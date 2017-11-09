@@ -1253,10 +1253,10 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
 	const float3 stageColors[2] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray]};
-	const float3 stageBounds    = {0.0f, model->GetDrawHeight(), unit->buildProgress};
+	const float3 stageBounds    = {0.0f, model->CalcDrawHeight(), unit->buildProgress};
 
 	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
-	// in the default case the above just remaps [mins.y, maxs.y] to [0, maxs.y - mins.y]
+	// the default value derives from the model vertices and makes more sense to use here
 	//
 	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
