@@ -174,10 +174,8 @@ static void FinishedLoading()
 	#if !defined(HEADLESS) && !defined(NO_SOUND)
 	// sound is initialized at this point,
 	// but EFX support is *not* guaranteed
-	if (efx != nullptr) {
-		efx->sfxProperties = *(mapInfo->efxprops);
-		efx->CommitEffects();
-	}
+	if (efx != nullptr)
+		efx->CommitEffects(mapInfo->efxprops);
 	#endif
 }
 

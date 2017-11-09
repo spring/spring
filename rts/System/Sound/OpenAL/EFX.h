@@ -20,7 +20,7 @@ public:
 	~CEFX();
 
 	void SetPreset(const std::string& name, bool verbose = true, bool commit = true);
-	void CommitEffects();
+	void CommitEffects(const EAXSfxProps* sfxProps = nullptr);
 
 	void Enable();
 	void Disable();
