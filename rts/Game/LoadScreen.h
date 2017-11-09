@@ -29,7 +29,8 @@ public:
 	// accessed from Game::KillLua where we do not care
 	static CLoadScreen* GetInstance() { return singleton; }
 
-	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	static void CreateDeleteInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	static bool CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
 	bool Draw() override;

@@ -375,7 +375,7 @@ void CPreGame::UpdateClientNet()
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
 
-				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
+				CLoadScreen::CreateDeleteInstance(gameSetup->MapFile(), modArchive, savefile);
 
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
