@@ -804,6 +804,10 @@ void CGame::KillLua(bool dtor)
 	LOG("[Game::%s][0] dtor=%d loadscreen=%p", __func__, dtor, loadscreen);
 	CLoadScreen::DeleteInstance();
 
+	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
+	LOG("[Game::%s][3] dtor=%d luaUI=%p", __func__, dtor, luaUI);
+	CLuaUI::FreeHandler();
+
 	ENTER_SYNCED_CODE();
 	LOG("[Game::%s][1] dtor=%d luaGaia=%p", __func__, dtor, luaGaia);
 	CLuaGaia::FreeHandler();
@@ -814,9 +818,6 @@ void CGame::KillLua(bool dtor)
 	CLuaHandleSynced::ClearGameParams();
 	LEAVE_SYNCED_CODE();
 
-	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
-	LOG("[Game::%s][3] dtor=%d luaUI=%p", __func__, dtor, luaUI);
-	CLuaUI::FreeHandler();
 
 	LOG("[Game::%s][4] dtor=%d", __func__, dtor);
 	LuaOpenGL::Free();
