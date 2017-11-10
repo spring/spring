@@ -380,7 +380,7 @@ inline void SerializeCVector(creg::ISerializer* s, T** vecPtr, C* count)
 		vec = *vecPtr;
 	}
 
-	for (unsigned i = 0; i < unsigned(count); ++i) {
+	for (unsigned i = 0; i < unsigned(*count); ++i) {
 		elemType->Serialize(s, &vec[i]);
 	}
 }
