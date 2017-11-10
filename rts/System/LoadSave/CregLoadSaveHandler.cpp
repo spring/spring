@@ -153,7 +153,8 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 				std::streamsize aiSize = aiData.tellp();
 				os.SerializeInt(&aiSize, sizeof(aiSize));
-				oss << aiData.rdbuf();
+				if (aiSize > 0)
+					oss << aiData.rdbuf();
 			}
 			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
 		}
