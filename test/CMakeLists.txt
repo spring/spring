@@ -499,6 +499,29 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
 ################################################################################
+### SerializeLuaState
+	set(test_name SerializeLuaState)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testSerializeLuaState.cpp"
+			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/SerializeLuaState.cpp"
+			"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
+			${sources_engine_System_Threading}
+			${test_Log_sources}
+		)
+	set(test_libs
+			lua
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			headlessStubs
+		)
+	set(test_flags "-DNOT_USING_STREFLOP")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
+
+################################################################################
 EndIf (NOT Boost_FOUND)
 
 add_subdirectory(headercheck)

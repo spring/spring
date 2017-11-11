@@ -18,19 +18,20 @@ static_assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE isn't 0");
 
 class LuaAllocator{
 public:
-	LuaAllocator() : lcd(nullptr) { }
+	LuaAllocator() : context(nullptr), la(nullptr) { }
 	void* alloc(size_t n) {
-		assert(lcd != nullptr);
-		return spring_lua_alloc(lcd, NULL, 0, n);
+		assert(context != nullptr && la != nullptr);
+		return la(context, NULL, 0, n);
 	}
 	template<typename T>
 	T* alloc() {
-		assert(lcd != nullptr);
-		return (T*) spring_lua_alloc(lcd, NULL, 0, sizeof(T));
+		assert(context != nullptr && la != nullptr);
+		return (T*) la(context, NULL, 0, sizeof(T));
 	}
-	void SetContext(luaContextData* newLcd) { lcd = newLcd; }
+	void SetContext(void* newLcd, lua_Alloc newla) { context = newLcd; la = newla; }
 private:
-	luaContextData* lcd;
+	void* context;
+	lua_Alloc la;
 };
 
 void freeProtector(void *m) {
@@ -392,7 +393,7 @@ CR_REG_METADATA(creg_Table, (
 	CR_IGNORED(array), //vector
 	CR_IGNORED(node), //vector
 	CR_IGNORED(lastfree), //serialized separately
-	CR_MEMBER(gclist),
+	CR_IGNORED(gclist), //probably unneeded
 	CR_MEMBER(sizearray),
 	CR_SERIALIZER(Serialize)
 ))
@@ -424,7 +425,7 @@ CR_REG_METADATA(creg_Proto, (
 	CR_MEMBER(sizelocvars),
 	CR_MEMBER(linedefined),
 	CR_MEMBER(lastlinedefined),
-	CR_MEMBER(gclist),
+	CR_IGNORED(gclist), //probably unneeded
 	CR_MEMBER(nups),
 	CR_MEMBER(numparams),
 	CR_MEMBER(is_vararg),
@@ -510,9 +511,9 @@ CR_REG_METADATA(creg_lua_State, (
 	CR_MEMBER(hookcount),
 	CR_IGNORED(hook),
 	CR_MEMBER(l_gt),
-	CR_MEMBER(env),
+	CR_IGNORED(env), // temporary
 	CR_MEMBER(openupval),
-	CR_MEMBER(gclist),
+	CR_IGNORED(gclist), //probably unneeded
 	CR_IGNORED(errorJmp),
 	CR_MEMBER(errfunc),
 	CR_SERIALIZER(Serialize)
@@ -559,20 +560,29 @@ void creg_TStringPtr::Serialize(creg::ISerializer* s)
 {
 	int idx;
 	if (s->IsWriting()) {
-		auto it = stringToIdx.find(ts);
-		if (it == stringToIdx.end()) {
-			idx = stringVec.size();
-			stringVec.push_back(ts);
-			stringToIdx[ts] = idx;
+		if (ts == nullptr) {
+			idx = 0;
 		} else {
-			idx = stringToIdx[ts];
+			auto it = stringToIdx.find(ts);
+			if (it == stringToIdx.end()) {
+				idx = stringVec.size();
+				stringVec.push_back(ts);
+				stringToIdx[ts] = idx + 1;
+			} else {
+				idx = stringToIdx[ts];
+			}
 		}
 	}
 
 	s->SerializeInt(&idx, sizeof(idx));
 
-	if (!(s->IsWriting()))
-		stringPtrToIdx[&ts] = idx;
+	if (!(s->IsWriting())) {
+		if (idx == 0) {
+			ts = nullptr;
+		} else {
+			stringPtrToIdx[&ts] = idx - 1;
+		}
+	}
 }
 
 
@@ -580,20 +590,29 @@ void creg_ClosurePtr::Serialize(creg::ISerializer* s)
 {
 	int idx;
 	if (s->IsWriting()) {
-		auto it = closureToIdx.find(c);
-		if (it == closureToIdx.end()) {
-			idx = closureVec.size();
-			closureVec.push_back(c);
-			closureToIdx[c] = idx;
+		if (c == nullptr) {
+			idx = 0;
 		} else {
-			idx = closureToIdx[c];
+			auto it = closureToIdx.find(c);
+			if (it == closureToIdx.end()) {
+				idx = closureVec.size() + 1;
+				closureVec.push_back(c);
+				closureToIdx[c] = idx;
+			} else {
+				idx = closureToIdx[c];
+			}
 		}
 	}
 
 	s->SerializeInt(&idx, sizeof(idx));
 
-	if (!(s->IsWriting()))
-		closurePtrToIdx[&c] = idx;
+	if (!(s->IsWriting())) {
+		if (idx == 0) {
+			c = nullptr;
+		} else {
+			closurePtrToIdx[&c] = idx - 1;
+		}
+	}
 }
 
 
@@ -601,34 +620,50 @@ void creg_UdataPtr::Serialize(creg::ISerializer* s)
 {
 	int idx;
 	if (s->IsWriting()) {
-		auto it = udataToIdx.find(u);
-		if (it == udataToIdx.end()) {
-			idx = udataVec.size();
-			udataVec.push_back(u);
-			udataToIdx[u] = idx;
+		if (u == nullptr) {
+			idx = 0;
 		} else {
-			idx = udataToIdx[u];
+			auto it = udataToIdx.find(u);
+			if (it == udataToIdx.end()) {
+				idx = udataVec.size() + 1;
+				udataVec.push_back(u);
+				udataToIdx[u] = idx;
+			} else {
+				idx = udataToIdx[u];
+			}
 		}
 	}
 
 	s->SerializeInt(&idx, sizeof(idx));
 
-	if (!(s->IsWriting()))
-		udataPtrToIdx[&u] = idx;
+	if (!(s->IsWriting())) {
+		if (idx == 0) {
+			u = nullptr;
+		} else {
+			udataPtrToIdx[&u] = idx - 1;
+		}
+	}
 }
 
 
 void creg_GCObjectPtr::Serialize(creg::ISerializer* s)
 {
+
 	int tt;
-	if (s->IsWriting())
-		tt = p.gch->tt;
+	if (s->IsWriting()) {
+		if (p.gch == nullptr) {
+			tt = LUA_TNONE;
+		} else {
+			tt = p.gch->tt;
+		}
+	}
 
 	s->SerializeInt(&tt, sizeof(tt));
 
 	switch(tt) {
+		case LUA_TNONE: { p.gch = nullptr; return; }
 		case LUA_TSTRING: { SerializeInstance(s, &p.ts); return; }
-		case LUA_TUSERDATA: { return; }
+		case LUA_TUSERDATA: { SerializeInstance(s, &p.u); }
 		case LUA_TFUNCTION: { SerializeInstance(s, &p.cl); return; }
 		case LUA_TTABLE: { SerializePtr(s, &p.h); return; }
 		case LUA_TPROTO: { SerializePtr(s, &p.p); return; }
@@ -649,7 +684,7 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 		case LUA_TSTRING: {SerializeInstance(s, &value.gc.p.ts); return; }
 		case LUA_TTABLE: { SerializePtr(s, &value.gc.p.h); return; }
 		case LUA_TFUNCTION: { SerializeInstance(s, &value.gc.p.cl); return; }
-		case LUA_TUSERDATA: { return; }
+		case LUA_TUSERDATA: { SerializeInstance(s, &value.gc.p.u); }
 		case LUA_TTHREAD: { SerializePtr(s, &value.gc.p.th); return; }
 		default: { assert(false); return; }
 	}
@@ -658,7 +693,6 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 
 void creg_Node::Serialize(creg::ISerializer* s)
 {
-	SerializeInstance(s, &i_key.tvk);
 	SerializeInstance(s, &i_key.tvk);
 	SerializePtr(s, &i_key.nk.next);
 }
@@ -719,8 +753,8 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 {
 	// stack should be empty when saving!
 	if (s->IsWriting()) {
-		assert(base == stack);
-		assert(top == base + 1);
+		assert(base == top);
+		assert(ci->base == top);
 		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
 		assert(base_ci == ci);
 		assert(end_ci == base_ci + size_ci - 1);
@@ -735,7 +769,7 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 
 		stack = (StkId) luaAllocator.alloc(stacksize * sizeof(*stack));
 		top = stack;
-		stack_last = stack + stacksize - EXTRA_STACK;
+		stack_last = stack + stacksize - EXTRA_STACK - 1;
 
 		ci->func = top;
 		setnilvalue(top++);
@@ -774,7 +808,7 @@ void creg_global_State::Serialize(creg::ISerializer* s)
 
 namespace creg {
 
-void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd, lua_CFunction panic, lua_Alloc frealloc)
+void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_CFunction panic, lua_Alloc frealloc)
 {
 	assert(stringToIdx.empty());
 	assert(stringVec.empty());
@@ -785,15 +819,17 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd,
 	if (s->IsWriting()) {
 		assert(*L != nullptr);
 		clg = (creg_LG*) *L;
+		// a garbage pointer that needs fixing
+		clg->g.uvhead.next.p.gch = nullptr;
 	} else {
 		assert(*L == nullptr);
 		clg = (creg_LG*) luaAllocator.alloc(sizeof(creg_LG));
 		*L = (lua_State*) &(clg->l);
-		clg->g.ud = &lcd;
+		clg->g.ud = context;
 		clg->g.panic = panic;
 		clg->g.frealloc = frealloc;
 
-		luaAllocator.SetContext(&lcd);
+		luaAllocator.SetContext(context, frealloc);
 	}
 
 	SerializeInstance(s, clg);
@@ -852,7 +888,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd,
 			SerializeInstance(s, (creg_GCObjectPtr*) &c->c.next);
 			// no need to serialize tt
 			s->SerializeInt(&c->c.marked, sizeof(c->c.marked));
-			SerializeInstance(s, (creg_GCObjectPtr*) &c->c.gclist);
+			// no need to serialize gclist
 			if (c->c.isC) {
 				CClosure* cc = &c->c;
 				assert(funcToName.find(cc->f) != funcToName.end());
@@ -890,7 +926,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd,
 			SerializeInstance(s, (creg_GCObjectPtr*) &c->c.next);
 			c->c.tt = LUA_TFUNCTION;
 			s->SerializeInt(&c->c.marked, sizeof(c->c.marked));
-			SerializeInstance(s, (creg_GCObjectPtr*) &c->c.gclist);
+			// no need to deserialize gclist
 
 			if (isC) {
 				CClosure* cc = &c->c;
@@ -959,7 +995,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd,
 	}
 
 
-	luaAllocator.SetContext(nullptr);
+	luaAllocator.SetContext(nullptr, nullptr);
 	stringToIdx.clear();
 	stringVec.clear();
 	stringPtrToIdx.clear();
