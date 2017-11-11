@@ -126,7 +126,7 @@ void LuaObjectRenderingImpl::PushFunction(lua_State* L, int (*fnPntr)(lua_State*
 
 int LuaObjectRenderingImpl::GetLODCount(lua_State* L)
 {
-	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+	const CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
 
 	if (obj == nullptr)
 		return 0;
@@ -144,7 +144,7 @@ int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 	const unsigned int objType = GetObjectType();
 	const unsigned int lodCount = std::min(1024, luaL_checkint(L, 2));
 
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, objType);
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, objType);
 
 	if (obj == nullptr)
 		return 0;
@@ -169,7 +169,7 @@ static int SetLODLengthCommon(lua_State* L, CSolidObject* obj, float scale)
 int LuaObjectRenderingImpl::SetLODLength(lua_State* L)
 {
 	// args=<objID, lodLevel, lodLength>
-	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, GetObjectType()), 1.0f));
+	return (SetLODLengthCommon(L, ParseSolidObject(L, __func__, 1, GetObjectType()), 1.0f));
 }
 
 int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
@@ -178,40 +178,7 @@ int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
 	//
 	// length adjusted for 45 degree FOV with a 1024x768 screen; the magic
 	// constant is 2.0f * math::tanf((45.0f * 0.5f) * (PI / 180.0f)) / 768.0f)
-	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, GetObjectType()), 0.0010786811520132682f));
-}
-
-
-/******************************************************************************/
-
-int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
-{
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
-
-	if (obj == nullptr)
-		return 0;
-
-	const LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
-	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 3);
-
-	if (lmp == nullptr)
-		return 0;
-
-	const unsigned int lod = luaL_checknumber(L, 2) - 1;
-
-	if (lod >= lmd->GetLODCount())
-		return 0;
-
-	// (re)set the default if no fourth argument
-	unsigned int dlist = lmp->dispListID;
-
-	if (lua_isnumber(L, 4)) {
-		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-		dlist = displayLists.GetDList(luaL_checknumber(L, 4));
-	}
-
-	lmp->lodDispLists[lod] = dlist;
-	return 0;
+	return (SetLODLengthCommon(L, ParseSolidObject(L, __func__, 1, GetObjectType()), 0.0010786811520132682f));
 }
 
 
@@ -344,7 +311,7 @@ int LuaObjectRenderingImpl::GetMaterial(lua_State* L)
 int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 {
 	// args=<objID, lodMatNum, matName, matRef>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
 
 	if (obj == nullptr)
 		return 0;
@@ -378,7 +345,7 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 {
 	// args=<objID, matName, lodMatNum>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
 
 	if (obj == nullptr)
 		return 0;
@@ -396,7 +363,7 @@ int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 {
 	// args=<objID, lodLevel, matName, preListID, postListID>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
 
 	if (obj == nullptr)
 		return 0;
@@ -475,7 +442,7 @@ int LuaObjectRenderingImpl::Debug(lua_State* L)
 	}
 
 	// args=<objID>
-	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+	const CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
 
 	if (obj == nullptr)
 		return 0;

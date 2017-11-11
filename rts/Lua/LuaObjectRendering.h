@@ -33,7 +33,7 @@ private:
 	static int SetLODLength(lua_State* L);
 	static int SetLODDistance(lua_State* L);
 
-	static int SetPieceList(lua_State* L);
+	static int SetPieceList(lua_State* L) { return 0; }
 
 	static int GetMaterial(lua_State* L);
 	static int SetMaterial(lua_State* L);

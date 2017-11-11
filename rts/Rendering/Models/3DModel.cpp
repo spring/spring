@@ -33,8 +33,6 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_IGNORED(dirty),
 	CR_IGNORED(modelSpaceMat),
 	CR_IGNORED(pieceSpaceMat),
-
-	CR_IGNORED(lodDispLists) //FIXME GL idx!
 ))
 
 CR_BIND(LocalModel, )
@@ -244,22 +242,10 @@ void LocalModel::DrawPieces() const
 	}
 }
 
-void LocalModel::DrawPiecesLOD(unsigned int lod) const
-{
-	if (!luaMaterialData.ValidLOD(lod))
-		return;
-
-	for (const auto& p: pieces) {
-		p.DrawLOD(lod);
-	}
-}
-
 void LocalModel::SetLODCount(unsigned int lodCount)
 {
 	assert(Initialized());
-
 	luaMaterialData.SetLODCount(lodCount);
-	pieces[0].SetLODCount(lodCount);
 }
 
 
@@ -481,29 +467,6 @@ void LocalModelPiece::Draw() const
 	GL::MultMatrix(GetModelSpaceMatrix());
 	glCallList(dispListID);
 	GL::PopMatrix();
-}
-
-void LocalModelPiece::DrawLOD(unsigned int lod) const
-{
-	if (!scriptSetVisible)
-		return;
-
-	GL::PushMatrix();
-	GL::MultMatrix(GetModelSpaceMatrix());
-	glCallList(lodDispLists[lod]);
-	GL::PopMatrix();
-}
-
-
-
-void LocalModelPiece::SetLODCount(unsigned int count)
-{
-	// any new LOD's get null-lists first
-	lodDispLists.resize(count, 0);
-
-	for (unsigned int i = 0; i < children.size(); i++) {
-		children[i]->SetLODCount(count);
-	}
 }
 
 

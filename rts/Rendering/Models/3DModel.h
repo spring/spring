@@ -323,8 +323,6 @@ struct LocalModelPiece
 	unsigned int GetScriptPieceIndex() const { return scriptPieceIndex; }
 
 	void Draw() const;
-	void DrawLOD(unsigned int lod) const;
-	void SetLODCount(unsigned int count);
 
 
 	// on-demand functions
@@ -398,7 +396,6 @@ public:
 	LocalModelPiece* parent;
 
 	std::vector<LocalModelPiece*> children;
-	std::vector<unsigned int> lodDispLists;
 };
 
 
@@ -433,12 +430,11 @@ struct LocalModel
 
 
 	void Draw() const {
-		if (!luaMaterialData.Enabled()) {
-			DrawPieces();
+		if (luaMaterialData.Enabled())
 			return;
-		}
 
-		DrawPiecesLOD(luaMaterialData.GetCurrentLOD());
+		DrawPieces();
+		return;
 	}
 
 	void SetModel(const S3DModel* model, bool initialize = true);
@@ -473,7 +469,6 @@ private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
 
 	void DrawPieces() const;
-	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
 	std::vector<LocalModelPiece> pieces;
