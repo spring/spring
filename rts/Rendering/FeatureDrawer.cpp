@@ -337,20 +337,12 @@ inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool noLua
 
 void CFeatureDrawer::DrawFeatureNoTrans(
 	const CFeature* feature,
-	unsigned int preList,
-	unsigned int postList,
+	unsigned int /*preList*/,
+	unsigned int /*postList*/,
 	bool /*lodCall*/,
 	bool noLuaCall
 ) {
-	if (preList != 0) {
-		glCallList(preList);
-	}
-
 	DrawFeatureModel(feature, noLuaCall);
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
 }
 
 void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)

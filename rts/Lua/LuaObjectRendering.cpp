@@ -228,7 +228,6 @@ static void ParseShader(lua_State* L, int index, LuaMatShader& shader)
 	}
 }
 
-
 static void ParseTexture(lua_State* L, int index, LuaMatTexture& texUnit) {
 	if (index < 0)
 		index = lua_gettop(L) + index + 1;
@@ -265,12 +264,7 @@ static void ParseTexture(lua_State* L, int index, LuaMatTexture& texUnit) {
 
 static GLuint ParseDisplayList(lua_State* L, int index)
 {
-	if (!lua_isnumber(L, index))
-		return 0;
-
-	const unsigned int ilist = (unsigned int)luaL_checknumber(L, index);
-	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-	return displayLists.GetDList(ilist);
+	return 0;
 }
 
 static LuaMatRef ParseMaterial(lua_State* L, int index, LuaMatType matType) {
@@ -356,30 +350,6 @@ int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 		return 0;
 
 	objMat->SetLastLOD(luaL_checknumber(L, 3) - 1);
-	return 0;
-}
-
-
-int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
-{
-	// args=<objID, lodLevel, matName, preListID, postListID>
-	CSolidObject* obj = ParseSolidObject(L, __func__, 1, GetObjectType());
-
-	if (obj == nullptr)
-		return 0;
-
-	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 3));
-
-	if (objMat == nullptr)
-		return 0;
-
-	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 2) - 1);
-
-	if (lodMat == nullptr)
-		return 0;
-
-	lodMat->preDisplayList  = ParseDisplayList(L, 4);
-	lodMat->postDisplayList = ParseDisplayList(L, 5);
 	return 0;
 }
 

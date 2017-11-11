@@ -208,9 +208,6 @@ class LuaMaterial {
 		  texCount(0),
 		  cullingMode(0),
 
-		  preList(0),
-		  postList(0),
-
 		  useCamera(true)
 		{}
 
@@ -245,9 +242,6 @@ class LuaMaterial {
 		LuaMatTexture  textures[MAX_TEX_UNITS];
 
 		GLenum cullingMode;
-
-		GLuint preList;
-		GLuint postList;
 
 		bool useCamera;
 

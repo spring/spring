@@ -1321,17 +1321,13 @@ void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
 
 void CUnitDrawer::DrawUnitNoTrans(
 	const CUnit* unit,
-	unsigned int preList,
-	unsigned int postList,
+	unsigned int /*preList*/,
+	unsigned int /*postList*/,
 	bool lodCall,
 	bool noLuaCall
 ) {
 	const unsigned int b0 = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
 	const unsigned int b1 = shadowHandler->InShadowPass();
-
-	if (preList != 0) {
-		glCallList(preList);
-	}
 
 	// if called from LuaObjectDrawer, unit has a custom material
 	//
@@ -1342,10 +1338,6 @@ void CUnitDrawer::DrawUnitNoTrans(
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
 	drawModelFuncs[ std::max(b0 * 2, b1) ](unit, noLuaCall);
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
 }
 
 void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)

@@ -32,7 +32,7 @@ CR_REG_METADATA(LocalModelPiece, (
 
 	CR_IGNORED(dirty),
 	CR_IGNORED(modelSpaceMat),
-	CR_IGNORED(pieceSpaceMat),
+	CR_IGNORED(pieceSpaceMat)
 ))
 
 CR_BIND(LocalModel, )

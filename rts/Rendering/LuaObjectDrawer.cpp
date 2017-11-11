@@ -375,6 +375,7 @@ void LuaObjectDrawer::DrawMaterialBin(
 	int minObjTeam = MAX_TEAMS;
 	int maxObjTeam = 0;
 
+	// FIXME: alpha-bin might be sorted
 	for (const CSolidObject* obj: objects) {
 		objectBuckets[obj->team].push_back(obj);
 
@@ -415,8 +416,6 @@ void LuaObjectDrawer::DrawBinObject(
 	bool applyTrans,
 	bool noLuaCall
 ) {
-	const unsigned int preList  = lodMat->preDisplayList;
-	const unsigned int postList = lodMat->postDisplayList;
 	const unsigned int tcFunIdx = GetTeamColorFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
@@ -426,7 +425,7 @@ void LuaObjectDrawer::DrawBinObject(
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
 			tcolFunc(deferredPass, unit, luaMat, float2(1.0f, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, 0, 0, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
 			const FeatureDrawFunc drawFunc = featureDrawFuncs[applyTrans];
@@ -434,15 +433,14 @@ void LuaObjectDrawer::DrawBinObject(
 			const CFeature* feat = static_cast<const CFeature*>(obj);
 
 			tcolFunc(deferredPass, feat, luaMat, float2(feat->drawAlpha, 1.0f * alphaMatBin));
-			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, 0, 0, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
 		} break;
 	}
 
-	//FIXME
-	binObjTeam = obj->team; //FIXME alpha????
+	binObjTeam = obj->team;
 }
 
 

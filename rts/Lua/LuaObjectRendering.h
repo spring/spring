@@ -38,7 +38,7 @@ private:
 	static int GetMaterial(lua_State* L);
 	static int SetMaterial(lua_State* L);
 	static int SetMaterialLastLOD(lua_State* L);
-	static int SetMaterialDisplayLists(lua_State* L);
+	static int SetMaterialDisplayLists(lua_State* L) { return 0; }
 
 	static int SetUnitLuaDraw(lua_State* L);
 	static int SetFeatureLuaDraw(lua_State* L);

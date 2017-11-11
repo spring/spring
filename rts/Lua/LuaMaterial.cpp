@@ -266,16 +266,6 @@ void LuaMaterial::Parse(
 			continue;
 		}
 
-		// dlists
-		if (key == "prelist") {
-			preList = ParseDisplayList(L, -1);
-			continue;
-		}
-		if (key == "postlist") {
-			postList = ParseDisplayList(L, -1);
-			continue;
-		}
-
 		// misc
 		if (key == "order") {
 			order = luaL_checkint(L, -1);
@@ -318,11 +308,6 @@ void LuaMaterial::Finalize()
 
 void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 {
-	if (prev.postList != 0)
-		glCallList(prev.postList);
-	if (preList != 0)
-		glCallList(preList);
-
 	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
 	uniforms[deferredPass].Execute();
 
@@ -388,11 +373,6 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.cullingMode != b.cullingMode)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
 
-
-	if (a.preList != b.preList)
-		return ((a.preList > b.preList) * 2 - 1);
-	if (a.postList != b.postList)
-		return ((a.postList > b.postList) * 2 - 1);
 
 	// these have no influence on the performance cost
 	// previously LuaMaterial/LuaMatBin were kept in a std::set (LuaMatBinSet, now a sorted std::vector)
@@ -489,9 +469,6 @@ void LuaMaterial::Print(const string& indent) const
 		SNPRINTF(buf, sizeof(buf), "%s  tex[%i] ", indent.c_str(), t);
 		textures[t].Print(buf);
 	}
-
-	LOG("%spreList  = %i",  indent.c_str(), preList);
-	LOG("%spostList = %i",  indent.c_str(), postList);
 
 	LOG("%suseCamera   = %s", indent.c_str(), (useCamera ? "true" : "false"));
 	LOG("%scullingMode = %s", indent.c_str(), CULL_TO_STR(cullingMode));
