@@ -242,12 +242,6 @@ void LocalModel::DrawPieces() const
 	}
 }
 
-void LocalModel::SetLODCount(unsigned int lodCount)
-{
-	assert(Initialized());
-	luaMaterialData.SetLODCount(lodCount);
-}
-
 
 void LocalModel::SetModel(const S3DModel* model, bool initialize)
 {

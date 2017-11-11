@@ -429,16 +429,14 @@ struct LocalModel
 	float GetDrawRadius() const { return (boundingVolume.GetBoundingRadius()); }
 
 
-	void Draw() const {
-		if (luaMaterialData.Enabled())
-			return;
-
-		DrawPieces();
-		return;
-	}
+	// LMD LODs use the engine lists (as was the default logic for SetPieceList)
+	void Draw() const { DrawPieces(); }
 
 	void SetModel(const S3DModel* model, bool initialize = true);
-	void SetLODCount(unsigned int lodCount);
+	void SetLODCount(unsigned int lodCount) {
+		assert(Initialized());
+		luaMaterialData.SetLODCount(lodCount);
+	}
 	void UpdateBoundingVolume();
 
 	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
