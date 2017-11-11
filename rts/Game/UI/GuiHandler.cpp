@@ -2189,8 +2189,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (unitdef == nullptr)
 				return Command(CMD_STOP);
 
-			std::vector<BuildInfo> buildPos;
-			BuildInfo bi(unitdef, cameraPos + mouseDir * dist, buildFacing);
+			const BuildInfo bi(unitdef, cameraPos + mouseDir * dist, buildFacing);
 
 			if (GetQueueKeystate() && (button == SDL_BUTTON_LEFT)) {
 				const float3 camTracePos = mouse->buttons[SDL_BUTTON_LEFT].camPos;
@@ -2199,30 +2198,30 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float traceDist = globalRendering->viewRange * 1.4f;
 				const float isectDist = CGround::LineGroundWaterCol(camTracePos, camTraceDir, traceDist, unitdef->floatOnWater, false);
 
-				buildPos = GetBuildPos(BuildInfo(unitdef, camTracePos + camTraceDir * isectDist, buildFacing), bi, cameraPos, mouseDir);
+				GetBuildPositions(BuildInfo(unitdef, camTracePos + camTraceDir * isectDist, buildFacing), bi, cameraPos, mouseDir);
 			} else {
-				buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
+				GetBuildPositions(bi, bi, cameraPos, mouseDir);
 			}
 
-			if (buildPos.empty())
+			if (buildInfos.empty())
 				return Command(CMD_STOP);
 
-			if (buildPos.size() == 1) {
+			if (buildInfos.size() == 1) {
 				CFeature* feature = nullptr;
 
-				// TODO Maybe also check out-of-range for immobile builder?
-				if (!CGameHelper::TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false))
+				// TODO: maybe also check out-of-range for immobile builder?
+				if (!CGameHelper::TestUnitBuildSquare(buildInfos[0], feature, gu->myAllyTeam, false))
 					return defaultRet;
 
 			}
 
 			if (!preview) {
-				for (auto bpi = buildPos.cbegin(); bpi != --buildPos.cend(); ++bpi) {
-					GiveCommand(bpi->CreateCommand(CreateOptions(button)));
+				for (const BuildInfo& bi: buildInfos) {
+					GiveCommand(bi.CreateCommand(CreateOptions(button)));
 				}
 			}
 
-			return CheckCommand(buildPos.back().CreateCommand(CreateOptions(button)));
+			return CheckCommand((buildInfos.back()).CreateCommand(CreateOptions(button)));
 		}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -2443,15 +2442,19 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 	}
 }
 
-// Assuming both builds have the same unitdef
-std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir)
+
+size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir)
 {
-	std::vector<BuildInfo> ret;
+	// both builds must have the same unitdef
+	assert(startInfo.def == endInfo.def);
 
 	float3 start = CGameHelper::Pos2BuildPos(startInfo, false);
 	float3 end = CGameHelper::Pos2BuildPos(endInfo, false);
 
 	BuildInfo other; // the unit around which buildings can be circled
+
+	buildInfos.clear();
+	buildInfos.reserve(16);
 
 	if (GetQueueKeystate() && KeyInput::GetKeyModState(KMOD_CTRL)) {
 		const CUnit* unit = nullptr;
@@ -2490,10 +2493,10 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		const int nvert = 1 + (oxsize / xsize);
 		const int nhori = 1 + (ozsize / xsize);
 
-		FillRowOfBuildPos(startInfo, end.x   + zsize / 2, start.z + xsize / 2,      0,  xsize, nhori, 3, true, ret);
-		FillRowOfBuildPos(startInfo, end.x   - xsize / 2, end.z   + zsize / 2, -xsize,      0, nvert, 2, true, ret);
-		FillRowOfBuildPos(startInfo, start.x - zsize / 2, end.z   - xsize / 2,      0, -xsize, nhori, 1, true, ret);
-		FillRowOfBuildPos(startInfo, start.x + xsize / 2, start.z - zsize / 2,  xsize,      0, nvert, 0, true, ret);
+		FillRowOfBuildPos(startInfo, end.x   + zsize / 2, start.z + xsize / 2,      0,  xsize, nhori, 3, true, buildInfos);
+		FillRowOfBuildPos(startInfo, end.x   - xsize / 2, end.z   + zsize / 2, -xsize,      0, nvert, 2, true, buildInfos);
+		FillRowOfBuildPos(startInfo, start.x - zsize / 2, end.z   - xsize / 2,      0, -xsize, nhori, 1, true, buildInfos);
+		FillRowOfBuildPos(startInfo, start.x + xsize / 2, start.z - zsize / 2,  xsize,      0, nvert, 0, true, buildInfos);
 	} else {
 		// rectangle or line
 		const float3 delta = end - start;
@@ -2512,17 +2515,17 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 				if ((1 < xnum) && (1 < znum)) {
 					// go "down" on the "left" side
-					FillRowOfBuildPos(startInfo, start.x                     , start.z + zstep             ,      0,  zstep, znum - 1, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x                     , start.z + zstep             ,      0,  zstep, znum - 1, 0, false, buildInfos);
 					// go "right" on the "bottom" side
-					FillRowOfBuildPos(startInfo, start.x + xstep             , start.z + (znum - 1) * zstep,  xstep,      0, xnum - 1, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x + xstep             , start.z + (znum - 1) * zstep,  xstep,      0, xnum - 1, 0, false, buildInfos);
 					// go "up" on the "right" side
-					FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, start.z + (znum - 2) * zstep,      0, -zstep, znum - 1, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, start.z + (znum - 2) * zstep,      0, -zstep, znum - 1, 0, false, buildInfos);
 					// go "left" on the "top" side
-					FillRowOfBuildPos(startInfo, start.x + (xnum - 2) * xstep, start.z                     , -xstep,      0, xnum - 1, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x + (xnum - 2) * xstep, start.z                     , -xstep,      0, xnum - 1, 0, false, buildInfos);
 				} else if (1 == xnum) {
-					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, buildInfos);
 				} else if (1 == znum) {
-					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, ret);
+					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, buildInfos);
 				}
 			} else {
 				// filled
@@ -2530,10 +2533,10 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				for (float z = start.z; zn < znum; ++zn) {
 					if (zn & 1) {
 						// every odd line "right" to "left"
-						FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, z, -xstep, 0, xnum, 0, false, ret);
+						FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, z, -xstep, 0, xnum, 0, false, buildInfos);
 					} else {
 						// every even line "left" to "right"
-						FillRowOfBuildPos(startInfo, start.x                     , z,  xstep, 0, xnum, 0, false, ret);
+						FillRowOfBuildPos(startInfo, start.x                     , z,  xstep, 0, xnum, 0, false, buildInfos);
 					}
 					z += zstep;
 				}
@@ -2548,11 +2551,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 				xstep = KeyInput::GetKeyModState(KMOD_CTRL) ? 0 : zstep * delta.x / (delta.z ? delta.z : 1);
 			}
 
-			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, xDominatesZ ? xnum : znum, 0, false, ret);
+			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, xDominatesZ ? xnum : znum, 0, false, buildInfos);
 		}
 	}
 
-	return ret;
+	return (buildInfos.size());
 }
 
 
@@ -3441,9 +3444,9 @@ static inline void DrawWeaponArc(const CUnit* unit)
 }
 
 
-void CGuiHandler::DrawMapStuff(bool onMinimap)
+void CGuiHandler::DrawMapStuff(bool onMiniMap)
 {
-	if (!onMinimap) {
+	if (!onMiniMap) {
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
@@ -3466,7 +3469,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		tracePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 		traceDir = -UpVector;
 
-		if (miniMapMarker && minimap->FullProxy() && !onMinimap && !minimap->GetMinimized()) {
+		if (miniMapMarker && minimap->FullProxy() && !onMiniMap && !minimap->GetMinimized()) {
 			DrawMiniMapMarker(tracePos);
 		}
 	}
@@ -3499,7 +3502,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 
-						DrawFront(button, maxSize, sizeDiv, onMinimap, tracePos, traceDir);
+						DrawFront(button, maxSize, sizeDiv, onMiniMap, tracePos, traceDir);
 					}
 				} break;
 
@@ -3547,7 +3550,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 						const float radius = std::min(maxRadius, innerPos.distance2D(outerPos));
 
-						if (!onMinimap) {
+						if (!onMiniMap) {
 							DrawArea(innerPos, radius, color);
 						} else {
 							glColor4f(color[0], color[1], color[2], 0.5f);
@@ -3584,7 +3587,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						const float3 innerPos = camTracePos + camTraceDir * innerDist;
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
-						if (!onMinimap) {
+						if (!onMiniMap) {
 							DrawSelectBox(innerPos, outerPos, tracePos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
@@ -3601,7 +3604,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		}
 	}
 
-	if (!onMinimap) {
+	if (!onMiniMap) {
 		glBlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
 		glLineWidth(cmdColors.SelectedLineWidth());
 	} else {
@@ -3717,21 +3720,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				const float3 cPos = tracePos + traceDir * dist;
 				const float3 bPos = bp.camPos + bp.dir * bpDist;
 
-				std::vector<BuildInfo> buildInfos;
-
 				if (GetQueueKeystate() && bp.pressed) {
 					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
 					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bInfo, cInfo, tracePos, traceDir));
+					buildColors.clear();
+					buildColors.reserve(GetBuildPositions(bInfo, cInfo, tracePos, traceDir));
 				} else {
 					const BuildInfo bi(unitdef, cPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bi, bi, tracePos, traceDir));
+					buildColors.clear();
+					buildColors.reserve(GetBuildPositions(bi, bi, tracePos, traceDir));
 				}
 
-				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
-					const float3& buildPos = bpi->pos;
+
+				for (const BuildInfo& bi: buildInfos) {
+					const float3& buildPos = bi.pos;
 
 					DrawUnitDefRanges(nullptr, unitdef, buildPos);
 
@@ -3739,48 +3743,69 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(buildPos, unitdef->weapons[0].def->range,
-						                  nullptr, 40, unitdef->weapons[0].def->heightmod);
+						glBallisticCircle(buildPos, unitdef->weapons[0].def->range, nullptr, 40, unitdef->weapons[0].def->heightmod);
 						glEnable(GL_DEPTH_TEST);
 					}
+
 					// draw extraction range
-					if (unitdef->extractRange > 0) {
+					if (unitdef->extractRange > 0.0f) {
 						glColor4fv(cmdColors.rangeExtract);
 						glSurfaceCircle(buildPos, unitdef->extractRange, 40);
 					}
+
 					// draw interceptor range
 					const WeaponDef* wd = unitdef->stockpileWeaponDef;
 					if ((wd != nullptr) && wd->interceptor) {
 						glColor4fv(cmdColors.rangeInterceptorOn);
 						glSurfaceCircle(buildPos, wd->coverageRange, 40);
 					}
+				}
 
-					std::vector<Command> cv;
 
-					if (GetQueueKeystate()) {
-						const Command c = bpi->CreateCommand();
-						for (const int unitID: selectedUnitsHandler.selectedUnits) {
-							const CUnit* su = unitHandler->GetUnit(unitID);
-							const CCommandAI* cai = su->commandAI;
-							for (const Command& cmd: cai->GetOverlapQueued(c)) {
-								cv.push_back(cmd);
+				if (!onMiniMap) {
+					// TODO: grab the minimap transform
+					unitDrawer->SetupShowUnitBuildSquares(onMiniMap);
+
+					for (const BuildInfo& bi: buildInfos) {
+						buildCommands.clear();
+
+						if (GetQueueKeystate()) {
+							const Command c = bi.CreateCommand();
+
+							for (const int unitID: selectedUnitsHandler.selectedUnits) {
+								const CUnit* su = unitHandler->GetUnit(unitID);
+								const CCommandAI* cai = su->commandAI;
+
+								for (const Command& cmd: cai->GetOverlapQueued(c)) {
+									buildCommands.push_back(cmd);
+								}
 							}
+						}
+
+						if (unitDrawer->ShowUnitBuildSquare(bi, buildCommands)) {
+							buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // green
+						} else {
+							buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
 						}
 					}
 
-					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
-						glColor4f(0.7f,1,1,0.4f);
-					} else {
-						glColor4f(1,0.5f,0.5f,0.4f);
-					}
+					unitDrawer->ResetShowUnitBuildSquares(onMiniMap);
+				}
 
-					if (!onMinimap) {
+				if (!onMiniMap) {
+					assert(buildInfos.size() == buildColors.size());
+
+					for (size_t n = 0; n < buildInfos.size(); n++) {
+						const BuildInfo& bi = buildInfos[n];
+						const float4& bc = buildColors[n];
+
 						GL::PushMatrix();
 						GL::LoadIdentity();
-						GL::Translate(buildPos);
-						GL::RotateY(bpi->buildFacing * 90.0f);
+						GL::Translate(bi.pos);
+						GL::RotateY(bi.buildFacing * 90.0f);
 
-						CUnitDrawer::DrawIndividualDefAlpha(bpi->def, gu->myTeam, false);
+						glColor4f(bc.x, bc.y, bc.z, bc.w);
+						CUnitDrawer::DrawIndividualDefAlpha(bi.def, gu->myTeam, false);
 
 						GL::PopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
@@ -3790,36 +3815,39 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		}
 	}
 
-	// draw range circles if attack orders are imminent
+	// draw range circles (for immobile units) if attack orders are imminent
 	const int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
 
-	if ((inCommand >= 0 && (size_t)inCommand<commands.size() && commands[inCommand].id == CMD_ATTACK) ||
-		(inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK)
-	) {
+	const bool  playerAttackCmd = (size_t(inCommand) < commands.size() && commands[inCommand].id == CMD_ATTACK);
+	const bool defaultAttackCmd = (inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK);
+	const bool drawWeaponRanges = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+
+	if ((playerAttackCmd || defaultAttackCmd) && drawWeaponRanges) {
 		for (const int unitID: selectedUnitsHandler.selectedUnits) {
 			const CUnit* unit = unitHandler->GetUnit(unitID);
 
 			if (unit == pointedAt)
 				continue;
 
-			if (onMinimap && (unit->unitDef->speed > 0.0f))
+			if (unit->maxRange <= 0.0f)
+				continue;
+			if (unit->unitDef->speed > 0.0f)
 				continue;
 
-			if (unit->maxRange > 0.0f && (unit->IsInLosForAllyTeam(gu->myAllyTeam) || gu->spectatingFullView)) {
+			if (unit->IsInLosForAllyTeam(gu->myAllyTeam) || gu->spectatingFullView) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange, unit->weapons.front(), 40);
 				glEnable(GL_DEPTH_TEST);
 
-				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug)
-					DrawWeaponArc(unit);
+				DrawWeaponArc(unit);
 			}
 		}
 	}
 
 	glLineWidth(1.0f);
 
-	if (!onMinimap) {
+	if (!onMiniMap) {
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}

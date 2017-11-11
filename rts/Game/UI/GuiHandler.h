@@ -9,13 +9,14 @@
 #include "InputReceiver.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/CommandAI/Command.h"
 
 #define DEFAULT_GUI_CONFIG "ctrlpanel.txt"
 
 class CUnit;
 struct UnitDef;
-struct BuildInfo;
+
 class Action;
 struct SCommandDescription;
 
@@ -29,7 +30,7 @@ public:
 	void Update();
 
 	void Draw();
-	void DrawMapStuff(bool onMinimap);
+	void DrawMapStuff(bool onMiniMap);
 	void DrawCentroidCursor();
 
 	bool AboveGui(int x, int y);
@@ -58,7 +59,7 @@ public:
 	}
 	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir);
 	/// startInfo.def has to be endInfo.def
-	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
+	size_t GetBuildPositions(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
 	bool EnableLuaUI(bool enableCommand);
 	bool DisableLuaUI(bool layoutIcons = true);
@@ -151,7 +152,7 @@ private:
 	void DrawSelectionInfo();
 	void DrawNumberInput();
 	void DrawMiniMapMarker(const float3& cameraPos);
-	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir);
+	void DrawFront(int button, float maxSize, float sizeDiv, bool onMiniMap, const float3& cameraPos, const float3& mouseDir);
 	void DrawArea(float3 pos, float radius, const float* color);
 	void DrawSelectBox(const float3& start, const float3& end, const float3& cameraPos);
 	void DrawSelectCircle(const float3& pos, float radius, const float* color);
@@ -245,6 +246,11 @@ private:
 
 	std::vector<std::string> layoutCommands;
 	std::vector< std::pair<Command, bool> > commandsToGive;
+
+	// DrawMapStuff caches
+	std::vector<BuildInfo> buildInfos;
+	std::vector<Command> buildCommands;
+	std::vector<float4> buildColors;
 };
 
 extern CGuiHandler* guihandler;

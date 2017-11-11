@@ -20,6 +20,7 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -1408,7 +1409,39 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 
 
+void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap)
+{
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+}
+
+void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap)
+{
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Disable();
+
+
+	glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// glDisable(GL_BLEND);
+
+}
+
+
 // visualize if a unit can be built at specified position
+// TODO: make this a lua callin!
 bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 {
 	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
@@ -1416,25 +1449,20 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 
 bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
 {
-	//TODO: make this a lua callin!
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_TEXTURE_2D);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	buildableSquares.clear();
+	buildableSquares.reserve(32);
+	featureSquares.clear(); // occupied by features
+	featureSquares.reserve(32);
+	illegalSquares.clear(); // otherwise non-buildable
+	illegalSquares.reserve(32);
 
 	CFeature* feature = nullptr;
 
-	std::vector<float3> buildableSquares; // buildable squares
-	std::vector<float3> featureSquares; // occupied squares
-	std::vector<float3> illegalSquares; // non-buildable squares
-
-	const float3& pos = buildInfo.pos;
-	const int x1 = pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
-	const int x2 =    x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
-	const int z1 = pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
-	const int z2 =    z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
-	const float h = CGameHelper::GetBuildHeight(pos, buildInfo.def, false);
+	const int x1 = buildInfo.pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
+	const int z1 = buildInfo.pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
+	const int x2 =              x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
+	const int z2 =              z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
+	const float h = CGameHelper::GetBuildHeight(buildInfo.pos, buildInfo.def, false);
 
 	const bool canBuild = !!CGameHelper::TestUnitBuildSquare(
 		buildInfo,
@@ -1447,78 +1475,53 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		&commands
 	);
 
-	if (canBuild) {
-		glColor4f(0.0f, 0.9f, 0.0f, 0.7f);
-	} else {
-		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
-	}
+	const SColor buildableSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}, {0.0f, 0.9f, 0.0f, 0.7f}};
+	const SColor   featureSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}};
+	const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
+
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	for (unsigned int i = 0; i < buildableSquares.size(); i++) {
-		va->AddVertexQ0(buildableSquares[i]                                      );
-		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(buildableSquares[i] + float3(          0, 0, SQUARE_SIZE));
+		buffer->Append({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
+		buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
+		buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+		buffer->Append({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
 	}
-	va->DrawArray0(GL_QUADS);
-
-
-	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
 	for (unsigned int i = 0; i < featureSquares.size(); i++) {
-		va->AddVertexQ0(featureSquares[i]                                      );
-		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(featureSquares[i] + float3(          0, 0, SQUARE_SIZE));
+		buffer->Append({featureSquares[i]                                      , featureSquareColors[0]});
+		buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
+		buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
+		buffer->Append({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
 	}
-	va->DrawArray0(GL_QUADS);
-
-
-	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 
 	for (unsigned int i = 0; i < illegalSquares.size(); i++) {
-		va->AddVertexQ0(illegalSquares[i]);
-		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0,           0));
-		va->AddVertexQ0(illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
-		va->AddVertexQ0(illegalSquares[i] + float3(          0, 0, SQUARE_SIZE));
+		buffer->Append({illegalSquares[i]                                      , illegalSquareColors[0]});
+		buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
+		buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
+		buffer->Append({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
 	}
-	va->DrawArray0(GL_QUADS);
+
+	buffer->Submit(GL_QUADS);
 
 
 	if (h < 0.0f) {
-		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
-		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
+		constexpr unsigned char sc[4] = { 0,   0, 255, 128 }; // start color
+		constexpr unsigned char ec[4] = { 0, 128, 255, 255 }; // end color
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(8, 0, VA_SIZE_C);
-		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
-		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
-		va->DrawArrayC(GL_LINES);
+		buffer->Append({float3(x1, h, z1), sc}); buffer->Append({float3(x1, 0.f, z1), ec});
+		buffer->Append({float3(x1, h, z2), sc}); buffer->Append({float3(x1, 0.f, z2), ec});
+		buffer->Append({float3(x2, h, z2), sc}); buffer->Append({float3(x2, 0.f, z2), ec});
+		buffer->Append({float3(x2, h, z1), sc}); buffer->Append({float3(x2, 0.f, z1), ec});
+		buffer->Submit(GL_LINES);
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->AddVertexQC(float3(x1, 0.0f, z1), e);
-		va->AddVertexQC(float3(x1, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z1), e);
-		va->DrawArrayC(GL_LINE_LOOP);
+		buffer->Append({float3(x1, 0.0f, z1), ec});
+		buffer->Append({float3(x1, 0.0f, z2), ec});
+		buffer->Append({float3(x2, 0.0f, z2), ec});
+		buffer->Append({float3(x2, 0.0f, z1), ec});
+		buffer->Submit(GL_LINE_LOOP);
 	}
-
-	glEnable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	// glDisable(GL_BLEND);
 
 	return canBuild;
 }
@@ -1558,9 +1561,8 @@ inline float GetUnitIconScale(const CUnit* unit) {
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
 
-	if ((unitVisible || gu->spectatingFullView)) {
+	if (unitVisible || gu->spectatingFullView)
 		scale *= (unit->radius / unit->myIcon->GetRadiusScale());
-	}
 
 	return scale;
 }

@@ -129,6 +129,8 @@ public:
 	void SetupAlphaDrawing(bool deferredPass);
 	void ResetAlphaDrawing(bool deferredPass);
 
+	void SetupShowUnitBuildSquares(bool onMiniMap);
+	void ResetShowUnitBuildSquares(bool onMiniMap);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -273,6 +275,13 @@ private:
 	std::vector<CUnit*> iconUnits;
 
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+
+
+	// caches for ShowUnitBuildSquare
+	std::vector<float3> buildableSquares;
+	std::vector<float3> featureSquares;
+	std::vector<float3> illegalSquares;
+
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path

@@ -362,7 +362,7 @@ void CWorldDrawer::DrawMiscObjects() const
 	// con: looks somewhat worse for underwater / obscured icons
 	unitDrawer->DrawUnitIcons();
 
-	lineDrawer.DrawAll();
+	lineDrawer.DrawAll(false);
 	cursorIcons.Draw();
 
 	mouse->DrawSelectionBox();

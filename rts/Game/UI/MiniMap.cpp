@@ -1553,7 +1553,7 @@ void CMiniMap::DrawWorldStuff() const
 
 
 	glLineWidth(2.5f);
-	lineDrawer.DrawAll();
+	lineDrawer.DrawAll(true);
 	glLineWidth(1.0f);
 
 	// draw the selection shape, and some ranges

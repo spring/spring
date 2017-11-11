@@ -1,12 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-// TODO: move this out of Sim, this is rendering code!
-
 #include "LineDrawer.h"
 
 #include <cmath>
 
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 
 CLineDrawer lineDrawer;
@@ -17,13 +18,13 @@ CLineDrawer::CLineDrawer()
 	, useColorRestarts(false)
 	, useRestartColor(false)
 	, restartAlpha(0.0f)
-	, restartColor(NULL)
-	, lastPos(ZeroVector)
-	, lastColor(NULL)
 	, stippleTimer(0.0f)
+	, lastPos(ZeroVector)
+	, restartColor(nullptr)
+	, lastColor(nullptr)
 {
-	lines.reserve(32);
-	stippled.reserve(32);
+	regularLines.reserve(32);
+	stippleLines.reserve(32);
 }
 
 
@@ -37,57 +38,90 @@ void CLineDrawer::UpdateLineStipple()
 void CLineDrawer::SetupLineStipple()
 {
 	const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
-	if ((stipPat != 0x0000) && (stipPat != 0xffff)) {
-		lineStipple = true;
-	} else {
-		lineStipple = false;
+
+	lineStipple = ((stipPat != 0x0000) && (stipPat != 0xffff));
+
+	if (!lineStipple)
 		return;
-	}
+
 	const unsigned int fullPat = (stipPat << 16) | (stipPat & 0x0000ffff);
 	const int shiftBits = 15 - (int(stippleTimer * 20.0f) % 16);
+
 	glLineStipple(cmdColors.StippleFactor(), (fullPat >> shiftBits));
 }
 
 
-void CLineDrawer::DrawAll()
+void CLineDrawer::Restart()
 {
-	if (lines.empty() && stippled.empty())
+	LinePair* ptr;
+	if (lineStipple) {
+		stippleLines.emplace_back();
+		ptr = &stippleLines.back();
+	} else {
+		regularLines.emplace_back();
+		ptr = &regularLines.back();
+	}
+	LinePair& p = *ptr;
+
+	if (!useColorRestarts)	 {
+		p.glType = GL_LINE_STRIP;
+
+		p.verts.push_back({lastPos, lastColor});
+	} else {
+		p.glType = GL_LINES;
+	}
+}
+
+
+void CLineDrawer::DrawAll(bool onMiniMap)
+{
+	// TODO: grab the minimap transform (DrawForReal->EnterNormalizedCoors->DrawWorldStuff)
+	if (onMiniMap)
 		return;
-	
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
+	if (regularLines.empty() && stippleLines.empty())
+		return;
 
 	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LINE_STIPPLE);
 
-	for (int i = 0; i<lines.size(); ++i) {
-		int size = lines[i].colors.size();
-		if(size > 0) {
-			glColorPointer(4, GL_FLOAT, 0, &lines[i].colors[0]);
-			glVertexPointer(3, GL_FLOAT, 0, &lines[i].verts[0]);
-			glDrawArrays(lines[i].type, 0, size/4);
+
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+
+	for (size_t i = 0, s = regularLines.size(); i < s; ++i) {
+		const size_t size = regularLines[i].verts.size();
+
+		// TODO: batch lines of equal type
+		if (size > 0) {
+			buffer->Append(regularLines[i].verts.data(), size);
+			buffer->Submit(regularLines[i].glType);
 		}
 	}
 
-	if (!stippled.empty()) {
+	if (!stippleLines.empty()) {
 		glEnable(GL_LINE_STIPPLE);
-		for (int i = 0; i<stippled.size(); ++i) {
-			int size = stippled[i].colors.size();
-			if(size > 0) {
-				glColorPointer(4, GL_FLOAT, 0, &stippled[i].colors[0]);
-				glVertexPointer(3, GL_FLOAT, 0, &stippled[i].verts[0]);
-				glDrawArrays(stippled[i].type, 0, size/4);
+
+		for (size_t i = 0, s = stippleLines.size(); i < s; ++i) {
+			const size_t size = stippleLines[i].verts.size();
+
+			if (size > 0) {
+				buffer->Append(stippleLines[i].verts.data(), size);
+				buffer->Submit(stippleLines[i].glType);
 			}
 		}
+
 		glDisable(GL_LINE_STIPPLE);
 	}
 
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	shader->Disable();
 	glPopAttrib();
 
-	lines.clear();
-	stippled.clear();
+	regularLines.clear();
+	stippleLines.clear();
 }
+
