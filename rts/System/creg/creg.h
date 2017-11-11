@@ -250,6 +250,21 @@ public: \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
 	creg::Class TCls::creg_class(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
 
+/** @def CR_BIND_POOL
+ * Bind a class not derived from CObject
+ * should be used in the source file
+ * @param TCls class to bind
+ * @param ctor_args constructor arguments
+ * @param poolAlloc pool function used to allocate
+ * @param poolFree pool function used to allocate
+ */
+#define CR_BIND_POOL(TCls, ctor_args, poolAlloc, poolFree) \
+	void* TCls::_Alloc() { return poolAlloc(); } \
+	void TCls::_Free(void* d) { poolFree(d); } \
+	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
+	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	creg::Class TCls::creg_class(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, TCls::_Alloc, TCls::_Free);
+
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
  * Should be used in the source file
