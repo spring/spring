@@ -12,9 +12,6 @@ struct creg_UpVal;
 struct creg_Node;
 struct creg_Table;
 
-// mark that the field serialization is not implemented.
-#define CR_FIXME(x) CR_IGNORED(x)
-
 #define ASSERT_SIZE(structName) static_assert(sizeof(creg_ ## structName) == sizeof(structName), #structName " Size mismatch");
 
 static_assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE isn't 0");
@@ -457,7 +454,7 @@ CR_REG_METADATA(creg_stringtable, (
 CR_BIND_POOL(creg_global_State, , allocProtector, freeProtector)
 CR_REG_METADATA(creg_global_State, (
 	CR_MEMBER(strt),
-	CR_FIXME(frealloc),
+	CR_IGNORED(frealloc),
 	CR_IGNORED(ud),
 	CR_MEMBER(currentwhite),
 	CR_MEMBER(gcstate),
@@ -475,18 +472,18 @@ CR_REG_METADATA(creg_global_State, (
 	CR_MEMBER(gcdept),
 	CR_MEMBER(gcpause),
 	CR_MEMBER(gcstepmul),
-	CR_FIXME(panic),
+	CR_IGNORED(panic),
 	CR_MEMBER(l_registry),
 	CR_MEMBER(mainthread),
 	CR_MEMBER(uvhead),
 	CR_MEMBER(mt),
 	CR_MEMBER(tmname),
-	CR_FIXME(fopen_func),
-	CR_FIXME(popen_func),
-	CR_FIXME(pclose_func),
-	CR_FIXME(system_func),
-	CR_FIXME(remove_func),
-	CR_FIXME(rename_func),
+	CR_IGNORED(fopen_func),
+	CR_IGNORED(popen_func),
+	CR_IGNORED(pclose_func),
+	CR_IGNORED(system_func),
+	CR_IGNORED(remove_func),
+	CR_IGNORED(rename_func),
 	CR_SERIALIZER(Serialize)
 ))
 
@@ -511,12 +508,12 @@ CR_REG_METADATA(creg_lua_State, (
 	CR_MEMBER(allowhook),
 	CR_MEMBER(basehookcount),
 	CR_MEMBER(hookcount),
-	CR_FIXME(hook),
+	CR_IGNORED(hook),
 	CR_MEMBER(l_gt),
 	CR_MEMBER(env),
 	CR_MEMBER(openupval),
 	CR_MEMBER(gclist),
-	CR_FIXME(errorJmp),
+	CR_IGNORED(errorJmp),
 	CR_MEMBER(errfunc),
 	CR_SERIALIZER(Serialize)
 ))
@@ -727,6 +724,9 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
 		assert(base_ci == ci);
 		assert(end_ci == base_ci + size_ci - 1);
+
+		assert(hook == NULL);
+		assert(errorJmp == NULL);
 	} else {
 		// adapted from stack_init lstate.cpp
 		base_ci = (CallInfo *) luaAllocator.alloc(size_ci * sizeof(*base_ci));
@@ -741,29 +741,45 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		setnilvalue(top++);
 		base = ci->base = top;
 		ci->top = top + LUA_MINSTACK;
+
+		errorJmp = NULL;
+		hook = NULL;
 	}
 }
 
 
 void creg_global_State::Serialize(creg::ISerializer* s)
 {
-	if (!s->IsWriting()) {
+	if (s->IsWriting()) {
+		assert(fopen_func  == NULL);
+		assert(popen_func  == NULL);
+		assert(pclose_func == NULL);
+		assert(system_func == NULL);
+		assert(remove_func == NULL);
+		assert(rename_func == NULL);
+	} else {
 		buff.buffer = NULL;
 		buff.buffsize = 0;
 		buff.n = 0;
+
+		fopen_func  = NULL;
+		popen_func  = NULL;
+		pclose_func = NULL;
+		system_func = NULL;
+		remove_func = NULL;
+		rename_func = NULL;
 	}
 }
 
 
 namespace creg {
 
-void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd)
+void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd, lua_CFunction panic, lua_Alloc frealloc)
 {
 	assert(stringToIdx.empty());
 	assert(stringVec.empty());
 	assert(stringPtrToIdx.empty());
 
-	luaAllocator.SetContext(&lcd);
 
 	creg_LG* clg;
 	if (s->IsWriting()) {
@@ -774,6 +790,10 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd)
 		clg = (creg_LG*) luaAllocator.alloc(sizeof(creg_LG));
 		*L = (lua_State*) &(clg->l);
 		clg->g.ud = &lcd;
+		clg->g.panic = panic;
+		clg->g.frealloc = frealloc;
+
+		luaAllocator.SetContext(&lcd);
 	}
 
 	SerializeInstance(s, clg);
