@@ -525,19 +525,20 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 
 		switch (c) {
 			// inlined colorcode
-			case ColorCodeIndicator:
+			case ColorCodeIndicator: {
 				if ((pos + 3) < text.length()) {
 					colorCodeStack.push_back(text.substr(pos, 4));
 					lines.back() += colorCodeStack.back();
 					pos += 3;
 				}
-				break;
+			} break;
 
 			// reset color
-			case ColorResetIndicator:
-				colorCodeStack.pop_back();
+			case ColorResetIndicator: {
+				if (!colorCodeStack.empty())
+					colorCodeStack.pop_back();
 				lines.back() += c;
-				break;
+			} break;
 
 			case 0x0d: {
 				// CR; fall-through
