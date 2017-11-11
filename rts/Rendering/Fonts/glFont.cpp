@@ -118,7 +118,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
 , fontPath(fontFile)
-, colorCallback(nullptr)
+, colorCallBack(nullptr)
 {
 	textColor    = white;
 	outlineColor = darkOutline;
@@ -202,7 +202,6 @@ float CglFont::GetCharacterWidth(const char32_t c) { return 1.0f; }
 float CglFont::GetTextWidth_(const std::u8string& text) { return (text.size() * 1.0f); }
 float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* numLines) { return 1.0f; }
 
-int CglFont::GetTextNumLines_(const std::u8string& text) { return 1; }
 std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text) { return {}; }
 
 #else
@@ -210,70 +209,68 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text) { ret
 /*******************************************************************************/
 /*******************************************************************************/
 
+// helper for GetText{Width,Height}
 template <typename T>
-static inline int SkipColorCodes(const std::u8string& text, T pos)
+static inline T SkipColorCodes(const std::u8string& text, T idx)
 {
-	while (text[pos] == CglFont::ColorCodeIndicator) {
-		if ((pos += 4) >= text.size())
-			return -1;
+	while (idx < text.size() && text[idx] == CglFont::ColorCodeIndicator) {
+		idx += 4;
 	}
 
-	return pos;
+	return (std::min(T(text.size()), idx));
 }
 
-
+// helper for RenderString*
 template <typename T>
 static inline bool SkipColorCodesAndNewLines(
 	const std::u8string& text,
-	T* currentPos,
-	T* skippedLines,
+	const CglFont::ColorCodeCallBack& cccb,
+	T* curIndex,
+	T* numLines,
 	float4* color,
-	float4* colorReset,
-	bool* colorChanged
+	float4* colorReset
 ) {
-	const size_t length = text.length();
+	T idx = *curIndex;
+	T nls = 0;
 
-	*colorChanged = false;
-	*skippedLines = 0;
+	for (T end = T(text.length()); idx < end; ) {
+		switch (text[idx]) {
+			case CglFont::ColorCodeIndicator: {
+				if ((idx += 4) < end)
+					cccb(*color = {text[idx - 3] / 255.0f, text[idx - 2] / 255.0f, text[idx - 1] / 255.0f, 1.0f});
 
-	while (*currentPos < length) {
-		switch (text[*currentPos]) {
-			case CglFont::ColorCodeIndicator:
-				*currentPos += 4;
-
-				if ((*colorChanged = ((*currentPos) < length))) {
-					color->x = text[(*currentPos) - 3] / 255.0f;
-					color->y = text[(*currentPos) - 2] / 255.0f;
-					color->z = text[(*currentPos) - 1] / 255.0f;
-				}
-			break;
+			} break;
 
 			case CglFont::ColorResetIndicator: {
-				(*currentPos)++;
-				*color = *colorReset;
-				*colorChanged = true;
+				idx += 1;
+
+				cccb(*color = *colorReset);
 			} break;
 
 			case 0x0d: {
 				// CR; fall-through
-				*currentPos += (*currentPos < length && text[*currentPos] == 0x0a);
+				idx += (idx < end && text[idx] == 0x0a);
 			}
 			case 0x0a: {
 				// LF
-				(*skippedLines)++;
-				(*currentPos)++;
+				idx += 1;
+				nls += 1;
 			} break;
 
 			default: {
 				// skip any non-printable ASCII chars which can only occur with
 				// malformed color-codes (e.g. when the ColorCodeIndicator byte
 				// is missing)
-				// *currentPos += (text[*currentPos] >= 127 && text[*currentPos] <= 255);
+				// idx += (text[idx] >= 127 && text[idx] <= 255);
+				*curIndex = idx;
+				*numLines = nls;
 				return false;
 			} break;
 		}
 	}
 
+	*curIndex = idx;
+	*numLines = nls;
 	return true;
 }
 
@@ -286,40 +283,23 @@ static inline void TextStripCallback(void* data)
 	f->SetNextColor();
 }
 
-static inline void CallColorCallback(CglFont::ColorCallback colorCallback, float* v)
+static inline void CallColorCallBack(CglFont::ColorCallBack ccb, float* v)
 {
-	if (colorCallback == nullptr) {
+	if (ccb == nullptr) {
 		glColor4fv(v);
 	} else {
-		colorCallback(v);
+		ccb(v);
 	}
 }
 
 void CglFont::SetNextColor()
 {
-	CallColorCallback(colorCallback, *colorIterator++);
+	CallColorCallBack(colorCallBack, *colorIterator++);
 }
 
 
 /*******************************************************************************/
 /*******************************************************************************/
-
-std::string CglFont::StripColorCodes_(const std::u8string& text)
-{
-	const size_t len = text.size();
-
-	std::string nocolor;
-	nocolor.reserve(len);
-	for (int i = 0; i < len; i++) {
-		if (text[i] == ColorCodeIndicator) {
-			i += 3;
-		} else {
-			nocolor += text[i];
-		}
-	}
-	return nocolor;
-}
-
 
 float CglFont::GetCharacterWidth(const char32_t c)
 {
@@ -334,7 +314,7 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	if (text.empty())
 		return 0.0f;
 
-	float w = 0.0f;
+	float curw = 0.0f;
 	float maxw = 0.0f;
 
 	char32_t prvGlyphIdx = 0;
@@ -343,39 +323,36 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	const GlyphInfo* prvGlyphPtr = nullptr;
 	const GlyphInfo* curGlyphPtr = nullptr;
 
-	int pos = 0;
-
-	while (pos < text.length()) {
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
 		#if 0
 		// see SkipColorCodesAndNewLines
-		if (text[pos] >= 127 && text[pos] <= 255) {
-			pos++;
+		if (text[idx] >= 127 && text[idx] <= 255) {
+			idx++;
 			continue;
 		}
 		#endif
 
-		switch (curGlyphIdx = utf8::GetNextChar(text, pos)) {
-			// inlined colorcode
+		switch (curGlyphIdx = utf8::GetNextChar(text, idx)) {
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
 			case ColorCodeIndicator: {
-				if ((pos = SkipColorCodes(text, pos - 1)) < 0)
-					pos = text.length();
+				idx = SkipColorCodes(text, idx - 1);
 			} break;
 
-			// reset color
+			// reset color; no-op since GetNextChar increments idx
 			case ColorResetIndicator: {
 			} break;
 
 			case 0x0d: {
 				// CR; fall-through
-				pos += (pos < text.length() && text[pos] == 0x0a);
+				idx += (idx < end && text[idx] == 0x0a);
 			}
 			case 0x0a: {
 				// LF
 				if (prvGlyphPtr != nullptr)
-					w += GetGlyph(prvGlyphIdx).advance;
+					curw += GetGlyph(prvGlyphIdx).advance;
 
-				maxw = std::max(w, maxw);
-				w = 0.0f;
+				maxw = std::max(curw, maxw);
+				curw = 0.0f;
 
 				prvGlyphPtr = nullptr;
 			} break;
@@ -385,7 +362,7 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 				curGlyphPtr = &GetGlyph(curGlyphIdx);
 
 				if (prvGlyphPtr != nullptr)
-					w += GetKerning(GetGlyph(prvGlyphIdx), *curGlyphPtr);
+					curw += GetKerning(GetGlyph(prvGlyphIdx), *curGlyphPtr);
 
 				prvGlyphPtr = curGlyphPtr;
 				prvGlyphIdx = curGlyphIdx;
@@ -394,9 +371,9 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	}
 
 	if (prvGlyphPtr != nullptr)
-		w += GetGlyph(prvGlyphIdx).advance;
+		curw += GetGlyph(prvGlyphIdx).advance;
 
-	return (std::max(w, maxw));
+	return (std::max(curw, maxw));
 }
 
 
@@ -410,36 +387,33 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 
 	float h = 0.0f;
 	float d = GetLineHeight() + GetDescender();
+
 	unsigned int multiLine = 1;
 
-	int pos = 0;
-
-	while (pos < text.length()) {
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
 		#if 0
 		// see SkipColorCodesAndNewLines
-		if (text[pos] >= 127 && text[pos] <= 255) {
-			pos++;
+		if (text[idx] >= 127 && text[idx] <= 255) {
+			idx++;
 			continue;
 		}
 		#endif
 
-		const char32_t u = utf8::GetNextChar(text, pos);
+		const char32_t u = utf8::GetNextChar(text, idx);
 
 		switch (u) {
-			// inlined colorcode
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
 			case ColorCodeIndicator: {
-				if ((pos = SkipColorCodes(text, pos - 1)) < 0)
-					pos = text.length();
-
+				idx = SkipColorCodes(text, idx - 1);
 			} break;
 
-			// reset color
+			// reset color; no-op since GetNextChar increments idx
 			case ColorResetIndicator: {
 			} break;
 
 			case 0x0d: {
 				// CR; fall-through
-				pos += (pos < text.length() && text[pos] == 0x0a);
+				idx += (idx < end && text[idx] == 0x0a);
 			}
 			case 0x0a: {
 				// LF
@@ -466,48 +440,6 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 }
 
 
-int CglFont::GetTextNumLines_(const std::u8string& text)
-{
-	if (text.empty())
-		return 0;
-
-	int lines = 1;
-
-	for (int pos = 0; pos < text.length(); pos++) {
-		switch (text[pos]) {
-			// inlined colorcode
-			case ColorCodeIndicator: {
-				if ((pos = SkipColorCodes(text, pos)) < 0) {
-					pos = text.length();
-				} else {
-					pos--;
-				}
-			} break;
-
-			// reset color
-			case ColorResetIndicator: {
-			} break;
-
-			case 0x0d: {
-				// CR; fall-through
-				pos += (pos + 1 < text.length() && text[pos + 1] == 0x0a);
-			}
-			case 0x0a: {
-				// LF
-				lines++;
-			} break;
-
-			default: {
-				// see SkipColorCodesAndNewLines
-				// pos += (text[pos] >= 127 && text[pos] <= 255);
-			} break;
-		}
-	}
-
-	return lines;
-}
-
-
 
 
 std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
@@ -520,16 +452,19 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 
 	lines.push_back("");
 
-	for (int pos = 0; pos < text.length(); pos++) {
-		const char8_t& c = text[pos];
+	for (int idx = 0, end = text.length(); idx < end; idx++) {
+		const char8_t& c = text[idx];
 
 		switch (c) {
-			// inlined colorcode
+			// inlined colorcode; push to stack if [I,R,G,B] is followed by more text
 			case ColorCodeIndicator: {
-				if ((pos + 3) < text.length()) {
-					colorCodeStack.push_back(text.substr(pos, 4));
+				if ((idx + 4) < end) {
+					colorCodeStack.emplace_back(std::move(text.substr(idx, 4)));
 					lines.back() += colorCodeStack.back();
-					pos += 3;
+
+					// compensate for loop-incr
+					idx -= 1;
+					idx += 4;
 				}
 			} break;
 
@@ -541,8 +476,8 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 			} break;
 
 			case 0x0d: {
-				// CR; fall-through
-				pos += ((pos + 1) < text.length() && text[pos + 1] == 0x0a);
+				// CR; increment if next char is a LF and fall-through
+				idx += ((idx + 1) < end && text[idx + 1] == 0x0a);
 			}
 			case 0x0a: {
 				lines.push_back("");
@@ -872,7 +807,7 @@ void CglFont::End()
 			colorIterator = stripOutlineColors.begin();
 			va2.DrawArray2dT(GL_QUADS, TextStripCallback, this);
 		} else {
-			CallColorCallback(colorCallback, outlineColor);
+			CallColorCallBack(colorCallBack, outlineColor);
 			va2.DrawArray2dT(GL_QUADS);
 		}
 	}
@@ -884,7 +819,7 @@ void CglFont::End()
 		} else {
 			// single color over entire text
 			if (setColor)
-				CallColorCallback(colorCallback, textColor);
+				CallColorCallBack(colorCallBack, textColor);
 			va.DrawArray2dT(GL_QUADS);
 		}
 	}
@@ -904,7 +839,7 @@ void CglFont::End()
 /*******************************************************************************/
 /*******************************************************************************/
 
-void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const std::string& str)
+void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
 	/**
 	 * NOTE:
@@ -930,9 +865,8 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	// const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
-	int i = 0;
+	int currentPos = 0;
 	int skippedLines = 0;
-	bool colorChanged = false;
 
 	// NOTE:
 	//   we need to keep track of the current and previous *characters*
@@ -947,17 +881,8 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 	constexpr float texScaleY = 1.0f;
 
 	// check for end-of-string
-	while (!SkipColorCodesAndNewLines(ustr, &i, &skippedLines, &newColor, &baseTextColor, &colorChanged)) {
-		curGlyphIdx = utf8::GetNextChar(str, i);
-
-		if (colorChanged) {
-			if (autoOutlineColor) {
-				SetColors(&newColor, nullptr);
-			} else {
-				SetTextColor(&newColor);
-			}
-		}
-
+	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
+		curGlyphIdx = utf8::GetNextChar(str, currentPos);
 
 		const GlyphInfo* curGlyphPtr = &GetGlyph(curGlyphIdx);
 		const GlyphInfo* prvGlyphPtr = nullptr;
@@ -1002,10 +927,10 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 }
 
 
-void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str)
+void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
 	#if 0
-	RenderString(x, y, scaleX, scaleY, str);
+	RenderString(x, y, scaleX, scaleY, str, cccb);
 	return;
 	#endif
 
@@ -1027,9 +952,8 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
-	int i = 0;
+	int currentPos = 0;
 	int skippedLines = 0;
-	bool colorChanged = false;
 
 	char32_t curGlyphIdx = 0;
 	char32_t prvGlyphIdx = 0;
@@ -1040,17 +964,8 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	constexpr float texScaleY = 1.0f;
 
 	// check for end-of-string
-	while (!SkipColorCodesAndNewLines(ustr, &i, &skippedLines, &newColor, &baseTextColor, &colorChanged)) {
-		curGlyphIdx = utf8::GetNextChar(str, i);
-
-		if (colorChanged) {
-			if (autoOutlineColor) {
-				SetColors(&newColor, nullptr);
-			} else {
-				SetTextColor(&newColor);
-			}
-		}
-
+	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
+		curGlyphIdx = utf8::GetNextChar(str, currentPos);
 
 		const GlyphInfo* curGlyphPtr = &GetGlyph(curGlyphIdx);
 		const GlyphInfo* prvGlyphPtr = nullptr;
@@ -1113,10 +1028,10 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	}
 }
 
-void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY, const std::string& str)
+void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
 	#if 0
-	RenderString(x, y, scaleX, scaleY, str);
+	RenderString(x, y, scaleX, scaleY, str, cccb);
 	return;
 	#endif
 
@@ -1136,9 +1051,8 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
-	int i = 0;
+	int currentPos = 0;
 	int skippedLines = 0;
-	bool colorChanged = false;
 
 	char32_t curGlyphIdx = 0;
 	char32_t prvGlyphIdx = 0;
@@ -1149,17 +1063,8 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 	constexpr float texScaleY = 1.0f;
 
 	// check for end-of-string
-	while (!SkipColorCodesAndNewLines(ustr, &i, &skippedLines, &newColor, &baseTextColor, &colorChanged)) {
-		curGlyphIdx = utf8::GetNextChar(str, i);
-
-		if (colorChanged) {
-			if (autoOutlineColor) {
-				SetColors(&newColor, nullptr);
-			} else {
-				SetTextColor(&newColor);
-			}
-		}
-
+	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
+		curGlyphIdx = utf8::GetNextChar(str, currentPos);
 
 		const GlyphInfo* curGlyphPtr = &GetGlyph(curGlyphIdx);
 		const GlyphInfo* prvGlyphPtr = nullptr;
@@ -1348,6 +1253,14 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	baseTextColor = textColor;
 	baseOutlineColor = outlineColor;
 
+	const ColorCodeCallBack cccb = [&](float4 newColor) {
+		if (autoOutlineColor) {
+			SetColors(&newColor, nullptr);
+		} else {
+			SetTextColor(&newColor);
+		}
+	};
+
 	const bool buffered = ((options & FONT_BUFFERED) != 0);
 	// immediate mode?
 	const bool immediate = (!inBeginEnd && !inBeginEndGL4 && !buffered);
@@ -1373,11 +1286,11 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 	// select correct decoration RenderString function
 	if (options & FONT_OUTLINE) {
-		RenderStringOutlined(x, y, sizeX, sizeY, text);
+		RenderStringOutlined(x, y, sizeX, sizeY, text, cccb);
 	} else if (options & FONT_SHADOW) {
-		RenderStringShadow(x, y, sizeX, sizeY, text);
+		RenderStringShadow(x, y, sizeX, sizeY, text, cccb);
 	} else {
-		RenderString(x, y, sizeX, sizeY, text);
+		RenderString(x, y, sizeX, sizeY, text, cccb);
 	}
 
 	if (immediate) {

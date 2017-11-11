@@ -96,7 +96,7 @@ public:
 	void glPrintTable(float x, float y, float s, const int options, const std::string& str);
 	void glFormat(float x, float y, float s, const int options, const char* fmt, ...);
 
-	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
+	void SetAutoOutlineColor(bool enable); // auto-select outline color for in-text-colorcodes
 	void SetTextColor(const float4* color = nullptr);
 	void SetOutlineColor(const float4* color = nullptr);
 	void SetColors(const float4* textColor = nullptr, const float4* outlineColor = nullptr);
@@ -114,29 +114,30 @@ public:
 	inline float GetTextWidth(const std::string& text) _final;
 #undef _final
 	inline float GetTextHeight(const std::string& text, float* descender = nullptr, int* numLines = nullptr);
-	inline static int GetTextNumLines(const std::string& text);
-	inline static std::string StripColorCodes(const std::string& text);
+
 	static std::deque<std::string> SplitIntoLines(const std::u8string&);
 
 	const std::string& GetFilePath() const { return fontPath; }
 
-	static const char8_t ColorCodeIndicator  = 0xFF;
-	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
+	static constexpr char8_t ColorCodeIndicator  = 0xFF;
+	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
 	static bool threadSafety;
+
+	typedef void (*ColorCallBack)(const float*);
+	// typedef void (*ColorCodeCallBack)(float4);
+	typedef std::function<void(float4)> ColorCodeCallBack;
 
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
 	static const float4 GetTexScaleMatrix(float w, float h) { return {1.0f / w, 0.0f, 0.0f, 1.0f / h}; } // 2x2
 
-	void RenderString(float x, float y, float scaleX, float scaleY, const std::string& str);
-	void RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str);
-	void RenderStringOutlined(float x, float y, float scaleX, float scaleY, const std::string& str);
+	void RenderString(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb);
+	void RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb);
+	void RenderStringOutlined(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb);
 
 private:
 	float GetTextWidth_(const std::u8string& text);
 	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
-	static int GetTextNumLines_(const std::u8string& text);
-	static std::string StripColorCodes_(const std::u8string& text);
 
 private:
 	unsigned int GetBufferIdx(bool outline) const { return (currBufferIdxGL4 * 2 + outline); }
@@ -150,10 +151,6 @@ private:
 	};
 
 public:
-	typedef std::vector<float4> ColorMap;
-	typedef void (*ColorCallback)(const float*);
-
-	void SetColorCallback(ColorCallback cb) { colorCallback = cb; }
 	// called from drawArrays through a callback
 	void SetNextColor();
 
@@ -161,11 +158,11 @@ private:
 	std::string fontPath;
 
 
-	ColorMap stripTextColors;
-	ColorMap stripOutlineColors;
+	std::vector<float4> stripTextColors;
+	std::vector<float4> stripOutlineColors;
+	std::vector<float4>::iterator colorIterator;
 
-	ColorMap::iterator colorIterator;
-	ColorCallback colorCallback;
+	ColorCallBack colorCallBack;
 
 	// used by {Begin,End}
 	CVertexArray va;
@@ -195,13 +192,13 @@ private:
 	bool bufferedWriteGL4 = false;
 	bool pendingFinishGL4 = false;
 
-	bool autoOutlineColor = false; //! auto select outline color for in-text-colorcodes
-	bool setColor = true; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
+	bool autoOutlineColor = false; // auto-select outline color for in-text-colorcodes
+	bool setColor = true; // used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
 	float4 textColor;
 	float4 outlineColor;
 
-	//! \::ColorResetIndicator will reset to those (they are the colors set when glPrint was called)
+	// colors set when glPrint was called; ColorResetIndicator will reset to these
 	float4 baseTextColor;
 	float4 baseOutlineColor;
 
@@ -221,14 +218,6 @@ float CglFont::GetTextWidth(const std::string& text)
 float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines)
 {
 	return GetTextHeight_(toustring(text), descender, numLines);
-}
-int   CglFont::GetTextNumLines(const std::string& text)
-{
-	return GetTextNumLines_(toustring(text));
-}
-std::string CglFont::StripColorCodes(const std::string& text)
-{
-	return StripColorCodes_(toustring(text));
 }
 
 #endif /* _GLFONT_H */
