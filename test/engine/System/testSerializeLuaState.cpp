@@ -6,6 +6,9 @@
 #define BOOST_TEST_MODULE SerializeLuaState
 #include <boost/test/unit_test.hpp>
 
+
+static int context = 1;
+
 static int handlepanic(lua_State* L)
 {
 	throw "lua paniced";
@@ -28,7 +31,6 @@ static void* l_alloc (void* ud, void* ptr, size_t osize, size_t nsize) {
 struct LuaRoot {
 	CR_DECLARE_STRUCT(LuaRoot);
 	lua_State* L;
-	void* context;
 	void Serialize(creg::ISerializer* s);
 };
 
@@ -40,28 +42,36 @@ CR_REG_METADATA(LuaRoot, (
 
 
 void LuaRoot::Serialize(creg::ISerializer* s) {
-	creg::SerializeLuaState(s, &L, context, handlepanic, l_alloc);
+	creg::SerializeLuaState(s, &L, &context, handlepanic, l_alloc);
 }
 
 BOOST_AUTO_TEST_CASE( SerializeLuaState )
 {
-	int context = 0;
 	lua_State* L = lua_newstate(l_alloc, &context);
 	lua_atpanic(L, handlepanic);
 
-	std::stringstream os(std::ios::in | std::ios::out | std::ios::binary);
+	LuaRoot root = {L};
+	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
 
-	creg::COutputStreamSerializer ss;
 
-	LuaRoot root = {L, &context};
-	ss.SavePackage(&os, &root, root.GetClass());
+	creg::COutputStreamSerializer oser;
+
+	oser.SavePackage(&ss, &root, root.GetClass());
 
 	lua_close(L);
 
-	// L = lua_newstate(l_alloc, &context);
-	// lua_atpanic(L, handlepanic);
-	// creg::CInputStreamSerializer is;
-	// lua_close(L);
+
+
+	// creg::CInputStreamSerializer iser;
+
+	// void* loaded;
+	// creg::Class* loadedCls;
+	// iser.LoadPackage(&ss, loaded, loadedCls);
+
+	// LuaRoot* loadedRoot = (LuaRoot*) loaded;
+
+	// lua_close(loadedRoot->L);
+	// delete loadedRoot;
 
 	BOOST_CHECK_MESSAGE(true, "Failed lua serialization!");
 }
