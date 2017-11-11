@@ -1552,19 +1552,17 @@ static bool AddPlayerToRoster(lua_State* L, int playerID, bool onlyActivePlayers
 int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams()))
 		return 0;
-	}
+
 	const CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
 
-	lua_pushnumber(L, (float)team->color[0] / 255.0f);
-	lua_pushnumber(L, (float)team->color[1] / 255.0f);
-	lua_pushnumber(L, (float)team->color[2] / 255.0f);
-	lua_pushnumber(L, (float)team->color[3] / 255.0f);
-
+	lua_pushnumber(L, team->color[0] / 255.0f);
+	lua_pushnumber(L, team->color[1] / 255.0f);
+	lua_pushnumber(L, team->color[2] / 255.0f);
+	lua_pushnumber(L, team->color[3] / 255.0f);
 	return 4;
 }
 
@@ -1572,19 +1570,17 @@ int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams()))
 		return 0;
-	}
+
 	const CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
 
-	lua_pushnumber(L, (float)team->origColor[0] / 255.0f);
-	lua_pushnumber(L, (float)team->origColor[1] / 255.0f);
-	lua_pushnumber(L, (float)team->origColor[2] / 255.0f);
-	lua_pushnumber(L, (float)team->origColor[3] / 255.0f);
-
+	lua_pushnumber(L, team->origColor[0] / 255.0f);
+	lua_pushnumber(L, team->origColor[1] / 255.0f);
+	lua_pushnumber(L, team->origColor[2] / 255.0f);
+	lua_pushnumber(L, team->origColor[3] / 255.0f);
 	return 4;
 }
 
