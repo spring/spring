@@ -267,7 +267,7 @@ class LuaOpenGL {
 		static int FeaturePieceMultMatrix(lua_State* L);
 
 
-		static int DrawListAtUnit(lua_State* L);
+		static int DrawListAtUnit(lua_State* L) { return 0; }
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
 		static int DrawGroundQuad(lua_State* L);

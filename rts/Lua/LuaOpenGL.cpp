@@ -1438,49 +1438,6 @@ int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaOpenGL::DrawListAtUnit(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	// is visible to current read team, is not an icon
-	const CUnit* unit = ParseDrawUnit(L, __func__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	while (CUnit* trans = unit->GetTransporter()) {
-		unit = trans;
-	}
-
-	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 2);
-	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-	const unsigned int dlist = displayLists.GetDList(listIndex);
-
-	if (dlist == 0)
-		return 0;
-
-	const bool useMidPos = luaL_optboolean(L, 3, true);
-	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
-
-	const float3 scale(luaL_optnumber(L, 4, 1.0f),
-	                   luaL_optnumber(L, 5, 1.0f),
-	                   luaL_optnumber(L, 6, 1.0f));
-	const float degrees = luaL_optnumber(L, 7, 0.0f);
-	const float3 rot(luaL_optnumber(L,  8, 0.0f),
-	                 luaL_optnumber(L,  9, 1.0f),
-	                 luaL_optnumber(L, 10, 0.0f));
-
-	GL::PushMatrix();
-	GL::Translate(drawPos.x, drawPos.y, drawPos.z);
-	GL::Rotate(degrees, rot.x, rot.y, rot.z);
-	GL::Scale(scale.x, scale.y, scale.z);
-	glCallList(dlist);
-	GL::PopMatrix();
-
-	return 0;
-}
-
-
 int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
@@ -1488,7 +1445,7 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	// is visible to current read team, is not an icon
 	const CUnit* unit = ParseDrawUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	while (CUnit* trans = unit->GetTransporter()) {
