@@ -1275,21 +1275,22 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 		defaultCmdMemory = -1;
 	}
 
-	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-		const bool rightMouseButton = (button == SDL_BUTTON_RIGHT);
-		SetActiveCommand(iconCmd, rightMouseButton);
+	if (size_t(iconCmd) < commands.size()) {
+		SetActiveCommand(iconCmd, button == SDL_BUTTON_RIGHT);
 		return;
 	}
 
 	// not over a button, try to execute a command
-	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
+	// note: this executes GiveCommand for build-icon clicks if !preview
+	const Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
-	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
+	if (c.GetID() == CMD_FAILED) {
+		// failed indicates we should not finish the current command
 		Channels::UserInterface->PlaySample(failedSound, 5);
 		return;
 	}
 
-	// if cmd_stop is returned it indicates that no good command could be found
+	// stop indicates that no good command could be found
 	if (c.GetID() != CMD_STOP) {
 		GiveCommand(c);
 
@@ -1691,7 +1692,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 	// only process the build options while building
 	// (conserve the keybinding space where we can)
-	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
+	if ((size_t(inCommand) < commands.size()) &&
 			((commands[inCommand].type == CMDTYPE_ICON_BUILDING) ||
 			(commands[inCommand].id == CMD_UNLOAD_UNITS))) {
 		if (ProcessBuildActions(action)) {
@@ -2077,11 +2078,10 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 // mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
 std::string CGuiHandler::GetBuildTooltip() const
 {
-	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
-	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+	if ((size_t(inCommand) < commands.size()) && (commands[inCommand].type == CMDTYPE_ICON_BUILDING))
 		return commands[inCommand].tooltip;
-	}
-	return std::string("");
+
+	return "";
 }
 
 
@@ -2149,7 +2149,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
-	if ((size_t)tempInCommand >= commands.size()) {
+	if (size_t(tempInCommand) >= commands.size()) {
 		if (!preview)
 			inCommand = -1;
 
@@ -2216,8 +2216,10 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			}
 
 			if (!preview) {
-				for (const BuildInfo& bi: buildInfos) {
-					GiveCommand(bi.CreateCommand(CreateOptions(button)));
+				// only issue if more than one entry, i.e. user created some
+				// kind of line/area queue (caller handles the last command)
+				for (auto beg = buildInfos.cbegin(), end = --buildInfos.cend(); beg != end; ++beg) {
+					GiveCommand(beg->CreateCommand(CreateOptions(button)));
 				}
 			}
 
@@ -3192,8 +3194,9 @@ void CGuiHandler::DrawSelectionInfo()
 void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 {
 	// draw the value for CMDTYPE_NUMBER commands
-	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
+	if (size_t(inCommand) < commands.size()) {
 		const SCommandDescription& cd = commands[inCommand];
+
 		if (cd.type == CMDTYPE_NUMBER) {
 			const float value = GetNumberInput(cd);
 			glDisable(GL_TEXTURE_2D);
@@ -3479,7 +3482,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		int cmdIndex = -1;
 		int button = SDL_BUTTON_LEFT;
 
-		if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
+		if (size_t(inCommand) < commands.size()) {
 			cmdIndex = inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
@@ -3681,7 +3684,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	}
 
 	// draw buildings we are about to build
-	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) && (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+	if ((size_t(inCommand) < commands.size()) && (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{
 			// draw build distance for all immobile builders during build commands
 			for (const auto bi: unitHandler->GetBuilderCAIs()) {
@@ -3907,19 +3910,19 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 void CGuiHandler::DrawCentroidCursor()
 {
 	int cmd = -1;
-	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
+	if (size_t(inCommand) < commands.size()) {
 		cmd = commands[inCommand].id;
 	} else {
-		int defcmd;
-		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((activeReceiver == this) || (minimap->ProxyMode()))) {
+		size_t defcmd = 0;
+
+		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed && ((activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
-		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
+
+		if (defcmd < commands.size())
 			cmd = commands[defcmd].id;
-		}
 	}
 
 	if ((cmd == CMD_MOVE) || (cmd == CMD_GATHERWAIT)) {
