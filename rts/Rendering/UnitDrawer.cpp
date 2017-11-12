@@ -1487,24 +1487,24 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 		const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
 		for (unsigned int i = 0; i < buildableSquares.size(); i++) {
-			buffer->Append({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
-			buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
-			buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
-			buffer->Append({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
 		}
 
 		for (unsigned int i = 0; i < featureSquares.size(); i++) {
-			buffer->Append({featureSquares[i]                                      , featureSquareColors[0]});
-			buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
-			buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
-			buffer->Append({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
+			buffer->SafeAppend({featureSquares[i]                                      , featureSquareColors[0]});
+			buffer->SafeAppend({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
+			buffer->SafeAppend({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
+			buffer->SafeAppend({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
 		}
 
 		for (unsigned int i = 0; i < illegalSquares.size(); i++) {
-			buffer->Append({illegalSquares[i]                                      , illegalSquareColors[0]});
-			buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
-			buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
-			buffer->Append({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquares[i]                                      , illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
 		}
 
 		return canBuild;
@@ -1517,16 +1517,16 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 	constexpr unsigned char ec[4] = { 0, 128, 255, 255 }; // end color
 
 	// vertical lines
-	buffer->Append({float3(x1, h, z1), sc}); buffer->Append({float3(x1, 0.0f, z1), ec});
-	buffer->Append({float3(x1, h, z2), sc}); buffer->Append({float3(x1, 0.0f, z2), ec});
-	buffer->Append({float3(x2, h, z2), sc}); buffer->Append({float3(x2, 0.0f, z2), ec});
-	buffer->Append({float3(x2, h, z1), sc}); buffer->Append({float3(x2, 0.0f, z1), ec});
+	buffer->SafeAppend({float3(x1, h, z1), sc}); buffer->SafeAppend({float3(x1, 0.0f, z1), ec});
+	buffer->SafeAppend({float3(x1, h, z2), sc}); buffer->SafeAppend({float3(x1, 0.0f, z2), ec});
+	buffer->SafeAppend({float3(x2, h, z2), sc}); buffer->SafeAppend({float3(x2, 0.0f, z2), ec});
+	buffer->SafeAppend({float3(x2, h, z1), sc}); buffer->SafeAppend({float3(x2, 0.0f, z1), ec});
 
 	// horizontal line-loop
-	buffer->Append({float3(x1, 0.0f, z1), ec}); buffer->Append({float3(x1, 0.0f, z2), ec});
-	buffer->Append({float3(x1, 0.0f, z2), ec}); buffer->Append({float3(x2, 0.0f, z2), ec});
-	buffer->Append({float3(x2, 0.0f, z2), ec}); buffer->Append({float3(x2, 0.0f, z1), ec});
-	buffer->Append({float3(x2, 0.0f, z1), ec}); buffer->Append({float3(x1, 0.0f, z1), ec});
+	buffer->SafeAppend({float3(x1, 0.0f, z1), ec}); buffer->SafeAppend({float3(x1, 0.0f, z2), ec});
+	buffer->SafeAppend({float3(x1, 0.0f, z2), ec}); buffer->SafeAppend({float3(x2, 0.0f, z2), ec});
+	buffer->SafeAppend({float3(x2, 0.0f, z2), ec}); buffer->SafeAppend({float3(x2, 0.0f, z1), ec});
+	buffer->SafeAppend({float3(x2, 0.0f, z1), ec}); buffer->SafeAppend({float3(x1, 0.0f, z1), ec});
 	return false;
 }
 

@@ -98,7 +98,7 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 
 		// TODO: batch lines of equal type
 		if (size > 0) {
-			buffer->Append(regularLines[i].verts.data(), size);
+			buffer->SafeAppend(regularLines[i].verts.data(), size);
 			buffer->Submit(regularLines[i].glType);
 		}
 	}
@@ -110,7 +110,7 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 			const size_t size = stippleLines[i].verts.size();
 
 			if (size > 0) {
-				buffer->Append(stippleLines[i].verts.data(), size);
+				buffer->SafeAppend(stippleLines[i].verts.data(), size);
 				buffer->Submit(stippleLines[i].glType);
 			}
 		}
