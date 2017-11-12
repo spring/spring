@@ -16,7 +16,8 @@
 template<size_t S> struct DynMemPool {
 public:
 
-	void* allocMem() {
+	void* allocMem(size_t size) {
+		assert(size <= page_size());
 		uint8_t* m = nullptr;
 
 		size_t i = 0;
@@ -40,7 +41,7 @@ public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
 
-		void* p = allocMem();
+		void* p = allocMem(sizeof(T));
 
 		return new (p) T(std::forward<A>(a)...);
 	}
@@ -108,7 +109,8 @@ template<size_t N, size_t S> struct StaticMemPool {
 public:
 	StaticMemPool() { clear(); }
 
-	void* allocMem() {
+	void* allocMem(size_t size) {
+		assert(size <= page_size());
 		static_assert(num_pages() != 0, "");
 
 		size_t i = 0;
@@ -127,7 +129,7 @@ public:
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
-		return new (allocMem()) T(std::forward<A>(a)...);
+		return new (allocMem(sizeof(T))) T(std::forward<A>(a)...);
 	}
 
 	void freeMem(void* m) {

@@ -53,7 +53,7 @@ static std::vector<Class*>& classes()
 
 Class::Class(const char* className, ClassFlags cf,
 		Class* baseCls, void (*memberRegistrator)(creg::Class*), int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
-		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst), void* (*allocProc)(), void (*freeProc)(void* instance))
+		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst), void* (*allocProc)(size_t size), void (*freeProc)(void* instance))
 	: baseClass(baseCls)
 	, flags(cf)
 	, hasVTable(hasVTable)
@@ -67,6 +67,7 @@ Class::Class(const char* className, ClassFlags cf,
 	, poolFree(freeProc)
 	, serializeProc(nullptr)
 	, postLoadProc(nullptr)
+	, getSizeProc(nullptr)
 {
 	System::AddClass(this);
 
@@ -181,11 +182,11 @@ void Class::SetMemberFlag(const char* name, ClassMemberFlag f)
 	}
 }
 
-void* Class::CreateInstance()
+void* Class::CreateInstance(size_t size)
 {
 	void* inst;
 	if (poolAlloc != nullptr) {
-		inst = poolAlloc();
+		inst = poolAlloc(size);
 	} else {
 		inst = ::operator new(size);
 	}
