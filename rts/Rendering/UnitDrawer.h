@@ -129,14 +129,12 @@ public:
 	void SetupAlphaDrawing(bool deferredPass);
 	void ResetAlphaDrawing(bool deferredPass);
 
-	void SetupShowUnitBuildSquares(bool onMiniMap);
-	void ResetShowUnitBuildSquares(bool onMiniMap);
+	void SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild);
+	void ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild);
+	bool ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
-
-	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
-	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
 	void DrawUnitMiniMapIcons() const;
 

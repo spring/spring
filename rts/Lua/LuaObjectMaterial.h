@@ -70,20 +70,12 @@ class LuaMatRef {
 
 class LuaObjectLODMaterial {
 	public:
-		LuaObjectLODMaterial()
-		: preDisplayList(0),
-		  postDisplayList(0)
-		{}
-
 		inline bool IsActive() const { return matref.IsActive(); }
 
 		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
 		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
 
 	public:
-		GLuint preDisplayList;
-		GLuint postDisplayList;
-
 		LuaMatRef matref;
 };
 

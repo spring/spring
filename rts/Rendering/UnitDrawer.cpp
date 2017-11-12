@@ -1409,8 +1409,11 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 
 
-void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap)
+void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 {
+	if (!testCanBuild)
+		return;
+
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1425,38 +1428,32 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap)
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 }
 
-void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap)
+void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 {
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
+	if (testCanBuild) {
+		buffer->Submit(GL_QUADS);
+		return;
+	}
+
+	buffer->Submit(GL_LINES);
 	shader->Disable();
 
 
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	// glDisable(GL_BLEND);
-
 }
 
 
-// visualize if a unit can be built at specified position
+// visualize if a unit can be built at specified position by
+// testing every square within a unit's build-grid footprint
 // TODO: make this a lua callin!
-bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
+bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild)
 {
-	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
-}
-
-bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
-{
-	buildableSquares.clear();
-	buildableSquares.reserve(32);
-	featureSquares.clear(); // occupied by features
-	featureSquares.reserve(32);
-	illegalSquares.clear(); // otherwise non-buildable
-	illegalSquares.reserve(32);
-
-	CFeature* feature = nullptr;
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	const int x1 = buildInfo.pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
 	const int z1 = buildInfo.pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
@@ -1464,66 +1461,73 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	const int z2 =              z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
 	const float h = CGameHelper::GetBuildHeight(buildInfo.pos, buildInfo.def, false);
 
-	const bool canBuild = !!CGameHelper::TestUnitBuildSquare(
-		buildInfo,
-		feature,
-		-1,
-		false,
-		&buildableSquares,
-		&featureSquares,
-		&illegalSquares,
-		&commands
-	);
+	if (testCanBuild) {
+		buildableSquares.clear();
+		buildableSquares.reserve(32);
+		featureSquares.clear(); // occupied by features
+		featureSquares.reserve(32);
+		illegalSquares.clear(); // otherwise non-buildable
+		illegalSquares.reserve(32);
 
-	const SColor buildableSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}, {0.0f, 0.9f, 0.0f, 0.7f}};
-	const SColor   featureSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}};
-	const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
+		CFeature* feature = nullptr;
 
+		const bool canBuild = !!CGameHelper::TestUnitBuildSquare(
+			buildInfo,
+			feature,
+			-1,
+			false,
+			&buildableSquares,
+			&featureSquares,
+			&illegalSquares,
+			&commands
+		);
 
-	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+		const SColor buildableSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}, {0.0f, 0.9f, 0.0f, 0.7f}};
+		const SColor   featureSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}};
+		const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
-	for (unsigned int i = 0; i < buildableSquares.size(); i++) {
-		buffer->Append({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
-		buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
-		buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
-		buffer->Append({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+		for (unsigned int i = 0; i < buildableSquares.size(); i++) {
+			buffer->Append({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
+			buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
+			buffer->Append({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			buffer->Append({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+		}
+
+		for (unsigned int i = 0; i < featureSquares.size(); i++) {
+			buffer->Append({featureSquares[i]                                      , featureSquareColors[0]});
+			buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
+			buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
+			buffer->Append({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
+		}
+
+		for (unsigned int i = 0; i < illegalSquares.size(); i++) {
+			buffer->Append({illegalSquares[i]                                      , illegalSquareColors[0]});
+			buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
+			buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			buffer->Append({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
+		}
+
+		return canBuild;
 	}
 
-	for (unsigned int i = 0; i < featureSquares.size(); i++) {
-		buffer->Append({featureSquares[i]                                      , featureSquareColors[0]});
-		buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
-		buffer->Append({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
-		buffer->Append({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
-	}
+	if (h >= 0.0f)
+		return false;
 
-	for (unsigned int i = 0; i < illegalSquares.size(); i++) {
-		buffer->Append({illegalSquares[i]                                      , illegalSquareColors[0]});
-		buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
-		buffer->Append({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
-		buffer->Append({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
-	}
+	constexpr unsigned char sc[4] = { 0,   0, 255, 128 }; // start color
+	constexpr unsigned char ec[4] = { 0, 128, 255, 255 }; // end color
 
-	buffer->Submit(GL_QUADS);
+	// vertical lines
+	buffer->Append({float3(x1, h, z1), sc}); buffer->Append({float3(x1, 0.0f, z1), ec});
+	buffer->Append({float3(x1, h, z2), sc}); buffer->Append({float3(x1, 0.0f, z2), ec});
+	buffer->Append({float3(x2, h, z2), sc}); buffer->Append({float3(x2, 0.0f, z2), ec});
+	buffer->Append({float3(x2, h, z1), sc}); buffer->Append({float3(x2, 0.0f, z1), ec});
 
-
-	if (h < 0.0f) {
-		constexpr unsigned char sc[4] = { 0,   0, 255, 128 }; // start color
-		constexpr unsigned char ec[4] = { 0, 128, 255, 255 }; // end color
-
-		buffer->Append({float3(x1, h, z1), sc}); buffer->Append({float3(x1, 0.f, z1), ec});
-		buffer->Append({float3(x1, h, z2), sc}); buffer->Append({float3(x1, 0.f, z2), ec});
-		buffer->Append({float3(x2, h, z2), sc}); buffer->Append({float3(x2, 0.f, z2), ec});
-		buffer->Append({float3(x2, h, z1), sc}); buffer->Append({float3(x2, 0.f, z1), ec});
-		buffer->Submit(GL_LINES);
-
-		buffer->Append({float3(x1, 0.0f, z1), ec});
-		buffer->Append({float3(x1, 0.0f, z2), ec});
-		buffer->Append({float3(x2, 0.0f, z2), ec});
-		buffer->Append({float3(x2, 0.0f, z1), ec});
-		buffer->Submit(GL_LINE_LOOP);
-	}
-
-	return canBuild;
+	// horizontal line-loop
+	buffer->Append({float3(x1, 0.0f, z1), ec}); buffer->Append({float3(x1, 0.0f, z2), ec});
+	buffer->Append({float3(x1, 0.0f, z2), ec}); buffer->Append({float3(x2, 0.0f, z2), ec});
+	buffer->Append({float3(x2, 0.0f, z2), ec}); buffer->Append({float3(x2, 0.0f, z1), ec});
+	buffer->Append({float3(x2, 0.0f, z1), ec}); buffer->Append({float3(x1, 0.0f, z1), ec});
+	return false;
 }
 
 

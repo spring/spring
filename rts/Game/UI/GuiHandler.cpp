@@ -3767,8 +3767,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 				if (!onMiniMap) {
 					// TODO: grab the minimap transform
-					unitDrawer->SetupShowUnitBuildSquares(onMiniMap);
+					unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
 
+					// first pass; grid squares
 					for (const BuildInfo& bi: buildInfos) {
 						buildCommands.clear();
 
@@ -3785,14 +3786,22 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							}
 						}
 
-						if (unitDrawer->ShowUnitBuildSquare(bi, buildCommands)) {
-							buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // green
+						if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
+							buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
 						} else {
 							buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
 						}
 					}
 
-					unitDrawer->ResetShowUnitBuildSquares(onMiniMap);
+					unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
+					unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
+
+					// second pass; water-depth indicator lines
+					for (const BuildInfo& bi: buildInfos) {
+						unitDrawer->ShowUnitBuildSquares(bi, {}, false);
+					}
+
+					unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
 				}
 
 				if (!onMiniMap) {
