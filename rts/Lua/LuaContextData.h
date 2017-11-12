@@ -10,6 +10,8 @@
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
+
+#include "Rendering/GL/MatrixStateTracker.h"
 #endif
 
 #include "System/EventClient.h"
@@ -67,7 +69,6 @@ public:
 		textures.Clear();
 		fbos.Clear();
 		rbos.Clear();
-		displayLists.Clear();
 		#endif
 	}
 
