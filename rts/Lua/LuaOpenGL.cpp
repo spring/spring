@@ -17,7 +17,6 @@
 
 #include "LuaInclude.h"
 #include "LuaContextData.h"
-#include "LuaDisplayLists.h"
 #include "LuaFBOs.h"
 #include "LuaFonts.h"
 #include "LuaHandle.h"
@@ -1452,8 +1451,7 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 		unit = trans;
 	}
 
-	const bool useMidPos = luaL_checkboolean(L, 2);
-	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
+	const float3 drawPos = (luaL_checkboolean(L, 2))? unit->drawMidPos: unit->drawPos;
 
 	if (!lua_isfunction(L, 3)) {
 		luaL_error(L, "Missing function parameter in DrawFuncAtUnit()\n");

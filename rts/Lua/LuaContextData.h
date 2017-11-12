@@ -10,7 +10,6 @@
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
-#include "LuaDisplayLists.h"
 #endif
 
 #include "System/EventClient.h"
@@ -107,7 +106,6 @@ public:
 	LuaTextures textures;
 	LuaFBOs fbos;
 	LuaRBOs rbos;
-	CLuaDisplayLists displayLists;
 
 	GLMatrixStateTracker glMatrixTracker;
 #endif

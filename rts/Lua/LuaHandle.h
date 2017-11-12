@@ -41,7 +41,6 @@ class LuaRBOs;
 class LuaFBOs;
 class LuaTextures;
 class LuaShaders;
-class CLuaDisplayLists;
 class CLuaRules;
 
 
@@ -98,7 +97,6 @@ class CLuaHandle : public CEventClient
 		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
 		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
 		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
-		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
 #endif
 
 	public: // call-ins
@@ -330,7 +328,6 @@ class CLuaHandle : public CEventClient
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
 		static inline LuaRBOs& GetActiveRBOs(lua_State* L) { return GetLuaContextData(L)->rbos; }
-		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
 #endif
 
 		static void SetDevMode(bool value) { devMode = value; }
