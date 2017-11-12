@@ -926,7 +926,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 		waitCommandsAI.ClearUnitQueue(owner, commandQue);
 		ClearTargetLock((commandQue.empty())? Command(CMD_STOP): commandQue.front());
 		ClearCommandDependencies();
-		SetOrderTarget(NULL);
+		SetOrderTarget(nullptr);
 
 		// if c is an attack command, the actual order-target
 		// gets set via ExecuteAttack (called from SlowUpdate
@@ -979,9 +979,8 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	}
 
 	// do not allow overlapping commands
-	if (!GetOverlapQueued(c).empty()) {
+	if (!GetOverlapQueued(c).empty())
 		return;
-	}
 
 	if (c.GetID() == CMD_ATTACK) {
 		// avoid weaponless units moving to 0 distance when given attack order
@@ -1044,9 +1043,8 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 
 void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 {
-	if (c.params.size() < 3) {
+	if (c.params.size() < 3)
 		return;
-	}
 
 	// make the command
 	Command newCmd((int)c.params[1], (unsigned char)c.params[2]);
@@ -1055,15 +1053,14 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	}
 
 	// validate the command
-	if (!AllowedCommand(newCmd, fromSynced)) {
+	if (!AllowedCommand(newCmd, fromSynced))
 		return;
-	}
 
 	CCommandQueue* queue = &commandQue;
 
 	bool facBuildQueue = false;
 	CFactoryCAI* facCAI = dynamic_cast<CFactoryCAI*>(this);
-	if (facCAI) {
+	if (facCAI != nullptr) {
 		if (c.options & CONTROL_KEY) {
 			// check the build order
 			const auto& bOpts = facCAI->buildOptions;
@@ -1083,34 +1080,31 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (c.options & ALT_KEY) {
 		// treat param0 as a position
 		int pos = (int)c.params[0];
-		const unsigned int qsize = queue->size();
-		if (pos < 0) {
-			pos = qsize + pos + 1; // convert the negative index
-			if (pos < 0) {
-				pos = 0;
-			}
-		}
-		if (pos > qsize) {
-			pos = qsize;
-		}
+		const int qsize = queue->size();
+
+		// convert negative indices, leave positive values untouched
+		pos = std::max(0, pos + (qsize + 1) * (pos < 0));
+		pos = std::min(pos, qsize);
+
 		std::advance(insertIt, pos);
-	}
-	else {
+	} else {
 		// treat param0 as a command tag
 		const unsigned int tag = (unsigned int)c.params[0];
-		CCommandQueue::iterator ci;
+
 		bool found = false;
-		for (ci = queue->begin(); ci != queue->end(); ++ci) {
+
+		for (auto ci = queue->begin(); ci != queue->end(); ++ci) {
 			const Command& qc = *ci;
-			if (qc.tag == tag) {
+
+			if ((found = (qc.tag == tag))) {
 				insertIt = ci;
-				found = true;
 				break;
 			}
 		}
-		if (!found) {
+
+		if (!found)
 			return;
-		}
+
 		if ((c.options & RIGHT_MOUSE_KEY) && (insertIt != queue->end())) {
 			++insertIt; // insert after the tagged command
 		}
@@ -1118,9 +1112,10 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 
 	if (facBuildQueue) {
 		facCAI->InsertBuildCommand(insertIt, newCmd);
-		if (!owner->IsStunned()) {
+
+		if (!owner->IsStunned())
 			SlowUpdate();
-		}
+
 		return;
 	}
 
@@ -1138,9 +1133,10 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 
 	queue->insert(insertIt, newCmd);
 
-	if (!owner->IsStunned()) {
-		SlowUpdate();
-	}
+	if (owner->IsStunned())
+		return;
+
+	SlowUpdate();
 }
 
 
@@ -1291,16 +1287,17 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 }
 
 
-int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q, bool& first)
+int CCommandAI::CancelCommands(const Command& c, CCommandQueue& q, bool& first)
 {
 	first = false;
 	int cancelCount = 0;
 
 	while (true) {
 		CCommandQueue::iterator ci = GetCancelQueued(c, q);
-		if (ci == q.end()) {
+
+		if (ci == q.end())
 			return cancelCount;
-		}
+
 		first = first || (ci == q.begin());
 		cancelCount++;
 
@@ -1324,9 +1321,8 @@ int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q, bool& first)
 		++lastErase; // STL: erase the range [first, last)
 		q.erase(firstErase, lastErase);
 
-		if (c.GetID() >= 0) {
+		if (c.GetID() >= 0)
 			return cancelCount; // only delete one non-build order
-		}
 	}
 
 	return cancelCount;
