@@ -74,26 +74,6 @@ CLoadScreen::~CLoadScreen()
 
 	if (activeController == this)
 		activeController = nullptr;
-
-	if (!gu->globalQuit) {
-		// send our playername to the server to indicate we finished loading
-		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
-
-		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
-#ifdef SYNCCHECK
-		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
-#endif
-		mouse->ShowMouse();
-
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-		// sound is initialized at this point,
-		// but EFX support is *not* guaranteed
-		if (efx != nullptr) {
-			efx->sfxProperties = *(mapInfo->efxprops);
-			efx->CommitEffects();
-		}
-#endif
-	}
 }
 
 
@@ -178,15 +158,48 @@ void CLoadScreen::Kill()
 
 /******************************************************************************/
 
-void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+static void FinishedLoading()
+{
+	if (gu->globalQuit)
+		return;
+
+	// send our playername to the server to indicate we finished loading
+	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+
+	clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+	#ifdef SYNCCHECK
+	clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+	#endif
+	mouse->ShowMouse();
+
+	#if !defined(HEADLESS) && !defined(NO_SOUND)
+	// sound is initialized at this point,
+	// but EFX support is *not* guaranteed
+	if (efx != nullptr) {
+		efx->sfxProperties = *(mapInfo->efxprops);
+		efx->CommitEffects();
+	}
+	#endif
+}
+
+
+void CLoadScreen::CreateDeleteInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+{
+	if (CreateInstance(mapName, modName, saveFile))
+		return;
+
+	// not mtLoading, LoadGame has completed and we can go
+	DeleteInstance();
+	FinishedLoading();
+}
+
+bool CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
 	assert(singleton == nullptr);
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 
-	if (singleton->Init())
-		return;
-
-	DeleteInstance();
+	// returns true when mtLoading, false otherwise
+	return (singleton->Init());
 }
 
 void CLoadScreen::DeleteInstance()
@@ -236,6 +249,7 @@ bool CLoadScreen::Update()
 
 	if (game->IsFinishedLoading()) {
 		CLoadScreen::DeleteInstance();
+		FinishedLoading();
 		return true;
 	}
 
