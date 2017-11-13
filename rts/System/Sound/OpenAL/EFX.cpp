@@ -243,10 +243,12 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 }
 
 
-void CEFX::CommitEffects()
+void CEFX::CommitEffects(const EAXSfxProps* sfxProps)
 {
 	if (!supported)
 		return;
+	if (sfxProps != nullptr)
+		sfxProperties = *sfxProps;
 
 	//! commit reverb properties
 	for (auto it = sfxProperties.reverb_props_f.begin(); it != sfxProperties.reverb_props_f.end(); ++it) alEffectf (sfxReverb, it->first, it->second);
