@@ -118,6 +118,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		tp->Enable();
 		tp->SetUniform3fv(3, &sunLighting->groundAmbientColor.x);
 		tp->SetUniform3fv(4, &sunLighting->groundDiffuseColor.x);
+		tp->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
 		tp->SetUniform3fv(6, &ZeroVector.x);
 		tp->SetUniform4fv(7, &sky->fogColor.x);
 		tp->SetUniform1i(8, 1);
@@ -276,15 +277,16 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 	}
 
 
-	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3& cameraDirX = cam->GetRight();
+	const float3& cameraDirY = cam->GetUp();
+	const float3   fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 
 	const CMatrix44f& treeMat = CMatrix44f::Identity();
 	const CMatrix44f& viewMat = camera->GetViewMatrix();
 	const CMatrix44f& projMat = camera->GetProjectionMatrix();
 
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(0, &cam->GetRight()[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(1, &cam->GetUp()[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(0, &cameraDirX.x);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(1, &cameraDirY.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(6, &fogParams.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(13, false, &treeMat.m[0]);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(14, false, &viewMat.m[0]);
