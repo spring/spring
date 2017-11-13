@@ -50,8 +50,8 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(modName),
 	CR_IGNORED(gameID),
 
-	// all other members can be reconstructed from this
-	CR_MEMBER(setupText),
+	// this is stored separately from creg
+	CR_IGNORED(setupText),
 
 	CR_IGNORED(recordDemo),
 	CR_IGNORED(demoName),
@@ -71,9 +71,7 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(restrictedUnits),
 
 	CR_IGNORED(mapOptions),
-	CR_IGNORED(modOptions),
-
-	CR_POSTLOAD(PostLoad)
+	CR_IGNORED(modOptions)
 ))
 
 CGameSetup* gameSetup = nullptr;
@@ -226,10 +224,6 @@ void CGameSetup::ResetState()
 	spring::clear_unordered_map(modOptions);
 }
 
-void CGameSetup::PostLoad()
-{
-	Init(setupText);
-}
 
 void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 {

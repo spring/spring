@@ -34,7 +34,6 @@ public:
 	static const std::vector<AllyTeam>& GetAllyStartingData();
 
 	void ResetState();
-	void PostLoad();
 
 	bool Init(const std::string& script);
 
