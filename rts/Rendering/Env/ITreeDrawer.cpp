@@ -96,7 +96,7 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;
-	ts.pos = pos;
+	ts.mat = CMatrix44f(pos);
 
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 	const int treeSquareIdx =
@@ -222,7 +222,7 @@ void ITreeDrawer::DrawTree(const CFeature* f, bool setupState, bool resetState)
 	}
 
 	// TODO: check if in shadow-pass
-	atd->DrawTree(f->pos, fd->drawType, 2);
+	atd->DrawTree(f->pos, fd->drawType, 13);
 
 	if (resetState) {
 		atd->ResetDrawState();

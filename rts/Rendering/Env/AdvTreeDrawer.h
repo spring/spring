@@ -31,8 +31,8 @@ public:
 	void DrawPass() override;
 	void DrawShadowPass() override;
 
-	void DrawTree(const TreeStruct& ts, int posOffsetIdx);
-	void DrawTree(const float3& pos, int treeType, int posOffsetIdx);
+	void DrawTree(const TreeStruct& ts, int treeMatIdx);
+	void DrawTree(const float3& pos, int treeType, int treeMatIdx);
 	void BindTreeGeometry(int treeType) const;
 	void DrawTreeGeometry(int treeType) const;
 
@@ -42,11 +42,11 @@ public:
 		int id;
 		int type;
 
-		float3 pos;
-		float3 dir;
+		CMatrix44f fallMat;
+		float3 fallDir;
 
-		float speed;
-		float fallPos;
+		float fallSpeed;
+		float fallAngle;
 	};
 
 private:

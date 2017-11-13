@@ -200,10 +200,10 @@ void CShadowHandler::LoadShadowGenShaders()
 				po->SetUniformLocation("shadowParams" ); // idx 0
 				po->SetUniformLocation("shadowViewMat"); // idx 1
 				po->SetUniformLocation("shadowProjMat"); // idx 2
-				po->SetUniformLocation("fallTreeMat"  ); // idx 3
+				po->SetUniformLocation("treeMat"      ); // idx 3
 				po->SetUniformLocation("cameraDirX"   ); // idx 4
 				po->SetUniformLocation("cameraDirY"   ); // idx 5
-				po->SetUniformLocation("treeOffset"   ); // idx 6
+				po->SetUniformLocation("$dummy$"      ); // idx 6, unused
 				po->SetUniformLocation("alphaMaskTex" ); // idx 7
 				po->SetUniformLocation("alphaParams"  ); // idx 8
 

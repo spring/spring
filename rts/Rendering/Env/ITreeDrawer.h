@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/EventClient.h"
 #include "System/float3.h"
+#include "System/Matrix44f.h"
 
 constexpr          int TREE_SQUARE_SIZE =   64;
 constexpr unsigned int   NUM_TREE_TYPES =    8; // number of variants per type (pine or bush)
@@ -68,7 +69,7 @@ public:
 		int id;
 		int type;
 
-		float3 pos;
+		CMatrix44f mat;
 	};
 
 	struct TreeSquareStruct {

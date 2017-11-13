@@ -72,7 +72,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 	const static char* uniformNames[] = {
 		"cameraDirX",          // VP, idx  0
 		"cameraDirY",          // VP, idx  1
-		"treeOffset",          // VP, idx  2
+		"$dummy$",             // VP, idx  2 (unused)
 		"groundAmbientColor",  // FP, idx  3
 		"groundDiffuseColor",  // FP, idx  4
 		"alphaModifiers",      // VP, idx  5
@@ -86,7 +86,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		"shadowParams",        // VP, idx 11 (unused when TREE_SHADOW=0)
 		"groundShadowDensity", // FP, idx 12 (unused when TREE_SHADOW=0)
 
-		"fallTreeMat",         // VP, idx 13
+		"treeMat",             // VP, idx 13
 		"viewMat",             // VP, idx 14
 		"projMat",             // VP, idx 15
 	};
@@ -139,15 +139,27 @@ void CAdvTreeDrawer::Update()
 		for (size_t n = 0; n < v.size(); /*no-op*/) {
 			FallingTree& ft = v[n];
 
-			ft.fallPos += (ft.speed * 0.1f);
-			ft.speed += (std::sin(ft.fallPos) * 0.04f);
+			// angle relative to positive y-axis, divided by PI
+			ft.fallAngle += (ft.fallSpeed * 0.1f);
+			ft.fallSpeed += (std::sin(ft.fallAngle) * 0.04f);
 
-			if (ft.fallPos > 1.0f) {
-				// remove the tree
+			if (ft.fallAngle > 1.0f) {
+				// remove the tree after it has fallen 180 degrees; removing
+				// after 90 degrees (angle > 0.5) would look silly for trees
+				// placed on inclines
 				v[n] = v.back();
 				v.pop_back();
 				continue;
 			}
+
+			const float ca = std::cos(ft.fallAngle * math::PI);
+			const float sa = std::sin(ft.fallAngle * math::PI);
+
+			const float3 yvec(ft.fallDir.x * sa, ca, ft.fallDir.z * sa);
+			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
+			const float3 xvec((yvec.cross(zvec)).ANormalize());
+
+			ft.fallMat = CMatrix44f(ft.fallMat.GetPos(), xvec, yvec, zvec);
 
 			n += 1;
 		}
@@ -188,7 +200,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 					if (rng.NextFloat() > drawProb)
 						continue;
 
-					atd->DrawTree(ts, 2);
+					atd->DrawTree(ts, 13);
 				}
 			}
 		}
@@ -202,7 +214,7 @@ private:
 
 
 
-void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int posOffsetIdx)
+void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int treeMatIdx)
 {
 	const CFeature* f = featureHandler->GetFeature(ts.id);
 
@@ -217,7 +229,7 @@ void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int posOffsetIdx)
 		return;
 	#endif
 
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(posOffsetIdx, &ts.pos.x);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(treeMatIdx, false, ts.mat);
 
 	// done by DrawQuad
 	// BindTreeGeometry(ts.type);
@@ -225,9 +237,9 @@ void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int posOffsetIdx)
 }
 
 // only called from ITreeDrawer; no in-view test
-void CAdvTreeDrawer::DrawTree(const float3& pos, int treeType, int posOffsetIdx)
+void CAdvTreeDrawer::DrawTree(const float3& pos, int treeType, int treeMatIdx)
 {
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(posOffsetIdx, &pos.x);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(treeMatIdx, false, CMatrix44f(pos));
 
 	BindTreeGeometry(treeType);
 	DrawTreeGeometry(treeType);
@@ -336,14 +348,17 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 	glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex()); // alpha-mask
 
 
+	const float3& cameraDirX = cam->GetRight();
+	const float3& cameraDirY = cam->GetUp();
+
 	const CMatrix44f& treeMat = CMatrix44f::Identity();
 	const CMatrix44f& viewMat = shadowHandler->GetShadowViewMatrix();
 	const CMatrix44f& projMat = shadowHandler->GetShadowProjMatrix();
 
 	treeShaders[TREE_PROGRAM_ACTIVE] = ipo;
 	treeShaders[TREE_PROGRAM_ACTIVE]->Enable();
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(4, &cam->GetRight()[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(5, &cam->GetUp()[0]);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(4, &cameraDirX.x);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(5, &cameraDirY.x);
 
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, &viewMat.m[0]);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, &projMat.m[0]);
@@ -388,32 +403,23 @@ void CAdvTreeDrawer::DrawPass()
 		CAdvTreeSquareDrawer drawer(this, cam);
 		readMap->GridVisibility(nullptr, &drawer, drawTreeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE * 2.0f, TREE_SQUARE_SIZE);
 
-		// reset the world-offset; not used by falling trees
-		ipo->SetUniform3fv(2, &ZeroVector.x);
-
 		// draw trees that have been marked as falling
 		for (int i = 0; i < 2; i++) {
 			BindTreeGeometry(i * NUM_TREE_TYPES);
 
 			for (const FallingTree& ft: fallingTrees[i]) {
 				// const CFeature* f = featureHandler->GetFeature(ft.id);
-				const float3 pos = ft.pos - UpVector * (ft.fallPos * 20);
+				const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
 
 				// featureID is invalid for falling trees
 				// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				//   continue;
-				if (!losHandler->InLos(pos, gu->myAllyTeam))
+				if (!losHandler->InLos(fpos, gu->myAllyTeam))
 					continue;
-				if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
+				if (!cam->InView(fpos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
 					continue;
 
-				const float ang = ft.fallPos * math::PI;
-
-				const float3 yvec(ft.dir.x * std::sin(ang), std::cos(ang), ft.dir.z * std::sin(ang));
-				const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
-				const float3 xvec(yvec.cross(zvec));
-
-				ipo->SetUniformMatrix4fv(13, false, CMatrix44f(pos, xvec, yvec, zvec));
+				ipo->SetUniformMatrix4fv(13, false, ft.fallMat);
 				DrawTreeGeometry(ft.type);
 			}
 		}
@@ -453,7 +459,7 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 					if (rng.NextFloat() > drawProb)
 						continue;
 
-					atd->DrawTree(ts, 6);
+					atd->DrawTree(ts, 3);
 				}
 			}
 		}
@@ -479,30 +485,22 @@ void CAdvTreeDrawer::DrawShadowPass()
 		CAdvTreeSquareShadowPassDrawer drawer(this, CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
 		readMap->GridVisibility(nullptr, &drawer, drawTreeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE * 2.0f, TREE_SQUARE_SIZE, 1);
 
-		ipo->SetUniform3fv(6, &ZeroVector.x);
-
 		for (int i = 0; i < 2; i++) {
 			BindTreeGeometry(i * NUM_TREE_TYPES);
 
 			for (const FallingTree& ft: fallingTrees[i]) {
 				// const CFeature* f = featureHandler->GetFeature(ft.id);
-				const float3 pos = ft.pos - UpVector * (ft.fallPos * 20);
+				const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
 
 				// featureID is invalid for falling trees
 				// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				//   continue;
-				if (!losHandler->InLos(pos, gu->myAllyTeam))
+				if (!losHandler->InLos(fpos, gu->myAllyTeam))
 					continue;
-				if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
+				if (!cam->InView(fpos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
 					continue;
 
-				const float ang = ft.fallPos * math::PI;
-
-				const float3 yvec(ft.dir.x * std::sin(ang), std::cos(ang), ft.dir.z * std::sin(ang));
-				const float3 zvec((yvec.cross(RgtVector)).ANormalize());
-				const float3 xvec(zvec.cross(yvec));
-
-				ipo->SetUniformMatrix4fv(3, false, CMatrix44f(pos, xvec, yvec, zvec));
+				ipo->SetUniformMatrix4fv(3, false, ft.fallMat);
 				DrawTreeGeometry(ft.type);
 			}
 		}
@@ -524,9 +522,9 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 
 	ft.id = treeID;
 	ft.type = treeType;
-	ft.pos = pos;
-	ft.dir = dir / len;
-	ft.speed = std::max(0.01f, len * 0.0004f);
-	ft.fallPos = 0.0f;
+	ft.fallMat = CMatrix44f(pos);
+	ft.fallDir = dir / len;
+	ft.fallSpeed = std::max(0.01f, len * 0.0004f);
+	ft.fallAngle = 0.0f;
 }
 

@@ -7,10 +7,9 @@ uniform mat4 shadowViewMat;
 uniform mat4 shadowProjMat;
 uniform vec4 shadowParams;
 
-uniform mat4 fallTreeMat;
+uniform mat4 treeMat;
 uniform vec3 cameraDirX;
 uniform vec3 cameraDirY;
-uniform vec3 treeOffset;
 
 
 layout(location = 0) in vec3 vtxPositionAttr; // vertexPosAttr
@@ -22,11 +21,11 @@ out vec4 vFrontColor;
 
 
 void main() {
-	vec4 vertexPos = vec4(vtxPositionAttr + treeOffset, 1.0);
+	vec4 vertexPos = vec4(vtxPositionAttr, 1.0);
 		vertexPos.xyz += (cameraDirX * vtxNormalAttr.x);
 		vertexPos.xyz += (cameraDirY * vtxNormalAttr.y);
 
-	vec4 vertexShadowPos = shadowViewMat * fallTreeMat * vertexPos;
+	vec4 vertexShadowPos = shadowViewMat * treeMat * vertexPos;
 		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
 		vertexShadowPos.xy += shadowParams.xy;
 

@@ -2,11 +2,10 @@
 
 uniform mat4 projMat;
 uniform mat4 viewMat;
-uniform mat4 fallTreeMat;         // used by falling trees
+uniform mat4 treeMat;             // world-transform
 
 uniform vec3 cameraDirX;          // needed for bush-type trees
 uniform vec3 cameraDirY;
-uniform vec3 treeOffset;
 
 uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
@@ -30,12 +29,11 @@ out float vFogFactor;
 void main() {
 	vec4 vertexPos = vec4(vtxPositionAttr, 1.0);
 
-	vertexPos.xyz += treeOffset;
 	vertexPos.xyz += (cameraDirX * vtxNormalAttr.x);
 	vertexPos.xyz += (cameraDirY * vtxNormalAttr.y);
 
 	#if (TREE_SHADOW == 1)
-	vVertexPos = fallTreeMat * vertexPos;
+	vVertexPos = treeMat * vertexPos;
 	#endif
 
 	vFrontColor.rgb = (vtxNormalAttr.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
@@ -44,10 +42,10 @@ void main() {
 	vTexCoord = vtxTexCoordAttr;
 
 
-	gl_Position = projMat * viewMat * fallTreeMat * vertexPos;
+	gl_Position = projMat * viewMat * treeMat * vertexPos;
 
 	{
-		float eyeDepth = length((viewMat * fallTreeMat * vertexPos).xyz);
+		float eyeDepth = length((viewMat * treeMat * vertexPos).xyz);
 		float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
 		float fogDepth = (eyeDepth - fogParams.x * fogParams.z) / fogRange;
 		// float fogDepth = (fogParams.y * fogParams.z - eyeDepth) / fogRange;
