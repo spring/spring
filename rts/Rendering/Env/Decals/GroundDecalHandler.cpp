@@ -552,7 +552,6 @@ void CGroundDecalHandler::BindTextures()
 {
 	{
 		glActiveTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 	}
 
@@ -567,11 +566,7 @@ void CGroundDecalHandler::KillTextures()
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	{
-		glActiveTexture(GL_TEXTURE1);
-		glDisable(GL_TEXTURE_2D);
-	}
-
+	glActiveTexture(GL_TEXTURE1);
 	glActiveTexture(GL_TEXTURE0);
 }
 

@@ -27,7 +27,7 @@
 #include "System/Log/ILog.h"
 
 #define SHADOWMATRIX_NONLINEAR 0
-#define SHADOWGEN_PER_FRAGMENT 1 // only for maps
+#define SHADOWGEN_PER_FRAGMENT 0 // maps
 
 CONFIG(int, Shadows).defaultValue(2).headlessValue(-1).minimumValue(-1).safemodeValue(-1).description("Sets whether shadows are rendered.\n-1:=forceoff, 0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
@@ -167,10 +167,10 @@ void CShadowHandler::LoadShadowGenShaders()
 	static const std::string shadowGenProgHandles[SHADOWGEN_PROGRAM_LAST] = {
 		"ShadowGenShaderProgModel",
 		"ShadowGenShaderProgMap",
-		"ShadowGenShaderProgTreeNear",
+		"ShadowGenShaderProgTree",
 		"ShadowGenShaderProgProjectile",
 	};
-	static const std::string shadowGenProgDefines[SHADOWGEN_PROGRAM_LAST] = {
+	static const std::string shadowGenProgDefs[SHADOWGEN_PROGRAM_LAST] = {
 		"#define SHADOWGEN_PROGRAM_MODEL\n",
 		"#define SHADOWGEN_PROGRAM_MAP\n",
 		"#define SHADOWGEN_PROGRAM_TREE\n",
@@ -180,7 +180,7 @@ void CShadowHandler::LoadShadowGenShaders()
 	// #version has to be added here because it is conditional
 	static const std::string versionDefs[2] = {
 		"#version 130\n",
-		"#version " + IntToString(globalRendering->supportFragDepthLayout? 420: 130) + "\n",
+		"#version " + IntToString(globalRendering->supportFragDepthLayout? 420: 410) + "\n",
 	};
 	static const std::string extraDefs =
 		("#define SHADOWMATRIX_NONLINEAR " + IntToString(SHADOWMATRIX_NONLINEAR) + "\n") +
@@ -191,23 +191,55 @@ void CShadowHandler::LoadShadowGenShaders()
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
 
-		// note: non-map FS is still at #130 (and too costly with dense foliage)
-		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
+		switch (i) {
+			case SHADOWGEN_PROGRAM_TREE: {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->Link();
 
-		if (i == SHADOWGEN_PROGRAM_MAP)
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[i == SHADOWGEN_PROGRAM_MAP] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->SetUniformLocation("shadowParams" ); // idx 0
+				po->SetUniformLocation("shadowViewMat"); // idx 1
+				po->SetUniformLocation("shadowProjMat"); // idx 2
+				po->SetUniformLocation("fallTreeMat"  ); // idx 3
+				po->SetUniformLocation("cameraDirX"   ); // idx 4
+				po->SetUniformLocation("cameraDirY"   ); // idx 5
+				po->SetUniformLocation("treeOffset"   ); // idx 6
+				po->SetUniformLocation("alphaMaskTex" ); // idx 7
+				po->SetUniformLocation("alphaParams"  ); // idx 8
 
-		po->Link();
-		po->SetUniformLocation("shadowParams");  // idx 0
-		po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE
-		po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE
-		po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE
-		po->SetUniformLocation("alphaMaskTex");  // idx 4
-		po->SetUniformLocation("alphaParams");   // idx 5, used by SHADOWGEN_PROGRAM_MAP
-		po->Enable();
-		po->SetUniform1i(4, 0); // alphaMaskTex
-		po->SetUniform2f(5, mapInfo->map.voidAlphaMin, 0.0f); // alphaParams
-		po->Disable();
+				po->Enable();
+				po->SetUniform1i(7, 0);
+				po->SetUniform2f(8, 0.5f, 0.5f);
+				po->Disable();
+			} break;
+
+			case SHADOWGEN_PROGRAM_MAP: {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->Link();
+
+				po->SetUniformLocation("shadowParams" ); // idx 0
+				po->SetUniformLocation("shadowViewMat"); // idx 1
+				po->SetUniformLocation("shadowProjMat"); // idx 2
+
+				#if 0
+				// TODO
+				po->Enable();
+				po->SetUniform1i(3, 0); // alphaMaskTex
+				po->SetUniform2f(4, mapInfo->map.voidAlphaMin, mapInfo->map.voidAlphaMax); // alphaParams
+				po->Disable();
+				#endif
+			} break;
+
+			default: {
+				// {model,projectile} program is still at #130 for now
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->Link();
+
+				po->SetUniformLocation("shadowParams"); // idx 0
+			} break;
+		}
+
 		po->Validate();
 
 		shadowGenProgs[i] = po;

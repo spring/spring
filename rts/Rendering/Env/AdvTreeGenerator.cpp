@@ -201,17 +201,17 @@ void CAdvTreeGenerator::GenVertexBuffers()
 void CAdvTreeGenerator::BindPineTreeBuffer(unsigned int) const {
 	// all pine subtypes share the same buffer
 	glBindBuffer(GL_ARRAY_BUFFER, pineBuffer);
-	glVertexPointer(3, GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
-	glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
-	glNormalPointer(GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
+	glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
 }
 
 void CAdvTreeGenerator::BindBushTreeBuffer(unsigned int) const {
 	// all bush subtypes share the same buffer
 	glBindBuffer(GL_ARRAY_BUFFER, bushBuffer);
-	glVertexPointer(3, GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
-	glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
-	glNormalPointer(GL_FLOAT, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
+	glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
 }
 
 void CAdvTreeGenerator::DrawPineTreeBuffer(unsigned int i) const { glDrawArrays(GL_TRIANGLES, i * MAX_TREE_VERTS, numPineVerts[i]); }

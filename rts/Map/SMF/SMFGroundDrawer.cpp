@@ -512,11 +512,17 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
+	const CMatrix44f& viewMat = shadowHandler->GetShadowViewMatrix();
+	const CMatrix44f& projMat = shadowHandler->GetShadowProjMatrix();
+
+
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
 		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
+		po->SetUniformMatrix4fv(1, false, &viewMat.m[0]);
+		po->SetUniformMatrix4fv(2, false, &projMat.m[0]);
 			meshDrawer->DrawMesh(DrawPass::Shadow);
 			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();

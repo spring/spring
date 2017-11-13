@@ -1,5 +1,10 @@
-#if (defined(TREE_BASIC) || defined(TREE_SHADOW))
-uniform vec3 cameraDirX;
+#version 410 core
+
+uniform mat4 projMat;
+uniform mat4 viewMat;
+uniform mat4 fallTreeMat;         // used by falling trees
+
+uniform vec3 cameraDirX;          // needed for bush-type trees
 uniform vec3 cameraDirY;
 uniform vec3 treeOffset;
 
@@ -7,46 +12,48 @@ uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 
 uniform vec2 alphaModifiers;      // (tree-height alpha, ground-diffuse alpha)
-#endif
 
-#ifdef TREE_BASIC
-uniform vec4 invMapSizePO2;
-#endif
+uniform vec3 fogParams;           // .x := start, .y := end, .z := viewrange
 
-#if (defined(TREE_SHADOW))
-varying float fogFactor;
-#endif
 
-#define MAX_TREE_HEIGHT 60.0
+layout(location = 0) in vec3 vtxPositionAttr;
+layout(location = 1) in vec2 vtxTexCoordAttr;
+layout(location = 2) in vec3 vtxNormalAttr;
+
+out vec4 vVertexPos;
+out vec2 vTexCoord;
+out vec4 vFrontColor;
+
+out float vFogFactor;
+
 
 void main() {
-	vec4 vertexPos = gl_Vertex;
+	vec4 vertexPos = vec4(vtxPositionAttr, 1.0);
 
-	#if (defined(TREE_BASIC) || defined(TREE_SHADOW))
 	vertexPos.xyz += treeOffset;
-	vertexPos.xyz += (cameraDirX * gl_Normal.x);
-	vertexPos.xyz += (cameraDirY * gl_Normal.y);
+	vertexPos.xyz += (cameraDirX * vtxNormalAttr.x);
+	vertexPos.xyz += (cameraDirY * vtxNormalAttr.y);
 
-	gl_FrontColor.rgb = (gl_Normal.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
-	gl_FrontColor.a = (gl_Vertex.y * alphaModifiers.x) + alphaModifiers.y;
+	#if (TREE_SHADOW == 1)
+	vVertexPos = fallTreeMat * vertexPos;
 	#endif
 
-	#if (defined(TREE_BASIC))
-	gl_TexCoord[0] = gl_MultiTexCoord0;
-	gl_TexCoord[1] = vertexPos.xzyw * invMapSizePO2;
-	#endif
+	vFrontColor.rgb = (vtxNormalAttr.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
+	vFrontColor.a = (vtxPositionAttr.y * alphaModifiers.x) + alphaModifiers.y;
 
-	#if (defined(TREE_SHADOW))
-	gl_TexCoord[2] = vertexPos;
-	gl_TexCoord[1] = gl_MultiTexCoord0;
-	#endif
+	vTexCoord = vtxTexCoordAttr;
 
 
-	gl_FogFragCoord = length((gl_ModelViewMatrix * vertexPos).xyz);
-	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
+	gl_Position = projMat * viewMat * fallTreeMat * vertexPos;
 
-	#if (defined(TREE_SHADOW))
-	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
-	fogFactor = clamp(fogFactor, 0.0, 1.0);
-	#endif
+	{
+		float eyeDepth = length((viewMat * fallTreeMat * vertexPos).xyz);
+		float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
+		float fogDepth = (eyeDepth - fogParams.x * fogParams.z) / fogRange;
+		// float fogDepth = (fogParams.y * fogParams.z - eyeDepth) / fogRange;
+
+		vFogFactor = 1.0 - clamp(fogDepth, 0.0, 1.0);
+		// vFogFactor = clamp(fogDepth, 0.0, 1.0);
+	}
 }
+

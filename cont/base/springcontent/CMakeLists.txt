@@ -2,6 +2,8 @@ set(FILES
 	unittextures/tatex/PALETTE.PAL
 	mapgenerator/mapinfo_template.lua
 	EngineOptions.lua
+	shaders/GLSL/bumpWaterVS.glsl
+	shaders/GLSL/bumpWaterFS.glsl
 	shaders/GLSL/bumpWaterCoastBlurVS.glsl
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
 	shaders/GLSL/infoHeight.lua
@@ -10,27 +12,29 @@ set(FILES
 	shaders/GLSL/infoPath.lua
 	shaders/GLSL/ShadowGenVertProg.glsl
 	shaders/GLSL/ShadowGenFragProg.glsl
+	shaders/GLSL/MapShadowGenVertProg.glsl
+	shaders/GLSL/MapShadowGenFragProg.glsl
+	shaders/GLSL/TreeShadowGenVertProg.glsl
+	shaders/GLSL/TreeShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
-	shaders/GLSL/terrainCommon.glsl
-	shaders/GLSL/SMFFragProg4.glsl
-	shaders/GLSL/SMFBorderFragProg4.glsl
-	shaders/GLSL/GrassFragProg.glsl
-	shaders/GLSL/GroundDecalsFragProg.glsl
-	shaders/GLSL/terrainSimpleCopyFS.glsl
-	shaders/GLSL/ModelVertProg.glsl
-	shaders/GLSL/terrainFragmentShader.glsl
-	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg4.glsl
+	shaders/GLSL/SMFFragProg4.glsl
 	shaders/GLSL/SMFBorderVertProg4.glsl
-	shaders/GLSL/bumpWaterFS.glsl
+	shaders/GLSL/SMFBorderFragProg4.glsl
+	shaders/GLSL/GroundDecalsFragProg.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
-	shaders/GLSL/GrassVertProg.glsl
-	shaders/GLSL/ModelFragProg.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
+	shaders/GLSL/DecalsFragGL4.glsl
+	shaders/GLSL/GrassVertProg.glsl
+	shaders/GLSL/GrassFragProg.glsl
+	shaders/GLSL/ModelVertProg.glsl
+	shaders/GLSL/ModelFragProg.glsl
+	shaders/GLSL/terrainCommon.glsl
 	shaders/GLSL/terrainSimpleCopyVS.glsl
+	shaders/GLSL/terrainSimpleCopyFS.glsl
 	shaders/GLSL/terrainVertexShader.glsl
-	shaders/GLSL/bumpWaterVS.glsl
+	shaders/GLSL/terrainFragmentShader.glsl
 	shaders/GLSL/GuiVertProg4.glsl
 	shaders/GLSL/GuiFragProg4.glsl
 	shaders/ARB/waterDynWave2.vp
