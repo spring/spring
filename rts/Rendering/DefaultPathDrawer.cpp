@@ -75,7 +75,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 {
 	const CPathEstimator* pe = pm->medResPE;
 
-	if (!IsEnabled())
+	if (!IsEnabled() || (!gs->cheatEnabled && !gu->spectatingFullView))
 		return;
 
 	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f,  true, true);
