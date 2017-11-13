@@ -76,7 +76,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 {
 	const CPathEstimator* pe = pm->medResPE;
 
-	if (!IsEnabled())
+	if (!IsEnabled() || (!gs->cheatEnabled && !gu->spectatingFullView))
 		return;
 
 	glMatrixMode(GL_PROJECTION);
