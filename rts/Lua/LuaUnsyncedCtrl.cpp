@@ -906,19 +906,17 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID)) {
+	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
-	}
+
 	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
-	const float r = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
-	const float g = max(0.0f, min(1.0f, luaL_checkfloat(L, 3)));
-	const float b = max(0.0f, min(1.0f, luaL_checkfloat(L, 4)));
-	team->color[0] = (unsigned char)(r * 255.0f);
-	team->color[1] = (unsigned char)(g * 255.0f);
-	team->color[2] = (unsigned char)(b * 255.0f);
+
+	team->color[0] = (unsigned char)(Clamp(luaL_checkfloat(L, 2      ), 0.0f, 1.0f) * 255.0f);
+	team->color[1] = (unsigned char)(Clamp(luaL_checkfloat(L, 3      ), 0.0f, 1.0f) * 255.0f);
+	team->color[2] = (unsigned char)(Clamp(luaL_checkfloat(L, 4      ), 0.0f, 1.0f) * 255.0f);
+	team->color[3] = (unsigned char)(Clamp(luaL_optfloat  (L, 5, 1.0f), 0.0f, 1.0f) * 255.0f);
 	return 0;
 }
 
