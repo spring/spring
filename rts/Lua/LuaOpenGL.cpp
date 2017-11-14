@@ -1300,7 +1300,7 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	GL::MultMatrix(unit->GetTransformMatrix());
+	GL::MultMatrix(unit->GetTransformMatrix(false, CLuaHandle::GetHandleFullRead(L)));
 	return 0;
 }
 

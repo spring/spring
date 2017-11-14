@@ -110,8 +110,8 @@ public:
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	CMatrix44f GetTransformMatrix(const bool synced = false) const final { return transMatrix[synced]; }
-	const CMatrix44f& GetTransformMatrixRef(const bool synced = false) const { return transMatrix[synced]; }
+	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final { return transMatrix[synced]; }
+	const CMatrix44f& GetTransformMatrixRef(bool synced = false) const { return transMatrix[synced]; }
 
 private:
 	static int ChunkNumber(float f);
