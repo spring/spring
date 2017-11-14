@@ -622,14 +622,18 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_vertex_array_object); // 3.0 (VAO; core in 4.x)
 	CHECK_REQ_EXT(GLEW_ARB_uniform_buffer_object); // 3.1 (UBO)
 
+	#ifdef GLEW_ARB_buffer_storage
 	CHECK_REQ_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
+	#endif
 	CHECK_REQ_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
 	CHECK_REQ_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_blit); // 3.0 (glBlitFramebuffer[EXT])
 
 	// not yet mandatory
+	#ifdef GLEW_ARB_multi_bind
 	CHECK_OPT_EXT(GLEW_ARB_multi_bind); // 4.4
+	#endif
 	CHECK_OPT_EXT(GLEW_ARB_texture_storage); // 4.2
 	CHECK_OPT_EXT(GLEW_ARB_program_interface_query); // 4.3
 	CHECK_OPT_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
