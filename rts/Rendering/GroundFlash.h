@@ -3,7 +3,7 @@
 #ifndef GROUND_FLASH_H
 #define GROUND_FLASH_H
 
-#include "Rendering/GL/VertexArrayTypes.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Sim/Projectiles/ExpGenSpawnable.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/Color.h"
@@ -11,12 +11,7 @@
 struct AtlasedTexture;
 struct GroundFlashInfo;
 class CColorMap;
-
 class CVertexArray;
-namespace GL {
-	template<typename T> struct TRenderDataBuffer;
-	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
-};
 
 class CGroundFlash : public CExpGenSpawnable
 {

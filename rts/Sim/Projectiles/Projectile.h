@@ -10,19 +10,14 @@
 #endif
 
 #include "ExpGenSpawnable.h"
-#include "Rendering/GL/VertexArrayTypes.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/type2.h"
 
 class CUnit;
 class CFeature;
 class CMatrix44f;
-
 class CVertexArray;
-namespace GL {
-	template<typename T> struct TRenderDataBuffer;
-	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
-};
 
 
 class CProjectile: public CExpGenSpawnable

@@ -354,10 +354,11 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	, ttl(_ttl)
 {
 	pos.y = CGround::GetHeightReal(_pos.x, _pos.z, false) + 1.0f;
-	// A is set in Draw
+
 	color.r = _color.x * 255.0f;
 	color.g = _color.y * 255.0f;
 	color.b = _color.z * 255.0f;
+	color.a = 255.0f;
 
 	size = _size;
 	alwaysVisible = true;
@@ -377,12 +378,15 @@ void CSeismicGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 	const float3 p3 = pos + ( side1 + side2) * size;
 	const float3 p4 = pos + (-side1 + side2) * size;
 
-	const SColor c = {color.r, color.g, color.b, mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade))};
+	// start alpha-fading when ttl drops below fade
+	constexpr uint8_t maxAlpha = 255;
+	const     uint8_t ttlAlpha = maxAlpha * (ttl / (1.0f * fade));
+	const     uint8_t curAlpha = mix(maxAlpha, ttlAlpha, ttl < fade);
 
-	va->SafeAppend({p1, texture->xstart, texture->ystart, c});
-	va->SafeAppend({p2, texture->xend,   texture->ystart, c});
-	va->SafeAppend({p3, texture->xend,   texture->yend,   c});
-	va->SafeAppend({p4, texture->xstart, texture->yend,   c});
+	va->SafeAppend({p1, texture->xstart, texture->ystart, {color.r, color.g, color.b, curAlpha}});
+	va->SafeAppend({p2, texture->xend,   texture->ystart, {color.r, color.g, color.b, curAlpha}});
+	va->SafeAppend({p3, texture->xend,   texture->yend,   {color.r, color.g, color.b, curAlpha}});
+	va->SafeAppend({p4, texture->xstart, texture->yend,   {color.r, color.g, color.b, curAlpha}});
 }
 
 bool CSeismicGroundFlash::Update()

@@ -7,7 +7,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/VertexArrayTypes.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
@@ -21,10 +21,6 @@ struct FlyingPiece;
 class IModelRenderContainer;
 class LuaTable;
 
-namespace GL {
-	template<typename T> struct TRenderDataBuffer;
-	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
-};
 namespace Shader {
 	struct IProgramObject;
 };

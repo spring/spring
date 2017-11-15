@@ -8,7 +8,7 @@
 
 #include "VAO.h"
 #include "VBO.h"
-#include "VertexArrayTypes.h"
+#include "RenderDataBufferFwd.hpp"
 #include "Rendering/Shaders/Shader.h"
 
 namespace GL {
@@ -509,15 +509,15 @@ namespace GL {
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->Submit(primType, dataIndx, dataSize); }
 		void Submit(uint32_t primType) {
-			if (curElemPos > prvElemPos)
-				rdb->Submit(primType, prvElemPos, curElemPos - prvElemPos);
+			if (NumElems() > 0)
+				rdb->Submit(primType, prvElemPos, NumElems());
 
 			prvElemPos = curElemPos;
 		}
 		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->SubmitIndexed(primType, dataIndx, dataSize); }
 		void SubmitIndexed(uint32_t primType) {
-			if (curIndxPos > prvIndxPos)
-				rdb->SubmitIndexed(primType, prvIndxPos, curIndxPos - prvIndxPos);
+			if (NumIndcs() > 0)
+				rdb->SubmitIndexed(primType, prvIndxPos, NumIndcs());
 
 			// TODO: allow multiple batches with the same set of indices?
 			prvIndxPos = curIndxPos;
@@ -548,18 +548,6 @@ namespace GL {
 	void KillRenderBuffers();
 	void SwapRenderBuffers();
 
-
-	typedef TRenderDataBuffer<VA_TYPE_0> RenderDataBuffer0;
-	typedef TRenderDataBuffer<VA_TYPE_N> RenderDataBufferN;
-	typedef TRenderDataBuffer<VA_TYPE_C> RenderDataBufferC;
-	typedef TRenderDataBuffer<VA_TYPE_T> RenderDataBufferT;
-
-	typedef TRenderDataBuffer<VA_TYPE_T4> RenderDataBufferT4;
-	typedef TRenderDataBuffer<VA_TYPE_TN> RenderDataBufferTN;
-	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
-
-	typedef TRenderDataBuffer<VA_TYPE_2d0> RenderDataBuffer2D0;
-	typedef TRenderDataBuffer<VA_TYPE_2dT> RenderDataBuffer2DT;
 
 	RenderDataBuffer0* GetRenderBuffer0();
 	RenderDataBufferN* GetRenderBufferN();
