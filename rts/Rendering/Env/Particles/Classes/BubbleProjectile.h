@@ -21,9 +21,9 @@ public:
 	);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 1; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

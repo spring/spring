@@ -40,6 +40,10 @@ public:
 
 	void PostLoad();
 
+public:
+	static constexpr unsigned int NUM_SEGMENTS_X = 6;
+	static constexpr unsigned int NUM_SEGMENTS_Y = 4;
+
 private:
 	bool UsingPerlinNoise() const;
 
@@ -53,7 +57,7 @@ private:
 	SColor color;
 
 	// NOTE: these are also registered in ProjectileHandler
-	std::vector<ShieldSegmentProjectile*> shieldSegments; //FIXME deque
+	std::vector<ShieldSegmentProjectile*> shieldSegments;
 };
 
 
@@ -70,9 +74,8 @@ public:
 		int xpart,
 		int ypart
 	);
-	~ShieldSegmentProjectile();
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 	void PreDelete();
 	void Reload(
@@ -81,7 +84,11 @@ public:
 		const int ypart
 	);
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return ((NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1)); }
+
+public:
+	static constexpr unsigned int NUM_VERTICES_X = 5;
+	static constexpr unsigned int NUM_VERTICES_Y = 3;
 
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);

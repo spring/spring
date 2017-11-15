@@ -35,13 +35,13 @@ public:
 	);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 	void Collision() override;
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* f) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return NUM_TRAIL_PARTS; }
 
 	float GetDrawAngle() const;
 
@@ -63,7 +63,7 @@ public:
 
 	const S3DModelPiece* omp;
 
-	static const unsigned NUM_TRAIL_PARTS = 8;
+	static constexpr unsigned NUM_TRAIL_PARTS = 8;
 	FireTrailPoint fireTrailPoints[NUM_TRAIL_PARTS];
 
 	float3 spinVec;

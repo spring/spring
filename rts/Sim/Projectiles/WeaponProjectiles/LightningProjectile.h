@@ -17,17 +17,18 @@ public:
 	CLightningProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return (NUM_DISPLACEMENTS * 2); }
 
 private:
+	static constexpr unsigned int NUM_DISPLACEMENTS = 10;
+
 	float3 color;
 
-	#define displacements_size 10
-	float displacements[displacements_size];
-	float displacements2[displacements_size];
+	float displacements[NUM_DISPLACEMENTS];
+	float displacements2[NUM_DISPLACEMENTS];
 };
 
 #endif /* LIGHTNING_PROJECTILE_H */

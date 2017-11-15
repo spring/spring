@@ -169,12 +169,14 @@ void CShadowHandler::LoadShadowGenShaders()
 		"ShadowGenShaderProgMap",
 		"ShadowGenShaderProgTree",
 		"ShadowGenShaderProgProjectile",
+		"ShadowGenShaderProgParticle",
 	};
 	static const std::string shadowGenProgDefs[SHADOWGEN_PROGRAM_LAST] = {
 		"#define SHADOWGEN_PROGRAM_MODEL\n",
 		"#define SHADOWGEN_PROGRAM_MAP\n",
 		"#define SHADOWGEN_PROGRAM_TREE\n",
 		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
+		"#define SHADOWGEN_PROGRAM_PARTICLE\n",
 	};
 
 	// #version has to be added here because it is conditional
@@ -189,7 +191,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		("#define SUPPORT_DEPTH_LAYOUT " + IntToString(globalRendering->supportFragDepthLayout) + "\n");
 
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
-		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
+		Shader::IProgramObject* po = (shadowGenProgs[i] = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL"));
 
 		switch (i) {
 			case SHADOWGEN_PROGRAM_TREE: {
@@ -231,6 +233,23 @@ void CShadowHandler::LoadShadowGenShaders()
 				#endif
 			} break;
 
+			case SHADOWGEN_PROGRAM_PARTICLE: {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->Link();
+
+				po->SetUniformLocation("shadowParams" ); // idx 0
+				po->SetUniformLocation("shadowViewMat"); // idx 1
+				po->SetUniformLocation("shadowProjMat"); // idx 2
+				po->SetUniformLocation("alphaMaskTex" ); // idx 3
+				po->SetUniformLocation("alphaParams"  ); // idx 4
+
+				po->Enable();
+				po->SetUniform1i(3, 0);
+				po->SetUniform2f(4, 0.3f, 0.3f);
+				po->Disable();
+			} break;
+
 			default: {
 				// {model,projectile} program is still at #130 for now
 				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
@@ -241,8 +260,6 @@ void CShadowHandler::LoadShadowGenShaders()
 		}
 
 		po->Validate();
-
-		shadowGenProgs[i] = po;
 	}
 
 	shadowsLoaded = true;

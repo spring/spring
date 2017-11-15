@@ -5,7 +5,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "MuzzleFlame.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 
 
@@ -49,18 +49,16 @@ void CMuzzleFlame::Update()
 	pos += speed;
 }
 
-void CMuzzleFlame::Draw(CVertexArray* va)
+void CMuzzleFlame::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	float alpha = std::max(0.0f, 1 - (age / (4 + size * 30)));
 	float modAge = fastmath::apxsqrt(static_cast<float>(age + 2));
 
-	va->EnlargeArrays(numSmoke * 8, 0, VA_SIZE_TC);
-
-	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-		int tex = a % projectileDrawer->smoketex.size();
-		//float xmod=0.125f+(float(int(tex%6)))/16;
-		//float ymod=(int(tex/6))/16.0f;
+	for (int a = 0; a < numSmoke; ++a) {
+		const int tex = a % projectileDrawer->smoketex.size();
+		// float xmod = 0.125f + (float(int(tex % 6))) / 16.0f;
+		// float ymod =                (int(tex / 6))  / 16.0f;
 
 		float drawsize = modAge * 3;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4f);
@@ -72,30 +70,25 @@ void CMuzzleFlame::Draw(CVertexArray* va)
 		col[3] = (unsigned char) (255 * alpha * fade);
 
 		#define st projectileDrawer->smoketex[tex]
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col);
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xstart, st->yend,   col);
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xstart, st->yend,   col});
 		#undef st
 
 		if (fade < 1.0f) {
-			float ifade = 1.0f - fade;
-			col[0] = (unsigned char) (ifade * 255);
-			col[1] = (unsigned char) (ifade * 255);
-			col[2] = (unsigned char) (ifade * 255);
+			col[0] = (unsigned char) ((1.0f - fade) * 255);
+			col[1] = (unsigned char) ((1.0f - fade) * 255);
+			col[2] = (unsigned char) ((1.0f - fade) * 255);
 			col[3] = (unsigned char) (1);
 
 			#define mft projectileDrawer->muzzleflametex
-			va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col);
-			va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col);
+			va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col});
+			va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col});
+			va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col});
+			va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col});
 			#undef mft
 		}
 	}
 }
 
-int CMuzzleFlame::GetProjectilesCount() const
-{
-	return numSmoke * 2;
-}

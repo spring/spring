@@ -15,10 +15,10 @@ public:
 	CBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 8; }
 
 private:
 	unsigned char coreColStart[4];

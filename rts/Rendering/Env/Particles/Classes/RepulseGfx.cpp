@@ -4,7 +4,7 @@
 #include "RepulseGfx.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Units/Unit.h"
 
@@ -59,7 +59,7 @@ void CRepulseGfx::DependentDied(CObject* o)
 	deleteMe = true;
 }
 
-void CRepulseGfx::Draw(CVertexArray* va)
+void CRepulseGfx::Draw(GL::RenderDataBufferTC* va) const
 {
 	const CUnit* owner = CProjectile::owner();
 
@@ -73,7 +73,7 @@ void CRepulseGfx::Draw(CVertexArray* va)
 	float3 xdirDS;
 	float3 ydirDS;
 
-	pos = (repulsed->pos - zdir * 10.0f) + (repulsed->speed * globalRendering->timeOffset);
+	const float3 drawPos = pos - (zdir * 10.0f) + (repulsed->speed * globalRendering->timeOffset);
 
 	float drawsize = 10.0f;
 	float alpha = std::min(255.0f, age * 10.0f);
@@ -98,9 +98,7 @@ void CRepulseGfx::Draw(CVertexArray* va)
 	static constexpr int loopCountY = 4;
 	static constexpr int loopCountX = 4;
 
-	va->EnlargeArrays(loopCountY * loopCountX * 4 + 16, 0, VA_SIZE_TC);
-
-	for (int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
+	for (int y = 0; y < loopCountY; ++y) {
 		const float dy = y - 2.0f;
 		const float ry = y * 0.25f;
 
@@ -108,10 +106,10 @@ void CRepulseGfx::Draw(CVertexArray* va)
 			const float dx = x - 2.00f;
 			const float rx = x * 0.25f;
 
-			va->AddVertexQTC(pos + xdirDS * (dx + 0) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x    ],  txo + (ry        ) * txs, tyo + (rx        ) * tys,  col);
-			va->AddVertexQTC(pos + xdirDS * (dx + 0) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x    ],  txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys,  col);
-			va->AddVertexQTC(pos + xdirDS * (dx + 1) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x + 1],  txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys,  col);
-			va->AddVertexQTC(pos + xdirDS * (dx + 1) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x + 1],  txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys,  col);
+			va->SafeAppend({drawPos + xdirDS * (dx + 0) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x    ],  txo + (ry        ) * txs, tyo + (rx        ) * tys,  col});
+			va->SafeAppend({drawPos + xdirDS * (dx + 0) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x    ],  txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys,  col});
+			va->SafeAppend({drawPos + xdirDS * (dx + 1) + ydirDS * (dy + 1) + zdir * vertexDists[(y + 1) * 5 + x + 1],  txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys,  col});
+			va->SafeAppend({drawPos + xdirDS * (dx + 1) + ydirDS * (dy + 0) + zdir * vertexDists[(y    ) * 5 + x + 1],  txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys,  col});
 		}
 	}
 
@@ -130,29 +128,31 @@ void CRepulseGfx::Draw(CVertexArray* va)
 	xdirDS = xdir * drawsize;
 	ydirDS = ydir * drawsize;
 
-	va->AddVertexQTC(owner->pos + (-xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(owner->pos + ( xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(       pos + xdirDS + ydirDS + zdir * vertexDists[6],  tx, ty, col );
-	va->AddVertexQTC(       pos - xdirDS + ydirDS + zdir * vertexDists[6],  tx, ty, col );
+	va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+	va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->AddVertexQTC(owner->pos + (-xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(owner->pos + ( xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(       pos + xdirDS - ydirDS + zdir * vertexDists[6],  tx, ty, col );
-	va->AddVertexQTC(       pos - xdirDS - ydirDS + zdir * vertexDists[6],  tx, ty, col );
+	va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+	va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->AddVertexQTC(owner->pos + (xdir - ydir) * drawsize * 0.2f,   tx, ty, col2);
-	va->AddVertexQTC(owner->pos + (xdir + ydir) * drawsize * 0.2f,   tx, ty, col2);
-	va->AddVertexQTC(       pos + xdirDS + ydirDS + zdir * vertexDists[6],  tx, ty, col );
-	va->AddVertexQTC(       pos + xdirDS - ydirDS + zdir * vertexDists[6],  tx, ty, col );
+	va->SafeAppend({owner->pos + ( xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({owner->pos + ( xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({   drawPos +   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+	va->SafeAppend({   drawPos +   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 
-	va->AddVertexQTC(owner->pos + (-xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(owner->pos + (-xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
-	va->AddVertexQTC(       pos - xdirDS + ydirDS + zdir * vertexDists[6],  tx, ty, col );
-	va->AddVertexQTC(       pos - xdirDS - ydirDS + zdir * vertexDists[6],  tx, ty, col );
+	va->SafeAppend({owner->pos + (-xdir   - ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({owner->pos + (-xdir   + ydir         ) * drawsize * 0.2f,  tx, ty, col2});
+	va->SafeAppend({   drawPos -   xdirDS + ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
+	va->SafeAppend({   drawPos -   xdirDS - ydirDS + zdir  *  vertexDists[6],  tx, ty, col });
 }
 
 void CRepulseGfx::Update()
 {
+	pos = repulsed->pos;
+
 	age += 1;
 	deleteMe |= (repulsed != nullptr && owner() != nullptr && (repulsed->pos - owner()->pos).SqLength() > sqMaxOwnerDist);
 }

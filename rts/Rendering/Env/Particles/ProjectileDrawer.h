@@ -7,6 +7,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
@@ -14,13 +15,19 @@
 
 class CSolidObject;
 class CTextureAtlas;
-class CVertexArray;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
 class IModelRenderContainer;
 class LuaTable;
 
+namespace GL {
+	template<typename T> struct TRenderDataBuffer;
+	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
+};
+namespace Shader {
+	struct IProgramObject;
+};
 
 
 class CProjectileDrawer: public CEventClient {
@@ -50,8 +57,10 @@ public:
 	void DecPerlinTexObjectCount() { perlinTexObjects--; }
 
 
-	CVertexArray* fxVA = nullptr;
-	CVertexArray* gfVA = nullptr;
+	GL::RenderDataBufferTC* fxBuffer = nullptr;
+	GL::RenderDataBufferTC* gfBuffer = nullptr;
+	Shader::IProgramObject* fxShader = nullptr;
+	Shader::IProgramObject* gfShader = nullptr;
 
 	CTextureAtlas* textureAtlas = nullptr;  ///< texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas = nullptr; ///< texture atlas for ground fx
@@ -98,17 +107,22 @@ public:
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
+	void DrawProjectilePass(Shader::IProgramObject*, bool, bool);
+	void DrawParticlePass(Shader::IProgramObject*, bool, bool);
+	void DrawProjectileShadowPass(Shader::IProgramObject*);
+	void DrawParticleShadowPass(Shader::IProgramObject*);
+
 	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
 	void DrawFlyingPieces(int modelType);
 
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
-	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
+	void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
 	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 
-	static void DrawProjectileShadow(CProjectile* projectile);
+	void DrawProjectileShadow(const CProjectile* projectile);
 	static bool DrawProjectileModel(const CProjectile* projectile);
 
 	void UpdatePerlin();

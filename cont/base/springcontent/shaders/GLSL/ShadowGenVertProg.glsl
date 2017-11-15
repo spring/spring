@@ -13,10 +13,5 @@ void main() {
 	#ifdef SHADOWGEN_PROGRAM_MODEL
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
-
-	#ifdef SHADOWGEN_PROGRAM_PROJECTILE
-	gl_FrontColor = gl_Color;
-	gl_TexCoord[0] = gl_MultiTexCoord0;
-	#endif
 }
 

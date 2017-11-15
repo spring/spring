@@ -7,7 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
@@ -80,56 +80,56 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	useAirLos = true;
 }
 
-void CSimpleParticleSystem::Draw(CVertexArray* va)
+void CSimpleParticleSystem::Draw(GL::RenderDataBufferTC* va) const
 {
-	va->EnlargeArrays(numParticles * 4, 0, VA_SIZE_TC);
-
 	if (directional) {
 		for (int i = 0; i < numParticles; i++) {
 			const Particle* p = &particles[i];
 
-			if (p->life < 1.0f) {
-				const float3 zdir = (p->pos - camera->GetPos()).SafeANormalize();
-				const float3 ydir = (zdir.cross(p->speed)).SafeANormalize();
-				const float3 xdir = (zdir.cross(ydir));
+			if (p->life >= 1.0f)
+				continue;
 
-				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
-				const float size = p->size;
+			const float3 zdir = (p->pos - camera->GetPos()).SafeANormalize();
+			const float3 ydir = (zdir.cross(p->speed)).SafeANormalize();
+			const float3 xdir = (zdir.cross(ydir));
 
-				unsigned char color[4];
-				colorMap->GetColor(color, p->life);
+			const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
+			const float size = p->size;
 
-				if (p->speed.SqLength() > 0.001f) {
-					va->AddVertexQTC(interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color);
-					va->AddVertexQTC(interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color);
-					va->AddVertexQTC(interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color);
-					va->AddVertexQTC(interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color);
-				} else {
-					// in this case the particle's coor-system is degenerate
-					va->AddVertexQTC(interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color);
-					va->AddVertexQTC(interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color);
-					va->AddVertexQTC(interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color);
-					va->AddVertexQTC(interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color);
-				}
+			unsigned char color[4];
+			colorMap->GetColor(color, p->life);
+
+			if (p->speed.SqLength() > 0.001f) {
+				va->SafeAppend({interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color});
+				va->SafeAppend({interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color});
+				va->SafeAppend({interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color});
+				va->SafeAppend({interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color});
+			} else {
+				// in this case the particle's coor-system is degenerate
+				va->SafeAppend({interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color});
+				va->SafeAppend({interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color});
+				va->SafeAppend({interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color});
+				va->SafeAppend({interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color});
 			}
 		}
 	} else {
 		for (int i = 0; i < numParticles; i++) {
 			const Particle* p = &particles[i];
 
-			if (p->life < 1.0f) {
-				unsigned char color[4];
-				colorMap->GetColor(color, p->life);
+			if (p->life >= 1.0f)
+				continue;
 
-				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
-				const float3 cameraRight = camera->GetRight() * p->size;
-				const float3 cameraUp    = camera->GetUp() * p->size;
+			unsigned char color[4];
+			colorMap->GetColor(color, p->life);
 
-				va->AddVertexQTC(interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color);
-				va->AddVertexQTC(interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color);
-				va->AddVertexQTC(interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color);
-				va->AddVertexQTC(interPos - cameraRight + cameraUp, texture->xstart, texture->yend,   color);
-			}
+			const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
+			const float3 cameraRight = camera->GetRight() * p->size;
+			const float3 cameraUp    = camera->GetUp() * p->size;
+
+			va->SafeAppend({interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color});
+			va->SafeAppend({interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color});
+			va->SafeAppend({interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color});
+			va->SafeAppend({interPos - cameraRight + cameraUp, texture->xstart, texture->yend,   color});
 		}
 	}
 }
@@ -182,11 +182,6 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
-}
-
-int CSimpleParticleSystem::GetProjectilesCount() const
-{
-	return numParticles;
 }
 
 

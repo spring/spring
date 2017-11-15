@@ -6,7 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
@@ -137,14 +137,13 @@ void CFireProjectile::Update()
 	deleteMe |= (ttl <= -particleTime);
 }
 
-void CFireProjectile::Draw(CVertexArray* va)
+void CFireProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
-	unsigned char col[4];
-	col[3] = 1;
+	unsigned char col [4]; col[3] = 1;
 	unsigned char col2[4];
-	size_t sz2 = subParticles2.size();
-	size_t sz = subParticles.size();
-	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
+
+	const size_t sz2 = subParticles2.size();
+	const size_t sz = subParticles.size();
 
 	for (const SubParticle& pi: subParticles2) {
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
@@ -163,13 +162,15 @@ void CFireProjectile::Draw(CVertexArray* va)
 		col[1] = (unsigned char) ((1 - age) * 255);
 		col[2] = (unsigned char) ((1 - age) * 255);
 
-		va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
-		va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
-		va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
-		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
+		va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
+		va->SafeAppend({interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col});
+		va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
+		va->SafeAppend({interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col});
 	}
+
 	for (const SubParticle& pi: subParticles) {
 		const AtlasedTexture* at = projectileDrawer->smoketex[pi.smokeType];
+
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
 		const float size = pi.maxSize * fastmath::apxsqrt(age);
 		const float  rot = pi.rotSpeed * age;
@@ -182,16 +183,16 @@ void CFireProjectile::Draw(CVertexArray* va)
 
 		float3 interPos = pi.pos;
 
-		if (age < 1/1.31f) {
+		if (age < (1.0f / 1.31f)) {
 			col[0] = (unsigned char) ((1 - age * 1.3f) * 255);
 			col[1] = (unsigned char) ((1 - age * 1.3f) * 255);
 			col[2] = (unsigned char) ((1 - age * 1.3f) * 255);
 			col[3] = 1;
 
-			va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
-			va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
-			va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
-			va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
+			va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
+			va->SafeAppend({interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col});
+			va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
+			va->SafeAppend({interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col});
 		}
 
 		unsigned char c;
@@ -205,16 +206,10 @@ void CFireProjectile::Draw(CVertexArray* va)
 		col2[2] = (unsigned char) (c * 0.6f);
 		col2[3] = c;
 
-		va->AddVertexQTC(interPos - dir1 - dir2, at->xstart, at->ystart, col2);
-		va->AddVertexQTC(interPos + dir1 - dir2, at->xend,   at->ystart, col2);
-		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
-		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
+		va->SafeAppend({interPos - dir1 - dir2, at->xstart, at->ystart, col2});
+		va->SafeAppend({interPos + dir1 - dir2, at->xend,   at->ystart, col2});
+		va->SafeAppend({interPos + dir1 + dir2, at->xend,   at->yend,   col2});
+		va->SafeAppend({interPos - dir1 + dir2, at->xstart, at->yend,   col2});
 	}
-}
-
-
-int CFireProjectile::GetProjectilesCount() const
-{
-	return subParticles2.size() + subParticles.size() * 2;
 }
 

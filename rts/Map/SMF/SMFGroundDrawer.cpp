@@ -232,8 +232,8 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		const char* vsCode =
 			"\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz + vec3(0.0, planeOffset, 0.0), 1.0);\n"
 			"\tv_color_rgba = a_color_rgba;\n";
-		const char* fsVars = "const float N = 1.0 / 255.0;\n";
-		const char* fsCode = "\tf_color_rgba = v_color_rgba * N;\n";
+		const char* fsVars = "const float v_color_mult = 1.0 / 255.0;\n";
+		const char* fsCode = "\tf_color_rgba = v_color_rgba * v_color_mult;\n";
 
 		GL::RenderDataBuffer::FormatShaderC(vsBuf, vsBuf + sizeof(vsBuf), "", vsVars, vsCode, "VS");
 		GL::RenderDataBuffer::FormatShaderC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
@@ -512,17 +512,13 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	const CMatrix44f& viewMat = shadowHandler->GetShadowViewMatrix();
-	const CMatrix44f& projMat = shadowHandler->GetShadowProjMatrix();
-
-
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
 		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
-		po->SetUniformMatrix4fv(1, false, &viewMat.m[0]);
-		po->SetUniformMatrix4fv(2, false, &projMat.m[0]);
+		po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+		po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
 			meshDrawer->DrawMesh(DrawPass::Shadow);
 			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();

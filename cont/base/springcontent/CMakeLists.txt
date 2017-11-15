@@ -14,6 +14,8 @@ set(FILES
 	shaders/GLSL/ShadowGenFragProg.glsl
 	shaders/GLSL/MapShadowGenVertProg.glsl
 	shaders/GLSL/MapShadowGenFragProg.glsl
+	shaders/GLSL/ParticleShadowGenVertProg.glsl
+	shaders/GLSL/ParticleShadowGenFragProg.glsl
 	shaders/GLSL/TreeShadowGenVertProg.glsl
 	shaders/GLSL/TreeShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl

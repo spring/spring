@@ -17,7 +17,7 @@ layout(location = 1) in vec2 vtxTexCoordAttr; // texCoordAttr
 layout(location = 2) in vec3 vtxNormalAttr;   // normalVecAttr
 
 out vec2 vTexCoord;
-out vec4 vFrontColor;
+out vec4 vBaseColor;
 
 
 void main() {
@@ -32,8 +32,8 @@ void main() {
 	gl_Position = shadowProjMat * vertexShadowPos;
 
 	#if 0
-	vFrontColor.xyz = vtxNormalAttr.z * vec3(1.0, 1.0, 1.0);
-	vFrontColor.a = vtxPositionAttr * (0.20 * (1.0 / MAX_TREE_HEIGHT)) + 0.85;
+	vBaseColor.xyz = vtxNormalAttr.z * vec3(1.0, 1.0, 1.0);
+	vBaseColor.a = vtxPositionAttr * (0.20 * (1.0 / MAX_TREE_HEIGHT)) + 0.85;
 	#endif
 
 	vTexCoord = vtxTexCoordAttr;

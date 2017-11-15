@@ -7,6 +7,7 @@
 #include "Map/Ground.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -28,9 +29,7 @@ void CWreckProjectile::Update()
 	speed.y += mygravity;
 	speed.x *= 0.994f;
 	speed.z *= 0.994f;
-
-	if (speed.y > 0.0f)
-		speed.y *= 0.998f;
+	speed.y *= (0.998f + 0.002f * (speed.y <= 0.0f));
 
 	pos += speed;
 
@@ -41,7 +40,7 @@ void CWreckProjectile::Update()
 	deleteMe |= (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z));
 }
 
-void CWreckProjectile::Draw(CVertexArray* va)
+void CWreckProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	col[0] = (unsigned char) (0.15f * 200);
@@ -50,10 +49,10 @@ void CWreckProjectile::Draw(CVertexArray* va)
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col);
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col});
 	#undef wt
 }
 
@@ -62,7 +61,3 @@ void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::redA);
 }
 
-int CWreckProjectile::GetProjectilesCount() const
-{
-	return 1;
-}

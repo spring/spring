@@ -22,11 +22,11 @@ public:
 		float particleSize
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 	void StopFire() { ttl = 0; }
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return (subParticles2.size() + subParticles.size() * 2); }
 
 public:
 	int ttl;

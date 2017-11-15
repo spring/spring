@@ -8,7 +8,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
@@ -76,7 +76,7 @@ void CDirtProjectile::Update()
 	deleteMe |= (alpha <= 0.0f);
 }
 
-void CDirtProjectile::Draw(CVertexArray* va)
+void CDirtProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	float partAbove = (pos.y / (size * camera->GetUp().y));
 
@@ -94,15 +94,10 @@ void CDirtProjectile::Draw(CVertexArray* va)
 	const float interSize = size + globalRendering->timeOffset * sizeExpansion;
 	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
-	va->AddVertexTC(drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->yend,   col);
-	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->ystart, col);
-}
-
-int CDirtProjectile::GetProjectilesCount() const
-{
-	return 1;
+	va->SafeAppend({drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->yend,   col});
+	va->SafeAppend({drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->ystart, col});
 }
 
 

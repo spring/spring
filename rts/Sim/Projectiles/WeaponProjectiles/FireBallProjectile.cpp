@@ -5,12 +5,13 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/myMath.h"
 #include "System/creg/STL_Deque.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
@@ -40,48 +41,42 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 	}
 }
 
-void CFireBallProjectile::Draw(CVertexArray* va)
+void CFireBallProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4] = { 255, 150, 100, 1 };
 
-	float3 interPos = checkCol ? drawPos : pos;
+	const float3 interPos = mix(pos, drawPos, checkCol);
 	float size = radius * 1.3f;
 
 	int numSparks = sparks.size();
 	int numFire = std::min(10, numSparks);
-	va->EnlargeArrays((numSparks + numFire) * 4, 0, VA_SIZE_TC);
 
 	for (int i = 0; i < numSparks; i++) {
-		//! CAUTION: loop count must match EnlargeArrays above
 		col[0] = (numSparks - i) * 12;
 		col[1] = (numSparks - i) *  6;
 		col[2] = (numSparks - i) *  4;
 
 		#define ept projectileDrawer->explotex
-		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend,   ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col);
-		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend,   col);
+		va->SafeAppend({sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col});
+		va->SafeAppend({sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend,   ept->ystart, col});
+		va->SafeAppend({sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col});
+		va->SafeAppend({sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend,   col});
 		#undef ept
 	}
 
-	int maxCol = numFire;
-	if (checkCol) {
-		maxCol = 10;
-	}
+	const int maxCol = mix(numFire, 10, checkCol);
 
-	for (int i = 0; i < numFire; i++) //! CAUTION: loop count must match EnlargeArrays above
-	{
+	for (int i = 0; i < numFire; i++) {
 		col[0] = (maxCol - i) * 25;
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;
+
 		#define dgt projectileDrawer->dguntex
-		va->AddVertexQTC(interPos - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col);
-		va->AddVertexQTC(interPos  -camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col);
+		va->SafeAppend({interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col});
+		va->SafeAppend({interPos - (speed * 0.5f * i) + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col});
+		va->SafeAppend({interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col});
+		va->SafeAppend({interPos - (speed * 0.5f * i) - camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col});
 		#undef dgt
-		interPos = interPos - speed * 0.5f;
 	}
 }
 
@@ -137,9 +132,3 @@ void CFireBallProjectile::Collision()
 	deleteMe = false;
 }
 
-int CFireBallProjectile::GetProjectilesCount() const
-{
-	int numSparks = sparks.size();
-	int numFire = std::min(10, numSparks);
-	return (numSparks + numFire);
-}

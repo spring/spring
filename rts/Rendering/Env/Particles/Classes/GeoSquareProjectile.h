@@ -11,15 +11,18 @@ class CGeoSquareProjectile : public CProjectile
 public:
 	CGeoSquareProjectile() { }
 	CGeoSquareProjectile(
-		const float3& p1, const float3& p2,
-		const float3& v1, const float3& v2,
-		float w1, float w2
+		const float3& p1,
+		const float3& p2,
+		const float3& v1,
+		const float3& v2,
+		float xsize,
+		float ysize
 	);
 
-	void Draw(CVertexArray* va) override;
-	void Update() override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
+	void Update() override {}
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 1; }
 
 	void SetColor(float r, float g, float b, float a) {
 		this->r = r;
@@ -29,8 +32,13 @@ public:
 	}
 
 private:
-	float3 p1, p2, v1, v2; ///< FIXME what is this?
-	float w1, w2; ///< FIXME what is this?
+	float3 p1; // start
+	float3 p2; // end
+	float3 v1;
+	float3 v2;
+
+	float xsize;
+	float ysize;
 	float r, g, b, a; ///< RGBA color
 };
 

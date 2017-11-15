@@ -147,9 +147,9 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		char fsBuf[65536];
 		// color attribs are not normalized
 		const char* fsVars =
-			"const float N = 1.0 / 255.0;\n"
+			"const float v_color_mult = 1.0 / 255.0;\n"
 			"uniform mat2 u_txcd_mat;\n";
-		const char* fsCode = "\tf_color_rgba = (v_color_rgba * N) * vec4(1.0, 1.0, 1.0, texture(u_tex0, u_txcd_mat * v_texcoor_st).a);\n";
+		const char* fsCode = "\tf_color_rgba = (v_color_rgba * v_color_mult) * vec4(1.0, 1.0, 1.0, texture(u_tex0, u_txcd_mat * v_texcoor_st).a);\n";
 
 		GL::RenderDataBuffer::FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
 		GL::RenderDataBuffer::FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");

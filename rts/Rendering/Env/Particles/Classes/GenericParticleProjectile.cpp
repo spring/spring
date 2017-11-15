@@ -3,7 +3,7 @@
 
 #include "Game/Camera.h"
 #include "GenericParticleProjectile.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
@@ -55,26 +55,23 @@ void CGenericParticleProjectile::Update()
 	deleteMe |= (life > 1.0f);
 }
 
-void CGenericParticleProjectile::Draw(CVertexArray* va)
+void CGenericParticleProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
-	float3 dir1 = camera->GetRight();
-	float3 dir2 = camera->GetUp();
+	float3 xdir = camera->GetRight();
+	float3 ydir = camera->GetUp();
+
 	if (directional) {
-		float3 dif(pos - camera->GetPos());
-		dif.ANormalize();
-		dir1 = dif.cross(speed).ANormalize();
-		dir2 = dif.cross(dir1);
+		const float3 dif = (pos - camera->GetPos()).ANormalize();
+
+		xdir = dif.cross(speed).ANormalize();
+		ydir = dif.cross(xdir);
 	}
 
 	unsigned char color[4];
 	colorMap->GetColor(color, life);
-	va->AddVertexTC(drawPos + (-dir1 - dir2) * size, texture->xstart, texture->ystart, color);
-	va->AddVertexTC(drawPos + (-dir1 + dir2) * size, texture->xend,   texture->ystart, color);
-	va->AddVertexTC(drawPos + ( dir1 + dir2) * size, texture->xend,   texture->yend,   color);
-	va->AddVertexTC(drawPos + ( dir1 - dir2) * size, texture->xstart, texture->yend,   color);
+	va->SafeAppend({drawPos + (-xdir - ydir) * size, texture->xstart, texture->ystart, color});
+	va->SafeAppend({drawPos + (-xdir + ydir) * size, texture->xend,   texture->ystart, color});
+	va->SafeAppend({drawPos + ( xdir + ydir) * size, texture->xend,   texture->yend,   color});
+	va->SafeAppend({drawPos + ( xdir - ydir) * size, texture->xstart, texture->yend,   color});
 }
 
-int CGenericParticleProjectile::GetProjectilesCount() const
-{
-	return 1;
-}

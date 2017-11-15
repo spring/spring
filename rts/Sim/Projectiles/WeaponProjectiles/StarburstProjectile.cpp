@@ -6,8 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -294,7 +293,7 @@ void CStarburstProjectile::UpdateTrajectory()
 	SetPosition(pos + speed);
 }
 
-void CStarburstProjectile::Draw(CVertexArray* va)
+void CStarburstProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
@@ -313,20 +312,21 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 		for (int num = 0; num < numAgeMods; aa += TRACER_PARTS_STEP, ++num) {
 			const float ageMod = tracerPart->ageMods[num];
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
+			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
+
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
 
 			float alpha = Square(1.0f - age2);
-			if (missileAge >= 20) {
+			if (missileAge >= 20)
 				alpha = (1.0f - age2) * std::max(0.0f, 1.0f - age2);
-			}
+
 			SColor col = lightYellow * Clamp(alpha, 0.f, 1.f);
 			col.a = 1;
 
-			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
-			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
-			va->AddVertexTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col);
+			va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col});
+			va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col});
+			va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col});
+			va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col});
 		}
 
 		// unsigned, so LHS will wrap around to UINT_MAX
@@ -336,10 +336,11 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 	// draw the engine flare
 	const SColor lightRed(255, 180, 180, 1);
 	const float fsize = 25.0f;
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed);
+
+	va->SafeAppend({drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed});
+	va->SafeAppend({drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed});
+	va->SafeAppend({drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed});
+	va->SafeAppend({drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed});
 }
 
 int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -365,7 +366,3 @@ int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldFor
 	return 0;
 }
 
-int CStarburstProjectile::GetProjectilesCount() const
-{
-	return numParts + 1;
-}

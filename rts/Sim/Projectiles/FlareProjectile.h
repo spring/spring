@@ -10,14 +10,17 @@ class CFlareProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CFlareProjectile)
 
+private:
+	CFlareProjectile() {}
+
 public:
 	CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame);
 	~CFlareProjectile();
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return (subPos.size()); }
 
 public:
 	int activateFrame;
@@ -25,13 +28,11 @@ public:
 
 	int numSub;
 	int lastSub;
+
 	std::vector<float3> subPos;
 	std::vector<float3> subSpeed;
+
 	float alphaFalloff;
-
-private:
-	CFlareProjectile() { }
-
 };
 
 #endif // FLARE_PROJECTILE_H

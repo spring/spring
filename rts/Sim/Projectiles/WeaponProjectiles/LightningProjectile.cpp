@@ -3,6 +3,7 @@
 
 #include "Game/Camera.h"
 #include "LightningProjectile.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -37,8 +38,8 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	displacements[0] = 0.0f;
 	displacements2[0] = 0.0f;
 
-	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
+	for (int d = 1; d < NUM_DISPLACEMENTS; ++d) {
+		displacements [d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 		displacements2[d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 	}
 
@@ -57,15 +58,15 @@ void CLightningProjectile::Update()
 		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, displacements[0], 0.0f, NULL, NULL);
 	}
 
-	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  += (gsRNG.NextFloat() - 0.5f) * 0.3f;
+	for (int d = 1; d < NUM_DISPLACEMENTS; ++d) {
+		displacements [d] += (gsRNG.NextFloat() - 0.5f) * 0.3f;
 		displacements2[d] += (gsRNG.NextFloat() - 0.5f) * 0.3f;
 	}
 
 	UpdateInterception();
 }
 
-void CLightningProjectile::Draw(CVertexArray* va)
+void CLightningProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * 255);
@@ -78,29 +79,28 @@ void CLightningProjectile::Draw(CVertexArray* va)
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	float3 tempPos = startPos;
 
-	va->EnlargeArrays(18 * 4, 0, VA_SIZE_TC);
-	for (size_t d = 1; d < displacements_size-1; ++d) {
+	for (int d = 1; d < NUM_DISPLACEMENTS - 1; ++d) {
 		float f = (d + 1) * 0.111f;
 
 		#define WDV (&weaponDef->visuals)
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col);
+		va->SafeAppend({tempPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col});
+		va->SafeAppend({tempPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col});
 		tempPos = (startPos * (1.0f - f)) + (targetPos * f);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col);
-		va->AddVertexQTC(tempPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		va->SafeAppend({tempPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col});
+		va->SafeAppend({tempPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col});
 		#undef WDV
 	}
 
 	tempPos = startPos;
-	for (size_t d = 1; d < displacements_size-1; ++d) {
-		float f = (d + 1) * 0.111f;
+	for (int d = 1; d < NUM_DISPLACEMENTS - 1; ++d) {
+		const float f = (d + 1) * 0.111f;
 
 		#define WDV (&weaponDef->visuals)
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col);
+		va->SafeAppend({tempPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col});
+		va->SafeAppend({tempPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col});
 		tempPos = startPos * (1.0f - f) + targetPos * f;
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col);
-		va->AddVertexQTC(tempPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col);
+		va->SafeAppend({tempPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col});
+		va->SafeAppend({tempPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col});
 		#undef WDV
 	}
 }
@@ -115,10 +115,5 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 	};
 	lines.AddVertexQC(startPos,  lcolor);
 	lines.AddVertexQC(targetPos, lcolor);
-}
-
-int CLightningProjectile::GetProjectilesCount() const
-{
-	return displacements_size * 2;
 }
 

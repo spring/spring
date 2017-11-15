@@ -15,10 +15,12 @@ public:
 	CFireBallProjectile() { }
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override {
+		return (sparks.size() + std::min(size_t(10), sparks.size()));
+	}
 
 	void Collision() override;
 
@@ -30,10 +32,9 @@ public:
 		int ttl;
 	};
 
-	typedef std::deque<Spark> spark_list_type;
-
 private:
-	spark_list_type sparks;
+	std::deque<Spark> sparks;
+
 	void EmitSpark();
 };
 

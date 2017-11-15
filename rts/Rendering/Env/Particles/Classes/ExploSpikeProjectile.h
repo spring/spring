@@ -22,7 +22,7 @@ public:
 		float alphaDecay
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
 	void Init(const CUnit* owner, const float3& offset) override;
@@ -30,7 +30,7 @@ public:
 	// after creation if it also happened to collide with something
 	void Collision() override {}
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 1; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

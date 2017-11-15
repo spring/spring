@@ -7,7 +7,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "System/myMath.h"
 
@@ -93,31 +93,25 @@ void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
 }
 
 
-void CSmokeTrailProjectile::Draw(CVertexArray* va)
+void CSmokeTrailProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
 	const float invLifeTime = (1.0f / lifeTime);
-	va->EnlargeArrays(8, 0, VA_SIZE_TC);
 
 	const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
 	const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
 	const float3 odir1 = (dif1.cross(dir1)).ANormalize();
 	const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
-	const SColor colBase(color, color, color, 1.f);
+	const SColor colBase(color, color, color, 1.0f);
 
-	float a1 = (1.f - age * invLifeTime) * (0.7f + std::fabs(dif1.dot(dir1)));
-	if (lastSegment) {
-		a1 = 0;
-	}
-	const float alpha1 = Clamp(a1, 0.f, 1.f);
+	const float a1 = ((1.0f - age * invLifeTime) * (0.7f + std::fabs(dif1.dot(dir1)))) * (1 - lastSegment);
+	const float a2 = ((1.0f - (age + 8) * invLifeTime) * (0.7f + std::fabs(dif2.dot(dir2)))) * (1 - firstSegment);
+
+	const float alpha1 = Clamp(a1, 0.0f, 1.0f);
 	const SColor col = colBase * alpha1;
 
-	float a2 = (1.f - (age + 8) * invLifeTime) * (0.7f + std::fabs(dif2.dot(dir2)));
-	if (firstSegment) {
-		a2 = 0;
-	}
-	const float alpha2 = Clamp(a2, 0.f, 1.f);
+	const float alpha2 = Clamp(a2, 0.0f, 1.0f);
 	const SColor col2 = colBase * alpha2;
 
 	const float size =  1 + ( age      * invLifeTime) * orgSize;
@@ -129,26 +123,26 @@ void CSmokeTrailProjectile::Draw(CVertexArray* va)
 		const float3 odir3 = (dif3.cross(middir)).ANormalize();
 		const float size3 = (0.2f + t) * orgSize;
 
-		const float a2 = (1.f - t) * (0.7f + std::fabs(dif3.dot(middir)));
-		const float alpha = Clamp(a2, 0.f, 1.f);
+		const float a2 = (1.0f - t) * (0.7f + std::fabs(dif3.dot(middir)));
+		const float alpha = Clamp(a2, 0.0f, 1.0f);
 		const SColor col3 = colBase * alpha;
 
 		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
 
-		va->AddVertexQTC(pos1   - (odir1 * size),  texture->xstart, texture->ystart, col);
-		va->AddVertexQTC(pos1   + (odir1 * size),  texture->xstart, texture->yend,   col);
-		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
+		va->SafeAppend({pos1   - (odir1 * size),  texture->xstart, texture->ystart, col });
+		va->SafeAppend({pos1   + (odir1 * size),  texture->xstart, texture->yend,   col });
+		va->SafeAppend({midpos + (odir3 * size3), midtexx,         texture->yend,   col3});
+		va->SafeAppend({midpos - (odir3 * size3), midtexx,         texture->ystart, col3});
 
-		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
-		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-		va->AddVertexQTC(pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2);
-		va->AddVertexQTC(pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2);
+		va->SafeAppend({midpos - (odir3 * size3), midtexx,         texture->ystart, col3});
+		va->SafeAppend({midpos + (odir3 * size3), midtexx,         texture->yend,   col3});
+		va->SafeAppend({pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2});
+		va->SafeAppend({pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2});
 	} else {
-		va->AddVertexQTC(pos1 - (odir1 * size),    texture->xstart, texture->ystart, col);
-		va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
-		va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
-		va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
+		va->SafeAppend({pos1 - (odir1 * size),    texture->xstart, texture->ystart, col });
+		va->SafeAppend({pos1 + (odir1 * size),    texture->xstart, texture->yend,   col });
+		va->SafeAppend({pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2});
+		va->SafeAppend({pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2});
 	}
 }
 
@@ -157,7 +151,3 @@ void CSmokeTrailProjectile::Update()
 	deleteMe |= (gs->frameNum >= (creationTime + lifeTime));
 }
 
-int CSmokeTrailProjectile::GetProjectilesCount() const
-{
-	return 2;
-}

@@ -10,13 +10,20 @@
 #endif
 
 #include "ExpGenSpawnable.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 #include "System/float3.h"
 #include "System/type2.h"
 
 class CUnit;
 class CFeature;
-class CVertexArray;
 class CMatrix44f;
+
+class CVertexArray;
+namespace GL {
+	template<typename T> struct TRenderDataBuffer;
+	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
+};
+
 
 class CProjectile: public CExpGenSpawnable
 {
@@ -43,7 +50,7 @@ public:
 	virtual void Update();
 	virtual void Init(const CUnit* owner, const float3& offset) override;
 
-	virtual void Draw(CVertexArray* va) {}
+	virtual void Draw(GL::RenderDataBufferTC* va) const {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
 	virtual int GetProjectilesCount() const = 0;

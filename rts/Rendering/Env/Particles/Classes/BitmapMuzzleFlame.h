@@ -15,12 +15,12 @@ class CBitmapMuzzleFlame : public CProjectile
 public:
 	CBitmapMuzzleFlame();
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
 	void Init(const CUnit* owner, const float3& offset) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 3; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

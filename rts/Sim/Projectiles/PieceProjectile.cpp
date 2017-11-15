@@ -6,6 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
@@ -252,32 +253,26 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 }
 
 
-void CPieceProjectile::Draw(CVertexArray* va)
+void CPieceProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	if ((explFlags & PF_Fire) == 0)
 		return;
 
-	va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
-	static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
+	const SColor lightOrange(1.0f, 0.78f, 0.59f, 0.2f);
+	const auto eft = projectileDrawer->explofadetex;
 
 	for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
 		const float3 interPos = fireTrailPoints[age].pos;
-		const float size = fireTrailPoints[age].size;
 
 		const float alpha = 1.0f - (age * (1.0f / NUM_TRAIL_PARTS));
-		const float drawsize = (1.0f + age) * size;
+		const float drawsize = (1.0f + age) * fireTrailPoints[age].size;
+
 		const SColor col = lightOrange * alpha;
 
-		const auto eft = projectileDrawer->explofadetex;
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xstart, eft->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xend,   eft->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xend,   eft->yend,   col);
-		va->AddVertexQTC(interPos - camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xstart, eft->yend,   col);
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xend,   eft->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xstart, eft->yend,   col});
 	}
 }
 
-
-int CPieceProjectile::GetProjectilesCount() const
-{
-	return NUM_TRAIL_PARTS;
-}

@@ -19,7 +19,7 @@ public:
 		const float4& gfxColor
 	);
 
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void Update() override;
 
 	int GetProjectilesCount() const override { return 20; }

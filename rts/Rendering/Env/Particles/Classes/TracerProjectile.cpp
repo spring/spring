@@ -3,6 +3,7 @@
 #include "TracerProjectile.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
 CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
@@ -53,29 +54,21 @@ void CTracerProjectile::Update()
 	pos += speed;
 
 	drawLength += speedf;
+	drawLength = std::min(drawLength, 3.0f);
 	length -= speedf;
 
 	deleteMe |= (length < 0.0f);
 }
 
-void CTracerProjectile::Draw(CVertexArray* va)
+void CTracerProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
-	drawLength = std::min(drawLength, 3.0f);
-
-	glTexCoord2f(1.0f/16, 1.0f/16);
-	glColor4f(1, 1, 0.1f, 0.4f);
-	glBegin(GL_LINES);
-		glVertexf3(drawPos);
-		glVertexf3(drawPos-dir * drawLength);
-	glEnd();
-	glColor4f(1, 1, 1, 1);
-	glTexCoord2f(0, 0);
+	// semi-degenerate quad; emulates a line
+	va->SafeAppend({drawPos + UpVector * 0.001f                   ,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
+	va->SafeAppend({drawPos + UpVector * 0.001f - dir * drawLength,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
+	va->SafeAppend({drawPos - UpVector * 0.001f - dir * drawLength,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
+	va->SafeAppend({drawPos - UpVector * 0.001f                   ,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
 }
 
-int CTracerProjectile::GetProjectilesCount() const
-{
-	return 100; // glBeginEnd is ways more evil than VA draw!
-}
 
 bool CTracerProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {

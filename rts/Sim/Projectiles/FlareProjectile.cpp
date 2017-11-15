@@ -5,7 +5,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
@@ -98,7 +98,7 @@ void CFlareProjectile::Update()
 	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CFlareProjectile::Draw(CVertexArray* va)
+void CFlareProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	if (gs->frameNum <= activateFrame)
 		return;
@@ -110,23 +110,17 @@ void CFlareProjectile::Draw(CVertexArray* va)
 	col[2] = (unsigned char) (alpha * 0.2f) * 255;
 	col[3] = 1;
 
-	float rad = 6.0;
-	va->EnlargeArrays(numSub * 4, 0, VA_SIZE_TC);
+	const float rad = 6.0;
+
 	for (int a = 0; a < numSub; ++a) {
-		//! CAUTION: loop count must match EnlargeArrays above
 		const float3 interPos = subPos[a] + subSpeed[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		va->AddVertexQTC(interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col);
-		va->AddVertexQTC(interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col);
+		va->SafeAppend({interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col});
 		#undef fpt
 	}
 }
 
-
-int CFlareProjectile::GetProjectilesCount() const
-{
-	return subPos.size();
-}

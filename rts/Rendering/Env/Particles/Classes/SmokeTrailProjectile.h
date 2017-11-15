@@ -27,9 +27,9 @@ public:
 	);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 2; }
 
 	void UpdateEndPos(const float3 pos, const float3 dir);
 

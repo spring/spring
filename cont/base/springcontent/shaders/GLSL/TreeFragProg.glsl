@@ -16,7 +16,7 @@ uniform vec4 fogColor;
 
 in vec4 vVertexPos;
 in vec2 vTexCoord;
-in vec4 vFrontColor;
+in vec4 vBaseColor;
 
 in float vFogFactor;
 
@@ -35,7 +35,7 @@ void main() {
 	float shadowCoeff = 1.0;
 	#endif
 
-	vec4 diffuseCol = texture(diffuseTex, vTexCoord) * vFrontColor;
+	vec4 diffuseCol = texture(diffuseTex, vTexCoord) * vBaseColor;
 	vec3 shadeInt = mix(groundAmbientColor.rgb, vec3(1.0, 1.0, 1.0), shadowCoeff);
 
 

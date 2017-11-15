@@ -14,6 +14,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -447,29 +448,30 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 
 void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles)
 {
-	for (CProjectile* p: projectiles) {
+	for (const CProjectile* p: projectiles) {
 		DrawProjectileShadow(p);
 	}
 }
 
-void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
+void CProjectileDrawer::DrawProjectileShadow(const CProjectile* p)
 {
-	if (CanDrawProjectile(p, p->owner())) {
-		const CCamera* cam = CCamera::GetActiveCamera();
-		if (!cam->InView(p->drawPos, p->GetDrawRadius()))
-			return;
+	if (!CanDrawProjectile(p, p->owner()))
+		return;
 
-		// if this returns false, then projectile is
-		// neither weapon nor piece, or has no model
-		if (DrawProjectileModel(p))
-			return;
+	const CCamera* cam = CCamera::GetActiveCamera();
+	if (!cam->InView(p->drawPos, p->GetDrawRadius()))
+		return;
 
-		if (!p->castShadow)
-			return;
+	// if this returns false, then projectile is
+	// neither weapon nor piece, or has no model
+	if (DrawProjectileModel(p))
+		return;
 
-		// don't need to z-sort in the shadow pass
-		p->Draw(projectileDrawer->fxVA);
-	}
+	if (!p->castShadow)
+		return;
+
+	// don't need to z-sort in the shadow pass
+	p->Draw(fxBuffer);
 }
 
 
@@ -556,6 +558,62 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 }
 
 
+
+void CProjectileDrawer::DrawProjectilePass(Shader::IProgramObject*, bool drawReflection, bool drawRefraction)
+{
+	unitDrawer->SetupOpaqueDrawing(false);
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		unitDrawer->PushModelRenderState(modelType);
+		DrawProjectiles(modelType, drawReflection, drawRefraction);
+		unitDrawer->PopModelRenderState(modelType);
+	}
+
+	unitDrawer->ResetOpaqueDrawing(false);
+
+	// note: model-less projectiles are NOT drawn by this call but
+	// only z-sorted (if the projectiles indicate they want to be)
+	DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
+
+	std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
+
+
+	// collect the alpha-translucent particle effects in fxBuffer
+	for (CProjectile* p: zSortedProjectiles) {
+		p->Draw(fxBuffer);
+	}
+	for (CProjectile* p: unsortedProjectiles) {
+		p->Draw(fxBuffer);
+	}
+}
+
+void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
+{
+	if (fxBuffer->NumElems() > 0) {
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		glActiveTexture(GL_TEXTURE0);
+
+		glAlphaFunc(GL_GREATER, 0.0f);
+		glEnable(GL_ALPHA_TEST);
+		glDepthMask(GL_FALSE);
+
+		// send event after the default state has been set, allows overriding
+		// it for specific cases such as proper blending with depth-aware fog
+		// (requires mask=true and func=always)
+		eventHandler.DrawWorldPreParticles();
+
+
+		po->Enable();
+		po->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		po->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		textureAtlas->BindTexture();
+		fxBuffer->Submit(GL_QUADS);
+		po->Disable();
+	} else {
+		eventHandler.DrawWorldPreParticles();
+	}
+}
+
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glDisable(GL_BLEND);
@@ -567,94 +625,59 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
 
-	{
-		unitDrawer->SetupOpaqueDrawing(false);
 
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			unitDrawer->PushModelRenderState(modelType);
-			DrawProjectiles(modelType, drawReflection, drawRefraction);
-			unitDrawer->PopModelRenderState(modelType);
-		}
+	fxBuffer = GL::GetRenderBufferTC();
+	fxShader = fxBuffer->GetShader();
 
-		unitDrawer->ResetOpaqueDrawing(false);
-
-		// note: model-less projectiles are NOT drawn by this call but
-		// only z-sorted (if the projectiles indicate they want to be)
-		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
-
-		std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
-
-		fxVA = GetVertexArray();
-		fxVA->Initialize();
-
-		// collect the alpha-translucent particle effects in fxVA
-		for (CProjectile* p: zSortedProjectiles) {
-			p->Draw(fxVA);
-		}
-		for (CProjectile* p: unsortedProjectiles) {
-			p->Draw(fxVA);
-		}
-	}
+	DrawProjectilePass(fxShader, drawReflection, drawRefraction);
 
 	glEnable(GL_BLEND);
 	glDisable(GL_FOG);
 
-	if (fxVA->drawIndex() > 0) {
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_TEXTURE_2D);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 0.2f);
-		glAlphaFunc(GL_GREATER, 0.0f);
-		glEnable(GL_ALPHA_TEST);
-		glDepthMask(GL_FALSE);
-
-		// send event after the default state has been set, allows overriding
-		// it for specific cases such as proper blending with depth-aware fog
-		// (requires mask=true and func=always)
-		eventHandler.DrawWorldPreParticles();
-
-		textureAtlas->BindTexture();
-		fxVA->DrawArrayTC(GL_QUADS);
-	} else {
-		eventHandler.DrawWorldPreParticles();
-	}
+	DrawParticlePass(fxShader, drawReflection, drawRefraction);
 
 	glPopAttrib();
 }
 
-void CProjectileDrawer::DrawShadowPass()
-{
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_TEXTURE_2D);
+
+void CProjectileDrawer::DrawProjectileShadowPass(Shader::IProgramObject* po)
+{
 	po->Enable();
 
-	fxVA = GetVertexArray();
-	fxVA->Initialize();
-
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			DrawProjectilesShadow(modelType);
-		}
-
-		// draw the model-less projectiles
-		DrawProjectilesSetShadow(renderProjectiles);
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		DrawProjectilesShadow(modelType);
 	}
 
-	if (fxVA->drawIndex() > 0) {
-		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glAlphaFunc(GL_GREATER, 0.3f);
-		glEnable(GL_ALPHA_TEST);
-		// glDisable(GL_CULL_FACE);
-
-		textureAtlas->BindTexture();
-		fxVA->DrawArrayTC(GL_QUADS);
-	}
-
+	// draw the model-less projectiles
+	DrawProjectilesSetShadow(renderProjectiles);
 	po->Disable();
+}
+
+void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
+{
+	if (fxBuffer->NumElems() == 0)
+		return;
+
+	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	textureAtlas->BindTexture();
+	fxBuffer->Submit(GL_QUADS);
+	po->Disable();
+}
+
+void CProjectileDrawer::DrawShadowPass()
+{
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_TEXTURE_2D);
+
+	fxBuffer = GL::GetRenderBufferTC();
+	fxShader = nullptr;
+
+	DrawProjectileShadowPass(shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE));
+	DrawParticleShadowPass(shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PARTICLE));
+
 	glPopAttrib();
 }
 
@@ -674,9 +697,9 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 		GL::PushMatrix();
 			GL::MultMatrix(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)));
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
+			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p)))
 				wp->model->DrawStatic();
-			}
+
 		GL::PopMatrix();
 	} else {
 		// piece-projectile
@@ -707,39 +730,38 @@ void CProjectileDrawer::DrawGroundFlashes()
 	if (gfc.empty())
 		return;
 
-	static constexpr GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
-
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
-	glEnable(GL_TEXTURE_2D);
+
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.01f);
+
 	glPolygonOffset(-20, -1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFogfv(GL_FOG_COLOR, black);
 
-	gfVA = GetVertexArray();
-	gfVA->Initialize();
-	gfVA->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
+	gfBuffer = GL::GetRenderBufferTC();
+	gfShader = gfBuffer->GetShader();
 
+	gfShader->Enable();
+	gfShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	gfShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 	bool depthTest = true;
 	bool depthMask = false;
 
-	for (CGroundFlash* gf: gfc) {
-		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf, gu->myAllyTeam);
-		if (!inLos)
+	for (const CGroundFlash* gf: gfc) {
+		if (!gf->alwaysVisible && !gu->spectatingFullView && !losHandler->InAirLos(gf, gu->myAllyTeam))
 			continue;
 
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
 		if (depthTest != gf->depthTest) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
+			gfBuffer->Submit(GL_QUADS);
 
 			if ((depthTest = gf->depthTest)) {
 				glEnable(GL_DEPTH_TEST);
@@ -748,8 +770,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 			}
 		}
 		if (depthMask != gf->depthMask) {
-			gfVA->DrawArrayTC(GL_QUADS);
-			gfVA->Initialize();
+			gfBuffer->Submit(GL_QUADS);
 
 			if ((depthMask = gf->depthMask)) {
 				glDepthMask(GL_TRUE);
@@ -758,10 +779,11 @@ void CProjectileDrawer::DrawGroundFlashes()
 			}
 		}
 
-		gf->Draw(gfVA);
+		gf->Draw(gfBuffer);
 	}
 
-	gfVA->DrawArrayTC(GL_QUADS);
+	gfBuffer->Submit(GL_QUADS);
+	gfShader->Disable();
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);

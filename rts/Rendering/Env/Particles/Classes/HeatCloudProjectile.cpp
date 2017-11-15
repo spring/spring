@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
@@ -80,7 +80,7 @@ void CHeatCloudProjectile::Update()
 	sizemod *= sizemodmod;
 }
 
-void CHeatCloudProjectile::Draw(CVertexArray* va)
+void CHeatCloudProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	const float dheat = std::max(0.0f, heat-globalRendering->timeOffset);
@@ -93,15 +93,10 @@ void CHeatCloudProjectile::Draw(CVertexArray* va)
 
 	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 
-	va->AddVertexTC(drawPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xstart, texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xend,   texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col);
-}
-
-int CHeatCloudProjectile::GetProjectilesCount() const
-{
-	return 1;
+	va->SafeAppend({drawPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xstart, texture->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xend,   texture->ystart, col});
+	va->SafeAppend({drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col});
 }
 
 

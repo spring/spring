@@ -351,18 +351,14 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 	const float3& cameraDirX = cam->GetRight();
 	const float3& cameraDirY = cam->GetUp();
 
-	const CMatrix44f& treeMat = CMatrix44f::Identity();
-	const CMatrix44f& viewMat = shadowHandler->GetShadowViewMatrix();
-	const CMatrix44f& projMat = shadowHandler->GetShadowProjMatrix();
-
 	treeShaders[TREE_PROGRAM_ACTIVE] = ipo;
 	treeShaders[TREE_PROGRAM_ACTIVE]->Enable();
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(4, &cameraDirX.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(5, &cameraDirY.x);
 
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, &viewMat.m[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, &projMat.m[0]);
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(3, false, &treeMat.m[0]);
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(3, false, CMatrix44f::Identity());
 
 
 	glAlphaFunc(GL_GREATER, 0.5f);

@@ -13,10 +13,10 @@ public:
 	CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 1; }
 };
 
 #endif /* WRECK_PROJECTILE_H */

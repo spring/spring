@@ -8,7 +8,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
@@ -95,33 +95,25 @@ void CSmokeProjectile::Update()
 	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile::Draw(CVertexArray* va)
+void CSmokeProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);
 	col[1] = (unsigned char) (color * alpha);
 	col[2] = (unsigned char) (color * alpha);
-	col[3] = (unsigned char) alpha/*-alphaFalloff*globalRendering->timeOffset*/;
-	//int frame=textureNum;
-	//float xmod=0.125f+(float(int(frame%6)))/16;
-	//float ymod=(int(frame/6))/16.0f;
+	col[3] = (unsigned char) alpha /* -alphaFalloff * globalRendering->timeOffset */;
 
 	const float interSize = size + (sizeExpansion * globalRendering->timeOffset);
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->smoketex[textureNum]
-	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
-	va->AddVertexTC(drawPos + pos1, st->xend,   st->ystart, col);
-	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);
-	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
+	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
+	va->SafeAppend({drawPos + pos1, st->xend,   st->ystart, col});
+	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
+	va->SafeAppend({drawPos - pos1, st->xstart, st->yend,   col});
 	#undef st
-}
-
-int CSmokeProjectile::GetProjectilesCount() const
-{
-	return 1;
 }
 
 

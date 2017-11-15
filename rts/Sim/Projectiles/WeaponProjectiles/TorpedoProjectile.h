@@ -14,7 +14,7 @@ public:
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 
 	int GetProjectilesCount() const override { return 8; }
 

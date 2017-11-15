@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundFlashInfo.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -192,6 +192,7 @@ void CStandardGroundFlash::InitCommon(const float3& _pos, const float3& _color)
 	color.r = _color.x * 255.0f;
 	color.g = _color.y * 255.0f;
 	color.b = _color.z * 255.0f;
+	color.a = 255;
 
 	// flashSize is just backward compability
 	size = flashSize;
@@ -211,7 +212,7 @@ bool CStandardGroundFlash::Update()
 	return (std::max(--ttl, 0) > 0);
 }
 
-void CStandardGroundFlash::Draw(CVertexArray* va)
+void CStandardGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 {
 	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
@@ -224,12 +225,12 @@ void CStandardGroundFlash::Draw(CVertexArray* va)
 		const float3 p3 = pos + ( side1 + side2) * iSize;
 		const float3 p4 = pos + (-side1 + side2) * iSize;
 
-		color.a = (unsigned char)(iAlpha * 255);
+		const SColor c = {color.r, color.g, color.b, uint8_t(iAlpha * 255)};
 
-		va->AddVertexQTC(p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, color);
-		va->AddVertexQTC(p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, color);
-		va->AddVertexQTC(p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   color);
-		va->AddVertexQTC(p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   color);
+		va->SafeAppend({p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, c});
+		va->SafeAppend({p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, c});
+		va->SafeAppend({p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   c});
+		va->SafeAppend({p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   c});
 	}
 
 	if (iAge < 1.0f) {
@@ -239,17 +240,17 @@ void CStandardGroundFlash::Draw(CVertexArray* va)
 			iAlpha = flashAlpha * (1.0f - iAge);
 		}
 
-		color.a = Clamp(iAlpha, 0.0f, 1.0f) * 255;
-
 		const float3 p1 = pos + (-side1 - side2) * size;
 		const float3 p2 = pos + ( side1 - side2) * size;
 		const float3 p3 = pos + ( side1 + side2) * size;
 		const float3 p4 = pos + (-side1 + side2) * size;
 
-		va->AddVertexQTC(p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color);
-		va->AddVertexQTC(p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color);
-		va->AddVertexQTC(p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color);
-		va->AddVertexQTC(p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color);
+		const SColor c = {color.r, color.g, color.b, uint8_t(Clamp(iAlpha, 0.0f, 1.0f) * 255)};
+
+		va->SafeAppend({p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   c});
+		va->SafeAppend({p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   c});
+		va->SafeAppend({p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, c});
+		va->SafeAppend({p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, c});
 	}
 }
 
@@ -296,7 +297,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSimpleGroundFlash::Draw(CVertexArray* va)
+void CSimpleGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
@@ -306,10 +307,10 @@ void CSimpleGroundFlash::Draw(CVertexArray* va)
 	const float3 p3 = pos + ( side1 + side2) * size;
 	const float3 p4 = pos + (-side1 + side2) * size;
 
-	va->AddVertexQTC(p1, texture->xstart, texture->ystart, color);
-	va->AddVertexQTC(p2, texture->xend,   texture->ystart, color);
-	va->AddVertexQTC(p3, texture->xend,   texture->yend,   color);
-	va->AddVertexQTC(p4, texture->xstart, texture->yend,   color);
+	va->SafeAppend({p1, texture->xstart, texture->ystart, color});
+	va->SafeAppend({p2, texture->xend,   texture->ystart, color});
+	va->SafeAppend({p3, texture->xend,   texture->yend,   color});
+	va->SafeAppend({p4, texture->xstart, texture->yend,   color});
 }
 
 bool CSimpleGroundFlash::Update()
@@ -369,19 +370,19 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSeismicGroundFlash::Draw(CVertexArray* va)
+void CSeismicGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 {
-	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
-
 	const float3 p1 = pos + (-side1 - side2) * size;
 	const float3 p2 = pos + ( side1 - side2) * size;
 	const float3 p3 = pos + ( side1 + side2) * size;
 	const float3 p4 = pos + (-side1 + side2) * size;
 
-	va->AddVertexQTC(p1, texture->xstart, texture->ystart, color);
-	va->AddVertexQTC(p2, texture->xend,   texture->ystart, color);
-	va->AddVertexQTC(p3, texture->xend,   texture->yend,   color);
-	va->AddVertexQTC(p4, texture->xstart, texture->yend,   color);
+	const SColor c = {color.r, color.g, color.b, mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade))};
+
+	va->SafeAppend({p1, texture->xstart, texture->ystart, c});
+	va->SafeAppend({p2, texture->xend,   texture->ystart, c});
+	va->SafeAppend({p3, texture->xend,   texture->yend,   c});
+	va->SafeAppend({p4, texture->xstart, texture->yend,   c});
 }
 
 bool CSeismicGroundFlash::Update()

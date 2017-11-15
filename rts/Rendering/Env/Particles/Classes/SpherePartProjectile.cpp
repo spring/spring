@@ -4,7 +4,7 @@
 
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
@@ -75,10 +75,9 @@ void CSpherePartProjectile::Update()
 	pos = centerPos + vectors[12] * sphereSize;
 }
 
-void CSpherePartProjectile::Draw(CVertexArray* va)
+void CSpherePartProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	unsigned char col[4];
-	va->EnlargeArrays(4*4*4, 0, VA_SIZE_TC);
 
 	const float interSize = sphereSize + expansionSpeed * globalRendering->timeOffset;
 
@@ -93,24 +92,20 @@ void CSpherePartProjectile::Draw(CVertexArray* va)
 			col[1] = (unsigned char) (color.y * 255.0f * alpha);
 			col[2] = (unsigned char) (color.z * 255.0f * alpha);
 			col[3] = ((unsigned char) (40 * alpha)) + 1;
-			va->AddVertexQTC(centerPos + vectors[y*5 + x]     * interSize, texx, texy, col);
-			va->AddVertexQTC(centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col);
+			va->SafeAppend({centerPos + vectors[y*5 + x]     * interSize, texx, texy, col});
+			va->SafeAppend({centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col});
 			alpha = baseAlpha * (1.0f - std::min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - std::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
 
 			col[0] = (unsigned char) (color.x * 255.0f * alpha);
 			col[1] = (unsigned char) (color.y * 255.0f * alpha);
 			col[2] = (unsigned char) (color.z * 255.0f * alpha);
 			col[3] = ((unsigned char) (40 * alpha)) + 1;
-			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x + 1] * interSize, texx, texy, col);
-			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x]     * interSize, texx, texy, col);
+			va->SafeAppend({centerPos+vectors[(y + 1)*5 + x + 1] * interSize, texx, texy, col});
+			va->SafeAppend({centerPos+vectors[(y + 1)*5 + x]     * interSize, texx, texy, col});
 		}
 	}
 }
 
-int CSpherePartProjectile::GetProjectilesCount() const
-{
-	return 4 * 4;
-}
 
 void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alpha, float expansionSpeed, float3 pos, float3 color)
 {

@@ -520,6 +520,9 @@ namespace GL {
 			prvIndxPos = curIndxPos;
 		}
 
+		size_t NumElems() const { return (curElemPos - prvElemPos); }
+		size_t NumIndcs() const { return (curIndxPos - prvIndxPos); }
+
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
 		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
 

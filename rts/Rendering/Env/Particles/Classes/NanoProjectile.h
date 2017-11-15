@@ -16,10 +16,11 @@ public:
 	~CNanoProjectile();
 
 	void Update() override;
-	void Draw(CVertexArray* va) override;
+	void Draw(GL::RenderDataBufferTC* va) const override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	int GetProjectilesCount() const override;
+	// nano-particles use their own counter
+	int GetProjectilesCount() const override { return 0; }
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

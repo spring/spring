@@ -21,7 +21,7 @@ layout(location = 2) in vec3 vtxNormalAttr;
 
 out vec4 vVertexPos;
 out vec2 vTexCoord;
-out vec4 vFrontColor;
+out vec4 vBaseColor;
 
 out float vFogFactor;
 
@@ -36,8 +36,8 @@ void main() {
 	vVertexPos = treeMat * vertexPos;
 	#endif
 
-	vFrontColor.rgb = (vtxNormalAttr.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
-	vFrontColor.a = (vtxPositionAttr.y * alphaModifiers.x) + alphaModifiers.y;
+	vBaseColor.rgb = (vtxNormalAttr.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
+	vBaseColor.a = (vtxPositionAttr.y * alphaModifiers.x) + alphaModifiers.y;
 
 	vTexCoord = vtxTexCoordAttr;
 
