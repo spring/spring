@@ -424,6 +424,9 @@ namespace GL {
 		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
 		void SubmitIndexed(uint32_t primType) {}
 
+		size_t NumElems() const { return 0; }
+		size_t NumIndcs() const { return 0; }
+
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
 		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
 

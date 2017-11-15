@@ -142,9 +142,6 @@ void CFireProjectile::Draw(GL::RenderDataBufferTC* va) const
 	unsigned char col [4]; col[3] = 1;
 	unsigned char col2[4];
 
-	const size_t sz2 = subParticles2.size();
-	const size_t sz = subParticles.size();
-
 	for (const SubParticle& pi: subParticles2) {
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
 		const float size = pi.maxSize * age;
