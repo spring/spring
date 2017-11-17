@@ -8,6 +8,8 @@ namespace DebugColVolDrawer
 {
 	extern bool enable;
 
+	void Init();
+	void Kill();
 	void Draw();
 }
 

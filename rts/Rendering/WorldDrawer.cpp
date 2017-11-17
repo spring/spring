@@ -45,6 +45,7 @@
 CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	LuaObjectDrawer::Init();
+	DebugColVolDrawer::Init();
 }
 
 CWorldDrawer::~CWorldDrawer()
@@ -76,6 +77,7 @@ CWorldDrawer::~CWorldDrawer()
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
 	LuaObjectDrawer::Kill();
+	DebugColVolDrawer::Kill();
 }
 
 

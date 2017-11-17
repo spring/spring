@@ -5,7 +5,6 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/MatrixState.hpp"
@@ -22,7 +21,8 @@
 
 
 static constexpr float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
-static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
+// [0] := VBO, [1] := IBO, [2 + i, 3 + i] := {#verts, #indcs}
+static unsigned int MESH_COLVOL_BUFFERS[2 + 3 * 2] = {20, 20, 20, 20, 0, 0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
 {
@@ -35,7 +35,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 			GL::Translate({vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2)});
 			GL::Scale({vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2)});
 
-			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
@@ -63,14 +63,14 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 				} break;
 			}
 
-			glWireCylinder(&volumeDisplayListIDs[1], 20, 1.0f);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 1);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
 			GL::Translate({vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2)});
 			GL::Scale({vol->GetScale(0), vol->GetScale(1), vol->GetScale(2)});
 
-			glWireCube(&volumeDisplayListIDs[2]);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 0);
 		} break;
 	}
 
@@ -137,7 +137,6 @@ static void DrawObjectDebugPieces(const CSolidObject* o)
 
 static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 {
-	GLUquadricObj* q = gluNewQuadric();
 	glDisable(GL_DEPTH_TEST);
 
 	if (o->aimPos != o->midPos) {
@@ -146,8 +145,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 		GL::Translate(o->relAimPos);
 
 		glColor4f(1.0f, 0.0f, 0.0f, 0.35f);
-		gluQuadricDrawStyle(q, GLU_FILL);
-		gluSphere(q, 2.0f, 5, 5);
+		gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 
 		GL::PopMatrix();
 	}
@@ -157,13 +155,11 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 		GL::Translate(o->relMidPos);
 
 		glColor4f(1.0f, 0.0f, 1.0f, 0.35f);
-		gluQuadricDrawStyle(q, GLU_FILL);
-		gluSphere(q, 2.0f, 5, 5);
+		gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 		glColorf4(DEFAULT_VOLUME_COLOR);
 	}
 
 	glEnable(GL_DEPTH_TEST);
-	gluDeleteQuadric(q);
 }
 
 
@@ -179,8 +175,8 @@ static inline void DrawFeatureColVol(const CFeature* f)
 	if (!camera->InView(f->pos, f->GetDrawRadius()))
 		return;
 
-	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
+	const bool customType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
+	const bool customSize = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
 	GL::PushMatrix();
 	GL::MultMatrix(f->GetTransformMatrixRef(false));
@@ -200,12 +196,12 @@ static inline void DrawFeatureColVol(const CFeature* f)
 				DrawCollisionVolume(v);
 		}
 
-		if (vCustomType || vCustomDims) {
+		if (customType || customSize) {
 			GL::Scale({f->radius, f->radius, f->radius});
 
 			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
-			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 		}
 
 	GL::PopMatrix();
@@ -221,11 +217,9 @@ static inline void DrawUnitColVol(const CUnit* u)
 		return;
 
 	const CollisionVolume* v = &u->collisionVolume;
-	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
+	const bool customType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
+	const bool customSize = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
-	GLUquadricObj* q = gluNewQuadric();
-	gluQuadricDrawStyle(q, GLU_FILL);
 	glDisable(GL_DEPTH_TEST);
 
 	for (const CWeapon* w: u->weapons) {
@@ -233,7 +227,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 		GL::Translate(w->aimFromPos);
 
 		glColor4f(1.0f, 1.0f, 0.0f, 0.4f);
-		gluSphere(q, 1.0f, 5, 5);
+		gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 
 		GL::PopMatrix();
 		GL::PushMatrix();
@@ -245,7 +239,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
 		}
 
-		gluSphere(q, 1.0f, 5, 5);
+		gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 		GL::PopMatrix();
 
 		if (w->HaveTarget()) {
@@ -253,7 +247,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			GL::Translate(w->GetCurrentTargetPos());
 
 			glColor4f(1.0f, 0.8f, 0.0f, 0.4f);
-			gluSphere(q, 1.0f, 5, 5);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 
 			GL::PopMatrix();
 		}
@@ -261,7 +255,6 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 	glColorf4(DEFAULT_VOLUME_COLOR);
 	glEnable(GL_DEPTH_TEST);
-	gluDeleteQuadric(q);
 
 
 	GL::PushMatrix();
@@ -293,16 +286,17 @@ static inline void DrawUnitColVol(const CUnit* u)
 		}
 		if (u->shieldWeapon != nullptr) {
 			const CPlasmaRepulser* shield = static_cast<const CPlasmaRepulser*>(u->shieldWeapon);
+
 			glColor4f(0.0f, 0.0f, 0.6f, 0.35f);
 			DrawCollisionVolume(&shield->collisionVolume);
 		}
 
-		if (vCustomType || vCustomDims) {
+		if (customType || customSize) {
 			GL::Scale({u->radius, u->radius, u->radius});
 
 			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
-			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
+			gleDrawColVolMeshSubBuffer(&MESH_COLVOL_BUFFERS[0], 2);
 		}
 
 	GL::PopMatrix();
@@ -312,28 +306,69 @@ static inline void DrawUnitColVol(const CUnit* u)
 class CDebugColVolQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	void ResetState() {
-		drawnIds[0].clear();
-		drawnIds[1].clear();
+		unitIDs.clear();
+		unitIDs.reserve(32);
+		featureIDs.clear();
+		featureIDs.reserve(32);
 	}
+
+	void Enable() const {
+		GL::PushMatrix();
+		GL::LoadIdentity();
+		GL::MultMatrix(camera->GetViewMatrix());
+
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_CLIP_PLANE0);
+		glDisable(GL_CLIP_PLANE1);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		gleBindColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(2.0f);
+		glDepthMask(GL_TRUE);
+	}
+	void Disable() const {
+		glLineWidth(1.0f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		gleBindColVolMeshBuffers(nullptr);
+		glPopAttrib();
+
+		GL::PopMatrix();
+	}
+
 	void DrawQuad(int x, int y) {
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
-		for (const CFeature* f: q.features) {
-			if (drawnIds[0].find(f->id) == drawnIds[0].end()) {
-				drawnIds[0].insert(f->id);
-				DrawFeatureColVol(f);
-			}
+		for (const CUnit* u: q.units) {
+			const auto& p = unitIDs.insert(u->id);
+
+			if (!p.second)
+				continue;
+
+			DrawUnitColVol(u);
 		}
 
-		for (const CUnit* u: q.units) {
-			if (drawnIds[1].find(u->id) == drawnIds[1].end()) {
-				drawnIds[1].insert(u->id);
-				DrawUnitColVol(u);
-			}
+		for (const CFeature* f: q.features) {
+			const auto& p = featureIDs.insert(f->id);
+
+			if (!p.second)
+				continue;
+
+			DrawFeatureColVol(f);
 		}
 	}
 
-	spring::unordered_set<int> drawnIds[2];
+private:
+	spring::unordered_set<int>    unitIDs;
+	spring::unordered_set<int> featureIDs;
 };
 
 
@@ -342,38 +377,20 @@ namespace DebugColVolDrawer
 {
 	bool enable = false;
 
-	void Draw()
-	{
+	static CDebugColVolQuadDrawer cvDrawer;
+
+
+	void Init() { gleGenColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]); }
+	void Kill() { gleDelColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]); }
+
+	void Draw() {
 		if (!enable)
 			return;
 
-		GL::PushMatrix();
-		GL::LoadIdentity();
-		GL::MultMatrix(camera->GetViewMatrix());
-
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-			glDisable(GL_CULL_FACE);
-			glDisable(GL_TEXTURE_2D);
-			// glDisable(GL_BLEND);
-			glDisable(GL_ALPHA_TEST);
-			glDisable(GL_FOG);
-			glDisable(GL_CLIP_PLANE0);
-			glDisable(GL_CLIP_PLANE1);
-
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-			glLineWidth(2.0f);
-			glDepthMask(GL_TRUE);
-
-			static CDebugColVolQuadDrawer drawer;
-
-			drawer.ResetState();
-			readMap->GridVisibility(nullptr, &drawer, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
-
-			glLineWidth(1.0f);
-		glPopAttrib();
-
-		GL::PopMatrix();
+		cvDrawer.ResetState();
+		cvDrawer.Enable();
+		readMap->GridVisibility(nullptr, &cvDrawer, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
+		cvDrawer.Disable();
 	}
 }
+

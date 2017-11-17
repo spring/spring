@@ -1480,15 +1480,14 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
-	const float r  = luaL_checkfloat(L, 4);
-	const int divs =   luaL_checkint(L, 5);
 
 	if ((args >= 6) && lua_isnumber(L, 6)) {
 		// const float slope = lua_tofloat(L, 6);
-		glBallisticCircle(pos, r, NULL, divs);
+		glBallisticCircle(nullptr, luaL_checkint(L, 5), pos, luaL_checkfloat(L, 4));
 	} else {
-		glSurfaceCircle(pos, r, divs);
+		glSurfaceCircle(pos, luaL_checkfloat(L, 4), luaL_checkint(L, 5));
 	}
+
 	return 0;
 }
 

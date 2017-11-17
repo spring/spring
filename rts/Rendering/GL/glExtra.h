@@ -18,8 +18,7 @@ typedef void (*SurfaceSquareFunc)(const float3& center, float xsize, float zsize
 extern SurfaceCircleFunc glSurfaceCircle;
 extern SurfaceSquareFunc glSurfaceSquare;
 
-extern void glBallisticCircle(const float3& center, float radius,
-	const CWeapon* weapon, unsigned int resolution, float slope = 0.0f);
+extern void glBallisticCircle(const CWeapon* weapon, unsigned int resolution, const float3& center, float radius, float slope = 0.0f);
 
 extern void setSurfaceCircleFunc(SurfaceCircleFunc func);
 extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
@@ -27,8 +26,10 @@ extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
 typedef void (*DrawVolumeFunc)(const void* data);
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
 
-extern void glWireCube(unsigned int* listID);
-extern void glWireCylinder(unsigned int* listID, unsigned int numDivs, float zSize);
-extern void glWireSphere(unsigned int* listID, unsigned int numRows, unsigned int numCols);
+
+void gleGenColVolMeshBuffers(unsigned int* meshData);
+void gleDelColVolMeshBuffers(unsigned int* meshData);
+void gleBindColVolMeshBuffers(const unsigned int* meshData);
+void gleDrawColVolMeshSubBuffer(const unsigned int* meshData, unsigned int meshType);
 
 #endif
