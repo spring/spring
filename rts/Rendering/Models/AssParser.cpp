@@ -590,7 +590,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
 		if (piece == model->GetRootPiece()) {
-			assert(piece->parent == nullptr);
+			assert(!piece->HasParent());
 			assert(model->GetRootPiece() == piece);
 			continue;
 		}
@@ -628,16 +628,15 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 // Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
-	const CMatrix44f scaleRotMat = std::move(piece->ComposeTransform(ZeroVector, ZeroVector, piece->scales));
+	const CMatrix44f scaleRotMat = piece->ComposeTransform(ZeroVector, ZeroVector, piece->scales);
 
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != nullptr)? piece->parent->goffset: ZeroVector);
+	piece->SetGlobalOffset(scaleRotMat);
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	// update model min/max extents
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
-
-	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	// Repeat with children
 	for (S3DModelPiece* childPiece: piece->children) {
@@ -739,18 +738,5 @@ void CAssParser::FindTextures(
 	// 3. try to load from metafile (highest priority)
 	model->texs[0] = FindTexture(modelTable.GetString("tex1", ""), modelPath, model->texs[0]);
 	model->texs[1] = FindTexture(modelTable.GetString("tex2", ""), modelPath, model->texs[1]);
-}
-
-
-void SAssPiece::UploadGeometryVBOs()
-{
-	if (!HasGeometryData())
-		return;
-
-	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
-	// vertices.clear();
-	// indices.clear();
-
-	uploadedVBOs = true;
 }
 

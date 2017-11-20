@@ -307,9 +307,7 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 
 
 void CModelLoader::UploadRenderData(S3DModel* model) {
-	const S3DModelPiece* rootPiece = model->GetRootPiece();
-
-	if (rootPiece->UploadedVBOs())
+	if (model->UploadedBuffers())
 		return;
 
 	model->UploadBuffers();
@@ -322,6 +320,6 @@ void CModelLoader::UploadRenderData(S3DModel* model) {
 
 	// warn about models with bad normals, they break lighting
 	// skip for 3DO's since those have auto-calculated normals
-	CheckPieceNormals(model, rootPiece);
+	CheckPieceNormals(model, model->GetRootPiece());
 }
 

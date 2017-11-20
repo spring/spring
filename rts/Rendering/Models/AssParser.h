@@ -21,10 +21,7 @@ typedef SVertexData SAssVertex;
 
 struct SAssPiece: public S3DModelPiece
 {
-	SAssPiece(): numTexCoorChannels(0) {
-	}
-
-	void UploadGeometryVBOs() override;
+	SAssPiece(): numTexCoorChannels(0) {}
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }

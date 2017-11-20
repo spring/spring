@@ -92,8 +92,6 @@ struct S3DModelPiece {
 		, scales(OnesVector)
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
-		, hasBakedMat(false)
-		, uploadedVBOs(false)
 	{}
 
 	virtual ~S3DModelPiece() {}
@@ -107,7 +105,7 @@ struct S3DModelPiece {
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 
-	virtual void UploadGeometryVBOs() = 0;
+	void SetGlobalOffset(const CMatrix44f& m) { goffset = (m.Mul(offset) + ((HasParent())? parent->goffset: ZeroVector)); }
 
 	void BindShatterIndexBuffer() const { shatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
 	void UnbindShatterIndexBuffer() const { shatterIndices.Unbind(); }
@@ -157,8 +155,8 @@ public:
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
+	bool HasParent() const { return (parent != nullptr); }
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
-	bool UploadedVBOs() const { return uploadedVBOs; }
 
 private:
 	void CreateShatterPiece(int pieceNum);
@@ -186,8 +184,8 @@ public:
 protected:
 	VBO shatterIndices;
 
-	bool hasBakedMat;
-	bool uploadedVBOs;
+	bool hasBakedMat = false;
+	bool dummyPadding = false;
 };
 
 
@@ -277,6 +275,8 @@ struct S3DModel
 	float3 GetDrawMidPos() const { return relMidPos; }
 
 	const std::vector<CMatrix44f>& GetPieceMatrices() const { return pieceMatrices; }
+
+	bool UploadedBuffers() const { return (vertexArray != 0); }
 
 public:
 	std::string name;

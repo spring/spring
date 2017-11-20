@@ -171,18 +171,9 @@ void CShadowHandler::LoadShadowGenShaders()
 		"ShadowGenShaderProgProjectile",
 		"ShadowGenShaderProgParticle",
 	};
-	static const std::string shadowGenProgDefs[SHADOWGEN_PROGRAM_LAST] = {
-		"#define SHADOWGEN_PROGRAM_MODEL\n",
-		"#define SHADOWGEN_PROGRAM_MAP\n",
-		"#define SHADOWGEN_PROGRAM_TREE\n",
-		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
-		"#define SHADOWGEN_PROGRAM_PARTICLE\n",
-	};
 
 	// #version has to be added here because it is conditional
-	static const std::string versionDef = {
-		"#version " + IntToString(globalRendering->supportFragDepthLayout? 420: 410) + "\n",
-	};
+	static const std::string versionDef = "#version " + IntToString(globalRendering->supportFragDepthLayout? 420: 410) + "\n";
 	static const std::string extraDefs =
 		("#define SHADOWMATRIX_NONLINEAR " + IntToString(SHADOWMATRIX_NONLINEAR) + "\n") +
 		("#define SHADOWGEN_PER_FRAGMENT " + IntToString(SHADOWGEN_PER_FRAGMENT) + "\n") +
@@ -190,97 +181,105 @@ void CShadowHandler::LoadShadowGenShaders()
 		("#define SUPPORT_DEPTH_LAYOUT " + IntToString(globalRendering->supportFragDepthLayout) + "\n");
 
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
-		Shader::IProgramObject* po = (shadowGenProgs[i] = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL"));
+		shadowGenProgs[i] = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
+	}
 
-		switch (i) {
-			case SHADOWGEN_PROGRAM_TREE: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
-				po->Link();
+	{
+		Shader::IProgramObject* po = shadowGenProgs[SHADOWGEN_PROGRAM_MODEL];
 
-				po->SetUniformLocation("shadowParams" ); // idx 0
-				po->SetUniformLocation("shadowViewMat"); // idx 1
-				po->SetUniformLocation("shadowProjMat"); // idx 2
-				po->SetUniformLocation("treeMat"      ); // idx 3
-				po->SetUniformLocation("cameraDirX"   ); // idx 4
-				po->SetUniformLocation("cameraDirY"   ); // idx 5
-				po->SetUniformLocation("$dummy$"      ); // idx 6, unused
-				po->SetUniformLocation("alphaMaskTex" ); // idx 7
-				po->SetUniformLocation("alphaParams"  ); // idx 8
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenVertProg.glsl", versionDef + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
 
-				po->Enable();
-				po->SetUniform1i(7, 0);
-				po->SetUniform2f(8, 0.5f, 0.5f);
-				po->Disable();
-			} break;
+		po->SetUniformLocation("shadowParams" ); // idx 0
+		po->SetUniformLocation("shadowViewMat"); // idx 1
+		po->SetUniformLocation("shadowProjMat"); // idx 2
+		po->SetUniformLocation("modelMat"     ); // idx 3
+		po->SetUniformLocation("pieceMats"    ); // idx 4
+		po->SetUniformLocation("alphaMaskTex" ); // idx 5
+		po->SetUniformLocation("alphaParams"  ); // idx 6
 
-			case SHADOWGEN_PROGRAM_MAP: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
-				po->Link();
+		po->Enable();
+		po->SetUniform1i(5, 0);
+		po->SetUniform2f(6, 0.5f, 0.5f);
+		po->Disable();
+		po->Validate();
+	}
+	{
+		Shader::IProgramObject* po = shadowGenProgs[SHADOWGEN_PROGRAM_MAP];
 
-				po->SetUniformLocation("shadowParams" ); // idx 0
-				po->SetUniformLocation("shadowViewMat"); // idx 1
-				po->SetUniformLocation("shadowProjMat"); // idx 2
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenVertProg.glsl", versionDef + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
 
-				#if 0
-				// TODO
-				po->Enable();
-				po->SetUniform1i(3, 0); // alphaMaskTex
-				po->SetUniform2f(4, mapInfo->map.voidAlphaMin, mapInfo->map.voidAlphaMax); // alphaParams
-				po->Disable();
-				#endif
-			} break;
+		po->SetUniformLocation("shadowParams" ); // idx 0
+		po->SetUniformLocation("shadowViewMat"); // idx 1
+		po->SetUniformLocation("shadowProjMat"); // idx 2
 
-			case SHADOWGEN_PROGRAM_MODEL: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
-				po->Link();
+		#if 0
+		// TODO
+		po->Enable();
+		po->SetUniform1i(3, 0); // alphaMaskTex
+		po->SetUniform2f(4, mapInfo->map.voidAlphaMin, mapInfo->map.voidAlphaMax); // alphaParams
+		po->Disable();
+		#endif
 
-				po->SetUniformLocation("shadowParams" ); // idx 0
-				po->SetUniformLocation("shadowViewMat"); // idx 1
-				po->SetUniformLocation("shadowProjMat"); // idx 2
-				po->SetUniformLocation("modelMat"     ); // idx 3
-				po->SetUniformLocation("pieceMats"    ); // idx 4
-				po->SetUniformLocation("alphaMaskTex" ); // idx 5
-				po->SetUniformLocation("alphaParams"  ); // idx 6
+		po->Validate();
+	}
+	{
+		Shader::IProgramObject* po = shadowGenProgs[SHADOWGEN_PROGRAM_TREE];
 
-				po->Enable();
-				po->SetUniform1i(5, 0);
-				po->SetUniform2f(6, 0.5f, 0.5f);
-				po->Disable();
-			} break;
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenVertProg.glsl", versionDef + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
 
-			case SHADOWGEN_PROGRAM_PROJECTILE: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
-				po->Link();
+		po->SetUniformLocation("shadowParams" ); // idx 0
+		po->SetUniformLocation("shadowViewMat"); // idx 1
+		po->SetUniformLocation("shadowProjMat"); // idx 2
+		po->SetUniformLocation("treeMat"      ); // idx 3
+		po->SetUniformLocation("cameraDirX"   ); // idx 4
+		po->SetUniformLocation("cameraDirY"   ); // idx 5
+		po->SetUniformLocation("$dummy$"      ); // idx 6, unused
+		po->SetUniformLocation("alphaMaskTex" ); // idx 7
+		po->SetUniformLocation("alphaParams"  ); // idx 8
 
-				po->SetUniformLocation("shadowParams" ); // idx 0
-				po->SetUniformLocation("shadowViewMat"); // idx 1
-				po->SetUniformLocation("shadowProjMat"); // idx 2
-				po->SetUniformLocation("modelMat"     ); // idx 3
-				po->SetUniformLocation("pieceMats"    ); // idx 4
-			} break;
+		po->Enable();
+		po->SetUniform1i(7, 0);
+		po->SetUniform2f(8, 0.5f, 0.5f);
+		po->Disable();
+		po->Validate();
+	}
+	{
+		Shader::IProgramObject* po = shadowGenProgs[SHADOWGEN_PROGRAM_PROJECTILE];
 
-			case SHADOWGEN_PROGRAM_PARTICLE: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
-				po->Link();
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenVertProg.glsl", versionDef + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
 
-				po->SetUniformLocation("shadowParams" ); // idx 0
-				po->SetUniformLocation("shadowViewMat"); // idx 1
-				po->SetUniformLocation("shadowProjMat"); // idx 2
-				po->SetUniformLocation("alphaMaskTex" ); // idx 3
-				po->SetUniformLocation("alphaParams"  ); // idx 4
+		po->SetUniformLocation("shadowParams" ); // idx 0
+		po->SetUniformLocation("shadowViewMat"); // idx 1
+		po->SetUniformLocation("shadowProjMat"); // idx 2
+		po->SetUniformLocation("modelMat"     ); // idx 3
+		po->SetUniformLocation("pieceMats"    ); // idx 4
+		po->Validate();
+	}
+	{
+		Shader::IProgramObject* po = shadowGenProgs[SHADOWGEN_PROGRAM_PARTICLE];
 
-				po->Enable();
-				po->SetUniform1i(3, 0);
-				po->SetUniform2f(4, 0.3f, 0.3f);
-				po->Disable();
-			} break;
-		}
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenVertProg.glsl", versionDef + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
+		po->Link();
 
+		po->SetUniformLocation("shadowParams" ); // idx 0
+		po->SetUniformLocation("shadowViewMat"); // idx 1
+		po->SetUniformLocation("shadowProjMat"); // idx 2
+		po->SetUniformLocation("alphaMaskTex" ); // idx 3
+		po->SetUniformLocation("alphaParams"  ); // idx 4
+
+		po->Enable();
+		po->SetUniform1i(3, 0);
+		po->SetUniform2f(4, 0.3f, 0.3f);
+		po->Disable();
 		po->Validate();
 	}
 

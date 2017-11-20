@@ -19,12 +19,9 @@ typedef SVertexData SS3OVertex;
 
 
 struct SS3OPiece: public S3DModelPiece {
-	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {
-	}
+	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {}
 
 public:
-	void UploadGeometryVBOs() override;
-
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }

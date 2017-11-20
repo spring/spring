@@ -68,9 +68,7 @@ void S3DModel::UploadBuffers()
 		size_t numVerts = 0;
 		size_t numIndcs = 0;
 
-		for (size_t i = 0, n = pieceObjects.size(); i < n; i++) {
-			S3DModelPiece* omp = pieceObjects[i];
-
+		for (S3DModelPiece* omp: pieceObjects) {
 			if (!omp->HasGeometryData())
 				continue;
 
@@ -85,10 +83,7 @@ void S3DModel::UploadBuffers()
 			numIndcs += indcs.size();
 		}
 
-		for (size_t i = 0, n = pieceObjects.size(); i < n; i++) {
-			S3DModelPiece* omp = pieceObjects[i];
-
-			omp->UploadGeometryVBOs();
+		for (S3DModelPiece* omp: pieceObjects) {
 			omp->CreateShatterPieces();
 		}
 

@@ -322,8 +322,8 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, co
 		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
 		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
 		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
-		piece->goffset = piece->offset + ((parent != nullptr)? parent->goffset: ZeroVector);
 
+	piece->SetGlobalOffset(CMatrix44f::Identity());
 	piece->GetVertices(&me, fileBuf);
 	piece->GetPrimitives(model, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf, teamTextures);
 
@@ -410,18 +410,6 @@ void S3DOPiece::GenTriangleGeometry()
 			} break;
 		}
 	}
-}
-
-void S3DOPiece::UploadGeometryVBOs()
-{
-	if (!HasGeometryData())
-		return;
-
-	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
-	// vertices.clear();
-	// indices.clear();
-
-	uploadedVBOs = true;
 }
 
 

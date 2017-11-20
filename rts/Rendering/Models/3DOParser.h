@@ -65,8 +65,6 @@ struct S3DOPrimitive
 
 struct S3DOPiece: public S3DModelPiece
 {
-	void UploadGeometryVBOs() override;
-
 	unsigned int GetVertexCount() const override { return (vertexAttribs.size()); }
 	unsigned int GetVertexDrawIndexCount() const override { return (vertexIndices.size()); }
 

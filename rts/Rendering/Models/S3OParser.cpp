@@ -102,8 +102,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 	// post-process the piece
 	{
-		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
-
+		piece->SetGlobalOffset(CMatrix44f::Identity());
 		piece->Trianglize();
 		piece->SetVertexTangents();
 		piece->SetMinMaxExtends();
@@ -129,19 +128,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 
 
-
-
-void SS3OPiece::UploadGeometryVBOs()
-{
-	if (!HasGeometryData())
-		return;
-
-	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
-	// vertices.clear();
-	// indices.clear();
-
-	uploadedVBOs = true;
-}
 
 
 void SS3OPiece::SetMinMaxExtends()
