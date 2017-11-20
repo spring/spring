@@ -16,33 +16,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Log/ILog.h"
 
-TdfParser::parse_error::parse_error(size_t l, size_t c, std::string const& f) throw()
-	: content_error("Parse error in " + f + " at line " + IntToString(l) + " column " + IntToString(c) + ".")
-	, line(l)
-	, column(c)
-	, filename(f)
-{}
-
-TdfParser::parse_error::parse_error(std::string const& line_of_error, size_t l, size_t c, std::string const& f) throw()
-	: content_error("Parse error in " + f + " at line " + IntToString(l) + " column " + IntToString(c) +" near\n"+ line_of_error)
-	, line(l)
-	, column(c)
-	, filename(f)
-{}
-
-TdfParser::parse_error::parse_error(std::string const& message, std::string const& line_of_error, size_t l, size_t c, std::string const& f)
-	throw()
-	: content_error("Parse error '" + message + "' in " + f + " at line " + IntToString(l) + " column " + IntToString(c) +" near\n"+ line_of_error)
-	, line(l)
-	, column(c)
-	, filename(f)
-{}
-
-TdfParser::parse_error::~parse_error() throw() {}
-size_t TdfParser::parse_error::get_line() const { return line; }
-size_t TdfParser::parse_error::get_column() const { return column; }
-std::string const& TdfParser::parse_error::get_filename() const { return filename; }
-
 void TdfParser::TdfSection::print(std::ostream & out) const
 {
 	for (auto it = sections.cbegin(), e = sections.cend(); it != e; ++it) {
