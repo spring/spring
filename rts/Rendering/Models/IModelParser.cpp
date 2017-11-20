@@ -234,7 +234,7 @@ S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 	S3DModel* cachedModel = &models[ci->second];
 
 	if (!preload)
-		CreateLists(cachedModel);
+		UploadRenderData(cachedModel);
 
 	return cachedModel;
 }
@@ -255,7 +255,7 @@ S3DModel* CModelLoader::CreateModel(
 	model.SetPieceMatrices();
 
 	if (!preload)
-		CreateLists(&model);
+		UploadRenderData(&model);
 
 	// add (parsed or dummy) model to cache
 	model.id = models.size();
@@ -306,17 +306,13 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 
 
 
-void CModelLoader::CreateLists(S3DModel* model) {
+void CModelLoader::UploadRenderData(S3DModel* model) {
 	const S3DModelPiece* rootPiece = model->GetRootPiece();
 
-	if (rootPiece->GetDisplayListID() != 0)
+	if (rootPiece->UploadedVBOs())
 		return;
 
-	for (S3DModelPiece* p: model->pieces) {
-		p->UploadGeometryVBOs();
-		p->CreateShatterPieces();
-		p->CreateDispList();
-	}
+	model->UploadBuffers();
 
 	if (model->type == MODELTYPE_3DO)
 		return;
@@ -324,10 +320,8 @@ void CModelLoader::CreateLists(S3DModel* model) {
 	// make sure textures (already preloaded) are fully loaded
 	texturehandlerS3O->LoadTexture(model);
 
-	// warn about models with bad normals (they break lighting)
+	// warn about models with bad normals, they break lighting
 	// skip for 3DO's since those have auto-calculated normals
 	CheckPieceNormals(model, rootPiece);
 }
 
-/******************************************************************************/
-/******************************************************************************/

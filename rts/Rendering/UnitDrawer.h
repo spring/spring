@@ -93,8 +93,8 @@ public:
 
 	void UpdateGhostedBuildings();
 
-	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
+	void Draw();
+	void DrawOpaquePass(bool deferredPass);
 	void DrawShadowPass();
 	void DrawAlphaPass();
 

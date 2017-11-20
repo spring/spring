@@ -29,7 +29,6 @@ CR_REG_METADATA(CPieceProjectile,(
 
 	CR_MEMBER(age),
 	CR_MEMBER(explFlags),
-	CR_IGNORED(dispList),
 	CR_IGNORED(omp),
 	CR_IGNORED(smokeTrail),
 	CR_IGNORED(fireTrailPoints),
@@ -51,7 +50,6 @@ CPieceProjectile::CPieceProjectile(
 	CProjectile(pos, speed, owner, true, false, true),
 	age(0),
 	explFlags(flags),
-	dispList((lmp != nullptr) ? lmp->dispListID : 0),
 	omp((lmp != nullptr) ? lmp->original : nullptr),
 	smokeTrail(nullptr)
 {

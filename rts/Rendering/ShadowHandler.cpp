@@ -180,8 +180,7 @@ void CShadowHandler::LoadShadowGenShaders()
 	};
 
 	// #version has to be added here because it is conditional
-	static const std::string versionDefs[2] = {
-		"#version 130\n",
+	static const std::string versionDef = {
 		"#version " + IntToString(globalRendering->supportFragDepthLayout? 420: 410) + "\n",
 	};
 	static const std::string extraDefs =
@@ -195,8 +194,8 @@ void CShadowHandler::LoadShadowGenShaders()
 
 		switch (i) {
 			case SHADOWGEN_PROGRAM_TREE: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/TreeShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
 				po->Link();
 
 				po->SetUniformLocation("shadowParams" ); // idx 0
@@ -216,8 +215,8 @@ void CShadowHandler::LoadShadowGenShaders()
 			} break;
 
 			case SHADOWGEN_PROGRAM_MAP: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/MapShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
 				po->Link();
 
 				po->SetUniformLocation("shadowParams" ); // idx 0
@@ -233,9 +232,40 @@ void CShadowHandler::LoadShadowGenShaders()
 				#endif
 			} break;
 
+			case SHADOWGEN_PROGRAM_MODEL: {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->Link();
+
+				po->SetUniformLocation("shadowParams" ); // idx 0
+				po->SetUniformLocation("shadowViewMat"); // idx 1
+				po->SetUniformLocation("shadowProjMat"); // idx 2
+				po->SetUniformLocation("modelMat"     ); // idx 3
+				po->SetUniformLocation("pieceMats"    ); // idx 4
+				po->SetUniformLocation("alphaMaskTex" ); // idx 5
+				po->SetUniformLocation("alphaParams"  ); // idx 6
+
+				po->Enable();
+				po->SetUniform1i(5, 0);
+				po->SetUniform2f(6, 0.5f, 0.5f);
+				po->Disable();
+			} break;
+
+			case SHADOWGEN_PROGRAM_PROJECTILE: {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ProjectileShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->Link();
+
+				po->SetUniformLocation("shadowParams" ); // idx 0
+				po->SetUniformLocation("shadowViewMat"); // idx 1
+				po->SetUniformLocation("shadowProjMat"); // idx 2
+				po->SetUniformLocation("modelMat"     ); // idx 3
+				po->SetUniformLocation("pieceMats"    ); // idx 4
+			} break;
+
 			case SHADOWGEN_PROGRAM_PARTICLE: {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenVertProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenVertProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ParticleShadowGenFragProg.glsl", versionDef + shadowGenProgDefs[i] + extraDefs, GL_FRAGMENT_SHADER));
 				po->Link();
 
 				po->SetUniformLocation("shadowParams" ); // idx 0
@@ -248,14 +278,6 @@ void CShadowHandler::LoadShadowGenShaders()
 				po->SetUniform1i(3, 0);
 				po->SetUniform2f(4, 0.3f, 0.3f);
 				po->Disable();
-			} break;
-
-			default: {
-				// {model,projectile} program is still at #130 for now
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefs[i] + extraDefs, GL_VERTEX_SHADER));
-				po->Link();
-
-				po->SetUniformLocation("shadowParams"); // idx 0
 			} break;
 		}
 
@@ -379,20 +401,24 @@ void CShadowHandler::DrawShadowPasses()
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
-			eventHandler.DrawWorldShadow();
+		eventHandler.DrawWorldShadow();
 
-			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
-				treeDrawer->DrawShadow();
-				grassDrawer->DrawShadow();
-			}
+		if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
+			currentShadowPass = SHADOWGEN_PROGRAM_TREE;
+			treeDrawer->DrawShadow();
+			grassDrawer->DrawShadow();
+		}
 
-			if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
-				projectileDrawer->DrawShadowPass();
+		if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0) {
+			currentShadowPass = SHADOWGEN_PROGRAM_PROJECTILE;
+			projectileDrawer->DrawShadowPass();
+		}
 
-			if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
-				unitDrawer->DrawShadowPass();
-				featureDrawer->DrawShadowPass();
-			}
+		if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
+			currentShadowPass = SHADOWGEN_PROGRAM_MODEL;
+			unitDrawer->DrawShadowPass();
+			featureDrawer->DrawShadowPass();
+		}
 
 		// cull front-faces during the terrain shadow pass: sun direction
 		// can be set so oblique that geometry back-faces are visible (eg.
@@ -404,8 +430,12 @@ void CShadowHandler::DrawShadowPasses()
 		// (could just disable culling of terrain faces entirely, but we
 		// also want to prevent overdraw in low-angle passes)
 		// glCullFace(GL_FRONT);
-			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
-				readMap->GetGroundDrawer()->DrawShadowPass();
+		if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0) {
+			currentShadowPass = SHADOWGEN_PROGRAM_MAP;
+			readMap->GetGroundDrawer()->DrawShadowPass();
+		}
+
+		currentShadowPass = SHADOWGEN_PROGRAM_LAST;
 
 	glPopAttrib();
 

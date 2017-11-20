@@ -27,7 +27,7 @@ public:
 	void Update();
 
 	void Draw();
-	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
+	void DrawOpaquePass(bool deferredPass);
 	void DrawShadowPass();
 	void DrawAlphaPass();
 

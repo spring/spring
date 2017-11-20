@@ -120,7 +120,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		tp->SetUniform3fv(4, &sunLighting->groundDiffuseColor.x);
 		tp->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
 		tp->SetUniform3fv(6, &ZeroVector.x);
-		tp->SetUniform4fv(7, &sky->fogColor.x);
+		tp->SetUniform4fv(7, sky->fogColor);
 		tp->SetUniform1i(8, 1);
 		tp->SetUniform1i(9, 0);
 		tp->SetUniform1f(12, 1.0f - (sunLighting->groundShadowDensity * 0.5f));

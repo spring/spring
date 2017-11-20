@@ -633,7 +633,7 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 
 void CProjectileHandler::AddFlyingPiece(
-	int modelType,
+	const S3DModel* model,
 	const S3DModelPiece* piece,
 	const CMatrix44f& m,
 	const float3 pos,
@@ -641,8 +641,8 @@ void CProjectileHandler::AddFlyingPiece(
 	const float2 pieceParams,
 	const int2 renderParams
 ) {
-	flyingPieces[modelType].emplace_back(piece, m, pos, speed, pieceParams, renderParams);
-	resortFlyingPieces[modelType] = true;
+	flyingPieces[model->type].emplace_back(model, piece, m, pos, speed, pieceParams, renderParams);
+	resortFlyingPieces[model->type] = true;
 }
 
 

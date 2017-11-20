@@ -47,8 +47,6 @@
 #include "System/myMath.h"
 #include "System/SafeUtil.h"
 
-#define UNIT_SHADOW_ALPHA_MASKING
-
 CUnitDrawer* unitDrawer;
 
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
@@ -364,7 +362,7 @@ void CUnitDrawer::Update()
 
 
 
-void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
+void CUnitDrawer::Draw()
 {
 	sky->SetupFog();
 
@@ -372,12 +370,12 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (drawDeferred && !drawReflection && !drawRefraction)
+	if (drawDeferred && !water->DrawReflectionPass() && !water->DrawRefractionPass())
 		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_UNIT);
 
 	// now do the regular forward pass
 	if (drawForward)
-		DrawOpaquePass(false, drawReflection, drawRefraction);
+		DrawOpaquePass(false);
 
 	farTextureHandler->Draw();
 
@@ -386,13 +384,22 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glDisable(GL_TEXTURE_2D);
 }
 
-void CUnitDrawer::DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction)
+void CUnitDrawer::DrawOpaquePass(bool deferredPass)
 {
 	SetupOpaqueDrawing(deferredPass);
 
+	// cubemap reflections do not include units
+	const bool inWaterReflPass = water->DrawReflectionPass();
+	const bool inWaterRefrPass = water->DrawRefractionPass();
+
+	if (inWaterReflPass)
+		unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterReflection);
+	if (inWaterRefrPass)
+		unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterRefraction);
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushModelRenderState(modelType);
-		DrawOpaqueUnits(modelType, drawReflection, drawRefraction);
+		DrawOpaqueUnits(modelType, inWaterReflPass, inWaterRefrPass);
 		DrawOpaqueAIUnits(modelType);
 		PopModelRenderState(modelType);
 	}
@@ -456,9 +463,11 @@ void CUnitDrawer::DrawOpaqueAIUnits(int modelType)
 
 void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 {
-	GL::PushMatrix();
-	GL::Translate(unit.pos);
-	GL::RotateY(unit.rotation * math::RAD_TO_DEG);
+	CMatrix44f mat;
+	mat.Translate(unit.pos);
+	mat.RotateY(unit.rotation * math::RAD_TO_DEG);
+
+	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -467,9 +476,8 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 
 	BindModelTypeTexture(mdl->type, mdl->textureType);
 	SetTeamColour(unit.team);
-	mdl->DrawStatic();
-
-	GL::PopMatrix();
+	state->SetMatrices(mat, mdl->GetPieceMatrices());
+	mdl->Draw();
 }
 
 
@@ -588,18 +596,17 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 
 void CUnitDrawer::DrawShadowPass()
 {
-	glColor3f(1.0f, 1.0f, 1.0f);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	#ifdef UNIT_SHADOW_ALPHA_MASKING
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
-	#endif
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
+	// TODO: shared by {AdvTree,SMFGround,Unit,Feature,Projectile}Drawer, move to ShadowHandler
+	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
 
 	{
 		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
@@ -614,17 +621,14 @@ void CUnitDrawer::DrawShadowPass()
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
 			// note: just use DrawOpaqueUnits()? would
 			// save texture switches needed anyway for
-			// UNIT_SHADOW_ALPHA_MASKING
+			// alpha-masking
 			DrawOpaqueUnitsShadow(modelType);
 		}
 	}
 
 	po->Disable();
 
-	#ifdef UNIT_SHADOW_ALPHA_MASKING
 	glDisable(GL_ALPHA_TEST);
-	#endif
-
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
@@ -731,6 +735,11 @@ void CUnitDrawer::DrawAlphaPass()
 		SetupAlphaDrawing(false);
 		glDisable(GL_ALPHA_TEST);
 
+		if (water->DrawReflectionPass())
+			unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterReflection);
+		if (water->DrawRefractionPass())
+			unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterRefraction);
+
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			PushModelRenderState(modelType);
 			DrawAlphaUnits(modelType);
@@ -776,6 +785,8 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 	if (drawGhostBuildingsPass) {
+		const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
+
 		// check for decoy models
 		const UnitDef* decoyDef = unit->unitDef->decoyDef;
 		const S3DModel* model = nullptr;
@@ -797,9 +808,9 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 			glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 		}
 
-		GL::PushMatrix();
-		GL::Translate(unit->drawPos);
-		GL::RotateY(unit->buildFacing * 90.0f);
+		CMatrix44f mat;
+		mat.Translate(unit->drawPos);
+		mat.RotateY(unit->buildFacing * 90.0f);
 
 		// the units in liveGhostedBuildings[modelType] are not
 		// sorted by textureType, but we cannot merge them with
@@ -808,8 +819,8 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		BindModelTypeTexture(modelType, model->textureType);
 
 		SetTeamColour(unit->team, float2((losStatus & LOS_CONTRADAR)? alphaValues.z: alphaValues.y, 1.0f));
-		model->DrawStatic();
-		GL::PopMatrix();
+		state->SetMatrices(mat, model->GetPieceMatrices());
+		model->Draw();
 
 		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 		return;
@@ -842,9 +853,11 @@ void CUnitDrawer::DrawAlphaAIUnits(int modelType)
 
 void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 {
-	GL::PushMatrix();
-	GL::Translate(unit.pos);
-	GL::RotateY(unit.rotation * math::RAD_TO_DEG);
+	CMatrix44f mat;
+	mat.Translate(unit.pos);
+	mat.RotateY(unit.rotation * math::RAD_TO_DEG);
+
+	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -853,9 +866,8 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 
 	BindModelTypeTexture(mdl->type, mdl->textureType);
 	SetTeamColour(unit.team, float2(alphaValues.x, 1.0f));
-	mdl->DrawStatic();
-
-	GL::PopMatrix();
+	state->SetMatrices(mat, mdl->GetPieceMatrices());
+	mdl->Draw();
 }
 
 void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
@@ -918,22 +930,27 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[gu->myAllyTeam][modelType];
 	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[gu->myAllyTeam][modelType];
 
+	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
+
 	glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 
 	// buildings that died while ghosted
-	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ++it) {
-		if (camera->InView((*it)->pos, (*it)->model->GetDrawRadius())) {
-			GL::PushMatrix();
-			GL::Translate((*it)->pos);
-			GL::RotateY((*it)->facing * 90.0f);
+	for (GhostSolidObject* gso: deadGhostedBuildings) {
+		const S3DModel* model = gso->model;
 
-			BindModelTypeTexture(modelType, (*it)->model->textureType);
-			SetTeamColour((*it)->team, float2(alphaValues.y, 1.0f));
+		if (!camera->InView(gso->pos, model->GetDrawRadius()))
+			continue;
 
-			(*it)->model->DrawStatic();
-			GL::PopMatrix();
-			(*it)->lastDrawFrame = globalRendering->drawFrame;
-		}
+		CMatrix44f mat;
+		mat.Translate(gso->pos);
+		mat.RotateY(gso->facing * 90.0f);
+
+		BindModelTypeTexture(modelType, gso->model->textureType);
+		SetTeamColour(gso->team, float2(alphaValues.y, 1.0f));
+		state->SetMatrices(mat, model->GetPieceMatrices());
+		model->Draw();
+
+		gso->lastDrawFrame = globalRendering->drawFrame;
 	}
 
 	for (CUnit* u: liveGhostedBuildings) {
@@ -1104,6 +1121,10 @@ static bool DIDCheckMatrixMode(int wantedMode)
 // custom materials
 void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
+	// TODO: use the matrix stack
+	return;
+
+	const IUnitDrawerState* state = nullptr;
 	const S3DModel* model = objectDef->LoadModel();
 
 	if (model == nullptr)
@@ -1125,9 +1146,12 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 		//   assumes the Lua transform includes a LoadIdentity!
 		DIDResetPrevProjection(toScreen);
 		DIDResetPrevModelView();
+
+		state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+		state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	}
 
-	model->DrawStatic();
+	model->Draw();
 
 	if (!rawState) {
 		unitDrawer->PopIndividualOpaqueState(model, teamID, false);
@@ -1137,6 +1161,10 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 // used for drawing building orders (with translucency)
 void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
+	// TODO: use the matrix stack
+	return;
+
+	const IUnitDrawerState* state = nullptr;
 	const S3DModel* model = objectDef->LoadModel();
 
 	if (model == nullptr)
@@ -1150,9 +1178,12 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 		DIDResetPrevProjection(toScreen);
 		DIDResetPrevModelView();
+
+		state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+		state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	}
 
-	model->DrawStatic();
+	model->Draw();
 
 	if (!rawState) {
 		unitDrawer->PopIndividualAlphaState(model, teamID, false);
@@ -1164,60 +1195,46 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, bool);
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const IUnitDrawerState* state, const float4&, const float4&, bool);
 
-static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, bool)
+static const void DrawModelNoopBuildStage(const CUnit*, const IUnitDrawerState* state, const float4&, const float4&, bool)
 {
 }
 
 static const void DrawModelWireBuildStage(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const IUnitDrawerState* state,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
-	if (globalRendering->atiHacks) {
-		// some ATi mobility cards/drivers dont like clipping wireframes
-		glDisable(GL_CLIP_PLANE0);
-		glDisable(GL_CLIP_PLANE1);
-	} else {
-		glClipPlane(GL_CLIP_PLANE0, upperPlane);
-		glClipPlane(GL_CLIP_PLANE1, lowerPlane);
-	}
+	state->SetBuildClipPlanes(upperPlane, lowerPlane);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	if (globalRendering->atiHacks) {
-		glEnable(GL_CLIP_PLANE0);
-		glEnable(GL_CLIP_PLANE1);
-	}
 }
 
 static const void DrawModelFlatBuildStage(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const IUnitDrawerState* state,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
-	glClipPlane(GL_CLIP_PLANE0, upperPlane);
-	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+	state->SetBuildClipPlanes(upperPlane, lowerPlane);
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 }
 
 static const void DrawModelFillBuildStage(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const IUnitDrawerState* state,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
-	if (globalRendering->atiHacks) {
-		glDisable(GL_CLIP_PLANE0);
-	} else {
-		glClipPlane(GL_CLIP_PLANE0, upperPlane);
-	}
+	state->SetBuildClipPlanes(upperPlane, lowerPlane);
 
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1263,50 +1280,53 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
-	const double upperPlanes[] = {
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0      ),
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 1.0),
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 2.0),
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
 	};
-	const double lowerPlanes[] = {
-		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0 - 9.0),
-		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0 - 2.0),
-		0.0,  1.0, 0.0,                                  (                       0.0),
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
 	};
 
 	enum {
 		STAGE_WIRE = 0,
 		STAGE_FLAT = 1,
 		STAGE_FILL = 2,
+		STAGE_NONE = 3,
 	};
 
 	// note: draw-func for stage i is at index i+1 (noop-func is at 0)
 	DrawModelBuildStageFunc stageFunc = nullptr;
 	IUnitDrawerState* selState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 
-	glPushAttrib(GL_CURRENT_BIT);
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
+	glEnable(GL_CLIP_DISTANCE0);
+	glEnable(GL_CLIP_DISTANCE1);
 
 	// wireframe, unconditional
 	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
 	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
-	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], noLuaCall);
+	stageFunc(unit, selState, upperPlanes[STAGE_WIRE], lowerPlanes[STAGE_WIRE], noLuaCall);
 
 	// flat-colored, conditional
 	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
-	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], noLuaCall);
+	stageFunc(unit, selState, upperPlanes[STAGE_FLAT], lowerPlanes[STAGE_FLAT], noLuaCall);
 
-	glDisable(GL_CLIP_PLANE1);
+	glDisable(GL_CLIP_DISTANCE1);
 
 	// fully-shaded, conditional
-	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
+	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f));
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
-	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], noLuaCall);
+	stageFunc(unit, selState, upperPlanes[STAGE_FILL], lowerPlanes[STAGE_FILL], noLuaCall);
 
-	glDisable(GL_CLIP_PLANE0);
-	glPopAttrib();
+	glDisable(GL_CLIP_DISTANCE0);
+
+	selState->SetBuildClipPlanes(upperPlanes[STAGE_NONE], lowerPlanes[STAGE_NONE]);
 }
 
 
@@ -1316,7 +1336,12 @@ void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
 	if (!noLuaCall && unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
-	unit->localModel.Draw();
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	LocalModel* model = const_cast<LocalModel*>(&unit->localModel);
+
+	model->UpdatePieceMatrices();
+	state->SetMatrices(unit->GetTransformMatrix(), model->GetPieceMatrices());
+	model->Draw();
 }
 
 
@@ -1343,12 +1368,7 @@ void CUnitDrawer::DrawUnitNoTrans(
 
 void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
-	GL::PushMatrix();
-	GL::MultMatrix(unit->GetTransformMatrix());
-
 	DrawUnitNoTrans(unit, preList, postList, lodCall, noLuaCall);
-
-	GL::PopMatrix();
 }
 
 

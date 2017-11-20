@@ -7,12 +7,13 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/myMath.h"
 
 
-static const float EXPLOSION_SPEED = 2.f;
+static constexpr float EXPLOSION_SPEED = 2.0f;
 
 //TODO: add to creg
 
@@ -21,6 +22,7 @@ static const float EXPLOSION_SPEED = 2.f;
 ///
 
 FlyingPiece::FlyingPiece(
+	const S3DModel* _model,
 	const S3DModelPiece* _piece,
 	const CMatrix44f& _pieceMatrix,
 	const float3 pos,
@@ -31,9 +33,11 @@ FlyingPiece::FlyingPiece(
 : pos0(pos)
 , pieceMatrix(_pieceMatrix)
 , age(0)
+, model(_model)
 , piece(_piece)
 {
-	assert(piece->GetVertexDrawIndexCount() % 3 == 0); // only triangles
+	// only allow triangles
+	assert(piece->GetVertexDrawIndexCount() % 3 == 0);
 
 	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
@@ -41,14 +45,16 @@ FlyingPiece::FlyingPiece(
 	const auto& shatterPieceData = shatterPiecePart.renderData;
 
 	splitterParts.reserve(shatterPieceData.size());
+
 	for (const auto& cp: shatterPieceData) {
 		if (guRNG.NextFloat() > _pieceParams.x)
 			continue;
 
-		const float3 flyDir = (cp.dir + (guRNG.NextVector() * 0.3f)).ANormalize();
+		const float3 rndVec = guRNG.NextVector() * 0.3f;
+		const float3 flyDir = (cp.dir + rndVec).ANormalize();
 
 		splitterParts.emplace_back();
-		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, guRNG.NextFloat());
+		splitterParts.back().speed                = speed + flyDir * mix<float>(1.0f, EXPLOSION_SPEED, guRNG.NextFloat());
 		splitterParts.back().rotationAxisAndSpeed = float4(guRNG.NextVector().ANormalize(), guRNG.NextFloat() * 0.1f);
 		splitterParts.back().indexCount           = cp.indexCount;
 		splitterParts.back().vboOffset            = cp.vboOffset;
@@ -86,12 +92,12 @@ bool FlyingPiece::Update()
 	if ((age % GAME_SPEED) == 0)
 		return true;
 
-	for (auto& cp: splitterParts) {
-		const CMatrix44f& m = GetMatrixOf(cp, dragFactors);
+	for (const SplitterData& sp: splitterParts) {
+		const CMatrix44f& m = GetMatrix(sp, dragFactors);
 		const float3 p = m.GetPos();
-		if ((p.y + pieceRadius * 2.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
+
+		if ((p.y + pieceRadius * 2.0f) >= CGround::GetApproximateHeight(p.x, p.z, false))
 			return true;
-		}
 	}
 
 	return false;
@@ -140,10 +146,10 @@ float3 FlyingPiece::GetDragFactors() const
 	// saving memory & cpu time.
 
 	static const float airDrag = 0.995f;
-	static const float invAirDrag = 1.f / (1.f - airDrag);
+	static const float invAirDrag = 1.0f / (1.0f - airDrag);
 
 	const float interAge = age + globalRendering->timeOffset;
-	const float airDragPowOne = std::pow(airDrag, interAge + 1.f);
+	const float airDragPowOne = std::pow(airDrag, interAge + 1.0f);
 	const float airDragPowTwo = airDragPowOne * airDrag; // := std::pow(airDrag, interAge + 2.f);
 
 	float3 dragFactors;
@@ -162,7 +168,7 @@ float3 FlyingPiece::GetDragFactors() const
 }
 
 
-CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const
+CMatrix44f FlyingPiece::GetMatrix(const SplitterData& cp, const float3 dragFactors) const
 {
 	const float3 interPos = cp.speed * dragFactors.x + UpVector * mapInfo->map.gravity * dragFactors.y;
 	const float4& rot = cp.rotationAxisAndSpeed;
@@ -177,14 +183,17 @@ CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFac
 
 void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 {
+	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
 	if (prev == nullptr) {
 		unitDrawer->SetTeamColour(team);
 
 		if (texture != -1)
 			CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
-		piece->BindVertexAttribVBOs();
-		piece->BindShatterIndexVBO();
+		model->BindElemsBuffer();
+		piece->BindShatterIndexBuffer();
+		model->EnableAttribs();
 		return;
 	}
 
@@ -194,19 +203,25 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 	if (texture != prev->texture && texture != -1)
 		CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
-	if (piece != prev->piece) {
-		prev->piece->UnbindShatterIndexVBO();
-		prev->piece->UnbindVertexAttribVBOs();
-		piece->BindVertexAttribVBOs();
-		piece->BindShatterIndexVBO();
+
+	if (piece == prev->piece)
+		return;
+
+	if (model != prev->model) {
+		prev->model->UnbindElemsBuffer();
+		model->BindElemsBuffer();
 	}
+
+	prev->piece->UnbindShatterIndexBuffer();
+	piece->BindShatterIndexBuffer();
 }
 
 
 void FlyingPiece::EndDraw() const
 {
-	piece->UnbindShatterIndexVBO();
-	piece->UnbindVertexAttribVBOs();
+	piece->UnbindShatterIndexBuffer();
+	model->UnbindElemsBuffer();
+	model->DisableAttribs();
 }
 
 
@@ -214,14 +229,21 @@ void FlyingPiece::Draw(const FlyingPiece* prev) const
 {
 	CheckDrawStateChange(prev);
 
-	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
-	const VBO& shatterIndices = piece->GetShatterIndexVBO();
+	// speedDrag, gravityDrag, interAge
+	const float3 dragFactors = GetDragFactors();
 
-	for (auto& cp: splitterParts) {
-		GL::PushMatrix();
-		GL::MultMatrix(GetMatrixOf(cp, dragFactors));
-		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, shatterIndices.GetPtr(cp.vboOffset));
-		GL::PopMatrix();
+	const auto& pieceMatrices = model->GetPieceMatrices();
+	const VBO& shatterIndices = piece->GetShatterIndexBuffer();
+
+	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
+	// set piece-matrices only once; shared by all parts
+	udState->SetMatrices(CMatrix44f::Identity(), pieceMatrices);
+
+	for (const SplitterData& sp: splitterParts) {
+		udState->SetMatrices(GetMatrix(sp, dragFactors), {});
+
+		glDrawElements(GL_TRIANGLES, sp.indexCount, GL_UNSIGNED_INT, shatterIndices.GetPtr(sp.vboOffset));
 	}
 }
 

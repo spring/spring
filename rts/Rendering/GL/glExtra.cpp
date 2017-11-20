@@ -385,9 +385,9 @@ void gleGenSphMeshBuffer(unsigned int* meshData, unsigned int numRows, unsigned 
 
 
 void gleGenColVolMeshBuffers(unsigned int* meshData) {
-	const unsigned int cylDivs = meshData[1];
-	const unsigned int sphRows = meshData[2];
-	const unsigned int sphCols = meshData[3];
+	const unsigned int cylDivs = meshData[0];
+	const unsigned int sphRows = meshData[1];
+	const unsigned int sphCols = meshData[2];
 
 	gleGenBoxMeshBuffer(nullptr);
 	gleGenCylMeshBuffer(nullptr, cylDivs, 1.0f);

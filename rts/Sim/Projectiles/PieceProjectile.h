@@ -59,7 +59,6 @@ public:
 	int age;
 
 	unsigned int explFlags;
-	unsigned int dispList;
 
 	const S3DModelPiece* omp;
 

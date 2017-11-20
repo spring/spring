@@ -189,6 +189,9 @@ namespace Shader {
 		void BindTextures() const;
 
 	public:
+		virtual int GetUniformLoc(const char* name) const = 0;
+		virtual int GetUniformType(const int idx) = 0;
+
 		virtual void SetUniform(const ShaderInput& u) = 0;
 
 		/// new interface
@@ -220,16 +223,18 @@ namespace Shader {
 		virtual void SetUniform3f(int idx, float v0, float v1, float v2) = 0;
 		virtual void SetUniform4f(int idx, float v0, float v1, float v2, float v3) = 0;
 
-		virtual void SetUniform2iv(int idx, const int*   v) = 0;
-		virtual void SetUniform3iv(int idx, const int*   v) = 0;
-		virtual void SetUniform4iv(int idx, const int*   v) = 0;
-		virtual void SetUniform2fv(int idx, const float* v) = 0;
-		virtual void SetUniform3fv(int idx, const float* v) = 0;
-		virtual void SetUniform4fv(int idx, const float* v) = 0;
+		virtual void SetUniform2iv(int idx,          const int*   v) = 0;
+		virtual void SetUniform3iv(int idx,          const int*   v) = 0;
+		virtual void SetUniform4iv(int idx,          const int*   v) = 0;
+		virtual void SetUniform2fv(int idx,          const float* v) = 0;
+		virtual void SetUniform3fv(int idx,          const float* v) = 0;
+		virtual void SetUniform4fv(int idx,          const float* v) = 0;
+		virtual void SetUniform4fv(int idx, int cnt, const float* v) = 0;
 
-		virtual void SetUniformMatrix2fv(int idx, bool transp, const float* v) {}
-		virtual void SetUniformMatrix3fv(int idx, bool transp, const float* v) {}
-		virtual void SetUniformMatrix4fv(int idx, bool transp, const float* v) {}
+		virtual void SetUniformMatrix2fv(int idx,          bool transp, const float* v) {}
+		virtual void SetUniformMatrix3fv(int idx,          bool transp, const float* v) {}
+		virtual void SetUniformMatrix4fv(int idx,          bool transp, const float* v) {}
+		virtual void SetUniformMatrix4fv(int idx, int cnt, bool transp, const float* v) {}
 
 	protected:
 		/// internal
@@ -257,9 +262,6 @@ namespace Shader {
 		int GetUniformLocation(const char* name) { return (GetUniformState(name)->GetLocation()); }
 
 	private:
-		virtual int GetUniformLoc(const char* name) = 0;
-		virtual int GetUniformType(const int idx) = 0;
-
 		UniformState* GetNewUniformState(const char* name);
 		UniformState* GetUniformState(const char* name) {
 			// (when inlined) hash might be compiletime const cause of constexpr of hashString
@@ -313,7 +315,7 @@ namespace Shader {
 		bool ReloadState(bool reloadShaderObjs) override { return true; }
 		bool Validate() override { return true; }
 
-		int GetUniformLoc(const char* name) override { return -1; }
+		int GetUniformLoc(const char* name) const override { return -1; }
 		int GetUniformType(const int idx) override { return -1; }
 
 		void SetUniform(const ShaderInput& u) override {}
@@ -327,12 +329,13 @@ namespace Shader {
 		void SetUniform3f(int idx, float v0, float v1, float v2) override {}
 		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) override {}
 
-		void SetUniform2iv(int idx, const int*   v) override {}
-		void SetUniform3iv(int idx, const int*   v) override {}
-		void SetUniform4iv(int idx, const int*   v) override {}
-		void SetUniform2fv(int idx, const float* v) override {}
-		void SetUniform3fv(int idx, const float* v) override {}
-		void SetUniform4fv(int idx, const float* v) override {}
+		void SetUniform2iv(int idx,          const int*   v) override {}
+		void SetUniform3iv(int idx,          const int*   v) override {}
+		void SetUniform4iv(int idx,          const int*   v) override {}
+		void SetUniform2fv(int idx,          const float* v) override {}
+		void SetUniform3fv(int idx,          const float* v) override {}
+		void SetUniform4fv(int idx,          const float* v) override {}
+		void SetUniform4fv(int idx, int cnt, const float* v) override {}
 	};
 
 
@@ -370,6 +373,9 @@ namespace Shader {
 		void RecalculateShaderHash();
 
 	public:
+		int GetUniformType(const int idx) override;
+		int GetUniformLoc(const char* name) const override;
+
 		void SetUniform(const ShaderInput& u) override { SetUniformLocation(u.name); } // TODO: values (u.type, u.data)
 		void SetUniformLocation(const char*) override;
 
@@ -382,21 +388,20 @@ namespace Shader {
 		void SetUniform3f(int idx, float v0, float v1, float v2) override;
 		void SetUniform4f(int idx, float v0, float v1, float v2, float v3) override;
 
-		void SetUniform2iv(int idx, const int*   v) override;
-		void SetUniform3iv(int idx, const int*   v) override;
-		void SetUniform4iv(int idx, const int*   v) override;
-		void SetUniform2fv(int idx, const float* v) override;
-		void SetUniform3fv(int idx, const float* v) override;
-		void SetUniform4fv(int idx, const float* v) override;
+		void SetUniform2iv(int idx,          const int*   v) override;
+		void SetUniform3iv(int idx,          const int*   v) override;
+		void SetUniform4iv(int idx,          const int*   v) override;
+		void SetUniform2fv(int idx,          const float* v) override;
+		void SetUniform3fv(int idx,          const float* v) override;
+		void SetUniform4fv(int idx,          const float* v) override;
+		void SetUniform4fv(int idx, int cnt, const float* v) override;
 
-		void SetUniformMatrix2fv(int idx, bool transp, const float* v) override;
-		void SetUniformMatrix3fv(int idx, bool transp, const float* v) override;
-		void SetUniformMatrix4fv(int idx, bool transp, const float* v) override;
+		void SetUniformMatrix2fv(int idx,          bool transp, const float* v) override;
+		void SetUniformMatrix3fv(int idx,          bool transp, const float* v) override;
+		void SetUniformMatrix4fv(int idx,          bool transp, const float* v) override;
+		void SetUniformMatrix4fv(int idx, int cnt, bool transp, const float* v) override;
 
 	private:
-		int GetUniformType(const int idx) override;
-		int GetUniformLoc(const char* name) override;
-
 		void SetUniform(UniformState* uState, int   v0) override;
 		void SetUniform(UniformState* uState, float v0) override;
 		void SetUniform(UniformState* uState, int   v0, int   v1) override;

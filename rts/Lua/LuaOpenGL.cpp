@@ -1122,12 +1122,13 @@ static void GLObjectPiece(lua_State* L, const CSolidObject* obj)
 	if (obj == nullptr)
 		return;
 
+	const LocalModel* lm = &obj->localModel;
 	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, obj, 2);
 
 	if (lmp == nullptr)
 		return;
 
-	glCallList(lmp->dispListID);
+	lm->DrawPiece(lmp);
 }
 
 static void GLObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)

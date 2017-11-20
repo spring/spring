@@ -64,6 +64,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	// retrieve piece data
 	Piece* fp = (Piece*)&buf[offset]; fp->swap();
 	Vertex* vertexList = reinterpret_cast<Vertex*>(&buf[fp->vertices]);
+
 	const int* indexList = reinterpret_cast<int*>(&buf[fp->vertexTable]);
 	const int* childList = reinterpret_cast<int*>(&buf[fp->children]);
 
@@ -87,6 +88,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		sv.normal = float3(v->xnormal, v->ynormal, v->znormal).SafeANormalize();
 		sv.texCoords[0] = float2(v->texu, v->texv);
 		sv.texCoords[1] = float2(v->texu, v->texv);
+		sv.pieceIndex = model->numPieces - 1;
 
 		piece->SetVertex(a, sv);
 	}
@@ -98,7 +100,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->SetIndex(a, vertexDrawIdx);
 	}
 
-	// post process the piece
+	// post-process the piece
 	{
 		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
@@ -116,9 +118,9 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	piece->children.reserve(fp->numchildren);
 
 	for (int a = 0; a < fp->numchildren; ++a) {
-		int childOffset = swabDWord(*(childList++));
-		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);
-		piece->children.push_back(childPiece);
+		const int childOffset = swabDWord(*(childList++));
+
+		piece->children.push_back(LoadPiece(model, piece, buf, childOffset));
 	}
 
 	return piece;
@@ -134,93 +136,11 @@ void SS3OPiece::UploadGeometryVBOs()
 	if (!HasGeometryData())
 		return;
 
-	//FIXME share 1 VBO for ALL models
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.New(vertices.size() * sizeof(SS3OVertex), GL_STATIC_DRAW, &vertices[0]);
-	vboAttributes.Unbind();
-
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
-	vboIndices.Unbind();
-
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
 	// indices.clear();
-}
 
-void SS3OPiece::BindVertexAttribVBOs() const
-{
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, pos)));
-
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, normal)));
-
-		glClientActiveTexture(GL_TEXTURE0);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, texCoords[0])));
-
-		glClientActiveTexture(GL_TEXTURE1);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, texCoords[1])));
-
-		glClientActiveTexture(GL_TEXTURE5);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, sTangent)));
-
-		glClientActiveTexture(GL_TEXTURE6);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, tTangent)));
-	vboAttributes.Unbind();
-}
-
-
-void SS3OPiece::UnbindVertexAttribVBOs() const
-{
-	glClientActiveTexture(GL_TEXTURE6);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE5);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE1);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE0);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-
-void SS3OPiece::DrawForList() const
-{
-	if (!HasGeometryData())
-		return;
-
-	BindVertexAttribVBOs();
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	switch (primType) {
-		case S3O_PRIMTYPE_TRIANGLES: {
-			glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-		} break;
-		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			// this is not compiled into display lists, but executed immediately
-			glPrimitiveRestartIndex(-1U);
-			glEnableClientState(GL_PRIMITIVE_RESTART);
-
-			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-
-			glDisableClientState(GL_PRIMITIVE_RESTART);
-		} break;
-		case S3O_PRIMTYPE_QUADS: {
-			glDrawRangeElements(GL_QUADS, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-		} break;
-	}
-	vboIndices.Unbind();
-	UnbindVertexAttribVBOs();
+	uploadedVBOs = true;
 }
 
 

@@ -748,6 +748,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
+	const S3DModel* mdl = unit->model;
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
 
@@ -755,10 +756,11 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 		return;
 
 	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
-	if (pieceChance > 0.0f) {
-		const CMatrix44f m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
-		omp->Shatter(pieceChance, unit->model->type, unit->model->textureType, unit->team, pos, speed, m);
-	}
+
+	if (pieceChance <= 0.0f)
+		return;
+
+	omp->Shatter(mdl, unit->team, pieceChance, pos, speed, unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix());
 }
 
 

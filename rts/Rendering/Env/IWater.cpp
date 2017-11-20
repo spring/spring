@@ -145,16 +145,8 @@ void IWater::ExplosionOccurred(const CExplosionParams& event) {
 	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
-void IWater::SetModelClippingPlane(const double* planeEq) {
-	GL::PushMatrix();
-	GL::LoadIdentity();
-	glEnable(GL_CLIP_PLANE0 + ClipPlaneIndex());
-	glClipPlane(GL_CLIP_PLANE0 + ClipPlaneIndex(), planeEq);
-	GL::PopMatrix();
-}
 
-
-void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool drawSky) {
+void IWater::DrawReflections(bool drawGround, bool drawSky) {
 	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	{
@@ -164,16 +156,13 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 		if (drawSky)
 			sky->Draw();
 
-		if (drawGround) {
-			glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+		glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+
+		if (drawGround)
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-			glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
-		}
 
-		// rest needs the plane in model-space; V is combined with P
-		SetModelClippingPlane(&clipPlaneEqs[4]);
-
-		unitDrawer->Draw(true);
+		// Draw*Pass sets up the clipping plane
+		unitDrawer->Draw();
 		featureDrawer->Draw();
 
 		// transparent
@@ -185,7 +174,7 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 
 		eventHandler.DrawWorldReflection();
 
-		glDisable(GL_CLIP_PLANE0 + ClipPlaneIndex());
+		glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 
 		drawReflection = false;
 	}
@@ -193,7 +182,7 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 	game->SetDrawMode(CGame::gameNormalDraw);
 }
 
-void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool drawSky) {
+void IWater::DrawRefractions(bool drawGround, bool drawSky) {
 	game->SetDrawMode(CGame::gameRefractionDraw);
 
 	{
@@ -202,15 +191,13 @@ void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool d
 		// opaque
 		if (drawSky)
 			sky->Draw();
-		if (drawGround) {
-			glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+
+		glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+
+		if (drawGround)
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
-			glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
-		}
 
-		SetModelClippingPlane(&clipPlaneEqs[4]);
-
-		unitDrawer->Draw(false, true);
+		unitDrawer->Draw();
 		featureDrawer->Draw();
 
 		// transparent
@@ -220,7 +207,7 @@ void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool d
 
 		eventHandler.DrawWorldRefraction();
 
-		glDisable(GL_CLIP_PLANE0 + ClipPlaneIndex());
+		glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 
 		drawRefraction = false;
 	}

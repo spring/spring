@@ -22,7 +22,7 @@
 
 static constexpr float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
 // [0] := VBO, [1] := IBO, [2 + i, 3 + i] := {#verts, #indcs}
-static unsigned int MESH_COLVOL_BUFFERS[2 + 3 * 2] = {20, 20, 20, 20, 0, 0, 0, 0};
+static unsigned int MESH_COLVOL_BUFFERS[2 + 3 * 2] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
 {
@@ -380,8 +380,16 @@ namespace DebugColVolDrawer
 	static CDebugColVolQuadDrawer cvDrawer;
 
 
-	void Init() { gleGenColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]); }
-	void Kill() { gleDelColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]); }
+	void Init() {
+		MESH_COLVOL_BUFFERS[0] = 20; // cylinder divs
+		MESH_COLVOL_BUFFERS[1] = 20; // sphere rows
+		MESH_COLVOL_BUFFERS[2] = 20; // sphere cols
+
+		gleGenColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]);
+	}
+	void Kill() {
+		gleDelColVolMeshBuffers(&MESH_COLVOL_BUFFERS[0]);
+	}
 
 	void Draw() {
 		if (!enable)

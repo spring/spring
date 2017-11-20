@@ -10,12 +10,14 @@ set(FILES
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
-	shaders/GLSL/ShadowGenVertProg.glsl
-	shaders/GLSL/ShadowGenFragProg.glsl
 	shaders/GLSL/MapShadowGenVertProg.glsl
 	shaders/GLSL/MapShadowGenFragProg.glsl
+	shaders/GLSL/ModelShadowGenVertProg.glsl
+	shaders/GLSL/ModelShadowGenFragProg.glsl
 	shaders/GLSL/ParticleShadowGenVertProg.glsl
 	shaders/GLSL/ParticleShadowGenFragProg.glsl
+	shaders/GLSL/ProjectileShadowGenVertProg.glsl
+	shaders/GLSL/ProjectileShadowGenFragProg.glsl
 	shaders/GLSL/TreeShadowGenVertProg.glsl
 	shaders/GLSL/TreeShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl

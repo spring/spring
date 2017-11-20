@@ -109,7 +109,7 @@ in float fogFactor;
 #ifdef DEFERRED_MODE
 layout(location = 0) out vec4 fragData[SMF_FRAGDATA_COUNT];
 #else
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 #endif
 
 

@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+// TODO: LuaUnitDrawerState for objects using custom LuaMaterial shaders
 #include "UnitDrawerState.hpp"
 #include "UnitDrawer.h"
 #include "Game/Camera.h"
@@ -18,25 +19,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 #include "System/StringUtil.h"
-
-
-
-void IUnitDrawerState::PushTransform(const CCamera* cam) {
-	// set model-drawing transform; view is combined with projection
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-	GL::MultMatrix(cam->GetViewMatrix());
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PushMatrix();
-	GL::LoadIdentity();
-}
-
-void IUnitDrawerState::PopTransform() {
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-}
 
 
 
@@ -60,7 +42,6 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool nopState) {
 
 
 void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
-	PushTransform(camera);
 	EnableTexturesCommon();
 
 	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
@@ -77,44 +58,27 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 
 	DisableTexturesCommon();
-	PopTransform();
 }
 
 
 void IUnitDrawerState::EnableTexturesCommon() const {
-	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
-
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
-	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetEnvReflectionTextureID());
 
 	glActiveTexture(GL_TEXTURE4);
-	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetSpecularTextureID());
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 }
 
 void IUnitDrawerState::DisableTexturesCommon() const {
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_CUBE_MAP);
-
-	glActiveTexture(GL_TEXTURE4);
-	glDisable(GL_TEXTURE_CUBE_MAP);
-
 	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -131,7 +95,12 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	};
 	const std::string extraDefs =
 		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
-		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n") +
+		("#define MDL_CLIP_PLANE_IDX "       + IntToString(            IWater::ClipPlaneIndex()) + "\n") +
+		("#define MDL_FRAGDATA_COUNT "       + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n");
+
+	const float3 cameraPos = camera->GetPos();
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n]);
@@ -154,17 +123,26 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("reflectTex");        // idx  3 (cube)
 		modelShaders[n]->SetUniformLocation("specularTex");       // idx  4 (cube)
 		modelShaders[n]->SetUniformLocation("sunDir");            // idx  5
-		modelShaders[n]->SetUniformLocation("cameraPos");         // idx  6
-		modelShaders[n]->SetUniformLocation("cameraMat");         // idx  7
-		modelShaders[n]->SetUniformLocation("cameraMatInv");      // idx  8
-		modelShaders[n]->SetUniformLocation("teamColor");         // idx  9
-		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 10
-		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 11
-		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 12
-		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 13
-		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 14
-		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 15
-		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 16
+
+		modelShaders[n]->SetUniformLocation("pieceMatrices");     // idx  6
+		modelShaders[n]->SetUniformLocation("modelMatrix");       // idx  7
+		modelShaders[n]->SetUniformLocation("viewMatrix");        // idx  8
+		modelShaders[n]->SetUniformLocation("projMatrix");        // idx  9
+		modelShaders[n]->SetUniformLocation("fogParams");         // idx 10
+		modelShaders[n]->SetUniformLocation("waterClipPlane");    // idx 11
+		modelShaders[n]->SetUniformLocation("upperClipPlane");    // idx 12
+		modelShaders[n]->SetUniformLocation("lowerClipPlane");    // idx 13
+
+		modelShaders[n]->SetUniformLocation("cameraPos");         // idx 14
+		modelShaders[n]->SetUniformLocation("teamColor");         // idx 15
+		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 16
+		modelShaders[n]->SetUniformLocation("fogColor");          // idx 17
+		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 18
+		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 19
+		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 20
+		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 21
+		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 22
+		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 23
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -172,18 +150,23 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(6, &camera->GetPos()[0]);
-		modelShaders[n]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
-		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-		modelShaders[n]->SetUniform4f(9, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowViewMatrixRaw());
-		modelShaders[n]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
-		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
+		modelShaders[n]->SetUniform3fv(5, sky->GetLight()->GetLightDir());
+		modelShaders[n]->SetUniform3fv(10, &fogParams.x);
+		modelShaders[n]->SetUniform4fv(11, IWater::ModelNullClipPlane());
+		modelShaders[n]->SetUniform4fv(12, IWater::ModelNullClipPlane());
+		modelShaders[n]->SetUniform4fv(13, IWater::ModelNullClipPlane());
+		modelShaders[n]->SetUniform3fv(14, &cameraPos.x);
+		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
+		modelShaders[n]->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
+		modelShaders[n]->SetUniform4f(15, 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform4f(16, 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform4fv(17, sky->fogColor);
+		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(20, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
+		modelShaders[n]->SetUniform4fv(22, shadowHandler->GetShadowParams());
+		// modelShaders[n]->SetUniform1f(23, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -203,11 +186,15 @@ void UnitDrawerStateGLSL::Kill() {
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
 	EnableCommon(ud, deferredPass);
 
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowViewMatrixRaw());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
+	const float3 cameraPos = camera->GetPos();
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(10, &fogParams.x);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(14, &cameraPos.x);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(22, shadowHandler->GetShadowParams());
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
 }
@@ -228,10 +215,10 @@ void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const IS
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniform3fv(5, skyLight->GetLightDir());
+		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(20, sunLighting->modelShadowDensity);
 		modelShaders[n]->Disable();
 	}
 }
@@ -239,13 +226,54 @@ void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const IS
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha.x)));
-	// modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(16, alpha.y);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, std::move(GetTeamColor(team, alpha.x)));
 }
 
 void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, color);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(16, color);
+}
+
+void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const {
+	Shader::IProgramObject* po = nullptr;
+
+	if (!shadowHandler->InShadowPass()) {
+		po = modelShaders[MODEL_SHADER_ACTIVE];
+
+		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_LAST);
+		assert(po->IsBound());
+
+		if (!pieceMats.empty())
+			po->SetUniformMatrix4fv(6, std::min(pieceMats.size(), size_t(128)), false, &pieceMats[0].m[0]);
+
+		po->SetUniformMatrix4fv(7, false, modelMat);
+	} else {
+		po = shadowHandler->GetCurrentShadowGenProg();
+
+		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_MODEL || shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_PROJECTILE);
+		assert(po->IsBound());
+
+		if (!pieceMats.empty())
+			po->SetUniformMatrix4fv(4, std::min(pieceMats.size(), size_t(128)), false, &pieceMats[0].m[0]);
+
+		// {Unit,Projectile}Drawer::DrawShadowPass sets view and proj
+		po->SetUniformMatrix4fv(3, false, modelMat);
+	}
+}
+
+void UnitDrawerStateGLSL::SetWaterClipPlane(const DrawPass::e& drawPass) const {
+	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
+
+	switch (drawPass) {
+		case DrawPass::WaterReflection: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelReflClipPlane()); } break;
+		case DrawPass::WaterRefraction: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelRefrClipPlane()); } break;
+		default: {} break;
+	}
+}
+
+void UnitDrawerStateGLSL::SetBuildClipPlanes(const float4& upper, const float4& lower) const {
+	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(12, upper);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(13, lower);
 }
 

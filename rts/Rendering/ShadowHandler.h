@@ -60,9 +60,8 @@ public:
 		SHADOWMAT_TYPE_DRAWING = 1,
 	};
 
-	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) {
-		return shadowGenProgs[p];
-	}
+	Shader::IProgramObject* GetCurrentShadowGenProg() { return (GetShadowGenProg(ShadowGenProgram(currentShadowPass))); }
+	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) { return shadowGenProgs[p]; }
 
 	const CMatrix44f& GetShadowViewMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
 	const CMatrix44f& GetShadowProjMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  projMatrix[idx];      }
@@ -73,6 +72,7 @@ public:
 
 	unsigned int GetShadowTextureID() const { return shadowTexture; }
 	unsigned int GetColorTextureID() const { return dummyColorTexture; }
+	unsigned int GetCurrentPass() const { return currentShadowPass; }
 
 	static bool ShadowsInitialized() { return firstInit; }
 	static bool ShadowsSupported() { return shadowsSupported; }
@@ -109,8 +109,9 @@ public:
 	int shadowProMode;
 
 private:
-	unsigned int shadowTexture;
-	unsigned int dummyColorTexture;
+	unsigned int shadowTexture = 0;
+	unsigned int dummyColorTexture = 0;
+	unsigned int currentShadowPass = SHADOWGEN_PROGRAM_LAST;
 
 	bool shadowsLoaded;
 	bool inShadowPass;

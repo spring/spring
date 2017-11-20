@@ -7,7 +7,6 @@
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
@@ -233,9 +232,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 			game->SetDrawMode(CGame::gameReflectionDraw);
 			sky->Draw();
 
-			if (!skyOnly) {
+			if (!skyOnly)
 				readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
-			}
 
 			game->SetDrawMode(CGame::gameNormalDraw);
 		}

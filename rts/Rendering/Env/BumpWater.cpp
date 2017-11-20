@@ -1121,18 +1121,13 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	constexpr double clipPlaneEqs[2 * 4] = {
-		0.0, -1.0, 0.0, 5.0, // ground
-		0.0, -1.0, 0.0, 0.0, // models
-	};
-
 	const float3 oldsun = sunLighting->modelDiffuseColor;
 	const float3 oldambient = sunLighting->modelAmbientColor;
 
 	sunLighting->modelDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->modelAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	DrawRefractions(&clipPlaneEqs[0], true, true);
+	DrawRefractions(true, true);
 
 	glEnable(GL_FOG);
 
@@ -1148,11 +1143,6 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	constexpr double clipPlaneEqs[2 * 4] = {
-		0.0, 1.0, 0.0, 5.0, // ground; use d>0 to hide shoreline cracks
-		0.0, 1.0, 0.0, 0.0, // models
-	};
-
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
@@ -1160,7 +1150,7 @@ void CBumpWater::DrawReflection(CGame* game)
 		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
 
-		DrawReflections(&clipPlaneEqs[0], reflection > 1, true);
+		DrawReflections(reflection > 1, true);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());

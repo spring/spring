@@ -13,6 +13,7 @@ uniform mat4 viewMat;
 uniform mat4 viewMatInv;
 uniform mat4 viewProjMat;
 
+
 layout(location = 0) in vec3 vertexPosAttr;
 
 out vec3 halfDir;

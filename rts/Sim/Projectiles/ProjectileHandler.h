@@ -60,7 +60,7 @@ public:
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(
-		int modelType,
+		const S3DModel* model,
 		const S3DModelPiece* piece,
 		const CMatrix44f& m,
 		const float3 pos,

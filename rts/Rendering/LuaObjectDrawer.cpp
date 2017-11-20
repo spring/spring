@@ -474,10 +474,10 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			unitDrawer->DrawOpaquePass(true, false, false);
+			unitDrawer->DrawOpaquePass(true);
 		} break;
 		case LUAOBJ_FEATURE: {
-			featureDrawer->DrawOpaquePass(true, false, false);
+			featureDrawer->DrawOpaquePass(true);
 		} break;
 		default: {
 			assert(false);

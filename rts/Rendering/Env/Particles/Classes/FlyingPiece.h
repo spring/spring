@@ -10,13 +10,14 @@
 #include "System/Matrix44f.h"
 #include "Rendering/GL/VBO.h"
 
-
+struct S3DModel;
 struct S3DModelPiece;
 
 
 struct FlyingPiece {
 public:
 	FlyingPiece(
+		const S3DModel* model,
 		const S3DModelPiece* _piece,
 		const CMatrix44f& _pieceMatrix,
 		const float3 pos,
@@ -58,7 +59,7 @@ private:
 	inline void InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team, int _texture);
 	void CheckDrawStateChange(const FlyingPiece* prev) const;
 	float3 GetDragFactors() const;
-	CMatrix44f GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const;
+	CMatrix44f GetMatrix(const SplitterData& cp, const float3 dragFactors) const;
 
 private:
 	float3 pos0;
@@ -74,6 +75,7 @@ private:
 	float pieceRadius;
 	float drawRadius;
 
+	const S3DModel* model;
 	const S3DModelPiece* piece;
 
 	std::vector<SplitterData> splitterParts;

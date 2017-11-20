@@ -24,16 +24,14 @@ struct SS3OPiece: public S3DModelPiece {
 
 public:
 	void UploadGeometryVBOs() override;
-	void DrawForList() const override;
 
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
-	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
-	void BindVertexAttribVBOs() const override;
-	void UnbindVertexAttribVBOs() const override;
+	const std::vector<SS3OVertex>& GetVertexElements() const override { return vertices; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 public:
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }

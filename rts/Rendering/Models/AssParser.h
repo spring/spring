@@ -24,16 +24,15 @@ struct SAssPiece: public S3DModelPiece
 	SAssPiece(): numTexCoorChannels(0) {
 	}
 
-	void DrawForList() const override;
 	void UploadGeometryVBOs() override;
-	void BindVertexAttribVBOs() const override;
-	void UnbindVertexAttribVBOs() const override;
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
+
+	const std::vector<SAssVertex>& GetVertexElements() const override { return vertices; }
 	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
@@ -84,6 +83,7 @@ private:
 	);
 	static void LoadPieceGeometry(
 		SAssPiece* piece,
+		const S3DModel* model,
 		const aiNode* pieceNode,
 		const aiScene* scene
 	);

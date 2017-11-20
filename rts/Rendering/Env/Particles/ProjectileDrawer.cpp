@@ -644,6 +644,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 void CProjectileDrawer::DrawProjectileShadowPass(Shader::IProgramObject* po)
 {
 	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		DrawProjectilesShadow(modelType);
@@ -685,7 +687,10 @@ void CProjectileDrawer::DrawShadowPass()
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 {
-	if (!(p->weapon || p->piece) || (p->model == nullptr))
+	const S3DModel* model = p->model;
+	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
+	if (!(p->weapon || p->piece) || (model == nullptr))
 		return false;
 
 	if (p->weapon) {
@@ -693,32 +698,29 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
 		unitDrawer->SetTeamColour(wp->GetTeamID());
+		udState->SetMatrices(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)), model->GetPieceMatrices());
 
-		GL::PushMatrix();
-			GL::MultMatrix(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)));
+		if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p)))
+			model->Draw();
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p)))
-				wp->model->DrawStatic();
-
-		GL::PopMatrix();
 	} else {
 		// piece-projectile
 		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
+		CMatrix44f modelMat;
+		modelMat.Translate(pp->drawPos);
+		modelMat.Rotate(pp->GetDrawAngle(), pp->spinVec);
+
 		unitDrawer->SetTeamColour(pp->GetTeamID());
+		udState->SetMatrices(modelMat, model->GetPieceMatrices());
 
-		GL::PushMatrix();
-			GL::Translate(pp->drawPos);
-			GL::Rotate(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
-
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				if (pp->explFlags & PF_Recursive) {
-					pp->omp->DrawStatic();
-				} else {
-					glCallList(pp->dispList);
-				}
+		if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
+			if (pp->explFlags & PF_Recursive) {
+				model->DrawPieceRec(pp->omp);
+			} else {
+				model->DrawPiece(pp->omp);
 			}
-		GL::PopMatrix();
+		}
 	}
 
 	return true;

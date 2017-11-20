@@ -352,9 +352,9 @@ void CAssParser::SetPieceName(
 			// root is always the first piece created, so safe to assign this
 			piece->name = "$$root$$";
 			return;
-		} else {
-			piece->name = "$$piece$$";
 		}
+
+		piece->name = "$$piece$$";
 	}
 
 	// find a new name if none given or if a piece with the same name already exists
@@ -402,7 +402,7 @@ void CAssParser::SetPieceParentName(
 	}
 }
 
-void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene)
+void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const aiScene* scene)
 {
 	// Get vertex data from node meshes
 	for (unsigned meshListIndex = 0; meshListIndex < pieceNode->mNumMeshes; ++meshListIndex) {
@@ -422,7 +422,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
 		piece->indices.reserve(piece->indices.size() + mesh->mNumFaces * 3);
 
-		std::vector<unsigned> mesh_vertex_mapping;
+		std::vector<unsigned> meshVertexMapping;
 
 		// extract vertex data per mesh
 		for (unsigned vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
@@ -432,6 +432,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 
 			// vertex coordinates
 			vertex.pos = aiVectorToFloat3(aiVertex);
+			vertex.pieceIndex = model->numPieces - 1;
 
 			// update piece min/max extents
 			piece->mins = float3::min(piece->mins, vertex.pos);
@@ -442,9 +443,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
-			if (!IS_QNAN(aiNormal)) {
+			if (!IS_QNAN(aiNormal))
 				vertex.normal = (aiVectorToFloat3(aiNormal)).SafeANormalize();
-			}
 
 			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
@@ -468,7 +468,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 				vertex.texCoords[uvChanIndex].y = mesh->mTextureCoords[uvChanIndex][vertexIndex].y;
 			}
 
-			mesh_vertex_mapping.push_back(piece->vertices.size());
+			meshVertexMapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
 		}
 
@@ -492,7 +492,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				const unsigned int vertexFaceIdx = face.mIndices[vertexListID];
-				const unsigned int vertexDrawIdx = mesh_vertex_mapping[vertexFaceIdx];
+				const unsigned int vertexDrawIdx = meshVertexMapping[vertexFaceIdx];
 				piece->indices.push_back(vertexDrawIdx);
 			}
 		}
@@ -505,8 +505,8 @@ static LuaTable GetPieceTableRecursively(
 	const LuaTable& table,
 	const std::string& name,
 	const std::string& parentName,
-	CAssParser::ParentNameMap& parentMap)
-{
+	CAssParser::ParentNameMap& parentMap
+) {
 	LuaTable ret = table.SubTable(name);
 	if (ret.IsValid()) {
 		if (parentName.size() > 0)
@@ -555,7 +555,7 @@ SAssPiece* CAssParser::LoadPiece(
 
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
-	LoadPieceGeometry(piece, pieceNode, scene);
+	LoadPieceGeometry(piece, model, pieceNode, scene);
 	SetPieceParentName(piece, model, pieceNode, pieceTable, parentMap);
 
 	{
@@ -648,7 +648,7 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 // Calculate model radius from the min/max extents
 void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& modelTable)
 {
-	CalculateModelDimensions(model, model->pieces[0]);
+	CalculateModelDimensions(model, model->GetRootPiece());
 
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
@@ -747,95 +747,10 @@ void SAssPiece::UploadGeometryVBOs()
 	if (!HasGeometryData())
 		return;
 
-	//FIXME share 1 VBO for ALL models
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.New(vertices.size() * sizeof(SAssVertex), GL_STATIC_DRAW, &vertices[0]);
-	vboAttributes.Unbind();
-
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
-	vboIndices.Unbind();
-
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
 	// indices.clear();
-}
 
-
-void SAssPiece::BindVertexAttribVBOs() const
-{
-	vboAttributes.Bind(GL_ARRAY_BUFFER);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, pos)));
-
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, normal)));
-
-		// primary and secondary texture use first UV channel
-		for (unsigned int n = 0; n < NUM_MODEL_TEXTURES; n++) {
-			glClientActiveTexture(GL_TEXTURE0 + n);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (0 * sizeof(float2))));
-		}
-
-		// extra UV channels (currently at most one)
-		for (unsigned int n = 1; n < GetNumTexCoorChannels(); n++) {
-			assert((GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1)) < GL_TEXTURE5);
-			glClientActiveTexture(GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1));
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-			glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, texCoords) + (n * sizeof(float2))));
-		}
-
-		glClientActiveTexture(GL_TEXTURE5);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, sTangent)));
-
-		glClientActiveTexture(GL_TEXTURE6);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, tTangent)));
-	vboAttributes.Unbind();
-}
-
-
-void SAssPiece::UnbindVertexAttribVBOs() const
-{
-	glClientActiveTexture(GL_TEXTURE6);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE5);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE2);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE1);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE0);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-
-void SAssPiece::DrawForList() const
-{
-	if (!HasGeometryData())
-		return;
-
-	/*
-	 * since aiProcess_SortByPType is being used,
-	 * we're sure we'll get only 1 type here,
-	 * so combination check isn't needed, also
-	 * anything more complex than triangles is
-	 * being split thanks to aiProcess_Triangulate
-	 */
-	BindVertexAttribVBOs();
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
-	UnbindVertexAttribVBOs();
+	uploadedVBOs = true;
 }
 

@@ -1,53 +1,67 @@
+#version 410 core
+
 // #define use_normalmapping
 // #define flip_normalmap
 
-#define textureS3o1 diffuseTex
-#define textureS3o2 shadingTex
-  uniform sampler2D textureS3o1;
-  uniform sampler2D textureS3o2;
-  uniform samplerCube specularTex;
-  uniform samplerCube reflectTex;
-
-  uniform vec3 sunDir;
-  uniform vec3 sunDiffuse;
-  uniform vec3 sunAmbient;
-
-#if (USE_SHADOWS == 1)
-  uniform sampler2DShadow shadowTex;
-  uniform mat4 shadowMatrix;
-  uniform vec4 shadowParams;
-  uniform float shadowDensity;
+uniform sampler2D diffuseTex;
+uniform sampler2D shadingTex;
+uniform samplerCube specularTex;
+uniform samplerCube reflectTex;
+#ifdef use_normalmapping
+uniform sampler2D normalMap;
 #endif
 
-  // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
-  // in alpha passes tc.a is either one of alphaValues.xyzw [for units] *or*
-  // contains a distance fading factor [for features], and alphaPass is 1.0
-  // texture alpha-masking is done in both passes
-  uniform vec4 teamColor;
-  uniform vec4 nanoColor;
-  // uniform float alphaPass;
+uniform vec3 sunDir;
+uniform vec3 sunDiffuse;
+uniform vec3 sunAmbient;
 
-  varying vec4 vertexWorldPos;
-  varying vec3 cameraDir;
-  varying float fogFactor;
+#if (USE_SHADOWS == 1)
+uniform sampler2DShadow shadowTex;
+uniform mat4 shadowMatrix;
+uniform vec4 shadowParams;
+uniform float shadowDensity;
+#endif
+
+uniform vec4 fogColor;
+// in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
+// in alpha passes tc.a is either one of alphaValues.xyzw [for units] *or*
+// contains a distance fading factor [for features], and alphaPass is 1.0
+// texture alpha-masking is done in both passes
+uniform vec4 teamColor;
+uniform vec4 nanoColor;
+// uniform float alphaPass;
+
+
+in vec4 worldPos;
+in vec3 cameraDir;
+
+in vec2 texCoord0;
+// in vec2 texCoord1;
+
+in float fogFactor;
 
 #ifdef use_normalmapping
-  uniform sampler2D normalMap;
-  varying mat3 tbnMatrix;
+in mat3 tbnMatrix;
 #else
-  varying vec3 normalv;
+in vec3 normalVec;
+#endif
+
+#if (DEFERRED_MODE == 0)
+layout(location = 0) out vec4 fragColor;
+#else
+layout(location = 0) out vec4 fragData[MDL_FRAGDATA_COUNT];
 #endif
 
 
 
 float GetShadowCoeff(float zBias) {
 	#if (USE_SHADOWS == 1)
-	vec4 vertexShadowPos = shadowMatrix * vertexWorldPos;
+	vec4 vertexShadowPos = shadowMatrix * worldPos;
 		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
 		vertexShadowPos.xy += shadowParams.xy;
 		vertexShadowPos.z  += zBias;
 
-	return mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
+	return mix(1.0, textureProj(shadowTex, vertexShadowPos), shadowDensity);
 	#endif
 	return 1.0;
 }
@@ -55,8 +69,9 @@ float GetShadowCoeff(float zBias) {
 vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
 	vec3 rgb = vec3(0.0);
 
+	#if 0
 	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
-		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
+		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - worldPos.xyz;
 		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
 
 		float lightRadius   = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
@@ -85,6 +100,7 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
 		rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
 	}
+	#endif
 
 	return rgb;
 }
@@ -92,24 +108,25 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
 void main(void)
 {
 #ifdef use_normalmapping
-	vec2 tc = gl_TexCoord[0].st;
+	vec2 tc = texCoord0;
 	#ifdef flip_normalmap
 		tc.t = 1.0 - tc.t;
 	#endif
-	vec3 nvTS  = normalize((texture2D(normalMap, tc).xyz - 0.5) * 2.0);
+
+	vec3 nvTS  = normalize((texture(normalMap, tc).xyz - 0.5) * 2.0);
 	vec3 normal = tbnMatrix * nvTS;
 #else
-	vec3 normal = normalize(normalv);
+	vec3 normal = normalize(normalVec);
 #endif
 
 	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
 
-	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
-	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
+	vec4 diffuse     = texture(diffuseTex, texCoord0);
+	vec4 extraColor  = texture(shadingTex, texCoord0);
 
 	vec3 reflectDir = reflect(cameraDir, normal);
-	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
-	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
+	vec3 specular   = texture(specularTex, reflectDir).rgb * extraColor.g * 4.0;
+	vec3 reflection = texture(reflectTex,  reflectDir).rgb;
 
 
 	float shadow = GetShadowCoeff(-0.00005);
@@ -124,29 +141,29 @@ void main(void)
 	reflection += extraColor.rrr; // self-illum
 
 	#if (DEFERRED_MODE == 0)
-	gl_FragColor     = diffuse;
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
-	gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
+	fragColor     = diffuse;
+	fragColor.rgb = mix(fragColor.rgb, teamColor.rgb, fragColor.a); // teamcolor
+	fragColor.rgb = fragColor.rgb * reflection + specular;
 	#endif
 
 	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MODEL_LIGHTS > 0)
-	gl_FragColor.rgb += DynamicLighting(normal, diffuse.rgb, specular);
+	fragColor.rgb += DynamicLighting(normal, diffuse.rgb, specular);
 	#endif
 
 	#if (DEFERRED_MODE == 1)
-	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(                         diffuse.rgb, teamColor.rgb,   diffuse.a), alpha);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(gl_FragData[GBUFFER_DIFFTEX_IDX].rgb, nanoColor.rgb, nanoColor.a), alpha);
+	fragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	fragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(                      diffuse.rgb, teamColor.rgb,   diffuse.a), alpha);
+	fragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(fragData[GBUFFER_DIFFTEX_IDX].rgb, nanoColor.rgb, nanoColor.a), alpha);
 	// do not premultiply reflection, leave it to the deferred lighting pass
-	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, alpha);
+	// fragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, alpha);
 	// allows standard-lighting reconstruction by lazy LuaMaterials using us
-	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(extraColor.rgb, alpha);
-	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
-	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
+	fragData[GBUFFER_SPECTEX_IDX] = vec4(extraColor.rgb, alpha);
+	fragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
+	fragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
-	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
-	gl_FragColor.a   = alpha;
+	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor); // fog
+	fragColor.rgb = mix(fragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
+	fragColor.a   = alpha;
 	#endif
 }
 

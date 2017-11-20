@@ -233,14 +233,12 @@ void CFeatureDrawer::Draw()
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (drawDeferred && !water->DrawReflectionPass() && !water->DrawRefractionPass()) {
+	if (drawDeferred && !water->DrawReflectionPass() && !water->DrawRefractionPass())
 		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_FEATURE);
-	}
 
 	// now do the regular forward pass
-	if (drawForward) {
-		DrawOpaquePass(false, water->DrawReflectionPass(), water->DrawRefractionPass());
-	}
+	if (drawForward)
+		DrawOpaquePass(false);
 
 	farTextureHandler->Draw();
 
@@ -248,7 +246,7 @@ void CFeatureDrawer::Draw()
 	glDisable(GL_FOG);
 }
 
-void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
+void CFeatureDrawer::DrawOpaquePass(bool deferredPass)
 {
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
 
@@ -332,7 +330,12 @@ inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool noLua
 	if (!noLuaCall && feature->luaDraw && eventHandler.DrawFeature(feature))
 		return;
 
-	feature->localModel.Draw();
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	LocalModel* model = const_cast<LocalModel*>(&feature->localModel);
+
+	model->UpdatePieceMatrices();
+	state->SetMatrices(feature->GetTransformMatrixRef(), model->GetPieceMatrices());
+	model->Draw();
 }
 
 void CFeatureDrawer::DrawFeatureNoTrans(
@@ -347,12 +350,7 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 
 void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
-	GL::PushMatrix();
-	GL::MultMatrix(feature->GetTransformMatrixRef());
-
 	DrawFeatureNoTrans(feature, preList, postList, lodCall, noLuaCall);
-
-	GL::PopMatrix();
 }
 
 
@@ -480,10 +478,11 @@ void CFeatureDrawer::DrawShadowPass()
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	po->Enable();
+	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
 
 	{
 		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);

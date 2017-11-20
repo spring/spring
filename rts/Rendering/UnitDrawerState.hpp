@@ -4,7 +4,9 @@
 #define UNITDRAWER_STATE_H
 
 #include <array>
+#include "Map/MapDrawPassTypes.h"
 #include "System/type2.h"
+#include "System/Matrix44f.h"
 
 struct float4;
 class CUnitDrawer;
@@ -28,8 +30,6 @@ public:
 	static IUnitDrawerState* GetInstance(bool nopState);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
-	static void PushTransform(const CCamera* cam);
-	static void PopTransform();
 	static float4 GetTeamColor(int team, float alpha);
 
 	IUnitDrawerState() { modelShaders.fill(nullptr); }
@@ -53,6 +53,9 @@ public:
 	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
 	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
 	virtual void SetNanoColor(const float4& color) const {}
+	virtual void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const {}
+	virtual void SetWaterClipPlane(const DrawPass::e& drawPass) const {} // water
+	virtual void SetBuildClipPlanes(const float4&, const float4&) const {} // nano-frames
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -104,6 +107,9 @@ public:
 	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override {}
 	void SetTeamColor(int team, const float2 alpha) const override {}
 	void SetNanoColor(const float4& color) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override {}
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
+	void SetBuildClipPlanes(const float4&, const float4&) const override {}
 };
 
 
@@ -127,6 +133,9 @@ public:
 	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override;
 	void SetTeamColor(int team, const float2 alpha) const override;
 	void SetNanoColor(const float4& color) const override;
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override;
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override;
+	void SetBuildClipPlanes(const float4&, const float4&) const override;
 };
 
 #endif

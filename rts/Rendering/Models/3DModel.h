@@ -38,18 +38,28 @@ struct LocalModelPiece;
 
 
 struct SVertexData {
-	SVertexData() : normal(UpVector) {}
+	SVertexData() = default;
+	SVertexData(const float3& p, const float3& n, const float3& s, const float3& t, const float2& uv0, const float2& uv1, uint32_t i) {
+		pos = p;
+		normal = n;
+		sTangent = s;
+		tTangent = t;
+		texCoords[0] = uv0;
+		texCoords[1] = uv1;
+		pieceIndex = i;
+	}
 
 	float3 pos;
-	float3 normal;
+	float3 normal = UpVector;
 	float3 sTangent;
 	float3 tTangent;
 
-	//< Second channel is optional, still good to have. Also makes
-	//< sure the struct is 64bytes in size (ATi's prefers such VBOs)
-	//< supporting an arbitrary number of channels would be easy but
-	//< overkill (for now)
+	// TODO:
+	//   with pieceIndex this struct is no longer 64 bytes in size which ATI's prefer
+	//   support an arbitrary number of channels, would be easy but overkill (for now)
 	float2 texCoords[NUM_MODEL_UVCHANNS];
+
+	uint32_t pieceIndex = 0;
 };
 
 
@@ -82,12 +92,11 @@ struct S3DModelPiece {
 		, scales(OnesVector)
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
-		, dispListID(0)
 		, hasBakedMat(false)
-		, dummyPadding(false)
+		, uploadedVBOs(false)
 	{}
 
-	virtual ~S3DModelPiece();
+	virtual ~S3DModelPiece() {}
 
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;
@@ -99,33 +108,25 @@ struct S3DModelPiece {
 	virtual const float3& GetNormal(const int) const = 0;
 
 	virtual void UploadGeometryVBOs() = 0;
-	virtual void BindVertexAttribVBOs() const = 0;
-	virtual void UnbindVertexAttribVBOs() const = 0;
 
-	void BindShatterIndexVBO() const { vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
-	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
+	void BindShatterIndexBuffer() const { shatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
+	void UnbindShatterIndexBuffer() const { shatterIndices.Unbind(); }
 
-	const VBO& GetIndexVBO() const { return vboIndices; }
-	const VBO& GetAttribVBO() const { return vboAttributes; }
-	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
+	const VBO& GetShatterIndexBuffer() const { return shatterIndices; }
 
-protected:
-	virtual void DrawForList() const = 0;
+public:
+	virtual const std::vector<SVertexData>& GetVertexElements() const = 0;
 	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
 
 public:
-	void DrawStatic() const;
-	void CreateDispList();
-	unsigned int GetDisplayListID() const { return dispListID; }
-
 	void CreateShatterPieces();
-	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
+	void Shatter(const S3DModel*, int, float, const float3&, const float3&, const CMatrix44f&) const;
 
-	void SetPieceMatrix(const CMatrix44f& m) {
-		pieceMatrix = m * ComposeTransform(offset, ZeroVector, scales);
+	void SetBindPoseMatrix(const CMatrix44f& m) {
+		bposeMatrix = m * ComposeTransform(offset, ZeroVector, scales);
 
 		for (S3DModelPiece* c: children) {
-			c->SetPieceMatrix(pieceMatrix);
+			c->SetBindPoseMatrix(bposeMatrix);
 		}
 	}
 	void SetBakedMatrix(const CMatrix44f& m) {
@@ -157,9 +158,10 @@ public:
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
+	bool UploadedVBOs() const { return uploadedVBOs; }
 
 private:
-	void CreateShatterPiecesVariation(const int num);
+	void CreateShatterPiece(int pieceNum);
 
 public:
 	std::string name;
@@ -169,7 +171,7 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
-	CMatrix44f pieceMatrix;    /// bind-pose transform, including baked rots
+	CMatrix44f bposeMatrix;    /// bind-pose transform, including baked rots
 	CMatrix44f bakedMatrix;    /// baked local-space rotations
 
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
@@ -178,15 +180,14 @@ public:
 	float3 mins;
 	float3 maxs;
 
-protected:
-	VBO vboIndices;
-	VBO vboAttributes;
-	VBO vboShatterIndices;
+	unsigned int vboStartElem = 0;
+	unsigned int vboStartIndx = 0;
 
-	unsigned int dispListID;
+protected:
+	VBO shatterIndices;
 
 	bool hasBakedMat;
-	bool dummyPadding;
+	bool uploadedVBOs;
 };
 
 
@@ -211,6 +212,7 @@ struct S3DModel
 
 	S3DModel(const S3DModel& m) = delete;
 	S3DModel(S3DModel&& m) { *this = std::move(m); }
+	~S3DModel() { DeleteBuffers(); }
 
 	S3DModel& operator = (const S3DModel& m) = delete;
 	S3DModel& operator = (S3DModel&& m) {
@@ -222,6 +224,12 @@ struct S3DModel
 		numPieces = m.numPieces;
 		textureType = m.textureType;
 
+		vertexArray = m.vertexArray; m.vertexArray = 0;
+		elemsBuffer = m.elemsBuffer; m.elemsBuffer = 0;
+		indcsBuffer = m.indcsBuffer; m.indcsBuffer = 0;
+		vboNumVerts = m.vboNumVerts;
+		vboNumIndcs = m.vboNumIndcs;
+
 		type = m.type;
 
 		radius = m.radius;
@@ -231,43 +239,33 @@ struct S3DModel
 		maxs = m.maxs;
 		relMidPos = m.relMidPos;
 
-		pieces = std::move(m.pieces);
+		pieceObjects = std::move(m.pieceObjects);
+		pieceMatrices = std::move(m.pieceMatrices);
 		return *this;
 	}
 
-	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieces.size()); return pieces[i]; }
+	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieceObjects.size()); return pieceObjects[i]; }
 	S3DModelPiece* GetRootPiece() const { return (GetPiece(0)); }
 
-	void AddPiece(S3DModelPiece* p) { pieces.push_back(p); }
-	void DrawStatic() const {
-		// draw pieces in their static bind-pose (ie. without script-transforms)
-		for (const S3DModelPiece* piece: pieces) {
-			piece->DrawStatic();
-		}
-	}
-
-	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
+	void AddPiece(S3DModelPiece* p) { pieceObjects.push_back(p); }
 	void DeletePieces();
-	void FlattenPieceTree(S3DModelPiece* root) {
-		assert(root != nullptr);
 
-		pieces.clear();
-		pieces.reserve(numPieces);
+	void Draw() const;
+	void DrawPiece(const S3DModelPiece* omp) const;
+	void DrawPieceRec(const S3DModelPiece* omp) const;
 
-		std::vector<S3DModelPiece*> stack = {root};
+	void DeleteBuffers();
+	void UploadBuffers();
+	void EnableAttribs() const;
+	void DisableAttribs() const;
+	void BindElemsBuffer() const { glBindBuffer(GL_ARRAY_BUFFER, elemsBuffer); }
+	void BindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indcsBuffer); }
+	void UnbindElemsBuffer() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
+	void UnbindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
 
-		while (!stack.empty()) {
-			S3DModelPiece* p = stack.back();
-
-			stack.pop_back();
-			pieces.push_back(p);
-
-			// add children in reverse for the correct DF traversal order
-			for (size_t n = 0; n < p->children.size(); n++) {
-				stack.push_back(p->children[p->children.size() - n - 1]);
-			}
-		}
-	}
+	void SetPieceMatrices();
+	void FlattenPieceTree(S3DModelPiece* root);
+	void FlattenPieceTreeRec(S3DModelPiece* piece);
 
 	// default values set by parsers; radius is also cached in WorldObject::drawRadius (used by projectiles)
 	float CalcDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
@@ -278,16 +276,25 @@ struct S3DModel
 	float3 CalcDrawMidPos() const { return ((maxs + mins) * 0.5f); }
 	float3 GetDrawMidPos() const { return relMidPos; }
 
+	const std::vector<CMatrix44f>& GetPieceMatrices() const { return pieceMatrices; }
+
 public:
 	std::string name;
 	std::string texs[NUM_MODEL_TEXTURES];
 
-	// flattened tree; pieces[0] is the root
-	std::vector<S3DModelPiece*> pieces;
+	// flattened tree; pieceObjects[0] is the root
+	std::vector<S3DModelPiece*> pieceObjects;
+	std::vector<CMatrix44f> pieceMatrices;
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
 	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or ASSIMP)
+
+	unsigned int vertexArray = 0;
+	unsigned int elemsBuffer = 0;
+	unsigned int indcsBuffer = 0;
+	unsigned int vboNumVerts = 0;
+	unsigned int vboNumIndcs = 0;
 
 	ModelType type;
 
@@ -321,8 +328,6 @@ struct LocalModelPiece
 	void SetScriptPieceIndex(unsigned int idx) { scriptPieceIndex = idx; }
 	unsigned int GetLModelPieceIndex() const { return lmodelPieceIndex; }
 	unsigned int GetScriptPieceIndex() const { return scriptPieceIndex; }
-
-	void Draw() const;
 
 
 	// on-demand functions
@@ -390,7 +395,6 @@ public:
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
 	unsigned int scriptPieceIndex; // index of this piece into UnitScript::pieces
-	unsigned int dispListID;
 
 	const S3DModelPiece* original;
 	LocalModelPiece* parent;
@@ -424,13 +428,15 @@ struct LocalModel
 	// raw forms, the piece-index must be valid
 	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
+	// const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieceMatrices[pieceIdx]; }
+	const std::vector<CMatrix44f>& GetPieceMatrices() const { return pieceMatrices; }
 
 	// used by all SolidObject's; accounts for piece movement
 	float GetDrawRadius() const { return (boundingVolume.GetBoundingRadius()); }
 
 
-	// LMD LODs use the engine lists (as was the default logic for SetPieceList)
-	void Draw() const { DrawPieces(); }
+	void Draw() const;
+	void DrawPiece(const LocalModelPiece* lmp) const;
 
 	void SetModel(const S3DModel* model, bool initialize = true);
 	void SetLODCount(unsigned int lodCount) {
@@ -438,11 +444,9 @@ struct LocalModel
 		luaMaterialData.SetLODCount(lodCount);
 	}
 	void UpdateBoundingVolume();
+	void UpdatePieceMatrices();
 
-	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
-		verts.resize(8 + 2); GetBoundingBoxVerts(&verts[0]);
-	}
-
+	void GetBoundingBoxVerts(std::array<float3, 8 + 2>& verts) const { GetBoundingBoxVerts(&verts[0]); }
 	void GetBoundingBoxVerts(float3* verts) const {
 		const float3 bbMins = GetRelMidPos() - boundingVolume.GetHScales();
 		const float3 bbMaxs = GetRelMidPos() + boundingVolume.GetHScales();
@@ -466,10 +470,9 @@ struct LocalModel
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
 
-	void DrawPieces() const;
-
 public:
 	std::vector<LocalModelPiece> pieces;
+	std::vector<CMatrix44f> pieceMatrices;
 
 private:
 	// object-oriented box; accounts for piece movement
@@ -477,6 +480,13 @@ private:
 
 	// custom Lua-set material this model should be rendered with
 	LuaObjectMaterialData luaMaterialData;
+
+	// per-instance shallow copies of S3DModel::*
+	unsigned int vertexArray = 0;
+	unsigned int elemsBuffer = 0;
+	unsigned int indcsBuffer = 0;
+	unsigned int vboNumVerts = 0;
+	unsigned int vboNumIndcs = 0;
 };
 
 #endif /* _3DMODEL_H */

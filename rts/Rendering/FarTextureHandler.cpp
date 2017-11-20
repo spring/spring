@@ -189,7 +189,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 		GL::PushMatrix();
 		// draw (static-pose) model
-		model->DrawStatic();
+		model->Draw();
 		GL::PopMatrix();
 
 		// rotate for the next orientation
