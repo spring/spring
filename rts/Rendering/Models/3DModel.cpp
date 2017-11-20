@@ -135,8 +135,7 @@ void S3DModel::UploadBuffers()
 			if (!omp->HasGeometryData())
 				continue;
 
-			const std::vector<SVertexData>& elems = omp->GetVertexElements();
-			      std::vector<unsigned int> indcs = omp->GetVertexIndices();
+			std::vector<unsigned int> indcs = omp->GetVertexIndices();
 
 			// shift piece-relative indices; vertices of all pieces are packed together
 			std::for_each(indcs.begin(), indcs.end(), [&omp](unsigned int& idx) { idx += omp->vboStartElem; });

@@ -183,8 +183,6 @@ CMatrix44f FlyingPiece::GetMatrix(const SplitterData& cp, const float3 dragFacto
 
 void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 {
-	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
-
 	if (prev == nullptr) {
 		unitDrawer->SetTeamColour(team);
 

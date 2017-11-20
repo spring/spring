@@ -240,7 +240,7 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vec
 	if (!shadowHandler->InShadowPass()) {
 		po = modelShaders[MODEL_SHADER_ACTIVE];
 
-		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_LAST);
+		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_LAST);
 		assert(po->IsBound());
 
 		if (!pieceMats.empty())
@@ -250,7 +250,7 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vec
 	} else {
 		po = shadowHandler->GetCurrentShadowGenProg();
 
-		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_MODEL || shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROG_PROJECTILE);
+		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_MODEL || shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 		assert(po->IsBound());
 
 		if (!pieceMats.empty())
