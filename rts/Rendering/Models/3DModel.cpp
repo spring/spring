@@ -39,9 +39,17 @@ CR_REG_METADATA(LocalModelPiece, (
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
 	CR_MEMBER(pieces),
+	CR_IGNORED(pieceMatrices),
 
 	CR_IGNORED(boundingVolume),
-	CR_IGNORED(luaMaterialData)
+	CR_IGNORED(luaMaterialData),
+
+	// reload
+	CR_IGNORED(vertexArray),
+	CR_IGNORED(elemsBuffer),
+	CR_IGNORED(indcsBuffer),
+	CR_IGNORED(vboNumVerts),
+	CR_IGNORED(vboNumIndcs)
 ))
 
 
@@ -507,6 +515,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	if (!initialize) {
 		assert(pieces.size() == model->numPieces);
+		pieceMatrices.resize(pieces.size());
 
 		// PostLoad; only update the pieces
 		for (size_t n = 0; n < pieces.size(); n++) {
@@ -525,9 +534,9 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	CreateLocalModelPieces(model->GetRootPiece());
 
-	// must recursively update matrices here too: for features
-	// LocalModel::Update is never called, but they might have
-	// baked piece rotations (in the case of .dae)
+	// must recursively update matrices here too since
+	// LocalModel::Update is never called for features
+	// (which might have baked piece rotations if .dae)
 	pieces[0].UpdateChildMatricesRec(false);
 	UpdateBoundingVolume();
 
