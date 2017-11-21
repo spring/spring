@@ -44,6 +44,7 @@ GLAPI void APIENTRY glBindVertexArray(GLuint id) {}
 GLAPI void APIENTRY glEnableVertexAttribArray(GLuint index) {}
 GLAPI void APIENTRY glDisableVertexAttribArray(GLuint index) {}
 GLAPI void APIENTRY glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) {}
+GLAPI void APIENTRY glVertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer) {}
 
 GLAPI void APIENTRY glGenFramebuffers(GLsizei n, GLuint *framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatus(GLenum target) { return 0; }
