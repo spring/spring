@@ -30,6 +30,9 @@ public:
 	static IUnitDrawerState* GetInstance(bool nopState);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
+	static const CMatrix44f& GetDummyPieceMatrixRef(size_t idx = 0);
+	static const CMatrix44f* GetDummyPieceMatrixPtr(size_t idx = 0);
+
 	static float4 GetTeamColor(int team, float alpha);
 
 	IUnitDrawerState() { modelShaders.fill(nullptr); }
@@ -47,15 +50,16 @@ public:
 
 	virtual void EnableTextures() const = 0;
 	virtual void DisableTextures() const = 0;
-	virtual void EnableShaders(const CUnitDrawer*) {}
-	virtual void DisableShaders(const CUnitDrawer*) {}
+	virtual void EnableShaders(const CUnitDrawer*) = 0;
+	virtual void DisableShaders(const CUnitDrawer*) = 0;
 
-	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
+	virtual void SetSkyLight(const ISkyLight*) const = 0;
 	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
-	virtual void SetNanoColor(const float4& color) const {}
-	virtual void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const {}
-	virtual void SetWaterClipPlane(const DrawPass::e& drawPass) const {} // water
-	virtual void SetBuildClipPlanes(const float4&, const float4&) const {} // nano-frames
+	virtual void SetNanoColor(const float4& color) const = 0;
+	virtual void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const = 0;
+	virtual void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const = 0;
+	virtual void SetWaterClipPlane(const DrawPass::e& drawPass) const = 0; // water
+	virtual void SetBuildClipPlanes(const float4&, const float4&) const = 0; // nano-frames
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -104,10 +108,11 @@ public:
 	void EnableShaders(const CUnitDrawer*) override {}
 	void DisableShaders(const CUnitDrawer*) override {}
 
-	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override {}
+	void SetSkyLight(const ISkyLight*) const override {}
 	void SetTeamColor(int team, const float2 alpha) const override {}
 	void SetNanoColor(const float4& color) const override {}
 	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override {}
 	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
 	void SetBuildClipPlanes(const float4&, const float4&) const override {}
 };
@@ -130,10 +135,11 @@ public:
 	void EnableShaders(const CUnitDrawer*) override;
 	void DisableShaders(const CUnitDrawer*) override;
 
-	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override;
+	void SetSkyLight(const ISkyLight*) const override;
 	void SetTeamColor(int team, const float2 alpha) const override;
 	void SetNanoColor(const float4& color) const override;
-	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override;
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override;
 	void SetWaterClipPlane(const DrawPass::e& drawPass) const override;
 	void SetBuildClipPlanes(const float4&, const float4&) const override;
 };

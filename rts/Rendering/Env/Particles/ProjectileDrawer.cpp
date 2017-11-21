@@ -39,7 +39,6 @@
 #include "System/StringUtil.h"
 
 
-
 CProjectileDrawer* projectileDrawer = nullptr;
 
 CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
@@ -690,40 +689,56 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 	const S3DModel* model = p->model;
 	const IUnitDrawerState* udState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 
-	if (!(p->weapon || p->piece) || (model == nullptr))
+	if (model == nullptr)
 		return false;
 
-	if (p->weapon) {
-		// weapon-projectile
-		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
+	switch ((p->weapon * 2) + (p->piece * 1)) {
+		case 2: {
+			// weapon-projectile
+			const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		unitDrawer->SetTeamColour(wp->GetTeamID());
-		udState->SetMatrices(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)), model->GetPieceMatrices());
+			unitDrawer->SetTeamColour(wp->GetTeamID());
+			udState->SetMatrices(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)), model->GetPieceMatrices());
 
-		if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p)))
+			if (/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))
+				return true;
+
 			model->Draw();
+			return true;
+		} break;
 
-	} else {
-		// piece-projectile
-		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
+		case 1: {
+			// piece-projectile
+			const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
-		CMatrix44f modelMat;
-		modelMat.Translate(pp->drawPos);
-		modelMat.Rotate(pp->GetDrawAngle(), pp->spinVec);
+			CMatrix44f modelMat;
 
-		unitDrawer->SetTeamColour(pp->GetTeamID());
-		udState->SetMatrices(modelMat, model->GetPieceMatrices());
+			modelMat.Translate(pp->drawPos);
+			modelMat.Rotate(pp->GetDrawAngle() * math::DEG_TO_RAD, pp->spinVector);
 
-		if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-			if (pp->explFlags & PF_Recursive) {
-				model->DrawPieceRec(pp->omp);
+			unitDrawer->SetTeamColour(pp->GetTeamID());
+
+			// NOTE: eventHandler.Draw{Unit,Feature,Projectile} now has no transform
+			if (/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))
+				return true;
+
+			if ((pp->explFlags & PF_Recursive) != 0) {
+				udState->SetMatrices(modelMat, model->GetPieceMatrices());
+				model->DrawPieceRec(pp->modelPiece);
 			} else {
-				model->DrawPiece(pp->omp);
+				// non-recursive, only use the model matrix
+				udState->SetMatrices(modelMat, IUnitDrawerState::GetDummyPieceMatrixPtr(), model->numPieces);
+				model->DrawPiece(pp->modelPiece);
 			}
-		}
+
+			return true;
+		} break;
+
+		default: {
+		} break;
 	}
 
-	return true;
+	return false;
 }
 
 void CProjectileDrawer::DrawGroundFlashes()

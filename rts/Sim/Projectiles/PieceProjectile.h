@@ -24,6 +24,8 @@ class CPieceProjectile: public CProjectile
 {
 	CR_DECLARE_DERIVED(CPieceProjectile)
 
+private:
+	CPieceProjectile() {}
 public:
 	CPieceProjectile(
 		CUnit* owner,
@@ -46,31 +48,25 @@ public:
 	float GetDrawAngle() const;
 
 private:
-	CPieceProjectile() { }
-	float3 RandomVertexPos() const;
 	void Collision(CUnit* unit, CFeature* feature);
 
 public:
-	struct FireTrailPoint {
-		float3 pos;
-		float size;
-	};
-
 	int age;
 
 	unsigned int explFlags;
 
-	const S3DModelPiece* omp;
+	static constexpr unsigned int SMOKE_TIME = 40;
+	static constexpr unsigned int NUM_TRAIL_PARTS = 8;
 
-	static constexpr unsigned NUM_TRAIL_PARTS = 8;
-	FireTrailPoint fireTrailPoints[NUM_TRAIL_PARTS];
+	float4 fireTrailPoints[NUM_TRAIL_PARTS];
 
-	float3 spinVec;
-	float spinSpeed;
-	float spinAngle;
+	float3 spinVector;
+	float2 spinParams; // .x := speed, .y := angle
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
+
+	const S3DModelPiece* modelPiece;
 	CSmokeTrailProjectile* smokeTrail;
 };
 

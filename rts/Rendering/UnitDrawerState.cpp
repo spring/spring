@@ -20,7 +20,11 @@
 #include "System/myMath.h"
 #include "System/StringUtil.h"
 
+static const std::array<CMatrix44f, 128> dummyPieceMatrices;
 
+
+const CMatrix44f& IUnitDrawerState::GetDummyPieceMatrixRef(size_t idx) { return  dummyPieceMatrices[idx]; }
+const CMatrix44f* IUnitDrawerState::GetDummyPieceMatrixPtr(size_t idx) { return &dummyPieceMatrices[idx]; }
 
 float4 IUnitDrawerState::GetTeamColor(int team, float alpha) {
 	assert(teamHandler->IsValidTeam(team));
@@ -211,7 +215,7 @@ void UnitDrawerStateGLSL::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL
 void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
 
 
-void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
+void UnitDrawerStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
@@ -234,7 +238,7 @@ void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(16, color);
 }
 
-void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const {
+void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const {
 	Shader::IProgramObject* po = nullptr;
 
 	if (!shadowHandler->InShadowPass()) {
@@ -243,8 +247,8 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vec
 		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_LAST);
 		assert(po->IsBound());
 
-		if (!pieceMats.empty())
-			po->SetUniformMatrix4fv(6, std::min(pieceMats.size(), size_t(128)), false, &pieceMats[0].m[0]);
+		if (numPieceMats > 0)
+			po->SetUniformMatrix4fv(6, std::min(numPieceMats, dummyPieceMatrices.size()), false, &pieceMats[0].m[0]);
 
 		po->SetUniformMatrix4fv(7, false, modelMat);
 	} else {
@@ -253,13 +257,14 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const std::vec
 		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_MODEL || shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 		assert(po->IsBound());
 
-		if (!pieceMats.empty())
-			po->SetUniformMatrix4fv(4, std::min(pieceMats.size(), size_t(128)), false, &pieceMats[0].m[0]);
+		if (numPieceMats > 0)
+			po->SetUniformMatrix4fv(4, std::min(numPieceMats, dummyPieceMatrices.size()), false, &pieceMats[0].m[0]);
 
 		// {Unit,Projectile}Drawer::DrawShadowPass sets view and proj
 		po->SetUniformMatrix4fv(3, false, modelMat);
 	}
 }
+
 
 void UnitDrawerStateGLSL::SetWaterClipPlane(const DrawPass::e& drawPass) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());

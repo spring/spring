@@ -1826,7 +1826,7 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 }
 
 void CUnitDrawer::SunChanged() {
-	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShaderSky(this, sky->GetLight());
+	unitDrawerStates[DRAWER_STATE_SEL]->SetSkyLight(sky->GetLight());
 }
 
 

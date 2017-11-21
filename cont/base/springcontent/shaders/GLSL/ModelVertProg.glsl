@@ -18,8 +18,6 @@ uniform mat4 modelMatrix;
 uniform mat4  viewMatrix;
 uniform mat4  projMatrix;
 
-// uniform mat4 cameraInv;
-
 uniform vec3 cameraPos;
 uniform vec3 fogParams;
 
@@ -44,21 +42,27 @@ out vec3 normalVec;
 #endif
 
 
+mat4 mat4mix(mat4 a, mat4 b, float alpha) {
+	return (a * (1.0 - alpha) + b * alpha);
+}
+
 void main(void)
 {
+	// mat4 pieceMatrix = mat4mix(mat4(1.0), pieceMatrices[pieceIdxAttr], pieceMatrices[0][3][3]);
 	mat4 pieceMatrix = pieceMatrices[pieceIdxAttr];
+	mat4 modelPieceMatrix = modelMatrix * pieceMatrix;
 
 	vec4 vertexPos = vec4(positionAttr, 1.0);
-	vec4 vertexModelPos = modelMatrix * pieceMatrix * vertexPos;
+	vec4 vertexModelPos = modelPieceMatrix * vertexPos;
 	vec4 vertexViewPos = viewMatrix * vertexModelPos;
 
 #ifdef use_normalmapping
-	tbnMatrix = modelMatrix * pieceMatrix * mat3(sTangentAttr, tTangentAttr, normalAttr);
+	tbnMatrix = modelPieceMatrix * mat3(sTangentAttr, tTangentAttr, normalAttr);
 #else
 	// NOTE:
 	//   technically need inverse(transpose(mview)) here, but
 	//   mview just equals model here and model is orthonormal
-	normalVec = (modelMatrix * pieceMatrix * vec4(normalAttr, 0.0)).xyz;
+	normalVec = (modelPieceMatrix * vec4(normalAttr, 0.0)).xyz;
 #endif
 
 	gl_Position = projMatrix * vertexViewPos;

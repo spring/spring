@@ -3249,17 +3249,17 @@ int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __func__, 1);
 
-	if (proj == NULL || !proj->piece)
+	if (proj == nullptr || !proj->piece)
 		return 0;
 
 	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
 
 	pproj->explFlags = luaL_optint(L, 2, pproj->explFlags);
-	pproj->spinAngle = luaL_optfloat(L, 3, pproj->spinAngle);
-	pproj->spinSpeed = luaL_optfloat(L, 4, pproj->spinSpeed);
-	pproj->spinVec.x = luaL_optfloat(L, 5, pproj->spinVec.x);
-	pproj->spinVec.y = luaL_optfloat(L, 6, pproj->spinVec.y);
-	pproj->spinVec.z = luaL_optfloat(L, 7, pproj->spinVec.z);
+	pproj->spinParams.y = luaL_optfloat(L, 3, pproj->spinParams.y);
+	pproj->spinParams.x = luaL_optfloat(L, 4, pproj->spinParams.x);
+	pproj->spinVector.x = luaL_optfloat(L, 5, pproj->spinVector.x);
+	pproj->spinVector.y = luaL_optfloat(L, 6, pproj->spinVector.y);
+	pproj->spinVector.z = luaL_optfloat(L, 7, pproj->spinVector.z);
 	return 0;
 }
 

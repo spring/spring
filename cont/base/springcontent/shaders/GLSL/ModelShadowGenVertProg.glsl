@@ -16,8 +16,14 @@ layout(location = 6) in uint pieceIdxAttr;
 out vec2 vTexCoord;
 
 
+mat4 mat4mix(mat4 a, mat4 b, float alpha) {
+	return (a * (1.0 - alpha) + b * alpha);
+}
+
 void main() {
-	mat4 modelPieceMat = modelMat * pieceMats[pieceIdxAttr];
+	// mat4 pieceMat = mat4mix(mat4(1.0), pieceMats[pieceIdxAttr], pieceMats[0][3][3]);
+	mat4 pieceMat = pieceMats[pieceIdxAttr];
+	mat4 modelPieceMat = modelMat * pieceMat;
 
 	vec4 vertexPos = vec4(positionAttr, 1.0);
 	vec4 vertexShadowPos = shadowViewMat * modelPieceMat * vertexPos;

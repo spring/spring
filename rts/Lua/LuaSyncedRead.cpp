@@ -4771,11 +4771,11 @@ int LuaSyncedRead::GetPieceProjectileParams(lua_State* L)
 	const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
 
 	lua_pushnumber(L, ppro->explFlags);
-	lua_pushnumber(L, ppro->spinAngle);
-	lua_pushnumber(L, ppro->spinSpeed);
-	lua_pushnumber(L, ppro->spinVec.x);
-	lua_pushnumber(L, ppro->spinVec.y);
-	lua_pushnumber(L, ppro->spinVec.z);
+	lua_pushnumber(L, ppro->spinParams.y);
+	lua_pushnumber(L, ppro->spinParams.x);
+	lua_pushnumber(L, ppro->spinVector.x);
+	lua_pushnumber(L, ppro->spinVector.y);
+	lua_pushnumber(L, ppro->spinVector.z);
 	return (1 + 1 + 1 + 3);
 }
 
@@ -4928,23 +4928,25 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 	if (pro == nullptr)
 		return 0;
 
-	if (pro->weapon) {
-		const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	switch ((pro->weapon * 2) + (pro->piece * 1)) {
+		case 2: {
+			const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
 
-		if (wpro != nullptr && wpro->GetWeaponDef() != nullptr) {
-			// maybe CWeaponProjectile derivatives
-			// should have actual names themselves?
-			lua_pushsstring(L, wpro->GetWeaponDef()->name);
-			return 1;
-		}
-	}
-	if (pro->piece) {
-		const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
+			if (wpro != nullptr && wpro->GetWeaponDef() != nullptr) {
+				// maybe CWeaponProjectile derivatives
+				// should have actual names themselves?
+				lua_pushsstring(L, wpro->GetWeaponDef()->name);
+				return 1;
+			}
+		} break;
+		case 1: {
+			const CPieceProjectile* ppro = static_cast<const CPieceProjectile*>(pro);
 
-		if (ppro != nullptr && ppro->omp != nullptr) {
-			lua_pushsstring(L, ppro->omp->name);
-			return 1;
-		}
+			if (ppro != nullptr && ppro->modelPiece != nullptr) {
+				lua_pushsstring(L, ppro->modelPiece->name);
+				return 1;
+			}
+		} break;
 	}
 
 	// neither weapon nor piece likely means the projectile is CExpGenSpawner, should we return any name in this case?

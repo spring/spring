@@ -21,27 +21,24 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-#define SMOKE_TIME 40
-
 CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
 
 	CR_MEMBER(age),
 	CR_MEMBER(explFlags),
-	CR_IGNORED(omp),
+	CR_IGNORED(modelPiece),
 	CR_IGNORED(smokeTrail),
 	CR_IGNORED(fireTrailPoints),
-	CR_MEMBER(spinVec),
-	CR_MEMBER(spinSpeed),
-	CR_MEMBER(spinAngle),
+	CR_MEMBER(spinVector),
+	CR_MEMBER(spinParams),
 	CR_MEMBER(oldSmokePos),
 	CR_MEMBER(oldSmokeDir)
 ))
 
 CPieceProjectile::CPieceProjectile(
-	CUnit* owner,
-	LocalModelPiece* lmp,
+	CUnit* owner, // never null
+	LocalModelPiece* lmp, // never null
 	const float3& pos,
 	const float3& speed,
 	int flags,
@@ -50,43 +47,41 @@ CPieceProjectile::CPieceProjectile(
 	CProjectile(pos, speed, owner, true, false, true),
 	age(0),
 	explFlags(flags),
-	omp((lmp != nullptr) ? lmp->original : nullptr),
+	modelPiece(lmp->original),
 	smokeTrail(nullptr)
 {
-	checkCol = false;
+	model = owner->model;
 
-	if (owner != nullptr) {
+	{
 		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 
-		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
+	{
+		// neither spinVector nor spinParams technically need to be
+		// synced, but since instances of this class are themselves
+		// synced and have LuaSynced{Ctrl, Read} exposure we treat
+		// them that way for consistency
+		spinVector = gsRNG.NextVector();
+		spinParams = {gsRNG.NextFloat() * 20.0f, 0.0f};
 
-	oldSmokePos = pos;
-	oldSmokeDir = speed;
-	oldSmokeDir.Normalize();
+		oldSmokePos = pos;
+		oldSmokeDir = speed;
 
-	// neither spinVec nor spinSpeed technically
-	// needs to be synced, but since instances of
-	// this class are themselves synced and have
-	// LuaSynced{Ctrl, Read} exposure we treat
-	// them that way for consistency
-	spinAngle = 0.0f;
-	spinVec = gsRNG.NextVector().Normalize();
-	spinSpeed = gsRNG.NextFloat() * 20;
+		spinVector.Normalize();
+		oldSmokeDir.Normalize();
+	}
 
 	for (auto& ftp: fireTrailPoints) {
-		ftp.pos = pos;
-		ftp.size = 0.f;
+		ftp = {pos, 0.0f};
 	}
+
+	checkCol = false;
+	castShadow = true;
+	useAirLos = ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10.0f);
 
 	SetRadiusAndHeight(radius, 0.0f);
-	castShadow = true;
-
-	if (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10) {
-		useAirLos = true;
-	}
 
 	projectileHandler->AddProjectile(this);
 	assert(!detached);
@@ -104,6 +99,7 @@ void CPieceProjectile::Collision()
 	// ground bounce
 	const float3& norm = CGround::GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
+
 	SetVelocityAndSpeed(speed - (norm * ns * 1.6f));
 	SetPosition(pos + (norm * 0.1f));
 }
@@ -125,16 +121,16 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 {
-	if (unit && (unit == owner()))
+	if (unit != nullptr && (unit == owner()))
 		return;
 
-	if ((explFlags & PF_Explode) && (unit || feature)) {
+	if ((explFlags & PF_Explode) != 0 && (unit != nullptr || feature != nullptr )) {
 		const DamageArray damageArray(50.0f);
 		const CExplosionParams params = {
 			pos,
 			ZeroVector,
 			damageArray,
-			NULL,              // weaponDef
+			nullptr,           // weaponDef
 			owner(),
 			unit,              // hitUnit
 			feature,           // hitFeature
@@ -152,8 +148,8 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 		helper->Explosion(params);
 	}
 
-	if (explFlags & PF_Smoke) {
-		if (explFlags & PF_NoCEGTrail) {
+	if ((explFlags & PF_Smoke) != 0) {
+		if ((explFlags & PF_NoCEGTrail) != 0) {
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
@@ -173,58 +169,45 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 
 
-float3 CPieceProjectile::RandomVertexPos() const
-{
-	if (omp == nullptr)
-		return ZeroVector;
-	#define rf guRNG.NextFloat()
-	return mix(omp->mins, omp->maxs, float3(rf,rf,rf));
-}
-
-
 float CPieceProjectile::GetDrawAngle() const
 {
-	return spinAngle + spinSpeed * globalRendering->timeOffset;
+	return (spinParams.y + spinParams.x * globalRendering->timeOffset);
 }
 
 
 void CPieceProjectile::Update()
 {
 	if (!luaMoveCtrl) {
-		speed.y += mygravity;
-		SetVelocityAndSpeed(speed * 0.997f);
+		SetVelocityAndSpeed((speed += (UpVector * mygravity)) * 0.997f);
 		SetPosition(pos + speed);
 	}
 
-	spinAngle += spinSpeed;
+	spinParams.y += spinParams.x;
 	age += 1;
 	checkCol |= (age > 10);
 
 	if ((explFlags & PF_NoCEGTrail) == 0) {
 		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 		return;
 	}
 
-	if (explFlags & PF_Fire) {
+	if ((explFlags & PF_Fire) != 0) {
 		for (int a = NUM_TRAIL_PARTS - 2; a >= 0; --a) {
 			fireTrailPoints[a + 1] = fireTrailPoints[a];
 		}
 
 		CMatrix44f m(pos);
-		m.Rotate(spinAngle * math::DEG_TO_RAD, spinVec);
-		m.Translate(RandomVertexPos());
 
-		fireTrailPoints[0].pos  = m.GetPos();
-		fireTrailPoints[0].size = 1 + guRNG.NextFloat();
+		m.Rotate(spinParams.y * math::DEG_TO_RAD, spinVector);
+		m.Translate(mix(modelPiece->mins, modelPiece->maxs, float3(guRNG.NextFloat(), guRNG.NextFloat(), guRNG.NextFloat())));
+
+		fireTrailPoints[0] = {m.GetPos(), 1.0f + guRNG.NextFloat()};
 	}
 
-	if (explFlags & PF_Smoke) {
-		if (smokeTrail) {
-			smokeTrail->UpdateEndPos(pos, dir);
-			oldSmokePos = pos;
-			oldSmokeDir = dir;
-		}
+	if ((explFlags & PF_Smoke) != 0) {
+		if (smokeTrail != nullptr)
+			smokeTrail->UpdateEndPos(oldSmokePos = pos, oldSmokeDir = dir);
 
 		if ((age % 8) == 0) {
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
@@ -260,10 +243,10 @@ void CPieceProjectile::Draw(GL::RenderDataBufferTC* va) const
 	const auto eft = projectileDrawer->explofadetex;
 
 	for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
-		const float3 interPos = fireTrailPoints[age].pos;
+		const float3 interPos = fireTrailPoints[age];
 
 		const float alpha = 1.0f - (age * (1.0f / NUM_TRAIL_PARTS));
-		const float drawsize = (1.0f + age) * fireTrailPoints[age].size;
+		const float drawsize = (1.0f + age) * fireTrailPoints[age].w;
 
 		const SColor col = lightOrange * alpha;
 

@@ -572,7 +572,7 @@ void CSMFGroundDrawer::SunChanged() {
 
 	// always update, SSMF shader needs current sundir even when shadows are disabled
 	// note: only the active state is notified of a given change
-	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSky(sky->GetLight());
+	smfRenderStates[RENDER_STATE_SEL]->SetSkyLight(sky->GetLight());
 }
 
 

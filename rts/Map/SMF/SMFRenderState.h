@@ -46,7 +46,7 @@ public:
 
 	virtual void SetSquareTexGen(const int sqx, const int sqy) const = 0;
 	virtual void SetCurrentShader(const DrawPass::e& drawPass) = 0;
-	virtual void UpdateCurrentShaderSky(const ISkyLight* skyLight) const = 0;
+	virtual void SetSkyLight(const ISkyLight* skyLight) const = 0;
 };
 
 
@@ -70,7 +70,7 @@ struct SMFRenderStateNOP: public ISMFRenderState {
 
 	void SetSquareTexGen(const int sqx, const int sqy) const override {}
 	void SetCurrentShader(const DrawPass::e& drawPass) override {}
-	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const override {}
+	void SetSkyLight(const ISkyLight* skyLight) const override {}
 };
 
 
@@ -96,7 +96,7 @@ public:
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
-	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
+	void SetSkyLight(const ISkyLight* skyLight) const;
 
 	enum {
 		GLSL_SHADER_STANDARD = 0,

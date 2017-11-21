@@ -261,6 +261,8 @@ struct S3DModel
 	void UnbindElemsBuffer() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
 	void UnbindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
 
+	// minor hack for piece-projectiles, saves a uniform
+	void SetPieceMatrixWeight(size_t i, float w) const { const_cast<CMatrix44f&>(pieceMatrices[i])[15] = w; }
 	void SetPieceMatrices();
 	void FlattenPieceTree(S3DModelPiece* root);
 	void FlattenPieceTreeRec(S3DModelPiece* piece);
