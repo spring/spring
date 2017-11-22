@@ -71,7 +71,7 @@ const std::array<KnownInfoTag, 12> knownTags = {
 	KnownInfoTag{"game",        "example: Total Annihilation",                                    false},
 	KnownInfoTag{"shortgame",   "example: TA",                                                    false},
 	KnownInfoTag{"description", "example: Little units blowing up other little units",            false},
-	KnownInfoTag{"mapfile",     "in case its a map, store location of smf file",              false}, //FIXME is this ever used in the engine?! or does it auto calc the location?
+	KnownInfoTag{"mapfile",     "in case its a map, store location of smf file",                  false}, //FIXME is this ever used in the engine?! or does it auto calc the location?
 	KnownInfoTag{"modtype",     "0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu",          true},
 	KnownInfoTag{"depend",      "a table with all archives that needs to be loaded for this one", false},
 	KnownInfoTag{"replace",     "a table with archives that got replaced with this one",          false},
