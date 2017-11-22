@@ -11,7 +11,8 @@ class CMatrix44f
 public:
 	CR_DECLARE_STRUCT(CMatrix44f)
 
-	CMatrix44f();
+	// identity
+	CMatrix44f() : m{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f} { }
 	CMatrix44f(const CMatrix44f& mat);
 
 	CMatrix44f(const float3 pos, const float3 x, const float3 y, const float3 z);
@@ -21,7 +22,7 @@ public:
 	bool IsOrthoNormal() const;
 	bool IsIdentity() const;
 
-	CMatrix44f& LoadIdentity();
+	CMatrix44f& LoadIdentity() { return (*this = CMatrix44f()); }
 
 	void SetUpVector(const float3 up);
 	CMatrix44f& RotateX(float angle); // (pitch) angle in radians
