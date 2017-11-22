@@ -21,6 +21,9 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
+static constexpr int SMOKE_TIME = 40;
+
+
 CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
