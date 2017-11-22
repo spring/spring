@@ -55,7 +55,8 @@ public:
 
 	unsigned int explFlags;
 
-	static constexpr unsigned int NUM_TRAIL_PARTS = 8;
+	constexpr static unsigned int TRAIL_SMOKE_TIME = 40;
+	constexpr static unsigned int NUM_TRAIL_PARTS = 8;
 
 	float4 fireTrailPoints[NUM_TRAIL_PARTS];
 

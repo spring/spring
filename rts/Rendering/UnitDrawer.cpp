@@ -247,9 +247,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(0, configHandler->GetInt("MaxDynamicModelLights"));
 
-	unitDrawerStates.fill(nullptr);
-	unitDrawerStates[DRAWER_STATE_NOP] = IUnitDrawerState::GetInstance( true);
-	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(false);
+	unitDrawerStates[DRAWER_STATE_NOP] = IUnitDrawerState::GetInstance( true, false);
+	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(false, false);
+	unitDrawerStates[DRAWER_STATE_LUA] = IUnitDrawerState::GetInstance(false,  true);
 
 	drawModelFuncs[0] = &CUnitDrawer::DrawUnitModelBeingBuiltOpaque;
 	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
@@ -276,6 +276,7 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitDrawerStates[DRAWER_STATE_NOP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_NOP]);
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
+	unitDrawerStates[DRAWER_STATE_LUA]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_LUA]);
 
 	cubeMapHandler->Free();
 
@@ -444,7 +445,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool d
 
 	// draw the unit with the default (non-Lua) material
 	SetTeamColour(unit->team);
-	DrawUnitTrans(unit, 0, 0, false, false);
+	DrawUnitDefTrans(unit, false, false);
 }
 
 
@@ -571,7 +572,7 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
 		return;
 
-	DrawUnitTrans(unit, 0, 0, false, false);
+	DrawUnitDefTrans(unit, false, false);
 }
 
 
@@ -604,7 +605,7 @@ void CUnitDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
-	// TODO: shared by {AdvTree,SMFGround,Unit,Feature,Projectile}Drawer, move to ShadowHandler
+	// TODO: shared by {AdvTree,SMFGround,Unit,Feature,Projectile,LuaObject}Drawer, move to ShadowHandler
 	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
 	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
 
@@ -831,7 +832,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		SetTeamColour(unit->team, float2(alphaValues.x, 1.0f));
-		DrawUnitTrans(unit, 0, 0, false, false);
+		DrawUnitDefTrans(unit, false, false);
 	}
 }
 
@@ -993,14 +994,6 @@ void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 	glPopAttrib();
 }
 
-const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
-{
-	// proper alpha-rendering is only enabled with GLSL state
-	const bool enableShaders =               unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this);
-	const bool permitShaders = !alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha();
-
-	return unitDrawerStates[enableShaders && permitShaders];
-}
 
 
 
@@ -1063,24 +1056,24 @@ void CUnitDrawer::PopIndividualOpaqueState(const CUnit* unit, bool deferredPass)
 }
 
 
-void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
+void CUnitDrawer::DrawIndividualDefTrans(const CUnit* unit, bool noLuaCall)
 {
 	if (LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/))
 		return;
 
 	// set the full default state
 	PushIndividualOpaqueState(unit, false);
-	DrawUnitTrans(unit, 0, 0, false, noLuaCall);
+	DrawUnitDefTrans(unit, false, noLuaCall);
 	PopIndividualOpaqueState(unit, false);
 }
 
-void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
+void CUnitDrawer::DrawIndividualLuaTrans(const CUnit* unit, bool noLuaCall)
 {
-	if (LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/))
+	if (LuaObjectDrawer::DrawSingleObjectLuaTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/))
 		return;
 
 	PushIndividualOpaqueState(unit, false);
-	DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
+	DrawUnitLuaTrans(unit, false, noLuaCall);
 	PopIndividualOpaqueState(unit, false);
 }
 
@@ -1119,7 +1112,7 @@ static bool DIDCheckMatrixMode(int wantedMode)
 // used by LuaOpenGL::Draw{Unit,Feature}Shape
 // acts like DrawIndividual but can not apply
 // custom materials
-void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
+void CUnitDrawer::DrawObjectDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
 	// TODO: use the matrix stack
 	return;
@@ -1159,7 +1152,7 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 }
 
 // used for drawing building orders (with translucency)
-void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
+void CUnitDrawer::DrawObjectDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
 	// TODO: use the matrix stack
 	return;
@@ -1336,25 +1329,31 @@ void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
 	if (!noLuaCall && unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
-	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
-	LocalModel* model = const_cast<LocalModel*>(&unit->localModel);
-
-	model->UpdatePieceMatrices();
-	state->SetMatrices(unit->GetTransformMatrix(), model->GetPieceMatrices());
-	model->Draw();
+	unit->localModel.Draw();
 }
 
 
-void CUnitDrawer::DrawUnitNoTrans(
-	const CUnit* unit,
-	unsigned int /*preList*/,
-	unsigned int /*postList*/,
-	bool lodCall,
-	bool noLuaCall
-) {
-	const unsigned int b0 = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
-	const unsigned int b1 = shadowHandler->InShadowPass();
 
+void CUnitDrawer::SetUnitLuaTrans(const CUnit* unit, bool lodCall) {
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	LocalModel* model = const_cast<LocalModel*>(&unit->localModel);
+
+	// use whatever model transform is on the stack
+	model->UpdatePieceMatrices(gs->frameNum);
+	state->SetMatrices(GL::GetMatrix(GL_MODELVIEW), model->GetPieceMatrices());
+}
+
+void CUnitDrawer::SetUnitDefTrans(const CUnit* unit, bool lodCall) {
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	LocalModel* model = const_cast<LocalModel*>(&unit->localModel);
+
+	model->UpdatePieceMatrices(gs->frameNum);
+	state->SetMatrices(unit->GetTransformMatrix(), model->GetPieceMatrices());
+}
+
+
+
+void CUnitDrawer::DrawUnitLuaTrans(const CUnit* unit, bool lodCall, bool noLuaCall, bool fullModel) {
 	// if called from LuaObjectDrawer, unit has a custom material
 	//
 	// we want Lua-material shaders to have full control over build
@@ -1363,12 +1362,23 @@ void CUnitDrawer::DrawUnitNoTrans(
 	//
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
-	drawModelFuncs[ std::max(b0 * 2, b1) ](unit, noLuaCall);
+	const unsigned int noNanoDraw = fullModel || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
+	const unsigned int shadowPass = shadowHandler->InShadowPass();
+
+	const DrawModelFunc drawModelFunc = unitDrawer->GetDrawModelFunc(std::max(noNanoDraw * 2, shadowPass));
+
+	SetUnitLuaTrans(unit, lodCall);
+	drawModelFunc(unit, noLuaCall);
 }
 
-void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
-{
-	DrawUnitNoTrans(unit, preList, postList, lodCall, noLuaCall);
+void CUnitDrawer::DrawUnitDefTrans(const CUnit* unit, bool lodCall, bool noLuaCall, bool fullModel) {
+	const unsigned int noNanoDraw = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
+	const unsigned int shadowPass = shadowHandler->InShadowPass();
+
+	const DrawModelFunc drawModelFunc = unitDrawer->GetDrawModelFunc(std::max(noNanoDraw * 2, shadowPass));
+
+	SetUnitDefTrans(unit, lodCall);
+	drawModelFunc(unit, noLuaCall);
 }
 
 

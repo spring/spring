@@ -118,7 +118,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 void CStarburstProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldSmokeDir, SMOKE_TIME, 7.0f, 0.7f, false, true);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision();
@@ -128,7 +128,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldSmokeDir, SMOKE_TIME, 7.0f, 0.7f, false, true);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(unit);
@@ -138,7 +138,7 @@ void CStarburstProjectile::Collision(CUnit* unit)
 void CStarburstProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldSmokeDir, SMOKE_TIME, 7.0f, 0.7f, false, true);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(feature);
@@ -201,25 +201,20 @@ void CStarburstProjectile::Update()
 	numParts++;
 
 	if (weaponDef->visuals.smokeTrail) {
-		if (smokeTrail) {
-			smokeTrail->UpdateEndPos(pos, dir);
-			oldSmoke = pos;
-			oldSmokeDir = dir;
-		}
+		if (smokeTrail != nullptr)
+			smokeTrail->UpdateEndPos(oldSmoke = pos, oldSmokeDir = dir);
 
 		if ((age % 8) == 0) {
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
-				pos,
-				oldSmoke,
-				dir,
-				oldSmokeDir,
-				age == 8,
-				false,
-				7,
+				weaponDef->visuals.texture2,
+				pos, oldSmoke,
+				dir, oldSmokeDir,
 				SMOKE_TIME,
+				7.0f,
 				0.7f,
-				weaponDef->visuals.texture2
+				age == 8,
+				false
 			);
 
 			numParts = 0;

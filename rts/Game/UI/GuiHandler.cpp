@@ -3817,7 +3817,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						GL::RotateY(bi.buildFacing * 90.0f);
 
 						glColor4f(bc.x, bc.y, bc.z, bc.w);
-						CUnitDrawer::DrawIndividualDefAlpha(bi.def, gu->myTeam, false);
+						CUnitDrawer::DrawObjectDefAlpha(bi.def, gu->myTeam, false);
 
 						GL::PopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());

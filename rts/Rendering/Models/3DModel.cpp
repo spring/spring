@@ -39,11 +39,12 @@ CR_REG_METADATA(LocalModelPiece, (
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
 	CR_MEMBER(pieces),
-	CR_IGNORED(pieceMatrices),
+	CR_IGNORED(matrices),
 
 	CR_IGNORED(boundingVolume),
 	CR_IGNORED(luaMaterialData),
 
+	CR_IGNORED(pmuFrameNum),
 	// reload
 	CR_IGNORED(vertexArray),
 	CR_IGNORED(elemsBuffer),
@@ -453,16 +454,21 @@ void S3DModelPiece::Shatter(const S3DModel* mdl, int team, float pieceChance, co
  * LocalModel
  */
 
-void LocalModel::UpdatePieceMatrices()
+void LocalModel::UpdatePieceMatrices(unsigned int gsFrameNum)
 {
+	if (gsFrameNum == pmuFrameNum)
+		return;
+
 	// could be combined with UpdateChildMatricesRec, but KISS
 	for (size_t i = 0, n = pieces.size(); i < n; i++) {
 		const LocalModelPiece& lmp = pieces[i];
 
 		// set a null-matrix for invisible pieces; empty pieces are not uploaded
-		pieceMatrices[i] = lmp.GetModelSpaceMatrix();
-		pieceMatrices[i] *= float(lmp.scriptSetVisible);
+		matrices[i] = lmp.GetModelSpaceMatrix();
+		matrices[i] *= float(lmp.scriptSetVisible);
 	}
+
+	pmuFrameNum = gsFrameNum;
 }
 
 void LocalModel::Draw() const
@@ -507,6 +513,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 	assert(model != nullptr);
 	assert(model->numPieces >= 1);
 
+	pmuFrameNum = -1u;
 	vertexArray = model->vertexArray;
 	elemsBuffer = model->elemsBuffer;
 	indcsBuffer = model->indcsBuffer;
@@ -515,33 +522,32 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	if (!initialize) {
 		assert(pieces.size() == model->numPieces);
-		pieceMatrices.resize(pieces.size());
+		matrices.clear();
+		matrices.resize(pieces.size());
 
 		// PostLoad; only update the pieces
 		for (size_t n = 0; n < pieces.size(); n++) {
 			pieces[n].original = model->GetPiece(n);
 		}
 
-		pieces[0].UpdateChildMatricesRec(true);
-		UpdateBoundingVolume();
+		UpdateVolumeAndMatrices(true);
 		return;
 	}
 
 	assert(pieces.empty());
-
 	pieces.clear();
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());
 
+	assert(pieces.size() == model->numPieces);
+	matrices.clear();
+	matrices.resize(pieces.size());
+
 	// must recursively update matrices here too since
 	// LocalModel::Update is never called for features
 	// (which might have baked piece rotations if .dae)
-	pieces[0].UpdateChildMatricesRec(false);
-	UpdateBoundingVolume();
-
-	assert(pieces.size() == model->numPieces);
-	pieceMatrices.resize(pieces.size());
+	UpdateVolumeAndMatrices(false);
 }
 
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)

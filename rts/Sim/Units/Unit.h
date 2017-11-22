@@ -82,6 +82,9 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
+	void SlowUpdateLocalModel() { localModel.UpdateBoundingVolume(); }
+	void UpdateLocalModel() { /*localModel.UpdatePieceMatrices(gs->frameNum);*/ }
+
 	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
@@ -175,8 +178,8 @@ public:
 	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
-	unsigned short CalcLosStatus(int allyTeam);
 	void UpdateLosStatus(int allyTeam);
+	unsigned short CalcLosStatus(int allyTeam) const;
 
 	void SlowUpdateCloak(bool);
 	void ScriptDecloak(bool);

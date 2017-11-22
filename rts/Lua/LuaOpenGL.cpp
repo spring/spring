@@ -1179,9 +1179,9 @@ static void GLObjectShape(lua_State* L, const SolidObjectDef* def)
 
 	// does not set the full state by default
 	if (luaL_optboolean(L, 5, true)) {
-		CUnitDrawer::DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);
+		CUnitDrawer::DrawObjectDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);
 	} else {
-		CUnitDrawer::DrawIndividualDefAlpha(def, luaL_checkint(L, 2), rawState, toScreen);
+		CUnitDrawer::DrawObjectDefAlpha(def, luaL_checkint(L, 2), rawState, toScreen);
 	}
 }
 
@@ -1230,8 +1230,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	// NOTE:
 	//   the "Raw" in UnitRaw means "no transform", not the same
 	//   UnitRaw also skips the DrawUnit callin by default so any
-	//   recursion is blocked; pass fullModel=true for lodCall by
-	//   default to bypass nanoframe-drawing
+	//   recursion is blocked
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = GLObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawUnit);
@@ -1239,29 +1238,29 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	typedef void(CUnitDrawer::*RawDrawMemFunc)(const CUnit*, unsigned int, unsigned int, bool, bool);
+	typedef void(             *RawDrawMemFunc)(const CUnit*, bool, bool, bool);
 	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool);
 
-	const RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnitTrans};
-	const MatDrawMemFunc matDrawFuncs[2] = {&CUnitDrawer::DrawIndividualNoTrans, &CUnitDrawer::DrawIndividual};
+	constexpr RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitLuaTrans, &CUnitDrawer::DrawUnitDefTrans};
+	constexpr MatDrawMemFunc matDrawFuncs[2] = {&CUnitDrawer::DrawIndividualLuaTrans, &CUnitDrawer::DrawIndividualDefTrans};
 
-	if (!useLuaMat) {
-		// "scoped" draw; this prevents any Lua-assigned
-		// material(s) from being used by the call below
+	// "scoped" draw; this prevents any Lua-assigned
+	// material(s) from being used by the call below
+	if (!useLuaMat)
 		(unit->GetLuaMaterialData())->PushLODCount(0);
-	}
 
 	if (doRawDraw) {
 		// draw with void material state
-		(unitDrawer->*rawDrawFuncs[applyTransform])(unit, 0, 0, fullModel, noLuaCall);
+		unitDrawer->SetDrawerState(DRAWER_STATE_NOP);
+		(rawDrawFuncs[applyTransform])(unit, false, noLuaCall, fullModel);
+		unitDrawer->SetDrawerState(DRAWER_STATE_SSP);
 	} else {
 		// draw with full material state
 		(unitDrawer->*matDrawFuncs[applyTransform])(unit, noLuaCall);
 	}
 
-	if (!useLuaMat) {
+	if (!useLuaMat)
 		(unit->GetLuaMaterialData())->PopLODCount();
-	}
 
 	glPopAttrib();
 	return 0;
@@ -1355,11 +1354,11 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	typedef void(CFeatureDrawer::*RawDrawMemFunc)(const CFeature*, unsigned int, unsigned int, bool, bool);
+	typedef void(                *RawDrawMemFunc)(const CFeature*, bool, bool);
 	typedef void(CFeatureDrawer::*MatDrawMemFunc)(const CFeature*, bool);
 
-	const RawDrawMemFunc rawDrawFuncs[2] = {&CFeatureDrawer::DrawFeatureNoTrans, &CFeatureDrawer::DrawFeatureTrans};
-	const MatDrawMemFunc matDrawFuncs[2] = {&CFeatureDrawer::DrawIndividualNoTrans, &CFeatureDrawer::DrawIndividual};
+	constexpr RawDrawMemFunc rawDrawFuncs[2] = {&CFeatureDrawer::DrawFeatureLuaTrans, &CFeatureDrawer::DrawFeatureDefTrans};
+	constexpr MatDrawMemFunc matDrawFuncs[2] = {&CFeatureDrawer::DrawIndividualLuaTrans, &CFeatureDrawer::DrawIndividualDefTrans};
 
 	// "scoped" draw; this prevents any Lua-assigned
 	// material(s) from being used by the call below
@@ -1368,7 +1367,9 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 
 	if (doRawDraw) {
 		// draw with void material state
-		(featureDrawer->*rawDrawFuncs[applyTransform])(feature, 0, 0, false, noLuaCall);
+		unitDrawer->SetDrawerState(DRAWER_STATE_NOP);
+		(rawDrawFuncs[applyTransform])(feature, false, noLuaCall);
+		unitDrawer->SetDrawerState(DRAWER_STATE_SSP);
 	} else {
 		// draw with full material state
 		(featureDrawer->*matDrawFuncs[applyTransform])(feature, noLuaCall);

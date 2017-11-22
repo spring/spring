@@ -299,7 +299,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 
 				unitDrawer->SetTeamColour(f->team);
 
-				DrawFeatureTrans(f, 0, 0, false, false);
+				DrawFeatureDefTrans(f, false, false);
 			}
 		}
 	}
@@ -330,27 +330,38 @@ inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool noLua
 	if (!noLuaCall && feature->luaDraw && eventHandler.DrawFeature(feature))
 		return;
 
+	feature->localModel.Draw();
+}
+
+
+
+void CFeatureDrawer::SetFeatureLuaTrans(const CFeature* feature, bool lodCall) {
 	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 	LocalModel* model = const_cast<LocalModel*>(&feature->localModel);
 
-	model->UpdatePieceMatrices();
-	state->SetMatrices(feature->GetTransformMatrixRef(), model->GetPieceMatrices());
-	model->Draw();
+	// use whatever model transform is on the stack
+	model->UpdatePieceMatrices(gs->frameNum);
+	state->SetMatrices(GL::GetMatrix(GL_MODELVIEW), model->GetPieceMatrices());
 }
 
-void CFeatureDrawer::DrawFeatureNoTrans(
-	const CFeature* feature,
-	unsigned int /*preList*/,
-	unsigned int /*postList*/,
-	bool /*lodCall*/,
-	bool noLuaCall
-) {
+void CFeatureDrawer::SetFeatureDefTrans(const CFeature* feature, bool lodCall) {
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	LocalModel* model = const_cast<LocalModel*>(&feature->localModel);
+
+	model->UpdatePieceMatrices(gs->frameNum);
+	state->SetMatrices(feature->GetTransformMatrixRef(), model->GetPieceMatrices());
+}
+
+
+
+void CFeatureDrawer::DrawFeatureLuaTrans(const CFeature* feature, bool lodCall, bool noLuaCall) {
+	SetFeatureLuaTrans(feature, lodCall);
 	DrawFeatureModel(feature, noLuaCall);
 }
 
-void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
-{
-	DrawFeatureNoTrans(feature, preList, postList, lodCall, noLuaCall);
+void CFeatureDrawer::DrawFeatureDefTrans(const CFeature* feature, bool lodCall, bool noLuaCall) {
+	SetFeatureDefTrans(feature, lodCall);
+	DrawFeatureModel(feature, noLuaCall);
 }
 
 
@@ -370,24 +381,24 @@ void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPa
 }
 
 
-void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
+void CFeatureDrawer::DrawIndividualDefTrans(const CFeature* feature, bool noLuaCall)
 {
 	if (LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
 		return;
 
 	// set the full default state
 	PushIndividualState(feature, false);
-	DrawFeatureTrans(feature, 0, 0, false, noLuaCall);
+	DrawFeatureDefTrans(feature, false, noLuaCall);
 	PopIndividualState(feature, false);
 }
 
-void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall)
+void CFeatureDrawer::DrawIndividualLuaTrans(const CFeature* feature, bool noLuaCall)
 {
-	if (LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
+	if (LuaObjectDrawer::DrawSingleObjectLuaTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
 		return;
 
 	PushIndividualState(feature, false);
-	DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
+	DrawFeatureLuaTrans(feature, false, noLuaCall);
 	PopIndividualState(feature, false);
 }
 
@@ -462,7 +473,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
 
 				glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
-				DrawFeatureTrans(f, 0, 0, false, false);
+				DrawFeatureDefTrans(f, false, false);
 			}
 		}
 	}

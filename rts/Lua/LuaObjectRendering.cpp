@@ -216,11 +216,11 @@ static void ParseShader(lua_State* L, int index, LuaMatShader& shader)
 
 	switch (lua_type(L, index)) {
 		case LUA_TNUMBER: {
-			shader.SetTypeFromID(shaders.GetProgramName(luaL_checknumber(L, index)));
+			shader.SetCustomTypeFromID(shaders.GetProgramName(luaL_checknumber(L, index)));
 		} break;
 
 		case LUA_TSTRING: {
-			shader.SetTypeFromKey(StringToLower(lua_tostring(L, index)));
+			shader.SetEngineTypeFromKey(StringToLower(lua_tostring(L, index)));
 		} break;
 
 		default: {

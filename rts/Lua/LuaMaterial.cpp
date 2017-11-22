@@ -10,7 +10,6 @@
 #include "Game/GlobalUnsynced.h" // randVector
 #include "Rendering/GlobalRendering.h" // drawFrame
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawerState.hpp"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/GlobalSynced.h" // simFrame
@@ -90,22 +89,13 @@ bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 //  LuaMatShader
 //
 
-void LuaMatShader::Finalize()
-{
-	if (type != LUASHADER_GL) {
-		openglID = 0;
-	}
-}
-
-
 int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 {
 	if (a.type != b.type)
 		return ((a.type > b.type) * 2 - 1);
 
-	if (a.openglID != b.openglID) {
+	if (a.openglID != b.openglID)
 		return ((a.openglID > b.openglID) * 2 - 1);
-	}
 
 	return 0;
 }
@@ -113,19 +103,26 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 
 void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
+	static_assert(int(LUASHADER_3DO) == int(MODELTYPE_3DO  ), "");
+	static_assert(int(LUASHADER_S3O) == int(MODELTYPE_S3O  ), "");
+	static_assert(int(LUASHADER_ASS) == int(MODELTYPE_ASS  ), "");
+	static_assert(int(LUASHADER_GL ) == int(MODELTYPE_OTHER), "");
+
 	if (type != prev.type) {
+		// reset old, setup new
 		switch (prev.type) {
 			case LUASHADER_GL: {
 				glUseProgram(0);
+
+				assert(luaMatHandler.resetDrawStateFuncs[prev.type] != nullptr);
+				luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
 			case LUASHADER_ASS: {
-				if (luaMatHandler.resetDrawStateFuncs[prev.type]) {
-					luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
-				}
+				assert(luaMatHandler.resetDrawStateFuncs[prev.type] != nullptr);
+				luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
 			} break;
-			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
 		}
 
@@ -133,23 +130,28 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 			case LUASHADER_GL: {
 				// custom shader
 				glUseProgram(openglID);
+
+				assert(luaMatHandler.setupDrawStateFuncs[type] != nullptr);
+				luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
 			case LUASHADER_ASS: {
-				if (luaMatHandler.setupDrawStateFuncs[type]) {
-					luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
-				}
+				assert(luaMatHandler.setupDrawStateFuncs[type] != nullptr);
+				luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
 			} break;
-			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
 		}
+
+		return;
 	}
-	else if (type == LUASHADER_GL) {
-		if (openglID != prev.openglID) {
-			glUseProgram(openglID);
-		}
-	}
+
+	if (type != LUASHADER_GL)
+		return;
+	if (openglID == prev.openglID)
+		return;
+
+	glUseProgram(openglID);
 }
 
 
@@ -158,12 +160,11 @@ void LuaMatShader::Print(const string& indent, bool isDeferred) const
 	const char* typeName = "Unknown";
 
 	switch (type) {
-		case LUASHADER_NONE: { typeName = "LUASHADER_NONE"; } break;
-		case LUASHADER_GL:   { typeName = "LUASHADER_GL"  ; } break;
-		case LUASHADER_3DO:  { typeName = "LUASHADER_3DO" ; } break;
-		case LUASHADER_S3O:  { typeName = "LUASHADER_S3O" ; } break;
-		case LUASHADER_ASS:  { typeName = "LUASHADER_ASS" ; } break;
-		default: { assert(false); } break;
+		case LUASHADER_GL : { typeName = "LUASHADER_GL"  ; } break;
+		case LUASHADER_3DO: { typeName = "LUASHADER_3DO" ; } break;
+		case LUASHADER_S3O: { typeName = "LUASHADER_S3O" ; } break;
+		case LUASHADER_ASS: { typeName = "LUASHADER_ASS" ; } break;
+		default           : {               assert(false); } break;
 	}
 
 	LOG("%s[shader][%s]", indent.c_str(), (isDeferred? "deferred": "standard"));
@@ -339,10 +340,6 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	}
 }
 
-void LuaMaterial::ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const
-{
-	uniforms[deferredPass].ExecuteInstance(o, alpha);
-}
 
 
 int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
@@ -403,6 +400,11 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 		return ((a.projMatrixInv.loc > b.projMatrixInv.loc) * 2 - 1);
 	if (a.viprMatrixInv.loc != b.viprMatrixInv.loc)
 		return ((a.viprMatrixInv.loc > b.viprMatrixInv.loc) * 2 - 1);
+
+	if (a.modelMatrix.loc != b.modelMatrix.loc)
+		return ((a.modelMatrix.loc > b.modelMatrix.loc) * 2 - 1);
+	if (a.pieceMatrices.loc != b.pieceMatrices.loc)
+		return ((a.pieceMatrices.loc > b.pieceMatrices.loc) * 2 - 1);
 
 	if (a.shadowMatrix.loc != b.shadowMatrix.loc)
 		return ((a.shadowMatrix.loc > b.shadowMatrix.loc) * 2 - 1);
@@ -493,6 +495,8 @@ spring::unsynced_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::Get
 		{&viewMatrixInv, "ViewMatrixInverse"},
 		{&projMatrixInv, "ProjectionMatrixInverse"},
 		{&viprMatrixInv, "ViewProjectionMatrixInverse"},
+		{&modelMatrix,   "ModelMatrix"},
+		{&pieceMatrices, "PieceMatrices"},
 		{&shadowMatrix,  "ShadowMatrix"},
 		{&shadowParams,  "ShadowParams"},
 		{&camPos,        "CameraPos"},
@@ -521,6 +525,8 @@ spring::unsynced_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::Get
 		{"ProjectionMatrixInv",     &projMatrixInv},
 		{"ViPrMatrixInv",           &viprMatrixInv},
 		{"ViewProjectionMatrixInv", &viprMatrixInv},
+		{"ModelMatrix",             &modelMatrix},
+		{"PieceMatrices",           &pieceMatrices},
 
 		{"Shadow",        &shadowMatrix},
 		{"ShadowMatrix",  &shadowMatrix},
@@ -699,12 +705,6 @@ void LuaMatUniforms::Execute() const
 	visFrame.Execute(globalRendering->drawFrame);
 }
 
-void LuaMatUniforms::ExecuteInstance(const CSolidObject* o, const float2 alpha) const
-{
-	teamColor.Execute(IUnitDrawerState::GetTeamColor(o->team, alpha.x));
-	//{"speed", },
-	//{"health", },
-}
 
 void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 {
@@ -714,8 +714,13 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 	LOG("%s  viewMatrixInvLoc = %i", indent.c_str(), viewMatrixInv.loc);
 	LOG("%s  projMatrixInvLoc = %i", indent.c_str(), projMatrixInv.loc);
 
+	LOG("%s    modelMatrixLoc = %i", indent.c_str(), modelMatrix.loc);
+	LOG("%s  pieceMatricesLoc = %i", indent.c_str(), pieceMatrices.loc);
+
 	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
 	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
+
+	LOG("%s     teamColorLoc  = %i", indent.c_str(), teamColor.loc);
 
 	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
 	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
@@ -739,33 +744,34 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 
 LuaMatRef::LuaMatRef(LuaMatBin* _bin)
 {
-	bin = _bin;
-	if (bin != nullptr) {
-		bin->Ref();
-	}
+	if ((bin = _bin) == nullptr)
+		return;
+
+	bin->Ref();
 }
 
 LuaMatRef::~LuaMatRef()
 {
-	if (bin != nullptr) {
-		bin->UnRef();
-	}
+	if (bin == nullptr)
+		return;
+
+	bin->UnRef();
 }
 
 LuaMatRef::LuaMatRef(const LuaMatRef& mr)
 {
-	bin = mr.bin;
-	if (bin != nullptr) {
-		bin->Ref();
-	}
+	if ((bin = mr.bin) == nullptr)
+		return;
+
+	bin->Ref();
 }
 
 
 void LuaMatRef::Reset()
 {
-	if (bin != nullptr) {
+	if (bin != nullptr)
 		bin->UnRef();
-	}
+
 	bin = nullptr;
 }
 
@@ -781,16 +787,16 @@ LuaMatRef& LuaMatRef::operator=(const LuaMatRef& mr)
 
 void LuaMatRef::AddUnit(CSolidObject* o)
 {
-	if (bin != nullptr) {
-		bin->AddUnit(o);
-	}
+	if (bin == nullptr)
+		return;
+	bin->AddUnit(o);
 }
 
 void LuaMatRef::AddFeature(CSolidObject* o)
 {
-	if (bin != nullptr) {
-		bin->AddFeature(o);
-	}
+	if (bin == nullptr)
+		return;
+	bin->AddFeature(o);
 }
 
 
@@ -827,7 +833,7 @@ void LuaMatBin::Print(const string& indent) const
 
 LuaMatHandler::LuaMatHandler()
 {
-	for (unsigned int i = LuaMatShader::LUASHADER_NONE; i < LuaMatShader::LUASHADER_LAST; i++) {
+	for (unsigned int i = LuaMatShader::LUASHADER_3DO; i < LuaMatShader::LUASHADER_LAST; i++) {
 		setupDrawStateFuncs[i] = nullptr;
 		resetDrawStateFuncs[i] = nullptr;
 	}

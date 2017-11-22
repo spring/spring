@@ -649,31 +649,29 @@ void CUnit::ForcedMove(const float3& newPos)
 
 float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
-	// LuaHandle without full read access
-	if (argAllyTeam < 0 || argAllyTeam >= losStatus.size())
-		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
+	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < losStatus.size());
 
-	// it's one of our own, or it's in LOS, so don't add an error
-	if (teamHandler->Ally(argAllyTeam, allyteam) || (losStatus[argAllyTeam] & LOS_INLOS))
-		return ZeroVector;
+	const bool b0 = (1     ) * (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
+	const bool b1 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler->Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
+	const bool b2 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsImmobileUnit()); // seen ghosted building, no error
+	const bool b3 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
 
-	// this is a ghosted building, so don't add an error
-	if (gameSetup->ghostedBuildings && (losStatus[argAllyTeam] & LOS_PREVLOS) && unitDef->IsImmobileUnit())
-		return ZeroVector;
+	switch ((b0 * 1) + (b1 * 2) + (b2 * 4) + (b3 * 8)) {
+		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !b0 &&  !b1 && !b2  && !b3
+		case  1: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; //  b0
+		case  8: { return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam)); } break; // !b0 &&  !b1 && !b2  &&  b3
+		default: {                                                                               } break; // !b0 && ( b1 ||  b2) && !b3
+	}
 
-	if ((losStatus[argAllyTeam] & LOS_INRADAR) != 0)
-		return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(argAllyTeam));
-
-	return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
+	return ZeroVector;
 }
 
 void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
 {
-	if (updateError) {
-		// every frame, magnitude of error increases
-		// error-direction is fixed until next delta
+	// every frame, magnitude of error increases
+	// error-direction is fixed until next delta
+	if (updateError)
 		posErrorVector += posErrorDelta;
-	}
 
 	if (updateDelta) {
 		if ((--nextPosErrorUpdate) <= 0) {
@@ -973,7 +971,7 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 }
 
 
-unsigned short CUnit::CalcLosStatus(int at)
+unsigned short CUnit::CalcLosStatus(int at) const
 {
 	const unsigned short currStatus = losStatus[at];
 
@@ -1024,7 +1022,6 @@ void CUnit::SetStunned(bool stun) {
 void CUnit::SlowUpdate()
 {
 	UpdatePosErrorParams(false, true);
-
 	DoWaterDamage();
 
 	if (health < 0.0f) {

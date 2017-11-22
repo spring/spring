@@ -16,7 +16,7 @@ namespace Shader {
 
 enum {
 	RENDER_STATE_NOP = 0, // no-op path
-	RENDER_STATE_SSP = 1, // standard-shader path (GLSL)
+	RENDER_STATE_SSP = 1, // standard-shader path
 	RENDER_STATE_LUA = 2, // Lua-shader path
 	RENDER_STATE_SEL = 3, // selected path
 	RENDER_STATE_CNT = 4,

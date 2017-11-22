@@ -286,6 +286,7 @@ public:
 
 	// flattened tree; pieceObjects[0] is the root
 	std::vector<S3DModelPiece*> pieceObjects;
+	// static bind-pose matrices
 	std::vector<CMatrix44f> pieceMatrices;
 
 	int id;                     /// unsynced ID, starting with 1
@@ -430,8 +431,8 @@ struct LocalModel
 	// raw forms, the piece-index must be valid
 	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
-	// const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieceMatrices[pieceIdx]; }
-	const std::vector<CMatrix44f>& GetPieceMatrices() const { return pieceMatrices; }
+	// const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return matrices[pieceIdx]; }
+	const std::vector<CMatrix44f>& GetPieceMatrices() const { return matrices; }
 
 	// used by all SolidObject's; accounts for piece movement
 	float GetDrawRadius() const { return (boundingVolume.GetBoundingRadius()); }
@@ -445,8 +446,14 @@ struct LocalModel
 		assert(Initialized());
 		luaMaterialData.SetLODCount(lodCount);
 	}
+
 	void UpdateBoundingVolume();
-	void UpdatePieceMatrices();
+	void UpdatePieceMatrices(unsigned int gsFrameNum);
+	void UpdateVolumeAndMatrices(bool updateChildMatrices) {
+		pieces[0].UpdateChildMatricesRec(updateChildMatrices);
+		UpdateBoundingVolume();
+		UpdatePieceMatrices(0);
+	}
 
 	void GetBoundingBoxVerts(std::array<float3, 8 + 2>& verts) const { GetBoundingBoxVerts(&verts[0]); }
 	void GetBoundingBoxVerts(float3* verts) const {
@@ -474,7 +481,8 @@ private:
 
 public:
 	std::vector<LocalModelPiece> pieces;
-	std::vector<CMatrix44f> pieceMatrices;
+	// unsynced copies of pieces[i].modelSpaceMat
+	std::vector<CMatrix44f> matrices;
 
 private:
 	// object-oriented box; accounts for piece movement
@@ -483,6 +491,8 @@ private:
 	// custom Lua-set material this model should be rendered with
 	LuaObjectMaterialData luaMaterialData;
 
+	// simframe at which unsynced piece-matrices were last updated
+	unsigned int pmuFrameNum = -1u;
 	// per-instance shallow copies of S3DModel::*
 	unsigned int vertexArray = 0;
 	unsigned int elemsBuffer = 0;

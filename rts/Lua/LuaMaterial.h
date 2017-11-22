@@ -50,9 +50,8 @@ class LuaMatShader {
 			LUASHADER_3DO    = 0, // engine default; *must* equal MODELTYPE_3DO!
 			LUASHADER_S3O    = 1, // engine default; *must* equal MODELTYPE_S3O!
 			LUASHADER_ASS    = 2, // engine default; *must* equal MODELTYPE_ASS!
-			LUASHADER_GL     = 3, // custom Lua
-			LUASHADER_NONE   = 4,
-			LUASHADER_LAST   = 5,
+			LUASHADER_GL     = 3, // custom Lua; *must* equal MODELTYPE_OTHER
+			LUASHADER_LAST   = 4,
 		};
 		enum Pass {
 			LUASHADER_PASS_FWD = 0, // forward pass
@@ -61,24 +60,24 @@ class LuaMatShader {
 		};
 
 	public:
-		LuaMatShader() : type(LUASHADER_NONE), openglID(0) {}
-
-		void Finalize();
+		void Finalize() { openglID *= (type == LUASHADER_GL); }
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
 		void Print(const std::string& indent, bool isDeferred) const;
 
-		void SetTypeFromID(unsigned int id) {
+		// only accepts custom programs
+		void SetCustomTypeFromID(unsigned int id) {
 			if ((openglID = id) == 0) {
-				type = LuaMatShader::LUASHADER_NONE;
+				type = LuaMatShader::LUASHADER_LAST;
 			} else {
 				type = LuaMatShader::LUASHADER_GL;
 			}
 		}
-		void SetTypeFromKey(const std::string& key) {
+		// only accepts engine programs
+		void SetEngineTypeFromKey(const std::string& key) {
 			if (key == "3do") { type = LUASHADER_3DO; return; }
 			if (key == "s3o") { type = LUASHADER_S3O; return; }
 			if (key == "ass") { type = LUASHADER_ASS; return; }
-			type = LUASHADER_NONE;
+			type = LUASHADER_LAST;
 		}
 
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
@@ -87,14 +86,15 @@ class LuaMatShader {
 		bool operator==(const LuaMatShader& mt) const = delete;
 		bool operator!=(const LuaMatShader& mt) const = delete;
 
-		bool ValidForPass(Pass pass) const { return (pass != LUASHADER_PASS_DFR || type != LUASHADER_NONE); }
+		// both passes require a (custom or engine) shader
+		bool ValidForPass(Pass pass) const { return (type != LUASHADER_LAST); }
 
 		bool IsCustomType() const { return (type == LUASHADER_GL); }
 		bool IsEngineType() const { return (type >= LUASHADER_3DO && type <= LUASHADER_ASS); }
 
 	public:
-		Type type;
-		GLuint openglID;
+		Type type = LUASHADER_LAST;
+		GLuint openglID = 0;
 };
 
 
@@ -108,7 +108,11 @@ public:
 	void Validate(LuaMatShader* s);
 
 	void Execute() const;
-	void ExecuteInstance(const CSolidObject* o, const float2 alpha) const;
+	void ExecuteInstanceTeamColor(const float4& tc) const { teamColor.Execute(tc); }
+	void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms) const {
+		modelMatrix.Execute(mm);
+		pieceMatrices.Execute(pms);
+	}
 
 	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
@@ -132,8 +136,17 @@ private:
 	template<typename Type> struct UniformMat : public IUniform {
 	public:
 		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
-		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
-		bool RawExec(const Type val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+
+		GLenum GetType() const { return GL_FLOAT_MAT4; }
+	};
+
+	template<typename Type> struct UniformMatArray : public IUniform {
+	public:
+		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, val.size(), GL_FALSE, val[0]); return true; }
 
 		GLenum GetType() const { return GL_FLOAT_MAT4; }
 	};
@@ -184,8 +197,13 @@ public:
 	UniformMat<CMatrix44f> projMatrixInv;
 	UniformMat<CMatrix44f> viprMatrixInv;
 
+	UniformMat<CMatrix44f> modelMatrix;
+	UniformMatArray< std::vector<CMatrix44f> > pieceMatrices;
+
 	UniformMat<CMatrix44f> shadowMatrix;
 	UniformVec<float4> shadowParams;
+
+	UniformVec<float4> teamColor;
 
 	UniformVec<float3> camPos;
 	UniformVec<float3> camDir;
@@ -194,9 +212,6 @@ public:
 
 	mutable UniformInt<         int> simFrame;
 	mutable UniformInt<unsigned int> visFrame;
-
-public:
-	UniformVec<float4> teamColor;
 };
 
 
@@ -218,15 +233,21 @@ class LuaMaterial {
 			void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
 			GLuint(*ParseDisplayList)(lua_State*, int)
 		);
+
 		void Finalize();
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;
-		void ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const;
+
+		void ExecuteInstanceTeamColor(const float4& tc, bool deferredPass) const { uniforms[deferredPass].ExecuteInstanceTeamColor(tc); }
+		void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms, bool deferredPass) const {
+			uniforms[deferredPass].ExecuteInstanceMatrices(mm, pms);
+		}
+
 		void Print(const std::string& indent) const;
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
-		bool operator<(const LuaMaterial& m) const { return (Compare(*this, m) < 0); }
-		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+		bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
+		bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
 
 	public:
 		static const int MAX_TEX_UNITS = 16;
@@ -314,9 +335,7 @@ class LuaMatHandler {
 	public:
 		LuaMatRef GetRef(const LuaMaterial& mat);
 
-		inline const LuaMatBinSet& GetBins(LuaMatType type) const {
-			return binTypes[type];
-		}
+		const LuaMatBinSet& GetBins(LuaMatType type) const { return binTypes[type]; }
 
 		void ClearBins(LuaObjType objType);
 		void ClearBins(LuaObjType objType, LuaMatType matType);
@@ -327,8 +346,8 @@ class LuaMatHandler {
 		void PrintAllBins(const std::string& indent) const;
 
 	public:
-		typedef void (*SetupDrawStateFunc)(unsigned int, bool); // std::function<void(unsigned int, bool)>
-		typedef void (*ResetDrawStateFunc)(unsigned int, bool); // std::function<void(unsigned int, bool)>
+		typedef void (*SetupDrawStateFunc)(unsigned int, bool);
+		typedef void (*ResetDrawStateFunc)(unsigned int, bool);
 
 		// note: only the DEF_* entries can be non-NULL
 		SetupDrawStateFunc setupDrawStateFuncs[LuaMatShader::LUASHADER_LAST];

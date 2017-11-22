@@ -14,16 +14,16 @@ public:
 	CSmokeTrailProjectile() { }
 	CSmokeTrailProjectile(
 		const CUnit* owner,
+		AtlasedTexture* texture,
 		const float3& pos1,
 		const float3& pos2,
 		const float3& dir1,
 		const float3& dir2,
-		bool firstSegment,
-		bool lastSegment,
-		float size,
 		int time,
+		float size,
 		float color,
-		AtlasedTexture* texture
+		bool firstSegment,
+		bool lastSegment
 	);
 
 	void Update() override;

@@ -142,7 +142,7 @@ void CCursorIcons::DrawBuilds()
 		GL::Translate(it->pos);
 		GL::RotateY(it->facing * 90.0f);
 
-		CUnitDrawer::DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
+		CUnitDrawer::DrawObjectDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
 
 		GL::PopMatrix();
 	}

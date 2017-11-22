@@ -123,7 +123,12 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
 	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
 
+	REGISTER_LUA_CFUNC(GetUnitPieceTransformMatrices);
+	REGISTER_LUA_CFUNC(GetFeaturePieceTransformMatrices);
+
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
+	REGISTER_LUA_CFUNC(GetFeatureTransformMatrix);
+
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
 
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
@@ -556,7 +561,7 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -574,10 +579,11 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
 	return 1;
 }
@@ -585,10 +591,11 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
@@ -618,10 +625,11 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->isIcon);
 	return 1;
 }
@@ -629,7 +637,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -641,71 +649,71 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitLuaDraw(lua_State* L)
 {
-	return (GetSolidObjectLuaDraw(L, ParseUnit(L, __FUNCTION__, 1)));
+	return (GetSolidObjectLuaDraw(L, ParseUnit(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 {
-	return (GetSolidObjectNoDraw(L, ParseUnit(L, __FUNCTION__, 1)));
+	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->noMinimap);
 	return 1;
 }
 
 int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->noSelect);
 	return 1;
 }
 
 int LuaUnsyncedRead::GetUnitSelectionVolumeData(lua_State* L)
 {
-	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __FUNCTION__, 1));
+	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __func__, 1));
 }
 
 int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 {
-	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __FUNCTION__, 1)));
+	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 {
-	return (GetSolidObjectNoDraw(L, ParseFeature(L, __FUNCTION__, 1)));
+	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
 {
-	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __FUNCTION__, 1));
+	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __func__, 1));
 }
 
 
-int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
+
+static int GetObjectTransformMatrix(const CSolidObject* o, lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (o == nullptr)
 		return 0;
-	}
 
-	CMatrix44f m = unit->GetTransformMatrix(false);
+	CMatrix44f m = o->GetTransformMatrix(false);
 
-	if (luaL_optboolean(L, 2, false)) {
+	if (luaL_optboolean(L, 2, false))
 		m = m.InvertAffine();
-	}
 
 	for (int i = 0; i < 16; i += 4) {
-		lua_pushnumber(L, m[i    ]);
+		lua_pushnumber(L, m[i + 0]);
 		lua_pushnumber(L, m[i + 1]);
 		lua_pushnumber(L, m[i + 2]);
 		lua_pushnumber(L, m[i + 3]);
@@ -714,9 +722,47 @@ int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
 	return 16;
 }
 
+int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L) { return (GetObjectTransformMatrix(ParseUnit(L, __func__, 1), L)); }
+int LuaUnsyncedRead::GetFeatureTransformMatrix(lua_State* L) { return (GetObjectTransformMatrix(ParseFeature(L, __func__, 1), L)); }
+
+
+static int GetObjectPieceTransformMatrices(CSolidObject* o, lua_State* L)
+{
+	if (o == nullptr)
+		return 0;
+
+	// NB: might be stale if object was not rendered for a while
+	const LocalModel& lm = o->localModel;
+	const std::vector<CMatrix44f>& pms = lm.GetPieceMatrices();
+
+	// matrices = {[1] = matrix{...}, [2] = matrix{...}, ...}
+	lua_createtable(L, pms.size(), 0);
+
+	for (size_t i = 0, n = pms.size(); i < n; i++) {
+		lua_pushnumber(L, i + 1);
+		lua_createtable(L, 16, 0);
+
+		for (int j = 0; j < 16; j += 4) {
+			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 0]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 1]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 2]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 3]); lua_rawset(L, -3);
+		}
+
+		lua_rawset(L, -3);
+	}
+
+	return 1;
+}
+
+int LuaUnsyncedRead::GetUnitPieceTransformMatrices(lua_State* L) { return (GetObjectPieceTransformMatrices(ParseUnit(L, __func__, 1), L)); }
+int LuaUnsyncedRead::GetFeaturePieceTransformMatrices(lua_State* L) { return (GetObjectPieceTransformMatrices(ParseUnit(L, __func__, 1), L)); }
+
+
+
 int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -2204,7 +2250,7 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;

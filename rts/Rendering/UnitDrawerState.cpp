@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-// TODO: LuaUnitDrawerState for objects using custom LuaMaterial shaders
 #include "UnitDrawerState.hpp"
 #include "UnitDrawer.h"
 #include "Game/Camera.h"
+// #include "Lua/LuaMaterial.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/SunLighting.h"
@@ -37,9 +37,11 @@ float4 IUnitDrawerState::GetTeamColor(int team, float alpha) {
 
 
 
-IUnitDrawerState* IUnitDrawerState::GetInstance(bool nopState) {
+IUnitDrawerState* IUnitDrawerState::GetInstance(bool nopState, bool luaState) {
 	if (nopState)
 		return (new UnitDrawerStateNOP());
+	if (luaState)
+		return (new UnitDrawerStateLUA());
 
 	return (new UnitDrawerStateGLSL());
 }
@@ -237,6 +239,7 @@ void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(16, color);
 }
+
 
 void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const {
 	Shader::IProgramObject* po = nullptr;

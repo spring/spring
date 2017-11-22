@@ -13,21 +13,23 @@ class CUnitDrawer;
 class CCamera;
 struct ISkyLight;
 
+class LuaMatShader;
 namespace Shader {
 	struct IProgramObject;
 }
 
 enum {
 	DRAWER_STATE_NOP = 0, // no-op path
-	DRAWER_STATE_SSP = 1, // standard-shader path (GLSL)
-	DRAWER_STATE_SEL = 2, // selected path
-	DRAWER_STATE_CNT = 3,
+	DRAWER_STATE_SSP = 1, // standard-shader path
+	DRAWER_STATE_LUA = 2, // custom-shader path
+	DRAWER_STATE_SEL = 3, // selected path
+	DRAWER_STATE_CNT = 4,
 };
 
 
 struct IUnitDrawerState {
 public:
-	static IUnitDrawerState* GetInstance(bool nopState);
+	static IUnitDrawerState* GetInstance(bool nopState, bool luaState);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
 	static const CMatrix44f& GetDummyPieceMatrixRef(size_t idx = 0);
@@ -115,6 +117,32 @@ public:
 	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override {}
 	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
 	void SetBuildClipPlanes(const float4&, const float4&) const override {}
+};
+
+
+// does nothing by itself; LuaObjectDrawer handles custom uniforms
+// this exists to ensure UnitDrawerStateGLSL::SetMatrices will not
+// be invoked (via *Drawer::Draw*Trans) during a custom bin-pass
+struct UnitDrawerStateLUA: public IUnitDrawerState {
+public:
+	void Enable(const CUnitDrawer* ud, bool, bool) override { EnableShaders(ud); }
+	void Disable(const CUnitDrawer* ud, bool) override { DisableShaders(ud); }
+
+	void EnableTextures() const override {}
+	void DisableTextures() const override {}
+	void EnableShaders(const CUnitDrawer*) override { /*luaMatShader->Enable();*/ }
+	void DisableShaders(const CUnitDrawer*) override { /*luaMatShader->Disable();*/ }
+
+	void SetSkyLight(const ISkyLight*) const override {}
+	void SetTeamColor(int team, const float2 alpha) const override { /*luaMatShader->ExecuteInstanceTeamColor(nullptr, GetTeamColor(team, alpha.x));*/ }
+	void SetNanoColor(const float4& color) const override {}
+	void SetMatrices(const CMatrix44f& modelMat, const std::vector<CMatrix44f>& pieceMats) const override { SetMatrices(modelMat, pieceMats.data(), pieceMats.size()); }
+	void SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const override { /*luaMatShader->ExecuteInstanceMatrices(nullptr);*/ }
+	void SetWaterClipPlane(const DrawPass::e& drawPass) const override {}
+	void SetBuildClipPlanes(const float4&, const float4&) const override {}
+
+private:
+	LuaMatShader* luaMatShader = nullptr;
 };
 
 

@@ -532,7 +532,6 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	#endif
 
 	// shaders need this form, projection into SM-space is done by shadow2DProj()
-	// note: ShadowGenVertProg is a special case because it does not use uniforms
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetX(std::move(lightMatrix.GetX()));
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetY(std::move(lightMatrix.GetY()));
@@ -550,7 +549,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 
 void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 {
-	// first set matrices needed by shaders (including ShadowGenVertProg)
+	// first set matrices needed by shaders
 	shadowCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);
 	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_DRAWING]);
 	// update frustum, load matrices into gl_{ModelView,Projection}Matrix

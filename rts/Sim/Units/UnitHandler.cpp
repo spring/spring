@@ -302,18 +302,19 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Sim::Unit::SlowUpdate");
 		assert(activeSlowUpdateUnit >= 0);
+
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
 		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0)
 			activeSlowUpdateUnit = 0;
 
 		// stagger the SlowUpdate's
-		for (unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
+		for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
 			CUnit* unit = activeUnits[activeSlowUpdateUnit];
 
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();
 			unit->SlowUpdateWeapons();
-			unit->localModel.UpdateBoundingVolume();
+			unit->SlowUpdateLocalModel();
 			UNIT_SANITY_CHECK(unit);
 
 			n--;
@@ -327,6 +328,8 @@ void CUnitHandler::Update()
 			CUnit* unit = activeUnits[activeUpdateUnit];
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
+			// unsynced; done on-demand when drawing unit
+			// unit->UpdateLocalModel();
 			UNIT_SANITY_CHECK(unit);
 			assert(activeUnits[activeUpdateUnit] == unit);
 		}

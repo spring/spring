@@ -55,7 +55,6 @@ public:
 
 
 
-
 class CUnitDrawer: public CEventClient
 {
 public:
@@ -104,9 +103,12 @@ public:
 	static void DrawUnitModel(const CUnit* unit, bool noLuaCall);
 	static void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall);
 	static void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall);
-	// note: make these static?
-	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+
+	static void SetUnitLuaTrans(const CUnit* unit, bool lodCall);
+	static void SetUnitDefTrans(const CUnit* unit, bool lodCall);
+
+	static void DrawUnitLuaTrans(const CUnit* unit, bool lodCall, bool noLuaCall, bool fullModel = false);
+	static void DrawUnitDefTrans(const CUnit* unit, bool lodCall, bool noLuaCall, bool fullModel = false);
 
 	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
 	void PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
@@ -116,8 +118,8 @@ public:
 	/// LuaOpenGL::Unit{Raw}: draw a single unit with full state setup
 	void PushIndividualOpaqueState(const CUnit* unit, bool deferredPass);
 	void PopIndividualOpaqueState(const CUnit* unit, bool deferredPass);
-	void DrawIndividual(const CUnit* unit, bool noLuaCall);
-	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
+	void DrawIndividualDefTrans(const CUnit* unit, bool noLuaCall);
+	void DrawIndividualLuaTrans(const CUnit* unit, bool noLuaCall);
 
 	// alpha.x := alpha-value
 	// alpha.y := alpha-pass (true or false)
@@ -138,6 +140,8 @@ public:
 
 	void DrawUnitMiniMapIcons() const;
 
+public:
+	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
@@ -150,8 +154,17 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
-	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
-	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
+	// always returns the default state (SSP)
+	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const {
+		assert(              unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this));
+		assert(!alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha(this));
+		return unitDrawerStates[DRAWER_STATE_SSP];
+	}
+
+	IUnitDrawerState* GetDrawerState(unsigned int idx) { return (                                     unitDrawerStates[idx]); }
+	IUnitDrawerState* SetDrawerState(unsigned int idx) { return (unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[idx]); }
+
+	const DrawModelFunc GetDrawModelFunc(unsigned int idx) const { return drawModelFuncs[idx]; }
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
@@ -224,8 +237,8 @@ public:
 	static void PushModelRenderState(const CSolidObject* o);
 	static void PopModelRenderState(const CSolidObject* o);
 
-	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
-	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawObjectDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawObjectDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 
 	static bool ObjectVisibleReflection(const float3 objPos, const float3 camPos, float maxRadius);
 
@@ -251,8 +264,6 @@ private:
 	bool useDistToGroundForIcons;
 
 private:
-	typedef void (*DrawModelFunc)(const CUnit*, bool);
-
 	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
 	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
 
@@ -281,8 +292,8 @@ private:
 	std::vector<float3> illegalSquares;
 
 
-	// [0] := fallback shader-less rendering path
-	// [1] := default shader-driven rendering path
+	// [0] := no-op path
+	// [1] := default shader-path
 	// [2] := currently selected state
 	std::array<IUnitDrawerState*, DRAWER_STATE_CNT> unitDrawerStates;
 	std::array<DrawModelFunc, 3> drawModelFuncs;

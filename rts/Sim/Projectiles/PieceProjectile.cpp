@@ -21,7 +21,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-static constexpr int SMOKE_TIME = 40;
+
 
 
 CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
@@ -153,16 +153,18 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if ((explFlags & PF_Smoke) != 0) {
 		if ((explFlags & PF_NoCEGTrail) != 0) {
+			const unsigned int smokeTime = TRAIL_SMOKE_TIME;
+
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
+				projectileDrawer->smoketrailtex,
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				false,
-				true,
-				14,
-				SMOKE_TIME,
+				smokeTime,
+				14.0f,
 				0.5f,
-				projectileDrawer->smoketrailtex
+				false,
+				true
 			);
 		}
 	}
@@ -213,16 +215,19 @@ void CPieceProjectile::Update()
 			smokeTrail->UpdateEndPos(oldSmokePos = pos, oldSmokeDir = dir);
 
 		if ((age % 8) == 0) {
+			// need the temporary to avoid an undefined ref
+			const unsigned int smokeTime = TRAIL_SMOKE_TIME;
+
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
+				projectileDrawer->smoketrailtex,
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
-				age == (NUM_TRAIL_PARTS - 1),
-				false,
-				14,
-				SMOKE_TIME,
+				smokeTime,
+				14.0f,
 				0.5f,
-				projectileDrawer->smoketrailtex
+				age == (NUM_TRAIL_PARTS - 1),
+				false
 			);
 
 			useAirLos = smokeTrail->useAirLos;

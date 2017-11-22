@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <array>
+
 #include "Game/Camera.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
@@ -31,14 +32,17 @@ public:
 	void DrawShadowPass();
 	void DrawAlphaPass();
 
-	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawFeatureTrans(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	static void SetFeatureLuaTrans(const CFeature* feature, bool lodCall);
+	static void SetFeatureDefTrans(const CFeature* feature, bool lodCall);
+
+	static void DrawFeatureLuaTrans(const CFeature* feature, bool lodCall, bool noLuaCall);
+	static void DrawFeatureDefTrans(const CFeature*, bool lodCall, bool noLuaCall);
 
 	/// LuaOpenGL::Feature{Raw}: draw a single feature with full state setup
 	void PushIndividualState(const CFeature* feature, bool deferredPass);
 	void PopIndividualState(const CFeature* feature, bool deferredPass);
-	void DrawIndividual(const CFeature* feature, bool noLuaCall);
-	void DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall);
+	void DrawIndividualDefTrans(const CFeature* feature, bool noLuaCall);
+	void DrawIndividualLuaTrans(const CFeature* feature, bool noLuaCall);
 
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
@@ -72,7 +76,7 @@ private:
 
 	bool CanDrawFeature(const CFeature*) const;
 
-	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
+	static void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
 	void FlagVisibleFeatures(
 		const CCamera*,

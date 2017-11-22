@@ -107,7 +107,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldDir, SMOKE_TIME, 7.0f, 0.6f, false, true);
 
 	CWeaponProjectile::Collision();
 	oldSmoke = pos;
@@ -116,7 +116,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldDir, SMOKE_TIME, 7.0f, 0.6f, false, true);
 
 	CWeaponProjectile::Collision(unit);
 	oldSmoke = pos;
@@ -125,7 +125,7 @@ void CMissileProjectile::Collision(CUnit* unit)
 void CMissileProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), weaponDef->visuals.texture2, pos, oldSmoke, dir, oldDir, SMOKE_TIME, 7.0f, 0.6f, false, true);
 
 	CWeaponProjectile::Collision(feature);
 	oldSmoke = pos;
@@ -142,7 +142,7 @@ void CMissileProjectile::Update()
 			if (speed.w < maxSpeed)
 				speed.w += weaponDef->weaponacceleration;
 
-			if (weaponDef->tracks && target != NULL) {
+			if (weaponDef->tracks && target != nullptr) {
 				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
 				if (so != nullptr) {
@@ -233,23 +233,20 @@ void CMissileProjectile::Update()
 	numParts++;
 
 	if (weaponDef->visuals.smokeTrail) {
-		if (smokeTrail) {
-			smokeTrail->UpdateEndPos(pos, dir);
-			oldSmoke = pos;
-			oldDir = dir;
-		}
+		if (smokeTrail != nullptr)
+			smokeTrail->UpdateEndPos(oldSmoke = pos, oldDir = dir);
 
 		if ((age % 8) == 0) {
 			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				own,
+				weaponDef->visuals.texture2,
 				pos, oldSmoke,
 				dir, oldDir,
-				age == 8,
-				false,
-				7,
 				SMOKE_TIME,
+				7.0f,
 				0.6f,
-				weaponDef->visuals.texture2
+				age == 8,
+				false
 			);
 
 			numParts = 0;
