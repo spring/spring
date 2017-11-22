@@ -24,7 +24,7 @@ public:
 	static const int NUM_TERRAIN_TYPES = 256;
 
 	/**
-	 * @param mapInfoFile mapinfo file, aka sm3 / smf (full path)
+	 * @param mapInfoFile mapinfo file, aka smf (full path)
 	 * @param mapName human readable mapname e.g. DeltaSiegeDry
 	 */
 	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
@@ -201,13 +201,6 @@ public:
 		bool splatDetailNormalDiffuseAlpha;
 	} smf;
 
-	/** SM3 specific settings
-	    This is NOT complete, SM3 stores so much in the map settings
-	    that it really isn't a good idea to put them here. */
-	struct sm3_t {
-		std::string minimap; ///< "MAP\minimap"
-	} sm3;
-
 	struct pfs_t {
 		struct legacy_constants_t {
 		} legacy_constants;
@@ -254,7 +247,6 @@ private:
 	void ReadLight();
 	void ReadWater();
 	void ReadSMF();
-	void ReadSM3();
 	void ReadTerrainTypes();
 	void ReadPFSConstants();
 	void ReadSound();

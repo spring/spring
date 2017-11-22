@@ -9,7 +9,6 @@
 #include "MapInfo.h"
 #include "MetalMap.h"
 #include "Rendering/Env/MapRendering.h"
-// #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
@@ -146,7 +145,6 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
 
 	if (FileSystem::GetExtension(mapName) == "sm3") {
 		throw content_error("[CReadMap::LoadMap] SM3 maps are no longer supported as of Spring 95.0");
-		// rm = new CSM3ReadMap(mapName);
 	} else {
 		// assume SMF format by default; calls ::Initialize
 		rm = new CSMFReadMap(mapName);

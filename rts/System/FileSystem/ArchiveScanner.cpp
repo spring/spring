@@ -71,7 +71,7 @@ const std::array<KnownInfoTag, 12> knownTags = {
 	KnownInfoTag{"game",        "example: Total Annihilation",                                    false},
 	KnownInfoTag{"shortgame",   "example: TA",                                                    false},
 	KnownInfoTag{"description", "example: Little units blowing up other little units",            false},
-	KnownInfoTag{"mapfile",     "in case its a map, store location of smf/sm3 file",              false}, //FIXME is this ever used in the engine?! or does it auto calc the location?
+	KnownInfoTag{"mapfile",     "in case its a map, store location of smf file",              false}, //FIXME is this ever used in the engine?! or does it auto calc the location?
 	KnownInfoTag{"modtype",     "0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu",          true},
 	KnownInfoTag{"depend",      "a table with all archives that needs to be loaded for this one", false},
 	KnownInfoTag{"replace",     "a table with archives that got replaced with this one",          false},
@@ -549,12 +549,12 @@ std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& erro
 {
 	assert(ar != nullptr);
 
-	// check for smf/sm3 and if the uncompression of important files is too costy
+	// check for smf and if the uncompression of important files is too costy
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 		const std::pair<std::string, int>& info = ar->FileInfo(fid);
 		const std::string& ext = FileSystem::GetExtension(StringToLower(info.first));
 
-		if ((ext == "smf") || (ext == "sm3")) {
+		if (ext == "smf") {
 			return info.first;
 		}
 	}
@@ -591,7 +591,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	}
 
 	std::string error;
-	std::string arMapFile; // file in archive with "smf" or "sm3" extension
+	std::string arMapFile; // file in archive with "smf" extension
 	std::string miMapFile; // value for the 'mapfile' key parsed from mapinfo
 
 	const bool hasModinfo = ar->FileExists("modinfo.lua");
@@ -1340,7 +1340,7 @@ int CArchiveScanner::GetMetaFileClass(const std::string& filePath)
 	if (it != metaFileClasses.end())
 		return (it->second);
 
-//	if ((ext == "smf") || (ext == "sm3")) // to generate minimap
+//	if (ext == "smf") // to generate minimap
 //		return 1;
 
 	for (const auto& p: metaDirClasses) {

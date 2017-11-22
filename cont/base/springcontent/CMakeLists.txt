@@ -34,11 +34,6 @@ set(FILES
 	shaders/GLSL/GrassFragProg.glsl
 	shaders/GLSL/ModelVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
-	shaders/GLSL/terrainCommon.glsl
-	shaders/GLSL/terrainSimpleCopyVS.glsl
-	shaders/GLSL/terrainSimpleCopyFS.glsl
-	shaders/GLSL/terrainVertexShader.glsl
-	shaders/GLSL/terrainFragmentShader.glsl
 	shaders/GLSL/GuiVertProg4.glsl
 	shaders/GLSL/GuiFragProg4.glsl
 	shaders/ARB/waterDynWave2.vp
