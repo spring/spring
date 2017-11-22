@@ -20,7 +20,7 @@
 #include "System/myMath.h"
 #include "System/StringUtil.h"
 
-static const std::array<CMatrix44f, 128> dummyPieceMatrices;
+static std::array<const CMatrix44f, 128> dummyPieceMatrices;
 
 
 const CMatrix44f& IUnitDrawerState::GetDummyPieceMatrixRef(size_t idx) { return  dummyPieceMatrices[idx]; }
