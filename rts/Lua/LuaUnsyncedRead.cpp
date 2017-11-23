@@ -744,9 +744,9 @@ static int GetObjectPieceTransformMatrices(CSolidObject* o, lua_State* L)
 
 		for (int j = 0; j < 16; j += 4) {
 			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 0]); lua_rawset(L, -3);
-			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 1]); lua_rawset(L, -3);
-			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 2]); lua_rawset(L, -3);
-			lua_pushnumber(L, j + 1); lua_pushnumber(L, pms[i][j + 3]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 2); lua_pushnumber(L, pms[i][j + 1]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 3); lua_pushnumber(L, pms[i][j + 2]); lua_rawset(L, -3);
+			lua_pushnumber(L, j + 4); lua_pushnumber(L, pms[i][j + 3]); lua_rawset(L, -3);
 		}
 
 		lua_rawset(L, -3);
