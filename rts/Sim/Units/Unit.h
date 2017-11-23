@@ -82,9 +82,6 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
-	void SlowUpdateLocalModel() { localModel.UpdateBoundingVolume(); }
-	void UpdateLocalModel() { /*localModel.UpdatePieceMatrices(gs->frameNum);*/ }
-
 	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);

@@ -448,11 +448,12 @@ struct LocalModel
 	}
 
 	void UpdateBoundingVolume();
+	void UpdatePieceMatrices() { UpdatePieceMatrices(pmuFrameNum + 1); }
 	void UpdatePieceMatrices(unsigned int gsFrameNum);
 	void UpdateVolumeAndMatrices(bool updateChildMatrices) {
 		pieces[0].UpdateChildMatricesRec(updateChildMatrices);
 		UpdateBoundingVolume();
-		UpdatePieceMatrices(0);
+		UpdatePieceMatrices();
 	}
 
 	void GetBoundingBoxVerts(std::array<float3, 8 + 2>& verts) const { GetBoundingBoxVerts(&verts[0]); }

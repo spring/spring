@@ -114,6 +114,9 @@ public:
 
 	virtual void UpdatePhysicalState(float eps);
 
+	void SlowUpdateLocalModel() { localModel.UpdateBoundingVolume(); }
+	void     UpdateLocalModel() { localModel.UpdatePieceMatrices(); }
+
 	void Move(const float3& v, bool relative) {
 		const float3& dv = relative? v: (v - pos);
 
