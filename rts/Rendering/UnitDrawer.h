@@ -157,7 +157,7 @@ public:
 	// always returns the default state (SSP)
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const {
 		assert(              unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this));
-		assert(!alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha(this));
+		assert(!alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha());
 		return unitDrawerStates[DRAWER_STATE_SSP];
 	}
 
