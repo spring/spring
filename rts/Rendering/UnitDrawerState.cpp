@@ -100,8 +100,9 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		"ModelShaderGLSL-ShadowedDeferred",
 	};
 	const std::string extraDefs =
-		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler->GetBaseLight()) + "\n") +
-		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n") +
+		("#define NUM_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->NumConfigLights()) + "\n") +
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(GL::LightHandler::MaxConfigLights()) + "\n") +
+		("#define MAX_LIGHT_UNIFORM_VECS "   + IntToString(GL::LightHandler::MaxUniformVecs()) + "\n") +
 		("#define MDL_CLIP_PLANE_IDX "       + IntToString(            IWater::ClipPlaneIndex()) + "\n") +
 		("#define MDL_FRAGDATA_COUNT "       + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n");
 
@@ -149,6 +150,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 21
 		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 22
 		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 23
+		modelShaders[n]->SetUniformLocation("fwdDynLights");      // idx 23
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -195,14 +197,22 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	const float3 cameraPos = camera->GetPos();
 	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(10, &fogParams.x);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(14, &cameraPos.x);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(22, shadowHandler->GetShadowParams());
+	Shader::IProgramObject* shader = modelShaders[MODEL_SHADER_ACTIVE];
 
-	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
+	const GL::LightHandler* cLightHandler = ud->GetLightHandler();
+	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
+
+	if (cLightHandler->NumConfigLights() > 0) {
+		mLightHandler->Update();
+		shader->SetUniform4fv(23, cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+	}
+
+	shader->SetUniform3fv(10, &fogParams.x);
+	shader->SetUniform3fv(14, &cameraPos.x);
+	shader->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
+	shader->SetUniform4fv(22, shadowHandler->GetShadowParams());
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {

@@ -114,8 +114,9 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetFlag("SMF_LIGHT_EMISSION",                  (smfMap->GetLightEmissionTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_PARALLAX_MAPPING",                (smfMap->GetParallaxHeightTexture() != 0));
 
-			glslShaders[n]->SetFlag("BASE_DYNAMIC_MAP_LIGHT", lightHandler->GetBaseLight());
-			glslShaders[n]->SetFlag("MAX_DYNAMIC_MAP_LIGHTS", lightHandler->GetMaxLights());
+			glslShaders[n]->SetFlag("NUM_DYNAMIC_MAP_LIGHTS", lightHandler->NumConfigLights());
+			glslShaders[n]->SetFlag("MAX_DYNAMIC_MAP_LIGHTS", GL::LightHandler::MaxConfigLights());
+			glslShaders[n]->SetFlag("MAX_LIGHT_UNIFORM_VECS", GL::LightHandler::MaxUniformVecs());
 
 			// both are runtime set in ::Enable, but ATI drivers need values from the beginning
 			glslShaders[n]->SetFlag("HAVE_SHADOWS", false);
@@ -171,6 +172,9 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowViewMatrix());
 			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
 
+			// Enable always sets these
+			// glslShaders[n]->SetUniform4v<const char*, float>("fwdDynLights", lightHandler->NumLightUniformVecs(), lightHandler->GetRawLightDataPtr());
+
 			glslShaders[n]->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
 			glslShaders[n]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
 
@@ -217,9 +221,12 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 		return;
 	}
 
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 
-	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
+	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	const float3 cameraPos = camera->GetPos();
 	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
@@ -239,21 +246,16 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
 	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 
+	if (cLightHandler->NumConfigLights() > 0) {
+		mLightHandler->Update();
+		shader->SetUniform4v<const char*, float>("fwdDynLights", cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+	}
+
 	switch (drawPass) {
 		case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
 		case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
 		default: {} break;
 	}
-
-	#if 0
-	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
-	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
-
-	// already on the MV stack at this point
-	GL::LoadIdentity();
-	mLightHandler->Update(shader);
-	GL::MultMatrix(camera->GetViewMatrix());
-	#endif
 
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);

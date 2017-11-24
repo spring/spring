@@ -245,7 +245,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	liveGhostBuildings.resize(teamHandler->ActiveAllyTeams());
 
 	// LH must be initialized before drawer-state is initialized
-	lightHandler.Init(0, configHandler->GetInt("MaxDynamicModelLights"));
+	lightHandler.Init(configHandler->GetInt("MaxDynamicModelLights"));
 
 	unitDrawerStates[DRAWER_STATE_NOP] = IUnitDrawerState::GetInstance( true, false);
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(false, false);

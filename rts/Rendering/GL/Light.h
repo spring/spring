@@ -124,23 +124,19 @@ namespace GL {
 		void SetTrackType(unsigned int n) { trackType = n; }
 
 		void DecayColors() {
-			const bool expAmbientDecay  = (decayFunctionType.x != 0.0f);
-			const bool expDiffuseDecay  = (decayFunctionType.y != 0.0f);
-			const bool expSpecularDecay = (decayFunctionType.z != 0.0f);
-
-			if (expAmbientDecay) {
+			if (decayFunctionType.x != 0.0f) {
 				ambientColor *= ambientDecayRate;
 			} else {
 				ambientColor -= ambientDecayRate;
 			}
 
-			if (expDiffuseDecay) {
+			if (decayFunctionType.y != 0.0f) {
 				diffuseColor *= diffuseDecayRate;
 			} else {
 				diffuseColor -= diffuseDecayRate;
 			}
 
-			if (expSpecularDecay) {
+			if (decayFunctionType.z != 0.0f) {
 				specularColor *= specularDecayRate;
 			} else {
 				specularColor -= specularDecayRate;

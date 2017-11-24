@@ -1,22 +1,10 @@
 #version 410 core
 
-#ifdef NOSPRING
-	#define SMF_INTENSITY_MULT (210.0 / 255.0)
-	#define SMF_TEXSQUARE_SIZE 1024.0
-	#define MAX_DYNAMIC_MAP_LIGHTS 4
-	#define BASE_DYNAMIC_MAP_LIGHT 0
-	#define GBUFFER_NORMTEX_IDX 0
-	#define GBUFFER_DIFFTEX_IDX 1
-	#define GBUFFER_SPECTEX_IDX 2
-	#define GBUFFER_EMITTEX_IDX 3
-	#define GBUFFER_MISCTEX_IDX 4
-#endif
-
-
-
 const float SMF_SHALLOW_WATER_DEPTH     = 10.0;
 const float SMF_SHALLOW_WATER_DEPTH_INV = 1.0 / SMF_SHALLOW_WATER_DEPTH;
 const float SMF_DETAILTEX_RES           = 0.02;
+
+const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
 
 
 
@@ -40,6 +28,8 @@ uniform vec3 cameraPos;
 uniform vec4 fogColor;
 
 uniform mat4 viewMat;
+
+uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
 
 
 
@@ -253,50 +243,64 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 }
 
 
-vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specularExp) {
+vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
 	vec3 light = vec3(0.0);
 
-	#if 0
 	#ifndef SMF_SPECULAR_LIGHTING
 	// non-zero default specularity on non-SSMF maps
-	specularCol = vec3(0.5, 0.5, 0.5);
+	specularColor.rgb = vec3(0.5, 0.5, 0.5);
 	#endif
 
-	for (int i = 0; i < MAX_DYNAMIC_MAP_LIGHTS; i++) {
-		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].position.xyz - vertexPos.xyz;
-		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].halfVector.xyz;
+	#if (NUM_DYNAMIC_MAP_LIGHTS > 0)
+	for (int i = 0; i < NUM_DYNAMIC_MAP_LIGHTS; i++) {
+		int j = i * 6;
 
-		float lightRadius = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation;
-		float lightDistance = length(lightVec);
-		float lightScale = float(lightDistance <= lightRadius);
-		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
-		//clamp lightCosAngSpec from 0.001 because this will later be in a power function
-		//results are undefined if x==0 or if x==0 and y==0.
-		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.001, 1.0);
+		vec4 wsLightPos = fwdDynLights[j + 0];
+		vec4 wsLightDir = fwdDynLights[j + 1];
+
+		vec4 lightDiffColor = fwdDynLights[j + 2];
+		vec4 lightSpecColor = fwdDynLights[j + 3];
+		vec4 lightAmbiColor = fwdDynLights[j + 4];
+
+		vec3 wsLightVec = normalize(wsLightPos.xyz - vertexPos.xyz);
+		vec3 wsHalfVec = normalize((wsNormal + wsLightVec) * 0.5);
+
+		float lightAngle    = fwdDynLights[j + 5].x; // fov
+		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
+		float lightDistance = dot(wsLightVec, wsLightPos.xyz - vertexPos.xyz);
+
+		// clamp lightCosAngleSpec from 0.001 because pow(0, exp) produces undefined results
+		float lightCosAngleDiff = clamp(dot(wsNormal, wsLightVec), 0.0, 1.0);
+		float lightCosAngleSpec = clamp(dot(wsNormal, wsHalfVec), 0.001, 1.0);
+
 		#ifdef OGL_SPEC_ATTENUATION
-		float lightAttenuation =
-			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation) +
-			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].linearAttenuation * lightDistance) +
-			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
+		// infinite falloff
+		float cLightAtten = fwdDynLights[j + 5].y;
+		float lLightAtten = fwdDynLights[j + 5].z;
+		float qLightAtten = fwdDynLights[j + 5].w;
+		float  lightAtten = cLightAtten + lLightAtten * lightDistance + qLightAtten * lightDistance * lightDistance;
+		float  lightConst = 1.0;
 
-		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
+		lightAtten = 1.0 / max(lightAtten, 1.0);
 		#else
-		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
+		float lightConst = float(lightDistance <= lightRadius);
+		float lightAtten = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
 		#endif
 
-		float vectorDot = -dot((lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotDirection);
-		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotCosCutoff;
-
-		float lightSpecularPow = 0.0;
 		#ifdef SMF_SPECULAR_LIGHTING
-		lightSpecularPow = max(0.0, pow(lightCosAngSpec, specularExp));
+		float lightSpecularPow = max(0.0, pow(lightCosAngleSpec, specularColor.a));
+		#else
+		float lightSpecularPow = 0.0;
 		#endif
 
-		lightScale *= float(vectorDot >= cutoffDot);
+		float vectorCosAngle = dot(-wsLightVec, wsLightDir.xyz);
+		float cutoffCosAngle = cos(lightAngle * DEGREES_TO_RADIANS);
 
-		light += (lightScale *                                       gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
-		light += (lightScale * lightAttenuation * (diffuseCol.rgb *  gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
-		light += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
+		lightConst *= float(vectorCosAngle >= cutoffCosAngle);
+
+		light += (lightConst *                                   lightAmbiColor.rgb                     );
+		light += (lightConst * lightAtten * ( diffuseColor.rgb * lightDiffColor.rgb * lightCosAngleDiff));
+		light += (lightConst * lightAtten * (specularColor.rgb * lightSpecColor.rgb * lightSpecularPow ));
 	}
 	#endif
 
@@ -311,15 +315,15 @@ void main() {
 	vec2 normTexCoords = vertexPos.xz * normalTexGen;
 
 	vec3 cameraDir = vertexPos.xyz - cameraPos;
-	vec3 normal = GetFragmentNormal(normTexCoords);
+	vec3 normalVec = GetFragmentNormal(normTexCoords);
 
 	#if (defined(SMF_BLEND_NORMALS) || defined(SMF_PARALLAX_MAPPING) || defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING))
 		// detail-normals are (assumed to be) defined within STN space
 		// (for a regular vertex normal equal to <0, 1, 0>, the S- and
 		// T-tangents are aligned with Spring's +x and +z (!) axes)
-		vec3 tTangent = normalize(cross(normal, vec3(-1.0, 0.0, 0.0)));
-		vec3 sTangent = cross(normal, tTangent);
-		mat3 stnMatrix = mat3(sTangent, tTangent, normal);
+		vec3 tTangent = normalize(cross(normalVec, vec3(-1.0, 0.0, 0.0)));
+		vec3 sTangent = cross(normalVec, tTangent);
+		mat3 stnMatrix = mat3(sTangent, tTangent, normalVec);
 	#endif
 
 	#ifdef SMF_PARALLAX_MAPPING
@@ -335,7 +339,7 @@ void main() {
 		normTexCoords += (uvOffset * (normalTexGen / specularTexGen));
 		specTexCoords += (uvOffset);
 
-		normal = GetFragmentNormal(normTexCoords);
+		normalVec = GetFragmentNormal(normTexCoords);
 	}
 	#endif
 
@@ -345,16 +349,16 @@ void main() {
 		vec3 dtNormal = (dtSample.xyz * 2.0) - 1.0;
 
 		// convert dtNormal from TS to WS before mixing
-		normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
+		normalVec = normalize(mix(normalVec, stnMatrix * dtNormal, dtSample.a));
 	}
 	#endif
 
 
-	vec4 detailCol;
+	vec4 detailColor;
 
 	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 	{
-		detailCol = GetDetailTextureColor(specTexCoords);
+		detailColor = GetDetailTextureColor(specTexCoords);
 	}
 	#else
 	{
@@ -365,35 +369,36 @@ void main() {
 		// note: splatDetailStrength is an OUT-param
 		vec4 splatDetailNormal = GetSplatDetailTextureNormal(specTexCoords, splatDetailStrength);
 
-		detailCol = vec4(splatDetailStrength.y);
+		detailColor = vec4(splatDetailStrength.y);
 
 		// convert the splat detail normal to worldspace,
 		// then mix it with the regular one (note: needs
 		// another normalization?)
-		normal = mix(normal, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
+		normalVec = mix(normalVec, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
 	}
 	#endif
 
 
 	#ifndef DEFERRED_MODE
-	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
-	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);
+	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normalVec), 0.0, 1.0);
+	float cosAngleSpecular = clamp(dot(normalize(halfDir), normalVec), 0.001, 1.0);
 	#endif
 
-	vec4 diffuseCol = texture(diffuseTex, diffTexCoords);
-	vec4 specularCol = vec4(0.0, 0.0, 0.0, 1.0);
-	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
+	vec4  diffuseColor = texture(diffuseTex, diffTexCoords);
+	vec4 specularColor = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 emissionColor = vec4(0.0, 0.0, 0.0, 0.0);
 
 	#if (!defined(DEFERRED_MODE) && defined(SMF_SKY_REFLECTIONS))
 	{
 		// cameraDir does not need to be normalized for reflect()
 		// note: assumes viewMat is always orthonormal, otherwise
 		// requires the inverse-transpose
-		vec4 reflectDir = viewMat * vec4(reflect(cameraDir, normal), 0.0);
-		vec3 reflectCol = texture(skyReflectTex, reflectDir.xyz).rgb;
-		vec3 reflectMod = texture(skyReflectModTex, specTexCoords).rgb;
+		vec4 reflectDir = viewMat * vec4(reflect(cameraDir, normalVec), 0.0);
 
-		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);
+		vec3 reflectColor = texture(skyReflectTex, reflectDir.xyz).rgb;
+		vec3 reflectCoeff = texture(skyReflectModTex, specTexCoords).rgb;
+
+		diffuseColor.rgb = mix(diffuseColor.rgb, reflectColor, reflectCoeff);
 	}
 	#endif
 	#if (!defined(DEFERRED_MODE) && defined(HAVE_INFOTEX))
@@ -402,8 +407,8 @@ void main() {
 		// TODO: make the multiplier configurable by users?
 		vec2 infoTexCoords = vertexPos.xz * infoTexGen;
 
-		diffuseCol.rgb += (texture(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
-		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
+		diffuseColor.rgb += (texture(infoTex, infoTexCoords).rgb * infoTexIntensityMul);
+		diffuseColor.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
 	}
 	#endif
 
@@ -424,9 +429,9 @@ void main() {
 	#ifndef DEFERRED_MODE
 	{
 		// diffuse shading intensity
-		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff, diffuseCol.a);
+		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff, diffuseColor.a);
 
-		fragColor.rgb = (diffuseCol.rgb + detailCol.rgb) * shadeInt.rgb;
+		fragColor.rgb = (diffuseColor.rgb + detailColor.rgb) * shadeInt.rgb;
 		fragColor.a = shadeInt.a;
 	}
 	#endif
@@ -434,44 +439,39 @@ void main() {
 	#ifdef SMF_LIGHT_EMISSION
 	{
 		// apply self-illumination aka. glow, not masked by shadows
-		emissionCol = texture(lightEmissionTex, specTexCoords);
+		emissionColor = texture(lightEmissionTex, specTexCoords);
 
 		#ifndef DEFERRED_MODE
-		fragColor.rgb = fragColor.rgb * (1.0 - emissionCol.a) + emissionCol.rgb;
+		fragColor.rgb = fragColor.rgb * (1.0 - emissionColor.a) + emissionColor.rgb;
 		#endif
 	}
 	#endif
 
 	#ifdef SMF_SPECULAR_LIGHTING
-	specularCol = texture(specularTex, specTexCoords);
+	specularColor = texture(specularTex, specTexCoords);
 	#else
-	specularCol = vec4(groundSpecularColor, 1.0);
+	specularColor = vec4(groundSpecularColor, 1.0);
 	#endif
 
 	#ifndef DEFERRED_MODE
 		// sun specular lighting contribution
 		#ifdef SMF_SPECULAR_LIGHTING
-		float specularExp = specularCol.a * 16.0;
+		float specularExp = specularColor.a * 16.0;
 		#else
 		float specularExp = groundSpecularExponent;
 		#endif
 
-		float specularPow = pow(cosAngleSpecular, specularExp);
-
-		fragColor.rgb += (specularCol.rgb * specularPow * shadowCoeff);
-
-		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
-		fragColor.rgb += DynamicLighting(normal, diffuseCol.rgb, specularCol.rgb, specularExp);
-		#endif
+		fragColor.rgb += (specularColor.rgb * pow(cosAngleSpecular, specularExp) * shadowCoeff);
+		fragColor.rgb += DynamicLighting(normalVec, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
 	#endif
 
 
 
 	#ifdef DEFERRED_MODE
-	fragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
-	fragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
-	fragData[GBUFFER_SPECTEX_IDX] = specularCol;
-	fragData[GBUFFER_EMITTEX_IDX] = emissionCol;
+	fragData[GBUFFER_NORMTEX_IDX] = vec4((normalVec + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	fragData[GBUFFER_DIFFTEX_IDX] = diffuseColor + detailColor;
+	fragData[GBUFFER_SPECTEX_IDX] = specularColor;
+	fragData[GBUFFER_EMITTEX_IDX] = emissionColor;
 	fragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);

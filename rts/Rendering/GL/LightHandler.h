@@ -3,7 +3,7 @@
 #ifndef _GL_LIGHTHANDLER_H
 #define _GL_LIGHTHANDLER_H
 
-#include <vector>
+#include <array>
 
 #include "Light.h"
 
@@ -14,27 +14,43 @@ namespace Shader {
 namespace GL {
 	struct LightHandler {
 	public:
-		LightHandler(): baseLight(0), maxLights(0), numLights(0), lightHandle(0) {}
+		LightHandler(): maxLights(0), lightHandle(0) {}
 		~LightHandler() { Kill(); }
 
-		void Init(unsigned int, unsigned int);
-		void Kill() { lights.clear(); }
-		void Update(Shader::IProgramObject*);
+		void Init(unsigned int);
+		void Kill() {}
+		void Update();
 
 		unsigned int AddLight(const GL::Light&);
 		unsigned int SetLight(unsigned int lgtIndex, const GL::Light&);
 
 		GL::Light* GetLight(unsigned int lgtHandle);
 
-		unsigned int GetBaseLight() const { return baseLight; }
-		unsigned int GetMaxLights() const { return maxLights; }
+		const float* GetRawLightDataPtr(size_t i = 0) const { return &rawLights[i].worldPos.x; }
+		      float* GetRawLightDataPtr(size_t i = 0)       { return &rawLights[i].worldPos.x; }
+
+		static constexpr unsigned int MaxConfigLights()       { return MAX_LIGHTS; }
+		                 unsigned int NumConfigLights() const { return  maxLights; }
+
+		static constexpr unsigned int MaxUniformVecs()       { return (MaxConfigLights() * (sizeof(RawLight) / sizeof(float))); }
+		                 unsigned int NumUniformVecs() const { return (NumConfigLights() * (sizeof(RawLight) / sizeof(float))); }
 
 	private:
-		std::vector<GL::Light> lights;
+		static constexpr unsigned int MAX_LIGHTS = 32;
 
-		unsigned int baseLight;
+		struct RawLight {
+			float4 worldPos;
+			float4 worldDir;
+			float4 diffColor;
+			float4 specColor;
+			float4 ambiColor;
+			float4 fovRadius;
+		};
+
+		std::array<GL::Light, MAX_LIGHTS> glLights;
+		std::array<RawLight, MAX_LIGHTS> rawLights;
+
 		unsigned int maxLights;
-		unsigned int numLights;
 		unsigned int lightHandle;
 	};
 }

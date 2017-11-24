@@ -38,7 +38,7 @@ out float fogFactor;
 #ifdef use_normalmapping
 out mat3 tbnMatrix;
 #else
-out vec3 normalVec;
+out vec3 wsNormalVec;
 #endif
 
 
@@ -62,7 +62,7 @@ void main(void)
 	// NOTE:
 	//   technically need inverse(transpose(mview)) here, but
 	//   mview just equals model here and model is orthonormal
-	normalVec = (modelPieceMatrix * vec4(normalAttr, 0.0)).xyz;
+	wsNormalVec = (modelPieceMatrix * vec4(normalAttr, 0.0)).xyz;
 #endif
 
 	gl_Position = projMatrix * vertexViewPos;
