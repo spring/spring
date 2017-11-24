@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -76,8 +77,8 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 {
 	glDeleteTextures(1, &barkTex);
 
-	glDeleteBuffers(1, &bushBuffer);
-	glDeleteBuffers(1, &pineBuffer);
+	glDeleteBuffers(1, &treeBuffers[1]);
+	glDeleteBuffers(1, &treeBuffers[0]);
 }
 
 
@@ -124,8 +125,9 @@ bool CAdvTreeGenerator::GenBarkTextures(const std::string& leafTexFile)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bmp.xsize, bmp.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bmp.GetRawMem());
 	glDisable(GL_CULL_FACE);
+
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, leafTex);
-	glEnable(GL_TEXTURE_2D);
 
 	CreateLeafTex(&treeTexMem[0], TEX_SIZE_X * 1, 0, TEX_SIZE_X * 4 * 2);
 	CreateLeafTex(&treeTexMem[0], TEX_SIZE_X * 2, 0, TEX_SIZE_X * 4 * 2);
@@ -167,7 +169,7 @@ void CAdvTreeGenerator::GenVertexBuffers()
 			GenBushTree(int(numBranches), treeScale * MAX_TREE_HEIGHT, treeScale * 0.05f * MAX_TREE_HEIGHT);
 		}
 
-		numBushVerts[a] = curVertPtr - prvVertPtr;
+		numTreeVerts[a] = curVertPtr - prvVertPtr;
 	}
 
 	// randomized pine-tree subtypes, ditto
@@ -182,40 +184,41 @@ void CAdvTreeGenerator::GenVertexBuffers()
 			GenPineTree(int(numBranches), MAX_TREE_HEIGHT * treeScale);
 		}
 
-		numPineVerts[a] = curVertPtr - prvVertPtr;
+		numTreeVerts[NUM_TREE_TYPES + a] = curVertPtr - prvVertPtr;
 	}
 
-	glGenBuffers(1, &pineBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, pineBuffer);
-	glBufferData(GL_ARRAY_BUFFER, pineVerts.size() * sizeof(VA_TYPE_TN), pineVerts.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &bushBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, bushBuffer);
+	glGenBuffers(1, &treeBuffers[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[0]);
 	glBufferData(GL_ARRAY_BUFFER, bushVerts.size() * sizeof(VA_TYPE_TN), bushVerts.data(), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glGenBuffers(1, &treeBuffers[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, pineVerts.size() * sizeof(VA_TYPE_TN), pineVerts.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 
 
-void CAdvTreeGenerator::BindPineTreeBuffer(unsigned int) const {
-	// all pine subtypes share the same buffer
-	glBindBuffer(GL_ARRAY_BUFFER, pineBuffer);
+void CAdvTreeGenerator::BindTreeBuffer(unsigned int treeType) const {
+	assert(treeType >= 0);
+	// all bush subtypes share the same buffer [0], so do all pine subtypes [1]
+	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[treeType >= NUM_TREE_TYPES]);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
 	glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
 }
 
-void CAdvTreeGenerator::BindBushTreeBuffer(unsigned int) const {
-	// all bush subtypes share the same buffer
-	glBindBuffer(GL_ARRAY_BUFFER, bushBuffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
-	glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
-}
+void CAdvTreeGenerator::DrawTreeBuffer(unsigned int treeType) const {
+	constexpr unsigned int primTypes[] = {GL_QUADS, GL_TRIANGLES};
 
-void CAdvTreeGenerator::DrawPineTreeBuffer(unsigned int i) const { glDrawArrays(GL_TRIANGLES, i * MAX_TREE_VERTS, numPineVerts[i]); }
-void CAdvTreeGenerator::DrawBushTreeBuffer(unsigned int i) const { glDrawArrays(GL_QUADS    , i * MAX_TREE_VERTS, numBushVerts[i]); }
+	assert(treeType >= 0);
+
+	const unsigned int pineType = (treeType >= NUM_TREE_TYPES);
+	const unsigned int baseType = treeType - (NUM_TREE_TYPES * pineType);
+
+	glDrawArrays(primTypes[pineType], baseType * MAX_TREE_VERTS, numTreeVerts[treeType]);
+}
 
 
 
@@ -351,14 +354,11 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 
 void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f, true, true);
 	glViewport(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
@@ -389,8 +389,6 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 	}
 
 	glPopAttrib();
-
-	glSpringMatrix2dResetPV(true, true);
 }
 
 void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& end)
@@ -400,23 +398,34 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 
 	const float length = dir.dot(end - start);
 
-	glBegin(GL_QUADS);
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	// root-level call, setup
+	if (start == ZeroVector) {
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f));
+	}
+
+	{
 		float3 c = float3(guRNG.NextFloat(), guRNG.NextFloat(), guRNG.NextFloat());
+
 		c *= float3(0.02f, 0.05f, 0.01f);
 		c += float3(0.05f, 0.21f, 0.04f);
 
-		glColorf3(c);
-		glVertexf3(start + dir * 0.006f + orto * 0.007f);
-		glVertexf3(start + dir * 0.006f - orto * 0.007f);
-		glVertexf3(  end                - orto * 0.007f);
-		glVertexf3(  end                + orto * 0.007f);
+		buffer->SafeAppend({start + dir * 0.006f + orto * 0.007f, SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({start + dir * 0.006f - orto * 0.007f, SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({  end                - orto * 0.007f, SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({  end                + orto * 0.007f, SColor(c.x, c.y, c.z, 1.0f)});
 
-		glColor3f(0.18f, 0.18f, 0.07f);
-		glVertexf3(start + orto * length * 0.01f );
-		glVertexf3(start - orto * length * 0.01f );
-		glVertexf3(  end - orto          * 0.001f);
-		glVertexf3(  end + orto          * 0.001f);
-	glEnd();
+		c = float3(0.18f, 0.18f, 0.07f);
+
+		buffer->SafeAppend({start + orto * length * 0.01f , SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({start - orto * length * 0.01f , SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({  end - orto          * 0.001f, SColor(c.x, c.y, c.z, 1.0f)});
+		buffer->SafeAppend({  end + orto          * 0.001f, SColor(c.x, c.y, c.z, 1.0f)});
+	}
 
 	float tipDist = 0.025f;
 	float delta = 0.013f;
@@ -433,6 +442,11 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 
 		tipDist += delta;
 		delta += 0.005f;
+	}
+
+	if (start == ZeroVector) {
+		buffer->Submit(GL_QUADS);
+		shader->Disable();
 	}
 }
 
@@ -545,17 +559,25 @@ void CAdvTreeGenerator::DrawPineBranch(const float3& start, const float3& dir, f
 void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
 	glViewport(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
-	glSpringMatrix2dSetupPV(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f, true, true);
 
 	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	CMatrix44f leafMat;
+
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f));
+
 
 	const float baseCol = 0.8f + 0.2f * guRNG.NextFloat();
 
@@ -563,29 +585,26 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		const float xp = 0.9f - 1.8f * guRNG.NextFloat();
 		const float yp = 0.9f - 1.8f * guRNG.NextFloat();
 
-		const float rot = 360.0f * guRNG.NextFloat();
+		const float rCol = baseCol * (0.7f + 0.3f * guRNG.NextFloat());
+		const float gCol = baseCol * (0.7f + 0.3f * guRNG.NextFloat());
+		const float bCol = baseCol * (0.7f + 0.3f * guRNG.NextFloat());
 
-		const float rCol = 0.7f + 0.3f * guRNG.NextFloat();
-		const float gCol = 0.7f + 0.3f * guRNG.NextFloat();
-		const float bCol = 0.7f + 0.3f * guRNG.NextFloat();
+		leafMat.LoadIdentity();
+		leafMat.RotateZ(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
+		leafMat.RotateX(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
+		leafMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
+		leafMat.Translate(xp, yp, 0.0f);
 
-		GL::PushMatrix();
-		GL::LoadIdentity();
-		glColor3f(baseCol * rCol, baseCol * gCol, baseCol * bCol);
-		GL::Translate(xp, yp, 0.0f);
-		GL::RotateZ(rot);
-		GL::RotateX(360.0f * guRNG.NextFloat());
-		GL::RotateY(360.0f * guRNG.NextFloat());
-
-		glBegin(GL_QUADS);
-			glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.1f, -0.2f, 0.0f);
-			glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.1f,  0.2f, 0.0f);
-			glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.1f,  0.2f, 0.0f);
-			glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.1f, -0.2f, 0.0f);
-		glEnd();
-
-		GL::PopMatrix();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, leafMat);
+		buffer->SafeAppend({{-0.1f, -0.2f, 0.0f}, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({{-0.1f,  0.2f, 0.0f}, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({{ 0.1f,  0.2f, 0.0f}, 1.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({{ 0.1f, -0.2f, 0.0f}, 1.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->Submit(GL_QUADS);
 	}
+
+	shader->Disable();
+
 
 	uint8_t leafTexBuf[TEX_SIZE_X * TEX_SIZE_Y * TEX_SIZE_C];
 	glReadPixels(0, 0, 256, 256,  GL_RGBA, GL_UNSIGNED_BYTE,  &leafTexBuf[0]);
@@ -612,6 +631,5 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	}
 
 	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glSpringMatrix2dResetPV(true, true);
 }
 

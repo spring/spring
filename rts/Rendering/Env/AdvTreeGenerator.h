@@ -21,13 +21,11 @@ public:
 
 	void Init();
 
-	void BindPineTreeBuffer(unsigned int i) const;
-	void BindBushTreeBuffer(unsigned int i) const;
-	void DrawPineTreeBuffer(unsigned int i) const;
-	void DrawBushTreeBuffer(unsigned int i) const;
+	void BindTreeBuffer(unsigned int treeType) const;
+	void DrawTreeBuffer(unsigned int treeType) const;
 
-	unsigned int GetPineBuffer() const { return pineBuffer; }
-	unsigned int GetBushBuffer() const { return bushBuffer; }
+	unsigned int GetBushBuffer() const { return treeBuffers[0]; }
+	unsigned int GetPineBuffer() const { return treeBuffers[1]; }
 	unsigned int GetBarkTex() const { return barkTex; }
 
 private:
@@ -52,12 +50,9 @@ private:
 	VA_TYPE_TN* prvVertPtr = nullptr;
 	VA_TYPE_TN* curVertPtr = nullptr;
 
-	size_t numBushVerts[8] = {0};
-	size_t numPineVerts[8] = {0};
+	size_t numTreeVerts[/*NUM_TREE_TYPES*/8 * 2] = {0};
 
-	GLuint bushBuffer = 0;
-	GLuint pineBuffer = 0;
-
+	GLuint treeBuffers[2] = {0, 0};
 	GLuint barkTex = 0;
 };
 

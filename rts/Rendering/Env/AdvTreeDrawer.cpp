@@ -246,23 +246,8 @@ void CAdvTreeDrawer::DrawTree(const float3& pos, int treeType, int treeMatIdx)
 }
 
 
-void CAdvTreeDrawer::BindTreeGeometry(int treeType) const {
-	switch (int(treeType < NUM_TREE_TYPES)) {
-		case  1: { treeGen.BindPineTreeBuffer(treeType                 ); } break;
-		case  0: { treeGen.BindBushTreeBuffer(treeType - NUM_TREE_TYPES); } break;
-		default: {                                                        } break;
-	}
-}
-
-void CAdvTreeDrawer::DrawTreeGeometry(int treeType) const {
-	assert(treeType >= 0);
-
-	switch (int(treeType < NUM_TREE_TYPES)) {
-		case  1: { treeGen.DrawPineTreeBuffer(treeType                 ); } break;
-		case  0: { treeGen.DrawBushTreeBuffer(treeType - NUM_TREE_TYPES); } break;
-		default: {                                                        } break;
-	}
-}
+void CAdvTreeDrawer::BindTreeGeometry(int treeType) const { treeGen.BindTreeBuffer(treeType); }
+void CAdvTreeDrawer::DrawTreeGeometry(int treeType) const { treeGen.DrawTreeBuffer(treeType); }
 
 
 

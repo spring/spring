@@ -69,12 +69,13 @@ void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
 
 Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool persistent)
 {
+	assert(!poClass.empty());
+	assert(!poName.empty());
+
 	ProgramTable& pTable = programObjects[persistent];
 
 	if (pTable.find(poClass) == pTable.end())
 		pTable[poClass] = ProgramObjMap();
-
-	assert(!poName.empty());
 
 	if (pTable[poClass].find(poName) == pTable[poClass].end())
 		return (pTable[poClass][poName] = new Shader::GLSLProgramObject(poName));
