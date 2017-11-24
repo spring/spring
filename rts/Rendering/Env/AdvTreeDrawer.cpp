@@ -247,21 +247,19 @@ void CAdvTreeDrawer::DrawTree(const float3& pos, int treeType, int treeMatIdx)
 
 
 void CAdvTreeDrawer::BindTreeGeometry(int treeType) const {
-	switch (treeType < NUM_TREE_TYPES) {
-		case  true: { treeGen.BindPineTreeBuffer(treeType                 ); } break;
-		case false: { treeGen.BindBushTreeBuffer(treeType - NUM_TREE_TYPES); } break;
-		default   : {                                                        } break;
-	}
+	if (treeType < NUM_TREE_TYPES)
+		treeGen.BindPineTreeBuffer(treeType);
+	else
+		treeGen.BindBushTreeBuffer(treeType - NUM_TREE_TYPES);
 }
 
 void CAdvTreeDrawer::DrawTreeGeometry(int treeType) const {
 	assert(treeType >= 0);
 
-	switch (treeType < NUM_TREE_TYPES) {
-		case  true: { treeGen.DrawPineTreeBuffer(treeType                 ); } break;
-		case false: { treeGen.DrawBushTreeBuffer(treeType - NUM_TREE_TYPES); } break;
-		default   : {                                                        } break;
-	}
+	if (treeType < NUM_TREE_TYPES)
+		treeGen.DrawPineTreeBuffer(treeType);
+	else
+		treeGen.DrawBushTreeBuffer(treeType - NUM_TREE_TYPES);
 }
 
 

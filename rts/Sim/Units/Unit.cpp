@@ -651,10 +651,10 @@ float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
 	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < losStatus.size());
 
-	const bool b0 = (1     ) * (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
-	const bool b1 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler->Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
-	const bool b2 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsImmobileUnit()); // seen ghosted building, no error
-	const bool b3 = (1 - b0) * ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
+	const bool b0 = (1     ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
+	const bool b1 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler->Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
+	const bool b2 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsImmobileUnit()); // seen ghosted building, no error
+	const bool b3 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
 
 	switch ((b0 * 1) + (b1 * 2) + (b2 * 4) + (b3 * 8)) {
 		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !b0 &&  !b1 && !b2  && !b3
