@@ -216,7 +216,7 @@ namespace Shader {
 
 
 		/// old interface
-		virtual int SetUniformLocation(const char*) {}
+		virtual int SetUniformLocation(const char*) { return 0; }
 
 		virtual void SetUniform1i(int idx,   int v0                              ) {}
 		virtual void SetUniform2i(int idx,   int v0,   int v1                    ) {}
