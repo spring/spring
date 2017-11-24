@@ -90,6 +90,7 @@ const CMatrix44f& GL::GetMatrix(unsigned int glMode) {
 }
 
 
+/*
 static bool InDisplayList() {
 	GLboolean inListCompile = GL_FALSE;
 	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
@@ -111,7 +112,7 @@ static void CompareMatrices(const CMatrix44f& svm, const CMatrix44f& spm) {
 		assert(epscmp(spm[i], cpm[i], 0.01f));
 	}
 }
-
+*/
 
 #if 0
 void GL::PushMatrix() { matrixState->Push(matrixState->Top()); }

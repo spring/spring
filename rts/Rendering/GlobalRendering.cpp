@@ -599,6 +599,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
+	#ifndef HEADLESS
 	const auto CheckExt = [](const char* extName, bool haveExt, bool needExt) {
 		if (haveExt)
 			return;
@@ -612,7 +613,6 @@ void CGlobalRendering::CheckGLExtensions() const
 		LOG("[GR::CheckGLExtensions] OpenGL extension \"%s\" not supported, ignoring", extName);
 	};
 
-	#ifndef HEADLESS
 	#define CHECK_REQ_EXT(ext) CheckExt(#ext, ext,  true)
 	#define CHECK_OPT_EXT(ext) CheckExt(#ext, ext, false)
 
