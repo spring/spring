@@ -216,7 +216,7 @@ namespace Shader {
 
 
 		/// old interface
-		virtual int SetUniformLocation(const char*) { return 0; }
+		virtual int SetUniformLocation(const char*) { return -1; }
 
 		virtual void SetUniform1i(int idx,   int v0                              ) {}
 		virtual void SetUniform2i(int idx,   int v0,   int v1                    ) {}
@@ -421,19 +421,19 @@ namespace Shader {
 		}
 
 		void SetUniform(UniformState* us,   int v0                              ) override;
-		void SetUniform(UniformState* us, float v0                              ) override;
 		void SetUniform(UniformState* us,   int v0,   int v1                    ) override;
-		void SetUniform(UniformState* us, float v0, float v1                    ) override;
 		void SetUniform(UniformState* us,   int v0,   int v1,   int v2          ) override;
-		void SetUniform(UniformState* us, float v0, float v1, float v2          ) override;
 		void SetUniform(UniformState* us,   int v0,   int v1,   int v2,   int v3) override;
+		void SetUniform(UniformState* us, float v0                              ) override;
+		void SetUniform(UniformState* us, float v0, float v1                    ) override;
+		void SetUniform(UniformState* us, float v0, float v1, float v2          ) override;
 		void SetUniform(UniformState* us, float v0, float v1, float v2, float v3) override;
 
 		void SetUniform2v(UniformState* us, const   int* v, int cnt = 1) override;
-		void SetUniform2v(UniformState* us, const float* v, int cnt = 1) override;
 		void SetUniform3v(UniformState* us, const   int* v, int cnt = 1) override;
-		void SetUniform3v(UniformState* us, const float* v, int cnt = 1) override;
 		void SetUniform4v(UniformState* us, const   int* v, int cnt = 1) override;
+		void SetUniform2v(UniformState* us, const float* v, int cnt = 1) override;
+		void SetUniform3v(UniformState* us, const float* v, int cnt = 1) override;
 		void SetUniform4v(UniformState* us, const float* v, int cnt = 1) override;
 
 		void SetUniformMatrix2x2(UniformState* us, const float* v, int cnt, bool transp) override;

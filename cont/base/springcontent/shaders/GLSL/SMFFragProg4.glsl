@@ -460,8 +460,9 @@ void main() {
 		#else
 		float specularExp = groundSpecularExponent;
 		#endif
+		float specularPow = max(0.0, pow(cosAngleSpecular, specularExp));
 
-		fragColor.rgb += (specularColor.rgb * pow(cosAngleSpecular, specularExp) * shadowCoeff);
+		fragColor.rgb += (specularColor.rgb * specularPow * shadowCoeff);
 		fragColor.rgb += DynamicLighting(normalVec, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
 	#endif
 
