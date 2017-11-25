@@ -47,10 +47,13 @@ private:
 	void CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsize);
 
 private:
+	constexpr static unsigned int NUM_TREE_TYPES =    8; // FIXME: duplicated from ITreeDrawer.h
+	constexpr static unsigned int MAX_TREE_VERTS = 2048; // number of vertices per randomized subtype
+
 	VA_TYPE_TN* prvVertPtr = nullptr;
 	VA_TYPE_TN* curVertPtr = nullptr;
 
-	size_t numTreeVerts[/*NUM_TREE_TYPES*/8 * 2] = {0};
+	size_t numTreeVerts[NUM_TREE_TYPES * 2] = {0};
 
 	GLuint treeBuffers[2] = {0, 0};
 	GLuint barkTex = 0;

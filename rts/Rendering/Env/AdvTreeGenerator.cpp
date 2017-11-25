@@ -23,9 +23,6 @@ constexpr static unsigned int TEX_SIZE_C = 4;
 constexpr static unsigned int TEX_SIZE_X = 256;
 constexpr static unsigned int TEX_SIZE_Y = 256;
 
-constexpr static unsigned int NUM_TREE_TYPES =    8; // FIXME: duplicated from ITreeDrawer.h
-constexpr static unsigned int MAX_TREE_VERTS = 2048; // number of vertices per randomized subtype
-
 // treeTexMem[y + ypos][x + xpos][i]
 // static uint8_t treeTexMem[TEX_SIZE_Y][TEX_SIZE_X * 4 * 2][TEX_SIZE_C];
 
@@ -201,8 +198,11 @@ void CAdvTreeGenerator::GenVertexBuffers()
 
 
 void CAdvTreeGenerator::BindTreeBuffer(unsigned int treeType) const {
-	assert(treeType >= 0);
 	// all bush subtypes share the same buffer [0], so do all pine subtypes [1]
+	// features however assume any treeType >= NUM_TREE_TYPES ([1]) corresponds
+	// to a bush rather than a pine, so flip the type
+	treeType = mix(treeType + NUM_TREE_TYPES, treeType - NUM_TREE_TYPES, treeType >= NUM_TREE_TYPES);
+
 	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[treeType >= NUM_TREE_TYPES]);
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
@@ -210,9 +210,9 @@ void CAdvTreeGenerator::BindTreeBuffer(unsigned int treeType) const {
 }
 
 void CAdvTreeGenerator::DrawTreeBuffer(unsigned int treeType) const {
-	constexpr unsigned int primTypes[] = {GL_QUADS, GL_TRIANGLES};
+	treeType = mix(treeType + NUM_TREE_TYPES, treeType - NUM_TREE_TYPES, treeType >= NUM_TREE_TYPES);
 
-	assert(treeType >= 0);
+	constexpr unsigned int primTypes[] = {GL_QUADS, GL_TRIANGLES};
 
 	const unsigned int pineType = (treeType >= NUM_TREE_TYPES);
 	const unsigned int baseType = treeType - (NUM_TREE_TYPES * pineType);
@@ -577,7 +577,7 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f));
-
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 
 	const float baseCol = 0.8f + 0.2f * guRNG.NextFloat();
 
@@ -595,14 +595,18 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		leafMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
 		leafMat.Translate(xp, yp, 0.0f);
 
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, leafMat);
-		buffer->SafeAppend({{-0.1f, -0.2f, 0.0f}, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({{-0.1f,  0.2f, 0.0f}, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({{ 0.1f,  0.2f, 0.0f}, 1.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({{ 0.1f, -0.2f, 0.0f}, 1.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->Submit(GL_QUADS);
+		const float3 v0 = leafMat * float3{-0.1f, -0.2f, 0.0f};
+		const float3 v1 = leafMat * float3{-0.1f,  0.2f, 0.0f};
+		const float3 v2 = leafMat * float3{ 0.1f,  0.2f, 0.0f};
+		const float3 v3 = leafMat * float3{ 0.1f, -0.2f, 0.0f};
+
+		buffer->SafeAppend({v0, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({v1, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({v2, 1.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({v3, 1.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
 	}
 
+	buffer->Submit(GL_QUADS);
 	shader->Disable();
 
 
