@@ -571,6 +571,7 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 
 
 	CMatrix44f leafMat;
+	CMatrix44f tempMat;
 
 	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
 	Shader::IProgramObject* shader = buffer->GetShader();
@@ -590,20 +591,15 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		const float bCol = baseCol * (0.7f + 0.3f * guRNG.NextFloat());
 
 		leafMat.LoadIdentity();
-		leafMat.RotateZ(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
-		leafMat.RotateX(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
-		leafMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
-		leafMat.Translate(xp, yp, 0.0f);
+		tempMat.LoadIdentity(); tempMat.Translate(xp, yp, 0.0f);                                   leafMat >>= tempMat;
+		tempMat.LoadIdentity(); tempMat.RotateZ(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
+		tempMat.LoadIdentity(); tempMat.RotateX(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
+		tempMat.LoadIdentity(); tempMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
 
-		const float3 v0 = leafMat * float3{-0.1f, -0.2f, 0.0f};
-		const float3 v1 = leafMat * float3{-0.1f,  0.2f, 0.0f};
-		const float3 v2 = leafMat * float3{ 0.1f,  0.2f, 0.0f};
-		const float3 v3 = leafMat * float3{ 0.1f, -0.2f, 0.0f};
-
-		buffer->SafeAppend({v0, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({v1, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({v2, 1.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
-		buffer->SafeAppend({v3, 1.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({leafMat * float3{-0.1f, -0.2f, 0.0f}, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({leafMat * float3{-0.1f,  0.2f, 0.0f}, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({leafMat * float3{ 0.1f,  0.2f, 0.0f}, 1.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
+		buffer->SafeAppend({leafMat * float3{ 0.1f, -0.2f, 0.0f}, 1.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
 	}
 
 	buffer->Submit(GL_QUADS);

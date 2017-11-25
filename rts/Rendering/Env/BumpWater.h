@@ -5,6 +5,7 @@
 
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "IWater.h"
 
 #include "System/EventClient.h"
@@ -39,9 +40,14 @@ public:
 	const char* GetName() const { return "bumpmapped"; }
 
 private:
+	void GenWaterPlaneBuffer(bool radial);
+	void GenOcclusionQuery(bool enabled);
+
 	void SetUniforms(); ///< @see #useUniforms
 	void SetupUniforms( std::string& definitions );
 	void GetUniformLocations(const Shader::IProgramObject*);
+
+	void UpdateWind();
 
 private:
 	//! coastmap (needed for shorewaves)
@@ -63,9 +69,6 @@ private:
 	void UploadCoastline(const bool forceFull = false);
 	void UpdateCoastmap();
 	void UpdateDynWaves(const bool initialize = false);
-
-	int atlasX,atlasY;
-
 	void UnsyncedHeightMapUpdate(const SRectangle& rect);
 
 private:
@@ -84,30 +87,33 @@ private:
 
 	uint8_t tileOffsets[16 * 16]; ///< used to randomize the wave/bumpmap/normal texture
 
-	int  normalTextureX; ///< needed for dynamic waves
-	int  normalTextureY;
+	int  normalTextureX = 0; ///< needed for dynamic waves
+	int  normalTextureY = 0;
 
-	GLuint target; ///< for screen copies (color/depth), can be GL_TEXTURE_RECTANGLE (nvidia) or GL_TEXTURE_2D (others)
-	int  screenTextureX;
-	int  screenTextureY;
+	int  screenTextureX = 0;
+	int  screenTextureY = 0;
+
+	int atlasSizeX = 0;
+	int atlasSizeY = 0;
 
 	FBO reflectFBO;
 	FBO refractFBO;
 	FBO coastFBO;
 	FBO dynWavesFBO;
 
-	GLuint displayList;
-
-	GLuint refractTexture;
-	GLuint reflectTexture;
-	GLuint depthTexture;   ///< screen depth copy
-	GLuint waveRandTexture;
-	GLuint foamTexture;
-	GLuint normalTexture;  ///< final used
-	GLuint normalTexture2; ///< updates normalTexture with dynamic waves turned on
-	GLuint coastTexture;
-	GLuint coastUpdateTexture;
+	GLuint screenCopyTarget = 0; ///< for screen copies (color/depth), can be GL_TEXTURE_RECTANGLE (nvidia) or GL_TEXTURE_2D (others)
+	GLuint refractTexture = 0;
+	GLuint reflectTexture = 0;
+	GLuint depthTexture = 0;   ///< screen depth copy
+	GLuint waveRandTexture = 0;
+	GLuint foamTexture = 0;
+	GLuint normalTexture = 0;  ///< final used
+	GLuint normalTexture2 = 0; ///< updates normalTexture with dynamic waves turned on
+	GLuint coastTexture = 0;
+	GLuint coastUpdateTexture = 0;
 	std::vector<GLuint> caustTextures;
+
+	GL::RenderDataBuffer waterPlaneBuffer;
 
 	Shader::IProgramObject* waterShader;
 	Shader::IProgramObject* blurShader;
@@ -118,9 +124,9 @@ private:
 	GLuint occlusionQuery;
 	GLuint occlusionQueryResult;
 
-	float3 windVec;
-	float3 windndir;
-//	float  windStrength;
+	float3 windVec = XZVector * 20.0f;
+	// float3 windDir;
+	// float  windStrength;
 };
 
 #endif // BUMP_WATER_H

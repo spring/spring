@@ -14,57 +14,93 @@
 
 
 #ifdef opt_texrect
-  #extension GL_ARB_texture_rectangle : enable
+// ancient
+#extension GL_ARB_texture_rectangle : enable
 #else
-  #define texture2DRect texture2D
-  #define sampler2DRect sampler2D
+#define sampler2DRect sampler2D
 #endif
 
 
 //////////////////////////////////////////////////
 // Uniforms + Varyings
 
-  uniform sampler2D normalmap;
-  uniform sampler2D heightmap;
-  uniform sampler2D caustic;
-  uniform sampler2D foam;
-  uniform sampler2D reflection;
-  uniform sampler2DRect refraction;
-  uniform sampler2D coastmap;
-  uniform sampler2DRect depthmap;
-  uniform sampler2D waverand;
-  uniform float frame;
-  uniform vec3 eyePos;
+uniform sampler2D normalmap;
+uniform sampler2D heightmap;
+uniform sampler2D caustic;
+uniform sampler2D foam;
+uniform sampler2D reflection;
+uniform sampler2DRect refraction;
+uniform sampler2D coastmap;
+uniform sampler2DRect depthmap;
+uniform sampler2D waverand;
 
-  varying vec3 eyeVec;
-  varying vec3 ligVec;
-  varying vec3 worldPos;
-  varying vec2 clampedPotCoords;
+#ifdef opt_infotex
+uniform sampler2D infotex;
+#endif
 
-  vec2 clampedWorldPos = clamp(worldPos.xz, vec2(0.0), (vec2(1.0) / TexGenPlane.xy));
+#ifdef opt_shadows
+uniform sampler2DShadow shadowmap;
+
+uniform mat4 shadowMatrix;
+// added via SetupUniforms or as a constant definition
+// uniform float shadowDensity;
+#endif
+
+uniform mat4 projMatrix;
+
+
+
+uniform float frame;
+
+uniform vec3 eyePos;
+uniform vec3 fogColor;
+uniform vec3 fogParams;
+
+in vec3 eyeVec;
+in vec3 sunVec;
+in vec3 worldPos;
+in vec2 clampedPotCoords;
+
+in vec4 texCoord0;
+in vec4 texCoord1;
+in vec4 texCoord2;
+in vec4 texCoord3;
+in vec4 texCoord4;
+in vec4 texCoord5;
+
+in float fogCoord;
+
+layout(location = 0) out vec4 fragColor;
+
+
+vec2 clampedWorldPos = clamp(worldPos.xz, vec2(0.0), (vec2(1.0) / TexGenPlane.xy));
+
+
 
 //////////////////////////////////////////////////
 // Screen Coordinates (normalized and screen dimensions)
 
 #ifdef opt_texrect
-  vec2 screencoord = (gl_FragCoord.xy - ViewPos);
-  vec2 reftexcoord = (screencoord*ScreenInverse);
+vec2 screencoord = gl_FragCoord.xy - ViewPos;
+vec2 reftexcoord = screencoord * ScreenInverse;
 #else
-  vec2 screenPos = gl_FragCoord.xy - ViewPos;
-  vec2 screencoord = screenPos*ScreenTextureSizeInverse;
-  vec2 reftexcoord = screenPos*ScreenInverse;
+vec2 screencoord = (gl_FragCoord.xy - ViewPos) * ScreenTextureSizeInverse;
+vec2 reftexcoord = (gl_FragCoord.xy - ViewPos) * ScreenInverse;
 #endif
+
 
 
 //////////////////////////////////////////////////
 // Depth conversion
 #ifdef opt_depth
-  float pm15 = gl_ProjectionMatrix[2][3];
-  float pm11 = gl_ProjectionMatrix[2][3];
-  float convertDepthToZ(float d) {
-    return pm15 / (((d * 2.0) - 1.0) + pm11);
-  }
+float convertDepthToZ(float d) {
+	float pm15 = projMatrix[2][3];
+	float pm11 = projMatrix[2][3];
+
+	return pm15 / (((d * 2.0) - 1.0) + pm11);
+}
 #endif
+
 
 
 //////////////////////////////////////////////////
@@ -83,77 +119,75 @@ vec4 waveIntensity(const vec4 v) {
 	front = max(front, vec4(bs) * v * 0.5);
 	return front;
 }
-
 #endif
+
 
 
 //////////////////////////////////////////////////
 // Shadow
 
-#ifdef opt_shadows
-  uniform mat4 shadowMatrix;
-  //uniform float shadowDensity;
-  uniform sampler2DShadow shadowmap;
-#endif
-
 float GetShadowOcclusion(vec3 worldPos) {
-#ifdef opt_shadows
+	#ifdef opt_shadows
 	vec4 vertexShadowPos = shadowMatrix * vec4(worldPos, 1.0);
 	vertexShadowPos.xy += vec2(0.5, 0.5); // shadowParams.xy
-	return mix(1.0, shadow2DProj(shadowmap, vertexShadowPos).r, shadowDensity);
-#endif
+	return mix(1.0, textureProj(shadowmap, vertexShadowPos), shadowDensity);
+	#endif
 	return 1.0;
 }
+
 
 
 //////////////////////////////////////////////////
 // infotex
 
-#ifdef opt_infotex
-  uniform sampler2D infotex;
-#endif
-
 vec3 GetInfoTex(float outside) {
 	vec3 info = vec3(0.0);
-#ifdef opt_infotex
+	#ifdef opt_infotex
 	vec2 clampedPotCoords = ShadingPlane.xy * clampedWorldPos;
-	info = (texture2D(infotex, clampedPotCoords).rgb - 0.5) * 0.5;
+	info = (texture(infotex, clampedPotCoords).rgb - 0.5) * 0.5;
 	info = mix(info, vec3(0.0), outside);
-#endif
+	#endif
 	return info;
 }
+
+
+
+
 
 
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, inout vec2 coastdist)
+vec3 GetWaterHeight(inout vec2 coastdist)
 {
-	outside = 0.0;
+	vec3 depths = vec3(0.0, 0.0, 0.0);
 
-#ifdef opt_shorewaves
-	vec3 coast = texture2D(coastmap, gl_TexCoord[0].st).rgb;
+	#ifdef opt_shorewaves
+	vec3 coast = texture(coastmap, texCoord0.st).rgb;
+
 	coastdist = coast.rg;
-	invwaterdepth = coast.b;
-#else
-	invwaterdepth = texture2D(heightmap, gl_TexCoord[5].st).a; // heightmap in alpha channel
-#endif
+	depths.y = coast.b;
+	#else
+	depths.y = texture(heightmap, texCoord5.st).a; // heightmap in alpha channel
+	#endif
 
-#ifdef opt_endlessocean
-	outside = min(1., distance(clampedWorldPos, worldPos.xz));
-	invwaterdepth = mix(invwaterdepth, 1.0, step(0.5, outside));
-#endif
+	#ifdef opt_endlessocean
+	depths.z = min(1.0, distance(clampedWorldPos, worldPos.xz));
+	depths.y = mix(depths.y, 1.0, step(0.5, depths.z));
+	#endif
 
-	waterdepth = 1.0 - invwaterdepth;
+	depths.x = 1.0 - depths.y;
+
+	return depths;
 }
 
 
 vec3 GetNormal(out vec3 octave)
 {
-	vec3 octave1 = texture2D(normalmap, gl_TexCoord[1].st).rgb;
-	vec3 octave2 = texture2D(normalmap, gl_TexCoord[1].pq).rgb;
-	vec3 octave3 = texture2D(normalmap, gl_TexCoord[2].st).rgb;
-	vec3 octave4 = texture2D(normalmap, gl_TexCoord[2].pq).rgb;
+	vec3 octave1 = texture(normalmap, texCoord1.st).rgb;
+	vec3 octave2 = texture(normalmap, texCoord1.pq).rgb;
+	vec3 octave3 = texture(normalmap, texCoord2.st).rgb;
+	vec3 octave4 = texture(normalmap, texCoord2.pq).rgb;
 
 	float a = PerlinAmp;
 	octave1 = (octave1 * 2.0 - 1.0) * a;
@@ -161,43 +195,44 @@ vec3 GetNormal(out vec3 octave)
 	octave3 = (octave3 * 2.0 - 1.0) * a * a * a;
 	octave4 = (octave4 * 2.0 - 1.0) * a * a * a * a;
 
-	vec3 normal = octave1 + octave2 + octave3 + octave4;
-	normal = normalize(normal).xzy;
+	vec3 normal = normalize(octave1 + octave2 + octave3 + octave4);
 
 	octave = octave3;
 
-	return normal;
+	return normal.xzy;
 }
 
 
 float GetWaterDepthFromDepthBuffer(float waterdepth)
 {
-#ifdef opt_depth
-	float tz = texture2DRect(depthmap, screencoord).r;
+	#ifdef opt_depth
+	float tz = texture(depthmap, screencoord).r;
 	float shallowScale = abs(convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z)) * 0.333;
 	shallowScale = clamp(shallowScale, 0.0, 1.0);
 	return shallowScale;
-#else
+	#else
 	return waterdepth;
-#endif
+	#endif
 }
 
 
 vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdepth)
 {
 	vec3 color = vec3(0.0, 0.0, 0.0);
-#ifdef opt_shorewaves
+
+	#ifdef opt_shorewaves
 	float coastdist = coast.g + octave.x * 0.1;
+
 	if (coastdist > 0.0) {
 		// no shorewaves/foam under terrain (is 0.0 underground, 1.0 else)
 		float underground = 1.0 - step(1.0, invwaterdepth);
 
-		vec3 wavefoam = texture2D(foam, gl_TexCoord[3].st).rgb;
-		wavefoam += texture2D(foam, gl_TexCoord[3].pq).rgb;
+		vec3 wavefoam = texture(foam, texCoord3.st).rgb;
+		wavefoam += texture(foam, texCoord3.pq).rgb;
 		wavefoam *= 0.5;
 
 		// shorewaves
-		vec4 waverands = texture2D(waverand, gl_TexCoord[4].pq);
+		vec4 waverands = texture(waverand, texCoord4.pq);
 
 		vec4 fi = vec4(0.25, 0.50, 0.75, 1.00);
 		vec4 f = fract(fi + frame * 50.0);
@@ -211,127 +246,163 @@ vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdep
 		intensity *= iwd * 1.5;
 
 		color += wavefoam * underground * intensity;
-
 		// cliff foam
 		color += (wavefoam * wavefoam) * (underground * 5.5 * (coast.r * coast.r * coast.r) * (coastdist * coastdist * coastdist * coastdist));
 	}
-#endif
+	#endif
+
 	return color;
 }
 
 
-vec3 GetReflection(float angle, vec3 normal, inout float fresnel)
+vec4 GetReflection(vec3 normal, float angle)
 {
- 	vec3 reflColor = vec3(0.0, 0.0, 0.0);
-#ifdef opt_reflection
+ 	vec4 reflColor = vec4(0.0, 0.0, 0.0, 0.0);
+
+	#ifdef opt_reflection
 	// we have to mirror the Y-axis
 	reftexcoord  = vec2(reftexcoord.x, 1.0 - reftexcoord.y);
 	reftexcoord += vec2(0.0, 3.0 * ScreenInverse.y) + normal.xz * 0.09 * ReflDistortion;
 
-	reflColor = texture2D(reflection, reftexcoord).rgb;
+	reflColor.rgb = texture(reflection, reftexcoord).rgb;
 
-  #ifdef opt_blurreflection
-	vec2  v = BlurBase;
-	float s = BlurExponent;
-	reflColor += texture2D(reflection, reftexcoord.st + v).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s*s).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s*s*s).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s*s*s*s).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s*s*s*s*s).rgb;
-	reflColor += texture2D(reflection, reftexcoord.st + v *s*s*s*s*s*s).rgb;
-	reflColor *= 0.125;
-  #endif
+		#ifdef opt_blurreflection
+		vec2  v = BlurBase;
+		float s = BlurExponent;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s*s).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s*s*s).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s*s*s*s).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s*s*s*s*s).rgb;
+		reflColor.rgb += texture(reflection, reftexcoord.st + v *s*s*s*s*s*s).rgb;
+		reflColor.rgb *= 0.125;
+		#endif
 
-	fresnel = FresnelMin + FresnelMax * pow(angle, FresnelPower);
-#endif
+	// fresnel term
+	reflColor.a = FresnelMin + FresnelMax * pow(angle, FresnelPower);
+	#endif
+
 	return reflColor;
 }
+
+
+
+
+
 
 //////////////////////////////////////////////////
 // MAIN()
 
 void main()
 {
-   gl_FragColor.a = 1.0; //note: only rendered with blending iff !opt_refraction
+	#ifdef dbg_coastmap
+	fragColor = vec4(texture(coastmap, texCoord0.st).g);
+	return;
+	#endif
 
-//#define dbg_coastmap
-#ifdef dbg_coastmap
-    gl_FragColor = vec4(texture2D(coastmap, gl_TexCoord[0].st).g);
-    return;
-#endif
-
-  // GET WATERDEPTH
-    float outside = 0.0;
-    vec2 coast = vec2(0.0, 0.0);
-    float waterdepth, invwaterdepth;
-    GetWaterHeight(waterdepth, invwaterdepth, outside, coast);
-    float shallowScale = GetWaterDepthFromDepthBuffer(waterdepth);
-
-  // NORMALMAP
-    vec3 octave;
-    vec3 normal = GetNormal(octave);
-
-    vec3  eVec = normalize(eyeVec);
-    float eyeNormalCos = dot(-eVec, normal);
-    float angle = (1.0 - abs(eyeNormalCos));
-
-  // SHADOW
-    float shadowOcc = GetShadowOcclusion(worldPos + vec3(normal.x, 0.0, normal.z) * 10.0);
-
-  // AMBIENT & DIFFUSE
-    vec3 reflectDir   = reflect(normalize(-ligVec), normal);
-    float specular    = angle * pow( max(dot(reflectDir, eVec), 0.0) , SpecularPower) * SpecularFactor * shallowScale;
-    vec3 SunLow       = SunDir * vec3(1.0, 0.1 ,1.0);
-    float diffuse     = pow( max( dot(normal, SunLow) ,0.0 ) ,3.0) * DiffuseFactor;
-    float ambient     = smoothstep(-1.3, 0.0, eyeNormalCos) * AmbientFactor;
-    vec3 waterSurface = SurfaceColor.rgb + DiffuseColor * diffuse + vec3(ambient);
-    float surfaceMix  = (SurfaceColor.a + diffuse) * shallowScale;
-    float refractDistortion = 60.0 * (1.0 - pow(gl_FragCoord.z, 80.0)) * shallowScale;
-
-  // INFOTEX
-    waterSurface += GetInfoTex(outside);
-
-  // REFRACTION
-#ifdef opt_refraction
-  #ifdef opt_texrect
-    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz * refractDistortion ).rgb;
-  #else
-    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz * refractDistortion * ScreenInverse ).rgb;
-  #endif
-    gl_FragColor.rgb = mix(refrColor, waterSurface, 0.1 + surfaceMix);
-#else
-    gl_FragColor.rgb = waterSurface;
-    gl_FragColor.a   = surfaceMix + specular;
-#endif
+	// only rendered with blending iff !opt_refraction
+	fragColor = vec4(0.0, 0.0, 0.0, 1.0);
 
 
-  // CAUSTICS
-    if (waterdepth>0.0) {
-      vec3 caust = texture2D(caustic, gl_TexCoord[0].pq * 75.0).rgb;
-  #ifdef opt_refraction
-      float caustBlend = smoothstep(CausticRange, 0.0, abs(waterdepth - CausticDepth));
-      gl_FragColor.rgb += caust * caustBlend * 0.08;
-  #else
-      gl_FragColor.a *= min(waterdepth * 4.0, 1.0);
-      gl_FragColor.rgb += caust * (1.0 - waterdepth) * 0.6;
-  #endif
-    }
+	// GET WATERDEPTH
+	//
+	// depths.z := outside
+	// depths.x := waterdepth
+	// depths.y := invwaterdepth
+	vec2 coast = vec2(0.0, 0.0);
+	vec3 depths = GetWaterHeight(coast);
+
+	float shallowScale = GetWaterDepthFromDepthBuffer(depths.x);
 
 
-  // SHORE WAVES
-    gl_FragColor.rgb += shadowOcc * GetShorewaves(coast, octave, waterdepth, invwaterdepth);
+	// NORMALMAP
+	vec3 octave;
+	vec3 normal = GetNormal(octave);
+	vec3 eyeDir = normalize(eyeVec);
 
-  // REFLECTION
-    // Schlick's approx. for Fresnel term
-    float fresnel = 0.0;
-    vec3 reflColor = GetReflection(angle, normal, fresnel);
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, reflColor, fresnel * shallowScale);
+	vec3 reflectDir   = reflect(normalize(-sunVec), normal);
+	vec3 SunLow       = SunDir * vec3(1.0, 0.1, 1.0);
 
-  // SPECULAR
-    gl_FragColor.rgb += shadowOcc * specular * SpecularColor;
+	float eyeNormalCos = dot(-eyeDir, normal);
+	float angle = (1.0 - abs(eyeNormalCos));
 
-  // FOG
-    float fog = clamp( (gl_Fog.end - abs(gl_FogFragCoord)) * gl_Fog.scale ,0.0,1.0);
-    gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fog );
+
+	// SHADOW
+	float shadowOcc = GetShadowOcclusion(worldPos + vec3(normal.x, 0.0, normal.z) * 10.0);
+
+
+	// AMBIENT & DIFFUSE
+	float diffuse     = pow(max(dot(normal, SunLow), 0.0), 3.0) * DiffuseFactor;
+	float ambient     = smoothstep(-1.3, 0.0, eyeNormalCos) * AmbientFactor;
+	float specular    = angle * pow(max(dot(reflectDir, eyeDir), 0.0), SpecularPower) * SpecularFactor * shallowScale;
+
+	float surfaceMix  = (SurfaceColor.a + diffuse) * shallowScale;
+	float refractDistortion = 60.0 * (1.0 - pow(gl_FragCoord.z, 80.0)) * shallowScale;
+
+	// NB: DiffuseColor (water.diffuseColor) and DiffuseFactor (water.diffuseFactor) default to 1
+	vec3 waterSurface = SurfaceColor.rgb + DiffuseColor * diffuse + vec3(ambient);
+
+	// INFOTEX
+	waterSurface += GetInfoTex(depths.z);
+
+
+	{
+		// REFRACTION
+		#ifdef opt_refraction
+			#ifdef opt_texrect
+			vec3 refrColor = texture(refraction, screencoord + normal.xz * refractDistortion).rgb;
+			#else
+			vec3 refrColor = texture(refraction, screencoord + normal.xz * refractDistortion * ScreenInverse).rgb;
+			#endif
+
+			fragColor.rgb = mix(refrColor, waterSurface, 0.1 + surfaceMix);
+		#else
+			fragColor.rgb = waterSurface;
+			fragColor.a   = surfaceMix + specular;
+		#endif
+	}
+
+	// CAUSTICS
+	if (depths.x > 0.0) {
+		vec3 caust = texture(caustic, texCoord0.pq * 75.0).rgb;
+
+		#ifdef opt_refraction
+		float caustBlend = smoothstep(CausticRange, 0.0, abs(depths.x - CausticDepth));
+		fragColor.rgb += caust * caustBlend * 0.08;
+		#else
+		fragColor.a *= min(depths.x * 4.0, 1.0);
+		fragColor.rgb += caust * (1.0 - depths.x) * 0.6;
+		#endif
+	}
+
+	{
+		// SHORE WAVES
+		fragColor.rgb += shadowOcc * GetShorewaves(coast, octave, depths.x, depths.y);
+	}
+
+	{
+		// REFLECTION
+		// Schlick's approx. for Fresnel term
+		vec4 reflColor = GetReflection(normal, angle);
+		fragColor.rgb = mix(fragColor.rgb, reflColor.rgb, reflColor.a * shallowScale);
+	}
+
+	{
+		// SPECULAR
+		fragColor.rgb += (shadowOcc * specular * SpecularColor);
+	}
+
+	{
+		// FOG
+		float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
+		float fogDepth = (fogCoord - fogParams.x * fogParams.z) / fogRange;
+		// float fogDepth = (fogParams.y * fogParams.z - fogCoord) / fogRange;
+
+		float fogFactor = 1.0 - clamp(fogDepth, 0.0, 1.0);
+		// float fogFactor = clamp(fogDepth, 0.0, 1.0);
+
+		fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
+	}
 }
+

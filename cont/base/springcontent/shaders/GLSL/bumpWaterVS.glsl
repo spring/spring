@@ -51,44 +51,65 @@
 // #define opt_endlessocean
 
 uniform float frame;
-uniform vec3 eyePos;
 
-varying vec3 eyeVec;
-varying vec3 ligVec;
-varying vec3 worldPos;
+uniform mat4 projMatrix;
+uniform mat4 viewMatrix;
+
+uniform vec3 eyePos;
+uniform vec2 windVector;
+
+
+layout(location = 0) in vec3 vertexPosAttr;
+
+out vec4 texCoord0;
+out vec4 texCoord1;
+out vec4 texCoord2;
+out vec4 texCoord3;
+out vec4 texCoord4;
+out vec4 texCoord5;
+
+out vec3 eyeVec;
+out vec3 sunVec;
+out vec3 worldPos;
+
+out float fogCoord;
+
 
 void main()
 {
+	vec4 vertexPos = vec4(vertexPosAttr, 1.0);
+
 	// COMPUTE TEXCOORDS
-	gl_TexCoord[0] = TexGenPlane * gl_Vertex.xzxz;
-	gl_TexCoord[5].st = ShadingPlane.xy * gl_Vertex.xz;
+	texCoord0 = TexGenPlane * vertexPos.xzxz;
+	texCoord5.st = ShadingPlane.xy * vertexPos.xz;
 
 	// COMPUTE WAVE TEXTURE COORDS
 	float fstart = PerlinStartFreq;
 	float f      = PerlinLacunarity;
-	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].pq + 0.75) * fstart       + frame * WindSpeed * gl_MultiTexCoord1.st;
-	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].pq + 0.50) * fstart*f     - frame * WindSpeed * gl_MultiTexCoord1.st;
-	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].pq + 0.25) * fstart*f*f   + frame * WindSpeed * gl_MultiTexCoord1.st;
-	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].pq + 0.00) * fstart*f*f*f + frame * WindSpeed * gl_MultiTexCoord1.st;
 
-	gl_TexCoord[3].st = gl_TexCoord[0].pq * 160.0 + frame * 2.5;
-	gl_TexCoord[3].pq = gl_TexCoord[0].pq * 90.0  - frame * 2.0;
-	gl_TexCoord[4].st = gl_TexCoord[0].pq * 2.0;
-	gl_TexCoord[4].pq = gl_TexCoord[0].pq * 6.0 + frame * 0.37;
+	texCoord1.st = (vec2(-1.0, -1.0) + texCoord0.pq + 0.75) * fstart       + frame * WindSpeed * windVector;
+	texCoord1.pq = (vec2(-1.0,  1.0) + texCoord0.pq + 0.50) * fstart*f     - frame * WindSpeed * windVector;
+	texCoord2.st = (vec2( 1.0, -1.0) + texCoord0.pq + 0.25) * fstart*f*f   + frame * WindSpeed * windVector;
+	texCoord2.pq = (vec2( 1.0,  1.0) + texCoord0.pq + 0.00) * fstart*f*f*f + frame * WindSpeed * windVector;
+
+	texCoord3.st = texCoord0.pq * 160.0 + frame * 2.5;
+	texCoord3.pq = texCoord0.pq *  90.0 - frame * 2.0;
+	texCoord4.st = texCoord0.pq *   2.0;
+	texCoord4.pq = texCoord0.pq *   6.0 + frame * 0.37;
+
 
 	// SIMULATE WAVES
-	vec4 myVertex;
-	myVertex.xzw = gl_Vertex.xzw;
-	myVertex.y = 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
+	vertexPos.y = 3.0 * (cos(frame * 500.0 + vertexPosAttr.z) * sin(frame * 500.0 + vertexPosAttr.x / 1000.0));
 
 	// COMPUTE LIGHT VECTORS
-	eyeVec = eyePos - gl_Vertex.xyz;
-	ligVec = normalize(SunDir*20000.0 + MapMid - myVertex.xyz);
+	eyeVec = eyePos - vertexPosAttr.xyz;
+	sunVec = normalize(SunDir * 20000.0 + MapMid - vertexPos.xyz);
 
-	// FOG
-	worldPos = myVertex.xyz;
-	gl_FogFragCoord = (gl_ModelViewMatrix * myVertex).z;
+	// FOG eye-depth
+	worldPos = vertexPos.xyz;
+	fogCoord = (viewMatrix * vertexPos).z;
 
 	// POSITION
-	gl_Position = gl_ModelViewProjectionMatrix * myVertex;
+	gl_Position = projMatrix * viewMatrix * vertexPos;
 }
+
