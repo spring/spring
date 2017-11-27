@@ -86,7 +86,7 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 	for (int i = 0; i < MAX_NUM_DECALS; i++) {
 		freeScarIDs.push_back(i);
 		// wipe out scars from previous runs
-		scars[i].Reset();
+		scars[i] = Scar();
 	}
 
 	scarFieldX = mapDims.mapx / 32;
@@ -141,7 +141,6 @@ void CGroundDecalHandler::GenDecalBuffers()
 		curBufferPos[i] = mapBufferPtr[i];
 
 		#ifndef HEADLESS
-		assert(mapBufferPtr[i] != nullptr);
 		assert(mapBufferPtr[i] != nullptr);
 		#endif
 	}
@@ -236,11 +235,12 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 	const int gsmx1 = mapDims.mapxp1;
 	const int gsmy  = mapDims.mapy;
 
+	const unsigned int simFrame = gs->frameNum;
 	const unsigned int visFrame = globalRendering->drawFrame;
 	const unsigned int decalIdx = decal->bufIndx;
-	const unsigned int numVerts = decal->bufSize / VA_SIZE_TC;
+	const unsigned int numVerts = decal->bufSize / sizeof(VA_TYPE_TC);
 
-	SColor color(255, 255, 255, int(decal->alpha * 255));
+	const SColor color(255, 255, 255, 255);
 
 	#ifndef DEBUG
 	#define HEIGHT(z, x) (cornerHeights[((z) * gsmx1) + (x)])
@@ -260,6 +260,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		// clip decal dimensions against map-edges
 		const int cxsize = (dxsize - dxoff) - ((dxpos + dxsize) - gsmx) * ((dxpos + dxsize) > gsmx);
 		const int czsize = (dzsize - dzoff) - ((dzpos + dzsize) - gsmy) * ((dzpos + dzsize) > gsmy);
+		const int nverts = cxsize * czsize * 4;
 
 
 		const float xts = 1.0f / dxsize;
@@ -270,19 +271,22 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 
 		// handle wraparound; overwriting old decal data should pose no danger
-		if ((curBufferPos[0] - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
+		if (((curBufferPos[0] + nverts) - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
 			curBufferPos[0] = mapBufferPtr[0];
 			curBufferPos[1] = mapBufferPtr[1];
 		}
 
+		assert(((curBufferPos[0] + nverts) - mapBufferPtr[0]) < decalBuffers[0].GetNumElems<VA_TYPE_TC>());
+		assert(((curBufferPos[1] + nverts) - mapBufferPtr[1]) < decalBuffers[1].GetNumElems<VA_TYPE_TC>());
+
+		decal->bufIndx = curBufferPos[0] - mapBufferPtr[0];
+		decal->bufSize = nverts * sizeof(VA_TYPE_TC);
+
 		decalVertices[0] = curBufferPos[0];
 		decalVertices[1] = curBufferPos[1];
 
-		decal->bufIndx = curBufferPos[0] - mapBufferPtr[0];
-		decal->bufSize = (cxsize * czsize * 4) * sizeof(VA_TYPE_TC);
-
-		curBufferPos[0] += (decal->bufSize / sizeof(VA_TYPE_TC));
-		curBufferPos[1] += (decal->bufSize / sizeof(VA_TYPE_TC));
+		curBufferPos[0] += nverts;
+		curBufferPos[1] += nverts;
 
 
 		for (int vx = 0; vx < cxsize; vx++) {
@@ -338,11 +342,15 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 				#undef HEIGHT2WORLD
 			}
 		}
-	} else {
-		decalVertices[0] = mapBufferPtr[0] + decalIdx;
-		decalVertices[1] = mapBufferPtr[1] + decalIdx;
 
-		// update vertex heights and alpha
+		return;
+	}
+
+	if (simFrame != decal->lastUpdateFrame) {
+		decalVertices[0] = mapBufferPtr[    (visFrame & 1)] + decalIdx;
+		decalVertices[1] = mapBufferPtr[1 - (visFrame & 1)] + decalIdx;
+
+		// update vertex heights
 		for (unsigned int i = 0; i < numVerts; ++i) {
 			const int x = int(decalVertices[1][i].p.x) >> 3;
 			const int z = int(decalVertices[1][i].p.z) >> 3;
@@ -350,16 +358,18 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 			decalVertices[0][i].p.y = cornerHeights[z * gsmx1 + x];
 		}
 
-		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
-		// shift the decal visually in the latter case so it is aligned
-		// with the object on top of it
-		const float3 pos{(int(decal->pos.x) % SQUARE_SIZE) * 1.0f, 0.0f, (int(decal->pos.z) % SQUARE_SIZE) * 1.0f};
-		const CMatrix44f mat{pos};
-
-		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, mat);
-		decalBuffers[0].Submit(GL_QUADS, decalIdx, numVerts);
+		decal->lastUpdateFrame = simFrame;
 	}
+
+	// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
+	// shift the decal visually in the latter case so it is aligned
+	// with the object on top of it
+	const float3 pos{(int(decal->pos.x) % SQUARE_SIZE) * 1.0f, 0.0f, (int(decal->pos.z) % SQUARE_SIZE) * 1.0f};
+	const CMatrix44f mat{pos};
+
+	decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, decal->alpha);
+	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, mat);
+	decalBuffers[1 - (visFrame & 1)].Submit(GL_QUADS, decalIdx, numVerts);
 
 	#undef HEIGHT
 	#endif
@@ -375,13 +385,13 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 	const float* cornerHeights = readMap->GetCornerHeightMapUnsynced();
 	VA_TYPE_TC* decalVertices[2] = {nullptr, nullptr};
 
+	const SColor color(255, 255, 255, 255);
+
 	const unsigned int simFrame = gs->frameNum;
 	const unsigned int visFrame = globalRendering->drawFrame;
 	const unsigned int decalIdx = scar.bufIndx;
-	const unsigned int numVerts = scar.bufSize / VA_SIZE_TC;
+	const unsigned int numVerts = scar.bufSize / sizeof(VA_TYPE_TC);
 	const unsigned int mapWidth = mapDims.mapxp1;
-
-	SColor color(255, 255, 255, 255);
 
 	if (numVerts == 0) {
 		const float3 pos = scar.pos;
@@ -391,36 +401,40 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 		const float tx = scar.texOffsetX;
 		const float ty = scar.texOffsetY;
 
-		const int sx = std::max(                0, int((pos.x - radius) * 0.0625f));
-		const int ex = std::min(mapDims.hmapx - 1, int((pos.x + radius) * 0.0625f));
-		const int sz = std::max(                0, int((pos.z - radius) * 0.0625f));
-		const int ez = std::min(mapDims.hmapy - 1, int((pos.z + radius) * 0.0625f));
+		const unsigned int sx = std::max(                0, int((pos.x - radius) * 0.0625f));
+		const unsigned int sz = std::max(                0, int((pos.z - radius) * 0.0625f));
+		const unsigned int ex = std::min(mapDims.hmapx - 1, int((pos.x + radius) * 0.0625f));
+		const unsigned int ez = std::min(mapDims.hmapy - 1, int((pos.z + radius) * 0.0625f));
+		const unsigned int nv = ((ex - sx) + 1) * ((ez - sz) + 1) * 4;
 
 		// create the scar texture-quads
 		float px1 = sx * TEX_QUAD_SIZE;
 
 
 		// handle wraparound
-		if ((curBufferPos[0] - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
+		if (((curBufferPos[0] + nv) - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
 			curBufferPos[0] = mapBufferPtr[0];
 			curBufferPos[1] = mapBufferPtr[1];
 		}
 
+		assert(((curBufferPos[0] + nv) - mapBufferPtr[0]) < decalBuffers[0].GetNumElems<VA_TYPE_TC>());
+		assert(((curBufferPos[1] + nv) - mapBufferPtr[1]) < decalBuffers[1].GetNumElems<VA_TYPE_TC>());
+
+		scar.bufIndx = curBufferPos[0] - mapBufferPtr[0];
+		scar.bufSize = nv * sizeof(VA_TYPE_TC);
+
 		decalVertices[0] = curBufferPos[0];
 		decalVertices[1] = curBufferPos[1];
 
-		scar.bufIndx = curBufferPos[0] - mapBufferPtr[0];
-		scar.bufSize = (((ex - sx) + 1) * ((ez - sz) + 1) * 4) * sizeof(VA_TYPE_TC);
-
-		curBufferPos[0] += (scar.bufSize / sizeof(VA_TYPE_TC));
-		curBufferPos[1] += (scar.bufSize / sizeof(VA_TYPE_TC));
+		curBufferPos[0] += nv;
+		curBufferPos[1] += nv;
 
 
-		for (int x = sx; x <= ex; ++x) {
+		for (unsigned int x = sx; x <= ex; ++x) {
 			const float px2 = px1 + TEX_QUAD_SIZE;
 			      float pz1 = sz * TEX_QUAD_SIZE;
 
-			for (int z = sz; z <= ez; ++z) {
+			for (unsigned int z = sz; z <= ez; ++z) {
 				const float pz2 = pz1 + TEX_QUAD_SIZE;
 				const float tx1 = std::min(0.5f, (pos.x - px1) / radius4 + 0.25f);
 				const float tx2 = std::max(0.0f, (pos.x - px2) / radius4 + 0.25f);
@@ -449,29 +463,29 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 
 			px1 = px2;
 		}
-	} else {
-		if (groundScarAlphaFade && simFrame != scar.lastDraw) {
-			// update scars only every *sim*frame, faster is pointless
-			// scars younger than 10 simframes decay at different rate
-			scar.fadedAlpha = scarAlphaDecayFuncs[ (scar.creationTime + 10) <= simFrame ](scar, simFrame);
 
-			decalVertices[0] = mapBufferPtr[0] + decalIdx;
-			decalVertices[1] = mapBufferPtr[1] + decalIdx;
-
-			for (unsigned int i = 0; i < numVerts; ++i) {
-				const int x = int(decalVertices[1][i].p.x) >> 3;
-				const int z = int(decalVertices[1][i].p.z) >> 3;
-
-				decalVertices[0][i].p.y = cornerHeights[z * mapWidth + x];
-			}
-		}
-
-		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, scar.fadedAlpha);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
-		decalBuffers[0].Submit(GL_QUADS, decalIdx, numVerts);
+		return;
 	}
 
-	scar.lastDraw = simFrame;
+	if (groundScarAlphaFade && simFrame != scar.lastUpdateFrame) {
+		// update scars only every *sim*frame, faster is pointless
+		// scars younger than 10 simframes decay at different rate
+		scar.fadedAlpha = scarAlphaDecayFuncs[ (scar.creationTime + 10) <= simFrame ](scar, scar.lastUpdateFrame = simFrame);
+
+		decalVertices[0] = mapBufferPtr[    (visFrame & 1)] + decalIdx; // write
+		decalVertices[1] = mapBufferPtr[1 - (visFrame & 1)] + decalIdx; // read
+
+		for (unsigned int i = 0; i < numVerts; ++i) {
+			const int x = int(decalVertices[1][i].p.x) >> 3;
+			const int z = int(decalVertices[1][i].p.z) >> 3;
+
+			decalVertices[0][i].p.y = cornerHeights[z * mapWidth + x];
+		}
+	}
+
+	decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, scar.fadedAlpha);
+	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
+	decalBuffers[1 - (visFrame & 1)].Submit(GL_QUADS, decalIdx, numVerts);
 	#endif
 }
 
@@ -749,7 +763,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 
 	s.basesize = (s.x2 - s.x1) * (s.y2 - s.y1);
 	s.overdrawn = 0;
-	s.lastTest = 0;
+	s.lastOverlapTest = 0;
 
 	addedScars.push_back(id);
 }
@@ -831,12 +845,12 @@ void CGroundDecalHandler::TestScarOverlaps(const Scar& scar)
 			for (size_t i = 0; i < quad.size(); i++) {
 				Scar& testScar = scars[ quad[i] ];
 
-				if (lastScarOverlapTest == testScar.lastTest)
+				if (lastScarOverlapTest == testScar.lastOverlapTest)
 					continue;
 				if (scar.lifeTime < testScar.lifeTime)
 					continue;
 
-				testScar.lastTest = lastScarOverlapTest;
+				testScar.lastOverlapTest = lastScarOverlapTest;
 
 				// area in texels
 				const int overlapSize = ScarOverlapSize(scar, testScar);
@@ -871,7 +885,7 @@ void CGroundDecalHandler::RemoveScar(Scar& scar)
 	spring::VectorInsertUnique(freeScarIDs, scar.id);
 	spring::VectorErase(usedScarIDs, scar.id);
 
-	scar.Reset();
+	scar = Scar();
 }
 
 int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
@@ -965,15 +979,15 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
 	assert(object);
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == NULL)
+	if (decal == nullptr)
 		return;
 
-	if (gb != NULL)
+	if (gb != nullptr)
 		gb->decal = decal;
 
-	decal->owner = NULL;
+	decal->owner = nullptr;
 	decal->gbOwner = gb;
-	object->groundDecal = NULL;
+	object->groundDecal = nullptr;
 }
 
 
@@ -984,12 +998,12 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 {
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == NULL)
+	if (decal == nullptr)
 		return;
 
-	decal->owner = NULL;
+	decal->owner = nullptr;
 	decal->alpha = 0.0f;
-	object->groundDecal = NULL;
+	object->groundDecal = nullptr;
 }
 
 
@@ -1013,8 +1027,7 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 	gb->decal->gbOwner = nullptr;
 
 	//If a ghost wasn't drawn, remove the decal
-	if (gb->lastDrawFrame < (globalRendering->drawFrame - 1))
-		gb->decal->alpha = 0.0f;
+	gb->decal->alpha *= (gb->lastDrawFrame >= (globalRendering->drawFrame - 1));
 }
 
 

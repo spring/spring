@@ -16,7 +16,7 @@ uniform float decalAlpha;
 in vec4 vertexPos;
 in vec2 texCoord0;
 in vec2 texCoord1;
-in vec4 baseColor;
+in vec4 baseColor; // only used by track parts
 
 out vec4 fragColor;
 
@@ -46,6 +46,6 @@ void main() {
 	shadeCol = mix(groundAmbientColor, shadeInt, shadowCoeff * shadeInt.a);
 
 	fragColor = decalInt * shadeCol;
-	fragColor.a = decalInt.a * decalAlpha;
+	fragColor.a = decalInt.a * baseColor.a * decalAlpha;
 }
 

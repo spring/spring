@@ -38,6 +38,8 @@ public:
 		bufIndx = d.bufIndx;
 		bufSize = d.bufSize;
 
+		lastUpdateFrame = d.lastUpdateFrame;
+
 		posx   = d.posx;
 		posy   = d.posy;
 		xsize  = d.xsize;
@@ -58,6 +60,8 @@ public:
 
 	unsigned int bufIndx = 0; // verts
 	unsigned int bufSize = 0; // bytes
+
+	unsigned int lastUpdateFrame = 0;
 
 	int posx = 0;
 	int posy = 0;
@@ -161,8 +165,8 @@ public:
 			creationTime = s.creationTime;
 			lifeTime     = s.lifeTime;
 
-			lastTest = s.lastTest;
-			lastDraw = s.lastDraw;
+			lastOverlapTest = s.lastOverlapTest;
+			lastUpdateFrame = s.lastUpdateFrame;
 
 			pos = s.pos;
 
@@ -176,64 +180,36 @@ public:
 
 			texOffsetX = s.texOffsetX;
 			texOffsetY = s.texOffsetY;
-
 			return *this;
 		}
 
-		void Reset() {
-			id = -1;
-
-			bufIndx = 0;
-			bufSize = 0;
-
-			x1 = 0; x2 = 0;
-			y1 = 0; y2 = 0;
-
-			creationTime = 0;
-			lifeTime = 0;
-			lastTest = 0;
-			lastDraw = -1;
-
-			pos = ZeroVector;
-
-			radius = 0.0f;
-			basesize = 0.0f;
-			overdrawn = 0.0f;
-
-			alphaDecay = 0.0f;
-			startAlpha = 1.0f;
-			fadedAlpha = 1.0f;
-
-			texOffsetX = 0.0f;
-			texOffsetY = 0.0f;
-		}
-
 	public:
-		int id;
+		int id = -1;
 
-		unsigned int bufIndx; // verts
-		unsigned int bufSize; // bytes
+		unsigned int bufIndx = 0; // verts
+		unsigned int bufSize = 0; // bytes
 
-		int x1, x2;
-		int y1, y2;
+		unsigned int lastOverlapTest = 0;
+		unsigned int lastUpdateFrame = 0;
 
-		int creationTime;
-		int lifeTime;
-		int lastTest;
-		int lastDraw;
+		int x1 = 0, x2 = 0;
+		int y1 = 0, y2 = 0;
+
+		int creationTime = 0;
+		int lifeTime = 0;
 
 		float3 pos;
 
-		float radius;
-		float basesize;
-		float overdrawn;
+		float radius = 0.0f;
+		float basesize = 0.0f;
+		float overdrawn = 0.0f;
 
-		float alphaDecay;
-		float startAlpha;
-		float fadedAlpha;
+		float alphaDecay = 0.0f;
+		float startAlpha = 1.0f;
+		float fadedAlpha = 1.0f;
 
-		float texOffsetX;
-		float texOffsetY;
+		float texOffsetX = 0.0f;
+		float texOffsetY = 0.0f;
 	};
 
 private:
