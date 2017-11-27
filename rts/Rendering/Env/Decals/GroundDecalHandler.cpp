@@ -176,9 +176,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	const std::string extraDef = "#define HAVE_SHADING_TEX " + IntToString(readMap->GetShadingTexture() != 0, "%d") + "\n";
 
 	decalShaders[DECAL_SHADER_NULL] = Shader::nullProgramObject;
-	decalShaders[DECAL_SHADER_GLSL] = Shader::nullProgramObject;
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_NULL];
-
 	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[GroundDecalHandler]", "DecalShaderGLSL");
 
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
@@ -630,18 +628,18 @@ void CGroundDecalHandler::DrawScars() {
 
 void CGroundDecalHandler::Draw()
 {
-	trackHandler.Draw();
-
 	if (!GetDrawDecals())
 		return;
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-10.0f, -20.0f);
 	glDepthMask(0);
 
-	BindTextures();
 	BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
+	BindTextures();
+	trackHandler.Draw(decalShaders[DECAL_SHADER_CURR]);
 	DrawDecals();
 	KillTextures();
 
@@ -674,7 +672,7 @@ void CGroundDecalHandler::KillTextures()
 void CGroundDecalHandler::BindShader(const float3& ambientColor)
 {
 	decalShaders[DECAL_SHADER_CURR]->Enable();
-	decalShaders[DECAL_SHADER_GLSL]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	decalShaders[DECAL_SHADER_CURR]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);

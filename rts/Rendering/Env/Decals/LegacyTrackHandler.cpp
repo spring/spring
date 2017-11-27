@@ -12,7 +12,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -60,54 +60,65 @@ LegacyTrackHandler::~LegacyTrackHandler()
 	tracksToBeAdded.clear();
 	tracksToBeDeleted.clear();
 
+	#ifndef USE_DECALHANDLER_STATE
 	shaderHandler->ReleaseProgramObjects("[LegacyTrackHandler]");
+	#endif
 }
 
 
 void LegacyTrackHandler::LoadDecalShaders()
 {
+	#ifndef USE_DECALHANDLER_STATE
 	#define sh shaderHandler
 	decalShaders.fill(nullptr);
 
 	const std::string extraDef = "#define HAVE_SHADING_TEX " + IntToString(readMap->GetShadingTexture() != 0, "%d") + "\n";
 
 	decalShaders[DECAL_SHADER_NULL] = Shader::nullProgramObject;
-	decalShaders[DECAL_SHADER_GLSL] = Shader::nullProgramObject;
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_NULL];
-
 	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[LegacyTrackHandler]", "DecalShaderGLSL");
 
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsFragProg.glsl", extraDef, GL_FRAGMENT_SHADER));
 	decalShaders[DECAL_SHADER_GLSL]->Link();
 
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx 0
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx 1
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx 2
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx 3
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx 4
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx 5
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 6
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 7
+	decalShaders[DECAL_SHADER_GLSL]->SetFlag("HAVE_SHADOWS", false);
+
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx  0
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx  1
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx  2
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx  3
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx  4
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("viewMatrix");         // idx  5
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("projMatrix");         // idx  6
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("quadMatrix");         // idx  7
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx  8
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx  9
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 10
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 11
 
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, 1.0f);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
 	#undef sh
+	#endif
 }
 
 void LegacyTrackHandler::SunChanged()
 {
+	#ifndef USE_DECALHANDLER_STATE
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
+	#endif
 }
 
 
@@ -126,10 +137,10 @@ void LegacyTrackHandler::AddTracks()
 		bool replace = false;
 
 		if (unit->myTrack->parts.size() > 1) {
-			std::deque<TrackPart>::iterator pi = --unit->myTrack->parts.end();
-			std::deque<TrackPart>::iterator pi2 = pi--;
+			std::deque<TrackPart>::iterator last = --unit->myTrack->parts.end();
+			std::deque<TrackPart>::iterator prev = last--;
 
-			replace = (((tp.pos1 + (*pi).pos1) * 0.5f).SqDistance((*pi2).pos1) < 1.0f);
+			replace = (((tp.pos1 + (*last).pos1) * 0.5f).SqDistance((*prev).pos1) < 1.0f);
 		}
 
 		if (replace) {
@@ -148,10 +159,13 @@ void LegacyTrackHandler::AddTracks()
 }
 
 
-void LegacyTrackHandler::DrawTracks()
+void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IProgramObject* shader)
 {
 	unsigned char curPartColor[4] = {255, 255, 255, 255};
 	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
+
+	shader->SetUniform1f(11, 1.0f);
+	shader->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
 
 	// create and draw the unit footprint quads
 	for (TrackType& tt: trackTypes) {
@@ -159,8 +173,6 @@ void LegacyTrackHandler::DrawTracks()
 			continue;
 
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
 		glBindTexture(GL_TEXTURE_2D, tt.texture);
 
 		for (UnitTrackStruct* track: tt.tracks) {
@@ -176,36 +188,37 @@ void LegacyTrackHandler::DrawTracks()
 			}
 
 			const auto frontPart = track->parts.front();
-			const auto backPart  = track->parts.back();
+			const auto  backPart = track->parts.back();
 
 			if (!camera->InView((frontPart.pos1 + backPart.pos1) * 0.5f, frontPart.pos1.distance(backPart.pos1) + 500.0f))
 				continue;
 
 			// walk across the track parts from front (oldest) to back (newest) and draw
 			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
-			std::deque<TrackPart>::const_iterator curPart =   (track->parts.begin());
-			std::deque<TrackPart>::const_iterator nxtPart = ++(track->parts.begin());
+			std::deque<TrackPart>::const_iterator curPartIt =   (track->parts.begin());
+			std::deque<TrackPart>::const_iterator nxtPartIt = ++(track->parts.begin());
 
-			curPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*curPart).creationTime) * track->alphaFalloff);
+			curPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*curPartIt).creationTime) * track->alphaFalloff);
 
-			va->EnlargeArrays(track->parts.size() * 4, 0, VA_SIZE_TC);
+			for (; nxtPartIt != track->parts.end(); ++nxtPartIt) {
+				const TrackPart& curPart = *curPartIt;
+				const TrackPart& nxtPart = *nxtPartIt;
 
-			for (; nxtPart != track->parts.end(); ++nxtPart) {
-				nxtPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*nxtPart).creationTime) * track->alphaFalloff);
+				nxtPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - nxtPart.creationTime) * track->alphaFalloff);
 
-				if ((*nxtPart).connected) {
-					va->AddVertexQTC((*curPart).pos1, (*curPart).texPos, 0, curPartColor);
-					va->AddVertexQTC((*curPart).pos2, (*curPart).texPos, 1, curPartColor);
-					va->AddVertexQTC((*nxtPart).pos2, (*nxtPart).texPos, 1, nxtPartColor);
-					va->AddVertexQTC((*nxtPart).pos1, (*nxtPart).texPos, 0, nxtPartColor);
+				if (nxtPart.connected) {
+					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
+					buffer->SafeAppend({curPart.pos2, curPart.texPos, 1.0f, curPartColor});
+					buffer->SafeAppend({nxtPart.pos2, nxtPart.texPos, 1.0f, nxtPartColor});
+					buffer->SafeAppend({nxtPart.pos1, nxtPart.texPos, 0.0f, nxtPartColor});
 				}
 
 				curPartColor[3] = nxtPartColor[3];
-				curPart = nxtPart;
+				curPartIt = nxtPartIt;
 			}
 		}
 
-		va->DrawArrayTC(GL_QUADS);
+		buffer->Submit(GL_QUADS);
 	}
 }
 
@@ -253,33 +266,41 @@ bool LegacyTrackHandler::GetDrawTracks() const
 }
 
 
-void LegacyTrackHandler::Draw()
+void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 {
 	SCOPED_TIMER("Draw::World::Decals::Tracks");
 
 	if (!GetDrawTracks())
 		return;
 
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glDepthMask(0);
-	glPolygonOffset(-10, -20);
+	#ifndef USE_DECALHANDLER_STATE
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glDepthMask(0);
+		glPolygonOffset(-10.0f, -20.0f);
 
-	BindTextures();
-	BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
+		BindTextures();
+		BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
 
-	// draw track decals
-	AddTracks();
-	DrawTracks();
-	CleanTracks();
+		AddTracks();
+		DrawTracks(GL::GetRenderBufferTC(), decalShaders[DECAL_SHADER_CURR]);
+		CleanTracks();
 
-	decalShaders[DECAL_SHADER_CURR]->Disable();
-	KillTextures();
+		decalShaders[DECAL_SHADER_CURR]->Disable();
+		KillTextures();
 
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_BLEND);
+	}
+	#else
+	{
+		AddTracks();
+		DrawTracks(GL::GetRenderBufferTC(), shader);
+		CleanTracks();
+	}
+	#endif
 }
 
 
@@ -309,13 +330,18 @@ void LegacyTrackHandler::KillTextures()
 
 void LegacyTrackHandler::BindShader(const float3& ambientColor)
 {
+	#ifndef USE_DECALHANDLER_STATE
 	decalShaders[DECAL_SHADER_CURR]->Enable();
+	decalShaders[DECAL_SHADER_CURR]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler->GetShadowViewMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, camera->GetViewMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(6, false, camera->GetProjectionMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(8, false, shadowHandler->GetShadowViewMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(9, shadowHandler->GetShadowParams());
 	}
+	#endif
 }
 
 
@@ -339,7 +365,7 @@ void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 			return;
 	}
 
-	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+	if (unit->myTrack != nullptr && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
 		return;
 
 	if (!gu->spectatingFullView && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0)
@@ -411,12 +437,11 @@ int LegacyTrackHandler::GetTrackType(const std::string& name)
 {
 	const std::string& lowerName = StringToLower(name);
 
-	unsigned int a = 0;
-	for (auto tt: trackTypes) {
-		if (tt.name == lowerName)
-			return a;
-		++a;
-	}
+	const auto pred = [&](const TrackType& tt) { return (tt.name == lowerName); };
+	const auto iter = std::find_if(trackTypes.begin(), trackTypes.end(), pred);
+
+	if (iter != trackTypes.end())
+		return (iter - trackTypes.begin());
 
 	const GLuint texID = LoadTexture(lowerName);
 	if (texID == 0)
@@ -430,9 +455,9 @@ int LegacyTrackHandler::GetTrackType(const std::string& name)
 unsigned int LegacyTrackHandler::LoadTexture(const std::string& name)
 {
 	std::string fullName = name;
-	if (fullName.find_first_of('.') == std::string::npos) {
+	if (fullName.find_first_of('.') == std::string::npos)
 		fullName += ".bmp";
-	}
+
 	if ((fullName.find_first_of('\\') == std::string::npos) &&
 	    (fullName.find_first_of('/')  == std::string::npos)) {
 		fullName = std::string("bitmaps/tracks/") + fullName;

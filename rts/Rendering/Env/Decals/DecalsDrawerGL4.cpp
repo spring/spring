@@ -706,7 +706,7 @@ bool CDecalsDrawerGL4::AnyDecalsInView() const
 
 void CDecalsDrawerGL4::Draw()
 {
-	trackHandler.Draw();
+	trackHandler.Draw(nullptr);
 
 	if (!GetDrawDecals())
 		return;

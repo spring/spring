@@ -9,9 +9,12 @@
 #include <vector>
 #include <string>
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/EventClient.h"
 
+// comment out if using DecalsDrawerGL4
+#define USE_DECALHANDLER_STATE
 
 
 class CSolidObject;
@@ -74,7 +77,7 @@ public:
 	LegacyTrackHandler();
 	~LegacyTrackHandler();
 
-	void Draw();
+	void Draw(Shader::IProgramObject* shader);
 
 public:
 	//CEventClient
@@ -102,7 +105,7 @@ private:
 	void BindShader(const float3& ambientColor);
 
 	void AddTracks();
-	void DrawTracks();
+	void DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IProgramObject* shader);
 	void CleanTracks();
 
 
@@ -128,7 +131,9 @@ private:
 		DECAL_SHADER_LAST
 	};
 
+	#ifndef USE_DECALHANDLER_STATE
 	std::array<Shader::IProgramObject*, DECAL_SHADER_LAST> decalShaders;
+	#endif
 
 	std::vector<UnitTrackStruct*> tracksToBeAdded;
 	std::vector<TrackToClean>     tracksToBeCleaned;
