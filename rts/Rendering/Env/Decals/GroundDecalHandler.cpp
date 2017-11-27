@@ -671,8 +671,8 @@ void CGroundDecalHandler::KillTextures()
 
 void CGroundDecalHandler::BindShader(const float3& ambientColor)
 {
-	decalShaders[DECAL_SHADER_CURR]->Enable();
 	decalShaders[DECAL_SHADER_CURR]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	decalShaders[DECAL_SHADER_CURR]->Enable();
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);

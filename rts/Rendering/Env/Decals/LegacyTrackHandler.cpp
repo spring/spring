@@ -331,8 +331,8 @@ void LegacyTrackHandler::KillTextures()
 void LegacyTrackHandler::BindShader(const float3& ambientColor)
 {
 	#ifndef USE_DECALHANDLER_STATE
-	decalShaders[DECAL_SHADER_CURR]->Enable();
 	decalShaders[DECAL_SHADER_CURR]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	decalShaders[DECAL_SHADER_CURR]->Enable();
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
