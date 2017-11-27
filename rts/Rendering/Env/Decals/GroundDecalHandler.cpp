@@ -348,7 +348,6 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 			const int z = int(decalVertices[1][i].p.z) >> 3;
 
 			decalVertices[0][i].p.y = cornerHeights[z * gsmx1 + x];
-			decalVertices[0][i].c   = color;
 		}
 
 		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
@@ -453,8 +452,8 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 	} else {
 		if (groundScarAlphaFade && simFrame != scar.lastDraw) {
 			// update scars only every *sim*frame, faster is pointless
-			// scars younger than 10 simframes decay at constant speed
-			const ScarAlphaDecayFunc alphaDecayFunc = scarAlphaDecayFuncs[ (scar.creationTime + 10) <= simFrame ];
+			// scars younger than 10 simframes decay at different rate
+			scar.fadedAlpha = scarAlphaDecayFuncs[ (scar.creationTime + 10) <= simFrame ](scar, simFrame);
 
 			decalVertices[0] = mapBufferPtr[0] + decalIdx;
 			decalVertices[1] = mapBufferPtr[1] + decalIdx;
@@ -467,7 +466,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 			}
 		}
 
-		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, alphaDecayFunc(scar, simFrame));
+		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, scar.fadedAlpha);
 		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
 		decalBuffers[0].Submit(GL_QUADS, decalIdx, numVerts);
 	}

@@ -172,6 +172,8 @@ public:
 
 			alphaDecay = s.alphaDecay;
 			startAlpha = s.startAlpha;
+			fadedAlpha = s.fadedAlpha;
+
 			texOffsetX = s.texOffsetX;
 			texOffsetY = s.texOffsetY;
 
@@ -200,6 +202,8 @@ public:
 
 			alphaDecay = 0.0f;
 			startAlpha = 1.0f;
+			fadedAlpha = 1.0f;
+
 			texOffsetX = 0.0f;
 			texOffsetY = 0.0f;
 		}
@@ -226,6 +230,8 @@ public:
 
 		float alphaDecay;
 		float startAlpha;
+		float fadedAlpha;
+
 		float texOffsetX;
 		float texOffsetY;
 	};
