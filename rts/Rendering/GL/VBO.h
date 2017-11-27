@@ -13,7 +13,7 @@
 class VBO
 {
 public:
-	VBO(GLenum _defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(GLenum _defTarget = GL_ARRAY_BUFFER, const bool storage = false, bool readable = false);
 	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO();
@@ -78,9 +78,12 @@ public:
 
 public:
 	mutable bool bound = false;
+
 	bool mapped = false;
 	bool nullSizeMapped = false; // Nvidia workaround
+
 	bool immutableStorage = false;
+	bool readableStorage = false;
 };
 
 #endif /* VBO_H */

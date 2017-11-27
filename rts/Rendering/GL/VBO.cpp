@@ -14,12 +14,13 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
-VBO::VBO(GLenum _defTarget, const bool storage)
+VBO::VBO(GLenum _defTarget, const bool storage, bool readable)
 {
 	curBoundTarget = _defTarget;
 	defTarget = _defTarget;
 
 	immutableStorage = storage;
+	readableStorage = readable;
 }
 
 // NOTE: if declared in global scope, user has to call these before exit
@@ -45,7 +46,7 @@ VBO& VBO::operator=(VBO&& other)
 	std::swap(nullSizeMapped, other.nullSizeMapped);
 
 	std::swap(immutableStorage, other.immutableStorage);
-
+	std::swap(readableStorage, other.readableStorage);
 	return *this;
 }
 
@@ -137,7 +138,7 @@ bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 
 	#ifdef GLEW_ARB_buffer_storage
 	if (immutableStorage) {
-		glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/ GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
+		glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/ (GL_MAP_READ_BIT * readableStorage) | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
 	} else
 	#endif
 	{
@@ -174,20 +175,31 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
 	// for easier handling convert the glMapBuffer ones here
 	switch (access) {
-		case GL_WRITE_ONLY:
+		case GL_WRITE_ONLY: {
 			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
-		#ifdef GLEW_ARB_buffer_storage
-			if (immutableStorage) {
-				access = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-			}
-		#endif
-			break;
-		case GL_READ_WRITE:
+
+			#ifdef GLEW_ARB_buffer_storage
+			access &= ~((GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT) * immutableStorage);
+			access |=  ((GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT            ) * immutableStorage);
+			#endif
+		} break;
+		case GL_READ_WRITE: {
 			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
-			break;
-		case GL_READ_ONLY:
+
+			#ifdef GLEW_ARB_buffer_storage
+			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);
+			access |=  (GL_MAP_PERSISTENT_BIT     * immutableStorage);
+			#endif
+		} break;
+		case GL_READ_ONLY: {
 			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
-			break;
+
+			#ifdef GLEW_ARB_buffer_storage
+			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);
+			access |=  (GL_MAP_PERSISTENT_BIT     * immutableStorage);
+			#endif
+		} break;
+
 		default: break;
 	}
 
@@ -205,6 +217,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	#else
 	assert(ptr == nullptr);
 	#endif
+
 	return ptr;
 }
 

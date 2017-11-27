@@ -159,12 +159,12 @@ namespace GL {
 
 		// must be called manually; allows {con,de}struction in global scope
 		// VAO and VBO ctors do not call GL functions for this reason either
-		bool Init(bool persistent = false) {
+		bool Init(bool persistent = false, bool readable = false) {
 			if (inited)
 				return false;
 
-			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent));
-			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent));
+			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent, readable));
+			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent, readable));
 			shader = std::move(Shader::GLSLProgramObject());
 
 			elems.Generate();
@@ -340,8 +340,8 @@ namespace GL {
 		#endif
 
 
-		template<typename T> T* MapElems(bool bind, bool unbind) { mapped = true; return (MapBuffer<T>(elems, bind, unbind)); }
-		template<typename T> T* MapIndcs(bool bind, bool unbind) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind)); }
+		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
+		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
 
 		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
 		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
@@ -358,11 +358,15 @@ namespace GL {
 		bool IsPinned() const { return elems.immutableStorage; }
 
 	private:
-		template<typename T> static T* MapBuffer(VBO& vbo, bool bind, bool unbind) {
+		template<typename T> static T* MapBuffer(VBO& vbo, bool bind, bool unbind, bool read, bool write) {
 			if (bind)
 				vbo.Bind();
 
-			T* ptr = reinterpret_cast<T*>(vbo.MapBuffer());
+			// read and write cannot both be false
+			constexpr unsigned int flags[] = {0, GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE};
+			const     unsigned int flag    = flags[int(read) + int(write) * 2];
+
+			T* ptr = reinterpret_cast<T*>(vbo.MapBuffer(flag));
 
 			if (unbind)
 				vbo.Unbind();

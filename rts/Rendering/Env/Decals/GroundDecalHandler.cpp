@@ -18,7 +18,6 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -38,17 +37,30 @@
 #include "System/FileSystem/FileSystem.h"
 
 #define TEX_QUAD_SIZE 16
-#define MAX_SCAR_COUNT 4096
+#define MAX_NUM_DECALS 4096
+
+// 4K * 2 (object plus scar) decals, 32MB per buffer
+#define NUM_BUFFER_ELEMS ((MAX_NUM_DECALS * 2) * 1024)
+#define ELEM_BUFFER_SIZE (sizeof(VA_TYPE_TC))
+#define QUAD_BUFFER_SIZE (4 * ELEM_BUFFER_SIZE)
 
 
 static DynMemPool<sizeof(SolidObjectGroundDecal)> sogdMemPool;
 
-static std::array<CGroundDecalHandler::Scar, MAX_SCAR_COUNT> scars;
+static std::array<CGroundDecalHandler::Scar, MAX_NUM_DECALS> scars;
 static std::vector<uint8_t> scarTexBuf;
 
 // free and used slots in <scars>
 static std::vector<int> freeScarIDs;
 static std::vector<int> usedScarIDs;
+
+
+
+float NewScarAlphaDecay(const CGroundDecalHandler::Scar& s, int f) { return (Clamp(s.startAlpha * (f - s.creationTime) *         0.1f, 0.0f, 255.0f) / 255.0f); }
+float DefScarAlphaDecay(const CGroundDecalHandler::Scar& s, int f) { return (Clamp(s.startAlpha - (f - s.creationTime) * s.alphaDecay, 0.0f, 255.0f) / 255.0f); }
+
+typedef float (*ScarAlphaDecayFunc)(const CGroundDecalHandler::Scar&, int);
+constexpr static ScarAlphaDecayFunc scarAlphaDecayFuncs[] = {NewScarAlphaDecay, DefScarAlphaDecay};
 
 
 
@@ -65,16 +77,15 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 	sogdMemPool.clear();
 	sogdMemPool.reserve(128);
 	freeScarIDs.clear();
-	freeScarIDs.reserve(MAX_SCAR_COUNT);
+	freeScarIDs.reserve(MAX_NUM_DECALS);
 	usedScarIDs.clear();
 	usedScarIDs.reserve(128);
 	scarTexBuf.clear();
 	scarTexBuf.resize(512 * 512 * 4, 0); // 1MB
 
-	for (int i = 0; i < MAX_SCAR_COUNT; i++) {
+	for (int i = 0; i < MAX_NUM_DECALS; i++) {
 		freeScarIDs.push_back(i);
-
-		// wipe out scars from previous runs; keep their VA's
+		// wipe out scars from previous runs
 		scars[i].Reset();
 	}
 
@@ -88,11 +99,10 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
+	GenDecalBuffers();
 	LoadScarTextures();
 	LoadDecalShaders();
 }
-
-
 
 CGroundDecalHandler::~CGroundDecalHandler()
 {
@@ -114,7 +124,29 @@ CGroundDecalHandler::~CGroundDecalHandler()
 	glDeleteTextures(1, &scarTex);
 
 	shaderHandler->ReleaseProgramObjects("[GroundDecalHandler]");
+
+	decalBuffers[0].Kill();
+	decalBuffers[1].Kill();
 }
+
+
+void CGroundDecalHandler::GenDecalBuffers()
+{
+	// TODO: reuse across reloads
+	for (unsigned int i = 0; i < 2; i++) {
+		decalBuffers[i].Init(true, true);
+		decalBuffers[i].UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
+
+		mapBufferPtr[i] = decalBuffers[i].MapElems<VA_TYPE_TC>(true, true, true, true);
+		curBufferPos[i] = mapBufferPtr[i];
+
+		#ifndef HEADLESS
+		assert(mapBufferPtr[i] != nullptr);
+		assert(mapBufferPtr[i] != nullptr);
+		#endif
+	}
+}
+
 
 void CGroundDecalHandler::LoadScarTextures() {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -122,8 +154,9 @@ void CGroundDecalHandler::LoadScarTextures() {
 	if (!resourcesParser.Execute())
 		LOG_L(L_ERROR, "Failed to load resources: %s", resourcesParser.GetErrorLog().c_str());
 
-	const LuaTable& gfxTable = resourcesParser.GetRoot().SubTable("graphics");
-	const LuaTable& scarsTable = gfxTable.SubTable("scars");
+	const LuaTable&  rootTable = resourcesParser.GetRoot();
+	const LuaTable&   gfxTable = rootTable.SubTable("graphics");
+	const LuaTable& scarsTable =  gfxTable.SubTable("scars");
 
 	LoadScarTexture("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), scarTexBuf.data(),   0,   0);
 	LoadScarTexture("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), scarTexBuf.data(), 256,   0);
@@ -153,21 +186,28 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsFragProg.glsl", extraDef, GL_FRAGMENT_SHADER));
 	decalShaders[DECAL_SHADER_GLSL]->Link();
 
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx 0
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx 1
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx 2
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx 3
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx 4
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx 5
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 6
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 7
+	decalShaders[DECAL_SHADER_GLSL]->SetFlag("HAVE_SHADOWS", false);
+
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx  0
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx  1
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx  2
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx  3
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx  4
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("viewMatrix");         // idx  5
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("projMatrix");         // idx  6
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("quadMatrix");         // idx  7
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx  8
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx  9
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 10
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 11
 
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, 1.0f);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -177,52 +217,50 @@ void CGroundDecalHandler::LoadDecalShaders() {
 
 void CGroundDecalHandler::SunChanged() {
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 }
 
-static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color)
-{
-	#define HEIGHT2WORLD(x) ((x) << 3)
-	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
-	va->AddVertexTC( VERTEX(x    , yv[0], z    ),   uv[0], uv[1],   color);
-	va->AddVertexTC( VERTEX(x + 1, yv[1], z    ),   uv[2], uv[3],   color);
-	va->AddVertexTC( VERTEX(x + 1, yv[2], z + 1),   uv[4], uv[5],   color);
-	va->AddVertexTC( VERTEX(x    , yv[3], z + 1),   uv[6], uv[7],   color);
-	#undef VERTEX
-	#undef HEIGHT2WORLD
-}
 
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
-	const float* hm = readMap->GetCornerHeightMapUnsynced();
+	#ifndef HEADLESS
+	if (!camera->InView(decal->pos, decal->radius + TEX_QUAD_SIZE))
+		return;
+
+	const float* cornerHeights = readMap->GetCornerHeightMapUnsynced();
+	VA_TYPE_TC* decalVertices[2] = {nullptr, nullptr};
 
 	const int gsmx  = mapDims.mapx;
 	const int gsmx1 = mapDims.mapxp1;
 	const int gsmy  = mapDims.mapy;
 
+	const unsigned int visFrame = globalRendering->drawFrame;
+	const unsigned int decalIdx = decal->bufIndx;
+	const unsigned int numVerts = decal->bufSize / VA_SIZE_TC;
+
 	SColor color(255, 255, 255, int(decal->alpha * 255));
 
 	#ifndef DEBUG
-	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
+	#define HEIGHT(z, x) (cornerHeights[((z) * gsmx1) + (x)])
 	#else
-	#define HEIGHT(z, x) (assert((z) <= gsmy), assert((x) <= gsmx), (hm[((z) * gsmx1) + (x)]))
+	#define HEIGHT(z, x) (assert((z) <= gsmy), assert((x) <= gsmx), (cornerHeights[((z) * gsmx1) + (x)]))
 	#endif
 
-	CVertexArray& va = decal->va;
-
-	if (va.drawIndex() == 0) {
+	if (numVerts == 0) {
 		// NOTE: this really needs CLOD'ing
-		va.Initialize();
+		const int dxsize = decal->xsize;
+		const int dzsize = decal->ysize;
+		const int dxpos  = decal->posx;              // top-left quad x-coordinate
+		const int dzpos  = decal->posy;              // top-left quad z-coordinate
+		const int dxoff  = (dxpos < 0)? -(dxpos): 0; // offset from left map edge
+		const int dzoff  = (dzpos < 0)? -(dzpos): 0; // offset from top map edge
 
-		const int
-			dxsize = decal->xsize,
-			dzsize = decal->ysize,
-			dxpos  = decal->posx,              // top-left quad x-coordinate
-			dzpos  = decal->posy,              // top-left quad z-coordinate
-			dxoff  = (dxpos < 0)? -(dxpos): 0, // offset from left map edge
-			dzoff  = (dzpos < 0)? -(dzpos): 0; // offset from top map edge
+		// clip decal dimensions against map-edges
+		const int cxsize = (dxsize - dxoff) - ((dxpos + dxsize) - gsmx) * ((dxpos + dxsize) > gsmx);
+		const int czsize = (dzsize - dzoff) - ((dzpos + dzsize) - gsmy) * ((dzpos + dzsize) > gsmy);
+
 
 		const float xts = 1.0f / dxsize;
 		const float zts = 1.0f / dzsize;
@@ -230,12 +268,22 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		float yv[4] = {0.0f}; // heights at each sub-quad vertex (tl, tr, br, bl)
 		float uv[8] = {0.0f}; // tex-coors at each sub-quad vertex
 
-		// clipped decal dimensions
-		int cxsize = dxsize - dxoff;
-		int czsize = dzsize - dzoff;
 
-		if ((dxpos + dxsize) > gsmx) { cxsize -= ((dxpos + dxsize) - gsmx); }
-		if ((dzpos + dzsize) > gsmy) { czsize -= ((dzpos + dzsize) - gsmy); }
+		// handle wraparound; overwriting old decal data should pose no danger
+		if ((curBufferPos[0] - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
+			curBufferPos[0] = mapBufferPtr[0];
+			curBufferPos[1] = mapBufferPtr[1];
+		}
+
+		decalVertices[0] = curBufferPos[0];
+		decalVertices[1] = curBufferPos[1];
+
+		decal->bufIndx = curBufferPos[0] - mapBufferPtr[0];
+		decal->bufSize = (cxsize * czsize * 4) * sizeof(VA_TYPE_TC);
+
+		curBufferPos[0] += (decal->bufSize / sizeof(VA_TYPE_TC));
+		curBufferPos[1] += (decal->bufSize / sizeof(VA_TYPE_TC));
+
 
 		for (int vx = 0; vx < cxsize; vx++) {
 			for (int vz = 0; vz < czsize; vz++) {
@@ -275,50 +323,68 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 					} break;
 				}
 
-				AddQuadVertices(&va, px, yv, pz, uv, color);
+				#define HEIGHT2WORLD(x) ((x) << 3)
+				#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
+				*(decalVertices[0]++) = { VERTEX(px    , yv[0], pz    ),  uv[0], uv[1],  color};
+				*(decalVertices[0]++) = { VERTEX(px + 1, yv[1], pz    ),  uv[2], uv[3],  color};
+				*(decalVertices[0]++) = { VERTEX(px + 1, yv[2], pz + 1),  uv[4], uv[5],  color};
+				*(decalVertices[0]++) = { VERTEX(px    , yv[3], pz + 1),  uv[6], uv[7],  color};
+
+				*(decalVertices[1]++) = { VERTEX(px    , yv[0], pz    ),  uv[0], uv[1],  color};
+				*(decalVertices[1]++) = { VERTEX(px + 1, yv[1], pz    ),  uv[2], uv[3],  color};
+				*(decalVertices[1]++) = { VERTEX(px + 1, yv[2], pz + 1),  uv[4], uv[5],  color};
+				*(decalVertices[1]++) = { VERTEX(px    , yv[3], pz + 1),  uv[6], uv[7],  color};
+				#undef VERTEX
+				#undef HEIGHT2WORLD
 			}
 		}
 	} else {
-		const int numVerts = va.drawIndex() / VA_SIZE_TC;
+		decalVertices[0] = mapBufferPtr[0] + decalIdx;
+		decalVertices[1] = mapBufferPtr[1] + decalIdx;
 
-		va.ResetPos();
-		VA_TYPE_TC* mem = va.GetTypedVertexArray<VA_TYPE_TC>(numVerts);
+		// update vertex heights and alpha
+		for (unsigned int i = 0; i < numVerts; ++i) {
+			const int x = int(decalVertices[1][i].p.x) >> 3;
+			const int z = int(decalVertices[1][i].p.z) >> 3;
 
-		for (int i = 0; i < numVerts; ++i) {
-			const int x = int(mem[i].p.x) >> 3;
-			const int z = int(mem[i].p.z) >> 3;
-
-			// update the height and alpha
-			mem[i].p.y = hm[z * gsmx1 + x];
-			mem[i].c   = color;
+			decalVertices[0][i].p.y = cornerHeights[z * gsmx1 + x];
+			decalVertices[0][i].c   = color;
 		}
 
 		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
 		// shift the decal visually in the latter case so it is aligned
 		// with the object on top of it
-		GL::PushMatrix();
-		GL::Translate(int(decal->pos.x) % SQUARE_SIZE, 0.0f, int(decal->pos.z) % SQUARE_SIZE);
-		va.DrawArrayTC(GL_QUADS);
-		GL::PopMatrix();
+		const float3 pos{(int(decal->pos.x) % SQUARE_SIZE) * 1.0f, 0.0f, (int(decal->pos.z) % SQUARE_SIZE) * 1.0f};
+		const CMatrix44f mat{pos};
+
+		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, 1.0f);
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, mat);
+		decalBuffers[0].Submit(GL_QUADS, decalIdx, numVerts);
 	}
 
 	#undef HEIGHT
+	#endif
 }
 
 
 inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 {
-	// TODO: do we want LOS-checks for decals?
+	#ifndef HEADLESS
 	if (!camera->InView(scar.pos, scar.radius + TEX_QUAD_SIZE))
 		return;
 
+	const float* cornerHeights = readMap->GetCornerHeightMapUnsynced();
+	VA_TYPE_TC* decalVertices[2] = {nullptr, nullptr};
+
+	const unsigned int simFrame = gs->frameNum;
+	const unsigned int visFrame = globalRendering->drawFrame;
+	const unsigned int decalIdx = scar.bufIndx;
+	const unsigned int numVerts = scar.bufSize / VA_SIZE_TC;
+	const unsigned int mapWidth = mapDims.mapxp1;
+
 	SColor color(255, 255, 255, 255);
-	CVertexArray& va = scar.va;
 
-	// do not test for drawIndex == 0 here because the VA might have been recycled
-	if (scar.lastDraw == -1) {
-		va.Initialize();
-
+	if (numVerts == 0) {
 		const float3 pos = scar.pos;
 
 		const float radius = scar.radius;
@@ -326,13 +392,30 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 		const float tx = scar.texOffsetX;
 		const float ty = scar.texOffsetY;
 
-		const int sx = (int) std::max(                    0.0f, (pos.x - radius) * 0.0625f);
-		const int ex = (int) std::min(float(mapDims.hmapx - 1), (pos.x + radius) * 0.0625f);
-		const int sz = (int) std::max(                    0.0f, (pos.z - radius) * 0.0625f);
-		const int ez = (int) std::min(float(mapDims.hmapy - 1), (pos.z + radius) * 0.0625f);
+		const int sx = std::max(                0, int((pos.x - radius) * 0.0625f));
+		const int ex = std::min(mapDims.hmapx - 1, int((pos.x + radius) * 0.0625f));
+		const int sz = std::max(                0, int((pos.z - radius) * 0.0625f));
+		const int ez = std::min(mapDims.hmapy - 1, int((pos.z + radius) * 0.0625f));
 
 		// create the scar texture-quads
 		float px1 = sx * TEX_QUAD_SIZE;
+
+
+		// handle wraparound
+		if ((curBufferPos[0] - mapBufferPtr[0]) >= decalBuffers[0].GetNumElems<VA_TYPE_TC>()) {
+			curBufferPos[0] = mapBufferPtr[0];
+			curBufferPos[1] = mapBufferPtr[1];
+		}
+
+		decalVertices[0] = curBufferPos[0];
+		decalVertices[1] = curBufferPos[1];
+
+		scar.bufIndx = curBufferPos[0] - mapBufferPtr[0];
+		scar.bufSize = (((ex - sx) + 1) * ((ez - sz) + 1) * 4) * sizeof(VA_TYPE_TC);
+
+		curBufferPos[0] += (scar.bufSize / sizeof(VA_TYPE_TC));
+		curBufferPos[1] += (scar.bufSize / sizeof(VA_TYPE_TC));
+
 
 		for (int x = sx; x <= ex; ++x) {
 			const float px2 = px1 + TEX_QUAD_SIZE;
@@ -350,45 +433,47 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 				const float h3 = CGround::GetHeightReal(px2, pz2, false);
 				const float h4 = CGround::GetHeightReal(px1, pz2, false);
 
-				va.AddVertexTC(float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color);
-				va.AddVertexTC(float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color);
-				va.AddVertexTC(float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color);
-				va.AddVertexTC(float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color);
+				*(decalVertices[0]++) = {float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color};
+				*(decalVertices[0]++) = {float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color};
+				*(decalVertices[0]++) = {float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color};
+				*(decalVertices[0]++) = {float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color};
+
+				// also add to secondary buffer; allows safely reading back
+				// verts even when drawframe rate drops below simframe rate
+				*(decalVertices[1]++) = {float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color};
+				*(decalVertices[1]++) = {float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color};
+				*(decalVertices[1]++) = {float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color};
+				*(decalVertices[1]++) = {float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color};
+
 				pz1 = pz2;
 			}
 
 			px1 = px2;
 		}
 	} else {
-		if (groundScarAlphaFade) {
-			if ((scar.creationTime + 10) > gs->frameNum) {
-				color[3] = (int) (scar.startAlpha * (gs->frameNum - scar.creationTime) * 0.1f);
-			} else {
-				color[3] = (int) (scar.startAlpha - (gs->frameNum - scar.creationTime) * scar.alphaDecay);
-			}
+		if (groundScarAlphaFade && simFrame != scar.lastDraw) {
+			// update scars only every *sim*frame, faster is pointless
+			// scars younger than 10 simframes decay at constant speed
+			const ScarAlphaDecayFunc alphaDecayFunc = scarAlphaDecayFuncs[ (scar.creationTime + 10) <= simFrame ];
 
-			const float* hm = readMap->GetCornerHeightMapUnsynced();
+			decalVertices[0] = mapBufferPtr[0] + decalIdx;
+			decalVertices[1] = mapBufferPtr[1] + decalIdx;
 
-			const int gsmx1 = mapDims.mapx + 1;
-			const int num = va.drawIndex() / VA_SIZE_TC;
+			for (unsigned int i = 0; i < numVerts; ++i) {
+				const int x = int(decalVertices[1][i].p.x) >> 3;
+				const int z = int(decalVertices[1][i].p.z) >> 3;
 
-			va.ResetPos();
-			VA_TYPE_TC* mem = va.GetTypedVertexArray<VA_TYPE_TC>(num);
-
-			for (int i = 0; i < num; ++i) {
-				const int x = int(mem[i].p.x) >> 3;
-				const int z = int(mem[i].p.z) >> 3;
-
-				// update the height and alpha
-				mem[i].p.y = hm[z * gsmx1 + x];
-				mem[i].c   = color;
+				decalVertices[0][i].p.y = cornerHeights[z * mapWidth + x];
 			}
 		}
 
-		va.DrawArrayTC(GL_QUADS);
+		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(11, alphaDecayFunc(scar, simFrame));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
+		decalBuffers[0].Submit(GL_QUADS, decalIdx, numVerts);
 	}
 
-	scar.lastDraw = globalRendering->drawFrame;
+	scar.lastDraw = simFrame;
+	#endif
 }
 
 
@@ -406,7 +491,10 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 
 		if (decalOwner == nullptr) {
 			if (gbOwner == nullptr) {
-				decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
+				const float dt = globalRendering->lastFrameTime * 0.001f;
+				const float af = decal->alphaFalloff * dt * gs->speedFactor;
+
+				decal->alpha -= af;
 			} else if (gbOwner->lastDrawFrame < (globalRendering->drawFrame - 1)) {
 				++i; continue;
 			}
@@ -519,6 +607,7 @@ void CGroundDecalHandler::DrawScars() {
 		}
 
 		DrawGroundScar(scar);
+
 		i++;
 	}
 }
@@ -533,7 +622,6 @@ void CGroundDecalHandler::Draw()
 	if (!GetDrawDecals())
 		return;
 
-	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -573,11 +661,14 @@ void CGroundDecalHandler::KillTextures()
 void CGroundDecalHandler::BindShader(const float3& ambientColor)
 {
 	decalShaders[DECAL_SHADER_CURR]->Enable();
+	decalShaders[DECAL_SHADER_GLSL]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler->GetShadowViewMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, camera->GetViewMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(6, false, camera->GetProjectionMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(8, false, shadowHandler->GetShadowViewMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(9, shadowHandler->GetShadowParams());
 	}
 }
 

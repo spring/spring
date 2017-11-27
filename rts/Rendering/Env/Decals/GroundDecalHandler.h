@@ -8,14 +8,13 @@
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/LegacyTrackHandler.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/float3.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 
 class CSolidObject;
 class CUnit;
-class CVertexArray;
 struct SolidObjectGroundDecal;
 struct SolidObjectDecalType;
 
@@ -27,28 +26,17 @@ namespace Shader {
 
 struct SolidObjectGroundDecal {
 public:
-	SolidObjectGroundDecal()
-		: owner(nullptr)
-		, gbOwner(nullptr)
-		, posx(0)
-		, posy(0)
-		, xsize(0)
-		, ysize(0)
-		, facing(-1)
-		, pos(ZeroVector)
-		, radius(0.0f)
-		, alpha(1.0f)
-		, alphaFalloff(1.0f)
-	{}
+	SolidObjectGroundDecal() = default;
 	SolidObjectGroundDecal(const SolidObjectGroundDecal& d) = delete;
 	SolidObjectGroundDecal(SolidObjectGroundDecal&& d) { *this = std::move(d); }
 
 	SolidObjectGroundDecal& operator = (const SolidObjectGroundDecal& d) = delete;
 	SolidObjectGroundDecal& operator = (SolidObjectGroundDecal&& d) {
-		va = std::move(d.va);
-
 		owner   = d.owner;   d.owner   = nullptr;
 		gbOwner = d.gbOwner; d.gbOwner = nullptr;
+
+		bufIndx = d.bufIndx;
+		bufSize = d.bufSize;
 
 		posx   = d.posx;
 		posy   = d.posy;
@@ -65,22 +53,23 @@ public:
 	}
 
 public:
-	CVertexArray va;
+	CSolidObject* owner = nullptr;
+	GhostSolidObject* gbOwner = nullptr;
 
-	CSolidObject* owner;
-	GhostSolidObject* gbOwner;
+	unsigned int bufIndx = 0; // verts
+	unsigned int bufSize = 0; // bytes
 
-	int posx;
-	int posy;
-	int xsize;
-	int ysize;
-	int facing;
+	int posx = 0;
+	int posy = 0;
+	int xsize = 0;
+	int ysize = 0;
+	int facing = -1;
 
 	float3 pos;
 
-	float radius;
-	float alpha;
-	float alphaFalloff;
+	float radius = 0.0f;
+	float alpha = 1.0f;
+	float alphaFalloff = 1.0f;
 };
 
 
@@ -155,13 +144,16 @@ public:
 
 	struct Scar {
 	public:
-		Scar(): va(2048) {}
+		Scar() = default;
 		Scar(const Scar& s) = delete;
 		Scar(Scar&& s) { *this = std::move(s); }
 
 		Scar& operator = (const Scar& s) = delete;
 		Scar& operator = (Scar&& s) {
 			id = s.id;
+
+			bufIndx = s.bufIndx;
+			bufSize = s.bufSize;
 
 			x1 = s.x1; x2 = s.x2;
 			y1 = s.y1; y2 = s.y2;
@@ -183,12 +175,14 @@ public:
 			texOffsetX = s.texOffsetX;
 			texOffsetY = s.texOffsetY;
 
-			va = std::move(s.va);
 			return *this;
 		}
 
 		void Reset() {
 			id = -1;
+
+			bufIndx = 0;
+			bufSize = 0;
 
 			x1 = 0; x2 = 0;
 			y1 = 0; y2 = 0;
@@ -208,12 +202,13 @@ public:
 			startAlpha = 1.0f;
 			texOffsetX = 0.0f;
 			texOffsetY = 0.0f;
-
-			va.Initialize();
 		}
 
 	public:
 		int id;
+
+		unsigned int bufIndx; // verts
+		unsigned int bufSize; // bytes
 
 		int x1, x2;
 		int y1, y2;
@@ -233,11 +228,10 @@ public:
 		float startAlpha;
 		float texOffsetX;
 		float texOffsetY;
-
-		CVertexArray va;
 	};
 
 private:
+	void GenDecalBuffers();
 	void LoadScarTextures();
 	void LoadDecalShaders();
 	void DrawObjectDecals();
@@ -274,6 +268,12 @@ private:
 
 	// stores indices into <scars> of reserved slots, per quad
 	std::vector< std::vector<int> > scarField;
+
+
+	GL::RenderDataBuffer decalBuffers[2];
+
+	VA_TYPE_TC* mapBufferPtr[2] = {nullptr, nullptr}; // start-pos
+	VA_TYPE_TC* curBufferPos[2] = {nullptr, nullptr}; // write-pos
 
 
 	int scarFieldX;
