@@ -37,6 +37,7 @@ public:
 	virtual void DeleteTree(int treeID, int treeType, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 
+	bool GetFullRead() const override { return true; }
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "RenderFeatureCreated") ||
