@@ -488,7 +488,7 @@ namespace Shader {
 	void GLSLProgramObject::SetUniform4v(UniformState* us, const   int* v, int cnt) { SET_VAL(cnt, 4, us->Set4v, glUniform4iv); }
 	void GLSLProgramObject::SetUniform2v(UniformState* us, const float* v, int cnt) { SET_VAL(cnt, 8, us->Set2v, glUniform2fv); }
 	void GLSLProgramObject::SetUniform3v(UniformState* us, const float* v, int cnt) { SET_VAL(cnt, 5, us->Set3v, glUniform3fv); }
-	void GLSLProgramObject::SetUniform4v(UniformState* us, const float* v, int cnt) { SET_VAL(cnt, 4, us->Set4v, glUniform2fv); }
+	void GLSLProgramObject::SetUniform4v(UniformState* us, const float* v, int cnt) { SET_VAL(cnt, 4, us->Set4v, glUniform4fv); }
 
 	void GLSLProgramObject::SetUniformMatrix2x2(UniformState* us, const float* v, int cnt, bool transp) { SET_MAT(cnt, 1, us->Set2x2, glUniformMatrix2fv); }
 	void GLSLProgramObject::SetUniformMatrix3x3(UniformState* us, const float* v, int cnt, bool transp) { SET_MAT(cnt, 1, us->Set3x3, glUniformMatrix3fv); }
