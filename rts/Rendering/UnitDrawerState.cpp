@@ -261,7 +261,7 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix4
 		assert(po->IsBound());
 
 		if (numPieceMats > 0)
-			po->SetUniformMatrix4fv(6, std::min(numPieceMats, dummyPieceMatrices.size()), false, &pieceMats[0].m[0]);
+			po->SetUniformMatrix4fv(6, -int(std::min(numPieceMats, dummyPieceMatrices.size())), false, &pieceMats[0].m[0]);
 
 		po->SetUniformMatrix4fv(7, false, modelMat);
 	} else {
@@ -271,7 +271,7 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix4
 		assert(po->IsBound());
 
 		if (numPieceMats > 0)
-			po->SetUniformMatrix4fv(4, std::min(numPieceMats, dummyPieceMatrices.size()), false, &pieceMats[0].m[0]);
+			po->SetUniformMatrix4fv(4, -int(std::min(numPieceMats, dummyPieceMatrices.size())), false, &pieceMats[0].m[0]);
 
 		// {Unit,Projectile}Drawer::DrawShadowPass sets view and proj
 		po->SetUniformMatrix4fv(3, false, modelMat);

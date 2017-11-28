@@ -195,10 +195,10 @@ namespace Shader {
 		virtual void SetUniform(const ShaderInput& u) {}
 
 		/// new (slower) interface
-		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0) { SetUniform(GetOrAddUniformState(name), v0); }
-		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1)  { SetUniform(GetOrAddUniformState(name), v0, v1); }
-		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1, TV v2)  { SetUniform(GetOrAddUniformState(name), v0, v1, v2); }
-		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3)  { SetUniform(GetOrAddUniformState(name), v0, v1, v2, v3); }
+		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0                     ) { SetUniform(GetOrAddUniformState(name), v0            ); }
+		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1              ) { SetUniform(GetOrAddUniformState(name), v0, v1        ); }
+		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1, TV v2       ) { SetUniform(GetOrAddUniformState(name), v0, v1, v2    ); }
+		template<typename TK, typename TV> void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3) { SetUniform(GetOrAddUniformState(name), v0, v1, v2, v3); }
 
 		template<typename TK, typename TV> void SetUniform2v(const TK& name, const TV* v) { SetUniform2v(GetOrAddUniformState(name), v); }
 		template<typename TK, typename TV> void SetUniform3v(const TK& name, const TV* v) { SetUniform3v(GetOrAddUniformState(name), v); }
@@ -248,7 +248,7 @@ namespace Shader {
 		virtual void SetUniformMatrix4fv(int idx, int cnt, bool transp, const float* v) {}
 
 	protected:
-		/// internal
+		/// internal; used by the templates above
 		virtual void SetUniform(UniformState* us,   int v0                              ) { SetUniform1i(us->GetLocation(), v0            ); }
 		virtual void SetUniform(UniformState* us,   int v0,   int v1                    ) { SetUniform2i(us->GetLocation(), v0, v1        ); }
 		virtual void SetUniform(UniformState* us,   int v0,   int v1,   int v2          ) { SetUniform3i(us->GetLocation(), v0, v1, v2    ); }
