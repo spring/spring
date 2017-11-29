@@ -46,6 +46,7 @@ Lua:
  - remove gl.DrawListAtUnit
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list
+ - add `VFS.GAME` as a synonym to `VFS.MOD`
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
  - move GetConfig* to LuaUnsyncedRead
