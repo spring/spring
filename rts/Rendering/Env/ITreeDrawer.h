@@ -32,7 +32,6 @@ public:
 	virtual void DrawShadowPass() = 0;
 	virtual void Update() {}
 
-	virtual void ResetPos(const float3& pos) {}
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
 	virtual void DeleteTree(int treeID, int treeType, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
@@ -53,9 +52,19 @@ public:
 	int NumTreesX() const { return treesX; }
 	int NumTreesY() const { return treesY; }
 
-	bool& DefDrawTreesRef() { return defDrawTrees; }
-	bool& LuaDrawTreesRef() { return luaDrawTrees; }
+	bool DefDrawTrees() const { return defDrawTrees; }
+	bool LuaDrawTrees() const { return luaDrawTrees; }
 	bool& WireFrameModeRef() { return wireFrameMode; }
+
+	void HandleAction(int arg) {
+		switch (arg) {
+			case -1: { defDrawTrees = !defDrawTrees; luaDrawTrees = !luaDrawTrees; } break;
+			case  0: { defDrawTrees =         false; luaDrawTrees =         false; } break;
+			case  1: { defDrawTrees =          true; luaDrawTrees =         false; } break;
+			case  2: { defDrawTrees =         false; luaDrawTrees =          true; } break;
+			default: {                                                             } break;
+		}
+	}
 
 	void RenderFeatureCreated(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);

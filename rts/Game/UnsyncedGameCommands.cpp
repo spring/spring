@@ -1275,27 +1275,8 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const char* strs[] = {"disabled", "enabled"};
 
-		switch ((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str())) {
-			case -1: {
-				grassDrawer->DefDrawGrassRef() = !grassDrawer->DefDrawGrassRef();
-				grassDrawer->LuaDrawGrassRef() = !grassDrawer->LuaDrawGrassRef();
-			} break;
-			case 0: {
-				grassDrawer->DefDrawGrassRef() = false;
-				grassDrawer->LuaDrawGrassRef() = false;
-			} break;
-			case 1: {
-				grassDrawer->DefDrawGrassRef() = true;
-				grassDrawer->LuaDrawGrassRef() = false;
-			} break;
-			case 2: {
-				grassDrawer->DefDrawGrassRef() = false;
-				grassDrawer->LuaDrawGrassRef() = true;
-			} break;
-			default: {} break;
-		}
-
-		LOG("{engine, Lua} grass rendering {%s, %s}", strs[grassDrawer->DefDrawGrassRef()], strs[grassDrawer->LuaDrawGrassRef()]);
+		grassDrawer->HandleAction((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str()));
+		LOG("{engine, Lua} grass rendering {%s, %s}", strs[grassDrawer->DefDrawGrass()], strs[grassDrawer->LuaDrawGrass()]);
 		return true;
 	}
 };
@@ -1307,27 +1288,8 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const char* strs[] = {"disabled", "enabled"};
 
-		switch ((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str())) {
-			case -1: {
-				treeDrawer->DefDrawTreesRef() = !treeDrawer->DefDrawTreesRef();
-				treeDrawer->LuaDrawTreesRef() = !treeDrawer->LuaDrawTreesRef();
-			} break;
-			case 0: {
-				treeDrawer->DefDrawTreesRef() = false;
-				treeDrawer->LuaDrawTreesRef() = false;
-			} break;
-			case 1: {
-				treeDrawer->DefDrawTreesRef() = true;
-				treeDrawer->LuaDrawTreesRef() = false;
-			} break;
-			case 2: {
-				treeDrawer->DefDrawTreesRef() = false;
-				treeDrawer->LuaDrawTreesRef() = true;
-			} break;
-			default: {} break;
-		}
-
-		LOG("{engine, Lua} tree rendering {%s, %s}", strs[treeDrawer->DefDrawTreesRef()], strs[treeDrawer->LuaDrawTreesRef()]);
+		treeDrawer->HandleAction((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str()));
+		LOG("{engine, Lua} tree rendering {%s, %s}", strs[treeDrawer->DefDrawTrees()], strs[treeDrawer->LuaDrawTrees()]);
 		return true;
 	}
 };

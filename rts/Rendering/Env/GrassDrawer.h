@@ -35,8 +35,18 @@ public:
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
-	bool& DefDrawGrassRef() { return defDrawGrass; }
-	bool& LuaDrawGrassRef() { return luaDrawGrass; }
+	void HandleAction(int arg) {
+		switch (arg) {
+			case -1: { defDrawGrass = !defDrawGrass; luaDrawGrass = !luaDrawGrass; } break;
+			case  0: { defDrawGrass =         false; luaDrawGrass =         false; } break;
+			case  1: { defDrawGrass =          true; luaDrawGrass =         false; } break;
+			case  2: { defDrawGrass =         false; luaDrawGrass =          true; } break;
+			default: {                                                             } break;
+		}
+	}
+
+	bool DefDrawGrass() const { return defDrawGrass; }
+	bool LuaDrawGrass() const { return luaDrawGrass; }
 
 public:
 	// EventClient

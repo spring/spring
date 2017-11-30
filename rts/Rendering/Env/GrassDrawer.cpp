@@ -241,9 +241,12 @@ void CGrassDrawer::CreateGrassBuffer()
 	grassBuffer.Init();
 
 	static std::vector<VA_TYPE_TN> verts;
+	static std::vector<uint32_t> indcs;
 
 	verts.clear();
 	verts.reserve(turfDetail.y * 8 * 3);
+	indcs.clear();
+	indcs.reserve(turfDetail.y * 8 * 3);
 
 	for (int a = 0; a < turfDetail.y; ++a) {
 		// generate a single blade
@@ -280,25 +283,34 @@ void CGrassDrawer::CreateGrassBuffer()
 			verts.push_back(prvVertR);
 			verts.push_back(prvVertL);
 			verts.push_back({basePos + edgePosR, xtexCoord + (1.0f / 32) * h              , h, (n + sideVect * 0.04f).ANormalize()});
-
-			verts.push_back(prvVertL);
-			verts.push_back(verts[verts.size() - 2]);
 			verts.push_back({basePos + edgePosL, xtexCoord - (1.0f / 32) * h + (1.0f / 16), h, (n - sideVect * 0.04f).ANormalize()});
 
-			prvVertR = verts[verts.size() - 4];
+			indcs.push_back(verts.size() - 4);
+			indcs.push_back(verts.size() - 3);
+			indcs.push_back(verts.size() - 2);
+
+			indcs.push_back(verts.size() - 3);
+			indcs.push_back(verts.size() - 1);
+			indcs.push_back(verts.size() - 2);
+
+			prvVertR = verts[verts.size() - 2];
 			prvVertL = verts[verts.size() - 1];
 		}
 
-		// end top tip (single triangle)
+		// blade tip; single triangle
 		const float3 edgePos = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
 		const float3 normalDir = (normalBend * std::cos(maxAng) + UpVector * std::sin(maxAng)).ANormalize();
 
 		verts.push_back(prvVertR);
 		verts.push_back(prvVertL);
 		verts.push_back({basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, normalDir});
+
+		indcs.push_back(verts.size() - 3);
+		indcs.push_back(verts.size() - 2);
+		indcs.push_back(verts.size() - 1);
 	}
 
-	grassBuffer.UploadTN(verts.size(), 0,  verts.data(), nullptr);
+	grassBuffer.UploadTN(verts.size(), indcs.size(),  verts.data(), indcs.data());
 }
 
 void CGrassDrawer::CreateGrassBladeTex(uint8_t* buf)
@@ -447,7 +459,7 @@ void CGrassDrawer::DrawBlocks(const CCamera* cam)
 					continue;
 
 				grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
-				grassBuffer.SubmitInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumElems<VA_TYPE_TN>(), numQueuedTurfs);
+				grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numQueuedTurfs);
 
 				numBlocksDrawn = 0;
 				numQueuedTurfs = 0;
@@ -460,7 +472,7 @@ void CGrassDrawer::DrawBlocks(const CCamera* cam)
 
 	// draw any leftovers
 	grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
-	grassBuffer.SubmitInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumElems<VA_TYPE_TN>(), numQueuedTurfs);
+	grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numQueuedTurfs);
 }
 
 
