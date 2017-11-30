@@ -80,7 +80,6 @@ void ShowSplashScreen(
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 
 	for (spring_time t0 = spring_now(), t1 = t0; !testDoneFunc(); t1 = spring_now()) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -110,7 +109,6 @@ void ShowSplashScreen(
 		SDL_PollEvent(nullptr);
 	}
 
-	glDisable(GL_TEXTURE_2D);
 	glDeleteTextures(1, &splashTex);
 }
 #endif
