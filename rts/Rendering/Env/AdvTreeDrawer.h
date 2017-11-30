@@ -3,9 +3,11 @@
 #ifndef _ADV_TREE_DRAWER_H_
 #define _ADV_TREE_DRAWER_H_
 
+#include <array>
+
 #include "ITreeDrawer.h"
 #include "AdvTreeGenerator.h"
-#include <array>
+#include "System/type2.h"
 
 class CCamera;
 
@@ -26,6 +28,8 @@ public:
 	void SetupShadowDrawState();
 	void SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo);
 	void ResetShadowDrawState();
+	void DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo);
+	void DrawFallingTrees(const CCamera* cam, Shader::IProgramObject* ipo) const;
 
 	void Update() override;
 	void DrawPass() override;
@@ -61,6 +65,11 @@ private:
 	std::vector<FallingTree> fallingTrees[2];
 
 	CAdvTreeGenerator treeGen;
+
+	float3 prvUpdateCamPos;
+	float3 prvUpdateCamDir;
+
+	bool updateVisibility = false;
 };
 
 #endif // _ADV_TREE_DRAWER_H_

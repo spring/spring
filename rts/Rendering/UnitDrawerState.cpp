@@ -131,7 +131,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("specularTex");       // idx  4 (cube)
 		modelShaders[n]->SetUniformLocation("sunDir");            // idx  5
 
-		modelShaders[n]->SetUniformLocation("pieceMatrices");     // idx  6
+		modelShaders[n]->SetUniformLocation("pieceMatrices[0]");  // idx  6
 		modelShaders[n]->SetUniformLocation("modelMatrix");       // idx  7
 		modelShaders[n]->SetUniformLocation("viewMatrix");        // idx  8
 		modelShaders[n]->SetUniformLocation("projMatrix");        // idx  9

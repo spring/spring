@@ -116,8 +116,8 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject() { LoadFromID(0); }
-		IProgramObject(const std::string& poName): name(poName) {}
+		IProgramObject() { LoadFromID(0); uniformStates.reserve(32); }
+		IProgramObject(const std::string& poName): name(poName) { uniformStates.reserve(32); }
 		IProgramObject(const IProgramObject& po) = delete;
 		IProgramObject(IProgramObject&& po) { *this = std::move(po); }
 		virtual ~IProgramObject() {}
@@ -270,25 +270,25 @@ namespace Shader {
 		virtual void SetUniformMatrix4x4(UniformState* us, const float* m, int cnt, bool transp) { SetUniformMatrix4fv(us->GetLocation(), cnt, transp, m); }
 
 	protected:
-		int GetUniformLocation(const char* name) { return (GetOrAddUniformState(name)->GetLocation()); }
+		int GetUniformLocation(const char* name, size_t hash) { return (GetOrAddUniformState(name, hash)->GetLocation()); }
 
 	private:
-		UniformState* GetOrAddUniformState(const char* name) {
+		UniformState* GetOrAddUniformState(const char* name) { return (GetOrAddUniformState(name, hashString(name))); }
+		UniformState* GetOrAddUniformState(const char* name, size_t hash) {
 			// (when inlined) hash might be compiletime const cause of constexpr of hashString
 			// WARNING: Cause of a bug in gcc, you _must_ assign the constexpr to a var before
 			//          passing it to a function. I.e. foo.find(hashString(name)) would always
 			//          be runtime evaluated (even when `name` is a literal)!
-			const auto hash = hashString(name);
 			const auto iter = uniformStates.find(hash);
 
 			if (iter != uniformStates.end())
 				return &iter->second;
 
-			return (AddUniformState(name));
+			return (AddUniformState(name, hash));
 		}
 
-		UniformState* AddUniformState(const char* name) {
-			const auto pair = uniformStates.emplace(hashString(name), name);
+		UniformState* AddUniformState(const char* name, size_t hash) {
+			const auto pair = uniformStates.emplace(hash, name);
 			const auto iter = pair.first;
 
 			UniformState* us = &(iter->second);
@@ -379,7 +379,7 @@ namespace Shader {
 		int SetUniformLocation(const char* name) override {
 			uniformHashes.push_back(hashString(name));
 			// create a new state if one is not yet associated with <name>
-			return (GetUniformLocation(name));
+			return (GetUniformLocation(name, uniformHashes.back()));
 		}
 
 		void SetUniform1i(int idx,   int v0                              ) override { SetUniform(GetUniformState(idx), v0            ); }

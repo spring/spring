@@ -297,6 +297,7 @@ GLAPI void APIENTRY glCopyTexSubImage2D(GLenum target, GLint level,
 
 GLAPI void APIENTRY glDrawBuffer(GLenum mode) {}
 GLAPI void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {}
+GLAPI void APIENTRY glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount) {}
 GLAPI void APIENTRY glEdgeFlag(GLboolean flag) {}
 GLAPI void APIENTRY glEvalCoord1f(GLfloat u) {}
 GLAPI void APIENTRY glEvalCoord2f(GLfloat u, GLfloat v) {}
@@ -398,6 +399,7 @@ GLAPI void APIENTRY glTexCoordPointer(GLint size, GLenum type, GLsizei stride, c
 GLAPI void APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr) {}
 GLAPI void APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr) {}
 GLAPI void APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count) {}
+GLAPI void APIENTRY glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount) {}
 
 GLAPI void APIENTRY glTexEnvi(GLenum target, GLenum pname, GLint param) {}
 

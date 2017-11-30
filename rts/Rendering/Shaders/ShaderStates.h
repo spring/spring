@@ -31,10 +31,10 @@ namespace Shader {
 		/// current glGetUniformLocation
 		int location;
 
-	#ifdef DEBUG
+		#ifdef DEBUG
 		/// uniform type
 		int type;
-	#endif
+		#endif
 
 		/// uniform name in the shader
 		char name[NAME_BUF_LEN];
@@ -45,9 +45,11 @@ namespace Shader {
 			i[1] = -0xFFFFFF;
 			i[2] = -0xFFFFFF;
 			i[3] = -0xFFFFFF;
-		#ifdef DEBUG
+
+			#ifdef DEBUG
 			type = -1;
-		#endif
+			#endif
+
 			memset(name, 0, sizeof(name));
 			strncpy(name, _name, sizeof(name));
 		}

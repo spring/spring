@@ -17,6 +17,22 @@
 #include "System/GlobalRNG.h"
 #include "System/Matrix44f.h"
 
+
+struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
+{
+	void ResetState() override {
+		inViewQuads.clear();
+		inViewQuads.reserve(32);
+	}
+	void DrawQuad(int x, int y) override {
+		inViewQuads.push_back({x, y});
+	}
+
+public:
+	std::vector<int2> inViewQuads;
+};
+
+
 static const float TEX_LEAF_START_Y1 = 0.001f;
 static const float TEX_LEAF_END_Y1   = 0.124f;
 static const float TEX_LEAF_START_Y2 = 0.126f;
@@ -38,6 +54,8 @@ static const float HALF_MAX_TREE_HEIGHT = MAX_TREE_HEIGHT * 0.5f;
 
 // global; sequence-id should be shared by CAdvTreeSquare*Drawer
 static CGlobalUnsyncedRNG rng;
+
+static CAdvTreeSquareDrawer squareDrawer;
 
 
 CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
@@ -133,6 +151,23 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 void CAdvTreeDrawer::Update()
 {
+	{
+		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+
+		updateVisibility |= (prvUpdateCamPos != cam->GetPos());
+		updateVisibility |= (prvUpdateCamDir != cam->GetDir());
+
+		if (updateVisibility) {
+			prvUpdateCamPos = cam->GetPos();
+			prvUpdateCamDir = cam->GetDir();
+
+			squareDrawer.ResetState();
+			readMap->GridVisibility(nullptr, &squareDrawer, drawTreeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE * 2.0f, TREE_SQUARE_SIZE);
+
+			updateVisibility = false;
+		}
+	}
+
 	for (int i = 0; i < 2; i++) {
 		std::vector<FallingTree>& v = fallingTrees[i];
 
@@ -165,52 +200,6 @@ void CAdvTreeDrawer::Update()
 		}
 	}
 }
-
-
-
-
-struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
-{
-	CAdvTreeSquareDrawer(CAdvTreeDrawer* _atd, CCamera* _cam): atd(_atd), cam(_cam) {}
-
-	void ResetState() {}
-	void DrawQuad(int x, int y)
-	{
-		constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-
-		const float3 camPos = cam->GetPos();
-		const float3 sqrPos = {(x * sqrWorldSize + (sqrWorldSize >> 1)) * 1.0f, 0.0f, (y * sqrWorldSize + (sqrWorldSize >> 1)) * 1.0f};
-
-		// soft cutoff (gradual density reduction)
-		const float drawProb = std::min(1.0f, Square(atd->GetDrawDistance()) / sqrPos.SqDistance2D(camPos));
-
-		if (drawProb > 0.001f) {
-			rng.SetSeed(rng.GetInitSeed());
-
-			for (int i = 0; i < 2; i++) {
-				const auto& treeStructs = atd->treeSquares[(y * atd->NumTreesX()) + x].trees[i];
-
-				if (treeStructs.empty())
-					continue;
-
-				// bind once per draw-quad per tree-type (bush, pine) batch
-				atd->BindTreeGeometry(i * NUM_TREE_TYPES);
-
-				for (const ITreeDrawer::TreeStruct& ts: treeStructs) {
-					if (rng.NextFloat() > drawProb)
-						continue;
-
-					atd->DrawTree(ts, 13);
-				}
-			}
-		}
-	}
-
-private:
-	CAdvTreeDrawer* atd;
-	CCamera* cam;
-};
-
 
 
 
@@ -372,84 +361,80 @@ void CAdvTreeDrawer::ResetShadowDrawState()
 
 
 
+void CAdvTreeDrawer::DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo)
+{
+	constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
+	const     int matUniformIdx = mix(13, 3, shadowHandler->InShadowPass());
+
+	for (const int2 idx: squareDrawer.inViewQuads) {
+		const float3 camPos  = cam->GetPos();
+		const float2 midPos = {(idx.x + 0.5f) * sqrWorldSize, (idx.y + 0.5f) * sqrWorldSize};
+		const float3 sqrPos = {midPos.x, CGround::GetHeightReal(midPos.x, midPos.y, false), midPos.y};
+
+		// soft cutoff (gradual density reduction)
+		const float drawProb = std::min(1.0f, Square(GetDrawDistance()) / sqrPos.SqDistance(camPos));
+
+		if (drawProb > 0.001f) {
+			rng.SetSeed(rng.GetInitSeed());
+
+			for (int i = 0; i < 2; i++) {
+				const auto& treeSquare = treeSquares[(idx.y * NumTreesX()) + idx.x];
+				const auto& treeStructs = treeSquare.trees[i];
+
+				if (treeStructs.empty())
+					continue;
+
+				// bind once per draw-quad per tree-type (bush, pine) batch
+				BindTreeGeometry(i * NUM_TREE_TYPES);
+
+				for (const ITreeDrawer::TreeStruct& ts: treeStructs) {
+					if (rng.NextFloat() > drawProb)
+						continue;
+
+					DrawTree(ts, matUniformIdx);
+				}
+			}
+		}
+	}
+}
+
+void CAdvTreeDrawer::DrawFallingTrees(const CCamera* cam, Shader::IProgramObject* ipo) const
+{
+	const int matUniformIdx = mix(13, 3, shadowHandler->InShadowPass());
+
+	// draw trees that have been marked as falling
+	for (int i = 0; i < 2; i++) {
+		BindTreeGeometry(i * NUM_TREE_TYPES);
+
+		for (const FallingTree& ft: fallingTrees[i]) {
+			// const CFeature* f = featureHandler->GetFeature(ft.id);
+			const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
+
+			// featureID is invalid for falling trees
+			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+			//   continue;
+			if (!losHandler->InLos(fpos, gu->myAllyTeam))
+				continue;
+			if (!cam->InView(fpos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
+				continue;
+
+			ipo->SetUniformMatrix4fv(matUniformIdx, false, ft.fallMat);
+			DrawTreeGeometry(ft.type);
+		}
+	}
+}
+
 void CAdvTreeDrawer::DrawPass()
 {
 	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* ipo = treeShaders[shadowHandler->ShadowsLoaded()];
 
-	{
-		SetupDrawState(cam, ipo);
-
-		CAdvTreeSquareDrawer drawer(this, cam);
-		readMap->GridVisibility(nullptr, &drawer, drawTreeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE * 2.0f, TREE_SQUARE_SIZE);
-
-		// draw trees that have been marked as falling
-		for (int i = 0; i < 2; i++) {
-			BindTreeGeometry(i * NUM_TREE_TYPES);
-
-			for (const FallingTree& ft: fallingTrees[i]) {
-				// const CFeature* f = featureHandler->GetFeature(ft.id);
-				const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
-
-				// featureID is invalid for falling trees
-				// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
-				//   continue;
-				if (!losHandler->InLos(fpos, gu->myAllyTeam))
-					continue;
-				if (!cam->InView(fpos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
-					continue;
-
-				ipo->SetUniformMatrix4fv(13, false, ft.fallMat);
-				DrawTreeGeometry(ft.type);
-			}
-		}
-
-		ResetDrawState();
-	}
+	SetupDrawState(cam, ipo);
+	DrawTrees(cam, ipo);
+	DrawFallingTrees(cam, ipo);
+	ResetDrawState();
 }
-
-
-
-struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
-{
-	CAdvTreeSquareShadowPassDrawer(CAdvTreeDrawer* _atd, CCamera* _cam): atd(_atd), cam(_cam) {}
-
-	void ResetState() {}
-	void DrawQuad(int x, int y)
-	{
-		constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-
-		const float3 camPos = cam->GetPos();
-		const float3 sqrPos = {(x * sqrWorldSize + (sqrWorldSize >> 1)) * 1.0f, 0.0f, (y * sqrWorldSize + (sqrWorldSize >> 1)) * 1.0f};
-
-		const float drawProb = std::min(1.0f, Square(atd->GetDrawDistance()) / sqrPos.SqDistance2D(camPos));
-
-		if (drawProb > 0.001f) {
-			rng.SetSeed(rng.GetInitSeed());
-
-			for (int i = 0; i < 2; i++) {
-				const auto& treeStructs = atd->treeSquares[(y * atd->NumTreesX()) + x].trees[i];
-
-				if (treeStructs.empty())
-					continue;
-
-				atd->BindTreeGeometry(i * NUM_TREE_TYPES);
-
-				for (const ITreeDrawer::TreeStruct& ts: treeStructs) {
-					if (rng.NextFloat() > drawProb)
-						continue;
-
-					atd->DrawTree(ts, 3);
-				}
-			}
-		}
-	}
-
-private:
-	CAdvTreeDrawer* atd;
-	CCamera* cam;
-};
 
 
 
@@ -458,36 +443,16 @@ void CAdvTreeDrawer::DrawShadowPass()
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* ipo = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE);
 
-	{
-		SetupShadowDrawState(cam, ipo);
-
-		// note: use the player camera s.t. all trees it can see are shadowed
-		// CAdvTreeSquareShadowPassDrawer drawer(this, camera);
-		CAdvTreeSquareShadowPassDrawer drawer(this, CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
-		readMap->GridVisibility(nullptr, &drawer, drawTreeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE * 2.0f, TREE_SQUARE_SIZE, 1);
-
-		for (int i = 0; i < 2; i++) {
-			BindTreeGeometry(i * NUM_TREE_TYPES);
-
-			for (const FallingTree& ft: fallingTrees[i]) {
-				// const CFeature* f = featureHandler->GetFeature(ft.id);
-				const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
-
-				// featureID is invalid for falling trees
-				// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
-				//   continue;
-				if (!losHandler->InLos(fpos, gu->myAllyTeam))
-					continue;
-				if (!cam->InView(fpos + (UpVector * (MAX_TREE_HEIGHT * 0.5f)), MAX_TREE_HEIGHT * 0.5f))
-					continue;
-
-				ipo->SetUniformMatrix4fv(3, false, ft.fallMat);
-				DrawTreeGeometry(ft.type);
-			}
-		}
-
-		ResetShadowDrawState();
-	}
+	SetupShadowDrawState(cam, ipo);
+	#if 0
+	DrawTrees(cam, ipo);
+	DrawFallingTrees(cam, ipo);
+	#else
+	// note: use player camera here s.t. all trees it can see are shadowed
+	DrawTrees(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
+	DrawFallingTrees(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
+	#endif
+	ResetShadowDrawState();
 }
 
 

@@ -52,7 +52,7 @@ Gui::Gui()
 		shader->SetUniformLocation("elemColor"); // idx 1
 		shader->SetUniformLocation("texWeight"); // idx 2
 
-		shader->SetUniformMatrix4x4<const char*, float>("viewProjMatrix", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+		shader->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
 		shader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, float4(1.0f, 0.0f, 0.0f, 1.0f)); // name-based for Font::*GL4
 		shader->SetUniform1i(0, 0);
 

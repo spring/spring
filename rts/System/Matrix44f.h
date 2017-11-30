@@ -116,13 +116,18 @@ public:
 	static CMatrix44f PerspProj(float aspect, float thfov, float zn, float zf);
 	static CMatrix44f PerspProj(float l, float r, float b, float t, float zn, float zf);
 	static CMatrix44f OrthoProj(float l, float r, float b, float t, float zn, float zf);
-	static CMatrix44f ClipControl(bool enabled) {
-		constexpr float s[2] = {0.0f, 1.0f};
-
+	static CMatrix44f ClipPerspProj(float aspect, float thfov, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(aspect, thfov, zn, zf)); }
+	static CMatrix44f ClipPerspProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(l, r, b, t, zn, zf)); }
+	static CMatrix44f ClipOrthoProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * OrthoProj(l, r, b, t, zn, zf)); }
+	static CMatrix44f ClipControl(float cc) {
 		CMatrix44f m;
-		m.Translate(FwdVector * 0.5f * s[enabled]);
-		m.Scale(OnesVector - (FwdVector * 0.5f * s[enabled]));
+		m.Translate(FwdVector * 0.5f * cc);
+		m.Scale(OnesVector - (FwdVector * 0.5f * cc));
 		return m;
+	}
+	static CMatrix44f ClipControl(bool enabled) {
+		constexpr float cc[2] = {0.0f, 1.0f};
+		return (ClipControl(cc[enabled]));
 	}
 
 

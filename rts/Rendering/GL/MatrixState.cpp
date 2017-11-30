@@ -53,9 +53,13 @@ void GL::MatrixState::Load(const CMatrix44f& m) { Top() = m; }
 
 void GL::MatrixState::Translate(const float3& v) { Load((Top()).Translate(v)); }
 void GL::MatrixState::Translate(float x, float y, float z) { Translate({x, y, z}); }
+
 void GL::MatrixState::Scale(const float3& s) { Load((Top()).Scale(s)); }
 void GL::MatrixState::Scale(float x, float y, float z) { Scale({x, y, z}); }
-void GL::MatrixState::Rotate(float a, float x, float y, float z) { Load((Top()).Rotate(-a * math::DEG_TO_RAD, {x, y, z})); } // FIXME: broken
+
+// FIXME: broken
+void GL::MatrixState::Rotate(float a, float x, float y, float z) { Load((Top()).Rotate(-a * math::DEG_TO_RAD, {x, y, z})); }
+
 void GL::MatrixState::RotateX(float a) { Load((Top()).RotateX(-a * math::DEG_TO_RAD)); }
 void GL::MatrixState::RotateY(float a) { Load((Top()).RotateY(-a * math::DEG_TO_RAD)); }
 void GL::MatrixState::RotateZ(float a) { Load((Top()).RotateZ(-a * math::DEG_TO_RAD)); }

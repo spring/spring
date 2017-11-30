@@ -292,7 +292,9 @@ namespace GL {
 		);
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
+		void SubmitInstanced(uint32_t primType, uint32_t dataIndx, uint32_t dataSize, uint32_t numInsts) const;
 		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
+		void SubmitIndexedInstanced(uint32_t primType, uint32_t dataIndx, uint32_t dataSize, uint32_t numInsts) const;
 		void Upload(
 			size_t numElems, // in bytes!
 			size_t numIndcs, // in bytes!
@@ -346,6 +348,7 @@ namespace GL {
 		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
 		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
 
+		VAO& GetArray() { return array; }
 		VBO& GetElems() { return elems; }
 		VBO& GetIndcs() { return indcs; }
 		Shader::GLSLProgramObject& GetShader() { return shader; }

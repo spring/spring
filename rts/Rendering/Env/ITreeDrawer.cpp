@@ -64,13 +64,8 @@ ITreeDrawer::~ITreeDrawer() {
 }
 
 
-float ITreeDrawer::IncrDrawDistance() {
-	return (drawTreeDistance = Clamp(baseTreeDistance *= 1.25f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE));
-}
-
-float ITreeDrawer::DecrDrawDistance() {
-	return (drawTreeDistance = Clamp(baseTreeDistance *= 0.8f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE));
-}
+float ITreeDrawer::IncrDrawDistance() { return (drawTreeDistance = Clamp(baseTreeDistance *= 1.25f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
+float ITreeDrawer::DecrDrawDistance() { return (drawTreeDistance = Clamp(baseTreeDistance *= 0.80f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
 
 
 void ITreeDrawer::AddTrees()

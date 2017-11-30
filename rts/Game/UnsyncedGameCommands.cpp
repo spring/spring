@@ -39,6 +39,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/Fonts/glFont.h"
@@ -1439,6 +1440,27 @@ public:
 
 };
 
+
+
+class MoreGrassActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MoreGrassActionExecutor() : IUnsyncedActionExecutor("MoreGrass", "Increases distance from the camera at which grass is still drawn") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("grass draw-distance increased to %f", grassDrawer->IncrDrawDistance());
+		return true;
+	}
+};
+
+class LessGrassActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LessGrassActionExecutor() : IUnsyncedActionExecutor("LessGrass", "Decreases distance from the camera at which grass are still drawn") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("grass draw-distance decreased to %f", grassDrawer->DecrDrawDistance());
+		return true;
+	}
+};
 
 
 class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
@@ -3065,6 +3087,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
 	AddActionExecutor(new GroundDetailActionExecutor());
+	AddActionExecutor(new MoreGrassActionExecutor());
+	AddActionExecutor(new LessGrassActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
 	AddActionExecutor(new LessTreesActionExecutor());
 	AddActionExecutor(new SpeedUpActionExecutor());

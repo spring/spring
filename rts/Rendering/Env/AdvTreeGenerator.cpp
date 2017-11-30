@@ -571,13 +571,12 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 
 
 	CMatrix44f leafMat;
-	CMatrix44f tempMat;
 
 	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f));
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f, globalRendering->supportClipSpaceControl * 1.0f));
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 
 	const float baseCol = 0.8f + 0.2f * guRNG.NextFloat();
@@ -591,10 +590,10 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		const float bCol = baseCol * (0.7f + 0.3f * guRNG.NextFloat());
 
 		leafMat.LoadIdentity();
-		tempMat.LoadIdentity(); tempMat.Translate(xp, yp, 0.0f);                                   leafMat >>= tempMat;
-		tempMat.LoadIdentity(); tempMat.RotateZ(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
-		tempMat.LoadIdentity(); tempMat.RotateX(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
-		tempMat.LoadIdentity(); tempMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD); leafMat >>= tempMat;
+		leafMat.Translate(xp, yp, 0.0f);
+		leafMat.RotateZ(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
+		leafMat.RotateX(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
+		leafMat.RotateY(-(360.0f * guRNG.NextFloat()) * math::DEG_TO_RAD);
 
 		buffer->SafeAppend({leafMat * float3{-0.1f, -0.2f, 0.0f}, 0.0f, 0.0f, SColor(rCol, gCol, bCol, 1.0f)});
 		buffer->SafeAppend({leafMat * float3{-0.1f,  0.2f, 0.0f}, 0.0f, 1.0f, SColor(rCol, gCol, bCol, 1.0f)});
@@ -610,8 +609,14 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	glReadPixels(0, 0, 256, 256,  GL_RGBA, GL_UNSIGNED_BYTE,  &leafTexBuf[0]);
 
 	#if 0
-	CBitmap bm(leafTexBuf, TEX_SIZE_X, TEX_SIZE_Y);
-	bm.Save("leaf.bmp");
+	{
+		static int i = 0;
+		static char buf[16];
+		memset(buf, 0, sizeof(buf));
+		sprintf(buf, "%d", i++);
+		CBitmap bm(leafTexBuf, TEX_SIZE_X, TEX_SIZE_Y);
+		bm.Save("leaf" + std::string(buf) + ".bmp");
+	}
 	#endif
 
 	for (int y = 0; y < TEX_SIZE_Y; ++y) {

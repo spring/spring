@@ -13,7 +13,6 @@
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/FBO.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -33,6 +32,7 @@
 
 CONFIG(int, GrassDetail).defaultValue(7).headlessValue(0).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
 
+
 // uses a 'synced' RNG s.t. grass turfs generated from the same
 // seed also share identical sequences, otherwise an unpleasant
 // shimmering effect occurs when zooming
@@ -41,6 +41,22 @@ typedef CGlobalRNG<LCG16, true> GrassRNG;
 #else
 typedef CGlobalRNG<PCG32, true> GrassRNG;
 #endif
+
+class CGrassBlockDrawer: public CReadMap::IQuadDrawer
+{
+public:
+	void ResetState() override {
+		inViewQuads.clear();
+		inViewQuads.reserve(32);
+	}
+	void DrawQuad(int x, int y) override {
+		inViewQuads.push_back({x, y});
+	}
+
+public:
+	std::vector<int2> inViewQuads;
+};
+
 
 static constexpr float turfSize        = 20.0f;            // single turf size
 static constexpr float partTurfSize    = turfSize * 1.0f;  // single turf size
@@ -51,120 +67,12 @@ static constexpr int   blockMapSize    = grassSquareSize * grassBlockSize;
 static constexpr int   GSSSQ = SQUARE_SIZE * grassSquareSize;
 static constexpr int   BMSSQ = SQUARE_SIZE * blockMapSize;
 
-static GrassRNG grng;
+static GrassRNG drawRNG;
+static GrassRNG turfRNG;
 
-
-
-static float GetGrassBlockCamDist(const int x, const int y, const bool square = false)
-{
-	const float qx = x * GSSSQ;
-	const float qz = y * GSSSQ;
-	const float3 mid = float3(qx, CGround::GetHeightReal(qx, qz, false), qz);
-	const float3 dif = camera->GetPos() - mid;
-	return (square) ? dif.SqLength() : dif.Length();
-}
-
-
-static const bool GrassSort(const CGrassDrawer::GrassStruct* a, const CGrassDrawer::GrassStruct* b) {
-	const float distA = GetGrassBlockCamDist((a->posX + 0.5f) * grassBlockSize, (a->posZ + 0.5f) * grassBlockSize, true);
-	const float distB = GetGrassBlockCamDist((b->posX + 0.5f) * grassBlockSize, (b->posZ + 0.5f) * grassBlockSize, true);
-	return (distA > distB);
-}
-
-static const bool GrassSortNear(const CGrassDrawer::InviewNearGrass& a, const CGrassDrawer::InviewNearGrass& b) {
-	return (a.dist > b.dist);
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-/// CGrassBlockDrawer
-
-class CGrassBlockDrawer: public CReadMap::IQuadDrawer
-{
-public:
-	std::vector<CGrassDrawer::InviewNearGrass> inviewGrass;
-	std::vector<CGrassDrawer::InviewNearGrass> inviewNearGrass;
-	std::vector<CGrassDrawer::GrassStruct*>    inviewFarGrass;
-	int cx, cy;
-	CGrassDrawer* gd;
-
-	void ResetState() {
-		inviewGrass.clear();
-		inviewNearGrass.clear();
-		inviewFarGrass.clear();
-
-		cx = 0;
-		cy = 0;
-
-		gd = nullptr;
-	}
-
-	void DrawQuad(int x, int y) {
-		const float distSq = GetGrassBlockCamDist((x + 0.5f) * grassBlockSize, (y + 0.5f) * grassBlockSize, true);
-
-		if (distSq > Square(gd->maxGrassDist))
-			return;
-
-		if (abs(x - cx) <= gd->detailedBlocks && abs(y - cy) <= gd->detailedBlocks)
-			return DrawDetailQuad(x, y);
-
-		DrawFarQuad(x, y);
-	}
-
-private:
-	void DrawDetailQuad(const int x, const int y) {
-		const float maxDetailedDist = gd->maxDetailedDist;
-
-		// blocks close to the camera
-		for (int y2 = y * grassBlockSize; y2 < (y + 1) * grassBlockSize; ++y2) {
-			for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
-				if (!gd->grassMap[y2 * mapDims.mapx / grassSquareSize + x2])
-					continue;
-
-				grng.Seed(y2 * mapDims.mapx / grassSquareSize + x2);
-
-				const float dist  = GetGrassBlockCamDist(x2, y2, false);
-				const float rdist = 1.0f + grng.NextFloat() * 0.5f;
-
-				//TODO instead of adding grass turfs depending on their distance to the camera,
-				//     there should be a fixed sized pool for mesh & billboard turfs
-				//     and then we fill these pools with _preference_ for close distance turfs.
-				//     So when a map has only less turfs, render them independent of the cam distance as mesh.
-				//     -> see Ravaged_2
-				if (dist < (maxDetailedDist + 128.f * rdist)) {
-					// close grass (render as mesh)
-					CGrassDrawer::InviewNearGrass iv;
-					iv.dist = dist;
-					iv.x = x2;
-					iv.y = y2;
-					inviewGrass.push_back(iv);
-				}
-
-				if (dist > maxDetailedDist) {
-					// near but not close, save for later drawing
-					CGrassDrawer::InviewNearGrass iv;
-					iv.dist = dist;
-					iv.x = x2;
-					iv.y = y2;
-					inviewNearGrass.push_back(iv);
-				}
-			}
-		}
-	}
-
-	void DrawFarQuad(const int x, const int y) {
-		const int curSquare = y * gd->blocksX + x;
-		CGrassDrawer::GrassStruct* grass = &gd->grass[curSquare];
-		grass->lastSeen = globalRendering->drawFrame;
-		grass->posX = x;
-		grass->posZ = y;
-		inviewFarGrass.push_back(grass);
-	}
-};
-
-
+#if 1
+static std::array<CMatrix44f, 128> turfMatrices;
+#endif
 
 static CGrassBlockDrawer blockDrawer;
 
@@ -173,37 +81,23 @@ CGrassDrawer* grassDrawer = nullptr;
 
 
 
-CGrassDrawer::CGrassDrawer()
-: CEventClient("[GrassDrawer]", 199992, false)
-, blocksX(mapDims.mapx / grassSquareSize / grassBlockSize)
-, blocksY(mapDims.mapy / grassSquareSize / grassBlockSize)
-, grassDL(0)
-, grassBladeTex(0)
-, farTex(0)
-, farnearVA(2048)
-, grassOff(false)
-, updateBillboards(false)
-, updateVisibility(false)
+CGrassDrawer::CGrassDrawer(): CEventClient("[GrassDrawer]", 199992, false)
 {
-	blockDrawer.ResetState();
-	grng.Seed(15);
-
 	const int detail = configHandler->GetInt("GrassDetail");
 
-	// some ATI drivers crash with grass enabled, default to disabled
-	if ((detail == 0) || ((detail == 7) && globalRendering->haveATI)) {
-		grassOff = true;
+	if ((grassDisabled = (detail == 0)))
 		return;
-	}
+
+	blockCount.x = mapDims.mapx / grassSquareSize / grassBlockSize;
+	blockCount.y = mapDims.mapy / grassSquareSize / grassBlockSize;
 
 	// load grass density from map
 	{
 		MapBitmapInfo grassbm;
-		unsigned char* grassdata = readMap->GetInfoMap("grass", &grassbm);
-		if (grassdata == nullptr) {
-			grassOff = true;
+		uint8_t* grassdata = readMap->GetInfoMap("grass", &grassbm);
+
+		if ((grassDisabled = (grassdata == nullptr)))
 			return;
-		}
 
 		if (grassbm.width != mapDims.mapx / grassSquareSize || grassbm.height != mapDims.mapy / grassSquareSize) {
 			char b[128];
@@ -212,7 +106,9 @@ CGrassDrawer::CGrassDrawer()
 			throw std::runtime_error(b);
 		}
 
+		// grassBlocks.resize(blockCount.x * blockCount.y);
 		grassMap.resize(mapDims.mapx * mapDims.mapy / (grassSquareSize * grassSquareSize));
+
 		memcpy(grassMap.data(), grassdata, grassMap.size());
 		readMap->FreeInfoMap("grass", grassdata);
 	}
@@ -223,23 +119,22 @@ CGrassDrawer::CGrassDrawer()
 		if (!grassBladeTexBM.Load(mapInfo->grass.bladeTexName)) {
 			// map didn't define a grasstex, so generate one
 			grassBladeTexBM.channels = 4;
-			grassBladeTexBM.Alloc(256,64);
+			grassBladeTexBM.Alloc(256, 64);
 
 			for (int a = 0; a < 16; ++a) {
 				CreateGrassBladeTex(&grassBladeTexBM.GetRawMem()[a * 16 * 4]);
 			}
 		}
-		//grassBladeTexBM.Save("blade.png", false);
+		// grassBladeTexBM.Save("blade.png", false);
 		grassBladeTex = grassBladeTexBM.CreateMipMapTexture();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		// ??
+		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	// create shaders and finalize
-	grass.resize(blocksX * blocksY);
-	farnearVA.Initialize();
-	grassDL = glGenLists(1);
-
 	ChangeDetail(detail);
 	LoadGrassShaders();
 	configHandler->NotifyOnChange(this, {"GrassDetail"});
@@ -255,33 +150,33 @@ CGrassDrawer::~CGrassDrawer()
 	eventHandler.RemoveClient(this);
 	configHandler->RemoveObserver(this);
 
-	glDeleteLists(grassDL, 1);
 	glDeleteTextures(1, &grassBladeTex);
-	glDeleteTextures(1, &farTex);
+
+	grassBuffer.Kill();
 	shaderHandler->ReleaseProgramObjects("[GrassDrawer]");
 }
 
 
 
+float CGrassDrawer::IncrDrawDistance() { return (grassDrawDist = Clamp(grassDrawDist *= 1.25f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
+float CGrassDrawer::DecrDrawDistance() { return (grassDrawDist = Clamp(grassDrawDist *= 0.80f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE)); }
+
 void CGrassDrawer::ChangeDetail(int detail) {
 	// TODO: get rid of the magic constants
-	const int detail_lim = std::min(3, detail);
-	maxGrassDist = 800 + std::sqrt((float) detail) * 240;
-	maxDetailedDist = 146 + detail * 24;
-	detailedBlocks = int((maxDetailedDist + 128.f * 1.5f) / BMSSQ) + 1;
-	numTurfs = 3 + int(detail_lim * 0.5f);
-	strawPerTurf = std::min(50 + int(std::sqrt((float)detail_lim) * 10), mapInfo->grass.maxStrawsPerTurf);
+	const int minDetail = std::min(3, detail);
 
-	// recreate textures & XBOs
-	CreateGrassDispList(grassDL);
-	CreateFarTex();
+	grassDrawDist = std::sqrt(detail * 1.0f) * 100.0f;
 
-	// reset  all cached blocks
-	for (GrassStruct& pGS: grass) {
-		ResetPos(pGS.posX, pGS.posZ);
-	}
+	// turfs per block
+	turfDetail.x = std::min(3 + int(minDetail * 0.5f), int(turfMatrices.size()));
+	// straws per turf
+	turfDetail.y = std::min(50 + int(std::sqrt(minDetail * 1.0f) * 10), mapInfo->grass.maxStrawsPerTurf);
+
+	// recreate turf geometry
+	CreateGrassBuffer();
+
+	updateVisibility = true;
 }
-
 
 void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value) {
 	ChangeDetail(configHandler->GetInt("GrassDetail"));
@@ -290,24 +185,30 @@ void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value
 
 void CGrassDrawer::LoadGrassShaders() {
 	#define sh shaderHandler
-	grassShaders.resize(GRASS_PROGRAM_LAST, nullptr);
+	grassShaders.fill(nullptr);
 
 	static const std::string shaderNames[GRASS_PROGRAM_LAST] = {
 		"grassNearAdvShader",
-		"grassDistAdvShader",
-		"grassShadGenShader"
+		"grassShadGenShader",
 	};
 	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
 		"#define DISTANCE_NEAR\n",
-		"#define DISTANCE_FAR\n",
-		"#define SHADOW_GEN\n"
+		"#define SHADOW_GEN\n",
 	};
 
-	for (int i = 0; i < GRASS_PROGRAM_LAST; i++) {
+	for (int i = 0; i < GRASS_PROGRAM_CURR; i++) {
 		grassShaders[i] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[i] + "GLSL");
 		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i], GL_VERTEX_SHADER));
 		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassFragProg.glsl", shaderDefines[i], GL_FRAGMENT_SHADER));
 		grassShaders[i]->Link();
+
+		grassShaders[i]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
+		grassShaders[i]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+		grassShaders[i]->SetFlag("SHADOW_GEN", i == GRASS_PROGRAM_SHADOW_GEN);
+
+		// idx 0, not settable as an array via name-based API
+		// needs to be named "[0]" or state-copying will fail
+		grassShaders[i]->SetUniformLocation("turfMatrices[0]");
 
 		grassShaders[i]->Enable();
 		grassShaders[i]->SetUniform("mapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
@@ -320,306 +221,318 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowViewMatrixRaw());
-		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+		grassShaders[i]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
+		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler->GetShadowViewMatrix());
+		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
+		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
 
-		if ((grassOff = !grassShaders[i]->IsValid()))
+		if ((grassDisabled = !grassShaders[i]->IsValid()))
 			break;
 	}
 
 	#undef sh
 }
 
+void CGrassDrawer::CreateGrassBuffer()
+{
+	turfRNG.Seed(15);
 
-void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
-	const float3 windSpeed =
-		wind.GetCurrentDirection() *
-		wind.GetCurrentStrength() *
-		mapInfo->grass.bladeWaveScale;
+	grassBuffer.Kill();
+	grassBuffer.Init();
 
-	grassShader = grassShaders[type];
-	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
-	grassShader->Enable();
+	static std::vector<VA_TYPE_TN> verts;
 
-	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
-	grassShader->SetUniform3v("windSpeed", &windSpeed.x);
-	grassShader->SetUniform3v("camPos",    &camera->GetPos().x);
-	grassShader->SetUniform3v("camDir",    &camera->GetDir().x);
-	grassShader->SetUniform3v("camUp",     &camera->GetUp().x);
-	grassShader->SetUniform3v("camRight",  &camera->GetRight().x);
+	verts.clear();
+	verts.reserve(turfDetail.y * 8 * 3);
 
-	grassShader->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
-	grassShader->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowViewMatrixRaw());
-	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+	for (int a = 0; a < turfDetail.y; ++a) {
+		// generate a single blade
+		const float rndVal = turfRNG.NextFloat();
+		const float length = mapInfo->grass.bladeHeight * (1.0f + rndVal);
+		const float maxAng = mapInfo->grass.bladeAngle * std::max(turfRNG.NextFloat(), 1.0f - smoothstep(0.0f, 1.0f, rndVal));
 
-	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);
-	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->modelDiffuseColor.x);
-	grassShader->SetUniform3v("specularLightColor", &sunLighting->modelSpecularColor.x);
-	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
+		// select one of the 16 color shadings
+		const float xtexCoord = turfRNG.NextInt(16) / 16.0f;
+		const float heightIncr = 1.0f / (2 + int(maxAng * 1.2f + length * 0.2f));
+
+
+		const float3 randVect = (turfRNG.NextVector2D() * 0.5f).ANormalize();
+		// direction to bend into
+		const float3 bendVect = randVect.cross(UpVector);
+		const float3 sideVect = randVect * (mapInfo->grass.bladeWidth * (-0.15f * rndVal + 1.0f));
+
+		const float3 normalBend = -bendVect;
+		const float3 basePos = turfRNG.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
+
+
+		// start at bottom of blade
+		VA_TYPE_TN prvVertR = {basePos + sideVect - (UpVector * 3.0f), xtexCoord              , 0.f, normalBend};
+		VA_TYPE_TN prvVertL = {basePos - sideVect - (UpVector * 3.0f), xtexCoord + (1.0f / 16), 0.f, normalBend};
+
+		for (float h = 0.0f; h < 1.0f; h += heightIncr) {
+			const float ang = maxAng * h;
+
+			const float3 n = (normalBend * std::cos(ang) + UpVector * std::sin(ang)).ANormalize();
+			const float3 edgePos  = (UpVector * std::cos(ang) + bendVect * std::sin(ang)) * length * h;
+			const float3 edgePosR = edgePos + sideVect * (1.0f - h);
+			const float3 edgePosL = edgePos - sideVect * (1.0f - h);
+
+			verts.push_back(prvVertR);
+			verts.push_back(prvVertL);
+			verts.push_back({basePos + edgePosR, xtexCoord + (1.0f / 32) * h              , h, (n + sideVect * 0.04f).ANormalize()});
+
+			verts.push_back(prvVertL);
+			verts.push_back(verts[verts.size() - 2]);
+			verts.push_back({basePos + edgePosL, xtexCoord - (1.0f / 32) * h + (1.0f / 16), h, (n - sideVect * 0.04f).ANormalize()});
+
+			prvVertR = verts[verts.size() - 4];
+			prvVertL = verts[verts.size() - 1];
+		}
+
+		// end top tip (single triangle)
+		const float3 edgePos = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
+		const float3 normalDir = (normalBend * std::cos(maxAng) + UpVector * std::sin(maxAng)).ANormalize();
+
+		verts.push_back(prvVertR);
+		verts.push_back(prvVertL);
+		verts.push_back({basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, normalDir});
+	}
+
+	grassBuffer.UploadTN(verts.size(), 0,  verts.data(), nullptr);
 }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-static float3 GetTurfParams(GrassRNG& rng, const int x, const int y)
+void CGrassDrawer::CreateGrassBladeTex(uint8_t* buf)
 {
-	float3 result;
-	result.x = (x + rng.NextFloat()) * GSSSQ;
-	result.y = (y + rng.NextFloat()) * GSSSQ;
-	result.z = rng.NextFloat() * 360.0f; // rotation
-	return result;
-}
+	float3 redish = float3(0.95f, 0.70f, 0.4f);
+	float3 color = mix(mapInfo->grass.color, redish, 0.1f * turfRNG.NextFloat());
 
+	color.x = Clamp(color.x, 0.0f, 1.0f);
+	color.y = Clamp(color.y, 0.0f, 1.0f);
+	color.z = Clamp(color.z, 0.0f, 1.0f);
 
+	SColor* img = reinterpret_cast<SColor*>(buf);
 
-void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
-{
-	for (const InviewNearGrass& g: inviewGrass) {
-		grng.Seed(g.y * mapDims.mapx / grassSquareSize + g.x);
+	for (int y = 0; y < 64; ++y) {
+		for (int x = 0; x < 16; ++x) {
+			const float brightness = smoothstep(-0.8f, 0.5f, y/63.0f) + ((x%2) == 0 ? 0.035f : 0.0f);
+			const float3 c = color * brightness;
 
-//		const float distSq = GetGrassBlockCamDist(g.x, g.y, true);
-		const float rdist  = 1.0f + grng.NextFloat() * 0.5f;
-		const float alpha  = linearstep(maxDetailedDist, maxDetailedDist + 128.0f * rdist, g.dist);
-
-		for (int a = 0; a < numTurfs; a++) {
-			const float3& p = GetTurfParams(grng, g.x, g.y);
-			float3 pos(p.x, CGround::GetHeightReal(p.x, p.y, false), p.y);
-
-			pos.y -= CGround::GetSlope(p.x, p.y, false) * 30.0f;
-			pos.y -= 2.0f * mapInfo->grass.bladeHeight * alpha;
-
-			GL::PushMatrix();
-			GL::Translate(pos);
-			GL::RotateY(p.z);
-			glCallList(grassDL);
-			GL::PopMatrix();
+			img[y * 256 + x] = SColor(c.r, c.g, c.b, 1.0f);
 		}
 	}
 }
 
 
-void CGrassDrawer::DrawBillboard(const int x, const int y, const float dist, VA_TYPE_TN* va_tn)
-{
-	GrassRNG trng; // need our own, this function may run threaded
-	trng.Seed(y * mapDims.mapx / grassSquareSize + x);
 
-	const float rDist = 1.0f + trng.NextFloat() * 0.5f;
-	const float gStep = linearstep(maxGrassDist,  maxGrassDist + 127.0f, dist + 128.0f);
-	const float dStep = linearstep(maxDetailedDist, maxDetailedDist + 128.0f * rDist, dist);
-	const float alpha = std::min(1.0f - gStep, dStep);
 
-	for (int a = 0; a < numTurfs; a++) {
-		const float3& p = GetTurfParams(trng, x, y);
-		const float3 pos(p.x, CGround::GetHeightReal(p.x, p.y, false) - CGround::GetSlope(p.x, p.y, false) * 30.0f, p.y);
+void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
+	const float3 windSpeed = wind.GetCurrentDirection() * wind.GetCurrentStrength() * mapInfo->grass.bladeWaveScale;
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 
-		va_tn[a * 4 + 0] = { pos,         0.0f, 1.0f, float3(-partTurfSize, -partTurfSize, alpha) };
-		va_tn[a * 4 + 1] = { pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize, -partTurfSize, alpha) };
-		va_tn[a * 4 + 2] = { pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize,  partTurfSize, alpha) };
-		va_tn[a * 4 + 3] = { pos,         0.0f, 0.0f, float3(-partTurfSize,  partTurfSize, alpha) };
+	Shader::IProgramObject* ipo = (grassShaders[GRASS_PROGRAM_CURR] = grassShaders[type]);
+
+	ipo->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
+	ipo->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	ipo->Enable();
+
+	ipo->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
+	ipo->SetUniform3v("windSpeed", &windSpeed.x);
+	ipo->SetUniform3v("camPos",    &camera->GetPos().x);
+	ipo->SetUniform3v("camDir",    &camera->GetDir().x);
+	ipo->SetUniform3v("camUp",     &camera->GetUp().x);
+	ipo->SetUniform3v("camRight",  &camera->GetRight().x);
+
+	ipo->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	ipo->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
+	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler->GetShadowViewMatrix());
+	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+
+	switch (type) {
+		case GRASS_PROGRAM_NEAR: {
+			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
+			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
+		} break;
+		case GRASS_PROGRAM_SHADOW_GEN: {
+			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, shadowHandler->GetShadowViewMatrix());
+			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, shadowHandler->GetShadowProjMatrix());
+		} break;
+		default: {
+		} break;
 	}
+
+	ipo->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);
+	ipo->SetUniform3v("diffuseLightColor",  &sunLighting->modelDiffuseColor.x);
+	ipo->SetUniform3v("specularLightColor", &sunLighting->modelSpecularColor.x);
+	ipo->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
+	ipo->SetUniform3v("fogParams",          &fogParams.x);
 }
 
 
-void CGrassDrawer::DrawFarBillboards(const std::vector<GrassStruct*>& inviewFarGrass)
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// NB: has to use another RNG so density reduction is not influenced
+static float3 GetRandomTurfParams(const int2& blockPos)
 {
-	// update far grass blocks
-	if (updateBillboards) {
-		updateBillboards = false;
+	float3 p;
+	p.x = (blockPos.x + turfRNG.NextFloat()) * GSSSQ;
+	p.y = (blockPos.y + turfRNG.NextFloat()) * GSSSQ;
+	p.z = (turfRNG.NextFloat() * 360.0f) * math::DEG_TO_RAD; // rotation
+	return p;
+}
 
-		for_mt(0, inviewFarGrass.size(), [&](const int i) {
-			GrassStruct& g = *inviewFarGrass[i];
+static float GetGrassBlockCamDistSq(const float3& pos, const int2 coors)
+{
+	const float qx = coors.x * GSSSQ;
+	const float qz = coors.y * GSSSQ;
 
-			if (g.lastFar == 0) {
-				// TODO: VA's need to be uploaded each frame, switch to VBO's
-				// force the patch-quads to be recreated
-				g.lastFar = globalRendering->drawFrame;
-				g.lastDist = -1.0f;
+	const float3 mid = float3(qx, CGround::GetHeightReal(qx, qz, false), qz);
+	const float3 dif = pos - mid;
+
+	return (dif.SqLength());
+}
+
+
+
+unsigned int CGrassDrawer::DrawBlock(const float3& camPos, const int2& blockPos, unsigned int turfMatIndex)
+{
+	const float blockDist = GetGrassBlockCamDistSq(camPos, blockPos);
+	const float drawProb = std::min(1.0f, Square(grassDrawDist) / blockDist);
+
+	if (drawProb < 0.001f)
+		return 0;
+
+	drawRNG.Seed(blockPos.y * (mapDims.mapx / grassSquareSize) + blockPos.x);
+	turfRNG.Seed(blockPos.y * (mapDims.mapx / grassSquareSize) + blockPos.x);
+
+	unsigned int numVisibleTurfs = 0;
+
+	// TODO: LODs?
+	for (int a = 0; a < turfDetail.x; a++) {
+		if (drawRNG.NextFloat() > drawProb)
+			continue;
+
+		const float3& rtp = GetRandomTurfParams(blockPos);
+		const float3  pos = {rtp.x, CGround::GetHeightReal(rtp.x, rtp.y, false) - CGround::GetSlope(rtp.x, rtp.y, false) * 30.0f, rtp.y};
+
+		turfMatrices[turfMatIndex + numVisibleTurfs].LoadIdentity();
+		turfMatrices[turfMatIndex + numVisibleTurfs].Translate(pos);
+		turfMatrices[turfMatIndex + numVisibleTurfs].RotateY(-rtp.z);
+
+		numVisibleTurfs += 1;
+	}
+
+	return numVisibleTurfs;
+}
+
+void CGrassDrawer::DrawBlocks(const CCamera* cam)
+{
+	Shader::IProgramObject* grassShader = grassShaders[GRASS_PROGRAM_CURR];
+
+	const unsigned int blocksPerBatch = turfMatrices.size() / turfDetail.x;
+
+	unsigned int numBlocksDrawn = 0;
+	unsigned int numQueuedTurfs = 0;
+
+	for (const int2 idx: blockDrawer.inViewQuads) {
+		for (int y = idx.y * grassBlockSize; y < (idx.y + 1) * grassBlockSize; ++y) {
+			for (int x = idx.x * grassBlockSize; x < (idx.x + 1) * grassBlockSize; ++x) {
+				if (grassMap[y * (mapDims.mapx / grassSquareSize) + x] == 0)
+					continue;
+
+				numQueuedTurfs += DrawBlock(cam->GetPos(), {x, y}, numQueuedTurfs);
+				numBlocksDrawn += 1;
+
+				if (numBlocksDrawn < blocksPerBatch)
+					continue;
+
+				grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
+				grassBuffer.SubmitInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumElems<VA_TYPE_TN>(), numQueuedTurfs);
+
+				numBlocksDrawn = 0;
+				numQueuedTurfs = 0;
 			}
-
-			const float distSq = GetGrassBlockCamDist((g.posX + 0.5f) * grassBlockSize, (g.posZ + 0.5f) * grassBlockSize, true);
-
-			if (distSq == g.lastDist)
-				return;
-
-			const bool inAlphaRange1 = (    distSq < Square(maxDetailedDist + 128.0f * 1.5f)) || (    distSq > Square(maxGrassDist - 128.0f));
-			const bool inAlphaRange2 = (g.lastDist < Square(maxDetailedDist + 128.0f * 1.5f)) || (g.lastDist > Square(maxGrassDist - 128.0f));
-
-			if (!inAlphaRange1 && (inAlphaRange1 == inAlphaRange2))
-				return;
-
-			g.lastDist = distSq;
-			CVertexArray* va = &g.va;
-			va->Initialize();
-
-			// (4*4)*numTurfs quads
-			for (int y2 = g.posZ * grassBlockSize; y2 < (g.posZ + 1) * grassBlockSize; ++y2) {
-				for (int x2 = g.posX * grassBlockSize; x2 < (g.posX  + 1) * grassBlockSize; ++x2) {
-					if (!grassMap[y2 * mapDims.mapx / grassSquareSize + x2])
-						continue;
-
-					const float dist = GetGrassBlockCamDist(x2, y2);
-					auto* va_tn = va->GetTypedVertexArray<VA_TYPE_TN>(numTurfs * 4);
-					DrawBillboard(x2, y2, dist, va_tn);
-				}
-			}
-		});
+		}
 	}
 
-	// render far grass blocks
-	for (GrassStruct* g: inviewFarGrass) {
-		g->va.DrawArrayTN(GL_QUADS);
-	}
+	if (numQueuedTurfs == 0)
+		return;
+
+	// draw any leftovers
+	grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
+	grassBuffer.SubmitInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumElems<VA_TYPE_TN>(), numQueuedTurfs);
 }
 
-
-void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inviewNearGrass)
-{
-	if (farnearVA.drawIndex() == 0) {
-		auto* va_tn = farnearVA.GetTypedVertexArray<VA_TYPE_TN>(inviewNearGrass.size() * numTurfs * 4);
-
-		for_mt(0, inviewNearGrass.size(), [&](const int i) {
-			const InviewNearGrass& gi = inviewNearGrass[i];
-			DrawBillboard(gi.x, gi.y, gi.dist, &va_tn[i * numTurfs * 4]);
-		});
-	}
-
-	farnearVA.DrawArrayTN(GL_QUADS);
-}
 
 
 void CGrassDrawer::Update()
 {
 	// grass is never drawn in any special (non-opaque) pass
-	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-	// update visible turfs
-	updateVisibility |= (oldCamPos != cam->GetPos());
-	updateVisibility |= (oldCamDir != cam->GetDir());
+	// update visible blocks
+	updateVisibility |= (prvUpdateCamPos != cam->GetPos());
+	updateVisibility |= (prvUpdateCamDir != cam->GetDir());
 
 	if (updateVisibility) {
 		SCOPED_TIMER("Update::Update::Grass");
-		oldCamPos = cam->GetPos();
-		oldCamDir = cam->GetDir();
-		lastVisibilityUpdate = globalRendering->drawFrame;
+
+		prvUpdateCamPos = cam->GetPos();
+		prvUpdateCamDir = cam->GetDir();
 
 		blockDrawer.ResetState();
-		blockDrawer.cx = int(cam->GetPos().x / BMSSQ);
-		blockDrawer.cy = int(cam->GetPos().z / BMSSQ);
-		blockDrawer.gd = this;
-		readMap->GridVisibility(nullptr, &blockDrawer, maxGrassDist, blockMapSize);
-
-		// ATI crashes w/o an error when shadows are enabled!?
-		const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
-
-		if (!shadows) {
-			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
-			std::sort(blockDrawer.inviewNearGrass.begin(), blockDrawer.inviewNearGrass.end(), GrassSortNear);
-			farnearVA.Initialize();
-			updateBillboards = true;
-		}
+		readMap->GridVisibility(nullptr, &blockDrawer, grassDrawDist * grassDrawDist, blockMapSize);
 
 		updateVisibility = false;
 	}
-
-	// collect garbage
-	//   originally, this deleted the billboard VA of any patch that was not drawn for 50 frames
-	//   now it only resets lastFar s.t. patches are forcibly recreated when they become visible
-	//   again (reusing memory)
-	//   pass negative coordinates since we do not want to set updateVisibility during this step
-	for (const GrassStruct& gs: grass) {
-		if ((gs.lastSeen != lastVisibilityUpdate) && (gs.lastSeen < globalRendering->drawFrame - 50) && gs.lastFar != 0) {
-			ResetPos(-gs.posX, -gs.posZ);
-		}
-	}
 }
 
 
-void CGrassDrawer::Draw()
+
+void CGrassDrawer::SetupStateShadow()
 {
-	if (grassOff || !readMap->GetGrassShadingTexture())
-		return;
-
-	SCOPED_TIMER("Draw::World::Foliage::Grass");
-	glPushAttrib(GL_CURRENT_BIT);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	if (!blockDrawer.inviewGrass.empty()) {
-		SetupGlStateNear();
-			DrawNear(blockDrawer.inviewGrass);
-		ResetGlStateNear();
-	}
-
-	// ATI crashes w/o an error when shadows are enabled!?
-	const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
-
-	if (!shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
-		SetupGlStateFar();
-			DrawFarBillboards(blockDrawer.inviewFarGrass);
-			DrawNearBillboards(blockDrawer.inviewNearGrass);
-		ResetGlStateFar();
-	}
-
-	glPopAttrib();
-}
-
-
-void CGrassDrawer::DrawShadow()
-{
-	// Grass self-shadowing doesn't look that good atm
-/*	if (grassOff || !readMap->GetGrassShadingTexture())
-		return;
-
-	// looks ad with low density grass
-	//TODO either enable it on high density only, or wait for alpha transparent shadows and use those then
 	EnableShader(GRASS_PROGRAM_SHADOW_GEN);
 
 	glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, activeFarTex);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glPolygonOffset(5, 15);
+	glPolygonOffset(5.0f, 15.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+}
 
-	// we pass it as uniform and want to have pos & rot
-	// of the turfs to be saved alone in the modelview matrix
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PushMatrix();
-	GL::LoadIdentity();
-
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
-
-	static CGrassBlockDrawer blockDrawer;
-	blockDrawer.ResetState();
-	blockDrawer.cx = int(cam->GetPos().x / BMSSQ);
-	blockDrawer.cy = int(cam->GetPos().z / BMSSQ);
-	blockDrawer.gd = this;
-
-	readMap->GridVisibility(nullptr, &drawer, maxGrassDist, blockMapSize);
-	DrawNear(blockDrawer.inviewGrass);
-
-	//FIXME needs own shader!
-	//DrawNearBillboards(blockDrawer.inviewNearGrass);
-
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-
+void CGrassDrawer::ResetStateShadow()
+{
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 
-	grassShader->Disable();*/
+	grassShaders[GRASS_PROGRAM_CURR]->Disable();
+}
+
+void CGrassDrawer::DrawShadow()
+{
+	if (grassDisabled || readMap->GetGrassShadingTexture() == 0)
+		return;
+
+	if (!blockDrawer.inViewQuads.empty()) {
+		SetupStateShadow();
+		#if 0
+		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW));
+		#else
+		// note: use player camera here s.t. all blocks it can see are shadowed
+		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
+		#endif
+		ResetStateShadow();
+	}
 }
 
 
-void CGrassDrawer::SetupGlStateNear()
+
+void CGrassDrawer::SetupStateOpaque()
 {
 	// bind textures
 	{
@@ -641,13 +554,6 @@ void CGrassDrawer::SetupGlStateNear()
 
 		if (shadowHandler->ShadowsLoaded())
 			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
-
-		GL::MatrixMode(GL_PROJECTION);
-			GL::PushMatrix();
-			GL::MultMatrix(camera->GetViewMatrix());
-		GL::MatrixMode(GL_MODELVIEW);
-			GL::PushMatrix();
-			GL::LoadIdentity();
 	}
 
 	glActiveTexture(GL_TEXTURE0);
@@ -657,309 +563,36 @@ void CGrassDrawer::SetupGlStateNear()
 	sky->SetupFog();
 }
 
-
-void CGrassDrawer::ResetGlStateNear()
+void CGrassDrawer::ResetStateOpaque()
 {
-	//CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+	grassShaders[GRASS_PROGRAM_CURR]->Disable();
 
-	{
-		grassShader->Disable();
-
-		GL::MatrixMode(GL_PROJECTION);
-		GL::PopMatrix();
-		GL::MatrixMode(GL_MODELVIEW);
-		GL::PopMatrix();
-	}
-
-	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 }
 
-
-void CGrassDrawer::SetupGlStateFar()
+void CGrassDrawer::Draw()
 {
-	//glEnable(GL_ALPHA_TEST);
-	//glAlphaFunc(GL_GREATER, 0.01f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask(GL_FALSE);
-
-	GL::MatrixMode(GL_PROJECTION);
-		GL::PushMatrix();
-		GL::MultMatrix(camera->GetViewMatrix());
-	GL::MatrixMode(GL_MODELVIEW);
-		GL::PushMatrix();
-		GL::LoadIdentity();
-
-	EnableShader(GRASS_PROGRAM_DIST);
-
-	glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, farTex);
-	glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
-	glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
-
-	glActiveTexture(GL_TEXTURE0);
-}
-
-
-void CGrassDrawer::ResetGlStateFar()
-{
-	grassShader->Disable();
-
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-
-	glDepthMask(GL_TRUE);
-	glDisable(GL_ALPHA_TEST);
-
-}
-
-
-void CGrassDrawer::CreateGrassDispList(int listNum)
-{
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	grng.Seed(15);
-
-	for (int a = 0; a < strawPerTurf; ++a) {
-		// draw a single blade
-		const float lngRnd = grng.NextFloat();
-		const float length = mapInfo->grass.bladeHeight * (1.0f + lngRnd);
-		const float maxAng = mapInfo->grass.bladeAngle * std::max(grng.NextFloat(), 1.0f - smoothstep(0.0f, 1.0f, lngRnd));
-
-		float3 sideVect;
-		sideVect.x = grng.NextFloat() - 0.5f;
-		sideVect.z = grng.NextFloat() - 0.5f;
-		sideVect.ANormalize();
-		float3 bendVect = sideVect.cross(UpVector); // direction to bend into
-		sideVect *= mapInfo->grass.bladeWidth * (-0.15f * lngRnd + 1.0f);
-
-		const float3 basePos = grng.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
-
-		// select one of the 16 color shadings
-		const float xtexCoord = grng.NextInt(16) / 16.0f;
-		const int numSections = 2 + int(maxAng * 1.2f + length * 0.2f);
-
-		float3 normalBend = -bendVect;
-
-		// start btm
-		va->AddVertexTN(basePos + sideVect - float3(0.0f, 3.0f, 0.0f), xtexCoord              , 0.f, normalBend);
-		va->AddVertexTN(basePos - sideVect - float3(0.0f, 3.0f, 0.0f), xtexCoord + (1.0f / 16), 0.f, normalBend);
-
-		for (float h = 0.0f; h < 1.0f; h += (1.0f / numSections)) {
-			const float ang = maxAng * h;
-			const float3 n = (normalBend * std::cos(ang) + UpVector * std::sin(ang)).ANormalize();
-			const float3 edgePos  = (UpVector * std::cos(ang) + bendVect * std::sin(ang)) * length * h;
-			const float3 edgePosL = edgePos - sideVect * (1.0f - h);
-			const float3 edgePosR = edgePos + sideVect * (1.0f - h);
-
-			va->AddVertexTN(basePos + edgePosR, xtexCoord + (1.0f / 32) * h              , h, (n + sideVect * 0.04f).ANormalize());
-			va->AddVertexTN(basePos + edgePosL, xtexCoord - (1.0f / 32) * h + (1.0f / 16), h, (n - sideVect * 0.04f).ANormalize());
-		}
-
-		// end top tip (single triangle)
-		const float3 edgePos = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
-		const float3 n = (normalBend * std::cos(maxAng) + UpVector * std::sin(maxAng)).ANormalize();
-		va->AddVertexTN(basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, n);
-
-		// next blade
-		va->EndStrip();
-	}
-
-	glNewList(listNum, GL_COMPILE);
-	va->DrawArrayTN(GL_TRIANGLE_STRIP);
-	glEndList();
-}
-
-void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
-{
-	float3 redish = float3(0.95f, 0.70f, 0.4f);
-	float3 col = mix(mapInfo->grass.color, redish, 0.1f * grng.NextFloat());
-	col.x = Clamp(col.x, 0.f, 1.f);
-	col.y = Clamp(col.y, 0.f, 1.f);
-	col.z = Clamp(col.z, 0.f, 1.f);
-
-	SColor* img = reinterpret_cast<SColor*>(buf);
-	for (int y=0; y<64; ++y) {
-		for (int x=0; x<16; ++x) {
-			const float brightness = smoothstep(-0.8f, 0.5f, y/63.0f) + ((x%2) == 0 ? 0.035f : 0.0f);
-			const float3 c = col * brightness;
-			img[y*256+x] = SColor(c.r, c.g, c.b, 1.0f);
-		}
-	}
-}
-
-void CGrassDrawer::CreateFarTex()
-{
-	//TODO create normalmap, too?
-	const int sizeMod = 2;
-	const int billboardSize = 256;
-	const int numAngles = 16;
-	const int texSizeX = billboardSize * numAngles;
-	const int texSizeY = billboardSize;
-
-	if (farTex == 0) {
-		glGenTextures(1, &farTex);
-		glBindTexture(GL_TEXTURE_2D, farTex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RGBA8, texSizeX, texSizeY);
-	}
-
-	FBO fboTex;
-	fboTex.Bind();
-	fboTex.AttachTexture(farTex);
-	fboTex.CheckStatus("GRASSDRAWER1");
-
-	FBO fbo;
-	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSizeX * sizeMod, texSizeY * sizeMod);
-	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, texSizeX * sizeMod, texSizeY * sizeMod);
-	fbo.CheckStatus("GRASSDRAWER2");
-
-	if (!fboTex.IsValid() || !fbo.IsValid()) {
-		grassOff = true;
-		return;
-	}
-
-	GL::PushMatrix();
-	GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-
-	glDisable(GL_FOG);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, grassBladeTex);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glColor4f(1,1,1,1);
-
-	glViewport(0,0,texSizeX*sizeMod, texSizeY*sizeMod);
-	glClearColor(mapInfo->grass.color.r,mapInfo->grass.color.g,mapInfo->grass.color.b,0.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.f,0.f,0.f,0.f);
-
-	static constexpr GLdouble clipPlaneEq[4] = {0.0f, 10.f, 0.0f, 0.0f};
-
-	// render turf from different vertical angles
-	for (int a = 0; a < numAngles; ++a) {
-		glViewport(a * billboardSize * sizeMod, 0, billboardSize * sizeMod, billboardSize * sizeMod);
-
-		glSpringMatrix2dSetupPV(-partTurfSize, partTurfSize, partTurfSize, -partTurfSize, -turfSize, turfSize);
-		GL::RotateX(a * 90.0f / (numAngles - 1));
-		GL::MatrixMode(GL_PROJECTION);
-
-		// has to be applied after the matrix transformations,
-		// cause it uses those an `compiles` them into the clip plane
-		glClipPlane(GL_CLIP_PLANE0, &clipPlaneEq[0]);
-
-		glCallList(grassDL);
-	}
-
-	glDisable(GL_CLIP_PLANE0);
-
-	// scale down the rendered fartextures (MSAA) and write to the final texture
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
-	glBlitFramebuffer(0, 0, texSizeX*sizeMod, texSizeY*sizeMod,
-		0, 0, texSizeX, texSizeY,
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-	// compute mipmaps
-	glBindTexture(GL_TEXTURE_2D, farTex);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	// blur non-rendered areas, so in mipmaps color data isn't blurred with background color
-	{
-		const int mipLevels = std::ceil(std::log((float)(std::max(texSizeX, texSizeY) + 1)));
-
-		GL::MatrixMode(GL_MODELVIEW);
-			GL::LoadIdentity();
-		GL::MatrixMode(GL_PROJECTION);
-			GL::LoadIdentity();
-
-		glEnable(GL_BLEND);
-		glBlendFuncSeparate(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA, GL_ZERO, GL_DST_ALPHA);
-
-		// copy each mipmap to its predecessor background
-		// -> fill background with blurred color data
-		fboTex.Bind();
-		for (int mipLevel = mipLevels - 2; mipLevel >= 0; --mipLevel) {
-			fboTex.AttachTexture(farTex, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0, mipLevel);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, mipLevel + 1.f);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, mipLevel + 1.f);
-			glViewport(0, 0, texSizeX>>mipLevel, texSizeY>>mipLevel);
-
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-				va->AddVertexT(float3(-1.0f,  1.0f, 0.0f), 0.0f, 1.0f);
-				va->AddVertexT(float3( 1.0f,  1.0f, 0.0f), 1.0f, 1.0f);
-				va->AddVertexT(float3( 1.0f, -1.0f, 0.0f), 1.0f, 0.0f);
-				va->AddVertexT(float3(-1.0f, -1.0f, 0.0f), 0.0f, 0.0f);
-			va->DrawArrayT(GL_QUADS);
-		}
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		// recreate mipmaps from now blurred base level
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, -1000.f);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD,  1000.f);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-
-	FBO::Unbind();
-	//glSaveTexture(farTex, "grassfar.png");
-}
-
-
-void CGrassDrawer::ResetPos(const int grassBlockX, const int grassBlockZ)
-{
-	if (grassOff)
+	if (grassDisabled || readMap->GetGrassShadingTexture() == 0)
 		return;
 
-	// negative coors are passed during "garbage-collection" resets
-	const int gbx = std::abs(grassBlockX);
-	const int gbz = std::abs(grassBlockZ);
+	SCOPED_TIMER("Draw::World::Foliage::Grass");
+	glPushAttrib(GL_CURRENT_BIT);
 
-	assert(gbx < blocksX);
-	assert(gbz < blocksY);
+	if (!blockDrawer.inViewQuads.empty()) {
+		SetupStateOpaque();
+		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
+		ResetStateOpaque();
+	}
 
-	grass[gbz * blocksX + gbx].lastFar = 0;
-
-	updateBillboards = true;
-	updateVisibility = (grassBlockX >= 0 && grassBlockZ >= 0);
+	glPopAttrib();
 }
 
 
-void CGrassDrawer::ResetPos(const float3& pos)
-{
-	ResetPos(pos.x / BMSSQ, pos.z / BMSSQ);
-}
 
 
 void CGrassDrawer::AddGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassDisabled)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -967,13 +600,13 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
-	grassMap[z * mapDims.mapx / grassSquareSize + x] = 1;
-	ResetPos(pos);
+	grassMap[z * (mapDims.mapx / grassSquareSize) + x] = 1;
+	updateVisibility = true;
 }
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassDisabled)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -981,13 +614,13 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
-	grassMap[z * mapDims.mapx / grassSquareSize + x] = 0;
-	ResetPos(pos);
+	grassMap[z * (mapDims.mapx / grassSquareSize) + x] = 0;
+	updateVisibility = true;
 }
 
-unsigned char CGrassDrawer::GetGrass(const float3& pos)
+uint8_t CGrassDrawer::GetGrass(const float3& pos)
 {
-	if (grassOff)
+	if (grassDisabled)
 		return -1;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -995,15 +628,6 @@ unsigned char CGrassDrawer::GetGrass(const float3& pos)
 	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
-	return grassMap[z * mapDims.mapx / grassSquareSize + x];
+	return grassMap[z * (mapDims.mapx / grassSquareSize) + x];
 }
 
-
-void CGrassDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
-{
-	for (int z = rect.z1; z <= rect.z2; ++z) {
-		for (int x = rect.x1; x <= rect.x2; ++x) {
-			ResetPos(float3(x, 0.f, z));
-		}
-	}
-}

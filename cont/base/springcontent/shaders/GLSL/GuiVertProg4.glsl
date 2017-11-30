@@ -7,11 +7,11 @@ layout(location = 2) in vec4 aFontColor; // used only in font-mode; has to be #2
 out vec2 vTexCoord;
 out vec4 vFontColor;
 
-uniform mat4 viewProjMatrix;
+uniform mat4 viewProjMat;
 
 void main()
 {
-	gl_Position = viewProjMatrix * vec4(aVertexPos, 1.0);
+	gl_Position = viewProjMat * vec4(aVertexPos, 1.0);
 
 	vTexCoord = aTexCoord;
 	vFontColor = aFontColor;
