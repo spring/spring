@@ -63,8 +63,6 @@ protected:
 	unsigned int DrawBlock(const float3& camPos, const int2& blockPos, unsigned int turfMatIndex);
 	void DrawBlocks(const CCamera* cam);
 
-	void ResetPos(const int grassBlockX, const int grassBlockZ);
-
 protected:
 	int2 blockCount;
 	int2 turfDetail;
