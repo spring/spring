@@ -83,7 +83,7 @@ CGrassDrawer::CGrassDrawer(): CEventClient("[GrassDrawer]", 199992, false)
 {
 	const int detail = configHandler->GetInt("GrassDetail");
 
-	if ((grassDisabled = (detail == 0)))
+	if (detail == 0)
 		return;
 
 	blockCount.x = mapDims.mapx / grassSquareSize / grassBlockSize;
@@ -94,7 +94,7 @@ CGrassDrawer::CGrassDrawer(): CEventClient("[GrassDrawer]", 199992, false)
 		MapBitmapInfo grassbm;
 		uint8_t* grassdata = readMap->GetInfoMap("grass", &grassbm);
 
-		if ((grassDisabled = (grassdata == nullptr)))
+		if (grassdata == nullptr)
 			return;
 
 		if (grassbm.width != mapDims.mapx / grassSquareSize || grassbm.height != mapDims.mapy / grassSquareSize) {
@@ -134,7 +134,7 @@ CGrassDrawer::CGrassDrawer(): CEventClient("[GrassDrawer]", 199992, false)
 
 	// create shaders and finalize
 	ChangeDetail(detail);
-	LoadGrassShaders();
+	defDrawGrass = LoadGrassShaders();
 	configHandler->NotifyOnChange(this, {"GrassDetail"});
 
 	// eventclient
@@ -179,7 +179,7 @@ void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value
 }
 
 
-void CGrassDrawer::LoadGrassShaders() {
+bool CGrassDrawer::LoadGrassShaders() {
 	#define sh shaderHandler
 	grassShaders.fill(nullptr);
 
@@ -225,11 +225,12 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
 
-		if ((grassDisabled = !grassShaders[i]->IsValid()))
-			break;
+		if (!grassShaders[i]->IsValid())
+			return false;
 	}
 
 	#undef sh
+	return true;
 }
 
 void CGrassDrawer::CreateGrassBuffer()
@@ -511,7 +512,12 @@ void CGrassDrawer::ResetStateShadow()
 
 void CGrassDrawer::DrawShadow()
 {
-	if (grassDisabled || readMap->GetGrassShadingTexture() == 0)
+	if (luaDrawGrass) {
+		eventHandler.DrawGrass();
+		return;
+	}
+
+	if (!defDrawGrass || readMap->GetGrassShadingTexture() == 0)
 		return;
 
 	if (!blockDrawer.inViewQuads.empty()) {
@@ -568,7 +574,13 @@ void CGrassDrawer::ResetStateOpaque()
 
 void CGrassDrawer::Draw()
 {
-	if (grassDisabled || readMap->GetGrassShadingTexture() == 0)
+	if (luaDrawGrass) {
+		// bypass engine rendering
+		eventHandler.DrawGrass();
+		return;
+	}
+
+	if (!defDrawGrass || readMap->GetGrassShadingTexture() == 0)
 		return;
 
 	SCOPED_TIMER("Draw::World::Foliage::Grass");
@@ -588,7 +600,7 @@ void CGrassDrawer::Draw()
 
 void CGrassDrawer::AddGrass(const float3& pos)
 {
-	if (grassDisabled)
+	if (!defDrawGrass)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -601,7 +613,7 @@ void CGrassDrawer::AddGrass(const float3& pos)
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
 {
-	if (grassDisabled)
+	if (!defDrawGrass)
 		return;
 
 	const int x = int(pos.x) / GSSSQ;
@@ -614,7 +626,7 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 
 uint8_t CGrassDrawer::GetGrass(const float3& pos)
 {
-	if (grassDisabled)
+	if (!defDrawGrass)
 		return -1;
 
 	const int x = int(pos.x) / GSSSQ;

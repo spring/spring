@@ -54,6 +54,7 @@ class LuaOpenGL {
 		NOOP_STATE_FUNCS(DrawWater)
 		NOOP_STATE_FUNCS(DrawSky)
 		NOOP_STATE_FUNCS(DrawSun)
+		NOOP_STATE_FUNCS(DrawGrass)
 		NOOP_STATE_FUNCS(DrawTrees)
 
 		static void EnableDrawWorld();

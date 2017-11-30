@@ -310,6 +310,7 @@ class CEventClient
 		virtual void DrawWater() {}
 		virtual void DrawSky() {}
 		virtual void DrawSun() {}
+		virtual void DrawGrass() {}
 		virtual void DrawTrees() {}
 		virtual void DrawWorld() {}
 		virtual void DrawWorldPreUnit() {}

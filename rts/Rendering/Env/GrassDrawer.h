@@ -35,6 +35,9 @@ public:
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+	bool& DefDrawGrassRef() { return defDrawGrass; }
+	bool& LuaDrawGrassRef() { return luaDrawGrass; }
+
 public:
 	// EventClient
 	void UnsyncedHeightMapUpdate(const SRectangle& rect) override {}
@@ -50,7 +53,7 @@ protected:
 		GRASS_PROGRAM_LAST        = 3,
 	};
 
-	void LoadGrassShaders();
+	bool LoadGrassShaders();
 	void CreateGrassBladeTex(uint8_t* buf);
 	void CreateGrassBuffer();
 
@@ -82,7 +85,8 @@ protected:
 	float3 prvUpdateCamPos;
 	float3 prvUpdateCamDir;
 
-	bool grassDisabled = false;
+	bool luaDrawGrass = false;
+	bool defDrawGrass = false;
 	bool updateVisibility = false;
 };
 

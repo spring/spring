@@ -225,6 +225,7 @@ class CLuaHandle : public CEventClient
 		void DrawWater() override;
 		void DrawSky() override;
 		void DrawSun() override;
+		void DrawGrass() override;
 		void DrawTrees() override;
 		void DrawWorld() override;
 		void DrawWorldPreUnit() override;

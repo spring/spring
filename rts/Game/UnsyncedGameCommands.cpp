@@ -1268,6 +1268,38 @@ public:
 
 
 
+class DrawGrassActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DrawGrassActionExecutor() : IUnsyncedActionExecutor("DrawGrass", "Enable/Disable grass rendering") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		const char* strs[] = {"disabled", "enabled"};
+
+		switch ((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str())) {
+			case -1: {
+				grassDrawer->DefDrawGrassRef() = !grassDrawer->DefDrawGrassRef();
+				grassDrawer->LuaDrawGrassRef() = !grassDrawer->LuaDrawGrassRef();
+			} break;
+			case 0: {
+				grassDrawer->DefDrawGrassRef() = false;
+				grassDrawer->LuaDrawGrassRef() = false;
+			} break;
+			case 1: {
+				grassDrawer->DefDrawGrassRef() = true;
+				grassDrawer->LuaDrawGrassRef() = false;
+			} break;
+			case 2: {
+				grassDrawer->DefDrawGrassRef() = false;
+				grassDrawer->LuaDrawGrassRef() = true;
+			} break;
+			default: {} break;
+		}
+
+		LOG("{engine, Lua} grass rendering {%s, %s}", strs[grassDrawer->DefDrawGrassRef()], strs[grassDrawer->LuaDrawGrassRef()]);
+		return true;
+	}
+};
+
 class DrawTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees", "Enable/Disable tree rendering") {}
@@ -3078,6 +3110,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
+	AddActionExecutor(new DrawGrassActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());

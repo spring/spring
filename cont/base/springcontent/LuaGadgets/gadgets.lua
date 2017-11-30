@@ -1750,6 +1750,12 @@ function gadgetHandler:DrawSun()
   end
 end
 
+function gadgetHandler:DrawGrass()
+  for _,g in r_ipairs(self.DrawGrassList) do
+    g:DrawGrass()
+  end
+end
+
 function gadgetHandler:DrawTrees()
   for _,g in r_ipairs(self.DrawTreesList) do
     g:DrawTrees()
