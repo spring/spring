@@ -70,9 +70,7 @@ static constexpr int   BMSSQ = SQUARE_SIZE * blockMapSize;
 static GrassRNG drawRNG;
 static GrassRNG turfRNG;
 
-#if 1
 static std::array<CMatrix44f, 128> turfMatrices;
-#endif
 
 static CGrassBlockDrawer blockDrawer;
 
@@ -174,8 +172,6 @@ void CGrassDrawer::ChangeDetail(int detail) {
 
 	// recreate turf geometry
 	CreateGrassBuffer();
-
-	updateVisibility = true;
 }
 
 void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value) {
@@ -389,7 +385,7 @@ static float GetGrassBlockCamDistSq(const float3& pos, const int2 coors)
 	const float qx = coors.x * GSSSQ;
 	const float qz = coors.y * GSSSQ;
 
-	const float3 mid = float3(qx, CGround::GetHeightReal(qx, qz, false), qz);
+	const float3 mid = {qx, CGround::GetHeightReal(qx, qz, false), qz};
 	const float3 dif = pos - mid;
 
 	return (dif.SqLength());
@@ -601,7 +597,6 @@ void CGrassDrawer::AddGrass(const float3& pos)
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
 	grassMap[z * (mapDims.mapx / grassSquareSize) + x] = 1;
-	updateVisibility = true;
 }
 
 void CGrassDrawer::RemoveGrass(const float3& pos)
@@ -615,7 +610,6 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
 
 	grassMap[z * (mapDims.mapx / grassSquareSize) + x] = 0;
-	updateVisibility = true;
 }
 
 uint8_t CGrassDrawer::GetGrass(const float3& pos)
