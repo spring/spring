@@ -27,7 +27,7 @@ class LuaOpenGL {
 		};
 
 	public:
-		static void Init();
+		static void Init() {}
 		static void Free();
 
 		static bool PushEntries(lua_State* L);
@@ -230,7 +230,7 @@ class LuaOpenGL {
 		static int MultiTexCoord(lua_State* L);
 		static int SecondaryColor(lua_State* L) { return 0; }
 		static int FogCoord(lua_State* L) { return 0; }
-		static int EdgeFlag(lua_State* L);
+		static int EdgeFlag(lua_State* L) { return 0; }
 
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);

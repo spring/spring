@@ -82,9 +82,7 @@ static const int MAX_TEXTURE_UNITS = 32;
 /******************************************************************************/
 /******************************************************************************/
 
-void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
-
-unsigned int LuaOpenGL::resetStateList = 0;
+void (*LuaOpenGL::resetMatrixFunc)(void) = nullptr;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
@@ -173,26 +171,14 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 /******************************************************************************/
 /******************************************************************************/
 
-void LuaOpenGL::Init()
-{
-	resetStateList = glGenLists(1);
-
-	glNewList(resetStateList, GL_COMPILE);
-	ResetGLState();
-	glEndList();
-}
-
 void LuaOpenGL::Free()
 {
-	glDeleteLists(resetStateList, 1);
-
 	for (const OcclusionQuery* q: occlusionQueries) {
 		glDeleteQueries(1, &q->id);
 	}
 
 	occlusionQueries.clear();
 }
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -380,51 +366,64 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 void LuaOpenGL::ResetGLState()
 {
-	glDisable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_CLAMP);
+	glDisable(GL_DEPTH_TEST); // ::DepthTest
+	glDepthFunc(GL_LEQUAL); // ::DepthTest
+	glDepthMask(GL_FALSE); // ::DepthMask
+	#if 0
+	glDisable(GL_DEPTH_CLAMP); // ::DepthClamp
+	#endif
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // ::ColorMask, ::*DrawWorldShadow (!)
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND); // ::Blending
+	#if 0
+	glBlendEquation(GL_FUNC_ADD); // ::BlendEquation*
+	#endif
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ::Blending, ::BlendFunc*
 
 	glDisable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
 
-	glDisable(GL_COLOR_LOGIC_OP);
-	glLogicOp(GL_INVERT);
+	#if 0
+	glDisable(GL_COLOR_LOGIC_OP); // ::LogicOp
+	glLogicOp(GL_INVERT); // ::LogicOp
+	#endif
 
-	// FIXME glViewport(gl); depends on the mode
+	glDisable(GL_CULL_FACE); // ::Culling
+	glCullFace(GL_BACK); // ::Culling
 
-	glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	#if 0
+	glDisable(GL_SCISSOR_TEST); // ::Scissor
+	#endif
 
-	glDisable(GL_SCISSOR_TEST);
+	#if 0
+	glDisable(GL_STENCIL_TEST); // ::StencilTest
+	glStencilMask(~0); // ::StencilMask*
+	// glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	#endif
 
-	glDisable(GL_STENCIL_TEST);
-	glStencilMask(~0);
-	glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-
+	#if 0
 	// FIXME -- multitexturing
-	glDisable(GL_TEXTURE_2D);
+	// glDisable(GL_TEXTURE_2D);
+	#endif
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // ::PolygonMode
+	#if 0
+	glDisable(GL_POLYGON_OFFSET_FILL); // ::PolygonOffset, ::*DrawWorldShadow (!)
 	glDisable(GL_POLYGON_OFFSET_LINE);
 	glDisable(GL_POLYGON_OFFSET_POINT);
+	#endif
 
-	glDisable(GL_LINE_STIPPLE);
+	#if 0
+	glDisable(GL_LINE_STIPPLE); // ::LineStipple
 
-	glDisable(GL_CLIP_PLANE4);
-	glDisable(GL_CLIP_PLANE5);
+	glDisable(GL_CLIP_PLANE4); // ::ClipPlane
+	glDisable(GL_CLIP_PLANE5); // ::ClipPlane
+	#endif
+	glLineWidth(1.0f); // ::LineWidth
 
-	glLineWidth(1.0f);
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	#if 0
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // ::Color, ::Shape
+	#endif
 	glUseProgram(0);
 }
 
@@ -453,7 +452,7 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 		return;
 
 	glPushAttrib(AttribBits);
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -498,7 +497,7 @@ void LuaOpenGL::ResetDrawGenesis()
 		return;
 
 	ResetGenesisMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -527,7 +526,7 @@ void LuaOpenGL::ResetDrawWorld()
 		return;
 
 	ResetWorldMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -556,7 +555,7 @@ void LuaOpenGL::ResetDrawWorldPreUnit()
 		return;
 
 	ResetWorldMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -569,14 +568,13 @@ void LuaOpenGL::EnableDrawWorldShadow()
 {
 	EnableCommon(DRAW_WORLD_SHADOW);
 	resetMatrixFunc = ResetWorldShadowMatrices;
+
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glPolygonOffset(1.0f, 1.0f);
-
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	// FIXME: map/proj/tree passes
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 }
 
@@ -584,8 +582,7 @@ void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Disable();
 
 	ResetWorldShadowMatrices();
@@ -598,7 +595,8 @@ void LuaOpenGL::ResetDrawWorldShadow()
 		return;
 
 	ResetWorldShadowMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
+
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -630,7 +628,7 @@ void LuaOpenGL::ResetDrawWorldReflection()
 		return;
 
 	ResetWorldMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -659,7 +657,7 @@ void LuaOpenGL::ResetDrawWorldRefraction()
 		return;
 
 	ResetWorldMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 /******************************************************************************/
@@ -673,7 +671,7 @@ void LuaOpenGL::EnableDrawScreenCommon()
 	resetMatrixFunc = ResetScreenMatrices;
 
 	SetupScreenMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -690,7 +688,7 @@ void LuaOpenGL::ResetDrawScreenCommon()
 		return;
 
 	ResetScreenMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 /******************************************************************************/
@@ -722,7 +720,7 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		if (safeMode) {
 			glPopAttrib();
 		} else {
-			glCallList(resetStateList);
+			ResetGLState();
 		}
 		resetMatrixFunc = ResetScreenMatrices;
 		ResetScreenMatrices();
@@ -742,7 +740,7 @@ void LuaOpenGL::ResetDrawInMiniMap()
 		return;
 
 	ResetMiniMapMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -775,7 +773,7 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 		if (safeMode) {
 			glPopAttrib();
 		} else {
-			glCallList(resetStateList);
+			ResetGLState();
 		}
 		resetMatrixFunc = ResetScreenMatrices;
 		ResetScreenMatrices();
@@ -795,7 +793,7 @@ void LuaOpenGL::ResetDrawInMiniMapBackground()
 		return;
 
 	ResetMiniMapMatrices();
-	glCallList(resetStateList);
+	ResetGLState();
 }
 
 
@@ -1975,17 +1973,6 @@ int LuaOpenGL::MultiTexCoord(lua_State* L)
 }
 
 
-int LuaOpenGL::EdgeFlag(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	if (lua_isboolean(L, 1))
-		glEdgeFlag(lua_toboolean(L, 1));
-
-	return 0;
-}
-
-
 /******************************************************************************/
 
 int LuaOpenGL::Rect(lua_State* L)
@@ -2102,7 +2089,7 @@ int LuaOpenGL::Color(lua_State* L)
 int LuaOpenGL::ResetState(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	glCallList(resetStateList);
+	ResetGLState();
 	return 0;
 }
 
@@ -2111,13 +2098,10 @@ int LuaOpenGL::ResetMatrices(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
+	if (lua_gettop(L) != 0)
 		luaL_error(L, "gl.ResetMatrices takes no arguments");
-	}
 
 	resetMatrixFunc();
-
 	return 0;
 }
 
@@ -3695,7 +3679,7 @@ int LuaOpenGL::GetAtmosphere(lua_State* L)
 		return 3;
 	}
 
-	const float3* data = NULL;
+	const float3* data = nullptr;
 
 	// float
 	if (param == "fogStart") {
@@ -3717,7 +3701,7 @@ int LuaOpenGL::GetAtmosphere(lua_State* L)
 		data = &sky->cloudColor;
 	}
 
-	if (data != NULL) {
+	if (data != nullptr) {
 		lua_pushnumber(L, data->x);
 		lua_pushnumber(L, data->y);
 		lua_pushnumber(L, data->z);

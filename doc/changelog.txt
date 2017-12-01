@@ -46,6 +46,7 @@ Lua:
  - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen
  - remove gl.CreateList, gl.CallList, gl.DeleteList
  - remove gl.DrawListAtUnit
+ - remove gl.EdgeFlag
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list handling
  - add `VFS.GAME` as a synonym to `VFS.MOD`
