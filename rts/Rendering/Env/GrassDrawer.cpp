@@ -187,20 +187,16 @@ bool CGrassDrawer::LoadGrassShaders() {
 		"grassNearAdvShader",
 		"grassShadGenShader",
 	};
-	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
-		"#define DISTANCE_NEAR\n",
-		"#define SHADOW_GEN\n",
-	};
 
 	for (int i = 0; i < GRASS_PROGRAM_CURR; i++) {
 		grassShaders[i] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[i] + "GLSL");
-		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i], GL_VERTEX_SHADER));
-		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassFragProg.glsl", shaderDefines[i], GL_FRAGMENT_SHADER));
+		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", "", GL_VERTEX_SHADER));
+		grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassFragProg.glsl", "", GL_FRAGMENT_SHADER));
 		grassShaders[i]->Link();
 
 		grassShaders[i]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 		grassShaders[i]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
-		grassShaders[i]->SetFlag("SHADOW_GEN", i == GRASS_PROGRAM_SHADOW_GEN);
+		grassShaders[i]->SetFlag("SHADOW_GEN", i == GRASS_PROGRAM_SHADOW);
 
 		// idx 0, not settable as an array via name-based API
 		// needs to be named "[0]" or state-copying will fail
@@ -240,13 +236,11 @@ void CGrassDrawer::CreateGrassBuffer()
 	grassBuffer.Kill();
 	grassBuffer.Init();
 
-	static std::vector<VA_TYPE_TN> verts;
-	static std::vector<uint32_t> indcs;
+	std::vector<VA_TYPE_TN> verts;
+	std::vector<uint32_t> indcs;
 
-	verts.clear();
-	verts.reserve(turfDetail.y * 8 * 3);
-	indcs.clear();
-	indcs.reserve(turfDetail.y * 8 * 3);
+	verts.reserve(turfDetail.y * 8 * 4);
+	indcs.reserve(turfDetail.y * 8 * 6);
 
 	for (int a = 0; a < turfDetail.y; ++a) {
 		// generate a single blade
@@ -269,8 +263,8 @@ void CGrassDrawer::CreateGrassBuffer()
 
 
 		// start at bottom of blade
-		VA_TYPE_TN prvVertR = {basePos + sideVect - (UpVector * 3.0f), xtexCoord              , 0.f, normalBend};
-		VA_TYPE_TN prvVertL = {basePos - sideVect - (UpVector * 3.0f), xtexCoord + (1.0f / 16), 0.f, normalBend};
+		VA_TYPE_TN prvVertR = {basePos + sideVect - (UpVector * 3.0f), xtexCoord              , 0.0f, normalBend};
+		VA_TYPE_TN prvVertL = {basePos - sideVect - (UpVector * 3.0f), xtexCoord + (1.0f / 16), 0.0f, normalBend};
 
 		for (float h = 0.0f; h < 1.0f; h += heightIncr) {
 			const float ang = maxAng * h;
@@ -298,12 +292,10 @@ void CGrassDrawer::CreateGrassBuffer()
 		}
 
 		// blade tip; single triangle
-		const float3 edgePos = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
+		const float3 tipOffset = (UpVector * std::cos(maxAng) + bendVect * std::sin(maxAng)) * length;
 		const float3 normalDir = (normalBend * std::cos(maxAng) + UpVector * std::sin(maxAng)).ANormalize();
 
-		verts.push_back(prvVertR);
-		verts.push_back(prvVertL);
-		verts.push_back({basePos + edgePos, xtexCoord + (1.0f / 32), 1.0f, normalDir});
+		verts.push_back({basePos + tipOffset, xtexCoord + (1.0f / 32), 1.0f, normalDir});
 
 		indcs.push_back(verts.size() - 3);
 		indcs.push_back(verts.size() - 2);
@@ -360,11 +352,11 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
 
 	switch (type) {
-		case GRASS_PROGRAM_NEAR: {
+		case GRASS_PROGRAM_OPAQUE: {
 			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
 			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
 		} break;
-		case GRASS_PROGRAM_SHADOW_GEN: {
+		case GRASS_PROGRAM_SHADOW: {
 			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, shadowHandler->GetShadowViewMatrix());
 			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, shadowHandler->GetShadowProjMatrix());
 		} break;
@@ -441,10 +433,8 @@ void CGrassDrawer::DrawBlocks(const CCamera* cam)
 {
 	Shader::IProgramObject* grassShader = grassShaders[GRASS_PROGRAM_CURR];
 
-	const unsigned int blocksPerBatch = turfMatrices.size() / turfDetail.x;
-
-	unsigned int numBlocksDrawn = 0;
-	unsigned int numQueuedTurfs = 0;
+	const unsigned int maxTurfsPerBatch = turfMatrices.size() - turfDetail.x + 1;
+	      unsigned int numInstanceTurfs = 0;
 
 	for (const int2 idx: blockDrawer.inViewQuads) {
 		for (int y = idx.y * grassBlockSize; y < (idx.y + 1) * grassBlockSize; ++y) {
@@ -452,27 +442,23 @@ void CGrassDrawer::DrawBlocks(const CCamera* cam)
 				if (grassMap[y * (mapDims.mapx / grassSquareSize) + x] == 0)
 					continue;
 
-				numQueuedTurfs += DrawBlock(cam->GetPos(), {x, y}, numQueuedTurfs);
-				numBlocksDrawn += 1;
-
-				if (numBlocksDrawn < blocksPerBatch)
+				if ((numInstanceTurfs += DrawBlock(cam->GetPos(), {x, y}, numInstanceTurfs)) < maxTurfsPerBatch)
 					continue;
 
-				grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
-				grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numQueuedTurfs);
+				grassShader->SetUniformMatrix4fv(0, -int(numInstanceTurfs), false, &turfMatrices[0].m[0]);
+				grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numInstanceTurfs);
 
-				numBlocksDrawn = 0;
-				numQueuedTurfs = 0;
+				numInstanceTurfs = 0;
 			}
 		}
 	}
 
-	if (numQueuedTurfs == 0)
+	if (numInstanceTurfs == 0)
 		return;
 
 	// draw any leftovers
-	grassShader->SetUniformMatrix4fv(0, -int(numQueuedTurfs), false, &turfMatrices[0].m[0]);
-	grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numQueuedTurfs);
+	grassShader->SetUniformMatrix4fv(0, -int(numInstanceTurfs), false, &turfMatrices[0].m[0]);
+	grassBuffer.SubmitIndexedInstanced(GL_TRIANGLES, 0, grassBuffer.GetNumIndcs<uint32_t>(), numInstanceTurfs);
 }
 
 
@@ -503,7 +489,7 @@ void CGrassDrawer::Update()
 
 void CGrassDrawer::SetupStateShadow()
 {
-	EnableShader(GRASS_PROGRAM_SHADOW_GEN);
+	EnableShader(GRASS_PROGRAM_SHADOW);
 
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_ALPHA_TEST);
@@ -564,7 +550,7 @@ void CGrassDrawer::SetupStateOpaque()
 
 	// bind shader
 	{
-		EnableShader(GRASS_PROGRAM_NEAR);
+		EnableShader(GRASS_PROGRAM_OPAQUE);
 
 		if (shadowHandler->ShadowsLoaded())
 			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);

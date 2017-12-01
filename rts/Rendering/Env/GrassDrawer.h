@@ -54,13 +54,11 @@ public:
 	void Update() override;
 
 protected:
-	friend class CGrassBlockDrawer;
-
 	enum GrassShaderProgram {
-		GRASS_PROGRAM_NEAR        = 0,
-		GRASS_PROGRAM_SHADOW_GEN  = 1,
-		GRASS_PROGRAM_CURR        = 2,
-		GRASS_PROGRAM_LAST        = 3,
+		GRASS_PROGRAM_OPAQUE = 0,
+		GRASS_PROGRAM_SHADOW = 1,
+		GRASS_PROGRAM_CURR   = 2,
+		GRASS_PROGRAM_LAST   = 3,
 	};
 
 	bool LoadGrassShaders();
