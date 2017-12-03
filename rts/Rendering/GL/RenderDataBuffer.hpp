@@ -171,6 +171,10 @@ namespace GL {
 			indcs.Generate();
 			array.Generate();
 
+			// defaults
+			SetElemBufferUsage(GL_STATIC_DRAW);
+			SetIndxBufferUsage(GL_STATIC_DRAW);
+
 			inited = true;
 			mapped = false;
 			return true;
@@ -191,6 +195,9 @@ namespace GL {
 			mapped = false;
 			return true;
 		}
+
+		void SetElemBufferUsage(unsigned int usage) { elems.usage = usage; }
+		void SetIndxBufferUsage(unsigned int usage) { indcs.usage = usage; }
 
 		void EnableShader() { shader.Enable(); }
 		void DisableShader() { shader.Disable(); }

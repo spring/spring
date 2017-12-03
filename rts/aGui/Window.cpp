@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "Gui.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/VertexArrayTypes.h"
 #include "Rendering/Fonts/glFont.h"
@@ -77,10 +78,7 @@ void Window::GeometryChangeSelf()
 		vaElems[2].p.z = depth;
 		vaElems[3].p.z = depth;
 
-		VBO* vbo = GetVBO(1);
-		vbo->Bind();
-		vbo->New(sizeof(vaElems), GL_DYNAMIC_DRAW, vaElems);
-		vbo->Unbind();
+		GeometryChangeSelfRaw(1, sizeof(vaElems), vaElems);
 	}
 }
 

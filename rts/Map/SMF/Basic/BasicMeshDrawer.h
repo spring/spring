@@ -8,6 +8,7 @@
 
 #include "Map/MapDrawPassTypes.h"
 #include "Map/SMF/IMeshDrawer.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/VBO.h"
 #include "System/EventClient.h"
 
@@ -34,12 +35,17 @@ public:
 		MAP_BORDER_B = 3,
 	};
 
-	struct MeshPatch {
-		std::array<VBO, LOD_LEVELS> squareVertexBuffers;
-		// std::array<VBO, LOD_LEVELS> squareNormalBuffers;
+	struct MeshBuffer {
+		VAO vao;
+		VBO vbo;
+	};
 
-		std::array<VBO, LOD_LEVELS> borderVertexBuffers[MAP_BORDER_B + 1];
-		std::array<VBO, LOD_LEVELS> borderNormalBuffers[MAP_BORDER_B + 1];
+	struct MeshPatch {
+		std::array<MeshBuffer, LOD_LEVELS> squareVertexBuffers;
+		// std::array<MeshBuffer, LOD_LEVELS> squareNormalBuffers;
+
+		std::array<MeshBuffer, LOD_LEVELS> borderVertexBuffers[MAP_BORDER_B + 1];
+		std::array<MeshBuffer, LOD_LEVELS> borderNormalBuffers[MAP_BORDER_B + 1];
 
 		std::array<float3*, LOD_LEVELS> squareVertexPtrs;
 		// std::array<float3*, LOD_LEVELS> squareNormalPtrs;
@@ -48,7 +54,8 @@ public:
 		std::array<uint32_t, 1> uhmUpdateFrames;
 	};
 
-	void Update() override;
+	void Update(const DrawPass::e& drawPass);
+	void Update() override {}
 	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 
 	void DrawMesh(const DrawPass::e& drawPass) override;
@@ -57,11 +64,10 @@ public:
 private:
 	void UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32_t py, const float* chm, const float3* cnm);
 	void UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32_t py, const float* chm, const float3* cnm);
-	void UploadPatchBorderNormals(VBO& nrmlBuffer, const float3& nrmlVector, uint32_t lodVerts);
 	void UploadPatchIndices(uint32_t n);
 
-	void DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam) const;
-	void DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam, uint32_t borderSide) const;
+	void DrawSquareMeshPatch(const MeshPatch& meshPatch, const CCamera* activeCam) const;
+	void DrawBorderMeshPatch(const MeshPatch& meshPatch, const CCamera* activeCam, uint32_t borderSide) const;
 
 	uint32_t CalcDrawPassLOD(const CCamera* cam, const DrawPass::e& drawPass) const;
 

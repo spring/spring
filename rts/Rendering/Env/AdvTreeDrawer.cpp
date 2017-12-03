@@ -282,18 +282,11 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 	glDepthMask(GL_TRUE);
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glDisable(GL_BLEND);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
 }
 
 void CAdvTreeDrawer::ResetDrawState()
 {
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // bound by BindTreeGeometry
+	glBindVertexArray(0);
 
 	if (shadowHandler->ShadowsLoaded()) {
 		// barkTex
@@ -337,18 +330,11 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
 }
 
 void CAdvTreeDrawer::ResetShadowDrawState()
 {
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	treeShaders[TREE_PROGRAM_ACTIVE]->Disable();
 	treeShaders[TREE_PROGRAM_ACTIVE] = nullptr;

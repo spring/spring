@@ -24,8 +24,8 @@ public:
 	void BindTreeBuffer(unsigned int treeType) const;
 	void DrawTreeBuffer(unsigned int treeType) const;
 
-	unsigned int GetBushBuffer() const { return treeBuffers[0]; }
-	unsigned int GetPineBuffer() const { return treeBuffers[1]; }
+	unsigned int GetBushBuffer() const { return treeVBOs[0]; }
+	unsigned int GetPineBuffer() const { return treeVBOs[1]; }
 	unsigned int GetBarkTex() const { return barkTex; }
 
 private:
@@ -55,7 +55,8 @@ private:
 
 	size_t numTreeVerts[NUM_TREE_TYPES * 2] = {0};
 
-	GLuint treeBuffers[2] = {0, 0};
+	GLuint treeVBOs[2] = {0, 0};
+	GLuint treeVAOs[2] = {0, 0};
 	GLuint barkTex = 0;
 };
 

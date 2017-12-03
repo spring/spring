@@ -4,13 +4,65 @@
 #include "GuiElement.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/VertexArrayTypes.h"
 
 namespace agui
 {
 
-static std::vector<VBO> quadBuffers[2];
+struct RenderElem {
+public:
+	RenderElem() = default;
+	RenderElem(RenderElem&& e) { *this = std::move(e); }
+	RenderElem(const RenderElem& e) = delete;
+
+	RenderElem& operator = (const RenderElem& e) = delete;
+	RenderElem& operator = (RenderElem&& e) {
+		array = std::move(e.array);
+		verts = std::move(e.verts);
+		return *this;
+	}
+
+	void EnableAttribs() {
+		// texcoors are effectively ignored for all elements except Picture
+		// (however, shader always samples from the texture so do not leave
+		// them undefined)
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 0));
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 3));
+	}
+	void DisableAttribs() {
+	}
+
+	void Generate() {
+		array.Generate();
+		verts.Generate();
+	}
+	void Bind() {
+		array.Bind();
+		verts.Bind();
+	}
+	void Unbind() {
+		array.Unbind();
+		verts.Unbind();
+	}
+	void Submit(unsigned int mode) {
+		array.Bind();
+		glDrawArrays(mode, 0, 4);
+		array.Unbind();
+	}
+	void Delete() {
+		array.Delete();
+		verts.Delete();
+	}
+
+	VAO array;
+	VBO verts;
+};
+
+static std::vector<RenderElem> renderElems[2];
 static std::vector<size_t> freeIndices;
 
 
@@ -19,25 +71,25 @@ static std::vector<size_t> freeIndices;
 int GuiElement::screensize[2];
 int GuiElement::screenoffset[2];
 
-GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false), weight(1), vboIndex(-1)
+GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false), weight(1), elIndex(-1)
 {
-	if (quadBuffers[0].empty()) {
-		quadBuffers[0].reserve(16);
-		quadBuffers[1].reserve(16);
+	if (renderElems[0].empty()) {
+		renderElems[0].reserve(16);
+		renderElems[1].reserve(16);
 	}
 
 	if (freeIndices.empty()) {
-		vboIndex = quadBuffers[0].size();
+		elIndex = renderElems[0].size();
 
-		quadBuffers[0].emplace_back();
-		quadBuffers[1].emplace_back();
+		renderElems[0].emplace_back();
+		renderElems[1].emplace_back();
 	} else {
-		vboIndex = freeIndices.back();
+		elIndex = freeIndices.back();
 		freeIndices.pop_back();
 	}
 
-	quadBuffers[0][vboIndex].Generate();
-	quadBuffers[1][vboIndex].Generate();
+	renderElems[0][elIndex].Generate();
+	renderElems[1][elIndex].Generate();
 
 	std::memset(pos, 0, sizeof(pos));
 	std::memset(size, 0, sizeof(size));
@@ -56,40 +108,30 @@ GuiElement::~GuiElement()
 		delete *i;
 	}
 
-	quadBuffers[0][vboIndex].Delete();
-	quadBuffers[1][vboIndex].Delete();
-	quadBuffers[0][vboIndex] = std::move(VBO());
-	quadBuffers[1][vboIndex] = std::move(VBO());
-	freeIndices.push_back(vboIndex);
+	renderElems[0][elIndex].Delete();
+	renderElems[1][elIndex].Delete();
+
+	renderElems[0][elIndex] = std::move(RenderElem());
+	renderElems[1][elIndex] = std::move(RenderElem());
+
+	freeIndices.push_back(elIndex);
 }
 
 
-
-VBO* GuiElement::GetVBO(unsigned int k) { return &quadBuffers[k][vboIndex]; }
 
 void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
-	VBO& vbo = *GetVBO(indx);
-
-	vbo.Bind();
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 0));
-
-	// texcoors are effectively ignored for all elements except Picture
-	// (however, shader always samples from the texture so do not leave
-	// them undefined)
-	if (true || HasTexCoors()) {
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 3));
-	}
-
-	vbo.Unbind();
-
-	glDrawArrays(mode, 0, 4);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
+	renderElems[indx][elIndex].Submit(mode);
 }
 
+
+void GuiElement::GeometryChangeSelfRaw(unsigned int bufIndx, unsigned int numBytes, const VA_TYPE_T* elemsPtr) const
+{
+	renderElems[bufIndx][elIndex].Bind();
+	renderElems[bufIndx][elIndex].verts.New(numBytes, GL_DYNAMIC_DRAW, elemsPtr);
+	renderElems[bufIndx][elIndex].EnableAttribs();
+	renderElems[bufIndx][elIndex].Unbind();
+	renderElems[bufIndx][elIndex].DisableAttribs();
+}
 
 void GuiElement::GeometryChangeSelf()
 {
@@ -109,9 +151,7 @@ void GuiElement::GeometryChangeSelf()
 	vaElems[2].s = 1.0f; vaElems[2].t = 0.0f;
 	vaElems[3].s = 1.0f; vaElems[3].t = 1.0f;
 
-	quadBuffers[0][vboIndex].Bind();
-	quadBuffers[0][vboIndex].New(sizeof(vaElems), GL_DYNAMIC_DRAW, vaElems);
-	quadBuffers[0][vboIndex].Unbind();
+	GeometryChangeSelfRaw(0, sizeof(vaElems), vaElems);
 }
 
 void GuiElement::GeometryChange()

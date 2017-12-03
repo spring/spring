@@ -336,11 +336,11 @@ void GL::RenderDataBuffer::Upload(
 ) {
 	array.Bind();
 	elems.Bind();
-	elems.New(numElems * sizeof(uint8_t), GL_STATIC_DRAW, rawElems);
+	elems.New(numElems * sizeof(uint8_t), elems.usage, rawElems);
 
 	if (numIndcs > 0) {
 		indcs.Bind();
-		indcs.New(numIndcs * sizeof(uint8_t), GL_STATIC_DRAW, rawIndcs);
+		indcs.New(numIndcs * sizeof(uint8_t), indcs.usage, rawIndcs);
 	}
 
 	EnableAttribs(numAttrs, rawAttrs);

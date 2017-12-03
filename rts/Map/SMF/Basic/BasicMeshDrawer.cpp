@@ -104,7 +104,13 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 			MeshPatch& meshPatch = meshPatches[y * numPatchesX + x];
 
 			for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
-				meshPatch.squareVertexBuffers[n].UnmapIf();
+				meshPatch.squareVertexBuffers[n].vbo.UnmapIf();
+				meshPatch.squareVertexBuffers[n].vao.Delete();
+			}
+			for (uint32_t i = MAP_BORDER_L; i <= MAP_BORDER_B; i++) {
+				for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
+					meshPatch.borderVertexBuffers[i][n].vao.Delete();
+				}
 			}
 
 			meshPatch.squareVertexPtrs.fill(nullptr);
@@ -115,7 +121,7 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 
 
 
-void CBasicMeshDrawer::Update() {
+void CBasicMeshDrawer::Update(const DrawPass::e& drawPass) {
 	CCamera* activeCam = CCamera::GetActiveCamera();
 	MeshPatch* meshPatch = &meshPatches[0];
 
@@ -123,6 +129,8 @@ void CBasicMeshDrawer::Update() {
 
 	activeCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(activeCam, &patchVisTestDrawer, 1e9, PATCH_SIZE);
+
+	drawPassLOD = CalcDrawPassLOD(activeCam, drawPass);
 }
 
 void CBasicMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect) {
@@ -153,7 +161,9 @@ void CBasicMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect) {
 
 void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32_t py, const float* chm, const float3* cnm) {
 	MeshPatch& meshPatch = meshPatches[py * numPatchesX + px];
-	VBO& squareVertexBuffer = meshPatch.squareVertexBuffers[n];
+
+	VAO& squareVAO = meshPatch.squareVertexBuffers[n].vao;
+	VBO& squareVBO = meshPatch.squareVertexBuffers[n].vbo;
 
 	meshPatch.uhmUpdateFrames[0] = globalRendering->drawFrame;
 
@@ -168,16 +178,21 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	{
 		#if (USE_MAPPED_BUFFERS == 1)
 		// HACK: the VBO constructor defaults to storage=false
-		squareVertexBuffer.immutableStorage = true;
+		squareVBO.immutableStorage = true;
 		#endif
 
-		squareVertexBuffer.Bind(GL_ARRAY_BUFFER);
-		squareVertexBuffer.New((lodVerts * lodVerts) * sizeof(float3), GL_DYNAMIC_DRAW);
+		if (squareVBO.vboId == 0)
+			squareVAO.Generate();
+
+		squareVAO.Bind();
+		squareVBO.Bind(GL_ARRAY_BUFFER);
+		squareVBO.New((lodVerts * lodVerts) * sizeof(float3), GL_DYNAMIC_DRAW);
+
 
 		float3* verts = meshPatch.squareVertexPtrs[n];
 
 		if (verts == nullptr)
-			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer(BUFFER_MAP_BITS));
+			verts = reinterpret_cast<float3*>(squareVBO.MapBuffer(BUFFER_MAP_BITS));
 
 		#if (USE_MAPPED_BUFFERS == 1)
 		meshPatch.squareVertexPtrs[n] = verts;
@@ -197,10 +212,16 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 			}
 		}
 
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), VA_TYPE_OFFSET(float, 0));
+
 		#if (USE_MAPPED_BUFFERS == 0)
-		squareVertexBuffer.UnmapBuffer();
+		squareVBO.UnmapBuffer();
 		#endif
-		squareVertexBuffer.Unbind();
+		squareVAO.Unbind();
+		squareVBO.Unbind();
+
+		glDisableVertexAttribArray(0);
 	}
 }
 
@@ -218,14 +239,18 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 	if (px == 0) {
 		vertexIndx = 0;
 
-		VBO& borderVertexBuffer = meshPatch.borderVertexBuffers[MAP_BORDER_L][n];
-		VBO& borderNormalBuffer = meshPatch.borderNormalBuffers[MAP_BORDER_L][n];
+		VAO& borderVAO = meshPatch.borderVertexBuffers[MAP_BORDER_L][n].vao;
+		VBO& borderVBO = meshPatch.borderVertexBuffers[MAP_BORDER_L][n].vbo;
 
 		{
-			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+			if (borderVBO.vboId == 0)
+				borderVAO.Generate();
 
-			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
+			borderVAO.Bind();
+			borderVBO.Bind(GL_ARRAY_BUFFER);
+			borderVBO.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVBO.MapBuffer());
 
 			if (verts != nullptr) {
 				for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
@@ -236,6 +261,11 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 					verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
 					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
 
+					// terrain normals point up, borders do not
+					// currently not needed for border rendering
+					// verts[vertexIndx           ].n = -RgtVector;
+					// verts[vertexIndx + lodVerts].n = -RgtVector;
+
 					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
 					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
@@ -243,24 +273,34 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				}
 			}
 
-			borderVertexBuffer.UnmapBuffer();
-			borderVertexBuffer.Unbind();
-		}
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
+			glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
 
-		// terrain normals point up, borders do not
-		UploadPatchBorderNormals(borderNormalBuffer, -RgtVector, lodVerts);
+			borderVBO.UnmapBuffer();
+			borderVAO.Unbind();
+			borderVBO.Unbind();
+
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
+		}
 	}
 	if (px == (numPatchesX - 1)) {
 		vertexIndx = 0;
 
-		VBO& borderVertexBuffer = meshPatch.borderVertexBuffers[MAP_BORDER_R][n];
-		VBO& borderNormalBuffer = meshPatch.borderNormalBuffers[MAP_BORDER_R][n];
+		VAO& borderVAO = meshPatch.borderVertexBuffers[MAP_BORDER_R][n].vao;
+		VBO& borderVBO = meshPatch.borderVertexBuffers[MAP_BORDER_R][n].vbo;
 
 		{
-			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+			if (borderVBO.vboId == 0)
+				borderVAO.Generate();
 
-			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
+			borderVAO.Bind();
+			borderVBO.Bind(GL_ARRAY_BUFFER);
+			borderVBO.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVBO.MapBuffer());
 
 			if (verts != nullptr) {
 				for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
@@ -271,6 +311,9 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 					verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
 					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
+					// verts[vertexIndx           ].n = RgtVector;
+					// verts[vertexIndx + lodVerts].n = RgtVector;
+
 					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
 					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
@@ -278,24 +321,35 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				}
 			}
 
-			borderVertexBuffer.UnmapBuffer();
-			borderVertexBuffer.Unbind();
-		}
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
+			glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
 
-		UploadPatchBorderNormals(borderNormalBuffer, RgtVector, lodVerts);
+			borderVBO.UnmapBuffer();
+			borderVAO.Unbind();
+			borderVBO.Unbind();
+
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
+		}
 	}
 
 	if (py == 0) {
 		vertexIndx = 0;
 
-		VBO& borderVertexBuffer = meshPatch.borderVertexBuffers[MAP_BORDER_T][n];
-		VBO& borderNormalBuffer = meshPatch.borderNormalBuffers[MAP_BORDER_T][n];
+		VAO& borderVAO = meshPatch.borderVertexBuffers[MAP_BORDER_T][n].vao;
+		VBO& borderVBO = meshPatch.borderVertexBuffers[MAP_BORDER_T][n].vbo;
 
 		{
-			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+			if (borderVBO.vboId == 0)
+				borderVAO.Generate();
 
-			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
+			borderVAO.Bind();
+			borderVBO.Bind(GL_ARRAY_BUFFER);
+			borderVBO.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVBO.MapBuffer());
 
 			if (verts != nullptr) {
 				for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
@@ -306,6 +360,9 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 					verts[vertexIndx           ].p.y = chm[0 + (bpx + vx * lodStep)];
 					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
+					// verts[vertexIndx           ].n = -FwdVector;
+					// verts[vertexIndx + lodVerts].n = -FwdVector;
+
 					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
 					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
@@ -313,23 +370,34 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				}
 			}
 
-			borderVertexBuffer.UnmapBuffer();
-			borderVertexBuffer.Unbind();
-		}
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
+			glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
 
-		UploadPatchBorderNormals(borderNormalBuffer, -FwdVector, lodVerts);
+			borderVBO.UnmapBuffer();
+			borderVAO.Unbind();
+			borderVBO.Unbind();
+
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
+		}
 	}
 	if (py == (numPatchesY - 1)) {
 		vertexIndx = 0;
 
-		VBO& borderVertexBuffer = meshPatch.borderVertexBuffers[MAP_BORDER_B][n];
-		VBO& borderNormalBuffer = meshPatch.borderNormalBuffers[MAP_BORDER_B][n];
+		VAO& borderVAO = meshPatch.borderVertexBuffers[MAP_BORDER_B][n].vao;
+		VBO& borderVBO = meshPatch.borderVertexBuffers[MAP_BORDER_B][n].vbo;
 
 		{
-			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+			if (borderVBO.vboId == 0)
+				borderVAO.Generate();
 
-			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
+			borderVAO.Bind();
+			borderVBO.Bind(GL_ARRAY_BUFFER);
+			borderVBO.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
+
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVBO.MapBuffer());
 
 			if (verts != nullptr) {
 				for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
@@ -340,6 +408,9 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 					verts[vertexIndx           ].p.y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
 					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
+					// verts[vertexIndx           ].n = FwdVector;
+					// verts[vertexIndx + lodVerts].n = FwdVector;
+
 					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
 					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
@@ -347,37 +418,19 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				}
 			}
 
-			borderVertexBuffer.UnmapBuffer();
-			borderVertexBuffer.Unbind();
-		}
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
+			glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
 
-		UploadPatchBorderNormals(borderNormalBuffer, FwdVector, lodVerts);
-	}
-}
+			borderVBO.UnmapBuffer();
+			borderVAO.Unbind();
+			borderVBO.Unbind();
 
-void CBasicMeshDrawer::UploadPatchBorderNormals(VBO& normalBuffer, const float3& normalVector, uint32_t lodVerts) {
-	// only have to upload these once
-	if (normalBuffer.GetSize() != 0)
-		return;
-
-	normalBuffer.Bind(GL_ARRAY_BUFFER);
-	normalBuffer.New(lodVerts * sizeof(float3) * 2, GL_STATIC_DRAW);
-
-	float3* nrmls = reinterpret_cast<float3*>(normalBuffer.MapBuffer());
-
-	if (nrmls != nullptr) {
-		uint32_t normalIndx = 0;
-
-		for (uint32_t vi = 0; vi < lodVerts; vi += 1) {
-			nrmls[normalIndx           ] = normalVector;
-			nrmls[normalIndx + lodVerts] = normalVector;
-
-			normalIndx += 1;
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
 		}
 	}
-
-	normalBuffer.UnmapBuffer();
-	normalBuffer.Unbind();
 }
 
 
@@ -393,22 +446,22 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 	const uint32_t lodQuads = (PATCH_SIZE / lodStep);
 	const uint32_t lodVerts = (PATCH_SIZE / lodStep) + 1;
 
-	VBO& squareIndexBuffer = lodSquareIndexBuffers[n];
-	VBO& borderIndexBuffer = lodBorderIndexBuffers[n];
+	VBO& squareIBO = lodSquareIndexBuffers[n];
+	VBO& borderIBO = lodBorderIndexBuffers[n];
 
 	{
-		// FIXME?
+		// NOTE:
 		//   with GL_STATIC_DRAW, driver spams [OPENGL_DEBUG] id=131186 source=API type=PERFORMANCE severity=MEDIUM
 		//   msg="Buffer performance warning: Buffer object 18 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is
-		//   GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory."
-		squareIndexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		//   GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory." unless USE_MAPPED_BUFFERS=0
+		squareIBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
 		#if (USE_TRIANGLE_STRIPS == 0)
-		squareIndexBuffer.New((numPolys / (lodStep * lodStep)) * 3 * sizeof(uint16_t), GL_DYNAMIC_DRAW);
+		squareIBO.New((numPolys / (lodStep * lodStep)) * 3 * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 		#else
-		squareIndexBuffer.New(((lodQuads * 2 + 3) * lodQuads) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
+		squareIBO.New(((lodQuads * 2 + 3) * lodQuads) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 		#endif
 
-		uint16_t* indcs = reinterpret_cast<uint16_t*>(squareIndexBuffer.MapBuffer());
+		uint16_t* indcs = reinterpret_cast<uint16_t*>(squareIBO.MapBuffer());
 
 		if (indcs != nullptr) {
 			uint32_t indxCtr = 0;
@@ -470,14 +523,14 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 			#endif
 		}
 
-		squareIndexBuffer.UnmapBuffer();
-		squareIndexBuffer.Unbind();
+		squareIBO.UnmapBuffer();
+		squareIBO.Unbind();
 	}
 	{
-		borderIndexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		borderIndexBuffer.New(((lodQuads * 2 + 3) * 1) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
+		borderIBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		borderIBO.New(((lodQuads * 2 + 3) * 1) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 
-		uint16_t* indcs = reinterpret_cast<uint16_t*>(borderIndexBuffer.MapBuffer());
+		uint16_t* indcs = reinterpret_cast<uint16_t*>(borderIBO.MapBuffer());
 
 		if (indcs != nullptr) {
 			uint32_t indxCtr = 0;
@@ -493,8 +546,8 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 			indcs[indxCtr++] = 0xFFFF;
 		}
 
-		borderIndexBuffer.UnmapBuffer();
-		borderIndexBuffer.Unbind();
+		borderIBO.UnmapBuffer();
+		borderIBO.Unbind();
 	}
 }
 
@@ -542,44 +595,43 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 
 
-void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam) const {
-	const VBO& vertexBuffer = meshPatch.squareVertexBuffers[drawPassLOD * USE_MIPMAP_BUFFERS];
+void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const CCamera* activeCam) const {
+	const VAO& squareVAO = meshPatch.squareVertexBuffers[drawPassLOD * USE_MIPMAP_BUFFERS].vao;
+	const VBO& squareIBO = lodSquareIndexBuffers[drawPassLOD];
 
-	vertexBuffer.Bind(GL_ARRAY_BUFFER);
-	assert(vertexBuffer.GetPtr() == nullptr);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
-	vertexBuffer.Unbind();
-
-	#if (USE_TRIANGLE_STRIPS == 0)
-		glDrawElements(GL_TRIANGLES, (indexBuffer.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, indexBuffer.GetPtr());
-		// glDrawRangeElements(GL_TRIANGLES, 0, (lodVerts * lodVerts) - 1, (indexBuffer.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, indexBuffer.GetPtr());
-	#else
-		glPrimitiveRestartIndex(0xFFFF);
-		glDrawElements(GL_TRIANGLE_STRIP, (indexBuffer.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, indexBuffer.GetPtr());
-	#endif
-}
-
-void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
-	Update();
-
-	const CCamera* activeCam = CCamera::GetActiveCamera();
-	const VBO& indexBuffer = lodSquareIndexBuffers[drawPassLOD = CalcDrawPassLOD(activeCam, drawPass)];
-
-	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
-
-	glEnableVertexAttribArray(0);
-	#if (USE_TRIANGLE_STRIPS == 1)
-	glEnable(GL_PRIMITIVE_RESTART);
-	#endif
+	// supply indices separately after VAO is bound
+	squareVAO.Bind();
+	squareIBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
 	#if (USE_TRIANGLE_STRIPS == 0)
 	const uint32_t lodStep  = 1 << drawPassLOD;
 	const uint32_t lodQuads = (PATCH_SIZE / lodStep);
-	const uint32_t numIndcs = indexBuffer.GetSize() / sizeof(uint16_t);
+	const uint32_t numIndcs = squareIBO.GetSize() / sizeof(uint16_t);
 
 	assert(numIndcs == (lodQuads * lodQuads * 2 * 3));
-	assert(indexBuffer.GetPtr() == nullptr);
+	assert(squareIBO.GetPtr() == nullptr);
 	#endif
+
+	#if (USE_TRIANGLE_STRIPS == 0)
+		glDrawElements(GL_TRIANGLES, (squareIBO.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, squareIBO.GetPtr());
+		// glDrawRangeElements(GL_TRIANGLES, 0, (lodVerts * lodVerts) - 1, (squareIBO.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, squareIBO.GetPtr());
+	#else
+		glPrimitiveRestartIndex(0xFFFF);
+		glDrawElements(GL_TRIANGLE_STRIP, (squareIBO.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, squareIBO.GetPtr());
+	#endif
+
+	squareIBO.Unbind();
+	squareVAO.Unbind();
+}
+
+void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
+	Update(drawPass);
+
+	#if (USE_TRIANGLE_STRIPS == 1)
+	glEnable(GL_PRIMITIVE_RESTART);
+	#endif
+
+	const CCamera* activeCam = CCamera::GetActiveCamera();
 
 	for (uint32_t py = 0; py < numPatchesY; py += 1) {
 		for (uint32_t px = 0; px < numPatchesX; px += 1) {
@@ -591,84 +643,67 @@ void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 			if (drawPass != DrawPass::Shadow)
 				smfGroundDrawer->SetupBigSquare(px, py);
 
-			DrawSquareMeshPatch(meshPatch, indexBuffer, activeCam);
+			DrawSquareMeshPatch(meshPatch, activeCam);
 		}
 	}
-
-	indexBuffer.Unbind();
 
 	#if (USE_TRIANGLE_STRIPS == 1)
 	glDisable(GL_PRIMITIVE_RESTART);
 	#endif
-	glDisableVertexAttribArray(0);
 }
 
 
-void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam, uint32_t borderSide) const {
+
+void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const CCamera* activeCam, uint32_t borderSide) const {
 	if (meshPatch.visUpdateFrames[activeCam->GetCamType()] < globalRendering->drawFrame)
 		return;
 
-	const VBO& vertexBuffer = meshPatch.borderVertexBuffers[borderSide][drawPassLOD];
-	// const VBO& normalBuffer = meshPatch.borderNormalBuffers[borderSide][drawPassLOD];
+	const VAO& borderVAO = meshPatch.borderVertexBuffers[borderSide][drawPassLOD].vao;
+	const VBO& borderIBO = lodBorderIndexBuffers[drawPassLOD];
 
-	vertexBuffer.Bind(GL_ARRAY_BUFFER);
-	assert(vertexBuffer.GetPtr() == nullptr);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
-	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
-	vertexBuffer.Unbind();
-
-	// border rendering is FFP without lighting
-	// normalBuffer.Bind(GL_ARRAY_BUFFER);
-	// assert(normalBuffer.GetPtr() == nullptr);
-	// glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
-	// normalBuffer.Unbind();
+	borderVAO.Bind();
+	borderIBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
 	glPrimitiveRestartIndex(0xFFFF);
-	glDrawElements(GL_TRIANGLE_STRIP, (indexBuffer.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, indexBuffer.GetPtr());
+	glDrawElements(GL_TRIANGLE_STRIP, (borderIBO.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, borderIBO.GetPtr());
+
+	borderIBO.Unbind();
+	borderVAO.Unbind();
 }
 
 void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
-	const CCamera* activeCam = CCamera::GetActiveCamera();
-	const VBO& indexBuffer = lodBorderIndexBuffers[drawPassLOD];
-
-	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	// always stripped
+	// border is always stripped
 	glEnable(GL_PRIMITIVE_RESTART);
 
 	const uint32_t npxm1 = numPatchesX - 1;
 	const uint32_t npym1 = numPatchesY - 1;
+
+	const CCamera* activeCam = CCamera::GetActiveCamera();
 
 	{
 		// invert culling; index-pattern for T and R borders is also inverted
 		glFrontFace(GL_CW);
 
 		if (drawPass != DrawPass::Shadow) {
-			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare( px  ,  0); DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], indexBuffer, activeCam, MAP_BORDER_T); }
-			for (uint32_t py = 0; py < numPatchesY; py++) { smfGroundDrawer->SetupBigSquare(npxm1, py); DrawBorderMeshPatch(meshPatches[py * numPatchesX + npxm1], indexBuffer, activeCam, MAP_BORDER_R); }
+			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare( px  ,  0); DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], activeCam, MAP_BORDER_T); }
+			for (uint32_t py = 0; py < numPatchesY; py++) { smfGroundDrawer->SetupBigSquare(npxm1, py); DrawBorderMeshPatch(meshPatches[py * numPatchesX + npxm1], activeCam, MAP_BORDER_R); }
 		} else {
-			for (uint32_t px = 0; px < numPatchesX; px++) { DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], indexBuffer, activeCam, MAP_BORDER_T); }
-			for (uint32_t py = 0; py < numPatchesY; py++) { DrawBorderMeshPatch(meshPatches[py * numPatchesX + npxm1], indexBuffer, activeCam, MAP_BORDER_R); }
+			for (uint32_t px = 0; px < numPatchesX; px++) { DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], activeCam, MAP_BORDER_T); }
+			for (uint32_t py = 0; py < numPatchesY; py++) { DrawBorderMeshPatch(meshPatches[py * numPatchesX + npxm1], activeCam, MAP_BORDER_R); }
 		}
 	}
 	{
 		glFrontFace(GL_CCW);
 
 		if (drawPass != DrawPass::Shadow) {
-			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare(px, npym1); DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], indexBuffer, activeCam, MAP_BORDER_B); }
-			for (uint32_t py = 0; py < numPatchesY; py++) { smfGroundDrawer->SetupBigSquare( 0,  py  ); DrawBorderMeshPatch(meshPatches[ py   * numPatchesX +  0], indexBuffer, activeCam, MAP_BORDER_L); }
+			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare(px, npym1); DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], activeCam, MAP_BORDER_B); }
+			for (uint32_t py = 0; py < numPatchesY; py++) { smfGroundDrawer->SetupBigSquare( 0,  py  ); DrawBorderMeshPatch(meshPatches[ py   * numPatchesX +  0], activeCam, MAP_BORDER_L); }
 		} else {
-			for (uint32_t px = 0; px < numPatchesX; px++) { DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], indexBuffer, activeCam, MAP_BORDER_B); }
-			for (uint32_t py = 0; py < numPatchesY; py++) { DrawBorderMeshPatch(meshPatches[ py   * numPatchesX +  0], indexBuffer, activeCam, MAP_BORDER_L); }
+			for (uint32_t px = 0; px < numPatchesX; px++) { DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], activeCam, MAP_BORDER_B); }
+			for (uint32_t py = 0; py < numPatchesY; py++) { DrawBorderMeshPatch(meshPatches[ py   * numPatchesX +  0], activeCam, MAP_BORDER_L); }
 		}
 	}
 
-	indexBuffer.Unbind();
-
 	glDisable(GL_PRIMITIVE_RESTART);
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
 }
 

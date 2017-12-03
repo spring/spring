@@ -7,6 +7,7 @@
 #include <SDL_events.h>
 #include "Rendering/GL/VertexArrayTypes.h"
 
+struct VAO;
 class VBO;
 
 namespace agui
@@ -25,7 +26,10 @@ public:
 	bool MouseOver(int x, int y) const;
 	bool MouseOver(float x, float y) const;
 
+	#if 0
+	VAO* GetVAO(unsigned int k);
 	VBO* GetVBO(unsigned int k);
+	#endif
 
 	static void UpdateDisplayGeo(int x, int y, int offsetX, int offsetY);
 	static float PixelToGlX(int x);
@@ -79,6 +83,8 @@ protected:
 	virtual bool HandleEventSelf(const SDL_Event& ev) { return false; }
 	virtual void GeometryChangeSelf();
 
+	void GeometryChangeSelfRaw(unsigned int bufIndx, unsigned int numBytes, const VA_TYPE_T* elemsPtr) const;
+
 	static int screensize[2];
 	static int screenoffset[2];
 
@@ -89,7 +95,7 @@ protected:
 	float depth = 0.0f;
 
 	unsigned weight;
-	unsigned vboIndex;
+	unsigned elIndex;
 };
 
 }

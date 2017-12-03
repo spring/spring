@@ -182,9 +182,11 @@ void CRoamMeshDrawer::Update()
 		for_mt(0, patches.size(), [&patches, &cam](const int i) {
 			Patch* p = &patches[i];
 
-			if (p->IsVisible(cam)) {
-				p->GenerateIndices();
-			}
+			if (!p->IsVisible(cam))
+				return;
+
+			p->GenerateIndices();
+			p->GenerateBorderVertices();
 		});
 	}
 
@@ -192,9 +194,11 @@ void CRoamMeshDrawer::Update()
 		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
-			if (p.IsVisible(cam)) {
-				p.Upload();
-			}
+			if (!p.IsVisible(cam))
+				continue;
+
+			p.UploadIndices();
+			p.UploadBorderVertices();
 		}
 	}
 

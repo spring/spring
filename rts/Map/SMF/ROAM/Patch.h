@@ -112,7 +112,9 @@ public:
 	void ComputeVariance();
 
 	void GenerateIndices();
-	void Upload();
+	void UploadIndices();
+	void GenerateBorderVertices();
+
 	void Draw();
 	void DrawBorder();
 	void SetSquareTexture() const;
@@ -191,9 +193,10 @@ private:
 	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
 
 
-	GLuint vertexBuffer;
-	GLuint indexBuffer;
-	GLuint borderVertexBuffer;
+	// [0] := inner, [1] := border
+	GLuint vertexArrays[2] = {0, 0};
+	GLuint vertexBuffers[2] = {0, 0};
+	GLuint indexBuffer = 0;
 };
 
 #endif

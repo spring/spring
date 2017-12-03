@@ -74,8 +74,8 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 {
 	glDeleteTextures(1, &barkTex);
 
-	glDeleteBuffers(1, &treeBuffers[1]);
-	glDeleteBuffers(1, &treeBuffers[0]);
+	glDeleteBuffers(1, &treeVBOs[1]);
+	glDeleteBuffers(1, &treeVBOs[0]);
 }
 
 
@@ -184,15 +184,48 @@ void CAdvTreeGenerator::GenVertexBuffers()
 		numTreeVerts[NUM_TREE_TYPES + a] = curVertPtr - prvVertPtr;
 	}
 
-	glGenBuffers(1, &treeBuffers[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[0]);
-	glBufferData(GL_ARRAY_BUFFER, bushVerts.size() * sizeof(VA_TYPE_TN), bushVerts.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	{
+		glGenBuffers(1, &treeVBOs[0]);
+		glGenVertexArrays(1, &treeVAOs[0]);
 
-	glGenBuffers(1, &treeBuffers[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[1]);
-	glBufferData(GL_ARRAY_BUFFER, pineVerts.size() * sizeof(VA_TYPE_TN), pineVerts.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(treeVAOs[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, treeVBOs[0]);
+		glBufferData(GL_ARRAY_BUFFER, bushVerts.size() * sizeof(VA_TYPE_TN), bushVerts.data(), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
+		glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+	}
+	{
+		glGenBuffers(1, &treeVBOs[1]);
+		glGenVertexArrays(1, &treeVAOs[1]);
+
+		glBindVertexArray(treeVAOs[1]);
+		glBindBuffer(GL_ARRAY_BUFFER, treeVBOs[1]);
+		glBufferData(GL_ARRAY_BUFFER, pineVerts.size() * sizeof(VA_TYPE_TN), pineVerts.data(), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
+		glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+	}
 }
 
 
@@ -203,10 +236,7 @@ void CAdvTreeGenerator::BindTreeBuffer(unsigned int treeType) const {
 	// to a bush rather than a pine, so flip the type
 	treeType = mix(treeType + NUM_TREE_TYPES, treeType - NUM_TREE_TYPES, treeType >= NUM_TREE_TYPES);
 
-	glBindBuffer(GL_ARRAY_BUFFER, treeBuffers[treeType >= NUM_TREE_TYPES]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 0));
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 3));
-	glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VA_TYPE_TN), VA_TYPE_OFFSET(float, 5));
+	glBindVertexArray(treeVAOs[treeType >= NUM_TREE_TYPES]);
 }
 
 void CAdvTreeGenerator::DrawTreeBuffer(unsigned int treeType) const {
