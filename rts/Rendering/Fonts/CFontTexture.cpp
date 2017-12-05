@@ -501,7 +501,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 	// readback textureatlas allocator data
 	{
-		atlasAlloc.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
+		atlasAlloc.SetNonPowerOfTwo(true);
 
 		if (!atlasAlloc.Allocate())
 			LOG_L(L_WARNING, "Texture limit reached! (try to reduce the font size and/or outlinewidth)");

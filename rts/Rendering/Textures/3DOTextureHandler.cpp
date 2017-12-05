@@ -45,7 +45,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 	IAtlasAllocator* atlasAlloc = atlas.GetAllocator();
 
 	// NOTE: most Intels report maxTextureSize=2048, some even 1024 (!)
-	atlasAlloc->SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
+	atlasAlloc->SetNonPowerOfTwo(true);
 	atlasAlloc->SetMaxSize(std::min(globalRendering->maxTextureSize, 2048), std::min(globalRendering->maxTextureSize, 2048));
 
 	// default for 3DO primitives that point to non-existing textures

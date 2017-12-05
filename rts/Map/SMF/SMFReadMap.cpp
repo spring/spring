@@ -337,9 +337,6 @@ void CSMFReadMap::CreateNormalTex()
 
 	normalsTex.SetRawSize(int2(mapDims.mapxp1, mapDims.mapyp1));
 
-	if (!globalRendering->supportNonPowerOfTwoTex)
-		normalsTex.SetRawSize(int2(next_power_of_2(mapDims.mapxp1), next_power_of_2(mapDims.mapyp1)));
-
 	glGenTextures(1, normalsTex.GetIDPtr());
 	glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

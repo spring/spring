@@ -40,7 +40,7 @@ CTextureAtlas::CTextureAtlas(unsigned int allocType)
 		default: { assert(false); } break;
 	}
 
-	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
+	atlasAllocator->SetNonPowerOfTwo(true);
 	// atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 
 	textures.reserve(256);
