@@ -147,7 +147,7 @@ CBumpWater::CBumpWater()
 
 	// LOAD TEXTURES
 	foamTexture   = LoadTexture(waterRendering->foamTexture);
-	normalTexture = LoadTexture(waterRendering->normalTexture , anisotropy , &normalTextureX, &normalTextureY);
+	normalTexture = LoadTexture(waterRendering->normalTexture, anisotropy, &normalTextureX, &normalTextureY);
 
 	// caustic textures
 	if (waterRendering->causticTextures.empty())
@@ -229,7 +229,7 @@ CBumpWater::CBumpWater()
 		coastFBO.Bind();
 		coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 
-		if (coastFBO.CheckStatus("BUMPWATER(Coastmap)")) {
+		if ((shoreWaves = coastFBO.CheckStatus("BUMPWATER(Coastmap)"))) {
 			// initialize texture
 			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -237,12 +237,10 @@ CBumpWater::CBumpWater()
 			// fill with current heightmap/coastmap
 			UnsyncedHeightMapUpdate(SRectangle(0, 0, mapDims.mapx, mapDims.mapy));
 			UploadCoastline(true);
-			UpdateCoastmap();
-		} else
-			shoreWaves = false;
+			UpdateCoastmap(true);
 
-		if (shoreWaves)
 			eventHandler.InsertEvent(this, "UnsyncedHeightMapUpdate");
+		}
 
 		//coastFBO.Unbind(); // gets done below
 	}
@@ -335,6 +333,7 @@ CBumpWater::CBumpWater()
 			if (dynWavesFBO.CheckStatus("BUMPWATER(DynWaves)"))
 				UpdateDynWaves(true); // initialize
 		}
+
 		FBO::Unbind();
 	}
 
@@ -842,7 +841,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 }
 
 
-void CBumpWater::UpdateCoastmap()
+void CBumpWater::UpdateCoastmap(const bool initialize)
 {
 	coastFBO.Bind();
 	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
@@ -935,7 +934,9 @@ void CBumpWater::UpdateCoastmap()
 	blurShader->Disable();
 	coastFBO.Detach(GL_COLOR_ATTACHMENT1);
 	glPopAttrib();
-	//coastFBO.Unbind();
+
+	// NB: not needed during init, but no reason to leave bound after ::Update
+	coastFBO.Unbind();
 
 	// generate mipmaps
 	//glActiveTexture(GL_TEXTURE0);
@@ -950,7 +951,7 @@ void CBumpWater::UpdateCoastmap()
 	glDeleteTextures(1, &coastUpdateTexture);
 	coastmapAtlasRects.clear();
 
-	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glActiveTexture(GL_TEXTURE0);
 }
 
