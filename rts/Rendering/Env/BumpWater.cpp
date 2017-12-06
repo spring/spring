@@ -119,9 +119,9 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 
 CBumpWater::CBumpWater()
 	: CEventClient("[CBumpWater]", 271923, false)
-	, screenCopyTarget((!globalRendering->atiHacks)? GL_TEXTURE_RECTANGLE: GL_TEXTURE_2D)
 	, screenTextureX(globalRendering->viewSizeX)
 	, screenTextureY(globalRendering->viewSizeY)
+	, screenCopyTarget((!globalRendering->atiHacks)? GL_TEXTURE_RECTANGLE: GL_TEXTURE_2D)
 	, wasVisibleLastFrame(false)
 {
 	eventHandler.AddClient(this);
