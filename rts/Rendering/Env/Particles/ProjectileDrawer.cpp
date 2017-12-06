@@ -362,18 +362,16 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (!wd.visuals.texNames[2].empty()) { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
 		if (!wd.visuals.texNames[3].empty()) { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
-		if (!wd.visuals.ptrailExpGenTag.empty()) {
-			// these can only be custom EG's so prefix is not required game-side
+		// these can only be custom EG's so prefix is not required game-side
+		if (!wd.visuals.ptrailExpGenTag.empty())
 			wd.ptrailExplosionGeneratorID = explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
-		}
 
-		if (!wd.visuals.impactExpGenTag.empty()) {
+		if (!wd.visuals.impactExpGenTag.empty())
 			wd.impactExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.impactExpGenTag);
-		}
 
-		if (!wd.visuals.bounceExpGenTag.empty()) {
+		if (!wd.visuals.bounceExpGenTag.empty())
 			wd.bounceExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.bounceExpGenTag);
-		}
+
 	}
 }
 
@@ -616,10 +614,7 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glDisable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
-
-	sky->SetupFog();
 
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
@@ -631,7 +626,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	DrawProjectilePass(fxShader, drawReflection, drawRefraction);
 
 	glEnable(GL_BLEND);
-	glDisable(GL_FOG);
 
 	DrawParticlePass(fxShader, drawReflection, drawRefraction);
 
@@ -671,7 +665,6 @@ void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
 void CProjectileDrawer::DrawShadowPass()
 {
 	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_TEXTURE_2D);
 
 	fxBuffer = GL::GetRenderBufferTC();
 	fxShader = nullptr;
@@ -813,45 +806,42 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 
 
-void CProjectileDrawer::UpdateTextures() {
-	if (perlinTexObjects > 0 && drawPerlinTex)
-		UpdatePerlin();
-}
-
+void CProjectileDrawer::UpdateTextures() { UpdatePerlin(); }
 void CProjectileDrawer::UpdatePerlin() {
+	if (perlinTexObjects == 0 || !drawPerlinTex)
+		return;
+
 	perlinFB.Bind();
 	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, perlinTexSize, perlinTexSize);
-
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_FOG);
 
 	unsigned char col[4];
-	float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
+	const float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
+
 	float speed = 1.0f;
 	float size = 1.0f;
 
-	CVertexArray* va = GetVertexArray();
-	va->CheckInitSize(4 * VA_SIZE_TC);
+
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
 
 	for (int a = 0; a < 4; ++a) {
-		perlinBlend[a] += time * speed;
-		if (perlinBlend[a] > 1) {
-			unsigned int temp = perlinBlendTex[a * 2];
-			perlinBlendTex[a * 2    ] = perlinBlendTex[a * 2 + 1];
-			perlinBlendTex[a * 2 + 1] = temp;
-
+		if ((perlinBlend[a] += (time * speed)) > 1.0f) {
+			std::swap(perlinBlendTex[a * 2 + 0], perlinBlendTex[a * 2 + 1]);
 			GenerateNoiseTex(perlinBlendTex[a * 2 + 1]);
-			perlinBlend[a] -= 1;
+			perlinBlend[a] -= 1.0f;
 		}
 
-		float tsize = 8.0f / size;
+		const float tsize = 8.0f / size;
 
 		if (a == 0)
 			glDisable(GL_BLEND);
@@ -859,13 +849,12 @@ void CProjectileDrawer::UpdatePerlin() {
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
 
-		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector, 0,         0, col);
-		va->AddVertexQTC(  UpVector, 0,     tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 0]);
+		buffer->SafeAppend({ZeroVector, 0,         0, col});
+		buffer->SafeAppend({  UpVector, 0,     tsize, col});
+		buffer->SafeAppend({  XYVector, tsize, tsize, col});
+		buffer->SafeAppend({ RgtVector, tsize,     0, col});
+		buffer->Submit(GL_QUADS);
 
 		if (a == 0)
 			glEnable(GL_BLEND);
@@ -874,16 +863,18 @@ void CProjectileDrawer::UpdatePerlin() {
 			col[b] = int(perlinBlend[a] * 16 * size);
 
 		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 1]);
-		va->Initialize();
-		va->AddVertexQTC(ZeroVector,     0,     0, col);
-		va->AddVertexQTC(  UpVector,     0, tsize, col);
-		va->AddVertexQTC(  XYVector, tsize, tsize, col);
-		va->AddVertexQTC( RgtVector, tsize,     0, col);
-		va->DrawArrayTC(GL_QUADS);
+		buffer->SafeAppend({ZeroVector,     0,     0, col});
+		buffer->SafeAppend({  UpVector,     0, tsize, col});
+		buffer->SafeAppend({  XYVector, tsize, tsize, col});
+		buffer->SafeAppend({ RgtVector, tsize,     0, col});
+		buffer->Submit(GL_QUADS);
 
 		speed *= 0.6f;
-		size *= 2;
+		size *= 2.0f;
 	}
+
+	shader->Disable();
+
 
 	perlinFB.Unbind();
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
@@ -891,8 +882,6 @@ void CProjectileDrawer::UpdatePerlin() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
-
-	glSpringMatrix2dResetPV(true, true);
 }
 
 void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)

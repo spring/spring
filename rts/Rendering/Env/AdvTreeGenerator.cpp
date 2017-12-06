@@ -387,7 +387,6 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 	glViewport(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
 
 	glAlphaFunc(GL_GREATER, 0.5f);
@@ -593,7 +592,6 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
-	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

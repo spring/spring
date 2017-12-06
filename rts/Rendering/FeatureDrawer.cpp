@@ -225,8 +225,6 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	sky->SetupFog();
-
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
 	// the passes below will ignore any features whose marker is not valid
 	GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
@@ -241,9 +239,6 @@ void CFeatureDrawer::Draw()
 		DrawOpaquePass(false);
 
 	farTextureHandler->Draw();
-
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
 }
 
 void CFeatureDrawer::DrawOpaquePass(bool deferredPass)
@@ -415,8 +410,6 @@ void CFeatureDrawer::DrawAlphaPass()
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
 
-		sky->SetupFog();
-
 		// needed for now; not always called directly after Draw()
 		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
 
@@ -426,7 +419,6 @@ void CFeatureDrawer::DrawAlphaPass()
 			unitDrawer->PopModelRenderState(modelType);
 		}
 
-		glDisable(GL_FOG);
 		glPopAttrib();
 
 		unitDrawer->ResetAlphaDrawing(false);
@@ -503,7 +495,6 @@ void CFeatureDrawer::DrawShadowPass()
 		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, false);
 
 		// need the alpha-mask for transparent features
-		glEnable(GL_TEXTURE_2D);
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
@@ -525,7 +516,6 @@ void CFeatureDrawer::DrawShadowPass()
 		}
 
 		glPopAttrib();
-		glDisable(GL_TEXTURE_2D);
 	}
 
 	po->Disable();

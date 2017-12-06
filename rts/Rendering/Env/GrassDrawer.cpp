@@ -560,7 +560,6 @@ void CGrassDrawer::SetupStateOpaque()
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glDepthMask(GL_TRUE);
-	sky->SetupFog();
 }
 
 void CGrassDrawer::ResetStateOpaque()

@@ -77,26 +77,22 @@ static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
 }
 
 static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
 }
 
 
 static const void BindShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
 }
 
 static const void KillShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -365,8 +361,6 @@ void CUnitDrawer::Update()
 
 void CUnitDrawer::Draw()
 {
-	sky->SetupFog();
-
 	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
 	// first do the deferred pass; conditional because
@@ -380,9 +374,7 @@ void CUnitDrawer::Draw()
 
 	farTextureHandler->Draw();
 
-	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
 }
 
 void CUnitDrawer::DrawOpaquePass(bool deferredPass)
@@ -713,7 +705,6 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
-	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);

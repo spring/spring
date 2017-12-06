@@ -321,7 +321,6 @@ public:
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
-		glDisable(GL_FOG);
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 

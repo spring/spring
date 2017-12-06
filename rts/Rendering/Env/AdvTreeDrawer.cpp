@@ -247,8 +247,6 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 	treeShaders[TREE_PROGRAM_ACTIVE] = ipo;
 	treeShaders[TREE_PROGRAM_ACTIVE]->Enable();
 
-	sky->SetupFog();
-
 	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex());

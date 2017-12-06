@@ -69,6 +69,9 @@ public:
 		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[shadowed + deferred * 2];
 	}
 
+	const Shader::IProgramObject* GetActiveShader() const { return modelShaders[MODEL_SHADER_ACTIVE]; }
+	      Shader::IProgramObject* GetActiveShader()       { return modelShaders[MODEL_SHADER_ACTIVE]; }
+
 	enum ModelShaderProgram {
 		MODEL_SHADER_NOSHADOW_STANDARD = 0, ///< model shader (V+F) without self-shadowing
 		MODEL_SHADER_SHADOWED_STANDARD = 1, ///< model shader (V+F) with self-shadowing

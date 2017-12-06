@@ -720,14 +720,12 @@ void CBumpWater::UpdateWater(CGame* game)
 	}
 
 
-	glPushAttrib(GL_FOG_BIT);
 	if (refraction > 1) DrawRefraction(game);
 	if (reflection > 0) DrawReflection(game);
 	if (reflection || refraction) {
 		FBO::Unbind();
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
-	glPopAttrib();
 }
 
 
@@ -1159,8 +1157,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
+	// TODO: disable shader fog or add special underwater settings
 	const float3 oldsun = sunLighting->modelDiffuseColor;
 	const float3 oldambient = sunLighting->modelAmbientColor;
 
@@ -1168,8 +1166,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 	sunLighting->modelAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	DrawRefractions(true, true);
-
-	glEnable(GL_FOG);
 
 	sunLighting->modelDiffuseColor = oldsun;
 	sunLighting->modelAmbientColor = oldambient;
