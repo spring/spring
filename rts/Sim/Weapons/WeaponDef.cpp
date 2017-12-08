@@ -81,6 +81,7 @@ WEAPONTAG(bool, fireSubmersed).fallbackName("waterweapon").defaultValue(false);
 
 // Targeting
 WEAPONTAG(bool, manualfire).externalName("commandfire").defaultValue(false);
+WEAPONDUMMYTAG(bool, noAutoTarget).defaultValue(false);
 WEAPONTAG(float, range).defaultValue(10.0f);
 WEAPONTAG(float, heightmod).defaultValue(0.2f);
 WEAPONTAG(float, targetBorder).defaultValue(0.0f).minimumValue(-1.0f).maximumValue(1.0f);
@@ -501,10 +502,10 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	// custom parameters table
 	wdTable.SubTable("customParams").GetMap(customParams);
 
-	// internal only
+	// mostly internal
 	isNulled = (StringToLower(name) == "noweapon");
 	isShield = (type == "Shield");
-	noAutoTarget = (manualfire || interceptor || isShield);
+	noAutoTarget = wdTable.GetBool("noAutoTarget", (manualfire || interceptor || isShield));
 	onlyForward = !turret && (type != "StarburstLauncher");
 }
 
