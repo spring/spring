@@ -144,7 +144,7 @@ static bool IsValidDstMode(unsigned int mode)
 static bool SafeAtoF(float& var, const std::string& value)
 {
 	const char* startPtr = value.c_str();
-	      char*   endPtr = startPtr;
+	      char*   endPtr = nullptr;
 
 	const float tmp = static_cast<float>(strtod(startPtr, &endPtr));
 
@@ -155,11 +155,10 @@ static bool SafeAtoF(float& var, const std::string& value)
 	return true;
 }
 
-
 static bool SafeAtoI(unsigned int& var, const std::string& value)
 {
 	const char* startPtr = value.c_str();
-	      char*   endPtr = startPtr;
+	      char*   endPtr = nullptr;
 
 	const unsigned int tmp = static_cast<unsigned int>(strtol(startPtr, &endPtr, 0));
 
