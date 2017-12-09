@@ -8,15 +8,10 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/StringUtil.h"
 
-#include <cstdio>
-#include <cstring>
+#include <cstdlib> // strto*
+#include <cstring> // memcpy
 #include <string>
 #include <vector>
-#include <map>
-
-using std::string;
-using std::vector;
-using std::map;
 
 /******************************************************************************/
 
@@ -26,40 +21,25 @@ CCommandColors cmdColors;
 
 CCommandColors::CCommandColors()
 {
-	alwaysDrawQueue = false;
-
-	useQueueIcons = true;
-	queueIconAlpha = 0.5f;
-	queueIconScale = 1.0f;
-	useColorRestarts = true;
-	useRestartColor = true;
-	restartAlpha = 0.25f;
-
-	queuedLineWidth = 1.49f;
 	queuedBlendSrc = GL_SRC_ALPHA;
 	queuedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
-	stipplePattern = 0xffffffff;
-	stippleFactor = 1;
-	stippleSpeed = 1.0f;
 
-	selectedLineWidth = 1.49f;
 	selectedBlendSrc = GL_SRC_ALPHA;
 	selectedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
-	buildBoxesOnShift = true;
 
-	mouseBoxLineWidth = 1.49f;
 	mouseBoxBlendSrc = GL_SRC_ALPHA;
 	mouseBoxBlendDst = GL_ONE_MINUS_SRC_ALPHA;
 
-	unitBoxLineWidth = 1.49f;
+#define SETUP_COLOR(name, r,g,b,a)  \
+	colors[name ## Index][0] = r;   \
+	colors[name ## Index][1] = g;   \
+	colors[name ## Index][2] = b;   \
+	colors[name ## Index][3] = a;   \
+	name = colors[name ## Index];   \
+	colorNames[StringToLower(#name)] = name ## Index
 
-#define SETUP_COLOR(name, r,g,b,a) \
-	colors[name ## _index][0] = r;   \
-	colors[name ## _index][1] = g;   \
-	colors[name ## _index][2] = b;   \
-	colors[name ## _index][3] = a;   \
-	name = colors[name ## _index];   \
-	colorNames[StringToLower(#name)] = name ## _index
+	colorNames.reserve(32);
+	customCmds.reserve(32);
 
 	SETUP_COLOR(start,               1.0f, 1.0f, 1.0f, 0.7f);
 	SETUP_COLOR(restart,             0.4f, 0.4f, 0.4f, 0.7f);
@@ -79,6 +59,8 @@ CCommandColors::CCommandColors()
 	SETUP_COLOR(load,                0.3f, 1.0f, 1.0f, 0.7f);
 	SETUP_COLOR(unload,              1.0f, 1.0f, 0.0f, 0.7f);
 	SETUP_COLOR(deathWait,           0.5f, 0.5f, 0.5f, 0.7f);
+	SETUP_COLOR(customArea,          0.5f, 0.5f, 0.5f, 0.5f); // grey
+
 	SETUP_COLOR(rangeAttack,         1.0f, 0.3f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeBuild,          0.3f, 1.0f, 0.3f, 0.7f);
 	SETUP_COLOR(rangeRadar,          0.3f, 1.0f, 0.3f, 0.7f);
@@ -100,37 +82,22 @@ CCommandColors::CCommandColors()
 }
 
 
-CCommandColors::~CCommandColors()
+
+static bool ParseBlendMode(const std::string& word, unsigned int& mode)
 {
-}
+	std::string lower = std::move(StringToLower(word));
 
-
-static bool ParseBlendMode(const string& word, unsigned int& mode)
-{
-	string lower = StringToLower(word);
-
-	     if (lower == "zero")
-	       { mode = GL_ZERO;                return true; }
-	else if (lower == "one")
-	       { mode = GL_ONE;                 return true; }
-	else if (lower == "src_alpha")
-	       { mode = GL_SRC_ALPHA;           return true; }
-	else if (lower == "src_color")
-	       { mode = GL_SRC_COLOR;           return true; }
-	else if (lower == "one_minus_src_alpha")
-	       { mode = GL_ONE_MINUS_SRC_ALPHA; return true; }
-	else if (lower == "one_minus_src_color")
-	       { mode = GL_ONE_MINUS_SRC_COLOR; return true; }
-	else if (lower == "dst_alpha")
-	       { mode = GL_DST_ALPHA;           return true; }
-	else if (lower == "dst_color")
-	       { mode = GL_DST_COLOR;           return true; }
-	else if (lower == "one_minus_dst_alpha")
-	       { mode = GL_ONE_MINUS_DST_ALPHA; return true; }
-	else if (lower == "one_minus_dst_color")
-	       { mode = GL_ONE_MINUS_DST_COLOR; return true; }
-	else if (lower == "src_alpha_saturate")
-	       { mode = GL_SRC_ALPHA_SATURATE;  return true; }
+	     if (lower == "zero"               ) { mode = GL_ZERO;                return true; }
+	else if (lower == "one"                ) { mode = GL_ONE;                 return true; }
+	else if (lower == "src_alpha"          ) { mode = GL_SRC_ALPHA;           return true; }
+	else if (lower == "src_color"          ) { mode = GL_SRC_COLOR;           return true; }
+	else if (lower == "one_minus_src_alpha") { mode = GL_ONE_MINUS_SRC_ALPHA; return true; }
+	else if (lower == "one_minus_src_color") { mode = GL_ONE_MINUS_SRC_COLOR; return true; }
+	else if (lower == "dst_alpha"          ) { mode = GL_DST_ALPHA;           return true; }
+	else if (lower == "dst_color"          ) { mode = GL_DST_COLOR;           return true; }
+	else if (lower == "one_minus_dst_alpha") { mode = GL_ONE_MINUS_DST_ALPHA; return true; }
+	else if (lower == "one_minus_dst_color") { mode = GL_ONE_MINUS_DST_COLOR; return true; }
+	else if (lower == "src_alpha_saturate" ) { mode = GL_SRC_ALPHA_SATURATE;  return true; }
 
 	return false;
 }
@@ -151,10 +118,9 @@ static bool IsValidSrcMode(unsigned int mode)
 			return true;
 		}
 	}
+
 	return false;
 }
-
-
 
 static bool IsValidDstMode(unsigned int mode)
 {
@@ -170,37 +136,42 @@ static bool IsValidDstMode(unsigned int mode)
 			return true;
 		}
 	}
+
 	return false;
 }
 
 
-static bool SafeAtoF(float& var, const string& value)
+static bool SafeAtoF(float& var, const std::string& value)
 {
-	char* endPtr;
 	const char* startPtr = value.c_str();
-	const float tmp = (float)strtod(startPtr, &endPtr);
-	if (endPtr == startPtr) {
+	      char*   endPtr = startPtr;
+
+	const float tmp = static_cast<float>(strtod(startPtr, &endPtr));
+
+	if (endPtr == startPtr)
 		return false;
-	}
+
 	var = tmp;
 	return true;
 }
 
 
-static bool SafeAtoI(unsigned int& var, const string& value)
+static bool SafeAtoI(unsigned int& var, const std::string& value)
 {
-	char* endPtr;
 	const char* startPtr = value.c_str();
-	const unsigned int tmp = (unsigned int)strtol(startPtr, &endPtr, 0);
-	if (endPtr == startPtr) {
+	      char*   endPtr = startPtr;
+
+	const unsigned int tmp = static_cast<unsigned int>(strtol(startPtr, &endPtr, 0));
+
+	if (endPtr == startPtr)
 		return false;
-	}
+
 	var = tmp;
 	return true;
 }
 
 
-bool CCommandColors::LoadConfigFromFile(const string& filename)
+bool CCommandColors::LoadConfigFromFile(const std::string& filename)
 {
 	CFileHandler ifs(filename);
 	std::string cfg;
@@ -209,147 +180,143 @@ bool CCommandColors::LoadConfigFromFile(const string& filename)
 }
 
 
-bool CCommandColors::LoadConfigFromString(const string& cfg)
+bool CCommandColors::LoadConfigFromString(const std::string& cfg)
 {
 	CSimpleParser parser(cfg);
 
 	while (true) {
-		const string line = parser.GetCleanLine();
-		if (line.empty()) {
+		const std::string line = std::move(parser.GetCleanLine());
+
+		if (line.empty())
 			break;
-		}
 
-		const vector<string> &words = parser.Tokenize(line, 1);
+		const std::vector<std::string> words = std::move(parser.Tokenize(line, 1));
 
-		const string command = StringToLower(words[0]);
+		if (words.size() <= 1)
+			continue;
 
-		if ((command == "alwaysdrawqueue") && (words.size() > 1)) {
+		const std::string command = std::move(StringToLower(words[0]));
+
+		if (command == "alwaysdrawqueue") {
 			alwaysDrawQueue = !!atoi(words[1].c_str());
 		}
-		else if ((command == "usequeueicons") && (words.size() > 1)) {
+		else if (command == "usequeueicons") {
 			useQueueIcons = !!atoi(words[1].c_str());
 		}
-		else if ((command == "queueiconalpha") && (words.size() > 1)) {
+		else if (command == "queueiconalpha") {
 			SafeAtoF(queueIconAlpha, words[1]);
 		}
-		else if ((command == "queueiconscale") && (words.size() > 1)) {
+		else if (command == "queueiconscale") {
 			SafeAtoF(queueIconScale, words[1]);
 		}
-		else if ((command == "usecolorrestarts") && (words.size() > 1)) {
+		else if (command == "usecolorrestarts") {
 			useColorRestarts = !!atoi(words[1].c_str());
 		}
-		else if ((command == "userestartcolor") && (words.size() > 1)) {
+		else if (command == "userestartcolor") {
 			useRestartColor = !!atoi(words[1].c_str());
 		}
-		else if ((command == "restartalpha") && (words.size() > 1)) {
+		else if (command == "restartalpha") {
 			SafeAtoF(restartAlpha, words[1]);
 		}
-		else if ((command == "queuedlinewidth") && (words.size() > 1)) {
+		else if (command == "queuedlinewidth") {
 			SafeAtoF(queuedLineWidth, words[1]);
 		}
-		else if ((command == "queuedblendsrc") && (words.size() > 1)) {
+
+		else if (command == "queuedblendsrc") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidSrcMode(mode)) {
-				queuedBlendSrc = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+				continue;
+
+			queuedBlendSrc = mode;
 		}
-		else if ((command == "queuedblenddst") && (words.size() > 1)) {
+		else if (command == "queuedblenddst") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
-				queuedBlendDst = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+				continue;
+
+			queuedBlendDst = mode;
 		}
-		else if ((command == "stipplepattern") && (words.size() > 1)) {
+
+		else if (command == "stipplepattern") {
 			SafeAtoI(stipplePattern, words[1]);
 		}
-		else if ((command == "stipplefactor") && (words.size() > 1)) {
+		else if (command == "stipplefactor") {
 			SafeAtoI(stippleFactor, words[1]);
 		}
-		else if ((command == "stipplespeed") && (words.size() > 1)) {
+		else if (command == "stipplespeed") {
 			SafeAtoF(stippleSpeed, words[1]);
 		}
-		else if ((command == "selectedlinewidth") && (words.size() > 1)) {
+
+		else if (command == "selectedlinewidth") {
 			SafeAtoF(selectedLineWidth, words[1]);
 		}
-		else if ((command == "selectedblendsrc") && (words.size() > 1)) {
+
+		else if (command == "selectedblendsrc") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidSrcMode(mode)) {
-				selectedBlendSrc = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+				continue;
+
+			selectedBlendSrc = mode;
 		}
-		else if ((command == "selectedblenddst") && (words.size() > 1)) {
+		else if (command == "selectedblenddst") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
-				selectedBlendDst = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+				continue;
+
+			selectedBlendDst = mode;
 		}
-		else if ((command == "buildboxesonshift") && (words.size() > 1)) {
+
+		else if (command == "buildboxesonshift") {
 			buildBoxesOnShift = !!atoi(words[1].c_str());
 		}
-		else if ((command == "mouseboxlinewidth") && (words.size() > 1)) {
+
+		else if (command == "mouseboxlinewidth") {
 			SafeAtoF(mouseBoxLineWidth, words[1]);
 		}
-		else if ((command == "mouseboxblendsrc") && (words.size() > 1)) {
+
+		else if (command == "mouseboxblendsrc") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidSrcMode(mode)) {
-				mouseBoxBlendSrc = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+				continue;
+
+			mouseBoxBlendSrc = mode;
 		}
-		else if ((command == "mouseboxblenddst") && (words.size() > 1)) {
+		else if (command == "mouseboxblenddst") {
 			unsigned int mode;
-			if (ParseBlendMode(words[1], mode) && IsValidDstMode(mode)) {
-				mouseBoxBlendDst = mode;
-			}
+
+			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+				continue;
+
+			mouseBoxBlendDst = mode;
 		}
-		else if ((command == "unitboxlinewidth") && (words.size() > 1)) {
+
+		else if (command == "unitboxlinewidth") {
 			SafeAtoF(unitBoxLineWidth, words[1]);
 		}
+
 		else {
-			// try to parse a color
-			if (words.size() > 1) {
-				map<string, int>::iterator it = colorNames.find(command);
-				if (it != colorNames.end()) {
-					//colors[it->second];
-					float tmp[4];
-					int count = sscanf(words[1].c_str(), "%f %f %f %f",
-														 &tmp[0], &tmp[1], &tmp[2], &tmp[3]);
-					if (count >= 3) {
-						if (count == 3) {
-							tmp[3] = 1.0f;
-						}
-						memcpy(colors[it->second], tmp, sizeof(float[4]));
-					}
-				}
-			}
+			// try to parse a color by name
+			const auto it = colorNames.find(command);
+
+			if (it == colorNames.end())
+				continue;
+
+			float tmp[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+			int count;
+
+			// require RGB, optionally A
+			if ((count = sscanf(words[1].c_str(), "%f %f %f %f", &tmp[0], &tmp[1], &tmp[2], &tmp[3])) < 3)
+				continue;
+
+			memcpy(colors[it->second], tmp, sizeof(float[4]));
 		}
 	}
+
 	return true;
 }
 
-
-void CCommandColors::SetCustomCmdData(int cmdID, int cmdIconID,
-                                      const float color[4], bool showArea)
-{
-	customCmds[cmdID] = DrawData(cmdIconID, color, showArea);
-}
-
-
-void CCommandColors::ClearCustomCmdData(int cmdID)
-{
-	customCmds.erase(cmdID);
-}
-
-
-const CCommandColors::DrawData*
-	CCommandColors::GetCustomCmdData(int cmdID) const
-{
-	customCmds_type::const_iterator it = customCmds.find(cmdID);
-	if (it == customCmds.end()) {
-		return NULL;
-	} else {
-		return &(it->second);
-	}
-}
-
-
-/******************************************************************************/

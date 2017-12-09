@@ -3534,8 +3534,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 innerPos = camTracePos + camTraceDir * innerDist;
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
-						constexpr float grey[4] = {0.5f, 0.5f, 0.5f, 0.5f};
-						const float* color = grey;
+						const float* color = cmdColors.customArea;
 
 						switch (cmdDesc.id) {
 							case CMD_ATTACK:
