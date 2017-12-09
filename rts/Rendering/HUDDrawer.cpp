@@ -30,7 +30,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	CMatrix44f projMat;
 	CMatrix44f viewMat;
 
-	projMat.Translate(-0.8f, -0.4f, -0.9f);
+	projMat.Translate(-0.8f, -0.4f, 0.0f);
 	projMat = projMat * camera->GetProjectionMatrix();
 
 	viewMat.Translate(0.0f, 0.0f, -unit->radius);
