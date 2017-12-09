@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "HUDDrawer.h"
-
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
@@ -30,7 +30,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	CMatrix44f projMat;
 	CMatrix44f viewMat;
 
-	projMat.Translate(-0.8f, -0.4f, 0.0f);
+	projMat.Translate(-0.8f, -0.4f, -0.9f);
 	projMat = projMat * camera->GetProjectionMatrix();
 
 	viewMat.Translate(0.0f, 0.0f, -unit->radius);
@@ -47,28 +47,27 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 		viewMat = viewMat * CMatrix44f(ZeroVector, {cx.x, cy.x, cz.x}, {cx.y, cy.y, cz.y}, {cx.z, cy.z, cz.z});
 	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+	// TODO: DrawIndividualLuaTrans
+	unitDrawer->PushIndividualOpaqueState(unit, false);
 
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-	GL::LoadMatrix(projMat);
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PushMatrix();
-	GL::LoadMatrix(viewMat);
+	IUnitDrawerState* state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	Shader::IProgramObject* shader = state->GetActiveShader();
+	LocalModel* model = const_cast<LocalModel*>(&unit->localModel);
 
-	unit->localModel.Draw();
+	shader->SetUniformMatrix4fv(8, false, viewMat);
+	shader->SetUniformMatrix4fv(9, false, projMat);
 
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
+	model->UpdatePieceMatrices(gs->frameNum);
+	// state->SetTeamColor(unit->team, {0.25f, 1.0f});
+	state->SetMatrices(CMatrix44f::Identity(), model->GetPieceMatrices());
+	model->Draw();
+
+	unitDrawer->PopIndividualOpaqueState(unit, false);
 }
 
 
 void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 {
-	glDisable(GL_TEXTURE_2D);
-
 	CMatrix44f viewMat;
 
 	viewMat.Translate(-0.8f, -0.4f, 0.0f);
@@ -99,8 +98,6 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 
 void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 {
-	glDisable(GL_TEXTURE_2D);
-
 	const float3 viewDir = camera->GetDir();
 	const SColor arrowColor = SColor(0.4f, 0.4f, 1.0f, 0.6f);
 
@@ -128,8 +125,6 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 
 void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 {
-	glEnable(GL_TEXTURE_2D);
-
 	// note: font p.m. is not identity, convert xy-coors from [-1,1] to [0,1]
 	font->SetTextColor(0.2f, 0.8f, 0.2f, 0.8f);
 	font->glFormat(-0.9f * 0.5f + 0.5f, 0.35f * 0.5f + 0.5f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
@@ -195,7 +190,6 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 
 void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 {
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 
 	// draw the reticle in world coordinates
