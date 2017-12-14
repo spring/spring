@@ -135,6 +135,7 @@ class LuaUnsyncedRead {
 
 		static int GetConsoleBuffer(lua_State* L);
 		static int GetCurrentTooltip(lua_State* L);
+		static int IsUserWriting(lua_State* L);
 
 		static int GetKeyCode(lua_State* L);
 		static int GetKeySymbol(lua_State* L);
