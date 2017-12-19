@@ -486,7 +486,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 			projMemPool.alloc<CWakeProjectile>(
 				unit,
 				absPos + guRNG.NextVector() * 2.0f,
-				absDir * 0.4f,
+				absDir * -0.4f,
 				6.0f + guRNG.NextFloat() * 4.0f,
 				0.15f + guRNG.NextFloat() * 0.3f,
 				wakeAlphaStart, wakeAlphaDecay, wakeFadeupTime
