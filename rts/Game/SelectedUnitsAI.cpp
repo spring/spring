@@ -439,7 +439,7 @@ void CSelectedUnitsHandlerAI::CreateUnitOrder(std::vector< std::pair<float, int>
 		out.emplace_back(value, unitID);
 	}
 
-	std::sort(out.begin(), out.end(), idPairComp);
+	std::stable_sort(out.begin(), out.end(), idPairComp);
 }
 
 
