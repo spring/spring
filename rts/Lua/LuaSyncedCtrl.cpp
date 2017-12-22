@@ -200,6 +200,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
+	REGISTER_LUA_CFUNC(SetUnitPieceMatrix);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
