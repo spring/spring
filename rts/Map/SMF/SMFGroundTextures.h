@@ -15,6 +15,7 @@ class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
 	CSMFGroundTextures(CSMFReadMap* rm);
+	~CSMFGroundTextures() { pbo.Release(); }
 
 	void DrawUpdate();
 	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID);

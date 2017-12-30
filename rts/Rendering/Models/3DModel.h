@@ -72,8 +72,8 @@ public:
 		size_t indexCount;
 	};
 
-	static const int SHATTER_MAX_PARTS  = 10;
-	static const int SHATTER_VARIATIONS = 2;
+	static constexpr int SHATTER_MAX_PARTS  = 10;
+	static constexpr int SHATTER_VARIATIONS =  2;
 
 	std::vector<RenderData> renderData;
 };
@@ -94,7 +94,7 @@ struct S3DModelPiece {
 		, maxs(DEF_MAX_SIZE)
 	{}
 
-	virtual ~S3DModelPiece() {}
+	virtual ~S3DModelPiece() { shatterIndices.Release(); }
 
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;

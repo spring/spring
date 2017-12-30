@@ -345,7 +345,7 @@ namespace Shader {
 		GLSLProgramObject(const std::string& poName); // NOTE: calls glCreateProgram
 		GLSLProgramObject(const GLSLProgramObject&) = delete;
 		GLSLProgramObject(GLSLProgramObject&& po) { *this = std::move(po); }
-		~GLSLProgramObject() { Release(); }
+		~GLSLProgramObject() { assert(glid == 0 && shaderObjs.empty()); }
 
 		GLSLProgramObject& operator = (const GLSLProgramObject& po) = delete;
 		GLSLProgramObject& operator = (GLSLProgramObject&& po) {

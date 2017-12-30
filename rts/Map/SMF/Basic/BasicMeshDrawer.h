@@ -45,7 +45,7 @@ public:
 		// std::array<MeshBuffer, LOD_LEVELS> squareNormalBuffers;
 
 		std::array<MeshBuffer, LOD_LEVELS> borderVertexBuffers[MAP_BORDER_B + 1];
-		std::array<MeshBuffer, LOD_LEVELS> borderNormalBuffers[MAP_BORDER_B + 1];
+		// std::array<MeshBuffer, LOD_LEVELS> borderNormalBuffers[MAP_BORDER_B + 1];
 
 		std::array<float3*, LOD_LEVELS> squareVertexPtrs;
 		// std::array<float3*, LOD_LEVELS> squareNormalPtrs;

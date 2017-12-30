@@ -67,6 +67,7 @@ void HeightMapTexture::Kill()
 	texID = 0;
 	xSize = 0;
 	ySize = 0;
+	pbo.Release();
 }
 
 

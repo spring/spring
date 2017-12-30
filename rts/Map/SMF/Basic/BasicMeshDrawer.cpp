@@ -104,11 +104,12 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 			MeshPatch& meshPatch = meshPatches[y * numPatchesX + x];
 
 			for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
-				meshPatch.squareVertexBuffers[n].vbo.UnmapIf();
+				meshPatch.squareVertexBuffers[n].vbo.Release();
 				meshPatch.squareVertexBuffers[n].vao.Delete();
 			}
 			for (uint32_t i = MAP_BORDER_L; i <= MAP_BORDER_B; i++) {
 				for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
+					meshPatch.borderVertexBuffers[i][n].vbo.Release();
 					meshPatch.borderVertexBuffers[i][n].vao.Delete();
 				}
 			}
@@ -117,6 +118,11 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 		}
 	}
 	#endif
+
+	for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
+		lodSquareIndexBuffers[n].Release();
+		lodBorderIndexBuffers[n].Release();
+	}
 }
 
 

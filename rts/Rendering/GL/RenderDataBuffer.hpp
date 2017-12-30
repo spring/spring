@@ -183,10 +183,8 @@ namespace GL {
 			if (!inited)
 				return false;
 
-			elems.UnmapIf();
-			indcs.UnmapIf();
-			elems.Delete();
-			indcs.Delete();
+			elems.Release();
+			indcs.Release();
 			array.Delete();
 			// do not delete the attached objects
 			shader.Release(false);

@@ -23,14 +23,6 @@ VBO::VBO(GLenum _defTarget, const bool storage, bool readable)
 	readableStorage = readable;
 }
 
-// NOTE: if declared in global scope, user has to call these before exit
-VBO::~VBO()
-{
-	UnmapIf();
-	Delete();
-}
-
-
 VBO& VBO::operator=(VBO&& other)
 {
 	std::swap(vboId, other.vboId);

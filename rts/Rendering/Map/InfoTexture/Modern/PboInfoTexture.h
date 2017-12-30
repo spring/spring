@@ -11,9 +11,14 @@
 class CPboInfoTexture : public CInfoTexture
 {
 public:
-	CPboInfoTexture(const std::string& name);
-	virtual ~CPboInfoTexture();
+	CPboInfoTexture(const std::string& _name) {
+		name        = _name;
+		texChannels = 0;
+		texture     = 0;
+	}
 	CPboInfoTexture(const CPboInfoTexture&) = delete; // no-copy
+
+	virtual ~CPboInfoTexture();
 
 public:
 	virtual void Update() = 0;

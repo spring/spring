@@ -16,11 +16,16 @@ public:
 	VBO(GLenum _defTarget = GL_ARRAY_BUFFER, const bool storage = false, bool readable = false);
 	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
-	virtual ~VBO();
+	virtual ~VBO() { assert(vboId == 0); }
 
 	VBO& operator = (const VBO& other) = delete;
 	VBO& operator = (VBO&& other);
 
+	// NOTE: if declared in global scope, user has to call these before exit
+	void Release() {
+		UnmapIf();
+		Delete();
+	}
 	void Generate() const;
 	void Delete() const;
 
