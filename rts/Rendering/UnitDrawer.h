@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawerState.hpp"
 #include "System/EventClient.h"
@@ -219,7 +220,7 @@ private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
 
-	static void DrawIcon(CUnit* unit, bool asRadarBlip);
+	static void DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool asRadarBlip);
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
@@ -281,8 +282,6 @@ private:
 	std::vector<std::array<std::vector<CUnit*>, MODELTYPE_OTHER>> liveGhostBuildings;
 
 	/// units that are only rendered as icons this frame
-	std::vector<CUnit*> iconUnits;
-
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 

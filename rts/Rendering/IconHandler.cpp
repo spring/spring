@@ -201,7 +201,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 
 CIcon::CIcon() 
 {
-	if (iconHandler && iconHandler->defIconData) {
+	if (iconHandler != nullptr && iconHandler->defIconData) {
 		data = iconHandler->defIconData;
 	} else {
 		data = &CIconHandler::safetyData;
@@ -212,7 +212,9 @@ CIcon::CIcon()
 
 CIcon::CIcon(CIconData* d)
 {
-	data = d ? d : &CIconHandler::safetyData;
+	if ((data = d) == nullptr)
+		data = &CIconHandler::safetyData;
+
 	data->Ref();
 }
 
@@ -285,16 +287,12 @@ CIconData::~CIconData()
 }
 
 
-void CIconData::Ref()
-{
-	refCount++;
-}
-
 void CIconData::UnRef()
 {
-	if ((--refCount) <= 0) {
-		delete this;
-	}
+	if ((--refCount) > 0)
+		return;
+
+	delete this;
 }
 
 void CIconData::CopyData(const CIconData* iconData)
@@ -314,39 +312,5 @@ void CIconData::BindTexture() const
 {
 	glBindTexture(GL_TEXTURE_2D, texID);
 }
-
-void CIconData::DrawArray(CVertexArray* va, float x0, float y0, float x1, float y1, const unsigned char* c) const
-{
-	va->AddVertex2dTC(x0, y0, 0.0f, 0.0f, c);
-	va->AddVertex2dTC(x1, y0, 1.0f, 0.0f, c);
-	va->AddVertex2dTC(x1, y1, 1.0f, 1.0f, c);
-	va->AddVertex2dTC(x0, y1, 0.0f, 1.0f, c);
-}
-
-void CIconData::Draw(float x0, float y0, float x1, float y1) const
-{
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex2f(x0, y0);
-	glTexCoord2f(1.0f, 0.0f); glVertex2f(x1, y0);
-	glTexCoord2f(1.0f, 1.0f); glVertex2f(x1, y1);
-	glTexCoord2f(0.0f, 1.0f); glVertex2f(x0, y1);
-	glEnd();
-}
-
-void CIconData::Draw(const float3& botLeft, const float3& botRight,
-                     const float3& topLeft, const float3& topRight) const
-{
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertexf3(botLeft);
-	glTexCoord2f(1.0f, 1.0f); glVertexf3(botRight);
-	glTexCoord2f(1.0f, 0.0f); glVertexf3(topRight);
-	glTexCoord2f(0.0f, 0.0f); glVertexf3(topLeft);
-	glEnd();
-}
-
-
-/******************************************************************************/
 
 }
