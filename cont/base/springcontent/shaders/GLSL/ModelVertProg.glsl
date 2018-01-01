@@ -81,7 +81,7 @@ void main(void)
 
 	#if (DEFERRED_MODE == 0)
 	{
-		float eyeDepth = length((viewMatrix * vertexPos).xyz);
+		float eyeDepth = length(vertexViewPos.xyz);
 		float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
 		float fogDepth = (eyeDepth - fogParams.x * fogParams.z) / fogRange;
 		// float fogDepth = (fogParams.y * fogParams.z - eyeDepth) / fogRange;

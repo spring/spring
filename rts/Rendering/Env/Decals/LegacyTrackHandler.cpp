@@ -4,6 +4,7 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
+#include "Map/HeightMapTexture.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -73,6 +74,12 @@ void LegacyTrackHandler::LoadDecalShaders()
 	decalShaders.fill(nullptr);
 
 	const std::string extraDef = "#define HAVE_SHADING_TEX " + IntToString(readMap->GetShadingTexture() != 0, "%d") + "\n";
+	const float4 invMapSize = {
+		1.0f / (mapDims.pwr2mapx * SQUARE_SIZE),
+		1.0f / (mapDims.pwr2mapy * SQUARE_SIZE),
+		1.0f / (mapDims.mapx * SQUARE_SIZE),
+		1.0f / (mapDims.mapy * SQUARE_SIZE),
+	};
 
 	decalShaders[DECAL_SHADER_NULL] = Shader::nullProgramObject;
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_NULL];
@@ -87,23 +94,25 @@ void LegacyTrackHandler::LoadDecalShaders()
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalTex");           // idx  0
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadeTex");           // idx  1
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowTex");          // idx  2
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx  3
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx  4
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("viewMatrix");         // idx  5
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("projMatrix");         // idx  6
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("quadMatrix");         // idx  7
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx  8
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx  9
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 10
-	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 11
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("heightTex");          // idx  3
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("mapSizePO2");         // idx  4
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("groundAmbientColor"); // idx  5
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("viewMatrix");         // idx  6
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("projMatrix");         // idx  7
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("quadMatrix");         // idx  8
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowMatrix");       // idx  9
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 10
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 11
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 12
 
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, 1.0f);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(3, 3); // heightTex (idx 3, texunit 3)
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform4f(4, invMapSize.x, invMapSize.y, invMapSize.z, invMapSize.w);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(12, 1.0f);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -116,7 +125,7 @@ void LegacyTrackHandler::SunChanged()
 {
 	#ifndef USE_DECALHANDLER_STATE
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
-	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(10, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, sunLighting->groundShadowDensity);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	#endif
 }
@@ -164,8 +173,8 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 	unsigned char curPartColor[4] = {255, 255, 255, 255};
 	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
 
-	shader->SetUniform1f(11, 1.0f);
-	shader->SetUniformMatrix4fv(7, false, CMatrix44f::Identity());
+	shader->SetUniform1f(12, 1.0f);
+	shader->SetUniformMatrix4fv(8, false, CMatrix44f::Identity());
 
 	// create and draw the unit footprint quads
 	for (TrackType& tt: trackTypes) {
@@ -307,6 +316,9 @@ void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 void LegacyTrackHandler::BindTextures()
 {
 	{
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
+
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 	}
@@ -320,11 +332,17 @@ void LegacyTrackHandler::BindTextures()
 
 void LegacyTrackHandler::KillTextures()
 {
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 
@@ -335,11 +353,11 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 	decalShaders[DECAL_SHADER_CURR]->Enable();
 
 	if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_GLSL]) {
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, camera->GetViewMatrix());
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(6, false, camera->GetProjectionMatrix());
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(8, false, shadowHandler->GetShadowViewMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(9, shadowHandler->GetShadowParams());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(5, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(6, false, camera->GetViewMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, camera->GetProjectionMatrix());
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(9, false, shadowHandler->GetShadowViewMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(10, shadowHandler->GetShadowParams());
 	}
 	#endif
 }

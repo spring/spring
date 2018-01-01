@@ -9,9 +9,7 @@
 
 #include <cstring>
 
-CONFIG(bool, HeightMapTexture).defaultValue(true);
-
-HeightMapTexture* heightMapTexture = NULL;
+HeightMapTexture* heightMapTexture = nullptr;
 HeightMapTexture::HeightMapTexture()
 	: CEventClient("[HeightMapTexture]", 2718965, false)
 {
@@ -33,11 +31,7 @@ HeightMapTexture::~HeightMapTexture()
 
 void HeightMapTexture::Init()
 {
-	if (readMap == nullptr)
-		return;
-
-	if (!configHandler->GetBool("HeightMapTexture"))
-		return;
+	assert(readMap != nullptr);
 
 	xSize = mapDims.mapxp1;
 	ySize = mapDims.mapyp1;
@@ -73,9 +67,9 @@ void HeightMapTexture::Kill()
 
 void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	if (texID == 0) {
+	if (texID == 0)
 		return;
-	}
+
 	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 	const int sizeX = rect.x2 - rect.x1 + 1;

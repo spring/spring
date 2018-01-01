@@ -252,10 +252,10 @@ private:
 	std::vector< std::vector<int> > scarField;
 
 
-	GL::RenderDataBuffer decalBuffers[2];
+	GL::RenderDataBuffer decalBuffer;
 
-	VA_TYPE_TC* mapBufferPtr[2] = {nullptr, nullptr}; // start-pos
-	VA_TYPE_TC* curBufferPos[2] = {nullptr, nullptr}; // write-pos
+	VA_TYPE_TC* mapBufferPtr = nullptr; // start-pos
+	VA_TYPE_TC* curBufferPos = nullptr; // write-pos
 
 
 	int scarFieldX;
@@ -267,8 +267,6 @@ private:
 	int lastScarOverlapTest;
 
 	float maxScarOverlapSize;
-
-	bool groundScarAlphaFade;
 
 	LegacyTrackHandler trackHandler;
 };

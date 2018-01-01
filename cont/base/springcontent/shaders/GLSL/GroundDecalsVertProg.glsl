@@ -2,10 +2,15 @@
 
 const float BASE_COLOR_MULT = 1.0 / 255.0;
 
+uniform sampler2D heightTex;
+
 uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
 uniform mat4 quadMatrix;
-uniform vec2 mapSizePO2; // 1.0f / (pwr2map{x,z} * SQUARE_SIZE)
+
+// .xy := 1.0f / (pwr2map{x,z} * SQUARE_SIZE)
+// .zw := 1.0f / (    map{x,z} * SQUARE_SIZE)
+uniform vec4 invMapSize;
 
 
 layout(location = 0) in vec3 vertexPosAttr;
@@ -20,11 +25,12 @@ out vec4 baseColor;
 
 void main() {
 	vertexPos = vec4(vertexPosAttr, 1.0);
+	vertexPos.y = texture(heightTex, vertexPosAttr.xz * invMapSize.zw).r + 0.05;
 
 	gl_Position = projMatrix * viewMatrix * quadMatrix * vertexPos;
 
 	texCoord0 = texCoordsAttr;
-	texCoord1 = vertexPosAttr.xz * mapSizePO2;
+	texCoord1 = vertexPosAttr.xz * invMapSize.xy;
 	baseColor = baseColorAttr * BASE_COLOR_MULT;
 }
 
