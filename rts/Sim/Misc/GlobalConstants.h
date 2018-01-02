@@ -15,8 +15,8 @@ static constexpr int SQUARE_SIZE = 8;
  *
  * Multiplier for {Unit, Feature, Move}Def footprint sizes which are
  * assumed to be expressed in "TA units". The resolution of Spring's
- * blocking-map is twice that of TA's; a "TA-footprint" square covers
- * SQUARE_SIZE*2 x SQUARE_SIZE*2 elmos.
+ * blocking-map is twice that of TA's; each square of a TA footprint
+ * covers SQUARE_SIZE*2 x SQUARE_SIZE*2 elmos.
  */
 static constexpr int SPRING_FOOTPRINT_SCALE = 2;
 
@@ -46,13 +46,6 @@ static constexpr int UNIT_SLOWUPDATE_RATE = 15;
  */
 static constexpr int TEAM_SLOWUPDATE_RATE = 30;
 
-/**
- * @brief los SlowUpdate rate
- *
- * Defines the interval of the LosHandler updates on terraform changes.
- */
-static constexpr int LOS_TERRAFORM_SLOWUPDATE_RATE = 15;
-
 
 /**
  * @brief max teams
@@ -65,20 +58,18 @@ static constexpr int MAX_TEAMS = 255;
 /**
  * @brief max players
  *
- * This is the hard limit.
- * It is currently 251. as it isrestricted by the size of the player-ID field
- * in the network, which is 1 byte (=> 255), plus 4 slots reserved for special
- * purposes, resulting in 251.
+ * Hard limit, currently restricted by the size of the player-ID field
+ * (1 byte) in network messages with the values 252 to 255 reserved for
+ * special purposes. (FIXME: max should be 252 then?)
  */
 static constexpr int MAX_PLAYERS = 251;
 
 /**
  * @brief max AIs
  *
- * This is the hard limit.
- * It is currently 255. as it isrestricted by the size of the ai-ID field
- * in the network, which is 1 byte (=> 256), with the value 255 reserved for
- * special purpose, resulting in 255.
+ * Hard limit, currently restricted by the size of the ai-ID field
+ * (1 byte) in network messages with the value 255 reserved for
+ * special purposes.
  */
 static constexpr int MAX_AIS = 255;
 
@@ -95,9 +86,9 @@ static constexpr int MAX_AIS = 255;
  * is stored in UnitHandler::maxUnits, and always clamped to this value.
  *
  * All types of IDs are also passed to Lua callins, while feature IDs are
- * additionally transmitted as (32-bit) floating-point command parameters,
- * which further limits them to 1 << 24 (far beyond the realm of feasible
- * runtime performance).
+ * additionally transmitted as (32-bit) floating-point command parameters
+ * which places a further cap at 1 << 24 (far beyond the realm of feasible
+ * runtime performance) should these maxima ever be removed.
  */
 static constexpr int MAX_UNITS = 32000;
 static constexpr int MAX_FEATURES = 64000;
