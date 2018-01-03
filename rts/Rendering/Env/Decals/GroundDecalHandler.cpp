@@ -229,7 +229,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		return;
 
 	const int gsmx  = mapDims.mapx;
-	const int gsmx1 = mapDims.mapxp1;
+	// const int gsmx1 = mapDims.mapxp1;
 	const int gsmy  = mapDims.mapy;
 
 	const unsigned int decalIdx = decal->bufIndx;
