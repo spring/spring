@@ -44,6 +44,7 @@ CSkyBox::~CSkyBox()
 
 void CSkyBox::LoadTexture(const std::string& texture)
 {
+	#ifndef HEADLESS
 	CBitmap btex;
 
 	if (!btex.Load(texture) || btex.textype != GL_TEXTURE_CUBE_MAP) {
@@ -57,6 +58,7 @@ void CSkyBox::LoadTexture(const std::string& texture)
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	#endif
 }
 
 void CSkyBox::LoadBuffer()
