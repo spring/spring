@@ -217,7 +217,7 @@ CR_REG_METADATA(CGame, (
 
 
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
-	: gameDrawMode(gameNotDrawing)
+	: gameDrawMode(Game::NotDrawing)
 	, lastSimFrame(-1)
 	, lastNumQueuedSimFrames(-1)
 	, numDrawFrames(0)
@@ -1200,11 +1200,11 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
 
-	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
 	if (luaUI != nullptr) { luaUI->CheckStack(); luaUI->CheckAction(); }
 	if (luaGaia != nullptr) { luaGaia->CheckStack(); }
 	if (luaRules != nullptr) { luaRules->CheckStack(); }
+
 
 	if (chatting && !userWriting) {
 		consoleHistory->AddLine(userInput);
@@ -1268,6 +1268,8 @@ bool CGame::Draw() {
 
 	SCOPED_SPECIAL_TIMER("Draw");
 	globalRendering->SetGLTimeStamp(0);
+
+	SetDrawMode(Game::NormalDraw);
 
 	{
 		SCOPED_TIMER("Draw::DrawGenesis");
@@ -1360,7 +1362,7 @@ bool CGame::Draw() {
 		videoCapturing->RenderFrame();
 	}
 
-	SetDrawMode(gameNotDrawing);
+	SetDrawMode(Game::NotDrawing);
 	CTeamHighlight::Disable();
 
 	const spring_time currentTimePostDraw = spring_gettime();

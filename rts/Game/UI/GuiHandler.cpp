@@ -2583,7 +2583,6 @@ void CGuiHandler::Draw()
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -3983,7 +3982,6 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glColor4f(color[0], color[1], color[2], 0.25f);
 
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_FOG);
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
@@ -3994,7 +3992,6 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 		}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_FOG);
 }
 
 
@@ -4073,7 +4070,6 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	{
 		// vertical quad
-		glDisable(GL_FOG);
 		glBegin(GL_QUAD_STRIP);
 		const float3 delta = (pos2 - pos1) / (float)steps;
 		for (int i = 0; i <= steps; i++) {
@@ -4086,7 +4082,6 @@ void CGuiHandler::DrawFormationFrontOrder(
 			p.y += 200.f; glVertexf3(p);
 		}
 		glEnd();
-		glEnable(GL_FOG);
 	}
 }
 
@@ -4164,8 +4159,6 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 	boxData.maxs = float3(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
-
 	glEnable(GL_BLEND);
 
 	if (!invColorSelect) {
@@ -4180,8 +4173,6 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 	}
 
 	DrawCornerPosts(pos0, pos1);
-
-	glEnable(GL_FOG);
 }
 
 
@@ -4237,7 +4228,6 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const fl
 	const float3 maxs(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
 
 	glDepthMask(GL_FALSE);
@@ -4268,7 +4258,6 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const fl
 	DrawCornerPosts(pos0, pos1);
 
 //	glDepthMask(GL_TRUE);
-	glEnable(GL_FOG);
 }
 
 
@@ -4326,8 +4315,6 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	cylData.divs = 128;
 
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glColor4f(color[0], color[1], color[2], 0.25f);
@@ -4344,8 +4331,6 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 		glVertexf3(base + float3(0.0f, 128.0f, 0.0f));
 	glEnd();
 	glLineWidth(1.0f);
-
-	glEnable(GL_FOG);
 }
 
 

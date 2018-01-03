@@ -82,7 +82,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawWater),
 	CR_MEMBER(drawGround),
 	CR_MEMBER(drawMapMarks),
-	CR_MEMBER(drawFog),
 
 	CR_MEMBER(drawdebug),
 	CR_MEMBER(drawdebugtraceray),
@@ -197,7 +196,6 @@ CGlobalRendering::CGlobalRendering()
 	, drawWater(true)
 	, drawGround(true)
 	, drawMapMarks(true)
-	, drawFog(true)
 
 	, drawdebug(false)
 	, drawdebugtraceray(false)

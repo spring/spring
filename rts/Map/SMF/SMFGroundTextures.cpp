@@ -490,7 +490,7 @@ void CSMFGroundTextures::BindSquareTexture(int texSquareX, int texSquareY)
 	GroundSquare* square = &squares[texSquareY * smfMap->numBigTexX + texSquareX];
 	glBindTexture(GL_TEXTURE_2D, square->GetTextureID());
 
-	if (game->GetDrawMode() == CGame::gameNormalDraw) {
+	if (game->GetDrawMode() == Game::NormalDraw) {
 		square->SetDrawFrame(globalRendering->drawFrame);
 	}
 }

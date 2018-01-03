@@ -147,14 +147,14 @@ void IWater::ExplosionOccurred(const CExplosionParams& event) {
 
 
 void IWater::DrawReflections(bool drawGround, bool drawSky) {
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	game->SetDrawMode(Game::ReflectionDraw);
 
 	{
 		drawReflection = true;
 
 		// opaque; do not clip skydome (is drawn in camera space)
 		if (drawSky)
-			sky->Draw();
+			sky->Draw(Game::ReflectionDraw);
 
 		glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 
@@ -170,7 +170,7 @@ void IWater::DrawReflections(bool drawGround, bool drawSky) {
 		featureDrawer->DrawAlphaPass();
 		projectileDrawer->Draw(true);
 		// sun-disc does not blend well with water
-		// sky->DrawSun();
+		// sky->DrawSun(Game::ReflectionDraw);
 
 		eventHandler.DrawWorldReflection();
 
@@ -179,18 +179,18 @@ void IWater::DrawReflections(bool drawGround, bool drawSky) {
 		drawReflection = false;
 	}
 
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 }
 
 void IWater::DrawRefractions(bool drawGround, bool drawSky) {
-	game->SetDrawMode(CGame::gameRefractionDraw);
+	game->SetDrawMode(Game::RefractionDraw);
 
 	{
 		drawRefraction = true;
 
 		// opaque
 		if (drawSky)
-			sky->Draw();
+			sky->Draw(Game::RefractionDraw);
 
 		glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 
@@ -212,6 +212,6 @@ void IWater::DrawRefractions(bool drawGround, bool drawSky) {
 		drawRefraction = false;
 	}
 
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 }
 

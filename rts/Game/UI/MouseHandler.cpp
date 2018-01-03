@@ -516,7 +516,6 @@ void CMouseHandler::DrawSelectionBox()
 
 		glPushAttrib(GL_ENABLE_BIT);
 
-		glDisable(GL_FOG);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_TEXTURE_2D);
 

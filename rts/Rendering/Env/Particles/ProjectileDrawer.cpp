@@ -795,7 +795,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 	gfBuffer->Submit(GL_QUADS);
 	gfShader->Disable();
 
-	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_ALPHA_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

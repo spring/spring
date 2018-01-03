@@ -200,13 +200,6 @@ public:
 	bool drawMapMarks;
 
 	/**
-	 * @brief draw fog
-	 *
-	 * Whether fog (of war) is drawn or not
-	 */
-	bool drawFog;
-
-	/**
 	 * @brief draw debug
 	 *
 	 * Whether debugging info is drawn

@@ -509,7 +509,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	assert((unitDrawer->GetWantedDrawerState(false))->CanDrawDeferred());
 
 	// note: should also set this during the map pass (in SMFGD)
-	game->SetDrawMode(CGame::gameDeferredDraw);
+	game->SetDrawMode(Game::DeferredDraw);
 	geomBuffer->Bind();
 	geomBuffer->SetDepthRange(1.0f, 0.0f);
 
@@ -536,7 +536,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 
 	geomBuffer->SetDepthRange(0.0f, 1.0f);
 	geomBuffer->UnBind();
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 
 	#if 0
 	geomBuffer->DrawDebug(geomBuffer->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));

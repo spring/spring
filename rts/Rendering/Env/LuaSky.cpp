@@ -5,7 +5,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/EventHandler.h"
 
-void CLuaSky::Draw()
+void CLuaSky::Draw(Game::DrawMode mode)
 {
 	if (!globalRendering->drawSky)
 		return;
@@ -13,7 +13,7 @@ void CLuaSky::Draw()
 	eventHandler.DrawSky();
 }
 
-void CLuaSky::DrawSun()
+void CLuaSky::DrawSun(Game::DrawMode mode)
 {
 	if (!globalRendering->drawSky)
 		return;

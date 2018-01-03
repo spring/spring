@@ -163,7 +163,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 {
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
-	glPushAttrib(GL_FOG_BIT | GL_DEPTH_BUFFER_BIT);
+	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -229,13 +229,13 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 			curCam->Update(false, true, false);
 
 			// generate the face
-			game->SetDrawMode(CGame::gameReflectionDraw);
-			sky->Draw();
+			game->SetDrawMode(Game::ReflectionDraw);
+			sky->Draw(Game::ReflectionDraw);
 
 			if (!skyOnly)
 				readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
 
-			game->SetDrawMode(CGame::gameNormalDraw);
+			game->SetDrawMode(Game::NormalDraw);
 		}
 
 		CCamera::SetActiveCamera(prvCam->GetCamType());

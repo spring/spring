@@ -134,8 +134,6 @@ void CWorldDrawer::LoadPost() const
 
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);
-
-	sky->SetupFog();
 }
 
 
@@ -175,9 +173,9 @@ void CWorldDrawer::GenerateIBLTextures() const
 
 	if (shadowHandler->ShadowsLoaded()) {
 		SCOPED_TIMER("Draw::World::CreateShadows");
-		game->SetDrawMode(CGame::gameShadowDraw);
+		game->SetDrawMode(Game::ShadowDraw);
 		shadowHandler->CreateShadows();
-		game->SetDrawMode(CGame::gameNormalDraw);
+		game->SetDrawMode(Game::NormalDraw);
 	}
 
 	{
@@ -231,7 +229,7 @@ void CWorldDrawer::Draw() const
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-	sky->Draw();
+	sky->Draw(Game::NormalDraw);
 
 	DrawOpaqueObjects();
 	DrawAlphaObjects();
@@ -241,7 +239,7 @@ void CWorldDrawer::Draw() const
 		projectileDrawer->Draw(false);
 	}
 
-	sky->DrawSun();
+	sky->DrawSun(Game::NormalDraw);
 
 	{
 		SCOPED_TIMER("Draw::World::DrawWorld");
@@ -250,8 +248,6 @@ void CWorldDrawer::Draw() const
 
 	DrawMiscObjects();
 	DrawBelowWaterOverlay();
-
-	glDisable(GL_FOG);
 }
 
 

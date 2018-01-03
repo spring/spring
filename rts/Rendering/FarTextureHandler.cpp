@@ -147,11 +147,6 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glDisable(GL_BLEND);
 	glFrontFace(GL_CW);
 
-	glFogi(GL_FOG_MODE,   GL_LINEAR);
-	glFogf(GL_FOG_START,  0.0f);
-	glFogf(GL_FOG_END,    1e6);
-	glFogf(GL_FOG_DENSITY, 1.0f);
-
 	// NOTE:
 	//   the icons are RTT'ed using a snapshot of the
 	//   current state (advModelShading, sunDir, etc)

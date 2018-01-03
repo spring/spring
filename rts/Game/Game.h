@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "GameController.h"
+#include "GameDrawMode.h"
 #include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
 #include "System/UnorderedMap.hpp"
@@ -32,15 +33,6 @@ public:
 	void KillLua(bool dtor);
 
 public:
-	enum GameDrawMode {
-		gameNotDrawing     = 0,
-		gameNormalDraw     = 1,
-		gameShadowDraw     = 2,
-		gameReflectionDraw = 3,
-		gameRefractionDraw = 4,
-		gameDeferredDraw   = 5,
-	};
-
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
 
@@ -105,8 +97,8 @@ public:
 
 	void ResizeEvent() override;
 
-	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
-	GameDrawMode GetDrawMode() const { return gameDrawMode; }
+	void SetDrawMode(Game::DrawMode mode) { gameDrawMode = mode; }
+	Game::DrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
 	bool Draw() override;
@@ -146,7 +138,7 @@ private:
 	void StartPlaying();
 
 public:
-	GameDrawMode gameDrawMode;
+	Game::DrawMode gameDrawMode;
 
 	unsigned char gameID[16];
 

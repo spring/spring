@@ -292,7 +292,6 @@ void CDynWater::Draw()
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_FOG);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, waveTex3);
@@ -386,7 +385,7 @@ void CDynWater::UpdateWater(CGame* game)
 	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_FOG_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
 	glDisable(GL_BLEND);

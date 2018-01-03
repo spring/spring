@@ -25,9 +25,9 @@ void CLuaWater::DrawReflection(CGame* game)
 {
 	drawReflection = true;
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	game->SetDrawMode(Game::ReflectionDraw);
 	eventHandler.DrawWorldReflection();
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 
 	drawReflection = false;
 }
@@ -36,9 +36,9 @@ void CLuaWater::DrawRefraction(CGame* game)
 {
 	drawRefraction = true;
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
+	game->SetDrawMode(Game::RefractionDraw);
 	eventHandler.DrawWorldRefraction();
-	game->SetDrawMode(CGame::gameNormalDraw);
+	game->SetDrawMode(Game::NormalDraw);
 
 	drawRefraction = false;
 }

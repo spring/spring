@@ -240,7 +240,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_FOG_BIT | GL_COLOR_BUFFER_BIT);
+	glPushAttrib(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);

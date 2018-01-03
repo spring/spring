@@ -4,8 +4,7 @@
 #define I_SKY_H
 
 #include "SkyLight.h"
-
-#define CLOUD_SIZE 256 // must be divisible by 4 and 8
+#include "Game/GameDrawMode.h"
 
 struct MapTextureData;
 class ISky
@@ -14,28 +13,23 @@ protected:
 	ISky();
 
 public:
-	virtual ~ISky();
+	virtual ~ISky() {}
 
 	virtual void Update() = 0;
 	virtual void UpdateSunDir() = 0;
 	virtual void UpdateSkyTexture() = 0;
 
-	virtual void Draw() = 0;
-	virtual void DrawSun() = 0;
+	virtual void Draw(Game::DrawMode mode) = 0;
+	virtual void DrawSun(Game::DrawMode mode) = 0;
 
 	virtual void SetLuaTexture(const MapTextureData& td) {}
 
-	ISkyLight* GetLight() const { return skyLight; }
+	const ISkyLight* GetLight() const { return &skyLight; }
+	      ISkyLight* GetLight()       { return &skyLight; }
 
 	bool SunVisible(const float3 pos) const;
 
 	bool& WireFrameModeRef() { return wireFrameMode; }
-
-	/**
-	 * Sets up OpenGL to draw fog or not, according to the value of
-	 * globalRendering->drawFog.
-	 */
-	void SetupFog();
 
 public:
 	static ISky* GetSky();
@@ -50,7 +44,7 @@ public:
 	float fogEnd;
 
 protected:
-	ISkyLight* skyLight;
+	ISkyLight skyLight;
 
 	bool wireFrameMode;
 };

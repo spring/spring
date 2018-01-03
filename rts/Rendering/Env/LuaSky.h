@@ -9,8 +9,8 @@ class CLuaSky : public ISky
 {
 public:
 	void Update() override {}
-	void Draw() override;
-	void DrawSun() override;
+	void Draw(Game::DrawMode mode) override;
+	void DrawSun(Game::DrawMode mode) override;
 
 	void UpdateSunDir() override {}
 	void UpdateSkyTexture() override {}

@@ -21,34 +21,9 @@ ISky::ISky()
 	, fogColor(mapInfo->atmosphere.fogColor)
 	, fogStart(mapInfo->atmosphere.fogStart)
 	, fogEnd(mapInfo->atmosphere.fogEnd)
-	, skyLight(nullptr)
 	, wireFrameMode(false)
 {
-	skyLight = new ISkyLight();
 }
-
-ISky::~ISky()
-{
-	spring::SafeDelete(skyLight);
-}
-
-
-
-void ISky::SetupFog() {
-
-	if (globalRendering->drawFog) {
-		glEnable(GL_FOG);
-	} else {
-		glDisable(GL_FOG);
-	}
-
-	glFogfv(GL_FOG_COLOR, fogColor);
-	glFogi(GL_FOG_MODE,   GL_LINEAR);
-	glFogf(GL_FOG_START,  globalRendering->viewRange * fogStart);
-	glFogf(GL_FOG_END,    globalRendering->viewRange * fogEnd);
-	glFogf(GL_FOG_DENSITY, 1.0f);
-}
-
 
 
 ISky* ISky::GetSky()
@@ -79,7 +54,7 @@ bool ISky::SunVisible(const float3 pos) const {
 
 	// cast a ray *toward* the sun from <pos>
 	// sun is visible if no terrain blocks it
-	const float3& sunDir = skyLight->GetLightDir();
+	const float3& sunDir = skyLight.GetLightDir();
 	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, false);
 
 	return (sunDist < 0.0f || sunDist >= globalRendering->viewRange);
