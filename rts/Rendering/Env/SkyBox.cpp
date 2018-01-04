@@ -30,10 +30,8 @@ static constexpr unsigned int SKYBOX_BUFFER_LEN = SKYBOX_VERTEX_CNT * 2;
 
 CSkyBox::CSkyBox(const std::string& texture)
 {
-	#ifndef HEADLESS
 	LoadTexture(texture);
 	LoadBuffer();
-	#endif
 }
 
 CSkyBox::~CSkyBox()
@@ -63,6 +61,7 @@ void CSkyBox::LoadTexture(const std::string& texture)
 
 void CSkyBox::LoadBuffer()
 {
+	#ifndef HEADLESS
 	const char* vsText =
 		"#version 410 core\n"
 		"\n"
@@ -115,6 +114,7 @@ void CSkyBox::LoadBuffer()
 	for (unsigned int i = 0, n = SKYBOX_BUFFER_LEN; i < n; i++) {
 		*(vtxPos++) = {{0.0f, 0.0f}, ZeroVector};
 	}
+	#endif
 }
 
 
