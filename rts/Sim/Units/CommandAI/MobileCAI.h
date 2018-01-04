@@ -76,29 +76,30 @@ public:
 
 	float3 lastBuggerGoalPos;
 	float3 lastUserGoal;
-
-	int lastIdleCheck;
-	bool tempOrder;
-
-	/// helps avoid infinate loops
-	int lastPC;
-
-	int lastBuggerOffTime;
-	float3 buggerOffPos;
-	float buggerOffRadius;
-
-	float repairBelowHealth;
 	/**
-	 * Used to avoid stuff in maneuvre mode moving too far away from patrol path
+	 * Used to avoid stuff in maneuver-mode moving too far away from patrol path
 	 */
 	float3 commandPos1;
 	float3 commandPos2;
 
+	float3 buggerOffPos;
+
+	float buggerOffRadius;
+	float repairBelowHealth;
+
+	bool tempOrder;
+
 protected:
-	int cancelDistance;
-	int lastCloseInTry;
 	bool slowGuard;
 	bool moveDir;
+
+	int cancelDistance;
+
+	/// last frame certain types of area-commands were handled, helps avoid infinite loops
+	int lastCommandFrame;
+	int lastCloseInTry;
+	int lastBuggerOffTime;
+	int lastIdleCheck;
 
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
