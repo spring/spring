@@ -1328,7 +1328,6 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	return 0;
 }
 
-
 /******************************************************************************/
 
 int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
@@ -1539,38 +1538,74 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 }
 
 
-static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
+static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 {
-	const string key = lua_tostring(L, index);
-	const float value = lua_tofloat(L, index + 1);
-	// FIXME: KDR -- missing checks and updates?
-	if (key == "reloadState" || key == "reloadFrame") {
-		weapon->reloadStatus = (int)value;
-	} else if (key == "reloadTime") {
-		weapon->reloadTime = std::max(1, (int)(value * GAME_SPEED));
-	} else if (key == "accuracy") {
-		weapon->accuracyError = value;
-	} else if (key == "sprayAngle") {
-		weapon->sprayAngle = value;
-	} else if (key == "range") {
-		weapon->UpdateRange(value);
-	} else if (key == "projectileSpeed") {
-		weapon->projectileSpeed = value;
-	} else if (key == "burst") {
-		weapon->salvoSize = (int)value;
-	} else if (key == "burstRate") {
-		weapon->salvoDelay = (int)(value * GAME_SPEED);
-	} else if (key == "projectiles") {
-		weapon->projectilesPerShot = (int)value;
-	} else if (key == "salvoLeft") {
-		weapon->salvoLeft = (int)value;
-	} else if (key == "nextSalvo") {
-		weapon->nextSalvo = (int)value;
-	} else if (key == "aimReady") {
-		// HACK, this should be set to result of lua_toboolean
-		weapon->angleGood = (value != 0.0f);
+	// FIXME: missing checks and updates?
+	switch (hashString(lua_tolstring(L, index, nullptr))) {
+		case hashString("reloadState"):
+		case hashString("reloadFrame"): {
+			weapon->reloadStatus = lua_toint(L, index + 1);
+		} break;
+
+		case hashString("reaimTime"): {
+			weapon->reaimTime = std::max(1, lua_toint(L, index + 1));
+		} break;
+
+		case hashString("reloadTime"): {
+			weapon->reloadTime = std::max(1, lua_toint(L, index + 1) * GAME_SPEED);
+		} break;
+
+		case hashString("accuracy"): {
+			weapon->accuracyError = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("sprayAngle"): {
+			weapon->sprayAngle = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("range"): {
+			weapon->UpdateRange(lua_tofloat(L, index + 1));
+		} break;
+
+		case hashString("projectileSpeed"): {
+			weapon->projectileSpeed = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("burst"): {
+			weapon->salvoSize = lua_toint(L, index + 1);
+		} break;
+
+		case hashString("burstRate"): {
+			weapon->salvoDelay = lua_toint(L, index + 1) * GAME_SPEED;
+		} break;
+
+		case hashString("projectiles"): {
+			weapon->projectilesPerShot = lua_toint(L, index + 1);
+		} break;
+
+		case hashString("salvoLeft"): {
+			weapon->salvoLeft = lua_toint(L, index + 1);
+		} break;
+
+		case hashString("nextSalvo"): {
+			weapon->nextSalvo = lua_toint(L, index + 1);
+		} break;
+
+		case hashString("aimReady"): {
+			weapon->angleGood = lua_toboolean(L, index + 1);
+		} break;
+
+		case hashString("forceAim"): {
+			// move into the past by default s.t. Weapon::CallAimingScript runs the callin next Update
+			weapon->lastAimedFrame -= luaL_optint(L, index + 1, weapon->reaimTime);
+		} break;
+
+		default: {
+			return false;
+		} break;
 	}
-	return 0;
+
+	return true;
 }
 
 
