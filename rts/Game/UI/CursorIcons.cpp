@@ -106,9 +106,10 @@ void CCursorIcons::DrawCursors()
 		buffer->SafeAppend({ICON_VERTS[1], ICON_TXCDS[1].x, ICON_TXCDS[1].y, iconColor});
 		buffer->SafeAppend({ICON_VERTS[2], ICON_TXCDS[2].x, ICON_TXCDS[2].y, iconColor});
 		buffer->SafeAppend({ICON_VERTS[3], ICON_TXCDS[3].x, ICON_TXCDS[3].y, iconColor});
+		// no batching; each quad has its own viewport
+		buffer->Submit(GL_QUADS);
 	}
 
-	buffer->Submit(GL_QUADS);
 	shader->Disable();
 }
 
