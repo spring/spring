@@ -46,6 +46,7 @@ CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	LuaObjectDrawer::Init();
 	DebugColVolDrawer::Init();
+	cursorIcons.Init();
 }
 
 CWorldDrawer::~CWorldDrawer()

@@ -47,7 +47,7 @@ public:
 
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
-	void DrawQuad(int x, int y) const;            // draw command queue icon
+	bool SetFrameHotSpotVP(int x, int y) const;   // draw command queue icon
 	void BindTexture() const;                     // software mouse cursor
 	void BindHwCursor() const;                    // hardware mouse cursor
 

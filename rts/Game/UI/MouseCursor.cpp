@@ -284,10 +284,10 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 }
 
 
-void CMouseCursor::DrawQuad(int x, int y) const
+bool CMouseCursor::SetFrameHotSpotVP(int x, int y) const
 {
 	if (frames.empty())
-		return;
+		return false;
 
 	const float scale = cmdColors.QueueIconScale();
 
@@ -295,25 +295,12 @@ void CMouseCursor::DrawQuad(int x, int y) const
 	const int xs = int(float(frame.image.xAlignedSize) * scale);
 	const int ys = int(float(frame.image.yAlignedSize) * scale);
 
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
+	// center on hotspot
+	const int xp = int(float(x) -              (float(xofs) * scale));
 	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
 
 	glViewport(globalRendering->viewPosX + xp, yp, xs, ys);
-
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,          0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-//FIXME pass va?
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	return true;
 }
 
 
