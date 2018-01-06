@@ -98,7 +98,11 @@ protected:
 		IconText(IconText&& i) { *this = std::move(i); }
 
 		IconText& operator = (const IconText& i) = delete;
-		IconText& operator = (IconText&& i) { text = std::move(i.text); pos = i.pos; }
+		IconText& operator = (IconText&& i) {
+			text = std::move(i.text);
+			pos = i.pos;
+			return *this;
+		}
 
 		bool operator == (const IconText& i) const { return (!((*this) < i) && !(i < (*this))); }
 		bool operator <  (const IconText& i) const
