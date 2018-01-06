@@ -109,7 +109,8 @@ private:
 	bool AllowWeaponAutoTarget() const;
 	bool CobBlockShot() const;
 	bool CheckAimingAngle() const;
-	bool CallAimingScript();
+	bool CanCallAimingScript(bool validAngle) const;
+	bool CallAimingScript(bool waitForAim);
 	void HoldIfTargetInvalid();
 
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire = false) const;

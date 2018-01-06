@@ -308,9 +308,7 @@ void CWeapon::UpdateAim()
 		return;
 
 	UpdateWantedDir();
-
-	angleGood &= CheckAimingAngle();
-	angleGood &= CallAimingScript();
+	CallAimingScript(!weaponDef->allowNonBlockingAim);
 }
 
 bool CWeapon::CheckAimingAngle() const
@@ -326,10 +324,19 @@ bool CWeapon::CheckAimingAngle() const
 }
 
 
-bool CWeapon::CallAimingScript()
-{
-	bool callScript = false;
+bool CWeapon::CanCallAimingScript(bool validAngle) const {
+	bool ret = (gs->frameNum >= (lastAimedFrame + reaimTime));
 
+	ret |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
+	ret |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.0f * math::DEG_TO_RAD));
+
+	// NOTE: angleGood checks unit/maindir, not the weapon's current dir
+	// ret |= (!validAngle);
+	return ret;
+}
+
+bool CWeapon::CallAimingScript(bool waitForAim)
+{
 	// periodically re-aim the weapon (by calling the script's AimWeapon
 	// every N=15 frames regardless of current angleGood state; interval
 	// can be artificially shrunk by larger maxFireAngle [firetolerance]
@@ -338,16 +345,11 @@ bool CWeapon::CallAimingScript()
 	// aim the weapon and defers setting angleGood to it) then this can
 	// lead to irregular/stuttering firing behavior, even in scenarios
 	// when the weapon does not have to re-aim
-	callScript |= (gs->frameNum >= (lastAimedFrame + reaimTime));
+	if (!CanCallAimingScript(angleGood &= CheckAimingAngle()))
+		return false;
 
-	callScript |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
-	callScript |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.0f * math::DEG_TO_RAD));
-
-	// NOTE: angleGood checks unit/maindir, not the weapon's current dir
-	// callScript |= (!angleGood);
-
-	if (!callScript)
-		return true;
+	// if false, block further firing until AimWeapon has finished
+	angleGood &= !waitForAim;
 
 	lastRequestedDir = wantedDir;
 	lastAimedFrame = gs->frameNum;
@@ -359,9 +361,7 @@ bool CWeapon::CallAimingScript()
 	// for LUS, there exists a callout to set the <angleGood> member directly
 	// FIXME: convert CSolidObject::heading to radians too.
 	owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
-
-	// if false, block further firing until AimWeapon has finished
-	return (weaponDef->allowNonBlockingAim);
+	return true;
 }
 
 
