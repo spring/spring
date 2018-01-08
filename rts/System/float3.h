@@ -692,13 +692,8 @@ public:
 	static float3 max(const float3 v1, const float3 v2);
 	static float3 fabs(const float3 v);
 
-	#if (__cplusplus <= 199711L) && !defined(__GXX_EXPERIMENTAL_CXX0X__) && (!defined(__GNUC__) || defined (__clang__)) && !(_MSC_VER >= 1900)
-	static float cmp_eps() { return 1e-04f; }
-	static float nrm_eps() { return 1e-12f; }
-	#else
 	static constexpr float cmp_eps() { return 1e-04f; }
 	static constexpr float nrm_eps() { return 1e-12f; }
-	#endif
 
 public:
 	union {
