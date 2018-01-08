@@ -4,10 +4,6 @@
 #define SMOOTH_HEIGHTMESH_DRAWER_H
 
 struct SmoothHeightMeshDrawer {
-private:
-	SmoothHeightMeshDrawer();
-	~SmoothHeightMeshDrawer();
-
 public:
 	static SmoothHeightMeshDrawer* GetInstance();
 
@@ -15,7 +11,7 @@ public:
 	bool& DrawEnabled() { return drawEnabled; }
 
 private:
-	bool drawEnabled;
+	bool drawEnabled = false;
 };
 
 #define smoothHeightMeshDrawer (SmoothHeightMeshDrawer::GetInstance())
