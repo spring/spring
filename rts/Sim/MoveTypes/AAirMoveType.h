@@ -26,7 +26,7 @@ public:
 	} aircraftState;
 
 	AAirMoveType(CUnit* unit);
-	virtual ~AAirMoveType();
+	virtual ~AAirMoveType() {}
 
 	virtual bool Update();
 	virtual void UpdateLanded();

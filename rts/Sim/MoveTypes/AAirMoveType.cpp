@@ -75,23 +75,24 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	useHeading = false;
 }
 
-AAirMoveType::~AAirMoveType()
-{ }
 
 bool AAirMoveType::UseSmoothMesh() const {
 	if (!useSmoothMesh)
 		return false;
 
-	const bool onTransportMission =
-		!owner->commandAI->commandQue.empty() &&
-		((owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().GetID() == CMD_UNLOAD_UNIT));
-	const bool forceDisableSmooth = onTransportMission || (aircraftState != AIRCRAFT_FLYING);
-	return !forceDisableSmooth;
+	const CCommandAI* cai = owner->commandAI;
+	const CCommandQueue& cq = cai->commandQue;
+	const Command& fc = (cq.empty())? Command(CMD_STOP): cq.front();
+
+	const bool transportCmd = ((fc.GetID() == CMD_LOAD_UNITS) || (fc.GetID() == CMD_UNLOAD_UNIT));
+	const bool forceDisable = ((transportCmd && (goalPos.SqDistance2D(owner->pos) < Square(landRadiusSq * 2.0f))) || (aircraftState != AIRCRAFT_FLYING));
+
+	return !forceDisable;
 }
 
 void AAirMoveType::DependentDied(CObject* o) {
 	if (o == lastColWarning) {
-		lastColWarning = NULL;
+		lastColWarning = nullptr;
 		lastColWarningType = 0;
 	}
 }
@@ -100,9 +101,8 @@ bool AAirMoveType::Update() {
 	// NOTE: useHeading is never true by default for aircraft (AAirMoveType
 	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
 	// specifically for HoverAirMoveType's)
-	if (useHeading) {
+	if (useHeading)
 		SetState(AIRCRAFT_TAKEOFF);
-	}
 
 	// this return value is never used
 	return (useHeading = false);
@@ -221,22 +221,20 @@ void AAirMoveType::CheckForCollision()
 
 	if (lastColWarning) {
 		DeleteDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
-		lastColWarning = NULL;
+		lastColWarning = nullptr;
 		lastColWarningType = 0;
 	}
 
 	for (CUnit* unit: *qfQuery.units) {
-		if (unit == owner || !unit->unitDef->canfly) {
+		if (unit == owner || !unit->unitDef->canfly)
 			continue;
-		}
 
 		const SyncedFloat3& op = unit->midPos;
 		const float3 dif = op - pos;
 		const float3 forwardDif = forward * (forward.dot(dif));
 
-		if (forwardDif.SqLength() >= (dist * dist)) {
+		if (forwardDif.SqLength() >= (dist * dist))
 			continue;
-		}
 
 		const float3 ortoDif = dif - forwardDif;
 		const float frontLength = forwardDif.Length();
@@ -249,7 +247,7 @@ void AAirMoveType::CheckForCollision()
 		}
 	}
 
-	if (lastColWarning != NULL) {
+	if (lastColWarning != nullptr) {
 		lastColWarningType = 2;
 		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
 		return;
@@ -258,12 +256,12 @@ void AAirMoveType::CheckForCollision()
 	for (CUnit* u: *qfQuery.units) {
 		if (u == owner)
 			continue;
-		if ((u->midPos - pos).SqLength() < (dist * dist)) {
+
+		if ((u->midPos - pos).SqLength() < (dist * dist))
 			lastColWarning = u;
-		}
 	}
 
-	if (lastColWarning != NULL) {
+	if (lastColWarning != nullptr) {
 		lastColWarningType = 1;
 		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
 	}

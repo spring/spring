@@ -830,13 +830,12 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
 	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
-	if (UseSmoothMesh()) {
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
-	}
 
-	if (((gs->frameNum + owner->id) & 3) == 0) {
+	if (UseSmoothMesh())
+		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
+
+	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
-	}
 
 	// RHS is needed for moving targets (when called by UpdateAttack)
 	const bool allowUnlockYawRoll = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
