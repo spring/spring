@@ -108,8 +108,16 @@ public:
 		return 0.0f;
 	}
 
-	void ResetState();
 	void ToggleLock(bool lock);
+	void ResetState();
+	void ResetPeaks() {
+		ToggleLock(true);
+
+		for (auto& p: profile)
+			p.second.peak = 0.0f;
+
+		ToggleLock(false);
+	}
 
 	void Update();
 	void UpdateRaw();
