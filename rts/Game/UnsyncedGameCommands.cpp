@@ -2239,10 +2239,10 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		bool aiDebugDraw = debugDrawerAI->GetDraw();
+		bool aiDebugDraw = debugDrawerAI->IsEnabled();
 		InverseOrSetBool(aiDebugDraw, action.GetArgs());
-		debugDrawerAI->SetDraw(aiDebugDraw);
-		LogSystemStatus("SkirmishAI debug drawing", debugDrawerAI->GetDraw());
+		debugDrawerAI->SetEnabled(aiDebugDraw);
+		LogSystemStatus("SkirmishAI debug drawing", debugDrawerAI->IsEnabled());
 		return true;
 	}
 };

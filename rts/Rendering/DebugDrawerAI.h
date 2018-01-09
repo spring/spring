@@ -6,9 +6,14 @@
 #include <deque>
 #include <vector>
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
+
+namespace Shader {
+	struct IProgramObject;
+};
 
 class DebugDrawerAI {
 public:
@@ -19,8 +24,8 @@ public:
 
 	void Draw();
 
-	void SetDraw(bool b) { draw = b; }
-	bool GetDraw() const { return draw; }
+	void SetEnabled(bool b) { enabled = b; }
+	bool IsEnabled() const { return enabled; }
 
 	void AddGraphPoint(int, int, float, float);
 	void DelGraphPoints(int, int, int);
@@ -43,7 +48,7 @@ private:
 		~Graph() {}
 		void Clear();
 
-		void Draw();
+		void Draw(GL::RenderDataBufferC*, Shader::IProgramObject*);
 		void AddPoint(int, float, float);
 		void DelPoints(int, int);
 
@@ -93,10 +98,13 @@ private:
 	public:
 		TexSet(): curTexHandle(0) {}
 		~TexSet() {}
-		void Clear();
+		void Clear() { textures.clear(); }
 
-		void Draw();
-		int AddTexture(const float*, int, int);
+		void Draw(GL::RenderDataBufferT*, Shader::IProgramObject*);
+		int AddTexture(const float* data, int w, int h) {
+			textures.emplace(curTexHandle, TexSet::Texture(w, h, data));
+			return (curTexHandle++);
+		}
 		void UpdateTexture(int, const float*, int, int, int, int);
 		void DelTexture(int);
 		void SetTexturePos(int, float, float);
@@ -148,7 +156,7 @@ private:
 	std::vector<Graph> graphs;
 	std::vector<TexSet> texsets;
 
-	bool draw;
+	bool enabled = false;
 };
 
 #define debugDrawerAI (DebugDrawerAI::GetInstance())

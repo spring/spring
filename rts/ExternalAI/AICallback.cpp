@@ -1582,16 +1582,16 @@ bool CAICallback::IsDebugDrawerEnabled() const
 	// this function will never be called,
 	// as it is handled in the C layer directly
 	// see eg. Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
-	return debugDrawerAI->GetDraw();
+	return debugDrawerAI->IsEnabled();
 }
 
-int CAICallback::GetNumUnitDefs ()
+int CAICallback::GetNumUnitDefs()
 {
-	// defid=0 is not valid, that's why "-1"
-	return unitDefHandler->unitDefs.size() - 1;
+	// id=0 is not a valid UnitDef, hence the -1
+	return (unitDefHandler->unitDefs.size() - 1);
 }
 
-void CAICallback::GetUnitDefList (const UnitDef** list)
+void CAICallback::GetUnitDefList(const UnitDef** list)
 {
 	for (int ud = 1; ud < unitDefHandler->unitDefs.size(); ud++) {
 		list[ud-1] = unitDefHandler->GetUnitDefByID(ud);
@@ -1602,7 +1602,7 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
-	S3DModel* mdl = ud->LoadModel();
+	const S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 
