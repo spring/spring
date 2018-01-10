@@ -8,8 +8,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-#include <sstream>
-
 CR_BIND(CCobThread, )
 
 CR_REG_METADATA(CCobThread, (
@@ -34,8 +32,8 @@ CR_REG_METADATA(CCobThread, (
 	CR_MEMBER(state),
 
 	CR_MEMBER(luaArgs),
-	CR_MEMBER(dataStack),
-	CR_MEMBER(callStack)
+	CR_MEMBER(callStack),
+	CR_MEMBER(dataStack)
 ))
 
 CR_BIND(CCobThread::CallInfo,)
@@ -126,7 +124,8 @@ void CCobThread::Start(int functionId, int sigMask, const std::vector<int>& args
 	callStack.push_back(ci);
 
 	// copy arguments
-	dataStack = args;
+	if (!args.empty())
+		dataStack = args;
 
 	// add to scheduler
 	if (schedule)
@@ -148,10 +147,12 @@ void CCobThread::Stop()
 	cobFile = nullptr;
 }
 
+
 const std::string& CCobThread::GetName()
 {
 	return cobFile->scriptNames[callStack[0].functionId];
 }
+
 
 int CCobThread::CheckStack(unsigned int size, bool warn)
 {
@@ -170,6 +171,18 @@ int CCobThread::CheckStack(unsigned int size, bool warn)
 
 	return (dataStack.size());
 }
+
+void CCobThread::InitStack(unsigned int n, CCobThread* t)
+{
+	dataStack.clear();
+	dataStack.reserve(argc);
+
+	// move n arguments from caller's stack onto our own
+	for (unsigned int i = 0; i < n; ++i) {
+		dataStack.push_back(t->POP());
+	}
+}
+
 
 
 // Command documentation from http://visualta.tauniverse.com/Downloads/cob-commands.txt
@@ -489,18 +502,12 @@ bool CCobThread::Tick()
 				if (cobFile->scriptLengths[r1] == 0)
 					break;
 
-				callArgs.clear();
-				callArgs.reserve(r2);
-
-				for (r3 = 0; r3 < r2; ++r3) {
-					callArgs.push_back(r4 = POP());
-				}
-
 
 				CCobThread t(cobInst);
 
 				t.SetID(cobEngine->GenThreadID());
-				t.Start(r1, signalMask, callArgs, true);
+				t.InitStack(r2, this);
+				t.Start(r1, signalMask, {}, true);
 
 				// calling AddThread directly might move <this>, defer it
 				cobEngine->QueueAddThread(std::move(t));
