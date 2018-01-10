@@ -13,8 +13,8 @@
 CR_BIND(CCobThread, )
 
 CR_REG_METADATA(CCobThread, (
-	CR_MEMBER(owner),
-	CR_MEMBER(cob),
+	CR_MEMBER(cobInst),
+	CR_IGNORED(cobFile),
 
 	CR_MEMBER(id),
 	CR_MEMBER(pc),
@@ -47,12 +47,13 @@ CR_REG_METADATA_SUB(CCobThread, CallInfo,(
 ))
 
 
-CCobThread::CCobThread(CCobInstance* _owner)
-	: owner(_owner)
-	, cob(_owner->cobFile)
+CCobThread::CCobThread(CCobInstance* _cobInst)
+	: cobInst(_cobInst)
+	, cobFile(_cobInst->cobFile)
 {
 	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
 }
+
 
 CCobThread& CCobThread::operator = (CCobThread&& t) {
 	id = t.id;
@@ -67,7 +68,7 @@ CCobThread& CCobThread::operator = (CCobThread&& t) {
 	waitAxis = t.waitAxis;
 	waitPiece = t.waitPiece;
 
-	memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
+	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
 
 	callStack = std::move(t.callStack);
 	dataStack = std::move(t.dataStack);
@@ -76,11 +77,35 @@ CCobThread& CCobThread::operator = (CCobThread&& t) {
 	state = t.state;
 	cbType = t.cbType;
 
-	owner = t.owner; t.owner = nullptr;
-	cob = t.cob; t.cob = nullptr;
+	cobInst = t.cobInst; t.cobInst = nullptr;
+	cobFile = t.cobFile; t.cobFile = nullptr;
+	return *this;
+}
 
-	t.owner = nullptr;
-	t.cob = nullptr;
+CCobThread& CCobThread::operator = (const CCobThread& t) {
+	id = t.id;
+	pc = t.pc;
+
+	wakeTime = t.wakeTime;
+	paramCount = t.paramCount;
+	retCode = t.retCode;
+	cbParam = t.cbParam;
+	signalMask = t.signalMask;
+
+	waitAxis = t.waitAxis;
+	waitPiece = t.waitPiece;
+
+	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
+
+	callStack = t.callStack;
+	dataStack = t.dataStack;
+	// execTrace = t.execTrace;
+
+	state = t.state;
+	cbType = t.cbType;
+
+	cobInst = t.cobInst;
+	cobFile = t.cobFile;
 	return *this;
 }
 
@@ -88,7 +113,7 @@ CCobThread& CCobThread::operator = (CCobThread&& t) {
 void CCobThread::Start(int functionId, int sigMask, const std::vector<int>& args, bool schedule)
 {
 	state = Run;
-	pc = cob->scriptOffsets[functionId];
+	pc = cobFile->scriptOffsets[functionId];
 
 	paramCount = args.size();
 	signalMask = sigMask;
@@ -110,22 +135,22 @@ void CCobThread::Start(int functionId, int sigMask, const std::vector<int>& args
 
 void CCobThread::Stop()
 {
-	if (owner == nullptr)
+	if (cobInst == nullptr)
 		return;
 
 	if (cbType != CCobInstance::CBNone)
-		owner->ThreadCallback(cbType, retCode, cbParam);
+		cobInst->ThreadCallback(cbType, retCode, cbParam);
 
-	owner->RemoveThreadID(id);
+	cobInst->RemoveThreadID(id);
 	SetState(Dead);
 
-	owner = nullptr;
-	cob = nullptr;
+	cobInst = nullptr;
+	cobFile = nullptr;
 }
 
 const std::string& CCobThread::GetName()
 {
-	return cob->scriptNames[callStack[0].functionId];
+	return cobFile->scriptNames[callStack[0].functionId];
 }
 
 int CCobThread::CheckStack(unsigned int size, bool warn)
@@ -239,7 +264,7 @@ constexpr int DROP   = 0x10084000;
 #define LUA8 118
 #define LUA9 119
 
-#define GET_LONG_PC() (cob->code[pc++])
+#define GET_LONG_PC() (cobFile->code[pc++])
 
 
 static const char* GetOpcodeName(int opcode)
@@ -333,7 +358,7 @@ int CCobThread::POP()
 bool CCobThread::Tick()
 {
 	assert(state != Sleep);
-	assert(owner != nullptr);
+	assert(cobInst != nullptr);
 
 	if (IsDead())
 		return false;
@@ -363,14 +388,14 @@ bool CCobThread::Tick()
 				r2 = GET_LONG_PC();
 				r3 = POP();         // speed
 				r4 = POP();         // accel
-				owner->Spin(r1, r2, r3, r4);
+				cobInst->Spin(r1, r2, r3, r4);
 			} break;
 			case STOP_SPIN: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();         // decel
 
-				owner->StopSpin(r1, r2, r3);
+				cobInst->StopSpin(r1, r2, r3);
 			} break;
 			case RETURN: {
 				retCode = POP();
@@ -412,13 +437,13 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				pc--;
 
-				if (cob->scriptNames[r1].find("lua_") == 0) {
-					cob->code[pc - 1] = LUA_CALL;
+				if (cobFile->scriptNames[r1].find("lua_") == 0) {
+					cobFile->code[pc - 1] = LUA_CALL;
 					LuaCall();
 					break;
 				}
 
-				cob->code[pc - 1] = REAL_CALL;
+				cobFile->code[pc - 1] = REAL_CALL;
 
 				// fall-through
 			}
@@ -427,7 +452,7 @@ bool CCobThread::Tick()
 				r2 = GET_LONG_PC();
 
 				// do not call zero-length functions
-				if (cob->scriptLengths[r1] == 0)
+				if (cobFile->scriptLengths[r1] == 0)
 					break;
 
 				CallInfo ci;
@@ -437,8 +462,8 @@ bool CCobThread::Tick()
 				callStack.push_back(ci);
 				paramCount = r2;
 
-				// call cob->scriptNames[r1]
-				pc = cob->scriptOffsets[r1];
+				// call cobFile->scriptNames[r1]
+				pc = cobFile->scriptOffsets[r1];
 			} break;
 			case LUA_CALL: {
 				LuaCall();
@@ -449,8 +474,8 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = POP();
 
-				if (static_cast<size_t>(r1) < owner->staticVars.size())
-					owner->staticVars[r1] = r2;
+				if (static_cast<size_t>(r1) < cobInst->staticVars.size())
+					cobInst->staticVars[r1] = r2;
 			} break;
 			case POP_STACK: {
 				POP();
@@ -461,7 +486,7 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 
-				if (cob->scriptLengths[r1] == 0)
+				if (cobFile->scriptLengths[r1] == 0)
 					break;
 
 				callArgs.clear();
@@ -472,7 +497,7 @@ bool CCobThread::Tick()
 				}
 
 
-				CCobThread t(owner);
+				CCobThread t(cobInst);
 
 				t.SetID(cobEngine->GenThreadID());
 				t.Start(r1, signalMask, callArgs, true);
@@ -494,7 +519,7 @@ bool CCobThread::Tick()
 					dataStack.push_back(luaArgs[r1 - LUA0]);
 					break;
 				}
-				r1 = owner->GetUnitVal(r1, 0, 0, 0, 0);
+				r1 = cobInst->GetUnitVal(r1, 0, 0, 0, 0);
 				dataStack.push_back(r1);
 			} break;
 
@@ -510,7 +535,7 @@ bool CCobThread::Tick()
 			case JUMP: {
 				r1 = GET_LONG_PC();
 				// this seem to be an error in the docs..
-				//r2 = cob->scriptOffsets[callStack.back().functionId] + r1;
+				//r2 = cobFile->scriptOffsets[callStack.back().functionId] + r1;
 				pc = r1;
 			} break;
 
@@ -550,20 +575,20 @@ bool CCobThread::Tick()
 			case EXPLODE: {
 				r1 = GET_LONG_PC();
 				r2 = POP();
-				owner->Explode(r1, r2);
+				cobInst->Explode(r1, r2);
 			} break;
 
 			case PLAY_SOUND: {
 				r1 = GET_LONG_PC();
 				r2 = POP();
-				owner->PlayUnitSound(r1, r2);
+				cobInst->PlayUnitSound(r1, r2);
 			} break;
 
 			case PUSH_STATIC: {
 				r1 = GET_LONG_PC();
 
-				if (static_cast<size_t>(r1) < owner->staticVars.size())
-					dataStack.push_back(owner->staticVars[r1]);
+				if (static_cast<size_t>(r1) < cobInst->staticVars.size())
+					dataStack.push_back(cobInst->staticVars[r1]);
 			} break;
 
 			case SET_NOT_EQUAL: {
@@ -614,7 +639,7 @@ bool CCobThread::Tick()
 			case EMIT_SFX: {
 				r1 = POP();
 				r2 = GET_LONG_PC();
-				owner->EmitSfx(r1, r2);
+				cobInst->EmitSfx(r1, r2);
 			} break;
 			case MUL: {
 				r1 = POP();
@@ -625,7 +650,7 @@ bool CCobThread::Tick()
 
 			case SIGNAL: {
 				r1 = POP();
-				owner->Signal(r1);
+				cobInst->Signal(r1);
 			} break;
 			case SET_SIGNAL_MASK: {
 				r1 = POP();
@@ -639,7 +664,7 @@ bool CCobThread::Tick()
 				r3 = GET_LONG_PC(); // piece
 				r4 = GET_LONG_PC(); // axis
 
-				owner->Turn(r3, r4, r1, r2);
+				cobInst->Turn(r3, r4, r1, r2);
 			} break;
 			case GET: {
 				r5 = POP();
@@ -651,7 +676,7 @@ bool CCobThread::Tick()
 					dataStack.push_back(luaArgs[r1 - LUA0]);
 					break;
 				}
-				r6 = owner->GetUnitVal(r1, r2, r3, r4, r5);
+				r6 = cobInst->GetUnitVal(r1, r2, r3, r4, r5);
 				dataStack.push_back(r6);
 			} break;
 			case ADD: {
@@ -696,19 +721,19 @@ bool CCobThread::Tick()
 				r2 = GET_LONG_PC();
 				r4 = POP();
 				r3 = POP();
-				owner->Move(r1, r2, r3, r4);
+				cobInst->Move(r1, r2, r3, r4);
 			} break;
 			case MOVE_NOW: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-				owner->MoveNow(r1, r2, r3);
+				cobInst->MoveNow(r1, r2, r3);
 			} break;
 			case TURN_NOW: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-				owner->TurnNow(r1, r2, r3);
+				cobInst->TurnNow(r1, r2, r3);
 			} break;
 
 
@@ -716,7 +741,7 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 
-				if (owner->NeedsWait(CCobInstance::ATurn, r1, r2)) {
+				if (cobInst->NeedsWait(CCobInstance::ATurn, r1, r2)) {
 					state = WaitTurn;
 					waitPiece = r1;
 					waitAxis = r2;
@@ -727,7 +752,7 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 
-				if (owner->NeedsWait(CCobInstance::AMove, r1, r2)) {
+				if (cobInst->NeedsWait(CCobInstance::AMove, r1, r2)) {
 					state = WaitMove;
 					waitPiece = r1;
 					waitAxis = r2;
@@ -745,7 +770,7 @@ bool CCobThread::Tick()
 					break;
 				}
 
-				owner->SetUnitVal(r1, r2);
+				cobInst->SetUnitVal(r1, r2);
 			} break;
 
 
@@ -753,11 +778,11 @@ bool CCobThread::Tick()
 				r3 = POP();
 				r2 = POP();
 				r1 = POP();
-				owner->AttachUnit(r2, r1);
+				cobInst->AttachUnit(r2, r1);
 			} break;
 			case DROP: {
 				r1 = POP();
-				owner->DropUnit(r1);
+				cobInst->DropUnit(r1);
 			} break;
 
 			// like bitwise ops, but only on values 1 and 0
@@ -784,7 +809,7 @@ bool CCobThread::Tick()
 
 			case HIDE: {
 				r1 = GET_LONG_PC();
-				owner->SetVisibility(r1, false);
+				cobInst->SetVisibility(r1, false);
 			} break;
 
 			case SHOW: {
@@ -792,27 +817,27 @@ bool CCobThread::Tick()
 
 				int i;
 				for (i = 0; i < MAX_WEAPONS_PER_UNIT; ++i)
-					if (callStack.back().functionId == cob->scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
+					if (callStack.back().functionId == cobFile->scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
 						break;
 
 				// if true, we are in a Fire-script and should show a special flare effect
 				if (i < MAX_WEAPONS_PER_UNIT) {
-					owner->ShowFlare(r1);
+					cobInst->ShowFlare(r1);
 				} else {
-					owner->SetVisibility(r1, true);
+					cobInst->SetVisibility(r1, true);
 				}
 			} break;
 
 			default: {
-				const char* name = cob->name.c_str();
-				const char* func = cob->scriptNames[callStack.back().functionId].c_str();
+				const char* name = cobFile->name.c_str();
+				const char* func = cobFile->scriptNames[callStack.back().functionId].c_str();
 
 				LOG_L(L_ERROR, "[COBThread::%s] unknown opcode %x (in %s:%s at %x)", __func__, opcode, name, func, pc - 1);
 
 				#if 0
 				auto ei = execTrace.begin();
 				while (ei != execTrace.end()) {
-					LOG_L(L_ERROR, "\tprogctr: %3x  opcode: %s", __func__, *ei, GetOpcodeName(cob->code[*ei]));
+					LOG_L(L_ERROR, "\tprogctr: %3x  opcode: %s", __func__, *ei, GetOpcodeName(cobFile->code[*ei]));
 					++ei;
 				}
 				#endif
@@ -837,8 +862,8 @@ void CCobThread::ShowError(const char* msg)
 		return;
 	}
 
-	const char* name = cob->name.c_str();
-	const char* func = cob->scriptNames[callStack.back().functionId].c_str();
+	const char* name = cobFile->name.c_str();
+	const char* func = cobFile->scriptNames[callStack.back().functionId].c_str();
 
 	LOG_L(L_ERROR, "[COBThread::%s] %s (in %s:%s at %x)", __func__, msg, name, func, pc - 1);
 }
@@ -871,13 +896,13 @@ void CCobThread::LuaCall()
 	}
 
 	// check script index validity
-	if (static_cast<size_t>(r1) >= cob->luaScripts.size()) {
+	if (static_cast<size_t>(r1) >= cobFile->luaScripts.size()) {
 		luaArgs[0] = 0; // failure
 		return;
 	}
 
 	int argsCount = argCount;
-	luaRules->Cob2Lua(cob->luaScripts[r1], owner->GetUnit(), argsCount, luaArgs);
+	luaRules->Cob2Lua(cobFile->luaScripts[r1], cobInst->GetUnit(), argsCount, luaArgs);
 	retCode = luaArgs[0];
 }
 

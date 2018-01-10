@@ -19,13 +19,17 @@ class CCobThread
 	CR_DECLARE_SUB(CallInfo)
 
 public:
-	// creg only
+	// default and copy-ctor are creg only
 	CCobThread() {}
-	CCobThread(CCobInstance* owner);
+
+	CCobThread(CCobInstance* _cobInst);
 	CCobThread(CCobThread&& t) { *this = std::move(t); }
+	CCobThread(const CCobThread& t) { *this = t; }
+
 	~CCobThread() { Stop(); }
 
 	CCobThread& operator = (CCobThread&& t);
+	CCobThread& operator = (const CCobThread& t);
 
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 
@@ -53,8 +57,8 @@ public:
 		cbParam = cbp;
 	}
 	void MakeGarbage() {
-		owner = nullptr;
-		cob = nullptr;
+		cobInst = nullptr;
+		cobFile = nullptr;
 	}
 
 
@@ -85,11 +89,12 @@ public:
 	}
 
 	bool IsDead() const { return (state == Dead); }
-	bool IsGarbage() const { return (owner == nullptr); }
+	bool IsGarbage() const { return (cobInst == nullptr); }
 	bool IsWaiting() const { return (waitAxis != -1); }
 
-	CCobInstance* owner = nullptr;
-	CCobFile* cob = nullptr;
+	// script instance that owns this thread
+	CCobInstance* cobInst = nullptr;
+	CCobFile* cobFile = nullptr;
 
 protected:
 	void LuaCall();

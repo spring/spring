@@ -35,7 +35,7 @@ int CCobEngine::AddThread(CCobThread&& thread)
 	if (thread.GetID() == -1)
 		thread.SetID(GenThreadID());
 
-	CCobInstance* o = thread.owner;
+	CCobInstance* o = thread.cobInst;
 	CCobThread& t = threadInstances[thread.GetID()];
 
 	// move thread into registry, hand its ID to owner

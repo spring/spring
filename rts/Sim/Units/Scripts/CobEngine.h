@@ -13,7 +13,7 @@
 #include "CobThread.h"
 #include "System/creg/creg_cond.h"
 #include "System/creg/STL_Queue.h"
-#include "System/UnorderedMap.hpp"
+#include "System/creg/STL_Map.h"
 
 
 class CCobThread;
