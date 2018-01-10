@@ -175,7 +175,7 @@ int CCobThread::CheckStack(unsigned int size, bool warn)
 void CCobThread::InitStack(unsigned int n, CCobThread* t)
 {
 	dataStack.clear();
-	dataStack.reserve(argc);
+	dataStack.reserve(n);
 
 	// move n arguments from caller's stack onto our own
 	for (unsigned int i = 0; i < n; ++i) {
