@@ -14,6 +14,7 @@ CR_BIND(CCobThread, )
 
 CR_REG_METADATA(CCobThread, (
 	CR_MEMBER(owner),
+	CR_MEMBER(cob),
 
 	CR_MEMBER(id),
 	CR_MEMBER(pc),
@@ -49,9 +50,6 @@ CR_REG_METADATA_SUB(CCobThread, CallInfo,(
 CCobThread::CCobThread(CCobInstance* _owner)
 	: owner(_owner)
 	, cob(_owner->cobFile)
-
-	, cbType(CCobInstance::CBNone)
-	, state(Init)
 {
 	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
 }

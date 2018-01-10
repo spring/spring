@@ -30,7 +30,7 @@ struct HashMapEqualTo
 template <typename KeyT, typename ValueT, typename HashT = std::hash<KeyT>, typename CompT = HashMapEqualTo<KeyT>>
 class HashMap
 {
-private:
+public:
 	using MyType = HashMap<KeyT, ValueT, HashT, CompT>;
 
 	using PairT = std::pair<KeyT, ValueT>;

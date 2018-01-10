@@ -127,7 +127,7 @@ protected:
 
 	State state = Init;
 
-	CCobInstance::ThreadCallbackType cbType;
+	CCobInstance::ThreadCallbackType cbType = CCobInstance::CBNone;
 };
 
 #endif // COB_THREAD_H
