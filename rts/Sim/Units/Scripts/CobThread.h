@@ -12,19 +12,22 @@
 class CCobFile;
 class CCobInstance;
 
-using std::vector;
-
 
 class CCobThread
 {
 	CR_DECLARE_STRUCT(CCobThread)
 	CR_DECLARE_SUB(CallInfo)
+
 public:
-	//creg only
-	CCobThread();
+	// creg only
+	CCobThread() {}
 	CCobThread(CCobInstance* owner);
-	/// Inform the vultures that we finally croaked
-	~CCobThread();
+	CCobThread(CCobThread&& t) { *this = std::move(t); }
+	~CCobThread() { Stop(); }
+
+	CCobThread& operator = (CCobThread&& t);
+
+	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 
 	/**
 	 * Returns false if this thread is dead and needs to be killed.
@@ -35,50 +38,80 @@ public:
 	 * If schedule is false the thread is not added to the scheduler, and thus
 	 * it is expected that the starter is responsible for ticking it.
 	 */
-	void Start(int functionId, const vector<int>& args, bool schedule);
+	void Start(int functionId, int sigMask, const std::vector<int>& args, bool schedule);
+	void Stop();
+
+	void SetID(int threadID) { id = threadID; }
+	void SetState(State s) { state = s; }
+
 	/**
 	 * Sets a callback that will be called when the thread dies.
 	 * There can be only one.
 	 */
-	void SetCallback(CCobInstance::ThreadCallbackType cb, int cbp);
+	void SetCallback(CCobInstance::ThreadCallbackType cb, int cbp) {
+		cbType = cb;
+		cbParam = cbp;
+	}
+	void MakeGarbage() {
+		owner = nullptr;
+		cob = nullptr;
+	}
+
+
 	/**
 	 * @brief Checks whether the stack has at least size items.
 	 * @returns min(size, stack.size())
 	 */
 	int CheckStack(unsigned int size, bool warn);
-	/**
-	 * @brief Returns the value at pos in the stack.
-	 * Neater than exposing the actual stack
-	 */
-	int GetStackVal(int pos);
-	const std::string& GetName();
-	int GetWakeTime() const;
+
 	/**
 	 * Shows an errormessage which includes the current state of the script
 	 * interpreter.
 	 */
-	void ShowError(const std::string& msg);
+	void ShowError(const char* msg);
 	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
+	const std::string& GetName();
+
+	int GetID() const { return id; }
+	int GetStackVal(int pos) const { return dataStack[pos]; }
+	int GetWakeTime() const { return wakeTime; }
 	int GetRetCode() const { return retCode; }
+	int GetSignalMask() const { return signalMask; }
+	State GetState() const { return state; }
+
+	bool Reschedule(CUnitScript::AnimType type) const {
+		return ((state == WaitMove && type == CCobInstance::AMove) || (state == WaitTurn && type == CCobInstance::ATurn));
+	}
+
+	bool IsDead() const { return (state == Dead); }
+	bool IsGarbage() const { return (owner == nullptr); }
 	bool IsWaiting() const { return (waitAxis != -1); }
 
-	CCobInstance* owner;
+	CCobInstance* owner = nullptr;
+	CCobFile* cob = nullptr;
+
 protected:
-	std::string GetOpcodeName(int opcode);
 	void LuaCall();
 
 	inline int POP();
 
-	int wakeTime;
-	int PC;
-	vector<int> stack;
-	//vector<int> execTrace;
+protected:
+	int id = -1;
+	int pc = 0;
 
-	int paramCount;
-	int retCode;
+	int wakeTime = 0;
+	int paramCount = 0;
+	int retCode = -1;
+	int cbParam = 0;
+	int signalMask = 0;
 
-	int luaArgs[MAX_LUA_COB_ARGS];
+	int waitAxis = -1;
+	int waitPiece = -1;
+
+	int errorCounter = 100;
+
+	int luaArgs[MAX_LUA_COB_ARGS] = {0};
 
 	struct CallInfo {
 		CR_DECLARE_STRUCT(CallInfo)
@@ -86,18 +119,15 @@ protected:
 		int returnAddr;
 		int stackTop;
 	};
-	vector<CallInfo> callStack;
+
+	std::vector<CallInfo> callStack;
+	std::vector<int> dataStack;
+	std::vector<int> callArgs;
+	// std::vector<int> execTrace;
+
+	State state = Init;
 
 	CCobInstance::ThreadCallbackType cbType;
-	int cbParam;
-
-
-public:
-	int waitAxis;
-	int waitPiece;
-	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
-	State state;
-	int signalMask;
 };
 
 #endif // COB_THREAD_H

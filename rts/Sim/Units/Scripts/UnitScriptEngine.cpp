@@ -5,14 +5,20 @@
 #include "UnitScriptEngine.h"
 
 #include "CobEngine.h"
+#include "CobFileHandler.h"
 #include "UnitScript.h"
 #include "UnitScriptFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
-#include "System/FileSystem/FileHandler.h"
 
+static CCobEngine gCobEngine;
+static CCobFileHandler gCobFileHandler;
+static CUnitScriptEngine gUnitScriptEngine;
+
+CCobEngine* cobEngine = nullptr;
+CCobFileHandler* cobFileHandler = nullptr;
 CUnitScriptEngine* unitScriptEngine = nullptr;
 
 
@@ -21,73 +27,72 @@ CR_BIND(CUnitScriptEngine, )
 CR_REG_METADATA(CUnitScriptEngine, (
 	CR_MEMBER(animating),
 
-	//always null when saving
+	// always null when saving
 	CR_IGNORED(currentScript)
 ))
 
 
 void CUnitScriptEngine::InitStatic() {
-	cobEngine = new CCobEngine();
-	cobFileHandler = new CCobFileHandler();
-	unitScriptEngine = new CUnitScriptEngine();
+	cobEngine = &gCobEngine;
+	cobFileHandler = &gCobFileHandler;
+	unitScriptEngine = &gUnitScriptEngine;
+
+	cobEngine->Init();
+	cobFileHandler->Init();
+	unitScriptEngine->Init();
 }
+
 void CUnitScriptEngine::KillStatic() {
-	spring::SafeDelete(cobEngine);
-	spring::SafeDelete(cobFileHandler);
-	spring::SafeDelete(unitScriptEngine);
+	cobEngine->Kill();
+	cobFileHandler->Kill();
+	unitScriptEngine->Kill();
+
+	cobEngine = nullptr;
+	cobFileHandler = nullptr;
+	unitScriptEngine = nullptr;
 }
 
 
 
 void CUnitScriptEngine::ReloadScripts(const UnitDef* udef)
 {
-	const CCobFile* oldScript = cobFileHandler->GetScriptAddr(udef->scriptName);
+	const CCobFile* oldScriptFile = cobFileHandler->GetScriptFile(udef->scriptName);
 
-	if (oldScript == nullptr) {
+	if (oldScriptFile == nullptr) {
 		LOG_L(L_WARNING, "[UnitScriptEngine::%s] unknown COB script for unit \"%s\": %s", __func__, udef->name.c_str(), udef->scriptName.c_str());
 		return;
 	}
 
-	CCobFile* newScript = cobFileHandler->ReloadCobFile(udef->scriptName);
+	CCobFile* newScriptFile = cobFileHandler->ReloadCobFile(udef->scriptName);
 
-	if (newScript == nullptr) {
+	if (newScriptFile == nullptr) {
 		LOG_L(L_WARNING, "[UnitScriptEngine::%s] could not load COB script for unit \"%s\" from: %s", __func__, udef->name.c_str(), udef->scriptName.c_str());
 		return;
 	}
 
-	int count = 0;
-	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
+	unsigned int count = 0;
+
+	for (unsigned int i = 0, n = unitHandler->MaxUnits(); i < n; i++) {
 		CUnit* unit = unitHandler->GetUnit(i);
 
 		if (unit == nullptr)
 			continue;
 
-		CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+		CUnitScript*& unitScript = unit->script;
+		CCobInstance* cobInstance = dynamic_cast<CCobInstance*>(unitScript);
 
-		if (cob == nullptr || cob->GetScriptAddr() != oldScript)
+		if (cobInstance == nullptr || cobInstance->GetFile() != oldScriptFile)
 			continue;
 
 		count++;
 
-		spring::SafeDestruct(unit->script);
+		spring::SafeDestruct(unitScript);
 
-		unit->script = CUnitScriptFactory::CreateCOBScript(unit, newScript);
-		unit->script->Create();
+		unitScript = CUnitScriptFactory::CreateCOBScript(unit, newScriptFile);
+		unitScript->Create();
 	}
 
 	LOG("[UnitScriptEngine::%s] reloaded COB scripts for %i units", __func__, count);
-}
-
-void CUnitScriptEngine::CheckForDuplicates(const char* name, const CUnitScript* instance)
-{
-	int found = 0;
-
-	for (const CUnitScript* us: animating) {
-		found += (us == instance);
-	}
-
-	if (found > 1)
-		LOG_L(L_WARNING, "[UnitScriptEngine::%s] %d duplicates found for %s", __func__, found, name);
 }
 
 
@@ -96,18 +101,11 @@ void CUnitScriptEngine::AddInstance(CUnitScript* instance)
 	if (instance == currentScript)
 		return;
 
-	spring::VectorInsertUnique(animating, instance);
+	spring::VectorInsertUnique(animating, instance/*, true*/);
 }
-
 
 void CUnitScriptEngine::RemoveInstance(CUnitScript* instance)
 {
-	// Error checking
-#ifdef _DEBUG
-	CheckForDuplicates(__FUNCTION__, instance);
-#endif
-
-	//This is slow. would be better if instance was a hashlist perhaps
 	if (instance == currentScript)
 		return;
 
@@ -119,9 +117,8 @@ void CUnitScriptEngine::Tick(int deltaTime)
 {
 	cobEngine->Tick(deltaTime);
 
-	// Tick all instances that have registered themselves as animating
-	size_t i = 0;
-	while (i < animating.size()) {
+	// tick all (COB or LUS) script instances that have registered themselves as animating
+	for (size_t i = 0; i < animating.size(); ) {
 		currentScript = animating[i];
 
 		if (!currentScript->Tick(deltaTime)) {

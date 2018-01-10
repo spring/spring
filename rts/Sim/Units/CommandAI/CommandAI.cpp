@@ -843,17 +843,17 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 			if (c.options & RIGHT_MOUSE_KEY) { change *= -1; }
 			if (c.options & SHIFT_KEY)       { change *=  5; }
 			if (c.options & CONTROL_KEY)     { change *= 20; }
+
 			stockpileWeapon->numStockpileQued += change;
-			if (stockpileWeapon->numStockpileQued < 0) {
-				stockpileWeapon->numStockpileQued = 0;
-			}
+			stockpileWeapon->numStockpileQued = std::max(stockpileWeapon->numStockpileQued, 0);
+
 			UpdateStockpileIcon();
 			return true;
 		}
 	}
 
-	// this is a custom lua command, calling CommandFallback
-	// and ignoring the result as this can't stay in the queue
+	// if this is a custom lua command, call CommandFallback
+	// (ignoring the result) since it can't stay in the queue
 	if (nonQueingCommands.find(c.GetID()) != nonQueingCommands.end()) {
 		eventHandler.CommandFallback(owner, c);
 		return true;
@@ -1498,9 +1498,9 @@ void CCommandAI::SlowUpdate()
 		return;
 	}
 
-	if (!eventHandler.CommandFallback(owner, c)) {
-		return; // luaRules wants the command to stay at the front
-	}
+	// luaRules wants the command to stay at the front
+	if (!eventHandler.CommandFallback(owner, c))
+		return;
 
 	FinishCommand();
 }

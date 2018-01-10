@@ -4,201 +4,141 @@
 #include "CobEngine.h"
 #include "CobThread.h"
 #include "CobFile.h"
-#include "System/FileSystem/FileHandler.h"
 
-
-CCobEngine* cobEngine = nullptr;
-CCobFileHandler* cobFileHandler = nullptr;
-
-
-/******************************************************************************/
-/******************************************************************************/
 
 CR_BIND(CCobEngine, )
 
 CR_REG_METADATA(CCobEngine, (
-	CR_MEMBER(currentTime),
-	CR_MEMBER(running),
-	CR_MEMBER(sleeping),
+	CR_IGNORED(curThread),
 
-	//always null/empty when saving
-	CR_IGNORED(wantToRun),
-	CR_IGNORED(curThread)
+	CR_MEMBER(currentTime),
+
+	CR_MEMBER(runningThreadIDs),
+	CR_MEMBER(sleepingThreadIDs),
+	// always null/empty when saving
+	CR_IGNORED(waitingThreadIDs)
+))
+
+CR_BIND(CCobEngine::SleepingThread, )
+CR_REG_METADATA(CCobEngine::SleepingThread, (
+	CR_MEMBER(id),
+	CR_MEMBER(wt)
 ))
 
 
-CCobEngine::CCobEngine()
-	: curThread(nullptr)
-	, currentTime(0)
-
-{ }
-
-
-CCobEngine::~CCobEngine()
+int CCobEngine::AddThread(CCobThread&& thread)
 {
-	//Should delete all things that the scheduler knows
-	do {
-		while (!running.empty()) {
-			CCobThread* tmp = running.back();
-			running.pop_back();
-			delete tmp;
-		}
-		while (!wantToRun.empty()) {
-			CCobThread* tmp = wantToRun.back();
-			wantToRun.pop_back();
-			delete tmp;
-		}
-		while (!sleeping.empty()) {
-			CCobThread* tmp = sleeping.top();
-			sleeping.pop();
-			delete tmp;
-		}
-		// callbacks may add new threads
-	} while (!running.empty() || !wantToRun.empty() || !sleeping.empty());
+	if (thread.GetID() == -1)
+		thread.SetID(GenThreadID());
+
+	CCobInstance* o = thread.owner;
+	CCobThread& t = threadInstances[thread.GetID()];
+
+	// move thread into registry, hand its ID to owner
+	t = std::move(thread);
+	o->AddThreadID(t.GetID());
+
+	return (t.GetID());
 }
 
 
-CCobFileHandler::~CCobFileHandler()
+// a thread wants to continue running at a later time, and adds itself to the scheduler
+void CCobEngine::ScheduleThread(const CCobThread* thread)
 {
-	//Free all cobfiles
-	for (auto i = cobFiles.begin(); i != cobFiles.end(); ++i) {
-		delete i->second;
+	switch (thread->GetState()) {
+		case CCobThread::Run: {
+			waitingThreadIDs.push_back(thread->GetID());
+		} break;
+		case CCobThread::Sleep: {
+			sleepingThreadIDs.push(SleepingThread{thread->GetID(), thread->GetWakeTime()});
+		} break;
+		default: {
+			LOG_L(L_ERROR, "[COBEngine::%s] unknown state %d for thread %d", __func__, thread->GetState(), thread->GetID());
+		} break;
 	}
 }
 
-
-//A thread wants to continue running at a later time, and adds itself to the scheduler
-void CCobEngine::AddThread(CCobThread *thread)
+void CCobEngine::SanityCheckThreads(const CCobInstance* owner)
 {
-	switch (thread->state) {
-		case CCobThread::Run:
-			wantToRun.push_back(thread);
-			break;
-		case CCobThread::Sleep:
-			sleeping.push(thread);
-			break;
-		default:
-			LOG_L(L_ERROR, "thread added to scheduler with unknown state (%d)", thread->state);
-			break;
+	if (false) {
+		// no threads belonging to owner should be left
+		for (const auto& p: threadInstances) {
+			assert(p.second.owner != owner);
+		}
+		for (const CCobThread& t: tickAddedThreads) {
+			assert(t.owner != owner);
+		}
 	}
 }
 
 
 void CCobEngine::TickThread(CCobThread* thread)
 {
-	curThread = thread; // for error messages originating in CUnitScript
+	// for error messages originating in CUnitScript
+	curThread = thread;
 
-	if (!thread->Tick())
-		delete thread;
+	// NB: threadID is still in <runningThreadIDs> here, TickRunningThreads clears it
+	if (thread != nullptr && !thread->Tick())
+		RemoveThread(thread->GetID());
 
 	curThread = nullptr;
 }
 
+void CCobEngine::WakeSleepingThreads()
+{
+	// check on the sleeping threads, remove any whose owner died
+	while (!sleepingThreadIDs.empty()) {
+		CCobThread* zzzThread = GetThread((sleepingThreadIDs.top()).id);
+
+		if (zzzThread == nullptr) {
+			sleepingThreadIDs.pop();
+			continue;
+		}
+
+		// not yet time to execute this thread or any subsequent sleepers
+		if (zzzThread->GetWakeTime() >= currentTime)
+			break;
+
+		// remove executing thread from the queue
+		sleepingThreadIDs.pop();
+
+		// wake up the thread and tick it (if not dead)
+		// this can quite possibly re-add the thread to <sleepingThreadIDs>
+		// again, but any thread is guaranteed to sleep for at least 1 tick
+		switch (zzzThread->GetState()) {
+			case CCobThread::Sleep: {
+				zzzThread->SetState(CCobThread::Run);
+				TickThread(zzzThread);
+			} break;
+			case CCobThread::Dead: {
+				RemoveThread(zzzThread->GetID());
+			} break;
+			default: {
+				LOG_L(L_ERROR, "[COBEngine::%s] unknown state %d for thread %d", __func__, zzzThread->GetState(), zzzThread->GetID());
+			} break;
+		}
+	}
+}
 
 void CCobEngine::Tick(int deltaTime)
 {
 	currentTime += deltaTime;
 
-	// Advance all running threads
-	for (CCobThread* t: running) {
-		//LOG_L(L_DEBUG, "Now 1running %d: %s", currentTime, (*i)->GetName().c_str());
-		TickThread(t);
-	}
+	TickRunningThreads();
+	AddQueuedThreads();
 
-	// A thread can never go from running->running, so clear the list
-	// note: if preemption was to be added, this would no longer hold
-	// however, ta scripts can not run preemptively anyway since there
-	// isn't any synchronization methods available
-	running.clear();
-
-	// The threads that just ran may have added new threads that should run next tick
-	std::swap(running, wantToRun);
-
-	//Check on the sleeping threads
-	if (!sleeping.empty()) {
-		CCobThread* cur = sleeping.top();
-
-		while ((cur != nullptr) && (cur->GetWakeTime() < currentTime)) {
-			// Start with removing the executing thread from the queue
-			sleeping.pop();
-
-			//Run forward again. This can quite possibly readd the thread to the sleeping array again
-			//But it will not interfere since it is guaranteed to sleep > 0 ms
-			//LOG_L(L_DEBUG, "Now 2running %d: %s", currentTime, cur->GetName().c_str());
-			if (cur->state == CCobThread::Sleep) {
-				cur->state = CCobThread::Run;
-				TickThread(cur);
-			} else if (cur->state == CCobThread::Dead) {
-				delete cur;
-			} else {
-				LOG_L(L_ERROR, "Sleeping thread strange state %d", cur->state);
-			}
-
-			if (!sleeping.empty())
-				cur = sleeping.top();
-			else
-				cur = nullptr;
-		}
-	}
+	WakeSleepingThreads();
+	AddQueuedThreads();
 }
 
 
 void CCobEngine::ShowScriptError(const std::string& msg)
 {
-	if (curThread != nullptr)
-		curThread->ShowError(msg);
-	else
-		LOG_L(L_ERROR, "%s outside script execution", msg.c_str());
+	if (curThread != nullptr) {
+		curThread->ShowError(msg.c_str());
+		return;
+	}
+
+	LOG_L(L_ERROR, "[COBEngine::%s] \"%s\" outside script execution", __func__, msg.c_str());
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-CCobFile* CCobFileHandler::GetCobFile(const std::string& name)
-{
-	const auto i = cobFiles.find(name);
-
-	if (i != cobFiles.end())
-		return i->second;
-
-	CFileHandler f(name);
-
-	if (!f.FileExists())
-		return nullptr;
-
-	// must use new here, pointers are leaked to CobInstance
-	CCobFile* cf = new CCobFile(f, name);
-
-	cobFiles[name] = cf;
-	return cf;
-}
-
-
-CCobFile* CCobFileHandler::ReloadCobFile(const std::string& name)
-{
-	const auto it = cobFiles.find(name);
-
-	if (it == cobFiles.end())
-		return GetCobFile(name);
-
-	delete it->second;
-	cobFiles.erase(it);
-
-	return GetCobFile(name);
-}
-
-
-const CCobFile* CCobFileHandler::GetScriptAddr(const std::string& name) const
-{
-	const auto it = cobFiles.find(name);
-
-	if (it != cobFiles.end())
-		return it->second;
-
-	return nullptr;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/

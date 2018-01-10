@@ -16,6 +16,25 @@ class CCobFile
 {
 public:
 	CCobFile(CFileHandler& in, const std::string& scriptName);
+	CCobFile(CCobFile&& f) { *this = std::move(f); }
+
+	CCobFile& operator = (CCobFile&& f) {
+		numStaticVars = f.numStaticVars;
+
+		code = std::move(f.code);
+		scriptNames = std::move(f.scriptNames);
+		scriptOffsets = std::move(f.scriptOffsets);
+
+		scriptLengths = std::move(f.scriptLengths);
+		pieceNames = std::move(f.pieceNames);
+		scriptIndex = std::move(f.scriptIndex);
+		sounds = std::move(f.sounds);
+		luaScripts = std::move(f.luaScripts);
+		scriptMap = std::move(f.scriptMap);
+
+		name = std::move(f.name);
+		return *this;
+	}
 
 	int GetFunctionId(const std::string& name);
 
@@ -37,3 +56,4 @@ public:
 };
 
 #endif // COB_FILE_H
+

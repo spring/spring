@@ -2,7 +2,7 @@
 
 #include "UnitScriptFactory.h"
 
-#include "CobEngine.h"
+#include "CobFileHandler.h"
 #include "CobInstance.h"
 #include "LuaUnitScript.h"
 #include "NullUnitScript.h"

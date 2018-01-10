@@ -1022,51 +1022,71 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
  	case PLAY_SOUND: {
- 		// FIXME: this can currently only work for CCobInstance, because Lua can not get sound IDs
+ 		// FIXME: this currently only works for CCobInstance, because Lua can not get sound IDs
  		// (however, for Lua scripts there is already LuaUnsyncedCtrl::PlaySoundFile)
- 		CCobInstance* cob = dynamic_cast<CCobInstance*>(this);
+ 		CCobInstance* cobInst = dynamic_cast<CCobInstance*>(this);
 
- 		if (cob == nullptr)
+ 		if (cobInst == nullptr)
  			return 1;
 
- 		const CCobFile* script = cob->GetScriptAddr();
+ 		const CCobFile* cobFile = cobInst->GetFile();
 
- 		if (script == nullptr)
+ 		if (cobFile == nullptr)
  			return 1;
 
-		if ((p1 < 0) || (static_cast<size_t>(p1) >= script->sounds.size()))
+		if ((p1 < 0) || (static_cast<size_t>(p1) >= cobFile->sounds.size()))
 			return 1;
 
-		switch (p3) {	//who hears the sound
-			case 0:		//ALOS
-				if (!losHandler->InAirLos(unit,gu->myAllyTeam)) { return 0; }
-				break;
-			case 1:		//LOS
-				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
-				break;
-			case 2:		//ALOS or radar
-				if (!(losHandler->InAirLos(unit,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
-				break;
-			case 3:		//LOS or radar
-				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }
-				break;
-			case 4:		//everyone
-				break;
-			case 5:		//allies
-				if (unit->allyteam != gu->myAllyTeam) { return 0; }
-				break;
-			case 6:		//team
-				if (unit->team != gu->myTeam) { return 0; }
-				break;
-			case 7:		//enemies
-				if (unit->allyteam == gu->myAllyTeam) { return 0; }
-				break;
+		// who hears the sound
+		switch (p3) {
+			case 0: {
+				// ALOS
+				if (!losHandler->InAirLos(unit, gu->myAllyTeam))
+					return 0;
+			} break;
+			case 1: {
+				// LOS
+				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS))
+					return 0;
+			} break;
+			case 2: {
+				// ALOS or radar
+				if (!(losHandler->InAirLos(unit, gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR)))
+					return 0;
+			} break;
+			case 3: {
+				// LOS or radar
+				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)))
+					return 0;
+			} break;
+			case 4: {
+				// everyone
+			} break;
+			case 5: {
+				// allies
+				if (unit->allyteam != gu->myAllyTeam)
+					return 0;
+			} break;
+			case 6: {
+				// team
+				if (unit->team != gu->myTeam)
+					return 0;
+			} break;
+			case 7: {
+				// enemies
+				if (unit->allyteam == gu->myAllyTeam)
+					return 0;
+			} break;
+			default: {
+			} break;
 		}
+
 		if (p4 == 0) {
-			Channels::General->PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::General->PlaySample(cobFile->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::General->PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::General->PlaySample(cobFile->sounds[p1], float(p2) / COBSCALE);
 		}
+
 		return 0;
 	} break;
 

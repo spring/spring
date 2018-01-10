@@ -33,24 +33,37 @@ public:
 protected:
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	int RealCall(int functionId, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int RealCall(int functionId, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode);
 
 	void ShowScriptError(const std::string& msg) override;
 
 public:
-	CCobFile* script;
+	CCobFile* cobFile;
+
 	std::vector<int> staticVars;
-	std::vector<CCobThread *> threads;
-	const CCobFile* GetScriptAddr() const { return script; }
+	std::vector<int> threadIDs;
 
 public:
 	//creg only
 	CCobInstance();
-	CCobInstance(CCobFile *script, CUnit *unit);
+	CCobInstance(CCobFile* cob, CUnit* unit);
 	virtual ~CCobInstance();
 
 	void Init();
 	void PostLoad();
+
+	void AddThreadID(int threadID) { threadIDs.push_back(threadID); }
+	bool RemoveThreadID(int threadID)
+	{
+		const auto it = std::find(threadIDs.begin(), threadIDs.end(), threadID);
+
+		if (it == threadIDs.end())
+			return false;
+
+		threadIDs.erase(it);
+		return true;
+	}
+
 
 	// takes COBFN_* constant as argument
 	bool HasFunction(int id) const;
@@ -59,22 +72,24 @@ public:
 	bool HasTargetWeight(int weaponNum) const override;
 
 	// call overloads, they all call RealCall
-	int Call(const std::string &fname);
-	int Call(const std::string &fname, int arg1);
-	int Call(const std::string &fname, std::vector<int> &args);
-	int Call(const std::string &fname, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int Call(const std::string& fname);
+	int Call(const std::string& fname, int arg1);
+	int Call(const std::string& fname, std::vector<int>& args);
+	int Call(const std::string& fname, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
-	int Call(int id, std::vector<int> &args);
+	int Call(int id, std::vector<int>& args);
 	int Call(int id, int arg1);
-	int Call(int id, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
+	int Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take the raw function number
-	int RawCall(int fn, std::vector<int> &args);
+	int RawCall(int fn, std::vector<int>& args);
 
 	void ThreadCallback(ThreadCallbackType type, int retCode, int cbParam);
 	// returns function number as expected by RawCall, but not Call
 	// returns -1 if the function does not exist
 	int GetFunctionId(const std::string& fname) const;
+
+	const CCobFile* GetFile() const { return cobFile; }
 
 	// used by CCobThread
 	void Signal(int signal);
