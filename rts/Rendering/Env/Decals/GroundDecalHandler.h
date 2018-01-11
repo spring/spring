@@ -92,7 +92,6 @@ public:
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
 	void ForceRemoveSolidObject(CSolidObject* object) override;
-	static void RemoveTrack(CUnit* unit);
 
 	void OnDecalLevelChanged() override {}
 

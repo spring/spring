@@ -283,6 +283,7 @@ private:
 
 	/// units that are only rendered as icons this frame
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	std::vector<icon::CIconData*> unitIcons;
 
 
 	// caches for ShowUnitBuildSquare

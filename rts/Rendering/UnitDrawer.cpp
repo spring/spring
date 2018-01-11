@@ -10,9 +10,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/UI/MiniMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
 #include "Rendering/Env/ISky.h"
@@ -40,6 +38,7 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 
 #include "System/Config/ConfigHandler.h"
@@ -237,6 +236,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
+
+	unitsByIcon.reserve(unitDefHandler->unitDefs.size());
+	unitIcons.resize(unitHandler->MaxUnits(), nullptr);
 
 	deadGhostBuildings.resize(teamHandler->ActiveAllyTeams());
 	liveGhostBuildings.resize(teamHandler->ActiveAllyTeams());
@@ -507,7 +509,7 @@ void CUnitDrawer::DrawUnitIcons()
 		icon->BindTexture();
 
 		for (const CUnit* unit: units) {
-			assert(unit->myIcon == icon);
+			assert(unitIcons[unit->id] == icon);
 
 			// unitsByIcon is unfiltered, also used for drawing on minimap
 			if (!unit->isIcon)
@@ -1583,12 +1585,12 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 	return iconData;
 }
 
-inline float GetUnitIconScale(const CUnit* unit) {
-	float scale = unit->myIcon->GetSize();
+inline float GetUnitIconScale(const CUnit* unit, const icon::CIconData* icon) {
+	float scale = icon->GetSize();
 
 	if (!minimap->UseUnitIcons())
 		return scale;
-	if (!unit->myIcon->GetRadiusAdjust())
+	if (!icon->GetRadiusAdjust())
 		return scale;
 
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -1596,7 +1598,7 @@ inline float GetUnitIconScale(const CUnit* unit) {
 	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
 
 	if (unitVisible || gu->spectatingFullView)
-		scale *= (unit->radius / unit->myIcon->GetRadiusScale());
+		scale *= (unit->radius / icon->GetRadiusScale());
 
 	return scale;
 }
@@ -1605,9 +1607,9 @@ inline float GetUnitIconScale(const CUnit* unit) {
 void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const {
 	if (unit->noMinimap)
 		return;
-	if (unit->myIcon == nullptr)
-		return;
 	if (unit->IsInVoid())
+		return;
+	if (unitIcons[unit->id] == nullptr)
 		return;
 
 	const unsigned char defaultColor[4] = {255, 255, 255, 255};
@@ -1627,7 +1629,7 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 		}
 	}
 
-	const float iconScale = GetUnitIconScale(unit);
+	const float iconScale = GetUnitIconScale(unit, unitIcons[unit->id]);
 	const float3& iconPos = (!gu->spectatingFullView) ?
 		unit->GetObjDrawErrorPos(gu->myAllyTeam):
 		unit->GetObjDrawMidPos();
@@ -1663,7 +1665,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		icon->BindTexture();
 
 		for (const CUnit* unit: units) {
-			assert(unit->myIcon == icon);
+			assert(unitIcons[unit->id] == icon);
 			DrawUnitMiniMapIcon(unit, va);
 		}
 
@@ -1674,10 +1676,10 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	icon::CIconData* oldIcon = unit->myIcon;
+	icon::CIconData* oldIcon = unitIcons[unit->id];
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
 
-	u->myIcon = nullptr;
+	unitIcons[unit->id] = nullptr;
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
@@ -1685,7 +1687,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 			unitsByIcon[newIcon].push_back(unit);
 		}
 
-		u->myIcon = newIcon;
+		unitIcons[unit->id] = newIcon;
 		return;
 	}
 

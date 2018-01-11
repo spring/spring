@@ -24,7 +24,6 @@ class DamageArray;
 class DynDamageArray;
 struct SolidObjectDef;
 struct UnitDef;
-struct UnitTrackStruct;
 struct UnitLoadParams;
 struct SLosInstance;
 
@@ -537,9 +536,6 @@ public:
 	std::string tooltip;
 
 	CGroup* group;
-
-	UnitTrackStruct* myTrack;
-	icon::CIconData* myIcon;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

@@ -10,7 +10,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
@@ -19,6 +18,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
@@ -29,6 +29,9 @@
 #include <algorithm>
 #include <cctype>
 
+static constexpr int DECAL_LEVEL = 3; //FIXME
+static constexpr int UPDATE_PERIOD = 8;
+
 
 
 LegacyTrackHandler::LegacyTrackHandler()
@@ -36,30 +39,17 @@ LegacyTrackHandler::LegacyTrackHandler()
 {
 	eventHandler.AddClient(this);
 	LoadDecalShaders();
+
+	unitTracks.reserve(256);
 }
-
-
 
 LegacyTrackHandler::~LegacyTrackHandler()
 {
 	eventHandler.RemoveClient(this);
 
 	for (TrackType& tt: trackTypes) {
-		for (UnitTrackStruct* uts: tt.tracks)
-			spring::VectorInsertUnique(tracksToBeDeleted, uts, true);
-
 		glDeleteTextures(1, &tt.texture);
 	}
-
-	for (auto ti = tracksToBeAdded.cbegin(); ti != tracksToBeAdded.cend(); ++ti)
-		spring::VectorInsertUnique(tracksToBeDeleted, *ti, true);
-
-	for (auto ti = tracksToBeDeleted.cbegin(); ti != tracksToBeDeleted.cend(); ++ti)
-		delete *ti;
-
-	trackTypes.clear();
-	tracksToBeAdded.clear();
-	tracksToBeDeleted.clear();
 
 	#ifndef USE_DECALHANDLER_STATE
 	shaderHandler->ReleaseProgramObjects("[LegacyTrackHandler]");
@@ -133,38 +123,31 @@ void LegacyTrackHandler::SunChanged()
 
 void LegacyTrackHandler::AddTracks()
 {
-	// Delayed addition of new tracks
-	for (const UnitTrackStruct* uts: tracksToBeAdded) {
-		const CUnit* unit = uts->owner;
-		const TrackPart& tp = uts->lastAdded;
+	for (unsigned int trackID: addedTrackIDs) {
+		UnitTrack& unitTrack = unitTracks[trackID];
+		auto& parts = unitTrack.parts;
 
 		// check if RenderUnitDestroyed pre-empted us
-		if (unit == nullptr)
+		if (unitTrack.owner == nullptr)
 			continue;
 
-		// if the unit is moving in a straight line only place marks at half the rate by replacing old ones
-		bool replace = false;
+		if (parts.size() <= 2)
+			continue;
 
-		if (unit->myTrack->parts.size() > 1) {
-			std::deque<TrackPart>::iterator last = --unit->myTrack->parts.end();
-			std::deque<TrackPart>::iterator prev = last--;
+		const TrackPart& nextPart = parts[parts.size() - 1];
+		const TrackPart& lastPart = parts[parts.size() - 2];
+		const TrackPart& prevPart = parts[parts.size() - 3];
 
-			replace = (((tp.pos1 + (*last).pos1) * 0.5f).SqDistance((*prev).pos1) < 1.0f);
-		}
+		// if the unit is moving in a straight line, only append parts at
+		// half the rate by replacing the last by the most recently added
+		if (((prevPart.pos1).SqDistance((nextPart.pos1 + lastPart.pos1) * 0.5f) >= 1.0f))
+			continue;
 
-		if (replace) {
-			unit->myTrack->parts.back() = tp;
-		} else {
-			unit->myTrack->parts.push_back(tp);
-		}
+		parts[parts.size() - 2] = nextPart;
+		parts.pop_back();
 	}
 
-	tracksToBeAdded.clear();
-
-	for (UnitTrackStruct* uts: tracksToBeDeleted)
-		delete uts;
-
-	tracksToBeDeleted.clear();
+	addedTrackIDs.clear();
 }
 
 
@@ -177,43 +160,46 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 	shader->SetUniformMatrix4fv(8, false, CMatrix44f::Identity());
 
 	// create and draw the unit footprint quads
-	for (TrackType& tt: trackTypes) {
-		if (tt.tracks.empty())
+	for (const TrackType& tt: trackTypes) {
+		if (tt.trackIDs.empty())
 			continue;
 
 
 		glBindTexture(GL_TEXTURE_2D, tt.texture);
 
-		for (UnitTrackStruct* track: tt.tracks) {
-			if (track->parts.empty()) {
-				tracksToBeCleaned.push_back(TrackToClean(track, &(tt.tracks)));
+		for (unsigned int trackID: tt.trackIDs) {
+			UnitTrack& track = unitTracks[trackID];
+			auto& parts = track.parts;
+
+			if (parts.empty()) {
+				cleanedTrackIDs.emplace_back(trackID, &tt - &trackTypes[0]);
 				continue;
 			}
 
-			if (gs->frameNum > ((track->parts.front()).creationTime + track->lifeTime)) {
-				tracksToBeCleaned.push_back(TrackToClean(track, &(tt.tracks)));
+			const TrackPart& frontPart = parts.front();
+			const TrackPart&  backPart = parts.back();
+
+			if (gs->frameNum > (frontPart.creationTime + track.lifeTime)) {
+				cleanedTrackIDs.emplace_back(trackID, &tt - &trackTypes[0]);
 				// still draw the track to avoid flicker
 				// continue;
 			}
-
-			const auto frontPart = track->parts.front();
-			const auto  backPart = track->parts.back();
 
 			if (!camera->InView((frontPart.pos1 + backPart.pos1) * 0.5f, frontPart.pos1.distance(backPart.pos1) + 500.0f))
 				continue;
 
 			// walk across the track parts from front (oldest) to back (newest) and draw
 			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
-			std::deque<TrackPart>::const_iterator curPartIt =   (track->parts.begin());
-			std::deque<TrackPart>::const_iterator nxtPartIt = ++(track->parts.begin());
+			auto curPartIt =   (parts.cbegin());
+			auto nxtPartIt = ++(parts.cbegin());
 
-			curPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*curPartIt).creationTime) * track->alphaFalloff);
+			curPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*curPartIt).creationTime) * track.alphaFalloff);
 
-			for (; nxtPartIt != track->parts.end(); ++nxtPartIt) {
+			for (; nxtPartIt != parts.cend(); ++nxtPartIt) {
 				const TrackPart& curPart = *curPartIt;
 				const TrackPart& nxtPart = *nxtPartIt;
 
-				nxtPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - nxtPart.creationTime) * track->alphaFalloff);
+				nxtPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - nxtPart.creationTime) * track.alphaFalloff);
 
 				if (nxtPart.connected) {
 					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
@@ -233,45 +219,39 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 
 void LegacyTrackHandler::CleanTracks()
 {
-	// Cleanup old tracks; runs *immediately* after DrawTracks
-	for (TrackToClean& ttc: tracksToBeCleaned) {
-		UnitTrackStruct* track = ttc.track;
+	// remove expired track parts; cleanup empty tracks
+	for (TrackToClean& ttc: cleanedTrackIDs) {
+		UnitTrack& track = unitTracks[ttc.trackID];
+		auto& parts = track.parts;
 
-		while (!track->parts.empty()) {
+		while (!parts.empty()) {
 			// stop at the first part that is still too young for deletion
-			if (gs->frameNum < ((track->parts.front()).creationTime + track->lifeTime))
+			if (gs->frameNum < ((parts.front()).creationTime + track.lifeTime))
 				break;
 
-			track->parts.pop_front();
+			parts.pop_front();
 		}
 
-		if (track->parts.empty()) {
-			if (track->owner != nullptr) {
-				track->owner->myTrack = nullptr;
-				track->owner = nullptr;
-			}
-
-			spring::VectorErase(*ttc.tracks, track);
-			tracksToBeDeleted.push_back(track);
+		if (parts.empty()) {
+			spring::VectorErase(trackTypes[ttc.ttIndex].trackIDs, track.id);
+			unitTracks.erase(track.id);
 		}
 	}
 
-	tracksToBeCleaned.clear();
+	cleanedTrackIDs.clear();
 }
 
 
 bool LegacyTrackHandler::GetDrawTracks() const
 {
 	//FIXME move track updating to ::Update()
-	if ((!tracksToBeAdded.empty()) || (!tracksToBeCleaned.empty()) || (!tracksToBeDeleted.empty()))
+	if (!addedTrackIDs.empty() || !cleanedTrackIDs.empty())
 		return true;
 
-	for (auto& tt: trackTypes) {
-		if (!tt.tracks.empty())
-			return true;
-	}
+	const auto pred = [](const TrackType& tt) { return (!tt.trackIDs.empty()); };
+	const auto iter = std::find_if(trackTypes.begin(), trackTypes.end(), pred);
 
-	return false;
+	return (iter != trackTypes.end());
 }
 
 
@@ -363,97 +343,107 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 }
 
 
-void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
+
+static bool CanReceiveTracks(const float3& pos)
 {
-	if (!unit->leaveTracks)
-		return;
-
-	const UnitDef* unitDef = unit->unitDef;
-	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
-
-	if (!unitDef->IsGroundUnit())
-		return;
-
-	if (decalDef.trackDecalType < -1)
-		return;
-
-	if (decalDef.trackDecalType < 0) {
-		const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
-		if (decalDef.trackDecalType < -1)
-			return;
-	}
-
-	if (unit->myTrack != nullptr && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
-		return;
-
-	if (!gu->spectatingFullView && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0)
-		return;
-
 	// calculate typemap-index
-	const int tmz = newPos.z / (SQUARE_SIZE * 2);
-	const int tmx = newPos.x / (SQUARE_SIZE * 2);
+	const int tmz = pos.z / (SQUARE_SIZE * 2);
+	const int tmx = pos.x / (SQUARE_SIZE * 2);
 	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
 
-	const unsigned char* typeMap = readMap->GetTypeMapSynced();
-	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
+	const uint8_t* typeMap = readMap->GetTypeMapSynced();
+	const uint8_t  typeNum = typeMap[tmi];
 
-	if (!terType.receiveTracks)
-		return;
+	return (mapInfo->terrainTypes[typeNum].receiveTracks);
 
-	static const int decalLevel = 3; //FIXME
-	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
+}
+
+void LegacyTrackHandler::CreateOrAddTrackPart(const CUnit* unit, const SolidObjectDecalDef& decalDef, const float3& pos)
+{
+	const float trackLifeTime = GAME_SPEED * DECAL_LEVEL * decalDef.trackDecalStrength;
 
 	if (trackLifeTime <= 0.0f)
 		return;
 
-	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
+	UnitTrack& unitTrack = unitTracks[unit->id];
 
+	if (unitTrack.owner != nullptr && unitTrack.lastUpdate >= (gs->frameNum - (UPDATE_PERIOD - 1)))
+		return;
 
-	// prepare the new part of the track; will be copied
-	TrackPart trackPart;
-	trackPart.pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	trackPart.pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	trackPart.pos1.y = CGround::GetHeightReal(trackPart.pos1.x, trackPart.pos1.z, false);
-	trackPart.pos2.y = CGround::GetHeightReal(trackPart.pos2.x, trackPart.pos2.z, false);
-	trackPart.creationTime = gs->frameNum;
+	if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
+		return;
 
-	UnitTrackStruct** unitTrack = &unit->myTrack;
+	// prepare the new part of the track
+	unitTrack.parts.emplace_back();
 
-	if ((*unitTrack) == nullptr) {
-		(*unitTrack) = new UnitTrackStruct(unit);
-		(*unitTrack)->lifeTime = trackLifeTime;
-		(*unitTrack)->alphaFalloff = 255.0f / trackLifeTime;
+	TrackPart& nextPart = unitTrack.parts.back();
+	nextPart.pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
+	nextPart.pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
+	nextPart.pos1.y = CGround::GetHeightReal(nextPart.pos1.x, nextPart.pos1.z, false);
+	nextPart.pos2.y = CGround::GetHeightReal(nextPart.pos2.x, nextPart.pos2.z, false);
+	nextPart.creationTime = gs->frameNum;
+	unitTrack.lastUpdate = gs->frameNum;
 
-		trackPart.texPos = 0;
-		trackPart.connected = false;
-		trackPart.isNewTrack = true;
-	} else {
-		const TrackPart& prevPart = (*unitTrack)->lastAdded;
+	if (unitTrack.owner == nullptr) {
+		unitTrack.owner = unit;
 
-		const float partDist = (trackPart.pos1).distance(prevPart.pos1);
-		const float texShift = (partDist / decalDef.trackDecalWidth) * decalDef.trackDecalStretch;
+		unitTrack.id = unit->id;
+		unitTrack.lifeTime = trackLifeTime;
+		unitTrack.alphaFalloff = 255.0f / trackLifeTime;
 
-		trackPart.texPos = prevPart.texPos + texShift;
-		trackPart.connected = (prevPart.creationTime == (gs->frameNum - 8));
-	}
-
-	if (trackPart.isNewTrack) {
 		auto& decDef = unit->unitDef->decalDef;
 		auto& trType = trackTypes[decDef.trackDecalType];
 
-		spring::VectorInsertUnique(trType.tracks, *unitTrack);
+		spring::VectorInsertUnique(trType.trackIDs, unitTrack.id);
+	} else {
+		const TrackPart& prevPart = unitTrack.parts[unitTrack.parts.size() - 2];
+
+		const float partDist = (nextPart.pos1).distance(prevPart.pos1);
+		const float texShift = (partDist / decalDef.trackDecalWidth) * decalDef.trackDecalStretch;
+
+		nextPart.texPos = prevPart.texPos + texShift;
+		nextPart.connected = (prevPart.creationTime == (gs->frameNum - UPDATE_PERIOD));
 	}
 
-	(*unitTrack)->lastUpdate = gs->frameNum;
-	(*unitTrack)->lastAdded = trackPart;
+	addedTrackIDs.push_back(unitTrack.id);
+}
 
-	tracksToBeAdded.push_back(*unitTrack);
+void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
+{
+	const UnitDef* unitDef = unit->unitDef;
+	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
+
+	if (!unit->leaveTracks)
+		return;
+	if (!unitDef->IsGroundUnit())
+		return;
+
+
+	// -2 := failed to load texture, do not try again
+	// -1 := texture was not loaded yet, first attempt
+	switch (decalDef.trackDecalType) {
+		case -2: {                                                                             return; } break;
+		case -1: { const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef); } break;
+		default: {                                                                                     } break;
+	}
+
+	if (decalDef.trackDecalType < 0)
+		return;
+
+
+	if (unitTracks.find(unit->id) == unitTracks.end())
+		unitTracks.emplace(unit->id, {});
+
+	if (!CanReceiveTracks(newPos))
+		return;
+
+	CreateOrAddTrackPart(unit, decalDef, newPos + unit->frontdir * decalDef.trackDecalOffset);
 }
 
 
-int LegacyTrackHandler::GetTrackType(const std::string& name)
+int LegacyTrackHandler::GetTrackType(const SolidObjectDecalDef& def)
 {
-	const std::string& lowerName = StringToLower(name);
+	const std::string& lowerName = StringToLower(def.trackDecalTypeName);
 
 	const auto pred = [&](const TrackType& tt) { return (tt.name == lowerName); };
 	const auto iter = std::find_if(trackTypes.begin(), trackTypes.end(), pred);
@@ -465,7 +455,7 @@ int LegacyTrackHandler::GetTrackType(const std::string& name)
 	if (texID == 0)
 		return -2;
 
-	trackTypes.push_back(TrackType(lowerName, texID));
+	trackTypes.emplace_back(lowerName, texID);
 	return (trackTypes.size() - 1);
 }
 
@@ -476,16 +466,15 @@ unsigned int LegacyTrackHandler::LoadTexture(const std::string& name)
 	if (fullName.find_first_of('.') == std::string::npos)
 		fullName += ".bmp";
 
-	if ((fullName.find_first_of('\\') == std::string::npos) &&
-	    (fullName.find_first_of('/')  == std::string::npos)) {
+	if ((fullName.find_first_of('\\') == std::string::npos) && (fullName.find_first_of('/') == std::string::npos))
 		fullName = std::string("bitmaps/tracks/") + fullName;
-	}
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		LOG_L(L_WARNING, "Could not load track decal from file %s", fullName.c_str());
 		return 0;
 	}
+
 	if (FileSystem::GetExtension(fullName) == "bmp") {
 		// bitmaps don't have an alpha channel
 		// so use: red := brightness & green := alpha
@@ -511,25 +500,14 @@ unsigned int LegacyTrackHandler::LoadTexture(const std::string& name)
 
 
 
-void LegacyTrackHandler::RemoveTrack(CUnit* unit)
-{
-	if (unit->myTrack == nullptr)
-		return;
-
-	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
-	unit->myTrack->owner = nullptr;
-	unit->myTrack = nullptr;
-}
-
-
 void LegacyTrackHandler::UnitMoved(const CUnit* unit)
 {
-	AddTrack(const_cast<CUnit*>(unit), unit->pos);
+	AddTrack(unit, unit->pos);
 }
-
 
 void LegacyTrackHandler::RenderUnitDestroyed(const CUnit* unit)
 {
-	RemoveTrack(const_cast<CUnit*>(unit));
+	// pre-empt AddTracks, but keep the track so it can decay normally
+	unitTracks[unit->id].owner = nullptr;
 }
 

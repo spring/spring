@@ -12,6 +12,7 @@
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/EventClient.h"
+#include "System/UnorderedMap.hpp"
 
 // comment out if using DecalsDrawerGL4
 #define USE_DECALHANDLER_STATE
@@ -19,54 +20,33 @@
 
 class CSolidObject;
 class CUnit;
-class CVertexArray;
+struct SolidObjectDecalDef;
 
 namespace Shader {
 	struct IProgramObject;
 }
 
 struct TrackPart {
-	TrackPart()
-		: texPos(0.0f)
-		, connected(false)
-		, isNewTrack(false)
-		, creationTime(0)
-	{}
 	float3 pos1;
 	float3 pos2;
-	float texPos;
-	bool connected;
-	bool isNewTrack;
-	unsigned int creationTime;
+
+	float texPos = 0.0f;
+
+	unsigned int creationTime = 0;
+
+	bool connected = false;
 };
 
-struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* owner)
-		: owner(owner)
-		, lastUpdate(0)
-		, lifeTime(0)
-		, alphaFalloff(0.0f)
-	{}
+struct UnitTrack {
+	const CUnit* owner = nullptr;
 
-	CUnit* owner;
+	unsigned int id = -1u;
+	unsigned int lastUpdate = 0;
+	unsigned int lifeTime = 0;
 
-	unsigned int lastUpdate;
-	unsigned int lifeTime;
+	float alphaFalloff = 0.0f;
 
-	float alphaFalloff;
-
-	TrackPart lastAdded;
 	std::deque<TrackPart> parts;
-};
-
-struct TrackToClean {
-	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
-		: track(t)
-		, tracks(ts)
-	{}
-
-	UnitTrackStruct* track;
-	std::vector<UnitTrackStruct*>* tracks;
 };
 
 
@@ -109,20 +89,28 @@ private:
 	void CleanTracks();
 
 
-	static void RemoveTrack(CUnit* unit);
-	void AddTrack(CUnit* unit, const float3& newPos);
-	int GetTrackType(const std::string& name);
+	void RemoveTrack(CUnit* unit);
+	void AddTrack(const CUnit* unit, const float3& newPos);
+	void CreateOrAddTrackPart(const CUnit* unit, const SolidObjectDecalDef& decalDef, const float3& pos);
+
+	int GetTrackType(const SolidObjectDecalDef& def);
 	unsigned int LoadTexture(const std::string& name);
 
 private:
 	struct TrackType {
 		TrackType(const std::string& s, unsigned t): name(s), texture(t) {}
+
 		std::string name;
-		std::vector<UnitTrackStruct*> tracks;
+		std::vector<unsigned int> trackIDs;
+
 		unsigned int texture;
 	};
+	struct TrackToClean {
+		TrackToClean(unsigned int id, unsigned tti): trackID(id), ttIndex(tti) {}
 
-	std::vector<TrackType> trackTypes;
+		unsigned int trackID;
+		unsigned int ttIndex;
+	};
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_NULL,
@@ -135,9 +123,11 @@ private:
 	std::array<Shader::IProgramObject*, DECAL_SHADER_LAST> decalShaders;
 	#endif
 
-	std::vector<UnitTrackStruct*> tracksToBeAdded;
-	std::vector<TrackToClean>     tracksToBeCleaned;
-	std::vector<UnitTrackStruct*> tracksToBeDeleted;
+	std::vector<TrackType> trackTypes;
+	spring::unsynced_map<int, UnitTrack> unitTracks;
+
+	std::vector<unsigned int> addedTrackIDs;
+	std::vector<TrackToClean> cleanedTrackIDs;
 };
 
 

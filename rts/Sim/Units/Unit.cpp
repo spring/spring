@@ -199,8 +199,6 @@ CUnit::CUnit()
 , iconRadius(0.0f)
 , lastUnitUpdate(0)
 , group(nullptr)
-, myTrack(nullptr)
-, myIcon(nullptr)
 
 , stunned(false)
 {
@@ -2945,9 +2943,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(curTerrainType),
 
 	CR_MEMBER(selfDCountdown),
-
-	CR_MEMBER_UN(myTrack),
-	CR_MEMBER_UN(myIcon),
 
 	CR_MEMBER(transportedUnits),
 	CR_MEMBER(incomingMissiles),
