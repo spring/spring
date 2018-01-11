@@ -126,7 +126,7 @@ private:
 	std::vector<TrackType> trackTypes;
 	spring::unsynced_map<int, UnitTrack> unitTracks;
 
-	std::vector<unsigned int> addedTrackIDs;
+	std::vector<unsigned int> updatedTrackIDs;
 	std::vector<TrackToClean> cleanedTrackIDs;
 };
 

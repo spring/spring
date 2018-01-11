@@ -123,7 +123,7 @@ void LegacyTrackHandler::SunChanged()
 
 void LegacyTrackHandler::AddTracks()
 {
-	for (unsigned int trackID: addedTrackIDs) {
+	for (unsigned int trackID: updatedTrackIDs) {
 		UnitTrack& unitTrack = unitTracks[trackID];
 		auto& parts = unitTrack.parts;
 
@@ -147,7 +147,7 @@ void LegacyTrackHandler::AddTracks()
 		parts.pop_back();
 	}
 
-	addedTrackIDs.clear();
+	updatedTrackIDs.clear();
 }
 
 
@@ -245,7 +245,7 @@ void LegacyTrackHandler::CleanTracks()
 bool LegacyTrackHandler::GetDrawTracks() const
 {
 	//FIXME move track updating to ::Update()
-	if (!addedTrackIDs.empty() || !cleanedTrackIDs.empty())
+	if (!updatedTrackIDs.empty() || !cleanedTrackIDs.empty())
 		return true;
 
 	const auto pred = [](const TrackType& tt) { return (!tt.trackIDs.empty()); };
@@ -405,7 +405,7 @@ void LegacyTrackHandler::CreateOrAddTrackPart(const CUnit* unit, const SolidObje
 		nextPart.connected = (prevPart.creationTime == (gs->frameNum - UPDATE_PERIOD));
 	}
 
-	addedTrackIDs.push_back(unitTrack.id);
+	updatedTrackIDs.push_back(unitTrack.id);
 }
 
 void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
