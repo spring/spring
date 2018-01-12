@@ -430,9 +430,8 @@ void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
 	if (decalDef.trackDecalType < 0)
 		return;
 
-
 	if (unitTracks.find(unit->id) == unitTracks.end())
-		unitTracks.emplace(unit->id, {});
+		unitTracks[unit->id] = std::move(UnitTrack{});
 
 	if (!CanReceiveTracks(newPos))
 		return;

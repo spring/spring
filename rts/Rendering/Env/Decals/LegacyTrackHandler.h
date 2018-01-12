@@ -26,30 +26,6 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-struct TrackPart {
-	float3 pos1;
-	float3 pos2;
-
-	float texPos = 0.0f;
-
-	unsigned int creationTime = 0;
-
-	bool connected = false;
-};
-
-struct UnitTrack {
-	const CUnit* owner = nullptr;
-
-	unsigned int id = -1u;
-	unsigned int lastUpdate = 0;
-	unsigned int lifeTime = 0;
-
-	float alphaFalloff = 0.0f;
-
-	std::deque<TrackPart> parts;
-};
-
-
 
 class LegacyTrackHandler: public CEventClient
 {
@@ -97,6 +73,48 @@ private:
 	unsigned int LoadTexture(const std::string& name);
 
 private:
+	struct TrackPart {
+		float3 pos1;
+		float3 pos2;
+
+		float texPos = 0.0f;
+
+		unsigned int creationTime = 0;
+
+		bool connected = false;
+	};
+
+	struct UnitTrack {
+		UnitTrack(                    ) = default;
+		UnitTrack(const UnitTrack&  ut) = delete;
+		UnitTrack(      UnitTrack&& ut) { *this = std::move(ut); }
+
+		UnitTrack& operator = (const UnitTrack&  ut) = delete;
+		UnitTrack& operator = (      UnitTrack&& ut) {
+			owner = ut.owner;
+			ut.owner = nullptr;
+
+			id = ut.id;
+			lastUpdate = ut.lastUpdate;
+			lifeTime = ut.lifeTime;
+
+			alphaFalloff = ut.alphaFalloff;
+
+			parts = std::move(ut.parts);
+			return *this;
+		}
+
+		const CUnit* owner = nullptr;
+
+		unsigned int id = -1u;
+		unsigned int lastUpdate = 0;
+		unsigned int lifeTime = 0;
+
+		float alphaFalloff = 0.0f;
+
+		std::deque<TrackPart> parts;
+	};
+
 	struct TrackType {
 		TrackType(const std::string& s, unsigned t): name(s), texture(t) {}
 
