@@ -187,9 +187,11 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 	if (!ThreadPool::HasThreads())
 		return;
 
-	if (cache.find(StringToLower(modelName)) != cache.end())
-		return;
-
+	// if already in cache, thread just returns early
+	// not spawning the thread at all would be better but still
+	// requires locking around cache.find(...) since some other
+	// preload worker might be down in CreateModel modifying it
+	// at the same time
 	ThreadPool::Enqueue([modelName]() {
 		modelLoader.LoadModel(modelName, true);
 	});
@@ -204,10 +206,10 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 
 	std::lock_guard<spring::mutex> lock(mutex);
 
-	StringToLowerInPlace(name);
-
 	std::string  path;
 	std::string* refs[2] = {&name, &path};
+
+	StringToLowerInPlace(name);
 
 	// search in cache first
 	for (unsigned int n = 0; n < 2; n++) {
