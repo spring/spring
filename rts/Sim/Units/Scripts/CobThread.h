@@ -67,6 +67,7 @@ public:
 	 * @returns min(size, stack.size())
 	 */
 	int CheckStack(unsigned int size, bool warn);
+	void InitStack(unsigned int n, CCobThread* t);
 
 	/**
 	 * Shows an errormessage which includes the current state of the script
@@ -127,7 +128,6 @@ protected:
 
 	std::vector<CallInfo> callStack;
 	std::vector<int> dataStack;
-	std::vector<int> callArgs;
 	// std::vector<int> execTrace;
 
 	State state = Init;

@@ -67,10 +67,10 @@ void CCobEngine::SanityCheckThreads(const CCobInstance* owner)
 	if (false) {
 		// no threads belonging to owner should be left
 		for (const auto& p: threadInstances) {
-			assert(p.second.owner != owner);
+			assert(p.second.cobInst != owner);
 		}
 		for (const CCobThread& t: tickAddedThreads) {
-			assert(t.owner != owner);
+			assert(t.cobInst != owner);
 		}
 	}
 }
