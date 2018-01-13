@@ -3,10 +3,9 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 
 // FIXME
 #define private public
@@ -23,8 +22,19 @@
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/StringUtil.h"
+
+static std::vector<const QTPFS::QTNode*> visibleNodes;
+
+static constexpr unsigned char LINK_COLOR[4] = {1 * 255, 0 * 255, 1 * 255, 1 * 128};
+static constexpr unsigned char PATH_COLOR[4] = {0 * 255, 0 * 255, 1 * 255, 1 * 255};
+static constexpr unsigned char NODE_COLORS[3][4] = {
+	{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // red --> blocked
+	{0 * 255, 1 * 255, 0 * 255, 1 * 255}, // green --> passable
+	{0 * 255, 0 * 255, 1 *  64, 1 *  64}, // light blue --> pushed
+};
+
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
 	pm = dynamic_cast<QTPFS::PathManager*>(pathManager);
@@ -36,98 +46,136 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (md == nullptr)
 		return;
 
-	if (enabled && (gs->cheatEnabled || gu->spectating)) {
-		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
+	if (!enabled)
+		return;
 
-		DrawNodeTree(md);
-		DrawPaths(md);
+	if (!gs->cheatEnabled && !gu->spectating)
+		return;
 
-		glPopAttrib();
+	glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+
+	visibleNodes.clear();
+	visibleNodes.reserve(256);
+
+	GetVisibleNodes(pm->nodeTrees[md->pathType], visibleNodes);
+
+	if (!visibleNodes.empty()) {
+		GL::RenderDataBufferC* rdb = GL::GetRenderBufferC();
+		Shader::IProgramObject* ipo = rdb->GetShader();
+
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+		DrawNodes(rdb, visibleNodes);
+		DrawPaths(md, rdb);
+
+		ipo->Disable();
+
+		// text has its own shader, draw it last
+		DrawCosts(visibleNodes);
 	}
+
+	glPopAttrib();
 }
 
-void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
-	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
-	CVertexArray* va = GetVertexArray();
+void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const {
+	Shader::IProgramObject* ipo = rdb->GetShader();
 
-	std::vector<const QTPFS::QTNode*> nodes;
-	std::vector<const QTPFS::QTNode*>::const_iterator nodesIt;
-
-	GetVisibleNodes(nt, nodes);
-
-	va->Initialize();
-	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
-
-	for (nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
-		DrawNode(*nodesIt, md, va, false, true, true);
+	for (const QTPFS::QTNode* node: nodes) {
+		DrawNode(node, rdb, &NODE_COLORS[node->moveCostAvg != QTPFS_POSITIVE_INFINITY][0]);
 	}
 
 	glLineWidth(2);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	va->DrawArrayC(GL_QUADS);
+
+	rdb->Submit(GL_QUADS);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(1);
 }
 
-void QTPFSPathDrawer::DrawNodeTreeRec(
-	const QTPFS::QTNode* nt,
-	const MoveDef* md,
-	CVertexArray* va
-) const {
-	if (nt->IsLeaf()) {
-		DrawNode(nt, md, va, false, true, false);
-	} else {
-		for (unsigned int i = 0; i < nt->children.size(); i++) {
-			const QTPFS::QTNode* n = nt->children[i];
-			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
-			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+void QTPFSPathDrawer::DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) const {
+	#define xmidw (node->xmid() * SQUARE_SIZE)
+	#define zmidw (node->zmid() * SQUARE_SIZE)
 
-			if (!camera->InView(mins, maxs))
-				continue;
+	for (const QTPFS::QTNode* node: nodes) {
+		const float3 pos = {xmidw * 1.0f, CGround::GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw * 1.0f};
 
-			DrawNodeTreeRec(nt->children[i], md, va);
-		}
+		if (pos.SqDistance(camera->GetPos()) >= Square(1000.0f))
+			continue;
+
+		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
+		font->glWorldPrint(pos, 5.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
 	}
+
+	#undef zmidw
+	#undef xmidw
 }
+
+
 
 void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const {
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
-	} else {
-		for (unsigned int i = 0; i < nt->children.size(); i++) {
-			const QTPFS::QTNode* n = nt->children[i];
-			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
-			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+		return;
+	}
 
-			if (!camera->InView(mins, maxs))
-				continue;
+	for (unsigned int i = 0; i < nt->children.size(); i++) {
+		const QTPFS::QTNode* n = nt->children[i];
+		const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
+		const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
 
-			GetVisibleNodes(nt->children[i], nodes);
-		}
+		if (!camera->InView(mins, maxs))
+			continue;
+
+		GetVisibleNodes(nt->children[i], nodes);
 	}
 }
 
 
 
-void QTPFSPathDrawer::DrawPaths(const MoveDef* md) const {
+void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) const {
 	const QTPFS::PathCache& pathCache = pm->pathCaches[md->pathType];
 	const QTPFS::PathCache::PathMap& paths = pathCache.GetLivePaths();
 
-	QTPFS::PathCache::PathMap::const_iterator pathsIt;
+	glLineWidth(4);
 
-	CVertexArray* va = GetVertexArray();
+	{
+		Shader::IProgramObject* ipo = rdb->GetShader();
 
-	for (pathsIt = paths.begin(); pathsIt != paths.end(); ++pathsIt) {
-		DrawPath(pathsIt->second, va);
+		for (const auto& pair: paths) {
+			DrawPath(pair.second, rdb);
+		}
+	}
 
-		#ifdef QTPFS_TRACE_PATH_SEARCHES
-		#define PM QTPFS::PathManager
-		const PM::PathTypeMap::const_iterator typeIt = pm->pathTypes.find(pathsIt->first);
-		const PM::PathTraceMap::const_iterator traceIt = pm->pathTraces.find(pathsIt->first);
-		#undef PM
+	{
+		#ifdef QTPFS_DRAW_WAYPOINT_GROUND_CIRCLES
+		#error UNCONVERTED FFP CODE
+		glColor4ub(0, 0, 255, 255);
+
+		for (const auto& pair: paths) {
+			const QTPFS::IPath* path = pair.second;
+
+			for (unsigned int n = 0; n < path->NumPoints(); n++) {
+				glSurfaceCircle(path->GetPoint(n), path->GetRadius(), 16);
+			}
+		}
+
+		glColor4ub(255, 255, 255, 255);
+		#endif
+	}
+
+	glLineWidth(1);
+
+
+	#ifdef QTPFS_TRACE_PATH_SEARCHES
+	for (const auto& pair: paths) {
+		const auto typeIt = pm->pathTypes.find(pair.first);
+		const auto traceIt = pm->pathTraces.find(pair.first);
 
 		if (typeIt == pm->pathTypes.end() || traceIt == pm->pathTraces.end())
 			continue;
@@ -135,68 +183,41 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md) const {
 		if (traceIt->second == nullptr)
 			continue;
 
-		DrawSearchExecution(typeIt->second, traceIt->second);
-		#endif
-	}
-}
-
-void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const {
-	glLineWidth(4);
-
-	{
-		va->Initialize();
-		va->EnlargeArrays(path->NumPoints() * 2, 0, VA_SIZE_C);
-
-		static const unsigned char color[4] = {
-			0 * 255, 0 * 255, 1 * 255, 1 * 255,
-		};
-
-		for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
-			float3 p0 = path->GetPoint(n + 0);
-			float3 p1 = path->GetPoint(n + 1);
-
-			if (!camera->InView(p0) && !camera->InView(p1))
-				continue;
-
-			p0.y = CGround::GetHeightReal(p0.x, p0.z, false);
-			p1.y = CGround::GetHeightReal(p1.x, p1.z, false);
-
-			va->AddVertexQC(p0, color);
-			va->AddVertexQC(p1, color);
-		}
-
-		va->DrawArrayC(GL_LINES);
-	}
-
-	#ifdef QTPFS_DRAW_WAYPOINT_GROUND_CIRCLES
-	{
-		glColor4ub(color[0], color[1], color[2], color[3]);
-
-		for (unsigned int n = 0; n < path->NumPoints(); n++) {
-			glSurfaceCircle(path->GetPoint(n), path->GetRadius(), 16);
-		}
-
-		glColor4ub(255, 255, 255, 255);
+		DrawSearchExecution(typeIt->second, traceIt->second, rdb);
 	}
 	#endif
-
-	glLineWidth(1);
 }
 
-void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const {
+void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, GL::RenderDataBufferC* rdb) const {
+	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
+		float3 p0 = path->GetPoint(n + 0);
+		float3 p1 = path->GetPoint(n + 1);
+
+		if (!camera->InView(p0) && !camera->InView(p1))
+			continue;
+
+		p0.y = CGround::GetHeightReal(p0.x, p0.z, false);
+		p1.y = CGround::GetHeightReal(p1.x, p1.z, false);
+
+		rdb->SafeAppend({p0, PATH_COLOR});
+		rdb->SafeAppend({p1, PATH_COLOR});
+	}
+
+	rdb->Submit(GL_LINES);
+}
+
+void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* se, GL::RenderDataBufferC* rdb) const {
 	// TODO: prevent overdraw so oft-visited nodes do not become darker
-	const std::vector<QTPFS::PathSearchTrace::Iteration>& searchIters = searchExec->GetIterations();
+	const std::vector<QTPFS::PathSearchTrace::Iteration>& searchIters = se->GetIterations();
 	      std::vector<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
-	const unsigned searchFrame = searchExec->GetFrame();
+	const unsigned searchFrame = se->GetFrame();
 
 	// number of frames reserved to draw the entire trace
-	static const unsigned int MAX_DRAW_TIME = GAME_SPEED * 5;
+	constexpr unsigned int MAX_DRAW_TIME = GAME_SPEED * 5;
 
 	unsigned int itersPerFrame = (searchIters.size() / MAX_DRAW_TIME) + 1;
 	unsigned int curSearchIter = 0;
 	unsigned int maxSearchIter = ((gs->frameNum - searchFrame) + 1) * itersPerFrame;
-
-	CVertexArray* va = GetVertexArray();
 
 	for (it = searchIters.begin(); it != searchIters.end(); ++it) {
 		if (curSearchIter++ >= maxSearchIter)
@@ -205,40 +226,50 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 		const QTPFS::PathSearchTrace::Iteration& searchIter = *it;
 		const std::vector<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
 
-		DrawSearchIteration(pathType, nodeIndices, va);
+		DrawSearchIteration(pathType, nodeIndices, rdb);
 	}
 }
 
-void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const {
-	std::vector<unsigned int>::const_iterator it = nodeIndices.cbegin();
-
-	unsigned int hmx = (*it) % mapDims.mapx;
-	unsigned int hmz = (*it) / mapDims.mapx;
+void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, GL::RenderDataBufferC* rdb) const {
+	unsigned int hmx = nodeIndices[0] % mapDims.mapx;
+	unsigned int hmz = nodeIndices[0] / mapDims.mapx;
 
 	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
-	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
+
 	const QTPFS::QTNode* pushedNode = nullptr;
+	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
-	DrawNode(poppedNode, nullptr, va, true, false, false);
+	{
+		// popped node
+		DrawNode(poppedNode, rdb, &NODE_COLORS[2][0]);
 
-	for (++it; it != nodeIndices.end(); ++it) {
-		hmx = (*it) % mapDims.mapx;
-		hmz = (*it) / mapDims.mapx;
-		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
+		// pushed nodes
+		for (size_t i = 1, n = nodeIndices.size(); i < n; i++) {
+			hmx = nodeIndices[i] % mapDims.mapx;
+			hmz = nodeIndices[i] / mapDims.mapx;
 
-		DrawNode(pushedNode, nullptr, va, true, false, false);
-		DrawNodeLink(pushedNode, poppedNode, va);
+			DrawNode(pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz)), rdb, &NODE_COLORS[2][0]);
+		}
+
+		rdb->Submit(GL_QUADS);
+	}
+	{
+		for (size_t i = 1, n = nodeIndices.size(); i < n; i++) {
+			hmx = nodeIndices[i] % mapDims.mapx;
+			hmz = nodeIndices[i] / mapDims.mapx;
+
+			DrawNodeLink(pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz)), poppedNode, rdb);
+		}
+
+		glLineWidth(2);
+		rdb->Submit(GL_LINES);
+		glLineWidth(1);
 	}
 }
 
-void QTPFSPathDrawer::DrawNode(
-	const QTPFS::QTNode* node,
-	const MoveDef* md,
-	CVertexArray* va,
-	bool fillQuad,
-	bool showCost,
-	bool batchDraw
-) const {
+
+
+void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC* rdb, const unsigned char* color) const {
 	#define xminw (node->xmin() * SQUARE_SIZE)
 	#define xmaxw (node->xmax() * SQUARE_SIZE)
 	#define zminw (node->zmin() * SQUARE_SIZE)
@@ -246,53 +277,17 @@ void QTPFSPathDrawer::DrawNode(
 	#define xmidw (node->xmid() * SQUARE_SIZE)
 	#define zmidw (node->zmid() * SQUARE_SIZE)
 
-	const float3 verts[5] = {
+	const float3 verts[4] = {
 		float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
 		float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
 		float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
 		float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xmidw, CGround::GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
-	};
-	static const unsigned char colors[3][4] = {
-		{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // red --> blocked
-		{0 * 255, 1 * 255, 0 * 255, 1 * 255}, // green --> passable
-		{0 * 255, 0 * 255, 1 *  64, 1 *  64}, // light blue --> pushed
 	};
 
-	const unsigned char* color =
-		(!showCost)?
-			&colors[2][0]:
-		(node->moveCostAvg == QTPFS_POSITIVE_INFINITY)?
-			&colors[0][0]:
-			&colors[1][0];
-
-	if (!batchDraw) {
-		if (!camera->InView(verts[4]))
-			return;
-
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_C);
-
-		if (!fillQuad)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-
-	va->AddVertexQC(verts[0], color);
-	va->AddVertexQC(verts[1], color);
-	va->AddVertexQC(verts[2], color);
-	va->AddVertexQC(verts[3], color);
-
-	if (!batchDraw) {
-		va->DrawArrayC(GL_QUADS);
-
-		if (!fillQuad)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-
-	if (showCost && camera->GetPos().SqDistance(verts[4]) < (1000.0f * 1000.0f)) {
-		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
-		font->glWorldPrint(verts[4], 5.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
-	}
+	rdb->SafeAppend({verts[0], color});
+	rdb->SafeAppend({verts[1], color});
+	rdb->SafeAppend({verts[2], color});
+	rdb->SafeAppend({verts[3], color});
 
 	#undef xminw
 	#undef xmaxw
@@ -302,28 +297,19 @@ void QTPFSPathDrawer::DrawNode(
 	#undef zmidw
 }
 
-void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, CVertexArray* va) const {
+void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::RenderDataBufferC* rdb) const {
 	#define xmidw(n) (n->xmid() * SQUARE_SIZE)
 	#define zmidw(n) (n->zmid() * SQUARE_SIZE)
 
-	const float3 verts[2] = {
-		float3(xmidw(pushedNode), CGround::GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode)),
-		float3(xmidw(poppedNode), CGround::GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode)),
-	};
-	static const unsigned char color[4] = {
-		1 * 255, 0 * 255, 1 * 255, 1 * 128,
-	};
+	const float3 v0 = {xmidw(pushedNode) * 1.0f, CGround::GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode) * 1.0f};
+	const float3 v1 = {xmidw(poppedNode) * 1.0f, CGround::GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode) * 1.0f};
 
-	if (!camera->InView(verts[0]) && !camera->InView(verts[1]))
+
+	if (!camera->InView(v0) && !camera->InView(v1))
 		return;
 
-	va->Initialize();
-	va->EnlargeArrays(2, 0, VA_SIZE_C);
-	va->AddVertexQC(verts[0], color);
-	va->AddVertexQC(verts[1], color);
-	glLineWidth(2);
-	va->DrawArrayC(GL_LINES);
-	glLineWidth(1);
+	rdb->SafeAppend({v0, LINK_COLOR});
+	rdb->SafeAppend({v1, LINK_COLOR});
 
 	#undef xmidw
 	#undef zmidw

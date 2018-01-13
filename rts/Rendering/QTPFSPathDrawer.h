@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "IPathDrawer.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 
 struct MoveDef;
-class CVertexArray;
 
 namespace QTPFS {
 	class PathManager;
@@ -30,34 +30,17 @@ public:
 	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
 
 private:
-	enum {
-		COLOR_BIT_R = 1,
-		COLOR_BIT_G = 2,
-		COLOR_BIT_B = 4,
-	};
-
-	void DrawNodeTree(const MoveDef* md) const;
-	void DrawNodeTreeRec(
-		const QTPFS::QTNode* nt,
-		const MoveDef* md,
-		CVertexArray* va
-	) const;
+	void DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const;
+	void DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) const;
 
 	void GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const;
 
-	void DrawPaths(const MoveDef* md) const;
-	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
-	void DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const;
-	void DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const;
-	void DrawNode(
-		const QTPFS::QTNode* node,
-		const MoveDef* md,
-		CVertexArray* va,
-		bool fillQuad,
-		bool showCost,
-		bool batchDraw
-	) const;
-	void DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, CVertexArray* va) const;
+	void DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) const;
+	void DrawPath(const QTPFS::IPath* path, GL::RenderDataBufferC* rdb) const;
+	void DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* se, GL::RenderDataBufferC* rdb) const;
+	void DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, GL::RenderDataBufferC* rdb) const;
+	void DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC* rdb, const unsigned char* color) const;
+	void DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::RenderDataBufferC* rdb) const;
 
 private:
 	QTPFS::PathManager* pm;
