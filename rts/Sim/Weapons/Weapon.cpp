@@ -35,20 +35,27 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(weaponDef),
+	CR_MEMBER(damages),
+
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
-	CR_MEMBER(range),
-	CR_MEMBER(damages),
+
+	CR_MEMBER(reaimTime),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
-	CR_MEMBER(salvoLeft),
+
 	CR_MEMBER(salvoDelay),
 	CR_MEMBER(salvoSize),
 	CR_MEMBER(projectilesPerShot),
 	CR_MEMBER(nextSalvo),
-	CR_MEMBER(accuracyError),
+	CR_MEMBER(salvoLeft),
+
+	CR_MEMBER(range),
 	CR_MEMBER(projectileSpeed),
+	CR_MEMBER(accuracyError),
+	CR_MEMBER(sprayAngle),
 	CR_MEMBER(predictSpeedMod),
+
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(hasBlockShot),
@@ -67,9 +74,8 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
-	CR_MEMBER(sprayAngle),
 
-	CR_MEMBER(lastRequest),
+	CR_MEMBER(lastAimedFrame),
 	CR_MEMBER(lastTargetRetry),
 
 	CR_MEMBER(maxForwardAngleDif),
@@ -107,22 +113,27 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
 	slavedTo(nullptr),
 	weaponDef(def),
+	damages(nullptr),
+
 	weaponNum(-1),
 	aimFromPiece(-1),
 	muzzlePiece(-1),
+
+	reaimTime(GAME_SPEED >> 1),
 	reloadTime(1),
 	reloadStatus(0),
-	range(1),
-	damages(nullptr),
-	projectileSpeed(1),
-	accuracyError(0),
-	sprayAngle(0),
+
 	salvoDelay(0),
 	salvoSize(1),
 	projectilesPerShot(1),
 	nextSalvo(0),
 	salvoLeft(0),
-	predictSpeedMod(1),
+
+	range(1.0f),
+	projectileSpeed(1.0f),
+	accuracyError(0.0f),
+	sprayAngle(0.0f),
+	predictSpeedMod(1.0f),
 
 	hasBlockShot(false),
 	hasTargetWeight(false),
@@ -139,7 +150,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	numStockpiled(0),
 	numStockpileQued(0),
 
-	lastRequest(0),
+	lastAimedFrame(0),
 	lastTargetRetry(-100),
 
 	maxForwardAngleDif(0.0f),
@@ -297,58 +308,51 @@ void CWeapon::UpdateAim()
 		return;
 
 	UpdateWantedDir();
+	CallAimingScript(!weaponDef->allowNonBlockingAim);
+}
 
-	// Check fire angle constraints
-	//TODO write a per weapontype CheckAim()?
+bool CWeapon::CheckAimingAngle() const
+{
+	// check fire angle constraints
+	// TODO: write a per-weapontype CheckAim()?
 	const float3 worldTargetDir = (currentTargetPos - owner->pos).SafeNormalize();
 	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
-	const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
 
 	// weapon finished a previously started AimWeapon thread and wants to
 	// fire, but target is no longer within contraints --> wait for re-aim
-	angleGood &= targetAngleConstraint;
-	// NOTE:
-	//   this should not need to be here, but many legacy scripts do not
-	//   seem to define Aim*Ary in COB for units with onlyForward weapons
-	//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
-	// angleGood |= (onlyForward && targetAngleConstraint);
-
-	// reaim weapon when needed
-	ReAimWeapon();
+	return (CheckTargetAngleConstraint(worldTargetDir, worldMainDir));
 }
 
 
-void CWeapon::ReAimWeapon()
+bool CWeapon::CanCallAimingScript(bool validAngle) const {
+	bool ret = (gs->frameNum >= (lastAimedFrame + reaimTime));
+
+	ret |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
+	ret |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.0f * math::DEG_TO_RAD));
+
+	// NOTE: angleGood checks unit/maindir, not the weapon's current dir
+	// ret |= (!validAngle);
+	return ret;
+}
+
+bool CWeapon::CallAimingScript(bool waitForAim)
 {
-	// NOTE:
-	//   let scripts do active aiming even if we are an onlyForward weapon
-	//   (reduces how far the entire unit must turn to face worldTargetDir)
-
-	bool reAim = false;
-
 	// periodically re-aim the weapon (by calling the script's AimWeapon
-	// every N=15 frames regardless of current angleGood state)
+	// every N=15 frames regardless of current angleGood state; interval
+	// can be artificially shrunk by larger maxFireAngle [firetolerance]
+	// *or* via Spring.SetUnitWeaponState)
 	// if it does not (eg. because AimWeapon always spawns a thread to
 	// aim the weapon and defers setting angleGood to it) then this can
 	// lead to irregular/stuttering firing behavior, even in scenarios
 	// when the weapon does not have to re-aim
-	reAim |= (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1)));
+	if (!CanCallAimingScript(angleGood &= CheckAimingAngle()))
+		return false;
 
-	// check max FireAngle
-	reAim |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
-	reAim |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.f * math::DEG_TO_RAD));
-
-	//note: angleGood checks unit/maindir, not the weapon's current aim dir!!!
-	//reAim |= (!angleGood);
-
-	if (!reAim)
-		return;
-
-	// if we should block further firing until AimWeapon() has finished
-	angleGood &= (weaponDef->allowNonBlockingAim);
+	// if false, block further firing until AimWeapon has finished
+	angleGood &= !waitForAim;
 
 	lastRequestedDir = wantedDir;
-	lastRequest = gs->frameNum;
+	lastAimedFrame = gs->frameNum;
 
 	const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 	const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
@@ -357,6 +361,7 @@ void CWeapon::ReAimWeapon()
 	// for LUS, there exists a callout to set the <angleGood> member directly
 	// FIXME: convert CSolidObject::heading to radians too.
 	owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
+	return true;
 }
 
 
@@ -416,7 +421,7 @@ void CWeapon::UpdateFire()
 		CTeam* ownerTeam = teamHandler->Team(owner->team);
 		if (!owner->UseResources(shotRes)) {
 			// not enough resource, update pull (needs factor cause called each ::Update() and not at reloadtime!)
-			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
+			const int minPeriod = std::max(1, int(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
 			ownerTeam->resPull.energy += (averageFactor * weaponDef->energycost);
 			ownerTeam->resPull.metal  += (averageFactor * weaponDef->metalcost);

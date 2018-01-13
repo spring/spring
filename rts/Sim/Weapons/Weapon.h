@@ -108,7 +108,9 @@ private:
 	void UpdateInterceptTarget();
 	bool AllowWeaponAutoTarget() const;
 	bool CobBlockShot() const;
-	void ReAimWeapon();
+	bool CheckAimingAngle() const;
+	bool CanCallAimingScript(bool validAngle) const;
+	bool CallAimingScript(bool waitForAim);
 	void HoldIfTargetInvalid();
 
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire = false) const;
@@ -119,20 +121,17 @@ public:
 
 	const WeaponDef* weaponDef;
 
+	const DynDamageArray* damages;
+
 	int weaponNum;                          // ordering among owner's weapons
 
 	int aimFromPiece;
 	int muzzlePiece;
 
-	int reloadTime;                         // time between succesive fires in ticks
+	int reaimTime;                          // time between successive reaims in ticks
+
+	int reloadTime;                         // time between successive fires in ticks
 	int reloadStatus;                       // next tick the weapon can fire again
-
-	float range;
-	const DynDamageArray* damages;
-
-	float projectileSpeed;
-	float accuracyError;                    // inaccuracy of whole salvo
-	float sprayAngle;                       // inaccuracy of individual shots inside salvo
 
 	int salvoDelay;                         // delay between shots in a salvo
 	int salvoSize;                          // number of shots in a salvo
@@ -140,6 +139,10 @@ public:
 	int nextSalvo;                          // when the next shot in the current salvo will fire
 	int salvoLeft;                          // number of shots left in current salvo
 
+	float range;
+	float projectileSpeed;
+	float accuracyError;                    // inaccuracy of whole salvo
+	float sprayAngle;                       // inaccuracy of individual shots inside salvo
 	float predictSpeedMod;                  // how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	bool hasBlockShot;                      // set when the script has a BlockShot() function for this weapon
@@ -158,7 +161,7 @@ public:
 	int numStockpiled;                      // how many missiles we have stockpiled
 	int numStockpileQued;                   // how many weapons the user have added to our que
 
-	int lastRequest;                        // when the last script call was done
+	int lastAimedFrame;                     // when the last AimWeapon script callin was performed
 	int lastTargetRetry;                    // when we last recalculated target selection
 
 	float maxForwardAngleDif;               // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
