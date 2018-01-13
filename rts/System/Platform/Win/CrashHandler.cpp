@@ -64,9 +64,9 @@ static bool imageHelpInitialised = false;
 
 static const char* aiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* glLibWarning =
-	"This stacktrace indicates a problem with your graphics card driver. "
-	"Please try upgrading it (specifically recommended is the latest version) "
-	"but make sure to use a driver removal utility first.";
+	"This stacktrace indicates a problem with your graphics card driver, please try "
+	"upgrading it. Specifically recommended is the latest version; do not forget to "
+	"use a driver removal utility first.";
 
 static const char* addrFmts[2] = {
 	"\t(%d) %s:%u %s [0x%08llX]",
