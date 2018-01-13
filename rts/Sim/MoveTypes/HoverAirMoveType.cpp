@@ -803,9 +803,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// copy vertical speed
 	const float yspeed = spd.y;
 
-	if (((gs->frameNum + owner->id) & 3) == 0) {
+	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
-	}
 
 	// cancel out vertical speed, acc and dec are applied in xz-plane
 	owner->SetVelocity(spd * XZVector);
@@ -819,18 +818,16 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		if (deltaSpeedSq < Square(accRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			if (deltaSpeedSq > 0.0f) {
+			if (deltaSpeedSq > 0.0f)
 				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * accRate));
-			}
 		}
 	} else {
 		// deccelerate
 		if (deltaSpeedSq < Square(decRate)) {
 			owner->SetVelocity(wantedSpeed);
 		} else {
-			if (deltaSpeedSq > 0.0f) {
+			if (deltaSpeedSq > 0.0f)
 				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * decRate));
-			}
 		}
 	}
 
@@ -851,9 +848,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
 		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
-		if (groundContact && handleContact) {
+		if (groundContact && handleContact)
 			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
-		}
 	}
 
 	if (UseSmoothMesh()) {
@@ -865,9 +861,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// restore original vertical speed, then compute new
 	UpdateVerticalSpeed(spd, pos.y - curAbsHeight, yspeed);
 
-	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds()) {
+	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds())
 		owner->Move(spd, true);
-	}
 }
 
 
