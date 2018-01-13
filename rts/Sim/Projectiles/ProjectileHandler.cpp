@@ -27,6 +27,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
+#include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
 
@@ -607,7 +608,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 			// where we can not live, adjust it and explode us now
 			// (if the projectile does not set deleteMe = true, it
 			// will keep hugging the terrain)
-			p->SetPosition(p->pos * XZVector + UpVector * groundHeight * belowGround);
+			p->SetPosition((p->pos * XZVector) + (UpVector * mix(p->pos.y, groundHeight, belowGround)));
 			p->Collision();
 		}
 	}

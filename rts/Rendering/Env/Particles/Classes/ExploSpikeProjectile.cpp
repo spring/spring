@@ -60,6 +60,16 @@ CExploSpikeProjectile::CExploSpikeProjectile(
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
 
+void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
+{
+	CProjectile::Init(owner, offset);
+
+	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
+	dir /= lengthGrowth;
+
+	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
+}
+
 void CExploSpikeProjectile::Update()
 {
 	pos += speed;
@@ -92,21 +102,12 @@ void CExploSpikeProjectile::Draw(CVertexArray* va)
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
-{
-	CProjectile::Init(owner, offset);
 
-	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
-	dir /= lengthGrowth;
-
-	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
-}
 
 int CExploSpikeProjectile::GetProjectilesCount() const
 {
 	return 1;
 }
-
 
 bool CExploSpikeProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
