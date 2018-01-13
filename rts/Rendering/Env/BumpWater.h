@@ -61,7 +61,7 @@ private:
 	CRectangleOptimizer heightmapUpdates;
 
 	void UploadCoastline(const bool forceFull = false);
-	void UpdateCoastmap();
+	void UpdateCoastmap(const bool initialize = false);
 	void UpdateDynWaves(const bool initialize = false);
 
 	int atlasX,atlasY;
