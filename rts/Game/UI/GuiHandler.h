@@ -151,7 +151,7 @@ private:
 	void DrawSelectionInfo();
 	void DrawNumberInput();
 	void DrawMiniMapMarker(const float3& cameraPos);
-	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir);
+	void DrawFormationFrontOrder(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir);
 	void DrawArea(float3 pos, float radius, const float* color);
 	void DrawSelectBox(const float3& start, const float3& end, const float3& cameraPos);
 	void DrawSelectCircle(const float3& pos, float radius, const float* color);

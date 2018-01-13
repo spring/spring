@@ -2561,9 +2561,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 void CGuiHandler::ProcessFrontPositions(float3& pos0, const float3& pos1)
 {
+	// rotate around corner
 	if (!frontByEnds)
-		return; // leave it centered
+		return;
 
+	// rotate around center
 	pos0 = pos1 + ((pos0 - pos1) * 0.5f);
 	pos0.y = CGround::GetHeightReal(pos0.x, pos0.z, false);
 }
@@ -3503,7 +3505,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 
-						DrawFront(button, maxSize, sizeDiv, onMinimap, tracePos, traceDir);
+						DrawFormationFrontOrder(button, maxSize, sizeDiv, onMinimap, tracePos, traceDir);
 					}
 				} break;
 
@@ -3962,24 +3964,28 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 }
 
 
-void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir)
-{
-	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
-	if (bp.movement < 5)
+void CGuiHandler::DrawFormationFrontOrder(
+	int button,
+	float maxSize,
+	float sizeDiv,
+	bool onMinimap,
+	const float3& cameraPos,
+	const float3& mouseDir
+) {
+	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
+
+	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+
+	if (buttonDist < 0.0f)
 		return;
 
-	float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+	const float cameraDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 
-	if (dist < 0.0f)
+	if (cameraDist < 0.0f)
 		return;
 
-	dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-
-	if (dist < 0.0f)
-		return;
-
-	float3 pos1 = bp.camPos + (  bp.dir * dist);
-	float3 pos2 = cameraPos + (mouseDir * dist);
+	float3 pos1 = bp.camPos + (  bp.dir * buttonDist);
+	float3 pos2 = cameraPos + (mouseDir * cameraDist);
 
 	ProcessFrontPositions(pos1, pos2);
 
@@ -4007,40 +4013,47 @@ void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMin
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glDisable(GL_DEPTH_TEST);
-	glBegin(GL_QUADS);
-		glVertexf3(pos1+side*25);
-		glVertexf3(pos1-side*25);
-		glVertexf3(pos1-side*25+forward*50);
-		glVertexf3(pos1+side*25+forward*50);
+	{
+		// direction arrow
+		glDisable(GL_DEPTH_TEST);
+		glBegin(GL_QUADS);
+			glVertexf3(pos1 + side * 25.0f                   );
+			glVertexf3(pos1 - side * 25.0f                   );
+			glVertexf3(pos1 - side * 25.0f + forward *  50.0f);
+			glVertexf3(pos1 + side * 25.0f + forward *  50.0f);
 
-		glVertexf3(pos1+side*40+forward*50);
-		glVertexf3(pos1-side*40+forward*50);
-		glVertexf3(pos1+forward*100);
-		glVertexf3(pos1+forward*100);
-	glEnd();
-	glEnable(GL_DEPTH_TEST);
+			glVertexf3(pos1 + side * 40.0f + forward *  50.0f);
+			glVertexf3(pos1 - side * 40.0f + forward *  50.0f);
+			glVertexf3(pos1 +                forward * 100.0f);
+			glVertexf3(pos1 +                forward * 100.0f);
+		glEnd();
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	pos1 += (pos1 - pos2);
-	const int maxSteps = 256;
+
 	const float frontLen = (pos1 - pos2).Length2D();
+
+	const int maxSteps = 256;
 	const int steps = std::min(maxSteps, std::max(1, int(frontLen / 16.0f)));
 
-	glDisable(GL_FOG);
-	glBegin(GL_QUAD_STRIP);
-	const float3 delta = (pos2 - pos1) / (float)steps;
-	for (int i = 0; i <= steps; i++) {
-		float3 p;
-		const float d = (float)i;
-		p.x = pos1.x + (d * delta.x);
-		p.z = pos1.z + (d * delta.z);
-		p.y = CGround::GetHeightAboveWater(p.x, p.z, false);
-		p.y -= 100.f; glVertexf3(p);
-		p.y += 200.f; glVertexf3(p);
+	{
+		// vertical quad
+		glDisable(GL_FOG);
+		glBegin(GL_QUAD_STRIP);
+		const float3 delta = (pos2 - pos1) / (float)steps;
+		for (int i = 0; i <= steps; i++) {
+			float3 p;
+			const float d = (float)i;
+			p.x = pos1.x + (d * delta.x);
+			p.z = pos1.z + (d * delta.z);
+			p.y = CGround::GetHeightAboveWater(p.x, p.z, false);
+			p.y -= 100.f; glVertexf3(p);
+			p.y += 200.f; glVertexf3(p);
+		}
+		glEnd();
+		glEnable(GL_FOG);
 	}
-	glEnd();
-
-	glEnable(GL_FOG);
 }
 
 
