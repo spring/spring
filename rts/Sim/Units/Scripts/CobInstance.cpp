@@ -3,6 +3,7 @@
 
 #include "CobEngine.h"
 #include "CobFile.h"
+#include "CobFileHandler.h"
 #include "CobInstance.h"
 #include "CobThread.h"
 
@@ -41,11 +42,11 @@
 CR_BIND_DERIVED(CCobInstance, CUnitScript, )
 
 CR_REG_METADATA(CCobInstance, (
-	CR_MEMBER(staticVars),
-	CR_MEMBER(threads),
+	// loaded from cobFileHandler
+	CR_IGNORED(cobFile),
 
-	//loaded from cobFileHandler
-	CR_IGNORED(script),
+	CR_MEMBER(staticVars),
+	CR_MEMBER(threadIDs),
 
 	CR_POSTLOAD(PostLoad)
 ))
@@ -53,30 +54,28 @@ CR_REG_METADATA(CCobInstance, (
 
 inline bool CCobInstance::HasFunction(int id) const
 {
-	return (script->scriptIndex.size() > id && script->scriptIndex[id] >= 0);
+	return (cobFile->scriptIndex.size() > id && cobFile->scriptIndex[id] >= 0);
 }
 
 //Used by creg
 CCobInstance::CCobInstance()
 	: CUnitScript(nullptr)
-	, script(nullptr)
+	, cobFile(nullptr)
 { }
 
-CCobInstance::CCobInstance(CCobFile* _script, CUnit* _unit)
+CCobInstance::CCobInstance(CCobFile* _cob, CUnit* _unit)
 	: CUnitScript(_unit)
-	, script(_script)
+	, cobFile(_cob)
 {
 	Init();
 }
 
 void CCobInstance::Init()
 {
-	assert(script != nullptr);
+	assert(cobFile != nullptr);
 
-	staticVars.reserve(script->numStaticVars);
-	for (int i = 0; i < script->numStaticVars; ++i) {
-		staticVars.push_back(0);
-	}
+	staticVars.clear();
+	staticVars.resize(cobFile->numStaticVars, 0);
 
 	MapScriptToModelPieces(&unit->localModel);
 
@@ -89,32 +88,33 @@ void CCobInstance::Init()
 void CCobInstance::PostLoad()
 {
 	assert(unit != nullptr);
-	script = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
+	cobFile = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
 	Init();
 }
 
 
 CCobInstance::~CCobInstance()
 {
-	//this may be dangerous, is it really desired?
-	//Destroy();
-	// Deleting waiting threads and unregistering all callbacks
-	while (!threads.empty()) {
-		CCobThread* t = threads.back();
-		t->owner = nullptr;
-		if (t->IsWaiting()) {
-			delete t;
-		} else {
-			t->state = CCobThread::Dead;
-		}
-		threads.pop_back();
+	// this may be dangerous, is it really desired?
+	// Destroy();
+
+	// delete our threads, make sure callbacks do not run
+	while (!threadIDs.empty()) {
+		CCobThread* t = cobEngine->GetThread(threadIDs.back());
+
+		t->MakeGarbage();
+		cobEngine->RemoveThread(t->GetID());
+
+		threadIDs.pop_back();
 	}
+
+	cobEngine->SanityCheckThreads(this);
 }
 
 
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
-	std::vector<std::string>& pieceNames = script->pieceNames; // already in lowercase!
+	std::vector<std::string>& pieceNames = cobFile->pieceNames; // already in lowercase!
 	std::vector<LocalModelPiece>& lmodelPieces = lmodel->pieces;
 
 	pieces.clear();
@@ -148,11 +148,11 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 			lmodelPieces[lmodelPieceNum].SetScriptPieceIndex(scriptPieceNum);
 			pieces.push_back(&lmodelPieces[lmodelPieceNum]);
 		} else {
-			pieces.push_back(NULL);
+			pieces.push_back(nullptr);
 
 			const char* fmtString = "[%s] could not find piece named \"%s\" (referenced by COB script \"%s\")";
 			const char* pieceName = pieceNames[scriptPieceNum].c_str();
-			const char* scriptName = script->name.c_str();
+			const char* scriptName = cobFile->name.c_str();
 
 			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, scriptName);
 		}
@@ -162,7 +162,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 int CCobInstance::GetFunctionId(const std::string& fname) const
 {
-	return script->GetFunctionId(fname);
+	return cobFile->GetFunctionId(fname);
 }
 
 
@@ -189,21 +189,10 @@ void CCobInstance::Create()
 
 	for (const CWeapon* w: unit->weapons) {
 		maxReloadTime = std::max(maxReloadTime, w->reloadTime);
-
-		#if 0
-		if (dynamic_cast<CBeamLaser*>(w))
-			maxReloadTime = 150; // ???
-		#endif
 	}
 
 	// convert ticks to milliseconds
 	maxReloadTime *= GAME_SPEED;
-
-	#if 0
-	// TA does some special handling depending on weapon count, Spring != TA
-	if (unit->weapons.size() > 1)
-		maxReloadTime = std::max(maxReloadTime, 3000);
-	#endif
 
 	Call(COBFN_Create);
 	Call(COBFN_SetMaxReloadTime, maxReloadTime);
@@ -224,17 +213,19 @@ void CCobInstance::Killed()
 
 void CCobInstance::WindChanged(float heading, float speed)
 {
-	Call(COBFN_SetSpeed, (int)(speed * 3000.0f));
+	Call(COBFN_SetSpeed, int(speed * 3000.0f));
 	Call(COBFN_SetDirection, short(heading * RAD2TAANG));
 }
 
 
 void CCobInstance::ExtractionRateChanged(float speed)
 {
-	Call(COBFN_SetSpeed, (int)(speed * 500.0f));
-	if (unit->activated) {
-		Call(COBFN_Go);
-	}
+	Call(COBFN_SetSpeed, int(speed * 500.0f));
+
+	if (!unit->activated)
+		return;
+
+	Call(COBFN_Go);
 }
 
 
@@ -300,8 +291,8 @@ void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
 
 void CCobInstance::BeginTransport(const CUnit* unit)
 {
-	// yes, COB is silly, while it handles integers fine it uses model height to identify units
-	Call(COBFN_BeginTransport, (int)(unit->model->height*65536));
+	// COB uses model height to identify units
+	Call(COBFN_BeginTransport, int(unit->model->height * 65536));
 }
 
 
@@ -310,7 +301,7 @@ int CCobInstance::QueryTransport(const CUnit* unit)
 	vector<int> args;
 	args.reserve(2);
 	args.push_back(0);
-	args.push_back((int)(unit->model->height*65536));
+	args.push_back(int(unit->model->height * 65536));
 	Call(COBFN_QueryTransport, args);
 	return args[0];
 }
@@ -437,7 +428,8 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 
 void CCobInstance::AnimFinished(AnimType type, int piece, int axis)
 {
-	for (CCobThread* t: threads) {
+	for (int threadID: threadIDs) {
+		CCobThread* t = cobEngine->GetThread(threadID);
 		t->AnimFinished(type, piece, axis);
 	}
 }
@@ -473,58 +465,60 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
  */
 int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
+	int ret = -1;
 
-	if (functionId < 0 || size_t(functionId) >= script->scriptNames.size()) {
+	if (size_t(functionId) >= cobFile->scriptNames.size()) {
 		if (retCode != nullptr)
-			*retCode = -1;
+			*retCode = ret;
 
-		if (cb != CBNone) {
-			// in case the function does not exist the callback should
-			// still be called; -1 is the default CobThread return code
+		// in case the function does not exist the callback should
+		// still be called; -1 is the default CobThread return code
+		if (cb != CBNone)
 			ThreadCallback(cb, -1, cbParam);
-		}
-		return -1;
+
+		return ret;
 	}
 
+	// LOG_L(L_DEBUG, "Calling %s:%s", cobFile->name.c_str(), cobFile->scriptNames[functionId].c_str());
 
-	CCobThread* thread = new CCobThread(this);
-	thread->Start(functionId, args, false);
+	const int threadID = cobEngine->AddThread(std::move(CCobThread(this)));
+	CCobThread* newThread = cobEngine->GetThread(threadID);
 
-	//LOG_L(L_DEBUG, "Calling %s:%s", script->name.c_str(), script->scriptNames[functionId].c_str());
 
-	const bool res = thread->Tick();
-
-	// Make sure this is run even if the call terminates instantly
+	// make sure this is run even if the call terminates instantly
 	if (cb != CBNone)
-		thread->SetCallback(cb, cbParam);
+		newThread->SetCallback(cb, cbParam);
 
-	if (!res) {
+	newThread->Start(functionId, 0, args, false);
+
+	if ((ret = newThread->Tick()) == 0) {
 		// thread died already after one tick
 		// NOTE:
 		//   the StartMoving callin now takes an argument which means
 		//   there will be a mismatch between the number of arguments
 		//   passed in (1) and the number returned (0) as of 95.0 -->
 		//   prevent error-spam
-		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script->scriptIndex[COBFN_StartMoving]);
+		unsigned int i = 0;
+		unsigned int argc = newThread->CheckStack(args.size(), functionId != cobFile->scriptIndex[COBFN_StartMoving]);
 
-		// Retrieve parameter values from stack
+		// retrieve parameter values from stack
 		for (; i < argc; ++i)
-			args[i] = thread->GetStackVal(i);
+			args[i] = newThread->GetStackVal(i);
 
-		// Set erroneous parameters to 0
+		// set erroneous parameters to 0
 		for (; i < args.size(); ++i)
 			args[i] = 0;
 
 		// dtor runs the callback
 		if (retCode != nullptr)
-			*retCode = thread->GetRetCode();
-		delete thread;
-		return 0;
+			*retCode = newThread->GetRetCode();
+
+		cobEngine->RemoveThread(newThread->GetID());
 	}
 
-	// thread has already added itself to the correct
-	// scheduler (global for sleep, or local for anim)
-	return 1;
+	// handle any spawned threads
+	cobEngine->AddQueuedThreads();
+	return ret;
 }
 
 
@@ -580,7 +574,7 @@ int CCobInstance::Call(int id, std::vector<int>& args)
 
 int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
-	return RealCall(script->scriptIndex[id], args, cb, cbParam, retCode);
+	return RealCall(cobFile->scriptIndex[id], args, cb, cbParam, retCode);
 }
 
 
@@ -597,23 +591,24 @@ int CCobInstance::RawCall(int fn, std::vector<int> &args)
 
 void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbParam)
 {
-	switch(type) {
+	switch (type) {
 		// note: this callback is always called, even if Killed does not exist
 		// however, retCode is only set if the function has a return statement
 		// (otherwise its value is -1 regardless of Killed being present which
 		// means *no* wreck will be spawned)
-		case CBKilled:
+		case CBKilled: {
 			unit->KilledScriptFinished(retCode);
-			break;
-		case CBAimWeapon:
+		} break;
+		case CBAimWeapon: {
 			unit->weapons[cbParam]->AimScriptFinished(retCode == 1);
-			break;
-		case CBAimShield:
+		} break;
+		case CBAimShield: {
 			static_cast<CPlasmaRepulser*>(unit->weapons[cbParam])->SetEnabled(retCode != 0);
-			break;
-		default:
+		} break;
+		default: {
 			assert(false);
-		}
+		} break;
+	}
 }
 
 /******************************************************************************/
@@ -622,18 +617,20 @@ void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbPa
 
 void CCobInstance::Signal(int signal)
 {
-	for (CCobThread* t: threads) {
-		if ((signal & t->signalMask) != 0) {
-			t->state = CCobThread::Dead;
-			//LOG_L(L_DEBUG, "Killing a thread %d %d", signal, (*i)->signalMask);
-		}
+	for (int threadID: threadIDs) {
+		CCobThread* t = cobEngine->GetThread(threadID);
+
+		if ((signal & t->GetSignalMask()) == 0)
+			continue;
+
+		t->SetState(CCobThread::Dead);
 	}
 }
 
 
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
-	Channels::UnitReply->PlaySample(script->sounds[snr], unit->pos, unit->speed, attr);
+	Channels::UnitReply->PlaySample(cobFile->sounds[snr], unit->pos, unit->speed, attr);
 }
 
 

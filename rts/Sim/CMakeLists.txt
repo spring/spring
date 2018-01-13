@@ -99,6 +99,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobEngine.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobFile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobFileHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobInstance.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobScriptNames.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobThread.cpp"
