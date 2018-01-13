@@ -43,19 +43,25 @@ bool CMatrix44f::IsOrthoNormal() const
 	const float3& xdir = GetX();
 	const float3& ydir = GetY();
 	const float3& zdir = GetZ();
-	const float3 ortho = float3(xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir));
-	const float3 norma = float3(xdir.SqLength(), ydir.SqLength(), zdir.SqLength());
-	return (ortho == ZeroVector) && (norma == OnesVector);
+
+	const float3 dots = {xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir)};
+	const float3 lens = {xdir.SqLength(), ydir.SqLength(), zdir.SqLength()};
+
+	constexpr float3 epsd = {float3::cmp_eps() *  8.0f, float3::cmp_eps() *  8.0f, float3::cmp_eps() *  8.0f};
+	constexpr float3 epsl = {float3::cmp_eps() * 16.0f, float3::cmp_eps() * 16.0f, float3::cmp_eps() * 16.0f};
+
+	return (dots.equals(ZeroVector, epsd)) && (lens.equals(OnesVector, epsl));
 }
 
 bool CMatrix44f::IsIdentity() const
 {
-	return
-		   (col[0] == float4(1.0f, 0.0f, 0.0f, 0.0f))
-		&& (col[1] == float4(0.0f, 1.0f, 0.0f, 0.0f))
-		&& (col[2] == float4(0.0f, 0.0f, 1.0f, 0.0f))
-		&& (col[3] == float4(0.0f, 0.0f, 0.0f, 1.0f));
+	constexpr float4 x = {1.0f, 0.0f, 0.0f, 0.0f};
+	constexpr float4 y = {0.0f, 1.0f, 0.0f, 0.0f};
+	constexpr float4 z = {0.0f, 0.0f, 1.0f, 0.0f};
+	constexpr float4 w = {0.0f, 0.0f, 0.0f, 1.0f};
+	return (col[0] == x && col[1] == y && col[2] == z && col[3] == w);
 }
+
 
 CMatrix44f& CMatrix44f::RotateX(float angle)
 {
