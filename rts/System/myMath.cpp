@@ -67,18 +67,10 @@ float3 GetVectorFromHAndPExact(const short int heading, const short int pitch)
 
 float LinePointDist(const float3 l1, const float3 l2, const float3 p)
 {
-	float3 dir(l2 - l1);
-	float length = dir.Length();
-	if (length == 0)
-		length = 0.1f;
-	dir /= length;
-
-	float a = (p - l1).dot(dir);
-	if (a <      0) a =      0;
-	if (a > length) a = length;
-
-	float3 p2 = p - dir * a;
-	return p2.distance(l1);
+	const float3 dir = (l2 - l1).SafeNormalize();
+	const float3 vec = dir * Clamp(dir.dot(p - l1), 0.0f, dir.dot(l2 - l1));
+	const float3  p2 = p - vec;
+	return (p2.distance(l1));
 }
 
 /**
@@ -87,15 +79,18 @@ float LinePointDist(const float3 l1, const float3 l2, const float3 p)
  */
 float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p)
 {
-	float3 dir(l2-l1);
-	float3 pdir(p-l1);
-	float length = dir.Length();
-	if (math::fabs(length) < 1e-4f)
+	const float3 ldir(l2 - l1);
+	const float3 pdir( p - l1);
+
+	const float length = ldir.Length();
+
+	if (length < 1e-4f)
 		return l1;
-	float c = dir.dot(pdir) / length;
-	if (c < 0) c = 0;
-	if (c > length) c = length;
-	return l1 + dir * (c / length);
+
+	const float pdist = ldir.dot(pdir) / length;
+	const float cdist = Clamp(pdist, 0.0f, length);
+
+	return (l1 + ldir * (cdist / length));
 }
 
 
