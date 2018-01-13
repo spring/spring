@@ -597,20 +597,21 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 		//   don't add p->radius to groundHeight, or most (esp. modelled)
 		//   projectiles will collide with the ground one or more frames
 		//   too early
-		const float groundHeight = CGround::GetHeightReal(p->pos.x, p->pos.z);
+		const float gy = CGround::GetHeightReal(p->pos.x, p->pos.z);
+		const float py = p->pos.y;
 
-		const bool belowGround = (p->pos.y < groundHeight);
-		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
-		const bool ignoreWater = p->ignoreWater;
+		const bool belowGround = (py < gy);
+		const bool insideWater = (py <= 0.0f);
 
-		if (belowGround || (insideWater && !ignoreWater)) {
-			// if position has dropped below terrain or into water
-			// where we can not live, adjust it and explode us now
-			// (if the projectile does not set deleteMe = true, it
-			// will keep hugging the terrain)
-			p->SetPosition((p->pos * XZVector) + (UpVector * mix(p->pos.y, groundHeight, belowGround)));
-			p->Collision();
-		}
+		if (!belowGround && (!insideWater || p->ignoreWater))
+			continue;
+
+		// if position has dropped below terrain or into water
+		// where we can not live, adjust it and explode us now
+		// (if the projectile does not set deleteMe = true, it
+		// will keep hugging the terrain)
+		p->SetPosition((p->pos * XZVector) + (UpVector * mix(py, gy, belowGround)));
+		p->Collision();
 	}
 }
 
