@@ -68,7 +68,6 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadLight();
 	ReadWater();
 	ReadSMF();
-	ReadSM3();
 	ReadTerrainTypes();
 	ReadPFSConstants();
 	ReadSound();
@@ -403,13 +402,6 @@ void CMapInfo::ReadSMF()
 }
 
 
-void CMapInfo::ReadSM3()
-{
-	// SM3 specific settings
-	sm3.minimap = parser->GetRoot().GetString("minimap", "");
-}
-
-
 void CMapInfo::ReadTerrainTypes()
 {
 	const LuaTable& terrTypeTable = parser->GetRoot().SubTable("terrainTypes");
@@ -476,7 +468,7 @@ void CMapInfo::ReadSound()
 
 		if (luaType == LuaTable::NIL)
 			continue;
-		
+
 		const ALuint param = it->second;
 		const unsigned type = alParamType[param];
 

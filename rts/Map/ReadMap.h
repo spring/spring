@@ -320,7 +320,7 @@ static inline float3 SquareToFloat3(int2 sq) {
 	return SquareToFloat3(sq.x, sq.y);
 }
 
-/// TODO: use in SM3 renderer also
+
 static inline float GetVisibleVertexHeight(int idx) {
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	return hm[idx];

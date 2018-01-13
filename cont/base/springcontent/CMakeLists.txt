@@ -10,13 +10,10 @@ set(FILES
 	shaders/GLSL/ShadowGenVertProg.glsl
 	shaders/GLSL/ShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
-	shaders/GLSL/terrainCommon.glsl
 	shaders/GLSL/SMFFragProg.glsl
 	shaders/GLSL/GrassFragProg.glsl
 	shaders/GLSL/GroundDecalsFragProg.glsl
-	shaders/GLSL/terrainSimpleCopyFS.glsl
 	shaders/GLSL/ModelVertProg.glsl
-	shaders/GLSL/terrainFragmentShader.glsl
 	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg.glsl
@@ -25,10 +22,6 @@ set(FILES
 	shaders/GLSL/GrassVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
 	shaders/GLSL/DecalsVertGL4.glsl
-	shaders/GLSL/terrainSimpleCopyVS.glsl
-	shaders/GLSL/terrainVertexShader.glsl
-	shaders/GLSL/bumpWaterVS.glsl
-	shaders/ARB/groundshadow.vp
 	shaders/ARB/waterDynWave2.vp
 	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp
