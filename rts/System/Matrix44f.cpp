@@ -10,12 +10,6 @@ CR_BIND(CMatrix44f, )
 
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m))
 
-
-CMatrix44f::CMatrix44f()
-{
-	LoadIdentity();
-}
-
 CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 {
 	memcpy(&m[0], &mat.m[0], sizeof(CMatrix44f));
@@ -62,19 +56,6 @@ bool CMatrix44f::IsIdentity() const
 		&& (col[2] == float4(0.0f, 0.0f, 1.0f, 0.0f))
 		&& (col[3] == float4(0.0f, 0.0f, 0.0f, 1.0f));
 }
-
-CMatrix44f& CMatrix44f::LoadIdentity()
-{
-	m[ 0] = m[ 5] = m[10] = m[15] = 1.0f;
-
-	m[ 1] = m[ 2] = m[ 3] = 0.0f;
-	m[ 4] = m[ 6] = m[ 7] = 0.0f;
-	m[ 8] = m[ 9] = m[11] = 0.0f;
-	m[12] = m[13] = m[14] = 0.0f;
-
-	return *this;
-}
-
 
 CMatrix44f& CMatrix44f::RotateX(float angle)
 {
