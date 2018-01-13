@@ -63,6 +63,16 @@ void ITreeDrawer::AddTrees()
 
 void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
 {
+	{
+		// FeatureDrawer does not take care of this for trees, update the
+		// draw-positions here since FeatureCreated and FeatureMoved both
+		// call us
+		CFeature* f = featureHandler->GetFeature(treeID);
+
+		f->drawPos = f->pos;
+		f->drawMidPos = f->midPos;
+	}
+
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;

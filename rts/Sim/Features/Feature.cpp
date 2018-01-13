@@ -235,8 +235,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 			// LoadFeaturesFromMap() doesn't set a scale for trees
 			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
 			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
-			drawPos = pos;
-			drawMidPos = midPos;
 		} break;
 	}
 
