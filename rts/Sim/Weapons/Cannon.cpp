@@ -74,12 +74,14 @@ bool CCannon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const
 
 	if (launchDir.SqLength() == 0.0f)
 		return false;
+	if (targetVec.SqLength2D() == 0.0f)
+		return true;
+
+	// pick launchDir[0] if .x != 0, otherwise launchDir[2]
+	const unsigned int dirIdx = 2 - 2 * (launchDir.x != 0.0f);
 
 	const float xzTargetDist = targetVec.LengthNormalize();
-	const float xzCoeffRatio = targetVec.x / launchDir.x;
-
-	if (xzTargetDist == 0.0f)
-		return true;
+	const float xzCoeffRatio = targetVec[dirIdx] / launchDir[dirIdx];
 
 	// targetVec is normalized in the xz-plane while launchDir is xyz
 	// therefore the linear parabolic coefficient has to be scaled by
