@@ -66,7 +66,7 @@ float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p) _pur
  * @param dir float3 direction of the ray
  * @return <near,far> std::pair<float,float> distance to the intersection points in mulitples of `dir`
  */
-std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir) _pure _warn_unused_result;
+float2 GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir) _pure _warn_unused_result;
 
 /**
  * @brief clamps a line (start & end points) to the map boundaries

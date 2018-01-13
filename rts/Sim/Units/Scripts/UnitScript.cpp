@@ -13,6 +13,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"

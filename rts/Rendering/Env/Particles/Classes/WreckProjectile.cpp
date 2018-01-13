@@ -10,6 +10,7 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 

@@ -10,15 +10,22 @@ class CCannon: public CWeapon
 	CR_DECLARE_DERIVED(CCannon)
 
 protected:
-	/// this is used to keep range true to range tag
-	float rangeFactor;
 	/// cached input for GetWantedDir
-	float3 lastDiff;
+	float3 lastTargetVec;
 	/// cached result for GetWantedDir
-	float3 lastDir;
+	float3 lastLaunchDir = -UpVector;
+
+	/// this is used to keep range true to range tag
+	float rangeFactor = 1.0f;
+
+	/// projectile gravity
+	float gravity = 0.0f;
+
+	/// indicates high trajectory on/off state
+	bool highTrajectory = false;
 
 public:
-	CCannon(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
+	CCannon(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
 
 	void Init() override final;
 	void UpdateRange(const float val) override final;
@@ -28,16 +35,10 @@ public:
 	float GetRange2D(float yDiff, float rFact) const;
 	float GetRange2D(const float yDiff) const override final;
 
-
-	/// indicates high trajectory on/off state
-	bool highTrajectory;
-	/// projectile gravity
-	float gravity;
-
 private:
 	/// tells where to point the gun to hit the point at pos+diff
 	float3 GetWantedDir(const float3& diff);
-	float3 GetWantedDir2(const float3& diff) const;
+	float3 CalcWantedDir(const float3& diff) const;
 
 	const float3& GetAimFromPos(bool useMuzzle = false) const override { return weaponMuzzlePos; }
 

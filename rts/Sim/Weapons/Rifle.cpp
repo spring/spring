@@ -8,6 +8,7 @@
 #include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Rendering/Env/Particles/Classes/TracerProjectile.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"

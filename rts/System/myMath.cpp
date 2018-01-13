@@ -104,21 +104,21 @@ float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p)
  * credits:
  * http://ompf.org/ray/ray_box.html
  */
-std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir)
+float2 GetMapBoundaryIntersectionPoints(const float3 start, const float3 dir)
 {
 	const float rcpdirx = (dir.x != 0.0f)? (1.0f / dir.x): 10000.0f;
 	const float rcpdirz = (dir.z != 0.0f)? (1.0f / dir.z): 10000.0f;
 
-	const float& mapwidth  = float3::maxxpos + 1;
-	const float& mapheight = float3::maxzpos + 1;
+	const float mapwidth  = float3::maxxpos + 1.0f;
+	const float mapheight = float3::maxzpos + 1.0f;
 
-	// x component
+	// x-component
 	float xl1 = (    0.0f - start.x) * rcpdirx;
 	float xl2 = (mapwidth - start.x) * rcpdirx;
 	float xnear = std::min(xl1, xl2);
 	float xfar  = std::max(xl1, xl2);
 
-	// z component
+	// z-component
 	float zl1 = (     0.0f - start.z) * rcpdirz;
 	float zl2 = (mapheight - start.z) * rcpdirz;
 	float znear = std::min(zl1, zl2);
@@ -133,16 +133,18 @@ std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3 start, con
 		near = -1.0f;
 		far = -1.0f;
 	}
-	return std::pair<float, float>(near, far);
+
+	return {near, far};
 }
 
 
 bool ClampLineInMap(float3& start, float3& end)
 {
 	const float3 dir = end - start;
-	const std::pair<float, float>& interp = GetMapBoundaryIntersectionPoints(start, dir);
-	const float& near = interp.first;
-	const float& far  = interp.second;
+	const float2 ips = GetMapBoundaryIntersectionPoints(start, dir);
+
+	const float near = ips.x;
+	const float far  = ips.y;
 
 	if (far < 0.0f) {
 		//! outside of map!
@@ -160,6 +162,7 @@ bool ClampLineInMap(float3& start, float3& end)
 		start.ClampInMap();
 		return true;
 	}
+
 	return false;
 }
 
@@ -167,9 +170,10 @@ bool ClampLineInMap(float3& start, float3& end)
 bool ClampRayInMap(const float3 start, float3& end)
 {
 	const float3 dir = end - start;
-	std::pair<float, float> interp = GetMapBoundaryIntersectionPoints(start, dir);
-	const float& near = interp.first;
-	const float& far  = interp.second;
+	const float2 ips = GetMapBoundaryIntersectionPoints(start, dir);
+
+	const float near = ips.x;
+	const float far  = ips.y;
 
 	if (far < 0.0f) {
 		//! outside of map!
@@ -184,6 +188,7 @@ bool ClampRayInMap(const float3 start, float3& end)
 		end.ClampInMap();
 		return true;
 	}
+
 	return false;
 }
 

@@ -8,6 +8,7 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Config/ConfigHandler.h"

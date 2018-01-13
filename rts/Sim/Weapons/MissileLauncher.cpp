@@ -5,6 +5,7 @@
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -26,22 +27,21 @@ void CMissileLauncher::UpdateWantedDir()
 
 void CMissileLauncher::FireImpl(const bool scriptCall)
 {
-	float3 dir = currentTargetPos - weaponMuzzlePos;
-	const float dist = dir.LengthNormalize();
+	float3 targetVec = currentTargetPos - weaponMuzzlePos;
+	const float targetDist = targetVec.LengthNormalize();
 
 	if (onlyForward) {
-		dir = owner->frontdir;
+		targetVec = owner->frontdir;
 	} else if (weaponDef->fixedLauncher) {
-		dir = weaponDir;
+		targetVec = weaponDir;
 	} else if (weaponDef->trajectoryHeight > 0.0f) {
-		dir.y += weaponDef->trajectoryHeight;
-		dir.Normalize();
+		targetVec = (targetVec + UpVector * weaponDef->trajectoryHeight).Normalize();
 	}
 
-	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
-	dir.Normalize();
+	targetVec += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
+	targetVec.Normalize();
 
-	float3 startSpeed = dir * weaponDef->startvelocity;
+	float3 startSpeed = targetVec * weaponDef->startvelocity;
 
 	// NOTE: why only for SAMT units?
 	if (onlyForward && owner->unitDef->IsStrafingAirUnit())
@@ -51,39 +51,34 @@ void CMissileLauncher::FireImpl(const bool scriptCall)
 	params.pos = weaponMuzzlePos;
 	params.end = currentTargetPos;
 	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? math::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+	params.ttl = weaponDef->flighttime == 0? math::ceil(std::max(targetDist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
 bool CMissileLauncher::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	// do a different test depending on if the missile has high
-	// trajectory (parabolic vs. linear ground intersection)
+	// high-trajectory missiles use parabolic rather than linear ground intersection
 	if (weaponDef->trajectoryHeight <= 0.0f)
 		return (CWeapon::HaveFreeLineOfFire(srcPos, tgtPos, trg));
 
-	float3 dir(tgtPos - srcPos);
-	float3 flatDir(dir.x, 0, dir.z);
-	dir.SafeNormalize();
-	const float flatLength = flatDir.LengthNormalize();
+	float3 targetVec = (tgtPos - srcPos) * XZVector;
+	float3 launchDir = (tgtPos - srcPos).SafeNormalize();
 
-	if (flatLength == 0.0f)
+	const float xzTargetDist = targetVec.LengthNormalize();
+
+	if (xzTargetDist == 0.0f)
 		return true;
 
-	const float linear = dir.y + weaponDef->trajectoryHeight;
-	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
+	const float   linCoeff = launchDir.y + weaponDef->trajectoryHeight;
+	const float   qdrCoeff = -weaponDef->trajectoryHeight / xzTargetDist;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		CGround::TrajectoryGroundCol(srcPos, flatDir, flatLength, linear, quadratic):
+		CGround::TrajectoryGroundCol(srcPos, targetVec, xzTargetDist, linCoeff, qdrCoeff):
 		-1.0f;
 
 	if (groundDist > 0.0f)
 		return false;
 
-	if (TraceRay::TestTrajectoryCone(srcPos, flatDir, flatLength,
-		linear, quadratic, 0.0f, owner->allyteam, avoidFlags, owner)) {
-		return false;
-	}
-
-	return true;
+	return (!TraceRay::TestTrajectoryCone(srcPos, targetVec, xzTargetDist, linCoeff, qdrCoeff, 0.0f, owner->allyteam, avoidFlags, owner));
 }
+

@@ -4,6 +4,7 @@
 
 #include "WeaponDef.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"

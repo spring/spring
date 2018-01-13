@@ -6,11 +6,12 @@
 #include "InterceptHandler.h"
 
 #include "Map/Ground.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
