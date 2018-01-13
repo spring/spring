@@ -9,6 +9,7 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, )

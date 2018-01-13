@@ -4,10 +4,11 @@
 #include "Game/Camera.h"
 #include "LaserProjectile.h"
 #include "Map/Ground.h"
+#include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC

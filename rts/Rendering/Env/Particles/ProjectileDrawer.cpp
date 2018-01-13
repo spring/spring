@@ -21,6 +21,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Models/ModelRenderContainer.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"

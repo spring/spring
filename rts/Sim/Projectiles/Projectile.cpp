@@ -134,7 +134,7 @@ CProjectile::~CProjectile()
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	if (owner != NULL) {
+	if (owner != nullptr) {
 		// must be set before the AddProjectile call
 		ownerID = owner->id;
 		teamID = owner->team;

@@ -10,6 +10,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"

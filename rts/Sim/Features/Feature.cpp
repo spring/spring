@@ -12,6 +12,7 @@
 #include "Rendering/Env/Particles/Classes/GeoThermSmokeProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/DamageArray.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"

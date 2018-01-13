@@ -3,6 +3,8 @@
 
 #include "Ground.h"
 #include "ReadMap.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/myMath.h"
 
 #include <cassert>
@@ -400,25 +402,25 @@ float CGround::LinePlaneCol(const float3 pos, const float3 dir, float len, float
 
 float CGround::LineGroundWaterCol(const float3 pos, const float3 dir, float len, bool testWater, bool synced)
 {
-	const float dist = LineGroundCol(pos, dir, len, synced);
+	const float terraDist = LineGroundCol(pos, dir, len, synced);
 	if (!testWater)
-		return dist;
+		return terraDist;
 
 	const float waterDist = LinePlaneCol(pos, dir, len, 0.0f);
 	if (waterDist < 0.0f)
-		return dist;
+		return terraDist;
 
-	float3 end = pos + dir * waterDist;
-	if (end.x > float3::maxxpos || end.x < 0.0f)
-		return dist;
+	const float3 end = pos + dir * waterDist;
 
-	if (end.z > float3::maxzpos || end.z < 0.0f)
-		return dist;
+	if (end.x < 0.0f || end.x > float3::maxxpos)
+		return terraDist;
+	if (end.z < 0.0f || end.z > float3::maxzpos)
+		return terraDist;
 
-	if (dist < 0.0f)
+	if (terraDist < 0.0f)
 		return waterDist;
 
-	return std::min(dist, waterDist);
+	return std::min(terraDist, waterDist);
 }
 
 
@@ -519,36 +521,79 @@ float3 CGround::GetSmoothNormal(float x, float z, bool synced)
 
 	const float3& n1 = normalMap[sz  * mapDims.mapx + sx ] * ifx * ifz;
 	const float3& n2 = normalMap[sz  * mapDims.mapx + sx2] *  fx * ifz;
-	const float3& n3 = normalMap[sz2 * mapDims.mapx + sx ] * ifx * fz;
-	const float3& n4 = normalMap[sz2 * mapDims.mapx + sx2] *  fx * fz;
+	const float3& n3 = normalMap[sz2 * mapDims.mapx + sx ] * ifx *  fz;
+	const float3& n4 = normalMap[sz2 * mapDims.mapx + sx2] *  fx *  fz;
 
 	return ((n1 + n2 + n3 + n4).Normalize());
 }
 
-float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic)
+
+
+float CGround::SimTrajectoryGroundColDist(const float3& trajStartPos, const float3& trajStartDir, const float3& acc, const float2& args)
 {
-	float3 dir(flatdir.x, linear, flatdir.z);
+	// args.x := speed, args.y := length
+	const float2 ips = GetMapBoundaryIntersectionPoints(trajStartPos, trajStartDir * XZVector * args.y);
 
-	// limit the checking to the `in map part` of the line
-	std::pair<float, float> near_far = GetMapBoundaryIntersectionPoints(from, dir * length);
-
-	// outside of map
-	if (near_far.second < 0.0f)
+	// outside map
+	if (ips.y < 0.0f)
 		return -1.0;
 
-	const float near = length * std::max(0.0f, near_far.first);
-	const float far  = length * std::min(1.0f, near_far.second);
+	const float minDist = args.y * std::max(0.0f, ips.x);
+	const float maxDist = args.y * std::min(1.0f, ips.y);
 
-	for (float l = near; l < far; l += SQUARE_SIZE) {
-		const float3 pos = (from + dir * l) + (UpVector * quadratic * l * l);
+	float3 pos = trajStartPos;
+	float3 vel = trajStartDir * args.x;
 
-		if (GetApproximateHeight(pos.x, pos.z) > pos.y) {
-			return l;
-		}
+	// sample heights along the trajectory of a virtual projectile launched
+	// from <pos> with velocity <trajStartDir * speed>; <pos> is assumed to
+	// start inside map
+	while (pos.SqDistance2D(trajStartPos) < Square(minDist)) {
+		pos += vel;
+		vel += acc;
+	}
+	while (pos.y >= GetHeightReal(pos)) {
+		pos += vel;
+		vel += acc;
+	}
+
+	if (pos.SqDistance2D(trajStartPos) >= Square(maxDist))
+		return -1.0f;
+
+	return (math::sqrt(pos.SqDistance2D(trajStartPos)));
+}
+
+float CGround::TrajectoryGroundCol(const float3& trajStartPos, const float3& trajTargetDir, float length, float linCoeff, float qdrCoeff)
+{
+	// trajTargetDir should be the normalized xz-vector from <trajStartPos> to the target
+	const float3 dir = {trajTargetDir.x, linCoeff, trajTargetDir.z};
+	const float3 alt = UpVector * qdrCoeff;
+
+	// limit checking to the in-map part of the line
+	const float2 ips = GetMapBoundaryIntersectionPoints(trajStartPos, dir * length);
+
+	// outside map
+	if (ips.y < 0.0f)
+		return -1.0;
+
+	const float minDist = length * std::max(0.0f, ips.x);
+	const float maxDist = length * std::min(1.0f, ips.y);
+
+	for (float dist = minDist; dist < maxDist; dist += SQUARE_SIZE) {
+		const float3 pos = (trajStartPos + dir * dist) + (alt * dist * dist);
+
+		#if 1
+		if (GetApproximateHeight(pos) > pos.y)
+			return dist;
+		#else
+		if (GetHeightReal(pos) > pos.y)
+			return dist;
+		#endif
 	}
 
 	return -1.0f;
 }
+
+
 
 int CGround::GetSquare(const float3& pos) {
 	const int x = Clamp((int(pos.x) / SQUARE_SIZE), 0, mapDims.mapxm1);

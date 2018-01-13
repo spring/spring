@@ -8,7 +8,7 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"

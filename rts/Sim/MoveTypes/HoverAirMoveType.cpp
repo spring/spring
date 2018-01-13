@@ -7,6 +7,7 @@
 #include "Map/Ground.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
