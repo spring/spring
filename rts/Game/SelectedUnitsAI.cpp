@@ -141,7 +141,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 			CUnit* unit = unitHandler->GetUnit(unitID);
 
 			if (unit == nullptr)
-				nullptr;
+				continue;
 
 			if (groupSpeed) {
 				AddGroupSetMaxSpeedCommand(unit, c.options);
