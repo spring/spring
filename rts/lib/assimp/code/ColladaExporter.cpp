@@ -184,7 +184,7 @@ void ColladaExporter::WriteHeader()
     bool add_root_node = false;
 
     ai_real scale = 1.0;
-    if(std::abs(scaling.x - scaling.y) <= epsilon && std::abs(scaling.x - scaling.z) <= epsilon && std::abs(scaling.y - scaling.z) <= epsilon) {
+    if(math::fabs(scaling.x - scaling.y) <= epsilon && math::fabsf(scaling.x - scaling.z) <= epsilon && math::fabs(scaling.y - scaling.z) <= epsilon) {
         scale = (ai_real) ((((float) scaling.x) + ((float) scaling.y) + ((float) scaling.z)) / 3.0);
     } else {
         add_root_node = true;

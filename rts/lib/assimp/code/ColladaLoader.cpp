@@ -1067,7 +1067,7 @@ void insertMorphTimeValue(std::vector<MorphTimeValues> &values, float time, floa
     }
     for (unsigned int i = 0; i < values.size(); i++)
     {
-        if (std::abs(time - values[i].mTime) < 1e-6f)
+        if (math::fabs(time - values[i].mTime) < 1e-6f)
         {
             values[i].mKeys.push_back(k);
             return;
@@ -1349,7 +1349,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
                       const ai_real cur_key_time = ReadFloat(*channelElement.mTimeAccessor, *channelElement.mTimeData, pos, 0);
                       const ai_real last_key_time = ReadFloat(*channelElement.mTimeAccessor, *channelElement.mTimeData, pos - 1, 0);
                       const ai_real last_eval_angle = last_key_angle + (cur_key_angle - last_key_angle) * (time - last_key_time) / (cur_key_time - last_key_time);
-                      const ai_real delta = std::abs(cur_key_angle - last_eval_angle);
+                      const ai_real delta = math::fabs(cur_key_angle - last_eval_angle);
 				      if (delta >= 180.0f) {
 						const int subSampleCount = static_cast<int>(math::floor(delta / 90.0f));
 						if (cur_key_time != time) {
