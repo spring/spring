@@ -206,6 +206,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLastMessagePositions);
 	REGISTER_LUA_CFUNC(GetConsoleBuffer);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
+	REGISTER_LUA_CFUNC(IsUserWriting);
 
 	REGISTER_LUA_CFUNC(GetUnitGroup);
 	REGISTER_LUA_CFUNC(GetGroupList);
@@ -2050,6 +2051,12 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	lua_pushsstring(L, mouse->GetCurrentTooltip());
+	return 1;
+}
+
+int LuaUnsyncedRead::IsUserWriting(lua_State* L)
+{
+	lua_pushboolean(L, activeController != nullptr && activeController->userWriting);
 	return 1;
 }
 
