@@ -18,6 +18,7 @@ set(FILES
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg.glsl
 	shaders/GLSL/bumpWaterFS.glsl
+	shaders/GLSL/bumpWaterVS.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
 	shaders/GLSL/GrassVertProg.glsl
 	shaders/GLSL/ModelFragProg.glsl
