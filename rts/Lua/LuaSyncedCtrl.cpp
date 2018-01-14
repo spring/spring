@@ -1552,7 +1552,7 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		} break;
 
 		case hashString("reloadTime"): {
-			weapon->reloadTime = std::max(1, lua_toint(L, index + 1) * GAME_SPEED);
+			weapon->reloadTime = std::max(1, (int) (lua_tofloat(L, index + 1) * GAME_SPEED));
 		} break;
 
 		case hashString("accuracy"): {
@@ -1576,7 +1576,7 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		} break;
 
 		case hashString("burstRate"): {
-			weapon->salvoDelay = lua_toint(L, index + 1) * GAME_SPEED;
+			weapon->salvoDelay = (int) (lua_tofloat(L, index + 1) * GAME_SPEED);
 		} break;
 
 		case hashString("projectiles"): {
