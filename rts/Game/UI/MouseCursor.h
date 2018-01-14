@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "System/float4.h"
+
 class CBitmap;
 class IHwCursor;
 
@@ -47,9 +49,11 @@ public:
 
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
-	bool SetFrameHotSpotVP(int x, int y) const;   // draw command queue icon
+
 	void BindTexture() const;                     // software mouse cursor
 	void BindHwCursor() const;                    // hardware mouse cursor
+
+	float4 CalcFrameMatrixParams(const float3& winPos) const;
 
 	int GetMaxSizeX() const { return xmaxsize; }
 	int GetMaxSizeY() const { return ymaxsize; }

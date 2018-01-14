@@ -276,27 +276,21 @@ void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC*
 	#define xmaxw (node->xmax() * SQUARE_SIZE)
 	#define zminw (node->zmin() * SQUARE_SIZE)
 	#define zmaxw (node->zmax() * SQUARE_SIZE)
-	#define xmidw (node->xmid() * SQUARE_SIZE)
-	#define zmidw (node->zmid() * SQUARE_SIZE)
 
-	const float3 verts[4] = {
-		float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
-	};
+	const float3 v0 = float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw);
+	const float3 v1 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw);
+	const float3 v2 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw);
+	const float3 v3 = float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw);
 
-	rdb->SafeAppend({verts[0], color});
-	rdb->SafeAppend({verts[1], color});
-	rdb->SafeAppend({verts[2], color});
-	rdb->SafeAppend({verts[3], color});
+	rdb->SafeAppend({v0, color});
+	rdb->SafeAppend({v1, color});
+	rdb->SafeAppend({v2, color});
+	rdb->SafeAppend({v3, color});
 
 	#undef xminw
 	#undef xmaxw
 	#undef zminw
 	#undef zmaxw
-	#undef xmidw
-	#undef zmidw
 }
 
 void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::RenderDataBufferC* rdb) const {

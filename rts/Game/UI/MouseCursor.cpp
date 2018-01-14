@@ -284,26 +284,6 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 }
 
 
-bool CMouseCursor::SetFrameHotSpotVP(int x, int y) const
-{
-	if (frames.empty())
-		return false;
-
-	const float scale = cmdColors.QueueIconScale();
-
-	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);
-	const int ys = int(float(frame.image.yAlignedSize) * scale);
-
-	// center on hotspot
-	const int xp = int(float(x) -              (float(xofs) * scale));
-	const int yp = int(float(y) - (float(ys) - (float(yofs) * scale)));
-
-	glViewport(globalRendering->viewPosX + xp, yp, xs, ys);
-	return true;
-}
-
-
 void CMouseCursor::Update()
 {
 	if (frames.empty())
@@ -335,5 +315,28 @@ void CMouseCursor::BindHwCursor() const
 {
 	assert(hwCursor != nullptr);
 	hwCursor->Bind();
+}
+
+
+float4 CMouseCursor::CalcFrameMatrixParams(const float3& winPos) const
+{
+	if (winPos.z > 1.0f || frames.empty())
+		return {0.0f, 0.0f, 0.0f, 0.0f};
+
+	const FrameData& frame = frames[currentFrame];
+	const ImageData& image = frame.image;
+
+	const float qis = cmdColors.QueueIconScale();
+	const float  xs = image.xAlignedSize * qis;
+	const float  ys = image.yAlignedSize * qis;
+
+	const float rxs = xs * globalRendering->pixelX;
+	const float rys = ys * globalRendering->pixelY;
+
+	// center on hotspot
+	const float xp = (winPos.x -       (xofs * qis))  * globalRendering->pixelX;
+	const float yp = (winPos.y - (ys - (yofs * qis))) * globalRendering->pixelY;
+
+	return {xp, yp, rxs, rys};
 }
 

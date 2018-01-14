@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-
 #include "CursorIcons.h"
 #include "CommandColors.h"
 #include "MouseHandler.h"
@@ -92,24 +91,24 @@ void CCursorIcons::DrawCursors()
 			if ((currentCursor = GetCursor(currentCommand = icon.cmd)) == nullptr)
 				continue;
 
+			buffer->Submit(GL_QUADS);
 			currentCursor->BindTexture();
 		}
 
-		const float3 winPos = camera->CalcWindowCoordinates(icon.pos);
+		const float3& winCoors = camera->CalcWindowCoordinates(icon.pos);
+		const float4& matParams = currentCursor->CalcFrameMatrixParams(winCoors);
 
-		if (winPos.z > 1.0f)
-			continue;
+		CMatrix44f cursorMat;
+		cursorMat.Translate(matParams.x, matParams.y, 0.0f);
+		cursorMat.Scale({matParams.z, matParams.w, 1.0f});
 
-		currentCursor->SetFrameHotSpotVP(winPos.x, winPos.y);
-
-		buffer->SafeAppend({ICON_VERTS[0], ICON_TXCDS[0].x, ICON_TXCDS[0].y, iconColor});
-		buffer->SafeAppend({ICON_VERTS[1], ICON_TXCDS[1].x, ICON_TXCDS[1].y, iconColor});
-		buffer->SafeAppend({ICON_VERTS[2], ICON_TXCDS[2].x, ICON_TXCDS[2].y, iconColor});
-		buffer->SafeAppend({ICON_VERTS[3], ICON_TXCDS[3].x, ICON_TXCDS[3].y, iconColor});
-		// no batching; each quad has its own viewport
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({cursorMat * ICON_VERTS[0], ICON_TXCDS[0].x, ICON_TXCDS[0].y, iconColor});
+		buffer->SafeAppend({cursorMat * ICON_VERTS[1], ICON_TXCDS[1].x, ICON_TXCDS[1].y, iconColor});
+		buffer->SafeAppend({cursorMat * ICON_VERTS[2], ICON_TXCDS[2].x, ICON_TXCDS[2].y, iconColor});
+		buffer->SafeAppend({cursorMat * ICON_VERTS[3], ICON_TXCDS[3].x, ICON_TXCDS[3].y, iconColor});
 	}
 
+	buffer->Submit(GL_QUADS);
 	shader->Disable();
 }
 
@@ -129,13 +128,13 @@ void CCursorIcons::DrawTexts()
 	font->SetColors(); // default
 
 	for (const IconText& iconText: texts) {
-		const float3 winPos = camera->CalcWindowCoordinates(iconText.pos);
+		const float3 winCoors = camera->CalcWindowCoordinates(iconText.pos);
 
-		if (winPos.z > 1.0f)
+		if (winCoors.z > 1.0f)
 			continue;
 
-		const float x = (winPos.x * globalRendering->pixelX);
-		const float y = (winPos.y * globalRendering->pixelY) + yOffset;
+		const float x = (winCoors.x * globalRendering->pixelX);
+		const float y = (winCoors.y * globalRendering->pixelY) + yOffset;
 
 		font->glPrint(x, y, fontScale, fontFlags, iconText.text);
 	}
