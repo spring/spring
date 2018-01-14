@@ -1598,7 +1598,7 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		} break;
 
 		case hashString("aimReady"): {
-			weapon->angleGood = lua_toboolean(L, index + 1);
+			weapon->angleGood = lua_tofloat(L, index + 1) != 0.0f;
 		} break;
 
 		case hashString("forceAim"): {
