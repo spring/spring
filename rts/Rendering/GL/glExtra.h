@@ -26,6 +26,14 @@ extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
 typedef void (*DrawVolumeFunc)(const void* data);
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
 
+template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQuadC(const TQuad& quad, const TColor& color, TRenderBuffer* buffer) {
+	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color});
+	buffer->SafeAppend({{quad.x1, quad.y2, 0.0f}, color});
+	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color});
+	buffer->SafeAppend({{quad.x2, quad.y1, 0.0f}, color});
+}
+
+
 
 void gleGenColVolMeshBuffers(unsigned int* meshData);
 void gleDelColVolMeshBuffers(unsigned int* meshData);

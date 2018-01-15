@@ -846,8 +846,8 @@ void CMouseHandler::DrawCursor()
 
 	if (locked) {
 		if (crossSize > 0.0f) {
-			const float xscale = (crossSize / globalRendering->viewSizeX);
-			const float yscale = (crossSize / globalRendering->viewSizeY);
+			const float xscale = crossSize * globalRendering->pixelX;
+			const float yscale = crossSize * globalRendering->pixelY;
 
 			GL::PushMatrix();
 			GL::Translate(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);

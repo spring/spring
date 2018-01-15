@@ -22,17 +22,17 @@ public:
 	bool KeyPressed(int key, bool isRepeat);
 
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
-	ContainerBox okBox;
-	ContainerBox cancelBox;
-	ContainerBox applyBox;
-	ContainerBox teamBox;
-	ContainerBox unitBox;
-	ContainerBox metalBox;
-	ContainerBox energyBox;
-	ContainerBox scrollbarBox;
-	ContainerBox scrollBox;
+	TRectangle<float> okBox;
+	TRectangle<float> cancelBox;
+	TRectangle<float> applyBox;
+	TRectangle<float> teamBox;
+	TRectangle<float> unitBox;
+	TRectangle<float> metalBox;
+	TRectangle<float> energyBox;
+	TRectangle<float> scrollbarBox;
+	TRectangle<float> scrollBox;
 
 	int shareTeam;
 	static int lastShareTeam;

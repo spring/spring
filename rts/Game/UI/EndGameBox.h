@@ -24,44 +24,43 @@ public:
 	virtual std::string GetTooltip(int x, int y);
 
 	static bool enabled;
-	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == NULL) new CEndGameBox(winningAllyTeams);}
-	static void Destroy() { if (endGameBox != NULL) { delete endGameBox; endGameBox = NULL; } }
+	static void Create(const std::vector<unsigned char>& winningAllyTeams) { if (endGameBox == nullptr) new CEndGameBox(winningAllyTeams);}
+	static void Destroy() { if (endGameBox != nullptr) { delete endGameBox; endGameBox = nullptr; } }
 
 protected:
 	static CEndGameBox* endGameBox;
 	void FillTeamStats();
-	ContainerBox box;
 
-	ContainerBox exitBox;
+	TRectangle<float> box;
 
-	ContainerBox playerBox;
-	ContainerBox sumBox;
-	ContainerBox difBox;
+	TRectangle<float>   exitBox;
+	TRectangle<float> playerBox;
+	TRectangle<float>    sumBox;
+	TRectangle<float>    difBox;
 
-	bool moveBox;
+	bool moveBox = false;
 
-	int dispMode;
+	int dispMode = 0;
 
-	int stat1;
-	int stat2;
+	int stat1 =  1;
+	int stat2 = -1;
 
 	struct Stat {
-		Stat(std::string s) : name(s), max(1), maxdif(1) {}
+		Stat(const char* s) : name(s), max(1), maxdif(1) {}
 
 		void AddStat(int team, float value) {
-			if (value > max) {
-				max = value;
-			}
-			if (team >= 0 && static_cast<size_t>(team) >= values.size()) {
+			max = std::max(max, value);
+
+			if (team >= 0 && static_cast<size_t>(team) >= values.size())
 				values.resize(team + 1);
-			}
-			if (values[team].size() > 0 && math::fabs(value-values[team].back()) > maxdif) {
-				maxdif = math::fabs(value-values[team].back());
-			}
+
+			if (values[team].size() > 0)
+				maxdif = std::max(math::fabs(value - values[team].back()), maxdif);
 
 			values[team].push_back(value);
 		}
-		std::string name;
+
+		const char* name;
 		float max;
 		float maxdif;
 
@@ -69,9 +68,9 @@ protected:
 	};
 
 	std::vector<unsigned char> winners;
-
 	std::vector<Stat> stats;
-	GLuint graphTex;
+
+	GLuint graphTex = 0;
 	CBitmap bm;
 };
 

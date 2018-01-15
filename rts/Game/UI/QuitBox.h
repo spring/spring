@@ -21,18 +21,18 @@ public:
 	bool KeyPressed(int key, bool isRepeat);
 
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
 	// in order of appearance
-	ContainerBox resignBox;
-	ContainerBox saveBox;
-	ContainerBox giveAwayBox;
-	ContainerBox teamBox;
-	ContainerBox menuBox;
-	ContainerBox quitBox;
-	ContainerBox cancelBox;
-	ContainerBox scrollbarBox;
-	ContainerBox scrollBox;
+	TRectangle<float> resignBox;
+	TRectangle<float> saveBox;
+	TRectangle<float> giveAwayBox;
+	TRectangle<float> teamBox;
+	TRectangle<float> menuBox;
+	TRectangle<float> quitBox;
+	TRectangle<float> cancelBox;
+	TRectangle<float> scrollbarBox;
+	TRectangle<float> scrollBox;
 
 	int shareTeam;
 	bool noAlliesLeft;

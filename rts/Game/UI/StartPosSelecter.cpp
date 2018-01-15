@@ -11,6 +11,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -95,16 +96,9 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 }
 
 
-void CStartPosSelecter::DrawStartBox() const
+#if 0
+void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IProgramObject* shader) const
 {
-	GL::PushMatrix();
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	camera->Update();
-
-	glColor4f(0.2f,0.8f,0.2f,0.5f);
-	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
@@ -113,11 +107,10 @@ void CStartPosSelecter::DrawStartBox() const
 	const float by = myStartData.startRectTop * mapDims.mapy * SQUARE_SIZE;
 	const float bx = myStartData.startRectLeft * mapDims.mapx * SQUARE_SIZE;
 
-	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * mapDims.mapy * SQUARE_SIZE / 10;
-	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * mapDims.mapx * SQUARE_SIZE / 10;
+	const float dy = (myStartData.startRectBottom - myStartData.startRectTop ) * mapDims.mapy * SQUARE_SIZE / 10;
+	const float dx = (myStartData.startRectRight  - myStartData.startRectLeft) * mapDims.mapx * SQUARE_SIZE / 10;
 
 	// draw starting-rectangle restrictions
-	glBegin(GL_QUADS);
 	for (int a = 0; a < 10; ++a) {
 		float3 pos1(bx + (a    ) * dx, 0.0f, by);
 		float3 pos2(bx + (a + 1) * dx, 0.0f, by);
@@ -125,51 +118,51 @@ void CStartPosSelecter::DrawStartBox() const
 		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
-		glVertexf3(pos1);
-		glVertexf3(pos2);
-		glVertexf3(pos2 + UpVector * 100.0f);
-		glVertexf3(pos1 + UpVector * 100.0f);
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 
 		pos1 = float3(bx + (a    ) * dx, 0.0f, by + dy * 10.0f);
 		pos2 = float3(bx + (a + 1) * dx, 0.0f, by + dy * 10.0f);
 		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
-		glVertexf3(pos1);
-		glVertexf3(pos2);
-		glVertexf3(pos2 + UpVector * 100.0f);
-		glVertexf3(pos1 + UpVector * 100.0f);
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 
 		pos1 = float3(bx, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx, 0.0f, by + dy * (a + 1));
 		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
-		glVertexf3(pos1);
-		glVertexf3(pos2);
-		glVertexf3(pos2 + UpVector * 100.0f);
-		glVertexf3(pos1 + UpVector * 100.0f);
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 
 		pos1 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a    ));
 		pos2 = float3(bx + dx * 10.0f, 0.0f, by + dy * (a + 1));
 		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false);
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 
-		glVertexf3(pos1);
-		glVertexf3(pos2);
-		glVertexf3(pos2 + UpVector * 100.0f);
-		glVertexf3(pos1 + UpVector * 100.0f);
+		buffer->SafeAppend({pos1                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2                    , {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos2 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
+		buffer->SafeAppend({pos1 + UpVector * 100.0f, {0.2f, 0.8f, 0.2f, 0.5f}});
 	}
-	glEnd();
 
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+	buffer->Submit(GL_QUADS);
+	shader->Disable();
 
 	glDisable(GL_DEPTH_TEST);
-	glColor4f(1.0f,1.0f,1.0f,1.0f);
 }
+#endif
 
 
 void CStartPosSelecter::Draw()
@@ -179,52 +172,60 @@ void CStartPosSelecter::Draw()
 		return;
 	}
 
+
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
 	// lua-fied!
-	//DrawStartBox();
+	// DrawStartBox(buffer, shader);
 
 	if (!showReadyBox)
 		return;
 
-	const float mx = float(mouse->lastx) / globalRendering->viewSizeX;
-	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) / globalRendering->viewSizeY;
+	const float mx =                               float(mouse->lastx)  * globalRendering->pixelX;
+	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) * globalRendering->pixelY;
+
 
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
 
-	if (InBox(mx, my, readyBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-	} else {
-		glColor4f(0.7f, 0.7f, 0.2f, guiAlpha);
+	{
+		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	DrawBox(readyBox);
+	{
+		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	if (InBox(mx, my, readyBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-	} else {
-		glColor4f(0.7f, 0.7f, 0.2f, guiAlpha);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	{
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->Submit(GL_QUADS);
+		shader->Disable();
 	}
 
-	DrawBox(readyBox);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	{
+		// fit text into box
+		const float ySize = readyBox.y2 - readyBox.y1;
+		const float xSize = readyBox.x2 - readyBox.x1;
 
-	// fit text into box
-	const float unitWidth  = font->GetSize() * font->GetTextWidth("Ready") * globalRendering->pixelX;
-	const float unitHeight = font->GetSize() * font->GetLineHeight() * globalRendering->pixelY;
+		const float yPos = 0.5f * (readyBox.y1 + readyBox.y2);
+		const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
 
-	const float ySize = (readyBox.y2 - readyBox.y1);
-	const float xSize = (readyBox.x2 - readyBox.x1);
+		const float unitWidth  = font->GetSize() * font->GetTextWidth("Ready") * globalRendering->pixelX;
+		const float unitHeight = font->GetSize() * font->GetLineHeight(      ) * globalRendering->pixelY;
 
-	const float fontScale = 0.9f * std::min(xSize/unitWidth, ySize/unitHeight);
-	const float yPos = 0.5f * (readyBox.y1 + readyBox.y2);
-	const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
+		const float fontScale = 0.9f * std::min(xSize / unitWidth, ySize / unitHeight);
 
-	font->SetColors(); // default
-	font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Ready");
-	font->DrawBufferedGL4();
+		font->SetColors(); // default
+		font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Ready");
+		font->DrawBufferedGL4();
+	}
 }
+

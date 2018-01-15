@@ -43,7 +43,7 @@ private:
 	void Draw();
 
 private:
-	ContainerBox box;
+	TRectangle<float> box;
 
 	std::vector<FontString> labels;
 	std::vector<FontString> values;

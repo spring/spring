@@ -65,7 +65,7 @@ void CTooltipConsole::Draw()
 	const float fontSize = (h * globalRendering->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
 
 	const float curX = x + 0.01f;
-	const float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() / globalRendering->viewSizeY;
+	const float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	smallFont->SetColors(); //default
 

@@ -18,9 +18,9 @@ public:
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
 
-	ContainerBox box;
-	ContainerBox metalBox;
-	ContainerBox energyBox;
+	TRectangle<float> box;
+	TRectangle<float> metalBox;
+	TRectangle<float> energyBox;
 
 	bool moveBox;
 	bool enabled;

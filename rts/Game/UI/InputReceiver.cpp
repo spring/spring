@@ -83,21 +83,8 @@ CInputReceiver* CInputReceiver::GetReceiverAt(int x, int y)
 	return nullptr;
 }
 
-bool CInputReceiver::InBox(float x, float y, const ContainerBox& box) const
+bool CInputReceiver::InBox(float x, float y, const TRectangle<float>& box) const
 {
 	return ((x > box.x1) && (x < box.x2)  &&  (y > box.y1) && (y < box.y2));
-}
-
-void CInputReceiver::DrawBox(const ContainerBox& box, int polyMode)
-{
-	if (polyMode == -1)
-		polyMode = GL_QUADS;
-
-	glBegin(polyMode);
-	glVertex2f(box.x1, box.y1);
-	glVertex2f(box.x1, box.y2);
-	glVertex2f(box.x2, box.y2);
-	glVertex2f(box.x2, box.y1);
-	glEnd();
 }
 

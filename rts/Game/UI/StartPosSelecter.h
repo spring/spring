@@ -24,7 +24,7 @@ private:
 	void DrawStartBox() const;
 
 private:
-	ContainerBox readyBox;
+	TRectangle<float> readyBox;
 	float3 setStartPos;
 
 	bool showReadyBox;

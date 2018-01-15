@@ -9,7 +9,8 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/TeamStatistics.h"
@@ -41,17 +42,13 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 }
 
 
+
 bool CEndGameBox::enabled = true;
-CEndGameBox* CEndGameBox::endGameBox = NULL;
+CEndGameBox* CEndGameBox::endGameBox = nullptr;
 
 CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	: CInputReceiver()
-	, moveBox(false)
-	, dispMode(0)
-	, stat1(1)
-	, stat2(-1)
 	, winners(winningAllyTeams)
-	, graphTex(0)
 {
 	endGameBox = this;
 	box.x1 = 0.14f;
@@ -79,9 +76,10 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	difBox.x2 = 0.38f;
 	difBox.y2 = 0.65f;
 
-	if (!bm.Load("bitmaps/graphPaper.bmp")) {
-		throw content_error("Could not load bitmaps/graphPaper.bmp");
-	}
+	if (!bm.Load("bitmaps/graphPaper.bmp"))
+		bm.AllocDummy(SColor(255, 255, 255, 255));
+
+	graphTex = bm.CreateTexture();
 }
 
 CEndGameBox::~CEndGameBox()
@@ -92,6 +90,7 @@ CEndGameBox::~CEndGameBox()
 	endGameBox = nullptr;
 }
 
+
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
 	if (!enabled)
@@ -99,34 +98,39 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 	float mx = MouseX(x);
 	float my = MouseY(y);
-	if (InBox(mx, my, box)) {
-		moveBox = true;
-		if (InBox(mx, my, box + exitBox)) {
-			moveBox = false;
-		}
-		if (InBox(mx, my, box + playerBox)) {
-			moveBox = false;
-		}
-		if (InBox(mx, my, box + sumBox)) {
-			moveBox = false;
-		}
-		if (InBox(mx, my, box + difBox)) {
-			moveBox = false;
-		}
-		if (dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f) {
-			moveBox = false;
-		}
-		return true;
-	}
 
-	return false;
+	if (!InBox(mx, my, box))
+		return false;
+
+	moveBox = true;
+
+	if (InBox(mx, my, box + exitBox))
+		moveBox = false;
+
+	if (InBox(mx, my, box + playerBox))
+		moveBox = false;
+
+	if (InBox(mx, my, box + sumBox))
+		moveBox = false;
+
+	if (InBox(mx, my, box + difBox))
+		moveBox = false;
+
+	const float bxmin = box.x1 + 0.01f ;
+	const float bxmax = box.x1 + 0.12f ;
+	const float bymin = box.y1 + 0.571f - (stats.size() * 0.02f);
+	const float bymax = box.y1 + 0.57f ;
+
+	if (dispMode > 0 &&  mx > bxmin && mx < bxmax && my > bymin && my < bymax)
+		moveBox = false;
+
+	return true;
 }
 
 void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
 	if (moveBox) {
 		box.x1 += MouseMoveX(dx);
@@ -138,12 +142,11 @@ void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
-	float mx = MouseX(x);
-	float my = MouseY(y);
+	const float mx = MouseX(x);
+	const float my = MouseY(y);
 
 	if (InBox(mx, my, box + exitBox)) {
 		delete this;
@@ -151,30 +154,34 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (InBox(mx, my, box + playerBox)) {
+	if (InBox(mx, my, box + playerBox))
 		dispMode = 0;
-	}
-	if (InBox(mx, my, box + sumBox)) {
+
+	if (InBox(mx, my, box + sumBox))
 		dispMode = 1;
-	}
-	if (InBox(mx, my, box + difBox)) {
+
+	if (InBox(mx, my, box + difBox))
 		dispMode = 2;
-	}
 
-	if (dispMode > 0 ) {
-		if ((mx > (box.x1 + 0.01f)) && (mx < (box.x1 + 0.12f)) &&
-		    (my < (box.y1 + 0.57f)) && (my > (box.y1 + 0.571f - stats.size()*0.02f))) {
-			int sel = (int) math::floor(-(my - box.y1 - 0.57f) * 50);
 
-			if (button == 1) {
-				stat1 = sel;
-				stat2 = -1;
-			} else {
-				stat2 = sel;
-			}
+	if (dispMode <= 0)
+		return;
+
+	const float bxmin = box.x1 + 0.01f ;
+	const float bxmax = box.x1 + 0.12f ;
+	const float bymin = box.y1 + 0.571f - (stats.size() * 0.02f);
+	const float bymax = box.y1 + 0.57f ;
+
+	if (mx > bxmin && mx < bxmax && my > bymin && my < bymax) {
+		const int sel = (int) math::floor(-(my - box.y1 - 0.57f) * 50);
+
+		if (button == 1) {
+			stat1 = sel;
+			stat2 = -1;
+		} else {
+			stat2 = sel;
 		}
 	}
-
 }
 
 bool CEndGameBox::IsAbove(int x, int y)
@@ -182,62 +189,73 @@ bool CEndGameBox::IsAbove(int x, int y)
 	if (!enabled)
 		return false;
 
-	const float mx = MouseX(x);
-	const float my = MouseY(y);
-	return (InBox(mx, my, box));
+	return (InBox(MouseX(x), MouseY(y), box));
 }
+
+
 
 void CEndGameBox::Draw()
 {
-	if (graphTex == 0)
-		graphTex = bm.CreateTexture();
-
 	if (!enabled)
 		return;
 
-	float mx = MouseX(mouse->lastx);
-	float my = MouseY(mouse->lasty);
+	const float mx = MouseX(mouse->lastx);
+	const float my = MouseY(mouse->lasty);
 
-	glDisable(GL_TEXTURE_2D);
+	GL::RenderDataBufferC* bufferC = GL::GetRenderBufferC();
+	GL::RenderDataBufferT* bufferT = GL::GetRenderBufferT();
+
+	Shader::IProgramObject* shaderC = bufferC->GetShader();
+	Shader::IProgramObject* shaderT = bufferT->GetShader();
+
+
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
-	// Large Box
-	glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-	DrawBox(box);
+	{
+		// Large Box
+		gleDrawQuadC(box, SColor{0.2f, 0.2f, 0.2f, guiAlpha}, bufferC);
 
-	glColor4f(0.2f, 0.2f, 0.7f, guiAlpha);
-	if (dispMode == 0) {
-		DrawBox(box + playerBox);
-	} else if (dispMode == 1) {
-		DrawBox(box + sumBox);
-	} else {
-		DrawBox(box + difBox);
+		switch (dispMode) {
+			case 0: {
+				gleDrawQuadC(box + playerBox, SColor{0.2f, 0.2f, 0.7f, guiAlpha}, bufferC);
+			} break;
+			case 1: {
+				gleDrawQuadC(box + sumBox, SColor{0.2f, 0.2f, 0.7f, guiAlpha}, bufferC);
+			} break;
+			default: {
+				gleDrawQuadC(box + difBox, SColor{0.2f, 0.2f, 0.7f, guiAlpha}, bufferC);
+			} break;
+		}
+
+		if (InBox(mx, my, box + exitBox))
+			gleDrawQuadC(box + exitBox, SColor{0.7f, 0.2f, 0.2f, guiAlpha}, bufferC);
+
+		if (InBox(mx, my, box + playerBox))
+			gleDrawQuadC(box + playerBox, SColor{0.7f, 0.2f, 0.2f, guiAlpha}, bufferC);
+
+		if (InBox(mx, my, box + sumBox))
+			gleDrawQuadC(box + sumBox, SColor{0.7f, 0.2f, 0.2f, guiAlpha}, bufferC);
+
+		if (InBox(mx, my, box + difBox))
+			gleDrawQuadC(box + difBox, SColor{0.7f, 0.2f, 0.2f, guiAlpha}, bufferC);
+
+	}
+	{
+		// draw boxes
+		shaderC->Enable();
+		shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		bufferC->Submit(GL_QUADS);
+		shaderC->Disable();
 	}
 
-	if (InBox(mx, my, box+exitBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-		DrawBox(box + exitBox);
-	}
-	if (InBox(mx,my,box+playerBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-		DrawBox(box + playerBox);
-	}
-	if (InBox(mx,my,box+sumBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-		DrawBox(box + sumBox);
-	}
-	if (InBox(mx,my,box+difBox)) {
-		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-		DrawBox(box + difBox);
-	}
 
-	glEnable(GL_TEXTURE_2D);
 	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
-	font->glPrint(box.x1 + exitBox.x1   + 0.025f, box.y1 + exitBox.y1   + 0.005f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Exit");
+	font->glPrint(box.x1 +   exitBox.x1 + 0.025f, box.y1 +   exitBox.y1 + 0.005f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Exit");
 	font->glPrint(box.x1 + playerBox.x1 + 0.015f, box.y1 + playerBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Player stats");
-	font->glPrint(box.x1 + sumBox.x1    + 0.015f, box.y1 + sumBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team stats");
-	font->glPrint(box.x1 + difBox.x1    + 0.015f, box.y1 + difBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team delta stats");
+	font->glPrint(box.x1 +    sumBox.x1 + 0.015f, box.y1 +    sumBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team stats");
+	font->glPrint(box.x1 +    difBox.x1 + 0.015f, box.y1 +    difBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Team delta stats");
 
 	if (winners.empty()) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Game result was undecided");
@@ -279,38 +297,38 @@ void CEndGameBox::Draw()
 		return;
 	}
 
+
 	if (dispMode == 0) {
 		float xpos = 0.01f;
+		float ypos = 0.5f;
 
 		const char* headers[] = {"Name", "MC/m", "MP/m", "KP/m", "Cmds/m", "ACS"};
+		char values[6][100];
 
 		for (int a = 0; a < 6; ++a) {
 			font->glPrint(box.x1 + xpos, box.y1 + 0.55f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, headers[a]);
 			xpos += 0.1f;
 		}
 
-		float ypos = 0.5f;
 		for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
 			const CPlayer* p = playerHandler->Player(a);
 			const PlayerStatistics& pStats = p->currentStats;
-			char values[6][100];
 
 			SNPRINTF(values[0], 100, "%s", p->name.c_str());
-			if (game->totalGameTime > 0) { // prevent div-zero
+
+			if (game->totalGameTime > 0) {
 				SNPRINTF(values[1], 100, "%i", int(pStats.mouseClicks * 60 / game->totalGameTime));
 				SNPRINTF(values[2], 100, "%i", int(pStats.mousePixels * 60 / game->totalGameTime));
 				SNPRINTF(values[3], 100, "%i", int(pStats.keyPresses  * 60 / game->totalGameTime));
 				SNPRINTF(values[4], 100, "%i", int(pStats.numCommands * 60 / game->totalGameTime));
 			} else {
-				for(int i = 1; i < 5; i++)
+				for (int i = 1; i < 5; i++)
 					SNPRINTF(values[i], 100, "%i", 0);
 			}
-			SNPRINTF(values[5], 100, "%i",
-				(pStats.numCommands != 0)?
-				(pStats.unitCommands / pStats.numCommands):
-				(0));
 
-			float xpos = 0.01f;
+			SNPRINTF(values[5], 100, "%i", (pStats.numCommands != 0)? (pStats.unitCommands / pStats.numCommands): 0);
+
+			xpos = 0.01f;
 			for (int a = 0; a < 6; ++a) {
 				font->glPrint(box.x1 + xpos, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, values[a]);
 				xpos += 0.1f;
@@ -322,34 +340,38 @@ void CEndGameBox::Draw()
 		if (stats.empty())
 			FillTeamStats();
 
+
+		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.08f, 0.0f}, 0.0f, 0.0f});
+		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.08f, 0.0f}, 4.0f, 0.0f});
+		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.62f, 0.0f}, 4.0f, 4.0f});
+		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.62f, 0.0f}, 0.0f, 4.0f});
+
 		glBindTexture(GL_TEXTURE_2D, graphTex);
+		shaderT->Enable();
+		shaderT->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderT->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		bufferT->Submit(GL_QUADS);
+		shaderT->Disable();
+		glBindTexture(GL_TEXTURE_2D, 0);
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->AddVertexT(float3(box.x1 + 0.15f, box.y1 + 0.08f, 0), 0, 0);
-		va->AddVertexT(float3(box.x1 + 0.69f, box.y1 + 0.08f, 0), 4, 0);
-		va->AddVertexT(float3(box.x1 + 0.69f, box.y1 + 0.62f, 0), 4, 4);
-		va->AddVertexT(float3(box.x1 + 0.15f, box.y1 + 0.62f, 0), 0, 4);
-		va->DrawArrayT(GL_QUADS);
+		const float bxmin = box.x1 + 0.01f ;
+		const float bxmax = box.x1 + 0.12f ;
+		const float bymin = box.y1 + 0.571f - (stats.size() * 0.02f);
+		const float bymax = box.y1 + 0.57f ;
 
-		if ((mx > box.x1 + 0.01f) && (mx < box.x1 + 0.12f) &&
-		    (my < box.y1 + 0.57f) && (my > box.y1 + 0.571f - (stats.size() * 0.02f))) {
-			const int sel = (int) math::floor(50 * -(my - box.y1 - 0.57f));
+		if (mx > bxmin && mx < bxmax && my > bymin && my < bymax) {
+			const float sel = math::floor(50.0f * -(my - box.y1 - 0.57f));
 
-			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
-			glDisable(GL_TEXTURE_2D);
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
-
-			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0));
-			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0));
-			va->AddVertex0(float3(box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0));
-			va->AddVertex0(float3(box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f)         , 0));
-
-			va->DrawArray0(GL_QUADS);
-			glEnable(GL_TEXTURE_2D);
-			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
+			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
+			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
+			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
+			shaderC->Enable();
+			bufferC->Submit(GL_QUADS);
+			shaderC->Disable();
 		}
+
+
 
 		float ypos = 0.55f;
 		float maxy = 1.0f;
@@ -365,76 +387,88 @@ void CEndGameBox::Draw()
 			maxy = std::max(stats[stat1].maxdif, (stat2 != -1) ? stats[stat2].maxdif : 0) / TeamStatistics::statsPeriod;
 		}
 
-		const int numPoints = stats[0].values[0].size();
-
-		for (int a = 0; a < 5; ++a) {
-			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, FloatToSmallString(maxy * 0.25f * a));
-			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%02i:%02i",
-				(int) (a * 0.25f * (numPoints    ) * TeamStatistics::statsPeriod  / 60),
-				(int) (a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60);
-		}
-
-		font->glPrint(box.x1 + 0.55f, box.y1 + 0.65f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, stats[stat1].name);
-		font->glPrint(box.x1 + 0.55f, box.y1 + 0.63f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, (stat2 != -1) ? stats[stat2].name : "");
-
-		glDisable(GL_TEXTURE_2D);
-		glBegin(GL_LINES);
-			glVertex3f(box.x1 + 0.50f, box.y1 + 0.66f, 0.0f);
-			glVertex3f(box.x1 + 0.55f, box.y1 + 0.66f, 0.0f);
-		glEnd();
-
-		glLineStipple(3, 0x5555);
-		glEnable(GL_LINE_STIPPLE);
-		glBegin(GL_LINES);
-			glVertex3f(box.x1 + 0.50f, box.y1 + 0.64f, 0.0f);
-			glVertex3f(box.x1 + 0.55f, box.y1 + 0.64f, 0.0f);
-		glEnd();
-		glDisable(GL_LINE_STIPPLE);
+		const size_t numPoints = stats[0].values[0].size();
 
 		const float scalex = 0.54f / std::max(1.0f, numPoints - 1.0f);
 		const float scaley = 0.54f / maxy;
 
-		for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
-			const CTeam* pteam = teamHandler->Team(team);
+		for (int a = 0; a < 5; ++a) {
+			const int secs = int(a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60;
+			const int mins = int(a * 0.25f * (numPoints    ) * TeamStatistics::statsPeriod) / 60;
 
-			if (pteam->gaia)
+			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, FloatToSmallString(maxy * 0.25f * a));
+			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%02i:%02i", mins, secs);
+		}
+
+		font->glPrint(box.x1 + 0.55f, box.y1 + 0.65f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED,                 stats[stat1].name     );
+		font->glPrint(box.x1 + 0.55f, box.y1 + 0.63f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, (stat2 != -1) ? stats[stat2].name : "");
+
+
+
+		bufferC->SafeAppend({{box.x1 + 0.50f, box.y1 + 0.66f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+		bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.66f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+
+		// no more stippling, minor sacrifice
+		// glLineStipple(3, 0x5555);
+		bufferC->SafeAppend({{box.x1 + 0.50f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+		bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
+
+
+		for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
+			const CTeam* team = teamHandler->Team(teamNum);
+
+			if (team->gaia)
 				continue;
 
-			glColor4ubv(pteam->color);
-			glBegin(GL_LINE_STRIP);
-			for (int a = 0; a < numPoints; ++a) {
-				float value = 0.0f;
+			{
+				const std::vector<float>& statValues = stats[stat1].values[teamNum];
 
-				if (dispMode == 1) {
-					value = stats[stat1].values[team][a];
-				} else if (a > 0) {
-					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / TeamStatistics::statsPeriod;
-				}
+				for (size_t a = 0, n = numPoints - 1; a < n; ++a) {
+					float v0 = 0.0f;
+					float v1 = 0.0f;
 
-				glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
-			}
-			glEnd();
-
-			if (stat2 != -1) {
-				glLineStipple(3, 0x5555);
-				glEnable(GL_LINE_STIPPLE);
-
-				glBegin(GL_LINE_STRIP);
-				for (int a = 0; a < numPoints; ++a) {
-					float value = 0.0f;
 					if (dispMode == 1) {
-						value = stats[stat2].values[team][a];
+						v0 = statValues[a    ];
+						v1 = statValues[a + 1];
 					} else if (a > 0) {
-						value = (stats[stat2].values[team][a] - stats[stat2].values[team][a - 1]) / TeamStatistics::statsPeriod;
+						// deltas
+						v0 = (statValues[a    ] - statValues[a - 1]) / TeamStatistics::statsPeriod;
+						v1 = (statValues[a + 1] - statValues[a    ]) / TeamStatistics::statsPeriod;
 					}
 
-					glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
+					bufferC->SafeAppend({{box.x1 + 0.15f + (a    ) * scalex, box.y1 + 0.08f + v0 * scaley, 0.0f}, team->color});
+					bufferC->SafeAppend({{box.x1 + 0.15f + (a + 1) * scalex, box.y1 + 0.08f + v1 * scaley, 0.0f}, team->color});
 				}
-				glEnd();
+			}
 
-				glDisable(GL_LINE_STIPPLE);
+			if (stat2 != -1) {
+				const std::vector<float>& statValues = stats[stat2].values[teamNum];
+
+				// ditto
+				// glLineStipple(3, 0x5555);
+
+				for (size_t a = 0, n = numPoints - 1; a < n; ++a) {
+					float v0 = 0.0f;
+					float v1 = 0.0f;
+
+					if (dispMode == 1) {
+						v0 = statValues[a    ];
+						v1 = statValues[a + 1];
+					} else if (a > 0) {
+						v0 = (statValues[a    ] - statValues[a - 1]) / TeamStatistics::statsPeriod;
+						v1 = (statValues[a + 1] - statValues[a    ]) / TeamStatistics::statsPeriod;
+					}
+
+					bufferC->SafeAppend({{box.x1 + 0.15f + (a    ) * scalex, box.y1 + 0.08f + v0 * scaley, 0.0f}, team->color});
+					bufferC->SafeAppend({{box.x1 + 0.15f + (a + 1) * scalex, box.y1 + 0.08f + v1 * scaley, 0.0f}, team->color});
+				}
 			}
 		}
+
+		// draw all lines
+		shaderC->Enable();
+		bufferC->Submit(GL_LINES);
+		shaderC->Disable();
 	}
 
 	font->DrawBufferedGL4();
@@ -442,9 +476,8 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (!enabled) {
+	if (!enabled)
 		return "";
-	}
 
 	const float mx = MouseX(x);
 
@@ -466,68 +499,72 @@ std::string CEndGameBox::GetTooltip(int x, int y)
 	return "No tooltip defined";
 }
 
+
+
 void CEndGameBox::FillTeamStats()
 {
-	stats.push_back(Stat(""));
-	stats.push_back(Stat("Metal used"));
-	stats.push_back(Stat("Energy used"));
-	stats.push_back(Stat("Metal produced"));
-	stats.push_back(Stat("Energy produced"));
+	stats.clear();
+	stats.reserve(23);
 
-	stats.push_back(Stat("Metal excess"));
-	stats.push_back(Stat("Energy excess"));
+	stats.emplace_back("");
+	stats.emplace_back("Metal used");
+	stats.emplace_back("Energy used");
+	stats.emplace_back("Metal produced");
+	stats.emplace_back("Energy produced");
 
-	stats.push_back(Stat("Metal received"));
-	stats.push_back(Stat("Energy received"));
+	stats.emplace_back("Metal excess");
+	stats.emplace_back("Energy excess");
 
-	stats.push_back(Stat("Metal sent"));
-	stats.push_back(Stat("Energy sent"));
+	stats.emplace_back("Metal received");
+	stats.emplace_back("Energy received");
 
-	stats.push_back(Stat("Metal stored"));
-	stats.push_back(Stat("Energy stored"));
+	stats.emplace_back("Metal sent");
+	stats.emplace_back("Energy sent");
 
-	stats.push_back(Stat("Active Units"));
-	stats.push_back(Stat("Units killed"));
+	stats.emplace_back("Metal stored");
+	stats.emplace_back("Energy stored");
 
-	stats.push_back(Stat("Units produced"));
-	stats.push_back(Stat("Units died"));
+	stats.emplace_back("Active Units");
+	stats.emplace_back("Units killed");
 
-	stats.push_back(Stat("Units received"));
-	stats.push_back(Stat("Units sent"));
-	stats.push_back(Stat("Units captured"));
-	stats.push_back(Stat("Units stolen"));
+	stats.emplace_back("Units produced");
+	stats.emplace_back("Units died");
 
-	stats.push_back(Stat("Damage Dealt"));
-	stats.push_back(Stat("Damage Received"));
+	stats.emplace_back("Units received");
+	stats.emplace_back("Units sent");
+	stats.emplace_back("Units captured");
+	stats.emplace_back("Units stolen");
+
+	stats.emplace_back("Damage Dealt");
+	stats.emplace_back("Damage Received");
 
 	for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
 		const CTeam* pteam = teamHandler->Team(team);
 
-		if (pteam->gaia) {
+		if (pteam->gaia)
 			continue;
-		}
 
 		for (auto si = pteam->statHistory.cbegin(); si != pteam->statHistory.cend(); ++si) {
-			stats[0].AddStat(team, 0);
+			stats[ 0].AddStat(team, 0);
 
-			stats[1].AddStat(team, si->metalUsed);
-			stats[2].AddStat(team, si->energyUsed);
-			stats[3].AddStat(team, si->metalProduced);
-			stats[4].AddStat(team, si->energyProduced);
+			stats[ 1].AddStat(team, si->metalUsed);
+			stats[ 2].AddStat(team, si->energyUsed);
+			stats[ 3].AddStat(team, si->metalProduced);
+			stats[ 4].AddStat(team, si->energyProduced);
 
-			stats[5].AddStat(team, si->metalExcess);
-			stats[6].AddStat(team, si->energyExcess);
+			stats[ 5].AddStat(team, si->metalExcess);
+			stats[ 6].AddStat(team, si->energyExcess);
 
-			stats[7].AddStat(team, si->metalReceived);
-			stats[8].AddStat(team, si->energyReceived);
+			stats[ 7].AddStat(team, si->metalReceived);
+			stats[ 8].AddStat(team, si->energyReceived);
 
-			stats[9].AddStat(team, si->metalSent);
+			stats[ 9].AddStat(team, si->metalSent);
 			stats[10].AddStat(team, si->energySent);
 
-			stats[11].AddStat(team, si->metalProduced+si->metalReceived - (si->metalUsed + si->metalSent+si->metalExcess) );
-			stats[12].AddStat(team, si->energyProduced+si->energyReceived - (si->energyUsed + si->energySent+si->energyExcess) );
+			stats[11].AddStat(team, si->metalProduced + si->metalReceived - (si->metalUsed + si->metalSent+si->metalExcess) );
+			stats[12].AddStat(team, si->energyProduced + si->energyReceived - (si->energyUsed + si->energySent+si->energyExcess) );
 
-			stats[13].AddStat(team, si->unitsProduced+si->unitsReceived + si->unitsCaptured - (si->unitsDied + si->unitsSent + si->unitsOutCaptured) );
+			stats[13].AddStat(team, si->unitsProduced + si->unitsReceived + si->unitsCaptured - (si->unitsDied + si->unitsSent + si->unitsOutCaptured));
 			stats[14].AddStat(team, si->unitsKilled);
 
 			stats[15].AddStat(team, si->unitsProduced);
