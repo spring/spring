@@ -751,7 +751,7 @@ void CGame::ClientReadNet()
 					for (int16_t c = 0; c < commandCount; c++) {
 						int32_t cmdID;
 						uint8_t cmdOpt;
-						int16_t paramCount;
+						uint16_t paramCount;
 
 						if ((cmdID = sameCmdID) == 0)
 							pckt >> cmdID;
