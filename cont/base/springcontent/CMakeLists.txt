@@ -6,6 +6,8 @@ set(FILES
 	shaders/GLSL/bumpWaterFS.glsl
 	shaders/GLSL/bumpWaterCoastBlurVS.glsl
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
+	shaders/GLSL/ColVolDebugVertProg.glsl
+	shaders/GLSL/ColVolDebugFragProg.glsl
 	shaders/GLSL/infoHeight.lua
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
@@ -22,6 +24,8 @@ set(FILES
 	shaders/GLSL/TreeShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
 	shaders/GLSL/TreeVertProg.glsl
+	shaders/GLSL/SkyBoxVertProg.glsl
+	shaders/GLSL/SkyBoxFragProg.glsl
 	shaders/GLSL/SMFVertProg4.glsl
 	shaders/GLSL/SMFFragProg4.glsl
 	shaders/GLSL/SMFBorderVertProg4.glsl

@@ -62,33 +62,8 @@ void CSkyBox::LoadTexture(const std::string& texture)
 void CSkyBox::LoadBuffer()
 {
 	#ifndef HEADLESS
-	const char* vsText =
-		"#version 410 core\n"
-		"\n"
-		"uniform mat4 u_movi_mat;\n"
-		"uniform mat4 u_proj_mat;\n"
-		"\n"
-		"layout(location = 0) in vec2 a_vertex_xy;\n"
-		"layout(location = 1) in vec3 a_texcoor_xyz;\n"
-		"\n"
-		"out vec3 v_texcoor_xyz;\n"
-		"\n"
-		"void main() {\n"
-		"	gl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xy, 0.0, 1.0);\n"
-		"	v_texcoor_xyz = a_texcoor_xyz;\n"
-		"}\n";
-	const char* fsText =
-		"#version 410 core\n"
-		"\n"
-		"uniform samplerCube u_skycube_tex;\n"
-		"\n"
-		"in vec3 v_texcoor_xyz;\n"
-		"\n"
-		"layout(location = 0) out vec4 f_color_rgba;\n"
-		"\n"
-		"void main() {\n"
-		"	f_color_rgba = texture(u_skycube_tex, v_texcoor_xyz);\n"
-		"}\n";
+	const std::string& vsText = Shader::GetShaderSource("GLSL/SkyBoxVertProg.glsl");
+	const std::string& fsText = Shader::GetShaderSource("GLSL/SkyBoxFragProg.glsl");
 
 	const std::array<SkyBoxAttrType, 2> vertAttrs = {{
 		{0,  2, GL_FLOAT,  (sizeof(float) * 5),  "a_vertex_xy"  , VA_TYPE_OFFSET(float, 0)},
@@ -99,7 +74,7 @@ void CSkyBox::LoadBuffer()
 	skyBox.Init(true);
 	skyBox.TUpload<SkyBoxVertType, uint32_t, SkyBoxAttrType>(SKYBOX_BUFFER_LEN, 0, vertAttrs.size(),  nullptr, nullptr, vertAttrs.data());
 
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsText[0], ""}, {GL_FRAGMENT_SHADER, &fsText[0], ""}};
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText.c_str(), ""}, {GL_FRAGMENT_SHADER, fsText.c_str(), ""}};
 	Shader::IProgramObject* shaderProg = skyBox.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();
