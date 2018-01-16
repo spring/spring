@@ -183,40 +183,6 @@ static constexpr std::array<uint32_t, 4 * 6> BOX_INDCS = {
 static std::vector<uint32_t> CYL_INDCS;
 static std::vector<uint32_t> SPH_INDCS;
 
-
-#if 0
-void gleDrawMeshBuffer(unsigned int* meshData, unsigned int primType) {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, meshData[0]);
-	glVertexPointer(3, GL_FLOAT, sizeof(float3), nullptr);
-	glDrawRangeElements(primType, 0, meshData[2], meshData[3], GL_UNSIGNED_INT, nullptr);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-
-void gleDelCylMeshBuffer(unsigned int* meshData) {
-	glDeleteBuffers(1, &meshData[0]);
-	glDeleteBuffers(1, &meshData[1]);
-}
-
-void gleDelBoxMeshBuffer(unsigned int* meshData) {
-	glDeleteBuffers(1, &meshData[0]);
-	glDeleteBuffers(1, &meshData[1]);
-}
-
-void gleDelSphereMeshBuffer(unsigned int* meshData) {
-	glDeleteBuffers(1, &meshData[0]);
-	glDeleteBuffers(1, &meshData[1]);
-}
-
-
-void gleDrawBoxMeshBuffer(unsigned int* meshData) { gleDrawMeshBuffer(meshData, GL_QUADS    ); }
-void gleDrawCylMeshBuffer(unsigned int* meshData) { gleDrawMeshBuffer(meshData, GL_TRIANGLES); }
-void gleDrawSphMeshBuffer(unsigned int* meshData) { gleDrawMeshBuffer(meshData, GL_TRIANGLES); }
-#endif
-
-
 void gleGenBoxMeshBuffer(unsigned int* meshData) {
 	if (meshData == nullptr)
 		return;
@@ -393,69 +359,81 @@ void gleGenColVolMeshBuffers(unsigned int* meshData) {
 	gleGenCylMeshBuffer(nullptr, cylDivs, 1.0f);
 	gleGenSphMeshBuffer(nullptr, sphRows, sphCols);
 
+	{
+		// VAO
+		glGenVertexArrays(1, &meshData[2]);
+		glBindVertexArray(meshData[2]);
+	}
+	{
+		// VBO
+		glGenBuffers(1, &meshData[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, meshData[0]);
+		glBufferData(GL_ARRAY_BUFFER, (BOX_VERTS.size() + CYL_VERTS.size() + SPH_VERTS.size()) * sizeof(float3), nullptr, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &meshData[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, meshData[0]);
-	glBufferData(GL_ARRAY_BUFFER, (BOX_VERTS.size() + CYL_VERTS.size() + SPH_VERTS.size()) * sizeof(float3), nullptr, GL_STATIC_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, (                                  0) * sizeof(float3), BOX_VERTS.size() * sizeof(float3), BOX_VERTS.data());
+		glBufferSubData(GL_ARRAY_BUFFER, (BOX_VERTS.size()                   ) * sizeof(float3), CYL_VERTS.size() * sizeof(float3), CYL_VERTS.data());
+		glBufferSubData(GL_ARRAY_BUFFER, (BOX_VERTS.size() + CYL_VERTS.size()) * sizeof(float3), SPH_VERTS.size() * sizeof(float3), SPH_VERTS.data());
+	}
 
-	glBufferSubData(GL_ARRAY_BUFFER, (                                  0) * sizeof(float3), BOX_VERTS.size() * sizeof(float3), BOX_VERTS.data());
-	glBufferSubData(GL_ARRAY_BUFFER, (BOX_VERTS.size()                   ) * sizeof(float3), CYL_VERTS.size() * sizeof(float3), CYL_VERTS.data());
-	glBufferSubData(GL_ARRAY_BUFFER, (BOX_VERTS.size() + CYL_VERTS.size()) * sizeof(float3), SPH_VERTS.size() * sizeof(float3), SPH_VERTS.data());
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	{
+		for (size_t n = 0; n < CYL_INDCS.size(); n++) { CYL_INDCS[n] += (BOX_VERTS.size()                   ); }
+		for (size_t n = 0; n < SPH_INDCS.size(); n++) { SPH_INDCS[n] += (BOX_VERTS.size() + CYL_VERTS.size()); }
 
+		// IBO
+		glGenBuffers(1, &meshData[1]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData[1]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size() + CYL_INDCS.size() + SPH_INDCS.size()) * sizeof(uint32_t), nullptr, GL_STATIC_DRAW);
 
-	for (size_t n = 0; n < CYL_INDCS.size(); n++) { CYL_INDCS[n] += (BOX_VERTS.size()                   ); }
-	for (size_t n = 0; n < SPH_INDCS.size(); n++) { SPH_INDCS[n] += (BOX_VERTS.size() + CYL_VERTS.size()); }
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (                                  0) * sizeof(uint32_t), BOX_INDCS.size() * sizeof(uint32_t), BOX_INDCS.data());
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size()                   ) * sizeof(uint32_t), CYL_INDCS.size() * sizeof(uint32_t), CYL_INDCS.data());
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size() + CYL_INDCS.size()) * sizeof(uint32_t), SPH_INDCS.size() * sizeof(uint32_t), SPH_INDCS.data());
+	}
+	{
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0,  3, GL_FLOAT,  false,  sizeof(float3), nullptr);
+		glBindVertexArray(0);
+		glDisableVertexAttribArray(0);
 
-	glGenBuffers(1, &meshData[1]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size() + CYL_INDCS.size() + SPH_INDCS.size()) * sizeof(uint32_t), nullptr, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
 
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (                                  0) * sizeof(uint32_t), BOX_INDCS.size() * sizeof(uint32_t), BOX_INDCS.data());
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size()                   ) * sizeof(uint32_t), CYL_INDCS.size() * sizeof(uint32_t), CYL_INDCS.data());
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (BOX_INDCS.size() + CYL_INDCS.size()) * sizeof(uint32_t), SPH_INDCS.size() * sizeof(uint32_t), SPH_INDCS.data());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-
-	meshData[2] = BOX_VERTS.size();
-	meshData[3] = BOX_INDCS.size();
-	meshData[4] = CYL_VERTS.size();
-	meshData[5] = CYL_INDCS.size();
-	meshData[6] = SPH_VERTS.size();
-	meshData[7] = SPH_INDCS.size();
+	meshData[3] = BOX_VERTS.size();
+	meshData[4] = BOX_INDCS.size();
+	meshData[5] = CYL_VERTS.size();
+	meshData[6] = CYL_INDCS.size();
+	meshData[7] = SPH_VERTS.size();
+	meshData[8] = SPH_INDCS.size();
 }
 
 void gleDelColVolMeshBuffers(unsigned int* meshData) {
 	glDeleteBuffers(1, &meshData[0]);
 	glDeleteBuffers(1, &meshData[1]);
+	glDeleteVertexArrays(1, &meshData[2]);
 
 	meshData[0] = 0;
 	meshData[1] = 0;
+	meshData[2] = 0;
 }
 
 
 void gleBindColVolMeshBuffers(const unsigned int* meshData) {
 	if (meshData != nullptr) {
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshData[1]);
-		glBindBuffer(GL_ARRAY_BUFFER, meshData[0]);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(float3), nullptr);
+		glBindVertexArray(meshData[2]);
 	} else {
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 }
 
 void gleDrawColVolMeshSubBuffer(const unsigned int* meshData, unsigned int meshType) {
 	constexpr unsigned int primTypes[] = {GL_QUADS, GL_TRIANGLES, GL_TRIANGLES};
 
-	// const unsigned int numVerts = meshData[2 + meshType * 2 + 0];
-	const unsigned int numIndcs = meshData[2 + meshType * 2 + 1];
+	// const unsigned int numVerts = meshData[3 + meshType * 2 + 0];
+	const unsigned int numIndcs = meshData[3 + meshType * 2 + 1];
 	const unsigned int startIdx =
-		(meshData[2 + 0 * 2 + 1] * (meshType > 0)) +
-		(meshData[2 + 1 * 2 + 1] * (meshType > 1)) +
-		(meshData[2 + 2 * 2 + 1] * (meshType > 2));
+		(meshData[3 + 0 * 2 + 1] * (meshType > 0)) +
+		(meshData[3 + 1 * 2 + 1] * (meshType > 1)) +
+		(meshData[3 + 2 * 2 + 1] * (meshType > 2));
 
 	glDrawElements(primTypes[meshType], numIndcs,  GL_UNSIGNED_INT, VA_TYPE_OFFSET(uint32_t, startIdx));
 }

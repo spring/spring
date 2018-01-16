@@ -119,6 +119,9 @@ public:
 	bool DefaultToFootPrint() const { return defaultToFootPrint; }
 	bool DefaultToPieceTree() const { return defaultToPieceTree; }
 
+	bool HasCustomType() const { return (volumeType < COLVOL_TYPE_SPHERE); }
+	bool HasCustomProp(float r) const { return (axisOffsets.SqLength() >= 1.0f || math::fabs(volumeBoundingRadius - r) >= 1.0f); }
+
 	float3 GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets = ZeroVector) const;
 
 	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& pos) const;
