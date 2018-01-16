@@ -164,6 +164,8 @@ void CStarburstProjectile::Update()
 				if (u != nullptr)
 					targetPos = u->GetErrorPos(allyteamID, true);
 			}
+
+			targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 		} else {
 			targetPos = target->pos;
 		}
