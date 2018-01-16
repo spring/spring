@@ -159,6 +159,7 @@ void CMissileProjectile::Update()
 							targetPos = u->GetErrorPos(allyteamID, true);
 
 					}
+					targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 				} else {
 					targetPos = target->pos;
 					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
