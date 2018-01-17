@@ -14,9 +14,10 @@ public:
 	void Expand(unsigned int baseID, unsigned int numIDs);
 
 	void AssignID(CSolidObject* object);
-	void FreeID(unsigned int id, bool delayed);
+	void FreeID(unsigned int uid, bool delayed);
 
-	bool HasID(unsigned int id) const;
+	bool RecycleID(unsigned int uid);
+	bool HasID(unsigned int uid) const;
 	bool IsEmpty() const { return (liveIndexToIdentMap.empty()); }
 
 	unsigned int GetSize() const { return (liveIndexToIdentMap.size()); } // number of ID's still unused
@@ -24,7 +25,7 @@ public:
 
 private:
 	unsigned int ExtractID();
-	void ReserveID(unsigned int id);
+	void ReserveID(unsigned int uid);
 	void RecycleIDs();
 
 private:

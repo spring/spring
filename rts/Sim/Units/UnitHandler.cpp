@@ -33,8 +33,10 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
+
 	CR_MEMBER(activeSlowUpdateUnit),
 	CR_MEMBER(activeUpdateUnit),
+
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius)
 ))
@@ -46,6 +48,24 @@ UnitMemPool unitMemPool;
 CUnitHandler* unitHandler = nullptr;
 
 
+void CUnitHandler::SanityCheckUnit(const CUnit* unit)
+{
+	unit->pos.AssertNaNs();
+	unit->midPos.AssertNaNs();
+	unit->relMidPos.AssertNaNs();
+	unit->speed.AssertNaNs();
+	unit->deathSpeed.AssertNaNs();
+	unit->rightdir.AssertNaNs();
+	unit->updir.AssertNaNs();
+	unit->frontdir.AssertNaNs();
+
+	if (unit->unitDef->IsGroundUnit()) {
+		assert(unit->pos.x >= -(float3::maxxpos * 16.0f));
+		assert(unit->pos.x <=  (float3::maxxpos * 16.0f));
+		assert(unit->pos.z >= -(float3::maxzpos * 16.0f));
+		assert(unit->pos.z <=  (float3::maxzpos * 16.0f));
+	}
+};
 
 CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 {
@@ -74,10 +94,7 @@ CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 
 
 
-CUnitHandler::CUnitHandler():
-	maxUnits(0),
-	maxUnitRadius(0.0f)
-{
+CUnitHandler::CUnitHandler() {
 	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CExtractorBuilding), "");
@@ -179,175 +196,189 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 }
 
 
-void CUnitHandler::DeleteUnit(CUnit* unit)
+bool CUnitHandler::GarbageCollectUnit(unsigned int id)
 {
-	unitsToBeRemoved.push_back(unit);
+	if (inUpdateCall)
+		return false;
+
+	// ensure that QDU can actually collect this unit
+	if (!units[id]->deathScriptFinished)
+		return false;
+
+	QueueDeleteUnits();
+	DeleteUnits();
+
+	return (idPool.RecycleID(id));
 }
 
-void CUnitHandler::DeleteUnitsNow()
-{
-	if (unitsToBeRemoved.empty())
-		return;
 
+void CUnitHandler::QueueDeleteUnits()
+{
+	// gather up dead units
+	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
+		CUnit* unit = activeUnits[activeUpdateUnit];
+
+		if (!unit->deathScriptFinished)
+			continue;
+
+		// there are many ways to fiddle with "deathScriptFinished", so a unit may
+		// arrive here not having been properly killed while isDead is still false
+		// make sure we always call Killed; no-op if isDead was already set to true
+		unit->KillUnit(nullptr, false, true, true);
+		unitsToBeRemoved.push_back(unit);
+
+		assert(activeUnits[activeUpdateUnit] == unit);
+	}
+}
+
+
+void CUnitHandler::DeleteUnits()
+{
 	while (!unitsToBeRemoved.empty()) {
-		DeleteUnitNow(unitsToBeRemoved.back());
+		DeleteUnit(unitsToBeRemoved.back());
 		unitsToBeRemoved.pop_back();
 	}
 }
 
-void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
+void CUnitHandler::DeleteUnit(CUnit* delUnit)
 {
+	assert(delUnit->isDead);
 	// we want to call RenderUnitDestroyed while the unit is still valid
 	eventHandler.RenderUnitDestroyed(delUnit);
 
 	const auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
 
-	if (it != activeUnits.end()) {
-		const int delTeam = delUnit->team;
-		const int delType = delUnit->unitDef->id;
-
-		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
-
-		if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it))
-			--activeSlowUpdateUnit;
-
-		activeUnits.erase(it);
-
-		spring::VectorErase(unitsByDefs[delTeam][delType], delUnit);
-		idPool.FreeID(delUnit->id, true);
-
-		units[delUnit->id] = nullptr;
-
-		CSolidObject::SetDeletingRefID(delUnit->id);
-		unitMemPool.free(delUnit);
-		CSolidObject::SetDeletingRefID(-1);
-	} else {
+	if (it == activeUnits.end()) {
 		assert(false);
+		return;
+	}
+
+	const int delUnitTeam = delUnit->team;
+	const int delUnitType = delUnit->unitDef->id;
+
+	teamHandler->Team(delUnitTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+
+	if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it))
+		--activeSlowUpdateUnit;
+
+	activeUnits.erase(it);
+
+	spring::VectorErase(unitsByDefs[delUnitTeam][delUnitType], delUnit);
+	idPool.FreeID(delUnit->id, true);
+
+	units[delUnit->id] = nullptr;
+
+	CSolidObject::SetDeletingRefID(delUnit->id);
+	unitMemPool.free(delUnit);
+	CSolidObject::SetDeletingRefID(-1);
+}
+
+
+void CUnitHandler::UpdateUnitMoveTypes()
+{
+	SCOPED_TIMER("Sim::Unit::MoveType");
+
+	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
+		CUnit* unit = activeUnits[activeUpdateUnit];
+		AMoveType* moveType = unit->moveType;
+
+		SanityCheckUnit(unit);
+
+		if (moveType->Update())
+			eventHandler.UnitMoved(unit);
+
+		// this unit is not coming back, kill it now without any death
+		// sequence (so deathScriptFinished becomes true immediately)
+		if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED))
+			unit->KillUnit(nullptr, false, true, false);
+
+		SanityCheckUnit(unit);
+		assert(activeUnits[activeUpdateUnit] == unit);
+	}
+}
+
+void CUnitHandler::UpdateUnitLosStates()
+{
+	SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
+
+	for (CUnit* unit: activeUnits) {
+		for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
+			unit->UpdateLosStatus(at);
+		}
+	}
+}
+
+
+void CUnitHandler::SlowUpdateUnits()
+{
+	SCOPED_TIMER("Sim::Unit::SlowUpdate");
+	assert(activeSlowUpdateUnit >= 0);
+
+	// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
+	if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0)
+		activeSlowUpdateUnit = 0;
+
+	// stagger the SlowUpdate's
+	for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
+		CUnit* unit = activeUnits[activeSlowUpdateUnit];
+
+		SanityCheckUnit(unit);
+		unit->SlowUpdate();
+		unit->SlowUpdateWeapons();
+		unit->SlowUpdateLocalModel();
+		SanityCheckUnit(unit);
+
+		n--;
+	}
+}
+
+void CUnitHandler::UpdateUnits()
+{
+	SCOPED_TIMER("Sim::Unit::Update");
+
+	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
+		CUnit* unit = activeUnits[activeUpdateUnit];
+		SanityCheckUnit(unit);
+		unit->Update();
+		// unsynced; done on-demand when drawing unit
+		// unit->UpdateLocalModel();
+		SanityCheckUnit(unit);
+		assert(activeUnits[activeUpdateUnit] == unit);
+	}
+}
+
+void CUnitHandler::UpdateUnitWeapons()
+{
+	SCOPED_TIMER("Sim::Unit::Weapon");
+
+	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
+		CUnit* unit = activeUnits[activeUpdateUnit];
+
+		if (!unit->CanUpdateWeapons())
+			continue;
+
+		for (CWeapon* w: unit->weapons) {
+			w->Update();
+		}
+
+		assert(activeUnits[activeUpdateUnit] == unit);
 	}
 }
 
 
 void CUnitHandler::Update()
 {
-	auto UNIT_SANITY_CHECK = [](const CUnit* unit) {
-		unit->pos.AssertNaNs();
-		unit->midPos.AssertNaNs();
-		unit->relMidPos.AssertNaNs();
-		unit->speed.AssertNaNs();
-		unit->deathSpeed.AssertNaNs();
-		unit->rightdir.AssertNaNs();
-		unit->updir.AssertNaNs();
-		unit->frontdir.AssertNaNs();
-		if (unit->unitDef->IsGroundUnit()) {
-			assert(unit->pos.x >= -(float3::maxxpos * 16.0f));
-			assert(unit->pos.x <=  (float3::maxxpos * 16.0f));
-			assert(unit->pos.z >= -(float3::maxzpos * 16.0f));
-			assert(unit->pos.z <=  (float3::maxzpos * 16.0f));
-		}
-	};
+	inUpdateCall = true;
 
-	DeleteUnitsNow();
+	DeleteUnits();
+	UpdateUnitMoveTypes();
+	QueueDeleteUnits();
+	UpdateUnitLosStates();
+	SlowUpdateUnits();
+	UpdateUnits();
+	UpdateUnitWeapons();
 
-	{
-		SCOPED_TIMER("Sim::Unit::MoveType");
-
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-			CUnit* unit = activeUnits[activeUpdateUnit];
-			AMoveType* moveType = unit->moveType;
-
-			UNIT_SANITY_CHECK(unit);
-
-			if (moveType->Update())
-				eventHandler.UnitMoved(unit);
-
-			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {
-				// this unit is not coming back, kill it now without any death
-				// sequence (so deathScriptFinished becomes true immediately)
-				unit->KillUnit(nullptr, false, true, false);
-			}
-
-			UNIT_SANITY_CHECK(unit);
-			assert(activeUnits[activeUpdateUnit] == unit);
-		}
-	}
-
-	{
-		// Delete dead units
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-			CUnit* unit = activeUnits[activeUpdateUnit];
-
-			if (!unit->deathScriptFinished)
-				continue;
-
-			// there are many ways to fiddle with "deathScriptFinished", so a unit
-			// may arrive here not having been properly killed (with isDead still
-			// false)
-			// make sure we always call Killed; no-op if isDead is already true
-			unit->KillUnit(nullptr, false, true, true);
-			DeleteUnit(unit);
-
-			assert(activeUnits[activeUpdateUnit] == unit);
-		}
-	}
-
-	{
-		SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
-		for (CUnit* unit: activeUnits) {
-			for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-				unit->UpdateLosStatus(at);
-			}
-		}
-	}
-
-	{
-		SCOPED_TIMER("Sim::Unit::SlowUpdate");
-		assert(activeSlowUpdateUnit >= 0);
-
-		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
-		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0)
-			activeSlowUpdateUnit = 0;
-
-		// stagger the SlowUpdate's
-		for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
-			CUnit* unit = activeUnits[activeSlowUpdateUnit];
-
-			UNIT_SANITY_CHECK(unit);
-			unit->SlowUpdate();
-			unit->SlowUpdateWeapons();
-			unit->SlowUpdateLocalModel();
-			UNIT_SANITY_CHECK(unit);
-
-			n--;
-		}
-	}
-
-	{
-		SCOPED_TIMER("Sim::Unit::Update");
-
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-			CUnit* unit = activeUnits[activeUpdateUnit];
-			UNIT_SANITY_CHECK(unit);
-			unit->Update();
-			// unsynced; done on-demand when drawing unit
-			// unit->UpdateLocalModel();
-			UNIT_SANITY_CHECK(unit);
-			assert(activeUnits[activeUpdateUnit] == unit);
-		}
-	}
-
-	{
-		SCOPED_TIMER("Sim::Unit::Weapon");
-
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-			CUnit* unit = activeUnits[activeUpdateUnit];
-			if (unit->CanUpdateWeapons()) {
-				for (CWeapon* w: unit->weapons) {
-					w->Update();
-				}
-			}
-			assert(activeUnits[activeUpdateUnit] == unit);
-		}
-	}
+	inUpdateCall = false;
 }
 
 
@@ -377,3 +408,4 @@ bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 
 	return true;
 }
+

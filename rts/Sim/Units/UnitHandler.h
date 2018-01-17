@@ -29,9 +29,9 @@ public:
 		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
 			return (!idPool.IsEmpty());
-		// is this ID not already in use?
+		// is this ID not already in use *and* has it been recycled by pool?
 		if (id < MaxUnits())
-			return (units[id] == nullptr);
+			return (units[id] == nullptr && idPool.HasID(id));
 		// AddUnit will not make new room for us
 		return false;
 	}
@@ -41,6 +41,7 @@ public:
 
 	/// Returns true if a unit of type unitID can be built, false otherwise
 	bool CanBuildUnit(const UnitDef* unitdef, int team) const;
+	bool GarbageCollectUnit(unsigned int id);
 
 	void AddBuilderCAI(CBuilderCAI*);
 	void RemoveBuilderCAI(CBuilderCAI*);
@@ -50,6 +51,7 @@ public:
 	CUnit* GetUnit(unsigned int id) const { return ((id < MaxUnits())? units[id]: nullptr); }
 
 	static CUnit* NewUnit(const UnitDef* ud);
+	static void SanityCheckUnit(const CUnit* unit);
 
 	const std::vector<CUnit*>& GetActiveUnits() const { return activeUnits; }
 	      std::vector<CUnit*>& GetActiveUnits()       { return activeUnits; }
@@ -61,10 +63,15 @@ public:
 	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
 
 private:
-	void DeleteUnit(CUnit* unit);
-	void DeleteUnitNow(CUnit* unit);
-	void DeleteUnitsNow();
 	void InsertActiveUnit(CUnit* unit);
+	void QueueDeleteUnits();
+	void DeleteUnit(CUnit* unit);
+	void DeleteUnits();
+	void SlowUpdateUnits();
+	void UpdateUnitMoveTypes();
+	void UpdateUnitLosStates();
+	void UpdateUnits();
+	void UpdateUnitWeapons();
 
 private:
 	SimObjectIDPool idPool;
@@ -75,16 +82,20 @@ private:
 
 	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
+
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 
+
 	///< global unit-limit (derived from the per-team limit)
 	///< units.size() is equal to this and constant at runtime
-	unsigned int maxUnits;
+	unsigned int maxUnits = 0;
 
 	///< largest radius of any unit added so far (some
 	///< spatial query filters in GameHelper use this)
-	float maxUnitRadius;
+	float maxUnitRadius = 0.0f;
+
+	bool inUpdateCall = false;
 };
 
 extern CUnitHandler* unitHandler;

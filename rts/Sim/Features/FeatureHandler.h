@@ -68,9 +68,9 @@ private:
 		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
 			return true;
-		// is this ID not already in use?
+		// is this ID not already in use *and* has it been recycled by pool?
 		if (id < features.size())
-			return (features[id] == nullptr);
+			return (features[id] == nullptr && idPool.HasID(id));
 		// AddFeature will not make new room for us
 		return false;
 	}
