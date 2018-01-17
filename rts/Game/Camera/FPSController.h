@@ -15,12 +15,12 @@ public:
 
 	void KeyMove(float3 move);
 	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
+	void ScreenEdgeMove(float3 move) { KeyMove(move); }
 	void MouseWheelMove(float move);
 
 	void SetPos(const float3& newPos);
 	void SetDir(const float3& newDir);
-	float3 SwitchFrom() const;
+	float3 SwitchFrom() const { return pos; }
 	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;

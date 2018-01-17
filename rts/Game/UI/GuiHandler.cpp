@@ -1663,11 +1663,11 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 		} else {
 			const float viewRange = globalRendering->viewRange * 1.4f;
-			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, NULL, unit, feature, true);
+			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, nullptr, unit, feature, true);
 			const float3 hit = cameraPos + mouseDir * dist;
 
 			// make sure the ray hit in the map
-			if (!unit && !feature && !hit.IsInBounds())
+			if (unit == nullptr && feature == nullptr && !hit.IsInBounds())
 				return -1;
 		}
 

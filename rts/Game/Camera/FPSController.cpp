@@ -68,12 +68,6 @@ void CFPSController::MouseMove(float3 move)
 }
 
 
-void CFPSController::ScreenEdgeMove(float3 move)
-{
-	KeyMove(move);
-}
-
-
 void CFPSController::MouseWheelMove(float move)
 {
 	pos += (camera->GetUp() * move);
@@ -83,22 +77,24 @@ void CFPSController::MouseWheelMove(float move)
 
 void CFPSController::Update()
 {
-	if (!gu->fpsMode && clampPos) {
-		const float margin = 0.01f;
-		const float xMin = margin;
-		const float zMin = margin;
-		const float xMax = (float)(mapDims.mapx * SQUARE_SIZE) - margin;
-		const float zMax = (float)(mapDims.mapy * SQUARE_SIZE) - margin;
+	if (gu->fpsMode || !clampPos)
+		return;
 
-		pos.x = Clamp(pos.x, xMin, xMax);
-		pos.z = Clamp(pos.z, zMin, zMax);
+	const float margin = 0.01f;
+	const float xMin = margin;
+	const float zMin = margin;
+	const float xMax = (float)(mapDims.mapx * SQUARE_SIZE) - margin;
+	const float zMax = (float)(mapDims.mapy * SQUARE_SIZE) - margin;
 
-		const float gndHeight = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-		const float yMin = gndHeight + 5.0f;
-		const float yMax = 9000.0f;
-		pos.y = Clamp(pos.y, yMin, yMax);
-		oldHeight = pos.y - gndHeight;
-	}
+	pos.x = Clamp(pos.x, xMin, xMax);
+	pos.z = Clamp(pos.z, zMin, zMax);
+
+	const float gndHeight = CGround::GetHeightAboveWater(pos.x, pos.z, false);
+	const float yMin = gndHeight + 5.0f;
+	const float yMax = 9000.0f;
+
+	pos.y = Clamp(pos.y, yMin, yMax);
+	oldHeight = pos.y - gndHeight;
 }
 
 
@@ -106,9 +102,9 @@ void CFPSController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 
-	if (!gu->fpsMode) {
+	if (!gu->fpsMode)
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + oldHeight;
-	}
+
 	Update();
 }
 
@@ -117,12 +113,6 @@ void CFPSController::SetDir(const float3& newDir)
 {
 	dir = newDir;
 	Update();
-}
-
-
-float3 CFPSController::SwitchFrom() const
-{
-	return pos;
 }
 
 
