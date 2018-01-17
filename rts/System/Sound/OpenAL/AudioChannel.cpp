@@ -50,8 +50,8 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
-			StreamPlay(streamQueue.back(), false);
-			streamQueue.pop_back();
+			StreamPlay(streamQueue.front(), false);
+			streamQueue.pop_front();
 		} else {
 			curStreamSrc = nullptr;
 		}
