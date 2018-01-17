@@ -163,10 +163,8 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o, Shader::IProgra
 
 
 
-static inline void DrawFeatureColVol(const CFeature* f, Shader::IProgramObject* s, CMatrix44f m)
+static inline void DrawFeatureColVol(const CFeature* f, Shader::IProgramObject* s)
 {
-	const CollisionVolume* v = &f->collisionVolume;
-
 	if (f->IsInVoid())
 		return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
@@ -174,9 +172,11 @@ static inline void DrawFeatureColVol(const CFeature* f, Shader::IProgramObject* 
 	if (!camera->InView(f->pos, f->GetDrawRadius()))
 		return;
 
+	CMatrix44f m = f->GetTransformMatrixRef(false);
+	const CollisionVolume* v = f->GetCollisionVolume(nullptr);
 
 	{
-		DrawObjectMidAndAimPos(f, s, m *= f->GetTransformMatrixRef(false));
+		DrawObjectMidAndAimPos(f, s, m);
 
 		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
@@ -203,10 +203,8 @@ static inline void DrawFeatureColVol(const CFeature* f, Shader::IProgramObject* 
 	}
 }
 
-static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s, CMatrix44f m)
+static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 {
-	const CollisionVolume* v = &u->collisionVolume;
-
 	if (u->IsInVoid())
 		return;
 	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
@@ -214,13 +212,17 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s, CMa
 	if (!camera->InView(u->drawMidPos, u->GetDrawRadius()))
 		return;
 
+	CMatrix44f m;
+	const CollisionVolume* v = u->GetCollisionVolume(nullptr);
 
 	glDisable(GL_DEPTH_TEST);
 
 	for (const CWeapon* w: u->weapons) {
-		CMatrix44f wm = m;
+		if (!w->HaveTarget())
+			continue;
 
-		wm.Translate(w->aimFromPos);
+		m.LoadIdentity();
+		m.Translate(w->aimFromPos);
 
 		s->SetUniform4f(3, 1.0f, 1.0f, 0.0f, 0.4f);
 		s->SetUniformMatrix4fv(0, false, m);
@@ -228,33 +230,29 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s, CMa
 		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
 
 
-		wm.Translate(-w->aimFromPos);
-		wm.Translate(w->weaponMuzzlePos);
+		m.Translate(-w->aimFromPos);
+		m.Translate(w->weaponMuzzlePos);
 
-		s->SetUniform4f(3, 1.0f, 0.8f * w->HaveTarget(), 0.0f, 0.4f);
+		s->SetUniform4f(3, 1.0f, 0.0f, 1.0f, 0.4f);
 		s->SetUniformMatrix4fv(0, false, m);
 
 		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
 
-		wm.Translate(-w->weaponMuzzlePos);
+		m.Translate(-w->weaponMuzzlePos);
+		m.Translate(w->GetCurrentTargetPos());
 
 
-		if (w->HaveTarget()) {
-			wm.Translate(w->GetCurrentTargetPos());
+		s->SetUniform4f(3, 0.0f, 1.0f, 1.0f, 0.4f);
+		s->SetUniformMatrix4fv(0, false, m);
+		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
 
-			s->SetUniform4f(3, 1.0f, 0.8f, 0.0f, 0.4f);
-			s->SetUniformMatrix4fv(0, false, m);
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
-
-			wm.Translate(-w->GetCurrentTargetPos());
-		}
+		m.Translate(-w->GetCurrentTargetPos());
 	}
 
 	glEnable(GL_DEPTH_TEST);
 
-
 	{
-		DrawObjectMidAndAimPos(u, s, m *= u->GetTransformMatrix(false));
+		DrawObjectMidAndAimPos(u, s, m = u->GetTransformMatrix(false));
 
 		if (v->DefaultToPieceTree()) {
 			// draw only the piece volumes for less clutter
@@ -311,8 +309,6 @@ public:
 		unitIDs.reserve(32);
 		featureIDs.clear();
 		featureIDs.reserve(32);
-
-		mat.LoadIdentity();
 	}
 
 	void Init(Shader::GLSLProgramObject* shader) { ipo = shader; }
@@ -355,7 +351,7 @@ public:
 			if (!p.second)
 				continue;
 
-			DrawUnitColVol(u, ipo, mat);
+			DrawUnitColVol(u, ipo);
 		}
 
 		for (const CFeature* f: q.features) {
@@ -364,15 +360,13 @@ public:
 			if (!p.second)
 				continue;
 
-			DrawFeatureColVol(f, ipo, mat);
+			DrawFeatureColVol(f, ipo);
 		}
 	}
 
 private:
 	spring::unordered_set<int>    unitIDs;
 	spring::unordered_set<int> featureIDs;
-
-	CMatrix44f mat;
 
 	Shader::IProgramObject* ipo = nullptr;
 };
