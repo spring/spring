@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -30,7 +31,6 @@
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -376,75 +376,70 @@ void CWorldDrawer::DrawMiscObjects() const
 
 void CWorldDrawer::DrawBelowWaterOverlay() const
 {
-
+	#if 0
 	if (!globalRendering->drawWater)
 		return;
 	if (mapRendering->voidWater)
 		return;
-	if (camera->GetPos().y >= 0.0f)
-		return;
+
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	{
-		glEnableClientState(GL_VERTEX_ARRAY);
+		const float4 cpos = {camera->GetPos(), globalRendering->viewRange * 0.5f};
 
-		const float3& cpos = camera->GetPos();
-		const float vr = globalRendering->viewRange * 0.5f;
+		if (cpos.y >= 0.0f)
+			return;
 
 		glDepthMask(GL_FALSE);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
 
 		{
-			const float3 verts[] = {
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z - vr)
-			};
+			shader->Enable();
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
-			glVertexPointer(3, GL_FLOAT, 0, verts);
-			glDrawArrays(GL_QUADS, 0, 4);
+			buffer->SafeAppend({{cpos.x - cpos.w, 0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x - cpos.w, 0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x + cpos.w, 0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x + cpos.w, 0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->Submit(GL_QUADS);
 		}
 
 		{
-			const float3 verts[] = {
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr,  -vr, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z + vr),
-				float3(cpos.x - vr,  -vr, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr,  -vr, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z - vr),
-				float3(cpos.x + vr,  -vr, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr,  -vr, cpos.z - vr),
-			};
+			buffer->SafeAppend({{cpos.x - cpos.w,     0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x - cpos.w,  -cpos.w, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x - cpos.w,     0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x - cpos.w,  -cpos.w, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
 
-			glVertexPointer(3, GL_FLOAT, 0, verts);
-			glDrawArrays(GL_QUAD_STRIP, 0, 10);
+			buffer->SafeAppend({{cpos.x + cpos.w,     0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x + cpos.w,  -cpos.w, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x + cpos.w,     0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x + cpos.w,  -cpos.w, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+
+			buffer->SafeAppend({{cpos.x - cpos.w,     0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->SafeAppend({{cpos.x - cpos.w,  -cpos.w, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->Submit(GL_QUAD_STRIP);
 		}
 
 		glDepthMask(GL_TRUE);
-		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
 	{
+		glEnable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		// draw water-coloration quad in raw screenspace
-		ResetMVPMatrices();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
+		buffer->SafeAppend({{0.0f, 0.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+		buffer->SafeAppend({{1.0f, 0.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+		buffer->SafeAppend({{1.0f, 1.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+		buffer->SafeAppend({{0.0f, 1.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+		buffer->Submit(GL_QUADS);
 
-		const float3 verts[] = {
-			float3(0.0f, 0.0f, -1.0f),
-			float3(1.0f, 0.0f, -1.0f),
-			float3(1.0f, 1.0f, -1.0f),
-			float3(0.0f, 1.0f, -1.0f),
-		};
-
-		glVertexPointer(3, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_QUADS, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
+		shader->Disable();
 	}
+	#endif
 }
