@@ -3,7 +3,7 @@
 #ifndef AUDIO_CHANNEL_H
 #define AUDIO_CHANNEL_H
 
-#include <vector>
+#include <deque>
 #include <cstring>
 
 #include "System/Sound/IAudioChannel.h"
@@ -58,7 +58,7 @@ protected:
 
 private:
 	spring::unsynced_set<CSoundSource*> curSources;
-	std::vector<StreamQueueItem> streamQueue;
+	std::deque<StreamQueueItem> streamQueue;
 
 	CSoundSource* curStreamSrc;
 
