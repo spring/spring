@@ -120,23 +120,24 @@ void COverheadController::MouseWheelMove(float move)
 			float3 cpos = pos - dir * height;
 			float dif = -altZoomDist;
 
-			if ((height - dif) < 60.0f) {
+			if ((height - dif) < 60.0f)
 				dif = height - 60.0f;
-			}
-			if (KeyInput::GetKeyModState(KMOD_ALT)) {
-				// instazoom in to standard view
+
+			// instazoom in to standard view
+			if (KeyInput::GetKeyModState(KMOD_ALT))
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
-			}
 
 			float3 wantedPos = cpos + mouse->dir * dif;
-			float newHeight = CGround::LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
 
-			if (newHeight < 0.0f) {
+			float newHeight = CGround::LineGroundCol(wantedPos, wantedPos + dir * 15000.0f, false);
+			float yDirClamp = std::max(std::fabs(dir.y), 0.0001f) * std::copysign(1.0f, dir.y);
+
+			if (newHeight < 0.0f)
 				newHeight = height * (1.0f + move * 0.007f * shiftSpeed);
-			}
-			if ((wantedPos.y + (dir.y * newHeight)) < 0.0f) {
-				newHeight = -wantedPos.y / dir.y;
-			}
+
+			if ((wantedPos.y + (dir.y * newHeight)) < 0.0f)
+				newHeight = -wantedPos.y / yDirClamp;
+
 			if (newHeight < maxHeight) {
 				height = newHeight;
 				pos = wantedPos + dir * height;
@@ -145,10 +146,11 @@ void COverheadController::MouseWheelMove(float move)
 			// ZOOM OUT from mid screen
 			if (KeyInput::GetKeyModState(KMOD_ALT)) {
 				// instazoom out to maximum height
-				if (height < maxHeight*0.5f && changeAltHeight) {
+				if (height < maxHeight * 0.5f && changeAltHeight) {
 					oldAltHeight = height;
 					changeAltHeight = false;
 				}
+
 				height = maxHeight;
 				pos.x  = mapDims.mapx * SQUARE_SIZE * 0.5f;
 				pos.z  = mapDims.mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
@@ -174,9 +176,10 @@ void COverheadController::Update()
 	pos.x = Clamp(pos.x, 0.01f, mapDims.mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, mapDims.mapy * SQUARE_SIZE - 0.01f);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-	height = Clamp(height, 60.0f, maxHeight);
 
+	height = Clamp(height, 60.0f, maxHeight);
 	angle = Clamp(angle, 0.01f, math::HALFPI);
+
 	dir = float3(0.0f, -fastmath::cos(angle), flipped ? fastmath::sin(angle) : -fastmath::sin(angle));
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
