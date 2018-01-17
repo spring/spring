@@ -3886,6 +3886,73 @@ EXPORT(float) skirmishAiCallback_Unit_getHealth(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitHealth(unitId);
 }
 
+EXPORT(float) skirmishAiCallback_Unit_getParalyzeDamage(int skirmishAIId, int unitId) {
+	float result = -1.0f;
+
+	const CUnit* unit = getUnit(unitId);
+	if (unit == nullptr)
+		return result;
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+		return unit->paralyzeDamage;
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+	const int allyId = teamHandler->AllyTeam(teamId);
+
+	if (teamHandler->Ally(unit->allyteam, allyId)) {
+		result = unit->paralyzeDamage;
+	} else if (unit->losStatus[allyId] & LOS_INLOS) {
+		const UnitDef* unitDef = unit->unitDef;
+		const UnitDef* decoyDef = unitDef->decoyDef;
+
+		if (decoyDef == nullptr) {
+			result = unit->paralyzeDamage;
+		} else {
+			result = unit->paralyzeDamage * (decoyDef->health / unitDef->health);
+		}
+	}
+
+	return result;
+}
+
+EXPORT(float) skirmishAiCallback_Unit_getCaptureProgress(int skirmishAIId, int unitId) {
+	const float fail = -1.0f;
+
+	const CUnit* unit = getUnit(unitId);
+	if (unit == nullptr)
+		return fail;
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+		return unit->captureProgress;
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+	const int allyId = teamHandler->AllyTeam(teamId);
+
+	if (teamHandler->Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
+		return unit->captureProgress;
+
+	return fail;
+}
+
+EXPORT(float) skirmishAiCallback_Unit_getBuildProgress(int skirmishAIId, int unitId) {
+	const float fail = -1.0f;
+
+	const CUnit* unit = getUnit(unitId);
+	if (unit == nullptr)
+		return fail;
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+		return unit->buildProgress;
+
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+	const int allyId = teamHandler->AllyTeam(teamId);
+
+	if (teamHandler->Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
+		return unit->buildProgress;
+
+	return fail;
+}
+
 EXPORT(float) skirmishAiCallback_Unit_getSpeed(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitSpeed(unitId);
 }
@@ -5582,6 +5649,9 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_SupportedCommand_isDisabled = &skirmishAiCallback_Unit_SupportedCommand_isDisabled;
 	callback->Unit_SupportedCommand_getParams = &skirmishAiCallback_Unit_SupportedCommand_getParams;
 	callback->Unit_getHealth = &skirmishAiCallback_Unit_getHealth;
+	callback->Unit_getParalyzeDamage = &skirmishAiCallback_Unit_getParalyzeDamage;
+	callback->Unit_getCaptureProgress = &skirmishAiCallback_Unit_getCaptureProgress;
+	callback->Unit_getBuildProgress = &skirmishAiCallback_Unit_getBuildProgress;
 	callback->Unit_getSpeed = &skirmishAiCallback_Unit_getSpeed;
 	callback->Unit_getPower = &skirmishAiCallback_Unit_getPower;
 	callback->Unit_getResourceUse = &skirmishAiCallback_Unit_getResourceUse;

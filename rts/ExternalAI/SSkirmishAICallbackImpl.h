@@ -748,6 +748,12 @@ EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getParams(int
 
 EXPORT(float            ) skirmishAiCallback_Unit_getHealth(int skirmishAIId, int unitId);
 
+EXPORT(float            ) skirmishAiCallback_Unit_getParalyzeDamage(int skirmishAIId, int unitId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_getCaptureProgress(int skirmishAIId, int unitId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_getBuildProgress(int skirmishAIId, int unitId);
+
 EXPORT(float            ) skirmishAiCallback_Unit_getSpeed(int skirmishAIId, int unitId);
 
 EXPORT(float            ) skirmishAiCallback_Unit_getPower(int skirmishAIId, int unitId);

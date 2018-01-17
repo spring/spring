@@ -1302,6 +1302,12 @@ struct SSkirmishAICallback {
 	/** The unit's current health */
 	float             (CALLING_CONV *Unit_getHealth)(int skirmishAIId, int unitId);
 
+	float             (CALLING_CONV *Unit_getParalyzeDamage)(int skirmishAIId, int unitId);
+
+	float             (CALLING_CONV *Unit_getCaptureProgress)(int skirmishAIId, int unitId);
+
+	float             (CALLING_CONV *Unit_getBuildProgress)(int skirmishAIId, int unitId);
+
 	float             (CALLING_CONV *Unit_getSpeed)(int skirmishAIId, int unitId);
 
 	/**
