@@ -583,7 +583,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 		// This will only do something if the AI is created mid-game.
 		const CTeam* team = teamHandler->Team(aiWrapper->GetTeamId());
 
-		for (CUnit* u: team->units) {
+		for (const CUnit* u: unitHandler->GetUnitsByTeam(team->teamNum)) {
 			aiWrapper->UnitCreated(u->id, -1);
 			aiWrapper->UnitFinished(u->id);
 		}

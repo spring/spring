@@ -214,7 +214,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if (s == "AllMap") {
 		if (!gu->spectatingFullSelect) {
 			// team units
-			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units) {
+			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
 				selection.push_back(unit);
 			}
 		} else {
@@ -226,14 +226,14 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	} else if (s == "Visible") {
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units) {
+			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
 				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
 		} else {
 		  // all units in viewport
 			for (CUnit* unit: unitHandler->GetActiveUnits()) {
-				if (camera->InView(unit->midPos,unit->radius))
+				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
 		}
@@ -247,7 +247,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		ReadDelimiter(selectString);
 
 		const float maxDist = atof(ReadToken(selectString).c_str());
-		const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+		const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange, false);
 
 		float3 mp = camera->GetPos() + mouse->dir * dist;
 
@@ -256,7 +256,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 			// team units in mouse range
-			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
 				float3 up = unit->pos;
 				if (cylindrical)
 					up.y = 0.0f;

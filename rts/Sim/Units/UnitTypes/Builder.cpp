@@ -748,7 +748,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 	}
 
 	// at this point we know the builder is going to create a new unit, bail if at the limit
-	if ((limitReached = (unitHandler->unitsByDefs[team][buildInfo.def->id].size() >= buildInfo.def->maxThisUnit)))
+	if ((limitReached = (unitHandler->NumUnitsByTeamAndDef(team, buildInfo.def->id) >= buildInfo.def->maxThisUnit)))
 		return false;
 
 	if ((inWaitStance = !ScriptStartBuilding(buildInfo.pos, true)))

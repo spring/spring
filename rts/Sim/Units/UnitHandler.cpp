@@ -116,7 +116,7 @@ CUnitHandler::CUnitHandler() {
 	}
 
 	units.resize(maxUnits, nullptr);
-	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->unitDefs.size()));
+	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->NumUnitDefs() + 1));
 
 	unitMemPool.reserve(128);
 	// id's are used as indices, so they must lie in [0, units.size() - 1]
@@ -193,7 +193,11 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 	InsertActiveUnit(unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
-	spring::VectorInsertUnique(unitsByDefs[unit->team][unit->unitDef->id], unit, false);
+
+	// 0 is not a valid UnitDef id, so just use unitsByDefs[team][0]
+	// as an unsorted bin to store all units belonging to unit->team
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(unit->team,                 0), unit, false);
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(unit->team, unit->unitDef->id), unit, false);
 
 	maxUnitRadius = std::max(unit->radius, maxUnitRadius);
 	return true;
@@ -270,7 +274,9 @@ void CUnitHandler::DeleteUnit(CUnit* delUnit)
 
 	activeUnits.erase(it);
 
-	spring::VectorErase(unitsByDefs[delUnitTeam][delUnitType], delUnit);
+	spring::VectorErase(GetUnitsByTeamAndDef(delUnitTeam,           0), delUnit);
+	spring::VectorErase(GetUnitsByTeamAndDef(delUnitTeam, delUnitType), delUnit);
+
 	idPool.FreeID(delUnit->id, true);
 
 	units[delUnit->id] = nullptr;
@@ -410,9 +416,6 @@ bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return false;
 
-	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit)
-		return false;
-
-	return true;
+	return (NumUnitsByTeamAndDef(team, unitdef->id) < unitdef->maxThisUnit);
 }
 

@@ -45,7 +45,8 @@ public:
 
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }
 	unsigned int GetMaxUnits() const { return maxUnits; }
-	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
+	unsigned int GetNumUnits() const { return numUnits; }
+	bool AtUnitLimit() const { return (numUnits >= maxUnits); }
 
 	TeamStatistics& GetCurrentStats() { return statHistory.back(); }
 	const TeamStatistics& GetCurrentStats() const { return statHistory.back(); }
@@ -74,13 +75,11 @@ public:
 
 public:
 	int teamNum;
-	unsigned int maxUnits;
+	unsigned int numUnits; // number of units this team controls
+	unsigned int maxUnits; // maximum number of units this team can control
 
 	bool isDead;
 	bool gaia;
-	bool removeUnits;
-
-	std::vector<CUnit*> units;
 
 	SResourcePack res;
 	SResourcePack resStorage;

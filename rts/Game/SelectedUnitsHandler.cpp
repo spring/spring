@@ -300,7 +300,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 	}
 
 	for (; team <= lastTeam; team++) {
-		for (CUnit* u: teamHandler->Team(team)->units) {
+		for (CUnit* u: unitHandler->GetUnitsByTeamAndDef(team, 0)) {
 			const float4 vec(u->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) >= 0.0f)
@@ -360,8 +360,9 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			team = gu->myTeam;
 			lastTeam = gu->myTeam;
 		}
+
 		for (; team <= lastTeam; team++) {
-			for (CUnit* u: teamHandler->Team(team)->units) {
+			for (CUnit* u: unitHandler->GetUnitsByTeamAndDef(team, 0)) {
 				if (u->unitDef->id == unit->unitDef->id) {
 					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((u)->midPos)) {
 						AddUnit(u);

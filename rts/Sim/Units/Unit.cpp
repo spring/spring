@@ -1537,16 +1537,16 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (unitHandler->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit)
+	if (unitHandler->NumUnitsByTeamAndDef(newteam, unitDef->id) >= unitDef->maxThisUnit)
 		return false;
 
 	if (!eventHandler.AllowUnitTransfer(this, newteam, type == ChangeCaptured))
 		return false;
 
 	// do not allow old player to keep controlling the unit
-	if (fpsControlPlayer != NULL) {
+	if (fpsControlPlayer != nullptr) {
 		fpsControlPlayer->StopControllingUnit();
-		assert(fpsControlPlayer == NULL);
+		assert(fpsControlPlayer == nullptr);
 	}
 
 	const int oldteam = team;
@@ -1582,8 +1582,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
 
-	spring::VectorErase(unitHandler->unitsByDefs[oldteam][unitDef->id], this);
-	spring::VectorInsertUnique(unitHandler->unitsByDefs[newteam][unitDef->id], this, false);
+	spring::VectorErase(unitHandler->GetUnitsByTeamAndDef(oldteam, unitDef->id), this);
+	spring::VectorInsertUnique(unitHandler->GetUnitsByTeamAndDef(newteam, unitDef->id), this, false);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {
