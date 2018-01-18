@@ -27,18 +27,22 @@
 
 CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
+	CR_MEMBER(idPool),
+
 	CR_MEMBER(units),
 	CR_MEMBER(unitsByDefs),
 	CR_MEMBER(activeUnits),
-	CR_MEMBER(builderCAIs),
-	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
+
+	CR_MEMBER(builderCAIs),
 
 	CR_MEMBER(activeSlowUpdateUnit),
 	CR_MEMBER(activeUpdateUnit),
 
 	CR_MEMBER(maxUnits),
-	CR_MEMBER(maxUnitRadius)
+	CR_MEMBER(maxUnitRadius),
+
+	CR_MEMBER(inUpdateCall)
 ))
 
 
