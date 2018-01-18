@@ -214,7 +214,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if (s == "AllMap") {
 		if (!gu->spectatingFullSelect) {
 			// team units
-			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
+			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
 				selection.push_back(unit);
 			}
 		} else {
@@ -226,7 +226,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	} else if (s == "Visible") {
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
+			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
 				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
@@ -256,7 +256,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 			// team units in mouse range
-			for (CUnit* unit: unitHandler->GetUnitsByTeamAndDef(gu->myTeam, 0)) {
+			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
 				float3 up = unit->pos;
 				if (cylindrical)
 					up.y = 0.0f;
