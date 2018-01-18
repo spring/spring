@@ -64,6 +64,7 @@ public:
 
 private:
 	void InsertActiveUnit(CUnit* unit);
+	bool QueueDeleteUnit(CUnit* unit);
 	void QueueDeleteUnits();
 	void DeleteUnit(CUnit* unit);
 	void DeleteUnits();
