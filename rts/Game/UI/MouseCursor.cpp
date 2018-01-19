@@ -278,13 +278,9 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	glBindTexture(GL_TEXTURE_2D, frames[currentFrame].image.texture);
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, cursorMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-
-	buffer->SafeAppend({cursorMat * CURSOR_VERTS[0].p, CURSOR_VERTS[0].s, CURSOR_VERTS[0].t, CURSOR_VERTS[0].c});
-	buffer->SafeAppend({cursorMat * CURSOR_VERTS[1].p, CURSOR_VERTS[1].s, CURSOR_VERTS[1].t, CURSOR_VERTS[1].c});
-	buffer->SafeAppend({cursorMat * CURSOR_VERTS[2].p, CURSOR_VERTS[2].s, CURSOR_VERTS[2].t, CURSOR_VERTS[2].c});
-	buffer->SafeAppend({cursorMat * CURSOR_VERTS[3].p, CURSOR_VERTS[3].s, CURSOR_VERTS[3].t, CURSOR_VERTS[3].c});
+	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
 	buffer->Submit(GL_QUADS);
 	shader->Disable();
 }
