@@ -123,42 +123,49 @@ void CTeam::ClampStartPosInStartBox(float3* pos) const
 
 bool CTeam::UseMetal(float amount)
 {
-	if (res.metal >= amount) {
-		res.metal -= amount;
-		resExpense.metal += amount;
-		return true;
-	}
-	return false;
+	if (res.metal < amount)
+		return false;
+
+	res.metal -= amount;
+	resExpense.metal += amount;
+	return true;
 }
 
 bool CTeam::UseEnergy(float amount)
 {
-	if (res.energy >= amount) {
-		res.energy -= amount;
-		resExpense.energy += amount;
-		return true;
-	}
-	return false;
+	if (res.energy < amount)
+		return false;
+
+	res.energy -= amount;
+	resExpense.energy += amount;
+	return true;
 }
 
 
 
 void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res.metal += amount;
 	resIncome.metal += amount;
-	if (res.metal > resStorage.metal) {
-		resDelayedShare.metal += (res.metal - resStorage.metal);
-		res.metal = resStorage.metal;
-	}
+
+	if (res.metal <= resStorage.metal)
+		return;
+
+	resDelayedShare.metal += (res.metal - resStorage.metal);
+	res.metal = resStorage.metal;
 }
 
 void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res.energy += amount;
 	resIncome.energy += amount;
+
 	if (res.energy > resStorage.energy) {
 		resDelayedShare.energy += (res.energy - resStorage.energy);
 		res.energy = resStorage.energy;
@@ -174,26 +181,29 @@ bool CTeam::HaveResources(const SResourcePack& amount) const
 
 void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
 {
-	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
+	if (useIncomeMultiplier)
+		amount *= GetIncomeMultiplier();
+
 	res += amount;
 	resIncome += amount;
+
 	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
-		if (res[i] > resStorage[i]) {
-			resDelayedShare[i] += (res[i] - resStorage[i]);
-			res[i] = resStorage[i];
-		}
+		if (res[i] <= resStorage[i])
+			continue;
+
+		resDelayedShare[i] += (res[i] - resStorage[i]);
+		res[i] = resStorage[i];
 	}
 }
 
-
 bool CTeam::UseResources(const SResourcePack& amount)
 {
-	if (res >= amount) {
-		res -= amount;
-		resExpense += amount;
-		return true;
-	}
-	return false;
+	if (!(res >= amount))
+		return false;
+
+	res -= amount;
+	resExpense += amount;
+	return true;
 }
 
 
@@ -201,7 +211,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
 	CTeam* target = teamHandler->Team(toTeam);
 
-	if (!target) {
+	if (target == nullptr) {
 		LOG_L(L_WARNING, "Team %i does not exist, can't give units", toTeam);
 		return;
 	}
@@ -255,13 +265,11 @@ void CTeam::AddPlayer(int playerNum)
 {
 	// note: does it matter if this team was already dead?
 	// (besides needing to restore its original unit-limit)
-	if (isDead) {
+	if (isDead)
 		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
-	}
 
-	if (!HasLeader()) {
+	if (!HasLeader())
 		SetLeader(playerNum);
-	}
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
 	playerHandler->Player(playerNum)->SetControlledTeams();

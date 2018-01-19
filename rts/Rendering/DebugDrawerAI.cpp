@@ -241,7 +241,7 @@ void DebugDrawerAI::Graph::Clear() {
 void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramObject* shader) {
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	unsigned char color[4];
 
@@ -401,7 +401,7 @@ void DebugDrawerAI::TexSet::Draw(GL::RenderDataBufferT* buffer, Shader::IProgram
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 

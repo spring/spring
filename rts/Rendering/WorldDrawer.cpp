@@ -351,9 +351,8 @@ void CWorldDrawer::DrawMiscObjects() const
 		// note: duplicated in CMiniMap::DrawWorldStuff()
 		commandDrawer->DrawLuaQueuedUnitSetCommands();
 
-		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
+		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate())
 			selectedUnitsHandler.DrawCommands();
-		}
 	}
 
 	// either draw from here, or make {Dyn,Bump}Water use blending
@@ -367,9 +366,10 @@ void CWorldDrawer::DrawMiscObjects() const
 	mouse->DrawSelectionBox();
 	guihandler->DrawMapStuff(false);
 
-	if (globalRendering->drawMapMarks && !game->hideInterface) {
-		inMapDrawerView->Draw();
-	}
+	if (!globalRendering->drawMapMarks || game->hideInterface)
+		return;
+
+	inMapDrawerView->Draw();
 }
 
 

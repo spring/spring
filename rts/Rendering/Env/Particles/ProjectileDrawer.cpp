@@ -533,6 +533,14 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
 
+	#if 0
+	// TODO
+	if (FLYING_PIECE_VAO_ID == 0)
+		glGenVertexArrays(1, &FLYING_PIECE_VAO_ID);
+
+	glBindVertexArray(FLYING_PIECE_VAO_ID);
+	#endif
+
 	const FlyingPiece* last = nullptr;
 
 	for (const FlyingPiece& fp: container) {
@@ -549,8 +557,12 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 		last = &fp;
 	}
 
-	if (last != nullptr)
+	if (last != nullptr) {
+		#if 0
+		glBindVertexArray(0);
+		#endif
 		last->EndDraw();
+	}
 
 	glPopAttrib();
 }
@@ -832,7 +844,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	for (int a = 0; a < 4; ++a) {
 		if ((perlinBlend[a] += (time * speed)) > 1.0f) {

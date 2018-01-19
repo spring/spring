@@ -119,6 +119,7 @@ public:
 	static CMatrix44f ClipPerspProj(float aspect, float thfov, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(aspect, thfov, zn, zf)); }
 	static CMatrix44f ClipPerspProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * PerspProj(l, r, b, t, zn, zf)); }
 	static CMatrix44f ClipOrthoProj(float l, float r, float b, float t, float zn, float zf, float cc) { return (ClipControl(cc) * OrthoProj(l, r, b, t, zn, zf)); }
+	static CMatrix44f ClipOrthoProj01(float cc) { return (ClipControl(cc) * OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f)); }
 	static CMatrix44f ClipControl(float cc) {
 		CMatrix44f m;
 		m.Translate(FwdVector * 0.5f * cc);

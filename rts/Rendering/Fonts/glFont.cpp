@@ -159,7 +159,7 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 		shaderProg->Enable();
 		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		shaderProg->SetUniformMatrix2x2<const char*, float>("u_txcd_mat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		shaderProg->SetUniform("u_tex0", 0);
 		shaderProg->Disable();
@@ -1182,7 +1182,7 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
 	if (curShader == defShader) {
 		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		curShader->Disable();
 	} else {
 		curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));

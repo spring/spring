@@ -80,7 +80,7 @@ void CSkyBox::LoadBuffer()
 	shaderProg->Enable();
 	shaderProg->SetUniform("u_skycube_tex", 0);
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shaderProg->Disable();
 
 	vtxPtr = skyBox.MapElems<SkyBoxVertType>(true, true);

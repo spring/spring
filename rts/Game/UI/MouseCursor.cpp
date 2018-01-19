@@ -8,6 +8,7 @@
 #include "CommandColors.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
@@ -19,6 +20,16 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
+
+
+// FIXME: "array must be initialized with a brace-enclosed initializer" if constexpr
+static const VA_TYPE_TC CURSOR_VERTS[] = {
+	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+	VA_TYPE_TC{{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+	VA_TYPE_TC{{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+};
+
 
 CMouseCursor::CMouseCursor()
  : hwCursor(nullptr)
@@ -79,30 +90,32 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 {
 	assert(hwCursor != nullptr);
 
-	const std::string specFile = "anims/" + name + ".txt";
-	CFileHandler specFH(specFile);
-	if (!specFH.FileExists())
+	const std::string specFileName = "anims/" + name + ".txt";
+
+	if (!CFileHandler::FileExists(specFileName, SPRING_VFS_RAW_FIRST))
 		return false;
 
-	CSimpleParser parser(specFH);
+	CFileHandler specFile(specFileName);
+	CSimpleParser specParser(specFile);
+
 	int lastFrame = 123456789;
 
 	const std::array<std::pair<std::string, int>, 3> commandsMap = {{{"frame", 0}, {"hotspot", 1}, {"lastframe", 2}}};
 	      spring::unsynced_map<std::string, int>     imageIdxMap;
 
 	while (true) {
-		const std::string& line = parser.GetCleanLine();
+		const std::string& line = specParser.GetCleanLine();
 		if (line.empty())
 			break;
 
-		const std::vector<std::string>& words = parser.Tokenize(line, 2);
+		const std::vector<std::string>& words = specParser.Tokenize(line, 2);
 		const std::string& command = StringToLower(words[0]);
 
 		const auto cmdPred = [&](const std::pair<std::string, int>& p) { return (p.first == command); };
 		const auto cmdIter = std::find_if(commandsMap.cbegin(), commandsMap.cend(), cmdPred);
 
 		if (cmdIter == commandsMap.end()) {
-			LOG_L(L_ERROR, "[MouseCursor::%s] unknown command \"%s\" in file \"%s\"", __func__, command.c_str(), specFile.c_str());
+			LOG_L(L_ERROR, "[MouseCursor::%s] unknown command \"%s\" in file \"%s\"", __func__, command.c_str(), specFileName.c_str());
 			continue;
 		}
 
@@ -144,7 +157,7 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 				continue;
 			}
 
-			LOG_L(L_ERROR, "[MouseCursor::%s] unknown hotspot \"%s\" in file \"%s\"", __func__, words[1].c_str(), specFile.c_str());
+			LOG_L(L_ERROR, "[MouseCursor::%s] unknown hotspot \"%s\" in file \"%s\"", __func__, words[1].c_str(), specFileName.c_str());
 			continue;
 		}
 
@@ -206,11 +219,11 @@ bool CMouseCursor::LoadCursorImage(const std::string& name, ImageData& image)
 		b.SetTransparent(SColor(84, 84, 252));
 
 	if (hwCursor->NeedsYFlip()) {
-		//WINDOWS
+		// WINDOWS
 		b.ReverseYAxis();
 		hwCursor->PushImage(b.xsize, b.ysize, b.GetRawMem());
 	} else {
-		//X11
+		// X11
 		hwCursor->PushImage(b.xsize, b.ysize, b.GetRawMem());
 		b.ReverseYAxis();
 	}
@@ -248,37 +261,32 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 	scale = std::max(scale, -scale);
 
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
 	const FrameData& frame = frames[currentFrame];
-	const int xs = int(float(frame.image.xAlignedSize) * scale);
-	const int ys = int(float(frame.image.yAlignedSize) * scale);
+	const ImageData& image = frame.image;
 
-	//Center on hotspot
-	const int xp = int(float(x) - (float(xofs) * scale));
+	const int xs = int(float(image.xAlignedSize) * scale);
+	const int ys = int(float(image.yAlignedSize) * scale);
+
+	// center on hotspot
+	const int xp = int(float(x) -              (float(xofs) * scale));
 	const int yp = int(float(y) + (float(ys) - (float(yofs) * scale)));
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER, 0.01f);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
+	glBindTexture(GL_TEXTURE_2D, image.texture);
 
-	static constexpr float vertices[] = {0.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f};
-	static constexpr float texcoors[] = {0.0f, 0.0f,         0.0f, 1.0f,         1.0f, 1.0f,         1.0f, 0.0f      };
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoors);
-	glVertexPointer(3, GL_FLOAT, 0, vertices);
-
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
+	buffer->Submit(GL_QUADS);
+	shader->Disable();
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }

@@ -211,7 +211,7 @@ CBumpWater::CBumpWater()
 			blurShader->SetUniform1i(1, 1);
 			blurShader->SetUniform2i(2, 0, 0);
 			blurShader->SetUniformMatrix4x4<const char*, float>("uViewMat", false, CMatrix44f::Identity());
-			blurShader->SetUniformMatrix4x4<const char*, float>("uProjMat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+			blurShader->SetUniformMatrix4x4<const char*, float>("uProjMat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 			blurShader->Disable();
 			blurShader->Validate();
 
@@ -998,7 +998,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	glViewport(0, 0, normalTextureX, normalTextureY);
 

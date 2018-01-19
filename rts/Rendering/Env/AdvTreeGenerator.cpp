@@ -434,7 +434,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 	if (start == ZeroVector) {
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f));
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f, globalRendering->supportClipSpaceControl * 1.0f));
 	}
 
 	{

@@ -21,17 +21,13 @@
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Map/Ground.h"
-#include "Map/MapDamage.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Game/UI/Groups/Group.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -359,11 +355,13 @@ void CMouseHandler::MousePress(int x, int y, int button)
 void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft)
 {
 	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
-	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	if (dist < 0.0f)
+		dist = globalRendering->viewRange * 1.4f;
 	float3 gpos1 = pos1 + dir1 * dist;
 
 	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
-	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	if (dist < 0.0f)
+		dist = globalRendering->viewRange * 1.4f;
 	float3 gpos2 = pos2 + dir2 * dist;
 
 	const float3 cdir1 = (gpos1 - camera->GetPos()).ANormalize();
@@ -464,7 +462,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
+			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, false);
 			lastClicked = unit;
 
 			const bool selectType = (bp.lastRelease >= (gu->gameTime - doubleClickTime) && unit == _lastClicked);
@@ -493,54 +491,62 @@ void CMouseHandler::DrawSelectionBox()
 {
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(lastx, lasty);
 
-	if (activeReceiver)
+	if (activeReceiver != nullptr)
 		return;
 
 	if (gu->fpsMode)
 		return;
 
-	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
+	const ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-	if (bp.pressed && !bp.chorded && (bp.movement > 4) &&
-	   (!inMapDrawer || !inMapDrawer->IsDrawMode()))
-	{
-		float2 topright, btmleft;
-		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
+	if (!bp.pressed)
+		return;
+	if (bp.chorded)
+		return;
+	if (bp.movement <= 4)
+		return;
 
-		float3 dir1S = camera->GetRight() * topright.x;
-		float3 dir1U = camera->GetUp()    * topright.y;
-		float3 dir2S = camera->GetRight() * btmleft.x;
-		float3 dir2U = camera->GetUp()    * btmleft.y;
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
+		return;
 
-		glColor4fv(cmdColors.mouseBox);
+	float2 topRight;
+	float2 bttmLeft;
 
-		glPushAttrib(GL_ENABLE_BIT);
+	GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topRight, bttmLeft);
 
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_TEXTURE_2D);
+	const float3 xminVec = camera->GetRight() * bttmLeft.x;
+	const float3 xmaxVec = camera->GetRight() * topRight.x;
+	const float3 yminVec = camera->GetUp()    * bttmLeft.y;
+	const float3 ymaxVec = camera->GetUp()    * topRight.y;
 
-		glEnable(GL_BLEND);
-		glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
-		            (GLenum)cmdColors.MouseBoxBlendDst());
+	const VA_TYPE_C selBoxVerts[] = {
+		{camera->GetPos() + (ymaxVec + xmaxVec + camera->GetDir()) * 30.0f, cmdColors.mouseBox},
+		{camera->GetPos() + (yminVec + xmaxVec + camera->GetDir()) * 30.0f, cmdColors.mouseBox},
+		{camera->GetPos() + (yminVec + xminVec + camera->GetDir()) * 30.0f, cmdColors.mouseBox},
+		{camera->GetPos() + (ymaxVec + xminVec + camera->GetDir()) * 30.0f, cmdColors.mouseBox},
+	};
 
-		glLineWidth(cmdColors.MouseBoxLineWidth());
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-		float3 verts[] = {
-			camera->GetPos() + (dir1U + dir1S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir2U + dir1S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir2U + dir2S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir1U + dir2S + camera->GetDir()) * 30,
-		};
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
+	            (GLenum)cmdColors.MouseBoxBlendDst());
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_LINE_LOOP, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
+	glLineWidth(cmdColors.MouseBoxLineWidth());
 
-		glLineWidth(1.0f);
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	buffer->SafeAppend(&selBoxVerts[0], sizeof(selBoxVerts) / sizeof(selBoxVerts[0]));
+	buffer->Submit(GL_LINE_LOOP);
+	shader->Disable();
 
-		glPopAttrib();
-	}
+	glLineWidth(1.0f);
+
+	glPopAttrib();
 }
 
 
