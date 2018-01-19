@@ -53,7 +53,7 @@ public:
 	void BindTexture() const;                     // software mouse cursor
 	void BindHwCursor() const;                    // hardware mouse cursor
 
-	float4 CalcFrameMatrixParams(const float3& winPos) const;
+	float4 CalcFrameMatrixParams(const float3& winCoors, const float2& winScale) const;
 
 	int GetMaxSizeX() const { return xmaxsize; }
 	int GetMaxSizeY() const { return ymaxsize; }

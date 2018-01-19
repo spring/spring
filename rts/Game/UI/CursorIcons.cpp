@@ -95,8 +95,9 @@ void CCursorIcons::DrawCursors()
 			currentCursor->BindTexture();
 		}
 
-		const float3& winCoors = camera->CalcWindowCoordinates(icon.pos);
-		const float4& matParams = currentCursor->CalcFrameMatrixParams(winCoors);
+		const float3 winCoors = camera->CalcWindowCoordinates(icon.pos);
+		const float2 winScale = {cmdColors.QueueIconScale(), 1.0f};
+		const float4& matParams = currentCursor->CalcFrameMatrixParams(winCoors, winScale);
 
 		CMatrix44f cursorMat;
 		cursorMat.Translate(matParams.x, matParams.y, 0.0f);

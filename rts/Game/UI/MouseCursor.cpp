@@ -259,36 +259,34 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	if (frames.empty())
 		return;
 
-	scale = std::max(scale, -scale);
-
 	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	const FrameData& frame = frames[currentFrame];
-	const ImageData& image = frame.image;
 
-	const int xs = int(float(image.xAlignedSize) * scale);
-	const int ys = int(float(image.yAlignedSize) * scale);
+	const float3 winCoors = {x * 1.0f, (globalRendering->viewSizeY - y) * 1.0f, 0.0f};
+	const float2 winScale = {std::max(scale, -scale), -1.0f};
+	const float4& matParams = CalcFrameMatrixParams(winCoors, winScale);
 
-	// center on hotspot
-	const int xp = int(float(x) -              (float(xofs) * scale));
-	const int yp = int(float(y) + (float(ys) - (float(yofs) * scale)));
+	CMatrix44f cursorMat;
+	cursorMat.Translate(matParams.x, matParams.y, 0.0f);
+	cursorMat.Scale({matParams.z, matParams.w, 1.0f});
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAlphaFunc(GL_GREATER, 0.01f);
 
-	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
-	glBindTexture(GL_TEXTURE_2D, image.texture);
+	glBindTexture(GL_TEXTURE_2D, frames[currentFrame].image.texture);
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
+
+	buffer->SafeAppend({cursorMat * CURSOR_VERTS[0].p, CURSOR_VERTS[0].s, CURSOR_VERTS[0].t, CURSOR_VERTS[0].c});
+	buffer->SafeAppend({cursorMat * CURSOR_VERTS[1].p, CURSOR_VERTS[1].s, CURSOR_VERTS[1].t, CURSOR_VERTS[1].c});
+	buffer->SafeAppend({cursorMat * CURSOR_VERTS[2].p, CURSOR_VERTS[2].s, CURSOR_VERTS[2].t, CURSOR_VERTS[2].c});
+	buffer->SafeAppend({cursorMat * CURSOR_VERTS[3].p, CURSOR_VERTS[3].s, CURSOR_VERTS[3].t, CURSOR_VERTS[3].c});
 	buffer->Submit(GL_QUADS);
 	shader->Disable();
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
 
@@ -326,15 +324,15 @@ void CMouseCursor::BindHwCursor() const
 }
 
 
-float4 CMouseCursor::CalcFrameMatrixParams(const float3& winPos) const
+float4 CMouseCursor::CalcFrameMatrixParams(const float3& winCoors, const float2& winScale) const
 {
-	if (winPos.z > 1.0f || frames.empty())
+	if (winCoors.z > 1.0f || frames.empty())
 		return {0.0f, 0.0f, 0.0f, 0.0f};
 
 	const FrameData& frame = frames[currentFrame];
 	const ImageData& image = frame.image;
 
-	const float qis = cmdColors.QueueIconScale();
+	const float qis = winScale.x;
 	const float  xs = image.xAlignedSize * qis;
 	const float  ys = image.yAlignedSize * qis;
 
@@ -342,8 +340,8 @@ float4 CMouseCursor::CalcFrameMatrixParams(const float3& winPos) const
 	const float rys = ys * globalRendering->pixelY;
 
 	// center on hotspot
-	const float xp = (winPos.x -       (xofs * qis))  * globalRendering->pixelX;
-	const float yp = (winPos.y - (ys - (yofs * qis))) * globalRendering->pixelY;
+	const float xp = (winCoors.x -                    (xofs * qis )) * globalRendering->pixelX;
+	const float yp = (winCoors.y - winScale.y * (ys - (yofs * qis))) * globalRendering->pixelY;
 
 	return {xp, yp, rxs, rys};
 }
