@@ -133,7 +133,7 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		//! strip off the qualifiers
+		// strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;
 		bool clamped = false;
@@ -201,7 +201,7 @@ namespace CNamedTextures {
 			}
 		}
 
-		//! get the image
+		// get the image
 		CBitmap bitmap;
 		TexInfo texInfo;
 
@@ -222,7 +222,7 @@ namespace CNamedTextures {
 			const int xbits = count_bits_set(bitmap.xsize);
 			const int ybits = count_bits_set(bitmap.ysize);
 
-			//! make the texture
+			// make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (clamped) {
@@ -231,10 +231,10 @@ namespace CNamedTextures {
 			}
 
 			if (nearest || linear) {
-				if (border) {
-					GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				constexpr GLfloat white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+				if (border)
 					glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
-				}
 
 				if (nearest) {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -244,13 +244,9 @@ namespace CNamedTextures {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				}
 
-				//! Note: NPOTs + nearest filtering seems broken on ATIs
-				if ((xbits != 1 || ybits != 1) && (globalRendering->atiHacks && nearest))
-					bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
-
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 			} else {
-				//! MIPMAPPING (default)
+				// MIPMAPPING (default)
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
