@@ -30,7 +30,7 @@ public:
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	void Draw();
-	void DrawForReal(bool useGeom = true, bool updateTex = false);
+	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false);
 	void Update();
 
 	void ConfigCommand(const std::string& command);
@@ -82,7 +82,7 @@ protected:
 	void ProxyMousePress(int x, int y, int button);
 	void ProxyMouseRelease(int x, int y, int button);
 
-	bool RenderCachedTexture(bool useGeom);
+	bool RenderCachedTexture(bool useNormalizedCoors);
 	void DrawBackground() const;
 	void DrawUnitIcons() const;
 	void DrawUnitRanges() const;

@@ -223,24 +223,6 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 
 /******************************************************************************/
 
-void WorkaroundATIPointSizeBug()
-{
-	if (!globalRendering->atiHacks)
-		return;
-
-	GLboolean pointSpritesEnabled = false;
-	glGetBooleanv(GL_POINT_SPRITE, &pointSpritesEnabled);
-	if (pointSpritesEnabled)
-		return;
-
-	// force default params
-	constexpr GLfloat atten[3] = {1.0f, 0.0f, 0.0f};
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
-}
-
-/******************************************************************************/
-
 void glSaveTexture(const GLuint textureID, const char* filename)
 {
 	const GLenum target = GL_TEXTURE_2D;

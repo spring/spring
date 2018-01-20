@@ -1033,14 +1033,14 @@ void CMiniMap::Draw()
 }
 
 
-void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
+void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
 {
 	if (minimized)
 		return;
 
 	glActiveTexture(GL_TEXTURE0);
 
-	if ((!updateTex) && RenderCachedTexture(useGeom))
+	if ((!updateTex) && RenderCachedTexture(useNormalizedCoors))
 		return;
 
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
@@ -1052,7 +1052,7 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	glDisable(GL_TEXTURE_2D);
 	GL::MatrixMode(GL_MODELVIEW);
 
-	if (useGeom)
+	if (useNormalizedCoors)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
 	setSurfaceCircleFunc(DrawSurfaceCircle);
@@ -1076,7 +1076,7 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	DrawUnitIcons();
 	DrawWorldStuff();
 
-	if (useGeom)
+	if (useNormalizedCoors)
 		LeaveNormalizedCoors(true, false);
 
 	glPopAttrib();
@@ -1093,7 +1093,7 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	}
 
 	// reset GL state after Lua
-	LeaveNormalizedCoors(false, useGeom && globalRendering->dualScreenMode);
+	LeaveNormalizedCoors(false, useNormalizedCoors && globalRendering->dualScreenMode);
 
 	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
@@ -1407,7 +1407,7 @@ void CMiniMap::DrawNotes()
 
 
 
-bool CMiniMap::RenderCachedTexture(bool useGeom)
+bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 {
 	if (!renderToTexture)
 		return false;
@@ -1417,7 +1417,7 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
-	if (useGeom)
+	if (useNormalizedCoors)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1432,7 +1432,7 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	DrawCameraFrustumAndMouseSelection();
-	LeaveNormalizedCoors(useGeom, useGeom && globalRendering->dualScreenMode);
+	LeaveNormalizedCoors(useNormalizedCoors, useNormalizedCoors && globalRendering->dualScreenMode);
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1533,11 +1533,8 @@ void CMiniMap::DrawWorldStuff() const
 	GL::Scale(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
 
 	// draw the projectiles
-	if (drawProjectiles) {
-		glPointSize(1.0f);
-		WorkaroundATIPointSizeBug();
+	if (drawProjectiles)
 		projectileDrawer->DrawProjectilesMiniMap();
-	}
 
 	{
 		// draw the queued commands

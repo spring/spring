@@ -52,8 +52,6 @@ static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r
 #undef glFrustum
 
 
-void WorkaroundATIPointSizeBug();
-
 void glSaveTexture(const GLuint textureID, const char* filename);
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
