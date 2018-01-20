@@ -181,7 +181,7 @@ public:
 		int timeout;
 
 		float3 pos;
-		float rotation;
+		float rotation; // radians
 
 		bool drawAlpha;
 		bool drawBorder;
@@ -209,7 +209,6 @@ private:
 	void DrawOpaqueAIUnit(const TempDrawUnit& unit);
 	void DrawAlphaAIUnits(int modelType);
 	void DrawAlphaAIUnit(const TempDrawUnit& unit);
-	void DrawAlphaAIUnitBorder(const TempDrawUnit& unit);
 
 	void DrawGhostedBuildings(int modelType);
 

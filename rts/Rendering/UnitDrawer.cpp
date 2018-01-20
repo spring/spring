@@ -459,7 +459,7 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 {
 	CMatrix44f mat;
 	mat.Translate(unit.pos);
-	mat.RotateY(unit.rotation * math::RAD_TO_DEG);
+	mat.RotateY(unit.rotation);
 
 	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
 
@@ -816,16 +816,9 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		if (model->type != modelType)
 			return;
 
-		// ghosted enemy units
-		if (losStatus & LOS_CONTRADAR) {
-			glColor4f(0.9f, 0.9f, 0.9f, alphaValues.z);
-		} else {
-			glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
-		}
-
 		CMatrix44f mat;
 		mat.Translate(unit->drawPos);
-		mat.RotateY(unit->buildFacing * 90.0f);
+		mat.RotateY(unit->buildFacing * 90.0f * math::DEG_TO_RAD);
 
 		// the units in liveGhostedBuildings[modelType] are not
 		// sorted by textureType, but we cannot merge them with
@@ -833,11 +826,10 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		// not actually cloaked
 		BindModelTypeTexture(modelType, model->textureType);
 
+		// SetAlphaMasks(unit->team, (losStatus & LOS_CONTRADAR)? {0.9f, 0.9f, 0.9f}: {0.6f, 0.6f, 0.6f});
 		SetTeamColour(unit->team, float2((losStatus & LOS_CONTRADAR)? alphaValues.z: alphaValues.y, 1.0f));
 		state->SetMatrices(mat, model->GetPieceMatrices());
 		model->Draw();
-
-		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 		return;
 	}
 
@@ -854,7 +846,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 void CUnitDrawer::DrawAlphaAIUnits(int modelType)
 {
-	std::vector<TempDrawUnit>& tmpAlphaUnits = tempAlphaUnits[modelType];
+	const std::vector<TempDrawUnit>& tmpAlphaUnits = tempAlphaUnits[modelType];
 
 	// NOTE: not type-sorted
 	for (const TempDrawUnit& unit: tmpAlphaUnits) {
@@ -862,7 +854,6 @@ void CUnitDrawer::DrawAlphaAIUnits(int modelType)
 			continue;
 
 		DrawAlphaAIUnit(unit);
-		DrawAlphaAIUnitBorder(unit);
 	}
 }
 
@@ -870,7 +861,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 {
 	CMatrix44f mat;
 	mat.Translate(unit.pos);
-	mat.RotateY(unit.rotation * math::RAD_TO_DEG);
+	mat.RotateY(unit.rotation);
 
 	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
 
@@ -885,31 +876,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 	mdl->Draw();
 }
 
-void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
-{
-	if (!unit.drawBorder)
-		return;
 
-	SetTeamColour(unit.team, float2(alphaValues.w, 1.0f));
-
-	const BuildInfo buildInfo(unit.unitDef, unit.pos, unit.facing);
-	const float3 buildPos = CGameHelper::Pos2BuildPos(buildInfo, false);
-
-	const float xsize = buildInfo.GetXSize() * (SQUARE_SIZE >> 1);
-	const float zsize = buildInfo.GetZSize() * (SQUARE_SIZE >> 1);
-
-	glColor4f(0.2f, 1, 0.2f, alphaValues.w);
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINE_STRIP);
-		glVertexf3(buildPos + float3( xsize, 1.0f,  zsize));
-		glVertexf3(buildPos + float3(-xsize, 1.0f,  zsize));
-		glVertexf3(buildPos + float3(-xsize, 1.0f, -zsize));
-		glVertexf3(buildPos + float3( xsize, 1.0f, -zsize));
-		glVertexf3(buildPos + float3( xsize, 1.0f,  zsize));
-	glEnd();
-	glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
-	glEnable(GL_TEXTURE_2D);
-}
 
 void CUnitDrawer::UpdateGhostedBuildings()
 {
@@ -947,8 +914,6 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	const IUnitDrawerState* state = GetDrawerState(DRAWER_STATE_SEL);
 
-	glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
-
 	// buildings that died while ghosted
 	for (GhostSolidObject* gso: deadGhostedBuildings) {
 		const S3DModel* model = gso->model;
@@ -958,9 +923,10 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 		CMatrix44f mat;
 		mat.Translate(gso->pos);
-		mat.RotateY(gso->facing * 90.0f);
+		mat.RotateY(gso->facing * 90.0f * math::DEG_TO_RAD);
 
 		BindModelTypeTexture(modelType, gso->model->textureType);
+		// SetAlphaMasks(gso->team, {0.6f, 0.6f, 0.6f});
 		SetTeamColour(gso->team, float2(alphaValues.y, 1.0f));
 		state->SetMatrices(mat, model->GetPieceMatrices());
 		model->Draw();
