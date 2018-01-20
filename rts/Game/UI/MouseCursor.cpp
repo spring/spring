@@ -262,9 +262,8 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-
 	const float3 winCoors = {x * 1.0f, (globalRendering->viewSizeY - y) * 1.0f, 0.0f};
-	const float2 winScale = {std::max(scale, -scale), -1.0f};
+	const float2 winScale = {std::max(scale, -scale), 1.0f};
 	const float4& matParams = CalcFrameMatrixParams(winCoors, winScale);
 
 	CMatrix44f cursorMat;
