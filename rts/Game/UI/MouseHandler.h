@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
@@ -75,8 +76,8 @@ private:
 
 	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
 
-	void DrawScrollCursor();
-	void DrawFPSCursor();
+	void DrawScrollCursor(GL::RenderDataBufferC* buffer);
+	void DrawFPSCursor(GL::RenderDataBufferC* buffer);
 
 
 public:

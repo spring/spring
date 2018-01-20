@@ -756,90 +756,80 @@ void CMouseHandler::UpdateCursors()
 	}
 }
 
-void CMouseHandler::DrawScrollCursor()
+
+void CMouseHandler::DrawScrollCursor(GL::RenderDataBufferC* buffer)
 {
-	const float scaleL = math::fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleT = math::fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
-	const float scaleR = math::fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleB = math::fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleL = math::fabs(std::min(0.0f, scrollx)) * crossMoveScale + 1.0f;
+	const float scaleT = math::fabs(std::min(0.0f, scrolly)) * crossMoveScale + 1.0f;
+	const float scaleR = math::fabs(std::max(0.0f, scrollx)) * crossMoveScale + 1.0f;
+	const float scaleB = math::fabs(std::max(0.0f, scrolly)) * crossMoveScale + 1.0f;
 
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_TRIANGLES);
-		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
-			glVertex2f(   0.f * scaleT,  1.00f * scaleT);
-			glVertex2f( 0.33f * scaleT,  0.66f * scaleT);
-			glVertex2f(-0.33f * scaleT,  0.66f * scaleT);
+	buffer->SafeAppend({{ 0.00f * scaleT,  1.00f * scaleT, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.33f * scaleT,  0.66f * scaleT, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{-0.33f * scaleT,  0.66f * scaleT, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-			glVertex2f(   0.f * scaleB, -1.00f * scaleB);
-			glVertex2f( 0.33f * scaleB, -0.66f * scaleB);
-			glVertex2f(-0.33f * scaleB, -0.66f * scaleB);
+	buffer->SafeAppend({{ 0.00f * scaleB, -1.00f * scaleB, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.33f * scaleB, -0.66f * scaleB, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{-0.33f * scaleB, -0.66f * scaleB, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-			glVertex2f(-1.00f * scaleL,    0.f * scaleL);
-			glVertex2f(-0.66f * scaleL,  0.33f * scaleL);
-			glVertex2f(-0.66f * scaleL, -0.33f * scaleL);
+	buffer->SafeAppend({{-1.00f * scaleL,  0.00f * scaleL, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{-0.66f * scaleL,  0.33f * scaleL, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{-0.66f * scaleL, -0.33f * scaleL, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-			glVertex2f( 1.00f * scaleR,    0.f * scaleR);
-			glVertex2f( 0.66f * scaleR,  0.33f * scaleR);
-			glVertex2f( 0.66f * scaleR, -0.33f * scaleR);
+	buffer->SafeAppend({{ 1.00f * scaleR,  0.00f * scaleR, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.66f * scaleR,  0.33f * scaleR, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.66f * scaleR, -0.33f * scaleR, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
-			glVertex2f(-0.33f * scaleT,  0.66f * scaleT);
-			glVertex2f( 0.33f * scaleT,  0.66f * scaleT);
-		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
-			glVertex2f(   0.f,    0.f);
+	buffer->SafeAppend({{-0.33f * scaleT,  0.66f * scaleT, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.33f * scaleT,  0.66f * scaleT, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
-			glVertex2f(-0.33f * scaleB, -0.66f * scaleB);
-			glVertex2f( 0.33f * scaleB, -0.66f * scaleB);
-		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
-			glVertex2f(   0.f,    0.f);
+	buffer->SafeAppend({{ 0.00f         ,  0.00f         , 0.0f}, {0.2f, 0.2f, 0.2f,       0.0f}});
 
-		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
-			glVertex2f(-0.66f * scaleL,  0.33f * scaleL);
-			glVertex2f(-0.66f * scaleL, -0.33f * scaleL);
-		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
-			glVertex2f(   0.f,    0.f);
+	buffer->SafeAppend({{-0.33f * scaleB, -0.66f * scaleB, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.33f * scaleB, -0.66f * scaleB, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
-			glVertex2f( 0.66f * scaleR, -0.33f * scaleR);
-			glVertex2f( 0.66f * scaleR,  0.33f * scaleR);
-		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
-			glVertex2f(   0.f,    0.f);
-	glEnd();
+	buffer->SafeAppend({{ 0.00f         ,  0.00f,          0.0f}, {0.2f, 0.2f, 0.2f,       0.0f}});
 
-	WorkaroundATIPointSizeBug();
-	glPointSize(crossSize * 0.6f);
-	glBegin(GL_POINTS);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.2f * crossAlpha);
-		glVertex2f(0.f, 0.f);
-	glEnd();
+	buffer->SafeAppend({{-0.66f * scaleL,  0.33f * scaleL, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{-0.66f * scaleL, -0.33f * scaleL, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glPointSize(1.0f);
+	buffer->SafeAppend({{ 0.00f         ,  0.00f         , 0.0f}, {0.2f, 0.2f, 0.2f,       0.0f}});
+
+	buffer->SafeAppend({{ 0.66f * scaleR, -0.33f * scaleR, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+	buffer->SafeAppend({{ 0.66f * scaleR,  0.33f * scaleR, 0.0f}, {1.0f, 1.0f, 1.0f, crossAlpha}});
+
+	buffer->SafeAppend({{ 0.00f         ,  0.00f         , 0.0f}, {0.2f, 0.2f, 0.2f,       0.0f}});
+
+
+	// center dot
+	buffer->SafeAppend({{-crossSize * 0.03f,  crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+	buffer->SafeAppend({{-crossSize * 0.03f, -crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+	buffer->SafeAppend({{ crossSize * 0.03f, -crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+
+	buffer->SafeAppend({{ crossSize * 0.03f, -crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+	buffer->SafeAppend({{ crossSize * 0.03f,  crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+	buffer->SafeAppend({{-crossSize * 0.03f,  crossSize * 0.03f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.2f * crossAlpha}});
+
+	buffer->Submit(GL_TRIANGLES);
 }
 
 
-void CMouseHandler::DrawFPSCursor()
+void CMouseHandler::DrawFPSCursor(GL::RenderDataBufferC* buffer)
 {
-	glDisable(GL_TEXTURE_2D);
+	constexpr int stepNumHalf = 2;
 
-	const float wingHalf = math::PI / 9.0f;
-	const int stepNumHalf = 2;
+	const float wingHalf = math::PI * 0.111111f;
 	const float step = wingHalf / stepNumHalf;
 
-	glBegin(GL_TRIANGLES);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-
-		for (float angle = 0.0f; angle < math::TWOPI; angle += math::TWOPI / 3.f) {
-			for (int i = -stepNumHalf; i < stepNumHalf; i++) {
-				glVertex2f(0.1f * fastmath::sin(angle),                0.1f * fastmath::cos(angle));
-				glVertex2f(0.8f * fastmath::sin(angle +     i * step), 0.8f * fastmath::cos(angle +     i * step));
-				glVertex2f(0.8f * fastmath::sin(angle + (i+1) * step), 0.8f * fastmath::cos(angle + (i+1) * step));
-			}
+	for (float angle = 0.0f; angle < math::TWOPI; angle += (math::TWOPI * 0.333333f)) {
+		for (int i = -stepNumHalf; i < stepNumHalf; i++) {
+			buffer->SafeAppend({{0.1f * fastmath::sin(angle),                  0.1f * fastmath::cos(angle                 ), 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			buffer->SafeAppend({{0.8f * fastmath::sin(angle + (i    ) * step), 0.8f * fastmath::cos(angle + (i    ) * step), 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
+			buffer->SafeAppend({{0.8f * fastmath::sin(angle + (i + 1) * step), 0.8f * fastmath::cos(angle + (i + 1) * step), 0.0f}, {1.0f, 1.0f, 1.0f, 0.5f}});
 		}
-	glEnd();
+	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	buffer->Submit(GL_TRIANGLES);
 }
 
 
@@ -851,24 +841,31 @@ void CMouseHandler::DrawCursor()
 		guihandler->DrawCentroidCursor();
 
 	if (locked) {
+		// draw procedural cursor if center-locked
 		if (crossSize > 0.0f) {
 			const float xscale = crossSize * globalRendering->pixelX;
 			const float yscale = crossSize * globalRendering->pixelY;
 
-			GL::PushMatrix();
-			GL::Translate(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);
-			GL::Scale(xscale, yscale, 1.f);
+			CMatrix44f cursorMat;
+			cursorMat.Translate(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.0f);
+			cursorMat.Scale({xscale, yscale, 1.0f});
+
+			GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+			Shader::IProgramObject* shader = buffer->GetShader();
+
+			shader->Enable();
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, cursorMat);
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 			if (gu->fpsMode) {
-				DrawFPSCursor();
+				DrawFPSCursor(buffer);
 			} else {
-				DrawScrollCursor();
+				DrawScrollCursor(buffer);
 			}
 
-			GL::PopMatrix();
+			shader->Disable();
 		}
 
-		glEnable(GL_TEXTURE_2D);
 		return;
 	}
 
