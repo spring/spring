@@ -1,9 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "GeometryBuffer.h"
+#include "RenderDataBuffer.hpp"
 #include "Rendering/GlobalRendering.h"
+
 #include <algorithm>
-#include <cstring> //memset
+#include <cstring> // memset
 
 void GL::GeometryBuffer::Init(bool ctor) {
 	// if dead, this must be a non-ctor reload
@@ -79,27 +81,25 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 }
 
 void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const {
-	GL::PushMatrix();
-	GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-	GL::LoadIdentity();
+	GL::RenderDataBuffer2DT* buffer = GL::GetRenderBuffer2DT();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texID);
-	glBegin(GL_QUADS);
-	glTexCoord2f(texMins.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMins.y);
-	glTexCoord2f(texMaxs.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMins.y);
-	glTexCoord2f(texMaxs.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMaxs.y);
-	glTexCoord2f(texMins.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMaxs.y);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
 
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+
+	buffer->SafeAppend({texMins.x, texMins.y,  texMins.x, texMins.y});
+	buffer->SafeAppend({texMaxs.x, texMins.y,  texMaxs.x, texMins.y});
+	buffer->SafeAppend({texMaxs.x, texMaxs.y,  texMaxs.x, texMaxs.y});
+	buffer->SafeAppend({texMins.x, texMaxs.y,  texMins.x, texMaxs.y});
+
+	buffer->Submit(GL_QUADS);
+	shader->Disable();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
