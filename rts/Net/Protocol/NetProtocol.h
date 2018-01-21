@@ -8,7 +8,9 @@
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
 
+class ClientSetup;
 class CDemoRecorder;
+
 namespace netcode
 {
 	class RawPacket;
@@ -32,7 +34,7 @@ public:
 	/**
 	 * @brief Initialise in client mode (remote server)
 	*/
-	void InitClient(const char* server, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
+	void InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion);
 
 	/**
 	 * @brief Initialise in client mode (local server)

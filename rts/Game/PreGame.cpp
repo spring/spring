@@ -48,6 +48,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Misc.h"
 #include "System/Sync/SyncedPrimitiveBase.h"
 #include "lib/luasocket/src/restrictions.h"
 #ifdef SYNCDEBUG
@@ -84,7 +85,7 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 		LOG("[%s] client using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		// don't allow luasocket to connect to the host
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
-		clientNet->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
+		clientNet->InitClient(clientSetup, SpringVersion::GetFull() + " [" + Platform::GetPlatformStr() + "]");
 	} else {
 		LOG("[%s] server using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		clientNet->InitLocalClient();
@@ -249,7 +250,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startGameData->SetSetupText(startGameSetup->setupText);
 	gameServer = new CGameServer(clientSetup, startGameData, startGameSetup);
 
-	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull() + " [" + Platform::GetPlatformStr() + "]");
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -437,7 +438,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	good_fpu_control_registers("before CGameServer creation");
 
 	gameServer = new CGameServer(clientSetup, gameData, demoGameSetup);
-	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull() + " [" + Platform::GetPlatformStr() + "]");
 
 	good_fpu_control_registers("after CGameServer creation");
 	LOG("[PreGame::%s] started GameServer", __func__);

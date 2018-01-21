@@ -361,7 +361,7 @@ namespace Platform
 	#endif
 	}
 
-	std::string GetOSFamily()
+	std::string GetOSFamilyStr()
 	{
 		#if defined(WIN32)
 		return "Windows";
@@ -382,6 +382,11 @@ namespace Platform
 			return "64-bit (native)";
 
 		return (std::string("32-bit ") + (Is32BitEmulation()? "emulated": "native"));
+	}
+
+	std::string GetPlatformStr()
+	{
+		return (Platform::GetOSFamilyStr() + " " + Platform::GetWordSizeStr());
 	}
 
 
