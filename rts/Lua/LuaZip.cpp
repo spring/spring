@@ -415,7 +415,7 @@ int LuaZipFileReader::meta_read(lua_State* L)
 		success = 1;
 		for (n = first; nargs-- && success; n++) {
 			if (lua_type(L, n) == LUA_TNUMBER) {
-				size_t l = (size_t) lua_tointeger(L, n);
+				size_t l = (size_t) lua_toint(L, n);
 				success = (l == 0) ? test_eof(L, f) : read_chars(L, f, l);
 			} else {
 				const char *p = lua_tostring(L, n);

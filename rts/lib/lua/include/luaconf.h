@@ -140,7 +140,8 @@
 ** CHANGE that if ptrdiff_t is not adequate on your machine. (On most
 ** machines, ptrdiff_t gives a good choice between int or long.)
 */
-#define LUA_INTEGER	ptrdiff_t
+//SPRING we must use the same size for 64 and 32 bit. 32 bit int should be enough
+#define LUA_INTEGER	int
 
 
 /*
