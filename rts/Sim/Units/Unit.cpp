@@ -1587,7 +1587,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
 
+	spring::VectorErase(unitHandler->GetUnitsByTeamAndDef(oldteam, 0), this);
 	spring::VectorErase(unitHandler->GetUnitsByTeamAndDef(oldteam, unitDef->id), this);
+	spring::VectorInsertUnique(unitHandler->GetUnitsByTeamAndDef(newteam, 0), this, false);
 	spring::VectorInsertUnique(unitHandler->GetUnitsByTeamAndDef(newteam, unitDef->id), this, false);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
