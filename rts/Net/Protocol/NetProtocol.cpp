@@ -9,6 +9,7 @@
 
 #include "NetProtocol.h"
 
+#include "Game/ClientSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UnpackPacket.h"
@@ -40,17 +41,17 @@ CNetProtocol::~CNetProtocol()
 }
 
 
-void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
+void CNetProtocol::InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion)
 {
-	userName = myName;
-	userPasswd = myPasswd;
+	userName = clientSetup->myPlayerName;
+	userPasswd = clientSetup->myPasswd;
 
-	serverConn.reset(new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum));
+	serverConn.reset(new netcode::UDPConnection(configHandler->GetInt("SourcePort"), clientSetup->hostIP, clientSetup->hostPort));
 	serverConn->Unmute();
-	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor));
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, clientVersion, globalConfig->networkLossFactor));
 	serverConn->Flush(true);
 
-	LOG("[NetProto::%s] connecting to IP %s on port %i using name %s", __func__, server_addr, portnum, myName.c_str());
+	LOG("[NetProto::%s] connecting to IP %s on port %i using name %s", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort, userName.c_str());
 }
 
 void CNetProtocol::InitLocalClient()

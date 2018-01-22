@@ -80,8 +80,9 @@ std::string GetModuleFile(std::string moduleName = "");
 std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
-std::string GetOSFamily();
+std::string GetOSFamilyStr();
 std::string GetWordSizeStr();
+std::string GetPlatformStr(); // osFamilyStr + wordSizeStr
 
 
 bool Is64Bit();

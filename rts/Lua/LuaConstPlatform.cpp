@@ -35,7 +35,7 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedBool(L, "glSupportFragDepthLayout" , globalRendering->supportFragDepthLayout);
 
 	LuaPushNamedString(L, "osName", Platform::GetOS());
-	LuaPushNamedString(L, "osFamily", Platform::GetOSFamily());
+	LuaPushNamedString(L, "osFamily", Platform::GetOSFamilyStr());
 
 	return true;
 }
