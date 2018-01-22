@@ -1220,9 +1220,10 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_checkfloat(L, 4)
 	);
 	const int facing = LuaUtils::ParseFacing(L, __func__, 5);
+	const int teamID = luaL_optint(L, 6, CtrlTeam(L));
+
 	const bool beingBuilt = luaL_optboolean(L, 7, false);
 	const bool flattenGround = luaL_optboolean(L, 8, true);
-	int teamID = luaL_optint(L, 6, CtrlTeam(L));
 
 	if (!teamHandler->IsValidTeam(teamID)) {
 		luaL_error(L, "[%s()]: invalid team number (%d)", __func__, teamID);
@@ -1276,8 +1277,9 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 
-	bool selfd = luaL_optboolean(L, 2, false);
-	bool reclaimed = luaL_optboolean(L, 3, false);
+	const bool selfDestr = luaL_optboolean(L, 2, false);
+	const bool reclaimed = luaL_optboolean(L, 3, false);
+	const bool recycleID = luaL_optboolean(L, 5, false);
 
 	CUnit* attacker = nullptr;
 	if (args >= 4)
@@ -1287,8 +1289,13 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
 
 	inDestroyUnit = true;
+
 	ASSERT_SYNCED(unit->id);
-	unit->ForcedKillUnit(attacker, selfd, reclaimed);
+	unit->ForcedKillUnit(attacker, selfDestr, reclaimed);
+
+	if (recycleID)
+		unitHandler->GarbageCollectUnit(unit->id);
+
 	inDestroyUnit = false;
 
 	return 0;

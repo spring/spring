@@ -59,45 +59,59 @@ unsigned int SimObjectIDPool::ExtractID() {
 	// and FeatureHandler have safeguards
 	assert(!IsEmpty());
 
-	const IDMap::iterator it = liveIndexToIdentMap.begin();
-	const unsigned int id = it->second;
+	const auto it = liveIndexToIdentMap.begin();
+	const unsigned int uid = it->second;
 
 	liveIndexToIdentMap.erase(it);
 
-	if (IsEmpty()) {
+	if (IsEmpty())
 		RecycleIDs();
-	}
 
-	return id;
+	return uid;
 }
 
-void SimObjectIDPool::ReserveID(unsigned int id) {
+void SimObjectIDPool::ReserveID(unsigned int uid) {
 	// reserve a chosen ID from the pool
-	assert(HasID(id));
+	assert(HasID(uid));
 	assert(!IsEmpty());
 
-	const IDMap::iterator it = liveIdentToIndexMap.find(id);
+	const auto it = liveIdentToIndexMap.find(uid);
 	const unsigned int idx = it->second;
 
 	liveIndexToIdentMap.erase(idx);
 
-	if (IsEmpty()) {
-		RecycleIDs();
-	}
+	if (!IsEmpty())
+		return;
+
+	RecycleIDs();
 }
 
-void SimObjectIDPool::FreeID(unsigned int id, bool delayed) {
+void SimObjectIDPool::FreeID(unsigned int uid, bool delayed) {
 	// put an ID back into the pool either immediately
 	// or after all remaining free ID's run out (which
 	// is better iff the object count never gets close
 	// to the maximum)
-	assert(!HasID(id));
+	assert(!HasID(uid));
 
 	if (delayed) {
-		tempIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[id], id));
+		tempIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[uid], uid));
 	} else {
-		liveIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[id], id));
+		liveIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[uid], uid));
 	}
+}
+
+bool SimObjectIDPool::RecycleID(unsigned int uid) {
+	assert(liveIdentToIndexMap.find(uid) != liveIdentToIndexMap.end());
+
+	const unsigned int idx = liveIdentToIndexMap[uid];
+	const auto it = tempIndexToIdentMap.find(idx);
+
+	if (it == tempIndexToIdentMap.end())
+		return false;
+
+	tempIndexToIdentMap.erase(idx);
+	liveIndexToIdentMap.insert(IDPair(idx, uid));
+	return true;
 }
 
 void SimObjectIDPool::RecycleIDs() {
@@ -106,11 +120,12 @@ void SimObjectIDPool::RecycleIDs() {
 	tempIndexToIdentMap.clear();
 }
 
-bool SimObjectIDPool::HasID(unsigned int id) const {
-	assert(liveIdentToIndexMap.find(id) != liveIdentToIndexMap.end());
 
-	// check if given ID is available in this pool
-	const IDMap::const_iterator it = liveIdentToIndexMap.find(id);
+bool SimObjectIDPool::HasID(unsigned int uid) const {
+	assert(liveIdentToIndexMap.find(uid) != liveIdentToIndexMap.end());
+
+	// check if given ID is available (to be assigned) in this pool
+	const auto it = liveIdentToIndexMap.find(uid);
 	const unsigned int idx = it->second;
 
 	return (liveIndexToIdentMap.find(idx) != liveIndexToIdentMap.end());
