@@ -216,7 +216,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 	}
 
 	// make a copy of unitsByDef[teamNum][0] since ChangeTeam modifies it
-	const auto teamUnits = unitHandler->GetUnitsByTeamAndDef(teamNum, 0);
+	const auto teamUnits = unitHandler->GetUnitsByTeam(teamNum);
 
 	for (CUnit* u: teamUnits) {
 		u->ChangeTeam(toTeam, CUnit::ChangeGiven);
