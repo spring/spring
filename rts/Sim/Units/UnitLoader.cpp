@@ -175,8 +175,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 	const CTeam* receivingTeam = teamHandler->Team(team);
 
 	if (objectName == "all") {
-		unsigned int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
-		unsigned int currentNumUnits = receivingTeam->units.size();
+		unsigned int numRequestedUnits = unitDefHandler->NumUnitDefs();
+		unsigned int currentNumUnits = receivingTeam->GetNumUnits();
 
 		// make sure team unit-limit is not exceeded
 		if ((currentNumUnits + numRequestedUnits) > receivingTeam->GetMaxUnits()) {
@@ -215,7 +215,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 	} else {
 		unsigned int numRequestedUnits = amount;
-		unsigned int currentNumUnits = receivingTeam->units.size();
+		unsigned int currentNumUnits = receivingTeam->GetNumUnits();
 
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,

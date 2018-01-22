@@ -67,11 +67,16 @@ void CTeamHighlight::Update(int frameNum) {
 			CTeam* t = teamHandler->Team(ti);
 			float teamhighlight = 0.0f;
 
-			if (t->gaia) { continue; }
-			if (t->isDead) { continue; }
-			if (t->units.empty()) { continue; }
-			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) { continue; }
-			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti)) { continue; }
+			if (t->gaia)
+				continue;
+			if (t->isDead)
+				continue;
+			if (t->GetNumUnits() == 0)
+				continue;
+			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty())
+				continue;
+			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti))
+				continue;
 
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
@@ -79,9 +84,12 @@ void CTeamHighlight::Update(int frameNum) {
 			for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
 				CPlayer* p = playerHandler->Player(pi);
 
-				if (!p->active) { continue; }
-				if (p->spectator) { continue; }
-				if ((p->team != ti)) { continue; }
+				if (!p->active)
+					continue;
+				if (p->spectator)
+					continue;
+				if ((p->team != ti))
+					continue;
 
 				hasPlayers = true;
 

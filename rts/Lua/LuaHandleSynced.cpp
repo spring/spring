@@ -334,7 +334,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	if (!IsValid())
 		return false;
 
-	watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
+	watchUnitDefs.resize(unitDefHandler->NumUnitDefs() + 1, false);
 	watchFeatureDefs.resize(featureDefHandler->GetFeatureDefs().size(), false);
 	watchWeaponDefs.resize(weaponDefHandler->weaponDefs.size(), false);
 

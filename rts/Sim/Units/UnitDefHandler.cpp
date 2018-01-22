@@ -21,7 +21,7 @@
 #include "System/Sound/ISound.h"
 
 
-CUnitDefHandler* unitDefHandler = NULL;
+CUnitDefHandler* unitDefHandler = nullptr;
 
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)

@@ -1587,14 +1587,13 @@ bool CAICallback::IsDebugDrawerEnabled() const
 
 int CAICallback::GetNumUnitDefs ()
 {
-	// defid=0 is not valid, that's why "-1"
-	return unitDefHandler->unitDefs.size() - 1;
+	return (unitDefHandler->NumUnitDefs());
 }
 
 void CAICallback::GetUnitDefList (const UnitDef** list)
 {
-	for (int ud = 1; ud < unitDefHandler->unitDefs.size(); ud++) {
-		list[ud-1] = unitDefHandler->GetUnitDefByID(ud);
+	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
+		list[i] = unitDefHandler->GetUnitDefByID(i + 1);
 	}
 }
 

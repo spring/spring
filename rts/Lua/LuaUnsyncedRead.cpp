@@ -1103,7 +1103,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	static std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
 
 	unitDefMap.clear();
-	unitDefMap.resize(unitDefHandler->unitDefs.size() + 1);
+	unitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
 
 	int numDefKeys = 0;
 
@@ -1151,7 +1151,7 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 	static std::vector< std::pair<int, int> > countMap;
 
 	countMap.clear();
-	countMap.resize(unitDefHandler->unitDefs.size() + 1, {0, 0});
+	countMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
 	int numDefKeys = 0;
 
@@ -2258,7 +2258,7 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 		return 0; // nils
 
 	std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
-	unitDefMap.resize(unitDefHandler->unitDefs.size() + 1);
+	unitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
 
 	for (const int unitID: groups[groupID]->units) {
 		const CUnit* unit = unitHandler->GetUnit(unitID);
@@ -2300,7 +2300,7 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 		return 0; // nils
 
 	std::vector< std::pair<int, int> > countMap;
-	countMap.resize(unitDefHandler->unitDefs.size() + 1, {0, 0});
+	countMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
 	for (const int unitID: groups[groupID]->units) {
 		const CUnit* unit = unitHandler->GetUnit(unitID);

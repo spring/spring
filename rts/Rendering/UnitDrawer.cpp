@@ -228,15 +228,15 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
 
 	// load unit explosion generators and decals
-	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
-		UnitDef& ud = unitDefHandler->unitDefs[unitDefID];
+	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
+		UnitDef& ud = *const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
 
-		for (unsigned int n = 0; n < ud.modelCEGTags.size(); n++) {
-			ud.SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud.modelCEGTags[n]));
+		for (unsigned int k = 0; k < ud.modelCEGTags.size(); k++) {
+			ud.SetModelExplosionGeneratorID(k, explGenHandler->LoadGeneratorID(ud.modelCEGTags[k]));
 		}
-		for (unsigned int n = 0; n < ud.pieceCEGTags.size(); n++) {
+		for (unsigned int k = 0; k < ud.pieceCEGTags.size(); k++) {
 			// these can only be custom EG's so prefix is not required game-side
-			ud.SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[n]));
+			ud.SetPieceExplosionGeneratorID(k, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[k]));
 		}
 	}
 

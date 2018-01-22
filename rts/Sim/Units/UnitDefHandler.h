@@ -36,7 +36,10 @@ public:
 		return (id > 0) && (id < (int)unitDefs.size());
 	}
 
+	// id=0 is not a valid UnitDef, hence the -1
+	unsigned int NumUnitDefs() const { return (unitDefs.size() - 1); }
 	unsigned int GetUnitDefImage(const UnitDef* unitDef);
+
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,

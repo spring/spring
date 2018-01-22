@@ -36,7 +36,10 @@ public:
 		return false;
 	}
 
+	unsigned int NumUnitsByTeam      (int teamNum               ) const { return (unitsByDefs[teamNum][        0].size()); }
+	unsigned int NumUnitsByTeamAndDef(int teamNum, int unitDefID) const { return (unitsByDefs[teamNum][unitDefID].size()); }
 	unsigned int MaxUnits() const { return maxUnits; }
+
 	float MaxUnitRadius() const { return maxUnitRadius; }
 
 	/// Returns true if a unit of type unitID can be built, false otherwise
@@ -56,11 +59,13 @@ public:
 	const std::vector<CUnit*>& GetActiveUnits() const { return activeUnits; }
 	      std::vector<CUnit*>& GetActiveUnits()       { return activeUnits; }
 
-	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
+	const std::vector<CUnit*>& GetUnitsByTeam      (int teamNum               ) const { return unitsByDefs[teamNum][        0]; }
+	const std::vector<CUnit*>& GetUnitsByTeamAndDef(int teamNum, int unitDefID) const { return unitsByDefs[teamNum][unitDefID]; }
 
-public:
-	// FIXME
-	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
+	std::vector<CUnit*>& GetUnitsByTeam      (int teamNum               ) { return unitsByDefs[teamNum][        0]; }
+	std::vector<CUnit*>& GetUnitsByTeamAndDef(int teamNum, int unitDefID) { return unitsByDefs[teamNum][unitDefID]; }
+
+	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
 
 private:
 	void InsertActiveUnit(CUnit* unit);
@@ -77,9 +82,11 @@ private:
 private:
 	SimObjectIDPool idPool;
 
-	std::vector<CUnit*> units;                         ///< used to get units from IDs (0 if not created)
-	std::vector<CUnit*> activeUnits;                   ///< used to get all active units
-	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
+	std::vector<CUnit*> units;                                 ///< used to get units from IDs (0 if not created)
+	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
+
+	std::vector<CUnit*> activeUnits;                           ///< used to get all active units
+	std::vector<CUnit*> unitsToBeRemoved;                      ///< units that will be removed at start of next update
 
 	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 

@@ -13,6 +13,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/MsgStrings.h"
@@ -25,11 +26,14 @@
 CR_BIND_DERIVED(CTeam, TeamBase, )
 CR_REG_METADATA(CTeam, (
 	CR_MEMBER(teamNum),
+	CR_MEMBER(numUnits),
 	CR_MEMBER(maxUnits),
+
 	CR_MEMBER(isDead),
 	CR_MEMBER(gaia),
+
 	CR_MEMBER(origColor),
-	CR_MEMBER(units),
+
 	CR_MEMBER(res),
 	CR_MEMBER(resStorage),
 	CR_MEMBER(resPull),
@@ -58,10 +62,12 @@ CR_REG_METADATA(CTeam, (
 
 CTeam::CTeam():
 	teamNum(-1),
+	numUnits(0),
 	maxUnits(0),
+
 	isDead(false),
 	gaia(false),
-	removeUnits(true),
+
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
@@ -209,19 +215,12 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		res.energy = 0;
 	}
 
-	{
-		// block RemoveUnit from creating a loop-and-modify
-		// situation for units that end up being transferred
-		removeUnits = false;
+	// make a copy of unitsByDef[teamNum][0] since ChangeTeam modifies it
+	const auto teamUnits = unitHandler->GetUnitsByTeamAndDef(teamNum, 0);
 
-		for (CUnit* u: units) {
-			u->ChangeTeam(toTeam, CUnit::ChangeGiven);
-		}
-
-		removeUnits = true;
+	for (CUnit* u: teamUnits) {
+		u->ChangeTeam(toTeam, CUnit::ChangeGiven);
 	}
-
-	units.clear();
 }
 
 
@@ -386,42 +385,36 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	spring::VectorInsertUnique(units, unit, false);
+	numUnits++;
+
 	switch (type) {
 		case AddBuilt: {
 			GetCurrentStats().unitsProduced++;
-			break;
-		}
+		} break;
 		case AddGiven: {
 			GetCurrentStats().unitsReceived++;
-			break;
-		}
+		} break;
 		case AddCaptured: {
 			GetCurrentStats().unitsCaptured++;
-			break;
-		}
+		} break;
 	}
 }
 
 
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
-	if (removeUnits)
-		spring::VectorErase(units, unit);
+	numUnits--;
 
 	switch (type) {
 		case RemoveDied: {
 			GetCurrentStats().unitsDied++;
-			break;
-		}
+		} break;
 		case RemoveGiven: {
 			GetCurrentStats().unitsSent++;
-			break;
-		}
+		} break;
 		case RemoveCaptured: {
 			GetCurrentStats().unitsOutCaptured++;
-			break;
-		}
+		} break;
 	}
 }
 
