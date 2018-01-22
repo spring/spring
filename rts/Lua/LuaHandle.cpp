@@ -2584,8 +2584,8 @@ int CLuaHandle::CallOutGetRegistry(lua_State* L)
 int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
 {
 	const int minMajorVer = luaL_checkint(L, 1);
-	const int minMinorVer = luaL_optinteger(L, 2, 0);
-	const int minCommits  = luaL_optinteger(L, 3, 0);
+	const int minMinorVer = luaL_optint(L, 2, 0);
+	const int minCommits  = luaL_optint(L, 3, 0);
 
 	if (StringToInt(SpringVersion::GetMajor()) < minMajorVer) {
 		lua_pushboolean(L, false);
