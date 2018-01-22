@@ -18,21 +18,11 @@ CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 CInfoConsole* infoConsole = nullptr;
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-const size_t CInfoConsole::maxRawLines   = 1024;
-const size_t CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole()
 	: CEventClient("InfoConsole", 999, false)
 	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
-	, newLines(0)
-	, rawId(0)
-	, fontScale(1.0f)
-	, maxLines(1)
 {
 	lifetime = configHandler->GetInt("InfoMessageTime");
 
@@ -62,40 +52,35 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
-	if (!enabled) return;
-	if (!smallFont) return;
-	if (data.empty()) return;
+	if (!enabled)
+		return;
+	if (smallFont == nullptr)
+		return;
+	if (data.empty())
+		return;
 
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (guihandler != nullptr && !guihandler->GetOutlineFonts()) {
-		// draw a black background when not using outlined font
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
+	// infoConsole exists before guiHandler does, but is never drawn during that period
+	assert(guihandler != nullptr);
 
-		glBegin(GL_TRIANGLE_STRIP);
-			glVertex3f(xpos,         ypos,          0);
-			glVertex3f(xpos + width, ypos,          0);
-			glVertex3f(xpos,         ypos - height, 0);
-			glVertex3f(xpos + width, ypos - height, 0);
-		glEnd();
-	}
-
-	const int fontOptions = FONT_NORM | (FONT_OUTLINE * (guihandler != nullptr && guihandler->GetOutlineFonts())) | FONT_BUFFERED;
+	// always draw outlined text here, saves an ugly black background
+	// (the default console is practically no longer used in any case)
+	const uint32_t fontOptions = FONT_NORM | FONT_OUTLINE | FONT_BUFFERED;
 	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	float curX = xpos + border * globalRendering->pixelX;
 	float curY = ypos - border * globalRendering->pixelY;
 
-	smallFont->SetColors(); // default
+	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
+	smallFont->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
 		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, data[i].text);
 	}
 
 	smallFont->DrawBufferedGL4();
+	smallFont->SetColors(); // default
 }
 
 

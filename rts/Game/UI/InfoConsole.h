@@ -36,8 +36,8 @@ public:
 	bool enabled;
 
 public:
-	static const size_t maxLastMsgPos;
-	static const size_t maxRawLines;
+	static constexpr size_t maxLastMsgPos = 10;
+	static constexpr size_t maxRawLines = 1024;
 
 	struct RawLine {
 		RawLine(const std::string& text, const std::string& section, int level,
@@ -67,20 +67,20 @@ private:
 	std::deque<RawLine> rawData;
 	std::deque<InfoLine> data;
 
-	size_t newLines;
-	int rawId;
+	spring::recursive_mutex infoConsoleMutex;
 
-	mutable spring::recursive_mutex infoConsoleMutex;
+	size_t maxLines = 1;
+	size_t newLines = 0;
 
-	int lifetime;
-	float xpos;
-	float ypos;
-	float width;
-	float height;
-	float fontScale;
-	float fontSize;
+	int rawId = 0;
+	int lifetime = 0;
 
-	size_t maxLines;
+	float xpos = 0.0f;
+	float ypos = 0.0f;
+	float width = 0.0f;
+	float height = 0.0f;
+	float fontScale = 1.0f;
+	float fontSize = 0.0f;
 };
 
 extern CInfoConsole* infoConsole;
