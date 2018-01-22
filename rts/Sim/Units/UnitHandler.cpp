@@ -205,11 +205,12 @@ bool CUnitHandler::GarbageCollectUnit(unsigned int id)
 	if (inUpdateCall)
 		return false;
 
-	// ensure that QDU can actually collect this unit
-	if (!units[id]->deathScriptFinished)
+	assert(unitsToBeRemoved.empty());
+
+	if (!QueueDeleteUnit(units[id]))
 		return false;
 
-	QueueDeleteUnits();
+	// only processes units[id]
 	DeleteUnits();
 
 	return (idPool.RecycleID(id));
@@ -220,19 +221,21 @@ void CUnitHandler::QueueDeleteUnits()
 {
 	// gather up dead units
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-		CUnit* unit = activeUnits[activeUpdateUnit];
-
-		if (!unit->deathScriptFinished)
-			continue;
-
-		// there are many ways to fiddle with "deathScriptFinished", so a unit may
-		// arrive here not having been properly killed while isDead is still false
-		// make sure we always call Killed; no-op if isDead was already set to true
-		unit->KillUnit(nullptr, false, true, true);
-		unitsToBeRemoved.push_back(unit);
-
-		assert(activeUnits[activeUpdateUnit] == unit);
+		QueueDeleteUnit(activeUnits[activeUpdateUnit]);
 	}
+}
+
+bool CUnitHandler::QueueDeleteUnit(CUnit* unit)
+{
+	if (!unit->deathScriptFinished)
+		return false;
+
+	// there are many ways to fiddle with "deathScriptFinished", so a unit may
+	// arrive here not having been properly killed while isDead is still false
+	// make sure we always call Killed; no-op if isDead was already set to true
+	unit->KillUnit(nullptr, false, true, true);
+	unitsToBeRemoved.push_back(unit);
+	return true;
 }
 
 
