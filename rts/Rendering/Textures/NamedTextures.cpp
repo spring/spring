@@ -219,8 +219,8 @@ namespace CNamedTextures {
 			if (greyed) bitmap.MakeGrayScale();
 			if (tint)   bitmap.Tint(tintColor);
 
-			const int xbits = count_bits_set(bitmap.xsize);
-			const int ybits = count_bits_set(bitmap.ysize);
+			// const int xbits = count_bits_set(bitmap.xsize);
+			// const int ybits = count_bits_set(bitmap.ysize);
 
 			// make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);

@@ -280,6 +280,7 @@ constexpr int DROP   = 0x10084000;
 #define GET_LONG_PC() (cobFile->code[pc++])
 
 
+#if 0
 static const char* GetOpcodeName(int opcode)
 {
 	switch (opcode) {
@@ -354,7 +355,7 @@ static const char* GetOpcodeName(int opcode)
 
 	return "unknown";
 }
-
+#endif
 
 
 int CCobThread::POP()
