@@ -4,7 +4,7 @@
 #define STRING_HASH_H
 
 unsigned HashString(const char* s, size_t n);
-static unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
+static inline unsigned HashString(const std::string& s) { return (HashString(s.c_str(), s.size())); }
 
 
 
