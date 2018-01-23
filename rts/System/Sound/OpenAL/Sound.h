@@ -18,6 +18,8 @@ class SoundBuffer;
 class SoundItem;
 struct ALCdevice_struct;
 typedef struct ALCdevice_struct ALCdevice;
+struct ALCcontext_struct;
+typedef struct ALCcontext_struct ALCcontext;
 
 /// Default sound system implementation (OpenAL)
 class CSound : public ISound
@@ -52,11 +54,18 @@ public:
 	bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes);
 	const float3& GetListenerPos() const { return myPos; }
 
+	ALCdevice* GetCurrentDevice() { return curDevice; }
+	int GetFrameSize() { return frameSize; }
+
 private:
 	typedef spring::unordered_map<std::string, std::string> SoundItemNameMap;
 	typedef spring::unordered_map<std::string, SoundItemNameMap> SoundItemDefsMap;
 
 private:
+	void Cleanup();
+	void OpenOpenALDevice(const std::string& deviceName);
+	void OpenLoopbackDevice(const std::string& deviceName);
+
 	void InitThread(int cfgMaxSounds);
 	void UpdateThread(int cfgMaxSounds);
 
@@ -70,6 +79,10 @@ private:
 	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
+	ALCdevice* curDevice;
+	ALCcontext* curContext;
+	int sdlDeviceID;
+
 	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
 	std::vector<SoundItem*> soundItems;
@@ -77,6 +90,8 @@ private:
 
 	SoundItemNameMap defaultItemNameMap;
 	SoundItemDefsMap soundItemDefsMap;
+
+	int frameSize;
 
 	float masterVolume;
 
