@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <al.h>
 #include <alc.h>
 #include <alext.h>
 
