@@ -32,8 +32,6 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(isDead),
 	CR_MEMBER(gaia),
 
-	CR_MEMBER(origColor),
-
 	CR_MEMBER(res),
 	CR_MEMBER(resStorage),
 	CR_MEMBER(resPull),
@@ -71,7 +69,6 @@ CTeam::CTeam():
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
-	origColor(0, 0, 0, 0),
 	highlight(0.0f)
 {
 	statHistory.reserve(1024);

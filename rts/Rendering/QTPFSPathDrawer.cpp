@@ -83,8 +83,6 @@ void QTPFSPathDrawer::DrawAll() const {
 }
 
 void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const {
-	// Shader::IProgramObject* ipo = rdb->GetShader();
-
 	for (const QTPFS::QTNode* node: nodes) {
 		DrawNode(node, rdb, &NODE_COLORS[node->moveCostAvg != QTPFS_POSITIVE_INFINITY][0]);
 	}
@@ -147,8 +145,6 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 	glLineWidth(4);
 
 	{
-		// Shader::IProgramObject* ipo = rdb->GetShader();
-
 		for (const auto& pair: paths) {
 			DrawPath(pair.second, rdb);
 		}

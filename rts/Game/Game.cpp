@@ -2,8 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include <SDL_keyboard.h>
-
 #include "Game.h"
 #include "Benchmark.h"
 #include "Camera.h"
@@ -98,7 +96,6 @@
 #include "UI/GuiHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/KeyBindings.h"
-#include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
 #include "UI/ResourceBar.h"
@@ -162,7 +159,7 @@ CR_REG_METADATA(CGame, (
 
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
-	CR_MEMBER(userInputPrefix),
+
 	CR_IGNORED(chatSound),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
@@ -172,16 +169,12 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
-	CR_IGNORED(chatting),
+
 	CR_IGNORED(curKeyChain),
 	CR_IGNORED(playerTraffic),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 	//CR_MEMBER(consoleHistory),
-	CR_IGNORED(inputTextPosX),
-	CR_IGNORED(inputTextPosY),
-	CR_IGNORED(inputTextSizeX),
-	CR_IGNORED(inputTextSizeY),
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
 	CR_IGNORED(msgProcTimeLeft),
@@ -202,17 +195,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(worldDrawer),
 	CR_IGNORED(defsParser),
 	CR_IGNORED(saveFile),
-
-	// from CGameController
-	CR_IGNORED(writingPos),
-	CR_IGNORED(ignoreNextChar),
-	CR_IGNORED(userInput),
-	CR_IGNORED(userPrompt),
-	CR_IGNORED(userWriting),
-
-	CR_IGNORED(editingPos),
-	CR_IGNORED(textEditing),
-	CR_IGNORED(textEditingWindow),
 
 	// Post Load
 	CR_POSTLOAD(PostLoad)
@@ -240,9 +222,10 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, updateDeltaSeconds(0.0f)
 	, totalGameTime(0)
 	, hideInterface(false)
+
 	, skipping(false)
 	, playing(false)
-	, chatting(false)
+
 	, noSpectatorChat(false)
 	, msgProcTimeLeft(0.0f)
 	, consumeSpeedMult(1.0f)
@@ -652,7 +635,6 @@ void CGame::LoadInterface()
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
 
 	// interface components
-	ReColorTeams();
 	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
 	{
@@ -663,8 +645,7 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
 
-		// add the Skirmish AIs instance names to word completion,
-		// for various things, eg chatting
+		// add the Skirmish AIs instance names to word completion (eg for chatting)
 		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
 		// add the available Skirmish AI libraries to word completion, for /aicontrol
 		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
@@ -936,22 +917,15 @@ void CGame::ResizeEvent()
 	// reload water renderer (it may depend on screen resolution)
 	water = IWater::GetWater(water, water->GetID());
 
-	textEditingWindow.x = inputTextPosX * globalRendering->viewSizeX;
-	textEditingWindow.y = (1.0 - inputTextPosY) * globalRendering->viewSizeY;
-	// textEditingWindow.w = globalRendering->viewSizeX - textEditingWindow.y; // remaining width
-	textEditingWindow.w = inputTextSizeX * globalRendering->viewSizeX;
-	textEditingWindow.h = inputTextSizeY * globalRendering->viewSizeY;
-	SDL_SetTextInputRect(&textEditingWindow);
-
+	textInput.ViewResize();
 	eventHandler.ViewResize();
 }
 
 
 int CGame::KeyPressed(int key, bool isRepeat)
 {
-	if (!gameOver && !isRepeat) {
+	if (!gameOver && !isRepeat)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
-	}
 
 	const CKeySet ks(key, false);
 	curKeyChain.push_back(key, spring_gettime(), isRepeat);
@@ -960,26 +934,16 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	//LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
 
-	if (userWriting) {
-		for (const Action& action: actionList) {
-			if (ProcessKeyPressAction(key, action)) {
-				// the key was used, ignore it (ex: alt+a)
-				ignoreNextChar = keyCodes->IsPrintable(key);
-				break;
-			}
-		}
-
+	if (textInput.ConsumePressedKey(key, actionList))
 		return 0;
-	}
 
 	if (luaInputReceiver->KeyPressed(key, isRepeat))
 		return 0;
 
 	// try the input receivers
 	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
-		if (recv != nullptr && recv->KeyPressed(key, isRepeat)) {
+		if (recv != nullptr && recv->KeyPressed(key, isRepeat))
 			return 0;
-		}
 	}
 
 
@@ -1008,15 +972,8 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 int CGame::KeyReleased(int k)
 {
-	if (userWriting) {
-		if (
-			   keyCodes->IsPrintable(k)
-			|| k == SDLK_RETURN || k == SDLK_BACKSPACE || k == SDLK_DELETE
-			|| k == SDLK_HOME || k == SDLK_END || k == SDLK_RIGHT || k == SDLK_LEFT
-		) {
-			return 0;
-		}
-	}
+	if (textInput.ConsumeReleasedKey(k))
+		return 0;
 
 	if (luaInputReceiver->KeyReleased(k))
 		return 0;
@@ -1032,9 +989,8 @@ int CGame::KeyReleased(int k)
 	CKeySet ks(k, true);
 	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
 	for (const Action& action: al) {
-		if (ActionReleased(action)) {
+		if (ActionReleased(action))
 			return 0;
-		}
 	}
 
 	return 0;
@@ -1045,29 +1001,16 @@ int CGame::TextInput(const std::string& utf8Text)
 {
 	if (eventHandler.TextInput(utf8Text))
 		return 0;
-	if (!userWriting)
-		return 0;
 
-	textEditing = "";
-	editingPos = 0;
-	std::string text = ignoreNextChar ? utf8Text.substr(utf8::NextChar(utf8Text, 0)) : utf8Text;
-
-	writingPos = Clamp<int>(writingPos, 0, userInput.length());
-	userInput.insert(writingPos, text);
-	writingPos += text.length();
-	return 0;
+	return (textInput.SetInputText(utf8Text));
 }
 
 int CGame::TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length)
 {
 	if (eventHandler.TextEditing(utf8Text, start, length))
 		return 0;
-	if (!userWriting)
-		return 0;
 
-	textEditing = utf8Text;
-	editingPos = utf8Text.length();
-	return 0;
+	return (textInput.SetEditText(utf8Text));
 }
 
 
@@ -1231,36 +1174,13 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (luaRules != nullptr) { luaRules->CheckStack(); }
 
 
-	if (chatting && !userWriting) {
-		consoleHistory->AddLine(userInput);
-
-		std::string msg = userInput;
-		std::string pfx = "";
-
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-			pfx = userInput.substr(0, 2);
-			msg = userInput.substr(2);
-		}
-		if ((msg[0] == '/') && (msg[1] == '/'))
-			msg = msg.substr(1);
-
-		userInput = pfx + msg;
-		SendNetChat(userInput);
-		chatting = false;
-		userInput = "";
-		writingPos = 0;
+	if (textInput.SendPromptInput()) {
+		consoleHistory->AddLine(textInput.userInput);
+		SendNetChat(textInput.userInput);
+		textInput.ClearInput();
 	}
-
-	if (inMapDrawer->IsWantLabel() && !userWriting) {
-		if (userInput.size() > 200) {
-			// avoid troubles with long lines
-			userInput = userInput.substr(0, 200);
-			writingPos = (int)userInput.length();
-		}
-		inMapDrawer->SendWaitingInput(userInput);
-		userInput = "";
-		writingPos = 0;
-	}
+	if (inMapDrawer->IsWantLabel() && textInput.SendLabelInput())
+		textInput.ClearInput();
 
 	assert(infoConsole);
 	infoConsole->PushNewLinesToEventHandler();
@@ -1470,23 +1390,14 @@ void CGame::ParseInputTextGeometry(const string& geo)
 		ParseInputTextGeometry("0.26 0.73 0.02 0.028");
 		return;
 	}
-	float px, py, sx, sy;
-	if (sscanf(geo.c_str(), "%f %f %f %f", &px, &py, &sx, &sy) == 4) {
-		inputTextPosX  = px;
-		inputTextPosY  = py;
-		inputTextSizeX = sx;
-		inputTextSizeY = sy;
 
-		// inputTextSizeX and inputTextSizeY aren't actually used by anything
-		// so we assume those values are bad, and we could simply ignore the X component
-		// that said, the width of the SDL TextInputRect doesn't seem to matter either, as
-		// it tends to be printed in groups of 10 characters.
-		textEditingWindow.x = inputTextPosX * globalRendering->viewSizeX;
-		textEditingWindow.y = (1.0 - inputTextPosY) * globalRendering->viewSizeY;
-		// textEditingWindow.w = globalRendering->viewSizeX - textEditingWindow.y; // remaining width
-		textEditingWindow.w = inputTextSizeX * globalRendering->viewSizeX;
-		textEditingWindow.h = inputTextSizeY * globalRendering->viewSizeY;
-		SDL_SetTextInputRect(&textEditingWindow);
+	float2 pos;
+	float2 size;
+
+	if (sscanf(geo.c_str(), "%f %f %f %f", &pos.x, &pos.y, &size.x, &size.y) == 4) {
+		textInput.SetPos(pos.x, pos.y);
+		textInput.SetSize(size.x, size.y);
+		textInput.ViewResize();
 
 		configHandler->SetString("InputTextGeo", geo);
 	}
@@ -1495,56 +1406,7 @@ void CGame::ParseInputTextGeometry(const string& geo)
 
 void CGame::DrawInputText()
 {
-	if (!userWriting)
-		return;
-
-	const float fontSale = 1.0f;                       // TODO: make configurable again
-	const float fontSize = fontSale * font->GetSize();
-
-	const string tempstring = userPrompt + userInput + textEditing;
-
-	// draw the caret
-	{
-		const int caretPosStr = userPrompt.length() + writingPos + editingPos;
-		const string caretStr = tempstring.substr(0, caretPosStr);
-		const float caretPos    = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
-		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
-		int cpos = writingPos + editingPos;
-		char32_t c = utf8::GetNextChar(userInput + textEditing, cpos);
-		if (c == 0) c = ' '; // make caret always visible
-		const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
-		const float csx = inputTextPosX + caretPos;
-
-		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
-		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + caretHeight);
-		glEnable(GL_TEXTURE_2D);
-	}
-
-	// setup the color
-	static float4 const defColor(1.0f, 1.0f, 1.0f, 1.0f);
-	static float4 const allyColor(0.5f, 1.0f, 0.5f, 1.0f);
-	static float4 const specColor(1.0f, 1.0f, 0.5f, 1.0f);
-	const float4* textColor = &defColor;
-	if (userInput.length() < 2) {
-		textColor = &defColor;
-	} else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-		textColor = &allyColor;
-	} else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-		textColor = &specColor;
-	} else {
-		textColor = &defColor;
-	}
-
-	// draw the text
-	font->SetColors(textColor, nullptr);
-	if (!guihandler->GetOutlineFonts()) {
-		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM | FONT_BUFFERED, tempstring);
-	} else {
-		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, tempstring);
-	}
-	font->DrawBufferedGL4();
+	textInput.Draw();
 }
 
 
@@ -1741,24 +1603,24 @@ void CGame::SendNetChat(std::string message, int destination)
 	if (message.empty())
 		return;
 
-	if (destination == -1) // overwrite
-	{
+	if (destination == -1) {
+		// overwrite
 		destination = ChatMessage::TO_EVERYONE;
+
 		if ((message.length() >= 2) && (message[1] == ':')) {
 			const char lower = tolower(message[0]);
 			if (lower == 'a') {
 				destination = ChatMessage::TO_ALLIES;
 				message = message.substr(2);
-			}
-			else if (lower == 's') {
+			} else if (lower == 's') {
 				destination = ChatMessage::TO_SPECTATORS;
 				message = message.substr(2);
 			}
 		}
 	}
-	if (message.size() > 128) {
+	if (message.size() > 128)
 		message.resize(128); // safety
-	}
+
 	ChatMessage buf(gu->myPlayerNum, destination, message);
 	clientNet->Send(buf.Pack());
 }
@@ -1955,18 +1817,6 @@ void CGame::ReloadCOB(const string& msg, int player)
 }
 
 
-//FIXME remove!
-void CGame::ReColorTeams()
-{
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		CTeam* team = teamHandler->Team(t);
-		team->origColor[0] = team->color[0];
-		team->origColor[1] = team->color[1];
-		team->origColor[2] = team->color[2];
-		team->origColor[3] = team->color[3];
-	}
-}
-
 bool CGame::IsLagging(float maxLatency) const
 {
 	const spring_time timeNow = spring_gettime();
@@ -2014,240 +1864,12 @@ bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
 
 	if ((command[0] == '/') && (command[1] != '/')) {
 		// strip the '/'
-		const Action fakeAction(command.substr(1));
-
-		ProcessAction(fakeAction, key, false);
+		ProcessAction(Action(command.substr(1)), key, false);
 		return true;
 	}
 
 	return false;
 }
-
-bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
-	if (!userWriting)
-		return false;
-
-	if (action.command == "pastetext") {
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
-		const std::string pastecommand = "pastetext ";
-
-		if (action.rawline.length() > pastecommand.length()) {
-			userInput.insert(writingPos, action.rawline.substr(pastecommand.length(), action.rawline.length() - pastecommand.length()));
-			writingPos += (action.rawline.length() - pastecommand.length());
-		} else {
-			PasteClipboard();
-		}
-
-		return true;
-	}
-
-	if (action.command.find("edit_") == 0) {
-		if (action.command == "edit_return") {
-			userWriting = false;
-			writingPos = 0;
-
-			if (chatting) {
-				string command;
-
-				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-					command = userInput.substr(2);
-				} else {
-					command = userInput;
-				}
-
-				if (ProcessCommandText(key, command)) {
-					// execute an action
-					consoleHistory->AddLine(command);
-					LOG_L(L_DEBUG, "%s", command.c_str());
-
-					chatting = false;
-					userInput = "";
-					writingPos = 0;
-				}
-			}
-
-			SDL_StopTextInput();
-			return true;
-		}
-
-		if (action.command == "edit_escape") {
-			if (chatting || inMapDrawer->IsWantLabel()) {
-				if (chatting) {
-					consoleHistory->AddLine(userInput);
-				}
-				userWriting = false;
-				chatting = false;
-				inMapDrawer->SetWantLabel(false);
-				userInput = "";
-				writingPos = 0;
-			}
-
-			SDL_StopTextInput();
-			return true;
-		}
-
-		if (action.command == "edit_complete") {
-			string head = userInput.substr(0, writingPos);
-			string tail = userInput.substr(writingPos);
-
-			// fills head with the first partial match
-			const vector<string>& partials = wordCompletion->Complete(head);
-
-			userInput = head + tail;
-			writingPos = head.length();
-
-			if (!partials.empty()) {
-				string msg;
-				for (unsigned int i = 0; i < partials.size(); i++) {
-					msg += "  ";
-					msg += partials[i];
-				}
-				LOG("%s", msg.c_str());
-			}
-
-			SDL_StopTextInput();
-			return true;
-		}
-
-
-		if (action.command == "edit_backspace") {
-			if (!userInput.empty() && (writingPos > 0)) {
-				const int prev = utf8::PrevChar(userInput, writingPos);
-				userInput.erase(prev, writingPos - prev);
-				writingPos = prev;
-			}
-
-			return true;
-		}
-
-		if (action.command == "edit_delete") {
-			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, utf8::CharLen(userInput, writingPos));
-			}
-
-			return true;
-		}
-
-
-		if (action.command == "edit_home") {
-			writingPos = 0;
-			return true;
-		}
-
-		if (action.command == "edit_end") {
-			writingPos = userInput.length();
-			return true;
-		}
-
-
-		if (action.command == "edit_prev_char") {
-			writingPos = utf8::PrevChar(userInput, writingPos);
-			return true;
-		}
-
-		if (action.command == "edit_next_char") {
-			writingPos = utf8::NextChar(userInput, writingPos);
-			return true;
-		}
-
-
-		if (action.command == "edit_prev_word") { //TODO don't seems to work correctly with utf-8
-			// prev word
-			const char* s = userInput.c_str();
-			int p = writingPos;
-			while ((p > 0) && !isalnum(s[p - 1])) { p--; }
-			while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
-			writingPos = p;
-			return true;
-		}
-
-		if (action.command == "edit_next_word") { //TODO don't seems to work correctly with utf-8
-			const size_t len = userInput.length();
-			const char* s = userInput.c_str();
-			size_t p = writingPos;
-			while ((p < len) && !isalnum(s[p])) { p++; }
-			while ((p < len) &&  isalnum(s[p])) { p++; }
-			writingPos = p;
-			return true;
-		}
-
-
-		if ((action.command == "edit_prev_line") && chatting) {
-			userInput = consoleHistory->PrevLine(userInput);
-			writingPos = (int)userInput.length();
-			return true;
-		}
-
-		if ((action.command == "edit_next_line") && chatting) {
-			userInput = consoleHistory->NextLine(userInput);
-			writingPos = (int)userInput.length();
-			return true;
-		}
-
-		// unknown edit-command
-		return false;
-	}
-
-
-	if (action.command.find("chatswitch") == 0) {
-		if (action.command == "chatswitchall") {
-			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-				userInput = userInput.substr(2);
-				writingPos = std::max(0, writingPos - 2);
-			}
-
-			userInputPrefix = "";
-			return true;
-		}
-
-		if (action.command == "chatswitchally") {
-			if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-				// already are in ally chat -> toggle it off
-				userInput = userInput.substr(2);
-				writingPos = std::max(0, writingPos - 2);
-				userInputPrefix = "";
-			}
-			else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-				// are in spec chat -> switch it to ally chat
-				userInput[0] = 'a';
-				userInputPrefix = "a:";
-			} else {
-				userInput = "a:" + userInput;
-				writingPos += 2;
-				userInputPrefix = "a:";
-			}
-
-			return true;
-		}
-
-		if (action.command == "chatswitchspec") {
-			if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-				// already are in spec chat -> toggle it off
-				userInput = userInput.substr(2);
-				writingPos = std::max(0, writingPos - 2);
-				userInputPrefix = "";
-			}
-			else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-				// are in ally chat -> switch it to spec chat
-				userInput[0] = 's';
-				userInputPrefix = "s:";
-			} else {
-				userInput = "s:" + userInput;
-				writingPos += 2;
-				userInputPrefix = "s:";
-			}
-
-			return true;
-		}
-
-		// unknown chat-command
-		return false;
-	}
-
-	return false;
-}
-
 
 bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 {
@@ -2284,7 +1906,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
 	const IUnsyncedActionExecutor* executor = unsyncedGameCommands->GetActionExecutor(action.command);
 
-	if (executor != NULL) {
+	if (executor != nullptr) {
 		// an executor for that action was found
 		if (executor->ExecuteAction(UnsyncedAction(action, key, isRepeat))) {
 			return true;

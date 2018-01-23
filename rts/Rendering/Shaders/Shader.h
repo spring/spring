@@ -10,13 +10,8 @@
 #include "ShaderStates.h"
 #include "Lua/LuaOpenGLUtils.h"
 #include "System/UnorderedMap.hpp"
+#include "System/StringHash.h"
 
-
-
-constexpr size_t hashString(const char* str, size_t hash = 5381)
-{
-	return (*str) ? hashString(str + 1, hash + (hash << 5) + *str) : hash;
-}
 
 struct fast_hash : public std::unary_function<int, size_t>
 {

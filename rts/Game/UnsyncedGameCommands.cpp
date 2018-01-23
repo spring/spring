@@ -1114,16 +1114,9 @@ class ChatActionExecutor : public IUnsyncedActionExecutor {
 
 public:
 	bool Execute(const UnsyncedAction& action) const {
-		if (setUserInputPrefix)
-			game->userInputPrefix = userInputPrefix;
-
 		SDL_StartTextInput();
-		game->userWriting = true;
-		game->userPrompt = "Say: ";
-		game->userInput = game->userInputPrefix;
-		game->writingPos = (int)game->userInput.length();
-		game->chatting = true;
-		game->ignoreNextChar = false;
+
+		game->textInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
 		game->consoleHistory->ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 		return true;
@@ -2455,22 +2448,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!game->userWriting)
-			return false;
-
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
-		const std::string pasteCmd = "pastetext ";
-		const std::string& rawLine = action.GetInnerAction().rawline;
-
-		if (rawLine.length() > pasteCmd.length() ) {
-			game->userInput.insert(game->writingPos, rawLine.substr(pasteCmd.length(), rawLine.length() - pasteCmd.length()));
-			game->writingPos += (rawLine.length() - pasteCmd.length());
-		} else {
-			game->PasteClipboard();
-		}
-
-		return true;
+		return (game->textInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
 	}
 };
 
@@ -2480,8 +2458,8 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
+		// we cannot use extra commands because tokenization strips multiple
+		// spaces or even trailing spaces, the text should be copied verbatim
 		const std::string bufferCmd = "buffertext ";
 		const std::string& rawLine = action.GetInnerAction().rawline;
 

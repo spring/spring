@@ -90,6 +90,7 @@ public:
 	 * The fourth channel (alpha) has to be 255, always.
 	 */
 	unsigned char color[4];
+	unsigned char origColor[4];
 
 	int teamStartNum;
 	int teamAllyteam;
