@@ -291,9 +291,15 @@ extern DECLSPEC SDL_bool SDL_SetHint(const char* name, const char* value) {
 	return SDL_TRUE;
 }
 
+extern DECLSPEC void SDLCALL SDL_SetTextInputRect(SDL_Rect *rect) {
+}
 
+extern DECLSPEC void SDLCALL SDL_StartTextInput(void) {
+}
+
+extern DECLSPEC void SDLCALL SDL_StopTextInput(void) {
+}
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
