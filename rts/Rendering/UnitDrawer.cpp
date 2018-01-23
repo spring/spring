@@ -1637,7 +1637,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 }
 
 void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
-	CUnit* u = const_cast<CUnit*>(unit);
+	// CUnit* u = const_cast<CUnit*>(unit);
 
 	icon::CIconData* oldIcon = unitIcons[unit->id];
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
