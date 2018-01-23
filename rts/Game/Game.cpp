@@ -210,6 +210,10 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(userPrompt),
 	CR_IGNORED(userWriting),
 
+	CR_IGNORED(editingPos),
+	CR_IGNORED(textEditing),
+	CR_IGNORED(textEditingWindow),
+
 	// Post Load
 	CR_POSTLOAD(PostLoad)
 ))
