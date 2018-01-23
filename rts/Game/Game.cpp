@@ -163,6 +163,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(chatSound),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
+	CR_IGNORED(textInput),
 	CR_IGNORED(gameDrawMode),
 	CR_IGNORED(windowedEdgeMove),
 	CR_IGNORED(fullscreenEdgeMove),
