@@ -63,10 +63,18 @@ void GameControllerTextInput::Draw() {
 		const float caretScrPos = inputTextPosX + caretRelPos;
 		const float caretIllum = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
 
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(caretIllum, caretIllum, caretIllum, 0.75f);
-		glRectf(caretScrPos, inputTextPosY, caretScrPos + caretWidth, inputTextPosY + caretHeight);
-		glEnable(GL_TEXTURE_2D);
+		GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+		Shader::IProgramObject* shader = buffer->GetShader();
+
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
+		buffer->Submit(GL_QUADS);
+		shader->Disable();
 	}
 
 	// setup the color
