@@ -64,8 +64,6 @@ public:
 		writingPos = 0;
 	}
 
-	void PasteClipboard();
-
 
 	bool CheckHandlePasteCommand(const std::string& rawLine);
 
@@ -73,6 +71,8 @@ public:
 	bool ConsumeReleasedKey(int key) const;
 
 private:
+	void PasteClipboard();
+
 	bool HandleChatCommand(int key, const std::string& command);
 	bool HandleEditCommand(int key, const std::string& command);
 	bool HandlePasteCommand(int key, const std::string& rawLine);
