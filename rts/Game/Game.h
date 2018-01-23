@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <SDL.h>
+
 #include "GameController.h"
 #include "GameDrawMode.h"
 #include "GameJobDispatcher.h"
@@ -119,6 +121,7 @@ private:
 	int KeyPressed(int k, bool isRepeat) override;
 	///
 	int TextInput(const std::string& utf8Text) override;
+	int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) override;
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
@@ -222,6 +225,10 @@ private:
 
 	volatile bool finishedLoading;
 	bool gameOver;
+
+	int editingPos;
+	std::string textEditing;
+	SDL_Rect textEditingWindow;
 };
 
 

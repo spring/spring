@@ -173,6 +173,10 @@ class LuaUnsyncedCtrl {
 		static int SetDecalRotation(lua_State* L);
 		static int SetDecalTexture(lua_State* L);
 		static int SetDecalAlpha(lua_State* L);
+
+		static int SDLSetTextInputRect(lua_State* L);
+		static int SDLStartTextInput(lua_State* L);
+		static int SDLStopTextInput(lua_State* L);
 };
 
 #endif /* LUA_UNSYNCED_CTRL_H */

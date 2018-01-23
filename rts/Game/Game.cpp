@@ -932,6 +932,13 @@ void CGame::ResizeEvent()
 	// reload water renderer (it may depend on screen resolution)
 	water = IWater::GetWater(water, water->GetID());
 
+	textEditingWindow.x = inputTextPosX * globalRendering->viewSizeX;
+	textEditingWindow.y = (1.0 - inputTextPosY) * globalRendering->viewSizeY;
+	// textEditingWindow.w = globalRendering->viewSizeX - textEditingWindow.y; // remaining width
+	textEditingWindow.w = inputTextSizeX * globalRendering->viewSizeX;
+	textEditingWindow.h = inputTextSizeY * globalRendering->viewSizeY;
+	SDL_SetTextInputRect(&textEditingWindow);
+
 	eventHandler.ViewResize();
 }
 
@@ -1037,11 +1044,25 @@ int CGame::TextInput(const std::string& utf8Text)
 	if (!userWriting)
 		return 0;
 
+	textEditing = "";
+	editingPos = 0;
 	std::string text = ignoreNextChar ? utf8Text.substr(utf8::NextChar(utf8Text, 0)) : utf8Text;
 
 	writingPos = Clamp<int>(writingPos, 0, userInput.length());
 	userInput.insert(writingPos, text);
 	writingPos += text.length();
+	return 0;
+}
+
+int CGame::TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length)
+{
+	if (eventHandler.TextEditing(utf8Text, start, length))
+		return 0;
+	if (!userWriting)
+		return 0;
+
+	textEditing = utf8Text;
+	editingPos = utf8Text.length();
 	return 0;
 }
 
@@ -1451,6 +1472,18 @@ void CGame::ParseInputTextGeometry(const string& geo)
 		inputTextPosY  = py;
 		inputTextSizeX = sx;
 		inputTextSizeY = sy;
+
+		// inputTextSizeX and inputTextSizeY aren't actually used by anything
+		// so we assume those values are bad, and we could simply ignore the X component
+		// that said, the width of the SDL TextInputRect doesn't seem to matter either, as
+		// it tends to be printed in groups of 10 characters.
+		textEditingWindow.x = inputTextPosX * globalRendering->viewSizeX;
+		textEditingWindow.y = (1.0 - inputTextPosY) * globalRendering->viewSizeY;
+		// textEditingWindow.w = globalRendering->viewSizeX - textEditingWindow.y; // remaining width
+		textEditingWindow.w = inputTextSizeX * globalRendering->viewSizeX;
+		textEditingWindow.h = inputTextSizeY * globalRendering->viewSizeY;
+		SDL_SetTextInputRect(&textEditingWindow);
+
 		configHandler->SetString("InputTextGeo", geo);
 	}
 }
@@ -1464,16 +1497,16 @@ void CGame::DrawInputText()
 	const float fontSale = 1.0f;                       // TODO: make configurable again
 	const float fontSize = fontSale * font->GetSize();
 
-	const string tempstring = userPrompt + userInput;
+	const string tempstring = userPrompt + userInput + textEditing;
 
 	// draw the caret
 	{
-		const int caretPosStr = userPrompt.length() + writingPos;
+		const int caretPosStr = userPrompt.length() + writingPos + editingPos;
 		const string caretStr = tempstring.substr(0, caretPosStr);
 		const float caretPos    = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
-		int cpos = writingPos;
-		char32_t c = utf8::GetNextChar(userInput, cpos);
+		int cpos = writingPos + editingPos;
+		char32_t c = utf8::GetNextChar(userInput + textEditing, cpos);
 		if (c == 0) c = ' '; // make caret always visible
 		const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 		const float csx = inputTextPosX + caretPos;
@@ -2030,6 +2063,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 				}
 			}
 
+			SDL_StopTextInput();
 			return true;
 		}
 
@@ -2045,6 +2079,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 				writingPos = 0;
 			}
 
+			SDL_StopTextInput();
 			return true;
 		}
 
@@ -2067,6 +2102,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 				LOG("%s", msg.c_str());
 			}
 
+			SDL_StopTextInput();
 			return true;
 		}
 

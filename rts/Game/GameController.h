@@ -16,6 +16,7 @@ public:
 	virtual int KeyPressed(int key, bool isRepeat) { return 0; }
 	virtual int KeyReleased(int key) { return 0; }
 	virtual int TextInput(const std::string& utf8Text) { return 0; }
+	virtual int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) { return 0; }
 	virtual void ResizeEvent() {}
 
 	void PasteClipboard();

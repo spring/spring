@@ -1117,6 +1117,7 @@ public:
 		if (setUserInputPrefix)
 			game->userInputPrefix = userInputPrefix;
 
+		SDL_StartTextInput();
 		game->userWriting = true;
 		game->userPrompt = "Say: ";
 		game->userInput = game->userInputPrefix;
@@ -3330,4 +3331,3 @@ void UnsyncedGameCommands::DestroyInstance() {
 		LOG_L(L_WARNING, "UnsyncedGameCommands singleton was not initialized or is already destroyed");
 	}
 }
-

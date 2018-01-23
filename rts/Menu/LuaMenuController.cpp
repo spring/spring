@@ -136,3 +136,8 @@ int CLuaMenuController::TextInput(const std::string& utf8Text)
 	return 0;
 }
 
+int CLuaMenuController::TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length)
+{
+	eventHandler.TextEditing(utf8Text, start, length);
+	return 0;
+}

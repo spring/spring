@@ -1956,6 +1956,28 @@ bool CLuaHandle::TextInput(const std::string& utf8)
 }
 
 
+bool CLuaHandle::TextEditing(const std::string& utf8, unsigned int start, unsigned int length)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 5, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	lua_pushsstring(L, utf8);
+	lua_pushinteger(L, start);
+	lua_pushinteger(L, length);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 3, 1))
+		return false;
+
+	const bool retval = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
 bool CLuaHandle::MousePress(int x, int y, int button)
 {
 	LUA_CALL_IN_CHECK(L, false);
@@ -2647,4 +2669,3 @@ int CLuaHandle::CallOutUpdateCallIn(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-

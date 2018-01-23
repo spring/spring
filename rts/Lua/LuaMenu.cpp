@@ -242,6 +242,10 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Reload);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Quit);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, Start);
+
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLSetTextInputRect);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLStartTextInput);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SDLStopTextInput);
 	return true;
 }
 

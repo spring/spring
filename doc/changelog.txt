@@ -59,6 +59,8 @@ Lua:
    this was done by the engine). You can prevent this filter by adding
    the `dont_remove` field to such movedefs. This is useful to make
    them available in `Spring.MoveCtrl.SetMoveDef` but beware the perf cost.
+ - new TextEditing(utf8, start, length) callin, which holds the IME editing composition (https://wiki.libsdl.org/Tutorials/TextInput)
+ - new SDLSetTextInputRect(x, y, w, h), SDLStartTextInput() and SDLStopTextInput() functions for controlling IME input from Lua
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
@@ -90,6 +92,7 @@ Misc:
  - `/nocost` now accepts 0/1 parameter (still toggles if none given)
  - model metadata for assimp/obj can now define pieces hierarchy
    by either nested tables or 'parent' key.
+ - IME editing support for those with the proper SDL2 version/IME tool combination
 
 Fixes:
  - fix infinite backtracking loop in PFS
