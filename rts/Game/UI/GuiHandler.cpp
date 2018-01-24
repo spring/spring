@@ -2884,7 +2884,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text, bool o
 	const float yCenter = 0.5f * (b.y1 + b.y2 + yShrink);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	font->glPrint(xCenter, yCenter, fontScale, (dropShadows ? FONT_SHADOW : 0) | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, text);
+	font->glPrint(xCenter, yCenter, fontScale, (dropShadows ? FONT_SHADOW : 0) | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, text);
 }
 
 
@@ -2899,7 +2899,7 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 	const float xPos = b.x1 + textBorder + 0.002f;
 	const float yPos = b.y1 - textBorder - 0.006f;
 
-	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_SCALE | FONT_NORM, text);
+	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_SCALE | FONT_NORM | FONT_BUFFERED, text);
 }
 
 
@@ -2914,7 +2914,7 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 	const float xPos = b.x1 + textBorder + 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
 
-	font->glPrint(xPos, yPos, fontScale, FONT_SCALE | FONT_NORM, text);
+	font->glPrint(xPos, yPos, fontScale, FONT_SCALE | FONT_NORM | FONT_BUFFERED, text);
 }
 
 
@@ -2929,7 +2929,7 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 	const float xPos = b.x2 - textBorder - 0.002f;
 	const float yPos = b.y1 - textBorder - 0.006f;
 
-	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_RIGHT | FONT_SCALE | FONT_NORM, text);
+	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_RIGHT | FONT_SCALE | FONT_NORM | FONT_BUFFERED, text);
 }
 
 
@@ -2944,7 +2944,7 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 	const float xPos = b.x2 - textBorder - 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
 
-	font->glPrint(xPos, yPos, fontScale, FONT_RIGHT | FONT_SCALE | FONT_NORM, text);
+	font->glPrint(xPos, yPos, fontScale, FONT_RIGHT | FONT_SCALE | FONT_NORM | FONT_BUFFERED, text);
 }
 
 
@@ -2973,7 +2973,6 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 void CGuiHandler::DrawButtons() // Only called by Draw
 {
 	glLineWidth(1.0f);
-	font->Begin();
 
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
@@ -3115,18 +3114,17 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
 		}
 		const float textSize = 1.2f;
-		font->glFormat(xBpos, yBpos, textSize, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "%i", activePage + 1);
+		font->glFormat(xBpos, yBpos, textSize, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%i", activePage + 1);
 	}
 
 	DrawMenuName();
-
-	font->End();
 
 	// LuaUI can handle this
 	if (luaUI == NULL || drawSelectionInfo)
 		DrawSelectionInfo();
 
 	DrawNumberInput();
+	font->DrawBufferedGL4();
 }
 
 
@@ -3147,10 +3145,10 @@ void CGuiHandler::DrawMenuName() // Only called by drawbuttons
 		        buttonBox.y2,
 		        buttonBox.x2,
 		        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
-		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, menuName);
 	} else {
 		font->SetColors(); // default
-		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM | FONT_BUFFERED, menuName);
 	}
 }
 
@@ -3183,10 +3181,10 @@ void CGuiHandler::DrawSelectionInfo()
 			        xSelectionPos + frameBorder + textWidth,
 			        ySelectionPos + frameBorder + textHeight);
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM, buf.str());
+			smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM | FONT_BUFFERED, buf.str());
 		} else {
 			smallFont->SetColors(); // default
-			smallFont->glPrint(xSelectionPos, ySelectionPos, fontSize, FONT_OUTLINE | FONT_NORM, buf.str());
+			smallFont->glPrint(xSelectionPos, ySelectionPos, fontSize, FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, buf.str());
 		}
 	}
 }
@@ -3220,7 +3218,7 @@ void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 				glVertex2f(slideX, 0.50f);
 			glEnd();
 			glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
-			font->glFormat(slideX, 0.56f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "%i", (int)value);
+			font->glFormat(slideX, 0.56f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%i", (int)value);
 		}
 	}
 }
