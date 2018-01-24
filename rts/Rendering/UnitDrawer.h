@@ -96,7 +96,7 @@ public:
 	void Draw();
 	void DrawOpaquePass(bool deferredPass);
 	void DrawShadowPass();
-	void DrawAlphaPass();
+	void DrawAlphaPass(bool aboveWater);
 
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
@@ -129,7 +129,7 @@ public:
 
 	void SetupOpaqueDrawing(bool deferredPass);
 	void ResetOpaqueDrawing(bool deferredPass);
-	void SetupAlphaDrawing(bool deferredPass);
+	void SetupAlphaDrawing(bool deferredPass, bool aboveWater);
 	void ResetAlphaDrawing(bool deferredPass);
 
 	void SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild);

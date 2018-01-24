@@ -301,23 +301,15 @@ void CWorldDrawer::DrawAlphaObjects() const
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	static const double belowPlaneEq[4] = {0.0f, -1.0f, 0.0f, 0.0f};
-	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
-
 	{
 		SCOPED_TIMER("Draw::World::Models::Alpha");
-		// clip in model-space
-		GL::PushMatrix();
-		GL::LoadIdentity();
-		glClipPlane(GL_CLIP_PLANE3, belowPlaneEq);
-		GL::PopMatrix();
-		glEnable(GL_CLIP_PLANE3);
+		glEnable(GL_CLIP_DISTANCE0 + IWater::ClipPlaneIndex());
 
 		// draw alpha-objects below water surface (farthest)
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(false);
+		featureDrawer->DrawAlphaPass(false);
 
-		glDisable(GL_CLIP_PLANE3);
+		glDisable(GL_CLIP_DISTANCE0 + IWater::ClipPlaneIndex());
 	}
 
 	// draw water (in-between)
@@ -330,17 +322,13 @@ void CWorldDrawer::DrawAlphaObjects() const
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Alpha");
-		GL::PushMatrix();
-		GL::LoadIdentity();
-		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
-		GL::PopMatrix();
-		glEnable(GL_CLIP_PLANE3);
+		glEnable(GL_CLIP_DISTANCE0 + IWater::ClipPlaneIndex());
 
 		// draw alpha-objects above water surface (closest)
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(true);
+		featureDrawer->DrawAlphaPass(true);
 
-		glDisable(GL_CLIP_PLANE3);
+		glDisable(GL_CLIP_DISTANCE0 + IWater::ClipPlaneIndex());
 	}
 }
 

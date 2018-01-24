@@ -30,7 +30,7 @@ public:
 	void Draw();
 	void DrawOpaquePass(bool deferredPass);
 	void DrawShadowPass();
-	void DrawAlphaPass();
+	void DrawAlphaPass(bool aboveWater);
 
 	static void SetFeatureLuaTrans(const CFeature* feature, bool lodCall);
 	static void SetFeatureDefTrans(const CFeature* feature, bool lodCall);

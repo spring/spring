@@ -166,8 +166,8 @@ void IWater::DrawReflections(bool drawGround, bool drawSky) {
 		featureDrawer->Draw();
 
 		// transparent
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(true);
+		featureDrawer->DrawAlphaPass(true);
 		projectileDrawer->Draw(true);
 		// sun-disc does not blend well with water
 		// sky->DrawSun(Game::ReflectionDraw);
@@ -201,8 +201,8 @@ void IWater::DrawRefractions(bool drawGround, bool drawSky) {
 		featureDrawer->Draw();
 
 		// transparent
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
+		unitDrawer->DrawAlphaPass(false);
+		featureDrawer->DrawAlphaPass(false);
 		projectileDrawer->Draw(false, true);
 
 		eventHandler.DrawWorldRefraction();

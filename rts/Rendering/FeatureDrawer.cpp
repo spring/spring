@@ -399,13 +399,13 @@ void CFeatureDrawer::DrawIndividualLuaTrans(const CFeature* feature, bool noLuaC
 
 
 
-void CFeatureDrawer::DrawAlphaPass()
+void CFeatureDrawer::DrawAlphaPass(bool aboveWater)
 {
 	inAlphaPass = true;
 
 	{
 		assert((unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha());
-		unitDrawer->SetupAlphaDrawing(false);
+		unitDrawer->SetupAlphaDrawing(false, aboveWater);
 
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);

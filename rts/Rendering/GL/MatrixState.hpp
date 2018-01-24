@@ -26,10 +26,11 @@ namespace GL {
 
 		CMatrix44f& Top(unsigned int mode);
 
-		const CMatrix44f& Top() const { return (Top(stack - &stacks[0])); }
-		      CMatrix44f& Top()       { return (Top(stack - &stacks[0])); }
+		const CMatrix44f& Top() const { return (Top(GetMode())); }
+		      CMatrix44f& Top()       { return (Top(GetMode())); }
 
 		void SetMode(unsigned int mode) { stack = &stacks[mode]; }
+		unsigned int GetMode() const { return (stack - &stacks[0]); }
 
 		void Push(const CMatrix44f& m);
 		void Push();
@@ -53,6 +54,7 @@ namespace GL {
 
 
 	void MatrixMode(unsigned int glMode);
+	int GetMatrixMode();
 
 	const CMatrix44f& GetMatrix();
 	const CMatrix44f& GetMatrix(unsigned int glMode);

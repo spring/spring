@@ -80,6 +80,25 @@ void GL::MatrixMode(unsigned int glMode) {
 void GL::MatrixMode(unsigned int glMode) { glMatrixMode(glMode); }
 #endif
 
+#if 0
+int GL::GetMatrixMode() {
+	switch (matrixState->GetMode()) {
+		case  0: { return GL_MODELVIEW ; } break;
+		case  1: { return GL_PROJECTION; } break;
+		case  2: { return GL_TEXTURE   ; } break;
+		default: {        assert(false); } break;
+	}
+
+	return 0;
+}
+#else
+int GL::GetMatrixMode() {
+	int matrixMode = 0;
+	glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+	return matrixMode;
+}
+#endif
+
 const CMatrix44f& GL::GetMatrix() { return (matrixState->Top()); }
 const CMatrix44f& GL::GetMatrix(unsigned int glMode) {
 	switch (glMode) {

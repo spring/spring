@@ -149,7 +149,7 @@ static void ResetLuaOpaqueFeatureDrawState(unsigned int modelType, bool deferred
 
 // transparency-pass (reflection, ...) state management funcs
 static void SetupDefAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->SetupAlphaDrawing(deferredPass);
+	unitDrawer->SetupAlphaDrawing(deferredPass, true);
 	unitDrawer->PushModelRenderState(modelType);
 }
 

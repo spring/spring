@@ -285,7 +285,7 @@ void UnitDrawerStateGLSL::SetWaterClipPlane(const DrawPass::e& drawPass) const {
 	switch (drawPass) {
 		case DrawPass::WaterReflection: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelReflClipPlane()); } break;
 		case DrawPass::WaterRefraction: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelRefrClipPlane()); } break;
-		default: {} break;
+		default                       : {                                                                                     } break;
 	}
 }
 

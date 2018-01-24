@@ -720,7 +720,7 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 
 
 
-void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
+void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 {
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
@@ -733,6 +733,16 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.1f);
 	glDepthMask(GL_FALSE);
+
+	if (water->DrawReflectionPass() || water->DrawRefractionPass()) {
+		// IWater enables GL_CLIP_DISTANCE{0,1}
+		assert(water->DrawReflectionPass() == aboveWater);
+		unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(water->DrawReflectionPass()? DrawPass::WaterReflection: DrawPass::WaterRefraction);
+	} else {
+		// (ab)use drawpass to select the proper plane; WorldDrawer enables GL_CLIP_DISTANCE*
+		unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(aboveWater? DrawPass::WaterReflection: DrawPass::WaterRefraction);
+	}
+
 }
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
@@ -744,16 +754,11 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 
 
 
-void CUnitDrawer::DrawAlphaPass()
+void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 {
 	{
-		SetupAlphaDrawing(false);
+		SetupAlphaDrawing(false, aboveWater);
 		glDisable(GL_ALPHA_TEST);
-
-		if (water->DrawReflectionPass())
-			unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterReflection);
-		if (water->DrawRefractionPass())
-			unitDrawerStates[DRAWER_STATE_SEL]->SetWaterClipPlane(DrawPass::WaterRefraction);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			PushModelRenderState(modelType);
@@ -1004,7 +1009,7 @@ void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, b
 
 void CUnitDrawer::PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
 {
-	SetupAlphaDrawing(deferredPass);
+	SetupAlphaDrawing(deferredPass, true);
 	PushModelRenderState(model);
 	SetTeamColour(teamID, float2(alphaValues.x, 1.0f));
 }
@@ -1080,9 +1085,7 @@ static void DIDResetPrevModelView()
 static bool DIDCheckMatrixMode(int wantedMode)
 {
 	#if 1
-	int matrixMode = 0;
-	glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
-	return (matrixMode == wantedMode);
+	return (GL::GetMatrixMode() == wantedMode);
 	#else
 	return true;
 	#endif
@@ -1094,73 +1097,67 @@ static bool DIDCheckMatrixMode(int wantedMode)
 // custom materials
 void CUnitDrawer::DrawObjectDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
-	// TODO: use the matrix stack
-	return;
-
 	const IUnitDrawerState* state = nullptr;
 	const S3DModel* model = objectDef->LoadModel();
 
 	if (model == nullptr)
 		return;
 
-	if (!rawState) {
-		if (!DIDCheckMatrixMode(GL_MODELVIEW))
-			return;
-
-		// teamID validity is checked by SetTeamColour
-		unitDrawer->PushIndividualOpaqueState(model, teamID, false);
-
-		// NOTE:
-		//   unlike DrawIndividual(...) the model transform is
-		//   always provided by Lua, not taken from the object
-		//   (which does not exist here) so we must restore it
-		//   (by undoing the UnitDrawerState MVP setup)
-		//
-		//   assumes the Lua transform includes a LoadIdentity!
-		DIDResetPrevProjection(toScreen);
-		DIDResetPrevModelView();
-
-		state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
-		state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
+	if (rawState) {
+		model->Draw();
+		return;
 	}
 
+	if (!DIDCheckMatrixMode(GL_MODELVIEW))
+		return;
+
+	// teamID validity is checked by SetTeamColour
+	unitDrawer->PushIndividualOpaqueState(model, teamID, false);
+
+	// NOTE:
+	//   unlike DrawIndividual(...) the model transform is
+	//   always provided by Lua, not taken from the object
+	//   (which does not exist here) so we must restore it
+	//   (by undoing the UnitDrawerState MVP setup)
+	//
+	//   assumes the Lua transform includes a LoadIdentity!
+	DIDResetPrevProjection(toScreen);
+	DIDResetPrevModelView();
+
+	// use the matrix stack to supply a transform
+	state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	model->Draw();
-
-	if (!rawState) {
-		unitDrawer->PopIndividualOpaqueState(model, teamID, false);
-	}
+	unitDrawer->PopIndividualOpaqueState(model, teamID, false);
 }
 
 // used for drawing building orders (with translucency)
 void CUnitDrawer::DrawObjectDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
-	// TODO: use the matrix stack
-	return;
-
 	const IUnitDrawerState* state = nullptr;
 	const S3DModel* model = objectDef->LoadModel();
 
 	if (model == nullptr)
 		return;
 
-	if (!rawState) {
-		if (!DIDCheckMatrixMode(GL_MODELVIEW))
-			return;
-
-		unitDrawer->PushIndividualAlphaState(model, teamID, false);
-
-		DIDResetPrevProjection(toScreen);
-		DIDResetPrevModelView();
-
-		state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
-		state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
+	if (rawState) {
+		model->Draw();
+		return;
 	}
 
+	if (!DIDCheckMatrixMode(GL_MODELVIEW))
+		return;
+
+	unitDrawer->PushIndividualAlphaState(model, teamID, false);
+
+	DIDResetPrevProjection(toScreen);
+	DIDResetPrevModelView();
+
+	// use the matrix stack to supply a transform
+	state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+	state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	model->Draw();
-
-	if (!rawState) {
-		unitDrawer->PopIndividualAlphaState(model, teamID, false);
-	}
+	unitDrawer->PopIndividualAlphaState(model, teamID, false);
 }
 
 
