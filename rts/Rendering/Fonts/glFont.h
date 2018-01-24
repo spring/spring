@@ -116,7 +116,6 @@ public:
 	static constexpr char8_t ColorResetIndicator = 0x08; // =: '\\b'
 	static bool threadSafety;
 
-	typedef void (*ColorCallBack)(const float*);
 	// typedef void (*ColorCodeCallBack)(float4);
 	typedef std::function<void(float4)> ColorCodeCallBack;
 
@@ -133,29 +132,19 @@ private:
 	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
 
 private:
-	unsigned int GetBufferIdx(bool outline) const { return (currBufferIdxGL4 * 2 + outline); }
+	unsigned int GetBufferIdx(bool outline) const { return (currBufferIndxGL4 * 2 + outline); }
 
-	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIdxGL4]; }
-	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIdxGL4]; }
+	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIndxGL4]; }
+	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIndxGL4]; }
 
 	enum {
 		PRIMARY_BUFFER = 0,
 		OUTLINE_BUFFER = 1,
 	};
 
-public:
-	// called from drawArrays through a callback
-	void SetNextColor();
-
 private:
 	std::string fontPath;
-
-
-	std::vector<float4> stripTextColors;
-	std::vector<float4> stripOutlineColors;
-	std::vector<float4>::iterator colorIterator;
-
-	ColorCallBack colorCallBack;
+	spring::recursive_mutex bufferMutex;
 
 
 	// used by {Begin,End}GL4; each double-buffered
@@ -170,10 +159,7 @@ private:
 	VA_TYPE_TC* curBufferPos[2 * 2] = {nullptr, nullptr, nullptr, nullptr}; // current {primary,outline} write-pos
 
 
-	spring::recursive_mutex bufferMutex;
-
-	unsigned int currBufferIdxGL4 = 0;
-	unsigned int lastDrawFrameGL4 = 0;
+	unsigned int currBufferIndxGL4 = 0;
 	unsigned int lastPrintFrameGL4 = 0;
 
 	bool inBeginEndGL4 = false; // implies bufferMutex is locked

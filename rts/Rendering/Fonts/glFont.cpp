@@ -117,7 +117,6 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
 , fontPath(fontFile)
-, colorCallBack(nullptr)
 {
 	textColor    = white;
 	outlineColor = darkOutline;
@@ -272,27 +271,6 @@ static inline bool SkipColorCodesAndNewLines(
 }
 
 
-
-
-static inline void TextStripCallback(void* data)
-{
-	CglFont* f = reinterpret_cast<CglFont*>(data);
-	f->SetNextColor();
-}
-
-static inline void CallColorCallBack(CglFont::ColorCallBack ccb, float* v)
-{
-	if (ccb == nullptr) {
-		glColor4fv(v);
-	} else {
-		ccb(v);
-	}
-}
-
-void CglFont::SetNextColor()
-{
-	CallColorCallBack(colorCallBack, *colorIterator++);
-}
 
 
 /*******************************************************************************/
@@ -614,9 +592,9 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		// skip past the submitted data chunk; buffer should never fill up
 		// within a single frame so handling wrap-around here is pointless
@@ -675,9 +653,9 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		prvBufferPos[pbi] = curBufferPos[pbi];
 		prvBufferPos[obi] = curBufferPos[obi];
@@ -983,9 +961,9 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 	if (curBufferPos[obi] > prvBufferPos[obi])
-		outlineBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+		outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 	if (curBufferPos[pbi] > prvBufferPos[pbi])
-		primaryBuffer[currBufferIdxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+		primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 	prvBufferPos[pbi] = curBufferPos[pbi];
 	prvBufferPos[obi] = curBufferPos[obi];
@@ -1088,7 +1066,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	// any data that was buffered but not submitted last frame gets discarded, user error
 	if (lastPrintFrameGL4 != globalRendering->drawFrame) {
 		lastPrintFrameGL4 = globalRendering->drawFrame;
-		currBufferIdxGL4 = (currBufferIdxGL4 + 1) & 1;
+		currBufferIndxGL4 = (currBufferIndxGL4 + 1) & 1;
 
 		ResetBufferGL4(false);
 		ResetBufferGL4( true);
