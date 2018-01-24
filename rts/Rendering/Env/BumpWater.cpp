@@ -121,7 +121,7 @@ CBumpWater::CBumpWater()
 	: CEventClient("[CBumpWater]", 271923, false)
 	, screenTextureX(globalRendering->viewSizeX)
 	, screenTextureY(globalRendering->viewSizeY)
-	, screenCopyTarget((!globalRendering->atiHacks)? GL_TEXTURE_RECTANGLE: GL_TEXTURE_2D)
+	, screenCopyTarget(GL_TEXTURE_RECTANGLE)
 	, wasVisibleLastFrame(false)
 {
 	eventHandler.AddClient(this);
