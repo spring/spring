@@ -34,10 +34,10 @@ endif (VORBIS_INCLUDE_DIR AND OGG_INCLUDE_DIR AND OGG_LIBRARY AND VORBIS_LIBRARY
 find_path(VORBIS_INCLUDE_DIR vorbis/vorbisfile.h)
 find_path(OGG_INCLUDE_DIR ogg/ogg.h)
 
-find_library(OGG_LIBRARY NAMES ogg)
-find_library(VORBIS_LIBRARY NAMES vorbis)
-find_library(VORBISFILE_LIBRARY NAMES vorbisfile)
-#find_library(VORBISENC_LIBRARY NAMES vorbisenc)
+find_library(OGG_LIBRARY NAMES ogg ogg-0)
+find_library(VORBIS_LIBRARY NAMES vorbis vorbis-0)
+find_library(VORBISFILE_LIBRARY NAMES vorbisfile vorbisfile-3)
+find_library(VORBISENC_LIBRARY NAMES vorbisenc vorbisenc-2)
 
 
 if (VORBIS_INCLUDE_DIR AND VORBIS_LIBRARY AND VORBISFILE_LIBRARY) # AND VORBISENC_LIBRARY)
