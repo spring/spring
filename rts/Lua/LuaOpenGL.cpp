@@ -275,8 +275,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TexRect);
 
 	REGISTER_LUA_CFUNC(BeginText);
-	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(EndText);
+	REGISTER_LUA_CFUNC(DrawBufferedText);
+	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(GetTextWidth);
 	REGISTER_LUA_CFUNC(GetTextHeight);
 
@@ -1022,15 +1023,21 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 int LuaOpenGL::BeginText(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	font->Begin();
+	font->BeginGL4();
 	return 0;
 }
-
 
 int LuaOpenGL::EndText(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	font->End();
+	font->EndGL4();
+	return 0;
+}
+
+int LuaOpenGL::DrawBufferedText(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+	font->DrawBufferedGL4();
 	return 0;
 }
 
@@ -1039,40 +1046,45 @@ int LuaOpenGL::Text(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
+	const std::string& text = luaL_checksstring(L, 1);
 
-	const string text = luaL_checksstring(L, 1);
-	const float x     = luaL_checkfloat(L, 2);
-	const float y     = luaL_checkfloat(L, 3);
+	const float xpos = luaL_checkfloat(L, 2);
+	const float ypos = luaL_checkfloat(L, 3);
+	const float size = luaL_optnumber(L, 4, 12.0f);
 
-	float size = luaL_optnumber(L, 4, 12.0f);
-	int options = FONT_NEAREST;
+	unsigned int options = FONT_NEAREST;
+
 	bool outline = false;
 	bool lightOut = false;
 
-	if ((args >= 5) && lua_isstring(L, 5)) {
+	if ((lua_gettop(L) >= 5) && lua_isstring(L, 5)) {
 		const char* c = lua_tostring(L, 5);
+
 		while (*c != 0) {
 	  		switch (*c) {
-				case 'c': { options |= FONT_CENTER;       break; }
-				case 'r': { options |= FONT_RIGHT;        break; }
+				case 'c': { options |= FONT_CENTER;    } break;
+				case 'r': { options |= FONT_RIGHT;     } break;
 
-				case 'a': { options |= FONT_ASCENDER;     break; }
-				case 't': { options |= FONT_TOP;          break; }
-				case 'v': { options |= FONT_VCENTER;      break; }
-				case 'x': { options |= FONT_BASELINE;     break; }
-				case 'b': { options |= FONT_BOTTOM;       break; }
-				case 'd': { options |= FONT_DESCENDER;    break; }
+				case 'a': { options |= FONT_ASCENDER;  } break;
+				case 't': { options |= FONT_TOP;       } break;
+				case 'v': { options |= FONT_VCENTER;   } break;
+				case 'x': { options |= FONT_BASELINE;  } break;
+				case 'b': { options |= FONT_BOTTOM;    } break;
+				case 'd': { options |= FONT_DESCENDER; } break;
 
-				case 's': { options |= FONT_SHADOW;       break; }
-				case 'o': { options |= FONT_OUTLINE; outline = true; lightOut = false;     break; }
-				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
+				case 's': { options |= FONT_SHADOW;    } break;
+				case 'o': { options |= FONT_OUTLINE;   } break;
+				case 'O': { options |= FONT_OUTLINE;   } break;
 
-				case 'n': { options ^= FONT_NEAREST;       break; }
+				case 'n': { options ^= FONT_NEAREST;   } break;
+				case 'B': { options |= FONT_BUFFERED;  } break; // for DrawBufferedText
 				default: break;
 			}
-	  		c++;
+
+			lightOut |= (*(c++) == 'O');
 		}
+
+		outline = ((options & FONT_OUTLINE) != 0);
 	}
 
 	if (outline) {
@@ -1083,30 +1095,26 @@ int LuaOpenGL::Text(lua_State* L)
 		}
 	}
 
-	font->glPrint(x, y, size, options, text);
-
+	font->glPrint(xpos, ypos, size, options, text);
 	return 0;
 }
 
 
 int LuaOpenGL::GetTextWidth(lua_State* L)
 {
-
-	const string text = luaL_checksstring(L, 1);
+	const std::string& text = luaL_checksstring(L, 1);
 	const float width = font->GetTextWidth(text);
 	lua_pushnumber(L, width);
 	return 1;
 }
 
-
 int LuaOpenGL::GetTextHeight(lua_State* L)
 {
-	const string text = luaL_checksstring(L, 1);
+	const std::string& text = luaL_checksstring(L, 1);
 	float descender;
 	int lines;
 
-	const float height = font->GetTextHeight(text,&descender,&lines);
-	lua_pushnumber(L, height);
+	lua_pushnumber(L, font->GetTextHeight(text, &descender, &lines));
 	lua_pushnumber(L, descender);
 	lua_pushnumber(L, lines);
 	return 3;

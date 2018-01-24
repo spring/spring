@@ -100,8 +100,6 @@ protected:
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 
 	void UpdateGlyphAtlasTexture();
-	void SetupTexCoorScaleMatrix();
-	void ResetTexCoorScaleMatrix();
 
 private:
 	void CreateTexture(const int width, const int height);

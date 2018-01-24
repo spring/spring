@@ -689,17 +689,3 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 #endif
 }
 
-void CFontTexture::SetupTexCoorScaleMatrix()
-{
-	GL::MatrixMode(GL_TEXTURE);
-	GL::PushMatrix();
-	GL::Scale(1.0f / texWidth, 1.0f / texHeight, 1.0f);
-	GL::MatrixMode(GL_MODELVIEW);
-}
-void CFontTexture::ResetTexCoorScaleMatrix()
-{
-	GL::MatrixMode(GL_TEXTURE);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-}
-

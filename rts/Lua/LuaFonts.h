@@ -28,6 +28,7 @@ class LuaFonts {
 
 		static int Begin(lua_State* L);
 		static int End(lua_State* L);
+		static int DrawBuffered(lua_State* L);
 
 		static int WrapText(lua_State* L);
 

@@ -7,7 +7,6 @@
 
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/VertexArray.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
@@ -179,8 +178,6 @@ CglFont::~CglFont()
 
 #ifdef HEADLESS
 
-void CglFont::Begin(const bool immediate, const bool resetColors) {}
-void CglFont::End() {}
 void CglFont::BeginGL4(Shader::IProgramObject* shader) {}
 void CglFont::EndGL4(Shader::IProgramObject* shader) {}
 void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader) {}
@@ -523,18 +520,6 @@ void CglFont::SetTextColor(const float4* color)
 	if (threadSafety)
 		bufferMutex.lock();
 
-
-	// if between Begin and End, replace current primary color
-	if (inBeginEnd && !(*color == textColor)) {
-		if (va.drawIndex() == 0 && !stripTextColors.empty()) {
-			stripTextColors.back() = *color;
-		} else {
-			stripTextColors.push_back(*color);
-			va.EndStrip();
-		}
-	}
-
-
 	textColor = *color;
 
 	if (threadSafety)
@@ -548,18 +533,6 @@ void CglFont::SetOutlineColor(const float4* color)
 
 	if (threadSafety)
 		bufferMutex.lock();
-
-
-	// if between Begin and End, replace current outline color
-	if (inBeginEnd && !(*color == outlineColor)) {
-		if (va2.drawIndex() == 0 && !stripOutlineColors.empty()) {
-			stripOutlineColors.back() = *color;
-		} else {
-			stripOutlineColors.push_back(*color);
-			va2.EndStrip();
-		}
-	}
-
 
 	outlineColor = *color;
 
@@ -601,7 +574,7 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 	if (threadSafety)
 		bufferMutex.lock();
 
-	if (inBeginEndGL4 || inBeginEnd) {
+	if (inBeginEndGL4) {
 		bufferMutex.unlock();
 		return;
 	}
@@ -621,7 +594,7 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 }
 
 void CglFont::EndGL4(Shader::IProgramObject* shader) {
-	if (!inBeginEndGL4 || inBeginEnd)
+	if (!inBeginEndGL4)
 		return;
 
 	{
@@ -651,10 +624,6 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		prvBufferPos[obi] = curBufferPos[obi];
 
 
-		// NOTE: each {Begin,End}GL4 pair currently requires an (implicit or explicit) glFinish after Submit
-		if (pendingFinishGL4)
-			glFinish();
-
 		if (curShader == defShader) {
 			curShader->Disable();
 		} else {
@@ -669,7 +638,6 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 	curShader = nullptr;
 
 	inBeginEndGL4 = false;
-	pendingFinishGL4 = false;
 
 	if (threadSafety)
 		bufferMutex.unlock();
@@ -715,9 +683,6 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		prvBufferPos[obi] = curBufferPos[obi];
 
 
-		if (pendingFinishGL4)
-			glFinish();
-
 		if (curShader == defShader) {
 			curShader->Disable();
 		} else {
@@ -730,104 +695,6 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 	}
 
 	curShader = nullptr;
-
-	pendingFinishGL4 = false;
-
-	if (threadSafety)
-		bufferMutex.unlock();
-}
-
-
-
-
-void CglFont::Begin(const bool immediate, const bool resetColors)
-{
-	if (threadSafety)
-		bufferMutex.lock();
-
-	if (inBeginEnd || inBeginEndGL4) {
-		LOG_L(L_ERROR, "[glFont::%s] called Begin() multiple times (inBeginEnd{GL4}={%d,%d}", __func__, inBeginEnd, inBeginEndGL4);
-		if (threadSafety)
-			bufferMutex.unlock();
-		return;
-	}
-
-
-	autoOutlineColor = true;
-	setColor = !immediate;
-
-	if (resetColors)
-		SetColors(); // reset colors
-
-	inBeginEnd = true;
-
-	va.Initialize();
-	va2.Initialize();
-
-	stripTextColors.clear();
-	stripOutlineColors.clear();
-	stripTextColors.push_back(textColor);
-	stripOutlineColors.push_back(outlineColor);
-
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-
-void CglFont::End()
-{
-	if (!inBeginEnd || inBeginEndGL4) {
-		LOG_L(L_ERROR, "[glFont::%s] called End() without Begin() (inBeginEnd{GL4}={%d,%d}", __func__, inBeginEnd, inBeginEndGL4);
-		return;
-	}
-
-	inBeginEnd = false;
-
-	if (va.drawIndex() == 0) {
-		glPopAttrib();
-		if (threadSafety)
-			bufferMutex.unlock();
-		return;
-	}
-
-	UpdateGlyphAtlasTexture();
-	// glyph-texture scale can change if GetGlyph calls LoadBlock, so
-	// texture-coors are specified in absolute texels in RenderString*
-	// and scaled here
-	SetupTexCoorScaleMatrix();
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, GetTexture());
-
-
-	if (va2.drawIndex() > 0) {
-		if (stripOutlineColors.size() > 1) {
-			colorIterator = stripOutlineColors.begin();
-			va2.DrawArray2dT(GL_QUADS, TextStripCallback, this);
-		} else {
-			CallColorCallBack(colorCallBack, outlineColor);
-			va2.DrawArray2dT(GL_QUADS);
-		}
-	}
-
-	{
-		if (stripTextColors.size() > 1) {
-			colorIterator = stripTextColors.begin();
-			va.DrawArray2dT(GL_QUADS, TextStripCallback, this);//FIXME calls a 0 length strip!
-		} else {
-			// single color over entire text
-			if (setColor)
-				CallColorCallBack(colorCallBack, textColor);
-			va.DrawArray2dT(GL_QUADS);
-		}
-	}
-
-	ResetTexCoorScaleMatrix();
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glPopAttrib();
 
 	if (threadSafety)
 		bufferMutex.unlock();
@@ -858,9 +725,6 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
 	const size_t length = str.length();
-
-	if (!inBeginEndGL4)
-		va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	// const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
@@ -908,15 +772,6 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 		const float tx1 = tc.x1() * texScaleX;
 		const float ty1 = tc.y1() * texScaleY;
 
-		if (!inBeginEndGL4 && !bufferedWriteGL4) {
-			va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
-			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
-			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
-			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-			continue;
-		}
-
-
 		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 4) < NUM_BUFFER_QUADS) {
 			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
@@ -943,11 +798,6 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	const float ssY = (scaleY / fontSize) * GetOutlineWidth();
 	const float lineHeight_ = scaleY * GetLineHeight();
 	const size_t length = str.length();
-
-	if (!inBeginEndGL4) {
-		va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-		va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	}
 
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
@@ -996,22 +846,6 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 		const float sty0 = stc.y0() * texScaleY;
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
-
-		if (!inBeginEndGL4 && !bufferedWriteGL4) {
-			// draw shadow
-			va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy1 - shiftY - ssY, stx0, sty1);
-			va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy0 - shiftY + ssY, stx0, sty0);
-			va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy0 - shiftY + ssY, stx1, sty0);
-			va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy1 - shiftY - ssY, stx1, sty1);
-
-			// draw the actual character
-			va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
-			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
-			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
-			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-			continue;
-		}
-
 
 		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 4) < NUM_BUFFER_QUADS) {
 			*(curBufferPos[obi]++) = {{dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
@@ -1043,11 +877,6 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 	const float lineHeight_ = scaleY * GetLineHeight();
 	const size_t length = str.length();
 
-	if (!inBeginEndGL4) {
-		va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-		va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	}
-
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
@@ -1095,22 +924,6 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 		const float sty0 = stc.y0() * texScaleY;
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
-
-		if (!inBeginEndGL4 && !bufferedWriteGL4) {
-			// draw outline
-			va2.AddVertexQ2dT(dx0 - shiftX, dy1 - shiftY, stx0, sty1);
-			va2.AddVertexQ2dT(dx0 - shiftX, dy0 + shiftY, stx0, sty0);
-			va2.AddVertexQ2dT(dx1 + shiftX, dy0 + shiftY, stx1, sty0);
-			va2.AddVertexQ2dT(dx1 + shiftX, dy1 - shiftY, stx1, sty1);
-
-			// draw the actual character
-			va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
-			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
-			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
-			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-			continue;
-		}
-
 
 		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 4) < NUM_BUFFER_QUADS) {
 			*(curBufferPos[obi]++) = {{dx0 - shiftX, dy1 - shiftY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
@@ -1262,17 +1075,14 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	};
 
 	const bool buffered = ((options & FONT_BUFFERED) != 0);
-	// immediate mode?
-	const bool immediate = (!inBeginEnd && !inBeginEndGL4 && !buffered);
+	const bool immediate = (!inBeginEndGL4 && !buffered);
 
 	if (immediate) {
-		Begin(!(options & (FONT_OUTLINE | FONT_SHADOW)));
+		// no buffering
+		BeginGL4();
 	} else if (buffered) {
 		if (threadSafety && !inBeginEndGL4)
 			bufferMutex.lock();
-
-		bufferedWriteGL4 = !inBeginEndGL4;
-		pendingFinishGL4 |= ((options & FONT_FINISHED) != 0);
 	}
 
 	// any data that was buffered but not submitted last frame gets discarded, user error
@@ -1285,19 +1095,17 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	}
 
 	// select correct decoration RenderString function
-	if (options & FONT_OUTLINE) {
+	if ((options & FONT_OUTLINE) != 0) {
 		RenderStringOutlined(x, y, sizeX, sizeY, text, cccb);
-	} else if (options & FONT_SHADOW) {
+	} else if ((options & FONT_SHADOW) != 0) {
 		RenderStringShadow(x, y, sizeX, sizeY, text, cccb);
 	} else {
 		RenderString(x, y, sizeX, sizeY, text, cccb);
 	}
 
 	if (immediate) {
-		End();
+		EndGL4();
 	} else if (buffered) {
-		bufferedWriteGL4 = false;
-
 		if (threadSafety && !inBeginEndGL4)
 			bufferMutex.unlock();
 	}

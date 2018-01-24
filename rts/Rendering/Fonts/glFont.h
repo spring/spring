@@ -9,7 +9,6 @@
 #include "TextWrap.h"
 #include "ustring.h"
 
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/float4.h"
 #include "System/Threading/SpringThreading.h"
@@ -34,7 +33,6 @@ static constexpr int FONT_SCALE     = 1 << 12; // given size argument will be tr
 static constexpr int FONT_NEAREST   = 1 << 13; // round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
 static constexpr int FONT_BUFFERED  = 1 << 14; // make glFormat append to buffer outside a {Begin,End}GL4 pair
-static constexpr int FONT_FINISHED  = 1 << 15; // make DrawBufferedGL4 force a finish-op
 
 
 namespace Shader {
@@ -51,11 +49,6 @@ public:
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
 	~CglFont();
-
-	// calling Begin() .. End() is optional, but can increase the
-	// performance of drawing multiple strings a lot (upto 10x)
-	void Begin(const bool immediate = false, const bool resetColors = true);
-	void End();
 
 
 	void BeginGL4() { BeginGL4(defShader); }
@@ -164,10 +157,6 @@ private:
 
 	ColorCallBack colorCallBack;
 
-	// used by {Begin,End}
-	CVertexArray va;
-	CVertexArray va2;
-
 
 	// used by {Begin,End}GL4; each double-buffered
 	GL::RenderDataBuffer primaryBuffer[2];
@@ -187,11 +176,7 @@ private:
 	unsigned int lastDrawFrameGL4 = 0;
 	unsigned int lastPrintFrameGL4 = 0;
 
-	bool inBeginEnd = false; // implies bufferMutex is locked
 	bool inBeginEndGL4 = false; // implies bufferMutex is locked
-	bool bufferedWriteGL4 = false;
-	bool pendingFinishGL4 = false;
-
 	bool autoOutlineColor = false; // auto-select outline color for in-text-colorcodes
 	bool setColor = true; // used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
