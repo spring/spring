@@ -163,17 +163,20 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	if (!item->PlayNow())
 		return;
 
+	const SoundBuffer& itemBuffer = SoundBuffer::GetById(item->GetSoundBufferID());
+
 	Stop();
 	curVolume = volume;
 	curPlaying = item;
 	curChannel = channel;
-	alSourcei(id, AL_BUFFER, item->buffer->GetId());
+	alSourcei(id, AL_BUFFER, itemBuffer.GetId());
 	alSourcef(id, AL_GAIN, volume * item->GetGain() * channel->volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
 	velocity *= item->dopplerScale * ELMOS_TO_METERS;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
 	loopStop = spring_gettime() + spring_msecs(item->loopTime);
+
 	if (relative || !item->in3D) {
 		in3D = false;
 		if (efxEnabled) {
@@ -188,10 +191,8 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 #endif
 	} else {
-		if (item->buffer->GetChannels() > 1) {
-			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.",
-					item->buffer->GetFilename().c_str());
-		}
+		if (itemBuffer.GetChannels() > 1)
+			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.", itemBuffer.GetFilename().c_str());
 
 		in3D = true;
 		if (efx->enabled) {
@@ -227,8 +228,8 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	}
 	alSourcePlay(id);
 
-	if (item->buffer->GetId() == 0)
-		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+	if (itemBuffer.GetId() == 0)
+		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), itemBuffer.GetFilename().c_str());
 
 	CheckError("CSoundSource::Play");
 }

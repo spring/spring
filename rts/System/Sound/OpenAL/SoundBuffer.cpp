@@ -41,14 +41,6 @@ int	VorbisClose(void* datasource)
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
 SoundBuffer::bufferVecT SoundBuffer::buffers;
 
-SoundBuffer::SoundBuffer() : id(0), channels(0), length(0.0f)
-{
-}
-
-SoundBuffer::~SoundBuffer()
-{
-}
-
 #pragma pack(push, 1)
 // Header copied from WavLib by Michael McTernan
 struct WAVHeader
@@ -139,9 +131,8 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<std::uint8_t> buf
 		header->datalen = std::uint32_t(buffer.size() - sizeof(WAVHeader))&(~std::uint32_t((header->BitsPerSample*header->channels)/8 -1));
 	}
 
-	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec)) {
+	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
 		LOG_L(L_WARNING, "Loading audio failed for %s", file.c_str());
-	}
 
 	filename = file;
 	channels = header->channels;
@@ -175,18 +166,13 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> 
 	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
 
 	ALenum format;
-	if (vorbisInfo->channels == 1)
-	{
+
+	if (vorbisInfo->channels == 1) {
 		format = AL_FORMAT_MONO16;
-	}
-	else if (vorbisInfo->channels == 2)
-	{
+	} else if (vorbisInfo->channels == 2) {
 		format = AL_FORMAT_STEREO16;
-	}
-	else
-	{
-		LOG_L(L_ERROR, "File %s: invalid number of channels: %i",
-					file.c_str(), vorbisInfo->channels);
+	} else {
+		LOG_L(L_ERROR, "File %s: invalid number of channels: %i", file.c_str(), vorbisInfo->channels);
 		return false;
 	}
 
@@ -194,13 +180,11 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> 
 	std::vector<std::uint8_t> decodeBuffer(512*1024); // 512kb read buffer
 	int section = 0;
 	long read = 0;
-	do
-	{
+	do {
 		if (4*pos > 3*decodeBuffer.size()) // enlarge buffer so ov_read has enough space
 			decodeBuffer.resize(decodeBuffer.size()*2);
 		read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section);
-		switch(read)
-		{
+		switch (read) {
 			case OV_HOLE:
 				LOG_L(L_WARNING,
 						"%s: garbage or corrupt page in stream (non-fatal)",
@@ -245,37 +229,36 @@ void SoundBuffer::Deinitialise()
 
 size_t SoundBuffer::GetId(const std::string& name)
 {
-	bufferMapT::const_iterator it = bufferMap.find(name);
+	const auto it = bufferMap.find(name);
+
 	if (it != bufferMap.end())
 		return it->second;
-	else
-		return 0;
+
+	return 0;
 }
 
-std::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
+SoundBuffer& SoundBuffer::GetById(const size_t id)
 {
 	assert(id < buffers.size());
 	return buffers.at(id);
 }
 
-size_t SoundBuffer::Count()
-{
-	return buffers.size();
-}
 
 size_t SoundBuffer::AllocedSize()
 {
 	int numBytes = 0;
-	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
-		numBytes += (*it)->BufferSize();
+	for (auto it = ++buffers.cbegin(); it != buffers.cend(); ++it)
+		numBytes += it->BufferSize();
 	return numBytes;
 }
 
-size_t SoundBuffer::Insert(std::shared_ptr<SoundBuffer> buffer)
+size_t SoundBuffer::Insert(SoundBuffer&& buffer)
 {
-	size_t bufId = buffers.size();
-	buffers.push_back(buffer);
-	bufferMap[buffer->GetFilename()] = bufId;
+	const size_t bufId = buffers.size();
+
+	bufferMap[buffer.GetFilename()] = bufId;
+	buffers.emplace_back(std::move(buffer));
+
 	return bufId;
 }
 
@@ -287,3 +270,4 @@ bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const std:
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
 	return CheckError("SoundBuffer::AlGenBufferData");
 }
+

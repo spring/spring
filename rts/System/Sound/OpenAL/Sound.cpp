@@ -640,12 +640,12 @@ size_t CSound::MakeItemFromDef(const SoundItemNameMap& itemDef)
 	if (defIt == itemDef.end())
 		return 0;
 
-	std::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(defIt->second));
+	const size_t bufferID = LoadSoundBuffer(defIt->second);
 
-	if (!buffer)
+	if (bufferID == 0)
 		return 0;
 
-	soundItems.push_back(new SoundItem(buffer, itemDef));
+	soundItems.push_back(new SoundItem(bufferID, itemDef));
 	soundMap[(soundItems.back())->Name()] = newid;
 	return newid;
 }
@@ -811,35 +811,43 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 		return 0;
 	}
 
+
 	// safe, caller locks
 	static std::vector<std::uint8_t> buf;
 
-	buf.clear();
-	buf.resize(file.FileSize());
-	// copy file into buffer
-	file.Read(buf.data(), file.FileSize());
-	file.Close();
+	if (!file.IsBuffered()) {
+		buf.clear();
+		buf.resize(file.FileSize());
+		// copy file into buffer
+		file.Read(buf.data(), file.FileSize());
+		file.Close();
+	} else {
+		buf = std::move(file.GetBuffer());
+	}
 
-	std::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
+
+	SoundBuffer soundBuf;
+	const std::string& soundExt = file.GetFileExt();
+
 	bool success = false;
-	const std::string ending = std::move(file.GetFileExt());
 
 	// TODO: load asynchronously
-	if (ending == "wav") {
-		success = buffer->LoadWAV(path, buf);
-	} else if (ending == "ogg") {
-		success = buffer->LoadVorbis(path, buf);
-	} else {
-		LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, ending.c_str());
+	switch (soundExt[0]) {
+		case 'w': { success = soundBuf.LoadWAV   (path, buf); } break; // wav
+		case 'o': { success = soundBuf.LoadVorbis(path, buf); } break; // ogg
+		default : {
+			LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, soundExt.c_str());
+		} break;
 	}
 
 	CheckError("[Sound::LoadSoundBuffer]");
+
 	if (!success) {
 		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
 
-	return (SoundBuffer::Insert(buffer));
+	return (SoundBuffer::Insert(std::move(soundBuf)));
 }
 
 void CSound::NewFrame()
