@@ -16,9 +16,10 @@
 
 namespace
 {
+
 struct VorbisInputBuffer
 {
-	std::uint8_t* data;
+	const std::uint8_t* data;
 	size_t pos;
 	size_t size;
 };
@@ -38,8 +39,11 @@ int	VorbisClose(void* datasource)
 }
 }
 
+
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
 SoundBuffer::bufferVecT SoundBuffer::buffers;
+
+static std::vector<std::uint8_t> decodeBuffer;
 
 #pragma pack(push, 1)
 // Header copied from WavLib by Michael McTernan
@@ -60,7 +64,7 @@ struct WAVHeader
 };
 #pragma pack(pop)
 
-bool SoundBuffer::LoadWAV(const std::string& file, std::vector<std::uint8_t> buffer)
+bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer)
 {
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
@@ -141,7 +145,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<std::uint8_t> buf
 	return true;
 }
 
-bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> buffer)
+bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uint8_t>& buffer)
 {
 	VorbisInputBuffer buf;
 	buf.data = &buffer[0];
@@ -151,14 +155,13 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> 
 	ov_callbacks vorbisCallbacks;
 	vorbisCallbacks.read_func  = VorbisRead;
 	vorbisCallbacks.close_func = VorbisClose;
-	vorbisCallbacks.seek_func  = NULL;
-	vorbisCallbacks.tell_func  = NULL;
+	vorbisCallbacks.seek_func  = nullptr;
+	vorbisCallbacks.tell_func  = nullptr;
 
 	OggVorbis_File oggStream;
-	const int result = ov_open_callbacks(&buf, &oggStream, NULL, 0, vorbisCallbacks);
+	const int result = ov_open_callbacks(&buf, &oggStream, nullptr, 0, vorbisCallbacks);
 	if (result < 0) {
-		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
-				ErrorString(result).c_str());
+		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
 		return false;
 	}
 
@@ -177,18 +180,20 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> 
 	}
 
 	size_t pos = 0;
-	std::vector<std::uint8_t> decodeBuffer(512*1024); // 512kb read buffer
 	int section = 0;
 	long read = 0;
+
+	decodeBuffer.clear();
+	decodeBuffer.resize(512 * 1024); // 512kb read buffer
+
 	do {
-		if (4*pos > 3*decodeBuffer.size()) // enlarge buffer so ov_read has enough space
-			decodeBuffer.resize(decodeBuffer.size()*2);
-		read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section);
-		switch (read) {
+		// enlarge buffer so ov_read has enough space
+		if ((4 * pos) > (3 * decodeBuffer.size()))
+			decodeBuffer.resize(decodeBuffer.size() * 2);
+
+		switch ((read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section))) {
 			case OV_HOLE:
-				LOG_L(L_WARNING,
-						"%s: garbage or corrupt page in stream (non-fatal)",
-						file.c_str());
+				LOG_L(L_WARNING, "%s: garbage or corrupt page in stream (non-fatal)", file.c_str());
 				continue; // read next
 			case OV_EBADLINK:
 				LOG_L(L_WARNING, "%s: corrupted stream", file.c_str());
@@ -198,7 +203,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<std::uint8_t> 
 				return false; // abort
 			default:
 				break; // all good
-		};
+		}
+
 		pos += read;
 	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
@@ -216,16 +222,6 @@ int SoundBuffer::BufferSize() const
 	return static_cast<int>(size);
 }
 
-void SoundBuffer::Initialise()
-{
-	buffers.resize(1); // empty ("zero") buffer
-}
-
-void SoundBuffer::Deinitialise()
-{
-	bufferMap.clear();
-	buffers.clear();
-}
 
 size_t SoundBuffer::GetId(const std::string& name)
 {

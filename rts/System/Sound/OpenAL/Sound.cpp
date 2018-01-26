@@ -799,30 +799,30 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	if (id > 0)
 		return id; // file is loaded already
 
-	// initial ctor Open is a no-op
-	static CFileHandler file("", "");
+	// reused across loads (safe, caller locks)
+	static std::vector<std::uint8_t> buf;
 
-	file.Close();
+
+	CFileHandler file("", "");
+
+	buf.clear();
+	buf.reserve(1024 * 1024);
+
+	file.GetBuffer() = std::move(buf);
 	file.Open(path, SPRING_VFS_RAW_FIRST);
 
+	// steal back
+	buf = std::move(file.GetBuffer());
+
 	if (!file.FileExists()) {
-		file.Close();
 		LOG_L(L_ERROR, "[%s] unable to open audio file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
 
-
-	// safe, caller locks
-	static std::vector<std::uint8_t> buf;
-
-	if (!file.IsBuffered()) {
-		buf.clear();
+	if (buf.empty()) {
+		// copy file into buffer manually if not in VFS
 		buf.resize(file.FileSize());
-		// copy file into buffer
 		file.Read(buf.data(), file.FileSize());
-		file.Close();
-	} else {
-		buf = std::move(file.GetBuffer());
 	}
 
 

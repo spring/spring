@@ -35,8 +35,8 @@ public:
 		return *this;
 	}
 
-	bool LoadWAV(const std::string& file, std::vector<std::uint8_t> buffer);
-	bool LoadVorbis(const std::string& file, std::vector<std::uint8_t> buffer);
+	bool LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer);
+	bool LoadVorbis(const std::string& file, const std::vector<std::uint8_t>& buffer);
 
 	const std::string& GetFilename() const { return filename; }
 
@@ -46,8 +46,11 @@ public:
 
 	int BufferSize() const;
 
-	static void Initialise();
-	static void Deinitialise();
+	static void Initialise() { buffers.resize(1); } // empty ("zero") buffer
+	static void Deinitialise() {
+		bufferMap.clear();
+		buffers.clear();
+	}
 
 	static size_t GetId(const std::string& name);
 	static SoundBuffer& GetById(const size_t id);
