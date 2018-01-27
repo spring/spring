@@ -58,6 +58,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
 		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
 		bool AllowResourceLevel(int teamID, const string& type, float level);

@@ -266,6 +266,12 @@ bool CEventHandler::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, 
 }
 
 
+bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
+{
+	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);
+}
+
+
 bool CEventHandler::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos)
 {
 	return ControlIterateDefTrue(listAllowFeatureCreation, &CEventClient::AllowFeatureCreation, featureDef, allyTeamID, pos);
