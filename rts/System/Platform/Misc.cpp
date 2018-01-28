@@ -381,7 +381,7 @@ namespace Platform
 		if (Is64Bit())
 			return "64-bit (native)";
 
-		return (std::string("32-bit ") + (Is32BitEmulation()? "emulated": "native"));
+		return (std::string("32-bit ") + (Is32BitEmulation()? "(emulated)": "(native)"));
 	}
 
 	std::string GetPlatformStr()
