@@ -3646,10 +3646,10 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			DrawUnitDefRanges(unit, unitdef, unit->pos);
 
 			// draw weapon range
-			if (unitdef->maxWeaponRange > 0) {
+			if (unitdef->maxWeaponRange > 0.0f) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unitdef->maxWeaponRange, unit->weapons[0], 40);
+				glBallisticCircle(unit->weapons[0]->weaponDef, 40, unit->pos, {unitdef->maxWeaponRange, 0.0f, mapInfo->map.gravity});
 				glEnable(GL_DEPTH_TEST);
 			}
 			// draw decloak distance
@@ -3751,8 +3751,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(buildPos, unitdef->weapons[0].def->range,
-						                  nullptr, 40, unitdef->weapons[0].def->heightmod);
+						glBallisticCircle(unitdef->weapons[0].def, 40, buildPos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity});
 						glEnable(GL_DEPTH_TEST);
 					}
 					// draw extraction range
@@ -3816,15 +3815,15 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			if (onMinimap && (unit->unitDef->speed > 0.0f))
 				continue;
 
-			if (unit->maxRange > 0.0f && (unit->IsInLosForAllyTeam(gu->myAllyTeam) || gu->spectatingFullView)) {
-				glDisable(GL_DEPTH_TEST);
-				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unit->maxRange, unit->weapons.front(), 40);
-				glEnable(GL_DEPTH_TEST);
+			if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
+				continue;
 
-				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug)
-					DrawWeaponArc(unit);
-			}
+			glDisable(GL_DEPTH_TEST);
+			glColor4fv(cmdColors.rangeAttack);
+			glBallisticCircle(unit->weapons[0]->weaponDef, 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
+			glEnable(GL_DEPTH_TEST);
+
+			DrawWeaponArc(unit);
 		}
 	}
 

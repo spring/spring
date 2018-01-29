@@ -4,6 +4,7 @@
 #define _CANNON_H
 
 #include "Weapon.h"
+#include "System/type2.h"
 
 class CCannon: public CWeapon
 {
@@ -16,7 +17,7 @@ protected:
 	float3 lastLaunchDir = -UpVector;
 
 	/// this is used to keep range true to range tag
-	float rangeFactor = 1.0f;
+	float rangeBoostFactor = 1.0f;
 
 	/// projectile gravity
 	float gravity = 0.0f;
@@ -29,11 +30,16 @@ public:
 
 	void Init() override final;
 	void UpdateRange(const float val) override final;
-	void UpdateWantedDir() override final;
+	void UpdateWantedDir() override final { wantedDir = GetWantedDir(currentTargetPos - aimFromPos); }
 	void SlowUpdate() override final;
 
-	float GetRange2D(float yDiff, float rFact) const;
-	float GetRange2D(const float yDiff) const override final;
+	float GetRange2D(float yDiff, float rbFac, float hbFac) const { return (GetStaticRange2D({range, yDiff}, {projectileSpeed, gravity}, {rbFac, hbFac})); }
+	float GetRange2D(const float yDiff) const override final { return (GetRange2D(yDiff, rangeBoostFactor, heightBoostFactor)); }
+
+	// baseConsts{.x := weaponDefRange, .y := modHeightDif}
+	// projConsts{.x := speed, .y := gravity}
+	// boostFacts{.x := range, .y := height}
+	static float GetStaticRange2D(const float2& baseConsts, const float2& projConsts, const float2& boostFacts);
 
 private:
 	/// tells where to point the gun to hit the point at pos+diff

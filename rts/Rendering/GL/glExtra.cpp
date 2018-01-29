@@ -64,49 +64,61 @@ void setSurfaceSquareFunc(SurfaceSquareFunc func)
 /*
  *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
  */
-void glBallisticCircle(const float3& center, const float radius,
-                       const CWeapon* weapon,
-                       unsigned int resolution, float slope)
+void glBallisticCircle(const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params)
 {
-	int rdiv = 50;
-	resolution *= 2;
-	rdiv *= 1;
+	constexpr int resDiv = 50;
+
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
-	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
+
+	const float radius = params.x;
+	const float slope = params.y;
+
+	const float wdHeightMod = weaponDef->heightmod;
+	const float wdProjGravity = mix(params.z, -weaponDef->myGravity, weaponDef->myGravity != 0.0f);
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = math::TWOPI * (float)i / (float)resolution;
-		float rad = radius;
-		float sinR = fastmath::sin(radians);
-		float cosR = fastmath::cos(radians);
+
+		const float sinR = fastmath::sin(radians);
+		const float cosR = fastmath::cos(radians);
+
+		float maxRadius = radius;
+
 		float3 pos;
-		pos.x = center.x + (sinR * rad);
-		pos.z = center.z + (cosR * rad);
+		pos.x = center.x + (sinR * maxRadius);
+		pos.z = center.z + (cosR * maxRadius);
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-		float heightDiff = (pos.y - center.y) * 0.5f;
-		rad -= heightDiff * slope;
-		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
-		float adjustment = rad * 0.5f;
-		float ydiff = 0;
-		for(int j = 0; j < rdiv && std::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
-			if (adjRadius > rad) {
-				rad += adjustment;
+
+		float posHeightDiff = (pos.y - center.y) * 0.5f;
+		maxRadius -= (posHeightDiff * slope);
+
+		float adjRadius = CWeapon::GetStaticRange2D(weaponDef, posHeightDiff * wdHeightMod, wdProjGravity);
+		float adjustment = maxRadius * 0.5f;
+		float ydiff = 0.0f;
+
+		for (int j = 0; j < resDiv && (std::fabs(adjRadius - maxRadius) + ydiff) > (0.01f * maxRadius); j++) {
+			if (adjRadius > maxRadius) {
+				maxRadius += adjustment;
 			} else {
-				rad -= adjustment;
-				adjustment /= 2;
+				maxRadius -= adjustment;
+				adjustment *= 0.5f;
 			}
-			pos.x = center.x + (sinR * rad);
-			pos.z = center.z + (cosR * rad);
-			float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
+
+			pos.x = center.x + (sinR * maxRadius);
+			pos.z = center.z + (cosR * maxRadius);
+
+			const float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 			ydiff = std::fabs(pos.y - newY);
 			pos.y = newY;
-			heightDiff = (pos.y - center.y);
-			adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
+
+			posHeightDiff = (pos.y - center.y);
+			adjRadius = CWeapon::GetStaticRange2D(weaponDef, posHeightDiff * wdHeightMod, wdProjGravity);
 		}
+
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
