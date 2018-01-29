@@ -889,7 +889,7 @@ bool CDDSImage::upload_textureCubemap() const
 
 ///////////////////////////////////////////////////////////////////////////////
 // clamps input size to [1-size]
-inline unsigned int CDDSImage::clamp_size(unsigned int size)
+inline unsigned int CDDSImage::clamp_size(unsigned int size) const
 {
     if (size <= 0)
         size = 1;
@@ -903,7 +903,7 @@ inline unsigned int CDDSImage::clamp_size(unsigned int size)
 
 ///////////////////////////////////////////////////////////////////////////////
 // calculates size of DXTC texture in bytes
-inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height)
+inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height) const
 {
     return ((width+3)/4)*((height+3)/4)*
         (m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);   
@@ -911,7 +911,7 @@ inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height
 
 ///////////////////////////////////////////////////////////////////////////////
 // calculates size of uncompressed RGB texture in bytes
-inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height)
+inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height) const
 {
     return width*height*m_components;
 }

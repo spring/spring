@@ -316,10 +316,9 @@ namespace nv_dds
             }
 
         private:
-            unsigned int clamp_size(unsigned int size);
-            unsigned int size_dxtc(unsigned int width, unsigned int height);
-            unsigned int size_rgb(unsigned int width, unsigned int height);
-            inline void swap_endian(void *val);
+            unsigned int clamp_size(unsigned int size) const;
+            unsigned int size_dxtc(unsigned int width, unsigned int height) const;
+            unsigned int size_rgb(unsigned int width, unsigned int height) const;
 
             // calculates 4-byte aligned width of image
             inline unsigned int get_dword_aligned_linesize(unsigned int width, unsigned int bpp) const
