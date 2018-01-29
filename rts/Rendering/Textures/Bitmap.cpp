@@ -118,7 +118,6 @@ CBitmap::CBitmap()
 	, memIndx(0)
 	#ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
-	, ddsimage(nullptr)
 	#endif
 	, compressed(false)
 {
@@ -128,10 +127,6 @@ CBitmap::CBitmap()
 CBitmap::~CBitmap()
 {
 	FreeMem(memIndx, mem);
-
-	#ifndef BITMAP_NO_OPENGL
-	spring::SafeDelete(ddsimage);
-	#endif
 }
 
 CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channels)
@@ -141,7 +136,6 @@ CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channel
 	, memIndx(0)
 	#ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
-	, ddsimage(nullptr)
 	#endif
 	, compressed(false)
 {
@@ -164,10 +158,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 #ifndef BITMAP_NO_OPENGL
 		textype = bmp.textype;
 
-		spring::SafeDelete(ddsimage);
-
-		if (bmp.ddsimage != nullptr)
-			ddsimage = new nv_dds::CDDSImage(*bmp.ddsimage);
+		ddsimage = bmp.ddsimage;
 
 #endif // !BITMAP_NO_OPENGL
 	}
@@ -189,10 +180,7 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp)
 #ifndef BITMAP_NO_OPENGL
 		textype = bmp.textype;
 
-		spring::SafeDelete(ddsimage);
-
-		ddsimage = bmp.ddsimage;
-		bmp.ddsimage = nullptr;
+		ddsimage = std::move(bmp.ddsimage);
 #endif // !BITMAP_NO_OPENGL
 	}
 
@@ -224,21 +212,22 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	textype = GL_TEXTURE_2D;
 #endif // !BITMAP_NO_OPENGL
 
-	if (filename.find(".dds") != std::string::npos) {
+
+	if (FileSystem::GetExtension(filename) == "dds") {
 #ifndef BITMAP_NO_OPENGL
 		compressed = true;
 		xsize = 0;
 		ysize = 0;
 		channels = 0;
 
-		ddsimage = new nv_dds::CDDSImage();
-		if (!ddsimage->load(filename))
+		ddsimage.clear();
+		if (!ddsimage.load(filename))
 			return false;
 
-		xsize = ddsimage->get_width();
-		ysize = ddsimage->get_height();
-		channels = ddsimage->get_components();
-		switch (ddsimage->get_type()) {
+		xsize = ddsimage.get_width();
+		ysize = ddsimage.get_height();
+		channels = ddsimage.get_components();
+		switch (ddsimage.get_type()) {
 			case nv_dds::TextureFlat :
 				textype = GL_TEXTURE_2D;
 				break;
@@ -253,11 +242,12 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 				break;
 		}
 		return true;
-#else // !BITMAP_NO_OPENGL
+#else
 		AllocDummy(); //allocate a dummy texture, as dds aren't supported in headless
 		return true;
-#endif // !BITMAP_NO_OPENGL
+#endif
 	}
+
 
 	compressed = false;
 	channels = 4;
@@ -396,7 +386,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
 #ifndef BITMAP_NO_OPENGL
-		return ddsimage->save(filename);
+		return ddsimage.save(filename);
 #else
 		return false;
 #endif // !BITMAP_NO_OPENGL
@@ -619,53 +609,57 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
-	if (texID == 0) {
+	if (texID == 0)
 		glGenTextures(1, &texID);
-	}
 
-	switch (ddsimage->get_type())
-	{
-	case nv_dds::TextureNone:
-		glDeleteTextures(1, &texID);
-		texID = 0;
-		break;
-	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texID);
-		if (!ddsimage->upload_texture2D(0, GL_TEXTURE_2D)) {
+	switch (ddsimage.get_type()) {
+		case nv_dds::TextureNone:
 			glDeleteTextures(1, &texID);
 			texID = 0;
 			break;
-		}
-		if (aniso > 0.0f)
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-		HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage->get_num_mipmaps());
-		break;
-	case nv_dds::Texture3D:
-		glEnable(GL_TEXTURE_3D);
-		glBindTexture(GL_TEXTURE_3D, texID);
-		if (!ddsimage->upload_texture3D()) {
-			glDeleteTextures(1, &texID);
-			texID = 0;
+		case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, texID);
+
+			if (!ddsimage.upload_texture2D(0, GL_TEXTURE_2D)) {
+				glDeleteTextures(1, &texID);
+				texID = 0;
+				break;
+			}
+			if (aniso > 0.0f)
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+
+			HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage.get_num_mipmaps());
 			break;
-		}
-		HandleDDSMipmap(GL_TEXTURE_3D, mipmaps, ddsimage->get_num_mipmaps());
-		break;
-	case nv_dds::TextureCubemap:
-		glEnable(GL_TEXTURE_CUBE_MAP);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
-		if (!ddsimage->upload_textureCubemap()) {
-			glDeleteTextures(1, &texID);
-			texID = 0;
+		case nv_dds::Texture3D:
+			glEnable(GL_TEXTURE_3D);
+			glBindTexture(GL_TEXTURE_3D, texID);
+
+			if (!ddsimage.upload_texture3D()) {
+				glDeleteTextures(1, &texID);
+				texID = 0;
+				break;
+			}
+
+			HandleDDSMipmap(GL_TEXTURE_3D, mipmaps, ddsimage.get_num_mipmaps());
 			break;
-		}
-		if (aniso > 0.0f)
-			glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-		HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage->get_num_mipmaps());
-		break;
-	default:
-		assert(false);
-		break;
+		case nv_dds::TextureCubemap:
+			glEnable(GL_TEXTURE_CUBE_MAP);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
+
+			if (!ddsimage.upload_textureCubemap()) {
+				glDeleteTextures(1, &texID);
+				texID = 0;
+				break;
+			}
+			if (aniso > 0.0f)
+				glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+
+			HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage.get_num_mipmaps());
+			break;
+		default:
+			assert(false);
+			break;
 	}
 
 	glPopAttrib();
@@ -686,42 +680,41 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char blue)
 {
 	float3 aCol;
-	for(int a=0; a < 3; ++a) {
+
+	for (int a = 0; a < 3; ++a) {
 		int cCol = 0;
 		int numCounted = 0;
-		for (int y=0; y < ysize; ++y) {
-			for (int x=0; x < xsize; ++x) {
+
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
 				const int index = (y*xsize + x) * 4;
-				if ((mem[index + 3] != 0) &&
-					!(
-						(mem[index + 0] == red) &&
-						(mem[index + 1] == green) &&
-						(mem[index + 2] == blue)
-					))
-				{
-					cCol += mem[index + a];
-					++numCounted;
-				}
+
+				if (mem[index + 3] == 0)
+					continue;
+				if (mem[index + 0] == red && mem[index + 1] == green && mem[index + 2] == blue)
+					continue;
+
+				cCol += mem[index + a];
+				++numCounted;
 			}
 		}
-		if (numCounted != 0) {
+
+		if (numCounted != 0)
 			aCol[a] = cCol / 255.0f / numCounted;
-		}
 	}
 
-	SColor c(red, green, blue);
-	SColor a(aCol.x, aCol.y, aCol.z, 0.0f);
+	const SColor c(red, green, blue);
+	const SColor a(aCol.x, aCol.y, aCol.z, 0.0f);
 	SetTransparent(c, a);
 }
 
 
 void CBitmap::SetTransparent(const SColor& c, const SColor trans)
 {
-	if (compressed) {
+	if (compressed)
 		return;
-	}
 
-	static const uint32_t RGB = 0x00FFFFFF;
+	constexpr uint32_t RGB = 0x00FFFFFF;
 
 	uint32_t* mem_i = reinterpret_cast<uint32_t*>(&mem[0]);
 	for (int y = 0; y < ysize; ++y) {
@@ -775,18 +768,20 @@ inline static void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int
 	const int pos = (x + y * dst->xsize) * dst->channels + channel;
 
 	for (int i = 0; i < 9; ++i) {
-		int yoffset = (i / 3) - 1;
+		int yoffset = (i                 / 3) - 1;
 		int xoffset = (i - (yoffset + 1) * 3) - 1;
 
 		const int tx = x + xoffset;
 		const int ty = y + yoffset;
-		if ((tx < 0) || (tx >= dst->xsize)) {
+
+		if ((tx < 0) || (tx >= dst->xsize))
 			xoffset = 0;
-		}
-		if ((ty < 0) || (ty >= dst->ysize)) {
+
+		if ((ty < 0) || (ty >= dst->ysize))
 			yoffset = 0;
-		}
-		int offset = (yoffset * dst->xsize + xoffset) * dst->channels;
+
+		const int offset = (yoffset * dst->xsize + xoffset) * dst->channels;
+
 		if (i == 4) {
 			fragment += weight * blurkernel[i] * src[pos + offset];
 		} else {
@@ -803,15 +798,17 @@ void CBitmap::Blur(int iterations, float weight)
 	if (compressed)
 		return;
 
+	CBitmap tmp;
+
 	CBitmap* src = this;
-	CBitmap* dst = new CBitmap();
+	CBitmap* dst = &tmp;
 	dst->channels = src->channels;
 	dst->Alloc(xsize, ysize);
 
 	for (int i = 0; i < iterations; ++i) {
 		for_mt(0, ysize, [&](const int y) {
-			for (int x=0; x < xsize; x++) {
-				for (int j=0; j < channels; j++) {
+			for (int x = 0; x < xsize; x++) {
+				for (int j = 0; j < channels; j++) {
 					kernelBlur(dst, &src->mem[0], x, y, j, weight);
 				}
 			}
@@ -819,12 +816,13 @@ void CBitmap::Blur(int iterations, float weight)
 		std::swap(src, dst);
 	}
 
-	if (dst == this) {
-		// make sure we don't delete `this`
-		std::swap(src, dst);
-	}
+	// if dst points to temporary, we are done
+	// otherwise need to perform one more swap
+	// (e.g. if iterations=1)
+	if (dst != this)
+		return;
 
-	delete dst;
+	std::swap(src, dst);
 }
 
 
@@ -1010,17 +1008,15 @@ void CBitmap::MakeGrayScale()
 
 static ILubyte TintByte(ILubyte value, float tint)
 {
-	float f = (float)value;
-	f = std::max(0.0f, std::min(255.0f, f * tint));
-	return (unsigned char)f;
+	return std::max(0.0f, std::min(255.0f, value * tint));
 }
 
 
 void CBitmap::Tint(const float tint[3])
 {
-	if (compressed) {
+	if (compressed)
 		return;
-	}
+
 	for (int y = 0; y < ysize; y++) {
 		for (int x = 0; x < xsize; x++) {
 			const int base = ((y * xsize) + x) * 4;
