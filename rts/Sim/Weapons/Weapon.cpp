@@ -1144,18 +1144,53 @@ ProjectileParams CWeapon::GetProjectileParams()
 }
 
 
+
+float CWeapon::GetStaticRange2D(const WeaponDef* wd, float modHeightDiff, float modProjGravity)
+{
+	float baseRange = wd->range;
+	float projSpeed = wd->projectilespeed;
+
+	switch (wd->projectileType) {
+		case WEAPON_EXPLOSIVE_PROJECTILE: {
+			return (CCannon::GetStaticRange2D({baseRange, modHeightDiff}, {projSpeed, modProjGravity}, {-1.0f, wd->heightBoostFactor}));
+		} break;
+		case WEAPON_LASER_PROJECTILE: {
+			// emulate LaserCannon::UpdateRange
+			baseRange = std::max(1.0f, std::floor(baseRange / projSpeed)) * projSpeed;
+		} break;
+		case WEAPON_STARBURST_PROJECTILE: {
+			// emulate StarburstLauncher::GetRange2D
+			return (baseRange + modHeightDiff);
+		} break;
+		default: {
+		} break;
+	}
+
+
+	const float rangeSq = baseRange * baseRange;
+	const float ydiffSq = Square(modHeightDiff);
+	const float    root = rangeSq - ydiffSq;
+	return (math::sqrt(std::max(root, 0.0f)));
+}
+
+
 float CWeapon::GetRange2D(const float yDiff) const
 {
-	const float root1 = range * range - yDiff * yDiff;
-	return (root1 > 0.0f) ? math::sqrt(root1) : 0.0f;
+	const float rangeSq = range * range;
+	const float ydiffSq = yDiff * yDiff;
+	const float   root = rangeSq - ydiffSq;
+	return (math::sqrt(std::max(root, 0.0f)));
 }
 
 
 void CWeapon::StopAttackingAllyTeam(const int ally)
 {
-	if ((currentTarget.type == Target_Unit) && currentTarget.unit->allyteam == ally) {
-		DropCurrentTarget();
-	}
+	if (currentTarget.type != Target_Unit)
+		return;
+	if (currentTarget.unit->allyteam != ally)
+		return;
+
+	DropCurrentTarget();
 }
 
 
@@ -1180,7 +1215,7 @@ void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 	tgtPos.y = std::max(tgtPos.y, tgtPos.y * weaponDef->waterweapon);
 
 	// prevent range hax in FPS mode
-	if (owner->UnderFirstPersonControl() && dynamic_cast<const CCannon*>(this)) {
+	if (owner->UnderFirstPersonControl() && dynamic_cast<const CCannon*>(this) != nullptr) {
 		tgtPos.y = CGround::GetHeightAboveWater(tgtPos.x, tgtPos.z);
 	}
 }

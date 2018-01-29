@@ -37,7 +37,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/LuaObjectDrawer.h"
@@ -49,7 +48,6 @@
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
-#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
@@ -65,8 +63,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
@@ -1484,14 +1482,22 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 int LuaOpenGL::DrawGroundCircle(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	const int args = lua_gettop(L); // number of arguments
+
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
 
-	if ((args >= 6) && lua_isnumber(L, 6)) {
-		// const float slope = lua_tofloat(L, 6);
-		glBallisticCircle(nullptr, luaL_checkint(L, 5), pos, luaL_checkfloat(L, 4));
+	if ((lua_gettop(L) >= 6) && lua_isnumber(L, 6)) {
+		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 8, 0));
+
+		if (wd == nullptr)
+			return 0;
+
+		const float  radius = luaL_checkfloat(L, 4);
+		const float   slope = luaL_checkfloat(L, 6);
+		const float gravity = luaL_optfloat(L, 7, mapInfo->map.gravity);
+
+		glBallisticCircle(wd, luaL_checkint(L, 5), pos, {radius, slope, gravity});
 	} else {
 		glSurfaceCircle(pos, luaL_checkfloat(L, 4), luaL_checkint(L, 5));
 	}

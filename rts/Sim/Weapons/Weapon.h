@@ -71,6 +71,8 @@ public:
 
 	float TargetWeight(const CUnit* unit) const;
 
+	static float GetStaticRange2D(const WeaponDef* wd, float modHeightDiff, float modProjGravity);
+
 	virtual float GetRange2D(const float yDiff) const;
 	virtual void UpdateRange(const float val) { range = val; }
 

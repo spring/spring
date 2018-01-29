@@ -18,7 +18,7 @@ CR_BIND_DERIVED(CCannon, CWeapon, )
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
-	CR_MEMBER(rangeFactor),
+	CR_MEMBER(rangeBoostFactor),
 	CR_MEMBER(gravity),
 	CR_MEMBER(lastTargetVec),
 	CR_MEMBER(lastLaunchDir)
@@ -42,21 +42,15 @@ void CCannon::UpdateRange(const float val)
 	// speed is too low to reach the *updated* range
 	// note: new range can be zero (!) making range
 	// and height factors irrelevant
-	range = val;
-	rangeFactor = Clamp(range / GetRange2D(0.0f, 1.0f), 0.0f, 1.0f);
+	rangeBoostFactor = Clamp((range = val) / GetRange2D(0.0f, 1.0f, heightBoostFactor), 0.0f, 1.0f);
 
-	// some magical (but working) equations
-	// useful properties: if rangeFactor == 1, heightBoostFactor == 1
+	// magical (but working) equations with useful properties:
+	// if rangeBoostFactor == 1, then heightBoostFactor == 1
 	// TODO find something better?
-	if (heightBoostFactor < 0.0f && rangeFactor > 0.0f) {
-		heightBoostFactor = (2.0f - rangeFactor) / math::sqrt(rangeFactor);
-	}
-}
+	if (heightBoostFactor >= 0.0f || rangeBoostFactor <= 0.0f)
+		return;
 
-
-void CCannon::UpdateWantedDir()
-{
-	wantedDir = GetWantedDir(currentTargetPos - aimFromPos);
+	heightBoostFactor = (2.0f - rangeBoostFactor) / math::sqrt(rangeBoostFactor);
 }
 
 
@@ -198,46 +192,62 @@ float3 CCannon::CalcWantedDir(const float3& targetVec) const
 		}
 	}
 
-	float3 dir = ZeroVector;
+	float3 nextWantedDir;
 
 	if (Vxz != 0.0f || Vy != 0.0f) {
-		dir.x = targetVec.x;
-		dir.z = targetVec.z;
-		dir.SafeNormalize();
+		nextWantedDir.x = targetVec.x;
+		nextWantedDir.z = targetVec.z;
+		nextWantedDir.SafeNormalize();
 
-		dir *= Vxz;
-		dir.y = Vy;
-		dir.SafeNormalize();
+		nextWantedDir *= Vxz;
+		nextWantedDir.y = Vy;
+		nextWantedDir.SafeNormalize();
 	}
 
-	return dir;
+	return nextWantedDir;
 }
 
-float CCannon::GetRange2D(float yDiff, float rFact) const
-{
-	const float speedFactor = 0.7071067f; // sin pi/4 == cos pi/4
-	const float smoothHeight = 100.0f;  // completely arbitrary
-	const float speed2d = projectileSpeed * speedFactor; // speed in one direction in max-range case
-	const float speed2dSq = speed2d * speed2d;
 
-	if (yDiff < -smoothHeight) {
-		yDiff *= heightBoostFactor;
-	} else if (yDiff < 0.0f) {
-		// smooth a bit
-		// f(0) == 1, f(smoothHeight) == heightBoostFactor
-		yDiff *= 1.0f + (heightBoostFactor - 1.0f) * (-yDiff)/smoothHeight;
-	}
+float CCannon::GetStaticRange2D(const float2& baseConsts, const float2& projConsts, const float2& boostFacts) {
+	const auto CalcRange2D = [](const float3& bc, const float2& pc, const float2& bf) {
+		float heightDiff = bc.x;
 
-	const float root1 = speed2dSq + 2.0f * gravity * yDiff;
+		const float speedFactor = bc.y; // always sin(pi/4) == cos(pi/4) == sqrt(0.5)
+		const float smoothHeight = bc.z; // always 100 (completely arbitrary)
 
-	if (root1 < 0.0f)
-		return 0.0f;
+		// speed in one direction in max-range case
+		const float   speed2D = pc.x * speedFactor;
+		const float sqSpeed2D = speed2D * speed2D;
 
-	return (rFact * (speed2dSq + speed2d * math::sqrt(root1)) / (-gravity));
-}
+		if (heightDiff < -smoothHeight) {
+			heightDiff *= bf.y;
+		} else if (heightDiff < 0.0f) {
+			// smooth a bit; f(0) == 1, f(smoothHeight) == hbFactor
+			heightDiff *= (1.0f + (bf.y - 1.0f) * -heightDiff / smoothHeight);
+		}
 
-float CCannon::GetRange2D(const float yDiff) const
-{
-	return (GetRange2D(yDiff, rangeFactor));
+		const float root = sqSpeed2D + 2.0f * pc.y * heightDiff;
+
+		if (root < 0.0f)
+			return 0.0f;
+
+		return (bf.x * (sqSpeed2D + speed2D * math::sqrt(root)) / -pc.y);
+	};
+
+	// if called from GetRange2D(), the range-boost factor (.x) is already known
+	if (boostFacts.x > 0.0f)
+		return (CalcRange2D({baseConsts.y, 0.7071067f, 100.0f}, projConsts, boostFacts));
+
+
+	// otherwise need to determine it from scratch as though calling UpdateRange
+	const float wdRangeExclBoost = CalcRange2D({0.0f, 0.7071067f, 100.0f}, projConsts, {1.0f, boostFacts.y});
+	const float wdRangeBoostFact = Clamp(baseConsts.x / wdRangeExclBoost, 0.0f, 1.0f);
+
+	float wdHeightBoostFact = boostFacts.y;
+
+	if (wdHeightBoostFact < 0.0f && wdRangeBoostFact > 0.0f)
+		wdHeightBoostFact = (2.0f - wdRangeBoostFact) / math::sqrt(wdRangeBoostFact);
+
+	return (CalcRange2D({baseConsts.y, 0.7071067f, 100.0f}, projConsts, {wdRangeBoostFact, wdHeightBoostFact}));
 }
 
