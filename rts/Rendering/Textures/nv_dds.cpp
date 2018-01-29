@@ -413,7 +413,7 @@ bool CDDSImage::load(string filename, bool flipImage)
     
     // use correct size calculation function depending on whether image is 
     // compressed
-    unsigned int (CDDSImage::*sizefunc)(unsigned int, unsigned int);
+    unsigned int (CDDSImage::*sizefunc)(unsigned int, unsigned int) const;
     sizefunc = (is_compressed() ? &CDDSImage::size_dxtc : &CDDSImage::size_rgb);
 
 	m_images.reserve((m_type == TextureCubemap)? 6 : 1);
