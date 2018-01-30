@@ -269,14 +269,15 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 
 			if (!partials.empty()) {
 				std::string msg;
-				for (size_t i = 0; i < partials.size(); i++) {
-					msg += "  ";
-					msg += partials[i];
+				for (const std::string& match: partials) {
+					msg.append("  ");
+					msg.append(match);
 				}
 				LOG("%s", msg.c_str());
 			}
 
-			SDL_StopTextInput();
+			// FIXME: breaks typing after <tab>, and seems like a strange place to stop input
+			// SDL_StopTextInput();
 			return true;
 		} break;
 
