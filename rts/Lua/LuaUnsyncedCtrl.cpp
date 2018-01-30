@@ -622,13 +622,13 @@ int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 {
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	if (!efx)
+	if (!efx.Supported())
 		return 0;
 
 	//! only a preset name given?
 	if (lua_israwstring(L, 1)) {
 		const std::string presetname = lua_tostring(L, 1);
-		efx->SetPreset(presetname, false);
+		efx.SetPreset(presetname, false);
 		return 0;
 	}
 
@@ -640,12 +640,12 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	lua_gettable(L, -2);
 	if (lua_israwstring(L, -1)) {
 		std::string presetname = lua_tostring(L, -1);
-		efx->SetPreset(presetname, false, false);
+		efx.SetPreset(presetname, false, false);
 	}
 	lua_pop(L, 1);
 
 
-	EAXSfxProps& efxprops = efx->sfxProperties;
+	EAXSfxProps& efxprops = efx.sfxProperties;
 
 
 	//! parse pass filter
@@ -713,8 +713,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	}
 	lua_pop(L, 1);
 
-	//! commit effects
-	efx->CommitEffects();
+	efx.CommitEffects();
 #endif /// !defined(HEADLESS) && !defined(NO_SOUND)
 
 	return 0;

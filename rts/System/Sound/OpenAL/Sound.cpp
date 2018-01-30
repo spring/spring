@@ -38,7 +38,6 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
-#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
@@ -231,24 +230,24 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 		return;
 	}
 	if (key == "snd_eaxpreset") {
-		efx->SetPreset(value);
+		efx.SetPreset(value);
 		return;
 	}
 	if (key == "snd_filter") {
 		float gainlf = 1.0f;
 		float gainhf = 1.0f;
 		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
-		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
-		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
-		efx->CommitEffects();
+		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
+		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
+		efx.CommitEffects();
 		return;
 	}
 	if (key == "UseEFX") {
-		if (std::atoi(value.c_str()) != 0)
-			efx->Enable();
-		else
-			efx->Disable();
-
+		if (std::atoi(value.c_str()) != 0) {
+			efx.Enable();
+		} else {
+			efx.Disable();
+		}
 		return;
 	}
 	if (key == "snd_volgeneral") {
@@ -568,7 +567,8 @@ void CSound::InitThread(int cfgMaxSounds)
 			CheckError("[Sound::Init]");
 		}
 
-		efx = new CEFX(curDevice);
+		efx.ResetState();
+		efx.Init(curDevice);
 		CheckError("[Sound::Init::EFX]");
 	}
 
@@ -604,12 +604,13 @@ void CSound::UpdateThread(int cfgMaxSounds)
 
 	Watchdog::DeregisterThread(WDT_AUDIO);
 
-	LOG("[Sound::%s][3] efx=%p", __func__, efx);
+	LOG("[Sound::%s][3] efx=%p", __func__, &efx);
 
 	soundSources.clear();
 
 	// must happen after sources and before context
-	spring::SafeDelete(efx);
+	efx.Kill();
+	efx.ResetState();
 
 	LOG("[Sound::%s][4] ctx=%p dev=%p", __func__, curContext, curDevice);
 
@@ -674,10 +675,10 @@ void CSound::UpdateListenerReal()
 	// reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
 	// for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
 	const float camHeight = std::max(1.0f, myPos.y - CGround::GetHeightAboveWater(myPos.x, myPos.z));
-	const float newMod = std::min(600.0f / camHeight, 1.0f);
+	const float rolloffMod = std::min(600.0f / camHeight, 1.0f);
 
-	CSoundSource::SetHeightRolloffModifer(newMod);
-	efx->SetHeightRolloffModifer(newMod);
+	CSoundSource::SetHeightRolloffModifer(rolloffMod);
+	efx.SetHeightRolloffModifer(rolloffMod);
 
 	// Result were bad with listener related doppler effects.
 	// The user experiences the camera/listener not as a world-interacting object.
