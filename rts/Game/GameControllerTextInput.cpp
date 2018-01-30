@@ -276,8 +276,6 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 				LOG("%s", msg.c_str());
 			}
 
-			// FIXME: breaks typing after <tab>, and seems like a strange place to stop input
-			// SDL_StopTextInput();
 			return true;
 		} break;
 
