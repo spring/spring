@@ -71,8 +71,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	if (volume <= 0.0f)
 		return;
 
-	// generate the sound item
-	SoundItem* sndItem = sound->GetSoundItem(id);
+	// get the sound item, then find a source for it
+	const SoundItem* sndItem = sound->GetSoundItem(id);
 
 	if (sndItem == nullptr) {
 		sound->numEmptyPlayRequests++;
@@ -84,12 +84,13 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		if (!relative)
 			return;
 
-		LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
+		LOG("[AudioChannel::%s] maximum distance ignored for relative playback of sound-item \"%s\"", __func__, (sndItem->Name()).c_str());
 	}
 
 	// don't spam to many sounds per frame
 	if (emitsThisFrame >= emitsPerFrame)
 		return;
+
 	emitsThisFrame++;
 
 	// check if the sound item is already played
@@ -106,7 +107,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		}
 
 		if (src == nullptr || prio > sndItem->GetPriority()) {
-			LOG_L(L_DEBUG, "CSound::PlaySample: Max concurrent sounds in channel reached! Dropping playback!");
+			LOG_L(L_DEBUG, "[AudioChannel::%s] maximum concurrent playbacks reached for sound-item %s", __func__, (sndItem->Name()).c_str());
 			return;
 		}
 
@@ -117,14 +118,14 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	CSoundSource* sndSource = sound->GetNextBestSource();
 
 	if (sndSource == nullptr || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
-		LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
+		LOG_L(L_DEBUG, "[AudioChannel::%s] no source found for sound-item %s", __func__, (sndItem->Name()).c_str());
 		return;
 	}
 	if (sndSource->IsPlaying())
 		sound->numAbortedPlays++;
 
 	// play the sound item
-	sndSource->PlayAsync(this, sndItem, pos, velocity, volume, relative);
+	sndSource->PlayAsync(this, id, pos, velocity, volume, sndItem->GetPriority(), relative);
 	curSources.insert(sndSource);
 }
 

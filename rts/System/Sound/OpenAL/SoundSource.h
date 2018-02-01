@@ -27,14 +27,14 @@ public:
 	CSoundSource();
 	CSoundSource(CSoundSource&& src) { *this = std::move(src); }
 	CSoundSource(const CSoundSource& src) = delete;
-	/// will stop during deletion
-	~CSoundSource();
+	~CSoundSource() { Delete(); }
 
-	// don't ever need to actually move, just here to satisfy compiler
+	// sources don't ever need to actually move, just here to satisfy compiler
 	CSoundSource& operator = (CSoundSource&& src) { return *this; }
 	CSoundSource& operator = (const CSoundSource& src) = delete;
 
 	void Update();
+	void Delete();
 
 	void UpdateVolume();
 	bool IsValid() const { return (id != 0); };
@@ -44,8 +44,8 @@ public:
 	void Stop();
 
 	/// will stop a currently playing sound, if any
-	void Play(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
-	void PlayAsync(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
+	void Play(IAudioChannel* channel, SoundItem* item, float3 pos, float3 velocity, float volume, bool relative = false);
+	void PlayAsync(IAudioChannel* channel, size_t id, float3 pos, float3 velocity, float volume, float priority, bool relative = false);
 	void PlayStream(IAudioChannel* channel, const std::string& stream, float volume);
 	void StreamStop();
 	void StreamPause();
@@ -57,36 +57,43 @@ public:
 
 private:
 	struct AsyncSoundItemData {
-		IAudioChannel* channel;
-		SoundItem* buffer;
+		IAudioChannel* channel = nullptr;
 
-		float3 pos;
+		size_t id = 0;
+
+		float3 position;
 		float3 velocity;
 
-		float volume;
-		bool relative;
+		float volume = 1.0f;
+		float priority = 0.0f;
 
-		AsyncSoundItemData()
-		: channel(nullptr)
-		, buffer(nullptr)
-		, volume(1.0f)
-		, relative(false)
-		{}
+		bool relative = false;
+	};
+
+	// light-weight SoundItem with only the data needed for playback
+	struct SoundItemData {
+		size_t id;
+
+		unsigned int loopTime;
+		int priority;
+
+		float rndGain;
+		float rolloff;
 	};
 
 private:
-	static float referenceDistance;
-
-	//! used to adjust the pitch to the GameSpeed (optional)
+	// used to adjust the pitch to the GameSpeed (optional)
 	static float globalPitch;
 
-	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
+	// reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
 
 private:
 	ALuint id;
 
-	SoundItem* curPlaying;
+	SoundItemData curPlayingItem;
+	AsyncSoundItemData asyncPlayItem;
+
 	IAudioChannel* curChannel;
 	COggStream curStream;
 
@@ -97,7 +104,6 @@ private:
 	int efxUpdates;
 
 	ALfloat curHeightRolloffModifier;
-	AsyncSoundItemData asyncPlay;
 };
 
 #endif

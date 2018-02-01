@@ -36,14 +36,11 @@ CONFIG(std::string, snd_device).defaultValue("").description("Sets the used outp
 CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
 CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
 
+// [0] := Music, [1] := General, [2] := Battle, [3] := UnitReply, [4] := UserInterface
+static uint8_t audioChannelMem[5][sizeof(AudioChannel)];
+
 
 ISound* ISound::singleton = nullptr;
-
-ISound::ISound()
-	: numEmptyPlayRequests(0)
-	, numAbortedPlays(0)
-{
-}
 
 void ISound::Initialize(bool forceNullSound)
 {
@@ -54,11 +51,11 @@ void ISound::Initialize(bool forceNullSound)
 
 #ifndef NO_SOUND
 	if (!IsNullAudio() && !forceNullSound) {
-		Channels::BGMusic = new AudioChannel();
-		Channels::General = new AudioChannel();
-		Channels::Battle = new AudioChannel();
-		Channels::UnitReply = new AudioChannel();
-		Channels::UserInterface = new AudioChannel();
+		Channels::BGMusic       = new (audioChannelMem[0]) AudioChannel();
+		Channels::General       = new (audioChannelMem[1]) AudioChannel();
+		Channels::Battle        = new (audioChannelMem[2]) AudioChannel();
+		Channels::UnitReply     = new (audioChannelMem[3]) AudioChannel();
+		Channels::UserInterface = new (audioChannelMem[4]) AudioChannel();
 
 		{
 			ScopedOnceTimer timer("ISound::Init::New");
@@ -83,11 +80,14 @@ void ISound::Initialize(bool forceNullSound)
 	} else
 #endif // NO_SOUND
 	{
-		Channels::BGMusic = new NullAudioChannel();
-		Channels::General = new NullAudioChannel();
-		Channels::Battle = new NullAudioChannel();
-		Channels::UnitReply = new NullAudioChannel();
-		Channels::UserInterface = new NullAudioChannel();
+		static_assert(sizeof(NullAudioChannel) <= sizeof(AudioChannel), "");
+
+		Channels::BGMusic       = new (audioChannelMem[0]) NullAudioChannel();
+		Channels::General       = new (audioChannelMem[1]) NullAudioChannel();
+		Channels::Battle        = new (audioChannelMem[2]) NullAudioChannel();
+		Channels::UnitReply     = new (audioChannelMem[3]) NullAudioChannel();
+		Channels::UserInterface = new (audioChannelMem[4]) NullAudioChannel();
+
 		singleton = new NullSound();
 	}
 }
@@ -96,11 +96,17 @@ void ISound::Shutdown()
 {
 	spring::SafeDelete(singleton);
 
-	spring::SafeDelete(Channels::BGMusic);
-	spring::SafeDelete(Channels::General);
-	spring::SafeDelete(Channels::Battle);
-	spring::SafeDelete(Channels::UnitReply);
-	spring::SafeDelete(Channels::UserInterface);
+	spring::SafeDestruct(Channels::BGMusic);
+	spring::SafeDestruct(Channels::General);
+	spring::SafeDestruct(Channels::Battle);
+	spring::SafeDestruct(Channels::UnitReply);
+	spring::SafeDestruct(Channels::UserInterface);
+
+	std::memset(audioChannelMem[0], 0, sizeof(AudioChannel));
+	std::memset(audioChannelMem[1], 0, sizeof(AudioChannel));
+	std::memset(audioChannelMem[2], 0, sizeof(AudioChannel));
+	std::memset(audioChannelMem[3], 0, sizeof(AudioChannel));
+	std::memset(audioChannelMem[4], 0, sizeof(AudioChannel));
 }
 
 

@@ -34,8 +34,9 @@ namespace
 	}
 }
 
-SoundItem::SoundItem(size_t bufferID, const spring::unordered_map<std::string, std::string>& items)
-	: soundBufferID(bufferID)
+SoundItem::SoundItem(size_t itemID, size_t bufferID, const spring::unordered_map<std::string, std::string>& items)
+	: soundItemID(itemID)
+	, soundBufferID(bufferID)
 	, maxDist(FLT_MAX)
 {
 	if (!MapEntryValExtract(items, "name", name))

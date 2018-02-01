@@ -20,9 +20,9 @@ public:
 
 	bool HasSoundItem(const std::string& name) const { return false; }
 	size_t GetSoundId(const std::string& name) { return 0; }
-	SoundItem* GetSoundItem(size_t id) const { return NULL; }
 
-	CSoundSource* GetNextBestSource(bool lock = true) { return NULL; }
+	SoundItem* GetSoundItem(size_t id) { return nullptr; }
+	CSoundSource* GetNextBestSource(bool lock = true) { return nullptr; }
 
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) {}
 	void NewFrame() {}

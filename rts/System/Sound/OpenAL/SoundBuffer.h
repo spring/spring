@@ -46,7 +46,10 @@ public:
 
 	int BufferSize() const;
 
-	static void Initialise() { buffers.resize(1); } // empty ("zero") buffer
+	static void Initialise() {
+		buffers.reserve(256);
+		buffers.emplace_back(); // empty ("zero") buffer
+	}
 	static void Deinitialise() {
 		bufferMap.clear();
 		buffers.clear();

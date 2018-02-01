@@ -30,8 +30,8 @@ public:
 
 	bool HasSoundItem(const std::string& name) const override;
 	size_t GetSoundId(const std::string& name) override;
-	SoundItem* GetSoundItem(size_t id) const;
 
+	SoundItem* GetSoundItem(size_t id);
 	CSoundSource* GetNextBestSource(bool lock = true) override;
 
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) override;
@@ -85,7 +85,8 @@ private:
 
 	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
-	std::vector<SoundItem*> soundItems;
+
+	std::vector<SoundItem> soundItems;
 	std::vector<CSoundSource> soundSources; // fixed-size
 
 	SoundItemNameMap defaultItemNameMap;
