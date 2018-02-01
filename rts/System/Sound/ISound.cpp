@@ -36,8 +36,13 @@ CONFIG(std::string, snd_device).defaultValue("").description("Sets the used outp
 CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
 CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
 
+
+#ifndef NO_SOUND
 // [0] := Music, [1] := General, [2] := Battle, [3] := UnitReply, [4] := UserInterface
 static uint8_t audioChannelMem[5][sizeof(AudioChannel)];
+#else
+static uint8_t audioChannelMem[5][sizeof(NullAudioChannel)];
+#endif
 
 
 ISound* ISound::singleton = nullptr;
@@ -80,8 +85,6 @@ void ISound::Initialize(bool forceNullSound)
 	} else
 #endif // NO_SOUND
 	{
-		static_assert(sizeof(NullAudioChannel) <= sizeof(AudioChannel), "");
-
 		Channels::BGMusic       = new (audioChannelMem[0]) NullAudioChannel();
 		Channels::General       = new (audioChannelMem[1]) NullAudioChannel();
 		Channels::Battle        = new (audioChannelMem[2]) NullAudioChannel();
@@ -102,11 +105,11 @@ void ISound::Shutdown()
 	spring::SafeDestruct(Channels::UnitReply);
 	spring::SafeDestruct(Channels::UserInterface);
 
-	std::memset(audioChannelMem[0], 0, sizeof(AudioChannel));
-	std::memset(audioChannelMem[1], 0, sizeof(AudioChannel));
-	std::memset(audioChannelMem[2], 0, sizeof(AudioChannel));
-	std::memset(audioChannelMem[3], 0, sizeof(AudioChannel));
-	std::memset(audioChannelMem[4], 0, sizeof(AudioChannel));
+	std::memset(audioChannelMem[0], 0, sizeof(audioChannelMem[0]));
+	std::memset(audioChannelMem[1], 0, sizeof(audioChannelMem[1]));
+	std::memset(audioChannelMem[2], 0, sizeof(audioChannelMem[2]));
+	std::memset(audioChannelMem[3], 0, sizeof(audioChannelMem[3]));
+	std::memset(audioChannelMem[4], 0, sizeof(audioChannelMem[4]));
 }
 
 
