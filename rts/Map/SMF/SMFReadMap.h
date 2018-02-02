@@ -24,9 +24,9 @@ public:
 
 public:
 
-	CSMFReadMap(std::string mapname);
+	CSMFReadMap(const std::string& mapName);
 	// note: textures are auto-deleted
-	~CSMFReadMap() {}
+	~CSMFReadMap() { mapFile.Close(); }
 
 	void UpdateShadingTexture() override;
 	void UpdateHeightMapUnsynced(const SRectangle&) override;
@@ -128,7 +128,7 @@ public:
 
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
-	inline CSMFMapFile& GetFile(){ return file; }
+	inline CSMFMapFile& GetMapFile() { return mapFile; }
 	inline CBaseGroundDrawer* GetGroundDrawer() override;
 
 
@@ -169,9 +169,9 @@ private:
 
 public:
 	// constants
-	static const int tileScale     = 4;
-	static const int bigSquareSize = 32 * tileScale;
-	static const int NUM_SPLAT_DETAIL_NORMALS = 4;
+	static constexpr int tileScale     = 4;
+	static constexpr int bigSquareSize = 32 * tileScale;
+	static constexpr int NUM_SPLAT_DETAIL_NORMALS = 4;
 
 	// globals for SMFGround{Drawer, Textures}
 	int numBigTexX;
@@ -186,16 +186,17 @@ public:
 	int heightMapSizeX;
 
 private:
-	CSMFMapFile file;
-	CSMFGroundDrawer* groundDrawer;
-
-private:
 	// note: intentionally declared static (see ReadMap)
+	static CSMFMapFile mapFile;
+
 	static std::vector<float> cornerHeightMapSynced;
 	static std::vector<float> cornerHeightMapUnsynced;
 
 	static std::vector<unsigned char> shadingTexBuffer;
 	static std::vector<unsigned char> waterHeightColors;
+
+private:
+	CSMFGroundDrawer* groundDrawer = nullptr;
 
 private:
 	MapTexture grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
@@ -220,15 +221,15 @@ private:
 	MapTexture parallaxHeightTex;
 
 private:
-	int shadingTexUpdateProgress;
+	int shadingTexUpdateProgress = -1;
 
-	float texAnisotropyLevels[2];
+	float texAnisotropyLevels[2] = {0.0f, 0.0f};
 
-	bool haveSpecularTexture;
-	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
-	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
+	bool haveSpecularTexture           = false;
+	bool haveSplatDetailDistribTexture = false; // true if we have both splatDetailTex and splatDistrTex
+	bool haveSplatNormalDistribTexture = false; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
 
-	bool shadingTexUpdateNeeded;
+	bool shadingTexUpdateNeeded = false;
 };
 
 #endif

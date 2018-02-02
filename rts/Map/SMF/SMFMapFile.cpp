@@ -25,28 +25,39 @@ static bool CheckHeader(const SMFHeader& h)
 }
 
 
-CSMFMapFile::CSMFMapFile(const std::string& mapFileName)
-	: ifs(mapFileName), featureFileOffset(0)
+void CSMFMapFile::Open(const std::string& mapFileName)
 {
 	char buf[512] = {0};
-	auto& h = header;
+	const char* fmts[] = {"[%s] could not open \"%s\"", "[%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)"};
 
-	memset(&h, 0, sizeof(header));
+	memset(&header, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));
 
+	ifs.Open(mapFileName);
+
 	if (!ifs.FileExists()) {
-		snprintf(buf, sizeof(buf), "[%s] could not open \"%s\"", __func__, mapFileName.c_str());
+		snprintf(buf, sizeof(buf), fmts[0], __func__, mapFileName.c_str());
 		throw content_error(buf);
 	}
 
-	ReadMapHeader(h, ifs);
+	ReadMapHeader(header, ifs);
 
-	if (CheckHeader(h))
+	if (CheckHeader(header))
 		return;
 
-	snprintf(buf, sizeof(buf), "[%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)", __func__, mapFileName.c_str(), h.version, h.tilesize, h.texelPerSquare, h.squareSize);
+	snprintf(buf, sizeof(buf), fmts[1], __func__, mapFileName.c_str(), header.version, header.tilesize, header.texelPerSquare, header.squareSize);
 	throw content_error(buf);
 }
+
+void CSMFMapFile::Close()
+{
+	ifs.Close();
+
+	featureTypes.clear();
+
+	featureFileOffset = 0;
+}
+
 
 void CSMFMapFile::ReadMinimap(void* data)
 {
@@ -56,16 +67,16 @@ void CSMFMapFile::ReadMinimap(void* data)
 
 int CSMFMapFile::ReadMinimap(std::vector<std::uint8_t>& data, unsigned miplevel)
 {
-	int offset=0;
+	int offset = 0;
 	int mipsize = 1024;
-	for (unsigned i = 0; i < std::min((unsigned)MINIMAP_NUM_MIPMAP, miplevel); i++)
-	{
-		const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+
+	for (unsigned i = 0, n = MINIMAP_NUM_MIPMAP; i < std::min(n, miplevel); i++) {
+		const int size = ((mipsize + 3) / 4) * ((mipsize + 3) / 4) * 8;
 		offset += size;
 		mipsize >>= 1;
 	}
 
-	const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+	const int size = ((mipsize + 3) / 4) * ((mipsize + 3) / 4) * 8;
 	data.resize(size);
 
 	ifs.Seek(header.minimapPtr + offset);
@@ -199,11 +210,14 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 
 	for (int a = 0; a < header.numExtraHeaders; ++a) {
 		int size;
-		ifs.Read(&size, 4);
-		swabDWordInPlace(size);
 		int type;
+
+		ifs.Read(&size, 4);
 		ifs.Read(&type, 4);
+
+		swabDWordInPlace(size);
 		swabDWordInPlace(type);
+
 		if (type == MEH_Vegetation) {
 			int pos;
 			ifs.Read(&pos, 4);
@@ -212,8 +226,7 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Read(data, header.mapx / 4 * header.mapy / 4);
 			/* char; no swabbing. */
 			return true; //we arent interested in other extensions anyway
-		}
-		else {
+		} else {
 			// assumes we can use data as scratch memory
 			assert(size - 8 <= header.mapx / 4 * header.mapy / 4);
 			ifs.Read(data, size - 8);
@@ -222,11 +235,12 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 	return false;
 }
 
+
 /// read a float from file (endian aware)
 static float ReadFloat(CFileHandler& file)
 {
 	float __tmpfloat = 0.0f;
-	file.Read(&__tmpfloat,sizeof(float));
+	file.Read(&__tmpfloat, sizeof(float));
 	return swabFloat(__tmpfloat);
 }
 
@@ -234,14 +248,15 @@ static float ReadFloat(CFileHandler& file)
 static int ReadInt(CFileHandler& file)
 {
 	unsigned int __tmpdw = 0;
-	file.Read(&__tmpdw,sizeof(unsigned int));
+	file.Read(&__tmpdw, sizeof(unsigned int));
 	return (int)swabDWord(__tmpdw);
 }
+
 
 /// Read SMFHeader head from file
 void CSMFMapFile::ReadMapHeader(SMFHeader& head, CFileHandler& file)
 {
-	file.Read(head.magic,sizeof(head.magic));
+	file.Read(head.magic, sizeof(head.magic));
 
 	head.version = ReadInt(file);
 	head.mapid = ReadInt(file);
@@ -289,7 +304,7 @@ void CSMFMapFile::ReadMapTileHeader(MapTileHeader& head, CFileHandler& file)
 /// Read TileFileHeader head from file src
 void CSMFMapFile::ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file)
 {
-	file.Read(&head.magic,sizeof(head.magic));
+	file.Read(&head.magic, sizeof(head.magic));
 	head.version = ReadInt(file);
 	head.numTiles = ReadInt(file);
 	head.tileSize = ReadInt(file);
