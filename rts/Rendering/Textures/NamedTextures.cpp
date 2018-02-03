@@ -289,13 +289,6 @@ namespace CNamedTextures {
 		}
 
 		// load texture
-		GLboolean inListCompile;
-		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-		if (inListCompile) {
-			GenInsertTex(texName, {}, true, true, false, false);
-			return true;
-		}
-
 		return (GenLoadTex(texName));
 	}
 
@@ -357,14 +350,7 @@ namespace CNamedTextures {
 
 		if (forceLoad) {
 			// load texture
-			GLboolean inListCompile;
-			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-
-			if (inListCompile) {
-				GenInsertTex(texName, {}, true, false, false, persist);
-			} else {
-				GenLoadTex(texName);
-			}
+			GenLoadTex(texName);
 
 			return &texInfoVec[ texInfoMap[texName] ];
 		}
