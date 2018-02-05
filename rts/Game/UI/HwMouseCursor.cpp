@@ -441,8 +441,8 @@ void HardwareCursor::Finish()
 		for (ImageData& id: icons) {
 			buildIco(curmem, id);
 			curmem += (2 * sizeof(DWORD) + 3 * sizeof(WORD));
-			curMem += (sizeof(CursorDirectoryHeader) + sizeof(CursorInfoHeader));
-			curMem += (squaresize * squaresize * 4 + squaresize * squaresize / 8);
+			curmem += (sizeof(CursorDirectoryHeader) + sizeof(CursorInfoHeader));
+			curmem += (squaresize * squaresize * 4 + squaresize * squaresize / 8);
 		}
 	}
 	{

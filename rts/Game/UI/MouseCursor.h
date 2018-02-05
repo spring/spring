@@ -53,7 +53,7 @@ public:
 	static constexpr float MIN_FRAME_LENGTH = 0.010f;  // seconds
 	static constexpr float DEF_FRAME_LENGTH = 0.100f;  // seconds
 
-	static constexpr size_t HWC_MEM_SIZE = 100;
+	static constexpr size_t HWC_MEM_SIZE = 128;
 
 
 private:
