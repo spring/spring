@@ -21,13 +21,13 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
-#include <cstring> // for memset
-
 #include <SDL_config.h>
 #include <SDL_syswm.h>
 #include <SDL_mouse.h>
 #include <SDL_events.h>
 #endif
+
+#include <cstring> // memset
 
 
 
