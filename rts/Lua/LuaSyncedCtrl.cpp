@@ -1554,18 +1554,16 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 			weapon->reloadStatus = lua_toint(L, index + 1);
 		} break;
 
-		case hashString("reaimTime"): {
-			weapon->reaimTime = std::max(1, lua_toint(L, index + 1));
-		} break;
-
 		case hashString("reloadTime"): {
 			weapon->reloadTime = std::max(1, (int) (lua_tofloat(L, index + 1) * GAME_SPEED));
+		} break;
+		case hashString("reaimTime"): {
+			weapon->reaimTime = std::max(1, lua_toint(L, index + 1));
 		} break;
 
 		case hashString("accuracy"): {
 			weapon->accuracyError = lua_tofloat(L, index + 1);
 		} break;
-
 		case hashString("sprayAngle"): {
 			weapon->sprayAngle = lua_tofloat(L, index + 1);
 		} break;
@@ -1573,7 +1571,6 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		case hashString("range"): {
 			weapon->UpdateRange(lua_tofloat(L, index + 1));
 		} break;
-
 		case hashString("projectileSpeed"): {
 			weapon->projectileSpeed = lua_tofloat(L, index + 1);
 		} break;
@@ -1581,7 +1578,6 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		case hashString("burst"): {
 			weapon->salvoSize = lua_toint(L, index + 1);
 		} break;
-
 		case hashString("burstRate"): {
 			weapon->salvoDelay = (int) (lua_tofloat(L, index + 1) * GAME_SPEED);
 		} break;
@@ -1593,18 +1589,24 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		case hashString("salvoLeft"): {
 			weapon->salvoLeft = lua_toint(L, index + 1);
 		} break;
-
 		case hashString("nextSalvo"): {
 			weapon->nextSalvo = lua_toint(L, index + 1);
 		} break;
 
 		case hashString("aimReady"): {
-			weapon->angleGood = lua_tofloat(L, index + 1) != 0.0f;
+			weapon->angleGood = (lua_tofloat(L, index + 1) != 0.0f);
 		} break;
 
 		case hashString("forceAim"): {
 			// move into the past by default s.t. Weapon::CallAimingScript runs the callin next Update
 			weapon->lastAimedFrame -= luaL_optint(L, index + 1, weapon->reaimTime);
+		} break;
+
+		case hashString("avoidFlags"): {
+			weapon->avoidFlags = lua_toint(L, index + 1);
+		} break;
+		case hashString("collisionFlags"): {
+			weapon->collisionFlags = lua_toint(L, index + 1);
 		} break;
 
 		default: {
