@@ -714,17 +714,26 @@ handler[s"Remove%{Addon}"] = handler.Remove
 --------------------------------------------------------------------------------
 -- Save/Load addon related data
 
+local function LoadConfigFile(filename, envParam)
+	if not VFS.FileExists (filename) then
+		return {}
+	end
+
+	local success, rvalue = pcall(VFS.Include, filename, envParam)
+	if (not success) then
+		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (' .. rvalue .. ')')
+	elseif (type(rvalue) ~= "table") then
+		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (broken data)')
+	else
+		return rvalue
+	end
+	return {}
+end
+
 function handler:LoadOrderList()
 	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
-	if VFS.FileExists(ORDER_FILENAME) then
-		local success, rvalue = pcall(VFS.Include, ORDER_FILENAME, {math = {huge = math.huge}})
-		if (not success) then
-			Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. ORDER_FILENAME .. '  (' .. rvalue .. ')')
-		elseif (type(rvalue) == "table") then
-			handler.orderList = rvalue
-		end
-	end
+	handler.orderList = LoadConfigFile(ORDER_FILENAME, {math = {huge = math.huge}})
 end
 
 
@@ -748,16 +757,7 @@ function handler:LoadKnownData()
 		error("Called handler:LoadKnownData after Initialization.", 2)
 	end
 
-	if VFS.FileExists(KNOWN_FILENAME) then
-		local success, rvalue = pcall(VFS.Include, KNOWN_FILENAME, {math = {huge = math.huge}})
-		if (not success) then
-			Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. KNOWN_FILENAME .. '  (' .. rvalue .. ')')
-		elseif (type(rvalue) ~= "table") then
-			Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. KNOWN_FILENAME .. '  (broken data)')
-		else
-			handler.knownInfos = rvalue
-		end
-	end
+	handler.knownInfos = LoadConfigFile(KNOWN_FILENAME, {math = {huge = math.huge}})
 
 	for i,ki in pairs(handler.knownInfos) do
 		ki.active = nil
@@ -786,10 +786,7 @@ end
 function handler:LoadConfigData()
 	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
-	if VFS.FileExists(CONFIG_FILENAME) then
-		handler.configData = VFS.Include(CONFIG_FILENAME, {})
-	end
-	handler.configData = handler.configData or {}
+	handler.configData = LoadConfigFile(CONFIG_FILENAME, {})
 end
 
 
