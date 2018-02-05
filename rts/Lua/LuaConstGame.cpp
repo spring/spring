@@ -6,6 +6,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/GameSetup.h"
+#include "Game/TraceRay.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -165,6 +166,19 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		LuaPushNamedNumber(L, "Water",           -CSolidObject::DAMAGE_EXTSOURCE_WATER  );
 		LuaPushNamedNumber(L, "Killed",          -CSolidObject::DAMAGE_EXTSOURCE_KILLED );
 		LuaPushNamedNumber(L, "Crushed",         -CSolidObject::DAMAGE_EXTSOURCE_CRUSHED);
+	lua_rawset(L, -3);
+
+	// weapon avoidance and projectile collision flags
+	lua_pushliteral(L, "collisionFlags");
+	lua_newtable(L);
+		LuaPushNamedNumber(L, "noEnemies",    Collision::NOENEMIES   );
+		LuaPushNamedNumber(L, "noFriendlies", Collision::NOFRIENDLIES);
+		LuaPushNamedNumber(L, "noFeatures",   Collision::NOFEATURES  );
+		LuaPushNamedNumber(L, "noNeutrals",   Collision::NONEUTRALS  );
+		LuaPushNamedNumber(L, "noFirebases",  Collision::NOFIREBASES );
+		LuaPushNamedNumber(L, "noGround",     Collision::NOGROUND    );
+		LuaPushNamedNumber(L, "noCloaked",    Collision::NOCLOAKED   );
+		LuaPushNamedNumber(L, "noUnits",      Collision::NOUNITS     );
 	lua_rawset(L, -3);
 
 	return true;
