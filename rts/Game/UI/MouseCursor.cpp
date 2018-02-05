@@ -59,8 +59,6 @@ CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor()
 {
-	printf("[~CMouseCursor]! this=%p cursor=%p\n", this, hwCursor);
-
 	if (hwCursor != nullptr) {
 		hwCursor->Kill();
 		IHardwareCursor::Free(hwCursor);
