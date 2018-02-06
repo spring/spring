@@ -414,6 +414,7 @@ static inline bool IsUnitTyped(lua_State* L, const CUnit* unit)
 	const unsigned short losStatus = unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)];
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 
+	// currently in LOS or not lost from radar since being visible means unit's type can be accessed
 	return ((losStatus & LOS_INLOS) || ((losStatus & prevMask) == prevMask));
 }
 
@@ -421,13 +422,14 @@ static inline bool IsUnitTyped(lua_State* L, const CUnit* unit)
 static inline const UnitDef* EffectiveUnitDef(lua_State* L, const CUnit* unit)
 {
 	const UnitDef* ud = unit->unitDef;
-	if (IsAllyUnit(L, unit)) {
+
+	if (IsAllyUnit(L, unit))
 		return ud;
-	} else if (ud->decoyDef) {
+
+	if (ud->decoyDef)
 		return ud->decoyDef;
-	} else {
-		return ud;
-	}
+
+	return ud;
 }
 
 
@@ -1672,13 +1674,18 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 }
 
 
-static inline bool PushUnitsVector(
+
+// used by GetTeamUnitsSorted (PushVisibleUnits) and GetTeamUnitsByDefs (InsertSearchUnitDefs)
+static std::vector<int> gtuObjectIDs;
+// used by GetTeamUnitsCounts
+static std::vector< std::pair<int, int> > gtuDefCounts;
+
+static bool PushVisibleUnits(
 	lua_State* L,
 	const std::vector<CUnit*>& defUnits,
-	std::vector<int>& unknownUnitIDs,
 	int unitDefID,
-	unsigned int& unitCount,
-	unsigned int& defCount
+	unsigned int* unitCount,
+	unsigned int* defCount
 ) {
 	bool createdTable = false;
 
@@ -1687,24 +1694,55 @@ static inline bool PushUnitsVector(
 			continue;
 
 		if (!IsUnitTyped(L, unit)) {
-			unknownUnitIDs.push_back(unit->id);
+			gtuObjectIDs.push_back(unit->id);
 			continue;
 		}
 
+		// push new table for first unit of type <unitDefID> to be visible
 		if (!createdTable) {
 			createdTable = true;
 
 			lua_pushnumber(L, unitDefID);
 			lua_createtable(L, defUnits.size(), 0);
-			defCount++;
+
+			(*defCount)++;
 		}
 
+		// add count-th unitID to table
 		lua_pushnumber(L, unit->id);
-		lua_rawseti(L, -2, unitCount++);
+		lua_rawseti(L, -2, (*unitCount)++);
 	}
 
 	return createdTable;
 }
+
+static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied)
+{
+	if (ud == nullptr)
+		return;
+
+	if (allied) {
+		gtuObjectIDs.push_back(ud->id);
+		return;
+	}
+	if (ud->decoyDef != nullptr)
+		return;
+
+	gtuObjectIDs.push_back(ud->id);
+
+	// spring::unordered_map<int, spring::unordered_set<int> >
+	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto decoyMapIt = decoyMap.find(ud->id);
+
+	if (decoyMapIt == unitDefHandler->decoyMap.end())
+		return;
+
+	for (int decoyDefID: decoyMapIt->second) {
+		gtuObjectIDs.push_back(decoyDefID);
+	}
+}
+
+
 
 int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 {
@@ -1744,11 +1782,9 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	} else {
-		std::vector<int> unknownUnitIDs;
-
 		// tally for enemies
-		unknownUnitIDs.clear();
-		unknownUnitIDs.reserve(16);
+		gtuObjectIDs.clear();
+		gtuObjectIDs.reserve(16);
 
 		for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
 			const unsigned int unitDefID = i + 1;
@@ -1759,14 +1795,14 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 			if (ud->decoyDef != nullptr)
 				continue;
 
-			bool createdTable = PushUnitsVector(L, unitHandler->GetUnitsByTeamAndDef(teamID, unitDefID), unknownUnitIDs, unitDefID, unitCount, defCount);
+			bool createdTable = PushVisibleUnits(L, unitHandler->GetUnitsByTeamAndDef(teamID, unitDefID), unitDefID, &unitCount, &defCount);
 
 			// for all decoy-defs of unitDefID, add decoy units under the same ID
 			const auto dmit = unitDefHandler->decoyMap.find(unitDefID);
 
 			if (dmit != unitDefHandler->decoyMap.end()) {
 				for (int decoyDefID: dmit->second) {
-					createdTable |= PushUnitsVector(L, unitHandler->GetUnitsByTeamAndDef(teamID, decoyDefID), unknownUnitIDs, unitDefID, unitCount, defCount);
+					createdTable |= PushVisibleUnits(L, unitHandler->GetUnitsByTeamAndDef(teamID, decoyDefID), unitDefID, &unitCount, &defCount);
 				}
 			}
 
@@ -1775,15 +1811,15 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 
 		}
 
-		if (!unknownUnitIDs.empty()) {
+		if (!gtuObjectIDs.empty()) {
 			HSTR_PUSH(L, "unknown");
 
 			defCount += 1;
 			unitCount = 1;
 
-			lua_createtable(L, unknownUnitIDs.size(), 0);
+			lua_createtable(L, gtuObjectIDs.size(), 0);
 
-			for (int unitID: unknownUnitIDs) {
+			for (int unitID: gtuObjectIDs) {
 				lua_pushnumber(L, unitID);
 				lua_rawseti(L, -2, unitCount++);
 			}
@@ -1836,8 +1872,8 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	}
 
 	// tally the counts for enemies
-	std::vector< std::pair<int, int> > unitDefCounts;
-	unitDefCounts.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
+	gtuDefCounts.clear();
+	gtuDefCounts.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
 	for (const CUnit* unit: unitHandler->GetUnitsByTeam(teamID)) {
 		if (!IsUnitVisible(L, unit))
@@ -1848,15 +1884,15 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 		} else {
 			const UnitDef* unitDef = EffectiveUnitDef(L, unit);
 
-			unitDefCounts[unitDef->id].first = unitDef->id;
-			unitDefCounts[unitDef->id].second += 1;
+			gtuDefCounts[unitDef->id].first = unitDef->id;
+			gtuDefCounts[unitDef->id].second += 1;
 		}
 	}
 
 	// push the counts
-	lua_createtable(L, 0, unitDefCounts.size());
+	lua_createtable(L, 0, gtuDefCounts.size());
 
-	for (auto mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
+	for (auto mit = gtuDefCounts.begin(); mit != gtuDefCounts.end(); ++mit) {
 		if (mit->second == 0)
 			continue;
 		lua_pushnumber(L, mit->second);
@@ -1874,33 +1910,6 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 }
 
 
-static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied, std::vector<int>& unitDefIDs)
-{
-	if (ud == nullptr)
-		return;
-
-	if (allied) {
-		unitDefIDs.push_back(ud->id);
-		return;
-	}
-	if (ud->decoyDef != nullptr)
-		return;
-
-	unitDefIDs.push_back(ud->id);
-
-	// spring::unordered_map<int, spring::unordered_set<int> >
-	const auto& decoyMap = unitDefHandler->decoyMap;
-	const auto decoyMapIt = decoyMap.find(ud->id);
-
-	if (decoyMapIt == unitDefHandler->decoyMap.end())
-		return;
-
-	for (int decoyDefID: decoyMapIt->second) {
-		unitDefIDs.push_back(decoyDefID);
-	}
-}
-
-
 int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 {
 	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
@@ -1915,10 +1924,11 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	const bool allied = IsAlliedTeam(L, teamID);
 
 	// parse the unitDefs
-	std::vector<int> unitDefIDs;
+	gtuObjectIDs.clear();
+	gtuObjectIDs.reserve(16);
 
 	if (lua_isnumber(L, 2)) {
-		InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, 2)), allied, unitDefIDs);
+		InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, 2)), allied);
 	} else if (lua_istable(L, 2)) {
 		const int tableIdx = 2;
 
@@ -1926,21 +1936,21 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 			if (!lua_isnumber(L, -1))
 				continue;
 
-			InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, -1)), allied, unitDefIDs);
+			InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, -1)), allied);
 		}
 	} else {
 		luaL_error(L, "Incorrect arguments to GetTeamUnitsByDefs()");
 	}
 
 	// sort the ID's so duplicates can be skipped
-	std::stable_sort(unitDefIDs.begin(), unitDefIDs.end());
+	std::stable_sort(gtuObjectIDs.begin(), gtuObjectIDs.end());
 
-	lua_createtable(L, unitDefIDs.size(), 0);
+	lua_createtable(L, gtuObjectIDs.size(), 0);
 
 	unsigned int unitCount = 1;
 	unsigned int prevUnitDefID = -1;
 
-	for (const int unitDefID: unitDefIDs) {
+	for (const int unitDefID: gtuObjectIDs) {
 		if (unitDefID == prevUnitDefID)
 			continue;
 
