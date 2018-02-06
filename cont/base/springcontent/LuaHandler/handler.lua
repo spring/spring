@@ -723,10 +723,11 @@ local function LoadConfigFile(filename, envParam)
 	if (not success) then
 		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (' .. rvalue .. ')')
 	elseif (type(rvalue) ~= "table") then
-		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (broken data)')
+		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (table data expected, got ' .. type(rvalue) .. ')')
 	else
 		return rvalue
 	end
+
 	return {}
 end
 
