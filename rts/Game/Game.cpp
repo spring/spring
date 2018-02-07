@@ -459,8 +459,10 @@ void CGame::LoadMap(const std::string& mapName)
 		// simulation components
 		helper->Init();
 		readMap = CReadMap::LoadMap(mapName);
-		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
-		buildingMaskMap = new BuildingMaskMap();
+
+		// half size; building positions are snapped to multiples of 2*SQUARE_SIZE
+		buildingMaskMap.Init(mapDims.hmapx * mapDims.hmapy);
+		groundBlockingObjectMap.Init(mapDims.mapSquares);
 	}
 
 	LEAVE_SYNCED_CODE();
@@ -887,8 +889,10 @@ void CGame::KillSimulation()
 
 	spring::SafeDelete(readMap);
 	spring::SafeDelete(smoothGround);
-	spring::SafeDelete(groundBlockingObjectMap);
-	spring::SafeDelete(buildingMaskMap);
+
+	groundBlockingObjectMap.Kill();
+	buildingMaskMap.Kill();
+
 	spring::SafeDelete(losHandler);
 	spring::SafeDelete(mapDamage);
 	spring::SafeDelete(quadField);

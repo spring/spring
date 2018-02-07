@@ -1077,7 +1077,7 @@ std::uint32_t CPathEstimator::CalcHash(const char* caller) const
 	const unsigned int hmChecksum = readMap->CalcHeightmapChecksum();
 	const unsigned int tmChecksum = readMap->CalcTypemapChecksum();
 	const unsigned int mdChecksum = moveDefHandler->GetCheckSum();
-	const unsigned int bmChecksum = groundBlockingObjectMap->CalcChecksum();
+	const unsigned int bmChecksum = groundBlockingObjectMap.CalcChecksum();
 	const unsigned int peHashCode = (hmChecksum + tmChecksum + mdChecksum + bmChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 
 	LOG("[PathEstimator::%s][%s] BLOCK_SIZE=%u", __func__, caller, BLOCK_SIZE);

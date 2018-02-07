@@ -100,7 +100,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	// figure out how much height to add to each square
 	for (int y = e.y1; y <= e.y2; ++y) {
 		for (int x = e.x1; x <= e.x2; ++x) {
-			const CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * mapDims.mapx + x);
+			const CSolidObject* so = groundBlockingObjectMap.GroundBlockedUnsafe(y * mapDims.mapx + x);
 
 			// do not change squares with buildings on them here
 			if (so != nullptr && so->blockHeightChanges) {

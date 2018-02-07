@@ -719,7 +719,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// note: even if construction has already started,
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
-			CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
+			CSolidObject* o = groundBlockingObjectMap.GroundBlocked(buildInfo.pos);
 			CUnit* u = nullptr;
 
 			if (o != nullptr) {

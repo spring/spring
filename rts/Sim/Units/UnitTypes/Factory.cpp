@@ -111,8 +111,8 @@ void CFactory::Update()
 			CGameHelper::BuggerOff(pos + frontdir * radius * 0.5f, radius * 0.5f, true, true, team, this);
 
 		if (!yardOpen && !IsStunned()) {
-			if (groundBlockingObjectMap->CanOpenYard(this)) {
-				groundBlockingObjectMap->OpenBlockingYard(this); // set yardOpen
+			if (groundBlockingObjectMap.CanOpenYard(this)) {
+				groundBlockingObjectMap.OpenBlockingYard(this); // set yardOpen
 				script->Activate(); // set buildStance
 
 				// make sure the idle-check does not immediately trigger
@@ -132,11 +132,11 @@ void CFactory::Update()
 	}
 
 	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * (UNIT_SLOWUPDATE_RATE >> 1))));
-	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
+	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap.CanCloseYard(this));
 
 	if (closeYard) {
 		// close the factory after inactivity
-		groundBlockingObjectMap->CloseBlockingYard(this);
+		groundBlockingObjectMap.CloseBlockingYard(this);
 		script->Deactivate();
 	}
 
@@ -150,7 +150,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 		return;
 
 	const float3& buildPos = CalcBuildPos();
-	const bool blocked = groundBlockingObjectMap->GroundBlocked(buildPos, this);
+	const bool blocked = groundBlockingObjectMap.GroundBlocked(buildPos, this);
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
 	//
