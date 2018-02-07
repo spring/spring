@@ -702,7 +702,6 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 
 	const float startx = x;
 	const float lineHeight_ = scaleY * GetLineHeight();
-	const size_t length = str.length();
 
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	// const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
@@ -775,7 +774,6 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	const float ssX = (scaleX / fontSize) * GetOutlineWidth();
 	const float ssY = (scaleY / fontSize) * GetOutlineWidth();
 	const float lineHeight_ = scaleY * GetLineHeight();
-	const size_t length = str.length();
 
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
@@ -853,7 +851,6 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 	const float shiftX = (scaleX / fontSize) * GetOutlineWidth();
 	const float shiftY = (scaleY / fontSize) * GetOutlineWidth();
 	const float lineHeight_ = scaleY * GetLineHeight();
-	const size_t length = str.length();
 
 	const unsigned int pbi = GetBufferIdx(PRIMARY_BUFFER);
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
