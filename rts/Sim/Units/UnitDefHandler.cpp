@@ -53,7 +53,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 	}
 
 	CleanBuildOptions();
-	FindStartUnits();
 	ProcessDecoys();
 }
 
@@ -137,23 +136,6 @@ void CUnitDefHandler::ProcessDecoys()
 		}
 	}
 	decoyNameMap.clear();
-}
-
-
-void CUnitDefHandler::FindStartUnits()
-{
-	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
-		const std::string& startUnit = sideParser.GetStartUnit(i);
-
-		if (startUnit.empty())
-			continue;
-
-		const auto it = unitDefIDsByName.find(startUnit);
-
-		if (it != unitDefIDsByName.end()) {
-			startUnitIDs.insert(it->second);
-		}
-	}
 }
 
 
