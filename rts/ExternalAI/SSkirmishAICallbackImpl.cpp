@@ -5304,7 +5304,10 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getTurnRadius = &skirmishAiCallback_UnitDef_getTurnRadius;
 	callback->UnitDef_getWantedHeight = &skirmishAiCallback_UnitDef_getWantedHeight;
 	callback->UnitDef_getVerticalSpeed = &skirmishAiCallback_UnitDef_getVerticalSpeed;
+
+	callback->UnitDef_isHoverAttack = &skirmishAiCallback_UnitDef_isHoverAttack;
 	callback->UnitDef_isAirStrafe = &skirmishAiCallback_UnitDef_isAirStrafe;
+
 	callback->UnitDef_getDlHoverFactor = &skirmishAiCallback_UnitDef_getDlHoverFactor;
 	callback->UnitDef_getMaxAcceleration = &skirmishAiCallback_UnitDef_getMaxAcceleration;
 	callback->UnitDef_getMaxDeceleration = &skirmishAiCallback_UnitDef_getMaxDeceleration;
