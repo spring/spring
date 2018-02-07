@@ -15,7 +15,7 @@ extern "C" {
  * Each Skirmish AI instance will receive an instance of this struct
  * in its init(skirmishAIId) function and with the SInitEvent.
  *
- * This struct contians only activities that leave the game state as it is,
+ * This struct contains only activities that leave the game state as it is,
  * in spring terms: unsynced events
  * Activities that change game state (-> synced events) are handled through
  * AI commands, defined in AISCommands.h.
@@ -436,14 +436,6 @@ struct SSkirmishAICallback {
 // END Visualization related callback functions
 
 
-// BEGINN kind of deprecated; it is recommended not to use these
-//	bool              (CALLING_CONV *getProperty)(int skirmishAIId, int id, int property, void* dst);
-
-//	bool              (CALLING_CONV *getValue)(int skirmishAIId, int id, void* dst);
-
-// END kind of deprecated; it is recommended not to use these
-
-
 // BEGINN OBJECT Cheats
 	/**
 	 * Returns whether this AI may use active cheats.
@@ -526,7 +518,6 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *getUnitDefByName)(int skirmishAIId, const char* unitName); //$ REF:RETURN->UnitDef
 
-//	int               (CALLING_CONV *UnitDef_getId)(int skirmishAIId, int unitDefId);
 
 	/** Forces loading of the unit model */
 	float             (CALLING_CONV *UnitDef_getHeight)(int skirmishAIId, int unitDefId);
@@ -537,18 +528,6 @@ struct SSkirmishAICallback {
 	const char*       (CALLING_CONV *UnitDef_getName)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getHumanName)(int skirmishAIId, int unitDefId);
-
-	const char*       (CALLING_CONV *UnitDef_getFileName)(int skirmishAIId, int unitDefId);
-
-	/** @deprecated */
-	int               (CALLING_CONV *UnitDef_getAiHint)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getCobId)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getTechLevel)(int skirmishAIId, int unitDefId);
-
-	/** @deprecated */
-	const char*       (CALLING_CONV *UnitDef_getGaia)(int skirmishAIId, int unitDefId);
 
 	float             (CALLING_CONV *UnitDef_getUpkeep)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
@@ -573,7 +552,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getStorage)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	bool              (CALLING_CONV *UnitDef_isSquareResourceExtractor)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *UnitDef_getBuildTime)(int skirmishAIId, int unitDefId);
 
@@ -672,12 +650,6 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *UnitDef_getSlideTolerance)(int skirmishAIId, int unitDefId);
 
 	/**
-	 * Build location relevant maximum steepness of the underlaying terrain.
-	 * Used to calculate the maxHeightDif.
-	 */
-	float             (CALLING_CONV *UnitDef_getMaxSlope)(int skirmishAIId, int unitDefId);
-
-	/**
 	 * Maximum terra-form height this building allows.
 	 * If this value is 0.0, you can only build this structure on
 	 * totally flat terrain.
@@ -726,8 +698,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getMaxWeaponRange)(int skirmishAIId, int unitDefId);
 
-	/** @deprecated */
-	const char*       (CALLING_CONV *UnitDef_getType)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getTooltip)(int skirmishAIId, int unitDefId);
 
@@ -805,7 +775,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getWingAngle)(int skirmishAIId, int unitDefId);
 
-	float             (CALLING_CONV *UnitDef_getDrag)(int skirmishAIId, int unitDefId);
 
 	float             (CALLING_CONV *UnitDef_getFrontToSpeed)(int skirmishAIId, int unitDefId);
 
@@ -823,15 +792,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getVerticalSpeed)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * @deprecated
-	 */
-	bool              (CALLING_CONV *UnitDef_isAbleToCrash)(int skirmishAIId, int unitDefId);
-
-	/**
-	 * @deprecated
-	 */
-	bool              (CALLING_CONV *UnitDef_isHoverAttack)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isAirStrafe)(int skirmishAIId, int unitDefId);
 
@@ -868,8 +828,6 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *UnitDef_getZSize)(int skirmishAIId, int unitDefId);
 
-	/** @deprecated */
-	int               (CALLING_CONV *UnitDef_getBuildAngle)(int skirmishAIId, int unitDefId);
 
 // beginn: transports stuff
 	float             (CALLING_CONV *UnitDef_getLoadingRadius)(int skirmishAIId, int unitDefId);
@@ -953,7 +911,6 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *UnitDef_isHideDamage)(int skirmishAIId, int unitDefId);
 
-	bool              (CALLING_CONV *UnitDef_isCommander)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isShowPlayerName)(int skirmishAIId, int unitDefId);
 
@@ -978,17 +935,6 @@ struct SSkirmishAICallback {
 	 */
 	int               (CALLING_CONV *UnitDef_getNoChaseCategory)(int skirmishAIId, int unitDefId);
 
-	bool              (CALLING_CONV *UnitDef_isLeaveTracks)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getTrackWidth)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getTrackOffset)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getTrackStrength)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getTrackStretch)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getTrackType)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isAbleToDropFlare)(int skirmishAIId, int unitDefId);
 
@@ -1016,15 +962,6 @@ struct SSkirmishAICallback {
 	 */
 	bool              (CALLING_CONV *UnitDef_isLevelGround)(int skirmishAIId, int unitDefId);
 
-	bool              (CALLING_CONV *UnitDef_isUseBuildingGroundDecal)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getBuildingDecalType)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getBuildingDecalSizeX)(int skirmishAIId, int unitDefId);
-
-	int               (CALLING_CONV *UnitDef_getBuildingDecalSizeY)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getBuildingDecalDecaySpeed)(int skirmishAIId, int unitDefId);
 
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
@@ -1045,18 +982,6 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *UnitDef_isMoveDataAvailable)(int skirmishAIId, int unitDefId); //$ AVAILABLE:MoveData
 
-	/// @deprecated
-	float             (CALLING_CONV *UnitDef_MoveData_getMaxAcceleration)(int skirmishAIId, int unitDefId);
-
-	/// @deprecated
-	float             (CALLING_CONV *UnitDef_MoveData_getMaxBreaking)(int skirmishAIId, int unitDefId);
-
-	/// @deprecated
-	float             (CALLING_CONV *UnitDef_MoveData_getMaxSpeed)(int skirmishAIId, int unitDefId);
-
-	/// @deprecated
-	short             (CALLING_CONV *UnitDef_MoveData_getMaxTurnRate)(int skirmishAIId, int unitDefId);
-
 	int               (CALLING_CONV *UnitDef_MoveData_getXSize)(int skirmishAIId, int unitDefId);
 
 	int               (CALLING_CONV *UnitDef_MoveData_getZSize)(int skirmishAIId, int unitDefId);
@@ -1073,8 +998,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_MoveData_getCrushStrength)(int skirmishAIId, int unitDefId);
 
-	/** enum MoveType { Ground_Move=0, Hover_Move=1, Ship_Move=2 }; */
-	int               (CALLING_CONV *UnitDef_MoveData_getMoveType)(int skirmishAIId, int unitDefId);
 
 	/** enum SpeedModClass { Tank=0, KBot=1, Hover=2, Ship=3 }; */
 	int               (CALLING_CONV *UnitDef_MoveData_getSpeedModClass)(int skirmishAIId, int unitDefId);
@@ -1219,25 +1142,6 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Unit_getAllyTeam)(int skirmishAIId, int unitId);
 
-	/**
-	 * Indicates the units main function.
-	 * This can be used as help for (skirmish) AIs.
-	 *
-	 * example:
-	 * A unit can shoot, build and transport other units.
-	 * To human players, it is obvious that transportation is the units
-	 * main function, as it can transport a lot of units,
-	 * but has only weak build- and fire-power.
-	 * Instead of letting the AI developers write complex
-	 * algorithms to find out the same, mod developers can set this value.
-	 *
-	 * @return  0: ???
-	 *          1: ???
-	 *          2: ???
-	 *          ...
-	 * @deprecated
-	 */
-	int               (CALLING_CONV *Unit_getAiHint)(int skirmishAIId, int unitId);
 
 	int               (CALLING_CONV *Unit_getStockpile)(int skirmishAIId, int unitId);
 
@@ -1469,7 +1373,6 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *Mod_getDescription)(int skirmishAIId);
 
-	bool              (CALLING_CONV *Mod_getAllowTeamColors)(int skirmishAIId);
 
 	/**
 	 * Should constructions without builders decay?
@@ -1885,13 +1788,11 @@ struct SSkirmishAICallback {
 // BEGINN OBJECT FeatureDef
 	int               (CALLING_CONV *getFeatureDefs)(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax); //$ FETCHER:MULTI:IDs:FeatureDef:featureDefIds
 
-//	int (CALLING_CONV *FeatureDef_getId)(int skirmishAIId, int featureDefId);
 
 	const char*       (CALLING_CONV *FeatureDef_getName)(int skirmishAIId, int featureDefId);
 
 	const char*       (CALLING_CONV *FeatureDef_getDescription)(int skirmishAIId, int featureDefId);
 
-	const char*       (CALLING_CONV *FeatureDef_getFileName)(int skirmishAIId, int featureDefId);
 
 	float             (CALLING_CONV *FeatureDef_getContainedResource)(int skirmishAIId, int featureDefId, int resourceId); //$ REF:resourceId->Resource
 
@@ -1934,8 +1835,6 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *FeatureDef_isGeoThermal)(int skirmishAIId, int featureDefId);
 
-	/** Name of the FeatureDef that this turns into when killed (not reclaimed). */
-	const char*       (CALLING_CONV *FeatureDef_getDeathFeature)(int skirmishAIId, int featureDefId);
 
 	/**
 	 * Size of the feature along the X axis - in other words: height.
@@ -2000,9 +1899,6 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *WeaponDef_getDescription)(int skirmishAIId, int weaponDefId);
 
-	const char*       (CALLING_CONV *WeaponDef_getFileName)(int skirmishAIId, int weaponDefId);
-
-	const char*       (CALLING_CONV *WeaponDef_getCegTag)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getRange)(int skirmishAIId, int weaponDefId);
 
@@ -2048,7 +1944,6 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *WeaponDef_Damage_getTypes)(int skirmishAIId, int weaponDefId, float* types, int types_sizeMax); //$ ARRAY:types
 
-//	int (CALLING_CONV *WeaponDef_getId)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getAreaOfEffect)(int skirmishAIId, int weaponDefId);
 
@@ -2161,24 +2056,10 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *WeaponDef_getIntensity)(int skirmishAIId, int weaponDefId);
 
-	/** @deprecated only relevant for visualization */
-	float             (CALLING_CONV *WeaponDef_getThickness)(int skirmishAIId, int weaponDefId);
-
-	/** @deprecated only relevant for visualization */
-	float             (CALLING_CONV *WeaponDef_getLaserFlareSize)(int skirmishAIId, int weaponDefId);
-
-	/** @deprecated only relevant for visualization */
-	float             (CALLING_CONV *WeaponDef_getCoreThickness)(int skirmishAIId, int weaponDefId);
-
 	float             (CALLING_CONV *WeaponDef_getDuration)(int skirmishAIId, int weaponDefId);
-
-	/** @deprecated only relevant for visualization */
-	int               (CALLING_CONV *WeaponDef_getLodDistance)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getFalloffRate)(int skirmishAIId, int weaponDefId);
 
-	/** @deprecated only relevant for visualization */
-	int               (CALLING_CONV *WeaponDef_getGraphicsType)(int skirmishAIId, int weaponDefId);
 
 	bool              (CALLING_CONV *WeaponDef_isSoundTrigger)(int skirmishAIId, int weaponDefId);
 
@@ -2289,14 +2170,6 @@ struct SSkirmishAICallback {
 	/** Number of frames to delay recharging by after each hit. */
 	int               (CALLING_CONV *WeaponDef_Shield_getRechargeDelay)(int skirmishAIId, int weaponDefId);
 
-	/** The color of the shield when it is at full power. */
-	void              (CALLING_CONV *WeaponDef_Shield_getGoodColor)(int skirmishAIId, int weaponDefId, short* return_colorS3_out);
-
-	/** The color of the shield when it is empty. */
-	void              (CALLING_CONV *WeaponDef_Shield_getBadColor)(int skirmishAIId, int weaponDefId, short* return_colorS3_out);
-
-	/** The shields alpha value. */
-	short             (CALLING_CONV *WeaponDef_Shield_getAlpha)(int skirmishAIId, int weaponDefId);
 
 	/**
 	 * The type of the shield (bitfield).

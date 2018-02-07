@@ -22,7 +22,6 @@ public:
 
 	void Init();
 	void ProcessDecoys();
-	void AssignTechLevels();
 
 	bool GetNoCost() { return noCost; }
 	void SetNoCost(bool value);
@@ -62,8 +61,6 @@ protected:
 	void CleanBuildOptions();
 
 	void FindStartUnits();
-
-	void AssignTechLevel(UnitDef& ud, int level);
 
 private:
 	spring::unordered_map<std::string, std::string> decoyNameMap;

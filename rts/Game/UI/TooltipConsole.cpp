@@ -181,9 +181,6 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		s += MakeUnitStatsString(stats);
 	}
 
-	if (gs->cheatEnabled)
-		s += IntToString(unit->unitDef->techLevel, DARKBLUE "  [TechLevel %i]");
-
 	s += "\n" + teamHandler->Team(unit->team)->GetControllerName();
 	return s;
 }

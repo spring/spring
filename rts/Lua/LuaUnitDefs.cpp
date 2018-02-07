@@ -665,7 +665,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("buildpicname", ud.buildPicName);
 
-	ADD_INT("techLevel",   ud.techLevel);
+	ADD_DEPRECATED_LUADEF_KEY("techLevel");
 	ADD_INT("maxThisUnit", ud.maxThisUnit);
 
 	ADD_FLOAT("metalUpkeep",    ud.metalUpkeep);

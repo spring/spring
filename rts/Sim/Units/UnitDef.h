@@ -91,8 +91,6 @@ public:
 
 	const UnitDef* decoyDef;
 
-	int techLevel;
-
 	float metalUpkeep;
 	float energyUpkeep;
 	float metalMake;		///< metal will always be created

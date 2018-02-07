@@ -55,7 +55,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 	CleanBuildOptions();
 	FindStartUnits();
 	ProcessDecoys();
-	AssignTechLevels();
 }
 
 
@@ -317,28 +316,3 @@ void CUnitDefHandler::SetNoCost(bool value)
 	}
 }
 
-
-void CUnitDefHandler::AssignTechLevels()
-{
-	for (auto it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
-		AssignTechLevel(unitDefs[*it], 0);
-	}
-}
-
-
-void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
-{
-	if ((ud.techLevel >= 0) && (ud.techLevel <= level))
-		return;
-
-	ud.techLevel = level;
-
-	level++;
-
-	for (auto bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
-		const auto ud_it = unitDefIDsByName.find(bo_it->second);
-		if (ud_it != unitDefIDsByName.end()) {
-			AssignTechLevel(unitDefs[ud_it->second], level);
-		}
-	}
-}
