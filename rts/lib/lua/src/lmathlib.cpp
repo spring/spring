@@ -194,7 +194,7 @@ static int math_max (lua_State *L) {
 
 
 static int math_random (lua_State *L) {
-  #if 0
+  #ifndef LUA_USER_H
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
   lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
@@ -225,7 +225,7 @@ static int math_random (lua_State *L) {
 }
 
 static int math_randomseed (lua_State *L) {
-  #if 0
+  #ifndef LUA_USER_H
   srand(luaL_checkint(L, 1));
   return 0;
   #else
