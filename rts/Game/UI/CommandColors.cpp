@@ -2,10 +2,10 @@
 
 #include "CommandColors.h"
 
-
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 
 #include <cstdlib> // strto*
@@ -87,17 +87,20 @@ static bool ParseBlendMode(const std::string& word, unsigned int& mode)
 {
 	std::string lower = std::move(StringToLower(word));
 
-	     if (lower == "zero"               ) { mode = GL_ZERO;                return true; }
-	else if (lower == "one"                ) { mode = GL_ONE;                 return true; }
-	else if (lower == "src_alpha"          ) { mode = GL_SRC_ALPHA;           return true; }
-	else if (lower == "src_color"          ) { mode = GL_SRC_COLOR;           return true; }
-	else if (lower == "one_minus_src_alpha") { mode = GL_ONE_MINUS_SRC_ALPHA; return true; }
-	else if (lower == "one_minus_src_color") { mode = GL_ONE_MINUS_SRC_COLOR; return true; }
-	else if (lower == "dst_alpha"          ) { mode = GL_DST_ALPHA;           return true; }
-	else if (lower == "dst_color"          ) { mode = GL_DST_COLOR;           return true; }
-	else if (lower == "one_minus_dst_alpha") { mode = GL_ONE_MINUS_DST_ALPHA; return true; }
-	else if (lower == "one_minus_dst_color") { mode = GL_ONE_MINUS_DST_COLOR; return true; }
-	else if (lower == "src_alpha_saturate" ) { mode = GL_SRC_ALPHA_SATURATE;  return true; }
+	switch (hashString(lower.c_str())) {
+		case hashString("zero"               ): { mode = GL_ZERO;                return true; } break;
+		case hashString("one"                ): { mode = GL_ONE;                 return true; } break;
+		case hashString("src_alpha"          ): { mode = GL_SRC_ALPHA;           return true; } break;
+		case hashString("src_color"          ): { mode = GL_SRC_COLOR;           return true; } break;
+		case hashString("one_minus_src_alpha"): { mode = GL_ONE_MINUS_SRC_ALPHA; return true; } break;
+		case hashString("one_minus_src_color"): { mode = GL_ONE_MINUS_SRC_COLOR; return true; } break;
+		case hashString("dst_alpha"          ): { mode = GL_DST_ALPHA;           return true; } break;
+		case hashString("dst_color"          ): { mode = GL_DST_COLOR;           return true; } break;
+		case hashString("one_minus_dst_alpha"): { mode = GL_ONE_MINUS_DST_ALPHA; return true; } break;
+		case hashString("one_minus_dst_color"): { mode = GL_ONE_MINUS_DST_COLOR; return true; } break;
+		case hashString("src_alpha_saturate" ): { mode = GL_SRC_ALPHA_SATURATE;  return true; } break;
+		default                               : {                                             } break;
+	}
 
 	return false;
 }
@@ -194,125 +197,127 @@ bool CCommandColors::LoadConfigFromString(const std::string& cfg)
 		if (words.size() <= 1)
 			continue;
 
-		const std::string command = std::move(StringToLower(words[0]));
+		const std::string& command = std::move(StringToLower(words[0]));
 
-		if (command == "alwaysdrawqueue") {
-			alwaysDrawQueue = !!atoi(words[1].c_str());
-		}
-		else if (command == "usequeueicons") {
-			useQueueIcons = !!atoi(words[1].c_str());
-		}
-		else if (command == "queueiconalpha") {
-			SafeAtoF(queueIconAlpha, words[1]);
-		}
-		else if (command == "queueiconscale") {
-			SafeAtoF(queueIconScale, words[1]);
-		}
-		else if (command == "usecolorrestarts") {
-			useColorRestarts = !!atoi(words[1].c_str());
-		}
-		else if (command == "userestartcolor") {
-			useRestartColor = !!atoi(words[1].c_str());
-		}
-		else if (command == "restartalpha") {
-			SafeAtoF(restartAlpha, words[1]);
-		}
-		else if (command == "queuedlinewidth") {
-			SafeAtoF(queuedLineWidth, words[1]);
-		}
+		switch (hashString(command.c_str())) {
+			case hashString("alwaysdrawqueue"): {
+				alwaysDrawQueue = !!atoi(words[1].c_str());
+			} break;
+			case hashString("usequeueicons"): {
+				useQueueIcons = !!atoi(words[1].c_str());
+			} break;
+			case hashString("queueiconalpha"): {
+				SafeAtoF(queueIconAlpha, words[1]);
+			} break;
+			case hashString("queueiconscale"): {
+				SafeAtoF(queueIconScale, words[1]);
+			} break;
+			case hashString("usecolorrestarts"): {
+				useColorRestarts = !!atoi(words[1].c_str());
+			} break;
+			case hashString("userestartcolor"): {
+				useRestartColor = !!atoi(words[1].c_str());
+			} break;
+			case hashString("restartalpha"): {
+				SafeAtoF(restartAlpha, words[1]);
+			} break;
+			case hashString("queuedlinewidth"): {
+				SafeAtoF(queuedLineWidth, words[1]);
+			} break;
 
-		else if (command == "queuedblendsrc") {
-			unsigned int mode;
+			case hashString("queuedblendsrc"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+					continue;
 
-			queuedBlendSrc = mode;
-		}
-		else if (command == "queuedblenddst") {
-			unsigned int mode;
+				queuedBlendSrc = mode;
+			} break;
+			case hashString("queuedblenddst"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+					continue;
 
-			queuedBlendDst = mode;
-		}
+				queuedBlendDst = mode;
+			} break;
 
-		else if (command == "stipplepattern") {
-			SafeAtoI(stipplePattern, words[1]);
-		}
-		else if (command == "stipplefactor") {
-			SafeAtoI(stippleFactor, words[1]);
-		}
-		else if (command == "stipplespeed") {
-			SafeAtoF(stippleSpeed, words[1]);
-		}
+			case hashString("stipplepattern"): {
+				SafeAtoI(stipplePattern, words[1]);
+			} break;
+			case hashString("stipplefactor"): {
+				SafeAtoI(stippleFactor, words[1]);
+			} break;
+			case hashString("stipplespeed"): {
+				SafeAtoF(stippleSpeed, words[1]);
+			} break;
 
-		else if (command == "selectedlinewidth") {
-			SafeAtoF(selectedLineWidth, words[1]);
-		}
+			case hashString("selectedlinewidth"): {
+				SafeAtoF(selectedLineWidth, words[1]);
+			} break;
 
-		else if (command == "selectedblendsrc") {
-			unsigned int mode;
+			case hashString("selectedblendsrc"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+					continue;
 
-			selectedBlendSrc = mode;
-		}
-		else if (command == "selectedblenddst") {
-			unsigned int mode;
+				selectedBlendSrc = mode;
+			} break;
+			case hashString("selectedblenddst"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+					continue;
 
-			selectedBlendDst = mode;
-		}
+				selectedBlendDst = mode;
+			} break;
 
-		else if (command == "buildboxesonshift") {
-			buildBoxesOnShift = !!atoi(words[1].c_str());
-		}
+			case hashString("buildboxesonshift"): {
+				buildBoxesOnShift = !!atoi(words[1].c_str());
+			} break;
 
-		else if (command == "mouseboxlinewidth") {
-			SafeAtoF(mouseBoxLineWidth, words[1]);
-		}
+			case hashString("mouseboxlinewidth"): {
+				SafeAtoF(mouseBoxLineWidth, words[1]);
+			} break;
 
-		else if (command == "mouseboxblendsrc") {
-			unsigned int mode;
+			case hashString("mouseboxblendsrc"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidSrcMode(mode))
+					continue;
 
-			mouseBoxBlendSrc = mode;
-		}
-		else if (command == "mouseboxblenddst") {
-			unsigned int mode;
+				mouseBoxBlendSrc = mode;
+			} break;
+			case hashString( "mouseboxblenddst"): {
+				unsigned int mode;
 
-			if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
-				continue;
+				if (!ParseBlendMode(words[1], mode) || !IsValidDstMode(mode))
+					continue;
 
-			mouseBoxBlendDst = mode;
-		}
+				mouseBoxBlendDst = mode;
+			} break;
 
-		else if (command == "unitboxlinewidth") {
-			SafeAtoF(unitBoxLineWidth, words[1]);
-		}
+			case hashString("unitboxlinewidth"): {
+				SafeAtoF(unitBoxLineWidth, words[1]);
+			} break;
 
-		else {
-			// try to parse a color by name
-			const auto it = colorNames.find(command);
+			default: {
+				// try to parse a color by name
+				const auto it = colorNames.find(command);
 
-			if (it == colorNames.end())
-				continue;
+				if (it == colorNames.end())
+					continue;
 
-			float tmp[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-			int count;
+				float tmp[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+				int count;
 
-			// require RGB, optionally A
-			if ((count = sscanf(words[1].c_str(), "%f %f %f %f", &tmp[0], &tmp[1], &tmp[2], &tmp[3])) < 3)
-				continue;
+				// require RGB, optionally A
+				if ((count = sscanf(words[1].c_str(), "%f %f %f %f", &tmp[0], &tmp[1], &tmp[2], &tmp[3])) < 3)
+					continue;
 
-			memcpy(colors[it->second], tmp, sizeof(float[4]));
+				memcpy(colors[it->second], tmp, sizeof(float[4]));
+			} break;
 		}
 	}
 

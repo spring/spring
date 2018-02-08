@@ -1880,48 +1880,45 @@ static int SetActiveCommandByAction(lua_State* L)
 
 int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1) {
-		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
-	}
-	if (lua_isnumber(L, 1)) {
+
+	if (lua_gettop(L) < 1)
+		luaL_error(L, "[%s] one argument required", __func__);
+
+	if (lua_isnumber(L, 1))
 		return SetActiveCommandByIndex(L);
-	}
-	if (lua_isstring(L, 1)) {
+
+	if (lua_isstring(L, 1))
 		return SetActiveCommandByAction(L);
-	}
-	luaL_error(L, "Incorrect arguments to SetActiveCommand()");
+
+	luaL_error(L, "[%s] incorrect argument type", __func__);
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 {
-	const string cfg = luaL_checkstring(L, 1);
-	cmdColors.LoadConfigFromString(cfg);
+	cmdColors.LoadConfigFromString(luaL_checkstring(L, 1));
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
-	const string cfg = luaL_checkstring(L, 1);
-	guihandler->ReloadConfigFromString(cfg);
+
+	guihandler->ReloadConfigFromString(luaL_checkstring(L, 1));
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	guihandler->ForceLayoutUpdate();
 	return 0;
 }

@@ -3533,7 +3533,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 innerPos = camTracePos + camTraceDir * innerDist;
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
-						const float* color = cmdColors.customArea;
+						const float radius = std::min(maxRadius, innerPos.distance2D(outerPos));
+						const float* color = nullptr;
 
 						switch (cmdDesc.id) {
 							case CMD_ATTACK:
@@ -3546,10 +3547,16 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							case CMD_UNLOAD_UNIT:
 							case CMD_UNLOAD_UNITS: { color = cmdColors.unload;    } break;
 							case CMD_CAPTURE:      { color = cmdColors.capture;   } break;
-							default: {}
-						}
+							default: {
+								const CCommandColors::DrawData* dd = cmdColors.GetCustomCmdData(cmdDesc.id);
 
-						const float radius = std::min(maxRadius, innerPos.distance2D(outerPos));
+								if (dd != nullptr && dd->showArea) {
+									color = dd->color;
+								} else {
+									color = cmdColors.customArea;
+								}
+							}
+						}
 
 						if (!onMiniMap) {
 							DrawArea(innerPos, radius, color);
