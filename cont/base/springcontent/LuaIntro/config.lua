@@ -11,9 +11,6 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
---// randomize each run
-math.randomseed(os.time())
-
 --// 0: disabled
 --// 1: enabled, but can be overriden by widget.GetInfo().unsafe
 --// 2: always enabled

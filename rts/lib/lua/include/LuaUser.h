@@ -12,7 +12,7 @@ extern void LuaMutexLock(lua_State* L);
 extern void LuaMutexUnlock(lua_State* L);
 extern void LuaMutexYield(lua_State* L);
 
-extern const char* spring_lua_getHandleName(lua_State* L);
+extern const char* spring_lua_get_handle_name(lua_State* L);
 
 struct SLuaAllocState;
 struct SLuaAllocError {
@@ -29,5 +29,9 @@ extern void spring_lua_alloc_update_stats(int clearStatsFrame);
 
 extern void spring_lua_ftoa(float f, char *buf, int precision = -1);
 extern void spring_lua_format(float f, const char* fmt, char *buf);
+
+// (these should) never (be) called from synced Lua states
+extern int spring_lua_unsynced_rand(lua_State* L);
+extern int spring_lua_unsynced_srand(lua_State* L);
 
 #endif // SPRING_LUA_USER_H
