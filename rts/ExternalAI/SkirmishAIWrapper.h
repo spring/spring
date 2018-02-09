@@ -3,11 +3,11 @@
 #ifndef SKIRMISH_AI_WRAPPER_H
 #define SKIRMISH_AI_WRAPPER_H
 
-#include "System/Object.h"
+#include "AICallback.h"
+#include "AICheats.h"
 #include "SkirmishAIKey.h"
-#include "System/Platform/SharedLib.h"
+#include "System/Object.h"
 
-#include <map>
 #include <string>
 #include <memory>
 
@@ -33,13 +33,42 @@ private:
 
 public:
 	/// used only by creg
-	CSkirmishAIWrapper();
-
+	CSkirmishAIWrapper() = default;
 	CSkirmishAIWrapper(const int skirmishAIId);
-	~CSkirmishAIWrapper();
 
-	void Serialize(creg::ISerializer *s);
-	void PostLoad();
+	CSkirmishAIWrapper(const CSkirmishAIWrapper& w) = delete;
+	CSkirmishAIWrapper(CSkirmishAIWrapper&& w) { *this = std::move(w); }
+
+	CSkirmishAIWrapper& operator = (const CSkirmishAIWrapper& w) = delete;
+	CSkirmishAIWrapper& operator = (CSkirmishAIWrapper&& w) {
+		key = w.key;
+
+		library = w.library; w.library = nullptr;
+		sCallback = w.sCallback; w.sCallback = nullptr;
+
+		callback = std::move(w.callback);
+		cheats = std::move(w.cheats);
+
+		timerName = std::move(w.timerName);
+
+
+		skirmishAIId = w.skirmishAIId; w.skirmishAIId = -1;
+		teamId = w.teamId; w.teamId = -1;
+
+		initialized = w.initialized; w.initialized = false;
+		released = w.released; w.released = false;
+		cheatEvents = w.cheatEvents; w.cheatEvents = false;
+
+		initOk = w.initOk; w.initOk = false;
+		dieing = w.dieing; w.dieing = false;
+		return *this;
+	}
+
+	void Serialize(creg::ISerializer* s) {}
+	void PostLoad() {
+		CreateCallback();
+		LoadSkirmishAI(true);
+	}
 
 
 	/**
@@ -47,6 +76,7 @@ public:
 	 * This calls the native init() method, the InitAIEvent is sent afterwards.
 	 */
 	void Init();
+	void Kill();
 
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	void Release(int reason = 0 /* = unspecified */);
@@ -61,7 +91,7 @@ public:
 	 * the Skirmish AI Handler instead.
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
-	void Dieing() { dieing = true; }
+	void SetDieing() { dieing = true; }
 
 
 	// AI Events
@@ -96,8 +126,10 @@ public:
 	int GetTeamId() const { return teamId; }
 	const SkirmishAIKey& GetKey() const { return key; }
 
+	bool Active() const { return (skirmishAIId != -1); }
+
 	void SetCheatEventsEnabled(bool enable) { cheatEvents = enable; }
-	bool IsCheatEventsEnabled() const { return cheatEvents; }
+	bool CheatEventsEnabled() const { return cheatEvents; }
 
 private:
 	bool LoadSkirmishAI(bool postLoad);
@@ -110,8 +142,8 @@ private:
 private:
 	SkirmishAIKey key;
 
-	const CSkirmishAILibrary* library;
-	const SSkirmishAICallback* sCallback;
+	const CSkirmishAILibrary* library = nullptr;
+	const SSkirmishAICallback* sCallback = nullptr;
 
 	std::unique_ptr<CAICallback> callback;
 	std::unique_ptr<CAICheats> cheats;
@@ -119,15 +151,15 @@ private:
 	std::string timerName;
 
 
-	int skirmishAIId;
-	int teamId;
+	int skirmishAIId = -1;
+	int teamId = -1;
 
-	bool initialized;
-	bool released;
-	bool cheatEvents;
+	bool initialized = false;
+	bool released = false;
+	bool cheatEvents = false;
 
-	bool initOk;
-	bool dieing;
+	bool initOk = false;
+	bool dieing = false;
 };
 
 #endif // SKIRMISH_AI_WRAPPER_H
