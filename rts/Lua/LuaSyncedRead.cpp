@@ -3195,7 +3195,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 
 int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 {
-	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
