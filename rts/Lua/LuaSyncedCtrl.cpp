@@ -1879,22 +1879,23 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 		return 0;
 
 	if (lua_isboolean(L, 2)) {
-		unit->scriptCloak = lua_toboolean(L, 2) ? 1 : 0;
+		unit->scriptCloak = lua_toboolean(L, 2) ? UNIT_ALLOW_CLOAK : UNIT_DEFER_CLOAK;
 	} else if (lua_isnumber(L, 2)) {
 		unit->scriptCloak = lua_toint(L, 2);
 	} else if (!lua_isnoneornil(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
+		luaL_error(L, "Incorrect arguments to SetUnitCloak(bool|number [, number [, bool]])");
 	}
 
 	if (lua_israwnumber(L, 3)) {
 		unit->decloakDistance = lua_tofloat(L, 3);
+		return 0;
 	}
-	else if (lua_isboolean(L, 3)) {
-		const float defDist = unit->unitDef->decloakDistance;
+
+	if (lua_isboolean(L, 3)) {
 		if (lua_toboolean(L, 3)) {
-			unit->decloakDistance = math::fabsf(defDist);
+			unit->decloakDistance = math::fabsf(unit->unitDef->decloakDistance);
 		} else {
-			unit->decloakDistance = defDist;
+			unit->decloakDistance = unit->unitDef->decloakDistance;
 		}
 	}
 

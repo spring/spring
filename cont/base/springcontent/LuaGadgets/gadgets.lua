@@ -1113,11 +1113,9 @@ function gadgetHandler:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y
 end
 
 
-function gadgetHandler:AllowUnitTransfer(unitID, unitDefID,
-                                         oldTeam, newTeam, capture)
+function gadgetHandler:AllowUnitTransfer(unitID, unitDefID, oldTeam, newTeam, capture)
   for _,g in r_ipairs(self.AllowUnitTransferList) do
-    if (not g:AllowUnitTransfer(unitID, unitDefID,
-                                oldTeam, newTeam, capture)) then
+    if (not g:AllowUnitTransfer(unitID, unitDefID, oldTeam, newTeam, capture)) then
       return false
     end
   end
@@ -1125,11 +1123,9 @@ function gadgetHandler:AllowUnitTransfer(unitID, unitDefID,
 end
 
 
-function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam,
-                                          unitID, unitDefID, part)
+function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam, unitID, unitDefID, part)
   for _,g in r_ipairs(self.AllowUnitBuildStepList) do
-    if (not g:AllowUnitBuildStep(builderID, builderTeam,
-                                 unitID, unitDefID, part)) then
+    if (not g:AllowUnitBuildStep(builderID, builderTeam, unitID, unitDefID, part)) then
       return false
     end
   end
@@ -1137,8 +1133,10 @@ function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam,
 end
 
 
-function gadgetHandler:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
-                                          transporteeID, transporteeUnitDefID, transporteeTeam)
+function gadgetHandler:AllowUnitTransport(
+  transporterID, transporterUnitDefID, transporterTeam,
+  transporteeID, transporteeUnitDefID, transporteeTeam
+)
   for _,g in r_ipairs(self.AllowUnitTransportList) do
     if (not g:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
                                  transporteeID, transporteeUnitDefID, transporteeTeam)) then
@@ -1148,12 +1146,28 @@ function gadgetHandler:AllowUnitTransport(transporterID, transporterUnitDefID, t
   return true
 end
 
+function gadgetHandler:AllowUnitCloak(unitID, enemyID, cloakCost, cloakDist)
+  local retCloakCost = cloakCost
+  local retCloakDist = cloakDist
 
-function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam,
-                                             featureID, featureDefID, part)
+  for _,g in r_ipairs(self.AllowUnitCloakList) do
+    ret, retCost, retDist = g:AllowUnitCloak(unitID, enemyID, retCloakCost, retCloakDist)
+
+    if (retCost ~= nil) then retCloakCost = retCost end
+    if (retDist ~= nil) then retCloakDist = retDist end
+
+    if (not ret) then
+      return false, retCloakCost, retCloakDist
+    end
+  end
+
+  return true, retCloakCost, retCloakDist
+end
+
+
+function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam, featureID, featureDefID, part)
   for _,g in r_ipairs(self.AllowFeatureBuildStepList) do
-    if (not g:AllowFeatureBuildStep(builderID, builderTeam,
-                                    featureID, featureDefID, part)) then
+    if (not g:AllowFeatureBuildStep(builderID, builderTeam, featureID, featureDefID, part)) then
       return false
     end
   end
@@ -1191,11 +1205,9 @@ function gadgetHandler:AllowResourceTransfer(oldTeamID, newTeamID, res, amount)
 end
 
 
-function gadgetHandler:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
-                                              playerID)
+function gadgetHandler:AllowDirectUnitControl(unitID, unitDefID, unitTeam, playerID)
   for _,g in r_ipairs(self.AllowDirectUnitControlList) do
-    if (not g:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
-                                     playerID)) then
+    if (not g:AllowDirectUnitControl(unitID, unitDefID, unitTeam, playerID)) then
       return false
     end
   end
@@ -1224,12 +1236,9 @@ function gadgetHandler:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
 end
 
 
-function gadgetHandler:TerraformComplete(unitID, unitDefID, unitTeam,
-                                       buildUnitID, buildUnitDefID, buildUnitTeam)
+function gadgetHandler:TerraformComplete(unitID, unitDefID, unitTeam, buildUnitID, buildUnitDefID, buildUnitTeam)
   for _,g in r_ipairs(self.TerraformCompleteList) do
-    local stop = g:TerraformComplete(unitID, unitDefID, unitTeam,
-                                       buildUnitID, buildUnitDefID, buildUnitTeam)
-    if (stop) then
+    if (g:TerraformComplete(unitID, unitDefID, unitTeam, buildUnitID, buildUnitDefID, buildUnitTeam)) then
       return true
     end
   end
@@ -1250,11 +1259,7 @@ function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, att
 		end
 	end
 
-	if ignore then
-		return -1
-	else
-		return 1
-	end
+	return ((ignore and -1) or 1)
 end
 
 function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
@@ -1389,7 +1394,8 @@ function gadgetHandler:UnitPreDamaged(
       unitID, unitDefID, unitTeam,
       retDamage, paralyzer,
       weaponDefID, projectileID,
-      attackerID, attackerDefID, attackerTeam)
+      attackerID, attackerDefID, attackerTeam
+    )
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end
@@ -1418,12 +1424,7 @@ function gadgetHandler:UnitDamaged(
   end
 end
 
-function gadgetHandler:UnitStunned(
-  unitID,
-  unitDefID,
-  unitTeam,
-  stunned
-)
+function gadgetHandler:UnitStunned(unitID, unitDefID, unitTeam, stunned)
   for _,g in r_ipairs(self.UnitStunnedList) do
     g:UnitStunned(unitID, unitDefID, unitTeam, stunned)
   end
@@ -1631,7 +1632,8 @@ function gadgetHandler:FeaturePreDamaged(
       featureID, featureDefID, featureTeam,
       retDamage,
       weaponDefID, projectileID,
-      attackerID, attackerDefID, attackerTeam)
+      attackerID, attackerDefID, attackerTeam
+    )
 
     if (dmg ~= nil) then retDamage = dmg end
     if (imp ~= nil) then retImpulse = imp end

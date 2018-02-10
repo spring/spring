@@ -446,14 +446,14 @@ bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
 {
 	string cmd = msg;
 	const string::size_type pos = cmd.find_first_of(" \t");
-	if (pos != string::npos) {
+	if (pos != string::npos)
 		cmd.resize(pos);
-	}
-	if (textCommands.find(cmd) == textCommands.end()) {
+
+	if (textCommands.find(cmd) == textCommands.end())
 		return false;
-	}
-	string msg_ = msg.substr(1); // strip the '/'
-	return GotChatMsg(msg_, playerID);
+
+	// strip the leading '/'
+	return GotChatMsg(msg.substr(1), playerID);
 }
 
 
@@ -588,13 +588,13 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
 }
 
 
-bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter,
-                                          const CUnit* transportee)
+bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 8, __func__);
 
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -615,9 +615,43 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter,
 	return retval;
 }
 
+bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 6, __func__);
 
-bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef,
-                                     int teamID, const float3& pos)
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return true;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, (enemy != nullptr)? enemy->id: -1);
+	lua_pushnumber(L, *cloakCost);
+	lua_pushnumber(L, *cloakDist);
+
+	if (!RunCallIn(L, cmdStr, 4, 3))
+		return true;
+
+	assert(lua_isnumber(L, -1) || lua_isnil(L, -1));
+	assert(lua_isnumber(L, -2) || lua_isnil(L, -2));
+	assert(lua_isboolean(L, -3));
+
+	// third optional result, pushed last (top of stack)
+	if (lua_isnumber(L, -1))
+		*cloakDist = lua_tonumber(L, -1);
+	// second optional result
+	if (lua_isnumber(L, -2))
+		*cloakCost = lua_tonumber(L, -2);
+
+	// first result, pushed first
+	const bool retval = lua_toboolean(L, -3);
+	lua_pop(L, 3);
+	return retval;
+}
+
+
+bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef, int teamID, const float3& pos)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __func__);
@@ -643,8 +677,7 @@ bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef,
 }
 
 
-bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder,
-                                      const CFeature* feature, float part)
+bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __func__);
@@ -694,8 +727,7 @@ bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const string& type, float 
 }
 
 
-bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam,
-                                      const string& type, float amount)
+bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 6, __func__);
@@ -706,7 +738,7 @@ bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam,
 
 	lua_pushnumber(L, oldTeam);
 	lua_pushnumber(L, newTeam);
-	lua_pushsstring(L, type);
+	lua_pushstring(L, type);
 	lua_pushnumber(L, amount);
 
 	// call the function
@@ -832,9 +864,8 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 	luaL_checkstack(L, 8, __func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-
-
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
 
@@ -876,8 +907,8 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	int projectileID,
 	bool paralyzer,
 	float* newDamage,
-	float* impulseMult)
-{
+	float* impulseMult
+) {
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 2 + 10, __func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -900,7 +931,7 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 		lua_pushnumber(L, weaponDefID); inArgCount += 1;
 		lua_pushnumber(L, projectileID); inArgCount += 1;
 
-		if (attacker != NULL) {
+		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
@@ -916,7 +947,9 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
-	assert(newDamage);
+	assert(newDamage != nullptr);
+	assert(impulseMult != nullptr);
+
 	if (lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
@@ -924,7 +957,6 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
-	assert(impulseMult);
 	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
@@ -933,7 +965,8 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	}
 
 	lua_pop(L, outArgCount);
-	return (*newDamage == 0.f && *impulseMult == 0.f); // returns true to disable engine dmg handling
+	// returns true to disable engine dmg handling
+	return (*newDamage == 0.0f && *impulseMult == 0.0f);
 }
 
 bool CSyncedLuaHandle::FeaturePreDamaged(
@@ -943,8 +976,8 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	int weaponDefID,
 	int projectileID,
 	float* newDamage,
-	float* impulseMult)
-{
+	float* impulseMult
+) {
 	assert(newDamage != nullptr);
 	assert(impulseMult != nullptr);
 
@@ -969,7 +1002,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 		lua_pushnumber(L, weaponDefID); inArgCount += 1;
 		lua_pushnumber(L, projectileID); inArgCount += 1;
 
-		if (attacker != NULL) {
+		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
@@ -996,7 +1029,8 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	}
 
 	lua_pop(L, outArgCount);
-	return (*newDamage == 0.f && *impulseMult == 0.f); // returns true to disable engine dmg handling
+	// returns true to disable engine dmg handling
+	return (*newDamage == 0.0f && *impulseMult == 0.0f);
 }
 
 bool CSyncedLuaHandle::ShieldPreDamaged(
@@ -1225,12 +1259,19 @@ int CSyncedLuaHandle::SyncedNext(lua_State* L)
 		LUA_TTHREAD //FIXME LUA_TTHREAD is normally _not_ synced safe but LUS handler needs it atm (and uses it in a safe way)
 	};
 
-	auto* slh = GetSyncedHandle(L);
+	const CSyncedLuaHandle* slh = GetSyncedHandle(L);
 	assert(slh->origNextRef > 0);
 	const int oldTop = lua_gettop(L);
+
 	lua_rawgeti(L, LUA_REGISTRYINDEX, slh->origNextRef);
 	lua_pushvalue(L, 1);
-	if (oldTop >= 2) { lua_pushvalue(L, 2); } else { lua_pushnil(L); }
+
+	if (oldTop >= 2) {
+		lua_pushvalue(L, 2);
+	} else {
+		lua_pushnil(L);
+	}
+
 	lua_call(L, 2, LUA_MULTRET);
 	const int retCount = lua_gettop(L) - oldTop;
 	assert(retCount == 1 || retCount == 2);

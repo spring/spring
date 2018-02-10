@@ -253,22 +253,24 @@ bool CEventHandler::AllowUnitCreation(const UnitDef* unitDef, const CUnit* build
 	return ControlIterateDefTrue(listAllowUnitCreation, &CEventClient::AllowUnitCreation, unitDef, builder, buildInfo);
 }
 
-
 bool CEventHandler::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 {
 	return ControlIterateDefTrue(listAllowUnitTransfer, &CEventClient::AllowUnitTransfer, unit, newTeam, capture);
 }
-
 
 bool CEventHandler::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part)
 {
 	return ControlIterateDefTrue(listAllowUnitBuildStep, &CEventClient::AllowUnitBuildStep, builder, unit, part);
 }
 
-
 bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
 {
 	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);
+}
+
+bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist)
+{
+	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy, cloakCost, cloakDist);
 }
 
 
@@ -290,7 +292,7 @@ bool CEventHandler::AllowResourceLevel(int teamID, const std::string& type, floa
 }
 
 
-bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const std::string& type, float amount)
+bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount)
 {
 	return ControlIterateDefTrue(listAllowResourceTransfer, &CEventClient::AllowResourceTransfer, oldTeam, newTeam, type, amount);
 }

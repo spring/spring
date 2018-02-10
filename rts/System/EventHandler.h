@@ -140,10 +140,11 @@ class CEventHandler
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
 		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
+		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist);
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
 		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
 		bool AllowResourceLevel(int teamID, const string& type, float level);
-		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);

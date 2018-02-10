@@ -41,34 +41,6 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  Synced
-//
-
-bool CEventClient::CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
-bool CEventClient::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) { return true; }
-
-bool CEventClient::AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
-bool CEventClient::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
-bool CEventClient::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
-bool CEventClient::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) { return true; }
-bool CEventClient::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) { return true; }
-bool CEventClient::AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) { return true; }
-bool CEventClient::AllowResourceLevel(int teamID, const string& type, float level) { return true; }
-bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount) { return true; }
-bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
-bool CEventClient::AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
-bool CEventClient::AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
-
-bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
-bool CEventClient::MoveCtrlNotify(const CUnit* unit, int data) { return false; }
-
-
-
-bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
-
-/******************************************************************************/
-/******************************************************************************/
-//
 //  Unsynced
 //
 

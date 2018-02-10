@@ -488,7 +488,7 @@ void CWeapon::UpdateSalvo()
 	nextSalvo = gs->frameNum + salvoDelay;
 
 	// Decloak
-	if ((owner->scriptCloak <= 2) && owner->unitDef->decloakOnFire) {
+	if ((owner->scriptCloak < UNIT_FORCE_CLOAK) && owner->unitDef->decloakOnFire) {
 		if (owner->isCloaked) {
 			owner->isCloaked = false;
 			eventHandler.UnitDecloaked(owner);

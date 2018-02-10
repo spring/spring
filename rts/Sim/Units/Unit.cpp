@@ -183,7 +183,7 @@ CUnit::CUnit()
 
 , isCloaked(false)
 , wantCloak(false)
-, scriptCloak(0)
+, scriptCloak(UNIT_DEFER_CLOAK)
 , cloakTimeout(128)
 , curCloakTimeout(gs->frameNum)
 , decloakDistance(0.0f)
@@ -2400,7 +2400,7 @@ void CUnit::TempHoldFire(int cmdID)
 	dontFire = true;
 
 	// clear current target (if any)
-	AttackUnit(NULL, false, false);
+	AttackUnit(nullptr, false, false);
 }
 
 
@@ -2414,34 +2414,46 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		DropCurrentAttackTarget();
 
 	commandAI->StopAttackingAllyTeam(ally);
-	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
-		(*it)->StopAttackingAllyTeam(ally);
+
+	for (CWeapon* w: weapons) {
+		w->StopAttackingAllyTeam(ally);
 	}
 }
 
 
 bool CUnit::GetNewCloakState(bool stunCheck) {
 	if (stunCheck) {
-		if (IsStunned() && isCloaked && scriptCloak <= 3)
+		if (IsStunned() && isCloaked && scriptCloak < UNIT_FORCE_CLOAK)
 			return false;
 
 		return isCloaked;
 	}
 
-	if (scriptCloak >= 3)
+	// check if script has set unit to be perma-cloaked
+	if (scriptCloak >= UNIT_FORCE_CLOAK)
 		return true;
 
-	if (wantCloak || (scriptCloak >= 1)) {
-		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
-		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
+	if (wantCloak || (scriptCloak >= UNIT_ALLOW_CLOAK)) {
+		// grab nearest enemy wrt our default decloak-distance
+		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 
-		if (decloakDistance > 0.0f && closestEnemy != NULL) {
+		float cloakCost = mix(unitDef->cloakCost, unitDef->cloakCostMoving, (Square(speed.w) > 0.2f));
+		float cloakDist = decloakDistance;
+
+		if (!eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist)) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 			return false;
 		}
 
+		// if set to a value LEQ 0, bumping into enemies never forces decloak
+		if (cloakDist > 0.0f && closestEnemy != nullptr) {
+			curCloakTimeout = gs->frameNum + cloakTimeout;
+			return false;
+		}
+
+		// remain or become cloaked if script lets us cloak for free or enough energy is available
 		if (isCloaked || (gs->frameNum >= curCloakTimeout))
-			return ((scriptCloak >= 2) || UseEnergy(cloakCost * 0.5f));
+			return ((scriptCloak >= UNIT_CONST_CLOAK) || UseEnergy(cloakCost * 0.5f));
 	}
 
 	return false;
@@ -2467,7 +2479,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 {
-	if (scriptCloak > 2)
+	if (scriptCloak >= UNIT_FORCE_CLOAK)
 		return;
 
 	if (isCloaked) {
@@ -2489,7 +2501,7 @@ bool CUnit::CanTransport(const CUnit* unit) const
 {
 	if (!unitDef->IsTransportUnit())
 		return false;
-	if (unit->GetTransporter() != NULL)
+	if (unit->GetTransporter() != nullptr)
 		return false;
 
 	if (!eventHandler.AllowUnitTransport(this, unit))
