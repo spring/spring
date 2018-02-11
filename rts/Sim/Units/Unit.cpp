@@ -2438,14 +2438,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 	float cloakCost = mix(unitDef->cloakCost, unitDef->cloakCostMoving, (Square(speed.w) > 0.2f));
 	float cloakDist = decloakDistance;
 
-	if (!eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist))
-		return false;
-
-	// NB: also possible via SetUnitCloak
-	decloakDistance = cloakDist;
-
-	// consume energy by default when cloaking or already cloaked
-	return (UseEnergy(cloakCost * 0.5f));
+	return (eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist));
 }
 
 
@@ -2475,8 +2468,8 @@ bool CUnit::ScriptCloak()
 	if (!eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr))
 		return false;
 
-	isCloaked = true;
 	wantCloak = true;
+	isCloaked = true;
 
 	eventHandler.UnitCloaked(this);
 	return true;
@@ -2490,8 +2483,8 @@ bool CUnit::ScriptDecloak(const CSolidObject* object, const CWeapon* weapon)
 	if (!eventHandler.AllowUnitDecloak(this, object, weapon))
 		return false;
 
+	// wantCloak = false;
 	isCloaked = false;
-	wantCloak = false;
 
 	eventHandler.UnitDecloaked(this);
 	return true;

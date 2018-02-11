@@ -2646,34 +2646,38 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 		return 0;
 
 	if (lua_isstring(L, 2)) {
-		const string& type = lua_tostring(L, 2);
+		const char* type = lua_tostring(L, 2);
 
-		if (!type.empty()) {
-			switch (type[0]) {
-				case 'm': { lua_pushboolean(L, unit->UseMetal (std::max(0.0f, lua_tofloat(L, 3)))); return 1; } break;
-				case 'e': { lua_pushboolean(L, unit->UseEnergy(std::max(0.0f, lua_tofloat(L, 3)))); return 1; } break;
-				default: {} break;
-			}
+		switch (type[0]) {
+			case 'm': { lua_pushboolean(L, unit->UseMetal (std::max(0.0f, lua_tofloat(L, 3)))); return 1; } break;
+			case 'e': { lua_pushboolean(L, unit->UseEnergy(std::max(0.0f, lua_tofloat(L, 3)))); return 1; } break;
+			default : {                                                                                   } break;
 		}
 
 		return 0;
 	}
-	else if (lua_istable(L, 2)) {
+
+	if (lua_istable(L, 2)) {
 		float metal  = 0.0f;
 		float energy = 0.0f;
-		const int table = 2;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+
+		constexpr int tableIdx = 2;
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, lua_tofloat(L, -1));
-				if ((key == "m") || (key == "metal")) {
-					metal = value;
-				} else if ((key == "e") || (key == "energy")) {
-					energy = value;
+				const char* key = lua_tostring(L, -2);
+				const float val = std::max(0.0f, lua_tofloat(L, -1));
+
+				switch (key[0]) {
+					case 'm': {  metal = val; } break;
+					case 'e': { energy = val; } break;
+					default : {               } break;
 				}
 			}
 		}
+
 		CTeam* team = teamHandler->Team(unit->team);
+
 		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			unit->UseMetal(metal);
 			unit->UseEnergy(energy);
@@ -2683,12 +2687,11 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 			team->resPull.energy += energy;
 			lua_pushboolean(L, false);
 		}
+
 		return 1;
 	}
-	else {
-		luaL_error(L, "Incorrect arguments to UseUnitResource()");
-	}
 
+	luaL_error(L, "Incorrect arguments to UseUnitResource()");
 	return 0;
 }
 
