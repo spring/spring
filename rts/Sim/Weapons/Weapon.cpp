@@ -488,13 +488,8 @@ void CWeapon::UpdateSalvo()
 	nextSalvo = gs->frameNum + salvoDelay;
 
 	// Decloak
-	if ((owner->scriptCloak < UNIT_FORCE_CLOAK) && owner->unitDef->decloakOnFire) {
-		if (owner->isCloaked) {
-			owner->isCloaked = false;
-			eventHandler.UnitDecloaked(owner);
-		}
-		owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
-	}
+	if (owner->unitDef->decloakOnFire)
+		owner->ScriptDecloak(nullptr, this);
 
 	for (int i = 0; i < projectilesPerShot; ++i) {
 		owner->script->Shot(weaponNum);
@@ -506,16 +501,14 @@ void CWeapon::UpdateSalvo()
 	}
 
 	// Rock the unit in the direction of fire
-	if (owner->script->HasRockUnit()) {
+	if (owner->script->HasRockUnit())
 		owner->script->WorldRockUnit((-wantedDir).SafeNormalize2D());
-	}
 
 	const bool searchForNewTarget = (salvoLeft == 0) && (currentTarget == owner->curTarget);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
-	if (salvoLeft == 0) {
+	if (salvoLeft == 0)
 		owner->script->EndBurst(weaponNum);
-	}
 }
 
 

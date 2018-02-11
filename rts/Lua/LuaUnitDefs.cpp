@@ -847,7 +847,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("decloakDistance",  ud.decloakDistance);
 	ADD_BOOL( "decloakSpherical", ud.decloakSpherical);
 	ADD_BOOL( "decloakOnFire",    ud.decloakOnFire);
-	ADD_INT(  "cloakTimeout",     ud.cloakTimeout);
+	ADD_DEPRECATED_LUADEF_KEY("cloakTimeout");
 
 	ADD_BOOL( "canKamikaze",    ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist",   ud.kamikazeDist);

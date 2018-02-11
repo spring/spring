@@ -1164,6 +1164,16 @@ function gadgetHandler:AllowUnitCloak(unitID, enemyID, cloakCost, cloakDist)
   return true, retCloakCost, retCloakDist
 end
 
+function gadgetHandler:AllowUnitDecloak(unitID, objectID, weaponID)
+  for _,g in r_ipairs(self.AllowUnitDecloakList) do
+    if (not g:AllowUnitDecloak(unitID, objectID, weaponID)) then
+      return false
+    end
+  end
+
+  return true
+end
+
 
 function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam, featureID, featureDefID, part)
   for _,g in r_ipairs(self.AllowFeatureBuildStepList) do

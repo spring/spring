@@ -183,12 +183,11 @@ CUnit::CUnit()
 
 , isCloaked(false)
 , wantCloak(false)
-, scriptCloak(UNIT_DEFER_CLOAK)
-, cloakTimeout(128)
-, curCloakTimeout(gs->frameNum)
 , decloakDistance(0.0f)
+
 , lastTerrainType(-1)
 , curTerrainType(0)
+
 , selfDCountdown(0)
 , cegDamage(1)
 
@@ -383,7 +382,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	// can be overridden by cloak orders during construction
 	wantCloak |= unitDef->startCloaked;
 	decloakDistance = unitDef->decloakDistance;
-	cloakTimeout = unitDef->cloakTimeout;
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -1080,12 +1078,11 @@ void CUnit::SlowUpdate()
 
 			AddMetal(cost.metal * buildDecay, false);
 
-			if (health <= 0.0f || buildProgress <= 0.0f) {
+			if (health <= 0.0f || buildProgress <= 0.0f)
 				KillUnit(nullptr, false, true);
-			}
 		}
 
-		ScriptDecloak(false);
+		ScriptDecloak(nullptr, nullptr);
 		return;
 	}
 
@@ -1098,13 +1095,14 @@ void CUnit::SlowUpdate()
 	AddEnergy(resourcesUncondMake.energy);
 	UseMetal(resourcesUncondUse.metal);
 	UseEnergy(resourcesUncondUse.energy);
+
 	if (activated) {
-		if (UseMetal(resourcesCondUse.metal)) {
+		if (UseMetal(resourcesCondUse.metal))
 			AddEnergy(resourcesCondMake.energy);
-		}
-		if (UseEnergy(resourcesCondUse.energy)) {
+
+		if (UseEnergy(resourcesCondUse.energy))
 			AddMetal(resourcesCondMake.metal);
-		}
+
 	}
 
 	AddMetal(unitDef->metalMake * 0.5f);
@@ -2423,40 +2421,31 @@ void CUnit::StopAttackingAllyTeam(int ally)
 
 bool CUnit::GetNewCloakState(bool stunCheck) {
 	if (stunCheck) {
-		if (IsStunned() && isCloaked && scriptCloak < UNIT_FORCE_CLOAK)
-			return false;
+		// if stunned, check if we are allowed to also stay cloaked
+		if (IsStunned() && IsCloaked())
+			return (eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr));
 
-		return isCloaked;
+		return (IsCloaked());
 	}
 
-	// check if script has set unit to be perma-cloaked
-	if (scriptCloak >= UNIT_FORCE_CLOAK)
-		return true;
+	if (!wantCloak)
+		return false;
 
-	if (wantCloak || (scriptCloak >= UNIT_ALLOW_CLOAK)) {
-		// grab nearest enemy wrt our default decloak-distance
-		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+	// grab nearest enemy wrt our default decloak-distance
+	const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 
-		float cloakCost = mix(unitDef->cloakCost, unitDef->cloakCostMoving, (Square(speed.w) > 0.2f));
-		float cloakDist = decloakDistance;
+	float cloakCost = mix(unitDef->cloakCost, unitDef->cloakCostMoving, (Square(speed.w) > 0.2f));
+	float cloakDist = decloakDistance;
 
-		if (!eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist)) {
-			curCloakTimeout = gs->frameNum + cloakTimeout;
-			return false;
-		}
+	if (!eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist))
+		return false;
 
-		// if set to a value LEQ 0, bumping into enemies never forces decloak
-		if (cloakDist > 0.0f && closestEnemy != nullptr) {
-			curCloakTimeout = gs->frameNum + cloakTimeout;
-			return false;
-		}
+	// if dist is set to a value LEQ 0, bumping into enemies never forces decloak
+	if (closestEnemy != nullptr && cloakDist > 0.0f)
+		return false;
 
-		// remain or become cloaked if script lets us cloak for free or enough energy is available
-		if (isCloaked || (gs->frameNum >= curCloakTimeout))
-			return ((scriptCloak >= UNIT_CONST_CLOAK) || UseEnergy(cloakCost * 0.5f));
-	}
-
-	return false;
+	// consume energy by default when cloaking or already cloaked
+	return (UseEnergy(cloakCost * 0.5f));
 }
 
 
@@ -2477,20 +2466,35 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 }
 
 
-void CUnit::ScriptDecloak(bool updateCloakTimeOut)
+#if 0
+// no use for this currently
+bool CUnit::ScriptCloak()
 {
-	if (scriptCloak >= UNIT_FORCE_CLOAK)
-		return;
+	if (isCloaked)
+		return true;
+	if (!eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr))
+		return false;
 
-	if (isCloaked) {
-		isCloaked = false;
-		eventHandler.UnitDecloaked(this);
-	}
+	isCloaked = true;
+	wantCloak = true;
 
-	if (!updateCloakTimeOut)
-		return;
+	eventHandler.UnitCloaked(this);
+	return true;
+}
+#endif
 
-	curCloakTimeout = gs->frameNum + cloakTimeout;
+bool CUnit::ScriptDecloak(const CSolidObject* object, const CWeapon* weapon)
+{
+	if (!isCloaked)
+		return false;
+	if (!eventHandler.AllowUnitDecloak(this, object, weapon))
+		return false;
+
+	isCloaked = false;
+	wantCloak = false;
+
+	eventHandler.UnitDecloaked(this);
+	return true;
 }
 
 
@@ -2953,9 +2957,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(nextPosErrorUpdate),
 
 	CR_MEMBER(wantCloak),
-	CR_MEMBER(scriptCloak),
-	CR_MEMBER(cloakTimeout),
-	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
 	CR_MEMBER(decloakDistance),
 

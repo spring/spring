@@ -101,6 +101,7 @@ CALLIN_LIST = {
 	"AllowUnitBuildStep",
 	"AllowUnitTransport",
 	"AllowUnitCloak",
+	"AllowUnitDecloak",
 	"AllowFeatureBuildStep",
 	"AllowFeatureCreation",
 	"AllowResourceLevel",

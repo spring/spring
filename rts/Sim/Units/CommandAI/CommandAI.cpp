@@ -829,7 +829,6 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				owner->wantCloak = true;
 			} else if(c.params[0] == 0) {
 				owner->wantCloak = false;
-				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 			} else {
 				// cause some code parts need it to be either 0 or 1,
 				// we can not accept any other values as valid

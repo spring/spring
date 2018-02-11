@@ -215,7 +215,7 @@ bool CBuilder::UpdateTerraform(const Command&)
 		} break;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(curBuildee, nullptr);
 	CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
 	// smooth the x-borders
@@ -278,7 +278,7 @@ bool CBuilder::AssistTerraform(const Command&)
 		return true;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(helpTerraformee, nullptr);
 
 	helpTerraformee->terraformHelp += terraformSpeed;
 	CreateNanoParticle(helpTerraformee->terraformCenter, helpTerraformee->terraformRadius * 0.5f, false);
@@ -329,7 +329,7 @@ bool CBuilder::UpdateBuild(const Command& fCommand)
 	if (!(inBuildStance || true))
 		return true;
 
-	ScriptDecloak(true);
+	ScriptDecloak(curBuildee, nullptr);
 
 	// adjusted build-speed: use repair-speed on units with
 	// progress >= 1 rather than raw build-speed on buildees
@@ -366,7 +366,7 @@ bool CBuilder::UpdateReclaim(const Command& fCommand)
 		return true;
 	}
 
-	ScriptDecloak(true);
+	ScriptDecloak(curReclaimee, nullptr);
 
 	if (!curReclaimee->AddBuildPower(this, -reclaimSpeed))
 		return true;

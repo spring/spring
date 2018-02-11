@@ -1863,10 +1863,8 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 	const unsigned short losStatus = unit->losStatus[allyTeam];
 	const unsigned char  oldState = losStatus & 0xFF;
 	const unsigned char  newState = ParseLosBits(L, 3, oldState);
-	const unsigned short state = (losStatus & 0xFF00) | newState;
 
-	unit->SetLosStatus(allyTeam, state);
-
+	unit->SetLosStatus(allyTeam, (losStatus & 0xFF00) | newState);
 	return 0;
 }
 
@@ -1878,13 +1876,11 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	if (lua_isboolean(L, 2)) {
-		unit->scriptCloak = lua_toboolean(L, 2) ? UNIT_ALLOW_CLOAK : UNIT_DEFER_CLOAK;
-	} else if (lua_isnumber(L, 2)) {
-		unit->scriptCloak = lua_toint(L, 2);
-	} else if (!lua_isnoneornil(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitCloak(bool|number [, number [, bool]])");
-	}
+	// make unit {de}cloak at next SlowUpdate
+	if (lua_isboolean(L, 2))
+		unit->wantCloak = lua_toboolean(L, 2);
+	if (lua_isnumber(L, 2))
+		unit->wantCloak = (lua_tonumber(L, 2) != 0);
 
 	if (lua_israwnumber(L, 3)) {
 		unit->decloakDistance = lua_tofloat(L, 3);
