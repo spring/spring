@@ -27,7 +27,7 @@
 #ifndef HEADLESS
 #include "aGui/Gui.h"
 #endif
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "Game/Benchmark.h"
 #include "Game/Camera.h"
 #include "Game/ClientSetup.h"
@@ -453,12 +453,12 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	// mutually exclusive options that cause spring to quit immediately
 	if (FLAGS_list_ai_interfaces) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
-		IAILibraryManager::OutputAIInterfacesInfo();
+		AILibraryManager::OutputAIInterfacesInfo();
 		exit(EXIT_SUCCESS);
 	}
 	else if (FLAGS_list_skirmish_ais) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
-		IAILibraryManager::OutputSkirmishAIInfo();
+		AILibraryManager::OutputSkirmishAIInfo();
 		exit(EXIT_SUCCESS);
 	}
 

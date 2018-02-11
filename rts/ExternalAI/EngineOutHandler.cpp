@@ -5,7 +5,7 @@
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
@@ -71,7 +71,7 @@ void CEngineOutHandler::Destroy() {
 		return;
 
 	singleton.Kill();
-	IAILibraryManager::Destroy();
+	AILibraryManager::Destroy();
 
 	numInstances -= 1;
 }

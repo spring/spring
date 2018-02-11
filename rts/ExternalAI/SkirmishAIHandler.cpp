@@ -3,7 +3,7 @@
 #include "SkirmishAIHandler.h"
 
 #include "ExternalAI/SkirmishAIKey.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
@@ -264,14 +264,14 @@ void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAI
 	if (!IsLocalSkirmishAI(skirmishAIId))
 		return;
 
-	const IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
-	const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
+	const AILibraryManager* aiLibMan = AILibraryManager::GetInstance();
+	const AILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
 	const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
 
 	if (aiKey == nullptr)
 		return;
 
-	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
+	const AILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
 
 	if (inf == aiInfos.end())
 		return;

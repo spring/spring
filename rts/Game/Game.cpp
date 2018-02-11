@@ -28,8 +28,8 @@
 #include "Game/UI/PlayerRoster.h"
 #include "Game/UI/PlayerRosterDrawer.h"
 #include "Game/UI/UnitTracker.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/IWater.h"
@@ -651,7 +651,7 @@ void CGame::LoadInterface()
 		// add the Skirmish AIs instance names to word completion (eg for chatting)
 		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
 		// add the available Skirmish AI libraries to word completion, for /aicontrol
-		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+		const AILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
 		// add the available Lua AI implementations to word completion, for /aicontrol
 		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
 

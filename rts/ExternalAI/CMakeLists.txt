@@ -10,7 +10,6 @@ SET(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/AILibraryManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AISCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EngineOutHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/IAILibraryManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaAIImplHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SAIInterfaceCallbackImpl.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SSkirmishAICallbackImpl.cpp"

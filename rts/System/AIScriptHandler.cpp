@@ -3,7 +3,7 @@
 #include "AIScriptHandler.h"
 
 #include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/SkirmishAIKey.h"
 
 #include <stdexcept>
@@ -30,15 +30,13 @@ const SkirmishAIData& CAIScriptHandler::GetSkirmishAIData(const std::string& scr
 {
 	const ScriptMap::const_iterator scriptsIt = scripts.find(scriptName);
 
-	if (scriptsIt == scripts.end()) {
+	if (scriptsIt == scripts.end())
 		throw std::runtime_error("start-script \"" + scriptName + "\" does not exist");
-	}
 
 	const CSkirmishAIScript* aiScript = dynamic_cast<const CSkirmishAIScript*>(scriptsIt->second);
 
-	if (aiScript == NULL) {
+	if (aiScript == nullptr)
 		throw std::runtime_error("start-script \"" + scriptName + "\" is not a CSkirmishAIScript");
-	}
 
 	return aiScript->aiData;
 }
@@ -57,10 +55,10 @@ CAIScriptHandler::CAIScriptHandler()
 	// add the C interface Skirmish AIs
 	// Lua AIs can not be added, as the selection would get invalid when
 	// selecting another mod.
-	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
+	const AILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
 
-	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
-	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
+	AILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
+	AILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
 
 	for (; i != e; ++i) {
 		SkirmishAIData aiData;

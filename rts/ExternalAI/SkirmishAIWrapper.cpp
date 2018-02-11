@@ -4,9 +4,8 @@
 
 #include "AICallback.h"
 #include "AICheats.h"
+#include "AILibraryManager.h"
 #include "EngineOutHandler.h"
-#include "IAILibraryManager.h"
-
 #include "SkirmishAIHandler.h"
 #include "SkirmishAILibrary.h"
 #include "SkirmishAILibraryInfo.h"
@@ -92,7 +91,7 @@ void CSkirmishAIWrapper::PreDestroy() {
 
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
-	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
+	AILibraryManager* libManager = AILibraryManager::GetInstance();
 
 	{
 		SCOPED_TIMER(timerName.c_str());
@@ -185,7 +184,7 @@ void CSkirmishAIWrapper::Kill()
 		if (initOk)
 			library->Release(skirmishAIId);
 
-		IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
+		AILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 	}
 
 	// NOTE: explicitly ordered so callback is valid in AI's dtor

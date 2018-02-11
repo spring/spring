@@ -2,7 +2,6 @@
 
 #include "SkirmishAILibrary.h"
 
-#include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/AIInterfaceKey.h"
 #include "Sim/Misc/GlobalConstants.h"

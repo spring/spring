@@ -11,7 +11,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
-#include "IAILibraryManager.h"
+#include "AILibraryManager.h"
 
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
@@ -214,7 +214,7 @@ const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 }
 
 int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+	const AILibraryManager* libMan = AILibraryManager::GetInstance();
 	const CSkirmishAILibraryInfo& aiInfo = (libMan->GetSkirmishAIInfos()).find(key)->second;
 
 	if (skirmishAILoadCount[key] == 0)
