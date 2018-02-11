@@ -1146,22 +1146,14 @@ function gadgetHandler:AllowUnitTransport(
   return true
 end
 
-function gadgetHandler:AllowUnitCloak(unitID, enemyID, cloakCost, cloakDist)
-  local retCloakCost = cloakCost
-  local retCloakDist = cloakDist
-
+function gadgetHandler:AllowUnitCloak(unitID, enemyID)
   for _,g in r_ipairs(self.AllowUnitCloakList) do
-    ret, retCost, retDist = g:AllowUnitCloak(unitID, enemyID, retCloakCost, retCloakDist)
-
-    if (retCost ~= nil) then retCloakCost = retCost end
-    if (retDist ~= nil) then retCloakDist = retDist end
-
-    if (not ret) then
-      return false, retCloakCost, retCloakDist
+    if (not g:AllowUnitCloak(unitID, enemyID)) then
+      return false
     end
   end
 
-  return true, retCloakCost, retCloakDist
+  return true
 end
 
 function gadgetHandler:AllowUnitDecloak(unitID, objectID, weaponID)

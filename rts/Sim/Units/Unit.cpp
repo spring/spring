@@ -2423,7 +2423,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 	if (stunCheck) {
 		// if stunned, check if we are allowed to also stay cloaked
 		if (IsStunned() && IsCloaked())
-			return (eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr));
+			return (eventHandler.AllowUnitCloak(this, nullptr));
 
 		return (IsCloaked());
 	}
@@ -2433,12 +2433,10 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	// grab nearest enemy wrt our default decloak-distance
 	// Lua code can do more elaborate scans if it wants to
+	// and has access to cloakCost{Moving}/decloakDistance
 	const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 
-	float cloakCost = mix(unitDef->cloakCost, unitDef->cloakCostMoving, (Square(speed.w) > 0.2f));
-	float cloakDist = decloakDistance;
-
-	return (eventHandler.AllowUnitCloak(this, closestEnemy, &cloakCost, &cloakDist));
+	return (eventHandler.AllowUnitCloak(this, closestEnemy));
 }
 
 

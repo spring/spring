@@ -268,9 +268,9 @@ bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* tr
 	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);
 }
 
-bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist)
+bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 {
-	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy, cloakCost, cloakDist);
+	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy);
 }
 
 bool CEventHandler::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)

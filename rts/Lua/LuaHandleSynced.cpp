@@ -616,10 +616,10 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit*
 }
 
 
-bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist)
+bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 6, __func__);
+	luaL_checkstack(L, 4, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
@@ -634,34 +634,12 @@ bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, flo
 	else
 		lua_pushnil(L);
 
-	if (cloakCost != nullptr)
-		lua_pushnumber(L, *cloakCost);
-	else
-		lua_pushnil(L);
 
-	if (cloakDist != nullptr)
-		lua_pushnumber(L, *cloakDist);
-	else
-		lua_pushnil(L);
-
-
-	if (!RunCallIn(L, cmdStr, 4, 3))
+	if (!RunCallIn(L, cmdStr, 2, 1))
 		return true;
 
-	assert(lua_isnumber(L, -1) || lua_isnil(L, -1));
-	assert(lua_isnumber(L, -2) || lua_isnil(L, -2));
-	assert(lua_isboolean(L, -3));
-
-	// third optional result, pushed last (top of stack)
-	if (cloakDist != nullptr && lua_isnumber(L, -1))
-		*cloakDist = lua_tonumber(L, -1);
-	// second optional result
-	if (cloakCost != nullptr && lua_isnumber(L, -2))
-		*cloakCost = lua_tonumber(L, -2);
-
-	// first result, pushed first
-	const bool retval = lua_toboolean(L, -3);
-	lua_pop(L, 3);
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
 	return retval;
 }
 
