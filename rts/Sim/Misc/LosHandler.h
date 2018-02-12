@@ -45,7 +45,7 @@ struct SLosInstance
 		, refCount(0)
 		, hashNum(-1)
 		, status(NONE)
-		, isCache(false)
+		, isCached(false)
 		, isQueuedForUpdate(false)
 		, isQueuedForTerraform(false)
 	{}
@@ -76,7 +76,7 @@ public:
 	};
 	int status;
 
-	bool isCache;
+	bool isCached;
 	bool isQueuedForUpdate;
 	bool isQueuedForTerraform;
 };
