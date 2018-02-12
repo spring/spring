@@ -7,8 +7,10 @@
 
 class CClipboard
 {
-	public:
-		std::string GetContents() const;
+public:
+	CClipboard() {}
+
+	std::string GetContents() const;
 };
 
 #endif // !CLIPBOARD_H
