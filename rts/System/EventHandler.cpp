@@ -64,11 +64,13 @@ void CEventHandler::AddClient(CEventClient* ec)
 	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
 
-		if (ei.HasPropBit(MANAGED_BIT)) {
-			if (ec->WantsEvent(it->first)) {
-				InsertEvent(ec, it->first);
-			}
-		}
+		if (!ei.HasPropBit(MANAGED_BIT))
+			continue;
+
+		if (!ec->WantsEvent(it->first))
+			continue;
+
+		InsertEvent(ec, it->first);
 	}
 }
 
@@ -81,9 +83,11 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 
 	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT)) {
-			RemoveEvent(ec, it->first);
-		}
+
+		if (!ei.HasPropBit(MANAGED_BIT))
+			continue;
+
+		RemoveEvent(ec, it->first);
 	}
 }
 
