@@ -47,7 +47,6 @@
 #include "System/myMath.h"
 #include "System/SafeUtil.h"
 
-CUnitDrawer* unitDrawer;
 
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
 CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
@@ -58,6 +57,14 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 
+
+
+CUnitDrawer* unitDrawer = nullptr;
+
+// can not be a CUnitDrawer; destruction in global
+// scope might happen after ~EventHandler which is
+// referenced by ~EventClient
+static uint8_t unitDrawerMem[sizeof(CUnitDrawer)];
 
 
 static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
@@ -205,8 +212,23 @@ void CUnitDrawer::PopModelRenderState(const CSolidObject* o) { PopModelRenderSta
 
 
 
-CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
-{
+void CUnitDrawer::InitStatic() {
+	if (unitDrawer == nullptr)
+		unitDrawer = new (unitDrawerMem) CUnitDrawer();
+
+	unitDrawer->Init();
+}
+void CUnitDrawer::KillStatic() {
+	unitDrawer->Kill();
+
+	if (gu->globalReload)
+		return;
+
+	spring::SafeDestruct(unitDrawer);
+	memset(unitDrawerMem, 0, sizeof(unitDrawerMem));
+}
+
+void CUnitDrawer::Init() {
 	eventHandler.AddClient(this);
 
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
@@ -269,9 +291,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 }
 
-CUnitDrawer::~CUnitDrawer()
+void CUnitDrawer::Kill()
 {
 	eventHandler.RemoveClient(this);
+	autoLinkedEvents.clear();
 
 	unitDrawerStates[DRAWER_STATE_NOP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_NOP]);
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
@@ -303,16 +326,21 @@ CUnitDrawer::~CUnitDrawer()
 			lgb.clear();
 		}
 	}
+
 	deadGhostBuildings.clear();
 	liveGhostBuildings.clear();
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete opaqueModelRenderers[modelType];
-		delete alphaModelRenderers[modelType];
+		spring::SafeDelete(opaqueModelRenderers[modelType]);
+		spring::SafeDelete(alphaModelRenderers[modelType]);
 	}
 
 	unsortedUnits.clear();
+	unitsByIcon.clear();
+	unitIcons.clear();
+
+	geomBuffer = nullptr;
 }
 
 

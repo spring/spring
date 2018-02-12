@@ -23,24 +23,29 @@ public:
 	 *
 	 * if FrameBuffers are supported by the current platform (now checked on startup)
 	 */
-	static bool IsSupported() { return true; }
+	static constexpr bool IsSupported() { return true; }
 
-	FBO();
-	~FBO();
+
+	FBO(         ) { Init(false); }
+	FBO(bool noop) { Init( noop); }
+	~FBO() { Kill(); }
+
+	void Init(bool noop);
+	void Kill();
 
 	/**
 	 * @brief fboId
 	 *
 	 * GLuint pointing to the current framebuffer
 	 */
-	GLuint fboId;
+	GLuint fboId = 0;
 
 	/**
 	 * @brief reloadOnAltTab
 	 *
 	 * bool save all attachments in system RAM and reloaded them on OpenGL-Context lost (alt-tab) (default: false)
 	 */
-	bool reloadOnAltTab;
+	bool reloadOnAltTab = false;
 
 	/**
 	 * @brief check FBO status
@@ -134,7 +139,7 @@ public:
 
 
 private:
-	bool valid;
+	bool valid = false;
 
 	/**
 	 * @brief rbos

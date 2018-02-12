@@ -30,6 +30,7 @@
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 
 #define DRAW_QUAD_SIZE 32
 
@@ -45,6 +46,13 @@ CONFIG(float, FeatureFadeDistance)
 .minimumValue(0.0f)
 .description("Distance at which features will begin to fade from view.");
 
+
+CFeatureDrawer* featureDrawer = nullptr;
+
+// can not be a CFeatureDrawer; destruction in global
+// scope might happen after ~EventHandler (referenced
+// by ~EventClient)
+static uint8_t featureDrawerMem[sizeof(CFeatureDrawer)];
 
 
 static bool SetFeatureDrawAlpha(
@@ -97,9 +105,24 @@ static bool SetFeatureDrawAlpha(
 
 
 
-CFeatureDrawer* featureDrawer = nullptr;
 
-CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false)
+void CFeatureDrawer::InitStatic() {
+	if (featureDrawer == nullptr)
+		featureDrawer = new (featureDrawerMem) CFeatureDrawer();
+
+	featureDrawer->Init();
+}
+void CFeatureDrawer::KillStatic() {
+	featureDrawer->Kill();
+
+	if (gu->globalReload)
+		return;
+
+	spring::SafeDestruct(featureDrawer);
+	memset(featureDrawerMem, 0, sizeof(featureDrawerMem));
+}
+
+void CFeatureDrawer::Init()
 {
 	eventHandler.AddClient(this);
 
@@ -123,16 +146,20 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	camVisDrawFrames.fill(0);
 
 	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
+		camVisibleQuads[n].clear();
 		camVisibleQuads[n].reserve(256);
 	}
 }
 
-
-CFeatureDrawer::~CFeatureDrawer()
+void CFeatureDrawer::Kill()
 {
 	eventHandler.RemoveClient(this);
+	autoLinkedEvents.clear();
 
 	modelRenderers.clear();
+	unsortedFeatures.clear();
+
+	geomBuffer = nullptr;
 }
 
 

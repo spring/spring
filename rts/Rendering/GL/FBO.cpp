@@ -206,8 +206,11 @@ void FBO::GLContextReinit()
  * Tests for support of the EXT_framebuffer_object
  * extension, and generates a framebuffer if supported
  */
-FBO::FBO() : fboId(0), reloadOnAltTab(false)
+void FBO::Init(bool noop)
 {
+	if (noop)
+		return;
+
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAttachments);
 
 	// set maxSamples once
@@ -218,7 +221,7 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 
 	glGenFramebuffers(1, &fboId);
 
-	// we need to bind it once, else it isn't valid
+	// we need to bind once, else it isn't valid
 	glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -231,30 +234,39 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 /**
  * Unbinds the framebuffer and deletes it
  */
-FBO::~FBO()
+void FBO::Kill()
 {
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
-		glDeleteRenderbuffers(1, &(*ri));
-	}
+	if (fboId == 0)
+		return;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	if (fboId != 0)
+	{
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
+			glDeleteRenderbuffers(1, &(*ri));
+		}
+
+		rboIDs.clear();
+	}
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDeleteFramebuffers(1, &fboId);
+
+		fboId = 0;
+	}
 
 	spring::VectorErase(activeFBOs, this);
 
 	if (!activeFBOs.empty())
 		return;
 
-	// seems the application exits and we are the last fbo left
-	// so we delete the remaining alloc'ed stuff
+	// we are the last fbo left, delete remaining alloc'ed stuff
 	fboTexData.clear();
 }
 
 
 /**
- * Tests whether or not if we have a valid framebuffer
+ * Tests if we have a valid (generated and complete) framebuffer
  */
 bool FBO::IsValid() const
 {
@@ -301,8 +313,7 @@ bool FBO::CheckStatus(const char* name)
 
 	switch (status) {
 		case GL_FRAMEBUFFER_COMPLETE:
-			valid = true;
-			return true;
+			return (valid = true);
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
 			LOG_L(L_WARNING, "FBO-%s: None/Unsupported textures/buffers attached!", name);
 			break;
