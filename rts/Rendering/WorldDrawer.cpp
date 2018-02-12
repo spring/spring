@@ -60,9 +60,9 @@ CWorldDrawer::~CWorldDrawer()
 	spring::SafeDelete(shadowHandler);
 	spring::SafeDelete(inMapDrawerView);
 
-	spring::SafeDelete(featureDrawer);
-	spring::SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
-	spring::SafeDelete(projectileDrawer);
+	CFeatureDrawer::KillStatic(gu->globalReload);
+	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
+	CProjectileDrawer::KillStatic(gu->globalReload);
 
 	modelLoader.Kill();
 
@@ -92,7 +92,7 @@ void CWorldDrawer::LoadPre() const
 	texturehandler3DO = new C3DOTextureHandler();
 	texturehandlerS3O = new CS3OTextureHandler();
 
-	featureDrawer = new CFeatureDrawer();
+	CFeatureDrawer::InitStatic();
 	loadscreen->SetLoadMessage("Creating Sky");
 
 	sky = ISky::GetSky();
@@ -125,12 +125,11 @@ void CWorldDrawer::LoadPost() const
 	IGroundDecalDrawer::Init();
 
 	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
-	projectileDrawer = new CProjectileDrawer();
-	projectileDrawer->LoadWeaponTextures();
 
-	unitDrawer = new CUnitDrawer();
+	CProjectileDrawer::InitStatic();
+	CUnitDrawer::InitStatic();
 	// see ::LoadPre
-	// featureDrawer = new CFeatureDrawer();
+	// CFeatureDrawer::InitStatic();
 
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);

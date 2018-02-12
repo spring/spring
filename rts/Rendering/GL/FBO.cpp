@@ -221,8 +221,10 @@ void FBO::GLContextReinit()
  * Tests for support of the EXT_framebuffer_object
  * extension, and generates a framebuffer if supported
  */
-FBO::FBO() : fboId(0), reloadOnAltTab(false)
+void FBO::Init(bool noop)
 {
+	if (noop)
+		return;
 	if (!IsSupported())
 		return;
 
@@ -262,33 +264,41 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 /**
  * Unbinds the framebuffer and deletes it
  */
-FBO::~FBO()
+void FBO::Kill()
 {
+	if (fboId == 0)
+		return;
 	if (!IsSupported())
 		return;
 
-	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
-	for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
-		glDeleteRenderbuffersEXT(1, &(*ri));
-	}
+	{
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-	if (fboId)
+		for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
+			glDeleteRenderbuffers(1, &(*ri));
+		}
+
+		rboIDs.clear();
+	}
+	{
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 		glDeleteFramebuffersEXT(1, &fboId);
+
+		fboId = 0;
+	}
 
 	spring::VectorErase(activeFBOs, this);
 
 	if (!activeFBOs.empty())
 		return;
 
-	// seems the application exits and we are the last fbo left
-	// so we delete the remaining alloc'ed stuff
+	// we are the last fbo left, delete remaining alloc'ed stuff
 	fboTexData.clear();
 }
 
 
 /**
- * Tests whether or not if we have a valid framebuffer
+ * Tests if we have a valid (generated and complete) framebuffer
  */
 bool FBO::IsValid() const
 {
@@ -328,37 +338,37 @@ void FBO::Unbind()
  * Tests if the framebuffer is a complete and
  * legitimate framebuffer
  */
-bool FBO::CheckStatus(std::string name)
+bool FBO::CheckStatus(const char* name)
 {
 	assert(GetCurrentBoundFBO() == fboId);
-	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+
 	switch (status) {
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
-			valid = true;
-			return true;
+			return (valid = true);
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-			LOG_L(L_WARNING, "FBO-%s: None/Unsupported textures/buffers attached!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: None/Unsupported textures/buffers attached!", name);
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-			LOG_L(L_WARNING, "FBO-%s: Missing a required texture/buffer attachment!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Missing a required texture/buffer attachment!", name);
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-			LOG_L(L_WARNING, "FBO-%s: Has mismatched texture/buffer dimensions!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Has mismatched texture/buffer dimensions!", name);
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-			LOG_L(L_WARNING, "FBO-%s: Incomplete buffer formats!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete buffer formats!", name);
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
-			LOG_L(L_WARNING, "FBO-%s: Incomplete draw buffers!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete draw buffers!", name);
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
-			LOG_L(L_WARNING, "FBO-%s: Incomplete read buffer!", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: Incomplete read buffer!", name);
 			break;
 		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			LOG_L(L_WARNING, "FBO-%s: GL_FRAMEBUFFER_UNSUPPORTED_EXT", name.c_str());
+			LOG_L(L_WARNING, "FBO-%s: GL_FRAMEBUFFER_UNSUPPORTED_EXT", name);
 			break;
 		default:
-			LOG_L(L_WARNING, "FBO-%s: error code 0x%X", name.c_str(), status);
+			LOG_L(L_WARNING, "FBO-%s: error code 0x%X", name, status);
 			break;
 	}
 	valid = false;

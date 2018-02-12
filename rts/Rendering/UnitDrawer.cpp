@@ -50,8 +50,6 @@
 
 #define UNIT_SHADOW_ALPHA_MASKING
 
-CUnitDrawer* unitDrawer;
-
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
 CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
@@ -63,6 +61,14 @@ CONFIG(int, MaxDynamicModelLights)
 CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 
 
+
+
+CUnitDrawer* unitDrawer = nullptr;
+
+// can not be a CUnitDrawer; destruction in global
+// scope might happen after ~EventHandler which is
+// referenced by ~EventClient
+static uint8_t unitDrawerMem[sizeof(CUnitDrawer)];
 
 
 static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
@@ -216,8 +222,23 @@ void CUnitDrawer::PopModelRenderState(const CSolidObject* o) { PopModelRenderSta
 
 
 
-CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
-{
+void CUnitDrawer::InitStatic() {
+	if (unitDrawer == nullptr)
+		unitDrawer = new (unitDrawerMem) CUnitDrawer();
+
+	unitDrawer->Init();
+}
+void CUnitDrawer::KillStatic(bool reload) {
+	unitDrawer->Kill();
+
+	if (reload)
+		return;
+
+	spring::SafeDestruct(unitDrawer);
+	memset(unitDrawerMem, 0, sizeof(unitDrawerMem));
+}
+
+void CUnitDrawer::Init() {
 	eventHandler.AddClient(this);
 
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
@@ -286,9 +307,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 }
 
-CUnitDrawer::~CUnitDrawer()
+void CUnitDrawer::Kill()
 {
 	eventHandler.RemoveClient(this);
+	autoLinkedEvents.clear();
 
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
@@ -323,17 +345,22 @@ CUnitDrawer::~CUnitDrawer()
 			lgb.clear();
 		}
 	}
+
 	// reuse inner vectors when reloading
 	// deadGhostBuildings.clear();
 	// liveGhostBuildings.clear();
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete opaqueModelRenderers[modelType];
-		delete alphaModelRenderers[modelType];
+		spring::SafeDelete(opaqueModelRenderers[modelType]);
+		spring::SafeDelete(alphaModelRenderers[modelType]);
 	}
 
 	unsortedUnits.clear();
+	unitsByIcon.clear();
+	unitIcons.clear();
+
+	geomBuffer = nullptr;
 }
 
 

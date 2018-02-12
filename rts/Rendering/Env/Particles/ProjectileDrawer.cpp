@@ -42,7 +42,29 @@
 
 CProjectileDrawer* projectileDrawer = nullptr;
 
-CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
+// can not be a CProjectileDrawer; destruction in global
+// scope might happen after ~EventHandler (referenced by
+// ~EventClient)
+static uint8_t projectileDrawerMem[sizeof(CProjectileDrawer)];
+
+
+void CProjectileDrawer::InitStatic() {
+	if (projectileDrawer == nullptr)
+		projectileDrawer = new (projectileDrawerMem) CProjectileDrawer();
+
+	projectileDrawer->Init();
+}
+void CProjectileDrawer::KillStatic(bool reload) {
+	projectileDrawer->Kill();
+
+	if (reload)
+		return;
+
+	spring::SafeDestruct(projectileDrawer);
+	memset(projectileDrawerMem, 0, sizeof(projectileDrawerMem));
+}
+
+void CProjectileDrawer::Init() {
 	eventHandler.AddClient(this);
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
@@ -156,6 +178,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	if (!textureAtlas->Finalize())
 		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use fewer/smaller textures.");
 
+
 	flaretex        = &textureAtlas->GetTexture("flare");
 	explotex        = &textureAtlas->GetTexture("explo");
 	explofadetex    = &textureAtlas->GetTexture("explofade");
@@ -173,7 +196,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
 		smoketex.push_back(smokeTex);
 	}
-
 
 	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
 	missiletrailtex    = &textureAtlas->GetTextureWithBackup("missiletrailtexture",    "smoketrail"    );
@@ -202,6 +224,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	groundringtex = &groundFXAtlas->GetTexture("groundring");
 	seismictex = &groundFXAtlas->GetTexture("seismic");
 
+
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a] = 0.0f;
 	}
@@ -212,15 +235,16 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 			glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, perlinBlendTexSize,perlinBlendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, perlinBlendTexSize, perlinBlendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		}
 	}
 
-	perlinTexObjects = 0;
-	drawPerlinTex = false;
+
+	// ProjectileDrawer is no-op constructed, has to be initialized manually
+	perlinFB.Init(false);
 
 	if (perlinFB.IsValid()) {
-		// we never refresh the full texture (just the perlin part). So we need to reload it then.
+		// we never refresh the full texture (just the perlin part), so reload it on AT
 		perlinFB.reloadOnAltTab = true;
 
 		perlinFB.Bind();
@@ -233,10 +257,13 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
+
+	LoadWeaponTextures();
 }
 
-CProjectileDrawer::~CProjectileDrawer() {
+void CProjectileDrawer::Kill() {
 	eventHandler.RemoveClient(this);
+	autoLinkedEvents.clear();
 
 	glDeleteTextures(8, perlinBlendTex);
 	spring::SafeDelete(textureAtlas);
@@ -246,7 +273,19 @@ CProjectileDrawer::~CProjectileDrawer() {
 		spring::SafeDelete(modelRenderers[modelType]);
 	}
 
+	smoketex.clear();
+
 	renderProjectiles.clear();
+	zSortedProjectiles.clear();
+	unsortedProjectiles.clear();
+
+	perlinFB.Kill();
+
+	perlinTexObjects = 0;
+	drawPerlinTex = false;
+
+	fxBuffer = nullptr;
+	fxShader = nullptr;
 }
 
 

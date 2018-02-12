@@ -25,8 +25,13 @@ class LuaTable;
 
 class CProjectileDrawer: public CEventClient {
 public:
-	CProjectileDrawer();
-	~CProjectileDrawer();
+	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinFB(true) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -117,11 +122,15 @@ private:
 private:
 	static constexpr int perlinBlendTexSize = 16;
 	static constexpr int perlinTexSize = 128;
+
 	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
+
+	int perlinTexObjects = 0;
+	bool drawPerlinTex = false;
+
 	FBO perlinFB;
-	int perlinTexObjects;
-	bool drawPerlinTex;
+
 
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;

@@ -20,8 +20,13 @@ namespace GL {
 class CFeatureDrawer: public CEventClient
 {
 public:
-	CFeatureDrawer();
-	~CFeatureDrawer();
+	CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	void UpdateDrawQuad(CFeature* feature);
 	void Update();
