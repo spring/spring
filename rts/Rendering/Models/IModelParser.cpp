@@ -157,33 +157,37 @@ std::string CModelLoader::FindModelPath(std::string name) const
 {
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
-	if (!name.empty()) {
-		const std::string vfsPath = "objects3d/";
-		const std::string& fileExt = FileSystem::GetExtension(name);
+	if (name.empty())
+		return name;
 
-		if (fileExt.empty()) {
-			for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
-				const std::string& formatExt = it->first;
+	const std::string vfsPath = "objects3d/";
+	const std::string& fileExt = FileSystem::GetExtension(name);
 
-				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
-					name += ("." + formatExt); break;
-				}
-			}
-		}
+	if (fileExt.empty()) {
+		for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
+			const std::string& formatExt = it->first;
 
-		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
-			if (name.find(vfsPath) == std::string::npos) {
-				return (FindModelPath(vfsPath + name));
+			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
+				name += ("." + formatExt);
+				break;
 			}
 		}
 	}
 
-	return name;
+	if (CFileHandler::FileExists(name, SPRING_VFS_ZIP))
+		return name;
+
+	if (name.find(vfsPath) != std::string::npos)
+		return name;
+
+	return (FindModelPath(vfsPath + name));
 }
 
 
 void CModelLoader::PreloadModel(const std::string& modelName)
 {
+	assert(Threading::IsMainThread());
+
 	if (!ThreadPool::HasThreads())
 		return;
 
@@ -195,6 +199,28 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 	ThreadPool::Enqueue([modelName]() {
 		modelLoader.LoadModel(modelName, true);
 	});
+}
+
+void CModelLoader::LogErrors()
+{
+	assert(Threading::IsMainThread());
+
+	if (errors.empty())
+		return;
+
+	// block any preload threads from modifying <errors>
+	// doing the empty-check outside lock should be fine
+	std::lock_guard<spring::mutex> lock(mutex);
+
+	while (!errors.empty()) {
+		char buf[1024];
+
+		SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", errors[0].first.c_str(), errors[0].second.c_str());
+		LOG_L(L_ERROR, "%s", buf);
+		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
+
+		errors.pop_front();
+	}
 }
 
 
@@ -291,11 +317,7 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 		try {
 			model = std::move(parser->Load(path));
 		} catch (const content_error& ex) {
-			char buf[1024];
-
-			SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
-			LOG_L(L_ERROR, "%s", buf);
-			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
+			errors.emplace_back(name, ex.what());
 
 			model.numPieces = 0;
 		}

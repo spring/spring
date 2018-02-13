@@ -161,6 +161,10 @@ void CWorldDrawer::Update(bool newSimFrame)
 		projectileDrawer->UpdateTextures();
 		sky->Update();
 		water->Update();
+
+		// once every simframe is frequent enough here
+		// NB: errors will not be logged until frame 0
+		modelLoader.LogErrors();
 	}
 
 	numUpdates += 1;

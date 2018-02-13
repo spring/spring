@@ -35,6 +35,7 @@ public:
 
 	bool IsValid() const { return (!formats.empty()); }
 	void PreloadModel(const std::string& name);
+	void LogErrors();
 
 public:
 	typedef spring::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
@@ -62,6 +63,7 @@ private:
 
 	// all unique models loaded so far
 	std::deque<S3DModel> models;
+	std::deque< std::pair<std::string, std::string> > errors;
 };
 
 #define modelLoader (CModelLoader::GetInstance())
