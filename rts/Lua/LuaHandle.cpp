@@ -17,10 +17,8 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/Protocol/BaseNetProtocol.h"
-#include "Game/UI/KeyCodes.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Game/UI/KeySet.h"
-#include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -41,7 +39,6 @@
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Platform/SDL1_keysym.h"
 
 #include "LuaInclude.h"
@@ -365,6 +362,10 @@ int CLuaHandle::RunCallInTraceback(
 
 				// log only errors that lead to a crash
 				luaHandle->callinErrors += (GetError() == LUA_ERRRUN);
+
+				// catch clients that desync due to corrupted data
+				if (GetError() == LUA_ERRRUN && GetHandleSynced(luaState))
+					CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, traceStr);
 			}
 		}
 
@@ -1400,7 +1401,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	const WeaponDef* wd = p->weapon? wp->GetWeaponDef(): nullptr;
 
 	// if this weapon-type is not being watched, bail
-	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
+	if (p->weapon && (wd == nullptr || !watchWeaponDefs[wd->id]))
 		return;
 
 	LUA_CALL_IN_CHECK(L);
@@ -1432,7 +1433,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		const WeaponDef* wd = wp->GetWeaponDef();
 
 		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeaponDefs[wd->id]) return;
+		if (wd == nullptr || !watchWeaponDefs[wd->id]) return;
 	}
 
 	LUA_CALL_IN_CHECK(L);
