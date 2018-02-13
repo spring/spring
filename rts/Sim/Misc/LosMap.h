@@ -20,10 +20,13 @@ public:
 	CLosMap(int2 size_, int2 mapDims, const float* ctrHeightMap_, const float* mipHeightMap_, bool sendReadmapEvents_)
 	: size(size_)
 	, LOS2HEIGHT(mapDims / size)
+
 	, losmap(size.x * size.y, 0)
-	, sendReadmapEvents(sendReadmapEvents_)
+
 	, ctrHeightMap(ctrHeightMap_)
 	, mipHeightMap(mipHeightMap_)
+
+	, sendReadmapEvents(sendReadmapEvents_)
 	{ }
 
 public:
