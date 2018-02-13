@@ -74,6 +74,7 @@ public:
 	static float GetStaticRange2D(const WeaponDef* wd, float modHeightDiff, float modProjGravity);
 
 	virtual float GetRange2D(const float yDiff) const;
+	virtual void UpdateProjectileSpeed(const float val) { projectileSpeed = val; }
 	virtual void UpdateRange(const float val) { range = val; }
 
 	bool AutoTarget();

@@ -1575,7 +1575,7 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 			weapon->UpdateRange(lua_tofloat(L, index + 1));
 		} break;
 		case hashString("projectileSpeed"): {
-			weapon->projectileSpeed = lua_tofloat(L, index + 1);
+			weapon->UpdateProjectileSpeed(lua_tofloat(L, index + 1));
 		} break;
 
 		case hashString("burst"): {
