@@ -4,7 +4,6 @@
 #define UNIT_H
 
 #include <vector>
-#include <string>
 
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
@@ -26,11 +25,6 @@ struct SolidObjectDef;
 struct UnitDef;
 struct UnitLoadParams;
 struct SLosInstance;
-
-
-namespace icon {
-	class CIconData;
-}
 
 
 // LOS state bits
@@ -256,12 +250,11 @@ public:
 
 	CUnit* soloBuilder;
 	CUnit* lastAttacker;
+	/// transport that the unit is currently in
+	CUnit* transporter;
 
 	/// player who is currently FPS'ing this unit
 	CPlayer* fpsControlPlayer;
-
-	/// transport that the unit is currently in
-	CUnit* transporter;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;
@@ -515,8 +508,6 @@ public:
 	float iconRadius;
 
 	unsigned int lastUnitUpdate;
-
-	std::string tooltip;
 
 	CGroup* group;
 

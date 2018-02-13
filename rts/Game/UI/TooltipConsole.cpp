@@ -18,6 +18,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
@@ -167,7 +168,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		team = teamHandler->Team(unit->team);
 		s = team->GetControllerName();
 	} else {
-		s = unit->tooltip;
+		s = unitToolTipMap.Get(unit->id);
+
 		if (decoyDef != nullptr)
 			s = decoyDef->humanName + " - " + decoyDef->tooltip;
 	}

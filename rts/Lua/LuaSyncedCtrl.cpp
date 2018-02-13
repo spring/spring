@@ -59,6 +59,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/Scripts/LuaUnitScript.h"
 #include "Sim/Units/UnitTypes/Builder.h"
@@ -1446,10 +1447,12 @@ int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 		return 0;
 
 	const char* tmp = luaL_checkstring(L, 2);
-	if (tmp)
-		unit->tooltip = string(tmp, lua_strlen(L, 2));
+
+	if (tmp != nullptr)
+		unitToolTipMap.Set(unit->id, std::string(tmp, lua_strlen(L, 2)));
 	else
-		unit->tooltip = "";
+		unitToolTipMap.Set(unit->id, "");
+
 	return 0;
 }
 
