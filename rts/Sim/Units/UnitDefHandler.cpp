@@ -23,6 +23,8 @@
 
 CUnitDefHandler* unitDefHandler = nullptr;
 
+static std::vector<UnitDefImage> unitDefImages;
+
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
 bool isblank(int c) {
@@ -43,10 +45,12 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 
 	unitDefs.reserve(unitDefNames.size() + 1);
 	unitDefs.emplace_back();
+	unitDefImages.clear();
+	unitDefImages.resize(unitDefNames.size() + 1);
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string& unitName = unitDefNames[a];
-		LuaTable udTable = rootTable.SubTable(unitName);
+		const LuaTable& udTable = rootTable.SubTable(unitName);
 
 		// parse the unitdef data (but don't load buildpics, etc...)
 		PushNewUnitDef(StringToLower(unitName), udTable);
@@ -68,16 +72,15 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 				unitName.c_str());
 	}
 
-	int defid = unitDefs.size();
+	const int defID = unitDefs.size();
 
 	try {
-		unitDefs.emplace_back(udTable, unitName, defid);
+		unitDefs.emplace_back(udTable, unitName, defID);
 		UnitDef& newDef = unitDefs.back();
 		UnitDefLoadSounds(&newDef, udTable);
 
-		if (!newDef.decoyName.empty()) {
+		if (!newDef.decoyName.empty())
 			decoyNameMap[unitName] = StringToLower(newDef.decoyName);
-		}
 
 		// force-initialize the real* members
 		newDef.SetNoCost(true);
@@ -87,8 +90,8 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		return 0;
 	}
 
-	unitDefIDsByName[unitName] = defid;
-	return defid;
+	unitDefIDsByName[unitName] = defID;
+	return defID;
 }
 
 
@@ -105,12 +108,12 @@ void CUnitDefHandler::CleanBuildOptions()
 		eraseOpts.clear();
 		eraseOpts.reserve(buildOpts.size());
 
-		for (auto it = buildOpts.cbegin(); it != buildOpts.cend(); ++it) {
-			const UnitDef* bd = GetUnitDefByName(it->second);
+		for (const auto& buildOpt: buildOpts) {
+			const UnitDef* bd = GetUnitDefByName(buildOpt.second);
 
 			if (bd == nullptr /*|| bd->maxThisUnit <= 0*/) {
-				LOG_L(L_WARNING, "removed the \"%s\" entry from the \"%s\" build menu", it->second.c_str(), ud.name.c_str());
-				eraseOpts.push_back(it->first);
+				LOG_L(L_WARNING, "removed the \"%s\" entry from the \"%s\" build menu", buildOpt.second.c_str(), ud.name.c_str());
+				eraseOpts.push_back(buildOpt.first);
 			}
 		}
 
@@ -125,8 +128,8 @@ void CUnitDefHandler::ProcessDecoys()
 {
 	// assign the decoy pointers, and build the decoy map
 	for (auto mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
-		auto fakeIt = unitDefIDsByName.find(mit->first);
-		auto realIt = unitDefIDsByName.find(mit->second);
+		const auto fakeIt = unitDefIDsByName.find(mit->first);
+		const auto realIt = unitDefIDsByName.find(mit->second);
 
 		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
 			UnitDef& fake = unitDefs[fakeIt->second];
@@ -218,20 +221,20 @@ const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
 
 static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
 {
-	CFileHandler bfile(filename);
-	if (bfile.FileExists()) {
+	if (CFileHandler::FileExists(filename, SPRING_VFS_RAW_FIRST)) {
 		bitmap.Load(filename);
 		return true;
 	}
+
 	return false;
 }
 
 
 unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
 {
-	if (unitDef->buildPic != NULL) {
+	if (unitDef->buildPic != nullptr)
 		return (unitDef->buildPic->textureID);
-	}
+
 	SetUnitDefImage(unitDef, unitDef->buildPicName);
 	return unitDef->buildPic->textureID;
 }
@@ -239,18 +242,19 @@ unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
 
 void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string& texName)
 {
-	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage();
+	UnitDefImage*& unitImage = unitDef->buildPic;
+
+	if (unitImage == nullptr) {
+		unitImage = &unitDefImages[unitDef->id];
 	} else {
-		unitDef->buildPic->Free();
+		unitImage->Free();
 	}
 
 	CBitmap bitmap;
 
 	if (!texName.empty()) {
 		bitmap.Load("unitpics/" + texName);
-	}
-	else {
+	} else {
 		if (!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
@@ -259,10 +263,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		}
 	}
 
-	const unsigned int texID = bitmap.CreateTexture();
-
-	UnitDefImage* unitImage = unitDef->buildPic;
-	unitImage->textureID = texID;
+	unitImage->textureID = bitmap.CreateTexture();
 	unitImage->imageSizeX = bitmap.xsize;
 	unitImage->imageSizeY = bitmap.ysize;
 }
@@ -274,13 +275,14 @@ void CUnitDefHandler::SetUnitDefImage(
 	int xsize,
 	int ysize
 ) {
-	if (unitDef->buildPic == nullptr) {
-		unitDef->buildPic = new UnitDefImage();
+	UnitDefImage*& unitImage = unitDef->buildPic;
+
+	if (unitImage == nullptr) {
+		unitImage = &unitDefImages[unitDef->id];
 	} else {
-		unitDef->buildPic->Free();
+		unitImage->Free();
 	}
 
-	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
 	unitImage->imageSizeX = xsize;
 	unitImage->imageSizeY = ysize;
