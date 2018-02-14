@@ -18,14 +18,14 @@ static inline float randf()
 
 BOOST_AUTO_TEST_CASE( QuadField )
 {
-	srand( time(NULL) );
+	srand( time(nullptr) );
 
-	static const int WIDTH  = 3;
-	static const int HEIGHT = 3;
-	static const int TEST_RUNS = 50000;
+	static constexpr int WIDTH  = 3;
+	static constexpr int HEIGHT = 3;
+	static constexpr int TEST_RUNS = 50000;
 
-	int2 mapDims = int2(WIDTH, HEIGHT);
-	CQuadField qf(mapDims, SQUARE_SIZE);
+	CQuadField qf;
+	qf.Init(int2(WIDTH, HEIGHT), SQUARE_SIZE);
 
 	// necessary for QuadFieldQuery
 	quadField = &qf;
