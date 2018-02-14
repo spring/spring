@@ -252,10 +252,10 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 	const float3 maxs(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetQuadsRectangle(qfQuery, mins, maxs);
+	quadField.GetQuadsRectangle(qfQuery, mins, maxs);
 
 	for (const int qi: *qfQuery.quads) {
-		for (CFeature* f: quadField->GetQuad(qi).features) {
+		for (CFeature* f: quadField.GetQuad(qi).features) {
 			// put this feature back in the update-queue
 			SetFeatureUpdateable(f);
 		}

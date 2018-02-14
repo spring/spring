@@ -180,7 +180,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemy);
 }
@@ -193,7 +193,7 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius);
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 

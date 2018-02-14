@@ -71,7 +71,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(gameSetup, gameSetup->GetClass());
 	s->SerializeObjectInstance(game, game->GetClass());
 	s->SerializeObjectInstance(readMap, readMap->GetClass());
-	s->SerializeObjectInstance(quadField, quadField->GetClass());
+	s->SerializeObjectInstance(&quadField, quadField.GetClass());
 	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s->SerializeObjectInstance(cobEngine, cobEngine->GetClass());
 	s->SerializeObjectInstance(unitScriptEngine, unitScriptEngine->GetClass());

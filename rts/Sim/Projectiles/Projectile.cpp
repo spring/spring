@@ -125,7 +125,7 @@ CProjectile::CProjectile(
 CProjectile::~CProjectile()
 {
 	if (synced) {
-		quadField->RemoveProjectile(this);
+		quadField.RemoveProjectile(this);
 #ifdef TRACE_SYNC
 		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
 #endif
@@ -153,7 +153,7 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		projectileHandler->AddProjectile(this);
 	}
 	if (synced && !weapon) {
-		quadField->AddProjectile(this);
+		quadField.AddProjectile(this);
 	}
 }
 

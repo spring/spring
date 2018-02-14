@@ -1479,7 +1479,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 
 	if (recUnits || recEnemy || recEnemyOnly) {
 		QuadFieldQuery qfQuery;
-		quadField->GetUnitsExact(qfQuery, pos, radius, false);
+		quadField.GetUnitsExact(qfQuery, pos, radius, false);
 		for (const CUnit* u: *qfQuery.units) {
 
 			if (u == owner)
@@ -1519,7 +1519,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
 		QuadFieldQuery qfQuery;
-		quadField->GetFeaturesExact(qfQuery, pos, radius, false);
+		quadField.GetFeaturesExact(qfQuery, pos, radius, false);
 		bool metal = false;
 		for (const CFeature* f: *qfQuery.features) {
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) &&
@@ -1590,7 +1590,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        bool freshOnly)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, pos, radius, false);
+	quadField.GetFeaturesExact(qfQuery, pos, radius, false);
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
@@ -1633,7 +1633,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 											  bool healthyOnly)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius, false);
+	quadField.GetUnitsExact(qfQuery, pos, radius, false);
 	std::vector<CUnit*>::const_iterator ui;
 
 	const CUnit* best = NULL;
@@ -1681,7 +1681,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 											bool builtOnly)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius, false);
+	quadField.GetUnitsExact(qfQuery, pos, radius, false);
 	const CUnit* bestUnit = NULL;
 
 	const float maxSpeed = owner->moveType->GetMaxSpeed();

@@ -343,7 +343,7 @@ public:
 	}
 
 	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 
 		for (const CUnit* u: q.units) {
 			const auto& p = unitIDs.insert(u->id);

@@ -260,7 +260,7 @@ CUnit::~CUnit()
 
 	// ScriptCallback may reference weapons, so delete the script first
 	CWeaponLoader::FreeWeapons(this);
-	quadField->RemoveUnit(this);
+	quadField.RemoveUnit(this);
 }
 
 
@@ -340,7 +340,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	UpdateMidAndAimPos();
 
 	unitHandler->AddUnit(this);
-	quadField->MovedUnit(this);
+	quadField.MovedUnit(this);
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
@@ -643,7 +643,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	Block();
 
 	eventHandler.UnitMoved(this);
-	quadField->MovedUnit(this);
+	quadField.MovedUnit(this);
 }
 
 
@@ -815,7 +815,7 @@ void CUnit::UpdateTransportees()
 
 		// see ::AttachUnit
 		if (transportee->IsStunned()) {
-			quadField->MovedUnit(transportee);
+			quadField.MovedUnit(transportee);
 		}
 	}
 }
@@ -861,7 +861,7 @@ void CUnit::ReleaseTransportees(CUnit* attacker, bool selfDestruct, bool reclaim
 					if (!pos.IsInBounds())
 						continue;
 
-					if (quadField->NoSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
+					if (quadField.NoSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 						transportee->Move(pos, false);
 						break;
 					}
@@ -1563,7 +1563,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eoh->UnitCaptured(*this, oldteam, newteam);
 
 	// remove for old allyteam
-	quadField->RemoveUnit(this);
+	quadField.RemoveUnit(this);
 
 
 	if (type == ChangeGiven) {
@@ -1603,7 +1603,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	// insert for new allyteam
-	quadField->MovedUnit(this);
+	quadField.MovedUnit(this);
 
 	eventHandler.UnitGiven(this, oldteam, newteam);
 	eoh->UnitGiven(*this, oldteam, newteam);
@@ -2600,7 +2600,7 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 	// up-to-date by MoveType::SlowUpdate, otherwise by
 	// ::Update
 	//
-	// quadField->RemoveUnit(unit);
+	// quadField.RemoveUnit(unit);
 
 	if (dynamic_cast<CBuilding*>(unit) != nullptr)
 		unitLoader->RestoreGround(unit);

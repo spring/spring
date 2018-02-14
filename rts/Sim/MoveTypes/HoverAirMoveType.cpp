@@ -1053,7 +1053,7 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 		// includes an extra condition for transports, which are exempt while loading
 		if (!forceHeading && checkCollisions) {
 			QuadFieldQuery qfQuery;
-			quadField->GetUnitsExact(qfQuery, pos, owner->radius + 6);
+			quadField.GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
 			for (CUnit* unit: *qfQuery.units) {
 				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);

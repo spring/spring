@@ -204,7 +204,7 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	const unsigned int oldNumUnits = unitCache.size();
 	const unsigned int oldNumFeatures = featureCache.size();
 
-	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, unitCache, featureCache);
+	quadField.GetUnitsAndFeaturesColVol(params.pos, expRad, unitCache, featureCache);
 
 	const unsigned int newNumUnits = unitCache.size();
 	const unsigned int newNumFeatures = featureCache.size();
@@ -352,7 +352,7 @@ template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
 	QuadFieldQuery qfQuery;
-	quadField->GetQuads(qfQuery, query.pos, query.radius);
+	quadField.GetQuads(qfQuery, query.pos, query.radius);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
@@ -360,7 +360,7 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 			continue;
 
 		for (const int qi: *qfQuery.quads) {
-			const auto& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			const auto& allyTeamUnits = quadField.GetQuad(qi).teamUnits[t];
 
 			for (CUnit* u: allyTeamUnits) {
 				if (u->tempNum == tempNum)
@@ -647,7 +647,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 	// copy on purpose since the below calls lua
 	QuadFieldQuery qfQuery;
-	quadField->GetQuads(qfQuery, pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	quadField.GetQuads(qfQuery, pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -655,7 +655,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 			continue;
 
 		for (const int qi: *qfQuery.quads) {
-			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			const std::vector<CUnit*>& allyTeamUnits = quadField.GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
 				if (targetUnit->tempNum == tempNum)
@@ -823,7 +823,7 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 {
 	// copy on purpose since BuggerOff can call risky stuff
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
+	quadField.GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
 	for (CUnit* u: *qfQuery.units) {
@@ -1081,7 +1081,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		testStatus = BUILDSQUARE_BLOCKED;
 
 		QuadFieldQuery qfQuery;
-		quadField->GetFeaturesExact(qfQuery, testPos, std::max(xsize, zsize) * 6);
+		quadField.GetFeaturesExact(qfQuery, testPos, std::max(xsize, zsize) * 6);
 
 		const int mindx = xsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);
 		const int mindz = zsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);

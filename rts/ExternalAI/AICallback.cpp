@@ -887,7 +887,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 {
 	verify();
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
@@ -905,7 +905,7 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 {
 	verify();
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsFriendly);
 }
@@ -922,7 +922,7 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 {
 	verify();
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius);
+	quadField.GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
 }
@@ -1252,7 +1252,7 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs, const float3& p
 
 	verify();
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, pos, radius);
+	quadField.GetFeaturesExact(qfQuery, pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	for (const CFeature* f: *qfQuery.features) {

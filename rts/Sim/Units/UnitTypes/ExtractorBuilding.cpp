@@ -78,7 +78,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 
 	// find any neighbouring extractors
 	QuadFieldQuery qfQuery;
-	quadField->GetUnits(qfQuery, pos, extractionRange + maxExtractionRange);
+	quadField.GetUnits(qfQuery, pos, extractionRange + maxExtractionRange);
 
 	for (CUnit* u: *qfQuery.units) {
 		if (u == this)

@@ -1585,7 +1585,7 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 		// this far apart, since <units> will be non-empty if pos is closer
 		// to a previous unloadee than <spread> elmos
 		QuadFieldQuery qfQuery;
-		quadField->GetSolidsExact(qfQuery, pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		quadField.GetSolidsExact(qfQuery, pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 		if (unitDef->IsAirUnit() && (qfQuery.solids->size() > 1 || (qfQuery.solids->size() == 1 && (*qfQuery.solids)[0] != owner)))
 			continue;
@@ -1607,7 +1607,7 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 	float bestDist = std::numeric_limits<float>::max();
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, center, radius);
+	quadField.GetUnitsExact(qfQuery, center, radius);
 
 	for (CUnit* unit: *qfQuery.units) {
 		const float dist = unit->pos.SqDistance2D(owner->pos);
@@ -1671,7 +1671,7 @@ bool CMobileCAI::SpotIsClear(float3 pos, CUnit* unloadee)
 	const float numSquares = math::ceil(unloadee->radius / SQUARE_SIZE);
 	const float queryRadius = std::max(1.0f, numSquares) * SQUARE_SIZE;
 
-	return (quadField->NoSolidsExact(pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
+	return (quadField.NoSolidsExact(pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS));
 }
 
 
@@ -1685,7 +1685,7 @@ bool CMobileCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unloadee)
 	const float queryRadius = std::max(1.0f, numSquares) * SQUARE_SIZE;
 
 	QuadFieldQuery qfQuery;
-	quadField->GetSolidsExact(qfQuery, pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	quadField.GetSolidsExact(qfQuery, pos, queryRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 	for (auto objectsIt = qfQuery.solids->begin(); objectsIt != qfQuery.solids->end(); ++objectsIt) {
 		// check if the queried objects are actually in the transport

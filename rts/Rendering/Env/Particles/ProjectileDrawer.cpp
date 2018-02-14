@@ -240,7 +240,7 @@ void CProjectileDrawer::Init() {
 	}
 
 
-	// ProjectileDrawer is constructed in global scope, FBO has to be initialized manually
+	// perlinFB is no-op constructed, FBO has to be initialized manually
 	perlinFB.Init(false);
 
 	if (perlinFB.IsValid()) {

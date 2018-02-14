@@ -216,7 +216,7 @@ void AAirMoveType::CheckForCollision()
 
 	const float3 midTestPos = pos + forward * 121.0f;
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, midTestPos, 115.0f);
+	quadField.GetUnitsExact(qfQuery, midTestPos, 115.0f);
 
 	float dist = 200.0f;
 

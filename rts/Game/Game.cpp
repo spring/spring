@@ -537,7 +537,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField(int2(mapDims.mapx, mapDims.mapy), CQuadField::BASE_QUAD_SIZE);
+	quadField.Init(int2(mapDims.mapx, mapDims.mapy), CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -895,7 +895,7 @@ void CGame::KillSimulation()
 
 	spring::SafeDelete(losHandler);
 	spring::SafeDelete(mapDamage);
-	spring::SafeDelete(quadField);
+	quadField.Kill();
 	spring::SafeDelete(moveDefHandler);
 	spring::SafeDelete(unitDefHandler);
 	spring::SafeDelete(featureDefHandler);
