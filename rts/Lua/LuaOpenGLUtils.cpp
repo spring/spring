@@ -15,6 +15,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDefImage.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -27,7 +28,6 @@
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitDefImage.h"
 #include "System/Matrix44f.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
@@ -108,21 +108,21 @@ static const spring::unsynced_map<std::string, LuaMatTexture::Type> luaMatTexTyp
 
 };
 
-static const spring::unsynced_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
-	{"view",                  LUAMATRICES_VIEW                 },
-	{"projection",            LUAMATRICES_PROJECTION           },
-	{"viewprojection",        LUAMATRICES_VIEWPROJECTION       },
-	{"viewinverse",           LUAMATRICES_VIEWINVERSE          },
-	{"projectioninverse",     LUAMATRICES_PROJECTIONINVERSE    },
-	{"viewprojectioninverse", LUAMATRICES_VIEWPROJECTIONINVERSE},
-	{"billboard",             LUAMATRICES_BILLBOARD            },
-	{"shadow",                LUAMATRICES_SHADOW               },
+static const spring::unsynced_map<unsigned int, LuaMatrixType> luaMatrixTypeMap = {
+	{hashString("view"),                  LUAMATRICES_VIEW                 },
+	{hashString("projection"),            LUAMATRICES_PROJECTION           },
+	{hashString("viewprojection"),        LUAMATRICES_VIEWPROJECTION       },
+	{hashString("viewinverse"),           LUAMATRICES_VIEWINVERSE          },
+	{hashString("projectioninverse"),     LUAMATRICES_PROJECTIONINVERSE    },
+	{hashString("viewprojectioninverse"), LUAMATRICES_VIEWPROJECTIONINVERSE},
+	{hashString("billboard"),             LUAMATRICES_BILLBOARD            },
+	{hashString("shadow"),                LUAMATRICES_SHADOW               },
 
 	// backward compability
-	{"camera",    LUAMATRICES_VIEW             },
-	{"camprj",    LUAMATRICES_PROJECTION       },
-	{"caminv",    LUAMATRICES_VIEWINVERSE      },
-	{"camprjinv", LUAMATRICES_PROJECTIONINVERSE},
+	{hashString("camera"),    LUAMATRICES_VIEW             },
+	{hashString("camprj"),    LUAMATRICES_PROJECTION       },
+	{hashString("caminv"),    LUAMATRICES_VIEWINVERSE      },
+	{hashString("camprjinv"), LUAMATRICES_PROJECTIONINVERSE},
 };
 
 
@@ -148,9 +148,9 @@ LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name
 	return it->second;
 }
 
-LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const std::string& name)
+LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const char* name)
 {
-	const auto it = luaMatrixTypeMap.find(name);
+	const auto it = luaMatrixTypeMap.find(hashString(name));
 
 	if (it == luaMatrixTypeMap.end())
 		return LUAMATRICES_NONE;
@@ -158,7 +158,7 @@ LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const std::string& name)
 	return it->second;
 }
 
-const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
+const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 {
 	// skipped for performance reasons (this function gets called a lot)
 	// StringToLowerInPlace(name);
@@ -516,7 +516,7 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// object icon-textures
 		case LUATEX_UNITBUILDPIC: if (unitDefHandler != nullptr) {
-			texID = unitDefHandler->GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
+			texID = unitDrawer->GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
 		} break;
 		case LUATEX_UNITRADARICON: {
 			texID = (reinterpret_cast<const UnitDef*>(data))->iconType->GetTextureID();
@@ -812,7 +812,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_UNITBUILDPIC: {
 			if (unitDefHandler != nullptr) {
 				const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
-				unitDefHandler->GetUnitDefImage(ud); // forced existance
+				unitDrawer->GetUnitDefImage(ud); // forced existance
 				const UnitDefImage* bp = ud->buildPic;
 				return int2(bp->imageSizeX, bp->imageSizeY);
 			}

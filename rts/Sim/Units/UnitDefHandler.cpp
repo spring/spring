@@ -8,7 +8,6 @@
 
 #include "UnitDefHandler.h"
 #include "UnitDef.h"
-#include "UnitDefImage.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -17,13 +16,10 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
 
 
 CUnitDefHandler* unitDefHandler = nullptr;
-
-static std::vector<UnitDefImage> unitDefImages;
 
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
@@ -45,8 +41,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 
 	unitDefs.reserve(unitDefNames.size() + 1);
 	unitDefs.emplace_back();
-	unitDefImages.clear();
-	unitDefImages.resize(unitDefNames.size() + 1);
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string& unitName = unitDefNames[a];
@@ -218,75 +212,6 @@ const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
 	return &unitDefs[defid];
 }
 
-
-static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
-{
-	if (CFileHandler::FileExists(filename, SPRING_VFS_RAW_FIRST)) {
-		bitmap.Load(filename);
-		return true;
-	}
-
-	return false;
-}
-
-
-unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
-{
-	if (unitDef->buildPic != nullptr)
-		return (unitDef->buildPic->textureID);
-
-	SetUnitDefImage(unitDef, unitDef->buildPicName);
-	return unitDef->buildPic->textureID;
-}
-
-
-void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string& texName)
-{
-	UnitDefImage*& unitImage = unitDef->buildPic;
-
-	if (unitImage == nullptr) {
-		unitImage = &unitDefImages[unitDef->id];
-	} else {
-		unitImage->Free();
-	}
-
-	CBitmap bitmap;
-
-	if (!texName.empty()) {
-		bitmap.Load("unitpics/" + texName);
-	} else {
-		if (!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.AllocDummy(SColor(255, 0, 0, 255));
-		}
-	}
-
-	unitImage->textureID = bitmap.CreateTexture();
-	unitImage->imageSizeX = bitmap.xsize;
-	unitImage->imageSizeY = bitmap.ysize;
-}
-
-
-void CUnitDefHandler::SetUnitDefImage(
-	const UnitDef* unitDef,
-	unsigned int texID,
-	int xsize,
-	int ysize
-) {
-	UnitDefImage*& unitImage = unitDef->buildPic;
-
-	if (unitImage == nullptr) {
-		unitImage = &unitDefImages[unitDef->id];
-	} else {
-		unitImage->Free();
-	}
-
-	unitImage->textureID = texID;
-	unitImage->imageSizeX = xsize;
-	unitImage->imageSizeY = ysize;
-}
 
 void CUnitDefHandler::SetNoCost(bool value)
 {

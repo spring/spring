@@ -10,6 +10,7 @@
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawerState.hpp"
+#include "Rendering/UnitDefImage.h"
 #include "System/EventClient.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
@@ -170,6 +171,10 @@ public:
 	IUnitDrawerState* GetDrawerState(unsigned int idx) { return (                                     unitDrawerStates[idx]); }
 	IUnitDrawerState* SetDrawerState(unsigned int idx) { return (unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[idx]); }
 
+	void SetUnitDefImage(const UnitDef* unitDef, const std::string& texName);
+	void SetUnitDefImage(const UnitDef* unitDef, unsigned int texID, int xsize, int ysize);
+	unsigned int GetUnitDefImage(const UnitDef* unitDef);
+
 	const DrawModelFunc GetDrawModelFunc(unsigned int idx) const { return drawModelFuncs[idx]; }
 
 	bool DrawForward() const { return drawForward; }
@@ -288,6 +293,8 @@ private:
 	/// units that are only rendered as icons this frame
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 	std::vector<icon::CIconData*> unitIcons;
+
+	std::vector<UnitDefImage> unitDefImages;
 
 
 	// caches for ShowUnitBuildSquare

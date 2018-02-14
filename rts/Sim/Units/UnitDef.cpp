@@ -2,7 +2,6 @@
 
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
-#include "UnitDefImage.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
@@ -648,16 +647,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
 }
-
-
-UnitDef::~UnitDef()
-{
-	if (buildPic == nullptr)
-		return;
-
-	buildPic->Free();
-}
-
 
 
 void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
