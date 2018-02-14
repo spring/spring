@@ -119,9 +119,11 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
 
+#ifndef UNIT_TEST
 	for (Quad& quad: baseQuads) {
 		quad.Resize(teamHandler->ActiveAllyTeams());
 	}
+#endif
 }
 
 void CQuadField::Kill()
