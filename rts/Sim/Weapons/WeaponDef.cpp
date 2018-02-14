@@ -268,8 +268,7 @@ WeaponDef::WeaponDef()
 
 	damages.fromDef = true;
 
-	const LuaTable wdTable;
-	WeaponDefs.Load(this, wdTable);
+	WeaponDefs.Load(this, {});
 }
 
 WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
@@ -283,8 +282,11 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, projectileType(WEAPON_BASE_PROJECTILE)
 	, collisionFlags(0)
 {
-	WeaponDefs.Load(this, wdTable);
-	WeaponDefs.ReportUnknownTags(name, wdTable);
+	{
+		WeaponDefs.Load(this, wdTable);
+		WeaponDefs.ReportUnknownTags(name, wdTable);
+	}
+
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
@@ -296,7 +298,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		LOG_L(L_WARNING, "WeaponDef (%s) The \"isShield\" tag has been removed. Use the weaponType=\"Shield\" tag instead!", name.c_str());
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
-	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
+	shieldArmorType = damageArrayHandler.GetTypeFromName(shieldArmorTypeName);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
 	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
 
@@ -363,7 +365,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		dmgTable.GetMap(dmgs);
 
 		for (di = dmgs.cbegin(); di != dmgs.cend(); ++di) {
-			const int type = damageArrayHandler->GetTypeFromName(di->first);
+			const int type = damageArrayHandler.GetTypeFromName(di->first);
 			if (type != 0) {
 				damages.Set(type, std::max(0.0001f, di->second));
 			}

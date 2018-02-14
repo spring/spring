@@ -249,7 +249,7 @@ static int DamagesArray(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "paralyzeDamageTime", d.paralyzeDamageTime);
 
 	// damage values
-	const int typeCount = damageArrayHandler->GetNumTypes();
+	const int typeCount = damageArrayHandler.GetNumTypes();
 	for (int i = 0; i < typeCount; i++) {
 		lua_pushnumber(L, i);
 		lua_pushnumber(L, d.Get(i));

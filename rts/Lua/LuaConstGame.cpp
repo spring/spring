@@ -136,13 +136,12 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		lua_rawset(L, -3);
 	}
 
-	// needed for LuaIntro which also pushes ConstGame entries
-	// (but it probably doesn't need to know about armor-types)
-	if (damageArrayHandler != nullptr) {
+	{
 		lua_pushliteral(L, "armorTypes");
 		lua_newtable(L);
 
-		const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
+		// NB: empty for LuaIntro which also pushes ConstGame entries
+		const std::vector<std::string>& typeList = damageArrayHandler.GetTypeList();
 
 		for (size_t i = 0; i < typeList.size(); i++) {
 			// bidirectional map

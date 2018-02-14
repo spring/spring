@@ -1351,7 +1351,7 @@ bool CAICallback::GetValue(int id, void *data)
 	verify();
 	switch (id) {
 		case AIVAL_NUMDAMAGETYPES:{
-			*((int*)data) = damageArrayHandler->GetNumTypes();
+			*((int*)data) = damageArrayHandler.GetNumTypes();
 			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = readMap->GetMapChecksum();
