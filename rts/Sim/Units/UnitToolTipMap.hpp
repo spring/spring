@@ -12,20 +12,11 @@ public:
 		tooltips.reserve(256);
 	}
 
-	void Set(int id, const std::string& tip) { tooltips[id] = tip; }
-	const std::string& Get(int id) const {
-		const auto it = tooltips.find(id);
-
-		// unreachable
-		if (it == tooltips.end())
-			return dummy;
-
-		return (it->second);
-	}
+	void Set(int id, std::string&& tip) { tooltips[id] = std::move(tip); }
+	const std::string& Get(int id) { return tooltips[id]; }
 
 private:
 	spring::unordered_map<int, std::string> tooltips;
-	std::string dummy;
 };
 
 extern UnitToolTipMap unitToolTipMap;
