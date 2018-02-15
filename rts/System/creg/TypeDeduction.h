@@ -102,7 +102,7 @@ public:
 
 	void Serialize(ISerializer* s, void* instance)
 	{
-		T* array = (T*)instance;
+		T* array = (T*) instance;
 
 		for (int a = 0; a < N; a++) {
 			DeduceType<T>::Get()->Serialize(s, &array[a]);
@@ -119,7 +119,7 @@ struct DeduceType<T[ArraySize]> {
 
 
 
-// STL static array
+// STL static array type
 template<typename ArrayT>
 class stlStaticArrayType : public StaticArrayBaseType
 {
@@ -133,7 +133,7 @@ public:
 		ArrayT& array = *(ArrayT*) instance;
 
 		for (size_t a = 0; a < array.size(); a++) {
-			DeduceType<ArrayT>::Get()->Serialize(s, &array[a]);
+			DeduceType<ElemT>::Get()->Serialize(s, &array[a]);
 		}
 	}
 };
