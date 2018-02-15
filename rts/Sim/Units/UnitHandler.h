@@ -40,6 +40,7 @@ public:
 	unsigned int NumUnitsByTeam      (int teamNum               ) const { return (unitsByDefs[teamNum][        0].size()); }
 	unsigned int NumUnitsByTeamAndDef(int teamNum, int unitDefID) const { return (unitsByDefs[teamNum][unitDefID].size()); }
 	unsigned int MaxUnits() const { return maxUnits; }
+	unsigned int CalcMaxUnits() const;
 
 	float MaxUnitRadius() const { return maxUnitRadius; }
 
@@ -49,6 +50,8 @@ public:
 
 	void AddBuilderCAI(CBuilderCAI*);
 	void RemoveBuilderCAI(CBuilderCAI*);
+
+	void ChangeUnitTeam(CUnit* unit, const UnitDef* unitDef, int oldTeamNum, int newTeamNum);
 
 	// note: negative ID's are implicitly converted
 	CUnit* GetUnitUnsafe(unsigned int id) const { return units[id]; }
