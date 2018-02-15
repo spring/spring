@@ -90,21 +90,26 @@ struct DeduceType<T, typename std::enable_if<std::is_reference<T>::value>::type>
 	static std::unique_ptr<IType> Get() { return std::unique_ptr<IType>(new ObjectPointerType<typename std::remove_reference<T>::type>()); }
 };
 
+
+
+// C-style static array type
 template<typename T, int N>
 class StaticArrayType : public StaticArrayBaseType
 {
 public:
 	typedef T ArrayType[N];
 	StaticArrayType() : StaticArrayBaseType(DeduceType<T>::Get(), N * sizeof(T)) { }
+
 	void Serialize(ISerializer* s, void* instance)
 	{
 		T* array = (T*)instance;
-		for (int a = 0; a < N; a++)
+
+		for (int a = 0; a < N; a++) {
 			DeduceType<T>::Get()->Serialize(s, &array[a]);
+		}
 	}
 };
 
-// Static array type
 template<typename T, size_t ArraySize>
 struct DeduceType<T[ArraySize]> {
 	static std::unique_ptr<IType> Get() {
@@ -113,28 +118,61 @@ struct DeduceType<T[ArraySize]> {
 };
 
 
-template<typename T>
+
+// STL static array
+template<typename ArrayT>
+class stlStaticArrayType : public StaticArrayBaseType
+{
+public:
+	typedef typename ArrayT::value_type ElemT;
+
+	stlStaticArrayType() : StaticArrayBaseType(DeduceType<ElemT>::Get(), sizeof(ArrayT)) {}
+
+	void Serialize(ISerializer* s, void* instance)
+	{
+		ArrayT& array = *(ArrayT*) instance;
+
+		for (size_t a = 0; a < array.size(); a++) {
+			DeduceType<ArrayT>::Get()->Serialize(s, &array[a]);
+		}
+	}
+};
+
+template<typename ElemT, size_t ArraySize>
+struct DeduceType<std::array<ElemT, ArraySize>> {
+	static std::unique_ptr<IType> Get() {
+		return std::unique_ptr<IType>(new stlStaticArrayType< std::array<ElemT, ArraySize> >());
+	}
+};
+
+
+
+template<typename VectorT>
 class DynamicArrayType : public DynamicArrayBaseType
 {
 public:
-	typedef typename T::value_type ElemT;
+	typedef typename VectorT::value_type ElemT;
 
-	DynamicArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(T)) { }
+	DynamicArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(VectorT)) {}
 	~DynamicArrayType() {}
 
 	void Serialize(ISerializer* s, void* inst) {
-		T& ct = *(T*)inst;
+		VectorT& ct = *(VectorT*) inst;
+
 		if (s->IsWriting()) {
-			int size = (int)ct.size();
+			int size = (int) ct.size();
 			s->SerializeInt(&size, sizeof(int));
+
 			for (int a = 0; a < size; a++) {
 				DeduceType<ElemT>::Get()->Serialize(s, &ct[a]);
 			}
 		} else {
-			ct.clear();
 			int size;
 			s->SerializeInt(&size, sizeof(int));
+
+			ct.clear();
 			ct.resize(size);
+
 			for (int a = 0; a < size; a++) {
 				DeduceType<ElemT>::Get()->Serialize(s, &ct[a]);
 			}
@@ -143,11 +181,11 @@ public:
 };
 
 
-// Vector type (vector<T>)
-template<typename T>
-struct DeduceType<std::vector<T>> {
+// Vector type (vector<ElemT>)
+template<typename ElemT>
+struct DeduceType<std::vector<ElemT>> {
 	static std::unique_ptr<IType> Get() {
-		return std::unique_ptr<IType>(new DynamicArrayType<std::vector<T> >());
+		return std::unique_ptr<IType>(new DynamicArrayType< std::vector<ElemT> >());
 	}
 };
 
