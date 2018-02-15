@@ -22,7 +22,6 @@ rts/lib/7z                        7zip library
 rts/lib/assimp                    Open Asset Import Library (short name: Assimp)
 rts/lib/gml                       graphics MT assistance library
 rts/lib/headlessStubs             stub libraries for OpenGL, GLEW & SDL
-rts/lib/lobby                     library that allows communication with a lobby server (used by LuaUI's LuaLobby API)
 rts/lib/lua                       lua interpreter library
 rts/lib/md5                       MD5 & base64 en-/de-cription library (used by lobby library)
 rts/lib/minizip                   zip library
