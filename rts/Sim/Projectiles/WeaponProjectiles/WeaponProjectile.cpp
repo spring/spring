@@ -122,7 +122,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	}
 
 	if (ownerID != -1u && weaponNum != -1u) {
-		const CUnit* owner = unitHandler->GetUnit(ownerID);
+		const CUnit* owner = unitHandler.GetUnit(ownerID);
 
 		if (owner != nullptr && weaponNum < owner->weapons.size()) {
 			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
@@ -142,7 +142,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	}
 
 	// must happen after setting position and velocity
-	projectileHandler->AddProjectile(this);
+	projectileHandler.AddProjectile(this);
 	quadField.AddProjectile(this);
 
 	ASSERT_SYNCED(id);

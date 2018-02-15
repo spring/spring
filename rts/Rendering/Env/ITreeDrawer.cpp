@@ -70,8 +70,8 @@ float ITreeDrawer::DecrDrawDistance() { return (drawTreeDistance = Clamp(baseTre
 
 void ITreeDrawer::AddTrees()
 {
-	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
-		const CFeature* f = featureHandler->GetFeature(featureID);
+	for (const int featureID: featureHandler.GetActiveFeatureIDs()) {
+		const CFeature* f = featureHandler.GetFeature(featureID);
 		const FeatureDef* fd = f->def;
 
 		if (fd->drawType < DRAWTYPE_TREE)
@@ -91,7 +91,7 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 		// FeatureDrawer does not take care of this for trees, update the
 		// draw-positions here since FeatureCreated and FeatureMoved both
 		// call us
-		CFeature* f = featureHandler->GetFeature(treeID);
+		CFeature* f = featureHandler.GetFeature(treeID);
 
 		f->drawPos = f->pos;
 		f->drawMidPos = f->midPos;

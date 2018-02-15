@@ -112,7 +112,7 @@ void CUnitTracker::CleanTrackGroup()
 	deadUnitIDs.reserve(trackedUnitIDs.size());
 
 	for (const int unitID: trackedUnitIDs) {
-		if (unitHandler->GetUnitUnsafe(unitID) == nullptr)
+		if (unitHandler.GetUnitUnsafe(unitID) == nullptr)
 			deadUnitIDs.push_back(unitID);
 	}
 
@@ -163,7 +163,7 @@ CUnit* CUnitTracker::GetTrackUnit()
 		return nullptr;
 	}
 
-	return unitHandler->GetUnitUnsafe(trackUnit);
+	return unitHandler.GetUnitUnsafe(trackUnit);
 }
 
 
@@ -172,7 +172,7 @@ float3 CUnitTracker::CalcAveragePos() const
 	float3 p;
 
 	for (const int unitID: trackedUnitIDs) {
-		p += unitHandler->GetUnitUnsafe(unitID)->drawPos;
+		p += unitHandler.GetUnitUnsafe(unitID)->drawPos;
 	}
 
 	return (p / trackedUnitIDs.size());
@@ -185,7 +185,7 @@ float3 CUnitTracker::CalcExtentsPos() const
 	float3 maxPos(-1e9f, -1e9f, -1e9f);
 
 	for (const int unitID: trackedUnitIDs) {
-		const float3& p = unitHandler->GetUnitUnsafe(unitID)->drawPos;
+		const float3& p = unitHandler.GetUnitUnsafe(unitID)->drawPos;
 
 		minPos = float3::min(minPos, p);
 		maxPos = float3::max(maxPos, p);
@@ -206,7 +206,7 @@ void CUnitTracker::SetCam()
 		return;
 	}
 
-	if (lastFollowUnit != 0 && unitHandler->GetUnitUnsafe(lastFollowUnit) == 0) {
+	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == 0) {
 		timeOut = 1;
 		lastFollowUnit = 0;
 	}

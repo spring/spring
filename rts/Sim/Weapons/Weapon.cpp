@@ -1091,7 +1091,7 @@ void CWeapon::UpdateInterceptTarget()
 		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
 
 	for (const int projID: incomingProjectileIDs) {
-		CProjectile* p = projectileHandler->GetProjectileBySyncedID(projID);
+		CProjectile* p = projectileHandler.GetProjectileBySyncedID(projID);
 		CWeaponProjectile* wp = static_cast<CWeaponProjectile*>(p);
 
 		const float curInterceptTargetDistSq = aimFromPos.SqDistance(wp->pos);

@@ -74,7 +74,7 @@ void CFireProjectile::Update()
 	ttl--;
 	if (ttl > 0) {
 		const float partSat = (gs->frameNum & 1) ? 1.0f : 0.8f;
-		if (projectileHandler->GetParticleSaturation() < partSat) {
+		if (projectileHandler.GetParticleSaturation() < partSat) {
 			// unsynced code
 			SubParticle sub;
 			sub.age = 0;

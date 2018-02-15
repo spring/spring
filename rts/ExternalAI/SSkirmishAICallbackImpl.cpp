@@ -109,7 +109,7 @@ static bool isControlledByLocalPlayer(int skirmishAIId) {
 
 
 static const CUnit* getUnit(int unitId) {
-	return (unitHandler->GetUnit(unitId));
+	return (unitHandler.GetUnit(unitId));
 }
 
 static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
@@ -1187,7 +1187,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 			Command c;
 
 			// check if data is a known command
-			if (newCommand(commandData, commandTopic, unitHandler->MaxUnits(), &c)) {
+			if (newCommand(commandData, commandTopic, unitHandler.MaxUnits(), &c)) {
 				c.aiCommandId = commandId;
 
 				const SStopUnitCommand* cmd = static_cast<SStopUnitCommand*>(commandData);
@@ -3494,7 +3494,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getMax(int skirmishAIId) {
-	return unitHandler->MaxUnits();
+	return unitHandler.MaxUnits();
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
@@ -3946,7 +3946,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	return unitHandler->GetUnit(unitId)->commandAI->lastUserCommand;
+	return unitHandler.GetUnit(unitId)->commandAI->lastUserCommand;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
@@ -4025,7 +4025,7 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
-	for (const CUnit* u: unitHandler->GetActiveUnits()) {
+	for (const CUnit* u: unitHandler.GetActiveUnits()) {
 		if (u->team != teamId)
 			continue;
 
@@ -4250,7 +4250,7 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getCustomParams(
 EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+		const auto& activeFeatureIDs = featureHandler.GetActiveFeatureIDs();
 		const int featureIdsRealSize = activeFeatureIDs.size();
 
 		int featureIdsSize = featureIdsRealSize;
@@ -4261,7 +4261,7 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 			size_t f = 0;
 
 			for (auto it = activeFeatureIDs.cbegin(); it != activeFeatureIDs.cend() && f < featureIdsSize; ++it) {
-				const CFeature* feature = featureHandler->GetFeature(*it);
+				const CFeature* feature = featureHandler.GetFeature(*it);
 
 				assert(feature != nullptr);
 				featureIds[f++] = feature->id;
@@ -4308,7 +4308,7 @@ EXPORT(int) skirmishAiCallback_Feature_getDef(int skirmishAIId, int featureId) {
 	const FeatureDef* def = nullptr;
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		const CFeature* f = featureHandler->GetFeature(featureId);
+		const CFeature* f = featureHandler.GetFeature(featureId);
 
 		if (f != nullptr) {
 			def = f->def;
@@ -4322,7 +4322,7 @@ EXPORT(int) skirmishAiCallback_Feature_getDef(int skirmishAIId, int featureId) {
 
 EXPORT(float) skirmishAiCallback_Feature_getHealth(int skirmishAIId, int featureId) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		const CFeature* f = featureHandler->GetFeature(featureId);
+		const CFeature* f = featureHandler.GetFeature(featureId);
 		return (f != nullptr)? f->health: 0.0f;
 	}
 
@@ -4331,7 +4331,7 @@ EXPORT(float) skirmishAiCallback_Feature_getHealth(int skirmishAIId, int feature
 
 EXPORT(float) skirmishAiCallback_Feature_getReclaimLeft(int skirmishAIId, int featureId) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		const CFeature* f = featureHandler->GetFeature(featureId);
+		const CFeature* f = featureHandler.GetFeature(featureId);
 		return (f != nullptr)? f->reclaimLeft: 0.0f;
 	}
 
@@ -4342,7 +4342,7 @@ EXPORT(void) skirmishAiCallback_Feature_getPosition(int skirmishAIId, int featur
 	float3 pos;
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		const CFeature* f = featureHandler->GetFeature(featureId);
+		const CFeature* f = featureHandler.GetFeature(featureId);
 
 		if (f != nullptr) {
 			pos = f->pos;
@@ -4355,7 +4355,7 @@ EXPORT(void) skirmishAiCallback_Feature_getPosition(int skirmishAIId, int featur
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getRulesParamFloat(int skirmishAIId, int featureId, const char* rulesParamName, float defaultValue) {
-	const CFeature* feature = featureHandler->GetFeature(featureId);
+	const CFeature* feature = featureHandler.GetFeature(featureId);
 
 	if (feature == nullptr)
 		return defaultValue;
@@ -4364,7 +4364,7 @@ EXPORT(float) skirmishAiCallback_Feature_getRulesParamFloat(int skirmishAIId, in
 }
 
 EXPORT(const char*) skirmishAiCallback_Feature_getRulesParamString(int skirmishAIId, int featureId, const char* rulesParamName, const char* defaultValue) {
-	const CFeature* feature = featureHandler->GetFeature(featureId);
+	const CFeature* feature = featureHandler.GetFeature(featureId);
 
 	if (feature == nullptr)
 		return defaultValue;

@@ -42,8 +42,8 @@ class CFeatureHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler();
-	~CFeatureHandler();
+	void Init();
+	void Kill();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params);
@@ -86,7 +86,7 @@ private:
 	std::vector<CFeature*> updateFeatures;
 };
 
-extern CFeatureHandler* featureHandler;
+extern CFeatureHandler featureHandler;
 
 
 #endif // _FEATURE_HANDLER_H

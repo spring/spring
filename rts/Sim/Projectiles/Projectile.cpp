@@ -144,17 +144,17 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		SetPosition(pos + offset);
 		SetVelocityAndSpeed(speed);
 	}
-	if (!weapon && !piece) {
-		// NOTE:
-		//   new CWeapon- and CPieceProjectile*'s add themselves
-		//   to CProjectileHandler (other code needs to be able
-		//   to dyna-cast CProjectile*'s to those derived types,
-		//   and adding them here would throw away too much RTTI)
-		projectileHandler->AddProjectile(this);
-	}
-	if (synced && !weapon) {
+
+	// NOTE:
+	//   new CWeapon- and CPieceProjectile*'s add themselves
+	//   to CProjectileHandler (other code needs to be able
+	//   to dyna-cast CProjectile*'s to those derived types,
+	//   and adding them here would throw away too much RTTI)
+	if (!weapon && !piece)
+		projectileHandler.AddProjectile(this);
+
+	if (synced && !weapon)
 		quadField.AddProjectile(this);
-	}
 }
 
 
@@ -163,8 +163,8 @@ void CProjectile::Update()
 	if (luaMoveCtrl)
 		return;
 
-	SetPosition(pos + speed);
 	SetVelocityAndSpeed(speed + (UpVector * mygravity));
+	SetPosition(pos + speed);
 }
 
 
@@ -186,7 +186,7 @@ CUnit* CProjectile::owner() const {
 	//   this death dependency optimization using "ownerID" is logically flawed:
 	//   because ID's are reused it could return a unit that is not the original
 	//   owner (unlikely however unless ID's get recycled very rapidly)
-	return (unitHandler->GetUnit(ownerID));
+	return (unitHandler.GetUnit(ownerID));
 }
 
 

@@ -5,10 +5,11 @@
 
 #include <vector>
 
-#include "UnitDef.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 #include "System/creg/STL_Map.h"
 
+struct UnitDef;
 class CUnit;
 class CBuilderCAI;
 
@@ -17,8 +18,8 @@ class CUnitHandler
 	CR_DECLARE_STRUCT(CUnitHandler)
 
 public:
-	CUnitHandler();
-	~CUnitHandler();
+	void Init();
+	void Kill();
 
 	void DeleteScripts();
 
@@ -82,11 +83,11 @@ private:
 private:
 	SimObjectIDPool idPool;
 
-	std::vector<CUnit*> units;                                 ///< used to get units from IDs (0 if not created)
-	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
+	std::vector<CUnit*> units;                                           ///< used to get units from IDs (0 if not created)
+	std::array<std::vector<std::vector<CUnit*>>, MAX_TEAMS> unitsByDefs; ///< units sorted by team and unitDef
 
-	std::vector<CUnit*> activeUnits;                           ///< used to get all active units
-	std::vector<CUnit*> unitsToBeRemoved;                      ///< units that will be removed at start of next update
+	std::vector<CUnit*> activeUnits;                                     ///< used to get all active units
+	std::vector<CUnit*> unitsToBeRemoved;                                ///< units that will be removed at start of next update
 
 	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
@@ -106,6 +107,6 @@ private:
 	bool inUpdateCall = false;
 };
 
-extern CUnitHandler* unitHandler;
+extern CUnitHandler unitHandler;
 
 #endif /* UNITHANDLER_H */

@@ -19,25 +19,16 @@
 
 #include <vector>
 
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler.MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
 CUnit* CAICheats::GetUnit(int unitId) const
 {
 	if (CHECK_UNITID(unitId))
-		return unitHandler->GetUnit(unitId);
+		return unitHandler.GetUnit(unitId);
 
 	return nullptr;
 }
-
-
-CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
-{
-}
-
-CAICheats::~CAICheats()
-{}
-
 
 
 bool CAICheats::OnlyPassiveCheats()
@@ -174,7 +165,7 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -187,7 +178,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -422,7 +413,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
+				const CUnit* srcUnit = unitHandler.GetUnit(cmdData->srcUID);
 
 				CUnit* hitUnit = nullptr;
 				CFeature* hitFeature = nullptr;
@@ -441,7 +432,7 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
+				const CUnit* srcUnit = unitHandler.GetUnit(cmdData->srcUID);
 
 				CUnit* hitUnit = nullptr;
 				CFeature* hitFeature = nullptr;

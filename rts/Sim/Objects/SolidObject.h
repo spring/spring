@@ -381,7 +381,7 @@ public:
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }
 	// returns the object (command reference) id of the object currently being deleted,
-	// for units this equals unit->id, and for features feature->id + unitHandler->MaxUnits()
+	// for units this equals unit->id, and for features feature->id + unitHandler.MaxUnits()
 	static int GetDeletingRefID() { return deletingRefID; }
 };
 

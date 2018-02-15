@@ -644,7 +644,7 @@ void CGame::ClientReadNet()
 
 					for (uint32_t a = 0; a < numUnitIDs; ++a) {
 						int16_t unitID; pckt >> unitID;
-						const CUnit* unit = unitHandler->GetUnit(unitID);
+						const CUnit* unit = unitHandler.GetUnit(unitID);
 
 						if (unit == nullptr) {
 							// unit was destroyed in simulation (without its ID being recycled)
@@ -680,7 +680,7 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					pckt >> unitid;
-					if (unitid < 0 || static_cast<size_t>(unitid) >= unitHandler->MaxUnits())
+					if (unitid < 0 || static_cast<size_t>(unitid) >= unitHandler.MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
 					int32_t cmdID;
@@ -848,7 +848,7 @@ void CGame::ClientReadNet()
 						int16_t unitID;
 						pckt >> unitID;
 
-						CUnit* u = unitHandler->GetUnit(unitID);
+						CUnit* u = unitHandler.GetUnit(unitID);
 
 						if (u == nullptr)
 							throw netcode::UnpackPacketException("Invalid unit ID");
@@ -977,7 +977,7 @@ void CGame::ClientReadNet()
 					std::vector<int32_t >& netSelUnits = selectedUnitsHandler.netSelected[playerNum];
 
 					for (const int32_t unitID: netSelUnits) {
-						CUnit* unit = unitHandler->GetUnit(unitID);
+						CUnit* unit = unitHandler.GetUnit(unitID);
 
 						if (unit == nullptr)
 							continue;
@@ -1307,7 +1307,7 @@ void CGame::ClientReadNet()
 
 					// stop attacks against former foe
 					if (allied) {
-						for (CUnit* u: unitHandler->GetActiveUnits()) {
+						for (CUnit* u: unitHandler.GetActiveUnits()) {
 							if (teamHandler->Ally(u->allyteam, whichAllyTeam)) {
 								u->StopAttackingAllyTeam(whichAllyTeam);
 							}

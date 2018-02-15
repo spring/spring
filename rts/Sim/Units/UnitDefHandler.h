@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "UnitDef.h"
 #include "Sim/Misc/CommonDefHandler.h"
 #include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"

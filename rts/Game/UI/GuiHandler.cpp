@@ -1153,7 +1153,7 @@ bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 		return false;
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 
 		// mobile kamikaze can always move into range
 		//FIXME do a range check in case of immobile kamikaze (-> mines)
@@ -2097,7 +2097,7 @@ inline Command CheckCommand(Command c) {
 		return c;
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 		CCommandAI* cai = u->commandAI;
 
 		if (cai->AllowedCommand(c, false))
@@ -2316,7 +2316,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
-					c.PushParam(unitHandler->MaxUnits() + feature->id);
+					c.PushParam(unitHandler.MaxUnits() + feature->id);
 				} else if (unit && commands[tempInCommand].type != CMDTYPE_ICON_AREA) { // clicked on unit
 					if (c.GetID() == CMD_RESURRECT)
 						return defaultRet; // cannot resurrect units!
@@ -2420,7 +2420,7 @@ static bool WouldCancelAnyQueued(const BuildInfo& b)
 	const Command c = b.CreateCommand();
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 
 		if (u->commandAI->WillCancelQueued(c))
 			return true;
@@ -3692,7 +3692,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	if ((size_t(inCommand) < commands.size()) && (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{
 			// draw build distance for all immobile builders during build commands
-			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+			for (const auto bi: unitHandler.GetBuilderCAIs()) {
 				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 				const UnitDef* builderDef = builder->unitDef;
@@ -3782,7 +3782,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							const Command c = bi.CreateCommand();
 
 							for (const int unitID: selectedUnitsHandler.selectedUnits) {
-								const CUnit* su = unitHandler->GetUnit(unitID);
+								const CUnit* su = unitHandler.GetUnit(unitID);
 								const CCommandAI* cai = su->commandAI;
 
 								for (const Command& cmd: cai->GetOverlapQueued(c)) {
@@ -3841,7 +3841,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	if ((playerAttackCmd || defaultAttackCmd) && drawWeaponRanges) {
 		for (const int unitID: selectedUnitsHandler.selectedUnits) {
-			const CUnit* unit = unitHandler->GetUnit(unitID);
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == pointedAt)
 				continue;
@@ -3959,7 +3959,7 @@ void CGuiHandler::DrawCentroidCursor()
 	float3 pos;
 
 	for (const int unitID: selUnits) {
-		pos += (unitHandler->GetUnit(unitID))->midPos;
+		pos += (unitHandler.GetUnit(unitID))->midPos;
 	}
 	pos /= (float)selUnits.size();
 

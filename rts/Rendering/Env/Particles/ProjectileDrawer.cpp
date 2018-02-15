@@ -564,7 +564,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
-	const FlyingPieceContainer& container = projectileHandler->flyingPieces[modelType];
+	const FlyingPieceContainer& container = projectileHandler.flyingPieces[modelType];
 
 	if (container.empty())
 		return;
@@ -788,7 +788,8 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 
 void CProjectileDrawer::DrawGroundFlashes()
 {
-	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
+	const GroundFlashContainer& gfc = projectileHandler.groundFlashes;
+
 	if (gfc.empty())
 		return;
 

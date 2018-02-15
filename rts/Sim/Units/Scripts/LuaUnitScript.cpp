@@ -218,7 +218,7 @@ CLuaUnitScript::~CLuaUnitScript()
 
 void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 {
-	for (CUnit* u: unitHandler->GetActiveUnits()) {
+	for (CUnit* u: unitHandler.GetActiveUnits()) {
 		CUnitScript* script = u->script;
 		CLuaUnitScript* luaScript = dynamic_cast<CLuaUnitScript*>(script);
 
@@ -954,7 +954,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	if (!lua_israwnumber(L, index))
 		luaL_error(L, "%s(): Bad unitID", caller);
 
-	CUnit* u = unitHandler->GetUnit(lua_toint(L, index));
+	CUnit* u = unitHandler.GetUnit(lua_toint(L, index));
 
 	if (u == nullptr)
 		luaL_error(L, "%s(): Bad unitID: %d", caller, lua_toint(L, index));

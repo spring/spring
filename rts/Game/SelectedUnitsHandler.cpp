@@ -82,7 +82,7 @@ bool CSelectedUnitsHandler::IsUnitSelected(const CUnit* unit) const
 
 bool CSelectedUnitsHandler::IsUnitSelected(const int unitID) const
 {
-	return (IsUnitSelected(unitHandler->GetUnit(unitID)));
+	return (IsUnitSelected(unitHandler.GetUnit(unitID)));
 }
 
 
@@ -105,7 +105,7 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	std::vector<SCommandDescription> commands;
 
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 		const CCommandAI* cai = u->commandAI;
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
@@ -130,7 +130,7 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 	// load the first set (separating build and non-build commands)
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 		const CCommandAI* cai = u->commandAI;
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
@@ -154,7 +154,7 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 	// load the second set (all those that have not already been included)
 	for (const int unitID: selectedUnits) {
-		const CUnit* u = unitHandler->GetUnit(unitID);
+		const CUnit* u = unitHandler.GetUnit(unitID);
 		const CCommandAI* cai = u->commandAI;
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
@@ -203,7 +203,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 	if (cmd_id == CMD_GROUPCLEAR) {
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			CUnit* u = unitHandler.GetUnit(unitID);
 
 			if (u->group != nullptr) {
 				u->SetGroup(nullptr);
@@ -214,7 +214,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 	}
 
 	if (cmd_id == CMD_GROUPSELECT) {
-		SelectGroup(unitHandler->GetUnit(*selectedUnits.begin())->group->id);
+		SelectGroup(unitHandler.GetUnit(*selectedUnits.begin())->group->id);
 		return;
 	}
 
@@ -222,7 +222,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 		CGroup* group = nullptr;
 
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			CUnit* u = unitHandler.GetUnit(unitID);
 
 			if (u->group != nullptr) {
 				group = u->group;
@@ -232,7 +232,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 		}
 		if (group != nullptr) {
 			for (const int unitID: selectedUnits) {
-				CUnit* u = unitHandler->GetUnit(unitID);
+				CUnit* u = unitHandler.GetUnit(unitID);
 
 				if (u == nullptr) {
 					assert(false);
@@ -275,7 +275,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 	SendCommand(c);
 
 	if (!selectedUnits.empty()) {
-		const CUnit* u = unitHandler->GetUnit(*selectedUnits.begin());
+		const CUnit* u = unitHandler.GetUnit(*selectedUnits.begin());
 		const UnitDef* ud = u->unitDef;
 		Channels::UnitReply->PlayRandomSample(ud->sounds.ok, u);
 	}
@@ -301,7 +301,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 	}
 
 	for (; team <= lastTeam; team++) {
-		for (CUnit* u: unitHandler->GetUnitsByTeam(team)) {
+		for (CUnit* u: unitHandler.GetUnitsByTeam(team)) {
 			const float4 vec(u->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) >= 0.0f)
@@ -363,7 +363,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		}
 
 		for (; team <= lastTeam; team++) {
-			for (CUnit* u: unitHandler->GetUnitsByTeam(team)) {
+			for (CUnit* u: unitHandler.GetUnitsByTeam(team)) {
 				if (u->unitDef->id == unit->unitDef->id) {
 					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((u)->midPos)) {
 						AddUnit(u);
@@ -416,7 +416,7 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 void CSelectedUnitsHandler::ClearSelected()
 {
 	for (const int unitID: selectedUnits) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 
 		// not possible unless ::RemoveUnit is not called when it should
 		if (u == nullptr) {
@@ -442,7 +442,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 	CGroup* group = grouphandlers[gu->myTeam]->groups[num];
 
 	for (const int unitID: group->units) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 
 		if (!u->noSelect) {
 			u->isSelected = true;
@@ -470,10 +470,10 @@ void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 			if (endPtr == startPtr)
 				continue; // bad number
 
-			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits()))
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler.MaxUnits()))
 				continue; // bad index
 
-			CUnit* unit = unitHandler->GetUnit(unitIndex);
+			CUnit* unit = unitHandler.GetUnit(unitIndex);
 			if (unit == nullptr)
 				continue;
 
@@ -500,7 +500,7 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 		ClearSelected();
 
 		for (const int unitID: unitIDs) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;
@@ -516,26 +516,26 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 		unitIDs.clear();
 
 		for (const int unitID: selectedUnits) {
-			const CUnit* u = unitHandler->GetUnit(unitID);
+			const CUnit* u = unitHandler.GetUnit(unitID);
 			unitIDs.insert(u->id);
 		}
 
 		ClearSelected();
-		AddUnit(unitHandler->GetUnit(lastID = *unitIDs.begin()));
+		AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
 		return;
 	}
 
 	// clean the list
 	spring::unordered_set<int> tmpSet;
 	for (const int unitID: unitIDs) {
-		if (unitHandler->GetUnit(unitID) == nullptr)
+		if (unitHandler.GetUnit(unitID) == nullptr)
 			continue;
 		tmpSet.insert(unitID);
 	}
 
 	unitIDs = std::move(tmpSet);
 
-	if ((lastID >= 0) && (unitHandler->GetUnit(lastID) == nullptr))
+	if ((lastID >= 0) && (unitHandler.GetUnit(lastID) == nullptr))
 		lastID = -1;
 
 	// selectedUnits size is 0 or 1
@@ -547,16 +547,16 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 	auto fit = unitIDs.find(lastID);
 
 	if (fit == unitIDs.end()) {
-		AddUnit(unitHandler->GetUnit(lastID = *unitIDs.begin()));
+		AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
 		return;
 	}
 
 	if ((++fit) != unitIDs.end()) {
-		AddUnit(unitHandler->GetUnit(lastID = *fit));
+		AddUnit(unitHandler.GetUnit(lastID = *fit));
 		return;
 	}
 
-	AddUnit(unitHandler->GetUnit(lastID = *unitIDs.begin()));
+	AddUnit(unitHandler.GetUnit(lastID = *unitIDs.begin()));
 }
 
 
@@ -596,7 +596,7 @@ void CSelectedUnitsHandler::Draw()
 		}
 
 		for (const int unitID: *unitSet) {
-			const CUnit* unit = unitHandler->GetUnit(unitID);
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 			const MoveDef* moveDef = unit->moveDef;
 
 			if (unit->isIcon)
@@ -661,7 +661,7 @@ void CSelectedUnitsHandler::Draw()
 		// draw queued build sites if a GUI build-icon has been
 		// clicked or whenever the shift key is being held down
 		if (!selectedUnits.empty() && (shiftPressed || buildQueued)) {
-			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+			for (const auto bi: unitHandler.GetBuilderCAIs()) {
 				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 
@@ -721,7 +721,7 @@ void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 
 void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
 {
-	CUnit* unit = unitHandler->GetUnit(unitid);
+	CUnit* unit = unitHandler.GetUnit(unitid);
 	if (unit == nullptr)
 		return;
 
@@ -835,11 +835,11 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		targetIsEnemy = !teamHandler->Ally(gu->myAllyTeam, targetUnit->allyteam);
 
 	// find the best leader to pick the command
-	const CUnit* leaderUnit = unitHandler->GetUnit(*selectedUnits.begin());
+	const CUnit* leaderUnit = unitHandler.GetUnit(*selectedUnits.begin());
 	const UnitDef* leaderDef = leaderUnit->unitDef;
 
 	for (const int unitID: selectedUnits) {
-		const CUnit* testUnit = unitHandler->GetUnit(unitID);
+		const CUnit* testUnit = unitHandler.GetUnit(unitID);
 		const UnitDef* testDef = testUnit->unitDef;
 
 		if (testDef == leaderDef)
@@ -888,11 +888,11 @@ void CSelectedUnitsHandler::DrawCommands()
 		const auto& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 
 		for (const int unitID: groupUnits) {
-			commandDrawer->Draw((unitHandler->GetUnit(unitID))->commandAI);
+			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI);
 		}
 	} else {
 		for (const int unitID: selectedUnits) {
-			commandDrawer->Draw((unitHandler->GetUnit(unitID))->commandAI);
+			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI);
 		}
 	}
 
@@ -918,7 +918,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		if (selectedUnits.empty())
 			return s;
 
-		const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
+		const CUnit* unit = unitHandler.GetUnit(*selectedUnits.begin());
 		const CTeam* team = nullptr;
 
 		// show the player name instead of unit name if it has FBI tag showPlayerName
@@ -942,7 +942,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		SUnitStats stats;
 
 		for (const int unitID: selectedUnits) {
-			const CUnit* unit = unitHandler->GetUnit(unitID);
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 			stats.AddUnit(unit, false);
 
 			if (ctrlTeam == NO_TEAM) {
@@ -971,7 +971,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
 	for (const int unitID: selectedUnits) {
-		CUnit* u = unitHandler->GetUnit(unitID);
+		CUnit* u = unitHandler.GetUnit(unitID);
 		CCommandAI* c = u->commandAI;
 		c->lastSelectedCommandPage = page;
 	}

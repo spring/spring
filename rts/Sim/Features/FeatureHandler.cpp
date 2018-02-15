@@ -29,24 +29,33 @@ CR_REG_METADATA(CFeatureHandler, (
 
 FeatureMemPool featureMemPool;
 
-CFeatureHandler* featureHandler = nullptr;
+CFeatureHandler featureHandler;
 
 
-CFeatureHandler::CFeatureHandler() {
+void CFeatureHandler::Init() {
 	features.resize(MAX_FEATURES, nullptr);
 	activeFeatureIDs.reserve(MAX_FEATURES);
 
 	featureMemPool.reserve(128);
-	idPool.Expand(0, features.size());
+
+	if (idPool.IsEmpty())
+		idPool.Expand(0, features.size());
 }
 
-CFeatureHandler::~CFeatureHandler() {
+void CFeatureHandler::Kill() {
 	for (const int featureID: activeFeatureIDs) {
 		featureMemPool.free(features[featureID]);
 	}
 
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	featureMemPool.clear();
+	// when reloading, do not expand pool again (but keep current mappings)
+	idPool.Clear();
+
+	spring::clear_unordered_set(activeFeatureIDs);
+	deletedFeatureIDs.clear();
+	features.clear();
+	updateFeatures.clear();
 }
 
 

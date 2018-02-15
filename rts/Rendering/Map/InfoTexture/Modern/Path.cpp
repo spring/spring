@@ -100,7 +100,7 @@ const MoveDef* CPathTexture::GetSelectedMoveDef()
 		return nullptr;
 
 	const auto iter = unitSet.begin();
-	const CUnit* unit = unitHandler->GetUnit(*iter);
+	const CUnit* unit = unitHandler.GetUnit(*iter);
 	return unit->moveDef;
 }
 

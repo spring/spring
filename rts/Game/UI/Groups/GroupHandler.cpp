@@ -98,7 +98,7 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 			group->ClearUnits();
 
 		for (const int unitID: selectedUnitsHandler.selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			CUnit* u = unitHandler.GetUnit(unitID);
 
 			if (u == nullptr) {
 				assert(false);
@@ -112,14 +112,14 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
 		for (const int unitID: group->units) {
-			selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
+			selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
 		}
 		return true;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
 		for (const int unitID: group->units) {
-			selectedUnitsHandler.RemoveUnit(unitHandler->GetUnit(unitID));
+			selectedUnitsHandler.RemoveUnit(unitHandler.GetUnit(unitID));
 		}
 		return true;
 	}
@@ -128,7 +128,7 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 		for (const int unitID: group->units) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (selUnits.find(unitID) == selUnits.end()) {
 				selectedUnitsHandler.AddUnit(unit);

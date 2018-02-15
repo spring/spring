@@ -262,7 +262,7 @@ void CUnitDrawer::Init() {
 	}
 
 	unitsByIcon.reserve(unitDefHandler->NumUnitDefs());
-	unitIcons.resize(unitHandler->MaxUnits(), nullptr);
+	unitIcons.resize(unitHandler.MaxUnits(), nullptr);
 
 	unitDefImages.clear();
 	unitDefImages.resize(unitDefHandler->NumUnitDefs() + 1);

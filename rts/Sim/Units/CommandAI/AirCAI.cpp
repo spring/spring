@@ -419,12 +419,19 @@ void CAirCAI::ExecuteAttack(Command& c)
 		targetAge = 0;
 
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler.GetUnit(c.params[0]);
 
-			if (targetUnit == NULL) { StopMoveAndFinishCommand(); return; }
-			if (targetUnit == owner) { StopMoveAndFinishCommand(); return; }
-			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
-				StopMoveAndFinishCommand(); return;
+			if (targetUnit == nullptr) {
+				StopMoveAndFinishCommand();
+				return;
+			}
+			if (targetUnit == owner) {
+				StopMoveAndFinishCommand();
+				return;
+			}
+			if (targetUnit->GetTransporter() != nullptr && !modInfo.targetableTransportedUnits) {
+				StopMoveAndFinishCommand();
+				return;
 			}
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
@@ -478,11 +485,20 @@ void CAirCAI::ExecuteGuard(Command& c)
 {
 	assert(owner->unitDef->canGuard);
 
-	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
+	const CUnit* guardee = unitHandler.GetUnit(c.params[0]);
 
-	if (guardee == NULL) { StopMoveAndFinishCommand(); return; }
-	if (UpdateTargetLostTimer(guardee->id) == 0) { StopMoveAndFinishCommand(); return; }
-	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { StopMoveAndFinishCommand(); return; }
+	if (guardee == nullptr) {
+		StopMoveAndFinishCommand();
+		return;
+	}
+	if (UpdateTargetLostTimer(guardee->id) == 0) {
+		StopMoveAndFinishCommand();
+		return;
+	}
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) {
+		StopMoveAndFinishCommand();
+		return;
+	}
 
 	const bool pushAttackCommand =
 		(owner->maxRange > 0.0f) &&
@@ -555,9 +571,9 @@ void CAirCAI::BuggerOff(const float3& pos, float radius)
 bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 {
 	assert(ac.GetID() == CMD_AREA_ATTACK);
-	if (ac.GetID() != CMD_AREA_ATTACK) {
+
+	if (ac.GetID() != CMD_AREA_ATTACK)
 		return false;
-	}
 
 	const float3& pos = ac.GetPos(0);
 	const float radius = ac.params[3];
@@ -576,7 +592,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		const unsigned int unitIdx = std::min<int>(gsRNG.NextFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
-		CUnit* targetUnit = unitHandler->GetUnitUnsafe(unitID);
+		CUnit* targetUnit = unitHandler.GetUnitUnsafe(unitID);
 
 		SetOrderTarget(targetUnit);
 		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);

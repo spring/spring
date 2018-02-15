@@ -460,9 +460,9 @@ void CCommandAI::AddCommandDependency(const Command& c) {
 
 	const int refId = c.params[cpos];
 
-	CObject* ref = (refId < unitHandler->MaxUnits()) ?
-		static_cast<CObject*>(unitHandler->GetUnit(refId)) :
-		static_cast<CObject*>(featureHandler->GetFeature(refId - unitHandler->MaxUnits()));
+	CObject* ref = (refId < unitHandler.MaxUnits()) ?
+		static_cast<CObject*>(unitHandler.GetUnit(refId)) :
+		static_cast<CObject*>(featureHandler.GetFeature(refId - unitHandler.MaxUnits()));
 
 	if (ref == nullptr)
 		return;
@@ -488,7 +488,7 @@ static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 	if (c.IsAreaCommand())
 		return nullptr;
 
-	return (unitHandler->GetUnit(c.params[idx]));
+	return (unitHandler.GetUnit(c.params[idx]));
 }
 
 static inline bool IsCommandInMap(const Command& c)
@@ -687,8 +687,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			} else {
 				const unsigned int reclaimeeFeatureID = (!npOrder)? c.GetParam(0): 0;
 
-				if (reclaimeeFeatureID >= unitHandler->MaxUnits()) {
-					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - unitHandler->MaxUnits());
+				if (reclaimeeFeatureID >= unitHandler.MaxUnits()) {
+					reclaimeeFeature = featureHandler.GetFeature(reclaimeeFeatureID - unitHandler.MaxUnits());
 
 					if (reclaimeeFeature != nullptr && !reclaimeeFeature->def->reclaimable)
 						return false;
@@ -1393,10 +1393,10 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, const CComma
 
 int CCommandAI::UpdateTargetLostTimer(int targetUnitID)
 {
-	const CUnit* targetUnit = unitHandler->GetUnit(targetUnitID);
-	const UnitDef* targetUnitDef = (targetUnit != NULL)? targetUnit->unitDef: NULL;
+	const CUnit* targetUnit = unitHandler.GetUnit(targetUnitID);
+	const UnitDef* targetUnitDef = (targetUnit != nullptr)? targetUnit->unitDef: nullptr;
 
-	if (targetUnit == NULL)
+	if (targetUnit == nullptr)
 		return (targetLostTimer = 0);
 
 	if (targetUnitDef->IsImmobileUnit())
@@ -1425,12 +1425,19 @@ void CCommandAI::ExecuteAttack(Command& c)
 		}
 	} else {
 		if (c.params.size() == 1) {
-			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
+			CUnit* targetUnit = unitHandler.GetUnit(c.params[0]);
 
-			if (targetUnit == NULL) { FinishCommand(); return; }
-			if (targetUnit == owner) { FinishCommand(); return; }
-			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
-				FinishCommand(); return;
+			if (targetUnit == nullptr) {
+				FinishCommand();
+				return;
+			}
+			if (targetUnit == owner) {
+				FinishCommand();
+				return;
+			}
+			if (targetUnit->GetTransporter() != nullptr && !modInfo.targetableTransportedUnits) {
+				FinishCommand();
+				return;
 			}
 
 			SetOrderTarget(targetUnit);
@@ -1777,7 +1784,7 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 		if (c.GetID() != CMD_FIGHT && c.GetID() != CMD_ATTACK)
 			continue;
 
-		const CUnit* target = unitHandler->GetUnit(c.params[0]);
+		const CUnit* target = unitHandler.GetUnit(c.params[0]);
 
 		if (target == nullptr)
 			continue;

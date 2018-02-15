@@ -65,10 +65,10 @@
 
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler.MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 // With some hacking you can raise an abort (assert) instead of ignoring the id,
-//#define CHECK_UNITID(id) (assert(id > 0 && id < unitHandler->MaxUnits()), true)
+//#define CHECK_UNITID(id) (assert(id > 0 && id < unitHandler.MaxUnits()), true)
 // ...or disable the check altogether for release.
 //#define CHECK_UNITID(id) true
 
@@ -78,7 +78,7 @@ CUnit* CAICallback::GetUnit(int unitId) const
 	CUnit* unit = nullptr;
 
 	if (CHECK_UNITID(unitId))
-		unit = unitHandler->GetUnit(unitId);
+		unit = unitHandler.GetUnit(unitId);
 
 	return unit;
 }
@@ -88,7 +88,7 @@ CUnit* CAICallback::GetMyTeamUnit(int unitId) const
 	CUnit* unit = nullptr;
 
 	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = unitHandler->GetUnit(unitId);
+		CUnit* unitTmp = unitHandler.GetUnit(unitId);
 		if (unitTmp != nullptr && (unitTmp->team == team)) {
 			unit = unitTmp;
 		}
@@ -102,7 +102,7 @@ CUnit* CAICallback::GetInSensorRangeUnit(int unitId, unsigned short losFlags) co
 	CUnit* unit = nullptr;
 
 	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = unitHandler->GetUnit(unitId);
+		CUnit* unitTmp = unitHandler.GetUnit(unitId);
 		// Skip in-sensor-range test if the unit is allied with our team.
 		// This prevents errors where an allied unit is starting to build,
 		// but is not yet (technically) in LOS, because LOS was not yet updated,
@@ -376,7 +376,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 	if (noMessages)
 		return -2;
 
-	const CUnit * unit = unitHandler->GetUnit(unitId);
+	const CUnit * unit = unitHandler.GetUnit(unitId);
 
 	if (unit == nullptr)
 		return -3;
@@ -447,7 +447,7 @@ float CAICallback::GetUnitHealth(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return health;
@@ -477,7 +477,7 @@ float CAICallback::GetUnitMaxHealth(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return maxHealth;
@@ -506,7 +506,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return speed;
@@ -534,7 +534,7 @@ float CAICallback::GetUnitPower(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return power;
@@ -574,7 +574,7 @@ float CAICallback::GetUnitMaxRange(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return maxRange;
@@ -602,7 +602,7 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 
 		if (unit == nullptr)
 			return def;
@@ -872,14 +872,14 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemyAndInLos);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
 
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemyAndInLosOrRadar);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemyAndInLosOrRadar);
 }
 
 int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
@@ -897,7 +897,7 @@ int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsFriendly);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsFriendly);
 }
 
 int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
@@ -915,7 +915,7 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
+	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
 }
 
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -1225,11 +1225,11 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs)
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	// non-spatial query
-	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
+	for (const int featureID: featureHandler.GetActiveFeatureIDs()) {
 		if (numFeatureIDs >= maxFeatureIDs)
 			break;
 
-		const CFeature* f = featureHandler->GetFeature(featureID);
+		const CFeature* f = featureHandler.GetFeature(featureID);
 
 		assert(f != nullptr);
 
@@ -1279,7 +1279,7 @@ const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 	verify();
 
 	const FeatureDef* featureDef = nullptr;
-	const CFeature* f = featureHandler->GetFeature(featureId);
+	const CFeature* f = featureHandler.GetFeature(featureId);
 
 	if (f != nullptr && f->IsInLosForAllyTeam(teamHandler->AllyTeam(team)))
 		featureDef = f->def;
@@ -1294,56 +1294,53 @@ const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 
 float CAICallback::GetFeatureHealth(int featureId)
 {
-	float health = 0.0f;
-
 	verify();
 
-	const CFeature* f = featureHandler->GetFeature(featureId);
+	const CFeature* f = featureHandler.GetFeature(featureId);
 
-	if (f) {
-		const int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			health = f->health;
-		}
-	}
+	if (f == nullptr)
+		return 0.0f;
 
-	return health;
+	const int allyteam = teamHandler->AllyTeam(team);
+
+	if (f->IsInLosForAllyTeam(allyteam))
+		return f->health;
+
+	return 0.0f;
 }
 
 float CAICallback::GetFeatureReclaimLeft(int featureId)
 {
-	float reclaimLeft = 0.0f;
-
 	verify();
 
-	const CFeature* f = featureHandler->GetFeature(featureId);
+	const CFeature* f = featureHandler.GetFeature(featureId);
 
-	if (f) {
-		const int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			return f->reclaimLeft;
-		}
-	}
+	if (f == nullptr)
+		return 0.0f;
 
-	return reclaimLeft;
+	const int allyteam = teamHandler->AllyTeam(team);
+
+	if (f->IsInLosForAllyTeam(allyteam))
+		return f->reclaimLeft;
+
+	return 0.0f;
 }
 
 float3 CAICallback::GetFeaturePos(int featureId)
 {
-	float3 pos = ZeroVector;
-
 	verify();
 
-	const CFeature* f = featureHandler->GetFeature(featureId);
+	const CFeature* f = featureHandler.GetFeature(featureId);
 
-	if (f) {
-		const int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			pos = f->pos;
-		}
-	}
+	if (f == nullptr)
+		return ZeroVector;
 
-	return pos;
+	const int allyteam = teamHandler->AllyTeam(team);
+
+	if (f->IsInLosForAllyTeam(allyteam))
+		return f->pos;
+
+	return ZeroVector;
 }
 
 bool CAICallback::GetValue(int id, void *data)
@@ -1450,7 +1447,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
+				const CUnit* srcUnit = unitHandler.GetUnit(cmdData->srcUID);
 
 				if (srcUnit != nullptr) {
 					CUnit* hitUnit = nullptr;
@@ -1477,7 +1474,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
+				const CUnit* srcUnit = unitHandler.GetUnit(cmdData->srcUID);
 
 				if (srcUnit != nullptr) {
 					CUnit* hitUnit = nullptr;
@@ -1617,7 +1614,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 {
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = unitHandler->GetUnit(unitId);
+		const CUnit* unit = unitHandler.GetUnit(unitId);
 		const int allyTeam = teamHandler->AllyTeam(team);
 
 		myAllyTeamId = allyTeam;
@@ -1731,7 +1728,7 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 
 		for (auto ui = selUnits.begin(); (ui != selUnits.end()) && (a < unitIds_max); ++ui) {
 			if (unitIds != nullptr)
-				unitIds[a] = (unitHandler->GetUnit(*ui))->id;
+				unitIds[a] = (unitHandler.GetUnit(*ui))->id;
 
 			a++;
 		}
@@ -1812,17 +1809,18 @@ const WeaponDef* CAICallback::GetWeapon(const char* weaponName)
 const WeaponDef* CAICallback::GetWeaponDefById(int weaponDefId)
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
+	return nullptr;
 }
 
 
 bool CAICallback::CanBuildUnit(int unitDefID)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+
+	if (ud == nullptr)
 		return false;
-	}
-	return unitHandler->CanBuildUnit(ud, team);
+
+	return unitHandler.CanBuildUnit(ud, team);
 }
 
 
@@ -1835,9 +1833,9 @@ const float3* CAICallback::GetStartPos()
 
 #define AICALLBACK_CALL_LUA(HandleName)                                              \
 	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize) { \
-		if (lua ## HandleName == NULL) {                                             \
+		if (lua ## HandleName == nullptr)                                            \
 			return NULL;                                                             \
-		}                                                                            \
+                                                                                     \
 		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize);       \
 	}
 

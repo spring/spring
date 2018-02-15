@@ -205,7 +205,7 @@ void CAdvTreeDrawer::Update()
 
 void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int treeMatIdx)
 {
-	const CFeature* f = featureHandler->GetFeature(ts.id);
+	const CFeature* f = featureHandler.GetFeature(ts.id);
 
 	if (f == nullptr)
 		return;
@@ -391,7 +391,7 @@ void CAdvTreeDrawer::DrawFallingTrees(const CCamera* cam, Shader::IProgramObject
 		BindTreeGeometry(i * NUM_TREE_TYPES);
 
 		for (const FallingTree& ft: fallingTrees[i]) {
-			// const CFeature* f = featureHandler->GetFeature(ft.id);
+			// const CFeature* f = featureHandler.GetFeature(ft.id);
 			const float3 fpos = ft.fallMat.GetPos() - (UpVector * ft.fallAngle * 20.0f);
 
 			// featureID is invalid for falling trees

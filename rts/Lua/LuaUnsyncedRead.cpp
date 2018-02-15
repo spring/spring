@@ -261,7 +261,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return nullptr;
 	}
 
-	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+	CUnit* unit = unitHandler.GetUnit(lua_toint(L, index));
 
 	if (unit == nullptr)
 		return nullptr;
@@ -281,10 +281,10 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad featureID", caller);
-		return NULL;
+		return nullptr;
 	}
 
-	CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
+	CFeature* feature = featureHandler.GetFeature(lua_toint(L, index));
 
 	if (CLuaHandle::GetHandleFullRead(L))
 		return feature;
@@ -1144,27 +1144,32 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 }
 
 
+static std::vector< std::pair<int, std::vector<const CUnit*> > > gsusUnitDefMap;
+static std::vector< std::pair<int, int> > gsucCountMap;
+
+static std::vector< std::pair<int, std::vector<const CUnit*> > > ggusUnitDefMap;
+static std::vector< std::pair<int, int> > ggucCountMap;
+
+
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-	static std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
-
-	unitDefMap.clear();
-	unitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
+	gsusUnitDefMap.clear();
+	gsusUnitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
 
 	int numDefKeys = 0;
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
-		unitDefMap[unitDef->id].first = unitDef->id;
-		unitDefMap[unitDef->id].second.push_back(unit);
+		gsusUnitDefMap[unitDef->id].first = unitDef->id;
+		gsusUnitDefMap[unitDef->id].second.push_back(unit);
 	}
 
 	// { [number unitDefID] = { [1] = [number unitID], ...}, ... }
-	lua_createtable(L, 0, unitDefMap.size());
+	lua_createtable(L, 0, gsusUnitDefMap.size());
 
-	for (const std::pair<int, std::vector<const CUnit*> >& p: unitDefMap) {
+	for (const std::pair<int, std::vector<const CUnit*> >& p: gsusUnitDefMap) {
 		const std::vector<const CUnit*>& v = p.second;
 
 		if (v.empty())
@@ -1194,26 +1199,24 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-	static std::vector< std::pair<int, int> > countMap;
-
-	countMap.clear();
-	countMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
+	gsucCountMap.clear();
+	gsucCountMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
 	int numDefKeys = 0;
 
 	// tally the types
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
-		countMap[unitDef->id].first = unitDef->id;
-		countMap[unitDef->id].second += 1;
+		gsucCountMap[unitDef->id].first = unitDef->id;
+		gsucCountMap[unitDef->id].second += 1;
 	}
 
 	// { [number unitDefID] = number count, ... }
-	lua_createtable(L, 0, countMap.size());
+	lua_createtable(L, 0, gsucCountMap.size());
 
-	for (const std::pair<int, int>& p: countMap) {
+	for (const std::pair<int, int>& p: gsucCountMap) {
 		if (p.second == 0)
 			continue;
 
@@ -2303,20 +2306,20 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
 		return 0; // nils
 
-	std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
-	unitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
+	ggusUnitDefMap.clear();
+	ggusUnitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
 
 	for (const int unitID: groups[groupID]->units) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
-		unitDefMap[unitDef->id].first = unitDef->id;
-		unitDefMap[unitDef->id].second.push_back(unit);
+		ggusUnitDefMap[unitDef->id].first = unitDef->id;
+		ggusUnitDefMap[unitDef->id].second.push_back(unit);
 	}
 
-	lua_createtable(L, 0, unitDefMap.size());
+	lua_createtable(L, 0, ggusUnitDefMap.size());
 
-	for (auto mit = unitDefMap.cbegin(); mit != unitDefMap.cend(); ++mit) {
+	for (auto mit = ggusUnitDefMap.cbegin(); mit != ggusUnitDefMap.cend(); ++mit) {
 		const std::vector<const CUnit*>& v = mit->second;
 
 		if (v.empty())
@@ -2345,20 +2348,20 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
 		return 0; // nils
 
-	std::vector< std::pair<int, int> > countMap;
-	countMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
+	ggucCountMap.clear();
+	ggucCountMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
 	for (const int unitID: groups[groupID]->units) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
-		countMap[unitDef->id].first = unitDef->id;
-		countMap[unitDef->id].second += 1;
+		ggucCountMap[unitDef->id].first = unitDef->id;
+		ggucCountMap[unitDef->id].second += 1;
 	}
 
-	lua_createtable(L, 0, countMap.size());
+	lua_createtable(L, 0, ggucCountMap.size());
 
-	for (auto mit = countMap.begin(); mit != countMap.end(); ++mit) {
+	for (auto mit = ggucCountMap.begin(); mit != ggucCountMap.end(); ++mit) {
 		if (mit->second == 0)
 			continue;
 
@@ -2697,7 +2700,7 @@ int LuaUnsyncedRead::GetDecalOwner(lua_State* L)
 
 	//XXX: I know, not very fast, but you cannot dynamic_cast a void* back to a CUnit*
 	//     also it's not called very often and so doesn't matter
-	for (const CUnit* u: unitHandler->GetActiveUnits()) {
+	for (const CUnit* u: unitHandler.GetActiveUnits()) {
 		if (u != decal.owner)
 			continue;
 

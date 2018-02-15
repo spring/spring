@@ -296,9 +296,9 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 	CProjectile* p = nullptr;
 
 	if (synced) {
-		p = projectileHandler->GetProjectileBySyncedID(lua_toint(L, index));
+		p = projectileHandler.GetProjectileBySyncedID(lua_toint(L, index));
 	} else {
-		p = projectileHandler->GetProjectileByUnsyncedID(lua_toint(L, index));
+		p = projectileHandler.GetProjectileByUnsyncedID(lua_toint(L, index));
 	}
 
 	return p;
@@ -312,7 +312,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		return nullptr;
 	}
 
-	return (unitHandler->GetUnit(lua_toint(L, index)));
+	return (unitHandler.GetUnit(lua_toint(L, index)));
 }
 
 static inline CFeature* ParseRawFeature(lua_State* L, const char* caller, int index)
@@ -322,7 +322,7 @@ static inline CFeature* ParseRawFeature(lua_State* L, const char* caller, int in
 		return nullptr;
 	}
 
-	return (featureHandler->GetFeature(luaL_checkint(L, index)));
+	return (featureHandler.GetFeature(luaL_checkint(L, index)));
 }
 
 

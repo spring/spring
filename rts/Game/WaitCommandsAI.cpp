@@ -12,6 +12,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -148,14 +149,14 @@ void CWaitCommandsAI::AddTimeWait(const Command& cmd)
 	const auto tmpSet = selectedUnitsHandler.selectedUnits;
 
 	for (const int unitID: tmpSet) {
-		InsertWaitObject(TimeWait::New(cmd, unitHandler->GetUnit(unitID)));
+		InsertWaitObject(TimeWait::New(cmd, unitHandler.GetUnit(unitID)));
 	}
 
 	// restore the selection
 	selectedUnitsHandler.ClearSelected();
 
 	for (const int unitID: tmpSet) {
-		selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
+		selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
 	}
 }
 
@@ -452,7 +453,7 @@ void CWaitCommandsAI::Wait::SendCommand(const Command& cmd, const CUnitSet& unit
 	// create new selection for this command
 	selectedUnitsHandler.ClearSelected();
 	for (const int unitID: unitSet) {
-		selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
+		selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
 	}
 
 	selectedUnitsHandler.GiveCommand(cmd, false);
@@ -460,7 +461,7 @@ void CWaitCommandsAI::Wait::SendCommand(const Command& cmd, const CUnitSet& unit
 
 	// restore previous selection
 	for (const int unitID: tmpSet) {
-		selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
+		selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
 	}
 }
 
@@ -660,7 +661,7 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 	if (cmd.params.size() == 1) {
 		const int unitID = (int)cmd.params[0];
 
-		CUnit* unit = unitHandler->GetUnit(unitID);
+		CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (unit == nullptr)
 			return;
@@ -699,10 +700,10 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 	selectedUnitsHandler.GiveCommand(waitCmd);
 
 	for (const int unitID: waitUnits) {
-		AddDeathDependence((CObject*) unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
 	for (const int unitID: deathUnits) {
-		AddDeathDependence((CObject*) unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
 
 	return;
@@ -756,16 +757,16 @@ void CWaitCommandsAI::DeathWait::Update()
 	std::vector<int> voidWaitUnitIDs;
 
 	for (const int unitID: waitUnits) {
-		const WaitState state = GetWaitState(unitHandler->GetUnit(unitID));
+		const WaitState state = GetWaitState(unitHandler.GetUnit(unitID));
 
 		if (state == Active) {
 			unblockSet.insert(unitID);
-			DeleteDeathDependence(unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+			DeleteDeathDependence(unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 			voidWaitUnitIDs.push_back(unitID);
 		}
 		else if (state == Queued) {} // do nothing
 		else if (state == Missing) {
-			DeleteDeathDependence(unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+			DeleteDeathDependence(unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 			voidWaitUnitIDs.push_back(unitID);
 		}
 	}
@@ -803,7 +804,7 @@ void CWaitCommandsAI::DeathWait::Draw() const
 	}
 
 	for (const int unitID: deathUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
 			cursorIcons.AddIcon(CMD_SELFD, unit->midPos);
@@ -874,7 +875,7 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	for (const int unitID: selUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (dynamic_cast<const CFactory*>(unit) != nullptr) {
 			buildUnits.insert(unitID);
@@ -896,10 +897,10 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	SendCommand(waitCmd, waitUnits);
 
 	for (const int unitID: buildUnits) {
-		AddDeathDependence((CObject*) unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
 	for (const int unitID: waitUnits) {
-		AddDeathDependence((CObject*) unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
 
 	UpdateText();
@@ -950,7 +951,7 @@ void CWaitCommandsAI::SquadWait::Update()
 		std::vector<int> voidWaitUnitIDs;
 
 		for (const int unitID: waitUnits) {
-			const WaitState state = GetWaitState(unitHandler->GetUnit(unitID));
+			const WaitState state = GetWaitState(unitHandler.GetUnit(unitID));
 
 			if (state == Active) {
 				unblockSet.insert(unitID);
@@ -960,7 +961,7 @@ void CWaitCommandsAI::SquadWait::Update()
 			}
 			else if (state == Queued) {} // do nothing
 			else if (state == Missing) {
-				DeleteDeathDependence(unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+				DeleteDeathDependence(unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 				voidWaitUnitIDs.push_back(unitID);
 			}
 		}
@@ -976,7 +977,7 @@ void CWaitCommandsAI::SquadWait::Update()
 
 			for (const int unitID: unblockSet) {
 				if (waitUnits.erase(unitID))
-					DeleteDeathDependence(unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+					DeleteDeathDependence(unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 			}
 		}
 	}
@@ -1027,7 +1028,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	for (const int unitID: selUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* ud = unit->unitDef;
 
 		if (ud->canmove && (dynamic_cast<const CFactory*>(unit) == nullptr)) {
@@ -1046,7 +1047,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	selectedUnitsHandler.GiveCommand(waitCmd, true);
 
 	for (const int unitID: waitUnits) {
-		AddDeathDependence((CObject*) unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
 
 	return;
@@ -1088,7 +1089,7 @@ void CWaitCommandsAI::GatherWait::Update()
 	std::vector<int> voidWaitUnitIDs;
 
 	for (const int unitID: waitUnits) {
-		const WaitState state = GetWaitState(unitHandler->GetUnit(unitID));
+		const WaitState state = GetWaitState(unitHandler.GetUnit(unitID));
 
 		if (state == Active) {} // do nothing
 		else if (state == Queued) {
@@ -1099,7 +1100,7 @@ void CWaitCommandsAI::GatherWait::Update()
 			return;
 		}
 		else if (state == Missing) {
-			DeleteDeathDependence(unitHandler->GetUnit(unitID), DEPENDENCE_WAITCMD);
+			DeleteDeathDependence(unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 			voidWaitUnitIDs.push_back(unitID);
 		}
 	}

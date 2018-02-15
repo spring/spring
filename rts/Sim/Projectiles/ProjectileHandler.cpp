@@ -70,41 +70,52 @@ CR_REG_METADATA(CProjectileHandler, (
 // note: stores all ExpGenSpawnable types, not just projectiles
 ProjMemPool projMemPool;
 
-CProjectileHandler* projectileHandler = nullptr;
+CProjectileHandler projectileHandler;
 
 
 
-CProjectileHandler::CProjectileHandler()
-: currentNanoParticles(0)
-, lastCurrentParticles(0)
-, lastSyncedProjectilesCount(0)
-, lastUnsyncedProjectilesCount(0)
-, resortFlyingPieces({false})
-, syncedProjectileIDs(1024, nullptr)
-#if UNSYNCED_PROJ_NOEVENT
-, unsyncedProjectileIDs(0, nullptr)
-#else
-, unsyncedProjectileIDs(8192, nullptr)
-#endif
+void CProjectileHandler::Init()
 {
+	currentNanoParticles = 0;
+	lastCurrentParticles = 0;
+	lastSyncedProjectilesCount = 0;
+	lastUnsyncedProjectilesCount = 0;
+
+	resortFlyingPieces.fill(false);
+
+	syncedProjectileIDs.clear();
+	syncedProjectileIDs.resize(1024, nullptr);
+
+#if UNSYNCED_PROJ_NOEVENT
+	unsyncedProjectileIDs.clear();
+	unsyncedProjectileIDs.resize(0, nullptr);
+#else
+	unsyncedProjectileIDs.clear();
+	unsyncedProjectileIDs.resize(8192, nullptr);
+#endif
+
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
 	projMemPool.clear();
 	projMemPool.reserve(1024);
 
-	// preload some IDs
-	for (int i = 0; i < syncedProjectileIDs.size(); i++) {
-		freeSyncedIDs.push_back(i);
-	}
-	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
+	{
+		// preload some IDs
+		for (int i = 0; i < syncedProjectileIDs.size(); i++) {
+			freeSyncedIDs.push_back(i);
+		}
 
-	for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
-		freeUnsyncedIDs.push_back(i);
+		for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
+			freeUnsyncedIDs.push_back(i);
+		}
+
+		std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
+		std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
 	}
-	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
 
 	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+		flyingPieces[modelType].clear();
 		flyingPieces[modelType].reserve(1000);
 	}
 
@@ -112,7 +123,7 @@ CProjectileHandler::CProjectileHandler()
 	configHandler->NotifyOnChange(this, {"MaxParticles", "MaxNanoParticles"});
 }
 
-CProjectileHandler::~CProjectileHandler()
+void CProjectileHandler::Kill()
 {
 	configHandler->RemoveObserver(this);
 

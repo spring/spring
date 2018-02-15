@@ -123,8 +123,8 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	// doesn't implement load/save support
 	Init();
 
-	for (unsigned int a = 0; a < unitHandler->MaxUnits(); a++) {
-		const CUnit* unit = unitHandler->GetUnit(a);
+	for (unsigned int a = 0; a < unitHandler.MaxUnits(); a++) {
+		const CUnit* unit = unitHandler.GetUnit(a);
 
 		if (unit == nullptr)
 			continue;
@@ -401,7 +401,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 ) {
 	std::vector<int> unitIds = playerSelectedUnits;
 
-	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
+	const int cCommandId = extractAICommandTopic(&c, unitHandler.MaxUnits());
 	const SPlayerCommandEvent evtData = {&unitIds[0], static_cast<int>(playerSelectedUnits.size()), cCommandId, playerId};
 
 	HandleEvent(EVENT_PLAYER_COMMAND, &evtData);

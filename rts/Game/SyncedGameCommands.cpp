@@ -174,14 +174,13 @@ public:
 		do {
 			argsStream >> unitId;
 
-			if (!argsStream) {
+			if (!argsStream)
 				break;
-			}
 
-			CUnit* unit = unitHandler->GetUnit(unitId);
+			CUnit* unit = unitHandler.GetUnit(unitId);
 
-			if (unit != NULL) {
-				unit->KillUnit(NULL, false, false);
+			if (unit != nullptr) {
+				unit->KillUnit(nullptr, false, false);
 			} else {
 				LOG("Wrong unitID: %i", unitId);
 			}
@@ -363,8 +362,8 @@ public:
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
-		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
-			CUnit* u = unitHandler->GetUnit(i);
+		for (int i = unitHandler.MaxUnits() - 1; i >= 0; --i) {
+			CUnit* u = unitHandler.GetUnit(i);
 
 			if (u == nullptr)
 				continue;

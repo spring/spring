@@ -30,7 +30,7 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	//   instead create a bi-directional mapping from indices to ID's
 	//   (where the ID's are a random permutation of the index range)
 	//   such that ID's can be assigned and returned to the pool with
-	//   their original index
+	//   their original index, e.g.
 	//
 	//     indexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
 	//     identToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}

@@ -9,7 +9,7 @@
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
 
-CR_BIND(CGroup, (0, NULL))
+CR_BIND(CGroup, (0, nullptr))
 CR_REG_METADATA(CGroup, (
 	CR_MEMBER(id),
 	CR_MEMBER(units),
@@ -22,8 +22,8 @@ CR_REG_METADATA(CGroup, (
 //////////////////////////////////////////////////////////////////////
 
 CGroup::CGroup(int id, CGroupHandler* groupHandler)
-		: id(id)
-		, handler(groupHandler)
+	: id(id)
+	, handler(groupHandler)
 {
 }
 
@@ -37,12 +37,10 @@ CGroup::~CGroup()
 
 void CGroup::PostLoad()
 {
-	assert(unitHandler != nullptr);
-
 	auto unitBackup = units;
 
 	for (const int unitID: unitBackup) {
-		CUnit* unit = unitHandler->GetUnit(unitID);
+		CUnit* unit = unitHandler.GetUnit(unitID);
 		units.erase(unit->id);
 		unit->group = nullptr;
 	}
@@ -63,13 +61,17 @@ void CGroup::RemoveUnit(CUnit* unit)
 
 void CGroup::RemoveIfEmptySpecialGroup()
 {
-	if (units.empty()
-			&& (id >= CGroupHandler::FIRST_SPECIAL_GROUP)
-			/*&& (handler == grouphandler)*/
-			&& (handler->team == gu->myTeam)) // HACK so Global AI groups do not get erased DEPRECATED
-	{
-		handler->RemoveGroup(this);
-	}
+	if (!units.empty())
+		return;
+
+	if (id < CGroupHandler::FIRST_SPECIAL_GROUP)
+		return;
+
+	//HACK so Global AI groups do not get erased DEPRECATED
+	if (handler->team != gu->myTeam)
+		return;
+
+	handler->RemoveGroup(this);
 }
 
 void CGroup::Update()
@@ -80,7 +82,7 @@ void CGroup::Update()
 void CGroup::ClearUnits()
 {
 	while (!units.empty()) {
-		CUnit* unit = unitHandler->GetUnit(*units.begin());
+		CUnit* unit = unitHandler.GetUnit(*units.begin());
 		unit->SetGroup(0);
 	}
 	handler->PushGroupChange(id);
@@ -88,11 +90,11 @@ void CGroup::ClearUnits()
 
 float3 CGroup::CalculateCenter() const
 {
-	float3 center = ZeroVector;
+	float3 center;
 
 	if (!units.empty()) {
 		for (const int unitID: units) {
-			center += (unitHandler->GetUnit(unitID))->pos;
+			center += (unitHandler.GetUnit(unitID))->pos;
 		}
 		center /= units.size();
 	}

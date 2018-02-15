@@ -85,7 +85,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = unitHandler->GetUnit(luaL_checkint(L, index));
+	CUnit* unit = unitHandler.GetUnit(luaL_checkint(L, index));
 
 	if (unit == nullptr)
 		return nullptr;

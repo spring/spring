@@ -83,7 +83,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 		if (ud == nullptr)
 			return unit;
 		// need to check this BEFORE creating the instance
-		if (!unitHandler->CanAddUnit(params.unitID))
+		if (!unitHandler.CanAddUnit(params.unitID))
 			return unit;
 
 		if (params.teamID < 0) {
@@ -220,7 +220,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		if (receivingTeam->AtUnitLimit()) {
 			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
-				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), unitHandler->MaxUnits()
+				__FUNCTION__, team, currentNumUnits, receivingTeam->GetMaxUnits(), unitHandler.MaxUnits()
 			);
 			return;
 		}
@@ -319,7 +319,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						0, // smokeTime
 					};
 
-					featureHandler->LoadFeature(params);
+					featureHandler.LoadFeature(params);
 
 					--total;
 				}

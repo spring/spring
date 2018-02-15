@@ -464,7 +464,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 
 	const int teamId           = unit.team;
 	const int unitId           = unit.id;
-	const int aiCommandTopicId = extractAICommandTopic(&command, unitHandler->MaxUnits());
+	const int aiCommandTopicId = extractAICommandTopic(&command, unitHandler.MaxUnits());
 
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, command.aiCommandId, aiCommandTopicId), teamId);
 }
@@ -544,7 +544,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 		// This will only do something if the AI is created mid-game.
 		const CTeam* team = teamHandler->Team(hostSkirmishAIs[skirmishAIId].GetTeamId());
 
-		for (const CUnit* u: unitHandler->GetUnitsByTeam(team->teamNum)) {
+		for (const CUnit* u: unitHandler.GetUnitsByTeam(team->teamNum)) {
 			hostSkirmishAIs[skirmishAIId].UnitCreated(u->id, -1);
 			hostSkirmishAIs[skirmishAIId].UnitFinished(u->id);
 		}

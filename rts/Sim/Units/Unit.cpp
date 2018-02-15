@@ -221,7 +221,7 @@ CUnit::~CUnit()
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
 		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, delayedWreckLevel - 1, 1};
-		featureHandler->CreateWreckage(params);
+		featureHandler.CreateWreckage(params);
 	}
 	if (deathExpDamages != nullptr)
 		DynDamageArray::DecRef(deathExpDamages);
@@ -339,7 +339,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	SetRadiusAndHeight(model);
 	UpdateMidAndAimPos();
 
-	unitHandler->AddUnit(this);
+	unitHandler.AddUnit(this);
 	quadField.MovedUnit(this);
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
@@ -528,14 +528,14 @@ void CUnit::FinishedBuilding(bool postInit)
 
 
 	// Sets the frontdir in sync with heading.
-	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
+	frontdir = GetVectorFromHeading(heading) + (UpVector * frontdir.y);
 
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
 		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), nullptr, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0, 0};
-		CFeature* f = featureHandler->CreateWreckage(p);
+		CFeature* f = featureHandler.CreateWreckage(p);
 
 		if (f != nullptr)
 			f->blockHeightChanges = true;
@@ -1151,7 +1151,7 @@ void CUnit::SlowUpdate()
 			}
 
 			for (auto it = nearbyUnits.cbegin(); it != nearbyUnits.cend(); ++it) {
-				const CUnit* victim = unitHandler->GetUnitUnsafe(*it);
+				const CUnit* victim = unitHandler.GetUnitUnsafe(*it);
 				const float3 dif = pos - victim->pos;
 
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
@@ -1542,7 +1542,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
-	if (unitHandler->NumUnitsByTeamAndDef(newteam, unitDef->id) >= unitDef->maxThisUnit)
+	if (unitHandler.NumUnitsByTeamAndDef(newteam, unitDef->id) >= unitDef->maxThisUnit)
 		return false;
 
 	if (!eventHandler.AllowUnitTransfer(this, newteam, type == ChangeCaptured))
@@ -1587,10 +1587,10 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
 
-	spring::VectorErase(unitHandler->GetUnitsByTeamAndDef(oldteam, 0), this);
-	spring::VectorErase(unitHandler->GetUnitsByTeamAndDef(oldteam, unitDef->id), this);
-	spring::VectorInsertUnique(unitHandler->GetUnitsByTeamAndDef(newteam, 0), this, false);
-	spring::VectorInsertUnique(unitHandler->GetUnitsByTeamAndDef(newteam, unitDef->id), this, false);
+	spring::VectorErase(unitHandler.GetUnitsByTeamAndDef(oldteam,           0), this);
+	spring::VectorErase(unitHandler.GetUnitsByTeamAndDef(oldteam, unitDef->id), this);
+	spring::VectorInsertUnique(unitHandler.GetUnitsByTeamAndDef(newteam,           0), this, false);
+	spring::VectorInsertUnique(unitHandler.GetUnitsByTeamAndDef(newteam, unitDef->id), this, false);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {

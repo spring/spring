@@ -42,8 +42,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	assert(gameSetup != nullptr);
 
 	// FIXME  --  this is getting silly, convert to userdata?
-	if (unitHandler != nullptr)
-		LuaPushNamedNumber(L, "maxUnits",      unitHandler->MaxUnits());
+	LuaPushNamedNumber(L, "maxUnits",      unitHandler.MaxUnits());
 
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);

@@ -40,10 +40,7 @@ public:
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
-
-		void* p = allocMem(sizeof(T));
-
-		return new (p) T(std::forward<A>(a)...);
+		return new (allocMem(sizeof(T))) T(std::forward<A>(a)...);
 	}
 
 

@@ -87,7 +87,7 @@ CPieceProjectile::CPieceProjectile(
 
 	SetRadiusAndHeight(radius, 0.0f);
 
-	projectileHandler->AddProjectile(this);
+	projectileHandler.AddProjectile(this);
 	assert(!detached);
 }
 

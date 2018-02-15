@@ -9,6 +9,7 @@
 #include "UnitScript.h"
 #include "UnitScriptFactory.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
@@ -72,8 +73,8 @@ void CUnitScriptEngine::ReloadScripts(const UnitDef* udef)
 
 	unsigned int count = 0;
 
-	for (unsigned int i = 0, n = unitHandler->MaxUnits(); i < n; i++) {
-		CUnit* unit = unitHandler->GetUnit(i);
+	for (unsigned int i = 0, n = unitHandler.MaxUnits(); i < n; i++) {
+		CUnit* unit = unitHandler.GetUnit(i);
 
 		if (unit == nullptr)
 			continue;

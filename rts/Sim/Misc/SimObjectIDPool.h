@@ -11,6 +11,7 @@ class SimObjectIDPool {
 	CR_DECLARE_STRUCT(SimObjectIDPool)
 
 public:
+	void Clear() { RecycleIDs(); }
 	void Expand(unsigned int baseID, unsigned int numIDs);
 
 	void AssignID(CSolidObject* object);
@@ -25,6 +26,7 @@ public:
 
 private:
 	unsigned int ExtractID();
+
 	void ReserveID(unsigned int uid);
 	void RecycleIDs();
 
