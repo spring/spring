@@ -264,6 +264,8 @@ SpringApp::SpringApp(int argc, char** argv)
 
 	// gu does not exist yet, pre-seed for ShowSplashScreen
 	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
+	// ditto for unsynced Lua states (which do not use guRNG)
+	spring_lua_unsynced_srand(nullptr);
 }
 
 /**
