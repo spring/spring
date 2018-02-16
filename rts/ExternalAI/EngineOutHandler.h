@@ -3,12 +3,11 @@
 #ifndef ENGINE_OUT_HANDLER_H
 #define ENGINE_OUT_HANDLER_H
 
+#include "SkirmishAIWrapper.h"
 #include "System/Object.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-#include <memory>
-
-#include <map>
+#include <array>
 #include <vector>
 #include <string>
 
@@ -22,20 +21,28 @@ class CSkirmishAIWrapper;
 struct SSkirmishAICallback;
 
 
-void handleAIException(const char* description);
-
 class CEngineOutHandler {
 	CR_DECLARE_STRUCT(CEngineOutHandler)
 
 
 public:
 	static CEngineOutHandler* GetInstance();
-	~CEngineOutHandler();
 
 	static void Create();
 	static void Destroy();
 
-	void PostLoad();
+	void Init() { activeSkirmishAIs.reserve(16); }
+	void Kill() {
+		PreDestroy();
+
+		// release leftover active AI's
+		while (!activeSkirmishAIs.empty()) {
+			DestroySkirmishAI(activeSkirmishAIs.back());
+		}
+
+		activeSkirmishAIs.clear();
+	}
+
 	/** Called just before all the units are destroyed. */
 	void PreDestroy();
 
@@ -83,7 +90,7 @@ public:
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 * @see DestroySkirmishAI()
 	 */
-	void SetSkirmishAIDieing(const uint8_t skirmishAIId);
+	void SetSkirmishAIDieing(const uint8_t skirmishAIId) { hostSkirmishAIs[skirmishAIId].SetDieing(); }
 	/**
 	 * Destructs a local Skirmish AI for real.
 	 * Do not call this if you want to kill a local AI, but use
@@ -98,18 +105,16 @@ public:
 	void Save(std::ostream* s, const uint8_t skirmishAIId);
 
 private:
-	typedef std::vector<uint8_t> ids_t;
-	typedef std::map<uint8_t, std::unique_ptr<CSkirmishAIWrapper> > id_ai_t;
-	typedef std::map<int, ids_t> team_ais_t;
-
 	/// Contains all local Skirmish AIs, indexed by their ID
-	id_ai_t hostSkirmishAIs;
+	std::array<CSkirmishAIWrapper, MAX_AIS > hostSkirmishAIs;
 
 	/**
 	 * Array mapping team IDs to local Skirmish AI instances.
 	 * There can be multiple Skirmish AIs per team.
 	 */
-	team_ais_t teamSkirmishAIs;
+	std::array<std::vector<uint8_t>, MAX_TEAMS> teamSkirmishAIs;
+
+	std::vector<uint8_t> activeSkirmishAIs;
 };
 
 #define eoh CEngineOutHandler::GetInstance()
