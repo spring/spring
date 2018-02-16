@@ -32,8 +32,8 @@ class Chunk
 public:
 	unsigned GetSize() const { return (data.size() + headerSize); }
 	void UpdateChecksum(CRC& crc) const;
-	static const unsigned maxSize = 254;
-	static const unsigned headerSize = 5;
+	static constexpr unsigned maxSize = 254;
+	static constexpr unsigned headerSize = 5;
 	std::int32_t chunkNumber;
 	std::uint8_t chunkSize;
 	std::vector<std::uint8_t> data;
@@ -43,7 +43,7 @@ typedef std::shared_ptr<Chunk> ChunkPtr;
 class Packet
 {
 public:
-	static const unsigned headerSize = 6;
+	static constexpr unsigned headerSize = 6;
 	Packet(const unsigned char* data, unsigned length);
 	Packet(int lastContinuous, int nak);
 
@@ -75,10 +75,8 @@ public:
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket,
-			const asio::ip::udp::endpoint& myAddr);
-	UDPConnection(int sourceport, const std::string& address,
-			const unsigned port);
+	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket, const asio::ip::udp::endpoint& myAddr);
+	UDPConnection(int sourceport, const std::string& address, const unsigned port);
 	UDPConnection(CConnection& conn);
 	virtual ~UDPConnection();
 
@@ -117,7 +115,7 @@ public:
 	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
-	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const;
+	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const { return (addr == from); }
 	/// Connections are stealth by default, this allow them to send data
 	void Unmute() { muted = false; }
 	void Close(bool flush);
@@ -136,8 +134,7 @@ private:
 	void Init();
 
 	/// add header to data and send it
-	void CreateChunk(const unsigned char* data, const unsigned length,
-			const int packetNum);
+	void CreateChunk(const unsigned char* data, const unsigned length, const int packetNum);
 	void SendIfNecessary(bool flushed);
 	void AckChunks(int lastAck);
 
@@ -155,8 +152,7 @@ private:
 	spring_time lastFramePacketRecvTime;
 	#endif
 
-	typedef std::map<int,RawPacket*> packetMap;
-	typedef std::list< std::shared_ptr<const RawPacket> > packetList;
+
 	/// address of the other end
 	asio::ip::udp::endpoint addr;
 
@@ -173,9 +169,9 @@ private:
 	int reconnectTime;
 
 	/// outgoing stuff (pure data without header) waiting to be sent
-	packetList outgoingData;
+	std::list< std::shared_ptr<const RawPacket> > outgoingData;
 	/// packets we have received but not yet read
-	packetMap waitingPackets;
+	std::map<int, RawPacket*> waitingPackets;
 
 	/// Newly created and not yet sent
 	std::deque<ChunkPtr> newChunks;
@@ -187,6 +183,10 @@ private:
 
 	/// complete packets we received but did not yet consume
 	std::deque< std::shared_ptr<const RawPacket> > msgQueue;
+
+	std::vector<std::uint8_t> sendBuffer;
+	std::vector<std::uint8_t> recvBuffer;
+	std::vector<std::uint8_t> waitBuffer;
 
 	std::int32_t lastMidChunk;
 
@@ -202,7 +202,7 @@ private:
 	/// Our socket
 	std::shared_ptr<asio::ip::udp::socket> mySocket;
 
-	RawPacket* fragmentBuffer;
+	RawPacket fragmentBuffer;
 
 	// Traffic statistics and stuff
 	#ifdef ENABLE_DEBUG_STATS

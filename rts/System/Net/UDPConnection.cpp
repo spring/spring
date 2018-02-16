@@ -216,7 +216,9 @@ std::uint8_t Packet::GetChecksum() const {
 
 void Packet::Serialize(std::vector<std::uint8_t>& data)
 {
+	data.clear();
 	data.reserve(GetSize());
+
 	Packer buf(data);
 	buf.Pack(lastContinuous);
 	buf.Pack(nakType);
@@ -296,7 +298,7 @@ void UDPConnection::Init()
 	lastNak = -1;
 	sentOverhead = 0;
 	recvOverhead = 0;
-	fragmentBuffer = 0;
+
 	resentChunks = 0;
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
@@ -333,11 +335,11 @@ void UDPConnection::InitConnection(ip::udp::endpoint address, std::shared_ptr<ip
 
 UDPConnection::~UDPConnection()
 {
-	delete fragmentBuffer;
-	for (auto &it: waitingPackets)
+	fragmentBuffer.Delete();
+
+	for (auto& it: waitingPackets)
 		delete it.second;
 
-	fragmentBuffer = NULL;
 	Flush(true);
 }
 
@@ -431,18 +433,22 @@ void UDPConnection::Update()
 	}
 	#endif
 
+
 	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
 		netservice.poll();
-		size_t bytesAvail = 0;
 
-		while ((bytesAvail = mySocket->available()) > 0) {
-			std::vector<std::uint8_t> buffer(bytesAvail, 0);
-			ip::udp::endpoint sender_endpoint;
-			ip::udp::socket::message_flags flags = 0;
+		size_t bytesAvailable = 0;
+
+		while ((bytesAvailable = mySocket->available()) > 0) {
+			recvBuffer.clear();
+			recvBuffer.resize(bytesAvailable, 0);
+
+			ip::udp::endpoint udpEndPoint;
+			ip::udp::socket::message_flags msgFlags = 0;
 			asio::error_code err;
 
-			const size_t bytesReceived = mySocket->receive_from(asio::buffer(buffer), sender_endpoint, flags, err);
+			const size_t bytesReceived = mySocket->receive_from(asio::buffer(recvBuffer), udpEndPoint, msgFlags, err);
 
 			if (CheckErrorCode(err))
 				break;
@@ -450,9 +456,9 @@ void UDPConnection::Update()
 			if (bytesReceived < Packet::headerSize)
 				continue;
 
-			Packet data(&buffer[0], bytesReceived);
+			Packet data(&recvBuffer[0], bytesReceived);
 
-			if (IsUsingAddress(sender_endpoint))
+			if (IsUsingAddress(udpEndPoint))
 				ProcessRawPacket(data);
 
 			// not likely, but make sure we do not get stuck here
@@ -462,15 +468,15 @@ void UDPConnection::Update()
 		}
 	}
 
+
 	Flush(false);
 }
 
 void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	#ifdef ENABLE_DEBUG_STATS
-	if (logMessages) {
+	if (logMessages)
 		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u) mtu=%u", __FUNCTION__, incoming.GetChecksum(), incoming.checksum, mtu);
-	}
 	#endif
 
 	lastPacketRecvTime = spring_gettime();
@@ -545,27 +551,26 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		waitingPackets.emplace(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
 	}
 
-	packetMap::iterator wpi;
 
 	// process all in order packets that we have waiting
-	while ((wpi = waitingPackets.find(lastInOrder + 1)) != waitingPackets.end()) {
-		std::vector<std::uint8_t> buf;
+	for (auto wpi = waitingPackets.find(lastInOrder + 1); wpi != waitingPackets.end(); wpi = waitingPackets.find(lastInOrder + 1)) {
+		waitBuffer.clear();
 
-		if (fragmentBuffer != NULL) {
-			buf.resize(fragmentBuffer->length);
+		if (fragmentBuffer.data != nullptr) {
+			waitBuffer.resize(fragmentBuffer.length);
 			// combine with fragment buffer (packet reassembly)
-			std::copy(fragmentBuffer->data, fragmentBuffer->data + fragmentBuffer->length, buf.begin());
-			delete fragmentBuffer;
-			fragmentBuffer = NULL;
+			std::copy(fragmentBuffer.data, fragmentBuffer.data + fragmentBuffer.length, waitBuffer.begin());
+
+			fragmentBuffer.Delete();
 		}
 
 		lastInOrder++;
-		std::copy(wpi->second->data, wpi->second->data + wpi->second->length, std::back_inserter(buf));
+		std::copy(wpi->second->data, wpi->second->data + wpi->second->length, std::back_inserter(waitBuffer));
 		waitingPackets.erase(wpi);
 
-		for (unsigned pos = 0; pos < buf.size(); ) {
-			const unsigned char* bufp = &buf[pos];
-			const unsigned msglength = buf.size() - pos;
+		for (unsigned pos = 0; pos < waitBuffer.size(); ) {
+			const unsigned char* bufp = &waitBuffer[pos];
+			const unsigned msglength = waitBuffer.size() - pos;
 
 			const int pktlength = ProtocolDef::GetInstance()->PacketLength(bufp, msglength);
 
@@ -602,7 +607,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			} else {
 				if (pktlength >= 0) {
 					// partial packet in buffer
-					fragmentBuffer = new RawPacket(bufp, msglength);
+					fragmentBuffer = std::move(RawPacket(bufp, msglength));
 					break;
 				}
 
@@ -620,6 +625,7 @@ void UDPConnection::Flush(const bool forced)
 {
 	if (muted)
 		return;
+
 	const spring_time curTime = spring_gettime();
 
 	// do not create chunks more than chunksPerSec times per second
@@ -735,11 +741,6 @@ std::string UDPConnection::Statistics() const
 	return msg;
 }
 
-bool UDPConnection::IsUsingAddress(const ip::udp::endpoint& from) const
-{
-	return (addr == from);
-}
-
 std::string UDPConnection::GetFullAddress() const
 {
 	return spring::format("[%s]:%u", addr.address().to_string().c_str(), addr.port());
@@ -772,9 +773,8 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 	{
 		int packetNum = lastInOrder+1;
-		for (packetMap::iterator pi = waitingPackets.begin(); pi != waitingPackets.end(); ++pi)
-		{
-			const int diff = pi->first - packetNum;
+		for (const auto& pair: waitingPackets) {
+			const int diff = pair.first - packetNum;
 			if (diff > 0) {
 				for (int i = 0; i < diff; ++i) {
 					dropped.push_back(packetNum);
@@ -813,8 +813,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		lastUnackResentTime = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || (netLossFactor == MIN_LOSS_FACTOR && !resendRequested.empty()) || (nak > 0) || (curTime - lastPacketSendTime) > spring_msecs(200 >> netLossFactor))
-	{
+	if (flushed || !newChunks.empty() || (netLossFactor == MIN_LOSS_FACTOR && !resendRequested.empty()) || (nak > 0) || (curTime - lastPacketSendTime) > spring_msecs(200 >> netLossFactor)) {
 		bool todo = true;
 
 		int maxResend = resendRequested.size();
@@ -935,22 +934,21 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 void UDPConnection::SendPacket(Packet& pkt)
 {
-	std::vector<std::uint8_t> data;
-	pkt.Serialize(data);
+	pkt.Serialize(sendBuffer);
 
-	outgoing.DataSent(data.size());
+	outgoing.DataSent(sendBuffer.size());
 	lastPacketSendTime = spring_gettime();
 	ip::udp::socket::message_flags flags = 0;
 	asio::error_code err;
 
 	EMULATE_LATENCY( !EMULATE_PACKET_LOSS( LOSS_COUNTER ) ) {
-		mySocket->send_to(buffer(data), addr, flags, err);
+		mySocket->send_to(buffer(sendBuffer), addr, flags, err);
 	}
 
 	if (CheckErrorCode(err))
 		return;
 
-	dataSent += data.size();
+	dataSent += sendBuffer.size();
 	++sentPackets;
 }
 

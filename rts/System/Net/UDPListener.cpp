@@ -27,19 +27,14 @@ using namespace asio;
 
 UDPListener::UDPListener(int port, const std::string& ip): acceptNewConnections(false)
 {
-	SocketPtr socket;
+	// resets socket on any exception
+	const std::string err = TryBindSocket(port, socket, ip);
 
-	const std::string err = TryBindSocket(port, &socket, ip);
-
-	if (err.empty()) {
-		socket->non_blocking(true);
-
-		mySocket = socket;
-		SetAcceptingConnections(true);
-	}
-
-	if (!IsAcceptingConnections())
+	if (!err.empty())
 		throw network_error(err);
+
+	socket->non_blocking(true);
+	SetAcceptingConnections(true);
 
 	LOG("[%s] successfully bound socket on port %i", __func__, socket->local_endpoint().port());
 }
@@ -51,9 +46,9 @@ UDPListener::~UDPListener() {
 }
 
 
-std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& ip) {
-
-	std::string errorMsg = "";
+std::string UDPListener::TryBindSocket(int port, std::shared_ptr<asio::ip::udp::socket>& sock, const std::string& ip)
+{
+	std::string errorMsg;
 
 	try {
 		asio::error_code err;
@@ -61,8 +56,8 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 		if ((port < 0) || (port > 65535))
 			throw std::range_error("Port is out of range [0, 65535]: " + IntToString(port));
 
-		socket->reset(new ip::udp::socket(netservice));
-		(*socket)->open(ip::udp::v6(), err); // test IP v6 support
+		sock.reset(new ip::udp::socket(netservice));
+		sock->open(ip::udp::v6(), err); // test IP v6 support
 
 		const bool supportsIPv6 = !err;
 
@@ -84,22 +79,23 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 
 		if (address.is_v4()) {
 			if (supportsIPv6)
-				(*socket)->close();
+				sock->close();
 
-			(*socket)->open(ip::udp::v4(), err);
+			sock->open(ip::udp::v4(), err);
 
 			if (err)
 				throw std::runtime_error("[UDPListener] failed to open IPv4 socket: " + err.message());
 		}
 
-		(*socket)->bind(endpoint);
+		sock->bind(endpoint);
 
 		LOG(
 			"[UDPListener::%s] binding UDP socket to IPv%d-address %s (%s) on port %i",
 			__func__, (address.is_v6()? 6: 4), address.to_string().c_str(), ip.c_str(), endpoint.port()
 		);
-	} catch (const std::runtime_error& ex) { // includes asio::system_error and std::range_error
-		socket->reset();
+	} catch (const std::runtime_error& ex) {
+		// ex includes asio::system_error and std::range_error
+		sock.reset();
 		errorMsg = ex.what();
 
 		if (errorMsg.empty())
@@ -114,21 +110,22 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 void UDPListener::Update() {
 	netservice.poll();
 
-	size_t bytes_avail = 0;
+	size_t bytesAvailable = 0;
 
-	while ((bytes_avail = mySocket->available()) > 0) {
-		std::vector<std::uint8_t> buffer(bytes_avail);
+	while ((bytesAvailable = socket->available()) > 0) {
+		recvBuffer.clear();
+		recvBuffer.resize(bytesAvailable, 0);
 
-		ip::udp::endpoint sender_endpoint;
-		asio::ip::udp::socket::message_flags flags = 0;
+		ip::udp::endpoint udpEndPoint;
+		asio::ip::udp::socket::message_flags msgFlags = 0;
 		asio::error_code err;
 
-		const size_t bytesReceived = mySocket->receive_from(asio::buffer(buffer), sender_endpoint, flags, err);
+		const size_t bytesReceived = socket->receive_from(asio::buffer(recvBuffer), udpEndPoint, msgFlags, err);
 
-		const auto ci = connMap.find(sender_endpoint);
-		const bool knownConnection = (ci != connMap.end());
+		const auto ci = connMap.find(udpEndPoint);
 
-		if (knownConnection && ci->second.expired())
+		// known connection but expired
+		if (ci != connMap.end() && ci->second.expired())
 			continue;
 
 		if (CheckErrorCode(err))
@@ -137,40 +134,44 @@ void UDPListener::Update() {
 		if (bytesReceived < Packet::headerSize)
 			continue;
 
-		Packet data(&buffer[0], bytesReceived);
+		Packet data(&recvBuffer[0], bytesReceived);
 
-		if (knownConnection) {
+		if (ci != connMap.end()) {
 			ci->second.lock()->ProcessRawPacket(data);
-		} else {
-			// still have the packet (means no connection with the sender's address found)
-			if (acceptNewConnections && data.lastContinuous == -1 && data.nakType == 0)	{
-				if (!data.chunks.empty() && (*data.chunks.begin())->chunkNumber == 0) {
-					// new client wants to connect
-					std::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, sender_endpoint));
-					waiting.push(incoming);
-					connMap[sender_endpoint] = incoming;
-					incoming->ProcessRawPacket(data);
-				}
-			} else {
-				const asio::ip::address& senderAddr = sender_endpoint.address();
-				const std::string& senderIP = senderAddr.to_string();
-
-				if (dropMap.find(senderIP) == dropMap.end()) {
-					LOG_L(L_DEBUG, "[UDPListener::%s] dropping packet from unknown IP: [%s]:%i", __func__, senderIP.c_str(), sender_endpoint.port());
-					dropMap[senderIP] = 0;
-				} else {
-					dropMap[senderIP] += 1;
-				}
-
-			#ifdef DEBUG
-				std::string conns;
-				for (auto it = connMap.cbegin(); it != connMap.cend(); ++it) {
-					conns += spring::format(" [%s]:%i;", it->first.address().to_string().c_str(),it->first.port());
-				}
-				LOG_L(L_DEBUG, "[UDPListener::%s] open connections: %s", __func__, conns.c_str());
-			#endif
-			}
+			continue;
 		}
+
+
+		// unknown connection but still have the packet, maybe a new client wants to connect from sender's address
+		if (acceptNewConnections && data.lastContinuous == -1 && data.nakType == 0)	{
+			if (!data.chunks.empty() && (*data.chunks.begin())->chunkNumber == 0) {
+				std::shared_ptr<UDPConnection> incoming(new UDPConnection(socket, udpEndPoint));
+				waiting.push(incoming);
+				connMap[udpEndPoint] = incoming;
+				incoming->ProcessRawPacket(data);
+			}
+
+			continue;
+		}
+
+
+		const asio::ip::address& senderAddr = udpEndPoint.address();
+		const std::string& senderIP = senderAddr.to_string();
+
+		if (dropMap.find(senderIP) == dropMap.end()) {
+			LOG_L(L_DEBUG, "[UDPListener::%s] dropping packet from unknown IP: [%s]:%i", __func__, senderIP.c_str(), udpEndPoint.port());
+			dropMap[senderIP] = 0;
+		} else {
+			dropMap[senderIP] += 1;
+		}
+
+	#ifdef DEBUG
+		std::string conns;
+		for (auto it = connMap.cbegin(); it != connMap.cend(); ++it) {
+			conns += spring::format(" [%s]:%i;", it->first.address().to_string().c_str(),it->first.port());
+		}
+		LOG_L(L_DEBUG, "[UDPListener::%s] open connections: %s", __func__, conns.c_str());
+	#endif
 	}
 
 	for (auto i = connMap.cbegin(); i != connMap.cend(); ) {
@@ -184,31 +185,12 @@ void UDPListener::Update() {
 	}
 }
 
+
 std::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& ip, const unsigned port)
 {
-	std::shared_ptr<UDPConnection> newConn(new UDPConnection(mySocket, ip::udp::endpoint(WrapIP(ip), port)));
+	std::shared_ptr<UDPConnection> newConn(new UDPConnection(socket, ip::udp::endpoint(WrapIP(ip), port)));
 	connMap[newConn->GetEndpoint()] = newConn;
 	return newConn;
-}
-
-void UDPListener::SetAcceptingConnections(const bool enable)
-{
-	acceptNewConnections = enable;
-}
-
-bool UDPListener::IsAcceptingConnections() const
-{
-	return acceptNewConnections;
-}
-
-bool UDPListener::HasIncomingConnections() const
-{
-	return !waiting.empty();
-}
-
-std::weak_ptr<UDPConnection> UDPListener::PreviewConnection()
-{
-	return waiting.front();
 }
 
 std::shared_ptr<UDPConnection> UDPListener::AcceptConnection()
@@ -219,10 +201,6 @@ std::shared_ptr<UDPConnection> UDPListener::AcceptConnection()
 	return newConn;
 }
 
-void UDPListener::RejectConnection()
-{
-	waiting.pop();
-}
 
 void UDPListener::UpdateConnections() {
 	for (auto i = connMap.begin(); i != connMap.end(); ) {
