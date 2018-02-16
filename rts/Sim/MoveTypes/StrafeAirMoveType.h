@@ -4,7 +4,6 @@
 #define STRAFE_AIR_MOVE_TYPE_H_
 
 #include "AAirMoveType.h"
-#include <vector>
 
 /**
  * Air movement type definition
@@ -54,43 +53,45 @@ public:
 
 	void Takeoff() override;
 
-	int maneuverState;
-	int maneuverSubState;
-
-	bool loopbackAttack;
-	bool isFighter;
-
-	float wingDrag;
-	float wingAngle;
-	float invDrag;
-	/// actually the invDrag of crashDrag
-	float crashDrag;
-
-	float frontToSpeed;
-	float speedToFront;
-	float myGravity;
-
-	float maxBank;
-	float maxPitch;
-	float turnRadius;
-
-	float maxAileron;
-	float maxElevator;
-	float maxRudder;
-	// fighters abort dive toward target if within this distance and climb back to normal altitude
-	float attackSafetyDistance;
-
-	/// used while landing
-	float crashAileron;
-	float crashElevator;
-	float crashRudder;
-
-	float lastRudderPos;
-	float lastElevatorPos;
-	float lastAileronPos;
-
 private:
 	bool HandleCollisions(bool checkCollisions);
+
+public:
+	int maneuverBlockTime = 0;
+	int maneuverState = MANEUVER_FLY_STRAIGHT;
+	int maneuverSubState = 0;
+
+	bool loopbackAttack = false;
+	bool isFighter = false;
+
+	float wingDrag = 0.07f;
+	float wingAngle = 0.1f;
+	float invDrag = 0.995f;
+	/// actually the invDrag of crashDrag
+	float crashDrag = 0.995f;
+
+	float frontToSpeed = 0.04f;
+	float speedToFront = 0.01f;
+	float myGravity = 0.8f;
+
+	float maxBank = 0.55f;
+	float maxPitch = 0.35f;
+	float turnRadius = 150.0f;
+
+	float maxAileron = 0.04f;
+	float maxElevator = 0.02f;
+	float maxRudder = 0.01f;
+	// fighters abort dive toward target if within this distance and climb back to normal altitude
+	float attackSafetyDistance = 0.0f;
+
+	/// used while landing
+	float crashAileron = 0.0f;
+	float crashElevator = 0.0f;
+	float crashRudder = 0.0f;
+
+	float lastRudderPos = 0.0f;
+	float lastElevatorPos = 0.0f;
+	float lastAileronPos = 0.0f;
 };
 
 #endif // _AIR_MOVE_TYPE_H_

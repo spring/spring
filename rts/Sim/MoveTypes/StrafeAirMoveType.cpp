@@ -25,6 +25,7 @@
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (nullptr))
 
 CR_REG_METADATA(CStrafeAirMoveType, (
+	CR_MEMBER(maneuverBlockTime),
 	CR_MEMBER(maneuverState),
 	CR_MEMBER(maneuverSubState),
 
@@ -56,6 +57,40 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(lastElevatorPos),
 	CR_MEMBER(lastAileronPos)
 ))
+
+
+
+#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
+static const unsigned int BOOL_MEMBER_HASHES[] = {
+	MEMBER_LITERAL_HASH(       "collide"),
+	MEMBER_LITERAL_HASH( "useSmoothMesh"),
+	MEMBER_LITERAL_HASH("loopbackAttack"),
+};
+
+static const unsigned int INT_MEMBER_HASHES[] = {
+	MEMBER_LITERAL_HASH("maneuverBlockTime"),
+};
+
+static const unsigned int FLOAT_MEMBER_HASHES[] = {
+	MEMBER_LITERAL_HASH(        "wantedHeight"),
+	MEMBER_LITERAL_HASH(          "turnRadius"),
+	MEMBER_LITERAL_HASH(             "accRate"),
+	MEMBER_LITERAL_HASH(             "decRate"),
+	MEMBER_LITERAL_HASH(              "maxAcc"), // synonym for accRate
+	MEMBER_LITERAL_HASH(              "maxDec"), // synonym for decRate
+	MEMBER_LITERAL_HASH(             "maxBank"),
+	MEMBER_LITERAL_HASH(            "maxPitch"),
+	MEMBER_LITERAL_HASH(          "maxAileron"),
+	MEMBER_LITERAL_HASH(         "maxElevator"),
+	MEMBER_LITERAL_HASH(           "maxRudder"),
+	MEMBER_LITERAL_HASH("attackSafetyDistance"),
+	MEMBER_LITERAL_HASH(           "myGravity"),
+};
+
+#undef MEMBER_CHARPTR_HASH
+#undef MEMBER_LITERAL_HASH
 
 
 
@@ -345,26 +380,10 @@ static int SelectLoopBackManeuver(
 
 
 
-CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
-	AAirMoveType(owner),
-	maneuverState(MANEUVER_FLY_STRAIGHT),
-	maneuverSubState(0),
-	loopbackAttack(false),
-	isFighter(false),
-	wingDrag(0.07f),
-	wingAngle(0.1f),
-	invDrag(0.995f),
-	crashDrag(0.995f),
-	frontToSpeed(0.04f),
-	speedToFront(0.01f),
-	myGravity(0.8f),
-	maxBank(0.55f),
-	maxPitch(0.35f),
-	turnRadius(150),
-	maxAileron(0.04f),
-	maxElevator(0.02f),
-	maxRudder(0.01f)
+CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner): AAirMoveType(owner)
 {
+	maneuverBlockTime = GAME_SPEED * 3;
+
 	// creg
 	if (owner == nullptr)
 		return;
@@ -399,7 +418,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
-	// FIXME: WHY ARE THESE RANDOMIZED?
 	maxRudder   *= (0.99f + gsRNG.NextFloat() * 0.02f);
 	maxElevator *= (0.99f + gsRNG.NextFloat() * 0.02f);
 	maxAileron  *= (0.99f + gsRNG.NextFloat() * 0.02f);
@@ -497,9 +515,8 @@ bool CStrafeAirMoveType::Update()
 
 							const float altitude = CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) - lastPos.y;
 
-							if ((maneuverState = SelectLoopBackManeuver(frontdir, rightdir, lastSpd, turnRadius, altitude)) == MANEUVER_IMMELMAN_INV) {
+							if ((maneuverState = SelectLoopBackManeuver(frontdir, rightdir, lastSpd, turnRadius, altitude)) == MANEUVER_IMMELMAN_INV)
 								maneuverSubState = 0;
-							}
 						}
 					}
 				} else {
@@ -696,13 +713,13 @@ void CStrafeAirMoveType::UpdateManeuver()
 
 			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
 
-			if ((owner->updir.y < 0.0f && owner->frontdir.y < 0.0f) || speedf < 0.8f) {
+			if ((owner->updir.y < 0.0f && owner->frontdir.y < 0.0f) || speedf < 0.8f)
 				maneuverState = MANEUVER_FLY_STRAIGHT;
-			}
+
 			// [?] some seem to report that the "unlimited altitude" thing is because of these maneuvers
-			if ((owner->pos.y - CGround::GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 4.0f)) {
+			if ((owner->pos.y - CGround::GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 4.0f))
 				maneuverState = MANEUVER_FLY_STRAIGHT;
-			}
+
 		} break;
 
 		case MANEUVER_IMMELMAN_INV: {
@@ -725,9 +742,9 @@ void CStrafeAirMoveType::UpdateManeuver()
 
 			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
 
-			if ((owner->updir.y > 0.0f && owner->frontdir.y > 0.0f && maneuverSubState == 1) || speedf < 0.2f) {
+			if ((owner->updir.y > 0.0f && owner->frontdir.y > 0.0f && maneuverSubState == 1) || speedf < 0.2f)
 				maneuverState = MANEUVER_FLY_STRAIGHT;
-			}
+
 		} break;
 
 		default: {
@@ -817,8 +834,6 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	//   turnRadius is often way too small, but cannot calculate one
 	//   because we have no turnRate (and unitDef->turnRate can be 0)
 	//   --> would lead to infinite circling without adjusting goal
-
-
 	const float3 goalVec = goalPos - pos;
 
 	const float goalDist2D = std::max(0.001f, goalVec.Length2D());
@@ -837,16 +852,19 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
 
+
 	// RHS is needed for moving targets (when called by UpdateAttack)
+	// yaw and roll have to be unconditionally unblocked after a certain
+	// time or aircraft can fly straight forever e.g. if their target is
+	// another chasing aircraft
 	const bool allowUnlockYawRoll = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
-	const bool forceUnlockYawRoll = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
+	const bool forceUnlockYawRoll = ((gs->frameNum - owner->lastFireWeapon) >= maneuverBlockTime);
 
-	// yaw and roll have to be unblocked after a certain time or aircraft
-	// can fly straight forever if their target is another chasing aircraft
-	float3 rightDir2D = rightdir;
-	float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
+	const float3 rightDir2D = (rightdir * XZVector).Normalize2D();
+	const float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
 
-	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
+
+	float goalDotRight = goalDir2D.dot(rightDir2D);
 
 	const float aGoalDotFront = goalDir2D.dot(frontdir);
 
@@ -857,13 +875,13 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// This is to prevent becoming stuck in a small circle
 	// around goal-position.
 	if ((goalDist2D < turnRadius * 0.5f && goalDir2D.dot(frontdir) < 0.7f) || (goalDist2D < turnRadius && goalDir2D.dot(frontdir) < -0.1f)) {
-		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) {
+		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2)
 			goalDotRight *= -1.0f;
-		}
 	}
 
-	if (lastColWarning != NULL) {
+	if (lastColWarning != nullptr) {
 		const float3 otherDif = lastColWarning->pos - pos;
+
 		const float otherLength = otherDif.Length();
 		const float otherThreat = (otherLength > 0.0f)?
 			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
@@ -885,15 +903,11 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 }
 
 
-static float GetVTOLAccelerationSign(float h, float wh, float speedy, bool ascending) {
-	const float nxtHeight = h + speedy * 20.0f;
-	const float tgtHeight = wh * 1.02f;
+static float GetVTOLAccelerationSign(float curHeight, float wtdHeight, float vertSpeed) {
+	const float nxtHeight = curHeight + vertSpeed * 20.0f;
+	const float tgtHeight = wtdHeight * 1.02f;
 
-	if (ascending) {
-		return ((nxtHeight < tgtHeight)?  1.0f: -1.0f);
-	} else {
-		return ((nxtHeight > tgtHeight)? -1.0f:  1.0f);
-	}
+	return (Sign<float>(nxtHeight < tgtHeight));
 }
 
 void CStrafeAirMoveType::UpdateTakeOff()
@@ -916,15 +930,14 @@ void CStrafeAirMoveType::UpdateTakeOff()
 	frontdir.Normalize();
 	rightdir = frontdir.cross(updir);
 
-	owner->SetVelocity(spd + (UpVector * accRate * GetVTOLAccelerationSign(currentHeight, wantedHeight, spd.y, true)));
+	owner->SetVelocity(spd + (UpVector * accRate * GetVTOLAccelerationSign(currentHeight, wantedHeight, spd.y)));
 
 	// initiate forward motion before reaching wantedHeight
-	if (currentHeight > wantedHeight * 0.4f) {
+	if (currentHeight > wantedHeight * 0.4f)
 		owner->SetVelocity(spd + (owner->frontdir * accRate));
-	}
-	if (currentHeight > wantedHeight) {
+
+	if (currentHeight > wantedHeight)
 		SetState(AIRCRAFT_FLYING);
-	}
 
 	owner->SetVelocityAndSpeed(spd * invDrag);
 	owner->Move(spd, true);
@@ -1336,41 +1349,16 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 	if (AMoveType::SetMemberValue(memberHash, memberValue))
 		return true;
 
-	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
-	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-
 	#define WANTEDHEIGHT_MEMBER_IDX 0
-
-	static const unsigned int boolMemberHashes[] = {
-		MEMBER_LITERAL_HASH(       "collide"),
-		MEMBER_LITERAL_HASH( "useSmoothMesh"),
-		MEMBER_LITERAL_HASH("loopbackAttack"),
-	};
-	static const unsigned int floatMemberHashes[] = {
-		MEMBER_LITERAL_HASH(        "wantedHeight"),
-		MEMBER_LITERAL_HASH(          "turnRadius"),
-		MEMBER_LITERAL_HASH(             "accRate"),
-		MEMBER_LITERAL_HASH(             "decRate"),
-		MEMBER_LITERAL_HASH(              "maxAcc"), // synonym for accRate
-		MEMBER_LITERAL_HASH(              "maxDec"), // synonym for decRate
-		MEMBER_LITERAL_HASH(             "maxBank"),
-		MEMBER_LITERAL_HASH(            "maxPitch"),
-		MEMBER_LITERAL_HASH(          "maxAileron"),
-		MEMBER_LITERAL_HASH(         "maxElevator"),
-		MEMBER_LITERAL_HASH(           "maxRudder"),
-		MEMBER_LITERAL_HASH("attackSafetyDistance"),
-		MEMBER_LITERAL_HASH(           "myGravity"),
-	};
-
-	#undef MEMBER_CHARPTR_HASH
-	#undef MEMBER_LITERAL_HASH
-
 
 	// unordered_map etc. perform dynallocs, so KISS here
 	bool* boolMemberPtrs[] = {
 		&collide,
 		&useSmoothMesh,
 		&loopbackAttack,
+	};
+	int* intMemberPtrs[] = {
+		&maneuverBlockTime,
 	};
 	float* floatMemberPtrs[] = {
 		&wantedHeight,
@@ -1393,21 +1381,28 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 	};
 
 	// special cases
-	if (memberHash == floatMemberHashes[WANTEDHEIGHT_MEMBER_IDX]) {
+	if (memberHash == FLOAT_MEMBER_HASHES[WANTEDHEIGHT_MEMBER_IDX]) {
 		SetDefaultAltitude(*(reinterpret_cast<float*>(memberValue)));
 		return true;
 	}
 
 	// note: <memberHash> should be calculated via HsiehHash
-	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
-		if (memberHash == boolMemberHashes[n]) {
+	for (size_t n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
+		if (memberHash == BOOL_MEMBER_HASHES[n]) {
 			*(boolMemberPtrs[n]) = *(reinterpret_cast<bool*>(memberValue));
 			return true;
 		}
 	}
 
-	for (unsigned int n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
-		if (memberHash == floatMemberHashes[n]) {
+	for (size_t n = 0; n < sizeof(intMemberPtrs) / sizeof(intMemberPtrs[0]); n++) {
+		if (memberHash == INT_MEMBER_HASHES[n]) {
+			*(intMemberPtrs[n]) = *(reinterpret_cast<int*>(memberValue));
+			return true;
+		}
+	}
+
+	for (size_t n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
+		if (memberHash == FLOAT_MEMBER_HASHES[n]) {
 			*(floatMemberPtrs[n]) = *(reinterpret_cast<float*>(memberValue));
 			return true;
 		}
