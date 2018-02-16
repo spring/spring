@@ -3311,6 +3311,10 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		} break;
 
 		case hashString("reloadTime"): {
+			lua_pushnumber(L, weapon->reloadTime / GAME_SPEED);
+		} break;
+		case hashString("reloadTimeXP"): {
+			// reloadSpeed is affected by unit experience
 			lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
 		} break;
 		case hashString("reaimTime"): {
@@ -3382,6 +3386,7 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, in
 {
 	if (lua_isnumber(L, index)) {
 		const unsigned armType = lua_toint(L, index);
+
 		if (armType >= damages.GetNumTypes())
 			return 0;
 
@@ -3389,37 +3394,59 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, in
 		return 1;
 	}
 
-	const std::string key = luaL_checkstring(L, index);
+	const char* key = luaL_checkstring(L, index);
 
-	if (key == "paralyzeDamageTime") {
-		lua_pushnumber(L, damages.paralyzeDamageTime);
-	} else if (key == "impulseFactor") {
-		lua_pushnumber(L, damages.impulseFactor);
-	} else if (key == "impulseBoost") {
-		lua_pushnumber(L, damages.impulseBoost);
-	} else if (key == "craterMult") {
-		lua_pushnumber(L, damages.craterMult);
-	} else if (key == "craterBoost") {
-		lua_pushnumber(L, damages.craterBoost);
-	} else if (key == "dynDamageExp") {
-		lua_pushnumber(L, damages.dynDamageExp);
-	} else if (key == "dynDamageMin") {
-		lua_pushnumber(L, damages.dynDamageMin);
-	} else if (key == "dynDamageRange") {
-		lua_pushnumber(L, damages.dynDamageRange);
-	} else if (key == "dynDamageInverted") {
-		lua_pushboolean(L, damages.dynDamageInverted);
-	} else if (key == "craterAreaOfEffect") {
-		lua_pushnumber(L, damages.craterAreaOfEffect);
-	} else if (key == "damageAreaOfEffect") {
-		lua_pushnumber(L, damages.damageAreaOfEffect);
-	} else if (key == "edgeEffectiveness") {
-		lua_pushnumber(L, damages.edgeEffectiveness);
-	} else if (key == "explosionSpeed") {
-		lua_pushnumber(L, damages.explosionSpeed);
-	} else {
-		return 0;
+	switch (hashString(key)) {
+		case hashString("paralyzeDamageTime"): {
+			lua_pushnumber(L, damages.paralyzeDamageTime);
+		} break;
+
+		case hashString("impulseFactor"): {
+			lua_pushnumber(L, damages.impulseFactor);
+		} break;
+		case hashString("impulseBoost"): {
+			lua_pushnumber(L, damages.impulseBoost);
+		} break;
+
+		case hashString("craterMult"): {
+			lua_pushnumber(L, damages.craterMult);
+		} break;
+		case hashString("craterBoost"): {
+			lua_pushnumber(L, damages.craterBoost);
+		} break;
+
+		case hashString("dynDamageExp"): {
+			lua_pushnumber(L, damages.dynDamageExp);
+		} break;
+		case hashString("dynDamageMin"): {
+			lua_pushnumber(L, damages.dynDamageMin);
+		} break;
+		case hashString("dynDamageRange"): {
+			lua_pushnumber(L, damages.dynDamageRange);
+		} break;
+		case hashString("dynDamageInverted"): {
+			lua_pushboolean(L, damages.dynDamageInverted);
+		} break;
+
+		case hashString("craterAreaOfEffect"): {
+			lua_pushnumber(L, damages.craterAreaOfEffect);
+		} break;
+		case hashString("damageAreaOfEffect"): {
+			lua_pushnumber(L, damages.damageAreaOfEffect);
+		} break;
+
+		case hashString("edgeEffectiveness"): {
+			lua_pushnumber(L, damages.edgeEffectiveness);
+		} break;
+		case hashString("explosionSpeed"): {
+			lua_pushnumber(L, damages.explosionSpeed);
+		} break;
+
+		default: {
+			return 0;
+		} break;
 	}
+
 	return 1;
 }
 
@@ -3433,13 +3460,12 @@ int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
 	const DynDamageArray* damages;
 
 	if (lua_israwstring(L, 2)) {
-		const string key = lua_tostring(L, 2);
-		if (key == "explode") {
-			damages = unit->deathExpDamages;
-		} else if (key == "selfDestruct") {
-			damages = unit->selfdExpDamages;
-		} else {
-			return 0;
+		const char* key = lua_tostring(L, 2);
+
+		switch (hashString(key)) {
+			case hashString("explode"     ): { damages = unit->deathExpDamages; } break;
+			case hashString("selfDestruct"): { damages = unit->selfdExpDamages; } break;
+			default                        : {                        return 0; } break;
 		}
 	} else {
 		const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
