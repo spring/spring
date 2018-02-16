@@ -22,10 +22,10 @@ class CUnsyncedLuaHandle : public CLuaHandle
 	friend class CLuaHandleSynced;
 
 	public: // call-ins
-		bool DrawUnit(const CUnit* unit);
-		bool DrawFeature(const CFeature* feature);
-		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
-		bool DrawProjectile(const CProjectile* projectile);
+		bool DrawUnit(const CUnit* unit) override;
+		bool DrawFeature(const CFeature* feature) override;
+		bool DrawShield(const CUnit* unit, const CWeapon* weapon) override;
+		bool DrawProjectile(const CProjectile* projectile) override;
 
 	public: // all non-eventhandler callins
 		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
@@ -37,7 +37,7 @@ class CUnsyncedLuaHandle : public CLuaHandle
 		bool Init(const string& code, const string& file);
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
-			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)));
+			assert(dynamic_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L)) != nullptr);
 			return static_cast<CUnsyncedLuaHandle*>(CLuaHandle::GetHandle(L));
 		}
 
@@ -52,35 +52,35 @@ class CSyncedLuaHandle : public CLuaHandle
 	friend class CLuaHandleSynced;
 
 	public: // call-ins
-		bool CommandFallback(const CUnit* unit, const Command& cmd);
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+		bool CommandFallback(const CUnit* unit, const Command& cmd) override;
+		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) override;
 
-		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
-		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
-		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
-		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
-		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist);
-		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon);
-		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
-		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
-		bool AllowResourceLevel(int teamID, const string& type, float level);
-		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount);
-		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
-		bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) override;
+		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;
+		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) override;
+		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) override;
+		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) override;
+		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) override;
+		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) override;
+		bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) override;
+		bool AllowResourceLevel(int teamID, const string& type, float level) override;
+		bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount) override;
+		bool AllowDirectUnitControl(int playerID, const CUnit* unit) override;
+		bool AllowBuilderHoldFire(const CUnit* unit, int action) override;
+		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) override;
 
-		bool TerraformComplete(const CUnit* unit, const CUnit* build);
-		bool MoveCtrlNotify(const CUnit* unit, int data);
+		bool TerraformComplete(const CUnit* unit, const CUnit* build) override;
+		bool MoveCtrlNotify(const CUnit* unit, int data) override;
 
-		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) override;
 		bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID,
 			float* targetPriority
-		);
-		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+		) override;
+		bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) override;
 
 		bool UnitPreDamaged(
 			const CUnit* unit,
@@ -91,7 +91,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			bool paralyzer,
 			float* newDamage,
 			float* impulseMult
-		);
+		) override;
 
 		bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -101,7 +101,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			int projectileID,
 			float* newDamage,
 			float* impulseMult
-		);
+		) override;
 
 		bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -112,9 +112,9 @@ class CSyncedLuaHandle : public CLuaHandle
 			const CUnit* beamCarrier,
 			const float3& startPos,
 			const float3& hitPos
-		);
+		) override;
 
-		bool SyncedActionFallback(const string& line, int playerID);
+		bool SyncedActionFallback(const string& line, int playerID) override;
 
 	protected:
 		CSyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
@@ -160,8 +160,7 @@ class CLuaHandleSynced
 {
 	public: // Non-eventhandler call-ins
 		bool GotChatMsg(const string& msg, int playerID) {
-			return syncedLuaHandle.GotChatMsg(msg, playerID) ||
-				unsyncedLuaHandle.GotChatMsg(msg, playerID);
+			return syncedLuaHandle.GotChatMsg(msg, playerID) || unsyncedLuaHandle.GotChatMsg(msg, playerID);
 		}
 
 		bool RecvLuaMsg(const string& msg, int playerID) {
