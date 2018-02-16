@@ -105,37 +105,36 @@ void CUnitHandler::Init() {
 	static_assert(sizeof(CBuilder) >= sizeof(CExtractorBuilding), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CFactory          ), "");
 
-	// set the global (runtime-constant) unit-limit as the sum
-	// of  all team unit-limits, which is *always* <= MAX_UNITS
-	// (note that this also counts the Gaia team)
-	//
-	// teams can not be created at runtime, but they can die and
-	// in that case the per-team limit is recalculated for every
-	// other team in the respective allyteam
-	maxUnits = 0;
+	{
+		// set the global (runtime-constant) unit-limit as the sum
+		// of  all team unit-limits, which is *always* <= MAX_UNITS
+		// (note that this also counts the Gaia team)
+		//
+		// teams can not be created at runtime, but they can die and
+		// in that case the per-team limit is recalculated for every
+		// other team in the respective allyteam
+		maxUnits = CalcMaxUnits();
 
-	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
-		maxUnits += teamHandler->Team(n)->GetMaxUnits();
+		maxUnitRadius = 0.0f;
 	}
-
-	maxUnitRadius = 0.0f;
-
-
-	units.resize(maxUnits, nullptr);
-
-	for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
-		unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);
+	{
+		activeSlowUpdateUnit = 0;
+		activeUpdateUnit = 0;
 	}
+	{
+		unitMemPool.reserve(128);
 
-	unitMemPool.reserve(128);
+		// id's are used as indices, so they must lie in [0, units.size() - 1]
+		// (furthermore all id's are treated equally, none have special status)
+		if (idPool.IsEmpty())
+			idPool.Expand(0, units.size());
 
-	// id's are used as indices, so they must lie in [0, units.size() - 1]
-	// (furthermore all id's are treated equally, none have special status)
-	if (idPool.IsEmpty())
-		idPool.Expand(0, units.size());
+		units.resize(maxUnits, nullptr);
 
-	activeSlowUpdateUnit = 0;
-	activeUpdateUnit = 0;
+		for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
+			unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);
+		}
+	}
 }
 
 
@@ -166,7 +165,8 @@ void CUnitHandler::Kill()
 	activeUnits.clear();
 	unitsToBeRemoved.clear();
 
-	spring::clear_unordered_map(builderCAIs);
+	// only iterated by unsynced code, GetBuilderCAIs has no synced callers
+	builderCAIs.clear();
 }
 
 
@@ -438,6 +438,14 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 }
 
 
+void CUnitHandler::ChangeUnitTeam(CUnit* unit, const UnitDef* unitDef, int oldTeamNum, int newTeamNum)
+{
+	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum,           0), unit       );
+	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum, unitDef->id), unit       );
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum,           0), unit, false);
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum, unitDef->id), unit, false);
+}
+
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 {
@@ -445,5 +453,16 @@ bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 		return false;
 
 	return (NumUnitsByTeamAndDef(team, unitdef->id) < unitdef->maxThisUnit);
+}
+
+unsigned int CUnitHandler::CalcMaxUnits() const
+{
+	unsigned int n = 0;
+
+	for (unsigned int i = 0; i < teamHandler->ActiveTeams(); i++) {
+		n += teamHandler->Team(i)->GetMaxUnits();
+	}
+
+	return n;
 }
 
