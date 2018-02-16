@@ -197,7 +197,7 @@ bool CCommandColors::LoadConfigFromString(const std::string& cfg)
 		if (words.size() <= 1)
 			continue;
 
-		const std::string& command = std::move(StringToLower(words[0]));
+		const std::string command = std::move(StringToLower(words[0]));
 
 		switch (hashString(command.c_str())) {
 			case hashString("alwaysdrawqueue"): {
