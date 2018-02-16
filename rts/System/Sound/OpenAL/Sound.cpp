@@ -4,7 +4,13 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <al.h>
 #include <alc.h>
+#include <alext.h>
+
+#ifdef ALC_SOFT_loopback
+#include <SDL.h>
+#endif
 
 #ifndef ALC_ALL_DEVICES_SPECIFIER
 #define ALC_ALL_DEVICES_SPECIFIER 0x1013
@@ -45,7 +51,11 @@ spring::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: masterVolume(0.0f)
+	: curDevice(nullptr)
+	, curContext(nullptr)
+	, sdlDeviceID(0)
+	, frameSize(-1)
+	, masterVolume(0.0f)
 
 	, pitchAdjustMode(0)
 
@@ -96,6 +106,26 @@ CSound::~CSound()
 	SoundBuffer::Deinitialise();
 
 	LOG("[%s][3]", __func__);
+}
+
+void CSound::Cleanup() {
+	if (curContext != nullptr) {
+		alcDestroyContext(curContext);
+		curContext = nullptr;
+	}
+	if (curDevice != nullptr) {
+		alcCloseDevice(curDevice);
+		curDevice = nullptr;
+	}
+
+#ifdef ALC_SOFT_loopback
+	if (sdlDeviceID != 0) {
+		SDL_CloseAudio();
+		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		sdlDeviceID = 0;
+	}
+#endif
+
 }
 
 bool CSound::HasSoundItem(const std::string& name) const
@@ -280,6 +310,188 @@ void CSound::Iconified(bool state)
 }
 
 
+void CSound::OpenOpenALDevice(const std::string& deviceName)
+{
+	assert(curDevice == nullptr);
+
+	if (!deviceName.empty()) {
+		LOG("[Sound::%s] opening configured device \"%s\"", __func__, deviceName.c_str());
+
+		curDevice = alcOpenDevice(deviceName.c_str());
+	}
+
+	if (curDevice == nullptr) {
+		LOG("[Sound::%s] opening default device \"%s\"", __func__, alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
+
+		curDevice = alcOpenDevice(nullptr);
+	}
+
+	if (curDevice == nullptr) {
+		LOG_L(L_ERROR, "[%s][2] failed to open device", __func__);
+
+		// fall back to NullSound
+		Cleanup();
+		soundThreadQuit = true;
+		return;
+	}
+
+	curContext = alcCreateContext(curDevice, nullptr);
+	LOG("[Sound::%s] device=%p context=%p", __func__, curDevice, curContext);
+}
+
+#ifdef ALC_SOFT_loopback
+
+static LPALCLOOPBACKOPENDEVICESOFT alcLoopbackOpenDeviceSOFT;
+static LPALCISRENDERFORMATSUPPORTEDSOFT alcIsRenderFormatSupportedSOFT;
+static LPALCRENDERSAMPLESSOFT alcRenderSamplesSOFT;
+
+static void SDLCALL RenderSDLSamples(void *userdata, Uint8 *stream, int len)
+{
+	CSound *snd = reinterpret_cast<CSound*>(userdata);
+	alcRenderSamplesSOFT(snd->GetCurrentDevice(), stream, len / snd->GetFrameSize());
+}
+
+static const char* ChannelsName(ALCenum chans)
+{
+	switch(chans)
+	{
+		case ALC_MONO_SOFT: return "Mono";
+		case ALC_STEREO_SOFT: return "Stereo";
+		case ALC_QUAD_SOFT: return "Quadraphonic";
+		case ALC_5POINT1_SOFT: return "5.1 Surround";
+		case ALC_6POINT1_SOFT: return "6.1 Surround";
+		case ALC_7POINT1_SOFT: return "7.1 Surround";
+	}
+	return "Unknown Channels";
+}
+
+static const char* TypeName(ALCenum type)
+{
+	switch(type)
+	{
+		case ALC_BYTE_SOFT: return "S8";
+		case ALC_UNSIGNED_BYTE_SOFT: return "U8";
+		case ALC_SHORT_SOFT: return "S16";
+		case ALC_UNSIGNED_SHORT_SOFT: return "U16";
+		case ALC_INT_SOFT: return "S32";
+		case ALC_UNSIGNED_INT_SOFT: return "U32";
+		case ALC_FLOAT_SOFT: return "Float32";
+	}
+	return "Unknown Type";
+}
+
+#endif
+
+void CSound::OpenLoopbackDevice(const std::string& deviceName)
+{
+	assert(curDevice == nullptr);
+
+#ifdef ALC_SOFT_loopback
+
+#define LOAD_PROC(x) ((x) = (decltype(x)) alcGetProcAddress(NULL, #x))
+	LOAD_PROC(alcLoopbackOpenDeviceSOFT);
+	LOAD_PROC(alcIsRenderFormatSupportedSOFT);
+	LOAD_PROC(alcRenderSamplesSOFT);
+#undef LOAD_PROC
+
+	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+		LOG("[Sound::%s] failed to initialize SDL audio, error:  \"%s\"", __func__, SDL_GetError());
+		return;
+	}
+
+	SDL_AudioSpec desired, obtained;
+
+	desired.channels = 2;
+	desired.format = AUDIO_S16SYS;
+	desired.freq = 44100;
+	desired.padding = 0;
+	desired.samples = 4096;
+	desired.callback = RenderSDLSamples;
+	desired.userdata = this;
+
+
+	sdlDeviceID = 0;
+
+	if (!deviceName.empty()) {
+		LOG("[Sound::%s] opening configured device \"%s\"", __func__, deviceName.c_str());
+		sdlDeviceID = SDL_OpenAudioDevice(deviceName.c_str(), 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+	}
+
+	if (sdlDeviceID == 0) {
+		LOG("[Sound::%s] opening default device", __func__);
+		sdlDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+	}
+
+	if (sdlDeviceID == 0) {
+		LOG("[Sound::%s] failed to open SDL audio, error:  \"%s\"", __func__, SDL_GetError());
+		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		return;
+	}
+
+	ALCint attrs[16];
+
+	/* Set up our OpenAL attributes based on what we got from SDL. */
+	attrs[0] = ALC_FORMAT_CHANNELS_SOFT;
+	if(obtained.channels == 1) {
+		attrs[1] = ALC_MONO_SOFT;
+	} else if(obtained.channels == 2) {
+		attrs[1] = ALC_STEREO_SOFT;
+	} else {
+		LOG("[Sound::%s] uhandled SDL channel count: %d", __func__, obtained.channels);
+		Cleanup();
+		return;
+	}
+
+	attrs[2] = ALC_FORMAT_TYPE_SOFT;
+	if (obtained.format == AUDIO_U8) {
+		attrs[3] = ALC_UNSIGNED_BYTE_SOFT;
+	} else if(obtained.format == AUDIO_S8) {
+		attrs[3] = ALC_BYTE_SOFT;
+	} else if(obtained.format == AUDIO_U16SYS) {
+		attrs[3] = ALC_UNSIGNED_SHORT_SOFT;
+	} else if(obtained.format == AUDIO_S16SYS) {
+		attrs[3] = ALC_SHORT_SOFT;
+	} else {
+		LOG("[Sound::%s] unhandled SDL format: 0x%04x", __func__, obtained.format);
+		Cleanup();
+		return;
+	}
+
+	attrs[4] = ALC_FREQUENCY;
+	attrs[5] = obtained.freq;
+
+	attrs[6] = 0; /* end of list */
+
+	frameSize = obtained.channels * SDL_AUDIO_BITSIZE(obtained.format) / 8;
+
+	/* Initialize OpenAL loopback device, using our format attributes. */
+	curDevice = alcLoopbackOpenDeviceSOFT(NULL);
+	if(curDevice == nullptr) {
+		LOG("[Sound::%s] failed to create loopback device", __func__);
+		Cleanup();
+		return;
+	}
+
+	/* Make sure the format is supported before setting them on the device. */
+	if(alcIsRenderFormatSupportedSOFT(curDevice, attrs[5], attrs[1], attrs[3]) == ALC_FALSE) {
+		LOG("[Sound::%s] render format not supported: %s, %s, %dhz\n", __func__,
+						ChannelsName(attrs[1]), TypeName(attrs[3]), attrs[5]);
+		Cleanup();
+		return;
+	}
+
+	curContext = alcCreateContext(curDevice, attrs);
+	if (curContext == nullptr) {
+		LOG_L(L_ERROR, "[Sound::%s][3] failed to create loopback context", __func__);
+		Cleanup();
+		return;
+	}
+
+	LOG("[Sound::%s] device=%p context=%p", __func__, curDevice, curContext);
+#endif
+}
+
+
 
 void CSound::InitThread(int cfgMaxSounds)
 {
@@ -287,6 +499,7 @@ void CSound::InitThread(int cfgMaxSounds)
 
 	{
 		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+		assert(curDevice == nullptr && curContext == nullptr);
 		// if empty, open default device
 		std::string configDeviceName;
 
@@ -296,44 +509,23 @@ void CSound::InitThread(int cfgMaxSounds)
 		if (configHandler->IsSet("snd_device"))
 			configDeviceName = configHandler->GetString("snd_device");
 
-		ALCdevice* device = nullptr;
-		ALCcontext* context = nullptr;
+		OpenLoopbackDevice(configDeviceName);
 
-		if (!configDeviceName.empty()) {
-			LOG("[Sound::%s][2] opening configured device \"%s\"", __func__, configDeviceName.c_str());
+		if (curContext == nullptr)
+			OpenOpenALDevice(configDeviceName);
 
-			device = alcOpenDevice(configDeviceName.c_str());
-		}
-		if (device == nullptr) {
-			LOG("[Sound::%s][2] opening default device \"%s\"", __func__, alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
-
-			device = alcOpenDevice(nullptr);
-		}
-
-		if (device == nullptr) {
-			LOG_L(L_ERROR, "[%s][2] failed to open device", __func__);
-
-			// fall back to NullSound
-			soundThreadQuit = true;
-			return;
-		}
-
-		context = alcCreateContext(device, nullptr);
-		LOG("[Sound::%s][3] device=%p context=%p", __func__, device, context);
-
-		if (context == nullptr) {
+		if (curContext == nullptr) {
 			LOG_L(L_ERROR, "[Sound::%s][3] failed to create context", __func__);
-			alcCloseDevice(device);
 
+			Cleanup();
 			soundThreadQuit = true;
 			return;
 		}
 
-		if (!alcMakeContextCurrent(context)) {
+		if (!alcMakeContextCurrent(curContext)) {
 			LOG_L(L_ERROR, "[Sound::%s][3] failed to set current context", __func__);
-			alcDestroyContext(context);
-			alcCloseDevice(device);
 
+			Cleanup();
 			soundThreadQuit = true;
 			return;
 		}
@@ -345,9 +537,9 @@ void CSound::InitThread(int cfgMaxSounds)
 			LOG("  Version:        %s", (const char*) alGetString(AL_VERSION));
 			LOG("  Renderer:       %s", (const char*) alGetString(AL_RENDERER));
 			LOG("  AL Extensions:  %s", (const char*) alGetString(AL_EXTENSIONS));
-			LOG("  ALC Extensions: %s", (const char*) alcGetString(device, ALC_EXTENSIONS));
+			LOG("  ALC Extensions: %s", (const char*) alcGetString(curDevice, ALC_EXTENSIONS));
 			// same as renderer
-			// LOG("  Implementation: %s", (const char*) alcGetString(device, ALC_DEVICE_SPECIFIER));
+			// LOG("  Implementation: %s", (const char*) alcGetString(curDevice, ALC_DEVICE_SPECIFIER));
 			LOG("  Devices:");
 
 			const bool hasAllEnumExt = alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
@@ -366,7 +558,7 @@ void CSound::InitThread(int cfgMaxSounds)
 		}
 
 		// generate sound sources; after this <soundSources> never changes size
-		GenSources(GetMaxMonoSources(device, cfgMaxSounds));
+		GenSources(GetMaxMonoSources(curDevice, cfgMaxSounds));
 
 		{
 			// set distance model (sound attenuation)
@@ -376,11 +568,15 @@ void CSound::InitThread(int cfgMaxSounds)
 			CheckError("[Sound::Init]");
 		}
 
-		efx = new CEFX(device);
+		efx = new CEFX(curDevice);
 		CheckError("[Sound::Init::EFX]");
 	}
 
 	canLoadDefs = true;
+#ifdef ALC_SOFT_loopback
+	if (sdlDeviceID != 0)
+		SDL_PauseAudioDevice(sdlDeviceID, 0);
+#endif
 }
 
 __FORCE_ALIGN_STACK__
@@ -415,14 +611,10 @@ void CSound::UpdateThread(int cfgMaxSounds)
 	// must happen after sources and before context
 	spring::SafeDelete(efx);
 
-	ALCcontext* curContext = alcGetCurrentContext();
-	ALCdevice* curDevice = alcGetContextsDevice(curContext);
-
 	LOG("[Sound::%s][4] ctx=%p dev=%p", __func__, curContext, curDevice);
 
 	alcMakeContextCurrent(nullptr);
-	alcDestroyContext(curContext);
-	alcCloseDevice(curDevice);
+	Cleanup();
 
 	LOG("[Sound::%s][5]", __func__);
 }
