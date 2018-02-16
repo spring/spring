@@ -548,12 +548,12 @@ float CGround::SimTrajectoryGroundColDist(const float3& trajStartPos, const floa
 	// from <pos> with velocity <trajStartDir * speed>; <pos> is assumed to
 	// start inside map
 	while (pos.SqDistance2D(trajStartPos) < Square(minDist)) {
-		pos += vel;
 		vel += acc;
+		pos += vel;
 	}
 	while (pos.y >= GetHeightReal(pos)) {
-		pos += vel;
 		vel += acc;
+		pos += vel;
 	}
 
 	if (pos.SqDistance2D(trajStartPos) >= Square(maxDist))

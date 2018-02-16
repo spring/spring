@@ -33,8 +33,8 @@ class CProjectileHandler
 	CR_DECLARE_STRUCT(CProjectileHandler)
 
 public:
-	CProjectileHandler();
-	~CProjectileHandler();
+	void Init();
+	void Kill();
 
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -72,14 +72,14 @@ public:
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
 public:
-	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
-	int maxNanoParticles;
-	int currentNanoParticles;
+	int maxParticles = 0;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxNanoParticles = 0;
+	int currentNanoParticles = 0;
 
 	// these vars are used to precache parts of GetCurrentParticles() calculations
-	int lastCurrentParticles;
-	int lastSyncedProjectilesCount;
-	int lastUnsyncedProjectilesCount;
+	int lastCurrentParticles = 0;
+	int lastSyncedProjectilesCount = 0;
+	int lastUnsyncedProjectilesCount = 0;
 
 	// flying pieces are sorted from time to time to reduce gl state changes
 	std::array<                bool, MODELTYPE_OTHER> resortFlyingPieces;
@@ -94,11 +94,12 @@ private:
 
 	std::deque<int> freeSyncedIDs;            // available synced (weapon, piece) projectile ID's
 	std::deque<int> freeUnsyncedIDs;          // available unsynced projectile ID's
+
 	ProjectileMap syncedProjectileIDs;        // ID ==> projectile* map for living synced projectiles
 	ProjectileMap unsyncedProjectileIDs;      // ID ==> projectile* map for living unsynced projectiles
 };
 
 
-extern CProjectileHandler* projectileHandler;
+extern CProjectileHandler projectileHandler;
 
 #endif /* PROJECTILE_HANDLER_H */
