@@ -531,7 +531,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->turnRadius = sAICallback->UnitDef_getTurnRadius(skirmishAIId, unitDefId);
 		unitDef->wantedHeight = sAICallback->UnitDef_getWantedHeight(skirmishAIId, unitDefId);
 		unitDef->verticalSpeed = sAICallback->UnitDef_getVerticalSpeed(skirmishAIId, unitDefId);
+
+		unitDef->hoverAttack = sAICallback->UnitDef_isHoverAttack(skirmishAIId, unitDefId);
 		unitDef->airStrafe = sAICallback->UnitDef_isAirStrafe(skirmishAIId, unitDefId);
+
 		unitDef->dlHoverFactor = sAICallback->UnitDef_getDlHoverFactor(skirmishAIId, unitDefId);
 		unitDef->maxAcc = sAICallback->UnitDef_getMaxAcceleration(skirmishAIId, unitDefId);
 		unitDef->maxDec = sAICallback->UnitDef_getMaxDeceleration(skirmishAIId, unitDefId);

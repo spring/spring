@@ -793,7 +793,10 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *UnitDef_getVerticalSpeed)(int skirmishAIId, int unitDefId);
 
 
+	bool              (CALLING_CONV *UnitDef_isHoverAttack)(int skirmishAIId, int unitDefId);
+
 	bool              (CALLING_CONV *UnitDef_isAirStrafe)(int skirmishAIId, int unitDefId);
+
 
 	/**
 	 * @return  < 0:  it can land

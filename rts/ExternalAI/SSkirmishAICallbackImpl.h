@@ -447,9 +447,11 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getWantedHeight(int skirmis
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getVerticalSpeed(int skirmishAIId, int unitDefId);
 
+
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isHoverAttack(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAirStrafe(int skirmishAIId, int unitDefId);
+
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getDlHoverFactor(int skirmishAIId, int unitDefId);
 
