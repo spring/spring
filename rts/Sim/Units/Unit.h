@@ -49,21 +49,12 @@ namespace icon {
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
 
-enum ScriptCloakBits { // FIXME -- not implemented
-	// always set to 0 if not enabled
-	SCRIPT_CLOAK_ENABLED          = (1 << 0),
-	SCRIPT_CLOAK_IGNORE_ENERGY    = (1 << 1),
-	SCRIPT_CLOAK_IGNORE_STUNNED   = (1 << 2),
-	SCRIPT_CLOAK_IGNORE_PROXIMITY = (1 << 3),
-	SCRIPT_CLOAK_IGNORE_BUILDING  = (1 << 4),
-	SCRIPT_CLOAK_IGNORE_RECLAIM   = (1 << 5),
-	SCRIPT_CLOAK_IGNORE_CAPTURING = (1 << 6),
-	SCRIPT_CLOAK_IGNORE_TERRAFORM = (1 << 7)
+enum ScriptCloakState {
+	UNIT_DEFER_CLOAK = 0, // control unit cloaking via wantCloak only
+	UNIT_ALLOW_CLOAK = 1, // allow unit to cloak even if wantCloak is false
+	UNIT_CONST_CLOAK = 2, // let unit remain or become cloaked even without energy
+	UNIT_FORCE_CLOAK = 3, // force unit to be cloaked at all times
 };
-
-
-
-
 
 class CUnit : public CSolidObject
 {
@@ -502,7 +493,7 @@ public:
 
 	int nextPosErrorUpdate;
 
-	///true if the unit is currently cloaked (has enough energy etc)
+	/// true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
 	/// true if the unit currently wants to be cloaked
 	bool wantCloak;

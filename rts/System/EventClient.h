@@ -192,23 +192,25 @@ class CEventClient
 
 		virtual bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner) { return false; }
 
-		virtual bool CommandFallback(const CUnit* unit, const Command& cmd);
-		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
 
-		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
-		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
-		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
-		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
-		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
-		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
-		virtual bool AllowResourceLevel(int teamID, const string& type, float level);
-		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
-		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
-		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		virtual bool CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
+		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) { return true; }
 
-		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
-		virtual bool MoveCtrlNotify(const CUnit* unit, int data);
+		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
+		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }
+		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) { return true; }
+		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) { return true; }
+		virtual bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist) { return true; }
+		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) { return true; }
+		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part) { return true; }
+		virtual bool AllowResourceLevel(int teamID, const string& type, float level) { return true; }
+		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const char* type, float amount) { return true; }
+		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
+		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
+		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
+
+		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
+		virtual bool MoveCtrlNotify(const CUnit* unit, int data) { return false; }
 
 		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
 		virtual bool AllowWeaponTarget(
@@ -252,7 +254,7 @@ class CEventClient
 			const float3& hitPos
 		) { return false; }
 
-		virtual bool SyncedActionFallback(const string& line, int playerID);
+		virtual bool SyncedActionFallback(const string& line, int playerID) { return false; }
 		/// @}
 
 		/**
