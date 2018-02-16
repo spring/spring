@@ -79,7 +79,6 @@ public:
 
 	int GetMaxUnits();
 
-	int GetUnitAiHint(int unitid);
 	int GetUnitTeam(int unitid);
 	int GetUnitAllyTeam(int unitid);
 	float GetUnitHealth(int unitid);

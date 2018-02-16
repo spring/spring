@@ -1516,7 +1516,7 @@ EXPORT(bool) skirmishAiCallback_Cheats_isOnlyPassive(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Game_getAiInterfaceVersion(int skirmishAIId) {
-	return wrapper_HandleCommand(skirmishAIId_callback[skirmishAIId], NULL, AIHCQuerySubVersionId, NULL);
+	return wrapper_HandleCommand(skirmishAIId_callback[skirmishAIId], nullptr, AIHCQuerySubVersionId, nullptr);
 }
 
 EXPORT(int) skirmishAiCallback_Game_getCurrentFrame(int skirmishAIId) {
@@ -1830,11 +1830,6 @@ EXPORT(const char*) skirmishAiCallback_Mod_getMutator(int skirmishAIId) {
 
 EXPORT(const char*) skirmishAiCallback_Mod_getDescription(int skirmishAIId) {
 	return modInfo.description.c_str();
-}
-
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_Mod_getAllowTeamColors(int skirmishAIId) {
-	return true;
 }
 
 EXPORT(bool) skirmishAiCallback_Mod_getConstructionDecay(int skirmishAIId) {
@@ -2346,28 +2341,6 @@ EXPORT(void) skirmishAiCallback_Map_getMousePos(int skirmishAIId, float* return_
 //########### END Map
 
 
-// DEPRECATED
-/*
-EXPORT(bool) skirmishAiCallback_getProperty(int skirmishAIId, int id, int property, void* dst) {
-//	return skirmishAIId_callback[skirmishAIId]->GetProperty(id, property, dst);
-	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		return skirmishAIId_cheatCallback[skirmishAIId]->GetProperty(id, property, dst);
-	} else {
-		return skirmishAIId_callback[skirmishAIId]->GetProperty(id, property, dst);
-	}
-}
-
-EXPORT(bool) skirmishAiCallback_getValue(int skirmishAIId, int id, void* dst) {
-//	return skirmishAIId_callback[skirmishAIId]->GetValue(id, dst);
-	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-		return skirmishAIId_cheatCallback[skirmishAIId]->GetValue(id, dst);
-	} else {
-		return skirmishAIId_callback[skirmishAIId]->GetValue(id, dst);
-	}
-}
-
-*/
-
 EXPORT(int) skirmishAiCallback_File_getSize(int skirmishAIId, const char* fileName) {
 	return skirmishAIId_callback[skirmishAIId]->GetFileSize(fileName);
 }
@@ -2570,30 +2543,6 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getHumanName(int skirmishAIId, in
 	return getUnitDefById(skirmishAIId, unitDefId)->humanName.c_str();
 }
 
-EXPORT(const char*) skirmishAiCallback_UnitDef_getFileName(int skirmishAIId, int unitDefId) {
-	return "$$deprecated$$";
-}
-
-//EXPORT(int) skirmishAiCallback_UnitDef_getId(int skirmishAIId, int unitDefId) {
-//	return getUnitDefById(skirmishAIId, unitDefId)->id;
-//}
-
-EXPORT(int) skirmishAiCallback_UnitDef_getAiHint(int skirmishAIId, int unitDefId) {
-	return 0;
-}
-
-EXPORT(int) skirmishAiCallback_UnitDef_getCobId(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->cobID;
-}
-
-EXPORT(int) skirmishAiCallback_UnitDef_getTechLevel(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->techLevel;
-}
-
-EXPORT(const char*) skirmishAiCallback_UnitDef_getGaia(int skirmishAIId, int unitDefId) {
-	return "";
-}
-
 
 EXPORT(float) skirmishAiCallback_UnitDef_getUpkeep(int skirmishAIId, int unitDefId, int resourceId) {
 	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
@@ -2690,10 +2639,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getStorage(int skirmishAIId, int unitDe
 	return 0.0f;
 }
 
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_UnitDef_isSquareResourceExtractor(int skirmishAIId, int unitDefId, int resourceId) {
-	return false;
-}
 
 EXPORT(float) skirmishAiCallback_UnitDef_getBuildTime(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->buildTime;
@@ -2851,10 +2796,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getSlideTolerance(int skirmishAIId, int
 	return getUnitDefById(skirmishAIId, unitDefId)->slideTolerance;
 }
 
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getMaxSlope(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
 
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxHeightDif(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->maxHeightDif;
@@ -2903,9 +2844,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxWeaponRange(int skirmishAIId, int
 	return getUnitDefById(skirmishAIId, unitDefId)->maxWeaponRange;
 }
 
-EXPORT(const char*) skirmishAiCallback_UnitDef_getType(int skirmishAIId, int unitDefId) {
-	return "$$deprecated$$";
-}
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getTooltip(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->tooltip.c_str();
@@ -3054,10 +2992,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getWingAngle(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->wingAngle;
 }
 
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getDrag(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
 
 EXPORT(float) skirmishAiCallback_UnitDef_getFrontToSpeed(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->frontToSpeed;
@@ -3091,10 +3025,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getVerticalSpeed(int skirmishAIId, int 
 	return getUnitDefById(skirmishAIId, unitDefId)->verticalSpeed;
 }
 
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToCrash(int skirmishAIId, int unitDefId) {
-	return false;
-}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isHoverAttack(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->hoverAttack;
@@ -3202,9 +3132,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getZSize(int skirmishAIId, int unitDefId)
 	return getUnitDefById(skirmishAIId, unitDefId)->zsize;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_getBuildAngle(int skirmishAIId, int unitDefId) {
-	return 0;
-}
 
 EXPORT(float) skirmishAiCallback_UnitDef_getLoadingRadius(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->loadingRadius;
@@ -3322,10 +3249,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isHideDamage(int skirmishAIId, int unitD
 	return getUnitDefById(skirmishAIId, unitDefId)->hideDamage;
 }
 
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_UnitDef_isCommander(int skirmishAIId, int unitDefId) {
-	return false;
-}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isShowPlayerName(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->showPlayerName;
@@ -3347,30 +3270,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getNoChaseCategory(int skirmishAIId, int 
 	return getUnitDefById(skirmishAIId, unitDefId)->noChaseCategory;
 }
 
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_UnitDef_isLeaveTracks(int skirmishAIId, int unitDefId) {
-	return false;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getTrackWidth(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getTrackOffset(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getTrackStrength(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getTrackStretch(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_UnitDef_getTrackType(int skirmishAIId, int unitDefId) {
-	return -1;
-}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToDropFlare(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->canDropFlare;
@@ -3412,26 +3311,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isLevelGround(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->levelGround;
 }
 
-// DEPRECATED
-EXPORT(bool) skirmishAiCallback_UnitDef_isUseBuildingGroundDecal(int skirmishAIId, int unitDefId) {
-	return false;
-}
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalType(int skirmishAIId, int unitDefId) {
-	return 0;
-}
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalSizeX(int skirmishAIId, int unitDefId) {
-	return 0;
-}
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_UnitDef_getBuildingDecalSizeY(int skirmishAIId, int unitDefId) {
-	return 0;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFirePlatform(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->isFirePlatform;
@@ -3512,21 +3391,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, in
 	return (getUnitDefById(skirmishAIId, unitDefId)->pathType != -1U);
 }
 
-EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-
-EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxBreaking(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-
-EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxSpeed(int skirmishAIId, int unitDefId) {
-	return 0.0f;
-}
-
-EXPORT(short) skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate(int skirmishAIId, int unitDefId) {
-	return 0;
-}
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId) {
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->xsize;
@@ -3560,10 +3424,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getCrushStrength(int skirmishA
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->crushStrength;
 }
 
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getMoveType(int skirmishAIId, int unitDefId) {
-	return -1;
-}
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSpeedModClass(int skirmishAIId, int unitDefId) {
 	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->speedModClass;
@@ -3683,9 +3543,6 @@ EXPORT(int) skirmishAiCallback_Unit_getAllyTeam(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitAllyTeam(unitId);
 }
 
-EXPORT(int) skirmishAiCallback_Unit_getAiHint(int skirmishAIId, int unitId) {
-	return 0;
-}
 
 EXPORT(int) skirmishAiCallback_Unit_getSupportedCommands(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->size();
@@ -4288,13 +4145,6 @@ EXPORT(const char*) skirmishAiCallback_FeatureDef_getDescription(int skirmishAII
 	return getFeatureDefById(skirmishAIId, featureDefId)->description.c_str();
 }
 
-EXPORT(const char*) skirmishAiCallback_FeatureDef_getFileName(int skirmishAIId, int featureDefId) {
-	return "$$deprecated$$";
-}
-
-//EXPORT(int) skirmishAiCallback_FeatureDef_getId(int skirmishAIId, int featureDefId) {
-//	return getFeatureDefById(skirmishAIId, featureDefId)->id;
-//}
 
 EXPORT(float) skirmishAiCallback_FeatureDef_getContainedResource(int skirmishAIId, int featureDefId, int resourceId) {
 
@@ -4369,9 +4219,6 @@ EXPORT(bool) skirmishAiCallback_FeatureDef_isGeoThermal(int skirmishAIId, int fe
 	return getFeatureDefById(skirmishAIId, featureDefId)->geoThermal;
 }
 
-EXPORT(const char*) skirmishAiCallback_FeatureDef_getDeathFeature(int skirmishAIId, int featureDefId) {
-	return "$$deprecated$$";
-}
 
 EXPORT(int) skirmishAiCallback_FeatureDef_getXSize(int skirmishAIId, int featureDefId) {
 	return getFeatureDefById(skirmishAIId, featureDefId)->xsize;
@@ -4539,9 +4386,6 @@ EXPORT(int) skirmishAiCallback_getWeaponDefByName(int skirmishAIId, const char* 
 	return -1;
 }
 
-//EXPORT(int) skirmishAiCallback_WeaponDef_getId(int skirmishAIId, int weaponDefId) {
-//	return getWeaponDefById(skirmishAIId, weaponDefId)->id;
-//}
 
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getName(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->name.c_str();
@@ -4555,16 +4399,9 @@ EXPORT(const char*) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId
 	return getWeaponDefById(skirmishAIId, weaponDefId)->description.c_str();
 }
 
-// WTF: AI's do not need to know about this crap AT ALL
-EXPORT(const char*) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId) {
-	return "$$deprecated$$";
-}
-EXPORT(const char*) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId) {
-	return "$$deprecated$$";
-}
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getRange(int skirmishAIId, int weaponDefId) {
-return getWeaponDefById(skirmishAIId, weaponDefId)->range;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->range;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getHeightMod(int skirmishAIId, int weaponDefId) {
@@ -4808,41 +4645,16 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getIntensity(int skirmishAIId, int we
 	return getWeaponDefById(skirmishAIId, weaponDefId)->intensity;
 }
 
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_WeaponDef_getThickness(int skirmishAIId, int weaponDefId) {
-	return 0.0f;
-}
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_WeaponDef_getLaserFlareSize(int skirmishAIId, int weaponDefId) {
-	return 0.0f;
-}
-
-// DEPRECATED
-EXPORT(float) skirmishAiCallback_WeaponDef_getCoreThickness(int skirmishAIId, int weaponDefId) {
-	return 0.0f;
-}
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getDuration(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->duration;
 }
 
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_WeaponDef_getLodDistance(int skirmishAIId, int weaponDefId) {
-	return 0;
-}
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getFalloffRate(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->falloffRate;
 }
 
-// DEPRECATED
-EXPORT(int) skirmishAiCallback_WeaponDef_getGraphicsType(int skirmishAIId, int weaponDefId) {
-	return 0;
-}
-
-EXPORT(bool) skirmishAiCallback_WeaponDef_isSoundTrigger(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->soundTrigger;
-}
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isSelfExplode(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->selfExplode;
@@ -4981,11 +4793,6 @@ EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getStartingPower(int skirmishA
 EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getRechargeDelay(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->shieldRechargeDelay;
 }
-
-// deprecated, useless for AI's
-EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int skirmishAIId, int weaponDefId, short* return_colorS3_out) {}
-EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int skirmishAIId, int weaponDefId, short* return_colorS3_out) {}
-EXPORT(short) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId) { return 0; }
 
 
 EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int skirmishAIId, int weaponDefId) {
@@ -5394,11 +5201,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getRadius = &skirmishAiCallback_UnitDef_getRadius;
 	callback->UnitDef_getName = &skirmishAiCallback_UnitDef_getName;
 	callback->UnitDef_getHumanName = &skirmishAiCallback_UnitDef_getHumanName;
-	callback->UnitDef_getFileName = &skirmishAiCallback_UnitDef_getFileName;
-	callback->UnitDef_getAiHint = &skirmishAiCallback_UnitDef_getAiHint;
-	callback->UnitDef_getCobId = &skirmishAiCallback_UnitDef_getCobId;
-	callback->UnitDef_getTechLevel = &skirmishAiCallback_UnitDef_getTechLevel;
-	callback->UnitDef_getGaia = &skirmishAiCallback_UnitDef_getGaia;
 	callback->UnitDef_getUpkeep = &skirmishAiCallback_UnitDef_getUpkeep;
 	callback->UnitDef_getResourceMake = &skirmishAiCallback_UnitDef_getResourceMake;
 	callback->UnitDef_getMakesResource = &skirmishAiCallback_UnitDef_getMakesResource;
@@ -5408,7 +5210,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getWindResourceGenerator = &skirmishAiCallback_UnitDef_getWindResourceGenerator;
 	callback->UnitDef_getTidalResourceGenerator = &skirmishAiCallback_UnitDef_getTidalResourceGenerator;
 	callback->UnitDef_getStorage = &skirmishAiCallback_UnitDef_getStorage;
-	callback->UnitDef_isSquareResourceExtractor = &skirmishAiCallback_UnitDef_isSquareResourceExtractor;
 	callback->UnitDef_getBuildTime = &skirmishAiCallback_UnitDef_getBuildTime;
 	callback->UnitDef_getAutoHeal = &skirmishAiCallback_UnitDef_getAutoHeal;
 	callback->UnitDef_getIdleAutoHeal = &skirmishAiCallback_UnitDef_getIdleAutoHeal;
@@ -5448,7 +5249,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_isStrafeToAttack = &skirmishAiCallback_UnitDef_isStrafeToAttack;
 	callback->UnitDef_getMinCollisionSpeed = &skirmishAiCallback_UnitDef_getMinCollisionSpeed;
 	callback->UnitDef_getSlideTolerance = &skirmishAiCallback_UnitDef_getSlideTolerance;
-	callback->UnitDef_getMaxSlope = &skirmishAiCallback_UnitDef_getMaxSlope;
 	callback->UnitDef_getMaxHeightDif = &skirmishAiCallback_UnitDef_getMaxHeightDif;
 	callback->UnitDef_getMinWaterDepth = &skirmishAiCallback_UnitDef_getMinWaterDepth;
 	callback->UnitDef_getWaterline = &skirmishAiCallback_UnitDef_getWaterline;
@@ -5461,7 +5261,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_FlankingBonus_getMin = &skirmishAiCallback_UnitDef_FlankingBonus_getMin;
 	callback->UnitDef_FlankingBonus_getMobilityAdd = &skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd;
 	callback->UnitDef_getMaxWeaponRange = &skirmishAiCallback_UnitDef_getMaxWeaponRange;
-	callback->UnitDef_getType = &skirmishAiCallback_UnitDef_getType;
 	callback->UnitDef_getTooltip = &skirmishAiCallback_UnitDef_getTooltip;
 	callback->UnitDef_getWreckName = &skirmishAiCallback_UnitDef_getWreckName;
 	callback->UnitDef_getDeathExplosion = &skirmishAiCallback_UnitDef_getDeathExplosion;
@@ -5497,7 +5296,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getMoveState = &skirmishAiCallback_UnitDef_getMoveState;
 	callback->UnitDef_getWingDrag = &skirmishAiCallback_UnitDef_getWingDrag;
 	callback->UnitDef_getWingAngle = &skirmishAiCallback_UnitDef_getWingAngle;
-	callback->UnitDef_getDrag = &skirmishAiCallback_UnitDef_getDrag;
 	callback->UnitDef_getFrontToSpeed = &skirmishAiCallback_UnitDef_getFrontToSpeed;
 	callback->UnitDef_getSpeedToFront = &skirmishAiCallback_UnitDef_getSpeedToFront;
 	callback->UnitDef_getMyGravity = &skirmishAiCallback_UnitDef_getMyGravity;
@@ -5506,8 +5304,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getTurnRadius = &skirmishAiCallback_UnitDef_getTurnRadius;
 	callback->UnitDef_getWantedHeight = &skirmishAiCallback_UnitDef_getWantedHeight;
 	callback->UnitDef_getVerticalSpeed = &skirmishAiCallback_UnitDef_getVerticalSpeed;
-	callback->UnitDef_isAbleToCrash = &skirmishAiCallback_UnitDef_isAbleToCrash;
-	callback->UnitDef_isHoverAttack = &skirmishAiCallback_UnitDef_isHoverAttack;
 	callback->UnitDef_isAirStrafe = &skirmishAiCallback_UnitDef_isAirStrafe;
 	callback->UnitDef_getDlHoverFactor = &skirmishAiCallback_UnitDef_getDlHoverFactor;
 	callback->UnitDef_getMaxAcceleration = &skirmishAiCallback_UnitDef_getMaxAcceleration;
@@ -5518,7 +5314,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getYardMap = &skirmishAiCallback_UnitDef_getYardMap;
 	callback->UnitDef_getXSize = &skirmishAiCallback_UnitDef_getXSize;
 	callback->UnitDef_getZSize = &skirmishAiCallback_UnitDef_getZSize;
-	callback->UnitDef_getBuildAngle = &skirmishAiCallback_UnitDef_getBuildAngle;
 	callback->UnitDef_getLoadingRadius = &skirmishAiCallback_UnitDef_getLoadingRadius;
 	callback->UnitDef_getUnloadSpread = &skirmishAiCallback_UnitDef_getUnloadSpread;
 	callback->UnitDef_getTransportCapacity = &skirmishAiCallback_UnitDef_getTransportCapacity;
@@ -5549,18 +5344,11 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_isNeedGeo = &skirmishAiCallback_UnitDef_isNeedGeo;
 	callback->UnitDef_isFeature = &skirmishAiCallback_UnitDef_isFeature;
 	callback->UnitDef_isHideDamage = &skirmishAiCallback_UnitDef_isHideDamage;
-	callback->UnitDef_isCommander = &skirmishAiCallback_UnitDef_isCommander;
 	callback->UnitDef_isShowPlayerName = &skirmishAiCallback_UnitDef_isShowPlayerName;
 	callback->UnitDef_isAbleToResurrect = &skirmishAiCallback_UnitDef_isAbleToResurrect;
 	callback->UnitDef_isAbleToCapture = &skirmishAiCallback_UnitDef_isAbleToCapture;
 	callback->UnitDef_getHighTrajectoryType = &skirmishAiCallback_UnitDef_getHighTrajectoryType;
 	callback->UnitDef_getNoChaseCategory = &skirmishAiCallback_UnitDef_getNoChaseCategory;
-	callback->UnitDef_isLeaveTracks = &skirmishAiCallback_UnitDef_isLeaveTracks;
-	callback->UnitDef_getTrackWidth = &skirmishAiCallback_UnitDef_getTrackWidth;
-	callback->UnitDef_getTrackOffset = &skirmishAiCallback_UnitDef_getTrackOffset;
-	callback->UnitDef_getTrackStrength = &skirmishAiCallback_UnitDef_getTrackStrength;
-	callback->UnitDef_getTrackStretch = &skirmishAiCallback_UnitDef_getTrackStretch;
-	callback->UnitDef_getTrackType = &skirmishAiCallback_UnitDef_getTrackType;
 	callback->UnitDef_isAbleToDropFlare = &skirmishAiCallback_UnitDef_isAbleToDropFlare;
 	callback->UnitDef_getFlareReloadTime = &skirmishAiCallback_UnitDef_getFlareReloadTime;
 	callback->UnitDef_getFlareEfficiency = &skirmishAiCallback_UnitDef_getFlareEfficiency;
@@ -5571,11 +5359,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getFlareSalvoDelay = &skirmishAiCallback_UnitDef_getFlareSalvoDelay;
 	callback->UnitDef_isAbleToLoopbackAttack = &skirmishAiCallback_UnitDef_isAbleToLoopbackAttack;
 	callback->UnitDef_isLevelGround = &skirmishAiCallback_UnitDef_isLevelGround;
-	callback->UnitDef_isUseBuildingGroundDecal = &skirmishAiCallback_UnitDef_isUseBuildingGroundDecal;
-	callback->UnitDef_getBuildingDecalType = &skirmishAiCallback_UnitDef_getBuildingDecalType;
-	callback->UnitDef_getBuildingDecalSizeX = &skirmishAiCallback_UnitDef_getBuildingDecalSizeX;
-	callback->UnitDef_getBuildingDecalSizeY = &skirmishAiCallback_UnitDef_getBuildingDecalSizeY;
-	callback->UnitDef_getBuildingDecalDecaySpeed = &skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed;
 	callback->UnitDef_getMaxThisUnit = &skirmishAiCallback_UnitDef_getMaxThisUnit;
 	callback->UnitDef_getDecoyDef = &skirmishAiCallback_UnitDef_getDecoyDef;
 	callback->UnitDef_isDontLand = &skirmishAiCallback_UnitDef_isDontLand;
@@ -5584,10 +5367,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getBuildOptions = &skirmishAiCallback_UnitDef_getBuildOptions;
 	callback->UnitDef_getCustomParams = &skirmishAiCallback_UnitDef_getCustomParams;
 	callback->UnitDef_isMoveDataAvailable = &skirmishAiCallback_UnitDef_isMoveDataAvailable;
-	callback->UnitDef_MoveData_getMaxAcceleration = &skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration;
-	callback->UnitDef_MoveData_getMaxBreaking = &skirmishAiCallback_UnitDef_MoveData_getMaxBreaking;
-	callback->UnitDef_MoveData_getMaxSpeed = &skirmishAiCallback_UnitDef_MoveData_getMaxSpeed;
-	callback->UnitDef_MoveData_getMaxTurnRate = &skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate;
 	callback->UnitDef_MoveData_getXSize = &skirmishAiCallback_UnitDef_MoveData_getXSize;
 	callback->UnitDef_MoveData_getZSize = &skirmishAiCallback_UnitDef_MoveData_getZSize;
 	callback->UnitDef_MoveData_getDepth = &skirmishAiCallback_UnitDef_MoveData_getDepth;
@@ -5596,7 +5375,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getDepthMod = &skirmishAiCallback_UnitDef_MoveData_getDepthMod;
 	callback->UnitDef_MoveData_getPathType = &skirmishAiCallback_UnitDef_MoveData_getPathType;
 	callback->UnitDef_MoveData_getCrushStrength = &skirmishAiCallback_UnitDef_MoveData_getCrushStrength;
-	callback->UnitDef_MoveData_getMoveType = &skirmishAiCallback_UnitDef_MoveData_getMoveType;
 	callback->UnitDef_MoveData_getSpeedModClass = &skirmishAiCallback_UnitDef_MoveData_getSpeedModClass;
 	callback->UnitDef_MoveData_getTerrainClass = &skirmishAiCallback_UnitDef_MoveData_getTerrainClass;
 	callback->UnitDef_MoveData_getFollowGround = &skirmishAiCallback_UnitDef_MoveData_getFollowGround;
@@ -5626,7 +5404,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_getRulesParamString = &skirmishAiCallback_Unit_getRulesParamString;
 	callback->Unit_getTeam = &skirmishAiCallback_Unit_getTeam;
 	callback->Unit_getAllyTeam = &skirmishAiCallback_Unit_getAllyTeam;
-	callback->Unit_getAiHint = &skirmishAiCallback_Unit_getAiHint;
 	callback->Unit_getStockpile = &skirmishAiCallback_Unit_getStockpile;
 	callback->Unit_getStockpileQueued = &skirmishAiCallback_Unit_getStockpileQueued;
 	callback->Unit_getMaxSpeed = &skirmishAiCallback_Unit_getMaxSpeed;
@@ -5693,7 +5470,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Mod_getVersion = &skirmishAiCallback_Mod_getVersion;
 	callback->Mod_getMutator = &skirmishAiCallback_Mod_getMutator;
 	callback->Mod_getDescription = &skirmishAiCallback_Mod_getDescription;
-	callback->Mod_getAllowTeamColors = &skirmishAiCallback_Mod_getAllowTeamColors;
 	callback->Mod_getConstructionDecay = &skirmishAiCallback_Mod_getConstructionDecay;
 	callback->Mod_getConstructionDecayTime = &skirmishAiCallback_Mod_getConstructionDecayTime;
 	callback->Mod_getConstructionDecaySpeed = &skirmishAiCallback_Mod_getConstructionDecaySpeed;
@@ -5770,7 +5546,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->getFeatureDefs = &skirmishAiCallback_getFeatureDefs;
 	callback->FeatureDef_getName = &skirmishAiCallback_FeatureDef_getName;
 	callback->FeatureDef_getDescription = &skirmishAiCallback_FeatureDef_getDescription;
-	callback->FeatureDef_getFileName = &skirmishAiCallback_FeatureDef_getFileName;
 	callback->FeatureDef_getContainedResource = &skirmishAiCallback_FeatureDef_getContainedResource;
 	callback->FeatureDef_getMaxHealth = &skirmishAiCallback_FeatureDef_getMaxHealth;
 	callback->FeatureDef_getReclaimTime = &skirmishAiCallback_FeatureDef_getReclaimTime;
@@ -5787,7 +5562,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->FeatureDef_isFloating = &skirmishAiCallback_FeatureDef_isFloating;
 	callback->FeatureDef_isNoSelect = &skirmishAiCallback_FeatureDef_isNoSelect;
 	callback->FeatureDef_isGeoThermal = &skirmishAiCallback_FeatureDef_isGeoThermal;
-	callback->FeatureDef_getDeathFeature = &skirmishAiCallback_FeatureDef_getDeathFeature;
 	callback->FeatureDef_getXSize = &skirmishAiCallback_FeatureDef_getXSize;
 	callback->FeatureDef_getZSize = &skirmishAiCallback_FeatureDef_getZSize;
 	callback->FeatureDef_getCustomParams = &skirmishAiCallback_FeatureDef_getCustomParams;
@@ -5804,8 +5578,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getName = &skirmishAiCallback_WeaponDef_getName;
 	callback->WeaponDef_getType = &skirmishAiCallback_WeaponDef_getType;
 	callback->WeaponDef_getDescription = &skirmishAiCallback_WeaponDef_getDescription;
-	callback->WeaponDef_getFileName = &skirmishAiCallback_WeaponDef_getFileName;
-	callback->WeaponDef_getCegTag = &skirmishAiCallback_WeaponDef_getCegTag;
 	callback->WeaponDef_getRange = &skirmishAiCallback_WeaponDef_getRange;
 	callback->WeaponDef_getHeightMod = &skirmishAiCallback_WeaponDef_getHeightMod;
 	callback->WeaponDef_getAccuracy = &skirmishAiCallback_WeaponDef_getAccuracy;
@@ -5862,14 +5634,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getCoverageRange = &skirmishAiCallback_WeaponDef_getCoverageRange;
 	callback->WeaponDef_getStockpileTime = &skirmishAiCallback_WeaponDef_getStockpileTime;
 	callback->WeaponDef_getIntensity = &skirmishAiCallback_WeaponDef_getIntensity;
-	callback->WeaponDef_getThickness = &skirmishAiCallback_WeaponDef_getThickness;
-	callback->WeaponDef_getLaserFlareSize = &skirmishAiCallback_WeaponDef_getLaserFlareSize;
-	callback->WeaponDef_getCoreThickness = &skirmishAiCallback_WeaponDef_getCoreThickness;
 	callback->WeaponDef_getDuration = &skirmishAiCallback_WeaponDef_getDuration;
-	callback->WeaponDef_getLodDistance = &skirmishAiCallback_WeaponDef_getLodDistance;
 	callback->WeaponDef_getFalloffRate = &skirmishAiCallback_WeaponDef_getFalloffRate;
-	callback->WeaponDef_getGraphicsType = &skirmishAiCallback_WeaponDef_getGraphicsType;
-	callback->WeaponDef_isSoundTrigger = &skirmishAiCallback_WeaponDef_isSoundTrigger;
 	callback->WeaponDef_isSelfExplode = &skirmishAiCallback_WeaponDef_isSelfExplode;
 	callback->WeaponDef_isGravityAffected = &skirmishAiCallback_WeaponDef_isGravityAffected;
 	callback->WeaponDef_getHighTrajectory = &skirmishAiCallback_WeaponDef_getHighTrajectory;
@@ -5902,9 +5668,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_Shield_getPowerRegenResource = &skirmishAiCallback_WeaponDef_Shield_getPowerRegenResource;
 	callback->WeaponDef_Shield_getStartingPower = &skirmishAiCallback_WeaponDef_Shield_getStartingPower;
 	callback->WeaponDef_Shield_getRechargeDelay = &skirmishAiCallback_WeaponDef_Shield_getRechargeDelay;
-	callback->WeaponDef_Shield_getGoodColor = &skirmishAiCallback_WeaponDef_Shield_getGoodColor;
-	callback->WeaponDef_Shield_getBadColor = &skirmishAiCallback_WeaponDef_Shield_getBadColor;
-	callback->WeaponDef_Shield_getAlpha = &skirmishAiCallback_WeaponDef_Shield_getAlpha;
 	callback->WeaponDef_Shield_getInterceptType = &skirmishAiCallback_WeaponDef_Shield_getInterceptType;
 	callback->WeaponDef_getInterceptedByShieldType = &skirmishAiCallback_WeaponDef_getInterceptedByShieldType;
 	callback->WeaponDef_isAvoidFriendly = &skirmishAiCallback_WeaponDef_isAvoidFriendly;

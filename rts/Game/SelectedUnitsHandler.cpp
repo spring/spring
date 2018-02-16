@@ -941,13 +941,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 		s += CTooltipConsole::MakeUnitStatsString(stats);
 
-		if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
-			const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
-			char tmp[500];
-			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]", unit->unitDef->techLevel);
-			s += tmp;
-		}
-
 		std::string ctrlName = "";
 
 		if (ctrlTeam == MULTI_TEAM) {
