@@ -517,7 +517,7 @@ bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
 	lua_pushnumber(L, builder->id);
 	lua_pushnumber(L, builder->team);
 
-	if (buildInfo != NULL) {
+	if (buildInfo != nullptr) {
 		lua_pushnumber(L, buildInfo->pos.x);
 		lua_pushnumber(L, buildInfo->pos.y);
 		lua_pushnumber(L, buildInfo->pos.z);
@@ -525,7 +525,7 @@ bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, (buildInfo != NULL)? 7 : 3, 1))
+	if (!RunCallIn(L, cmdStr, (buildInfo != nullptr)? 7 : 3, 1))
 		return true;
 
 	// get the results
@@ -616,6 +616,7 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit*
 	return retval;
 }
 
+
 bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float* cloakCost, float* cloakDist)
 {
 	LUA_CALL_IN_CHECK(L, true);
@@ -626,10 +627,24 @@ bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, flo
 	if (!cmdStr.GetGlobalFunc(L))
 		return true;
 
+
 	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, (enemy != nullptr)? enemy->id: -1);
-	lua_pushnumber(L, *cloakCost);
-	lua_pushnumber(L, *cloakDist);
+
+	if (enemy != nullptr)
+		lua_pushnumber(L, enemy->id);
+	else
+		lua_pushnil(L);
+
+	if (cloakCost != nullptr)
+		lua_pushnumber(L, *cloakCost);
+	else
+		lua_pushnil(L);
+
+	if (cloakDist != nullptr)
+		lua_pushnumber(L, *cloakDist);
+	else
+		lua_pushnil(L);
+
 
 	if (!RunCallIn(L, cmdStr, 4, 3))
 		return true;
@@ -639,15 +654,49 @@ bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, flo
 	assert(lua_isboolean(L, -3));
 
 	// third optional result, pushed last (top of stack)
-	if (lua_isnumber(L, -1))
+	if (cloakDist != nullptr && lua_isnumber(L, -1))
 		*cloakDist = lua_tonumber(L, -1);
 	// second optional result
-	if (lua_isnumber(L, -2))
+	if (cloakCost != nullptr && lua_isnumber(L, -2))
 		*cloakCost = lua_tonumber(L, -2);
 
 	// first result, pushed first
 	const bool retval = lua_toboolean(L, -3);
 	lua_pop(L, 3);
+	return retval;
+}
+
+bool CSyncedLuaHandle::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 5, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return true;
+
+
+	lua_pushnumber(L, unit->id);
+
+	if (object != nullptr)
+		lua_pushnumber(L, object->id);
+	else
+		lua_pushnil(L);
+
+	if (weapon != nullptr)
+		lua_pushnumber(L, weapon->weaponNum);
+	else
+		lua_pushnil(L);
+
+
+	if (!RunCallIn(L, cmdStr, 3, 1))
+		return true;
+
+	assert(lua_isboolean(L, -1));
+
+	const bool retval = lua_toboolean(L, -1);
+	lua_pop(L, 1);
 	return retval;
 }
 
@@ -1127,7 +1176,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 	unsigned int attackerWeaponDefID,
 	float* targetPriority)
 {
-	assert(targetPriority != NULL);
+	assert(targetPriority != nullptr);
 
 	bool ret = true;
 
@@ -1153,9 +1202,8 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 
 	ret = luaL_optboolean(L, -2, false);
 
-	if (lua_isnumber(L, -1)) {
+	if (lua_isnumber(L, -1))
 		*targetPriority = lua_tonumber(L, -1);
-	}
 
 	lua_pop(L, 2);
 

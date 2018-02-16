@@ -49,12 +49,6 @@ namespace icon {
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
 
-enum ScriptCloakState {
-	UNIT_DEFER_CLOAK = 0, // control unit cloaking via wantCloak only
-	UNIT_ALLOW_CLOAK = 1, // allow unit to cloak even if wantCloak is false
-	UNIT_CONST_CLOAK = 2, // let unit remain or become cloaked even without energy
-	UNIT_FORCE_CLOAK = 3, // force unit to be cloaked at all times
-};
 
 class CUnit : public CSolidObject
 {
@@ -156,12 +150,12 @@ public:
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
+	bool IsStunned() const { return stunned; }
 	bool IsIdle() const;
 
 	bool CanUpdateWeapons() const;
 
 	void SetStunned(bool stun);
-	bool IsStunned() const { return stunned; }
 
 	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
@@ -170,7 +164,8 @@ public:
 	void UpdateLosStatus(int allyTeam);
 
 	void SlowUpdateCloak(bool);
-	void ScriptDecloak(bool);
+	bool ScriptCloak();
+	bool ScriptDecloak(const CSolidObject* object, const CWeapon* weapon);
 	bool GetNewCloakState(bool checkStun);
 
 	enum ChangeType {
@@ -493,17 +488,14 @@ public:
 
 	int nextPosErrorUpdate;
 
+
 	/// true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
 	/// true if the unit currently wants to be cloaked
 	bool wantCloak;
-	/// true if a script currently wants the unit to be cloaked
-	int scriptCloak;
-	/// the minimum time between decloaking and cloaking again
-	int cloakTimeout;
-	/// the earliest frame the unit can cloak again
-	int curCloakTimeout;
+
 	float decloakDistance;
+
 
 	int lastTerrainType;
 	/// Used for calling setSFXoccupy which TA scripts want

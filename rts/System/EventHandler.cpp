@@ -273,6 +273,11 @@ bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy, float*
 	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy, cloakCost, cloakDist);
 }
 
+bool CEventHandler::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)
+{
+	return ControlIterateDefTrue(listAllowUnitDecloak, &CEventClient::AllowUnitDecloak, unit, object, weapon);
+}
+
 
 bool CEventHandler::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos)
 {

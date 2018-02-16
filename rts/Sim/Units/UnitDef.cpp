@@ -219,7 +219,7 @@ UnitDef::UnitDef()
 	, decloakDistance(0.0f)
 	, decloakSpherical(false)
 	, decloakOnFire(false)
-	, cloakTimeout(0)
+
 	, kamikazeDist(0.0f)
 	, kamikazeUseLOS(false)
 	, targfac(false)
@@ -411,7 +411,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
 	decloakSpherical = udTable.GetBool("decloakSpherical", true);
 	decloakOnFire    = udTable.GetBool("decloakOnFire",    true);
-	cloakTimeout     = udTable.GetInt("cloakTimeout", 128);
 
 	highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
