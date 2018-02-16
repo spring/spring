@@ -23,7 +23,9 @@
 float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0f;
 float CSoundSource::heightRolloffModifier = 1.0f;
-static const float ROLLOFF_FACTOR = 5.0f;
+
+static constexpr float ROLLOFF_FACTOR = 5.0f;
+
 
 CSoundSource::CSoundSource()
 	: curPlaying(nullptr)
@@ -65,12 +67,12 @@ void CSoundSource::Update()
 	}
 
 	if (curPlaying != nullptr) {
-		if (in3D && (efxEnabled != efx->enabled)) {
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
-			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
-			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
-			efxEnabled = efx->enabled;
-			efxUpdates = efx->updates;
+		if (in3D && (efxEnabled != efx.Enabled())) {
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx.Enabled()) ? efx.GetAirAbsorptionFactor() : 0);
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx.Enabled()) ? efx.sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, (efx.Enabled()) ? efx.sfxFilter : AL_FILTER_NULL);
+			efxEnabled = efx.Enabled();
+			efxUpdates = efx.updates;
 		}
 
 		if (heightRolloffModifier != curHeightRolloffModifier) {
@@ -91,11 +93,11 @@ void CSoundSource::Update()
 		}
 	}
 
-	if (efxEnabled && (efxUpdates != efx->updates)) {
+	if (efxEnabled && (efxUpdates != efx.updates)) {
 		//! airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
-		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
-		alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
-		efxUpdates = efx->updates;
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx.GetAirAbsorptionFactor());
+		alSourcei(id, AL_DIRECT_FILTER, efx.sfxFilter);
+		efxUpdates = efx.updates;
 	}
 }
 
@@ -147,7 +149,7 @@ void CSoundSource::Stop()
 	if (curStream.Valid())
 		curStream.Stop();
 
-	if (curChannel) {
+	if (curChannel != nullptr) {
 		IAudioChannel* oldChannel = curChannel;
 		curChannel = nullptr;
 		oldChannel->SoundSourceFinished(this);
@@ -166,15 +168,19 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	const SoundBuffer& itemBuffer = SoundBuffer::GetById(item->GetSoundBufferID());
 
 	Stop();
+
 	curVolume = volume;
 	curPlaying = item;
 	curChannel = channel;
+
 	alSourcei(id, AL_BUFFER, itemBuffer.GetId());
 	alSourcef(id, AL_GAIN, volume * item->GetGain() * channel->volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
+
 	velocity *= item->dopplerScale * ELMOS_TO_METERS;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
+
 	loopStop = spring_gettime() + spring_msecs(item->loopTime);
 
 	if (relative || !item->in3D) {
@@ -195,18 +201,21 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.", itemBuffer.GetFilename().c_str());
 
 		in3D = true;
-		if (efx->enabled) {
+		if (efx.Enabled()) {
 			efxEnabled = true;
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
-			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
-			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
-			efxUpdates = efx->updates;
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx.GetAirAbsorptionFactor());
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx.sfxSlot, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, efx.sfxFilter);
+			efxUpdates = efx.updates;
 		}
+
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		pos *= ELMOS_TO_METERS;
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		curHeightRolloffModifier = heightRolloffModifier;
 		alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier);
+
+
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		//! Max distance is too small by default on my Mac...
@@ -225,6 +234,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 		}
 #endif
+
 	}
 	alSourcePlay(id);
 
@@ -258,11 +268,13 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	curChannel = channel;
 	curVolume = volume;
 	in3D = false;
+
 	if (efxEnabled) {
 		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
 		efxEnabled = false;
 	}
+
 	alSource3f(id, AL_POSITION,       0.0f, 0.0f, 0.0f);
 	alSourcef(id, AL_GAIN,            volume);
 	alSourcef(id, AL_PITCH,           globalPitch);

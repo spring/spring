@@ -1675,10 +1675,10 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 #if defined(HEADLESS) || defined(NO_SOUND)
 	return 0;
 #else
-	if (efx == nullptr)
+	if (!efx.Supported())
 		return 0;
 
-	EAXSfxProps& efxprops = efx->sfxProperties;
+	EAXSfxProps& efxprops = efx.sfxProperties;
 
 	lua_createtable(L, 0, 2);
 

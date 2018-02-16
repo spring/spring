@@ -16,8 +16,28 @@
 class CEFX
 {
 public:
-	CEFX(ALCdevice* device);
-	~CEFX();
+	void Init(ALCdevice* device);
+	void Kill();
+	void ResetState() {
+		updates = 0;
+		maxSlots = 0;
+
+		enabled = false;
+		supported = false;
+
+		sfxProperties = {};
+
+		sfxSlot = 0;
+		sfxReverb = 0;
+		sfxFilter = 0;
+		maxSlotsPerSource = 0;
+
+		airAbsorptionFactor = 0.0f;
+		heightRolloffModifier = 1.0f;
+
+		effectsSupported.clear();
+		filtersSupported.clear();
+	}
 
 	void SetPreset(const std::string& name, bool verbose = true, bool commit = true);
 	void CommitEffects(const EAXSfxProps* sfxProps = nullptr);
@@ -25,7 +45,10 @@ public:
 	void Enable();
 	void Disable();
 
-	void SetHeightRolloffModifer(const float& mod);
+	void SetHeightRolloffModifer(float mod);
+
+	bool Enabled() const { return enabled; }
+	bool Supported() const { return supported; }
 
 public:
 	/// @see ConfigHandler::ConfigNotifyCallback
@@ -34,25 +57,25 @@ public:
 	void SetAirAbsorptionFactor(ALfloat value);
 	ALfloat GetAirAbsorptionFactor() const { return airAbsorptionFactor; }
 
+public:
+	int updates = 0;
+	int maxSlots = 0;
 
-	int updates;
-	int maxSlots;
-
-	bool enabled;
-	bool supported;
+	bool enabled = false;
+	bool supported = false;
 
 	EAXSfxProps sfxProperties;
 
-	ALuint sfxSlot;
-	ALuint sfxReverb;
-	ALuint sfxFilter;
-	ALuint maxSlotsPerSource;
+	ALuint sfxSlot = 0;
+	ALuint sfxReverb = 0;
+	ALuint sfxFilter = 0;
+	ALuint maxSlotsPerSource = 0;
 
 private:
-	ALfloat airAbsorptionFactor;
+	ALfloat airAbsorptionFactor = 0.0f;
 
 	// reduces the rolloff when camera is high above the ground (so we still hear something in tab mode or far zoom)
-	static float heightRolloffModifier;
+	float heightRolloffModifier = 1.0f;
 
 private:
 	// information about the supported features
@@ -60,7 +83,7 @@ private:
 	spring::unsynced_map<ALuint, bool> filtersSupported;
 };
 
-//! init in Sound.cpp
-extern CEFX* efx;
+// initialized in Sound.cpp
+extern CEFX efx;
 
 #endif // _EFX_H_

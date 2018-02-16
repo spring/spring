@@ -173,10 +173,8 @@ static void FinishedLoading()
 	mouse->ShowMouse();
 
 	#if !defined(HEADLESS) && !defined(NO_SOUND)
-	// sound is initialized at this point,
-	// but EFX support is *not* guaranteed
-	if (efx != nullptr)
-		efx->CommitEffects(mapInfo->efxprops);
+	// NB: sound is initialized at this point, but EFX support is *not* guaranteed
+	efx.CommitEffects(mapInfo->efxprops);
 	#endif
 }
 
