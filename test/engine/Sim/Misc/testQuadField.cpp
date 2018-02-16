@@ -9,8 +9,6 @@
 #define BOOST_TEST_MODULE QuadField
 #include <boost/test/unit_test.hpp>
 
-CQuadField quadField;
-
 static inline float randf()
 {
 	return rand() / float(RAND_MAX);
