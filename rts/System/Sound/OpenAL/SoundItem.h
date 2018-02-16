@@ -22,10 +22,12 @@ class SoundItem
 {
 	friend class CSoundSource;
 public:
-	SoundItem(std::shared_ptr<SoundBuffer> buffer, const spring::unordered_map<std::string, std::string>& items);
+	SoundItem(size_t bufferID, const spring::unordered_map<std::string, std::string>& items);
 
 	bool PlayNow();
 	void StopPlay();
+
+	size_t GetSoundBufferID() const { return soundBufferID; }
 
 	float MaxDistance() const { return maxDist; }
 	const std::string& Name() const { return name; }
@@ -35,28 +37,29 @@ public:
 	float GetPitch() const;
 
 private:
-	std::shared_ptr<SoundBuffer> buffer;
+	size_t soundBufferID = 0;
+
 	/// unique identifier (if no name is specified, this will be the filename)
 	std::string name;
 
 	/// volume gain, applied to this sound
-	float gain;
-	float gainMod;
+	float gain = 1.0f;
+	float gainMod = 0.0f;
 	/// sound pitch (multiplied with globalPitch from CSoundSource when played)
-	float pitch;
-	float pitchMod;
-	float dopplerScale;
+	float pitch = 1.0f;
+	float pitchMod = 0.0f;
+	float dopplerScale = 1.0f;
 
-	float maxDist;
-	float rolloff;
-	int priority;
+	float maxDist = 0.0f;
+	float rolloff = 1.0f;
 
-	unsigned maxConcurrent;
-	unsigned currentlyPlaying;
+	int priority = 0;
 
-	unsigned loopTime;
+	unsigned maxConcurrent = 16;
+	unsigned currentlyPlaying = 0;
+	unsigned loopTime = 0;
 
-	bool in3D;
+	bool in3D = true;
 };
 
 #endif
