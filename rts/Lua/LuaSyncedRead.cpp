@@ -54,6 +54,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -2772,7 +2773,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	string tooltip;
+	std::string tooltip;
 
 	const CTeam* unitTeam = nullptr;
 	const UnitDef* unitDef = unit->unitDef;
@@ -2785,19 +2786,20 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 
 		if (unitTeam != nullptr && unitTeam->HasLeader()) {
 			tooltip = playerHandler->Player(unitTeam->GetLeader())->name;
-			CSkirmishAIHandler::ids_t teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
 
-			if (!teamAIs.empty()) {
-				tooltip = std::string("AI@") + tooltip;
-			}
+			const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
+
+			if (!teamAIs.empty())
+				tooltip = "AI@" + tooltip;
 		}
 	} else {
-		if (!decoyDef) {
-			tooltip = unit->tooltip;
+		if (decoyDef == nullptr) {
+			tooltip = unitToolTipMap.Get(unit->id);
 		} else {
 			tooltip = decoyDef->humanName + " - " + decoyDef->tooltip;
 		}
 	}
+
 	lua_pushsstring(L, tooltip);
 	return 1;
 }
@@ -2811,12 +2813,13 @@ int LuaSyncedRead::GetUnitDefID(lua_State* L)
 
 	if (IsAllyUnit(L, unit)) {
 		lua_pushnumber(L, unit->unitDef->id);
-	} else {
-		if (!IsUnitTyped(L, unit))
-			return 0;
-
-		lua_pushnumber(L, EffectiveUnitDef(L, unit)->id);
+		return 1;
 	}
+
+	if (!IsUnitTyped(L, unit))
+		return 0;
+
+	lua_pushnumber(L, EffectiveUnitDef(L, unit)->id);
 	return 1;
 }
 

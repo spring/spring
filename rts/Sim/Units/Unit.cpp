@@ -6,6 +6,7 @@
 #include "UnitDefHandler.h"
 #include "UnitLoader.h"
 #include "UnitMemPool.h"
+#include "UnitToolTipMap.hpp"
 #include "UnitTypes/Building.h"
 #include "Scripts/NullUnitScript.h"
 #include "Scripts/UnitScriptFactory.h"
@@ -84,15 +85,18 @@ float CUnit::expGrade       = 0.0f;
 CUnit::CUnit()
 : CSolidObject()
 , unitDef(nullptr)
+
 , shieldWeapon(nullptr)
 , stockpileWeapon(nullptr)
+
 , selfdExpDamages(nullptr)
 , deathExpDamages(nullptr)
+
 , soloBuilder(nullptr)
 , lastAttacker(nullptr)
+, transporter(nullptr)
 
 , fpsControlPlayer(nullptr)
-, transporter(nullptr)
 
 , moveType(nullptr)
 , prevMoveType(nullptr)
@@ -276,6 +280,7 @@ void CUnit::InitStatic()
 	SetExpReloadScale(modInfo.unitExpReloadScale);
 
 	CBuilderCAI::InitStatic();
+	unitToolTipMap.Clear();
 }
 
 
@@ -365,7 +370,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	category = unitDef->category;
 	leaveTracks = unitDef->decalDef.leaveTrackDecals;
 
-	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
+	unitToolTipMap.Set(id, unitDef->humanName + " - " + unitDef->tooltip);
 
 
 	// sensor parameters
@@ -2830,9 +2835,9 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(soloBuilder),
 	CR_MEMBER(lastAttacker),
+	CR_MEMBER(transporter),
 
 	CR_MEMBER(fpsControlPlayer),
-	CR_MEMBER(transporter),
 
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
@@ -2977,8 +2982,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(iconRadius),
 
 	CR_MEMBER(lastUnitUpdate),
-
-	CR_MEMBER_UN(tooltip),
 
 	CR_MEMBER(stunned),
 

@@ -23,6 +23,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitToolTipMap.hpp"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
@@ -913,7 +914,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			team = teamHandler->Team(unit->team);
 			s = team->GetControllerName();
 		} else {
-			s = unit->tooltip;
+			s = unitToolTipMap.Get(unit->id);
 		}
 	}
 
