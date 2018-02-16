@@ -41,6 +41,7 @@
 #include "Sim/Units/Unit.h"
 
 #include "System/Config/ConfigHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
@@ -227,6 +228,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);
 	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
 
+
 	// load unit explosion generators and decals
 	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
 		UnitDef& ud = *const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
@@ -245,6 +247,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
+
+	unitDefImages.clear();
+	unitDefImages.resize(unitDefHandler->NumUnitDefs() + 1);
 
 	deadGhostBuildings.resize(teamHandler->ActiveAllyTeams());
 	liveGhostBuildings.resize(teamHandler->ActiveAllyTeams());
@@ -293,6 +298,9 @@ CUnitDrawer::~CUnitDrawer()
 		groundDecals->ForceRemoveSolidObject(u);
 	}
 
+	for (UnitDefImage& img: unitDefImages) {
+		img.Free();
+	}
 
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -1949,5 +1957,71 @@ void CUnitDrawer::UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits)
 
 		n += 1;
 	}
+}
+
+
+
+
+
+
+static bool LoadBuildPic(const std::string& filename, CBitmap& bitmap)
+{
+	if (CFileHandler::FileExists(filename, SPRING_VFS_RAW_FIRST)) {
+		bitmap.Load(filename);
+		return true;
+	}
+
+	return false;
+}
+
+void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, const std::string& texName)
+{
+	UnitDefImage*& unitImage = unitDef->buildPic;
+
+	if (unitImage == nullptr) {
+		unitImage = &unitDefImages[unitDef->id];
+	} else {
+		unitImage->Free();
+	}
+
+	CBitmap bitmap;
+
+	if (!texName.empty()) {
+		bitmap.Load("unitpics/" + texName);
+	} else {
+		if (!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
+			bitmap.AllocDummy(SColor(255, 0, 0, 255));
+		}
+	}
+
+	unitImage->textureID = bitmap.CreateTexture();
+	unitImage->imageSizeX = bitmap.xsize;
+	unitImage->imageSizeY = bitmap.ysize;
+}
+
+void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, unsigned int texID, int xsize, int ysize)
+{
+	UnitDefImage*& unitImage = unitDef->buildPic;
+
+	if (unitImage == nullptr) {
+		unitImage = &unitDefImages[unitDef->id];
+	} else {
+		unitImage->Free();
+	}
+
+	unitImage->textureID = texID;
+	unitImage->imageSizeX = xsize;
+	unitImage->imageSizeY = ysize;
+}
+
+unsigned int CUnitDrawer::GetUnitDefImage(const UnitDef* unitDef)
+{
+	if (unitDef->buildPic == nullptr)
+		SetUnitDefImage(unitDef, unitDef->buildPicName);
+
+	return (unitDef->buildPic->textureID);
 }
 

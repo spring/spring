@@ -46,7 +46,6 @@ struct UnitDef: public SolidObjectDef
 public:
 	UnitDef(const LuaTable& udTable, const std::string& unitName, int id);
 	UnitDef();
-	~UnitDef();
 
 	void SetNoCost(bool noCost);
 

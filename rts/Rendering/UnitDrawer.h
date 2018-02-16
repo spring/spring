@@ -9,6 +9,7 @@
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawerState.hpp"
+#include "Rendering/UnitDefImage.h"
 #include "System/EventClient.h"
 #include "System/type2.h"
 #include "System/UnorderedMap.hpp"
@@ -153,6 +154,10 @@ public:
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
 	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
 
+	void SetUnitDefImage(const UnitDef* unitDef, const std::string& texName);
+	void SetUnitDefImage(const UnitDef* unitDef, unsigned int texID, int xsize, int ysize);
+	unsigned int GetUnitDefImage(const UnitDef* unitDef);
+
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
@@ -284,8 +289,17 @@ private:
 
 	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
-	// [0] := fallback shader-less rendering path
-	// [1] := default shader-driven rendering path
+	std::vector<UnitDefImage> unitDefImages;
+
+
+	// caches for ShowUnitBuildSquare
+	std::vector<float3> buildableSquares;
+	std::vector<float3> featureSquares;
+	std::vector<float3> illegalSquares;
+
+
+	// [0] := no-op path
+	// [1] := default shader-path
 	// [2] := currently selected state
 	std::array<IUnitDrawerState*, DRAWER_STATE_CNT> unitDrawerStates;
 	std::array<DrawModelFunc, 3> drawModelFuncs;

@@ -2,7 +2,6 @@
 
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
-#include "UnitDefImage.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
@@ -650,50 +649,38 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 }
 
 
-UnitDef::~UnitDef()
-{
-	if (buildPic != nullptr) {
-		buildPic->Free();
-		spring::SafeDelete(buildPic);
-	}
-}
-
-
-
 void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 {
 	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
 
 	for (int w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
 		LuaTable wTable;
-		string name = weaponsTable.GetString(w + 1, "");
+		string wdName = weaponsTable.GetString(w + 1, "");
 
-		if (name.empty()) {
+		if (wdName.empty()) {
 			wTable = weaponsTable.SubTable(w + 1);
-			name = wTable.GetString("name", "");
+			wdName = wTable.GetString("name", "");
 		}
 
-		const WeaponDef* wd = NULL;
-		if (!name.empty()) {
-			wd = weaponDefHandler->GetWeaponDef(name);
-		}
+		const WeaponDef* wd = nullptr;
 
-		if (wd == NULL) {
-			if (w <= 3) {
+		if (!wdName.empty())
+			wd = weaponDefHandler->GetWeaponDef(wdName);
+
+		if (wd == nullptr) {
+			if (w <= 3)
 				continue; // allow empty weapons among the first 3
-			} else {
-				break;
-			}
+
+			break;
 		}
 
 		while (weapons.size() < w) {
-			if (!noWeaponDef) {
-				LOG_L(L_ERROR, "Spring requires a NOWEAPON weapon type "
-						"to be present as a placeholder for missing weapons");
+			if (noWeaponDef == nullptr) {
+				LOG_L(L_ERROR, "[%s] missing NOWEAPON for WeaponDef %s (#%d) of UnitDef %s", __func__, wdName.c_str(), w, humanName.c_str());
 				break;
-			} else {
-				weapons.push_back(UnitDefWeapon(noWeaponDef));
 			}
+
+			weapons.emplace_back(noWeaponDef);
 		}
 
 		weapons.emplace_back(wd, wTable);
@@ -704,17 +691,15 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 			maxCoverage = wd->coverageRange;
 
 		if (wd->isShield) {
-			if (!shieldWeaponDef || // use the biggest shield
-			    (shieldWeaponDef->shieldRadius < wd->shieldRadius)) {
+			// use the biggest shield
+			if (shieldWeaponDef == nullptr || (shieldWeaponDef->shieldRadius < wd->shieldRadius))
 				shieldWeaponDef = wd;
-			}
 		}
 
 		if (wd->stockpile) {
 			// interceptors have priority
-			if (wd->interceptor || !stockpileWeaponDef || !stockpileWeaponDef->interceptor) {
+			if (wd->interceptor || stockpileWeaponDef == nullptr || !stockpileWeaponDef->interceptor)
 				stockpileWeaponDef = wd;
-			}
 		}
 	}
 }

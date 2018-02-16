@@ -128,10 +128,10 @@ class LuaOpenGLUtils {
 public:
 	static void ResetState();
 
-	static const CMatrix44f* GetNamedMatrix(const std::string& name);
+	static const CMatrix44f* GetNamedMatrix(const char* name);
 
 	static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name);
-	static LuaMatrixType GetLuaMatrixType(const std::string& name);
+	static LuaMatrixType GetLuaMatrixType(const char* name);
 
 	static bool ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image);
 };

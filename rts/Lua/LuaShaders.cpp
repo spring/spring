@@ -869,7 +869,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 			if (!lua_isstring(L, 2))
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 
-			const std::string matName = lua_tostring(L, 2);
+			const char* matName = lua_tostring(L, 2);
 			const CMatrix44f* mat = LuaOpenGLUtils::GetNamedMatrix(matName);
 
 			if (mat) {
