@@ -21,7 +21,6 @@
 #include "System/TimeProfiler.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
-#include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 
 
@@ -30,8 +29,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(idPool),
 
 	CR_MEMBER(units),
-	// FIXME: std::array
-	// CR_MEMBER(unitsByDefs),
+	CR_MEMBER(unitsByDefs),
 	CR_MEMBER(activeUnits),
 	CR_MEMBER(unitsToBeRemoved),
 
