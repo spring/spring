@@ -27,6 +27,9 @@ struct UnitTrackStruct;
 struct UnitLoadParams;
 struct SLosInstance;
 
+namespace icon {
+	class CIconData;
+}
 
 // LOS state bits
 #define LOS_INLOS      (1 << 0)  // the unit is currently in the los of the allyteam
