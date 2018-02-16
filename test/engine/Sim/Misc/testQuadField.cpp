@@ -9,6 +9,8 @@
 #define BOOST_TEST_MODULE QuadField
 #include <boost/test/unit_test.hpp>
 
+CQuadField quadField;
+
 static inline float randf()
 {
 	return rand() / float(RAND_MAX);
@@ -24,11 +26,8 @@ BOOST_AUTO_TEST_CASE( QuadField )
 	static constexpr int HEIGHT = 3;
 	static constexpr int TEST_RUNS = 50000;
 
-	CQuadField qf;
-	qf.Init(int2(WIDTH, HEIGHT), SQUARE_SIZE);
+	quadField.Init(int2(WIDTH, HEIGHT), SQUARE_SIZE);
 
-	// necessary for QuadFieldQuery
-	quadField = &qf;
 	int bitmap[WIDTH * HEIGHT];
 
 	bool fail = false;
@@ -69,7 +68,7 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		// #2: raytrace via QuadField
 		{
 			QuadFieldQuery qfQuery;
-			qf.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
+			quadField.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
 			assert( std::adjacent_find(qfQuery.quads->begin(), qfQuery.quads->end()) == qfQuery.quads->end() ); // check for duplicates
 			for (int qi: *qfQuery.quads) {
 				bitmap[qi] |= 2;
