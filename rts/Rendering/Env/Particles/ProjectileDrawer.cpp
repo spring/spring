@@ -128,9 +128,9 @@ void CProjectileDrawer::Init() {
 
 	{
 		// shield-texture memory
-		std::array<char, 4 * perlinTexSize * perlinTexSize> perlinTexMem;
+		std::array<char, 4 * PerlinData::noiseTexSize * PerlinData::noiseTexSize> perlinTexMem;
 		perlinTexMem.fill(70);
-		textureAtlas->AddTexFromMem("perlintex", perlinTexSize, perlinTexSize, CTextureAtlas::RGBA32, &perlinTexMem[0]);
+		textureAtlas->AddTexFromMem("perlintex", PerlinData::noiseTexSize, PerlinData::noiseTexSize, CTextureAtlas::RGBA32, &perlinTexMem[0]);
 		blockedTexNames.insert("perlintex");
 	}
 
@@ -226,32 +226,34 @@ void CProjectileDrawer::Init() {
 
 
 	for (int a = 0; a < 4; ++a) {
-		perlinBlend[a] = 0.0f;
+		perlinData.blendWeights[a] = 0.0f;
 	}
 
 	{
-		glGenTextures(8, perlinBlendTex);
+		glGenTextures(8, perlinData.blendTextures);
 		for (int a = 0; a < 8; ++a) {
-			glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a]);
+			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, perlinBlendTexSize, perlinBlendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, PerlinData::blendTexSize, PerlinData::blendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		}
 	}
 
 
-	// perlinFB is no-op constructed, FBO has to be initialized manually
-	perlinFB.Init(false);
+	// perlinNoiseFBO is no-op constructed, has to be initialized manually
+	perlinNoiseFBO.Init(false);
 
-	if (perlinFB.IsValid()) {
+	if (perlinNoiseFBO.IsValid()) {
 		// we never refresh the full texture (just the perlin part), so reload it on AT
-		perlinFB.reloadOnAltTab = true;
+		perlinNoiseFBO.reloadOnAltTab = true;
 
-		perlinFB.Bind();
-		perlinFB.AttachTexture(textureAtlas->GetTexID());
-		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
-		perlinFB.Unbind();
+		perlinNoiseFBO.Bind();
+		perlinNoiseFBO.AttachTexture(textureAtlas->GetTexID());
+		perlinData.fboComplete = perlinNoiseFBO.CheckStatus("PERLIN");
+		perlinNoiseFBO.Unbind();
 	}
+
+	flyingPieceVAO.Generate();
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -265,7 +267,7 @@ void CProjectileDrawer::Kill() {
 	eventHandler.RemoveClient(this);
 	autoLinkedEvents.clear();
 
-	glDeleteTextures(8, perlinBlendTex);
+	glDeleteTextures(8, perlinData.blendTextures);
 	spring::SafeDelete(textureAtlas);
 	spring::SafeDelete(groundFXAtlas);
 
@@ -279,10 +281,11 @@ void CProjectileDrawer::Kill() {
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
 
-	perlinFB.Kill();
+	perlinNoiseFBO.Kill();
+	flyingPieceVAO.Delete();
 
-	perlinTexObjects = 0;
-	drawPerlinTex = false;
+	perlinData.texObjects = 0;
+	perlinData.fboComplete = false;
 
 	fxBuffer = nullptr;
 	fxShader = nullptr;
@@ -572,13 +575,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
 
-	#if 0
-	// TODO
-	if (FLYING_PIECE_VAO_ID == 0)
-		glGenVertexArrays(1, &FLYING_PIECE_VAO_ID);
-
-	glBindVertexArray(FLYING_PIECE_VAO_ID);
-	#endif
+	flyingPieceVAO.Bind();
 
 	const FlyingPiece* last = nullptr;
 
@@ -597,10 +594,8 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	}
 
 	if (last != nullptr) {
-		#if 0
-		glBindVertexArray(0);
-		#endif
 		last->EndDraw();
+		flyingPieceVAO.Unbind();
 	}
 
 	glPopAttrib();
@@ -860,11 +855,11 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 void CProjectileDrawer::UpdateTextures() { UpdatePerlin(); }
 void CProjectileDrawer::UpdatePerlin() {
-	if (perlinTexObjects == 0 || !drawPerlinTex)
+	if (perlinData.texObjects == 0 || !perlinData.fboComplete)
 		return;
 
-	perlinFB.Bind();
-	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, perlinTexSize, perlinTexSize);
+	perlinNoiseFBO.Bind();
+	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, PerlinData::noiseTexSize, PerlinData::noiseTexSize);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
@@ -887,10 +882,10 @@ void CProjectileDrawer::UpdatePerlin() {
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	for (int a = 0; a < 4; ++a) {
-		if ((perlinBlend[a] += (time * speed)) > 1.0f) {
-			std::swap(perlinBlendTex[a * 2 + 0], perlinBlendTex[a * 2 + 1]);
-			GenerateNoiseTex(perlinBlendTex[a * 2 + 1]);
-			perlinBlend[a] -= 1.0f;
+		if ((perlinData.blendWeights[a] += (time * speed)) > 1.0f) {
+			std::swap(perlinData.blendTextures[a * 2 + 0], perlinData.blendTextures[a * 2 + 1]);
+			GenerateNoiseTex(perlinData.blendTextures[a * 2 + 1]);
+			perlinData.blendWeights[a] -= 1.0f;
 		}
 
 		const float tsize = 8.0f / size;
@@ -899,9 +894,9 @@ void CProjectileDrawer::UpdatePerlin() {
 			glDisable(GL_BLEND);
 
 		for (int b = 0; b < 4; ++b)
-			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
+			col[b] = int((1.0f - perlinData.blendWeights[a]) * 16 * size);
 
-		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 0]);
+		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
 		buffer->SafeAppend({ZeroVector, 0,         0, col});
 		buffer->SafeAppend({  UpVector, 0,     tsize, col});
 		buffer->SafeAppend({  XYVector, tsize, tsize, col});
@@ -912,9 +907,9 @@ void CProjectileDrawer::UpdatePerlin() {
 			glEnable(GL_BLEND);
 
 		for (int b = 0; b < 4; ++b)
-			col[b] = int(perlinBlend[a] * 16 * size);
+			col[b] = int(perlinData.blendWeights[a] * 16 * size);
 
-		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 1]);
+		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 1]);
 		buffer->SafeAppend({ZeroVector,     0,     0, col});
 		buffer->SafeAppend({  UpVector,     0, tsize, col});
 		buffer->SafeAppend({  XYVector, tsize, tsize, col});
@@ -928,7 +923,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	shader->Disable();
 
 
-	perlinFB.Unbind();
+	perlinNoiseFBO.Unbind();
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -938,9 +933,9 @@ void CProjectileDrawer::UpdatePerlin() {
 
 void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 {
-	std::array<unsigned char, 4 * perlinBlendTexSize * perlinBlendTexSize> mem;
+	std::array<unsigned char, 4 * PerlinData::blendTexSize * PerlinData::blendTexSize> mem;
 
-	for (int a = 0; a < perlinBlendTexSize * perlinBlendTexSize; ++a) {
+	for (int a = 0; a < PerlinData::blendTexSize * PerlinData::blendTexSize; ++a) {
 		const unsigned char rnd = int(std::max(0.0f, guRNG.NextFloat() * 555.0f - 300.0f));
 
 		mem[a * 4 + 0] = rnd;
@@ -950,7 +945,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 	}
 
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, perlinBlendTexSize, perlinBlendTexSize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, PerlinData::blendTexSize, PerlinData::blendTexSize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 }
 
 

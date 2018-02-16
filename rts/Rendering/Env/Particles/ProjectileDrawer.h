@@ -6,6 +6,7 @@
 #include <array>
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VAO.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
@@ -28,7 +29,7 @@ namespace Shader {
 
 class CProjectileDrawer: public CEventClient {
 public:
-	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinFB(true) {}
+	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinNoiseFBO(true) {}
 
 	static void InitStatic();
 	static void KillStatic();
@@ -54,8 +55,8 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
-	void IncPerlinTexObjectCount() { perlinTexObjects++; }
-	void DecPerlinTexObjectCount() { perlinTexObjects--; }
+	void IncPerlinTexObjectCount() { perlinData.texObjects++; }
+	void DecPerlinTexObjectCount() { perlinData.texObjects--; }
 
 
 	GL::RenderDataBufferTC* fxBuffer = nullptr;
@@ -130,16 +131,22 @@ private:
 	static void GenerateNoiseTex(unsigned int tex);
 
 private:
-	static constexpr int perlinBlendTexSize = 16;
-	static constexpr int perlinTexSize = 128;
+	struct PerlinData {
+		static constexpr int blendTexSize =  16;
+		static constexpr int noiseTexSize = 128;
 
-	GLuint perlinBlendTex[8];
-	float perlinBlend[4];
+		GLuint blendTextures[8];
+		float blendWeights[4];
 
-	int perlinTexObjects = 0;
-	bool drawPerlinTex = false;
+		int texObjects = 0;
+		bool fboComplete = false;
+	};
 
-	FBO perlinFB;
+	PerlinData perlinData;
+
+	FBO perlinNoiseFBO;
+
+	VAO flyingPieceVAO;
 
 
 	/// projectiles without a model
