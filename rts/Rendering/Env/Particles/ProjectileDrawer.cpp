@@ -54,10 +54,10 @@ void CProjectileDrawer::InitStatic() {
 
 	projectileDrawer->Init();
 }
-void CProjectileDrawer::KillStatic() {
+void CProjectileDrawer::KillStatic(bool reload) {
 	projectileDrawer->Kill();
 
-	if (gu->globalReload)
+	if (reload)
 		return;
 
 	spring::SafeDestruct(projectileDrawer);

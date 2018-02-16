@@ -92,7 +92,7 @@ public:
  * LosInstance.
  *
  * To quickly find LosInstances that can be shared CLosHandler implements a
- * hash table (instanceHash). Additionally, LosInstances that reach a refCount
+ * hash table (instanceHashes). Additionally, LosInstances that reach a refCount
  * of 0 are not immediately deleted, but up to 500 of those are stored, in case
  * they can be reused for a future unit.
  *
@@ -124,7 +124,8 @@ public:
 		LOS_TYPE_COUNT
 	};
 
-	ILosType(const int mipLevel, LosType type);
+	void Init(const int mipLevel, LosType type);
+	void Kill();
 
 public:
 	void Update();
@@ -156,20 +157,22 @@ private:
 	float GetHeight(const CUnit* unit) const;
 
 public:
-	const int   mipLevel;
-	const int   divisor;
-	const float invDiv;
-	const int2  size;
-	const LosType type;
-	const LosAlgoType algoType;
-	std::vector<CLosMap> losMaps;
+	int   mipLevel = 0;
+	int   mipDiv = 0;
+
+	float invDiv = 0.0f;
+	int2  size;
+
+	LosType type;
+	LosAlgoType algoType;
 
 	static size_t cacheFails;
 	static size_t cacheHits;
-	static size_t cacheReactivated;
+	static size_t cacheRefs;
 
-	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHash;
+	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHashes;
 
+	std::vector<CLosMap> losMaps;
 	std::deque<SLosInstance> instances;
 	std::deque<int> freeIDs;
 
@@ -204,8 +207,13 @@ class CLosHandler : public CEventClient
 {
 	CR_DECLARE_STRUCT(CLosHandler)
 public:
-	CLosHandler();
-	~CLosHandler();
+	CLosHandler(): CEventClient("[CLosHandler]", 271993, true) {}
+
+	static void InitStatic();
+	static void KillStatic(bool reload);
+
+	void Init();
+	void Kill();
 
 	// the Interface
 	bool InLos(const CUnit* unit, int allyTeam) const;
@@ -293,7 +301,7 @@ public:
 	* Whether everything on the map is visible at all times to a given ALLYteam
 	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
 	*/
-	bool globalLOS[MAX_TEAMS];
+	std::array<bool, MAX_TEAMS> globalLOS;
 
 	ILosType los;
 	ILosType airLos;
@@ -305,12 +313,13 @@ public:
 
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
-	static constexpr float defBaseRadarErrorMult = 2.0f;
+	static constexpr float defBaseRadarErrorMult =  2.0f;
 
 	float baseRadarErrorSize;
 	float baseRadarErrorMult;
+
 	std::vector<float> radarErrorSizes;
-	std::vector<ILosType*> losTypes;
+	std::array<ILosType*, 7> losTypes;
 };
 
 

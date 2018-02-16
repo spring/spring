@@ -51,7 +51,7 @@ public:
 	void AddBuilderCAI(CBuilderCAI*);
 	void RemoveBuilderCAI(CBuilderCAI*);
 
-	void ChangeUnitTeam(CUnit* unit, const UnitDef* unitDef, int oldTeamNum, int newTeamNum);
+	void ChangeUnitTeam(CUnit* unit, int oldTeamNum, int newTeamNum);
 
 	// note: negative ID's are implicitly converted
 	CUnit* GetUnitUnsafe(unsigned int id) const { return units[id]; }

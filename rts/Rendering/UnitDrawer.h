@@ -90,7 +90,7 @@ public:
 	CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false) {}
 
 	static void InitStatic();
-	static void KillStatic();
+	static void KillStatic(bool reload);
 
 	void Init();
 	void Kill();

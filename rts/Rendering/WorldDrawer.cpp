@@ -28,13 +28,13 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Game.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/GuiHandler.h"
@@ -61,9 +61,9 @@ CWorldDrawer::~CWorldDrawer()
 	spring::SafeDelete(shadowHandler);
 	spring::SafeDelete(inMapDrawerView);
 
-	CFeatureDrawer::KillStatic();
-	CUnitDrawer::KillStatic(); // depends on unitHandler, cubeMapHandler
-	CProjectileDrawer::KillStatic();
+	CFeatureDrawer::KillStatic(gu->globalReload);
+	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
+	CProjectileDrawer::KillStatic(gu->globalReload);
 
 	modelLoader.Kill();
 

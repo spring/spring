@@ -1587,7 +1587,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
 
-	unitHandler.ChangeUnitTeam(this, unitDef, oldteam, newteam);
+	unitHandler.ChangeUnitTeam(this, oldteam, newteam);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {

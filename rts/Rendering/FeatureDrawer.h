@@ -24,7 +24,7 @@ public:
 	CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false) {}
 
 	static void InitStatic();
-	static void KillStatic();
+	static void KillStatic(bool reload);
 
 	void Init();
 	void Kill();

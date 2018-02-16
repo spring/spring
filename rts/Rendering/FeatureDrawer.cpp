@@ -112,10 +112,10 @@ void CFeatureDrawer::InitStatic() {
 
 	featureDrawer->Init();
 }
-void CFeatureDrawer::KillStatic() {
+void CFeatureDrawer::KillStatic(bool reload) {
 	featureDrawer->Kill();
 
-	if (gu->globalReload)
+	if (reload)
 		return;
 
 	spring::SafeDestruct(featureDrawer);

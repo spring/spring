@@ -438,12 +438,12 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 }
 
 
-void CUnitHandler::ChangeUnitTeam(CUnit* unit, const UnitDef* unitDef, int oldTeamNum, int newTeamNum)
+void CUnitHandler::ChangeUnitTeam(CUnit* unit, int oldTeamNum, int newTeamNum)
 {
-	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum,           0), unit       );
-	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum, unitDef->id), unit       );
-	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum,           0), unit, false);
-	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum, unitDef->id), unit, false);
+	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum,                 0), unit       );
+	spring::VectorErase       (GetUnitsByTeamAndDef(oldTeamNum, unit->unitDef->id), unit       );
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum,                 0), unit, false);
+	spring::VectorInsertUnique(GetUnitsByTeamAndDef(newTeamNum, unit->unitDef->id), unit, false);
 }
 
 

@@ -219,10 +219,10 @@ void CUnitDrawer::InitStatic() {
 
 	unitDrawer->Init();
 }
-void CUnitDrawer::KillStatic() {
+void CUnitDrawer::KillStatic(bool reload) {
 	unitDrawer->Kill();
 
-	if (gu->globalReload)
+	if (reload)
 		return;
 
 	spring::SafeDestruct(unitDrawer);
