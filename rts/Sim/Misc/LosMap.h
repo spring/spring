@@ -17,12 +17,13 @@ struct SLosInstance;
 class CLosMap
 {
 public:
-	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_, const int2 mapDims)
+	CLosMap(int2 size_, int2 mapDims, const float* ctrHeightMap_, const float* mipHeightMap_, bool sendReadmapEvents_)
 	: size(size_)
 	, LOS2HEIGHT(mapDims / size)
 	, losmap(size.x * size.y, 0)
 	, sendReadmapEvents(sendReadmapEvents_)
-	, heightmap(heightmap_)
+	, ctrHeightMap(ctrHeightMap_)
+	, mipHeightMap(mipHeightMap_)
 	{ }
 
 public:
@@ -43,21 +44,25 @@ public:
 	}
 
 	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data
-	unsigned short& front() { return losmap.front(); }
+	const unsigned short& front() const { return (losmap.front()); }
 
 private:
 	void LosAdd(SLosInstance* instance) const;
 	void UnsafeLosAdd(SLosInstance* instance) const;
 	void SafeLosAdd(SLosInstance* instance) const;
 
-	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& squaresMap) const;
+	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& losRaySquares) const;
 
 protected:
 	const int2 size;
 	const int2 LOS2HEIGHT;
+
 	std::vector<unsigned short> losmap;
+
+	const float* const ctrHeightMap;
+	const float* const mipHeightMap;
+
 	bool sendReadmapEvents;
-	const float* const heightmap;
 };
 
 #endif // LOS_MAP_H

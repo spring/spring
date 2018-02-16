@@ -58,7 +58,7 @@ inline void SLosInstance::Init(int radius, int allyteam, int2 basePos, float bas
 	this->refCount = 0;
 	this->hashNum = hashNum;
 	this->status = NONE;
-	this->isCache = false;
+	this->isCached = false;
 	this->isQueuedForUpdate = false;
 	this->isQueuedForTerraform = false;
 }
@@ -71,6 +71,7 @@ inline void SLosInstance::Init(int radius, int allyteam, int2 basePos, float bas
 size_t ILosType::cacheFails = 1;
 size_t ILosType::cacheHits  = 1;
 size_t ILosType::cacheReactivated = 1;
+
 constexpr float CLosHandler::defBaseRadarErrorSize;
 constexpr float CLosHandler::defBaseRadarErrorMult;
 constexpr SLosInstance::RLE SLosInstance::EMPTY_RLE;
@@ -84,7 +85,7 @@ ILosType::ILosType(const int mipLevel_, LosType type_)
 	, type(type_)
 	, algoType((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE)
 	, losMaps(teamHandler->ActiveAllyTeams(),
-		CLosMap(size, type == LOS_TYPE_LOS, readMap->GetMIPHeightMapSynced(mipLevel_), int2(mapDims.mapx, mapDims.mapy)))
+		CLosMap(size, int2(mapDims.mapx, mapDims.mapy), readMap->GetCenterHeightMapSynced(), readMap->GetMIPHeightMapSynced(mipLevel_), type == LOS_TYPE_LOS))
 {
 }
 
@@ -254,14 +255,13 @@ inline void ILosType::LosRemove(SLosInstance* li)
 
 inline void ILosType::RefInstance(SLosInstance* li)
 {
-	li->refCount++;
-	if (li->refCount != 1)
+	if ((++li->refCount) != 1)
 		return;
 
-	if (li->isCache) {
+	if (li->isCached) {
 		cacheReactivated += (algoType == LOS_ALGO_RAYCAST);
 		auto it = std::find(losCache.begin(), losCache.end(), li);
-		li->isCache = false;
+		li->isCached = false;
 		losCache.erase(it);
 	}
 
@@ -272,8 +272,8 @@ inline void ILosType::RefInstance(SLosInstance* li)
 void ILosType::UnrefInstance(SLosInstance* li)
 {
 	assert(li->refCount > 0);
-	li->refCount--;
-	if (li->refCount > 0)
+
+	if ((--li->refCount) > 0)
 		return;
 
 	UpdateInstanceStatus(li, SLosInstance::TLosStatus::REMOVE);
@@ -292,12 +292,12 @@ inline void ILosType::DelayedUnrefInstance(SLosInstance* li)
 inline void ILosType::AddInstanceToCache(SLosInstance* li)
 {
 	if (li->status & SLosInstance::TLosStatus::RECALC) {
-		assert(!li->isCache);
+		assert(!li->isCached);
 		DeleteInstance(li);
 		return;
 	}
 
-	li->isCache = true;
+	li->isCached = true;
 	losCache.push_back(li);
 }
 
@@ -327,8 +327,8 @@ inline void ILosType::DeleteInstance(SLosInstance* li)
 	vec.pop_back();
 
 	// caller has to do that
-	assert(!li->isCache);
-	/*if (li->isCache) {
+	assert(!li->isCached);
+	/*if (li->isCached) {
 		auto it = std::find(losCache.begin(), losCache.end(), li);
 		losCache.erase(it);
 	}*/
@@ -389,7 +389,7 @@ inline void ILosType::UpdateInstanceStatus(SLosInstance* li, SLosInstance::TLosS
 		assert(li->refCount > 0 || (li->status & SLosInstance::TLosStatus::REMOVE));
 
 	if (li->refCount == 0)
-		assert(li->isCache || (li->status & SLosInstance::TLosStatus::REMOVE));
+		assert(li->isCached || (li->status & SLosInstance::TLosStatus::REMOVE));
 
 	if (status == SLosInstance::TLosStatus::REMOVE)
 		assert(li->refCount == 0);
@@ -532,7 +532,7 @@ void ILosType::Update()
 		while (!losCache.empty() && ((losCache.size() + losDeleted.size()) > CACHE_SIZE)) {
 			SLosInstance* li = losCache.front();
 			losCache.pop_front();
-			li->isCache = false;
+			li->isCached = false;
 			DeleteInstance(li);
 		}
 
@@ -584,7 +584,7 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 		}
 
 		it = losCache.erase(it);
-		li->isCache = false;
+		li->isCached = false;
 		DeleteInstance(li);
 	}
 
