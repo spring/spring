@@ -382,7 +382,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
 	armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
-	armorType = damageArrayHandler->GetTypeFromName(name);
+	armorType = damageArrayHandler.GetTypeFromName(name);
 
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
 	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
