@@ -630,9 +630,9 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	return (unitHandler->GetUnit(lua_toint(L, index)));
 }
 
-static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
+static inline const CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = ParseRawUnit(L, caller, index);
+	const CUnit* unit = ParseRawUnit(L, caller, index);
 
 	if (unit == nullptr)
 		return nullptr;
@@ -644,9 +644,9 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	return unit;
 }
 
-static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
+static inline const CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = ParseRawUnit(L, caller, index);
+	const CUnit* unit = ParseRawUnit(L, caller, index);
 
 	if (unit == nullptr)
 		return nullptr;
@@ -657,9 +657,9 @@ static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
 	return unit;
 }
 
-static inline CUnit* ParseInLosUnit(lua_State* L, const char* caller, int index)
+static inline const CUnit* ParseInLosUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = ParseRawUnit(L, caller, index);
+	const CUnit* unit = ParseRawUnit(L, caller, index);
 
 	if (unit == nullptr)
 		return nullptr;
@@ -671,9 +671,9 @@ static inline CUnit* ParseInLosUnit(lua_State* L, const char* caller, int index)
 }
 
 
-static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
+static inline const CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = ParseRawUnit(L, caller, index);
+	const CUnit* unit = ParseRawUnit(L, caller, index);
 
 	if (unit == nullptr)
 		return nullptr;
@@ -685,14 +685,14 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 }
 
 
-static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
+static const CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "[%s] featureID (arg #%d) not a number\n", caller, index);
 		return nullptr;
 	}
 
-	CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
+	const CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
 
 	if (feature == nullptr)
 		return nullptr;
@@ -705,9 +705,9 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 }
 
 
-static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
+static const CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
-	CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
+	const CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
 
 	if (p == nullptr)
 		return nullptr;
@@ -719,12 +719,13 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 }
 
 
-static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
+static inline const CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
 	const int teamID = luaL_checkint(L, index);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		luaL_error(L, "Bad teamID in %s\n", caller);
-	}
+
 	return teamHandler->Team(teamID);
 }
 
@@ -1289,7 +1290,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 
 int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __func__, 1);
+	const CTeam* team = ParseTeam(L, __func__, 1);
 	if (team == nullptr || game == nullptr)
 		return 0;
 
@@ -1308,7 +1309,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __func__, 1);
+	const CTeam* team = ParseTeam(L, __func__, 1);
 	if (team == nullptr || game == nullptr)
 		return 0;
 
@@ -1412,7 +1413,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 
 int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __func__, 1);
+	const CTeam* team = ParseTeam(L, __func__, 1);
 	if (team == nullptr)
 		return 0;
 
@@ -2419,7 +2420,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 
 int LuaSyncedRead::GetUnitNearestAlly(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2437,7 +2438,7 @@ int LuaSyncedRead::GetUnitNearestAlly(lua_State* L)
 
 int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2613,7 +2614,7 @@ int LuaSyncedRead::ValidUnitID(lua_State* L)
 
 int LuaSyncedRead::GetUnitStates(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2649,7 +2650,7 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 
 int LuaSyncedRead::GetUnitArmored(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2661,7 +2662,7 @@ int LuaSyncedRead::GetUnitArmored(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsActive(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2672,7 +2673,7 @@ int LuaSyncedRead::GetUnitIsActive(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsCloaked(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2683,7 +2684,7 @@ int LuaSyncedRead::GetUnitIsCloaked(lua_State* L)
 
 int LuaSyncedRead::GetUnitSelfDTime(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2694,7 +2695,7 @@ int LuaSyncedRead::GetUnitSelfDTime(lua_State* L)
 
 int LuaSyncedRead::GetUnitStockpile(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2710,7 +2711,7 @@ int LuaSyncedRead::GetUnitStockpile(lua_State* L)
 
 int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2739,7 +2740,7 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 
 int LuaSyncedRead::GetUnitPosErrorParams(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -2757,7 +2758,7 @@ int LuaSyncedRead::GetUnitPosErrorParams(lua_State* L)
 
 int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2794,7 +2795,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 
 int LuaSyncedRead::GetUnitDefID(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2812,7 +2813,7 @@ int LuaSyncedRead::GetUnitDefID(lua_State* L)
 
 int LuaSyncedRead::GetUnitTeam(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2823,7 +2824,7 @@ int LuaSyncedRead::GetUnitTeam(lua_State* L)
 
 int LuaSyncedRead::GetUnitAllyTeam(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2834,7 +2835,7 @@ int LuaSyncedRead::GetUnitAllyTeam(lua_State* L)
 
 int LuaSyncedRead::GetUnitNeutral(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2845,7 +2846,7 @@ int LuaSyncedRead::GetUnitNeutral(lua_State* L)
 
 int LuaSyncedRead::GetUnitHealth(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2874,7 +2875,7 @@ int LuaSyncedRead::GetUnitHealth(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsDead(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2885,7 +2886,7 @@ int LuaSyncedRead::GetUnitIsDead(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsStunned(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2898,7 +2899,7 @@ int LuaSyncedRead::GetUnitIsStunned(lua_State* L)
 
 int LuaSyncedRead::GetUnitResources(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2912,7 +2913,7 @@ int LuaSyncedRead::GetUnitResources(lua_State* L)
 
 int LuaSyncedRead::GetUnitMetalExtraction(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2926,7 +2927,7 @@ int LuaSyncedRead::GetUnitMetalExtraction(lua_State* L)
 
 int LuaSyncedRead::GetUnitExperience(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2938,7 +2939,7 @@ int LuaSyncedRead::GetUnitExperience(lua_State* L)
 
 int LuaSyncedRead::GetUnitHeight(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2949,7 +2950,7 @@ int LuaSyncedRead::GetUnitHeight(lua_State* L)
 
 int LuaSyncedRead::GetUnitRadius(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2974,7 +2975,7 @@ int LuaSyncedRead::GetUnitBasePosition(lua_State* L)
 
 int LuaSyncedRead::GetUnitVectors(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3013,7 +3014,7 @@ int LuaSyncedRead::GetUnitDirection(lua_State* L)
 
 int LuaSyncedRead::GetUnitHeading(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3030,7 +3031,7 @@ int LuaSyncedRead::GetUnitVelocity(lua_State* L)
 
 int LuaSyncedRead::GetUnitBuildFacing(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3041,27 +3042,32 @@ int LuaSyncedRead::GetUnitBuildFacing(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsBuilding(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
-	const CBuilder* builder = dynamic_cast<CBuilder*>(unit);
-	if (builder && builder->curBuild) {
+	const CBuilder* builder = dynamic_cast<const CBuilder*>(unit);
+
+	if (builder != nullptr && builder->curBuild) {
 		lua_pushnumber(L, builder->curBuild->id);
 		return 1;
 	}
-	const CFactory* factory = dynamic_cast<CFactory*>(unit);
-	if (factory && factory->curBuild) {
+
+	const CFactory* factory = dynamic_cast<const CFactory*>(unit);
+
+	if (factory != nullptr && factory->curBuild) {
 		lua_pushnumber(L, factory->curBuild->id);
 		return 1;
 	}
+
 	return 0;
 }
 
 
 int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3089,7 +3095,7 @@ int LuaSyncedRead::GetUnitCurrentBuildPower(lua_State* L)
 
 int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3144,7 +3150,7 @@ int LuaSyncedRead::GetUnitNanoPieces(lua_State* L)
 
 int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3158,7 +3164,7 @@ int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr || !unit->unitDef->IsTransportUnit())
 		return 0;
 
@@ -3179,7 +3185,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 
 int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3203,35 +3209,38 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 
 int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
 	if (lua_israwstring(L, 2)) {
-		const string key = lua_tostring(L, 2);
-		if (key == "mode") {
-			lua_pushnumber(L, unit->flankingBonusMode);
-			return 1;
-		}
-		else if (key == "dir") {
-			lua_pushnumber(L, unit->flankingBonusDir.x);
-			lua_pushnumber(L, unit->flankingBonusDir.y);
-			lua_pushnumber(L, unit->flankingBonusDir.z);
-			return 3;
-		}
-		else if (key == "moveFactor") {
-			lua_pushnumber(L, unit->flankingBonusMobilityAdd);
-			return 1;
-		}
-		else if (key == "minDamage") {
-			lua_pushnumber(L, unit->flankingBonusAvgDamage -
-												unit->flankingBonusDifDamage);
-			return 1;
-		}
-		else if (key == "maxDamage") {
-			lua_pushnumber(L, unit->flankingBonusAvgDamage +
-												unit->flankingBonusDifDamage);
-			return 1;
+		const std::string& key = lua_tostring(L, 2);
+
+		switch (hashString(key.c_str())) {
+			case hashString("mode"): {
+				lua_pushnumber(L, unit->flankingBonusMode);
+				return 1;
+			} break;
+			case hashString("dir"): {
+				lua_pushnumber(L, unit->flankingBonusDir.x);
+				lua_pushnumber(L, unit->flankingBonusDir.y);
+				lua_pushnumber(L, unit->flankingBonusDir.z);
+				return 3;
+			} break;
+			case hashString("moveFactor"): {
+				lua_pushnumber(L, unit->flankingBonusMobilityAdd);
+				return 1;
+			} break;
+			case hashString("minDamage"): {
+				lua_pushnumber(L, unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage);
+				return 1;
+			} break;
+			case hashString("maxDamage"): {
+				lua_pushnumber(L, unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage);
+				return 1;
+			} break;
+			default: {
+			} break;
 		}
 	}
 	else if (lua_isnoneornil(L, 2)) {
@@ -3253,7 +3262,7 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 
 int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3264,7 +3273,7 @@ int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
 
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3274,9 +3283,9 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const string key = luaL_optstring(L, 3, "");
+	const char* key = luaL_optstring(L, 3, "");
 
-	if (key.empty()) { // backwards compatible
+	if (key[0] == 0) { // backwards compatible
 		lua_pushboolean(L, weapon->angleGood);
 		lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
 		lua_pushnumber(L,  weapon->reloadStatus);
@@ -3284,52 +3293,77 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		lua_pushnumber(L,  weapon->numStockpiled);
 		return 5;
 	}
-	else if (key == "reloadState" || key == "reloadFrame") {
-		lua_pushnumber(L, weapon->reloadStatus);
+
+	switch (hashString(key)) {
+		case hashString("reloadState"):
+		case hashString("reloadFrame"): {
+			lua_pushnumber(L, weapon->reloadStatus);
+		} break;
+
+		case hashString("reloadTime"): {
+			lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
+		} break;
+		case hashString("reaimTime"): {
+			lua_pushnumber(L, weapon->reaimTime);
+		} break;
+
+		case hashString("accuracy"): {
+			lua_pushnumber(L, weapon->AccuracyExperience());
+		} break;
+		case hashString("sprayAngle"): {
+			lua_pushnumber(L, weapon->SprayAngleExperience());
+		} break;
+
+		case hashString("range"): {
+			lua_pushnumber(L, weapon->range);
+		} break;
+		case hashString("projectileSpeed"): {
+			lua_pushnumber(L, weapon->projectileSpeed);
+		} break;
+
+		case hashString("burst"): {
+			lua_pushnumber(L, weapon->salvoSize);
+		} break;
+		case hashString("burstRate"): {
+			lua_pushnumber(L, weapon->salvoDelay / GAME_SPEED);
+		} break;
+
+		case hashString("projectiles"): {
+			lua_pushnumber(L, weapon->projectilesPerShot);
+		} break;
+
+		case hashString("salvoError"): {
+			const float3 salvoError =  weapon->SalvoErrorExperience();
+
+			lua_createtable(L, 3, 0);
+			lua_pushnumber(L, salvoError.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, salvoError.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, salvoError.z); lua_rawseti(L, -2, 3);
+		} break;
+
+		case hashString("salvoLeft"): {
+			lua_pushnumber(L, weapon->salvoLeft);
+		} break;
+		case hashString("nextSalvo"): {
+			lua_pushnumber(L, weapon->nextSalvo);
+		} break;
+
+		case hashString("targetMoveError"): {
+			lua_pushnumber(L, weapon->MoveErrorExperience());
+		} break;
+
+		case hashString("avoidFlags"): {
+			lua_pushnumber(L, weapon->avoidFlags);
+		} break;
+		case hashString("collisionFlags"): {
+			lua_pushnumber(L, weapon->collisionFlags);
+		} break;
+
+		default: {
+			return 0;
+		} break;
 	}
-	else if (key == "reloadTime") {
-		lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
-	}
-	else if (key == "accuracy") {
-		lua_pushnumber(L, weapon->AccuracyExperience());
-	}
-	else if (key == "sprayAngle") {
-		lua_pushnumber(L, weapon->SprayAngleExperience());
-	}
-	else if (key == "range") {
-		lua_pushnumber(L, weapon->range);
-	}
-	else if (key == "projectileSpeed") {
-		lua_pushnumber(L, weapon->projectileSpeed);
-	}
-	else if (key == "burst") {
-		lua_pushnumber(L, weapon->salvoSize);
-	}
-	else if (key == "burstRate") {
-		lua_pushnumber(L, weapon->salvoDelay / GAME_SPEED);
-	}
-	else if (key == "projectiles") {
-		lua_pushnumber(L, weapon->projectilesPerShot);
-	}
-	else if (key == "salvoError") {
-		float3 salvoError =  weapon->SalvoErrorExperience();
-		lua_createtable(L, 3, 0);
-		lua_pushnumber(L, salvoError.x); lua_rawseti(L, -2, 1);
-		lua_pushnumber(L, salvoError.y); lua_rawseti(L, -2, 2);
-		lua_pushnumber(L, salvoError.z); lua_rawseti(L, -2, 3);
-	}
-	else if (key == "salvoLeft") {
-		lua_pushnumber(L, weapon->salvoLeft);
-	}
-	else if (key == "nextSalvo") {
-		lua_pushnumber(L, weapon->nextSalvo);
-	}
-	else if (key == "targetMoveError") {
-		lua_pushnumber(L, weapon->MoveErrorExperience());
-	}
-	else {
-		return 0;
-	}
+
 	return 1;
 }
 
@@ -3382,7 +3416,7 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, in
 
 int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3684,7 +3718,7 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 
 int LuaSyncedRead::GetUnitTravel(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3699,7 +3733,7 @@ int LuaSyncedRead::GetUnitFuel(lua_State* L) { lua_pushnumber(L, 0.0f); return 1
 
 int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -3714,7 +3748,7 @@ int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 
 int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -4069,7 +4103,7 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 
 int LuaSyncedRead::GetUnitCommands(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -4115,7 +4149,7 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 
 int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -4196,7 +4230,7 @@ static void PackFactoryCounts(lua_State* L,
 
 int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -4229,7 +4263,7 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 
 static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 {
-	CUnit* unit = ParseAllyUnit(L, caller, 1);
+	const CUnit* unit = ParseAllyUnit(L, caller, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -4318,7 +4352,7 @@ int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 
 int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr || game == nullptr)
 		return 0;
 
@@ -4348,7 +4382,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr || game == nullptr)
 		return 0;
 
@@ -4378,7 +4412,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 
 int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -4412,7 +4446,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 
 int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -4465,7 +4499,7 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 
 int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4476,7 +4510,7 @@ int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 
 int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4491,7 +4525,7 @@ int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 
 int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4502,7 +4536,7 @@ int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 
 int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4515,7 +4549,7 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 
 int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4526,7 +4560,7 @@ int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 
 int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4546,11 +4580,11 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 
 int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
 {
-	CFeature* feature1 = ParseFeature(L, __func__, 1);
+	const CFeature* feature1 = ParseFeature(L, __func__, 1);
 	if (feature1 == nullptr || !IsFeatureVisible(L, feature1))
 		return 0;
 
-	CFeature* feature2 = ParseFeature(L, __func__, 2);
+	const CFeature* feature2 = ParseFeature(L, __func__, 2);
 	if (feature2 == nullptr || !IsFeatureVisible(L, feature2))
 		return 0;
 
@@ -4563,14 +4597,14 @@ int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
 	} else {
 		dist = pos1.distance(pos2);
 	}
-	lua_pushnumber(L, dist);
 
+	lua_pushnumber(L, dist);
 	return 1;
 }
 
 int LuaSyncedRead::GetFeatureRotation(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4579,7 +4613,7 @@ int LuaSyncedRead::GetFeatureRotation(lua_State* L)
 
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
@@ -4601,7 +4635,7 @@ int LuaSyncedRead::GetFeatureVelocity(lua_State* L)
 
 int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4612,7 +4646,7 @@ int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 
 int LuaSyncedRead::GetFeatureResources(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
 
@@ -4668,7 +4702,7 @@ int LuaSyncedRead::GetFeatureLastAttackedPiece(lua_State* L)
 
 int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -4684,7 +4718,7 @@ int LuaSyncedRead::GetFeaturePieceCollisionVolumeData(lua_State* L)
 
 int LuaSyncedRead::GetFeatureRulesParams(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -4712,7 +4746,7 @@ int LuaSyncedRead::GetFeatureRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetFeatureRulesParam(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __func__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -5379,7 +5413,7 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 
 int LuaSyncedRead::GetUnitLosState(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -5729,7 +5763,7 @@ int LuaSyncedRead::GetFeaturePieceMatrix(lua_State* L) {
 
 int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -5759,7 +5793,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 
 int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 {
-	CUnit* unit = ParseTypedUnit(L, __func__, 1);
+	const CUnit* unit = ParseTypedUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
