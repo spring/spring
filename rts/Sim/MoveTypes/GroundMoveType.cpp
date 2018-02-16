@@ -935,9 +935,6 @@ void CGroundMoveType::CheckCollisionSkid()
 	quadField->GetUnitsExact(qfQuery, pos, collider->radius);
 	quadField->GetFeaturesExact(qfQuery, pos, collider->radius);
 
-	vector<CUnit*>::const_iterator ui;
-	vector<CFeature*>::const_iterator fi;
-
 	for (CUnit* collidee: *qfQuery.units) {
 		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
@@ -964,10 +961,10 @@ void CGroundMoveType::CheckCollisionSkid()
 
 			// damage the collider, no added impulse
 			if (doColliderDamage)
-				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, collidee, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			// damage the (static) collidee based on collider's mass, no added impulse
 			if (doCollideeDamage)
-				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, collider, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 			collider->Move(dif * impactSpeed, true);
 			collider->SetVelocity(collider->speed + ((dif * impactSpeed) * 1.8f));
@@ -996,10 +993,10 @@ void CGroundMoveType::CheckCollisionSkid()
 
 			// damage the collider
 			if (doColliderDamage)
-				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, collidee, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			// damage the collidee
 			if (doCollideeDamage)
-				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, collider, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 			collider->Move( colliderImpactImpulse, true);
 			collidee->Move(-collideeImpactImpulse, true);
@@ -1022,12 +1019,15 @@ void CGroundMoveType::CheckCollisionSkid()
 		const float impactSpeed = -collider->speed.dot(dif);
 		const float impactDamageMult = std::min(impactSpeed * collider->mass * COLLISION_DAMAGE_MULT, MAX_UNIT_SPEED);
 		const float3 impactImpulse = dif * impactSpeed;
+
 		const bool doColliderDamage = (modInfo.allowUnitCollisionDamage && impactSpeed > colliderUD->minCollisionSpeed && colliderUD->minCollisionSpeed >= 0.0f);
 
 		if (impactSpeed <= 0.0f)
 			continue;
 
 		// damage the collider, no added impulse (!)
+		// the collidee feature can not be passed along to the collider as attacker
+		// yet, keep symmetry and do not pass collider along to the collidee either
 		if (doColliderDamage)
 			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 

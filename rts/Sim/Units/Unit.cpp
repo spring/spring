@@ -1358,9 +1358,10 @@ void CUnit::DoDamage(
 	float experienceMod = expMultiplier;
 	float impulseMult = 1.0f;
 
+	const bool isCollision = (weaponDefID == -CSolidObject::DAMAGE_COLLISION_OBJECT || weaponDefID == -CSolidObject::DAMAGE_COLLISION_GROUND);
 	const bool isParalyzer = (damages.paralyzeDamageTime != 0);
 
-	if (baseDamage > 0.0f) {
+	if (!isCollision && baseDamage > 0.0f) {
 		if (attacker != nullptr) {
 			SetLastAttacker(attacker);
 
@@ -1396,14 +1397,13 @@ void CUnit::DoDamage(
 	tracefile << id << " " << baseDamage << "\n";
 #endif
 
-	if (baseDamage > 0.0f) {
+	if (!isCollision && baseDamage > 0.0f) {
 		if ((attacker != nullptr) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
 			const float scaledDamage = std::max(0.0f, (baseDamage + std::min(0.0f, health))) / maxHealth;
 			// alternative
 			// scaledDamage = (max(healthPreDamage, 0) - max(health, 0)) / maxHealth
 
-			// FIXME: why is experience added a second time when health <= 0.0f?
 			attacker->AddExperience(scaledExpMod * scaledDamage);
 		}
 	}
@@ -1423,8 +1423,10 @@ void CUnit::DoDamage(
 	if (teamHandler->Ally(allyteam, attacker->allyteam))
 		return;
 
-	attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-	teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
+	CTeam* attackerTeam = teamHandler->Team(attacker->team);
+	TeamStatistics& attackerStats = attackerTeam->GetCurrentStats();
+
+	attackerStats.unitsKilled += (1 - isCollision);
 }
 
 
