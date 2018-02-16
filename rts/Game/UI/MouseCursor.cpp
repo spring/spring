@@ -20,29 +20,10 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/SimpleParser.h"
 
-CMouseCursor::CMouseCursor()
- : hwCursor(nullptr)
-
- , animTime(0.0f)
- , animPeriod(0.0f)
- , currentFrame(0)
-
- , xmaxsize(0)
- , ymaxsize(0)
-
- , xofs(0)
- , yofs(0)
-
- , hwValid(false)
-{}
-
 CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
 {
-	// default-initialize
-	*this = std::move(CMouseCursor());
-
-	hwCursor = GetNewHwCursor();
-	hwCursor->hotSpot = (hotSpot = hs);
+	hwCursor = IHardwareCursor::Alloc(hwCursorMem);
+	hwCursor->Init(hotSpot = hs);
 
 	if (!BuildFromSpecFile(name))
 		BuildFromFileNames(name, 123456);
@@ -65,13 +46,44 @@ CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
 	}
 }
 
-
 CMouseCursor::~CMouseCursor()
 {
-	spring::SafeDelete(hwCursor);
+	if (hwCursor != nullptr) {
+		hwCursor->Kill();
+		IHardwareCursor::Free(hwCursor);
+	}
 
 	for (auto it = images.begin(); it != images.end(); ++it)
 		glDeleteTextures(1, &it->texture);
+}
+
+
+CMouseCursor& CMouseCursor::operator = (CMouseCursor&& mc) {
+	images = std::move(mc.images);
+	frames = std::move(mc.frames);
+
+	if (mc.hwCursor != nullptr) {
+		memcpy(hwCursorMem, mc.hwCursorMem, sizeof(hwCursorMem));
+		memset(mc.hwCursorMem, 0, sizeof(hwCursorMem));
+
+		hwCursor = reinterpret_cast<IHardwareCursor*>(hwCursorMem);
+		mc.hwCursor = nullptr;
+	}
+
+	hotSpot = mc.hotSpot;
+
+	animTime = mc.animTime;
+	animPeriod = mc.animPeriod;
+	currentFrame = mc.currentFrame;
+
+	xmaxsize = mc.xmaxsize;
+	ymaxsize = mc.ymaxsize;
+
+	xofs = mc.xofs;
+	yofs = mc.yofs;
+
+	hwValid = mc.hwValid;
+	return *this;
 }
 
 
@@ -108,7 +120,7 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 
 		if ((cmdIter->second == 0) && (words.size() >= 2)) {
 			const std::string& imageName = words[1];
-			float length = minFrameLength;
+			float length = MIN_FRAME_LENGTH;
 
 			if (words.size() >= 3)
 				length = std::max(length, float(std::atof(words[2].c_str())));
@@ -136,11 +148,11 @@ bool CMouseCursor::BuildFromSpecFile(const std::string& name)
 
 		if ((cmdIter->second == 1) && (!words.empty())) {
 			if (words[1] == "topleft") {
-				hwCursor->hotSpot = (hotSpot = TopLeft);
+				hwCursor->SetHotSpot(hotSpot = TopLeft);
 				continue;
 			}
 			if (words[1] == "center") {
-				hwCursor->hotSpot = (hotSpot = Center);
+				hwCursor->SetHotSpot(hotSpot = Center);
 				continue;
 			}
 
@@ -182,7 +194,7 @@ bool CMouseCursor::BuildFromFileNames(const std::string& name, int lastFrame)
 			break;
 
 		images.push_back(image);
-		frames.emplace_back(image, defFrameLength);
+		frames.emplace_back(image, DEF_FRAME_LENGTH * 1.0f);
 	}
 
 	hwCursor->Finish();

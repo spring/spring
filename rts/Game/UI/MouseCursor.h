@@ -7,7 +7,7 @@
 #include <vector>
 
 class CBitmap;
-class IHwCursor;
+class IHardwareCursor;
 
 class CMouseCursor {
 public:
@@ -16,34 +16,15 @@ public:
 public:
 	static CMouseCursor New(const std::string& name, HotSpot hs) { return (CMouseCursor(name, hs)); }
 
-	CMouseCursor(); // null-cursor
+	CMouseCursor() = default; // null-cursor
 	CMouseCursor(const CMouseCursor& mc) = delete;
 	CMouseCursor(CMouseCursor&& mc) { *this = std::move(mc); }
 	~CMouseCursor();
 
 	CMouseCursor& operator = (const CMouseCursor& mc) = delete;
-	CMouseCursor& operator = (CMouseCursor&& mc) {
-		images = std::move(mc.images);
-		frames = std::move(mc.frames);
+	CMouseCursor& operator = (CMouseCursor&& mc);
 
-		hwCursor = mc.hwCursor;
-		mc.hwCursor = nullptr;
-
-		hotSpot = mc.hotSpot;
-
-		animTime = mc.animTime;
-		animPeriod = mc.animPeriod;
-		currentFrame = mc.currentFrame;
-
-		xmaxsize = mc.xmaxsize;
-		ymaxsize = mc.ymaxsize;
-
-		xofs = mc.xofs;
-		yofs = mc.yofs;
-
-		hwValid = mc.hwValid;
-		return *this;
-	}
+	CMouseCursor(const std::string& name, HotSpot hs);
 
 	void Update();
 	void Draw(int x, int y, float scale) const;   // software cursor draw
@@ -57,7 +38,21 @@ public:
 	bool IsHWValid() const { return hwValid; }
 	bool IsValid() const { return (!frames.empty()); }
 
-protected:
+private:
+	struct ImageData;
+
+	bool LoadCursorImage(const std::string& name, ImageData& image);
+	bool BuildFromSpecFile(const std::string& name);
+	bool BuildFromFileNames(const std::string& name, int lastFrame);
+
+public:
+	static constexpr float MIN_FRAME_LENGTH = 0.010f;  // seconds
+	static constexpr float DEF_FRAME_LENGTH = 0.100f;  // seconds
+
+	static constexpr size_t HWC_MEM_SIZE = 128;
+
+
+private:
 	struct ImageData {
 		unsigned int texture;
 		int xOrigSize;
@@ -66,44 +61,35 @@ protected:
 		int yAlignedSize;
 	};
 	struct FrameData {
-		FrameData(const ImageData& _image, float time)
-			: image(_image), length(time), startTime(0.0f), endTime(0.0f) {}
+		FrameData(const ImageData& _image, float time): image(_image), length(time) {}
 		ImageData image;
-		float length;
-		float startTime;
-		float endTime;
+
+		float length = 0.0f;
+		float startTime = 0.0f;
+		float endTime = 0.0f;
 	};
 
-protected:
-	CMouseCursor(const std::string& name, HotSpot hs);
-	bool LoadCursorImage(const std::string& name, struct ImageData& image);
-	bool BuildFromSpecFile(const std::string& name);
-	bool BuildFromFileNames(const std::string& name, int lastFrame);
-
-protected:
 	std::vector<ImageData> images;
 	std::vector<FrameData> frames;
 
-	IHwCursor* hwCursor; // hardware cursor
+	unsigned char hwCursorMem[HWC_MEM_SIZE] = {0};
 
-	HotSpot hotSpot;
+	IHardwareCursor* hwCursor = nullptr;
 
-	float animTime;
-	float animPeriod;
-	int currentFrame;
+	HotSpot hotSpot = Center;
 
-	int xmaxsize;
-	int ymaxsize;
+	float animTime = 0.0f;
+	float animPeriod = 0.0f;
+	int currentFrame = 0;
 
-	int xofs; // describes where the center of the cursor is,
-	int yofs; // based on xmaxsize, ymaxsize, and the hotspot
+	int xmaxsize = 0;
+	int ymaxsize = 0;
 
-	bool hwValid; // if hardware cursor is valid
+	int xofs = 0; // describes where the center of the cursor is,
+	int yofs = 0; // based on xmaxsize, ymaxsize, and the hotspot
+
+	bool hwValid = false; // if hardware cursor is valid
 };
-
-
-static const float minFrameLength = 0.010f;  // seconds
-static const float defFrameLength = 0.100f;  // seconds
 
 
 #endif /* MOUSECURSOR_H */

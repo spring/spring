@@ -112,8 +112,6 @@ CMouseHandler::CMouseHandler()
 		buttons[a].movement = 0;
 	}
 
-	ReloadCursors();
-
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
@@ -142,12 +140,10 @@ CMouseHandler::~CMouseHandler()
 
 CMouseHandler* CMouseHandler::GetOrReloadInstance()
 {
-	if (mouse == nullptr) {
+	if (mouse == nullptr)
 		mouse = new CMouseHandler();
-	} else {
-		mouse->ReloadCursors();
-	}
 
+	mouse->ReloadCursors();
 	return mouse;
 }
 
