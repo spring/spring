@@ -392,7 +392,7 @@ static void DrawInfoText()
 	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
 	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P,W}={%.1f/%.1f, %.1f/%.1f, %.1f/%.1f, %.1f/%.1f}KB";
 
-	const CProjectileHandler* ph = projectileHandler;
+	const CProjectileHandler* ph = &projectileHandler;
 	const IPathManager* pm = pathManager;
 
 	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS);

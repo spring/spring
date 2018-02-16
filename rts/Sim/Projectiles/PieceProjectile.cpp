@@ -90,7 +90,7 @@ CPieceProjectile::CPieceProjectile(
 		useAirLos = true;
 	}
 
-	projectileHandler->AddProjectile(this);
+	projectileHandler.AddProjectile(this);
 	assert(!detached);
 }
 

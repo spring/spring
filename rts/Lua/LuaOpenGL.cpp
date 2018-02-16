@@ -109,7 +109,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool
 		return nullptr;
 	}
 
-	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+	CUnit* unit = unitHandler.GetUnit(lua_toint(L, index));
 
 	if (unit == nullptr)
 		return nullptr;
@@ -159,7 +159,7 @@ static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
 
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
-	CFeature* feature = featureHandler->GetFeature(luaL_checkint(L, index));
+	CFeature* feature = featureHandler.GetFeature(luaL_checkint(L, index));
 
 	if (feature == nullptr)
 		return nullptr;
@@ -1414,7 +1414,7 @@ int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 int LuaOpenGL::UnitTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectTextures(L, unitHandler->GetUnit(luaL_checkint(L, 1)));
+	GLObjectTextures(L, unitHandler.GetUnit(luaL_checkint(L, 1)));
 	return 0;
 }
 
@@ -1518,7 +1518,7 @@ int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)
 int LuaOpenGL::FeatureTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectTextures(L, featureHandler->GetFeature(luaL_checkint(L, 1)));
+	GLObjectTextures(L, featureHandler.GetFeature(luaL_checkint(L, 1)));
 	return 0;
 }
 

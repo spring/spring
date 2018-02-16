@@ -30,7 +30,8 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(idPool),
 
 	CR_MEMBER(units),
-	CR_MEMBER(unitsByDefs),
+	// FIXME: std::array
+	// CR_MEMBER(unitsByDefs),
 	CR_MEMBER(activeUnits),
 	CR_MEMBER(unitsToBeRemoved),
 
@@ -49,7 +50,7 @@ CR_REG_METADATA(CUnitHandler, (
 
 UnitMemPool unitMemPool;
 
-CUnitHandler* unitHandler = nullptr;
+CUnitHandler unitHandler;
 
 
 void CUnitHandler::SanityCheckUnit(const CUnit* unit)
@@ -98,7 +99,7 @@ CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 
 
 
-CUnitHandler::CUnitHandler() {
+void CUnitHandler::Init() {
 	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CExtractorBuilding), "");
@@ -111,24 +112,34 @@ CUnitHandler::CUnitHandler() {
 	// teams can not be created at runtime, but they can die and
 	// in that case the per-team limit is recalculated for every
 	// other team in the respective allyteam
+	maxUnits = 0;
+
 	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
 		maxUnits += teamHandler->Team(n)->GetMaxUnits();
 	}
 
+	maxUnitRadius = 0.0f;
+
+
 	units.resize(maxUnits, nullptr);
-	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->NumUnitDefs() + 1));
+
+	for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
+		unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);
+	}
 
 	unitMemPool.reserve(128);
+
 	// id's are used as indices, so they must lie in [0, units.size() - 1]
 	// (furthermore all id's are treated equally, none have special status)
-	idPool.Expand(0, units.size());
+	if (idPool.IsEmpty())
+		idPool.Expand(0, units.size());
 
 	activeSlowUpdateUnit = 0;
 	activeUpdateUnit = 0;
 }
 
 
-CUnitHandler::~CUnitHandler()
+void CUnitHandler::Kill()
 {
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
@@ -138,6 +149,24 @@ CUnitHandler::~CUnitHandler()
 
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	unitMemPool.clear();
+	// when reloading, do not expand pool again (but keep current mappings)
+	idPool.Clear();
+
+	units.clear();
+
+	for (int teamNum = 0; teamNum < MAX_TEAMS; teamNum++) {
+		// reuse inner vectors when reloading
+		// unitsByDefs[teamNum].clear();
+
+		for (size_t defID = 0; defID < unitsByDefs[teamNum].size(); defID++) {
+			unitsByDefs[teamNum][defID].clear();
+		}
+	}
+
+	activeUnits.clear();
+	unitsToBeRemoved.clear();
+
+	spring::clear_unordered_map(builderCAIs);
 }
 
 

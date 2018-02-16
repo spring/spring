@@ -270,10 +270,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 CMobileCAI::~CMobileCAI()
 {
-	// if uh == NULL then all pointers to units should be considered dangling
-	if (unitHandler != nullptr) {
-		SetTransportee(nullptr);
-	}
+	SetTransportee(nullptr);
 }
 
 
@@ -453,7 +450,7 @@ void CMobileCAI::ExecuteMove(Command& c)
 }
 
 void CMobileCAI::ExecuteLoadOnto(Command& c) {
-	CUnit* unit = unitHandler->GetUnit(c.params[0]);
+	CUnit* unit = unitHandler.GetUnit(c.params[0]);
 
 	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
 		StopMoveAndFinishCommand();
@@ -627,7 +624,7 @@ void CMobileCAI::ExecuteGuard(Command& c)
 	assert(owner->unitDef->canGuard);
 	assert(!c.params.empty());
 
-	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
+	const CUnit* guardee = unitHandler.GetUnit(c.params[0]);
 
 	if (guardee == nullptr) {
 		StopMoveAndFinishCommand();
@@ -885,7 +882,7 @@ void CMobileCAI::ExecuteAttack(Command& c)
 			} break;
 
 			case 1: {
-				CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
+				CUnit* targetUnit = unitHandler.GetUnit(c.params[0]);
 
 				// check if we have valid target parameter and that we aren't attacking ourselves
 				if (targetUnit == nullptr) {
@@ -1265,7 +1262,7 @@ void CMobileCAI::SetTransportee(CUnit* unit) {
 	if (unit == nullptr)
 		return;
 
-	CUnit* transport = (unit->loadingTransportId == -1) ? nullptr : unitHandler->GetUnitUnsafe(unit->loadingTransportId);
+	CUnit* transport = (unit->loadingTransportId == -1) ? nullptr : unitHandler.GetUnitUnsafe(unit->loadingTransportId);
 
 	// if no loading transport, then assign ourselves
 	if (transport == nullptr) {
@@ -1288,7 +1285,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 	switch (c.params.size()) {
 		case 1: {
 			// load single unit
-			CUnit* unit = unitHandler->GetUnit(c.params[0]);
+			CUnit* unit = unitHandler.GetUnit(c.params[0]);
 
 			if (unit == nullptr) {
 				StopMoveAndFinishCommand();
@@ -1613,7 +1610,7 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 		const float dist = unit->pos.SqDistance2D(owner->pos);
 
 		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
-			const CUnit* trans = unitHandler->GetUnitUnsafe(unit->loadingTransportId);
+			const CUnit* trans = unitHandler.GetUnitUnsafe(unit->loadingTransportId);
 
 			// don't refuse to load a unit if an enemy transport is trying to at the same time
 			if ((trans != nullptr) && teamHandler->AlliedTeams(owner->team, trans->team))

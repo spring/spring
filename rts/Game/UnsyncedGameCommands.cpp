@@ -579,7 +579,7 @@ public:
 		float3 pos;
 
 		for (const int unitID: selUnits) {
-			pos += (unitHandler->GetUnit(unitID))->midPos;
+			pos += (unitHandler.GetUnit(unitID))->midPos;
 		}
 		pos /= (float)selUnits.size();
 		camHandler->CameraTransition(0.6f);
@@ -2332,12 +2332,9 @@ public:
 			"Set the maximum number of particles (Graphics setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (projectileHandler == NULL)
-			return false;
-
 		if (!action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
-			projectileHandler->SetMaxParticles(value);
+			projectileHandler.SetMaxParticles(value);
 			LOG("Set maximum particles to: %i", value);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2354,12 +2351,9 @@ public:
 			"Set the maximum number of nano-particles (Graphic setting)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (projectileHandler == NULL)
-			return false;
-
 		if (!action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
-			projectileHandler->SetMaxNanoParticles(value);
+			projectileHandler.SetMaxNanoParticles(value);
 			LOG("Set maximum nano-particles to: %i", value);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());

@@ -365,7 +365,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -409,7 +409,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -575,7 +575,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (f == NULL)
 						continue;
@@ -637,7 +637,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 		// draw trees that have been marked as falling
 		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
-			// const CFeature* f = featureHandler->GetFeature(fti->id);
+			// const CFeature* f = featureHandler.GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
 			// featureID is invalid for falling trees
@@ -693,7 +693,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 		// draw faded mid-distance trees
 		for (const FadeTree& fTree: fadeTrees) {
-			const CFeature* f = featureHandler->GetFeature(fTree.id);
+			const CFeature* f = featureHandler.GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;
@@ -827,7 +827,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -868,7 +868,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 				const ITreeDrawer::TreeStruct* ts = &(*ti);
-				const CFeature* f = featureHandler->GetFeature(ts->id);
+				const CFeature* f = featureHandler.GetFeature(ts->id);
 
 				if (f == NULL)
 					continue;
@@ -978,7 +978,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (f == NULL)
 						continue;
@@ -1034,8 +1034,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
-			// const CFeature* f = featureHandler->GetFeature(fti->id);
-			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
+			// const CFeature* f = featureHandler.GetFeature(ft.id);
+			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20.0f);
 
 			// featureID is invalid for falling trees
 			// if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
@@ -1080,7 +1080,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 		// draw faded mid-distance trees
 		for (const FadeTree& fTree: fadeTrees) {
-			const CFeature* f = featureHandler->GetFeature(fTree.id);
+			const CFeature* f = featureHandler.GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;

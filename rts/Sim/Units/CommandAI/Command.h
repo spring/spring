@@ -72,7 +72,7 @@
 #define CMDTYPE_ICON_UNIT_OR_AREA          16  // expect 1 parameter in return (unitid) or 4 parameters in return (mappos+radius)
 #define CMDTYPE_NEXT                       17  // used with CMD_INTERNAL
 #define CMDTYPE_PREV                       18  // used with CMD_INTERNAL
-#define CMDTYPE_ICON_UNIT_FEATURE_OR_AREA  19  // expect 1 parameter in return (unitid or featureid+unitHandler->MaxUnits() (id>unitHandler->MaxUnits()=feature)) or 4 parameters in return (mappos+radius)
+#define CMDTYPE_ICON_UNIT_FEATURE_OR_AREA  19  // expect 1 parameter in return (unitid or featureid+unitHandler.MaxUnits() (id>unitHandler.MaxUnits()=feature)) or 4 parameters in return (mappos+radius)
 #define CMDTYPE_ICON_BUILDING              20  // expect 3 parameters in return (mappos)
 #define CMDTYPE_CUSTOM                     21  // used with CMD_INTERNAL
 #define CMDTYPE_ICON_UNIT_OR_RECTANGLE     22  // expect 1 parameter in return (unitid)

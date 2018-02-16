@@ -101,11 +101,13 @@ const MoveDef* CPathTexture::GetSelectedMoveDef()
 
 	const MoveDef* md = nullptr;
 	const auto& unitSet = selectedUnitsHandler.selectedUnits;
-	if (!unitSet.empty()) {
-		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
-		md = unit->moveDef;
-	}
-	return md;
+
+	if (unitSet.empty())
+		return nullptr;
+
+	const auto iter = unitSet.begin();
+	const CUnit* unit = unitHandler.GetUnit(*iter);
+	return unit->moveDef;
 }
 
 

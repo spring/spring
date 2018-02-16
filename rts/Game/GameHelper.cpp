@@ -63,8 +63,8 @@ void CGameHelper::Update()
 	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
 		const WaitingDamage& wd = waitingDamages[wdIdx][n];
 
-		CUnit* attackee = unitHandler->GetUnit(wd.targetID);
-		CUnit* attacker = unitHandler->GetUnit(wd.attackerID); // null if wd.attacker is -1
+		CUnit* attackee = unitHandler.GetUnit(wd.targetID);
+		CUnit* attacker = unitHandler.GetUnit(wd.attackerID); // null if wd.attacker is -1
 
 		if (attackee == nullptr)
 			continue;
@@ -563,7 +563,7 @@ namespace {
 
 		public:
 			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
-				Base(pos, searchRadius + unitHandler->MaxUnitRadius()),
+				Base(pos, searchRadius + unitHandler.MaxUnitRadius()),
 				closeDist(searchRadius), closeUnit(nullptr), canBeBlind(canBeBlind) {}
 
 			void AddUnit(CUnit* u) {
@@ -1271,14 +1271,11 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 	float3 tempF1 = pos;
 
-	CCommandQueue::iterator ci;
-
-
-	for (CUnit* unit: unitHandler->GetActiveUnits()) {
+	for (CUnit* unit: unitHandler.GetActiveUnits()) {
 		if (unit->team != gu->myTeam)
 			continue;
 
-		ci = unit->commandAI->commandQue.begin();
+		CCommandQueue::iterator ci = unit->commandAI->commandQue.begin();
 
 		for (; ci != unit->commandAI->commandQue.end(); ++ci) {
 			const Command& cmd = *ci;
@@ -1293,8 +1290,7 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 		}
 	}
 
-	Command c(CMD_STOP);
-	return c;
+	return (Command(CMD_STOP));
 }
 
 bool CGameHelper::CheckTerrainConstraints(

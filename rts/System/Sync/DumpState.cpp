@@ -21,6 +21,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -96,9 +97,9 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		return;
 
 	// we only care about the synced projectile data here
-	const std::vector<CUnit*>& activeUnits = unitHandler->GetActiveUnits();
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-	const ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
+	const std::vector<CUnit*>& activeUnits = unitHandler.GetActiveUnits();
+	const auto& activeFeatureIDs = featureHandler.GetActiveFeatureIDs();
+	const ProjectileContainer& projectiles = projectileHandler.syncedProjectiles;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
 	file << "\tunits: " << activeUnits.size() << "\n";
@@ -209,7 +210,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 	#ifdef DUMP_FEATURE_DATA
 	for (const int featureID: activeFeatureIDs) {
-		const CFeature* f = featureHandler->GetFeature(featureID);
+		const CFeature* f = featureHandler.GetFeature(featureID);
 
 		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";

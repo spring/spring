@@ -98,7 +98,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 	}
 	else if (nbrOfSelectedUnits == 1) {
 		// a single unit selected
-		CUnit* unit = unitHandler->GetUnit(*netSelected.begin());
+		CUnit* unit = unitHandler.GetUnit(*netSelected.begin());
 
 		if (unit != nullptr) {
 			unit->commandAI->GiveCommand(c, true);
@@ -138,7 +138,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 		const bool groupSpeed = !!(c.options & CONTROL_KEY);
 
 		for (const int unitID: netSelected) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;
@@ -169,7 +169,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 		const bool groupSpeed = !!(c.options & CONTROL_KEY);
 
 		for (const int unitID: netSelected) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;
@@ -189,7 +189,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 		const bool queueing = (c.options & SHIFT_KEY);
 
 		for (const int unitID: netSelected) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;
@@ -214,7 +214,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 	}
 	else {
 		for (const int unitID: netSelected) {
-			CUnit* unit = unitHandler->GetUnit(unitID);
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;
@@ -257,7 +257,7 @@ void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 	const std::vector<int>& playerUnitIDs = selectedUnitsHandler.netSelected[player];
 
 	for (auto ui = playerUnitIDs.begin(); ui != playerUnitIDs.end(); ++ui) {
-		CUnit* unit = unitHandler->GetUnit(*ui);
+		CUnit* unit = unitHandler.GetUnit(*ui);
 
 		if (unit == nullptr)
 			continue;
@@ -303,7 +303,7 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int player)
 	if (formationCenterPos.distance(formationRightPos) < playerUnitIDs.size() + 33) {
 		// if the front is not long enough, treat as a standard move
 		for (auto ui = playerUnitIDs.begin(); ui != playerUnitIDs.end(); ++ui) {
-			CUnit* unit = unitHandler->GetUnit(*ui);
+			CUnit* unit = unitHandler.GetUnit(*ui);
 
 			if (unit == nullptr)
 				continue;
@@ -358,10 +358,10 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int player)
 		}
 
 
-		nextPos = MoveToPos(nextPos, formationSideDir, unitHandler->GetUnit(suPair.second), c, &frontMoveCommands, &newFormationLine);
+		nextPos = MoveToPos(nextPos, formationSideDir, unitHandler.GetUnit(suPair.second), c, &frontMoveCommands, &newFormationLine);
 
 		if ((++k) < sortedUnitPairs.size()) {
-			MoveToPos(nextPos, formationSideDir, unitHandler->GetUnit(suPair.second), c, nullptr, &newFormationLine);
+			MoveToPos(nextPos, formationSideDir, unitHandler.GetUnit(suPair.second), c, nullptr, &newFormationLine);
 
 			if (!newFormationLine)
 				continue;
@@ -405,7 +405,7 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int player)
 		}
 
 		for (size_t i = 0; i < frontMoveCommands.size(); i++) {
-			CUnit* unit = unitHandler->GetUnit(mixedUnitIDs[i]);
+			CUnit* unit = unitHandler.GetUnit(mixedUnitIDs[i]);
 			CCommandAI* cai = unit->commandAI;
 
 			cai->GiveCommand(frontMoveCommands[i].second, false);
@@ -425,7 +425,7 @@ void CSelectedUnitsHandlerAI::CreateUnitOrder(std::vector< std::pair<float, int>
 	out.reserve(playerUnitIDs.size());
 
 	for (const int unitID: playerUnitIDs) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (unit == nullptr)
 			continue;
@@ -521,7 +521,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 		attackCmd.options |= SHIFT_KEY;
 
 		for (unsigned int s = 0; s < selectedCount; s++) {
-			const CUnit* unit = unitHandler->GetUnit(selected[s]);
+			const CUnit* unit = unitHandler.GetUnit(selected[s]);
 
 			if (unit == nullptr)
 				continue;
@@ -546,7 +546,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 	float3 midPos;
 
 	for (unsigned int s = 0; s < selectedCount; s++) {
-		CUnit* unit = unitHandler->GetUnit(selected[s]);
+		CUnit* unit = unitHandler.GetUnit(selected[s]);
 
 		if (unit == nullptr)
 			continue;
@@ -564,7 +564,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 
 	// sort the targets
 	for (unsigned int t = 0; t < targetsCount; t++) {
-		const CUnit* unit = unitHandler->GetUnit(targetUnitIDs[t]);
+		const CUnit* unit = unitHandler.GetUnit(targetUnitIDs[t]);
 		const float3 unitPos = float3(unit->midPos);
 
 		sortedUnitPairs.emplace_back((unitPos - midPos).SqLength2D(), targetUnitIDs[t]);
@@ -578,7 +578,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 		if (!queueing)
 			attackCmd.options &= ~SHIFT_KEY;
 
-		CUnit* unit = unitHandler->GetUnit(selected[s]);
+		CUnit* unit = unitHandler.GetUnit(selected[s]);
 
 		if (unit == nullptr)
 			continue;

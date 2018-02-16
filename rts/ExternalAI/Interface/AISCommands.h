@@ -1599,7 +1599,7 @@ int toInternalUnitCommandTopic(int aiCmdTopic, void* sUnitCommandData);
  * Returns the C AI Interface command topic ID that corresponds
  * to the engine internal C++ unit command (topic) ID specified by
  * <code>internalUnitCmdTopic</code>.
- * @param  maxUnits  should be the value returned by unitHandler->MaxUnits()
+ * @param  maxUnits  should be the value returned by unitHandler.MaxUnits()
  *                   -> max units per team for the current game
  */
 int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);

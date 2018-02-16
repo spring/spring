@@ -630,7 +630,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		return nullptr;
 	}
 
-	return (unitHandler->GetUnit(lua_toint(L, index)));
+	return (unitHandler.GetUnit(lua_toint(L, index)));
 }
 
 static inline const CUnit* ParseUnit(lua_State* L, const char* caller, int index)
@@ -695,7 +695,7 @@ static const CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		return nullptr;
 	}
 
-	const CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
+	const CFeature* feature = featureHandler.GetFeature(lua_toint(L, index));
 
 	if (feature == nullptr)
 		return nullptr;
@@ -710,7 +710,7 @@ static const CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 
 static const CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
-	const CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
+	const CProjectile* p = projectileHandler.GetProjectileBySyncedID(luaL_checkint(L, index));
 
 	if (p == nullptr)
 		return nullptr;
@@ -1613,16 +1613,16 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 
 int LuaSyncedRead::GetAllUnits(lua_State* L)
 {
-	lua_createtable(L, (unitHandler->GetActiveUnits()).size(), 0);
+	lua_createtable(L, (unitHandler.GetActiveUnits()).size(), 0);
 
 	unsigned int unitCount = 1;
 	if (CLuaHandle::GetHandleFullRead(L)) {
-		for (const CUnit* unit: unitHandler->GetActiveUnits()) {
+		for (const CUnit* unit: unitHandler.GetActiveUnits()) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, unitCount++);
 		}
 	} else {
-		for (const CUnit* unit: unitHandler->GetActiveUnits()) {
+		for (const CUnit* unit: unitHandler.GetActiveUnits()) {
 			if (!IsUnitVisible(L, unit))
 				continue;
 
@@ -1651,9 +1651,9 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 
 	// raw push for allies
 	if (IsAlliedTeam(L, teamID)) {
-		lua_createtable(L, unitHandler->NumUnitsByTeam(teamID), 0);
+		lua_createtable(L, unitHandler.NumUnitsByTeam(teamID), 0);
 
-		for (const CUnit* unit: unitHandler->GetUnitsByTeam(teamID)) {
+		for (const CUnit* unit: unitHandler.GetUnitsByTeam(teamID)) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, unitCount++);
 		}
@@ -1662,9 +1662,9 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 	}
 
 	// check visibility for enemies
-	lua_createtable(L, unitHandler->NumUnitsByTeam(teamID), 0);
+	lua_createtable(L, unitHandler.NumUnitsByTeam(teamID), 0);
 
-	for (const CUnit* unit: unitHandler->GetUnitsByTeam(teamID)) {
+	for (const CUnit* unit: unitHandler.GetUnitsByTeam(teamID)) {
 		if (!IsUnitVisible(L, unit))
 			continue;
 		lua_pushnumber(L, unit->id);
@@ -1767,7 +1767,7 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 	if (IsAlliedTeam(L, teamID)) {
 		// tally for allies
 		for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
-			const auto& unitsByDef = unitHandler->GetUnitsByTeamAndDef(teamID, i + 1);
+			const auto& unitsByDef = unitHandler.GetUnitsByTeamAndDef(teamID, i + 1);
 
 			if (unitsByDef.empty())
 				continue;
@@ -1796,14 +1796,14 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 			if (ud->decoyDef != nullptr)
 				continue;
 
-			bool createdTable = PushVisibleUnits(L, unitHandler->GetUnitsByTeamAndDef(teamID, unitDefID), unitDefID, &unitCount, &defCount);
+			bool createdTable = PushVisibleUnits(L, unitHandler.GetUnitsByTeamAndDef(teamID, unitDefID), unitDefID, &unitCount, &defCount);
 
 			// for all decoy-defs of unitDefID, add decoy units under the same ID
 			const auto dmit = unitDefHandler->decoyMap.find(unitDefID);
 
 			if (dmit != unitDefHandler->decoyMap.end()) {
 				for (int decoyDefID: dmit->second) {
-					createdTable |= PushVisibleUnits(L, unitHandler->GetUnitsByTeamAndDef(teamID, decoyDefID), unitDefID, &unitCount, &defCount);
+					createdTable |= PushVisibleUnits(L, unitHandler.GetUnitsByTeamAndDef(teamID, decoyDefID), unitDefID, &unitCount, &defCount);
 				}
 			}
 
@@ -1856,7 +1856,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 
 		for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
 			const unsigned int unitDefID = i + 1;
-			const unsigned int unitCount = unitHandler->NumUnitsByTeamAndDef(teamID, unitDefID);
+			const unsigned int unitCount = unitHandler.NumUnitsByTeamAndDef(teamID, unitDefID);
 
 			if (unitCount == 0)
 				continue;
@@ -1876,7 +1876,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	gtuDefCounts.clear();
 	gtuDefCounts.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
-	for (const CUnit* unit: unitHandler->GetUnitsByTeam(teamID)) {
+	for (const CUnit* unit: unitHandler.GetUnitsByTeam(teamID)) {
 		if (!IsUnitVisible(L, unit))
 			continue;
 
@@ -1957,7 +1957,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 
 		prevUnitDefID = unitDefID;
 
-		for (const CUnit* unit: unitHandler->GetUnitsByTeamAndDef(teamID, unitDefID)) {
+		for (const CUnit* unit: unitHandler.GetUnitsByTeamAndDef(teamID, unitDefID)) {
 			if (!allied && !IsUnitTyped(L, unit))
 				continue;
 
@@ -1990,7 +1990,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	// use the unitsByDefs count for allies
 	if (IsAlliedTeam(L, teamID)) {
-		lua_pushnumber(L, unitHandler->NumUnitsByTeamAndDef(teamID, unitDef->id));
+		lua_pushnumber(L, unitHandler.NumUnitsByTeamAndDef(teamID, unitDef->id));
 		return 1;
 	}
 
@@ -2003,7 +2003,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	unsigned int unitCount = 0;
 
 	// tally the given unitDef units
-	for (const CUnit* unit: unitHandler->GetUnitsByTeamAndDef(teamID, unitDef->id)) {
+	for (const CUnit* unit: unitHandler.GetUnitsByTeamAndDef(teamID, unitDef->id)) {
 		unitCount += (IsUnitTyped(L, unit));
 	}
 
@@ -2012,7 +2012,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	if (dmit != unitDefHandler->decoyMap.end()) {
 		for (const int udID: dmit->second) {
-			for (const CUnit* unit: unitHandler->GetUnitsByTeamAndDef(teamID, udID)) {
+			for (const CUnit* unit: unitHandler.GetUnitsByTeamAndDef(teamID, udID)) {
 				unitCount += (IsUnitTyped(L, unit));
 			}
 		}
@@ -2036,14 +2036,14 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 
 	// use the raw team count for allies
 	if (IsAlliedTeam(L, team->teamNum)) {
-		lua_pushnumber(L, unitHandler->NumUnitsByTeam(team->teamNum));
+		lua_pushnumber(L, unitHandler.NumUnitsByTeam(team->teamNum));
 		return 1;
 	}
 
 	// loop through the units for enemies
 	unsigned int unitCount = 0;
 
-	for (const CUnit* unit: unitHandler->GetUnitsByTeam(team->teamNum)) {
+	for (const CUnit* unit: unitHandler.GetUnitsByTeam(team->teamNum)) {
 		unitCount += int(IsUnitVisible(L, unit));
 	}
 
@@ -2388,7 +2388,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	lua_newtable(L);
 
 	for (int team = startTeam; team <= endTeam; team++) {
-		const std::vector<CUnit*>& units = unitHandler->GetUnitsByTeam(team);
+		const std::vector<CUnit*>& units = unitHandler.GetUnitsByTeam(team);
 
 		if (allegiance >= 0) {
 			if (allegiance == team) {
@@ -4515,7 +4515,7 @@ int LuaSyncedRead::ValidFeatureID(lua_State* L)
 int LuaSyncedRead::GetAllFeatures(lua_State* L)
 {
 	int count = 0;
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+	const auto& activeFeatureIDs = featureHandler.GetActiveFeatureIDs();
 
 	lua_createtable(L, activeFeatureIDs.size(), 0);
 
@@ -4526,7 +4526,7 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 		}
 	} else {
 		for (const int featureID: activeFeatureIDs) {
-			if (IsFeatureVisible(L, featureHandler->GetFeature(featureID))) {
+			if (IsFeatureVisible(L, featureHandler.GetFeature(featureID))) {
 				lua_pushnumber(L, featureID);
 				lua_rawseti(L, -2, ++count);
 			}
@@ -4955,7 +4955,7 @@ int LuaSyncedRead::GetProjectileOwnerID(lua_State* L)
 		return 0;
 
 	const int unitID = pro->GetOwnerID();
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits()))
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler.MaxUnits()))
 		return 0;
 
 	lua_pushnumber(L, unitID);

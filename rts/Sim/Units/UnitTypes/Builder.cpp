@@ -432,7 +432,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		resurrectee->health *= 0.05f;
 
 		for (const int resurrecterID: cai->resurrecters) {
-			CBuilder* resurrecter = static_cast<CBuilder*>(unitHandler->GetUnit(resurrecterID));
+			CBuilder* resurrecter = static_cast<CBuilder*>(unitHandler.GetUnit(resurrecterID));
 			CCommandAI* resurrecterCAI = resurrecter->commandAI;
 
 			if (resurrecterCAI->commandQue.empty())
@@ -443,7 +443,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 			if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 				continue;
 
-			if ((c.params[0] - unitHandler->MaxUnits()) != curResurrectee->id)
+			if ((c.params[0] - unitHandler.MaxUnits()) != curResurrectee->id)
 				continue;
 
 			if (!teamHandler->Ally(allyteam, resurrecter->allyteam))
@@ -459,7 +459,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		}
 
 		// this takes one simframe to do the deletion
-		featureHandler->DeleteFeature(curResurrectee);
+		featureHandler.DeleteFeature(curResurrectee);
 	}
 
 	StopBuild(true);
@@ -748,7 +748,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 	}
 
 	// at this point we know the builder is going to create a new unit, bail if at the limit
-	if ((limitReached = (unitHandler->NumUnitsByTeamAndDef(team, buildInfo.def->id) >= buildInfo.def->maxThisUnit)))
+	if ((limitReached = (unitHandler.NumUnitsByTeamAndDef(team, buildInfo.def->id) >= buildInfo.def->maxThisUnit)))
 		return false;
 
 	if ((inWaitStance = !ScriptStartBuilding(buildInfo.pos, true)))
@@ -895,5 +895,5 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
-	projectileHandler->AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
+	projectileHandler.AddNanoParticle(nanoPos, goal, unitDef, team, radius, inverse, highPriority);
 }

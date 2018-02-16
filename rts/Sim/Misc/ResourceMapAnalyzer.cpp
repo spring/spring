@@ -60,7 +60,7 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 
 float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* extractor) const {
 
-	CUnit* builder = unitHandler->GetUnit(builderUnitId);
+	const CUnit* builder = unitHandler.GetUnit(builderUnitId);
 
 	if (builder == nullptr) {
 		LOG_L(L_WARNING, "GetNearestSpot: Invalid unit ID: %i", builderUnitId);
@@ -95,7 +95,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 			bool b1 = (tempScore < spotScore);
 // 			bool b2 = (numEnemies == 0);
 // 			bool b3 = (myThreat <= (ai->tm->GetAverageThreat() * 1.5));
-// 			bool b4 = (ai->unitHandler->TaskPlanExist(spotCoords, extractor));
+// 			bool b4 = (ai->unitHandler.TaskPlanExist(spotCoords, extractor));
 
 			if (b1/* && b2 && b3 && !b4*/) {
 				tempScore = spotScore;

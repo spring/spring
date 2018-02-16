@@ -30,8 +30,7 @@ class CAICheats
 	CUnit* GetUnit(int unitId) const;
 
 public:
-	CAICheats(CSkirmishAIWrapper* ai);
-	~CAICheats();
+	CAICheats(CSkirmishAIWrapper* w): ai(w) {}
 
 	void SetMyIncomeMultiplier(float incomeMultiplier);
 

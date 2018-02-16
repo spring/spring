@@ -13,6 +13,7 @@
 // see ParseUnitTexture
 // #include "Rendering/Textures/3DOTextureHandler.h"
 // #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/Log/ILog.h"
@@ -75,9 +76,9 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 	}
 
 	switch (objType) {
-		case LUAOBJ_UNIT   : { return (   unitHandler->GetUnit   (lua_toint(L, index))); } break;
-		case LUAOBJ_FEATURE: { return (featureHandler->GetFeature(lua_toint(L, index))); } break;
-		default            : {                                            assert(false); } break;
+		case LUAOBJ_UNIT   : { return (   unitHandler.GetUnit   (lua_toint(L, index))); } break;
+		case LUAOBJ_FEATURE: { return (featureHandler.GetFeature(lua_toint(L, index))); } break;
+		default            : {                                           assert(false); } break;
 	}
 
 	return nullptr;
@@ -435,12 +436,12 @@ static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
 
 int LuaObjectRenderingImpl::SetUnitLuaDraw(lua_State* L)
 {
-	return (SetObjectLuaDraw(L, unitHandler->GetUnit(luaL_checkint(L, 1))));
+	return (SetObjectLuaDraw(L, unitHandler.GetUnit(luaL_checkint(L, 1))));
 }
 
 int LuaObjectRenderingImpl::SetFeatureLuaDraw(lua_State* L)
 {
-	return (SetObjectLuaDraw(L, featureHandler->GetFeature(luaL_checkint(L, 1))));
+	return (SetObjectLuaDraw(L, featureHandler.GetFeature(luaL_checkint(L, 1))));
 }
 
 /******************************************************************************/

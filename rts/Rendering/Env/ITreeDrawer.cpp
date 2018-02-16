@@ -49,10 +49,8 @@ ITreeDrawer::~ITreeDrawer() {
 
 void ITreeDrawer::AddTrees()
 {
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-
-	for (const int featureID: activeFeatureIDs) {
-		const CFeature* f = featureHandler->GetFeature(featureID);
+	for (const int featureID: featureHandler.GetActiveFeatureIDs()) {
+		const CFeature* f = featureHandler.GetFeature(featureID);
 
 		if (f->def->drawType >= DRAWTYPE_TREE) {
 			AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
@@ -67,7 +65,7 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 		// FeatureDrawer does not take care of this for trees, update the
 		// draw-positions here since FeatureCreated and FeatureMoved both
 		// call us
-		CFeature* f = featureHandler->GetFeature(treeID);
+		CFeature* f = featureHandler.GetFeature(treeID);
 
 		f->drawPos = f->pos;
 		f->drawMidPos = f->midPos;

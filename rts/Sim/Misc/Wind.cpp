@@ -93,7 +93,7 @@ void CWind::Update()
 
 		// update generators
 		for (const int unitID: windGenIDs) {
-			(unitHandler->GetUnit(unitID))->UpdateWind(newWind.x, newWind.z, newStrength);
+			(unitHandler.GetUnit(unitID))->UpdateWind(newWind.x, newWind.z, newStrength);
 		}
 	} else {
 		const float mod = smoothstep(0.0f, 1.0f, status / float(WIND_UPDATE_RATE));

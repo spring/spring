@@ -1507,8 +1507,8 @@ static inline bool HasGroundDecalDef(const CSolidObject* object)
 
 static inline bool ExplosionInAirLos(const CExplosionParams& event)
 {
-	const auto proj = projectileHandler->GetProjectileBySyncedID(event.projectileID);
-	if (proj) {
+	const auto proj = projectileHandler.GetProjectileBySyncedID(event.projectileID);
+	if (proj != nullptr) {
 		if (teamHandler->ValidAllyTeam(proj->GetAllyteamID()) && teamHandler->AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
 			return true;
 	}

@@ -343,7 +343,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	return (unitHandler->GetUnit(luaL_checkint(L, index)));
+	return (unitHandler.GetUnit(luaL_checkint(L, index)));
 }
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
@@ -360,7 +360,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
-	CFeature* f = featureHandler->GetFeature(luaL_checkint(L, index));
+	CFeature* f = featureHandler.GetFeature(luaL_checkint(L, index));
 
 	if (f == nullptr)
 		return nullptr;
@@ -372,7 +372,7 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 
 static inline CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
-	CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
+	CProjectile* p = projectileHandler.GetProjectileBySyncedID(luaL_checkint(L, index));
 
 	if (p == nullptr)
 		return nullptr;
@@ -1234,7 +1234,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "[%s()]: not a controllable team (%d)", __func__, teamID);
 		return 0;
 	}
-	if (!unitHandler->CanBuildUnit(unitDef, teamID))
+	if (!unitHandler.CanBuildUnit(unitDef, teamID))
 		return 0; // unit limit reached
 
 	ASSERT_SYNCED(pos);
@@ -1242,7 +1242,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 
 	inCreateUnit = true;
 
-	CUnit* builder = unitHandler->GetUnit(luaL_optint(L, 10, -1));
+	CUnit* builder = unitHandler.GetUnit(luaL_optint(L, 10, -1));
 
 	UnitLoadParams params;
 	params.unitDef = unitDef; /// must be non-NULL
@@ -1295,7 +1295,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	unit->ForcedKillUnit(attacker, selfDestr, reclaimed);
 
 	if (recycleID)
-		unitHandler->GarbageCollectUnit(unit->id);
+		unitHandler.GarbageCollectUnit(unit->id);
 
 	inDestroyUnit = false;
 
@@ -2569,10 +2569,10 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	CUnit* attacker = nullptr;
 
 	if (attackerID >= 0) {
-		if (static_cast<size_t>(attackerID) >= unitHandler->MaxUnits())
+		if (static_cast<size_t>(attackerID) >= unitHandler.MaxUnits())
 			return 0;
 
-		attacker = unitHandler->GetUnit(attackerID);
+		attacker = unitHandler.GetUnit(attackerID);
 	}
 
 	if (weaponDefID >= int(weaponDefHandler->weaponDefs.size()))
@@ -2795,7 +2795,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	params.wreckLevels = 0;
 	params.smokeTime   = 0;
 
-	CFeature* feature = featureHandler->LoadFeature(params);
+	CFeature* feature = featureHandler.LoadFeature(params);
 	inCreateFeature = false;
 
 	if (feature != nullptr) {
@@ -2818,7 +2818,7 @@ int LuaSyncedCtrl::DestroyFeature(lua_State* L)
 		luaL_error(L, "DestroyFeature() recursion is not permitted");
 
 	inDestroyFeature = true;
-	featureHandler->DeleteFeature(feature);
+	featureHandler.DeleteFeature(feature);
 	inDestroyFeature = false;
 
 	return 0;
@@ -2936,7 +2936,7 @@ int LuaSyncedCtrl::SetFeatureMoveCtrl(lua_State* L)
 	CFeature::MoveCtrl& moveCtrl = feature->moveCtrl;
 
 	if ((moveCtrl.enabled = luaL_optboolean(L, 2, moveCtrl.enabled))) {
-		featureHandler->SetFeatureUpdateable(feature);
+		featureHandler.SetFeatureUpdateable(feature);
 
 		// set vectors
 		for (int i = 0; i < 3; i++) {

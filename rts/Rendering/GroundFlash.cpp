@@ -158,7 +158,7 @@ CStandardGroundFlash::CStandardGroundFlash(
 	, circleAlphaDec(ttl ? circleAlpha / ttl : 0.0f)
 {
 	InitCommon(_pos, info.color);
-	projectileHandler->AddGroundFlash(this);
+	projectileHandler.AddGroundFlash(this);
 }
 
 CStandardGroundFlash::CStandardGroundFlash(
@@ -182,7 +182,7 @@ CStandardGroundFlash::CStandardGroundFlash(
 	, circleAlphaDec(ttl ? circleAlpha / ttl : 0)
 {
 	InitCommon(_pos, _color);
-	projectileHandler->AddGroundFlash(this);
+	projectileHandler.AddGroundFlash(this);
 }
 
 void CStandardGroundFlash::InitCommon(const float3& _pos, const float3& _color)
@@ -293,7 +293,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	side1 = (normal.cross(RgtVector)).ANormalize();
 	side2 = side1.cross(normal);
 
-	projectileHandler->AddGroundFlash(this);
+	projectileHandler.AddGroundFlash(this);
 }
 
 void CSimpleGroundFlash::Draw(CVertexArray* va)
@@ -366,7 +366,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	side1 = (normal.cross(RgtVector)).SafeANormalize();
 	side2 = side1.cross(normal);
 
-	projectileHandler->AddGroundFlash(this);
+	projectileHandler.AddGroundFlash(this);
 }
 
 void CSeismicGroundFlash::Draw(CVertexArray* va)

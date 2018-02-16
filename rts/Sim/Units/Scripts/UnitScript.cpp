@@ -460,7 +460,7 @@ bool CUnitScript::EmitRelSFX(int sfxType, const float3& relPos, const float3& re
 bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& absDir, const float3& relDir)
 {
 	// skip adding (non-CEG) particles when we have too many
-	if (sfxType < SFX_CEG && projectileHandler->GetParticleSaturation() > 1.0f)
+	if (sfxType < SFX_CEG && projectileHandler.GetParticleSaturation() > 1.0f)
 		return false;
 
 	// make sure wakes are only emitted on water
@@ -633,7 +633,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CUnit* tgtUnit = unitHandler->GetUnit(u);
+	CUnit* tgtUnit = unitHandler.GetUnit(u);
 
 	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
 		return;
@@ -646,7 +646,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CUnit* tgtUnit = unitHandler->GetUnit(u);
+	CUnit* tgtUnit = unitHandler.GetUnit(u);
 
 	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
 		return;
@@ -733,7 +733,7 @@ void CUnitScript::Explode(int piece, int flags)
 		baseSpeed *= (l2 / l);
 	}
 
-	const float partSat = projectileHandler->GetParticleSaturation();
+	const float partSat = projectileHandler.GetParticleSaturation();
 
 	unsigned int newFlags = 0;
 	newFlags |= (PF_Explode    *  ((flags & PF_Explode   ) != 0)                    );
@@ -755,7 +755,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 	if (!omp->HasGeometryData())
 		return;
 
-	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
+	const float pieceChance = 1.0f - (projectileHandler.GetCurrentParticles() - (projectileHandler.maxParticles - 2000)) / 2000.0f;
 	if (pieceChance > 0.0f) {
 		const CMatrix44f m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
 		omp->Shatter(pieceChance, unit->model->type, unit->model->textureType, unit->team, pos, speed, m);
@@ -802,7 +802,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int((unit->health / unit->maxHealth) * 100.0f);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -840,7 +840,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return PACKXZ(0, 0);
@@ -851,7 +851,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->pos.y * COBSCALE);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -862,7 +862,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return int(unit->radius * COBSCALE);
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u == nullptr)
 			return 0;
@@ -900,16 +900,16 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case IN_WATER:
 		return (unit->IsInWater());
 	case MAX_ID:
-		return unitHandler->MaxUnits()-1;
+		return unitHandler.MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
 
 	case UNIT_TEAM: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		return (u != nullptr)? unit->team : 0;
 	} break;
 	case UNIT_ALLIED: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u != nullptr)
 			return teamHandler->Ally(unit->allyteam, u->allyteam) ? 1 : 0;
@@ -918,7 +918,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	case UNIT_BUILD_PERCENT_LEFT: {
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		if (u != nullptr)
 			return int((1.0f - u->buildProgress) * 100);
 
@@ -946,7 +946,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return unit->heading;
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u != nullptr)
 			return u->heading;
@@ -1016,7 +1016,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0)
 			return unit->unitDef->cobID;
 
-		const CUnit* u = unitHandler->GetUnit(p1);
+		const CUnit* u = unitHandler.GetUnit(p1);
 		return ((u == nullptr)? -1 : u->unitDef->cobID);
 	} break;
 
@@ -1104,7 +1104,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		// if targetID is 0, just sets weapon->haveUserTarget
 		// to false (and targetType to None) without attacking
-		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): nullptr;
+		CUnit* target = (targetID > 0)? unitHandler.GetUnit(targetID): nullptr;
 		return (weapon->Attack(SWeaponTarget(target, userTarget)));
 	} break;
 
@@ -1164,7 +1164,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 	case KILL_UNIT: {
 		// ID 0 is reserved for the script's owner
-		CUnit* u = (p1 > 0)? unitHandler->GetUnit(p1): this->unit;
+		CUnit* u = (p1 > 0)? unitHandler.GetUnit(p1): this->unit;
 
 		if (u == nullptr)
 			return 0;

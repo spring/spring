@@ -1502,7 +1502,7 @@ void CMiniMap::DrawUnitRanges() const
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	for (const int unitID: selUnits) {
-		const CUnit* unit = unitHandler->GetUnit(unitID);
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {

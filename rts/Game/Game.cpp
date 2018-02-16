@@ -565,9 +565,9 @@ void CGame::PostLoadSimulation()
 	MoveTypeFactory::InitStatic();
 	CWeaponLoader::InitStatic();
 
-	unitHandler = new CUnitHandler();
-	featureHandler = new CFeatureHandler();
-	projectileHandler = new CProjectileHandler();
+	unitHandler.Init();
+	featureHandler.Init();
+	projectileHandler.Init();
 	losHandler = new CLosHandler();
 
 	readMap->InitHeightMapDigestVectors(losHandler->los.size);
@@ -596,7 +596,7 @@ void CGame::PostLoadSimulation()
 	loadscreen->SetLoadMessage("Initializing Map Features");
 	featureDefHandler->LoadFeatureDefsFromMap();
 	if (saveFile == nullptr)
-		featureHandler->LoadFeaturesFromMap();
+		featureHandler.LoadFeaturesFromMap();
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -874,13 +874,12 @@ void CGame::KillSimulation()
 		teamHandler->Team(t)->Died(false);
 	}
 
-	LOG("[Game::%s][2] unitHandler=%p", __func__, unitHandler);
-	if (unitHandler != nullptr)
-		unitHandler->DeleteScripts();
+	LOG("[Game::%s][2]", __func__);
+	unitHandler.DeleteScripts();
 
-	spring::SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	spring::SafeDelete(unitHandler);
-	spring::SafeDelete(projectileHandler);
+	featureHandler.Kill(); // depends on unitHandler (via ~CFeature)
+	unitHandler.Kill();
+	projectileHandler.Kill();
 
 	LOG("[Game::%s][3]", __func__);
 	IPathManager::FreeInstance(pathManager);
@@ -1491,9 +1490,9 @@ void CGame::SimFrame() {
 		helper->Update();
 		mapDamage->Update();
 		pathManager->Update();
-		unitHandler->Update();
-		projectileHandler->Update();
-		featureHandler->Update();
+		unitHandler.Update();
+		projectileHandler.Update();
+		featureHandler.Update();
 		{
 			SCOPED_TIMER("Sim::Script");
 			unitScriptEngine->Tick(33);

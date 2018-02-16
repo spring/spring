@@ -257,7 +257,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 
 	if (curBuild != nullptr)
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (unitHandler->NumUnitsByTeamAndDef(team, buildeeDef->id) >= buildeeDef->maxThisUnit)
+	if (unitHandler.NumUnitsByTeamAndDef(team, buildeeDef->id) >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
@@ -487,5 +487,5 @@ void CFactory::CreateNanoParticle(bool highPriority)
 	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced
-	projectileHandler->AddNanoParticle(nanoPos, curBuild->midPos, unitDef, team, highPriority);
+	projectileHandler.AddNanoParticle(nanoPos, curBuild->midPos, unitDef, team, highPriority);
 }

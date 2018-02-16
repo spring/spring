@@ -163,7 +163,7 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const ITreeDrawer::TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
@@ -200,7 +200,7 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
 					const ITreeDrawer::TreeStruct* ts = &(*ti);
-					const CFeature* f = featureHandler->GetFeature(ts->id);
+					const CFeature* f = featureHandler.GetFeature(ts->id);
 
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;

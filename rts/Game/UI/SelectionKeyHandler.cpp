@@ -147,7 +147,7 @@ namespace
 			const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 			for (const int unitID: selUnits) {
-				const CUnit* u = unitHandler->GetUnit(unitID);
+				const CUnit* u = unitHandler.GetUnit(unitID);
 				const UnitDef* ud = u->unitDef;
 				prevTypes.insert(ud->id);
 			}
@@ -214,25 +214,25 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if (s == "AllMap") {
 		if (!gu->spectatingFullSelect) {
 			// team units
-			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
+			for (CUnit* unit: unitHandler.GetUnitsByTeam(gu->myTeam)) {
 				selection.push_back(unit);
 			}
 		} else {
 			// all units
-			for (CUnit* unit: unitHandler->GetActiveUnits()) {
+			for (CUnit* unit: unitHandler.GetActiveUnits()) {
 				selection.push_back(unit);
 			}
 		}
 	} else if (s == "Visible") {
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
+			for (CUnit* unit: unitHandler.GetUnitsByTeam(gu->myTeam)) {
 				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
 		} else {
 		  // all units in viewport
-			for (CUnit* unit: unitHandler->GetActiveUnits()) {
+			for (CUnit* unit: unitHandler.GetActiveUnits()) {
 				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
@@ -256,7 +256,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 			// team units in mouse range
-			for (CUnit* unit: unitHandler->GetUnitsByTeam(gu->myTeam)) {
+			for (CUnit* unit: unitHandler.GetUnitsByTeam(gu->myTeam)) {
 				float3 up = unit->pos;
 				if (cylindrical)
 					up.y = 0.0f;
@@ -266,7 +266,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		} else {
 			// all units in mouse range
-			for (CUnit* unit: unitHandler->GetActiveUnits()) {
+			for (CUnit* unit: unitHandler.GetActiveUnits()) {
 				float3 up = unit->pos;
 
 				if (cylindrical)
@@ -280,7 +280,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 		for (const int unitID: selUnits) {
-			selection.push_back(unitHandler->GetUnit(unitID));
+			selection.push_back(unitHandler.GetUnit(unitID));
 		}
 	} else {
 		LOG_L(L_WARNING, "Unknown source token %s", s.c_str());

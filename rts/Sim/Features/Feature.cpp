@@ -252,7 +252,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// feature does not have an assigned ID yet
 	// this MUST be done before the Block() call
-	featureHandler->AddFeature(this);
+	featureHandler.AddFeature(this);
 	quadField.AddFeature(this);
 
 	ChangeTeam(team);
@@ -316,7 +316,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 				isRepairingBeforeResurrect = false;
 			} else if (reclaimLeft <= 0.0f) {
 				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
-				featureHandler->DeleteFeature(this);
+				featureHandler.DeleteFeature(this);
 				return false;
 			}
 
@@ -396,7 +396,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 	// Has the reclaim finished?
 	if (reclaimLeft <= 0.0f) {
-		featureHandler->DeleteFeature(this);
+		featureHandler.DeleteFeature(this);
 		return false;
 	}
 
@@ -438,7 +438,7 @@ void CFeature::DoDamage(
 
 	if (health <= 0.0f && def->destructable) {
 		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
-		CFeature* deathFeature = featureHandler->CreateWreckage(params);
+		CFeature* deathFeature = featureHandler.CreateWreckage(params);
 
 		if (deathFeature != nullptr) {
 			// if a partially reclaimed corpse got blasted,
@@ -448,7 +448,7 @@ void CFeature::DoDamage(
 			deathFeature->resources.energy *= (def->energy != 0.0f) ? resources.energy / def->energy : 1.0f;
 		}
 
-		featureHandler->DeleteFeature(this);
+		featureHandler.DeleteFeature(this);
 		blockHeightChanges = false;
 	}
 }
@@ -471,9 +471,10 @@ void CFeature::SetVelocity(const float3& v)
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, speed.w != 0.0f);
 
-	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this);
-	}
+	if (!IsMoving())
+		return;
+
+	featureHandler.SetFeatureUpdateable(this);
 }
 
 
@@ -617,7 +618,7 @@ bool CFeature::Update()
 	continueUpdating |= (def->geoThermal);
 
 	if (smokeTime != 0) {
-		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
+		if (!((gs->frameNum + id) & 3) && projectileHandler.GetParticleSaturation() < 0.7f) {
 			if (pos.y < 0.0f) {
 				projMemPool.alloc<CBubbleProjectile>(nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
 					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
@@ -628,7 +629,7 @@ bool CFeature::Update()
 		}
 	}
 	if (fireTime == 1)
-		featureHandler->DeleteFeature(this);
+		featureHandler.DeleteFeature(this);
 
 	if (def->geoThermal)
 		EmitGeoSmoke();
@@ -647,7 +648,7 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gsRNG.NextFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this);
+	featureHandler.SetFeatureUpdateable(this);
 
 	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
 }
@@ -689,7 +690,7 @@ void CFeature::EmitGeoSmoke()
 	if (u != nullptr && u->unitDef->needGeo)
 		return;
 
-	if (projectileHandler->GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
+	if (projectileHandler.GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
 		return;
 
 	const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
@@ -704,5 +705,5 @@ int CFeature::ChunkNumber(float f) { return int(math::ceil(f * modInfo.reclaimMe
 // note: this is not actually used by GroundBlockingObjectMap anymore, just
 // to distinguish unit and feature ID's (values >= MaxUnits() correspond to
 // features in object commands)
-int CFeature::GetBlockingMapID() const { return (id + unitHandler->MaxUnits()); }
+int CFeature::GetBlockingMapID() const { return (id + unitHandler.MaxUnits()); }
 

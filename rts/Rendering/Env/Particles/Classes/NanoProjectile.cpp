@@ -41,16 +41,12 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawSorted = false;
 	drawRadius = 3;
 
-	if (projectileHandler != nullptr) {
-		projectileHandler->currentNanoParticles += 1;
-	}
+	projectileHandler.currentNanoParticles += 1;
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
-	if (projectileHandler != nullptr) {
-		projectileHandler->currentNanoParticles -= 1;
-	}
+	projectileHandler.currentNanoParticles -= 1;
 }
 
 

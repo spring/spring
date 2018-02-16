@@ -228,7 +228,7 @@ void S3DModelPiece::Shatter(float pieceChance, int modelType, int texType, int t
 	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
 	const   int2 renderParams = {texType, team};
 
-	projectileHandler->AddFlyingPiece(modelType, this, m, pos, speed, pieceParams, renderParams);
+	projectileHandler.AddFlyingPiece(modelType, this, m, pos, speed, pieceParams, renderParams);
 }
 
 

@@ -84,8 +84,8 @@ void CBenchmark::GameFrame(int gameFrame)
 
 	if (gameFrame >= startFrame) {
 		simFPS[gameFrame] = (gu->avgSimFrameTime == 0.0f)? 0.0f: 1000.0f / gu->avgSimFrameTime;
-		units[gameFrame] = (unitHandler->GetActiveUnits()).size();
-		features[gameFrame] = (featureHandler->GetActiveFeatureIDs()).size();
+		units[gameFrame] = (unitHandler.GetActiveUnits()).size();
+		features[gameFrame] = (featureHandler.GetActiveFeatureIDs()).size();
 		gameSpeed[gameFrame] = GAME_SPEED * gs->wantedSpeedFactor;
 		luaUsage[gameFrame] = profiler.GetPercent("Lua");
 	}

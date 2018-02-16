@@ -165,7 +165,7 @@ void CPlayer::StartControllingUnit()
 			return;
 
 		// pick the first unit we have selected
-		newControlleeUnit = unitHandler->GetUnit(ourSelectedUnits[0]);
+		newControlleeUnit = unitHandler.GetUnit(ourSelectedUnits[0]);
 
 		if (newControlleeUnit == nullptr || newControlleeUnit->weapons.empty())
 			return;

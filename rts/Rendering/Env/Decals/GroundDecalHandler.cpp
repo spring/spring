@@ -444,7 +444,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		} else {
 			++i;
 
-			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
+			if (decalOwner->GetBlockingMapID() < unitHandler.MaxUnits()) {
 				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
 
 				const bool decalOwnerInCurLOS = ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS  ) != 0);

@@ -36,10 +36,7 @@ float CExtractorBuilding::maxExtractionRange = 0.0f;
 
 CExtractorBuilding::~CExtractorBuilding()
 {
-	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (unitHandler != nullptr) {
-		ResetExtraction();
-	}
+	ResetExtraction();
 }
 
 /* resets the metalMap and notifies the neighbours */
