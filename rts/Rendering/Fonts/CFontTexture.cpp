@@ -107,6 +107,20 @@ public:
 		if (!FcInit()) {
 			throw std::runtime_error("FontConfig failed");
 		}
+		// Windows users most likely don't have a fontconfig configuration file
+		// so manually add windows fonts dir and engine fonts dir to fontconfig
+		// so it can use them as fallback.
+		#ifdef WIN32
+		{
+			const size_t maxSize = 32 * 1024;
+			char out_dir[maxSize];
+			ExpandEnvironmentStrings("%WINDIR%\\fonts", out_dir, maxSize); // expands %HOME% etc.
+			FcConfigAppFontAddDir(nullptr, reinterpret_cast<FcChar8*>(out_dir));
+			FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
+			FcConfigBuildFonts(nullptr);
+		}
+		#endif
+
 	#endif
 	};
 
