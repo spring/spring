@@ -2494,6 +2494,10 @@ bool CUnit::CanTransport(const CUnit* unit) const
 		return false;
 	if (unit->GetTransporter() != NULL)
 		return false;
+
+	if (!eventHandler.AllowUnitTransport(this, unit))
+		return false;
+
 	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team))
 		return false;
 	if (transportCapacityUsed >= unitDef->transportCapacity)

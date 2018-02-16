@@ -589,6 +589,34 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
 }
 
 
+bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter,
+                                          const CUnit* transportee)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 8, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return true; // the call is not defined
+
+	lua_pushnumber(L, transporter->id);
+	lua_pushnumber(L, transporter->unitDef->id);
+	lua_pushnumber(L, transporter->team);
+	lua_pushnumber(L, transportee->id);
+	lua_pushnumber(L, transportee->unitDef->id);
+	lua_pushnumber(L, transportee->team);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 6, 1))
+		return true;
+
+	// get the results
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
 bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef,
                                      int teamID, const float3& pos)
 {

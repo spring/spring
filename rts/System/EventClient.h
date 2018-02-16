@@ -198,6 +198,7 @@ class CEventClient
 		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
 		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		virtual bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
+		virtual bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
 		virtual bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
 		virtual bool AllowFeatureBuildStep(const CUnit* builder, const CFeature* feature, float part);
 		virtual bool AllowResourceLevel(int teamID, const string& type, float level);

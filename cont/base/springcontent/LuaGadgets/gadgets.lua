@@ -1137,6 +1137,18 @@ function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam,
 end
 
 
+function gadgetHandler:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
+                                          transporteeID, transporteeUnitDefID, transporteeTeam)
+  for _,g in r_ipairs(self.AllowUnitTransportList) do
+    if (not g:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
+                                 transporteeID, transporteeUnitDefID, transporteeTeam)) then
+      return false
+    end
+  end
+  return true
+end
+
+
 function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam,
                                              featureID, featureDefID, part)
   for _,g in r_ipairs(self.AllowFeatureBuildStepList) do
