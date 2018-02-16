@@ -2686,4 +2686,3 @@ int LuaUnsyncedRead::GetDecalType(lua_State* L)
 	}
 	return 1;
 }
-

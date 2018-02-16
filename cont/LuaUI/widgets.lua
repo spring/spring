@@ -192,6 +192,7 @@ local callInLists = {
   'TweakGetTooltip',
   'RecvFromSynced',
   'TextInput',
+  "TextEditing",
   'DownloadQueued',
   'DownloadStarted',
   'DownloadFinished',
@@ -1392,6 +1393,19 @@ function widgetHandler:TextInput(utf8, ...)
 
   for _,w in ipairs(self.TextInputList) do
     if (w:TextInput(utf8, ...)) then
+      return true
+    end
+  end
+  return false
+end
+
+function widgetHandler:TextEditing(utf8, ...)
+  if (self.tweakMode) then
+    return true
+  end
+
+  for _,w in ipairs(self.TextEditingList) do
+    if (w:TextEditing(utf8, ...)) then
       return true
     end
   end

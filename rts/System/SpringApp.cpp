@@ -1089,7 +1089,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			gu->globalQuit = true;
 		} break;
 		case SDL_TEXTEDITING: {
-			//FIXME don't known when this is called
+			if (activeController != nullptr)
+				activeController->TextEditing(event.edit.text, event.edit.start, event.edit.length);
+
 		} break;
 		case SDL_TEXTINPUT: {
 			if (activeController != nullptr)

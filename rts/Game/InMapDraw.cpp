@@ -271,6 +271,7 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	game->userPrompt = "Label: ";
 	game->ignoreNextChar = true;
 	inMapDrawer->SetDrawMode(false);
+	SDL_StartTextInput();
 }
 
 
@@ -329,4 +330,3 @@ void CInMapDraw::GetLines(std::vector<LineMarker>& lines, size_t maxLines, const
 		}
 	}
 }
-

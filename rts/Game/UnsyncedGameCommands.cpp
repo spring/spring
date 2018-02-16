@@ -1097,6 +1097,7 @@ public:
 		if (setUserInputPrefix)
 			game->userInputPrefix = userInputPrefix;
 
+		SDL_StartTextInput();
 		game->userWriting = true;
 		game->userPrompt = "Say: ";
 		game->userInput = game->userInputPrefix;

@@ -266,6 +266,7 @@ class CEventClient
 		virtual bool KeyPress(int key, bool isRepeat);
 		virtual bool KeyRelease(int key);
 		virtual bool TextInput(const std::string& utf8);
+		virtual bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
 		virtual bool MousePress(int x, int y, int button);
 		virtual void MouseRelease(int x, int y, int button);
@@ -342,4 +343,3 @@ class CEventClient
 
 
 #endif /* EVENT_CLIENT_H */
-

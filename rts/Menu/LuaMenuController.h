@@ -21,6 +21,7 @@ public:
 	int KeyReleased(int k) override;
 	int KeyPressed(int k, bool isRepeat) override;
 	int TextInput(const std::string& utf8Text) override;
+	int TextEditing(const std::string& utf8, unsigned int start, unsigned int length) override;
 
 	bool Draw() override;
 	void ResizeEvent() override;

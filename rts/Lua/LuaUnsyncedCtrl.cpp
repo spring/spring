@@ -95,6 +95,7 @@
 
 #include <fstream>
 
+#include <SDL_keyboard.h>
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
@@ -270,6 +271,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDecalRotation);
 	REGISTER_LUA_CFUNC(SetDecalTexture);
 	REGISTER_LUA_CFUNC(SetDecalAlpha);
+
+	REGISTER_LUA_CFUNC(SDLSetTextInputRect);
+	REGISTER_LUA_CFUNC(SDLStartTextInput);
+	REGISTER_LUA_CFUNC(SDLStopTextInput);
 
 	return true;
 }
@@ -3084,5 +3089,28 @@ int LuaUnsyncedCtrl::SetDecalAlpha(lua_State* L)
 	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
 	decal.alpha = luaL_checkfloat(L, 2);
 	decal.Invalidate();
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SDLSetTextInputRect(lua_State* L)
+{
+	SDL_Rect textWindow;
+	textWindow.x = luaL_checkint(L, 1);
+	textWindow.y = luaL_checkint(L, 2);
+	textWindow.w = luaL_checkint(L, 3);
+	textWindow.h = luaL_checkint(L, 4);
+	SDL_SetTextInputRect(&textWindow);
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SDLStartTextInput(lua_State* L)
+{
+	SDL_StartTextInput();
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SDLStopTextInput(lua_State* L)
+{
+	SDL_StopTextInput();
 	return 0;
 }

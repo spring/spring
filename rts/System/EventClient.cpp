@@ -100,6 +100,7 @@ void CEventClient::MetalMapChanged(const int x, const int z) {}
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
 bool CEventClient::KeyRelease(int key) { return false; }
 bool CEventClient::TextInput(const std::string& utf8) { return false; }
+bool CEventClient::TextEditing(const std::string& utf8, unsigned int start, unsigned int length) { return false; }
 bool CEventClient::MouseMove(int x, int y, int dx, int dy, int button) { return false; }
 bool CEventClient::MousePress(int x, int y, int button) { return false; }
 void CEventClient::MouseRelease(int x, int y, int button) { }

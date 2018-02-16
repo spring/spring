@@ -665,6 +665,11 @@ bool CEventHandler::TextInput(const std::string& utf8)
 	return ControlReverseIterateDefTrue(listTextInput, &CEventClient::TextInput, utf8);
 }
 
+bool CEventHandler::TextEditing(const std::string& utf8, unsigned int start, unsigned int length)
+{
+	return ControlReverseIterateDefTrue(listTextEditing, &CEventClient::TextEditing, utf8, start, length);
+}
+
 
 bool CEventHandler::MousePress(int x, int y, int button)
 {
@@ -800,4 +805,3 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
-

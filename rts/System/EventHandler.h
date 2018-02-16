@@ -208,6 +208,7 @@ class CEventHandler
 		bool KeyPress(int key, bool isRepeat);
 		bool KeyRelease(int key);
 		bool TextInput(const std::string& utf8);
+		bool TextEditing(const std::string& utf8, unsigned int start, unsigned int length);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
 		bool MousePress(int x, int y, int button);
 		void MouseRelease(int x, int y, int button);
@@ -747,4 +748,3 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 #undef UNIT_CALLIN_LOS_PARAM
 
 #endif /* EVENT_HANDLER_H */
-
