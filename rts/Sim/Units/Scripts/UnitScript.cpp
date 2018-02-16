@@ -1245,32 +1245,38 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	case WEAPON_RANGE: {
-		const int np1 = -p1;
-
+		// get (+)
 		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->range * COBSCALE);
 
-		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			CWeapon* w = unit->weapons[np1 - 1];
-			const int old = w->range * COBSCALE;
-			w->range = float(p2) / COBSCALE;
-			return old;
+		// set (-)
+		if (-p1 > 0 && static_cast<size_t>(-p1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[-p1 - 1];
+
+			const float  wr = w->range * COBSCALE;
+			const float nwr = float(p2) / COBSCALE;
+
+			w->UpdateRange(nwr);
+			return int(wr);
 		}
 
 		return -1;
 	} break;
 
 	case WEAPON_PROJECTILE_SPEED: {
-		const int np1 = -p1;
-
+		// get (+)
 		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->projectileSpeed * COBSCALE);
 
-		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			CWeapon* w = unit->weapons[np1 - 1];
-			const int old = w->projectileSpeed * COBSCALE;
-			w->projectileSpeed = float(p2) / COBSCALE;
-			return old;
+		// set (-)
+		if (-p1 > 0 && static_cast<size_t>(-p1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[-p1 - 1];
+
+			const float  wps = w->projectileSpeed * COBSCALE;
+			const float nwps = float(p2) / COBSCALE;
+
+			w->UpdateProjectileSpeed(nwps);
+			return int(wps);
 		}
 
 		return -1;
