@@ -47,7 +47,6 @@ public:
 	int PushNewUnitDef(const std::string& unitName, const LuaTable& udTable);
 
 	spring::unordered_map<int, spring::unordered_set<int> > decoyMap;
-	spring::unordered_set<int> startUnitIDs;
 
 //protected: //FIXME UnitDef::*ExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
 	std::vector<UnitDef> unitDefs;
@@ -59,8 +58,6 @@ protected:
 	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);
 
 	void CleanBuildOptions();
-
-	void FindStartUnits();
 
 private:
 	spring::unordered_map<std::string, std::string> decoyNameMap;
