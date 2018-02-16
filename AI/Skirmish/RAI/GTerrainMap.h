@@ -81,7 +81,7 @@ struct TerrainMapMobileType
 		minElevation = 0.0;
 		maxElevation = 0.0;
 		maxSlope = 0.0;
-		memset(area,0,MAP_AREA_LIST_SIZE);
+		memset(area,0,MAP_AREA_LIST_SIZE * sizeof(area[0]));
 		
 	};
 	~TerrainMapMobileType()

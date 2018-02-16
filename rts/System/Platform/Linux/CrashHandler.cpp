@@ -684,7 +684,6 @@ namespace CrashHandler
 	int thread_unwind(ucontext_t* uc, void** iparray, StackTrace& stacktrace)
 	{
 		assert(iparray != nullptr);
-		assert(&stacktrace != nullptr);
 
 		unw_cursor_t cursor;
 

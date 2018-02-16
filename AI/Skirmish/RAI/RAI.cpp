@@ -74,7 +74,7 @@ cRAI::cRAI()
 	SWM=0;
 	cb=0;
 	frame=0;
-	memset(eventList, 0, EVENT_LIST_SIZE);
+	memset(eventList, 0, EVENT_LIST_SIZE * sizeof(eventList[0]));
 	TM=0;
 	RM=0;
 	UM=0;
