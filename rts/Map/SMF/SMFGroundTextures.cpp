@@ -64,7 +64,7 @@ CSMFGroundTextures::GroundSquare::~GroundSquare()
 
 CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
-	LoadTiles(smfMap->GetFile());
+	LoadTiles(smfMap->GetMapFile());
 	LoadSquareTextures(3);
 	ConvolveHeightMap(mapDims.mapx, 1);
 }
