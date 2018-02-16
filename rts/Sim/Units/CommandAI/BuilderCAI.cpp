@@ -334,7 +334,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame
 		return false;
 
 	// status is blocked, check if there is a foreign object in the way
-	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(bi.pos);
+	const CSolidObject* s = groundBlockingObjectMap.GroundBlocked(bi.pos);
 
 	// just ourselves, does not count
 	if (s == owner)

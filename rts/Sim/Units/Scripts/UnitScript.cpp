@@ -1399,13 +1399,13 @@ void CUnitScript::SetUnitVal(int val, int param)
 				// the yardOpen state (they probably should be removed
 				// at some point)
 				if (param == 0) {
-					if (groundBlockingObjectMap->CanCloseYard(unit)) {
-						groundBlockingObjectMap->CloseBlockingYard(unit);
-					}
+					if (groundBlockingObjectMap.CanCloseYard(unit))
+						groundBlockingObjectMap.CloseBlockingYard(unit);
+
 				} else {
-					if (groundBlockingObjectMap->CanOpenYard(unit)) {
-						groundBlockingObjectMap->OpenBlockingYard(unit);
-					}
+					if (groundBlockingObjectMap.CanOpenYard(unit))
+						groundBlockingObjectMap.OpenBlockingYard(unit);
+
 				}
 			}
 		} break;

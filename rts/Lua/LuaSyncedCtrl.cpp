@@ -4076,15 +4076,17 @@ int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 	const int x = luaL_checkint(L, 1);
 	const int z = luaL_checkint(L, 2);
 	const int mask = luaL_checkint(L, 3);
+
 	if (mask < 0 || mask > USHRT_MAX) {
 		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %d)", __func__, x, z, mask);
 		return 0;
 	}
-	const bool result = buildingMaskMap->SetTileMask(x, z, (std::uint16_t)mask);
-	if (!result) {
+
+	if (!buildingMaskMap.SetTileMask(x, z, (std::uint16_t)mask)) {
 		luaL_error(L, "Invalid values supplied: %s(%d, %d, %d)", __func__, x, z, mask);
 		return 0;
 	}
+
 	return 0; //no error = success
 }
 

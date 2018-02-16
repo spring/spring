@@ -1009,9 +1009,8 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			if (groundBlockingObjectMap->GroundBlocked(x, z, owner)) {
+			if (groundBlockingObjectMap.GroundBlocked(x, z, owner))
 				return false;
-			}
 		}
 	}
 

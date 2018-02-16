@@ -7,31 +7,31 @@
 
 #include "System/creg/creg_cond.h"
 
-#include "Map/ReadMap.h"
-
 class BuildingMaskMap
 {
-
 	CR_DECLARE_STRUCT(BuildingMaskMap)
 
 public:
-	BuildingMaskMap() {
+	void Init(unsigned int numSquares) {
 		maskMap.clear();
-
-		// we are going to operate in 2*SQUARE_SIZE space as spring snaps buildings to 2*SQUARE_SIZE based grid
-		maskMap.resize(mapDims.hmapx * mapDims.hmapy, 1); //1st bit set to 1 constitutes for "normal tile"
+		maskMap.resize(numSquares, 1); // 1st bit set to 1 indicates a normal tile
 	};
+	void Kill() {
+		maskMap.clear();
+	}
 
 	bool SetTileMask(unsigned int x, unsigned int z, std::uint16_t value);
-	bool TestTileMask(unsigned int x, unsigned int z, std::uint16_t value);
-	bool TestTileMaskUnsafe(unsigned int x, unsigned int z, std::uint16_t value);
+	bool TestTileMask(unsigned int x, unsigned int z, std::uint16_t value) const { return (CheckBounds(x, z) && TestTileMaskUnsafe(x, z, value)); }
+	bool TestTileMaskUnsafe(unsigned int x, unsigned int z, std::uint16_t value) const;
 
 private:
-	bool CheckBounds(unsigned int x, unsigned int z);
+	bool CheckBounds(unsigned int x, unsigned int z) const;
+
 private:
 	std::vector<std::uint16_t> maskMap;
 };
 
-extern BuildingMaskMap* buildingMaskMap;
+extern BuildingMaskMap buildingMaskMap;
 
 #endif
+

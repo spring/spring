@@ -5131,7 +5131,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 	for (int z = tz1; z <= tz2; z++){
 		for (int x = tx1; x <= tx2; x++){
-			const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(x, z);
+			const CSolidObject* s = groundBlockingObjectMap.GroundBlocked(x, z);
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature != nullptr) {

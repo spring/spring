@@ -13,15 +13,17 @@
 typedef std::vector<CSolidObject*> BlockingMapCell;
 typedef std::vector<BlockingMapCell> BlockingMap;
 
-
 class CGroundBlockingObjectMap
 {
 	CR_DECLARE_STRUCT(CGroundBlockingObjectMap)
 
 public:
-	CGroundBlockingObjectMap(int numSquares) {
+	void Init(unsigned int numSquares) {
 		groundBlockingMap.clear();
 		groundBlockingMap.resize(numSquares);
+	}
+	void Kill() {
+		groundBlockingMap.clear();
 	}
 
 	unsigned int CalcChecksum() const;
@@ -81,6 +83,6 @@ private:
 	BlockingMap groundBlockingMap;
 };
 
-extern CGroundBlockingObjectMap* groundBlockingObjectMap;
+extern CGroundBlockingObjectMap groundBlockingObjectMap;
 
 #endif

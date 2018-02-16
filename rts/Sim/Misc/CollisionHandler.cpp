@@ -7,6 +7,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
@@ -131,7 +132,7 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	const int hmz = p.z / SQUARE_SIZE;
 	const int idx = hmx + hmz * mapDims.mapx;
 
-	return (groundBlockingObjectMap->ObjectInCell(idx, o));
+	return (groundBlockingObjectMap.ObjectInCell(idx, o));
 }
 
 

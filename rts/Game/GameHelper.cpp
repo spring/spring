@@ -928,7 +928,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 			// check for nearby blocking features
 			for (int z2 = z2Min; z2 < z2Max; ++z2) {
 				for (int x2 = x2Min; x2 < x2Max; ++x2) {
-					CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
+					CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
 
 					if (solObj && solObj->immobile && !dynamic_cast<CFeature*>(solObj)) {
 						good = false;
@@ -946,7 +946,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 				// check for nearby factories with open yards
 				for (int z2 = z2Min; z2 < z2Max; ++z2) {
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
-						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
+						CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
 
 						if (solObj == nullptr)
 							continue;
@@ -1192,7 +1192,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	if (!CheckTerrainConstraints(unitDef, moveDef, pos.y, groundHeight, CGround::GetSlope(pos.x, pos.z, synced)))
 		return BUILDSQUARE_BLOCKED;
 
-	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, unitDef->buildingMask))
+	if (!buildingMaskMap.TestTileMaskUnsafe(sqx >> 1, sqz >> 1, unitDef->buildingMask))
 		return BUILDSQUARE_BLOCKED;
 
 
@@ -1200,7 +1200,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const int yardxpos = unsigned(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	const int yardypos = unsigned(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 
-	CSolidObject* so = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+	CSolidObject* so = groundBlockingObjectMap.GroundBlocked(yardxpos, yardypos);
 
 	if (so != nullptr) {
 		CFeature* f = dynamic_cast<CFeature*>(so);

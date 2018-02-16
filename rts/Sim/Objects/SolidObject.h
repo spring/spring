@@ -200,6 +200,11 @@ public:
 	 */
 	void UnBlock();
 
+	void SetMapPos(const int2 mp) {
+		mapPos = mp;
+		groundBlockPos = pos;
+	}
+
 
 	// these transform a point or vector to object-space
 	float3 GetObjectSpaceVec(const float3& v) const { return (      (frontdir * v.z) + (rightdir * v.x) + (updir * v.y)); }
