@@ -15,8 +15,8 @@ struct MapBitmapInfo;
 class CSMFMapFile
 {
 public:
-	CSMFMapFile(                              ): ifs(     "", "") {}
-	CSMFMapFile(const std::string& mapFileName): ifs(mapFileName) {}
+	CSMFMapFile(                              ): ifs("", "") {                    } // defer Open
+	CSMFMapFile(const std::string& mapFileName): ifs("", "") { Open(mapFileName); } // unitsync
 	~CSMFMapFile() { Close(); }
 
 	void Open(const std::string& mapFileName);
