@@ -116,7 +116,7 @@ static constexpr float MAX_EXPLOSION_IMPULSE = 1e4f;
  * if explosion distance is less than speed of explosion multiplied by
  * this factor, units are damaged directly rather than N>=1 frames later
  */
-static constexpr float DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE = 4.0f;
+static constexpr int DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE = 4;
 
 /**
  * maximum range of a weapon-projectile with a flight-time member

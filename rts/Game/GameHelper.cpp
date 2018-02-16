@@ -152,7 +152,7 @@ void CGameHelper::DoExplosionDamage(
 		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID, projectileID);
 	} else {
 		// damage later
-		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & (waitingDamages.size() - 1)].emplace_back(std::move(expDamages), expImpulse, ((owner != nullptr)? owner->id: -1), unit->id, weaponDefID, projectileID);
+		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - (DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE - 1)) & (waitingDamages.size() - 1)].emplace_back(std::move(expDamages), expImpulse, ((owner != nullptr)? owner->id: -1), unit->id, weaponDefID, projectileID);
 	}
 }
 
