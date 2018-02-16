@@ -13,20 +13,20 @@ public:
 	void TestPort(int port, bool result = true)
 	{
 #ifndef NO_IPV6
-		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "::");
+		const std::string& err = netcode::UDPListener::TryBindSocket(port, socket, "::");
 #else
-		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "127.0.0.1");
+		const std::string& err = netcode::UDPListener::TryBindSocket(port, socket, "127.0.0.1");
 #endif
 		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 
 	}
 	void TestHost(const char* address, bool result = true)
 	{
-		const std::string& err = netcode::UDPListener::TryBindSocket(11111, &socket, address);
+		const std::string& err = netcode::UDPListener::TryBindSocket(11111, socket, address);
 		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 	}
 private:
-	netcode::SocketPtr socket;
+	std::shared_ptr<asio::ip::udp::socket> socket;
 };
 
 BOOST_AUTO_TEST_CASE(TryBindSocket)
