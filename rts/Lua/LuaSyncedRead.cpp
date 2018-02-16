@@ -2141,7 +2141,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
 	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
@@ -2190,7 +2190,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 	}
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
 	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
@@ -2240,7 +2240,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	}                                           \
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
 	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
@@ -2294,7 +2294,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	}                                           \
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
 	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
@@ -2514,7 +2514,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 maxs(xmax, 0.0f, zmax);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, mins, maxs);
+	quadField.GetFeaturesExact(qfQuery, mins, maxs);
 	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
@@ -2529,7 +2529,7 @@ int LuaSyncedRead::GetFeaturesInSphere(lua_State* L)
 	const float3 pos(x, y, z);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, pos, rad, true);
+	quadField.GetFeaturesExact(qfQuery, pos, rad, true);
 	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
@@ -2543,7 +2543,7 @@ int LuaSyncedRead::GetFeaturesInCylinder(lua_State* L)
 	const float3 pos(x, 0, z);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, pos, rad, false);
+	quadField.GetFeaturesExact(qfQuery, pos, rad, false);
 	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
@@ -2562,7 +2562,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 maxs(xmax, 0.0f, zmax);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetProjectilesExact(qfQuery, mins, maxs);
+	quadField.GetProjectilesExact(qfQuery, mins, maxs);
 	const unsigned int rectProjectileCount = qfQuery.projectiles->size();
 	unsigned int arrayIndex = 1;
 

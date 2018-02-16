@@ -18,12 +18,13 @@ class CGroundBlockingObjectMap
 	CR_DECLARE_STRUCT(CGroundBlockingObjectMap)
 
 public:
-	void Init(unsigned int numSquares) {
-		groundBlockingMap.clear();
-		groundBlockingMap.resize(numSquares);
-	}
+	void Init(unsigned int numSquares) { groundBlockingMap.resize(numSquares); }
 	void Kill() {
-		groundBlockingMap.clear();
+		// reuse inner vectors when reloading
+		// groundBlockingMap.clear();
+		for (BlockingMapCell& v: groundBlockingMap) {
+			v.clear();
+		}
 	}
 
 	unsigned int CalcChecksum() const;

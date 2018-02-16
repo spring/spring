@@ -17,7 +17,7 @@
 	#include "Sim/Weapons/PlasmaRepulser.h"
 #endif
 
-CR_BIND(CQuadField, (int2(1,1), 1))
+CR_BIND(CQuadField, )
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(numQuadsX),
@@ -43,17 +43,18 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_POSTLOAD(PostLoad)
 ))
 
-CQuadField* quadField = NULL;
+
+CQuadField quadField;
 
 
 #ifndef UNIT_TEST
 /*
 void CQuadField::Resize(int quad_size)
 {
-	CQuadField* oldQuadField = quadField;
-	CQuadField* newQuadField = new CQuadField(int2(mapDims.mapx, mapDims.mapy), quad_size);
+	CQuadField* oldQuadField = &quadField;
+	CQuadField newQuadField;
 
-	quadField = NULL;
+	newQuadField.Init(int2(mapDims.mapx, mapDims.mapy), quad_size);
 
 	for (int zq = 0; zq < oldQuadField->GetNumQuadsZ(); zq++) {
 		for (int xq = 0; xq < oldQuadField->GetNumQuadsX(); xq++) {
@@ -87,50 +88,55 @@ void CQuadField::Resize(int quad_size)
 		}
 	}
 
-	quadField = newQuadField;
-
-	// do this last so pointer is never dangling
-	delete oldQuadField;
+	quadField = std::move(newQuadField);
 }
 */
 #endif
 
 
-CQuadField::Quad::Quad()
-{
-#ifndef UNIT_TEST
-	teamUnits.resize(teamHandler->ActiveAllyTeams());
-	assert(teamUnits.capacity() == teamHandler->ActiveAllyTeams());
-#endif
-}
-
 void CQuadField::Quad::PostLoad()
 {
 #ifndef UNIT_TEST
+	Resize(teamHandler->ActiveAllyTeams());
+
 	for (CUnit* unit: units) {
 		spring::VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
 	}
 #endif
 }
 
-CQuadField::CQuadField(int2 mapDims, int quad_size)
+void CQuadField::Init(int2 mapDims, int quadSize)
 {
-	quadSizeX = quad_size;
-	quadSizeZ = quad_size;
-	numQuadsX = (mapDims.x * SQUARE_SIZE) / quad_size;
-	numQuadsZ = (mapDims.y * SQUARE_SIZE) / quad_size;
+	quadSizeX = quadSize;
+	quadSizeZ = quadSize;
+	numQuadsX = (mapDims.x * SQUARE_SIZE) / quadSize;
+	numQuadsZ = (mapDims.y * SQUARE_SIZE) / quadSize;
 
 	assert(numQuadsX >= 1);
 	assert(numQuadsZ >= 1);
-	assert((mapDims.x * SQUARE_SIZE) % quad_size == 0);
-	assert((mapDims.y * SQUARE_SIZE) % quad_size == 0);
+	assert((mapDims.x * SQUARE_SIZE) % quadSize == 0);
+	assert((mapDims.y * SQUARE_SIZE) % quadSize == 0);
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
+
+	for (Quad& quad: baseQuads) {
+		quad.Resize(teamHandler->ActiveAllyTeams());
+	}
 }
 
-
-CQuadField::~CQuadField()
+void CQuadField::Kill()
 {
+	// reuse quads when reloading
+	// baseQuads.clear();
+	for (Quad& quad: baseQuads) {
+		quad.Clear();
+	}
+
+	tempUnits.ReleaseAll();
+	tempFeatures.ReleaseAll();
+	tempProjectiles.ReleaseAll();
+	tempSolids.ReleaseAll();
+	tempQuads.ReleaseAll();
 }
 
 

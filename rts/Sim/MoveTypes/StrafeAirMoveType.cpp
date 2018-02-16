@@ -583,7 +583,7 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 		if (checkCollisions) {
 			// copy on purpose, since the below can call Lua
 			QuadFieldQuery qfQuery;
-			quadField->GetUnitsExact(qfQuery, pos, owner->radius + 6);
+			quadField.GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
 			for (CUnit* unit: *qfQuery.units) {
 				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);

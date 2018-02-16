@@ -98,8 +98,8 @@ void CFireProjectile::Update()
 		if (!(ttl & 31)) {
 			// copy on purpose, since the below can call Lua
 			QuadFieldQuery qfQuery;
-			quadField->GetFeaturesExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
-			quadField->GetUnitsExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			quadField.GetFeaturesExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			quadField.GetUnitsExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 
 			for (CFeature* f: *qfQuery.features) {
 				if (gsRNG.NextFloat() > 0.8f) {

@@ -143,7 +143,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	// must happen after setting position and velocity
 	projectileHandler->AddProjectile(this);
-	quadField->AddProjectile(this);
+	quadField.AddProjectile(this);
 
 	ASSERT_SYNCED(id);
 

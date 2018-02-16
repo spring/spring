@@ -111,7 +111,7 @@ CFeature::~CFeature()
 {
 	assert(featureMemPool.mapped(this));
 	UnBlock();
-	quadField->RemoveFeature(this);
+	quadField.RemoveFeature(this);
 
 	if (myFire != nullptr) {
 		myFire->StopFire();
@@ -253,7 +253,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	// feature does not have an assigned ID yet
 	// this MUST be done before the Block() call
 	featureHandler->AddFeature(this);
-	quadField->AddFeature(this);
+	quadField.AddFeature(this);
 
 	ChangeTeam(team);
 	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, def->collidable);
@@ -480,7 +480,7 @@ void CFeature::SetVelocity(const float3& v)
 void CFeature::ForcedMove(const float3& newPos)
 {
 	// remove from managers
-	quadField->RemoveFeature(this);
+	quadField.RemoveFeature(this);
 
 	const float3 oldPos = pos;
 
@@ -495,7 +495,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	eventHandler.FeatureMoved(this, oldPos);
 
 	// insert into managers
-	quadField->AddFeature(this);
+	quadField.AddFeature(this);
 }
 
 
@@ -518,13 +518,13 @@ void CFeature::UpdateTransformAndPhysState()
 
 void CFeature::UpdateQuadFieldPosition(const float3& moveVec)
 {
-	quadField->RemoveFeature(this);
+	quadField.RemoveFeature(this);
 	UnBlock();
 
 	Move(moveVec, true);
 
 	Block();
-	quadField->AddFeature(this);
+	quadField.AddFeature(this);
 }
 
 
@@ -658,7 +658,7 @@ void CFeature::EmitGeoSmoke()
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
 		QuadFieldQuery qfQuery;
-		quadField->GetSolidsExact(qfQuery, pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		quadField.GetSolidsExact(qfQuery, pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = nullptr;

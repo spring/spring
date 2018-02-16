@@ -328,7 +328,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (!quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+		if (!quadField.NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 		if (unit->moveDef != nullptr && !unit->moveDef->TestMoveSquare(nullptr, testPos, ZeroVector, true, true))
 			continue;

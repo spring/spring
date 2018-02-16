@@ -237,7 +237,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		MAPPOS_SANITY_CHECK(p->pos);
 
 		p->Update();
-		quadField->MovedProjectile(p);
+		quadField.MovedProjectile(p);
 
 		MAPPOS_SANITY_CHECK(p->pos);
 	}
@@ -567,7 +567,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		const float3 ppos0 = p->pos;
 		const float3 ppos1 = p->pos + p->speed;
 
-		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
+		quadField.GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
 		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1); tempUnits.clear();

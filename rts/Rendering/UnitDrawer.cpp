@@ -293,6 +293,7 @@ CUnitDrawer::~CUnitDrawer()
 		groundDecals->ForceRemoveSolidObject(u);
 	}
 
+
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			auto& lgb = liveGhostBuildings[allyTeam][modelType];
@@ -313,8 +314,9 @@ CUnitDrawer::~CUnitDrawer()
 			lgb.clear();
 		}
 	}
-	deadGhostBuildings.clear();
-	liveGhostBuildings.clear();
+	// reuse inner vectors when reloading
+	// deadGhostBuildings.clear();
+	// liveGhostBuildings.clear();
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {

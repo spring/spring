@@ -301,7 +301,7 @@ public:
 	void ResetState() { alreadyDrawnIds.clear(); }
 	void DrawQuad(int x, int y)
 	{
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 
 		for (const CFeature* f: q.features) {
 			if (alreadyDrawnIds.find(MAX_UNITS + f->id) == alreadyDrawnIds.end()) {

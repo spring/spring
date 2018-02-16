@@ -48,7 +48,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(ow
 CPlasmaRepulser::~CPlasmaRepulser()
 {
 	delete segmentCollection;
-	quadField->RemoveRepulser(this);
+	quadField.RemoveRepulser(this);
 }
 
 
@@ -66,7 +66,7 @@ void CPlasmaRepulser::Init()
 
 	CWeapon::Init();
 
-	quadField->MovedRepulser(this);
+	quadField.MovedRepulser(this);
 
 	// deleted by ProjectileHandler
 	segmentCollection = new ShieldSegmentCollection(this);
@@ -112,7 +112,7 @@ void CPlasmaRepulser::Update()
 
 	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
 	if (weaponMuzzlePos != lastPos)
-		quadField->MovedRepulser(this);
+		quadField.MovedRepulser(this);
 
 	if (lastPos != ZeroVector)
 		deltaPos = weaponMuzzlePos - lastPos;

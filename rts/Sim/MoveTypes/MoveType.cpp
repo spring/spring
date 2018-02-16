@@ -70,7 +70,7 @@ void AMoveType::SlowUpdate()
 			}
 		}
 
-		quadField->MovedUnit(owner);
+		quadField.MovedUnit(owner);
 	}
 }
 

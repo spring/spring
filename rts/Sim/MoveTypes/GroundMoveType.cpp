@@ -932,8 +932,8 @@ void CGroundMoveType::CheckCollisionSkid()
 	const UnitDef* colliderUD = collider->unitDef;
 	// copy on purpose, since the below can call Lua
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, collider->radius);
-	quadField->GetFeaturesExact(qfQuery, pos, collider->radius);
+	quadField.GetUnitsExact(qfQuery, pos, collider->radius);
+	quadField.GetFeaturesExact(qfQuery, pos, collider->radius);
 
 	for (CUnit* collidee: *qfQuery.units) {
 		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
@@ -1123,7 +1123,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
 	QuadFieldQuery qfQuery;
-	quadField->GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 	for (const CSolidObject* avoidee: *qfQuery.solids) {
 		const MoveDef* avoideeMD = avoidee->moveDef;
@@ -1803,7 +1803,7 @@ void CGroundMoveType::HandleUnitCollisions(
 
 	// copy on purpose, since the below can call Lua
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, collider->pos, searchRadius);
+	quadField.GetUnitsExact(qfQuery, collider->pos, searchRadius);
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
 	const int dirSign = Sign(int(!reversing));
@@ -2025,7 +2025,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 	// copy on purpose, since DoDamage below can call Lua
 	QuadFieldQuery qfQuery;
-	quadField->GetFeaturesExact(qfQuery, collider->pos, searchRadius);
+	quadField.GetFeaturesExact(qfQuery, collider->pos, searchRadius);
 
 	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
@@ -2095,10 +2095,10 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float colliderMassScale = Clamp(1.0f - r1, 0.01f, 0.99f);
 		const float collideeMassScale = Clamp(1.0f - r2, 0.01f, 0.99f);
 
-		quadField->RemoveFeature(collidee);
+		quadField.RemoveFeature(collidee);
 		collider->Move( colResponseVec * colliderMassScale, true);
 		collidee->Move(-colResponseVec * collideeMassScale, true);
-		quadField->AddFeature(collidee);
+		quadField.AddFeature(collidee);
 	}
 }
 

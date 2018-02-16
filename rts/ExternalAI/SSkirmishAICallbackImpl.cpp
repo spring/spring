@@ -40,7 +40,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/QuadField.h" // for quadField->GetFeaturesExact(pos, radius)
+#include "Sim/Misc/QuadField.h" // for quadField.GetFeaturesExact(pos, radius)
 #include "System/SafeCStrings.h"
 #include "System/myMath.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -4279,7 +4279,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
 		QuadFieldQuery qfQuery;
-		quadField->GetFeaturesExact(qfQuery, pos_posF3, radius);
+		quadField.GetFeaturesExact(qfQuery, pos_posF3, radius);
 		const int featureIdsRealSize = qfQuery.features->size();
 
 		int featureIdsSize = featureIdsRealSize;

@@ -2274,13 +2274,13 @@ int LuaSyncedCtrl::SetUnitMidAndAimPos(lua_State* L)
 
 	if (updateQuads) {
 		// safety, possibly just need MovedUnit
-		quadField->RemoveUnit(unit);
+		quadField.RemoveUnit(unit);
 	}
 
 	unit->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
-		quadField->MovedUnit(unit);
+		quadField.MovedUnit(unit);
 	}
 
 	lua_pushboolean(L, true);
@@ -2302,13 +2302,13 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 
 	if (updateQuads) {
 		// safety, possibly just need MovedUnit
-		quadField->RemoveUnit(unit);
+		quadField.RemoveUnit(unit);
 	}
 
 	unit->SetRadiusAndHeight(newRadius, newHeight);
 
 	if (updateQuads) {
-		quadField->MovedUnit(unit);
+		quadField.MovedUnit(unit);
 	}
 
 	lua_pushboolean(L, true);
@@ -3038,13 +3038,13 @@ int LuaSyncedCtrl::SetFeatureMidAndAimPos(lua_State* L)
 	#undef FLOAT
 
 	if (updateQuads) {
-		quadField->RemoveFeature(feature);
+		quadField.RemoveFeature(feature);
 	}
 
 	feature->SetMidAndAimPos(newMidPos, newAimPos, setRelative);
 
 	if (updateQuads) {
-		quadField->AddFeature(feature);
+		quadField.AddFeature(feature);
 	}
 
 	lua_pushboolean(L, true);
@@ -3065,13 +3065,13 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 	const bool updateQuads = (newRadius != feature->radius);
 
 	if (updateQuads) {
-		quadField->RemoveFeature(feature);
+		quadField.RemoveFeature(feature);
 	}
 
 	feature->SetRadiusAndHeight(newRadius, newHeight);
 
 	if (updateQuads) {
-		quadField->AddFeature(feature);
+		quadField.AddFeature(feature);
 	}
 
 	lua_pushboolean(L, true);

@@ -782,7 +782,7 @@ protected:
 class CVisUnitQuadDrawer: public CWorldObjectQuadDrawer<CUnit> {
 public:
 	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.units;
 
 		AddObjectList(o);
@@ -792,7 +792,7 @@ public:
 class CVisFeatureQuadDrawer: public CWorldObjectQuadDrawer<CFeature> {
 public:
 	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.features;
 
 		AddObjectList(o);
@@ -802,7 +802,7 @@ public:
 class CVisProjectileQuadDrawer: public CWorldObjectQuadDrawer<CProjectile> {
 public:
 	void DrawQuad(int x, int y) {
-		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
+		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.projectiles;
 
 		AddObjectList(o);

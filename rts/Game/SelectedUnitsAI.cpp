@@ -618,7 +618,7 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 		return;
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, pos, radius, false);
+	quadField.GetUnitsExact(qfQuery, pos, radius, false);
 
 	const float radiusSqr = radius * radius;
 	const unsigned int count = qfQuery.units->size();
@@ -667,7 +667,7 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
 	QuadFieldQuery qfQuery;
-	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	quadField.GetUnitsExact(qfQuery, mins, maxs);
 
 	const unsigned int count = qfQuery.units->size();
 	const int allyTeam = teamHandler->AllyTeam(p->team);
