@@ -4,11 +4,11 @@
 #include "VFSHandler.h"
 
 #include <algorithm>
-#include <set>
 #include <cstring>
 
 #include "ArchiveLoader.h"
 #include "System/FileSystem/Archives/IArchive.h"
+#include "System/Threading/SpringThreading.h"
 #include "FileSystem.h"
 #include "ArchiveScanner.h"
 #include "System/Exceptions.h"
@@ -26,6 +26,12 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 #define LOG_SECTION_CURRENT LOG_SECTION_VFS
 
 
+// GetFileData can be called on a thread other than main (e.g. sound) via
+// FileHandler::Open, while {Add,Remove}Archive are reached from multiple
+// places including LuaVFS
+static spring::recursive_mutex vfsMutex;
+
+
 CVFSHandler* vfsHandler = nullptr;
 
 
@@ -39,6 +45,7 @@ CVFSHandler::~CVFSHandler()
 	LOG_L(L_INFO, "[%s] #archives=%lu", __func__, (long unsigned) archives.size());
 	DeleteArchives();
 }
+
 
 CVFSHandler::Section CVFSHandler::GetModeSection(char mode)
 {
@@ -64,44 +71,46 @@ CVFSHandler::Section CVFSHandler::GetModTypeSection(int mt)
 }
 
 
-static const std::string GetArchivePath(const std::string& name){
+static const std::string GetArchivePath(const std::string& name) {
 	if (name.empty())
 		return name;
+
 	const std::string& filename = archiveScanner->ArchiveFromName(name);
+
 	if (filename == name)
 		return "";
-	const std::string& path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
+
+	return (archiveScanner->GetArchivePath(filename) + filename);
 }
+
 
 
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 {
+	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
 	LOG_L(L_DEBUG, "[VFSH::%s(arName=\"%s\", overwrite=%s)]", __func__, archiveName.c_str(), overwrite ? "true" : "false");
 
-	const CArchiveScanner::ArchiveData& ad = archiveScanner->GetArchiveData(archiveName);
-	const Section section = GetModTypeSection(ad.GetModType());
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	const std::string& archivePath = GetArchivePath(archiveName);
+	const Section section = GetModTypeSection(archiveData.GetModType());
 
-	assert(!ad.IsEmpty());
-	assert(section < Section::Count);
+	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
+	assert(section < Section::Count);
 
 	IArchive* ar = archives[archivePath];
 
 	if (ar == nullptr) {
 		if ((ar = archiveLoader.OpenArchive(archivePath)) == nullptr) {
-			LOG_L(L_ERROR, "[VFSH::%s] failed to open archive '%s' (path '%s', type %d).", __func__, archiveName.c_str(), archivePath.c_str(), ad.GetModType());
+			LOG_L(L_ERROR, "[VFSH::%s] failed to open archive '%s' (path '%s', type %d)", __func__, archiveName.c_str(), archivePath.c_str(), archiveData.GetModType());
 			return false;
 		}
 		archives[archivePath] = ar;
 	}
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		std::string name;
-		int size;
-		ar->FileInfo(fid, name, size);
-		StringToLowerInPlace(name);
+		std::pair<std::string, int> fi = ar->FileInfo(fid);
+		std::string name = std::move(StringToLower(fi.first));
 
 		if (!overwrite) {
 			if (files[section].find(name) != files[section].end()) {
@@ -114,10 +123,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 			LOG_L(L_DEBUG, "[VFSH::%s] overriding \"%s\"", __func__, name.c_str());
 		}
 
-		FileData d;
-		d.ar = ar;
-		d.size = size;
-		files[section][name] = d;
+		files[section][name] = {ar, fi.second};
 	}
 
 	return true;
@@ -130,9 +136,9 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwr
 	if (ars.empty())
 		throw content_error("Could not find any archives for '" + archiveName + "'.");
 
-	for (auto it = ars.cbegin(); it != ars.cend(); ++it) {
-		if (!AddArchive(*it, overwrite))
-			throw content_error("Failed loading archive '" + *it + "', dependency of '" + archiveName + "'.");
+	for (const std::string& depArchiveName: ars) {
+		if (!AddArchive(depArchiveName, overwrite))
+			throw content_error("Failed loading archive '" + depArchiveName + "', dependency of '" + archiveName + "'.");
 	}
 
 	return true;
@@ -140,13 +146,15 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwr
 
 bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	const CArchiveScanner::ArchiveData& ad = archiveScanner->GetArchiveData(archiveName);
-	const Section section = GetModTypeSection(ad.GetModType());
-	const std::string& archivePath = GetArchivePath(archiveName);
+	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
 
-	assert(!ad.IsEmpty());
-	assert(section < Section::Count);
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
+	const std::string& archivePath = GetArchivePath(archiveName);
+	const Section section = GetModTypeSection(archiveData.GetModType());
+
+	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
+	assert(section < Section::Count);
 
 	LOG_L(L_DEBUG, "[VFHS::%s(archiveName=\"%s\")]", __func__, archivePath.c_str());
 
@@ -173,9 +181,10 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 
 	delete ar;
 	archives.erase(archivePath);
-
 	return true;
 }
+
+
 
 void CVFSHandler::DeleteArchives()
 {
@@ -194,84 +203,75 @@ void CVFSHandler::DeleteArchives()
 }
 
 
+
 std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
-	std::string path = std::move(StringToLower(rawPath));
-	FileSystem::ForwardSlashes(path);
-	return path;
+	std::string lcPath = std::move(StringToLower(rawPath));
+	std::string nPath = std::move(FileSystem::ForwardSlashes(lcPath));
+	return nPath;
 }
 
 
-const CVFSHandler::FileData* CVFSHandler::GetFileData(const std::string& normalizedFilePath, Section section)
+CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFilePath, Section section)
 {
 	assert(section < Section::Count);
+	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
 
 	const auto fi = files[section].find(normalizedFilePath);
 
 	if (fi != files[section].end())
-		return &(fi->second);
+		return fi->second;
 
-	return nullptr;
+	// file does not exist in the VFS
+	return {nullptr, 0};
 }
+
 
 
 bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section)
 {
-	assert(section < Section::Count);
-
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", )]", __func__, filePath.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const FileData* fileData = GetFileData(normalizedPath, section);
+	const FileData& fileData = GetFileData(normalizedPath, section);
 
-	if (fileData == nullptr) {
-		LOG_L(L_DEBUG, "[VFHS::%s] file \"%s\" does not exist in VFS", __func__, filePath.c_str());
+	if (fileData.ar == nullptr)
 		return false;
-	}
 
-	if (!fileData->ar->GetFile(normalizedPath, buffer)) {
-		LOG_L(L_DEBUG, "[VFHS::%s] file \"%s\" does not exist in archive", __func__, filePath.c_str());
-		return false;
-	}
-
-	return true;
+	return (fileData.ar->GetFile(normalizedPath, buffer));
 }
-
 
 bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 {
-	assert(section < Section::Count);
-
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", )]", __func__, filePath.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
-	const FileData* fileData = GetFileData(normalizedPath, section);
+	const FileData& fileData = GetFileData(normalizedPath, section);
 
-	// the file does not exist in the VFS
-	if (fileData == nullptr)
+	if (fileData.ar == nullptr)
 		return false;
 
-	// the file does not exist in the archive
-	if (!fileData->ar->FileExists(normalizedPath))
-		return false;
-
-	return true;
+	return (fileData.ar->FileExists(normalizedPath));
 }
+
+
 
 
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, Section section)
 {
+	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+
 	assert(section < Section::Count);
 
 	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
 
-	std::vector<std::string> ret;
-	std::string dir = GetNormalizedPath(rawDir);
+	std::vector<std::string> dirFiles;
+	std::string dir = std::move(GetNormalizedPath(rawDir));
 
 	auto filesStart = files[section].begin();
 	auto filesEnd   = files[section].end();
 
-	// Non-empty directories to look in should have a trailing backslash
+	// non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
 		if (dir.back() != '/')
 			dir += "/";
@@ -281,7 +281,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 		filesEnd   = files[section].upper_bound(dir); dir.back() -= 1;
 	}
 
-	ret.reserve(std::distance(filesStart, filesEnd));
+	dirFiles.reserve(std::distance(filesStart, filesEnd));
 
 	for (; filesStart != filesEnd; ++filesStart) {
 		const std::string& path = FileSystem::GetDirectory(filesStart->first);
@@ -290,35 +290,37 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 		if (path.compare(0, dir.length(), dir) != 0)
 			continue;
 
-		// Strip pathname
-		const std::string& name = filesStart->first.substr(dir.length());
+		// strip pathname
+		std::string name = std::move(filesStart->first.substr(dir.length()));
 
-		// Do not return files in subfolders
+		// do not return files in subfolders
 		if ((name.find('/') != std::string::npos) || (name.find('\\') != std::string::npos))
 			continue;
 
-		ret.push_back(name);
-		LOG_L(L_DEBUG, "\t%s", name.c_str());
+		dirFiles.emplace_back(std::move(name));
+		LOG_L(L_DEBUG, "\t%s", dirFiles[dirFiles.size() - 1].c_str());
 	}
 
-	return ret;
+	return dirFiles;
 }
 
 
 std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Section section)
 {
+	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+
 	assert(section < Section::Count);
 
 	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
 
-	std::vector<std::string> ret;
-	std::set<std::string> dirs;
-	std::string dir = GetNormalizedPath(rawDir);
+	std::vector<std::string> dirs;
+	std::vector<std::string>::iterator iter;
+	std::string dir = std::move(GetNormalizedPath(rawDir));
 
 	auto filesStart = files[section].begin();
 	auto filesEnd   = files[section].end();
 
-	// Non-empty directories to look in should have a trailing backslash
+	// non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
 		if (dir.back() != '/')
 			dir += "/";
@@ -328,29 +330,31 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 		filesEnd   = files[section].upper_bound(dir); dir.back() -= 1;
 	}
 
-	ret.reserve(std::distance(filesStart, filesEnd));
+	dirs.reserve(std::distance(filesStart, filesEnd));
 
 	for (; filesStart != filesEnd; ++filesStart) {
 		const std::string& path = FileSystem::GetDirectory(filesStart->first);
 
-		// Test to see if this file start with the dir path
+		// test if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) != 0)
 			continue;
 
-		// Strip pathname
+		// strip pathname
 		const std::string& name = filesStart->first.substr(dir.length());
 		const std::string::size_type slash = name.find_first_of("/\\");
 
-		if (slash != std::string::npos) {
-			dirs.insert(name.substr(0, slash + 1));
-		}
+		if (slash == std::string::npos)
+			continue;
+
+		dirs.emplace_back(std::move(name.substr(0, slash + 1)));
 	}
 
-	for (auto it = dirs.cbegin(); it != dirs.cend(); ++it) {
-		ret.push_back(*it);
-		LOG_L(L_DEBUG, "\t%s", it->c_str());
-	}
+	std::stable_sort(dirs.begin(), dirs.end());
 
-	return ret;
+	// filter duplicates
+	if ((iter = std::unique(dirs.begin(), dirs.end())) != dirs.end())
+		dirs.erase(iter, dirs.end());
+
+	return dirs;
 }
 

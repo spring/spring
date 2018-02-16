@@ -13,8 +13,8 @@ class IArchive;
 
 /**
  * Main API for accessing the Virtual File System (VFS).
- * This only allows accessing the VFS (stuff within archives registered with the
- * VFS), NOT the real file system.
+ * This only allows accessing the VFS (files in archives
+ * registered with the VFS), NOT the real file system.
  */
 class CVFSHandler
 {
@@ -32,8 +32,8 @@ public:
 	};
 
 	static Section GetModeSection(char mode);
-
 	static Section GetModTypeSection(int modtype);
+
 
 	/**
 	 * Checks whether a file exists in the VFS (does not work for dirs).
@@ -44,6 +44,7 @@ public:
 	 * @return true if the file exists in the VFS, false otherwise
 	 */
 	bool FileExists(const std::string& filePath, Section section);
+
 	/**
 	 * Reads the contents of a file from within the VFS.
 	 * @param filePath raw file path, for example "maps/myMap.smf",
@@ -52,6 +53,7 @@ public:
 	 */
 	bool LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section);
 
+
 	/**
 	 * Returns all the files in the given (virtual) directory without the
 	 * preceeding pathname.
@@ -59,6 +61,7 @@ public:
 	 *   case-insensitive
 	 */
 	std::vector<std::string> GetFilesInDir(const std::string& dir, Section section);
+
 	/**
 	 * Returns all the sub-directories in the given (virtual) directory without
 	 * the preceeding pathname.
@@ -67,12 +70,14 @@ public:
 	 */
 	std::vector<std::string> GetDirsInDir(const std::string& dir, Section section);
 
+
 	/**
 	 * Adds an archive to the VFS.
 	 * @param override determines whether in case of a  conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
 	bool AddArchive(const std::string& archiveName, bool overwrite);
+
 	/**
 	 * Adds an archive and all of its dependencies to the VFS.
 	 * @param override determines whether in case of a  conflict, the existing
@@ -87,19 +92,21 @@ public:
 	 */
 	bool RemoveArchive(const std::string& archiveName);
 
+
 	void DeleteArchives();
 
-protected:
+private:
 	struct FileData {
 		IArchive* ar;
 		int size;
 	};
+
 	std::array<std::map<std::string, FileData>, Section::Count> files;
 	std::map<std::string, IArchive*> archives;
 
 private:
 	std::string GetNormalizedPath(const std::string& rawPath);
-	const FileData* GetFileData(const std::string& normalizedFilePath, Section section);
+	FileData GetFileData(const std::string& normalizedFilePath, Section section);
 };
 
 extern CVFSHandler* vfsHandler;
