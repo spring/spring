@@ -80,7 +80,6 @@
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
-#include "System/Platform/Battery.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
@@ -341,7 +340,6 @@ bool SpringApp::Init()
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
 
-	battery = new CBattery();
 	LuaVFSDownload::Init();
 
 	// Create CGameSetup and CPreGame objects
@@ -752,7 +750,6 @@ void SpringApp::Reload(const std::string script)
 
 	// do not stop running downloads when reloading
 	LuaVFSDownload::Free(false);
-	spring::SafeDelete(battery);
 
 	LOG("[SpringApp::%s][6]", __func__);
 
@@ -786,7 +783,6 @@ void SpringApp::Reload(const std::string script)
 	// make sure all old EventClients are really gone (safety)
 	eventHandler.ResetState();
 
-	battery = new CBattery();
 	LuaVFSDownload::Init();
 
 	LOG("[SpringApp::%s][10]", __func__);
