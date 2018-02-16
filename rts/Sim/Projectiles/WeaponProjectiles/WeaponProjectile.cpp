@@ -93,6 +93,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	collisionFlags = weaponDef->collisionFlags;
 	weaponNum = params.weaponNum;
+
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
 
@@ -123,10 +124,14 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	if (ownerID != -1u && weaponNum != -1u) {
 		const CUnit* owner = unitHandler->GetUnit(ownerID);
 
-		if (owner != nullptr && weaponNum < owner->weapons.size())
+		if (owner != nullptr && weaponNum < owner->weapons.size()) {
 			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
 
+			// inherit from weapon instance if possible since Lua can change the flags at runtime
+			collisionFlags = owner->weapons[weaponNum]->collisionFlags;
+		}
 	}
+
 	if (damages == nullptr)
 		damages = DynDamageArray::IncRef(&weaponDef->damages);
 
