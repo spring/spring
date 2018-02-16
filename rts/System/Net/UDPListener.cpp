@@ -32,8 +32,7 @@ UDPListener::UDPListener(int port, const std::string& ip): acceptNewConnections(
 	const std::string err = TryBindSocket(port, &socket, ip);
 
 	if (err.empty()) {
-		asio::socket_base::non_blocking_io socketCommand(true);
-		socket->io_control(socketCommand);
+		socket->non_blocking(true);
 
 		mySocket = socket;
 		SetAcceptingConnections(true);
