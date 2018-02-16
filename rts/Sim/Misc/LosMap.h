@@ -17,17 +17,21 @@ struct SLosInstance;
 class CLosMap
 {
 public:
-	CLosMap(int2 size_, int2 mapDims, const float* ctrHeightMap_, const float* mipHeightMap_, bool sendReadmapEvents_)
-	: size(size_)
-	, LOS2HEIGHT(mapDims / size)
+	void Init(const int2 size_, const int2 mapDims, const float* ctrHeightMap_, const float* mipHeightMap_, bool sendReadmapEvents_)
+	{
+		size = size_;
+		LOS2HEIGHT = mapDims / size;
 
-	, losmap(size.x * size.y, 0)
+		losmap.clear();
+		losmap.resize(size.x * size.y, 0);
 
-	, ctrHeightMap(ctrHeightMap_)
-	, mipHeightMap(mipHeightMap_)
+		ctrHeightMap = ctrHeightMap_;
+		mipHeightMap = mipHeightMap_;
 
-	, sendReadmapEvents(sendReadmapEvents_)
-	{ }
+		sendReadmapEvents = sendReadmapEvents_;
+	}
+
+	void Kill() {}
 
 public:
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
@@ -57,15 +61,15 @@ private:
 	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& losRaySquares) const;
 
 protected:
-	const int2 size;
-	const int2 LOS2HEIGHT;
+	int2 size;
+	int2 LOS2HEIGHT;
 
 	std::vector<unsigned short> losmap;
 
-	const float* const ctrHeightMap;
-	const float* const mipHeightMap;
+	const float* ctrHeightMap = nullptr;
+	const float* mipHeightMap = nullptr;
 
-	bool sendReadmapEvents;
+	bool sendReadmapEvents = false;
 };
 
 #endif // LOS_MAP_H

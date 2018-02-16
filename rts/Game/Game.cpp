@@ -568,7 +568,7 @@ void CGame::PostLoadSimulation()
 	unitHandler.Init();
 	featureHandler.Init();
 	projectileHandler.Init();
-	losHandler = new CLosHandler();
+	CLosHandler::InitStatic();
 
 	readMap->InitHeightMapDigestVectors(losHandler->los.size);
 
@@ -890,7 +890,7 @@ void CGame::KillSimulation()
 	groundBlockingObjectMap.Kill();
 	buildingMaskMap.Kill();
 
-	spring::SafeDelete(losHandler);
+	CLosHandler::KillStatic(gu->globalReload);
 	spring::SafeDelete(mapDamage);
 	quadField.Kill();
 	spring::SafeDelete(moveDefHandler);
