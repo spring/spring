@@ -4,29 +4,12 @@
 #define LUA_HASH_STRING_H
 
 #include <string>
+
 using std::string;
 
 
 #include "LuaInclude.h"
-
-
-template<unsigned int length, unsigned int step = (length >> 5) + 1, unsigned int idx = length, unsigned int stop = length % step>
-struct compileTimeHasher {
-	static constexpr unsigned int hash(const char *str, unsigned int prev_hash = length) {
-		return compileTimeHasher<length, step, idx - step, stop>::hash(str, prev_hash ^ ((prev_hash << 5) + (prev_hash >> 2) + ((unsigned char)str[idx - 1])));
-	}
-};
-
-// stopping condition
-template<unsigned int length, unsigned int step, unsigned int idx>
-struct compileTimeHasher<length, step, idx, idx> {
-	static constexpr unsigned int hash(const char *str, unsigned int prev_hash = length) {
-		return prev_hash;
-	}
-};
-
-
-#define COMPILE_TIME_HASH(str) compileTimeHasher<sizeof(str) - 1>::hash(str)
+#include "System/StringHash.h"
 
 
 struct LuaHashString {

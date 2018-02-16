@@ -1109,7 +1109,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			KeyInput::Update(event.key.keysym.sym, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
 
 			if (activeController != nullptr) {
-				activeController->ignoreNextChar = false;
+				activeController->textInput.ignoreNextChar = false;
 				activeController->KeyReleased(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym));
 			}
 		} break;

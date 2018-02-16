@@ -266,11 +266,10 @@ void CInMapDraw::SendWaitingInput(const std::string& label)
 void CInMapDraw::PromptLabel(const float3& pos)
 {
 	waitingPoint = pos;
-	game->userWriting = true;
 	wantLabel = true;
-	game->userPrompt = "Label: ";
-	game->ignoreNextChar = true;
-	inMapDrawer->SetDrawMode(false);
+
+	game->textInput.PromptLabel();
+	SetDrawMode(false);
 	SDL_StartTextInput();
 }
 

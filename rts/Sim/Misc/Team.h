@@ -100,7 +100,6 @@ public:
 	LuaRulesParams::Params  modParams;
 
 	/// unsynced
-	SColor origColor;
 	float highlight;
 };
 

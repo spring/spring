@@ -1094,16 +1094,9 @@ class ChatActionExecutor : public IUnsyncedActionExecutor {
 
 public:
 	bool Execute(const UnsyncedAction& action) const {
-		if (setUserInputPrefix)
-			game->userInputPrefix = userInputPrefix;
-
 		SDL_StartTextInput();
-		game->userWriting = true;
-		game->userPrompt = "Say: ";
-		game->userInput = game->userInputPrefix;
-		game->writingPos = (int)game->userInput.length();
-		game->chatting = true;
-		game->ignoreNextChar = false;
+
+		game->textInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
 		game->consoleHistory->ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 
@@ -2404,18 +2397,7 @@ public:
 			"Paste either the argument string(s) or if none given, the content of the clip-board to chat input") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!game->userWriting)
-			return false;
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
-		const std::string pastecommand = "pastetext ";
-		if (action.GetInnerAction().rawline.length() > pastecommand.length() ) {
-			game->userInput.insert(game->writingPos, action.GetInnerAction().rawline.substr(pastecommand.length(), action.GetInnerAction().rawline.length()-pastecommand.length()));
-			game->writingPos += action.GetInnerAction().rawline.length()-pastecommand.length();
-		} else {
-			game->PasteClipboard();
-		}
-		return true;
+		return (game->textInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
 	}
 };
 
@@ -2429,8 +2411,8 @@ public:
 			" of the command, later on") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
+		// we cannot use extra commands because tokenization strips multiple
+		// spaces or even trailing spaces, the text should be copied verbatim
 		const std::string buffercommand = "buffertext ";
 		if (action.GetInnerAction().rawline.length() > buffercommand.length() ) {
 			game->consoleHistory->AddLine(action.GetInnerAction().rawline.substr(buffercommand.length(), action.GetInnerAction().rawline.length()-buffercommand.length()));

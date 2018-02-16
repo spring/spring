@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-#include <SDL.h>
-
 #include "GameController.h"
 #include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
@@ -91,7 +89,6 @@ public:
 	void SendNetChat(std::string message, int destination = -1);
 
 	bool ProcessCommandText(unsigned int key, const std::string& command);
-	bool ProcessKeyPressAction(unsigned int key, const Action& action);
 	bool ProcessAction(const Action& action, unsigned int key = -1, bool isRepeat = false);
 
 	void ReloadCOB(const std::string& msg, int player);
@@ -135,8 +132,6 @@ private:
 	bool ActionReleased(const Action& action);
 	/// synced actions (received from server) go in here
 	void ActionReceived(const Action& action, int playerID);
-
-	void ReColorTeams();
 
 	unsigned int GetNumQueuedSimFrameMessages(unsigned int maxFrames) const;
 	float GetNetMessageProcessingTimeLimit() const;
@@ -184,20 +179,13 @@ public:
 	bool showClock;
 	bool showSpeed;
 
-	float inputTextPosX;
-	float inputTextPosY;
-	float inputTextSizeX;
-	float inputTextSizeY;
-
 	bool skipping;
 	bool playing;
-	bool chatting;
 
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
 	CTimedKeyChain curKeyChain;
-	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >
 	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
@@ -233,10 +221,6 @@ private:
 
 	volatile bool finishedLoading;
 	bool gameOver;
-
-	int editingPos;
-	std::string textEditing;
-	SDL_Rect textEditingWindow;
 };
 
 

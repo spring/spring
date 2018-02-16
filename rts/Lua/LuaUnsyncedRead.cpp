@@ -2056,7 +2056,7 @@ int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 
 int LuaUnsyncedRead::IsUserWriting(lua_State* L)
 {
-	lua_pushboolean(L, activeController != nullptr && activeController->userWriting);
+	lua_pushboolean(L, activeController != nullptr && activeController->textInput.userWriting);
 	return 1;
 }
 

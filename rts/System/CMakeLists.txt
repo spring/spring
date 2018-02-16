@@ -60,6 +60,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UriParser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/StringHash.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/StringUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"

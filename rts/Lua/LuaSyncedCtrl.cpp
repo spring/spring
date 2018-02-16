@@ -1544,12 +1544,6 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 	return 0;
 }
 
-// Added here due to maintenance branch
-constexpr size_t hashString(const char* str, size_t hash = 5381)
-{
-	return (*str) ? hashString(str + 1, hash + (hash << 5) + *str) : hash;
-}
-
 
 static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 {

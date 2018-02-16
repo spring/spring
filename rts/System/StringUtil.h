@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef STRING_UTIL_H
+#define STRING_UTIL_H
 
 #include <algorithm>
 #include <cassert>

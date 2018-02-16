@@ -4,11 +4,11 @@
 #define _GAME_CONTROLLER_H_
 
 #include <string>
+#include "GameControllerTextInput.h"
 
 class CGameController
 {
 public:
-	CGameController();
 	virtual ~CGameController();
 
 	virtual bool Draw() { return true; }
@@ -19,17 +19,8 @@ public:
 	virtual int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) { return 0; }
 	virtual void ResizeEvent() {}
 
-	void PasteClipboard();
-
 public:
-	/// true if user is writing
-	bool userWriting;
-	/// current writing position
-	int  writingPos;
-	bool ignoreNextChar;
-
-	std::string userInput;
-	std::string userPrompt;
+	GameControllerTextInput textInput;
 };
 
 extern CGameController* activeController;

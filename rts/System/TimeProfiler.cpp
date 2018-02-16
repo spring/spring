@@ -6,6 +6,7 @@
 
 #include "System/TimeProfiler.h"
 #include "System/GlobalRNG.h"
+#include "System/StringHash.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
 
@@ -21,29 +22,8 @@ static CGlobalUnsyncedRNG profileColorRNG;
 
 
 
-static unsigned HashString(const char* s, size_t n)
-{
-	unsigned hash = 0;
-
-	for (size_t i = 0; (i < n || n == std::string::npos); ++i) {
-		if (s[i] == 0)
-			break;
-
-		hash += s[i];
-		hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
-	}
-
-	return hash;
-}
-
 #if 0
 // unused
-static unsigned HashString(const std::string& s) {
-	return (HashString(s.c_str(), s.size()));
-}
-
-
-
 BasicTimer::BasicTimer(const std::string& timerName)
 	: nameHash(HashString(timerName))
 	, startTime(spring_gettime())
