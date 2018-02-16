@@ -9,7 +9,7 @@
 #define __NV_DDS_H__
 
 #include <string>
-#include <deque>
+#include <vector>
 #include <cstdio>
 #include <assert.h>
 
@@ -179,7 +179,7 @@ namespace nv_dds
             }
 
         private:
-            std::deque<CSurface> m_mipmaps;
+            std::vector<CSurface> m_mipmaps;
     };
 
     class CDDSImage
@@ -208,22 +208,24 @@ namespace nv_dds
 				return *this;
 			}
 
+			#if 0
             void create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage);
             void create_texture3D(unsigned int format, unsigned int components, const CTexture &baseImage);
             void create_textureCubemap(unsigned int format, unsigned int components,
                                        const CTexture &positiveX, const CTexture &negativeX,
                                        const CTexture &positiveY, const CTexture &negativeY,
                                        const CTexture &positiveZ, const CTexture &negativeZ);
+			#endif
 
             void clear();
             bool load(std::string filename, bool flipImage = true);
-            bool save(std::string filename, bool flipImage = true);
+            bool save(std::string filename, bool flipImage = true) const;
 
-            bool upload_texture1D();
-            bool upload_texture2D(unsigned int imageIndex, int target);
-            bool upload_texture3D();
-            bool upload_textureRectangle();
-            bool upload_textureCubemap();
+            bool upload_texture1D() const;
+            bool upload_texture2D(unsigned int imageIndex, int target) const;
+            bool upload_texture3D() const;
+            bool upload_textureRectangle() const;
+            bool upload_textureCubemap() const;
 
             inline operator unsigned char*()
             {
@@ -233,7 +235,7 @@ namespace nv_dds
                 return m_images[0];
             }
 
-            inline unsigned int get_width()
+            inline unsigned int get_width() const
             {
                 assert(m_valid);
                 assert(!m_images.empty());
@@ -241,7 +243,7 @@ namespace nv_dds
                 return m_images[0].get_width();
             }
 
-            inline unsigned int get_height()
+            inline unsigned int get_height() const
             {
                 assert(m_valid);
                 assert(!m_images.empty());
@@ -249,7 +251,7 @@ namespace nv_dds
                 return m_images[0].get_height();
             }
 
-            inline unsigned int get_depth()
+            inline unsigned int get_depth() const
             {
                 assert(m_valid);
                 assert(!m_images.empty());
@@ -257,7 +259,7 @@ namespace nv_dds
                 return m_images[0].get_depth();
             }
 
-            inline unsigned int get_size()
+            inline unsigned int get_size() const
             {
                 assert(m_valid);
                 assert(!m_images.empty());
@@ -265,7 +267,7 @@ namespace nv_dds
                 return m_images[0].get_size();
             }
 
-            inline unsigned int get_num_mipmaps()
+            inline unsigned int get_num_mipmaps() const
             {
                 assert(m_valid);
                 assert(!m_images.empty());
@@ -303,7 +305,7 @@ namespace nv_dds
             inline bool is_volume() const { return (m_type == Texture3D); }
             inline bool is_valid() const { return m_valid; }
 
-            inline bool is_dword_aligned()
+            inline bool is_dword_aligned() const
             {
                 assert(m_valid);
 
@@ -314,10 +316,9 @@ namespace nv_dds
             }
 
         private:
-            unsigned int clamp_size(unsigned int size);
-            unsigned int size_dxtc(unsigned int width, unsigned int height);
-            unsigned int size_rgb(unsigned int width, unsigned int height);
-            inline void swap_endian(void *val);
+            unsigned int clamp_size(unsigned int size) const;
+            unsigned int size_dxtc(unsigned int width, unsigned int height) const;
+            unsigned int size_rgb(unsigned int width, unsigned int height) const;
 
             // calculates 4-byte aligned width of image
             inline unsigned int get_dword_aligned_linesize(unsigned int width, unsigned int bpp) const
@@ -325,23 +326,23 @@ namespace nv_dds
                 return ((width * bpp + 31) & -32) >> 3;
             }
 
-            void flip(CSurface &surface);
-            void flip_texture(CTexture &texture);
+            void flip(CSurface &surface) const;
+            void flip_texture(CTexture &texture) const;
 
-            void swap(void *byte1, void *byte2, unsigned int size);
-            void flip_blocks_dxtc1(DXTColBlock *line, unsigned int numBlocks);
-            void flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks);
-            void flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks);
-            void flip_dxt5_alpha(DXT5AlphaBlock *block);
+            void swap(void *byte1, void *byte2, unsigned int size) const;
+            void flip_blocks_dxtc1(DXTColBlock *line, unsigned int numBlocks) const;
+            void flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks) const;
+            void flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks) const;
+            void flip_dxt5_alpha(DXT5AlphaBlock *block) const;
 
-            bool write_texture(const CTexture &texture, FILE *fp);
+            bool write_texture(const CTexture &texture, FILE *fp) const;
 
             unsigned int m_format;
             unsigned int m_components;
             TextureType m_type;
             bool m_valid;
 
-            std::deque<CTexture> m_images;
+            std::vector<CTexture> m_images;
     };
 }
 

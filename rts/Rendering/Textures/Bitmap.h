@@ -75,7 +75,7 @@ public:
 	#ifndef BITMAP_NO_OPENGL
 	int32_t textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
 
-	nv_dds::CDDSImage* ddsimage;
+	nv_dds::CDDSImage ddsimage;
 	#endif // !BITMAP_NO_OPENGL
 
 	bool compressed;

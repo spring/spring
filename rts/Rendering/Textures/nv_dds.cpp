@@ -187,6 +187,8 @@ CDDSImage::CDDSImage()
 {
 }
 
+
+#if 0
 void CDDSImage::create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage)
 {
     assert(format != 0);
@@ -222,7 +224,10 @@ void CDDSImage::create_texture3D(unsigned int format, unsigned int components, c
 
     m_valid = true;
 }
+#endif
 
+
+#if 0
 inline bool same_size(const CTexture &a, const CTexture &b)
 {
     if (a.get_width() != b.get_width())
@@ -267,6 +272,8 @@ void CDDSImage::create_textureCubemap(unsigned int format, unsigned int componen
 
     m_valid = true;
 }
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // loads DDS image
@@ -406,14 +413,16 @@ bool CDDSImage::load(string filename, bool flipImage)
     
     // use correct size calculation function depending on whether image is 
     // compressed
-    unsigned int (CDDSImage::*sizefunc)(unsigned int, unsigned int);
+    unsigned int (CDDSImage::*sizefunc)(unsigned int, unsigned int) const;
     sizefunc = (is_compressed() ? &CDDSImage::size_dxtc : &CDDSImage::size_rgb);
+
+	m_images.reserve((m_type == TextureCubemap)? 6 : 1);
 
     // load all surfaces for the image (6 surfaces for cubemaps)
     for (unsigned int n = 0; n < (unsigned int)(m_type == TextureCubemap ? 6 : 1); n++)
     {
         // add empty texture object
-        m_images.push_back(CTexture());
+        m_images.emplace_back();
 
         // get reference to newly added texture object
         CTexture &img = m_images[n];
@@ -476,10 +485,9 @@ bool CDDSImage::load(string filename, bool flipImage)
     // swap cubemaps on y axis (since image is flipped in OGL)
     if (m_type == TextureCubemap && flipImage)
     {
-        CTexture tmp;
-        tmp = m_images[3];
-        m_images[3] = m_images[2];
-        m_images[2] = tmp;
+        CTexture tmp = std::move(m_images[3]);
+        m_images[3] = std::move(m_images[2]);
+        m_images[2] = std::move(tmp);
     }
     
     //fclose(fp);
@@ -489,7 +497,7 @@ bool CDDSImage::load(string filename, bool flipImage)
     return true;
 }
 
-bool CDDSImage::write_texture(const CTexture &texture, FILE *fp)
+bool CDDSImage::write_texture(const CTexture &texture, FILE *fp) const
 {
     assert(get_num_mipmaps() == texture.get_num_mipmaps());
     
@@ -508,7 +516,7 @@ bool CDDSImage::write_texture(const CTexture &texture, FILE *fp)
     return true;
 }
 
-bool CDDSImage::save(std::string filename, bool flipImage)
+bool CDDSImage::save(std::string filename, bool flipImage) const
 {
     assert(m_valid);
     assert(m_type != TextureNone);
@@ -612,7 +620,7 @@ bool CDDSImage::save(std::string filename, bool flipImage)
 
     if (m_type != TextureCubemap)
     {
-        CTexture tex = m_images[0];
+        CTexture tex = m_images[0]; // copy
         if (flipImage) flip_texture(tex);
         if (!write_texture(tex, fp)) {
             LOG_L(L_ERROR, "couldn't write texture %s: %s",filename.c_str(), strerror(ferror(fp)));
@@ -626,7 +634,7 @@ bool CDDSImage::save(std::string filename, bool flipImage)
 
         for (unsigned int i = 0; i < m_images.size(); i++)
         {
-            CTexture cubeFace;
+            CTexture cubeFace; // copy
 
             if (i == 2) 
                 cubeFace = m_images[3];
@@ -670,7 +678,7 @@ bool CDDSImage::is_compressed() const
 
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 1D texture
-bool CDDSImage::upload_texture1D()
+bool CDDSImage::upload_texture1D() const
 {
     assert(m_valid);
     assert(!m_images.empty());
@@ -733,7 +741,7 @@ bool CDDSImage::upload_texture1D()
 //              the 2D texture such as a specific face of a cubemap
 //
 //              default: GL_TEXTURE_2D
-bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target)
+bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target) const
 {
     assert(m_valid);
     assert(!m_images.empty());
@@ -794,7 +802,7 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target)
 
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 3D texture
-bool CDDSImage::upload_texture3D()
+bool CDDSImage::upload_texture3D() const
 {
     assert(m_valid);
     assert(!m_images.empty());
@@ -849,14 +857,14 @@ bool CDDSImage::upload_texture3D()
     return true;
 }
 
-bool CDDSImage::upload_textureRectangle()
+bool CDDSImage::upload_textureRectangle() const
 {
     return upload_texture2D(0, GL_TEXTURE_RECTANGLE_NV);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed cubemap texture
-bool CDDSImage::upload_textureCubemap()
+bool CDDSImage::upload_textureCubemap() const
 {
     assert(m_valid);
     assert(!m_images.empty());
@@ -881,7 +889,7 @@ bool CDDSImage::upload_textureCubemap()
 
 ///////////////////////////////////////////////////////////////////////////////
 // clamps input size to [1-size]
-inline unsigned int CDDSImage::clamp_size(unsigned int size)
+inline unsigned int CDDSImage::clamp_size(unsigned int size) const
 {
     if (size <= 0)
         size = 1;
@@ -895,7 +903,7 @@ inline unsigned int CDDSImage::clamp_size(unsigned int size)
 
 ///////////////////////////////////////////////////////////////////////////////
 // calculates size of DXTC texture in bytes
-inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height)
+inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height) const
 {
     return ((width+3)/4)*((height+3)/4)*
         (m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);   
@@ -903,14 +911,14 @@ inline unsigned int CDDSImage::size_dxtc(unsigned int width, unsigned int height
 
 ///////////////////////////////////////////////////////////////////////////////
 // calculates size of uncompressed RGB texture in bytes
-inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height)
+inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height) const
 {
     return width*height*m_components;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // flip image around X axis
-void CDDSImage::flip(CSurface &surface)
+void CDDSImage::flip(CSurface &surface) const
 {
     unsigned int linesize;
 
@@ -938,7 +946,7 @@ void CDDSImage::flip(CSurface &surface)
     }
     else
     {
-        void (CDDSImage::*flipblocks)(DXTColBlock*, unsigned int);
+        void (CDDSImage::*flipblocks)(DXTColBlock*, unsigned int) const = nullptr;
         unsigned int xblocks = surface.get_width() / 4;
         unsigned int yblocks = surface.get_height() / 4;
         unsigned int blocksize;
@@ -947,15 +955,15 @@ void CDDSImage::flip(CSurface &surface)
         {
             case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT: 
                 blocksize = 8;
-                flipblocks = &CDDSImage::flip_blocks_dxtc1; 
+                flipblocks = &CDDSImage::flip_blocks_dxtc1;
                 break;
             case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT: 
                 blocksize = 16;
-                flipblocks = &CDDSImage::flip_blocks_dxtc3; 
+                flipblocks = &CDDSImage::flip_blocks_dxtc3;
                 break;
             case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: 
                 blocksize = 16;
-                flipblocks = &CDDSImage::flip_blocks_dxtc5; 
+                flipblocks = &CDDSImage::flip_blocks_dxtc5;
                 break;
             default:
                 return;
@@ -979,7 +987,7 @@ void CDDSImage::flip(CSurface &surface)
     }
 }    
 
-void CDDSImage::flip_texture(CTexture &texture)
+void CDDSImage::flip_texture(CTexture &texture) const
 {
     flip(texture);
     
@@ -991,7 +999,7 @@ void CDDSImage::flip_texture(CTexture &texture)
 
 ///////////////////////////////////////////////////////////////////////////////
 // swap to sections of memory
-void CDDSImage::swap(void *byte1, void *byte2, unsigned int size)
+void CDDSImage::swap(void *byte1, void *byte2, unsigned int size) const
 {
     unsigned char *tmp = new unsigned char[size];
 
@@ -1004,7 +1012,7 @@ void CDDSImage::swap(void *byte1, void *byte2, unsigned int size)
 
 ///////////////////////////////////////////////////////////////////////////////
 // flip a DXT1 color block
-void CDDSImage::flip_blocks_dxtc1(DXTColBlock *line, unsigned int numBlocks)
+void CDDSImage::flip_blocks_dxtc1(DXTColBlock *line, unsigned int numBlocks) const
 {
     DXTColBlock *curblock = line;
 
@@ -1019,7 +1027,7 @@ void CDDSImage::flip_blocks_dxtc1(DXTColBlock *line, unsigned int numBlocks)
 
 ///////////////////////////////////////////////////////////////////////////////
 // flip a DXT3 color block
-void CDDSImage::flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks)
+void CDDSImage::flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks) const
 {
     DXTColBlock *curblock = line;
     DXT3AlphaBlock *alphablock;
@@ -1042,7 +1050,7 @@ void CDDSImage::flip_blocks_dxtc3(DXTColBlock *line, unsigned int numBlocks)
 
 ///////////////////////////////////////////////////////////////////////////////
 // flip a DXT5 alpha block
-void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
+void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block) const
 {
     unsigned char gBits[4][4];
     
@@ -1120,7 +1128,7 @@ void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
 
 ///////////////////////////////////////////////////////////////////////////////
 // flip a DXT5 color block
-void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks)
+void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks) const
 {
     DXTColBlock *curblock = line;
     DXT5AlphaBlock *alphablock;
