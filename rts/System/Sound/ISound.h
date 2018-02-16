@@ -18,25 +18,26 @@ class ISound {
 	static ISound* singleton;
 
 public:
-	ISound();
-	virtual ~ISound() {};
+	virtual ~ISound() {}
 
 	static void Initialize(bool forceNullSound = false);
 	static void Shutdown();
-	static bool IsInitialized() { return (singleton != NULL); }
+	static bool IsInitialized() { return (singleton != nullptr); }
 	static inline ISound* GetInstance() {
 		return singleton;
 	}
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;
 	virtual size_t GetSoundId(const std::string& name) = 0;
-	virtual SoundItem* GetSoundItem(size_t id) const = 0;
 
+
+	virtual SoundItem* GetSoundItem(size_t id) = 0;
 	/**
 	 * Returns a free sound source if available,
 	 * the one with the lowest priority otherwise.
 	 */
 	virtual CSoundSource* GetNextBestSource(bool lock = true) = 0;
+
 
 	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp) = 0;
 	virtual void NewFrame() = 0;
@@ -63,8 +64,8 @@ public:
 	virtual const float3& GetListenerPos() const = 0;
 
 public:
-	unsigned numEmptyPlayRequests;
-	unsigned numAbortedPlays;
+	unsigned numEmptyPlayRequests = 0;
+	unsigned numAbortedPlays = 0;
 private:
 	virtual bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) = 0;
 	static bool IsNullAudio();

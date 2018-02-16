@@ -79,7 +79,8 @@ CSound::CSound()
 	Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
 
 	SoundBuffer::Initialise();
-	soundItems.push_back(nullptr);
+	soundItems.reserve(1024);
+	soundItems.emplace_back();
 
 	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
 
@@ -98,10 +99,6 @@ CSound::~CSound()
 
 	LOG("[%s][2]", __func__);
 
-	for (SoundItem* item: soundItems)
-		delete item;
-
-	soundItems.clear();
 	SoundBuffer::Deinitialise();
 
 	LOG("[%s][3]", __func__);
@@ -162,15 +159,13 @@ size_t CSound::GetSoundId(const std::string& name)
 	return 0;
 }
 
-SoundItem* CSound::GetSoundItem(size_t id) const {
+SoundItem* CSound::GetSoundItem(size_t id) {
 	// id==0 is a special id and invalid
 	if (id == 0 || id >= soundItems.size())
 		return nullptr;
 
-	// WARNING:
-	//   leaked to SoundSource::PlayAsync via AudioChannel::FindSourceAndPlay
-	//   soundItems vector grows on-demand via GetSoundId -> MakeItemFromDef
-	return soundItems[id];
+	// WARNING: may not be leaked, soundItems vector grows on-demand via GetSoundId -> MakeItemFromDef
+	return &soundItems[id];
 }
 
 CSoundSource* CSound::GetNextBestSource(bool lock)
@@ -606,7 +601,9 @@ void CSound::UpdateThread(int cfgMaxSounds)
 
 	LOG("[Sound::%s][3] efx=%p", __func__, &efx);
 
+	// destruct items before context cleanup
 	soundSources.clear();
+	soundItems.clear();
 
 	// must happen after sources and before context
 	efx.Kill();
@@ -622,7 +619,7 @@ void CSound::UpdateThread(int cfgMaxSounds)
 
 void CSound::Update()
 {
-	std::lock_guard<spring::recursive_mutex> lck(soundMutex); // lock
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	for (CSoundSource& source: soundSources)
 		source.Update();
@@ -633,22 +630,23 @@ void CSound::Update()
 
 size_t CSound::MakeItemFromDef(const SoundItemNameMap& itemDef)
 {
-	//! MakeItemFromDef is private. Only caller is LoadSoundDefs and it sets the mutex itself.
+	// only callers are LoadSoundDefs{Impl} and GetSoundId which both grab this
 	// std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-	const size_t newid = soundItems.size();
+
 	const auto defIt = itemDef.find("file");
 
 	if (defIt == itemDef.end())
 		return 0;
 
 	const size_t bufferID = LoadSoundBuffer(defIt->second);
+	const size_t   itemID = soundItems.size();
 
 	if (bufferID == 0)
 		return 0;
 
-	soundItems.push_back(new SoundItem(bufferID, itemDef));
-	soundMap[(soundItems.back())->Name()] = newid;
-	return newid;
+	soundItems.emplace_back(itemID, bufferID, itemDef);
+	soundMap[ soundItems[itemID].Name() ] = itemID;
+	return itemID;
 }
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup)
@@ -768,9 +766,10 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 
 				soundItemDefsMap[name] = bufmap;
 
-				if (buf.KeyExists("preload")) {
-					MakeItemFromDef(bufmap);
-				}
+				if (!buf.KeyExists("preload"))
+					continue;
+
+				MakeItemFromDef(bufmap);
 			}
 			LOG(" parsed %i sounds from %s", (int)keys.size(), fileName.c_str());
 		}

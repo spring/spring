@@ -15,14 +15,43 @@ class SoundBuffer;
  *
  * This can be played by CSoundSource.
  * Each soundsource has exactly one SoundBuffer it wraps around, while one buffer can be shared among multiple Items.
- * You can adjust various playing parameters within this class, sou you can have 1 buffer and multiple SoundItems
+ * You can adjust various playing parameters within this class, so you can have 1 buffer and multiple SoundItems
  * which differ in pitch, volume etc.
  */
 class SoundItem
 {
 	friend class CSoundSource;
+
 public:
-	SoundItem(size_t bufferID, const spring::unordered_map<std::string, std::string>& items);
+	SoundItem() = default;
+	SoundItem(size_t itemID, size_t bufferID, const spring::unordered_map<std::string, std::string>& items);
+	SoundItem(SoundItem&& s) { *this = std::move(s); }
+
+	SoundItem& operator = (SoundItem&& s) {
+		soundItemID = s.soundItemID;
+		soundBufferID = s.soundBufferID;
+
+		name = std::move(s.name);
+
+		gain = s.gain;
+		gainMod = s.gainMod;
+
+		pitch = s.pitch;
+		pitchMod = s.pitchMod;
+		dopplerScale = s.dopplerScale;
+
+		maxDist = s.maxDist;
+		rolloff = s.rolloff;
+
+		priority = s.priority;
+
+		maxConcurrent = s.maxConcurrent;
+		currentlyPlaying = s.currentlyPlaying;
+		loopTime = s.loopTime;
+
+		in3D = s.in3D;
+		return *this;
+	}
 
 	bool PlayNow();
 	void StopPlay();
@@ -37,6 +66,7 @@ public:
 	float GetPitch() const;
 
 private:
+	size_t soundItemID = 0;
 	size_t soundBufferID = 0;
 
 	/// unique identifier (if no name is specified, this will be the filename)
