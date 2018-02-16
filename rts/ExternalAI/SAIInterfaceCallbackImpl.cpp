@@ -9,7 +9,7 @@ using std::sprintf;
 #include "Game/GameVersion.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/AIInterfaceLibraryInfo.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"     // for ABI version
@@ -147,20 +147,20 @@ EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(
 ) {
 	const char* value = "";
 
-	SkirmishAIKey aiKey(shortName, version);
+	const SkirmishAIKey aiKey(shortName, version);
 
-	const IAILibraryManager::T_skirmishAIInfos& skirmishInfos = IAILibraryManager::GetInstance()->GetSkirmishAIInfos();
-	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+	const AILibraryManager::T_skirmishAIInfos& skirmishInfos = AILibraryManager::GetInstance()->GetSkirmishAIInfos();
+	const AILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
 
-	if (inf != skirmishInfos.end()) {
-		const std::string& valueStr = (inf->second).GetInfo(key);
+	if (inf == skirmishInfos.end())
+		return value;
 
-		if (valueStr != "") {
-			value = valueStr.c_str();
-		}
-	}
+	const std::string& valueStr = (inf->second).GetInfo(key);
 
-	return value;
+	if (valueStr.empty())
+		return value;
+
+	return (valueStr.c_str());
 }
 
 EXPORT(void) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg) {

@@ -7,7 +7,7 @@
 #include "LuaUtils.h"
 
 #include "ExternalAI/LuaAIImplHandler.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
@@ -217,22 +217,22 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	const std::string mapArchiveName = luaL_optsstring(L, 2, "");
 
 	// load selected archives to get lua ais
-	if (!gameArchiveName.empty()) {
+	if (!gameArchiveName.empty())
 		vfsHandler->AddArchive(gameArchiveName, false);
-	}
-	if (!mapArchiveName.empty()) {
+	if (!mapArchiveName.empty())
 		vfsHandler->AddArchive(mapArchiveName, false);
-	}
 
-	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
+	const AILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
+	const std::vector< std::vector<InfoItem> >& luaAIInfos = luaAIImplHandler.LoadInfos();
 
 	lua_createtable(L, skirmishAIKeys.size() + luaAIInfos.size(), 0);
+
 	unsigned int count = 0;
 
-	for(int i=0; i<luaAIInfos.size(); i++) {
+	for (size_t i = 0; i < luaAIInfos.size(); i++) {
 		lua_newtable(L); {
-			for (int j=0; j<luaAIInfos[i].size(); j++) {
+
+			for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
 				if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME) {
 					HSTR_PUSH_STRING(L, "shortName", luaAIInfos[i][j].GetValueAsString());
 				} else if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_VERSION) {
@@ -240,19 +240,18 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 				}
 			}
 		}
+
 		lua_rawseti(L, -2, ++count);
 	}
 
 	// close archives
-	if (!mapArchiveName.empty()) {
+	if (!mapArchiveName.empty())
 		vfsHandler->RemoveArchive(mapArchiveName);
-	}
-	if (!gameArchiveName.empty()) {
+	if (!gameArchiveName.empty())
 		vfsHandler->RemoveArchive(gameArchiveName);
-	}
 
-	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
-	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
+	AILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
+	AILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
 
 	for (; i != e; ++i) {
 		lua_newtable(L); {

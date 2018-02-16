@@ -21,7 +21,7 @@
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
@@ -814,10 +814,8 @@ public:
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
 				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
 
-				if (aiKey.IsUnspecified()) {
-					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s",
-							aiShortName.c_str(), aiVersion.c_str());
-					badArgs = true;
+				if ((badArgs = aiKey.IsUnspecified())) {
+					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s", aiShortName.c_str(), aiVersion.c_str());
 				} else {
 					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
 
@@ -828,8 +826,8 @@ public:
 					aiData.shortName  = aiShortName;
 					aiData.version    = aiVersion;
 
-					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
-						aiData.optionKeys.push_back(o->first);
+					for (const auto& opt: aiOptions)
+						aiData.optionKeys.push_back(opt.first);
 
 					aiData.options = aiOptions;
 					aiData.isLuaAI = aiLibInfo.IsLuaAI();

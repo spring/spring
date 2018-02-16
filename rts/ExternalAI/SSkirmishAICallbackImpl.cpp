@@ -2,7 +2,7 @@
 
 #include "ExternalAI/AICallback.h"
 #include "ExternalAI/AICheats.h"
-#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/SSkirmishAICallbackImpl.h"
 #include "ExternalAI/SkirmishAILibraryInfo.h"
 #include "ExternalAI/SAIInterfaceCallbackImpl.h"
@@ -1275,8 +1275,9 @@ EXPORT(int) skirmishAiCallback_SkirmishAI_getTeamId(int skirmishAIId) {
 static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmishAIId) {
 	const CSkirmishAILibraryInfo* info = nullptr;
 
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+	const AILibraryManager* libMan = AILibraryManager::GetInstance();
 	const SkirmishAIKey* key = skirmishAIHandler.GetLocalSkirmishAILibraryKey(skirmishAIId);
+
 	assert(key != nullptr);
 
 	const auto& infs = libMan->GetSkirmishAIInfos();
