@@ -20,14 +20,7 @@ CR_REG_METADATA(DamageArray, (
 void DamageArray::SetDefaultDamage(float damage)
 {
 	damages.clear();
-
-	if (damageArrayHandler != nullptr) {
-		damages.resize(damageArrayHandler->GetNumTypes(), damage);
-		assert(!damages.empty());
-	} else {
-		// default-damage only (never reached?)
-		damages.resize(1, damage);
-	}
+	damages.resize(std::max(1, damageArrayHandler.GetNumTypes()), damage);
 }
 
 
@@ -94,7 +87,7 @@ DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const floa
 	const float ddmod     = dynDamageMin / damages[0]; // get damage mod from first damage type
 
 	if (dynDamageInverted) {
-		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+		for (int i = 0; i < damageArrayHandler.GetNumTypes(); ++i) {
 			float d = damages[i] - damageMod * damages[i];
 
 			if (dynDamageMin > 0.0f)
@@ -105,7 +98,7 @@ DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const floa
 			dynDamages.Set(i, d);
 		}
 	} else {
-		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+		for (int i = 0; i < damageArrayHandler.GetNumTypes(); ++i) {
 			float d = damageMod * damages[i];
 
 			if (dynDamageMin > 0.0f)
