@@ -219,9 +219,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	perlinTexObjects = 0;
 	drawPerlinTex = false;
 
-	// perlinFB is no-op constructed, FBO has to be initialized manually
-	perlinFB.Init(false);
-
 	if (perlinFB.IsValid()) {
 		// we never refresh the full texture (just the perlin part). So we need to reload it then.
 		perlinFB.reloadOnAltTab = true;
