@@ -43,6 +43,9 @@ private:
 
 	std::vector<float> mesh;
 	std::vector<float> origMesh;
+
+	std::vector<float> colsMaxima;
+	std::vector<int> maximaRows;
 };
 
 extern SmoothHeightMesh smoothGround;
