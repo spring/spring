@@ -15,7 +15,7 @@
 
 
 
-SmoothHeightMesh* smoothGround = NULL;
+SmoothHeightMesh smoothGround;
 
 
 static float Interpolate(float x, float y, const int maxx, const int maxy, const float res, const float* heightmap)
@@ -41,7 +41,7 @@ static float Interpolate(float x, float y, const int maxx, const int maxy, const
 }
 
 
-SmoothHeightMesh::SmoothHeightMesh(float mx, float my, float res, float smoothRad)
+void SmoothHeightMesh::Init(float mx, float my, float res, float smoothRad)
 	: maxx((mx / res) + 1)
 	, maxy((my / res) + 1)
 	, fmaxx(mx)
@@ -52,7 +52,7 @@ SmoothHeightMesh::SmoothHeightMesh(float mx, float my, float res, float smoothRa
 	MakeSmoothMesh();
 }
 
-SmoothHeightMesh::~SmoothHeightMesh() {
+void SmoothHeightMesh::Kill() {
 
 	mesh.clear();
 	origMesh.clear();

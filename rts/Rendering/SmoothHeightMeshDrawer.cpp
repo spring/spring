@@ -57,9 +57,9 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 	glDisable(GL_TEXTURE_1D);
 	glDisable(GL_CULL_FACE);
 
-	const float quadSize = 4.0f * smoothGround->GetResolution();
-	const unsigned int numQuadsX = smoothGround->GetFMaxX() / quadSize;
-	const unsigned int numQuadsZ = smoothGround->GetFMaxY() / quadSize;
+	const float quadSize = 4.0f * smoothGround.GetResolution();
+	const unsigned int numQuadsX = smoothGround.GetFMaxX() / quadSize;
+	const unsigned int numQuadsZ = smoothGround.GetFMaxY() / quadSize;
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
@@ -69,10 +69,11 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 		for (unsigned int xq = 0; xq <= numQuadsX; xq++) {
 			const float x = xq * quadSize;
 			const float z = zq * quadSize;
-			const float h1 = smoothGround->GetHeightAboveWater(x,            z           ) + yoffset;
-			const float h2 = smoothGround->GetHeightAboveWater(x + quadSize, z           ) + yoffset;
-			const float h3 = smoothGround->GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
-			const float h4 = smoothGround->GetHeightAboveWater(x,            z + quadSize) + yoffset;
+
+			const float h1 = smoothGround.GetHeightAboveWater(x,            z           ) + yoffset;
+			const float h2 = smoothGround.GetHeightAboveWater(x + quadSize, z           ) + yoffset;
+			const float h3 = smoothGround.GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
+			const float h4 = smoothGround.GetHeightAboveWater(x,            z + quadSize) + yoffset;
 
 			va->AddVertexQ0(float3(x,            h1, z           ));
 			va->AddVertexQ0(float3(x + quadSize, h2, z           ));

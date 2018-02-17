@@ -531,7 +531,7 @@ void CGame::PreLoadSimulation()
 	ENTER_SYNCED_CODE();
 
 	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
-	smoothGround = new SmoothHeightMesh(float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
+	smoothGround.Init(float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
@@ -885,7 +885,7 @@ void CGame::KillSimulation()
 	IPathManager::FreeInstance(pathManager);
 
 	spring::SafeDelete(readMap);
-	spring::SafeDelete(smoothGround);
+	smoothGround.Kill();
 
 	groundBlockingObjectMap.Kill();
 	buildingMaskMap.Kill();
