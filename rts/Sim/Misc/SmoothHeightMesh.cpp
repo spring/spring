@@ -42,13 +42,13 @@ static float Interpolate(float x, float y, const int maxx, const int maxy, const
 
 
 void SmoothHeightMesh::Init(float mx, float my, float res, float smoothRad)
-	: maxx((mx / res) + 1)
-	, maxy((my / res) + 1)
-	, fmaxx(mx)
-	, fmaxy(my)
-	, resolution(res)
-	, smoothRadius(std::max(1.0f, smoothRad))
 {
+	maxx = ((fmaxx = mx) / res) + 1;
+	maxy = ((fmaxy = my) / res) + 1;
+
+	resolution = res;
+	smoothRadius = std::max(1.0f, smoothRad);
+
 	MakeSmoothMesh();
 }
 

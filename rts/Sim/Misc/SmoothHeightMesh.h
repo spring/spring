@@ -34,10 +34,12 @@ public:
 private:
 	void MakeSmoothMesh();
 
-	const int maxx, maxy;
-	const float fmaxx, fmaxy;
-	const float resolution;
-	const float smoothRadius;
+	int maxx = 0;
+	int maxy = 0;
+	float fmaxx = 0.0f;
+	float fmaxy = 0.0f;
+	float resolution = 0.0f;
+	float smoothRadius = 0.0f;
 
 	std::vector<float> mesh;
 	std::vector<float> origMesh;
