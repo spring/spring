@@ -13,8 +13,8 @@ class CGround;
 class SmoothHeightMesh
 {
 public:
-	SmoothHeightMesh(float mx, float my, float res, float smoothRad);
-	~SmoothHeightMesh();
+	void Init(float mx, float my, float res, float smoothRad);
+	void Kill();
 
 	float GetHeight(float x, float y);
 	float GetHeightAboveWater(float x, float y);
@@ -43,6 +43,6 @@ private:
 	std::vector<float> origMesh;
 };
 
-extern SmoothHeightMesh* smoothGround;
+extern SmoothHeightMesh smoothGround;
 
 #endif

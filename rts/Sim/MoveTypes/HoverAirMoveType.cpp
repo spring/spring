@@ -452,7 +452,7 @@ void CHoverAirMoveType::UpdateFlying()
 
 	const float goalDistSq2D = goalVec.SqLength2D();
 	const float gHeight = UseSmoothMesh()?
-		std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z)):
+		std::max(smoothGround.GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z)):
 		CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	const bool closeToGoal = (flyState == FLY_ATTACKING)?
@@ -855,8 +855,8 @@ void CHoverAirMoveType::UpdateAirPhysics()
 
 	if (UseSmoothMesh()) {
 		curAbsHeight = owner->unitDef->canSubmerge?
-			smoothGround->GetHeight(pos.x, pos.z):
-			smoothGround->GetHeightAboveWater(pos.x, pos.z);
+			smoothGround.GetHeight(pos.x, pos.z):
+			smoothGround.GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	// restore original vertical speed, then compute new

@@ -5227,7 +5227,7 @@ int LuaSyncedRead::GetSmoothMeshHeight(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
 
-	lua_pushnumber(L, smoothGround->GetHeight(x, z));
+	lua_pushnumber(L, smoothGround.GetHeight(x, z));
 	return 1;
 }
 

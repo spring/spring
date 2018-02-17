@@ -17,9 +17,9 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(1.0f);
 
-	const float quadSize = 4.0f * smoothGround->GetResolution();
-	const unsigned int numQuadsX = smoothGround->GetFMaxX() / quadSize;
-	const unsigned int numQuadsZ = smoothGround->GetFMaxY() / quadSize;
+	const float quadSize = 4.0f * smoothGround.GetResolution();
+	const unsigned int numQuadsX = smoothGround.GetFMaxX() / quadSize;
+	const unsigned int numQuadsZ = smoothGround.GetFMaxY() / quadSize;
 	const SColor quadColor = {0.0f, 1.0f, 0.0f, 1.0f};
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
@@ -34,10 +34,10 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 			const float x = xq * quadSize;
 			const float z = zq * quadSize;
 
-			const float h1 = smoothGround->GetHeightAboveWater(x,            z           ) + yoffset;
-			const float h2 = smoothGround->GetHeightAboveWater(x + quadSize, z           ) + yoffset;
-			const float h3 = smoothGround->GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
-			const float h4 = smoothGround->GetHeightAboveWater(x,            z + quadSize) + yoffset;
+			const float h1 = smoothGround.GetHeightAboveWater(x,            z           ) + yoffset;
+			const float h2 = smoothGround.GetHeightAboveWater(x + quadSize, z           ) + yoffset;
+			const float h3 = smoothGround.GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
+			const float h4 = smoothGround.GetHeightAboveWater(x,            z + quadSize) + yoffset;
 
 			buffer->SafeAppend({{x,            h1, z           }, quadColor});
 			buffer->SafeAppend({{x + quadSize, h2, z           }, quadColor});

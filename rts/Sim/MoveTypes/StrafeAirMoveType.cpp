@@ -847,7 +847,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 
 	if (UseSmoothMesh())
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
+		gHeight = std::max(smoothGround.GetHeight(pos.x, pos.z), gHeight);
 
 	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();

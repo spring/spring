@@ -3843,8 +3843,8 @@ static inline void ParseSmoothMeshParams(lua_State* L, const char* caller,
 		float& factor, int& x1, int& z1, int& x2, int& z2)
 {
 	ParseParams(L, caller, factor, x1, z1, x2, z2,
-			smoothGround->GetResolution(), smoothGround->GetMaxX(),
-			smoothGround->GetMaxY());
+			smoothGround.GetResolution(), smoothGround.GetMaxX(),
+			smoothGround.GetMaxY());
 }
 
 
@@ -3856,8 +3856,8 @@ int LuaSyncedCtrl::LevelSmoothMesh(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * smoothGround->GetMaxX()) + x;
-			smoothGround->SetHeight(index, height);
+			const int index = (z * smoothGround.GetMaxX()) + x;
+			smoothGround.SetHeight(index, height);
 		}
 	}
 	return 0;
@@ -3871,8 +3871,8 @@ int LuaSyncedCtrl::AdjustSmoothMesh(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * smoothGround->GetMaxX()) + x;
-			smoothGround->AddHeight(index, height);
+			const int index = (z * smoothGround.GetMaxX()) + x;
+			smoothGround.AddHeight(index, height);
 		}
 	}
 
@@ -3885,14 +3885,14 @@ int LuaSyncedCtrl::RevertSmoothMesh(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseSmoothMeshParams(L, __func__, origFactor, x1, z1, x2, z2);
 
-	const float* origMap = smoothGround->GetOriginalMeshData();
-	const float* currMap = smoothGround->GetMeshData();
+	const float* origMap = smoothGround.GetOriginalMeshData();
+	const float* currMap = smoothGround.GetMeshData();
 
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int idx = (z * smoothGround->GetMaxX()) + x;
-				smoothGround->SetHeight(idx, origMap[idx]);
+				const int idx = (z * smoothGround.GetMaxX()) + x;
+				smoothGround.SetHeight(idx, origMap[idx]);
 			}
 		}
 	}
@@ -3900,10 +3900,10 @@ int LuaSyncedCtrl::RevertSmoothMesh(lua_State* L)
 		const float currFactor = (1.0f - origFactor);
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int index = (z * smoothGround->GetMaxX()) + x;
+				const int index = (z * smoothGround.GetMaxX()) + x;
 				const float ofh = origFactor * origMap[index];
 				const float cfh = currFactor * currMap[index];
-				smoothGround->SetHeight(index, ofh + cfh);
+				smoothGround.SetHeight(index, ofh + cfh);
 			}
 		}
 	}
@@ -3923,20 +3923,20 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State* L)
 	const float h  = luaL_checkfloat(L, 3);
 
 	// quantize
-	const int x = (int)(xl / smoothGround->GetResolution());
-	const int z = (int)(zl / smoothGround->GetResolution());
+	const int x = (int)(xl / smoothGround.GetResolution());
+	const int z = (int)(zl / smoothGround.GetResolution());
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
-	    (z < 0) || (z > smoothGround->GetMaxY())) {
+	if ((x < 0) || (x > smoothGround.GetMaxX()) ||
+	    (z < 0) || (z > smoothGround.GetMaxY())) {
 		return 0;
 	}
 
-	const int index = (z * smoothGround->GetMaxX()) + x;
-	const float oldHeight = smoothGround->GetMeshData()[index];
+	const int index = (z * smoothGround.GetMaxX()) + x;
+	const float oldHeight = smoothGround.GetMeshData()[index];
 	smoothMeshAmountChanged += math::fabsf(h);
 
-	smoothGround->AddHeight(index, h);
+	smoothGround.AddHeight(index, h);
 	// push the new height
 	lua_pushnumber(L, oldHeight + h);
 	return 1;
@@ -3953,17 +3953,17 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State* L)
 	const float h  = luaL_checkfloat(L, 3);
 
 	// quantize
-	const int x = (int)(xl / smoothGround->GetResolution());
-	const int z = (int)(zl / smoothGround->GetResolution());
+	const int x = (int)(xl / smoothGround.GetResolution());
+	const int z = (int)(zl / smoothGround.GetResolution());
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
-	    (z < 0) || (z > smoothGround->GetMaxY())) {
+	if ((x < 0) || (x > smoothGround.GetMaxX()) ||
+	    (z < 0) || (z > smoothGround.GetMaxY())) {
 		return 0;
 	}
 
-	const int index = (z * (smoothGround->GetMaxX())) + x;
-	const float oldHeight = smoothGround->GetMeshData()[index];
+	const int index = (z * (smoothGround.GetMaxX())) + x;
+	const float oldHeight = smoothGround.GetMeshData()[index];
 	float height = oldHeight;
 
 	if (lua_israwnumber(L, 4)) {
@@ -3976,7 +3976,7 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State* L)
 	const float heightDiff = (height - oldHeight);
 	smoothMeshAmountChanged += math::fabsf(heightDiff);
 
-	smoothGround->SetHeight(index, height);
+	smoothGround.SetHeight(index, height);
 	lua_pushnumber(L, heightDiff);
 	return 1;
 }
