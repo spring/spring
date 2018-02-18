@@ -23,6 +23,7 @@ static constexpr float4 const  defColor(1.0f, 1.0f, 1.0f, 1.0f);
 static constexpr float4 const allyColor(0.5f, 1.0f, 0.5f, 1.0f);
 static constexpr float4 const specColor(1.0f, 1.0f, 0.5f, 1.0f);
 
+GameControllerTextInput gameTextInput;
 
 void GameControllerTextInput::ViewResize() {
 	// inputTextSizeX and inputTextSizeY aren't actually used by anything
@@ -233,7 +234,7 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 
 				if (game->ProcessCommandText(key, cmd)) {
 					// execute an action
-					game->consoleHistory->AddLine(cmd);
+					gameConsoleHistory.AddLine(cmd);
 					ClearInput();
 				}
 			}
@@ -245,7 +246,7 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 		case hashString("edit_escape"): {
 			if (userChatting || inMapDrawer->IsWantLabel()) {
 				if (userChatting)
-					game->consoleHistory->AddLine(userInput);
+					gameConsoleHistory.AddLine(userInput);
 
 				userWriting = false;
 
@@ -345,7 +346,7 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 
 		case hashString("edit_prev_line"): {
 			if (userChatting) {
-				userInput = game->consoleHistory->PrevLine(userInput);
+				userInput = gameConsoleHistory.PrevLine(userInput);
 				writingPos = (int)userInput.length();
 				return true;
 			}
@@ -353,7 +354,7 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 
 		case hashString("edit_next_line"): {
 			if (userChatting) {
-				userInput = game->consoleHistory->NextLine(userInput);
+				userInput = gameConsoleHistory.NextLine(userInput);
 				writingPos = (int)userInput.length();
 				return true;
 			}

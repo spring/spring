@@ -1114,8 +1114,8 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		SDL_StartTextInput();
 
-		game->textInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
-		game->consoleHistory->ResetPosition();
+		gameTextInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
+		gameConsoleHistory.ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 		return true;
 	}
@@ -2440,7 +2440,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		return (game->textInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
+		return (gameTextInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
 	}
 };
 
@@ -2456,7 +2456,7 @@ public:
 		const std::string& rawLine = action.GetInnerAction().rawline;
 
 		if (rawLine.length() > bufferCmd.length() ) {
-			game->consoleHistory->AddLine(rawLine.substr(bufferCmd.length(), rawLine.length() - bufferCmd.length()));
+			gameConsoleHistory.AddLine(rawLine.substr(bufferCmd.length(), rawLine.length() - bufferCmd.length()));
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}

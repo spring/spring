@@ -14,7 +14,6 @@
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
-class CConsoleHistory;
 class LuaParser;
 class ILoadSaveHandler;
 class Action;
@@ -177,8 +176,6 @@ public:
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
-	CTimedKeyChain curKeyChain;
-
 	/// <playerID, <packetCode, total bytes> >
 	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
@@ -199,10 +196,10 @@ public:
 	 */
 	int speedControl;
 
-	CConsoleHistory* consoleHistory;
-
 private:
 	JobDispatcher jobDispatcher;
+
+	CTimedKeyChain curKeyChain;
 
 	CWorldDrawer* worldDrawer;
 
@@ -218,5 +215,5 @@ private:
 
 extern CGame* game;
 
-
 #endif // _GAME_H
+

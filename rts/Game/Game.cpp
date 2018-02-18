@@ -163,7 +163,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(chatSound),
 	CR_MEMBER(hideInterface),
 	CR_MEMBER(gameOver),
-	CR_IGNORED(textInput),
+
 	CR_IGNORED(gameDrawMode),
 	CR_IGNORED(windowedEdgeMove),
 	CR_IGNORED(fullscreenEdgeMove),
@@ -171,11 +171,10 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 
-	CR_IGNORED(curKeyChain),
 	CR_IGNORED(playerTraffic),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
-	//CR_MEMBER(consoleHistory),
+
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
 	CR_IGNORED(msgProcTimeLeft),
@@ -191,8 +190,8 @@ CR_REG_METADATA(CGame, (
 
 	CR_MEMBER(speedControl),
 
-	CR_IGNORED(consoleHistory),
 	CR_IGNORED(jobDispatcher),
+	CR_IGNORED(curKeyChain),
 	CR_IGNORED(worldDrawer),
 	CR_IGNORED(defsParser),
 	CR_IGNORED(saveFile),
@@ -238,7 +237,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldSpeed(0.0f)
 	, skipOldUserSpeed(0.0f)
 	, speedControl(-1)
-	, consoleHistory(nullptr)
+
 	, worldDrawer(nullptr)
 	, defsParser(nullptr)
 	, saveFile(saveFile)
@@ -642,7 +641,9 @@ void CGame::LoadInterface()
 
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
-		consoleHistory = new CConsoleHistory;
+
+		gameConsoleHistory.Init();
+		gameTextInput.ClearInput();
 
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
@@ -845,7 +846,6 @@ void CGame::KillInterface()
 	spring::SafeDelete(resourceBar);
 	spring::SafeDelete(tooltip); // CTooltipConsole*
 	spring::SafeDelete(infoConsole);
-	spring::SafeDelete(consoleHistory);
 	spring::SafeDelete(keyBindings);
 	spring::SafeDelete(selectionKeys); // CSelectionKeyHandler*
 	spring::SafeDelete(mouse); // CMouseHandler*
@@ -921,7 +921,7 @@ void CGame::ResizeEvent()
 	// reload water renderer (it may depend on screen resolution)
 	water = IWater::GetWater(water, water->GetID());
 
-	textInput.ViewResize();
+	gameTextInput.ViewResize();
 	eventHandler.ViewResize();
 }
 
@@ -938,7 +938,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	//LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
 
-	if (textInput.ConsumePressedKey(key, actionList))
+	if (gameTextInput.ConsumePressedKey(key, actionList))
 		return 0;
 
 	if (luaInputReceiver->KeyPressed(key, isRepeat))
@@ -976,7 +976,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 int CGame::KeyReleased(int k)
 {
-	if (textInput.ConsumeReleasedKey(k))
+	if (gameTextInput.ConsumeReleasedKey(k))
 		return 0;
 
 	if (luaInputReceiver->KeyReleased(k))
@@ -1006,7 +1006,7 @@ int CGame::TextInput(const std::string& utf8Text)
 	if (eventHandler.TextInput(utf8Text))
 		return 0;
 
-	return (textInput.SetInputText(utf8Text));
+	return (gameTextInput.SetInputText(utf8Text));
 }
 
 int CGame::TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length)
@@ -1014,7 +1014,7 @@ int CGame::TextEditing(const std::string& utf8Text, unsigned int start, unsigned
 	if (eventHandler.TextEditing(utf8Text, start, length))
 		return 0;
 
-	return (textInput.SetEditText(utf8Text));
+	return (gameTextInput.SetEditText(utf8Text));
 }
 
 
@@ -1178,13 +1178,13 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (luaRules != nullptr) { luaRules->CheckStack(); }
 
 
-	if (textInput.SendPromptInput()) {
-		consoleHistory->AddLine(textInput.userInput);
-		SendNetChat(textInput.userInput);
-		textInput.ClearInput();
+	if (gameTextInput.SendPromptInput()) {
+		gameConsoleHistory.AddLine(gameTextInput.userInput);
+		SendNetChat(gameTextInput.userInput);
+		gameTextInput.ClearInput();
 	}
-	if (inMapDrawer->IsWantLabel() && textInput.SendLabelInput())
-		textInput.ClearInput();
+	if (inMapDrawer->IsWantLabel() && gameTextInput.SendLabelInput())
+		gameTextInput.ClearInput();
 
 	assert(infoConsole);
 	infoConsole->PushNewLinesToEventHandler();
@@ -1399,9 +1399,9 @@ void CGame::ParseInputTextGeometry(const string& geo)
 	float2 size;
 
 	if (sscanf(geo.c_str(), "%f %f %f %f", &pos.x, &pos.y, &size.x, &size.y) == 4) {
-		textInput.SetPos(pos.x, pos.y);
-		textInput.SetSize(size.x, size.y);
-		textInput.ViewResize();
+		gameTextInput.SetPos(pos.x, pos.y);
+		gameTextInput.SetSize(size.x, size.y);
+		gameTextInput.ViewResize();
 
 		configHandler->SetString("InputTextGeo", geo);
 	}
@@ -1410,7 +1410,7 @@ void CGame::ParseInputTextGeometry(const string& geo)
 
 void CGame::DrawInputText()
 {
-	textInput.Draw();
+	gameTextInput.Draw();
 }
 
 
