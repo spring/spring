@@ -297,7 +297,7 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 	}
 
 	if (!noGfx) {
-		explGenHandler->GenExplosion(
+		explGenHandler.GenExplosion(
 			explosionID,
 			params.pos,
 			params.dir,

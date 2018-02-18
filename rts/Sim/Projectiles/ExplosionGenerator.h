@@ -44,8 +44,8 @@ public:
 		EXPGEN_ID_STANDARD =  0u,
 	};
 
-	CExplosionGeneratorHandler();
-	~CExplosionGeneratorHandler();
+	void Init();
+	void Kill();
 
 	void ParseExplosionTables();
 	void ReloadGenerators(const std::string&);
@@ -71,17 +71,18 @@ public:
 protected:
 	ClassAliasList projectileClasses;
 
-	LuaParser* exploParser;
-	LuaParser* aliasParser;
-	LuaTable*  explTblRoot;
+	uint8_t exploParserMem[512];
+	uint8_t aliasParserMem[512];
+	uint8_t explTblRootMem[ 64];
+
+	LuaParser* exploParser = nullptr;
+	LuaParser* aliasParser = nullptr;
+	LuaTable*  explTblRoot = nullptr;
 
 	std::vector<IExplosionGenerator*> explosionGenerators;
 
 	spring::unordered_map<std::string, unsigned int> expGenTagIdentMap;
 	spring::unordered_map<unsigned int, std::string> expGenIdentTagMap;
-
-	typedef spring::unordered_map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
-	typedef spring::unordered_map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
 };
 
 
@@ -233,6 +234,6 @@ protected:
 };
 
 
-extern CExplosionGeneratorHandler* explGenHandler;
+extern CExplosionGeneratorHandler explGenHandler;
 
 #endif // EXPLOSION_GENERATOR_H

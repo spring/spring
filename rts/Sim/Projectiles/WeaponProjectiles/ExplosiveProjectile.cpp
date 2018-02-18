@@ -33,7 +33,7 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	mygravity = params.gravity;
 	useAirLos = true;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
@@ -57,9 +57,8 @@ void CExplosiveProjectile::Update()
 	if (--ttl == 0) {
 		Collision();
 	} else {
-		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
-		}
+		if (ttl > 0)
+			explGenHandler.GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
 	}
 
 	curTime += invttl;

@@ -85,7 +85,7 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 static DynMemPool<sizeof(CCustomExplosionGenerator)> egMemPool;
 
-CExplosionGeneratorHandler* explGenHandler = nullptr;
+CExplosionGeneratorHandler explGenHandler;
 
 
 
@@ -107,33 +107,32 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 {
 	unsigned int flags = 0;
 
-	const float waterDist = math::fabsf(height);
-	const float altitude  = height - groundHeight;
+	const float waterDistance = math::fabsf(height);
+	const float exploAltitude = height - groundHeight;
 
-	const float groundLenience = 20.0f;
+	constexpr float  waterLenienceDist =  5.0f;
+	constexpr float groundLenienceDist = 20.0f;
+
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
-	if (altitude < -groundLenience) {
-		/* underground! don't spawn CEG! */
-	} else
-	if (height   >= 5.0f) { // above water
-		if (altitude >= groundLenience) {
-			flags |= CCustomExplosionGenerator::SPW_AIR;    // air
-		} else {
-			flags |= CCustomExplosionGenerator::SPW_GROUND; // ground
-		}
-	} else
-	if (waterDist < 5.0f) { // water surface
-		if (groundHeight > -2.0f) {
-			flags |= CCustomExplosionGenerator::SPW_GROUND; // shallow water (use ground fx)
-		} else {
-			flags |= CCustomExplosionGenerator::SPW_WATER;  // water (surface)
-		}
-	} else
-	/*if (height <= -5.0f) */ { // under water
-		flags |= CCustomExplosionGenerator::SPW_UNDERWATER;     // underwater
+	if (exploAltitude < -groundLenienceDist)
+		return flags; // underground, don't spawn CEG
+
+	if (height >= waterLenienceDist) {
+		// above water
+		flags |= (CCustomExplosionGenerator::SPW_AIR    * (exploAltitude >= groundLenienceDist)); // air
+		flags |= (CCustomExplosionGenerator::SPW_GROUND * (exploAltitude <  groundLenienceDist)); // ground
+		return flags;
 	}
 
+	if (waterDistance < waterLenienceDist) {
+		// water surface
+		flags |= (CCustomExplosionGenerator::SPW_GROUND * (groundHeight >  -2.0f)); // shallow water (use ground fx)
+		flags |= (CCustomExplosionGenerator::SPW_WATER  * (groundHeight <= -2.0f)); // water (surface)
+		return flags;
+	}
+
+	flags |= (CCustomExplosionGenerator::SPW_UNDERWATER /* * (height <= -5.0f)*/); // under water
 	return flags;
 }
 
@@ -147,9 +146,9 @@ void ClassAliasList::Load(const LuaTable& aliasTable)
 }
 
 
-std::string ClassAliasList::ResolveAlias(const string& name) const
+std::string ClassAliasList::ResolveAlias(const std::string& name) const
 {
-	string n = name;
+	std::string n = name;
 
 	for (;;) {
 		const auto i = aliases.find(n);
@@ -164,11 +163,11 @@ std::string ClassAliasList::ResolveAlias(const string& name) const
 }
 
 
-string ClassAliasList::FindAlias(const string& className) const
+std::string ClassAliasList::FindAlias(const std::string& className) const
 {
-	for (auto i = aliases.cbegin(); i != aliases.cend(); ++i) {
-		if (i->second == className)
-			return i->first;
+	for (const auto& p: aliases) {
+		if (p.second == className)
+			return p.first;
 	}
 
 	return className;
@@ -179,7 +178,7 @@ string ClassAliasList::FindAlias(const string& className) const
 
 
 
-CExplosionGeneratorHandler::CExplosionGeneratorHandler()
+void CExplosionGeneratorHandler::Init()
 {
 	egMemPool.clear();
 	egMemPool.reserve(32);
@@ -195,11 +194,15 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	ParseExplosionTables();
 }
 
-CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
+void CExplosionGeneratorHandler::Kill()
 {
-	spring::SafeDelete(exploParser);
-	spring::SafeDelete(aliasParser);
-	spring::SafeDelete(explTblRoot);
+	spring::SafeDestruct(exploParser);
+	spring::SafeDestruct(aliasParser);
+	spring::SafeDestruct(explTblRoot);
+
+	std::memset(exploParserMem, 0, sizeof(exploParserMem));
+	std::memset(aliasParserMem, 0, sizeof(aliasParserMem));
+	std::memset(explTblRootMem, 0, sizeof(explTblRootMem));
 
 	// delete CStdExplGen
 	egMemPool.free(explosionGenerators[0]);
@@ -210,22 +213,25 @@ CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 
 	explosionGenerators.clear();
 
-	expGenTagIdentMap.clear();
-	expGenIdentTagMap.clear();
+	expGenTagIdentMap.clear(); // never iterated
+	expGenIdentTagMap.clear(); // never iterated
 }
 
-void CExplosionGeneratorHandler::ParseExplosionTables() {
-	delete exploParser;
-	delete aliasParser;
-	delete explTblRoot;
+void CExplosionGeneratorHandler::ParseExplosionTables()
+{
+	static_assert(sizeof(LuaParser) <= sizeof(exploParserMem), "");
+	static_assert(sizeof(LuaTable ) <= sizeof(explTblRootMem), "");
 
-	exploParser = new LuaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	aliasParser = new LuaParser("gamedata/explosion_alias.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	spring::SafeDestruct(exploParser);
+	spring::SafeDestruct(aliasParser);
+	spring::SafeDestruct(explTblRoot);
+
+	exploParser = new (exploParserMem) LuaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	aliasParser = new (aliasParserMem) LuaParser("gamedata/explosion_alias.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	explTblRoot = nullptr;
 
 	if (!aliasParser->Execute()) {
-		LOG_L(L_ERROR, "Failed to parse explosion aliases: %s",
-				aliasParser->GetErrorLog().c_str());
+		LOG_L(L_ERROR, "[%s] failed to parse explosion aliases: %s", __func__, (aliasParser->GetErrorLog()).c_str());
 	} else {
 		const LuaTable& aliasRoot = aliasParser->GetRoot();
 
@@ -234,9 +240,9 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 	}
 
 	if (!exploParser->Execute()) {
-		LOG_L(L_ERROR, "Failed to parse explosions: %s", exploParser->GetErrorLog().c_str());
+		LOG_L(L_ERROR, "[%s] failed to parse explosions: %s", __func__, (exploParser->GetErrorLog()).c_str());
 	} else {
-		explTblRoot = new LuaTable(exploParser->GetRoot());
+		explTblRoot = new (explTblRootMem) LuaTable(exploParser->GetRoot());
 	}
 }
 
@@ -267,7 +273,7 @@ void CExplosionGeneratorHandler::ReloadGenerators(const std::string& tag) {
 			}
 		}
 	} else {
-		const TagIdentMapConstIt it = expGenTagIdentMap.find(tag);
+		const auto it = expGenTagIdentMap.find(tag);
 
 		if (it == expGenTagIdentMap.end()) {
 			LOG_L(L_WARNING, "[%s] no CEG named \"%s\" (forgot the \"%s\" prefix?)", __FUNCTION__, tag.c_str(), CEG_PREFIX_STRING);
@@ -302,7 +308,7 @@ unsigned int CExplosionGeneratorHandler::LoadGeneratorID(const std::string& tag)
 //   must NOT be overwritten
 IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
-	const TagIdentMapConstIt it = expGenTagIdentMap.find(tag);
+	const auto it = expGenTagIdentMap.find(tag);
 
 	if (it != expGenTagIdentMap.end())
 		return explosionGenerators[it->second];
@@ -863,7 +869,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const string& tag)
 {
 	const LuaTable* root = handler->GetExplosionTableRoot();
-	const LuaTable& expTable = (root != NULL)? root->SubTable(tag): LuaTable();
+	const LuaTable& expTable = (root != nullptr)? root->SubTable(tag): LuaTable();
 
 	if (!expTable.IsValid()) {
 		// not a fatal error: any calls to Explosion will just return early
@@ -944,7 +950,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 bool CCustomExplosionGenerator::Reload(CExplosionGeneratorHandler* handler, const std::string& tag) {
 	const ExpGenParams oldParams = expGenParams;
 
-	if (!Load(explGenHandler, tag)) {
+	if (!Load(handler, tag)) {
 		expGenParams = oldParams;
 		return false;
 	}
@@ -993,7 +999,7 @@ bool CCustomExplosionGenerator::Explosion(
 		projMemPool.alloc<CStandardGroundFlash>(pos, groundFlash);
 
 	if (expGenParams.useDefaultExplosions)
-		return (explGenHandler->GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, pos, dir, damage, radius, gfxMod, owner, hit));
+		return (explGenHandler.GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, pos, dir, damage, radius, gfxMod, owner, hit));
 
 	return true;
 }

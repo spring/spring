@@ -222,7 +222,7 @@ public:
 			"Reloads CEG scripts", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		explGenHandler->ReloadGenerators(action.GetArgs());
+		explGenHandler.ReloadGenerators(action.GetArgs());
 		return true;
 	}
 };

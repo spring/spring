@@ -234,11 +234,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		UnitDef& ud = *const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
 
 		for (unsigned int k = 0; k < ud.modelCEGTags.size(); k++) {
-			ud.SetModelExplosionGeneratorID(k, explGenHandler->LoadGeneratorID(ud.modelCEGTags[k]));
+			ud.SetModelExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(ud.modelCEGTags[k]));
 		}
 		for (unsigned int k = 0; k < ud.pieceCEGTags.size(); k++) {
 			// these can only be custom EG's so prefix is not required game-side
-			ud.SetPieceExplosionGeneratorID(k, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[k]));
+			ud.SetPieceExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[k]));
 		}
 	}
 

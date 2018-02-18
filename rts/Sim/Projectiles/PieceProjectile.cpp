@@ -59,7 +59,7 @@ CPieceProjectile::CPieceProjectile(
 
 	if (owner != nullptr) {
 		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+			explGenHandler.GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 
 		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
@@ -204,7 +204,7 @@ void CPieceProjectile::Update()
 
 	if ((explFlags & PF_NoCEGTrail) == 0) {
 		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		explGenHandler->GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 		return;
 	}
 
