@@ -55,7 +55,7 @@ void CLightningProjectile::Update()
 	if (--ttl <= 0) {
 		deleteMe = true;
 	} else {
-		explGenHandler->GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, displacements[0], 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, startPos + ((targetPos - startPos) / ttl), (targetPos - startPos), 0.0f, displacements[0], 0.0f, NULL, NULL);
 	}
 
 	for (int d = 1; d < NUM_DISPLACEMENTS; ++d) {

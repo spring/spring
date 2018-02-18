@@ -407,13 +407,13 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 		// these can only be custom EG's so prefix is not required game-side
 		if (!wd.visuals.ptrailExpGenTag.empty())
-			wd.ptrailExplosionGeneratorID = explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
+			wd.ptrailExplosionGeneratorID = explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
 
 		if (!wd.visuals.impactExpGenTag.empty())
-			wd.impactExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.impactExpGenTag);
+			wd.impactExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.impactExpGenTag);
 
 		if (!wd.visuals.bounceExpGenTag.empty())
-			wd.bounceExplosionGeneratorID = explGenHandler->LoadGeneratorID(wd.visuals.bounceExpGenTag);
+			wd.bounceExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.bounceExpGenTag);
 
 	}
 }

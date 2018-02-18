@@ -326,7 +326,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 		// SetPosition(bounceHitPos + speed * (1.0f - bounceParams.z));
 		SetPosition(bounceHitPos + dir * moveDistance);
 
-		explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, bounceHitPos, bounceNormal, speed.w, 1.0f, 1.0f, owner(), nullptr);
+		explGenHandler.GenExplosion(weaponDef->bounceExplosionGeneratorID, bounceHitPos, bounceNormal, speed.w, 1.0f, 1.0f, owner(), nullptr);
 
 		bounced = false;
 	}

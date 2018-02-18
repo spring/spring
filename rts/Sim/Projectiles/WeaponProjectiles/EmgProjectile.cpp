@@ -24,7 +24,7 @@ CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectil
 {
 	projectileType = WEAPON_EMG_PROJECTILE;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 
@@ -48,15 +48,14 @@ void CEmgProjectile::Update()
 	checkCol &= (ttl >= 0);
 	deleteMe |= (intensity <= 0.0f);
 
-	if (!luaMoveCtrl) {
-		pos += speed;
-	}
+	pos += (speed * (1 - luaMoveCtrl));
+
 	if (ttl <= 0) {
 		// fade out over the next 10 frames at most
 		intensity -= 0.1f;
 		intensity = std::max(intensity, 0.0f);
 	} else {
-		explGenHandler->GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, NULL, NULL);
+		explGenHandler.GenExplosion(cegID, pos, speed, ttl, intensity, 0.0f, nullptr, nullptr);
 	}
 
 	UpdateGroundBounce();

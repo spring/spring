@@ -393,64 +393,59 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 	params.teamID = teamHandler->GaiaTeamID();
 
 	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const std::string& key = lua_tostring(L, -2);
+		if (!lua_israwstring(L, -2))
+			continue;
 
-			if (lua_istable(L, -1)) {
-				float array[3] = {0.0f, 0.0f, 0.0f};
+		const char* key = lua_tostring(L, -2);
 
-				if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
-				    if (key == "pos") {
-						params.pos = array;
-					} else if (key == "end") {
-						params.end = array;
-					} else if (key == "speed") {
-						params.speed = array;
-					} else if (key == "spread") {
-						params.spread = array;
-					} else if (key == "error") {
-						params.error = array;
-					}
+		if (lua_istable(L, -1)) {
+			float array[3] = {0.0f, 0.0f, 0.0f};
+
+			if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
+				switch (hashString(key)) {
+					case hashString("pos"   ): { params.pos    = array; } break;
+					case hashString("end"   ): { params.end    = array; } break;
+					case hashString("speed" ): { params.speed  = array; } break;
+					case hashString("spread"): { params.spread = array; } break;
+					case hashString("error" ): { params.error  = array; } break;
 				}
-
-				continue;
 			}
 
-			if (lua_isnumber(L, -1)) {
-				if (key == "owner") {
-					params.ownerID = lua_toint(L, -1);
-				} else if (key == "weapon") {
-					params.weaponNum = lua_toint(L, -1) - LUA_WEAPON_BASE_INDEX;
-				} else if (key == "team") {
-					params.teamID = lua_toint(L, -1);
-				} else if (key == "ttl") {
-					params.ttl = lua_tofloat(L, -1);
-				} else if (key == "gravity") {
-					params.gravity = lua_tofloat(L, -1);
-				} else if (key == "tracking") {
-					params.tracking = lua_tofloat(L, -1);
-				} else if (key == "maxRange") {
-					params.maxRange = lua_tofloat(L, -1);
-				} else if (key == "upTime") {
-					params.upTime = lua_tofloat(L, -1);
-				} else if (key == "startAlpha") {
-					params.startAlpha = lua_tofloat(L, -1);
-				} else if (key == "endAlpha") {
-					params.endAlpha = lua_tofloat(L, -1);
-				}
+			continue;
+		}
 
-				continue;
+		if (lua_isnumber(L, -1)) {
+			switch (hashString(key)) {
+				case hashString("owner" ): { params.ownerID   = lua_toint(L, -1)                        ; } break;
+				case hashString("weapon"): { params.weaponNum = lua_toint(L, -1) - LUA_WEAPON_BASE_INDEX; } break;
+				case hashString("team"  ): { params.teamID    = lua_toint(L, -1)                        ; } break;
+
+				case hashString("ttl"): { params.ttl = lua_tofloat(L, -1); } break;
+
+				case hashString("gravity" ): { params.gravity  = lua_tofloat(L, -1); } break;
+				case hashString("tracking"): { params.tracking = lua_tofloat(L, -1); } break;
+
+				case hashString("maxRange"): { params.maxRange = lua_tofloat(L, -1); } break;
+				case hashString("upTime"  ): { params.upTime   = lua_tofloat(L, -1); } break;
+
+				case hashString("startAlpha"): { params.startAlpha = lua_tofloat(L, -1); } break;
+				case hashString("endAlpha"  ): { params.endAlpha   = lua_tofloat(L, -1); } break;
 			}
 
-			if (lua_isstring(L, -1)) {
-				if (key == "model") {
+			continue;
+		}
+
+		if (lua_isstring(L, -1)) {
+			switch (hashString(key)) {
+				case hashString("model"): {
 					params.model = modelLoader.LoadModel(lua_tostring(L, -1));
-				} else if (key == "cegtag") {
-					params.cegID = explGenHandler->LoadGeneratorID(lua_tostring(L, -1));
-				}
-
-				continue;
+				} break;
+				case hashString("cegtag"): {
+					params.cegID = explGenHandler.LoadGeneratorID(lua_tostring(L, -1));
+				} break;
 			}
+
+			continue;
 		}
 	}
 
@@ -461,7 +456,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad teamID", caller);
-		return NULL;
+		return nullptr;
 	}
 
 	const int teamID = lua_toint(L, index);
@@ -3326,15 +3321,14 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	if (lua_isstring(L, 2)) {
-		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
 	} else {
 		cegID = luaL_checknumber(L, 2);
 	}
 
 	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
-	if (explGenHandler->GetGenerator(cegID) != nullptr) {
+	if (explGenHandler.GetGenerator(cegID) != nullptr)
 		proj->SetCustomExplosionGeneratorID(cegID);
-	}
 
 	lua_pushnumber(L, cegID);
 	return 1;
@@ -4397,12 +4391,12 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 	if (lua_isstring(L, 1)) {
 		// args from Lua are assumed not to include the prefix
 		// (Spawn*C*EG implies only custom generators can fire)
-		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
+		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
 	} else {
 		cegID = luaL_checknumber(L, 1);
 	}
 
-	lua_pushboolean(L, explGenHandler->GenExplosion(cegID, pos, dir, damage, radius, dmgMod, nullptr, nullptr));
+	lua_pushboolean(L, explGenHandler.GenExplosion(cegID, pos, dir, damage, radius, dmgMod, nullptr, nullptr));
 	lua_pushnumber(L, cegID);
 	return 2;
 }

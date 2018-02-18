@@ -106,7 +106,7 @@ void CFireBallProjectile::Update()
 		sparks[i].speed *= 0.95f;
 	}
 
-	explGenHandler->GenExplosion(cegID, pos, speed, ttl, !sparks.empty() ? sparks[0].size : 0.0f, 0.0f, NULL, NULL);
+	explGenHandler.GenExplosion(cegID, pos, speed, ttl, !sparks.empty() ? sparks[0].size : 0.0f, 0.0f, NULL, NULL);
 	UpdateGroundBounce();
 	UpdateInterception();
 }

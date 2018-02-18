@@ -25,7 +25,6 @@
 #include "System/ScopedFPUSettings.h"
 #include "System/StringUtil.h"
 
-
 LuaParser* GetLuaParser(lua_State* L) {
 	assert(GetLuaContextData(L)->parser != nullptr);
 	return GetLuaContextData(L)->parser;
@@ -38,7 +37,7 @@ LuaParser* GetLuaParser(lua_State* L) {
 //  LuaParser
 //
 
-LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, const boolean& synced)
+LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes, const std::string& _accessModes, const boolean& synced)
 	: fileName(_fileName)
 	, fileModes(_fileModes)
 	, accessModes(_accessModes)
@@ -62,7 +61,7 @@ LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const st
 	}
 }
 
-LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const boolean& synced)
+LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced)
 	: fileName("")
 	, fileModes("")
 	, textChunk(_textChunk)
@@ -178,8 +177,8 @@ bool LuaParser::Execute()
 	assert(initDepth == 0);
 	initDepth = -1;
 
-	string code;
-	string codeLabel;
+	std::string code;
+	std::string codeLabel;
 
 	if (!textChunk.empty()) {
 		code = textChunk;
@@ -269,7 +268,7 @@ void LuaParser::PushParam()
 }
 
 
-void LuaParser::GetTable(const string& name, bool overwrite)
+void LuaParser::GetTable(const std::string& name, bool overwrite)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -278,8 +277,7 @@ void LuaParser::GetTable(const string& name, bool overwrite)
 
 	if (overwrite) {
 		lua_newtable(L);
-	}
-	else {
+	} else {
 		lua_pushsstring(L, name);
 		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
 		if (!lua_istable(L, -1)) {
@@ -326,7 +324,7 @@ void LuaParser::EndTable()
 
 /******************************************************************************/
 
-void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
+void LuaParser::AddFunc(const std::string& key, int (*func)(lua_State*))
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -343,7 +341,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 }
 
 
-void LuaParser::AddInt(const string& key, int value)
+void LuaParser::AddInt(const std::string& key, int value)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -353,7 +351,7 @@ void LuaParser::AddInt(const string& key, int value)
 }
 
 
-void LuaParser::AddBool(const string& key, bool value)
+void LuaParser::AddBool(const std::string& key, bool value)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -363,7 +361,7 @@ void LuaParser::AddBool(const string& key, bool value)
 }
 
 
-void LuaParser::AddFloat(const string& key, float value)
+void LuaParser::AddFloat(const std::string& key, float value)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -373,7 +371,7 @@ void LuaParser::AddFloat(const string& key, float value)
 }
 
 
-void LuaParser::AddString(const string& key, const string& value)
+void LuaParser::AddString(const std::string& key, const std::string& value)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -429,7 +427,7 @@ void LuaParser::AddFloat(int key, float value)
 }
 
 
-void LuaParser::AddString(int key, const string& value)
+void LuaParser::AddString(int key, const std::string& value)
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
@@ -450,13 +448,13 @@ int LuaParser::TimeCheck(lua_State* L)
 	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2))
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
 
-	const string name = lua_tostring(L, 1);
+	const std::string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
 
 	const spring_time startTime = spring_gettime();
 
 	if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
-		const string errmsg = lua_tostring(L, -1);
+		const std::string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
@@ -543,7 +541,7 @@ int LuaParser::Include(lua_State* L)
  		lua_error(L);
 	}
 
-	string code;
+	std::string code;
 	if (!fh.LoadStringData(code)) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'\n", filename.c_str());
@@ -595,7 +593,7 @@ int LuaParser::LoadFile(lua_State* L)
 {
 	const LuaParser* currentParser = GetLuaParser(L);
 
-	const std::string&  filename = luaL_checkstring(L, 1);
+	const std::string& filename = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
@@ -608,7 +606,7 @@ int LuaParser::LoadFile(lua_State* L)
 		lua_pushstring(L, "missing file");
 		return 2;
 	}
-	string data;
+	std::string data;
 	if (!fh.LoadStringData(data)) {
 		lua_pushnil(L);
 		lua_pushstring(L, "could not load data");
@@ -627,7 +625,7 @@ int LuaParser::FileExists(lua_State* L)
 {
 	const LuaParser* currentParser = GetLuaParser(L);
 
-	const std::string&  filename = luaL_checkstring(L, 1);
+	const std::string& filename = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
@@ -766,9 +764,9 @@ LuaTable LuaTable::SubTable(int key) const
 }
 
 
-LuaTable LuaTable::SubTable(const string& mixedKey) const
+LuaTable LuaTable::SubTable(const std::string& mixedKey) const
 {
-	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
+	const std::string key = !((parser != nullptr)? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
@@ -793,37 +791,34 @@ LuaTable LuaTable::SubTable(const string& mixedKey) const
 }
 
 
-LuaTable LuaTable::SubTableExpr(const string& expr) const
+LuaTable LuaTable::SubTableExpr(const std::string& expr) const
 {
-	if (expr.empty()) {
+	if (expr.empty())
 		return LuaTable(*this);
-	}
-	if (!isValid) {
-		return LuaTable();
-	}
 
-	string::size_type endPos;
+	if (!isValid)
+		return LuaTable();
+
+	std::string::size_type endPos;
 	LuaTable nextTable;
 
 	if (expr[0] == '[') { // numeric key
-		endPos = expr.find(']');
-		if (endPos == string::npos) {
+		if ((endPos = expr.find(']')) == std::string::npos)
 			return LuaTable(); // missing brace
-		}
+
 		const char* startPtr = expr.c_str() + 1; // skip the '['
 		char* endPtr;
 		const int index = strtol(startPtr, &endPtr, 10);
-		if (endPtr == startPtr) {
+
+		if (endPtr == startPtr)
 			return LuaTable(); // invalid index
-		}
+
 		endPos++; // eat the ']'
 		nextTable = SubTable(index);
-	}
-	else { // string key
-		endPos = expr.find_first_of(".[");
-		if (endPos == string::npos) {
+	} else { // string key
+		if ((endPos = expr.find_first_of(".[")) == std::string::npos)
 			return SubTable(expr);
-		}
+
 		nextTable = SubTable(expr.substr(0, endPos));
 	}
 
@@ -898,12 +893,12 @@ bool LuaTable::PushValue(int key) const
 }
 
 
-bool LuaTable::PushValue(const string& mixedKey) const
+bool LuaTable::PushValue(const std::string& mixedKey) const
 {
-	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
-	if (!PushTable()) {
+	const std::string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
+
+	if (!PushTable())
 		return false;
-	}
 
 	const int top = lua_gettop(L);
 
@@ -987,19 +982,19 @@ bool LuaTable::PushValue(const string& mixedKey) const
 
 bool LuaTable::KeyExists(int key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return false;
-	}
+
 	lua_pop(L, 1);
 	return true;
 }
 
 
-bool LuaTable::KeyExists(const string& key) const
+bool LuaTable::KeyExists(const std::string& key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return false;
-	}
+
 	lua_pop(L, 1);
 	return true;
 }
@@ -1013,9 +1008,9 @@ bool LuaTable::KeyExists(const string& key) const
 
 LuaTable::DataType LuaTable::GetType(int key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return NIL;
-	}
+
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
 
@@ -1029,11 +1024,11 @@ LuaTable::DataType LuaTable::GetType(int key) const
 }
 
 
-LuaTable::DataType LuaTable::GetType(const string& key) const
+LuaTable::DataType LuaTable::GetType(const std::string& key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return NIL;
-	}
+
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
 
@@ -1055,29 +1050,29 @@ LuaTable::DataType LuaTable::GetType(const string& key) const
 
 int LuaTable::GetLength() const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return 0;
-	}
+
 	return lua_objlen(L, -1);
 }
 
 
 int LuaTable::GetLength(int key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return 0;
-	}
+
 	const int len = lua_objlen(L, -1);
 	lua_pop(L, 1);
 	return len;
 }
 
 
-int LuaTable::GetLength(const string& key) const
+int LuaTable::GetLength(const std::string& key) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return 0;
-	}
+
 	const int len = lua_objlen(L, -1);
 	lua_pop(L, 1);
 	return len;
@@ -1107,18 +1102,18 @@ bool LuaTable::GetKeys(std::vector<int>& data) const
 }
 
 
-bool LuaTable::GetKeys(std::vector<string>& data) const
+bool LuaTable::GetKeys(std::vector<std::string>& data) const
 {
 	if (!PushTable())
 		return false;
 
 	const int table = lua_gettop(L);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string value = lua_tostring(L, -2);
-			data.push_back(value);
-		}
+		if (lua_israwstring(L, -2))
+			data.emplace_back(lua_tostring(L, -2));
 	}
+
 	std::stable_sort(data.begin(), data.end());
 	return true;
 }
@@ -1147,7 +1142,7 @@ bool LuaTable::GetMap(spring::unordered_map<int, float>& data) const
 }
 
 
-bool LuaTable::GetMap(spring::unordered_map<int, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<int, std::string>& data) const
 {
 	if (!PushTable())
 		return false;
@@ -1156,12 +1151,12 @@ bool LuaTable::GetMap(spring::unordered_map<int, string>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
 			if (lua_isstring(L, -1)) {
-				const int    key   = lua_toint(L, -2);
-				const string value = lua_tostring(L, -1);
+				const int         key   = lua_toint(L, -2);
+				const std::string value = lua_tostring(L, -1);
 				data[key] = value;
 			} else if (lua_isboolean(L, -1)) {
-				const int    key   = lua_toint(L, -2);
-				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				const int         key   = lua_toint(L, -2);
+				const std::string value = lua_toboolean(L, -1) ? "1" : "0";
 				data[key] = value;
 			}
 		}
@@ -1170,7 +1165,7 @@ bool LuaTable::GetMap(spring::unordered_map<int, string>& data) const
 }
 
 
-bool LuaTable::GetMap(spring::unordered_map<string, float>& data) const
+bool LuaTable::GetMap(spring::unordered_map<std::string, float>& data) const
 {
 	if (!PushTable())
 		return false;
@@ -1178,8 +1173,8 @@ bool LuaTable::GetMap(spring::unordered_map<string, float>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-			const string key   = lua_tostring(L, -2);
-			const float  value = lua_tonumber(L, -1);
+			const std::string key   = lua_tostring(L, -2);
+			const float       value = lua_tonumber(L, -1);
 			data[key] = value;
 		}
 	}
@@ -1187,7 +1182,7 @@ bool LuaTable::GetMap(spring::unordered_map<string, float>& data) const
 }
 
 
-bool LuaTable::GetMap(spring::unordered_map<string, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<std::string, std::string>& data) const
 {
 	if (!PushTable())
 		return false;
@@ -1196,12 +1191,12 @@ bool LuaTable::GetMap(spring::unordered_map<string, string>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
 			if (lua_isstring(L, -1)) { // includes numbers
-				const string key   = lua_tostring(L, -2);
-				const string value = lua_tostring(L, -1);
+				const std::string key   = lua_tostring(L, -2);
+				const std::string value = lua_tostring(L, -1);
 				data[key] = value;
 			} else if (lua_isboolean(L, -1)) {
-				const string key   = lua_tostring(L, -2);
-				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				const std::string key   = lua_tostring(L, -2);
+				const std::string value = lua_toboolean(L, -1) ? "1" : "0";
 				data[key] = value;
 			}
 		}
@@ -1243,12 +1238,10 @@ static bool ParseFloat3(lua_State* L, int index, float3& value)
 		}
 	}
 	else if (lua_isstring(L, index)) {
-		const int count = sscanf(lua_tostring(L, index), "%f %f %f",
-		                         &value.x, &value.y, &value.z);
-		if (count == 3) {
+		if (sscanf(lua_tostring(L, index), "%f %f %f", &value.x, &value.y, &value.z) == 3)
 			return true;
-		}
 	}
+
 	return false;
 }
 
@@ -1264,11 +1257,8 @@ static bool ParseFloat4(lua_State* L, int index, float4& value)
 		}
 	}
 	else if (lua_isstring(L, index)) {
-		const int count = sscanf(lua_tostring(L, index), "%f %f %f %f",
-		                         &value.x, &value.y, &value.z, &value.w);
-		if (count == 4) {
+		if (sscanf(lua_tostring(L, index), "%f %f %f %f", &value.x, &value.y, &value.z, &value.w) == 4)
 			return true;
-		}
 	}
 	return false;
 }
@@ -1286,7 +1276,7 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 		return true;
 	}
 	else if (lua_isstring(L, index)) {
-		const string str = StringToLower(lua_tostring(L, index));
+		const std::string str = StringToLower(lua_tostring(L, index));
 		if ((str == "1") || (str == "true")) {
 			value = true;
 			return true;
@@ -1306,11 +1296,11 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 //  String key functions
 //
 
-int LuaTable::Get(const string& key, int def) const
+int LuaTable::Get(const std::string& key, int def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	const int value = lua_toint(L, -1);
 	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
@@ -1321,11 +1311,11 @@ int LuaTable::Get(const string& key, int def) const
 }
 
 
-bool LuaTable::Get(const string& key, bool def) const
+bool LuaTable::Get(const std::string& key, bool def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	bool value;
 	if (!ParseBoolean(L, -1, value)) {
 		lua_pop(L, 1);
@@ -1336,11 +1326,11 @@ bool LuaTable::Get(const string& key, bool def) const
 }
 
 
-float LuaTable::Get(const string& key, float def) const
+float LuaTable::Get(const std::string& key, float def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	const float value = lua_tonumber(L, -1);
 	if (unlikely(value == 0.f) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
@@ -1352,11 +1342,11 @@ float LuaTable::Get(const string& key, float def) const
 
 
 
-float3 LuaTable::Get(const string& key, const float3& def) const
+float3 LuaTable::Get(const std::string& key, const float3& def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	float3 value;
 	if (!ParseFloat3(L, -1, value)) {
 		lua_pop(L, 1);
@@ -1366,11 +1356,11 @@ float3 LuaTable::Get(const string& key, const float3& def) const
 	return value;
 }
 
-float4 LuaTable::Get(const string& key, const float4& def) const
+float4 LuaTable::Get(const std::string& key, const float4& def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	float4 value;
 	if (!ParseFloat4(L, -1, value)) {
 		lua_pop(L, 1);
@@ -1382,16 +1372,16 @@ float4 LuaTable::Get(const string& key, const float4& def) const
 
 
 
-string LuaTable::Get(const string& key, const string& def) const
+std::string LuaTable::Get(const std::string& key, const std::string& def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	if (!lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const string value = lua_tostring(L, -1);
+	const std::string value = lua_tostring(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1405,9 +1395,9 @@ string LuaTable::Get(const string& key, const string& def) const
 
 int LuaTable::Get(int key, int def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	const int value = lua_toint(L, -1);
 	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
@@ -1420,9 +1410,9 @@ int LuaTable::Get(int key, int def) const
 
 bool LuaTable::Get(int key, bool def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	bool value;
 	if (!ParseBoolean(L, -1, value)) {
 		lua_pop(L, 1);
@@ -1435,9 +1425,9 @@ bool LuaTable::Get(int key, bool def) const
 
 float LuaTable::Get(int key, float def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	const float value = lua_tonumber(L, -1);
 	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
@@ -1451,9 +1441,9 @@ float LuaTable::Get(int key, float def) const
 
 float3 LuaTable::Get(int key, const float3& def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	float3 value;
 	if (!ParseFloat3(L, -1, value)) {
 		lua_pop(L, 1);
@@ -1479,16 +1469,16 @@ float4 LuaTable::Get(int key, const float4& def) const
 
 
 
-string LuaTable::Get(int key, const string& def) const
+std::string LuaTable::Get(int key, const std::string& def) const
 {
-	if (!PushValue(key)) {
+	if (!PushValue(key))
 		return def;
-	}
+
 	if (!lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const string value = lua_tostring(L, -1);
+	const std::string value = lua_tostring(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1512,13 +1502,13 @@ float4 LuaTable::GetFloat4(int key, const float4& def) const
 }
 
 
-float3 LuaTable::GetFloat3(const string& key, const float3& def) const
+float3 LuaTable::GetFloat3(const std::string& key, const float3& def) const
 {
 	return Get(key, def);
 }
 
 
-float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+float4 LuaTable::GetFloat4(const std::string& key, const float4& def) const
 {
 	return Get(key, def);
 }

@@ -69,7 +69,7 @@ void CFlameProjectile::Update()
 	curTime = std::min(curTime, 1.0f);
 	deleteMe |= (curTime >= 1.0f);
 
-	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
+	explGenHandler.GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
 }
 
 void CFlameProjectile::Draw(GL::RenderDataBufferTC* va) const

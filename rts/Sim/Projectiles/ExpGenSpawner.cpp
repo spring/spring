@@ -20,7 +20,7 @@ CExpGenSpawner::CExpGenSpawner() :
 	CProjectile(),
 	delay(1),
 	damage(0.0f),
-	explosionGenerator(NULL)
+	explosionGenerator(nullptr)
 {
 	checkCol = false;
 	deleteMe = false;
@@ -30,7 +30,7 @@ CExpGenSpawner::CExpGenSpawner() :
 void CExpGenSpawner::Update()
 {
 	if ((deleteMe |= ((delay--) <= 0))) {
-		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), NULL);
+		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), nullptr);
 	}
 }
 
@@ -48,7 +48,7 @@ bool CExpGenSpawner::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	CHECK_MEMBER_INFO_INT  (CExpGenSpawner, delay )
 	CHECK_MEMBER_INFO_FLOAT(CExpGenSpawner, damage)
-	CHECK_MEMBER_INFO_PTR  (CExpGenSpawner, explosionGenerator, explGenHandler->LoadGenerator)
+	CHECK_MEMBER_INFO_PTR  (CExpGenSpawner, explosionGenerator, explGenHandler.LoadGenerator)
 
 	return false;
 }
