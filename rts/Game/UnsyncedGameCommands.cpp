@@ -1094,8 +1094,8 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		SDL_StartTextInput();
 
-		game->textInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
-		game->consoleHistory->ResetPosition();
+		gameTextInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
+		gameConsoleHistory.ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 
 		return true;
@@ -2389,7 +2389,7 @@ public:
 			"Paste either the argument string(s) or if none given, the content of the clip-board to chat input") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		return (game->textInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
+		return (gameTextInput.CheckHandlePasteCommand(action.GetInnerAction().rawline));
 	}
 };
 
@@ -2405,9 +2405,11 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		// we cannot use extra commands because tokenization strips multiple
 		// spaces or even trailing spaces, the text should be copied verbatim
-		const std::string buffercommand = "buffertext ";
-		if (action.GetInnerAction().rawline.length() > buffercommand.length() ) {
-			game->consoleHistory->AddLine(action.GetInnerAction().rawline.substr(buffercommand.length(), action.GetInnerAction().rawline.length()-buffercommand.length()));
+		const std::string bufferCmd = "buffertext ";
+		const std::string& rawLine = action.GetInnerAction().rawline;
+
+		if (rawLine.length() > bufferCmd.length() ) {
+			gameConsoleHistory.AddLine(rawLine.substr(bufferCmd.length(), rawLine.length() - bufferCmd.length()));
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}

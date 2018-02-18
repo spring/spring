@@ -102,5 +102,7 @@ public:
 	std::string editText;
 };
 
+extern GameControllerTextInput gameTextInput;
+
 #endif
 

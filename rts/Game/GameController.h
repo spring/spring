@@ -4,6 +4,8 @@
 #define _GAME_CONTROLLER_H_
 
 #include <string>
+
+#include "ConsoleHistory.h"
 #include "GameControllerTextInput.h"
 
 class CGameController
@@ -18,9 +20,6 @@ public:
 	virtual int TextInput(const std::string& utf8Text) { return 0; }
 	virtual int TextEditing(const std::string& utf8Text, unsigned int start, unsigned int length) { return 0; }
 	virtual void ResizeEvent() {}
-
-public:
-	GameControllerTextInput textInput;
 };
 
 extern CGameController* activeController;
