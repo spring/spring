@@ -71,8 +71,8 @@ public:
 protected:
 	ClassAliasList projectileClasses;
 
-	uint8_t exploParserMem[512];
-	uint8_t aliasParserMem[512];
+	uint8_t exploParserMem[600];
+	uint8_t aliasParserMem[600];
 	uint8_t explTblRootMem[ 64];
 
 	LuaParser* exploParser = nullptr;
