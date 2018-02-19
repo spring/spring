@@ -8,12 +8,14 @@
 
 #include <vector>
 
+class ShieldSegmentCollection;
+class CRepulseGfx;
+
 class CPlasmaRepulser: public CWeapon
 {
 	CR_DECLARE_DERIVED(CPlasmaRepulser)
-
 public:
-	CPlasmaRepulser(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
+	CPlasmaRepulser(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 	~CPlasmaRepulser();
 
 	void Init() override final;
@@ -30,50 +32,38 @@ public:
 	bool IsEnabled() const { return isEnabled; }
 	bool IsActive() const;
 	bool IsRepulsing(CWeaponProjectile* p) const;
-
-	float GetDeltaDist() const { return (deltaPos.Length()); }
 	float GetCurPower() const { return curPower; }
 	float GetRadius() const { return radius; }
-
 	int GetHitFrames() const { return hitFrames; }
 	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
 
 	bool IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier);
 	bool IncomingProjectile(CWeaponProjectile* p, const float3& hitPos);
 
-	const std::vector<int>& GetQuads() const { return quads; }
-
-	void SetQuads(std::vector<int>&& q) { quads = std::move(q); }
-	void ClearQuads() { quads.clear(); }
+	//collisions
+	std::vector<int> quads;
+	CollisionVolume collisionVolume;
+	int tempNum;
+	float3 deltaPos;
 
 private:
 	void FireImpl(const bool scriptCall) override final {}
 
-private:
 	// these are strictly unsynced
+	ShieldSegmentCollection* segmentCollection;
 	std::vector<CWeaponProjectile*> repulsedProjectiles;
 
-	// collisions
-	std::vector<int> quads;
-
-public:
-	CollisionVolume collisionVolume;
 
 	float3 lastPos;
-	float3 deltaPos;
+	float curPower;
 
-	int tempNum = 0;
+	float radius;
+	float sqRadius;
 
-private:
-	int hitFrames = 0;
-	int rechargeDelay = 0;
+	int hitFrames;
+	int rechargeDelay;
 
-	float curPower = 0.0f;
-
-	float radius = 0.0f;
-	float sqRadius = 0.0f;
-
-	bool isEnabled = true;
+	bool isEnabled;
 };
 
 #endif

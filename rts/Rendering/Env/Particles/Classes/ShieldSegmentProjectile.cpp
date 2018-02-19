@@ -42,46 +42,15 @@ static std::vector<float3> spherevertices;
 static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 
-ShieldSegmentCollection::~ShieldSegmentCollection()
+
+ShieldSegmentCollection::ShieldSegmentCollection(CPlasmaRepulser* shield_)
+	: shield(shield_)
+	, shieldTexture(nullptr)
+	, lastAllowDrawingframe(-1)
+	, allowDrawing(false)
+	, size(shield->weaponDef->shieldRadius)
+	, color(255,255,255,0)
 {
-	for (auto* seg: shieldSegments) {
-		seg->PreDelete();
-	}
-
-	if (UsingPerlinNoise())
-		projectileDrawer->DecPerlinTexObjectCount();
-}
-
-ShieldSegmentCollection& ShieldSegmentCollection::operator = (ShieldSegmentCollection&& ssc) {
-	shield = ssc.shield; ssc.shield = nullptr;
-	shieldTexture = ssc.shieldTexture; ssc.shieldTexture = nullptr;
-
-	lastAllowDrawingframe = ssc.lastAllowDrawingframe;
-	allowDrawing = ssc.allowDrawing;
-
-	size = ssc.size;
-	color = ssc.color;
-
-	shieldSegments = std::move(ssc.shieldSegments);
-
-	// update collection-pointers if we are moved into
-	for (ShieldSegmentProjectile* ssp: shieldSegments) {
-		ssp->Reload(this, -1, -1);
-	}
-
-	return *this;
-}
-
-
-void ShieldSegmentCollection::Init(CPlasmaRepulser* shield_)
->>>>>>> ad81779... fix #5899
-{
-	shield = shield_;
-	shieldTexture = nullptr;
-
-	size = shield->weaponDef->shieldRadius;
-	color = SColor(255, 255, 255, 0);
-
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 
@@ -101,6 +70,12 @@ void ShieldSegmentCollection::Init(CPlasmaRepulser* shield_)
 	}
 }
 
+bool ShieldSegmentCollection::UsingPerlinNoise() const
+{
+	return projectileDrawer && (shieldTexture == projectileDrawer->perlintex);
+}
+
+
 void ShieldSegmentCollection::PostLoad()
 {
 	lastAllowDrawingframe = -1;
@@ -118,10 +93,14 @@ void ShieldSegmentCollection::PostLoad()
 	}
 }
 
-
-bool ShieldSegmentCollection::UsingPerlinNoise() const
+ShieldSegmentCollection::~ShieldSegmentCollection()
 {
-	return (shieldTexture == projectileDrawer->perlintex);
+	for (auto* segs: shieldSegments) {
+		segs->PreDelete();
+	}
+
+	if (UsingPerlinNoise())
+		projectileDrawer->DecPerlinTexObjectCount();
 }
 
 bool ShieldSegmentCollection::AllowDrawing()
@@ -180,6 +159,8 @@ float3 ShieldSegmentCollection::GetShieldDrawPos() const
 {
 	assert(shield != nullptr);
 	assert(shield->owner != nullptr);
+
+
 	return shield->owner->GetObjectSpaceDrawPos(shield->relWeaponMuzzlePos);
 }
 
@@ -188,20 +169,20 @@ float3 ShieldSegmentCollection::GetShieldDrawPos() const
 #define NUM_VERTICES_Y 3
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-	ShieldSegmentCollection* collection_,
-	const WeaponDef* shieldWeaponDef,
-	const float3& shieldSegmentPos,
-	int xpart,
-	int ypart
-)
+			ShieldSegmentCollection* collection_,
+			const WeaponDef* shieldWeaponDef,
+			const float3& shieldSegmentPos,
+			int xpart,
+			int ypart
+		)
 	: CProjectile(
-		shieldSegmentPos,
-		ZeroVector,
-		collection_->GetShield()->owner,
-		false,
-		false,
-		false
-	)
+			shieldSegmentPos,
+			ZeroVector,
+			collection_->GetShield()->owner,
+			false,
+			false,
+			false
+		)
 	, collection(collection_)
 {
 	checkCol      = false;
@@ -217,15 +198,16 @@ ShieldSegmentProjectile::ShieldSegmentProjectile(
 
 void ShieldSegmentProjectile::Reload(ShieldSegmentCollection* collection_, int xpart, int ypart)
 {
-	assert(!deleteMe);
-
 	collection = collection_;
-
-	if (xpart < 0 && ypart < 0)
-		return;
-
 	vertices = GetSegmentVertices(xpart, ypart);
 	texCoors = GetSegmentTexCoords(collection->GetShieldTexture(), xpart, ypart);
+}
+
+
+void ShieldSegmentProjectile::PreDelete()
+{
+	collection = nullptr;
+	deleteMe = true;
 }
 
 
@@ -237,7 +219,7 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 		#define NUM_VERTICES_X_M1 (NUM_VERTICES_X - 1)
 		#define NUM_VERTICES_Y_M1 (NUM_VERTICES_Y - 1)
 
-		// add <NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X> vertices
+		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
 		for (int ypart_ = 0; ypart_ < ShieldSegmentCollection::NUM_SEGMENTS_Y; ++ypart_) {
 			for (int xpart_ = 0; xpart_ < ShieldSegmentCollection::NUM_SEGMENTS_X; ++xpart_) {
 				const int segmentIdx = (xpart_ + ypart_ * ShieldSegmentCollection::NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);

@@ -21,32 +21,34 @@ CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, )
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
+	CR_MEMBER(lastPos),
 	CR_MEMBER(curPower),
-
-	CR_MEMBER(tempNum),
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
-
 	CR_MEMBER(isEnabled),
-
+	CR_MEMBER(segmentCollection),
 	CR_MEMBER(repulsedProjectiles),
+
 	CR_MEMBER(quads),
 	CR_MEMBER(collisionVolume),
-
-	CR_MEMBER(lastPos),
+	CR_MEMBER(tempNum),
 	CR_MEMBER(deltaPos)
 ))
 
 
-// PlasmaRepulser is already the largest weapon type; inlining
-// these would add another ~50 bytes per instance from pooling
-static spring::unsynced_map<CPlasmaRepulser*, ShieldSegmentCollection> segmentCollections;
+CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),
+	tempNum(0),
+	curPower(0.0f),
+	hitFrames(0),
+	rechargeDelay(0),
+	isEnabled(true)
+{ }
 
 
 CPlasmaRepulser::~CPlasmaRepulser()
 {
+	delete segmentCollection;
 	quadField.RemoveRepulser(this);
-	segmentCollections.erase(this);
 }
 
 
@@ -56,13 +58,18 @@ void CPlasmaRepulser::Init()
 
 	radius = weaponDef->shieldRadius;
 	sqRadius = radius * radius;
-	curPower = mix(99999999999.0f, weaponDef->shieldStartingPower, weaponDef->shieldPower != 0.0f);
 
+	if (weaponDef->shieldPower == 0)
+		curPower = 99999999999.0f;
+	else
+		curPower = weaponDef->shieldStartingPower;
 
 	CWeapon::Init();
 
-	segmentCollections[this] = std::move(ShieldSegmentCollection(this));
 	quadField.MovedRepulser(this);
+
+	// deleted by ProjectileHandler
+	segmentCollection = new ShieldSegmentCollection(this);
 }
 
 
@@ -90,8 +97,7 @@ bool CPlasmaRepulser::CanIntercept(unsigned interceptedType, int allyTeam) const
 
 void CPlasmaRepulser::Update()
 {
-	rechargeDelay -= (rechargeDelay > 0);
-	hitFrames -= (hitFrames > 0);
+	rechargeDelay -= (rechargeDelay > 0) ? 1 : 0;
 
 	if (IsActive() && (curPower < weaponDef->shieldPower) && rechargeDelay <= 0) {
 		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / GAME_SPEED))) {
@@ -99,10 +105,12 @@ void CPlasmaRepulser::Update()
 		}
 	}
 
+	if (hitFrames > 0)
+		hitFrames--;
+
 	UpdateWeaponVectors();
 
 	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
-
 	if (weaponMuzzlePos != lastPos)
 		quadField.MovedRepulser(this);
 
@@ -111,7 +119,7 @@ void CPlasmaRepulser::Update()
 
 	lastPos = weaponMuzzlePos;
 
-	segmentCollections[this].UpdateColor();
+	segmentCollection->UpdateColor();
 }
 
 // Returns true if the projectile is destroyed.
