@@ -341,16 +341,14 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, repulser->weaponMuzzlePos, repulser->GetRadius());
 
-	const auto& repQuads = repulser->GetQuads();
-
 	// compare if the quads have changed, if not stop here
-	if (qfQuery.quads->size() == repQuads.size()) {
-		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), repQuads.begin())) {
+	if (qfQuery.quads->size() == repulser->quads.size()) {
+		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), repulser->quads.begin())) {
 			return;
 		}
 	}
 
-	for (const int qi: repQuads) {
+	for (const int qi: repulser->quads) {
 		spring::VectorErase(baseQuads[qi].repulsers, repulser);
 	}
 
@@ -358,16 +356,16 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 		spring::VectorInsertUnique(baseQuads[qi].repulsers, repulser, false);
 	}
 
-	repulser->SetQuads(std::move(*qfQuery.quads));
+	repulser->quads = std::move(*qfQuery.quads);
 }
 
 void CQuadField::RemoveRepulser(CPlasmaRepulser* repulser)
 {
-	for (const int qi: repulser->GetQuads()) {
+	for (const int qi: repulser->quads) {
 		spring::VectorErase(baseQuads[qi].repulsers, repulser);
 	}
 
-	repulser->ClearQuads();
+	repulser->quads.clear();
 
 	#ifdef DEBUG_QUADFIELD
 	for (const Quad& q: baseQuads) {
