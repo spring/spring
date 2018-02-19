@@ -3848,6 +3848,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			if (unit->maxRange <= 0.0f)
 				continue;
+			if (unit->weapons.empty())
+				continue;
+			// only consider (armed) static structures
 			if (unit->unitDef->speed > 0.0f)
 				continue;
 
