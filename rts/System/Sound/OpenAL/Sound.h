@@ -26,7 +26,9 @@ class CSound : public ISound
 {
 public:
 	CSound();
-	virtual ~CSound();
+	~CSound();
+
+	void Kill() override;
 
 	bool HasSoundItem(const std::string& name) const override;
 	size_t GetSoundId(const std::string& name) override;

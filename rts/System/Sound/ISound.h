@@ -18,14 +18,14 @@ class ISound {
 	static ISound* singleton;
 
 public:
-	virtual ~ISound() {}
-
 	static void Initialize(bool forceNullSound = false);
 	static void Shutdown();
 	static bool IsInitialized() { return (singleton != nullptr); }
-	static inline ISound* GetInstance() {
-		return singleton;
-	}
+	static inline ISound* GetInstance() { return singleton; }
+
+
+	virtual ~ISound() {}
+	virtual void Kill();
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;
 	virtual size_t GetSoundId(const std::string& name) = 0;
@@ -66,6 +66,7 @@ public:
 public:
 	unsigned numEmptyPlayRequests = 0;
 	unsigned numAbortedPlays = 0;
+
 private:
 	virtual bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) = 0;
 	static bool IsNullAudio();
