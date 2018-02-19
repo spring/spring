@@ -214,7 +214,7 @@ void ShieldSegmentProjectile::PreDelete()
 const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
 {
 	if (spherevertices.empty()) {
-		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
+		spherevertices.resize(ShieldSegmentCollection::NUM_SEGMENTS_Y * ShieldSegmentCollection::NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
 
 		#define NUM_VERTICES_X_M1 (NUM_VERTICES_X - 1)
 		#define NUM_VERTICES_Y_M1 (NUM_VERTICES_Y - 1)
@@ -320,7 +320,3 @@ void ShieldSegmentProjectile::Draw(CVertexArray* va)
 	}
 }
 
-int ShieldSegmentProjectile::GetProjectilesCount() const
-{
-	return (NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1);
-}

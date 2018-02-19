@@ -85,7 +85,11 @@ public:
 		const int ypart
 	);
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return ((NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1)); }
+
+public:
+	static constexpr unsigned int NUM_VERTICES_X = 5;
+	static constexpr unsigned int NUM_VERTICES_Y = 3;
 
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);
