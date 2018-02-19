@@ -25,7 +25,7 @@ public:
 
 
 	virtual ~ISound() {}
-	virtual void Kill();
+	virtual void Kill() {}
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;
 	virtual size_t GetSoundId(const std::string& name) = 0;
