@@ -74,7 +74,6 @@ public:
 		int xpart,
 		int ypart
 	);
-	~ShieldSegmentProjectile();
 
 	void Draw(CVertexArray* va) override;
 	void Update() override;
