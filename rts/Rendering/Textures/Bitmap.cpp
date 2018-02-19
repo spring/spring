@@ -208,12 +208,20 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	bool noAlpha = true;
 
+	// LHS is only true for "image.dds", "IMAGE.DDS" would be loaded by IL
+	// which does not vertically flip DDS images by default, unlike nv_dds
+	// most Spring games do not seem to store DDS buildpics pre-flipped so
+	// files ending in ".DDS" would appear upside-down if loaded by nv_dds
+	//
+	// const bool loadDDS = (filename.find(".dds") != std::string::npos || filename.find(".DDS") != std::string::npos);
+	const bool loadDDS = (FileSystem::GetExtension(filename) == "dds"); // always lower-case
+	const bool flipDDS = (filename.find("unitpics") == std::string::npos); // keep buildpics as-is
+
 #ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
 #endif // !BITMAP_NO_OPENGL
 
-
-	if (FileSystem::GetExtension(filename) == "dds") {
+	if (loadDDS) {
 #ifndef BITMAP_NO_OPENGL
 		compressed = true;
 		xsize = 0;
@@ -221,7 +229,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		channels = 0;
 
 		ddsimage.clear();
-		if (!ddsimage.load(filename))
+		if (!ddsimage.load(filename, flipDDS))
 			return false;
 
 		xsize = ddsimage.get_width();
@@ -243,7 +251,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		}
 		return true;
 #else
-		AllocDummy(); //allocate a dummy texture, as dds aren't supported in headless
+		// allocate a dummy texture, dds aren't supported in headless
+		AllocDummy();
 		return true;
 #endif
 	}
