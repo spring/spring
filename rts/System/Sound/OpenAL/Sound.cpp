@@ -89,19 +89,24 @@ CSound::CSound()
 
 CSound::~CSound()
 {
-	soundThreadQuit = true;
 	configHandler->RemoveObserver(this);
+}
 
-	LOG("[%s][1] soundThread=%p", __func__, &soundThread);
 
-	if (soundThread.joinable())
+void CSound::Kill()
+{
+	LOG("[Sound::%s] soundThread.joinable()=%d", __func__, soundThread.joinable());
+
+	{
+		soundThreadQuit = true;
+
+		if (!soundThread.joinable())
+			return;
+
 		soundThread.join();
-
-	LOG("[%s][2]", __func__);
+	}
 
 	SoundBuffer::Deinitialise();
-
-	LOG("[%s][3]", __func__);
 }
 
 void CSound::Cleanup() {
@@ -577,18 +582,20 @@ void CSound::InitThread(int cfgMaxSounds)
 __FORCE_ALIGN_STACK__
 void CSound::UpdateThread(int cfgMaxSounds)
 {
-	LOG("[Sound::%s][1] cfgMaxSounds=%d", __func__, cfgMaxSounds);
+	{
+		LOG("[Sound::%s][1] cfgMaxSounds=%d", __func__, cfgMaxSounds);
 
-	Threading::SetAudioThread();
-	// InitThread can hang, pre-register
-	Watchdog::RegisterThread(WDT_AUDIO);
+		Threading::SetAudioThread();
+		// InitThread can hang, pre-register
+		Watchdog::RegisterThread(WDT_AUDIO);
 
-	// OpenAL will create its own thread and copy the current's name
-	Threading::SetThreadName("openal");
-	InitThread(cfgMaxSounds);
-	Threading::SetThreadName("audio");
+		// OpenAL will create its own thread and copy the current's name
+		Threading::SetThreadName("openal");
+		InitThread(cfgMaxSounds);
+		Threading::SetThreadName("audio");
 
-	LOG("[Sound::%s][2]", __func__);
+		LOG("[Sound::%s][2]", __func__);
+	}
 
 	while (!soundThreadQuit) {
 		// update at roughly 30Hz
@@ -597,24 +604,28 @@ void CSound::UpdateThread(int cfgMaxSounds)
 		Update();
 	}
 
-	Watchdog::DeregisterThread(WDT_AUDIO);
+	{
+		Watchdog::DeregisterThread(WDT_AUDIO);
 
-	LOG("[Sound::%s][3] efx=%p", __func__, &efx);
+		LOG("[Sound::%s][3] #sources=%u #items=%u", __func__, uint32_t(soundSources.size()), uint32_t(soundItems.size()));
 
-	// destruct items before context cleanup
-	soundSources.clear();
-	soundItems.clear();
+		// destruct items before context cleanup
+		soundSources.clear();
+		soundItems.clear();
 
-	// must happen after sources and before context
-	efx.Kill();
-	efx.ResetState();
+		LOG("[Sound::%s][4] ctx=%p dev=%p", __func__, curContext, curDevice);
 
-	LOG("[Sound::%s][4] ctx=%p dev=%p", __func__, curContext, curDevice);
+		// must happen after sources and before context
+		efx.Kill();
+		efx.ResetState();
 
-	alcMakeContextCurrent(nullptr);
-	Cleanup();
+		LOG("[Sound::%s][5] ctx=%p dev=%p", __func__, curContext, curDevice);
 
-	LOG("[Sound::%s][5]", __func__);
+		alcMakeContextCurrent(nullptr);
+		Cleanup();
+
+		LOG("[Sound::%s][6]", __func__);
+	}
 }
 
 void CSound::Update()
