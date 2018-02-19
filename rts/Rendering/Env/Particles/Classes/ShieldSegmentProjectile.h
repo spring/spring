@@ -40,6 +40,10 @@ public:
 
 	void PostLoad();
 
+public:
+	static constexpr unsigned int NUM_SEGMENTS_X = 6;
+	static constexpr unsigned int NUM_SEGMENTS_Y = 4;
+
 private:
 	bool UsingPerlinNoise() const;
 
