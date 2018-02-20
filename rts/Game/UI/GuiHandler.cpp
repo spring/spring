@@ -3832,37 +3832,43 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		}
 	}
 
-	// draw range circles (for immobile units) if attack orders are imminent
-	const int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
+	{
+		// draw range circles (for immobile units) if attack orders are imminent
+		const int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
 
-	const bool  playerAttackCmd = (size_t(inCommand) < commands.size() && commands[inCommand].id == CMD_ATTACK);
-	const bool defaultAttackCmd = (inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK);
-	const bool drawWeaponRanges = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+		const bool  playerAttackCmd = (size_t(inCommand) < commands.size() && commands[inCommand].id == CMD_ATTACK);
+		const bool defaultAttackCmd = (inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK);
+		const bool   drawWeaponArcs = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
 
-	if ((playerAttackCmd || defaultAttackCmd) && drawWeaponRanges) {
-		for (const int unitID: selectedUnitsHandler.selectedUnits) {
-			const CUnit* unit = unitHandler.GetUnit(unitID);
+		if (playerAttackCmd || defaultAttackCmd) {
+			for (const int unitID: selectedUnitsHandler.selectedUnits) {
+				const CUnit* unit = unitHandler.GetUnit(unitID);
 
-			if (unit == pointedAt)
-				continue;
+				// handled above
+				if (unit == pointedAt)
+					continue;
 
-			if (unit->maxRange <= 0.0f)
-				continue;
-			if (unit->weapons.empty())
-				continue;
-			// only consider (armed) static structures
-			if (unit->unitDef->speed > 0.0f)
-				continue;
+				if (unit->maxRange <= 0.0f)
+					continue;
+				if (unit->weapons.empty())
+					continue;
+				// only consider (armed) static structures for the minimap
+				if (onMiniMap && !unit->unitDef->IsImmobileUnit())
+					continue;
 
-			if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
-				continue;
+				if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
+					continue;
 
-			glDisable(GL_DEPTH_TEST);
-			glColor4fv(cmdColors.rangeAttack);
-			glBallisticCircle(unit->weapons[0]->weaponDef, 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
-			glEnable(GL_DEPTH_TEST);
+				glDisable(GL_DEPTH_TEST);
+				glColor4fv(cmdColors.rangeAttack);
+				glBallisticCircle(unit->weapons[0]->weaponDef, 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
+				glEnable(GL_DEPTH_TEST);
 
-			DrawWeaponArc(unit);
+				if (!drawWeaponArcs)
+					continue;
+
+				DrawWeaponArc(unit);
+			}
 		}
 	}
 
