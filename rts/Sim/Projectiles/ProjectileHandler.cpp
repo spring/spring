@@ -446,8 +446,8 @@ void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
 	const float3 ppos0,
-	const float3 ppos1)
-{
+	const float3 ppos1
+) {
 	if (!p->checkCol)
 		return;
 
@@ -486,8 +486,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 	CProjectile* p,
 	std::vector<CFeature*>& tempFeatures,
 	const float3 ppos0,
-	const float3 ppos1)
-{
+	const float3 ppos1
+) {
 	// already collided with unit?
 	if (!p->checkCol)
 		return;
@@ -525,41 +525,50 @@ void CProjectileHandler::CheckShieldCollisions(
 	CProjectile* p,
 	std::vector<CPlasmaRepulser*>& tempRepulsers,
 	const float3 ppos0,
-	const float3 ppos1)
-{
+	const float3 ppos1
+) {
 	if (!p->checkCol)
 		return;
-
 	if (!p->weapon)
 		return;
 
 	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(p);
 	const WeaponDef* wdef = wpro->GetWeaponDef();
 
-	//Bail early
-	if (wdef->interceptedByShieldType == 0)
+	const unsigned int interceptType = wdef->interceptedByShieldType;
+	const unsigned int projAllyTeam = p->GetAllyteamID();
+
+	// bail early
+	if (interceptType == 0)
 		return;
 
 	CollisionQuery cq;
 
 	for (CPlasmaRepulser* repulser: tempRepulsers) {
 		assert(repulser != nullptr);
-		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
+
+		if (!repulser->CanIntercept(interceptType, projAllyTeam))
 			continue;
 
-		// we sometimes get false inside hits due to the movement of the shield
-		// a very hacky solution is to increase the ray that's intersecting
-		// by the last movement of the shield.
-		// it's not 100% accurate so there's a bit of a FIXME here to do a real solution
-		// (keep track in the projectile which shields it's in)
+		CUnit* owner = repulser->owner;
 
-		const float3 effectivePPos0 = ppos0 + (ppos0 - ppos1) * repulser->deltaPos.Length();
-		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), effectivePPos0, ppos1, &cq)) {
-			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
-				if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
-					return;
-			}
-		}
+		// we sometimes get false inside hits due to the movement of the shield
+		// a very hacky solution is to nudge the start of the intersecting ray
+		// back (proportional to how far the shield moved last frame) so as to
+		// increase its length.
+		// it's not 100% accurate so there's a bit of a FIXME here to do a real
+		// solution (keep track in the projectile which shields it's in)
+		const float3 rpvec  = ppos0 - ppos1;
+		const float3 rppos0 = ppos0 + rpvec * repulser->GetDeltaDist();
+
+		if (!CCollisionHandler::DetectHit(owner, &repulser->collisionVolume, owner->GetTransformMatrix(true), rppos0, ppos1, &cq))
+			continue;
+
+		if (cq.InsideHit() && repulser->weaponDef->exteriorShield && !repulser->IsRepulsing(wpro))
+			continue;
+
+		if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
+			return;
 	}
 }
 

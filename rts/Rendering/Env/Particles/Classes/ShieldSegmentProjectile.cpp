@@ -19,7 +19,7 @@ CR_BIND(ShieldSegmentCollection, )
 CR_REG_METADATA(ShieldSegmentCollection, (
 	CR_MEMBER(shield),
 	CR_IGNORED(shieldTexture),
-	CR_IGNORED(lastAllowDrawingframe),
+	CR_IGNORED(lastAllowDrawFrame),
 	CR_IGNORED(allowDrawing),
 	CR_MEMBER(shieldSegments),
 	CR_MEMBER(color),
@@ -43,18 +43,43 @@ static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheret
 
 
 
-ShieldSegmentCollection::ShieldSegmentCollection(CPlasmaRepulser* shield_)
-	: shield(shield_)
-	, shieldTexture(nullptr)
-	, lastAllowDrawingframe(-1)
-	, allowDrawing(false)
-	, size(shield->weaponDef->shieldRadius)
-	, color(255,255,255,0)
+ShieldSegmentCollection& ShieldSegmentCollection::operator = (ShieldSegmentCollection&& ssc) {
+	shield = ssc.shield; ssc.shield = nullptr;
+	shieldTexture = ssc.shieldTexture; ssc.shieldTexture = nullptr;
+
+	lastAllowDrawFrame = ssc.lastAllowDrawFrame;
+	allowDrawing = ssc.allowDrawing;
+
+	size = ssc.size;
+	color = ssc.color;
+
+	shieldSegments = std::move(ssc.shieldSegments);
+
+	// update collection-pointers if we are moved into
+	for (ShieldSegmentProjectile* ssp: shieldSegments) {
+		ssp->Reload(this, -1, -1);
+	}
+
+	return *this;
+}
+
+
+void ShieldSegmentCollection::Init(CPlasmaRepulser* shield_)
 {
+	shield = shield_;
+	shieldTexture = nullptr;
+
+	lastAllowDrawFrame = -1;
+	allowDrawing = false;
+
+	size = shield->weaponDef->shieldRadius;
+	color = SColor(255, 255, 255, 0);
+
+
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 
-	if ((allowDrawing = (wd->visibleShield || wd->visibleShieldHitFrames > 0))) {
+	if ((allowDrawing = wd->IsVisibleShield())) {
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
@@ -65,23 +90,41 @@ ShieldSegmentCollection::ShieldSegmentCollection(CPlasmaRepulser* shield_)
 		}
 
 		// ProjectileDrawer needs to know if any shields use the Perlin-noise texture
-		if (UsingPerlinNoise())
-			projectileDrawer->IncPerlinTexObjectCount();
+		if (!UsingPerlinNoise())
+			return;
+
+		projectileDrawer->IncPerlinTexObjectCount();
 	}
 }
 
-bool ShieldSegmentCollection::UsingPerlinNoise() const
+void ShieldSegmentCollection::Kill()
 {
-	return projectileDrawer && (shieldTexture == projectileDrawer->perlintex);
+	{
+		shield = nullptr;
+		shieldTexture = nullptr;
+	}
+	{
+		for (ShieldSegmentProjectile* seg: shieldSegments) {
+			seg->PreDelete();
+		}
+
+		shieldSegments.clear();
+	}
+	{
+		if (!UsingPerlinNoise())
+			return;
+
+		projectileDrawer->DecPerlinTexObjectCount();
+	}
 }
 
 
 void ShieldSegmentCollection::PostLoad()
 {
-	lastAllowDrawingframe = -1;
+	lastAllowDrawFrame = -1;
 	const WeaponDef* wd = shield->weaponDef;
 
-	if ((allowDrawing = (wd->visibleShield || wd->visibleShieldHitFrames > 0))) {
+	if ((allowDrawing = wd->IsVisibleShield())) {
 		shieldTexture = wd->visuals.texture1;
 
 		int i = 0;
@@ -93,42 +136,38 @@ void ShieldSegmentCollection::PostLoad()
 	}
 }
 
-ShieldSegmentCollection::~ShieldSegmentCollection()
-{
-	for (auto* segs: shieldSegments) {
-		segs->PreDelete();
-	}
 
-	if (UsingPerlinNoise())
-		projectileDrawer->DecPerlinTexObjectCount();
+bool ShieldSegmentCollection::UsingPerlinNoise() const
+{
+	return (projectileDrawer != nullptr && shieldTexture == projectileDrawer->perlintex);
 }
 
 bool ShieldSegmentCollection::AllowDrawing()
 {
 	// call eventHandler.DrawShield only once per shield & frame
-	if (lastAllowDrawingframe == globalRendering->drawFrame)
+	if (lastAllowDrawFrame == globalRendering->drawFrame)
 		return allowDrawing;
 
-	lastAllowDrawingframe = globalRendering->drawFrame;
-	allowDrawing = false;
+	lastAllowDrawFrame = globalRendering->drawFrame;
 
-	if (shield == NULL)
-		return allowDrawing;
-	if (shield->owner == NULL)
-		return allowDrawing;
+
+	if (shield == nullptr)
+		return (allowDrawing = false);
+	if (shield->owner == nullptr)
+		return (allowDrawing = false);
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
 	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield()
 	if (eventHandler.DrawShield(shield->owner, shield))
-		return allowDrawing;
+		return (allowDrawing = false);
 
 	if (!shield->IsActive())
-		return allowDrawing;
+		return (allowDrawing = false);
 	if (shieldSegments.empty())
-		return allowDrawing;
+		return (allowDrawing = false);
 	if (!camera->InView(GetShieldDrawPos(), shield->weaponDef->shieldRadius * 2.0f))
-		return allowDrawing;
+		return (allowDrawing = false);
 
 	// signal the ShieldSegmentProjectile's they can draw
 	return (allowDrawing = true);
@@ -159,8 +198,6 @@ float3 ShieldSegmentCollection::GetShieldDrawPos() const
 {
 	assert(shield != nullptr);
 	assert(shield->owner != nullptr);
-
-
 	return shield->owner->GetObjectSpaceDrawPos(shield->relWeaponMuzzlePos);
 }
 
@@ -169,20 +206,20 @@ float3 ShieldSegmentCollection::GetShieldDrawPos() const
 #define NUM_VERTICES_Y 3
 
 ShieldSegmentProjectile::ShieldSegmentProjectile(
-			ShieldSegmentCollection* collection_,
-			const WeaponDef* shieldWeaponDef,
-			const float3& shieldSegmentPos,
-			int xpart,
-			int ypart
-		)
+	ShieldSegmentCollection* collection_,
+	const WeaponDef* shieldWeaponDef,
+	const float3& shieldSegmentPos,
+	int xpart,
+	int ypart
+)
 	: CProjectile(
-			shieldSegmentPos,
-			ZeroVector,
-			collection_->GetShield()->owner,
-			false,
-			false,
-			false
-		)
+		shieldSegmentPos,
+		ZeroVector,
+		collection_->GetShield()->owner,
+		false,
+		false,
+		false
+	)
 	, collection(collection_)
 {
 	checkCol      = false;
@@ -198,16 +235,15 @@ ShieldSegmentProjectile::ShieldSegmentProjectile(
 
 void ShieldSegmentProjectile::Reload(ShieldSegmentCollection* collection_, int xpart, int ypart)
 {
+	assert(!deleteMe);
+
 	collection = collection_;
+
+	if (xpart < 0 && ypart < 0)
+		return;
+
 	vertices = GetSegmentVertices(xpart, ypart);
 	texCoors = GetSegmentTexCoords(collection->GetShieldTexture(), xpart, ypart);
-}
-
-
-void ShieldSegmentProjectile::PreDelete()
-{
-	collection = nullptr;
-	deleteMe = true;
 }
 
 
@@ -219,7 +255,7 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 		#define NUM_VERTICES_X_M1 (NUM_VERTICES_X - 1)
 		#define NUM_VERTICES_Y_M1 (NUM_VERTICES_Y - 1)
 
-		// NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X vertices
+		// add <NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X> vertices
 		for (int ypart_ = 0; ypart_ < ShieldSegmentCollection::NUM_SEGMENTS_Y; ++ypart_) {
 			for (int xpart_ = 0; xpart_ < ShieldSegmentCollection::NUM_SEGMENTS_X; ++xpart_) {
 				const int segmentIdx = (xpart_ + ypart_ * ShieldSegmentCollection::NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);

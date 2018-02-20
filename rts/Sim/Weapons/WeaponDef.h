@@ -43,6 +43,8 @@ public:
 		return false;
 	}
 
+	bool IsVisibleShield() const { return (visibleShield || visibleShieldHitFrames > 0); }
+
 public:
 	std::string name;
 	std::string type;

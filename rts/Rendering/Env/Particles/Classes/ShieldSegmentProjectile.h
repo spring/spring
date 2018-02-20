@@ -21,16 +21,21 @@ class ShieldSegmentCollection
 	CR_DECLARE_STRUCT(ShieldSegmentCollection)
 public:
 	// creg only
-	ShieldSegmentCollection() { }
-	ShieldSegmentCollection(CPlasmaRepulser*);
-	~ShieldSegmentCollection();
+	ShieldSegmentCollection() {}
+	ShieldSegmentCollection(CPlasmaRepulser* shield) { Init(shield); }
+	ShieldSegmentCollection(ShieldSegmentCollection&& ssc) { *this = std::move(ssc); }
+	~ShieldSegmentCollection() { Kill(); }
 
+	ShieldSegmentCollection& operator = (ShieldSegmentCollection&& ssc);
+
+	void Init(CPlasmaRepulser*);
+	void Kill();
 	void Update();
 	void UpdateColor();
 
 	bool AllowDrawing();
 
-	CPlasmaRepulser* GetShield() const { return shield; }
+	const CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 
 	float3 GetShieldDrawPos() const;
@@ -47,12 +52,12 @@ public:
 private:
 	bool UsingPerlinNoise() const;
 
-	CPlasmaRepulser* shield;
-	const AtlasedTexture* shieldTexture;
+	const CPlasmaRepulser* shield = nullptr;
+	const AtlasedTexture* shieldTexture = nullptr;
 
-	int lastAllowDrawingframe;
-	bool allowDrawing;
-	float size;
+	int lastAllowDrawFrame = -1;
+	bool allowDrawing = false;
+	float size = 0.0f;
 
 	SColor color;
 
@@ -77,7 +82,10 @@ public:
 
 	void Draw(CVertexArray* va) override;
 	void Update() override;
-	void PreDelete();
+	void PreDelete() {
+		collection = nullptr;
+		deleteMe = true;
+	}
 	void Reload(
 		ShieldSegmentCollection* collection,
 		const int xpart,
