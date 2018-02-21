@@ -3227,9 +3227,9 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 		return 0;
 
 	if (lua_israwstring(L, 2)) {
-		const std::string& key = lua_tostring(L, 2);
+		const char* key = lua_tostring(L, 2);
 
-		switch (hashString(key.c_str())) {
+		switch (hashString(key)) {
 			case hashString("mode"): {
 				lua_pushnumber(L, unit->flankingBonusMode);
 				return 1;

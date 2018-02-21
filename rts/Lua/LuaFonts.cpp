@@ -113,9 +113,9 @@ int LuaFonts::meta_index(lua_State* L)
 	CglFont* f = tofont(L, 1);
 
 	if (lua_israwstring(L, 2)) {
-		const std::string& key = lua_tostring(L, 2);
+		const char* key = lua_tostring(L, 2);
 
-		switch (hashString(key.c_str())) {
+		switch (hashString(key)) {
 			case hashString("size"): {
 				lua_pushnumber(L, f->GetSize());
 				return 1;
