@@ -46,18 +46,20 @@ void GameControllerTextInput::Draw() {
 	const float fontScale = 1.0f; // TODO: make configurable again
 	const float fontSize = fontScale * font->GetSize();
 
-	const std::string tempstring = userPrompt + userInput + editText;
+	const std::string userString = userPrompt + userInput + editText;
 
 	if (drawTextCaret) {
-		int caretIdx = writingPos + editingPos;
-		char32_t c = utf8::GetNextChar(userInput + editText, caretIdx);
+		int curCaretIdx = writingPos + editingPos; // advanced by GetNextChar
+		int prvCaretIdx = curCaretIdx;
+
+		char32_t c = utf8::GetNextChar(userInput + editText, curCaretIdx);
 
 		// make caret always visible
 		if (c == 0)
 			c = ' ';
 
 
-		const float caretRelPos = fontSize * font->GetTextWidth(tempstring.substr(0, userPrompt.length() + caretIdx)) * globalRendering->pixelX;
+		const float caretRelPos = fontSize * font->GetTextWidth(userString.substr(0, userPrompt.length() + prvCaretIdx)) * globalRendering->pixelX;
 		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
 		const float caretWidth  = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 
@@ -94,7 +96,7 @@ void GameControllerTextInput::Draw() {
 
 	// draw the text
 	font->SetColors(textColor, nullptr);
-	font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | (FONT_OUTLINE * guihandler->GetOutlineFonts()) | FONT_NORM | FONT_BUFFERED, tempstring);
+	font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | (FONT_OUTLINE * guihandler->GetOutlineFonts()) | FONT_NORM | FONT_BUFFERED, userString);
 	font->DrawBufferedGL4();
 }
 
