@@ -17,18 +17,17 @@
 	#include "LanguageBlocksDefs.h"
 #endif // HEADLESS
 
-#include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
 #include "System/SafeUtil.h"
-#include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
+#include "System/TimeProfiler.h"
+#include "System/UnorderedMap.hpp"
 #include "System/float4.h"
 #include "System/bitops.h"
 
@@ -103,19 +102,23 @@ public:
 			msg += GetFTError(error);
 			throw std::runtime_error(msg);
 		}
+
 	#ifdef USE_FONTCONFIG
-		if (!FcInit()) {
+		if (!FcInit())
 			throw std::runtime_error("FontConfig failed");
-		}
+
 		// Windows users most likely don't have a fontconfig configuration file
 		// so manually add windows fonts dir and engine fonts dir to fontconfig
 		// so it can use them as fallback.
 		#ifdef WIN32
 		{
-			const size_t maxSize = 32 * 1024;
-			char out_dir[maxSize];
-			ExpandEnvironmentStrings("%WINDIR%\\fonts", out_dir, maxSize); // expands %HOME% etc.
-			FcConfigAppFontAddDir(nullptr, reinterpret_cast<FcChar8*>(out_dir));
+			ScopedOnceTimer timer("FtLibraryHandler::FcConfigBuildFonts");
+			char osFontsDir[32 * 1024];
+
+			ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
+			LOG_L(L_INFO, "[%s] creating fontconfig for directory %s\n", __func__, osFontsDir);
+
+			FcConfigAppFontAddDir(nullptr, reinterpret_cast<FcChar8*>(osFontsDir));
 			FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
 			FcConfigBuildFonts(nullptr);
 		}
@@ -155,14 +158,15 @@ private:
 	static bool flag;
 #endif
 	static std::unique_ptr<FtLibraryHandler> singleton;
-
 };
+
 
 #ifndef WIN32
 std::once_flag FtLibraryHandler::flag;
 #else
 bool FtLibraryHandler::flag = true;
 #endif
+
 std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #endif
 
