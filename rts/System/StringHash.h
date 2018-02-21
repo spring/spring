@@ -8,7 +8,7 @@ static inline unsigned HashString(const std::string& s) { return (HashString(s.c
 
 
 
-constexpr size_t hashString(const char* str, size_t hash = 5381)
+constexpr unsigned int hashString(const char* str, size_t hash = 5381)
 {
 	return ((*str) != 0) ? hashString(str + 1, hash + (hash << 5) + *str) : hash;
 }
