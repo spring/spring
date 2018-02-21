@@ -112,43 +112,58 @@ int LuaFonts::meta_index(lua_State* L)
 	CglFont* f = tofont(L, 1);
 
 	if (lua_israwstring(L, 2)) {
-		const string key = lua_tostring(L, 2);
+		const char* key = lua_tostring(L, 2);
 
-		if (key == "size") {
-			lua_pushnumber(L, f->GetSize());
-			return 1;
-		//} else if (key == "outlinecolor") {
-		//} else if (key == "textcolor") {
-		} else if (key == "path") {
-			const std::string& filepath = f->GetFilePath();
-			lua_pushsstring(L, filepath);
-			return 1;
-		} else if (key == "height" || key == "lineheight") {
-			lua_pushnumber(L, f->GetLineHeight());
-			return 1;
-		} else if (key == "descender") {
-			lua_pushnumber(L, f->GetDescender());
-			return 1;
-		} else if (key == "outlinewidth") {
-			lua_pushnumber(L, f->GetOutlineWidth());
-			return 1;
-		} else if (key == "outlineweight") {
-			lua_pushnumber(L, f->GetOutlineWeight());
-			return 1;
-		} else if (key == "family") {
-			const std::string& family = f->GetFamily();
-			lua_pushsstring(L, family);
-			return 1;
-		} else if (key == "style") {
-			const std::string& style = f->GetStyle();
-			lua_pushsstring(L, style);
-			return 1;
-		} else if (key == "texturewidth") {
-			lua_pushnumber(L, f->GetTextureWidth());
-			return 1;
-		} else if (key == "textureheight") {
-			lua_pushnumber(L, f->GetTextureHeight());
-			return 1;
+		switch (hashString(key)) {
+			case hashString("size"): {
+				lua_pushnumber(L, f->GetSize());
+				return 1;
+			} break;
+			case hashString("path"): {
+				lua_pushsstring(L, f->GetFilePath());
+				return 1;
+			} break;
+
+			case hashString("height"):
+			case hashString("lineheight"): {
+				lua_pushnumber(L, f->GetLineHeight());
+				return 1;
+			} break;
+
+			case hashString("descender"): {
+				lua_pushnumber(L, f->GetDescender());
+				return 1;
+			} break;
+
+			case hashString("outlinewidth"): {
+				lua_pushnumber(L, f->GetOutlineWidth());
+				return 1;
+			} break;
+			case hashString("outlineweight"): {
+				lua_pushnumber(L, f->GetOutlineWeight());
+				return 1;
+			} break;
+
+			case hashString("family"): {
+				lua_pushsstring(L, f->GetFamily());
+				return 1;
+			} break;
+			case hashString("style"): {
+				lua_pushsstring(L, f->GetStyle());
+				return 1;
+			} break;
+
+			case hashString("texturewidth"): {
+				lua_pushnumber(L, f->GetTextureWidth());
+				return 1;
+			} break;
+			case hashString("textureheight"): {
+				lua_pushnumber(L, f->GetTextureHeight());
+				return 1;
+			} break;
+
+			default: {
+			} break;
 		}
 	}
 
