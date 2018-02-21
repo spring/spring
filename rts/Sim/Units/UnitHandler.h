@@ -95,8 +95,8 @@ private:
 	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
 
-	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
-	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
+	size_t activeSlowUpdateUnit = 0;  ///< first unit of batch that will be SlowUpdate'd this frame
+	size_t activeUpdateUnit = 0;      ///< first unit of batch that will be SlowUpdate'd this frame
 
 
 	///< global unit-limit (derived from the per-team limit)

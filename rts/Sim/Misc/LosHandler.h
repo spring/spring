@@ -163,8 +163,8 @@ public:
 	float invDiv = 0.0f;
 	int2  size;
 
-	LosType type;
-	LosAlgoType algoType;
+	LosType type = LOS_TYPE_LOS;
+	LosAlgoType algoType = LOS_ALGO_RAYCAST;
 
 	static size_t cacheFails;
 	static size_t cacheHits;
@@ -315,8 +315,8 @@ private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
 	static constexpr float defBaseRadarErrorMult =  2.0f;
 
-	float baseRadarErrorSize;
-	float baseRadarErrorMult;
+	float baseRadarErrorSize = 0.0f;
+	float baseRadarErrorMult = 0.0f;
 
 	std::vector<float> radarErrorSizes;
 	std::array<ILosType*, 7> losTypes;
