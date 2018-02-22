@@ -101,8 +101,8 @@ void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 std::string CLocalConnection::Statistics() const
 {
 	std::string msg = "[LocalConnection::Statistics]\n";
-	msg += spring::format("\tReceived: %u bytes\n", dataRecv);
-	msg += spring::format("\tSent: %u bytes\n", dataSent);
+	msg += spring::format("\t%u bytes sent  \n", dataRecv);
+	msg += spring::format("\t%u bytes recv'd\n", dataSent);
 	return msg;
 }
 

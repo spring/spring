@@ -300,7 +300,8 @@ void UDPConnection::Init()
 	recvOverhead = 0;
 
 	resentChunks = 0;
-	sentPackets = recvPackets = 0;
+	sentPackets = 0;
+	recvPackets = 0;
 	droppedChunks = 0;
 	mtu = globalConfig->mtu;
 	reconnectTime = globalConfig->reconnectTimeout;
@@ -729,15 +730,18 @@ bool UDPConnection::CanReconnect() const {
 
 std::string UDPConnection::Statistics() const
 {
+	const char* fmts[] = {
+		"\t%u bytes sent   in %u packets (%.3f bytes/packet)\n",
+		"\t%u bytes recv'd in %u packets (%.3f bytes/packet)\n",
+		"\t{%.3fx, %.3fx} relative protocol overhead {up, down}\n",
+		"\t%u incoming chunks dropped, %u outgoing chunks resent\n",
+	};
+
 	std::string msg = "[UDPConnection::Statistics]\n";
-	msg += spring::format("\tReceived: %u bytes in %u packets (%f bytes/package)\n",
-			dataRecv, recvPackets, spring::SafeDivide(dataRecv, recvPackets));
-	msg += spring::format("\tSent: %u bytes in %u packets (%f bytes/package)\n",
-			dataSent, sentPackets, spring::SafeDivide(dataSent, sentPackets));
-	msg += spring::format("\tRelative protocol overhead: %f up, %f down\n",
-			spring::SafeDivide(sentOverhead, dataSent), spring::SafeDivide(recvOverhead, dataRecv) );
-	msg += spring::format("\t%u incoming chunks dropped, %u outgoing chunks resent\n",
-			droppedChunks, resentChunks);
+	msg += spring::format(fmts[0], dataRecv, recvPackets, spring::SafeDivide(dataRecv * 1.0f, recvPackets * 1.0f));
+	msg += spring::format(fmts[1], dataSent, sentPackets, spring::SafeDivide(dataSent * 1.0f, sentPackets * 1.0f));
+	msg += spring::format(fmts[2], spring::SafeDivide(sentOverhead * 1.0f, dataSent * 1.0f), spring::SafeDivide(recvOverhead * 1.0f, dataRecv * 1.0f));
+	msg += spring::format(fmts[3], droppedChunks, resentChunks);
 	return msg;
 }
 
