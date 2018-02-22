@@ -127,8 +127,8 @@ void CUnitHandler::Init() {
 
 		// id's are used as indices, so they must lie in [0, units.size() - 1]
 		// (furthermore all id's are treated equally, none have special status)
-		if (idPool.IsEmpty())
-			idPool.Expand(0, units.size());
+		idPool.Clear();
+		idPool.Expand(0, units.size());
 
 		for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
 			unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);
@@ -147,8 +147,6 @@ void CUnitHandler::Kill()
 
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	unitMemPool.clear();
-	// when reloading, do not expand pool again (but keep current mappings)
-	idPool.Clear();
 
 	units.clear();
 

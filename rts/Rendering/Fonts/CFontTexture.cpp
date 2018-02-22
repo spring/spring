@@ -96,12 +96,10 @@ class FtLibraryHandler
 {
 public:
 	FtLibraryHandler() {
-		FT_Error error = FT_Init_FreeType(&lib);
-		if (error) {
-			std::string msg = "FT_Init_FreeType failed:";
-			msg += GetFTError(error);
-			throw std::runtime_error(msg);
-		}
+		const FT_Error error = FT_Init_FreeType(&lib);
+
+		if (error)
+			throw std::runtime_error(std::string("FT_Init_FreeType failed:") + GetFTError(error));
 
 	#ifdef USE_FONTCONFIG
 		if (!FcInit())

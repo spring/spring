@@ -10,10 +10,9 @@
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/UnorderedSet.hpp"
-#include "Sim/Features/Feature.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
-class CFeature;
 struct UnitDef;
 class LuaTable;
 struct FeatureDef;
@@ -36,12 +35,15 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
-class LuaParser;
+
+class CFeature;
 class CFeatureHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
+	CFeatureHandler(): idPool(MAX_FEATURES) {}
+
 	void Init();
 	void Kill();
 

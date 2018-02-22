@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SimObjectIDPool.h"
+#include "GlobalConstants.h"
 #include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/creg/STL_Map.h"
@@ -8,22 +9,24 @@
 
 CR_BIND(SimObjectIDPool, )
 CR_REG_METADATA(SimObjectIDPool, (
-	CR_MEMBER(liveIdentToIndexMap),
-	CR_MEMBER(liveIndexToIdentMap),
-	CR_MEMBER(tempIndexToIdentMap)
+	CR_MEMBER(poolIDs),
+	CR_MEMBER(freeIDs),
+	CR_MEMBER(tempIDs)
 ))
 
-void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
-	// allocate new batch of (randomly shuffled) id's
-	std::vector<int> newIDs(numIDs);
 
-	for (unsigned int offsetID = 0; offsetID < numIDs; offsetID++) {
-		newIDs[offsetID] = baseID + offsetID;
-	}
+void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
+	std::array<int, (MAX_UNITS > MAX_FEATURES)? MAX_UNITS: MAX_FEATURES> newIDs;
+
+	assert(numIDs <= newIDs.size());
+
+	// allocate new batch of (randomly shuffled) id's
+	std::fill(newIDs.begin(), newIDs.end(), 0);
+	std::generate(newIDs.begin(), newIDs.begin() + numIDs, [n = baseID]() mutable { return (n++); });
 
 	// randomize so that Lua widgets can not easily determine counts
-	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
-	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
+	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
+	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
 
 	// NOTE:
 	//   any randomization would be undone by a sorted std::container
@@ -32,13 +35,13 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	//   such that ID's can be assigned and returned to the pool with
 	//   their original index, e.g.
 	//
-	//     indexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
-	//     identToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
+	//     freeIDs<idx, uid> = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
+	//     poolIDs<uid, idx> = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
 	//
 	//   (the ID --> index map is never changed at runtime!)
 	for (unsigned int offsetID = 0; offsetID < numIDs; offsetID++) {
-		liveIndexToIdentMap.insert(IDPair(baseID + offsetID, newIDs[offsetID]));
-		liveIdentToIndexMap.insert(IDPair(newIDs[offsetID], baseID + offsetID));
+		freeIDs.insert(std::pair<unsigned int, unsigned int>(baseID + offsetID, newIDs[offsetID]));
+		poolIDs.insert(std::pair<unsigned int, unsigned int>(newIDs[offsetID], baseID + offsetID));
 	}
 }
 
@@ -59,10 +62,10 @@ unsigned int SimObjectIDPool::ExtractID() {
 	// and FeatureHandler have safeguards
 	assert(!IsEmpty());
 
-	const auto it = liveIndexToIdentMap.begin();
+	const auto it = freeIDs.begin();
 	const unsigned int uid = it->second;
 
-	liveIndexToIdentMap.erase(it);
+	freeIDs.erase(it);
 
 	if (IsEmpty())
 		RecycleIDs();
@@ -75,10 +78,10 @@ void SimObjectIDPool::ReserveID(unsigned int uid) {
 	assert(HasID(uid));
 	assert(!IsEmpty());
 
-	const auto it = liveIdentToIndexMap.find(uid);
+	const auto it = poolIDs.find(uid);
 	const unsigned int idx = it->second;
 
-	liveIndexToIdentMap.erase(idx);
+	freeIDs.erase(idx);
 
 	if (!IsEmpty())
 		return;
@@ -94,40 +97,40 @@ void SimObjectIDPool::FreeID(unsigned int uid, bool delayed) {
 	assert(!HasID(uid));
 
 	if (delayed) {
-		tempIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[uid], uid));
+		tempIDs.insert(std::pair<unsigned int, unsigned int>(poolIDs[uid], uid));
 	} else {
-		liveIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[uid], uid));
+		freeIDs.insert(std::pair<unsigned int, unsigned int>(poolIDs[uid], uid));
 	}
 }
 
 bool SimObjectIDPool::RecycleID(unsigned int uid) {
-	assert(liveIdentToIndexMap.find(uid) != liveIdentToIndexMap.end());
+	assert(poolIDs.find(uid) != poolIDs.end());
 
-	const unsigned int idx = liveIdentToIndexMap[uid];
-	const auto it = tempIndexToIdentMap.find(idx);
+	const unsigned int idx = poolIDs[uid];
+	const auto it = tempIDs.find(idx);
 
-	if (it == tempIndexToIdentMap.end())
+	if (it == tempIDs.end())
 		return false;
 
-	tempIndexToIdentMap.erase(idx);
-	liveIndexToIdentMap.insert(IDPair(idx, uid));
+	tempIDs.erase(idx);
+	freeIDs.insert(std::pair<unsigned int, unsigned int>(idx, uid));
 	return true;
 }
 
 void SimObjectIDPool::RecycleIDs() {
 	// throw each ID recycled up until now back into the pool
-	liveIndexToIdentMap.insert(tempIndexToIdentMap.begin(), tempIndexToIdentMap.end());
-	tempIndexToIdentMap.clear();
+	freeIDs.insert(tempIDs.begin(), tempIDs.end());
+	tempIDs.clear();
 }
 
 
 bool SimObjectIDPool::HasID(unsigned int uid) const {
-	assert(liveIdentToIndexMap.find(uid) != liveIdentToIndexMap.end());
+	assert(poolIDs.find(uid) != poolIDs.end());
 
 	// check if given ID is available (to be assigned) in this pool
-	const auto it = liveIdentToIndexMap.find(uid);
+	const auto it = poolIDs.find(uid);
 	const unsigned int idx = it->second;
 
-	return (liveIndexToIdentMap.find(idx) != liveIndexToIdentMap.end());
+	return (freeIDs.find(idx) != freeIDs.end());
 }
 

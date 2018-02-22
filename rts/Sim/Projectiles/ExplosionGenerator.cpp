@@ -898,8 +898,8 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 			continue;
 
 		const string& className = handler->GetProjectileClasses().ResolveAlias(spawnTable.GetString("class", spawnName));
-		psi.spawnableID = CExpGenSpawnable::GetSpawnableID(className);
-		if (psi.spawnableID == -1u) {
+
+		if ((psi.spawnableID = CExpGenSpawnable::GetSpawnableID(className)) == -1u) {
 			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
 			continue;
 		}
