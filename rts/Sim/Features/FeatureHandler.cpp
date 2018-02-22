@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "FeatureHandler.h"
-
+#include "Feature.h"
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
 #include "FeatureMemPool.h"
@@ -38,8 +38,8 @@ void CFeatureHandler::Init() {
 
 	featureMemPool.reserve(128);
 
-	if (idPool.IsEmpty())
-		idPool.Expand(0, features.size());
+	idPool.Clear();
+	idPool.Expand(0, features.size());
 }
 
 void CFeatureHandler::Kill() {
@@ -49,8 +49,6 @@ void CFeatureHandler::Kill() {
 
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	featureMemPool.clear();
-	// when reloading, do not expand pool again (but keep current mappings)
-	idPool.Clear();
 
 	spring::clear_unordered_set(activeFeatureIDs);
 	deletedFeatureIDs.clear();

@@ -18,6 +18,8 @@ class CUnitHandler
 	CR_DECLARE_STRUCT(CUnitHandler)
 
 public:
+	CUnitHandler(): idPool(MAX_UNITS) {}
+
 	void Init();
 	void Kill();
 
