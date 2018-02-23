@@ -3,6 +3,7 @@
 
 #include "glFont.h"
 #include "FontLogSection.h"
+
 #include <stdarg.h>
 #include <stdexcept>
 

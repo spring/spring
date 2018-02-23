@@ -76,6 +76,7 @@ class CFontTexture
 {
 public:
 	static void Update();
+	static bool GenFontConfig();
 
 public:
 	CFontTexture(const std::string& fontfile, int size, int outlinesize, float  outlineweight);

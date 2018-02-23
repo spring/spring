@@ -105,6 +105,7 @@ CONFIG(std::string, SplashScreenDir).defaultValue(".");
 
 
 DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
+DEFINE_bool_EX  (gen_fontconfig,     "gen-fontconfig",     false, "Generate font-configuration database");
 DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
 DEFINE_bool     (window,                                   false, "Run in windowed mode");
 DEFINE_bool     (hidden,                                   false, "Start in background (minimised, no taskbar entry)");
@@ -475,12 +476,17 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		inputFile = argv[1];
 
 #ifndef WIN32
-	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
+
+	if (FLAGS_gen_fontconfig) {
+		CFontTexture::GenFontConfig();
+		exit(EXIT_SUCCESS);
+	}
 
 	if (FLAGS_sync_version) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`

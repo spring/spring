@@ -91,9 +91,9 @@ static spring::recursive_mutex m;
 
 
 
+
 #ifndef HEADLESS
-class FtLibraryHandler
-{
+class FtLibraryHandler {
 public:
 	FtLibraryHandler() {
 		const FT_Error error = FT_Init_FreeType(&lib);
@@ -101,60 +101,62 @@ public:
 		if (error)
 			throw std::runtime_error(std::string("FT_Init_FreeType failed:") + GetFTError(error));
 
-	#ifdef USE_FONTCONFIG
+        #ifdef USE_FONTCONFIG
 		if (!FcInit())
 			throw std::runtime_error("FontConfig failed");
-
-		// Windows users most likely don't have a fontconfig configuration file
-		// so manually add windows fonts dir and engine fonts dir to fontconfig
-		// so it can use them as fallback.
-		#ifdef WIN32
-		{
-			ScopedOnceTimer timer("FtLibraryHandler::FcConfigBuildFonts");
-			char osFontsDir[32 * 1024];
-
-			ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
-			LOG_L(L_INFO, "[%s] creating fontconfig for directory %s\n", __func__, osFontsDir);
-
-			FcConfigAppFontAddDir(nullptr, reinterpret_cast<FcChar8*>(osFontsDir));
-			FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
-			FcConfigBuildFonts(nullptr);
-		}
 		#endif
-
-	#endif
-	};
+	}
 
 	~FtLibraryHandler() {
 		FT_Done_FreeType(lib);
-	#ifdef USE_FONTCONFIG
+		#ifdef USE_FONTCONFIG
 		FcFini();
+		#endif
+	}
+
+	#ifdef USE_FONTCONFIG
+	bool CheckFontConfig() const { return (FcConfigUptoDate(nullptr)); }
+	bool BuildFontConfig(const char* osFontsDir) const {
+		// Windows users most likely don't have a fontconfig configuration file
+		// so manually add windows fonts dir and engine fonts dir to fontconfig
+		// so it can use them as fallback.
+		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>(osFontsDir));
+		FcConfigAppFontAddDir(nullptr, reinterpret_cast<const FcChar8*>("fonts"));
+		FcConfigBuildFonts(nullptr);
+		return true;
+	}
+	#else
+	bool CheckFontConfig() const { return false; }
+	bool BuildFontConfig(const char*) const { return false; }
 	#endif
-	};
 
 	static FT_Library& GetLibrary() {
-		// singleton
-#ifndef WIN32
+		#ifndef WIN32
 		std::call_once(flag, []() {
 			singleton.reset(new FtLibraryHandler());
 		});
-#else
+
+		#else
+
 		std::lock_guard<spring::recursive_mutex> lk(m);
 		if (flag) {
 			singleton.reset(new FtLibraryHandler());
 			flag = false;
 		}
-#endif
+		#endif
+
 		return singleton->lib;
 	};
 
 private:
 	FT_Library lib;
-#ifndef WIN32
+
+	#ifndef WIN32
 	static std::once_flag flag;
-#else
+	#else
 	static bool flag;
-#endif
+	#endif
+
 	static std::unique_ptr<FtLibraryHandler> singleton;
 };
 
@@ -167,6 +169,7 @@ bool FtLibraryHandler::flag = true;
 
 std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #endif
+
 
 
 
@@ -309,8 +312,11 @@ static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t
 	std::unique_ptr<FcFontSet, decltype(del)> fs_(fs, del);
 	FcPatternDestroy(pattern);
 	FcCharSetDestroy(cset);
-	if (!fs) return nullptr;
-	if (res != FcResultMatch) return nullptr;
+
+	if (fs == nullptr)
+		return nullptr;
+	if (res != FcResultMatch)
+		return nullptr;
 
 	// iterate returned font list
 	for (int i = 0; i < fs->nfont; ++i) {
@@ -430,6 +436,28 @@ void CFontTexture::Update() {
 	for (auto& font: allFonts) {
 		font->UpdateTexture();
 	}
+}
+
+
+bool CFontTexture::GenFontConfig() {
+	#ifndef HEADLESS
+	#ifdef WIN32
+	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
+	FtLibraryHandler ftLibHandler;
+	char osFontsDir[32 * 1024];
+
+	ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
+
+	if (ftLibHandler.CheckFontConfig()) {
+		printf("[%s] fontconfig for directory %s up to date\n", __func__, osFontsDir);
+		return true;
+	}
+
+	printf("[%s] creating fontconfig for directory %s\n", __func__, osFontsDir);
+	return (ftLibHandler.BuildFontConfig(osFontsDir));
+	#endif
+	#endif
+	return true;
 }
 
 
