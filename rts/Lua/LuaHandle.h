@@ -171,6 +171,7 @@ class CLuaHandle : public CEventClient
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID) override;
 

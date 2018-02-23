@@ -175,6 +175,7 @@ class CEventClient
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID) {}
 		virtual void FeatureMoved(const CFeature* feature, const float3& oldpos) {}
@@ -239,6 +240,7 @@ class CEventClient
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,

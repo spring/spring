@@ -389,12 +389,13 @@ bool CEventHandler::FeaturePreDamaged(
 	const CFeature* feature,
 	const CUnit* attacker,
 	float damage,
+	bool paralyzer,
 	int weaponDefID,
 	int projectileID,
 	float* newDamage,
 	float* impulseMult
 ) {
-	return ControlIterateDefFalse(listFeaturePreDamaged, &CEventClient::FeaturePreDamaged, feature, attacker, damage, weaponDefID, projectileID, newDamage, impulseMult);
+	return ControlIterateDefFalse(listFeaturePreDamaged, &CEventClient::FeaturePreDamaged, feature, attacker, damage, paralyzer, weaponDefID, projectileID, newDamage, impulseMult);
 }
 
 
