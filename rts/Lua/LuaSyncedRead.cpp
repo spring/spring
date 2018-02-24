@@ -3314,7 +3314,10 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		} break;
 
 		case hashString("reloadTime"): {
-			lua_pushnumber(L, weapon->reloadTime / GAME_SPEED);
+			// SetUnitWeaponState sets reloadTime to int(value * GAME_SPEED);
+			// divide by 1.0 here since reloadTime / GAME_SPEED would itself
+			// be an integer division
+			lua_pushnumber(L, (weapon->reloadTime / 1.0f) / GAME_SPEED);
 		} break;
 		case hashString("reloadTimeXP"): {
 			// reloadSpeed is affected by unit experience
