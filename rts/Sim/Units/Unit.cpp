@@ -2463,7 +2463,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 // no use for this currently
 bool CUnit::ScriptCloak()
 {
-	if (isCloaked)
+	if (isCloaked /*|| wantCloak*/)
 		return true;
 	if (!eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr))
 		return false;
@@ -2478,7 +2478,8 @@ bool CUnit::ScriptCloak()
 
 bool CUnit::ScriptDecloak(const CSolidObject* object, const CWeapon* weapon)
 {
-	if (!isCloaked)
+	// horrific ScriptCloak asymmetry for Lua's sake
+	if (!isCloaked && !wantCloak)
 		return false;
 	if (!eventHandler.AllowUnitDecloak(this, object, weapon))
 		return false;
@@ -2533,10 +2534,10 @@ bool CUnit::CanTransport(const CUnit* unit) const
 	// check if <unit> is already (in)directly transporting <this>
 	const CUnit* u = this;
 
-	while (u != NULL) {
-		if (u == unit) {
+	while (u != nullptr) {
+		if (u == unit)
 			return false;
-		}
+
 		u = u->GetTransporter();
 	}
 
