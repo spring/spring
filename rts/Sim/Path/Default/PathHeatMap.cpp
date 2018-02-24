@@ -4,42 +4,34 @@
 #include "PathConstants.h"
 #include "PathManager.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 
 // not extern'ed, so static
-static StaticMemPool<1, sizeof(PathHeatMap)> phmMemPool;
-static PathHeatMap* gPathHeatMap = nullptr;
-
+static PathHeatMap gPathHeatMap;
 
 
 PathHeatMap* PathHeatMap::GetInstance() {
-	if (gPathHeatMap == nullptr)
-		gPathHeatMap = phmMemPool.alloc<PathHeatMap>(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
-
-	return gPathHeatMap;
+	gPathHeatMap.Init(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
+	return &gPathHeatMap;
 }
 
 void PathHeatMap::FreeInstance(PathHeatMap* phm) {
-	assert(phm == gPathHeatMap);
-	phmMemPool.free(gPathHeatMap);
+	assert(phm == &gPathHeatMap);
+	phm->Kill();
 }
 
 
 
-PathHeatMap::PathHeatMap(unsigned int scalex, unsigned int scalez): enabled(true) {
+void PathHeatMap::Init(unsigned int scalex, unsigned int scalez) {
 	xscale = std::max(1, std::min(mapDims.hmapx, int(scalex)));
 	zscale = std::max(1, std::min(mapDims.hmapy, int(scalez)));
 	xsize  = mapDims.hmapx / xscale;
 	zsize  = mapDims.hmapy / zscale;
 
-	heatMap.resize(xsize * zsize, HeatCell());
 	heatMapOffset = 0;
-}
 
-PathHeatMap::~PathHeatMap() {
-	heatMap.clear();
+	heatMap.resize(xsize * zsize);
 }
 
 unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) const {
@@ -106,8 +98,6 @@ void PathHeatMap::UpdateHeatValue(unsigned int x, unsigned int y, unsigned int v
 float PathHeatMap::GetHeatCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int ownerID) const {
 	float c = 0.0f;
 
-	if (!enabled)
-		return c;
 	if (!md.heatMapping)
 		return c;
 
