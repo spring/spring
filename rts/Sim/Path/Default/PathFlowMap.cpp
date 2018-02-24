@@ -23,14 +23,14 @@ PathFlowMap* PathFlowMap::GetInstance() {
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
-	assert(pfm == gPathFlowMap);
+	assert(pfm == &gPathFlowMap);
 	pfm->Kill();
 }
 
 
 
 void PathFlowMap::Init(unsigned int scalex, unsigned int scalez) {
-	const float s = 1.0f / math::sqrt(2.0f);
+	// const float s = 1.0f / math::sqrt(2.0f);
 
 	fBufferIdx = 0;
 	bBufferIdx = 1;
