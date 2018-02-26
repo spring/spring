@@ -51,7 +51,7 @@ CVFSHandler::~CVFSHandler()
 void CVFSHandler::GrabLock() { vfsMutex.lock(); }
 void CVFSHandler::FreeLock() { vfsMutex.unlock(); }
 
-void CVFSHandler::FreeGlobalInstance() { FreeInstance(vfsHandlerGlobal);
+void CVFSHandler::FreeGlobalInstance() { FreeInstance(vfsHandlerGlobal); }
 void CVFSHandler::FreeInstance(CVFSHandler* handler)
 {
 	if (handler != vfsHandlerGlobal) {
