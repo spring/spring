@@ -110,10 +110,9 @@ private:
 
 static bool CheckInit(bool throwException = true)
 {
-	if (archiveScanner == NULL || vfsHandler == NULL) {
-		if (throwException) {
+	if (archiveScanner == nullptr || vfsHandler == nullptr) {
+		if (throwException)
 			throw std::logic_error("UnitSync not initialized. Call Init first.");
-		}
 
 		return false;
 	}
@@ -265,17 +264,15 @@ class ScopedMapLoader {
 		 * @param mapFile checks if this file already exists in the current VFS,
 		 *   if so skip reloading
 		 */
-		ScopedMapLoader(const std::string& mapName, const std::string& mapFile)
-			: oldHandler(vfsHandler)
+		ScopedMapLoader(const std::string& mapName, const std::string& mapFile): oldHandler(vfsHandler)
 		{
 			if (!autoUnLoadmap)
 				return;
 			CFileHandler f(mapFile);
-			if (f.FileExists()) {
+			if (f.FileExists())
 				return;
-			}
 
-			vfsHandler = new CVFSHandler();
+			CVFSHandler::SetGlobalInstance(new CVFSHandler());
 			vfsHandler->AddArchiveWithDeps(mapName, false);
 		}
 
@@ -284,8 +281,8 @@ class ScopedMapLoader {
 			if (!autoUnLoadmap)
 				return;
 			if (vfsHandler != oldHandler) {
-				delete vfsHandler;
-				vfsHandler = oldHandler;
+				CVFSHandler::FreeGlobalInstance();
+				CVFSHandler::SetGlobalInstance(oldHandler);
 			}
 		}
 
@@ -539,8 +536,9 @@ EXPORT(void) RemoveAllArchives()
 		CheckInit();
 
 		LOG_L(L_DEBUG, "removing all archives");
-		spring::SafeDelete(vfsHandler);
-		vfsHandler = new CVFSHandler();
+
+		CVFSHandler::FreeGlobalInstance();
+		CVFSHandler::SetGlobalInstance(new CVFSHandler());
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
