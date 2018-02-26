@@ -322,24 +322,21 @@ bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
 		const string& path, const string& pattern, int section)
 {
 #ifndef TOOLS
-	if (!vfsHandler) {
+	if (!vfsHandler)
 		return false;
-	}
 
-	string prefix = path;
-	if (path.find_last_of("\\/") != (path.size() - 1)) {
+	std::string prefix = path;
+	if (path.find_last_of("\\/") != (path.size() - 1))
 		prefix += '/';
-	}
 
-	spring::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			spring::regex::icase);
+	const spring::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern), spring::regex::icase);
+	const std::vector<string>& found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
 
-	const std::vector<string> &found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
-	std::vector<string>::const_iterator fi;
-	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (spring::regex_match(*fi, regexpattern)) {
-			fileSet.insert(prefix + *fi);
-		}
+	for (const std::string& fi: found) {
+		if (!spring::regex_match(fi, regexpattern))
+			continue;
+
+		fileSet.insert(prefix + fi);
 	}
 #endif
 	return true;

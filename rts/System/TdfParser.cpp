@@ -131,10 +131,10 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 
 void TdfParser::ParseBuffer(char const* buf, size_t size) {
 	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler tempvfsHandler;
+	CVFSHandler  tmpHandler;
 
-	vfsHandler = &tempvfsHandler;
-	vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
+	CVFSHandler::SetGlobalInstance(&tmpHandler);
+	tmpHandler.AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 
 	{
 		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + buf + "]])";
@@ -144,7 +144,7 @@ void TdfParser::ParseBuffer(char const* buf, size_t size) {
 		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
 	}
 
-	vfsHandler = oldHandler;
+	CVFSHandler::SetGlobalInstance(oldHandler);
 }
 
 void TdfParser::LoadBuffer(char const* buf, size_t size)

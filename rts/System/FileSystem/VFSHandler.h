@@ -34,6 +34,8 @@ public:
 	static Section GetModeSection(char mode);
 	static Section GetModTypeSection(int modtype);
 
+	static void SetGlobalInstance(CVFSHandler* handler);
+
 
 	/**
 	 * Checks whether a file exists in the VFS (does not work for dirs).
