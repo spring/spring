@@ -330,27 +330,25 @@ int LuaVFS::UseArchive(lua_State* L)
 	if (!LuaIO::IsSimplePath(filename)) {}
 
 
-	int funcIndex = 2;
+	constexpr int funcIndex = 2;
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
 	if (!lua_isfunction(L, funcIndex))
 		return 0;
 
-	string fileData;
-	CFileHandler f(filename, SPRING_VFS_RAW);
-	if (!f.FileExists())
+	if (!CFileHandler::FileExists(filename, SPRING_VFS_RAW))
 		return 0;
 
 	CVFSHandler* oldHandler = vfsHandler;
 	CVFSHandler  tmpHandler;
 
-	vfsHandler = &tmpHandler;
-	vfsHandler->AddArchive(filename, false);
+	CVFSHandler::SetGlobalInstance(&tmpHandler);
+	tmpHandler.AddArchive(filename, false);
 
 	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-	vfsHandler = oldHandler;
+	CVFSHandler::SetGlobalInstance(oldHandler);
 
 	if (error != 0)
 		lua_error(L);

@@ -47,6 +47,13 @@ CVFSHandler::~CVFSHandler()
 }
 
 
+void CVFSHandler::SetGlobalInstance(CVFSHandler* handler)
+{
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
+	vfsHandler = handler;
+}
+
+
 CVFSHandler::Section CVFSHandler::GetModeSection(char mode)
 {
 	switch (mode) {
@@ -87,7 +94,7 @@ static const std::string GetArchivePath(const std::string& name) {
 
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 {
-	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 	LOG_L(L_DEBUG, "[VFSH::%s(arName=\"%s\", overwrite=%s)]", __func__, archiveName.c_str(), overwrite ? "true" : "false");
 
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
@@ -146,7 +153,7 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwr
 
 bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	const std::string& archivePath = GetArchivePath(archiveName);
@@ -215,7 +222,7 @@ std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFilePath, Section section)
 {
 	assert(section < Section::Count);
-	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	const auto fi = files[section].find(normalizedFilePath);
 
@@ -259,7 +266,7 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, Section section)
 {
-	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	assert(section < Section::Count);
 
@@ -307,7 +314,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 
 std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Section section)
 {
-	std::lock_guard<spring::recursive_mutex> lck(vfsMutex);
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	assert(section < Section::Count);
 
