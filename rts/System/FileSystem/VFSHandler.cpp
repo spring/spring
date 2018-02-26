@@ -13,6 +13,7 @@
 #include "ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
 
