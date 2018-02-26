@@ -7,10 +7,10 @@
 #include <cstring>
 
 #include "ArchiveLoader.h"
+#include "ArchiveScanner.h"
+#include "FileSystem.h"
 #include "System/FileSystem/Archives/IArchive.h"
 #include "System/Threading/SpringThreading.h"
-#include "FileSystem.h"
-#include "ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
@@ -33,7 +33,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 static spring::recursive_mutex vfsMutex;
 
 
-CVFSHandler* vfsHandlerGlobal = nullptr;
+static CVFSHandler* vfsHandlerGlobal = nullptr;
 
 
 CVFSHandler::CVFSHandler()
@@ -72,7 +72,7 @@ void CVFSHandler::SetGlobalInstance(CVFSHandler* handler)
 }
 void CVFSHandler::SetGlobalInstanceRaw(CVFSHandler* handler)
 {
-	assert(vfsMutex.locked());
+	// assert(vfsMutex.locked());
 	vfsHandlerGlobal = handler;
 }
 
@@ -393,4 +393,3 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 
 	return dirs;
 }
-
