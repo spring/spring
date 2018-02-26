@@ -32,7 +32,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 static spring::recursive_mutex vfsMutex;
 
 
-CVFSHandler* vfsHandler = nullptr;
+CVFSHandler* vfsHandlerGlobal = nullptr;
 
 
 CVFSHandler::CVFSHandler()
@@ -47,11 +47,39 @@ CVFSHandler::~CVFSHandler()
 }
 
 
+
+void CVFSHandler::GrabLock() { vfsMutex.lock(); }
+void CVFSHandler::FreeLock() { vfsMutex.unlock(); }
+
+void CVFSHandler::FreeGlobalInstance() { FreeInstance(vfsHandlerGlobal);
+void CVFSHandler::FreeInstance(CVFSHandler* handler)
+{
+	if (handler != vfsHandlerGlobal) {
+		// never happens
+		delete handler;
+		return;
+	}
+
+	spring::SafeDelete(vfsHandlerGlobal);
+}
+
 void CVFSHandler::SetGlobalInstance(CVFSHandler* handler)
 {
-	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
-	vfsHandler = handler;
+	GrabLock();
+	SetGlobalInstanceRaw(handler);
+	FreeLock();
 }
+void CVFSHandler::SetGlobalInstanceRaw(CVFSHandler* handler)
+{
+	assert(vfsMutex.locked());
+	vfsHandlerGlobal = handler;
+}
+
+CVFSHandler* CVFSHandler::GetGlobalInstance() {
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
+	return vfsHandlerGlobal;
+}
+
 
 
 CVFSHandler::Section CVFSHandler::GetModeSection(char mode)

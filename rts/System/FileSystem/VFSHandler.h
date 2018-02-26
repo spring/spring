@@ -34,7 +34,14 @@ public:
 	static Section GetModeSection(char mode);
 	static Section GetModTypeSection(int modtype);
 
+	static void GrabLock();
+	static void FreeLock();
+	static void FreeInstance(CVFSHandler* handler);
+	static void FreeGlobalInstance();
 	static void SetGlobalInstance(CVFSHandler* handler);
+	static void SetGlobalInstanceRaw(CVFSHandler* handler);
+
+	static CVFSHandler* GetGlobalInstance();
 
 
 	/**
@@ -111,6 +118,6 @@ private:
 	FileData GetFileData(const std::string& normalizedFilePath, Section section);
 };
 
-extern CVFSHandler* vfsHandler;
+#define vfsHandler (CVFSHandler::GetGlobalInstance())
 
 #endif // _VFS_HANDLER_H

@@ -133,7 +133,9 @@ void TdfParser::ParseBuffer(char const* buf, size_t size) {
 	CVFSHandler* oldHandler = vfsHandler;
 	CVFSHandler  tmpHandler;
 
-	CVFSHandler::SetGlobalInstance(&tmpHandler);
+	// block other threads from getting the global until we are done
+	CVFSHandler::GrabLock();
+	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
 	tmpHandler.AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 
 	{
@@ -144,7 +146,8 @@ void TdfParser::ParseBuffer(char const* buf, size_t size) {
 		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
 	}
 
-	CVFSHandler::SetGlobalInstance(oldHandler);
+	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	CVFSHandler::FreeLock();
 }
 
 void TdfParser::LoadBuffer(char const* buf, size_t size)

@@ -64,7 +64,7 @@ bool FileSystemInitializer::Initialize()
 		dataDirLocater.Check();
 
 		archiveScanner = new CArchiveScanner();
-		vfsHandler = new CVFSHandler();
+		CVFSHandler::SetGlobalInstance(new CVFSHandler());
 
 		initSuccess = true;
 	} catch (const std::exception& ex) {
@@ -91,7 +91,7 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 {
 	if (initSuccess) {
 		spring::SafeDelete(archiveScanner);
-		spring::SafeDelete(vfsHandler);
+		CVFSHandler::FreeGlobalInstance();
 
 		initSuccess = false;
 		initFailure = false;

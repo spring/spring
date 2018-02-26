@@ -340,15 +340,20 @@ int LuaVFS::UseArchive(lua_State* L)
 	if (!CFileHandler::FileExists(filename, SPRING_VFS_RAW))
 		return 0;
 
+
 	CVFSHandler* oldHandler = vfsHandler;
 	CVFSHandler  tmpHandler;
 
-	CVFSHandler::SetGlobalInstance(&tmpHandler);
+	// block other threads from getting the global until we are done
+	CVFSHandler::GrabLock();
+	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
 	tmpHandler.AddArchive(filename, false);
 
 	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-	CVFSHandler::SetGlobalInstance(oldHandler);
+	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	CVFSHandler::FreeLock();
+
 
 	if (error != 0)
 		lua_error(L);
