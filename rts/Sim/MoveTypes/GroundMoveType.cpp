@@ -2519,17 +2519,26 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, bool*>& p) { return (memberHash == p.first); };
 		const auto iter = std::find_if(gmtMemberData.bools.begin(), gmtMemberData.bools.end(), pred);
-		if (iter != gmtMemberData.bools.end()) { *(iter->second) = *(reinterpret_cast<bool*>(memberValue)); return true; }
+		if (iter != gmtMemberData.bools.end()) {
+			*(iter->second) = *(reinterpret_cast<bool*>(memberValue));
+			return true;
+		}
 	}
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, short*>& p) { return (memberHash == p.first); };
 		const auto iter = std::find_if(gmtMemberData.shorts.begin(), gmtMemberData.shorts.end(), pred);
-		if (iter != gmtMemberData.shorts.end()) { *(iter->second) = *(reinterpret_cast<short*>(memberValue)); return true; }
+		if (iter != gmtMemberData.shorts.end()) {
+			*(iter->second) = short(*(reinterpret_cast<float*>(memberValue))); // sic (see SetMoveTypeValue)
+			return true;
+		}
 	}
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, float*>& p) { return (memberHash == p.first); };
 		const auto iter = std::find_if(gmtMemberData.floats.begin(), gmtMemberData.floats.end(), pred);
-		if (iter != gmtMemberData.floats.end()) { *(iter->second) = *(reinterpret_cast<float*>(memberValue)); return true; }
+		if (iter != gmtMemberData.floats.end()) {
+			*(iter->second) = *(reinterpret_cast<float*>(memberValue));
+			return true;
+		}
 	}
 
 	return false;
