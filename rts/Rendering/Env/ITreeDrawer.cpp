@@ -87,20 +87,22 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 	if (treeSquares.empty())
 		return; // NullDrawer
 
+	CFeature* f = featureHandler.GetFeature(treeID);
+
 	{
 		// FeatureDrawer does not take care of this for trees, update the
 		// draw-positions here since FeatureCreated and FeatureMoved both
 		// call us
-		CFeature* f = featureHandler.GetFeature(treeID);
-
 		f->drawPos = f->pos;
 		f->drawMidPos = f->midPos;
+
+		f->UpdateTransform(f->drawPos, false);
 	}
 
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;
-	ts.mat = CMatrix44f(pos);
+	ts.mat = f->GetTransformMatrix(false);
 
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 	const int treeSquareIdx =
