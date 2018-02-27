@@ -514,10 +514,11 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 /******************************************************************************/
 /* MoveType member-value handling */
 
-template<typename value_type>
-static bool SetMoveTypeValue(AMoveType* mt, const string& key, value_type value)
+template<typename ValueType>
+static bool SetMoveTypeValue(AMoveType* mt, const char* key, ValueType val)
 {
-	return (mt->SetMemberValue(HsiehHash(key.c_str(), key.size(), 0), &value));
+	// NOTE: only supports floats and bools, callee MUST reinterpret &val as float* or bool*
+	return (mt->SetMemberValue(HsiehHash(key, strlen(key), 0), &val));
 }
 
 static inline bool SetMoveTypeValue(lua_State* L, AMoveType* moveType, int keyIdx, int valIdx)
@@ -544,7 +545,7 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 	switch (lua_gettop(L)) {
 		case 2: {
 			// two args (unitID, {"key1" = (number | bool) value1, ...})
-			const int tableIdx = 2;
+			constexpr int tableIdx = 2;
 
 			if (lua_istable(L, tableIdx)) {
 				for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {

@@ -1395,7 +1395,7 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 
 	for (size_t n = 0; n < sizeof(intMemberPtrs) / sizeof(intMemberPtrs[0]); n++) {
 		if (memberHash == INT_MEMBER_HASHES[n]) {
-			*(intMemberPtrs[n]) = *(reinterpret_cast<int*>(memberValue));
+			*(intMemberPtrs[n]) = int(*(reinterpret_cast<float*>(memberValue))); // sic (see SetMoveTypeValue)
 			return true;
 		}
 	}
