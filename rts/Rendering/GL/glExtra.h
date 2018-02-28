@@ -10,6 +10,7 @@
  *  Note: Uses the current color.
  */
 
+class CWeapon;
 struct WeaponDef;
 
 typedef void (*SurfaceCircleFunc)(const float3& center, float radius, unsigned int res);
@@ -19,6 +20,7 @@ extern SurfaceCircleFunc glSurfaceCircle;
 extern SurfaceSquareFunc glSurfaceSquare;
 
 // params.x := radius, params.y := slope, params.z := gravity
+extern void glBallisticCircle(const CWeapon* weapon, unsigned int resolution, const float3& center, const float3& params);
 extern void glBallisticCircle(const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params);
 
 extern void setSurfaceCircleFunc(SurfaceCircleFunc func);

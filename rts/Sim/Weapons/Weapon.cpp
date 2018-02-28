@@ -1138,8 +1138,10 @@ ProjectileParams CWeapon::GetProjectileParams()
 
 
 
-float CWeapon::GetStaticRange2D(const WeaponDef* wd, float modHeightDiff, float modProjGravity)
+float CWeapon::GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity)
 {
+	(void) w;
+
 	float baseRange = wd->range;
 	float projSpeed = wd->projectilespeed;
 

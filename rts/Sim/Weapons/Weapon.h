@@ -71,7 +71,8 @@ public:
 
 	float TargetWeight(const CUnit* unit) const;
 
-	static float GetStaticRange2D(const WeaponDef* wd, float modHeightDiff, float modProjGravity);
+	static float GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity);
+	static float GetLiveRange2D(const CWeapon* w, const WeaponDef* wd, float modHeightDiff, float modProjGravity) { return (w->GetRange2D(modHeightDiff)); }
 
 	virtual float GetRange2D(const float yDiff) const;
 	virtual void UpdateProjectileSpeed(const float val) { projectileSpeed = val; }
