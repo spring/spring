@@ -39,11 +39,11 @@ done
 
 SOURCEROOT=$(pwd)
 
-describe=$(git describe --tags --candidates 999 --match "*.*")
+describe=$(git describe --abbrev=7 --tags --candidates 999 --match "*.*")
 
 set +e # turn of quit on error
 # Check if current HEAD has a version tag
-git describe --tags --candidates 0 --match "*.*" &> /dev/null
+git describe --abbrev=7 --tags --candidates 0 --match "*.*" &> /dev/null
 onVersionTag=$(if [ $? -eq "0" ]; then echo "true"; else echo "false"; fi)
 set -e # turn it on again
 
