@@ -9,7 +9,7 @@ if [ ! -e installer ]; then
 fi
 WGET="wget -N --cache=off"
 
-TAG=$(git describe --tags|tr -d '\n')
+TAG=$(git describe --abbrev=7 --tags|tr -d '\n')
 
 if [ "$TAG" = "" ]; then
 	echo "Error running git describe"
