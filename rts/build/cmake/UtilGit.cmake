@@ -70,7 +70,7 @@ If    (GIT_FOUND)
 	# may be used.
 	# Example tag patterns: all tags:"*", spring-version-tags:"*.*.*"
 	Macro    (Git_Util_Describe var dir tagPattern)
-		Git_Util_Command(${var} "${dir}" describe --tags --always --candidates 999 --match "${tagPattern}" ${ARGN})
+		Git_Util_Command(${var} "${dir}" describe --tags --abbrev=7 --always --candidates 999 --match "${tagPattern}" ${ARGN})
 	EndMacro (Git_Util_Describe)
 
 
