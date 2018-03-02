@@ -18,7 +18,7 @@ fi
 NSISDEFINES="-DVERSION_TAG="$TAG""
 
 # Evaluate the engines version
-if ! git describe --candidate=0 --tags 2>/dev/null; then
+if ! git describe --abbrev=7 --candidate=0 --tags 2>/dev/null; then
 	NSISDEFINES="$NSISDEFINES -DTEST_BUILD"
 	echo "Creating test installer for revision $TAG"
 fi
