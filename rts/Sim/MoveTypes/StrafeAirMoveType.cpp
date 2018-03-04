@@ -534,10 +534,8 @@ bool CStrafeAirMoveType::Update()
 			// NOTE: the crashing-state can only be set (and unset) by scripts
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0.0f, owner->frontdir);
 
-			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
-				owner->KillUnit(nullptr, true, false);
-			}
+			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y)
+				owner->ForcedKillUnit(nullptr, true, false);
 
 			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100.0f + guRNG.NextFloat() * 50.0f, 5, 0.2f, 0.4f);
 		} break;
@@ -586,19 +584,19 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 			quadField.GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
 			for (CUnit* unit: *qfQuery.units) {
-				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
-				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
+				const bool unloadingUnit  = ( unit->unloadingTransportId == owner->id);
+				const bool unloadingOwner = (owner->unloadingTransportId ==  unit->id);
+				const bool   loadingUnit  = ( unit->id == owner->loadingTransportId);
+				const bool   loadingOwner = (owner->id ==  unit->loadingTransportId);
 
 				if (unloadingUnit)
 					unit->unloadingTransportId = -1;
-
 				if (unloadingOwner)
 					owner->unloadingTransportId = -1;
 
-				if (unit->id == owner->loadingTransportId || owner->id == unit->loadingTransportId ||
-				    unit == owner->transporter || unit->transporter != NULL) {
+				if (loadingUnit || loadingOwner || unit == owner->transporter || unit->transporter != nullptr)
 					continue;
-				}
+
 
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;
@@ -628,8 +626,8 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 					owner->SetVelocity(owner->speed * 0.99f);
 
 					if (modInfo.allowUnitCollisionDamage) {
-						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						owner->DoDamage(DamageArray(damage), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						unit->DoDamage(DamageArray(damage), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 					}
 
 					hitBuilding = true;
@@ -640,13 +638,12 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 					owner->Move(-dif * (dist - totRad) * (1 - part), true);
 					owner->SetVelocity(owner->speed * 0.99f);
 
-					if (!unit->UsingScriptMoveType()) {
+					if (!unit->UsingScriptMoveType())
 						unit->Move(dif * (dist - totRad) * (part), true);
-					}
 
 					if (modInfo.allowUnitCollisionDamage) {
-						owner->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-						unit->DoDamage(DamageArray(damage), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						owner->DoDamage(DamageArray(damage), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+						unit->DoDamage(DamageArray(damage), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 					}
 				}
 			}
@@ -659,7 +656,7 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 			// if crashing and we hit a building, die right now
 			// rather than waiting until we are close enough to
 			// the ground
-			owner->KillUnit(NULL, true, false);
+			owner->ForcedKillUnit(nullptr, true, false);
 			return true;
 		}
 

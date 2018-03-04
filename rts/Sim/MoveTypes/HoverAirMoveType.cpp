@@ -955,8 +955,7 @@ bool CHoverAirMoveType::Update()
 			UpdateAirPhysics();
 
 			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
-				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
-				owner->KillUnit(NULL, true, false);
+				owner->ForcedKillUnit(nullptr, true, false);
 			} else {
 				#define SPIN_DIR(o) ((o->id & 1) * 2 - 1)
 				wantedHeading = GetHeadingFromVector(owner->rightdir.x * SPIN_DIR(owner), owner->rightdir.z * SPIN_DIR(owner));
@@ -1056,19 +1055,18 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 			quadField.GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
 			for (CUnit* unit: *qfQuery.units) {
-				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
-				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
+				const bool unloadingUnit  = ( unit->unloadingTransportId == owner->id);
+				const bool unloadingOwner = (owner->unloadingTransportId ==  unit->id);
+				const bool   loadingUnit  = ( unit->id == owner->loadingTransportId);
+				const bool   loadingOwner = (owner->id ==  unit->loadingTransportId);
 
 				if (unloadingUnit)
 					unit->unloadingTransportId = -1;
-
 				if (unloadingOwner)
 					owner->unloadingTransportId = -1;
 
-				if (unit->id == owner->loadingTransportId || owner->id == unit->loadingTransportId ||
-				    unit == owner->transporter || unit->transporter != NULL) {
+				if (loadingUnit || loadingOwner || unit == owner->transporter || unit->transporter != nullptr)
 					continue;
-				}
 
 
 				const float sqDist = (pos - unit->pos).SqLength();
@@ -1116,7 +1114,7 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 		}
 
 		if (hitBuilding && owner->IsCrashing()) {
-			owner->KillUnit(NULL, true, false);
+			owner->ForcedKillUnit(nullptr, true, false);
 			return true;
 		}
 
