@@ -62,9 +62,6 @@ void setSurfaceSquareFunc(SurfaceSquareFunc func)
 
 
 
-// typedef float (*WeaponRangeFunc)(const CWeapon*, const WeaponDef*, float, float);
-// static constexpr WeaponRangeFunc weaponRangeFuncs[] = {
-
 static constexpr float (*weaponRangeFuncs[])(const CWeapon*, const WeaponDef*, float, float) = {
 	CWeapon::GetStaticRange2D,
 	CWeapon::GetLiveRange2D,
