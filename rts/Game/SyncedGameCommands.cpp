@@ -393,9 +393,13 @@ public:
 			true) {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& args = action.GetArgs();
+
 		const int team = playerHandler->Player(action.GetPlayerID())->team;
-		teamHandler->Team(team)->AddMetal(1000);
-		teamHandler->Team(team)->AddEnergy(1000);
+		const int amount = (args.empty())? 1000: std::atoi(args.c_str());
+
+		teamHandler->Team(team)->AddMetal(std::max(0, amount));
+		teamHandler->Team(team)->AddEnergy(std::max(0, amount));
 		return true;
 	}
 };
