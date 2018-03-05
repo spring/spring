@@ -5,7 +5,6 @@
 #include "Map/MapInfo.h" // for the metal extractor radius
 #include "Map/ReadMap.h" // for the metal map
 #include "Map/MetalMap.h"
-#include "GlobalSynced.h" // for the map size
 
 #include <cfloat>
 
@@ -21,31 +20,23 @@ CR_REG_METADATA(CResourceHandler, (
 ))
 
 
-CResourceHandler* CResourceHandler::instance = nullptr;
+static CResourceHandler instance;
 
-CResourceHandler* CResourceHandler::GetInstance() {
-	assert(instance != nullptr);
-	return instance;
-}
 
-void CResourceHandler::CreateInstance()
-{
-	if (instance == nullptr) {
-		instance = new CResourceHandler();
-	}
-}
-void CResourceHandler::FreeInstance()
-{
-	delete instance;
-	instance = nullptr;
-}
+CResourceHandler* CResourceHandler::GetInstance() { return &instance; }
+
+void CResourceHandler::CreateInstance() { instance.Init(); }
+void CResourceHandler::FreeInstance() { instance.Kill(); }
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 void CResourceHandler::AddResources() {
+	resourceDescriptions.clear();
 	resourceDescriptions.reserve(SResourcePack::MAX_RESOURCES);
+	resourceMapAnalyzers.clear();
 	resourceMapAnalyzers.reserve(SResourcePack::MAX_RESOURCES);
 
 	CResourceDescription rMetal;
@@ -137,11 +128,5 @@ const CResourceMapAnalyzer* CResourceHandler::GetResourceMapAnalyzer(int resourc
 		rma->Init();
 
 	return rma;
-}
-
-
-
-bool CResourceHandler::IsValidId(int resourceId) const {
-	return (static_cast<size_t>(resourceId) < resourceDescriptions.size());
 }
 
