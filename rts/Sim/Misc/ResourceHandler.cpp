@@ -88,7 +88,7 @@ int CResourceHandler::GetResourceId(const std::string& resourceName) const
 const unsigned char* CResourceHandler::GetResourceMap(int resourceId) const
 {
 	if (resourceId == GetMetalId())
-		return (readMap->metalMap->GetDistributionMap());
+		return (metalMap.GetDistributionMap());
 
 	return nullptr;
 }

@@ -297,7 +297,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		pos.x, pos.z, pos.y, tt->name.c_str(),
 		tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
 		tt->hardness * mapDamage->mapHardness,
-		readMap->metalMap->GetMetalAmount(px, pz)
+		metalMap.GetMetalAmount(px, pz)
 	);
 	return tmp;
 }

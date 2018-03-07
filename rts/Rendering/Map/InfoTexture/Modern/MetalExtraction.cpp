@@ -96,14 +96,13 @@ void CMetalExtractionTexture::Update()
 	if (!fbo.IsValid() || !shader->IsValid())
 		return;
 
-	const      CMetalMap* metalMap        = readMap->metalMap;
-	const          float* extractDepthMap = metalMap->GetExtractionMap();
-//	const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
-	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
+	CInfoTexture* infoTex = infoTextureHandler->GetInfoTexture("los");
+
+	assert(metalMap.GetSizeX() == texSize.x && metalMap.GetSizeZ() == texSize.y);
 
 	// upload raw data to gpu
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, extractDepthMap);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_FLOAT, metalMap.GetExtractionMap());
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
