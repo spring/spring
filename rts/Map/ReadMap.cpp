@@ -55,7 +55,6 @@ CR_REG_METADATA(MapDimensions, (
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-	CR_MEMBER(metalMap),
 	CR_IGNORED(initHeightBounds),
 	CR_IGNORED(currHeightBounds),
 	CR_IGNORED(boundingRadius),
@@ -162,7 +161,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
 
 	assert(mbi.width == mapDims.hmapx);
 	assert(mbi.height == mapDims.hmapy);
-	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
+	metalMap.Init(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
 	if (metalmapPtr != nullptr)
 		rm->FreeInfoMap("metal", metalmapPtr);
@@ -261,19 +260,9 @@ void CReadMap::PostLoad()
 #endif //USING_CREG
 
 
-CReadMap::CReadMap()
-	: metalMap(nullptr)
-	, heightMapSyncedPtr(nullptr)
-	, heightMapUnsyncedPtr(nullptr)
-	, mapChecksum(0)
-	, boundingRadius(0.0f)
-{
-}
-
-
 CReadMap::~CReadMap()
 {
-	spring::SafeDelete(metalMap);
+	metalMap.Kill();
 }
 
 

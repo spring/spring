@@ -3,13 +3,14 @@
 #ifndef METAL_MAP_H
 #define METAL_MAP_H
 
+#include <array>
 #include <vector>
 
 #include "System/creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-// Each square on metalmap is a 2x2 square on normal map.
-static const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
+// each metalmap square covers 2x2 normal squares
+static constexpr float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
 
 
 class CMetalMap
@@ -18,19 +19,23 @@ class CMetalMap
 
 public:
 	/** Receiving a map over all metal, and creating a map over extraction. */
-	CMetalMap(const unsigned char* map, int sizeX, int sizeZ, float metalScale);
+	void Init(const unsigned char* map, int sizeX, int sizeZ, float metalScale);
+	void Kill() {
+		distributionMap.clear();
+		extractionMap.clear();
+	}
 
 	/** Returns the amount of metal over an area. */
-	float GetMetalAmount(int x1, int z1, int x2, int z2);
+	float GetMetalAmount(int x1, int z1, int x2, int z2) const;
 	/** Returns the amount of metal on a single square. */
-	float GetMetalAmount(int x, int z);
+	float GetMetalAmount(int x, int z) const;
 	/** Sets the amount of metal on a single square. */
 	void SetMetalAmount(int x, int z, float m);
 	/**
 	 * Makes a request for extracting metal from a given square.
 	 * If there is metal left to extract to the requested depth,
 	 * the amount available will be returned and the requested
-	 * depth will be sat as new extraction-depth on the extraction-map.
+	 * depth will be set as new extraction-depth on the extraction-map.
 	 * If the requested depth is greater than the current
 	 * extraction-depth 0.0 will be returned and nothing changed.
 	 */
@@ -42,25 +47,28 @@ public:
 	 */
 	void RemoveExtraction(int x, int z, float depth);
 
-	int GetMetalExtraction(int x, int z);
+	int GetMetalExtraction(int x, int z) const;
 
 	int GetSizeX() const { return sizeX; }
 	int GetSizeZ() const { return sizeZ; }
 
-	const unsigned char* GetTexturePalette () const { return        &metalPal[0]; }
-	const unsigned char* GetDistributionMap() const { return &distributionMap[0]; }
-	const         float* GetExtractionMap  () const { return   &extractionMap[0]; }
-
-protected:
-	float metalScale;
-	int sizeX;
-	int sizeZ;
+	const unsigned char* GetTexturePalette () const { return  texturePalette.data(); }
+	const unsigned char* GetDistributionMap() const { return distributionMap.data(); }
+	const         float* GetExtractionMap  () const { return   extractionMap.data(); }
 
 private:
-	unsigned char metalPal[768];
+	std::array<unsigned char, 256 * 3> texturePalette;
 
 	std::vector<unsigned char> distributionMap;
 	std::vector<        float> extractionMap;
+
+	float metalScale = 0.0f;
+
+	int sizeX = 0;
+	int sizeZ = 0;
 };
 
-#endif /* METAL_MAP_H */
+extern CMetalMap metalMap;
+
+#endif
+

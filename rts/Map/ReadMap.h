@@ -18,7 +18,6 @@
 #define USE_UNSYNCED_HEIGHTMAP
 #define USE_HEIGHTMAP_DIGESTS
 
-class CMetalMap;
 class CCamera;
 class CUnit;
 class CSolidObject;
@@ -71,8 +70,6 @@ enum {
 class CReadMap
 {
 protected:
-	CReadMap();
-
 	/// called by implementations of CReadMap
 	void Initialize();
 
@@ -220,14 +217,11 @@ public:
 	/// number of heightmap mipmaps, including full resolution
 	static constexpr int numHeightMipMaps = 7;
 
-	/// Metal-density/height-map
-	CMetalMap* metalMap;
-
 protected:
 	// these point to the actual heightmap data
 	// which is allocated by subclass instances
-	std::vector<float>* heightMapSyncedPtr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
-	std::vector<float>* heightMapUnsyncedPtr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
+	std::vector<float>* heightMapSyncedPtr = nullptr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
+	std::vector<float>* heightMapUnsyncedPtr = nullptr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
 
 
 	// note: intentionally declared static, s.t. repeated reloading to the same
@@ -275,11 +269,12 @@ private:
 	static std::vector<uint8_t> unsyncedHeightMapDigests;
 #endif
 
-	unsigned int mapChecksum;
+	unsigned int mapChecksum = 0;
 
 	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
 	float2 currHeightBounds; //< current minimum- and maximum-height
-	float boundingRadius;
+
+	float boundingRadius = 0.0f;
 };
 
 
