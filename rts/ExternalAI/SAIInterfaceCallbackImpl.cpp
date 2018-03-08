@@ -127,7 +127,7 @@ EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValueByKey(int inter
 }
 
 EXPORT(int) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId) {
-	return teamHandler->ActiveTeams();
+	return teamHandler.ActiveTeams();
 }
 
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {

@@ -60,7 +60,7 @@ void CResourceBar::Draw()
 	if (!enabled)
 		return;
 
-	const CTeam* myTeam = teamHandler->Team(gu->myTeam);
+	const CTeam* myTeam = teamHandler.Team(gu->myTeam);
 
 	const SResourcePack& rpp  = myTeam->resPrevPull;
 	const SResourcePack& rpi  = myTeam->resPrevIncome;
@@ -208,12 +208,12 @@ bool CResourceBar::MousePress(int x, int y, int button)
 		if (InBox(mx, my, box + metalBox)) {
 			moveBox = false;
 			const float metalShare = Clamp((mx - (box.x1 + metalBox.x1)) / (metalBox.x2 - metalBox.x1), 0.f, 1.f);
-			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler->Team(gu->myTeam)->resShare.energy));
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler.Team(gu->myTeam)->resShare.energy));
 		}
 		if (InBox(mx, my, box + energyBox)) {
 			moveBox = false;
 			const float energyShare = Clamp((mx - (box.x1 + energyBox.x1)) / (energyBox.x2 - energyBox.x1), 0.f, 1.f);
-			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, energyShare));
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler.Team(gu->myTeam)->resShare.metal, energyShare));
 		}
 	}
 

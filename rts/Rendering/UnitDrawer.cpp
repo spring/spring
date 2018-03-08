@@ -267,8 +267,8 @@ void CUnitDrawer::Init() {
 	unitDefImages.clear();
 	unitDefImages.resize(unitDefHandler->NumUnitDefs() + 1);
 
-	deadGhostBuildings.resize(teamHandler->ActiveAllyTeams());
-	liveGhostBuildings.resize(teamHandler->ActiveAllyTeams());
+	deadGhostBuildings.resize(teamHandler.ActiveAllyTeams());
+	liveGhostBuildings.resize(teamHandler.ActiveAllyTeams());
 
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(configHandler->GetInt("MaxDynamicModelLights"));
@@ -734,7 +734,7 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 
 
 	// use white for selected units
-	const uint8_t* colors[] = {teamHandler->Team(unit->team)->color, color4::white};
+	const uint8_t* colors[] = {teamHandler.Team(unit->team)->color, color4::white};
 	const uint8_t* color = colors[unit->isSelected];
 
 	// calculate the vertices
@@ -1023,7 +1023,7 @@ void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 {
 	// need this because we can be called by no-team projectiles
-	const int b0 = teamHandler->IsValidTeam(team);
+	const int b0 = teamHandler.IsValidTeam(team);
 	// should be an assert, but projectiles (+FlyingPiece) would trigger it
 	const int b1 = !shadowHandler->InShadowPass();
 
@@ -1271,7 +1271,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
 {
 	const S3DModel* model = unit->model;
-	const    CTeam*  team = teamHandler->Team(unit->team);
+	const    CTeam*  team = teamHandler.Team(unit->team);
 	const   SColor  color = team->color;
 
 	const float wireColorMult = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
@@ -1620,13 +1620,13 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 		if (minimap->UseSimpleColors()) {
 			if (unit->team == gu->myTeam) {
 				color = minimap->GetMyTeamIconColor();
-			} else if (teamHandler->Ally(gu->myAllyTeam, unit->allyteam)) {
+			} else if (teamHandler.Ally(gu->myAllyTeam, unit->allyteam)) {
 				color = minimap->GetAllyTeamIconColor();
 			} else {
 				color = minimap->GetEnemyTeamIconColor();
 			}
 		} else {
-			color = teamHandler->Team(unit->team)->color;
+			color = teamHandler.Team(unit->team)->color;
 		}
 	}
 

@@ -875,10 +875,10 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	}
 
 	if (teamID >= 0) {
-		if (!teamHandler->IsValidTeam(teamID))
+		if (!teamHandler.IsValidTeam(teamID))
 			return 0;
 
-		allyTeamID = teamHandler->AllyTeam(teamID);
+		allyTeamID = teamHandler.AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
 		if (!CLuaHandle::GetHandleFullRead(L)) {
@@ -955,7 +955,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	int allyTeamID = luaL_optint(L, 1, -1);
 
 	if (allyTeamID >= 0) {
-		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
+		if (!teamHandler.ValidAllyTeam(allyTeamID)) {
 			return 0;
 		}
 	} else {
@@ -1026,7 +1026,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 	int allyTeamID = luaL_optint(L, 1, -1);
 
 	if (allyTeamID >= 0) {
-		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
+		if (!teamHandler.ValidAllyTeam(allyTeamID)) {
 			return 0;
 		}
 	} else {
@@ -1583,7 +1583,7 @@ static bool AddPlayerToRoster(lua_State* L, int playerID, bool onlyActivePlayers
 	PUSH_ROSTER_ENTRY(string, p->name.c_str());
 	PUSH_ROSTER_ENTRY(number, playerID);
 	PUSH_ROSTER_ENTRY(number, p->team);
-	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
+	PUSH_ROSTER_ENTRY(number, teamHandler.AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
 
@@ -1602,10 +1602,10 @@ static bool AddPlayerToRoster(lua_State* L, int playerID, bool onlyActivePlayers
 int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams()))
+	if ((teamID < 0) || (teamID >= teamHandler.ActiveTeams()))
 		return 0;
 
-	const CTeam* team = teamHandler->Team(teamID);
+	const CTeam* team = teamHandler.Team(teamID);
 	if (team == nullptr)
 		return 0;
 
@@ -1620,10 +1620,10 @@ int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams()))
+	if ((teamID < 0) || (teamID >= teamHandler.ActiveTeams()))
 		return 0;
 
-	const CTeam* team = teamHandler->Team(teamID);
+	const CTeam* team = teamHandler.Team(teamID);
 	if (team == nullptr)
 		return 0;
 

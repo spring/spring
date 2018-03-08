@@ -951,7 +951,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature*)
 	if (pointed == nullptr)
 		return CMD_MOVE;
 
-	if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
+	if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 		if (owner->unitDef->canAttack)
 			return CMD_ATTACK;
 		if (owner->CanTransport(pointed))
@@ -1613,7 +1613,7 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 			const CUnit* trans = unitHandler.GetUnitUnsafe(unit->loadingTransportId);
 
 			// don't refuse to load a unit if an enemy transport is trying to at the same time
-			if ((trans != nullptr) && teamHandler->AlliedTeams(owner->team, trans->team))
+			if ((trans != nullptr) && teamHandler.AlliedTeams(owner->team, trans->team))
 				continue;
 		}
 

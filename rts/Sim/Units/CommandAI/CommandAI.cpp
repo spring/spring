@@ -1516,7 +1516,7 @@ void CCommandAI::SlowUpdate()
 int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
-		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (IsAttackCapable()) {
 				return CMD_ATTACK;
 			}

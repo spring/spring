@@ -414,8 +414,8 @@ void CEndGameBox::Draw()
 		bufferC->SafeAppend({{box.x1 + 0.55f, box.y1 + 0.64f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.8f}});
 
 
-		for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
-			const CTeam* team = teamHandler->Team(teamNum);
+		for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
+			const CTeam* team = teamHandler.Team(teamNum);
 
 			if (team->gaia)
 				continue;
@@ -538,8 +538,8 @@ void CEndGameBox::FillTeamStats()
 	stats.emplace_back("Damage Dealt");
 	stats.emplace_back("Damage Received");
 
-	for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
-		const CTeam* pteam = teamHandler->Team(team);
+	for (int team = 0; team < teamHandler.ActiveTeams(); team++) {
+		const CTeam* pteam = teamHandler.Team(team);
 
 		if (pteam->gaia)
 			continue;

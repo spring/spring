@@ -77,7 +77,7 @@ CTeam::CTeam():
 
 void CTeam::SetDefaultStartPos()
 {
-	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const int allyTeam = teamHandler.AllyTeam(teamNum);
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 
 	assert(!allyStartData.empty());
@@ -95,13 +95,13 @@ void CTeam::SetDefaultStartPos()
 	assert(xcenter >= 0 && xcenter < mapDims.mapx * SQUARE_SIZE);
 	assert(zcenter >= 0 && zcenter < mapDims.mapy * SQUARE_SIZE);
 
-	startPos.x = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
-	startPos.z = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
+	startPos.x = (teamNum - teamHandler.ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+	startPos.z = (teamNum - teamHandler.ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
 }
 
 void CTeam::ClampStartPosInStartBox(float3* pos) const
 {
-	const int allyTeam = teamHandler->AllyTeam(teamNum);
+	const int allyTeam = teamHandler.AllyTeam(teamNum);
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	const SRectangle rect(
@@ -206,7 +206,7 @@ bool CTeam::UseResources(const SResourcePack& amount)
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
-	CTeam* target = teamHandler->Team(toTeam);
+	CTeam* target = teamHandler.Team(toTeam);
 
 	if (target == nullptr) {
 		LOG_L(L_WARNING, "Team %i does not exist, can't give units", toTeam);
@@ -252,7 +252,7 @@ void CTeam::Died(bool normalDeath)
 	}
 
 	// increase per-team unit-limit for each remaining team in _our_ allyteam
-	teamHandler->UpdateTeamUnitLimitsPreDeath(teamNum);
+	teamHandler.UpdateTeamUnitLimitsPreDeath(teamNum);
 	eventHandler.TeamDied(teamNum);
 
 	isDead = true;
@@ -263,7 +263,7 @@ void CTeam::AddPlayer(int playerNum)
 	// note: does it matter if this team was already dead?
 	// (besides needing to restore its original unit-limit)
 	if (isDead)
-		teamHandler->UpdateTeamUnitLimitsPreSpawn(teamNum);
+		teamHandler.UpdateTeamUnitLimitsPreSpawn(teamNum);
 
 	if (!HasLeader())
 		SetLeader(playerNum);
@@ -310,10 +310,10 @@ void CTeam::SlowUpdate()
 	// calculate the total amount of resources that all
 	// (allied) teams can collectively receive through
 	// sharing
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		CTeam* team = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		CTeam* team = teamHandler.Team(a);
 
-		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
+		if ((a != teamNum) && (teamHandler.AllyTeam(teamNum) == teamHandler.AllyTeam(a))) {
 			if (team->isDead)
 				continue;
 
@@ -340,9 +340,9 @@ void CTeam::SlowUpdate()
 	if (mShare > 0.0f) { dm = std::min(1.0f, mExcess / mShare); }
 
 	// now evenly distribute our excess resources among allied teams
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
-			CTeam* team = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		if ((a != teamNum) && (teamHandler.AllyTeam(teamNum) == teamHandler.AllyTeam(a))) {
+			CTeam* team = teamHandler.Team(a);
 			if (team->isDead)
 				continue;
 
@@ -431,7 +431,7 @@ std::string CTeam::GetControllerName() const {
 		const CPlayer* leadPlayer = playerHandler->Player(leader);
 
 		if (leadPlayer->team != this->teamNum) {
-			const CTeam*   realLeadPlayerTeam = teamHandler->Team(leadPlayer->team);
+			const CTeam*   realLeadPlayerTeam = teamHandler.Team(leadPlayer->team);
 			const CPlayer* realLeadPlayer     = NULL;
 
 			if (realLeadPlayerTeam->HasLeader()) {

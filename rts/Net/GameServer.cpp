@@ -347,7 +347,7 @@ void CGameServer::WriteDemoData()
 		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
 	}
 	for (int i = 0; i < numTeams; ++i) {
-		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+		record->SetTeamStats(i, teamHandler.Team(i)->statHistory);
 	}
 	*/
 }

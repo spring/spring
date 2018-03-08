@@ -128,14 +128,14 @@ void CEngineOutHandler::Update() {
 // Do only if the unit is not allied, in which case we know
 // everything about it anyway, and do not need to be informed
 #define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)    \
-	if (teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID))                  \
+	if (teamHandler.Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID))                  \
 		return;                                                              \
                                                                              \
 	for (uint8_t aiID: activeSkirmishAIs) {                                  \
 		auto& ai = hostSkirmishAIs[aiID];                                    \
-		const int aiAllyTeam = teamHandler->AllyTeam(ai.GetTeamId());        \
+		const int aiAllyTeam = teamHandler.AllyTeam(ai.GetTeamId());        \
                                                                              \
-		if (teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID)) {                   \
+		if (teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID)) {                   \
 			ai.FUNC;                                                         \
 		}                                                                    \
 	}
@@ -195,9 +195,9 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 	for (uint8_t aiID: activeSkirmishAIs) {                                     \
 		CSkirmishAIWrapper& aiWrapper = hostSkirmishAIs[aiID];                  \
                                                                                 \
-		const int aiAllyTeam = teamHandler->AllyTeam(aiWrapper.GetTeamId());    \
+		const int aiAllyTeam = teamHandler.AllyTeam(aiWrapper.GetTeamId());    \
                                                                                 \
-		const bool alliedAI = teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID);      \
+		const bool alliedAI = teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID);      \
 		const bool cheatingAI = aiWrapper.CheatEventsEnabled();                 \
                                                                                 \
 		if (alliedAI)                                                           \
@@ -258,15 +258,15 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam, int newTeam) {
 
 	const int unitId        = unit.id;
 	const int newAllyTeamId = unit.allyteam;
-	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
+	const int oldAllyTeamId = teamHandler.AllyTeam(oldTeam);
 
 	for (uint8_t aiID: activeSkirmishAIs) {
 		CSkirmishAIWrapper& aiWrapper = hostSkirmishAIs[aiID];
 
 		const int aiTeam     = aiWrapper.GetTeamId();
-		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
-		const bool alliedOld = teamHandler->Ally(aiAllyTeam, oldAllyTeamId);
-		const bool alliedNew = teamHandler->Ally(aiAllyTeam, newAllyTeamId);
+		const int aiAllyTeam = teamHandler.AllyTeam(aiTeam);
+		const bool alliedOld = teamHandler.Ally(aiAllyTeam, oldAllyTeamId);
+		const bool alliedNew = teamHandler.Ally(aiAllyTeam, newAllyTeamId);
 
 		// inform the new team and its allies
 		// (except those also allied with the old team,
@@ -293,16 +293,16 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int oldTeam, int newTeam
 
 	const int unitId        = unit.id;
 	const int newAllyTeamId = unit.allyteam;
-	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
+	const int oldAllyTeamId = teamHandler.AllyTeam(oldTeam);
 
 	for (uint8_t aiID: activeSkirmishAIs) {
 		CSkirmishAIWrapper& aiWrapper = hostSkirmishAIs[aiID];
 
 		const int aiTeam     = aiWrapper.GetTeamId();
-		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
+		const int aiAllyTeam = teamHandler.AllyTeam(aiTeam);
 
-		const bool alliedOld = teamHandler->Ally(aiAllyTeam, oldAllyTeamId);
-		const bool alliedNew = teamHandler->Ally(aiAllyTeam, newAllyTeamId);
+		const bool alliedOld = teamHandler.Ally(aiAllyTeam, oldAllyTeamId);
+		const bool alliedNew = teamHandler.Ally(aiAllyTeam, newAllyTeamId);
 
 		// inform the old team and its allies
 		// (except those also allied with the new team,
@@ -350,9 +350,9 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed, const CUnit* attac
 		CSkirmishAIWrapper& aiWrapper = hostSkirmishAIs[aiID];
 
 		const int aiTeam = aiWrapper.GetTeamId();
-		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
+		const int aiAllyTeam = teamHandler.AllyTeam(aiTeam);
 
-		if (teamHandler->Ally(aiAllyTeam, destroyed.allyteam))
+		if (teamHandler.Ally(aiAllyTeam, destroyed.allyteam))
 			continue;
 
 		if (!aiWrapper.CheatEventsEnabled() && !IsUnitInLosOrRadarOfAllyTeam(destroyed, aiAllyTeam))
@@ -360,7 +360,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed, const CUnit* attac
 
 		int myAttackerId = -1;
 
-		if ((attacker != nullptr) && teamHandler->Ally(aiAllyTeam, attacker->allyteam))
+		if ((attacker != nullptr) && teamHandler.Ally(aiAllyTeam, attacker->allyteam))
 			myAttackerId = attackerId;
 
 		aiWrapper.EnemyDestroyed(destroyedId, myAttackerId);
@@ -407,7 +407,7 @@ void CEngineOutHandler::UnitDamaged(
 
 	const int at = attacker->team;
 
-	if (teamHandler->Ally(attacker->allyteam, damaged.allyteam))
+	if (teamHandler.Ally(attacker->allyteam, damaged.allyteam))
 		return;
 	if (teamSkirmishAIs[at].empty())
 		return;
@@ -542,7 +542,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 
 		// Send a UnitCreated event for each unit of the team.
 		// This will only do something if the AI is created mid-game.
-		const CTeam* team = teamHandler->Team(hostSkirmishAIs[skirmishAIId].GetTeamId());
+		const CTeam* team = teamHandler.Team(hostSkirmishAIs[skirmishAIId].GetTeamId());
 
 		for (const CUnit* u: unitHandler.GetUnitsByTeam(team->teamNum)) {
 			hostSkirmishAIs[skirmishAIId].UnitCreated(u->id, -1);

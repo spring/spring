@@ -46,7 +46,7 @@ void CInterceptHandler::Update(bool forced) {
 
 			const int pAllyTeam = p->GetAllyteamID();
 
-			if (teamHandler->IsValidAllyTeam(pAllyTeam) && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
+			if (teamHandler.IsValidAllyTeam(pAllyTeam) && teamHandler.Ally(wOwner->allyteam, pAllyTeam))
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true

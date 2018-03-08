@@ -172,8 +172,8 @@ void CBeamLaser::UpdateSweep()
 	if (reloadStatus > gs->frameNum)
 		return;
 
-	if (teamHandler->Team(owner->team)->res.metal < weaponDef->metalcost) { return; }
-	if (teamHandler->Team(owner->team)->res.energy < weaponDef->energycost) { return; }
+	if (teamHandler.Team(owner->team)->res.metal < weaponDef->metalcost) { return; }
+	if (teamHandler.Team(owner->team)->res.energy < weaponDef->energycost) { return; }
 
 	owner->UseEnergy(weaponDef->energycost / salvoSize);
 	owner->UseMetal(weaponDef->metalcost / salvoSize);
@@ -303,7 +303,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
-		if (hitUnit != nullptr && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
+		if (hitUnit != nullptr && teamHandler.AlliedTeams(hitUnit->team, owner->team)) {
 			if (sweepFireState.IsSweepFiring() && !sweepFireState.DamageAllies()) {
 				doDamage = false; break;
 			}

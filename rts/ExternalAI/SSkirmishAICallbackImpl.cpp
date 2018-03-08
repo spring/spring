@@ -113,20 +113,20 @@ static const CUnit* getUnit(int unitId) {
 }
 
 static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
-	return teamHandler->AlliedTeams(unit->team, skirmishAIId_teamId[skirmishAIId]);
+	return teamHandler.AlliedTeams(unit->team, skirmishAIId_teamId[skirmishAIId]);
 }
 
 static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyID = teamHandler->AllyTeam(teamId);
+	const int allyID = teamHandler.AllyTeam(teamId);
 	const int losStatus = unit->losStatus[allyID];
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
 	if (unit->allyteam == allyID || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	} else if (teamHandler->AlliedTeams(unit->team, teamId)) {
+	} else if (teamHandler.AlliedTeams(unit->team, teamId)) {
 		// ingame alliances
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	} else if (losStatus & LOS_INLOS) {
@@ -141,13 +141,13 @@ static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
 static int featureModParamLosMask(int skirmishAIId, const CFeature* feature) {
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyID = teamHandler->AllyTeam(teamId);
+	const int allyID = teamHandler.AllyTeam(teamId);
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
 	if (feature->allyteam == allyID || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	} else if (teamHandler->AlliedTeams(feature->team, teamId)) {
+	} else if (teamHandler.AlliedTeams(feature->team, teamId)) {
 		// ingame alliances
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	} else if (feature->IsInLosForAllyTeam(allyID)) {
@@ -162,11 +162,11 @@ static inline bool modParamIsVisible(const LuaRulesParams::Param& param, const i
 }
 
 static const CTeam* getTeam(int teamId) {
-	return (teamId < teamHandler->ActiveTeams()) ? teamHandler->Team(teamId) : NULL;
+	return (teamId < teamHandler.ActiveTeams()) ? teamHandler.Team(teamId) : NULL;
 }
 
 static bool isAlliedTeam(int skirmishAIId, const CTeam* team) {
-	return teamHandler->AlliedTeams(team->teamNum, skirmishAIId_teamId[skirmishAIId]);
+	return teamHandler.AlliedTeams(team->teamNum, skirmishAIId_teamId[skirmishAIId]);
 }
 
 static int teamModParamLosMask(int skirmishAIId, const CTeam* team) {
@@ -175,7 +175,7 @@ static int teamModParamLosMask(int skirmishAIId, const CTeam* team) {
 
 	if (isAlliedTeam(skirmishAIId, team) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	} else if (teamHandler->AlliedTeams(team->teamNum, teamId)) {
+	} else if (teamHandler.AlliedTeams(team->teamNum, teamId)) {
 		// ingame alliances
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
@@ -1257,7 +1257,7 @@ EXPORT(const char*) skirmishAiCallback_Engine_Version_getFull(int skirmishAIId) 
 }
 
 EXPORT(int) skirmishAiCallback_Teams_getSize(int skirmishAIId) {
-	return teamHandler->ActiveTeams();
+	return teamHandler.ActiveTeams();
 }
 
 EXPORT(int) skirmishAiCallback_SkirmishAIs_getSize(int skirmishAIId) {
@@ -1537,7 +1537,7 @@ EXPORT(int) skirmishAiCallback_Game_getPlayerTeam(int skirmishAIId, int player) 
 }
 
 EXPORT(int) skirmishAiCallback_Game_getTeams(int skirmishAIId) {
-	return teamHandler->ActiveTeams();
+	return teamHandler.ActiveTeams();
 }
 
 EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int otherTeamId) {
@@ -1546,30 +1546,30 @@ EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int ot
 
 EXPORT(void) skirmishAiCallback_Game_getTeamColor(int skirmishAIId, int otherTeamId, short* return_colorS3_out) {
 
-	const unsigned char* color = teamHandler->Team(otherTeamId)->color;
+	const unsigned char* color = teamHandler.Team(otherTeamId)->color;
 	return_colorS3_out[0] = color[0];
 	return_colorS3_out[1] = color[1];
 	return_colorS3_out[2] = color[2];
 }
 
 EXPORT(float) skirmishAiCallback_Game_getTeamIncomeMultiplier(int skirmishAIId, int otherTeamId) {
-	return teamHandler->Team(otherTeamId)->GetIncomeMultiplier();
+	return teamHandler.Team(otherTeamId)->GetIncomeMultiplier();
 }
 
 EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId) {
-	return teamHandler->AllyTeam(otherTeamId);
+	return teamHandler.AllyTeam(otherTeamId);
 }
 
 EXPORT(float) skirmishAiCallback_Game_getTeamResourceCurrent(int skirmishAIId, int otherTeamId, int resourceId) {
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->res.metal;
+			res = teamHandler.Team(otherTeamId)->res.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->res.energy;
+			res = teamHandler.Team(otherTeamId)->res.energy;
 		}
 	}
 
@@ -1580,12 +1580,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceIncome(int skirmishAIId, in
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevIncome.metal;
+			res = teamHandler.Team(otherTeamId)->resPrevIncome.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevIncome.energy;
+			res = teamHandler.Team(otherTeamId)->resPrevIncome.energy;
 		}
 	}
 
@@ -1596,12 +1596,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceUsage(int skirmishAIId, int
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevExpense.metal;
+			res = teamHandler.Team(otherTeamId)->resPrevExpense.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevExpense.energy;
+			res = teamHandler.Team(otherTeamId)->resPrevExpense.energy;
 		}
 	}
 
@@ -1612,12 +1612,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceStorage(int skirmishAIId, i
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resStorage.metal;
+			res = teamHandler.Team(otherTeamId)->resStorage.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resStorage.energy;
+			res = teamHandler.Team(otherTeamId)->resStorage.energy;
 		}
 	}
 
@@ -1628,12 +1628,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourcePull(int skirmishAIId, int 
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resStorage.metal;
+			res = teamHandler.Team(otherTeamId)->resStorage.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resStorage.energy;
+			res = teamHandler.Team(otherTeamId)->resStorage.energy;
 		}
 	}
 
@@ -1644,12 +1644,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceShare(int skirmishAIId, int
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resShare.metal;
+			res = teamHandler.Team(otherTeamId)->resShare.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resShare.energy;
+			res = teamHandler.Team(otherTeamId)->resShare.energy;
 		}
 	}
 
@@ -1660,12 +1660,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceSent(int skirmishAIId, int 
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevSent.metal;
+			res = teamHandler.Team(otherTeamId)->resPrevSent.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevSent.energy;
+			res = teamHandler.Team(otherTeamId)->resPrevSent.energy;
 		}
 	}
 
@@ -1676,12 +1676,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceReceived(int skirmishAIId, 
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevReceived.metal;
+			res = teamHandler.Team(otherTeamId)->resPrevReceived.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevReceived.energy;
+			res = teamHandler.Team(otherTeamId)->resPrevReceived.energy;
 		}
 	}
 
@@ -1692,12 +1692,12 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceExcess(int skirmishAIId, in
 
 	float res = -1.0f;
 
-	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	const bool fetchOk = teamHandler.AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevExcess.metal;
+			res = teamHandler.Team(otherTeamId)->resPrevExcess.metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(otherTeamId)->resPrevExcess.energy;
+			res = teamHandler.Team(otherTeamId)->resPrevExcess.energy;
 		}
 	}
 
@@ -1705,7 +1705,7 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceExcess(int skirmishAIId, in
 }
 
 EXPORT(bool) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId) {
-	return teamHandler->Ally(firstAllyTeamId, secondAllyTeamId);
+	return teamHandler.Ally(firstAllyTeamId, secondAllyTeamId);
 }
 
 
@@ -2034,7 +2034,7 @@ EXPORT(int) skirmishAiCallback_Map_get##name##Map(int skirmishAIId,	\
 \
 	if (sensor##Values != NULL) {	\
 		int teamId = skirmishAIId_teamId[skirmishAIId];	\
-		const unsigned short* tmpMap = &losHandler->sensor.losMaps[teamHandler->AllyTeam(teamId)].front();	\
+		const unsigned short* tmpMap = &losHandler->sensor.losMaps[teamHandler.AllyTeam(teamId)].front();	\
 		sensor##ValuesSize = std::min(sensor##ValuesRealSize, sensor##ValuesMaxSize);	\
 		int i;	\
 		for (i=0; i < sensor##ValuesSize; ++i) {	\
@@ -2423,10 +2423,10 @@ EXPORT(float) skirmishAiCallback_Economy_getPull(int skirmishAIId, int resourceI
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId())
-		return teamHandler->Team(teamId)->resPrevPull.metal;
+		return teamHandler.Team(teamId)->resPrevPull.metal;
 
 	if (resourceId == resourceHandler->GetEnergyId())
-		return teamHandler->Team(teamId)->resPrevPull.energy;
+		return teamHandler.Team(teamId)->resPrevPull.energy;
 
 	return -1.0f;
 }
@@ -2435,10 +2435,10 @@ EXPORT(float) skirmishAiCallback_Economy_getShare(int skirmishAIId, int resource
 	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId())
-		return teamHandler->Team(teamId)->resShare.metal;
+		return teamHandler.Team(teamId)->resShare.metal;
 
 	if (resourceId == resourceHandler->GetEnergyId())
-		return teamHandler->Team(teamId)->resShare.energy;
+		return teamHandler.Team(teamId)->resShare.energy;
 
 	return -1.0f;
 }
@@ -2447,10 +2447,10 @@ EXPORT(float) skirmishAiCallback_Economy_getSent(int skirmishAIId, int resourceI
 	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId())
-		return teamHandler->Team(teamId)->resPrevSent.metal;
+		return teamHandler.Team(teamId)->resPrevSent.metal;
 
 	if (resourceId == resourceHandler->GetEnergyId())
-		return teamHandler->Team(teamId)->resPrevSent.energy;
+		return teamHandler.Team(teamId)->resPrevSent.energy;
 
 	return -1.0f;
 }
@@ -2459,10 +2459,10 @@ EXPORT(float) skirmishAiCallback_Economy_getReceived(int skirmishAIId, int resou
 	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId())
-		return teamHandler->Team(teamId)->resPrevReceived.metal;
+		return teamHandler.Team(teamId)->resPrevReceived.metal;
 
 	if (resourceId == resourceHandler->GetEnergyId())
-		return teamHandler->Team(teamId)->resPrevReceived.energy;
+		return teamHandler.Team(teamId)->resPrevReceived.energy;
 
 	return -1.0f;
 }
@@ -2471,10 +2471,10 @@ EXPORT(float) skirmishAiCallback_Economy_getExcess(int skirmishAIId, int resourc
 	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId())
-		return teamHandler->Team(teamId)->resPrevExcess.metal;
+		return teamHandler.Team(teamId)->resPrevExcess.metal;
 
 	if (resourceId == resourceHandler->GetEnergyId())
-		return teamHandler->Team(teamId)->resPrevExcess.energy;
+		return teamHandler.Team(teamId)->resPrevExcess.energy;
 
 	return -1.0f;
 }
@@ -3489,7 +3489,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int ski
 //########### BEGINN Unit
 EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
 	const int team = skirmishAIId_teamId[skirmishAIId];
-	const int limit = teamHandler->Team(team)->GetMaxUnits();
+	const int limit = teamHandler.Team(team)->GetMaxUnits();
 	return limit;
 }
 
@@ -3755,9 +3755,9 @@ EXPORT(float) skirmishAiCallback_Unit_getParalyzeDamage(int skirmishAIId, int un
 		return unit->paralyzeDamage;
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyId = teamHandler->AllyTeam(teamId);
+	const int allyId = teamHandler.AllyTeam(teamId);
 
-	if (teamHandler->Ally(unit->allyteam, allyId)) {
+	if (teamHandler.Ally(unit->allyteam, allyId)) {
 		result = unit->paralyzeDamage;
 	} else if (unit->losStatus[allyId] & LOS_INLOS) {
 		const UnitDef* unitDef = unit->unitDef;
@@ -3784,9 +3784,9 @@ EXPORT(float) skirmishAiCallback_Unit_getCaptureProgress(int skirmishAIId, int u
 		return unit->captureProgress;
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyId = teamHandler->AllyTeam(teamId);
+	const int allyId = teamHandler.AllyTeam(teamId);
 
-	if (teamHandler->Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
+	if (teamHandler.Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
 		return unit->captureProgress;
 
 	return fail;
@@ -3803,9 +3803,9 @@ EXPORT(float) skirmishAiCallback_Unit_getBuildProgress(int skirmishAIId, int uni
 		return unit->buildProgress;
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	const int allyId = teamHandler->AllyTeam(teamId);
+	const int allyId = teamHandler.AllyTeam(teamId);
 
-	if (teamHandler->Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
+	if (teamHandler.Ally(unit->allyteam, allyId) || unit->losStatus[allyId] & LOS_INLOS)
 		return unit->buildProgress;
 
 	return fail;
@@ -4059,14 +4059,14 @@ EXPORT(int) skirmishAiCallback_getEnemyTeams(int skirmishAIId, int* teamIds, int
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (teamIds != nullptr) {
-		for (int i = 0; i < teamHandler->ActiveTeams() && a < teamIdsMaxSize; i++) {
-			if (!teamHandler->AlliedTeams(i, teamId)) {
+		for (int i = 0; i < teamHandler.ActiveTeams() && a < teamIdsMaxSize; i++) {
+			if (!teamHandler.AlliedTeams(i, teamId)) {
 				teamIds[a++] = i;
 			}
 		}
 	} else {
-		for (int i = 0; i < teamHandler->ActiveTeams(); i++) {
-			if (!teamHandler->AlliedTeams(i, teamId)) {
+		for (int i = 0; i < teamHandler.ActiveTeams(); i++) {
+			if (!teamHandler.AlliedTeams(i, teamId)) {
 				a++;
 			}
 		}
@@ -4081,14 +4081,14 @@ EXPORT(int) skirmishAiCallback_getAllyTeams(int skirmishAIId, int* teamIds, int 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (teamIds != nullptr) {
-		for (int i = 0; i < teamHandler->ActiveTeams() && a < teamIdsMaxSize; i++) {
-			if (teamHandler->AlliedTeams(i, teamId)) {
+		for (int i = 0; i < teamHandler.ActiveTeams() && a < teamIdsMaxSize; i++) {
+			if (teamHandler.AlliedTeams(i, teamId)) {
 				teamIds[a++] = i;
 			}
 		}
 	} else {
-		for (int i = 0; i < teamHandler->ActiveTeams(); i++) {
-			if (teamHandler->AlliedTeams(i, teamId)) {
+		for (int i = 0; i < teamHandler.ActiveTeams(); i++) {
+			if (teamHandler.AlliedTeams(i, teamId)) {
 				a++;
 			}
 		}

@@ -690,7 +690,7 @@ void CGame::LoadInterface()
 	keyBindings->Load("uikeys.txt");
 	selectionKeys = new CSelectionKeyHandler();
 
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
 		grouphandlers.push_back(new CGroupHandler(t));
 	}
 
@@ -872,8 +872,8 @@ void CGame::KillSimulation()
 	// must happen after Lua (cause CGame is already
 	// null'ed and Died() causes a Lua event, which
 	// could issue Lua code that tries to access it)
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		teamHandler->Team(t)->Died(false);
+	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
+		teamHandler.Team(t)->Died(false);
 	}
 
 	LOG("[Game::%s][2]", __func__);
@@ -1422,15 +1422,15 @@ void CGame::StartPlaying()
 
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
-	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+	gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
 
 	GameSetupDrawer::Disable();
 	CLuaUI::UpdateTeams();
 
 	// setup the teams
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		CTeam* team = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		CTeam* team = teamHandler.Team(a);
 
 		if (team->gaia)
 			continue;
@@ -1512,7 +1512,7 @@ void CGame::SimFrame() {
 		unitDrawer->UpdateGhostedBuildings();
 		interceptHandler.Update(false);
 
-		teamHandler->GameFrame(gs->frameNum);
+		teamHandler.GameFrame(gs->frameNum);
 		playerHandler->GameFrame(gs->frameNum);
 	}
 
@@ -1582,7 +1582,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	// Write CPlayer::Statistics and CTeam::Statistics to demo
 	// TODO: move this to a method in CTeamHandler
 	const int numPlayers = playerHandler->ActivePlayers();
-	const int numTeams = teamHandler->ActiveTeams() - int(gs->useLuaGaia);
+	const int numTeams = teamHandler.ActiveTeams() - int(gs->useLuaGaia);
 
 	record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
 	record->InitializeStats(numPlayers, numTeams);
@@ -1596,7 +1596,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 	}
 	for (int i = 0; i < numTeams; ++i) {
-		const CTeam* team = teamHandler->Team(i);
+		const CTeam* team = teamHandler.Team(i);
 		record->SetTeamStats(i, team->statHistory);
 		clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
 	}
@@ -1670,8 +1670,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		*/
 
 		if (msg.destination == ChatMessage::TO_ALLIES && player) {
-			const int msgAllyTeam = teamHandler->AllyTeam(player->team);
-			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
+			const int msgAllyTeam = teamHandler.AllyTeam(player->team);
+			const bool allied = teamHandler.Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				LOG("%sAllies: %s", label.c_str(), s.c_str());
 				Channels::UserInterface->PlaySample(chatSound, 5);

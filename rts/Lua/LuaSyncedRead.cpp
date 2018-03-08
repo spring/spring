@@ -367,7 +367,7 @@ static inline bool IsAlliedTeam(lua_State* L, int team)
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
 		return CLuaHandle::GetHandleFullRead(L);
 
-	return (teamHandler->AllyTeam(team) == CLuaHandle::GetHandleReadAllyTeam(L));
+	return (teamHandler.AllyTeam(team) == CLuaHandle::GetHandleReadAllyTeam(L));
 }
 
 static inline bool IsAlliedAllyTeam(lua_State* L, int allyTeam)
@@ -726,10 +726,10 @@ static inline const CTeam* ParseTeam(lua_State* L, const char* caller, int index
 {
 	const int teamID = luaL_checkint(L, index);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		luaL_error(L, "Bad teamID in %s\n", caller);
 
-	return teamHandler->Team(teamID);
+	return teamHandler.Team(teamID);
 }
 
 
@@ -824,7 +824,7 @@ int LuaSyncedRead::IsNoCostEnabled(lua_State* L)
 int LuaSyncedRead::GetGlobalLos(lua_State* L)
 {
 	const int allyTeam = luaL_optint(L, 1, CLuaHandle::GetHandleReadAllyTeam(L));
-	if (!teamHandler->IsValidAllyTeam(allyTeam))
+	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		return 0;
 
 	lua_pushboolean(L, losHandler->globalLOS[allyTeam]);
@@ -867,7 +867,7 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 	if (!gs->useLuaGaia) {
 		return 0;
 	}
-	lua_pushnumber(L, teamHandler->GaiaTeamID());
+	lua_pushnumber(L, teamHandler.GaiaTeamID());
 	return 1;
 }
 
@@ -1063,11 +1063,11 @@ int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 
 int LuaSyncedRead::GetAllyTeamList(lua_State* L)
 {
-	lua_createtable(L, teamHandler->ActiveAllyTeams(), 0);
+	lua_createtable(L, teamHandler.ActiveAllyTeams(), 0);
 
 	unsigned int allyCount = 1;
 
-	for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
+	for (int at = 0; at < teamHandler.ActiveAllyTeams(); at++) {
 		lua_pushnumber(L, at);
 		lua_rawseti(L, -2, allyCount++);
 	}
@@ -1088,19 +1088,19 @@ int LuaSyncedRead::GetTeamList(lua_State* L)
 
 	if (args == 1) {
 		allyTeamID = lua_toint(L, 1);
-		if (!teamHandler->IsValidAllyTeam(allyTeamID))
+		if (!teamHandler.IsValidAllyTeam(allyTeamID))
 			return 0;
 	}
 
-	lua_createtable(L, teamHandler->ActiveTeams(), 0);
+	lua_createtable(L, teamHandler.ActiveTeams(), 0);
 
 	unsigned int teamCount = 1;
 
-	for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
-		if (teamHandler->Team(t) == nullptr)
+	for (int t = 0; t < teamHandler.ActiveTeams(); t++) {
+		if (teamHandler.Team(t) == nullptr)
 			continue;
 
-		if ((allyTeamID >= 0) && (allyTeamID != teamHandler->AllyTeam(t)))
+		if ((allyTeamID >= 0) && (allyTeamID != teamHandler.AllyTeam(t)))
 			continue;
 
 		lua_pushnumber(L, t);
@@ -1125,7 +1125,7 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 		teamID = lua_isnumber(L, 2)? lua_toint(L, 2): teamID;
 	}
 
-	if (teamID >= teamHandler->ActiveTeams())
+	if (teamID >= teamHandler.ActiveTeams())
 		return 0;
 
 	lua_createtable(L, playerHandler->ActivePlayers(), 0);
@@ -1163,10 +1163,10 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 int LuaSyncedRead::GetTeamInfo(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
-	const CTeam* team = teamHandler->Team(teamID);
+	const CTeam* team = teamHandler.Team(teamID);
 	if (team == nullptr)
 		return 0;
 
@@ -1175,7 +1175,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, !skirmishAIHandler.GetSkirmishAIsInTeam(teamID).empty()); // hasAIs
 	lua_pushsstring(L, team->GetSide());
-	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
+	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
 
 	const TeamBase::customOpts& teamOpts(team->GetAllValues());
 
@@ -1302,7 +1302,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1321,7 +1321,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	if (IsAlliedTeam(L, team->teamNum) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(team->teamNum, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1456,7 +1456,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
 	lua_pushnumber(L, player->team);
-	lua_pushnumber(L, teamHandler->AllyTeam(player->team));
+	lua_pushnumber(L, teamHandler.AllyTeam(player->team));
 	lua_pushnumber(L, player->ping * 0.001f); // in seconds
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushsstring(L, player->countryCode);
@@ -1496,7 +1496,7 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 		return 0;
 
 	if ((CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) ||
-	    ((CLuaHandle::GetHandleReadAllyTeam(L) >= 0) && !teamHandler->Ally(unit->allyteam, CLuaHandle::GetHandleReadAllyTeam(L)))) {
+	    ((CLuaHandle::GetHandleReadAllyTeam(L) >= 0) && !teamHandler.Ally(unit->allyteam, CLuaHandle::GetHandleReadAllyTeam(L)))) {
 		return 0;
 	}
 
@@ -1509,7 +1509,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	int numVals = 0;
 
 	const int teamId = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamId))
+	if (!teamHandler.IsValidTeam(teamId))
 		return numVals;
 
 	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
@@ -1554,10 +1554,10 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
 {
 	const size_t allyteam = (size_t)luaL_checkint(L, -1);
-	if (!teamHandler->ValidAllyTeam(allyteam))
+	if (!teamHandler.ValidAllyTeam(allyteam))
 		return 0;
 
-	const AllyTeam& ally = teamHandler->GetAllyTeam(allyteam);
+	const AllyTeam& ally = teamHandler.GetAllyTeam(allyteam);
 	const AllyTeam::customOpts& allyTeamOpts = ally.GetAllValues();
 
 	lua_createtable(L, allyTeamOpts.size(), 0);
@@ -1575,10 +1575,10 @@ int LuaSyncedRead::AreTeamsAllied(lua_State* L)
 	const int teamId1 = (int)luaL_checkint(L, -1);
 	const int teamId2 = (int)luaL_checkint(L, -2);
 
-	if (!teamHandler->IsValidTeam(teamId1) || !teamHandler->IsValidTeam(teamId2))
+	if (!teamHandler.IsValidTeam(teamId1) || !teamHandler.IsValidTeam(teamId2))
 		return 0;
 
-	lua_pushboolean(L, teamHandler->AlliedTeams(teamId1, teamId2));
+	lua_pushboolean(L, teamHandler.AlliedTeams(teamId1, teamId2));
 	return 1;
 }
 
@@ -1600,7 +1600,7 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 	if ((!IsPlayerSynced(L, p1)) || (!IsPlayerSynced(L, p2)))
 		return 0;
 
-	lua_pushboolean(L, teamHandler->AlliedTeams(p1->team, p2->team));
+	lua_pushboolean(L, teamHandler.AlliedTeams(p1->team, p2->team));
 	return 1;
 }
 
@@ -2118,7 +2118,7 @@ static int ParseAllegiance(lua_State* L, const char* caller, int index)
 
 	if (teamID < EnemyUnits) {
 		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
-	} else if (teamID >= teamHandler->ActiveTeams()) {
+	} else if (teamID >= teamHandler.ActiveTeams()) {
 		luaL_error(L, "Bad teamID in %s (%d)", caller, teamID);
 	}
 
@@ -2375,7 +2375,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	}
 	else {
 		startTeam = 0;
-		endTeam = teamHandler->ActiveTeams() - 1;
+		endTeam = teamHandler.ActiveTeams() - 1;
 	}
 
 #define PLANES_TEST                    \
@@ -2405,12 +2405,12 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 			}
 		}
 		else if (allegiance == AllyUnits) {
-			if (CLuaHandle::GetHandleReadAllyTeam(L) == teamHandler->AllyTeam(team)) {
+			if (CLuaHandle::GetHandleReadAllyTeam(L) == teamHandler.AllyTeam(team)) {
 				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST, false);
 			}
 		}
 		else if (allegiance == EnemyUnits) {
-			if (CLuaHandle::GetHandleReadAllyTeam(L) != teamHandler->AllyTeam(team)) {
+			if (CLuaHandle::GetHandleReadAllyTeam(L) != teamHandler.AllyTeam(team)) {
 				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST, false);
 			}
 		}
@@ -2781,8 +2781,8 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* effectiveDef = EffectiveUnitDef(L, unit);
 
 	if (effectiveDef->showPlayerName) {
-		if (teamHandler->IsValidTeam(unit->team))
-			unitTeam = teamHandler->Team(unit->team);
+		if (teamHandler.IsValidTeam(unit->team))
+			unitTeam = teamHandler.Team(unit->team);
 
 		if (unitTeam != nullptr && unitTeam->HasLeader()) {
 			tooltip = playerHandler->Player(unitTeam->GetLeader())->name;
@@ -4403,7 +4403,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
@@ -4433,7 +4433,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
@@ -4770,7 +4770,7 @@ int LuaSyncedRead::GetFeatureRulesParams(lua_State* L)
 	if (IsAlliedAllyTeam(L, feature->allyteam) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
@@ -4798,7 +4798,7 @@ int LuaSyncedRead::GetFeatureRulesParam(lua_State* L)
 	if (IsAlliedAllyTeam(L, feature->allyteam) || game->IsGameOver()) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+	else if (teamHandler.AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
@@ -4972,7 +4972,7 @@ int LuaSyncedRead::GetProjectileTeamID(lua_State* L)
 	if (pro == nullptr)
 		return 0;
 
-	if (!teamHandler->IsValidTeam(pro->GetTeamID()))
+	if (!teamHandler.IsValidTeam(pro->GetTeamID()))
 		return 0;
 
 	lua_pushnumber(L, pro->GetTeamID());
@@ -5361,7 +5361,7 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 		return aat;
 
 	if (CLuaHandle::GetHandleFullRead(L)) {
-		if (teamHandler->IsValidAllyTeam(aat))
+		if (teamHandler.IsValidAllyTeam(aat))
 			return aat;
 
 		if (aat == CEventClient::AllAccessTeam)
@@ -5860,7 +5860,7 @@ int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
 {
 	const int allyTeamID = lua_tonumber(L, 1);
 
-	if (!teamHandler->IsValidAllyTeam(allyTeamID))
+	if (!teamHandler.IsValidAllyTeam(allyTeamID))
 		return 0;
 
 	if (IsAlliedAllyTeam(L, allyTeamID)) {

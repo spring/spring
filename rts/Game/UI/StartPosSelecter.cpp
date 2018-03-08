@@ -46,7 +46,7 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return true;
 	}
 
-	const CTeam* mt = teamHandler->Team(gu->myTeam);
+	const CTeam* mt = teamHandler.Team(gu->myTeam);
 	const float3* sp = nullptr;
 
 	// player did not set a startpos yet, so do not let

@@ -41,7 +41,7 @@ CLuaGaia::CLuaGaia(): CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 	SetCtrlTeam(CEventClient::AllAccessTeam);
 	SetReadTeam(CEventClient::AllAccessTeam);
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
-	SetSelectTeam(teamHandler->GaiaTeamID());
+	SetSelectTeam(teamHandler.GaiaTeamID());
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP_BASE);
 }

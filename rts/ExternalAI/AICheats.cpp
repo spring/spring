@@ -58,20 +58,20 @@ void CAICheats::EnableCheatEvents(bool enable)
 void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 {
 	if (!OnlyPassiveCheats()) {
-		teamHandler->Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
+		teamHandler.Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
 	}
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->res.metal += amount;
+		teamHandler.Team(ai->GetTeamId())->res.metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->res.energy += amount;
+		teamHandler.Team(ai->GetTeamId())->res.energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, const float3& pos)
@@ -157,14 +157,14 @@ static int myAllyTeamId = -1;
 
 /// You have to set myAllyTeamId before callign this function. NOT thread safe!
 static inline bool unit_IsEnemy(CUnit* unit) {
-	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
+	return (!teamHandler.Ally(unit->allyteam, myAllyTeamId)
 			&& !unit_IsNeutral(unit));
 }
 
 
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
-	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
+	myAllyTeamId = teamHandler.AllyTeam(ai->GetTeamId());
 	return FilterUnitsVector(unitHandler.GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemy);
 }
 
@@ -172,7 +172,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 {
 	QuadFieldQuery qfQuery;
 	quadField.GetUnitsExact(qfQuery, pos, radius);
-	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
+	myAllyTeamId = teamHandler.AllyTeam(ai->GetTeamId());
 	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemy);
 }
 

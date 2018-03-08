@@ -231,11 +231,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tteams: " << teamHandler->ActiveTeams() << "\n";
+	file << "\tteams: " << teamHandler.ActiveTeams() << "\n";
 
 	#ifdef DUMP_TEAM_DATA
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		const CTeam* t = teamHandler->Team(a);
+	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+		const CTeam* t = teamHandler.Team(a);
 
 		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
 		file << "\t\t\tmetal: " << float(t->res.metal) << ", energy: " << float(t->res.energy) << "\n";
@@ -245,10 +245,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tallyteams: " << teamHandler->ActiveAllyTeams() << "\n";
+	file << "\tallyteams: " << teamHandler.ActiveAllyTeams() << "\n";
 
 	#ifdef DUMP_ALLYTEAM_DATA
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
+	for (int a = 0; a < teamHandler.ActiveAllyTeams(); ++a) {
 		file << "\t\tallyteamID: " << a << ", LOS-map:" << "\n";
 
 		for (int y = 0; y < losHandler->losSizeY; ++y) {

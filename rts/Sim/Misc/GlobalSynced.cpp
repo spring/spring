@@ -49,15 +49,11 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	assert(teamHandler == nullptr);
 	ResetState();
 }
 
 CGlobalSynced::~CGlobalSynced()
 {
-	spring::SafeDelete(teamHandler);
-	assert(teamHandler == nullptr);
-
 	log_framePrefixer_setFrameNumReference(nullptr);
 }
 
@@ -85,22 +81,16 @@ void CGlobalSynced::ResetState() {
 	gsRNG.SetSeed(18655, true);
 	log_framePrefixer_setFrameNumReference(&frameNum);
 
-	if (teamHandler == NULL) {
-		// needs to be available as early as PreGame
-		teamHandler = new CTeamHandler();
-	} else {
-		// less cavemanly than delete + new
-		teamHandler->ResetState();
-		skirmishAIHandler.ResetState();
-	}
+	teamHandler.ResetState();
+	skirmishAIHandler.ResetState();
 }
 
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
-	noHelperAIs     = setup->noHelperAIs;
-	useLuaGaia      = setup->useLuaGaia;
+	noHelperAIs = setup->noHelperAIs;
+	useLuaGaia  = setup->useLuaGaia;
 
-	teamHandler->LoadFromSetup(setup);
+	teamHandler.LoadFromSetup(setup);
 	skirmishAIHandler.LoadFromSetup(*setup);
 }
 

@@ -259,7 +259,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (unitHandler.NumUnitsByTeamAndDef(team, buildeeDef->id) >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
-	if (teamHandler->Team(team)->AtUnitLimit())
+	if (teamHandler.Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (!eventHandler.AllowUnitCreation(buildeeDef, this, nullptr))
 		return FACTORY_SKIP_BUILD_ORDER;

@@ -16,8 +16,8 @@ static constexpr float3 GRAPH_MIN_SCALE( 1e9,  1e9, 0.0f);
 static constexpr float3 GRAPH_MAX_SCALE(-1e9, -1e9, 0.0f);
 
 DebugDrawerAI::DebugDrawerAI() {
-	graphs.resize(teamHandler->ActiveTeams(), Graph(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE));
-	texsets.resize(teamHandler->ActiveTeams(), TexSet());
+	graphs.resize(teamHandler.ActiveTeams(), Graph(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE));
+	texsets.resize(teamHandler.ActiveTeams(), TexSet());
 }
 DebugDrawerAI::~DebugDrawerAI() {
 	for (Graph& graph: graphs) {

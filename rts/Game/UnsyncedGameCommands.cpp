@@ -632,8 +632,8 @@ public:
 				share = true;
 			}
 
-			CTeam* teamToKill = (teamHandler->IsActiveTeam(teamToKillId))? teamHandler->Team(teamToKillId) : NULL;
-			const CTeam* teamToReceiveUnits = (teamHandler->IsActiveTeam(teamToReceiveUnitsId))? teamHandler->Team(teamToReceiveUnitsId): NULL;
+			CTeam* teamToKill = (teamHandler.IsActiveTeam(teamToKillId))? teamHandler.Team(teamToKillId) : NULL;
+			const CTeam* teamToReceiveUnits = (teamHandler.IsActiveTeam(teamToReceiveUnitsId))? teamHandler.Team(teamToReceiveUnitsId): NULL;
 
 			if (teamToKill == nullptr) {
 				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
@@ -660,7 +660,7 @@ public:
 				badArgs = true;
 			}
 			if (!badArgs) {
-				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
+				const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToKillId);
 				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
 				const bool weAreLeader  = (teamToKill->GetLeader() == gu->myPlayerNum);
 
@@ -751,8 +751,8 @@ public:
 			spring::unordered_map<std::string, std::string> aiOptions;
 
 			const int teamToControlId = atoi(args[0].c_str());
-			const CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-				teamHandler->Team(teamToControlId) : nullptr;
+			const CTeam* teamToControl = teamHandler.IsActiveTeam(teamToControlId) ?
+				teamHandler.Team(teamToControlId) : nullptr;
 
 			if (args.size() >= 2) {
 				aiShortName = args[1];
@@ -771,7 +771,7 @@ public:
 				badArgs = true;
 			}
 			if (!badArgs) {
-				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToControlId);
+				const bool weAreAllied  = teamHandler.AlliedTeams(fromTeamId, teamToControlId);
 				const bool weAreLeader  = (teamToControl->GetLeader() == gu->myPlayerNum);
 				const bool noLeader     = (!teamToControl->HasLeader());
 
@@ -897,7 +897,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
 
-		if (teamHandler->IsValidTeam(teamId)) {
+		if (teamHandler.IsValidTeam(teamId)) {
 			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
 			LOG_L(L_WARNING, "[%s] team %d does not exist", __func__, teamId);
@@ -942,11 +942,11 @@ public:
 
 		const int teamId = atoi(action.GetArgs().c_str());
 
-		if (!teamHandler->IsValidTeam(teamId))
+		if (!teamHandler.IsValidTeam(teamId))
 			return false;
 
 		gu->myTeam = teamId;
-		gu->myAllyTeam = teamHandler->AllyTeam(teamId);
+		gu->myAllyTeam = teamHandler.AllyTeam(teamId);
 
 		CLuaUI::UpdateTeams();
 		return true;

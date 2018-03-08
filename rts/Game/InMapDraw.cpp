@@ -292,7 +292,7 @@ void CInMapDraw::GetPoints(std::vector<PointMarker>& points, size_t maxPoints, c
 
 					PointMarker pm;
 					pm.pos   = point->GetPos();
-					pm.color = teamHandler->Team(point->GetTeamID())->color;
+					pm.color = teamHandler.Team(point->GetTeamID())->color;
 					pm.label = point->GetLabel().c_str();
 					points.push_back(pm);
 					break;
@@ -321,7 +321,7 @@ void CInMapDraw::GetLines(std::vector<LineMarker>& lines, size_t maxLines, const
 					LineMarker lm;
 					lm.pos   = line->GetPos1();
 					lm.pos2  = line->GetPos2();
-					lm.color = teamHandler->Team(line->GetTeamID())->color;
+					lm.color = teamHandler.Team(line->GetTeamID())->color;
 					lines.push_back(lm);
 					break;
 				}

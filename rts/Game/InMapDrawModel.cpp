@@ -42,10 +42,10 @@ CInMapDrawModel::CInMapDrawModel()
 
 bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) const
 {
-	const int allyTeam = teamHandler->AllyTeam(teamID);
+	const int allyTeam = teamHandler.AllyTeam(teamID);
 
-	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
-	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedAB = teamHandler.Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler.Ally(gu->myAllyTeam, allyTeam);
 
 	return (gu->spectating || drawAllMarks || (!spectator && alliedAB && alliedBA));
 }
@@ -53,10 +53,10 @@ bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) con
 
 bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 {
-	const int  allyTeam  = teamHandler->AllyTeam(sender->team);
+	const int  allyTeam  = teamHandler.AllyTeam(sender->team);
 
-	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
-	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedAB = teamHandler.Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler.Ally(gu->myAllyTeam, allyTeam);
 	const bool alliedMsg = alliedAB && alliedBA;
 
 	// if we are playing and the guy sending the message is

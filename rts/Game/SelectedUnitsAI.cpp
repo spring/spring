@@ -622,7 +622,7 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 
 	const float radiusSqr = radius * radius;
 	const unsigned int count = qfQuery.units->size();
-	const int allyTeam = teamHandler->AllyTeam(p->team);
+	const int allyTeam = teamHandler.AllyTeam(p->team);
 
 	units.reserve(count);
 
@@ -670,7 +670,7 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 	quadField.GetUnitsExact(qfQuery, mins, maxs);
 
 	const unsigned int count = qfQuery.units->size();
-	const int allyTeam = teamHandler->AllyTeam(p->team);
+	const int allyTeam = teamHandler.AllyTeam(p->team);
 
 	units.reserve(count);
 

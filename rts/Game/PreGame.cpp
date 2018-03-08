@@ -507,11 +507,11 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		if (!playerHandler->IsValidPlayer(player->playerNum))
 			throw content_error("Invalid player in game data");
 
-		if (!teamHandler->IsValidTeam(player->team))
+		if (!teamHandler.IsValidTeam(player->team))
 			throw content_error("Invalid team in game data");
 
 		// TODO: seems not to make sense really
-		if (!teamHandler->IsValidAllyTeam(teamHandler->AllyTeam(player->team)))
+		if (!teamHandler.IsValidAllyTeam(teamHandler.AllyTeam(player->team)))
 			throw content_error("Invalid ally team in game data");
 
 	}

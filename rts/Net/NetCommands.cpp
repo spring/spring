@@ -449,7 +449,7 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid player-number %i", __func__, playerID);
 					break;
 				}
-				if (!teamHandler->IsValidTeam(teamID)) {
+				if (!teamHandler.IsValidTeam(teamID)) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid team-number %i", __func__, teamID);
 					break;
 				}
@@ -459,7 +459,7 @@ void CGame::ClientReadNet()
 				float3 rawPickPos(*reinterpret_cast<const float*>(&inbuf[4]), *reinterpret_cast<const float*>(&inbuf[8]), *reinterpret_cast<const float*>(&inbuf[12]));
 				float3 clampedPos(rawPickPos);
 
-				CTeam* team = teamHandler->Team(teamID);
+				CTeam* team = teamHandler.Team(teamID);
 				team->ClampStartPosInStartBox(&clampedPos);
 
 				if (eventHandler.AllowStartPosition(playerID, teamID, rdyState, clampedPos, rawPickPos)) {
@@ -820,8 +820,8 @@ void CGame::ClientReadNet()
 					pckt >> metalShare;
 					pckt >> energyShare;
 
-					CTeam* srcTeam = teamHandler->Team(srcTeamID);
-					CTeam* dstTeam = teamHandler->Team(dstTeamID);
+					CTeam* srcTeam = teamHandler.Team(srcTeamID);
+					CTeam* dstTeam = teamHandler.Team(dstTeamID);
 
 					if (metalShare > 0.0f) {
 						if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
@@ -945,8 +945,8 @@ void CGame::ClientReadNet()
 				const int32_t srcTeamID = playerHandler->Player(playerNum)->team;
 				const uint8_t dstTeamID = inbuf[2];
 
-				CTeam* srcTeam = teamHandler->Team(srcTeamID);
-				CTeam* dstTeam = teamHandler->Team(dstTeamID);
+				CTeam* srcTeam = teamHandler.Team(srcTeamID);
+				CTeam* dstTeam = teamHandler.Team(dstTeamID);
 
 				const float metalShare  = Clamp(*reinterpret_cast<const float*>(&inbuf[4]), 0.0f, srcTeam->res.metal);
 				const float energyShare = Clamp(*reinterpret_cast<const float*>(&inbuf[8]), 0.0f, srcTeam->res.energy);
@@ -1011,12 +1011,12 @@ void CGame::ClientReadNet()
 
 				const uint8_t teamNum = inbuf[2];
 
-				if (!teamHandler->IsValidTeam(teamNum)) {
+				if (!teamHandler.IsValidTeam(teamNum)) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_SETSHARE] invalid team-number %i", __func__, teamNum);
 					break;
 				}
 
-				CTeam* team = teamHandler->Team(teamNum);
+				CTeam* team = teamHandler.Team(teamNum);
 
 				const float metalShare = *reinterpret_cast<const float*>(&inbuf[3]);
 				const float energyShare = *reinterpret_cast<const float*>(&inbuf[7]);
@@ -1053,7 +1053,7 @@ void CGame::ClientReadNet()
 						const uint8_t toTeam = inbuf[3];
 						const uint8_t giverTeam = inbuf[4];
 
-						if (!teamHandler->IsValidTeam(toTeam) || !teamHandler->IsValidTeam(giverTeam)) {
+						if (!teamHandler.IsValidTeam(toTeam) || !teamHandler.IsValidTeam(giverTeam)) {
 							LOG_L(L_ERROR, "[Game::%s][TEAMMSG_GIVEWAY] invalid team-numbers {%i,%i}", __func__, toTeam, giverTeam);
 							break;
 						}
@@ -1067,7 +1067,7 @@ void CGame::ClientReadNet()
 						if ((giveAwayOk = (giverTeam == player->team))) {
 							// player is giving stuff from his own team
 							if (numPlayersInGiverTeam == 1) {
-								teamHandler->Team(giverTeam)->GiveEverythingTo(toTeam);
+								teamHandler.Team(giverTeam)->GiveEverythingTo(toTeam);
 							} else {
 								player->StartSpectating();
 							}
@@ -1080,8 +1080,8 @@ void CGame::ClientReadNet()
 
 						if (giveAwayOk && (numControllersInGiverTeam == 1)) {
 							// team has no controller left now
-							teamHandler->Team(giverTeam)->GiveEverythingTo(toTeam);
-							teamHandler->Team(giverTeam)->SetLeader(-1);
+							teamHandler.Team(giverTeam)->GiveEverythingTo(toTeam);
+							teamHandler.Team(giverTeam)->SetLeader(-1);
 						}
 
 						CPlayer::UpdateControlledTeams();
@@ -1093,8 +1093,8 @@ void CGame::ClientReadNet()
 						player->StartSpectating();
 
 						// update all teams of which the player is leader
-						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
-							CTeam* team = teamHandler->Team(t);
+						for (size_t t = 0; t < teamHandler.ActiveTeams(); ++t) {
+							CTeam* team = teamHandler.Team(t);
 
 							if (team->GetLeader() != playerNum)
 								continue;
@@ -1124,12 +1124,12 @@ void CGame::ClientReadNet()
 					case TEAMMSG_JOIN_TEAM: {
 						const uint8_t newTeamNum = inbuf[3];
 
-						if (!teamHandler->IsValidTeam(newTeamNum)) {
+						if (!teamHandler.IsValidTeam(newTeamNum)) {
 							LOG_L(L_ERROR, "[Game::%s][TEAMMSG_JOIN_TEAM] invalid team-number %i", __func__, newTeamNum);
 							break;
 						}
 
-						teamHandler->Team(newTeamNum)->AddPlayer(playerNum);
+						teamHandler.Team(newTeamNum)->AddPlayer(playerNum);
 					} break;
 					case TEAMMSG_TEAM_DIED: {
 						// silently drop since we can calculate this ourselves, although useful to store in replays
@@ -1165,7 +1165,7 @@ void CGame::ClientReadNet()
 					pckt >> aiTeamNum;
 					pckt >> aiName;
 
-					CTeam* tai = teamHandler->Team(aiTeamNum);
+					CTeam* tai = teamHandler.Team(aiTeamNum);
 
 					if (playerNum == gu->myPlayerNum) {
 						// local player
@@ -1231,7 +1231,7 @@ void CGame::ClientReadNet()
 				const size_t numPlayersInAITeam  = playerHandler->ActivePlayersInTeam(aiTeamId).size();
 				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
 
-				CTeam* tai                       = teamHandler->Team(aiTeamId);
+				CTeam* tai                       = teamHandler.Team(aiTeamId);
 
 				aiData->status = newState;
 
@@ -1287,12 +1287,12 @@ void CGame::ClientReadNet()
 				const bool allied = static_cast<bool>(inbuf[3]);
 
 				const uint8_t whichAllyTeam = inbuf[2];
-				const uint8_t fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(playerNum)->team);
+				const uint8_t fromAllyTeam = teamHandler.AllyTeam(playerHandler->Player(playerNum)->team);
 
-				if (teamHandler->IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
+				if (teamHandler.IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
 					// FIXME NETMSG_ALLIANCE need to reset unit allyTeams
 					// FIXME NETMSG_ALLIANCE need a call-in for AIs
-					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
+					teamHandler.SetAlly(fromAllyTeam, whichAllyTeam, allied);
 
 					// inform the players
 					std::ostringstream msg;
@@ -1308,7 +1308,7 @@ void CGame::ClientReadNet()
 					// stop attacks against former foe
 					if (allied) {
 						for (CUnit* u: unitHandler.GetActiveUnits()) {
-							if (teamHandler->Ally(u->allyteam, whichAllyTeam)) {
+							if (teamHandler.Ally(u->allyteam, whichAllyTeam)) {
 								u->StopAttackingAllyTeam(whichAllyTeam);
 							}
 						}

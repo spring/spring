@@ -446,7 +446,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 			if ((c.params[0] - unitHandler.MaxUnits()) != curResurrectee->id)
 				continue;
 
-			if (!teamHandler->Ally(allyteam, resurrecter->allyteam))
+			if (!teamHandler.Ally(allyteam, resurrecter->allyteam))
 				continue;
 
 			// all units that were rezzing shall assist the repair too

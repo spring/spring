@@ -119,7 +119,7 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point, GL:
 	const float3 ydir = (zdir.cross(xdir));
 
 
-	const unsigned char* pcolor = point->IsBySpectator() ? color4::white : teamHandler->Team(point->GetTeamID())->color;
+	const unsigned char* pcolor = point->IsBySpectator() ? color4::white : teamHandler.Team(point->GetTeamID())->color;
 	const unsigned char color[4] = {pcolor[0], pcolor[1], pcolor[2], 200};
 
 	constexpr float size = 6.0f;
@@ -149,7 +149,7 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point, GL:
 
 void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line, GL::RenderDataBufferC* buffer) const
 {
-	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
+	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler.Team(line->GetTeamID())->color;
 	buffer->SafeAppend({line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color});
 	buffer->SafeAppend({line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color});
 }
@@ -227,7 +227,7 @@ void CInMapDrawView::Draw()
 		for (const CInMapDrawModel::MapPoint* point: visibleLabels) {
 			const float3 pos = point->GetPos() + UpVector * 111.0f;
 
-			const CTeam* team = teamHandler->Team(point->GetTeamID());
+			const CTeam* team = teamHandler.Team(point->GetTeamID());
 			const unsigned char* color = point->IsBySpectator() ? color4::white : team->color;
 
 			font->SetTextColor(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f, 1.0f);

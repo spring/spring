@@ -25,8 +25,8 @@ void CTeamHighlight::Enable(unsigned currentTime)
 	if (!highlight)
 		return;
 
-	for (int i = 0; i < teamHandler->ActiveTeams(); ++i) {
-		CTeam* t = teamHandler->Team(i);
+	for (int i = 0; i < teamHandler.ActiveTeams(); ++i) {
+		CTeam* t = teamHandler.Team(i);
 
 		if (t->highlight <= 0.0f)
 			continue;
@@ -48,7 +48,7 @@ void CTeamHighlight::Disable()
 		return;
 
 	for (auto i = oldColors.begin(); i != oldColors.end(); ++i) {
-		CTeam* team = teamHandler->Team((*i).first);
+		CTeam* team = teamHandler.Team((*i).first);
 		*(int*)team->color = (*i).second;
 	}
 
@@ -63,8 +63,8 @@ void CTeamHighlight::Update(int frameNum) {
 	if ((globalConfig->teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig->teamHighlight == HIGHLIGHT_ALL) {
 		const int maxhl = 1000 * (globalConfig->networkTimeout + 1);
 
-		for (int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
-			CTeam* t = teamHandler->Team(ti);
+		for (int ti = 0; ti < teamHandler.ActiveTeams(); ++ti) {
+			CTeam* t = teamHandler.Team(ti);
 			float teamhighlight = 0.0f;
 
 			if (t->gaia)
@@ -75,7 +75,7 @@ void CTeamHighlight::Update(int frameNum) {
 				continue;
 			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty())
 				continue;
-			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti))
+			if (!gu->spectatingFullView && !teamHandler.AlliedTeams(gu->myTeam, ti))
 				continue;
 
 			int minPing = INT_MAX;

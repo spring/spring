@@ -414,7 +414,7 @@ void CFactoryCAI::ExecuteStop(Command& c)
 int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
-		if (teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
 			}

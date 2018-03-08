@@ -151,7 +151,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	std::string s;
 	s.reserve(512);
 
-	const bool enemyUnit = (teamHandler->AllyTeam(unit->team) != gu->myAllyTeam) && !gu->spectatingFullView;
+	const bool enemyUnit = (teamHandler.AllyTeam(unit->team) != gu->myAllyTeam) && !gu->spectatingFullView;
 
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : nullptr;
@@ -166,7 +166,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		team = teamHandler->Team(unit->team);
+		team = teamHandler.Team(unit->team);
 		s = team->GetControllerName();
 	} else {
 		s = unitToolTipMap.Get(unit->id);
@@ -184,7 +184,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		s += MakeUnitStatsString(stats);
 	}
 
-	s += "\n" + teamHandler->Team(unit->team)->GetControllerName();
+	s += "\n" + teamHandler.Team(unit->team)->GetControllerName();
 	return s;
 }
 

@@ -114,7 +114,7 @@ bool CPlasmaRepulser::CanIntercept(unsigned interceptedType, int allyTeam) const
 	if ((weaponDef->shieldInterceptType & interceptedType) == 0)
 		return false;
 
-	if (weaponDef->smartShield && teamHandler->IsValidAllyTeam(allyTeam) && teamHandler->AlliedAllyTeams(allyTeam, owner->allyteam))
+	if (weaponDef->smartShield && teamHandler.IsValidAllyTeam(allyTeam) && teamHandler.AlliedAllyTeams(allyTeam, owner->allyteam))
 		return false;
 
 	return IsActive();
@@ -167,7 +167,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 		return false;
 
 		// team does not have enough energy, don't touch the projectile
-	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
+	if (teamHandler.Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
 	rechargeDelay = defRechargeDelay;
@@ -249,7 +249,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPo
 		return false;
 
 	// team does not have enough energy, don't touch the projectile
-	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
+	if (teamHandler.Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
 	if (weaponDef->shieldPower > 0.0f)
