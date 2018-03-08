@@ -298,12 +298,10 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			} break;
 
 			case drawMetal: {
-				const CMetalMap* metalMap = readMap->metalMap;
-
 				const unsigned short* myLos           = &losHandler->los.losMaps[gu->myAllyTeam].front();
-				const unsigned  char* extraTex        = metalMap->GetDistributionMap();
-				const unsigned  char* extraTexPal     = metalMap->GetTexturePalette();
-				const          float* extractDepthMap = metalMap->GetExtractionMap();
+				const unsigned  char* extraTex        = metalMap.GetDistributionMap();
+				const unsigned  char* extraTexPal     = metalMap.GetTexturePalette();
+				const          float* extractDepthMap = metalMap.GetExtractionMap();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;

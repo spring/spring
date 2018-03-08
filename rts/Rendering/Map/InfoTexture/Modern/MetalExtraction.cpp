@@ -110,7 +110,7 @@ void CMetalExtractionTexture::Update()
 	glViewport(0,0, texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
+	glBindTexture(GL_TEXTURE_2D, infoTex->GetTexture());
 	glBegin(GL_QUADS);
 		glVertex2f(-1.f, -1.f);
 		glVertex2f(-1.f, +1.f);
