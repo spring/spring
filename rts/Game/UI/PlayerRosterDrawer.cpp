@@ -57,17 +57,17 @@ void CPlayerRosterDrawer::Draw()
 			if (p->spectator)
 				prefix = "S";
 			else {
-				const unsigned char* bColor = teamHandler->Team(p->team)->color;
+				const unsigned char* bColor = teamHandler.Team(p->team)->color;
 
 				teamColor[0] = std::max((unsigned char)1, bColor[0]);
 				teamColor[1] = std::max((unsigned char)1, bColor[1]);
 				teamColor[2] = std::max((unsigned char)1, bColor[2]);
 
-				if (gu->myAllyTeam == teamHandler->AllyTeam(p->team)) {
+				if (gu->myAllyTeam == teamHandler.AllyTeam(p->team)) {
 					allyColor[0] = allyColor[2] = 1;
 					prefix = "A";	// same AllyTeam
 				}
-				else if (teamHandler->AlliedTeams(gu->myTeam, p->team)) {
+				else if (teamHandler.AlliedTeams(gu->myTeam, p->team)) {
 					allyColor[0] = allyColor[1] = 1;
 					prefix = "E+";	// different AllyTeams, but are allied
 				}

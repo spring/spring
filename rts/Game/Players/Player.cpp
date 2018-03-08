@@ -56,7 +56,7 @@ void CPlayer::SetControlledTeams()
 
 	if (gs->godMode) {
 		// anyone can control any unit
-		for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
+		for (int t = 0; t < teamHandler.ActiveTeams(); t++) {
 			controlledTeams.insert(t);
 		}
 		return;
@@ -125,7 +125,7 @@ void CPlayer::JoinTeam(int newTeam)
 	if (gu->myPlayerNum == this->playerNum) {
 		// HACK: see StartSpectating
 		gu->myPlayingTeam = gu->myTeam = newTeam;
-		gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+		gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
 
 		gu->spectating           = false;
 		gu->spectatingFullView   = false;

@@ -17,7 +17,7 @@
 #include <SDL_keycode.h>
 
 
-#define MAX_SHARE_TEAMS (teamHandler->ActiveTeams() - 1)
+#define MAX_SHARE_TEAMS (teamHandler.ActiveTeams() - 1)
 int CShareBox::lastShareTeam = 0;
 
 CShareBox::CShareBox()
@@ -88,11 +88,11 @@ CShareBox::CShareBox()
 	scrollGrab = 0.0f;
 	hasScroll = MAX_SHARE_TEAMS > numTeamsDisp;
 
-	while (shareTeam == gu->myTeam || teamHandler->Team(shareTeam)->isDead) {
+	while (shareTeam == gu->myTeam || teamHandler.Team(shareTeam)->isDead) {
 		++shareTeam;
 
 		// wrap around
-		if (shareTeam >= teamHandler->ActiveTeams()) {
+		if (shareTeam >= teamHandler.ActiveTeams()) {
 			shareTeam = 0;
 		}
 
@@ -212,48 +212,49 @@ void CShareBox::Draw()
 	font->SetTextColor(1, 1, 0.4f, 0.8f);
 	font->glPrint(box.x1 + 0.01f, box.y1 + 0.16f, 0.7f, FONT_SCALE | FONT_NORM, "Share Energy");
 
-	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.energy));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.energy * energyShare);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler.Team(gu->myTeam)->res.energy));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler.Team(gu->myTeam)->res.energy * energyShare);
 
 	font->SetTextColor(0.8f, 0.8f, 0.9f, 0.8f);
 	font->glPrint(box.x1 + 0.01f, box.y1 + 0.22f, 0.7f, FONT_SCALE | FONT_NORM, "Share Metal");
 
-	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.metal));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.metal * metalShare);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler.Team(gu->myTeam)->res.metal));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler.Team(gu->myTeam)->res.metal * metalShare);
 
-	int teamPos = 0;
-	for(int team = startTeam; team < MAX_SHARE_TEAMS && teamPos < numTeamsDisp; ++team, ++teamPos) {
-		int actualTeam = team;
-		if (team >= gu->myTeam) {
-			actualTeam++;
-		}
-		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
+	for (int teamNum = startTeam, teamPos = 0; teamNum < MAX_SHARE_TEAMS && teamPos < numTeamsDisp; ++teamNum, ++teamPos) {
+		const int actualTeam = teamNum + (teamNum >= gu->myTeam);
 
-		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
-		std::string ally, dead;
+		const CTeam* team = teamHandler.Team(actualTeam);
+		const char* name = (team->GetControllerName()).c_str();
 
-		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
-			font->SetTextColor(0.5f, 1.0f, 0.5f, alpha);
+		const char* ally = "";
+		const char* dead = "";
+
+		if (teamHandler.Ally(gu->myAllyTeam, teamHandler.AllyTeam(actualTeam))) {
+			font->SetTextColor(0.5f, 1.0f, 0.5f, 0.4f + 0.4f * (shareTeam == actualTeam));
+
 			ally = " <Ally>";
 		} else {
 			font->SetTextColor(1.0f, 0.5f, 0.5f, alpha);
 			ally = " <Enemy>";
 		}
-		if (teamHandler->Team(actualTeam)->isDead) {
-			font->SetTextColor(0.5f, 0.5f, 1.0f, alpha);
+
+		if (teamHandler.Team(actualTeam)->isDead) {
+			font->SetTextColor(0.5f, 0.5f, 1.0f, 0.4f + 0.4f * (shareTeam == actualTeam));
 			dead = " <Dead>";
 		}
-		if (actualTeam == teamHandler->GaiaTeamID()) {
-			font->SetTextColor(0.8f, 0.8f, 0.8f, alpha);
-			teamName = "Gaia";
-			ally   = " <Gaia>";
+		if (actualTeam == teamHandler.GaiaTeamID()) {
+			font->SetTextColor(0.8f, 0.8f, 0.8f, 0.4f + 0.4f * (shareTeam == actualTeam));
+			name = "Gaia";
+			ally = " <Gaia>";
 		}
+
 		font->glFormat(box.x1 + teamBox.x1 + 0.002f,
 		                box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,
 		                0.7f, FONT_SCALE | FONT_NORM, "Team%i (%s)%s%s", actualTeam,
-		                teamName.c_str(), ally.c_str(), dead.c_str());
+		                name, ally, dead);
 	}
 
 	font->End();
@@ -340,7 +341,7 @@ bool CShareBox::MousePress(int x, int y, int button)
 			if (team >= gu->myTeam) {
 				team++;
 			}
-			if (team < teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead) {
+			if (team < teamHandler.ActiveTeams() && !teamHandler.Team(team)->isDead) {
 				shareTeam = team;
 			}
 		}
@@ -360,13 +361,13 @@ void CShareBox::MouseRelease(int x, int y, int button)
 		shareUnits = !shareUnits;
 	}
 	if ((InBox(mx, my, box + okBox) || InBox(mx, my, box + applyBox)) &&
-			 shareTeam != -1 && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead) {
+			 shareTeam != -1 && !teamHandler.Team(shareTeam)->isDead && !teamHandler.Team(gu->myTeam)->isDead) {
 		if (shareUnits) {
 			Command c(CMD_STOP);
 			// make sure the units are stopped and that the selection is transmitted
 			selectedUnitsHandler.GiveCommand(c, false);
 		}
-		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler->Team(gu->myTeam)->res.metal, energyShare * teamHandler->Team(gu->myTeam)->res.energy));
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler.Team(gu->myTeam)->res.metal, energyShare * teamHandler.Team(gu->myTeam)->res.energy));
 		if (shareUnits) {
 			selectedUnitsHandler.ClearSelected();
 		}
@@ -412,7 +413,7 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 		if (team >= gu->myTeam) {
 			team++;
 		}
-		if (team < teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead) {
+		if (team < teamHandler.ActiveTeams() && !teamHandler.Team(team)->isDead) {
 			shareTeam = team;
 		}
 	}

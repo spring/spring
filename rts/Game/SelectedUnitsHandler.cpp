@@ -294,7 +294,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 		// any team's units can be *selected*
 		// (whether they can be given orders
 		// depends on our ability to play god)
-		lastTeam = teamHandler->ActiveTeams() - 1;
+		lastTeam = teamHandler.ActiveTeams() - 1;
 	} else {
 		team = gu->myTeam;
 		lastTeam = gu->myTeam;
@@ -356,7 +356,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 
 		if (gu->spectatingFullSelect || gs->godMode) {
 			team = 0;
-			lastTeam = teamHandler->ActiveTeams() - 1;
+			lastTeam = teamHandler.ActiveTeams() - 1;
 		} else {
 			team = gu->myTeam;
 			lastTeam = gu->myTeam;
@@ -656,7 +656,8 @@ void CSelectedUnitsHandler::Draw()
 					}
 					commandDrawer->DrawQuedBuildingSquares(builderCAI);
 				}
-				else if (teamHandler->AlliedTeams(builder->team, gu->myTeam)) {
+
+				else if (teamHandler.AlliedTeams(builder->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
@@ -818,9 +819,9 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 	// setup the locals for IsBetterLeader()
 	targetUnit = unit;
 	targetFeature = feature;
-	if (targetUnit) {
-		targetIsEnemy = !teamHandler->Ally(gu->myAllyTeam, targetUnit->allyteam);
-	}
+
+	if (targetUnit != nullptr)
+		targetIsEnemy = !teamHandler.Ally(gu->myAllyTeam, targetUnit->allyteam);
 
 	// find the best leader to pick the command
 	const CUnit* leaderUnit = unitHandler.GetUnit(*selectedUnits.begin());
@@ -911,7 +912,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if (unit->unitDef->showPlayerName) {
-			team = teamHandler->Team(unit->team);
+			team = teamHandler.Team(unit->team);
 			s = team->GetControllerName();
 		} else {
 			s = unitToolTipMap.Get(unit->id);
@@ -947,7 +948,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		if (ctrlTeam == MULTI_TEAM) {
 			ctrlName = "(Multiple teams)";
 		} else if (ctrlTeam != NO_TEAM) {
-			ctrlName = teamHandler->Team(ctrlTeam)->GetControllerName();
+			ctrlName = teamHandler.Team(ctrlTeam)->GetControllerName();
 		}
 
 		s += "\n\xff\xff\xff\xff" + ctrlName;

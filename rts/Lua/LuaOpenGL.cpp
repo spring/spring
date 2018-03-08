@@ -117,7 +117,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool
 	if (readAllyTeam < 0)
 		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
 
-	if (allyCheck && teamHandler->Ally(readAllyTeam, unit->allyteam))
+	if (allyCheck && teamHandler.Ally(readAllyTeam, unit->allyteam))
 		return unit;
 	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
 		return unit;

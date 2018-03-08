@@ -183,8 +183,8 @@ void QTPFS::PathManager::Load() {
 	pathSearches.resize(moveDefHandler->GetNumMoveDefs());
 
 	// add one extra element for object-less requests
-	numCurrExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
-	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
+	numCurrExecutedSearches.resize(teamHandler.ActiveTeams() + 1, 0);
+	numPrevExecutedSearches.resize(teamHandler.ActiveTeams() + 1, 0);
 
 	{
 		const std::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
@@ -890,7 +890,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetSourcePoint(pos);
 		newPath->SetTargetPoint(oldPath->GetTargetPoint());
 		newSearch->SetID(oldPath->GetID());
-		newSearch->SetTeam(teamHandler->ActiveTeams());
+		newSearch->SetTeam(teamHandler.ActiveTeams());
 	} else {
 		// NOTE:
 		//     the unclamped end-points are temporary
@@ -903,7 +903,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetSourcePoint(sourcePoint);
 		newPath->SetTargetPoint(targetPoint);
 		newSearch->SetID(newPath->GetID());
-		newSearch->SetTeam((object != NULL)? object->team: teamHandler->ActiveTeams());
+		newSearch->SetTeam((object != NULL)? object->team: teamHandler.ActiveTeams());
 	}
 
 	assert((pathCaches[moveDef->pathType].GetTempPath(newPath->GetID()))->GetID() == 0);

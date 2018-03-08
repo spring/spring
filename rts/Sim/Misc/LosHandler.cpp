@@ -89,7 +89,7 @@ void ILosType::Init(const int mipLevel_, LosType type_)
 	algoType = ((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE);
 
 
-	losMaps.resize(teamHandler->ActiveAllyTeams());
+	losMaps.resize(teamHandler.ActiveAllyTeams());
 
 	const float* ctrHeightMap = readMap->GetCenterHeightMapSynced();
 	const float* mipHeightMap = readMap->GetMIPHeightMapSynced(mipLevel_);
@@ -271,7 +271,7 @@ inline void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 inline void ILosType::LosAdd(SLosInstance* li)
 {
 	assert(li);
-	assert(teamHandler->IsValidAllyTeam(li->allyteam));
+	assert(teamHandler.IsValidAllyTeam(li->allyteam));
 
 	if (algoType == LOS_ALGO_RAYCAST) {
 		losMaps[li->allyteam].AddRaycast(li, 1);
@@ -695,7 +695,7 @@ void CLosHandler::Init()
 	sonarJammer.Init(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR_JAMMER);
 
 	radarErrorSizes.clear();
-	radarErrorSizes.resize(teamHandler->ActiveAllyTeams(), defBaseRadarErrorSize);
+	radarErrorSizes.resize(teamHandler.ActiveAllyTeams(), defBaseRadarErrorSize);
 
 	losTypes[0] = &los;
 	losTypes[1] = &airLos;

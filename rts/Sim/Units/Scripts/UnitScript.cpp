@@ -912,7 +912,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const CUnit* u = unitHandler.GetUnit(p1);
 
 		if (u != nullptr)
-			return teamHandler->Ally(unit->allyteam, u->allyteam) ? 1 : 0;
+			return teamHandler.Ally(unit->allyteam, u->allyteam) ? 1 : 0;
 
 		return 0;
 	} break;

@@ -531,7 +531,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
-		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack) {
 				return CMD_ATTACK;
 			}

@@ -41,9 +41,9 @@ void IUnitDrawerState::PopTransform() {
 
 
 float4 IUnitDrawerState::GetTeamColor(int team, float alpha) {
-	assert(teamHandler->IsValidTeam(team));
+	assert(teamHandler.IsValidTeam(team));
 
-	const   CTeam* t = teamHandler->Team(team);
+	const   CTeam* t = teamHandler.Team(team);
 	const uint8_t* c = t->color;
 
 	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha));

@@ -66,7 +66,7 @@ void CResourceBar::Draw()
 		return;
 	}
 
-	const CTeam* myTeam = teamHandler->Team(gu->myTeam);
+	const CTeam* myTeam = teamHandler.Team(gu->myTeam);
 
 	GLfloat x1, y1, x2, y2, x;
 
@@ -239,30 +239,31 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 bool CResourceBar::MousePress(int x, int y, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	if (InBox(mx, my, box)) {
-		moveBox = true;
-		if (!gu->spectating) {
-			if (InBox(mx, my, box + metalBox)) {
-				moveBox = false;
-				const float metalShare = Clamp((mx - (box.x1 + metalBox.x1)) / (metalBox.x2 - metalBox.x1), 0.f, 1.f);
-				clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler->Team(gu->myTeam)->resShare.energy));
-			}
-			if (InBox(mx, my, box + energyBox)) {
-				moveBox = false;
-				const float energyShare = Clamp((mx - (box.x1 + energyBox.x1)) / (energyBox.x2 - energyBox.x1), 0.f, 1.f);
-				clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, energyShare));
-			}
+	if (!InBox(mx, my, box))
+		return false;
+
+	moveBox = true;
+
+	if (!gu->spectating) {
+		if (InBox(mx, my, box + metalBox)) {
+			moveBox = false;
+			const float metalShare = Clamp((mx - (box.x1 + metalBox.x1)) / (metalBox.x2 - metalBox.x1), 0.f, 1.f);
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler.Team(gu->myTeam)->resShare.energy));
 		}
-		return true;
+		if (InBox(mx, my, box + energyBox)) {
+			moveBox = false;
+			const float energyShare = Clamp((mx - (box.x1 + energyBox.x1)) / (energyBox.x2 - energyBox.x1), 0.f, 1.f);
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler.Team(gu->myTeam)->resShare.metal, energyShare));
+		}
 	}
-	return false;
+
+	return true;
 }
 
 

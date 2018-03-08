@@ -390,7 +390,7 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 		return false;
 	}
 
-	params.teamID = teamHandler->GaiaTeamID();
+	params.teamID = teamHandler.GaiaTeamID();
 
 	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
@@ -461,11 +461,11 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 
 	const int teamID = lua_toint(L, index);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
 
 
-	return (teamHandler->Team(teamID));
+	return (teamHandler.Team(teamID));
 }
 
 static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
@@ -648,12 +648,12 @@ int LuaSyncedCtrl::SetAlly(lua_State* L)
 	const int firstAllyTeamID = luaL_checkint(L, 1);
 	const int secondAllyTeamID = luaL_checkint(L, 2);
 
-	if (!teamHandler->IsValidAllyTeam(firstAllyTeamID))
+	if (!teamHandler.IsValidAllyTeam(firstAllyTeamID))
 		return 0;
-	if (!teamHandler->IsValidAllyTeam(secondAllyTeamID))
+	if (!teamHandler.IsValidAllyTeam(secondAllyTeamID))
 		return 0;
 
-	teamHandler->SetAlly(firstAllyTeamID, secondAllyTeamID, luaL_checkboolean(L, 3));
+	teamHandler.SetAlly(firstAllyTeamID, secondAllyTeamID, luaL_checkboolean(L, 3));
 	return 0;
 }
 
@@ -661,15 +661,15 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
 	//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
 	//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
-	if (teamID == teamHandler->GaiaTeamID())
+	if (teamID == teamHandler.GaiaTeamID())
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 
 	if (team == nullptr)
 		return 0;
@@ -691,10 +691,10 @@ int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
 	if (!IsPlayerSynced(player))
 		return 0;
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
-	teamHandler->Team(teamID)->AddPlayer(playerID);
+	teamHandler.Team(teamID)->AddPlayer(playerID);
 	return 0;
 }
 
@@ -717,7 +717,7 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 
 		const unsigned char allyTeamID = lua_toint(L, -1);
 
-		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
+		if (!teamHandler.ValidAllyTeam(allyTeamID)) {
 			continue;
 		}
 
@@ -734,7 +734,7 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 int LuaSyncedCtrl::SetGlobalLos(lua_State* L)
 {
 	const int allyTeam = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidAllyTeam(allyTeam)) {
+	if (!teamHandler.IsValidAllyTeam(allyTeam)) {
 		luaL_error(L, "bad allyTeam");
 	}
 
@@ -749,13 +749,13 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
 	if (!CanControlTeam(L, teamID))
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 
 	if (team == nullptr)
 		return 0;
@@ -778,13 +778,13 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
 	if (!CanControlTeam(L, teamID))
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 
 	if (team == nullptr)
 		return 0;
@@ -842,13 +842,13 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
 	if (!CanControlTeam(L, teamID))
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 
 	if (team == nullptr)
 		return 0;
@@ -879,13 +879,13 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
 	if (!CanControlTeam(L, teamID))
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 
 	if (team == nullptr)
 		return 0;
@@ -908,23 +908,23 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 {
 	const int teamID1 = luaL_checkint(L, 1);
 
-	if (!teamHandler->IsValidTeam(teamID1))
+	if (!teamHandler.IsValidTeam(teamID1))
 		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
 
 	if (!CanControlTeam(L, teamID1))
 		return 0;
 
-	CTeam* team1 = teamHandler->Team(teamID1);
+	CTeam* team1 = teamHandler.Team(teamID1);
 
 	if (team1 == nullptr)
 		return 0;
 
 	const int teamID2 = luaL_checkint(L, 2);
 
-	if (!teamHandler->IsValidTeam(teamID2))
+	if (!teamHandler.IsValidTeam(teamID2))
 		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
 
-	CTeam* team2 = teamHandler->Team(teamID2);
+	CTeam* team2 = teamHandler.Team(teamID2);
 
 	if (team2 == nullptr)
 		return 0;
@@ -1221,7 +1221,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const bool beingBuilt = luaL_optboolean(L, 7, false);
 	const bool flattenGround = luaL_optboolean(L, 8, true);
 
-	if (!teamHandler->IsValidTeam(teamID)) {
+	if (!teamHandler.IsValidTeam(teamID)) {
 		luaL_error(L, "[%s()]: invalid team number (%d)", __func__, teamID);
 		return 0;
 	}
@@ -1307,10 +1307,10 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 		return 0;
 
 	const int newTeam = luaL_checkint(L, 2);
-	if (!teamHandler->IsValidTeam(newTeam))
+	if (!teamHandler.IsValidTeam(newTeam))
 		return 0;
 
-	const CTeam* team = teamHandler->Team(newTeam);
+	const CTeam* team = teamHandler.Team(newTeam);
 	if (team == nullptr)
 		return 0;
 
@@ -1831,7 +1831,7 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 
 	const int allyTeam = luaL_checkint(L, 2);
 
-	if (!teamHandler->IsValidAllyTeam(allyTeam))
+	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -1855,7 +1855,7 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 
 	const int allyTeam = luaL_checkint(L, 2);
 
-	if (!teamHandler->IsValidAllyTeam(allyTeam))
+	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -2674,7 +2674,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 			}
 		}
 
-		CTeam* team = teamHandler->Team(unit->team);
+		CTeam* team = teamHandler.Team(unit->team);
 
 		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			unit->UseMetal(metal);
@@ -2762,12 +2762,12 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	if (lua_isnumber(L, 6)) {
 		if ((team = lua_toint(L, 6)) < -1) {
 			team = -1;
-		} else if (team >= teamHandler->ActiveTeams()) {
+		} else if (team >= teamHandler.ActiveTeams()) {
 			return 0;
 		}
 	}
 
-	const int allyTeam = (team < 0) ? -1 : teamHandler->AllyTeam(team);
+	const int allyTeam = (team < 0) ? -1 : teamHandler.AllyTeam(team);
 
 	if (!CanControlFeatureAllyTeam(L, allyTeam))
 		luaL_error(L, "CreateFeature() bad team permission %d", team);
@@ -2828,7 +2828,7 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 		return 0;
 
 	const int teamId = luaL_checkint(L, 2);
-	if (!teamHandler->IsValidTeam(teamId))
+	if (!teamHandler.IsValidTeam(teamId))
 		return 0;
 
 	feature->ChangeTeam(teamId);
@@ -4473,7 +4473,7 @@ int LuaSyncedCtrl::SetRadarErrorParams(lua_State* L)
 {
 	const int allyTeamID = lua_tonumber(L, 1);
 
-	if (!teamHandler->IsValidAllyTeam(allyTeamID))
+	if (!teamHandler.IsValidAllyTeam(allyTeamID))
 		return 0;
 
 	losHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));

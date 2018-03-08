@@ -357,7 +357,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame
 		}
 
 		// unfinished nanoframe, assist it
-		if (nanoFrame != nullptr && teamHandler->Ally(owner->allyteam, u->allyteam))
+		if (nanoFrame != nullptr && teamHandler.Ally(owner->allyteam, u->allyteam))
 			*nanoFrame = u;
 
 		return false;
@@ -635,7 +635,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			return;
 		}
 
-		if (teamHandler->Team(owner->team)->AtUnitLimit())
+		if (teamHandler.Team(owner->team)->AtUnitLimit())
 			return;
 
 		CFeature* f = nullptr;
@@ -1031,7 +1031,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				const bool busyAlliedBuilder =
 					unit->unitDef->builder &&
 					!unit->commandAI->commandQue.empty() &&
-					teamHandler->Ally(owner->allyteam, unit->allyteam);
+					teamHandler.Ally(owner->allyteam, unit->allyteam);
 
 				if (outOfReclaimRange || busyAlliedBuilder) {
 					StopMoveAndFinishCommand();
@@ -1303,7 +1303,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
-		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack && (owner->maxRange > 0)) {
 				return CMD_ATTACK;
 			} else if (owner->unitDef->canReclaim && pointed->unitDef->reclaimable) {
@@ -1378,7 +1378,7 @@ bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 			continue;
 		}
 		const int cmdUnitId = (int)c.params[0];
-		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
+		if (cmdUnitId == unit->id && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1413,7 +1413,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
+		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1448,7 +1448,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
+		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1494,7 +1494,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 				continue;
 			if (!u->unitDef->reclaimable)
 				continue;
-			if (!((!recEnemy && !recEnemyOnly) || !teamHandler->Ally(owner->allyteam, u->allyteam)))
+			if (!((!recEnemy && !recEnemyOnly) || !teamHandler.Ally(owner->allyteam, u->allyteam)))
 				continue;
 			if (!(u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)))
 				continue;
@@ -1504,7 +1504,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 				continue;
 
 			// do not reclaim friendly builders that are busy
-			if (u->unitDef->builder && teamHandler->Ally(owner->allyteam, u->allyteam) && !u->commandAI->commandQue.empty())
+			if (u->unitDef->builder && teamHandler.Ally(owner->allyteam, u->allyteam) && !u->commandAI->commandQue.empty())
 				continue;
 
 			const float dist = f3SqDist(u->pos, owner->pos);
@@ -1525,7 +1525,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
-		const CTeam* team = teamHandler->Team(owner->team);
+		const CTeam* team = teamHandler.Team(owner->team);
 		QuadFieldQuery qfQuery;
 		quadField.GetFeaturesExact(qfQuery, pos, radius, false);
 		bool metal = false;
@@ -1651,7 +1651,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 
 	for (const CUnit* unit: *qfQuery.units) {
 		if ((((options & CONTROL_KEY) && owner->team != unit->team) ||
-			!teamHandler->Ally(owner->allyteam, unit->allyteam)) && (unit != owner) &&
+			!teamHandler.Ally(owner->allyteam, unit->allyteam)) && (unit != owner) &&
 			(unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)) &&
 			!unit->beingBuilt && unit->unitDef->capturable) {
 			if(unit->IsMoving() && stationary) { // capture stationary targets first
@@ -1702,7 +1702,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool stationary = false;
 
 	for (const CUnit* unit: *qfQuery.units) {
-		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
+		if (teamHandler.Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
 				// don't help allies build unless set on roam
 				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != MOVESTATE_ROAM)) {

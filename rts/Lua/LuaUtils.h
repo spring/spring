@@ -279,7 +279,7 @@ static inline int CtrlAllyTeam(const lua_State* L)
 	if (ctrlTeam < 0)
 		return ctrlTeam;
 
-	return teamHandler->AllyTeam(ctrlTeam);
+	return teamHandler.AllyTeam(ctrlTeam);
 }
 
 
@@ -300,7 +300,7 @@ static inline bool CanControlAllyTeam(const lua_State* L, int allyTeamID)
 	if (ctrlTeam < 0)
 		return (ctrlTeam == CEventClient::AllAccessTeam);
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
@@ -311,9 +311,9 @@ static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
 		return (ctrlTeam == CEventClient::AllAccessTeam);
 
 	if (allyTeamID < 0)
-		return (ctrlTeam == teamHandler->GaiaTeamID());
+		return (ctrlTeam == teamHandler.GaiaTeamID());
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeamID)
@@ -326,7 +326,7 @@ static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeam
 	if (allyTeamID < 0)
 		return false;
 
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler.AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 

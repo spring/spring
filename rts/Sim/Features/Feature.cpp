@@ -136,11 +136,11 @@ void CFeature::ChangeTeam(int newTeam)
 		// remap all negative teams to Gaia
 		// if the Gaia team is not enabled, these would become
 		// -1 and we remap them again (to 0) to prevent crashes
-		team = std::max(0, teamHandler->GaiaTeamID());
-		allyteam = std::max(0, teamHandler->GaiaAllyTeamID());
+		team = std::max(0, teamHandler.GaiaTeamID());
+		allyteam = std::max(0, teamHandler.GaiaAllyTeamID());
 	} else {
 		team = newTeam;
-		allyteam = teamHandler->AllyTeam(newTeam);
+		allyteam = teamHandler.AllyTeam(newTeam);
 	}
 }
 
@@ -150,7 +150,7 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 	if (alwaysVisible || argAllyTeam == -1)
 		return true;
 
-	const bool isGaia = allyteam == std::max(0, teamHandler->GaiaAllyTeamID());
+	const bool isGaia = allyteam == std::max(0, teamHandler.GaiaAllyTeamID());
 
 	switch (modInfo.featureVisibility) {
 		case CModInfo::FEATURELOS_NONE:
@@ -289,7 +289,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		if (reclaimLeft <= 0.0f)
 			return false;
 
-		const CTeam* builderTeam = teamHandler->Team(builder->team);
+		const CTeam* builderTeam = teamHandler.Team(builder->team);
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
 		const float step = amount / reclaimTime;
@@ -324,8 +324,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		}
 
 		// update the energy and metal required counts
-		teamHandler->Team(builder->team)->resPull.energy += energyUse;
-		teamHandler->Team(builder->team)->resPull.metal  += metalUse;
+		teamHandler.Team(builder->team)->resPull.energy += energyUse;
+		teamHandler.Team(builder->team)->resPull.metal  += metalUse;
 		return false;
 	}
 

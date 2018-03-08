@@ -383,7 +383,7 @@ float GuiTraceRay(
 
 		// Unit Intersection
 		for (const CUnit* u: quad.units) {
-			const bool unitIsEnemy = !teamHandler->Ally(u->allyteam, gu->myAllyTeam);
+			const bool unitIsEnemy = !teamHandler.Ally(u->allyteam, gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && losHandler->InRadar(u, gu->myAllyTeam));
 			const bool unitInSight = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;

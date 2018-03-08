@@ -105,7 +105,7 @@ public:
 	bool Execute(const SyncedAction& action) const {
 		const std::string& args = action.GetArgs();
 		const unsigned int argAllyTeam = atoi(args.c_str());
-		const unsigned int maxAllyTeam = teamHandler->ActiveAllyTeams();
+		const unsigned int maxAllyTeam = teamHandler.ActiveAllyTeams();
 
 		if (args.empty()) {
 			for (unsigned int n = 0; n < maxAllyTeam; n++) {
@@ -398,8 +398,8 @@ public:
 		const int team = playerHandler->Player(action.GetPlayerID())->team;
 		const int amount = (args.empty())? 1000: std::atoi(args.c_str());
 
-		teamHandler->Team(team)->AddMetal(std::max(0, amount));
-		teamHandler->Team(team)->AddEnergy(std::max(0, amount));
+		teamHandler.Team(team)->AddMetal(std::max(0, amount));
+		teamHandler.Team(team)->AddEnergy(std::max(0, amount));
 		return true;
 	}
 };
@@ -422,8 +422,8 @@ public:
 			return true;
 		}
 
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			if (!teamHandler->AlliedTeams(a, actionPlayer->team)) {
+		for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
+			if (!teamHandler.AlliedTeams(a, actionPlayer->team)) {
 				continue;
 			}
 
@@ -441,7 +441,7 @@ public:
 			}
 
 			if (!hasPlayer) {
-				teamHandler->Team(a)->GiveEverythingTo(actionPlayer->team);
+				teamHandler.Team(a)->GiveEverythingTo(actionPlayer->team);
 			}
 		}
 

@@ -414,10 +414,10 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
 {
-	if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
+	if (teamHandler.IsValidAllyTeam(p->GetAllyteamID())) {
 		const bool noFriendsBit = ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) != 0);
 		const bool noEnemiesBit = ((p->GetCollisionFlags() & Collision::NOENEMIES   ) != 0);
-		const bool friendlyFire = teamHandler->AlliedAllyTeams(p->GetAllyteamID(), u->allyteam);
+		const bool friendlyFire = teamHandler.AlliedAllyTeams(p->GetAllyteamID(), u->allyteam);
 
 		if (noFriendsBit && friendlyFire)
 			return false;
@@ -690,7 +690,7 @@ void CProjectileHandler::AddNanoParticle(
 	dif += guRNG.NextVector() * 0.15f;
 
 	const float3 udColor = unitDef->nanoColor;
-	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
+	const uint8_t* tColor = (teamHandler.Team(teamNum))->color;
 
 	const SColor colors[2] = {
 		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),
@@ -723,7 +723,7 @@ void CProjectileHandler::AddNanoParticle(
 	float3 error = guRNG.NextVector() * (radius / l);
 
 	const float3 udColor = unitDef->nanoColor;
-	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
+	const uint8_t* tColor = (teamHandler.Team(teamNum))->color;
 
 	const SColor colors[2] = {
 		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),

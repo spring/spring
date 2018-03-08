@@ -400,7 +400,7 @@ bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidOb
 {
 	auto& th = teamHandler;
 	auto& lh = losHandler;
-	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
+	return (gu->spectatingFullView || (owner != nullptr && th.Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
@@ -534,7 +534,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	const FlyingPiece* last = nullptr;
 
 	for (const FlyingPiece& fp: container) {
-		const bool noLosTst = gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, fp.GetTeam());
+		const bool noLosTst = gu->spectatingFullView || teamHandler.AlliedTeams(gu->myTeam, fp.GetTeam());
 		const bool inAirLos = noLosTst || losHandler->InAirLos(fp.GetPos(), gu->myAllyTeam);
 
 		if (!inAirLos)

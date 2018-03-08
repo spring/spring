@@ -1560,7 +1560,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
 		const int teamID = lua_toint(L, 1);
-		if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler->ActiveTeams())) {
+		if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams())) {
 			luaL_error(L, "Bad teamID in SetCtrlTeam");
 		}
 		// ctrl
@@ -1568,7 +1568,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 		CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
 		// read
 		CLuaHandle::SetHandleReadTeam(L, teamID);
-		CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
+		CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler.AllyTeam(teamID));
 		CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
 		// select
 		CLuaHandle::SetHandleSelectTeam(L, teamID);
@@ -1581,7 +1581,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 			const string key = lua_tostring(L, -2);
 			const int teamID = lua_toint(L, -1);
-			if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler->ActiveTeams())) {
+			if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams())) {
 				luaL_error(L, "Bad teamID in SetCtrlTeam");
 			}
 
@@ -1591,7 +1591,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 			else if (key == "read") {
 				CLuaHandle::SetHandleReadTeam(L, teamID);
-				CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
+				CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler.AllyTeam(teamID));
 				CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
 			}
 			else if (key == "select") {

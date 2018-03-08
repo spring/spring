@@ -104,7 +104,7 @@ CUnit::CUnit()
 , script(nullptr)
 
 , los(ILosType::LOS_TYPE_COUNT, nullptr)
-, losStatus(teamHandler->ActiveAllyTeams(), 0)
+, losStatus(teamHandler.ActiveAllyTeams(), 0)
 
 , deathSpeed(ZeroVector)
 , lastMuzzleFlameDir(UpVector)
@@ -312,7 +312,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	}
 
 	team = params.teamID;
-	allyteam = teamHandler->AllyTeam(team);
+	allyteam = teamHandler.AllyTeam(team);
 
 	buildFacing = std::abs(params.facing) % NUM_FACINGS;
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
@@ -652,31 +652,29 @@ void CUnit::ForcedMove(const float3& newPos)
 
 float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
-	// LuaHandle without full read access
-	if (argAllyTeam < 0 || argAllyTeam >= losStatus.size())
-		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
+	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < losStatus.size());
 
-	// it's one of our own, or it's in LOS, so don't add an error
-	if (teamHandler->Ally(argAllyTeam, allyteam) || (losStatus[argAllyTeam] & LOS_INLOS))
-		return ZeroVector;
+	const bool b0 = (1     ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
+	const bool b1 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
+	const bool b2 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsImmobileUnit()); // seen ghosted building, no error
+	const bool b3 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
 
-	// this is a ghosted building, so don't add an error
-	if (gameSetup->ghostedBuildings && (losStatus[argAllyTeam] & LOS_PREVLOS) && unitDef->IsImmobileUnit())
-		return ZeroVector;
+	switch ((b0 * 1) + (b1 * 2) + (b2 * 4) + (b3 * 8)) {
+		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !b0 &&  !b1 && !b2  && !b3
+		case  1: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; //  b0
+		case  8: { return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam)); } break; // !b0 &&  !b1 && !b2  &&  b3
+		default: {                                                                               } break; // !b0 && ( b1 ||  b2) && !b3
+	}
 
-	if ((losStatus[argAllyTeam] & LOS_INRADAR) != 0)
-		return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(argAllyTeam));
-
-	return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
+	return ZeroVector;
 }
 
 void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
 {
-	if (updateError) {
-		// every frame, magnitude of error increases
-		// error-direction is fixed until next delta
+	// every frame, magnitude of error increases
+	// error-direction is fixed until next delta
+	if (updateError)
 		posErrorVector += posErrorDelta;
-	}
 
 	if (updateDelta) {
 		if ((--nextPosErrorUpdate) <= 0) {
@@ -1273,7 +1271,7 @@ static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 	if (unit == nullptr)
 		return;
 
-	CTeam* team = teamHandler->Team(unit->team);
+	CTeam* team = teamHandler.Team(unit->team);
 	TeamStatistics& stats = team->GetCurrentStats();
 
 	if (dealt) {
@@ -1401,7 +1399,7 @@ void CUnit::DoDamage(
 #endif
 
 	if (!isCollision && baseDamage > 0.0f) {
-		if ((attacker != nullptr) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
+		if ((attacker != nullptr) && !teamHandler.Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
 			const float scaledDamage = std::max(0.0f, (baseDamage + std::min(0.0f, health))) / maxHealth;
 			// alternative
@@ -1423,10 +1421,10 @@ void CUnit::DoDamage(
 	if (attacker == nullptr)
 		return;
 
-	if (teamHandler->Ally(allyteam, attacker->allyteam))
+	if (teamHandler.Ally(allyteam, attacker->allyteam))
 		return;
 
-	CTeam* attackerTeam = teamHandler->Team(attacker->team);
+	CTeam* attackerTeam = teamHandler.Team(attacker->team);
 	TeamStatistics& attackerStats = attackerTeam->GetCurrentStats();
 
 	attackerStats.unitsKilled += (1 - isCollision);
@@ -1522,7 +1520,7 @@ void CUnit::DoSeismicPing(float pingSize)
 
 		projMemPool.alloc<CSeismicGroundFlash>(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
+	for (int a = 0; a < teamHandler.ActiveAllyTeams(); ++a) {
 		if (losHandler->InSeismicDistance(this, a)) {
 			const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(a);
 			const float3 pingPos = (pos + err);
@@ -1572,30 +1570,30 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 
 	if (type == ChangeGiven) {
-		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
-		teamHandler->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
+		teamHandler.Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
+		teamHandler.Team(newteam)->AddUnit(this,    CTeam::AddGiven);
 	} else {
-		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveCaptured);
-		teamHandler->Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
+		teamHandler.Team(oldteam)->RemoveUnit(this, CTeam::RemoveCaptured);
+		teamHandler.Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
 	}
 
 	if (!beingBuilt) {
-		teamHandler->Team(oldteam)->resStorage.metal  -= storage.metal;
-		teamHandler->Team(oldteam)->resStorage.energy -= storage.energy;
+		teamHandler.Team(oldteam)->resStorage.metal  -= storage.metal;
+		teamHandler.Team(oldteam)->resStorage.energy -= storage.energy;
 
-		teamHandler->Team(newteam)->resStorage.metal  += storage.metal;
-		teamHandler->Team(newteam)->resStorage.energy += storage.energy;
+		teamHandler.Team(newteam)->resStorage.metal  += storage.metal;
+		teamHandler.Team(newteam)->resStorage.energy += storage.energy;
 	}
 
 
 	team = newteam;
-	allyteam = teamHandler->AllyTeam(newteam);
+	allyteam = teamHandler.AllyTeam(newteam);
 	neutral = false;
 
 	unitHandler.ChangeUnitTeam(this, oldteam, newteam);
 
-	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		if (teamHandler->Ally(at, allyteam)) {
+	for (int at = 0; at < teamHandler.ActiveAllyTeams(); ++at) {
+		if (teamHandler.Ally(at, allyteam)) {
 			SetLosStatus(at, LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
 		} else {
 			// re-calc LOS status
@@ -1611,7 +1609,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eoh->UnitGiven(*this, oldteam, newteam);
 
 	// reset states and clear the queues
-	if (!teamHandler->AlliedTeams(oldteam, newteam))
+	if (!teamHandler.AlliedTeams(oldteam, newteam))
 		ChangeTeamReset();
 
 	return true;
@@ -1629,7 +1627,7 @@ void CUnit::ChangeTeamReset()
 
 			if (u == nullptr)
 				continue;
-			if (!teamHandler->AlliedTeams(team, u->team))
+			if (!teamHandler.AlliedTeams(team, u->team))
 				continue;
 
 			alliedunits.push_back(u);
@@ -1639,8 +1637,8 @@ void CUnit::ChangeTeamReset()
 		(*ui)->StopAttackingAllyTeam(allyteam);
 	}
 	// and stop shooting at friendly ally teams
-	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-		if (teamHandler->Ally(t, allyteam))
+	for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) {
+		if (teamHandler.Ally(t, allyteam))
 			StopAttackingAllyTeam(t);
 	}
 
@@ -1791,7 +1789,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 {
 	assert(attacker != nullptr);
 
-	if (teamHandler->AlliedTeams(team, attacker->team))
+	if (teamHandler.AlliedTeams(team, attacker->team))
 		return;
 
 	if (lastAttacker != nullptr)
@@ -1931,7 +1929,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
 
-	CTeam* builderTeam = teamHandler->Team(builder->team);
+	CTeam* builderTeam = teamHandler.Team(builder->team);
 
 	if (amount >= 0.0f) {
 		// build or repair
@@ -2072,17 +2070,17 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 void CUnit::SetMetalStorage(float newStorage)
 {
-	teamHandler->Team(team)->resStorage.metal -= storage.metal;
+	teamHandler.Team(team)->resStorage.metal -= storage.metal;
 	storage.metal = newStorage;
-	teamHandler->Team(team)->resStorage.metal += storage.metal;
+	teamHandler.Team(team)->resStorage.metal += storage.metal;
 }
 
 
 void CUnit::SetEnergyStorage(float newStorage)
 {
-	teamHandler->Team(team)->resStorage.energy -= storage.energy;
+	teamHandler.Team(team)->resStorage.energy -= storage.energy;
 	storage.energy = newStorage;
-	teamHandler->Team(team)->resStorage.energy += storage.energy;
+	teamHandler.Team(team)->resStorage.energy += storage.energy;
 }
 
 
@@ -2108,7 +2106,7 @@ bool CUnit::UseMetal(float metal)
 		return true;
 	}
 
-	CTeam* myTeam = teamHandler->Team(team);
+	CTeam* myTeam = teamHandler.Team(team);
 	myTeam->resPull.metal += metal;
 
 	if (myTeam->UseMetal(metal)) {
@@ -2127,7 +2125,7 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 	}
 
 	resourcesMakeI.metal += metal;
-	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
+	teamHandler.Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
 
 
@@ -2138,7 +2136,7 @@ bool CUnit::UseEnergy(float energy)
 		return true;
 	}
 
-	CTeam* myTeam = teamHandler->Team(team);
+	CTeam* myTeam = teamHandler.Team(team);
 	myTeam->resPull.energy += energy;
 
 	if (myTeam->UseEnergy(energy)) {
@@ -2156,7 +2154,7 @@ void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 		return;
 	}
 	resourcesMakeI.energy += energy;
-	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
+	teamHandler.Team(team)->AddEnergy(energy, useIncomeMultiplier);
 }
 
 
@@ -2183,15 +2181,15 @@ bool CUnit::AddHarvestedMetal(float metal)
 
 void CUnit::SetStorage(const SResourcePack& newStorage)
 {
-	teamHandler->Team(team)->resStorage -= storage;
+	teamHandler.Team(team)->resStorage -= storage;
 	storage = newStorage;
-	teamHandler->Team(team)->resStorage += storage;
+	teamHandler.Team(team)->resStorage += storage;
 }
 
 
 bool CUnit::HaveResources(const SResourcePack& pack) const
 {
-	return teamHandler->Team(team)->HaveResources(pack);
+	return teamHandler.Team(team)->HaveResources(pack);
 }
 
 
@@ -2203,7 +2201,7 @@ bool CUnit::UseResources(const SResourcePack& pack)
 		return true;
 	}*/
 
-	CTeam* myTeam = teamHandler->Team(team);
+	CTeam* myTeam = teamHandler.Team(team);
 	myTeam->resPull += pack;
 
 	if (myTeam->UseResources(pack)) {
@@ -2222,7 +2220,7 @@ void CUnit::AddResources(const SResourcePack& pack, bool useIncomeMultiplier)
 		return true;
 	}*/
 	resourcesMakeI += pack;
-	teamHandler->Team(team)->AddResources(pack, useIncomeMultiplier);
+	teamHandler.Team(team)->AddResources(pack, useIncomeMultiplier);
 }
 
 
@@ -2291,7 +2289,7 @@ bool CUnit::IssueResourceOrder(SResourceOrder* order)
 	//FIXME assert(order.use.energy >= 0.0f && order.use.metal >= 0.0f);
 	//FIXME assert(order.add.energy >= 0.0f && order.add.metal >= 0.0f);
 
-	CTeam* myTeam = teamHandler->Team(team);
+	CTeam* myTeam = teamHandler.Team(team);
 	myTeam->resPull += order->use;
 
 	// check
@@ -2510,7 +2508,7 @@ bool CUnit::CanTransport(const CUnit* unit) const
 	if (!eventHandler.AllowUnitTransport(this, unit))
 		return false;
 
-	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team))
+	if (!unit->unitDef->transportByEnemy && !teamHandler.AlliedTeams(unit->team, team))
 		return false;
 	if (transportCapacityUsed >= unitDef->transportCapacity)
 		return false;
@@ -2518,7 +2516,7 @@ bool CUnit::CanTransport(const CUnit* unit) const
 		return false;
 
 	// don't transport cloaked enemies
-	if (unit->isCloaked && !teamHandler->AlliedTeams(unit->team, team))
+	if (unit->isCloaked && !teamHandler.AlliedTeams(unit->team, team))
 		return false;
 
 	if (unit->xsize > (unitDef->transportSize * SPRING_FOOTPRINT_SCALE))

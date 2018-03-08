@@ -834,7 +834,7 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 	quadField.GetUnitsExact(qfQuery, mins, maxs);
 
 	for (const CUnit* unit: *qfQuery.units) {
-		if (enemies && teamHandler->Ally(unit->allyteam, gu->myAllyTeam))
+		if (enemies && teamHandler.Ally(unit->allyteam, gu->myAllyTeam))
 			continue;
 
 		if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)))

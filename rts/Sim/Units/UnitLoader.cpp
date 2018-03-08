@@ -87,12 +87,12 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 			return unit;
 
 		if (params.teamID < 0) {
-			if (teamHandler->GaiaTeamID() < 0) {
+			if (teamHandler.GaiaTeamID() < 0) {
 				LOG_L(L_WARNING, "[%s] invalid team %d and no Gaia-team", __func__, params.teamID);
 				return unit;
 			}
 
-			const_cast<UnitLoadParams&>(params).teamID = teamHandler->GaiaTeamID();
+			const_cast<UnitLoadParams&>(params).teamID = teamHandler.GaiaTeamID();
 		}
 
 		unit = CUnitHandler::NewUnit(ud);
@@ -151,12 +151,12 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 	if (teamArgIdx >= 0) {
 		team = atoi(args[teamArgIdx].c_str());
 
-		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
+		if ((!teamHandler.IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
 			LOG_L(L_WARNING, "[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
 
-		featureAllyTeam = teamHandler->AllyTeam(team);
+		featureAllyTeam = teamHandler.AllyTeam(team);
 	}
 
 	const std::string& objectName = (amountArgIdx >= 0) ? args[1] : args[0];
@@ -172,7 +172,7 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 
 void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int featureAllyTeam)
 {
-	const CTeam* receivingTeam = teamHandler->Team(team);
+	const CTeam* receivingTeam = teamHandler.Team(team);
 
 	if (objectName == "all") {
 		unsigned int numRequestedUnits = unitDefHandler->NumUnitDefs();

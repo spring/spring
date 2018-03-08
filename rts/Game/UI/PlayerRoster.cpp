@@ -171,8 +171,8 @@ static int CompareAllies(const int aIdx, const int bIdx)
 	if ((aTeam != myTeam) && (bTeam == myTeam)) return +1;
 
 	// my allies first
-	const int aAlly = teamHandler->AllyTeam(aTeam);
-	const int bAlly = teamHandler->AllyTeam(bTeam);
+	const int aAlly = teamHandler.AllyTeam(aTeam);
+	const int bAlly = teamHandler.AllyTeam(bTeam);
 	const int myATeam = gu->myAllyTeam;
 	if ((aAlly == myATeam) && (bAlly != myATeam)) return -1;
 	if ((aAlly != myATeam) && (bAlly == myATeam)) return +1;

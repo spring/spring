@@ -118,7 +118,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
-		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
+		allyteamID = teamHandler.IsValidTeam(teamID)? teamHandler.AllyTeam(teamID): -1;
 	}
 
 	if (ownerID != -1u && weaponNum != -1u) {

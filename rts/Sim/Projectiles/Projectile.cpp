@@ -138,7 +138,7 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		// must be set before the AddProjectile call
 		ownerID = owner->id;
 		teamID = owner->team;
-		allyteamID =  teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
+		allyteamID =  teamHandler.IsValidTeam(teamID)? teamHandler.AllyTeam(teamID): -1;
 	}
 	if (!hitscan) {
 		SetPosition(pos + offset);

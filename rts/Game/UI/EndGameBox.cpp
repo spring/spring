@@ -86,37 +86,35 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 
 CEndGameBox::~CEndGameBox()
 {
-	if (graphTex) {
-		glDeleteTextures(1,&graphTex);
-	}
-	endGameBox = NULL;
+	if (graphTex != 0)
+		glDeleteTextures(1, &graphTex);
+
+	endGameBox = nullptr;
 }
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
-	float mx = MouseX(x);
-	float my = MouseY(y);
+	const float mx = MouseX(x);
+	const float my = MouseY(y);
+
 	if (InBox(mx, my, box)) {
 		moveBox = true;
-		if (InBox(mx, my, box + exitBox)) {
+
+		if (InBox(mx, my, box + exitBox))
 			moveBox = false;
-		}
-		if (InBox(mx, my, box + playerBox)) {
+		if (InBox(mx, my, box + playerBox))
 			moveBox = false;
-		}
-		if (InBox(mx, my, box + sumBox)) {
+		if (InBox(mx, my, box + sumBox))
 			moveBox = false;
-		}
-		if (InBox(mx, my, box + difBox)) {
+		if (InBox(mx, my, box + difBox))
 			moveBox = false;
-		}
-		if (dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f) {
+
+		if (dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f)
 			moveBox = false;
-		}
+
 		return true;
 	}
 
@@ -125,9 +123,8 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
 	if (moveBox) {
 		box.x1 += MouseMoveX(dx);
@@ -139,12 +136,11 @@ void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
-	float mx = MouseX(x);
-	float my = MouseY(y);
+	const float mx = MouseX(x);
+	const float my = MouseY(y);
 
 	if (InBox(mx, my, box + exitBox)) {
 		delete this;
@@ -152,15 +148,12 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (InBox(mx, my, box + playerBox)) {
+	if (InBox(mx, my, box + playerBox))
 		dispMode = 0;
-	}
-	if (InBox(mx, my, box + sumBox)) {
+	if (InBox(mx, my, box + sumBox))
 		dispMode = 1;
-	}
-	if (InBox(mx, my, box + difBox)) {
+	if (InBox(mx, my, box + difBox))
 		dispMode = 2;
-	}
 
 	if (dispMode > 0 ) {
 		if ((mx > (box.x1 + 0.01f)) && (mx < (box.x1 + 0.12f)) &&
@@ -180,9 +173,8 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -191,16 +183,14 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	if (!graphTex) {
+	if (graphTex == 0)
 		graphTex = bm.CreateTexture();
-	}
 
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
-	float mx = MouseX(mouse->lastx);
-	float my = MouseY(mouse->lasty);
+	const float mx = MouseX(mouse->lastx);
+	const float my = MouseY(mouse->lasty);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -321,12 +311,11 @@ void CEndGameBox::Draw()
 			ypos -= 0.02f;
 		}
 	} else {
-		if (stats.empty()) {
+		if (stats.empty())
 			FillTeamStats();
-		}
 
 		glBindTexture(GL_TEXTURE_2D, graphTex);
-		CVertexArray* va=GetVertexArray();
+		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 
 		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.08f, 0), 0, 0);
@@ -397,23 +386,22 @@ void CEndGameBox::Draw()
 		const float scalex = 0.54f / std::max(1.0f, numPoints - 1.0f);
 		const float scaley = 0.54f / maxy;
 
-		for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
-			const CTeam* pteam = teamHandler->Team(team);
+		for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
+			const CTeam* team = teamHandler.Team(teamNum);
 
-			if (pteam->gaia) {
+			if (team->gaia)
 				continue;
-			}
 
-			glColor4ubv(pteam->color);
+			glColor4ubv(team->color);
 
 			glBegin(GL_LINE_STRIP);
 			for (int a = 0; a < numPoints; ++a) {
 				float value = 0.0f;
 
 				if (dispMode == 1) {
-					value = stats[stat1].values[team][a];
+					value = stats[stat1].values[teamNum][a];
 				} else if (a > 0) {
-					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / TeamStatistics::statsPeriod;
+					value = (stats[stat1].values[teamNum][a] - stats[stat1].values[teamNum][a - 1]) / TeamStatistics::statsPeriod;
 				}
 
 				glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
@@ -428,9 +416,9 @@ void CEndGameBox::Draw()
 				for (int a = 0; a < numPoints; ++a) {
 					float value = 0;
 					if (dispMode == 1) {
-						value = stats[stat2].values[team][a];
+						value = stats[stat2].values[teamNum][a];
 					} else if (a > 0) {
-						value = (stats[stat2].values[team][a]-stats[stat2].values[team][a-1]) / TeamStatistics::statsPeriod;
+						value = (stats[stat2].values[teamNum][a]-stats[stat2].values[teamNum][a-1]) / TeamStatistics::statsPeriod;
 					}
 
 					glVertex3f(box.x1+0.15f+a*scalex, box.y1+0.08f+value*scaley, 0);
@@ -445,9 +433,8 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (!enabled) {
+	if (!enabled)
 		return "";
-	}
 
 	const float mx = MouseX(x);
 
@@ -471,44 +458,46 @@ std::string CEndGameBox::GetTooltip(int x, int y)
 
 void CEndGameBox::FillTeamStats()
 {
-	stats.push_back(Stat(""));
-	stats.push_back(Stat("Metal used"));
-	stats.push_back(Stat("Energy used"));
-	stats.push_back(Stat("Metal produced"));
-	stats.push_back(Stat("Energy produced"));
+	stats.clear();
+	stats.reserve(23);
 
-	stats.push_back(Stat("Metal excess"));
-	stats.push_back(Stat("Energy excess"));
+	stats.emplace_back("");
+	stats.emplace_back("Metal used");
+	stats.emplace_back("Energy used");
+	stats.emplace_back("Metal produced");
+	stats.emplace_back("Energy produced");
 
-	stats.push_back(Stat("Metal received"));
-	stats.push_back(Stat("Energy received"));
+	stats.emplace_back("Metal excess");
+	stats.emplace_back("Energy excess");
 
-	stats.push_back(Stat("Metal sent"));
-	stats.push_back(Stat("Energy sent"));
+	stats.emplace_back("Metal received");
+	stats.emplace_back("Energy received");
 
-	stats.push_back(Stat("Metal stored"));
-	stats.push_back(Stat("Energy stored"));
+	stats.emplace_back("Metal sent");
+	stats.emplace_back("Energy sent");
 
-	stats.push_back(Stat("Active Units"));
-	stats.push_back(Stat("Units killed"));
+	stats.emplace_back("Metal stored");
+	stats.emplace_back("Energy stored");
 
-	stats.push_back(Stat("Units produced"));
-	stats.push_back(Stat("Units died"));
+	stats.emplace_back("Active Units");
+	stats.emplace_back("Units killed");
 
-	stats.push_back(Stat("Units received"));
-	stats.push_back(Stat("Units sent"));
-	stats.push_back(Stat("Units captured"));
-	stats.push_back(Stat("Units stolen"));
+	stats.emplace_back("Units produced");
+	stats.emplace_back("Units died");
 
-	stats.push_back(Stat("Damage Dealt"));
-	stats.push_back(Stat("Damage Received"));
+	stats.emplace_back("Units received");
+	stats.emplace_back("Units sent");
+	stats.emplace_back("Units captured");
+	stats.emplace_back("Units stolen");
 
-	for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
-		const CTeam* pteam = teamHandler->Team(team);
+	stats.emplace_back("Damage Dealt");
+	stats.emplace_back("Damage Received");
 
-		if (pteam->gaia) {
+	for (int team = 0; team < teamHandler.ActiveTeams(); team++) {
+		const CTeam* pteam = teamHandler.Team(team);
+
+		if (pteam->gaia)
 			continue;
-		}
 
 		for (auto si = pteam->statHistory.cbegin(); si != pteam->statHistory.cend(); ++si) {
 			stats[0].AddStat(team, 0);

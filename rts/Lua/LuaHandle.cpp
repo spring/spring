@@ -1566,8 +1566,8 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vec
 						} else if (player->spectator) {
 							sendMsg = gu->spectating;
 						} else {
-							const int msgAllyTeam = teamHandler->AllyTeam(player->team);
-							sendMsg = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
+							const int msgAllyTeam = teamHandler.AllyTeam(player->team);
+							sendMsg = teamHandler.Ally(msgAllyTeam, gu->myAllyTeam);
 						}
 					} break;
 				}

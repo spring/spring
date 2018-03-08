@@ -355,7 +355,7 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 	quadField.GetQuads(qfQuery, query.pos, query.radius);
 	const int tempNum = gs->GetTempNum();
 
-	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
+	for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) { //FIXME
 		if (!filter.Team(t))
 			continue;
 
@@ -398,7 +398,7 @@ namespace {
 		{
 		public:
 			Friendly(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
-			bool Team(int allyTeam) { return teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Team(int allyTeam) { return teamHandler.Ally(searchAllyteam, allyTeam); }
 			bool Unit(const CUnit* unit) { return (unit != excludeUnit); }
 		protected:
 			const CUnit* excludeUnit;
@@ -412,7 +412,7 @@ namespace {
 		{
 		public:
 			Enemy(const CUnit* exclUnit, int allyTeam) : Base(allyTeam), excludeUnit(exclUnit) {}
-			bool Team(int allyTeam) { return !teamHandler->Ally(searchAllyteam, allyTeam); }
+			bool Team(int allyTeam) { return !teamHandler.Ally(searchAllyteam, allyTeam); }
 			bool Unit(const CUnit* unit) { return (unit != excludeUnit && !unit->IsNeutral()); }
 		protected:
 			const CUnit* excludeUnit;
@@ -650,8 +650,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	quadField.GetQuads(qfQuery, pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
 
-	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-		if (teamHandler->Ally(owner->allyteam, t))
+	for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) {
+		if (teamHandler.Ally(owner->allyteam, t))
 			continue;
 
 		for (const int qi: *qfQuery.quads) {
@@ -824,13 +824,13 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 	// copy on purpose since BuggerOff can call risky stuff
 	QuadFieldQuery qfQuery;
 	quadField.GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
-	const int allyTeamId = teamHandler->AllyTeam(teamId);
+	const int allyTeamId = teamHandler.AllyTeam(teamId);
 
 	for (CUnit* u: *qfQuery.units) {
 		if (u == excludeUnit)
 			continue;
 		// don't send BuggerOff commands to enemy units
-		if (!teamHandler->Ally(u->allyteam, allyTeamId) && !teamHandler->Ally(allyTeamId, u->allyteam))
+		if (!teamHandler.Ally(u->allyteam, allyTeamId) && !teamHandler.Ally(allyTeamId, u->allyteam))
 			continue;
 		if (!forced && (u->moveType->IsPushResistant() || u->UsingScriptMoveType()))
 			continue;
@@ -901,7 +901,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 
 	CFeature* feature = nullptr;
 
-	const int allyTeam = teamHandler->AllyTeam(team);
+	const int allyTeam = teamHandler.AllyTeam(team);
 	const int endr = (int) (searchRadius / (SQUARE_SIZE * 2));
 	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
 

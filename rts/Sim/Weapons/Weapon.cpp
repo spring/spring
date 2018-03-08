@@ -419,7 +419,7 @@ void CWeapon::UpdateFire()
 
 	if (!weaponDef->stockpile) {
 		// use resource for shoot
-		CTeam* ownerTeam = teamHandler->Team(owner->team);
+		CTeam* ownerTeam = teamHandler.Team(owner->team);
 		if (!owner->UseResources(shotRes)) {
 			// not enough resource, update pull (needs factor cause called each ::Update() and not at reloadtime!)
 			const int minPeriod = std::max(1, int(reloadTime / owner->reloadSpeed));
@@ -879,7 +879,7 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 				return false;
 
 			// don't fire at allied targets
-			if (!trg.isUserTarget && teamHandler->Ally(owner->allyteam, trg.unit->allyteam))
+			if (!trg.isUserTarget && teamHandler.Ally(owner->allyteam, trg.unit->allyteam))
 				return false;
 
 			if (trg.unit->GetTransporter() != nullptr) {

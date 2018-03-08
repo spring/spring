@@ -138,16 +138,16 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 			continue;
 		}
 
-		if (unit->allyteam == teamHandler->AllyTeam(teamId))
+		if (unit->allyteam == teamHandler.AllyTeam(teamId))
 			continue;
 
-		if (teamHandler->Ally(teamHandler->AllyTeam(teamId), unit->allyteam))
+		if (teamHandler.Ally(teamHandler.AllyTeam(teamId), unit->allyteam))
 			continue;
 
-		if (unit->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS))
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS))
 			EnemyEnterRadar(a);
 
-		if (unit->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS)
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & LOS_INLOS)
 			EnemyEnterLOS(a);
 	}
 

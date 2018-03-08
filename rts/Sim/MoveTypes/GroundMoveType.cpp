@@ -1879,8 +1879,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		bool crushCollidee = false;
 
 		const bool alliedCollision =
-			teamHandler->Ally(collider->allyteam, collidee->allyteam) &&
-			teamHandler->Ally(collidee->allyteam, collider->allyteam);
+			teamHandler.Ally(collider->allyteam, collidee->allyteam) &&
+			teamHandler.Ally(collidee->allyteam, collider->allyteam);
 		const bool collideeYields = (collider->IsMoving() && !collidee->IsMoving());
 		const bool ignoreCollidee = (collideeYields && alliedCollision);
 

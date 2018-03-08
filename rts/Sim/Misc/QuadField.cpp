@@ -97,7 +97,7 @@ void CQuadField::Resize(int quad_size)
 void CQuadField::Quad::PostLoad()
 {
 #ifndef UNIT_TEST
-	Resize(teamHandler->ActiveAllyTeams());
+	Resize(teamHandler.ActiveAllyTeams());
 
 	for (CUnit* unit: units) {
 		spring::VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
@@ -121,7 +121,7 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 
 #ifndef UNIT_TEST
 	for (Quad& quad: baseQuads) {
-		quad.Resize(teamHandler->ActiveAllyTeams());
+		quad.Resize(teamHandler.ActiveAllyTeams());
 	}
 #endif
 }

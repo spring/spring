@@ -755,7 +755,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
 	const int teamId = luaL_checkint(L, 5);
-	if (!teamHandler->IsValidTeam(teamId)) {
+	if (!teamHandler.IsValidTeam(teamId)) {
 		return 0;
 	}
 	const int facing = luaL_checkint(L, 6);
@@ -910,10 +910,10 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID))
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
 
-	CTeam* team = teamHandler->Team(teamID);
+	CTeam* team = teamHandler.Team(teamID);
 	if (team == nullptr)
 		return 0;
 
@@ -2589,10 +2589,10 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
 
 	if (shareType == "metal") {
-		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->resShare.energy));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler.Team(gu->myTeam)->resShare.energy));
 	}
 	else if (shareType == "energy") {
-		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, shareLevel));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler.Team(gu->myTeam)->resShare.metal, shareLevel));
 	}
 	else {
 		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -2612,10 +2612,10 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		luaL_error(L, "Incorrect arguments to ShareResources()");
 	}
 	const int teamID = lua_toint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID)) {
+	if (!teamHandler.IsValidTeam(teamID)) {
 		return 0;
 	}
-	const CTeam* team = teamHandler->Team(teamID);
+	const CTeam* team = teamHandler.Team(teamID);
 	if ((team == NULL) || team->isDead) {
 		return 0;
 	}

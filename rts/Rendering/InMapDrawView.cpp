@@ -132,32 +132,27 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) con
 	const float3 dir2 = (dif.cross(dir1));
 
 
-	const unsigned char* color = point->IsBySpectator() ? color4::white : teamHandler->Team(point->GetTeamID())->color;
-	const unsigned char col[4] = {
-		color[0],
-		color[1],
-		color[2],
-		200
-	};
+	const unsigned char* pcolor = point->IsBySpectator() ? color4::white : teamHandler.Team(point->GetTeamID())->color;
+	const unsigned char color[4] = {pcolor[0], pcolor[1], pcolor[2], 200};
 
 	const float size = 6.0f;
 	const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
 	const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
 
-	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
-	pointsVa->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
+	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, color);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, color);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, color);
+	pointsVa->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, color);
 
-	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
-	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
-	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
+	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, color);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, color);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, color);
+	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, color);
 
-	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
-	pointsVa->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
-	pointsVa->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
+	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, color);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, color);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, color);
+	pointsVa->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, color);
 
 	if (!point->GetLabel().empty()) {
 		visibleLabels->push_back(point);
@@ -166,7 +161,7 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) con
 
 void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line) const
 {
-	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
+	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler.Team(line->GetTeamID())->color;
 	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->GetPos()).ANormalize() * 26, color);
 	linesVa->AddVertexQC(line->GetPos2() - (line->GetPos2() - camera->GetPos()).ANormalize() * 26, color);
 }
@@ -231,16 +226,17 @@ void CInMapDrawView::Draw()
 	pointsVa->DrawArrayTC(GL_QUADS); //! draw point markers
 
 	if (!visibleLabels.empty()) {
-		font->SetColors(); //! default
+		font->SetColors(); // default
 
-		//! draw point labels
-		for (std::vector<const CInMapDrawModel::MapPoint*>::const_iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
-			float3 pos = (*pi)->GetPos();
-			pos.y += 111.0f;
+		// draw point labels
+		for (const CInMapDrawModel::MapPoint* point: visibleLabels) {
+			const float3 pos = point->GetPos() + UpVector * 111.0f;
 
-			const unsigned char* color = (*pi)->IsBySpectator() ? color4::white : teamHandler->Team((*pi)->GetTeamID())->color;
-			font->SetTextColor(color[0]/255.0f, color[1]/255.0f, color[2]/255.0f, 1.0f); //FIXME (overload!)
-			font->glWorldPrint(pos, 26.0f, (*pi)->GetLabel());
+			const CTeam* team = teamHandler.Team(point->GetTeamID());
+			const unsigned char* color = point->IsBySpectator() ? color4::white : team->color;
+
+			font->SetTextColor(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f, 1.0f); //FIXME (overload!)
+			font->glWorldPrint(pos, 26.0f, point->GetLabel());
 		}
 
 		visibleLabels.clear();

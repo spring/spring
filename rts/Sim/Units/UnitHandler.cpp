@@ -130,7 +130,7 @@ void CUnitHandler::Init() {
 		idPool.Clear();
 		idPool.Expand(0, units.size());
 
-		for (int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
+		for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
 			unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);
 		}
 	}
@@ -218,7 +218,7 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 
 	InsertActiveUnit(unit);
 
-	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
+	teamHandler.Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 
 	// 0 is not a valid UnitDef id, so just use unitsByDefs[team][0]
 	// as an unsorted bin to store all units belonging to unit->team
@@ -293,7 +293,7 @@ void CUnitHandler::DeleteUnit(CUnit* delUnit)
 	const int delUnitTeam = delUnit->team;
 	const int delUnitType = delUnit->unitDef->id;
 
-	teamHandler->Team(delUnitTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+	teamHandler.Team(delUnitTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 	if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it))
 		--activeSlowUpdateUnit;
@@ -341,7 +341,7 @@ void CUnitHandler::UpdateUnitLosStates()
 	SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
 
 	for (CUnit* unit: activeUnits) {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
+		for (int at = 0; at < teamHandler.ActiveAllyTeams(); ++at) {
 			unit->UpdateLosStatus(at);
 		}
 	}
@@ -446,7 +446,7 @@ void CUnitHandler::ChangeUnitTeam(CUnit* unit, int oldTeamNum, int newTeamNum)
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 {
-	if (teamHandler->Team(team)->AtUnitLimit())
+	if (teamHandler.Team(team)->AtUnitLimit())
 		return false;
 
 	return (NumUnitsByTeamAndDef(team, unitdef->id) < unitdef->maxThisUnit);
@@ -456,8 +456,8 @@ unsigned int CUnitHandler::CalcMaxUnits() const
 {
 	unsigned int n = 0;
 
-	for (unsigned int i = 0; i < teamHandler->ActiveTeams(); i++) {
-		n += teamHandler->Team(i)->GetMaxUnits();
+	for (unsigned int i = 0; i < teamHandler.ActiveTeams(); i++) {
+		n += teamHandler.Team(i)->GetMaxUnits();
 	}
 
 	return n;
