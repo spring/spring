@@ -4392,33 +4392,33 @@ int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 
 /******************************************************************************/
 
+static int GetUnitRulesParamLosMask(lua_State* L, const CUnit* unit)
+{
+	if (IsAllyUnit(L, unit) || game->IsGameOver())
+		return LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	else if (teamHandler.AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L)))
+		return LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+	const auto losStatus = unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)];
+	if (losStatus & LOS_INLOS)
+		return LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	else if (losStatus & (LOS_PREVLOS | LOS_CONTRADAR))
+		return LuaRulesParams::RULESPARAMLOS_TYPED_MASK;
+	else if (losStatus & LOS_INRADAR)
+		return LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
+	else
+		return LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+}
+
 int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
 	const CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr || game == nullptr)
 		return 0;
 
-	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-
-	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	}
-	else if (teamHandler.AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
-	}
-	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		//! NoAccessTeam
-	}
-	else if (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & LOS_INLOS) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-	}
-	else if (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & LOS_INRADAR) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-	}
-
-	const LuaRulesParams::Params&  params = unit->modParams;
-
-	return PushRulesParams(L, __func__, params, losMask);
+	return PushRulesParams(L, __func__, unit->modParams, GetUnitRulesParamLosMask(L, unit));
 }
 
 
@@ -4428,25 +4428,7 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	if (unit == nullptr || game == nullptr)
 		return 0;
 
-	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-
-	if (IsAllyUnit(L, unit) || game->IsGameOver()) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-	}
-	else if (teamHandler.AlliedTeams(unit->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
-	}
-	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		//! NoAccessTeam
-	}
-	else if (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & LOS_INLOS) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-	}
-	else if (unit->losStatus[CLuaHandle::GetHandleReadAllyTeam(L)] & LOS_INRADAR) {
-		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-	}
-
-	return GetRulesParam(L, __func__, 2, unit->modParams, losMask);
+	return GetRulesParam(L, __func__, 2, unit->modParams, GetUnitRulesParamLosMask(L, unit));
 }
 
 

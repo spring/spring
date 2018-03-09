@@ -131,6 +131,8 @@ static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	} else if (losStatus & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	} else if (losStatus & (LOS_PREVLOS | LOS_CONTRADAR)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_TYPED_MASK;
 	} else if (losStatus & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
