@@ -42,6 +42,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Rectangle.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeCStrings.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SplashScreen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/StartScriptGen.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/DumpState.cpp"

@@ -141,6 +141,8 @@ int spring::exitCode = spring::EXIT_CODE_SUCCESS;
 static unsigned int numReloads = 0;
 static unsigned int numKilleds = 0;
 
+extern const uint8_t* SPLASH_PIXELS_PTR;
+
 
 
 // initialize basic systems for command line help / output
@@ -161,10 +163,34 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 	CVertexArray* va = GetVertexArray();
 	CBitmap bmp;
 
+	VA_TYPE_2dT quadElems[] = {
+		{0.0f, 1.0f,  0.0f, 0.0f},
+		{0.0f, 0.0f,  0.0f, 1.0f},
+		{1.0f, 0.0f,  1.0f, 1.0f},
+		{1.0f, 1.0f,  1.0f, 0.0f},
+	};
+
 	// passing an empty name would cause bmp FileHandler to also
 	// search inside the VFS since its default mode is RAW_FIRST
-	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile))
+	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile)) {
+		#if 0
 		bmp.AllocDummy({0, 0, 0, 0});
+		#else
+		bmp.Alloc(200, 200, 4);
+
+		for (size_t i = 0, j = 0, n = 200 * 200 * 3; i < n; i += 3, j += 4) {
+			bmp.GetRawMem()[j + 0] = SPLASH_PIXELS_PTR[i + 0];
+			bmp.GetRawMem()[j + 1] = SPLASH_PIXELS_PTR[i + 1];
+			bmp.GetRawMem()[j + 2] = SPLASH_PIXELS_PTR[i + 2];
+			bmp.GetRawMem()[j + 3] = 255; // no transparency
+		}
+
+		quadElems[0].x = 0.5f - 0.125f * 0.5f; quadElems[0].y = 0.5f + 0.125f * 0.5f * globalRendering->aspectRatio;
+		quadElems[1].x = 0.5f - 0.125f * 0.5f; quadElems[1].y = 0.5f - 0.125f * 0.5f * globalRendering->aspectRatio;
+		quadElems[2].x = 0.5f + 0.125f * 0.5f; quadElems[2].y = 0.5f - 0.125f * 0.5f * globalRendering->aspectRatio;
+		quadElems[3].x = 0.5f + 0.125f * 0.5f; quadElems[3].y = 0.5f + 0.125f * 0.5f * globalRendering->aspectRatio;
+		#endif
+	}
 
 	// not constexpr to circumvent a VS bug
 	// https://developercommunity.visualstudio.com/content/problem/10720/constexpr-function-accessing-character-array-leads.html
@@ -202,10 +228,10 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 
 		glBindTexture(GL_TEXTURE_2D, splashTex);
 		va->Initialize();
-		va->AddVertex2dT({ZeroVector.x, 1.0f - ZeroVector.y}, {0.0f, 0.0f});
-		va->AddVertex2dT({  UpVector.x, 1.0f -   UpVector.y}, {0.0f, 1.0f});
-		va->AddVertex2dT({  XYVector.x, 1.0f -   XYVector.y}, {1.0f, 1.0f});
-		va->AddVertex2dT({ RgtVector.x, 1.0f -  RgtVector.y}, {1.0f, 0.0f});
+		va->AddVertex2dT({quadElems[0].x, quadElems[0].y}, {quadElems[0].s, quadElems[0].t});
+		va->AddVertex2dT({quadElems[1].x, quadElems[1].y}, {quadElems[1].s, quadElems[1].t});
+		va->AddVertex2dT({quadElems[2].x, quadElems[2].y}, {quadElems[2].s, quadElems[2].t});
+		va->AddVertex2dT({quadElems[3].x, quadElems[3].y}, {quadElems[3].s, quadElems[3].t});
 		va->DrawArray2dT(GL_QUADS);
 
 		font->Begin();
