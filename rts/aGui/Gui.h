@@ -18,7 +18,7 @@ class Gui
 {
 public:
 	Gui();
-	virtual ~Gui();
+	~Gui();
 
 	void Clean();
 	void Draw();
@@ -47,8 +47,6 @@ private:
 };
 
 extern Gui* gui;
-void InitGui();
-void FreeGui();
 
 }
 

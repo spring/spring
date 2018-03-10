@@ -255,7 +255,9 @@ bool SpringApp::Init()
 	gu = new CGlobalUnsynced();
 
 	// GUIs
-	agui::InitGui();
+	#ifndef HEADLESS
+	agui::gui = new agui::Gui();
+	#endif
 	keyCodes = new CKeyCodes();
 
 	CNamedTextures::Init();
@@ -377,13 +379,12 @@ void SpringApp::SaveWindowPosAndSize()
 
 void SpringApp::UpdateInterfaceGeometry()
 {
+	#ifndef HEADLESS
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	if (agui::gui == nullptr)
-		return;
-
 	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	#endif
 }
 
 
@@ -887,8 +888,10 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4] font=%p", __func__, font);
+	#ifndef HEADLESS
+	spring::SafeDelete(agui::gui);
+	#endif
 	spring::SafeDelete(keyCodes);
-	agui::FreeGui();
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
 

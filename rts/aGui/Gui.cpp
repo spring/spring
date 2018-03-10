@@ -135,19 +135,6 @@ bool Gui::HandleEvent(const SDL_Event& ev)
 	return false;
 }
 
-Gui* gui = NULL;
-void InitGui()
-{
-	if (gui == NULL)
-		gui = new Gui();
-}
-
-void FreeGui()
-{
-	if (gui != NULL) {
-		delete gui;
-		gui = NULL;
-	}
-}
+Gui* gui = nullptr;
 
 }
