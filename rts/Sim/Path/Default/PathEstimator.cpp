@@ -604,7 +604,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// get the open block with lowest cost
-		PathNode* ob = const_cast<PathNode*>(openBlocks.top());
+		const PathNode* ob = openBlocks.top();
 		openBlocks.pop();
 
 		// check if the block has been marked as unaccessible during its time in the queue
@@ -714,17 +714,22 @@ bool CPathEstimator::TestBlock(
 	assert(vertexCostIdx < vertexCosts.size());
 
 	// best accessible heightmap-coordinate within tested block
+	// [DBG] const int2 openBlockSquare = blockStates.peNodeOffsets[moveDef.pathType][openBlockIdx];
 	const int2 testBlockSquare = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
 
 	// transition-cost from parent to tested child
 	float testVertexCost = vertexCosts[vertexCostIdx];
 
 
-	// this means we can not get from the parent VERTEX to the child
-	// but the latter might still be reachable from peDef.wsStartPos
-	// (if it is one of the first 8 expanded)
+	// inf-cost means we can not get from the parent VERTEX to the child
+	// but the latter might still be reachable from peDef.wsStartPos (if
+	// it is one of the first 8 expanded)
+	// regular edges within the base-set are only valid to expand iff end
+	// is reachable from wsStartPos, which can disagree with reachability
+	// from openBlockSquare
 	const bool infCostVertex = (testVertexCost >= PATHCOST_INFINITY);
 	const bool baseSetVertex = (testedBlocks <= 8);
+	const bool blockedSearch = (!baseSetVertex || peDef.skipSubSearches);
 
 	if (infCostVertex) {
 		// warning: we cannot naively set PATHOPT_BLOCKED here;
@@ -736,14 +741,13 @@ bool CPathEstimator::TestBlock(
 		//
 		// blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
 		// dirtyBlocks.push_back(testBlockIdx);
-		if (!baseSetVertex)
-			return false;
-		if (peDef.skipSubSearches)
-			return false;
-		if (DoBlockSearch(owner, moveDef, peDef.wsStartPos, SquareToFloat3(testBlockSquare.x, testBlockSquare.y)) != IPath::Ok)
+		if (blockedSearch || DoBlockSearch(owner, moveDef, peDef.wsStartPos, SquareToFloat3(testBlockSquare)) != IPath::Ok)
 			return false;
 
 		testVertexCost = peDef.Heuristic(testBlockSquare.x, testBlockSquare.y, peDef.startSquareX, peDef.startSquareZ, BLOCK_SIZE);
+	} else {
+		if (!blockedSearch && DoBlockSearch(owner, moveDef, peDef.wsStartPos, SquareToFloat3(testBlockSquare)) != IPath::Ok)
+			return false;
 	}
 
 
