@@ -26,13 +26,20 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Game/UI/PlayerRoster.h"
-#include "Net/GameServer.h"
+
+#include "Lua/LuaOpenGL.h"
+#include "Lua/LuaUI.h"
+
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Map/SMF/ROAM/Patch.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
+
+#include "Net/GameServer.h"
+#include "Net/Protocol/NetProtocol.h"
+
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/IPathDrawer.h"
@@ -84,7 +91,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/GlobalConfig.h"
-#include "Net/Protocol/NetProtocol.h"
+
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
@@ -978,12 +985,11 @@ public:
 			gu->spectatingFullView = !gu->spectatingFullView;
 			gu->spectatingFullSelect = gu->spectatingFullView;
 		}
+
 		CLuaUI::UpdateTeams();
-		// NOTE: unsynced, so do not inform via eventHandler
-		luaUI->PlayerChanged(gu->myPlayerNum);
-		luaGaia->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
-		luaRules->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
-		unitDrawer->PlayerChanged(gu->myPlayerNum);
+
+		// NOTE: unsynced event
+		eventHandler.PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
 };
@@ -1335,9 +1341,9 @@ public:
 			"Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest,") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!gameServer) {
+		if (gameServer == nullptr)
 			return false;
-		}
+
 		if (action.GetArgs().empty()) {
 			// switch to next value
 			++game->speedControl;
