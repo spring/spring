@@ -528,6 +528,7 @@ void CBuilderCAI::SlowUpdate()
 			} else {
 				CMobileCAI::SlowUpdate();
 			}
+
 			return;
 		}
 	}
@@ -1775,7 +1776,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		}
 	}
 
-	if (bestUnit == NULL) {
+	if (bestUnit == nullptr) {
 		if (trySelfRepair &&
 		    owner->unitDef->canSelfRepair &&
 		    (owner->health < owner->maxHealth)) {
@@ -1786,9 +1787,9 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	}
 
 	if (!haveEnemy) {
-		if (attackEnemy) {
+		if (attackEnemy)
 			PushOrUpdateReturnFight();
-		}
+
 		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER, bestUnit->id, pos);
 			cmd.PushParam(radius);
 		commandQue.push_front(cmd);

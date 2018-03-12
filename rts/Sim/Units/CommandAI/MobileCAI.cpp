@@ -356,7 +356,6 @@ void CMobileCAI::SlowUpdate()
 	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 
-
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMoveAndFinishCommand();
 		return;
@@ -1038,6 +1037,7 @@ void CMobileCAI::NonMoving()
 	if (lastBuggerOffTime <= (gs->frameNum - BUGGER_OFF_TTL))
 		return;
 
+	#if 0
 	float3 deltaPos = (owner->pos - buggerOffPos) * XZVector;
 	float3 buggerPos;
 
@@ -1047,9 +1047,16 @@ void CMobileCAI::NonMoving()
 		deltaPos = RgtVector * (buggerDist = 0.1f);
 	if (buggerDist >= buggerOffRadius)
 		return;
+	#endif
 
-	buggerPos = buggerOffPos + deltaPos * ((buggerOffRadius + 128) / buggerDist);
+	if (((owner->pos - buggerOffPos) * XZVector).SqLength() >= Square(buggerOffRadius * 1.5f))
+		return;
 
+	// pick a perimeter point and hope for the best
+	float3 buggerVec = gsRNG.NextVector2D();
+	float3 buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+
+	#if 0
 	if ((buggerPos.x == lastBuggerGoalPos.x) && (buggerPos.z == lastBuggerGoalPos.z)) {
 		// randomize; gradually increase the amplitude of the random factor (radius)
 		lastBuggerGoalPos.y += 32.0f;
@@ -1063,10 +1070,11 @@ void CMobileCAI::NonMoving()
 		lastBuggerGoalPos.x = buggerPos.x;
 		lastBuggerGoalPos.z = buggerPos.z;
 	}
+	#endif
 
 	Command c(CMD_MOVE, buggerPos);
-	//c.options = INTERNAL_ORDER;
-	c.timeOut = gs->frameNum + 40;
+	// c.options = INTERNAL_ORDER;
+	c.timeOut = gs->frameNum + BUGGER_OFF_TTL;
 	commandQue.push_front(c);
 }
 
