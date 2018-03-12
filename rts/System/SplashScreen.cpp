@@ -185,10 +185,13 @@ void ShowSplashScreen(
 
 		static_assert(sizeof(LOGO_PIXELS) == (LOGO_SIZE_X * LOGO_SIZE_Y * 3), "");
 		for (size_t i = 0, j = 0, n = sizeof(LOGO_PIXELS); i < n; i += 3, j += 4) {
+			const size_t x = (i / 3) % LOGO_SIZE_X;
+			const size_t y = (i / 3) / LOGO_SIZE_X;
+
 			bmp.GetRawMem()[j + 0] = LOGO_PIXELS[i + 0];
 			bmp.GetRawMem()[j + 1] = LOGO_PIXELS[i + 1];
 			bmp.GetRawMem()[j + 2] = LOGO_PIXELS[i + 2];
-			bmp.GetRawMem()[j + 3] = 255; // no transparency
+			bmp.GetRawMem()[j + 3] = 255 * (x > 0 && x < (LOGO_SIZE_X - 1) && y > 0 && y < (LOGO_SIZE_Y - 2));
 		}
 
 		QUAD_ELEMS[0].p = {-0.125f,  0.125f * globalRendering->aspectRatio, 0.0f};
