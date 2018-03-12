@@ -1005,6 +1005,9 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 				else if (losType == "inlos") {
 					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
 				}
+				else if (losType == "typed") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_TYPED;
+				}
 				else if (losType == "inradar") {
 					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
 				}

@@ -43,6 +43,8 @@ Lua:
  - new SDLSetTextInputRect(x, y, w, h), SDLStartTextInput() and SDLStopTextInput() functions for controlling IME input from Lua
  - Add AllowUnitTransport callin. Called when the engine tests whether unit A can transport unit B. Returning true will let
    the engine decide, returning false will force the engine to disallow transportation (for this specific call).
+ - new unit rules param access level, 'typed': between 'inlos' and 'inradar', applicable when the unit has once been in LoS
+   and continuously in radar since (same rule as `GetUnitLosState(x).typed` and typed engine icons)
 
 
 AI:
