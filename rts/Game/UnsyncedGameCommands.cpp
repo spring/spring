@@ -47,8 +47,6 @@
 
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
 
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
@@ -978,11 +976,8 @@ public:
 
 		CLuaUI::UpdateTeams();
 
-		// NOTE: unsynced, so do not inform via eventHandler
-		luaUI->PlayerChanged(gu->myPlayerNum);
-		luaGaia->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
-		luaRules->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
-		unitDrawer->PlayerChanged(gu->myPlayerNum);
+		// NOTE: unsynced event
+		eventHandler.PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
 };
