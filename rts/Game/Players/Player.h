@@ -48,6 +48,8 @@ public:
 	void StartControllingUnit();
 	void StopControllingUnit();
 
+	void NotifyPlayerChanged() const;
+
 public:
 	bool active;
 

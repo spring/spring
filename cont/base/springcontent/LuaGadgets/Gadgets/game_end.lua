@@ -150,7 +150,7 @@ function gadget:Initialize()
 		allyTeamInfos[allyTeamID] = allyTeamInfo
 	end
 	for _,playerID in ipairs(GetPlayerList()) do
-		gadget:PlayerChanged(playerID)
+		gadget:SyncedPlayerChanged(playerID)
 	end
 end
 
@@ -234,7 +234,7 @@ end
 
 function gadget:GameFrame()
 	for _,playerID in ipairs(GetPlayerList()) do
-		gadget:PlayerChanged(playerID)
+		gadget:SyncedPlayerChanged(playerID)
 	end
 	local winners
 	if sharedDynamicAllianceVictory == 0 then
@@ -249,7 +249,7 @@ function gadget:GameFrame()
 end
 
 
-function gadget:PlayerChanged(playerID)
+function gadget:SyncedPlayerChanged(playerID)
 	local _,active,spectator,teamID = GetPlayerInfo(playerID) 
 	local allyTeamID = teamToAllyTeam[teamID] 
 	local teamInfo = allyTeamInfos[allyTeamID].teams[teamID]

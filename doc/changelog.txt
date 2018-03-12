@@ -67,6 +67,7 @@ Lua:
    and continuously in radar since (same rule as `GetUnitLosState(x).typed` and typed engine icons)
  - the GiveOrder* family of callouts can now accept a number for command params,
    equivalent to providing an array with one member (use it to save on arrays)
+ - add SyncedPlayerChanged callin: similar to PlayerChanged, not called for demo-watching spectators but available for synced Lua
 
 
 AI:

@@ -117,6 +117,7 @@ class CEventClient
 
 		virtual void TeamDied(int teamID) {}
 		virtual void TeamChanged(int teamID) {}
+		virtual void SyncedPlayerChanged(int playerID) {}
 		virtual void PlayerChanged(int playerID) {}
 		virtual void PlayerAdded(int playerID) {}
 		virtual void PlayerRemoved(int playerID, int reason) {}

@@ -115,6 +115,7 @@ class CLuaHandle : public CEventClient
 
 		void TeamDied(int teamID) override;
 		void TeamChanged(int teamID) override;
+		void SyncedPlayerChanged(int playerID) override;
 		void PlayerChanged(int playerID) override;
 		void PlayerAdded(int playerID) override;
 		void PlayerRemoved(int playerID, int reason) override;

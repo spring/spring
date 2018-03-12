@@ -1212,7 +1212,7 @@ void CGame::ClientReadNet()
 						tai->SetLeader(playerNum);
 
 					CPlayer::UpdateControlledTeams();
-					eventHandler.PlayerChanged(playerNum);
+					playerHandler.Player(playerNum)->NotifyPlayerChanged();
 
 					if (playerNum == gu->myPlayerNum) {
 						LOG("Skirmish AI being created for team %i ...", aiTeamNum);
@@ -1271,7 +1271,7 @@ void CGame::ClientReadNet()
 							tai->SetLeader(-1);
 
 						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(playerNum);
+						playerHandler.Player(playerNum)->NotifyPlayerChanged();
 
 						LOG("Skirmish AI \"%s\" (ID:%i), which controlled team %i is now dead", aiInstanceName.c_str(), aiNum, aiTeamId);
 					}
