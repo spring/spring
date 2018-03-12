@@ -711,15 +711,13 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 	static const int tableIdx = 1;
 
 	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
-		if (!lua_israwnumber(L, -1)) {
+		if (!lua_israwnumber(L, -1))
 			continue;
-		}
 
 		const unsigned char allyTeamID = lua_toint(L, -1);
 
-		if (!teamHandler.ValidAllyTeam(allyTeamID)) {
+		if (!teamHandler.ValidAllyTeam(allyTeamID))
 			continue;
-		}
 
 		winningAllyTeams.push_back(allyTeamID);
 	}
@@ -734,9 +732,9 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 int LuaSyncedCtrl::SetGlobalLos(lua_State* L)
 {
 	const int allyTeam = luaL_checkint(L, 1);
-	if (!teamHandler.IsValidAllyTeam(allyTeam)) {
+
+	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
-	}
 
 	losHandler->globalLOS[allyTeam] = luaL_checkboolean(L, 2);
 	return 0;
@@ -760,16 +758,16 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
-	const string type = luaL_checkstring(L, 2);
+	const char* type = luaL_checkstring(L, 2);
 
 	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
-	if ((type == "m") || (type == "metal")) {
-		team->AddMetal(value);
+	switch (type[0]) {
+		case 'm': { team->AddMetal (value); } break;
+		case 'e': { team->AddEnergy(value); } break;
+		default : {                         } break;
 	}
-	else if ((type == "e") || (type == "energy")) {
-		team->AddEnergy(value);
-	}
+
 	return 0;
 }
 
@@ -790,38 +788,51 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		return 0;
 
 	if (lua_isstring(L, 2)) {
-		const string type = lua_tostring(L, 2);
+		const char* type = lua_tostring(L, 2);
 
-		const float value = max(0.0f, luaL_checkfloat(L, 3));
+		const float value = std::max(0.0f, luaL_checkfloat(L, 3));
 
-		if ((type == "m") || (type == "metal")) {
-			team->resPull.metal += value;
-			lua_pushboolean(L, team->UseMetal(value));
-			return 1;
+		switch (type[0]) {
+			case 'm': {
+				team->resPull.metal += value;
+				lua_pushboolean(L, team->UseMetal(value));
+				return 1;
+			} break;
+			case 'e': {
+				team->resPull.energy += value;
+				lua_pushboolean(L, team->UseEnergy(value));
+				return 1;
+			} break;
+			default: {
+			} break;
 		}
-		else if ((type == "e") || (type == "energy")) {
-			team->resPull.energy += value;
-			lua_pushboolean(L, team->UseEnergy(value));
-			return 1;
-		}
+
+		return 0;
 	}
-	else if (lua_istable(L, 2)) {
+
+	if (lua_istable(L, 2)) {
 		float metal  = 0.0f;
 		float energy = 0.0f;
-		const int table = 2;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, lua_tofloat(L, -1));
-				if ((key == "m") || (key == "metal")) {
-					metal = value;
-				} else if ((key == "e") || (key == "energy")) {
-					energy = value;
-				}
+
+		constexpr int tableIdx = 2;
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+				continue;
+
+			const char* key = lua_tostring(L, -2);
+			const float value = lua_tofloat(L, -1);
+
+			switch (key[0]) {
+				case 'm': { metal  = std::max(0.0f, value); } break;
+				case 'e': { energy = std::max(0.0f, value); } break;
+				default : {                                 } break;
 			}
 		}
+
 		team->resPull.metal  += metal;
 		team->resPull.energy += energy;
+
 		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			team->UseMetal(metal);
 			team->UseEnergy(energy);
@@ -829,11 +840,11 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		} else {
 			lua_pushboolean(L, false);
 		}
+
 		return 1;
 	}
-	else {
-		luaL_error(L, "bad arguments");
-	}
+
+	luaL_error(L, "bad arguments");
 	return 0;
 }
 
@@ -853,24 +864,30 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
-	const string type = luaL_checkstring(L, 2);
+	const float value = std::max(0.0f, luaL_checkfloat(L, 3));
 
-	const float value = max(0.0f, luaL_checkfloat(L, 3));
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString("m"):
+		case hashString("metal"): {
+			team->res.metal = std::min<float>(team->resStorage.metal, value);
+		} break;
 
-	if ((type == "m") || (type == "metal")) {
-		team->res.metal = min<float>(team->resStorage.metal, value);
+		case hashString("e"):
+		case hashString("energy"): {
+			team->res.energy = std::min<float>(team->resStorage.energy, value);
+		} break;
+
+		case hashString("ms"):
+		case hashString("metalStorage"): {
+			team->res.metal = std::min<float>(team->res.metal, team->resStorage.metal = value);
+		} break;
+
+		case hashString("es"):
+		case hashString("energyStorage"): {
+			team->res.energy = std::min<float>(team->res.energy, team->resStorage.energy = value);
+		} break;
 	}
-	else if ((type == "e") || (type == "energy")) {
-		team->res.energy = min<float>(team->resStorage.energy, value);
-	}
-	else if ((type == "ms") || (type == "metalStorage")) {
-		team->resStorage.metal = value;
-		team->res.metal = min<float>(team->res.metal, team->resStorage.metal);
-	}
-	else if ((type == "es") || (type == "energyStorage")) {
-		team->resStorage.energy = value;
-		team->res.energy = min<float>(team->res.energy, team->resStorage.energy);
-	}
+
 	return 0;
 }
 
@@ -890,16 +907,16 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
-	const string type = luaL_checkstring(L, 2);
+	const char* type = luaL_checkstring(L, 2);
 
 	const float value = luaL_checkfloat(L, 3);
 
-	if ((type == "m") || (type == "metal")) {
-		team->resShare.metal = Clamp(value, 0.0f, 1.0f);
+	switch (type[0]) {
+		case 'm': { team->resShare.metal  = Clamp(value, 0.0f, 1.0f); } break;
+		case 'e': { team->resShare.energy = Clamp(value, 0.0f, 1.0f); } break;
+		default : {                                                   } break;
 	}
-	else if ((type == "e") || (type == "energy")) {
-		team->resShare.energy = Clamp(value, 0.0f, 1.0f);
-	}
+
 	return 0;
 }
 
@@ -929,30 +946,38 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	if (team2 == nullptr)
 		return 0;
 
-	const string type = luaL_checkstring(L, 3);
+	const char* type = luaL_checkstring(L, 3);
 	float amount = luaL_checkfloat(L, 4);
 
-	if (type == "metal") {
-		amount = std::min(amount, (float)team1->res.metal);
-		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
-			team1->res.metal                       -= amount;
-			team1->resSent.metal                   += amount;
-			team1->GetCurrentStats().metalSent     += amount;
-			team2->res.metal                       += amount;
-			team2->resReceived.metal               += amount;
-			team2->GetCurrentStats().metalReceived += amount;
-		}
-	} else if (type == "energy") {
-		amount = std::min(amount, (float)team1->res.energy);
-		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
-			team1->res.energy                       -= amount;
-			team1->resSent.energy                   += amount;
-			team1->GetCurrentStats().energySent     += amount;
-			team2->res.energy                       += amount;
-			team2->resReceived.energy               += amount;
-			team2->GetCurrentStats().energyReceived += amount;
-		}
+	switch (type[0]) {
+		case 'm': {
+			amount = std::min(amount, (float)team1->res.metal);
+
+			if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
+				team1->res.metal                       -= amount;
+				team1->resSent.metal                   += amount;
+				team1->GetCurrentStats().metalSent     += amount;
+				team2->res.metal                       += amount;
+				team2->resReceived.metal               += amount;
+				team2->GetCurrentStats().metalReceived += amount;
+			}
+		} break;
+		case 'e': {
+			amount = std::min(amount, (float)team1->res.energy);
+
+			if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
+				team1->res.energy                       -= amount;
+				team1->resSent.energy                   += amount;
+				team1->GetCurrentStats().energySent     += amount;
+				team2->res.energy                       += amount;
+				team2->resReceived.energy               += amount;
+				team2->GetCurrentStats().energyReceived += amount;
+			}
+		} break;
+		default: {
+		} break;
 	}
+
 	return 0;
 }
 
@@ -965,13 +990,13 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 {
 	const int index = offset + 1;
 	const int valIndex = offset + 2;
-	const int losIndex = offset + 3;
+	const int losIndex = offset + 3; // table
 
-	const string key = luaL_checkstring(L, index);
+	const std::string& key = luaL_checkstring(L, index);
 
 	LuaRulesParams::Param& param = params[key];
 
-	//! set the value of the parameter
+	// set the value of the parameter
 	if (lua_isnumber(L, valIndex)) {
 		param.valueInt = lua_tofloat(L, valIndex);
 		param.valueString.resize(0);
@@ -984,39 +1009,27 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
 
-	//! set the los checking of the parameter
+	// set the los checking of the parameter
 	if (lua_istable(L, losIndex)) {
-		const int table = losIndex;
 		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
 
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			//! ignore if the value is false
-			if (!luaL_optboolean(L, -1, true)) {
+		for (lua_pushnil(L); lua_next(L, losIndex) != 0; lua_pop(L, 1)) {
+			// ignore if the value is false
+			if (!luaL_optboolean(L, -1, true))
 				continue;
-			}
 
-			//! read the losType from the key
-			if (lua_isstring(L, -2)) {
-				const string losType = lua_tostring(L, -2);
+			// read the losType from the key
+			if (!lua_isstring(L, -2))
+				continue;
 
-				if (losType == "public") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;
-				}
-				else if (losType == "inlos") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
-				}
-				else if (losType == "typed") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_TYPED;
-				}
-				else if (losType == "inradar") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
-				}
-				else if (losType == "allied") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
-				}
-				/*else if (losType == "private") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; //! default
-				}*/
+			switch (hashString(lua_tostring(L, -2))) {
+				case hashString("public" ): { losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;  } break;
+				case hashString("inlos"  ): { losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;   } break;
+				case hashString("typed"  ): { losMask |= LuaRulesParams::RULESPARAMLOS_TYPED;   } break;
+				case hashString("inradar"): { losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR; } break;
+				case hashString("allied" ): { losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;  } break;
+				// case hashString("private"): { losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; } break;
+				default                   : {                                                   } break;
 			}
 		}
 
