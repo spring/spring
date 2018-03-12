@@ -458,10 +458,11 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 }
 
 
-static inline bool IsPlayerSynced(lua_State* L, const CPlayer* player)
+static inline bool IsPlayerUnsynced(lua_State* L, const CPlayer* player)
 {
-	const bool onlyFromDemo = CLuaHandle::GetHandleSynced(L) && (gameSetup != nullptr) && gameSetup->hostDemo;
-	return (!onlyFromDemo || player->isFromDemo);
+	const bool syncedHandle = CLuaHandle::GetHandleSynced(L);
+	const bool onlyFromDemo = !syncedHandle || (gameSetup == nullptr) || !gameSetup->hostDemo;
+	return (onlyFromDemo || player->isFromDemo);
 }
 
 
@@ -1136,7 +1137,7 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 		if (player == nullptr)
 			continue;
 
-		if (!IsPlayerSynced(L, player))
+		if (IsPlayerUnsynced(L, player))
 			continue;
 
 		if (active && !player->active)
@@ -1449,7 +1450,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	if (player == nullptr)
 		return 0;
 
-	if (!IsPlayerSynced(L, player))
+	if (IsPlayerUnsynced(L, player))
 		return 0;
 
 	lua_pushsstring(L, player->name);
@@ -1485,7 +1486,7 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 	if (player == nullptr)
 		return 0;
 
-	if (!IsPlayerSynced(L, player))
+	if (IsPlayerUnsynced(L, player))
 		return 0;
 
 
@@ -1597,7 +1598,7 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 	if ((p1 == nullptr) || (p2 == nullptr))
 		return 0;
 
-	if ((!IsPlayerSynced(L, p1)) || (!IsPlayerSynced(L, p2)))
+	if ((IsPlayerUnsynced(L, p1)) || (IsPlayerUnsynced(L, p2)))
 		return 0;
 
 	lua_pushboolean(L, teamHandler.AlliedTeams(p1->team, p2->team));
