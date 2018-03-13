@@ -227,6 +227,7 @@ public:
 	float3 GetWantedUpDir(bool useGroundNormal) const;
 
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
+	float CalcFootPrintRadius(float scale) const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
