@@ -68,8 +68,8 @@ struct S3DModelPiecePart {
 public:
 	struct RenderData {
 		float3 dir;
-		size_t vboOffset;
-		size_t indexCount;
+		size_t vboOffset = 0;
+		size_t indexCount = 0;
 	};
 
 	static constexpr int SHATTER_MAX_PARTS  = 10;
