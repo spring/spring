@@ -398,16 +398,18 @@ void S3DModelPiece::CreateShatterPiece(int pieceNum)
 
 		auto* idxBufMem = reinterpret_cast<unsigned char*>(shatterIndices.MapBuffer(pieceNum * numBytes, numBytes, GL_WRITE_ONLY));
 
-		for (ShatterPartDataPair& cp: shatterPartsBuf) {
-			S3DModelPiecePart::RenderData& rd = cp.first;
-			const std::vector<unsigned int>& idcs = cp.second;
+		if (idxBufMem != nullptr) {
+			for (ShatterPartDataPair& cp: shatterPartsBuf) {
+				S3DModelPiecePart::RenderData& rdata = cp.first;
+				const std::vector<unsigned int>& idcs = cp.second;
 
-			rd.indexCount = idcs.size();
-			rd.vboOffset  = pieceNum * numBytes + vboIndex;
+				rdata.indexCount = idcs.size();
+				rdata.vboOffset  = pieceNum * numBytes + vboIndex;
 
-			if (rd.indexCount > 0) {
-				memcpy(idxBufMem + vboIndex, idcs.data(), rd.indexCount * sizeof(unsigned int));
-				vboIndex += (rd.indexCount * sizeof(unsigned int));
+				if (rdata.indexCount != 0) {
+					memcpy(idxBufMem + vboIndex, idcs.data(), rdata.indexCount * sizeof(unsigned int));
+					vboIndex += (rdata.indexCount * sizeof(unsigned int));
+				}
 			}
 		}
 
