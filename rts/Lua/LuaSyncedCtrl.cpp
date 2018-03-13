@@ -1359,32 +1359,37 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 	if (!lua_istable(L, 2))
 		luaL_error(L, "Incorrect arguments to SetUnitCosts");
 
-	const int table = 2;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
-			continue;
-		}
-		const string key = lua_tostring(L, -2);
-		const float value = lua_tofloat(L, -1);
-		ASSERT_SYNCED((float)value);
+	constexpr int tableIdx = 2;
 
-		if (key == "buildTime") {
-			unit->buildTime  = max(1.0f, value);
-		} else if (key == "metalCost") {
-			unit->cost.metal  = max(1.0f, value);
-		} else if (key == "energyCost") {
-			unit->cost.energy = max(1.0f, value);
-		}
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+			continue;
+
+		switch (hashString(lua_tolstring(L, -2, nullptr))) {
+			case hashString("buildTime"): {
+				unit->buildTime = std::max(1.0f, lua_tofloat(L, -1));
+			} break;
+			case hashString("metalCost"): {
+				unit->cost.metal = std::max(1.0f, lua_tofloat(L, -1));
+			} break;
+			case hashString("energyCost"): {
+				unit->cost.energy = std::max(1.0f, lua_tofloat(L, -1));
+			} break;
+			default: {
+			} break;
+ 		}
+
+		ASSERT_SYNCED(unit->buildTime);
+		ASSERT_SYNCED(unit->metalCost);
+		ASSERT_SYNCED(unit->energyCost);
 	}
+
 	return 0;
 }
 
 
-static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
+static bool SetUnitResourceParam(CUnit* unit, const char* name, float value)
 {
-	if (name.size() != 3) {
-		return false;
-	}
 	// [u|c][u|m][m|e]
 	//
 	// unconditional | conditional
@@ -1393,26 +1398,45 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 
 	value *= 0.5f;
 
-	if (name[0] == 'u') {
-		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->resourcesUncondUse.metal = value;  return true; }
-			else if (name[2] == 'e') { unit->resourcesUncondUse.energy = value; return true; }
-		}
-		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->resourcesUncondMake.metal = value;  return true; }
-			else if (name[2] == 'e') { unit->resourcesUncondMake.energy = value; return true; }
-		}
+	switch (name[0]) {
+		case 'u': {
+			switch (name[1]) {
+				case 'u': {
+					if (name[2] == 'm') { unit->resourcesUncondUse.metal  = value; return true; }
+					if (name[2] == 'e') { unit->resourcesUncondUse.energy = value; return true; }
+				} break;
+
+				case 'm': {
+					if (name[2] == 'm') { unit->resourcesUncondMake.metal  = value; return true; }
+					if (name[2] == 'e') { unit->resourcesUncondMake.energy = value; return true; }
+				} break;
+
+				default: {
+				} break;
+			}
+		} break;
+
+		case 'c': {
+			switch (name[1]) {
+				case 'u': {
+					if (name[2] == 'm') { unit->resourcesCondUse.metal  = value; return true; }
+					if (name[2] == 'e') { unit->resourcesCondUse.energy = value; return true; }
+				} break;
+
+				case 'm': {
+					if (name[2] == 'm') { unit->resourcesCondMake.metal  = value; return true; }
+					if (name[2] == 'e') { unit->resourcesCondMake.energy = value; return true; }
+				} break;
+
+				default: {
+				} break;
+			}
+		} break;
+
+		default: {
+		} break;
 	}
-	else if (name[0] == 'c') {
-		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->resourcesCondUse.metal = value;  return true; }
-			else if (name[2] == 'e') { unit->resourcesCondUse.energy = value; return true; }
-		}
-		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->resourcesCondMake.metal = value;  return true; }
-			else if (name[2] == 'e') { unit->resourcesCondMake.energy = value; return true; }
-		}
-	}
+
 	return false;
 }
 
@@ -1425,21 +1449,15 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 		return 0;
 
 	if (lua_israwstring(L, 2)) {
-		const string key = luaL_checkstring(L, 2);
-		const float value = luaL_checkfloat(L, 3);
-		SetUnitResourceParam(unit, key, value);
-	}
-	else if (lua_istable(L, 2)) {
-		const int table = 2;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
-				continue;
-			}
-			const string key = lua_tostring(L, -2);
-			const float value = lua_tofloat(L, -1);
-			ASSERT_SYNCED((float)value);
+		SetUnitResourceParam(unit, lua_tostring(L, 2), luaL_checkfloat(L, 3));
+	} else if (lua_istable(L, 2)) {
+		constexpr int tableIdx = 2;
 
-			SetUnitResourceParam(unit, key, value);
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+				continue;
+
+			SetUnitResourceParam(unit, lua_tostring(L, -2), lua_tofloat(L, -1));
 		}
 	}
 	else {
@@ -1476,40 +1494,40 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 		return 0;
 
 	if (lua_isnumber(L, 2)) {
-		const float health = lua_tofloat(L, 2);
-		unit->health = min(unit->maxHealth, health);
-	}
-	else if (lua_istable(L, 2)) {
-		const int table = 2;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				const string key = lua_tostring(L, -2);
-				const float value = lua_tofloat(L, -1);
-				if (key == "health") {
-					unit->health = min(unit->maxHealth, value);
-				}
-				else if (key == "capture") {
-					unit->captureProgress = value;
-				}
-				else if (key == "paralyze") {
-					unit->paralyzeDamage = max(0.0f, value);
-					if (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
+		unit->health = min(unit->maxHealth, lua_tofloat(L, 2));
+	} else if (lua_istable(L, 2)) {
+		constexpr int tableIdx = 2;
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+				continue;
+
+			switch (hashString(lua_tolstring(L, -2, nullptr))) {
+				case hashString("health"): {
+					unit->health = min(unit->maxHealth, lua_tofloat(L, -1));
+				} break;
+				case hashString("capture"): {
+					unit->captureProgress = lua_tofloat(L, -1);
+				} break;
+				case hashString("paralyze"): {
+					const float argValue = lua_tofloat(L, -1);
+					const float refValue = modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health;
+
+					if ((unit->paralyzeDamage = std::max(0.0f, argValue)) > refValue) {
 						unit->SetStunned(true);
-					} else if (value < 0.0f) {
+					} else if (argValue < 0.0f) {
 						unit->SetStunned(false);
 					}
-				}
-				else if (key == "build") {
-					unit->buildProgress = value;
-
-					if (unit->buildProgress >= 1.0f) {
+				} break;
+				case hashString("build"): {
+					if ((unit->buildProgress = lua_tofloat(L, -1)) >= 1.0f)
 						unit->FinishedBuilding(false);
-					}
-				}
+				} break;
+				default: {
+				} break;
 			}
 		}
-	}
-	else {
+	} else {
 		luaL_error(L, "Incorrect arguments to SetUnitHealth()");
 	}
 
@@ -1525,10 +1543,7 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 		return 0;
 
 	unit->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
-
-	if (unit->health > unit->maxHealth)
-		unit->health = unit->maxHealth;
-
+	unit->health = std::min(unit->maxHealth, unit->health);
 	return 0;
 }
 
@@ -1546,14 +1561,12 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 		return 0;
 
 	if (lua_isnumber(L, 2)) {
-		w->numStockpiled = max(0, luaL_checkint(L, 2));
+		w->numStockpiled = std::max(0, luaL_checkint(L, 2));
 		unit->commandAI->UpdateStockpileIcon();
 	}
 
-	if (lua_isnumber(L, 3)) {
-		const float percent = max(0.0f, min(1.0f, lua_tofloat(L, 3)));
-		unit->stockpileWeapon->buildPercent = percent;
-	}
+	if (lua_isnumber(L, 3))
+		unit->stockpileWeapon->buildPercent = Clamp(lua_tofloat(L, 3), 0.0f, 1.0f);
 
 	return 0;
 }
