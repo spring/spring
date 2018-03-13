@@ -18,10 +18,10 @@ if [ "$(cat /proc/sys/kernel/core_pattern)" != "core" ]; then
 	exit 1
 fi
 
-if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
-	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
-	exit 1
-fi
+#if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
+#	echo "Please run sudo echo 1 >/proc/sys/kernel/core_uses_pid"
+#	exit 1
+#fi
 
 echo "Env: GAME=$GAME MAP=$MAP AI=$AI AIVER=$AIVER"
 
