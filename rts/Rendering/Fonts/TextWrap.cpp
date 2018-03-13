@@ -441,35 +441,38 @@ void CTextWrap::SplitTextInWords(const std::u8string& text, std::list<word>* wor
 				break;
 
 			// inlined colorcodes
-			case ColorCodeIndicator:
-				{
-					colorcodes->push_back(colorcode());
-					colorcode& cc = colorcodes->back();
-					cc.pos = numChar;
-					SkipColorCodes(text, &pos, &(cc.color));
-					if (pos<0) {
-						pos = length;
-					} else {
-						// SkipColorCodes jumps 1 too far (it jumps on the first non
-						// colorcode char, but our for-loop will still do "pos++;")
-						pos--;
-					}
-				} break;
-			case ColorResetIndicator:
-				{
+			case ColorCodeIndicator: {
+				colorcodes->push_back(colorcode());
+				colorcode& cc = colorcodes->back();
+				cc.pos = numChar;
+
+				SkipColorCodes(text, &pos, &(cc.color));
+
+				if (pos < 0) {
+					pos = length;
+				} else {
+					// SkipColorCodes jumps 1 too far (it jumps on the first non
+					// colorcode char, but our for-loop will still do "pos++;")
+					pos--;
+				}
+			} break;
+			case ColorResetIndicator: {
+				if (!colorcodes->empty()) {
 					colorcode* cc = &colorcodes->back();
+
 					if (cc->pos != numChar) {
 						colorcodes->push_back(colorcode());
 						cc = &colorcodes->back();
 						cc->pos = numChar;
 					}
+
 					cc->resetColor = true;
-				} break;
+				}
+			} break;
 
 			// newlines
 			case 0x0d: // CR+LF
-				if (pos+1 < length && text[pos+1] == 0x0a)
-					pos++;
+				pos += (pos + 1 < length && text[pos+1] == 0x0a);
 			case 0x0a: // LF
 				if (w->isSpace) {
 					w->width = spaceAdvance * w->numSpaces;
@@ -498,6 +501,7 @@ void CTextWrap::SplitTextInWords(const std::u8string& text, std::list<word>* wor
 				numChar++;
 		}
 	}
+
 	if (w->isSpace) {
 		w->width = spaceAdvance * w->numSpaces;
 	} else if (!w->isLineBreak) {
