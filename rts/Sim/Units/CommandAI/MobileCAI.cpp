@@ -449,32 +449,34 @@ void CMobileCAI::ExecuteMove(Command& c)
 }
 
 void CMobileCAI::ExecuteLoadOnto(Command& c) {
-	CUnit* unit = unitHandler.GetUnit(c.params[0]);
+	CUnit* transport = unitHandler.GetUnit(c.params[0]);
 
-	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
+	if (transport == nullptr) {
+		StopMoveAndFinishCommand();
+		return;
+	}
+
+	// prevent <owner> from chasing after full transports, etc
+	if (!transport->unitDef->IsTransportUnit() || !transport->CanTransport(owner)) {
 		StopMoveAndFinishCommand();
 		return;
 	}
 
 	if (!inCommand) {
 		inCommand = true;
-		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id);
-		unit->commandAI->GiveCommandReal(newCommand);
+		transport->commandAI->GiveCommandReal(Command(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id));
 	}
+
 	if (owner->GetTransporter() != nullptr) {
-		if (!commandQue.empty())
-			StopMoveAndFinishCommand();
-
+		assert(!commandQue.empty()); // <c> should still be in front
+		StopMoveAndFinishCommand();
 		return;
 	}
 
-	if (unit == nullptr)
-		return;
-
-	if ((owner->pos - unit->pos).SqLength2D() < cancelDistance) {
+	if ((owner->pos - transport->pos).SqLength2D() < cancelDistance) {
 		StopMove();
 	} else {
-		SetGoal(unit->pos, owner->pos);
+		SetGoal(transport->pos, owner->pos);
 	}
 }
 
