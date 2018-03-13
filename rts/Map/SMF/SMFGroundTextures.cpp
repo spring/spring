@@ -410,8 +410,11 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
-	static const int BLOCK_SIZE = 32;
+	if (tileBuf == nullptr)
+		return;
+
+	constexpr int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
+	constexpr int BLOCK_SIZE = 32;
 
 	const int mipOffset = TILE_MIP_OFFSET[mipLevel];
 	const int numBlocks = SQUARE_SIZE >> mipLevel;
@@ -443,7 +446,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 
 void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 {
-	static const GLenum ttarget = GL_TEXTURE_2D;
+	constexpr GLenum ttarget = GL_TEXTURE_2D;
 
 	const int mipSqSize = smfMap->bigTexSize >> level;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
