@@ -98,8 +98,10 @@ void ISound::Initialize(bool forceNullSound)
 void ISound::Shutdown()
 {
 	// kill thread before setting singleton pointer to null
-	singleton->Kill();
-	spring::SafeDelete(singleton);
+	if (singleton != nullptr) {
+		singleton->Kill();
+		spring::SafeDelete(singleton);
+	}
 
 	spring::SafeDestruct(Channels::BGMusic);
 	spring::SafeDestruct(Channels::General);
