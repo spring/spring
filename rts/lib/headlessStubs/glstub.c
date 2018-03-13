@@ -137,8 +137,10 @@ GLAPI void APIENTRY glUniform4uiv(GLint location, GLsizei count, const GLuint *v
 GLAPI void APIENTRY glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {}
 GLAPI GLint APIENTRY glGetAttribLocation(GLuint program, const GLchar *name) { return -1; }
 GLAPI void APIENTRY glBindAttribLocation(GLuint program, GLuint index, const GLchar *name) {}
-GLAPI GLboolean APIENTRY glIsShader(GLuint shader) { return GL_FALSE; }
-GLAPI GLboolean APIENTRY glIsProgram(GLuint shader) { return GL_FALSE; }
+
+// true for headless asserts
+GLAPI GLboolean APIENTRY glIsShader(GLuint shader) { return GL_TRUE; }
+GLAPI GLboolean APIENTRY glIsProgram(GLuint shader) { return GL_TRUE; }
 
 GLAPI void APIENTRY glDetachShader(GLuint program, GLuint shader) {}
 GLAPI void APIENTRY glAttachShader(GLuint program, GLuint shader) {}
