@@ -486,3 +486,10 @@ void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed)
 	}
 }
 
+
+
+float CSolidObject::CalcFootPrintRadius(float scale) const
+{
+	return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale);
+}
+

@@ -336,14 +336,13 @@ bool MoveDef::TestMoveSquare(
 	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
 	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
-	float3 testMoveDir2D = testMoveDir;
-	testMoveDir2D.SafeNormalize2D();
+	const float3 testMoveDir2D = (testMoveDir * XZVector).SafeNormalize2D();
 
-	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
-		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
+	for (int z = zMin; z <= zMax && retTestMove; z++) {
+		for (int x = xMin; x <= xMax && retTestMove; x++) {
 			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir2D);
 
-			minSpeedMod = std::min(minSpeedMod, speedMod);
+			minSpeedMod  = std::min(minSpeedMod, speedMod);
 			retTestMove &= (!testTerrain || (speedMod > 0.0f));
 		}
 	}
@@ -352,6 +351,7 @@ bool MoveDef::TestMoveSquare(
 	// (heightmap/slopemap/typemap), not the blocking-map
 	if (retTestMove) {
 		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xTestMoveSqr + xMin, xTestMoveSqr + xMax, zTestMoveSqr + zMin, zTestMoveSqr + zMax, collider);
+
 		maxBlockBit |= blockBits;
 		retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
 	}
@@ -380,12 +380,15 @@ bool MoveDef::TestMoveSquare(
 }
 
 
-float MoveDef::GetDepthMod(const float height) const {
+float MoveDef::CalcFootPrintRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
+float MoveDef::GetDepthMod(float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
 	// only negative heights ("depths") are allowed
-	if (height > -depthModParams[DEPTHMOD_MIN_HEIGHT]) { return 1.0f; }
-	if (height < -depthModParams[DEPTHMOD_MAX_HEIGHT]) { return 0.0f; }
+	if (height > -depthModParams[DEPTHMOD_MIN_HEIGHT])
+		return 1.0f;
+	if (height < -depthModParams[DEPTHMOD_MAX_HEIGHT])
+		return 0.0f;
 
 	const float a = depthModParams[DEPTHMOD_QUA_COEFF];
 	const float b = depthModParams[DEPTHMOD_LIN_COEFF];

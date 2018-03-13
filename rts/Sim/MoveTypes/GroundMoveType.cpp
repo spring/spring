@@ -70,7 +70,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 // Not using IsMoveCommand on purpose, as the following is changing the effective goalRadius
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE || u->commandAI->commandQue[0].GetID() == CMD_FIGHT)
 
-#define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
+#define WAYPOINT_RADIUS (1.25f * SQUARE_SIZE)
 
 #define MAXREVERSESPEED_MEMBER_IDX 7
 
@@ -416,13 +416,16 @@ void CGroundMoveType::SlowUpdate()
 
 
 void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) {
+	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
+	const float extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+
 	goalPos = moveGoalPos * XZVector;
-	goalRadius = moveGoalRadius;
+	goalRadius = moveGoalRadius + extraRadius;
 
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
 
-	atGoal = moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius);
+	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius));
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -442,11 +445,16 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
+	// add the footprint radius if moving onto goalPos would cause it to overlap impassable squares
+	// (otherwise repeated coldet push-jittering can ensue if allowTerrainCollision is not disabled)
+	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
+	const float extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+
 	// set the new goal
 	goalPos = moveGoalPos * XZVector;
-	goalRadius = moveGoalRadius;
+	goalRadius = moveGoalRadius + extraRadius;
 
-	atGoal = moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius);
+	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius));
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -1111,16 +1119,16 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	if (avoider->frontdir.dot(desiredDir) < 0.0f)
 		return lastAvoidanceDir;
 
-	static const float AVOIDER_DIR_WEIGHT = 1.0f;
-	static const float DESIRED_DIR_WEIGHT = 0.5f;
-	static const float MAX_AVOIDEE_COSINE = math::cosf(120.0f * math::DEG_TO_RAD);
-	static const float LAST_DIR_MIX_ALPHA = 0.7f;
+	static constexpr float AVOIDER_DIR_WEIGHT = 1.0f;
+	static constexpr float DESIRED_DIR_WEIGHT = 0.5f;
+	static constexpr float LAST_DIR_MIX_ALPHA = 0.7f;
+	static const     float MAX_AVOIDEE_COSINE = math::cosf(120.0f * math::DEG_TO_RAD);
 
 	// now we do the obstacle avoidance proper
 	// avoider always uses its never-rotated MoveDef footprint
 	// note: should increase radius for smaller turnAccel values
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
-	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
+	const float avoiderRadius = avoiderMD->CalcFootPrintRadius(1.0f);
 
 	QuadFieldQuery qfQuery;
 	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
@@ -1151,8 +1159,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// use the avoidee's MoveDef footprint as radius if it is mobile
 		// use the avoidee's Unit (not UnitDef) footprint as radius otherwise
 		const float avoideeRadius = avoideeMobile?
-			FOOTPRINT_RADIUS(avoideeMD->xsize, avoideeMD->zsize, 1.0f):
-			FOOTPRINT_RADIUS(avoidee  ->xsize, avoidee  ->zsize, 1.0f);
+			avoideeMD->CalcFootPrintRadius(1.0f):
+			avoidee->CalcFootPrintRadius(1.0f);
 		const float avoidanceRadiusSum = avoiderRadius + avoideeRadius;
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = avoideeMobile? (avoidee->mass / avoidanceMassSum): 1.0f;
@@ -1297,8 +1305,8 @@ unsigned int CGroundMoveType::GetNewPath()
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
-		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
+		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, WAYPOINT_RADIUS, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, WAYPOINT_RADIUS, true);
 
 		pathController.SetRealGoalPosition(newPathID, goalPos);
 		pathController.SetTempGoalPosition(newPathID, currWayPoint);
@@ -1343,8 +1351,8 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 			// but still has the same ID; in this case (which is
 			// specific to QTPFS) we don't go through GetNewPath
 			//
-			cwp = pathManager->NextWayPoint(owner, pathID, 0, pos, 1.25f * SQUARE_SIZE, true);
-			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, 1.25f * SQUARE_SIZE, true);
+			cwp = pathManager->NextWayPoint(owner, pathID, 0, pos, WAYPOINT_RADIUS, true);
+			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, WAYPOINT_RADIUS, true);
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
@@ -1370,22 +1378,22 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
-		if (currWayPointDist > (turnRadius * 2.0f)) {
+		if (currWayPointDist > (turnRadius * 2.0f))
 			return false;
-		}
-		if (currWayPointDist > SQUARE_SIZE && waypointDot >= 0.995f) {
+
+		if (currWayPointDist > SQUARE_SIZE && waypointDot >= 0.995f)
 			return false;
-		}
+
 		#else
-		if ((currWayPointDist > std::max(turnRadius * 2.0f, 1.0f * SQUARE_SIZE)) && (waypointDot >= 0.0f)) {
+
+		if ((currWayPointDist > std::max(turnRadius * 2.0f, 1.0f * SQUARE_SIZE)) && (waypointDot >= 0.0f))
 			return false;
-		}
-		if ((currWayPointDist > std::max(turnRadius * 1.0f, 1.0f * SQUARE_SIZE)) && (waypointDot <  0.0f)) {
+
+		if ((currWayPointDist > std::max(turnRadius * 1.0f, 1.0f * SQUARE_SIZE)) && (waypointDot <  0.0f))
 			return false;
-		}
-		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * math::TWOPI)) {
+
+		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * math::TWOPI))
 			return false;
-		}
 		#endif
 
 		{
@@ -1397,15 +1405,14 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 			for (int x = xmin; x < xmax; x++) {
 				for (int z = zmin; z < zmax; z++) {
-					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true)) {
+					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true))
 						continue;
-					}
+
 					// if still further than SS elmos from waypoint, disallow skipping
 					// note: can somehow cause units to move in circles near obstacles
 					// (mantis3718) if rectangle is too generous in size
-					if ((pos - cwp).SqLength() > Square(SQUARE_SIZE) && (pos - cwp).dot(flatFrontDir) >= 0.0f) {
+					if ((pos - cwp).SqLength() > Square(SQUARE_SIZE) && (pos - cwp).dot(flatFrontDir) >= 0.0f)
 						return false;
-					}
 				}
 			}
 		}
@@ -1446,7 +1453,7 @@ void CGroundMoveType::GetNextWayPoint()
 
 		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
-		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, WAYPOINT_RADIUS, true);
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
@@ -1591,7 +1598,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
 		const float colliderSpeed = collider->speed.w;
-		const float colliderRadius = FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize, 0.75f);
+		const float colliderRadius = colliderMD->CalcFootPrintRadius(1.0f);
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
@@ -1669,9 +1676,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		float3 sqrSumPosition; // .y is always 0
 		float2 sqrPenDistance; // .x = sum, .y = count
 
-		if (DEBUG_DRAWING_ENABLED) {
+		if (DEBUG_DRAWING_ENABLED)
 			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
-		}
 
 		// check for blocked squares inside collider's MoveDef footprint zone
 		// interpret each square as a "collidee" and sum up separation vectors
@@ -1686,8 +1692,8 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		//   if a unit is not affected by slopes) --> can be solved through
 		//   smoothing the cost-function, eg. blurring heightmap before PFS
 		//   sees it
-		float3 speed2D = collider->speed;
-		speed2D.SafeNormalize2D();
+		const float3 speed2D = (collider->speed * XZVector).SafeNormalize2D();
+
 		for (int z = zmin; z <= zmax; z++) {
 			for (int x = xmin; x <= xmax; x++) {
 				const int xabs = xmid + x;
@@ -1851,8 +1857,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
 		const float collideeSpeed = collidee->speed.w;
 		const float collideeRadius = collideeMobile?
-			FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize, 0.75f):
-			FOOTPRINT_RADIUS(collidee  ->xsize, collidee  ->zsize, 0.75f);
+			collideeMD->CalcFootPrintRadius(0.75f):
+			collidee->CalcFootPrintRadius(0.75f);
 
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -2001,15 +2007,13 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 collideeMoveVec = collideePushVec + collideeSlideVec;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec)) {
+			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec))
 				collider->Move(colliderMoveVec, true);
-			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec)) {
+			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec))
 				collidee->Move(collideeMoveVec, true);
-			}
 		}
 	}
 }
@@ -2034,8 +2038,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// const FeatureDef* collideeFD = collidee->def;
 
 		// use the collidee's Feature (not FeatureDef) footprint as radius
-		// const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize, 0.75f);
-		const float collideeRadius = FOOTPRINT_RADIUS(collidee->xsize, collidee->zsize, 0.75f);
+		const float collideeRadius = collidee->CalcFootPrintRadius(0.75f);
 		const float collisionRadiusSum = colliderRadius + collideeRadius;
 
 		const float3 separationVector   = collider->pos - collidee->pos;
@@ -2396,12 +2399,11 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 			bool updatePos = false;
 
 			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true))) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true)))
 					owner->Move(owner->pos + owner->rightdir * n, false); break;
-				}
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true))) {
+
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true)))
 					owner->Move(owner->pos - owner->rightdir * n, false); break;
-				}
 			}
 
 			if (!updatePos) {
