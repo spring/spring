@@ -2463,8 +2463,9 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 // no use for this currently
 bool CUnit::ScriptCloak()
 {
-	if (isCloaked /*|| wantCloak*/)
+	if (isCloaked)
 		return true;
+
 	if (!eventHandler.AllowUnitCloak(this, nullptr, nullptr, nullptr))
 		return false;
 
@@ -2479,8 +2480,11 @@ bool CUnit::ScriptCloak()
 bool CUnit::ScriptDecloak(const CSolidObject* object, const CWeapon* weapon)
 {
 	// horrific ScriptCloak asymmetry for Lua's sake
-	if (!isCloaked && !wantCloak)
-		return false;
+	// maintaining internal consistency requires the
+	// decloak event to only fire if isCloaked
+	if (!isCloaked)
+		return (!wantCloak || eventHandler.AllowUnitDecloak(this, object, weapon));
+
 	if (!eventHandler.AllowUnitDecloak(this, object, weapon))
 		return false;
 
