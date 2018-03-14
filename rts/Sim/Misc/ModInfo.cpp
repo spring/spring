@@ -77,7 +77,7 @@ void CModInfo::ResetState()
 
 	featureVisibility = FEATURELOS_NONE;
 
-	pathFinderSystem = PFS_TYPE_DEFAULT;
+	pathFinderSystem = NOPFS_TYPE;
 	pfRawDistMult    = 1.25f;
 	pfUpdateRate     = 0.007f;
 
@@ -114,7 +114,7 @@ void CModInfo::Init(const char* modArchive)
 		// system
 		const LuaTable& system = root.SubTable("system");
 
-		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
+		pathFinderSystem = Clamp(system.GetInt("pathFinderSystem", HAPFS_TYPE), int(NOPFS_TYPE), int(QTPFS_TYPE));
 		pfRawDistMult = system.GetFloat("pathFinderRawDistMult", pfRawDistMult);
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", pfUpdateRate);
 
@@ -133,7 +133,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
-		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
+		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
 	}
 
 	{

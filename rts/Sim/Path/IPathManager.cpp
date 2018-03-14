@@ -9,15 +9,16 @@ IPathManager* pathManager = nullptr;
 
 IPathManager* IPathManager::GetInstance(unsigned int type) {
 	if (pathManager == nullptr) {
-		const char* fmtStr = "[IPathManager::GetInstance] using %s path-manager";
+		const char* fmtStr = "[IPathManager::%s] using %sPFS";
 		const char* typeStr = "";
 
 		switch (type) {
-			case PFS_TYPE_DEFAULT: { typeStr = "DEFAULT"; pathManager = new       CPathManager(); } break;
-			case PFS_TYPE_QTPFS:   { typeStr = "QTPFS";   pathManager = new QTPFS::PathManager(); } break;
+			case NOPFS_TYPE: { typeStr = "NO"; pathManager = new       IPathManager(); } break;
+			case HAPFS_TYPE: { typeStr = "HA"; pathManager = new       CPathManager(); } break;
+			case QTPFS_TYPE: { typeStr = "QT"; pathManager = new QTPFS::PathManager(); } break;
 		}
 
-		LOG(fmtStr, typeStr);
+		LOG(fmtStr, __func__, typeStr);
 	}
 
 	return pathManager;
