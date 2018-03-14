@@ -15,12 +15,12 @@ class CSolidObject;
 
 class IPathManager {
 public:
-	static IPathManager* GetInstance(unsigned int type);
+	static IPathManager* GetInstance(int type);
 	static void FreeInstance(IPathManager*);
 
 	virtual ~IPathManager() {}
 
-	virtual unsigned int GetPathFinderType() const { return NOPFS_TYPE; }
+	virtual std::int32_t GetPathFinderType() const { return NOPFS_TYPE; }
 	virtual std::uint32_t GetPathCheckSum() const { return 0; }
 
 	virtual std::int64_t Finalize() { return 0; }

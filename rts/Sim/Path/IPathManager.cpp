@@ -7,7 +7,7 @@
 
 IPathManager* pathManager = nullptr;
 
-IPathManager* IPathManager::GetInstance(unsigned int type) {
+IPathManager* IPathManager::GetInstance(int type) {
 	if (pathManager == nullptr) {
 		const char* fmtStr = "[IPathManager::%s] using %sPFS";
 		const char* typeStr = "";
