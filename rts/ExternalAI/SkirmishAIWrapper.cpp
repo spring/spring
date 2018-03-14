@@ -5,7 +5,6 @@
 #include "AICallback.h"
 #include "AICheats.h"
 #include "AILibraryManager.h"
-#include "EngineOutHandler.h"
 #include "SkirmishAIHandler.h"
 #include "SkirmishAILibrary.h"
 #include "SkirmishAILibraryInfo.h"
@@ -61,31 +60,47 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_POSTLOAD(PostLoad)
 ))
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(const int aiID): skirmishAIId(aiID)
+void CSkirmishAIWrapper::PreInit(int aiID)
 {
-	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiID);
 
-	teamId = aiData->team;
-	key    = aiLibManager->ResolveSkirmishAIKey(SkirmishAIKey(aiData->shortName, aiData->version));
+	{
+		key = aiLibManager->ResolveSkirmishAIKey(SkirmishAIKey(aiData->shortName, aiData->version));
+	}
+	{
+		skirmishAIId = aiID;
+		teamId       = aiData->team;
+	}
+	{
+		initialized = false;
+		released = false;
+		cheatEvents = false;
 
-	timerName += ("AI::t:" + IntToString(teamId));
-	timerName += (" id:" + IntToString(skirmishAIId));
-	timerName += (" " + key.GetShortName());
-	timerName += (" " + key.GetVersion());
+		initOk = false;
+		dieing = false;
+	}
+	{
+		timerName  = ""; // clear
+		timerName += ("AI::t:" + IntToString(teamId));
+		timerName += (" id:" + IntToString(skirmishAIId));
+		timerName += (" " + key.GetShortName());
+		timerName += (" " + key.GetVersion());
+	}
 
 	CreateCallback();
 }
 
-void CSkirmishAIWrapper::CreateCallback() {
-	callback.reset(new CAICallback(teamId));
-	cheats.reset(new CAICheats(this));
-
-	sCallback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
+void CSkirmishAIWrapper::PreDestroy() {
+	callback->noMessages = true;
 }
 
 
-void CSkirmishAIWrapper::PreDestroy() {
-	callback->noMessages = true;
+void CSkirmishAIWrapper::CreateCallback() {
+	callback.reset(new CAICallback(teamId));
+	cheats.reset(new CAICheats(this)); // NB: leaks <this>
+
+	library = nullptr;
+	sCallback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
 }
 
 
@@ -187,11 +202,18 @@ void CSkirmishAIWrapper::Kill()
 		AILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 	}
 
-	// NOTE: explicitly ordered so callback is valid in AI's dtor
-	cheats.reset();
-	callback.reset();
-
-	skirmishAiCallback_release(skirmishAIId);
+	{
+		// NOTE: explicitly ordered so callback is valid in AI's dtor
+		cheats.reset();
+		callback.reset();
+	}
+	{
+		skirmishAiCallback_release(skirmishAIId);
+	}
+	{
+		library = nullptr;
+		sCallback = nullptr;
+	}
 }
 
 void CSkirmishAIWrapper::Release(int reason) {

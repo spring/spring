@@ -34,35 +34,12 @@ private:
 public:
 	/// used only by creg
 	CSkirmishAIWrapper() = default;
-	CSkirmishAIWrapper(const int skirmishAIId);
 
 	CSkirmishAIWrapper(const CSkirmishAIWrapper& w) = delete;
-	CSkirmishAIWrapper(CSkirmishAIWrapper&& w) { *this = std::move(w); }
+	CSkirmishAIWrapper(CSkirmishAIWrapper&& w) = delete;
 
 	CSkirmishAIWrapper& operator = (const CSkirmishAIWrapper& w) = delete;
-	CSkirmishAIWrapper& operator = (CSkirmishAIWrapper&& w) {
-		key = w.key;
-
-		library = w.library; w.library = nullptr;
-		sCallback = w.sCallback; w.sCallback = nullptr;
-
-		callback = std::move(w.callback);
-		cheats = std::move(w.cheats);
-
-		timerName = std::move(w.timerName);
-
-
-		skirmishAIId = w.skirmishAIId; w.skirmishAIId = -1;
-		teamId = w.teamId; w.teamId = -1;
-
-		initialized = w.initialized; w.initialized = false;
-		released = w.released; w.released = false;
-		cheatEvents = w.cheatEvents; w.cheatEvents = false;
-
-		initOk = w.initOk; w.initOk = false;
-		dieing = w.dieing; w.dieing = false;
-		return *this;
-	}
+	CSkirmishAIWrapper& operator = (CSkirmishAIWrapper&& w) = delete;
 
 	void Serialize(creg::ISerializer* s) {}
 	void PostLoad() {
@@ -70,6 +47,10 @@ public:
 		LoadSkirmishAI(true);
 	}
 
+
+	void PreInit(int aiID);
+	/** Called just before all the units are destroyed. */
+	void PreDestroy();
 
 	/**
 	 * Initialize the AI instance.
@@ -80,9 +61,6 @@ public:
 
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	void Release(int reason = 0 /* = unspecified */);
-
-	/** Called just before all the units are destroyed. */
-	void PreDestroy();
 
 	/**
 	 * No events are forwarded to the Skirmish AI plugin
