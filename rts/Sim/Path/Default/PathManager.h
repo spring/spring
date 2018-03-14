@@ -23,7 +23,7 @@ public:
 	CPathManager();
 	~CPathManager();
 
-	unsigned int GetPathFinderType() const override { return HAPFS_TYPE; }
+	std::int32_t GetPathFinderType() const override { return HAPFS_TYPE; }
 	std::uint32_t GetPathCheckSum() const override;
 
 	std::int64_t Finalize() override;
