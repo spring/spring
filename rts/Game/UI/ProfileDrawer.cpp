@@ -400,10 +400,13 @@ static void DrawInfoText(GL::RenderDataBufferC* buffer)
 		const int2 pfsUpdates = pm->GetNumQueuedUpdates();
 
 		switch (pm->GetPathFinderType()) {
-			case PFS_TYPE_DEFAULT: {
-				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "DEF", pfsUpdates.x, pfsUpdates.y);
+			case NOPFS_TYPE: {
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "NO", pfsUpdates.x, pfsUpdates.y);
 			} break;
-			case PFS_TYPE_QTPFS: {
+			case HAPFS_TYPE: {
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "HA", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case QTPFS_TYPE: {
 				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			default: {

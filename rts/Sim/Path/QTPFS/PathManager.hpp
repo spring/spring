@@ -32,7 +32,7 @@ namespace QTPFS {
 
 		static void InitStatic();
 
-		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
+		unsigned int GetPathFinderType() const { return QTPFS_TYPE; }
 		std::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
 		std::int64_t Finalize();

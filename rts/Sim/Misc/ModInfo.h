@@ -136,15 +136,20 @@ public:
 
 
 	enum {
-		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,
+		FEATURELOS_NONE = 0,
+		FEATURELOS_GAIAONLY,
+		FEATURELOS_GAIAALLIED,
+		FEATURELOS_ALL,
 	};
+
 	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
 	// PFS
-	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	/// which pathfinder system (NOP, DEFAULT/legacy, or QT) the mod will use
 	int pathFinderSystem;
+
 	float pfRawDistMult;
 	float pfUpdateRate;
 

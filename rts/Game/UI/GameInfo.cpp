@@ -126,9 +126,10 @@ CGameInfo::CGameInfo()
 
 	labels.push_back("PFS Name:");
 	switch (pathManager->GetPathFinderType()) {
-		case PFS_TYPE_DEFAULT: { values.push_back("Default"); } break;
-		case PFS_TYPE_QTPFS:   { values.push_back("QTPFS"  ); } break;
-		default:               { values.push_back("UNKNOWN"); } break; // not reachable
+		case NOPFS_TYPE: { values.push_back("NOPFS"  ); } break;
+		case HAPFS_TYPE: { values.push_back("HAPFS"  ); } break;
+		case QTPFS_TYPE: { values.push_back("QTPFS"  ); } break;
+		default        : { values.push_back("UNKNOWN"); } break; // not reachable
 	}
 
 	labels.push_back("CHEATS:");
@@ -137,7 +138,7 @@ CGameInfo::CGameInfo()
 
 CGameInfo::~CGameInfo()
 {
-	instance = NULL;
+	instance = nullptr;
 }
 
 

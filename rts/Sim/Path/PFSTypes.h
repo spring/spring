@@ -4,9 +4,9 @@
 #define PFS_TYPES_HDR
 
 enum {
-	PFS_TYPE_DEFAULT = 0,
-	PFS_TYPE_QTPFS   = 1,
-	PFS_NUM_TYPES    = 2,
+	NOPFS_TYPE  = -1, // for editors
+	HAPFS_TYPE  =  0, // default HPA
+	QTPFS_TYPE  =  1,
 };
 
 #endif
