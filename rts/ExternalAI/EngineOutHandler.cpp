@@ -525,13 +525,11 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 		// currently, we need to do nothing for Lua AIs
 		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 	} else {
-		CSkirmishAIWrapper aiWrapper = CSkirmishAIWrapper(skirmishAIId);
+		hostSkirmishAIs[                skirmishAIId             ].PreInit(skirmishAIId);
+		teamSkirmishAIs[hostSkirmishAIs[skirmishAIId].GetTeamId()].push_back(skirmishAIId);
+		hostSkirmishAIs[                skirmishAIId             ].Init();
 
-		teamSkirmishAIs[aiWrapper.GetTeamId()].push_back(skirmishAIId);
-		hostSkirmishAIs[skirmishAIId] = std::move(aiWrapper);
 		activeSkirmishAIs.push_back(skirmishAIId);
-
-		hostSkirmishAIs[skirmishAIId].Init();
 
 		if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
 			return;
@@ -566,7 +564,6 @@ void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {
 		activeSkirmishAIs.erase(jt);
 
 		hostSkirmishAIs[skirmishAIId].Kill();
-		hostSkirmishAIs[skirmishAIId] = std::move(CSkirmishAIWrapper());
 	} else {
 		assert(false);
 	}
