@@ -442,7 +442,7 @@ void CMobileCAI::ExecuteMove(Command& c)
 	// this check is important to process failed orders properly
 	// NB: only works if the *non-extended* goal radius is passed
 	if (!owner->moveType->IsMovingTowards(cmdPos, mtGoalRadiusRaw, false))
-		SetGoal(cmdPos, owner->pos);
+		SetGoal(cmdPos, owner->pos, mtGoalRadiusRaw);
 
 	if (owner->moveType->progressState == AMoveType::Failed) {
 		StopMoveAndFinishCommand();
