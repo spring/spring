@@ -330,12 +330,14 @@ void CGame::AddTimedJobs()
 
 		j.f = []() -> bool {
 			SCOPED_TIMER("Misc::CollectGarbage");
+
 			eventHandler.CollectGarbage();
 			CInputReceiver::CollectGarbage();
 			return true;
 		};
 
-		j.freq = GAME_SPEED;
+		// does not need to run often; SimFrame handles gc when not paused
+		j.freq = 4.0f;
 		j.time = (1000.0f / j.freq) * (1 - j.startDirect);
 		j.name = "EventHandler::CollectGarbage";
 
@@ -1483,10 +1485,16 @@ void CGame::SimFrame() {
 	// everything from here is simulation
 	{
 		SCOPED_SPECIAL_TIMER("Sim");
+
 		{
 			SCOPED_TIMER("Sim::GameFrame");
+
+			// keep garbage-collection rate tied to sim-speed
+			// (fixed 30Hz gc is not enough while catching up)
+			eventHandler.CollectGarbage();
 			eventHandler.GameFrame(gs->frameNum);
 		}
+
 		helper->Update();
 		mapDamage->Update();
 		pathManager->Update();
