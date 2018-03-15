@@ -458,11 +458,22 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 }
 
 
+
+#if 0
+static inline bool IsPlayerSynced(lua_State* L, const CPlayer* player)
+{
+	const bool syncedHandle = CLuaHandle::GetHandleSynced(L);
+	const bool onlyFromDemo = syncedHandle && (gameSetup != nullptr) && gameSetup->hostDemo;
+	return (!onlyFromDemo || player->isFromDemo);
+}
+#endif
+
 static inline bool IsPlayerUnsynced(lua_State* L, const CPlayer* player)
 {
 	const bool syncedHandle = CLuaHandle::GetHandleSynced(L);
-	const bool onlyFromDemo = !syncedHandle || (gameSetup == nullptr) || !gameSetup->hostDemo;
-	return (onlyFromDemo || player->isFromDemo);
+	const bool onlyFromDemo = syncedHandle && (gameSetup != nullptr) && gameSetup->hostDemo;
+
+	return (onlyFromDemo && !player->isFromDemo);
 }
 
 
