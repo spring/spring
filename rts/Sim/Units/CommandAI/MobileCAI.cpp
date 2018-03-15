@@ -426,8 +426,11 @@ void CMobileCAI::ExecuteMove(Command& c)
 {
 	const float3 cmdPos = c.GetPos(0);
 
-	const float sqDist = owner->pos.SqDistance2D(cmdPos);
-	if (sqDist < Square(SQUARE_SIZE)) {
+	const float sqGoalDist = owner->pos.SqDistance2D(cmdPos);
+	const float mtGoalRadius = owner->moveType->GetGoalRadius(1.0f);
+
+	// this has to check against the moveType's own (possibly extended) goal radius
+	if (sqGoalDist < Square(mtGoalRadius)) {
 		if (!HasMoreMoveCommands())
 			StopMove();
 
@@ -435,8 +438,9 @@ void CMobileCAI::ExecuteMove(Command& c)
 		return;
 	}
 
-	// This check is important to process failed orders properly
-	if (!owner->moveType->IsMovingTowards(cmdPos, SQUARE_SIZE, false))
+	// this check is important to process failed orders properly
+	// NB: only works if the *non-extended* goal radius is passed
+	if (!owner->moveType->IsMovingTowards(cmdPos, mtGoalRadius, false))
 		SetGoal(cmdPos, owner->pos);
 
 	if (owner->moveType->progressState == AMoveType::Failed) {
@@ -444,7 +448,8 @@ void CMobileCAI::ExecuteMove(Command& c)
 		return;
 	}
 
-	if (sqDist < cancelDistance && HasMoreMoveCommands())
+	// fallback
+	if (sqGoalDist < cancelDistance && HasMoreMoveCommands())
 		FinishCommand();
 }
 
@@ -973,7 +978,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature*)
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	// already have equal move order?
+	// check if owner already has a move order to this position with the same radius
 	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
@@ -983,7 +988,7 @@ void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goal
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	// already have equal move order?
+	// check if owner already has a move order to this position with the same radius
 	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
@@ -1342,9 +1347,8 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 				const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
 				const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != nullptr && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
 
-				if (outOfRange || moveCloser) {
+				if (outOfRange || moveCloser)
 					SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
-				}
 
 				if (inLoadingRadius) {
 					if (am != nullptr) {

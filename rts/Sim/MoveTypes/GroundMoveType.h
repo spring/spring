@@ -33,8 +33,8 @@ public:
 	void SlowUpdate() override;
 
 	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
-	void StartMoving(float3 pos, float goalRadius) override;
-	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
+	void StartMoving(float3 pos, float moveGoalRadius) override;
+	void StartMoving(float3 pos, float moveGoalRadius, float speed) override { StartMoving(pos, moveGoalRadius); }
 	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 	bool IsMovingTowards(const float3& pos, float radius, bool checkProgress) const override {
 		return (goalPos == pos * XZVector && goalRadius == radius && (!checkProgress || progressState == Active));
@@ -71,7 +71,8 @@ public:
 
 	float GetCurrWayPointDist() const { return currWayPointDist; }
 	float GetPrevWayPointDist() const { return prevWayPointDist; }
-	float GetGoalRadius() const { return goalRadius; }
+	float GetGoalRadius(float s = 0.0f) const override { return (goalRadius + extraRadius * s); }
+
 	unsigned int GetPathID() const { return pathID; }
 
 	const SyncedFloat3& GetCurrWayPoint() const { return currWayPoint; }
@@ -183,7 +184,9 @@ private:
 
 	float currWayPointDist;
 	float prevWayPointDist;
-	float goalRadius;
+
+	float goalRadius;                   /// original radius passed to StartMoving*
+	float extraRadius;                  /// owner MoveDef footprint radius
 
 	bool reversing;
 	bool idling;

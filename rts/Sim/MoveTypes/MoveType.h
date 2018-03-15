@@ -6,6 +6,8 @@
 #include "System/creg/creg_cond.h"
 #include "System/Object.h"
 #include "System/float3.h"
+#include "Sim/Misc/GlobalConstants.h"
+
 #include <algorithm>
 
 class CUnit;
@@ -60,6 +62,7 @@ public:
 	float GetManeuverLeash() const { return maneuverLeash; }
 	float GetWaterline() const { return waterline; }
 
+	virtual float GetGoalRadius(float s = 0.0f) const { return SQUARE_SIZE; }
 	// The distance the unit will move before stopping,
 	// starting from given speed and applying maximum
 	// brake rate.
