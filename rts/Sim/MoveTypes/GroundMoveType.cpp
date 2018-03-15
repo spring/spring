@@ -115,6 +115,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
 	CR_MEMBER(goalRadius),
+	CR_MEMBER(extraRadius),
 
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
@@ -199,7 +200,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
+
 	goalRadius(0.0f),
+	extraRadius(0.0f),
 
 	reversing(false),
 	idling(false),
@@ -257,7 +260,7 @@ void CGroundMoveType::PostLoad()
 	if (pathID == 0)
 		return;
 
-	pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
+	pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true);
 }
 
 bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, const float3& cmpEps) {
@@ -367,7 +370,7 @@ void CGroundMoveType::UpdateOwnerSpeedAndHeading()
 
 void CGroundMoveType::SlowUpdate()
 {
-	if (owner->GetTransporter() != NULL) {
+	if (owner->GetTransporter() != nullptr) {
 		if (progressState == Active) {
 			StopEngine(false);
 		}
@@ -417,15 +420,15 @@ void CGroundMoveType::SlowUpdate()
 
 void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) {
 	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
-	const float extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
 	goalPos = moveGoalPos * XZVector;
-	goalRadius = moveGoalRadius + extraRadius;
+	goalRadius = moveGoalRadius;
+	extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
 
-	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius));
+	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(goalRadius + extraRadius));
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -448,13 +451,13 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// add the footprint radius if moving onto goalPos would cause it to overlap impassable squares
 	// (otherwise repeated coldet push-jittering can ensue if allowTerrainCollision is not disabled)
 	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
-	const float extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
 	// set the new goal
 	goalPos = moveGoalPos * XZVector;
-	goalRadius = moveGoalRadius + extraRadius;
+	goalRadius = moveGoalRadius;
+	extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
-	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius));
+	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(goalRadius + extraRadius));
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -493,10 +496,8 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw)
 
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
-	if (!atGoal) {
-		currWayPoint = Here();
-		goalPos = currWayPoint;
-	}
+	if (!atGoal)
+		goalPos = (currWayPoint = Here());
 
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no
@@ -518,6 +519,7 @@ bool CGroundMoveType::FollowPath()
 	if (WantToStop()) {
 		currWayPoint.y = -1.0f;
 		nextWayPoint.y = -1.0f;
+
 		SetMainHeading();
 		ChangeSpeed(0.0f, false);
 	} else {
@@ -532,13 +534,13 @@ bool CGroundMoveType::FollowPath()
 			// NOTE:
 			//   uses owner->pos instead of currWayPoint (ie. not the same as atEndOfPath)
 			//
-			//   if our first command is a build-order, then goalRadius is set to our build-range
+			//   if our first command is a build-order, then goal-radius is set to our build-range
 			//   and we cannot increase tolerance safely (otherwise the unit might stop when still
 			//   outside its range and fail to start construction)
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
 			const float minGoalDistSq = (UNIT_HAS_MOVE_CMD(owner))?
-				Square(goalRadius * (numIdlingSlowUpdates + 1)):
-				Square(goalRadius                             );
+				Square((goalRadius + extraRadius) * (numIdlingSlowUpdates + 1)):
+				Square((goalRadius + extraRadius)                             );
 
 			atGoal |= (curGoalDistSq <= minGoalDistSq);
 		}
@@ -1298,10 +1300,10 @@ unsigned int CGroundMoveType::GetNewPath()
 	if (useRawMovement)
 		return newPathID;
 	// avoid frivolous requests if called from outside StartMoving*()
-	if ((owner->pos - goalPos).SqLength2D() <= Square(goalRadius))
+	if ((owner->pos - goalPos).SqLength2D() <= Square(goalRadius + extraRadius))
 		return newPathID;
 
-	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true)) != 0) {
+	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true)) != 0) {
 		atGoal = false;
 		atEndOfPath = false;
 
@@ -1420,8 +1422,8 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		{
 			const float curGoalDistSq = (currWayPoint - goalPos).SqLength2D();
 			const float minGoalDistSq = (UNIT_HAS_MOVE_CMD(owner))?
-				Square(goalRadius * (numIdlingSlowUpdates + 1)):
-				Square(goalRadius                             );
+				Square((goalRadius + extraRadius) * (numIdlingSlowUpdates + 1)):
+				Square((goalRadius + extraRadius)                             );
 
 			// trigger Arrived on the next Update (only if we have non-temporary waypoints)
 			// note:
