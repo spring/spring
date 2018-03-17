@@ -5,16 +5,18 @@
 
 #include "MapDamage.h"
 
-/** Do no deformation. */
-class CNoMapDamage : public IMapDamage
+/** does not perform any deformation */
+class CDummyMapDamage : public IMapDamage
 {
 public:
-	CNoMapDamage();
-	~CNoMapDamage();
+	void Explosion(const float3& pos, float strength, float radius) override {}
+	void RecalcArea(int x1, int x2, int y1, int y2) override {}
 
-	void Explosion(const float3& pos, float strength, float radius);
-	void RecalcArea(int x1, int x2, int y1, int y2);
-	void Update();
+	void Init() override {
+		disabled = true;
+		mapHardness = 0.0f;
+	}
+	void Update() override {}
 };
 
 #endif // _NO_MAP_DAMAGE_H
