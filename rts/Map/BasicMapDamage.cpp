@@ -15,7 +15,7 @@
 #include "System/TimeProfiler.h"
 
 
-CBasicMapDamage::CBasicMapDamage()
+void CBasicMapDamage::Init()
 {
 	mapHardness = mapInfo->map.hardness;
 	disabled = false;
@@ -43,6 +43,17 @@ CBasicMapDamage::CBasicMapDamage()
 	weightTable[6] = 1.0f / 16.0f;
 	weightTable[7] = 2.0f / 16.0f;
 	weightTable[8] = 1.0f / 16.0f;
+
+
+	explSquaresPoolIdx = 0;
+	explUpdateQueueIdx = 0;
+
+	explosionSquaresPool.clear();
+	explosionSquaresPool.resize(4 * 1024 * 1024);
+	explosionUpdateQueue.clear();
+	explosionUpdateQueue.reserve(64);
+
+	std::fill(explosionSquaresPool.begin(), explosionSquaresPool.end(), 0.0f);
 }
 
 
@@ -77,9 +88,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	if (strength < 10.0f || radius < 8.0f)
 		return;
 
-	explosions.emplace_back();
+	explosionUpdateQueue.emplace_back();
 
-	Explo& e = explosions.back();
+	Explo& e = explosionUpdateQueue.back();
 	e.pos = pos;
 	e.strength = strength;
 	e.radius = radius;
@@ -88,7 +99,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e.x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
 	e.y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, mapDims.mapym1);
 	e.y2 = Clamp<int>((pos.z + radius) / SQUARE_SIZE, 1, mapDims.mapym1);
-	e.squares.reserve((e.y2 - e.y1 + 1) * (e.x2 - e.x1 + 1));
+	e.idx = explSquaresPoolIdx;
 
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
 	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
@@ -104,7 +115,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 			// do not change squares with buildings on them here
 			if (so != nullptr && so->blockHeightChanges) {
-				e.squares.push_back(0.0f);
+				SetExplosionSquare(0.0f);
 				continue;
 			}
 
@@ -149,7 +160,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			if (explDif < -0.3f && strength > 200.0f)
 				grassDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 
-			e.squares.push_back(explDif);
+			SetExplosionSquare(explDif);
 		}
 	}
 
@@ -221,19 +232,21 @@ void CBasicMapDamage::Update()
 {
 	SCOPED_TIMER("Sim::BasicMapDamage");
 
-	for (Explo& e: explosions) {
-		if (e.ttl <= 0)
+	for (unsigned int i = explUpdateQueueIdx, n = explosionUpdateQueue.size(); i < n; i++) {
+		Explo& e = explosionUpdateQueue[i];
+
+		if ((e.ttl--) <= 0)
 			continue;
 
-		--e.ttl;
 
-		auto si = e.squares.cbegin();
+		unsigned int expPoolIdx = e.idx;
 
 		for (int y = e.y1; y <= e.y2; ++y) {
 			for (int x = e.x1; x <= e.x2; ++x) {
-				readMap->AddHeight(y * mapDims.mapxp1 + x, *(si++));
+				readMap->AddHeight(y * mapDims.mapxp1 + x, explosionSquaresPool[ (expPoolIdx++) % explosionSquaresPool.size() ]);
 			}
 		}
+
 
 		for (const ExploBuilding& b: e.buildings) {
 			CUnit* unit = unitHandler.GetUnit(b.id);
@@ -251,18 +264,23 @@ void CBasicMapDamage::Update()
 			unit->Move(UpVector * b.dif, true);
 		}
 
-		if (e.ttl == 0) {
-			RecalcArea(e.x1 - 1, e.x2 + 1, e.y1 - 1, e.y2 + 1);
-		}
+		if (e.ttl != 0)
+			continue;
+
+		RecalcArea(e.x1 - 1, e.x2 + 1, e.y1 - 1, e.y2 + 1);
 	}
 
-	while (!explosions.empty()) {
-		const Explo& explosion = explosions.front();
 
-		if (explosion.ttl > 0)
-			break;
+	// pop explosions that are no longer being processed
+	while (explUpdateQueueIdx < explosionUpdateQueue.size()) {
+		if (explosionUpdateQueue[explUpdateQueueIdx].ttl > 0)
+			return;
 
-		explosions.pop_front();
+		explUpdateQueueIdx += 1;
 	}
+
+	// no more explosions left to process, clear queue for real
+	explosionUpdateQueue.clear();
+	explUpdateQueueIdx = 0;
 }
 

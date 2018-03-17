@@ -8,48 +8,63 @@
 #include <deque>
 #include <vector>
 
-class CUnit;
-
 class CBasicMapDamage : public IMapDamage
 {
 public:
-	CBasicMapDamage();
-
 	void Explosion(const float3& pos, float strength, float radius) override;
 	void RecalcArea(int x1, int x2, int y1, int y2) override;
 	void TerrainTypeHardnessChanged(int ttIndex) override;
 	void TerrainTypeSpeedModChanged(int ttIndex) override;
+
+	void Init() override;
 	void Update() override;
 
 private:
+	void SetExplosionSquare(float v) {
+		explosionSquaresPool[explSquaresPoolIdx] = v;
+
+		explSquaresPoolIdx += 1;
+		explSquaresPoolIdx %= explosionSquaresPool.size();
+	}
+
 	struct ExploBuilding {
 		/**
 		 * Searching for building pointers inside these on DependentDied
 		 * could be messy, so we use the id.
 		 */
 		int id;
-		/// How much to move the building and the ground below it.
+
+		// how much to move the building and the ground below it
 		float dif;
-		int tx1, tx2, tz1, tz2;
+
+		int tx1, tx2;
+		int tz1, tz2;
 	};
 
 	struct Explo {
 		float3 pos;
 
-		float strength;
-		float radius;
+		float strength = 0.0f;
+		float radius = 0.0f;
 
-		int ttl;
-		int x1, x2, y1, y2;
+		int ttl = 0;
+		int x1 = 0, x2 = 0;
+		int y1 = 0, y2 = 0;
 
-		std::vector<float> squares;
+		// index (into explosionSquaresPool) of first square touched by us
+		unsigned int idx = 0;
+
 		std::vector<ExploBuilding> buildings;
 	};
 
-	std::deque<Explo> explosions;
+	std::vector<float> explosionSquaresPool;
+	std::vector<Explo> explosionUpdateQueue;
 
-	static const unsigned int CRATER_TABLE_SIZE = 200;
-	static const unsigned int EXPLOSION_LIFETIME = 10;
+	static constexpr unsigned int CRATER_TABLE_SIZE = 200;
+	static constexpr unsigned int EXPLOSION_LIFETIME = 10;
+
+	unsigned int explSquaresPoolIdx = 0;
+	unsigned int explUpdateQueueIdx = 0;
 
 	float craterTable[CRATER_TABLE_SIZE + 1];
 	float rawHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];

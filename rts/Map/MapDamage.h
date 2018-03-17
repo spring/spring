@@ -11,17 +11,18 @@ public:
 	static IMapDamage* GetMapDamage();
 
 public:
-	IMapDamage();
 	virtual ~IMapDamage() {}
 
 	virtual void Explosion(const float3& pos, float strength, float radius) = 0;
 	virtual void RecalcArea(int x1, int x2, int y1, int y2) = 0;
 	virtual void TerrainTypeHardnessChanged(int ttIndex) {}
 	virtual void TerrainTypeSpeedModChanged(int ttIndex) {}
-	virtual void Update() {}
 
-	bool disabled;
-	float mapHardness;
+	virtual void Init() = 0;
+	virtual void Update() = 0;
+
+	bool disabled = true;
+	float mapHardness = 0.0f;
 };
 
 extern IMapDamage* mapDamage;

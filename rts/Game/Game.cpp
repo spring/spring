@@ -581,8 +581,8 @@ void CGame::PostLoadSimulation()
 	// made by Lua while loading) would otherwise generate a
 	// queue of pending PFS updates, which should be consumed
 	// to avoid blocking regular updates from being processed
-	// but doing so was impossible without stalling the loading
-	// thread for *minutes* (in the worst-case scenario)
+	// however, doing so was impossible without stalling the
+	// loading thread for *minutes* in the worst-case scenario
 	//
 	// the only disadvantage is that LuaPathFinder can not be
 	// used during Lua initialization anymore (not a concern)
@@ -895,7 +895,6 @@ void CGame::KillSimulation()
 	buildingMaskMap.Kill();
 
 	CLosHandler::KillStatic(gu->globalReload);
-	spring::SafeDelete(mapDamage);
 	quadField.Kill();
 	spring::SafeDelete(moveDefHandler);
 	spring::SafeDelete(unitDefHandler);
