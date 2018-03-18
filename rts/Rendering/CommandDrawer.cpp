@@ -633,7 +633,11 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		buildCommands += 1;
@@ -656,7 +660,11 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		const float xsize = bi.GetXSize() * (SQUARE_SIZE >> 1);
