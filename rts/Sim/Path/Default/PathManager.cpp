@@ -350,7 +350,7 @@ unsigned int CPathManager::RequestPath(
 
 	// Create an estimator definition.
 	goalRadius = std::max<float>(goalRadius, PATH_NODE_SPACING * SQUARE_SIZE); //FIXME do on a per PE & PF level?
-	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
+	assert(moveDef == moveDefHandler.GetMoveDefByPathType(moveDef->pathType));
 
 	MultiPath newPath = MultiPath(moveDef, startPos, goalPos, goalRadius);
 	newPath.finalGoal = goalPos;

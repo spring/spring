@@ -177,10 +177,10 @@ void QTPFS::PathManager::Load() {
 	numPathRequests   = 0;
 	maxNumLeafNodes   = 0;
 
-	nodeTrees.resize(moveDefHandler->GetNumMoveDefs(), NULL);
-	nodeLayers.resize(moveDefHandler->GetNumMoveDefs());
-	pathCaches.resize(moveDefHandler->GetNumMoveDefs());
-	pathSearches.resize(moveDefHandler->GetNumMoveDefs());
+	nodeTrees.resize(moveDefHandler.GetNumMoveDefs(), NULL);
+	nodeLayers.resize(moveDefHandler.GetNumMoveDefs());
+	pathCaches.resize(moveDefHandler.GetNumMoveDefs());
+	pathSearches.resize(moveDefHandler.GetNumMoveDefs());
 
 	// add one extra element for object-less requests
 	numCurrExecutedSearches.resize(teamHandler.ActiveTeams() + 1, 0);
@@ -404,7 +404,7 @@ void QTPFS::PathManager::UpdateNodeLayersThread(
 // called in the non-staggered (#ifndef QTPFS_STAGGERED_LAYER_UPDATES)
 // layer update scheme and during initialization; see ::TerrainChange
 void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r) {
-	const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
+	const MoveDef* md = moveDefHandler.GetMoveDefByPathType(layerNum);
 
 	if (!IsFinalized())
 		return;
@@ -449,7 +449,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 #ifdef QTPFS_STAGGERED_LAYER_UPDATES
 void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
+		const MoveDef* md = moveDefHandler.GetMoveDefByPathType(layerNum);
 
 		SRectangle mr;
 		// SRectangle ur;
@@ -541,7 +541,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
-		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+		const MoveDef* md = moveDefHandler.GetMoveDefByPathType(i);
 
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + md->name;
 		fileStreams[i] = new std::fstream();
@@ -823,7 +823,7 @@ void QTPFS::PathManager::QueueDeadPathSearches(unsigned int pathType) {
 	PathCache::PathMap::const_iterator deadPathsIt;
 
 	const PathCache::PathMap& deadPaths = pathCache.GetDeadPaths();
-	const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(pathType);
+	const MoveDef* moveDef = moveDefHandler.GetMoveDefByPathType(pathType);
 
 	if (!deadPaths.empty()) {
 		// re-request LIVE paths that were marked as DEAD by a TerrainChange

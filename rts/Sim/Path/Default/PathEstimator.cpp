@@ -65,8 +65,8 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	, nextPathEstimator(nullptr)
 	, blockUpdatePenalty(0)
 {
-	vertexCosts.resize(moveDefHandler->GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
-	maxSpeedMods.resize(moveDefHandler->GetNumMoveDefs(), 0.001f);
+	vertexCosts.resize(moveDefHandler.GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
+	maxSpeedMods.resize(moveDefHandler.GetNumMoveDefs(), 0.001f);
 
 	CPathEstimator*  childPE = this;
 	CPathEstimator* parentPE = dynamic_cast<CPathEstimator*>(pf);
@@ -95,8 +95,8 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 		assert(parentPE != nullptr);
 
 		// calculate map-wide maximum positional speedmod for each MoveDef
-		for_mt(0, moveDefHandler->GetNumMoveDefs(), [&](unsigned int i) {
-			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+		for_mt(0, moveDefHandler.GetNumMoveDefs(), [&](unsigned int i) {
+			const MoveDef* md = moveDefHandler.GetMoveDefByPathType(i);
 
 			for (int y = 0; y < mapDims.mapy; y++) {
 				for (int x = 0; x < mapDims.mapx; x++) {
@@ -201,8 +201,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 
 void CPathEstimator::InitBlocks()
 {
-	blockStates.peNodeOffsets.resize(moveDefHandler->GetNumMoveDefs());
-	for (unsigned int idx = 0; idx < moveDefHandler->GetNumMoveDefs(); idx++) {
+	blockStates.peNodeOffsets.resize(moveDefHandler.GetNumMoveDefs());
+	for (unsigned int idx = 0; idx < moveDefHandler.GetNumMoveDefs(); idx++) {
 		blockStates.peNodeOffsets[idx].resize(nbrOfBlocks.x * nbrOfBlocks.y);
 	}
 }
@@ -245,8 +245,8 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 		clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (blockIdx << 8)));
 	}
 
-	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
-		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+	for (unsigned int i = 0; i < moveDefHandler.GetNumMoveDefs(); i++) {
+		const MoveDef* md = moveDefHandler.GetMoveDefByPathType(i);
 
 		blockStates.peNodeOffsets[md->pathType][blockIdx] = FindBlockPosOffset(*md, blockPos.x, blockPos.y);
 	}
@@ -267,8 +267,8 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 		loadscreen->SetLoadMessage(calcMsg, (blockIdx != 0));
 	}
 
-	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
-		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+	for (unsigned int i = 0; i < moveDefHandler.GetNumMoveDefs(); i++) {
+		const MoveDef* md = moveDefHandler.GetMoveDefByPathType(i);
 
 		CalcVertexPathCosts(*md, blockPos, threadNum);
 	}
@@ -458,7 +458,7 @@ void CPathEstimator::Update()
 	pathCache[0]->Update();
 	pathCache[1]->Update();
 
-	const unsigned int numMoveDefs = moveDefHandler->GetNumMoveDefs();
+	const unsigned int numMoveDefs = moveDefHandler.GetNumMoveDefs();
 
 	if (numMoveDefs == 0)
 		return;
@@ -506,7 +506,7 @@ void CPathEstimator::Update()
 
 		// issue repathing for all active movedefs
 		for (unsigned int i = 0; i < numMoveDefs; i++) {
-			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+			const MoveDef* md = moveDefHandler.GetMoveDefByPathType(i);
 
 			consumedBlocks.emplace_back(pos, md);
 		}
@@ -957,13 +957,13 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 		return false;
 	}
 
-	if (buffer.size() < (pos + blockSize * moveDefHandler->GetNumMoveDefs())) {
+	if (buffer.size() < (pos + blockSize * moveDefHandler.GetNumMoveDefs())) {
 		FileSystem::Remove(cacheFileName);
 		return false;
 	}
 
 	// read center-offset data
-	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+	for (int pathType = 0; pathType < moveDefHandler.GetNumMoveDefs(); ++pathType) {
 		std::memcpy(&blockStates.peNodeOffsets[pathType][0], &buffer[pos], blockSize);
 		pos += blockSize;
 	}
@@ -1005,7 +1005,7 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 	zipWriteInFileInZip(file, (const void*) &fileHashCode, 4);
 
 	// write center-offsets
-	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+	for (int pathType = 0; pathType < moveDefHandler.GetNumMoveDefs(); ++pathType) {
 		zipWriteInFileInZip(file, (const void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
 	}
 
@@ -1080,7 +1080,7 @@ std::uint32_t CPathEstimator::CalcHash(const char* caller) const
 {
 	const unsigned int hmChecksum = readMap->CalcHeightmapChecksum();
 	const unsigned int tmChecksum = readMap->CalcTypemapChecksum();
-	const unsigned int mdChecksum = moveDefHandler->GetCheckSum();
+	const unsigned int mdChecksum = moveDefHandler.GetCheckSum();
 	const unsigned int bmChecksum = groundBlockingObjectMap.CalcChecksum();
 	const unsigned int peHashCode = (hmChecksum + tmChecksum + mdChecksum + bmChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 

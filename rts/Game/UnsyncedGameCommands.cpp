@@ -1719,41 +1719,44 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
-		if (pathTexInfo) {
-			bool set = false;
+
+		if (pathTexInfo != nullptr) {
+			bool shown = false;
+			bool failed = false;
 
 			if (!action.GetArgs().empty()) {
-				if (!set) {
-					bool failed = false;
-					unsigned int i = StringToInt(action.GetArgs(), &failed);
-					if (failed) i = -1;
-					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
-					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
-					if (md) {
-						set = true;
-						pathTexInfo->ShowMoveDef(md->pathType);
-						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
-					}
-				}
+				unsigned int i = StringToInt(action.GetArgs(), &failed);
 
-				if (!set) {
-					const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
-					if (ud) {
-						set = true;
+				if (failed)
+					i = -1;
+
+				const MoveDef* md = moveDefHandler.GetMoveDefByName(action.GetArgs());
+				const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
+
+				if (md == nullptr && i < moveDefHandler.GetNumMoveDefs())
+					md = moveDefHandler.GetMoveDefByPathType(i);
+
+				shown = (md != nullptr || ud != nullptr);
+
+				if (md != nullptr) {
+					pathTexInfo->ShowMoveDef(md->pathType);
+					LOG("Showing PathView for MoveDef: %s", md->name.c_str());
+				} else {
+					if (ud != nullptr) {
 						pathTexInfo->ShowUnitDef(ud->id);
 						LOG("Showing BuildView for UnitDef: %s", ud->name.c_str());
 					}
 				}
 			}
 
-			if (!set) {
+			if (!shown) {
 				pathTexInfo->ShowMoveDef(-1);
 				LOG("Switching back to automatic PathView");
-			}
-
-			if (set && infoTextureHandler->GetMode() != "path")
+			} else if (infoTextureHandler->GetMode() != "path") {
 				infoTextureHandler->ToggleMode("path");
+			}
 		}
+
 		return true;
 	}
 };

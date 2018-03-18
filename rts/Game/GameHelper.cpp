@@ -1067,7 +1067,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	const int2 xrange = int2(x1, x2);
 	const int2 zrange = int2(z1, z2);
 
-	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler->GetMoveDefByPathType(buildInfo.def->pathType) : nullptr;
+	const MoveDef* moveDef = (buildInfo.def->pathType != -1U) ? moveDefHandler.GetMoveDefByPathType(buildInfo.def->pathType) : nullptr;
 	/*const S3DModel* model =*/ buildInfo.def->LoadModel();
 
 	// const float buildHeight = GetBuildHeight(testPos, buildInfo.def, synced);
@@ -1305,7 +1305,7 @@ bool CGameHelper::CheckTerrainConstraints(
 	bool slopeCheck = false;
 
 	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
-	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
+	// assert(pathType == -1u || moveDef == moveDefHandler.GetMoveDefByPathType(pathType));
 
 	float minDepth = MoveDef::GetDefaultMinWaterDepth();
 	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();

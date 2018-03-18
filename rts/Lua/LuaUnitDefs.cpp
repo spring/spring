@@ -440,7 +440,7 @@ static int MoveDefTable(lua_State* L, const void* data)
 	if (mdType == -1u)
 		return 1;
 
-	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == nullptr)
+	if ((md = moveDefHandler.GetMoveDefByPathType(mdType)) == nullptr)
 		return 1;
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);

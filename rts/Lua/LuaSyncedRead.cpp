@@ -5240,7 +5240,7 @@ int LuaSyncedRead::TestMoveOrder(lua_State* L)
 		return 1;
 	}
 
-	const MoveDef* moveDef = moveDefHandler->GetMoveDefByPathType(unitDef->pathType);
+	const MoveDef* moveDef = moveDefHandler.GetMoveDefByPathType(unitDef->pathType);
 
 	if (moveDef == nullptr) {
 		lua_pushboolean(L, !unitDef->IsImmobileUnit());
