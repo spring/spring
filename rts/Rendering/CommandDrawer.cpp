@@ -638,7 +638,11 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		#if 0
@@ -691,7 +695,11 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		// skip above-water positions
@@ -721,7 +729,11 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
 			continue;
 
-		BuildInfo bi(c);
+		BuildInfo bi;
+
+		if (!bi.Parse(c))
+			continue;
+
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 		if (bi.pos.y >= 0.0f)
