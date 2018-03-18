@@ -1744,11 +1744,11 @@ public:
 				if (failed)
 					i = -1;
 
-				const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
+				const MoveDef* md = moveDefHandler.GetMoveDefByName(action.GetArgs());
 				const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
 
-				if (md == nullptr && i < moveDefHandler->GetNumMoveDefs())
-					md = moveDefHandler->GetMoveDefByPathType(i);
+				if (md == nullptr && i < moveDefHandler.GetNumMoveDefs())
+					md = moveDefHandler.GetMoveDefByPathType(i);
 
 				shown = (md != nullptr || ud != nullptr);
 

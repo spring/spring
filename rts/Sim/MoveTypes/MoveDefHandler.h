@@ -145,7 +145,11 @@ class MoveDefHandler
 {
 	CR_DECLARE_STRUCT(MoveDefHandler)
 public:
-	MoveDefHandler(LuaParser* defsParser);
+	void Init(LuaParser* defsParser);
+	void Kill() {
+		moveDefs.clear();
+		moveDefNames.clear(); // never iterated
+	}
 
 	MoveDef* GetMoveDefByPathType(unsigned int pathType) { return &moveDefs[pathType]; }
 	MoveDef* GetMoveDefByName(const std::string& name);
@@ -157,10 +161,10 @@ private:
 	std::vector<MoveDef> moveDefs;
 	spring::unordered_map<std::string, int> moveDefNames;
 
-	unsigned int checksum;
+	unsigned int checksum = 0;
 };
 
-extern MoveDefHandler* moveDefHandler;
+extern MoveDefHandler moveDefHandler;
 
 #endif // MOVEDEF_HANDLER_H
 

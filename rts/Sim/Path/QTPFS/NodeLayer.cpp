@@ -110,7 +110,7 @@ bool QTPFS::NodeLayer::ExecQueuedUpdate() {
 	const std::vector<float>* speedMods = &layerUpdate.speedMods;
 	const std::vector<  int>* blockBits = &layerUpdate.blockBits;
 
-	return (Update(rectangle, moveDefHandler->GetMoveDefByPathType(layerNumber), speedMods, blockBits));
+	return (Update(rectangle, moveDefHandler.GetMoveDefByPathType(layerNumber), speedMods, blockBits));
 }
 #endif
 

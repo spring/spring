@@ -2,7 +2,6 @@
 
 #include "MoveDefHandler.h"
 #include "Lua/LuaParser.h"
-#include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -13,7 +12,7 @@
 #include "System/StringUtil.h"
 
 CR_BIND(MoveDef, ())
-CR_BIND(MoveDefHandler, (nullptr))
+CR_BIND(MoveDefHandler, )
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -55,11 +54,11 @@ CR_REG_METADATA(MoveDefHandler, (
 ))
 
 
-MoveDefHandler* moveDefHandler;
+MoveDefHandler moveDefHandler;
 
 // FIXME: do something with these magic numbers
-static const float MAX_ALLOWED_WATER_DAMAGE_GMM = 1e3f;
-static const float MAX_ALLOWED_WATER_DAMAGE_HMM = 1e4f;
+static constexpr float MAX_ALLOWED_WATER_DAMAGE_GMM = 1e3f;
+static constexpr float MAX_ALLOWED_WATER_DAMAGE_HMM = 1e4f;
 
 static float DegreesToMaxSlope(float degrees)
 {
@@ -95,7 +94,7 @@ static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName,
 
 
 
-MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
+void MoveDefHandler::Init(LuaParser* defsParser)
 {
 	const LuaTable& rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 
@@ -111,7 +110,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 		crc << terrType.hoverSpeed << terrType.shipSpeed;
 	}
 
+	moveDefs.clear();
 	moveDefs.reserve(rootTable.GetLength());
+	moveDefNames.clear();
+	moveDefNames.reserve(rootTable.GetLength());
+
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable& moveDefTable = rootTable.SubTable(num);
 
@@ -138,7 +141,7 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	auto it = moveDefNames.find(name);
+	const auto it = moveDefNames.find(name);
 
 	if (it == moveDefNames.end())
 		return nullptr;

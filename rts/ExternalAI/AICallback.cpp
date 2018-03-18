@@ -714,8 +714,8 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 
 int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
-	assert(((size_t)pathType) < moveDefHandler->GetNumMoveDefs());
-	return pathManager->RequestPath(nullptr, moveDefHandler->GetMoveDefByPathType(pathType), start, end, goalRadius, false);
+	assert(((size_t)pathType) < moveDefHandler.GetNumMoveDefs());
+	return pathManager->RequestPath(nullptr, moveDefHandler.GetMoveDefByPathType(pathType), start, end, goalRadius, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)

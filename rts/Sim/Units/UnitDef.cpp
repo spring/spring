@@ -512,7 +512,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
 			// invalidate this unitDef; caught in ParseUnitDef
-			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == nullptr)
+			if ((moveDef = moveDefHandler.GetMoveDefByName(moveClass)) == nullptr)
 				throw content_error(errMsg);
 
 			this->pathType = moveDef->pathType;

@@ -92,7 +92,7 @@ static SColor GetSpeedModColor(const float sm) {
 const MoveDef* CPathTexture::GetSelectedMoveDef()
 {
 	if (forcedPathType >= 0)
-		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
+		return moveDefHandler.GetMoveDefByPathType(forcedPathType);
 
 	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 
