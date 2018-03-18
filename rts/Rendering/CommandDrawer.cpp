@@ -231,19 +231,21 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 	if (owner->selfDCountdown != 0)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 
-	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int cmdID = ci->GetID();
+	for (const Command& ci: commandQue) {
+		const int cmdID = ci.GetID();
 
 		if (cmdID < 0) {
 			if (cai->buildOptions.find(cmdID) != cai->buildOptions.end()) {
 				BuildInfo bi;
-				bi.Parse(*ci);
+
+				if (!bi.Parse(ci))
+					continue;
 
 				cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
 				lineDrawer.DrawLine(bi.pos, cmdColors.build);
 
 				// draw metal extraction range
-				if (bi.def->extractRange > 0) {
+				if (bi.def->extractRange > 0.0f) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
 					glColor4fv(cmdColors.rangeExtract);
 					glSurfaceCircle(bi.pos, bi.def->extractRange, 40.0f);
@@ -255,17 +257,17 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.move);
 			} break;
 			case CMD_FIGHT:{
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.fight);
 			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0), cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0), cmdColors.patrol);
 			} break;
 
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.params[0]));
 
 				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
@@ -273,28 +275,28 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			} break;
 
 			case CMD_RESTORE: {
-				const float3& endPos = ci->GetPos(0);
+				const float3& endPos = ci.GetPos(0);
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
 				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci->params[3], 20.0f);
+				glSurfaceCircle(endPos, ci.params[3], 20.0f);
 				lineDrawer.RestartWithColor(cmdColors.restore);
 			} break;
 
 			case CMD_ATTACK:
 			case CMD_MANUALFIRE: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
+				if (ci.params.size() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.params[0]));
 
 					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 
 				} else {
-					assert(ci->params.size() >= 3);
+					assert(ci.params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+					const float x = ci.params[0];
+					const float z = ci.params[2];
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
@@ -305,18 +307,18 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			case CMD_RESURRECT: {
 				const float* color = (cmdID == CMD_RECLAIM) ? cmdColors.reclaim
 				                                             : cmdColors.resurrect;
-				if (ci->params.size() == 4) {
-					const float3& endPos = ci->GetPos(0);
+				if (ci.params.size() == 4) {
+					const float3& endPos = ci.GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci.params[3], 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
-					assert(ci->params[0] >= 0.0f);
+					assert(ci.params[0] >= 0.0f);
 
-					const unsigned int id = std::max(0.0f, ci->params[0]);
+					const unsigned int id = std::max(0.0f, ci.params[0]);
 
 					if (id >= unitHandler.MaxUnits()) {
 						const CFeature* feature = featureHandler.GetFeature(id - unitHandler.MaxUnits());
@@ -336,19 +338,19 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 			case CMD_REPAIR:
 			case CMD_CAPTURE: {
-				const float* color = (ci->GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
+				const float* color = (ci.GetID() == CMD_REPAIR) ? cmdColors.repair: cmdColors.capture;
 
-				if (ci->params.size() == 4) {
-					const float3& endPos = ci->GetPos(0);
+				if (ci.params.size() == 4) {
+					const float3& endPos = ci.GetPos(0);
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
 					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircle(endPos, ci.params[3], 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
-					if (ci->params.size() >= 1) {
-						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
+					if (ci.params.size() >= 1) {
+						const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.params[0]));
 
 						if (unit != nullptr)
 							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
@@ -358,18 +360,18 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			} break;
 
 			case CMD_LOAD_ONTO: {
-				const CUnit* unit = unitHandler.GetUnitUnsafe(ci->params[0]);
+				const CUnit* unit = unitHandler.GetUnitUnsafe(ci.params[0]);
 				lineDrawer.DrawLineAndIcon(cmdID, unit->pos, cmdColors.load);
 			} break;
 			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
+				DrawWaitIcon(ci);
 			} break;
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->GetID());
+				lineDrawer.DrawIconAtLastPos(ci.GetID());
 			} break;
 
 			default: {
-				DrawDefaultCommand(*ci, owner);
+				DrawDefaultCommand(ci, owner);
 			} break;
 		}
 	}
@@ -393,32 +395,32 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT))
 		DrawWaitIcon(commandQue.front());
 
-	for (auto ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
-		const int cmdID = ci->GetID();
+	for (const Command& ci: newUnitCommands) {
+		const int cmdID = ci.GetID();
 
 		switch (cmdID) {
 			case CMD_MOVE: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.move);
 			} break;
 			case CMD_FIGHT: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.fight);
 			} break;
 			case CMD_PATROL: {
-				lineDrawer.DrawLineAndIcon(cmdID, ci->GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmdID, ci.GetPos(0) + UpVector * 3.0f, cmdColors.patrol);
 			} break;
 
 			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
+				if (ci.params.size() == 1) {
+					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.params[0]));
 
 					if (unit != nullptr)
 						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 
 				} else {
-					assert(ci->params.size() >= 3);
+					assert(ci.params.size() >= 3);
 
-					const float x = ci->params[0];
-					const float z = ci->params[2];
+					const float x = ci.params[0];
+					const float z = ci.params[2];
 					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
 
 					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
@@ -426,7 +428,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			} break;
 
 			case CMD_GUARD: {
-				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
+				const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci.params[0]));
 
 				if (unit != nullptr)
 					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
@@ -434,20 +436,22 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			} break;
 
 			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
+				DrawWaitIcon(ci);
 			} break;
 			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(cmdID);
 			} break;
 
 			default: {
-				DrawDefaultCommand(*ci, owner);
+				DrawDefaultCommand(ci, owner);
 			} break;
 		}
 
-		if ((cmdID < 0) && (ci->params.size() >= 3)) {
+		if ((cmdID < 0) && (ci.params.size() >= 3)) {
 			BuildInfo bi;
-			bi.Parse(*ci);
+
+			if (!bi.Parse(ci))
+				continue;
 
 			cursorIcons.AddBuildIcon(cmdID, bi.pos, owner->team, bi.buildFacing);
 			lineDrawer.DrawLine(bi.pos, cmdColors.build);
