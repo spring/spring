@@ -11,21 +11,24 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
-CFeatureDefHandler* featureDefHandler = nullptr;
+static CFeatureDefHandler gFeatureDefHandler;
+CFeatureDefHandler* featureDefHandler = &gFeatureDefHandler;
 
-CFeatureDefHandler::CFeatureDefHandler(LuaParser* defsParser)
+void CFeatureDefHandler::Init(LuaParser* defsParser)
 {
 	const LuaTable rootTable = defsParser->GetRoot().SubTable("FeatureDefs");
 
 	if (!rootTable.IsValid())
 		throw content_error("Error loading FeatureDefs");
 
-	// featureDefIDs start with 1
-	featureDefsVector.emplace_back();
-
-	// get most of the feature defs (missing trees and geovent from the map)
+	// get most of the feature defs (excluding map-defined trees and geovents)
 	std::vector<std::string> keys;
 	rootTable.GetKeys(keys);
+
+	// FeatureDef ID's start with 1
+	featureDefIDs.reserve(keys.size());
+	featureDefsVector.reserve(keys.size());
+	featureDefsVector.emplace_back();
 
 	for (unsigned int i = 0; i < keys.size(); i++) {
 		const std::string& nameMixedCase = keys[i];
@@ -52,25 +55,19 @@ CFeatureDefHandler::CFeatureDefHandler(LuaParser* defsParser)
 	}
 }
 
-CFeatureDefHandler::~CFeatureDefHandler()
-{
-	featureDefs.clear();
-	featureDefsVector.clear();
-}
-
 
 void CFeatureDefHandler::AddFeatureDef(const std::string& name, FeatureDef* fd, bool isDefaultFeature)
 {
 	if (fd == nullptr)
 		return;
 
-	assert(featureDefs.find(name) == featureDefs.end());
+	assert(featureDefIDs.find(name) == featureDefIDs.end());
 
 	// generated trees, etc have no pieces
 	fd->collisionVolume.SetDefaultToPieceTree(fd->collisionVolume.DefaultToPieceTree() && !isDefaultFeature);
 	fd->collisionVolume.SetIgnoreHits(fd->geoThermal);
 
-	featureDefs[name] = fd->id;
+	featureDefIDs[name] = fd->id;
 }
 
 FeatureDef& CFeatureDefHandler::GetNewFeatureDef()
@@ -87,7 +84,7 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 {
 	const std::string& name = StringToLower(mixedCase);
 
-	if (featureDefs.find(name) != featureDefs.end())
+	if (featureDefIDs.find(name) != featureDefIDs.end())
 		return nullptr;
 
 	FeatureDef& fd = GetNewFeatureDef();
@@ -204,9 +201,9 @@ const FeatureDef* CFeatureDefHandler::GetFeatureDef(string name, const bool show
 		return nullptr;
 
 	StringToLowerInPlace(name);
-	const auto fi = featureDefs.find(name);
+	const auto fi = featureDefIDs.find(name);
 
-	if (fi != featureDefs.end())
+	if (fi != featureDefIDs.end())
 		return &featureDefsVector[fi->second];
 
 	if (showError)

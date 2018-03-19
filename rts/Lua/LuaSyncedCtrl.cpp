@@ -2599,7 +2599,8 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = unitHandler.GetUnit(attackerID);
 	}
 
-	if (weaponDefID >= int(weaponDefHandler->weaponDefs.size()))
+	// -1 is allowed
+	if (weaponDefID >= int(weaponDefHandler->NumWeaponDefs()))
 		return 0;
 
 	DamageArray damages;

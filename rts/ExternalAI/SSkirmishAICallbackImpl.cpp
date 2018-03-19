@@ -4123,17 +4123,19 @@ EXPORT(const char*) skirmishAiCallback_Team_getRulesParamString(int skirmishAIId
 
 //########### BEGINN FeatureDef
 EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefIds, int featureDefIdsMaxSize) {
-	const auto& fds = featureDefHandler->GetFeatureDefs();
-	const int featureDefIdsRealSize = fds.size();
+	const auto& featureDefs = featureDefHandler->GetFeatureDefsVec();
+	const int featureDefIdsRealSize = featureDefs.size();
 
 	int featureDefIdsSize = featureDefIdsRealSize;
 
 	if (featureDefIds != nullptr) {
 		featureDefIdsSize = std::min(featureDefIdsRealSize, featureDefIdsMaxSize);
 
-		auto fdi = fds.cbegin();
+		// skip dummy
+		auto fdi = ++(featureDefs.cbegin());
+
 		for (int f = 0; f < featureDefIdsSize; ++f, ++fdi) {
-			featureDefIds[f] = fdi->second;
+			featureDefIds[f] = fdi->id;
 		}
 	}
 
@@ -4377,7 +4379,7 @@ EXPORT(const char*) skirmishAiCallback_Feature_getRulesParamString(int skirmishA
 
 //########### BEGINN WeaponDef
 EXPORT(int) skirmishAiCallback_getWeaponDefs(int skirmishAIId) {
-	return weaponDefHandler->weaponDefs.size();
+	return (weaponDefHandler->NumWeaponDefs());
 }
 
 EXPORT(int) skirmishAiCallback_getWeaponDefByName(int skirmishAIId, const char* weaponDefName) {

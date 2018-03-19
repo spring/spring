@@ -546,17 +546,17 @@ void CGame::PostLoadSimulation()
 	{
 		ScopedOnceTimer timer("Game::PostLoadSim (WeaponDefs)");
 		loadscreen->SetLoadMessage("Loading Weapon Definitions");
-		weaponDefHandler = new CWeaponDefHandler(defsParser);
+		weaponDefHandler->Init(defsParser);
 	}
 	{
 		ScopedOnceTimer timer("Game::PostLoadSim (UnitDefs)");
 		loadscreen->SetLoadMessage("Loading Unit Definitions");
-		unitDefHandler = new CUnitDefHandler(defsParser);
+		unitDefHandler->Init(defsParser);
 	}
 	{
 		ScopedOnceTimer timer("Game::PostLoadSim (FeatureDefs)");
 		loadscreen->SetLoadMessage("Loading Feature Definitions");
-		featureDefHandler = new CFeatureDefHandler(defsParser);
+		featureDefHandler->Init(defsParser);
 	}
 
 	CUnit::InitStatic();
@@ -668,14 +668,12 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(sn + " ", false, false, false);
 		}
 
-		const auto& unitDefs = unitDefHandler->unitDefIDsByName;
-		const auto& featureDefs = featureDefHandler->GetFeatureDefs();
-
-		for (auto uit = unitDefs.cbegin(); uit != unitDefs.cend(); ++uit) {
-			wordCompletion->AddWord(uit->first + " ", false, true, false);
+		// register {Unit,Feature}Def names
+		for (const auto& pair: unitDefHandler->GetUnitDefIDs()) {
+			wordCompletion->AddWord(pair.first + " ", false, true, false);
 		}
-		for (auto fit = featureDefs.cbegin(); fit != featureDefs.cend(); ++fit) {
-			wordCompletion->AddWord(fit->first + " ", false, true, false);
+		for (const auto& pair: featureDefHandler->GetFeatureDefIDs()) {
+			wordCompletion->AddWord(pair.first + " ", false, true, false);
 		}
 	}
 
@@ -895,9 +893,9 @@ void CGame::KillSimulation()
 	CLosHandler::KillStatic(gu->globalReload);
 	quadField.Kill();
 	moveDefHandler.Kill();
-	spring::SafeDelete(unitDefHandler);
-	spring::SafeDelete(featureDefHandler);
-	spring::SafeDelete(weaponDefHandler);
+	unitDefHandler->Kill();
+	featureDefHandler->Kill();
+	weaponDefHandler->Kill();
 	damageArrayHandler.Kill();
 	explGenHandler.Kill();
 	spring::SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));

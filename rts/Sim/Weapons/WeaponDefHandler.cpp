@@ -5,19 +5,19 @@
 #include <cctype>
 #include <iostream>
 #include <stdexcept>
-#include "WeaponDefHandler.h"
 
+#include "WeaponDefHandler.h"
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
-#include "System/Log/ILog.h"
 
 
-CWeaponDefHandler* weaponDefHandler = nullptr;
+static CWeaponDefHandler gWeaponDefHandler;
+CWeaponDefHandler* weaponDefHandler = &gWeaponDefHandler;
 
 
-CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
+void CWeaponDefHandler::Init(LuaParser* defsParser)
 {
 	const LuaTable& rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
 
@@ -27,34 +27,36 @@ CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 	std::vector<std::string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	weaponDefs.reserve(weaponNames.size());
+	weaponDefsVector.reserve(weaponNames.size());
+	weaponDefIDs.reserve(weaponNames.size());
 
 	for (int wid = 0; wid < weaponNames.size(); wid++) {
 		const std::string& name = weaponNames[wid];
 		const LuaTable wdTable = rootTable.SubTable(name);
-		weaponDefs.emplace_back(wdTable, name, wid);
-		weaponID[name] = wid;
+		weaponDefsVector.emplace_back(wdTable, name, wid);
+		weaponDefIDs[name] = wid;
 	}
 }
 
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string weaponname) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string wdName) const
 {
-	StringToLowerInPlace(weaponname);
+	StringToLowerInPlace(wdName);
 
-	auto ii = weaponID.find(weaponname);
-	if (ii == weaponID.end())
+	const auto it = weaponDefIDs.find(wdName);
+
+	if (it == weaponDefIDs.end())
 		return nullptr;
 
-	return &weaponDefs[ii->second];
+	return &weaponDefsVector[it->second];
 }
 
 
-const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
+const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int id) const
 {
-	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size()))
+	if (!IsValidWeaponDefID(id))
 		return nullptr;
 
-	return &weaponDefs[weaponDefId];
+	return &weaponDefsVector[id];
 }
