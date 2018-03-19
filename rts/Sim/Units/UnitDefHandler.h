@@ -9,7 +9,6 @@
 #include "UnitDef.h"
 #include "Sim/Misc/CommonDefHandler.h"
 #include "System/UnorderedMap.hpp"
-#include "System/UnorderedSet.hpp"
 
 class LuaTable;
 struct UnitDef;
@@ -19,33 +18,45 @@ class LuaParser;
 class CUnitDefHandler : CommonDefHandler
 {
 public:
-	CUnitDefHandler(LuaParser* defsParser);
+	void Init(LuaParser* defsParser);
+	void Kill() {
+		unitDefsVector.clear();
+		unitDefIDs.clear(); // never iterated in synced code
 
-	void Init();
-	void ProcessDecoys();
+		// reuse inner vectors when reloading; keys are never iterated
+		// decoyMap.clear();
+
+		for (auto& pair: decoyMap) {
+			pair.second.clear();
+		}
+
+		decoyNameMap.clear();
+	}
 
 	bool GetNoCost() { return noCost; }
 	void SetNoCost(bool value);
 
-	// NOTE: safe with unordered_map after ctor
+	// NOTE: safe with unordered_map after Init
 	const UnitDef* GetUnitDefByName(std::string name);
-	const UnitDef* GetUnitDefByID(int id);
+	const UnitDef* GetUnitDefByID(int id) {
+		if (!IsValidUnitDefID(id))
+			return nullptr;
+
+		return &unitDefsVector[id];
+	}
 
 	bool IsValidUnitDefID(const int id) const {
-		/// zero is not valid!
-		return (id > 0) && (id < (int)unitDefs.size());
+		return (id > 0) && (static_cast<size_t>(id) < unitDefsVector.size());
 	}
 
 	// id=0 is not a valid UnitDef, hence the -1
-	unsigned int NumUnitDefs() const { return (unitDefs.size() - 1); }
+	unsigned int NumUnitDefs() const { return (unitDefsVector.size() - 1); }
 
 	int PushNewUnitDef(const std::string& unitName, const LuaTable& udTable);
 
-	spring::unordered_map<int, spring::unordered_set<int> > decoyMap;
-
-//protected: //FIXME UnitDef::*ExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
-	std::vector<UnitDef> unitDefs;
-	spring::unordered_map<std::string, int> unitDefIDsByName;
+	const std::vector<UnitDef>& GetUnitDefsVec() const { return unitDefsVector; }
+	const spring::unordered_map<std::string, int>& GetUnitDefIDs() const { return unitDefIDs; }
+	const spring::unordered_map<int, std::vector<int> >& GetDecoyDefIDs() const { return decoyMap; }
 
 protected:
 	void UnitDefLoadSounds(UnitDef*, const LuaTable&);
@@ -53,11 +64,15 @@ protected:
 	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);
 
 	void CleanBuildOptions();
+	void ProcessDecoys();
 
 private:
-	spring::unordered_map<std::string, std::string> decoyNameMap;
+	std::vector<UnitDef> unitDefsVector;
+	spring::unordered_map<std::string, int> unitDefIDs;
+	spring::unordered_map<int, std::vector<int> > decoyMap;
+	std::vector< std::pair<std::string, std::string> > decoyNameMap;
 
-	bool noCost;
+	bool noCost = false;
 };
 
 extern CUnitDefHandler* unitDefHandler;

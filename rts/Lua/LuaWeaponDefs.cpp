@@ -60,7 +60,7 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
 
-	const auto& defsMap = weaponDefHandler->weaponID;
+	const auto& defsVec = weaponDefHandler->GetWeaponDefsVec();
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
@@ -75,8 +75,8 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 	const std::array<const IndxFuncType, 3> indxFuncs = {{WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable}};
 	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
+	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
+		const auto def = weaponDefHandler->GetWeaponDefByID(it->id);
 
 		if (def == nullptr)
 			continue;

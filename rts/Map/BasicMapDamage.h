@@ -5,7 +5,6 @@
 
 #include "MapDamage.h"
 
-#include <deque>
 #include <vector>
 
 class CBasicMapDamage : public IMapDamage

@@ -15,7 +15,8 @@
 #include "System/Sound/ISound.h"
 
 
-CUnitDefHandler* unitDefHandler = nullptr;
+static CUnitDefHandler gUnitDefHandler;
+CUnitDefHandler* unitDefHandler = &gUnitDefHandler;
 
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
@@ -25,8 +26,10 @@ bool isblank(int c) {
 #endif
 
 
-CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
+void CUnitDefHandler::Init(LuaParser* defsParser)
 {
+	noCost = false;
+
 	const LuaTable& rootTable = defsParser->GetRoot().SubTable("UnitDefs");
 
 	if (!rootTable.IsValid())
@@ -35,8 +38,9 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 	std::vector<std::string> unitDefNames;
 	rootTable.GetKeys(unitDefNames);
 
-	unitDefs.reserve(unitDefNames.size() + 1);
-	unitDefs.emplace_back();
+	unitDefIDs.reserve(unitDefNames.size() + 1);
+	unitDefsVector.reserve(unitDefNames.size() + 1);
+	unitDefsVector.emplace_back();
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string& unitName = unitDefNames[a];
@@ -54,23 +58,19 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 
 int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable& udTable)
 {
-	if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end()) {
-		LOG_L(L_WARNING,
-				"UnitDef name \"%s\" contains white-spaces, "
-				"which will likely cause problems. "
-				"Please contact the Game/Mod developers.",
-				unitName.c_str());
-	}
+	if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end())
+		LOG_L(L_WARNING, "[%s] UnitDef name \"%s\" contains white-spaces", __func__, unitName.c_str());
 
-	const int defID = unitDefs.size();
+	const int defID = unitDefsVector.size();
 
 	try {
-		unitDefs.emplace_back(udTable, unitName, defID);
-		UnitDef& newDef = unitDefs.back();
+		unitDefsVector.emplace_back(udTable, unitName, defID);
+		UnitDef& newDef = unitDefsVector.back();
 		UnitDefLoadSounds(&newDef, udTable);
 
+		// map unitName to newDef.decoyName
 		if (!newDef.decoyName.empty())
-			decoyNameMap[unitName] = StringToLower(newDef.decoyName);
+			decoyNameMap.emplace_back(unitName, StringToLower(newDef.decoyName));
 
 		// force-initialize the real* members
 		newDef.SetNoCost(true);
@@ -80,7 +80,7 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		return 0;
 	}
 
-	unitDefIDsByName[unitName] = defID;
+	unitDefIDs[unitName] = defID;
 	return defID;
 }
 
@@ -90,8 +90,8 @@ void CUnitDefHandler::CleanBuildOptions()
 	std::vector<int> eraseOpts;
 
 	// remove invalid build options
-	for (int i = 1; i < unitDefs.size(); i++) {
-		UnitDef& ud = unitDefs[i];
+	for (size_t i = 1; i < unitDefsVector.size(); i++) {
+		UnitDef& ud = unitDefsVector[i];
 
 		auto& buildOpts = ud.buildOptions;
 
@@ -117,17 +117,30 @@ void CUnitDefHandler::CleanBuildOptions()
 void CUnitDefHandler::ProcessDecoys()
 {
 	// assign the decoy pointers, and build the decoy map
-	for (auto mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
-		const auto fakeIt = unitDefIDsByName.find(mit->first);
-		const auto realIt = unitDefIDsByName.find(mit->second);
+	for (const auto& p: decoyNameMap) {
+		const auto fakeIt = unitDefIDs.find(p.first);
+		const auto realIt = unitDefIDs.find(p.second);
 
-		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
-			UnitDef& fake = unitDefs[fakeIt->second];
-			UnitDef& real = unitDefs[realIt->second];
-			fake.decoyDef = &real;
-			decoyMap[real.id].insert(fake.id);
-		}
+		if ((fakeIt == unitDefIDs.end()) || (realIt == unitDefIDs.end()))
+			continue;
+
+		UnitDef& fakeDef = unitDefsVector[fakeIt->second];
+		UnitDef& realDef = unitDefsVector[realIt->second];
+		fakeDef.decoyDef = &realDef;
+		decoyMap[realDef.id].push_back(fakeDef.id);
 	}
+
+	for (auto& pair: decoyMap) {
+		auto& vect = pair.second;
+
+		std::sort(vect.begin(), vect.end());
+
+		const auto vend = vect.end();
+		const auto vera = std::unique(vect.begin(), vend);
+
+		vect.erase(vera, vend);
+	}
+
 	decoyNameMap.clear();
 }
 
@@ -191,21 +204,12 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
-	const auto it = unitDefIDsByName.find(name);
+	const auto it = unitDefIDs.find(name);
 
-	if (it == unitDefIDsByName.end())
+	if (it == unitDefIDs.end())
 		return nullptr;
 
-	return &unitDefs[it->second];
-}
-
-
-const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
-{
-	if ((defid <= 0) || (defid >= unitDefs.size()))
-		return nullptr;
-
-	return &unitDefs[defid];
+	return &unitDefsVector[it->second];
 }
 
 
@@ -216,8 +220,8 @@ void CUnitDefHandler::SetNoCost(bool value)
 
 	noCost = value;
 
-	for (size_t i = 1; i < unitDefs.size(); ++i) {
-		unitDefs[i].SetNoCost(noCost);
+	for (size_t i = 1; i < unitDefsVector.size(); ++i) {
+		unitDefsVector[i].SetNoCost(noCost);
 	}
 }
 

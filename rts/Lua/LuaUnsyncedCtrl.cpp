@@ -2196,7 +2196,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		ud->decoyDef->iconType = ud->iconType;
 
 	// unordered_map<int, unordered_set<int> >
-	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 
 	if (decoyMapIt == decoyMap.end())

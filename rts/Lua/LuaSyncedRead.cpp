@@ -1744,10 +1744,10 @@ static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied)
 	gtuObjectIDs.push_back(ud->id);
 
 	// spring::unordered_map<int, spring::unordered_set<int> >
-	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find(ud->id);
 
-	if (decoyMapIt == unitDefHandler->decoyMap.end())
+	if (decoyMapIt == decoyMap.end())
 		return;
 
 	for (int decoyDefID: decoyMapIt->second) {
@@ -1811,10 +1811,11 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 			bool createdTable = PushVisibleUnits(L, unitHandler.GetUnitsByTeamAndDef(teamID, unitDefID), unitDefID, &unitCount, &defCount);
 
 			// for all decoy-defs of unitDefID, add decoy units under the same ID
-			const auto dmit = unitDefHandler->decoyMap.find(unitDefID);
+			const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
+			const auto decoyMapIt = decoyMap.find(unitDefID);
 
-			if (dmit != unitDefHandler->decoyMap.end()) {
-				for (int decoyDefID: dmit->second) {
+			if (decoyMapIt != decoyMap.end()) {
+				for (int decoyDefID: decoyMapIt->second) {
 					createdTable |= PushVisibleUnits(L, unitHandler.GetUnitsByTeamAndDef(teamID, decoyDefID), unitDefID, &unitCount, &defCount);
 				}
 			}
@@ -2020,10 +2021,11 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	}
 
 	// tally the decoy units for the given unitDef
-	const auto dmit = unitDefHandler->decoyMap.find(unitDef->id);
+	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
+	const auto decoyMapIt = decoyMap.find(unitDef->id);
 
-	if (dmit != unitDefHandler->decoyMap.end()) {
-		for (const int udID: dmit->second) {
+	if (decoyMapIt != decoyMap.end()) {
+		for (const int udID: decoyMapIt->second) {
 			for (const CUnit* unit: unitHandler.GetUnitsByTeamAndDef(teamID, udID)) {
 				unitCount += (IsUnitTyped(L, unit));
 			}

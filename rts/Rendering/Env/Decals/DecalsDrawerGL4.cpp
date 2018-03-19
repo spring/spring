@@ -403,8 +403,8 @@ static STex LoadTexture(const std::string& name)
 
 static inline void GetBuildingDecals(spring::unordered_map<std::string, STex>& textures)
 {
-	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
-		SolidObjectDecalDef& decalDef = unitDef.decalDef;
+	for (const UnitDef& unitDef: unitDefHandler->GetUnitDefsVec()) {
+		const SolidObjectDecalDef& decalDef = unitDef.decalDef;
 
 		if (!decalDef.useGroundDecal)
 			continue;

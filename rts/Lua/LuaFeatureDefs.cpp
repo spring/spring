@@ -47,7 +47,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
 
-	const auto& defsMap = featureDefHandler->GetFeatureDefs();
+	const auto& defsVec = featureDefHandler->GetFeatureDefsVec();
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
@@ -62,8 +62,8 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	const std::array<const IndxFuncType, 3> indxFuncs = {{FeatureDefIndex, FeatureDefNewIndex, FeatureDefMetatable}};
 	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = featureDefHandler->GetFeatureDefByID(it->second); // ObjectDefMapType::mapped_type
+	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
+		const auto def = featureDefHandler->GetFeatureDefByID(it->id); // ObjectDefMapType::mapped_type
 
 		if (def == nullptr)
 			continue;

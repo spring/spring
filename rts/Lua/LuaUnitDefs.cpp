@@ -62,7 +62,7 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
 
-	const auto& defsMap = unitDefHandler->unitDefIDsByName;
+	const auto& defsVec = unitDefHandler->GetUnitDefsVec();
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
@@ -77,8 +77,8 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 	const std::array<const IndxFuncType, 3> indxFuncs = {{UnitDefIndex, UnitDefNewIndex, UnitDefMetatable}};
 	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = unitDefHandler->GetUnitDefByID(it->second);
+	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
+		const auto def = unitDefHandler->GetUnitDefByID(it->id);
 
 		if (def == nullptr)
 			continue;
@@ -304,15 +304,15 @@ static int CustomParamsTable(lua_State* L, const void* data)
 static int BuildOptions(lua_State* L, const void* data)
 {
 	const spring::unordered_map<int, std::string>& buildOptions = *((const spring::unordered_map<int, std::string>*)data);
-	const spring::unordered_map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+	const spring::unordered_map<std::string, int>& unitDefIDsMap = unitDefHandler->GetUnitDefIDs();
 
 	lua_newtable(L);
 	int count = 0;
 
 	for (auto it = buildOptions.cbegin(); it != buildOptions.cend(); ++it) {
-		const auto fit = unitMap.find(it->second);
+		const auto fit = unitDefIDsMap.find(it->second);
 
-		if (fit != unitMap.end()) {
+		if (fit != unitDefIDsMap.end()) {
 			count++;
 			lua_pushnumber(L, count);
 			lua_pushnumber(L, fit->second); // UnitDef id
@@ -578,7 +578,7 @@ static bool InitParamMap()
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy UnitDef for address lookups
-	const UnitDef& ud = unitDefHandler->unitDefs[0];
+	const UnitDef& ud = unitDefHandler->GetUnitDefsVec()[0];
 	const char* start = ADDRESS(ud);
 
 /*

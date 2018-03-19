@@ -334,8 +334,8 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 		return false;
 
 	watchUnitDefs.resize(unitDefHandler->NumUnitDefs() + 1, false);
-	watchFeatureDefs.resize(featureDefHandler->GetFeatureDefs().size(), false);
-	watchWeaponDefs.resize(weaponDefHandler->weaponDefs.size(), false);
+	watchFeatureDefs.resize(featureDefHandler->NumFeatureDefs() + 1, false);
+	watchWeaponDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
