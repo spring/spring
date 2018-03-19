@@ -143,7 +143,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
-	if (owner->unitDef->canRestore && !mapDamage->disabled) {
+	if (owner->unitDef->canRestore && !mapDamage->Disabled()) {
 		SCommandDescription c;
 
 		c.id   = CMD_RESTORE;

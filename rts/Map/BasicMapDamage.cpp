@@ -18,7 +18,6 @@
 void CBasicMapDamage::Init()
 {
 	mapHardness = mapInfo->map.hardness;
-	disabled = false;
 
 	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
 		const float r  = a / float(CRATER_TABLE_SIZE);
@@ -239,11 +238,11 @@ void CBasicMapDamage::Update()
 			continue;
 
 
-		unsigned int expPoolIdx = e.idx;
+		unsigned int expSquarePoolIdx = e.idx;
 
 		for (int y = e.y1; y <= e.y2; ++y) {
 			for (int x = e.x1; x <= e.x2; ++x) {
-				readMap->AddHeight(y * mapDims.mapxp1 + x, explosionSquaresPool[ (expPoolIdx++) % explosionSquaresPool.size() ]);
+				readMap->AddHeight(y * mapDims.mapxp1 + x, explosionSquaresPool[ (expSquarePoolIdx++) % explosionSquaresPool.size() ]);
 			}
 		}
 

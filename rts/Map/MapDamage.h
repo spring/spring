@@ -21,7 +21,8 @@ public:
 	virtual void Init() = 0;
 	virtual void Update() = 0;
 
-	bool disabled = true;
+	virtual bool Disabled() const = 0;
+
 	float mapHardness = 0.0f;
 };
 

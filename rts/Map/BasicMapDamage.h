@@ -18,6 +18,8 @@ public:
 	void Init() override;
 	void Update() override;
 
+	bool Disabled() const override { return false; }
+
 private:
 	void SetExplosionSquare(float v) {
 		explosionSquaresPool[explSquaresPoolIdx] = v;

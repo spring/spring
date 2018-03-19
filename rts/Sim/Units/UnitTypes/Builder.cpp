@@ -147,7 +147,7 @@ bool CBuilder::UpdateTerraform(const Command&)
 	const float* heightmap = readMap->GetCornerHeightMapSynced();
 	float terraformScale = 0.1f;
 
-	assert(!mapDamage->disabled);
+	assert(!mapDamage->Disabled());
 
 	switch (terraformType) {
 		case Terraform_Building: {
@@ -761,7 +761,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 	// floating structures don't terraform the seabed
 	const bool buildeeOnWater = (buildee->FloatOnWater() && buildee->IsInWater());
-	const bool allowTerraform = (!mapDamage->disabled && buildeeDef->levelGround);
+	const bool allowTerraform = (!mapDamage->Disabled() && buildeeDef->levelGround);
 	const bool  skipTerraform = (buildeeOnWater || buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit());
 
 	if (!allowTerraform || skipTerraform) {

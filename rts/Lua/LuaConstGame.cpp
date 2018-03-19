@@ -62,7 +62,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	// damage is enabled iff !mapInfo->map.notDeformable
 	if (mapDamage != nullptr)
-		LuaPushNamedBool(L, "mapDamage", !mapDamage->disabled);
+		LuaPushNamedBool(L, "mapDamage", !mapDamage->Disabled());
 
 
 	if (readMap != nullptr) {
