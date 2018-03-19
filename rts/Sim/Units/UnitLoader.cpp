@@ -339,7 +339,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 	const UnitDef* unitDef = unit->unitDef;
 	// const MoveDef* moveDef = unit->moveDef;
 
-	if (mapDamage->disabled)
+	if (mapDamage->Disabled())
 		return;
 	if (!unitDef->levelGround)
 		return;
@@ -374,7 +374,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
 
-	if (mapDamage->disabled)
+	if (mapDamage->Disabled())
 		return;
 	if (!unitDef->levelGround)
 		return;

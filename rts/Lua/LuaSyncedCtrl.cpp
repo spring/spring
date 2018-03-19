@@ -3657,7 +3657,7 @@ static inline void ParseMapParams(lua_State* L, const char* caller,
 
 int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 {
-	if (mapDamage->disabled) {
+	if (mapDamage->Disabled()) {
 		return 0;
 	}
 	float height;
@@ -3677,7 +3677,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 {
-	if (mapDamage->disabled) {
+	if (mapDamage->Disabled()) {
 		return 0;
 	}
 
@@ -3699,7 +3699,7 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 {
-	if (mapDamage->disabled) {
+	if (mapDamage->Disabled()) {
 		return 0;
 	}
 	float origFactor;
@@ -3822,7 +3822,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 {
-	if (mapDamage->disabled) {
+	if (mapDamage->Disabled()) {
 		return 0;
 	}
 

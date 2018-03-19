@@ -697,7 +697,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		} break;
 
 		case CMD_RESTORE: {
-			if (!ud->canRestore || mapDamage->disabled)
+			if (!ud->canRestore || mapDamage->Disabled())
 				return false;
 		} break;
 
