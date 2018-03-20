@@ -294,7 +294,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	CResourceHandler::CreateInstance();
 	CCategoryHandler::CreateInstance();
-	CWordCompletion::CreateInstance();
 }
 
 CGame::~CGame()
@@ -316,7 +315,6 @@ CGame::~CGame()
 	spring::SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 
 	LOG("[Game::%s][3]", __func__);
-	CWordCompletion::DestroyInstance();
 	CCategoryHandler::RemoveInstance();
 	CResourceHandler::FreeInstance();
 
@@ -645,10 +643,11 @@ void CGame::LoadInterface()
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 
 		gameConsoleHistory.Init();
+		wordCompletion.Init();
 		gameTextInput.ClearInput();
 
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+			wordCompletion.AddWord(playerHandler->Player(pp)->name, false, false, false, false);
 		}
 
 		// add the Skirmish AIs instance names to word completion (eg for chatting)
@@ -659,24 +658,26 @@ void CGame::LoadInterface()
 		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
 
 		for (const auto& ai: ais) {
-			wordCompletion->AddWord(ai.second.name + " ", false, false, false);
+			wordCompletion.AddWord(ai.second.name + " ", false, false, false, false);
 		}
 
 		for (const auto& aiLib: aiLibs) {
-			wordCompletion->AddWord(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false);
+			wordCompletion.AddWord(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false, false);
 		}
 
 		for (const std::string& sn: luaAIShortNames) {
-			wordCompletion->AddWord(sn + " ", false, false, false);
+			wordCompletion.AddWord(sn + " ", false, false, false, false);
 		}
 
 		// register {Unit,Feature}Def names
 		for (const auto& pair: unitDefHandler->GetUnitDefIDs()) {
-			wordCompletion->AddWord(pair.first + " ", false, true, false);
+			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
 		}
 		for (const auto& pair: featureDefHandler->GetFeatureDefIDs()) {
-			wordCompletion->AddWord(pair.first + " ", false, true, false);
+			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
 		}
+
+		wordCompletion.Sort();
 	}
 
 	if (infoConsole == nullptr)

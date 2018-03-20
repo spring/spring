@@ -409,7 +409,7 @@ void CGame::ClientReadNet()
 					player->SetReadyToStart(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 					player->active = true;
 
-					wordCompletion->AddWord(player->name, false, false, false); // required?
+					wordCompletion.AddWord(player->name, false, false, false); // required?
 					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERNAME] exception \"%s\"", __func__, ex.what());
@@ -1183,7 +1183,7 @@ void CGame::ClientReadNet()
 							const std::string aiName = aiData.name + " ";
 
 							skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
-							wordCompletion->AddWord(aiName, false, false, false);
+							wordCompletion.AddWord(aiName, false, false, false);
 						}
 					} else {
 						SkirmishAIData aiData;
@@ -1191,7 +1191,7 @@ void CGame::ClientReadNet()
 						aiData.name       = aiName;
 						aiData.hostPlayer = playerNum;
 						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
-						wordCompletion->AddWord(aiData.name + " ", false, false, false);
+						wordCompletion.AddWord(aiData.name + " ", false, false, false);
 					}
 
 					if (!tai->HasLeader())
@@ -1246,7 +1246,7 @@ void CGame::ClientReadNet()
 					} else {
 						const std::string aiInstanceName = aiData->name;
 
-						wordCompletion->RemoveWord(aiData->name + " ");
+						wordCompletion.RemoveWord(aiData->name + " ");
 						skirmishAIHandler.RemoveSkirmishAI(aiNum);
 
 						// not valid anymore after RemoveSkirmishAI()
