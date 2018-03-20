@@ -275,7 +275,7 @@ void FBO::Kill()
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 
 		for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
-			glDeleteRenderbuffers(1, &(*ri));
+			glDeleteRenderbuffersEXT(1, &(*ri));
 		}
 
 		rboIDs.clear();
