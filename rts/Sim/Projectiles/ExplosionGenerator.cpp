@@ -85,6 +85,10 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 static DynMemPool<sizeof(CCustomExplosionGenerator)> egMemPool;
 
+static uint8_t exploParserMem[sizeof(LuaParser)];
+static uint8_t aliasParserMem[sizeof(LuaParser)];
+static uint8_t explTblRootMem[sizeof(LuaTable )];
+
 CExplosionGeneratorHandler explGenHandler;
 
 
@@ -257,35 +261,37 @@ void CExplosionGeneratorHandler::ReloadGenerators(const std::string& tag) {
 	//   maps store tags inclusive of CEG_PREFIX_STRING
 	//   but the Lua subtables that define each CEG are
 	//   only indexed by tag postfix
-	if (tag.empty()) {
-		for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
-			IExplosionGenerator* eg = explosionGenerators[n];
-
-			// standard EG's (empty postfix) do not need to be reloaded
-			if (expGenIdentTagMap.find(n) == expGenIdentTagMap.end())
-				continue;
-
-			assert(eg->GetGeneratorID() == n);
-			LOG(preFmt, __FUNCTION__, n, expGenIdentTagMap[n].c_str());
-
-			if (!eg->Reload(this, expGenIdentTagMap[n].substr(7))) {
-				LOG_L(L_WARNING, pstFmt, __FUNCTION__, n, expGenIdentTagMap[n].c_str());
-			}
-		}
-	} else {
+	if (!tag.empty()) {
 		const auto it = expGenTagIdentMap.find(tag);
 
 		if (it == expGenTagIdentMap.end()) {
-			LOG_L(L_WARNING, "[%s] no CEG named \"%s\" (forgot the \"%s\" prefix?)", __FUNCTION__, tag.c_str(), CEG_PREFIX_STRING);
+			LOG_L(L_WARNING, "[%s] no CEG named \"%s\" (forgot the \"%s\" prefix?)", __func__, tag.c_str(), CEG_PREFIX_STRING);
 			return;
 		}
 
 		assert(explosionGenerators[it->second]->GetGeneratorID() == it->second);
-		LOG(preFmt, __FUNCTION__, it->second, tag.c_str());
+		LOG(preFmt, __func__, it->second, tag.c_str());
 
-		if (!explosionGenerators[it->second]->Reload(this, tag.substr(7))) {
-			LOG_L(L_WARNING, pstFmt, __FUNCTION__, it->second, tag.c_str());
-		}
+		if (!explosionGenerators[it->second]->Reload(this, tag.substr(7)))
+			LOG_L(L_WARNING, pstFmt, __func__, it->second, tag.c_str());
+
+		return;
+	}
+
+	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
+		IExplosionGenerator* eg = explosionGenerators[n];
+
+		// standard EG's (empty postfix) do not need to be reloaded
+		if (expGenIdentTagMap.find(n) == expGenIdentTagMap.end())
+			continue;
+
+		assert(eg->GetGeneratorID() == n);
+		LOG(preFmt, __func__, n, expGenIdentTagMap[n].c_str());
+
+		if (eg->Reload(this, expGenIdentTagMap[n].substr(7)))
+			continue;
+
+		LOG_L(L_WARNING, pstFmt, __func__, n, expGenIdentTagMap[n].c_str());
 	}
 }
 
@@ -873,7 +879,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 
 	if (!expTable.IsValid()) {
 		// not a fatal error: any calls to Explosion will just return early
-		LOG_L(L_WARNING, "[CCEG::%s] table for CEG \"%s\" invalid (parse errors?)", __FUNCTION__, tag.c_str());
+		LOG_L(L_WARNING, "[CCEG::%s] table for CEG \"%s\" invalid (parse errors?)", __func__, tag.c_str());
 		return false;
 	}
 
@@ -900,7 +906,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		const string& className = handler->GetProjectileClasses().ResolveAlias(spawnTable.GetString("class", spawnName));
 
 		if ((psi.spawnableID = CExpGenSpawnable::GetSpawnableID(className)) == -1u) {
-			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
+			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __func__, tag.c_str(), className.c_str());
 			continue;
 		}
 
@@ -918,7 +924,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 			if (CExpGenSpawnable::GetSpawnableMemberInfo(className, memberInfo)) {
 				ParseExplosionCode(&psi, propIt.second, memberInfo, code);
 			} else {
-				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __FUNCTION__, tag.c_str(), className.c_str(), propIt.first.c_str());
+				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __func__, tag.c_str(), className.c_str(), propIt.first.c_str());
 			}
 		}
 
