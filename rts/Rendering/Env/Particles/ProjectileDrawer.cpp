@@ -283,9 +283,6 @@ void CProjectileDrawer::Kill() {
 
 	perlinTexObjects = 0;
 	drawPerlinTex = false;
-
-	fxBuffer = nullptr;
-	fxShader = nullptr;
 }
 
 

@@ -358,7 +358,6 @@ void CUnitDrawer::Kill()
 
 	unsortedUnits.clear();
 	unitsByIcon.clear();
-	unitIcons.clear();
 
 	geomBuffer = nullptr;
 }
