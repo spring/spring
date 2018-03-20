@@ -90,9 +90,9 @@ static constexpr int MAX_AIS = 255;
  * which places a further cap at 1 << 24 (far beyond the realm of feasible
  * runtime performance) should these maxima ever be removed.
  */
-static constexpr int MAX_UNITS = 32000;
-static constexpr int MAX_FEATURES = 64000;
-static constexpr int MAX_PROJECTILES = 256000;
+static constexpr int MAX_UNITS       =  32000;
+static constexpr int MAX_FEATURES    =  32000;
+static constexpr int MAX_PROJECTILES = 128000;
 
 /**
  * @brief max weapons per unit
