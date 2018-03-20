@@ -128,7 +128,7 @@ void CUnitHandler::Init() {
 		// id's are used as indices, so they must lie in [0, units.size() - 1]
 		// (furthermore all id's are treated equally, none have special status)
 		idPool.Clear();
-		idPool.Expand(0, units.size());
+		idPool.Expand(0, MAX_UNITS);
 
 		for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
 			unitsByDefs[teamNum].resize(unitDefHandler->NumUnitDefs() + 1);

@@ -39,7 +39,7 @@ void CFeatureHandler::Init() {
 	featureMemPool.reserve(128);
 
 	idPool.Clear();
-	idPool.Expand(0, features.size());
+	idPool.Expand(0, MAX_FEATURES);
 }
 
 void CFeatureHandler::Kill() {
