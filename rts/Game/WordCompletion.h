@@ -5,30 +5,19 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 class CWordCompletion
 {
-	CWordCompletion();
-
 public:
-	/**
-	 * This function initialized a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
-	static void CreateInstance();
-	static CWordCompletion* GetInstance() { return singleton; }
-	static void DestroyInstance();
-
-	void AddWord(const std::string& word, bool startOfLine, bool unitName,
-			bool miniMap);
+	void Init();
+	void Sort();
+	void AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap, bool resort = true);
 	void RemoveWord(const std::string& word);
+
 	/// Returns partial matches
 	std::vector<std::string> Complete(std::string& msg) const;
 
 private:
-	void Reset();
-
 	class WordProperties {
 		public:
 			WordProperties()
@@ -47,11 +36,11 @@ private:
 			bool miniMap;
 	};
 
-	static CWordCompletion* singleton;
+	typedef std::pair<std::string, WordProperties> WordEntry;
 
-	std::map<std::string, WordProperties> words;
+	std::vector<WordEntry> words;
 };
 
-#define wordCompletion CWordCompletion::GetInstance()
+extern CWordCompletion wordCompletion;
 
 #endif /* WORD_COMPLETION_H */

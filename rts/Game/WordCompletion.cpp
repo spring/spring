@@ -14,119 +14,117 @@
 #include <stdexcept>
 #include <algorithm>
 
-CWordCompletion* CWordCompletion::singleton = NULL;
+CWordCompletion wordCompletion;
 
-void CWordCompletion::CreateInstance() {
-	if (singleton == NULL) {
-		singleton = new CWordCompletion();
-	} else {
-		throw std::logic_error("WordCompletion singleton is already initialized");
-	}
-}
-
-void CWordCompletion::DestroyInstance() {
-	if (singleton != NULL) {
-		spring::SafeDelete(singleton);
-	} else {
-		throw std::logic_error("WordCompletion singleton was not initialized or is already destroyed");
-	}
-}
-
-
-
-CWordCompletion::CWordCompletion()
-{
-	Reset();
-}
-
-void CWordCompletion::Reset()
+void CWordCompletion::Init()
 {
 	words.clear();
+	words.reserve(64);
+
 	WordProperties sl(true, false, false);
 
 	// key bindings (Game/UI/KeyBindings.cpp)
-	words["/bind "] = sl;
-	words["/unbind "] = sl;
-	words["/unbindall "] = sl;
-	words["/unbindaction "] = sl;
-	words["/unbindkeyset "] = sl;
-	words["/keyload "] = sl;
-	words["/keyreload "] = sl;
-	words["/keysave "] = sl;
-	words["/keysyms "] = sl;
-	words["/keycodes "] = sl;
-	words["/keyprint "] = sl;
-	words["/keydebug "] = sl;
-	words["/fakemeta "] = sl;
+	words.emplace_back("/bind ", sl);
+	words.emplace_back("/unbind ", sl);
+	words.emplace_back("/unbindall ", sl);
+	words.emplace_back("/unbindaction ", sl);
+	words.emplace_back("/unbindkeyset ", sl);
+	words.emplace_back("/keyload ", sl);
+	words.emplace_back("/keyreload ", sl);
+	words.emplace_back("/keysave ", sl);
+	words.emplace_back("/keysyms ", sl);
+	words.emplace_back("/keycodes ", sl);
+	words.emplace_back("/keyprint ", sl);
+	words.emplace_back("/keydebug ", sl);
+	words.emplace_back("/fakemeta ", sl);
 
 	// camera handler (Game/CameraHandler.cpp)
-	words["/viewtaflip "] = sl;
+	words.emplace_back("/viewtaflip ", sl);
 
 	// mini-map (Game/UI/MiniMap.cpp)
 	WordProperties mm(false, false, true);
-	words["fullproxy "] = mm;
-	words["drawcommands "] = mm;
-	words["drawprojectiles "] = mm;
-	words["icons "] = mm;
-	words["unitexp "] = mm;
-	words["unitsize "] = mm;
-	words["simplecolors "] = mm;
-	words["geometry "] = mm;
-	words["minimize "] = mm;
-	words["maximize "] = mm;
-	words["maxspect "] = mm;
+	words.emplace_back("fullproxy ", mm);
+	words.emplace_back("drawcommands ", mm);
+	words.emplace_back("drawprojectiles ", mm);
+	words.emplace_back("icons ", mm);
+	words.emplace_back("unitexp ", mm);
+	words.emplace_back("unitsize ", mm);
+	words.emplace_back("simplecolors ", mm);
+	words.emplace_back("geometry ", mm);
+	words.emplace_back("minimize ", mm);
+	words.emplace_back("maximize ", mm);
+	words.emplace_back("maxspect ", mm);
 
 	// remote commands (Game/GameServer.cpp)
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)
 	// deprecated idea, use *ActionExecutor's instead
-	words["/atm"] = sl;
-	words["/devlua "] = sl;
-	words["/editdefs "] = sl;
-	words["/give "] = sl;
-	words["/luagaia "] = sl;
-	words["/luarules "] = sl;
-	words["/nocost"] = sl;
-	words["/nospectatorchat "] = sl;
-	words["/reloadcob "] = sl;
-	words["/reloadcegs "] = sl;
-	words["/save "] = sl;
-	words["/skip "] = sl;
-	words["/skip +"] = sl;
-	words["/skip f"] = sl;
-	words["/skip f+"] = sl;
-	words["/spectator "] = sl;
-	words["/take "] = sl;
-	words["/team "] = sl;
+	words.emplace_back("/atm", sl);
+	words.emplace_back("/devlua ", sl);
+	words.emplace_back("/editdefs ", sl);
+	words.emplace_back("/give ", sl);
+	words.emplace_back("/luagaia ", sl);
+	words.emplace_back("/luarules ", sl);
+	words.emplace_back("/nocost", sl);
+	words.emplace_back("/nospectatorchat ", sl);
+	words.emplace_back("/reloadcob ", sl);
+	words.emplace_back("/reloadcegs ", sl);
+	words.emplace_back("/save ", sl);
+	words.emplace_back("/skip ", sl);
+	words.emplace_back("/skip +", sl);
+	words.emplace_back("/skip f", sl);
+	words.emplace_back("/skip f+", sl);
+	words.emplace_back("/spectator ", sl);
+	words.emplace_back("/take ", sl);
+	words.emplace_back("/team ", sl);
 
-	words["/cheat "] = sl;
-	words["/nohelp "] = sl;
-	words["/nopause "] = sl;
-	words["/setmaxspeed "] = sl;
-	words["/setminspeed "] = sl;
-	words["/kick "] = sl;
-	words["/kickbynum "] = sl;
-	words["/mute "] = sl;
-	words["/mutebynum "] = sl;
+	words.emplace_back("/cheat ", sl);
+	words.emplace_back("/nohelp ", sl);
+	words.emplace_back("/nopause ", sl);
+	words.emplace_back("/setmaxspeed ", sl);
+	words.emplace_back("/setminspeed ", sl);
+	words.emplace_back("/kick ", sl);
+	words.emplace_back("/kickbynum ", sl);
+	words.emplace_back("/mute ", sl);
+	words.emplace_back("/mutebynum ", sl);
 }
 
+void CWordCompletion::Sort() {
+	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
 
-void CWordCompletion::AddWord(const std::string& word, bool startOfLine,
-		bool unitName, bool miniMap)
+	std::sort(words.begin(), words.end(), pred);
+}
+
+void CWordCompletion::AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap, bool resort)
 {
-	if (!word.empty()) {
-		if (words.find(word) != words.end()) {
-			LOG_SL("WordCompletion", L_DEBUG,
-					"Tried to add already present word: %s", word.c_str());
-			return;
-		}
-		words[word] = WordProperties(startOfLine, unitName, miniMap);
+	if (word.empty())
+		return;
+
+	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(words.begin(), words.end(), WordEntry{word, {}}, pred);
+
+	if (iter != words.end() && iter->first == word) {
+		LOG_SL("WordCompletion", L_DEBUG, "Tried to add already present word: %s", word.c_str());
+		return;
 	}
+
+	words.emplace_back(word, WordProperties(startOfLine, unitName, miniMap));
+
+	if (!resort)
+		return;
+
+	Sort();
 }
 
 void CWordCompletion::RemoveWord(const std::string& word)
 {
-	words.erase(word);
+	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(words.begin(), words.end(), WordEntry{word, {}}, pred);
+
+	if (iter == words.end() || iter->first != word)
+		return;
+
+	words.erase(iter);
 }
 
 
@@ -138,7 +136,9 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 	const bool miniMap = (msg.find("/minimap ") == 0);
 
 	// strip "a:" and "s:" prefixes
-	std::string prefix, rawmsg;
+	std::string prefix;
+	std::string rawmsg;
+
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {
 		prefix = msg.substr(0, 2);
 		rawmsg = msg.substr(2);
@@ -146,26 +146,28 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 		rawmsg = msg;
 	}
 
+
+	const std::string::size_type spacePos = rawmsg.find_last_of(' ');
+	const bool startOfLine = (spacePos == std::string::npos);
+	const std::string::size_type startPos = (spacePos + 1) * (1 - startOfLine);
+
 	// the word fragment
-	std::string::size_type startPos = rawmsg.find_last_of(' ');
-	const bool startOfLine = (startPos == std::string::npos);
-	startPos = startOfLine ? 0 : startPos + 1;
 	const std::string fragment(rawmsg, startPos, std::string::npos);
-	if (fragment.empty()) {
+
+	if (fragment.empty())
 		return partials;
-	}
-	const std::string::size_type fragLen = fragment.size();
 
 	// pick a decent spot to start scanning
-	std::map<std::string, WordProperties>::const_iterator start;
-	start = words.lower_bound(fragment);
+	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
+	const auto start = std::lower_bound(words.begin(), words.end(), WordEntry{fragment, {}}, pred);
 
 	// make a list of valid possible matches
-	std::map<std::string, WordProperties>::const_iterator it;
-	for (it = start; it != words.end(); ++it) {
-		const int cmp = it->first.compare(0, fragLen, fragment);
+	for (auto it = start; it != words.end(); ++it) {
+		const int cmp = it->first.compare(0, fragment.size(), fragment);
+
 		if (cmp < 0) continue;
 		if (cmp > 0) break;
+
 		if ((!it->second.startOfLine || startOfLine) &&
 		    (!it->second.unitName    || unitName)    &&
 		    (!it->second.miniMap     || miniMap)) {
@@ -173,9 +175,8 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 		}
 	}
 
-	if (partials.empty()) {
+	if (partials.empty())
 		return partials; // no possible matches
-	}
 
 	if (partials.size() == 1) {
 		msg = prefix + rawmsg.substr(0, startPos) + partials[0];
@@ -186,13 +187,15 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 	// add as much of the match as possible
 	const std::string& firstStr = partials[0];
 	const std::string& lastStr = partials[partials.size() - 1];
+
 	unsigned int i = 0;
 	unsigned int least = std::min(firstStr.size(), lastStr.size());
+
 	for (i = 0; i < least; i++) {
-		if (firstStr[i] != lastStr[i]) {
+		if (firstStr[i] != lastStr[i])
 			break;
-		}
 	}
+
 	msg = prefix + rawmsg.substr(0, startPos) + partials[0].substr(0, i);
 
 	return partials;

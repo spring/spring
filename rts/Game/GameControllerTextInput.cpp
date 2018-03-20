@@ -257,8 +257,8 @@ bool GameControllerTextInput::HandleEditCommand(int key, const std::string& comm
 			std::string head = userInput.substr(0, writingPos);
 			std::string tail = userInput.substr(writingPos);
 
-			// sets head to the first partial match
-			const std::vector<std::string>& partials = wordCompletion->Complete(head);
+			// NB: sets head to the first partial match
+			const std::vector<std::string>& partials = wordCompletion.Complete(head);
 
 			userInput = head + tail;
 			writingPos = head.length();

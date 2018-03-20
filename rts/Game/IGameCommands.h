@@ -97,7 +97,7 @@ void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* execut
 		throw std::logic_error("Tried to register a duplicate action-executor for command: " + commandLower);
 	} else {
 		actionExecutors[commandLower] = executor;
-		wordCompletion->AddWord("/" + commandLower + " ", true, false, false);
+		wordCompletion.AddWord("/" + commandLower + " ", true, false, false);
 	}
 }
 
@@ -113,7 +113,7 @@ void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& co
 		// -> remove and delete
 		actionExecutor_t* executor = aei->second;
 		actionExecutors.erase(aei);
-		wordCompletion->RemoveWord("/" + commandLower + " ");
+		wordCompletion.RemoveWord("/" + commandLower + " ");
 		delete executor;
 	}
 }
