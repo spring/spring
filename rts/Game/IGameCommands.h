@@ -87,58 +87,56 @@ IGameCommands<actionExecutor_t>::~IGameCommands() {
 }
 
 template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* executor) {
-
+void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* executor)
+{
 	const std::string commandLower = StringToLower(executor->GetCommand());
-	const typename actionExecutorsMap_t::const_iterator aei
-			= actionExecutors.find(commandLower);
 
-	if (aei != actionExecutors.end()) {
-		throw std::logic_error("Tried to register a duplicate action-executor for command: " + commandLower);
-	} else {
-		actionExecutors[commandLower] = executor;
-		wordCompletion.AddWord("/" + commandLower + " ", true, false, false);
-	}
+	// prevent registering a duplicate action-executor for command
+	if (actionExecutors.find(commandLower) != actionExecutors.end())
+		return;
+
+	actionExecutors[commandLower] = executor;
+	wordCompletion.AddWord("/" + commandLower + " ", true, false, false, false);
 }
 
 template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& command) {
-
+void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& command)
+{
 	const std::string commandLower = StringToLower(command);
-	const typename actionExecutorsMap_t::iterator aei
-			= actionExecutors.find(commandLower);
+	const typename actionExecutorsMap_t::iterator aei = actionExecutors.find(commandLower);
 
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
-		// -> remove and delete
-		actionExecutor_t* executor = aei->second;
-		actionExecutors.erase(aei);
-		wordCompletion.RemoveWord("/" + commandLower + " ");
-		delete executor;
-	}
+	if (aei == actionExecutors.end())
+		return;
+
+	// an executor for this command is registered
+	// -> remove and delete
+	actionExecutor_t* executor = aei->second;
+	actionExecutors.erase(aei);
+	wordCompletion.RemoveWord("/" + commandLower + " ");
+	delete executor;
 }
 
-template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::RemoveAllActionExecutors() {
 
+template<class actionExecutor_t>
+void IGameCommands<actionExecutor_t>::RemoveAllActionExecutors()
+{
 	while (!actionExecutors.empty()) {
 		RemoveActionExecutor(actionExecutors.begin()->first);
 	}
 }
 
-template<class actionExecutor_t>
-const actionExecutor_t* IGameCommands<actionExecutor_t>::GetActionExecutor(const std::string& command) const {
 
-	const actionExecutor_t* executor = NULL;
+template<class actionExecutor_t>
+const actionExecutor_t* IGameCommands<actionExecutor_t>::GetActionExecutor(const std::string& command) const
+{
+	const actionExecutor_t* executor = nullptr;
 
 	const std::string commandLower = StringToLower(command);
-	const typename actionExecutorsMap_t::const_iterator aei
-			= actionExecutors.find(commandLower);
+	const typename actionExecutorsMap_t::const_iterator aei = actionExecutors.find(commandLower);
 
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
+	// an executor for this command is registered
+	if (aei != actionExecutors.end())
 		executor = aei->second;
-	}
 
 	return executor;
 }

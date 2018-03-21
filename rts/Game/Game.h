@@ -10,6 +10,7 @@
 #include "GameDrawMode.h"
 #include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
+#include "Rendering/WorldDrawer.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
@@ -18,7 +19,6 @@ class LuaParser;
 class ILoadSaveHandler;
 class Action;
 class ChatMessage;
-class CWorldDrawer;
 
 
 class CGame : public CGameController
@@ -50,9 +50,9 @@ private:
 	void AddTimedJobs();
 
 	void LoadMap(const std::string& mapName);
-	void LoadDefs();
-	void PreLoadSimulation();
-	void PostLoadSimulation();
+	void LoadDefs(LuaParser* defsParser);
+	void PreLoadSimulation(LuaParser* defsParser);
+	void PostLoadSimulation(LuaParser* defsParser);
 	void PreLoadRendering();
 	void PostLoadRendering();
 	void LoadInterface();
@@ -201,9 +201,7 @@ private:
 
 	CTimedKeyChain curKeyChain;
 
-	CWorldDrawer* worldDrawer;
-
-	LuaParser* defsParser;
+	CWorldDrawer worldDrawer;
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;

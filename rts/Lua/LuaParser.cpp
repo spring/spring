@@ -37,7 +37,7 @@ LuaParser* GetLuaParser(lua_State* L) {
 //  LuaParser
 //
 
-LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes, const std::string& _accessModes, const boolean& synced)
+LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes, const std::string& _accessModes, const boolean& synced, const boolean& setup)
 	: fileName(_fileName)
 	, fileModes(_fileModes)
 	, accessModes(_accessModes)
@@ -53,15 +53,17 @@ LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes
 	, lowerCppKeys(true)
 {
 	// be on the safe side
+	// D.synced = synced.b;
 	D.synced = true;
 	D.parser = this;
 
-	if ((L = LUA_OPEN(&D)) != nullptr) {
-		SetupEnv(synced.b);
-	}
+	if (!setup.b)
+		return;
+
+	SetupLua(synced.b);
 }
 
-LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced)
+LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced, const boolean& setup)
 	: fileName("")
 	, fileModes("")
 	, textChunk(_textChunk)
@@ -78,12 +80,14 @@ LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessMo
 	, lowerCppKeys(true)
 {
 	// be on the safe side
+	// D.synced = synced.b;
 	D.synced = true;
 	D.parser = this;
 
-	if ((L = LUA_OPEN(&D)) != nullptr) {
-		SetupEnv(synced.b);
-	}
+	if (!setup.b)
+		return;
+
+	SetupLua(synced.b);
 }
 
 
@@ -103,6 +107,15 @@ LuaParser::~LuaParser()
 		table->isValid = false;
 		table->refnum  = LUA_NOREF;
 	}
+}
+
+
+void LuaParser::SetupLua(bool synced)
+{
+	if ((L = LUA_OPEN(&D)) == nullptr)
+		return;
+
+	SetupEnv(synced);
 }
 
 void LuaParser::SetupEnv(bool synced)
