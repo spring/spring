@@ -90,9 +90,7 @@ void CWordCompletion::Init()
 }
 
 void CWordCompletion::Sort() {
-	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
-
-	std::sort(words.begin(), words.end(), pred);
+	std::sort(words.begin(), words.end(), [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); });
 }
 
 void CWordCompletion::AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap, bool resort)

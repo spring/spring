@@ -42,48 +42,11 @@
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 
-CWorldDrawer::CWorldDrawer(): numUpdates(0)
+void CWorldDrawer::LoadPre() const
 {
 	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
-}
 
-CWorldDrawer::~CWorldDrawer()
-{
-	spring::SafeDelete(infoTextureHandler);
-
-	spring::SafeDelete(water);
-	spring::SafeDelete(sky);
-	spring::SafeDelete(treeDrawer);
-	spring::SafeDelete(grassDrawer);
-	spring::SafeDelete(pathDrawer);
-	spring::SafeDelete(shadowHandler);
-	spring::SafeDelete(inMapDrawerView);
-
-	CFeatureDrawer::KillStatic(gu->globalReload);
-	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
-	CProjectileDrawer::KillStatic(gu->globalReload);
-
-	modelLoader.Kill();
-
-	spring::SafeDelete(farTextureHandler);
-	spring::SafeDelete(heightMapTexture);
-
-	spring::SafeDelete(texturehandler3DO);
-	spring::SafeDelete(texturehandlerS3O);
-
-	spring::SafeDelete(cubeMapHandler);
-
-	readMap->KillGroundDrawer();
-	IGroundDecalDrawer::FreeInstance();
-	CShaderHandler::FreeInstance(shaderHandler);
-	LuaObjectDrawer::Kill();
-}
-
-
-
-void CWorldDrawer::LoadPre() const
-{
 	// these need to be loaded before featureHandler is created
 	// (maps with features have their models loaded at startup)
 	modelLoader.Init();
@@ -99,7 +62,7 @@ void CWorldDrawer::LoadPre() const
 	sunLighting->Init();
 }
 
-void CWorldDrawer::LoadPost() const
+void CWorldDrawer::InitPost() const
 {
 	loadscreen->SetLoadMessage("Creating ShadowHandler");
 	cubeMapHandler = new CubeMapHandler();
@@ -136,6 +99,42 @@ void CWorldDrawer::LoadPost() const
 
 	sky->SetupFog();
 }
+
+
+void CWorldDrawer::Kill()
+{
+	spring::SafeDelete(infoTextureHandler);
+
+	spring::SafeDelete(water);
+	spring::SafeDelete(sky);
+	spring::SafeDelete(treeDrawer);
+	spring::SafeDelete(grassDrawer);
+	spring::SafeDelete(pathDrawer);
+	spring::SafeDelete(shadowHandler);
+	spring::SafeDelete(inMapDrawerView);
+
+	CFeatureDrawer::KillStatic(gu->globalReload);
+	CUnitDrawer::KillStatic(gu->globalReload); // depends on unitHandler, cubeMapHandler
+	CProjectileDrawer::KillStatic(gu->globalReload);
+
+	modelLoader.Kill();
+
+	spring::SafeDelete(farTextureHandler);
+	spring::SafeDelete(heightMapTexture);
+
+	spring::SafeDelete(texturehandler3DO);
+	spring::SafeDelete(texturehandlerS3O);
+
+	spring::SafeDelete(cubeMapHandler);
+
+	readMap->KillGroundDrawer();
+	IGroundDecalDrawer::FreeInstance();
+	CShaderHandler::FreeInstance(shaderHandler);
+	LuaObjectDrawer::Kill();
+
+	numUpdates = 0;
+}
+
 
 
 

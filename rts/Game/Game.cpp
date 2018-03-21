@@ -192,7 +192,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(jobDispatcher),
 	CR_IGNORED(curKeyChain),
 	CR_IGNORED(worldDrawer),
-	CR_IGNORED(defsParser),
 	CR_IGNORED(saveFile),
 
 	// Post Load
@@ -237,8 +236,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldUserSpeed(0.0f)
 	, speedControl(-1)
 
-	, worldDrawer(nullptr)
-	, defsParser(nullptr)
 	, saveFile(saveFile)
 	, finishedLoading(false)
 	, gameOver(false)
@@ -370,11 +367,13 @@ void CGame::LoadGame(const std::string& mapName)
 	auto& globalQuit = gu->globalQuit;
 	bool  forcedQuit = false;
 
+	LuaParser defsParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true}, {false});
+
 	try {
 		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, !Threading::IsMainThread());
 
 		LoadMap(mapName);
-		LoadDefs();
+		LoadDefs(&defsParser);
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
 
@@ -386,7 +385,7 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		PreLoadSimulation();
+		PreLoadSimulation(&defsParser);
 		PreLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][2] forced quit with exception \"%s\"", __func__, e.what());
@@ -396,7 +395,7 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		PostLoadSimulation();
+		PostLoadSimulation(&defsParser);
 		PostLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());
@@ -466,20 +465,15 @@ void CGame::LoadMap(const std::string& mapName)
 }
 
 
-void CGame::LoadDefs()
+void CGame::LoadDefs(LuaParser* defsParser)
 {
 	ENTER_SYNCED_CODE();
-
-	{
-		loadscreen->SetLoadMessage("Loading Radar Icons");
-		icon::iconHandler = new icon::CIconHandler();
-	}
 
 	{
 		ScopedOnceTimer timer("Game::LoadDefs (GameData)");
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
-		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true});
+		defsParser->SetupLua(true);
 		// customize the defs environment
 		defsParser->GetTable("Spring");
 		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
@@ -515,6 +509,10 @@ void CGame::LoadDefs()
 	}
 
 	{
+		loadscreen->SetLoadMessage("Loading Radar Icons");
+		icon::iconHandler = new icon::CIconHandler();
+	}
+	{
 		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
@@ -525,7 +523,8 @@ void CGame::LoadDefs()
 	LEAVE_SYNCED_CODE();
 }
 
-void CGame::PreLoadSimulation()
+
+void CGame::PreLoadSimulation(LuaParser* defsParser)
 {
 	ENTER_SYNCED_CODE();
 
@@ -539,7 +538,7 @@ void CGame::PreLoadSimulation()
 	explGenHandler.Init();
 }
 
-void CGame::PostLoadSimulation()
+void CGame::PostLoadSimulation(LuaParser* defsParser)
 {
 	{
 		ScopedOnceTimer timer("Game::PostLoadSim (WeaponDefs)");
@@ -603,23 +602,20 @@ void CGame::PostLoadSimulation()
 	inMapDrawerModel = new CInMapDrawModel();
 	inMapDrawer = new CInMapDraw();
 
-	syncedGameCommands->AddDefaultActionExecutors();
-	unsyncedGameCommands->AddDefaultActionExecutors();
-
 	LEAVE_SYNCED_CODE();
 }
+
 
 void CGame::PreLoadRendering()
 {
 	geometricObjects = new CGeometricObjects();
-	worldDrawer = new CWorldDrawer();
 
 	// load components that need to exist before PostLoadSimulation
-	worldDrawer->LoadPre();
+	worldDrawer.InitPre();
 }
 
 void CGame::PostLoadRendering() {
-	worldDrawer->LoadPost();
+	worldDrawer.InitPost();
 }
 
 
@@ -641,8 +637,8 @@ void CGame::LoadInterface()
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 
 		gameConsoleHistory.Init();
-		wordCompletion.Init();
 		gameTextInput.ClearInput();
+		wordCompletion.Init();
 
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion.AddWord(playerHandler->Player(pp)->name, false, false, false, false);
@@ -674,6 +670,10 @@ void CGame::LoadInterface()
 		for (const auto& pair: featureDefHandler->GetFeatureDefIDs()) {
 			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
 		}
+
+		// these are also added to word-completion
+		syncedGameCommands->AddDefaultActionExecutors();
+		unsyncedGameCommands->AddDefaultActionExecutors();
 
 		wordCompletion.Sort();
 	}
@@ -713,8 +713,6 @@ void CGame::LoadLua()
 
 	loadscreen->SetLoadMessage("Loading LuaUI");
 	CLuaUI::LoadFreeHandler();
-
-	spring::SafeDelete(defsParser);
 }
 
 void CGame::LoadSkirmishAIs()
@@ -833,7 +831,7 @@ void CGame::KillRendering()
 	LOG("[Game::%s][1]", __func__);
 	spring::SafeDelete(icon::iconHandler);
 	spring::SafeDelete(geometricObjects);
-	spring::SafeDelete(worldDrawer);
+	worldDrawer.Kill();
 }
 
 void CGame::KillInterface()
@@ -1151,7 +1149,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 
 	if (doDrawWorld) {
-		worldDrawer->Update(newSimFrame);
+		worldDrawer.Update(newSimFrame);
 
 		CNamedTextures::Update();
 		CFontTexture::Update();
@@ -1268,14 +1266,14 @@ bool CGame::Draw() {
 		minimap->Update();
 
 		if (doDrawWorld)
-			worldDrawer->GenerateIBLTextures();
+			worldDrawer.GenerateIBLTextures();
 
 		camera->Update();
 
 		if (doDrawWorld)
-			worldDrawer->Draw();
+			worldDrawer.Draw();
 
-		worldDrawer->ResetMVPMatrices();
+		worldDrawer.ResetMVPMatrices();
 	}
 
 	{
