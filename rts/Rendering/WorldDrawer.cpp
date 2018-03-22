@@ -42,7 +42,7 @@
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 
-void CWorldDrawer::LoadPre() const
+void CWorldDrawer::InitPre() const
 {
 	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
