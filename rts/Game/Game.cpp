@@ -647,45 +647,41 @@ void CGame::LoadInterface()
 		wordCompletion.Init();
 
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-			wordCompletion.AddWord(playerHandler->Player(pp)->name, false, false, false, false);
+			wordCompletion.AddWordRaw(playerHandler->Player(pp)->name, false, false, false);
 		}
 
 		// add the Skirmish AIs instance names to word completion (eg for chatting)
-		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+			wordCompletion.AddWordRaw(ai.second.name + " ", false, false, false);
+		}
 		// add the available Skirmish AI libraries to word completion, for /aicontrol
-		const AILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+		for (const auto& aiLib: aiLibManager->GetSkirmishAIKeys()) {
+			wordCompletion.AddWordRaw(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false);
+		}
+
 		// add the available Lua AI implementations to word completion, for /aicontrol
-		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
-
-		for (const auto& ai: ais) {
-			wordCompletion.AddWord(ai.second.name + " ", false, false, false, false);
-		}
-
-		for (const auto& aiLib: aiLibs) {
-			wordCompletion.AddWord(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false, false);
-		}
-
-		for (const std::string& sn: luaAIShortNames) {
-			wordCompletion.AddWord(sn + " ", false, false, false, false);
+		for (const std::string& sn: skirmishAIHandler.GetLuaAIImplShortNames()) {
+			wordCompletion.AddWordRaw(sn + " ", false, false, false);
 		}
 
 		// register {Unit,Feature}Def names
 		for (const auto& pair: unitDefHandler->GetUnitDefIDs()) {
-			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
+			wordCompletion.AddWordRaw(pair.first + " ", false, true, false);
 		}
 		for (const auto& pair: featureDefHandler->GetFeatureDefIDs()) {
-			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
+			wordCompletion.AddWordRaw(pair.first + " ", false, true, false);
 		}
 
 		// register /command's
 		for (const auto& pair: syncedGameCommands->GetActionExecutors()) {
-			wordCompletion.AddWord("/" + pair.first + " ", true, false, false, false);
+			wordCompletion.AddWordRaw("/" + pair.first + " ", true, false, false);
 		}
 		for (const auto& pair: unsyncedGameCommands->GetActionExecutors()) {
-			wordCompletion.AddWord("/" + pair.first + " ", true, false, false, false);
+			wordCompletion.AddWordRaw("/" + pair.first + " ", true, false, false);
 		}
 
 		wordCompletion.Sort();
+		wordCompletion.Filter();
 	}
 
 	if (infoConsole == nullptr)

@@ -11,8 +11,11 @@ class CWordCompletion
 public:
 	void Init();
 	void Sort();
-	void AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap, bool resort = true);
-	void RemoveWord(const std::string& word);
+	void Filter();
+
+	bool AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap);
+	bool AddWordRaw(const std::string& word, bool startOfLine, bool unitName, bool miniMap);
+	bool RemoveWord(const std::string& word);
 
 	/// Returns partial matches
 	std::vector<std::string> Complete(std::string& msg) const;

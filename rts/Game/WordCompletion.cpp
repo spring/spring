@@ -19,110 +19,102 @@ CWordCompletion wordCompletion;
 void CWordCompletion::Init()
 {
 	words.clear();
-	words.reserve(64);
-
-	WordProperties sl(true, false, false);
+	words.reserve(256);
 
 	// key bindings (Game/UI/KeyBindings.cpp)
-	words.emplace_back("/bind ", sl);
-	words.emplace_back("/unbind ", sl);
-	words.emplace_back("/unbindall ", sl);
-	words.emplace_back("/unbindaction ", sl);
-	words.emplace_back("/unbindkeyset ", sl);
-	words.emplace_back("/keyload ", sl);
-	words.emplace_back("/keyreload ", sl);
-	words.emplace_back("/keysave ", sl);
-	words.emplace_back("/keysyms ", sl);
-	words.emplace_back("/keycodes ", sl);
-	words.emplace_back("/keyprint ", sl);
-	words.emplace_back("/keydebug ", sl);
-	words.emplace_back("/fakemeta ", sl);
+	AddWordRaw("/bind ", true, false, false);
+	AddWordRaw("/unbind ", true, false, false);
+	AddWordRaw("/unbindall ", true, false, false);
+	AddWordRaw("/unbindaction ", true, false, false);
+	AddWordRaw("/unbindkeyset ", true, false, false);
+	AddWordRaw("/keyload ", true, false, false);
+	AddWordRaw("/keyreload ", true, false, false);
+	AddWordRaw("/keysave ", true, false, false);
+	AddWordRaw("/keysyms ", true, false, false);
+	AddWordRaw("/keycodes ", true, false, false);
+	AddWordRaw("/keyprint ", true, false, false);
+	AddWordRaw("/keydebug ", true, false, false);
+	AddWordRaw("/fakemeta ", true, false, false);
 
 	// camera handler (Game/CameraHandler.cpp)
-	words.emplace_back("/viewtaflip ", sl);
+	AddWordRaw("/viewtaflip ", true, false, false);
 
 	// mini-map (Game/UI/MiniMap.cpp)
-	WordProperties mm(false, false, true);
-	words.emplace_back("fullproxy ", mm);
-	words.emplace_back("drawcommands ", mm);
-	words.emplace_back("drawprojectiles ", mm);
-	words.emplace_back("icons ", mm);
-	words.emplace_back("unitexp ", mm);
-	words.emplace_back("unitsize ", mm);
-	words.emplace_back("simplecolors ", mm);
-	words.emplace_back("geometry ", mm);
-	words.emplace_back("minimize ", mm);
-	words.emplace_back("maximize ", mm);
-	words.emplace_back("maxspect ", mm);
+	AddWordRaw("fullproxy ", false, false, true);
+	AddWordRaw("drawcommands ", false, false, true);
+	AddWordRaw("drawprojectiles ", false, false, true);
+	AddWordRaw("icons ", false, false, true);
+	AddWordRaw("unitexp ", false, false, true);
+	AddWordRaw("unitsize ", false, false, true);
+	AddWordRaw("simplecolors ", false, false, true);
+	AddWordRaw("geometry ", false, false, true);
+	AddWordRaw("minimize ", false, false, true);
+	AddWordRaw("maximize ", false, false, true);
+	AddWordRaw("maxspect ", false, false, true);
 
-	// remote commands (Game/GameServer.cpp)
-	// TODO those commans are registered in Console, get the list from there
-	// This is best done with a new command class (eg. ConsoleCommand)
-	// deprecated idea, use *ActionExecutor's instead
-	words.emplace_back("/atm", sl);
-	words.emplace_back("/devlua ", sl);
-	words.emplace_back("/editdefs ", sl);
-	words.emplace_back("/give ", sl);
-	words.emplace_back("/luagaia ", sl);
-	words.emplace_back("/luarules ", sl);
-	words.emplace_back("/nocost", sl);
-	words.emplace_back("/nospectatorchat ", sl);
-	words.emplace_back("/reloadcob ", sl);
-	words.emplace_back("/reloadcegs ", sl);
-	words.emplace_back("/save ", sl);
-	words.emplace_back("/skip ", sl);
-	words.emplace_back("/skip +", sl);
-	words.emplace_back("/skip f", sl);
-	words.emplace_back("/skip f+", sl);
-	words.emplace_back("/spectator ", sl);
-	words.emplace_back("/take ", sl);
-	words.emplace_back("/team ", sl);
-
-	words.emplace_back("/cheat ", sl);
-	words.emplace_back("/nohelp ", sl);
-	words.emplace_back("/nopause ", sl);
-	words.emplace_back("/setmaxspeed ", sl);
-	words.emplace_back("/setminspeed ", sl);
-	words.emplace_back("/kick ", sl);
-	words.emplace_back("/kickbynum ", sl);
-	words.emplace_back("/mute ", sl);
-	words.emplace_back("/mutebynum ", sl);
+	// commands not yet handled by *ActionExecutor's
+	AddWordRaw("/nopause ", true, false, false);
+	AddWordRaw("/setmaxspeed ", true, false, false);
+	AddWordRaw("/setminspeed ", true, false, false);
+	AddWordRaw("/kick ", true, false, false);
+	AddWordRaw("/kickbynum ", true, false, false);
+	AddWordRaw("/mutebynum ", true, false, false);
 }
+
 
 void CWordCompletion::Sort() {
 	std::sort(words.begin(), words.end(), [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); });
 }
 
-void CWordCompletion::AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap, bool resort)
+void CWordCompletion::Filter() {
+	words.erase(std::unique(words.begin(), words.end(), [](const WordEntry& a, const WordEntry& b) { return (a.first == b.first); }));
+}
+
+
+bool CWordCompletion::AddWord(const std::string& word, bool startOfLine, bool unitName, bool miniMap)
 {
 	if (word.empty())
-		return;
+		return false;
 
+	// assumes <words> is already sorted
 	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(words.begin(), words.end(), WordEntry{word, {}}, pred);
 
-	if (iter != words.end() && iter->first == word) {
-		LOG_SL("WordCompletion", L_DEBUG, "Tried to add already present word: %s", word.c_str());
-		return;
-	}
+	if (iter != words.end() && iter->first == word)
+		return false;
 
 	words.emplace_back(word, WordProperties(startOfLine, unitName, miniMap));
 
-	if (!resort)
-		return;
+	for (size_t i = words.size() - 1; i > 0; i--) {
+		if (words[i - 1].first < words[i].first)
+			break;
 
-	Sort();
+		std::swap(words[i - 1], words[i]);
+	}
+
+	return true;
 }
 
-void CWordCompletion::RemoveWord(const std::string& word)
+bool CWordCompletion::AddWordRaw(const std::string& word, bool startOfLine, bool unitName, bool miniMap)
+{
+	if (word.empty())
+		return false;
+
+	// assumes <words> is still unsorted
+	words.emplace_back(word, WordProperties(startOfLine, unitName, miniMap));
+	return true;
+}
+
+bool CWordCompletion::RemoveWord(const std::string& word)
 {
 	const auto pred = [](const WordEntry& a, const WordEntry& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(words.begin(), words.end(), WordEntry{word, {}}, pred);
 
 	if (iter == words.end() || iter->first != word)
-		return;
+		return false;
 
 	words.erase(iter);
+	return true;
 }
 
 
