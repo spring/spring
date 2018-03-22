@@ -34,8 +34,7 @@ CFeatureHandler featureHandler;
 
 void CFeatureHandler::Init() {
 	features.resize(MAX_FEATURES, nullptr);
-	activeFeatureIDs.reserve(MAX_FEATURES);
-
+	activeFeatureIDs.reserve(MAX_FEATURES); // internal table size must be constant
 	featureMemPool.reserve(128);
 
 	idPool.Clear();
@@ -50,7 +49,7 @@ void CFeatureHandler::Kill() {
 	// do not clear in ctor because creg-loaded objects would be wiped out
 	featureMemPool.clear();
 
-	spring::clear_unordered_set(activeFeatureIDs);
+	activeFeatureIDs.clear();
 	deletedFeatureIDs.clear();
 	features.clear();
 	updateFeatures.clear();
