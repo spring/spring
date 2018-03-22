@@ -632,6 +632,10 @@ void CGame::LoadInterface()
 
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
 
+	// NB: these are also added to word-completion
+	syncedGameCommands->AddDefaultActionExecutors();
+	unsyncedGameCommands->AddDefaultActionExecutors();
+
 	// interface components
 	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
@@ -673,9 +677,13 @@ void CGame::LoadInterface()
 			wordCompletion.AddWord(pair.first + " ", false, true, false, false);
 		}
 
-		// these are also added to word-completion
-		syncedGameCommands->AddDefaultActionExecutors();
-		unsyncedGameCommands->AddDefaultActionExecutors();
+		// register /command's
+		for (const auto& pair: syncedGameCommands->GetActionExecutors()) {
+			wordCompletion.AddWord("/" + pair.first + " ", true, false, false, false);
+		}
+		for (const auto& pair: unsyncedGameCommands->GetActionExecutors()) {
+			wordCompletion.AddWord("/" + pair.first + " ", true, false, false, false);
+		}
 
 		wordCompletion.Sort();
 	}
@@ -1916,9 +1924,8 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	if (executor != nullptr) {
 		// an executor for that action was found
-		if (executor->ExecuteAction(UnsyncedAction(action, key, isRepeat))) {
+		if (executor->ExecuteAction(UnsyncedAction(action, key, isRepeat)))
 			return true;
-		}
 	}
 
 	const std::set<std::string>& serverCommands = CGameServer::GetCommandBlackList();

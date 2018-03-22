@@ -8,7 +8,6 @@
 // These two are required for the destructors
 #include "SyncedActionExecutor.h"
 #include "UnsyncedActionExecutor.h"
-#include "WordCompletion.h"
 
 #include <map>
 #include <string>
@@ -96,7 +95,6 @@ void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* execut
 		return;
 
 	actionExecutors[commandLower] = executor;
-	wordCompletion.AddWord("/" + commandLower + " ", true, false, false, false);
 }
 
 template<class actionExecutor_t>
@@ -108,11 +106,9 @@ void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& co
 	if (aei == actionExecutors.end())
 		return;
 
-	// an executor for this command is registered
-	// -> remove and delete
+	// an executor for this command is registered; remove and delete
 	actionExecutor_t* executor = aei->second;
 	actionExecutors.erase(aei);
-	wordCompletion.RemoveWord("/" + commandLower + " ");
 	delete executor;
 }
 
