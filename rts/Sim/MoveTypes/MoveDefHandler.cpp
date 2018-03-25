@@ -333,16 +333,16 @@ bool MoveDef::TestMoveSquare(
 
 	assert(testTerrain || testObjects);
 
-	float                minSpeedMod = std::numeric_limits<float>::max();;
-	CMoveMath::BlockType maxBlockBit = CMoveMath::BLOCK_NONE;
+	float minSpeedMod = std::numeric_limits<float>::max();
+	int   maxBlockBit = CMoveMath::BLOCK_NONE;
 
 	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
 	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
 	const float3 testMoveDir2D = (testMoveDir * XZVector).SafeNormalize2D();
 
-	for (int z = zMin; z <= zMax && retTestMove; z++) {
-		for (int x = xMin; x <= xMax && retTestMove; x++) {
+	for (int z = zMin; retTestMove && z <= zMax; z += 1) {
+		for (int x = xMin; retTestMove && x <= xMax; x += 1) {
 			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir2D);
 
 			minSpeedMod  = std::min(minSpeedMod, speedMod);
