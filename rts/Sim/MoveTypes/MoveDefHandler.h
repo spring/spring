@@ -21,16 +21,16 @@ struct MoveDef {
 	MoveDef();
 	MoveDef(const LuaTable& moveDefTable, int moveDefID);
 
-	bool TestMoveSquare(
+	bool TestMoveSquareRange(
 		const CSolidObject* collider,
-		const int xTestMoveSqr,
-		const int zTestMoveSqr,
+		const float3 rangeMins,
+		const float3 rangeMaxs,
 		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedMod = nullptr,
-		int* maxBlockBit = nullptr
+		float* minSpeedModPtr = nullptr,
+		int* maxBlockBitPtr = nullptr
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
@@ -39,9 +39,11 @@ struct MoveDef {
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedMod = nullptr,
-		int* maxBlockBit = nullptr
-	) const;
+		float* minSpeedModPtr = nullptr,
+		int* maxBlockBitPtr = nullptr
+	) const {
+		return (TestMoveSquareRange(collider, testMovePos, testMovePos, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedModPtr, maxBlockBitPtr));
+	}
 
 	// aircraft and buildings defer to UnitDef::floatOnWater
 	bool FloatOnWater() const { return (speedModClass == MoveDef::Hover || speedModClass == MoveDef::Ship); }

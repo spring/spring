@@ -1397,23 +1397,14 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 		{
 			// check the rectangle between pos and cwp for obstacles
-			const int xmin = std::min(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE), xmax = std::max(cwp.x / SQUARE_SIZE, pos.x / SQUARE_SIZE);
-			const int zmin = std::min(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE), zmax = std::max(cwp.z / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+			// if still further than SS elmos from waypoint, disallow skipping
+			// note: can somehow cause units to move in circles near obstacles
+			// (mantis3718) if rectangle is too generous in size
+			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true);
+			const bool allowSkip = ((pos - cwp).SqLength() <= Square(SQUARE_SIZE) || (pos - cwp).dot(flatFrontDir) < 0.0f);
 
-			const MoveDef* ownerMD = owner->moveDef;
-
-			for (int z = zmin; z < zmax; z++) {
-				for (int x = xmin; x < xmax; x++) {
-					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true))
-						continue;
-
-					// if still further than SS elmos from waypoint, disallow skipping
-					// note: can somehow cause units to move in circles near obstacles
-					// (mantis3718) if rectangle is too generous in size
-					if ((pos - cwp).SqLength() > Square(SQUARE_SIZE) && (pos - cwp).dot(flatFrontDir) >= 0.0f)
-						return false;
-				}
-			}
+			if (!rangeTest && !allowSkip)
+				return false;
 		}
 
 		{
@@ -2405,9 +2396,8 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 					owner->Move(owner->pos - owner->rightdir * n, false); break;
 			}
 
-			if (!updatePos) {
-				owner->Move(owner->pos - newSpeedVector, false);
-			}
+			if (!updatePos)
+				owner->Move((owner->pos - newSpeedVector), false);
 		}
 
 		// NOTE:

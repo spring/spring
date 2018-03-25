@@ -318,10 +318,10 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 }
 
 
-bool MoveDef::TestMoveSquare(
+bool MoveDef::TestMoveSquareRange(
 	const CSolidObject* collider,
-	const int xTestMoveSqr,
-	const int zTestMoveSqr,
+	const float3 rangeMins,
+	const float3 rangeMaxs,
 	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
@@ -329,21 +329,23 @@ bool MoveDef::TestMoveSquare(
 	float* minSpeedModPtr,
 	int* maxBlockBitPtr
 ) const {
-	bool retTestMove = true;
-
 	assert(testTerrain || testObjects);
+
+	const int xmin = int(rangeMins.x / SQUARE_SIZE) - xsizeh * (1 - centerOnly);
+	const int zmin = int(rangeMins.z / SQUARE_SIZE) - zsizeh * (1 - centerOnly);
+	const int xmax = int(rangeMaxs.x / SQUARE_SIZE) + xsizeh * (1 - centerOnly);
+	const int zmax = int(rangeMaxs.z / SQUARE_SIZE) + zsizeh * (1 - centerOnly);
+
+	const float3 testMoveDir2D = (testMoveDir * XZVector).SafeNormalize2D();
 
 	float minSpeedMod = std::numeric_limits<float>::max();
 	int   maxBlockBit = CMoveMath::BLOCK_NONE;
 
-	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
-	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
+	bool retTestMove = true;
 
-	const float3 testMoveDir2D = (testMoveDir * XZVector).SafeNormalize2D();
-
-	for (int z = zMin; retTestMove && z <= zMax; z += 1) {
-		for (int x = xMin; retTestMove && x <= xMax; x += 1) {
-			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir2D);
+	for (int z = zmin; retTestMove && z <= zmax; z += 1) {
+		for (int x = xmin; retTestMove && x <= xmax; x += 1) {
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, x, z, testMoveDir2D);
 
 			minSpeedMod  = std::min(minSpeedMod, speedMod);
 			retTestMove &= (!testTerrain || (speedMod > 0.0f));
@@ -353,33 +355,16 @@ bool MoveDef::TestMoveSquare(
 	// GetPosSpeedMod only checks *one* square of terrain
 	// (heightmap/slopemap/typemap), not the blocking-map
 	if (retTestMove) {
-		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xTestMoveSqr + xMin, xTestMoveSqr + xMax, zTestMoveSqr + zMin, zTestMoveSqr + zMax, collider);
+		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xmin, xmax, zmin, zmax, collider);
 
 		maxBlockBit |= blockBits;
 		retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
 	}
 
-	// don't use std::min or |= because the values might be garbage
+	// don't use std::min or |= because the ptr values might be garbage
 	if (minSpeedModPtr != nullptr) *minSpeedModPtr = minSpeedMod;
 	if (maxBlockBitPtr != nullptr) *maxBlockBitPtr = maxBlockBit;
 	return retTestMove;
-}
-
-
-bool MoveDef::TestMoveSquare(
-	const CSolidObject* collider,
-	const float3 testMovePos,
-	const float3 testMoveDir,
-	bool testTerrain,
-	bool testObjects,
-	bool centerOnly,
-	float* minSpeedMod,
-	int* maxBlockBit
-) const {
-	const int xTestMoveSqr = testMovePos.x / SQUARE_SIZE;
-	const int zTestMoveSqr = testMovePos.z / SQUARE_SIZE;
-
-	return (TestMoveSquare(collider, xTestMoveSqr, zTestMoveSqr, testMoveDir, testTerrain, testObjects, centerOnly, minSpeedMod, maxBlockBit));
 }
 
 
