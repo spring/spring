@@ -371,9 +371,9 @@ void CGroundMoveType::UpdateOwnerSpeedAndHeading()
 void CGroundMoveType::SlowUpdate()
 {
 	if (owner->GetTransporter() != nullptr) {
-		if (progressState == Active) {
+		if (progressState == Active)
 			StopEngine(false);
-		}
+
 	} else {
 		if (progressState == Active) {
 			if (pathID != 0) {
@@ -400,18 +400,15 @@ void CGroundMoveType::SlowUpdate()
 				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 				ReRequestPath(true);
 			}
-			if (wantRepath) {
+
+			if (wantRepath)
 				ReRequestPath(true);
-			}
 		}
 
-		if (!owner->IsFlying()) {
-			// move us into the map, and update <oldPos>
-			// to prevent any extreme changes in <speed>
-			if (!owner->pos.IsInBounds()) {
-				owner->Move(oldPos = owner->pos.cClampInBounds(), false);
-			}
-		}
+		// move us into the map, and update <oldPos>
+		// to prevent any extreme changes in <speed>
+		if (!owner->IsFlying() && !owner->pos.IsInBounds())
+			owner->Move(oldPos = owner->pos.cClampInBounds(), false);
 	}
 
 	AMoveType::SlowUpdate();
@@ -1405,8 +1402,8 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 			const MoveDef* ownerMD = owner->moveDef;
 
-			for (int x = xmin; x < xmax; x++) {
-				for (int z = zmin; z < zmax; z++) {
+			for (int z = zmin; z < zmax; z++) {
+				for (int x = xmin; x < xmax; x++) {
 					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true))
 						continue;
 
@@ -1600,7 +1597,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
 		const float colliderSpeed = collider->speed.w;
-		const float colliderRadius = colliderMD->CalcFootPrintRadius(1.0f);
+		const float colliderRadius = colliderMD->CalcFootPrintRadius(0.75f);
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
@@ -1612,9 +1609,10 @@ void CGroundMoveType::HandleObjectCollisions()
 		const bool squareChange = (CGround::GetSquare(owner->pos + owner->speed) != CGround::GetSquare(owner->pos));
 		const bool checkAllowed = ((collider->id & 1) == (gs->frameNum & 1));
 
-		if (squareChange || checkAllowed) {
-			HandleStaticObjectCollision(owner, owner, owner->moveDef, colliderRadius, 0.0f, ZeroVector, true, false, true);
-		}
+		if (!squareChange && !checkAllowed)
+			return;
+
+		HandleStaticObjectCollision(owner, owner, owner->moveDef, colliderRadius, 0.0f, ZeroVector, true, false, true);
 	}
 }
 
@@ -1754,7 +1752,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
 				collider->Move(strafeVec + bounceVec, true);
 			} else {
-				collider->Move(oldPos - collider->pos, wantRequestPath = true);
+				collider->Move(oldPos - collider->pos, true);
 			}
 		}
 
@@ -1784,18 +1782,17 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			// this means deltaSpeed will be non-zero if stuck on an impassable square and hence
 			// the new speedvector which is constructed from deltaSpeed --> we would simply keep
 			// moving forward through obstacles if not counteracted by this
-			if (collider->frontdir.dot(separationVector) < 0.25f) {
-				collider->Move(oldPos - collider->pos, wantRequestPath = true);
-			}
+			collider->Move((oldPos - collider->pos) * (collider->frontdir.dot(separationVector) < 0.25f), true);
 		}
 
 		// same here
 		wantRequestPath = (penDistance < 0.0f);
 	}
 
-	if (canRequestPath && wantRequestPath) {
-		ReRequestPath(false);
-	}
+	if (!canRequestPath || !wantRequestPath)
+		return;
+
+	ReRequestPath(false);
 }
 
 
