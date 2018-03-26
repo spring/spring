@@ -4,6 +4,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Game/GameVersion.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/Platform/Misc.h"
 
 bool LuaConstEngine::PushEntries(lua_State* L)
@@ -19,6 +20,10 @@ bool LuaConstEngine::PushEntries(lua_State* L)
 	#else
 	LuaPushNamedNumber(L, "wordSize", (!CLuaHandle::GetHandleSynced(L))? Platform::NativeWordSize() * 8: 0);
 	#endif
+
+	LuaPushNamedNumber(L, "gameSpeed",  GAME_SPEED);
+	LuaPushNamedNumber(L, "squareSize", SQUARE_SIZE);
+
 	return true;
 }
 
