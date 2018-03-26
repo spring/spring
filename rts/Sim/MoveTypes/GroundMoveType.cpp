@@ -2389,11 +2389,14 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 			bool updatePos = false;
 
 			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true)))
-					owner->Move(owner->pos + owner->rightdir * n, false); break;
-
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true)))
-					owner->Move(owner->pos - owner->rightdir * n, false); break;
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true))) {
+					owner->Move(owner->pos + owner->rightdir * n, false);
+					break;
+				}
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true))) {
+					owner->Move(owner->pos - owner->rightdir * n, false);
+					break;
+				}
 			}
 
 			if (!updatePos)
