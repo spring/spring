@@ -1049,11 +1049,11 @@ void CUnit::SlowUpdate()
 		// which would make us invulnerable to most non-/small-AOE weapon impacts
 		static_cast<AMoveType*>(moveType)->SlowUpdate();
 
-		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
-		const bool b1 = (transporter == nullptr || !transporter->unitDef->IsTransportUnit() || transporter->unitDef->isFirePlatform);
+		const bool notStunned = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
+		const bool inFireBase = (transporter == nullptr || !transporter->unitDef->IsTransportUnit() || transporter->unitDef->isFirePlatform);
 
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (b0 && b1)
+		if (notStunned && inFireBase)
 			SetStunned(false);
 
 		SlowUpdateCloak(true);
@@ -1066,9 +1066,9 @@ void CUnit::SlowUpdate()
 			KillUnit(nullptr, !beingBuilt, beingBuilt);
 			return;
 		}
-		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating) {
+
+		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating)
 			LOG("%s: self-destruct in %is", unitDef->humanName.c_str(), (selfDCountdown >> 1) + 1);
-		}
 	}
 
 	if (beingBuilt) {
@@ -1095,6 +1095,7 @@ void CUnit::SlowUpdate()
 	commandAI->SlowUpdate();
 	moveType->SlowUpdate();
 
+
 	// FIXME: scriptMakeMetal ...?
 	AddMetal(resourcesUncondMake.metal);
 	AddEnergy(resourcesUncondMake.energy);
@@ -1111,13 +1112,15 @@ void CUnit::SlowUpdate()
 	}
 
 	AddMetal(unitDef->metalMake * 0.5f);
+
 	if (activated) {
 		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
 			AddMetal(unitDef->makesMetal * 0.5f);
-			if (unitDef->extractsMetal > 0.0f) {
+
+			if (unitDef->extractsMetal > 0.0f)
 				AddMetal(metalExtract * 0.5f);
-			}
 		}
+
 		UseMetal(unitDef->metalUpkeep * 0.5f);
 
 		if (unitDef->windGenerator > 0.0f) {
@@ -1128,13 +1131,12 @@ void CUnit::SlowUpdate()
 			}
 		}
 	}
+
 	AddEnergy(energyTickMake * 0.5f);
 
-	if (health < maxHealth) {
-		if (restTime > unitDef->idleTime) {
-			health += unitDef->idleAutoHeal;
-		}
 
+	if (health < maxHealth) {
+		health += (unitDef->idleAutoHeal * (restTime > unitDef->idleTime));
 		health += unitDef->autoHeal;
 		health = std::min(health, maxHealth);
 	}
@@ -2422,21 +2424,18 @@ void CUnit::StopAttackingAllyTeam(int ally)
 
 
 bool CUnit::GetNewCloakState(bool stunCheck) {
-	if (stunCheck) {
-		// if stunned, check if we are allowed to also stay cloaked
-		if (IsStunned() && IsCloaked())
-			return (eventHandler.AllowUnitCloak(this, nullptr));
-
-		return (IsCloaked());
-	}
-
-	if (!wantCloak)
-		return false;
+	assert(wantCloak);
 
 	// grab nearest enemy wrt our default decloak-distance
 	// Lua code can do more elaborate scans if it wants to
 	// and has access to cloakCost{Moving}/decloakDistance
-	const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+	//
+	// NB: for stun checks, set enemy to <this> instead of
+	// a nullptr s.t. Lua can deduce the context
+	const CUnit* closestEnemy = this;
+
+	if (!stunCheck)
+		closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(nullptr, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 
 	return (eventHandler.AllowUnitCloak(this, closestEnemy));
 }
@@ -2445,7 +2444,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 void CUnit::SlowUpdateCloak(bool stunCheck)
 {
 	const bool oldCloak = isCloaked;
-	const bool newCloak = GetNewCloakState(stunCheck);
+	const bool newCloak = wantCloak && GetNewCloakState(stunCheck);
 
 	if (oldCloak != newCloak) {
 		if (newCloak) {
@@ -2568,18 +2567,16 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 
 		unit->UpdateVoidState(piece < 0);
 		return false;
-	} else {
-		// handle transfers from another transport to us
-		// (can still fail depending on CanTransport())
-		if (unit->GetTransporter() != NULL) {
-			unit->GetTransporter()->DetachUnit(unit);
-		}
 	}
 
+	// handle transfers from another transport to us
+	// (can still fail depending on CanTransport())
+	if (unit->GetTransporter() != nullptr)
+		unit->GetTransporter()->DetachUnit(unit);
+
 	// covers the case where unit->transporter != NULL
-	if (!force && !CanTransport(unit)) {
+	if (!force && !CanTransport(unit))
 		return false;
-	}
 
 	AddDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
 	unit->AddDeathDependence(this, DEPENDENCE_TRANSPORTER);
