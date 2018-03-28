@@ -385,7 +385,7 @@ void CGroundMoveType::SlowUpdate()
 
 				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 					// case A: we have a path but are not moving
-					LOG_L(L_DEBUG, "SlowUpdate: unit %i has pathID %i but %i ETA failures", owner->id, pathID, numIdlingUpdates);
+					LOG_L(L_DEBUG, "[%s] unit %i has pathID %i but %i ETA failures", __func__, owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 						ReRequestPath(true);
@@ -397,7 +397,7 @@ void CGroundMoveType::SlowUpdate()
 				}
 			} else {
 				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
+				LOG_L(L_DEBUG, "[%s] unit %i has no path", __func__, owner->id);
 				ReRequestPath(true);
 			}
 
@@ -417,10 +417,11 @@ void CGroundMoveType::SlowUpdate()
 
 void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) {
 	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
+	const float deltaRadius = std::max(0.0f, ownerRadius - moveGoalRadius);
 
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
-	extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+	extraRadius = deltaRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
@@ -441,18 +442,20 @@ void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRad
 
 void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "[" << __func__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
 	// add the footprint radius if moving onto goalPos would cause it to overlap impassable squares
 	// (otherwise repeated coldet push-jittering can ensue if allowTerrainCollision is not disabled)
+	// not needed if goalRadius actually exceeds ownerRadius, e.g. for builders
 	const float ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
+	const float deltaRadius = std::max(0.0f, ownerRadius - moveGoalRadius);
 
 	// set the new goal
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
-	extraRadius = ownerRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+	extraRadius = deltaRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
 
 	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(goalRadius + extraRadius));
 	atEndOfPath = false;
@@ -468,7 +471,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	currWayPointDist = 0.0f;
 	prevWayPointDist = 0.0f;
 
-	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "[%s] starting engine for unit %i", __func__, owner->id);
 
 	if (atGoal)
 		return;
@@ -480,18 +483,17 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// unless they come to a full stop first
 	ReRequestPath(true);
 
-	if (owner->team == gu->myTeam) {
+	if (owner->team == gu->myTeam)
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
-	}
 }
 
 void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw) {
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "[" << __func__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "[%s] stopping engine for unit %i", __func__, owner->id);
 
 	if (!atGoal)
 		goalPos = (currWayPoint = Here());
@@ -1525,23 +1527,21 @@ void CGroundMoveType::Arrived(bool callScript)
 	if (progressState == Active) {
 		StopEngine(callScript);
 
-		if (owner->team == gu->myTeam) {
+		if (owner->team == gu->myTeam)
 			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
-		}
 
 		// and the action is done
 		progressState = Done;
 
-		if (!owner->commandAI->HasMoreMoveCommands()) {
-			// update the position-parameter of our queue's front CMD_MOVE
-			// this is needed in case we Arrive()'ed non-directly (through
-			// colliding with another unit that happened to share our goal)
+		// update the position-parameter of our queue's front CMD_MOVE
+		// this is needed in case we Arrive()'ed non-directly (through
+		// colliding with another unit that happened to share our goal)
+		if (!owner->commandAI->HasMoreMoveCommands())
 			static_cast<CMobileCAI*>(owner->commandAI)->SetFrontMoveCommandPos(owner->pos);
-		}
 
 		owner->commandAI->SlowUpdate();
 
-		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
+		LOG_L(L_DEBUG, "[%s] unit %i arrived", __func__, owner->id);
 	}
 }
 
@@ -1551,7 +1551,7 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail(bool callScript)
 {
-	LOG_L(L_DEBUG, "Fail: unit %i failed", owner->id);
+	LOG_L(L_DEBUG, "[%s] unit %i failed", __func__, owner->id);
 
 	StopEngine(callScript);
 
