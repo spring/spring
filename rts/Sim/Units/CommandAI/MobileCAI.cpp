@@ -424,34 +424,41 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command& c)
 */
 void CMobileCAI::ExecuteMove(Command& c)
 {
+	const AMoveType* moveType = owner->moveType;
+
 	const float3 cmdPos = c.GetPos(0);
 
-	const float sqGoalDist = owner->pos.SqDistance2D(cmdPos);
-	const float mtGoalRadiusExt = owner->moveType->GetGoalRadius(1.0f);
-	const float mtGoalRadiusRaw = owner->moveType->GetGoalRadius(0.0f);
-
-	// this has to check against the moveType's own (possibly extended) goal radius
-	if (sqGoalDist < Square(mtGoalRadiusExt)) {
-		if (!HasMoreMoveCommands())
-			StopMove();
-
-		FinishCommand();
-		return;
-	}
+	const float sqGoalDist      = cmdPos.SqDistance2D(owner->pos);
+	const float mtGoalRadiusRaw = moveType->GetGoalRadius(0.0f);
+	const float mtGoalRadiusExt = moveType->GetGoalRadius(1.0f);
 
 	// this check is important to process failed orders properly
 	// NB: only works if the *non-extended* goal radius is passed
-	if (!owner->moveType->IsMovingTowards(cmdPos, mtGoalRadiusRaw, false))
-		SetGoal(cmdPos, owner->pos);
+	if (moveType->IsMovingTowards(cmdPos, mtGoalRadiusRaw, false)) {
+		// compare against the moveType's own (possibly extended)
+		// goal radius to determine if we can finish the command
+		if (sqGoalDist < Square(mtGoalRadiusExt)) {
+			if (!HasMoreMoveCommands())
+				StopMove();
 
-	if (owner->moveType->progressState == AMoveType::Failed) {
+			FinishCommand();
+			return;
+		}
+	} else {
+		SetGoal(cmdPos, owner->pos);
+	}
+
+	if (moveType->progressState == AMoveType::Failed) {
 		StopMoveAndFinishCommand();
 		return;
 	}
 
+
+	if (sqGoalDist >= cancelDistance || !HasMoreMoveCommands())
+		return;
+
 	// fallback
-	if (sqGoalDist < cancelDistance && HasMoreMoveCommands())
-		FinishCommand();
+	FinishCommand();
 }
 
 void CMobileCAI::ExecuteLoadOnto(Command& c) {
