@@ -109,13 +109,17 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
-	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
+	const int xmin = Clamp(xSquare - moveDef.xsizeh, 0, mapDims.mapx - 1);
+	const int zmin = Clamp(zSquare - moveDef.zsizeh, 0, mapDims.mapy - 1);
+	const int xmax = Clamp(xSquare + moveDef.xsizeh, 0, mapDims.mapx - 1);
+	const int zmax = Clamp(zSquare + moveDef.zsizeh, 0, mapDims.mapy - 1);
 
+	#if 0
 	if (xmin < 0 || xmax >= mapDims.mapx)
 		return BLOCK_IMPASSABLE;
 	if (zmin < 0 || zmax >= mapDims.mapy)
 		return BLOCK_IMPASSABLE;
+	#endif
 
 	BlockType ret = BLOCK_NONE;
 
@@ -124,13 +128,16 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		const int zOffset = z * mapDims.mapx;
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
+
 			for (const CSolidObject* collidee: cell) {
-				ret |= ObjectBlockType(moveDef, collidee, collider);
-				if (ret & BLOCK_STRUCTURE)
-					return ret;
+				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
+					continue;
+
+				return ret;
 			}
 		}
 	}
+
 	return ret;
 }
 
@@ -265,11 +272,17 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin, int xmax, int zmin, int zmax, const CSolidObject* collider)
 {
+	#if 0
 	if (xmin < 0 || xmax >= mapDims.mapx)
 		return BLOCK_IMPASSABLE;
-
 	if (zmin < 0 || zmax >= mapDims.mapy)
 		return BLOCK_IMPASSABLE;
+	#else
+	xmin = Clamp(xmin, 0, mapDims.mapx - 1);
+	zmin = Clamp(zmin, 0, mapDims.mapy - 1);
+	xmax = Clamp(xmax, 0, mapDims.mapx - 1);
+	zmax = Clamp(zmax, 0, mapDims.mapy - 1);
+	#endif
 
 	BlockType ret = BLOCK_NONE;
 
@@ -287,10 +300,11 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 					continue;
 
 				collidee->tempNum = tempNum;
-				ret |= ObjectBlockType(moveDef, collidee, collider);
 
-				if (ret & BLOCK_STRUCTURE)
-					return ret;
+				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
+					continue;
+
+				return ret;
 			}
 		}
 	}
