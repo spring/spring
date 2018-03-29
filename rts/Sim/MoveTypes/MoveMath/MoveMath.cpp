@@ -109,10 +109,10 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	const int xmin = Clamp(xSquare - moveDef.xsizeh, 0, mapDims.mapx - 1);
-	const int zmin = Clamp(zSquare - moveDef.zsizeh, 0, mapDims.mapy - 1);
-	const int xmax = Clamp(xSquare + moveDef.xsizeh, 0, mapDims.mapx - 1);
-	const int zmax = Clamp(zSquare + moveDef.zsizeh, 0, mapDims.mapy - 1);
+	const int xmin = std::max(xSquare - moveDef.xsizeh,                0);
+	const int zmin = std::max(zSquare - moveDef.zsizeh,                0);
+	const int xmax = std::min(xSquare + moveDef.xsizeh, mapDims.mapx - 1);
+	const int zmax = std::min(zSquare + moveDef.zsizeh, mapDims.mapy - 1);
 
 	#if 0
 	if (xmin < 0 || xmax >= mapDims.mapx)
@@ -278,10 +278,10 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 	if (zmin < 0 || zmax >= mapDims.mapy)
 		return BLOCK_IMPASSABLE;
 	#else
-	xmin = Clamp(xmin, 0, mapDims.mapx - 1);
-	zmin = Clamp(zmin, 0, mapDims.mapy - 1);
-	xmax = Clamp(xmax, 0, mapDims.mapx - 1);
-	zmax = Clamp(zmax, 0, mapDims.mapy - 1);
+	xmin = std::max(xmin,                0);
+	zmin = std::max(zmin,                0);
+	xmax = std::min(xmax, mapDims.mapx - 1);
+	zmax = std::min(zmax, mapDims.mapy - 1);
 	#endif
 
 	BlockType ret = BLOCK_NONE;
