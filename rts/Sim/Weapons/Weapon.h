@@ -144,6 +144,7 @@ public:
 	int salvoLeft;                          // number of shots left in current salvo
 
 	float range;
+	float rangeAutoTargetBoost;
 	float projectileSpeed;
 	float accuracyError;                    // inaccuracy of whole salvo
 	float sprayAngle;                       // inaccuracy of individual shots inside salvo

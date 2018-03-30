@@ -630,28 +630,38 @@ namespace {
 } // end of namespace
 
 
+
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets)
 {
-	const CUnit* owner    = weapon->owner;
-	const float radius    = weapon->range;
-	const float3& pos     = owner->pos;
-	const float aHeight   = weapon->aimFromPos.y;
-	const CUnit* lastAttacker = ((owner->lastAttackFrame + 200) <= gs->frameNum) ? owner->lastAttacker : nullptr;
+	const CUnit*  weaponOwner = weapon->owner;
+	const CUnit* lastAttacker = ((weaponOwner->lastAttackFrame + 200) <= gs->frameNum) ? weaponOwner->lastAttacker : nullptr;
 
-	const WeaponDef* weaponDef = weapon->weaponDef;
-	const float heightMod = weaponDef->heightmod;
+	const      WeaponDef* weaponDef = weapon->weaponDef;
+	const DynDamageArray* weaponDmg = weapon->damages;
+
+	const float3& ownerPos = weaponOwner->pos;
+	const float3 testPos;
+
+	const float scanRadius = weapon->range + weapon->rangeAutoTargetBoost;
+	const float aimHeight = weapon->aimFromPos.y;
 
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weapon->damages->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
-	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
+	const float secDamage = weaponDmg->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const float heightMod = weaponDef->heightmod;
+
+	// [0] := default, [1,2,3,4,5] := target is {avoidee, in bad category, crashing, last attacker, paralyzed}
+	constexpr float tgtPriorityMults[] = {1.0f, 10.0f, 100.0f, 1000.0f, 0.5f, 4.0f};
+
+	const bool paralyzer = (weaponDmg->paralyzeDamageTime != 0);
 
 	// copy on purpose since the below calls lua
 	QuadFieldQuery qfQuery;
-	quadField.GetQuads(qfQuery, pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	quadField.GetQuads(qfQuery, ownerPos, scanRadius + (aimHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) {
-		if (teamHandler.Ally(owner->allyteam, t))
+		if (teamHandler.Ally(weaponOwner->allyteam, t))
 			continue;
 
 		for (const int qi: *qfQuery.quads) {
@@ -663,34 +673,32 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				targetUnit->tempNum = tempNum;
 
-				float targetPriority = 1.0f;
-
-				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit)))
+				if (!weapon->TestTarget(testPos, SWeaponTarget(targetUnit)))
 					continue;
 
-				if (targetUnit == avoidUnit)
-					targetPriority *= 10.0f;
+				const unsigned short targetLOSState = targetUnit->losStatus[weaponOwner->allyteam];
 
-				float3 targPos;
-				const unsigned short targetLOSState = targetUnit->losStatus[owner->allyteam];
+				float targetPriority = tgtPriorityMults[(targetUnit == avoidUnit) * 1];
+				float3 targetPos;
 
 				if (targetLOSState & LOS_INLOS) {
-					targPos = targetUnit->aimPos;
+					targetPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = weapon->GetUnitPositionWithError(targetUnit);
-					targetPriority *= 10.0f;
+					targetPos = weapon->GetUnitPositionWithError(targetUnit);
+					targetPriority *= tgtPriorityMults[1];
 				} else {
 					continue;
 				}
 
-				const float modRange = radius + (aHeight - targPos.y) * heightMod;
+				const float modRange = scanRadius + (aimHeight - targetPos.y) * heightMod;
+				const float sqDist2D = ownerPos.SqDistance2D(targetPos);
 
-				if (pos.SqDistance2D(targPos) > modRange * modRange)
+				if (sqDist2D > Square(modRange))
 					continue;
 
-				const float dist2D = (pos - targPos).Length2D();
+				const float dist2D = math::sqrt(sqDist2D);
 				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-				const float damageMul = weapon->damages->Get(targetUnit->armorType) * targetUnit->curArmorMultiple;
+				const float damageMul = weaponDmg->Get(targetUnit->armorType) * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
 
@@ -698,7 +706,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 					targetPriority *= (secDamage + targetUnit->health);
 
 					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health))
-						targetPriority *= 4.0f;
+						targetPriority *= tgtPriorityMults[5];
 
 					if (weapon->hasTargetWeight)
 						targetPriority *= weapon->TargetWeight(targetUnit);
@@ -709,33 +717,29 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				if (targetLOSState & LOS_PREVLOS) {
 					targetPriority /= (damageMul * targetUnit->power * (0.7f + gsRNG.NextFloat() * 0.6f));
-
-					if (targetUnit->category & weapon->badTargetCategory)
-						targetPriority *= 100.0f;
-
-					if (targetUnit->IsCrashing())
-						targetPriority *= 1000.0f;
-
-					if (targetUnit == lastAttacker)
-						targetPriority *= 0.5f;
+					targetPriority *= tgtPriorityMults[((targetUnit->category & weapon->badTargetCategory) != 0) * 2];
+					targetPriority *= tgtPriorityMults[(targetUnit->IsCrashing()) * 3];
+					targetPriority *= tgtPriorityMults[(targetUnit == lastAttacker) * 4];
 				}
 
-				const bool allow = eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority);
-				//Lua call may have changed tempNum, so needs to be set again.
+				const bool allowTarget = eventHandler.AllowWeaponTarget(weaponOwner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority);
+
+				// Lua call may have changed tempNum, so needs to be set again
 				targetUnit->tempNum = tempNum;
 
-				if (!allow)
+				if (!allowTarget)
 					continue;
 
-				targets.push_back(std::pair<float, CUnit*>(targetPriority, targetUnit));
+				targets.emplace_back(targetPriority, targetUnit);
 			}
 		}
 	}
+
 	std::stable_sort(targets.begin(), targets.end(), [](const std::pair<float, CUnit*>& a, const std::pair<float, CUnit*>& b) { return (a.first < b.first); });
 
 #ifdef TRACE_SYNC
 	{
-		tracefile << "[GenerateWeaponTargets] ownerID, attackRadius: " << owner->id << ", " << radius << " ";
+		tracefile << "[GenerateWeaponTargets] ownerID, attackRadius: " << weaponOwner->id << ", " << scanRadius << " ";
 
 		for (const auto& ti: targets) {
 			tracefile << "\tpriority: " << (ti.first) <<  ", targetID: " << (ti.second)->id <<  " ";
@@ -745,6 +749,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	}
 #endif
 }
+
+
 
 CUnit* CGameHelper::GetClosestUnit(const float3& pos, float searchRadius)
 {
