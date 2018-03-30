@@ -52,6 +52,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(salvoLeft),
 
 	CR_MEMBER(range),
+	CR_MEMBER(rangeAutoTargetBoost),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(sprayAngle),
@@ -131,6 +132,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoLeft(0),
 
 	range(1.0f),
+	rangeAutoTargetBoost(0.0f),
 	projectileSpeed(1.0f),
 	accuracyError(0.0f),
 	sprayAngle(0.0f),
@@ -218,23 +220,25 @@ void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 	const bool aimExists = owner->script->PieceExists(aimFromPiece);
 	const bool muzExists = owner->script->PieceExists(muzzlePiece);
 
-	if (aimExists && muzExists) {
-		// everything fine
-	} else
+	if (aimExists && muzExists)
+		return; // everything fine
+
 	if (!aimExists && muzExists) {
 		aimFromPiece = muzzlePiece;
-	} else
+		return;
+	}
 	if (aimExists && !muzExists) {
 		muzzlePiece = aimFromPiece;
-	} else
-	if (!aimExists && !muzExists) {
-		if (!alreadyWarnedAboutMissingPieces && (owner->script != &CNullUnitScript::value) && !weaponDef->isShield && (dynamic_cast<CNoWeapon*>(this) == nullptr)) {
-			LOG_L(L_WARNING, "%s: weapon%i: Neither AimFromWeapon nor QueryWeapon defined or returned invalid pieceids", owner->unitDef->name.c_str(), weaponNum + LUA_WEAPON_BASE_INDEX);
-			alreadyWarnedAboutMissingPieces = true;
-		}
-		aimFromPiece = -1;
-		muzzlePiece = -1;
+		return;
 	}
+
+	if (!alreadyWarnedAboutMissingPieces && (owner->script != &CNullUnitScript::value) && !weaponDef->isShield && (dynamic_cast<CNoWeapon*>(this) == nullptr)) {
+		LOG_L(L_WARNING, "%s: weapon%i: Neither AimFromWeapon nor QueryWeapon defined or returned invalid pieceids", owner->unitDef->name.c_str(), weaponNum + LUA_WEAPON_BASE_INDEX);
+		alreadyWarnedAboutMissingPieces = true;
+	}
+
+	aimFromPiece = -1;
+	muzzlePiece = -1;
 }
 
 
@@ -282,9 +286,8 @@ void CWeapon::Update()
 	// SlowUpdate() only generates targets when we are in range
 	// esp. for bombs this is often too late (SlowUpdate gets only called twice per second)
 	// so check unit's target this check every frame (unit target has highest priority even in SlowUpdate!)
-	if (!HaveTarget() && owner->curTarget.type != Target_None) {
+	if (!HaveTarget() && owner->curTarget.type != Target_None)
 		Attack(owner->curTarget);
-	}
 
 	UpdateWeaponVectors();
 	currentTargetPos = GetLeadTargetPos(currentTarget);
@@ -546,9 +549,9 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 	DropCurrentTarget();
 	currentTarget = newTarget;
-	if (newTarget.type == Target_Unit) {
+
+	if (newTarget.type == Target_Unit)
 		AddDeathDependence(newTarget.unit, DEPENDENCE_TARGETUNIT);
-	}
 
 	currentTargetPos = GetLeadTargetPos(newTarget);
 	UpdateWantedDir();
@@ -557,9 +560,9 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 void CWeapon::DropCurrentTarget()
 {
-	if (currentTarget.type == Target_Unit) {
+	if (currentTarget.type == Target_Unit)
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
-	}
+
 	currentTarget = SWeaponTarget();
 }
 
@@ -567,21 +570,27 @@ void CWeapon::DropCurrentTarget()
 bool CWeapon::AllowWeaponAutoTarget() const
 {
 	const int checkAllowed = eventHandler.AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
-	if (checkAllowed >= 0) {
+	if (checkAllowed >= 0)
 		return checkAllowed;
-	}
 
 	//FIXME these need to be merged
-	if (weaponDef->noAutoTarget || noAutoTarget) { return false; }
-	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (slavedTo != nullptr)                     { return false; }
-	if (weaponDef->interceptor)                  { return false; }
+	if (weaponDef->noAutoTarget || noAutoTarget)
+		return false;
+	if (owner->fireState < FIRESTATE_FIREATWILL)
+		return false;
+	if (slavedTo != nullptr)
+		return false;
+	if (weaponDef->interceptor)
+		return false;
 
 	// if CAI has an auto-generated attack order, do not interfere
-	if (!owner->commandAI->CanWeaponAutoTarget(this)) { return false; }
+	if (!owner->commandAI->CanWeaponAutoTarget(this))
+		return false;
 
-	if (!HaveTarget()) { return true; }
-	if (avoidTarget)   { return true; }
+	if (!HaveTarget())
+		return true;
+	if (avoidTarget)
+		return true;
 
 	if (currentTarget.type == Target_Unit) {
 		if (!TryTarget(SWeaponTarget(currentTarget.unit, currentTarget.isUserTarget))) {
@@ -600,19 +609,15 @@ bool CWeapon::AllowWeaponAutoTarget() const
 			return true;
 		}
 		if (!currentTarget.isUserTarget) {
-			if (currentTarget.unit->category & badTargetCategory) {
+			if (currentTarget.unit->category & badTargetCategory)
 				return true;
-			}
 		}
 	}
 
-	if (currentTarget.isUserTarget) { return false; }
+	if (currentTarget.isUserTarget)
+		return false;
 
-	if (gs->frameNum > (lastTargetRetry + 65)) {
-		return true;
-	}
-
-	return false;
+	return (gs->frameNum > (lastTargetRetry + 65));
 }
 
 bool CWeapon::AutoTarget()
@@ -632,7 +637,7 @@ bool CWeapon::AutoTarget()
 	static std::vector<std::pair<float, CUnit*>> targets;
 
 	targets.clear();
-	targets.reserve(16);
+	targets.reserve(32);
 
 	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
@@ -648,7 +653,9 @@ bool CWeapon::AutoTarget()
 		if (isBadTarget && (badTargetUnit != nullptr))
 			continue;
 
-		if (!TryTarget(SWeaponTarget(unit)))
+		// set isAutoTarget s.t. TestRange result is ignored
+		// (which enables pre-aiming at targets out of range)
+		if (!TryTarget(SWeaponTarget(unit, false, true)))
 			continue;
 
 		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
@@ -656,20 +663,22 @@ bool CWeapon::AutoTarget()
 
 		if (isBadTarget) {
 			badTargetUnit = unit;
-		} else {
-			goodTargetUnit = unit;
-			break;
+			continue;
 		}
+
+		goodTargetUnit = unit;
+		break;
 	}
 
 	if (goodTargetUnit == nullptr)
 		goodTargetUnit = badTargetUnit;
 
-	if (goodTargetUnit) {
+	if (goodTargetUnit != nullptr) {
 		// pick our new target
 		SetAttackTarget(SWeaponTarget(goodTargetUnit));
 		return true;
 	}
+
 	return false;
 }
 
@@ -806,32 +815,29 @@ float3 CWeapon::GetTargetBorderPos(
 	tmpColVol.SetBoundingRadius();
 	tmpColVol.SetUseContHitTest(false);
 
-	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, ZeroVector, nullptr)) {
-		// FIXME use aimFromPos ?
-		// our weapon muzzle is inside the target unit's volume
-		targetBorderPos = weaponMuzzlePos;
-	} else {
-		// otherwise, perform a raytrace to find the proper length correction
-		// factor for non-spherical coldet volumes based on the ray's ingress
-		// (for positive TB values) or egress (for negative TB values) position;
-		// this either increases or decreases the length of <targetVec> but does
-		// not change its direction
-		tmpColVol.SetUseContHitTest(true);
+	// our weapon muzzle is inside the target unit's volume (FIXME: use aimFromPos?)
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, ZeroVector, nullptr))
+		return (targetBorderPos = weaponMuzzlePos);
 
-		// make the ray-segment long enough so it can reach the far side of the
-		// scaled collision volume (helps to ensure a ray-intersection is found)
-		//
-		// note: ray-intersection is NOT guaranteed if the volume itself has a
-		// non-zero offset, since here we are "shooting" at the target UNIT's
-		// aimpoint
-		const float3 targetOffset = rawTargetDir * (tmpColVol.GetBoundingRadius() * 2.0f);
-		const float3 targetRayPos = rawTargetPos + targetOffset;
+	// otherwise, perform a raytrace to find the proper length correction
+	// factor for non-spherical coldet volumes based on the ray's ingress
+	// (for positive TB values) or egress (for negative TB values) position;
+	// this either increases or decreases the length of <targetVec> but does
+	// not change its direction
+	tmpColVol.SetUseContHitTest(true);
 
-		// adjust the length of <targetVec> based on the targetBorder factor
-		if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			targetBorderPos = (weaponDef->targetBorder > 0.0f) ? tmpColQry.GetIngressPos() : tmpColQry.GetEgressPos();
-		}
-	}
+	// make the ray-segment long enough so it can reach the far side of the
+	// scaled collision volume (helps to ensure a ray-intersection is found)
+	//
+	// note: ray-intersection is NOT guaranteed if the volume itself has a
+	// non-zero offset, since here we are "shooting" at the target UNIT's
+	// aimpoint
+	const float3 targetOffset = rawTargetDir * (tmpColVol.GetBoundingRadius() * 2.0f);
+	const float3 targetRayPos = rawTargetPos + targetOffset;
+
+	// adjust the length of <targetVec> based on the targetBorder factor
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry))
+		targetBorderPos = mix(tmpColQry.GetIngressPos(), tmpColQry.GetEgressPos(), weaponDef->targetBorder <= 0.0f);
 
 	return targetBorderPos;
 }
@@ -843,7 +849,9 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preF
 
 	if (!TestTarget(tgtPos, trg))
 		return false;
-	if (!TestRange(tgtPos, trg))
+	// auto-targeted units are allowed to be out of range
+	// (UpdateFire will still block firing at such units)
+	if (!trg.isAutoTarget && !TestRange(tgtPos, trg))
 		return false;
 
 	// no LOF if aim-position is below ground (not in HFLOF, is overridden)

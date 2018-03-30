@@ -1598,6 +1598,9 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		case hashString("range"): {
 			weapon->UpdateRange(lua_tofloat(L, index + 1));
 		} break;
+		case hashString("rangeAutoTargetBoost"): {
+			weapon->rangeAutoTargetBoost = std::max(0.0f, lua_tofloat(L, index + 1));
+		} break;
 		case hashString("projectileSpeed"): {
 			weapon->UpdateProjectileSpeed(lua_tofloat(L, index + 1));
 		} break;
@@ -1683,41 +1686,64 @@ static int SetSingleDynDamagesKey(lua_State* L, DynDamageArray* damages, int ind
 
 	if (lua_isnumber(L, index)) {
 		const unsigned armType = lua_toint(L, index);
+
 		if (armType < damages->GetNumTypes())
 			damages->Set(armType, std::max(value, 0.0001f));
+
 		return 0;
 	}
 
-	const string key = lua_tostring(L, index);
-	// FIXME: KDR -- missing checks and updates?
-	if (key == "paralyzeDamageTime") {
-		damages->paralyzeDamageTime = std::max((int)value, 0);
-	} else if (key == "impulseFactor") {
-		damages->impulseFactor = value;
-	} else if (key == "impulseBoost") {
-		damages->impulseBoost = value;
-	} else if (key == "craterMult") {
-		damages->craterMult = value;
-	} else if (key == "craterBoost") {
-		damages->craterBoost = value;
-	} else if (key == "dynDamageExp") {
-		damages->dynDamageExp = value;
-	} else if (key == "dynDamageMin") {
-		damages->dynDamageMin = value;
-	} else if (key == "dynDamageRange") {
-		damages->dynDamageRange = value;
-	} else if (key == "dynDamageInverted") {
-		// HACK, this should be set to result of lua_toboolean
-		damages->dynDamageInverted = (value != 0.0f);
-	} else if (key == "craterAreaOfEffect") {
-		damages->craterAreaOfEffect = value;
-	} else if (key == "damageAreaOfEffect") {
-		damages->damageAreaOfEffect = value;
-	} else if (key == "edgeEffectiveness") {
-		damages->edgeEffectiveness = std::min(value, 0.999f);
-	} else if (key == "explosionSpeed") {
-		damages->explosionSpeed = value;
+	const char* key = lua_tostring(L, index);
+
+	// FIXME: missing checks and updates?
+	switch (hashString(key)) {
+		case hashString("paralyzeDamageTime"): {
+			damages->paralyzeDamageTime = std::max((int)value, 0);
+		} break;
+
+		case hashString("impulseFactor"): {
+			damages->impulseFactor = value;
+		} break;
+		case hashString("impulseBoost"): {
+			damages->impulseBoost = value;
+		} break;
+
+		case hashString("craterMult"): {
+			damages->craterMult = value;
+		} break;
+		case hashString("craterBoost"): {
+			damages->craterBoost = value;
+		} break;
+
+		case hashString("dynDamageExp"): {
+			damages->dynDamageExp = value;
+		} break;
+		case hashString("dynDamageMin"): {
+			damages->dynDamageMin = value;
+		} break;
+		case hashString("dynDamageRange"): {
+			damages->dynDamageRange = value;
+		} break;
+		case hashString("dynDamageInverted"): {
+			// HACK, this should be set to result of lua_toboolean
+			damages->dynDamageInverted = (value != 0.0f);
+		} break;
+
+		case hashString("craterAreaOfEffect"): {
+			damages->craterAreaOfEffect = value;
+		} break;
+		case hashString("damageAreaOfEffect"): {
+			damages->damageAreaOfEffect = value;
+		} break;
+
+		case hashString("edgeEffectiveness"): {
+			damages->edgeEffectiveness = std::min(value, 0.999f);
+		} break;
+		case hashString("explosionSpeed"): {
+			damages->explosionSpeed = value;
+		} break;
 	}
+
 	return 0;
 }
 
