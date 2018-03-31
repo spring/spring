@@ -2105,7 +2105,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 
 	if (!newProcess) {
 		// signal SpringApp
-		gu->reloadScript = scriptText;
+		gameSetup->reloadScript = scriptText;
 		gu->globalReload = true;
 
 		LOG("[%s] Spring \"%s\" should be reloading", __func__, springFullName.c_str());

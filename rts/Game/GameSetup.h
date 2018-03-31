@@ -154,9 +154,8 @@ public:
 	std::string gameID;
 
 	std::string setupText;
+	std::string reloadScript;
 	std::string demoName;
-	std::string saveName;
-	std::string menuName;
 
 private:
 	spring::unordered_map<int, int> playerRemap;
