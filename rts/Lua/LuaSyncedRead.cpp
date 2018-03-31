@@ -463,7 +463,7 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 static inline bool IsPlayerSynced(lua_State* L, const CPlayer* player)
 {
 	const bool syncedHandle = CLuaHandle::GetHandleSynced(L);
-	const bool onlyFromDemo = syncedHandle && (gameSetup != nullptr) && gameSetup->hostDemo;
+	const bool onlyFromDemo = syncedHandle && gameSetup->hostDemo;
 	return (!onlyFromDemo || player->isFromDemo);
 }
 #endif
@@ -471,7 +471,7 @@ static inline bool IsPlayerSynced(lua_State* L, const CPlayer* player)
 static inline bool IsPlayerUnsynced(lua_State* L, const CPlayer* player)
 {
 	const bool syncedHandle = CLuaHandle::GetHandleSynced(L);
-	const bool onlyFromDemo = syncedHandle && (gameSetup != nullptr) && gameSetup->hostDemo;
+	const bool onlyFromDemo = syncedHandle && gameSetup->hostDemo;
 
 	return (onlyFromDemo && !player->isFromDemo);
 }
@@ -846,9 +846,9 @@ int LuaSyncedRead::GetGlobalLos(lua_State* L)
 
 int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 {
-	if (!game) {
+	if (game == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, !gs->noHelperAIs);
 	return 1;
 }
@@ -856,19 +856,19 @@ int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 
 int LuaSyncedRead::FixedAllies(lua_State* L)
 {
-	if (!game) {
+	if (game == nullptr)
 		return 0;
-	}
-	lua_pushboolean(L, !(gameSetup != nullptr && !gameSetup->fixedAllies));
+
+	lua_pushboolean(L, gameSetup->fixedAllies);
 	return 1;
 }
 
 
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
-	if (!game) {
+	if (game == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
@@ -876,9 +876,9 @@ int LuaSyncedRead::IsGameOver(lua_State* L)
 
 int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 {
-	if (!gs->useLuaGaia) {
+	if (!gs->useLuaGaia)
 		return 0;
-	}
+
 	lua_pushnumber(L, teamHandler.GaiaTeamID());
 	return 1;
 }

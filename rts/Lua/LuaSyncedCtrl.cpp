@@ -633,8 +633,7 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 
 static inline bool IsPlayerSynced(const CPlayer* player)
 {
-	const bool onlyFromDemo = (gameSetup != nullptr) && gameSetup->hostDemo;
-	return (!onlyFromDemo || player->isFromDemo);
+	return (!gameSetup->hostDemo || player->isFromDemo);
 }
 
 /******************************************************************************/

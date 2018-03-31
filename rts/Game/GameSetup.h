@@ -22,11 +22,65 @@ class CGameSetup
 
 public:
 	CGameSetup() { ResetState(); }
+	CGameSetup(const CGameSetup& gs) = delete;
+	CGameSetup(CGameSetup&& gs) { *this = std::move(gs); }
+
+	CGameSetup& operator = (const CGameSetup& gs) = delete;
+	CGameSetup& operator = (CGameSetup&& gs) {
+		fixedAllies = gs.fixedAllies;
+		useLuaGaia = gs.useLuaGaia;
+		noHelperAIs = gs.noHelperAIs;
+
+		ghostedBuildings = gs.ghostedBuildings;
+		disableMapDamage = gs.disableMapDamage;
+
+		onlyLocal = gs.onlyLocal;
+		hostDemo = gs.hostDemo;
+		recordDemo = gs.recordDemo;
+
+		mapHash = gs.mapHash;
+		modHash = gs.modHash;
+		mapSeed = gs.mapSeed;
+
+		gameStartDelay = gs.gameStartDelay;
+
+		numDemoPlayers = gs.numDemoPlayers;
+		maxUnitsPerTeam = gs.maxUnitsPerTeam;
+
+		maxSpeed = gs.maxSpeed;
+		minSpeed = gs.minSpeed;
+
+		startPosType = gs.startPosType;
+
+		mapName = std::move(gs.mapName);
+		modName = std::move(gs.modName);
+		gameID = std::move(gs.gameID);
+
+		setupText = std::move(gs.setupText);
+		reloadScript = std::move(gs.reloadScript);
+		demoName = std::move(gs.demoName);
+
+		playerRemap = std::move(gs.playerRemap);
+		teamRemap = std::move(gs.teamRemap);
+		allyteamRemap = std::move(gs.allyteamRemap);
+
+		playerStartingData = std::move(gs.playerStartingData);
+		teamStartingData = std::move(gs.teamStartingData);
+		allyStartingData = std::move(gs.allyStartingData);
+		skirmishAIStartingData = std::move(gs.skirmishAIStartingData);
+		mutatorsList = std::move(gs.mutatorsList);
+
+		restrictedUnits = std::move(gs.restrictedUnits);
+
+		mapOptions = std::move(gs.mapOptions);
+		modOptions = std::move(gs.modOptions);
+		return *this;
+	}
 
 	static bool LoadReceivedScript(const std::string& script, bool isHost);
 	static bool LoadSavedScript(const std::string& file, const std::string& script);
+	static bool ScriptLoaded();
 
-	// these return dummy containers if the global gameSetup instance is NULL
 	static const spring::unordered_map<std::string, std::string>& GetMapOptions();
 	static const spring::unordered_map<std::string, std::string>& GetModOptions();
 	static const std::vector<PlayerBase>& GetPlayerStartingData();

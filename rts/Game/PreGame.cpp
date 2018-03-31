@@ -358,7 +358,7 @@ void CPreGame::UpdateClientNet()
 				// this is sent after NETMSG_GAMEDATA, to let us know which
 				// player number we have (server assigns them based on order
 				// of connection)
-				if (gameSetup == nullptr)
+				if (!CGameSetup::ScriptLoaded())
 					throw content_error("No game data received from server");
 
 				const uint8_t playerNum = packet->data[1];
@@ -400,7 +400,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 	{
 		// server will always use a modified copy of this
-		assert(gameSetup != nullptr);
+		assert(gameSetup->ScriptLoaded());
 
 		// modify the demo's start-script so it can be used to watch the demo
 		tgame->AddPair("MapName", gameSetup->mapName);
@@ -487,11 +487,10 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	// this means gameSetup contains data from the original game but we need the
 	// modified version (cf StartServerForDemo) which the server already has that
 	// contains an extra player
-	if (gameSetup != nullptr)
-		spring::SafeDelete(gameSetup);
+	gameSetup->ResetState();
 
 	if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), clientSetup->isHost)) {
-		assert(gameSetup != nullptr);
+		assert(gameSetup->ScriptLoaded());
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
 		// do we really need to do this so early?

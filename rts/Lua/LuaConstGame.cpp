@@ -39,7 +39,7 @@ static void LuaPushNamedColor(lua_State* L,
 bool LuaConstGame::PushEntries(lua_State* L)
 {
 	assert(mapInfo != nullptr);
-	assert(gameSetup != nullptr);
+	assert(gameSetup->ScriptLoaded());
 
 	// FIXME  --  this is getting silly, convert to userdata?
 	LuaPushNamedNumber(L, "maxUnits",      unitHandler.MaxUnits());
