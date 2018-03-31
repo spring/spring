@@ -73,10 +73,13 @@ CR_REG_METADATA(CGameSetup, (
 ))
 
 
-static CGameSetup gGameSetup;
-static CGameSetup gGameSetupDummy;
+static CGameSetup gLocalGameSetup;
+static CGameSetup gDummyGameSetup;
 
-CGameSetup* gameSetup = &gGameSetupDummy;
+// only points to dummy instance if Load*Script fails, which
+// indicates a bigger problem and currently always causes an
+// exception to be thrown
+CGameSetup* gameSetup = &gLocalGameSetup;
 
 
 bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
@@ -84,7 +87,7 @@ bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
 	CGameSetup tempGameSetup;
 
 	if (!tempGameSetup.Init(script)) {
-		gameSetup = &gGameSetupDummy;
+		gameSetup = &gDummyGameSetup;
 		return false;
 	}
 
@@ -97,36 +100,36 @@ bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
 	}
 
 	// set the global instance
-	gGameSetup = std::move(tempGameSetup);
-	gameSetup = &gGameSetup;
+	gLocalGameSetup = std::move(tempGameSetup);
+	gameSetup = &gLocalGameSetup;
 	return true;
 }
 
 bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
 {
 	if (script.empty()) {
-		gameSetup = &gGameSetupDummy;
+		gameSetup = &gDummyGameSetup;
 		return false;
 	}
 	// already initialized
-	if (gameSetup == &gGameSetup)
+	if (gameSetup == &gLocalGameSetup)
 		return false;
 
 	CGameSetup tempGameSetup;
 
 	if (!tempGameSetup.Init(script)) {
-		gameSetup = &gGameSetupDummy;
+		gameSetup = &gDummyGameSetup;
 		return false;
 	}
 
 	// set the global instance
-	gGameSetup = std::move(tempGameSetup);
-	gameSetup = &gGameSetup;
+	gLocalGameSetup = std::move(tempGameSetup);
+	gameSetup = &gLocalGameSetup;
 	return true;
 }
 
 bool CGameSetup::ScriptLoaded() {
-	return (gameSetup != &gGameSetupDummy);
+	return (gameSetup != &gDummyGameSetup && !gameSetup->setupText.empty());
 }
 
 
@@ -286,8 +289,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file, spring::unordered_set<std::s
 	assert(numDemoPlayers == 0);
 
 	// i = player index in game (no gaps), a = player index in script
-	int i = 0;
-	for (int a = 0; a < MAX_PLAYERS; ++a) {
+	for (int i = 0, a = 0; a < MAX_PLAYERS; ++a) {
 		const std::string section = "GAME\\PLAYER" + IntToString(a, "%i");
 
 		if (!file.SectionExist(section))
@@ -378,8 +380,7 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<st
 void CGameSetup::LoadTeams(const TdfParser& file)
 {
 	// i = team index in game (no gaps), a = team index in script
-	int i = 0;
-	for (int a = 0; a < MAX_TEAMS; ++a) {
+	for (int i = 0, a = 0; a < MAX_TEAMS; ++a) {
 		const std::string section = "GAME\\TEAM" + IntToString(a, "%i");
 
 		if (!file.SectionExist(section))
@@ -409,8 +410,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
 {
 	// i = allyteam index in game (no gaps), a = allyteam index in script
-	int i = 0;
-	for (int a = 0; a < MAX_TEAMS; ++a) {
+	for (int i = 0, a = 0; a < MAX_TEAMS; ++a) {
 		const std::string section = "GAME\\ALLYTEAM" + IntToString(a, "%i");
 
 		if (!file.SectionExist(section))
@@ -499,8 +499,6 @@ void CGameSetup::RemapTeams()
 			throw content_error("invalid AI.Team in GameSetup script");
 
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
-		// unused (also seems redundant)
-		// team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
 }
 
@@ -524,7 +522,7 @@ bool CGameSetup::Init(const std::string& buf)
 	setupText = buf;
 
 	// Parse game parameters
-	TdfParser file(buf.c_str(),buf.size());
+	TdfParser file(buf.c_str(), buf.size());
 
 	if (!file.SectionExist("GAME"))
 		return false;
