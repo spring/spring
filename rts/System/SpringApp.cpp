@@ -803,7 +803,7 @@ int SpringApp::Run()
 
 			if (gu->globalReload) {
 				// copy; reloadScript is cleared by ResetState
-				Reload(gu->reloadScript);
+				Reload(gameSetup->reloadScript);
 			} else {
 				gu->globalQuit |= (!Update());
 			}

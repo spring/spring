@@ -6,8 +6,6 @@
 #include "System/creg/creg_cond.h"
 #include "System/GlobalRNG.h"
 
-#include <string>
-
 class CPlayer;
 class CGameSetup;
 
@@ -171,7 +169,6 @@ public:
 	*/
 	volatile bool globalQuit;
 	volatile bool globalReload;
-	std::string reloadScript;
 };
 
 

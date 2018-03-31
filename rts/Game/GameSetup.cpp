@@ -31,6 +31,7 @@ CR_REG_METADATA(CGameSetup, (
 
 	CR_IGNORED(onlyLocal),
 	CR_IGNORED(hostDemo),
+	CR_IGNORED(recordDemo),
 
 	CR_IGNORED(mapHash),
 	CR_IGNORED(modHash),
@@ -52,11 +53,8 @@ CR_REG_METADATA(CGameSetup, (
 
 	// this is stored separately from creg
 	CR_IGNORED(setupText),
-
-	CR_IGNORED(recordDemo),
+	CR_IGNORED(reloadScript),
 	CR_IGNORED(demoName),
-	CR_IGNORED(saveName),
-	CR_IGNORED(menuName),
 
 	CR_IGNORED(playerRemap),
 	CR_IGNORED(teamRemap),
@@ -113,7 +111,6 @@ bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& scr
 		return false;
 	}
 
-	tempGameSetup->saveName = file;
 	// set the global instance
 	gameSetup = tempGameSetup;
 	return true;
@@ -205,8 +202,8 @@ void CGameSetup::ResetState()
 	gameID.clear();
 
 	setupText.clear();
+	reloadScript.clear();
 	demoName.clear();
-	saveName.clear();
 
 	spring::clear_unordered_map(playerRemap);
 	spring::clear_unordered_map(teamRemap);
@@ -551,8 +548,6 @@ bool CGameSetup::Init(const std::string& buf)
 	gameID      = file.SGetValueDef("",  "GAME\\GameID");
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
-	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
-	menuName    = file.SGetValueDef("",  "GAME\\MenuName");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 

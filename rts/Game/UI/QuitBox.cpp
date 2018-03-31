@@ -354,7 +354,7 @@ void CQuitBox::MouseRelease(int x, int y, int button)
 		LOG("[QuitBox] user exited to menu");
 
 		// signal SpringApp
-		gu->reloadScript = "";
+		gameSetup->reloadScript = "";
 		gu->globalReload = true;
 	}
 	else if (InBox(mx, my, box + quitBox)) {

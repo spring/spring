@@ -50,8 +50,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectatingFullSelect),
 	CR_IGNORED(fpsMode),
 	CR_IGNORED(globalQuit),
-	CR_IGNORED(globalReload),
-	CR_IGNORED(reloadScript)
+	CR_IGNORED(globalReload)
 ))
 
 CGlobalUnsynced::CGlobalUnsynced()
@@ -94,7 +93,6 @@ void CGlobalUnsynced::ResetState()
 	fpsMode = false;
 	globalQuit = false;
 	globalReload = false;
-	reloadScript = "";
 
 	if (playerHandler == nullptr) {
 		playerHandler = new CPlayerHandler();

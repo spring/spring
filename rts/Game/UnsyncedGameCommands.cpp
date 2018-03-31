@@ -1867,7 +1867,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		LOG("[ReloadAction] user exited to menu");
 
-		gu->reloadScript = "";
+		gameSetup->reloadScript = "";
 		gu->globalReload = true;
 		return true;
 	}
