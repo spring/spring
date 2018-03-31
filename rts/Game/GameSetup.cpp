@@ -73,8 +73,8 @@ CR_REG_METADATA(CGameSetup, (
 ))
 
 
-static       CGameSetup gGameSetup;
-static const CGameSetup gGameSetupDummy;
+static CGameSetup gGameSetup;
+static CGameSetup gGameSetupDummy;
 
 CGameSetup* gameSetup = &gGameSetupDummy;
 
