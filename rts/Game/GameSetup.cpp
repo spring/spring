@@ -72,15 +72,19 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(modOptions)
 ))
 
-CGameSetup* gameSetup = nullptr;
+
+static       CGameSetup gGameSetup;
+static const CGameSetup gGameSetupDummy;
+
+CGameSetup* gameSetup = &gGameSetupDummy;
 
 
 bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
 {
-	CGameSetup* tempGameSetup = new CGameSetup();
+	CGameSetup tempGameSetup;
 
-	if (!tempGameSetup->Init(script)) {
-		delete tempGameSetup;
+	if (!tempGameSetup.Init(script)) {
+		gameSetup = &gGameSetupDummy;
 		return false;
 	}
 
@@ -93,79 +97,64 @@ bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
 	}
 
 	// set the global instance
-	gameSetup = tempGameSetup;
+	gGameSetup = std::move(tempGameSetup);
+	gameSetup = &gGameSetup;
 	return true;
 }
 
 bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
 {
-	if (script.empty())
+	if (script.empty()) {
+		gameSetup = &gGameSetupDummy;
 		return false;
-	if (gameSetup != nullptr)
+	}
+	// already initialized
+	if (gameSetup == &gGameSetup)
 		return false;
 
-	CGameSetup* tempGameSetup = new CGameSetup();
+	CGameSetup tempGameSetup;
 
-	if (!tempGameSetup->Init(script)) {
-		delete tempGameSetup;
+	if (!tempGameSetup.Init(script)) {
+		gameSetup = &gGameSetupDummy;
 		return false;
 	}
 
 	// set the global instance
-	gameSetup = tempGameSetup;
+	gGameSetup = std::move(tempGameSetup);
+	gameSetup = &gGameSetup;
 	return true;
+}
+
+bool CGameSetup::ScriptLoaded() {
+	return (gameSetup != &gGameSetupDummy);
 }
 
 
 const spring::unordered_map<std::string, std::string>& CGameSetup::GetMapOptions()
 {
-	static spring::unordered_map<std::string, std::string> dummyOptions;
-
-	if (gameSetup != nullptr)
-		return gameSetup->GetMapOptionsCont();
-
-	return dummyOptions;
+	// will always be empty if !ScriptLoaded
+	return gameSetup->GetMapOptionsCont();
 }
 
 const spring::unordered_map<std::string, std::string>& CGameSetup::GetModOptions()
 {
-	static spring::unordered_map<std::string, std::string> dummyOptions;
-
-	if (gameSetup != nullptr)
-		return gameSetup->GetModOptionsCont();
-
-	return dummyOptions;
+	return gameSetup->GetModOptionsCont();
 }
 
 
 const std::vector<PlayerBase>& CGameSetup::GetPlayerStartingData()
 {
-	static std::vector<PlayerBase> dummyData;
-
-	if (gameSetup != nullptr)
-		return gameSetup->GetPlayerStartingDataCont();
-
-	return dummyData;
+	return gameSetup->GetPlayerStartingDataCont();
 }
 
 const std::vector<TeamBase>& CGameSetup::GetTeamStartingData()
 {
-	static std::vector<TeamBase> dummyData;
-
-	if (gameSetup != nullptr)
-		return gameSetup->GetTeamStartingDataCont();
-
-	return dummyData;
+	return gameSetup->GetTeamStartingDataCont();
 }
 
 const std::vector<AllyTeam>& CGameSetup::GetAllyStartingData()
 {
-	static std::vector<AllyTeam> dummyData;
-
-	if (gameSetup != nullptr)
-		return gameSetup->GetAllyStartingDataCont();
-
-	return dummyData;
+	return gameSetup->GetAllyStartingDataCont();
 }
 
 
@@ -205,9 +194,9 @@ void CGameSetup::ResetState()
 	reloadScript.clear();
 	demoName.clear();
 
-	spring::clear_unordered_map(playerRemap);
-	spring::clear_unordered_map(teamRemap);
-	spring::clear_unordered_map(allyteamRemap);
+	playerRemap.clear(); // never iterated
+	teamRemap.clear(); // never iterated
+	allyteamRemap.clear(); // never iterated
 
 	playerStartingData.clear();
 	teamStartingData.clear();
@@ -215,7 +204,7 @@ void CGameSetup::ResetState()
 	skirmishAIStartingData.clear();
 	mutatorsList.clear();
 
-	spring::clear_unordered_map(restrictedUnits);
+	restrictedUnits.clear(); // never iterated
 
 	spring::clear_unordered_map(mapOptions);
 	spring::clear_unordered_map(modOptions);

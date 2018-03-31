@@ -337,18 +337,14 @@ static int GetSolidObjectSelectionVolume(lua_State* L, const CSolidObject* obj)
 
 int LuaUnsyncedRead::IsReplay(lua_State* L)
 {
-	if (gameSetup && gameSetup->hostDemo) {
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
-	}
+	lua_pushboolean(L, gameSetup->hostDemo);
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetReplayLength(lua_State* L)
 {
-	if (gameServer && gameServer->GetDemoReader()) {
+	if (gameServer != nullptr && gameServer->GetDemoReader()) {
 		lua_pushnumber(L, gameServer->GetDemoReader()->GetFileHeader().gameTime);
 		return 1;
 	}

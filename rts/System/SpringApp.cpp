@@ -885,7 +885,6 @@ void SpringApp::Kill(bool fromRun)
 	LOG("[SpringApp::%s][3]", __func__);
 	spring::SafeDelete(clientNet);
 	spring::SafeDelete(gameServer);
-	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4] font=%p", __func__, font);
 	#ifndef HEADLESS

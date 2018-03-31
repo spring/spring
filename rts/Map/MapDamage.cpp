@@ -18,7 +18,7 @@ IMapDamage* IMapDamage::GetMapDamage()
 		dummyMapDamage.Init();
 		return &dummyMapDamage;
 	}
-	if (gameSetup != nullptr && gameSetup->disableMapDamage) {
+	if (gameSetup->disableMapDamage) {
 		dummyMapDamage.Init();
 		return &dummyMapDamage;
 	}

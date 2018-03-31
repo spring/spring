@@ -88,7 +88,7 @@ CGameInfo::CGameInfo()
 
 	char buf[1024];
 
-	if (gameSetup != NULL && gameSetup->hostDemo) {
+	if (gameSetup->hostDemo) {
 		labels.push_back("Playback:");
 		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
 	}
