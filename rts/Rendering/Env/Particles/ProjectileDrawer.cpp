@@ -283,6 +283,8 @@ void CProjectileDrawer::Kill() {
 
 	perlinTexObjects = 0;
 	drawPerlinTex = false;
+
+	drawSorted = true;
 }
 
 
