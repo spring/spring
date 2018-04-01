@@ -287,6 +287,8 @@ void CProjectileDrawer::Kill() {
 	perlinData.texObjects = 0;
 	perlinData.fboComplete = false;
 
+	drawSorted = true;
+
 	fxBuffer = nullptr;
 	fxShader = nullptr;
 }
