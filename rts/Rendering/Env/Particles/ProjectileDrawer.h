@@ -55,9 +55,17 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+
+	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
+
 	void IncPerlinTexObjectCount() { perlinData.texObjects++; }
 	void DecPerlinTexObjectCount() { perlinData.texObjects--; }
 
+	bool EnableSorting(bool b) { return (drawSorted =           b); }
+	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
+
+
+	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
 	GL::RenderDataBufferTC* fxBuffer = nullptr;
 	GL::RenderDataBufferTC* gfBuffer = nullptr;
@@ -104,8 +112,6 @@ public:
 
 	AtlasedTexture* seismictex = nullptr;
 
-	std::vector<const AtlasedTexture*> smoketex;
-
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
@@ -149,6 +155,8 @@ private:
 	VAO flyingPieceVAO;
 
 
+	std::vector<const AtlasedTexture*> smokeTextures;
+
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
@@ -156,12 +164,11 @@ private:
 
 	ProjectileDistanceComparator zSortCmp;
 
-	/**
-	 * distance-sorted projectiles without models; used
-	 * to render particle effects in back-to-front order
-	 */
-	std::vector<CProjectile*> zSortedProjectiles;
-	std::vector<CProjectile*> unsortedProjectiles;
+	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
+	/// used to render particle effects in back-to-front order
+	std::vector<CProjectile*> sortedProjectiles[2];
+
+	bool drawSorted = true;
 };
 
 extern CProjectileDrawer* projectileDrawer;

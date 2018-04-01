@@ -194,7 +194,7 @@ void CProjectileDrawer::Init() {
 	for (int i = 0; i < smokeTexCount; i++) {
 		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
 		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
-		smoketex.push_back(smokeTex);
+		smokeTextures.push_back(smokeTex);
 	}
 
 	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
@@ -275,11 +275,11 @@ void CProjectileDrawer::Kill() {
 		spring::SafeDelete(modelRenderers[modelType]);
 	}
 
-	smoketex.clear();
+	smokeTextures.clear();
 
 	renderProjectiles.clear();
-	zSortedProjectiles.clear();
-	unsortedProjectiles.clear();
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
 
 	perlinNoiseFBO.Kill();
 	flyingPieceVAO.Delete();
@@ -463,14 +463,11 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
+	// no-op if no model
 	DrawProjectileModel(pro);
 
-	if (pro->drawSorted) {
-		pro->SetSortDist(cam->ProjectedDistance(pro->pos));
-		zSortedProjectiles.push_back(pro);
-	} else {
-		unsortedProjectiles.push_back(pro);
-	}
+	pro->SetSortDist(cam->ProjectedDistance(pro->pos));
+	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
 }
 
 
@@ -619,14 +616,15 @@ void CProjectileDrawer::DrawProjectilePass(Shader::IProgramObject*, bool drawRef
 	// only z-sorted (if the projectiles indicate they want to be)
 	DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-	std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
+	// empty if !drawSorted
+	std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), zSortCmp);
 
 
 	// collect the alpha-translucent particle effects in fxBuffer
-	for (CProjectile* p: zSortedProjectiles) {
+	for (CProjectile* p: sortedProjectiles[1]) {
 		p->Draw(fxBuffer);
 	}
-	for (CProjectile* p: unsortedProjectiles) {
+	for (CProjectile* p: sortedProjectiles[0]) {
 		p->Draw(fxBuffer);
 	}
 }
@@ -663,8 +661,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);
 
-	zSortedProjectiles.clear();
-	unsortedProjectiles.clear();
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
 
 
 	fxBuffer = GL::GetRenderBufferTC();

@@ -75,6 +75,7 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/GrassDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/Modern/Path.h"
@@ -2347,12 +2348,13 @@ class GroundDecalsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	GroundDecalsActionExecutor() : IUnsyncedActionExecutor(
 		"GroundDecals",
-		"Disable/Enable ground-decal rendering."
+		"Enable/Disable ground-decal rendering."
 	) {
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		bool drawDecals = IGroundDecalDrawer::GetDrawDecals();
+
 		InverseOrSetBool(drawDecals, action.GetArgs());
 		IGroundDecalDrawer::SetDrawDecals(drawDecals);
 
@@ -2363,6 +2365,28 @@ public:
 
 
 
+class DistSortProjectilesActionExecutor: public IUnsyncedActionExecutor {
+public:
+	DistSortProjectilesActionExecutor(): IUnsyncedActionExecutor(
+		"DistSortProjectiles",
+		"Enable/Disable sorting drawn projectiles by camera distance"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		const auto& args = action.GetArgs();
+		const char* strs[] = {"disabled", "enabled"};
+
+		if (!args.empty()) {
+			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
+		} else {
+			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->ToggleSorting()]);
+		}
+
+		return true;
+	}
+};
+
 class MaxParticlesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MaxParticlesActionExecutor() : IUnsyncedActionExecutor(
@@ -2372,8 +2396,10 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!action.GetArgs().empty()) {
-			const int value = std::max(1, atoi(action.GetArgs().c_str()));
+		const auto& args = action.GetArgs();
+
+		if (!args.empty()) {
+			const int value = std::max(1, atoi(args.c_str()));
 			projectileHandler.SetMaxParticles(value);
 			LOG("Set maximum particles to: %i", value);
 		} else {
@@ -2393,8 +2419,10 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!action.GetArgs().empty()) {
-			const int value = std::max(1, atoi(action.GetArgs().c_str()));
+		const auto& args = action.GetArgs();
+
+		if (!args.empty()) {
+			const int value = std::max(1, atoi(args.c_str()));
 			projectileHandler.SetMaxNanoParticles(value);
 			LOG("Set maximum nano-particles to: %i", value);
 		} else {
@@ -3233,8 +3261,11 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new LuaUIActionExecutor());
 	AddActionExecutor(new MiniMapActionExecutor());
 	AddActionExecutor(new GroundDecalsActionExecutor());
+
+	AddActionExecutor(new DistSortProjectilesActionExecutor());
 	AddActionExecutor(new MaxParticlesActionExecutor());
 	AddActionExecutor(new MaxNanoParticlesActionExecutor());
+
 	AddActionExecutor(new GatherModeActionExecutor());
 	AddActionExecutor(new PasteTextActionExecutor());
 	AddActionExecutor(new BufferTextActionExecutor());
