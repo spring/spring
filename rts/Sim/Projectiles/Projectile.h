@@ -97,11 +97,12 @@ public:
 	bool piece;   ///< is this a piece projectile? (true implies synced true)
 	bool hitscan; ///< is this a hit-scan projectile?
 
+	bool luaDraw;   // whether the DrawProjectile callin is enabled for us
 	bool luaMoveCtrl;
 	bool checkCol;
 	bool ignoreWater;
 	bool deleteMe;
-	bool callEvent; //do we need to call the ProjectileCreated event
+	bool callEvent; // do we need to call the ProjectileCreated event
 
 	bool castShadow;
 	bool drawSorted;

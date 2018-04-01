@@ -21,11 +21,12 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(piece),
 	CR_MEMBER(hitscan),
 
+	CR_IGNORED(luaDraw),
 	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
-	CR_IGNORED(callEvent), //we want the render event called for all projectiles
+	CR_IGNORED(callEvent), // we want the render event called for all projectiles
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),
@@ -59,11 +60,13 @@ CProjectile::CProjectile()
 	, piece(false)
 	, hitscan(false)
 
+	, luaDraw(false)
 	, luaMoveCtrl(false)
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
 	, callEvent(true)
+
 	, castShadow(false)
 	, drawSorted(true)
 
@@ -97,11 +100,13 @@ CProjectile::CProjectile(
 	, piece(isPiece)
 	, hitscan(isHitScan)
 
+	, luaDraw(false)
 	, luaMoveCtrl(false)
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
 	, callEvent(true)
+
 	, castShadow(false)
 	, drawSorted(true)
 

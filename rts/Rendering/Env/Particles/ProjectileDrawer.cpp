@@ -740,7 +740,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 			unitDrawer->SetTeamColour(wp->GetTeamID());
 			udState->SetMatrices(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)), model->GetPieceMatrices());
 
-			if (/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))
+			if (p->luaDraw && eventHandler.DrawProjectile(p))
 				return true;
 
 			model->Draw();
@@ -759,7 +759,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 			unitDrawer->SetTeamColour(pp->GetTeamID());
 
 			// NOTE: eventHandler.Draw{Unit,Feature,Projectile} now has no transform
-			if (/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))
+			if (p->luaDraw && eventHandler.DrawProjectile(p))
 				return true;
 
 			if ((pp->explFlags & PF_Recursive) != 0) {

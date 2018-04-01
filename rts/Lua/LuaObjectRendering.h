@@ -42,6 +42,7 @@ private:
 
 	static int SetUnitLuaDraw(lua_State* L);
 	static int SetFeatureLuaDraw(lua_State* L);
+	static int SetProjectileLuaDraw(lua_State* L);
 
 	static int Debug(lua_State* L);
 
@@ -75,6 +76,7 @@ public:
 
 		PUSH_FUNCTION(SetUnitLuaDraw);
 		PUSH_FUNCTION(SetFeatureLuaDraw);
+		PUSH_FUNCTION(SetProjectileLuaDraw);
 
 		PUSH_FUNCTION(Debug);
 
@@ -155,6 +157,10 @@ private:
 			return 0;
 
 		return (LuaObjectRenderingImpl::SetFeatureLuaDraw(L));
+	}
+	// NB: value of T is not relevant here, slightly foreign callout
+	static int SetProjectileLuaDraw(lua_State* L) {
+		return (LuaObjectRenderingImpl::SetProjectileLuaDraw(L));
 	}
 
 

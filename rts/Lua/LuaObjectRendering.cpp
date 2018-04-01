@@ -16,6 +16,9 @@
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
@@ -358,7 +361,8 @@ int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
+template<typename ObjectType>
+static int SetObjectLuaDraw(lua_State* L, ObjectType* obj)
 {
 	if (obj == nullptr)
 		return 0;
@@ -373,12 +377,17 @@ static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
 
 int LuaObjectRenderingImpl::SetUnitLuaDraw(lua_State* L)
 {
-	return (SetObjectLuaDraw(L, unitHandler.GetUnit(luaL_checkint(L, 1))));
+	return (SetObjectLuaDraw<CSolidObject>(L, unitHandler.GetUnit(luaL_checkint(L, 1))));
 }
 
 int LuaObjectRenderingImpl::SetFeatureLuaDraw(lua_State* L)
 {
-	return (SetObjectLuaDraw(L, featureHandler.GetFeature(luaL_checkint(L, 1))));
+	return (SetObjectLuaDraw<CSolidObject>(L, featureHandler.GetFeature(luaL_checkint(L, 1))));
+}
+
+int LuaObjectRenderingImpl::SetProjectileLuaDraw(lua_State* L)
+{
+	return (SetObjectLuaDraw<CProjectile>(L, projectileHandler.GetProjectileBySyncedID(luaL_checkint(L, 1))));
 }
 
 /******************************************************************************/
