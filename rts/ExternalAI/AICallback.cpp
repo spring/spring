@@ -1343,66 +1343,75 @@ float3 CAICallback::GetFeaturePos(int featureId)
 	return ZeroVector;
 }
 
-bool CAICallback::GetValue(int id, void *data)
+bool CAICallback::GetValue(int id, void* data)
 {
 	verify();
+
 	switch (id) {
-		case AIVAL_NUMDAMAGETYPES:{
-			*((int*)data) = damageArrayHandler.GetNumTypes();
-			return true;
-		}case AIVAL_MAP_CHECKSUM:{
-			*(unsigned int*)data = readMap->GetMapChecksum();
-			return true;
-		}case AIVAL_DEBUG_MODE:{
-			*(bool*)data = globalRendering->drawdebug;
-			return true;
-		}case AIVAL_GAME_PAUSED:{
-			*(bool*)data = gs->paused;
-			return true;
-		}case AIVAL_GAME_SPEED_FACTOR:{
-			*(float*)data = gs->speedFactor;
-			return true;
-		}case AIVAL_GUI_VIEW_RANGE:{
-			*(float*)data = globalRendering->viewRange;
-			return true;
-		}case AIVAL_GUI_SCREENX:{
-			*(float*)data = globalRendering->viewSizeX;
-			return true;
-		}case AIVAL_GUI_SCREENY:{
-			*(float*)data = globalRendering->viewSizeY;
-			return true;
-		}case AIVAL_GUI_CAMERA_DIR:{
+		case AIVAL_NUMDAMAGETYPES: {
+			*((int*) data) = damageArrayHandler.GetNumTypes();
+		} break;
+		case AIVAL_MAP_CHECKSUM: {
+			*(unsigned int*) data = readMap->GetMapChecksum();
+		} break;
+		case AIVAL_DEBUG_MODE: {
+			*(bool*) data = globalRendering->drawdebug;
+		} break;
+
+		case AIVAL_GAME_PAUSED: {
+			*(bool*) data = gs->paused;
+		} break;
+		case AIVAL_GAME_SPEED_FACTOR: {
+			*(float*) data = gs->speedFactor;
+		} break;
+
+		case AIVAL_GUI_VIEW_RANGE: {
+			*(float*) data = globalRendering->viewRange;
+		} break;
+		case AIVAL_GUI_SCREENX: {
+			*(float*) data = globalRendering->viewSizeX;
+		} break;
+		case AIVAL_GUI_SCREENY: {
+			*(float*) data = globalRendering->viewSizeY;
+		} break;
+
+		case AIVAL_GUI_CAMERA_DIR: {
 			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetDir();
-			return true;
-		}case AIVAL_GUI_CAMERA_POS:{
+		} break;
+		case AIVAL_GUI_CAMERA_POS: {
 			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetPos();
-			return true;
-		}case AIVAL_LOCATE_FILE_R:{
-			std::string f((char*) data);
-			f = dataDirsAccess.LocateFile(f);
-			strcpy((char*) data, f.c_str());
-			return FileSystem::IsReadableFile(f);
-		}case AIVAL_LOCATE_FILE_W:{
-			std::string f((char*) data);
-			std::string f_abs = dataDirsAccess.LocateFile(f, FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
-			if (!FileSystem::IsAbsolutePath(f_abs)) {
+		} break;
+
+		case AIVAL_LOCATE_FILE_R: {
+			const std::string frel((char*) data);
+			const std::string fabs(dataDirsAccess.LocateFile(frel));
+
+			strcpy((char*) data, fabs.c_str());
+			return FileSystem::IsReadableFile(fabs);
+		} break;
+		case AIVAL_LOCATE_FILE_W: {
+			const std::string frel((char*) data);
+			const std::string fabs(dataDirsAccess.LocateFile(frel, FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS));
+
+			if (!FileSystem::IsAbsolutePath(fabs))
 				return false;
-			} else {
-				strcpy((char*) data, f.c_str());
-				return true;
-			}
-		}
+
+			strcpy((char*) data, frel.c_str());
+		} break;
+
 		case AIVAL_UNIT_LIMIT: {
 			*(int*) data = teamHandler.Team(team)->GetMaxUnits();
-			return true;
-		}
+		} break;
 		case AIVAL_SCRIPT: {
-			*(const char**) data = gameSetup ? gameSetup->setupText.c_str() : "";
-			return true;
-		}
-		default:
+			*(const char**) data = gameSetup->setupText.c_str();
+		} break;
+
+		default: {
 			return false;
+		} break;
 	}
+
+	return true;
 }
 
 int CAICallback::HandleCommand(int commandId, void* data)
