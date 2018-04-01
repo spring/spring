@@ -2117,7 +2117,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 
 	#ifdef _WIN32
 	// else OpenAL crashes when using execvp
-	ISound::Shutdown();
+	ISound::Shutdown(false);
 	#endif
 	// close local socket to avoid "bind: Address already in use"
 	spring::SafeDelete(gameServer);
