@@ -53,10 +53,11 @@ CSound::CSound()
 	: curDevice(nullptr)
 	, curContext(nullptr)
 	, sdlDeviceID(0)
-	, frameSize(-1)
+
 	, masterVolume(0.0f)
 
 	, pitchAdjustMode(0)
+	, frameSize(-1)
 
 	, listenerNeedsUpdate(false)
 	, mute(false)
@@ -65,25 +66,6 @@ CSound::CSound()
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
 {
-	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-
-	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
-	pitchAdjustMode = configHandler->GetInt("PitchAdjust");
-
-	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
-	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
-	Channels::UnitReply->SetMaxConcurrent(1);
-	Channels::UnitReply->SetMaxEmits(1);
-	Channels::Battle->SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
-	Channels::UserInterface->SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
-	Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
-
-	SoundBuffer::Initialise();
-	soundItems.reserve(1024);
-	soundItems.emplace_back();
-
-	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
-
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
 
@@ -92,6 +74,55 @@ CSound::~CSound()
 	configHandler->RemoveObserver(this);
 }
 
+
+void CSound::Init()
+{
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+
+	{
+		curDevice = nullptr;
+		curContext = nullptr;
+
+		sdlDeviceID = 0;
+
+		masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
+		pitchAdjustMode = configHandler->GetInt("PitchAdjust");
+		frameSize = -1;
+
+		listenerNeedsUpdate = false;
+		mute = false;
+		appIsIconified = false;
+
+		soundThreadQuit = false;
+		canLoadDefs = false;
+	}
+	{
+		Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
+		Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
+		Channels::UnitReply->SetMaxConcurrent(1);
+		Channels::UnitReply->SetMaxEmits(1);
+		Channels::Battle->SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
+		Channels::UserInterface->SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
+		Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
+	}
+	{
+		SoundBuffer::Initialise();
+
+		soundMap.clear();
+		soundMap.reserve(256);
+
+		defaultItemNameMap.clear();
+		soundItemDefsMap.clear();
+
+		soundItems.clear();
+		soundItems.reserve(1024);
+		soundItems.emplace_back();
+
+		soundSources.clear();
+	}
+
+	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
+}
 
 void CSound::Kill()
 {
@@ -109,7 +140,10 @@ void CSound::Kill()
 	SoundBuffer::Deinitialise();
 }
 
+
 void CSound::Cleanup() {
+	alcMakeContextCurrent(nullptr);
+
 	if (curContext != nullptr) {
 		alcDestroyContext(curContext);
 		curContext = nullptr;
@@ -126,8 +160,8 @@ void CSound::Cleanup() {
 		sdlDeviceID = 0;
 	}
 #endif
-
 }
+
 
 bool CSound::HasSoundItem(const std::string& name) const
 {
@@ -330,6 +364,7 @@ void CSound::OpenOpenALDevice(const std::string& deviceName)
 
 		// fall back to NullSound
 		Cleanup();
+
 		soundThreadQuit = true;
 		return;
 	}
@@ -398,27 +433,28 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 		return;
 	}
 
-	SDL_AudioSpec desired, obtained;
+	SDL_AudioSpec desiredSpec;
+	SDL_AudioSpec obtainedSpec;
 
-	desired.channels = 2;
-	desired.format = AUDIO_S16SYS;
-	desired.freq = 44100;
-	desired.padding = 0;
-	desired.samples = 4096;
-	desired.callback = RenderSDLSamples;
-	desired.userdata = this;
+	desiredSpec.channels = 2;
+	desiredSpec.format = AUDIO_S16SYS;
+	desiredSpec.freq = 44100;
+	desiredSpec.padding = 0;
+	desiredSpec.samples = 4096;
+	desiredSpec.callback = RenderSDLSamples;
+	desiredSpec.userdata = this;
 
 
 	sdlDeviceID = 0;
 
 	if (!deviceName.empty()) {
 		LOG("[Sound::%s] opening configured device \"%s\"", __func__, deviceName.c_str());
-		sdlDeviceID = SDL_OpenAudioDevice(deviceName.c_str(), 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+		sdlDeviceID = SDL_OpenAudioDevice(deviceName.c_str(), 0, &desiredSpec, &obtainedSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
 	}
 
 	if (sdlDeviceID == 0) {
 		LOG("[Sound::%s] opening default device", __func__);
-		sdlDeviceID = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+		sdlDeviceID = SDL_OpenAudioDevice(NULL, 0, &desiredSpec, &obtainedSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
 	}
 
 	if (sdlDeviceID == 0) {
@@ -431,48 +467,47 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 
 	/* Set up our OpenAL attributes based on what we got from SDL. */
 	attrs[0] = ALC_FORMAT_CHANNELS_SOFT;
-	if(obtained.channels == 1) {
-		attrs[1] = ALC_MONO_SOFT;
-	} else if(obtained.channels == 2) {
-		attrs[1] = ALC_STEREO_SOFT;
-	} else {
-		LOG("[Sound::%s] uhandled SDL channel count: %d", __func__, obtained.channels);
-		Cleanup();
-		return;
+
+	switch (obtainedSpec.channels) {
+		case 1: { attrs[1] = ALC_MONO_SOFT  ; } break;
+		case 2: { attrs[1] = ALC_STEREO_SOFT; } break;
+		default: {
+			LOG("[Sound::%s] unhandled SDL channel count: %d", __func__, obtainedSpec.channels);
+			Cleanup();
+			return;
+		} break;
 	}
 
 	attrs[2] = ALC_FORMAT_TYPE_SOFT;
-	if (obtained.format == AUDIO_U8) {
-		attrs[3] = ALC_UNSIGNED_BYTE_SOFT;
-	} else if(obtained.format == AUDIO_S8) {
-		attrs[3] = ALC_BYTE_SOFT;
-	} else if(obtained.format == AUDIO_U16SYS) {
-		attrs[3] = ALC_UNSIGNED_SHORT_SOFT;
-	} else if(obtained.format == AUDIO_S16SYS) {
-		attrs[3] = ALC_SHORT_SOFT;
-	} else {
-		LOG("[Sound::%s] unhandled SDL format: 0x%04x", __func__, obtained.format);
-		Cleanup();
-		return;
+
+	switch (obtainedSpec.format) {
+		case AUDIO_U8    : { attrs[3] = ALC_UNSIGNED_BYTE_SOFT ; } break;
+		case AUDIO_S8    : { attrs[3] = ALC_BYTE_SOFT          ; } break;
+		case AUDIO_U16SYS: { attrs[3] = ALC_UNSIGNED_SHORT_SOFT; } break;
+		case AUDIO_S16SYS: { attrs[3] = ALC_SHORT_SOFT         ; } break;
+		default: {
+			LOG("[Sound::%s] unhandled SDL format: 0x%04x", __func__, obtainedSpec.format);
+			Cleanup();
+			return;
+		} break;
 	}
 
 	attrs[4] = ALC_FREQUENCY;
-	attrs[5] = obtained.freq;
-
+	attrs[5] = obtainedSpec.freq;
 	attrs[6] = 0; /* end of list */
 
-	frameSize = obtained.channels * SDL_AUDIO_BITSIZE(obtained.format) / 8;
+	frameSize = obtainedSpec.channels * SDL_AUDIO_BITSIZE(obtainedSpec.format) / 8;
 
 	/* Initialize OpenAL loopback device, using our format attributes. */
-	curDevice = alcLoopbackOpenDeviceSOFT(NULL);
-	if(curDevice == nullptr) {
+	curDevice = alcLoopbackOpenDeviceSOFT(nullptr);
+	if (curDevice == nullptr) {
 		LOG("[Sound::%s] failed to create loopback device", __func__);
 		Cleanup();
 		return;
 	}
 
 	/* Make sure the format is supported before setting them on the device. */
-	if(alcIsRenderFormatSupportedSOFT(curDevice, attrs[5], attrs[1], attrs[3]) == ALC_FALSE) {
+	if (alcIsRenderFormatSupportedSOFT(curDevice, attrs[5], attrs[1], attrs[3]) == ALC_FALSE) {
 		LOG("[Sound::%s] render format not supported: %s, %s, %dhz\n", __func__,
 						ChannelsName(attrs[1]), TypeName(attrs[3]), attrs[5]);
 		Cleanup();
@@ -621,7 +656,6 @@ void CSound::UpdateThread(int cfgMaxSounds)
 
 		LOG("[Sound::%s][5] ctx=%p dev=%p", __func__, curContext, curDevice);
 
-		alcMakeContextCurrent(nullptr);
 		Cleanup();
 
 		LOG("[Sound::%s][6]", __func__);

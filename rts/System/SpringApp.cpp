@@ -262,7 +262,7 @@ bool SpringApp::Init()
 
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
-	ISound::Initialize();
+	ISound::Initialize(false);
 
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
@@ -665,7 +665,7 @@ void SpringApp::Reload(const std::string script)
 	LOG("[SpringApp::%s][3]", __func__);
 
 	// kill sound here; thread might access readMap which is deleted by ~CGame
-	ISound::Shutdown();
+	ISound::Shutdown(true);
 
 	LOG("[SpringApp::%s][4]", __func__);
 
@@ -709,7 +709,7 @@ void SpringApp::Reload(const std::string script)
 	LOG("[SpringApp::%s][8]", __func__);
 
 	// reload sounds.lua in case we switched to a different game
-	ISound::Initialize();
+	ISound::Initialize(true);
 
 	// make sure all old EventClients are really gone (safety)
 	eventHandler.ResetState();
@@ -874,7 +874,7 @@ void SpringApp::Kill(bool fromRun)
 		clientNet->SetDemoRecorder(nullptr);
 
 	// see ::Reload
-	ISound::Shutdown();
+	ISound::Shutdown(false);
 
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
