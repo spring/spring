@@ -194,7 +194,7 @@ void CProjectileDrawer::Init() {
 	for (int i = 0; i < smokeTexCount; i++) {
 		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
 		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
-		smoketex.push_back(smokeTex);
+		smokeTextures.push_back(smokeTex);
 	}
 
 	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
@@ -273,11 +273,11 @@ void CProjectileDrawer::Kill() {
 		spring::SafeDelete(modelRenderers[modelType]);
 	}
 
-	smoketex.clear();
+	smokeTextures.clear();
 
 	renderProjectiles.clear();
-	zSortedProjectiles.clear();
-	unsortedProjectiles.clear();
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
 
 	perlinFB.Kill();
 
@@ -456,14 +456,11 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
+	// no-op if no model
 	DrawProjectileModel(pro);
 
-	if (pro->drawSorted) {
-		pro->SetSortDist(cam->ProjectedDistance(pro->pos));
-		zSortedProjectiles.push_back(pro);
-	} else {
-		unsortedProjectiles.push_back(pro);
-	}
+	pro->SetSortDist(cam->ProjectedDistance(pro->pos));
+	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
 }
 
 
@@ -598,8 +595,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 	sky->SetupFog();
 
-	zSortedProjectiles.clear();
-	unsortedProjectiles.clear();
+	sortedProjectiles[0].clear();
+	sortedProjectiles[1].clear();
 
 	{
 		unitDrawer->SetupOpaqueDrawing(false);
@@ -616,16 +613,18 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// only z-sorted (if the projectiles indicate they want to be)
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-		std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
+		// empty if !drawSorted
+		std::sort(sortedProjectiles[1].begin(), sortedProjectiles[1].end(), zSortCmp);
+
 
 		fxVA = GetVertexArray();
 		fxVA->Initialize();
 
 		// collect the alpha-translucent particle effects in fxVA
-		for (CProjectile* p: zSortedProjectiles) {
+		for (CProjectile* p: sortedProjectiles[1]) {
 			p->Draw(fxVA);
 		}
-		for (CProjectile* p: unsortedProjectiles) {
+		for (CProjectile* p: sortedProjectiles[0]) {
 			p->Draw(fxVA);
 		}
 	}

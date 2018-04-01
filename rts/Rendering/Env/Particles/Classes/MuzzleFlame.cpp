@@ -58,9 +58,9 @@ void CMuzzleFlame::Draw(CVertexArray* va)
 	va->EnlargeArrays(numSmoke * 8, 0, VA_SIZE_TC);
 
 	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-		int tex = a % projectileDrawer->smoketex.size();
-		//float xmod=0.125f+(float(int(tex%6)))/16;
-		//float ymod=(int(tex/6))/16.0f;
+		const int tex = a % projectileDrawer->NumSmokeTextures();
+		// float xmod = 0.125f + (float(int(tex % 6))) / 16.0f;
+		// float ymod =                (int(tex / 6))  / 16.0f;
 
 		float drawsize = modAge * 3;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4f);
@@ -71,7 +71,7 @@ void CMuzzleFlame::Draw(CVertexArray* va)
 		col[2] = (unsigned char) (180 * alpha * fade);
 		col[3] = (unsigned char) (255 * alpha * fade);
 
-		#define st projectileDrawer->smoketex[tex]
+		#define st projectileDrawer->GetSmokeTexture(tex)
 		va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col);
 		va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col);
 		va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col);

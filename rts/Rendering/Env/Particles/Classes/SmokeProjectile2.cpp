@@ -69,7 +69,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
 
 	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
-	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
+	textureNum = (int)(guRNG.NextInt(projectileDrawer->NumSmokeTextures()));
 }
 
 
@@ -125,7 +125,7 @@ void CSmokeProjectile2::Draw(CVertexArray* va)
 	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
 	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
-	#define st projectileDrawer->smoketex[textureNum]
+	#define st projectileDrawer->GetSmokeTexture(textureNum)
 	va->AddVertexTC(interPos - pos2, st->xstart, st->ystart, col);
 	va->AddVertexTC(interPos + pos1, st->xend,   st->ystart, col);
 	va->AddVertexTC(interPos + pos2, st->xend,   st->yend,   col);

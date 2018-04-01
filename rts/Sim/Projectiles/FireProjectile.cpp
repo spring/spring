@@ -84,7 +84,7 @@ void CFireProjectile::Update()
 			sub.pos.y += sub.posDif.y;
 			sub.posDif.y = 0;
 			sub.rotSpeed = (guRNG.NextFloat() - 0.5f) * 4;
-			sub.smokeType = guRNG.NextInt(projectileDrawer->smoketex.size());
+			sub.smokeType = guRNG.NextInt(projectileDrawer->NumSmokeTextures());
 			subParticles.push_front(sub);
 
 			sub.maxSize = (0.7f + guRNG.NextFloat()*0.3f) * particleSize;
@@ -169,7 +169,8 @@ void CFireProjectile::Draw(CVertexArray* va)
 		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 	}
 	for (const SubParticle& pi: subParticles) {
-		const AtlasedTexture* at = projectileDrawer->smoketex[pi.smokeType];
+		const AtlasedTexture* at = projectileDrawer->GetSmokeTexture(pi.smokeType);
+
 		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
 		const float size = pi.maxSize * fastmath::apxsqrt(age);
 		const float  rot = pi.rotSpeed * age;
