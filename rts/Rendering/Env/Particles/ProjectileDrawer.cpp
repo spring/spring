@@ -699,43 +699,52 @@ void CProjectileDrawer::DrawShadowPass()
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 {
-	if (!(p->weapon || p->piece) || (p->model == nullptr))
+	if (p->model == nullptr)
 		return false;
 
-	if (p->weapon) {
-		// weapon-projectile
-		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
+	switch ((p->weapon * 2) + (p->piece * 1)) {
+		case 2: {
+			// weapon-projectile
+			const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		unitDrawer->SetTeamColour(wp->GetTeamID());
+			unitDrawer->SetTeamColour(wp->GetTeamID());
 
-		glPushMatrix();
-			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
+			glPushMatrix();
+				glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				wp->model->DrawStatic();
-			}
-		glPopMatrix();
-	} else {
-		// piece-projectile
-		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
+				if (!p->luaDraw || !eventHandler.DrawProjectile(p))
+					wp->model->DrawStatic();
 
-		unitDrawer->SetTeamColour(pp->GetTeamID());
+			glPopMatrix();
+			return true;
+		} break;
 
-		glPushMatrix();
-			glTranslatef3(pp->drawPos);
-			glRotatef(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
+		case 1: {
+			// piece-projectile
+			const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
-			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				if (pp->explFlags & PF_Recursive) {
-					pp->omp->DrawStatic();
-				} else {
-					glCallList(pp->dispList);
+			unitDrawer->SetTeamColour(pp->GetTeamID());
+
+			glPushMatrix();
+				glTranslatef3(pp->drawPos);
+				glRotatef(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
+
+				if (!p->luaDraw || !eventHandler.DrawProjectile(p)) {
+					if (pp->explFlags & PF_Recursive) {
+						pp->omp->DrawStatic();
+					} else {
+						glCallList(pp->dispList);
+					}
 				}
-			}
-		glPopMatrix();
+			glPopMatrix();
+			return true;
+		} break;
+
+		default: {
+		} break;
 	}
 
-	return true;
+	return false;
 }
 
 void CProjectileDrawer::DrawGroundFlashes()
