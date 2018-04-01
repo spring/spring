@@ -18,13 +18,14 @@ class ISound {
 	static ISound* singleton;
 
 public:
-	static void Initialize(bool forceNullSound = false);
-	static void Shutdown();
+	static void Initialize(bool reload, bool forceNullSound = false);
+	static void Shutdown(bool reload);
 	static bool IsInitialized() { return (singleton != nullptr); }
 	static inline ISound* GetInstance() { return singleton; }
 
 
 	virtual ~ISound() {}
+	virtual void Init() {}
 	virtual void Kill() {}
 
 	virtual bool HasSoundItem(const std::string& name) const = 0;

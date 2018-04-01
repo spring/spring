@@ -47,13 +47,8 @@ static uint8_t audioChannelMem[5][sizeof(NullAudioChannel)];
 
 ISound* ISound::singleton = nullptr;
 
-void ISound::Initialize(bool forceNullSound)
+void ISound::Initialize(bool reload, bool forceNullSound)
 {
-	if (singleton != nullptr) {
-		LOG_L(L_WARNING, "[ISound::%s] already initialized!", __func__);
-		return;
-	}
-
 #ifndef NO_SOUND
 	if (!IsNullAudio() && !forceNullSound) {
 		Channels::BGMusic       = new (audioChannelMem[0]) AudioChannel();
@@ -62,8 +57,9 @@ void ISound::Initialize(bool forceNullSound)
 		Channels::UnitReply     = new (audioChannelMem[3]) AudioChannel();
 		Channels::UserInterface = new (audioChannelMem[4]) AudioChannel();
 
-		{
+		if (!reload) {
 			ScopedOnceTimer timer("ISound::Init::New");
+			assert(singleton == nullptr);
 			singleton = new CSound();
 		}
 		{
@@ -71,12 +67,15 @@ void ISound::Initialize(bool forceNullSound)
 
 			// sound device is initialized in a thread, must wait
 			// for it to finish (otherwise LoadSoundDefs can fail)
+			singleton->Init();
+
 			while (!singleton->CanLoadSoundDefs()) {
 				LOG("[ISound::%s] spawning sound-thread (%.1fms)", __func__, (timer.GetDuration()).toMilliSecsf());
 
 				if (singleton->SoundThreadQuit()) {
 					// no device or context found, fallback
-					ChangeOutput(true); break;
+					ChangeOutput(true);
+					break;
 				}
 
 				spring_sleep(spring_msecs(100));
@@ -85,23 +84,27 @@ void ISound::Initialize(bool forceNullSound)
 	} else
 #endif // NO_SOUND
 	{
+		if (!reload) {
+			assert(singleton == nullptr);
+			singleton = new NullSound();
+		}
+
 		Channels::BGMusic       = new (audioChannelMem[0]) NullAudioChannel();
 		Channels::General       = new (audioChannelMem[1]) NullAudioChannel();
 		Channels::Battle        = new (audioChannelMem[2]) NullAudioChannel();
 		Channels::UnitReply     = new (audioChannelMem[3]) NullAudioChannel();
 		Channels::UserInterface = new (audioChannelMem[4]) NullAudioChannel();
-
-		singleton = new NullSound();
 	}
 }
 
-void ISound::Shutdown()
+void ISound::Shutdown(bool reload)
 {
 	// kill thread before setting singleton pointer to null
-	if (singleton != nullptr) {
+	if (singleton != nullptr)
 		singleton->Kill();
+
+	if (!reload)
 		spring::SafeDelete(singleton);
-	}
 
 	spring::SafeDestruct(Channels::BGMusic);
 	spring::SafeDestruct(Channels::General);
@@ -126,12 +129,15 @@ bool ISound::IsNullAudio()
 bool ISound::ChangeOutput(bool forceNullSound)
 {
 	// FIXME: on reload, sound-ids change (depends on order when they are requested, see GetSoundId()/GetSoundItem()
-	if (IsNullAudio())
-		LOG_L(L_ERROR, "[ISound::%s] re-enabling sound isn't supported yet, expect problems!", __func__);
+	if (IsNullAudio()) {
+		LOG_L(L_ERROR, "[ISound::%s] re-enabling sound isn't supported yet!", __func__);
+		return true;
+	}
 
-	Shutdown();
+	Shutdown(false);
 	configHandler->Set("Sound", IsNullAudio() || forceNullSound);
-	Initialize(forceNullSound);
+	Initialize(false, forceNullSound);
+
 	return (IsNullAudio() || forceNullSound);
 }
 

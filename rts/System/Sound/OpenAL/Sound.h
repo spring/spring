@@ -28,6 +28,7 @@ public:
 	CSound();
 	~CSound();
 
+	void Init() override;
 	void Kill() override;
 
 	bool HasSoundItem(const std::string& name) const override;
@@ -94,8 +95,6 @@ private:
 	SoundItemNameMap defaultItemNameMap;
 	SoundItemDefsMap soundItemDefsMap;
 
-	int frameSize;
-
 	float masterVolume;
 
 	/// unscaled
@@ -105,6 +104,7 @@ private:
 	float3 prevVelocity;
 
 	int pitchAdjustMode;
+	int frameSize;
 
 	bool listenerNeedsUpdate;
 	bool mute;
