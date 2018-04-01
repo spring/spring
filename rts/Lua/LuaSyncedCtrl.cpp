@@ -1692,10 +1692,8 @@ static int SetSingleDynDamagesKey(lua_State* L, DynDamageArray* damages, int ind
 		return 0;
 	}
 
-	const char* key = lua_tostring(L, index);
-
 	// FIXME: missing checks and updates?
-	switch (hashString(key)) {
+	switch (hashString(lua_tostring(L, index))) {
 		case hashString("paralyzeDamageTime"): {
 			damages->paralyzeDamageTime = std::max((int)value, 0);
 		} break;
@@ -1741,6 +1739,9 @@ static int SetSingleDynDamagesKey(lua_State* L, DynDamageArray* damages, int ind
 		case hashString("explosionSpeed"): {
 			damages->explosionSpeed = value;
 		} break;
+
+		default: {
+		} break;
 	}
 
 	return 0;
@@ -1757,13 +1758,10 @@ int LuaSyncedCtrl::SetUnitWeaponDamages(lua_State* L)
 	DynDamageArray* damages;
 
 	if (lua_israwstring(L, 2)) {
-		const string key = lua_tostring(L, 2);
-		if (key == "explode") {
-			damages = DynDamageArray::GetMutable(unit->deathExpDamages);
-		} else if (key == "selfDestruct") {
-			damages = DynDamageArray::GetMutable(unit->selfdExpDamages);
-		} else {
-			return 0;
+		switch (hashString(lua_tostring(L, 2))) {
+			case hashString("explode"     ): { damages = DynDamageArray::GetMutable(unit->deathExpDamages); } break;
+			case hashString("selfDestruct"): { damages = DynDamageArray::GetMutable(unit->selfdExpDamages); } break;
+			default                        : {                                                    return 0; } break;
 		}
 	} else {
 		const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
@@ -4292,7 +4290,6 @@ int LuaSyncedCtrl::DeleteProjectile(lua_State* L)
 		return 0;
 
 	proj->Delete();
-
 	return 0;
 }
 
@@ -4308,18 +4305,27 @@ static int SetSingleDamagesKey(lua_State* L, DamageArray& damages, int index)
 		return 0;
 	}
 
-	const string key = lua_tostring(L, index);
-	// FIXME: KDR -- missing checks and updates?
-	if (key == "paralyzeDamageTime") {
-		damages.paralyzeDamageTime = std::max((int)value, 0);
-	} else if (key == "impulseFactor") {
-		damages.impulseFactor = value;
-	} else if (key == "impulseBoost") {
-		damages.impulseBoost = value;
-	} else if (key == "craterMult") {
-		damages.craterMult = value;
-	} else if (key == "craterBoost") {
-		damages.craterBoost = value;
+	// FIXME: missing checks and updates?
+	switch (hashString(lua_tostring(L, index))) {
+		case hashString("paralyzeDamageTime"): {
+			damages.paralyzeDamageTime = std::max((int)value, 0);
+		} break;
+
+		case hashString("impulseFactor"): {
+			damages.impulseFactor = value;
+		} break;
+		case hashString("impulseBoost"): {
+			damages.impulseBoost = value;
+		} break;
+
+		case hashString("craterMult"): {
+			damages.craterMult = value;
+		} break;
+		case hashString("craterBoost"): {
+			damages.craterBoost = value;
+		} break;
+		default: {
+		} break;
 	}
 
 	return 0;
@@ -4328,47 +4334,70 @@ static int SetSingleDamagesKey(lua_State* L, DamageArray& damages, int index)
 
 static int SetExplosionParam(lua_State* L, CExplosionParams& params, DamageArray& damages, int index)
 {
-	const string& key = lua_tostring(L, index);
-	if (key == "damages") {
-		if (lua_istable(L, index + 1)) {
-			// {key1 = value1, ...}
-			for (lua_pushnil(L); lua_next(L, index + 1) != 0; lua_pop(L, 1)) {
-				if ((lua_isnumber(L, -2) || lua_israwstring(L, -2)) && lua_isnumber(L, -1)) {
-					SetSingleDamagesKey(L, damages, -2);
+	switch (hashString(lua_tostring(L, index))) {
+		case hashString("damages"): {
+			if (lua_istable(L, index + 1)) {
+				// {key1 = value1, ...}
+				for (lua_pushnil(L); lua_next(L, index + 1) != 0; lua_pop(L, 1)) {
+					if ((lua_isnumber(L, -2) || lua_israwstring(L, -2)) && lua_isnumber(L, -1)) {
+						SetSingleDamagesKey(L, damages, -2);
+					}
 				}
+			} else {
+				damages.SetDefaultDamage(std::max(lua_tofloat(L, index + 1), 0.0001f));
 			}
-		} else {
-			damages.SetDefaultDamage(std::max(lua_tofloat(L, index + 1), 0.0001f));
-		}
-	} else if (key == "weaponDef") {
-		params.weaponDef = weaponDefHandler->GetWeaponDefByID(lua_tofloat(L, index + 1));
-	} else if (key == "owner") {
-		params.owner = ParseUnit(L, __func__, index + 1);
-	} else if (key == "hitUnit") {
-		params.hitUnit = ParseUnit(L, __func__, index + 1);
-	} else if (key == "hitFeature") {
-		params.hitFeature = ParseFeature(L, __func__, index + 1);
-	} else if (key == "craterAreaOfEffect") {
-		params.craterAreaOfEffect = lua_tofloat(L, index + 1);
-	} else if (key == "damageAreaOfEffect") {
-		params.damageAreaOfEffect = lua_tofloat(L, index + 1);
-	} else if (key == "edgeEffectiveness") {
-		params.edgeEffectiveness  = lua_tofloat(L, index + 1);
-	} else if (key == "explosionSpeed") {
-		params.explosionSpeed     = lua_tofloat(L, index + 1);
-	} else if (key == "gfxMod") {
-		params.gfxMod             = lua_tofloat(L, index + 1);
-	} else if (key == "projectileID") {
-		params.projectileID = static_cast<unsigned int>(lua_toint(L, index + 1));
-	} else if (key == "impactOnly") {
-		params.impactOnly   = lua_toboolean(L, index + 1);
-	} else if (key == "ignoreOwner") {
-		params.ignoreOwner  = lua_toboolean(L, index + 1);
-	} else if (key == "damageGround") {
-		params.damageGround = lua_toboolean(L, index + 1);
-	} else {
-		luaL_error(L, "illegal explosion param: %s", key.c_str());
+		} break;
+		case hashString("weaponDef"): {
+			params.weaponDef = weaponDefHandler->GetWeaponDefByID(lua_tofloat(L, index + 1));
+		} break;
+		case hashString("owner"): {
+			params.owner = ParseUnit(L, __func__, index + 1);
+		} break;
+
+		case hashString("hitUnit"): {
+			params.hitUnit = ParseUnit(L, __func__, index + 1);
+		} break;
+		case hashString("hitFeature"): {
+			params.hitFeature = ParseFeature(L, __func__, index + 1);
+		} break;
+
+		case hashString("craterAreaOfEffect"): {
+			params.craterAreaOfEffect = lua_tofloat(L, index + 1);
+		} break;
+		case hashString("damageAreaOfEffect"): {
+			params.damageAreaOfEffect = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("edgeEffectiveness"): {
+			params.edgeEffectiveness = lua_tofloat(L, index + 1);
+		} break;
+		case hashString("explosionSpeed"): {
+			params.explosionSpeed = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("gfxMod"): {
+			params.gfxMod = lua_tofloat(L, index + 1);
+		} break;
+
+		case hashString("projectileID"): {
+			params.projectileID = static_cast<unsigned int>(lua_toint(L, index + 1));
+		} break;
+
+		case hashString("impactOnly"): {
+			params.impactOnly = lua_toboolean(L, index + 1);
+		} break;
+		case hashString("ignoreOwner"): {
+			params.ignoreOwner = lua_toboolean(L, index + 1);
+		} break;
+		case hashString("damageGround"): {
+			params.damageGround = lua_toboolean(L, index + 1);
+		} break;
+
+		default: {
+			luaL_error(L, "[%s] illegal explosion param \"%s\"", __func__, lua_tostring(L, index));
+		} break;
 	}
+
 	return 0;
 }
 
