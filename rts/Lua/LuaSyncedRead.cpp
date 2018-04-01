@@ -3417,9 +3417,7 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, in
 		return 1;
 	}
 
-	const char* key = luaL_checkstring(L, index);
-
-	switch (hashString(key)) {
+	switch (hashString(luaL_checkstring(L, index))) {
 		case hashString("paralyzeDamageTime"): {
 			lua_pushnumber(L, damages.paralyzeDamageTime);
 		} break;
