@@ -202,7 +202,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// get the open square with lowest expected path-cost
-		PathNode* openSquare = const_cast<PathNode*>(openBlocks.top());
+		const PathNode* openSquare = openBlocks.top();
 		openBlocks.pop();
 
 		// check if this PathNode has become obsolete
@@ -250,30 +250,38 @@ void CPathFinder::TestNeighborSquares(
 	struct SquareState {
 		CMoveMath::BlockType blockMask = CMoveMath::BLOCK_IMPASSABLE;
 		float speedMod = 0.0f;
-		bool inSearch = false;
+		bool insideMap = true;
+		bool insideDef = false;
 	};
 
 	SquareState ngbStates[PATH_DIRECTIONS];
 
+	const int2 squarePos = square->nodePos;
+
+	const bool startSquareExpanded = (openBlocks.empty() && testedBlocks < 8);
+	const bool startSquareBlocked = (startSquareExpanded && (blockCheckFunc(moveDef, squarePos.x, squarePos.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
+
 	// precompute structure-blocked state and speedmod for all neighbors
-	for (unsigned int dir = 0; dir < PATH_DIRECTIONS; dir++) {
-		const unsigned int optDir = PathDir2PathOpt(dir);
-		const int2 ngbSquareCoors = square->nodePos + PF_DIRECTION_VECTORS_2D[optDir];
+	for (SquareState& sqState: ngbStates) {
+		const unsigned int dirIdx = &sqState - &ngbStates[0];
+		const unsigned int optDir = PathDir2PathOpt(dirIdx);
+		const int2 ngbSquareCoors = squarePos + PF_DIRECTION_VECTORS_2D[optDir];
 		const unsigned int ngbSquareIdx = BlockPosToIdx(ngbSquareCoors);
 
-		if (static_cast<unsigned>(ngbSquareCoors.x) >= nbrOfBlocks.x || static_cast<unsigned>(ngbSquareCoors.y) >= nbrOfBlocks.y)
+		sqState.insideMap &= (static_cast<unsigned int>(ngbSquareCoors.x) < nbrOfBlocks.x);
+		sqState.insideMap &= (static_cast<unsigned int>(ngbSquareCoors.y) < nbrOfBlocks.y);
+
+		if (!sqState.insideMap)
 			continue;
 
 		if (blockStates.nodeMask[ngbSquareIdx] & (PATHOPT_CLOSED | PATHOPT_BLOCKED)) //FIXME
 			continue;
 
-		SquareState& sqState = ngbStates[dir];
-
-		// IsBlockedNoSpeedModCheck; very expensive call
+		// IsBlockedNoSpeedModCheck; very expensive call but with a ~20% (?) chance of early-out
 		if ((sqState.blockMask = blockCheckFunc(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner)) & CMoveMath::BLOCK_STRUCTURE) {
 			blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
 			dirtyBlocks.push_back(ngbSquareIdx);
-			continue; // early-out (20% chance)
+			continue;
 		}
 
 
@@ -285,19 +293,32 @@ void CPathFinder::TestNeighborSquares(
 			// no gain placing this in front of the above code, only has a ~2%
 			// chance (heavily depending on the map) to early-out
 			//
-			// only close node if search is directionally independent, otherwise
-			// it is possible we might enter it from another (better) direction
+			// only close node if search is directionally independent, since it
+			// might still be entered from another (better) direction otherwise
 			if ((sqState.speedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y)) == 0.0f) {
 				blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
 				dirtyBlocks.push_back(ngbSquareIdx);
 			}
 		}
 
-		sqState.inSearch = (sqState.speedMod != 0.0f && pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y));
+		// LHS is only here to save some cycles
+		sqState.insideDef = (sqState.speedMod != 0.0f && pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y));
 	}
 
+
 	const auto CanTestSquareSM = [&](const int dir) { return (ngbStates[dir].speedMod != 0.0f); };
-	const auto CanTestSquareIS = [&](const int dir) { return (ngbStates[dir].inSearch); };
+	const auto CanTestSquareIS = [&](const int dir) { return (ngbStates[dir].insideDef       ); };
+
+	#if ENABLE_DIAG_TESTS
+	const auto TestDiagSquare = [&](const int dirX, const int dirY, const int dirXY) {
+		if (!CanTestSquareSM(dirXY) || (!startSquareBlocked && (!CanTestSquareSM(dirX) || !CanTestSquareSM(dirY))))
+			return;
+		if (!CanTestSquareIS(dirXY) && (                        !CanTestSquareIS(dirX) || !CanTestSquareIS(dirY)))
+			return;
+
+		TestBlock(moveDef, pfDef, square, owner, PathDir2PathOpt(dirXY), ngbStates[dirXY].blockMask, ngbStates[dirXY].speedMod);
+	};
+	#endif
 
 	// first test squares along the cardinal directions
 	for (unsigned int dir: PATHDIR_CARDINALS) {
@@ -313,7 +334,8 @@ void CPathFinder::TestNeighborSquares(
 	// don't search diagonally if there is a blocking object
 	// (or blocking terrain!) in one of the two side squares
 	// e.g. do not consider the edge (p, q) passable if X is
-	// impassable in this situation:
+	// blocked here:
+	//
 	//   +---+---+
 	//   | X | q |
 	//   +---+---+
@@ -327,15 +349,19 @@ void CPathFinder::TestNeighborSquares(
 	// edge passable since we still need to be able to jump to
 	// diagonally adjacent PE-blocks!
 	//
-	const auto TestDiagSquare = [&](const int dirX, const int dirY, const int dirXY) {
-		if (!CanTestSquareSM(dirXY) || !CanTestSquareSM(dirX) || !CanTestSquareSM(dirY))
-			return;
-		if (!CanTestSquareIS(dirXY) && (!CanTestSquareIS(dirX) || !CanTestSquareIS(dirY)))
-			return;
-
-		TestBlock(moveDef, pfDef, square, owner, PathDir2PathOpt(dirXY), ngbStates[dirXY].blockMask, ngbStates[dirXY].speedMod);
-	};
-
+	// make another exception if the starting square is inside
+	// a concave corner s.t. all non-diagonal ngbs are blocked
+	// (according to blockCheckFunc) and the MoveDef footprint
+	// overlaps at least one impassable square, which would be
+	// the case for a 5x5 footprint centered on S below
+	//
+	//   [.][.][.][.][X][X]
+	//   [.][.][.][.][X][X]
+	//   [.][.][S][.][.][ ]
+	//   [.][.][.][.][.][ ]
+	//   [X][X][.][.][X][X]
+	//   [X][X][ ][ ][X][X]
+	//
 	TestDiagSquare(PATHDIR_LEFT,  PATHDIR_UP,   PATHDIR_LEFT_UP   );
 	TestDiagSquare(PATHDIR_RIGHT, PATHDIR_UP,   PATHDIR_RIGHT_UP  );
 	TestDiagSquare(PATHDIR_LEFT,  PATHDIR_DOWN, PATHDIR_LEFT_DOWN );
