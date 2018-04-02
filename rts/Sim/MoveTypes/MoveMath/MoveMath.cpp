@@ -114,18 +114,13 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	const int xmax = std::min(xSquare + moveDef.xsizeh, mapDims.mapx - 1);
 	const int zmax = std::min(zSquare + moveDef.zsizeh, mapDims.mapy - 1);
 
-	#if 0
-	if (xmin < 0 || xmax >= mapDims.mapx)
-		return BLOCK_IMPASSABLE;
-	if (zmin < 0 || zmax >= mapDims.mapy)
-		return BLOCK_IMPASSABLE;
-	#endif
-
 	BlockType ret = BLOCK_NONE;
 
-	// (footprints are point-symmetric around <xSquare, zSquare>)
+	// footprints are point-symmetric around <xSquare, zSquare>
+	// same as RangeIsBlocked but without anti-duplication test
 	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
+
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
@@ -272,23 +267,16 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin, int xmax, int zmin, int zmax, const CSolidObject* collider)
 {
-	#if 0
-	if (xmin < 0 || xmax >= mapDims.mapx)
-		return BLOCK_IMPASSABLE;
-	if (zmin < 0 || zmax >= mapDims.mapy)
-		return BLOCK_IMPASSABLE;
-	#else
 	xmin = std::max(xmin,                0);
 	zmin = std::max(zmin,                0);
 	xmax = std::min(xmax, mapDims.mapx - 1);
 	zmax = std::min(zmax, mapDims.mapy - 1);
-	#endif
 
 	BlockType ret = BLOCK_NONE;
 
 	const int tempNum = gs->GetTempNum();
 
-	// (footprints are point-symmetric around <xSquare, zSquare>)
+	// footprints are point-symmetric around <xSquare, zSquare>
 	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
 
