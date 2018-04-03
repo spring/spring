@@ -16,7 +16,7 @@ class CglFont;
 class CLoadScreen : public CGameController
 {
 public:
-	void SetLoadMessage(const std::string& text, bool replace_lastline = false);
+	void SetLoadMessage(const std::string& text, bool replaceLast = false);
 
 	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	~CLoadScreen();
@@ -45,12 +45,12 @@ public:
 private:
 	static CLoadScreen* singleton;
 
-	std::string oldLoadMessages;
-	std::string curLoadMessage;
+	ILoadSaveHandler* saveFile;
+
+	std::vector< std::pair<std::string, bool> > loadMessages;
 
 	std::string mapName;
 	std::string modName;
-	ILoadSaveHandler* saveFile;
 
 	spring::recursive_mutex mutex;
 	spring::thread netHeartbeatThread;
