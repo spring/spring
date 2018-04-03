@@ -642,7 +642,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float3& ownerPos = weaponOwner->pos;
 	const float3 testPos;
 
-	const float scanRadius = weapon->range + weapon->rangeAutoTargetBoost;
+	const float scanRadius = weapon->range + weapon->autoTargetRangeBoost;
 	const float aimHeight = weapon->aimFromPos.y;
 
 	// how much damage the weapon deals over 1 second

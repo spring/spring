@@ -144,7 +144,6 @@ public:
 	int salvoLeft;                          // number of shots left in current salvo
 
 	float range;
-	float rangeAutoTargetBoost;
 	float projectileSpeed;
 	float accuracyError;                    // inaccuracy of whole salvo
 	float sprayAngle;                       // inaccuracy of individual shots inside salvo
@@ -173,6 +172,7 @@ public:
 	float maxMainDirAngleDif;               // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
 	float heightBoostFactor;                // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float autoTargetRangeBoost;
 
 	unsigned int avoidFlags;
 	unsigned int collisionFlags;

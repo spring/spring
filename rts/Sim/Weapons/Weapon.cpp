@@ -52,7 +52,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(salvoLeft),
 
 	CR_MEMBER(range),
-	CR_MEMBER(rangeAutoTargetBoost),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(sprayAngle),
@@ -82,7 +81,10 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(maxForwardAngleDif),
 	CR_MEMBER(maxMainDirAngleDif),
+
 	CR_MEMBER(heightBoostFactor),
+	CR_MEMBER(autoTargetRangeBoost),
+
 	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
 	CR_MEMBER(weaponNum),
@@ -132,7 +134,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoLeft(0),
 
 	range(1.0f),
-	rangeAutoTargetBoost(0.0f),
 	projectileSpeed(1.0f),
 	accuracyError(0.0f),
 	sprayAngle(0.0f),
@@ -146,6 +147,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	doTargetGroundPos(false),
 	noAutoTarget(false),
 	alreadyWarnedAboutMissingPieces(false),
+
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 
@@ -158,7 +160,10 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 	maxForwardAngleDif(0.0f),
 	maxMainDirAngleDif(-1.0f),
-	heightBoostFactor(-1.f),
+
+	heightBoostFactor(-1.0f),
+	autoTargetRangeBoost(0.0f),
+
 	avoidFlags(0),
 	collisionFlags(0),
 

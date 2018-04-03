@@ -3351,11 +3351,12 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		case hashString("range"): {
 			lua_pushnumber(L, weapon->range);
 		} break;
-		case hashString("rangeAutoTargetBoost"): {
-			lua_pushnumber(L, weapon->rangeAutoTargetBoost);
-		} break;
 		case hashString("projectileSpeed"): {
 			lua_pushnumber(L, weapon->projectileSpeed);
+		} break;
+
+		case hashString("autoTargetRangeBoost"): {
+			lua_pushnumber(L, weapon->autoTargetRangeBoost);
 		} break;
 
 		case hashString("burst"): {
