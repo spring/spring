@@ -114,11 +114,10 @@ void CSound::Init()
 		defaultItemNameMap.clear();
 		soundItemDefsMap.clear();
 
+		// sources are cleared and reserved by GenSources
 		soundItems.clear();
 		soundItems.reserve(1024);
 		soundItems.emplace_back();
-
-		soundSources.clear();
 	}
 
 	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
@@ -131,10 +130,8 @@ void CSound::Kill()
 	{
 		soundThreadQuit = true;
 
-		if (!soundThread.joinable())
-			return;
-
-		soundThread.join();
+		if (soundThread.joinable())
+			soundThread.join();
 	}
 
 	SoundBuffer::Deinitialise();
