@@ -260,7 +260,6 @@ bool CLoadScreen::Update()
 	if (!mtLoading)
 		SDL_PollEvent(nullptr);
 
-	CNamedTextures::Update();
 	return true;
 }
 
