@@ -44,12 +44,14 @@ CONFIG(int, LoadingMT).defaultValue(0).safemodeValue(0);
 
 CLoadScreen* CLoadScreen::singleton = nullptr;
 
-CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
-	mapName(_mapName),
-	modName(_modName),
-	saveFile(_saveFile),
-	mtLoading(true),
-	lastDrawTime(0)
+CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile)
+	: saveFile(_saveFile)
+
+	, mapName(_mapName)
+	, modName(_modName)
+
+	, mtLoading(true)
+	, lastDrawTime(0)
 {
 }
 
@@ -236,10 +238,16 @@ int CLoadScreen::KeyReleased(int k)
 
 bool CLoadScreen::Update()
 {
-	{
+	if (luaIntro != nullptr) {
 		// keep checking this while we are the active controller
 		std::lock_guard<spring::recursive_mutex> lck(mutex);
-		good_fpu_control_registers(curLoadMessage.c_str());
+
+		for (const auto& pair: loadMessages) {
+			good_fpu_control_registers(pair.first.c_str());
+			luaIntro->LoadProgress(pair.first, pair.second);
+		}
+
+		loadMessages.clear();
 	}
 
 	if (game->IsFinishedLoading()) {
@@ -273,9 +281,6 @@ bool CLoadScreen::Draw()
 		lastDrawTime = now;
 	}
 
-	// curLoadMessage might be concurrently updated
-	std::lock_guard<spring::recursive_mutex> lck(mutex);
-
 	// let LuaMenu keep the lobby connection alive
 	if (luaMenu != nullptr)
 		luaMenu->Update();
@@ -297,35 +302,26 @@ bool CLoadScreen::Draw()
 /******************************************************************************/
 /******************************************************************************/
 
-void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
+void CLoadScreen::SetLoadMessage(const std::string& text, bool replaceLast)
 {
 	Watchdog::ClearTimer(WDT_LOAD);
 
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-	if (!replace_lastline) {
-		if (oldLoadMessages.empty()) {
-			oldLoadMessages = curLoadMessage;
-		} else {
-			oldLoadMessages += "\n" + curLoadMessage;
-		}
-	}
-	curLoadMessage = text;
+	loadMessages.emplace_back(text, replaceLast);
 
 	LOG("%s", text.c_str());
 	LOG_CLEANUP();
 
-	if (luaIntro != nullptr)
-		luaIntro->LoadProgress(text, replace_lastline);
-
 	// be paranoid about FPU state for the loading thread since some
 	// external library might reset it (main thread state is checked
 	// in ::Update)
-	good_fpu_control_registers(curLoadMessage.c_str());
+	good_fpu_control_registers(text.c_str());
 
-	if (!mtLoading) {
-		Update();
-		Draw();
-	}
+	if (mtLoading)
+		return;
+
+	Update();
+	Draw();
 }
 
