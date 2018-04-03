@@ -1597,11 +1597,12 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		case hashString("range"): {
 			weapon->UpdateRange(lua_tofloat(L, index + 1));
 		} break;
-		case hashString("rangeAutoTargetBoost"): {
-			weapon->rangeAutoTargetBoost = std::max(0.0f, lua_tofloat(L, index + 1));
-		} break;
 		case hashString("projectileSpeed"): {
 			weapon->UpdateProjectileSpeed(lua_tofloat(L, index + 1));
+		} break;
+
+		case hashString("autoTargetRangeBoost"): {
+			weapon->autoTargetRangeBoost = std::max(0.0f, lua_tofloat(L, index + 1));
 		} break;
 
 		case hashString("burst"): {
