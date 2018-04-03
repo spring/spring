@@ -25,6 +25,8 @@ public: // call-ins
 
 	void GamePreload() override;
 
+	virtual bool SecondaryGLContext() const override { return true; }
+
 protected:
 	CLuaIntro();
 	virtual ~CLuaIntro();

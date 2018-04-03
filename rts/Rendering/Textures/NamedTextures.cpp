@@ -68,7 +68,6 @@ namespace CNamedTextures {
 
 	static void InsertTex(const std::string& texName, const TexInfo& texInfo, bool loadTex)
 	{
-		// caller (GenInsertTex) already has lock
 		if (!loadTex)
 			waitingTextures.push_back(texName);
 
@@ -352,7 +351,7 @@ namespace CNamedTextures {
 	}
 
 	const TexInfo* GetInfo(size_t texIdx) { return &texInfoVec[texIdx]; }
-	const TexInfo* GetInfo(const std::string& texName, bool forceLoad, bool persist)
+	const TexInfo* GetInfo(const std::string& texName, bool forceLoad, bool persist, bool secondaryGLContext)
 	{
 		if (texName.empty())
 			return nullptr;
@@ -370,7 +369,7 @@ namespace CNamedTextures {
 			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
 
 			if (inListCompile) {
-				GenInsertTex(texName, {}, true, false, false, persist);
+				GenInsertTex(texName, {}, true, secondaryGLContext, false, persist);
 			} else {
 				GenLoadTex(texName);
 			}

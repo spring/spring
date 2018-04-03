@@ -89,6 +89,7 @@ class CLuaHandle : public CEventClient
 
 		// virtual bool PersistOnReload() const { return (GetName() == "LuaMenu"); }
 		virtual bool PersistOnReload() const { return false; }
+		virtual bool SecondaryGLContext() const { return false; }
 
 		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
 		lua_State* GetLuaState() const { return L; }

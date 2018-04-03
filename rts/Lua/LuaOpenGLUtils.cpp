@@ -457,7 +457,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 
 		default: {
 			const CLuaHandle* luaHandle = CLuaHandle::GetHandle(L);
-			const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, luaHandle->PersistOnReload());
+			const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, luaHandle->PersistOnReload(), luaHandle->SecondaryGLContext());
 
 			if (texInfo != nullptr) {
 				texUnit.type = LuaMatTexture::LUATEX_NAMED;
