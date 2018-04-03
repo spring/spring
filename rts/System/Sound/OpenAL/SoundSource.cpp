@@ -155,7 +155,7 @@ void CSoundSource::Stop()
 		SoundItem* item = nullptr;
 
 		// callers marked * are mutex-guarded
-		//   ::Delete via CSoundSource via ~CSound
+		//   ::Delete via ~CSoundSource via CSound::Kill
 		//   ::Play via ::Update (*)
 		//   ::PlayStream via AudioChannel::StreamPlay (*)
 		//   ::StreamStop via AudioChannel::StreamStop (*)
