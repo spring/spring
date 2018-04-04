@@ -19,6 +19,9 @@
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 
+CModelLoader modelLoader;
+
+
 static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
 	spring::unordered_set<std::string> whitelist;
 
@@ -62,10 +65,11 @@ static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
 	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
-static S3DModel CreateDummyModel()
+static S3DModel CreateDummyModel(unsigned int id)
 {
 	// create a crash-dummy
 	S3DModel model;
+	model.id = id;
 	model.type = MODELTYPE_3DO;
 	model.numPieces = 1;
 	// give it one empty piece
@@ -102,6 +106,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 }
 
 
+
 void CModelLoader::Init()
 {
 	// file-extension should be lowercase
@@ -114,8 +119,11 @@ void CModelLoader::Init()
 
 	RegisterAssimpModelFormats(formats);
 
-	// dummy first model, model IDs start at 1
-	models.emplace_back();
+	models.clear();
+	models.resize(MAX_MODEL_OBJECTS);
+
+	// dummy first model, legitimate model IDs start at 1
+	models[0] = std::move(CreateDummyModel(numModels = 0));
 }
 
 void CModelLoader::Kill()
@@ -129,11 +137,9 @@ void CModelLoader::Kill()
 
 void CModelLoader::KillModels()
 {
-	for (unsigned int n = 1; n < models.size(); n++) {
-		models[n].DeletePieces();
+	for (unsigned int i = 0; i < numModels; i++) {
+		models[i].DeletePieces();
 	}
-
-	models.clear();
 }
 
 void CModelLoader::KillParsers()
@@ -143,12 +149,6 @@ void CModelLoader::KillParsers()
 	}
 
 	parsers.clear();
-}
-
-CModelLoader& CModelLoader::GetInstance()
-{
-	static CModelLoader instance;
-	return instance;
 }
 
 
@@ -212,15 +212,15 @@ void CModelLoader::LogErrors()
 	// doing the empty-check outside lock should be fine
 	std::lock_guard<spring::mutex> lock(mutex);
 
-	while (!errors.empty()) {
+	for (const auto& pair: errors) {
 		char buf[1024];
 
-		SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", errors[0].first.c_str(), errors[0].second.c_str());
+		SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", pair.first.c_str(), pair.second.c_str());
 		LOG_L(L_ERROR, "%s", buf);
 		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
-
-		errors.pop_front();
 	}
+
+	errors.clear();
 }
 
 
@@ -230,22 +230,24 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 	if (name.empty())
 		return nullptr;
 
-	std::lock_guard<spring::mutex> lock(mutex);
-
 	std::string  path;
 	std::string* refs[2] = {&name, &path};
 
 	StringToLowerInPlace(name);
 
-	// search in cache first
-	for (unsigned int n = 0; n < 2; n++) {
-		S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
+	{
+		std::lock_guard<spring::mutex> lock(mutex);
 
-		if (cachedModel != nullptr)
-			return cachedModel;
+		// search in cache first
+		for (unsigned int n = 0; n < 2; n++) {
+			S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
 
-		// expensive, delay until needed
-		path = FindModelPath(name);
+			if (cachedModel != nullptr)
+				return cachedModel;
+
+			// expensive, delay until needed
+			path = FindModelPath(name);
+		}
 	}
 
 	// not found in cache, create the model and cache it
@@ -254,6 +256,7 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 
 S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 {
+	// caller has lock
 	const auto ci = cache.find(name);
 
 	if (ci == cache.end())
@@ -276,24 +279,36 @@ S3DModel* CModelLoader::CreateModel(
 ) {
 	S3DModel model = std::move(ParseModel(name, path));
 
-	if (model.numPieces == 0)
-		model = std::move(CreateDummyModel());
+	{
+		assert(model.numPieces != 0);
+		assert(model.GetRootPiece() != nullptr);
 
-	assert(model.GetRootPiece() != nullptr);
-	model.SetPieceMatrices();
+		model.SetPieceMatrices();
 
-	if (!preload)
-		UploadRenderData(&model);
+		if (!preload)
+			UploadRenderData(&model);
+	}
+	{
+		std::lock_guard<spring::mutex> lock(mutex);
 
-	// add (parsed or dummy) model to cache
-	model.id = models.size();
+		// return dummy if at limit
+		if (numModels >= MAX_MODEL_OBJECTS) {
+			errors.emplace_back(name, "numModels >= MAX_MODEL_OBJECTS");
+			return &models[0];
+		}
 
-	cache[name] = model.id;
-	cache[path] = model.id;
+		// NB: id depends on thread order, can not be used in synced code
+		model.id = ++numModels;
 
-	models.emplace_back();
-	models.back() = std::move(model);
-	return &(models.back());
+		// add (parsed or dummy) model to cache
+		cache[name] = model.id;
+		cache[path] = model.id;
+
+		models[model.id] = std::move(model);
+	}
+
+	// id is still valid after move()
+	return &models[model.id];
 }
 
 
@@ -317,9 +332,12 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 		try {
 			model = std::move(parser->Load(path));
 		} catch (const content_error& ex) {
-			errors.emplace_back(name, ex.what());
+			{
+				std::lock_guard<spring::mutex> lock(mutex);
+				errors.emplace_back(name, ex.what());
+			}
 
-			model.numPieces = 0;
+			model = std::move(CreateDummyModel(0));
 		}
 	} else {
 		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
