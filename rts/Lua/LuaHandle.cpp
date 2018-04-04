@@ -2440,57 +2440,65 @@ void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, MaxLuaGarbageCollectionTime ).defaultValue(5.f).minimumValue(1.0f).description("in MilliSecs");
+CONFIG(float, LuaGarbageCollectionTimeMult).defaultValue(5.0f).minimumValue(1.0f).description("in milliseconds");
 
 
 void CLuaHandle::CollectGarbage()
 {
 	lua_lock(L_GC);
-	//SCOPED_MT_TIMER("CollectGarbage"); // this func doesn't run in parallel yet, cause of problems with IsHandleRunning()
+	SetHandleRunning(L_GC, true);
 
 	// note: total footprint INCLUDING garbage
 	int luaMemFootPrintKB = lua_gc(L_GC, LUA_GCCOUNT, 0);
-	int numLuaGarbageCollectIters = 0;
+	int gcItersInBatch = 0;
 
-	static int gcsteps = 10;
-	// 30x per second !!!
-	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime");
+	static int gcStepsPerIter = 10;
 
-	float maxRunTime = smoothstep(10, 100, luaMemFootPrintKB / 1024) * maxLuaGarbageCollectTime;
+	static const float gcRunTimeMult = configHandler->GetFloat("LuaGarbageCollectionTimeMult");
+
+	// if gc runs at a fixed rate, the upper limit to base runtime will
+	// quickly be reached since Lua's footprint can easily exceed 100MB
+	// and OOM exceptions become a concern when catching up
+	// OTOH if gc is tied to sim-speed the increased number of calls can
+	// mean too much time is spent on it, must weigh the per-call period
+	const float gcBaseRunTime = smoothstep(10.0f, 100.0f, luaMemFootPrintKB / 1024);
+	const float gcMaxRunTime = (gcBaseRunTime * gcRunTimeMult) / gs->speedFactor;
 
 	const spring_time startTime = spring_gettime();
-	const spring_time endTime = startTime + spring_msecs(maxRunTime);
-
-	SetHandleRunning(L_GC, true);
+	const spring_time   endTime = startTime + spring_msecs(gcMaxRunTime);
 
 	// collect garbage until time runs out
 	while (spring_gettime() < endTime) {
-		numLuaGarbageCollectIters++;
-		if (!lua_gc(L_GC, LUA_GCSTEP, gcsteps))
+		gcItersInBatch++;
+
+		if (!lua_gc(L_GC, LUA_GCSTEP, gcStepsPerIter))
 			continue;
 
 		// garbage-collection cycle finished
 		const int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0);
-		const int luaMemFootPrintChange = luaMemFootPrintNow - luaMemFootPrintKB;
+		const int luaMemFootPrintDif = luaMemFootPrintNow - luaMemFootPrintKB;
+
 		luaMemFootPrintKB = luaMemFootPrintNow;
 
-		// cycle didn't freed any memory early-exit
-		if (luaMemFootPrintChange == 0)
+		// early-exit if cycle didn't free any memory
+		if (luaMemFootPrintDif == 0)
 			break;
 	}
 
-	lua_gc(L_GC, LUA_GCSTOP, 0); // don't collect garbage outside of this function
+	// don't collect garbage outside of CollectGarbage
+	lua_gc(L_GC, LUA_GCSTOP, 0);
 	SetHandleRunning(L_GC, false);
 	lua_unlock(L_GC);
 
+
 	const spring_time finishTime = spring_gettime();
 
-	if (gcsteps > 1 && numLuaGarbageCollectIters > 0) {
+	if (gcStepsPerIter > 1 && gcItersInBatch > 0) {
 		// runtime optimize number of steps to process in a batch
-		const float avgTimePerLoopIter = (finishTime - startTime).toMilliSecsf() / numLuaGarbageCollectIters;
+		const float avgTimePerLoopIter = (finishTime - startTime).toMilliSecsf() / gcItersInBatch;
 
-		if (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f)) gcsteps--;
-		if (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f)) gcsteps++;
+		gcStepsPerIter -= (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f));
+		gcStepsPerIter += (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f));
 	}
 
 	eventHandler.DbgTimingInfo(TIMING_GC, startTime, finishTime);
