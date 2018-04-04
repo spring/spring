@@ -2497,8 +2497,8 @@ void CLuaHandle::CollectGarbage()
 		// runtime optimize number of steps to process in a batch
 		const float avgTimePerLoopIter = (finishTime - startTime).toMilliSecsf() / gcItersInBatch;
 
-		gcStepsPerIter -= (avgTimePerLoopIter > (maxLuaGarbageCollectTime * 0.150f));
-		gcStepsPerIter += (avgTimePerLoopIter < (maxLuaGarbageCollectTime * 0.075f));
+		gcStepsPerIter -= (avgTimePerLoopIter > (gcRunTimeMult * 0.150f));
+		gcStepsPerIter += (avgTimePerLoopIter < (gcRunTimeMult * 0.075f));
 	}
 
 	eventHandler.DbgTimingInfo(TIMING_GC, startTime, finishTime);
