@@ -3,7 +3,7 @@
 #ifndef IMODELPARSER_H
 #define IMODELPARSER_H
 
-#include <deque>
+#include <vector>
 #include <string>
 
 #include "3DModel.h"
@@ -25,8 +25,6 @@ public:
 class CModelLoader
 {
 public:
-	static CModelLoader& GetInstance();
-
 	void Init();
 	void Kill();
 
@@ -61,11 +59,13 @@ private:
 
 	spring::mutex mutex;
 
+	std::vector<S3DModel> models;
+	std::vector< std::pair<std::string, std::string> > errors;
+
 	// all unique models loaded so far
-	std::deque<S3DModel> models;
-	std::deque< std::pair<std::string, std::string> > errors;
+	unsigned int numModels = 0;
 };
 
-#define modelLoader (CModelLoader::GetInstance())
+extern CModelLoader modelLoader;
 
 #endif /* IMODELPARSER_H */
