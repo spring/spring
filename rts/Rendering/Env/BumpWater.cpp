@@ -1085,17 +1085,17 @@ void CBumpWater::Draw()
 	if (refraction > 0)
 		glDisable(GL_BLEND);
 
-	waterShader->SetFlag("opt_shadows", (shadowHandler->ShadowsLoaded()));
+	waterShader->SetFlag("opt_shadows", (shadowHandler.ShadowsLoaded()));
 	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
-	if (shadowHandler->ShadowsLoaded()) {
-		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
+	if (shadowHandler.ShadowsLoaded()) {
+		waterShader->SetUniformMatrix4fv(13, false, shadowHandler.GetShadowMatrixRaw());
 
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE9);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE9);
 	}
 
 	const int causticTexNum = (gs->frameNum % caustTextures.size());
@@ -1121,7 +1121,7 @@ void CBumpWater::Draw()
 
 	waterShader->Disable();
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glActiveTexture(GL_TEXTURE0);
 	}

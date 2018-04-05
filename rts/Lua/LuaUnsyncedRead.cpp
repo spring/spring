@@ -1201,7 +1201,7 @@ int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 
 int LuaUnsyncedRead::HaveShadows(lua_State* L)
 {
-	lua_pushboolean(L, shadowHandler->ShadowsLoaded());
+	lua_pushboolean(L, shadowHandler.ShadowsLoaded());
 	return 1;
 }
 

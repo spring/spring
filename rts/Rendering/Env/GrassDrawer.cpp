@@ -329,8 +329,8 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
-		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler.GetShadowParams().x);
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
 
@@ -350,7 +350,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	grassShader = grassShaders[type];
 	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	grassShader->Enable();
 
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
@@ -362,8 +362,8 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	grassShader->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	grassShader->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
-	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowMatrixRaw());
+	grassShader->SetUniform4v("shadowParams", &shadowHandler.GetShadowParams().x);
 
 	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);
 	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->modelDiffuseColor.x);
@@ -524,7 +524,7 @@ void CGrassDrawer::Update()
 
 		// ATI crashes w/o an error when shadows are enabled!?
 		static const bool shaders = globalRendering->haveGLSL;
-		       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+		       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
 
 		if (shaders && !shadows) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
@@ -566,7 +566,7 @@ void CGrassDrawer::Draw()
 
 	// ATI crashes w/o an error when shadows are enabled!?
 	static const bool shaders = globalRendering->haveGLSL;
-	       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+	       const bool shadows = (shadowHandler.ShadowsLoaded() && globalRendering->atiHacks);
 
 	if (shaders && !shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
 		SetupGlStateFar();
@@ -650,8 +650,8 @@ void CGrassDrawer::SetupGlStateNear()
 	if (globalRendering->haveGLSL) {
 		EnableShader(GRASS_PROGRAM_NEAR);
 
-		if (shadowHandler->ShadowsLoaded())
-			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+		if (shadowHandler.ShadowsLoaded())
+			shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 		glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
@@ -704,7 +704,7 @@ void CGrassDrawer::ResetGlStateNear()
 	if (globalRendering->haveGLSL) {
 		grassShader->Disable();
 
-		if (shadowHandler->ShadowsLoaded()) {
+		if (shadowHandler.ShadowsLoaded()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
@@ -770,8 +770,8 @@ void CGrassDrawer::SetupGlStateFar()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
@@ -786,7 +786,7 @@ void CGrassDrawer::ResetGlStateFar()
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);

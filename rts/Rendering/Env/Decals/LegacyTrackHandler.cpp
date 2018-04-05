@@ -313,8 +313,8 @@ void LegacyTrackHandler::BindTextures()
 		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	}
 
-	if (shadowHandler->ShadowsLoaded()) {
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded()) {
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
 	}
 
@@ -350,9 +350,10 @@ void LegacyTrackHandler::KillTextures()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 
-	if (shadowHandler->ShadowsLoaded()) {
-		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
 
+	{
 		glActiveTexture(GL_TEXTURE1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
@@ -385,12 +386,12 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sunLighting->groundShadowDensity);
 
 		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+		glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
 		glMatrixMode(GL_MODELVIEW);
 	} else {
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler->GetShadowMatrixRaw());
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
+		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, shadowHandler.GetShadowMatrixRaw());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler.GetShadowParams().x));
 	}
 }
 

@@ -232,8 +232,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
-			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
-			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
+			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler.GetShadowMatrixRaw());
+			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler.GetShadowParams().x));
 
 			glslShaders[n]->SetUniform3v("waterMinColor",    &waterRendering->minColor[0]);
 			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
@@ -276,7 +276,7 @@ bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 	//   ARB map shaders assume shadows are always on, so
 	//   SMFRenderStateARB can be used only when they are
 	//   in fact enabled (see Init)
-	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->ShadowsLoaded());
+	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler.ShadowsLoaded());
 }
 
 bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
@@ -446,14 +446,14 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
 
 	glMatrixMode(GL_MATRIX0_ARB);
-	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+	glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
 	glMatrixMode(GL_MODELVIEW);
 
 	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
-	assert(shadowHandler->ShadowsLoaded());
-	shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+	assert(shadowHandler.ShadowsLoaded());
+	shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -493,14 +493,14 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler.GetShadowMatrixRaw());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler.GetShadowParams().x));
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 
 	// already on the MV stack at this point
@@ -508,8 +508,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	mLightHandler->Update(glslShaders[GLSL_SHADER_CURRENT]);
 	glMultMatrixf(camera->GetViewMatrix());
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());
@@ -539,7 +539,7 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 		return;
 	}
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE4);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	}

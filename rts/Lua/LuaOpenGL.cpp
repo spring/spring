@@ -643,8 +643,8 @@ void LuaOpenGL::EnableDrawWorldShadow()
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	// FIXME: map/proj/tree passes
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 }
 
@@ -652,8 +652,7 @@ void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Disable();
 
 	ResetWorldShadowMatrices();
@@ -1005,7 +1004,7 @@ void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
 	glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
-	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
 }
 
 
@@ -4353,10 +4352,10 @@ int LuaOpenGL::GetGlobalTexCoords(lua_State* L)
 
 int LuaOpenGL::GetShadowMapParams(lua_State* L)
 {
-	lua_pushnumber(L, shadowHandler->GetShadowParams().x);
-	lua_pushnumber(L, shadowHandler->GetShadowParams().y);
-	lua_pushnumber(L, shadowHandler->GetShadowParams().z);
-	lua_pushnumber(L, shadowHandler->GetShadowParams().w);
+	lua_pushnumber(L, shadowHandler.GetShadowParams().x);
+	lua_pushnumber(L, shadowHandler.GetShadowParams().y);
+	lua_pushnumber(L, shadowHandler.GetShadowParams().z);
+	lua_pushnumber(L, shadowHandler.GetShadowParams().w);
 	return 4;
 }
 

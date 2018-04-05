@@ -315,7 +315,7 @@ public:
 			" 1=full shadows, 2=skip terrain shadows") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (shadowHandler->shadowConfig < 0) {
+		if (shadowHandler.shadowConfig < 0) {
 			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return true;
 		}
@@ -324,8 +324,8 @@ public:
 			return true;
 		}
 
-		shadowHandler->Reload(((action.GetArgs()).empty())? NULL: (action.GetArgs()).c_str());
-		LOG("Set \"shadows\" config-parameter to %i", shadowHandler->shadowConfig);
+		shadowHandler.Reload(((action.GetArgs()).empty())? nullptr: (action.GetArgs()).c_str());
+		LOG("Set \"shadows\" config-parameter to %i", shadowHandler.shadowConfig);
 		return true;
 	}
 };

@@ -72,7 +72,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	PushTransform(camera);
 	EnableTexturesCommon();
 
-	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), deferredPass);
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
@@ -83,7 +83,7 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), deferredPass);
 
 	DisableTexturesCommon();
 	PopTransform();
@@ -94,8 +94,8 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -113,8 +113,8 @@ void IUnitDrawerState::DisableTexturesCommon() const {
 	glActiveTexture(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -232,7 +232,7 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
 
 	// make the active shader non-NULL
-	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), false);
 
 	#undef sh
 	return true;
@@ -263,7 +263,7 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->modelAmbientColor.x, sunLighting->modelAmbientColor.y, sunLighting->modelAmbientColor.z, 1.0f);
 
 	glMatrixMode(GL_MATRIX0_ARB);
-	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+	glLoadMatrixf(shadowHandler.GetShadowMatrixRaw());
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -371,15 +371,15 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
 		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
-		modelShaders[n]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
+		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler.GetShadowMatrixRaw());
+		modelShaders[n]->SetUniform4fv(15, &(shadowHandler.GetShadowParams().x));
 		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
 
 	// make the active shader non-NULL
-	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), false);
 
 	#undef sh
 	return true;
@@ -400,8 +400,8 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler.GetShadowMatrixRaw());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler.GetShadowParams().x));
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
 }

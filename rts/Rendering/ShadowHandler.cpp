@@ -33,7 +33,7 @@ CONFIG(int, Shadows).defaultValue(2).headlessValue(-1).minimumValue(-1).safemode
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
-CShadowHandler* shadowHandler = nullptr;
+CShadowHandler shadowHandler;
 
 bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInit = true;
@@ -149,11 +149,13 @@ void CShadowHandler::Kill()
 }
 
 void CShadowHandler::FreeTextures() {
-	if (fb.IsValid()) {
-		fb.Bind();
-		fb.DetachAll();
-		fb.Unbind();
+	if (shadowMapFBO.IsValid()) {
+		shadowMapFBO.Bind();
+		shadowMapFBO.DetachAll();
+		shadowMapFBO.Unbind();
 	}
+
+	shadowMapFBO.Kill();
 
 	glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
 	glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
@@ -265,7 +267,10 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	constexpr bool useColorTexture = false;
 
-	if (!fb.IsValid()) {
+	// shadowMapFBO is no-op constructed, has to be initialized manually
+	shadowMapFBO.Init(false);
+
+	if (!shadowMapFBO.IsValid()) {
 		LOG_L(L_ERROR, "[%s] framebuffer not valid", __func__);
 		return false;
 	}
@@ -282,8 +287,8 @@ bool CShadowHandler::InitDepthTarget()
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
-		fb.Bind();
-		fb.AttachTexture(shadowTexture);
+		shadowMapFBO.Bind();
+		shadowMapFBO.AttachTexture(shadowTexture);
 
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
@@ -292,20 +297,20 @@ bool CShadowHandler::InitDepthTarget()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 		// Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
-		fb.Bind();
-		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+		shadowMapFBO.Bind();
+		shadowMapFBO.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 
 		glDrawBuffer(GL_NONE);
 		// glReadBuffer() only works with color buffers
 	}
 
 	// test the FBO
-	bool status = fb.CheckStatus("SHADOW");
+	bool status = shadowMapFBO.CheckStatus("SHADOW");
 
 	if (!status && !useColorTexture)
 		status = WorkaroundUnsupportedFboRenderTargets();
 
-	fb.Unbind();
+	shadowMapFBO.Unbind();
 	return status;
 }
 
@@ -316,7 +321,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 
 	// some drivers/GPUs fail to render to GL_CLAMP_TO_BORDER (and GL_LINEAR may cause a drop in performance for them, too)
 	{
-		fb.Detach(GL_DEPTH_ATTACHMENT_EXT);
+		shadowMapFBO.Detach(GL_DEPTH_ATTACHMENT_EXT);
 		glDeleteTextures(1, &shadowTexture);
 
 		glGenTextures(1, &shadowTexture);
@@ -328,9 +333,10 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		const GLint texFormat = globalRendering->support24bitDepthBuffer? GL_DEPTH_COMPONENT24: GL_DEPTH_COMPONENT16;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
-		status = fb.CheckStatus("SHADOW-GL_CLAMP_TO_EDGE");
-		if (status)
+
+		shadowMapFBO.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+
+		if (shadowMapFBO.CheckStatus("SHADOW-GL_CLAMP_TO_EDGE"))
 			return true;
 	}
 
@@ -344,19 +350,20 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		glGenTextures(1, &dummyColorTexture);
 		glBindTexture(GL_TEXTURE_2D, dummyColorTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
-		fb.AttachTexture(dummyColorTexture);
-		status = fb.CheckStatus("SHADOW-GL_ALPHA4");
-		if (status)
+
+		shadowMapFBO.AttachTexture(dummyColorTexture);
+
+		if (shadowMapFBO.CheckStatus("SHADOW-GL_ALPHA4"))
 			return true;
 
 		// failed revert changes of 1st attempt
-		fb.Detach(GL_COLOR_ATTACHMENT0_EXT);
+		shadowMapFBO.Detach(GL_COLOR_ATTACHMENT0_EXT);
 		glDeleteTextures(1, &dummyColorTexture);
 
 		// 2nd: try smallest standard format that must be renderable for OGL3
-		fb.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RED, shadowMapSize, shadowMapSize);
-		status = fb.CheckStatus("SHADOW-GL_RED");
-		if (status)
+		shadowMapFBO.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RED, shadowMapSize, shadowMapSize);
+
+		if (shadowMapFBO.CheckStatus("SHADOW-GL_RED"))
 			return true;
 	}
 
@@ -573,7 +580,7 @@ void CShadowHandler::CreateShadows()
 	//   we unbind later in WorldDrawer::GenerateIBLTextures() to save render
 	//   context switches (which are one of the slowest OpenGL operations!)
 	//   together with VP restoration
-	fb.Bind();
+	shadowMapFBO.Bind();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);

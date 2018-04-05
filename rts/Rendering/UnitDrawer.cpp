@@ -197,7 +197,7 @@ static const SetTeamColorFunc setTeamColorFuncs[] = {
 // low-level (batch and solo)
 // note: also called during SP
 void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {
-	const auto texFun = bindModelTexFuncs[shadowHandler->InShadowPass()][mdlType];
+	const auto texFun = bindModelTexFuncs[shadowHandler.InShadowPass()][mdlType];
 	const auto texMat = texturehandlerS3O->GetTexture(texType);
 
 	texFun(texMat);
@@ -642,8 +642,7 @@ void CUnitDrawer::DrawShadowPass()
 	glEnable(GL_ALPHA_TEST);
 	#endif
 
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 
 	{
@@ -1038,7 +1037,7 @@ void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 	// need this because we can be called by no-team projectiles
 	const int b0 = teamHandler.IsValidTeam(team);
 	// should be an assert, but projectiles (+FlyingPiece) would trigger it
-	const int b1 = !shadowHandler->InShadowPass();
+	const int b1 = !shadowHandler.InShadowPass();
 
 	setTeamColorFuncs[b0 * b1](unitDrawerStates[DRAWER_STATE_SEL], team, alpha);
 }
@@ -1451,8 +1450,8 @@ void CUnitDrawer::DrawUnitNoTrans(
 	bool lodCall,
 	bool noLuaCall
 ) {
-	const unsigned int b0 = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
-	const unsigned int b1 = shadowHandler->InShadowPass();
+	const unsigned int noNanoDraw = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
+	const unsigned int shadowPass = shadowHandler.InShadowPass();
 
 	if (preList != 0) {
 		glCallList(preList);
@@ -1466,7 +1465,7 @@ void CUnitDrawer::DrawUnitNoTrans(
 	//
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
-	drawModelFuncs[ std::max(b0 * 2, b1) ](unit, noLuaCall);
+	drawModelFuncs[ std::max(noNanoDraw * 2, shadowPass) ](unit, noLuaCall);
 
 	if (postList != 0) {
 		glCallList(postList);
