@@ -50,7 +50,7 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool nopState, bool luaState) {
 void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	EnableTexturesCommon();
 
-	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), deferredPass);
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
@@ -61,15 +61,15 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), deferredPass);
 
 	DisableTexturesCommon();
 }
 
 
 void IUnitDrawerState::EnableTexturesCommon() const {
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
@@ -81,8 +81,8 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 }
 
 void IUnitDrawerState::DisableTexturesCommon() const {
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -172,15 +172,15 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelAmbientColor[0]);
 		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(20, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
-		modelShaders[n]->SetUniform4fv(22, shadowHandler->GetShadowParams());
+		modelShaders[n]->SetUniformMatrix4fv(21, false, shadowHandler.GetShadowViewMatrixRaw());
+		modelShaders[n]->SetUniform4fv(22, shadowHandler.GetShadowParams());
 		// modelShaders[n]->SetUniform1f(23, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
 
 	// make the active shader non-NULL
-	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
+	SetActiveShader(shadowHandler.ShadowsLoaded(), false);
 
 	#undef sh
 	return true;
@@ -211,8 +211,8 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	shader->SetUniform3fv(14, &cameraPos.x);
 	shader->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
-	shader->SetUniformMatrix4fv(21, false, shadowHandler->GetShadowViewMatrixRaw());
-	shader->SetUniform4fv(22, shadowHandler->GetShadowParams());
+	shader->SetUniformMatrix4fv(21, false, shadowHandler.GetShadowViewMatrixRaw());
+	shader->SetUniform4fv(22, shadowHandler.GetShadowParams());
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
@@ -254,10 +254,10 @@ void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
 void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix44f* pieceMats, size_t numPieceMats) const {
 	Shader::IProgramObject* po = nullptr;
 
-	if (!shadowHandler->InShadowPass()) {
+	if (!shadowHandler.InShadowPass()) {
 		po = modelShaders[MODEL_SHADER_ACTIVE];
 
-		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_LAST);
+		assert(shadowHandler.GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_LAST);
 		assert(po->IsBound());
 
 		if (numPieceMats > 0)
@@ -265,9 +265,9 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix4
 
 		po->SetUniformMatrix4fv(7, false, modelMat);
 	} else {
-		po = shadowHandler->GetCurrentShadowGenProg();
+		po = shadowHandler.GetCurrentShadowGenProg();
 
-		assert(shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_MODEL || shadowHandler->GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
+		assert(shadowHandler.GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_MODEL || shadowHandler.GetCurrentPass() == CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 		assert(po->IsBound());
 
 		if (numPieceMats > 0)

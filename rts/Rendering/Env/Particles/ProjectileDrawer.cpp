@@ -684,8 +684,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 void CProjectileDrawer::DrawProjectileShadowPass(Shader::IProgramObject* po)
 {
 	po->Enable();
-	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
-	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		DrawProjectilesShadow(modelType);
@@ -702,8 +702,8 @@ void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
 		return;
 
 	po->Enable();
-	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
-	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 	textureAtlas->BindTexture();
 	fxBuffer->Submit(GL_QUADS);
 	po->Disable();
@@ -716,8 +716,8 @@ void CProjectileDrawer::DrawShadowPass()
 	fxBuffer = GL::GetRenderBufferTC();
 	fxShader = nullptr;
 
-	DrawProjectileShadowPass(shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE));
-	DrawParticleShadowPass(shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PARTICLE));
+	DrawProjectileShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE));
+	DrawParticleShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PARTICLE));
 
 	glPopAttrib();
 }

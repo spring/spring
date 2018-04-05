@@ -760,7 +760,7 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_LESS, 1.0f);
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
@@ -775,14 +775,14 @@ void CDecalsDrawerGL4::Draw()
 	const std::array<GLuint,5> textures = {
 		atlasTex,
 		static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture(),
-		shadowHandler->GetShadowTextureID(),
+		shadowHandler.GetShadowTextureID(),
 		infoTextureHandler->GetCurrentInfoTexture(),
 		depthTex
 	};
 	glSpringBindTextures(0, textures.size(), &textures[0]);
 
-	if (shadowHandler->ShadowsLoaded()) {
-		CMatrix44f sm = shadowHandler->GetShadowViewMatrix();
+	if (shadowHandler.ShadowsLoaded()) {
+		CMatrix44f sm = shadowHandler.GetShadowViewMatrix();
 		sm.GetPos() += float3(0.5f, 0.5f, 0.0f);
 		decalShader->SetUniformMatrix4x4("shadowMatrix", false, sm.m);
 		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);

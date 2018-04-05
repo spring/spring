@@ -188,7 +188,7 @@ static const SetTeamColorFunc setTeamColorFuncs[] = {
 // low-level (batch and solo)
 // note: also called during SP
 void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {
-	const auto texFun = bindModelTexFuncs[shadowHandler->InShadowPass()][mdlType];
+	const auto texFun = bindModelTexFuncs[shadowHandler.InShadowPass()][mdlType];
 	const auto texMat = texturehandlerS3O->GetTexture(texType);
 
 	texFun(texMat);
@@ -663,11 +663,11 @@ void CUnitDrawer::DrawShadowPass()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 	// TODO: shared by {AdvTree,SMFGround,Unit,Feature,Projectile,LuaObject}Drawer, move to ShadowHandler
-	po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
-	po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 
 	{
 		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
@@ -1025,7 +1025,7 @@ void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 	// need this because we can be called by no-team projectiles
 	const int b0 = teamHandler.IsValidTeam(team);
 	// should be an assert, but projectiles (+FlyingPiece) would trigger it
-	const int b1 = !shadowHandler->InShadowPass();
+	const int b1 = !shadowHandler.InShadowPass();
 
 	setTeamColorFuncs[b0 * b1](unitDrawerStates[DRAWER_STATE_SEL], team, alpha);
 }
@@ -1378,7 +1378,7 @@ void CUnitDrawer::DrawUnitLuaTrans(const CUnit* unit, bool lodCall, bool noLuaCa
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
 	const unsigned int noNanoDraw = fullModel || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
-	const unsigned int shadowPass = shadowHandler->InShadowPass();
+	const unsigned int shadowPass = shadowHandler.InShadowPass();
 
 	const DrawModelFunc drawModelFunc = unitDrawer->GetDrawModelFunc(std::max(noNanoDraw * 2, shadowPass));
 
@@ -1388,7 +1388,7 @@ void CUnitDrawer::DrawUnitLuaTrans(const CUnit* unit, bool lodCall, bool noLuaCa
 
 void CUnitDrawer::DrawUnitDefTrans(const CUnit* unit, bool lodCall, bool noLuaCall, bool fullModel) {
 	const unsigned int noNanoDraw = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
-	const unsigned int shadowPass = shadowHandler->InShadowPass();
+	const unsigned int shadowPass = shadowHandler.InShadowPass();
 
 	const DrawModelFunc drawModelFunc = unitDrawer->GetDrawModelFunc(std::max(noNanoDraw * 2, shadowPass));
 

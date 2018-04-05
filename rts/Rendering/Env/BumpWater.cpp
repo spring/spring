@@ -1090,7 +1090,7 @@ void CBumpWater::Draw()
 		glDisable(GL_BLEND);
 
 
-	waterShader->SetFlag("opt_shadows", (shadowHandler->ShadowsLoaded()));
+	waterShader->SetFlag("opt_shadows", (shadowHandler.ShadowsLoaded()));
 	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
@@ -1100,10 +1100,10 @@ void CBumpWater::Draw()
 	waterShader->SetUniformMatrix4fv(14, false, camera->GetViewMatrix());
 	waterShader->SetUniformMatrix4fv(15, false, camera->GetProjectionMatrix());
 
-	if (shadowHandler->ShadowsLoaded()) {
-		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowViewMatrixRaw());
+	if (shadowHandler.ShadowsLoaded()) {
+		waterShader->SetUniformMatrix4fv(13, false, shadowHandler.GetShadowViewMatrixRaw());
 
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE9);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE9);
 	}
 
 	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
@@ -1128,7 +1128,7 @@ void CBumpWater::Draw()
 	waterShader->Disable();
 
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glActiveTexture(GL_TEXTURE0);
 	}

@@ -165,7 +165,7 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 
 	switch (GetLuaMatrixType(name)) {
 		case LUAMATRICES_SHADOW:
-			return &shadowHandler->GetShadowViewMatrix();
+			return &shadowHandler.GetShadowViewMatrix();
 		case LUAMATRICES_VIEW:
 			return &camera->GetViewMatrix();
 		case LUAMATRICES_VIEWINVERSE:
@@ -536,14 +536,11 @@ GLuint LuaMatTexture::GetTextureID() const
 
 
 		case LUATEX_SHADOWMAP: {
-			if (shadowHandler != nullptr) {
-				texID = shadowHandler->GetShadowTextureID();
-			}
+			texID = shadowHandler.GetShadowTextureID();
 		} break;
 		case LUATEX_HEIGHTMAP: {
-			if (heightMapTexture != nullptr) {
+			if (heightMapTexture != nullptr)
 				texID = heightMapTexture->GetTextureID();
-			}
 		} break;
 
 
@@ -740,7 +737,7 @@ void LuaMatTexture::Bind() const
 	}
 
 	if (enableTexParams && type == LUATEX_SHADOWMAP)
-		shadowHandler->SetupShadowTexSamplerRaw();
+		shadowHandler.SetupShadowTexSamplerRaw();
 
 }
 
@@ -751,7 +748,7 @@ void LuaMatTexture::Unbind() const
 		return;
 
 	if (enableTexParams && type == LUATEX_SHADOWMAP)
-		shadowHandler->ResetShadowTexSamplerRaw();
+		shadowHandler.ResetShadowTexSamplerRaw();
 
 	if (!enable)
 		return;
@@ -831,14 +828,11 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_SHADOWMAP: {
-			if (shadowHandler != nullptr) {
-				return sqint2(shadowHandler->shadowMapSize);
-			}
+			return sqint2(shadowHandler.shadowMapSize);
 		} break;
 		case LUATEX_HEIGHTMAP: {
-			if (heightMapTexture != nullptr) {
+			if (heightMapTexture != nullptr)
 				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
-			}
 		} break;
 
 

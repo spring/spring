@@ -241,20 +241,20 @@ void CAdvTreeDrawer::DrawTreeGeometry(int treeType) const { treeGen.DrawTreeBuff
 
 
 
-void CAdvTreeDrawer::SetupDrawState() { SetupDrawState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), treeShaders[shadowHandler->ShadowsLoaded()]); }
+void CAdvTreeDrawer::SetupDrawState() { SetupDrawState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), treeShaders[shadowHandler.ShadowsLoaded()]); }
 void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	treeShaders[TREE_PROGRAM_ACTIVE] = ipo;
 	treeShaders[TREE_PROGRAM_ACTIVE]->Enable();
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex());
 
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0, true);
 
-		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(10, false, shadowHandler->GetShadowViewMatrixRaw());
-		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(11, shadowHandler->GetShadowParams());
+		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(10, false, shadowHandler.GetShadowViewMatrixRaw());
+		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(11, shadowHandler.GetShadowParams());
 	} else {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex());
@@ -286,11 +286,11 @@ void CAdvTreeDrawer::ResetDrawState()
 {
 	glBindVertexArray(0);
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		// barkTex
 		// glActiveTexture(GL_TEXTURE1);
 
-		shadowHandler->ResetShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE0, true);
 	} else {
 		glActiveTexture(GL_TEXTURE0);
 	}
@@ -300,7 +300,7 @@ void CAdvTreeDrawer::ResetDrawState()
 }
 
 
-void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
+void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
 void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	glEnable(GL_ALPHA_TEST);
@@ -321,8 +321,8 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(4, &cameraDirX.x);
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform3fv(5, &cameraDirY.x);
 
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
-	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(3, false, CMatrix44f::Identity());
 
 
@@ -348,7 +348,7 @@ void CAdvTreeDrawer::ResetShadowDrawState()
 void CAdvTreeDrawer::DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const     int matUniformIdx = mix(13, 3, shadowHandler->InShadowPass());
+	const     int matUniformIdx = mix(13, 3, shadowHandler.InShadowPass());
 
 	for (const int2 idx: squareDrawer.inViewQuads) {
 		const float3 camPos  = cam->GetPos();
@@ -384,7 +384,7 @@ void CAdvTreeDrawer::DrawTrees(const CCamera* cam, Shader::IProgramObject* ipo)
 
 void CAdvTreeDrawer::DrawFallingTrees(const CCamera* cam, Shader::IProgramObject* ipo) const
 {
-	const int matUniformIdx = mix(13, 3, shadowHandler->InShadowPass());
+	const int matUniformIdx = mix(13, 3, shadowHandler.InShadowPass());
 
 	// draw trees that have been marked as falling
 	for (int i = 0; i < 2; i++) {
@@ -412,7 +412,7 @@ void CAdvTreeDrawer::DrawPass()
 {
 	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
-	Shader::IProgramObject* ipo = treeShaders[shadowHandler->ShadowsLoaded()];
+	Shader::IProgramObject* ipo = treeShaders[shadowHandler.ShadowsLoaded()];
 
 	SetupDrawState(cam, ipo);
 	DrawTrees(cam, ipo);
@@ -425,7 +425,7 @@ void CAdvTreeDrawer::DrawPass()
 void CAdvTreeDrawer::DrawShadowPass()
 {
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
-	Shader::IProgramObject* ipo = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE);
+	Shader::IProgramObject* ipo = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE);
 
 	SetupShadowDrawState(cam, ipo);
 	#if 0

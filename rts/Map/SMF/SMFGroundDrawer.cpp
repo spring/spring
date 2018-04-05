@@ -510,15 +510,15 @@ void CSMFGroundDrawer::DrawShadowPass()
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
+	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
 		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
-		po->SetUniformMatrix4fv(1, false, shadowHandler->GetShadowViewMatrix());
-		po->SetUniformMatrix4fv(2, false, shadowHandler->GetShadowProjMatrix());
+		po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
+		po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 			meshDrawer->DrawMesh(DrawPass::Shadow);
 			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();

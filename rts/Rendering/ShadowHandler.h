@@ -17,9 +17,10 @@ class CCamera;
 class CShadowHandler
 {
 public:
-	CShadowHandler() { Init(); }
-	~CShadowHandler() { Kill(); }
+	CShadowHandler(): shadowMapFBO(true) {}
 
+	void Init();
+	void Kill();
 	void Reload(const char* argv);
 
 	void SetupShadowTexSampler(unsigned int texUnit, bool enable = false) const;
@@ -81,8 +82,6 @@ public:
 	bool InShadowPass() const { return inShadowPass; }
 
 private:
-	void Init();
-	void Kill();
 	void FreeTextures();
 
 	bool InitDepthTarget();
@@ -136,9 +135,9 @@ private:
 	CMatrix44f projMatrix[2];
 	CMatrix44f viewMatrix[2];
 
-	FBO fb;
+	FBO shadowMapFBO;
 };
 
-extern CShadowHandler* shadowHandler;
+extern CShadowHandler shadowHandler;
 
 #endif /* SHADOW_HANDLER_H */

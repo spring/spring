@@ -310,7 +310,7 @@ void CDynWater::Draw()
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, detailNormalTex);
 
-	shadowHandler->SetupShadowTexSampler(GL_TEXTURE7);
+	shadowHandler.SetupShadowTexSampler(GL_TEXTURE7);
 	glActiveTexture(GL_TEXTURE0);
 
 	glColor4f(1, 1, 1, 0.5f);

@@ -66,7 +66,7 @@ void CWorldDrawer::InitPre() const
 void CWorldDrawer::InitPost() const
 {
 	loadscreen->SetLoadMessage("Creating ShadowHandler");
-	shadowHandler = new CShadowHandler();
+	shadowHandler.Init();
 
 	// SMFGroundDrawer accesses InfoTextureHandler, create it first
 	loadscreen->SetLoadMessage("Creating InfoTextureHandler");
@@ -108,7 +108,7 @@ void CWorldDrawer::Kill()
 	spring::SafeDelete(treeDrawer);
 	spring::SafeDelete(grassDrawer);
 	spring::SafeDelete(pathDrawer);
-	spring::SafeDelete(shadowHandler);
+	shadowHandler.Kill();
 	spring::SafeDelete(inMapDrawerView);
 
 	CFeatureDrawer::KillStatic(gu->globalReload);
@@ -171,10 +171,10 @@ void CWorldDrawer::Update(bool newSimFrame)
 void CWorldDrawer::GenerateIBLTextures() const
 {
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		SCOPED_TIMER("Draw::World::CreateShadows");
 		game->SetDrawMode(Game::ShadowDraw);
-		shadowHandler->CreateShadows();
+		shadowHandler.CreateShadows();
 		game->SetDrawMode(Game::NormalDraw);
 	}
 

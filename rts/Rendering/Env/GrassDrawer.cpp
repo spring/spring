@@ -195,7 +195,7 @@ bool CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->Link();
 
 		grassShaders[i]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-		grassShaders[i]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+		grassShaders[i]->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 		grassShaders[i]->SetFlag("SHADOW_GEN", i == GRASS_PROGRAM_SHADOW);
 
 		// idx 0, not settable as an array via name-based API
@@ -213,9 +213,9 @@ bool CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 		grassShaders[i]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
-		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler->GetShadowViewMatrix());
+		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
 		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
 		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
 		grassShaders[i]->Disable();
@@ -336,7 +336,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	Shader::IProgramObject* ipo = (grassShaders[GRASS_PROGRAM_CURR] = grassShaders[type]);
 
 	ipo->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-	ipo->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	ipo->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	ipo->Enable();
 
 	ipo->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
@@ -348,8 +348,8 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	ipo->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	ipo->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler->GetShadowViewMatrix());
-	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
+	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 
 	switch (type) {
 		case GRASS_PROGRAM_OPAQUE: {
@@ -357,8 +357,8 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
 		} break;
 		case GRASS_PROGRAM_SHADOW: {
-			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, shadowHandler->GetShadowViewMatrix());
-			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, shadowHandler->GetShadowProjMatrix());
+			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, shadowHandler.GetShadowViewMatrix());
+			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, shadowHandler.GetShadowProjMatrix());
 		} break;
 		default: {
 		} break;
@@ -552,8 +552,8 @@ void CGrassDrawer::SetupStateOpaque()
 	{
 		EnableShader(GRASS_PROGRAM_OPAQUE);
 
-		if (shadowHandler->ShadowsLoaded())
-			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+		if (shadowHandler.ShadowsLoaded())
+			shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 	}
 
 	glActiveTexture(GL_TEXTURE0);

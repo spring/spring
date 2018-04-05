@@ -169,8 +169,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowViewMatrix());
-			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
+			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 
 			// Enable always sets these
 			// glslShaders[n]->SetUniform4v<const char*, float>("fwdDynLights", lightHandler->NumLightUniformVecs(), lightHandler->GetRawLightDataPtr());
@@ -232,7 +232,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
-	shader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	shader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
 	shader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	shader->Enable();
@@ -241,8 +241,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	shader->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 	shader->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowViewMatrix());
-	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
+	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
 	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 
@@ -257,8 +257,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 		default: {} break;
 	}
 
-	if (shadowHandler->ShadowsLoaded())
-		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
+	if (shadowHandler.ShadowsLoaded())
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());
@@ -288,7 +288,7 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 		return;
 	}
 
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler.ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE4);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	}

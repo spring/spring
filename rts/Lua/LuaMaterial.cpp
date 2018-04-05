@@ -693,8 +693,8 @@ void LuaMatUniforms::Execute() const
 	projMatrixInv.Execute(camera->GetProjectionMatrixInverse());
 	viprMatrixInv.Execute(camera->GetViewProjectionMatrixInverse());
 
-	shadowMatrix.Execute(shadowHandler->GetShadowViewMatrix());
-	shadowParams.Execute(shadowHandler->GetShadowParams());
+	shadowMatrix.Execute(shadowHandler.GetShadowViewMatrix());
+	shadowParams.Execute(shadowHandler.GetShadowParams());
 
 	camPos.Execute(camera->GetPos());
 	camDir.Execute(camera->GetDir());
