@@ -17,25 +17,21 @@
 CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
 
-CubeMapHandler* cubeMapHandler = NULL;
+CubeMapHandler cubeMapHandler;
 
-CubeMapHandler::CubeMapHandler() {
+bool CubeMapHandler::Init() {
 	envReflectionTexID = 0;
 	skyReflectionTexID = 0;
 	specularTexID = 0;
 
-	reflTexSize = 0;
-	specTexSize = 0;
+	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
+	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
+
+	specTexBuf.clear();
+	specTexBuf.resize(specTexSize * 4, 0);
 
 	currReflectionFace = 0;
 	specularTexIter = 0;
-	mapSkyReflections = false;
-}
-
-bool CubeMapHandler::Init() {
-	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
-	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
-	specTexBuf.resize(specTexSize * 4, 0);
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
 
@@ -88,13 +84,14 @@ bool CubeMapHandler::Init() {
 	}
 
 
+	// reflectionCubeFBO is no-op constructed, has to be initialized manually
+	reflectionCubeFBO.Init(false);
+
 	if (reflectionCubeFBO.IsValid()) {
 		reflectionCubeFBO.Bind();
 		reflectionCubeFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT, reflTexSize, reflTexSize);
 		reflectionCubeFBO.Unbind();
-	}
-
-	if (!reflectionCubeFBO.IsValid()) {
+	} else {
 		Free();
 		return false;
 	}
@@ -115,6 +112,8 @@ void CubeMapHandler::Free() {
 		glDeleteTextures(1, &skyReflectionTexID);
 		skyReflectionTexID = 0;
 	}
+
+	reflectionCubeFBO.Kill();
 }
 
 

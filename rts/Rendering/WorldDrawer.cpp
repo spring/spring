@@ -65,7 +65,6 @@ void CWorldDrawer::InitPre() const
 void CWorldDrawer::InitPost() const
 {
 	loadscreen->SetLoadMessage("Creating ShadowHandler");
-	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
 
 	// SMFGroundDrawer accesses InfoTextureHandler, create it first
@@ -125,8 +124,6 @@ void CWorldDrawer::Kill()
 	spring::SafeDelete(texturehandler3DO);
 	spring::SafeDelete(texturehandlerS3O);
 
-	spring::SafeDelete(cubeMapHandler);
-
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
 	CShaderHandler::FreeInstance(shaderHandler);
@@ -184,13 +181,13 @@ void CWorldDrawer::GenerateIBLTextures() const
 
 	{
 		SCOPED_TIMER("Draw::World::UpdateReflTex");
-		cubeMapHandler->UpdateReflectionTexture();
+		cubeMapHandler.UpdateReflectionTexture();
 	}
 
 	if (sky->GetLight()->Update()) {
 		{
 			SCOPED_TIMER("Draw::World::UpdateSpecTex");
-			cubeMapHandler->UpdateSpecularTexture();
+			cubeMapHandler.UpdateSpecularTexture();
 		}
 		{
 			SCOPED_TIMER("Draw::World::UpdateSkyTex");

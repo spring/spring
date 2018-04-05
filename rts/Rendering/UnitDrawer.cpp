@@ -300,7 +300,7 @@ void CUnitDrawer::Init() {
 	//   FFP renderer-state (in ::Draw) in that special case and it
 	//   does not matter whether SSP renderer-state is initialized
 	//   *** except for DrawAlphaUnits
-	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
+	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler.Init());
 
 	// note: state must be pre-selected before the first drawn frame
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
@@ -315,7 +315,7 @@ void CUnitDrawer::Kill()
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
 
-	cubeMapHandler->Free();
+	cubeMapHandler.Free();
 
 	for (CUnit* u: unsortedUnits) {
 		groundDecals->ForceRemoveSolidObject(u);

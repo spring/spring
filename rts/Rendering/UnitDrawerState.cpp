@@ -99,11 +99,11 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 
 	glActiveTexture(GL_TEXTURE3);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler.GetEnvReflectionTextureID());
 
 	glActiveTexture(GL_TEXTURE4);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler.GetSpecularTextureID());
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);

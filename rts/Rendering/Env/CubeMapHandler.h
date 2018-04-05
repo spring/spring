@@ -7,7 +7,7 @@
 
 class CubeMapHandler {
 public:
-	CubeMapHandler();
+	CubeMapHandler(): reflectionCubeFBO(true) {}
 
 	bool Init();
 	void Free();
@@ -23,7 +23,7 @@ public:
 
 private:
 	void CreateReflectionFace(unsigned int, const float3&, bool);
-	inline void CreateSpecularFacePart(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
+	void CreateSpecularFacePart(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
 	void CreateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&);
 	void UpdateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
 
@@ -43,6 +43,6 @@ private:
 	FBO reflectionCubeFBO;
 };
 
-extern CubeMapHandler* cubeMapHandler;
+extern CubeMapHandler cubeMapHandler;
 
 #endif
