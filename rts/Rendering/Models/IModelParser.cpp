@@ -128,6 +128,7 @@ void CModelLoader::Init()
 
 void CModelLoader::Kill()
 {
+	LogErrors();
 	KillModels();
 	KillParsers();
 
@@ -278,6 +279,7 @@ S3DModel* CModelLoader::CreateModel(
 	bool preload
 ) {
 	S3DModel model = std::move(ParseModel(name, path));
+	S3DModel* pmodel = &models[0];
 
 	{
 		assert(model.numPieces != 0);
@@ -291,24 +293,23 @@ S3DModel* CModelLoader::CreateModel(
 	{
 		std::lock_guard<spring::mutex> lock(mutex);
 
-		// return dummy if at limit
+		// discard loaded model and return dummy if at limit
 		if (numModels >= MAX_MODEL_OBJECTS) {
 			errors.emplace_back(name, "numModels >= MAX_MODEL_OBJECTS");
-			return &models[0];
+			return pmodel;
 		}
 
 		// NB: id depends on thread order, can not be used in synced code
-		model.id = ++numModels;
+		pmodel = &models[model.id = ++numModels];
 
 		// add (parsed or dummy) model to cache
 		cache[name] = model.id;
 		cache[path] = model.id;
 
-		models[model.id] = std::move(model);
+		*pmodel = std::move(model);
 	}
 
-	// id is still valid after move()
-	return &models[model.id];
+	return pmodel;
 }
 
 

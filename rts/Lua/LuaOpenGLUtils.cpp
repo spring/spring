@@ -525,19 +525,13 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// cubemap textures
 		case LUATEX_MAP_REFLECTION: {
-			if (cubeMapHandler != nullptr) {
-				texID = cubeMapHandler->GetEnvReflectionTextureID();
-			}
+			texID = cubeMapHandler.GetEnvReflectionTextureID();
 		} break;
 		case LUATEX_SKY_REFLECTION: {
-			if (cubeMapHandler != nullptr) {
-				texID = cubeMapHandler->GetSkyReflectionTextureID();
-			}
+			texID = cubeMapHandler.GetSkyReflectionTextureID();
 		} break;
 		case LUATEX_SPECULAR: {
-			if (cubeMapHandler != nullptr) {
-				texID = cubeMapHandler->GetSpecularTextureID();
-			}
+			texID = cubeMapHandler.GetSpecularTextureID();
 		} break;
 
 
@@ -825,20 +819,14 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_MAP_REFLECTION: {
-			if (cubeMapHandler != nullptr) {
-				return sqint2(cubeMapHandler->GetReflectionTextureSize());
-			}
+			return sqint2(cubeMapHandler.GetReflectionTextureSize());
 		} break;
 		case LUATEX_SKY_REFLECTION: {
-			if (cubeMapHandler != nullptr) {
-				// note: same size as regular refltex
-				return sqint2(cubeMapHandler->GetReflectionTextureSize());
-			}
+			// note: same size as regular refltex
+			return sqint2(cubeMapHandler.GetReflectionTextureSize());
 		} break;
 		case LUATEX_SPECULAR: {
-			if (cubeMapHandler != nullptr) {
-				return sqint2(cubeMapHandler->GetSpecularTextureSize());
-			}
+			return sqint2(cubeMapHandler.GetSpecularTextureSize());
 		} break;
 
 

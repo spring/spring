@@ -72,10 +72,10 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetEnvReflectionTextureID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
 
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetSpecularTextureID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
 
 	glActiveTexture(GL_TEXTURE0);
 }

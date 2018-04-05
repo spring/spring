@@ -339,8 +339,8 @@ bool FBO::CheckStatus(const char* name)
 			LOG_L(L_WARNING, "FBO-%s: error code 0x%X", name, status);
 			break;
 	}
-	valid = false;
-	return false;
+
+	return (valid = false);
 }
 
 

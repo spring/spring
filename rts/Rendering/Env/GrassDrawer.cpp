@@ -545,7 +545,7 @@ void CGrassDrawer::SetupStateOpaque()
 		glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTexture(GL_TEXTURE5);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetSpecularTextureID());
+			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
 	}
 
 	// bind shader

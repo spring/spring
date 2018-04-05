@@ -289,7 +289,7 @@ void CUnitDrawer::Init() {
 	wireFrameMode = false;
 
 	unitDrawerStates[DRAWER_STATE_SSP]->Init(this);
-	cubeMapHandler->Init(); // can only fail if FBO's are invalid
+	cubeMapHandler.Init(); // can only fail if FBO's are invalid
 
 	// note: state must be pre-selected before the first drawn frame
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
@@ -305,7 +305,7 @@ void CUnitDrawer::Kill()
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 	unitDrawerStates[DRAWER_STATE_LUA]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_LUA]);
 
-	cubeMapHandler->Free();
+	cubeMapHandler.Free();
 
 	for (CUnit* u: unsortedUnits) {
 		groundDecals->ForceRemoveSolidObject(u);
