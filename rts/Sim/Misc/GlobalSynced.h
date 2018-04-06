@@ -22,14 +22,14 @@ class CGlobalSynced
 public:
 	CR_DECLARE_STRUCT(CGlobalSynced)
 
-	CGlobalSynced();  //!< Constructor
-	~CGlobalSynced(); //!< Destructor
+	void Init() { ResetState(); }
+	void Kill();
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
 	// Lua should never see the pre-simframe value
-	int GetLuaSimFrame() { return (frameNum > 0) ? frameNum : 0; }
+	int GetLuaSimFrame() { return (frameNum * (frameNum > 0)); }
 	int GetTempNum() { return tempNum++; }
 
 	// remains true until first SimFrame call
@@ -41,7 +41,7 @@ public:
 	*
 	* Stores the current frame number
 	*/
-	int frameNum;
+	int frameNum = -1;
 
 
 	/**
@@ -52,7 +52,7 @@ public:
 	* can be up to this but is lowered if
 	* clients can't keep up (lag protection)
 	*/
-	float speedFactor;
+	float speedFactor = 1.0f;
 
 	/**
 	* @brief wanted speed factor
@@ -62,7 +62,7 @@ public:
 	* per second calculate as follow:
 	* wantedSimFPS = speedFactor * GAME_SPEED;
 	*/
-	float wantedSpeedFactor;
+	float wantedSpeedFactor = 1.0f;
 
 
 	/**
@@ -70,7 +70,7 @@ public:
 	*
 	* Holds whether the game is paused
 	*/
-	bool paused;
+	bool paused = false;
 
 	/**
 	* @brief god mode
@@ -78,35 +78,35 @@ public:
 	* Whether god-mode is enabled, which allows all players (even spectators)
 	* to control all units.
 	*/
-	bool godMode;
+	bool godMode = false;
 
 	/**
 	* @brief cheat enabled
 	*
 	* Whether cheating is enabled
 	*/
-	bool cheatEnabled;
+	bool cheatEnabled = false;
 
 	/**
 	* @brief disable helper AIs
 	*
 	* Whether helper AIs are allowed, including LuaUI control widgets
 	*/
-	bool noHelperAIs;
+	bool noHelperAIs = false;
 
 	/**
 	* @brief definition editing enabled
 	*
 	* Whether editing of unit-, feature- and weapon-defs through Lua is enabled.
 	*/
-	bool editDefsEnabled;
+	bool editDefsEnabled = false;
 
 	/**
 	* @brief LuaGaia control
 	*
 	* Whether or not LuaGaia is enabled
 	*/
-	bool useLuaGaia;
+	bool useLuaGaia = true;
 
 private:
 	/**
@@ -115,7 +115,7 @@ private:
 	* Used for getting temporary but unique numbers
 	* (increase after each use)
 	*/
-	int tempNum;
+	int tempNum = 1;
 };
 
 

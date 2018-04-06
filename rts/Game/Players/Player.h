@@ -31,7 +31,6 @@ public:
 	};
 
 	CPlayer();
-	virtual ~CPlayer(){}
 
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());

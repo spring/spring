@@ -635,7 +635,7 @@ void CGame::LoadInterface()
 		mouse = CMouseHandler::GetOrReloadInstance();
 	}
 
-	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
+	selectedUnitsHandler.Init(playerHandler.ActivePlayers());
 
 	// NB: these are also added to word-completion
 	syncedGameCommands->AddDefaultActionExecutors();
@@ -651,8 +651,8 @@ void CGame::LoadInterface()
 		gameTextInput.ClearInput();
 		wordCompletion.Init();
 
-		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-			wordCompletion.AddWordRaw(playerHandler->Player(pp)->name, false, false, false);
+		for (int pp = 0; pp < playerHandler.ActivePlayers(); pp++) {
+			wordCompletion.AddWordRaw(playerHandler.Player(pp)->name, false, false, false);
 		}
 
 		// add the Skirmish AIs instance names to word completion (eg for chatting)
@@ -936,7 +936,7 @@ void CGame::ResizeEvent()
 int CGame::KeyPressed(int key, bool isRepeat)
 {
 	if (!gameOver && !isRepeat)
-		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
+		playerHandler.Player(gu->myPlayerNum)->currentStats.keyPresses++;
 
 	const CKeySet ks(key, false);
 	curKeyChain.push_back(key, spring_gettime(), isRepeat);
@@ -1149,7 +1149,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	lastSimFrame = gs->frameNum;
 
 	// set camera
-	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
+	camHandler->UpdateController(playerHandler.Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
 	{
 		SCOPED_TIMER("Update::UnitDrawer");
@@ -1428,7 +1428,7 @@ void CGame::StartPlaying()
 	lastReadNetTime = spring_gettime();
 
 	gu->startTime = gu->gameTime;
-	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
+	gu->myTeam = playerHandler.Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
 
@@ -1486,7 +1486,7 @@ void CGame::SimFrame() {
 		for (size_t a = 0; a < grouphandlers.size(); a++)
 			grouphandlers[a]->Update();
 
-		CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+		CPlayer* p = playerHandler.Player(gu->myPlayerNum);
 		FPSUnitController& c = p->fpsController;
 
 		c.SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
@@ -1526,7 +1526,7 @@ void CGame::SimFrame() {
 		interceptHandler.Update(false);
 
 		teamHandler.GameFrame(gs->frameNum);
-		playerHandler->GameFrame(gs->frameNum);
+		playerHandler.GameFrame(gs->frameNum);
 	}
 
 	lastSimFrameTime = spring_gettime();
@@ -1594,7 +1594,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 
 	// Write CPlayer::Statistics and CTeam::Statistics to demo
 	// TODO: move this to a method in CTeamHandler
-	const int numPlayers = playerHandler->ActivePlayers();
+	const int numPlayers = playerHandler.ActivePlayers();
 	const int numTeams = teamHandler.ActiveTeams() - int(gs->useLuaGaia);
 
 	record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
@@ -1603,10 +1603,10 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	record->SetWinningAllyTeams(winningAllyTeams);
 
 	// tell everybody about our APM, it's the most important statistic
-	clientNet->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
+	clientNet->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler.Player(gu->myPlayerNum)->currentStats));
 
 	for (int i = 0; i < numPlayers; ++i) {
-		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+		record->SetPlayerStats(i, playerHandler.Player(i)->currentStats);
 	}
 	for (int i = 0; i < numTeams; ++i) {
 		const CTeam* team = teamHandler.Team(i);
@@ -1646,7 +1646,7 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-		((msg.fromPlayer >= playerHandler->ActivePlayers()) &&
+		((msg.fromPlayer >= playerHandler.ActivePlayers()) &&
 			(static_cast<unsigned int>(msg.fromPlayer) != SERVER_PLAYER))) {
 		return;
 	}
@@ -1654,7 +1654,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	const std::string& s = msg.msg;
 
 	if (!s.empty()) {
-		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
+		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler.Player(msg.fromPlayer);
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
 
 		string label;
@@ -1707,7 +1707,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 				Channels::UserInterface->PlaySample(chatSound, 5);
 			}
 		}
-		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
+		else if ((msg.destination < playerHandler.ActivePlayers()) && player)
 		{	// player -> spectators and spectator -> player PMs should be forbidden
 			// player <-> player and spectator <-> spectator are allowed
 			if (msg.destination == gu->myPlayerNum && player->spectator == gu->spectating) {
@@ -1716,7 +1716,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
-				LOG("You whispered %s: %s", playerHandler->Player(msg.destination)->name.c_str(), s.c_str());
+				LOG("You whispered %s: %s", playerHandler.Player(msg.destination)->name.c_str(), s.c_str());
 			}
 		}
 	}

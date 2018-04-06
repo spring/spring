@@ -1,14 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/* based on code from GlobalSynced.{cpp,h} */
+#include <algorithm>
+#include <cassert>
 
 #include "PlayerHandler.h"
-
-#include "Player.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnitsHandler.h"
-#include <algorithm>
 
 CR_BIND(CPlayerHandler,)
 
@@ -17,21 +15,13 @@ CR_REG_METADATA(CPlayerHandler, (
 ))
 
 
-CPlayerHandler* playerHandler = NULL;
-
-CPlayerHandler::~CPlayerHandler()
-{
-	ResetState();
-}
+CPlayerHandler playerHandler;
 
 
 void CPlayerHandler::ResetState()
 {
-	for (playerVec::iterator pi = players.begin(); pi != players.end(); ++pi) {
-		delete *pi;
-	}
-
 	players.clear();
+	players.reserve(MAX_PLAYERS);
 }
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
@@ -41,12 +31,14 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 	const int oldSize = players.size();
 	const int newSize = std::max(players.size(), playerData.size());
 
+	assert(newSize <= MAX_PLAYERS);
+
 	for (unsigned int i = oldSize; i < newSize; ++i) {
-		players.push_back(new CPlayer());
+		players.emplace_back();
 	}
 
 	for (size_t i = 0; i < playerData.size(); ++i) {
-		CPlayer* player = players[i];
+		CPlayer* player = &players[i];
 		*player = playerData[i];
 
 		player->playerNum = (int)i;
@@ -57,11 +49,11 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 
 int CPlayerHandler::Player(const std::string& name) const
 {
-	for (auto pi = players.cbegin(); pi != players.cend(); ++pi) {
-		if ((*pi)->name == name) {
-			return (*pi)->playerNum;
-		}
-	}
+	const auto pred = [&name](const CPlayer& player) { return (player.name == name); };
+	const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+	if (iter != players.end())
+		return (iter->playerNum);
 
 	return -1;
 }
@@ -72,26 +64,45 @@ void CPlayerHandler::PlayerLeft(int id, unsigned char reason)
 	Player(id)->ping = 0;
 }
 
+
+
+unsigned int CPlayerHandler::NumActivePlayersInTeam(int teamId) const
+{
+	unsigned int n = 0;
+
+	for (const CPlayer& player: players) {
+		// do not count spectators, or demos will desync
+		n += (player.active && !player.spectator && player.team == teamId);
+	}
+
+	return n;
+}
+
 std::vector<int> CPlayerHandler::ActivePlayersInTeam(int teamId) const
 {
 	std::vector<int> playersInTeam;
 
-	size_t p = 0;
-
-	for (auto pi = players.cbegin(); pi != players.cend(); ++pi, ++p) {
+	for (const CPlayer& player: players) {
 		// do not count spectators, or demos will desync
-		if ((*pi)->active && !(*pi)->spectator && ((*pi)->team == teamId)) {
-			playersInTeam.push_back(p);
-		}
+		if (!player.active)
+			continue;
+		if (player.spectator)
+			continue;
+		if (player.team != teamId)
+			continue;
+
+		playersInTeam.push_back(player.playerNum);
 	}
 
 	return playersInTeam;
 }
 
+
+
 void CPlayerHandler::GameFrame(int frameNum)
 {
-	for (playerVec::iterator pi = players.begin(); pi != players.end(); ++pi) {
-		(*pi)->GameFrame(frameNum);
+	for (CPlayer& player: players) {
+		player.GameFrame(frameNum);
 	}
 }
 
@@ -100,20 +111,27 @@ void CPlayerHandler::AddPlayer(const CPlayer& player)
 	const int oldSize = players.size();
 	const int newSize = std::max(oldSize, player.playerNum + 1);
 
+	assert(players.capacity() == MAX_PLAYERS);
+	assert((players.size() + (newSize - oldSize)) <= MAX_PLAYERS);
+
 	{
 		for (unsigned int i = oldSize; i < newSize; ++i) {
 			// fill gap with stubs
-			CPlayer* stub = new CPlayer();
-			stub->name = "unknown";
-			stub->isFromDemo = false;
-			stub->spectator = true;
-			stub->team = 0;
-			stub->playerNum = (int)i;
-			players.push_back(stub);
-			selectedUnitsHandler.netSelected.push_back(std::vector<int>());
+			players.emplace_back();
+
+			CPlayer& stub = players.back();
+			stub.name = "unknown";
+
+			stub.isFromDemo = false;
+			stub.spectator = true;
+
+			stub.team = 0;
+			stub.playerNum = (int)i;
+
+			selectedUnitsHandler.netSelected.emplace_back();
 		}
 
-		CPlayer* newPlayer = players[player.playerNum];
+		CPlayer* newPlayer = &players[player.playerNum];
 		*newPlayer = player;
 		newPlayer->fpsController.SetControllerPlayer(newPlayer);
 	}

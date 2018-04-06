@@ -310,8 +310,8 @@ void CEndGameBox::Draw()
 			xpos += 0.1f;
 		}
 
-		for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-			const CPlayer* p = playerHandler->Player(a);
+		for (int a = 0; a < playerHandler.ActivePlayers(); ++a) {
+			const CPlayer* p = playerHandler.Player(a);
 			const PlayerStatistics& pStats = p->currentStats;
 
 			SNPRINTF(values[0], 100, "%s", p->name.c_str());

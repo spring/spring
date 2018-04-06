@@ -25,10 +25,12 @@
  *
  * Global instance of CGlobalUnsynced
  */
-CGlobalUnsynced* gu;
+
+CGlobalUnsynced guOBJ;
 CGlobalUnsyncedRNG guRNG;
 
-const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
+CGlobalUnsynced* gu = &guOBJ;
+
 
 CR_BIND(CGlobalUnsynced, )
 
@@ -53,18 +55,15 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_IGNORED(globalReload)
 ))
 
-CGlobalUnsynced::CGlobalUnsynced()
+void CGlobalUnsynced::Init()
 {
 	guRNG.Seed(time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
-
-	assert(playerHandler == nullptr);
 	ResetState();
 }
 
-CGlobalUnsynced::~CGlobalUnsynced()
+void CGlobalUnsynced::Kill()
 {
-	spring::SafeDelete(playerHandler);
-	assert(playerHandler == nullptr);
+	playerHandler.ResetState();
 }
 
 
@@ -76,9 +75,9 @@ void CGlobalUnsynced::ResetState()
 	avgDrawFrameTime = 0.001f;
 	avgFrameTime = 0.001f;
 
-	modGameTime = 0;
-	gameTime = 0;
-	startTime = 0;
+	modGameTime = 0.0f;
+	gameTime = 0.0f;
+	startTime = 0.0f;
 
 	myPlayerNum = 0;
 	myTeam = 1;
@@ -93,17 +92,12 @@ void CGlobalUnsynced::ResetState()
 	fpsMode = false;
 	globalQuit = false;
 	globalReload = false;
-
-	if (playerHandler == nullptr) {
-		playerHandler = new CPlayerHandler();
-	} else {
-		playerHandler->ResetState();
-	}
 }
 
 void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
-	playerHandler->LoadFromSetup(setup);
+	playerHandler.ResetState();
+	playerHandler.LoadFromSetup(setup);
 }
 
 
@@ -115,29 +109,28 @@ void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 	tracefile.Initialize(myPlayerNum);
 #endif
 
-	const CPlayer* myPlayer = playerHandler->Player(myPlayerNum);
+	const CPlayer* myPlayer = playerHandler.Player(myPlayerNum);
 
 	myTeam = myPlayer->team;
-	if (!teamHandler.IsValidTeam(myTeam)) {
+	if (!teamHandler.IsValidTeam(myTeam))
 		throw content_error("Invalid MyTeam in player setup");
-	}
 
 	myAllyTeam = teamHandler.AllyTeam(myTeam);
-	if (!teamHandler.IsValidAllyTeam(myAllyTeam)) {
+	if (!teamHandler.IsValidAllyTeam(myAllyTeam))
 		throw content_error("Invalid MyAllyTeam in player setup");
-	}
 
 	spectating           = myPlayer->spectator;
 	spectatingFullView   = myPlayer->spectator;
 	spectatingFullSelect = myPlayer->spectator;
 
-	if (!spectating) {
-		myPlayingTeam = myTeam;
-		myPlayingAllyTeam = myAllyTeam;
-	}
+	if (spectating)
+		return;
+
+	myPlayingTeam = myTeam;
+	myPlayingAllyTeam = myAllyTeam;
 }
 
 CPlayer* CGlobalUnsynced::GetMyPlayer() {
-	return (playerHandler->Player(myPlayerNum));
+	return (playerHandler.Player(myPlayerNum));
 }
 

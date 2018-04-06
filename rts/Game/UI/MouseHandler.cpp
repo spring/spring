@@ -255,7 +255,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
 	if (game != nullptr && !game->IsGameOver())
-		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
+		playerHandler.Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
 
 	if (activeReceiver != nullptr)
 		activeReceiver->MouseMove(x, y, dx, dy, activeButtonIdx);
@@ -279,7 +279,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
 	if (game != nullptr && !game->IsGameOver())
-		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
+		playerHandler.Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
 	ButtonPressEvt& bp = buttons[button];
 	bp.chorded  = (buttons[SDL_BUTTON_LEFT].pressed || buttons[SDL_BUTTON_RIGHT].pressed);

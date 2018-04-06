@@ -339,7 +339,7 @@ void CPreGame::UpdateClientNet()
 					// we will receive this message a second time (the global broadcast
 					// version) which will overwrite the player with the same values as
 					// set here
-					playerHandler->AddPlayer(player);
+					playerHandler.AddPlayer(player);
 
 					LOG("[PreGame::%s] added new player %s with number %d to team %d", __func__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -363,7 +363,7 @@ void CPreGame::UpdateClientNet()
 
 				const uint8_t playerNum = packet->data[1];
 
-				if (!playerHandler->IsValidPlayer(playerNum))
+				if (!playerHandler.IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
@@ -500,10 +500,10 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	}
 
 	// some sanity checks
-	for (int p = 0; p < playerHandler->ActivePlayers(); ++p) {
-		const CPlayer* player = playerHandler->Player(p);
+	for (int p = 0; p < playerHandler.ActivePlayers(); ++p) {
+		const CPlayer* player = playerHandler.Player(p);
 
-		if (!playerHandler->IsValidPlayer(player->playerNum))
+		if (!playerHandler.IsValidPlayer(player->playerNum))
 			throw content_error("Invalid player in game data");
 
 		if (!teamHandler.IsValidTeam(player->team))

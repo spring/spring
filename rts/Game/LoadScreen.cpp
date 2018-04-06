@@ -165,7 +165,7 @@ static void FinishedLoading()
 		return;
 
 	// send our playername to the server to indicate we finished loading
-	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+	const CPlayer* p = playerHandler.Player(gu->myPlayerNum);
 
 	clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 	#ifdef SYNCCHECK

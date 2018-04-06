@@ -3,6 +3,7 @@
 #ifndef PLAYER_HANDLER_H
 #define PLAYER_HANDLER_H
 
+#include "Game/Players/Player.h"
 #include "System/creg/creg_cond.h"
 
 #include <cassert>
@@ -10,15 +11,11 @@
 #include <vector>
 
 class CGameSetup;
-class CPlayer;
-
 
 class CPlayerHandler
 {
 public:
 	CR_DECLARE_STRUCT(CPlayerHandler)
-
-	~CPlayerHandler();
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
@@ -30,7 +27,7 @@ public:
 	 *
 	 * Accesses a CPlayer instance at a given index
 	 */
-	CPlayer* Player(int id) { assert(unsigned(id) < players.size()); return players[id]; }
+	CPlayer* Player(int id) { assert(unsigned(id) < players.size()); return &players[id]; }
 
 	/**
 	 * @brief Player
@@ -49,6 +46,8 @@ public:
 	 * Will change at runtime, for example if a new spectator joins
 	 */
 	int ActivePlayers() const { return players.size(); }
+
+	unsigned int NumActivePlayersInTeam(int teamId) const;
 
 	/**
 	 * @brief Number of players in a team
@@ -77,15 +76,15 @@ public:
 	void AddPlayer(const CPlayer& player);
 
 private:
-	typedef std::vector<CPlayer*> playerVec;
 	/**
 	 * @brief players
 	 *
 	 * for all the players in the game
+	 * must never be resized beyond MAX_PLAYERS!
 	 */
-	playerVec players;
+	std::vector<CPlayer> players;
 };
 
-extern CPlayerHandler* playerHandler;
+extern CPlayerHandler playerHandler;
 
 #endif // !PLAYER_HANDLER_H

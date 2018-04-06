@@ -105,9 +105,9 @@ const std::vector<int>& PlayerRoster::GetIndices(bool includePathingFlag, bool c
 	// or make PlayerRoster an EventClient and listen for Player* events
 	// caller should ensure not to block resorting if a player joins and
 	// another quits in between calls
-	if (playerIndices.size() != playerHandler->ActivePlayers()) {
+	if (playerIndices.size() != playerHandler.ActivePlayers()) {
 		playerIndices.clear();
-		playerIndices.resize(playerHandler->ActivePlayers(), 0);
+		playerIndices.resize(playerHandler.ActivePlayers(), 0);
 	}
 
 	if (!callerBlockResort) {
@@ -147,8 +147,8 @@ static inline int CompareBasics(const CPlayer* a, const CPlayer* b)
 
 static int CompareAllies(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler->Player(aIdx);
-	const CPlayer* b = playerHandler->Player(bIdx);
+	const CPlayer* a = playerHandler.Player(aIdx);
+	const CPlayer* b = playerHandler.Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -194,8 +194,8 @@ static int CompareAllies(const int aIdx, const int bIdx)
 
 static int CompareTeamIDs(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler->Player(aIdx);
-	const CPlayer* b = playerHandler->Player(bIdx);
+	const CPlayer* a = playerHandler.Player(aIdx);
+	const CPlayer* b = playerHandler.Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -216,8 +216,8 @@ static int CompareTeamIDs(const int aIdx, const int bIdx)
 
 static int ComparePlayerNames(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler->Player(aIdx);
-	const CPlayer* b = playerHandler->Player(bIdx);
+	const CPlayer* a = playerHandler.Player(aIdx);
+	const CPlayer* b = playerHandler.Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -231,8 +231,8 @@ static int ComparePlayerNames(const int aIdx, const int bIdx)
 
 static int ComparePlayerCPUs(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler->Player(aIdx);
-	const CPlayer* b = playerHandler->Player(bIdx);
+	const CPlayer* a = playerHandler.Player(aIdx);
+	const CPlayer* b = playerHandler.Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)
@@ -247,8 +247,8 @@ static int ComparePlayerCPUs(const int aIdx, const int bIdx)
 
 static int ComparePlayerPings(const int aIdx, const int bIdx)
 {
-	const CPlayer* a = playerHandler->Player(aIdx);
-	const CPlayer* b = playerHandler->Player(bIdx);
+	const CPlayer* a = playerHandler.Player(aIdx);
+	const CPlayer* b = playerHandler.Player(bIdx);
 
 	const int basic = CompareBasics(a, b);
 	if (basic != 0)

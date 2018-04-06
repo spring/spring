@@ -68,12 +68,12 @@ bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 
 bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label, int playerID)
 {
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler.IsValidPlayer(playerID)) {
 		return false;
 	}
 
 	// GotNetMsg() alreadys checks validity of playerID
-	const CPlayer* sender = playerHandler->Player(playerID);
+	const CPlayer* sender = playerHandler.Player(playerID);
 	const bool allowed = AllowedMsg(sender);
 
 	float3 pos = constPos;
@@ -103,11 +103,11 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, int playerID)
 {
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler.IsValidPlayer(playerID)) {
 		return false;
 	}
 
-	const CPlayer* sender = playerHandler->Player(playerID);
+	const CPlayer* sender = playerHandler.Player(playerID);
 
 	float3 pos1 = constPos1;
 	float3 pos2 = constPos2;
@@ -135,10 +135,10 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 
 void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 {
-	if (!playerHandler->IsValidPlayer(playerID))
+	if (!playerHandler.IsValidPlayer(playerID))
 		return;
 
-	const CPlayer* sender = playerHandler->Player(playerID);
+	const CPlayer* sender = playerHandler.Player(playerID);
 
 	float3 pos = constPos;
 	pos.ClampInBounds();

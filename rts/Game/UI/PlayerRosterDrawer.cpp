@@ -43,7 +43,7 @@ void CPlayerRosterDrawer::Draw()
 	chart.append(buf);
 
 	for (size_t a = 0, s = playerIndices.size(); a < s; ++a) {
-		const CPlayer* p = playerHandler->Player(playerIndices[a]);
+		const CPlayer* p = playerHandler.Player(playerIndices[a]);
 
 		if (!p->active)
 			continue;

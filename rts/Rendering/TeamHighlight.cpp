@@ -81,8 +81,8 @@ void CTeamHighlight::Update(int frameNum) {
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
 
-			for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
-				CPlayer* p = playerHandler->Player(pi);
+			for (int pi = 0; pi < playerHandler.ActivePlayers(); ++pi) {
+				CPlayer* p = playerHandler.Player(pi);
 
 				if (!p->active)
 					continue;

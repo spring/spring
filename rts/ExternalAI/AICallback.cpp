@@ -266,8 +266,8 @@ int CAICallback::GetPlayerTeam(int playerId)
 {
 	int playerTeamId = -1;
 
-	if (playerHandler->IsValidPlayer(playerId)) {
-		CPlayer* pl = playerHandler->Player(playerId);
+	if (playerHandler.IsValidPlayer(playerId)) {
+		CPlayer* pl = playerHandler.Player(playerId);
 		if (!pl->spectator) {
 			playerTeamId = pl->team;
 		}

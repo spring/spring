@@ -80,8 +80,8 @@ void CPlayer::SetControlledTeams()
 
 void CPlayer::UpdateControlledTeams()
 {
-	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
-		CPlayer* player = playerHandler->Player(p);
+	for (int p = 0; p < playerHandler.ActivePlayers(); p++) {
+		CPlayer* player = playerHandler.Player(p);
 
 		if (player == nullptr)
 			continue;

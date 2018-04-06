@@ -316,7 +316,7 @@ void CQuitBox::MouseRelease(int x, int y, int button)
 
 	const CTeam* localTeam = teamHandler.Team(gu->myTeam);
 	const CTeam* recipTeam = teamHandler.Team(shareTeam);
-	const CPlayer* localPlayer = playerHandler->Player(gu->myPlayerNum);
+	const CPlayer* localPlayer = playerHandler.Player(gu->myPlayerNum);
 
 	const bool resign = InBox(mx, my, box + resignBox);
 	const bool   save = InBox(mx, my, box + saveBox);

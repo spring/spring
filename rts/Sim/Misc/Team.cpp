@@ -244,10 +244,10 @@ void CTeam::Died(bool normalDeath)
 	}
 
 	// demote all players in _this_ team to spectators
-	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-		if (playerHandler->Player(a)->team == teamNum) {
-			playerHandler->Player(a)->StartSpectating();
-			playerHandler->Player(a)->SetControlledTeams();
+	for (int a = 0; a < playerHandler.ActivePlayers(); ++a) {
+		if (playerHandler.Player(a)->team == teamNum) {
+			playerHandler.Player(a)->StartSpectating();
+			playerHandler.Player(a)->SetControlledTeams();
 		}
 	}
 
@@ -268,8 +268,8 @@ void CTeam::AddPlayer(int playerNum)
 	if (!HasLeader())
 		SetLeader(playerNum);
 
-	playerHandler->Player(playerNum)->JoinTeam(teamNum);
-	playerHandler->Player(playerNum)->SetControlledTeams();
+	playerHandler.Player(playerNum)->JoinTeam(teamNum);
+	playerHandler.Player(playerNum)->SetControlledTeams();
 
 	isDead = false;
 }
@@ -428,14 +428,14 @@ std::string CTeam::GetControllerName() const {
 
 	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
 	if (HasLeader()) {
-		const CPlayer* leadPlayer = playerHandler->Player(leader);
+		const CPlayer* leadPlayer = playerHandler.Player(leader);
 
 		if (leadPlayer->team != this->teamNum) {
 			const CTeam*   realLeadPlayerTeam = teamHandler.Team(leadPlayer->team);
 			const CPlayer* realLeadPlayer     = NULL;
 
 			if (realLeadPlayerTeam->HasLeader()) {
-				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->GetLeader());
+				realLeadPlayer = playerHandler.Player(realLeadPlayerTeam->GetLeader());
 				s = realLeadPlayer->name;
 			} else {
 				s = "N/A"; // weird
