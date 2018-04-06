@@ -609,10 +609,10 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 ) {
 	units.clear();
 
-	if (!playerHandler->IsValidPlayer(player))
+	if (!playerHandler.IsValidPlayer(player))
 		return;
 
-	const CPlayer* p = playerHandler->Player(player);
+	const CPlayer* p = playerHandler.Player(player);
 
 	if (p == nullptr)
 		return;
@@ -655,10 +655,10 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 ) {
 	units.clear();
 
-	if (!playerHandler->IsValidPlayer(player))
+	if (!playerHandler.IsValidPlayer(player))
 		return;
 
-	const CPlayer* p = playerHandler->Player(player);
+	const CPlayer* p = playerHandler.Player(player);
 
 	if (p == nullptr)
 		return;

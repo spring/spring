@@ -251,8 +251,8 @@ bool SpringApp::Init()
 	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
 
 	// Global structures
-	gs = new CGlobalSynced();
-	gu = new CGlobalUnsynced();
+	gs->Init();
+	gu->Init();
 
 	// GUIs
 	#ifndef HEADLESS
@@ -901,8 +901,8 @@ void SpringApp::Kill(bool fromRun)
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);
-	spring::SafeDelete(gs);
-	spring::SafeDelete(gu);
+	gs->Kill();
+	gu->Kill();
 
 	LOG("[SpringApp::%s][7]", __func__);
 	spring::SafeDelete(globalRendering);

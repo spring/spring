@@ -1556,7 +1556,7 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vec
 					case 0: { sendMsg = true; } break;
 					case 's': { sendMsg = gu->spectating; } break;
 					case 'a': {
-						const CPlayer* player = playerHandler->Player(playerID);
+						const CPlayer* player = playerHandler.Player(playerID);
 
 						if (player == nullptr)
 							return;

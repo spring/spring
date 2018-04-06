@@ -193,11 +193,11 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 	const int cmd_id = c.GetID();
 
 	if (fromUser) { // add some statistics
-		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
+		playerHandler.Player(gu->myPlayerNum)->currentStats.numCommands++;
 		if (selectedGroup != -1) {
-			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands += grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
 		} else {
-			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands += selectedUnits.size();
+			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += selectedUnits.size();
 		}
 	}
 
@@ -714,7 +714,7 @@ void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
 	if (unit == nullptr)
 		return;
 
-	const CPlayer* player = playerHandler->Player(playerId);
+	const CPlayer* player = playerHandler.Player(playerId);
 	if (player == nullptr)
 		return;
 

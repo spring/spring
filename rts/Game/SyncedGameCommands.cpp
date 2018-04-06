@@ -153,9 +153,9 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		// not for autohosts
-		if (!playerHandler->IsValidPlayer(action.GetPlayerID()))
+		if (!playerHandler.IsValidPlayer(action.GetPlayerID()))
 			return false;
-		unitLoader->ParseAndExecuteGiveUnitsCommand(CSimpleParser::Tokenize(action.GetArgs(), 0), playerHandler->Player(action.GetPlayerID())->team);
+		unitLoader->ParseAndExecuteGiveUnitsCommand(CSimpleParser::Tokenize(action.GetArgs(), 0), playerHandler.Player(action.GetPlayerID())->team);
 		return true;
 	}
 };
@@ -395,7 +395,7 @@ public:
 	bool Execute(const SyncedAction& action) const {
 		const std::string& args = action.GetArgs();
 
-		const int team = playerHandler->Player(action.GetPlayerID())->team;
+		const int team = playerHandler.Player(action.GetPlayerID())->team;
 		const int amount = (args.empty())? 1000: std::atoi(args.c_str());
 
 		teamHandler.Team(team)->AddMetal(std::max(0, amount));
@@ -412,7 +412,7 @@ public:
 			"active players to the team of the issuing player") {}
 
 	bool Execute(const SyncedAction& action) const {
-		const CPlayer* actionPlayer = playerHandler->Player(action.GetPlayerID());
+		const CPlayer* actionPlayer = playerHandler.Player(action.GetPlayerID());
 
 		if (actionPlayer->spectator && !gs->cheatEnabled) {
 			return false;
@@ -429,8 +429,8 @@ public:
 
 			bool hasPlayer = false;
 
-			for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-				const CPlayer* teamPlayer = playerHandler->Player(b);
+			for (int b = 0; b < playerHandler.ActivePlayers(); ++b) {
+				const CPlayer* teamPlayer = playerHandler.Player(b);
 
 				if (!teamPlayer->active) { continue; }
 				if (teamPlayer->spectator) { continue; }

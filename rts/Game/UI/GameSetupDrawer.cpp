@@ -76,14 +76,14 @@ void GameSetupDrawer::Draw()
 		}
 	}
 
-	const unsigned int numPlayers = playerHandler->ActivePlayers();
+	const unsigned int numPlayers = playerHandler.ActivePlayers();
 
 	std::vector< std::pair<int, std::string> > playerStates(numPlayers);
 	std::string startState = "Unknown state.";
 
 	if (readyCountdown > spring_nulltime) {
 		startState = "Starting in " + IntToString(readyCountdown.toSecsi(), "%i");
-	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->IsReadyToStart()) {
+	} else if (!playerHandler.Player(gu->myPlayerNum)->spectator && !playerHandler.Player(gu->myPlayerNum)->IsReadyToStart()) {
 		startState = "Choose start pos";
 	} else if (gameServer) {
 		// we are the host and can get the show on the road by force
@@ -95,7 +95,7 @@ void GameSetupDrawer::Draw()
 	}
 
 	for (unsigned int a = 0; a < numPlayers; a++) {
-		const CPlayer* player = playerHandler->Player(a);
+		const CPlayer* player = playerHandler.Player(a);
 
 		// redundant
 		playerStates[a].first = a;
@@ -164,7 +164,7 @@ void GameSetupDrawer::Draw()
 			color = &white;
 			name = "Players:";
 		} else {
-			player = playerHandler->Player(a);
+			player = playerHandler.Player(a);
 			name = player->name;
 
 			if (player->spectator) {

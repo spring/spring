@@ -50,7 +50,7 @@ public:
 	virtual bool MapDrawCmd(int playerID, int type, const float3* pos0, const float3* pos1, const std::string* label) {
 
 		if (type == MAPDRAW_POINT) {
-			const CPlayer* sender = playerHandler->Player(playerID);
+			const CPlayer* sender = playerHandler.Player(playerID);
 
 			// if we happen to be in drawAll mode, notify us now
 			// even if this message is not intented for our ears
@@ -164,7 +164,7 @@ int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
 
 		unsigned char uPlayerID;
 		pckt >> uPlayerID;
-		if (!playerHandler->IsValidPlayer(uPlayerID)) {
+		if (!playerHandler.IsValidPlayer(uPlayerID)) {
 			throw netcode::UnpackPacketException("Invalid player number");
 		}
 		playerID = uPlayerID;

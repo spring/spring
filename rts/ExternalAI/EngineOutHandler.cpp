@@ -454,7 +454,7 @@ void CEngineOutHandler::PlayerCommandGiven(
 {
 	AI_SCOPED_TIMER();
 
-	const int teamId = playerHandler->Player(playerId)->team;
+	const int teamId = playerHandler.Player(playerId)->team;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(PlayerCommandGiven(selectedUnitIds, c, playerId), teamId);
 }

@@ -22,8 +22,11 @@
  *
  * Global instance of CGlobalSynced
  */
-CGlobalSynced* gs = nullptr;
+
+CGlobalSynced gsOBJ;
 CGlobalSyncedRNG gsRNG;
+
+CGlobalSynced* gs = &gsOBJ;
 
 
 CR_BIND(CGlobalSynced, )
@@ -44,15 +47,7 @@ CR_REG_METADATA(CGlobalSynced, (
 ))
 
 
-/**
- * Initializes variables in CGlobalSynced
- */
-CGlobalSynced::CGlobalSynced()
-{
-	ResetState();
-}
-
-CGlobalSynced::~CGlobalSynced()
+void CGlobalSynced::Kill()
 {
 	log_framePrefixer_setFrameNumReference(nullptr);
 }
@@ -80,9 +75,6 @@ void CGlobalSynced::ResetState() {
 
 	gsRNG.SetSeed(18655, true);
 	log_framePrefixer_setFrameNumReference(&frameNum);
-
-	teamHandler.ResetState();
-	skirmishAIHandler.ResetState();
 }
 
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
@@ -90,7 +82,9 @@ void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 	noHelperAIs = setup->noHelperAIs;
 	useLuaGaia  = setup->useLuaGaia;
 
+	teamHandler.ResetState();
 	teamHandler.LoadFromSetup(setup);
+	skirmishAIHandler.ResetState();
 	skirmishAIHandler.LoadFromSetup(*setup);
 }
 

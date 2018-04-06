@@ -273,6 +273,7 @@ void CEndGameBox::Draw()
 
 	if (dispMode == 0) {
 		float xpos = 0.01f;
+		float ypos = 0.5f;
 
 		std::string headers[] = {"Name", "MC/m", "MP/m", "KP/m", "Cmds/m", "ACS"};
 
@@ -281,9 +282,8 @@ void CEndGameBox::Draw()
 			xpos += 0.1f;
 		}
 
-		float ypos = 0.5f;
-		for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-			const CPlayer* p = playerHandler->Player(a);
+		for (int a = 0; a < playerHandler.ActivePlayers(); ++a) {
+			const CPlayer* p = playerHandler.Player(a);
 			const PlayerStatistics& pStats = p->currentStats;
 			char values[6][100];
 

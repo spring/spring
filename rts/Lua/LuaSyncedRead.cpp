@@ -1140,10 +1140,10 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 	if (teamID >= teamHandler.ActiveTeams())
 		return 0;
 
-	lua_createtable(L, playerHandler->ActivePlayers(), 0);
+	lua_createtable(L, playerHandler.ActivePlayers(), 0);
 
-	for (unsigned int p = 0, playerCount = 1; p < playerHandler->ActivePlayers(); p++) {
-		const CPlayer* player = playerHandler->Player(p);
+	for (unsigned int p = 0, playerCount = 1; p < playerHandler.ActivePlayers(); p++) {
+		const CPlayer* player = playerHandler.Player(p);
 
 		if (player == nullptr)
 			continue;
@@ -1454,10 +1454,10 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (!playerHandler->IsValidPlayer(playerID))
+	if (!playerHandler.IsValidPlayer(playerID))
 		return 0;
 
-	const CPlayer* player = playerHandler->Player(playerID);
+	const CPlayer* player = playerHandler.Player(playerID);
 	if (player == nullptr)
 		return 0;
 
@@ -1490,10 +1490,10 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (!playerHandler->IsValidPlayer(playerID))
+	if (!playerHandler.IsValidPlayer(playerID))
 		return 0;
 
-	const CPlayer* player = playerHandler->Player(playerID);
+	const CPlayer* player = playerHandler.Player(playerID);
 	if (player == nullptr)
 		return 0;
 
@@ -1600,11 +1600,11 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 	const int player1 = luaL_checkint(L, -1);
 	const int player2 = luaL_checkint(L, -2);
 
-	if (!playerHandler->IsValidPlayer(player1) || !playerHandler->IsValidPlayer(player2))
+	if (!playerHandler.IsValidPlayer(player1) || !playerHandler.IsValidPlayer(player2))
 		return 0;
 
-	const CPlayer* p1 = playerHandler->Player(player1);
-	const CPlayer* p2 = playerHandler->Player(player2);
+	const CPlayer* p1 = playerHandler.Player(player1);
+	const CPlayer* p2 = playerHandler.Player(player2);
 
 	if ((p1 == nullptr) || (p2 == nullptr))
 		return 0;
@@ -2799,7 +2799,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 			unitTeam = teamHandler.Team(unit->team);
 
 		if (unitTeam != nullptr && unitTeam->HasLeader()) {
-			tooltip = playerHandler->Player(unitTeam->GetLeader())->name;
+			tooltip = playerHandler.Player(unitTeam->GetLeader())->name;
 
 			const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
 

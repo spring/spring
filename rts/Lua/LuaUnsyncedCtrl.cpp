@@ -423,10 +423,10 @@ static string ParseMessage(lua_State* L, const string& msg)
 		luaL_error(L, "Bad message format: %s", msg.c_str());
 	}
 
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler.IsValidPlayer(playerID)) {
 		luaL_error(L, "Invalid message playerID: %c", playerID); //FIXME
 	}
-	const CPlayer* player = playerHandler->Player(playerID);
+	const CPlayer* player = playerHandler.Player(playerID);
 	if ((player == NULL) || !player->active || player->name.empty()) {
 		luaL_error(L, "Invalid message playerID: %c", playerID);
 	}

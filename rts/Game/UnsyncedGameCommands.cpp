@@ -435,7 +435,8 @@ public:
 		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string name = action.GetArgs().substr(0, pos);
-			const int playerID = playerHandler->Player(name);
+			const int playerID = playerHandler.Player(name);
+
 			if (playerID >= 0) {
 				game->SendNetChat(action.GetArgs().substr(pos+1), playerID);
 			} else {
@@ -640,11 +641,13 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		bool badArgs = false;
 
-		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
-		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+		const CPlayer* fromPlayer     = playerHandler.Player(gu->myPlayerNum);
+		const int      fromTeamId     = (fromPlayer != nullptr) ? fromPlayer->team : -1;
+
 		const bool cheating           = gs->cheatEnabled;
+		const bool singlePlayer       = (playerHandler.ActivePlayers() <= 1);
+
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
-		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		const std::string actionName  = StringToLower(GetCommand()).substr(2);
 
 		if (!args.empty()) {
@@ -760,11 +763,11 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		bool badArgs = false;
 
-		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
-		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+		const CPlayer* fromPlayer     = playerHandler.Player(gu->myPlayerNum);
+		const int      fromTeamId     = (fromPlayer != nullptr) ? fromPlayer->team : -1;
 
 		const bool cheating           = gs->cheatEnabled;
-		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+		const bool singlePlayer       = (playerHandler.ActivePlayers() <= 1);
 
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
@@ -893,7 +896,7 @@ public:
 				if (isLocal) {
 					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
 				} else {
-					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
+					lastPart = "(Host:) " + playerHandler.Player(gu->myPlayerNum)->name;
 				}
 
 				LOG("%i | %i | %s | %s | %s | %s",

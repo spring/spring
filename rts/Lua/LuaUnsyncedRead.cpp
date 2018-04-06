@@ -1523,7 +1523,7 @@ static bool AddPlayerToRoster(lua_State* L, int playerID, bool onlyActivePlayers
 #define PUSH_ROSTER_ENTRY(type, val) \
 	lua_push ## type(L, val); lua_rawseti(L, -2, index++);
 
-	const CPlayer* p = playerHandler->Player(playerID);
+	const CPlayer* p = playerHandler.Player(playerID);
 
 	if (onlyActivePlayers && !p->active)
 		return false;
@@ -2414,11 +2414,11 @@ int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 int LuaUnsyncedRead::GetPlayerStatistics(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler.IsValidPlayer(playerID)) {
 		return 0;
 	}
 
-	const CPlayer* player = playerHandler->Player(playerID);
+	const CPlayer* player = playerHandler.Player(playerID);
 	if (player == NULL) {
 		return 0;
 	}
