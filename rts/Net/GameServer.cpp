@@ -952,11 +952,14 @@ void CGameServer::LagProtection()
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
 		//average to smooth the speed change over time to reduce the impact of cpu spikes in the players
 		newSpeed = (newSpeed + internalSpeed) * 0.5f;
+
 #ifndef DEDICATED
 		// in non-dedicated hosting, we'll add an additional safeguard to make sure the host can keep up with the game's speed
 		// adjust game speed to localclient's (:= host) maximum SimFrame rate
-		const float maxSimFPS = (1000.0f / gu->avgSimFrameTime) * (1.0f - gu->reconnectSimDrawBalance);
-		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFPS / GAME_SPEED) + internalSpeed) * 0.5f);
+		const float invSimDrawFract = 1.0f - CGlobalUnsynced::reconnectSimDrawBalance;
+		const float maxSimFrameRate = (1000.0f / gu->avgSimFrameTime) * invSimDrawFract;
+
+		newSpeed = Clamp(newSpeed, 0.1f, ((maxSimFrameRate / GAME_SPEED) + internalSpeed) * 0.5f);
 #endif
 
 		if (newSpeed != internalSpeed)
