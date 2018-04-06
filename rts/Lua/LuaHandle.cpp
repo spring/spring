@@ -2456,11 +2456,12 @@ void CLuaHandle::CollectGarbage()
 	// and OOM exceptions become a concern when catching up
 	// OTOH if gc is tied to sim-speed the increased number of calls can
 	// mean too much time is spent on it, must weigh the per-call period
+	const float gcSpeedFactor = Clamp(gs->speedFactor * (1 - gs->PreSimFrame()) * (1 - gs->paused), 1.0f, 100.0f);
 	const float gcBaseRunTime = smoothstep(10.0f, 100.0f, luaMemFootPrintKB / 1024);
-	const float gcMaxRunTime = (gcBaseRunTime * gcRunTimeMult) / gs->speedFactor;
+	const float gcLoopRunTime = (gcBaseRunTime * gcRunTimeMult) / gcSpeedFactor;
 
 	const spring_time startTime = spring_gettime();
-	const spring_time   endTime = startTime + spring_msecs(gcMaxRunTime);
+	const spring_time   endTime = startTime + spring_msecs(gcLoopRunTime);
 
 	// collect garbage until time runs out
 	while (spring_gettime() < endTime) {
