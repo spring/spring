@@ -1345,10 +1345,30 @@ public:
 
 
 
+class NetMsgSmoothingActionExecutor : public IUnsyncedActionExecutor {
+public:
+	NetMsgSmoothingActionExecutor() : IUnsyncedActionExecutor(
+		"NetMsgSmoothing",
+		"Toggles whether client will use net-message smoothing; better for unstable connections"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		const char* fmt = "net-message smoothing %s";
+		const char* strs[] = {"disabled", "enabled"};
+
+		LOG(fmt, strs[globalConfig->useNetMessageSmoothingBuffer = !globalConfig->useNetMessageSmoothingBuffer]);
+		return true;
+	}
+};
+
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
-			"Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest,") {}
+	SpeedControlActionExecutor() : IUnsyncedActionExecutor(
+		"SpeedControl",
+		"Sets how server adjusts speed according to player's CPU load, 1: use average, 2: use highest"
+	) {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (gameServer == nullptr)
@@ -2364,12 +2384,14 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const auto& args = action.GetArgs();
+
+		const char* fmt = "ProjectileDrawer distance-sorting %s";
 		const char* strs[] = {"disabled", "enabled"};
 
 		if (!args.empty()) {
-			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
+			LOG(fmt, strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
 		} else {
-			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->ToggleSorting()]);
+			LOG(fmt, strs[projectileDrawer->ToggleSorting()]);
 		}
 
 		return true;
@@ -3145,6 +3167,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
+
+	AddActionExecutor(new NetMsgSmoothingActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
