@@ -1328,10 +1328,11 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
+		const char* fmt = "{engine, Lua} grass rendering {%s, %s}";
 		const char* strs[] = {"disabled", "enabled"};
 
 		grassDrawer->HandleAction((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str()));
-		LOG("{engine, Lua} grass rendering {%s, %s}", strs[grassDrawer->DefDrawGrass()], strs[grassDrawer->LuaDrawGrass()]);
+		LOG(fmt, strs[grassDrawer->DefDrawGrass()], strs[grassDrawer->LuaDrawGrass()]);
 		return true;
 	}
 };
@@ -1342,21 +1343,39 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
+		const char* fmt = "{engine, Lua} tree rendering {%s, %s}";
 		const char* strs[] = {"disabled", "enabled"};
 
 		treeDrawer->HandleAction((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str()));
-		LOG("{engine, Lua} tree rendering {%s, %s}", strs[treeDrawer->DefDrawTrees()], strs[treeDrawer->LuaDrawTrees()]);
+		LOG(fmt, strs[treeDrawer->DefDrawTrees()], strs[treeDrawer->LuaDrawTrees()]);
 		return true;
 	}
 };
 
 
 
+class NetMsgSmoothingActionExecutor : public IUnsyncedActionExecutor {
+public:
+	NetMsgSmoothingActionExecutor() : IUnsyncedActionExecutor(
+		"NetMsgSmoothing",
+		"Toggles whether client will use net-message smoothing; better for unstable connections"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		const char* fmt = "net-message smoothing %s";
+		const char* strs[] = {"disabled", "enabled"};
+
+		LOG(fmt, strs[globalConfig->useNetMessageSmoothingBuffer = !globalConfig->useNetMessageSmoothingBuffer]);
+		return true;
+	}
+};
+
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor(
 		"SpeedControl",
-		"Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest,"
+		"Sets how server adjusts speed according to player's CPU load, 1: use average, 2: use highest"
 	) {
 	}
 
@@ -2375,12 +2394,14 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const auto& args = action.GetArgs();
+
+		const char* fmt = "ProjectileDrawer distance-sorting %s";
 		const char* strs[] = {"disabled", "enabled"};
 
 		if (!args.empty()) {
-			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
+			LOG(fmt, strs[projectileDrawer->EnableSorting(atoi(args.c_str()))]);
 		} else {
-			LOG("ProjectileDrawer z-sorting %s", strs[projectileDrawer->ToggleSorting()]);
+			LOG(fmt, strs[projectileDrawer->ToggleSorting()]);
 		}
 
 		return true;
@@ -3203,6 +3224,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawGrassActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
+	AddActionExecutor(new NetMsgSmoothingActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
