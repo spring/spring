@@ -311,7 +311,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	if (resign || (save && !localTeam->isDead) || (give && !recipTeam->isDead && !localTeam->isDead)) {
 		// give away all units (and resources)
 		if (give && !localPlayer->spectator)
-			clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
+			clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, localPlayer->team));
 
 		// resign, so self-d all units
 		if (resign && !localPlayer->spectator)
