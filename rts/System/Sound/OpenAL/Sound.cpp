@@ -139,21 +139,26 @@ void CSound::Kill()
 
 
 void CSound::Cleanup() {
-	alcMakeContextCurrent(nullptr);
-
 	if (curContext != nullptr) {
+		LOG("[Sound::%s][alcDestroyContext(%p)]", __func__, curContext);
+		alcMakeContextCurrent(nullptr);
 		alcDestroyContext(curContext);
 		curContext = nullptr;
 	}
+
 	if (curDevice != nullptr) {
+		LOG("[Sound::%s][alcCloseDevice(%p)]", __func__, curDevice);
 		alcCloseDevice(curDevice);
 		curDevice = nullptr;
 	}
 
 #ifdef ALC_SOFT_loopback
 	if (sdlDeviceID != 0) {
+		LOG("[Sound::%s][SDL_CloseAudioDevice(%d)]", __func__, sdlDeviceID);
+		SDL_CloseAudioDevice(sdlDeviceID);
 		SDL_CloseAudio();
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+
 		sdlDeviceID = 0;
 	}
 #endif
