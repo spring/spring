@@ -177,10 +177,15 @@ public:
 	static constexpr size_t NUM_PAGES() { return K; } // per chunk
 	static constexpr size_t PAGE_SIZE() { return S; }
 
-	uint8_t* page_mem(size_t idx) {
+	const uint8_t* page_mem(size_t idx, size_t ofs = 0) const {
+		const t_chunk_ptr& chunk_ptr = chunks[idx / K];
+		const t_chunk_mem& chunk_mem = *chunk_ptr;
+		return (&chunk_mem[idx % K][0] + ofs);
+	}
+	uint8_t* page_mem(size_t idx, size_t ofs = 0) {
 		t_chunk_ptr& chunk_ptr = chunks[idx / K];
 		t_chunk_mem& chunk_mem = *chunk_ptr;
-		return &chunk_mem[idx % K][0];
+		return (&chunk_mem[idx % K][0] + ofs);
 	}
 
 	size_t page_idx(void* ptr) const {
@@ -193,8 +198,8 @@ public:
 	size_t alloc_size() const { return (num_chunks * NUM_PAGES() * PAGE_SIZE()); } // size of total number of pages added over the pool's lifetime
 	size_t freed_size() const { return (indcs.size() * PAGE_SIZE()); } // size of number of pages that were freed and are awaiting reuse
 
-	bool mapped(void* ptr) const { return ((page_idx(ptr) < (num_chunks * K)) && (page_mem(page_idx(ptr)) == ptr)); }
-	bool alloced(void* ptr) const { return ((page_index < (num_chunks * K)) && (page_mem(page_index) == ptr)); }
+	bool mapped(void* ptr) const { return ((page_idx(ptr) < (num_chunks * K)) && (page_mem(page_idx(ptr), sizeof(size_t)) == ptr)); }
+	bool alloced(void* ptr) const { return ((page_index < (num_chunks * K)) && (page_mem(page_index, sizeof(size_t)) == ptr)); }
 
 private:
 	// first size_t bytes are reserved for index
