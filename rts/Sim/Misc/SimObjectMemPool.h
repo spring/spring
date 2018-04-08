@@ -107,10 +107,10 @@ template<size_t S, size_t N, size_t K> struct FixedDynMemPool {
 public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= PAGE_SIZE(), "");
-		return (new (allocMem()) T(std::forward<A>(a)...));
+		return (new (allocMem(sizeof(T))) T(std::forward<A>(a)...));
 	}
 
-	void* allocMem(size_t size = PAGE_SIZE()) {
+	void* allocMem(size_t size) {
 		uint8_t* ptr = nullptr;
 
 		if (indcs.empty()) {
@@ -131,6 +131,7 @@ public:
 
 		const size_t idx = spring::VectorBackPop(indcs);
 
+		assert(size <= PAGE_SIZE());
 		memcpy(ptr = page_mem(page_index = idx), &idx, sizeof(size_t));
 		return (ptr + sizeof(size_t));
 	}
