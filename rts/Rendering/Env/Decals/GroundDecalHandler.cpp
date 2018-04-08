@@ -41,7 +41,7 @@
 #define MAX_SCAR_COUNT 4096
 
 
-static DynMemPool<sizeof(SolidObjectGroundDecal)> sogdMemPool;
+static FixedDynMemPool<sizeof(SolidObjectGroundDecal), 64, 1024> sogdMemPool;
 
 static std::array<CGroundDecalHandler::Scar, MAX_SCAR_COUNT> scars;
 static std::vector<uint8_t> scarTexBuf;
@@ -913,16 +913,19 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 			return;
 	}
 
-	SolidObjectGroundDecal* olddecal = object->groundDecal;
-	if (olddecal != nullptr) {
-		olddecal->owner = nullptr;
-		olddecal->gbOwner = nullptr;
+	SolidObjectGroundDecal* oldDecal = object->groundDecal;
+	if (oldDecal != nullptr) {
+		oldDecal->owner = nullptr;
+		oldDecal->gbOwner = nullptr;
 	}
 
 	const int sizex = decalDef.groundDecalSizeX;
 	const int sizey = decalDef.groundDecalSizeY;
 
 	SolidObjectGroundDecal* decal = sogdMemPool.alloc<SolidObjectGroundDecal>();
+
+	if (decal == nullptr)
+		return;
 
 	decal->owner = object;
 	decal->gbOwner = nullptr;
@@ -935,10 +938,9 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->xsize = sizex << 1;
 	decal->ysize = sizey << 1;
 
-	if (object->buildFacing == FACING_EAST || object->buildFacing == FACING_WEST) {
-		// swap xsize and ysize if object faces East or West
+	// swap xsize and ysize if object faces East or West
+	if (object->buildFacing == FACING_EAST || object->buildFacing == FACING_WEST)
 		std::swap(decal->xsize, decal->ysize);
-	}
 
 	// position of top-left corner
 	decal->posx = (pos.x / SQUARE_SIZE) - (decal->xsize >> 1);
