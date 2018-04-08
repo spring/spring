@@ -415,7 +415,7 @@ void UDPConnection::Update()
 			if (logMessages) {
 				LOG_L(L_INFO,
 					"[UDPConnection::%s] %u NETMSG_*FRAME packets received (%fms : %fp/ms) during (empty=%u total=%u) GetData calls",
-					__FUNCTION__, numReceivedFramePackets, debugMssgDeltaTime, avgFramePacketRate, numEmptyGetDataCalls, numTotalGetDataCalls
+					__func__, numReceivedFramePackets, debugMssgDeltaTime, avgFramePacketRate, numEmptyGetDataCalls, numTotalGetDataCalls
 				);
 			}
 
@@ -477,13 +477,13 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	#ifdef ENABLE_DEBUG_STATS
 	if (logMessages)
-		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u) mtu=%u", __FUNCTION__, incoming.GetChecksum(), incoming.checksum, mtu);
+		LOG_L(L_INFO, "\t[%s] checksum=(%u : %u) mtu=%u", __func__, incoming.GetChecksum(), incoming.checksum, mtu);
 	#endif
 
 	lastPacketRecvTime = spring_gettime();
 	dataRecv += incoming.GetSize();
 	recvOverhead += Packet::headerSize;
-	++recvPackets;
+	recvPackets += 1;
 
 //	if (EMULATE_PACKET_LOSS(lossCounter))
 //		return;
@@ -597,7 +597,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 					if (logMessages) {
 						LOG_L(L_INFO,
 							"\t[%s] (received=%u enqueued=%u) packets (dt=%fms mindt=%fms maxdt=%fms sumdt=%fms)",
-							__FUNCTION__, numReceivedFramePackets, numEnqueuedFramePackets, dt.toMilliSecsf(),
+							__func__, numReceivedFramePackets, numEnqueuedFramePackets, dt.toMilliSecsf(),
 							minDeltaFramePacketRecvTime, maxDeltaFramePacketRecvTime, sumDeltaFramePacketRecvTime
 						);
 					}
@@ -670,11 +670,13 @@ void UDPConnection::Flush(const bool forced)
 
 					assert(packet->length > 0);
 					memcpy(buffer + pos, packet->data, numBytes);
-					pos += numBytes;
-					outgoing.DataSent(numBytes, true);
-					partialPacket = (numBytes != packet->length);
 
-					if (partialPacket) {
+					pos += numBytes;
+					sentOverhead += Packet::headerSize;
+
+					outgoing.DataSent(numBytes, true);
+
+					if ((partialPacket = (numBytes != packet->length))) {
 						// partially transfered
 						packet.reset(new RawPacket(packet->data + numBytes, packet->length - numBytes));
 					} else {
@@ -771,168 +773,194 @@ void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length
 void UDPConnection::SendIfNecessary(bool flushed)
 {
 	const spring_time curTime = spring_gettime();
+	const spring_time difTime = curTime - lastPacketSendTime;
+	const spring_time unackTime = spring_msecs(400 >> netLossFactor);
 
 	int nak = 0;
-	std::vector<int> dropped;
+	int rev = 0;
+
+	droppedPackets.clear();
 
 	{
-		int packetNum = lastInOrder+1;
+		int packetNum = lastInOrder + 1;
+
 		for (const auto& pair: waitingPackets) {
 			const int diff = pair.first - packetNum;
-			if (diff > 0) {
-				for (int i = 0; i < diff; ++i) {
-					dropped.push_back(packetNum);
-					packetNum++;
-				}
+
+			for (int i = 0; i < diff; ++i) {
+				droppedPackets.push_back(packetNum++);
 			}
+
 			packetNum++;
 		}
-		while (!dropped.empty() && (dropped.back() - (lastInOrder + 1)) > 255)
-			dropped.pop_back();
-		unsigned numContinuous = 0;
-		for (unsigned i = 0; i != dropped.size(); ++i) {
-			if (dropped[i] == (lastInOrder + i + 1)) {
-				numContinuous++;
-			} else {
-				break;
-			}
+
+		while (!droppedPackets.empty() && (droppedPackets.back() - (lastInOrder + 1)) > 255) {
+			droppedPackets.pop_back();
 		}
 
-		if ((numContinuous < 8) && (curTime - lastNakTime) > spring_msecs(200 >> netLossFactor)) {
-			nak = std::min(dropped.size(), (size_t)127);
+
+		unsigned int numContinuous = 0;
+
+		for (unsigned int i = 0; i != droppedPackets.size(); ++i) {
+			if (droppedPackets[i] != (lastInOrder + i + 1))
+				break;
+
+			numContinuous++;
+		}
+
+		if ((numContinuous < 8) && (curTime - lastNakTime) > (unackTime * 0.5f)) {
+			nak = std::min(droppedPackets.size(), (size_t)127);
 			// needs 1 byte per requested packet, so do not spam to often
 			lastNakTime = curTime;
 		} else {
-			nak = -(int)std::min((unsigned)127, numContinuous);
+			nak = -(int)std::min(127u, numContinuous);
 		}
 	}
 
 	if (!unackedChunks.empty() &&
-		(curTime - lastChunkCreatedTime) > spring_msecs(400 >> netLossFactor) &&
-		(curTime - lastUnackResentTime) > spring_msecs(400 >> netLossFactor)) {
+		(curTime - lastChunkCreatedTime) > unackTime &&
+		(curTime - lastUnackResentTime) > unackTime) {
+
 		// resend last packet if we didn't get an ack within reasonable time
 		// and don't plan sending out a new chunk either
 		if (newChunks.empty())
 			RequestResend(*unackedChunks.rbegin());
+
 		lastUnackResentTime = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || (netLossFactor == MIN_LOSS_FACTOR && !resendRequested.empty()) || (nak > 0) || (curTime - lastPacketSendTime) > spring_msecs(200 >> netLossFactor)) {
-		bool todo = true;
 
-		int maxResend = resendRequested.size();
-		int unackPrevSize = unackedChunks.size();
+	const bool flushSend = (flushed || !newChunks.empty());
+	const bool otherSend = (UseMinLossFactor() && !resendRequested.empty());
+	const bool unackSend = (nak > 0) || (difTime > (unackTime * 0.5f));
 
-		std::map<std::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
-		std::map<std::int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
-		std::map<std::int32_t, ChunkPtr>::reverse_iterator resRevIter;
+	if (!flushSend && !otherSend && !unackSend)
+		return;
 
-		if (netLossFactor != MIN_LOSS_FACTOR) {
-			maxResend = std::min(maxResend, 20 * netLossFactor); // keep it reasonable, or it could cause a tremendous flood of packets
+	int maxResend = resendRequested.size();
+	int unackPrevSize = unackedChunks.size();
 
-			resMidIter = resendRequested.begin();
-			resMidIterStart = resendRequested.begin();
-			resMidIterEnd = resendRequested.end();
-			resRevIter = resendRequested.rbegin();
+	std::map<std::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
+	std::map<std::int32_t, ChunkPtr>::iterator resMidIter;
+	std::map<std::int32_t, ChunkPtr>::iterator resMidIterStart;
+	std::map<std::int32_t, ChunkPtr>::iterator resMidIterEnd;
+	std::map<std::int32_t, ChunkPtr>::reverse_iterator resRevIter;
 
-			const int resMidStart = (maxResend + 3) / 4;
-			const int resMidEnd = (maxResend + 2) / 4;
+	if (!UseMinLossFactor()) {
+		// keep resend reasonable, or it could cause a tremendous flood of packets
+		maxResend = std::min(maxResend, 20 * netLossFactor);
 
-			for (int i = 0; i < resMidStart; ++i)
-				++resMidIterStart;
-			if (resMidIterStart != resendRequested.end() && lastMidChunk < resMidIterStart->first)
-				lastMidChunk = resMidIterStart->first - 1;
+		resMidIter = resendRequested.begin();
+		resMidIterStart = resendRequested.begin();
+		resMidIterEnd = resendRequested.end();
+		resRevIter = resendRequested.rbegin();
 
-			for (int i = 0; i < resMidEnd; ++i)
-				--resMidIterEnd;
+		const int resMidStart = (maxResend + 3) / 4;
+		const int resMidEnd   = (maxResend + 2) / 4;
 
-			while (resMidIter != resendRequested.end() && resMidIter->first <= lastMidChunk)
-				++resMidIter;
+		std::advance(resMidIterStart, resMidStart);
 
-			if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() ||
-				resMidIter->first >= resMidIterEnd->first)
-				resMidIter = resMidIterStart;
+		if (resMidIterStart != resendRequested.end() && lastMidChunk < resMidIterStart->first)
+			lastMidChunk = resMidIterStart->first - 1;
+
+		std::advance(resMidIterEnd, -resMidEnd);
+
+		while (resMidIter != resendRequested.end() && resMidIter->first <= lastMidChunk) {
+			++resMidIter;
 		}
 
-		int rev = 0;
+		if (resMidIter == resendRequested.end() || resMidIterEnd == resendRequested.end() || resMidIter->first >= resMidIterEnd->first)
+			resMidIter = resMidIterStart;
+	}
 
-		while (todo && ((outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth) || (globalConfig->linkOutgoingBandwidth <= 0))) {
-			Packet buf(lastInOrder, nak);
 
-			if (nak > 0) {
-				buf.naks.resize(nak);
-				for (unsigned i = 0; i != buf.naks.size(); ++i) {
-					buf.naks[i] = dropped[i] - (lastInOrder + 1); // zero means request resend of lastInOrder + 1
-				}
-				if (netLossFactor == MIN_LOSS_FACTOR)
-					nak = 0; // 1 request is enough, unless high loss
+	while (((outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth) || (globalConfig->linkOutgoingBandwidth <= 0))) {
+		Packet buf(lastInOrder, nak);
+
+		if (nak > 0) {
+			buf.naks.resize(nak);
+
+			for (unsigned i = 0; i != buf.naks.size(); ++i) {
+				buf.naks[i] = droppedPackets[i] - (lastInOrder + 1); // zero means request resend of lastInOrder + 1
 			}
 
-			bool sent = false;
-			while (true) {
-				bool canResend = maxResend > 0 &&
-					((buf.GetSize() +
-					(((netLossFactor == MIN_LOSS_FACTOR) || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())) // resend chunk size
-					) <= mtu);
-				bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
+			// 1 request is enough, unless high loss
+			nak *= (1 - UseMinLossFactor());
+		}
 
-				if (!canResend && !canSendNew)
-					break;
 
-				// alternate between send and resend to make sure none is starved
-				resend = !resend;
+		bool sent = false;
 
-				if (resend && canResend) {
-					if (netLossFactor == MIN_LOSS_FACTOR) {
-						buf.chunks.push_back(resIter->second);
-						resIter = resendRequested.erase(resIter);
-					} else {
-						// on a lossy connection, just keep resending until it is acked
-						switch(rev) {
-							case 0:
-								buf.chunks.push_back(resIter->second);
-								++resIter;
-								break;
-								// alternate between sending from front, middle and back of list of requested chunks,
-							case 1:
-								buf.chunks.push_back(resRevIter->second);
-								++resRevIter;
-								break;
-								// since this improves performance on high latency connections
-							case 2:
-							case 3:
-								buf.chunks.push_back(resMidIter->second);
-								lastMidChunk = resMidIter->first;
-								++resMidIter;
-								if (resMidIter == resMidIterEnd)
-									resMidIter = resMidIterStart;
-								break;
-						}
-						rev = (rev + 1) % 4;
+		while (true) {
+			const size_t bufferSize = buf.GetSize();
+			const size_t resendSize = ((UseMinLossFactor() || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())); // resend chunk size
+
+			const bool canResend = (maxResend > 0) && ((bufferSize + resendSize) <= mtu);
+			const bool canSendNew = !newChunks.empty() && ((bufferSize + newChunks[0]->GetSize()) <= mtu);
+
+			if (!canResend && !canSendNew)
+				break;
+
+			// alternate between send and resend to make sure none is starved
+			resend = !resend;
+
+			if (resend && canResend) {
+				if (UseMinLossFactor()) {
+					buf.chunks.push_back(resIter->second);
+					resIter = resendRequested.erase(resIter);
+				} else {
+					// on a lossy connection, just keep resending until it is acked
+					// alternate between sending from front, middle and back of list of requested
+					// chunks, since this improves performance on high latency connections
+					switch (rev) {
+						case 0: {
+							buf.chunks.push_back(resIter->second);
+							++resIter;
+						} break;
+						case 1: {
+							buf.chunks.push_back(resRevIter->second);
+							++resRevIter;
+						} break;
+						case 2:
+						case 3: {
+							buf.chunks.push_back(resMidIter->second);
+							lastMidChunk = resMidIter->first;
+
+							if ((++resMidIter) == resMidIterEnd)
+								resMidIter = resMidIterStart;
+						} break;
 					}
-					++resentChunks;
-					--maxResend;
-					sent = true;
-				} else if (!resend && canSendNew) {
-					buf.chunks.push_back(newChunks[0]);
-					unackedChunks.push_back(newChunks[0]);
-					newChunks.pop_front();
-					sent = true;
+
+					rev = (rev + 1) % 4;
 				}
+
+				resentChunks += 1;
+				maxResend -= 1;
+
+				sent = true;
+			} else if (!resend && canSendNew) {
+				buf.chunks.push_back(newChunks[0]);
+				unackedChunks.push_back(newChunks[0]);
+				newChunks.pop_front();
+				sent = true;
 			}
-			if (!sent || (maxResend == 0 && newChunks.empty()))
-				todo = false;
-			buf.checksum = buf.GetChecksum();
-			EMULATE_PACKET_CORRUPTION(buf.checksum);
-
-			SendPacket(buf);
 		}
 
-		if (netLossFactor != MIN_LOSS_FACTOR) {
-			// on a lossy connection the packet will be sent multiple times
-			for (int i = unackPrevSize; i < unackedChunks.size(); ++i)
-				RequestResend(unackedChunks[i]);
-		}
+		buf.checksum = buf.GetChecksum();
+		EMULATE_PACKET_CORRUPTION(buf.checksum);
+
+		SendPacket(buf);
+
+		if (!sent || (maxResend == 0 && newChunks.empty()))
+			break;
+	}
+
+	if (UseMinLossFactor())
+		return;
+
+	// on a lossy connection the packet will be sent multiple times
+	for (int i = unackPrevSize; i < unackedChunks.size(); ++i) {
+		RequestResend(unackedChunks[i]);
 	}
 }
 
@@ -942,6 +970,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 
 	outgoing.DataSent(sendBuffer.size());
 	lastPacketSendTime = spring_gettime();
+
 	ip::udp::socket::message_flags flags = 0;
 	asio::error_code err;
 
@@ -953,7 +982,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 		return;
 
 	dataSent += sendBuffer.size();
-	++sentPackets;
+	sentPackets += 1;
 }
 
 void UDPConnection::AckChunks(int lastAck)
@@ -1008,9 +1037,8 @@ float UDPConnection::BandwidthUsage::GetAverage(bool prel) const
 
 void UDPConnection::Close(bool flush) {
 
-	if (closed) {
+	if (closed)
 		return;
-	}
 
 	Flush(flush);
 	muted = true;
@@ -1025,7 +1053,9 @@ void UDPConnection::Close(bool flush) {
 }
 
 void UDPConnection::SetLossFactor(int factor) {
-	netLossFactor = std::max((int)MIN_LOSS_FACTOR, std::min(factor, (int)MAX_LOSS_FACTOR));
+	netLossFactor = factor;
+	netLossFactor = std::max(netLossFactor, int(MIN_LOSS_FACTOR));
+	netLossFactor = std::min(netLossFactor, int(MAX_LOSS_FACTOR));
 }
 
 } // namespace netcode
