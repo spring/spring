@@ -190,7 +190,7 @@ public:
 		return (*reinterpret_cast<const size_t*>(idx_ptr));
 	}
 
-	size_t alloc_size() const { return (num_chunks * PAGE_SIZE()); } // size of total number of pages added over the pool's lifetime
+	size_t alloc_size() const { return (num_chunks * NUM_PAGES() * PAGE_SIZE()); } // size of total number of pages added over the pool's lifetime
 	size_t freed_size() const { return (indcs.size() * PAGE_SIZE()); } // size of number of pages that were freed and are awaiting reuse
 
 	bool mapped(void* ptr) const { return ((page_idx(ptr) < (num_chunks * K)) && (page_mem(page_idx(ptr)) == ptr)); }
