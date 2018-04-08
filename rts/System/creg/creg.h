@@ -285,7 +285,7 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_POOL(TCls, TBase, ctor_args, poolAlloc, poolFree) \
-	void* TCls::_Alloc() { return poolAlloc(); } \
+	void* TCls::_Alloc() { return poolAlloc(0); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
@@ -320,7 +320,7 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_INTERFACE_POOL(TCls, TBase, poolAlloc, poolFree)	\
-	void* TCls::_Alloc() { return poolAlloc(); } \
+	void* TCls::_Alloc() { return poolAlloc(0); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	creg::Class TCls::creg_class(#TCls, creg::CF_Abstract, &TBase::creg_class, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, nullptr, nullptr, TCls::_Alloc, TCls::_Free);
 
