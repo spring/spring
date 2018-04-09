@@ -67,7 +67,7 @@ public:
 	 * after this method has been called.
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
-	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalKillFlag()
 	 */
 	void SetDieing() { dieing = true; }
 

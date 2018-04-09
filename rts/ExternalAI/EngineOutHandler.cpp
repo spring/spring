@@ -531,7 +531,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 
 		activeSkirmishAIs.push_back(skirmishAIId);
 
-		if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
+		if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
 			return;
 
 		// We will only get here if the AI is created mid-game.

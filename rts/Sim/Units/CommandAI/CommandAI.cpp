@@ -608,10 +608,10 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 	const UnitDef* ud = owner->unitDef;
 	// AI's may issue attack-ground orders that are not on the ground
-	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
+	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
 
 	const bool npOrder = c.params.empty(); // no-param
-	const bool aiOrder = !saids.empty();
+	const bool aiOrder = !teamAIs.empty(); // assume no sharing with AI
 
 	switch (cmdID) {
 		case CMD_MANUALFIRE: {

@@ -1381,9 +1381,10 @@ EXPORT(void) skirmishAiCallback_Log_exception(int skirmishAIId, const char* cons
 
 	LOG_L(L_ERROR, "Skirmish AI <%s-%s>: severity %i: [%s] %s", aiName, aiVersion, severity, status, msg);
 
-	if (die) {
-		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 4 /* = AI crashed */);
-	}
+	if (!die)
+		return;
+
+	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 4 /* = AI crashed */);
 }
 
 EXPORT(char) skirmishAiCallback_DataDirs_getPathSeparator(int UNUSED_skirmishAIId) {

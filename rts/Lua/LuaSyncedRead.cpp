@@ -1433,9 +1433,9 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 		return 0;
 
 	std::string luaAIName;
-	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
+	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
 
-	for (uint8_t id: saids) {
+	for (uint8_t id: teamAIs) {
 		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(id);
 
 		if (!aiData->isLuaAI)
@@ -1524,11 +1524,11 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	if (!teamHandler.IsValidTeam(teamId))
 		return numVals;
 
-	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
-	if (saids.empty())
+	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	if (teamAIs.empty())
 		return numVals;
 
-	const size_t skirmishAIId    = *(saids.begin());
+	const size_t skirmishAIId    = *(teamAIs.begin());
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
 	// this is synced AI info
@@ -2801,7 +2801,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 		if (unitTeam != nullptr && unitTeam->HasLeader()) {
 			tooltip = playerHandler.Player(unitTeam->GetLeader())->name;
 
-			const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
+			const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
 
 			if (!teamAIs.empty())
 				tooltip = "AI@" + tooltip;

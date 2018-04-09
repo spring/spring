@@ -142,7 +142,7 @@ void CAICallback::SendStartPos(bool ready, float3 startPos)
 
 void CAICallback::SendTextMsg(const char* text, int zone)
 {
-	const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->team);
+	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->team);
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // FIXME is there a better way?
 
 	if (!game->ProcessCommandText(-1, text)) {
