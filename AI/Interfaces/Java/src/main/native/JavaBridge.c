@@ -36,7 +36,8 @@ static const struct SAIInterfaceCallback* callback = NULL;
 static struct Properties jvmCfgProps = {0, NULL, NULL};
 
 static       size_t numSkirmishAIs = 0;
-static const size_t maxSkirmishAIs = 255; // MAX_AIS
+// static const size_t maxSkirmishAIs = 255; // MAX_AIS
+#define maxSkirmishAIs 255
 
 static size_t skirmishAIId_skirmishAiImpl[maxSkirmishAIs] = {999999};
 
@@ -683,8 +684,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 			continue;
 		}
 
-		vm_args->options[nOptions  ].optionString = tmpOptionString;
-		vm_args->options[nOptions++].extraInfo = NULL;
+		vm_args->options[vm_args->nOptions  ].optionString = tmpOptionString;
+		vm_args->options[vm_args->nOptions++].extraInfo = NULL;
 
 		simpleLog_logL(LOG_LEVEL_INFO, "JVM option %ul: %s", vm_args->nOptions - 1, tmpOptionString);
 	}
@@ -703,8 +704,8 @@ static JNIEnv* java_reattachCurrentThread(JavaVM* jvm)
 
 	JNIEnv* env = NULL;
 
-	// const jint res = jvm->AttachCurrentThreadAsDaemon(jvm, (void**) &env, NULL);
-	const jint res = jvm->AttachCurrentThread(jvm, (void**) &env, NULL);
+	// const jint res = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void**) &env, NULL);
+	const jint res = (*jvm)->AttachCurrentThread(jvm, (void**) &env, NULL);
 
 	if (res != 0) {
 		env = NULL;
@@ -716,10 +717,8 @@ static JNIEnv* java_reattachCurrentThread(JavaVM* jvm)
 
 static JNIEnv* java_getJNIEnv(bool preload)
 {
-	if (g_jvm != NULL) {
-		assert(!preload);
+	if (g_jvm != NULL)
 		return java_reattachCurrentThread(g_jvm);
-	}
 
 	assert(preload);
 	simpleLog_logL(LOG_LEVEL_INFO, "Creating the JVM.");
@@ -859,16 +858,6 @@ bool java_unloadJNIEnv()
 }
 
 
-bool java_preloadJNIEnv()
-{
-	java_establishJavaEnv();
-	const JNIEnv* env = java_getJNIEnv(true);
-	java_establishSpringEnv();
-
-	return (env != NULL);
-}
-
-
 bool java_initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 {
 	interfaceId = _interfaceId;
@@ -940,10 +929,12 @@ bool java_initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callb
 	}
 
 	java_establishJavaEnv();
-	const bool ret = (eventsJniBridge_initStatic(java_getJNIEnv(false), maxSkirmishAIs) == 0);
+	JNIEnv* env = java_getJNIEnv(true);
+	const bool loaded = (env != NULL);
+	const bool inited = (loaded && eventsJniBridge_initStatic(env, maxSkirmishAIs) == 0);
 	java_establishSpringEnv();
 
-	return ret;
+	return inited;
 }
 
 bool java_releaseStatic()
@@ -951,14 +942,16 @@ bool java_releaseStatic()
 	sharedLib_unload(jvmSharedLib);
 	jvmSharedLib = NULL;
 
-	FREE(jvmCfgProps->keys);
-	FREE(jvmCfgProps->values);
+	FREE(jvmCfgProps.keys);
+	FREE(jvmCfgProps.values);
 	return true;
 }
 
 
 
-static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* /*aiCallback*/, int skirmishAIId) {
+static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback, int skirmishAIId) {
+	(void) aiCallback;
+
 	// initialize the AI Callback class, if not yet done
 	if (g_cls_aiCallback == NULL) {
 		// get the AI Callback class

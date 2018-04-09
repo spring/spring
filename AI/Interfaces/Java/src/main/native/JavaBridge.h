@@ -26,7 +26,6 @@ extern "C" {
 struct SAIInterfaceCallback;
 struct SSkirmishAICallback;
 
-bool java_preloadJNIEnv();
 bool java_unloadJNIEnv();
 
 bool java_initStatic(int interfaceId, const struct SAIInterfaceCallback* callback);
