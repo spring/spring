@@ -45,7 +45,7 @@ EXPORT(int) initStatic(int _interfaceId, const struct SAIInterfaceCallback* _cal
 	simpleLog_log("Initialized %s v%s AI Interface", myShortName, myVersion);
 
 	// initialize Java part of the interface and the JVM
-	if (java_initStatic(interfaceId, callback) && java_preloadJNIEnv()) {
+	if (java_initStatic(interfaceId, callback)) {
 		simpleLog_logL(LOG_LEVEL_NOTICE, "Initialization successful.");
 		return 0;
 	}
