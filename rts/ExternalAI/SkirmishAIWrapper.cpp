@@ -113,14 +113,14 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr) {
 			dieing = true;
-			skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+			skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 		} else {
 			initOk = library->Init(skirmishAIId, sCallback);
 		}
 	}
 
 	// check if initialization went ok
-	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
+	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
 		return false;
 
 	libManager->FetchSkirmishAILibrary(key);
@@ -184,14 +184,14 @@ void CSkirmishAIWrapper::Init() {
 
 	// init failed
 	LOG_L(L_ERROR, "Failed to handle init event: AI for team %d, error %d", teamId, error);
-	skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 }
 
 void CSkirmishAIWrapper::Kill()
 {
 	assert(Active());
 	// send release event
-	Release(skirmishAIHandler.GetLocalSkirmishAIDieReason(skirmishAIId));
+	Release(skirmishAIHandler.GetLocalKillFlag(skirmishAIId));
 
 	{
 		SCOPED_TIMER(timerName.c_str());

@@ -87,7 +87,7 @@ public:
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to mark as dieing
-	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalKillFlag()
 	 * @see DestroySkirmishAI()
 	 */
 	void SetSkirmishAIDieing(const uint8_t skirmishAIId) { hostSkirmishAIs[skirmishAIId].SetDieing(); }
@@ -97,7 +97,7 @@ public:
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
 	 * @see SetSkirmishAIDieing()
-	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalKillFlag()
 	 */
 	void DestroySkirmishAI(const uint8_t skirmishAIId);
 

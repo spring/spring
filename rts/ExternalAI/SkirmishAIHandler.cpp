@@ -15,50 +15,38 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
-#include <assert.h>
+#include <algorithm>
+#include <cassert>
 
 CR_BIND(CSkirmishAIHandler,)
 
 CR_REG_METADATA(CSkirmishAIHandler, (
-	CR_MEMBER(id_ai),
-	CR_MEMBER(team_localAIsInCreation),
-	CR_MEMBER(id_dieReason),
-	CR_MEMBER(id_libKey),
-	CR_MEMBER(gameInitialized),
+	CR_MEMBER(aiInstanceData),
+	CR_MEMBER(localTeamAIs),
+	CR_MEMBER(aiKillFlags),
+	CR_MEMBER(aiLibraryKeys),
+
+	CR_MEMBER(skirmishAIDataMap),
 	CR_MEMBER(luaAIShortNames),
-	CR_IGNORED(currentAIId)
+
+	CR_IGNORED(currentAIId),
+	CR_IGNORED(numSkirmishAIs),
+
+	CR_MEMBER(gameInitialized)
 ))
 
 
-// not extern'ed, so static
-static CSkirmishAIHandler* gSkirmishAIHandler = nullptr;
-
-CSkirmishAIHandler* CSkirmishAIHandler::GetInstance()
-{
-	if (gSkirmishAIHandler == nullptr) {
-		gSkirmishAIHandler = new CSkirmishAIHandler();
-	}
-
-	return gSkirmishAIHandler;
-}
-
-void CSkirmishAIHandler::FreeInstance(CSkirmishAIHandler* handler)
-{
-	assert(handler == gSkirmishAIHandler);
-	delete handler;
-	gSkirmishAIHandler = nullptr;
-}
-
+CSkirmishAIHandler skirmishAIHandler;
 
 
 void CSkirmishAIHandler::ResetState()
 {
-	id_ai.clear();
-	id_libKey.clear();
+	aiInstanceData.fill({});
+	aiLibraryKeys.fill({});
+	localTeamAIs.fill({});
+	aiKillFlags.fill(-1);
 
-	team_localAIsInCreation.clear();
-	id_dieReason.clear();
-
+	skirmishAIDataMap.clear();
 	luaAIShortNames.clear();
 
 	currentAIId = MAX_AIS;
@@ -66,9 +54,10 @@ void CSkirmishAIHandler::ResetState()
 }
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
+	const auto& aiDataCont = setup.GetAIStartingDataCont();
 
-	for (size_t a = 0; a < setup.GetAIStartingDataCont().size(); ++a) {
-		AddSkirmishAI(setup.GetAIStartingDataCont()[a], a);
+	for (const SkirmishAIData& aiData: aiDataCont) {
+		AddSkirmishAI(aiData, &aiData - &aiDataCont[0]);
 	}
 }
 
@@ -77,8 +66,9 @@ void CSkirmishAIHandler::LoadPreGame() {
 	if (gameInitialized)
 		return;
 
-	// Extract all Lua AI implementations short names
+	// extract all Lua AI implementation short names
 	const std::vector< std::vector<InfoItem> >& luaAIImpls = luaAIImplHandler.LoadInfos();
+
 	for (auto impl = luaAIImpls.cbegin(); impl != luaAIImpls.cend(); ++impl) {
 		for (auto info = impl->cbegin(); info != impl->cend(); ++info) {
 			if (info->key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
@@ -91,83 +81,98 @@ void CSkirmishAIHandler::LoadPreGame() {
 
 	gameInitialized = true;
 
-	// actualize the already added SkirmishAIData's
-	for (auto ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
-		CompleteSkirmishAI(ai->first);
+	// finalize already added SkirmishAIData's
+	for (size_t i = 0; i < aiInstanceData.size(); i++) {
+		CompleteSkirmishAI(i);
 	}
 }
 
 bool CSkirmishAIHandler::IsActiveSkirmishAI(const size_t skirmishAIId) const {
-	return (id_ai.find(skirmishAIId) != id_ai.end());
+	return IsValidSkirmishAI(aiInstanceData[skirmishAIId]);
 }
 
 SkirmishAIData* CSkirmishAIHandler::GetSkirmishAI(const size_t skirmishAIId) {
-	const auto ai = id_ai.find(skirmishAIId);
-	assert(ai != id_ai.end());
+	if (!IsActiveSkirmishAI(skirmishAIId))
+		return nullptr;
 
-	return &(ai->second);
+	return &aiInstanceData[skirmishAIId];
 }
 
 size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 {
-	size_t skirmishAIId = 0;
+	const auto pred = [&name](const SkirmishAIData& aiData) { return (name == aiData.name); };
+	const auto iter = std::find_if(aiInstanceData.begin(), aiInstanceData.end(), pred);
 
-	bool found = false;
-	for (id_ai_t::const_iterator ai = id_ai.begin(); ai != id_ai.end() && !found; ++ai) {
-		if (ai->second.name == name) {
-			skirmishAIId = ai->first;
-			found = true;
-		}
-	}
-	assert(found);
+	if (iter == aiInstanceData.end())
+		return -1;
 
-	return skirmishAIId;
+	return (iter - aiInstanceData.begin());
 }
 
-CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
 {
-	ids_t skirmishAIs;
+	std::vector<uint8_t> skirmishAIs;
 
-	for (auto ai = id_ai.cbegin(); ai != id_ai.cend(); ++ai) {
-		if ((ai->second.team == teamId) && ((hostPlayerId < 0) || (ai->second.hostPlayer == hostPlayerId))) {
-			skirmishAIs.push_back(ai->first);
-		}
+	// just loop over everything
+	for (const SkirmishAIData& aiData: aiInstanceData) {
+		if (aiData.team != teamId)
+			continue;
+		if ((hostPlayerId < 0) || (aiData.hostPlayer == hostPlayerId))
+			continue;
+
+		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
 	}
 
 	return skirmishAIs;
 }
 
-CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId)
 {
-	ids_t skirmishAIs;
+	std::vector<uint8_t> skirmishAIs;
 
-	for (auto ai = id_ai.cbegin(); ai != id_ai.cend(); ++ai) {
-		if (ai->second.hostPlayer == hostPlayerId) {
-			skirmishAIs.push_back(ai->first);
-		}
+	// just loop over everything
+	for (const SkirmishAIData& aiData: aiInstanceData) {
+		if (aiData.hostPlayer != hostPlayerId)
+			continue;
+
+		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
 	}
 
 	return skirmishAIs;
 }
 
 
-void CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t skirmishAIId) {
+bool CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t skirmishAIId) {
 	// if the ID is already taken, something went very wrong
-	assert(id_ai.find(skirmishAIId) == id_ai.end());
+	if (IsValidSkirmishAI(aiInstanceData[skirmishAIId]))
+		return false;
 
-	id_ai[skirmishAIId] = data;
-	team_localAIsInCreation.erase(data.team);
+	assert(IsValidSkirmishAI(data));
 
+	aiInstanceData[skirmishAIId] = data;
+	localTeamAIs[data.team] = {};
+
+	skirmishAIDataMap.emplace(skirmishAIId, data);
 	CompleteSkirmishAI(skirmishAIId);
+
+	numSkirmishAIs += 1;
+	return true;
 }
 
 bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
-	team_localAIsInCreation.erase(id_ai[skirmishAIId].team);
+	if (!IsActiveSkirmishAI(skirmishAIId))
+		return false;
 
-	id_dieReason.erase(skirmishAIId);
-	id_libKey.erase(skirmishAIId);
+	localTeamAIs[ aiInstanceData[skirmishAIId].team ] = {};
 
-	return id_ai.erase(skirmishAIId);
+	aiKillFlags[skirmishAIId] = -1;
+	aiLibraryKeys[skirmishAIId] = {};
+	aiInstanceData[skirmishAIId] = {};
+
+	skirmishAIDataMap.erase(skirmishAIId);
+
+	numSkirmishAIs -= 1;
+	return true;
 }
 
 
@@ -175,13 +180,13 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 	SkirmishAIData* aiData = GetSkirmishAI(skirmishAIId);
 
 	// fail, if a local AI is already in line for this team
-	assert(team_localAIsInCreation.find(aiData->team) == team_localAIsInCreation.end());
+	assert(!IsValidSkirmishAI(localTeamAIs[aiData->team]));
 	// fail, if the specified AI is not a local one
-	assert(CSkirmishAIHandler::IsLocalSkirmishAI(*aiData));
+	assert(IsLocalSkirmishAI(*aiData));
 
-	team_localAIsInCreation[aiData->team] = *aiData;
+	localTeamAIs[aiData->team] = *aiData;
 	aiData->isLuaAI = IsLuaAI(*aiData);
-	team_localAIsInCreation[aiData->team].isLuaAI = aiData->isLuaAI;
+	localTeamAIs[aiData->team].isLuaAI = aiData->isLuaAI;
 
 	// create instantly
 	eoh->CreateSkirmishAI(skirmishAIId);
@@ -189,47 +194,48 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 
 void CSkirmishAIHandler::CreateLocalSkirmishAI(const SkirmishAIData& aiData) {
 	// fail if a local AI is already in line for this team
-	assert(team_localAIsInCreation.find(aiData.team) == team_localAIsInCreation.end());
+	assert(!IsValidSkirmishAI(localTeamAIs[aiData.team]));
 	// fail, if the specified AI is not a local one
-	assert(CSkirmishAIHandler::IsLocalSkirmishAI(aiData));
+	assert(IsLocalSkirmishAI(aiData));
 
-	team_localAIsInCreation[aiData.team] = aiData;
-	team_localAIsInCreation[aiData.team].isLuaAI = IsLuaAI(aiData);
+	localTeamAIs[aiData.team] = aiData;
+	localTeamAIs[aiData.team].isLuaAI = IsLuaAI(aiData);
 
-	// this will be ignored; the real one is generated by the server
-	static const size_t unspecified_skirmishAIId = 0;
 	// send to server, as the AI was not specified in the start script
-	clientNet->Send(CBaseNetProtocol::Get().SendAICreated(aiData.hostPlayer, unspecified_skirmishAIId, aiData.team, aiData.name));
+	// (0 is bogus but will be ignored, server generates AI's real ID)
+	clientNet->Send(CBaseNetProtocol::Get().SendAICreated(aiData.hostPlayer, 0, aiData.team, aiData.name));
 }
 
 const SkirmishAIData* CSkirmishAIHandler::GetLocalSkirmishAIInCreation(const int teamId) const {
-	return (team_localAIsInCreation.find(teamId) != team_localAIsInCreation.end()) ? &(team_localAIsInCreation.find(teamId)->second) : nullptr;
+	if (IsValidSkirmishAI(localTeamAIs[teamId]))
+		return &localTeamAIs[teamId];
+	return nullptr;
 }
 
-void CSkirmishAIHandler::SetLocalSkirmishAIDieing(const size_t skirmishAIId, const int reason) {
-	const auto ai = id_ai.find(skirmishAIId);
+void CSkirmishAIHandler::SetLocalKillFlag(const size_t skirmishAIId, const int reason) {
+	const SkirmishAIData& aiData = aiInstanceData[skirmishAIId];
 
-	assert(ai != id_ai.end()); // is valid id?
-	assert(CSkirmishAIHandler::IsLocalSkirmishAI(ai->second)); // is local AI?
+	assert(IsActiveSkirmishAI(skirmishAIId)); // is valid id?
+	assert(IsLocalSkirmishAI(aiData)); // is local AI?
 
-	if (!GetSkirmishAI(skirmishAIId)->isLuaAI)
+	aiKillFlags[skirmishAIId] = reason;
+
+	if (!aiData.isLuaAI)
 		eoh->SetSkirmishAIDieing(skirmishAIId);
-
-	id_dieReason[skirmishAIId] = reason;
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
 }
 
 
 const SkirmishAIKey* CSkirmishAIHandler::GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) {
-	// fail, if the specified AI is not a local one
-	assert(CSkirmishAIHandler::IsLocalSkirmishAI(skirmishAIId));
+	// fail if the specified AI is not local
+	assert(IsLocalSkirmishAI(skirmishAIId));
 
-	const auto libKey = id_libKey.find(skirmishAIId);
+	const SkirmishAIKey& libKey = aiLibraryKeys[skirmishAIId];
 
 	// already resolved
-	if (libKey != id_libKey.end())
-		return &(libKey->second);
+	if (!libKey.IsUnspecified())
+		return &libKey;
 
 	// resolve it
 	const SkirmishAIData* aiData = GetSkirmishAI(skirmishAIId);
@@ -237,18 +243,13 @@ const SkirmishAIKey* CSkirmishAIHandler::GetLocalSkirmishAILibraryKey(const size
 
 	assert(!resKey.IsUnspecified());
 
-	id_libKey[skirmishAIId] = resKey;
-	return &(id_libKey[skirmishAIId]);
+	aiLibraryKeys[skirmishAIId] = resKey;
+	return &aiLibraryKeys[skirmishAIId];
 }
 
 
 bool CSkirmishAIHandler::IsLocalSkirmishAI(const size_t skirmishAIId) const {
-	const auto ai = id_ai.find(skirmishAIId);
-
-	if (ai != id_ai.end())
-		return CSkirmishAIHandler::IsLocalSkirmishAI(ai->second);
-
-	return false;
+	return (IsValidSkirmishAI(aiInstanceData[skirmishAIId]) && IsLocalSkirmishAI(aiInstanceData[skirmishAIId]));
 }
 
 bool CSkirmishAIHandler::IsLocalSkirmishAI(const SkirmishAIData& aiData) {
@@ -271,20 +272,18 @@ void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAI
 	if (aiKey == nullptr)
 		return;
 
-	const AILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
+	const auto infoIt = aiInfos.find(*aiKey);
 
-	if (inf == aiInfos.end())
+	if (infoIt == aiInfos.end())
 		return;
 
-	const CSkirmishAILibraryInfo& aiInfo = inf->second;
+	const CSkirmishAILibraryInfo& aiInfo = infoIt->second;
 	const std::vector<Option>& options = aiInfo.GetOptions();
 
-	id_ai_t::iterator ai = id_ai.find(skirmishAIId);
+	SkirmishAIData& aiData = aiInstanceData[skirmishAIId];
 
-	if (ai == id_ai.end())
+	if (!IsValidSkirmishAI(aiData))
 		return;
-
-	SkirmishAIData& aiData = ai->second;
 
 	for (auto oi = options.cbegin(); oi != options.cend(); ++oi) {
 		if (oi->typeCode == opt_error)
@@ -304,15 +303,14 @@ void CSkirmishAIHandler::CompleteSkirmishAI(const size_t skirmishAIId) {
 	if (!gameInitialized)
 		return;
 
-	auto ai = id_ai.find(skirmishAIId);
+	SkirmishAIData& aiData = aiInstanceData[skirmishAIId];
 
-	if (ai == id_ai.end())
+	if (!IsValidSkirmishAI(aiData))
 		return;
 
-	ai->second.isLuaAI = IsLuaAI(ai->second);
+	if ((aiData.isLuaAI = IsLuaAI(aiData)))
+		return;
 
-	if (!ai->second.isLuaAI) {
-		CompleteWithDefaultOptionValues(skirmishAIId);
-	}
+	CompleteWithDefaultOptionValues(skirmishAIId);
 }
 

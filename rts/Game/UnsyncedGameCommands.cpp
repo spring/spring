@@ -676,9 +676,9 @@ public:
 				LOG_L(L_WARNING, "Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			} else {
-				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
-				if (!skirmishAIIds.empty()) {
-					skirmishAIId = skirmishAIIds[0];
+				const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
+				if (!teamAIs.empty()) {
+					skirmishAIId = teamAIs[0];
 				} else {
 					LOG_L(L_WARNING, "Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
 					badArgs = true;
@@ -711,11 +711,8 @@ public:
 						// when the AIs team has no units left,
 						// the AI will be destroyed automatically
 					} else {
-						const SkirmishAIData* sai = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-						const bool isLocalSkirmishAI = (sai->hostPlayer == gu->myPlayerNum);
-						if (isLocalSkirmishAI) {
-							skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 3 /* = AI killed */);
-						}
+						if (skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId))
+							skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 3 /* = AI killed */);
 					}
 				} else {
 					// reload
@@ -822,7 +819,7 @@ public:
 				badArgs = true;
 			}
 			if (!badArgs) {
-				const std::set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+				const spring::unordered_set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
 				if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
 					LOG_L(L_WARNING, "Team to control: it is currently not supported to initialize Lua AIs mid-game");
 					badArgs = true;
@@ -877,38 +874,38 @@ public:
 			"Prints a list of all currently active Skirmish AIs") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-		CSkirmishAIHandler::id_ai_t::const_iterator ai;
+		const spring::unordered_map<uint8_t, SkirmishAIData>& ais = skirmishAIHandler.GetAllSkirmishAIs();
 
-		if (!ais.empty()) {
-			LOG("%s | %s | %s | %s | %s | %s",
-					"ID",
-					"Team",
-					"Local",
-					"Lua",
-					"Name",
-					"(Hosting player name) or (Short name & Version)");
-
-			for (ai = ais.begin(); ai != ais.end(); ++ai) {
-				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
-				std::string lastPart;
-
-				if (isLocal) {
-					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
-				} else {
-					lastPart = "(Host:) " + playerHandler.Player(gu->myPlayerNum)->name;
-				}
-
-				LOG("%i | %i | %s | %s | %s | %s",
-						ai->first,
-						ai->second.team,
-						(isLocal ? "yes" : "no "),
-						(ai->second.isLuaAI ? "yes" : "no "),
-						ai->second.name.c_str(),
-						lastPart.c_str());
-			}
-		} else {
+		if (ais.empty()) {
 			LOG("<There are no active Skirmish AIs in this game>");
+			return false;
+		}
+
+		LOG("%s | %s | %s | %s | %s | %s",
+				"ID",
+				"Team",
+				"Local",
+				"Lua",
+				"Name",
+				"(Hosting player name) or (Short name & Version)");
+
+		for (const auto& p: ais) {
+			const bool isLocal = (p.second.hostPlayer == gu->myPlayerNum);
+			std::string lastPart;
+
+			if (isLocal) {
+				lastPart = "(Key:)  " + p.second.shortName + " " + p.second.version;
+			} else {
+				lastPart = "(Host:) " + playerHandler.Player(gu->myPlayerNum)->name;
+			}
+
+			LOG("%i | %i | %s | %s | %s | %s",
+					p.first,
+					p.second.team,
+					(isLocal ? "yes" : "no "),
+					(p.second.isLuaAI ? "yes" : "no "),
+					p.second.name.c_str(),
+					lastPart.c_str());
 		}
 
 		return true;

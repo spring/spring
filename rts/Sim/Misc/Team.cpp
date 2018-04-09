@@ -267,7 +267,7 @@ void CTeam::AddPlayer(int playerNum)
 void CTeam::KillAIs()
 {
 	for (const auto& id: skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum)) {
-		skirmishAIHandler.SetLocalSkirmishAIDieing(id, 2 /* = team died */);
+		skirmishAIHandler.SetLocalKillFlag(id, 2 /* = team died */);
 	}
 }
 

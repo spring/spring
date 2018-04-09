@@ -59,7 +59,7 @@ bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_cal
 	if (ret == 0)
 		return true;
 
-	skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 
 	// init failed
 	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;

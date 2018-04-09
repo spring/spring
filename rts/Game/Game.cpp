@@ -730,7 +730,7 @@ void CGame::LoadSkirmishAIs()
 		return;
 
 	// create a Skirmish AI if required
-	const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
+	const std::vector<uint8_t>& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
 
 	if (!localAIs.empty()) {
 		loadscreen->SetLoadMessage("Loading Skirmish AIs");
