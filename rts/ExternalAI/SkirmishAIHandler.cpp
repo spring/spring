@@ -117,7 +117,7 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, 
 	for (const SkirmishAIData& aiData: aiInstanceData) {
 		if (aiData.team != teamId)
 			continue;
-		if ((hostPlayerId < 0) || (aiData.hostPlayer == hostPlayerId))
+		if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
 			continue;
 
 		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
