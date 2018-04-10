@@ -1342,6 +1342,18 @@ public:
 
 
 
+class NetPingActionExecutor : public IUnsyncedActionExecutor {
+public:
+	NetPingActionExecutor() : IUnsyncedActionExecutor("NetPing", "Send a ping request to the server") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		game->QueuePing(); // tell ClientReadNet to expect a ping
+		clientNet->Send(CBaseNetProtocol::Get().SendPing(gu->myPlayerNum, spring_tomsecs(spring_now())));
+		return true;
+	}
+};
+
 class NetMsgSmoothingActionExecutor : public IUnsyncedActionExecutor {
 public:
 	NetMsgSmoothingActionExecutor() : IUnsyncedActionExecutor(
@@ -3165,6 +3177,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
 
+	AddActionExecutor(new NetPingActionExecutor());
 	AddActionExecutor(new NetMsgSmoothingActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());

@@ -88,26 +88,34 @@ void CGame::SendClientProcUsage()
 }
 
 
-unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
+uint64_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPings) const
 {
 	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
 	// this number is effectively a measure of current user network conditions
 	std::shared_ptr<const netcode::RawPacket> packet;
 
-	unsigned int numQueuedFrames = 0;
-	unsigned int packetPeekIndex = 0;
+	uint32_t numQueuedFrames = 0;
+	uint32_t packetPeekIndex = 0;
 
 	while ((packet = clientNet->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
+			case NETMSG_PING: {
+				const spring_time pktSendTime = spring_msecs(*reinterpret_cast<const float*>(&packet->data[2]));
+				const spring_time pktRecvTime = spring_now();
+
+				LOG_L(L_INFO, "[Game::%s][NETMSG_PING] dt=%fms", __func__, pktRecvTime.toMilliSecsf() - pktSendTime.toMilliSecsf());
+
+				eventHandler.Pong(pktSendTime, pktRecvTime);
+				clientNet->DeleteBufferPacketAt(packetPeekIndex);
+
+				numPings -= 1;
+			} break;
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
 				// it's meant to indicate current game progress for clients fast-forwarding to current point the game
 				// NOTE: this event should be unsynced, since its time reference frame is not related to the current
 				// progress of the game from the client's point of view
-				//
-				// send the event to lua call-in
 				eventHandler.GameProgress(*reinterpret_cast<int32_t*>(packet->data + 1));
-				// pop it out of the net buffer
 				clientNet->DeleteBufferPacketAt(packetPeekIndex);
 			} break;
 
@@ -119,13 +127,20 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 		}
 	}
 
-	return numQueuedFrames;
+	return ((uint64_t(numPings) << 32) | numQueuedFrames);
 }
 
 void CGame::UpdateNumQueuedSimFrames()
 {
+	// if pings requested, just process NETMSG_{PING,GAME_FRAME_PROGRESS}
+	// (self-ping processing time is useful to know for testing purposes)
+	if (numQueuedPings > 0)
+		numQueuedPings = (GetNumQueuedSimFrameMessages(-1u, numQueuedPings) >> 32) & 0xFFFFFFFF;
+
+	// if host, we have no buffer
 	if (gameServer != nullptr)
 		return;
+
 
 	static spring_time lastUpdateTime = spring_gettime();
 
@@ -136,10 +151,11 @@ void CGame::UpdateNumQueuedSimFrames()
 	if (deltaTime.toMilliSecsf() < (500.0f / gs->speedFactor))
 		return;
 
+
 	// NOTE:
 	//   unnecessary to scan entire queue *unless* joining a running game
 	//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
-	const unsigned int numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
+	const uint32_t numQueuedFrames = (GetNumQueuedSimFrameMessages(-1u, 0) >> 0) & 0xFFFFFFFF;
 
 	if (globalConfig->useNetMessageSmoothingBuffer) {
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
@@ -1446,10 +1462,14 @@ void CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 			} break;
 
-			// if we received this packet here we are the host player
-			// (meaning the message was not processed), so discard it
+
+			// if we received this packet here we are the local host player
+			// (for which GetNumQueuedSimFrameMessages is not called where
+			// it would normally be processed), so discard it
+			case NETMSG_PING:
 			case NETMSG_GAME_FRAME_PROGRESS: {
 			} break;
+
 
 			default: {
 #ifdef SYNCDEBUG

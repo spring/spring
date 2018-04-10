@@ -65,10 +65,6 @@ void CEventClient::GameProgress(int gameFrame) {}
 void CEventClient::DrawLoadScreen() {}
 void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastline) {}
 
-void CEventClient::CollectGarbage() {}
-void CEventClient::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
-void CEventClient::MetalMapChanged(const int x, const int z) {}
-
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
 bool CEventClient::KeyRelease(int key) { return false; }

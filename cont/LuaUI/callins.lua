@@ -101,6 +101,7 @@ CallInsList = {
 	"AllowResourceTransfer",
 
 	"GameProgress",
+	"Pong",
 
 	"DownloadQueued",
 	"DownloadStarted",

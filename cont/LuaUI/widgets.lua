@@ -2001,6 +2001,27 @@ function widgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
   return
 end
 
+
+
+
+--------------------------------------------------------------------------------
+--
+--  Timing call-ins
+--
+
+function widgetHandler:GameProgress(frameNum)
+  for _,w in ipairs(self.GameProgressList) do
+    w:GameProgress(frameNum)
+  end
+end
+
+function widgetHander:Pong(pktSendTime, pktRecvTime)
+  for _,w in ipairs(self.PongList) do
+    w:Pong(pktSendTime, pktRecvTime)
+  end
+end
+
+
 --------------------------------------------------------------------------------
 --
 --  Download call-ins

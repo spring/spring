@@ -182,8 +182,7 @@ CGameServer::~CGameServer()
 	quitServer = true;
 
 	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
-	thread->join();
-	delete thread;
+	thread.join();
 	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
 
 	// after this, demoRecorder goes out of scope and its dtor is called
@@ -223,6 +222,7 @@ void CGameServer::Initialize()
 
 	// initialize players, teams & ais
 	{
+		pingTimeFilter.fill(spring_notime);
 		clientDrawFilter.fill({spring_notime, 0});
 		clientMuteFilter.fill({false, false});
 
@@ -236,7 +236,7 @@ void CGameServer::Initialize()
 		teams.resize(teamStartData.size());
 
 		players.resize(playerStartData.size());
-		if (demoReader != NULL) {
+		if (demoReader != nullptr) {
 			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
 			players.resize(std::max(demoPlayers, playerStartData.size()));
 			if (players.size() >= MAX_PLAYERS) {
@@ -284,7 +284,7 @@ void CGameServer::Initialize()
 	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
-	thread = new spring::thread(std::bind(&CGameServer::UpdateLoop, this));
+	thread = std::move(spring::thread(std::bind(&CGameServer::UpdateLoop, this)));
 
 	// Something in CGameServer::CGameServer borks the FPU control word
 	// maybe the threading, or something in CNet::InitServer() ??
@@ -817,7 +817,7 @@ void CGameServer::Update()
 		// if we are not playing a demo, or have no local client, or the
 		// local client is less than <GAME_SPEED> frames behind, advance
 		// <modGameTime>
-		if (demoReader == NULL || !HasLocalClient() || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
+		if (demoReader == nullptr || !HasLocalClient() || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
 			modGameTime += (tdif * internalSpeed);
 	}
 
@@ -850,7 +850,7 @@ void CGameServer::Update()
 
 	if (!gameHasStarted)
 		CheckForGameStart();
-	else if (!PreSimFrame() || demoReader != NULL)
+	else if (!PreSimFrame() || demoReader != nullptr)
 		CreateNewFrame(true, false);
 
 	if (hostif) {
@@ -1013,16 +1013,31 @@ static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishA
 void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const netcode::RawPacket> packet)
 {
 	const std::uint8_t* inbuf = packet->data;
+
 	const unsigned a = playerNum;
-	unsigned msgCode = (unsigned) inbuf[0];
+	const unsigned msgCode = (unsigned) inbuf[0];
 
 	switch (msgCode) {
 		case NETMSG_KEYFRAME: {
-			const int frameNum = *(int*)&inbuf[1];
+			const int frameNum = *(int*) &inbuf[1];
+
 			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
 			break;
 		}
+
+		case NETMSG_PING: {
+			if (inbuf[1] != playerNum) {
+				Message(spring::format(WrongPlayer, msgCode, playerNum, (unsigned)inbuf[1]));
+				break;
+			}
+
+			// limit to 50 pings per second
+			if (spring_diffmsecs(spring_now(), pingTimeFilter[playerNum]) >= 20) {
+				players[playerNum].SendData(CBaseNetProtocol::Get().SendPing(playerNum, *(reinterpret_cast<const float*>(&inbuf[2]))));
+				pingTimeFilter[playerNum] = spring_now();
+			}
+		} break;
 
 		case NETMSG_PAUSE:
 			if (inbuf[1] != a) {
@@ -1032,10 +1047,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			if (!inbuf[2])  // reset sync checker
 				syncErrorFrame = 0;
 			if (gamePausable || players[a].isLocal) { // allow host to pause even if nopause is set
-				if (!players[a].isLocal && players[a].spectator && demoReader == NULL) {
+				if (!players[a].isLocal && players[a].spectator && demoReader == nullptr) {
 					PrivateMessage(a, "Spectators cannot pause the game");
-				}
-				else {
+				} else {
 					frameTimeLeft = 0.0f;
 
 					if ((isPaused != !!inbuf[2]) || demoReader)
@@ -1049,17 +1063,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			break;
 
 		case NETMSG_USER_SPEED: {
-			if (!players[a].isLocal && players[a].spectator && demoReader == NULL) {
+			if (!players[a].isLocal && players[a].spectator && demoReader == nullptr) {
 				PrivateMessage(a, "Spectators cannot change game speed");
-			}
-			else {
-				float speed = *((float*) &inbuf[2]);
-				UserSpeedChange(speed, a);
+			} else {
+				UserSpeedChange(*((float*) &inbuf[2]), a);
 			}
 		} break;
 
 		case NETMSG_CPU_USAGE:
-			players[a].cpuUsage = *((float*)&inbuf[1]);
+			players[a].cpuUsage = *((float*) &inbuf[1]);
 			break;
 
 		case NETMSG_QUIT: {
@@ -1157,9 +1169,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(player, team, rdyState, *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])));
 
-					if (hostif) {
+					if (hostif != nullptr)
 						hostif->SendPlayerReady(a, rdyState);
-					}
 				}
 			} else {
 				Message(spring::format(NoStartposChange, a));
@@ -1178,7 +1189,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 
 				#ifndef ALLOW_DEMO_GODMODE
-				if (demoReader == NULL)
+				if (demoReader == nullptr)
 				#endif
 				{
 					Broadcast(packet); //forward data
@@ -1199,7 +1210,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 
 				#ifndef ALLOW_DEMO_GODMODE
-				if (demoReader == NULL)
+				if (demoReader == nullptr)
 				#endif
 				{
 					Broadcast(packet); //forward data
@@ -1218,9 +1229,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
+
 				if (noHelperAIs)
 					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
-				else if (demoReader == NULL)
+				else if (demoReader == nullptr)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid AICommand: %s", players[a].name.c_str(), ex.what()));
@@ -1233,13 +1245,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				netcode::UnpackPacket pckt(packet, 3);
 				unsigned char playerNum;
 				pckt >> playerNum;
+
 				if (playerNum != a) {
 					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
+
 				if (noHelperAIs)
 					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
-				else if (demoReader == NULL)
+				else if (demoReader == nullptr)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid AICommands: %s", players[a].name.c_str(), ex.what()));
@@ -1478,7 +1492,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						//players[player].team = 0;
 						players[player].spectator = true;
 
-						if (hostif)
+						if (hostif != nullptr)
 							hostif->SendPlayerDefeated(player);
 					} else {
 						// player is giving stuff from one of his AI teams
@@ -2488,7 +2502,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 	}
 
 	if (normalFrame || videoFrame || singleStep) {
-		assert(demoReader == NULL);
+		assert(demoReader == nullptr);
 
 		for (unsigned int i = 0; i < numNewFrames; ++i) {
 			++serverFrameNum;

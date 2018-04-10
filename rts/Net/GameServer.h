@@ -213,6 +213,8 @@ private:
 	std::vector<GameTeam> teams;
 	std::vector<unsigned char> winningAllyTeams;
 
+	std::array<spring_time, MAX_PLAYERS> pingTimeFilter;
+
 	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> clientDrawFilter;
 	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> clientMuteFilter;
 
@@ -268,7 +270,7 @@ private:
 	std::unique_ptr<AutohostInterface> hostif;
 
 	CGlobalUnsyncedRNG rng;
-	spring::thread* thread;
+	spring::thread thread;
 
 	mutable spring::recursive_mutex gameServerMutex;
 
