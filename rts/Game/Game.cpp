@@ -141,10 +141,11 @@ CGame* game = nullptr;
 CR_BIND(CGame, (std::string(""), std::string(""), nullptr))
 
 CR_REG_METADATA(CGame, (
-	CR_IGNORED(finishedLoading),
-	CR_IGNORED(numDrawFrames),
 	CR_MEMBER(lastSimFrame),
 	CR_IGNORED(lastNumQueuedSimFrames),
+
+	CR_IGNORED(numDrawFrames),
+	CR_IGNORED(numQueuedPings),
 
 	CR_IGNORED(frameStartTime),
 	CR_IGNORED(lastSimFrameTime),
@@ -162,6 +163,8 @@ CR_REG_METADATA(CGame, (
 
 	CR_IGNORED(chatSound),
 	CR_MEMBER(hideInterface),
+
+	CR_IGNORED(finishedLoading),
 	CR_MEMBER(gameOver),
 
 	CR_IGNORED(gameDrawMode),
@@ -177,6 +180,7 @@ CR_REG_METADATA(CGame, (
 
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
+
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
 
@@ -206,6 +210,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrame(-1)
 	, lastNumQueuedSimFrames(-1)
 	, numDrawFrames(0)
+	, numQueuedPings(0)
 
 	, frameStartTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())

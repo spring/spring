@@ -287,6 +287,7 @@ class CEventHandler
 
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void Pong(const spring_time pktSendTime, const spring_time pktRecvTime);
 		void MetalMapChanged(const int x, const int z);
 		/// @}
 

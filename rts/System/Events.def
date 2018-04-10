@@ -211,6 +211,7 @@
 	// System
 	SETUP_EVENT(CollectGarbage,  MANAGED_BIT)
 	SETUP_EVENT(DbgTimingInfo,   MANAGED_BIT | UNSYNCED_BIT) // informs about video-/sim-frame start & end times
+	SETUP_EVENT(Pong,            MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(MetalMapChanged, MANAGED_BIT)
 
 

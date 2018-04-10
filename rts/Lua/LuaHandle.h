@@ -247,6 +247,8 @@ class CLuaHandle : public CEventClient
 		void DrawInMiniMapBackground() override;
 
 		void GameProgress(int frameNum) override;
+		void Pong(const spring_time pktSendTime, const spring_time pktRecvTime) override;
+
 		//FIXME void MetalMapChanged(const int x, const int z);
 
 		void CollectGarbage() override;

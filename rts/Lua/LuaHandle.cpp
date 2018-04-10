@@ -1853,11 +1853,13 @@ void CLuaHandle::DrawInMiniMapBackground()
 }
 
 
-void CLuaHandle::GameProgress(int frameNum )
+void CLuaHandle::GameProgress(int frameNum)
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 3, __func__);
+
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
@@ -1865,6 +1867,23 @@ void CLuaHandle::GameProgress(int frameNum )
 
 	// call the routine
 	RunCallIn(L, cmdStr, 1, 0);
+}
+
+void CLuaHandle::Pong(const spring_time pktSendTime, const spring_time pktRecvTime)
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 1 + 1 + 2, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushnumber(L, pktSendTime.toMilliSecsf());
+	lua_pushnumber(L, pktRecvTime.toMilliSecsf());
+
+	// call the routine
+	RunCallIn(L, cmdStr, 2, 0);
 }
 
 

@@ -19,6 +19,8 @@ CALLIN_LIST = {
 	"Save",
 	"Load",
 
+	"Pong",
+
 	-- called when Lua is disabled or this client exits
 	"Shutdown",
 
