@@ -126,13 +126,13 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 /*******************************************************************************/
 
 template <typename T>
-static inline int SkipColorCodes(const std::u8string& text, T pos)
+static inline int SkipColorCodes(const std::u8string& text, T idx)
 {
-	while (text[pos] == CglFont::ColorCodeIndicator) {
-		pos += 4;
-		if (pos >= text.size()) { return -1; }
+	while (idx < text.size() && text[idx] == CglFont::ColorCodeIndicator) {
+		idx += 4;
 	}
-	return pos;
+
+	return (std::min(T(text.size()), idx));
 }
 
 
@@ -220,57 +220,58 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 	if (text.empty())
 		return 0.0f;
 
-	float w = 0.0f;
+	float curw = 0.0f;
 	float maxw = 0.0f;
 
-	const GlyphInfo* prv_g = nullptr;
-	const GlyphInfo* cur_g = nullptr;
+	char32_t prvGlyphIdx = 0;
+	char32_t curGlyphIdx = 0;
 
-	int pos = 0;
-	while (pos < text.length()) {
-		const char32_t u = utf8::GetNextChar(text, pos);
+	const GlyphInfo* prvGlyphPtr = nullptr;
+	const GlyphInfo* curGlyphPtr = nullptr;
 
-		switch (u) {
-			// inlined colorcode
-			case ColorCodeIndicator:
-				pos = SkipColorCodes(text, pos - 1);
-				if (pos < 0)
-					pos = text.length();
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
+		switch (curGlyphIdx = utf8::GetNextChar(text, idx)) {
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
+			case ColorCodeIndicator: {
+				idx = SkipColorCodes(text, idx - 1);
+			} break;
 
-				break;
+			// reset color; no-op since GetNextChar increments idx
+			case ColorResetIndicator: {
+			} break;
 
-			// reset color
-			case ColorResetIndicator:
-				break;
+			case 0x0d: {
+				// CR; fall-through
+				idx += (idx < end && text[idx] == 0x0a);
+			}
+			case 0x0a: {
+				// LF
+				if (prvGlyphPtr != nullptr)
+					curw += GetGlyph(prvGlyphIdx).advance;
 
-			// newline
-			case 0x0d: // CR+LF
-				pos += (pos < text.length() && text[pos] == 0x0a);
-			case 0x0a: // LF
-				if (prv_g != nullptr)
-					w += prv_g->advance;
-				if (w > maxw)
-					maxw = w;
-				w = 0.0f;
-				prv_g = nullptr;
-				break;
+				maxw = std::max(curw, maxw);
+				curw = 0.0f;
+
+				prvGlyphPtr = nullptr;
+			} break;
 
 			// printable char
 			default: {
-				cur_g = &GetGlyph(u);
-				if (prv_g != nullptr)
-					w += GetKerning(*prv_g, *cur_g);
-				prv_g = cur_g;
-			}
+				curGlyphPtr = &GetGlyph(curGlyphIdx);
+
+				if (prvGlyphPtr != nullptr)
+					curw += GetKerning(GetGlyph(prvGlyphIdx), *curGlyphPtr);
+
+				prvGlyphPtr = curGlyphPtr;
+				prvGlyphIdx = curGlyphIdx;
+			} break;
 		}
 	}
 
-	if (prv_g != nullptr)
-		w += prv_g->advance;
-	if (w > maxw)
-		maxw = w;
+	if (prvGlyphPtr != nullptr)
+		curw += GetGlyph(prvGlyphIdx).advance;
 
-	return maxw;
+	return (std::max(curw, maxw));
 }
 
 
@@ -282,42 +283,46 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 		return 0.0f;
 	}
 
-	float h = 0.0f, d = GetLineHeight() + GetDescender();
+	float h = 0.0f;
+	float d = GetLineHeight() + GetDescender();
+
 	unsigned int multiLine = 1;
 
-	int pos = 0;
-	while (pos < text.length()) {
-		const char32_t u = utf8::GetNextChar(text, pos);
+	for (int idx = 0, end = int(text.length()); idx < end; ) {
+		const char32_t u = utf8::GetNextChar(text, idx);
+
 		switch (u) {
-			// inlined colorcode
-			case ColorCodeIndicator:
-				pos = SkipColorCodes(text, pos - 1);
-				if (pos < 0)
-					pos = text.length();
+			// inlined colorcode; subtract 1 since GetNextChar increments idx
+			case ColorCodeIndicator: {
+				idx = SkipColorCodes(text, idx - 1);
+			} break;
 
-				break;
+			// reset color; no-op since GetNextChar increments idx
+			case ColorResetIndicator: {
+			} break;
 
-			// reset color
-			case ColorResetIndicator:
-				break;
-
-			// newline
-			case 0x0d: // CR+LF
-				pos += (pos < text.length() && text[pos] == 0x0a);
-			case 0x0a: // LF
+			case 0x0d: {
+				// CR; fall-through
+				idx += (idx < end && text[idx] == 0x0a);
+			}
+			case 0x0a: {
+				// LF
 				multiLine++;
 				d = GetLineHeight() + GetDescender();
-				break;
+			} break;
 
 			// printable char
-			default:
+			default: {
 				const GlyphInfo& g = GetGlyph(u);
-				if (g.descender < d) d = g.descender;
-				if (multiLine < 2 && g.height > h) h = g.height; // only calc height for the first line
+
+				d = std::min(d, g.descender);
+				h = std::max(h, g.height * (multiLine < 2)); // only calculate height for the first line
+			} break;
 		}
 	}
 
-	if (multiLine > 1) d -= ((multiLine - 1) * GetLineHeight());
+	d -= ((multiLine - 1) * GetLineHeight() * (multiLine > 1));
+
 	if (descender != nullptr) *descender = d;
 	if (numLines != nullptr) *numLines = multiLine;
 
