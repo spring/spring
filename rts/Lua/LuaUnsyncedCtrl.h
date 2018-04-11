@@ -15,6 +15,7 @@ class LuaUnsyncedCtrl {
 		static bool PushEntries(lua_State* L);
 
 	public:
+		static int Ping(lua_State* L);
 		static int Echo(lua_State* L);
 		static int Log(lua_State* L);
 		static int SendMessage(lua_State* L);

@@ -114,6 +114,7 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 {
+	REGISTER_LUA_CFUNC(Ping);
 	REGISTER_LUA_CFUNC(Echo);
 	REGISTER_LUA_CFUNC(Log);
 
@@ -289,7 +290,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, int index, bool synced)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "[%s] projectile ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		luaL_error(L, "[%s] projectile ID parameter in %s() not a number\n", __func__, caller);
 		return nullptr;
 	}
 
@@ -308,7 +309,7 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __func__, caller);
 		return nullptr;
 	}
 
@@ -318,7 +319,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 static inline CFeature* ParseRawFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __func__, caller);
 		return nullptr;
 	}
 
@@ -399,6 +400,16 @@ static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index
 //  The call-outs
 //
 
+int LuaUnsyncedCtrl::Ping(lua_State* L)
+{
+	// pre-game ping would not be handled properly, send via GUI
+	if (guihandler == nullptr)
+		return 0;
+
+	guihandler->RunCustomCommands({"@@netping"}, false);
+	return 0;
+}
+
 int LuaUnsyncedCtrl::Echo(lua_State* L)
 {
 	return LuaUtils::Echo(L);
@@ -412,24 +423,22 @@ int LuaUnsyncedCtrl::Log(lua_State* L)
 static string ParseMessage(lua_State* L, const string& msg)
 {
 	string::size_type start = msg.find("<PLAYER");
-	if (start == string::npos) {
+	if (start == string::npos)
 		return msg;
-	}
 
 	const char* number = msg.c_str() + start + strlen("<PLAYER");
 	char* endPtr;
 	const int playerID = (int)strtol(number, &endPtr, 10);
-	if ((endPtr == number) || (*endPtr != '>')) {
-		luaL_error(L, "Bad message format: %s", msg.c_str());
-	}
 
-	if (!playerHandler.IsValidPlayer(playerID)) {
+	if ((endPtr == number) || (*endPtr != '>'))
+		luaL_error(L, "Bad message format: %s", msg.c_str());
+
+	if (!playerHandler.IsValidPlayer(playerID))
 		luaL_error(L, "Invalid message playerID: %c", playerID); //FIXME
-	}
+
 	const CPlayer* player = playerHandler.Player(playerID);
-	if ((player == NULL) || !player->active || player->name.empty()) {
+	if ((player == nullptr) || !player->active || player->name.empty())
 		luaL_error(L, "Invalid message playerID: %c", playerID);
-	}
 
 	const string head = msg.substr(0, start);
 	const string tail = msg.substr(endPtr - msg.c_str() + 1);
@@ -450,42 +459,41 @@ int LuaUnsyncedCtrl::SendMessage(lua_State* L)
 	return 0;
 }
 
-
 int LuaUnsyncedCtrl::SendMessageToSpectators(lua_State* L)
 {
-	if (gu->spectating) {
+	if (gu->spectating)
 		PrintMessage(L, luaL_checksstring(L, 1));
-	}
+
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (playerID == gu->myPlayerNum) {
+
+	if (playerID == gu->myPlayerNum)
 		PrintMessage(L, luaL_checksstring(L, 2));
-	}
+
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (teamID == gu->myTeam) {
+
+	if (teamID == gu->myTeam)
 		PrintMessage(L, luaL_checksstring(L, 2));
-	}
+
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 {
 	const int allyTeamID = luaL_checkint(L, 1);
-	if (allyTeamID == gu->myAllyTeam) {
+
+	if (allyTeamID == gu->myAllyTeam)
 		PrintMessage(L, luaL_checksstring(L, 2));
-	}
+
 	return 0;
 }
 
@@ -494,27 +502,29 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
-	const string soundFile = luaL_checksstring(L, 1);
-	bool success = sound->LoadSoundDefs(soundFile, SPRING_VFS_ZIP_FIRST);
+	const bool success = sound->LoadSoundDefs(luaL_checksstring(L, 1), SPRING_VFS_ZIP_FIRST);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);
 		return 1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	bool success = false;
-	const string soundFile = luaL_checksstring(L, 1);
-	const unsigned int soundID = sound->GetSoundId(soundFile);
+
+	const unsigned int soundID = sound->GetSoundId(luaL_checksstring(L, 1));
+
 	if (soundID > 0) {
 		float volume = luaL_optfloat(L, 2, 1.0f);
+
 		float3 pos;
 		float3 speed;
+
 		bool pos_given = false;
 		bool speed_given = false;
 
@@ -524,8 +534,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			pos_given = true;
 			index += 3;
 
-			if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8))
-			{
+			if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
 				speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
 				speed_given = true;
 				index += 3;
@@ -578,28 +587,25 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);
 		return 1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }
 
 
 int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
-	const string soundFile = luaL_checksstring(L, 1);
-	const float volume = luaL_optnumber(L, 2, 1.0f);
-	bool enqueue = luaL_optboolean(L, 3, false);
-
-	Channels::BGMusic->StreamPlay(soundFile, volume, enqueue);
+	// file, volume, enqueue
+	Channels::BGMusic->StreamPlay(luaL_checksstring(L, 1), luaL_optnumber(L, 2, 1.0f), luaL_optboolean(L, 3, false));
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, true);
 		return 1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
@@ -775,7 +781,7 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 			if (!lua_israwnumber(L, -2))
 				continue;
 
-			const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
+			const CUnit* unit = ParseAllyUnit(L, __func__, unitArg);
 
 			if (unit == NULL)
 				continue;
@@ -783,7 +789,7 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 			commandDrawer->AddLuaQueuedUnit(unit);
 		}
 	} else {
-		const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+		const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
 		if (unit != NULL) {
 			commandDrawer->AddLuaQueuedUnit(unit);
@@ -858,46 +864,43 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 
 int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SelectUnitArray()");
-	}
 
 	// clear the current units, unless the append flag is present
-	if (!luaL_optboolean(L, 2, false)) {
+	if (!luaL_optboolean(L, 2, false))
 		selectedUnitsHandler.ClearSelected();
-	}
 
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	constexpr int tableIdx = 1;
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {     // avoid 'n'
-			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -1); // the value
-			if (unit != NULL) {
+			CUnit* unit = ParseSelectUnit(L, __func__, -1); // the value
+
+			if (unit != nullptr)
 				selectedUnitsHandler.AddUnit(unit);
-			}
 		}
 	}
+
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SelectUnitMap()");
-	}
 
 	// clear the current units, unless the append flag is present
-	if (!luaL_optboolean(L, 2, false)) {
+	if (!luaL_optboolean(L, 2, false))
 		selectedUnitsHandler.ClearSelected();
-	}
 
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	constexpr int tableIdx = 1;
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
-			CUnit* unit = ParseSelectUnit(L, __FUNCTION__, -2); // the key
-			if (unit != NULL) {
+			CUnit* unit = ParseSelectUnit(L, __func__, -2); // the key
+
+			if (unit != nullptr)
 				selectedUnitsHandler.AddUnit(unit);
-			}
 		}
 	}
 
@@ -1573,7 +1576,7 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
 
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1588,7 +1591,7 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
 
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1603,7 +1606,7 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
 
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1624,7 +1627,7 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 {
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1636,7 +1639,7 @@ int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitSelectionVolumeData(lua_State* L)
 {
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1650,7 +1653,7 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
 
-	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -1662,7 +1665,7 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 {
-	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -1674,7 +1677,7 @@ int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
 {
-	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -1747,10 +1750,8 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 #endif
 
-	if (!dname.empty() && !FileSystem::CreateDirectory(dname)) {
-		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"",
-		           dname.c_str(), fname.c_str());
-	}
+	if (!dname.empty() && !FileSystem::CreateDirectory(dname))
+		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
 
 	const int numBytes = fhVFS.FileSize();
 	char* buffer = new char[numBytes];
@@ -1786,20 +1787,19 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 {
-	if ((guihandler == NULL) || gs->noHelperAIs) {
+	if ((guihandler == nullptr) || gs->noHelperAIs)
 		return 0;
-	}
 
 	vector<string> cmds;
 
 	if (lua_istable(L, 1)) { // old style -- table
-		const int table = 1;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		constexpr int tableIdx = 1;
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -1)) {
 				string action = lua_tostring(L, -1);
-				if (action[0] != '@') {
+				if (action[0] != '@')
 					action = "@@" + action;
-				}
+
 				cmds.push_back(action);
 			}
 		}
@@ -1807,9 +1807,9 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 	else if (lua_israwstring(L, 1)) { // new style -- function parameters
 		for (int i = 1; lua_israwstring(L, i); i++) {
 			string action = lua_tostring(L, i);
-			if (action[0] != '@') {
+			if (action[0] != '@')
 				action = "@@" + action;
-			}
+
 			cmds.push_back(action);
 		}
 	}
@@ -1822,7 +1822,6 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
 	guihandler->RunCustomCommands(cmds, false);
 	configHandler->EnableWriting(true);
-
 	return 0;
 }
 
@@ -1831,9 +1830,9 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 static int SetActiveCommandByIndex(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	const int args = lua_gettop(L); // number of arguments
 	const int cmdIndex = lua_toint(L, 1) - CMD_INDEX_OFFSET;
 	int button = luaL_optint(L, 2, 1); // LMB
@@ -1861,19 +1860,18 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 static int SetActiveCommandByAction(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	const int args = lua_gettop(L); // number of arguments
 	const string text = lua_tostring(L, 1);
 	const Action action(text);
+
 	CKeySet ks;
-	if (args >= 2) {
-		const string ksText = lua_tostring(L, 2);
-		ks.Parse(ksText);
-	}
-	const bool success = guihandler->SetActiveCommand(action, ks, 0);
-	lua_pushboolean(L, success);
+	if (args >= 2)
+		ks.Parse(lua_tostring(L, 2));
+
+	lua_pushboolean(L, guihandler->SetActiveCommand(action, ks, 0));
 	return 1;
 }
 
@@ -2254,7 +2252,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	if (gs->noHelperAIs)
 		return 0;
 
-	CUnit* unit = ParseRawUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseRawUnit(L, __func__, 1);
 
 	if (unit == NULL)
 		return 0;
@@ -2285,13 +2283,13 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 static void ParseUnitMap(lua_State* L, const char* caller,
                          int table, vector<int>& unitIDs)
 {
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		luaL_error(L, "%s(): error parsing unit map", caller);
-	}
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
-			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -2); // the key
-			if (unit != NULL && !unit->noSelect) {
+			CUnit* unit = ParseCtrlUnit(L, __func__, -2); // the key
+			if (unit != nullptr && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
@@ -2302,12 +2300,12 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 static void ParseUnitArray(lua_State* L, const char* caller,
                            int table, vector<int>& unitIDs)
 {
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		luaL_error(L, "%s(): error parsing unit array", caller);
-	}
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
-			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -1); // the value
+			CUnit* unit = ParseCtrlUnit(L, __func__, -1); // the value
 			if (unit != NULL && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
@@ -2345,12 +2343,11 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 	if (!CanGiveOrders(L))
 		return 1;
 
-	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 1);
+	Command cmd = LuaUtils::ParseCommand(L, __func__, 1);
 
 	selectedUnitsHandler.GiveCommand(cmd);
 
 	lua_pushboolean(L, true);
-
 	return 1;
 }
 
@@ -2362,13 +2359,13 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 		return 1;
 	}
 
-	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL || unit->noSelect) {
+	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+	if (unit == nullptr || unit->noSelect) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
+	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
@@ -2386,7 +2383,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitMap(L, __FUNCTION__, 1, unitIDs);
+	ParseUnitMap(L, __func__, 1, unitIDs);
 	const int count = (int)unitIDs.size();
 
 	if (count <= 0) {
@@ -2394,7 +2391,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
+	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
 	vector<Command> commands;
 	commands.push_back(cmd);
@@ -2414,7 +2411,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitArray(L, __FUNCTION__, 1, unitIDs);
+	ParseUnitArray(L, __func__, 1, unitIDs);
 	const int count = (int)unitIDs.size();
 
 	if (count <= 0) {
@@ -2422,7 +2419,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
+	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
 	vector<Command> commands;
 	commands.push_back(cmd);
@@ -2442,11 +2439,11 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitMap(L, __FUNCTION__, 1, unitIDs);
+	ParseUnitMap(L, __func__, 1, unitIDs);
 
 	// commands
 	vector<Command> commands;
-	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
+	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
 
 	if (unitIDs.empty() || commands.empty()) {
 		lua_pushboolean(L, false);
@@ -2471,11 +2468,11 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 
 	// unitIDs
 	vector<int> unitIDs;
-	ParseUnitArray(L, __FUNCTION__, 1, unitIDs);
+	ParseUnitArray(L, __func__, 1, unitIDs);
 
 	// commands
 	vector<Command> commands;
-	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
+	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
 
 	bool pairwise = false;
 	if (args >= 3)
@@ -2503,46 +2500,43 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1);
+	const string msg = GetRawMsg(L, __func__, 1);
 	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
-	const string mode = luaL_optstring(L, 2, "");
-	unsigned char modeNum = 0;
-	if ((mode == "s") || (mode == "specs")) {
-		modeNum = 's';
-	}
-	else if ((mode == "a") || (mode == "allies")) {
-		modeNum = 'a';
-	}
-	else if (!mode.empty()) {
+	const char* mode = luaL_optstring(L, 2, "");
+
+	if (mode[0] != 'a' && mode[0] != 's')
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
-	}
+
 	try {
-		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, mode[0], data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaUIMsg() packet error: %s", ex.what());
 	}
+
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1);
+	const string msg = GetRawMsg(L, __func__, 1);
 	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
+
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaGaiaMsg() packet error: %s", ex.what());
 	}
+
 	return 0;
 }
 
 
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1);
+	const string msg = GetRawMsg(L, __func__, 1);
 	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
@@ -2556,7 +2550,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
 {
 	if (luaMenu != nullptr)
-		luaMenu->RecvLuaMsg(GetRawMsg(L, __FUNCTION__, 1), gu->myPlayerNum);
+		luaMenu->RecvLuaMsg(GetRawMsg(L, __func__, 1), gu->myPlayerNum);
 
 	return 0;
 }
@@ -2570,18 +2564,19 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 		return 0;
 
 
-	const string shareType = luaL_checksstring(L, 1);
-	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
+	const char* shareType = lua_tostring(L, 1);
+	const float shareLevel = Clamp(luaL_checkfloat(L, 2), 0.0f, 1.0f);
 
-	if (shareType == "metal") {
+	if (shareType[0] == 'm') {
 		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler.Team(gu->myTeam)->resShare.energy));
+		return 0;
 	}
-	else if (shareType == "energy") {
+	if (shareType[0] == 'e') {
 		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler.Team(gu->myTeam)->resShare.metal, shareLevel));
+		return 0;
 	}
-	else {
-		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
-	}
+
+	LOG_L(L_WARNING, "[%s] unknown resource-type \"%s\"", __func__, shareType);
 	return 0;
 }
 
@@ -2592,35 +2587,38 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||
-	    ((args >= 3) && !lua_isnumber(L, 3))) {
+	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) || ((args >= 3) && !lua_isnumber(L, 3)))
 		luaL_error(L, "Incorrect arguments to ShareResources()");
-	}
+
 	const int teamID = lua_toint(L, 1);
-	if (!teamHandler.IsValidTeam(teamID)) {
+	if (!teamHandler.IsValidTeam(teamID))
 		return 0;
-	}
+
 	const CTeam* team = teamHandler.Team(teamID);
-	if ((team == NULL) || team->isDead) {
+	if ((team == nullptr) || team->isDead)
 		return 0;
-	}
-	const string& type = lua_tostring(L, 2);
-	if (type == "units") {
+
+	const char* type = lua_tostring(L, 2);
+	if (type[0] == 'u') {
 		// update the selection, and clear the unit command queues
-		Command c(CMD_STOP);
-		selectedUnitsHandler.GiveCommand(c, false);
+		selectedUnitsHandler.GiveCommand(Command(CMD_STOP), false);
 		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnitsHandler.ClearSelected();
+		return 0;
 	}
-	else if (args >= 3) {
-		const float amount = lua_tofloat(L, 3);
-		if (type == "metal") {
-			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
-		}
-		else if (type == "energy") {
-			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
-		}
+
+	if (args < 3)
+		return 0;
+
+	if (type[0] == 'm') {
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, lua_tofloat(L, 3), 0.0f));
+		return 0;
 	}
+	if (type[0] == 'e') {
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, lua_tofloat(L, 3)));
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -2636,7 +2634,6 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	eventHandler.LastMessagePosition(pos);
-
 	return 0;
 }
 
@@ -2645,9 +2642,9 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 {
-	if (inMapDrawer == NULL) {
+	if (inMapDrawer == nullptr)
 		return 0;
-	}
+
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
@@ -2666,9 +2663,9 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 {
-	if (inMapDrawer == NULL) {
+	if (inMapDrawer == nullptr)
 		return 0;
-	}
+
 	const float3 pos1(luaL_checkfloat(L, 1),
 	                  luaL_checkfloat(L, 2),
 	                  luaL_checkfloat(L, 3));
@@ -2689,9 +2686,9 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 {
-	if (inMapDrawer == NULL) {
+	if (inMapDrawer == nullptr)
 		return 0;
-	}
+
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
@@ -2707,7 +2704,7 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
-	if (guihandler)
+	if (guihandler != nullptr)
 		guihandler->SetDrawSelectionInfo(luaL_checkboolean(L, 1));
 
 	return 0;
@@ -2719,7 +2716,7 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 {
-	if (guihandler)
+	if (guihandler != nullptr)
 		guihandler->SetBuildSpacing(luaL_checkinteger(L, 1));
 
 	return 0;
@@ -2727,7 +2724,7 @@ int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 {
-	if (guihandler)
+	if (guihandler != nullptr)
 		guihandler->SetBuildFacing(luaL_checkint(L, 1));
 
 	return 0;
@@ -2737,9 +2734,8 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 
 int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetAtmosphere()");
-	}
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
@@ -2874,16 +2870,15 @@ int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
 
 	const int aiTeam = luaL_checkint(L, 1);
 	const char* inData = luaL_checkstring(L, 2);
 
 	std::vector<const char*> outData;
 
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
 
 	// push the AI response(s)
