@@ -1456,11 +1456,11 @@ void CUnit::ApplyImpulse(const float3& impulse) {
 /******************************************************************************/
 /******************************************************************************/
 
-CMatrix44f CUnit::GetTransformMatrix(const bool synced) const
+CMatrix44f CUnit::GetTransformMatrix(bool synced, bool fullread) const
 {
 	float3 interPos = synced ? pos : drawPos;
 
-	if (!synced && !gu->spectatingFullView)
+	if (!synced && !fullread && !gu->spectatingFullView)
 		interPos += GetErrorVector(gu->myAllyTeam);
 
 	return (ComposeMatrix(interPos));
