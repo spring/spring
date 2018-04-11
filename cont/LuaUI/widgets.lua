@@ -2015,9 +2015,9 @@ function widgetHandler:GameProgress(frameNum)
   end
 end
 
-function widgetHander:Pong(pktSendTime, pktRecvTime)
+function widgetHander:Pong(pingTag, pktSendTime, pktRecvTime)
   for _,w in ipairs(self.PongList) do
-    w:Pong(pktSendTime, pktRecvTime)
+    w:Pong(pingTag, pktSendTime, pktRecvTime)
   end
 end
 

@@ -2011,9 +2011,9 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-function gadgetHandler:Pong(pktSendTime, pktRecvTime)
+function gadgetHandler:Pong(pingTag, pktSendTime, pktRecvTime)
   for _,g in r_ipairs(self.PongList) do
-    g:Pong(pktSendTime, pktRecvTime)
+    g:Pong(pingTag, pktSendTime, pktRecvTime)
   end
 end
 

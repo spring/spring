@@ -100,12 +100,12 @@ uint64_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPin
 	while ((packet = clientNet->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
 			case NETMSG_PING: {
-				const spring_time pktSendTime = spring_msecs(*reinterpret_cast<const float*>(&packet->data[2]));
+				const spring_time pktSendTime = spring_msecs(*reinterpret_cast<const float*>(&packet->data[3]));
 				const spring_time pktRecvTime = spring_now();
 
-				LOG_L(L_INFO, "[Game::%s][NETMSG_PING] dt=%fms", __func__, pktRecvTime.toMilliSecsf() - pktSendTime.toMilliSecsf());
+				// LOG_L(L_INFO, "[Game::%s][NETMSG_PING] tag=%u dt=%fms", __func__, packet->data[2], pktRecvTime.toMilliSecsf() - pktSendTime.toMilliSecsf());
 
-				eventHandler.Pong(pktSendTime, pktRecvTime);
+				eventHandler.Pong(packet->data[2], pktSendTime, pktRecvTime);
 				clientNet->DeleteBufferPacketAt(packetPeekIndex);
 
 				numPings -= 1;

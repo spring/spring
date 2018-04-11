@@ -116,7 +116,7 @@ enum NETMSG {
 
 	NETMSG_GAME_FRAME_PROGRESS= 77, // int32_t frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
 
-	NETMSG_PING = 78, // uint8_t playerNum
+	NETMSG_PING = 78, // uint8_t playerNum, uint8_t pingTag, float localTime
 
 	NETMSG_LAST //max types of netmessages, internal only
 };
@@ -192,7 +192,7 @@ public:
 	PacketType SendLogMsg(uint8_t playerNum, uint8_t logMsgLvl, const std::string& strData);
 	PacketType SendLuaMsg(uint8_t playerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& rawData);
 	PacketType SendCurrentFrameProgress(int32_t frameNum);
-	PacketType SendPing(uint8_t playerNum, float localTime);
+	PacketType SendPing(uint8_t playerNum, uint8_t pingTag, float localTime);
 
 	PacketType SendPlayerStat(uint8_t playerNum, const PlayerStatistics& currentStats);
 	PacketType SendTeamStat(uint8_t teamNum, const TeamStatistics& currentStats);
