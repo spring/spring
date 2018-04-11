@@ -24,11 +24,6 @@ public:
 		assert(context != nullptr && frealloc != nullptr);
 		return frealloc(context, NULL, 0, n);
 	}
-	template<typename T>
-	T* alloc() const {
-		assert(context != nullptr && frealloc != nullptr);
-		return (T*) frealloc(context, NULL, 0, sizeof(T));
-	}
 	void SetContext(void* newLcd, lua_Alloc newfrealloc, lua_CFunction newPanic) { context = newLcd; frealloc = newfrealloc; panic = newPanic; }
 	lua_CFunction GetPanic() const { return panic; }
 	void* GetContext() const { return context; }
@@ -43,7 +38,7 @@ void freeProtector(void *m) {
 	assert(false);
 }
 
-void* allocProtector() {
+void* allocProtector(size_t size) {
 	assert(false);
 	return nullptr;
 }
@@ -391,7 +386,7 @@ CR_REG_METADATA(creg_Node, (
 ))
 
 
-CR_BIND_POOL(creg_Table, , luaContext.alloc<creg_Table>, freeProtector)
+CR_BIND_POOL(creg_Table, , luaContext.alloc, freeProtector)
 CR_REG_METADATA(creg_Table, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(flags),
@@ -414,7 +409,7 @@ CR_REG_METADATA(creg_LocVar, (
 ))
 
 
-CR_BIND_POOL(creg_Proto, , luaContext.alloc<creg_Proto>, freeProtector)
+CR_BIND_POOL(creg_Proto, , luaContext.alloc, freeProtector)
 CR_REG_METADATA(creg_Proto, (
 	CR_COMMON_HEADER(),
 	CR_IGNORED(k), // vector
@@ -441,7 +436,7 @@ CR_REG_METADATA(creg_Proto, (
 ))
 
 
-CR_BIND_POOL(creg_UpVal, , luaContext.alloc<creg_UpVal>, freeProtector)
+CR_BIND_POOL(creg_UpVal, , luaContext.alloc, freeProtector)
 CR_REG_METADATA(creg_UpVal, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(v),
@@ -495,7 +490,7 @@ CR_REG_METADATA(creg_global_State, (
 	CR_SERIALIZER(Serialize)
 ))
 
-CR_BIND_POOL(creg_lua_State, , luaContext.alloc<creg_lua_State>, freeProtector)
+CR_BIND_POOL(creg_lua_State, , luaContext.alloc, freeProtector)
 CR_REG_METADATA(creg_lua_State, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(status),

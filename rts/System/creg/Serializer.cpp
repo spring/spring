@@ -359,6 +359,8 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		char isEmbedded = oRef.isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
 		stream->write((char*)&isEmbedded, sizeof(char));
+		if (!isEmbedded && oRef.class_ != nullptr && oRef.class_->HasGetSize())
+			WriteVarSizeUInt(stream, oRef.class_->CallGetSizeProc(oRef.ptr));
 	}
 
 	// Calculate a checksum for metadata verification
@@ -550,11 +552,18 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 		char isEmbedded;
 		ReadVarSizeUInt(stream, &classRefIndex);
 		stream->read((char*)&isEmbedded, sizeof(char));
+		Class* c = classRefs[classRefIndex];
 
 		objects[a].obj = NULL;
 		if (!isEmbedded) {
+			size_t size;
+			if (c->HasGetSize()) {
+				ReadVarSizeUInt(stream, &size);
+			} else {
+				size = c->size;
+			}
 			// Allocate and construct
-			void* inst = classRefs[classRefIndex]->CreateInstance();
+			void* inst = c->CreateInstance(size);
 			objects[a].obj = inst;
 		}
 		objects[a].isEmbedded = !!isEmbedded;

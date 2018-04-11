@@ -87,7 +87,7 @@ namespace creg {
 				void (*memberRegistrator)(creg::Class*),
 				int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
 				void (*constructorProc)(void* instance), void (*destructorProc)(void* instance),
-				void* (*allocProc)(), void (*freeProc)(void* instance));
+				void* (*allocProc)(size_t size), void (*freeProc)(void* instance));
 
 		// propagates poolAlloc and poolFree to derivatives
 		void PropagatePoolFuncs();
@@ -97,7 +97,7 @@ namespace creg {
 		bool IsSubclassOf(Class* other) const;
 
 		/// Allocate an instance of the class
-		void* CreateInstance();
+		void* CreateInstance(size_t size);
 		void DeleteInstance(void* inst);
 
 		/// Calculate a checksum from the class metadata
@@ -120,15 +120,19 @@ namespace creg {
 		// generic member function pointer
 		typedef void(*SerializeProc)(void* object, ISerializer* s);
 		typedef void(*PostLoadProc)(void* object);
+		typedef size_t (*GetSizeProc)(void* object);
 
 
 
 		void SetSerialize(SerializeProc proc) { serializeProc = proc; }
 		void SetPostLoad(PostLoadProc proc) { postLoadProc = proc; }
+		void SetGetSize(GetSizeProc proc) { getSizeProc = proc; }
 		bool HasSerialize() const { return (serializeProc != nullptr); }
 		bool HasPostLoad() const { return (postLoadProc != nullptr); }
+		bool HasGetSize() const { return (getSizeProc != nullptr); }
 		void CallSerializeProc(void* object, ISerializer* s) { serializeProc(object, s); }
 		void CallPostLoadProc(void* object)                  { postLoadProc(object); }
+		size_t CallGetSizeProc(void* object)                  { return getSizeProc(object); }
 
 
 		Class* baseClass;
@@ -156,13 +160,14 @@ namespace creg {
 		/**
 		 * Needed for objects using pools.
 		 */
-		void* (*poolAlloc)();
+		void* (*poolAlloc)(size_t size);
 
 		void (*poolFree)(void* instance);
 
 
 		SerializeProc serializeProc;
 		PostLoadProc postLoadProc;
+		GetSizeProc getSizeProc;
 	};
 
 
@@ -206,7 +211,7 @@ public: \
 	VIRTUAL creg::Class* GetClass() const OVERRIDE { return &creg_class; } \
 	static void _ConstructInstance(void* d); \
 	static void _DestructInstance(void* d); \
-	static void* _Alloc(); \
+	static void* _Alloc(size_t size); \
 	static void _Free(void* d); \
 	static void _CregRegisterMembers(creg::Class* class_);
 
@@ -259,7 +264,7 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_POOL(TCls, ctor_args, poolAlloc, poolFree) \
-	void* TCls::_Alloc() { return poolAlloc(); } \
+	void* TCls::_Alloc(size_t size) { return poolAlloc(size); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
@@ -300,7 +305,7 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_POOL(TCls, TBase, ctor_args, poolAlloc, poolFree) \
-	void* TCls::_Alloc() { return poolAlloc(0); } \
+	void* TCls::_Alloc(size_t size) { return poolAlloc(size); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
@@ -335,7 +340,7 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_INTERFACE_POOL(TCls, TBase, poolAlloc, poolFree)	\
-	void* TCls::_Alloc() { return poolAlloc(0); } \
+	void* TCls::_Alloc(size_t size) { return poolAlloc(size); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	creg::Class TCls::creg_class(#TCls, creg::CF_Abstract, &TBase::creg_class, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, nullptr, nullptr, TCls::_Alloc, TCls::_Free);
 
@@ -480,6 +485,17 @@ public: \
 #define CR_POSTLOAD(PostLoadFunc) \
 	(class_->SetPostLoad([](void* object) { \
 				static_cast<Type*>(object)->PostLoadFunc(); \
+			}))
+
+/** @def CR_SIZE
+ * Registers a custom post-loading method for the class/struct
+ * this function will be called during package loading when all serialization is
+ * finished.
+ * There can only be one postload method per class/struct
+ */
+#define CR_GETSIZE(GetSizeFunc) \
+	(class_->SetSize([](void* object) { \
+				return static_cast<Type*>(object)->GetSizeFunc(); \
 			}))
 
 #endif // _CREG_H
