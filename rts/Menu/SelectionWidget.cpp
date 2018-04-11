@@ -2,7 +2,7 @@
 
 #include "SelectionWidget.h"
 
-#ifndef HEADLESS
+///[maint]#ifndef HEADLESS
 #include <functional>
 
 #include "System/FileSystem/ArchiveScanner.h"
@@ -260,5 +260,5 @@ void SelectionWidget::CleanWindow()
 	agui::gui->RmElement(curSelect);
 	curSelect = nullptr;
 }
-#endif
+///[maint]#endif
 
