@@ -1034,7 +1034,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 			// limit to 50 pings per second
 			if (spring_diffmsecs(spring_now(), pingTimeFilter[playerNum]) >= 20) {
-				players[playerNum].SendData(CBaseNetProtocol::Get().SendPing(playerNum, *(reinterpret_cast<const float*>(&inbuf[2]))));
+				players[playerNum].SendData(CBaseNetProtocol::Get().SendPing(playerNum, inbuf[2], *(reinterpret_cast<const float*>(&inbuf[3]))));
 				pingTimeFilter[playerNum] = spring_now();
 			}
 		} break;

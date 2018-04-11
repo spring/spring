@@ -550,9 +550,9 @@ void CEventHandler::DbgTimingInfo(DbgTimingInfoType type, const spring_time star
 	ITERATE_EVENTCLIENTLIST(DbgTimingInfo, type, start, end);
 }
 
-void CEventHandler::Pong(const spring_time pktSendTime, const spring_time pktRecvTime)
+void CEventHandler::Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime)
 {
-	ITERATE_EVENTCLIENTLIST(Pong, pktSendTime, pktRecvTime);
+	ITERATE_EVENTCLIENTLIST(Pong, pingTag, pktSendTime, pktRecvTime);
 }
 
 

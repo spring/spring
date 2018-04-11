@@ -406,7 +406,7 @@ int LuaUnsyncedCtrl::Ping(lua_State* L)
 	if (guihandler == nullptr)
 		return 0;
 
-	guihandler->RunCustomCommands({"@@netping"}, false);
+	guihandler->RunCustomCommands({"@@netping " + IntToString(luaL_optint(L, 1, 0), "%u")}, false);
 	return 0;
 }
 

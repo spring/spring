@@ -484,14 +484,15 @@ PacketType CBaseNetProtocol::SendCurrentFrameProgress(int32_t frameNum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendPing(uint8_t playerNum, float localTime)
+PacketType CBaseNetProtocol::SendPing(uint8_t playerNum, uint8_t pingTag, float localTime)
 {
-	const uint32_t payloadSize = sizeof(playerNum) + sizeof(localTime);
+	const uint32_t payloadSize = sizeof(playerNum) + sizeof(pingTag) + sizeof(localTime);
 	const uint32_t headerSize = sizeof(uint8_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
 	PackPacket* packet = new PackPacket(packetSize, NETMSG_PING);
 	*packet << playerNum;
+	*packet << pingTag;
 	*packet << localTime;
 	return PacketType(packet);
 }
@@ -618,7 +619,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_AI_CREATED, -1);
 	proto->AddType(NETMSG_AI_STATE_CHANGED, 4);
 	proto->AddType(NETMSG_GAME_FRAME_PROGRESS, 5);
-	proto->AddType(NETMSG_PING, 1 + (1 + 4));
+	proto->AddType(NETMSG_PING, 1 + (1 + 1 + 4));
 
 #ifdef SYNCDEBUG
 	proto->AddType(NETMSG_SD_CHKREQUEST, 5);
