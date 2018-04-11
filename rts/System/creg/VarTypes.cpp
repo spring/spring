@@ -72,7 +72,7 @@ std::unique_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t si
 
 std::string StaticArrayBaseType::GetName() const
 {
-	return elemType->GetName() + "[" + IntToString(size) + "]";
+	return elemType->GetName() + "[" + IntToString(size / elemType->GetSize()) + "]";
 }
 
 std::string DynamicArrayBaseType::GetName() const

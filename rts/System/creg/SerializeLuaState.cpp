@@ -16,22 +16,26 @@ struct creg_Table;
 
 static_assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE isn't 0");
 
-class LuaAllocator{
+class LuaContext{
 public:
-	LuaAllocator() : context(nullptr), la(nullptr) { }
-	void* alloc(size_t n) {
-		assert(context != nullptr && la != nullptr);
-		return la(context, NULL, 0, n);
+	LuaContext() : context(nullptr), frealloc(nullptr), panic(nullptr) { }
+	void* alloc(size_t n) const {
+		assert(context != nullptr && frealloc != nullptr);
+		return frealloc(context, NULL, 0, n);
 	}
 	template<typename T>
-	T* alloc() {
-		assert(context != nullptr && la != nullptr);
-		return (T*) la(context, NULL, 0, sizeof(T));
+	T* alloc() const {
+		assert(context != nullptr && frealloc != nullptr);
+		return (T*) frealloc(context, NULL, 0, sizeof(T));
 	}
-	void SetContext(void* newLcd, lua_Alloc newla) { context = newLcd; la = newla; }
+	void SetContext(void* newLcd, lua_Alloc newfrealloc, lua_CFunction newPanic) { context = newLcd; frealloc = newfrealloc; panic = newPanic; }
+	lua_CFunction GetPanic() const { return panic; }
+	void* GetContext() const { return context; }
+	lua_Alloc Getfrealloc() const { return frealloc; }
 private:
 	void* context;
-	lua_Alloc la;
+	lua_Alloc frealloc;
+	lua_CFunction panic;
 };
 
 void freeProtector(void *m) {
@@ -44,7 +48,7 @@ void* allocProtector() {
 }
 
 
-static LuaAllocator luaAllocator;
+static LuaContext luaContext;
 
 
 // TString structs have variable size which c++ and/or creg
@@ -384,7 +388,7 @@ CR_REG_METADATA(creg_Node, (
 ))
 
 
-CR_BIND_POOL(creg_Table, , luaAllocator.alloc<creg_Table>, freeProtector)
+CR_BIND_POOL(creg_Table, , luaContext.alloc<creg_Table>, freeProtector)
 CR_REG_METADATA(creg_Table, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(flags),
@@ -407,7 +411,7 @@ CR_REG_METADATA(creg_LocVar, (
 ))
 
 
-CR_BIND_POOL(creg_Proto, , luaAllocator.alloc<creg_Proto>, freeProtector)
+CR_BIND_POOL(creg_Proto, , luaContext.alloc<creg_Proto>, freeProtector)
 CR_REG_METADATA(creg_Proto, (
 	CR_COMMON_HEADER(),
 	CR_IGNORED(k), // vector
@@ -434,7 +438,7 @@ CR_REG_METADATA(creg_Proto, (
 ))
 
 
-CR_BIND_POOL(creg_UpVal, , luaAllocator.alloc<creg_UpVal>, freeProtector)
+CR_BIND_POOL(creg_UpVal, , luaContext.alloc<creg_UpVal>, freeProtector)
 CR_REG_METADATA(creg_UpVal, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(v),
@@ -488,7 +492,7 @@ CR_REG_METADATA(creg_global_State, (
 	CR_SERIALIZER(Serialize)
 ))
 
-CR_BIND_POOL(creg_lua_State, , luaAllocator.alloc<creg_lua_State>, freeProtector)
+CR_BIND_POOL(creg_lua_State, , luaContext.alloc<creg_lua_State>, freeProtector)
 CR_REG_METADATA(creg_lua_State, (
 	CR_COMMON_HEADER(),
 	CR_MEMBER(status),
@@ -533,7 +537,7 @@ inline void SerializeCVector(creg::ISerializer* s, T** vecPtr, C count)
 	std::unique_ptr<creg::IType> elemType = creg::DeduceType<T>::Get();
 	T* vec;
 	if (!(s->IsWriting())) {
-		vec = (T*) luaAllocator.alloc(count * sizeof(T));
+		vec = (T*) luaContext.alloc(count * sizeof(T));
 		*vecPtr = vec;
 	} else {
 		vec = *vecPtr;
@@ -763,11 +767,11 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		assert(errorJmp == NULL);
 	} else {
 		// adapted from stack_init lstate.cpp
-		base_ci = (CallInfo *) luaAllocator.alloc(size_ci * sizeof(*base_ci));
+		base_ci = (CallInfo *) luaContext.alloc(size_ci * sizeof(*base_ci));
 		ci = base_ci;
 		end_ci = base_ci + size_ci - 1;
 
-		stack = (StkId) luaAllocator.alloc(stacksize * sizeof(*stack));
+		stack = (StkId) luaContext.alloc(stacksize * sizeof(*stack));
 		top = stack;
 		stack_last = stack + stacksize - EXTRA_STACK - 1;
 
@@ -808,7 +812,7 @@ void creg_global_State::Serialize(creg::ISerializer* s)
 
 namespace creg {
 
-void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_CFunction panic, lua_Alloc frealloc)
+void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 {
 	assert(stringToIdx.empty());
 	assert(stringVec.empty());
@@ -823,14 +827,12 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 		clg->g.uvhead.next.p.gch = nullptr;
 		clg->g.uvhead.v = nullptr;
 	} else {
-		assert(*L == nullptr);
-		clg = (creg_LG*) luaAllocator.alloc(sizeof(creg_LG));
+		//assert(*L == nullptr);
+		clg = (creg_LG*) luaContext.alloc(sizeof(creg_LG));
 		*L = (lua_State*) &(clg->l);
-		clg->g.ud = context;
-		clg->g.panic = panic;
-		clg->g.frealloc = frealloc;
-
-		luaAllocator.SetContext(context, frealloc);
+		clg->g.ud = luaContext.GetContext();
+		clg->g.panic = luaContext.GetPanic();
+		clg->g.frealloc = luaContext.Getfrealloc();
 	}
 
 	SerializeInstance(s, clg);
@@ -846,6 +848,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 
 			SerializeInstance(s, (creg_GCObjectPtr*) &ts->tsv.next);
 			// no need to serialize tt
+			// no need to serialize hash
 			s->SerializeInt(&ts->tsv.marked, sizeof(ts->tsv.marked));
 			s->SerializeInt(&ts->tsv.reserved, sizeof(ts->tsv.reserved));
 		}
@@ -856,8 +859,8 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 		for (int i = 0; i < count; ++i) {
 			size_t length;
 			s->SerializeInt(&length, sizeof(length));
-			TString* ts = (TString*) luaAllocator.alloc((length + 1) * sizeof(char) + sizeof(TString));
-			s->Serialize(ts + 1, ts->tsv.len);
+			TString* ts = (TString*) luaContext.alloc((length + 1) * sizeof(char) + sizeof(TString));
+			s->Serialize(ts + 1, length);
 
 			SerializeInstance(s, (creg_GCObjectPtr*) &ts->tsv.next);
 			s->SerializeInt(&ts->tsv.marked, sizeof(ts->tsv.marked));
@@ -917,9 +920,9 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 			s->SerializeInt(&nupvalues, sizeof(nupvalues));
 			Closure* c;
 			if (isC) {
-				c = (Closure*) luaAllocator.alloc(sizeCclosure(nupvalues));
+				c = (Closure*) luaContext.alloc(sizeCclosure(nupvalues));
 			} else {
-				c = (Closure*) luaAllocator.alloc(sizeLclosure(nupvalues));
+				c = (Closure*) luaContext.alloc(sizeLclosure(nupvalues));
 			}
 			c->c.isC = isC;
 			c->c.nupvalues = nupvalues;
@@ -978,7 +981,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 			size_t length;
 			s->SerializeInt(&length, sizeof(length));
 			assert(length == sizeof(int));
-			Udata* ud = (Udata*) luaAllocator.alloc(length + sizeof(Udata));
+			Udata* ud = (Udata*) luaContext.alloc(length + sizeof(Udata));
 
 			SerializeInstance(s, (creg_GCObjectPtr*) &ud->uv.next);
 			ud->uv.tt = LUA_TUSERDATA;
@@ -996,7 +999,6 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 	}
 
 
-	luaAllocator.SetContext(nullptr, nullptr);
 	stringToIdx.clear();
 	stringVec.clear();
 	stringPtrToIdx.clear();
@@ -1008,6 +1010,9 @@ void RegisterCFunction(const char* name, lua_CFunction f)
 	nameToFunc[name] = f;
 	funcToName[f] = name;
 }
-
+void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic)
+{
+	luaContext.SetContext(context, frealloc, panic);
+}
 }
 

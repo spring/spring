@@ -7,8 +7,6 @@
 #include <boost/test/unit_test.hpp>
 
 
-static int context = 1;
-
 static int handlepanic(lua_State* L)
 {
 	throw "lua paniced";
@@ -42,11 +40,15 @@ CR_REG_METADATA(LuaRoot, (
 
 
 void LuaRoot::Serialize(creg::ISerializer* s) {
-	creg::SerializeLuaState(s, &L, &context, handlepanic, l_alloc);
+	creg::SerializeLuaState(s, &L);
 }
 
 BOOST_AUTO_TEST_CASE( SerializeLuaState )
 {
+	int context = 1;
+	creg::SetLuaContext(&context, l_alloc, handlepanic);
+
+
 	lua_State* L = lua_newstate(l_alloc, &context);
 	lua_atpanic(L, handlepanic);
 
@@ -62,16 +64,16 @@ BOOST_AUTO_TEST_CASE( SerializeLuaState )
 
 
 
-	// creg::CInputStreamSerializer iser;
+	creg::CInputStreamSerializer iser;
 
-	// void* loaded;
-	// creg::Class* loadedCls;
-	// iser.LoadPackage(&ss, loaded, loadedCls);
+	void* loaded;
+	creg::Class* loadedCls;
+	iser.LoadPackage(&ss, loaded, loadedCls);
 
-	// LuaRoot* loadedRoot = (LuaRoot*) loaded;
+	LuaRoot* loadedRoot = (LuaRoot*) loaded;
 
-	// lua_close(loadedRoot->L);
-	// delete loadedRoot;
+	lua_close(loadedRoot->L);
+	delete loadedRoot;
 
 	BOOST_CHECK_MESSAGE(true, "Failed lua serialization!");
 }

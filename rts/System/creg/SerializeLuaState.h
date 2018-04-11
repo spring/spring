@@ -7,8 +7,9 @@
 #include "LuaInclude.h"
 
 namespace creg {
-	void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_CFunction panic, lua_Alloc frealloc);
+	void SerializeLuaState(creg::ISerializer* s, lua_State** L);
 	void RegisterCFunction(const char* name, lua_CFunction f);
+	void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic);
 }
 
 #endif //CR_BASIC_TYPES_H
