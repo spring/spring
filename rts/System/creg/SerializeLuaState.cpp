@@ -821,6 +821,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L, void* context, lua_C
 		clg = (creg_LG*) *L;
 		// a garbage pointer that needs fixing
 		clg->g.uvhead.next.p.gch = nullptr;
+		clg->g.uvhead.v = nullptr;
 	} else {
 		assert(*L == nullptr);
 		clg = (creg_LG*) luaAllocator.alloc(sizeof(creg_LG));
