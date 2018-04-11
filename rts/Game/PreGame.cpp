@@ -341,7 +341,7 @@ void CPreGame::UpdateClientNet()
 					// set here
 					playerHandler.AddPlayer(player);
 
-					LOG("[PreGame::%s] added new player %s with number %d to team %d", __func__, name.c_str(), player.playerNum, player.team);
+					LOG("[PreGame::%s] added new player \"%s\" with number %d to team %d (#active=%d)", __func__, name.c_str(), player.playerNum, player.team, playerHandler.ActivePlayers());
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_CREATE_NEWPLAYER] exception \"%s\"", __func__, ex.what());
 				}
@@ -366,13 +366,11 @@ void CPreGame::UpdateClientNet()
 				if (!playerHandler.IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
-				gu->SetMyPlayer(playerNum);
-
-				LOG("[PreGame::%s] received user number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
-
 				// respond with the client data and content checksums
+				gu->SetMyPlayer(playerNum);
 				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
+				LOG("[PreGame::%s] received local player number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
 
@@ -448,7 +446,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	ScopedOnceTimer timer("PreGame::ReadDataFromDemo");
 	assert(gameServer == nullptr);
-	LOG("[PreGame::%s] pre-scanning demo file for game data...", __func__);
+	LOG("[PreGame::%s] pre-scanning demo file \"%s\" for game data...", __func__, demoName.c_str());
 	CDemoReader scanner(demoName, 0.0f);
 
 	{
@@ -476,7 +474,7 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		// in live games it will always still be NULL at this point
 		gameData.reset(new GameData(packet));
 	} catch (const netcode::UnpackPacketException& ex) {
-		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
+		throw content_error(std::string("invalid GameData received: ") + ex.what());
 	}
 
 	// preseed the synced RNG until GameID-based NETMSG_RANDSEED arrives
@@ -496,7 +494,7 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		// do we really need to do this so early?
 		CPlayer::UpdateControlledTeams();
 	} else {
-		throw content_error("Server sent us incorrect script");
+		throw content_error("error loading received setup-script");
 	}
 
 	// some sanity checks
@@ -504,15 +502,14 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		const CPlayer* player = playerHandler.Player(p);
 
 		if (!playerHandler.IsValidPlayer(player->playerNum))
-			throw content_error("Invalid player in game data");
+			throw content_error("Invalid player in game-data");
 
 		if (!teamHandler.IsValidTeam(player->team))
-			throw content_error("Invalid team in game data");
+			throw content_error("Invalid team in game-data");
 
 		// TODO: seems not to make sense really
 		if (!teamHandler.IsValidAllyTeam(teamHandler.AllyTeam(player->team)))
-			throw content_error("Invalid ally team in game data");
-
+			throw content_error("Invalid allyteam in game-data");
 	}
 
 	// load archives into VFS
