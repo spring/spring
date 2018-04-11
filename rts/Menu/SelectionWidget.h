@@ -72,6 +72,7 @@ private:
 class SelectionWidget : public agui::GuiElement
 {
 public:
+	static const std::string NoDemoSelect;
 	static const std::string NoModSelect;
 	static const std::string NoMapSelect;
 	static const std::string NoScriptSelect;
@@ -80,14 +81,17 @@ public:
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
 
+	void ShowDemoList(const std::function<void(const std::string&)>& demoSelectedCB);
 	void ShowModList();
 	void ShowMapList();
 	void ShowScriptList();
 
+	void SelectDemo(const std::string&);
 	void SelectMod(const std::string&);
 	void SelectScript(const std::string&);
 	void SelectMap(const std::string&);
 
+	std::string userDemo;
 	std::string userScript;
 	std::string userMap;
 	std::string userMod;
@@ -99,12 +103,17 @@ private:
 
 
 	agui::Button* mod;
-	agui::TextElement* modT;
 	agui::Button* map;
-	agui::TextElement* mapT;
 	agui::Button* script;
+
+	agui::TextElement* modT;
+	agui::TextElement* mapT;
 	agui::TextElement* scriptT;
+
 	ListSelectWnd* curSelect;
+
+	std::function<void(const std::string&)> demoSelectedCB;
+
 	std::vector<std::string> availableScripts;
 };
 

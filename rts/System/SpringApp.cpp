@@ -636,13 +636,18 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdfz") {
-		LoadDemoFile(inputFile);
-	} else if (extension == "slsf" || extension == "ssf") {
-		LoadSaveFile(inputFile);
-	} else {
-		StartScript(inputFile);
+		return;
 	}
+	if (extension == "sdfz") {
+		LoadDemoFile(inputFile);
+		return;
+	}
+	if (extension == "slsf" || extension == "ssf") {
+		LoadSaveFile(inputFile);
+		return;
+	}
+
+	StartScript(inputFile);
 }
 
 

@@ -145,15 +145,18 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
-		Button* single = new Button("Test the Game", menu);
-		single->Clicked.connect(std::bind(&SelectMenu::Single, this));
+		Button* testGame = new Button("Test Game", menu);
+		testGame->Clicked.connect(std::bind(&SelectMenu::Single, this));
+
+		Button* watchDemo = new Button("Watch Demo", menu);
+		watchDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
 		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
 
-		Button* direct = new Button("Direct connect", menu);
-		direct->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
+		Button* directConnect = new Button("Direct connect", menu);
+		directConnect->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
 
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(std::bind(&SelectMenu::Quit, this));
@@ -179,20 +182,47 @@ bool SelectMenu::Draw()
 	return true;
 }
 
+
+void SelectMenu::Demo()
+{
+	const std::function<void(const std::string&)> demoSelectedCB = [&](const std::string& userDemo) {
+		if (pregame != nullptr)
+			return;
+
+		clientSetup->isHost = true;
+		clientSetup->myPlayerName += " (spec)";
+		clientSetup->demoFile = userDemo;
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadDemo(clientSetup->demoFile);
+		return (agui::gui->RmElement(this));
+	};
+
+	if (selw->userDemo == SelectionWidget::NoDemoSelect) {
+		selw->ShowDemoList(demoSelectedCB);
+		return;
+	}
+}
+
 void SelectMenu::Single()
 {
 	if (selw->userMod == SelectionWidget::NoModSelect) {
 		selw->ShowModList();
-	} else if (selw->userMap == SelectionWidget::NoMapSelect) {
-		selw->ShowMapList();
-	} else if (selw->userScript == SelectionWidget::NoScriptSelect) {
-		selw->ShowScriptList();
+		return;
 	}
-	else if (pregame == NULL) {
+	if (selw->userMap == SelectionWidget::NoMapSelect) {
+		selw->ShowMapList();
+		return;
+	}
+	if (selw->userScript == SelectionWidget::NoScriptSelect) {
+		selw->ShowScriptList();
+		return;
+	}
+
+	if (pregame == nullptr) {
 		// in case of double-click
-		if (selw->userScript == SelectionWidget::SandboxAI) {
+		if (selw->userScript == SelectionWidget::SandboxAI)
 			selw->userScript.clear();
-		}
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
@@ -217,26 +247,24 @@ void SelectMenu::ShowConnectWindow(bool show)
 	else if (!show && conWindow)
 	{
 		agui::gui->RmElement(conWindow);
-		conWindow = NULL;
+		conWindow = nullptr;
 	}
 }
 
 void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 {
-	if (show)
-	{
-		if(settingsWindow) {
+	if (show) {
+		if (settingsWindow) {
 			agui::gui->RmElement(settingsWindow);
-			settingsWindow = NULL;
+			settingsWindow = nullptr;
 		}
 		settingsWindow = new SettingsWindow(name);
 		settingsWindow->OK.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, std::placeholders::_1));
 		settingsWindow->WantClose.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
 	}
-	else if (!show && settingsWindow)
-	{
+	else if (!show && settingsWindow) {
 		agui::gui->RmElement(settingsWindow);
-		settingsWindow = NULL;
+		settingsWindow = nullptr;
 		size_t p = name.find(" = ");
 		if(p != std::string::npos) {
 			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
