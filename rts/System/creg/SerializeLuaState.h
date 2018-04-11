@@ -8,6 +8,7 @@
 
 namespace creg {
 	void SerializeLuaState(creg::ISerializer* s, lua_State** L, luaContextData& lcd);
+	void RegisterCFunction(const char* name, lua_CFunction f);
 }
 
 #endif //CR_BASIC_TYPES_H
