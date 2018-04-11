@@ -11,7 +11,8 @@ struct creg_Proto;
 struct creg_UpVal;
 struct creg_Node;
 struct creg_Table;
-struct creg_GCObject;
+union creg_GCObject;
+struct creg_TString;
 
 #define ASSERT_SIZE(structName) static_assert(sizeof(creg_ ## structName) == sizeof(structName), #structName " Size mismatch");
 
@@ -46,57 +47,10 @@ void* allocProtector(size_t size) {
 
 static LuaContext luaContext;
 
-
-// TString structs have variable size which c++ and/or creg
-// don't support too well, so they're handled separately.
-static spring::unsynced_map<TString*, int> stringToIdx;
-static std::deque<TString*> stringVec;
-static spring::unsynced_map<TString**, int> stringPtrToIdx;
-
-// Same for Closure structs
-static spring::unsynced_map<Closure*, int> closureToIdx;
-static std::deque<Closure*> closureVec;
-static spring::unsynced_map<Closure**, int> closurePtrToIdx;
-
-// And userdata
-static spring::unsynced_map<Udata*, int> udataToIdx;
-static std::deque<Udata*> udataVec;
-static spring::unsynced_map<Udata**, int> udataPtrToIdx;
-
-
 // C functions in lua have to be specially registered in order to
 // be serialized correctly
 static spring::unsynced_map<std::string, lua_CFunction> nameToFunc;
 static spring::unsynced_map<lua_CFunction, std::string> funcToName;
-
-
-
-
-
-/*
- * Ptr types
- */
-
-
-struct creg_TStringPtr {
-	CR_DECLARE_STRUCT(creg_TStringPtr)
-	TString* ts;
-	void Serialize(creg::ISerializer* s);
-};
-
-
-struct creg_ClosurePtr {
-	CR_DECLARE_STRUCT(creg_ClosurePtr)
-	Closure* c;
-	void Serialize(creg::ISerializer* s);
-};
-
-
-struct creg_UdataPtr {
-	CR_DECLARE_STRUCT(creg_UdataPtr)
-	Udata* u;
-	void Serialize(creg::ISerializer* s);
-};
 
 
 /*
@@ -173,7 +127,7 @@ ASSERT_SIZE(Table)
 
 struct creg_LocVar {
 	CR_DECLARE_STRUCT(creg_LocVar)
-	creg_TStringPtr varname;
+	creg_TString *varname;
 	int startpc;  /* first point where variable is active */
 	int endpc;    /* first point where variable is dead */
 };
@@ -189,8 +143,8 @@ struct creg_Proto {
 	creg_Proto **p;  /* functions defined inside the function */
 	int *lineinfo;  /* map from opcodes to source lines */
 	creg_LocVar *locvars;  /* information about local variables */
-	creg_TStringPtr *upvalues;  /* upvalue names */
-	creg_TStringPtr  source;
+	creg_TString **upvalues;  /* upvalue names */
+	creg_TString *source;
 	int sizeupvalues;
 	int sizek;  /* size of `k' */
 	int sizecode;
@@ -226,6 +180,79 @@ struct creg_UpVal {
 };
 
 ASSERT_SIZE(UpVal)
+
+
+struct creg_TString {
+	CR_DECLARE_STRUCT(creg_TString)
+	union {
+		L_Umaxalign dummy;  /* ensures maximum alignment for strings */
+		struct {
+			creg_CommonHeader;
+			lu_byte reserved;
+			unsigned int hash;
+			size_t len;
+		} tsv;
+	} u;
+	void Serialize(creg::ISerializer* s);
+	size_t GetSize();
+};
+
+ASSERT_SIZE(TString)
+
+#define creg_ClosureHeader \
+	creg_CommonHeader; lu_byte isC; lu_byte nupvalues; creg_GCObject *gclist; \
+	creg_Table *env
+
+#define CR_CLOSURE_HEADER() CR_COMMON_HEADER(), CR_MEMBER(isC), CR_MEMBER(nupvalues), CR_MEMBER(gclist), \
+	CR_MEMBER(env)
+
+struct creg_CClosure {
+	CR_DECLARE_STRUCT(creg_CClosure)
+	creg_ClosureHeader;
+	lua_CFunction f;
+	creg_TValue upvalue[1];
+	void Serialize(creg::ISerializer* s);
+	size_t GetSize();
+};
+
+ASSERT_SIZE(CClosure)
+
+struct creg_LClosure {
+	CR_DECLARE_STRUCT(creg_LClosure)
+	creg_ClosureHeader;
+	creg_Proto *p;
+	creg_UpVal *upvals[1];
+	void Serialize(creg::ISerializer* s);
+	size_t GetSize();
+};
+
+ASSERT_SIZE(LClosure)
+
+union creg_Closure {
+	creg_CClosure c;
+	creg_LClosure l;
+};
+
+ASSERT_SIZE(Closure)
+
+
+struct creg_Udata {
+	CR_DECLARE_STRUCT(creg_Udata)
+	union {
+		L_Umaxalign dummy;  /* ensures maximum alignment for strings */
+		struct {
+			creg_CommonHeader;
+			creg_Table *metatable;
+			creg_Table *env;
+			size_t len;
+		} uv;
+	} u;
+	void Serialize(creg::ISerializer* s);
+	size_t GetSize();
+};
+
+ASSERT_SIZE(Udata)
+
 
 /*
  * Converted from lstate.h
@@ -268,7 +295,7 @@ struct creg_global_State {
 	creg_lua_State *mainthread;
 	creg_UpVal uvhead;  /* head of double-linked list of all open upvalues */
 	creg_Table *mt[NUM_TAGS];  /* metatables for basic types */
-	creg_TStringPtr tmname[TM_N];  /* array with tag-method names */
+	creg_TString *tmname[TM_N];  /* array with tag-method names */
 
 	//SPRING additions
 	lua_Func_fopen  fopen_func;
@@ -317,21 +344,69 @@ struct creg_lua_State {
 ASSERT_SIZE(lua_State)
 
 
-struct creg_GCObject {
-	CR_DECLARE_STRUCT(creg_GCObject)
-	union {
-		GCheader gch;
-		//creg_TString* ts;
-		//creg_Udata* u;
-		//creg_Closure* cl;
-		creg_Table h;
-		creg_Proto p;
-		creg_UpVal uv;
-		creg_lua_State th;
-	} u;
-	void Serialize(creg::ISerializer* s);
-	size_t GetSize();
+union creg_GCObject {
+	GCheader gch;
+	creg_TString ts;
+	creg_Udata u;
+	creg_Closure cl;
+	creg_Table h;
+	creg_Proto p;
+	creg_UpVal uv;
+	creg_lua_State th;
 };
+
+
+// Specialization because we have to figure the real class and not
+// serialize GCObject* pointers.
+namespace creg {
+template<>
+class ObjectPointerType<creg_GCObject> : public IType
+{
+public:
+	ObjectPointerType() : IType(sizeof(creg_GCObject*)) { }
+	void Serialize(ISerializer *s, void *instance) override{
+		void **ptr = (void**)instance;
+		int tt;
+		creg_GCObject *gco = (creg_GCObject *) *ptr;
+		if (s->IsWriting())
+			tt = gco == nullptr ? LUA_TNONE : gco->gch.tt;
+
+		s->SerializeInt(&tt, sizeof(tt));
+
+		if (tt == LUA_TNONE) {
+			if(!s->IsWriting())
+				*ptr = nullptr;
+
+			return;
+		}
+
+		Class *c = nullptr;
+
+		switch(tt) {
+			case LUA_TSTRING: { c = creg_TString::StaticClass(); break; }
+			case LUA_TUSERDATA: { c = creg_Udata::StaticClass(); break; }
+			case LUA_TFUNCTION: {
+					if (gco->cl.c.isC) {
+						c = creg_CClosure::StaticClass();
+					} else {
+						c = creg_LClosure::StaticClass();
+					}
+					break;
+				}
+			case LUA_TTABLE: { c = creg_Table::StaticClass(); break; }
+			case LUA_TPROTO: { c = creg_Proto::StaticClass(); break; }
+			case LUA_TUPVAL: { c = creg_UpVal::StaticClass(); break; }
+			case LUA_TTHREAD: { c = creg_lua_State::StaticClass(); break; }
+			default: { assert(false); break; }
+		}
+
+		s->SerializeObjectPtr(ptr, c);
+	}
+	std::string GetName() const {
+		return "creg_GCObject*";
+	}
+};
+}
 
 
 struct creg_LG {
@@ -339,35 +414,6 @@ struct creg_LG {
 	creg_lua_State l;
 	creg_global_State g;
 };
-
-
-CR_BIND_POOL(creg_TStringPtr, , allocProtector, freeProtector)
-CR_REG_METADATA(creg_TStringPtr, (
-	CR_IGNORED(ts), // late serialized ptr
-	CR_SERIALIZER(Serialize)
-))
-
-
-CR_BIND_POOL(creg_ClosurePtr, , allocProtector, freeProtector)
-CR_REG_METADATA(creg_ClosurePtr, (
-	CR_IGNORED(c), // late serialized ptr
-	CR_SERIALIZER(Serialize)
-))
-
-
-CR_BIND_POOL(creg_UdataPtr, , allocProtector, freeProtector)
-CR_REG_METADATA(creg_UdataPtr, (
-	CR_IGNORED(u), // late serialized ptr
-	CR_SERIALIZER(Serialize)
-))
-
-
-CR_BIND_POOL(creg_GCObject, , luaContext.alloc, freeProtector)
-CR_REG_METADATA(creg_GCObject, (
-	CR_IGNORED(u), //union
-	//CR_GETSIZE(GetSize),
-	CR_SERIALIZER(Serialize)
-))
 
 
 CR_BIND_POOL(creg_TValue, , allocProtector, freeProtector)
@@ -443,6 +489,43 @@ CR_REG_METADATA(creg_UpVal, (
 	CR_IGNORED(u), //union
 	CR_SERIALIZER(Serialize)
 ))
+
+
+CR_BIND_POOL(creg_TString, , luaContext.alloc, freeProtector)
+CR_REG_METADATA(creg_TString, (
+	CR_IGNORED(u), //union
+	CR_SERIALIZER(Serialize),
+	CR_GETSIZE(GetSize)
+))
+
+
+CR_BIND_POOL(creg_CClosure, , luaContext.alloc, freeProtector)
+CR_REG_METADATA(creg_CClosure, (
+	CR_CLOSURE_HEADER(),
+	CR_IGNORED(f),
+	CR_IGNORED(upvalue),
+	CR_SERIALIZER(Serialize),
+	CR_GETSIZE(GetSize)
+))
+
+
+CR_BIND_POOL(creg_LClosure, , luaContext.alloc, freeProtector)
+CR_REG_METADATA(creg_LClosure, (
+	CR_CLOSURE_HEADER(),
+	CR_MEMBER(p),
+	CR_IGNORED(upvals),
+	CR_SERIALIZER(Serialize),
+	CR_GETSIZE(GetSize)
+))
+
+
+CR_BIND_POOL(creg_Udata, , luaContext.alloc, freeProtector)
+CR_REG_METADATA(creg_Udata, (
+	CR_IGNORED(u),
+	CR_SERIALIZER(Serialize),
+	CR_GETSIZE(GetSize)
+))
+
 
 
 CR_BIND_POOL(creg_stringtable, , allocProtector, freeProtector)
@@ -558,135 +641,6 @@ void SerializeInstance(creg::ISerializer* s, T* t) {
 }
 
 
-void creg_TStringPtr::Serialize(creg::ISerializer* s)
-{
-	int idx;
-	if (s->IsWriting()) {
-		if (ts == nullptr) {
-			idx = 0;
-		} else {
-			auto it = stringToIdx.find(ts);
-			if (it == stringToIdx.end()) {
-				idx = stringVec.size();
-				stringVec.push_back(ts);
-				stringToIdx[ts] = idx + 1;
-			} else {
-				idx = stringToIdx[ts];
-			}
-		}
-	}
-
-	s->SerializeInt(&idx, sizeof(idx));
-
-	if (!(s->IsWriting())) {
-		if (idx == 0) {
-			ts = nullptr;
-		} else {
-			stringPtrToIdx[&ts] = idx - 1;
-		}
-	}
-}
-
-
-void creg_ClosurePtr::Serialize(creg::ISerializer* s)
-{
-	int idx;
-	if (s->IsWriting()) {
-		if (c == nullptr) {
-			idx = 0;
-		} else {
-			auto it = closureToIdx.find(c);
-			if (it == closureToIdx.end()) {
-				idx = closureVec.size() + 1;
-				closureVec.push_back(c);
-				closureToIdx[c] = idx;
-			} else {
-				idx = closureToIdx[c];
-			}
-		}
-	}
-
-	s->SerializeInt(&idx, sizeof(idx));
-
-	if (!(s->IsWriting())) {
-		if (idx == 0) {
-			c = nullptr;
-		} else {
-			closurePtrToIdx[&c] = idx - 1;
-		}
-	}
-}
-
-
-void creg_UdataPtr::Serialize(creg::ISerializer* s)
-{
-	int idx;
-	if (s->IsWriting()) {
-		if (u == nullptr) {
-			idx = 0;
-		} else {
-			auto it = udataToIdx.find(u);
-			if (it == udataToIdx.end()) {
-				idx = udataVec.size() + 1;
-				udataVec.push_back(u);
-				udataToIdx[u] = idx;
-			} else {
-				idx = udataToIdx[u];
-			}
-		}
-	}
-
-	s->SerializeInt(&idx, sizeof(idx));
-
-	if (!(s->IsWriting())) {
-		if (idx == 0) {
-			u = nullptr;
-		} else {
-			udataPtrToIdx[&u] = idx - 1;
-		}
-	}
-}
-
-
-void creg_GCObject::Serialize(creg::ISerializer* s)
-{
-
-	int tt;
-	if (s->IsWriting())
-		tt = u.gch.tt;
-
-	s->SerializeInt(&tt, sizeof(tt));
-
-	switch(tt) {
-		// case LUA_TSTRING: { SerializeInstance(s, &u.ts); return; }
-		// case LUA_TUSERDATA: { SerializeInstance(s, &u.u); }
-		// case LUA_TFUNCTION: { SerializeInstance(s, &u.cl); return; }
-		case LUA_TTABLE: { SerializeInstance(s, &u.h); return; }
-		case LUA_TPROTO: { SerializeInstance(s, &u.p); return; }
-		case LUA_TUPVAL: { SerializeInstance(s, &u.uv); return; }
-		case LUA_TTHREAD: { SerializeInstance(s, &u.th); return; }
-		default: { assert(false); return; }
-	}
-}
-
-
-size_t creg_GCObject::GetSize()
-{
-	int tt = u.gch.tt;
-	switch(tt) {
-		// case LUA_TSTRING: { SerializeInstance(s, &u.ts); return; }
-		// case LUA_TUSERDATA: { SerializeInstance(s, &u.u); }
-		// case LUA_TFUNCTION: { SerializeInstance(s, &u.cl); return; }
-		case LUA_TTABLE: { return sizeof(Table); }
-		case LUA_TPROTO: { return sizeof(Proto); }
-		case LUA_TUPVAL: { return sizeof(UpVal); }
-		case LUA_TTHREAD: { return sizeof(lua_State); }
-		default: { assert(false); return 0; }
-	}
-	return 0;
-}
-
-
 void creg_TValue::Serialize(creg::ISerializer* s)
 {
 	switch(tt) {
@@ -694,10 +648,10 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 		case LUA_TBOOLEAN: { s->SerializeInt(&value.b, sizeof(value.b)); return; }
 		case LUA_TLIGHTUSERDATA: { assert(false); return; } // No support for light user data atm
 		case LUA_TNUMBER: { s->SerializeInt(&value.n, sizeof(value.n)); return; }
-		// case LUA_TSTRING: {SerializeInstance(s, &value.gc.p.ts); return; }
+		case LUA_TSTRING: { SerializePtr(s, &value.gc); return; }
 		case LUA_TTABLE: { SerializePtr(s, &value.gc); return; }
-		// case LUA_TFUNCTION: { SerializeInstance(s, &value.gc.p.cl); return; }
-		// case LUA_TUSERDATA: { SerializeInstance(s, &value.gc.p.u); }
+		case LUA_TFUNCTION: { SerializePtr(s, &value.gc); return; }
+		case LUA_TUSERDATA: { SerializePtr(s, &value.gc); }
 		case LUA_TTHREAD: { SerializePtr(s, &value.gc); return; }
 		default: { assert(false); return; }
 	}
@@ -753,6 +707,87 @@ void creg_UpVal::Serialize(creg::ISerializer* s)
 		SerializePtr(s, &u.l.prev);
 		SerializePtr(s, &u.l.next);
 	}
+}
+
+
+void creg_TString::Serialize(creg::ISerializer* s)
+{
+	SerializePtr(s, &u.tsv.next);
+	s->SerializeInt(&u.tsv.tt, sizeof(u.tsv.tt));
+	s->SerializeInt(&u.tsv.marked, sizeof(u.tsv.marked));
+	s->SerializeInt(&u.tsv.reserved, sizeof(u.tsv.reserved));
+	s->SerializeInt(&u.tsv.len, sizeof(u.tsv.len));
+	s->Serialize(this + 1, u.tsv.len);
+	if (!s->IsWriting()) {
+		((char *)(this+1))[u.tsv.len] = '\0';
+		u.tsv.hash = lua_calchash(getstr(this), u.tsv.len);
+	}
+}
+
+
+size_t creg_TString::GetSize()
+{
+	return sizeof(creg_TString) + u.tsv.len + 1;
+}
+
+
+void creg_CClosure::Serialize(creg::ISerializer* s)
+{
+	for (unsigned i = 0; i < nupvalues; ++i) {
+		SerializeInstance(s, &upvalue[i]);
+	}
+	creg::StringType sType;
+	if (s->IsWriting()) {
+		assert(funcToName.find(f) != funcToName.end());
+		std::string name = funcToName[f];
+		sType.Serialize(s, &name);
+	} else {
+		std::string name;
+		sType.Serialize(s, &name);
+		assert(nameToFunc.find(name) != nameToFunc.end());
+		f = nameToFunc[name];
+	}
+}
+
+
+size_t creg_CClosure::GetSize()
+{
+	return sizeCclosure(nupvalues);
+}
+
+
+void creg_LClosure::Serialize(creg::ISerializer* s)
+{
+	for (unsigned i = 0; i < nupvalues; ++i) {
+		SerializePtr(s, &upvals[i]);
+	}
+}
+
+
+size_t creg_LClosure::GetSize()
+{
+	return sizeLclosure(nupvalues);
+}
+
+
+void creg_Udata::Serialize(creg::ISerializer* s)
+{
+	SerializePtr(s, &u.uv.next);
+	s->SerializeInt(&u.uv.tt, sizeof(u.uv.tt));
+	s->SerializeInt(&u.uv.marked, sizeof(u.uv.marked));
+	SerializePtr(s, &u.uv.metatable);
+	SerializePtr(s, &u.uv.env);
+	s->SerializeInt(&u.uv.len, sizeof(u.uv.len));
+
+	// currently we only support integer user data
+	assert(u.uv.len == sizeof(int));
+	s->SerializeInt((int *) (this + 1), sizeof(int));
+}
+
+
+size_t creg_Udata::GetSize()
+{
+	return sizeof(creg_Udata) + u.uv.len;
 }
 
 
@@ -837,11 +872,6 @@ namespace creg {
 
 void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 {
-	assert(stringToIdx.empty());
-	assert(stringVec.empty());
-	assert(stringPtrToIdx.empty());
-
-
 	creg_LG* clg;
 	if (s->IsWriting()) {
 		assert(*L != nullptr);
@@ -859,172 +889,6 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 	}
 
 	SerializeInstance(s, clg);
-
-	// // TString - - see comment in top of page
-	// if (s->IsWriting()) {
-		// int count = stringVec.size();
-		// s->SerializeInt(&count, sizeof(count));
-		// for (TString* ts: stringVec) {
-			// // Serialize length first, so we know how much to alloc
-			// s->SerializeInt(&ts->tsv.len, sizeof(ts->tsv.len));
-			// s->Serialize(ts + 1, ts->tsv.len);
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &ts->tsv.next);
-			// // no need to serialize tt
-			// // no need to serialize hash
-			// s->SerializeInt(&ts->tsv.marked, sizeof(ts->tsv.marked));
-			// s->SerializeInt(&ts->tsv.reserved, sizeof(ts->tsv.reserved));
-		// }
-	// } else {
-		// int count;
-		// s->SerializeInt(&count, sizeof(count));
-		// stringVec.resize(count);
-		// for (int i = 0; i < count; ++i) {
-			// size_t length;
-			// s->SerializeInt(&length, sizeof(length));
-			// TString* ts = (TString*) luaContext.alloc((length + 1) * sizeof(char) + sizeof(TString));
-			// s->Serialize(ts + 1, length);
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &ts->tsv.next);
-			// s->SerializeInt(&ts->tsv.marked, sizeof(ts->tsv.marked));
-			// s->SerializeInt(&ts->tsv.reserved, sizeof(ts->tsv.reserved));
-
-			// ts->tsv.tt = LUA_TSTRING;
-			// ts->tsv.hash = lua_calchash(getstr(ts), length);
-			// ts->tsv.len = length;
-
-			// stringVec[i] = ts;
-		// }
-		// for (auto& it: stringPtrToIdx) {
-			// *(it.first) = stringVec[it.second];
-		// }
-	// }
-
-
-	// // Closure - - see comment in top of page
-	// StringType sType;
-	// if (s->IsWriting()) {
-		// int count = closureVec.size();
-		// s->SerializeInt(&count, sizeof(count));
-		// for (Closure* c: closureVec) {
-			// // Serialize type and number of upvalues first,
-			// // so we know how much to alloc
-			// s->SerializeInt(&c->c.isC, sizeof(c->c.isC));
-			// s->SerializeInt(&c->c.nupvalues, sizeof(c->c.nupvalues));
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &c->c.next);
-			// // no need to serialize tt
-			// s->SerializeInt(&c->c.marked, sizeof(c->c.marked));
-			// // no need to serialize gclist
-			// if (c->c.isC) {
-				// CClosure* cc = &c->c;
-				// assert(funcToName.find(cc->f) != funcToName.end());
-				// std::string name = funcToName[cc->f];
-				// sType.Serialize(s, &name);
-				// for (unsigned i = 0; i < cc->nupvalues; ++i) {
-					// SerializeInstance(s, (creg_TValue *) &cc->upvalue[i]);
-				// }
-			// } else {
-				// LClosure* lc = &c->l;
-				// SerializePtr(s, (creg_Proto **) &lc->p);
-				// for (unsigned i = 0; i < lc->nupvalues; ++i) {
-					// SerializePtr(s, (creg_UpVal **) &lc->upvals[i]);
-				// }
-			// }
-		// }
-	// } else {
-		// int count;
-		// s->SerializeInt(&count, sizeof(count));
-		// closureVec.resize(count);
-		// for (int i = 0; i < count; ++i) {
-			// lu_byte isC;
-			// lu_byte nupvalues;
-			// s->SerializeInt(&isC, sizeof(isC));
-			// s->SerializeInt(&nupvalues, sizeof(nupvalues));
-			// Closure* c;
-			// if (isC) {
-				// c = (Closure*) luaContext.alloc(sizeCclosure(nupvalues));
-			// } else {
-				// c = (Closure*) luaContext.alloc(sizeLclosure(nupvalues));
-			// }
-			// c->c.isC = isC;
-			// c->c.nupvalues = nupvalues;
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &c->c.next);
-			// c->c.tt = LUA_TFUNCTION;
-			// s->SerializeInt(&c->c.marked, sizeof(c->c.marked));
-			// // no need to deserialize gclist
-
-			// if (isC) {
-				// CClosure* cc = &c->c;
-				// std::string name;
-				// sType.Serialize(s, &name);
-				// assert(nameToFunc.find(name) != nameToFunc.end());
-				// cc->f = nameToFunc[name];
-				// for (unsigned j = 0; j < cc->nupvalues; ++j) {
-					// SerializeInstance(s, (creg_TValue *) &cc->upvalue[j]);
-				// }
-			// } else {
-				// LClosure* lc = &c->l;
-				// SerializePtr(s, (creg_Proto **) &lc->p);
-				// for (unsigned j = 0; j < lc->nupvalues; ++j) {
-					// SerializePtr(s, (creg_UpVal **) &lc->upvals[j]);
-				// }
-			// }
-
-			// closureVec[i] = c;
-		// }
-		// for (auto& it: closurePtrToIdx) {
-			// *(it.first) = closureVec[it.second];
-		// }
-	// }
-
-
-	// // UData - see comment in top of page
-	// if (s->IsWriting()) {
-		// int count = udataVec.size();
-		// s->SerializeInt(&count, sizeof(count));
-		// for (Udata* ud: udataVec) {
-			// // Serialize length first, so we know how much to alloc
-			// assert(ud->uv.len == sizeof(int));
-			// s->SerializeInt(&ud->uv.len, sizeof(ud->uv.len));
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &ud->uv.next);
-			// // no need to serialize tt
-			// s->SerializeInt(&ud->uv.marked, sizeof(ud->uv.marked));
-			// SerializePtr(s, (creg_Table **) &ud->uv.metatable);
-			// SerializePtr(s, (creg_Table **) &ud->uv.env);
-			// s->SerializeInt((int *) (ud + 1), ud->uv.len);
-		// }
-	// } else {
-		// int count;
-		// s->SerializeInt(&count, sizeof(count));
-		// udataVec.resize(count);
-		// for (int i = 0; i < count; ++i) {
-			// size_t length;
-			// s->SerializeInt(&length, sizeof(length));
-			// assert(length == sizeof(int));
-			// Udata* ud = (Udata*) luaContext.alloc(length + sizeof(Udata));
-
-			// SerializeInstance(s, (creg_GCObjectPtr*) &ud->uv.next);
-			// ud->uv.tt = LUA_TUSERDATA;
-			// s->SerializeInt(&ud->uv.marked, sizeof(ud->uv.marked));
-			// SerializePtr(s, (creg_Table **) &ud->uv.metatable);
-			// SerializePtr(s, (creg_Table **) &ud->uv.env);
-			// ud->uv.len = length;
-			// s->SerializeInt((int *) (ud + 1), ud->uv.len);
-
-			// udataVec[i] = ud;
-		// }
-		// for (auto& it: udataPtrToIdx) {
-			// *(it.first) = udataVec[it.second];
-		// }
-	// }
-
-
-	stringToIdx.clear();
-	stringVec.clear();
-	stringPtrToIdx.clear();
 }
 
 void RegisterCFunction(const char* name, lua_CFunction f)

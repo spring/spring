@@ -45,35 +45,35 @@ void LuaRoot::Serialize(creg::ISerializer* s) {
 
 BOOST_AUTO_TEST_CASE( SerializeLuaState )
 {
-	// int context = 1;
-	// creg::SetLuaContext(&context, l_alloc, handlepanic);
+	int context = 1;
+	creg::SetLuaContext(&context, l_alloc, handlepanic);
 
 
-	// lua_State* L = lua_newstate(l_alloc, &context);
-	// lua_atpanic(L, handlepanic);
+	lua_State* L = lua_newstate(l_alloc, &context);
+	lua_atpanic(L, handlepanic);
 
-	// LuaRoot root = {L};
-	// std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
-
-
-	// creg::COutputStreamSerializer oser;
-
-	// oser.SavePackage(&ss, &root, root.GetClass());
-
-	// lua_close(L);
+	LuaRoot root = {L};
+	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
 
 
+	creg::COutputStreamSerializer oser;
 
-	// creg::CInputStreamSerializer iser;
+	oser.SavePackage(&ss, &root, root.GetClass());
 
-	// void* loaded;
-	// creg::Class* loadedCls;
-	// iser.LoadPackage(&ss, loaded, loadedCls);
+	lua_close(L);
 
-	// LuaRoot* loadedRoot = (LuaRoot*) loaded;
 
-	// lua_close(loadedRoot->L);
-	// delete loadedRoot;
+
+	creg::CInputStreamSerializer iser;
+
+	void* loaded;
+	creg::Class* loadedCls;
+	iser.LoadPackage(&ss, loaded, loadedCls);
+
+	LuaRoot* loadedRoot = (LuaRoot*) loaded;
+
+	lua_close(loadedRoot->L);
+	delete loadedRoot;
 
 	BOOST_CHECK_MESSAGE(true, "Failed lua serialization!");
 }

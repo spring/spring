@@ -494,7 +494,7 @@ public: \
  * There can only be one postload method per class/struct
  */
 #define CR_GETSIZE(GetSizeFunc) \
-	(class_->SetSize([](void* object) { \
+	(class_->SetGetSize([](void* object) { \
 				return static_cast<Type*>(object)->GetSizeFunc(); \
 			}))
 
