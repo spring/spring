@@ -359,37 +359,6 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		char isEmbedded = oRef.isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
 		stream->write((char*)&isEmbedded, sizeof(char));
-
-		char mgcnt = oRef.memberGroups.size();
-		WriteVarSizeUInt(stream, mgcnt);
-
-		std::vector<COutputStreamSerializer::ObjectMemberGroup>::iterator j;
-		for (j = oRef.memberGroups.begin(); j != oRef.memberGroups.end(); ++j) {
-			std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(j->membersClass);
-			if (cr == classMap.end()) throw "Cannot find member class ref";
-			int cid = cr->second.index;
-			WriteVarSizeUInt(stream, cid);
-
-			unsigned int mcnt = j->members.size();
-			WriteVarSizeUInt(stream, mcnt);
-
-			bool hasSerializerMember = false;
-			char groupFlags = 0;
-			if (!j->members.empty() && (j->members.back().memberId == -1)) {
-				groupFlags |= 0x01;
-				hasSerializerMember = true;
-			}
-			stream->write((char*)&groupFlags, sizeof(char));
-
-			int midx = 0;
-			std::vector<COutputStreamSerializer::ObjectMember>::iterator k;
-			for (k = j->members.begin(); k != j->members.end(); ++k, ++midx) {
-				if ((k->memberId != midx) && (!hasSerializerMember || k != (j->members.end() - 1))) {
-					throw "Invalid member id";
-				}
-				WriteVarSizeUInt(stream, k->size);
-			}
-		}
 	}
 
 	// Calculate a checksum for metadata verification
@@ -579,22 +548,8 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	{
 		unsigned int classRefIndex;
 		char isEmbedded;
-		unsigned int mgcnt;
 		ReadVarSizeUInt(stream, &classRefIndex);
 		stream->read((char*)&isEmbedded, sizeof(char));
-		ReadVarSizeUInt(stream, &mgcnt);
-
-		for (unsigned int b = 0; b < mgcnt; b++) {
-			unsigned int cid, mcnt;
-			char groupFlags;
-			ReadVarSizeUInt(stream, &cid);
-			ReadVarSizeUInt(stream, &mcnt);
-			stream->read((char*)&groupFlags, sizeof(char));
-			for (unsigned int c = 0; c < mcnt; c++) {
-				unsigned int size;
-				ReadVarSizeUInt(stream, &size);
-			}
-		}
 
 		objects[a].obj = NULL;
 		if (!isEmbedded) {
