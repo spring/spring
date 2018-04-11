@@ -2035,7 +2035,7 @@ function widgetHandler:GameProgress(frameNum)
   end
 end
 
-function widgetHander:Pong(pingTag, pktSendTime, pktRecvTime)
+function widgetHandler:Pong(pingTag, pktSendTime, pktRecvTime)
   for _,w in ipairs(self.PongList) do
     w:Pong(pingTag, pktSendTime, pktRecvTime)
   end
