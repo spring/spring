@@ -148,8 +148,8 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		Button* testGame = new Button("Test Game", menu);
 		testGame->Clicked.connect(std::bind(&SelectMenu::Single, this));
 
-		Button* watchDemo = new Button("Watch Demo", menu);
-		watchDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
+		Button* playDemo = new Button("Play Demo", menu);
+		playDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
