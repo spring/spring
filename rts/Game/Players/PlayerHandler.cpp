@@ -32,17 +32,17 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 	const int newSize = std::max(players.size(), playerData.size());
 
 	assert(newSize <= MAX_PLAYERS);
+	assert(players.capacity() == MAX_PLAYERS);
 
 	for (unsigned int i = oldSize; i < newSize; ++i) {
 		players.emplace_back();
 	}
 
 	for (size_t i = 0; i < playerData.size(); ++i) {
-		CPlayer* player = &players[i];
-		*player = playerData[i];
+		players[i] = playerData[i];
 
-		player->playerNum = (int)i;
-		player->fpsController.SetControllerPlayer(player);
+		players[i].playerNum = int(i);
+		players[i].fpsController.SetControllerPlayer(&players[i]);
 	}
 }
 

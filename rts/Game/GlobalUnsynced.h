@@ -18,8 +18,8 @@ class CGlobalUnsynced {
 public:
 	CR_DECLARE_STRUCT(CGlobalUnsynced)
 
-	void Init();
-	void Kill();
+	void Init() { ResetState(); }
+	void Kill() { ResetState(); }
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);

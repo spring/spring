@@ -55,17 +55,6 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_IGNORED(globalReload)
 ))
 
-void CGlobalUnsynced::Init()
-{
-	guRNG.Seed(time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
-	ResetState();
-}
-
-void CGlobalUnsynced::Kill()
-{
-	playerHandler.ResetState();
-}
-
 
 void CGlobalUnsynced::ResetState()
 {
@@ -92,11 +81,15 @@ void CGlobalUnsynced::ResetState()
 	fpsMode = false;
 	globalQuit = false;
 	globalReload = false;
+
+	guRNG.Seed(time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
+	playerHandler.ResetState();
 }
 
 void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
-	playerHandler.ResetState();
+	// do not call here; AddPlayer can precede LoadFromSetup
+	// playerHandler.ResetState();
 	playerHandler.LoadFromSetup(setup);
 }
 
