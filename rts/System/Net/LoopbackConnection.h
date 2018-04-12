@@ -15,29 +15,26 @@ namespace netcode {
 class CLoopbackConnection : public CConnection
 {
 public:
-	CLoopbackConnection();
-	virtual ~CLoopbackConnection();
+	void SendData(std::shared_ptr<const RawPacket> pkt) override;
+	bool HasIncomingData() const override { return (!pktQueue.empty()); }
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const override;
+	std::shared_ptr<const RawPacket> GetData() override;
+	void DeleteBufferPacketAt(unsigned index) override;
+	void Flush(const bool forced) override {}
+	bool CheckTimeout(int seconds, bool initial) const override { return false; }
 
-	void SendData(std::shared_ptr<const RawPacket> data);
-	bool HasIncomingData() const;
-	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	std::shared_ptr<const RawPacket> GetData();
-	void DeleteBufferPacketAt(unsigned index);
-	void Flush(const bool forced);
-	bool CheckTimeout(int seconds, bool initial) const;
+	void ReconnectTo(CConnection& conn) override {}
+	bool CanReconnect() const override { return false; }
+	bool NeedsReconnect() override { return false; }
+	void Unmute() override {}
+	void Close(bool flush) override {}
+	void SetLossFactor(int factor) override {}
 
-	void ReconnectTo(CConnection& conn) {}
-	bool CanReconnect() const;
-	bool NeedsReconnect();
-	void Unmute() {}
-	void Close(bool flush) {}
-	void SetLossFactor(int factor) {}
-
-	std::string Statistics() const;
-	std::string GetFullAddress() const;
+	std::string Statistics() const override { return "Statistics for loopback connection: N/A"; }
+	std::string GetFullAddress() const override { return "Loopback"; }
 
 private:
-	std::deque< std::shared_ptr<const RawPacket> > Data;
+	std::deque< std::shared_ptr<const RawPacket> > pktQueue;
 };
 
 } // namespace netcode

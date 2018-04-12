@@ -134,8 +134,7 @@ void CNetProtocol::Send(std::shared_ptr<const netcode::RawPacket> pkt)
 
 void CNetProtocol::Send(const netcode::RawPacket* pkt)
 {
-	std::shared_ptr<const netcode::RawPacket> ptr(pkt);
-	Send(ptr);
+	Send(std::make_shared<const netcode::RawPacket>(pkt));
 }
 
 __FORCE_ALIGN_STACK__
@@ -165,4 +164,5 @@ void CNetProtocol::SetDemoRecorder(CDemoRecorder* r) { demoRecorder.reset(r); }
 CDemoRecorder* CNetProtocol::GetDemoRecorder() const { return demoRecorder.get(); }
 
 unsigned int CNetProtocol::GetNumWaitingServerPackets() const { return (serverConn.get())->GetPacketQueueSize(); }
+unsigned int CNetProtocol::GetNumWaitingPingPackets() const { return (serverConn.get())->GetNumPingsQueued(); }
 

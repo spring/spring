@@ -12,89 +12,85 @@ namespace netcode {
 // static stuff
 unsigned CLocalConnection::instances = 0;
 
-std::deque< std::shared_ptr<const RawPacket> > CLocalConnection::pqueues[2];
+std::deque< std::shared_ptr<const RawPacket> > CLocalConnection::pktQueues[2];
 spring::mutex CLocalConnection::mutexes[2];
 
 CLocalConnection::CLocalConnection()
 {
-	if (instances > 1) {
+	if (instances > 1)
 		throw network_error("Opening a third local connection is not allowed");
-	}
 
 	instance = instances;
 	instances++;
 
 	// clear data that might have been left over (if we reloaded)
-	pqueues[instance].clear();
+	pktQueues[instance].clear();
 
 	// make sure protocoldef is initialized
 	CBaseNetProtocol::Get();
 }
 
-CLocalConnection::~CLocalConnection()
-{
-	instances--;
-}
 
 void CLocalConnection::Close(bool flush)
 {
 	if (flush) {
 		std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
-		pqueues[instance].clear();
+		pktQueues[instance].clear();
 	}
 }
 
-void CLocalConnection::SendData(std::shared_ptr<const RawPacket> packet)
+void CLocalConnection::SendData(std::shared_ptr<const RawPacket> pkt)
 {
-	if (!ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
+	if (!ProtocolDef::GetInstance()->IsValidPacket(pkt->data, pkt->length)) {
 		// having this check here makes it easier to find networking bugs
 		// also when testing locally
 		LOG_L(L_ERROR, "[LocalConn::%s] discarding invalid packet: ID %d, LEN %d",
-			__FUNCTION__, (packet->length > 0) ? (int)packet->data[0] : -1, packet->length);
+			__func__, (pkt->length > 0) ? (int)pkt->data[0] : -1, pkt->length);
 		return;
 	}
 
-	dataSent += packet->length;
+	dataSent += pkt->length;
+	numPings += (pkt->data[0] == NETMSG_PING);
 
 	// when sending from A to B we must lock B's queue
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[OtherInstance()]);
-	pqueues[OtherInstance()].push_back(packet);
+	pktQueues[OtherInstance()].push_back(pkt);
 }
 
 std::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
 
-	if (!pqueues[instance].empty()) {
-		std::shared_ptr<const RawPacket> next = pqueues[instance].front();
-		pqueues[instance].pop_front();
-		dataRecv += next->length;
-		return next;
-	}
+	if (pktQueues[instance].empty())
+		return {};
 
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	std::shared_ptr<const RawPacket> pkt = pktQueues[instance].front();
+	pktQueues[instance].pop_front();
+
+	dataRecv += pkt->length;
+	numPings -= (pkt->data[0] == NETMSG_PING);
+	return pkt;
 }
 
 std::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
 
-	if (ahead < pqueues[instance].size())
-		return pqueues[instance][ahead];
+	if (ahead >= pktQueues[instance].size())
+		return {};
 
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	return pktQueues[instance][ahead];
 }
 
 void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
 
-	if (index >= pqueues[instance].size())
+	if (index >= pktQueues[instance].size())
 		return;
 
-	pqueues[instance].erase(pqueues[instance].begin() + index);
+	numPings -= (pktQueues[instance][0]->data[0] == NETMSG_PING);
+	pktQueues[instance].erase(pktQueues[instance].begin() + index);
 }
 
 
@@ -115,13 +111,13 @@ std::string CLocalConnection::GetFullAddress() const
 bool CLocalConnection::HasIncomingData() const
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
-	return (!pqueues[instance].empty());
+	return (!pktQueues[instance].empty());
 }
 
 unsigned int CLocalConnection::GetPacketQueueSize() const
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
-	return (!pqueues[instance].size());
+	return (!pktQueues[instance].size());
 }
 
 } // namespace netcode

@@ -26,34 +26,34 @@ public:
 	 * @throw network_error When there already 2 instances
 	 */
 	CLocalConnection();
-	virtual ~CLocalConnection();
+	~CLocalConnection() { instances--; }
 
 	// START overriding CConnection
 
-	void SendData(std::shared_ptr<const RawPacket> packet);
-	bool HasIncomingData() const;
-	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	std::shared_ptr<const RawPacket> GetData();
-	void DeleteBufferPacketAt(unsigned index);
-	void Flush(const bool forced) {}
-	bool CheckTimeout(int seconds, bool initial) const { return false; }
+	void SendData(std::shared_ptr<const RawPacket> pkt) override;
+	bool HasIncomingData() const override;
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const override;
+	std::shared_ptr<const RawPacket> GetData() override;
+	void DeleteBufferPacketAt(unsigned index) override;
+	void Flush(const bool forced) override {}
+	bool CheckTimeout(int seconds, bool initial) const override { return false; }
 
-	void ReconnectTo(CConnection& conn) {}
-	bool CanReconnect() const { return false; }
-	bool NeedsReconnect() { return false; }
-	void Unmute() {}
-	void Close(bool flush);
-	void SetLossFactor(int factor) {}
+	void ReconnectTo(CConnection& conn) override {}
+	bool CanReconnect() const override { return false; }
+	bool NeedsReconnect() override { return false; }
+	void Unmute() override {}
+	void Close(bool flush) override;
+	void SetLossFactor(int factor) override {}
 
-	unsigned int GetPacketQueueSize() const;
+	unsigned int GetPacketQueueSize() const override;
 
-	std::string Statistics() const;
-	std::string GetFullAddress() const;
+	std::string Statistics() const override;
+	std::string GetFullAddress() const override;
 
 	// END overriding CConnection
 
 private:
-	static std::deque< std::shared_ptr<const RawPacket> > pqueues[2];
+	static std::deque< std::shared_ptr<const RawPacket> > pktQueues[2];
 	static spring::mutex mutexes[2];
 
 	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
