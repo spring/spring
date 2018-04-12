@@ -2492,20 +2492,14 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 
 /******************************************************************************/
 
-static string GetRawMsg(lua_State* L, const char* caller, int index)
-{
-	return luaL_checksstring(L, index);
-}
-
-
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __func__, 1);
-	std::vector<std::uint8_t> data(msg.size());
-	std::copy(msg.begin(), msg.end(), data.begin());
+	const std::string msg = luaL_checksstring(L, 1);
+	const std::vector<std::uint8_t> data(msg.begin(), msg.end());
+
 	const char* mode = luaL_optstring(L, 2, "");
 
-	if (mode[0] != 'a' && mode[0] != 's')
+	if (mode[0] != 0 && mode[0] != 'a' && mode[0] != 's')
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 
 	try {
@@ -2520,9 +2514,8 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __func__, 1);
-	std::vector<std::uint8_t> data(msg.size());
-	std::copy(msg.begin(), msg.end(), data.begin());
+	const std::string msg = luaL_checksstring(L, 1);
+	const std::vector<std::uint8_t> data(msg.begin(), msg.end());
 
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
@@ -2536,9 +2529,9 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __func__, 1);
-	std::vector<std::uint8_t> data(msg.size());
-	std::copy(msg.begin(), msg.end(), data.begin());
+	const std::string msg = luaL_checksstring(L, 1);
+	const std::vector<std::uint8_t> data(msg.begin(), msg.end());
+
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
@@ -2550,7 +2543,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
 {
 	if (luaMenu != nullptr)
-		luaMenu->RecvLuaMsg(GetRawMsg(L, __func__, 1), gu->myPlayerNum);
+		luaMenu->RecvLuaMsg(luaL_checksstring(L, 1), gu->myPlayerNum);
 
 	return 0;
 }
