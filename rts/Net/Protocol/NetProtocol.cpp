@@ -34,7 +34,7 @@ CNetProtocol::~CNetProtocol()
 	// when the client-server connection is deleted, make sure
 	// the server cleans up its corresponding connection to the
 	// client
-	Send(CBaseNetProtocol::Get().SendQuit(__FUNCTION__));
+	Send(CBaseNetProtocol::Get().SendQuit(__func__));
 	Close(true);
 
 	LOG("%s", serverConn->Statistics().c_str());
@@ -134,7 +134,7 @@ void CNetProtocol::Send(std::shared_ptr<const netcode::RawPacket> pkt)
 
 void CNetProtocol::Send(const netcode::RawPacket* pkt)
 {
-	Send(std::make_shared<const netcode::RawPacket>(pkt));
+	Send(std::shared_ptr<const netcode::RawPacket>(pkt));
 }
 
 __FORCE_ALIGN_STACK__
