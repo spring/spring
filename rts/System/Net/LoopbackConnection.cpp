@@ -1,66 +1,39 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LoopbackConnection.h"
+#include "Net/Protocol/NetMessageTypes.h"
 
 namespace netcode {
 
-CLoopbackConnection::CLoopbackConnection() {
-}
-
-CLoopbackConnection::~CLoopbackConnection() {
-}
-
-void CLoopbackConnection::SendData(std::shared_ptr<const RawPacket> data) {
-	Data.push_back(data);
+void CLoopbackConnection::SendData(std::shared_ptr<const RawPacket> pkt) {
+	numPings += (pkt->data[0] == NETMSG_PING);
+	pktQueue.push_back(pkt);
 }
 
 std::shared_ptr<const RawPacket> CLoopbackConnection::Peek(unsigned ahead) const {
-	if (ahead < Data.size())
-		return Data[ahead];
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	if (ahead >= pktQueue.size())
+		return {};
+
+	return pktQueue[ahead];
 }
 
 void CLoopbackConnection::DeleteBufferPacketAt(unsigned index) {
-	if (index < Data.size())
-		Data.erase(Data.begin() + index);
+	if (index >= pktQueue.size())
+		return;
+
+	numPings -= (pktQueue[index]->data[0] == NETMSG_PING);
+	pktQueue.erase(pktQueue.begin() + index);
 }
 
 std::shared_ptr<const RawPacket> CLoopbackConnection::GetData() {
-	if (!Data.empty()) {
-		std::shared_ptr<const RawPacket> next = Data.front();
-		Data.pop_front();
-		return next;
-	}
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
-}
+	if (pktQueue.empty())
+		return {};
 
-void CLoopbackConnection::Flush(const bool forced) {
-}
+	numPings -= (pktQueue[0]->data[0] == NETMSG_PING);
 
-bool CLoopbackConnection::CheckTimeout(int seconds, bool initial) const {
-	return false;
-}
-
-bool CLoopbackConnection::CanReconnect() const {
-	return false;
-}
-
-bool CLoopbackConnection::NeedsReconnect() {
-	return false;
-}
-
-std::string CLoopbackConnection::Statistics() const {
-	return "Statistics for loopback connection: N/A";
-}
-
-std::string CLoopbackConnection::GetFullAddress() const {
-	return "Loopback";
-}
-
-bool CLoopbackConnection::HasIncomingData() const {
-	return !Data.empty();
+	std::shared_ptr<const RawPacket> next = pktQueue.front();
+	pktQueue.pop_front();
+	return next;
 }
 
 } // namespace netcode

@@ -78,7 +78,7 @@ public:
 	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket, const asio::ip::udp::endpoint& myAddr);
 	UDPConnection(int sourceport, const std::string& address, const unsigned port);
 	UDPConnection(CConnection& conn);
-	virtual ~UDPConnection();
+	~UDPConnection();
 
 	enum {
 		MIN_LOSS_FACTOR = 0,
@@ -87,7 +87,7 @@ public:
 
 
 	// START overriding CConnection
-	void SendData(std::shared_ptr<const RawPacket> data) override;
+	void SendData(std::shared_ptr<const RawPacket> pkt) override;
 	bool HasIncomingData() const override { return !msgQueue.empty(); }
 	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const override;
 	std::shared_ptr<const RawPacket> GetData() override;

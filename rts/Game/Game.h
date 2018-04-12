@@ -93,7 +93,6 @@ public:
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
-	void QueuePing() { numQueuedPings += 1; }
 	void StartSkip(int toFrame);
 	void EndSkip();
 
@@ -133,7 +132,7 @@ private:
 	/// synced actions (received from server) go in here
 	void ActionReceived(const Action& action, int playerID);
 
-	uint64_t GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPings) const;
+	uint32_t GetNumQueuedSimFrameMessages(uint32_t maxFrames) const;
 	float GetNetMessageProcessingTimeLimit() const;
 
 	void SendClientProcUsage();
@@ -153,8 +152,6 @@ public:
 
 	// number of Draw() calls per 1000ms
 	unsigned int numDrawFrames;
-
-	unsigned int numQueuedPings;
 
 	spring_time frameStartTime;
 	spring_time lastSimFrameTime;

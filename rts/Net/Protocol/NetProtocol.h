@@ -105,7 +105,7 @@ public:
 	CDemoRecorder* GetDemoRecorder() const;
 
 	unsigned int GetNumWaitingServerPackets() const;
-
+	unsigned int GetNumWaitingPingPackets() const;
 
 private:
 	volatile bool keepUpdating;

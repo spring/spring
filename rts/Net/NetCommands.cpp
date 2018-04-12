@@ -88,7 +88,7 @@ void CGame::SendClientProcUsage()
 }
 
 
-uint64_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPings) const
+uint32_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames) const
 {
 	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
 	// this number is effectively a measure of current user network conditions
@@ -107,8 +107,6 @@ uint64_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPin
 
 				eventHandler.Pong(packet->data[2], pktSendTime, pktRecvTime);
 				clientNet->DeleteBufferPacketAt(packetPeekIndex);
-
-				numPings -= 1;
 			} break;
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
@@ -127,15 +125,15 @@ uint64_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames, uint32_t numPin
 		}
 	}
 
-	return ((uint64_t(numPings) << 32) | numQueuedFrames);
+	return (numQueuedFrames);
 }
 
 void CGame::UpdateNumQueuedSimFrames()
 {
 	// if pings requested, just process NETMSG_{PING,GAME_FRAME_PROGRESS}
 	// (self-ping processing time is useful to know for testing purposes)
-	if (numQueuedPings > 0)
-		numQueuedPings = (GetNumQueuedSimFrameMessages(-1u, numQueuedPings) >> 32) & 0xFFFFFFFF;
+	if (clientNet->GetNumWaitingPingPackets() > 0)
+		GetNumQueuedSimFrameMessages(-1u);
 
 	// if host, we have no buffer
 	if (gameServer != nullptr)
@@ -155,7 +153,7 @@ void CGame::UpdateNumQueuedSimFrames()
 	// NOTE:
 	//   unnecessary to scan entire queue *unless* joining a running game
 	//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
-	const uint32_t numQueuedFrames = (GetNumQueuedSimFrameMessages(-1u, 0) >> 0) & 0xFFFFFFFF;
+	const uint32_t numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
 
 	if (globalConfig->useNetMessageSmoothingBuffer) {
 		if (numQueuedFrames < lastNumQueuedSimFrames) {

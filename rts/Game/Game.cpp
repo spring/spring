@@ -142,9 +142,7 @@ CR_BIND(CGame, (std::string(""), std::string(""), nullptr))
 CR_REG_METADATA(CGame, (
 	CR_MEMBER(lastSimFrame),
 	CR_IGNORED(lastNumQueuedSimFrames),
-
 	CR_IGNORED(numDrawFrames),
-	CR_IGNORED(numQueuedPings),
 
 	CR_IGNORED(frameStartTime),
 	CR_IGNORED(lastSimFrameTime),
@@ -209,7 +207,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrame(-1)
 	, lastNumQueuedSimFrames(-1)
 	, numDrawFrames(0)
-	, numQueuedPings(0)
 
 	, frameStartTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())

@@ -1348,7 +1348,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->QueuePing(); // tell ClientReadNet to expect a ping, tag=0 if no args
+		// tag=0 if no args
 		clientNet->Send(CBaseNetProtocol::Get().SendPing(gu->myPlayerNum, StringToInt(action.GetArgs()), spring_tomsecs(spring_now())));
 		return true;
 	}

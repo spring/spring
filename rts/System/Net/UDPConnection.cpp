@@ -25,9 +25,9 @@ CONFIG(bool, UDPConnectionLogDebugMessages).defaultValue(false);
 namespace netcode {
 using namespace asio;
 
-static const unsigned udpMaxPacketSize = 4096;
-static const int maxChunkSize = 254;
-static const int chunksPerSec = 30;
+static constexpr unsigned udpMaxPacketSize = 4096;
+static constexpr int maxChunkSize = 254;
+static constexpr int chunksPerSec = 30;
 
 
 
@@ -344,19 +344,19 @@ UDPConnection::~UDPConnection()
 	Flush(true);
 }
 
-void UDPConnection::SendData(std::shared_ptr<const RawPacket> data)
+void UDPConnection::SendData(std::shared_ptr<const RawPacket> pkt)
 {
-	assert(data->length > 0);
-	outgoingData.push_back(data);
+	assert(pkt->length > 0);
+	numPings += (pkt->data[0] == NETMSG_PING);
+	outgoingData.push_back(pkt);
 }
 
 std::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 {
-	if (ahead < msgQueue.size())
-		return msgQueue[ahead];
+	if (ahead >= msgQueue.size())
+		return {};
 
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	return msgQueue[ahead];
 }
 
 #ifdef ENABLE_DEBUG_STATS
@@ -368,6 +368,7 @@ std::shared_ptr<const RawPacket> UDPConnection::GetData()
 		std::shared_ptr<const RawPacket> msg = msgQueue.front();
 		msgQueue.pop_front();
 
+		numPings                -= (msg->data[0] == NETMSG_PING    );
 		numEnqueuedFramePackets -= (msg->data[0] == NETMSG_NEWFRAME);
 		numEnqueuedFramePackets -= (msg->data[0] == NETMSG_KEYFRAME);
 
@@ -375,30 +376,30 @@ std::shared_ptr<const RawPacket> UDPConnection::GetData()
 	}
 
 	numEmptyGetDataCalls++;
-
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	return {};
 }
 #else
 std::shared_ptr<const RawPacket> UDPConnection::GetData()
 {
-	if (!msgQueue.empty()) {
-		std::shared_ptr<const RawPacket> msg = msgQueue.front();
-		msgQueue.pop_front();
-		return msg;
-	}
+	if (msgQueue.empty())
+		return {};
 
-	std::shared_ptr<const RawPacket> empty;
-	return empty;
+	numPings -= (msgQueue[0]->data[0] == NETMSG_PING);
+
+	std::shared_ptr<const RawPacket> msg = msgQueue.front();
+	msgQueue.pop_front();
+	return msg;
 }
 #endif
 
 
 void UDPConnection::DeleteBufferPacketAt(unsigned index)
 {
-	if (index < msgQueue.size()) {
-		msgQueue.erase(msgQueue.begin() + index);
-	}
+	if (index >= msgQueue.size())
+		return;
+
+	numPings -= (msgQueue[index]->data[0] == NETMSG_PING);
+	msgQueue.erase(msgQueue.begin() + index);
 }
 
 void UDPConnection::Update()
