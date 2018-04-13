@@ -62,7 +62,7 @@ public:
 	virtual bool NeedsReconnect() = 0;
 
 	unsigned int GetDataReceived() const { return dataRecv; }
-	unsigned int GetNumPingsQueued() const { return numPings; }
+	unsigned int GetNumQueuedPings() const { return numPings; }
 	virtual unsigned int GetPacketQueueSize() const { return 0; }
 
 	virtual std::string Statistics() const = 0;

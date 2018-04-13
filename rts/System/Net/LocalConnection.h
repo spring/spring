@@ -26,7 +26,7 @@ public:
 	 * @throw network_error When there already 2 instances
 	 */
 	CLocalConnection();
-	~CLocalConnection() { instances--; }
+	~CLocalConnection();
 
 	// START overriding CConnection
 
@@ -48,21 +48,24 @@ public:
 	unsigned int GetPacketQueueSize() const override;
 
 	std::string Statistics() const override;
-	std::string GetFullAddress() const override;
+	std::string GetFullAddress() const override { return "Localhost"; }
 
 	// END overriding CConnection
 
 private:
-	static std::deque< std::shared_ptr<const RawPacket> > pktQueues[2];
-	static spring::mutex mutexes[2];
+	static constexpr unsigned int MAX_INSTANCES = 2;
 
-	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
+	static std::deque< std::shared_ptr<const RawPacket> > pktQueues[MAX_INSTANCES];
+	static spring::mutex mutexes[MAX_INSTANCES];
+	static CLocalConnection* instancePtrs[MAX_INSTANCES];
+
+	unsigned int RemoteInstanceIdx() const { return ((instanceIdx + 1) % MAX_INSTANCES); }
 
 	/// we can have two instances, one in GameServer and one in NetProtocol
 	/// (first instance represents server->client and second client->server)
-	static unsigned int instances;
+	static unsigned int numInstances;
 	/// which instance we are
-	unsigned int instance;
+	unsigned int instanceIdx;
 };
 
 } // namespace netcode

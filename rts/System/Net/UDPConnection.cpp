@@ -347,7 +347,6 @@ UDPConnection::~UDPConnection()
 void UDPConnection::SendData(std::shared_ptr<const RawPacket> pkt)
 {
 	assert(pkt->length > 0);
-	numPings += (pkt->data[0] == NETMSG_PING);
 	outgoingData.push_back(pkt);
 }
 
@@ -554,14 +553,14 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 	}
 
 
-	// process all in order packets that we have waiting
+	// process all in-order packets that we have waiting
 	for (auto wpi = waitingPackets.find(lastInOrder + 1); wpi != waitingPackets.end(); wpi = waitingPackets.find(lastInOrder + 1)) {
 		waitBuffer.clear();
 
 		if (fragmentBuffer.data != nullptr) {
-			waitBuffer.resize(fragmentBuffer.length);
 			// combine with fragment buffer (packet reassembly)
-			std::copy(fragmentBuffer.data, fragmentBuffer.data + fragmentBuffer.length, waitBuffer.begin());
+			waitBuffer.resize(fragmentBuffer.length);
+			waitBuffer.assign(fragmentBuffer.data, fragmentBuffer.data + fragmentBuffer.length);
 
 			fragmentBuffer.Delete();
 		}
@@ -572,19 +571,20 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 
 		for (unsigned pos = 0; pos < waitBuffer.size(); ) {
 			const unsigned char* bufp = &waitBuffer[pos];
-			const unsigned msglength = waitBuffer.size() - pos;
+			const unsigned int msgLength = waitBuffer.size() - pos;
 
-			const int pktlength = ProtocolDef::GetInstance()->PacketLength(bufp, msglength);
+			const int pktLength = ProtocolDef::GetInstance()->PacketLength(bufp, msgLength);
 
-			// this returns false for zero/invalid pktlength
-			if (ProtocolDef::GetInstance()->IsValidLength(pktlength, msglength)) {
-				msgQueue.push_back(std::shared_ptr<const RawPacket>(new RawPacket(bufp, pktlength)));
+			// this returns false for zero/invalid pktLength
+			if (ProtocolDef::GetInstance()->IsValidLength(pktLength, msgLength)) {
+				msgQueue.emplace_back(new RawPacket(bufp, pktLength));
+				std::shared_ptr<const RawPacket>& msgPacket = msgQueue.back();
 
 				#ifdef ENABLE_DEBUG_STATS
 				// server sends both of these, clients send only keyframe messages
 				// TODO: would be easy to feed this data into a Q3A-style lagometer
 				//
-				if ((msgQueue.back())->data[0] == NETMSG_NEWFRAME || (msgQueue.back())->data[0] == NETMSG_KEYFRAME) {
+				if (msgPacket->data[0] == NETMSG_NEWFRAME || msgPacket->data[0] == NETMSG_KEYFRAME) {
 					const spring_time dt = spring_gettime() - lastFramePacketRecvTime;
 
 					sumDeltaFramePacketRecvTime += dt.toMilliSecsf();
@@ -605,15 +605,16 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 				}
 				#endif
 
-				pos += pktlength;
+				pos += pktLength;
+				numPings += (msgPacket->data[0] == NETMSG_PING); // incoming
 			} else {
-				if (pktlength >= 0) {
+				if (pktLength >= 0) {
 					// partial packet in buffer
-					fragmentBuffer = std::move(RawPacket(bufp, msglength));
+					fragmentBuffer = std::move(RawPacket(bufp, msgLength));
 					break;
 				}
 
-				LOG_L(L_ERROR, "Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktlength);
+				LOG_L(L_ERROR, "Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktLength);
 
 				// if the packet is invalid, skip a single byte
 				// until we encounter a good packet
