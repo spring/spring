@@ -130,8 +130,8 @@ uint32_t CGame::GetNumQueuedSimFrameMessages(uint32_t maxFrames) const
 
 void CGame::UpdateNumQueuedSimFrames()
 {
-	// if pings requested, just process NETMSG_{PING,GAME_FRAME_PROGRESS}
-	// (self-ping processing time is useful to know for testing purposes)
+	// on any *incoming* ping-response, just process NETMSG_{PING, GAME_FRAME_PROGRESS}
+	// (even if host, self-ping processing time is useful to know for testing purposes)
 	if (clientNet->GetNumWaitingPingPackets() > 0)
 		GetNumQueuedSimFrameMessages(-1u);
 

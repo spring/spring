@@ -37,7 +37,7 @@ CNetProtocol::~CNetProtocol()
 	Send(CBaseNetProtocol::Get().SendQuit(__func__));
 	Close(true);
 
-	LOG("%s", serverConn->Statistics().c_str());
+	LOG("[NetProto::%s] %s",__func__, serverConn->Statistics().c_str());
 }
 
 
@@ -164,5 +164,5 @@ void CNetProtocol::SetDemoRecorder(CDemoRecorder* r) { demoRecorder.reset(r); }
 CDemoRecorder* CNetProtocol::GetDemoRecorder() const { return demoRecorder.get(); }
 
 unsigned int CNetProtocol::GetNumWaitingServerPackets() const { return (serverConn.get())->GetPacketQueueSize(); }
-unsigned int CNetProtocol::GetNumWaitingPingPackets() const { return (serverConn.get())->GetNumPingsQueued(); }
+unsigned int CNetProtocol::GetNumWaitingPingPackets() const { return (serverConn.get())->GetNumQueuedPings(); }
 
