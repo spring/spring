@@ -342,7 +342,7 @@ bool CGroundMoveType::Update()
 
 	// these must be executed even when stunned (so
 	// units do not get buried by restoring terrain)
-	UpdateOwnerSpeedAndHeading();
+	UpdateOwnerAccelAndHeading();
 	UpdateOwnerPos(owner->speed, GetNewSpeedVector(deltaSpeed, myGravity));
 	HandleObjectCollisions();
 	AdjustPosToWaterLine();
@@ -355,7 +355,7 @@ bool CGroundMoveType::Update()
 	return (OwnerMoved(heading, owner->pos - oldPos, float3(float3::cmp_eps(), float3::cmp_eps() * 1e-2f, float3::cmp_eps())));
 }
 
-void CGroundMoveType::UpdateOwnerSpeedAndHeading()
+void CGroundMoveType::UpdateOwnerAccelAndHeading()
 {
 	if (owner->IsStunned() || owner->beingBuilt) {
 		ChangeSpeed(0.0f, false);
@@ -650,9 +650,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 						// never let speed drop below TIPSL, but limit TIPSL itself to turnMaxSpeed
 						targetSpeed = Clamp(turnModSpeed, std::min(ud->turnInPlaceSpeedLimit, turnMaxSpeed), turnMaxSpeed);
 					} else {
-						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-							targetSpeed = turnModSpeed;
-						}
+						targetSpeed = mix(targetSpeed, turnModSpeed, reqTurnAngle > ud->turnInPlaceAngleLimit);
 					}
 				}
 
@@ -2368,16 +2366,15 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 	return speedVector;
 }
 
-void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3& newSpeedVector) {
-	const float oldSpeed = math::fabs(oldSpeedVector.dot(flatFrontDir));
-	const float newSpeed = math::fabs(newSpeedVector.dot(flatFrontDir));
 
-	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, newSpeed > 0.01f);
+void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3& newSpeedVector) {
+	const float oldSpeed = oldSpeedVector.dot(flatFrontDir);
+	const float newSpeed = newSpeedVector.dot(flatFrontDir);
 
 	// if being built, the nanoframe might not be exactly on
 	// the ground and would jitter from gravity acting on it
 	// --> nanoframes can not move anyway, just return early
-	// (units that become reverse-built will stop instantly)
+	// (units that become reverse-built will continue moving)
 	if (owner->beingBuilt)
 		return;
 
@@ -2424,14 +2421,28 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true));
 	}
 
-	if (oldSpeed <= 0.01f && newSpeed >  0.01f)
-		owner->script->StartMoving(reversing = (newSpeedVector.dot(flatFrontDir) < 0.0f));
-	if (oldSpeed >  0.01f && newSpeed <= 0.01f)
+	reversing = UpdateOwnerSpeed(math::fabs(oldSpeed), math::fabs(newSpeed), newSpeed);
+}
+
+bool CGroundMoveType::UpdateOwnerSpeed(float oldSpeedAbs, float newSpeedAbs, float newSpeedRaw)
+{
+	const bool oldSpeedAbsGTZ = (oldSpeedAbs > 0.01f);
+	const bool newSpeedAbsGTZ = (newSpeedAbs > 0.01f);
+	const bool newSpeedRawLTZ = (newSpeedRaw < 0.0f );
+
+	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, newSpeedAbsGTZ);
+
+	if (!oldSpeedAbsGTZ &&  newSpeedAbsGTZ)
+		owner->script->StartMoving(newSpeedRawLTZ);
+	if ( oldSpeedAbsGTZ && !newSpeedAbsGTZ)
 		owner->script->StopMoving();
 
-	currentSpeed = newSpeed;
+	currentSpeed = newSpeedAbs;
 	deltaSpeed   = 0.0f;
+
+	return newSpeedRawLTZ;
 }
+
 
 bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) const
 {
