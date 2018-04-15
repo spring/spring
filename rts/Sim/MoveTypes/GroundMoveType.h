@@ -55,6 +55,15 @@ public:
 	bool IsPushResistant() const override { return pushResistant; }
 	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
+	void TriggerSkipWayPoint() {
+		currWayPoint.y = -1.0f;
+		// nextWayPoint.y = -1.0f;
+	}
+	void TriggerCallArrived() {
+		atEndOfPath = true;
+		atGoal = true;
+	}
+
 
 	float GetTurnRate() const { return turnRate; }
 	float GetTurnSpeed() const { return turnSpeed; }
@@ -63,6 +72,7 @@ public:
 	float GetAccRate() const { return accRate; }
 	float GetDecRate() const { return decRate; }
 	float GetMyGravity() const { return myGravity; }
+	float GetOwnerRadius() const { return ownerRadius; }
 
 	float GetMaxReverseSpeed() const { return maxReverseSpeed; }
 	float GetWantedSpeed() const { return wantedSpeed; }
@@ -93,11 +103,11 @@ private:
 
 	unsigned int GetNewPath();
 
-	void GetNextWayPoint();
-	bool CanGetNextWayPoint();
+	void SetNextWayPoint();
+	bool CanSetNextWayPoint();
 	void ReRequestPath(bool forceRequest);
 
-	float3 Here();
+	float3 Here() const;
 
 	void StartEngine(bool callScript);
 	void StopEngine(bool callScript, bool hardStop = false);
@@ -106,7 +116,7 @@ private:
 	void Fail(bool callScript);
 
 	void HandleObjectCollisions();
-	void HandleStaticObjectCollision(
+	bool HandleStaticObjectCollision(
 		CUnit* collider,
 		CSolidObject* collidee,
 		const MoveDef* colliderMD,
@@ -115,20 +125,23 @@ private:
 		const float3& separationVector,
 		bool canRequestPath,
 		bool checkYardMap,
-		bool checkTerrain);
+		bool checkTerrain
+	);
 
 	void HandleUnitCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD);
+		const MoveDef* colliderMD
+	);
 	void HandleFeatureCollisions(
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
 		const UnitDef* colliderUD,
-		const MoveDef* colliderMD);
+		const MoveDef* colliderMD
+	);
 
 	void SetMainHeading();
 	void ChangeSpeed(float, bool, bool = false);
@@ -178,22 +191,12 @@ private:
 	float currentSpeed;
 	float deltaSpeed;
 
-	bool atGoal;
-	bool atEndOfPath;
-	bool wantRepath;
-
 	float currWayPointDist;
 	float prevWayPointDist;
 
 	float goalRadius;                   /// original radius passed to StartMoving*
-	float extraRadius;                  /// owner MoveDef footprint radius
-
-	bool reversing;
-	bool idling;
-	bool pushResistant;
-	bool canReverse;
-	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
-	bool useRawMovement;                /// if true, move towards goal without invoking PFS
+	float ownerRadius;                  /// owner MoveDef footprint radius
+	float extraRadius;
 
 	float skidRotSpeed;                 /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;                 /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
@@ -206,6 +209,17 @@ private:
 
 	short wantedHeading;
 	short minScriptChangeHeading;       /// minimum required turn-angle before script->ChangeHeading is called
+
+	bool atGoal;
+	bool atEndOfPath;
+	bool wantRepath;
+
+	bool reversing;
+	bool idling;
+	bool pushResistant;
+	bool canReverse;
+	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
+	bool useRawMovement;                /// if true, move towards goal without invoking PFS
 };
 
 #endif // GROUNDMOVETYPE_H

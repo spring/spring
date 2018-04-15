@@ -270,7 +270,7 @@ public:
 	uint8_t usMemBuffer[240];
 	// sufficient for the largest AMoveType (CGroundMoveType)
 	// need two buffers since ScriptMoveType might be enabled
-	uint8_t amtMemBuffer[490];
+	uint8_t amtMemBuffer[498];
 	uint8_t smtMemBuffer[370];
 	// sufficient for the largest CommandAI type (CBuilderCAI)
 	// knowing the exact CAI object size here is not required;
