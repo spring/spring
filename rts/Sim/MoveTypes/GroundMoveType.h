@@ -156,8 +156,9 @@ private:
 	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
-	void UpdateOwnerSpeedAndHeading();
+	void UpdateOwnerAccelAndHeading();
 	void UpdateOwnerPos(const float3&, const float3&);
+	bool UpdateOwnerSpeed(float oldSpeedAbs, float newSpeedAbs, float newSpeedRaw);
 	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
