@@ -1084,31 +1084,41 @@ int LuaSyncedCtrl::SetFeatureRulesParam(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline void ParseCobArgs(lua_State* L,
-                                int first, int last, vector<int>& args)
-{
+static inline void ParseCobArgs(
+	lua_State* L,
+	int first,
+	int last,
+	std::array<int, 1 + MAX_COB_ARGS>& args
+) {
+	args[0] = 0;
+
 	for (int a = first; a <= last; a++) {
 		if (lua_isnumber(L, a)) {
-			args.push_back(lua_toint(L, a));
+			args[1 + (args[0]++)] = lua_toint(L, a);
+			continue;
 		}
-		else if (lua_istable(L, a)) {
+		if (lua_istable(L, a)) {
 			lua_rawgeti(L, a, 1);
 			lua_rawgeti(L, a, 2);
+
 			if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {
 				const int x = lua_toint(L, -2);
 				const int z = lua_toint(L, -1);
-				args.push_back(PACKXZ(x, z));
+
+				args[1 + (args[0]++)] = PACKXZ(x, z);
 			} else {
-				args.push_back(0);
+				args[1 + (args[0]++)] = 0;
 			}
+
 			lua_pop(L, 2);
+			continue;
 		}
-		else if (lua_isboolean(L, a)) {
-			args.push_back(lua_toboolean(L, a) ? 1 : 0);
+		if (lua_isboolean(L, a)) {
+			args[1 + (args[0]++)] = int(lua_toboolean(L, a));
+			continue;
 		}
-		else {
-			args.push_back(0);
-		}
+
+		args[1 + (args[0]++)] = 0;
 	}
 }
 
@@ -1116,12 +1126,19 @@ static inline void ParseCobArgs(lua_State* L,
 int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 {
 //FIXME?	CheckAllowGameChanges(L);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || // unitID
-	    !lua_isnumber(L, 3)) { // number of returned parameters
-		luaL_error(L, "Incorrect arguments to CallCOBScript()");
-	}
+	const int numArgs = lua_gettop(L);
+
+	if (numArgs < 3)
+		luaL_error(L, "[%s] too few arguments", __func__);
+	if (numArgs > MAX_COB_ARGS)
+		luaL_error(L, "[%s] too many arguments", __func__);
+
+	// unitID
+	if (!lua_isnumber(L, 1))
+		luaL_error(L, "[%s] unitID not a number", __func__);
+	// number of returned parameters
+	if (!lua_isnumber(L, 3))
+		luaL_error(L, "[%s] retval-count not a number", __func__);
 
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
@@ -1131,34 +1148,31 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 
 	if (cob == nullptr)
-		luaL_error(L, "CallCOBScript(): unit is not running a COB script");
+		luaL_error(L, "[%s] unit is not running a COB script", __func__);
 
-	// collect the arguments
-	vector<int> cobArgs;
-	ParseCobArgs(L, 4, args, cobArgs);
-	const int retParams = min(lua_toint(L, 3),
-	                          min(MAX_LUA_COB_ARGS, (int)cobArgs.size()));
+	static_assert(MAX_LUA_COB_ARGS <= MAX_COB_ARGS, "");
 
-	int retval;
+	// collect the arguments; cobArgs[0] holds the final count
+	std::array<int, 1 + MAX_COB_ARGS> cobArgs;
+	ParseCobArgs(L, 4, numArgs, cobArgs);
+
+	const int numRetVals = std::min(lua_toint(L, 3), std::min(MAX_LUA_COB_ARGS, cobArgs[0]));
+	int retCode = 0;
+
 	if (lua_israwnumber(L, 2)) {
-		const int funcId = lua_toint(L, 2);
-		retval = cob->RawCall(funcId, cobArgs);
-	}
-	else if (lua_israwstring(L, 2)) {
-		const string funcName = lua_tostring(L, 2);
-		retval = cob->Call(funcName, cobArgs);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to CallCOBScript()");
-		retval = 0;
+		retCode = cob->RawCall(lua_toint(L, 2), cobArgs);
+	} else if (lua_israwstring(L, 2)) {
+		retCode = cob->Call(lua_tostring(L, 2), cobArgs);
+	} else {
+		luaL_error(L, "[%s] bad function id or name", __func__);
 	}
 
 	lua_settop(L, 0); // FIXME - ok?
-	lua_pushnumber(L, retval);
-	for (int i = 0; i < retParams; i++) {
+	lua_pushnumber(L, retCode);
+	for (int i = 0; i < numRetVals; i++) {
 		lua_pushnumber(L, cobArgs[i]);
 	}
-	return 1 + retParams;
+	return (1 + numRetVals);
 }
 
 
@@ -1167,7 +1181,7 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2))
-		luaL_error(L, "Incorrect arguments to GetCOBScriptID()");
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
@@ -1176,10 +1190,9 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 
 	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 
-	if (cob == nullptr) {
-		// no error - allows using this to determine whether unit runs COB or LUS
+	// no error - allows using this to determine whether unit runs COB or LUS
+	if (cob == nullptr)
 		return 0;
-	}
 
 	const int funcID = cob->GetFunctionId(lua_tostring(L, 2));
 
