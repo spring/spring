@@ -42,7 +42,7 @@ public:
 	 * If schedule is false the thread is not added to the scheduler, and thus
 	 * it is expected that the starter is responsible for ticking it.
 	 */
-	void Start(int functionId, int sigMask, const std::vector<int>& args, bool schedule);
+	void Start(int functionId, int sigMask, const std::array<int, 1 + MAX_COB_ARGS>& args, bool schedule);
 	void Stop();
 
 	void SetID(int threadID) { id = threadID; }

@@ -52,27 +52,12 @@ CR_REG_METADATA(CCobInstance, (
 ))
 
 
-// most callins only need two args, some three or four
-static std::vector<int> callinArgs = {0, 0, 0, 0};
-
-
 inline bool CCobInstance::HasFunction(int id) const
 {
 	return (cobFile->scriptIndex.size() > id && cobFile->scriptIndex[id] >= 0);
 }
 
-//Used by creg
-CCobInstance::CCobInstance()
-	: CUnitScript(nullptr)
-	, cobFile(nullptr)
-{ }
 
-CCobInstance::CCobInstance(CCobFile* _cob, CUnit* _unit)
-	: CUnitScript(_unit)
-	, cobFile(_cob)
-{
-	Init();
-}
 
 void CCobInstance::Init()
 {
@@ -206,9 +191,11 @@ void CCobInstance::Create()
 
 void CCobInstance::Killed()
 {
-	callinArgs.clear();
-	callinArgs.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
-	callinArgs.push_back(0);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = int(unit->recentDamage / unit->maxHealth * 100);
+	callinArgs[2] = 0;
 
 	Call(COBFN_Killed, callinArgs, CBKilled, 0, nullptr);
 }
@@ -234,9 +221,11 @@ void CCobInstance::ExtractionRateChanged(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
-	callinArgs.clear();
-	callinArgs.push_back(rockDir.z);
-	callinArgs.push_back(rockDir.x);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = int(rockDir.z);
+	callinArgs[2] = int(rockDir.x);
 
 	Call(COBFN_RockUnit, callinArgs);
 }
@@ -244,15 +233,18 @@ void CCobInstance::RockUnit(const float3& rockDir)
 
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
-	callinArgs.clear();
-	callinArgs.push_back(hitDir.z);
-	callinArgs.push_back(hitDir.x);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = int(hitDir.z);
+	callinArgs[2] = int(hitDir.x);
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
 
-		callinArgs.push_back((wd != nullptr)? wd->tdfId : -1);
-		callinArgs.push_back(int(100 * inoutDamage));
+		callinArgs[0] = 4;
+		callinArgs[3] = ((wd != nullptr)? wd->tdfId : -1);
+		callinArgs[4] = int(100 * inoutDamage);
 
 		int weaponHitMod = 1;
 
@@ -271,23 +263,30 @@ void CCobInstance::SetSFXOccupy(int curTerrainType)
 }
 
 
-void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
+void CCobInstance::QueryLandingPads(std::vector<int>& outPieces)
 {
-	int maxPadCount = 16; // default max pad count
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 1;
+	callinArgs[1] = MAX_COB_ARGS; // default max pad count
 
 	if (HasFunction(COBFN_QueryLandingPadCount)) {
-		callinArgs.clear();
-		callinArgs.push_back(maxPadCount);
-
+		// query the count
 		Call(COBFN_QueryLandingPadCount, callinArgs);
-		maxPadCount = callinArgs[0];
+
+		// setup count as first arg for next query
+		callinArgs[1] = callinArgs[0];
+		callinArgs[0] = 1;
 	}
 
-	for (int i = 0; i < maxPadCount; i++) {
-		out_pieces.push_back(-1);
-	}
+	const int maxPadCount = std::min(callinArgs[1], int(MAX_COB_ARGS));
 
-	Call(COBFN_QueryLandingPad, out_pieces);
+	// query the pieces
+	Call(COBFN_QueryLandingPad, callinArgs);
+
+	outPieces.clear();
+	outPieces.resize(maxPadCount);
+	outPieces.assign(callinArgs.begin(), callinArgs.begin() + maxPadCount);
 }
 
 
@@ -300,9 +299,11 @@ void CCobInstance::BeginTransport(const CUnit* unit)
 
 int CCobInstance::QueryTransport(const CUnit* unit)
 {
-	callinArgs.clear();
-	callinArgs.push_back(0);
-	callinArgs.push_back(int(unit->model->height * 65536));
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = 0;
+	callinArgs[2] = int(unit->model->height * 65536);
 
 	Call(COBFN_QueryTransport, callinArgs);
 	return callinArgs[0];
@@ -311,16 +312,18 @@ int CCobInstance::QueryTransport(const CUnit* unit)
 
 void CCobInstance::TransportPickup(const CUnit* unit)
 {
-	// funny, now it uses unitIDs instead of model height
+	// here COB uses unitIDs instead of model height
 	Call(COBFN_TransportPickup, unit->id);
 }
 
 
 void CCobInstance::TransportDrop(const CUnit* unit, const float3& pos)
 {
-	callinArgs.clear();
-	callinArgs.push_back(unit->id);
-	callinArgs.push_back(PACKXZ(pos.x, pos.z));
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = unit->id;
+	callinArgs[2] = PACKXZ(pos.x, pos.z);
 
 	Call(COBFN_TransportDrop, callinArgs);
 }
@@ -328,9 +331,11 @@ void CCobInstance::TransportDrop(const CUnit* unit, const float3& pos)
 
 void CCobInstance::StartBuilding(float heading, float pitch)
 {
-	callinArgs.clear();
-	callinArgs.push_back(short(heading * RAD2TAANG));
-	callinArgs.push_back(short(  pitch * RAD2TAANG));
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = short(heading * RAD2TAANG);
+	callinArgs[2] = short(  pitch * RAD2TAANG);
 
 	Call(COBFN_StartBuilding, callinArgs);
 }
@@ -338,8 +343,10 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 
 int CCobInstance::QueryNanoPiece()
 {
-	callinArgs.clear();
-	callinArgs.push_back(-1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] =  1;
+	callinArgs[1] = -1;
 
 	Call(COBFN_QueryNanoPiece, callinArgs);
 	return callinArgs[0];
@@ -348,8 +355,10 @@ int CCobInstance::QueryNanoPiece()
 
 int CCobInstance::QueryBuildInfo()
 {
-	callinArgs.clear();
-	callinArgs.push_back(-1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] =  1;
+	callinArgs[1] = -1;
 
 	Call(COBFN_QueryBuildInfo, callinArgs);
 	return callinArgs[0];
@@ -358,8 +367,10 @@ int CCobInstance::QueryBuildInfo()
 
 int CCobInstance::QueryWeapon(int weaponNum)
 {
-	callinArgs.clear();
-	callinArgs.push_back(-1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] =  1;
+	callinArgs[1] = -1;
 
 	Call(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum, callinArgs);
 	return callinArgs[0];
@@ -368,9 +379,11 @@ int CCobInstance::QueryWeapon(int weaponNum)
 
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 {
-	callinArgs.clear();
-	callinArgs.push_back(short(heading * RAD2TAANG));
-	callinArgs.push_back(short(  pitch * RAD2TAANG));
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = short(heading * RAD2TAANG);
+	callinArgs[2] = short(  pitch * RAD2TAANG);
 
 	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, callinArgs, CBAimWeapon, weaponNum, nullptr);
 }
@@ -378,9 +391,10 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	callinArgs.clear();
-	callinArgs.push_back(0); // compat with AimWeapon (same script is called)
-	callinArgs.push_back(0);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 2;
+	callinArgs[1] = 0; // compat with AimWeapon (same script is called)
 
 	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, callinArgs, CBAimShield, weapon->weaponNum, nullptr);
 }
@@ -388,8 +402,10 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
-	callinArgs.clear();
-	callinArgs.push_back(-1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] =  1;
+	callinArgs[1] = -1;
 
 	Call(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum, callinArgs);
 	return callinArgs[0];
@@ -404,12 +420,12 @@ void CCobInstance::Shot(int weaponNum)
 
 bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
-	const int unitID = targetUnit ? targetUnit->id : 0;
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
 
-	callinArgs.clear();
-	callinArgs.push_back(unitID);
-	callinArgs.push_back(0); // return value; default is to not block the shot
-	callinArgs.push_back(userTarget);
+	callinArgs[0] = 3;
+	callinArgs[1] = (targetUnit != nullptr)? targetUnit->id : 0;
+	callinArgs[2] = 0; // return value; default is to not block the shot
+	callinArgs[3] = userTarget;
 
 	Call(COBFN_BlockShot + COBFN_Weapon_Funcs * weaponNum, callinArgs);
 
@@ -419,11 +435,11 @@ bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTa
 
 float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
-	const int unitID = (targetUnit != nullptr)? targetUnit->id : 0;
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
 
-	callinArgs.clear();
-	callinArgs.push_back(unitID);
-	callinArgs.push_back(COBSCALE); // return value; default is 1.0
+	callinArgs[0] = 2;
+	callinArgs[1] = (targetUnit != nullptr)? targetUnit->id : 0;
+	callinArgs[2] = COBSCALE; // return value; default is 1.0
 
 	Call(COBFN_TargetWeight + COBFN_Weapon_Funcs * weaponNum, callinArgs);
 
@@ -467,7 +483,7 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
-int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
+int CCobInstance::RealCall(int functionId, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 	int ret = -1;
 
@@ -498,19 +514,25 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType
 	if ((ret = newThread->Tick()) == 0) {
 		// thread died already after one tick
 		// NOTE:
+		//   ticking can trigger recursion, for example FireWeapon ->
+		//   Call(COBFN_FirePrimary + N*) -> EmitSFX -> FireWeapon ->
+		//   ...
+		//
 		//   the StartMoving callin now takes an argument which means
 		//   there will be a mismatch between the number of arguments
-		//   passed in (1) and the number returned (0) as of 95.0 -->
-		//   prevent error-spam
-		unsigned int i = 0;
-		unsigned int argc = newThread->CheckStack(args.size(), functionId != cobFile->scriptIndex[COBFN_StartMoving]);
+		//   passed in (1) and the number returned (0) as of 95.0, so
+		//   prevent error-spam by checking functionId
+		//
+		//   args[0] holds the number of input args
+		const unsigned int numArgs = args[0];
+		const unsigned int retArgs = newThread->CheckStack(numArgs, functionId != cobFile->scriptIndex[COBFN_StartMoving]);
 
-		// retrieve parameter values from stack
-		for (; i < argc; ++i)
+		// retrieve output parameter values from stack
+		for (unsigned int i = 0, n = std::min(retArgs, MAX_COB_ARGS); i < n; ++i)
 			args[i] = newThread->GetStackVal(i);
 
 		// set erroneous parameters to 0
-		for (; i < args.size(); ++i)
+		for (unsigned int i = std::min(retArgs, MAX_COB_ARGS); i < numArgs; ++i)
 			args[i] = 0;
 
 		// dtor runs the callback
@@ -531,25 +553,29 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType
 
 int CCobInstance::Call(const std::string& fname)
 {
-	callinArgs.clear();
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs = {{0}};
+
 	return Call(fname, callinArgs, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
+int CCobInstance::Call(const std::string& fname, std::array<int, 1 + MAX_COB_ARGS>& args)
 {
 	return Call(fname, args, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(const std::string& fname, int arg1)
 {
-	callinArgs.clear();
-	callinArgs.push_back(arg1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 1;
+	callinArgs[1] = arg1;
+
 	return Call(fname, callinArgs, CBNone, 0, nullptr);
 }
 
 
 
-int CCobInstance::Call(const std::string& fname, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
+int CCobInstance::Call(const std::string& fname, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
 	//      (the callback has always been called [when the function is not defined]
@@ -561,23 +587,27 @@ int CCobInstance::Call(const std::string& fname, std::vector<int>& args, ThreadC
 
 int CCobInstance::Call(int id)
 {
-	callinArgs.clear();
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs = {{0}};
+
 	return Call(id, callinArgs, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(int id, int arg1)
 {
-	callinArgs.clear();
-	callinArgs.push_back(arg1);
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs;
+
+	callinArgs[0] = 1;
+	callinArgs[1] = arg1;
+
 	return Call(id, callinArgs, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, std::vector<int>& args)
+int CCobInstance::Call(int id, std::array<int, 1 + MAX_COB_ARGS>& args)
 {
 	return Call(id, args, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
+int CCobInstance::Call(int id, std::array<int, 1 + MAX_COB_ARGS>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 	return RealCall(cobFile->scriptIndex[id], args, cb, cbParam, retCode);
 }
@@ -585,11 +615,12 @@ int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, in
 
 void CCobInstance::RawCall(int fn)
 {
-	callinArgs.clear();
+	std::array<int, 1 + MAX_COB_ARGS> callinArgs = {{0}};
+
 	RealCall(fn, callinArgs, CBNone, 0, nullptr);
 }
 
-int CCobInstance::RawCall(int fn, std::vector<int>& args)
+int CCobInstance::RawCall(int fn, std::array<int, 1 + MAX_COB_ARGS>& args)
 {
 	return RealCall(fn, args, CBNone, 0, nullptr);
 }

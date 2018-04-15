@@ -108,12 +108,12 @@ CCobThread& CCobThread::operator = (const CCobThread& t) {
 }
 
 
-void CCobThread::Start(int functionId, int sigMask, const std::vector<int>& args, bool schedule)
+void CCobThread::Start(int functionId, int sigMask, const std::array<int, 1 + MAX_COB_ARGS>& args, bool schedule)
 {
 	state = Run;
 	pc = cobFile->scriptOffsets[functionId];
 
-	paramCount = args.size();
+	paramCount = args[0];
 	signalMask = sigMask;
 
 	CallInfo ci;
@@ -123,9 +123,11 @@ void CCobThread::Start(int functionId, int sigMask, const std::vector<int>& args
 
 	callStack.push_back(ci);
 
-	// copy arguments
-	if (!args.empty())
-		dataStack = args;
+	// copy arguments; args[0] holds the count
+	if (paramCount > 0) {
+		dataStack.resize(paramCount);
+		dataStack.assign(args.begin() + 1, args.begin() + 1 + paramCount);
+	}
 
 	// add to scheduler
 	if (schedule)
@@ -508,7 +510,7 @@ bool CCobThread::Tick()
 
 				t.SetID(cobEngine->GenThreadID());
 				t.InitStack(r2, this);
-				t.Start(r1, signalMask, {}, true);
+				t.Start(r1, signalMask, {{0}}, true);
 
 				// calling AddThread directly might move <this>, defer it
 				cobEngine->QueueAddThread(std::move(t));
