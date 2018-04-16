@@ -50,7 +50,7 @@
 
 
 
-LuaRulesParams::Params  CLuaHandleSynced::gameParams;
+LuaRulesParams::Params  CSplitLuaHandle::gameParams;
 
 
 
@@ -64,7 +64,7 @@ LuaRulesParams::Params  CLuaHandleSynced::gameParams;
 // ##     ## ##   ### ##    ##    ##    ##   ### ##    ## ##       ##     ##
 //  #######  ##    ##  ######     ##    ##    ##  ######  ######## ########
 
-CUnsyncedLuaHandle::CUnsyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
+CUnsyncedLuaHandle::CUnsyncedLuaHandle(CSplitLuaHandle* _base, const string& _name, int _order)
 	: CLuaHandle(_name, _order, false, false)
 	, base(*_base)
 {
@@ -108,8 +108,8 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 		LuaPushNamedNil(L, "Kill");
 	lua_pop(L, 1);
 
-	LuaPushNamedCFunc(L, "loadstring", CLuaHandleSynced::LoadStringData);
-	LuaPushNamedCFunc(L, "CallAsTeam", CLuaHandleSynced::CallAsTeam);
+	LuaPushNamedCFunc(L, "loadstring", CSplitLuaHandle::LoadStringData);
+	LuaPushNamedCFunc(L, "CallAsTeam", CSplitLuaHandle::CallAsTeam);
 	LuaPushNamedNumber(L, "COBSCALE",  COBSCALE);
 
 	// load our libraries
@@ -313,7 +313,7 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 // ##    ##    ##    ##   ### ##    ## ##       ##     ##
 //  ######     ##    ##    ##  ######  ######## ########
 
-CSyncedLuaHandle::CSyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
+CSyncedLuaHandle::CSyncedLuaHandle(CSplitLuaHandle* _base, const string& _name, int _order)
 	: CLuaHandle(_name, _order, false, true)
 	, base(*_base)
 	, origNextRef(-1)
@@ -366,7 +366,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
-	LuaPushNamedCFunc(L, "loadstring", CLuaHandleSynced::LoadStringData);
+	LuaPushNamedCFunc(L, "loadstring", CSplitLuaHandle::LoadStringData);
 	LuaPushNamedCFunc(L, "pairs", SyncedPairs);
 	LuaPushNamedCFunc(L, "next",  SyncedNext);
 	lua_pop(L, 1);
@@ -394,7 +394,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 
 	// add the custom file loader
 	LuaPushNamedCFunc(L, "SendToUnsynced", SendToUnsynced);
-	LuaPushNamedCFunc(L, "CallAsTeam",     CLuaHandleSynced::CallAsTeam);
+	LuaPushNamedCFunc(L, "CallAsTeam",     CSplitLuaHandle::CallAsTeam);
 	LuaPushNamedNumber(L, "COBSCALE",      COBSCALE);
 
 	// load our libraries  (LuaSyncedCtrl overrides some LuaUnsyncedCtrl entries)
@@ -1354,7 +1354,7 @@ int CSyncedLuaHandle::SendToUnsynced(lua_State* L)
 		}
 	}
 
-	CUnsyncedLuaHandle* ulh = CLuaHandleSynced::GetUnsyncedHandle(L);
+	CUnsyncedLuaHandle* ulh = CSplitLuaHandle::GetUnsyncedHandle(L);
 	ulh->RecvFromSynced(L, args);
 	return 0;
 }
@@ -1460,14 +1460,14 @@ SetWatchDef(Weapon)
 // ##    ## ##     ## ##     ## ##    ##  ##       ##     ##
 //  ######  ##     ## ##     ## ##     ## ######## ########
 
-CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
+CSplitLuaHandle::CSplitLuaHandle(const string& _name, int _order)
 	: syncedLuaHandle(this, _name, _order)
 	, unsyncedLuaHandle(this, _name, _order + 1)
 {
 }
 
 
-CLuaHandleSynced::~CLuaHandleSynced()
+CSplitLuaHandle::~CSplitLuaHandle()
 {
 	// must be called before their dtors!!!
 	syncedLuaHandle.KillLua();
@@ -1475,7 +1475,7 @@ CLuaHandleSynced::~CLuaHandleSynced()
 }
 
 
-void CLuaHandleSynced::Init(const string& syncedFile, const string& unsyncedFile, const string& modes)
+void CSplitLuaHandle::Init(const string& syncedFile, const string& unsyncedFile, const string& modes)
 {
 	if (!IsValid())
 		return;
@@ -1499,7 +1499,7 @@ void CLuaHandleSynced::Init(const string& syncedFile, const string& unsyncedFile
 }
 
 
-string CLuaHandleSynced::LoadFile(const string& filename, const string& modes) const
+string CSplitLuaHandle::LoadFile(const string& filename, const string& modes) const
 {
 	string vfsModes(modes);
 	if (CSyncedLuaHandle::devMode) {
@@ -1517,7 +1517,7 @@ string CLuaHandleSynced::LoadFile(const string& filename, const string& modes) c
 // Call-Outs
 //
 
-int CLuaHandleSynced::LoadStringData(lua_State* L)
+int CSplitLuaHandle::LoadStringData(lua_State* L)
 {
 	size_t len;
 	const char *str    = luaL_checklstring(L, 1, &len);
@@ -1541,7 +1541,7 @@ int CLuaHandleSynced::LoadStringData(lua_State* L)
 }
 
 
-int CLuaHandleSynced::CallAsTeam(lua_State* L)
+int CSplitLuaHandle::CallAsTeam(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	if ((args < 2) || !lua_isfunction(L, 2)) {

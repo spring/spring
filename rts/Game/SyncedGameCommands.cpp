@@ -261,7 +261,7 @@ public:
 
 
 template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
-	CLuaHandleSynced* handler,
+	CSplitLuaHandle* handler,
 	const SyncedAction& action,
 	const char* luaName
 ) {

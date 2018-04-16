@@ -9,7 +9,7 @@ using std::string;
 #include "LuaHandleSynced.h"
 
 
-class CLuaGaia : public CLuaHandleSynced
+class CLuaGaia : public CSplitLuaHandle
 {
 public:
 	static bool CanLoadHandler();

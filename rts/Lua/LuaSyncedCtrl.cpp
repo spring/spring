@@ -1043,7 +1043,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
 {
-	SetRulesParam(L, __func__, 0, CLuaHandleSynced::gameParams);
+	SetRulesParam(L, __func__, 0, CSplitLuaHandle::gameParams);
 	return 0;
 }
 

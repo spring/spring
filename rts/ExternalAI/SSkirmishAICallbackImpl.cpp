@@ -1772,11 +1772,11 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 
 
 EXPORT(float) skirmishAiCallback_Game_getRulesParamFloat(int skirmishAIId, const char* rulesParamName, float defaultValue) {
-	return getRulesParamFloatValueByName(CLuaHandleSynced::GetGameParams(), gameModParamLosMask(), rulesParamName, defaultValue);
+	return getRulesParamFloatValueByName(CSplitLuaHandle::GetGameParams(), gameModParamLosMask(), rulesParamName, defaultValue);
 }
 
 EXPORT(const char*) skirmishAiCallback_Game_getRulesParamString(int skirmishAIId, const char* rulesParamName, const char* defaultValue) {
-	return getRulesParamStringValueByName(CLuaHandleSynced::GetGameParams(), gameModParamLosMask(), rulesParamName, defaultValue);
+	return getRulesParamStringValueByName(CSplitLuaHandle::GetGameParams(), gameModParamLosMask(), rulesParamName, defaultValue);
 }
 
 

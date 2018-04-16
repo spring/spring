@@ -920,14 +920,14 @@ int LuaSyncedRead::GetWind(lua_State* L)
 int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 {
 	// always readable for all
-	return PushRulesParams(L, __func__, CLuaHandleSynced::GetGameParams(), LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK);
+	return PushRulesParams(L, __func__, CSplitLuaHandle::GetGameParams(), LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK);
 }
 
 
 int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 {
 	// always readable for all
-	return GetRulesParam(L, __func__, 1, CLuaHandleSynced::GetGameParams(), LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK);
+	return GetRulesParam(L, __func__, 1, CSplitLuaHandle::GetGameParams(), LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK);
 }
 
 

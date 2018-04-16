@@ -50,6 +50,11 @@
 
 #include <string>
 
+
+static spring::unsynced_set<const lua_State*>    SYNCED_LUAHANDLE_STATES;
+static spring::unsynced_set<const lua_State*>  UNSYNCED_LUAHANDLE_STATES;
+const  spring::unsynced_set<const lua_State*>*          LUAHANDLE_STATES[2] = {&SYNCED_LUAHANDLE_STATES, &UNSYNCED_LUAHANDLE_STATES};
+
 bool CLuaHandle::devMode = false;
 
 
@@ -91,6 +96,12 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	D.synced = _synced;
 	L = LUA_OPEN(&D);
 
+	if (D.synced) {
+		SYNCED_LUAHANDLE_STATES.insert(L);
+	} else {
+		UNSYNCED_LUAHANDLE_STATES.insert(L);
+	}
+
 	L_GC = lua_newthread(L);
 	luaL_ref(L, LUA_REGISTRYINDEX);
 
@@ -104,6 +115,12 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 
 CLuaHandle::~CLuaHandle()
 {
+	if (D.synced) {
+		SYNCED_LUAHANDLE_STATES.erase(L);
+	} else {
+		UNSYNCED_LUAHANDLE_STATES.erase(L);
+	}
+
 	// KillLua() must be called before us!
 	assert(!IsValid());
 	assert(!eventHandler.HasClient(this));
