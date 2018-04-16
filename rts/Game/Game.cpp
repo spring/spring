@@ -814,7 +814,7 @@ void CGame::KillLua(bool dtor)
 	LOG("[Game::%s][2] dtor=%d luaRules=%p", __func__, dtor, luaRules);
 	CLuaRules::FreeHandler();
 
-	CLuaHandleSynced::ClearGameParams();
+	CSplitLuaHandle::ClearGameParams();
 	LEAVE_SYNCED_CODE();
 
 

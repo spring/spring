@@ -18,12 +18,12 @@
 
 #include <assert.h>
 
-CLuaRules* luaRules = NULL;
+CLuaRules* luaRules = nullptr;
 
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
-const int* CLuaRules::currentCobArgs = NULL;
+const int* CLuaRules::currentCobArgs = nullptr;
 
 
 /******************************************************************************/
@@ -38,10 +38,9 @@ DECL_FREE_HANDLER(CLuaRules, luaRules)
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaRules::CLuaRules()
-: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
+CLuaRules::CLuaRules(): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	currentCobArgs = NULL;
+	currentCobArgs = nullptr;
 
 	if (!IsValid())
 		return;

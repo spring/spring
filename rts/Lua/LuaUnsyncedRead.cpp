@@ -370,6 +370,7 @@ int LuaUnsyncedRead::GetMenuName(lua_State* L)
 	return 1;
 }
 
+
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetLuaMemUsage(lua_State* L)
@@ -386,7 +387,27 @@ int LuaUnsyncedRead::GetLuaMemUsage(lua_State* L)
 	lua_pushnumber(L, lhs->numLuaAllocs / 1000.0f); // (kilo)allocs, ditto
 	lua_pushnumber(L, lgs.allocedBytes / 1024.0f);
 	lua_pushnumber(L, lgs.numLuaAllocs / 1000.0f);
-	return 4;
+
+	extern const spring::unsynced_set<const lua_State*>* LUAHANDLE_STATES[2];
+
+	// sum up the individual synced and unsynced states
+	for (unsigned int i = 0; i < 2; i++) {
+		lgs.allocedBytes = {0};
+		lgs.numLuaAllocs = {0};
+
+		for (const lua_State* luaState: *LUAHANDLE_STATES[i]) {
+			lcd = GetLuaContextData(luaState);
+			lhs = &lcd->allocState;
+
+			lgs.allocedBytes += lhs->allocedBytes;
+			lgs.numLuaAllocs += lhs->numLuaAllocs;
+		}
+
+		lua_pushnumber(L, lgs.allocedBytes / 1024.0f);
+		lua_pushnumber(L, lgs.numLuaAllocs / 1000.0f);
+	}
+
+	return 8;
 }
 
 int LuaUnsyncedRead::GetVidMemUsage(lua_State* L)
@@ -399,6 +420,7 @@ int LuaUnsyncedRead::GetVidMemUsage(lua_State* L)
 	lua_pushnumber(L, (vidMemInfo.x               ) / 1024.0f); // MB
 	return 2;
 }
+
 
 /******************************************************************************/
 

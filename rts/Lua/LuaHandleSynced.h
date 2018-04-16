@@ -13,13 +13,13 @@ using std::string;
 
 struct lua_State;
 class LuaSyncedCtrl;
-class CLuaHandleSynced;
+class CSplitLuaHandle;
 struct BuildInfo;
 
 
 class CUnsyncedLuaHandle : public CLuaHandle
 {
-	friend class CLuaHandleSynced;
+	friend class CSplitLuaHandle;
 
 	public: // call-ins
 		bool DrawUnit(const CUnit* unit) override;
@@ -31,7 +31,7 @@ class CUnsyncedLuaHandle : public CLuaHandle
 		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in
 
 	protected:
-		CUnsyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		CUnsyncedLuaHandle(CSplitLuaHandle* base, const string& name, int order);
 		virtual ~CUnsyncedLuaHandle();
 
 		bool Init(const string& code, const string& file);
@@ -42,14 +42,14 @@ class CUnsyncedLuaHandle : public CLuaHandle
 		}
 
 	protected:
-		CLuaHandleSynced& base;
+		CSplitLuaHandle& base;
 };
 
 
 
 class CSyncedLuaHandle : public CLuaHandle
 {
-	friend class CLuaHandleSynced;
+	friend class CSplitLuaHandle;
 
 	public: // call-ins
 		bool CommandFallback(const CUnit* unit, const Command& cmd) override;
@@ -117,7 +117,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool SyncedActionFallback(const string& line, int playerID) override;
 
 	protected:
-		CSyncedLuaHandle(CLuaHandleSynced* base, const string& name, int order);
+		CSyncedLuaHandle(CSplitLuaHandle* base, const string& name, int order);
 		virtual ~CSyncedLuaHandle();
 
 		bool Init(const string& code, const string& file);
@@ -128,7 +128,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		}
 
 	protected:
-		CLuaHandleSynced& base;
+		CSplitLuaHandle& base;
 
 		spring::unordered_map<string, string> textCommands; // name, help
 
@@ -156,7 +156,8 @@ class CSyncedLuaHandle : public CLuaHandle
 };
 
 
-class CLuaHandleSynced
+// split synced and unsynced components
+class CSplitLuaHandle
 {
 	public: // Non-eventhandler call-ins
 		bool GotChatMsg(const string& msg, int playerID) {
@@ -190,8 +191,8 @@ class CLuaHandleSynced
 		}
 
 	protected:
-		CLuaHandleSynced(const string& name, int order);
-		virtual ~CLuaHandleSynced();
+		CSplitLuaHandle(const string& name, int order);
+		virtual ~CSplitLuaHandle();
 
 		string LoadFile(const string& filename, const string& modes) const;
 		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);

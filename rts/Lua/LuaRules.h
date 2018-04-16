@@ -26,7 +26,7 @@ struct BuildInfo;
 struct lua_State;
 
 
-class CLuaRules : public CLuaHandleSynced
+class CLuaRules : public CSplitLuaHandle
 {
 public:
 	static bool CanLoadHandler() { return true; }

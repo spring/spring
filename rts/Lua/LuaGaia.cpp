@@ -31,7 +31,7 @@ DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaGaia::CLuaGaia(): CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
+CLuaGaia::CLuaGaia(): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
 	if (!IsValid())
 		return;
