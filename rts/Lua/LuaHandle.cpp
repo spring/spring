@@ -53,7 +53,7 @@
 
 static spring::unsynced_set<const lua_State*>    SYNCED_LUAHANDLE_STATES;
 static spring::unsynced_set<const lua_State*>  UNSYNCED_LUAHANDLE_STATES;
-const  spring::unsynced_set<const lua_State*>*          LUAHANDLE_STATES[2] = {&SYNCED_LUAHANDLE_STATES, &UNSYNCED_LUAHANDLE_STATES};
+const  spring::unsynced_set<const lua_State*>*          LUAHANDLE_STATES[2] = {&UNSYNCED_LUAHANDLE_STATES, &SYNCED_LUAHANDLE_STATES};
 
 bool CLuaHandle::devMode = false;
 
@@ -73,6 +73,12 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 }
 
 
+static void LUA_INSERT_STATE(const lua_State* L, const spring::unsynced_set<const lua_State*>* S) {
+	const_cast<  spring::unsynced_set<const lua_State*>*  >(S)->insert(L);
+}
+static void LUA_ERASE_STATE(const lua_State* L, const spring::unsynced_set<const lua_State*>* S) {
+	const_cast<  spring::unsynced_set<const lua_State*>*  >(S)->erase(L);
+}
 
 static int handlepanic(lua_State* L)
 {
@@ -96,11 +102,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	D.synced = _synced;
 	L = LUA_OPEN(&D);
 
-	if (D.synced) {
-		SYNCED_LUAHANDLE_STATES.insert(L);
-	} else {
-		UNSYNCED_LUAHANDLE_STATES.insert(L);
-	}
+	LUA_INSERT_STATE(L, LUAHANDLE_STATES[D.synced]);
 
 	L_GC = lua_newthread(L);
 	luaL_ref(L, LUA_REGISTRYINDEX);
@@ -115,12 +117,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 
 CLuaHandle::~CLuaHandle()
 {
-	if (D.synced) {
-		SYNCED_LUAHANDLE_STATES.erase(L);
-	} else {
-		UNSYNCED_LUAHANDLE_STATES.erase(L);
-	}
-
 	// KillLua() must be called before us!
 	assert(!IsValid());
 	assert(!eventHandler.HasClient(this));
@@ -147,6 +143,7 @@ void CLuaHandle::KillLua(bool inFreeHandler)
 	// must be done here: if called from a ctor, we want the
 	// state to become non-valid so that LoadHandler returns
 	// false and FreeHandler runs next
+	LUA_ERASE_STATE(L, LUAHANDLE_STATES[D.synced]);
 	LUA_CLOSE(&L);
 }
 
