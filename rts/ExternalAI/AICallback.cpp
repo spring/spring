@@ -3,9 +3,7 @@
 #include "ExternalAI/AICallback.h"
 
 #include "Game/Game.h"
-#include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
-#include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
@@ -75,47 +73,42 @@
 
 CUnit* CAICallback::GetUnit(int unitId) const
 {
-	CUnit* unit = nullptr;
-
 	if (CHECK_UNITID(unitId))
-		unit = unitHandler.GetUnit(unitId);
+		return unitHandler.GetUnit(unitId);
 
-	return unit;
+	return nullptr;
 }
 
 CUnit* CAICallback::GetMyTeamUnit(int unitId) const
 {
-	CUnit* unit = nullptr;
+	if (!CHECK_UNITID(unitId))
+		return nullptr;
 
-	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = unitHandler.GetUnit(unitId);
-		if (unitTmp != nullptr && (unitTmp->team == team)) {
-			unit = unitTmp;
-		}
-	}
+	CUnit* unit = unitHandler.GetUnit(unitId);
 
-	return unit;
+	if (unit != nullptr && (unit->team == team))
+		return unit;
+
+	return nullptr;
 }
 
 CUnit* CAICallback::GetInSensorRangeUnit(int unitId, unsigned short losFlags) const
 {
-	CUnit* unit = nullptr;
+	if (!CHECK_UNITID(unitId))
+		return nullptr;
 
-	if (CHECK_UNITID(unitId)) {
-		CUnit* unitTmp = unitHandler.GetUnit(unitId);
-		// Skip in-sensor-range test if the unit is allied with our team.
-		// This prevents errors where an allied unit is starting to build,
-		// but is not yet (technically) in LOS, because LOS was not yet updated,
-		// and thus would be invisible for us, without the ally check.
-		if (unitTmp != nullptr
-				&& (teamHandler.AlliedTeams(unitTmp->team, team)
-				||  (unitTmp->losStatus[teamHandler.AllyTeam(team)] & losFlags)))
-		{
-			unit = unitTmp;
-		}
-	}
+	CUnit* unit = unitHandler.GetUnit(unitId);
+	// Skip in-sensor-range test if the unit is allied with our team.
+	// This prevents errors where an allied unit is starting to build,
+	// but is not yet (technically) in LOS, because LOS was not yet updated,
+	// and thus would be invisible for us, without the ally check.
+	if (unit == nullptr)
+		return nullptr;
 
-	return unit;
+	if ((teamHandler.AlliedTeams(unit->team, team) || (unit->losStatus[teamHandler.AllyTeam(team)] & losFlags)))
+		return unit;
+
+	return nullptr;
 }
 CUnit* CAICallback::GetInLosUnit(int unitId) const {
 	return GetInSensorRangeUnit(unitId, LOS_INLOS);
@@ -127,7 +120,7 @@ CUnit* CAICallback::GetInLosAndRadarUnit(int unitId) const {
 
 CAICallback::CAICallback(int teamId)
 	: team(teamId)
-	, noMessages(false)
+	, allowOrders(false)
 	, gh(grouphandlers[teamId])
 {}
 
@@ -265,32 +258,30 @@ int CAICallback::GetMyAllyTeam()
 
 int CAICallback::GetPlayerTeam(int playerId)
 {
-	int playerTeamId = -1;
+	if (!playerHandler.IsValidPlayer(playerId))
+		return -1;
 
-	if (playerHandler.IsValidPlayer(playerId)) {
-		CPlayer* pl = playerHandler.Player(playerId);
-		if (!pl->spectator) {
-			playerTeamId = pl->team;
-		}
-	}
+	const CPlayer* pl = playerHandler.Player(playerId);
 
-	return playerTeamId;
+	if (!pl->spectator)
+		return pl->team;
+
+	return -1;
 }
 
 const char* CAICallback::GetTeamSide(int teamId)
 {
-	if (teamHandler.IsValidTeam(teamId)) {
+	if (teamHandler.IsValidTeam(teamId))
 		return (teamHandler.Team(teamId)->GetSide().c_str());
-	}
 
-	return NULL;
+	return nullptr;
 }
 
 void* CAICallback::CreateSharedMemArea(char* name, int size)
 {
 	handleerror (0, "AI wants to use deprecated function \"CreateSharedMemArea\"",
 				"Spring is closing:", MBF_OK | MBF_EXCL);
-	return NULL;
+	return nullptr;
 }
 
 void CAICallback::ReleasedSharedMemArea(char* name)
@@ -307,53 +298,49 @@ int CAICallback::CreateGroup()
 
 void CAICallback::EraseGroup(int groupId)
 {
-	if (CHECK_GROUPID(groupId)) {
-		if (gh->groups[groupId]) {
-			gh->RemoveGroup(gh->groups[groupId]);
-		}
-	}
+	if (!CHECK_GROUPID(groupId))
+		return;
+
+	if (gh->groups[groupId] == nullptr)
+		return;
+
+	gh->RemoveGroup(gh->groups[groupId]);
 }
 
 bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 {
-	bool added = false;
-
 	CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit) {
-		if (CHECK_GROUPID(groupId) && gh->groups[groupId]) {
-			added = unit->SetGroup(gh->groups[groupId]);
-		}
-	}
 
-	return added;
+	if (unit == nullptr)
+		return false;
+
+	return (CHECK_GROUPID(groupId) && gh->groups[groupId] != nullptr && unit->SetGroup(gh->groups[groupId]));
 }
 
 bool CAICallback::RemoveUnitFromGroup(int unitId)
 {
-	bool removed = false;
-
 	CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit) {
-		unit->SetGroup(0);
-		removed = true;
-	}
 
-	return removed;
+	if (unit == nullptr)
+		return false;
+
+	unit->SetGroup(0);
+	return true;
 }
 
 int CAICallback::GetUnitGroup(int unitId)
 {
-	int groupId = -1;
-
 	const CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit) {
-		const CGroup* group = unit->group;
-		if (group) {
-			groupId = group->id;
-		}
-	}
 
-	return groupId;
+	if (unit == nullptr)
+		return -1;
+
+	const CGroup* group = unit->group;
+
+	if (group != nullptr)
+		return group->id;
+
+	return -1;
 }
 
 const std::vector<const SCommandDescription*>* CAICallback::GetGroupCommands(int groupId)
@@ -374,7 +361,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 	if (!CHECK_UNITID(unitId) || c == nullptr)
 		return -1;
 
-	if (noMessages)
+	if (!allowOrders)
 		return -2;
 
 	const CUnit * unit = unitHandler.GetUnit(unitId);
@@ -391,26 +378,22 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 
 const std::vector<const SCommandDescription*>* CAICallback::GetUnitCommands(int unitId)
 {
-	const std::vector<const SCommandDescription*>* unitCommands = NULL;
-
 	const CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit) {
-		unitCommands = &unit->commandAI->possibleCommands;
-	}
 
-	return unitCommands;
+	if (unit != nullptr)
+		return &unit->commandAI->possibleCommands;
+
+	return nullptr;
 }
 
 const CCommandQueue* CAICallback::GetCurrentUnitCommands(int unitId)
 {
-	const CCommandQueue* currentUnitCommands = NULL;
-
 	const CUnit* unit = GetMyTeamUnit(unitId);
-	if (unit) {
-		currentUnitCommands = &unit->commandAI->commandQue;
-	}
 
-	return currentUnitCommands;
+	if (unit != nullptr)
+		return &unit->commandAI->commandQue;
+
+	return nullptr;
 }
 
 int CAICallback::GetUnitAiHint(int unitId)
@@ -1374,13 +1357,6 @@ bool CAICallback::GetValue(int id, void* data)
 		} break;
 		case AIVAL_GUI_SCREENY: {
 			*(float*) data = globalRendering->viewSizeY;
-		} break;
-
-		case AIVAL_GUI_CAMERA_DIR: {
-			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetDir();
-		} break;
-		case AIVAL_GUI_CAMERA_POS: {
-			*(static_cast<float3*>(data)) = camHandler->GetCurrentController().GetPos();
 		} break;
 
 		case AIVAL_LOCATE_FILE_R: {
