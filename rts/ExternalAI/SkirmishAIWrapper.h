@@ -3,16 +3,11 @@
 #ifndef SKIRMISH_AI_WRAPPER_H
 #define SKIRMISH_AI_WRAPPER_H
 
-#include "AICallback.h"
-#include "AICheats.h"
 #include "SkirmishAIKey.h"
 #include "System/Object.h"
 
 #include <string>
-#include <memory>
 
-class CAICallback;
-class CAICheats;
 class CSkirmishAILibrary;
 struct SSkirmishAICallback;
 
@@ -122,9 +117,6 @@ private:
 
 	const CSkirmishAILibrary* library = nullptr;
 	const SSkirmishAICallback* sCallback = nullptr;
-
-	std::unique_ptr<CAICallback> callback;
-	std::unique_ptr<CAICheats> cheats;
 
 	std::string timerName;
 

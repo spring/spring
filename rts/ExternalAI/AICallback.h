@@ -23,12 +23,14 @@ class CUnit;
 /** Generalized legacy callback interface backend */
 class CAICallback
 {
-	int team;
-public:
-	bool noMessages;
 private:
-	CGroupHandler* gh;
+	int team = -1;
 
+	bool allowOrders = false;
+
+	CGroupHandler* gh = nullptr;
+
+private:
 	// utility methods
 	void verify();
 
@@ -43,7 +45,10 @@ private:
 	CUnit* GetInLosAndRadarUnit(int unitId) const;
 
 public:
+	CAICallback() = default;
 	CAICallback(int teamId);
+
+	void AllowOrders(bool b) { allowOrders = b; }
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);

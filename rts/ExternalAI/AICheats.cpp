@@ -36,15 +36,14 @@ bool CAICheats::OnlyPassiveCheats()
 	// returns whether cheats will desync (this is
 	// always the case unless we are both the host
 	// and the only client) if used by an AI
-	if (!gameServer) {
+	if (gameServer == nullptr)
 		return true;
-	} else if ((CGameSetup::GetPlayerStartingData()).size() == 1) {
-		// assumes AI's dont count toward numPlayers
+	// assumes AI's dont count toward numPlayers
+	if ((CGameSetup::GetPlayerStartingData()).size() == 1)
 		return false;
-	} else {
-		// disable it in case we are not sure
-		return true;
-	}
+
+	// disable it in case we are not sure
+	return true;
 }
 
 void CAICheats::EnableCheatEvents(bool enable)
@@ -57,49 +56,50 @@ void CAICheats::EnableCheatEvents(bool enable)
 
 void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 {
-	if (!OnlyPassiveCheats()) {
-		teamHandler.Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
-	}
+	if (OnlyPassiveCheats())
+		return;
+
+	teamHandler.Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
-	if (!OnlyPassiveCheats())
-		teamHandler.Team(ai->GetTeamId())->res.metal += amount;
+	if (OnlyPassiveCheats())
+		return;
+
+	teamHandler.Team(ai->GetTeamId())->res.metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
-	if (!OnlyPassiveCheats())
-		teamHandler.Team(ai->GetTeamId())->res.energy += amount;
+	if (OnlyPassiveCheats())
+		return;
+
+	teamHandler.Team(ai->GetTeamId())->res.energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, const float3& pos)
 {
-	int unitId = 0;
+	if (OnlyPassiveCheats())
+		return 0;
 
-	if (!OnlyPassiveCheats()) {
-		const UnitLoadParams unitParams = {NULL, NULL, pos, ZeroVector, -1, ai->GetTeamId(), FACING_SOUTH, false, false};
-		const CUnit* unit = unitLoader->LoadUnit(name, unitParams);
+	const UnitLoadParams unitParams = {nullptr, nullptr, pos, ZeroVector, -1, ai->GetTeamId(), FACING_SOUTH, false, false};
+	const CUnit* unit = unitLoader->LoadUnit(name, unitParams);
 
-		if (unit) {
-			unitId = unit->id;
-		}
-	}
+	if (unit != nullptr)
+		return unit->id;
 
-	return unitId;
+	return 0;
 }
 
 const UnitDef* CAICheats::GetUnitDef(int unitId) const
 {
-	const UnitDef* unitDef = NULL;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		unitDef = unit->unitDef;
-	}
 
-	return unitDef;
+	if (unit != nullptr)
+		return unit->unitDef;
+
+	return nullptr;
 }
 
 
@@ -107,9 +107,9 @@ const UnitDef* CAICheats::GetUnitDef(int unitId) const
 float3 CAICheats::GetUnitPos(int unitId) const
 {
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
+
+	if (unit != nullptr)
 		return unit->midPos;
-	}
 
 	return ZeroVector;
 }
@@ -117,9 +117,9 @@ float3 CAICheats::GetUnitPos(int unitId) const
 float3 CAICheats::GetUnitVelocity(int unitId) const
 {
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
+
+	if (unit != nullptr)
 		return unit->speed;
-	}
 
 	return ZeroVector;
 }
@@ -130,18 +130,17 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 	int a = 0;
 
 	if (unitIds_max < 0) {
-		unitIds = NULL;
+		unitIds = nullptr;
 		unitIds_max = MAX_UNITS;
 	}
 
-	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
+	for (auto ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		CUnit* u = *ui;
 
-		if ((includeUnit == NULL) || (*includeUnit)(u)) {
-			if (unitIds != NULL) {
+		if ((includeUnit == nullptr) || (*includeUnit)(u)) {
+			if (unitIds != nullptr)
 				unitIds[a] = u->id;
-			}
+
 			a++;
 		}
 	}
@@ -157,8 +156,7 @@ static int myAllyTeamId = -1;
 
 /// You have to set myAllyTeamId before callign this function. NOT thread safe!
 static inline bool unit_IsEnemy(CUnit* unit) {
-	return (!teamHandler.Ally(unit->allyteam, myAllyTeamId)
-			&& !unit_IsNeutral(unit));
+	return (!teamHandler.Ally(unit->allyteam, myAllyTeamId) && !unit_IsNeutral(unit));
 }
 
 
@@ -192,8 +190,7 @@ int CAICheats::GetFeatures(int* features, int max) const {
 	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
 	return 0;
 }
-int CAICheats::GetFeatures(int* features, int max, const float3& pos,
-			float radius) const {
+int CAICheats::GetFeatures(int* features, int max, const float3& pos, float radius) const {
 	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
 	return 0;
 }
@@ -202,197 +199,167 @@ int CAICheats::GetFeatures(int* features, int max, const float3& pos,
 
 int CAICheats::GetUnitTeam(int unitId) const
 {
-	int unitTeamId = 0;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		unitTeamId = unit->team;
-	}
 
-	return unitTeamId;
+	if (unit != nullptr)
+		return unit->team;
+
+	return 0;
 }
 
 int CAICheats::GetUnitAllyTeam(int unitId) const
 {
-	int unitAllyTeamId = 0;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		unitAllyTeamId = unit->allyteam;
-	}
 
-	return unitAllyTeamId;
+	if (unit != nullptr)
+		return unit->allyteam;
+
+	return 0;
 }
 
 float CAICheats::GetUnitHealth(int unitId) const
 {
-	float health = 0.0f;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		health = unit->health;
-	}
 
-	return health;
+	if (unit != nullptr)
+		return unit->health;
+
+	return 0.0f;
 }
 
 float CAICheats::GetUnitMaxHealth(int unitId) const
 {
-	float maxHealth = 0.0f;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		maxHealth = unit->maxHealth;
-	}
 
-	return maxHealth;
+	if (unit != nullptr)
+		return unit->maxHealth;
+
+	return 0.0f;
 }
 
 float CAICheats::GetUnitPower(int unitId) const
 {
-	float power = 0.0f;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		power = unit->power;
-	}
 
-	return power;
+	if (unit != nullptr)
+		return unit->power;
+
+	return 0.0f;
 }
 
 float CAICheats::GetUnitExperience(int unitId) const
 {
-	float experience = 0.0f;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		experience = unit->experience;
-	}
 
-	return experience;
+	if (unit != nullptr)
+		return unit->experience;
+
+	return 0.0f;
 }
 
 bool CAICheats::IsUnitActivated(int unitId) const
 {
-	bool activated = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		activated = unit->activated;
-	}
 
-	return activated;
+	if (unit != nullptr)
+		return unit->activated;
+
+	return false;
 }
 
 bool CAICheats::UnitBeingBuilt(int unitId) const
 {
-	bool beingBuilt = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		beingBuilt = unit->beingBuilt;
-	}
 
-	return beingBuilt;
+	if (unit != nullptr)
+		return unit->beingBuilt;
+
+	return false;
 }
 
 bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf) const
 {
-	bool fetchOk = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		unitResInf->energyMake = unit->resourcesMake.energy;
-		unitResInf->energyUse  = unit->resourcesUse.energy;
-		unitResInf->metalMake  = unit->resourcesMake.metal;
-		unitResInf->metalUse   = unit->resourcesUse.metal;
-		fetchOk = true;
-	}
 
-	return fetchOk;
+	if (unit == nullptr)
+		return false;
+
+	unitResInf->energyMake = unit->resourcesMake.energy;
+	unitResInf->energyUse  = unit->resourcesUse.energy;
+	unitResInf->metalMake  = unit->resourcesMake.metal;
+	unitResInf->metalUse   = unit->resourcesUse.metal;
+	return true;
 }
 
 const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitId) const
 {
-	const CCommandQueue* currentUnitCommands = NULL;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		currentUnitCommands = &unit->commandAI->commandQue;
-	}
 
-	return currentUnitCommands;
+	if (unit != nullptr)
+		return &unit->commandAI->commandQue;
+
+	return nullptr;
 }
 
 int CAICheats::GetBuildingFacing(int unitId) const
 {
-	int buildFacing = 0;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		buildFacing = unit->buildFacing;
-	}
 
-	return buildFacing;
+	if (unit != nullptr)
+		return unit->buildFacing;
+
+	return 0;
 }
 
 bool CAICheats::IsUnitCloaked(int unitId) const
 {
-	bool isCloaked = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		isCloaked = unit->isCloaked;
-	}
 
-	return isCloaked;
+	if (unit != nullptr)
+		return unit->isCloaked;
+
+	return false;
 }
 
 bool CAICheats::IsUnitParalyzed(int unitId) const
 {
-	bool stunned = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		stunned = unit->IsStunned();
-	}
 
-	return stunned;
+	if (unit != nullptr)
+		return unit->IsStunned();
+
+	return false;
 }
 
 
 bool CAICheats::IsUnitNeutral(int unitId) const
 {
-	bool isNeutral = false;
-
 	const CUnit* unit = GetUnit(unitId);
-	if (unit) {
-		isNeutral = unit->IsNeutral();
-	}
 
-	return isNeutral;
+	if (unit != nullptr)
+		return unit->IsNeutral();
+
+	return false;
 }
 
 
-bool CAICheats::GetProperty(int id, int property, void *data) const
+bool CAICheats::GetProperty(int id, int property, void* data) const
 {
-	bool fetchOk = false;
-
 	switch (property) {
 		case AIVAL_UNITDEF: {
 			const CUnit* unit = GetUnit(id);
-			if (unit) {
+
+			if (unit != nullptr) {
 				(*(const UnitDef**) data) = unit->unitDef;
-				fetchOk = true;
+				return true;
 			}
-			break;
-		}
+		} break;
+
 		default: {
-			fetchOk = false;
-		}
+		} break;
 	}
 
-	return fetchOk;
+	return false;
 }
 
 bool CAICheats::GetValue(int id, void* data) const
@@ -449,8 +416,9 @@ int CAICheats::HandleCommand(int commandId, void* data)
 
 		default: {
 			ret = 0; // handling failed
-		}
+		} break;
 	}
 
 	return ret;
 }
+

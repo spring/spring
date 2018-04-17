@@ -1307,8 +1307,11 @@ EXPORT(bool             ) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int ski
 } // extern "C"
 #endif
 
+
+
 #if defined __cplusplus && !defined BUILDING_AI
 struct SSkirmishAICallback;
+class CSkirmishAIWrapper;
 class CAICallback;
 class CAICheats;
 
@@ -1316,16 +1319,20 @@ class CAICheats;
 
 /**
  * Create the C Skirmish AI callback instance for a specific AI.
- * @see skirmishAiCallback_release
+ * @see skirmishAiCallback_Release
  */
-SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int skirmishAIId, int teamId, CAICallback* aiCallback, CAICheats* aiCheats);
+SSkirmishAICallback* skirmishAiCallback_GetInstance(CSkirmishAIWrapper* ai);
 
 /**
  * Releases the C Skirmish AI callback instance for a specific AI.
  * @see skirmishAiCallback_getInstanceFor
  */
-void skirmishAiCallback_release(int skirmishAIId);
+void skirmishAiCallback_Release(const CSkirmishAIWrapper* ai);
+
+void skirmishAiCallback_BlockOrders(const CSkirmishAIWrapper* ai);
 
 #endif // defined __cplusplus && !defined BUILDING_AI
+
+
 
 #endif // S_SKIRMISH_AI_CALLBACK_IMPL_H

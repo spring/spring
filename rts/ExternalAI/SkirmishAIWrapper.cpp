@@ -2,8 +2,6 @@
 
 #include "SkirmishAIWrapper.h"
 
-#include "AICallback.h"
-#include "AICheats.h"
 #include "AILibraryManager.h"
 #include "SkirmishAIHandler.h"
 #include "SkirmishAILibrary.h"
@@ -39,9 +37,6 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 	CR_IGNORED(library),
 	CR_IGNORED(sCallback),
-
-	CR_IGNORED(callback),
-	CR_IGNORED(cheats),
 
 	CR_MEMBER(timerName),
 
@@ -91,16 +86,13 @@ void CSkirmishAIWrapper::PreInit(int aiID)
 }
 
 void CSkirmishAIWrapper::PreDestroy() {
-	callback->noMessages = true;
+	skirmishAiCallback_BlockOrders(this);
 }
 
 
 void CSkirmishAIWrapper::CreateCallback() {
-	callback.reset(new CAICallback(teamId));
-	cheats.reset(new CAICheats(this)); // NB: leaks <this>
-
 	library = nullptr;
-	sCallback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
+	sCallback = skirmishAiCallback_GetInstance(this);
 }
 
 
@@ -112,7 +104,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 		SCOPED_TIMER(timerName.c_str());
 
 		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr) {
-			dieing = true;
+			SetDieing();
 			skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 		} else {
 			initOk = library->Init(skirmishAIId, sCallback);
@@ -203,12 +195,7 @@ void CSkirmishAIWrapper::Kill()
 	}
 
 	{
-		// NOTE: explicitly ordered so callback is valid in AI's dtor
-		cheats.reset();
-		callback.reset();
-	}
-	{
-		skirmishAiCallback_release(skirmishAIId);
+		skirmishAiCallback_Release(this);
 	}
 	{
 		library = nullptr;
