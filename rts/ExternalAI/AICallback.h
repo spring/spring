@@ -26,7 +26,7 @@ class CAICallback
 private:
 	int team = -1;
 
-	bool allowOrders = false;
+	bool allowOrders = true;
 
 	CGroupHandler* gh = nullptr;
 

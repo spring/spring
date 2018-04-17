@@ -120,7 +120,7 @@ CUnit* CAICallback::GetInLosAndRadarUnit(int unitId) const {
 
 CAICallback::CAICallback(int teamId)
 	: team(teamId)
-	, allowOrders(false)
+	, allowOrders(true)
 	, gh(grouphandlers[teamId])
 {}
 
