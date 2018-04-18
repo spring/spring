@@ -2987,7 +2987,7 @@ int LuaSyncedRead::GetUnitRadius(lua_State* L)
 
 int LuaSyncedRead::GetUnitMass(lua_State* L)
 {
-	return (GetSolidObjectMass(L, ParseUnit(L, __func__, 1)));
+	return (GetSolidObjectMass(L, ParseInLosUnit(L, __func__, 1)));
 }
 
 int LuaSyncedRead::GetUnitPosition(lua_State* L)
