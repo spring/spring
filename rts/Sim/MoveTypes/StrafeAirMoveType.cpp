@@ -423,10 +423,11 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner): AAirMoveType(owner)
 	maxAileron  *= (0.99f + gsRNG.NextFloat() * 0.02f);
 	accRate     *= (0.99f + gsRNG.NextFloat() * 0.02f);
 
-	crashAileron = 1.0f - (gsRNG.NextFloat() * gsRNG.NextFloat());
-	crashAileron *= ((gsRNG.NextInt(2) == 1)? -1.0f: 1.0f);
-	crashElevator = gsRNG.NextFloat();
-	crashRudder = gsRNG.NextFloat() - 0.5f;
+	// magic constant ensures the same (0.25) average as urand() * urand()
+	crashAileron   = 1.0f - Square(gsRNG.NextFloat() * 0.8660254037844386f);
+	crashAileron  *= ((gsRNG.NextInt(2) == 1)? -1.0f: 1.0f);
+	crashElevator  = gsRNG.NextFloat();
+	crashRudder    = gsRNG.NextFloat() - 0.5f;
 
 	lastRudderPos = 0.0f;
 	lastElevatorPos = 0.0f;
