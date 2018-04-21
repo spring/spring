@@ -28,7 +28,6 @@
 #include "aGui/Gui.h"
 #endif
 #include "ExternalAI/AILibraryManager.h"
-#include "Game/Benchmark.h"
 #include "Game/Camera.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
@@ -57,6 +56,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/myMath.h"
@@ -114,8 +114,6 @@ DEFINE_bool     (hidden,                                   false, "Start in back
 DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
 DEFINE_string   (server,                                   "",    "Set listening IP for server");
 DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
-DEFINE_int32    (benchmark,                                -1,    "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
-DEFINE_int32    (benchmarkstart,                           -1,    "Benchmark start time in minutes.");
 
 DEFINE_bool_EX  (list_ai_interfaces, "list-ai-interfaces", false, "Dump a list of available AI Interfaces to stdout");
 DEFINE_bool_EX  (list_skirmish_ais,  "list-skirmish-ais",  false, "Dump a list of available Skirmish AIs to stdout");
@@ -472,15 +470,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 
 	if (!FLAGS_name.empty())
 		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
-
-	if (FLAGS_benchmark > 0) {
-		CBenchmark::enabled = true;
-
-		if (FLAGS_benchmarkstart > 0)
-			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
-
-		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
-	}
 }
 
 

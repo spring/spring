@@ -55,6 +55,7 @@
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h" // NETMSG_*
+#include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
@@ -87,6 +88,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetGameName);
 	REGISTER_LUA_CFUNC(GetMenuName);
+
+	REGISTER_LUA_CFUNC(GetProfilerTimeRecord);
 
 	REGISTER_LUA_CFUNC(GetLuaMemUsage);
 	REGISTER_LUA_CFUNC(GetVidMemUsage);
@@ -367,6 +370,20 @@ int LuaUnsyncedRead::GetMenuName(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaUnsyncedRead::GetProfilerTimeRecord(lua_State* L)
+{
+	const CTimeProfiler::TimeRecord& record = profiler.GetTimeRecord(lua_tostring(L, 1));
+
+	lua_pushnumber(L, record.total.toMilliSecsf());
+	lua_pushnumber(L, record.current.toMilliSecsf());
+	// lua_pushnumber(L, record.frames[0].toMilliSecsf());
+	lua_pushnumber(L, record.stats.x); // max-dt
+	lua_pushnumber(L, record.stats.y); // time-%
+	lua_pushnumber(L, record.stats.z); // peak-%
+	return 5;
+}
+
 
 int LuaUnsyncedRead::GetLuaMemUsage(lua_State* L)
 {

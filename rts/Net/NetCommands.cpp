@@ -74,8 +74,8 @@ void CGame::SendClientProcUsage()
 		lastProcUsageUpdateTime = spring_gettime();
 
 		if (playing) {
-			const float simProcUsage = (profiler.GetPercent("Sim"));
-			const float drawProcUsage = (profiler.GetPercent("Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+			const float simProcUsage = (profiler.GetTimePercentage("Sim"));
+			const float drawProcUsage = (profiler.GetTimePercentage("Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
 			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too

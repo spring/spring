@@ -99,17 +99,65 @@ public:
 
 	static CTimeProfiler& GetInstance();
 
-	float GetPercent(const char* name) const;
-	float GetPercentRaw(const char* name) const {
+	struct TimeRecord {
+		TimeRecord()
+		: total(0.0f)
+		, current(0.0f)
+
+		, newPeak(false)
+		, newLagPeak(false)
+		, showGraph(false)
+		{
+			memset(frames, 0, sizeof(frames));
+		}
+
+		static constexpr unsigned numFrames = 128;
+
+		spring_time total;
+		spring_time current;
+		spring_time frames[numFrames];
+
+		// .x := maximum dt, .y := time-percentage, .z := peak-percentage
+		float3 stats;
+		float3 color;
+
+		bool newPeak;
+		bool newLagPeak;
+		bool showGraph;
+	};
+
+public:
+	std::vector< std::pair<std::string, TimeRecord> >& GetSortedProfiles() { return sortedProfiles; }
+	std::vector< std::deque< std::pair<spring_time, spring_time> > >& GetThreadProfiles() { return threadProfiles; }
+
+	size_t GetNumSortedProfiles() const { return (sortedProfiles.size()); }
+	size_t GetNumThreadProfiles() const { return (threadProfiles.size()); }
+
+	float GetTimePercentage(const char* name) const { return (GetTimeRecord(name).stats.y); }
+	float GetTimePercentageRaw(const char* name) const { return (GetTimeRecordRaw(name).stats.y); }
+
+	const TimeRecord& GetTimeRecord(const char* name) const;
+	const TimeRecord& GetTimeRecordRaw(const char* name) const {
 		// do not default-create keys, breaks resorting
-		const auto it = profile.find(name);
-		if (it != profile.end())
-			return ((it->second).percent);
-		return 0.0f;
+		const auto it = profiles.find(name);
+		const static TimeRecord rec;
+
+		if (it == profiles.end())
+			return rec;
+
+		return (it->second);
 	}
 
-	void ResetState();
 	void ToggleLock(bool lock);
+	void ResetState();
+	void ResetPeaks() {
+		ToggleLock(true);
+
+		for (auto& p: profiles)
+			p.second.stats.z = 0.0f;
+
+		ToggleLock(false);
+	}
 
 	void Update();
 	void UpdateRaw();
@@ -137,46 +185,12 @@ public:
 		const bool threadTimer
 	);
 
-public:
-	struct TimeRecord {
-		TimeRecord()
-		: total(0.0f)
-		, current(0.0f)
-
-		, maxLag(0.0f)
-		, percent(0.0f)
-		, peak(0.0f)
-
-		, newPeak(false)
-		, newLagPeak(false)
-		, showGraph(false)
-		{
-			memset(frames, 0, sizeof(frames));
-		}
-
-		static constexpr unsigned numFrames = 128;
-
-		spring_time total;
-		spring_time current;
-		spring_time frames[numFrames];
-
-		float maxLag;
-		float percent;
-		float peak;
-
-		float3 color;
-
-		bool newPeak;
-		bool newLagPeak;
-		bool showGraph;
-	};
-
-	spring::unordered_map<std::string, TimeRecord> profile;
-
-	std::vector< std::pair<std::string, TimeRecord> > sortedProfile;
-	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfile;
-
 private:
+	spring::unordered_map<std::string, TimeRecord> profiles;
+
+	std::vector< std::pair<std::string, TimeRecord> > sortedProfiles;
+	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfiles;
+
 	spring_time lastBigUpdate;
 
 	/// increases each update, from 0 to (numFrames-1)
