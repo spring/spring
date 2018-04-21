@@ -742,8 +742,8 @@ std::string UDPConnection::Statistics() const
 	};
 
 	std::string msg = "[UDPConnection::Statistics]\n";
-	msg += spring::format(fmts[0], dataRecv, recvPackets, spring::SafeDivide(dataRecv * 1.0f, recvPackets * 1.0f));
-	msg += spring::format(fmts[1], dataSent, sentPackets, spring::SafeDivide(dataSent * 1.0f, sentPackets * 1.0f));
+	msg += spring::format(fmts[0], dataSent, sentPackets, spring::SafeDivide(dataSent * 1.0f, sentPackets * 1.0f));
+	msg += spring::format(fmts[1], dataRecv, recvPackets, spring::SafeDivide(dataRecv * 1.0f, recvPackets * 1.0f));
 	msg += spring::format(fmts[2], spring::SafeDivide(sentOverhead * 1.0f, dataSent * 1.0f), spring::SafeDivide(recvOverhead * 1.0f, dataRecv * 1.0f));
 	msg += spring::format(fmts[3], droppedChunks, resentChunks);
 	return msg;
