@@ -280,8 +280,8 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	if (!InBox(mx, my, box + teamBox))
 		return true;
 
-	const int teamIdx = (box.y1 + teamBox.y2 - my) / 0.025f;
-	const int teamNum = startTeam + teamIdx + (teamNum >= gu->myTeam);
+	const int teamIdx = startTeam + (box.y1 + teamBox.y2 - my) / 0.025f;
+	const int teamNum = teamIdx + (teamIdx >= gu->myTeam);
 
 	if (teamHandler.IsValidTeam(teamNum) && !teamHandler.Team(teamNum)->isDead) {
 		// we don't want to give everything to the enemy if there are allies left
