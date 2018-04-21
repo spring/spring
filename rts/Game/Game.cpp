@@ -3,7 +3,6 @@
 #include "Rendering/GL/myGL.h"
 
 #include "Game.h"
-#include "Benchmark.h"
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "ChatMessage.h"
@@ -765,15 +764,6 @@ void CGame::LoadFinalize()
 			"[" + std::string(__func__) + "] finalized PFS " +
 			"(" + IntToString(dt, "%ld") + "ms, checksum " + IntToString(cs, "%08x") + ")"
 		);
-	}
-
-	if (CBenchmark::enabled) {
-		static CBenchmark benchmark;
-
-		// in case we reloaded (benchmark does not get deleted
-		// until program exit, so only data of the most recent
-		// run counts)
-		benchmark.ResetState();
 	}
 
 	lastReadNetTime = spring_gettime();

@@ -200,11 +200,11 @@ void CTimeProfiler::ResetState() {
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
-	profile.clear();
-	sortedProfile.clear();
+	profiles.clear();
+	sortedProfiles.clear();
 	#ifdef THREADPOOL
-	threadProfile.clear();
-	threadProfile.resize(ThreadPool::GetMaxThreads());
+	threadProfiles.clear();
+	threadProfiles.resize(ThreadPool::GetMaxThreads());
 	#endif
 
 	profileColorRNG.Seed(spring_tomsecs(lastBigUpdate = spring_gettime()));
@@ -248,7 +248,7 @@ void CTimeProfiler::UpdateRaw()
 	currentPosition += 1;
 	currentPosition &= (TimeRecord::numFrames - 1);
 
-	for (auto& pi: profile) {
+	for (auto& pi: profiles) {
 		pi.second.frames[currentPosition] = spring_notime;
 	}
 
@@ -257,26 +257,28 @@ void CTimeProfiler::UpdateRaw()
 
 	if (timeDiff > 500.0f) {
 		// update percentages and peaks twice every second
-		for (auto& pi: profile) {
+		for (auto& pi: profiles) {
 			auto& p = pi.second;
 
-			p.percent = spring_tomsecs(p.current) / timeDiff;
+			p.stats.y = spring_tomsecs(p.current) / timeDiff;
 			p.current = spring_notime;
 
 			p.newLagPeak = false;
-			p.newPeak = false;
+			p.newPeak = (p.stats.y > p.stats.z);
 
-			if (p.percent > p.peak) {
-				p.peak = p.percent;
-				p.newPeak = true;
-			}
+			if (!p.newPeak)
+				continue;
+
+			p.stats.z = p.stats.y;
+
 		}
+
 		lastBigUpdate = curTime;
 	}
 
 	if (curTime.toSecsi() % 6 == 0) {
-		for (auto& pi: profile) {
-			(pi.second).maxLag *= 0.5f;
+		for (auto& pi: profiles) {
+			(pi.second).stats.x *= 0.5f;
 		}
 	}
 }
@@ -286,8 +288,8 @@ void CTimeProfiler::ResortProfilesRaw()
 	if (resortProfiles > 0) {
 		resortProfiles = 0;
 
-		sortedProfile.clear();
-		sortedProfile.reserve(profile.size());
+		sortedProfiles.clear();
+		sortedProfiles.reserve(profiles.size());
 
 		typedef std::pair<std::string, TimeRecord> TimeRecordPair;
 		typedef std::function<bool(const TimeRecordPair&, const TimeRecordPair&)> ProfileSortFunc;
@@ -295,11 +297,11 @@ void CTimeProfiler::ResortProfilesRaw()
 		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
 
 		// either caller already has lock, or we are disabled and thread-safe
-		for (auto it = profile.begin(); it != profile.end(); ++it) {
-			sortedProfile.emplace_back(it->first, it->second);
+		for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+			sortedProfiles.emplace_back(it->first, it->second);
 		}
 
-		std::sort(sortedProfile.begin(), sortedProfile.end(), sortFunc);
+		std::sort(sortedProfiles.begin(), sortedProfiles.end(), sortFunc);
 	}
 }
 
@@ -320,28 +322,28 @@ void CTimeProfiler::RefreshProfilesRaw()
 {
 	// either called from ProfileDrawer or from Update; the latter
 	// makes the "/debuginfo profiling" command work when disabled
-	for (auto it = sortedProfile.begin(); it != sortedProfile.end(); ++it) {
+	for (auto it = sortedProfiles.begin(); it != sortedProfiles.end(); ++it) {
 		TimeRecord& rec = it->second;
 
 		const bool showGraph = rec.showGraph;
 
-		rec = profile[it->first];
+		rec = profiles[it->first];
 		rec.showGraph = showGraph;
 	}
 }
 
 
-float CTimeProfiler::GetPercent(const char* name) const
+const CTimeProfiler::TimeRecord& CTimeProfiler::GetTimeRecord(const char* name) const
 {
 	// if disabled, only special timers can pass AddTime
 	// all of those are non-threaded, so no need to lock
 	if (!enabled)
-		return (GetPercentRaw(name));
+		return (GetTimeRecordRaw(name));
 
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
-	return (GetPercentRaw(name));
+	return (GetTimeRecordRaw(name));
 }
 
 
@@ -383,21 +385,21 @@ void CTimeProfiler::AddTimeRaw(
 ) {
 #ifdef THREADPOOL
 	if (threadTimer)
-		threadProfile[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
+		threadProfiles[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
 #endif
 
-	auto pi = profile.find(name);
-	auto& p = (pi != profile.end())? pi->second: profile[name];
+	auto pi = profiles.find(name);
+	auto& p = (pi != profiles.end())? pi->second: profiles[name];
 
 	// these are 0 if just created, works for both paths
 	p.total   += deltaTime;
 	p.current += deltaTime;
 
-	p.newLagPeak = (p.maxLag > 0.0f && deltaTime.toMilliSecsf() > p.maxLag);
-	p.maxLag     = std::max(p.maxLag, deltaTime.toMilliSecsf());
+	p.newLagPeak = (p.stats.x > 0.0f && deltaTime.toMilliSecsf() > p.stats.x);
+	p.stats.x    = std::max(p.stats.x, deltaTime.toMilliSecsf());
 
-	if (pi != profile.end()) {
-		// profile already exists
+	if (pi != profiles.end()) {
+		// profile already exists, add dt
 		p.frames[currentPosition] += deltaTime;
 	} else {
 		// new profile, new color
@@ -412,16 +414,16 @@ void CTimeProfiler::AddTimeRaw(
 
 void CTimeProfiler::PrintProfilingInfo() const
 {
-	if (sortedProfile.empty())
+	if (sortedProfiles.empty())
 		return;
 
 	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
 
-	for (auto pi = sortedProfile.begin(); pi != sortedProfile.end(); ++pi) {
+	for (auto pi = sortedProfiles.begin(); pi != sortedProfiles.end(); ++pi) {
 		const std::string& name = pi->first;
 		const TimeRecord& tr = pi->second;
 
-		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.percent * 100);
+		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.stats.y * 100);
 	}
 }
 

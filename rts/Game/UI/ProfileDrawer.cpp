@@ -122,8 +122,7 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 	const spring_time curTime = spring_now();
 	const spring_time maxHist = spring_secs(maxHistTime);
 
-	auto& threadProfs = profiler.threadProfile;
-	const size_t numThreads = threadProfs.size();
+	const size_t numThreads = profiler.GetNumThreadProfiles();
 
 	{
 		// background
@@ -143,7 +142,7 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 
 		// bars
 		int i = 0;
-		for (auto& threadProf: threadProfs) {
+		for (auto& threadProf: profiler.GetThreadProfiles()) {
 			float drawArea2[4] = {drawArea[0], 0.0f, drawArea[2], 0.0f};
 			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
 			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - (4 * globalRendering->pixelY);
@@ -239,12 +238,14 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	constexpr float winColor[4] = {0.0f, 0.0f, 0.5f, 0.5f};
 	constexpr float textSize = 0.5f;
 
+	const auto& sortedProfiles = profiler.GetSortedProfiles();
+
 	// draw the background of the window
 	{
-		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR - profiler.sortedProfile.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR +                                 LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                                 LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR - profiler.sortedProfile.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
+		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
+		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
+		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
+		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
 	}
 
 	// table header
@@ -267,7 +268,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	// draw the textual info (total-time, short-time percentual time, timer-name)
 	int y = 1;
 
-	for (const auto& p: profiler.sortedProfile) {
+	for (const auto& p: sortedProfiles) {
 		const auto& profileData = p.second;
 
 		const float fStartY = MIN_Y_COOR - (y++) * LINE_HEIGHT;
@@ -277,9 +278,9 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2f%%", profileData.percent * 100);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
-		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
+		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "%.2f%%", profileData.stats.y * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.2f%%", profileData.newPeak? 1: 255, profileData.newPeak? 1: 255, profileData.stats.z * 100.0f);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "\xff\xff%c%c%.0fms", profileData.newLagPeak? 1: 255, profileData.newLagPeak? 1: 255, profileData.stats.x);
 
 		// print timer name
 		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, p.first);
@@ -296,7 +297,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 
 		int i = 1;
 
-		for (const auto& p: profiler.sortedProfile) {
+		for (const auto& p: sortedProfiles) {
 			const CTimeProfiler::TimeRecord& tr = p.second;
 
 			const SColor selColor(tr.color.x, tr.color.y, tr.color.z, 1.0f);
@@ -326,7 +327,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	// draw the graph lines
 	glLineWidth(3.0f);
 
-	for (const auto& p: profiler.sortedProfile) {
+	for (const auto& p: sortedProfiles) {
 		const CTimeProfiler::TimeRecord& tr = p.second;
 
 		const float3& fc = tr.color;
@@ -482,12 +483,15 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 	if (selIndex < 0)
 		return false;
-	if (selIndex >= profiler.sortedProfile.size())
+	if (selIndex >= profiler.GetNumSortedProfiles())
 		return false;
+
+	auto& sortedProfiles = profiler.GetSortedProfiles();
+	auto& timeRecord = sortedProfiles[selIndex].second;
 
 	// switch the selected Timers showGraph value
 	// this reverts when the profile is re-sorted
-	profiler.sortedProfile[selIndex].second.showGraph = !profiler.sortedProfile[selIndex].second.showGraph;
+	timeRecord.showGraph = !timeRecord.showGraph;
 	return true;
 }
 
@@ -497,7 +501,7 @@ bool ProfileDrawer::IsAbove(int x, int y)
 	const float my = CInputReceiver::MouseY(y);
 
 	// check if a Timer selection box was hit
-	return (mx >= MIN_X_COOR && mx <= MAX_X_COOR && my >= (MIN_Y_COOR - profiler.sortedProfile.size() * LINE_HEIGHT) && my <= MIN_Y_COOR);
+	return (mx >= MIN_X_COOR && mx <= MAX_X_COOR && my >= (MIN_Y_COOR - profiler.GetNumSortedProfiles() * LINE_HEIGHT) && my <= MIN_Y_COOR);
 }
 
 
