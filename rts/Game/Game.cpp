@@ -268,7 +268,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
 	// clear left-over receivers in case we reloaded
-	commandConsole.ResetState();
+	gameCommandConsole.ResetState();
 
 	wind.ResetState();
 
@@ -1939,5 +1939,5 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		return true;
 	}
 
-	return (commandConsole.ExecuteAction(action));
+	return (gameCommandConsole.ExecuteAction(action));
 }

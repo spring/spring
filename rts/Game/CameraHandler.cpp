@@ -104,6 +104,7 @@ CCameraHandler::CCameraHandler()
 
 	RegisterAction("viewsave");
 	RegisterAction("viewload");
+	SortRegisteredActions();
 
 	SetCameraMode(currCamCtrlNum);
 }
