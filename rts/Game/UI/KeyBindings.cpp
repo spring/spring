@@ -282,6 +282,7 @@ CKeyBindings::CKeyBindings()
 	RegisterAction("keyprint");
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
+	SortRegisteredActions();
 
 	configHandler->NotifyOnChange(this, {"KeyChainTimeout"});
 }
