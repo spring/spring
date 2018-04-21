@@ -52,16 +52,16 @@ ProfileDrawer::ProfileDrawer()
 
 void ProfileDrawer::SetEnabled(bool enable)
 {
-	if (enable) {
-		assert(instance == nullptr);
-		instance = new ProfileDrawer();
-
-		// reset peak indicators each time the drawer is restarted
-		for (auto& p: profiler.profile)
-			p.second.peak = 0.0f;
-	} else {
+	if (!enable) {
 		spring::SafeDelete(instance);
+		return;
 	}
+
+	assert(instance == nullptr);
+	instance = new ProfileDrawer();
+
+	// reset peak indicators each time the drawer is restarted
+	profiler.ResetPeaks();
 }
 
 
