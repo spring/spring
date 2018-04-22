@@ -585,9 +585,9 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		if ( p->deleteMe) continue;
 
 		const float3 ppos0 = p->pos;
-		const float3 ppos1 = p->pos + p->speed;
+		// const float3 ppos1 = p->pos + p->dir * (p->speed.w + p->radius);
 
-		quadField.GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
+		quadField.GetUnitsAndFeaturesColVol(p->pos, p->speed.w + p->radius, tempUnits, tempFeatures, &tempRepulsers);
 
 		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1); tempUnits.clear();
