@@ -2208,7 +2208,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	if (ud->decoyDef != nullptr)
 		ud->decoyDef->iconType = ud->iconType;
 
-	// unordered_map<int, unordered_set<int> >
+	// spring::unordered_map<int, std::vector<int> >
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 
