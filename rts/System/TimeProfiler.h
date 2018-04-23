@@ -140,10 +140,10 @@ public:
 	const TimeRecord& GetTimeRecordRaw(const char* name) const {
 		// do not default-create keys, breaks resorting
 		const auto it = profiles.find(name);
-		const static TimeRecord rec;
+		const static TimeRecord tr;
 
 		if (it == profiles.end())
-			return rec;
+			return tr;
 
 		return (it->second);
 	}

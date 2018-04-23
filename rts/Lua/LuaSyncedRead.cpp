@@ -1743,7 +1743,7 @@ static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied)
 
 	gtuObjectIDs.push_back(ud->id);
 
-	// spring::unordered_map<int, spring::unordered_set<int> >
+	// spring::unordered_map<int, std::vector<int> >
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find(ud->id);
 

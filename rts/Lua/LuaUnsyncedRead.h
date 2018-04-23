@@ -20,6 +20,7 @@ class LuaUnsyncedRead {
 		static int GetMenuName(lua_State* L);
 
 		static int GetProfilerTimeRecord(lua_State* L);
+		static int GetProfilerRecordNames(lua_State* L);
 
 		static int GetLuaMemUsage(lua_State* L);
 		static int GetVidMemUsage(lua_State* L);
