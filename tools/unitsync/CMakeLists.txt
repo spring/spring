@@ -11,7 +11,7 @@ FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 
 LIST(APPEND unitsync_libs ${CMAKE_DL_LIBS})
 if (USE_BOOST_REGEX)
-	LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+	LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY})
 endif (USE_BOOST_REGEX)
 LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
 LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})

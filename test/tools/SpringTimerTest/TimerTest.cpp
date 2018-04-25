@@ -1,9 +1,10 @@
 // ldd libboost_chrono.so.* --> must be linked against librt (for nanosecond-precision timer) which must be present
-// g++  -Wall -Wextra -Wno-unused -O2  -o tst TimerTest.cpp  -I ../../../rts/  -lboost_system -lboost_thread -lboost_chrono {-lrt}
+// g++  -Wall -Wextra -Wno-unused -O2  -o tst TimerTest.cpp  -I ../../../rts/  -lboost_chrono {-lrt}
 //
 #include <cstdio>
 #include <cstdlib>
-#include <boost/thread.hpp>
+#include <thread>
+
 #include "System/Misc/SpringTime.h"
 
 #define GAME_SPEED_HZ 30
@@ -25,7 +26,7 @@ static float simSpeedFactor     = 0.0f; // globalRendering->weightedSpeedFactor
 
 static void NewSimFrame(unsigned int currSimFrame) {
 	if (currSimFrame > GAME_SPEED_HZ) {
-		printf("[%s] sf=%u fps=%f to=%f\n\n", __FUNCTION__, currSimFrame, simFrameRate, simFrameTimeOffset);
+		printf("[%s] sf=%u fps=%f to=%f\n\n", __func__, currSimFrame, simFrameRate, simFrameTimeOffset);
 	}
 
 	lastSimFrame = currSimFrame;
@@ -56,7 +57,7 @@ static void GameDraw(unsigned int currSimFrame, unsigned int currDrawFrame) {
 	// wake-up can vary and affects FPS too much, busy-loop instead
 	{
 	#ifdef SLEEP_DRAW
-		boost::this_thread::sleep(boost::posix_time::milliseconds(1 + (random() % 5)));
+		std::this_thread::sleep(boost::posix_time::milliseconds(1 + (random() % 5)));
 	#else
 		const spring_time currentTime = spring_gettime();
 		const spring_time wakeUpTime = currentTime + spring_time(1 + (random() % 5)); // MILLIseconds
@@ -74,13 +75,13 @@ static void GameDraw(unsigned int currSimFrame, unsigned int currDrawFrame) {
 		return;
 
 	if (currTimeOffset < 0.0f)
-		printf("[%s] assert(timeOffset >= 0.0f) failed (SF=%u : DF=%u : TO=%f)\n", __FUNCTION__, currSimFrame, currDrawFrame, currTimeOffset);
+		printf("[%s] assert(timeOffset >= 0.0f) failed (SF=%u : DF=%u : TO=%f)\n", __func__, currSimFrame, currDrawFrame, currTimeOffset);
 	if (currTimeOffset > 1.0f)
-		printf("[%s] assert(timeOffset <= 1.0f) failed (SF=%u : DF=%u : TO=%f)\n", __FUNCTION__, currSimFrame, currDrawFrame, currTimeOffset);
+		printf("[%s] assert(timeOffset <= 1.0f) failed (SF=%u : DF=%u : TO=%f)\n", __func__, currSimFrame, currDrawFrame, currTimeOffset);
 
 	// test for monotonicity
 	if (currTimeOffset < lastTimeOffset)
-		printf("[%s] assert(timeOffset < lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)\n", __FUNCTION__, currSimFrame, currDrawFrame, currTimeOffset, lastTimeOffset);
+		printf("[%s] assert(timeOffset < lastTimeOffset) failed (SF=%u : DF=%u : CTO=%f LTO=%f)\n", __func__, currSimFrame, currDrawFrame, currTimeOffset, lastTimeOffset);
 
 	lastTimeOffset = currTimeOffset;
 }
@@ -93,7 +94,7 @@ static void NewDrawFrame(unsigned int currSimFrame, unsigned int currDrawFrame) 
 }
 
 static void TimerFunc(unsigned int N) {
-	printf("[%s][N=%u]\n\n", __FUNCTION__, N);
+	printf("[%s][N=%u]\n\n", __func__, N);
 
 	lastDrawFrameTime = spring_gettime();
 	lastSimFrameTime = spring_gettime();
@@ -109,9 +110,9 @@ static void TimerFunc(unsigned int N) {
 }
 
 int main(int argc, char** argv) {
-	srandom(time(NULL));
+	srandom(time(nullptr));
 
-	boost::thread timer = boost::thread(boost::bind(&TimerFunc, (argc >= 2)? atoi(argv[1]): (GAME_SPEED_HZ * 60 * 60)));
+	std::thread timer = std::thread(std::bind(&TimerFunc, (argc >= 2)? atoi(argv[1]): (GAME_SPEED_HZ * 60 * 60)));
 	timer.join();
 	return 0;
 }

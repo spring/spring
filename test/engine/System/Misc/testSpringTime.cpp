@@ -7,64 +7,20 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Misc/SpringTime.h"
-#include <cmath>
 
-#include <boost/chrono/include.hpp> // boost chrono
-#include <boost/thread.hpp>
+#include <cmath>
+#include <cstdint>
+
+#include <chrono>
+#include <thread>
 
 BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 // #define BOOST_MONOTONIC_RAW_CLOCK
 
-static const int testRuns = 1000000;
+static constexpr int testRuns = 1000000;
 
 
-#ifdef TEST_SDL
-#include <SDL_timer.h>
-struct SDLClock {
-	static inline float ToMs() { return 1.0f; }
-	static inline std::string GetName() { return "SDL_GetTicks"; }
-	static inline int64_t Get() {
-		// on Linux, same as clock_gettime(MT) with SDL 1.2
-		// on Windows, same as GetTickCount or timeGetTime
-		assert(SDL_WasInit(SDL_INIT_TIMER));
-		return SDL_GetTicks();
-	}
-};
-#endif
-
-
-#ifdef Boost_TIMER_FOUND
-#include <boost/timer/timer.hpp> // boost timer
-static boost::timer::cpu_timer boost_clock;
-struct BoostTimerClock {
-	static inline float ToMs() { return 1.0f / 1e6; }
-	static inline std::string GetName() { return "BoostTimer"; }
-	static inline int64_t Get() {
-		return boost_clock.elapsed().wall;
-	}
-};
-#endif
-
-struct BoostChronoClock {
-	static inline float ToMs() { return 1.0f / 1e6; }
-	static inline std::string GetName() { return "BoostChrono"; }
-	static inline int64_t Get() {
-		return boost::chrono::duration_cast<boost::chrono::nanoseconds>(boost::chrono::high_resolution_clock::now().time_since_epoch()).count();
-	}
-};
-
-
-struct BoostChronoMicroClock {
-	static inline float ToMs() { return 1.0f / 1e3; }
-	static inline std::string GetName() { return "BoostChronoMicro"; }
-	static inline int64_t Get() {
-		return boost::chrono::duration_cast<boost::chrono::microseconds>(boost::chrono::high_resolution_clock::now().time_since_epoch()).count();
-	}
-};
-
-
-#if __cplusplus > 199711L
 #include <chrono>
 struct Cpp11ChronoClock {
 	static inline float ToMs() { return 1.0f / 1e6; }
@@ -73,7 +29,6 @@ struct Cpp11ChronoClock {
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	}
 };
-#endif
 
 
 
@@ -95,7 +50,7 @@ struct PosixClockMT {
 		// is also a CLOCK_MONOTONIC_RAW (never slews or jumps which is
 		// what we want, no NTP adjustments at all) but boost DOES *NOT*
 		// USE this even in the latest release (1.54)!
-	#if defined(CLOCK_MONOTONIC_RAW) && defined(BOOST_MONOTONIC_RAW_CLOCK)
+	#if defined(CLOCK_MONOTONIC_RAW)
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 	#else
 		clock_gettime(CLOCK_MONOTONIC, &t1);
@@ -162,36 +117,18 @@ struct TestProcessor {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	LOG("Clock Precision Test");
-
-	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
-	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);
-	#else
-	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY undefined --> CLOCK_REALTIME", __FUNCTION__);
-	#endif
-
-	BOOST_CHECK(boost::chrono::high_resolution_clock::is_steady); // true if BOOST_CHRONO_HAS_CLOCK_STEADY
-#if __cplusplus > 199711L
 	BOOST_WARN(std::chrono::high_resolution_clock::is_steady);
-#endif
 
 	float bestAvg = 1e9;
 
-	#ifdef TEST_SDL
-	bestAvg = std::min(bestAvg, TestProcessor<SDLClock>::Run());
-	#endif
-	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoClock>::Run());
-	bestAvg = std::min(bestAvg, TestProcessor<BoostChronoMicroClock>::Run());
-#ifdef Boost_TIMER_FOUND
-	bestAvg = std::min(bestAvg, TestProcessor<BoostTimerClock>::Run());
-#endif
 #if defined(__USE_GNU) && !defined(WIN32)
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockMT>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockRT>::Run());
 #endif
-#if __cplusplus > 199711L
+
 	bestAvg = std::min(bestAvg, TestProcessor<Cpp11ChronoClock>::Run());
-#endif
-	float springAvg = TestProcessor<SpringClock>::Run();
+
+	const float springAvg = TestProcessor<SpringClock>::Run();
 
 	bestAvg = std::min(bestAvg, springAvg);
 
@@ -252,7 +189,7 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 	}
 
 	// check toSecs precision range
-	boost::int64_t i10ei = 10;
+	int64_t i10ei = 10;
 	for (int i = 1; i<10; ++i) {
 		BOOST_CHECK( std::abs(spring_time::fromSecs(i10ei).toSecsi() - i10ei) < 1.0f);
 		i10ei *= 10LL;
@@ -268,23 +205,14 @@ BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 
 
 
-#ifdef TEST_SDL
-void sleep_sdl(int time)  { SDL_Delay(time); }
-#endif
-
-void sleep_boost_posix(int time)  { boost::this_thread::sleep(boost::posix_time::milliseconds(time)); }
-void sleep_boost_posix2(int time) { boost::this_thread::sleep(boost::posix_time::microseconds(time)); }
-#ifdef BOOST_THREAD_USES_CHRONO
-	void sleep_boost_chrono(int time) { boost::this_thread::sleep_for(boost::chrono::nanoseconds(time)); }
-#endif
-void yield_boost(int time) { boost::this_thread::yield(); }
-#if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
-	#include <thread>
+#if (!defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD)) //last one is a gcc 4.7 bug
 	void sleep_stdchrono(int time) { std::this_thread::sleep_for(std::chrono::nanoseconds(time)); }
 	void yield_chrono(int time) { std::this_thread::yield(); }
 #endif
+
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
 void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
+
 #ifdef WIN32
 	#include <windows.h>
 	void sleep_windows(int time)  { Sleep(time); }
@@ -292,8 +220,9 @@ void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 	#include <time.h>
 	#include <unistd.h>
 	void sleep_posix_msec(int time)  { usleep(time); }
-	void sleep_posix_nanosec(int time)  { struct timespec tim, tim2; tim.tv_sec = 0; tim.tv_nsec = time; if (nanosleep(&tim, &tim2) != 0) nanosleep(&tim2, NULL); }
+	void sleep_posix_nanosec(int time)  { struct timespec tim, tim2; tim.tv_sec = 0; tim.tv_nsec = time; if (nanosleep(&tim, &tim2) != 0) nanosleep(&tim2, nullptr); }
 #endif
+
 
 void BenchmarkSleepFnc(const std::string& name, void (*sleep)(int time), const int runs, const float toMilliSecondsScale)
 {
@@ -340,16 +269,7 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 {
 	LOG("Sleep() Precision Test");
 
-	#ifdef TEST_SDL
-	BenchmarkSleepFnc("sleep_sdl", &sleep_sdl, 500, 1e0);
-	#endif
-	BenchmarkSleepFnc("sleep_boost_posixtime_milliseconds", &sleep_boost_posix, 500, 1e0);
-	BenchmarkSleepFnc("sleep_boost_posixtime_microseconds", &sleep_boost_posix2, 500, 1e3);
-#ifdef BOOST_THREAD_USES_CHRONO
-	BenchmarkSleepFnc("sleep_boost_chrono", &sleep_boost_chrono, 50000, 1e6);
-#endif
-	BenchmarkSleepFnc("yield_boost", &yield_boost, 500000, 0);
-#if (__cplusplus > 199711L) && !defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD) //last one is a gcc 4.7 bug
+#if (!defined(__MINGW32__) && defined(_GLIBCXX_USE_SCHED_YIELD)) //last one is a gcc 4.7 bug
 	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 500, 1e6);
 	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 500000, 0);
 #endif

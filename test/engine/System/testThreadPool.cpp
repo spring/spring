@@ -9,7 +9,7 @@
 
 #include <vector>
 #include <atomic>
-#include <boost/thread/future.hpp>
+#include <future>
 
 #define BOOST_TEST_MODULE ThreadPool
 #include <boost/test/unit_test.hpp>
