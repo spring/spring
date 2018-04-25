@@ -3,7 +3,7 @@ If (MINGW)
 	RemoveFlag("-mwindows")
 EndIf (MINGW)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework chrono)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
 
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
@@ -11,20 +11,12 @@ Else  (NOT Boost_FOUND)
 	# defines spring_test_compile_fail macro
 	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
-	# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
-	Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
 	IF    (UNIX AND NOT MINGW)
 		FIND_LIBRARY(REALTIME_LIBRARY rt)
 
 		IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-			MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
+			MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std::chrono when statically linked!")
 		ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-
-		# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
-		#  so always link it (won't hurt cause std/boost chrono need it never the less)
-		if    (EXISTS "${REALTIME_LIBRARY}")
-			LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-		ENDIF (EXISTS "${REALTIME_LIBRARY}")
 	ENDIF (UNIX AND NOT MINGW)
 
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
@@ -38,6 +30,7 @@ Else  (NOT Boost_FOUND)
 		#Win32 tests links static
 		add_definitions(-DBOOST_TEST_DYN_LINK)
 	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
+
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 	REMOVE_DEFINITIONS(-DTHREADPOOL)
 
@@ -109,7 +102,7 @@ if(NOT DEFINED ENV{CI})
 	set(test_libs
 		engineSystemNet
 		${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-		${Boost_CHRONO_LIBRARY_WITH_RT}
+		${REALTIME_LIBRARY}
 		${WINMM_LIBRARY}
 		${WS2_32_LIBRARY}
 		7zip
@@ -180,7 +173,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
 
@@ -203,7 +195,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
 
@@ -222,7 +213,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
 
@@ -242,7 +232,7 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${REALTIME_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
@@ -441,7 +431,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 			streflop
 			lua
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 			headlessStubs
 		)
@@ -464,7 +453,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 	set(test_libs
 			streflop
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
 	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
