@@ -4,13 +4,14 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+
+#include <mutex>
+#include <thread>
+
+#include <cstdint>
 #include <functional>
 
 #ifndef _WIN32
-	#include <mutex>
 	#include <sys/syscall.h>
 	#include <linux/futex.h>
 #endif
@@ -25,7 +26,7 @@
 BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 #ifndef _WIN32
-	typedef boost::uint32_t futex;
+	typedef uint32_t futex;
 
 	static void futex_init(futex* m)
 	{
@@ -83,14 +84,12 @@ BOOST_AUTO_TEST_CASE( Mutex )
 
 	spring::mutex spmtx;
 	spring::recursive_mutex sprmtx;
-	boost::mutex mtx;
-	boost::recursive_mutex rmtx;
+	std::mutex mtx;
+	std::recursive_mutex rmtx;
 
 	spring_time tRaw    = Test("raw",                     []{                 }, []{                   });
 	spring_time tSpMtx  = Test("spring::mutex",           [&]{ spmtx.lock();  }, [&]{ spmtx.unlock();  });
 	spring_time tSpRMtx = Test("spring::recursive_mutex", [&]{ sprmtx.lock(); }, [&]{ sprmtx.unlock(); });
-	spring_time tMtx    = Test("boost::mutex",            [&]{ mtx.lock();    }, [&]{ mtx.unlock();    });
-	spring_time tRMtx   = Test("boost::recursive_mutex",  [&]{ rmtx.lock();   }, [&]{ rmtx.unlock();   });
 
 #ifndef _WIN32
 	std::mutex smtx;

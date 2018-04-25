@@ -3,7 +3,7 @@ If (MINGW)
 	RemoveFlag("-mwindows")
 EndIf (MINGW)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework chrono thread system)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework chrono)
 
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
@@ -109,8 +109,6 @@ if(NOT DEFINED ENV{CI})
 	set(test_libs
 		engineSystemNet
 		${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-		${Boost_SYSTEM_LIBRARY}
-		${Boost_THREAD_LIBRARY}
 		${Boost_CHRONO_LIBRARY_WITH_RT}
 		${WINMM_LIBRARY}
 		${WS2_32_LIBRARY}
@@ -162,7 +160,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG")
@@ -183,8 +180,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
-			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
@@ -208,8 +203,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
-			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
@@ -229,8 +222,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
-			${Boost_THREAD_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${WINMM_LIBRARY}
 		)
@@ -251,9 +242,7 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
@@ -301,7 +290,6 @@ endif()
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_FILESYSTEM_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
 			${Boost_REGEX_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
@@ -383,9 +371,6 @@ endif()
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_THREAD_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
@@ -406,9 +391,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
-			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
 		)
@@ -459,9 +441,7 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 			streflop
 			lua
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
 			headlessStubs
 		)
@@ -484,9 +464,7 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 	set(test_libs
 			streflop
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
-			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
