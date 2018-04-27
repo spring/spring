@@ -4,6 +4,7 @@
 #define _POOL_ARCHIVE_H
 
 #include <zlib.h>
+#include <cstring>
 
 #include "ArchiveFactory.h"
 #include "BufferedArchive.h"
@@ -85,9 +86,11 @@ public:
 		name = files[fid].name;
 		size = files[fid].size;
 	}
-	unsigned GetCrc32(unsigned int fid) override {
+	bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN]) override {
 		assert(IsFileId(fid));
-		return files[fid].crc32;
+		// FIXME: not calculated until GetFileImpl
+		memcpy(hash, &files[fid].shasum[0], sha512::SHA_LEN);
+		return true;
 	}
 
 protected:
@@ -107,6 +110,7 @@ protected:
 	struct FileData {
 		std::string name;
 		uint8_t md5sum[16];
+		uint8_t shasum[sha512::SHA_LEN];
 		uint32_t crc32;
 		uint32_t size;
 	};

@@ -184,10 +184,15 @@ int LuaArchive::GetArchiveReplaces(lua_State* L)
 int LuaArchive::GetArchiveChecksum(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-	const unsigned int checksumSingl = archiveScanner->GetSingleArchiveChecksum(archiveName);
-	const unsigned int checksumAccum = archiveScanner->GetArchiveCompleteChecksum(archiveName);
-	lua_pushsstring(L, IntToString(checksumSingl, "%X"));
-	lua_pushsstring(L, IntToString(checksumAccum, "%X"));
+
+	sha512::hex_digest asChecksumHexDigest;
+	sha512::hex_digest acChecksumHexDigest;
+
+	sha512::dump_digest(archiveScanner->GetArchiveSingleChecksumBytes(archiveName), asChecksumHexDigest);
+	sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(archiveName), acChecksumHexDigest);
+
+	lua_pushsstring(L, asChecksumHexDigest.data());
+	lua_pushsstring(L, acChecksumHexDigest.data());
 	return 2;
 }
 

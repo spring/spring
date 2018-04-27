@@ -65,6 +65,7 @@ CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 	// get pool dir from .sdp absolute path
 	assert(FileSystem::IsAbsolutePath(name));
 	poolRootDir = FileSystem::GetParent(FileSystem::GetDirectory(name));
+	assert(!poolRootDir.empty());
 
 	while (gz_really_read(in, &length, 1)) {
 		if (!gz_really_read(in, &c_name, length)) break;
@@ -78,14 +79,17 @@ CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 		FileStat& s = stats.back();
 
 		f.name = std::move(std::string(c_name, length));
-		std::memcpy(&f.md5sum, &c_md5sum, 16);
+
+		std::memcpy(&f.md5sum, &c_md5sum, sizeof(f.md5sum));
+		std::memset(&f.shasum, 0, sizeof(f.shasum));
+
 		f.crc32 = parse_uint32(c_crc32);
 		f.size = parse_uint32(c_size);
 
 		s.fileIndx = files.size() - 1;
 		s.readTime = 0;
 
-		lcNameIndex[f.name] = files.size() - 1;
+		lcNameIndex[f.name] = s.fileIndx;
 	}
 
 	isOpen = gzeof(in);
@@ -133,10 +137,9 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 	}
 
 	const std::string prefix(c_hex,      2);
-	const std::string postfix(c_hex + 2, 30);
+	const std::string pstfix(c_hex + 2, 30);
 
-	assert(!poolRootDir.empty());
-	      std::string rpath = poolRootDir + "/pool/" + prefix + "/" + postfix + ".gz";
+	      std::string rpath = poolRootDir + "/pool/" + prefix + "/" + pstfix + ".gz";
 	const std::string  path = FileSystem::FixSlashes(rpath);
 
 	const spring_time startTime = spring_now();
@@ -150,11 +153,11 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 	buffer.clear();
 	buffer.resize(f->size);
 
-	const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), f->size);
+	const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), buffer.size());
 	gzclose(in);
 
-
 	s->readTime = (spring_now() - startTime).toNanoSecsi();
+
 
 	if (bytesRead != buffer.size()) {
 		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\"", __func__, path.c_str());
@@ -162,5 +165,6 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 		return false;
 	}
 
+	sha512::calc_digest(buffer.data(), buffer.size(), f->shasum);
 	return true;
 }

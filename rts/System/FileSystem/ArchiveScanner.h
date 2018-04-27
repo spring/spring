@@ -3,12 +3,14 @@
 #ifndef _ARCHIVE_SCANNER_H
 #define _ARCHIVE_SCANNER_H
 
+#include <cstring> // memset
 #include <string>
 #include <deque>
 #include <map>
 #include <vector>
 
 #include "System/Info.h"
+#include "System/Sync/SHA512.hpp"
 
 class IArchive;
 class IFileFilter;
@@ -128,12 +130,17 @@ public:
 
 public:
 	/// checksum of the given archive (without dependencies)
-	unsigned int GetSingleArchiveChecksum(const std::string& name);
-	/// Calculate checksum of the given archive and all its dependencies
-	unsigned int GetArchiveCompleteChecksum(const std::string& name);
+	sha512::raw_digest GetArchiveSingleChecksumBytes(const std::string& name);
+	/// calculate checksum of the given archive and all its dependencies
+	sha512::raw_digest GetArchiveCompleteChecksumBytes(const std::string& name);
+
+	/// first 4 bytes of single checksum (TODO: get rid of this in unitsync)
+	uint32_t GetArchiveSingleChecksum(const std::string& name) { return *reinterpret_cast<const uint32_t*>(&GetArchiveSingleChecksumBytes(name)[0]); }
+	/// first 4 bytes of complete checksum (TODO: get rid of this in ExternalAI)
+	uint32_t GetArchiveCompleteChecksum(const std::string& name) { return *reinterpret_cast<const uint32_t*>(&GetArchiveCompleteChecksumBytes(name)[0]); }
 
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
-	void CheckArchive(const std::string& name, unsigned int hostChecksum, unsigned int& localChecksum);
+	void CheckArchive(const std::string& name, const sha512::raw_digest& serverChecksum, sha512::raw_digest& clientChecksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	void ScanAllDirs();
 	void Reload();
@@ -148,28 +155,28 @@ public:
 
 private:
 	struct ArchiveInfo {
-		ArchiveInfo()
-			: modified(0)
-			, checksum(0)
-			, updated(false)
-			{}
+		ArchiveInfo() {
+			memset(checksum, 0, sizeof(checksum));
+		}
 		std::string path;
 		std::string origName;     ///< Could be useful to have the non-lowercased name around
 		std::string replaced;     ///< If not empty, use that archive instead
 		ArchiveData archiveData;
-		unsigned int modified;
-		unsigned int checksum;
-		bool updated;
+
+		uint32_t modified = 0;
+		uint8_t checksum[sha512::SHA_LEN];
+
+		bool updated = false;
+		bool hashed = false;
 	};
 	struct BrokenArchive {
-		BrokenArchive()
-			: modified(0)
-			, updated(false)
-			{}
+		BrokenArchive() {}
+
 		std::string path;
-		unsigned int modified;
-		bool updated;
 		std::string problem;
+
+		uint32_t modified = 0;
+		bool updated = false;
 	};
 
 private:
@@ -192,11 +199,10 @@ private:
 	IFileFilter* CreateIgnoreFilter(IArchive* ar);
 
 	/**
-	 * Get CRC of the data in the specified archive.
-	 * Returns 0 if file could not be opened.
+	 * Get hash of the data in the specified archive.
+	 * Returns false if file could not be opened.
 	 */
-	unsigned int GetCRC(const std::string& filename);
-	void ComputeChecksumForArchive(const std::string& filePath);
+	bool GetArchiveChecksum(const std::string& filename, ArchiveInfo& archiveInfo);
 
 	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
 

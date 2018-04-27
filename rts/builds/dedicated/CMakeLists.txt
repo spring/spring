@@ -99,25 +99,9 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/TdfParser.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Info.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/LogOutput.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
-	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/UriParser.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/StringUtil.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
@@ -126,6 +110,23 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Log/LogUtil.c
 	${ENGINE_SRC_ROOT_DIR}/System/Log/ConsoleSink.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Misc/SpringTime.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Sync/SHA512.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/TdfParser.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Info.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LogOutput.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
+	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/UriParser.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/StringUtil.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
 	)
 IF    (WIN32)
 	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion.cpp)

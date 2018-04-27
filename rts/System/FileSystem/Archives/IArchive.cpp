@@ -2,13 +2,7 @@
 
 #include "IArchive.h"
 
-#include "System/CRC.h"
 #include "System/StringUtil.h"
-
-IArchive::IArchive(const std::string& archiveName)
-	: archiveFile(archiveName)
-{
-}
 
 unsigned int IArchive::FindFile(const std::string& filePath) const
 {
@@ -21,14 +15,18 @@ unsigned int IArchive::FindFile(const std::string& filePath) const
 	return NumFiles();
 }
 
-unsigned int IArchive::GetCrc32(unsigned int fid)
+bool IArchive::CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN])
 {
-	CRC crc;
+	// NOTE: should be possible to avoid a re-read for buffered archives
 	std::vector<std::uint8_t> buffer;
-	if (GetFile(fid, buffer) && !buffer.empty())
-		crc.Update(&buffer[0], buffer.size());
 
-	return crc.GetDigest();
+	if (!GetFile(fid, buffer))
+		return false;
+
+	if (buffer.empty())
+		return false;
+
+	sha512::calc_digest(buffer.data(), buffer.size(), hash);
 }
 
 bool IArchive::GetFile(const std::string& name, std::vector<std::uint8_t>& buffer)

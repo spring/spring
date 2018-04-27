@@ -238,13 +238,23 @@ void CPreGame::StartServer(const std::string& setupscript)
 	// (Which is OK, since unitsync does not have map options available either.)
 	startGameSetup->LoadStartPositions();
 
-	const std::string& modArchive = archiveScanner->ArchiveFromName(startGameSetup->modName);
-	const std::string& mapArchive = archiveScanner->ArchiveFromName(startGameSetup->mapName);
-	const auto modChecksum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
-	const auto mapChecksum = archiveScanner->GetArchiveCompleteChecksum(mapArchive);
-	startGameData->SetModChecksum(modChecksum);
-	startGameData->SetMapChecksum(mapChecksum);
-	LOG("[PreGame::%s] checksums: game=0x%X map=0x%X", __func__, modChecksum, mapChecksum);
+	{
+		const std::string& modArchive = archiveScanner->ArchiveFromName(startGameSetup->modName);
+		const std::string& mapArchive = archiveScanner->ArchiveFromName(startGameSetup->mapName);
+
+		const sha512::raw_digest& mapChecksum = archiveScanner->GetArchiveCompleteChecksumBytes(mapArchive);
+		const sha512::raw_digest& modChecksum = archiveScanner->GetArchiveCompleteChecksumBytes(modArchive);
+
+		startGameData->SetMapChecksum(mapChecksum.data());
+		startGameData->SetModChecksum(modChecksum.data());
+
+		sha512::hex_digest mapChecksumHex;
+		sha512::hex_digest modChecksumHex;
+		sha512::dump_digest(mapChecksum, mapChecksumHex);
+		sha512::dump_digest(modChecksum, modChecksumHex);
+
+		LOG("[PreGame::%s]\n\tmod-checksum=%s\n\tmap-checksum=%s", __func__, modChecksumHex.data(), mapChecksumHex.data());
+	}
 
 	good_fpu_control_registers("before CGameServer creation");
 	startGameData->SetSetupText(startGameSetup->setupText);
@@ -515,29 +525,47 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	// load archives into VFS
 	AddGameSetupArchivesToVFS(gameSetup, false);
 
-	// check checksums of map & game
-	// mismatches happen on dedicated servers between host and clients
-	// we want to know whether the *locally calculated* checksums also
-	// differ among clients so use the opportunity to send them
-	// NOTE: gu->myPlayerNum is not valid yet, GameData arrives first
-	std::pair<unsigned int, unsigned int> mapChecksums = {gameData->GetMapChecksum(), 0};
-	std::pair<unsigned int, unsigned int> modChecksums = {gameData->GetModChecksum(), 0};
+	{
+		// check checksums of map & game
+		// mismatches happen on dedicated servers between host and clients
+		// we want to know whether the *locally calculated* checksums also
+		// differ among clients so use the opportunity
+		// NOTE: gu->myPlayerNum is not valid yet, GameData arrives first
+		sha512::raw_digest gdMapChecksum;
+		sha512::raw_digest asMapChecksum;
+		sha512::raw_digest gdModChecksum;
+		sha512::raw_digest asModChecksum;
+		sha512::hex_digest gdMapChecksumHex;
+		sha512::hex_digest asMapChecksumHex;
+		sha512::hex_digest gdModChecksumHex;
+		sha512::hex_digest asModChecksumHex;
 
-	try {
-		archiveScanner->CheckArchive(gameSetup->mapName, mapChecksums.first, mapChecksums.second);
-	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
-	}
-	try {
-		archiveScanner->CheckArchive(modArchive, modChecksums.first, modChecksums.second);
-	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
-	}
+		std::copy(gameData->GetMapChecksum(), gameData->GetMapChecksum() + sha512::SHA_LEN, gdMapChecksum.begin());
+		std::copy(gameData->GetModChecksum(), gameData->GetModChecksum() + sha512::SHA_LEN, gdModChecksum.begin());
+		std::fill(asMapChecksum.begin(), asMapChecksum.end(), 0);
+		std::fill(asModChecksum.begin(), asModChecksum.end(), 0);
 
-	std::memset(mapChecksumMsgBuf, 0, sizeof(mapChecksumMsgBuf));
-	std::memset(modChecksumMsgBuf, 0, sizeof(modChecksumMsgBuf));
-	std::snprintf(mapChecksumMsgBuf, sizeof(mapChecksumMsgBuf), "[PreGame::%s][map-checksums={0x%x,0x%x}]", __func__, mapChecksums.first, mapChecksums.second);
-	std::snprintf(modChecksumMsgBuf, sizeof(modChecksumMsgBuf), "[PreGame::%s][mod-checksums={0x%x,0x%x}]", __func__, modChecksums.first, modChecksums.second);
+		try {
+			archiveScanner->CheckArchive(gameSetup->mapName, gdMapChecksum, asMapChecksum);
+		} catch (const content_error& ex) {
+			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
+		}
+		try {
+			archiveScanner->CheckArchive(modArchive, gdModChecksum, asModChecksum);
+		} catch (const content_error& ex) {
+			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
+		}
+
+		sha512::dump_digest(gdMapChecksum, gdMapChecksumHex);
+		sha512::dump_digest(gdModChecksum, gdModChecksumHex);
+		sha512::dump_digest(asMapChecksum, asMapChecksumHex);
+		sha512::dump_digest(asModChecksum, asModChecksumHex);
+
+		std::memset(mapChecksumMsgBuf, 0, sizeof(mapChecksumMsgBuf));
+		std::memset(modChecksumMsgBuf, 0, sizeof(modChecksumMsgBuf));
+		std::snprintf(mapChecksumMsgBuf, sizeof(mapChecksumMsgBuf), "[PreGame::%s][map-checksums]\n\tserver=%s\n\tclient=%s", __func__, gdMapChecksumHex.data(), asMapChecksumHex.data());
+		std::snprintf(modChecksumMsgBuf, sizeof(modChecksumMsgBuf), "[PreGame::%s][mod-checksums]\n\tserver=%s\n\tclient=%s", __func__, gdModChecksumHex.data(), asModChecksumHex.data());
+	}
 
 	// script.txt allows to disable demo file recording (host only, used for menu)
 	if (clientSetup->isHost && !gameSetup->recordDemo)

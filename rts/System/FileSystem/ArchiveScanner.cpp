@@ -19,7 +19,6 @@
 #include "FileQueryFlags.h"
 #include "Lua/LuaParser.h"
 #include "System/ContainerUtil.h"
-#include "System/CRC.h"
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
 #include "System/Threading/ThreadPool.h"
@@ -51,7 +50,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
  * but mapping them all, every time to make the list is)
  */
 
-constexpr int INTERNAL_VER = 13;
+constexpr int INTERNAL_VER = 14;
 
 
 /*
@@ -554,9 +553,8 @@ std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& erro
 		const std::pair<std::string, int>& info = ar->FileInfo(fid);
 		const std::string& ext = FileSystem::GetExtension(StringToLower(info.first));
 
-		if (ext == "smf") {
+		if (ext == "smf")
 			return info.first;
-		}
 	}
 
 	return "";
@@ -633,8 +631,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 	if (hasMapinfo || !arMapFile.empty()) {
 		// map archive
+		// FIXME: name will never be empty if version is set (see HACK in ArchiveData)
 		if ((ad.GetName()).empty()) {
-			// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
 			ad.SetInfoItemValueString("name_pure", FileSystem::GetBasename(arMapFile));
 			ad.SetInfoItemValueString("name", FileSystem::GetBasename(arMapFile));
 		}
@@ -662,7 +660,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	ai.modified = modifiedTime;
 	ai.origName = fn;
 	ai.updated = true;
-	ai.checksum = (doChecksum) ? GetCRC(fullName) : 0;
+	ai.hashed = doChecksum && GetArchiveChecksum(fullName, ai);
+
 	archiveInfos[lcfn] = ai;
 
 	numScannedArchives += 1;
@@ -686,9 +685,8 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 	if (bai != brokenArchives.end()) {
 		BrokenArchive& ba = bai->second;
 
-		if (*modified == ba.modified && fpath == ba.path) {
+		if (*modified == ba.modified && fpath == ba.path)
 			return (ba.updated = true);
-		}
 	}
 
 
@@ -703,11 +701,14 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 			return true;
 
 		if (*modified == ai.modified && fpath == ai.path) {
-			// cache found update checksum if wanted
+			// archive found in cache, update checksum if wanted
+			// this also has to flag isDirty or ArchiveCache will
+			// not be rewritten even if the hash silently changed,
+			// e.g. after redownload
 			ai.updated = true;
 
-			if (doChecksum && (ai.checksum == 0))
-				ai.checksum = GetCRC(fullName);
+			if (doChecksum && !ai.hashed)
+				isDirty |= (ai.hashed = GetArchiveChecksum(fullName, ai));
 
 			return true;
 		}
@@ -770,42 +771,35 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
 	std::vector<std::uint8_t> buf;
-	if (ar->GetFile("springignore.txt", buf) && !buf.empty()) {
-		// this automatically splits lines
+
+	// this automatically splits lines
+	if (ar->GetFile("springignore.txt", buf) && !buf.empty())
 		ignore->AddRule(std::string((char*)(&buf[0]), buf.size()));
-	}
+
 	return ignore;
 }
 
 
 
 /**
- * Get CRC of the data in the specified archive.
+ * Get checksum of the data in the specified archive.
  * Returns 0 if file could not be opened.
  */
-unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
+bool CArchiveScanner::GetArchiveChecksum(const std::string& archiveName, ArchiveInfo& archiveInfo)
 {
-	CRC crc;
-
-	struct CRCPair {
-		std::string* filename;
-		unsigned int nameCRC;
-		unsigned int dataCRC;
-	};
-
 	// try to open an archive
-	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
+	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(archiveName));
 
 	if (ar == nullptr)
-		return 0;
+		return false;
 
 	// load ignore list, and insert all files to check in lowercase format
 	std::unique_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
-	std::vector<std::string> files;
-	std::vector<CRCPair> crcs;
+	std::vector<std::string> fileNames;
+	std::vector<sha512::raw_digest> fileHashes;
 
-	files.reserve(ar->NumFiles());
-	crcs.reserve(ar->NumFiles());
+	fileNames.reserve(ar->NumFiles());
+	fileHashes.reserve(ar->NumFiles());
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 		const std::pair<std::string, int>& info = ar->FileInfo(fid);
@@ -814,53 +808,36 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 			continue;
 
 		// create case-insensitive hashes
-		files.push_back(StringToLower(info.first));
+		fileNames.push_back(StringToLower(info.first));
+		fileHashes.emplace_back();
 	}
 
 	// sort by filename
-	std::stable_sort(files.begin(), files.end());
+	std::stable_sort(fileNames.begin(), fileNames.end());
 
-	for (std::string& f: files) {
-		crcs.push_back(CRCPair{&f, 0, 0});
-	}
+	// compute hashes of the files
+	for_mt(0, fileNames.size(), [&](const int i) {
+		ar->CalcHash(ar->FindFile(fileNames[i]), fileHashes[i].data());
 
-	// compute CRCs of the files
-	// Hint: Multithreading only speedups `.sdd` loading. For those the CRC generation is extremely slow -
-	//       it has to load the full file to calc it! For the other formats (sd7, sdz, sdp) the CRC is saved
-	//       in the metainformation of the container and so the loading is much faster. Neither does any of our
-	//       current (2011) packing libraries support multithreading :/
-	for_mt(0, crcs.size(), [&](const int i) {
-		CRCPair& crcp = crcs[i];
-		assert(crcp.filename == &files[i]);
-		const unsigned int nameCRC = CRC::GetCRC(crcp.filename->data(), crcp.filename->size());
-		const unsigned fid = ar->FindFile(*crcp.filename);
-		const unsigned int dataCRC = ar->GetCrc32(fid);
-		crcp.nameCRC = nameCRC;
-		crcp.dataCRC = dataCRC;
-	#if !defined(DEDICATED) && !defined(UNITSYNC)
+		#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
-	#endif
+		#endif
 	});
 
-	// Add file CRCs to the main archive CRC
-	for (const CRCPair& crcp: crcs) {
-		crc.Update(crcp.nameCRC);
-		crc.Update(crcp.dataCRC);
-	#if !defined(DEDICATED) && !defined(UNITSYNC)
+	// combine individual hashes, initialize to hash(name)
+	for (size_t i = 0; i < fileNames.size(); i++) {
+		sha512::calc_digest(reinterpret_cast<const uint8_t*>(fileNames[i].c_str()), fileNames[i].size(), archiveInfo.checksum);
+
+		for (uint8_t j = 0; j < sha512::SHA_LEN; j++) {
+			archiveInfo.checksum[j] ^= fileHashes[i][j];
+		}
+
+		#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer();
-	#endif
+		#endif
 	}
 
-	// A value of 0 is used to indicate no crc.. so never return that
-	// Shouldn't happen all that often
-	const unsigned int digest = crc.GetDigest();
-	return (digest == 0)? 4711: digest;
-}
-
-
-void CArchiveScanner::ComputeChecksumForArchive(const std::string& filePath)
-{
-	ScanArchive(filePath, true);
+	return true;
 }
 
 
@@ -890,18 +867,33 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	for (int i = 1; archives.KeyExists(i); ++i) {
 		const LuaTable& curArchive = archives.SubTable(i);
 		const LuaTable& archived = curArchive.SubTable("archivedata");
-		std::string name = curArchive.GetString("name", "");
 
-		ArchiveInfo& ai = archiveInfos[StringToLower(name)];
-		ai.origName = name;
+		const std::string curArchiveName = curArchive.GetString("name", "");
+		const std::string& hexDigestStr = curArchive.GetString("checksum", "");
+
+		ArchiveInfo& ai = archiveInfos[StringToLower(curArchiveName)];
+		ArchiveInfo tmp; // used to compare against all-zero hash
+
+		ai.origName = curArchiveName;
 		ai.path     = curArchive.GetString("path", "");
 
 		// do not use LuaTable.GetInt() for 32-bit integers: the Spring lua
 		// library uses 32-bit floats to represent numbers, which can only
 		// represent 2^24 consecutive integers
 		ai.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
-		ai.checksum = strtoul(curArchive.GetString("checksum", "0").c_str(), 0, 10);
+
+		// convert digest-string back to raw checksum
+		if (hexDigestStr.size() == (sha512::SHA_LEN * 2)) {
+			sha512::hex_digest hexDigest;
+			sha512::raw_digest rawDigest;
+			std::copy(hexDigestStr.begin(), hexDigestStr.end(), hexDigest.data());
+			sha512::read_digest(hexDigest, rawDigest);
+			std::memcpy(ai.checksum, rawDigest.data(), sha512::SHA_LEN);
+		}
+
 		ai.updated = false;
+		ai.hashed = (memcmp(ai.checksum, tmp.checksum, sha512::SHA_LEN) != 0);
+
 
 		ai.archiveData = CArchiveScanner::ArchiveData(archived, true);
 		if (ai.archiveData.IsMap()) {
@@ -970,11 +962,17 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	for (const auto& arcIt: archiveInfos) {
 		const ArchiveInfo& arcInfo = arcIt.second;
 
+		sha512::raw_digest rawDigest;
+		sha512::hex_digest hexDigest;
+
+		std::memcpy(rawDigest.data(), arcInfo.checksum, sha512::SHA_LEN);
+		sha512::dump_digest(rawDigest, hexDigest);
+
 		fprintf(out, "\t\t{\n");
 		SafeStr(out, "\t\t\tname = ",              arcInfo.origName);
 		SafeStr(out, "\t\t\tpath = ",              arcInfo.path);
 		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcInfo.modified);
-		fprintf(out, "\t\t\tchecksum = \"%u\",\n", arcInfo.checksum);
+		fprintf(out, "\t\t\tchecksum = \"%s\",\n", hexDigest.data());
 		SafeStr(out, "\t\t\treplaced = ",          arcInfo.replaced);
 
 		// mod info?
@@ -1230,48 +1228,67 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 	return s;
 }
 
-unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePath)
+
+
+sha512::raw_digest CArchiveScanner::GetArchiveSingleChecksumBytes(const std::string& filePath)
 {
-	ComputeChecksumForArchive(filePath);
-	const std::string lcname = std::move(StringToLower(FileSystem::GetFilename(filePath)));
+	// compute checksum for archive only when it is actually loaded by e.g. PreGame or LuaVFS
+	ScanArchive(filePath, true);
 
-	const auto aii = archiveInfos.find(lcname);
-	if (aii == archiveInfos.end()) {
-		LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "%s checksum: not found (0)", filePath.c_str());
-		return 0;
-	}
+	const std::string lcName = std::move(StringToLower(FileSystem::GetFilename(filePath)));
+	const auto aiIter = archiveInfos.find(lcName);
 
-	LOG_S(LOG_SECTION_ARCHIVESCANNER,"%s checksum: %d/%u", filePath.c_str(), aii->second.checksum, aii->second.checksum);
-	return aii->second.checksum;
-}
+	sha512::raw_digest checksum;
+	std::fill(checksum.begin(), checksum.end(), 0);
 
-unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name)
-{
-	const std::vector<std::string> ars = GetAllArchivesUsedBy(name);
+	if (aiIter == archiveInfos.end())
+		return checksum;
 
-	unsigned int checksum = 0;
-
-	for (const std::string& depName: ars) {
-		const std::string& archive = ArchiveFromName(depName);
-		checksum ^= GetSingleArchiveChecksum(GetArchivePath(archive) + archive);
-	}
-	LOG_S(LOG_SECTION_ARCHIVESCANNER, "archive checksum %s: %d/%u", name.c_str(), checksum, checksum);
+	std::memcpy(checksum.data(), aiIter->second.checksum, sha512::SHA_LEN);
 	return checksum;
 }
 
-void CArchiveScanner::CheckArchive(const std::string& name, unsigned int hostChecksum, unsigned int& localChecksum)
+sha512::raw_digest CArchiveScanner::GetArchiveCompleteChecksumBytes(const std::string& name)
 {
-	if ((localChecksum = GetArchiveCompleteChecksum(name)) == hostChecksum)
+	sha512::raw_digest checksum;
+	std::fill(checksum.begin(), checksum.end(), 0);
+
+	for (const std::string& depName: GetAllArchivesUsedBy(name)) {
+		const std::string& archiveName = ArchiveFromName(depName);
+		const std::string  archivePath = GetArchivePath(archiveName) + archiveName;
+
+		const sha512::raw_digest& archiveChecksum = GetArchiveSingleChecksumBytes(archivePath);
+
+		for (uint8_t i = 0; i < sha512::SHA_LEN; i++) {
+			checksum[i] ^= archiveChecksum[i];
+		}
+	}
+
+	return checksum;
+}
+
+
+void CArchiveScanner::CheckArchive(
+	const std::string& name,
+	const sha512::raw_digest& serverChecksum,
+	      sha512::raw_digest& clientChecksum
+) {
+	if ((clientChecksum = GetArchiveCompleteChecksumBytes(name)) == serverChecksum)
 		return;
+
+	sha512::hex_digest serverChecksumHex;
+	sha512::hex_digest clientChecksumHex;
+	sha512::dump_digest(serverChecksum, serverChecksumHex);
+	sha512::dump_digest(clientChecksum, clientChecksumHex);
 
 	char msg[1024];
 	sprintf(
 		msg,
-		"Archive %s (checksum 0x%x) differs from the host's copy (checksum 0x%x). "
+		"Archive %s (checksum %s) differs from the host's copy (checksum %s). "
 		"This may be caused by a corrupted download or there may even be two "
 		"different versions in circulation. Make sure you and the host have installed "
 		"the chosen archive and its dependencies and consider redownloading it.",
-		name.c_str(), localChecksum, hostChecksum);
+		name.c_str(), clientChecksumHex.data(), serverChecksumHex.data());
 
 	throw content_error(msg);
 }

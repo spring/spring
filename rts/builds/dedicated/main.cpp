@@ -157,21 +157,29 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		// Create the server, it will run in a separate thread
+		// create the server, it will run in a separate thread
 		CGlobalUnsyncedRNG rng;
 
-		const unsigned sleepTime = FLAGS_sleeptime;
-		const unsigned randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		const uint32_t sleepTime = FLAGS_sleeptime;
+		const uint32_t randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 
 		rng.Seed(randSeed);
 		dsGameData->SetRandomSeed(rng.NextInt());
 
-		//  Use script provided hashes if they exist
-		if (dsGameSetup->mapHash != 0) {
-			dsGameData->SetMapChecksum(dsGameSetup->mapHash);
+
+		sha512::raw_digest dsMapChecksum;
+		sha512::raw_digest dsModChecksum;
+
+		std::memcpy(dsMapChecksum.data(), &dsGameSetup->dsMapHash[0], sizeof(dsGameSetup->dsMapHash));
+		std::memcpy(dsModChecksum.data(), &dsGameSetup->dsModHash[0], sizeof(dsGameSetup->dsModHash));
+
+		// use script-provided hashes if they exist; these
+		// are only used for some client-side sanity checks
+		if (std::find_if(dsMapChecksum.begin(), dsMapChecksum.end(), [](uint8_t byte) { return (byte != 0); }) != dsMapChecksum.end()) {
+			dsGameData->SetMapChecksum(dsMapChecksum.data());
 			dsGameSetup->LoadStartPositions(false); // reduced mode
 		} else {
-			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
+			dsGameData->SetMapChecksum(&archiveScanner->GetArchiveCompleteChecksumBytes(dsGameSetup->mapName)[0]);
 
 			CFileHandler f("maps/" + dsGameSetup->mapName);
 			if (!f.FileExists())
@@ -180,12 +188,13 @@ int main(int argc, char* argv[])
 			dsGameSetup->LoadStartPositions(); // full mode
 		}
 
-		if (dsGameSetup->modHash != 0) {
-			dsGameData->SetModChecksum(dsGameSetup->modHash);
+		if (std::find_if(dsModChecksum.begin(), dsModChecksum.end(), [](uint8_t byte) { return (byte != 0); }) != dsModChecksum.end()) {
+			dsGameData->SetModChecksum(dsModChecksum.data());
 		} else {
 			const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
-			const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
-			dsGameData->SetModChecksum(modCheckSum);
+			const sha512::raw_digest& modCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(modArchive);
+
+			dsGameData->SetModChecksum(&modCheckSum[0]);
 		}
 
 		LOG("starting server...");

@@ -33,8 +33,8 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(hostDemo),
 	CR_IGNORED(recordDemo),
 
-	CR_IGNORED(mapHash),
-	CR_IGNORED(modHash),
+	CR_IGNORED(dsMapHash),
+	CR_IGNORED(dsModHash),
 	CR_IGNORED(mapSeed),
 
 	CR_IGNORED(gameStartDelay),
@@ -175,8 +175,8 @@ void CGameSetup::ResetState()
 	hostDemo = false;
 	recordDemo = true;
 
-	mapHash = 0;
-	modHash = 0;
+	std::memset(dsMapHash, 0, sizeof(dsMapHash));
+	std::memset(dsModHash, 0, sizeof(dsModHash));
 	mapSeed = 0;
 
 	gameStartDelay = 0;
@@ -527,9 +527,24 @@ bool CGameSetup::Init(const std::string& buf)
 	if (!file.SectionExist("GAME"))
 		return false;
 
-	// Used by dedicated server only
-	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
-	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
+	{
+		// Used by dedicated server only
+		const std::string mapHashHexStr = file.SGetValueDef("",  "GAME\\MapHash");
+		const std::string modHashHexStr = file.SGetValueDef("",  "GAME\\ModHash");
+
+		sha512::hex_digest mapHashHex;
+		sha512::hex_digest modHashHex;
+		sha512::raw_digest mapHashRaw;
+		sha512::raw_digest modHashRaw;
+
+		std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
+		std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+		sha512::read_digest(mapHashHex, mapHashRaw);
+		sha512::read_digest(modHashHex, modHashRaw);
+		std::memcpy(dsMapHash, mapHashRaw.data(), sizeof(dsMapHash));
+		std::memcpy(dsModHash, modHashRaw.data(), sizeof(dsModHash));
+	}
+
 	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 
 	gameID      = file.SGetValueDef("",  "GAME\\GameID");

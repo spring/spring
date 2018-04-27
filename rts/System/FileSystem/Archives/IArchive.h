@@ -8,6 +8,8 @@
 #include <map>
 #include <cinttypes>
 
+#include "System/Sync/SHA512.hpp"
+
 /**
  * @brief Abstraction of different archive types
  *
@@ -19,7 +21,8 @@
 class IArchive
 {
 protected:
-	IArchive(const std::string& archiveName);
+	IArchive(const std::string& archiveName): archiveFile(archiveName) {
+	}
 
 public:
 	virtual ~IArchive() {}
@@ -116,9 +119,9 @@ public:
 	 */
 	virtual bool CheckForSolid() const { return false; }
 	/**
-	 * Fetches the CRC32 hash of a file by its ID.
+	 * Fetches the (SHA512) hash of a file by its ID.
 	 */
-	virtual unsigned int GetCrc32(unsigned int fid);
+	virtual bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN]);
 
 
 protected:

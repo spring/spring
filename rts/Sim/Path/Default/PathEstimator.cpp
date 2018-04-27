@@ -1036,11 +1036,11 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 	std::uint64_t nb = 0;
 
 	#if (ENABLE_NETLOG_CHECKSUM == 1)
-	std::array<   char, 128 + sha512::SHA_LEN * 2 + 1> msgChars;
-	std::array<   char,       sha512::SHA_LEN * 2 + 1> hexChars;
-	std::array<uint8_t,       sha512::SHA_LEN        > shaBytes;
+	std::array<char, 128 + sha512::SHA_LEN * 2 + 1> msgBuffer;
 
-	std::vector<uint8_t> rawBytes;
+	sha512::hex_digest hexChars;
+	sha512::raw_digest shaBytes;
+	sha512::msg_vector rawBytes;
 	#endif
 
 	for (const auto& pathTypeOffsets: blockStates.peNodeOffsets) {
@@ -1064,8 +1064,8 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 		sha512::calc_digest(rawBytes, shaBytes); // hash(offsets|costs)
 		sha512::dump_digest(shaBytes, hexChars); // hexify(hash)
 
-		SNPRINTF(msgChars.data(), msgChars.size(), "[PE::%s][BLK_SIZE=%d][SHA_DATA=%s]", __func__, BLOCK_SIZE, hexChars.data());
-		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgChars.data());
+		SNPRINTF(msgBuffer.data(), msgBuffer.size(), "[PE::%s][BLK_SIZE=%d][SHA_DATA=%s]", __func__, BLOCK_SIZE, hexChars.data());
+		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuffer.data());
 	}
 	#endif
 

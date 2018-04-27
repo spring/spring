@@ -50,8 +50,13 @@ namespace sha512 {
 	};
 
 
-	void dump_digest(const std::array<uint8_t, SHA_LEN>& sha_bytes, std::array<char, SHA_LEN * 2 + 1>& hex_chars);
-	void calc_digest(const std::vector<uint8_t>& msg_bytes, std::array<uint8_t, SHA_LEN>& sha_bytes);
+	typedef std::array<uint8_t, SHA_LEN        > raw_digest;
+	typedef std::array<   char, SHA_LEN * 2 + 1> hex_digest; // null-terminated
+	typedef std::vector<uint8_t                > msg_vector;
+
+	void read_digest(const hex_digest& hex_chars, raw_digest& sha_bytes); // hex to raw
+	void dump_digest(const raw_digest& sha_bytes, hex_digest& hex_chars); // raw to hex
+	void calc_digest(const msg_vector& msg_bytes, raw_digest& sha_bytes);
 	void calc_digest(const uint8_t msg_bytes[], size_t len, uint8_t sha_bytes[SHA_LEN]);
 	void dm_compress(uint64_t state[NUM_STATE_CONSTS], const uint8_t blocks[], size_t len);
 
