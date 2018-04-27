@@ -38,8 +38,8 @@ public:
 		hostDemo = gs.hostDemo;
 		recordDemo = gs.recordDemo;
 
-		mapHash = gs.mapHash;
-		modHash = gs.modHash;
+		std::copy(gs.dsMapHash, gs.dsMapHash + sizeof(dsMapHash), dsMapHash);
+		std::copy(gs.dsModHash, gs.dsModHash + sizeof(dsModHash), dsModHash);
 		mapSeed = gs.mapSeed;
 
 		gameStartDelay = gs.gameStartDelay;
@@ -184,13 +184,13 @@ public:
 	bool hostDemo;
 	bool recordDemo;
 
-	unsigned int mapHash;
-	unsigned int modHash;
-	unsigned int mapSeed;
+	uint8_t dsMapHash[64];
+	uint8_t dsModHash[64];
+	uint32_t mapSeed;
 
 	/**
-	 * The number of seconds till the game starts,
-	 * counting from the moment when all players are connected and ready.
+	 * Number of seconds until the game starts, counting
+	 * from the moment when all players are connected and ready.
 	 * Default: 4 (seconds)
 	 */
 	unsigned int gameStartDelay;

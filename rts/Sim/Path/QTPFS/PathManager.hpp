@@ -137,7 +137,7 @@ namespace QTPFS {
 		bool IsFinalized() const { return (!nodeTrees.empty()); }
 
 
-		std::string GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const;
+		std::string GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const;
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;

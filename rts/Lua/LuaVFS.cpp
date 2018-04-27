@@ -169,7 +169,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	if (hasCustomEnv) {
 		lua_pushvalue(L, 2); // user fenv
 	} else {
-		LuaUtils::PushCurrentFuncEnv(L, __FUNCTION__);
+		LuaUtils::PushCurrentFuncEnv(L, __func__);
 	}
 
 	// set the include fenv to the current function's fenv
@@ -374,11 +374,9 @@ int LuaVFS::MapArchive(lua_State* L)
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
 
-	CFileHandler f(filename, SPRING_VFS_RAW);
-
-	if (!f.FileExists()) {
+	if (!CFileHandler::FileExists(filename, SPRING_VFS_RAW)) {
 		std::ostringstream buf;
-		buf << "Achive not found: " << filename;
+		buf << "[" << __func__ << "] archive not found: " << filename;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
@@ -386,17 +384,18 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 
 	if (args >= 2) {
-		// parse checksum as a STRING to convert it to a number because
-		// lua numbers are float and so limited to 2^24, while the checksum is an int32.
-		// const unsigned int argChecksum = lua_tonumber(L, 2);
-		const unsigned int argChecksum = StringToInt(lua_tostring(L, 2));
-		const unsigned int realChecksum = archiveScanner->GetSingleArchiveChecksum(filename);
+		sha512::hex_digest argChecksum;
+		sha512::hex_digest hexChecksum;
 
-		if (argChecksum != realChecksum) {
+		std::fill(argChecksum.begin(), argChecksum.end(), 0);
+		std::memcpy(argChecksum.data(), lua_tostring(L, 2), std::min(argChecksum.size() - 1, strlen(lua_tostring(L, 2))));
+		sha512::dump_digest(archiveScanner->GetArchiveSingleChecksumBytes(filename), hexChecksum);
+
+		if (argChecksum != hexChecksum) {
 			std::ostringstream buf;
 
-			buf << "[" << __FUNCTION__ << "] incorrect archive checksum ";
-			buf << "(got: " << argChecksum << ", expected: " << realChecksum << ")";
+			buf << "[" << __func__ << "] incorrect archive checksum ";
+			buf << "(got: " << argChecksum.data() << ", expected: " << hexChecksum.data() << ")";
 
 			lua_pushboolean(L, false);
 			lua_pushsstring(L, buf.str());
@@ -406,7 +405,7 @@ int LuaVFS::MapArchive(lua_State* L)
 
 	if (!vfsHandler->AddArchive(filename, false)) {
 		std::ostringstream buf;
-		buf << "[" << __FUNCTION__ << "] failed to load archive: " << filename;
+		buf << "[" << __func__ << "] failed to load archive: " << filename;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
@@ -431,7 +430,7 @@ int LuaVFS::UnmapArchive(lua_State* L)
 
 	if (!vfsHandler->RemoveArchive(filename)) {
 		std::ostringstream buf;
-		buf << "[" << __FUNCTION__ << "] failed to remove archive: " << filename;
+		buf << "[" << __func__ << "] failed to remove archive: " << filename;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
@@ -538,9 +537,7 @@ int PackType(lua_State* L)
 	std::vector<T> vals;
 
 	if (lua_istable(L, 1)) {
-		for (int i = 1;
-		     lua_rawgeti(L, 1, i), lua_isnumber(L, -1);
-		     lua_pop(L, 1), i++) {
+		for (int i = 1; lua_rawgeti(L, 1, i), lua_isnumber(L, -1); lua_pop(L, 1), i++) {
 			vals.push_back((T)lua_tonumber(L, -1));
 		}
 	} else {

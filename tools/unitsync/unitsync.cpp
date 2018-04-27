@@ -550,7 +550,7 @@ EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName)
 		CheckNullOrEmpty(archiveName);
 
 		LOG_L(L_DEBUG, "archive checksum: %s", archiveName);
-		return archiveScanner->GetSingleArchiveChecksum(archiveName);
+		return archiveScanner->GetArchiveSingleChecksum(archiveName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;

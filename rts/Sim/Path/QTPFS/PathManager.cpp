@@ -187,9 +187,15 @@ void QTPFS::PathManager::Load() {
 	numPrevExecutedSearches.resize(teamHandler.ActiveTeams() + 1, 0);
 
 	{
-		const std::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
-		const std::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
-		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
+		const sha512::raw_digest& mapCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(gameSetup->mapName);
+		const sha512::raw_digest& modCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(gameSetup->modName);
+
+		sha512::hex_digest mapCheckSumHex;
+		sha512::hex_digest modCheckSumHex;
+		sha512::dump_digest(mapCheckSum, mapCheckSumHex);
+		sha512::dump_digest(modCheckSum, modCheckSumHex);
+
+		const std::string& cacheDirName = GetCacheDirName({mapCheckSumHex.data()}, {modCheckSumHex.data()});
 
 		{
 			layersInited = false;
@@ -209,7 +215,9 @@ void QTPFS::PathManager::Load() {
 		//   make it depend on the tesselation code specifics
 		// FIXME:
 		//   assumption is invalid now (Lua inits before we do)
-		pfsCheckSum = mapCheckSum ^ modCheckSum;
+		pfsCheckSum =
+			((mapCheckSum[0] << 24) | (mapCheckSum[1] << 16) | (mapCheckSum[2] << 8) | (mapCheckSum[3] << 0)) ^
+			((modCheckSum[0] << 24) | (modCheckSum[1] << 16) | (modCheckSum[2] << 8) | (modCheckSum[3] << 0));
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
@@ -231,7 +239,7 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.AddLoadMessage("[" + std::string(__FUNCTION__) + "] " + sumStr + memStr);
+		pmLoadScreen.AddLoadMessage("[" + std::string(__func__) + "] " + sumStr + memStr);
 		pmLoadScreen.SetLoading(false);
 	}
 }
@@ -272,7 +280,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		sprintf(loadMsg, fmtString, __FUNCTION__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
+		sprintf(loadMsg, fmtString, __func__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		#ifndef NDEBUG
@@ -307,7 +315,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#else
 	{
-		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
+		sprintf(loadMsg, fmtString, __func__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		SpawnSpringThreads(&PathManager::InitNodeLayersThread, rect);
@@ -509,16 +517,16 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 
 
-std::string QTPFS::PathManager::GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const {
+std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const {
 	const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
 	const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
-		IntToString(mapCheckSum, "%08x") + "-" +
-		IntToString(modCheckSum, "%08x") + "/";
+		mapCheckSumHexStr + "-" +
+		modCheckSumHexStr + "/";
 
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %08x, mod-checksum %08x)";
+	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %s, mod-checksum %s)";
 
-	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
+	sprintf(loadMsg, fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
 	pmLoadScreen.AddLoadMessage(loadMsg);
 
 	return dir;
@@ -584,7 +592,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		}
 
 		#ifndef NDEBUG
-		sprintf(loadMsg, fmtString, __FUNCTION__, i, md->name.c_str());
+		sprintf(loadMsg, fmtString, __func__, i, md->name.c_str());
 		pmLoadScreen.AddLoadMessage(loadMsg);
 		#endif
 

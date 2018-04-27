@@ -20,7 +20,15 @@ static uint64_t rotr64(uint64_t x, uint64_t i) {
 }
 
 
-void sha512::dump_digest(const std::array<uint8_t, SHA_LEN>& sha_bytes, std::array<char, SHA_LEN * 2 + 1>& hex_chars) {
+void sha512::read_digest(const hex_digest& hex_chars, raw_digest& sha_bytes) {
+	for (uint8_t i = 0; i < SHA_LEN; i++) {
+		const uint8_t c0 = hex2dec(hex_chars[i * 2 + 0]);
+		const uint8_t c1 = hex2dec(hex_chars[i * 2 + 1]);
+		sha_bytes[i] = (c0 << 4) | c1;
+	}
+}
+
+void sha512::dump_digest(const raw_digest& sha_bytes, hex_digest& hex_chars) {
 	for (uint8_t i = 0; i < SHA_LEN; i++) {
 		snprintf(hex_chars.data() + (i * 2), hex_chars.size() - (i * 2), "%02x", sha_bytes[i]);
 	}
@@ -29,7 +37,7 @@ void sha512::dump_digest(const std::array<uint8_t, SHA_LEN>& sha_bytes, std::arr
 }
 
 
-void sha512::calc_digest(const std::vector<uint8_t>& msg_bytes, std::array<uint8_t, SHA_LEN>& sha_bytes) {
+void sha512::calc_digest(const msg_vector& msg_bytes, raw_digest& sha_bytes) {
 	calc_digest(msg_bytes.data(), msg_bytes.size(), sha_bytes.data());
 }
 
@@ -137,8 +145,8 @@ void sha512::dm_compress(uint64_t state[NUM_STATE_CONSTS], const uint8_t blocks[
 
 
 bool sha512::unit_test(const char* msg_str, const char* sha_str) {
-	std::vector<uint8_t> msg_bytes = {};
-	std::array<uint8_t, SHA_LEN> sha_bytes = {0};
+	msg_vector msg_bytes = {};
+	raw_digest sha_bytes = {0};
 
 	if (msg_str[0] != 0) {
 		msg_bytes.resize(std::strlen(msg_str), 0);
