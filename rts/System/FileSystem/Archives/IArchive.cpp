@@ -27,6 +27,7 @@ bool IArchive::CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN])
 		return false;
 
 	sha512::calc_digest(buffer.data(), buffer.size(), hash);
+	return true;
 }
 
 bool IArchive::GetFile(const std::string& name, std::vector<std::uint8_t>& buffer)
