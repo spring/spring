@@ -642,15 +642,16 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float3& ownerPos = weaponOwner->pos;
 	const float3 testPos;
 
-	const float scanRadius = weapon->range + weapon->autoTargetRangeBoost;
-	const float aimHeight = weapon->aimFromPos.y;
+	const float  baseRange = weapon->range;
+	const float scanRadius = baseRange + weapon->autoTargetRangeBoost;
+	const float  aimHeight = weapon->aimFromPos.y;
 
 	// how much damage the weapon deals over 1 second
 	const float secDamage = weaponDmg->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const float heightMod = weaponDef->heightmod;
 
-	// [0] := default, [1,2,3,4,5] := target is {avoidee, in bad category, crashing, last attacker, paralyzed}
-	constexpr float tgtPriorityMults[] = {1.0f, 10.0f, 100.0f, 1000.0f, 0.5f, 4.0f};
+	// [0] := default, [1,2,3,4,5,6] := target is {avoidee, in bad category, crashing, last attacker, paralyzed, outside unboosted range}
+	constexpr float tgtPriorityMults[] = {1.0f, 10.0f, 100.0f, 1000.0f, 0.5f, 4.0f, 100000.0f};
 
 	const bool paralyzer = (weaponDmg->paralyzeDamageTime != 0);
 
@@ -701,6 +702,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				const float damageMul = weaponDmg->Get(targetUnit->armorType) * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
+				targetPriority *= tgtPriorityMults[(dist2D > baseRange) * 6];
 
 				if (targetLOSState & LOS_INLOS) {
 					targetPriority *= (secDamage + targetUnit->health);
