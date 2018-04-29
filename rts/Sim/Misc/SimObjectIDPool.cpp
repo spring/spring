@@ -22,11 +22,14 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 
 	// allocate new batch of (randomly shuffled) id's
 	std::fill(newIDs.begin(), newIDs.end(), 0);
-	std::generate(newIDs.begin(), newIDs.begin() + numIDs, [n = baseID]() mutable { return (n++); });
+	std::generate(newIDs.begin(), newIDs.begin() + numIDs, [&baseID]() { return (baseID++); });
 
 	// randomize so that Lua widgets can not easily determine counts
 	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
 	std::random_shuffle(newIDs.begin(), newIDs.begin() + numIDs, gsRNG);
+
+	// lambda capture ("[n = baseID]() mutable { return (n++); }") requires std=c++14
+	baseID -= numIDs;
 
 	// NOTE:
 	//   any randomization would be undone by a sorted std::container
