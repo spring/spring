@@ -660,7 +660,7 @@ bool CWeapon::AutoTarget()
 
 		// set isAutoTarget s.t. TestRange result is ignored
 		// (which enables pre-aiming at targets out of range)
-		if (!TryTarget(SWeaponTarget(unit, false, true)))
+		if (!TryTarget(SWeaponTarget(unit, false, autoTargetRangeBoost > 0.0f)))
 			continue;
 
 		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
