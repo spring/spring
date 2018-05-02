@@ -40,7 +40,7 @@
 std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 {
 	std::string regex;
-	regex.reserve(glob.size()<<1);
+	regex.reserve(glob.size() << 1);
 	int braces = 0;
 	for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i) {
 		char c = *i;
@@ -73,7 +73,7 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 				if (braces > 0) {
 					regex += '|';
 				} else {
-					QUOTE(c,regex);
+					QUOTE(c, regex);
 				}
 				break;
 			case '\\':
@@ -83,10 +83,10 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 					LOG_L(L_WARNING, "%s: pattern ends with backslash\n%s", __FUNCTION__, glob.c_str());
 				}
 #endif
-				QUOTE(*i,regex);
+				QUOTE(*i, regex);
 				break;
 			default:
-				QUOTE(c,regex);
+				QUOTE(c, regex);
 				break;
 		}
 	}
@@ -221,9 +221,24 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 	std::string normalizedPath = StringReplace(path, "\\", "/"); // convert to POSIX path separators
 
 	normalizedPath = StringReplace(normalizedPath, "/./", "/");
-	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
-	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[^/]+[/][.]{2}"), {""});
-	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
+
+	try {
+		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
+	} catch (const std::regex_error& e) {
+		LOG_L(L_WARNING, "[%s][1] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
+	}
+
+	try {
+		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[^/]+[/][.]{2}"), {""});
+	} catch (const std::regex_error& e) {
+		LOG_L(L_WARNING, "[%s][2] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
+	}
+
+	try {
+		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
+	} catch (const std::regex_error& e) {
+		LOG_L(L_WARNING, "[%s][3] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
+	}
 
 	return normalizedPath; // maybe use FixSlashes here
 }
