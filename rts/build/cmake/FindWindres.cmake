@@ -22,6 +22,7 @@ IF    (MINGW)
 			i586-pc-mingw32-windres
 			i686-pc-mingw32-windres
 			i686-mingw32-windres
+			${CMAKE_RC_COMPILER}
 		DOC "path to mingw's windres executable"
 		)
 
