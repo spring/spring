@@ -10,7 +10,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <limits.h>
+#include <climits>
+#include <cstring>
+
 #include "System/SpringRegex.h"
 
 #include "FileQueryFlags.h"

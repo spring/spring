@@ -8,11 +8,7 @@
 #include "System/VersionGenerated.h"
 
 #include <cstring>
-#ifdef USE_BOOST_REGEX
-#include <boost/version.hpp>
-#include <boost/config.hpp>
-#endif
-#include <stdio.h>
+#include <cstdio>
 
 /**
  * @brief Defines the current version string.
