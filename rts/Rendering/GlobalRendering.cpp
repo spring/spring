@@ -15,6 +15,7 @@
 #include "System/EventHandler.h"
 #include "System/type2.h"
 #include "System/TimeProfiler.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -65,7 +66,9 @@ CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position
  *
  * Global instance of CGlobalRendering
  */
-CGlobalRendering* globalRendering;
+static uint8_t globalRenderingMem[sizeof(CGlobalRendering)];
+
+CGlobalRendering* globalRendering = nullptr;
 GlobalRenderingInfo globalRenderingInfo;
 
 
@@ -146,6 +149,11 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(glTimerQueries)
 ))
+
+
+void CGlobalRendering::InitStatic() { globalRendering = new (globalRenderingMem) CGlobalRendering(); }
+void CGlobalRendering::KillStatic() { spring::SafeDestruct(globalRendering); }
+
 
 CGlobalRendering::CGlobalRendering()
 	: timeOffset(0.0f)

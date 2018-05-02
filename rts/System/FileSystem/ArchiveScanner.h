@@ -170,8 +170,6 @@ private:
 		bool hashed = false;
 	};
 	struct BrokenArchive {
-		BrokenArchive() {}
-
 		std::string path;
 		std::string problem;
 

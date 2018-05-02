@@ -190,40 +190,54 @@ void CSMFReadMap::CreateSpecularTex()
 	if (!haveSpecularTexture)
 		return;
 
-	CBitmap specularTexBM;
-	CBitmap skyReflectModTexBM;
-	CBitmap blendNormalsTexBM;
-	CBitmap lightEmissionTexBM;
-	CBitmap parallaxHeightTexBM;
+	{
+		CBitmap specularTexBM;
 
-	if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
-		// maps wants specular lighting, but no moderation
-		specularTexBM.channels = 4;
-		specularTexBM.AllocDummy(SColor(255, 255, 255, 255));
+		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
+			// maps wants specular lighting, but no moderation
+			specularTexBM.channels = 4;
+			specularTexBM.AllocDummy(SColor(255, 255, 255, 255));
+		}
+
+		specularTex.SetRawTexID(specularTexBM.CreateTexture());
+		specularTex.SetRawSize(int2(specularTexBM.xsize, specularTexBM.ysize));
 	}
 
-	specularTex.SetRawTexID(specularTexBM.CreateTexture());
-	specularTex.SetRawSize(int2(specularTexBM.xsize, specularTexBM.ysize));
+	{
+		CBitmap skyReflectModTexBM;
 
-	// no default 1x1 textures for these
-	if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
-		skyReflectModTex.SetRawTexID(skyReflectModTexBM.CreateTexture());
-		skyReflectModTex.SetRawSize(int2(skyReflectModTexBM.xsize, skyReflectModTexBM.ysize));
+		// no default 1x1 textures for these
+		if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
+			skyReflectModTex.SetRawTexID(skyReflectModTexBM.CreateTexture());
+			skyReflectModTex.SetRawSize(int2(skyReflectModTexBM.xsize, skyReflectModTexBM.ysize));
+		}
 	}
 
-	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
-		blendNormalsTex.SetRawTexID(blendNormalsTexBM.CreateTexture());
-		blendNormalsTex.SetRawSize(int2(blendNormalsTexBM.xsize, blendNormalsTexBM.ysize));
+	{
+		CBitmap blendNormalsTexBM;
+
+		if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
+			blendNormalsTex.SetRawTexID(blendNormalsTexBM.CreateTexture());
+			blendNormalsTex.SetRawSize(int2(blendNormalsTexBM.xsize, blendNormalsTexBM.ysize));
+		}
 	}
 
-	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
-		lightEmissionTex.SetRawTexID(lightEmissionTexBM.CreateTexture());
-		lightEmissionTex.SetRawSize(int2(lightEmissionTexBM.xsize, lightEmissionTexBM.ysize));
+	{
+		CBitmap lightEmissionTexBM;
+
+		if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
+			lightEmissionTex.SetRawTexID(lightEmissionTexBM.CreateTexture());
+			lightEmissionTex.SetRawSize(int2(lightEmissionTexBM.xsize, lightEmissionTexBM.ysize));
+		}
 	}
 
-	if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
-		parallaxHeightTex.SetRawTexID(parallaxHeightTexBM.CreateTexture());
-		parallaxHeightTex.SetRawSize(int2(parallaxHeightTexBM.xsize, parallaxHeightTexBM.ysize));
+	{
+		CBitmap parallaxHeightTexBM;
+
+		if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
+			parallaxHeightTex.SetRawTexID(parallaxHeightTexBM.CreateTexture());
+			parallaxHeightTex.SetRawSize(int2(parallaxHeightTexBM.xsize, parallaxHeightTexBM.ysize));
+		}
 	}
 }
 
@@ -232,27 +246,32 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!haveSplatDetailDistribTexture)
 		return;
 
-	CBitmap splatDistrTexBM;
-	CBitmap splatDetailTexBM;
+	{
+		CBitmap splatDetailTexBM;
 
-	// if the map supplies an intensity- AND a distribution-texture for
-	// detail-splat blending, the regular detail-texture is not used
-	if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
-		// default detail-texture should be all-grey
-		splatDetailTexBM.channels = 4;
-		splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
+		// if a map supplies an intensity- AND a distribution-texture for
+		// detail-splat blending, the regular detail-texture is not used
+		if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
+			// default detail-texture should be all-grey
+			splatDetailTexBM.channels = 4;
+			splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
+		}
+
+		splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(texAnisotropyLevels[true], true));
+		splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
 	}
 
-	if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
-		splatDistrTexBM.channels = 4;
-		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
+	{
+		CBitmap splatDistrTexBM;
+
+		if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
+			splatDistrTexBM.channels = 4;
+			splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
+		}
+
+		splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(texAnisotropyLevels[true], true));
+		splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
 	}
-
-	splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(texAnisotropyLevels[true], true));
-	splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
-
-	splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(texAnisotropyLevels[true], true));
-	splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
 
 	// only load the splat detail normals if any of them are defined and present
 	if (!haveSplatNormalDistribTexture)
