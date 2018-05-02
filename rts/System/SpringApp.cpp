@@ -49,6 +49,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h" // DefType
@@ -96,6 +97,7 @@
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
+CONFIG(unsigned, TextureMemPoolSize).defaultValue(64 * 1024 * 1024);
 CONFIG(bool, UseLuaMemPools).defaultValue(__archBits__ == 64).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
@@ -207,7 +209,7 @@ bool SpringApp::Init()
 	CMyMath::Init();
 	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
-	globalRendering = new CGlobalRendering();
+	CGlobalRendering::InitStatic();
 	globalRendering->SetFullScreen(FLAGS_window, FLAGS_fullscreen);
 
 	if (!InitPlatformLibs())
@@ -234,6 +236,8 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
 	CCamera::InitializeStatic();
+	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
+
 	UpdateInterfaceGeometry();
 	CglFont::LoadConfigFonts();
 	ClearScreen();
@@ -263,8 +267,7 @@ bool SpringApp::Init()
 	ISound::Initialize(false);
 
 	// Lua socket restrictions
-	luaSocketRestrictions = new CLuaSocketRestrictions();
-
+	CLuaSocketRestrictions::InitStatic();
 	LuaVFSDownload::Init();
 
 	// Create CGameSetup and CPreGame objects
@@ -697,6 +700,8 @@ void SpringApp::Reload(const std::string script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
+
 	// normally not needed, but would allow switching fonts
 	// LoadFonts();
 
@@ -899,8 +904,9 @@ void SpringApp::Kill(bool fromRun)
 	gu->Kill();
 
 	LOG("[SpringApp::%s][7]", __func__);
-	spring::SafeDelete(globalRendering);
-	spring::SafeDelete(luaSocketRestrictions);
+
+	CGlobalRendering::KillStatic();
+	CLuaSocketRestrictions::KillStatic();
 
 	// also gets rid of configHandler
 	FileSystemInitializer::Cleanup();

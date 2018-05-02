@@ -25,6 +25,10 @@ class CGlobalRendering {
 public:
 	CGlobalRendering();
 	~CGlobalRendering();
+
+	static void InitStatic();
+	static void KillStatic();
+
 	/**
 	 * @return whether setting the video mode was successful
 	 *
