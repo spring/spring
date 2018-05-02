@@ -1,6 +1,4 @@
-# CMake 2.8.10
-# + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.1)
 
 
 SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
@@ -21,7 +19,7 @@ INCLUDE(Util)
 INCLUDE(PreferStaticLibs)
 
 # check for minimal gcc version
-set(MIN_GCC_VER "4.8")
+set(MIN_GCC_VER "5.4")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
 		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
