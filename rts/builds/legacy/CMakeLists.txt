@@ -40,7 +40,7 @@ FIND_PACKAGE_STATIC(Freetype REQUIRED)
 foreach(f ${FREETYPE_INCLUDE_DIRS})
 	LIST(APPEND engineIncludes ${f})
 endforeach(f)
-LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
+LIST(APPEND engineLibraries ${FREETYPE_LIBRARY})
 
 IF    (PREFER_STATIC_LIBS)
 	# dependencies of FreeType
