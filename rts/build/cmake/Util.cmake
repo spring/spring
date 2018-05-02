@@ -26,7 +26,6 @@
 # * MakeAbsolute
 # * GetVersionPlusDepFile
 # * GetNativeSourcesRecursive
-# * CheckMinCMakeVersion
 # * MakeGlobalVar
 
 
@@ -240,26 +239,6 @@ Macro    (GetNativeSourcesRecursive _var _dir _relDir)
 		EndIf ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
 	EndForEach (_ext)
 EndMacro (GetNativeSourcesRecursive _var _dir _relDir)
-
-
-# Check If the CMake version used is >= "major.minor.patch".
-Macro    (CheckMinCMakeVersion res_var major minor patch)
-	Set(${res_var} FALSE)
-	If     (${CMAKE_MAJOR_VERSION} GREATER ${major})
-		Set(${res_var} TRUE)
-	ElseIf (${CMAKE_MAJOR_VERSION} EQUAL ${major})
-		If     (${CMAKE_MINOR_VERSION} GREATER ${minor})
-			Set(${res_var} TRUE)
-		ElseIf (${CMAKE_MINOR_VERSION} EQUAL ${minor})
-			If     (${CMAKE_PATCH_VERSION} GREATER ${patch})
-				Set(${res_var} TRUE)
-			ElseIf (${CMAKE_PATCH_VERSION} EQUAL ${patch})
-				Set(${res_var} TRUE)
-			EndIf  ()
-		EndIf  ()
-	EndIf  ()
-EndMacro (CheckMinCMakeVersion res_var major minor patch)
-
 
 # Tries to capture a specific regex group from a string.
 # The regex has to match the whole string.

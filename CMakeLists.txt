@@ -20,8 +20,6 @@ endif()
 INCLUDE(Util)
 INCLUDE(PreferStaticLibs)
 
-CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
-
 # check for minimal gcc version
 set(MIN_GCC_VER "4.8")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
