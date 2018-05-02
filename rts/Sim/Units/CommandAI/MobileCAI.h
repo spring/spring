@@ -17,7 +17,7 @@ struct Command;
 class CMobileCAI : public CCommandAI
 {
 public:
-	CR_DECLARE(CMobileCAI)
+	CR_DECLARE_DERIVED(CMobileCAI)
 	CMobileCAI(CUnit* owner);
 	CMobileCAI();
 	virtual ~CMobileCAI();
@@ -57,7 +57,7 @@ public:
 	int GetCancelDistance() { return cancelDistance; }
 
 	virtual bool IsValidTarget(const CUnit* enemy) const;
-	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const;
+	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const override;
 
 	void SetTransportee(CUnit* unit);
 	bool FindEmptySpot(const CUnit* unloadee, const float3& center, float radius, float spread, float3& found, bool fromSynced = true);
