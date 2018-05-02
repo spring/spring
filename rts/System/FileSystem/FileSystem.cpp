@@ -186,7 +186,7 @@ std::string FileSystem::GetBasename(const std::string& path)
 	std::string fn = GetFilename(path);
 	const size_t dot = fn.find_last_of('.');
 
-	if (dot != std::string::npos) {
+	if (dot != std::string::npos)
 		return fn.substr(0, dot);
 
 	return fn;
