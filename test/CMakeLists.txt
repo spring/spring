@@ -11,13 +11,13 @@ Else  (NOT Boost_FOUND)
 	# defines spring_test_compile_fail macro
 	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
-	IF    (UNIX AND NOT MINGW)
+	IF    (UNIX AND (NOT APPLE) AND (NOT MINGW))
 		FIND_LIBRARY(REALTIME_LIBRARY rt)
 
 		IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
 			MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std::chrono when statically linked!")
 		ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-	ENDIF (UNIX AND NOT MINGW)
+	ENDIF (UNIX AND (NOT APPLE) AND (NOT MINGW))
 
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
