@@ -402,7 +402,7 @@ public:
 
 		s->SerializeObjectPtr(ptr, c);
 	}
-	std::string GetName() const {
+	std::string GetName() const override {
 		return "creg_GCObject*";
 	}
 };
