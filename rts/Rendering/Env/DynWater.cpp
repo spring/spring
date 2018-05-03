@@ -100,7 +100,7 @@ CDynWater::CDynWater()
 	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1))
 		foam.CreateRescaled(next_power_of_2(foam.xsize), next_power_of_2(foam.ysize));
 
-	foamTex = foam.CreateTexture(0.0f, true);
+	foamTex = foam.CreateTexture(0.0f, 0.0f, true);
 
 
 	if (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, "ARB/waterDyn.vp")) {

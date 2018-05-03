@@ -41,10 +41,10 @@ public:
 
 	bool Empty() const { return (mem == nullptr); } // implies size=0
 
-	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
-	unsigned int CreateMipMapTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, true)); }
-	unsigned int CreateAnisoTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, false)); }
-	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateTexture(float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateMipMapTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, true)); }
+	unsigned int CreateAnisoTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, false)); }
+	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
 
 	void CreateAlpha(uint8_t red, uint8_t green, uint8_t blue);
 	void SetTransparent(const SColor& c, const SColor trans = SColor(0, 0, 0, 0));

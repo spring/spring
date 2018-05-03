@@ -709,10 +709,10 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 
 #ifndef BITMAP_NO_OPENGL
-unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
+unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const
 {
 	if (compressed)
-		return CreateDDSTexture(0, aniso, mipmaps);
+		return CreateDDSTexture(0, aniso, lodBias, mipmaps);
 
 	if (GetMemSize() == 0)
 		return 0;
@@ -730,6 +730,8 @@ unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	if (lodBias != 0.0f)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, lodBias);
 	if (aniso > 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 
@@ -764,7 +766,7 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mipmaps) const
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -776,6 +778,7 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 			glDeleteTextures(1, &texID);
 			texID = 0;
 			break;
+
 		case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, texID);
@@ -785,11 +788,15 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 				texID = 0;
 				break;
 			}
+
+			if (lodBias != 0.0f)
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, lodBias);
 			if (aniso > 0.0f)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 
 			HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage.get_num_mipmaps());
 			break;
+
 		case nv_dds::Texture3D:
 			glEnable(GL_TEXTURE_3D);
 			glBindTexture(GL_TEXTURE_3D, texID);
@@ -800,8 +807,12 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 				break;
 			}
 
+			if (lodBias != 0.0f)
+				glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_LOD_BIAS, lodBias);
+
 			HandleDDSMipmap(GL_TEXTURE_3D, mipmaps, ddsimage.get_num_mipmaps());
 			break;
+
 		case nv_dds::TextureCubemap:
 			glEnable(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
@@ -811,11 +822,15 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 				texID = 0;
 				break;
 			}
+
+			if (lodBias != 0.0f)
+				glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_LOD_BIAS, lodBias);
 			if (aniso > 0.0f)
 				glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 
 			HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage.get_num_mipmaps());
 			break;
+
 		default:
 			assert(false);
 			break;
@@ -826,11 +841,11 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mip
 }
 #else  // !BITMAP_NO_OPENGL
 
-unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const {
+unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const {
 	return 0;
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mipmaps) const {
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const {
 	return 0;
 }
 #endif // !BITMAP_NO_OPENGL

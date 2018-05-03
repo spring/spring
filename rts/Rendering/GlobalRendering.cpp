@@ -46,7 +46,7 @@ CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).descripti
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
 CONFIG(bool, TeamNanoSpray).defaultValue(true).headlessValue(false);
-CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
+
 CONFIG(int, MinimizeOnFocusLoss).defaultValue(0).minimumValue(0).maximumValue(1).description("When set to 1 minimize Window if it loses key focus when in fullscreen mode.");
 
 CONFIG(bool, Fullscreen).defaultValue(true).headlessValue(false).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
@@ -236,7 +236,7 @@ CGlobalRendering::CGlobalRendering()
 	, glContexts{nullptr, nullptr}
 {
 	verticalSync->WrapNotifyOnChange();
-	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
+	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
 }
 
 CGlobalRendering::~CGlobalRendering()
@@ -912,11 +912,6 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	if (sdlWindows[0] == nullptr)
 		return;
 
-	if (key == "TextureLODBias") {
-		UpdateGLConfigs();
-		return;
-	}
-
 	borderless = configHandler->GetBool("WindowBorderless");
 	fullScreen = configHandler->GetBool("Fullscreen");
 
@@ -1072,11 +1067,6 @@ void CGlobalRendering::UpdateGLConfigs()
 {
 	// re-read configuration value
 	verticalSync->SetInterval();
-
-	const float lodBias = configHandler->GetFloat("TextureLODBias");
-	const float absBias = math::fabs(lodBias);
-
-	glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias * (absBias > 0.01f));
 }
 
 void CGlobalRendering::UpdateGLGeometry()
