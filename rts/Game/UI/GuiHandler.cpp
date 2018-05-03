@@ -1336,13 +1336,13 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 		}
 		case CMDTYPE_ICON_MODE: {
 			int newMode = atoi(cd.params[0].c_str()) + 1;
-			if (newMode > (static_cast<int>(cd.params.size())-2)) {
+
+			if (newMode > (static_cast<int>(cd.params.size())-2))
 				newMode = 0;
-			}
 
 			// not really required
-			char t[10];
-			SNPRINTF(t, 10, "%d", newMode);
+			char t[16];
+			SNPRINTF(t, sizeof(t), "%d", newMode);
 			cd.params[0] = t;
 
 			GiveCommand(Command(cd.id, CreateOptions(rightMouseButton), newMode));
@@ -1933,13 +1933,12 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					newMode = atoi(cmdDesc.params[0].c_str()) + 1;
 				}
 
-				if ((newMode < 0) || ((size_t)newMode > (cmdDesc.params.size() - 2))) {
+				if ((newMode < 0) || ((size_t)newMode > (cmdDesc.params.size() - 2)))
 					newMode = 0;
-				}
 
 				// not really required
-				char t[10];
-				SNPRINTF(t, 10, "%d", newMode);
+				char t[16];
+				SNPRINTF(t, sizeof(t), "%d", newMode);
 				cmdDesc.params[0] = t;
 
 				GiveCommand(Command(cmdDesc.id, 0, newMode));
