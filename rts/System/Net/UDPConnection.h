@@ -122,9 +122,9 @@ public:
 	bool UseMinLossFactor() const { return (netLossFactor == MIN_LOSS_FACTOR); }
 
 	/// Connections are stealth by default, this allow them to send data
-	void Unmute() { muted = false; }
-	void Close(bool flush);
-	void SetLossFactor(int factor);
+	void Unmute() override { muted = false; }
+	void Close(bool flush) override;
+	void SetLossFactor(int factor) override;
 
 	const asio::ip::udp::endpoint& GetEndpoint() const { return addr; }
 

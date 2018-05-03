@@ -145,7 +145,7 @@ public:
 	void SetBuildClipPlanes(const float4&, const float4&) const override {}
 
 private:
-	LuaMatShader* luaMatShader = nullptr;
+	//LuaMatShader* luaMatShader = nullptr;
 };
 
 

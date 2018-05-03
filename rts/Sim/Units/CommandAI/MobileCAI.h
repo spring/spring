@@ -24,9 +24,9 @@ public:
 
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
-	virtual void BuggerOff(const float3& pos, float radius);
+	virtual void BuggerOff(const float3& pos, float radius) override;
 	bool SetFrontMoveCommandPos(const float3& pos);
-	void StopMove();
+	void StopMove() override;
 	void StopMoveAndFinishCommand();
 	void StopMoveAndKeepPointing(const float3& p, const float r, bool b);
 

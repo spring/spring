@@ -30,7 +30,7 @@ public:
 
 	virtual void DrawPass() = 0;
 	virtual void DrawShadowPass() = 0;
-	virtual void Update() {}
+	virtual void Update() override {}
 
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
 	virtual void DeleteTree(int treeID, int treeType, const float3& pos);
@@ -66,7 +66,7 @@ public:
 		}
 	}
 
-	void RenderFeatureCreated(const CFeature* feature);
+	void RenderFeatureCreated(const CFeature* feature) override;
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 	void RenderFeatureDestroyed(const CFeature* feature);
 
