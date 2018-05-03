@@ -20,7 +20,7 @@ public:
 	void Draw();
 	void DrawSun() {}
 
-	void SetLuaTexture(const MapTextureData& td)
+	void SetLuaTexture(const MapTextureData& td) override
 	{
 		skyTex.SetLuaTexture(td);
 	}
