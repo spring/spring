@@ -224,19 +224,19 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 
 	try {
 		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
-	} catch (const std::regex_error& e) {
+	} catch (const spring::regex_error& e) {
 		LOG_L(L_WARNING, "[%s][1] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
 	}
 
 	try {
 		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[^/]+[/][.]{2}"), {""});
-	} catch (const std::regex_error& e) {
+	} catch (const spring::regex_error& e) {
 		LOG_L(L_WARNING, "[%s][2] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
 	}
 
 	try {
 		normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), {"/"});
-	} catch (const std::regex_error& e) {
+	} catch (const spring::regex_error& e) {
 		LOG_L(L_WARNING, "[%s][3] regex exception \"%s\" (code=%d)", __func__, e.what(), int(e.code()));
 	}
 
