@@ -561,36 +561,38 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
 		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
-		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight)) {
+		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight))
 			(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
-		}
 
-		if (!atlasUpdateShadow) {
-			atlasUpdateShadow = new CBitmap();
-			atlasUpdateShadow->channels = 1;
-			atlasUpdateShadow->Alloc(wantedTexWidth, wantedTexHeight);
-		}
-		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight)) {
+		if (atlasUpdateShadow == nullptr)
+			atlasUpdateShadow = new CBitmap(nullptr, wantedTexWidth, wantedTexHeight, 1);
+
+		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight))
 			(*atlasUpdateShadow) = atlasUpdateShadow->CanvasResize(wantedTexWidth, wantedTexHeight, false);
-		}
 
-		for(char32_t i=start; i<end; ++i) {
+		for(char32_t i = start; i < end; ++i) {
 			const std::string glyphName  = IntToString(i);
 			const std::string glyphName2 = glyphName + "sh";
 
 			if (!atlasAlloc.contains(glyphName))
 				continue;
 
-			auto texpos  = atlasAlloc.GetEntry(glyphName);
-			auto texpos2 = atlasAlloc.GetEntry(glyphName2);
+			const auto texpos  = atlasAlloc.GetEntry(glyphName);
+			const auto texpos2 = atlasAlloc.GetEntry(glyphName2);
+
 			glyphs[i].texCord       = IGlyphRect(texpos[0], texpos[1], texpos[2] - texpos[0], texpos[3] - texpos[1]);
 			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
 
 			auto& glyphbm  = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
-			if (texpos[2] != 0)  atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
-			if (texpos2[2] != 0) atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
-			delete glyphbm; glyphbm = NULL;
+
+			if (texpos[2] != 0)
+				atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
+			if (texpos2[2] != 0)
+				atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
+
+			spring::SafeDelete(glyphbm);
 		}
+
 		atlasAlloc.clear();
 	}
 
@@ -676,10 +678,12 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 	if (GLEW_ARB_texture_border_clamp) {
-		const GLfloat borderColor[4] = { 1.0f,1.0f,1.0f,0.0f };
+		constexpr GLfloat borderColor[4] = {1.0f, 1.0f, 1.0f, 0.0f};
+
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -688,15 +692,13 @@ void CFontTexture::CreateTexture(const int width, const int height)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
 
 	texWidth  = wantedTexWidth  = width;
 	texHeight = wantedTexHeight = height;
 	glPopAttrib();
 
-	atlasUpdate = new CBitmap();
-	atlasUpdate->channels = 1;
-	atlasUpdate->Alloc(texWidth, texHeight);
+	atlasUpdate = new CBitmap(nullptr, texWidth, texHeight, 1);
 
 	textureSpaceMatrix = glGenLists(1);
 	glNewList(textureSpaceMatrix, GL_COMPILE);
