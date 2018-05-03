@@ -261,8 +261,14 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 	#endif
 	, compressed(false)
 {
+	assert(GetMemSize() > 0);
 	mem = texMemPool.Alloc(GetMemSize());
-	std::memcpy(mem, data, GetMemSize());
+
+	if (data != nullptr) {
+		std::memcpy(mem, data, GetMemSize());
+	} else {
+		std::memset(mem, 0, GetMemSize());
+	}
 }
 
 

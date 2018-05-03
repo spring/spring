@@ -555,11 +555,9 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight))
 			(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
 
-		if (atlasUpdateShadow == nullptr) {
-			atlasUpdateShadow = new CBitmap();
-			atlasUpdateShadow->channels = 1;
-			atlasUpdateShadow->Alloc(wantedTexWidth, wantedTexHeight);
-		}
+		if (atlasUpdateShadow == nullptr)
+			atlasUpdateShadow = new CBitmap(nullptr, wantedTexWidth, wantedTexHeight, 1);
+
 		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight))
 			(*atlasUpdateShadow) = atlasUpdateShadow->CanvasResize(wantedTexWidth, wantedTexHeight, false);
 
@@ -664,14 +662,13 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 void CFontTexture::CreateTexture(const int width, const int height)
 {
 #ifndef HEADLESS
-	glPushAttrib(GL_TEXTURE_BIT);
-
 	glGenTextures(1, &glyphAtlasTextureID);
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	constexpr GLfloat borderColor[4] = {1.0f, 1.0f, 1.0f, 0.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
@@ -679,14 +676,12 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
-	glPopAttrib();
+
 
 	texWidth  = wantedTexWidth  = width;
 	texHeight = wantedTexHeight = height;
 
-	atlasUpdate = new CBitmap();
-	atlasUpdate->channels = 1;
-	atlasUpdate->Alloc(texWidth, texHeight);
+	atlasUpdate = new CBitmap(nullptr, texWidth, texHeight, 1);
 
 #endif
 }
@@ -724,12 +719,10 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 	}
 
 
-	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
-		// update texture atlas
-		glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
-		glBindTexture(GL_TEXTURE_2D, 0);
-	glPopAttrib();
+	// update texture atlas
+	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
+	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }
 
