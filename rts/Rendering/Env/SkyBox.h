@@ -23,7 +23,7 @@ public:
 	void Draw(Game::DrawMode mode) override;
 	void DrawSun(Game::DrawMode mode) override {}
 
-	void SetLuaTexture(const MapTextureData& td)
+	void SetLuaTexture(const MapTextureData& td) override
 	{
 		skyTex.SetLuaTexture(td);
 	}

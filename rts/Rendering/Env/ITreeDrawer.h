@@ -67,8 +67,8 @@ public:
 	}
 
 	void RenderFeatureCreated(const CFeature* feature) override;
-	void FeatureMoved(const CFeature* feature, const float3& oldpos);
-	void RenderFeatureDestroyed(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
 
 public:
 	struct TreeStruct {
