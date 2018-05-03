@@ -2,7 +2,7 @@
 // detail/win_iocp_handle_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -21,23 +21,24 @@
 #if defined(ASIO_HAS_IOCP)
 
 #include "asio/error.hpp"
-#include "asio/io_service.hpp"
-#include "asio/detail/addressof.hpp"
+#include "asio/io_context.hpp"
 #include "asio/detail/buffer_sequence_adapter.hpp"
 #include "asio/detail/cstdint.hpp"
 #include "asio/detail/handler_alloc_helpers.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/mutex.hpp"
 #include "asio/detail/operation.hpp"
 #include "asio/detail/win_iocp_handle_read_op.hpp"
 #include "asio/detail/win_iocp_handle_write_op.hpp"
-#include "asio/detail/win_iocp_io_service.hpp"
+#include "asio/detail/win_iocp_io_context.hpp"
 
 #include "asio/detail/push_options.hpp"
 
 namespace asio {
 namespace detail {
 
-class win_iocp_handle_service
+class win_iocp_handle_service :
+  public service_base<win_iocp_handle_service>
 {
 public:
   // The native type of a stream handle.
@@ -74,10 +75,10 @@ public:
     implementation_type* prev_;
   };
 
-  ASIO_DECL win_iocp_handle_service(asio::io_service& io_service);
+  ASIO_DECL win_iocp_handle_service(asio::io_context& io_context);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown_service();
+  ASIO_DECL void shutdown();
 
   // Construct a new handle implementation.
   ASIO_DECL void construct(implementation_type& impl);
@@ -148,11 +149,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_handle_write_op<ConstBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "handle", &impl, "async_write_some"));
+    ASIO_HANDLER_CREATION((iocp_service_.context(), *p.p, "handle", &impl,
+          reinterpret_cast<uintmax_t>(impl.handle_), "async_write_some"));
 
     start_write_op(impl, 0,
         buffer_sequence_adapter<asio::const_buffer,
@@ -169,11 +170,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_handle_write_op<ConstBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "handle", &impl, "async_write_some_at"));
+    ASIO_HANDLER_CREATION((iocp_service_.context(), *p.p, "handle", &impl,
+          reinterpret_cast<uintmax_t>(impl.handle_), "async_write_some_at"));
 
     start_write_op(impl, offset,
         buffer_sequence_adapter<asio::const_buffer,
@@ -210,11 +211,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_handle_read_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "handle", &impl, "async_read_some"));
+    ASIO_HANDLER_CREATION((iocp_service_.context(), *p.p, "handle", &impl,
+          reinterpret_cast<uintmax_t>(impl.handle_), "async_read_some"));
 
     start_read_op(impl, 0,
         buffer_sequence_adapter<asio::mutable_buffer,
@@ -232,11 +233,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef win_iocp_handle_read_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "handle", &impl, "async_read_some_at"));
+    ASIO_HANDLER_CREATION((iocp_service_.context(), *p.p, "handle", &impl,
+          reinterpret_cast<uintmax_t>(impl.handle_), "async_read_some_at"));
 
     start_read_op(impl, offset,
         buffer_sequence_adapter<asio::mutable_buffer,
@@ -299,7 +300,7 @@ private:
 
   // The IOCP service used for running asynchronous operations and dispatching
   // handlers.
-  win_iocp_io_service& iocp_service_;
+  win_iocp_io_context& iocp_service_;
 
   // Mutex to protect access to the linked list of implementations.
   mutex mutex_;

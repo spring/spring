@@ -2,7 +2,7 @@
 // detail/null_event.hpp
 // ~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,9 +16,6 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include "asio/detail/config.hpp"
-
-#if !defined(ASIO_HAS_THREADS)
-
 #include "asio/detail/noncopyable.hpp"
 
 #include "asio/detail/push_options.hpp"
@@ -75,7 +72,20 @@ public:
   template <typename Lock>
   void wait(Lock&)
   {
+    do_wait();
   }
+
+  // Timed wait for the event to become signalled.
+  template <typename Lock>
+  bool wait_for_usec(Lock&, long usec)
+  {
+    do_wait_for_usec(usec);
+    return true;
+  }
+
+private:
+  ASIO_DECL static void do_wait();
+  ASIO_DECL static void do_wait_for_usec(long usec);
 };
 
 } // namespace detail
@@ -83,6 +93,8 @@ public:
 
 #include "asio/detail/pop_options.hpp"
 
-#endif // !defined(ASIO_HAS_THREADS)
+#if defined(ASIO_HEADER_ONLY)
+# include "asio/detail/impl/null_event.ipp"
+#endif // defined(ASIO_HEADER_ONLY)
 
 #endif // ASIO_DETAIL_NULL_EVENT_HPP

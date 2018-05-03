@@ -2,7 +2,7 @@
 // detail/reactive_socket_recvmsg_op.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,10 +16,10 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include "asio/detail/config.hpp"
-#include "asio/detail/addressof.hpp"
 #include "asio/detail/bind_handler.hpp"
 #include "asio/detail/buffer_sequence_adapter.hpp"
 #include "asio/detail/fenced_block.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/reactor_op.hpp"
 #include "asio/detail/socket_ops.hpp"
 #include "asio/socket_base.hpp"
@@ -44,7 +44,7 @@ public:
   {
   }
 
-  static bool do_perform(reactor_op* base)
+  static status do_perform(reactor_op* base)
   {
     reactive_socket_recvmsg_op_base* o(
         static_cast<reactive_socket_recvmsg_op_base*>(base));
@@ -52,10 +52,15 @@ public:
     buffer_sequence_adapter<asio::mutable_buffer,
         MutableBufferSequence> bufs(o->buffers_);
 
-    return socket_ops::non_blocking_recvmsg(o->socket_,
+    status result = socket_ops::non_blocking_recvmsg(o->socket_,
         bufs.buffers(), bufs.count(),
         o->in_flags_, o->out_flags_,
-        o->ec_, o->bytes_transferred_);
+        o->ec_, o->bytes_transferred_) ? done : not_done;
+
+    ASIO_HANDLER_REACTOR_OPERATION((*o, "non_blocking_recvmsg",
+          o->ec_, o->bytes_transferred_));
+
+    return result;
   }
 
 private:
@@ -79,9 +84,10 @@ public:
         in_flags, out_flags, &reactive_socket_recvmsg_op::do_complete),
       handler_(ASIO_MOVE_CAST(Handler)(handler))
   {
+    handler_work<Handler>::start(handler_);
   }
 
-  static void do_complete(io_service_impl* owner, operation* base,
+  static void do_complete(void* owner, operation* base,
       const asio::error_code& /*ec*/,
       std::size_t /*bytes_transferred*/)
   {
@@ -89,8 +95,9 @@ public:
     reactive_socket_recvmsg_op* o(
         static_cast<reactive_socket_recvmsg_op*>(base));
     ptr p = { asio::detail::addressof(o->handler_), o, o };
+    handler_work<Handler> w(o->handler_);
 
-    ASIO_HANDLER_COMPLETION((o));
+    ASIO_HANDLER_COMPLETION((*o));
 
     // Make a copy of the handler so that the memory can be deallocated before
     // the upcall is made. Even if we're not about to make an upcall, a
@@ -108,7 +115,7 @@ public:
     {
       fenced_block b(fenced_block::half);
       ASIO_HANDLER_INVOCATION_BEGIN((handler.arg1_, handler.arg2_));
-      asio_handler_invoke_helpers::invoke(handler, handler.handler_);
+      w.complete(handler, handler.handler_);
       ASIO_HANDLER_INVOCATION_END;
     }
   }
