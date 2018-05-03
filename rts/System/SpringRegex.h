@@ -10,6 +10,7 @@ namespace spring {
 	using std::regex_replace;
 	using std::regex_match;
 	using std::regex_search;
+	using std::regex_error;
 }
 
 #endif // SPRINGREGEX_H
