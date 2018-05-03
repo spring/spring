@@ -257,7 +257,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
 		}
 
-		splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(texAnisotropyLevels[true], true));
+		splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(texAnisotropyLevels[true], 0.0f, true));
 		splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
 	}
 
@@ -269,7 +269,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 		}
 
-		splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(texAnisotropyLevels[true], true));
+		splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(texAnisotropyLevels[true], 0.0f, true));
 		splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
 	}
 
@@ -292,7 +292,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDetailNormalTextureBM.GetRawMem()[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
 
-		splatNormalTextures[i].SetRawTexID(splatDetailNormalTextureBM.CreateTexture(texAnisotropyLevels[true], true));
+		splatNormalTextures[i].SetRawTexID(splatDetailNormalTextureBM.CreateTexture(texAnisotropyLevels[true], 0.0f, true));
 		splatNormalTextures[i].SetRawSize(int2(splatDetailNormalTextureBM.xsize, splatDetailNormalTextureBM.ysize));
 	}
 
@@ -319,7 +319,7 @@ void CSMFReadMap::CreateDetailTex()
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName))
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 
-	detailTex.SetRawTexID(detailTexBM.CreateTexture(texAnisotropyLevels[false], true));
+	detailTex.SetRawTexID(detailTexBM.CreateTexture(texAnisotropyLevels[false], 0.0f, true));
 	detailTex.SetRawSize(int2(detailTexBM.xsize, detailTexBM.ysize));
 }
 
