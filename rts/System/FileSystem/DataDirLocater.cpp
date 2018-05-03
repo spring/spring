@@ -93,8 +93,8 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 		return;
 	}
 
-	const std::string dir = GetBinaryLocation();
-	if (FileSystem::FileExists(dir + "/isolated.txt")) {
+	const std::string dir = FileSystem::EnsurePathSepAtEnd(GetBinaryLocation());
+	if (FileSystem::FileExists(dir + "isolated.txt")) {
 		SetIsolationMode(true);
 		SetIsolationModeDir(dir);
 	}
