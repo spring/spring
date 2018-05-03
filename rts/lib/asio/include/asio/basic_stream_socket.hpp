@@ -2,7 +2,7 @@
 // basic_stream_socket.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -22,7 +22,10 @@
 #include "asio/detail/handler_type_requirements.hpp"
 #include "asio/detail/throw_error.hpp"
 #include "asio/error.hpp"
-#include "asio/stream_socket_service.hpp"
+
+#if defined(ASIO_ENABLE_OLD_SERVICES)
+# include "asio/stream_socket_service.hpp"
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
 
 #include "asio/detail/push_options.hpp"
 
@@ -40,18 +43,19 @@ namespace asio {
  * @par Concepts:
  * AsyncReadStream, AsyncWriteStream, Stream, SyncReadStream, SyncWriteStream.
  */
-template <typename Protocol,
-    typename StreamSocketService = stream_socket_service<Protocol> >
+template <typename Protocol
+    ASIO_SVC_TPARAM_DEF1(= stream_socket_service<Protocol>)>
 class basic_stream_socket
-  : public basic_socket<Protocol, StreamSocketService>
+  : public basic_socket<Protocol ASIO_SVC_TARG>
 {
 public:
-  /// (Deprecated: Use native_handle_type.) The native representation of a
-  /// socket.
-  typedef typename StreamSocketService::native_handle_type native_type;
-
   /// The native representation of a socket.
-  typedef typename StreamSocketService::native_handle_type native_handle_type;
+#if defined(GENERATING_DOCUMENTATION)
+  typedef implementation_defined native_handle_type;
+#else
+  typedef typename basic_socket<
+    Protocol ASIO_SVC_TARG>::native_handle_type native_handle_type;
+#endif
 
   /// The protocol type.
   typedef Protocol protocol_type;
@@ -65,11 +69,11 @@ public:
    * needs to be opened and then connected or accepted before data can be sent
    * or received on it.
    *
-   * @param io_service The io_service object that the stream socket will use to
+   * @param io_context The io_context object that the stream socket will use to
    * dispatch handlers for any asynchronous operations performed on the socket.
    */
-  explicit basic_stream_socket(asio::io_service& io_service)
-    : basic_socket<Protocol, StreamSocketService>(io_service)
+  explicit basic_stream_socket(asio::io_context& io_context)
+    : basic_socket<Protocol ASIO_SVC_TARG>(io_context)
   {
   }
 
@@ -78,16 +82,16 @@ public:
    * This constructor creates and opens a stream socket. The socket needs to be
    * connected or accepted before data can be sent or received on it.
    *
-   * @param io_service The io_service object that the stream socket will use to
+   * @param io_context The io_context object that the stream socket will use to
    * dispatch handlers for any asynchronous operations performed on the socket.
    *
    * @param protocol An object specifying protocol parameters to be used.
    *
    * @throws asio::system_error Thrown on failure.
    */
-  basic_stream_socket(asio::io_service& io_service,
+  basic_stream_socket(asio::io_context& io_context,
       const protocol_type& protocol)
-    : basic_socket<Protocol, StreamSocketService>(io_service, protocol)
+    : basic_socket<Protocol ASIO_SVC_TARG>(io_context, protocol)
   {
   }
 
@@ -98,7 +102,7 @@ public:
    * to the specified endpoint on the local machine. The protocol used is the
    * protocol associated with the given endpoint.
    *
-   * @param io_service The io_service object that the stream socket will use to
+   * @param io_context The io_context object that the stream socket will use to
    * dispatch handlers for any asynchronous operations performed on the socket.
    *
    * @param endpoint An endpoint on the local machine to which the stream
@@ -106,9 +110,9 @@ public:
    *
    * @throws asio::system_error Thrown on failure.
    */
-  basic_stream_socket(asio::io_service& io_service,
+  basic_stream_socket(asio::io_context& io_context,
       const endpoint_type& endpoint)
-    : basic_socket<Protocol, StreamSocketService>(io_service, endpoint)
+    : basic_socket<Protocol ASIO_SVC_TARG>(io_context, endpoint)
   {
   }
 
@@ -117,7 +121,7 @@ public:
    * This constructor creates a stream socket object to hold an existing native
    * socket.
    *
-   * @param io_service The io_service object that the stream socket will use to
+   * @param io_context The io_context object that the stream socket will use to
    * dispatch handlers for any asynchronous operations performed on the socket.
    *
    * @param protocol An object specifying protocol parameters to be used.
@@ -126,10 +130,10 @@ public:
    *
    * @throws asio::system_error Thrown on failure.
    */
-  basic_stream_socket(asio::io_service& io_service,
+  basic_stream_socket(asio::io_context& io_context,
       const protocol_type& protocol, const native_handle_type& native_socket)
-    : basic_socket<Protocol, StreamSocketService>(
-        io_service, protocol, native_socket)
+    : basic_socket<Protocol ASIO_SVC_TARG>(
+        io_context, protocol, native_socket)
   {
   }
 
@@ -142,11 +146,10 @@ public:
    * will occur.
    *
    * @note Following the move, the moved-from object is in the same state as if
-   * constructed using the @c basic_stream_socket(io_service&) constructor.
+   * constructed using the @c basic_stream_socket(io_context&) constructor.
    */
   basic_stream_socket(basic_stream_socket&& other)
-    : basic_socket<Protocol, StreamSocketService>(
-        ASIO_MOVE_CAST(basic_stream_socket)(other))
+    : basic_socket<Protocol ASIO_SVC_TARG>(std::move(other))
   {
   }
 
@@ -158,12 +161,11 @@ public:
    * will occur.
    *
    * @note Following the move, the moved-from object is in the same state as if
-   * constructed using the @c basic_stream_socket(io_service&) constructor.
+   * constructed using the @c basic_stream_socket(io_context&) constructor.
    */
   basic_stream_socket& operator=(basic_stream_socket&& other)
   {
-    basic_socket<Protocol, StreamSocketService>::operator=(
-        ASIO_MOVE_CAST(basic_stream_socket)(other));
+    basic_socket<Protocol ASIO_SVC_TARG>::operator=(std::move(other));
     return *this;
   }
 
@@ -176,15 +178,13 @@ public:
    * will occur.
    *
    * @note Following the move, the moved-from object is in the same state as if
-   * constructed using the @c basic_stream_socket(io_service&) constructor.
+   * constructed using the @c basic_stream_socket(io_context&) constructor.
    */
-  template <typename Protocol1, typename StreamSocketService1>
+  template <typename Protocol1 ASIO_SVC_TPARAM1>
   basic_stream_socket(
-      basic_stream_socket<Protocol1, StreamSocketService1>&& other,
+      basic_stream_socket<Protocol1 ASIO_SVC_TARG1>&& other,
       typename enable_if<is_convertible<Protocol1, Protocol>::value>::type* = 0)
-    : basic_socket<Protocol, StreamSocketService>(
-        ASIO_MOVE_CAST2(basic_stream_socket<
-          Protocol1, StreamSocketService1>)(other))
+    : basic_socket<Protocol ASIO_SVC_TARG>(std::move(other))
   {
   }
 
@@ -196,19 +196,26 @@ public:
    * will occur.
    *
    * @note Following the move, the moved-from object is in the same state as if
-   * constructed using the @c basic_stream_socket(io_service&) constructor.
+   * constructed using the @c basic_stream_socket(io_context&) constructor.
    */
-  template <typename Protocol1, typename StreamSocketService1>
+  template <typename Protocol1 ASIO_SVC_TPARAM1>
   typename enable_if<is_convertible<Protocol1, Protocol>::value,
       basic_stream_socket>::type& operator=(
-        basic_stream_socket<Protocol1, StreamSocketService1>&& other)
+        basic_stream_socket<Protocol1 ASIO_SVC_TARG1>&& other)
   {
-    basic_socket<Protocol, StreamSocketService>::operator=(
-        ASIO_MOVE_CAST2(basic_stream_socket<
-          Protocol1, StreamSocketService1>)(other));
+    basic_socket<Protocol ASIO_SVC_TARG>::operator=(std::move(other));
     return *this;
   }
 #endif // defined(ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
+
+  /// Destroys the socket.
+  /**
+   * This function destroys the socket, cancelling any outstanding asynchronous
+   * operations associated with the socket as if by calling @c cancel.
+   */
+  ~basic_stream_socket()
+  {
+  }
 
   /// Send some data on the socket.
   /**
@@ -329,7 +336,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The send operation may not transmit all of the data to the peer.
    * Consider using the @ref async_write function if you need to ensure that all
@@ -354,9 +361,20 @@ public:
     // not meet the documented type requirements for a WriteHandler.
     ASIO_WRITE_HANDLER_CHECK(WriteHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_send(
         this->get_implementation(), buffers, 0,
         ASIO_MOVE_CAST(WriteHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<WriteHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_send(
+        this->get_implementation(), buffers, 0,
+        init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 
   /// Start an asynchronous send.
@@ -381,7 +399,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The send operation may not transmit all of the data to the peer.
    * Consider using the @ref async_write function if you need to ensure that all
@@ -407,9 +425,20 @@ public:
     // not meet the documented type requirements for a WriteHandler.
     ASIO_WRITE_HANDLER_CHECK(WriteHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_send(
         this->get_implementation(), buffers, flags,
         ASIO_MOVE_CAST(WriteHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<WriteHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_send(
+        this->get_implementation(), buffers, flags,
+        init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 
   /// Receive some data on the socket.
@@ -537,7 +566,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The receive operation may not receive all of the requested number of
    * bytes. Consider using the @ref async_read function if you need to ensure
@@ -564,8 +593,18 @@ public:
     // not meet the documented type requirements for a ReadHandler.
     ASIO_READ_HANDLER_CHECK(ReadHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_receive(this->get_implementation(),
         buffers, 0, ASIO_MOVE_CAST(ReadHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<ReadHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_receive(this->get_implementation(),
+        buffers, 0, init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 
   /// Start an asynchronous receive.
@@ -590,7 +629,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The receive operation may not receive all of the requested number of
    * bytes. Consider using the @ref async_read function if you need to ensure
@@ -618,8 +657,18 @@ public:
     // not meet the documented type requirements for a ReadHandler.
     ASIO_READ_HANDLER_CHECK(ReadHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_receive(this->get_implementation(),
         buffers, flags, ASIO_MOVE_CAST(ReadHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<ReadHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_receive(this->get_implementation(),
+        buffers, flags, init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 
   /// Write some data to the socket.
@@ -702,7 +751,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The write operation may not transmit all of the data to the peer.
    * Consider using the @ref async_write function if you need to ensure that all
@@ -727,8 +776,18 @@ public:
     // not meet the documented type requirements for a WriteHandler.
     ASIO_WRITE_HANDLER_CHECK(WriteHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_send(this->get_implementation(),
         buffers, 0, ASIO_MOVE_CAST(WriteHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<WriteHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_send(this->get_implementation(),
+        buffers, 0, init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 
   /// Read some data from the socket.
@@ -814,7 +873,7 @@ public:
    * Regardless of whether the asynchronous operation completes immediately or
    * not, the handler will not be invoked from within this function. Invocation
    * of the handler will be performed in a manner equivalent to using
-   * asio::io_service::post().
+   * asio::io_context::post().
    *
    * @note The read operation may not read all of the requested number of bytes.
    * Consider using the @ref async_read function if you need to ensure that the
@@ -840,8 +899,18 @@ public:
     // not meet the documented type requirements for a ReadHandler.
     ASIO_READ_HANDLER_CHECK(ReadHandler, handler) type_check;
 
+#if defined(ASIO_ENABLE_OLD_SERVICES)
     return this->get_service().async_receive(this->get_implementation(),
         buffers, 0, ASIO_MOVE_CAST(ReadHandler)(handler));
+#else // defined(ASIO_ENABLE_OLD_SERVICES)
+    async_completion<ReadHandler,
+      void (asio::error_code, std::size_t)> init(handler);
+
+    this->get_service().async_receive(this->get_implementation(),
+        buffers, 0, init.completion_handler);
+
+    return init.result.get();
+#endif // defined(ASIO_ENABLE_OLD_SERVICES)
   }
 };
 

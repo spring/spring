@@ -2,7 +2,7 @@
 // detail/winrt_ssocket_service_base.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -21,10 +21,10 @@
 
 #include "asio/buffer.hpp"
 #include "asio/error.hpp"
-#include "asio/io_service.hpp"
+#include "asio/io_context.hpp"
 #include "asio/socket_base.hpp"
-#include "asio/detail/addressof.hpp"
 #include "asio/detail/buffer_sequence_adapter.hpp"
+#include "asio/detail/memory.hpp"
 #include "asio/detail/socket_types.hpp"
 #include "asio/detail/winrt_async_manager.hpp"
 #include "asio/detail/winrt_socket_recv_op.hpp"
@@ -62,10 +62,10 @@ public:
 
   // Constructor.
   ASIO_DECL winrt_ssocket_service_base(
-      asio::io_service& io_service);
+      asio::io_context& io_context);
 
   // Destroy all user-defined handler objects owned by the service.
-  ASIO_DECL void shutdown_service();
+  ASIO_DECL void base_shutdown();
 
   // Construct a new socket implementation.
   ASIO_DECL void construct(base_implementation_type&);
@@ -90,6 +90,10 @@ public:
 
   // Destroy a socket implementation.
   ASIO_DECL asio::error_code close(
+      base_implementation_type& impl, asio::error_code& ec);
+
+  // Release ownership of the socket.
+  ASIO_DECL native_handle_type release(
       base_implementation_type& impl, asio::error_code& ec);
 
   // Get the native socket representation.
@@ -199,11 +203,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef winrt_socket_send_op<ConstBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_send"));
+    ASIO_HANDLER_CREATION((io_context_.context(),
+          *p.p, "socket", &impl, 0, "async_send"));
 
     start_send_op(impl,
         buffer_sequence_adapter<asio::const_buffer,
@@ -219,7 +223,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_service_.get_io_service().post(
+    io_context_.get_io_context().post(
         detail::bind_handler(handler, ec, bytes_transferred));
   }
 
@@ -255,11 +259,11 @@ public:
     // Allocate and construct an operation to wrap the handler.
     typedef winrt_socket_recv_op<MutableBufferSequence, Handler> op;
     typename op::ptr p = { asio::detail::addressof(handler),
-      asio_handler_alloc_helpers::allocate(
-        sizeof(op), handler), 0 };
+      op::ptr::allocate(handler), 0 };
     p.p = new (p.v) op(buffers, handler);
 
-    ASIO_HANDLER_CREATION((p.p, "socket", &impl, "async_receive"));
+    ASIO_HANDLER_CREATION((io_context_.context(),
+          *p.p, "socket", &impl, 0, "async_receive"));
 
     start_receive_op(impl,
         buffer_sequence_adapter<asio::mutable_buffer,
@@ -275,7 +279,7 @@ public:
   {
     asio::error_code ec = asio::error::operation_not_supported;
     const std::size_t bytes_transferred = 0;
-    io_service_.get_io_service().post(
+    io_context_.get_io_context().post(
         detail::bind_handler(handler, ec, bytes_transferred));
   }
 
@@ -328,8 +332,8 @@ protected:
       winrt_async_op<Windows::Storage::Streams::IBuffer^>* op,
       bool is_continuation);
 
-  // The io_service implementation used for delivering completions.
-  io_service_impl& io_service_;
+  // The io_context implementation used for delivering completions.
+  io_context_impl& io_context_;
 
   // The manager that keeps track of outstanding operations.
   winrt_async_manager& async_manager_;

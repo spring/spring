@@ -2,7 +2,7 @@
 // ssl/rfc2818_verification.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2015 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,18 +17,14 @@
 
 #include "asio/detail/config.hpp"
 
-#if !defined(ASIO_ENABLE_OLD_SSL)
-# include <string>
-# include "asio/ssl/detail/openssl_types.hpp"
-# include "asio/ssl/verify_context.hpp"
-#endif // !defined(ASIO_ENABLE_OLD_SSL)
+#include <string>
+#include "asio/ssl/detail/openssl_types.hpp"
+#include "asio/ssl/verify_context.hpp"
 
 #include "asio/detail/push_options.hpp"
 
 namespace asio {
 namespace ssl {
-
-#if !defined(ASIO_ENABLE_OLD_SSL)
 
 /// Verifies a certificate against a hostname according to the rules described
 /// in RFC 2818.
@@ -46,9 +42,9 @@ namespace ssl {
  * ctx.set_default_verify_paths();
  *
  * // Open a socket and connect it to the remote host.
- * asio::io_service io_service;
- * ssl_socket sock(io_service, ctx);
- * tcp::resolver resolver(io_service);
+ * asio::io_context io_context;
+ * ssl_socket sock(io_context, ctx);
+ * tcp::resolver resolver(io_context);
  * tcp::resolver::query query("host.name", "https");
  * asio::connect(sock.lowest_layer(), resolver.resolve(query));
  * sock.lowest_layer().set_option(tcp::no_delay(true));
@@ -85,8 +81,6 @@ private:
   // The host name to be checked.
   std::string host_;
 };
-
-#endif // defined(ASIO_ENABLE_OLD_SSL)
 
 } // namespace ssl
 } // namespace asio
