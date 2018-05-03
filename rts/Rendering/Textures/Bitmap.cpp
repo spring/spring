@@ -160,27 +160,32 @@ public:
 	}
 
 
-	void Defrag() {
+	bool Defrag() {
 		if (freeList.empty())
-			return;
+			return false;
 
 		std::lock_guard<spring::mutex> lck(bmpMutex);
-		DefragRaw();
+		return (DefragRaw());
 	}
 
-	void DefragRaw() {
+	bool DefragRaw() {
 		std::sort(freeList.begin(), freeList.end(), [](const FreePair& a, const FreePair& b) { return (a.first < b.first); });
 
 		// merge adjacent chunks
-		for (size_t i = 0; i < (freeList.size() - 1); i++) {
-			FreePair& curr = freeList[i + 0];
-			FreePair& next = freeList[i + 1];
+		for (size_t i = 0, n = freeList.size(); i < n; /**/) {
+			FreePair& currPair = freeList[i++];
 
-			if ((curr.first + curr.second) != next.first)
-				continue;
+			for (size_t j = i; j < n; j++) {
+				FreePair& nextPair = freeList[j];
 
-			curr.second += next.second;
-			next.second = 0;
+				if ((currPair.first + currPair.second) != nextPair.first)
+					break;
+
+				currPair.second += nextPair.second;
+				nextPair.second = 0;
+
+				i += 1;
+			}
 		}
 
 		size_t i = 0;
@@ -194,8 +199,12 @@ public:
 			i += 1;
 		}
 
+		if (j >= freeList.size())
+			return false;
+
 		// shrink
 		freeList.resize(j);
+		return true;
 	}
 };
 
