@@ -5,6 +5,16 @@
 
 #include <regex>
 
+#if !( __cplusplus >= 201103L &&                             \
+    (!defined(__GLIBCXX__) || (__cplusplus >= 201402L) || \
+        (defined(_GLIBCXX_REGEX_DFS_QUANTIFIERS_LIMIT) || \
+         defined(_GLIBCXX_REGEX_STATE_LIMIT)           || \
+             (defined(_GLIBCXX_RELEASE)                && \
+             _GLIBCXX_RELEASE > 4))))
+#error The regex implementation of the used stdlibc++ is broken. Please update gcc / clang to compile spring!
+#endif
+
+
 namespace spring {
 	using std::regex;
 	using std::regex_replace;
