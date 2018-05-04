@@ -388,6 +388,7 @@ static void SDLCALL RenderSDLSamples(void* userdata, Uint8* stream, int len)
 	CSound* snd = reinterpret_cast<CSound*>(userdata);
 	ALCdevice* dev = snd->GetCurrentDevice();
 
+	assert(snd->GetFrameSize() > 0);
 	alcRenderSamplesSOFT(dev, stream, len / snd->GetFrameSize());
 }
 
@@ -469,6 +470,13 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 		return;
 	}
 
+	// needs to be at least 1 or the callback will divide by 0
+	if ((frameSize = obtainedSpec.channels * SDL_AUDIO_BITSIZE(obtainedSpec.format) / 8) <= 0) {
+		LOG("[Sound::%s] failed to obtain valid SDL spec: numChannels=%d formatBits=%d", __func__, obtainedSpec.channels, SDL_AUDIO_BITSIZE(obtainedSpec.format));
+		Cleanup();
+		return;
+	}
+
 
 	ALCint attrs[16];
 
@@ -504,9 +512,6 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	attrs[6] = 0; // end of list
 
 
-	// at least one frame or the callback will divide by 0
-	frameSize = std::max(1, obtainedSpec.channels * SDL_AUDIO_BITSIZE(obtainedSpec.format) / 8);
-
 	// initialize OpenAL loopback device, using our format attributes
 	if ((curDevice = alcLoopbackOpenDeviceSOFT(nullptr)) == nullptr) {
 		LOG("[Sound::%s] failed to create loopback device", __func__);
@@ -522,7 +527,7 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	}
 
 	if ((curContext = alcCreateContext(curDevice, attrs)) == nullptr) {
-		LOG_L(L_ERROR, "[Sound::%s][3] failed to create loopback context", __func__);
+		LOG_L(L_ERROR, "[Sound::%s] failed to create loopback context", __func__);
 		Cleanup();
 		return;
 	}
