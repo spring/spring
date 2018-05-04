@@ -58,7 +58,7 @@ public:
 	const float3& GetListenerPos() const { return myPos; }
 
 	ALCdevice* GetCurrentDevice() { return curDevice; }
-	int GetFrameSize() { return frameSize; }
+	int GetFrameSize() const { return frameSize; }
 
 private:
 	typedef spring::unordered_map<std::string, std::string> SoundItemNameMap;
