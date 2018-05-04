@@ -567,7 +567,7 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 			curShader->Enable();
 
 		// NOTE: FFP
-		//glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -613,7 +613,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
-		//glPopAttrib();
+		glPopAttrib();
 	}
 
 	curShader = nullptr;
@@ -637,7 +637,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		if ((curShader = shader) == defShader)
 			curShader->Enable();
 
-		//glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -672,7 +672,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
-		//glPopAttrib();
+		glPopAttrib();
 	}
 
 	curShader = nullptr;
@@ -949,7 +949,7 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 	//glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-	//glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
