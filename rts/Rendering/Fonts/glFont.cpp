@@ -614,7 +614,6 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		//glPopAttrib();
-		glEnable(GL_DEPTH_TEST);
 	}
 
 	curShader = nullptr;
@@ -674,7 +673,6 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		//glPopAttrib();
-		glEnable(GL_DEPTH_TEST);
 	}
 
 	curShader = nullptr;
