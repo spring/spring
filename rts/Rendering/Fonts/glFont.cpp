@@ -21,8 +21,10 @@
 // should be enough to hold all data for a given frame
 #define NUM_BUFFER_ELEMS (1 << 17)
 #define NUM_BUFFER_QUADS (NUM_BUFFER_ELEMS / 4)
+#define NUM_BUFFER_TRIS  (NUM_BUFFER_ELEMS / 6)
 #define ELEM_BUFFER_SIZE (sizeof(VA_TYPE_TC))
 #define QUAD_BUFFER_SIZE (4 * ELEM_BUFFER_SIZE)
+#define TRI_BUFFER_SIZE  (6 * ELEM_BUFFER_SIZE)
 
 CONFIG(std::string,      FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
@@ -125,8 +127,8 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	for (unsigned int i = 0; i < 2; i++) {
 		primaryBuffer[i].Init(true);
 		outlineBuffer[i].Init(true);
-		primaryBuffer[i].UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
-		outlineBuffer[i].UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
+		primaryBuffer[i].UploadTC((NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
+		outlineBuffer[i].UploadTC((NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
 
 		mapBufferPtr[i * 2 + PRIMARY_BUFFER] = primaryBuffer[i].MapElems<VA_TYPE_TC>(true, true);
 		prvBufferPos[i * 2 + PRIMARY_BUFFER] = mapBufferPtr[i * 2 + PRIMARY_BUFFER];
@@ -148,7 +150,7 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		const char* fsVars =
 			"const float v_color_mult = 1.0 / 255.0;\n"
 			"uniform mat2 u_txcd_mat;\n";
-		const char* fsCode = "\tf_color_rgba = (v_color_rgba * v_color_mult) * vec4(1.0, 1.0, 1.0, texture(u_tex0, u_txcd_mat * v_texcoor_st).a);\n";
+		const char* fsCode = "\tf_color_rgba = (v_color_rgba * v_color_mult) * vec4(1.0, 1.0, 1.0, texture(u_tex0, u_txcd_mat * v_texcoor_st).r);\n";
 
 		GL::RenderDataBuffer::FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
 		GL::RenderDataBuffer::FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
@@ -593,9 +595,9 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		// skip past the submitted data chunk; buffer should never fill up
 		// within a single frame so handling wrap-around here is pointless
@@ -640,7 +642,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glEnable(GL_TEXTURE_2D);
+		//glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 		if (curShader == defShader) {
@@ -654,9 +656,9 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		prvBufferPos[pbi] = curBufferPos[pbi];
 		prvBufferPos[obi] = curBufferPos[obi];
@@ -750,9 +752,12 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 		const float tx1 = tc.x1() * texScaleX;
 		const float ty1 = tc.y1() * texScaleY;
 
-		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 4) < NUM_BUFFER_QUADS) {
+		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 6) < NUM_BUFFER_TRIS) {
 			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			
+			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
@@ -824,15 +829,21 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
 
-		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 4) < NUM_BUFFER_QUADS) {
+		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 6) < NUM_BUFFER_TRIS) {
 			*(curBufferPos[obi]++) = {{dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
+			
+			*(curBufferPos[obi]++) = {{dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
+			*(curBufferPos[obi]++) = {{dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x)};
 		}
-		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 4) < NUM_BUFFER_QUADS) {
+		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 6) < NUM_BUFFER_TRIS) {
 			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			
+			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
@@ -901,15 +912,21 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
 
-		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 4) < NUM_BUFFER_QUADS) {
+		if (((curBufferPos[obi] - mapBufferPtr[obi]) / 6) < NUM_BUFFER_TRIS) {
 			*(curBufferPos[obi]++) = {{dx0 - shiftX, dy1 - shiftY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx0 - shiftX, dy0 + shiftY, textDepth.y},  stx0, sty0,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx1 + shiftX, dy0 + shiftY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
+			
+			*(curBufferPos[obi]++) = {{dx0 - shiftX, dy1 - shiftY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
+			*(curBufferPos[obi]++) = {{dx1 + shiftX, dy0 + shiftY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
 			*(curBufferPos[obi]++) = {{dx1 + shiftX, dy1 - shiftY, textDepth.y},  stx1, sty1,  (&outlineColor.x)};
 		}
-		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 4) < NUM_BUFFER_QUADS) {
+		if (((curBufferPos[pbi] - mapBufferPtr[pbi]) / 6) < NUM_BUFFER_TRIS) {
 			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			
+			*(curBufferPos[pbi]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
 			*(curBufferPos[pbi]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
@@ -929,7 +946,7 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	}
 
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
@@ -959,9 +976,9 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 	if (curBufferPos[obi] > prvBufferPos[obi])
-		outlineBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+		outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 	if (curBufferPos[pbi] > prvBufferPos[pbi])
-		primaryBuffer[currBufferIndxGL4].Submit(GL_QUADS, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+		primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 	prvBufferPos[pbi] = curBufferPos[pbi];
 	prvBufferPos[obi] = curBufferPos[obi];

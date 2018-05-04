@@ -42,15 +42,15 @@ void LineEdit::DrawSelf()
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
-	DrawBox(GL_QUADS);
+	DrawBox(GL_TRIANGLE_STRIP);
 
 	glLineWidth(1.49f);
 	if (hasFocus) {
 		gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, 0, 2);
 	} else {
 		gui->SetColor(0.5f, 0.5f, 0.5f, opacity);
-		DrawBox(GL_LINE_LOOP);
+		DrawBox(GL_LINE_LOOP, 0, 2);
 	}
 
 	std::string tempText;

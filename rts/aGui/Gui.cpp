@@ -90,7 +90,7 @@ void Gui::Draw()
 {
 	Clean();
 
-	glDisable(GL_ALPHA_TEST);
+	//glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
 
 	shader->Enable();

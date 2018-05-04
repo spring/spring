@@ -48,9 +48,9 @@ public:
 		array.Unbind();
 		verts.Unbind();
 	}
-	void Submit(unsigned int mode) {
+	void Submit(unsigned int mode, unsigned int ofs = 0) {
 		array.Bind();
-		glDrawArrays(mode, 0, 4);
+		glDrawArrays(mode, ofs, 4);
 		array.Unbind();
 	}
 	void Delete() {
@@ -119,8 +119,8 @@ GuiElement::~GuiElement()
 
 
 
-void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
-	renderElems[indx][elIndex].Submit(mode);
+void GuiElement::DrawBox(unsigned int mode, unsigned int indx, unsigned int ofs) {
+	renderElems[indx][elIndex].Submit(mode, ofs);
 }
 
 
@@ -135,21 +135,27 @@ void GuiElement::GeometryChangeSelfRaw(unsigned int bufIndx, unsigned int numByt
 
 void GuiElement::GeometryChangeSelf()
 {
-	VA_TYPE_T vaElems[4];
+	VA_TYPE_T vaElems[6]; // two extra for edges
 
-	vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1]          ; // TL
-	vaElems[1].p.x = pos[0]          ; vaElems[1].p.y = pos[1] + size[1]; // BL
-	vaElems[2].p.x = pos[0] + size[0]; vaElems[2].p.y = pos[1] + size[1]; // BR
+	vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1] + size[1]; // BL
+	vaElems[1].p.x = pos[0] + size[0]; vaElems[1].p.y = pos[1] + size[1]; // BR
+	vaElems[2].p.x = pos[0]          ; vaElems[2].p.y = pos[1]          ; // TL
 	vaElems[3].p.x = pos[0] + size[0]; vaElems[3].p.y = pos[1]          ; // TR
+	vaElems[4].p.x = pos[0] + size[0]; vaElems[4].p.y = pos[1] + size[1]; // BR
+	vaElems[5].p.x = pos[0]          ; vaElems[5].p.y = pos[1] + size[1]; // BL
 	vaElems[0].p.z = depth;
 	vaElems[1].p.z = depth;
 	vaElems[2].p.z = depth;
 	vaElems[3].p.z = depth;
+	vaElems[4].p.z = depth;
+	vaElems[5].p.z = depth;
 
-	vaElems[0].s = 0.0f; vaElems[0].t = 1.0f;
-	vaElems[1].s = 0.0f; vaElems[1].t = 0.0f;
-	vaElems[2].s = 1.0f; vaElems[2].t = 0.0f;
+	vaElems[0].s = 0.0f; vaElems[0].t = 0.0f;
+	vaElems[1].s = 1.0f; vaElems[1].t = 0.0f;
+	vaElems[2].s = 0.0f; vaElems[2].t = 1.0f;
 	vaElems[3].s = 1.0f; vaElems[3].t = 1.0f;
+	vaElems[4].s = 0.0f; vaElems[4].t = 0.0f;
+	vaElems[5].s = 0.0f; vaElems[5].t = 0.0f;
 
 	GeometryChangeSelfRaw(0, sizeof(vaElems), vaElems);
 }

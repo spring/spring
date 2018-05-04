@@ -19,7 +19,7 @@ void HorizontalLayout::DrawSelf()
 
 	glLineWidth(borderWidth);
 	gui->SetColor(1.0f, 1.0f, 1.0f, Opacity());
-	DrawBox(GL_LINE_LOOP);
+	DrawBox(GL_LINE_LOOP, 0, 2);
 }
 
 void HorizontalLayout::GeometryChangeSelf()

@@ -230,25 +230,25 @@ void List::DrawSelf()
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
 		gui->SetColor(1.0f, 1.0f, 1.0f, opacity * 0.25f);
-		b.DrawBox(GL_LINE_LOOP);
+		b.DrawBox(GL_LINE_LOOP, 0, 2);
 
 		if (nCurIndex == place) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
 			gui->SetColor(0.2f,0,0,opacity);
-			b.DrawBox(GL_QUADS);
+			b.DrawBox(GL_TRIANGLE_STRIP);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1,0,0,opacity/2.f);
 			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP, 0, 2);
 			glLineWidth(1.0f);
 		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
 			gui->SetColor(0,0,0.2f,opacity);
-			b.DrawBox(GL_QUADS);
+			b.DrawBox(GL_TRIANGLE_STRIP);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1,1,1,opacity/2.f);
 			glLineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP, 0, 2);
 			glLineWidth(1.0f);
 		}
 
@@ -282,15 +282,15 @@ void List::DrawSelf()
 		b.SetSize(itemHeight + itemSpacing, sbHeight);
 
 		gui->SetColor(1,1,1,opacity/4.f);
-		b.DrawBox(GL_LINE_LOOP);
+		b.DrawBox(GL_LINE_LOOP, 0, 2);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gui->SetColor(0.8f,0.8f,0.8f,opacity);
-		scrollbar.DrawBox(GL_QUADS);
+		scrollbar.DrawBox(GL_TRIANGLE_STRIP);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gui->SetColor(1,1,1,opacity/2.f);
 		glLineWidth(1.49f);
-		scrollbar.DrawBox(GL_LINE_LOOP);
+		scrollbar.DrawBox(GL_LINE_LOOP, 0, 2);
 		glLineWidth(1.0f);
 		return;
 	}
