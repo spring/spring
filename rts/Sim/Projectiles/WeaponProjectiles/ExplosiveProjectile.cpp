@@ -81,22 +81,24 @@ void CExplosiveProjectile::Draw(GL::RenderDataBufferTC* va) const
 
 	unsigned char col[4] = {0};
 
-	if (weaponDef->visuals.colorMap) {
-		weaponDef->visuals.colorMap->GetColor(col, curTime);
+	const WeaponDef::Visuals& wdVisuals = weaponDef->visuals;
+	const AtlasedTexture* tex = wdVisuals.texture1;
+
+	if (wdVisuals.colorMap != nullptr) {
+		wdVisuals.colorMap->GetColor(col, curTime);
 	} else {
-		col[0] = weaponDef->visuals.color.x * 255;
-		col[1] = weaponDef->visuals.color.y * 255;
-		col[2] = weaponDef->visuals.color.z * 255;
-		col[3] = weaponDef->intensity       * 255;
+		col[0] = wdVisuals.color.x    * 255;
+		col[1] = wdVisuals.color.y    * 255;
+		col[2] = wdVisuals.color.z    * 255;
+		col[3] = weaponDef->intensity * 255;
 	}
 
-	const AtlasedTexture* tex = weaponDef->visuals.texture1;
-	const float  alphaDecay = weaponDef->visuals.alphaDecay;
-	const float  sizeDecay  = weaponDef->visuals.sizeDecay;
-	const float  separation = weaponDef->visuals.separation;
-	const bool   noGap      = weaponDef->visuals.noGap;
-	const int    stages     = weaponDef->visuals.stages;
-	const float  invStages  = 1.0f / stages;
+	const float  alphaDecay = wdVisuals.alphaDecay;
+	const float  sizeDecay  = wdVisuals.sizeDecay;
+	const float  separation = wdVisuals.separation;
+	const bool   noGap      = wdVisuals.noGap;
+	const int    stages     = wdVisuals.stages;
+	const float  invStages  = 1.0f / std::max(1, stages);
 
 	const float3 ndir = dir * separation * 0.6f;
 
