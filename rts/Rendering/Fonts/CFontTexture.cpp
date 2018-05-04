@@ -675,7 +675,7 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
 
 	texWidth  = wantedTexWidth  = width;
@@ -721,7 +721,7 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 
 	// update texture atlas
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
 	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }
