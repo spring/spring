@@ -2475,13 +2475,16 @@ void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(float, LuaGarbageCollectionTimeMult).defaultValue(5.0f).minimumValue(1.0f).description("in milliseconds");
+CONFIG(float, LuaGarbageCollectionMemLoadMult).defaultValue(1.33f).minimumValue(1.0f).maximumValue(100.0f);
+CONFIG(float, LuaGarbageCollectionRunTimeMult).defaultValue(5.0f).minimumValue(1.0f).description("in milliseconds");
 
 
 void CLuaHandle::CollectGarbage()
 {
-	// if memory load is smaller than 75% run the GC less frequently
-	if (guRNG.NextFloat() > (1.33f * float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::maxAllocedBytes)))
+	static const float gcMemLoadMult = configHandler->GetFloat("LuaGarbageCollectionMemLoadMult");
+	static const float gcRunTimeMult = configHandler->GetFloat("LuaGarbageCollectionRunTimeMult");
+
+	if (spring_lua_alloc_skip_gc(gcMemLoadMult))
 		return;
 
 	lua_lock(L_GC);
@@ -2492,8 +2495,6 @@ void CLuaHandle::CollectGarbage()
 	int gcItersInBatch = 0;
 
 	static int gcStepsPerIter = 10;
-
-	static const float gcRunTimeMult = configHandler->GetFloat("LuaGarbageCollectionTimeMult");
 
 	// if gc runs at a fixed rate, the upper limit to base runtime will
 	// quickly be reached since Lua's footprint can easily exceed 100MB
