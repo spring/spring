@@ -9,6 +9,7 @@
 namespace creg {
 	void SerializeLuaState(creg::ISerializer* s, lua_State** L);
 	void RegisterCFunction(const char* name, lua_CFunction f);
+	void AutoRegisterCFunctions(const std::string& handle, lua_State* L);
 	void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic);
 }
 
