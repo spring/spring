@@ -52,8 +52,8 @@ void CWorldDrawer::InitPre() const
 	modelLoader.Init();
 
 	loadscreen->SetLoadMessage("Creating Unit Textures");
-	texturehandler3DO = new C3DOTextureHandler();
-	texturehandlerS3O = new CS3OTextureHandler();
+	textureHandler3DO.Init();
+	textureHandlerS3O.Init();
 
 	CFeatureDrawer::InitStatic();
 	loadscreen->SetLoadMessage("Creating Sky");
@@ -121,8 +121,8 @@ void CWorldDrawer::Kill()
 	spring::SafeDelete(farTextureHandler);
 	spring::SafeDelete(heightMapTexture);
 
-	spring::SafeDelete(texturehandler3DO);
-	spring::SafeDelete(texturehandlerS3O);
+	textureHandler3DO.Kill();
+	textureHandlerS3O.Kill();
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();

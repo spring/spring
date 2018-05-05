@@ -4323,7 +4323,7 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 {
-	const auto& textures = texturehandler3DO->GetAtlasTextures();
+	const auto& textures = textureHandler3DO.GetAtlasTextures();
 
 	lua_createtable(L, textures.size(), 0);
 	int count = 1;
@@ -4337,7 +4337,7 @@ int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexCoords(lua_State* L)
 {
-	const C3DOTextureHandler::UnitTexture* texCoords = texturehandler3DO->Get3DOTexture(luaL_checkstring(L, 1));
+	const C3DOTextureHandler::UnitTexture* texCoords = textureHandler3DO.Get3DOTexture(luaL_checkstring(L, 1));
 
 	if (texCoords == nullptr)
 		return 0;

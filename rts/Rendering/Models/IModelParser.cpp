@@ -365,7 +365,7 @@ void CModelLoader::CreateLists(S3DModel* model) {
 		return;
 
 	// make sure textures (already preloaded) are fully loaded
-	texturehandlerS3O->LoadTexture(model);
+	textureHandlerS3O.LoadTexture(model);
 
 	// warn about models with bad normals (they break lighting)
 	// skip for 3DO's since those have auto-calculated normals

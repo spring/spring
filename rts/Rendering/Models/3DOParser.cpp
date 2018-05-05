@@ -224,14 +224,14 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 		texName = "ta_color" + IntToString(p->PaletteEntry, "%i");
 	}
 
-	auto tex = texturehandler3DO->Get3DOTexture(texName);
+	auto tex = textureHandler3DO.Get3DOTexture(texName);
 	if (tex != nullptr)
 		return tex;
 
 	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"", __func__, texName.c_str(), obj->name.c_str());
 
 	// assign a dummy texture (the entire atlas)
-	return texturehandler3DO->Get3DOTexture("___dummy___");
+	return textureHandler3DO.Get3DOTexture("___dummy___");
 }
 
 

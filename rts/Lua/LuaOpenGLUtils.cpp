@@ -219,7 +219,7 @@ bool ParseTexture(const S3DModel* model, LuaMatTexture& texUnit, char texNum)
 		return false;
 
 	// note: textures are stored contiguously, so this pointer can not be leaked
-	const CS3OTextureHandler::S3OTexMat* stex = texturehandlerS3O->GetTexture(texType);
+	const CS3OTextureHandler::S3OTexMat* stex = textureHandlerS3O.GetTexture(texType);
 
 	if (stex == nullptr)
 		return false;
@@ -499,18 +499,16 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// object model-textures
 		case LUATEX_UNITTEXTURE1: {
-			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex1;
+			texID = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data))->tex1;
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex2;
+			texID = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data))->tex2;
 		} break;
 		case LUATEX_3DOTEXTURE: {
-			if (texturehandler3DO != nullptr) {
-				if (*reinterpret_cast<const int*>(&data) == 1) {
-					texID = texturehandler3DO->GetAtlasTex1ID();
-				} else {
-					texID = texturehandler3DO->GetAtlasTex2ID();
-				}
+			if (*reinterpret_cast<const int*>(&data) == 1) {
+				texID = textureHandler3DO.GetAtlasTex1ID();
+			} else {
+				texID = textureHandler3DO.GetAtlasTex2ID();
 			}
 		} break;
 
@@ -786,17 +784,15 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_UNITTEXTURE1: {
-			const CS3OTextureHandler::S3OTexMat* texMat = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
+			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(texMat->tex1SizeX, texMat->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			const CS3OTextureHandler::S3OTexMat* texMat = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
+			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(texMat->tex2SizeX, texMat->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE: {
-			if (texturehandler3DO != nullptr) {
-				return int2(texturehandler3DO->GetAtlasTexSizeX(), texturehandler3DO->GetAtlasTexSizeY());
-			}
+			return int2(textureHandler3DO.GetAtlasTexSizeX(), textureHandler3DO.GetAtlasTexSizeY());
 		} break;
 
 
