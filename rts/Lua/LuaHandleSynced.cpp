@@ -428,14 +428,14 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	}
 
 	lua_settop(L, 0);
+	creg::AutoRegisterCFunctions(GetName(), L);
+
 	if (!LoadCode(L, code, file)) {
 		KillLua();
 		return false;
 	}
 
 	lua_settop(L, 0);
-	creg::AutoRegisterCFunctions(GetName(), L);
-
 	eventHandler.AddClient(this);
 	return true;
 }
