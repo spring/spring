@@ -25,7 +25,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-C3DOTextureHandler* texturehandler3DO = NULL;
+C3DOTextureHandler textureHandler3DO;
 
 struct TexFile {
 	CBitmap tex;  ///< same format as s3o's
@@ -34,9 +34,9 @@ struct TexFile {
 };
 
 
-C3DOTextureHandler::C3DOTextureHandler()
+void C3DOTextureHandler::Init()
 {
-	std::vector<TexFile> texfiles = std::move(LoadTexFiles());
+	std::vector<TexFile> texFiles = std::move(LoadTexFiles());
 
 	// TODO: make this use TextureAtlas directly
 	CTextureAtlas atlas;
@@ -51,8 +51,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 	// default for 3DO primitives that point to non-existing textures
 	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
 
-	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
-		atlasAlloc->AddEntry(it->name, int2(it->tex.xsize, it->tex.ysize));
+	for (const TexFile& texFile: texFiles) {
+		atlasAlloc->AddEntry(texFile.name, int2(texFile.tex.xsize, texFile.tex.ysize));
 	}
 
 	const bool allocated = atlasAlloc->Allocate();
@@ -64,41 +64,42 @@ C3DOTextureHandler::C3DOTextureHandler()
 		// textures or the textures would really not fit
 		LOG_L(L_WARNING,
 			"[%s] failed to allocate 3DO texture-atlas memory (size=%dx%d max=%dx%d)",
-			__FUNCTION__,
+			__func__,
 			curAtlasSize.x, curAtlasSize.y,
 			maxAtlasSize.x, maxAtlasSize.y
 		);
+
 		return;
-	} else {
-		assert(curAtlasSize.x <= maxAtlasSize.x);
-		assert(curAtlasSize.y <= maxAtlasSize.y);
 	}
 
-	unsigned char* bigtex1 = new unsigned char[curAtlasSize.x * curAtlasSize.y * 4];
-	unsigned char* bigtex2 = new unsigned char[curAtlasSize.x * curAtlasSize.y * 4];
+	assert(curAtlasSize.x <= maxAtlasSize.x);
+	assert(curAtlasSize.y <= maxAtlasSize.y);
+
+	std::vector<uint8_t> bigtex1(curAtlasSize.x * curAtlasSize.y * 4, 0);
+	std::vector<uint8_t> bigtex2(curAtlasSize.x * curAtlasSize.y * 4, 0);
 
 	for (int a = 0; a < (curAtlasSize.x * curAtlasSize.y); ++a) {
 		bigtex1[a*4 + 0] = 128;
 		bigtex1[a*4 + 1] = 128;
 		bigtex1[a*4 + 2] = 128;
-		bigtex1[a*4 + 3] = 0;
+		bigtex1[a*4 + 3] =   0;
 
-		bigtex2[a*4 + 0] = 0;
+		bigtex2[a*4 + 0] =   0;
 		bigtex2[a*4 + 1] = 128;
-		bigtex2[a*4 + 2] = 0;
+		bigtex2[a*4 + 2] =   0;
 		bigtex2[a*4 + 3] = 255;
 	}
 
-	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
-		CBitmap& curtex1 = it->tex;
-		CBitmap& curtex2 = it->tex2;
+	for (const TexFile& texFile: texFiles) {
+		const CBitmap& curtex1 = texFile.tex;
+		const CBitmap& curtex2 = texFile.tex2;
 
-		const size_t foundx = atlasAlloc->GetEntry(it->name).x;
-		const size_t foundy = atlasAlloc->GetEntry(it->name).y;
-		const float4 texCoords = atlasAlloc->GetTexCoords(it->name);
+		const size_t foundx = atlasAlloc->GetEntry(texFile.name).x;
+		const size_t foundy = atlasAlloc->GetEntry(texFile.name).y;
+		const float4 texCoords = atlasAlloc->GetTexCoords(texFile.name);
 
-		const unsigned char* rmem1 = curtex1.GetRawMem();
-		const unsigned char* rmem2 = curtex2.GetRawMem();
+		const uint8_t* rmem1 = curtex1.GetRawMem();
+		const uint8_t* rmem2 = curtex2.GetRawMem();
 
 		for (int y = 0; y < curtex1.ysize; ++y) {
 			for (int x = 0; x < curtex1.xsize; ++x) {
@@ -109,7 +110,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 			}
 		}
 
-		textures[it->name] = UnitTexture(texCoords);
+		textures[texFile.name] = UnitTexture(texCoords);
 	}
 
 	const int maxMipMaps = atlasAlloc->GetMaxMipMaps();
@@ -122,10 +123,11 @@ C3DOTextureHandler::C3DOTextureHandler()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
+
 		if (maxMipMaps > 0) {
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1); //FIXME disable texcompression
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1.data()); //FIXME disable texcompression
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex1.data());
 		}
 	}
 	{
@@ -136,6 +138,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
+
 		if (maxMipMaps > 0) {
 			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2); //FIXME disable texcompression
 		} else {
@@ -144,21 +147,23 @@ C3DOTextureHandler::C3DOTextureHandler()
 	}
 
 	if (CTextureAtlas::GetDebug()) {
-		CBitmap tex1(bigtex1, curAtlasSize.x, curAtlasSize.y);
-		CBitmap tex2(bigtex2, curAtlasSize.x, curAtlasSize.y);
+		CBitmap tex1(bigtex1.data(), curAtlasSize.x, curAtlasSize.y);
+		CBitmap tex2(bigtex2.data(), curAtlasSize.x, curAtlasSize.y);
 
 		tex1.Save(atlas.GetName() + "-1-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
 		tex2.Save(atlas.GetName() + "-2-" + IntToString(curAtlasSize.x) + "x" + IntToString(curAtlasSize.y) + ".png");
 	}
-
-	delete[] bigtex1;
-	delete[] bigtex2;
 }
 
-C3DOTextureHandler::~C3DOTextureHandler()
+void C3DOTextureHandler::Kill()
 {
 	glDeleteTextures(1, &atlas3do1);
 	glDeleteTextures(1, &atlas3do2);
+
+	atlas3do1 = 0;
+	atlas3do2 = 0;
+
+	textures.clear();
 }
 
 

@@ -211,7 +211,7 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	FindTextures(&model, scene, modelTable, modelPath, modelName);
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model.texs[0].c_str(), model.texs[1].c_str());
 
-	texturehandlerS3O->PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
+	textureHandlerS3O.PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);

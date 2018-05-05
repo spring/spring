@@ -77,9 +77,9 @@ static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat)
 
 static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+	glBindTexture(GL_TEXTURE_2D, textureHandler3DO.GetAtlasTex2ID());
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID());
+	glBindTexture(GL_TEXTURE_2D, textureHandler3DO.GetAtlasTex1ID());
 }
 static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
@@ -96,7 +96,7 @@ static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 
 static const void BindShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+	glBindTexture(GL_TEXTURE_2D, textureHandler3DO.GetAtlasTex2ID());
 }
 
 static const void KillShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
@@ -189,7 +189,7 @@ static const SetTeamColorFunc setTeamColorFuncs[] = {
 // note: also called during SP
 void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {
 	const auto texFun = bindModelTexFuncs[shadowHandler.InShadowPass()][mdlType];
-	const auto texMat = texturehandlerS3O->GetTexture(texType);
+	const auto texMat = textureHandlerS3O.GetTexture(texType);
 
 	texFun(texMat);
 }
@@ -645,7 +645,7 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 
 		// only need to bind the atlas once for 3DO's, but KISS
 		assert((modelType != MODELTYPE_3DO) || (textureType == 0));
-		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
+		shadowTexBindFuncs[modelType](textureHandlerS3O.GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);
