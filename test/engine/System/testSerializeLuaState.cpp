@@ -51,6 +51,12 @@ BOOST_AUTO_TEST_CASE( SerializeLuaState )
 
 	lua_State* L = lua_newstate(l_alloc, &context);
 	lua_atpanic(L, handlepanic);
+	SPRING_LUA_OPEN_LIB(L, luaopen_base);
+	SPRING_LUA_OPEN_LIB(L, luaopen_math);
+	SPRING_LUA_OPEN_LIB(L, luaopen_table);
+	SPRING_LUA_OPEN_LIB(L, luaopen_string);
+	lua_settop(L, 0);
+	creg::AutoRegisterCFunctions("Test::", L);
 
 	LuaRoot root = {L};
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);

@@ -4,6 +4,7 @@
 #include "VarTypes.h"
 
 #include "System/UnorderedMap.hpp"
+#include "System/StringUtil.h"
 #include <deque>
 
 struct creg_lua_State;
@@ -203,7 +204,7 @@ ASSERT_SIZE(TString)
 	creg_CommonHeader; lu_byte isC; lu_byte nupvalues; creg_GCObject *gclist; \
 	creg_Table *env
 
-#define CR_CLOSURE_HEADER() CR_COMMON_HEADER(), CR_MEMBER(isC), CR_MEMBER(nupvalues), CR_MEMBER(gclist), \
+#define CR_CLOSURE_HEADER() CR_COMMON_HEADER(), CR_MEMBER(isC), CR_MEMBER(nupvalues), CR_IGNORED(gclist), \
 	CR_MEMBER(env)
 
 struct creg_CClosure {
@@ -386,12 +387,17 @@ public:
 			case LUA_TSTRING: { c = creg_TString::StaticClass(); break; }
 			case LUA_TUSERDATA: { c = creg_Udata::StaticClass(); break; }
 			case LUA_TFUNCTION: {
-					if (gco->cl.c.isC) {
-						c = creg_CClosure::StaticClass();
-					} else {
-						c = creg_LClosure::StaticClass();
-					}
-					break;
+				bool isC;
+				if (s->IsWriting())
+					isC = gco->cl.c.isC;
+
+				s->SerializeInt(&isC, sizeof(isC));
+				if (isC) {
+					c = creg_CClosure::StaticClass();
+				} else {
+					c = creg_LClosure::StaticClass();
+				}
+				break;
 				}
 			case LUA_TTABLE: { c = creg_Table::StaticClass(); break; }
 			case LUA_TPROTO: { c = creg_Proto::StaticClass(); break; }
@@ -893,10 +899,63 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 
 void RegisterCFunction(const char* name, lua_CFunction f)
 {
-	assert(nameToFunc.find(std::string(name)) == nameToFunc.end());
+	assert((nameToFunc.find(std::string(name)) == nameToFunc.end()) || (nameToFunc[name] == f));
+	//assert(() || (funcToName[f] == name));
 	nameToFunc[name] = f;
-	funcToName[f] = name;
+
+	if (funcToName.find(f) == funcToName.end() || funcToName[f].size() > strlen(name))
+		funcToName[f] = name;
 }
+
+constexpr int MAX_REC_DEPTH = 7;
+
+void RecursiveAutoRegisterFunction(const std::string& handle, lua_State* L, int depth);
+void RecursiveAutoRegisterTable(const std::string& handle, lua_State* L, int depth);
+
+
+void RecursiveAutoRegisterFunction(const std::string& handle, lua_State* L, int depth)
+{
+	if (depth > MAX_REC_DEPTH)
+		return;
+
+	RegisterCFunction(handle.c_str(), lua_tocfunction(L,-1));
+	for (int upval = 1; lua_getupvalue(L, -1, upval) != nullptr; ++upval, lua_pop(L,1)) {
+		const std::string newHandle = handle + "::" + IntToString(upval);
+		if (lua_iscfunction(L, -1)) {
+			RecursiveAutoRegisterFunction(newHandle, L, depth + 1);
+		} else if (lua_istable(L, -1)) {
+			RecursiveAutoRegisterTable(newHandle, L, depth + 1);
+		}
+	}
+
+}
+
+
+void RecursiveAutoRegisterTable(const std::string& handle, lua_State* L, int depth)
+{
+	if (depth > MAX_REC_DEPTH)
+		return;
+
+	for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
+		const std::string key = lua_tostring(L,-2);
+		if (lua_iscfunction(L, -1)) {
+			RecursiveAutoRegisterFunction(handle + key, L, depth + 1);
+		} else if (lua_istable(L, -1)) {
+			if (key == std::string("_G") && depth > 1)
+				continue;
+
+			RecursiveAutoRegisterTable(handle, L, depth + 1);
+		}
+	}
+}
+
+void AutoRegisterCFunctions(const std::string& handle, lua_State* L)
+{
+	lua_pushvalue(L,LUA_GLOBALSINDEX);
+	RecursiveAutoRegisterTable(handle, L, 0);
+	lua_pop(L,1);
+}
+
 void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic)
 {
 	luaContext.SetContext(context, frealloc, panic);

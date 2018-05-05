@@ -247,5 +247,13 @@ static inline void LUA_UNLOAD_LIB(lua_State* L, std::string libname) {
      lua_pcall((L), 0, 0, 0);
 #endif
 
+#ifdef USING_CREG
+#  define SPRING_LUA_OPEN_LIB(L, lib) \
+	LUA_OPEN_LIB(L, lib); \
+	creg::RegisterCFunction(#lib, lib);
+#else
+#  define SPRING_LUA_OPEN_LIB(L, lib) LUA_OPEN_LIB(L, lib)
+#endif
+
 
 #endif // SPRING_LUA_INCLUDE
