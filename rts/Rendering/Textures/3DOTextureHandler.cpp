@@ -72,6 +72,9 @@ void C3DOTextureHandler::Init()
 		return;
 	}
 
+	bigTexX = curAtlasSize.x;
+	bigTexY = curAtlasSize.y;
+
 	assert(curAtlasSize.x <= maxAtlasSize.x);
 	assert(curAtlasSize.y <= maxAtlasSize.y);
 
@@ -140,9 +143,9 @@ void C3DOTextureHandler::Init()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
 
 		if (maxMipMaps > 0) {
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2); //FIXME disable texcompression
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2.data()); //FIXME disable texcompression
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, curAtlasSize.x, curAtlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bigtex2.data());
 		}
 	}
 
@@ -212,17 +215,9 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
 		TexFile texFile;
 		texFile.name = "ta_color" + IntToString(a, "%i");
-		texFile.tex.Alloc(1, 1);
-		texFile.tex.GetRawMem()[0] = palette[a][0];
-		texFile.tex.GetRawMem()[1] = palette[a][1];
-		texFile.tex.GetRawMem()[2] = palette[a][2];
-		texFile.tex.GetRawMem()[3] = 0; // teamcolor
 
-		texFile.tex2.Alloc(1, 1);
-		texFile.tex2.GetRawMem()[0] = 0;  // self illum
-		texFile.tex2.GetRawMem()[1] = 30; // reflectivity
-		texFile.tex2.GetRawMem()[2] =  0;
-		texFile.tex2.GetRawMem()[3] = 255;
+		texFile.tex.AllocDummy(SColor{palette[a][0], palette[a][1], palette[a][2], uint8_t(0)}); // A=team-color
+		texFile.tex2.AllocDummy(SColor{0, 30, 0, 255}); // R=self-illum, G=reflectivity
 
 		texFiles.push_back(texFile);
 	}
