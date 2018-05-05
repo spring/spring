@@ -177,11 +177,10 @@ const char* spring_lua_get_handle_name(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
-static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
 static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
 
 // tracks allocations across all states
-static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
+SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
 static SLuaAllocError gLuaAllocError = {};
 
 void spring_lua_alloc_log_error(const luaContextData* lcd)
@@ -198,7 +197,7 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 		e.msgPtr = &e.msgBuf[0];
 
 	// append to buffer until it fills up or get_error is called
-	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), maxAllocedBytes);
+	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), SLuaAllocState::maxAllocedBytes);
 }
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
@@ -218,7 +217,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > maxAllocedBytes)) {
+	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > SLuaAllocState::maxAllocedBytes)) {
 		// (re)allocation
 		// better kill Lua than whole engine; instant desync if synced handle
 		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
@@ -294,8 +293,8 @@ static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%
 
 // excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
 // int numbers in that range are 100% exact, and don't suffer float precision issues
-// static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
-// static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
+static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
+static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
 static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {

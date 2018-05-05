@@ -2479,6 +2479,10 @@ CONFIG(float, LuaGarbageCollectionTimeMult).defaultValue(5.0f).minimumValue(1.0f
 
 void CLuaHandle::CollectGarbage()
 {
+	// if memory load is smaller than 75% run the GC less frequently
+	if (guRNG.NextFloat() > (1.33f * float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::maxAllocedBytes)))
+		return;
+
 	lua_lock(L_GC);
 	SetHandleRunning(L_GC, true);
 

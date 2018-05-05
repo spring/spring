@@ -4,11 +4,14 @@
 #include <atomic>
 
 struct SLuaAllocState {
+	static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
 	std::atomic<uint64_t> allocedBytes;
 	std::atomic<uint64_t> numLuaAllocs;
 	std::atomic<uint64_t> luaAllocTime;
 	std::atomic<uint64_t> numLuaStates;
 };
+
+extern SLuaAllocState gLuaAllocState;
 
 #endif
 
