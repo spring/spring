@@ -900,9 +900,10 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 void RegisterCFunction(const char* name, lua_CFunction f)
 {
 	assert((nameToFunc.find(std::string(name)) == nameToFunc.end()) || (nameToFunc[name] == f));
-	//assert(() || (funcToName[f] == name));
 	nameToFunc[name] = f;
 
+	// if the function is already registered under a different name, that's no problem, pick the
+	// shorter one
 	if (funcToName.find(f) == funcToName.end() || funcToName[f].size() > strlen(name))
 		funcToName[f] = name;
 }
@@ -937,14 +938,14 @@ void RecursiveAutoRegisterTable(const std::string& handle, lua_State* L, int dep
 		return;
 
 	for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
-		const std::string key = lua_tostring(L,-2);
+		const std::string key = lua_israwstring(L, -2) ? lua_tostring(L,-2) : IntToString(lua_toint(L,-2));
 		if (lua_iscfunction(L, -1)) {
 			RecursiveAutoRegisterFunction(handle + key, L, depth + 1);
 		} else if (lua_istable(L, -1)) {
 			if (key == std::string("_G") && depth > 1)
 				continue;
 
-			RecursiveAutoRegisterTable(handle, L, depth + 1);
+			RecursiveAutoRegisterTable(handle + key + ".", L, depth + 1);
 		}
 	}
 }
@@ -961,4 +962,3 @@ void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic)
 	luaContext.SetContext(context, frealloc, panic);
 }
 }
-

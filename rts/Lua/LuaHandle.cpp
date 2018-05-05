@@ -30,6 +30,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/creg/SerializeLuaState.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -63,7 +64,7 @@ bool CLuaHandle::devMode = false;
 
 void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 {
-	LUA_OPEN_LIB(L, luaopen_debug);
+	SPRING_LUA_OPEN_LIB(L, luaopen_debug);
 		HSTR_PUSH(L, "traceback");
 		LuaUtils::PushDebugTraceback(L);
 		lua_rawset(L, LUA_REGISTRYINDEX);
