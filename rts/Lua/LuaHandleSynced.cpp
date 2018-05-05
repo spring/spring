@@ -44,6 +44,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
+#include "System/creg/SerializeLuaState.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -339,14 +340,14 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	watchWeaponDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
 
 	// load the standard libraries
-	LUA_OPEN_LIB(L, luaopen_base);
-	LUA_OPEN_LIB(L, luaopen_math);
-	LUA_OPEN_LIB(L, luaopen_table);
-	LUA_OPEN_LIB(L, luaopen_string);
-	//LUA_OPEN_LIB(L, luaopen_io);
-	//LUA_OPEN_LIB(L, luaopen_os);
-	//LUA_OPEN_LIB(L, luaopen_package);
-	//LUA_OPEN_LIB(L, luaopen_debug);
+	SPRING_LUA_OPEN_LIB(L, luaopen_base);
+	SPRING_LUA_OPEN_LIB(L, luaopen_math);
+	SPRING_LUA_OPEN_LIB(L, luaopen_table);
+	SPRING_LUA_OPEN_LIB(L, luaopen_string);
+	//SPRING_LUA_OPEN_LIB(L, luaopen_io);
+	//SPRING_LUA_OPEN_LIB(L, luaopen_os);
+	//SPRING_LUA_OPEN_LIB(L, luaopen_package);
+	//SPRING_LUA_OPEN_LIB(L, luaopen_debug);
 
 	lua_getglobal(L, "next");
 	origNextRef = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -434,6 +435,8 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	}
 
 	lua_settop(L, 0);
+	creg::AutoRegisterCFunctions(GetName(), L);
+
 	eventHandler.AddClient(this);
 	return true;
 }
