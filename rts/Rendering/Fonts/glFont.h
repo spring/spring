@@ -99,13 +99,8 @@ public:
 	void SetOutlineDepth(float z) { textDepth.y = z; }
 
 	float GetCharacterWidth(const char32_t c);
-#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 6)
-	#define _final
-#else
-	#define _final final
-#endif
-	inline float GetTextWidth(const std::string& text) _final;
-#undef _final
+
+	inline float GetTextWidth(const std::string& text) override;
 	inline float GetTextHeight(const std::string& text, float* descender = nullptr, int* numLines = nullptr);
 
 	static std::deque<std::string> SplitIntoLines(const std::u8string&);
