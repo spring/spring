@@ -177,11 +177,10 @@ const char* spring_lua_get_handle_name(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
-static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
 static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
 
 // tracks allocations across all states
-static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
+SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
 static SLuaAllocError gLuaAllocError = {};
 
 void spring_lua_alloc_log_error(const luaContextData* lcd)
@@ -198,7 +197,7 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 		e.msgPtr = &e.msgBuf[0];
 
 	// append to buffer until it fills up or get_error is called
-	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), maxAllocedBytes);
+	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), SLuaAllocState::maxAllocedBytes);
 }
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
@@ -218,7 +217,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > maxAllocedBytes)) {
+	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > SLuaAllocState::maxAllocedBytes)) {
 		// (re)allocation
 		// better kill Lua than whole engine; instant desync if synced handle
 		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
