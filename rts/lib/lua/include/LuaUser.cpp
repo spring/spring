@@ -29,6 +29,53 @@
 
 
 ///////////////////////////////////////////////////////////////////////////
+// Custom (Unsynced) Random Number Generator
+
+static CGlobalUnsyncedRNG lguRNG;
+
+int spring_lua_unsynced_rand(lua_State* L) {
+	const lua_Number r = lguRNG.NextFloat();
+
+	switch (lua_gettop(L)) {
+		case 0: {
+			lua_pushnumber(L, r);
+		} break;
+		case 1: {
+			const unsigned int l = 1;
+			const unsigned int u = luaL_checkint(L, 1);
+
+			luaL_argcheck(L, 1 <= u, 1, "[spring_lua_unsynced_rand(1, upper)] empty interval");
+			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
+		} break;
+		case 2: {
+			const unsigned int l = luaL_checkint(L, 1);
+			const unsigned int u = luaL_checkint(L, 2);
+
+			luaL_argcheck(L, l <= u, 2, "[spring_lua_unsynced_rand(lower, upper)] empty interval");
+			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
+		} break;
+		default: {
+			return luaL_error(L, "[spring_lua_unsynced_rand] wrong number of arguments");
+		} break;
+	}
+
+	return 1;
+}
+
+int spring_lua_unsynced_srand(lua_State* L) {
+	if (L == nullptr) {
+		lguRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&L)); // startup
+	} else {
+		lguRNG.Seed(luaL_checkint(L, 1));
+	}
+
+	return 0;
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
 #if (ENABLE_USERSTATE_LOCKS != 0)
@@ -174,13 +221,15 @@ const char* spring_lua_get_handle_name(lua_State* L)
 }
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
 static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
 
 // tracks allocations across all states
-SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
+static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
 static SLuaAllocError gLuaAllocError = {};
 
 void spring_lua_alloc_log_error(const luaContextData* lcd)
@@ -251,6 +300,12 @@ void spring_lua_alloc_get_stats(SLuaAllocState* state)
 #else
 	state->numLuaStates.store(LuaMemPool::GetPoolCount());
 #endif
+}
+
+bool spring_lua_alloc_skip_gc(float gcLoadMult)
+{
+	// if memory load is smaller than 1/gcWeight run the GC less frequently
+	return (lguRNG.NextFloat() > (gcLoadMult * float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::maxAllocedBytes)));
 }
 
 bool spring_lua_alloc_get_error(SLuaAllocError* error)
@@ -542,52 +597,5 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 
 	// copy the float string into dst
 	memcpy(buf, bufC, len + 1);
-}
-
-
-
-
-///////////////////////////////////////////////////////////////////////////
-// Custom (Unsynced) Random Number Generator
-
-static CGlobalUnsyncedRNG lguRNG;
-
-int spring_lua_unsynced_rand(lua_State* L) {
-	const lua_Number r = lguRNG.NextFloat();
-
-	switch (lua_gettop(L)) {
-		case 0: {
-			lua_pushnumber(L, r);
-		} break;
-		case 1: {
-			const unsigned int l = 1;
-			const unsigned int u = luaL_checkint(L, 1);
-
-			luaL_argcheck(L, 1 <= u, 1, "[spring_lua_unsynced_rand(1, upper)] empty interval");
-			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
-		} break;
-		case 2: {
-			const unsigned int l = luaL_checkint(L, 1);
-			const unsigned int u = luaL_checkint(L, 2);
-
-			luaL_argcheck(L, l <= u, 2, "[spring_lua_unsynced_rand(lower, upper)] empty interval");
-			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
-		} break;
-		default: {
-			return luaL_error(L, "[spring_lua_unsynced_rand] wrong number of arguments");
-		} break;
-	}
-
-	return 1;
-}
-
-int spring_lua_unsynced_srand(lua_State* L) {
-	if (L == nullptr) {
-		lguRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&L)); // startup
-	} else {
-		lguRNG.Seed(luaL_checkint(L, 1));
-	}
-
-	return 0;
 }
 

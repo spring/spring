@@ -24,6 +24,7 @@ struct SLuaAllocError {
 extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);
 extern void spring_lua_alloc_get_stats(SLuaAllocState* state);
 extern bool spring_lua_alloc_get_error(SLuaAllocError* error);
+extern bool spring_lua_alloc_skip_gc(float gcLoadMult);
 extern void spring_lua_alloc_update_stats(int clearStatsFrame);
 
 
