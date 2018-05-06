@@ -218,8 +218,8 @@ bool SpringApp::Init()
 
 	good_fpu_control_registers(__func__);
 
-	// GlobalConfig
-	GlobalConfig::Instantiate();
+	// populate params
+	globalConfig.Init();
 
 	// Install Watchdog (must happen after time epoch is set)
 	Watchdog::Install();
@@ -901,7 +901,6 @@ void SpringApp::Kill(bool fromRun)
 
 	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
-	GlobalConfig::Deallocate();
 
 	CCameraHandler::KillStatic();
 

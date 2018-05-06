@@ -78,7 +78,7 @@ void CPlayerRosterDrawer::Draw()
 			}
 
 			const bool cpuConstRed = !p->spectator && (p->cpuUsage > 0.75f) && (gs->speedFactor < gs->wantedSpeedFactor * 0.99f) && (currentTime & 128);
-			const bool pingConstRed = !p->spectator && (globalConfig->reconnectTimeout > 0) && (p->ping > 1000 * globalConfig->reconnectTimeout) && (currentTime & 128);
+			const bool pingConstRed = !p->spectator && (globalConfig.reconnectTimeout > 0) && (p->ping > 1000 * globalConfig.reconnectTimeout) && (currentTime & 128);
 
 			const float4 cpuColor(cpuConstRed ? 0.5f : Clamp(p->cpuUsage * 2.0f / 0.75f, 0.01f, 1.0f), Clamp((1.0f - p->cpuUsage / 0.75f) * 2.0f, 0.01f, 1.0f), 0.01f, 1.0f);
 			const float4 pingColor(pingConstRed ? 0.5f : Clamp((p->ping - 250) / 375.0f, 0.01f, 1.0f), Clamp((1000 - p->ping) / 375.0f, 0.01f, 1.0f), 0.01f, 1.0f);

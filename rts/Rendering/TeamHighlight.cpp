@@ -60,8 +60,8 @@ void CTeamHighlight::Update(int frameNum) {
 		return;
 
 	bool hl = false;
-	if ((globalConfig->teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig->teamHighlight == HIGHLIGHT_ALL) {
-		const int maxhl = 1000 * (globalConfig->networkTimeout + 1);
+	if ((globalConfig.teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig.teamHighlight == HIGHLIGHT_ALL) {
+		const int maxhl = 1000 * (globalConfig.networkTimeout + 1);
 
 		for (int ti = 0; ti < teamHandler.ActiveTeams(); ++ti) {
 			CTeam* t = teamHandler.Team(ti);

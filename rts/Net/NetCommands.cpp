@@ -155,7 +155,7 @@ void CGame::UpdateNumQueuedSimFrames()
 	//   only reason in that case is to handle NETMSG_GAME_FRAME_PROGRESS
 	const uint32_t numQueuedFrames = GetNumQueuedSimFrameMessages(-1u);
 
-	if (globalConfig->useNetMessageSmoothingBuffer) {
+	if (globalConfig.useNetMessageSmoothingBuffer) {
 		if (numQueuedFrames < lastNumQueuedSimFrames) {
 			// conservative policy: take minimum of current and previous queue size
 			// we *NEVER* want the queue to run completely dry (by not keeping a few

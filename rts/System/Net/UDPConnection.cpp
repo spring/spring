@@ -303,8 +303,8 @@ void UDPConnection::Init()
 	sentPackets = 0;
 	recvPackets = 0;
 	droppedChunks = 0;
-	mtu = globalConfig->mtu;
-	reconnectTime = globalConfig->reconnectTimeout;
+	mtu = globalConfig.mtu;
+	reconnectTime = globalConfig.reconnectTimeout;
 
 	muted = true;
 	closed = false;
@@ -314,7 +314,7 @@ void UDPConnection::Init()
 	logMessages = configHandler->GetBool("UDPConnectionLogDebugMessages");
 	#endif
 
-	netLossFactor = globalConfig->networkLossFactor;
+	netLossFactor = globalConfig.networkLossFactor;
 	lastMidChunk = -1;
 #if	NETWORK_TEST
 	lossCounter = 0;
@@ -655,8 +655,8 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			sendMore  = (outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth);
-			sendMore |= ((globalConfig->linkOutgoingBandwidth <= 0) || partialPacket || forced);
+			sendMore  = (outgoing.GetAverage(true) <= globalConfig.linkOutgoingBandwidth);
+			sendMore |= ((globalConfig.linkOutgoingBandwidth <= 0) || partialPacket || forced);
 
 			if (!outgoingData.empty() && sendMore) {
 				std::shared_ptr<const RawPacket>& packet = *(outgoingData.begin());
@@ -703,12 +703,12 @@ bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 
 	if (seconds == 0) {
 		timeout = (dataRecv && !initial)
-				? globalConfig->networkTimeout
-				: globalConfig->initialNetworkTimeout;
+				? globalConfig.networkTimeout
+				: globalConfig.initialNetworkTimeout;
 	} else if (seconds > 0) {
 		timeout = seconds;
 	} else {
-		timeout = globalConfig->reconnectTimeout;
+		timeout = globalConfig.reconnectTimeout;
 	}
 
 	return (timeout > 0 && (spring_gettime() - lastPacketRecvTime) > spring_secs(timeout));
@@ -718,7 +718,7 @@ bool UDPConnection::NeedsReconnect() {
 
 	if (CanReconnect()) {
 		if (!CheckTimeout(-1)) {
-			reconnectTime = globalConfig->reconnectTimeout;
+			reconnectTime = globalConfig.reconnectTimeout;
 		} else if (CheckTimeout(reconnectTime)) {
 			++reconnectTime;
 			return true;
@@ -729,7 +729,7 @@ bool UDPConnection::NeedsReconnect() {
 }
 
 bool UDPConnection::CanReconnect() const {
-	return (globalConfig->reconnectTimeout > 0);
+	return (globalConfig.reconnectTimeout > 0);
 }
 
 std::string UDPConnection::Statistics() const
@@ -876,7 +876,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	}
 
 
-	while (((outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth) || (globalConfig->linkOutgoingBandwidth <= 0))) {
+	while (((outgoing.GetAverage() <= globalConfig.linkOutgoingBandwidth) || (globalConfig.linkOutgoingBandwidth <= 0))) {
 		Packet buf(lastInOrder, nak);
 
 		if (nak > 0) {

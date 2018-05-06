@@ -6,12 +6,9 @@
 
 class GlobalConfig {
 public:
-	GlobalConfig();
+	void Init();
 
-	static void Instantiate();
-
-	static void Deallocate();
-
+public:
 	/**
 	 * @brief network loss factor
 	 *
@@ -109,6 +106,6 @@ public:
 	int teamHighlight;
 };
 
-extern GlobalConfig* globalConfig;
+extern GlobalConfig globalConfig;
 
 #endif // _GLOBAL_CONFIG_H

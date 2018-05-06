@@ -1834,7 +1834,7 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 	lua_settop(L, 0); // pop the input arguments
 
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->EnableWriting(globalConfig.luaWritableConfigFile);
 	guihandler->RunCustomCommands(cmds, false);
 	configHandler->EnableWriting(true);
 	return 0;
@@ -2034,7 +2034,7 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 		return 0;
 	}
 
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->EnableWriting(globalConfig.luaWritableConfigFile);
 	configHandler->Set(key, luaL_checkint(L, 2), luaL_optboolean(L, 3, false));
 	configHandler->EnableWriting(true);
 	return 0;
@@ -2049,7 +2049,7 @@ int LuaUnsyncedCtrl::SetConfigFloat(lua_State* L)
 		return 0;
 	}
 
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->EnableWriting(globalConfig.luaWritableConfigFile);
 	configHandler->Set(key, luaL_checkfloat(L, 2), luaL_optboolean(L, 3, false));
 	configHandler->EnableWriting(true);
 	return 0;
@@ -2065,7 +2065,7 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 		return 0;
 	}
 
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->EnableWriting(globalConfig.luaWritableConfigFile);
 	configHandler->SetString(key, val, luaL_optboolean(L, 3, false));
 	configHandler->EnableWriting(true);
 	return 0;
