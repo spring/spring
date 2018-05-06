@@ -38,6 +38,7 @@
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
@@ -74,43 +75,11 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-	: lastx(-1)
-	, lasty(-1)
-	, activeButtonIdx(-1)
-	, activeCursorIdx(-1)
-
-	, locked(false)
-	, wasLocked(false)
-	, offscreen(false)
-
-	, hide(true)
-	, hwHide(true)
-	, hardwareCursor(false)
-	, invertMouse(false)
-
-	, cursorScale(1.0f)
-	, dragScrollThreshold(0.0f)
-	, scrollx(0.0f)
-	, scrolly(0.0f)
-
-	, doubleClickTime(0.0f)
-	, scrollWheelSpeed(0.0f)
-
-	, crossSize(0.0f)
-	, crossAlpha(0.0f)
-	, crossMoveScale(0.0f)
-
-	, lastClicked(nullptr)
 {
 	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
+
 	lastx = mousepos.x;
 	lasty = mousepos.y;
-
-	for (int a = 1; a <= NUM_BUTTONS; a++) {
-		buttons[a].pressed = false;
-		buttons[a].lastRelease = -20;
-		buttons[a].movement = 0;
-	}
 
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
@@ -132,19 +101,22 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
-	configHandler->RemoveObserver(this);
-
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
+
+	configHandler->RemoveObserver(this);
 }
 
-CMouseHandler* CMouseHandler::GetOrReloadInstance()
-{
-	if (mouse == nullptr)
-		mouse = new CMouseHandler();
 
-	mouse->ReloadCursors();
-	return mouse;
+void CMouseHandler::InitStatic()
+{
+	assert(mouse == nullptr);
+	mouse = new CMouseHandler();
+}
+
+void CMouseHandler::KillStatic()
+{
+	spring::SafeDelete(mouse);
 }
 
 

@@ -23,7 +23,8 @@ public:
 	CMouseHandler();
 	~CMouseHandler();
 
-	static CMouseHandler* GetOrReloadInstance();
+	static void InitStatic();
+	static void KillStatic();
 
 	void ChangeCursor(const std::string& cmdName, const float scale = 1.0f);
 	void ReloadCursors();
@@ -80,49 +81,49 @@ private:
 
 
 public:
-	int lastx;
-	int lasty;
-	int activeButtonIdx;
-	int activeCursorIdx;
+	int lastx = -1;
+	int lasty = -1;
+	int activeButtonIdx = -1;
+	int activeCursorIdx = -1;
 
-	bool locked;
+	bool locked = false;
 	/// Stores if the mouse was locked or not before going into direct control,
 	/// so we can restore it when we return to normal.
-	bool wasLocked;
-	bool offscreen;
+	bool wasLocked = false;
+	bool offscreen = false;
 
 private:
-	bool hide;
-	bool hwHide;
-	bool hardwareCursor;
-	bool invertMouse;
+	bool hide = true;
+	bool hwHide = true;
+	bool hardwareCursor = false;
+	bool invertMouse = false;
 
-	float cursorScale;
-	float dragScrollThreshold;
+	float cursorScale = 1.0f;
+	float dragScrollThreshold = 0.0f;
 
-	float scrollx;
-	float scrolly;
+	float scrollx = 0.0f;
+	float scrolly = 0.0f;
 
 public:
-	float doubleClickTime;
-	float scrollWheelSpeed;
+	float doubleClickTime = 0.0f;
+	float scrollWheelSpeed = 0.0f;
 
 	/// locked mouse indicator size
-	float crossSize;
-	float crossAlpha;
-	float crossMoveScale;
+	float crossSize = 0.0f;
+	float crossAlpha = 0.0f;
+	float crossMoveScale = 0.0f;
 
 
 	struct ButtonPressEvt {
-		bool pressed;
-		bool chorded;
-		int x;
-		int y;
+		bool pressed = false;
+		bool chorded = false;
+		int x = 0;
+		int y = 0;
 		float3 camPos;
 		float3 dir;
-		float time;
-		float lastRelease;
-		int movement;
+		float time = 0.0f;
+		float lastRelease = -20.0f;
+		int movement = 0;
 	};
 
 	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
@@ -136,7 +137,7 @@ private:
 	spring::unordered_map<std::string, size_t> cursorFileMap;
 	spring::unordered_map<std::string, size_t> cursorCommandMap;
 
-	const CUnit* lastClicked;
+	const CUnit* lastClicked = nullptr;
 };
 
 extern CMouseHandler* mouse;

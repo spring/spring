@@ -1,22 +1,35 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-
 #include "InfoConsole.h"
-#include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "Rendering/Fonts/glFont.h"
 #include "System/EventHandler.h"
+#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/LogSinkHandler.h"
 
 #define border 7
 
-CONFIG(int, InfoMessageTime).defaultValue(10).description("Timeout till old messages disappear from the ingame console.");
+CONFIG(int, InfoMessageTime).defaultValue(10).description("Time until old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
 CInfoConsole* infoConsole = nullptr;
 
+static uint8_t infoConsoleMem[sizeof(CInfoConsole)];
+
+
+
+
+void CInfoConsole::InitStatic() {
+	assert(infoConsole == nullptr);
+	infoConsole = new (infoConsoleMem) CInfoConsole();
+}
+
+void CInfoConsole::KillStatic() {
+	assert(infoConsole != nullptr);
+	spring::SafeDestruct(infoConsole);
+	std::memset(infoConsoleMem, 0, sizeof(infoConsoleMem));
+}
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -25,16 +38,24 @@ CInfoConsole* infoConsole = nullptr;
 const size_t CInfoConsole::maxRawLines   = 1024;
 const size_t CInfoConsole::maxLastMsgPos = 10;
 
-CInfoConsole::CInfoConsole()
-	: CEventClient("InfoConsole", 999, false)
-	, enabled(true)
-	, lastMsgIter(lastMsgPositions.begin())
-	, newLines(0)
-	, rawId(0)
-	, fontScale(1.0f)
-	, maxLines(1)
+void CInfoConsole::Init()
 {
+	maxLines = 1;
+	newLines = 0;
+
+	msgPosIndx = 0;
+	numPosMsgs = 0;
+
+	rawId = 0;
 	lifetime = configHandler->GetInt("InfoMessageTime");
+
+	xpos = 0.0f;
+	ypos = 0.0f;
+	width = 0.0f;
+	height = 0.0f;
+
+	fontScale = 1.0f;
+	fontSize = fontScale * smallFont->GetSize();;
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
@@ -46,20 +67,27 @@ CInfoConsole::CInfoConsole()
 		height = 0.205f;
 	}
 
-	if (width == 0.f || height == 0.f)
-		enabled = false;
+	enabled = (width != 0.0f && height != 0.0f);
+	inited = true;
 
-	fontSize = fontScale * smallFont->GetSize();
 
 	logSinkHandler.AddSink(this);
 	eventHandler.AddClient(this);
+
+	rawData.clear();
+	data.clear();
+
+	lastMsgPositions.fill(ZeroVector);
 }
 
-CInfoConsole::~CInfoConsole()
+void CInfoConsole::Kill()
 {
 	logSinkHandler.RemoveSink(this);
 	eventHandler.RemoveClient(this);
+
+	inited = false;
 }
+
 
 void CInfoConsole::Draw()
 {
@@ -196,6 +224,7 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 	for (auto& line: lines) {
 		// add the line to the console
 		data.emplace_back();
+
 		InfoLine& l = data.back();
 		l.text    = std::move(line);
 		l.timeout = spring_gettime() + spring_secs(lifetime);
@@ -205,27 +234,24 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 
 void CInfoConsole::LastMessagePosition(const float3& pos)
 {
-	if (lastMsgPositions.size() >= maxLastMsgPos) {
-		lastMsgPositions.pop_back();
-	}
-	lastMsgPositions.push_front(pos);
+	// reset index to head when a new msg comes in
+	msgPosIndx  = numPosMsgs % maxMsgCount;
+	numPosMsgs += 1;
 
-	// reset the iterator when a new msg comes in
-	lastMsgIter = lastMsgPositions.begin();
+	lastMsgPositions[msgPosIndx] = pos;
 }
 
 const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 {
-	if (lastMsgPositions.empty())
+	if (numPosMsgs == 0)
 		return defaultPos;
 
-	// advance the position
-	const float3& p = *(lastMsgIter++);
+	const float3& p = lastMsgPositions[msgPosIndx];
 
-	// wrap around
-	if (lastMsgIter == lastMsgPositions.end()) {
-		lastMsgIter = lastMsgPositions.begin();
-	}
+	// advance the position and wrap around
+	msgPosIndx += 1;
+	msgPosIndx %= std::min(numPosMsgs, maxMsgCount);
 
 	return p;
 }
+
