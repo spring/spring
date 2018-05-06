@@ -15,21 +15,21 @@ public:
 	 * Network loss factor, a higher factor will reconfigure the protocol
 	 * to resend data more frequently, i.e. waste bandwidth to reduce lag
 	 */
-	int networkLossFactor;
+	int networkLossFactor = 0;
 
 	/**
 	 * @brief initial network timeout
 	 *
 	 * Network timeout in seconds, effective before the game has started
 	 */
-	int initialNetworkTimeout;
+	int initialNetworkTimeout = 30;
 
 	/**
 	 * @brief network timeout
 	 *
 	 * Network timeout in seconds, effective after the game has started
 	 */
-	int networkTimeout;
+	int networkTimeout = 120;
 
 	/**
 	 * @brief reconnect timeout
@@ -37,49 +37,49 @@ public:
 	 * Network timeout in seconds after which a player is allowed to reconnect
 	 * with a different IP.
 	 */
-	int reconnectTimeout;
+	int reconnectTimeout = 15;
 
 	/**
 	 * @brief MTU
 	 *
 	 * Maximum size of network packets to send
 	 */
-	unsigned mtu;
+	unsigned mtu = 1400;
 
 	/**
 	 * @brief linkBandwidth
 	 *
 	 * Maximum outgoing bandwidth from server in bytes, per user
 	 */
-	int linkOutgoingBandwidth;
+	int linkOutgoingBandwidth = 64 * 1024;
 
 	/**
 	 * @brief linkIncomingSustainedBandwidth
 	 *
 	 * Maximum incoming sustained bandwidth to server in bytes, per user
 	 */
-	int linkIncomingSustainedBandwidth;
+	int linkIncomingSustainedBandwidth = 2;
 
 	/**
 	 * @brief linkIncomingPeakBandwidth
 	 *
 	 * Maximum peak incoming bandwidth to server in bytes, per user
 	 */
-	int linkIncomingPeakBandwidth;
+	int linkIncomingPeakBandwidth = 32;
 
 	/**
 	 * @brief linkIncomingMaxPacketRate
 	 *
 	 * Maximum number of incoming packets to server, per user and second
 	 */
-	int linkIncomingMaxPacketRate;
+	int linkIncomingMaxPacketRate = 64;
 
 	/**
 	 * @brief linkIncomingMaxWaitingPackets
 	 *
 	 * Maximum number of queued incoming packets to server, per user
 	 */
-	int linkIncomingMaxWaitingPackets;
+	int linkIncomingMaxWaitingPackets = 512;
 
 	/**
 	 * @brief useNetMessageSmoothingBuffer
@@ -88,14 +88,14 @@ public:
 	 * messages for smoothing network jitter at the cost of increased
 	 * latency (running further behind the server)
 	 */
-	bool useNetMessageSmoothingBuffer;
+	bool useNetMessageSmoothingBuffer = true;
 
 	/**
 	 * @brief luaWritableConfigFile
 	 *
 	 * Allows Lua to write to springsettings/springrc file
 	 */
-	bool luaWritableConfigFile;
+	bool luaWritableConfigFile = false;
 
 	/**
 	 * @brief teamHighlight
@@ -103,7 +103,7 @@ public:
 	 * Team highlighting for teams that are uncontrolled or have connection
 	 * problems.
 	 */
-	int teamHighlight;
+	int teamHighlight = 1;
 };
 
 extern GlobalConfig globalConfig;
