@@ -2,6 +2,7 @@
 
 #include "RoamMeshDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -112,7 +113,7 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
  */
 void CRoamMeshDrawer::Update()
 {
-	CCamera* cam = CCamera::GetActiveCamera();
+	CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	bool shadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
 	bool retessellate = forceTessellate[shadowPass];
@@ -225,12 +226,12 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 		case DrawPass::Normal: { Update(); } break;
 		case DrawPass::Shadow: { Update(); } break;
 		default: {
-			Patch::UpdateVisibility(CCamera::GetActiveCamera(), patchMeshGrid[MESH_NORMAL], numPatchesX);
+			Patch::UpdateVisibility(CCameraHandler::GetActiveCamera(), patchMeshGrid[MESH_NORMAL], numPatchesX);
 		} break;
 	}
 
 	for (Patch& p: patchMeshGrid[drawPass == DrawPass::Shadow]) {
-		if (!p.IsVisible(CCamera::GetActiveCamera()))
+		if (!p.IsVisible(CCameraHandler::GetActiveCamera()))
 			continue;
 
 		// do not need textures in the SP
@@ -244,7 +245,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 {
 	for (Patch* p: borderPatches[drawPass == DrawPass::Shadow]) {
-		if (!p->IsVisible(CCamera::GetActiveCamera()))
+		if (!p->IsVisible(CCameraHandler::GetActiveCamera()))
 			continue;
 
 		if (drawPass != DrawPass::Shadow)
@@ -267,7 +268,7 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
 	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
-		if (!p.IsVisible(CCamera::GetActiveCamera())) {
+		if (!p.IsVisible(CCameraHandler::GetActiveCamera())) {
 			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 		}
 	}

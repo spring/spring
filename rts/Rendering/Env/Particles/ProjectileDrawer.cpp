@@ -4,6 +4,7 @@
 #include "ProjectileDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
@@ -461,7 +462,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
 		return;
 
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
@@ -497,7 +498,7 @@ void CProjectileDrawer::DrawProjectileShadow(const CProjectile* p)
 	if (!CanDrawProjectile(p, p->owner()))
 		return;
 
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 	if (!cam->InView(p->drawPos, p->GetDrawRadius()))
 		return;
 

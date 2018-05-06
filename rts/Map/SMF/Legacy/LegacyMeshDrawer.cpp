@@ -2,6 +2,7 @@
 
 #include "LegacyMeshDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/SMF/SMFReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -563,7 +564,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	UpdateLODParams(drawPass);
 
-	CCamera* cam = CCamera::GetActiveCamera();
+	CCamera* cam = CCameraHandler::GetActiveCamera();
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	const int camBigTexY = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);

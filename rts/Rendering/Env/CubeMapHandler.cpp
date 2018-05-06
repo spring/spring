@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -176,8 +177,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	}
 
 	{
-		CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
-		CCamera* curCam = CCamera::GetActiveCamera();
+		CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
+		CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 		bool draw = true;
 
@@ -196,7 +197,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		#endif
 
 		#if 1
-		// work around CCamera::GetRgtFromRot bugs
+		// work around CCameraHandler::GetRgtFromRot bugs
 		switch (glType) {
 			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { /*fwd =  Rgt*/ curCam->right =  FwdVector; curCam->up =   UpVector; } break;
 			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { /*fwd = -Rgt*/ curCam->right = -FwdVector; curCam->up =   UpVector; } break;
@@ -237,7 +238,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 			game->SetDrawMode(Game::NormalDraw);
 		}
 
-		CCamera::SetActiveCamera(prvCam->GetCamType());
+		CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 		prvCam->Update();
 	}
 

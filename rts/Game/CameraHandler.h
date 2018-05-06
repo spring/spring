@@ -3,6 +3,7 @@
 #ifndef _CAMERA_HANDLER_H
 #define _CAMERA_HANDLER_H
 
+#include <array>
 #include <vector>
 #include <string>
 
@@ -18,10 +19,35 @@ class CCameraHandler : public CommandReceiver
 public:
 	typedef CCameraController::StateMap ViewData;
 
+	enum {
+		CAMERA_MODE_FIRSTPERSON = 0,
+		CAMERA_MODE_OVERHEAD    = 1,
+		CAMERA_MODE_SPRING      = 2,
+		CAMERA_MODE_ROTOVERHEAD = 3,
+		CAMERA_MODE_FREE        = 4,
+		CAMERA_MODE_OVERVIEW    = 5,
+		CAMERA_MODE_LAST        = 6,
+	};
+
 public:
 	CCameraHandler();
 	~CCameraHandler();
 
+
+	static void InitStatic();
+	static void KillStatic();
+	static void SetActiveCamera(unsigned int camType);
+
+	static CCamera* GetCamera(unsigned int camType);
+	static CCamera* GetActiveCamera();
+
+	// sets the current active camera, returns the previous
+	static CCamera* GetSetActiveCamera(unsigned int camType) {
+		CCamera* cam = GetActiveCamera(); SetActiveCamera(camType); return cam;
+	}
+
+
+	void ResetState();
 	void UpdateController(CPlayer* player, bool fpsMode, bool fsEdgeMove, bool wnEdgeMove);
 
 	void SetCameraMode(unsigned int mode);
@@ -57,24 +83,14 @@ public:
 	CCameraController& GetCurrentController() { return *(camControllers[currCamCtrlNum]); }
 	unsigned int GetCurrentControllerNum() const { return currCamCtrlNum; }
 
-	const std::vector<CCameraController*>& GetControllers() const { return camControllers; }
-
-	enum {
-		CAMERA_MODE_FIRSTPERSON = 0,
-		CAMERA_MODE_OVERHEAD    = 1,
-		CAMERA_MODE_SPRING      = 2,
-		CAMERA_MODE_ROTOVERHEAD = 3,
-		CAMERA_MODE_FREE        = 4,
-		CAMERA_MODE_OVERVIEW    = 5,
-		CAMERA_MODE_LAST        = 6,
-	};
+	const std::array<CCameraController*, CAMERA_MODE_LAST>& GetControllers() const { return camControllers; }
 
 private:
 	void UpdateController(CCameraController& camCon, bool keyMove, bool wheelMove, bool edgeMove);
 	bool LoadViewData(const ViewData& vd);
 
 private:
-	unsigned int currCamCtrlNum;
+	unsigned int currCamCtrlNum = 0;
 
 	struct CamTransitionState {
 		float3 startPos;
@@ -82,18 +98,18 @@ private:
 		float3 startRot;
 		float3 tweenRot;
 
-		float startFOV;
-		float tweenFOV;
+		float startFOV = 0.0f;
+		float tweenFOV = 0.0f;
 
-		float timeStart;
-		float timeEnd;
-		float timeFactor;
-		float timeExponent;
+		float timeStart = 0.0f;
+		float timeEnd = 0.0f;
+		float timeFactor = 0.0f;
+		float timeExponent = 0.0f;
 	};
 
 	CamTransitionState camTransState;
 
-	std::vector<CCameraController*> camControllers;
+	std::array<CCameraController*, CAMERA_MODE_LAST> camControllers;
 	std::vector<unsigned int> controllerStack;
 
 	spring::unordered_map<std::string, ViewData> viewDataMap;
@@ -103,3 +119,4 @@ private:
 extern CCameraHandler* camHandler;
 
 #endif // _CAMERA_HANDLER_H
+

@@ -5,7 +5,6 @@
 
 #include <vector>
 
-#include "Rendering/GL/myGL.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
@@ -150,9 +149,12 @@ public:
 	const bool* GetMovState() const { return movState; }
 	const bool* GetRotState() const { return rotState; }
 
+	static CCamera* GetActive();
+
 	static float3 GetRotFromDir(float3 fwd);
 	static float3 GetFwdFromRot(const float3 r);
 	static float3 GetRgtFromRot(const float3 r);
+
 
 	float ProjectedDistance(const float3 objPos) const {
 		const float3 diff = objPos - GetPos();
@@ -174,18 +176,6 @@ public:
 	unsigned int GetProjType() const { return projType; }
 	unsigned int SetCamType(unsigned int ct) { return (camType = ct); }
 	unsigned int SetProjType(unsigned int pt) { return (projType = pt); }
-
-
-	static void InitializeStatic();
-	static void SetActiveCamera(unsigned int camType);
-
-	static CCamera* GetCamera(unsigned int camType);
-	static CCamera* GetActiveCamera();
-
-	// sets the current active camera, returns the previous
-	static CCamera* GetSetActiveCamera(unsigned int camType) {
-		CCamera* cam = GetActiveCamera(); SetActiveCamera(camType); return cam;
-	}
 
 public:
 	void UpdateViewRange();
@@ -222,7 +212,7 @@ public:
 	float3 posOffset;
 	float3 tiltOffset;
 
-	GLint viewport[4];
+	int viewport[4];
 
 private:
 	CMatrix44f projectionMatrix;
@@ -246,6 +236,6 @@ private:
 	bool rotState[4]; // unused
 };
 
-#define camera (CCamera::GetActiveCamera())
+#define camera (CCamera::GetActive())
 #endif // _CAMERA_H
 

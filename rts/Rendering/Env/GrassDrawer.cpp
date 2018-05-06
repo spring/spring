@@ -4,6 +4,7 @@
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -466,7 +467,7 @@ void CGrassDrawer::DrawBlocks(const CCamera* cam)
 void CGrassDrawer::Update()
 {
 	// grass is never drawn in any special (non-opaque) pass
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	// update visible blocks
 	updateVisibility |= (prvUpdateCamPos != cam->GetPos());
@@ -521,10 +522,10 @@ void CGrassDrawer::DrawShadow()
 	if (!blockDrawer.inViewQuads.empty()) {
 		SetupStateShadow();
 		#if 0
-		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW));
+		DrawBlocks(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW));
 		#else
 		// note: use player camera here s.t. all blocks it can see are shadowed
-		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
+		DrawBlocks(CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER));
 		#endif
 		ResetStateShadow();
 	}
@@ -585,7 +586,7 @@ void CGrassDrawer::Draw()
 
 	if (!blockDrawer.inViewQuads.empty()) {
 		SetupStateOpaque();
-		DrawBlocks(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
+		DrawBlocks(CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER));
 		ResetStateOpaque();
 	}
 

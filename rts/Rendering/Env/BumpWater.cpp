@@ -11,6 +11,7 @@
 #include "WaterRendering.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -1179,8 +1180,8 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -1189,7 +1190,7 @@ void CBumpWater::DrawReflection(CGame* game)
 		DrawReflections(reflection > 1, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 
 	prvCam->Update();
 	// done by caller

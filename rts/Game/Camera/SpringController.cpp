@@ -25,16 +25,15 @@ CONFIG(bool,  CamSpringEdgeRotate).defaultValue(false).description("Rotate camer
 
 
 CSpringController::CSpringController()
-: rot(2.677f, 0.0f, 0.0f)
-, curDist(float3(mapDims.mapx * 0.5f, 0.0f, mapDims.mapy * 0.55f).Length2D() * 1.5f * SQUARE_SIZE)
-, maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
-, oldDist(0.0f)
-, zoomBack(false)
-, cursorZoomIn(configHandler->GetBool("CamSpringZoomInToMousePos"))
-, cursorZoomOut(configHandler->GetBool("CamSpringZoomOutFromMousePos"))
+	: rot(2.677f, 0.0f, 0.0f)
+	, curDist(float3(mapDims.mapx * 0.5f, 0.0f, mapDims.mapy * 0.55f).Length2D() * 1.5f * SQUARE_SIZE)
+	, maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
+	, oldDist(0.0f)
+	, zoomBack(false)
+	, cursorZoomIn(configHandler->GetBool("CamSpringZoomInToMousePos"))
+	, cursorZoomOut(configHandler->GetBool("CamSpringZoomOutFromMousePos"))
 {
 	enabled = configHandler->GetBool("CamSpringEnabled");
-	Update();
 }
 
 

@@ -2,6 +2,7 @@
 
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
@@ -152,7 +153,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 void CAdvTreeDrawer::Update()
 {
 	{
-		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 		updateVisibility |= (prvUpdateCamPos != cam->GetPos());
 		updateVisibility |= (prvUpdateCamDir != cam->GetDir());
@@ -241,7 +242,7 @@ void CAdvTreeDrawer::DrawTreeGeometry(int treeType) const { treeGen.DrawTreeBuff
 
 
 
-void CAdvTreeDrawer::SetupDrawState() { SetupDrawState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), treeShaders[shadowHandler.ShadowsLoaded()]); }
+void CAdvTreeDrawer::SetupDrawState() { SetupDrawState(CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER), treeShaders[shadowHandler.ShadowsLoaded()]); }
 void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	treeShaders[TREE_PROGRAM_ACTIVE] = ipo;
@@ -300,7 +301,7 @@ void CAdvTreeDrawer::ResetDrawState()
 }
 
 
-void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
+void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
 void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
 	glEnable(GL_ALPHA_TEST);
@@ -411,7 +412,7 @@ void CAdvTreeDrawer::DrawFallingTrees(const CCamera* cam, Shader::IProgramObject
 void CAdvTreeDrawer::DrawPass()
 {
 	// trees are never drawn in any special (non-opaque) pass
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* ipo = treeShaders[shadowHandler.ShadowsLoaded()];
 
 	SetupDrawState(cam, ipo);
@@ -424,7 +425,7 @@ void CAdvTreeDrawer::DrawPass()
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* ipo = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE);
 
 	SetupShadowDrawState(cam, ipo);
@@ -433,8 +434,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 	DrawFallingTrees(cam, ipo);
 	#else
 	// note: use player camera here s.t. all trees it can see are shadowed
-	DrawTrees(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
-	DrawFallingTrees(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
+	DrawTrees(CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
+	DrawFallingTrees(CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER), ipo);
 	#endif
 	ResetShadowDrawState();
 }

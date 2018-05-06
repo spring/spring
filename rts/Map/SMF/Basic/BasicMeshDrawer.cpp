@@ -2,6 +2,7 @@
 
 #include "BasicMeshDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -128,7 +129,7 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 
 
 void CBasicMeshDrawer::Update(const DrawPass::e& drawPass) {
-	CCamera* activeCam = CCamera::GetActiveCamera();
+	CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	MeshPatch* meshPatch = &meshPatches[0];
 
 	patchVisTestDrawer.ResetState(activeCam, meshPatch, numPatchesX);
@@ -567,7 +568,7 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 	// force SP and NP to equal LOD; avoids projection issues
 	if (drawPass == DrawPass::Shadow || drawPass == DrawPass::WaterReflection)
-		cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+		cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	{
 		const CUnit* hitUnit = nullptr;
@@ -637,7 +638,7 @@ void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 	glEnable(GL_PRIMITIVE_RESTART);
 	#endif
 
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 
 	for (uint32_t py = 0; py < numPatchesY; py += 1) {
 		for (uint32_t px = 0; px < numPatchesX; px += 1) {
@@ -684,7 +685,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 	const uint32_t npxm1 = numPatchesX - 1;
 	const uint32_t npym1 = numPatchesY - 1;
 
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 
 	{
 		// invert culling; index-pattern for T and R borders is also inverted

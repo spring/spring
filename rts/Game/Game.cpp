@@ -629,12 +629,8 @@ void CGame::PostLoadRendering() {
 
 void CGame::LoadInterface()
 {
-	{
-		ScopedOnceTimer timer("Game::LoadInterface (Camera & Mouse)");
-
-		camHandler = new CCameraHandler();
-		mouse->ReloadCursors();
-	}
+	camHandler->ResetState();
+	mouse->ReloadCursors();
 
 	selectedUnitsHandler.Init(playerHandler.ActivePlayers());
 
@@ -848,7 +844,6 @@ void CGame::KillInterface()
 	spring::SafeDelete(inMapDrawer);
 
 	LOG("[Game::%s][2]", __func__);
-	spring::SafeDelete(camHandler);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
 		spring::SafeDelete(grouphandlers[i]);

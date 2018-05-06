@@ -316,8 +316,8 @@ void CAdvWater::UpdateWater(CGame* game)
 		0.0, 1.0, 0.0, 0.0,
 	};
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -326,7 +326,7 @@ void CAdvWater::UpdateWater(CGame* game)
 		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
 	prvCam->LoadViewPort();
 

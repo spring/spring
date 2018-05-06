@@ -44,10 +44,9 @@ CFreeController::CFreeController()
 {
 	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
 	pos -= (dir * 1000.0f);
-	if (camera) {
-		camera->SetDir(dir);
-		rot = camera->GetRot();
-	}
+
+	camera->SetDir(dir);
+	rot = camera->GetRot();
 
 	enabled     = configHandler->GetBool("CamFreeEnabled");
 	invertAlt   = configHandler->GetBool("CamFreeInvertAlt");
