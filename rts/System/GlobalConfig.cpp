@@ -4,7 +4,6 @@
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "Lua/LuaConfig.h"
 
 CONFIG(int, NetworkLossFactor)
 .defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
@@ -59,10 +58,10 @@ CONFIG(bool, UseNetMessageSmoothingBuffer).defaultValue(true);
 CONFIG(bool, LuaWritableConfigFile).defaultValue(true);
 
 
+GlobalConfig globalConfig;
 
-GlobalConfig* globalConfig = nullptr;
 
-GlobalConfig::GlobalConfig()
+void GlobalConfig::Init()
 {
 	// Recommended semantics for "expert" type config values:
 	// <0 = disable (if applicable)
@@ -91,14 +90,3 @@ GlobalConfig::GlobalConfig()
 	teamHighlight = configHandler->GetInt("TeamHighlight");
 }
 
-void GlobalConfig::Instantiate()
-{
-	Deallocate();
-	globalConfig = new GlobalConfig();
-}
-
-void GlobalConfig::Deallocate()
-{
-	delete globalConfig;
-	globalConfig = nullptr;
-}

@@ -1376,7 +1376,7 @@ public:
 		const char* fmt = "net-message smoothing %s";
 		const char* strs[] = {"disabled", "enabled"};
 
-		LOG(fmt, strs[globalConfig->useNetMessageSmoothingBuffer = !globalConfig->useNetMessageSmoothingBuffer]);
+		LOG(fmt, strs[globalConfig.useNetMessageSmoothingBuffer = !globalConfig.useNetMessageSmoothingBuffer]);
 		return true;
 	}
 };
@@ -2052,17 +2052,17 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % CTeamHighlight::HIGHLIGHT_SIZE;
+			globalConfig.teamHighlight = abs(globalConfig.teamHighlight + 1) % CTeamHighlight::HIGHLIGHT_SIZE;
 		} else {
-			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
+			globalConfig.teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
 		}
 
 		LOG("Team highlighting: %s",
-				((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_PLAYERS) ? "Players only"
-				: ((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_ALL) ? "Players and spectators"
+				((globalConfig.teamHighlight == CTeamHighlight::HIGHLIGHT_PLAYERS) ? "Players only"
+				: ((globalConfig.teamHighlight == CTeamHighlight::HIGHLIGHT_ALL) ? "Players and spectators"
 				: "Disabled")));
 
-		configHandler->Set("TeamHighlight", globalConfig->teamHighlight);
+		configHandler->Set("TeamHighlight", globalConfig.teamHighlight);
 		return true;
 	}
 };
