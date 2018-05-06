@@ -641,11 +641,15 @@ void CGame::LoadInterface()
 	// interface components
 	cmdColors.LoadConfigFromFile("cmdcolors.txt");
 
+	keyBindings.Init();
+	keyBindings.Load("uikeys.txt");
+
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 
 		gameConsoleHistory.Init();
 		gameTextInput.ClearInput();
+
 		wordCompletion.Init();
 
 		for (int pp = 0; pp < playerHandler.ActivePlayers(); pp++) {
@@ -694,8 +698,6 @@ void CGame::LoadInterface()
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 	resourceBar = new CResourceBar();
-	keyBindings = new CKeyBindings();
-	keyBindings->Load("uikeys.txt");
 	selectionKeys = new CSelectionKeyHandler();
 
 	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
@@ -842,7 +844,7 @@ void CGame::KillInterface()
 	spring::SafeDelete(minimap);
 	spring::SafeDelete(resourceBar);
 	spring::SafeDelete(tooltip); // CTooltipConsole*
-	spring::SafeDelete(keyBindings);
+	keyBindings.Kill();
 	spring::SafeDelete(selectionKeys); // CSelectionKeyHandler*
 	spring::SafeDelete(inMapDrawerModel);
 	spring::SafeDelete(inMapDrawer);
@@ -929,7 +931,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 
 	// Get the list of possible key actions
 	//LOG_L(L_DEBUG, "curKeyChain: %s", curKeyChain.GetString().c_str());
-	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(curKeyChain);
+	const CKeyBindings::ActionList& actionList = keyBindings.GetActionList(curKeyChain);
 
 	if (gameTextInput.ConsumePressedKey(key, actionList))
 		return 0;
@@ -984,7 +986,7 @@ int CGame::KeyReleased(int k)
 
 	// try our list of actions
 	CKeySet ks(k, true);
-	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+	const CKeyBindings::ActionList& al = keyBindings.GetActionList(ks);
 	for (const Action& action: al) {
 		if (ActionReleased(action))
 			return 0;

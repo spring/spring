@@ -42,7 +42,7 @@ void CKeySet::SetAnyBit()
 
 bool CKeySet::IsPureModifier() const
 {
-	return (CKeyCodes::IsModifier(Key()) || (Key() == keyBindings->GetFakeMetaKey()));
+	return (CKeyCodes::IsModifier(Key()) || (Key() == keyBindings.GetFakeMetaKey()));
 }
 
 
@@ -175,7 +175,7 @@ void CTimedKeyChain::push_back(const int key, const spring_time t, const bool is
 	assert(keyBindings);
 
 	// clear chain on timeout
-	const auto dropTime = t - spring_msecs(keyBindings->GetKeyChainTimeout());
+	const auto dropTime = t - spring_msecs(keyBindings.GetKeyChainTimeout());
 	if (!empty() && times.back() < dropTime) {
 		clear();
 	}

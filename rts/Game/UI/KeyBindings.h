@@ -5,13 +5,13 @@
 
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
+#include <set>
 
 #include "KeySet.h"
 #include "Game/Console.h"
 #include "Game/Action.h"
-
+#include "System/UnorderedSet.hpp"
 
 
 class CKeyBindings : public CommandReceiver
@@ -21,8 +21,8 @@ class CKeyBindings : public CommandReceiver
 		typedef std::set<std::string> HotkeyList;
 
 	public:
-		CKeyBindings();
-		~CKeyBindings();
+		void Init();
+		void Kill();
 
 		bool Load(const std::string& filename);
 		bool Save(const std::string& filename) const;
@@ -35,11 +35,10 @@ class CKeyBindings : public CommandReceiver
 		virtual void PushAction(const Action&);
 		bool ExecuteCommand(const std::string& line);
 
-		int GetFakeMetaKey() const { return fakeMetaKey; }
-
 		// Receive configuration notifications (for KeyChainTimeout)
 		void ConfigNotify(const std::string& key, const std::string& value);
 
+		int GetFakeMetaKey() const { return fakeMetaKey; }
 		int GetKeyChainTimeout() const { return keyChainTimeout; }
 
 	protected:
@@ -64,17 +63,18 @@ class CKeyBindings : public CommandReceiver
 		ActionMap hotkeys;
 
 		// commands that use both Up and Down key presses
-		std::set<std::string> statefulCommands;
+		spring::unsynced_set<std::string> statefulCommands;
 
-		int fakeMetaKey;
-		bool buildHotkeyMap;
 	private:
-		bool debugEnabled;
-		int keyChainTimeout;
+		int fakeMetaKey = 1;
+		int keyChainTimeout = 750;
+
+		bool buildHotkeyMap = true;
+		bool debugEnabled = false;
 };
 
 
-extern CKeyBindings* keyBindings;
+extern CKeyBindings keyBindings;
 
 
 #endif /* KEYBINDINGS_H */
