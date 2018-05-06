@@ -20,7 +20,7 @@ public:
 	void MouseWheelMove(float move);
 
 	void Update();
-	float3 GetPos() const;
+	float3 GetPos() const { return (pos - dir * height); }
 	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const { return pos; }

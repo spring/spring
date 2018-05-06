@@ -21,7 +21,7 @@ CONFIG(float, FPSFOV).defaultValue(45.0f);
 CONFIG(bool, FPSClampPos).defaultValue(true);
 
 
-CFPSController::CFPSController(): oldHeight(300)
+CFPSController::CFPSController(): oldHeight(300.0f)
 {
 	ConfigUpdate();
 	dir = camera->GetDir();
