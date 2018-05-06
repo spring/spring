@@ -36,9 +36,6 @@ void CWordCompletion::Init()
 	AddWordRaw("/keydebug ", true, false, false);
 	AddWordRaw("/fakemeta ", true, false, false);
 
-	// camera handler (Game/CameraHandler.cpp)
-	AddWordRaw("/viewtaflip ", true, false, false);
-
 	// mini-map (Game/UI/MiniMap.cpp)
 	AddWordRaw("fullproxy ", false, false, true);
 	AddWordRaw("drawcommands ", false, false, true);

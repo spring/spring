@@ -41,13 +41,18 @@ protected:
 class CommandConsole
 {
 public:
+	typedef std::pair<std::string, CommandReceiver*> CmdPair;
+	// typedef std::function<bool(const CmdPair& a, const CmdPair& b)> SortPred;
+
 	/**
 	 * @brief register a command
 	 * @param name the name of the command (e.g. "cheat")
-	 * @param rec the CommandReceiver who want to recieve the command
+	 * @param rec the CommandReceiver who want to receive the command
 	 */
 	void AddCommandReceiver(const std::string& name, CommandReceiver* rec) { commandMap.emplace_back(name, rec); }
 	void SortCommandMap();
+
+	const std::vector<CmdPair>& GetCommandMap() const { return commandMap; }
 	
 	/**
 	 * @brief Execute an action
@@ -60,9 +65,6 @@ public:
 	}
 
 private:
-	typedef std::pair<std::string, CommandReceiver*> CmdPair;
-	// typedef std::function<bool(const CmdPair& a, const CmdPair& b)> SortPred;
-
 	std::vector<CmdPair> commandMap;
 };
 
