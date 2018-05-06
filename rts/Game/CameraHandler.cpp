@@ -444,7 +444,7 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 
 void CCameraHandler::PushAction(const Action& action)
 {
-	switch (hashString(action.command.c_str()) {
+	switch (hashString(action.command.c_str())) {
 		case hashString("viewfps"): {
 			SetCameraMode(CAMERA_MODE_FIRSTPERSON);
 		} break;
@@ -490,7 +490,7 @@ void CCameraHandler::PushAction(const Action& action)
 
 		} break;
 
-		case hashString("toggleoverview"); {
+		case hashString("toggleoverview"): {
 			ToggleOverviewCamera();
 		} break;
 		case hashString("togglecammode"): {
