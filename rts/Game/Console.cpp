@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "Console.h" 
+#include "Console.h"
 
 #include "System/Log/ILog.h"
 #include "Action.h"

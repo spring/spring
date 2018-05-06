@@ -679,6 +679,10 @@ void CGame::LoadInterface()
 		for (const auto& pair: unsyncedGameCommands->GetActionExecutors()) {
 			wordCompletion.AddWordRaw("/" + pair.first + " ", true, false, false);
 		}
+		// legacy commands without executors
+		for (const auto& pair: gameCommandConsole.GetCommandMap()) {
+			wordCompletion.AddWordRaw("/" + pair.first + " ", true, false, false);
+		}
 
 		wordCompletion.Sort();
 		wordCompletion.Filter();
