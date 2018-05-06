@@ -2,6 +2,7 @@
 
 #include "BasicMeshDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"

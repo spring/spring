@@ -505,7 +505,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 void CGrassDrawer::Update()
 {
 	// grass is never drawn in any special (non-opaque) pass
-	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	const CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	// update visible turfs
 	updateVisibility |= (oldCamPos != cam->GetPos());
@@ -605,7 +605,7 @@ void CGrassDrawer::DrawShadow()
 	glPushMatrix();
 	glLoadIdentity();
 
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	static CGrassBlockDrawer blockDrawer;
 	blockDrawer.ResetState();

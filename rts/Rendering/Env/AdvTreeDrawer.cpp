@@ -2,6 +2,7 @@
 
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"

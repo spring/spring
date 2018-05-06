@@ -70,10 +70,10 @@ private:
 	std::deque<RawLine> rawData;
 	std::deque<InfoLine> data;
 
-	size_t newLines;
-	int rawId;
-
 	mutable spring::recursive_mutex infoConsoleMutex;
+
+	size_t maxLines = 1;
+	size_t newLines = 0;
 
 	size_t msgPosIndx = 0;
 	size_t numPosMsgs = 0;

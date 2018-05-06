@@ -28,15 +28,10 @@ void CInfoConsole::InitStatic() {
 void CInfoConsole::KillStatic() {
 	assert(infoConsole != nullptr);
 	spring::SafeDestruct(infoConsole);
-	std::memset(infoConsoleMem, 0, sizeof(infoConsoleMem));
+	// std::memset(infoConsoleMem, 0, sizeof(infoConsoleMem));
+	std::fill(infoConsoleMem, infoConsoleMem + sizeof(infoConsoleMem), 0);
 }
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-const size_t CInfoConsole::maxRawLines   = 1024;
-const size_t CInfoConsole::maxLastMsgPos = 10;
 
 void CInfoConsole::Init()
 {
@@ -148,10 +143,12 @@ void CInfoConsole::Update()
 
 	// if we have more lines then we can show, remove the oldest one,
 	// and make sure the others are shown long enough
-	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
-	maxLines = (smallFont->GetLineHeight() > 0)
-			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
-			: 1; // this will likely be the case on HEADLESS only
+	const float  maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
+	const float fontHeight = smallFont->GetLineHeight();
+
+	// height=0 will likely be the case on HEADLESS only
+	maxLines = (fontHeight > 0.0f)? math::floor(maxHeight / (fontSize * fontHeight)): 1;
+
 	for (size_t i = data.size(); i > maxLines; i--) {
 		data.pop_front();
 	}
