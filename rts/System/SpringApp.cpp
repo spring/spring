@@ -38,6 +38,7 @@
 #include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
+#include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFSDownload.h"
@@ -243,6 +244,7 @@ bool SpringApp::Init()
 
 	UpdateInterfaceGeometry();
 	CglFont::LoadConfigFonts();
+
 	ClearScreen();
 
 	if (!InitFileSystem())
@@ -251,6 +253,9 @@ bool SpringApp::Init()
 	// Multithreading & Affinity
 	Threading::SetThreadName("spring-main"); // set default threadname for pstree
 	Threading::SetThreadScheduler();
+
+	CInfoConsole::InitStatic();
+	CMouseHandler::InitStatic();
 
 	mouseInput = IMouseInput::GetInstance();
 	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
@@ -883,8 +888,8 @@ void SpringApp::Kill(bool fromRun)
 
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
-
 	spring::SafeDelete(luaMenuController);
+
 	LuaMemPool::KillStatic();
 
 	LOG("[SpringApp::%s][3]", __func__);
@@ -903,6 +908,8 @@ void SpringApp::Kill(bool fromRun)
 	CNamedTextures::Kill(true);
 	GlobalConfig::Deallocate();
 
+	CInfoConsole::KillStatic();
+	CMouseHandler::KillStatic();
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);

@@ -10,15 +10,21 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Threading/SpringThreading.h"
 
+#include <array>
 #include <deque>
 #include <string>
-#include <list>
 
 class CInfoConsole: public CInputReceiver, public CEventClient, public ILogSink
 {
 public:
-	CInfoConsole();
-	virtual ~CInfoConsole();
+	static void InitStatic();
+	static void KillStatic();
+
+	CInfoConsole(): CEventClient("InfoConsole", 999, false) { Init(); }
+	~CInfoConsole() { Kill(); }
+
+	void Init();
+	void Kill();
 
 	void Update() override;
 	void Draw() override;
@@ -33,12 +39,7 @@ public:
 	const float3& GetMsgPos(const float3& defaultPos = ZeroVector);
 	unsigned int GetMsgPosCount() const { return lastMsgPositions.size(); }
 
-	bool enabled;
-
 public:
-	static constexpr size_t maxLastMsgPos = 10;
-	static constexpr size_t maxRawLines = 1024;
-
 	struct RawLine {
 		RawLine(const std::string& text, const std::string& section, int level,
 				int id)
@@ -56,13 +57,15 @@ public:
 	int GetRawLines(std::deque<RawLine>& copy);
 
 private:
+	static constexpr size_t maxMsgCount = 10;
+	static constexpr size_t maxRawLines = 1024;
+
 	struct InfoLine {
 		std::string text;
 		spring_time timeout;
 	};
 
-	std::list<float3> lastMsgPositions;
-	std::list<float3>::iterator lastMsgIter;
+	std::array<float3, maxMsgCount> lastMsgPositions;
 
 	std::deque<RawLine> rawData;
 	std::deque<InfoLine> data;
@@ -72,6 +75,9 @@ private:
 	size_t maxLines = 1;
 	size_t newLines = 0;
 
+	size_t msgPosIndx = 0;
+	size_t numPosMsgs = 0;
+
 	int rawId = 0;
 	int lifetime = 0;
 
@@ -79,8 +85,13 @@ private:
 	float ypos = 0.0f;
 	float width = 0.0f;
 	float height = 0.0f;
+
 	float fontScale = 1.0f;
 	float fontSize = 0.0f;
+
+public:
+	bool enabled = true;
+	bool inited = false;
 };
 
 extern CInfoConsole* infoConsole;

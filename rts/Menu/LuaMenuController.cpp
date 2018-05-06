@@ -2,6 +2,7 @@
 
 #include "LuaMenuController.h"
 
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaInputReceiver.h"
@@ -35,9 +36,6 @@ CLuaMenuController::CLuaMenuController(const std::string& menuName)
 CLuaMenuController::~CLuaMenuController()
 {
 	CLuaMenu::FreeHandler();
-
-	spring::SafeDelete(mouse);
-	spring::SafeDelete(infoConsole);
 }
 
 
@@ -48,11 +46,7 @@ void CLuaMenuController::Reset()
 
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
-
-	mouse = CMouseHandler::GetOrReloadInstance();
-
-	if (infoConsole == nullptr)
-		infoConsole = new CInfoConsole();
+	mouse->ReloadCursors();
 }
 
 bool CLuaMenuController::Activate(const std::string& msg)

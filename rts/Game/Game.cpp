@@ -630,10 +630,10 @@ void CGame::PostLoadRendering() {
 void CGame::LoadInterface()
 {
 	{
-		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
+		ScopedOnceTimer timer("Game::LoadInterface (Camera & Mouse)");
 
 		camHandler = new CCameraHandler();
-		mouse = CMouseHandler::GetOrReloadInstance();
+		mouse->ReloadCursors();
 	}
 
 	selectedUnitsHandler.Init(playerHandler.ActivePlayers());
@@ -689,9 +689,6 @@ void CGame::LoadInterface()
 		wordCompletion.Sort();
 		wordCompletion.Filter();
 	}
-
-	if (infoConsole == nullptr)
-		infoConsole = new CInfoConsole();
 
 	tooltip = new CTooltipConsole();
 	guihandler = new CGuiHandler();
@@ -845,10 +842,8 @@ void CGame::KillInterface()
 	spring::SafeDelete(minimap);
 	spring::SafeDelete(resourceBar);
 	spring::SafeDelete(tooltip); // CTooltipConsole*
-	spring::SafeDelete(infoConsole);
 	spring::SafeDelete(keyBindings);
 	spring::SafeDelete(selectionKeys); // CSelectionKeyHandler*
-	spring::SafeDelete(mouse); // CMouseHandler*
 	spring::SafeDelete(inMapDrawerModel);
 	spring::SafeDelete(inMapDrawer);
 
@@ -1172,9 +1167,14 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 
-	if (luaUI != nullptr) { luaUI->CheckStack(); luaUI->CheckAction(); }
-	if (luaGaia != nullptr) { luaGaia->CheckStack(); }
-	if (luaRules != nullptr) { luaRules->CheckStack(); }
+	if (luaUI != nullptr) {
+		luaUI->CheckStack();
+		luaUI->CheckAction();
+	}
+	if (luaGaia != nullptr)
+		luaGaia->CheckStack();
+	if (luaRules != nullptr)
+		luaRules->CheckStack();
 
 
 	if (gameTextInput.SendPromptInput()) {
@@ -1185,7 +1185,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (inMapDrawer->IsWantLabel() && gameTextInput.SendLabelInput())
 		gameTextInput.ClearInput();
 
-	assert(infoConsole);
 	infoConsole->PushNewLinesToEventHandler();
 	infoConsole->Update();
 

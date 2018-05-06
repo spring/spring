@@ -35,7 +35,7 @@ public:
 	void ToggleState();
 	void ToggleOverviewCamera();
 
-	void PushAction(const Action&);
+	void PushAction(const Action&) override;
 
 	void SaveView(const std::string& name);
 	bool LoadView(const std::string& name);
