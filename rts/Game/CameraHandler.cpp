@@ -94,38 +94,21 @@ CCamera* CCameraHandler::GetCamera(unsigned int camType) { return &cameras[camTy
 CCamera* CCameraHandler::GetActiveCamera() { return (GetCamera(cameras[CCamera::CAMTYPE_ACTIVE].GetCamType())); }
 
 
-
-CCameraHandler::CCameraHandler() {}
-CCameraHandler::~CCameraHandler()
-{
-	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
-		spring::SafeDestruct(camControllers[i]);
-		std::memset(camControllerMem[i], 0, sizeof(camControllerMem[i]));
-	}
-}
+// some controllers access the heightmap, do not construct them yet
+CCameraHandler::CCameraHandler() { camControllers.fill(nullptr); }
+CCameraHandler::~CCameraHandler() { KillControllers(); }
 
 
 void CCameraHandler::ResetState()
 {
-	static_assert(sizeof(        CFPSController) <= sizeof(camControllerMem[CAMERA_MODE_FIRSTPERSON]), "");
-	static_assert(sizeof(   COverheadController) <= sizeof(camControllerMem[CAMERA_MODE_OVERHEAD   ]), "");
-	static_assert(sizeof(     CSpringController) <= sizeof(camControllerMem[CAMERA_MODE_SPRING     ]), "");
-	static_assert(sizeof(CRotOverheadController) <= sizeof(camControllerMem[CAMERA_MODE_ROTOVERHEAD]), "");
-	static_assert(sizeof(       CFreeController) <= sizeof(camControllerMem[CAMERA_MODE_FREE       ]), "");
-	static_assert(sizeof(   COverviewController) <= sizeof(camControllerMem[CAMERA_MODE_OVERVIEW   ]), "");
+	{
+		KillControllers();
+		InitControllers();
 
-	// FPS camera must always be the first one in the list
-	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])         CFPSController();
-	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])    COverheadController();
-	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])      CSpringController();
-	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) CRotOverheadController();
-	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])        CFreeController();
-	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])    COverviewController();
-
-	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
-		nameModeMap[camControllers[i]->GetName()] = i;
+		for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+			nameModeMap[camControllers[i]->GetName()] = i;
+		}
 	}
-
 	{
 		RegisterAction("viewfps");
 		RegisterAction("viewta");
@@ -144,20 +127,52 @@ void CCameraHandler::ResetState()
 		SortRegisteredActions();
 	}
 
-	camTransState.startFOV  = 90.0f;
-	camTransState.timeStart =  0.0f;
-	camTransState.timeEnd   =  0.0f;
+	{
+		camTransState.startFOV  = 90.0f;
+		camTransState.timeStart =  0.0f;
+		camTransState.timeEnd   =  0.0f;
 
-	camTransState.timeFactor   = configHandler->GetFloat("CamTimeFactor");
-	camTransState.timeExponent = configHandler->GetFloat("CamTimeExponent");
+		camTransState.timeFactor   = configHandler->GetFloat("CamTimeFactor");
+		camTransState.timeExponent = configHandler->GetFloat("CamTimeExponent");
+	}
 
-	const std::string& modeName = configHandler->GetString("CamModeName");
-
-	SetCameraMode(currCamCtrlNum = ((!modeName.empty())? GetModeIndex(modeName): configHandler->GetInt("CamMode")));
+	SetCameraMode(configHandler->GetString("CamModeName"));
 
 	for (CCameraController* cc: camControllers) {
 		cc->Update();
 	}
+}
+
+
+void CCameraHandler::InitControllers()
+{
+	static_assert(sizeof(        CFPSController) <= sizeof(camControllerMem[CAMERA_MODE_FIRSTPERSON]), "");
+	static_assert(sizeof(   COverheadController) <= sizeof(camControllerMem[CAMERA_MODE_OVERHEAD   ]), "");
+	static_assert(sizeof(     CSpringController) <= sizeof(camControllerMem[CAMERA_MODE_SPRING     ]), "");
+	static_assert(sizeof(CRotOverheadController) <= sizeof(camControllerMem[CAMERA_MODE_ROTOVERHEAD]), "");
+	static_assert(sizeof(       CFreeController) <= sizeof(camControllerMem[CAMERA_MODE_FREE       ]), "");
+	static_assert(sizeof(   COverviewController) <= sizeof(camControllerMem[CAMERA_MODE_OVERVIEW   ]), "");
+
+	// FPS camera must always be the first one in the list
+	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])         CFPSController();
+	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])    COverheadController();
+	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])      CSpringController();
+	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) CRotOverheadController();
+	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])        CFreeController();
+	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])    COverviewController();
+}
+
+void CCameraHandler::KillControllers()
+{
+	if (camControllers[0] == nullptr)
+		return;
+
+	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+		spring::SafeDestruct(camControllers[i]);
+		std::memset(camControllerMem[i], 0, sizeof(camControllerMem[i]));
+	}
+
+	assert(camControllers[0] == nullptr);
 }
 
 
@@ -288,12 +303,13 @@ void CCameraHandler::SetCameraMode(unsigned int newMode)
 
 void CCameraHandler::SetCameraMode(const std::string& modeName)
 {
-	const int modeNum = GetModeIndex(modeName);
+	const int modeNum = (!modeName.empty())? GetModeIndex(modeName): configHandler->GetInt("CamMode");
 
 	// do nothing if the name is not matched
-	if (modeNum >= 0) {
-		SetCameraMode(modeNum);
-	}
+	if (modeNum < 0)
+		return;
+
+	SetCameraMode(modeNum);
 }
 
 
@@ -427,55 +443,58 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 
 void CCameraHandler::PushAction(const Action& action)
 {
-	const std::string cmd = action.command;
+	switch (hashString(action.command.c_str()) {
+		case hashString("viewfps"): {
+			SetCameraMode(CAMERA_MODE_FIRSTPERSON);
+		} break;
+		case hashString("viewta"): {
+			SetCameraMode(CAMERA_MODE_OVERHEAD);
+		} break;
+		case hashString("viewspring"): {
+			SetCameraMode(CAMERA_MODE_SPRING);
+		} break;
+		case hashString("viewrot"): {
+			SetCameraMode(CAMERA_MODE_ROTOVERHEAD);
+		} break;
+		case hashString("viewfree"): {
+				SetCameraMode(CAMERA_MODE_FREE);
+		} break;
+		case hashString("viewov"): {
+			SetCameraMode(CAMERA_MODE_OVERVIEW);
+		} break;
 
-	if (cmd == "viewfps") {
-		SetCameraMode(CAMERA_MODE_FIRSTPERSON);
-	}
-	else if (cmd == "viewta") {
-		SetCameraMode(CAMERA_MODE_OVERHEAD);
-	}
-	else if (cmd == "viewspring") {
-		SetCameraMode(CAMERA_MODE_SPRING);
-	}
-	else if (cmd == "viewrot") {
-		SetCameraMode(CAMERA_MODE_ROTOVERHEAD);
-	}
-	else if (cmd == "viewfree") {
-		SetCameraMode(CAMERA_MODE_FREE);
-	}
-	else if (cmd == "viewov") {
-		SetCameraMode(CAMERA_MODE_OVERVIEW);
-	}
+		case hashString("viewtaflip"): {
+			COverheadController* ohCamCtrl = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
 
-	else if (cmd == "viewtaflip") {
-		COverheadController* taCam = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
+			if (ohCamCtrl != nullptr) {
+				if (!action.extra.empty()) {
+					ohCamCtrl->flipped = !!atoi(action.extra.c_str());
+				} else {
+					ohCamCtrl->flipped = !ohCamCtrl->flipped;
+				}
 
-		if (taCam) {
-			if (!action.extra.empty()) {
-				taCam->flipped = !!atoi(action.extra.c_str());
-			} else {
-				taCam->flipped = !taCam->flipped;
+				ohCamCtrl->Update();
 			}
-			taCam->Update();
-		}
-	}
-	else if (cmd == "viewsave") {
-		if (!action.extra.empty()) {
-			SaveView(action.extra);
-			LOG("Saved view: %s", action.extra.c_str());
-		}
-	}
-	else if (cmd == "viewload") {
-		if (!LoadView(action.extra)) {
-			LOG_L(L_WARNING, "Loading view failed!");
-		}
-	}
-	else if (cmd == "toggleoverview") {
-		ToggleOverviewCamera();
-	}
-	else if (cmd == "togglecammode") {
-		ToggleState();
+		} break;
+
+		case hashString("viewsave"): {
+			if (!action.extra.empty()) {
+				SaveView(action.extra);
+				LOG("Saved view: %s", action.extra.c_str());
+			}
+		} break;
+		case hashString("viewload"): {
+			if (!LoadView(action.extra))
+				LOG_L(L_WARNING, "Loading view failed!");
+
+		} break;
+
+		case hashString("toggleoverview"); {
+			ToggleOverviewCamera();
+		} break;
+		case hashString("togglecammode"): {
+			ToggleState();
+		} break;
 	}
 }
 

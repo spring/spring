@@ -48,6 +48,8 @@ public:
 
 
 	void ResetState();
+	void InitControllers();
+	void KillControllers();
 	void UpdateController(CPlayer* player, bool fpsMode, bool fsEdgeMove, bool wnEdgeMove);
 
 	void SetCameraMode(unsigned int mode);

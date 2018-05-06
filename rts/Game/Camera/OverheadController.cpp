@@ -179,10 +179,6 @@ void COverheadController::Update()
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
-float3 COverheadController::GetPos() const
-{
-	return (pos - dir * height);
-}
 
 void COverheadController::SetPos(const float3& newPos)
 {
