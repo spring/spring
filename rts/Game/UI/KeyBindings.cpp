@@ -272,16 +272,16 @@ CKeyBindings::CKeyBindings()
 	RegisterAction("bind");
 	RegisterAction("unbind");
 	RegisterAction("unbindall");
-	RegisterAction("unbindkeyset");
 	RegisterAction("unbindaction");
-	RegisterAction("keydebug");
+	RegisterAction("unbindkeyset");
 	RegisterAction("fakemeta");
+	RegisterAction("keydebug");
 	RegisterAction("keyload");
 	RegisterAction("keyreload");
 	RegisterAction("keysave");
-	RegisterAction("keyprint");
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
+	RegisterAction("keyprint");
 	SortRegisteredActions();
 
 	configHandler->NotifyOnChange(this, {"KeyChainTimeout"});

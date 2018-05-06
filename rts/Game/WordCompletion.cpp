@@ -21,21 +21,6 @@ void CWordCompletion::Init()
 	words.clear();
 	words.reserve(256);
 
-	// key bindings (Game/UI/KeyBindings.cpp)
-	AddWordRaw("/bind ", true, false, false);
-	AddWordRaw("/unbind ", true, false, false);
-	AddWordRaw("/unbindall ", true, false, false);
-	AddWordRaw("/unbindaction ", true, false, false);
-	AddWordRaw("/unbindkeyset ", true, false, false);
-	AddWordRaw("/keyload ", true, false, false);
-	AddWordRaw("/keyreload ", true, false, false);
-	AddWordRaw("/keysave ", true, false, false);
-	AddWordRaw("/keysyms ", true, false, false);
-	AddWordRaw("/keycodes ", true, false, false);
-	AddWordRaw("/keyprint ", true, false, false);
-	AddWordRaw("/keydebug ", true, false, false);
-	AddWordRaw("/fakemeta ", true, false, false);
-
 	// mini-map (Game/UI/MiniMap.cpp)
 	AddWordRaw("fullproxy ", false, false, true);
 	AddWordRaw("drawcommands ", false, false, true);
