@@ -1848,7 +1848,7 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		}
 	}
 
-	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+	const CKeyBindings::ActionList& al = keyBindings.GetActionList(ks);
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
 		const int actionIndex = (ali + tmpActionOffset) % (int)al.size(); //????
 		const Action& action = al[actionIndex];
@@ -2055,21 +2055,24 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 
 	const int iconPos = IconAtPos(x, y);
 	const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
+
 	if ((iconCmd >= 0) && (iconCmd < (int)commands.size())) {
-		if (commands[iconCmd].tooltip != "") {
+		if (!commands[iconCmd].tooltip.empty()) {
 			s = commands[iconCmd].tooltip;
-		}else{
+		} else {
 			s = commands[iconCmd].name;
 		}
 
-		const CKeyBindings::HotkeyList& hl = keyBindings->GetHotkeys(commands[iconCmd].action);
-		if(!hl.empty()){
+		const CKeyBindings::HotkeyList& hl = keyBindings.GetHotkeys(commands[iconCmd].action);
+
+		if (!hl.empty()) {
 			s += "\nHotkeys:";
 			for (const std::string& hk: hl) {
 				s += " " + hk;
 			}
 		}
 	}
+
 	return s;
 }
 

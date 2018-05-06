@@ -1837,7 +1837,7 @@ public:
 		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()) != nullptr)
 			return false;
 
-		const CKeyBindings::HotkeyList& quitList = keyBindings->GetHotkeys("quitmenu");
+		const CKeyBindings::HotkeyList& quitList = keyBindings.GetHotkeys("quitmenu");
 		const std::string& quitKey = quitList.empty() ? "<none>" : *quitList.begin();
 
 		LOG("Press %s to access the quit menu", quitKey.c_str());

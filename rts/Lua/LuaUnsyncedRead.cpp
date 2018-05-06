@@ -2193,10 +2193,8 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 	if (!ks.Parse(luaL_checksstring(L, 1)))
 		return 0;
-	if (keyBindings == nullptr)
-		return 0;
 
-	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
+	const CKeyBindings::ActionList& actions = keyBindings.GetActionList(ks);
 
 	int i = 1;
 	lua_newtable(L);
@@ -2216,10 +2214,7 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	if (keyBindings == nullptr)
-		return 0;
-
-	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
+	const CKeyBindings::HotkeyList& hotkeys = keyBindings.GetHotkeys(luaL_checksstring(L, 1));
 
 	lua_newtable(L);
 	int i = 1;
