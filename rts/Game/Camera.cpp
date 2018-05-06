@@ -3,9 +3,12 @@
 #include <cstring>
 
 #include "Camera.h"
+#include "CameraHandler.h"
 #include "UI/MouseHandler.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/MatrixState.hpp"
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -20,32 +23,6 @@ CONFIG(bool, EdgeMoveDynamic)
 	.defaultValue(true)
 	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
-
-
-// cameras[ACTIVE] is just used to store which of the others is active
-static CCamera cameras[CCamera::CAMTYPE_COUNT];
-
-void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
-void CCamera::InitializeStatic() {
-	CMatrix44f clipCtrlMatrix;
-
-	if (globalRendering->supportClipSpaceControl) {
-		clipCtrlMatrix.Translate(FwdVector * 0.5f);
-		clipCtrlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
-	}
-
-	// initialize all global cameras
-	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
-		cameras[i].SetCamType(i);
-		cameras[i].SetProjType((i == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP);
-		cameras[i].SetClipCtrlMatrix(clipCtrlMatrix);
-	}
-
-	SetActiveCamera(CAMTYPE_PLAYER);
-}
-
-CCamera* CCamera::GetCamera(unsigned int camType) { return &cameras[camType]; }
-CCamera* CCamera::GetActiveCamera() { return (GetCamera(cameras[CAMTYPE_ACTIVE].GetCamType())); }
 
 
 
@@ -73,6 +50,13 @@ CCamera::CCamera(unsigned int cameraType, unsigned int projectionType)
 
 	SetVFOV(45.0f);
 }
+
+
+CCamera* CCamera::GetActive()
+{
+	return (CCameraHandler::GetActiveCamera());
+}
+
 
 void CCamera::CopyState(const CCamera* cam)
 {
@@ -174,7 +158,10 @@ void CCamera::UpdateFrustum()
 	// VC
 	//
 	// note that this is the only place where VISCUL is updated!
-	cameras[CAMTYPE_VISCUL].CopyState(&cameras[camType]);
+	CCamera* visCam = CCameraHandler::GetCamera(CAMTYPE_VISCUL);
+	CCamera* curCam = CCameraHandler::GetCamera(camType);
+
+	visCam->CopyState(curCam);
 }
 
 void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
@@ -652,6 +639,7 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 {
 	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
+
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
 	camMoveSpeed *= (1.0f + movState[MOVE_STATE_FST] * 9.0f);
 

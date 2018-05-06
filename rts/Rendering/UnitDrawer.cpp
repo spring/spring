@@ -413,7 +413,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	sky->SetupFog();
 
-	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
+	assert((CCameraHandler::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
@@ -567,7 +567,7 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 		return false;
 
 	// either PLAYER or UWREFL
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	if (drawRefraction && !unit->IsInWater())
 		return false;
@@ -590,7 +590,7 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	if (unit->isCloaked)
 		return false;
 
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 	const bool unitInView = cam->InView(unit->drawMidPos, unit->GetDrawRadius());
@@ -646,7 +646,7 @@ void CUnitDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
-		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
+		assert((CCameraHandler::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
 
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface

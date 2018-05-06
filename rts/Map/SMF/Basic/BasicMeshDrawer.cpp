@@ -127,7 +127,7 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 
 
 void CBasicMeshDrawer::Update() {
-	CCamera* activeCam = CCamera::GetActiveCamera();
+	CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	MeshPatch* meshPatch = &meshPatches[0];
 
 	patchVisTestDrawer.ResetState(activeCam, meshPatch, numPatchesX);
@@ -539,7 +539,7 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 	// force SP and NP to equal LOD; avoids projection issues
 	if (drawPass == DrawPass::Shadow)
-		cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+		cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	{
 		const CUnit* hitUnit = nullptr;
@@ -609,7 +609,7 @@ void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO
 void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 	Update();
 
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	const VBO& indexBuffer = lodSquareIndexBuffers[drawPassLOD = CalcDrawPassLOD(activeCam, drawPass)];
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -675,7 +675,7 @@ void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO
 }
 
 void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
-	const CCamera* activeCam = CCamera::GetActiveCamera();
+	const CCamera* activeCam = CCameraHandler::GetActiveCamera();
 	const VBO& indexBuffer = lodBorderIndexBuffers[drawPassLOD];
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -717,4 +717,5 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 
 	indexBuffer.Unbind();
 }
+
 

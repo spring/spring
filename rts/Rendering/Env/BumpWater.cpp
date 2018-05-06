@@ -11,6 +11,7 @@
 #include "WaterRendering.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -1185,8 +1186,8 @@ void CBumpWater::DrawReflection(CGame* game)
 		0.0, 1.0, 0.0, 0.0, // models
 	};
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -1195,7 +1196,7 @@ void CBumpWater::DrawReflection(CGame* game)
 		DrawReflections(&clipPlaneEqs[0], reflection > 1, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 
 	prvCam->Update();
 	// done by caller

@@ -23,22 +23,24 @@ public:
 	float3 GetPos() const;
 	void SetPos(const float3& newPos);
 
-	float3 SwitchFrom() const;
+	float3 SwitchFrom() const { return pos; }
 	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 
-	bool flipped;
-
 	void ConfigNotify(const std::string& key, const std::string& value);
 	void ConfigUpdate();
 
+public:
+	bool flipped;
 private:
+	bool changeAltHeight;
+
 	float middleClickScrollSpeed;
 	float height;
 	float oldAltHeight;
-	bool changeAltHeight;
+
 	float maxHeight;
 	float tiltSpeed;
 	float angle;

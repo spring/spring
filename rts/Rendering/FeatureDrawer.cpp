@@ -3,6 +3,7 @@
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -280,7 +281,7 @@ void CFeatureDrawer::Draw()
 
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
 	// the passes below will ignore any features whose marker is not valid
-	GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
+	GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, true);
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
@@ -318,7 +319,7 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	const auto& quads = camVisibleQuads[(CCamera::GetActiveCamera())->GetCamType()];
+	const auto& quads = camVisibleQuads[(CCameraHandler::GetActiveCamera())->GetCamType()];
 
 	for (int quad: quads) {
 		const auto& mdlRenderProxy = modelRenderers[quad];
@@ -372,7 +373,7 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 		return false;
 
 	// either PLAYER or SHADOW or UWREFL
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	return (cam->InView(feature->drawMidPos, feature->GetDrawRadius()));
 }
@@ -468,7 +469,7 @@ void CFeatureDrawer::DrawAlphaPass()
 		sky->SetupFog();
 
 		// needed for now; not always called directly after Draw()
-		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
+		GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, true);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			unitDrawer->PushModelRenderState(modelType);
@@ -490,7 +491,7 @@ void CFeatureDrawer::DrawAlphaPass()
 
 void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 {
-	const auto& quads = camVisibleQuads[(CCamera::GetActiveCamera())->GetCamType()];
+	const auto& quads = camVisibleQuads[(CCameraHandler::GetActiveCamera())->GetCamType()];
 
 	for (int quad: quads) {
 		const auto& mdlRenderProxy = modelRenderers[quad];
@@ -544,11 +545,11 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
-		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
+		assert((CCameraHandler::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
 
 		// mark all features (in the quads we can see) with FD_SHADOW_FLAG
 		// the pass below will ignore any features whose tag != this value
-		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, false);
+		GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, false);
 
 		// need the alpha-mask for transparent features
 		glEnable(GL_TEXTURE_2D);
@@ -625,7 +626,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 	const float sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
-	const CCamera* playerCam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	const CCamera* playerCam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	for (unsigned int n = 0; n < quads.size(); n++) {
 		auto& mdlRenderProxy = featureDrawer->modelRenderers[ quads[n] ];

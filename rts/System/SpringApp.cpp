@@ -28,7 +28,7 @@
 #include "aGui/Gui.h"
 #endif
 #include "ExternalAI/AILibraryManager.h"
-#include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
@@ -236,7 +236,8 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLConfigs();
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
-	CCamera::InitializeStatic();
+
+	CCameraHandler::InitStatic();
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 
 	UpdateInterfaceGeometry();
@@ -901,6 +902,8 @@ void SpringApp::Kill(bool fromRun)
 	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
 	GlobalConfig::Deallocate();
+
+	CCameraHandler::KillStatic();
 
 	CInfoConsole::KillStatic();
 	CMouseHandler::KillStatic();

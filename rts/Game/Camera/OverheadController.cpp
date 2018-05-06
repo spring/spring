@@ -27,22 +27,17 @@ static const float angleStep = math::HALFPI / 14.0f;
 
 COverheadController::COverheadController()
 	: flipped(false)
-	, height(1500)
-	, oldAltHeight(1500)
 	, changeAltHeight(true)
-	, maxHeight(10000)
+
+	// make whole map visible in overhead mode
+	, height(CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * std::max(pos.x / globalRendering->aspectRatio, pos.z)))
+	, oldAltHeight(height)
+
+	, maxHeight(10000.0f)
 	, angle(DEFAULT_ANGLE)
 {
 	configHandler->NotifyOnChange(this, {"MiddleClickScrollSpeed", "OverheadScrollSpeed", "OverheadTiltSpeed", "OverheadEnabled", "OverheadFOV", "OverheadMaxHeightFactor"});
 	ConfigUpdate();
-
-	if (globalRendering) {
-		// make whole map visible
-		const float h = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
-	}
-
-	Update();
 }
 
 COverheadController::~COverheadController()
@@ -186,8 +181,7 @@ void COverheadController::Update()
 
 float3 COverheadController::GetPos() const
 {
-	float3 cpos = pos - dir * height;
-	return cpos;
+	return (pos - dir * height);
 }
 
 void COverheadController::SetPos(const float3& newPos)
@@ -196,16 +190,12 @@ void COverheadController::SetPos(const float3& newPos)
 	Update();
 }
 
-float3 COverheadController::SwitchFrom() const
-{
-	return pos;
-}
 
 void COverheadController::SwitchTo(const int oldCam, const bool showText)
 {
-	if (showText) {
+	if (showText)
 		LOG("Switching to Overhead (TA) style camera");
-	}
+
 	angle = DEFAULT_ANGLE;
 	Update();
 }

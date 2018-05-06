@@ -3,6 +3,7 @@
 
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GameVersion.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -137,7 +138,7 @@ void CShadowHandler::Init()
 		return;
 	}
 
-	LoadProjectionMatrix(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW));
+	LoadProjectionMatrix(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW));
 	LoadShadowGenShaders();
 }
 
@@ -595,8 +596,8 @@ void CShadowHandler::CreateShadows()
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 
 	SetShadowMapSizeFactors();
@@ -625,7 +626,7 @@ void CShadowHandler::CreateShadows()
 		DrawShadowPasses();
 
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
 
 
@@ -833,7 +834,7 @@ void CShadowHandler::CalcMinMaxView()
 	// derive the size of the shadow-map from the
 	// intersection points of the camera frustum
 	// with the xz-plane
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_VISCUL);
 
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);

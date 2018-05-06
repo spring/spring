@@ -1132,8 +1132,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
-		// CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
-		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
+		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);

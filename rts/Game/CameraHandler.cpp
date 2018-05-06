@@ -1,7 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cstring> // memset
 #include <cstdlib>
-#include <stdarg.h>
+#include <cstdarg> // va_start
 
 #include "CameraHandler.h"
 
@@ -18,6 +19,7 @@
 #include "UI/UnitTracker.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -61,60 +63,100 @@ CONFIG(float, CamTimeExponent)
 CCameraHandler* camHandler = nullptr;
 
 
-CCameraHandler::CCameraHandler()
+
+
+// cameras[ACTIVE] is just used to store which of the others is active
+static CCamera cameras[CCamera::CAMTYPE_COUNT];
+
+static uint8_t camControllerMem[CCameraHandler::CAMERA_MODE_LAST][sizeof(CFreeController)];
+static uint8_t camHandlerMem[sizeof(CCameraHandler)];
+
+void CCameraHandler::SetActiveCamera(unsigned int camType) { cameras[CCamera::CAMTYPE_ACTIVE].SetCamType(camType); }
+void CCameraHandler::InitStatic() {
+	// initialize all global cameras
+	for (unsigned int i = CCamera::CAMTYPE_PLAYER; i < CCamera::CAMTYPE_COUNT; i++) {
+		cameras[i].SetCamType(i);
+		cameras[i].SetProjType((i == CCamera::CAMTYPE_SHADOW)? CCamera::PROJTYPE_ORTHO: CCamera::PROJTYPE_PERSP);
+		cameras[i].SetClipCtrlMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl));
+	}
+
+	SetActiveCamera(CCamera::CAMTYPE_PLAYER);
+
+	camHandler = new (camHandlerMem) CCameraHandler();
+}
+
+void CCameraHandler::KillStatic() {
+	spring::SafeDestruct(camHandler);
+	std::memset(camHandlerMem, 0, sizeof(camHandlerMem));
+}
+
+CCamera* CCameraHandler::GetCamera(unsigned int camType) { return &cameras[camType]; }
+CCamera* CCameraHandler::GetActiveCamera() { return (GetCamera(cameras[CCamera::CAMTYPE_ACTIVE].GetCamType())); }
+
+
+
+CCameraHandler::CCameraHandler() {}
+CCameraHandler::~CCameraHandler()
 {
+	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+		spring::SafeDestruct(camControllers[i]);
+		std::memset(camControllerMem[i], 0, sizeof(camControllerMem[i]));
+	}
+}
+
+
+void CCameraHandler::ResetState()
+{
+	static_assert(sizeof(        CFPSController) <= sizeof(camControllerMem[CAMERA_MODE_FIRSTPERSON]), "");
+	static_assert(sizeof(   COverheadController) <= sizeof(camControllerMem[CAMERA_MODE_OVERHEAD   ]), "");
+	static_assert(sizeof(     CSpringController) <= sizeof(camControllerMem[CAMERA_MODE_SPRING     ]), "");
+	static_assert(sizeof(CRotOverheadController) <= sizeof(camControllerMem[CAMERA_MODE_ROTOVERHEAD]), "");
+	static_assert(sizeof(       CFreeController) <= sizeof(camControllerMem[CAMERA_MODE_FREE       ]), "");
+	static_assert(sizeof(   COverviewController) <= sizeof(camControllerMem[CAMERA_MODE_OVERVIEW   ]), "");
+
+	// FPS camera must always be the first one in the list
+	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])         CFPSController();
+	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])    COverheadController();
+	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])      CSpringController();
+	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) CRotOverheadController();
+	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])        CFreeController();
+	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])    COverviewController();
+
+	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+		nameModeMap[camControllers[i]->GetName()] = i;
+	}
+
+	{
+		RegisterAction("viewfps");
+		RegisterAction("viewta");
+		RegisterAction("viewspring");
+		RegisterAction("viewrot");
+		RegisterAction("viewfree");
+		RegisterAction("viewov");
+		RegisterAction("viewtaflip");
+
+		RegisterAction("toggleoverview");
+		RegisterAction("togglecammode");
+
+		RegisterAction("viewsave");
+		RegisterAction("viewload");
+
+		SortRegisteredActions();
+	}
+
 	camTransState.startFOV  = 90.0f;
 	camTransState.timeStart =  0.0f;
 	camTransState.timeEnd   =  0.0f;
 
-	// FPS camera must always be the first one in the list
-	camControllers.resize(CAMERA_MODE_LAST, nullptr);
-	camControllers[CAMERA_MODE_FIRSTPERSON] = new CFPSController();
-	camControllers[CAMERA_MODE_OVERHEAD   ] = new COverheadController();
-	camControllers[CAMERA_MODE_SPRING     ] = new CSpringController();
-	camControllers[CAMERA_MODE_ROTOVERHEAD] = new CRotOverheadController();
-	camControllers[CAMERA_MODE_FREE       ] = new CFreeController();
-	camControllers[CAMERA_MODE_OVERVIEW   ] = new COverviewController();
-
-	for (unsigned int i = 0; i < camControllers.size(); i++) {
-		nameModeMap[camControllers[i]->GetName()] = i;
-	}
-
-	const std::string& modeName = configHandler->GetString("CamModeName");
-
-	if (!modeName.empty()) {
-		currCamCtrlNum = GetModeIndex(modeName);
-	} else {
-		currCamCtrlNum = configHandler->GetInt("CamMode");
-	}
-
 	camTransState.timeFactor   = configHandler->GetFloat("CamTimeFactor");
 	camTransState.timeExponent = configHandler->GetFloat("CamTimeExponent");
 
-	RegisterAction("viewfps");
-	RegisterAction("viewta");
-	RegisterAction("viewspring");
-	RegisterAction("viewrot");
-	RegisterAction("viewfree");
-	RegisterAction("viewov");
-	RegisterAction("viewtaflip");
+	const std::string& modeName = configHandler->GetString("CamModeName");
 
-	RegisterAction("toggleoverview");
-	RegisterAction("togglecammode");
+	SetCameraMode(currCamCtrlNum = ((!modeName.empty())? GetModeIndex(modeName): configHandler->GetInt("CamMode")));
 
-	RegisterAction("viewsave");
-	RegisterAction("viewload");
-	SortRegisteredActions();
-
-	SetCameraMode(currCamCtrlNum);
-}
-
-
-CCameraHandler::~CCameraHandler()
-{
-	while (!camControllers.empty()) {
-		delete camControllers.back();
-		camControllers.pop_back();
+	for (CCameraController* cc: camControllers) {
+		cc->Update();
 	}
 }
 

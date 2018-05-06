@@ -8,6 +8,7 @@
 #include "SMFFormat.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
@@ -793,7 +794,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 		// allow passing in a custom camera for grid-visibility testing
 		// otherwise this culls using the state of whichever camera most
 		// recently had Update() called on it
-		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+		cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_VISCUL);
 		// for other cameras, KISS and just assume caller has done this
 		cam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	}

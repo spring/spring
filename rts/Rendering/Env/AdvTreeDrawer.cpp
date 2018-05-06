@@ -457,7 +457,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 void CAdvTreeDrawer::Draw(float treeDistance)
 {
 	// trees are never drawn in any special (non-opaque) pass
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = nullptr;
 
 	const int activeFarTex = treeGen.farTex[cam->GetDir().z >= 0.0f];
@@ -908,7 +908,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	if (!drawTrees)
 		return;
 
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* po = nullptr;
 
 	const float treeDistance = oldTreeDistance;

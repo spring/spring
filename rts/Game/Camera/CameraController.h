@@ -4,10 +4,8 @@
 #define _CAMERA_CONTROLLER_H
 
 #include <string>
-#include <vector>
 #include <map>
 
-#include "Game/Camera.h"
 #include "System/float3.h"
 
 
@@ -33,7 +31,7 @@ public:
 
 	virtual float3 GetPos() const { return pos; }
 	virtual float3 GetDir() const { return dir; }
-	virtual float3 GetRot() const { return CCamera::GetRotFromDir(GetDir()); }
+	virtual float3 GetRot() const;
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; }
 	virtual void SetDir(const float3& newDir) { dir = newDir; }

@@ -1361,7 +1361,7 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 {
-	const std::vector<CCameraController*>& cc = camHandler->GetControllers();
+	const std::array<CCameraController*, CCameraHandler::CAMERA_MODE_LAST>& cc = camHandler->GetControllers();
 
 	lua_createtable(L, 0, cc.size());
 

@@ -4,6 +4,7 @@
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"

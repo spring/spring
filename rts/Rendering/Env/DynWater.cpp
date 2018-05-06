@@ -449,8 +449,8 @@ void CDynWater::DrawReflection(CGame* game)
 		0.0, 1.0, 0.0, 0.0, // models
 	};
 
-	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
-	CCamera* curCam = CCamera::GetActiveCamera();
+	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCameraHandler::GetActiveCamera();
 
 	{
 		curCam->CopyStateReflect(prvCam);
@@ -463,7 +463,7 @@ void CDynWater::DrawReflection(CGame* game)
 		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
-	CCamera::SetActiveCamera(prvCam->GetCamType());
+	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 
 	prvCam->Update();
 	prvCam->LoadViewPort();
@@ -761,7 +761,7 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	CCamera* cam = CCamera::GetActiveCamera();
+	CCamera* cam = CCameraHandler::GetActiveCamera();
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	camPosBig2.x = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);

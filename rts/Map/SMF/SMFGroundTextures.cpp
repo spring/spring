@@ -16,6 +16,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/LoadScreen.h"
@@ -293,7 +294,7 @@ bool CSMFGroundTextures::RecompressTilesIfNeeded()
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
@@ -311,7 +312,7 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 
 void CSMFGroundTextures::DrawUpdate()
 {
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;

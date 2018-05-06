@@ -21,12 +21,10 @@ CONFIG(float, FPSFOV).defaultValue(45.0f);
 CONFIG(bool, FPSClampPos).defaultValue(true);
 
 
-CFPSController::CFPSController()
-	: oldHeight(300)
+CFPSController::CFPSController(): oldHeight(300)
 {
 	ConfigUpdate();
 	dir = camera->GetDir();
-	Update();
 
 	configHandler->NotifyOnChange(this, {"FPSScrollSpeed", "FPSMouseScale", "FPSEnabled", "FPSFOV", "FPSClampPos"});
 }

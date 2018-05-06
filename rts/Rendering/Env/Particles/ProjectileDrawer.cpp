@@ -454,7 +454,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
 		return;
 
-	const CCamera* cam = CCamera::GetActiveCamera();
+	const CCamera* cam = CCameraHandler::GetActiveCamera();
 	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
@@ -488,7 +488,7 @@ void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
 	if (CanDrawProjectile(p, p->owner())) {
-		const CCamera* cam = CCamera::GetActiveCamera();
+		const CCamera* cam = CCameraHandler::GetActiveCamera();
 		if (!cam->InView(p->drawPos, p->GetDrawRadius()))
 			return;
 
@@ -949,3 +949,4 @@ void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 		renderProjectiles.erase(it);
 	}
 }
+
