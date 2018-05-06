@@ -20,6 +20,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/SafeUtil.h"
+#include "System/StringHash.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 

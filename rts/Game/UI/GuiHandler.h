@@ -226,10 +226,10 @@ private:
 	float xBpos, yBpos; // center of the buildIconsFirst indicator
 
 	struct Box {
-		GLfloat x1;
-		GLfloat y1;
-		GLfloat x2;
-		GLfloat y2;
+		float x1;
+		float y1;
+		float x2;
+		float y2;
 	};
 	Box buttonBox;
 
