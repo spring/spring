@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
 		gflags::ParseCommandLineFlags(&argc, &argv, true);
 		ParseCmdLine(argc, argv, scriptName);
 
-		GlobalConfig::Instantiate();
+		globalConfig.Init();
 		FileSystemInitializer::InitializeLogOutput();
 		FileSystemInitializer::Initialize();
 
@@ -233,7 +233,6 @@ int main(int argc, char* argv[])
 
 		LOG("exiting");
 		FileSystemInitializer::Cleanup();
-		GlobalConfig::Deallocate();
 		DataDirLocater::FreeInstance();
 
 		spring_clock::PopTickRate();
