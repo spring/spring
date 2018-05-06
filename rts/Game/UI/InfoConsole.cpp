@@ -213,7 +213,7 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 void CInfoConsole::LastMessagePosition(const float3& pos)
 {
 	// reset index to head when a new msg comes in
-	msgPosIndx  = numPosMsgs % maxMsgCount;
+	msgPosIndx  = numPosMsgs % lastMsgPositions.size();
 	numPosMsgs += 1;
 
 	lastMsgPositions[msgPosIndx] = pos;
@@ -228,7 +228,7 @@ const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 
 	// advance the position and wrap around
 	msgPosIndx += 1;
-	msgPosIndx %= std::min(numPosMsgs, maxMsgCount);
+	msgPosIndx %= std::min(numPosMsgs, lastMsgPositions.size());
 
 	return p;
 }
