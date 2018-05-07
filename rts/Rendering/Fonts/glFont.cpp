@@ -273,9 +273,6 @@ static inline bool SkipColorCodesAndNewLines(
 	return true;
 }
 
-
-
-
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -741,6 +738,9 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 
 		prvGlyphPtr = curGlyphPtr;
 		prvGlyphIdx = curGlyphIdx;
+		
+		if (isspace(curGlyphIdx))
+			continue;
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const float dx0 = (scaleX * prvGlyphPtr->size.x0()) + x;
@@ -813,6 +813,8 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 		prvGlyphPtr = curGlyphPtr;
 		prvGlyphIdx = curGlyphIdx;
 
+		if (isspace(curGlyphIdx))
+			continue;
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const auto& stc = prvGlyphPtr->shadowTexCord;
@@ -821,11 +823,11 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 		const float dx1 = (scaleX * prvGlyphPtr->size.x1()) + x;
 		const float dy1 = (scaleY * prvGlyphPtr->size.y1()) + y;
 		const float tx0 = tc.x0() * texScaleX;
-		const float ty0 = tc.y0() * texScaleY;
+		const float ty0 = (tc.y0() + 1) * texScaleY;
 		const float tx1 = tc.x1() * texScaleX;
 		const float ty1 = tc.y1() * texScaleY;
 		const float stx0 = stc.x0() * texScaleX;
-		const float sty0 = stc.y0() * texScaleY;
+		const float sty0 = (stc.y0() + 1) * texScaleY;
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
 
@@ -896,6 +898,8 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 		prvGlyphPtr = curGlyphPtr;
 		prvGlyphIdx = curGlyphIdx;
 
+		if (isspace(curGlyphIdx))
+			continue;
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const auto& stc = prvGlyphPtr->shadowTexCord;
