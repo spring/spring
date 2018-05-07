@@ -86,37 +86,23 @@ void CInfoConsole::Kill()
 
 void CInfoConsole::Draw()
 {
-	if (!enabled) return;
-	if (!smallFont) return;
-	if (data.empty()) return;
+	if (!enabled)
+		return;
+	if (smallFont == nullptr)
+		return;
+	if (data.empty())
+		return;
 
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (guihandler && !guihandler->GetOutlineFonts()) {
-		// draw a black background when not using outlined font
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
+	smallFont->Begin();
+	smallFont->SetColors(); // default
 
-		glBegin(GL_TRIANGLE_STRIP);
-			glVertex3f(xpos,         ypos,          0);
-			glVertex3f(xpos + width, ypos,          0);
-			glVertex3f(xpos,         ypos - height, 0);
-			glVertex3f(xpos + width, ypos - height, 0);
-		glEnd();
-	}
-
+	const uint32_t fontOptions = FONT_NORM | FONT_OUTLINE;
 	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	float curX = xpos + border * globalRendering->pixelX;
 	float curY = ypos - border * globalRendering->pixelY;
-
-	smallFont->Begin();
-	smallFont->SetColors(); // default
-	int fontOptions = FONT_NORM;
-	if (guihandler && guihandler->GetOutlineFonts())
-		fontOptions |= FONT_OUTLINE;
 
 	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
 		curY -= fontHeight;
