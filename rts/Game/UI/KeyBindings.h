@@ -5,12 +5,11 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include <set>
 
 #include "KeySet.h"
 #include "Game/Console.h"
 #include "Game/Action.h"
+#include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"
 
 
@@ -18,7 +17,7 @@ class CKeyBindings : public CommandReceiver
 {
 	public:
 		typedef std::vector<Action> ActionList;
-		typedef std::set<std::string> HotkeyList;
+		typedef spring::unsynced_set<std::string> HotkeyList;
 
 	public:
 		void Init();
@@ -57,8 +56,15 @@ class CKeyBindings : public CommandReceiver
 		bool FileSave(FILE* file) const;
 
 	protected:
-		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
-		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
+		struct KeySetHash {
+			uint64_t operator ()(const CKeySet& ks) const {
+				return ((ks.Key() * 6364136223846793005ull + ks.Mod() * 9600629759793949339ull) % 15726070495360670683ull);
+			}
+		};
+
+		typedef spring::unsynced_map<CKeySet, ActionList, KeySetHash> KeyMap; // keyset to action
+		typedef spring::unsynced_map<std::string, HotkeyList> ActionMap; // action to keyset
+
 		KeyMap bindings;
 		ActionMap hotkeys;
 
@@ -66,7 +72,7 @@ class CKeyBindings : public CommandReceiver
 		spring::unsynced_set<std::string> statefulCommands;
 
 	private:
-		int fakeMetaKey = 1;
+		int fakeMetaKey = -1;
 		int keyChainTimeout = 750;
 
 		bool buildHotkeyMap = true;

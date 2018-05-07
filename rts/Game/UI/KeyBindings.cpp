@@ -255,12 +255,17 @@ static const DefaultBinding defaultBindings[] = {
 
 void CKeyBindings::Init()
 {
-	fakeMetaKey = 1;
+	fakeMetaKey = -1;
 	keyChainTimeout = 750;
 
 	buildHotkeyMap = true;
 	debugEnabled = false;
 
+
+	bindings.reserve(32);
+	hotkeys.reserve(32);
+
+	statefulCommands.reserve(16);
 	statefulCommands.insert("drawinmap");
 	statefulCommands.insert("moveforward");
 	statefulCommands.insert("moveback");
@@ -304,6 +309,8 @@ void CKeyBindings::Kill()
 const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) const
 {
 	static const ActionList empty;
+	static ActionList merged; //FIXME switch to thread_local (?)
+
 	const ActionList* alPtr = &empty;
 
 	if (ks.AnyMod()) {
@@ -331,7 +338,6 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 		}
 		else if (haveNormal && haveAnyMod) {
 			// combine the two lists (normal first)
-			static ActionList merged; //FIXME switch to thread_local when all buildbots are using >=gcc4.7
 			merged = nit->second;
 			merged.insert(merged.end(), ait->second.begin(), ait->second.end());
 			alPtr = &merged;
@@ -340,6 +346,7 @@ const CKeyBindings::ActionList& CKeyBindings::GetActionList(const CKeySet& ks) c
 
 	if (debugEnabled) {
 		LOG("GetActions: hex=0x%02X acii=\"%s\":", ks.Key(), ks.GetString(false).c_str());
+
 		if (alPtr != &empty) {
 			int i = 1;
 			for (const auto& a: *alPtr) {
