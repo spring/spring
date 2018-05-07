@@ -172,13 +172,11 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 
 void CTimedKeyChain::push_back(const int key, const spring_time t, const bool isRepeat)
 {
-	assert(keyBindings);
-
 	// clear chain on timeout
 	const auto dropTime = t - spring_msecs(keyBindings.GetKeyChainTimeout());
-	if (!empty() && times.back() < dropTime) {
+
+	if (!empty() && times.back() < dropTime)
 		clear();
-	}
 
 	CKeySet ks(key, false);
 
