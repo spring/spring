@@ -61,30 +61,42 @@ public:
 	}
 
 	uint8_t* AllocRaw(size_t size) {
+		#if 0
+		uint8_t* mem = new uint8_t[size];
+		#else
 		uint8_t* mem = nullptr;
 
-		#if 0
-		mem = new uint8_t[size];
-		#else
 		size_t bestPair = size_t(-1);
 		size_t bestSize = size_t(-1);
 		size_t diffSize = size_t(-1);
 
-		// find chunk with smallest size difference
-		for (size_t i = 0, n = freeList.size(); i < n; i++) {
-			if (freeList[i].second < size)
-				continue;
+		for (bool runDefrag: {true, false}) {
+			bestPair = size_t(-1);
+			bestSize = size_t(-1);
+			diffSize = size_t(-1);
 
-			if ((freeList[i].second - size) > diffSize)
-				continue;
+			// find chunk with smallest size difference
+			for (size_t i = 0, n = freeList.size(); i < n; i++) {
+				if (freeList[i].second < size)
+					continue;
 
-			bestSize = freeList[bestPair = i].second;
-			diffSize = std::min(bestSize - size, diffSize);
-		}
+				if ((freeList[i].second - size) > diffSize)
+					continue;
 
-		if (bestPair == size_t(-1)) {
-			throw std::bad_alloc();
-			return mem;
+				bestSize = freeList[bestPair = i].second;
+				diffSize = std::min(bestSize - size, diffSize);
+			}
+
+			if (bestPair == size_t(-1)) {
+				if (runDefrag && DefragRaw())
+					continue;
+
+				// give up
+				throw std::bad_alloc();
+				return mem;
+			}
+
+			break;
 		}
 
 		mem = &memArray[freeList[bestPair].first];
@@ -93,6 +105,7 @@ public:
 			freeList[bestPair].first += size;
 			freeList[bestPair].second -= size;
 		} else {
+			// exact match
 			freeList[bestPair] = freeList.back();
 			freeList.pop_back();
 		}
@@ -120,15 +133,15 @@ public:
 		memset(mem, 0, size);
 		freeList.emplace_back(mem - &memArray[0], size);
 
+		numFrees += 1;
+		freeSize += size;
+
 		// most bitmaps are transient, so keep the list short
 		// longer-lived textures should be allocated ASAP s.t.
 		// rest of the pool remains unfragmented
 		// TODO: split into power-of-two subpools?
-		if (freeList.size() >= 64)
+		if (freeList.size() >= 64 || freeSize >= (memArray.size() >> 4))
 			DefragRaw();
-
-		numFrees += 1;
-		freeSize += size;
 		#endif
 
 		mem = nullptr;
@@ -1018,7 +1031,7 @@ void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 		return;
 	}
 
-	for (int y=0; y < src.ysize; ++y) {
+	for (int y = 0; y < src.ysize; ++y) {
 		const int pixelDst = (((ypos + y) * xsize) + xpos) * channels;
 		const int pixelSrc = ((y * src.xsize) + 0 ) * channels;
 
@@ -1041,8 +1054,7 @@ CBitmap CBitmap::CanvasResize(const int newx, const int newy, const bool center)
 	const int borderLeft = (center) ? (newx - xsize) / 2 : 0;
 	const int borderTop  = (center) ? (newy - ysize) / 2 : 0;
 
-	bm.channels = channels;
-	bm.Alloc(newx, newy);
+	bm.Alloc(newx, newy, channels);
 	bm.CopySubImage(*this, borderLeft, borderTop);
 
 	return bm;
@@ -1094,7 +1106,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 	const float dy = (float) ysize / newy;
 
 	float cy = 0;
-	for (int y=0; y < newy; ++y) {
+	for (int y = 0; y < newy; ++y) {
 		const int sy = (int) cy;
 		cy += dy;
 		int ey = (int) cy;
@@ -1136,9 +1148,9 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 
 void CBitmap::InvertColors()
 {
-	if (compressed) {
+	if (compressed)
 		return;
-	}
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
