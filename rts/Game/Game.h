@@ -180,6 +180,7 @@ public:
 
 	bool skipping;
 	bool playing;
+	bool paused; // unsynced
 
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;

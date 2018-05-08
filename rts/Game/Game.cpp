@@ -176,6 +176,7 @@ CR_REG_METADATA(CGame, (
 
 	CR_IGNORED(skipping),
 	CR_MEMBER(playing),
+	CR_IGNORED(paused),
 
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
@@ -224,6 +225,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	, skipping(false)
 	, playing(false)
+	, paused(false)
 
 	, noSpectatorChat(false)
 	, msgProcTimeLeft(0.0f)
@@ -324,16 +326,19 @@ void CGame::AddTimedJobs()
 	{
 		JobDispatcher::Job j;
 
-		j.f = []() -> bool {
+		j.f = [this]() -> bool {
 			SCOPED_TIMER("Misc::CollectGarbage");
 
-			eventHandler.CollectGarbage();
+			// SimFrame handles gc when not paused, this all other cases
+			// do not check the global synced state, never true in demos
+			if (!playing || paused)
+				eventHandler.CollectGarbage();
+
 			CInputReceiver::CollectGarbage();
 			return true;
 		};
 
-		// does not need to run often; SimFrame handles gc when not paused
-		j.freq = 4.0f;
+		j.freq = GAME_SPEED;
 		j.time = (1000.0f / j.freq) * (1 - j.startDirect);
 		j.name = "EventHandler::CollectGarbage";
 
@@ -1153,7 +1158,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		CFontTexture::Update();
 	}
 	// always update InfoTexture and SoundListener at <= 30Hz (even when paused)
-	// garbage collection event must also run regularly because of unsynced code
 	if (newSimFrame || forceUpdate) {
 		lastUnsyncedUpdateTime = currentTime;
 
