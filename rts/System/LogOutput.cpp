@@ -264,7 +264,7 @@ void CLogOutput::Initialize()
 	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 
-	LOG("LogOutput initialized.");
+	LOG("LogOutput initialized. Logging to %s", filePath.c_str());
 }
 
 
