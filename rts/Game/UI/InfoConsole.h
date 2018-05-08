@@ -30,7 +30,7 @@ public:
 	void Draw() override;
 	void PushNewLinesToEventHandler();
 
-	void RecordLogMessage(int level, const std::string& section, const std::string& text) override;
+	void RecordLogMessage(int level, const std::string& section, const std::string& message) override;
 
 	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "LastMessagePosition");
@@ -69,6 +69,9 @@ private:
 
 	std::deque<RawLine> rawData;
 	std::deque<InfoLine> data;
+
+	std::string prvSection;
+	std::string prvMessage;
 
 	spring::recursive_mutex infoConsoleMutex;
 
