@@ -45,6 +45,8 @@ Lua:
    the engine decide, returning false will force the engine to disallow transportation (for this specific call).
  - new unit rules param access level, 'typed': between 'inlos' and 'inradar', applicable when the unit has once been in LoS
    and continuously in radar since (same rule as `GetUnitLosState(x).typed` and typed engine icons)
+ - the GiveOrder* family of callouts can now accept a number for command params,
+   equivalent to providing an array with one member (use it to save on arrays)
 
 
 AI:
