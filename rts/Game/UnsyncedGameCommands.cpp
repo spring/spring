@@ -1176,9 +1176,8 @@ public:
 
 		// do not need to update lastReadNetTime, gets
 		// done when NETMSG_PAUSE makes the round-trip
-		bool newPause = gs->paused;
-		InverseOrSetBool(newPause, action.GetArgs());
-		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
+		InverseOrSetBool(game->paused, action.GetArgs());
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, game->paused));
 		return true;
 	}
 
