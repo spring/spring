@@ -9,6 +9,7 @@
 #include "Action.h"
 #include "Camera.h"
 #include "Camera/CameraController.h"
+#include "Camera/DummyController.h"
 #include "Camera/FPSController.h"
 #include "Camera/OverheadController.h"
 #include "Camera/RotOverheadController.h"
@@ -48,7 +49,7 @@ CONFIG(int, CamMode)
 		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
 	))
 	.minimumValue(0)
-	.maximumValue(CCameraHandler::CAMERA_MODE_LAST - 1);
+	.maximumValue(CCameraHandler::CAMERA_MODE_DUMMY - 1);
 
 CONFIG(float, CamTimeFactor)
 	.defaultValue(1.0f)
@@ -72,6 +73,7 @@ static CCamera cameras[CCamera::CAMTYPE_COUNT];
 static uint8_t camControllerMem[CCameraHandler::CAMERA_MODE_LAST][sizeof(CFreeController)];
 static uint8_t camHandlerMem[sizeof(CCameraHandler)];
 
+
 void CCameraHandler::SetActiveCamera(unsigned int camType) { cameras[CCamera::CAMTYPE_ACTIVE].SetCamType(camType); }
 void CCameraHandler::InitStatic() {
 	// initialize all global cameras
@@ -91,22 +93,32 @@ void CCameraHandler::KillStatic() {
 	std::memset(camHandlerMem, 0, sizeof(camHandlerMem));
 }
 
+
 CCamera* CCameraHandler::GetCamera(unsigned int camType) { return &cameras[camType]; }
 CCamera* CCameraHandler::GetActiveCamera() { return (GetCamera(cameras[CCamera::CAMTYPE_ACTIVE].GetCamType())); }
 
 
+
 // some controllers access the heightmap, do not construct them yet
-CCameraHandler::CCameraHandler() { camControllers.fill(nullptr); }
-CCameraHandler::~CCameraHandler() { KillControllers(); }
+CCameraHandler::CCameraHandler() {
+	camControllers.fill(nullptr);
+	camControllers[CAMERA_MODE_DUMMY] = new (camControllerMem[CAMERA_MODE_DUMMY]) CDummyController();
+}
+
+CCameraHandler::~CCameraHandler() {
+	// regular controllers should already have been killed
+	assert(camControllers[0] == nullptr);
+	spring::SafeDestruct(camControllers[CAMERA_MODE_DUMMY]);
+	std::memset(camControllerMem[CAMERA_MODE_DUMMY], 0, sizeof(camControllerMem[CAMERA_MODE_DUMMY]));
+}
 
 
-void CCameraHandler::ResetState()
+void CCameraHandler::Init()
 {
 	{
-		KillControllers();
 		InitControllers();
 
-		for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+		for (unsigned int i = 0; i < CAMERA_MODE_DUMMY; i++) {
 			nameModeMap[camControllers[i]->GetName()] = i;
 		}
 	}
@@ -144,6 +156,11 @@ void CCameraHandler::ResetState()
 	}
 }
 
+void CCameraHandler::Kill()
+{
+	KillControllers();
+}
+
 
 void CCameraHandler::InitControllers()
 {
@@ -168,7 +185,9 @@ void CCameraHandler::KillControllers()
 	if (camControllers[0] == nullptr)
 		return;
 
-	for (unsigned int i = 0; i < CAMERA_MODE_LAST; i++) {
+	SetCameraMode(CAMERA_MODE_DUMMY);
+
+	for (unsigned int i = 0; i < CAMERA_MODE_DUMMY; i++) {
 		spring::SafeDestruct(camControllers[i]);
 		std::memset(camControllerMem[i], 0, sizeof(camControllerMem[i]));
 	}
@@ -287,14 +306,21 @@ void CCameraHandler::UpdateTransition()
 
 void CCameraHandler::SetCameraMode(unsigned int newMode)
 {
-	if ((newMode >= camControllers.size()) || (newMode == currCamCtrlNum))
+	const unsigned int oldMode = currCamCtrlNum;
+
+	if ((newMode >= camControllers.size()) || (newMode == oldMode))
 		return;
+
+	// switching {from, to} the dummy only happens on {init, kill}
+	// in either case an interpolated transition is not necessary
+	if (oldMode == CAMERA_MODE_DUMMY || newMode == CAMERA_MODE_DUMMY) {
+		currCamCtrlNum = newMode;
+		return;
+	}
 
 	CameraTransition(1.0f);
 
-	const unsigned int oldMode = currCamCtrlNum;
-
-	CCameraController* oldCamCtrl = camControllers[currCamCtrlNum          ];
+	CCameraController* oldCamCtrl = camControllers[                 oldMode];
 	CCameraController* newCamCtrl = camControllers[currCamCtrlNum = newMode];
 
 	newCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
@@ -431,9 +457,8 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 		if (camMode >= camControllers.size())
 			return false;
 
-		if (camMode != currCamCtrlNum) {
+		if (camMode != currCamCtrlNum)
 			camControllers[currCamCtrlNum = camMode]->SwitchTo(oldMode);
-		}
 	}
 
 	const bool result = camControllers[currCamCtrlNum]->SetState(sm);

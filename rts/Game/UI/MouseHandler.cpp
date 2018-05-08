@@ -217,7 +217,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
-	if (locked && camHandler != nullptr) {
+	if (locked) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		return;
 	}
@@ -235,7 +235,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
 		inMapDrawer->MouseMove(x, y, dx, dy, activeButtonIdx);
 
-	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL) && camHandler != nullptr) {
+	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == nullptr)) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		unitTracker.Disable();
 		return;
@@ -448,10 +448,7 @@ void CMouseHandler::MouseWheel(float delta)
 	if (eventHandler.MouseWheel(delta > 0.0f, delta))
 		return;
 
-	delta *= scrollWheelSpeed;
-
-	if (camHandler != nullptr)
-		camHandler->GetCurrentController().MouseWheelMove(delta);
+	camHandler->GetCurrentController().MouseWheelMove(delta * scrollWheelSpeed);
 }
 
 

@@ -26,7 +26,8 @@ public:
 		CAMERA_MODE_ROTOVERHEAD = 3,
 		CAMERA_MODE_FREE        = 4,
 		CAMERA_MODE_OVERVIEW    = 5,
-		CAMERA_MODE_LAST        = 6,
+		CAMERA_MODE_DUMMY       = 6,
+		CAMERA_MODE_LAST        = 7,
 	};
 
 public:
@@ -47,7 +48,8 @@ public:
 	}
 
 
-	void ResetState();
+	void Init();
+	void Kill();
 	void InitControllers();
 	void KillControllers();
 	void UpdateController(CPlayer* player, bool fpsMode, bool fsEdgeMove, bool wnEdgeMove);
@@ -69,6 +71,8 @@ public:
 	bool LoadView(const std::string& name);
 
 	int GetModeIndex(const std::string& modeName) const;
+	unsigned int GetCurrentControllerNum() const { return currCamCtrlNum; }
+
 
 	/**
 	 * @brief write current camera settings in a vector
@@ -82,8 +86,9 @@ public:
 	 */
 	bool SetState(const CCameraController::StateMap& sm);
 
-	CCameraController& GetCurrentController() { return *(camControllers[currCamCtrlNum]); }
-	unsigned int GetCurrentControllerNum() const { return currCamCtrlNum; }
+
+	const CCameraController& GetCurrentController() const { return *(camControllers[currCamCtrlNum]); }
+	      CCameraController& GetCurrentController()       { return *(camControllers[currCamCtrlNum]); }
 
 	const std::array<CCameraController*, CAMERA_MODE_LAST>& GetControllers() const { return camControllers; }
 
@@ -92,7 +97,7 @@ private:
 	bool LoadViewData(const ViewData& vd);
 
 private:
-	unsigned int currCamCtrlNum = 0;
+	unsigned int currCamCtrlNum = CAMERA_MODE_DUMMY;
 
 	struct CamTransitionState {
 		float3 startPos;
@@ -111,6 +116,7 @@ private:
 
 	CamTransitionState camTransState;
 
+	// last controller is a dummy
 	std::array<CCameraController*, CAMERA_MODE_LAST> camControllers;
 	std::vector<unsigned int> controllerStack;
 
