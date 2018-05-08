@@ -532,7 +532,7 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 		return;
 	}
 
-	LOG("[Sound::%s] device=%p context=%p  channels=%d frames=%d", __func__, curDevice, curContext, obtainedSpec.channels, frameSize);
+	LOG("[Sound::%s] device=%p context=%p  numChannels=%d frameSize=%d", __func__, curDevice, curContext, obtainedSpec.channels, frameSize);
 #endif
 }
 

@@ -170,39 +170,37 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	lines = rawData;
-	int tmp = newLines;
+
+	const int numNewLines = newLines;
 	newLines = 0;
-	return tmp;
+	return numNewLines;
 }
 
 
-void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& text)
+void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& message)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
+
+	if (section == prvSection && message == prvMessage)
+		return;
+
+	newLines += (newLines < maxRawLines);
 
 	if (rawData.size() > maxRawLines)
 		rawData.pop_front();
 
-	if (newLines < maxRawLines)
-		++newLines;
+	rawData.emplace_back(prvMessage = message, prvSection = section, level, rawId++);
 
-	rawData.emplace_back(text, section, level, rawId++);
-
-	if (!smallFont)
+	if (smallFont == nullptr)
 		return;
 
-	// !!! Warning !!!
-	// We must not remove elements from `data` here
-	// cause ::Draw() iterats that container, and it's
-	// possible that it calls LOG(), which will end
-	// in here. So if we would remove stuff here it's
-	// possible that we delete a var that is used in
-	// Draw() & co, and so we might invalidate references
-	// (e.g. of std::strings) and cause SIGFAULTs!
-	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
-	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
+	// NOTE
+	//   do not remove elements from `data` here, ::Draw iterates over it
+	//   and can call LOG() which will end up back in ::RecordLogMessage
+	const std::string& wrappedText = smallFont->Wrap(message, fontSize, (width * globalRendering->viewSizeX) - (2 * border));
+	const std::u8string& unicodeText = toustring(wrappedText);
 
-	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(toustring(wrappedText)));
+	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(unicodeText));
 
 	for (auto& line: lines) {
 		// add the line to the console
