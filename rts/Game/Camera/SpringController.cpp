@@ -262,9 +262,10 @@ void CSpringController::SwitchTo(const int oldCam, const bool showText)
 	if (showText)
 		LOG("Switching to Spring style camera");
 
-	if (oldCam != CCameraHandler::CAMERA_MODE_OVERVIEW) {
-		rot = camera->GetRot() * XZVector;
-	}
+	if (oldCam == CCameraHandler::CAMERA_MODE_OVERVIEW)
+		return;
+
+	rot = camera->GetRot() * XZVector;
 }
 
 

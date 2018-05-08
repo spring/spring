@@ -627,7 +627,7 @@ void CGame::PostLoadRendering() {
 
 void CGame::LoadInterface()
 {
-	camHandler->ResetState();
+	camHandler->Init();
 	mouse->ReloadCursors();
 
 	selectedUnitsHandler.Init(playerHandler.ActivePlayers());
@@ -838,6 +838,7 @@ void CGame::KillInterface()
 {
 	LOG("[Game::%s][1]", __func__);
 	ProfileDrawer::SetEnabled(false);
+	camHandler->Kill();
 	spring::SafeDelete(guihandler);
 	spring::SafeDelete(minimap);
 	spring::SafeDelete(resourceBar);

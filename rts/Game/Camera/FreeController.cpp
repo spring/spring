@@ -367,9 +367,9 @@ float3 CFreeController::SwitchFrom() const
 
 void CFreeController::SwitchTo(const int oldCam, const bool showText)
 {
-	if (showText) {
+	if (showText)
 		LOG("Switching to Free style camera");
-	}
+
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;
 }
