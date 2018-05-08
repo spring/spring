@@ -650,8 +650,8 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
 	CHECK_REQ_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
 	CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
-	CHECK_REQ_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
-	CHECK_REQ_EXT(GLEW_ARB_texture_border_clamp); // 1.3
+	CHECK_OPT_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
+	CHECK_OPT_EXT(GLEW_ARB_texture_border_clamp); // 1.3
 
 	CHECK_REQ_EXT(GLEW_EXT_blend_func_separate); // 1.4
 	CHECK_REQ_EXT(GLEW_EXT_blend_equation_separate); // 2.0
@@ -668,8 +668,8 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_explicit_attrib_location); // 3.3
 
 	CHECK_REQ_EXT(GLEW_ARB_vertex_program); // VS-ARB
-	CHECK_REQ_EXT(GLEW_ARB_fragment_program); // FS-ARB
-	CHECK_REQ_EXT(GLEW_ARB_shading_language_100); // 2.0
+	CHECK_OPT_EXT(GLEW_ARB_fragment_program); // FS-ARB
+	CHECK_OPT_EXT(GLEW_ARB_shading_language_100); // 2.0
 	CHECK_REQ_EXT(GLEW_ARB_vertex_shader); // 1.5 (VS-GLSL; core in 2.0)
 	CHECK_REQ_EXT(GLEW_ARB_fragment_shader); // 1.5 (FS-GLSL; core in 2.0)
 	CHECK_REQ_EXT(GLEW_ARB_geometry_shader4); // GS v4 (GL3.2)
