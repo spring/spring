@@ -1006,18 +1006,20 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 	// params
 	const int paramTableIdx = (idIndex + 1);
 
-	if (!lua_istable(L, paramTableIdx)) {
-		luaL_error(L, "%s(): bad param table", caller);
-	}
+	if (lua_isnumber(L, paramTableIdx)) {
+		cmd.PushParam(lua_tofloat(L, paramTableIdx));
+	} else if (lua_istable(L, paramTableIdx)) {
+		for (lua_pushnil(L); lua_next(L, paramTableIdx) != 0; lua_pop(L, 1)) {
+			if (lua_israwnumber(L, -2)) { // avoid 'n'
+				if (!lua_isnumber(L, -1)) {
+					luaL_error(L, "%s(): expected <number idx=%d, number value> in params-table", caller, lua_tonumber(L, -2));
+				}
 
-	for (lua_pushnil(L); lua_next(L, paramTableIdx) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) { // avoid 'n'
-			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): expected <number idx=%d, number value> in params-table", caller, lua_tonumber(L, -2));
+				cmd.PushParam(lua_tofloat(L, -1));
 			}
-
-			cmd.PushParam(lua_tofloat(L, -1));
 		}
+	} else {
+		luaL_error(L, "%s(): bad param (expected table or number)", caller);
 	}
 
 	// options
@@ -1041,18 +1043,21 @@ Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int table)
 
 	// params
 	lua_rawgeti(L, table, 2);
-	if (!lua_istable(L, -1)) {
-		luaL_error(L, "%s(): bad param table", caller);
-	}
-	const int paramTable = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) { // avoid 'n'
-			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): bad param table entry", caller);
+	if (lua_isnumber(L, -1)) {
+		cmd.PushParam(lua_tofloat(L, -1));
+	} else if (lua_istable(L, -1)) {
+		const int paramTable = lua_gettop(L);
+		for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
+			if (lua_israwnumber(L, -2)) { // avoid 'n'
+				if (!lua_isnumber(L, -1)) {
+					luaL_error(L, "%s(): bad param table entry", caller);
+				}
+				const float value = lua_tofloat(L, -1);
+				cmd.PushParam(value);
 			}
-			const float value = lua_tofloat(L, -1);
-			cmd.PushParam(value);
 		}
+	} else {
+		luaL_error(L, "%s(): bad param (expected table or number)", caller);
 	}
 	lua_pop(L, 1);
 
