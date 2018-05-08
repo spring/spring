@@ -670,12 +670,17 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	constexpr GLfloat borderColor[4] = {1.0f, 1.0f, 1.0f, 0.0f};
+	// no border to prevent artefacts in outlined text
+	constexpr GLfloat borderColor[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+	// constexpr GLint swizzleMask[4] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
+
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	// glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
 
 	texWidth  = wantedTexWidth  = width;
@@ -721,7 +726,7 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 
 	// update texture atlas
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
 	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }

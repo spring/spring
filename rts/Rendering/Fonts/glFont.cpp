@@ -689,18 +689,6 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 
 void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
-	/**
-	 * NOTE:
-	 * Font rendering does not use display lists, but VAs. It's actually faster
-	 * (450% faster with a 7600GT!) for these reasons:
-	 *
-	 * 1. When using DLs, we can not group multiple glyphs into one glBegin/End pair
-	 *    because GL::Translate can not go between such a pair.
-	 * 2. We can now eliminate all GL::PushMatrix/PopMatrix pairs related to font rendering
-	 *    because the transformations are calculated on the fly. These are just a couple of
-	 *    floating point multiplications and shouldn't be too expensive.
-	 */
-
 	const std::u8string& ustr = toustring(str);
 
 	const float startx = x;
@@ -741,6 +729,7 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 
 		prvGlyphPtr = curGlyphPtr;
 		prvGlyphIdx = curGlyphIdx;
+
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const float dx0 = (scaleX * prvGlyphPtr->size.x0()) + x;
@@ -816,6 +805,7 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const auto& stc = prvGlyphPtr->shadowTexCord;
+
 		const float dx0 = (scaleX * prvGlyphPtr->size.x0()) + x;
 		const float dy0 = (scaleY * prvGlyphPtr->size.y0()) + y;
 		const float dx1 = (scaleX * prvGlyphPtr->size.x1()) + x;
@@ -899,6 +889,7 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 
 		const auto&  tc = prvGlyphPtr->texCord;
 		const auto& stc = prvGlyphPtr->shadowTexCord;
+
 		const float dx0 = (scaleX * prvGlyphPtr->size.x0()) + x;
 		const float dy0 = (scaleY * prvGlyphPtr->size.y0()) + y;
 		const float dx1 = (scaleX * prvGlyphPtr->size.x1()) + x;
