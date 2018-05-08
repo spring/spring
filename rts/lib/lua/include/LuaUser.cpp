@@ -41,15 +41,15 @@ int spring_lua_unsynced_rand(lua_State* L) {
 			lua_pushnumber(L, r);
 		} break;
 		case 1: {
-			const unsigned int l = 1;
-			const unsigned int u = luaL_checkint(L, 1);
+			const int l = 1;
+			const int u = luaL_checkint(L, 1);
 
 			luaL_argcheck(L, 1 <= u, 1, "[spring_lua_unsynced_rand(1, upper)] empty interval");
 			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
 		} break;
 		case 2: {
-			const unsigned int l = luaL_checkint(L, 1);
-			const unsigned int u = luaL_checkint(L, 2);
+			const int l = luaL_checkint(L, 1);
+			const int u = luaL_checkint(L, 2);
 
 			luaL_argcheck(L, l <= u, 2, "[spring_lua_unsynced_rand(lower, upper)] empty interval");
 			lua_pushnumber(L, std::floor(r * (u - l + 1)) + l);
