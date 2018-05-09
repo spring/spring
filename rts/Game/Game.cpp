@@ -332,7 +332,7 @@ void CGame::AddTimedJobs()
 
 			// SimFrame handles gc when not paused, this all other cases
 			// do not check the global synced state, never true in demos
-			if (!playing || paused)
+			if ((spring_gettime() - lastSimFrameNetPacketTime).toMilliSecsf() > ((5.0f * 1000.0f) / (GAME_SPEED * gs->speedFactor)))
 				eventHandler.CollectGarbage();
 
 			CInputReceiver::CollectGarbage();
