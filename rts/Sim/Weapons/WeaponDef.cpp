@@ -513,9 +513,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 
 void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
-	LoadSound(wdTable, "soundStart",  0, fireSound.sounds);
-	LoadSound(wdTable, "soundHitDry", 0, hitSound.sounds);
-	LoadSound(wdTable, "soundHitWet", 1, hitSound.sounds);
+	LoadSound(wdTable, "soundStart" , fireSound);
+	LoadSound(wdTable, "soundHitDry",  hitSound);
+	LoadSound(wdTable, "soundHitWet",  hitSound);
 
 	// FIXME: do we still want or need any of this?
 	const bool forceSetVolume =
@@ -530,26 +530,32 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 		fireSound.setVolume(0, 5.0f);
 		hitSound.setVolume(0, 5.0f);
 		hitSound.setVolume(1, 5.0f);
-	} else {
-		float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
-		float hitSoundVolume = fireSoundVolume;
-
-		if (fireSoundVolume > 100.0f) {
-			if (type == "MissileLauncher" || type == "StarburstLauncher") {
-				fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
-			}
-		}
-
-		if (damages.damageAreaOfEffect > 8.0f)
-			hitSoundVolume *= 2.0f;
-
-		if (type == "DGun")
-			hitSoundVolume *= 0.15f;
-
-		if (fireSound.getVolume(0) == -1.0f) { fireSound.setVolume(0, fireSoundVolume); }
-		if (hitSound.getVolume(0) == -1.0f) { hitSound.setVolume(0, hitSoundVolume); }
-		if (hitSound.getVolume(1) == -1.0f) { hitSound.setVolume(1, hitSoundVolume); }
+		return;
 	}
+
+	const float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
+	const float hitSoundVolume = fireSoundVolume;
+
+	#if 0
+	if (fireSoundVolume > 100.0f) {
+		if (type == "MissileLauncher" || type == "StarburstLauncher") {
+			fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
+		}
+	}
+
+	if (damages.damageAreaOfEffect > 8.0f)
+		hitSoundVolume *= 2.0f;
+
+	if (type == "DGun")
+		hitSoundVolume *= 0.15f;
+	#endif
+
+	if (fireSound.getVolume(0) == -1.0f)
+		fireSound.setVolume(0, fireSoundVolume);
+	if (hitSound.getVolume(0) == -1.0f)
+		hitSound.setVolume(0, hitSoundVolume);
+	if (hitSound.getVolume(1) == -1.0f)
+		hitSound.setVolume(1, hitSoundVolume);
 }
 
 
@@ -557,29 +563,19 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 void WeaponDef::LoadSound(
 	const LuaTable& wdTable,
 	const std::string& soundKey,
-	const unsigned int soundIdx,
-	std::vector<GuiSoundSet::Data>& soundData
+	GuiSoundSet& soundData
 ) {
-	soundData.emplace_back("", -1, -1.0f);
-	GuiSoundSet::Data& data = soundData.back();
-
-	assert(soundIdx < soundData.size());
-	assert(soundData[soundIdx].id == -1);
-
 	if (soundKey == "soundStart") {
-		data.name   = wdTable.GetString(soundKey, "");
-		data.volume = wdTable.GetFloat(soundKey + "Volume", -1.0f);
+		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, ""), wdTable.GetFloat(soundKey + "Volume", -1.0f));
 		return;
 	}
 
 	if (soundKey == "soundHitDry") {
-		data.name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
-		data.volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
+		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
 		return;
 	}
 	if (soundKey == "soundHitWet") {
-		data.name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
-		data.volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
+		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
 		return;
 	}
 }

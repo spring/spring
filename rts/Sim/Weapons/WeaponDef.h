@@ -285,7 +285,7 @@ public:
 
 private:
 	void ParseWeaponSounds(const LuaTable& wdTable);
-	void LoadSound(const LuaTable& wdTable, const std::string& soundKey, const unsigned int soundIdx, std::vector<GuiSoundSet::Data>& soundData);
+	void LoadSound(const LuaTable& wdTable, const std::string& soundKey, GuiSoundSet& soundSet);
 };
 
 #endif // _WEAPON_DEF_H

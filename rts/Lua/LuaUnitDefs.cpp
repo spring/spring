@@ -391,13 +391,15 @@ static int WeaponsTable(lua_State* L, const void* data)
 static void PushGuiSoundSet(lua_State* L, const string& name,
                             const GuiSoundSet& soundSet)
 {
-	const int soundCount = (int)soundSet.sounds.size();
+	const int soundCount = (int)soundSet.NumSounds();
+
 	lua_pushsstring(L, name);
-	lua_newtable(L);
+	lua_createtable(L, soundCount, 0);
+
 	for (int i = 0; i < soundCount; i++) {
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
-		const GuiSoundSet::Data& sound = soundSet.sounds[i];
+		const GuiSoundSetData& sound = soundSet.GetSoundData(i);
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
 		if (!CLuaHandle::GetHandleSynced(L)) {

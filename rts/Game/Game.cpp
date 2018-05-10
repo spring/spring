@@ -551,6 +551,8 @@ void CGame::PreLoadSimulation(LuaParser* defsParser)
 
 void CGame::PostLoadSimulation(LuaParser* defsParser)
 {
+	CommonDefHandler::InitStatic();
+
 	{
 		ScopedOnceTimer timer("Game::PostLoadSim (WeaponDefs)");
 		loadscreen->SetLoadMessage("Loading Weapon Definitions");
@@ -906,6 +908,7 @@ void CGame::KillSimulation()
 	CCommandAI::KillCommandDescriptionCache();
 	CUnitScriptEngine::KillStatic();
 	CWeaponLoader::KillStatic();
+	CommonDefHandler::KillStatic();
 }
 
 

@@ -4,68 +4,66 @@
 #define GUI_SOUND_SET_H
 
 #include <cstdlib>
-#include <vector>
 #include <string>
 
 #include "Sim/Misc/CommonDefHandler.h"
 
-struct GuiSoundSet
-{
+struct GuiSoundSetData {
+	GuiSoundSetData() = default;
+	GuiSoundSetData(const std::string& n, int i, float v): name(n), id(i), volume(v) {}
+
+	std::string name;
+	int id = -1;
+	float volume = 0.0f;
+};
+
+struct GuiSoundSet {
 public:
-	struct Data {
-		Data() : id(-1), volume(0.0f) {}
-		Data(const std::string& n, int i, float v): name(n), id(i), volume(v) {}
-
-		std::string name;
-		mutable int id;
-		float volume;
-	};
-
 public:
-	bool ValidIndex(size_t idx) const { return (idx < sounds.size()); }
+	const GuiSoundSetData& GetSoundData(int relDataIdx) const {
+		if (!ValidIndex(minSoundDataIdx + relDataIdx))
+			return CommonDefHandler::GetSoundSetData(0);
 
-	const Data& getSound(int idx) const { return sounds[idx]; }
-	/// get a (loaded) sound's name for index \<idx\>
-	const std::string getName(int idx) const { return ((ValidIndex(idx))? sounds[idx].name : ""); }
+		return CommonDefHandler::GetSoundSetData(minSoundDataIdx + relDataIdx);
+	}
 
-	/// get a (loaded) sound's ID for index \<idx\>
-	// int getID(int idx) const { return (ValidIndex(idx) ? sounds[idx].id : 0); }
-	int getID(int idx) const {
-		if (!ValidIndex(idx))
+
+	/// get a (loaded) sound's ID for set-relative index \<relDataIdx\>
+	int getID(int relDataIdx) const {
+		if (!ValidIndex(minSoundDataIdx + relDataIdx))
 			return 0;
-		if (sounds[idx].id == -1)
-			sounds[idx].id = CommonDefHandler::LoadSoundFile(sounds[idx].name);
 
-		return sounds[idx].id;
+		GuiSoundSetData& soundSet = CommonDefHandler::GetSoundSetData(minSoundDataIdx + relDataIdx);
+
+		if (soundSet.id == -1)
+			soundSet.id = CommonDefHandler::LoadSoundFile(soundSet.name);
+
+		return soundSet.id;
 	}
 
-	/// get a (loaded) sound's volume for index \<idx\>
-	float getVolume(int idx) const { return ((ValidIndex(idx))? sounds[idx].volume: 0.0f); }
+	/// get a (loaded) sound's volume for set-relative index \<relDataIdx\>
+	float getVolume(int relDataIdx) const { return (GetSoundData(relDataIdx).volume); }
 
-
-	/// set a (loaded) sound's name for index \<idx\>
-	void setName(int idx, std::string name) {
-		if (!ValidIndex(idx))
-			return;
-		sounds[idx].name = name;
+	/// set a (loaded) sound's volume for set-relative index \<relDataIdx\>
+	void setVolume(int relDataIdx, float volume) {
+		const_cast<GuiSoundSetData&>(GetSoundData(relDataIdx)).volume = volume;
 	}
 
-	/// set a (loaded) sound's ID for index \<idx\>
-	void setID(int idx, int id) {
-		if (!ValidIndex(idx))
-			return;
-		sounds[idx].id = id;
+	void UpdateIndices(size_t maxDataIdx) {
+		minSoundDataIdx = std::min(minSoundDataIdx, maxDataIdx);
+		maxSoundDataIdx = maxDataIdx;
 	}
 
-	/// set a (loaded) sound's volume for index \<idx\>
-	void setVolume(int idx, float volume) {
-		if (!ValidIndex(idx))
-			return;
-		sounds[idx].volume = volume;
-	}
+	size_t NumSounds() const { return (maxSoundDataIdx + 1 - minSoundDataIdx); }
 
-public:
-	std::vector<Data> sounds;
+private:
+	bool ValidIndex(size_t absDataIdx) const { return (absDataIdx < CommonDefHandler::SoundSetDataCount()); }
+
+private:
+	// data indices into CommonDefHandler::soundSetData comprising this set
+	size_t minSoundDataIdx = 1u << 31u;
+	size_t maxSoundDataIdx = 0;
 };
 
 #endif // GUI_SOUND_SET
+
