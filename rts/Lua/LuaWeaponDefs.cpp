@@ -383,12 +383,14 @@ static int CustomParamsTable(lua_State* L, const void* data)
 static int GuiSoundSetTable(lua_State* L, const void* data)
 {
 	const GuiSoundSet& soundSet = *static_cast<const GuiSoundSet*>(data);
-	const int soundCount = (int)soundSet.sounds.size();
-	lua_newtable(L);
+	const int soundCount = (int)soundSet.NumSounds();
+
+	lua_createtable(L, soundCount, 0);
+
 	for (int i = 0; i < soundCount; i++) {
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
-		const GuiSoundSet::Data& sound = soundSet.sounds[i];
+		const GuiSoundSetData& sound = soundSet.GetSoundData(i);
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
 		if (!CLuaHandle::GetHandleSynced(L)) {

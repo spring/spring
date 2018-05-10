@@ -61,7 +61,6 @@ public:
 protected:
 	void UnitDefLoadSounds(UnitDef*, const LuaTable&);
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
-	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);
 
 	void CleanBuildOptions();
 	void ProcessDecoys();

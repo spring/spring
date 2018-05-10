@@ -158,10 +158,10 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObj
 
 void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
 {
-	if (soundSet.sounds.empty())
+	if (soundSet.NumSounds() == 0)
 		return;
 
-	const int soundIdx = guRNG.NextInt(soundSet.sounds.size());
+	const int soundIdx = guRNG.NextInt(soundSet.NumSounds());
 	const int soundID = soundSet.getID(soundIdx);
 	const float soundVol = soundSet.getVolume(soundIdx);
 
