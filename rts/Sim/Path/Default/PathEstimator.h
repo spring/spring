@@ -40,8 +40,8 @@ public:
 	 *   name of the corresponding map.
 	 *   Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
-	~CPathEstimator();
+	void Init(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
+	void Kill();
 
 
 	/**
@@ -122,16 +122,18 @@ private:
 	friend class CPathManager;
 	friend class CDefaultPathDrawer;
 
-	const unsigned int BLOCKS_TO_UPDATE;
+	unsigned int BLOCKS_TO_UPDATE = 0;
 
-	unsigned int nextOffsetMessageIdx;
-	unsigned int nextCostMessageIdx;
+	unsigned int nextOffsetMessageIdx = 0;
+	unsigned int nextCostMessageIdx = 0;
 
-	std::uint32_t pathChecksum;
-	std::uint32_t fileHashCode;
+	int blockUpdatePenalty = 0;
 
-	std::atomic<std::int64_t> offsetBlockNum;
-	std::atomic<std::int64_t> costBlockNum;
+	std::uint32_t pathChecksum = 0;
+	std::uint32_t fileHashCode = 0;
+
+	std::atomic<std::int64_t> offsetBlockNum = {0};
+	std::atomic<std::int64_t> costBlockNum = {0};
 
 	IPathFinder* parentPathFinder; // parent (PF if BLOCK_SIZE is 16, PE[16] if 32)
 	CPathEstimator* nextPathEstimator; // next lower-resolution estimator
@@ -144,8 +146,6 @@ private:
 	std::vector<float> vertexCosts;
 	/// blocks that may need an update due to map changes
 	std::deque<int2> updatedBlocks;
-
-	int blockUpdatePenalty;
 
 	struct SOffsetBlock {
 		float cost;
