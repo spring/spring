@@ -38,7 +38,8 @@ void IPathFinder::Init(unsigned int _BLOCK_SIZE)
 		openBlockBuffer.Clear();
 		// handled via AllocStateBuffer
 		// blockStates.Clear();
-		openBlocks.Clear();
+		// done in ResetSearch
+		// openBlocks.Clear();
 		dirtyBlocks.clear();
 	}
 	{
