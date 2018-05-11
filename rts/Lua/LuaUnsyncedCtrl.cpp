@@ -2899,7 +2899,7 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 	if (loglevel < 0)
 		return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
 
-	log_frontend_register_runtime_section(logLevel, luaL_checkstring(L, 1));
+	log_frontend_register_runtime_section(loglevel, luaL_checkstring(L, 1));
 	return 0;
 }
 
