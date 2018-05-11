@@ -6,6 +6,7 @@
 #include <string>
 
 class float3;
+class LuaParser;
 class CSoundSource;
 class SoundItem;
 
@@ -60,7 +61,7 @@ public:
 	virtual bool SoundThreadQuit() const = 0;
 	virtual bool CanLoadSoundDefs() const = 0;
 
-	bool LoadSoundDefs(const std::string& fileName, const std::string& modes);
+	bool LoadSoundDefs(LuaParser* defsParser);
 
 	virtual const float3& GetListenerPos() const = 0;
 
@@ -69,7 +70,7 @@ public:
 	unsigned numAbortedPlays = 0;
 
 private:
-	virtual bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) = 0;
+	virtual bool LoadSoundDefsImpl(LuaParser* defsParser) = 0;
 	static bool IsNullAudio();
 };
 

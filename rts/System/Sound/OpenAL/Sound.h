@@ -54,7 +54,7 @@ public:
 	bool SoundThreadQuit() const { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const { return canLoadDefs; }
 
-	bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes);
+	bool LoadSoundDefsImpl(LuaParser* defsParser);
 	const float3& GetListenerPos() const { return myPos; }
 
 	ALCdevice* GetCurrentDevice() { return curDevice; }

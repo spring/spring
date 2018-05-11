@@ -1243,6 +1243,42 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 	return true;
 }
 
+int LuaUtils::ParseLogLevel(lua_State* L, int index)
+{
+	int loglevel = 0;
+	if (lua_israwnumber(L, index)) {
+		loglevel = lua_tonumber(L, index);
+	}
+	else if (lua_israwstring(L, index)) {
+		std::string loglvlstr = lua_tostring(L, index);
+		StringToLowerInPlace(loglvlstr);
+		if (loglvlstr == "debug") {
+			loglevel = LOG_LEVEL_DEBUG;
+		}
+		else if (loglvlstr == "info") {
+			loglevel = LOG_LEVEL_INFO;
+		}
+		else if (loglvlstr == "notice") {
+			loglevel = LOG_LEVEL_NOTICE;
+		}
+		else if (loglvlstr == "warning") {
+			loglevel = LOG_LEVEL_WARNING;
+		}
+		else if (loglvlstr == "error") {
+			loglevel = LOG_LEVEL_ERROR;
+		}
+		else if (loglvlstr == "fatal") {
+			loglevel = LOG_LEVEL_FATAL;
+		}
+		else {
+			return -1;
+		}
+	}
+	else {
+		return -1;
+	}
+	return loglevel;
+}
 
 /*-
 	Logs a msg to the logfile / console

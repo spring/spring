@@ -771,25 +771,27 @@ void CSound::PrintDebugInfo()
 	LOG_L(L_DEBUG, "# SoundItems: %i", (int)soundItems.size());
 }
 
-bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& modes)
+bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	LuaParser parser(fileName, modes, modes);
-	parser.Execute();
+	defsParser->Execute();
 
-	if (!parser.IsValid()) {
-		LOG_L(L_WARNING, "Could not load %s: %s", fileName.c_str(), parser.GetErrorLog().c_str());
+	const std::string& fileName = defsParser->fileName;
+	const std::string& errorLog = defsParser->GetErrorLog();
+
+	if (!defsParser->IsValid()) {
+		LOG_L(L_WARNING, "[%s] could not load %s: %s", __func__, fileName.c_str(), errorLog.c_str());
 		return false;
 	}
 
 	{
-		const LuaTable& soundRoot = parser.GetRoot();
+		const LuaTable& soundRoot = defsParser->GetRoot();
 		const LuaTable& soundItemTable = soundRoot.SubTable("SoundItems");
 
 		if (!soundItemTable.IsValid()) {
-			LOG_L(L_WARNING, "CSound(): could not parse SoundItems table in %s", fileName.c_str());
+			LOG_L(L_WARNING, "[%s] could not parse SoundItems table in %s", __func__, fileName.c_str());
 			return false;
 		}
 
@@ -802,7 +804,6 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 				const LuaTable buf(soundItemTable.SubTable(name));
 				buf.GetMap(bufmap);
 				bufmap["name"] = name;
-				const auto sit = soundItemDefsMap.find(name);
 
 				if (name == "default") {
 					defaultItemNameMap = bufmap;
@@ -811,12 +812,12 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 					continue;
 				}
 
-				if (sit != soundItemDefsMap.end())
-					LOG_L(L_WARNING, "Sound %s gets overwritten by %s", name.c_str(), fileName.c_str());
+				if (soundItemDefsMap.find(name) != soundItemDefsMap.end())
+					LOG_L(L_WARNING, "[%s] sound %s gets overwritten by %s", __func__, name.c_str(), fileName.c_str());
 
 				if (!buf.KeyExists("file")) {
 					// no file, drop
-					LOG_L(L_WARNING, "Sound %s is missing file tag (ignoring)", name.c_str());
+					LOG_L(L_WARNING, "[%s] sound %s is missing file tag (ignoring)", __func__, name.c_str());
 					continue;
 				}
 
@@ -827,7 +828,8 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 
 				MakeItemFromDef(bufmap);
 			}
-			LOG(" parsed %i sounds from %s", (int)keys.size(), fileName.c_str());
+
+			LOG("[%s] parsed %i sounds from %s", __func__, (int)keys.size(), fileName.c_str());
 		}
 	}
 

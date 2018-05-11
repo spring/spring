@@ -7,6 +7,7 @@
 #include "LuaHashString.h"
 #include "LuaMenu.h"
 #include "LuaOpenGLUtils.h"
+#include "LuaParser.h"
 #include "LuaTextures.h"
 #include "LuaUtils.h"
 
@@ -49,7 +50,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/LineDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -469,9 +469,7 @@ int LuaUnsyncedCtrl::SendMessageToSpectators(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
 {
-	const int playerID = luaL_checkint(L, 1);
-
-	if (playerID == gu->myPlayerNum)
+	if (luaL_checkint(L, 1) == gu->myPlayerNum)
 		PrintMessage(L, luaL_checksstring(L, 2));
 
 	return 0;
@@ -479,9 +477,7 @@ int LuaUnsyncedCtrl::SendMessageToPlayer(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
 {
-	const int teamID = luaL_checkint(L, 1);
-
-	if (teamID == gu->myTeam)
+	if (luaL_checkint(L, 1) == gu->myTeam)
 		PrintMessage(L, luaL_checksstring(L, 2));
 
 	return 0;
@@ -489,9 +485,7 @@ int LuaUnsyncedCtrl::SendMessageToTeam(lua_State* L)
 
 int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 {
-	const int allyTeamID = luaL_checkint(L, 1);
-
-	if (allyTeamID == gu->myAllyTeam)
+	if (luaL_checkint(L, 1) == gu->myAllyTeam)
 		PrintMessage(L, luaL_checksstring(L, 2));
 
 	return 0;
@@ -502,7 +496,9 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
-	const bool success = sound->LoadSoundDefs(luaL_checksstring(L, 1), SPRING_VFS_ZIP_FIRST);
+	LuaParser soundDefsParser(luaL_checksstring(L, 1), SPRING_VFS_ZIP_FIRST, SPRING_VFS_ZIP_FIRST);
+
+	const bool success = sound->LoadSoundDefs(&soundDefsParser);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);
@@ -515,7 +511,6 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
 	const int args = lua_gettop(L);
-	bool success = false;
 
 	const unsigned int soundID = sound->GetSoundId(luaL_checksstring(L, 1));
 
@@ -525,24 +520,21 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		float3 pos;
 		float3 speed;
 
-		bool pos_given = false;
-		bool speed_given = false;
-
 		int index = 3;
+
 		if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
 			pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
-			pos_given = true;
 			index += 3;
 
 			if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
 				speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				speed_given = true;
 				index += 3;
 			}
 		}
 
-		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
+		// last argument (with and without pos/speed arguments) is the optional `sfx channel`
 		IAudioChannel** channel = &Channels::General;
+
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
@@ -572,20 +564,18 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			}
 		}
 
-		if (pos_given) {
-			if (speed_given) {
+		if (index >= 6) {
+			if (index >= 9) {
 				channel[0]->PlaySample(soundID, pos, speed, volume);
 			} else {
 				channel[0]->PlaySample(soundID, pos, volume);
 			}
 		} else
 			channel[0]->PlaySample(soundID, volume);
-
-		success = true;
 	}
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, success);
+		lua_pushboolean(L, soundID > 0);
 		return 1;
 	}
 
@@ -754,16 +744,18 @@ int LuaUnsyncedCtrl::AddWorldText(lua_State* L)
 int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	if (!unitDefHandler->IsValidUnitDefID(unitDefID)) {
+
+	if (!unitDefHandler->IsValidUnitDefID(unitDefID))
 		return 0;
-	}
+
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
 	const int teamId = luaL_checkint(L, 5);
-	if (!teamHandler.IsValidTeam(teamId)) {
+
+	if (!teamHandler.IsValidTeam(teamId))
 		return 0;
-	}
+
 	const int facing = luaL_checkint(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, teamId, facing);
 	return 0;
@@ -783,7 +775,7 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 
 			const CUnit* unit = ParseAllyUnit(L, __func__, unitArg);
 
-			if (unit == NULL)
+			if (unit == nullptr)
 				continue;
 
 			commandDrawer->AddLuaQueuedUnit(unit);
@@ -791,9 +783,8 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 	} else {
 		const CUnit* unit = ParseAllyUnit(L, __func__, 1);
 
-		if (unit != NULL) {
+		if (unit != nullptr)
 			commandDrawer->AddLuaQueuedUnit(unit);
-		}
 	}
 
 	return 0;
@@ -2269,7 +2260,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 
 	CUnit* unit = ParseRawUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	const int groupID = luaL_checkint(L, 2);
@@ -2286,7 +2277,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 
 	CGroup* group = groups[groupID];
 
-	if (group != NULL)
+	if (group != nullptr)
 		unit->SetGroup(group);
 
 	return 0;
@@ -2903,33 +2894,10 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
-	int logLevel = LOG_LEVEL_INFO;
+	const int loglevel = LuaUtils::ParseLogLevel(L, 2);
 
-	if (lua_israwnumber(L, 2)) {
-		logLevel = lua_tonumber(L, 2);
-	}
-	if (lua_isstring(L, 2)) {
-		const std::string& loglvlstr = StringToLower(lua_tostring(L, 2));
-
-		if (loglvlstr == "debug") {
-			logLevel = LOG_LEVEL_DEBUG;
-		}
-		else if (loglvlstr == "info") {
-			logLevel = LOG_LEVEL_INFO;
-		}
-		else if (loglvlstr == "warning") {
-			logLevel = LOG_LEVEL_WARNING;
-		}
-		else if (loglvlstr == "error") {
-			logLevel = LOG_LEVEL_ERROR;
-		}
-		else if (loglvlstr == "fatal") {
-			logLevel = LOG_LEVEL_FATAL;
-		}
-		else {
-			return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
-		}
-	}
+	if (loglevel < 0)
+		return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
 
 	log_frontend_register_runtime_section(logLevel, luaL_checkstring(L, 1));
 	return 0;
