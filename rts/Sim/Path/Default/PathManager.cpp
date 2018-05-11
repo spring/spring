@@ -16,6 +16,10 @@
 #include "System/TimeProfiler.h"
 
 
+static CPathFinder    gMaxResPF;
+static CPathEstimator gMedResPE;
+static CPathEstimator gLowResPE;
+
 
 CPathManager::CPathManager()
 : maxResPF(nullptr)
@@ -32,9 +36,6 @@ CPathManager::CPathManager()
 	pathHeatMap = PathHeatMap::GetInstance();
 
 	pathMap.reserve(1024);
-	pcMemPool.clear();
-	peMemPool.clear();
-	pfMemPool.clear();
 
 	// PathNode::nodePos is an ushort2, PathNode::nodeNum is an int
 	// therefore the maximum map size is limited to 64k*64k squares
@@ -43,9 +44,13 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	peMemPool.free(lowResPE);
-	peMemPool.free(medResPE);
-	pfMemPool.free(maxResPF);
+	lowResPE->Kill();
+	medResPE->Kill();
+	maxResPF->Kill();
+
+	maxResPF = nullptr;
+	medResPE = nullptr;
+	lowResPE = nullptr;
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
@@ -56,14 +61,18 @@ std::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		// maxResPF only runs on the main thread, so can be unsafe
-		maxResPF = pfMemPool.alloc<CPathFinder>(false);
-		medResPE = peMemPool.alloc<CPathEstimator>(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
-		lowResPE = peMemPool.alloc<CPathEstimator>(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+		maxResPF = &gMaxResPF;
+		medResPE = &gMedResPE;
+		lowResPE = &gLowResPE;
 
-		// make cached path data checksum part of synced state
-		// so that when any client has a corrupted / incorrect
-		// cache it desyncs from the start, not minutes later
+		// maxResPF only runs on the main thread, so can be unsafe
+		maxResPF->Init(false);
+		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+
+		// make cached path data checksum part of synced state s.t. when
+		// any client has a corrupted or incorrect cache it desyncs from
+		// the start, not minutes later
 		{ SyncedUint tmp(GetPathCheckSum()); }
 	}
 

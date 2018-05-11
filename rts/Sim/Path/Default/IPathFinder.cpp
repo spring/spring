@@ -11,32 +11,49 @@ static std::vector<PathNodeStateBuffer> nodeStateBuffers;
 static std::vector<IPathFinder*> pathFinderInstances;
 
 
-IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
-	: BLOCK_SIZE(_BLOCK_SIZE)
-	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
-	, nbrOfBlocks(mapDims.mapx / BLOCK_SIZE, mapDims.mapy / BLOCK_SIZE)
-	, mStartBlockIdx(0)
-	, mGoalBlockIdx(0)
-	, mGoalHeuristic(0.0f)
-	, maxBlocksToBeSearched(0)
-	, testedBlocks(0)
-	, instanceIndex(pathFinderInstances.size())
+void IPathFinder::InitStatic() { pathFinderInstances.reserve(8); }
+void IPathFinder::KillStatic() { pathFinderInstances.clear  ( ); }
+
+
+void IPathFinder::Init(unsigned int _BLOCK_SIZE)
 {
-	pathFinderInstances.push_back(this);
+	{
+		BLOCK_SIZE = _BLOCK_SIZE;
+		BLOCK_PIXEL_SIZE = BLOCK_SIZE * SQUARE_SIZE;
+
+		nbrOfBlocks.x = mapDims.mapx / BLOCK_SIZE;
+		nbrOfBlocks.y = mapDims.mapy / BLOCK_SIZE;
+
+		mStartBlockIdx = 0;
+		mGoalBlockIdx = 0;
+
+		mGoalHeuristic = 0.0f;
+
+		maxBlocksToBeSearched = 0;
+		testedBlocks = 0;
+
+		instanceIndex = pathFinderInstances.size();
+	}
+	{
+		openBlockBuffer.Clear();
+		// handled via AllocStateBuffer
+		// blockStates.Clear();
+		openBlocks.Clear();
+		dirtyBlocks.clear();
+	}
+	{
+		pathFinderInstances.push_back(this);
+	}
 
 	AllocStateBuffer();
 	ResetSearch();
 }
 
-IPathFinder::~IPathFinder()
+void IPathFinder::Kill()
 {
 	// allow our PNSB to be reused across reloads
 	nodeStateBuffers[instanceIndex] = std::move(blockStates);
 }
-
-
-void IPathFinder::InitStatic() { pathFinderInstances.reserve(8); }
-void IPathFinder::KillStatic() { pathFinderInstances.clear  ( ); }
 
 
 void IPathFinder::AllocStateBuffer()
