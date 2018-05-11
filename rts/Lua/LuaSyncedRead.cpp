@@ -935,9 +935,9 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 
 int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
-	lua_newtable(L);
-
 	const auto& mapOpts = CGameSetup::GetMapOptions();
+
+	lua_createtable(L, 0, mapOpts.size());
 
 	for (auto it = mapOpts.cbegin(); it != mapOpts.cend(); ++it) {
 		lua_pushsstring(L, it->first);
@@ -951,9 +951,9 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 
 int LuaSyncedRead::GetModOptions(lua_State* L)
 {
-	lua_newtable(L);
-
 	const auto& modOpts = CGameSetup::GetModOptions();
+
+	lua_createtable(L, 0, modOpts.size());
 
 	for (auto it = modOpts.cbegin(); it != modOpts.cend(); ++it) {
 		lua_pushsstring(L, it->first);

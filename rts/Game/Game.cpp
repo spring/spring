@@ -529,7 +529,13 @@ void CGame::LoadDefs(LuaParser* defsParser)
 		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
-		sound->LoadSoundDefs("gamedata/sounds.lua", SPRING_VFS_MOD_BASE);
+		LuaParser soundDefsParser("gamedata/sounds.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+		soundDefsParser.GetTable("Spring");
+		soundDefsParser.AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+		soundDefsParser.AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
+		soundDefsParser.EndTable();
+
+		sound->LoadSoundDefs(&soundDefsParser);
 		chatSound = sound->GetSoundId("IncomingChat");
 	}
 
