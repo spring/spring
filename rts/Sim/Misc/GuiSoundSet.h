@@ -54,7 +54,9 @@ public:
 		maxSoundDataIdx = maxDataIdx;
 	}
 
-	size_t NumSounds() const { return (maxSoundDataIdx + 1 - minSoundDataIdx); }
+	size_t NumSounds() const {
+		return ((maxSoundDataIdx + 1 - minSoundDataIdx) * ValidIndex(minSoundDataIdx + 0));
+	}
 
 private:
 	bool ValidIndex(size_t absDataIdx) const { return (absDataIdx >= minSoundDataIdx && absDataIdx <= maxSoundDataIdx); }
