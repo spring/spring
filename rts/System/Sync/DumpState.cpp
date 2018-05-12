@@ -126,10 +126,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const float3& zdir = u->frontdir;
 
 		file << "\t\tunitID: " << u->id << " (name: " << u->unitDef->name << ")\n";
-		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << "\n";
-		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << "\n";
-		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << "\n";
-		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << "\n";
+		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
+		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << ">\n";
+		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << ">\n";
+		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << ">\n";
 		file << "\t\t\theading: " << int(u->heading) << ", mapSquare: " << u->mapSquare << "\n";
 		file << "\t\t\thealth: " << u->health << ", experience: " << u->experience << "\n";
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";

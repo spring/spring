@@ -245,12 +245,12 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 		callinArgs[0] = 4;
 		callinArgs[3] = ((wd != nullptr)? wd->tdfId : -1);
 		callinArgs[4] = int(100 * inoutDamage);
+		// weaponHitMod, not an actual arg
+		callinArgs[MAX_COB_ARGS] = 1;
 
-		int weaponHitMod = 1;
+		Call(COBFN_HitByWeaponId, callinArgs, CBNone, 0, &callinArgs[MAX_COB_ARGS]);
 
-		Call(COBFN_HitByWeaponId, callinArgs, CBNone, 0, &weaponHitMod);
-
-		inoutDamage *= weaponHitMod * 0.01f;
+		inoutDamage *= (callinArgs[MAX_COB_ARGS] * 0.01f);
 	} else {
 		Call(COBFN_HitByWeapon, callinArgs);
 	}

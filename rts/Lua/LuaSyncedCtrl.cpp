@@ -1506,7 +1506,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 		return 0;
 
 	if (lua_isnumber(L, 2)) {
-		unit->health = min(unit->maxHealth, lua_tofloat(L, 2));
+		unit->health = std::min(unit->maxHealth, lua_tofloat(L, 2));
 	} else if (lua_istable(L, 2)) {
 		constexpr int tableIdx = 2;
 
@@ -1516,7 +1516,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 
 			switch (hashString(lua_tolstring(L, -2, nullptr))) {
 				case hashString("health"): {
-					unit->health = min(unit->maxHealth, lua_tofloat(L, -1));
+					unit->health = std::min(unit->maxHealth, lua_tofloat(L, -1));
 				} break;
 				case hashString("capture"): {
 					unit->captureProgress = lua_tofloat(L, -1);
