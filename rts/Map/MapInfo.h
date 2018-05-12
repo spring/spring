@@ -21,7 +21,7 @@ class CMapInfo
 public:
 	/** Terrain type, there can be 256 of these:
 	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
-	static const int NUM_TERRAIN_TYPES = 256;
+	static constexpr int NUM_TERRAIN_TYPES = 256;
 
 	/**
 	 * @param mapInfoFile mapinfo file, aka smf (full path)
@@ -251,8 +251,8 @@ private:
 	void ReadPFSConstants();
 	void ReadSound();
 
-	MapParser* parser; // map       parser root table
-	LuaTable* resRoot; // resources parser root table
+	MapParser* mapInfoParser; // map-info parser root table
+	LuaTable* resTableRoot; // resources parser root table
 };
 
 extern const CMapInfo* mapInfo;
