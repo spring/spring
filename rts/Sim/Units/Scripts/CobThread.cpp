@@ -279,7 +279,12 @@ constexpr int DROP   = 0x10084000;
 #define LUA8 118
 #define LUA9 119
 
+#if 0
 #define GET_LONG_PC() (cobFile->code[pc++])
+#else
+// mantis #5981
+#define GET_LONG_PC() (cobFile->code.at(pc++))
+#endif
 
 
 #if 0
