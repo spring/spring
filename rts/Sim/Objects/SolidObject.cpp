@@ -47,14 +47,14 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 
 	CR_MEMBER(tempNum),
-	CR_MEMBER(lastHitPieceFrame),
+	CR_MEMBER(pieceHitFrames),
 
 	CR_MEMBER(moveDef),
 
 	CR_MEMBER(localModel),
 	CR_MEMBER(collisionVolume),
 	CR_MEMBER(selectionVolume), // unsynced, could also be ignored
-	CR_MEMBER(lastHitPiece),
+	CR_MEMBER(hitModelPieces),
 
 	CR_IGNORED(groundDecal), // loaded from render*Created
 
@@ -93,6 +93,7 @@ CSolidObject::CSolidObject():
 
 	crushable(false),
 	immobile(false),
+	yardOpen(false),
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
 
@@ -105,6 +106,7 @@ CSolidObject::CSolidObject():
 	footprint(1, 1),
 
 	heading(0),
+	buildFacing(0),
 
 	// objects start out non-blocking but fully collidable
 	// SolidObjectDef::collidable controls only the SO-bit
@@ -115,11 +117,12 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 
 	tempNum(0),
-	lastHitPieceFrame(-1),
+	pieceHitFrames{-1, -1},
 
 	moveDef(nullptr),
 
-	lastHitPiece(nullptr),
+	hitModelPieces{nullptr, nullptr},
+	blockMap(nullptr),
 	groundDecal(nullptr),
 
 	frontdir( FwdVector),
@@ -129,11 +132,7 @@ CSolidObject::CSolidObject():
 	midPos(pos),
 	mapPos(GetMapPos()),
 
-	dragScales(OnesVector),
-
-	blockMap(nullptr),
-	yardOpen(false),
-	buildFacing(0)
+	dragScales(OnesVector)
 {
 }
 

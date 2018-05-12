@@ -102,21 +102,18 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* lmp, const LocalModelP
 
 static void DrawObjectDebugPieces(const CSolidObject* o)
 {
-	const int hitDeltaTime = (gs->frameNum - o->lastHitPieceFrame);
+	const int hitDeltaTime = gs->frameNum - o->pieceHitFrames[true];
+	const int setFadeColor = (o->pieceHitFrames[true] > 0 && hitDeltaTime < 150);
 
 	for (unsigned int n = 0; n < o->localModel.pieces.size(); n++) {
 		const LocalModelPiece* lmp = o->localModel.GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 
-		const bool b0 = ((o->lastHitPieceFrame > 0) && (hitDeltaTime < 150));
-		const bool b1 = (lmp == o->lastHitPiece);
-
 		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
 			continue;
 
-		if (b0 && b1) {
+		if (setFadeColor && lmp == o->hitModelPieces[true])
 			glColor3f((1.0f - (hitDeltaTime / 150.0f)), 0.0f, 0.0f);
-		}
 
 		glPushMatrix();
 		glMultMatrixf(lmp->GetModelSpaceMatrix());
@@ -124,9 +121,8 @@ static void DrawObjectDebugPieces(const CSolidObject* o)
 		DrawCollisionVolume(lmpVol);
 		glPopMatrix();
 
-		if (b0 && b1) {
+		if (setFadeColor && lmp == o->hitModelPieces[true])
 			glColorf4(DEFAULT_VOLUME_COLOR);
-		}
 	}
 }
 
