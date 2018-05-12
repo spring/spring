@@ -176,18 +176,16 @@ public:
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
 	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
 
-	const LocalModelPiece* GetLastHitPiece(int frame) const {
-		if (frame < 0)
-			return lastHitPiece;
-		if (frame == lastHitPieceFrame)
-			return lastHitPiece;
+	const LocalModelPiece* GetLastHitPiece(int frame, bool synced = true) const {
+		if (frame == pieceHitFrames[synced])
+			return hitModelPieces[synced];
 
 		return nullptr;
 	}
 
-	void SetLastHitPiece(const LocalModelPiece* p, int f) {
-		lastHitPiece      = p;
-		lastHitPieceFrame = f;
+	void SetLastHitPiece(const LocalModelPiece* piece, int frame, bool synced = true) {
+		hitModelPieces[synced] = piece;
+		pieceHitFrames[synced] = frame;
 	}
 
 
@@ -312,6 +310,7 @@ public:
 
 	bool crushable;                             ///< whether this object can potentially be crushed during a collision with another object
 	bool immobile;                              ///< whether this object can be moved or not (except perhaps along y-axis, to make it stay on ground)
+	bool yardOpen;
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
@@ -324,6 +323,8 @@ public:
 	int2 footprint;                             ///< The unrotated x-/z-size of this object, according to its footprint.
 
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
+	SyncedSshort buildFacing;                   ///< Orientation of footprint, 4 different states
+
 	PhysicalState physicalState;                ///< bitmask indicating current state of this object within the game world
 	CollidableState collidableState;            ///< bitmask indicating which types of objects this object can collide with
 
@@ -331,7 +332,7 @@ public:
 	int allyteam;                               ///< allyteam that this->team is part of
 
 	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
-	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
+	int pieceHitFrames[2];                      ///< frames in which lastHitPieces were hit
 
 
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
@@ -340,8 +341,10 @@ public:
 	CollisionVolume collisionVolume;
 	CollisionVolume selectionVolume;
 
-	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
-	      SolidObjectGroundDecal* groundDecal;
+	const LocalModelPiece* hitModelPieces[2];   ///< pieces that were last hit by a {[0] := unsynced, [1] := synced} projectile
+
+	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
+	SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
@@ -359,10 +362,6 @@ public:
 
 	float3 drawPos;                             ///< = pos + speed * timeOffset (unsynced)
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
-
-	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
-	bool yardOpen;
-	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
 	/**
 	 * @brief mod controlled parameters

@@ -217,6 +217,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 			if (synced) {
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+
 				syncedProjectileIDs[p->id] = nullptr;
 				freeSyncedIDs.push_back(p->id);
 
@@ -225,6 +226,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			} else {
 			#if !UNSYNCED_PROJ_NOEVENT
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+
 				unsyncedProjectileIDs[p->id] = nullptr;
 				freeUnsyncedIDs.push_back(p->id);
 			#endif
@@ -306,8 +308,7 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		++i;
 	}
 
-	//WARNING: check if the vector got enlarged while iterating, in that case
-	// we didn't update the newest items
+	// WARNING: see UPDATE_PTR_CONTAINER
 	assert(cont.size() == origSize);
 
 	cont.erase(cont.begin() + size, cont.end());
@@ -381,14 +382,17 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	if (freeIDs->empty()) {
 		const size_t oldSize = proIDs->size();
 		const size_t newSize = oldSize + 256;
+
 		for (int i = oldSize; i < newSize; i++) {
 			freeIDs->push_back(i);
 		}
+
 		if (p->synced) {
 			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
-		} else{
+		} else {
 			std::random_shuffle(freeIDs->begin(), freeIDs->end(), guRNG);
 		}
+
 		proIDs->resize(newSize, nullptr);
 	}
 
@@ -467,7 +471,7 @@ void CProjectileHandler::CheckUnitCollisions(
 
 		if (CCollisionHandler::DetectHit(unit, unit->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
 			if (cq.GetHitPiece() != nullptr)
-				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
+				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum, p->synced);
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -505,7 +509,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 		if (CCollisionHandler::DetectHit(feature, feature->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
 			if (cq.GetHitPiece() != nullptr)
-				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
+				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum, p->synced);
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -529,6 +533,7 @@ void CProjectileHandler::CheckShieldCollisions(
 ) {
 	if (!p->checkCol)
 		return;
+	// skip unsynced and non-weapon projectiles
 	if (!p->weapon)
 		return;
 

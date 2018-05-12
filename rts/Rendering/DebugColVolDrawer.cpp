@@ -107,8 +107,8 @@ static void DrawUnitDebugPieceTree(CMatrix44f m, const LocalModelPiece* lmp, con
 
 static void DrawObjectDebugPieces(const CSolidObject* o, Shader::IProgramObject* s, CMatrix44f m)
 {
-	const int hitDeltaTime = gs->frameNum - o->lastHitPieceFrame;
-	const int setFadeColor = (o->lastHitPieceFrame > 0 && hitDeltaTime < 150);
+	const int hitDeltaTime = gs->frameNum - o->pieceHitFrames[true];
+	const int setFadeColor = (o->pieceHitFrames[true] > 0 && hitDeltaTime < 150);
 
 	for (unsigned int n = 0; n < o->localModel.pieces.size(); n++) {
 		const LocalModelPiece* lmp = o->localModel.GetPiece(n);
@@ -117,13 +117,13 @@ static void DrawObjectDebugPieces(const CSolidObject* o, Shader::IProgramObject*
 		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
 			continue;
 
-		if (setFadeColor && lmp == o->lastHitPiece)
+		if (setFadeColor && lmp == o->hitModelPieces[true])
 			s->SetUniform4f(3, 1.0f - (hitDeltaTime / 150.0f), 0.0f, 0.0f, 1.0f);
 
 		// factors in the volume offsets
 		DrawCollisionVolume(lmpVol, s, m * lmp->GetModelSpaceMatrix());
 
-		if (setFadeColor && lmp == o->lastHitPiece)
+		if (setFadeColor && lmp == o->hitModelPieces[true])
 			s->SetUniform4fv(3, DEFAULT_VOLUME_COLOR);
 	}
 }

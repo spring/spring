@@ -485,10 +485,10 @@ static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o)
 {
 	if (o == nullptr)
 		return 0;
-	if (o->lastHitPiece == nullptr)
+	if (o->hitModelPieces[true] == nullptr)
 		return 0;
 
-	const LocalModelPiece* lmp = o->lastHitPiece;
+	const LocalModelPiece* lmp = o->hitModelPieces[true];
 	const S3DModelPiece* omp = lmp->original;
 
 	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
@@ -497,7 +497,7 @@ static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o)
 		lua_pushsstring(L, omp->name);
 	}
 
-	lua_pushnumber(L, o->lastHitPieceFrame);
+	lua_pushnumber(L, o->pieceHitFrames[true]);
 	return 2;
 }
 
