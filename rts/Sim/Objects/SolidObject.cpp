@@ -13,9 +13,6 @@
 
 int CSolidObject::deletingRefID = -1;
 
-const float CSolidObject::DEFAULT_MASS = 1e5f;
-const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
-const float CSolidObject::MAXIMUM_MASS = 1e6f;
 
 CR_BIND_DERIVED_INTERFACE(CSolidObject, CWorldObject)
 CR_REG_METADATA(CSolidObject,
@@ -82,59 +79,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_POSTLOAD(PostLoad)
 
 ))
-
-
-CSolidObject::CSolidObject():
-	health(0.0f),
-	maxHealth(1.0f),
-
-	mass(DEFAULT_MASS),
-	crushResistance(0.0f),
-
-	crushable(false),
-	immobile(false),
-	yardOpen(false),
-	blockEnemyPushing(true),
-	blockHeightChanges(false),
-
-	noDraw(false),
-	luaDraw(false),
-	noSelect(false),
-
-	xsize(1),
-	zsize(1),
-	footprint(1, 1),
-
-	heading(0),
-	buildFacing(0),
-
-	// objects start out non-blocking but fully collidable
-	// SolidObjectDef::collidable controls only the SO-bit
-	physicalState(PhysicalState(PSTATE_BIT_ONGROUND)),
-	collidableState(CollidableState(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS)),
-
-	team(0),
-	allyteam(0),
-
-	tempNum(0),
-	pieceHitFrames{-1, -1},
-
-	moveDef(nullptr),
-
-	hitModelPieces{nullptr, nullptr},
-	blockMap(nullptr),
-	groundDecal(nullptr),
-
-	frontdir( FwdVector),
-	rightdir(-RgtVector),
-	updir(UpVector),
-
-	midPos(pos),
-	mapPos(GetMapPos()),
-
-	dragScales(OnesVector)
-{
-}
 
 
 void CSolidObject::PostLoad()
@@ -416,7 +360,8 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const
 			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
 
 			case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-			case MoveDef::Ship:  { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+			case MoveDef::Ship : { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
+			default            : {                                                                    } break;
 		}
 	}
 
