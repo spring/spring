@@ -23,12 +23,12 @@ class MapParser
 		MapParser(const MapParser&) = delete;
 
 		LuaParser* GetParser() { return parser; }
-
 		LuaTable GetRoot();
-		bool IsValid() const;
-		std::string GetErrorLog() const;
 
+		bool IsValid() const;
 		bool GetStartPos(int team, float3& pos) const;
+
+		const std::string& GetErrorLog() const;
 
 	private:
 		LuaParser* parser;

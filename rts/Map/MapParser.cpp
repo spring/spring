@@ -10,8 +10,8 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
-#include <string>
-#include <ctype.h>
+#include <cassert>
+#include <cctype>
 
 
 std::string MapParser::GetMapConfigName(const std::string& mapFileName)
@@ -20,25 +20,25 @@ std::string MapParser::GetMapConfigName(const std::string& mapFileName)
 	const std::string filename  = FileSystem::GetBasename(mapFileName);
 	const std::string extension = FileSystem::GetExtension(mapFileName);
 
-	if (extension == "smf") {
+	if (extension == "smf")
 		return directory + filename + ".smd";
-	}
-	else {
-		return mapFileName;
-	}
+
+	return mapFileName;
 }
 
 
-MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
+MapParser::MapParser(const std::string& mapFileName) : parser(nullptr)
 {
 	const std::string mapConfig = GetMapConfigName(mapFileName);
 
-	CFileHandler f("mapinfo.lua", SPRING_VFS_MAP_BASE);
-	if (f.FileExists()) {
+	if (CFileHandler::FileExists("mapinfo.lua", SPRING_VFS_MAP_BASE)) {
+		// map supplies its own
 		parser = new LuaParser("mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	} else {
+		// rely on basecontent
 		parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	}
+
 	parser->GetTable("Map");
 	parser->AddString("fileName", FileSystem::GetFilename(mapFileName));
 	parser->AddString("fullName", mapFileName);
@@ -54,17 +54,17 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 	parser->EndTable();
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 
-	if (!parser->Execute())
-	{
-		errorLog = parser->GetErrorLog();
-	}
+	if (parser->Execute())
+		return;
+
+	errorLog = parser->GetErrorLog();
 }
 
 
 MapParser::~MapParser()
 {
 	delete parser;
-	parser = NULL;
+	parser = nullptr;
 }
 
 
@@ -73,50 +73,43 @@ bool MapParser::GetStartPos(int team, float3& pos) const
 	errorLog.clear();
 
 	if (!parser->IsValid()) {
-		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: " + parser->GetErrorLog();
+		errorLog = "[MapParser] can not get start-position for team " + IntToString(team) + ", reason: " + parser->GetErrorLog();
 		return false;
 	}
+
 	const LuaTable teamsTable = parser->GetRoot().SubTable("teams");
 	const LuaTable posTable = teamsTable.SubTable(team).SubTable("startPos");
+
 	if (!posTable.IsValid()) {
-		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: Not defined in the map's config!";
+		errorLog = "[MapParser] start-position for team " + IntToString(team) + " not defined in the map's config";
 		return false;
 	}
 
 	pos.x = posTable.GetFloat("x", pos.x);
 	pos.z = posTable.GetFloat("z", pos.z);
-
 	return true;
 }
 
 
 LuaTable MapParser::GetRoot()
 {
-	if (parser) {
-		errorLog.clear();
-		return parser->GetRoot();
-	} else {
-		errorLog = "Map-Parser: Failed to get parser root node, reason: parser not ready || file not found.";
-		return LuaTable();
-	}
+	// can never be non-null
+	assert(parser != nullptr);
+	errorLog.clear();
+	return parser->GetRoot();
 }
 
 
 bool MapParser::IsValid() const
 {
-	if (parser) {
-		return parser->IsValid();
-	} else {
-		return false;
-	}
+	assert(parser != nullptr);
+	return parser->IsValid();
 }
 
 
-std::string MapParser::GetErrorLog() const
+const std::string& MapParser::GetErrorLog() const
 {
-	if (parser) {
-		return errorLog;
-	} else {
-		return "Map-Parser: parser not ready || file not found";
-	}
+	assert(parser != nullptr);
+	return errorLog;
 }
+
