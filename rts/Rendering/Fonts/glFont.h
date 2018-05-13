@@ -41,6 +41,7 @@ public:
 	static bool LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile);
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
+	static void ReallocAtlases();
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float  outlineweight);
 

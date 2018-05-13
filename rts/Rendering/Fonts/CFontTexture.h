@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/RowAtlasAlloc.h"
 #include "System/UnorderedMap.hpp"
@@ -91,21 +92,25 @@ public:
 	float GetLineHeight() const { return lineHeight; }
 	float GetDescender() const { return fontDescender; }
 	int GetTexture() const { return texture; }
+
 	const std::string& GetFamily()   const { return fontFamily; }
 	const std::string& GetStyle()    const { return fontStyle; }
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
+public:
+	void ReallocAtlases();
 protected:
-	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 	void UpdateTexture();
-
 private:
 	void CreateTexture(const int width, const int height);
 
 	// Load all chars in block's range
 	void LoadBlock(char32_t start, char32_t end);
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
+
+protected:
+	float GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl);
 
 protected:
 	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
@@ -129,19 +134,20 @@ public:
 	unsigned int textureSpaceMatrix;
 
 private:
-	CBitmap* atlasUpdate;
-	CBitmap* atlasUpdateShadow;
+	int curTextureUpdate = 0;
 #ifndef HEADLESS
-	int lastTextureUpdate;
+	int lastTextureUpdate = 0;
 	FT_Face face;
 #endif
-	int curTextureUpdate;
 
 
 	std::shared_ptr<FontFace> shFace;
 	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
 	CRowAtlasAlloc atlasAlloc;
+
+	CBitmap atlasUpdate;
+	CBitmap atlasUpdateShadow;
 };
 
 #endif // CFONTTEXTURE_H
