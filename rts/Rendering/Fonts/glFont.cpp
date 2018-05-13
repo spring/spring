@@ -117,6 +117,16 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 }
 
 
+void CglFont::ReallocAtlases()
+{
+	if (font != nullptr)
+		static_cast<CFontTexture*>(font)->ReallocAtlases();
+	if (smallFont != nullptr)
+		static_cast<CFontTexture*>(smallFont)->ReallocAtlases();
+}
+
+
+
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
 , fontPath(fontFile)

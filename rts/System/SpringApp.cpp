@@ -712,9 +712,7 @@ void SpringApp::Reload(const std::string script)
 	LuaOpenGL::Init();
 
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
-
-	// normally not needed, but would allow switching fonts
-	// LoadFonts();
+	CglFont::ReallocAtlases();
 
 	LOG("[SpringApp::%s][8]", __func__);
 

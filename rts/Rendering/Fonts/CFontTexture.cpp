@@ -350,9 +350,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, texHeight(0)
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
-
-	, atlasUpdate(nullptr)
-	, atlasUpdateShadow(nullptr)
 {
 	if (fontSize <= 0)
 		fontSize = 14;
@@ -378,6 +375,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
 	//lineHeight = FT_MulFix(face->height, face->size->metrics.y_scale); // bad results
 	lineHeight = face->height / face->units_per_EM;
+
 	if (lineHeight <= 0)
 		lineHeight = 1.25 * (face->bbox.yMax - face->bbox.yMin);
 
@@ -385,7 +383,8 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	CreateTexture(32, 32);
 
 	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
-	memset(kerningPrecached, 0, 128*128*sizeof(float));
+	memset(kerningPrecached, 0, sizeof(kerningPrecached));
+
 	for (char32_t i = 32; i < 127; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
@@ -409,9 +408,6 @@ CFontTexture::~CFontTexture()
 
 	glDeleteTextures(1, &glyphAtlasTextureID);
 	glyphAtlasTextureID = 0;
-
-	spring::SafeDelete(atlasUpdate);
-	spring::SafeDelete(atlasUpdateShadow);
 #endif
 }
 
@@ -478,7 +474,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 	// first check caches
 	const uint32_t hash = GetKerningHash(lgl.utf16, rgl.utf16);
 
-	if (hash < 128*128)
+	if (hash < (sizeof(kerningPrecached) / sizeof(kerningPrecached[0])))
 		return kerningPrecached[hash];
 
 	const auto it = kerningDynamic.find(hash);
@@ -543,7 +539,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	}
 
 
-	// readback textureatlas allocator data
+	// read atlasAlloc glyph data back into atlasUpdate{Shadow}
 	{
 		atlasAlloc.SetNonPowerOfTwo(true);
 
@@ -552,14 +548,15 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
 		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
-		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight))
-			(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
 
-		if (atlasUpdateShadow == nullptr)
-			atlasUpdateShadow = new CBitmap(nullptr, wantedTexWidth, wantedTexHeight, 1);
+		if ((atlasUpdate.xsize != wantedTexWidth) || (atlasUpdate.ysize != wantedTexHeight))
+			atlasUpdate = std::move(atlasUpdate.CanvasResize(wantedTexWidth, wantedTexHeight, false));
 
-		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight))
-			(*atlasUpdateShadow) = atlasUpdateShadow->CanvasResize(wantedTexWidth, wantedTexHeight, false);
+		if (atlasUpdateShadow.Empty())
+			atlasUpdateShadow.Alloc(wantedTexWidth, wantedTexHeight, 1);
+
+		if ((atlasUpdateShadow.xsize != wantedTexWidth) || (atlasUpdateShadow.ysize != wantedTexHeight))
+			atlasUpdateShadow = std::move(atlasUpdateShadow.CanvasResize(wantedTexWidth, wantedTexHeight, false));
 
 		for (char32_t i = start; i < end; ++i) {
 			const std::string glyphName  = IntToString(i);
@@ -571,15 +568,15 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 			const auto texpos  = atlasAlloc.GetEntry(glyphName);
 			const auto texpos2 = atlasAlloc.GetEntry(glyphName2);
 
-			glyphs[i].texCord       = IGlyphRect(texpos[0], texpos[1], texpos[2] - texpos[0], texpos[3] - texpos[1]);
+			glyphs[i].texCord       = IGlyphRect(texpos [0], texpos [1], texpos [2] - texpos [0], texpos [3] - texpos [1]);
 			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
 
-			auto& glyphbm = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
+			auto& glyphbm = (CBitmap*&) atlasAlloc.GetEntryData(glyphName);
 
 			if (texpos[2] != 0)
-				atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
+				atlasUpdate.CopySubImage(*glyphbm, texpos.x, texpos.y);
 			if (texpos2[2] != 0)
-				atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
+				atlasUpdateShadow.CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
 
 			spring::SafeDelete(glyphbm);
 		}
@@ -600,13 +597,14 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 		return;
 
 	// check for duplicated glyphs
-	for (auto& it: glyphs) {
-		if (it.second.index == index && it.second.face == f->face) {
-			auto& glyph = glyphs[ch];
-			glyph = it.second;
-			glyph.utf16 = ch;
-			return;
-		}
+	const auto pred = [&](const std::pair<char32_t, GlyphInfo>& p) { return (p.second.index == index && p.second.face == f->face); };
+	const auto iter = std::find_if(glyphs.begin(), glyphs.end(), pred);
+
+	if (iter != glyphs.end()) {
+		auto& glyph = glyphs[ch];
+		glyph = iter->second;
+		glyph.utf16 = ch;
+		return;
 	}
 
 	auto& glyph = glyphs[ch];
@@ -652,6 +650,7 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 		return;
 	}
 
+	// store glyph bitmap in allocator until the next LoadBlock
 	CBitmap* gbm = new CBitmap(slot->bitmap.buffer, width, height, 1);
 	atlasAlloc.AddEntry(IntToString(ch), int2(width, height), (void*)gbm);
 	atlasAlloc.AddEntry(IntToString(ch) + "sh", int2(width + 2 * outlineSize, height + 2 * outlineSize));
@@ -682,12 +681,22 @@ void CFontTexture::CreateTexture(const int width, const int height)
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 1, 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
+	atlasUpdate.Alloc(texWidth = wantedTexWidth = width, texHeight = wantedTexHeight = height, 1);
+	atlasUpdateShadow.Alloc(width, height, 1);
+#endif
+}
 
-	texWidth  = wantedTexWidth  = width;
-	texHeight = wantedTexHeight = height;
+void CFontTexture::ReallocAtlases()
+{
+#ifndef HEADLESS
+	assert(!atlasUpdate.Empty());
 
-	atlasUpdate = new CBitmap(nullptr, texWidth, texHeight, 1);
+	const int xsize = atlasUpdate.xsize;
+	const int ysize = atlasUpdate.ysize;
 
+	// NB: pool has already been wiped here, do not return memory to it but just realloc
+	atlasUpdate.Alloc(xsize, ysize, 1);
+	atlasUpdateShadow.Alloc(xsize, ysize, 1);
 #endif
 }
 
@@ -704,29 +713,30 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 	texWidth  = wantedTexWidth;
 	texHeight = wantedTexHeight;
 
-	// merge shadowing
-	if (atlasUpdateShadow != nullptr) {
-		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
-		assert((atlasUpdate->xsize * atlasUpdate->ysize) % sizeof(int) == 0);
+	// merge shadow and regular atlas bitmaps, dispose shadow
+	if (atlasUpdateShadow.xsize == atlasUpdate.xsize && atlasUpdateShadow.ysize == atlasUpdate.ysize) {
+		atlasUpdateShadow.Blur(outlineSize, outlineWeight);
+		assert((atlasUpdate.xsize * atlasUpdate.ysize) % sizeof(int) == 0);
 
-		auto src = reinterpret_cast<int*>(atlasUpdateShadow->GetRawMem());
-		auto dst = reinterpret_cast<int*>(atlasUpdate->GetRawMem());
-		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
+		const int* src = reinterpret_cast<const int*>(atlasUpdateShadow.GetRawMem());
+		      int* dst = reinterpret_cast<      int*>(atlasUpdate.GetRawMem());
 
-		assert(atlasUpdateShadow->GetMemSize() / sizeof(int) == size);
-		assert(atlasUpdate->GetMemSize() / sizeof(int) == size);
+		const int size = (atlasUpdate.xsize * atlasUpdate.ysize) / sizeof(int);
+
+		assert(atlasUpdateShadow.GetMemSize() / sizeof(int) == size);
+		assert(atlasUpdate.GetMemSize() / sizeof(int) == size);
 
 		for (int i = 0; i < size; ++i) {
 			dst[i] |= src[i];
 		}
 
-		spring::SafeDelete(atlasUpdateShadow);
+		atlasUpdateShadow = {};
 	}
 
 
 	// update texture atlas
 	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, texWidth, texHeight, 0, GL_RED, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
 	glBindTexture(GL_TEXTURE_2D, 0);
 #endif
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/RowAtlasAlloc.h"
 #include "System/UnorderedMap.hpp"
@@ -97,17 +98,19 @@ public:
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
+public:
+	void ReallocAtlases();
 protected:
-	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
-
 	void UpdateGlyphAtlasTexture();
-
 private:
 	void CreateTexture(const int width, const int height);
 
 	// Load all chars in block's range
 	void LoadBlock(char32_t start, char32_t end);
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
+
+protected:
+	float GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl);
 
 protected:
 	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
@@ -132,9 +135,6 @@ protected:
 	unsigned int glyphAtlasTextureID = 0;
 
 private:
-	CBitmap* atlasUpdate;
-	CBitmap* atlasUpdateShadow;
-
 	int curTextureUpdate = 0;
 #ifndef HEADLESS
 	int lastTextureUpdate = 0;
@@ -146,6 +146,9 @@ private:
 	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
 	CRowAtlasAlloc atlasAlloc;
+
+	CBitmap atlasUpdate;
+	CBitmap atlasUpdateShadow;
 };
 
 #endif // CFONTTEXTURE_H
