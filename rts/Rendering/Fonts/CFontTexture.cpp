@@ -754,7 +754,7 @@ void CFontTexture::UpdateTexture()
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate.GetRawMem());
 
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);
