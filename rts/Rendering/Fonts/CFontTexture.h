@@ -113,9 +113,6 @@ protected:
 	float GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl);
 
 protected:
-	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
-	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
-
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
 
 	int outlineSize;
@@ -143,6 +140,11 @@ private:
 
 	std::shared_ptr<FontFace> shFace;
 	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
+
+	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
+	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
+
+	std::vector<CBitmap> atlasGlyphs;
 
 	CRowAtlasAlloc atlasAlloc;
 
