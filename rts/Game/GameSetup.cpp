@@ -528,17 +528,28 @@ bool CGameSetup::Init(const std::string& buf)
 		return false;
 
 	{
-		// Used by dedicated server only
+		// read script-provided hashes for dedicated server
 		const std::string mapHashHexStr = file.SGetValueDef("",  "GAME\\MapHash");
 		const std::string modHashHexStr = file.SGetValueDef("",  "GAME\\ModHash");
+
+		LOG_L(L_INFO, "[GameSetup::%s]\n\tmapHashStr=\"%s\"\n\tmodHashStr=\"%s\"", __func__, mapHashHexStr.c_str(), modHashHexStr.c_str());
 
 		sha512::hex_digest mapHashHex;
 		sha512::hex_digest modHashHex;
 		sha512::raw_digest mapHashRaw;
 		sha512::raw_digest modHashRaw;
 
-		std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
-		std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+		// zero-fill; {map,mod}HashHexStr might be empty or invalid SHA digests
+		mapHashHex.fill(0);
+		modHashHex.fill(0);
+		mapHashRaw.fill(0);
+		modHashRaw.fill(0);
+
+		if (mapHashHexStr.size() == (sha512::SHA_LEN * 2))
+			std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
+		if (modHashHexStr.size() == (sha512::SHA_LEN * 2))
+			std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+
 		sha512::read_digest(mapHashHex, mapHashRaw);
 		sha512::read_digest(modHashHex, modHashRaw);
 		std::memcpy(dsMapHash, mapHashRaw.data(), sizeof(dsMapHash));
