@@ -571,17 +571,18 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 			glyphs[i].texCord       = IGlyphRect(texpos [0], texpos [1], texpos [2] - texpos [0], texpos [3] - texpos [1]);
 			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
 
-			auto& glyphbm = (CBitmap*&) atlasAlloc.GetEntryData(glyphName);
+			const size_t glyphIdx = reinterpret_cast<size_t>(atlasAlloc.GetEntryData(glyphName));
+
+			assert(glyphIdx < atlasGlyphs.size());
 
 			if (texpos[2] != 0)
-				atlasUpdate.CopySubImage(*glyphbm, texpos.x, texpos.y);
+				atlasUpdate.CopySubImage(atlasGlyphs[glyphIdx], texpos.x, texpos.y);
 			if (texpos2[2] != 0)
-				atlasUpdateShadow.CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
-
-			spring::SafeDelete(glyphbm);
+				atlasUpdateShadow.CopySubImage(atlasGlyphs[glyphIdx], texpos2.x + outlineSize, texpos2.y + outlineSize);
 		}
 
 		atlasAlloc.clear();
+		atlasGlyphs.clear();
 	}
 
 	// schedule a texture update
@@ -636,6 +637,7 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 
 	const int width  = slot->bitmap.width;
 	const int height = slot->bitmap.rows;
+	const int olSize = 2 * outlineSize;
 
 	if (width <= 0 || height <= 0)
 		return;
@@ -650,10 +652,11 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 		return;
 	}
 
-	// store glyph bitmap in allocator until the next LoadBlock
-	CBitmap* gbm = new CBitmap(slot->bitmap.buffer, width, height, 1);
-	atlasAlloc.AddEntry(IntToString(ch), int2(width, height), (void*)gbm);
-	atlasAlloc.AddEntry(IntToString(ch) + "sh", int2(width + 2 * outlineSize, height + 2 * outlineSize));
+	// store glyph bitmap (index) in allocator until the next LoadBlock call
+	atlasGlyphs.emplace_back(slot->bitmap.buffer, width, height, 1);
+
+	atlasAlloc.AddEntry(IntToString(ch)       , int2(width         , height         ), reinterpret_cast<void*>(atlasGlyphs.size() - 1));
+	atlasAlloc.AddEntry(IntToString(ch) + "sh", int2(width + olSize, height + olSize)                                                 );
 #endif
 }
 
@@ -697,6 +700,18 @@ void CFontTexture::ReallocAtlases()
 	// NB: pool has already been wiped here, do not return memory to it but just realloc
 	atlasUpdate.Alloc(xsize, ysize, 1);
 	atlasUpdateShadow.Alloc(xsize, ysize, 1);
+
+	if (atlasGlyphs.empty())
+		return;
+
+	LOG_L(L_WARNING, "[FontTexture::%s] discarding %u glyph bitmaps", __func__, uint32_t(atlasGlyphs.size()));
+
+	// should be empty, but realloc glyphs just in case so we can safely dispose of them
+	for (CBitmap& bmp: atlasGlyphs) {
+		bmp.Alloc(1, 1, 1);
+	}
+
+	atlasGlyphs.clear();
 #endif
 }
 
