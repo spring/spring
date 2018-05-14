@@ -527,12 +527,13 @@ bool CGameSetup::Init(const std::string& buf)
 	if (!file.SectionExist("GAME"))
 		return false;
 
+	#ifdef DEDICATED
 	{
 		// read script-provided hashes for dedicated server
 		const std::string mapHashHexStr = file.SGetValueDef("",  "GAME\\MapHash");
 		const std::string modHashHexStr = file.SGetValueDef("",  "GAME\\ModHash");
 
-		LOG_L(L_INFO, "[GameSetup::%s]\n\tmapHashStr=\"%s\"\n\tmodHashStr=\"%s\"", __func__, mapHashHexStr.c_str(), modHashHexStr.c_str());
+		LOG_L(L_INFO, "[GameSetup::%s]\n\tmapHashHexStr=\"%s\"\n\tmodHashHexStr=\"%s\"", __func__, mapHashHexStr.c_str(), modHashHexStr.c_str());
 
 		sha512::hex_digest mapHashHex;
 		sha512::hex_digest modHashHex;
@@ -555,6 +556,7 @@ bool CGameSetup::Init(const std::string& buf)
 		std::memcpy(dsMapHash, mapHashRaw.data(), sizeof(dsMapHash));
 		std::memcpy(dsModHash, modHashRaw.data(), sizeof(dsModHash));
 	}
+	#endif
 
 	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 
