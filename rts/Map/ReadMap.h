@@ -192,6 +192,8 @@ public:
 	float GetCurrMinHeight() const { return currHeightBounds.x; }
 	float GetInitMaxHeight() const { return initHeightBounds.y; }
 	float GetCurrMaxHeight() const { return currHeightBounds.y; }
+	float GetInitAvgHeight() const { return (GetInitMinHeight() + GetInitMaxHeight()) * 0.5f); }
+	float GetCurrAvgHeight() const { return (GetCurrMinHeight() + GetCurrAvgHeight()) * 0.5f); }
 	float GetBoundingRadius() const { return boundingRadius; }
 
 	bool IsUnderWater() const { return (currHeightBounds.y <  0.0f); }

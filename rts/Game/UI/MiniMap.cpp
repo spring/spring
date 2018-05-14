@@ -1131,7 +1131,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+		cam->GetFrustumSides(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
 		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
 		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
@@ -1140,7 +1140,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		va->Initialize();
 		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
 
-		for (auto& fl: negSides) {
+		for (const auto& fl: negSides) {
 			if (fl.minz < fl.maxz) {
 				va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
 				va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
