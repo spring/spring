@@ -229,8 +229,8 @@ const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 
 	const float3& p = lastMsgPositions[msgPosIndx];
 
-	// advance the position and wrap around
-	msgPosIndx += 1;
+	// cycle to previous position
+	msgPosIndx += (std::min(numPosMsgs, lastMsgPositions.size()) - 1);
 	msgPosIndx %= std::min(numPosMsgs, lastMsgPositions.size());
 
 	return p;
