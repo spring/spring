@@ -25,7 +25,7 @@ public:
 	virtual int GetMaxMipMaps() = 0;
 
 public:
-	void AddEntry(const std::string& name, int2 size, void* data = NULL)
+	void AddEntry(const std::string& name, int2 size, void* data = nullptr)
 	{
 		entries[name] = SAtlasEntry(size, data);
 	}
@@ -37,7 +37,6 @@ public:
 
 	void*& GetEntryData(const std::string& name)
 	{
-		assert(entries[name].data);
 		return entries[name].data;
 	}
 
@@ -77,8 +76,8 @@ public:
 protected:
 	struct SAtlasEntry
 	{
-		SAtlasEntry() : data(NULL) {}
-		SAtlasEntry(const int2 _size, void* _data = NULL) : size(_size), data(_data) {}
+		SAtlasEntry() : data(nullptr) {}
+		SAtlasEntry(const int2 _size, void* _data = nullptr) : size(_size), data(_data) {}
 		
 		int2 size;
 		float4 texCoords;
