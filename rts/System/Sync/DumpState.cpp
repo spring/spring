@@ -99,7 +99,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// we only care about the synced projectile data here
 	const std::vector<CUnit*>& activeUnits = unitHandler.GetActiveUnits();
 	const auto& activeFeatureIDs = featureHandler.GetActiveFeatureIDs();
-	const ProjectileContainer& projectiles = projectileHandler.syncedProjectiles;
+	const ProjectileContainer& projectiles = projectileHandler.projectileContainers[true];
 
 	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
 	file << "\tunits: " << activeUnits.size() << "\n";
