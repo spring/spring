@@ -4,8 +4,8 @@
 #define PROJECTILE_HANDLER_H
 
 #include <array>
-#include <deque>
 #include <vector>
+
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
@@ -22,7 +22,6 @@ struct UnitDef;
 struct FlyingPiece;
 
 
-typedef std::vector<CProjectile*> ProjectileMap;
 typedef std::vector<CProjectile*> ProjectileContainer; // <unsorted>
 typedef std::vector<CGroundFlash*> GroundFlashContainer;
 typedef std::vector<FlyingPiece> FlyingPieceContainer;
@@ -78,25 +77,29 @@ public:
 
 	// these vars are used to precache parts of GetCurrentParticles() calculations
 	int lastCurrentParticles = 0;
-	int lastSyncedProjectilesCount = 0;
-	int lastUnsyncedProjectilesCount = 0;
+	int lastProjectileCounts[2] = {0, 0};
 
-	// flying pieces are sorted from time to time to reduce gl state changes
+	// flying pieces (unsynced) are sorted from time to time to reduce GL state changes
 	std::array<                bool, MODELTYPE_OTHER> resortFlyingPieces;
-	std::array<FlyingPieceContainer, MODELTYPE_OTHER> flyingPieces;  // unsynced
+	std::array<FlyingPieceContainer, MODELTYPE_OTHER> flyingPieces;
 
-	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
-	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
-	GroundFlashContainer groundFlashes;       // unsynced
+	// [0] contains only projectiles that can not change simulation state
+	// [1] contains only projectiles that can     change simulation state
+	ProjectileContainer projectileContainers[2];
+
+	// unsynced
+	GroundFlashContainer groundFlashes;
 
 private:
-	void UpdateProjectileContainer(ProjectileContainer&, bool);
+	void UpdateProjectileContainer(bool);
 
-	std::deque<int> freeSyncedIDs;            // available synced (weapon, piece) projectile ID's
-	std::deque<int> freeUnsyncedIDs;          // available unsynced projectile ID's
+	// [0] := available unsynced projectile ID's
+	// [1] := available synced (weapon, piece) projectile ID's
+	std::vector<int> freeProjectileIDs[2];
 
-	ProjectileMap syncedProjectileIDs;        // ID ==> projectile* map for living synced projectiles
-	ProjectileMap unsyncedProjectileIDs;      // ID ==> projectile* map for living unsynced projectiles
+	// [0] := ID ==> projectile* map for living unsynced projectiles
+	// [1] := ID ==> projectile* map for living   synced projectiles
+	std::vector<CProjectile*> projectileMaps[2];
 };
 
 
