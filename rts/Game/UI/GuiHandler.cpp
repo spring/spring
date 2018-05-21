@@ -3405,58 +3405,31 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitdef, const f
 
 
 
-static inline GLuint GetConeList()
-{
-	static GLuint list = 0; // FIXME: put in the class
 
-	if (list != 0)
-		return list;
+static void DrawWeaponArc(
+	GL::RenderDataBufferC* rdb,
+	Shader::IProgramObject* ipo,
+	const float3& sourcePos,
+	const float2& rangleAngle,
+	const float2& headingPitch
+) {
+	CMatrix44f mat;
 
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE); {
-		glBegin(GL_TRIANGLE_FAN);
-		const int divs = 64;
-		glVertex3f(0.0f, 0.0f, 0.0f);
-		for (int i = 0; i <= divs; i++) {
-			const float rad = math::TWOPI * (float)i / (float)divs;
-			glVertex3f(1.0f, std::sin(rad), std::cos(rad));
-		}
-		glEnd();
-	}
-	glEndList();
-	return list;
+	const float  xlen = rangleAngle.x * std::cos(rangleAngle.y);
+	const float yzlen = rangleAngle.x * std::sin(rangleAngle.y);
+
+	mat.Translate(sourcePos);
+	mat.RotateY(-headingPitch.x);
+	mat.RotateZ(-headingPitch.y);
+	mat.Scale({xlen, yzlen, yzlen});
+
+	ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * mat);
+
+	glDrawCone(rdb, GL_FRONT, 64, {1.0f, 0.0f, 0.0f, 0.25f}); // back-faces (inside) in red
+	glDrawCone(rdb, GL_BACK , 64, {0.0f, 1.0f, 0.0f, 0.25f}); // front-faces (outside) in green
 }
 
-
-static void DrawWeaponCone(const float3& pos, float len, float hrads, float heading, float pitch)
-{
-	GL::PushMatrix();
-
-	const float xlen = len * std::cos(hrads);
-	const float yzlen = len * std::sin(hrads);
-
-	GL::Translate(pos.x, pos.y, pos.z);
-	GL::RotateY(heading * math::RAD_TO_DEG);
-	GL::RotateZ(pitch   * math::RAD_TO_DEG);
-	GL::Scale(xlen, yzlen, yzlen);
-
-	glEnable(GL_CULL_FACE);
-
-	glCullFace(GL_FRONT);
-	glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-	glCallList(GetConeList());
-
-	glCullFace(GL_BACK);
-	glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
-	glCallList(GetConeList());
-
-	glDisable(GL_CULL_FACE);
-
-	GL::PopMatrix();
-}
-
-
-static inline void DrawWeaponArc(const CUnit* unit)
+static inline void DrawUnitWeaponArcs(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
 {
 	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
@@ -3470,9 +3443,58 @@ static inline void DrawWeaponArc(const CUnit* unit)
 		const float pitch   = math::asin(w->wantedDir.y);
 
 		// note: cone visualization is invalid for ballistic weapons
-		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
+		DrawWeaponArc(rdb, ipo, w->weaponMuzzlePos, {w->range, hrads}, {heading, pitch});
 	}
 }
+
+
+static void DrawUnitRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject*)
+{
+	glBallisticCircle(rdb, unit->weapons[0],  40, 1, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+}
+static void DrawUnitWeaponArcFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
+{
+	DrawUnitWeaponArcs(unit, rdb, ipo);
+}
+
+template<typename DrawFunc> static void DrawRangeRingsAndWeaponArcs(
+	const CUnit* unitPointedAt,
+	const DrawFunc unitDrawFunc,
+	GL::RenderDataBufferC* rdb,
+	Shader::IProgramObject* ipo,
+	bool onMiniMap
+) {
+	assert((unitDrawFunc == DrawUnitRangeRingFunc) || (unitDrawFunc == DrawUnitWeaponArcFunc));
+
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* unit = unitHandler.GetUnit(unitID);
+
+		// handled earlier in DrawMapStuff
+		if (unit == unitPointedAt)
+			continue;
+
+		if (unit->maxRange <= 0.0f)
+			continue;
+		if (unit->weapons.empty())
+			continue;
+		// only consider (armed) static structures for the minimap
+		if (onMiniMap && !unit->unitDef->IsImmobileUnit())
+			continue;
+
+		if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
+			continue;
+
+		unitDrawFunc(unit, rdb, ipo);
+	}
+
+	// rings are batched (unlike arcs), have to use LINES
+	if (unitDrawFunc != DrawUnitRangeRingFunc)
+		return;
+
+	rdb->Submit(GL_LINES);
+}
+
+
 
 
 void CGuiHandler::DrawMapStuff(bool onMiniMap)
@@ -3649,6 +3671,10 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 
 
+
+	GL::RenderDataBufferC*  bufferC = GL::GetRenderBufferC();
+	Shader::IProgramObject* shaderC = bufferC->GetShader();
+
 	// draw the ranges for the unit that is being pointed at
 	const CUnit* pointedAt = nullptr;
 
@@ -3676,11 +3702,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			// draw (primary) weapon range
 			if (unit->maxRange > 0.0f) {
-				glDisable(GL_DEPTH_TEST);
-				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->weapons[0], 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
-				glEnable(GL_DEPTH_TEST);
+				glSetupRangeRingDrawState(shaderC);
+				glBallisticCircle(bufferC, unit->weapons[0],  40, 0, GL_LINE_LOOP,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+				glResetRangeRingDrawState(shaderC);
 			}
+
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
@@ -3773,19 +3799,25 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					buildColors.reserve(GetBuildPositions(bi, bi, tracePos, traceDir));
 				}
 
+				{
+					glSetupRangeRingDrawState(shaderC);
+
+					// draw (primary) weapon range
+					for (const BuildInfo& bi: buildInfos) {
+						if (unitdef->weapons.empty())
+							continue;
+
+						glBallisticCircle(bufferC, unitdef->weapons[0].def,  40, 1, GL_LINES,  bi.pos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
+					}
+
+					bufferC->Submit(GL_LINES);
+					glResetRangeRingDrawState(shaderC);
+				}
 
 				for (const BuildInfo& bi: buildInfos) {
 					const float3& buildPos = bi.pos;
 
 					DrawUnitDefRanges(nullptr, unitdef, buildPos);
-
-					// draw (primary) weapon range
-					if (!unitdef->weapons.empty()) {
-						glDisable(GL_DEPTH_TEST);
-						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(unitdef->weapons[0].def, 40, buildPos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity});
-						glEnable(GL_DEPTH_TEST);
-					}
 
 					// draw extraction range
 					if (unitdef->extractRange > 0.0f) {
@@ -3873,33 +3905,17 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		const bool   drawWeaponArcs = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
 
 		if (playerAttackCmd || defaultAttackCmd) {
-			for (const int unitID: selectedUnitsHandler.selectedUnits) {
-				const CUnit* unit = unitHandler.GetUnit(unitID);
+			static constexpr decltype(&glSetupRangeRingDrawState) setupDrawStateFuncs[] = {&glSetupRangeRingDrawState, &glSetupWeaponArcDrawState};
+			static constexpr decltype(&glResetRangeRingDrawState) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
+			static constexpr decltype(&DrawUnitRangeRingFunc    )       unitDrawFuncs[] = {&DrawUnitRangeRingFunc, &DrawUnitWeaponArcFunc};
 
-				// handled above
-				if (unit == pointedAt)
-					continue;
+			shaderC->Enable();
+			shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 
-				if (unit->maxRange <= 0.0f)
-					continue;
-				if (unit->weapons.empty())
-					continue;
-				// only consider (armed) static structures for the minimap
-				if (onMiniMap && !unit->unitDef->IsImmobileUnit())
-					continue;
-
-				if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
-					continue;
-
-				glDisable(GL_DEPTH_TEST);
-				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->weapons[0], 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
-				glEnable(GL_DEPTH_TEST);
-
-				if (!drawWeaponArcs)
-					continue;
-
-				DrawWeaponArc(unit);
+			for (int i = 0; i < (1 + drawWeaponArcs); i++) {
+				setupDrawStateFuncs[i](nullptr);
+				DrawRangeRingsAndWeaponArcs(pointedAt, unitDrawFuncs[i], bufferC, shaderC, onMiniMap);
+				resetDrawStateFuncs[i](nullptr);
 			}
 		}
 	}

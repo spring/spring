@@ -1497,7 +1497,15 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 		const float   slope = luaL_checkfloat(L, 6);
 		const float gravity = luaL_optfloat(L, 7, mapInfo->map.gravity);
 
-		glBallisticCircle(wd, luaL_checkint(L, 5), pos, {radius, slope, gravity});
+		const float4 defColor = cmdColors.rangeAttack;
+		const float4 argColor = {luaL_optfloat(L, 8, defColor.x), luaL_optfloat(L, 9, defColor.y), luaL_optfloat(L, 10, defColor.z), 1.0f};
+
+		GL::RenderDataBufferC*  bufferC = GL::GetRenderBufferC();
+		Shader::IProgramObject* shaderC = (luaL_optboolean(L, 11, true))? bufferC->GetShader(): nullptr;
+
+		glSetupRangeRingDrawState(shaderC);
+		glBallisticCircle(bufferC, wd,  luaL_checkint(L, 5), 0, GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		glResetRangeRingDrawState(shaderC);
 	} else {
 		glSurfaceCircle(pos, luaL_checkfloat(L, 4), luaL_checkint(L, 5));
 	}

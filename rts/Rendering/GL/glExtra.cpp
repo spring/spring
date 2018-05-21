@@ -2,7 +2,10 @@
 
 
 #include "glExtra.h"
+#include "RenderDataBuffer.hpp"
 #include "VertexArray.h"
+
+#include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -62,20 +65,68 @@ void setSurfaceSquareFunc(SurfaceSquareFunc func)
 
 
 
-static constexpr float (*weaponRangeFuncs[])(const CWeapon*, const WeaponDef*, float, float) = {
-	CWeapon::GetStaticRange2D,
-	CWeapon::GetLiveRange2D,
-};
+// default for glBallisticCircle
+void glSetupRangeRingDrawState(Shader::IProgramObject* ipo) {
+	glDisable(GL_DEPTH_TEST);
 
-static void glBallisticCircle(const CWeapon* weapon, const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params)
-{
-	constexpr int resDiv = 50;
+	if (ipo != nullptr) {
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	}
+}
+// default for glDrawCone
+void glSetupWeaponArcDrawState(Shader::IProgramObject* ipo) {
+	glEnable(GL_CULL_FACE);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(resolution *= 2, 0, VA_SIZE_0);
+	if (ipo != nullptr) {
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	}
+}
 
-	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
+// default for glBallisticCircle
+void glResetRangeRingDrawState(Shader::IProgramObject* ipo) {
+	if (ipo != nullptr)
+		ipo->Disable();
+
+	glEnable(GL_DEPTH_TEST);
+}
+// default for glDrawCone
+void glResetWeaponArcDrawState(Shader::IProgramObject* ipo) {
+	if (ipo != nullptr)
+		ipo->Disable();
+
+	glDisable(GL_CULL_FACE);
+}
+
+
+
+
+static void glBallisticCircle(
+	GL::RenderDataBufferC* rdBuffer,
+	const CWeapon* weapon,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t submitCtr,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	constexpr unsigned int RES_DIV = 50;
+	constexpr unsigned int MAX_RES = 80;
+
+	static constexpr decltype(&CWeapon::GetStaticRange2D) weaponRangeFuncs[] = {
+		CWeapon::GetStaticRange2D,
+		CWeapon::GetLiveRange2D,
+	};
+
+	circleRes = std::min(circleRes * 2, MAX_RES);
+
+	// world-space
+	static float3 vertices[MAX_RES];
 
 	const float radius = params.x;
 	const float slope = params.y;
@@ -83,8 +134,8 @@ static void glBallisticCircle(const CWeapon* weapon, const WeaponDef* weaponDef,
 	const float wdHeightMod = weaponDef->heightmod;
 	const float wdProjGravity = mix(params.z, -weaponDef->myGravity, weaponDef->myGravity != 0.0f);
 
-	for_mt(0, resolution, [&](const int i) {
-		const float radians = math::TWOPI * (float)i / (float)resolution;
+	for_mt(0, circleRes, [&](const int i) {
+		const float radians = math::TWOPI * (float)i / (float)circleRes;
 
 		const float sinR = fastmath::sin(radians);
 		const float cosR = fastmath::cos(radians);
@@ -102,7 +153,7 @@ static void glBallisticCircle(const CWeapon* weapon, const WeaponDef* weaponDef,
 		float ydiff = 0.0f;
 
 		// "binary search" for the maximum positional range per angle, accounting for terrain height
-		for (int j = 0; j < resDiv && (std::fabs(posWeaponRange - maxWeaponRange) + ydiff) > (0.01f * maxWeaponRange); j++) {
+		for (unsigned int j = 0; j < RES_DIV && (std::fabs(posWeaponRange - maxWeaponRange) + ydiff) > (0.01f * maxWeaponRange); j++) {
 			if (posWeaponRange > maxWeaponRange) {
 				maxWeaponRange += rangeIncrement;
 			} else {
@@ -129,25 +180,106 @@ static void glBallisticCircle(const CWeapon* weapon, const WeaponDef* weaponDef,
 		vertices[i] = pos;
 	});
 
-	va->DrawArray0(GL_LINE_LOOP);
+	switch (lineMode) {
+		case GL_LINE_LOOP: {
+			for (unsigned int i = 0; i < circleRes; i++) {
+				rdBuffer->SafeAppend({vertices[i], &color.x});
+			}
+		} break;
+		case GL_LINES: {
+			for (unsigned int i = 0; i < circleRes; i++) {
+				rdBuffer->SafeAppend({vertices[(i + 0)            ], &color.x});
+				rdBuffer->SafeAppend({vertices[(i + 1) % circleRes], &color.x});
+			}
+		} break;
+		default: {
+			assert(false);
+		} break;
+	}
+
+	if (submitCtr != 0)
+		return;
+
+	rdBuffer->Submit(lineMode);
 }
 
 
 /*
- *  Draws a trigonometric circle in 'resolution' steps, with a slope modifier
+ *  Draws a trigonometric circle in 'circleRes' steps, with a slope modifier
  */
-void glBallisticCircle(const CWeapon* weapon, unsigned int resolution, const float3& center, const float3& params)
-{
-	glBallisticCircle(weapon, weapon->weaponDef, resolution, center, params);
+void glBallisticCircle(
+	GL::RenderDataBufferC* rdBuffer,
+	const CWeapon* weapon,
+	uint32_t circleRes,
+	uint32_t submitCtr,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(rdBuffer,  weapon, weapon->weaponDef,  circleRes, submitCtr, lineMode,  center, params, color);
 }
 
-void glBallisticCircle(const WeaponDef* weaponDef, unsigned int resolution, const float3& center, const float3& params)
-{
-	glBallisticCircle(nullptr, weaponDef, resolution, center, params);
+void glBallisticCircle(
+	GL::RenderDataBufferC* rdBuffer,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t submitCtr,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(rdBuffer,  nullptr, weaponDef,  circleRes, submitCtr, lineMode,  center, params, color);
 }
+
+
 
 
 /******************************************************************************/
+
+void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t coneDivs, const float4& color) {
+	const float invConeDiv = 1.0f / coneDivs;
+	const float radsPerDiv = math::TWOPI * invConeDiv;
+
+	switch (cullFace) {
+		case GL_FRONT: { glCullFace(cullFace); } break;
+		case GL_BACK : { glCullFace(cullFace); } break;
+		default      : {                       } break;
+	}
+
+	#if 0
+	rdBuffer->SafeAppend({ZeroVector, {&color.x}});
+	#endif
+
+	#if 0
+	for (int i = 0; i <= coneDivs; i++) {
+	#else
+	for (int i = 0; i < coneDivs; i++) {
+	#endif
+		const float cd0 = ((i + 0)           ) * radsPerDiv;
+		const float cd1 = ((i + 1) % coneDivs) * radsPerDiv;
+		const float sa0 = std::sin(cd0);
+		const float ca0 = std::cos(cd0);
+		const float sa1 = std::sin(cd1);
+		const float ca1 = std::cos(cd1);
+
+		#if 0
+		rdBuffer->SafeAppend({{1.0f, sa0, ca0}, {&color.x}});
+		#else
+		rdBuffer->SafeAppend({ZeroVector, {&color.x}});
+		rdBuffer->SafeAppend({{1.0f, sa0, ca0}, {&color.x}});
+		rdBuffer->SafeAppend({{1.0f, sa1, ca1}, {&color.x}});
+		#endif
+	}
+
+	#if 0
+	rdBuffer->Submit(GL_TRIANGLE_FAN);
+	#else
+	rdBuffer->Submit(GL_TRIANGLES);
+	#endif
+}
+
 
 void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 {
