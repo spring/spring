@@ -63,11 +63,9 @@ public:
 	 *
 	 * @see incomeMultiplier
 	 */
-	void SetAdvantage(float advantage);
+	void SetAdvantage(float advantage) { SetIncomeMultiplier(std::max(0.0f, advantage) + 1.0f); }
 
-	/// @see incomeMultiplier
-	void SetIncomeMultiplier(float incomeMultiplier);
-	/// @see incomeMultiplier
+	void SetIncomeMultiplier(float incomeMult) { incomeMultiplier = std::max(0.0f, incomeMult); }
 	float GetIncomeMultiplier() const { return incomeMultiplier; }
 
 	void SetDefaultColor(int teamNum) {
@@ -84,19 +82,20 @@ public:
 	 * The player either controls this team directly,
 	 * or an AI running on his computer does so.
 	 */
-	int leader;
+	int leader = -1;
+
+	int teamStartNum = -1;
+	int teamAllyteam = -1;
+
 	/**
 	 * The team-color in RGB, with values in [0, 255].
 	 * The fourth channel (alpha) has to be 255, always.
 	 */
-	unsigned char color[4];
-	unsigned char origColor[4];
-
-	int teamStartNum;
-	int teamAllyteam;
+	uint8_t color[4];
+	uint8_t origColor[4];
 
 	static constexpr int NUM_DEFAULT_TEAM_COLORS = 10;
-	static unsigned char teamDefaultColor[NUM_DEFAULT_TEAM_COLORS][4];
+	static uint8_t teamDefaultColor[NUM_DEFAULT_TEAM_COLORS][4];
 
 protected:
 	/**
