@@ -15,19 +15,18 @@ class AllyTeam
 	CR_DECLARE_STRUCT(AllyTeam)
 
 public:
-	AllyTeam();
+	AllyTeam() { customValues.reserve(8); }
 
 	typedef spring::unordered_map<std::string, std::string> customOpts;
-	void SetValue(const std::string& key, const std::string& value);
-	const customOpts& GetAllValues() const
-	{
-		return customValues;
-	};
 
-	float startRectTop;
-	float startRectBottom;
-	float startRectLeft;
-	float startRectRight;
+	void SetValue(const std::string& key, const std::string& value);
+	const customOpts& GetAllValues() const { return customValues; }
+
+	float startRectTop    = 0.0f;
+	float startRectBottom = 1.0f;
+	float startRectLeft   = 0.0f;
+	float startRectRight  = 1.0f;
+
 	std::vector<bool> allies;
 
 private:

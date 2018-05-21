@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "AllyTeam.h"
-
 #include <cstdlib>
-#include "System/creg/STL_Map.h"
 
+#include "AllyTeam.h"
+#include "System/StringHash.h"
+#include "System/creg/STL_Map.h"
 
 CR_BIND(AllyTeam, )
 
@@ -18,24 +18,23 @@ CR_REG_METADATA(AllyTeam, (
 ))
 
 
-AllyTeam::AllyTeam()
-	: startRectTop(0)
-	, startRectBottom(1)
-	, startRectLeft(0)
-	, startRectRight(1)
-{
-}
-
 void AllyTeam::SetValue(const std::string& key, const std::string& value)
 {
-	if (key == "startrecttop")
-		startRectTop = std::atof(value.c_str());
-	else if (key == "startrectbottom")
-		startRectBottom = std::atof(value.c_str());
-	else if (key == "startrectleft")
-		startRectLeft = std::atof(value.c_str());
-	else if (key == "startrectright")
-		startRectRight = std::atof(value.c_str());
-	else
-		customValues[key] = value;
+	switch (hashString(key.c_str())) {
+		case hashString("startrecttop"): {
+			startRectTop = std::atof(value.c_str());
+		} break;
+		case hashString("startrectbottom"): {
+			startRectBottom = std::atof(value.c_str());
+		} break;
+		case hashString("startrectleft"): {
+			startRectLeft = std::atof(value.c_str());
+		} break;
+		case hashString("startrectright"): {
+			startRectRight = std::atof(value.c_str());
+		} break;
+		default: {
+			customValues[key] = value;
+		} break;
+	}
 }

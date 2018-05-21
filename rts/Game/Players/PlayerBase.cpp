@@ -1,8 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "PlayerBase.h"
-
 #include <cstdlib>
+
+#include "PlayerBase.h"
+#include "System/StringHash.h"
 #include "System/creg/STL_Map.h"
 
 
@@ -20,32 +21,34 @@ CR_REG_METADATA(PlayerBase, (
 
 
 
-PlayerBase::PlayerBase() :
-	TeamController(),
-	rank(-1),
-	cpuUsage (0.0f),
-	spectator(false),
-	isFromDemo(false),
-	readyToStart(false),
-	desynced(false)
-{
+PlayerBase::PlayerBase(): TeamController() {
+	// NB: sync-safe so long as PlayerHandler destroys all players on reload
+	customValues.reserve(8);
 }
 
 void PlayerBase::SetValue(const std::string& key, const std::string& value)
 {
-	if (key == "team") {
-		team = std::atoi(value.c_str());
-	} else if (key == "name") {
-		name = value;
-	} else if (key == "rank") {
-		rank = std::atoi(value.c_str());
-	} else if (key == "countrycode") {
-		countryCode = value;
-	} else if (key == "spectator") {
-		spectator = static_cast<bool>(std::atoi(value.c_str()));
-	} else if (key == "isfromdemo") {
-		isFromDemo = static_cast<bool>(std::atoi(value.c_str()));
-	} else {
-		customValues[key] = value;
+	switch (hashString(key.c_str())) {
+		case hashString("team"): {
+			team = std::atoi(value.c_str());
+		} break;
+		case hashString("name"): {
+			name = value;
+		} break;
+		case hashString("rank"): {
+			rank = std::atoi(value.c_str());
+		} break;
+		case hashString("countrycode"): {
+			countryCode = value;
+		} break;
+		case hashString("spectator"): {
+			spectator = static_cast<bool>(std::atoi(value.c_str()));
+		} break;
+		case hashString("isfromdemo"): {
+			isFromDemo = static_cast<bool>(std::atoi(value.c_str()));
+		} break;
+		default: {
+			customValues[key] = value;
+		} break;
 	}
 }
