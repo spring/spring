@@ -475,6 +475,13 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		return false;
 	}
 
+	// always require a proper stencil-buffer
+	if (!CheckGLStencilBufferBits(8)) {
+		handleerror(nullptr, "insufficient OpenGL stencil-buffer support, aborting", "ERROR", MBF_OK | MBF_EXCL);
+		return false;
+	}
+
+
 	// redundant, but harmless
 	SDL_GL_MakeCurrent(sdlWindows[0], glContexts[0]);
 	SDL_DisableScreenSaver();
@@ -616,6 +623,8 @@ void CGlobalRendering::CheckGLExtensions() const
 
 	#define CHECK_REQ_EXT(ext) CheckExt(#ext, ext,  true)
 	#define CHECK_OPT_EXT(ext) CheckExt(#ext, ext, false)
+
+	CHECK_REQ_EXT(GLEW_ARB_multisample); // 1.3 (MSAA)
 
 	CHECK_REQ_EXT(GLEW_ARB_vertex_buffer_object); // 1.5 (VBO)
 	CHECK_REQ_EXT(GLEW_ARB_pixel_buffer_object); // 2.1 (PBO)
@@ -1113,14 +1122,10 @@ void CGlobalRendering::InitGLState()
 /**
  * @brief multisample verify
  * @return whether verification passed
- *
- * Tests whether FSAA was actually enabled
  */
 bool CGlobalRendering::CheckGLMultiSampling() const
 {
 	if (msaaLevel == 0)
-		return false;
-	if (!GLEW_ARB_multisample)
 		return false;
 
 	GLint buffers = 0;
@@ -1130,6 +1135,14 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 	glGetIntegerv(GL_SAMPLES, &samples);
 
 	return (buffers != 0 && samples != 0);
+}
+
+bool CGlobalRendering::CheckGLStencilBufferBits(int minBufferBits) const
+{
+	GLint bufferBits = 0;
+	glGetIntegerv(GL_STENCIL_BITS, &bufferBits);
+
+	return (bufferBits >= minBufferBits);
 }
 
 bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const

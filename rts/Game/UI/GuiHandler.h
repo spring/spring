@@ -149,12 +149,8 @@ private:
 
 	void DrawMiniMapMarker(const float3& cameraPos);
 	void DrawFormationFrontOrder(int button, float maxSize, float sizeDiv, bool onMiniMap, const float3& cameraPos, const float3& mouseDir);
-	void DrawArea(float3 pos, float radius, const float* color);
-	void DrawSelectBox(const float3& start, const float3& end, const float3& cameraPos);
-	void DrawSelectCircle(const float3& pos, float radius, const float* color);
-
-	void DrawStencilCone(const float3& pos, float radius, float height);
-	void DrawStencilRange(const float3& pos, float radius);
+	void DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float3& start, const float3& end);
+	void DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float4& pos, const float* color);
 
 
 	int  IconAtPos(int x, int y);
@@ -236,8 +232,6 @@ private:
 	bool attackRect = false;
 	bool invColorSelect = true;
 	bool frontByEnds = false;
-
-	bool useStencil = true;
 
 
 	struct Box {

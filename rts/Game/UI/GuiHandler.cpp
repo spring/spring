@@ -72,10 +72,6 @@ CGuiHandler::CGuiHandler()
 	miniMapMarker = configHandler->GetBool("MiniMapMarker");
 	invertQueueKey = configHandler->GetBool("InvertQueueKey");
 
-	GLint stencilBits;
-	glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
-	useStencil = (stencilBits >= 1);
-
 	failedSound = sound->GetSoundId("FailedCommand");
 }
 
@@ -3466,6 +3462,10 @@ template<typename DrawFunc> static void DrawRangeRingsAndWeaponArcs(
 ) {
 	assert((unitDrawFunc == DrawUnitRangeRingFunc) || (unitDrawFunc == DrawUnitWeaponArcFunc));
 
+	// TODO: grab the minimap transform
+	if (onMiniMap)
+		return;
+
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 
@@ -3508,6 +3508,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
+
 	float3 tracePos = camera->GetPos();
 	float3 traceDir = mouse->dir;
 
@@ -3526,6 +3527,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			DrawMiniMapMarker(tracePos);
 	}
 
+
+	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	if (activeMousePress) {
 		int cmdIndex = -1;
@@ -3609,7 +3613,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						}
 
 						if (!onMiniMap) {
-							DrawArea(innerPos, radius, color);
+							DrawSelectCircle(buffer, shader, {innerPos, radius}, color);
 						} else {
 							glColor4f(color[0], color[1], color[2], 0.5f);
 							glBegin(GL_TRIANGLE_FAN);
@@ -3646,7 +3650,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
 						if (!onMiniMap) {
-							DrawSelectBox(innerPos, outerPos, tracePos);
+							DrawSelectBox(buffer, shader, innerPos, outerPos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
 							glBegin(GL_QUADS);
@@ -3670,10 +3674,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	}
 
 
-
-
-	GL::RenderDataBufferC*  bufferC = GL::GetRenderBufferC();
-	Shader::IProgramObject* shaderC = bufferC->GetShader();
 
 	// draw the ranges for the unit that is being pointed at
 	const CUnit* pointedAt = nullptr;
@@ -3702,9 +3702,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			// draw (primary) weapon range
 			if (unit->maxRange > 0.0f) {
-				glSetupRangeRingDrawState(shaderC);
-				glBallisticCircle(bufferC, unit->weapons[0],  40, 0, GL_LINE_LOOP,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
-				glResetRangeRingDrawState(shaderC);
+				glSetupRangeRingDrawState(shader);
+				glBallisticCircle(buffer, unit->weapons[0],  40, 0, GL_LINE_LOOP,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+				glResetRangeRingDrawState(shader);
 			}
 
 			// draw decloak distance
@@ -3800,18 +3800,18 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				}
 
 				{
-					glSetupRangeRingDrawState(shaderC);
+					glSetupRangeRingDrawState(shader);
 
 					// draw (primary) weapon range
 					for (const BuildInfo& bi: buildInfos) {
 						if (unitdef->weapons.empty())
 							continue;
 
-						glBallisticCircle(bufferC, unitdef->weapons[0].def,  40, 1, GL_LINES,  bi.pos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
+						glBallisticCircle(buffer, unitdef->weapons[0].def,  40, 1, GL_LINES,  bi.pos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
 					}
 
-					bufferC->Submit(GL_LINES);
-					glResetRangeRingDrawState(shaderC);
+					buffer->Submit(GL_LINES);
+					glResetRangeRingDrawState(shader);
 				}
 
 				for (const BuildInfo& bi: buildInfos) {
@@ -3909,12 +3909,12 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			static constexpr decltype(&glResetRangeRingDrawState) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
 			static constexpr decltype(&DrawUnitRangeRingFunc    )       unitDrawFuncs[] = {&DrawUnitRangeRingFunc, &DrawUnitWeaponArcFunc};
 
-			shaderC->Enable();
-			shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+			shader->Enable();
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 
 			for (int i = 0; i < (1 + drawWeaponArcs); i++) {
 				setupDrawStateFuncs[i](nullptr);
-				DrawRangeRingsAndWeaponArcs(pointedAt, unitDrawFuncs[i], bufferC, shaderC, onMiniMap);
+				DrawRangeRingsAndWeaponArcs(pointedAt, unitDrawFuncs[i], buffer, shader, onMiniMap);
 				resetDrawStateFuncs[i](nullptr);
 			}
 		}
@@ -4052,32 +4052,6 @@ void CGuiHandler::DrawCentroidCursor()
 }
 
 
-void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
-{
-	if (useStencil) {
-		DrawSelectCircle(pos, radius, color);
-		return;
-	}
-
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(color[0], color[1], color[2], 0.25f);
-
-	glDisable(GL_DEPTH_TEST);
-	glBegin(GL_TRIANGLE_FAN);
-		glVertexf3(pos);
-		for (int a = 0; a <= 40; ++a) {
-			float3 p(fastmath::cos(a * math::TWOPI / 40.0f) * radius, 0.0f, fastmath::sin(a * math::TWOPI / 40.0f) * radius);
-			p += pos;
-			p.y = CGround::GetHeightAboveWater(p.x, p.z, false);
-			glVertexf3(p);
-		}
-	glEnd();
-	glEnable(GL_DEPTH_TEST);
-}
-
-
 void CGuiHandler::DrawFormationFrontOrder(
 	int button,
 	float maxSize,
@@ -4086,6 +4060,10 @@ void CGuiHandler::DrawFormationFrontOrder(
 	const float3& cameraPos,
 	const float3& mouseDir
 ) {
+	// TODO: grab the minimap transform
+	if (onMinimap)
+		return;
+
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 
 	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
@@ -4103,44 +4081,52 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	ProcessFrontPositions(pos1, pos2);
 
-	const float3 forward = ((pos1 - pos2).cross(UpVector)).ANormalize();
-	const float3 side = forward.cross(UpVector);
+	const float3 zdir = ((pos1 - pos2).cross(UpVector)).ANormalize();
+	const float3 xdir = zdir.cross(UpVector);
 
 	if (pos1.SqDistance2D(pos2) > maxSize * maxSize) {
-		pos2 = pos1 + side * maxSize;
+		pos2 = pos1 + xdir * maxSize;
 		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 	}
 
-	glColor4f(0.5f, 1.0f, 0.5f, 0.5f);
 
+	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	constexpr float4 color = {0.5f, 1.0f, 0.5f, 0.5f};
+
+	#if 0
 	if (onMinimap) {
 		pos1 += (pos1 - pos2);
+		buffer->SafeAppend({pos1, {&color.x}});
+		buffer->SafeAppend({pos2, {&color.x}});
 		glLineWidth(2.0f);
-		glBegin(GL_LINES);
-		glVertexf3(pos1);
-		glVertexf3(pos2);
-		glEnd();
+		buffer->Submit(GL_LINES);
 		return;
 	}
+	#endif
 
-	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	{
-		// direction arrow
-		glDisable(GL_DEPTH_TEST);
-		glBegin(GL_QUADS);
-			glVertexf3(pos1 + side * 25.0f                   );
-			glVertexf3(pos1 - side * 25.0f                   );
-			glVertexf3(pos1 - side * 25.0f + forward *  50.0f);
-			glVertexf3(pos1 + side * 25.0f + forward *  50.0f);
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
-			glVertexf3(pos1 + side * 40.0f + forward *  50.0f);
-			glVertexf3(pos1 - side * 40.0f + forward *  50.0f);
-			glVertexf3(pos1 +                forward * 100.0f);
-			glVertexf3(pos1 +                forward * 100.0f);
-		glEnd();
+		// direction arrow
+		buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
+		buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
+		buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
+		buffer->SafeAppend({pos1 + xdir * 25.0f + zdir *  50.0f, {&color.x}});
+
+		buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
+		buffer->SafeAppend({pos1 - xdir * 40.0f + zdir *  50.0f, {&color.x}});
+		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+
+		glDisable(GL_DEPTH_TEST);
+		buffer->Submit(GL_QUADS);
 		glEnable(GL_DEPTH_TEST);
 	}
 
@@ -4153,18 +4139,21 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	{
 		// vertical quad
-		glBegin(GL_QUAD_STRIP);
 		const float3 delta = (pos2 - pos1) / (float)steps;
+
 		for (int i = 0; i <= steps; i++) {
 			float3 p;
-			const float d = (float)i;
-			p.x = pos1.x + (d * delta.x);
-			p.z = pos1.z + (d * delta.z);
+
+			p.x = pos1.x + (i * delta.x);
+			p.z = pos1.z + (i * delta.z);
 			p.y = CGround::GetHeightAboveWater(p.x, p.z, false);
-			p.y -= 100.f; glVertexf3(p);
-			p.y += 200.f; glVertexf3(p);
+
+			buffer->SafeAppend({p - UpVector * 100.0f, {&color.x}});
+			buffer->SafeAppend({p + UpVector * 100.0f, {&color.x}});
 		}
-		glEnd();
+
+		buffer->Submit(GL_QUAD_STRIP);
+		shader->Disable();
 	}
 }
 
@@ -4173,84 +4162,173 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 
 
-/******************************************************************************/
-/******************************************************************************/
+
 
 struct BoxData {
 	float3 mins;
 	float3 maxs;
+	SColor color;
+
+	GL::RenderDataBufferC* buffer;
+	Shader::IProgramObject* shader;
 };
 
+struct CylinderData {
+	int divs;
+	float2 center; // xc, zc
+	float3 params; // yp, yn, radius;
+	SColor color;
+
+	GL::RenderDataBufferC* buffer;
+	Shader::IProgramObject* shader;
+};
+
+
+static void DrawCylinderShape(const void* data)
+{
+	const CylinderData* cylData = static_cast<const CylinderData*>(data);
+
+	const float2& center = cylData->center;
+	const float3& params = cylData->params;
+	const SColor&  color = cylData->color;
+
+	const float step = math::TWOPI / cylData->divs;
+
+	{
+		// sides
+		for (int i = 0; i <= cylData->divs; i++) {
+			const float radians = step * (i % cylData->divs);
+			const float x = center.x + (params.z * fastmath::sin(radians));
+			const float z = center.y + (params.z * fastmath::cos(radians));
+
+			cylData->buffer->SafeAppend({{x, params.x, z}, color});
+			cylData->buffer->SafeAppend({{x, params.y, z}, color});
+		}
+
+		cylData->shader->Enable();
+		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		cylData->buffer->Submit(GL_QUAD_STRIP);
+	}
+	{
+		// top
+		for (int i = 0; i < cylData->divs; i++) {
+			const float radians = step * i;
+			const float x = center.x + (params.z * fastmath::sin(radians));
+			const float z = center.y + (params.z * fastmath::cos(radians));
+
+			cylData->buffer->SafeAppend({{x, params.x, z}, color});
+		}
+
+		cylData->buffer->Submit(GL_TRIANGLE_FAN);
+	}
+	{
+		// bottom
+		for (int i = (cylData->divs - 1); i >= 0; i--) {
+			const float radians = step * i;
+			const float x = center.x + (params.z * fastmath::sin(radians));
+			const float z = center.y + (params.z * fastmath::cos(radians));
+
+			cylData->buffer->SafeAppend({{x, params.y, z}, color});
+		}
+
+		cylData->buffer->Submit(GL_TRIANGLE_FAN);
+		// leave enabled for DrawSelectCircle center-line
+		// cylData->shader->Disable();
+	}
+}
 
 static void DrawBoxShape(const void* data)
 {
 	const BoxData* boxData = static_cast<const BoxData*>(data);
-	const float3& mins = boxData->mins;
-	const float3& maxs = boxData->maxs;
-	glBegin(GL_QUADS);
-		// the top
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		// the bottom
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(maxs.x, mins.y, mins.z);
-		glVertex3f(maxs.x, mins.y, maxs.z);
-		glVertex3f(mins.x, mins.y, maxs.z);
-	glEnd();
-	glBegin(GL_QUAD_STRIP);
-		// the sides
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-		glVertex3f(mins.x, mins.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, mins.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		glVertex3f(maxs.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, mins.z);
-	glEnd();
+
+	const float3&  mins = boxData->mins;
+	const float3&  maxs = boxData->maxs;
+	const SColor& color = boxData->color;
+
+	boxData->shader->Enable();
+	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+	// top
+	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+	// bottom
+	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+	boxData->buffer->Submit(GL_QUADS);
+
+	// sides
+	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	boxData->buffer->Submit(GL_QUAD_STRIP);
+	// leave enabled for DrawSelectBox corner-posts
+	// boxData->shader->Disable();
 }
 
 
-static void DrawCornerPosts(const float3& pos0, const float3& pos1)
+void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float4& pos, const float* color)
 {
-	const float3 lineVector(0.0f, 128.0f, 0.0f);
-	const float3 corner0(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos0.z, false), pos0.z);
-	const float3 corner1(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos1.z, false), pos1.z);
-	const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
-	const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glLineWidth(2.0f);
-	glBegin(GL_LINES);
-		glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
-		glVertexf3(corner0); glVertexf3(corner0 + lineVector);
-		glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
-		glVertexf3(corner1); glVertexf3(corner1 + lineVector);
-		glColor4f(0.0f, 0.0f, 1.0f, 0.9f);
-		glVertexf3(corner2); glVertexf3(corner2 + lineVector);
-		glVertexf3(corner3); glVertexf3(corner3 + lineVector);
-	glEnd();
-	glLineWidth(1.0f);
+	CylinderData cylData;
+	cylData.center.x = pos.x;
+	cylData.center.y = pos.z;
+	cylData.params.x = readMap->GetCurrMaxHeight() + 10000.0f;
+	cylData.params.y = readMap->GetCurrMinHeight() -   250.0f;
+	cylData.params.z = pos.w; // radius
+	cylData.divs = 128;
+	cylData.color = {color[0], color[1], color[2], 0.25f};
+	cylData.buffer = rdb;
+	cylData.shader = ipo;
+
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+		glDrawVolume(DrawCylinderShape, &cylData);
+	}
+	{
+		// draw the center line
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glLineWidth(2.0f);
+
+		const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
+
+		rdb->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
+		rdb->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
+		rdb->Submit(GL_LINES);
+		ipo->Disable();
+
+		glLineWidth(1.0f);
+	}
 }
 
-
-static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
-		bool invColorSelect)
+void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float3& pos0, const float3& pos1)
 {
+	constexpr float4 colors[] = {{1.0f, 0.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 0.0f, 0.0f}};
+
 	BoxData boxData;
 	boxData.mins = float3(std::min(pos0.x, pos1.x), readMap->GetCurrMinHeight() -   250.0f, std::min(pos0.z, pos1.z));
 	boxData.maxs = float3(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
+	boxData.color = &colors[invColorSelect].x;
+	boxData.buffer = rdb;
+	boxData.shader = ipo;
 
-	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
 	if (!invColorSelect) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 		glDrawVolume(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
@@ -4259,166 +4337,28 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
 
-	DrawCornerPosts(pos0, pos1);
-}
+	{
+		// draw corner posts
+		const float3 corner0(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos0.z, false), pos0.z);
+		const float3 corner1(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos1.z, false), pos1.z);
+		const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
+		const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
 
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glLineWidth(2.0f);
 
-static void FullScreenDraw()
-{
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PushMatrix();
-	GL::LoadIdentity();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::LoadIdentity();
-	GL::PushMatrix();
-	glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-}
+		rdb->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
+		rdb->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
+		rdb->SafeAppend({corner1                    , {0.0f, 1.0f, 0.0f, 0.9f}});
+		rdb->SafeAppend({corner1 + UpVector * 128.0f, {0.0f, 1.0f, 0.0f, 0.9f}});
+		rdb->SafeAppend({corner2                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		rdb->SafeAppend({corner2 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		rdb->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		rdb->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		rdb->Submit(GL_LINES);
+		ipo->Disable();
 
-
-static void DrawMinMaxBox(const float3& mins, const float3& maxs)
-{
-	glBegin(GL_QUADS);
-		// the top
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-	glEnd();
-	glBegin(GL_QUAD_STRIP);
-		// the sides
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, maxs.z);
-		glVertex3f(mins.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, mins.y, maxs.z);
-		glVertex3f(maxs.x, maxs.y, maxs.z);
-		glVertex3f(maxs.x, mins.y, mins.z);
-		glVertex3f(maxs.x, maxs.y, mins.z);
-		glVertex3f(mins.x, mins.y, mins.z);
-		glVertex3f(mins.x, maxs.y, mins.z);
-	glEnd();
-}
-
-
-
-
-void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const float3& cameraPos)
-{
-	if (useStencil) {
-		StencilDrawSelectBox(pos0, pos1, invColorSelect);
-		return;
+		glLineWidth(1.0f);
 	}
-
-	const float3 mins(std::min(pos0.x, pos1.x), readMap->GetCurrMinHeight() -   250.0f, std::min(pos0.z, pos1.z));
-	const float3 maxs(std::max(pos0.x, pos1.x), readMap->GetCurrMaxHeight() + 10000.0f, std::max(pos0.z, pos1.z));
-
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-
-	glDepthMask(GL_FALSE);
-	glEnable(GL_CULL_FACE);
-
-	glEnable(GL_COLOR_LOGIC_OP);
-	glLogicOp(GL_INVERT);
-
-	// invert the color for objects within the box
-	glCullFace(GL_FRONT); DrawMinMaxBox(mins, maxs);
-	glCullFace(GL_BACK);  DrawMinMaxBox(mins, maxs);
-
-	glDisable(GL_CULL_FACE);
-
-	// do a full screen inversion if the camera is within the box
-	if ((cameraPos.x > mins.x) && (cameraPos.x < maxs.x) &&
-	    (cameraPos.y > mins.y) && (cameraPos.y < maxs.y) &&
-	    (cameraPos.z > mins.z) && (cameraPos.z < maxs.z)) {
-		glDisable(GL_DEPTH_TEST);
-		FullScreenDraw();
-		glEnable(GL_DEPTH_TEST);
-	}
-
-	glDisable(GL_COLOR_LOGIC_OP);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	DrawCornerPosts(pos0, pos1);
-
-//	glDepthMask(GL_TRUE);
-}
-
-
-/******************************************************************************/
-
-struct CylinderData {
-	int divs;
-	float xc, zc, yp, yn;
-	float radius;
-};
-
-
-static void DrawCylinderShape(const void* data)
-{
-	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
-	const float step = math::TWOPI / cyl.divs;
-	int i;
-	glBegin(GL_QUAD_STRIP); // the sides
-	for (i = 0; i <= cyl.divs; i++) {
-		const float radians = step * float(i % cyl.divs);
-		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
-		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
-		glVertex3f(x, cyl.yp, z);
-		glVertex3f(x, cyl.yn, z);
-	}
-	glEnd();
-	glBegin(GL_TRIANGLE_FAN); // the top
-	for (i = 0; i < cyl.divs; i++) {
-		const float radians = step * float(i);
-		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
-		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
-		glVertex3f(x, cyl.yp, z);
-	}
-	glEnd();
-	glBegin(GL_TRIANGLE_FAN); // the bottom
-	for (i = (cyl.divs - 1); i >= 0; i--) {
-		const float radians = step * float(i);
-		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
-		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
-		glVertex3f(x, cyl.yn, z);
-	}
-	glEnd();
-}
-
-
-void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
-                                   const float* color)
-{
-	CylinderData cylData;
-	cylData.xc = pos.x;
-	cylData.zc = pos.z;
-	cylData.yp = readMap->GetCurrMaxHeight() + 10000.0f;
-	cylData.yn = readMap->GetCurrMinHeight() -   250.0f;
-	cylData.radius = radius;
-	cylData.divs = 128;
-
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glColor4f(color[0], color[1], color[2], 0.25f);
-
-	glDrawVolume(DrawCylinderShape, &cylData);
-
-	// draw the center line
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(color[0], color[1], color[2], 0.9f);
-	glLineWidth(2.0f);
-	const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
-	glBegin(GL_LINES);
-		glVertexf3(base);
-		glVertexf3(base + float3(0.0f, 128.0f, 0.0f));
-	glEnd();
-	glLineWidth(1.0f);
 }
 
