@@ -2,6 +2,7 @@
 
 #include "CommandDrawer.h"
 #include "LineDrawer.h"
+#include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/WaitCommandsAI.h"
@@ -19,8 +20,8 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
@@ -643,7 +644,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		#if 0
 		// skip under-water positions
@@ -700,7 +702,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		// skip above-water positions
 		if (bi.pos.y >= 0.0f)
@@ -734,7 +737,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		if (bi.pos.y >= 0.0f)
 			continue;

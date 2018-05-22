@@ -1486,12 +1486,16 @@ void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 // TODO: make this a lua callin!
 bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild)
 {
+	if (!camera->InView(buildInfo.pos))
+		return false;
+
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	const int x1 = buildInfo.pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
 	const int z1 = buildInfo.pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
 	const int x2 =              x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
 	const int z2 =              z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
+
 	const float h = CGameHelper::GetBuildHeight(buildInfo.pos, buildInfo.def, false);
 
 	if (testCanBuild) {

@@ -4299,6 +4299,8 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 		glDrawVolume(DrawCylinderShape, &cylData);
 	}
 	{
+		assert(ipo->IsBound());
+
 		// draw the center line
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glLineWidth(2.0f);
@@ -4343,6 +4345,8 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		const float3 corner1(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos1.z, false), pos1.z);
 		const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
 		const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
+
+		assert(ipo->IsBound());
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glLineWidth(2.0f);
