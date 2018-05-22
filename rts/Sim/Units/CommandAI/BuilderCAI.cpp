@@ -1077,9 +1077,10 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			SlowUpdate();
 			return;
 		}
-		if(!(c.options & ALT_KEY)){
+
+		if (!(c.options & ALT_KEY))
 			StopMoveAndFinishCommand();
-		}
+
 	} else {
 		// wrong number of parameters
 		RemoveUnitFromReclaimers(owner);
@@ -1092,13 +1093,10 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 	if (MoveInBuildRange(feature, true)) {
 		ownerBuilder->SetResurrectTarget(feature);
-	} else {
-		if (owner->moveType->progressState == AMoveType::Failed) {
-			return false;
-		}
+		return true;
 	}
 
-	return true;
+	return (owner->moveType->progressState != AMoveType::Failed);
 }
 
 

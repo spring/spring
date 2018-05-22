@@ -68,7 +68,6 @@
 #define CMDTYPE_ICON_UNIT                  12  // expect 1 parameters in return (unitid)
 #define CMDTYPE_ICON_UNIT_OR_MAP           13  // expect 1 parameters in return (unitid) or 3 parameters in return (mappos)
 #define CMDTYPE_ICON_FRONT                 14  // expect 3 or 6 parameters in return (middle of front and right side of front if a front was defined)
-#define CMDTYPE_COMBO_BOX                  15  // expect 1 parameter in return (number selected option)
 #define CMDTYPE_ICON_UNIT_OR_AREA          16  // expect 1 parameter in return (unitid) or 4 parameters in return (mappos+radius)
 #define CMDTYPE_NEXT                       17  // used with CMD_INTERNAL
 #define CMDTYPE_PREV                       18  // used with CMD_INTERNAL
