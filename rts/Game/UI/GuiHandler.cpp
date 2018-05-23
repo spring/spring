@@ -3917,6 +3917,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				DrawRangeRingsAndWeaponArcs(pointedAt, unitDrawFuncs[i], buffer, shader, onMiniMap);
 				resetDrawStateFuncs[i](nullptr);
 			}
+
+			shader->Disable();
 		}
 	}
 
