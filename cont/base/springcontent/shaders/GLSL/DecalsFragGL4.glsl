@@ -59,6 +59,7 @@ uniform mat4 viewProjMatrixInv;
 uniform vec2 invMapSize;
 uniform vec2 invMapSizePO2;
 
+
 layout(std140) uniform SGroundLighting
 {
 	uniform vec3 ambientColor;
@@ -79,6 +80,9 @@ layout(binding=2) uniform sampler2DShadow shadowTex;
 
 flat in int decalGroupId;
 
+layout(location = 0) out vec4 fragColor;
+
+
 
 vec3 ReconstructWorldPos() {
 	vec2 screenCoord = (gl_FragCoord.st - vec2(0.5)) * invScreenSize;
@@ -96,9 +100,8 @@ vec3 GroundNormal(vec3 worldPos, vec3 normal) {
 	//normal = groundNormal;
 	vec3 front = normalize(cross(groundNormal, vec3(1.,0.,0.)));
 	vec3 right = cross(groundNormal, front);
-	normal = mat3x3(right, groundNormal, front) * normal;
 
-	return normal;
+	return (mat3x3(right, groundNormal, front) * normal);
 }
 
 
@@ -218,7 +221,7 @@ const vec4 colors[8] = {
 
 
 void main() {
-	gl_FragColor = vec4(0.0);
+	fragColor = vec4(0.0);
 	SDecalGroup g = groups[decalGroupId];
 
 	// PROJECTION
@@ -293,15 +296,16 @@ void main() {
 
 	// COMBINE
 	vec3 lightCol = (specTerm + diffuseTerm) * shadowInt + groundLighting.ambientColor;
-	gl_FragColor.rgb = albedo.rgb * lightCol;
-	gl_FragColor.a   = albedo.a;
+	fragColor.rgb = albedo.rgb * lightCol;
+	fragColor.a   = albedo.a;
 
 	// FOG
 	float fogFactor = (groundLighting.fogEnd - eyeDist) * groundLighting.fogScale;
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
-	gl_FragColor.rgb = mix(groundLighting.fogColor * (1.0 - albedo.a), gl_FragColor.rgb, fogFactor); //FIXME
+	fragColor.rgb = mix(groundLighting.fogColor * (1.0 - albedo.a), fragColor.rgb, fogFactor); //FIXME
 
 #ifdef DEBUG
-	gl_FragColor = mix(gl_FragColor, vec4(1.0,0.0,0.0,0.0), 0.2);
+	fragColor = mix(fragColor, vec4(1.0, 0.0, 0.0, 0.0), 0.2);
 #endif
 }
+
