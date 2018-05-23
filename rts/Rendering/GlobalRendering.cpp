@@ -1139,10 +1139,10 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 
 bool CGlobalRendering::CheckGLStencilBufferBits(int minBufferBits) const
 {
-	GLint bufferBits = 0;
-	glGetIntegerv(GL_STENCIL_BITS, &bufferBits);
+	GLint ctxBufferBits = 0;
+	glGetIntegerv(GL_STENCIL_BITS, &ctxBufferBits);
 
-	return (bufferBits >= minBufferBits);
+	return (ctxBufferBits >= minBufferBits);
 }
 
 bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
