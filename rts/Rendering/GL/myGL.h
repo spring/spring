@@ -17,34 +17,14 @@
 #endif // defined(HEADLESS)
 
 
-#include "System/float3.h"
-#include "System/float4.h"
-
 #include "MatrixState.hpp"
 #include "glStateDebug.h"
 
-
-#if       defined(HEADLESS)
-	// All OpenGL functions should always exists on HEADLESS.
-	// If one does not, we should crash, and it has to be added to glstub.c.
-	// No runtime check should be performed, or it can be optimized away
-	// by the compiler.
-	// This also prevents a compile warning.
-	#define IS_GL_FUNCTION_AVAILABLE(functionName) true
-#else
-	// Check if the functions address is non-NULL.
-	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
-#endif // defined(HEADLESS)
 
 #ifndef GL_INVALID_INDEX
 	#define GL_INVALID_INDEX -1
 #endif
 
-
-static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
-static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }
-static inline void glColorf4(const float4& v)     { glColor4f(v.r, v.g, v.b, v.a); }
-static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 
 // replaced by Matrix::{Ortho,Persp}Proj
 #undef glOrtho

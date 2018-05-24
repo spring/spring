@@ -3648,7 +3648,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 								float3 p(innerPos.x, 0.0f, innerPos.z);
 								p.x += (fastmath::sin(radians) * radius);
 								p.z += (fastmath::cos(radians) * radius);
-								glVertexf3(p);
+								glVertex3f(p.x, p.y, p.z);
 							}
 							glEnd();
 						}

@@ -459,9 +459,6 @@ static bool ParseShaderTable(
 
 static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
-	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
-		return;
-
 	constexpr struct { const char* name; GLenum param; } parameters[] = {
 		{ "geoInputType",   GL_GEOMETRY_INPUT_TYPE_EXT },
 		{ "geoOutputType",  GL_GEOMETRY_OUTPUT_TYPE_EXT },
@@ -474,7 +471,7 @@ static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 		lua_getfield(L, table, parameters[i].name);
 
 		if (lua_israwnumber(L, -1))
-			glProgramParameteriEXT(prog, parameters[i].param, /*type*/ lua_toint(L, -1));
+			glProgramParameteri(prog, parameters[i].param, /*type*/ lua_toint(L, -1));
 
 		lua_pop(L, 1);
 	}
@@ -931,9 +928,7 @@ int LuaShaders::SetShaderParameter(lua_State* L)
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	if (IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
-		glProgramParameteriEXT(progName, param, value);
-
+	glProgramParameteri(progName, param, value);
 	return 0;
 }
 

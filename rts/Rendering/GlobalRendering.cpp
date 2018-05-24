@@ -648,7 +648,8 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_OPT_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
 	CHECK_OPT_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
 	CHECK_OPT_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
-	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1
+	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1 (gl{Get}ProgramBinary)
+	CHECK_REQ_EXT(GLEW_ARB_separate_shader_objects); // 4.1 (glProgramParameteri)
 
 	CHECK_REQ_EXT(GLEW_ARB_texture_compression);
 	CHECK_REQ_EXT(GLEW_EXT_texture_compression_s3tc);
