@@ -288,7 +288,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 void DefaultPathDrawer::Draw() const {
-	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3);
 
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
@@ -320,30 +319,26 @@ void DefaultPathDrawer::Draw() const {
 		rdbc->Submit(GL_LINE_STRIP);
 	}
 
-	prog->Disable();
-
 	// draw path definitions (goal, radius)
 	for (const auto& p: pm->pathMap) {
-		Draw(&p.second.peDef);
+		Draw(&p.second.peDef, rdbc);
 	}
+
+	rdbc->Submit(GL_LINES);
+	prog->Disable();
 
 	glLineWidth(1);
 }
 
 
 
-void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
-	if (pfd->synced) {
-		glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
-	} else {
-		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-	}
-	glSurfaceCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), 20);
+void DefaultPathDrawer::Draw(const CPathFinderDef* pfd, GL::RenderDataBufferC* rdbc) const {
+	constexpr float4 colors[] = {{0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}};
+
+	glSurfaceCircleRB(rdbc, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
-	glDisable(GL_TEXTURE_2D);
-
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
@@ -386,8 +381,6 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
-
-	glDisable(GL_TEXTURE_2D);
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
 	const int overlayPeriod = GAME_SPEED * 5;

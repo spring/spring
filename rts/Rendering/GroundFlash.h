@@ -11,7 +11,6 @@
 struct AtlasedTexture;
 struct GroundFlashInfo;
 class CColorMap;
-class CVertexArray;
 
 class CGroundFlash : public CExpGenSpawnable
 {

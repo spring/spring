@@ -4,6 +4,7 @@
 #define DEFAULT_PATHDRAWER_HDR
 
 #include "IPathDrawer.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 
 class CPathManager;
 class CPathFinderDef;
@@ -28,7 +29,7 @@ public:
 
 private:
 	void Draw() const;
-	void Draw(const CPathFinderDef*) const;
+	void Draw(const CPathFinderDef*, GL::RenderDataBufferC*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
 

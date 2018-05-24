@@ -10,8 +10,6 @@
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
 
-class CVertexArray;
-
 namespace icon {
 	class CIconData {
 		public:

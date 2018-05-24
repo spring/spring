@@ -1500,14 +1500,28 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 		const float4 defColor = cmdColors.rangeAttack;
 		const float4 argColor = {luaL_optfloat(L, 8, defColor.x), luaL_optfloat(L, 9, defColor.y), luaL_optfloat(L, 10, defColor.z), 1.0f};
 
-		GL::RenderDataBufferC*  bufferC = GL::GetRenderBufferC();
-		Shader::IProgramObject* shaderC = (luaL_optboolean(L, 11, true))? bufferC->GetShader(): nullptr;
+		GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
+		Shader::IProgramObject* shader = (luaL_optboolean(L, 11, true))? buffer->GetShader(): nullptr;
 
-		glSetupRangeRingDrawState(shaderC);
-		glBallisticCircle(bufferC, wd,  luaL_checkint(L, 5), 0, GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
-		glResetRangeRingDrawState(shaderC);
+		#if 1
+		// if null, expect caller to supply a shader
+		if (shader != nullptr) {
+			shader->Enable();
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		}
+		#endif
+
+		glSetupRangeRingDrawState();
+		glBallisticCircle(buffer, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		glResetRangeRingDrawState();
+
+		#if 1
+		if (shader != nullptr)
+			shader->Disable();
+		#endif
 	} else {
-		glSurfaceCircle(pos, luaL_checkfloat(L, 4), luaL_checkint(L, 5));
+		glSurfaceCircleVA(GetVertexArray(), {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
 	}
 
 	return 0;

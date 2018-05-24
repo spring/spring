@@ -3,103 +3,79 @@
 
 #include "glExtra.h"
 #include "RenderDataBuffer.hpp"
-#include "VertexArray.h"
 
-#include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 #include "System/Threading/ThreadPool.h"
 
-
-/**
- *  Draws a trigonometric circle in 'resolution' steps.
- */
-static void defSurfaceCircle(const float3& center, float radius, unsigned int res)
+// center.w is radius
+static void DefSurfaceCircleVA(CVertexArray* va, const float4& center, const float4& color, unsigned int res)
 {
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	#if 0
+	float3 pos0;
+	float3 pos1;
+
 	for (unsigned int i = 0; i < res; ++i) {
-		const float radians = math::TWOPI * (float)i / (float)res;
-		float3 pos;
-		pos.x = center.x + (fastmath::sin(radians) * radius);
-		pos.z = center.z + (fastmath::cos(radians) * radius);
-		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
-		va->AddVertex0(pos);
+		const float step0 = ( i           ) * 1.0f / res;
+		const float step1 = ((i + 1) % res) * 1.0f / res;
+
+		pos0.x = center.x + (fastmath::sin(math::TWOPI * step0) * center.w);
+		pos0.z = center.z + (fastmath::cos(math::TWOPI * step0) * center.w);
+
+		pos1.x = center.x + (fastmath::sin(math::TWOPI * step1) * center.w);
+		pos1.z = center.z + (fastmath::cos(math::TWOPI * step1) * center.w);
+
+		pos0.y = CGround::GetHeightAboveWater(pos0.x, pos0.z, false) + 5.0f;
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 5.0f;
+
+		va->AddVertexC(pos0, SColor(&color.x));
+		va->AddVertexC(pos1, SColor(&color.x));
 	}
-	va->DrawArray0(GL_LINE_LOOP);
+	#endif
 }
 
-static void defSurfaceSquare(const float3& center, float xsize, float zsize)
+static void DefSurfaceCircleRB(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res)
 {
-	// FIXME: terrain contouring
-	const float3 p0 = center + float3(-xsize, 0.0f, -zsize);
-	const float3 p1 = center + float3( xsize, 0.0f, -zsize);
-	const float3 p2 = center + float3( xsize, 0.0f,  zsize);
-	const float3 p3 = center + float3(-xsize, 0.0f,  zsize);
+	float3 pos0;
+	float3 pos1;
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(p0.x, CGround::GetHeightAboveWater(p0.x, p0.z, false), p0.z);
-		va->AddVertex0(p1.x, CGround::GetHeightAboveWater(p1.x, p1.z, false), p1.z);
-		va->AddVertex0(p2.x, CGround::GetHeightAboveWater(p2.x, p2.z, false), p2.z);
-		va->AddVertex0(p3.x, CGround::GetHeightAboveWater(p3.x, p3.z, false), p3.z);
-	va->DrawArray0(GL_LINE_LOOP);
+	for (unsigned int i = 0; i < res; ++i) {
+		const float step0 = ( i           ) * 1.0f / res;
+		const float step1 = ((i + 1) % res) * 1.0f / res;
+
+		pos0.x = center.x + (fastmath::sin(math::TWOPI * step0) * center.w);
+		pos0.z = center.z + (fastmath::cos(math::TWOPI * step0) * center.w);
+
+		pos1.x = center.x + (fastmath::sin(math::TWOPI * step1) * center.w);
+		pos1.z = center.z + (fastmath::cos(math::TWOPI * step1) * center.w);
+
+		pos0.y = CGround::GetHeightAboveWater(pos0.x, pos0.z, false) + 5.0f;
+		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 5.0f;
+
+		// assume caller wants to submit lines
+		rb->SafeAppend({pos0, {&color.x}});
+		rb->SafeAppend({pos1, {&color.x}});
+	}
 }
 
 
-SurfaceCircleFunc glSurfaceCircle = defSurfaceCircle;
-SurfaceSquareFunc glSurfaceSquare = defSurfaceSquare;
+SurfaceCircleFuncVA glSurfaceCircleVA = DefSurfaceCircleVA;
+SurfaceCircleFuncRB glSurfaceCircleRB = DefSurfaceCircleRB;
 
-void setSurfaceCircleFunc(SurfaceCircleFunc func)
-{
-	glSurfaceCircle = (func == nullptr)? defSurfaceCircle: func;
-}
-
-void setSurfaceSquareFunc(SurfaceSquareFunc func)
-{
-	glSurfaceSquare = (func == nullptr)? defSurfaceSquare: func;
-}
+void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func) { glSurfaceCircleVA = (func == nullptr)? DefSurfaceCircleVA: func; }
+void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func) { glSurfaceCircleRB = (func == nullptr)? DefSurfaceCircleRB: func; }
 
 
 
 
 // default for glBallisticCircle
-void glSetupRangeRingDrawState(Shader::IProgramObject* ipo) {
-	glDisable(GL_DEPTH_TEST);
-
-	if (ipo != nullptr) {
-		ipo->Enable();
-		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	}
-}
+void glSetupRangeRingDrawState() { glDisable(GL_DEPTH_TEST); }
+void glResetRangeRingDrawState() { glEnable(GL_DEPTH_TEST); }
 // default for glDrawCone
-void glSetupWeaponArcDrawState(Shader::IProgramObject* ipo) {
-	glEnable(GL_CULL_FACE);
-
-	if (ipo != nullptr) {
-		ipo->Enable();
-		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	}
-}
-
-// default for glBallisticCircle
-void glResetRangeRingDrawState(Shader::IProgramObject* ipo) {
-	if (ipo != nullptr)
-		ipo->Disable();
-
-	glEnable(GL_DEPTH_TEST);
-}
-// default for glDrawCone
-void glResetWeaponArcDrawState(Shader::IProgramObject* ipo) {
-	if (ipo != nullptr)
-		ipo->Disable();
-
-	glDisable(GL_CULL_FACE);
-}
+void glSetupWeaponArcDrawState() { glEnable(GL_CULL_FACE); }
+void glResetWeaponArcDrawState() { glDisable(GL_CULL_FACE); }
 
 
 
@@ -109,7 +85,6 @@ static void glBallisticCircle(
 	const CWeapon* weapon,
 	const WeaponDef* weaponDef,
 	uint32_t circleRes,
-	uint32_t submitCtr,
 	uint32_t lineMode,
 	const float3& center,
 	const float3& params,
@@ -185,22 +160,21 @@ static void glBallisticCircle(
 			for (unsigned int i = 0; i < circleRes; i++) {
 				rdBuffer->SafeAppend({vertices[i], &color.x});
 			}
+
+			rdBuffer->Submit(lineMode);
 		} break;
 		case GL_LINES: {
 			for (unsigned int i = 0; i < circleRes; i++) {
 				rdBuffer->SafeAppend({vertices[(i + 0)            ], &color.x});
 				rdBuffer->SafeAppend({vertices[(i + 1) % circleRes], &color.x});
 			}
+
+			// caller submits
 		} break;
 		default: {
 			assert(false);
 		} break;
 	}
-
-	if (submitCtr != 0)
-		return;
-
-	rdBuffer->Submit(lineMode);
 }
 
 
@@ -211,26 +185,24 @@ void glBallisticCircle(
 	GL::RenderDataBufferC* rdBuffer,
 	const CWeapon* weapon,
 	uint32_t circleRes,
-	uint32_t submitCtr,
 	uint32_t lineMode,
 	const float3& center,
 	const float3& params,
 	const float4& color
 ) {
-	glBallisticCircle(rdBuffer,  weapon, weapon->weaponDef,  circleRes, submitCtr, lineMode,  center, params, color);
+	glBallisticCircle(rdBuffer,  weapon, weapon->weaponDef,  circleRes, lineMode,  center, params, color);
 }
 
 void glBallisticCircle(
 	GL::RenderDataBufferC* rdBuffer,
 	const WeaponDef* weaponDef,
 	uint32_t circleRes,
-	uint32_t submitCtr,
 	uint32_t lineMode,
 	const float3& center,
 	const float3& params,
 	const float4& color
 ) {
-	glBallisticCircle(rdBuffer,  nullptr, weaponDef,  circleRes, submitCtr, lineMode,  center, params, color);
+	glBallisticCircle(rdBuffer,  nullptr, weaponDef,  circleRes, lineMode,  center, params, color);
 }
 
 
@@ -318,6 +290,10 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 
 /******************************************************************************/
 
+unsigned int COLVOL_MESH_BUFFERS[3 + GLE_MESH_TYPE_CNT * 2] = {0, 0, 0,  0, 0, 0, 0, 0, 0};
+unsigned int COLVOL_MESH_PARAMS[3] = {20, 20, 20};
+
+
 static constexpr std::array<float3, 2 * 4> BOX_VERTS = {
 	// bottom-face, ccw
 	float3{-0.5f, -0.5f,  0.5f},
@@ -346,6 +322,7 @@ static constexpr std::array<uint32_t, 4 * 6> BOX_INDCS = {
 
 static std::vector<uint32_t> CYL_INDCS;
 static std::vector<uint32_t> SPH_INDCS;
+
 
 void gleGenBoxMeshBuffer(unsigned int* meshData) {
 	if (meshData == nullptr)
@@ -514,7 +491,7 @@ void gleGenSphMeshBuffer(unsigned int* meshData, unsigned int numRows, unsigned 
 
 
 
-void gleGenColVolMeshBuffers(unsigned int* meshData) {
+void gleGenMeshBuffers(unsigned int* meshData) {
 	const unsigned int cylDivs = meshData[0];
 	const unsigned int sphRows = meshData[1];
 	const unsigned int sphCols = meshData[2];
@@ -570,7 +547,7 @@ void gleGenColVolMeshBuffers(unsigned int* meshData) {
 	meshData[8] = SPH_INDCS.size();
 }
 
-void gleDelColVolMeshBuffers(unsigned int* meshData) {
+void gleDelMeshBuffers(unsigned int* meshData) {
 	glDeleteBuffers(1, &meshData[0]);
 	glDeleteBuffers(1, &meshData[1]);
 	glDeleteVertexArrays(1, &meshData[2]);
@@ -581,7 +558,7 @@ void gleDelColVolMeshBuffers(unsigned int* meshData) {
 }
 
 
-void gleBindColVolMeshBuffers(const unsigned int* meshData) {
+void gleBindMeshBuffers(const unsigned int* meshData) {
 	if (meshData != nullptr) {
 		glBindVertexArray(meshData[2]);
 	} else {
@@ -589,7 +566,7 @@ void gleBindColVolMeshBuffers(const unsigned int* meshData) {
 	}
 }
 
-void gleDrawColVolMeshSubBuffer(const unsigned int* meshData, unsigned int meshType) {
+void gleDrawMeshSubBuffer(const unsigned int* meshData, unsigned int meshType) {
 	constexpr unsigned int primTypes[] = {GL_QUADS, GL_TRIANGLES, GL_TRIANGLES};
 
 	// const unsigned int numVerts = meshData[3 + meshType * 2 + 0];

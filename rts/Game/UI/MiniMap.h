@@ -5,6 +5,7 @@
 
 #include <string>
 #include <deque>
+
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
 #include "System/Color.h"
@@ -12,6 +13,7 @@
 #include "System/type2.h"
 
 
+class CVertexArray;
 class CUnit;
 namespace icon {
 	class CIconData;
@@ -96,16 +98,14 @@ protected:
 	void DrawMinimizedButton();
 
 	void DrawUnitHighlight(const CUnit* unit);
-	void DrawCircle(const float3& pos, float radius) const;
-	void DrawSquare(const float3& pos, float xsize, float zsize) const;
+	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
 	void UpdateTextureCache();
 	void ResizeTextureCache();
 
 protected:
-	static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);
-	static void DrawSurfaceSquare(const float3& pos, float xsize, float zsize);
+	static void DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int);
 
 protected:
 	int2 curPos;
@@ -173,9 +173,7 @@ protected:
 	int2 minimapTexSize;
 	float minimapRefreshRate;
 
-	GLuint buttonsTexture;
-	GLuint circleLists; // 8 - 256 divs
-	static const int circleListsCount = 6;
+	GLuint buttonsTexture = 0;
 
 	struct Notification {
 		float creationTime;

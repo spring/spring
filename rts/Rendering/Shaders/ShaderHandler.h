@@ -18,6 +18,7 @@ public:
 	typedef spring::unsynced_map<std::string, Shader::IProgramObject*> ProgramObjMap;
 	typedef spring::unsynced_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
 	typedef spring::unsynced_map<std::string, ProgramObjMap> ProgramTable;
+	typedef spring::unsynced_map<const char*, Shader::IProgramObject*> ExtProgramObjMap;
 
 	static CShaderHandler* GetInstance();
 
@@ -34,6 +35,9 @@ public:
 		shaderCache.Clear();
 	}
 
+	void InsertExtProgramObject(const char* name, Shader::IProgramObject* prog) { extProgramObjects.insert(name, prog); }
+	void RemoveExtProgramObject(const char* name, Shader::IProgramObject* prog) { extProgramObjects.erase(name); }
+
 	bool ReleaseProgramObjects(const std::string& poClass, bool persistent = false);
 	void ReleaseProgramObjectsMap(ProgramObjMap& poMap);
 
@@ -44,6 +48,15 @@ public:
 	 * @param soType Can be GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, ...
 	 */
 	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
+
+	Shader::IProgramObject* GetExtProgramObject(const char* name) {
+		const auto it = extProgramObjects.find(name);
+
+		if (it == extProgramObjects.end())
+			return nullptr;
+
+		return (it->second);
+	}
 
 
 	struct ShaderCache {
@@ -85,6 +98,9 @@ private:
 	// [0] := game-created programs, by name
 	// [1] := menu-created (persistent) programs, by name
 	ProgramTable programObjects[2];
+
+	// holds external programs not created by CreateProgramObject
+	ExtProgramObjMap extProgramObjects;
 
 	// all (re)loaded program ID's, by hash
 	ShaderCache shaderCache;

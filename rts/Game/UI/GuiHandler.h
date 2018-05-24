@@ -259,7 +259,7 @@ private:
 	std::vector< std::pair<Command, bool> > commandsToGive;
 
 	// DrawMapStuff caches
-	std::vector<BuildInfo> buildInfos;
+	std::vector<BuildInfo> buildInfoQueue;
 	std::vector<Command> buildCommands;
 	std::vector<float4> buildColors;
 

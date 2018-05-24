@@ -24,6 +24,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -32,7 +33,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -2143,14 +2144,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				GetBuildPositions(bi, bi, cameraPos, mouseDir);
 			}
 
-			if (buildInfos.empty())
+			if (buildInfoQueue.empty())
 				return Command(CMD_STOP);
 
-			if (buildInfos.size() == 1) {
+			if (buildInfoQueue.size() == 1) {
 				CFeature* feature = nullptr;
 
 				// TODO: maybe also check out-of-range for immobile builder?
-				if (!CGameHelper::TestUnitBuildSquare(buildInfos[0], feature, gu->myAllyTeam, false))
+				if (!CGameHelper::TestUnitBuildSquare(buildInfoQueue[0], feature, gu->myAllyTeam, false))
 					return defaultRet;
 
 			}
@@ -2158,12 +2159,12 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (!preview) {
 				// only issue if more than one entry, i.e. user created some
 				// kind of line/area queue (caller handles the last command)
-				for (auto beg = buildInfos.cbegin(), end = --buildInfos.cend(); beg != end; ++beg) {
+				for (auto beg = buildInfoQueue.cbegin(), end = --buildInfoQueue.cend(); beg != end; ++beg) {
 					GiveCommand(beg->CreateCommand(CreateOptions(button)));
 				}
 			}
 
-			return CheckCommand((buildInfos.back()).CreateCommand(CreateOptions(button)));
+			return CheckCommand((buildInfoQueue.back()).CreateCommand(CreateOptions(button)));
 		}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -2395,8 +2396,8 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 
 	BuildInfo other; // the unit around which buildings can be circled
 
-	buildInfos.clear();
-	buildInfos.reserve(16);
+	buildInfoQueue.clear();
+	buildInfoQueue.reserve(16);
 
 	if (GetQueueKeystate() && KeyInput::GetKeyModState(KMOD_CTRL)) {
 		const CUnit* unit = nullptr;
@@ -2435,10 +2436,10 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 		const int nvert = 1 + (oxsize / xsize);
 		const int nhori = 1 + (ozsize / xsize);
 
-		FillRowOfBuildPos(startInfo, end.x   + zsize / 2, start.z + xsize / 2,      0,  xsize, nhori, 3, true, buildInfos);
-		FillRowOfBuildPos(startInfo, end.x   - xsize / 2, end.z   + zsize / 2, -xsize,      0, nvert, 2, true, buildInfos);
-		FillRowOfBuildPos(startInfo, start.x - zsize / 2, end.z   - xsize / 2,      0, -xsize, nhori, 1, true, buildInfos);
-		FillRowOfBuildPos(startInfo, start.x + xsize / 2, start.z - zsize / 2,  xsize,      0, nvert, 0, true, buildInfos);
+		FillRowOfBuildPos(startInfo, end.x   + zsize / 2, start.z + xsize / 2,      0,  xsize, nhori, 3, true, buildInfoQueue);
+		FillRowOfBuildPos(startInfo, end.x   - xsize / 2, end.z   + zsize / 2, -xsize,      0, nvert, 2, true, buildInfoQueue);
+		FillRowOfBuildPos(startInfo, start.x - zsize / 2, end.z   - xsize / 2,      0, -xsize, nhori, 1, true, buildInfoQueue);
+		FillRowOfBuildPos(startInfo, start.x + xsize / 2, start.z - zsize / 2,  xsize,      0, nvert, 0, true, buildInfoQueue);
 	} else {
 		// rectangle or line
 		const float3 delta = end - start;
@@ -2457,17 +2458,17 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 			if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 				if ((1 < xnum) && (1 < znum)) {
 					// go "down" on the "left" side
-					FillRowOfBuildPos(startInfo, start.x                     , start.z + zstep             ,      0,  zstep, znum - 1, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x                     , start.z + zstep             ,      0,  zstep, znum - 1, 0, false, buildInfoQueue);
 					// go "right" on the "bottom" side
-					FillRowOfBuildPos(startInfo, start.x + xstep             , start.z + (znum - 1) * zstep,  xstep,      0, xnum - 1, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x + xstep             , start.z + (znum - 1) * zstep,  xstep,      0, xnum - 1, 0, false, buildInfoQueue);
 					// go "up" on the "right" side
-					FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, start.z + (znum - 2) * zstep,      0, -zstep, znum - 1, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, start.z + (znum - 2) * zstep,      0, -zstep, znum - 1, 0, false, buildInfoQueue);
 					// go "left" on the "top" side
-					FillRowOfBuildPos(startInfo, start.x + (xnum - 2) * xstep, start.z                     , -xstep,      0, xnum - 1, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x + (xnum - 2) * xstep, start.z                     , -xstep,      0, xnum - 1, 0, false, buildInfoQueue);
 				} else if (1 == xnum) {
-					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, buildInfoQueue);
 				} else if (1 == znum) {
-					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, buildInfos);
+					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, buildInfoQueue);
 				}
 			} else {
 				// filled
@@ -2475,10 +2476,10 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 				for (float z = start.z; zn < znum; ++zn) {
 					if (zn & 1) {
 						// every odd line "right" to "left"
-						FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, z, -xstep, 0, xnum, 0, false, buildInfos);
+						FillRowOfBuildPos(startInfo, start.x + (xnum - 1) * xstep, z, -xstep, 0, xnum, 0, false, buildInfoQueue);
 					} else {
 						// every even line "left" to "right"
-						FillRowOfBuildPos(startInfo, start.x                     , z,  xstep, 0, xnum, 0, false, buildInfos);
+						FillRowOfBuildPos(startInfo, start.x                     , z,  xstep, 0, xnum, 0, false, buildInfoQueue);
 					}
 					z += zstep;
 				}
@@ -2493,11 +2494,11 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 				xstep = KeyInput::GetKeyModState(KMOD_CTRL) ? 0 : zstep * delta.x / (delta.z ? delta.z : 1);
 			}
 
-			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, xDominatesZ ? xnum : znum, 0, false, buildInfos);
+			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, xDominatesZ ? xnum : znum, 0, false, buildInfoQueue);
 		}
 	}
 
-	return (buildInfos.size());
+	return (buildInfoQueue.size());
 }
 
 
@@ -3344,65 +3345,58 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 /******************************************************************************/
 /******************************************************************************/
 
-static inline void DrawSensorRange(int radius, const float* color, const float3& pos)
+static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::RenderDataBufferC* rb, const float3& pos)
 {
-	if (radius > 0) {
-		glColor4fv(color);
-		glSurfaceCircle(pos, (float)radius, 40);
-	}
-}
+	const auto DrawCircleIf = [&](const float4& center, const float* color) {
+		if (center.w <= 0.0f)
+			return false;
 
+		glSurfaceCircleRB(rb, center, color, 40);
+		return true;
+	};
 
-static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitdef, const float3 pos)
-{
+	const WeaponDef* shieldWD = unitDef->shieldWeaponDef;
+	const WeaponDef*  exploWD = unitDef->selfdExpWeaponDef;
+
 	// draw build range for immobile builders
-	if (unitdef->builder) {
-		const float radius = unitdef->buildDistance;
-		if (radius > 0.0f) {
-			glColor4fv(cmdColors.rangeBuild);
-			glSurfaceCircle(pos, radius, 40);
-		}
-	}
+	if (unitDef->builder)
+		DrawCircleIf({pos, unitDef->buildDistance}, cmdColors.rangeBuild);
+
 	// draw shield range for immobile units
-	if (unitdef->shieldWeaponDef) {
-		glColor4fv(cmdColors.rangeShield);
-		glSurfaceCircle(pos, unitdef->shieldWeaponDef->shieldRadius, 40);
-	}
+	if (shieldWD != nullptr)
+		glSurfaceCircleRB(rb, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
+
 	// draw sensor and jammer ranges
-	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-		if (unit != nullptr && unitdef == unit->unitDef) { // test if it's a decoy
-			DrawSensorRange(unit->radarRadius   , cmdColors.rangeRadar,       pos);
-			DrawSensorRange(unit->sonarRadius   , cmdColors.rangeSonar,       pos);
-			DrawSensorRange(unit->seismicRadius , cmdColors.rangeSeismic,     pos);
-			DrawSensorRange(unit->jammerRadius  , cmdColors.rangeJammer,      pos);
-			DrawSensorRange(unit->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+	if (unitDef->onoffable || unitDef->activateWhenBuilt) {
+		if (unit != nullptr && unitDef == unit->unitDef) { // test if it's a decoy
+			DrawCircleIf({pos, unit->radarRadius    * 1.0f}, cmdColors.rangeRadar      );
+			DrawCircleIf({pos, unit->sonarRadius    * 1.0f}, cmdColors.rangeSonar      );
+			DrawCircleIf({pos, unit->seismicRadius  * 1.0f}, cmdColors.rangeSeismic    );
+			DrawCircleIf({pos, unit->jammerRadius   * 1.0f}, cmdColors.rangeJammer     );
+			DrawCircleIf({pos, unit->sonarJamRadius * 1.0f}, cmdColors.rangeSonarJammer);
 		} else {
-			DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
-			DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
-			DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
-			DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
-			DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
-		}
-	}
-	// draw self destruct and damage distance
-	if (unitdef->kamikazeDist > 0) {
-		glColor4fv(cmdColors.rangeKamikaze);
-		glSurfaceCircle(pos, unitdef->kamikazeDist, 40);
-
-		const WeaponDef* wd = unitdef->selfdExpWeaponDef;
-
-		if (wd != nullptr) {
-			glColor4fv(cmdColors.rangeSelfDestruct);
-			glSurfaceCircle(pos, wd->damages.damageAreaOfEffect, 40);
+			DrawCircleIf({pos, unitDef->radarRadius    * 1.0f}, cmdColors.rangeRadar      );
+			DrawCircleIf({pos, unitDef->sonarRadius    * 1.0f}, cmdColors.rangeSonar      );
+			DrawCircleIf({pos, unitDef->seismicRadius  * 1.0f}, cmdColors.rangeSeismic    );
+			DrawCircleIf({pos, unitDef->jammerRadius   * 1.0f}, cmdColors.rangeJammer     );
+			DrawCircleIf({pos, unitDef->sonarJamRadius * 1.0f}, cmdColors.rangeSonarJammer);
 		}
 	}
 
+	// draw self-destruct and damage distance
+	if (!DrawCircleIf({pos, unitDef->kamikazeDist}, cmdColors.rangeKamikaze))
+		return;
+
+	if (exploWD == nullptr)
+		return;
+
+	glSurfaceCircleRB(rb, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
 }
 
 
 
 
-static void DrawWeaponArc(
+static void DrawWeaponAngleCone(
 	GL::RenderDataBufferC* rdb,
 	Shader::IProgramObject* ipo,
 	const float3& sourcePos,
@@ -3425,7 +3419,7 @@ static void DrawWeaponArc(
 	glDrawCone(rdb, GL_BACK , 64, {0.0f, 1.0f, 0.0f, 0.25f}); // front-faces (outside) in green
 }
 
-static inline void DrawUnitWeaponArcs(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
+static inline void DrawUnitWeaponAngleCones(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
 {
 	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
@@ -3439,58 +3433,80 @@ static inline void DrawUnitWeaponArcs(const CUnit* unit, GL::RenderDataBufferC* 
 		const float pitch   = math::asin(w->wantedDir.y);
 
 		// note: cone visualization is invalid for ballistic weapons
-		DrawWeaponArc(rdb, ipo, w->weaponMuzzlePos, {w->range, hrads}, {heading, pitch});
+		DrawWeaponAngleCone(rdb, ipo, w->weaponMuzzlePos, {w->range, hrads}, {heading, pitch});
 	}
 }
 
 
-static void DrawUnitRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject*)
+static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject*)
 {
-	glBallisticCircle(rdb, unit->weapons[0],  40, 1, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+	glBallisticCircle(rdb, unit->weapons[0],  40, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
 }
-static void DrawUnitWeaponArcFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
+static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
 {
-	DrawUnitWeaponArcs(unit, rdb, ipo);
+	DrawUnitWeaponAngleCones(unit, rdb, ipo);
 }
 
-template<typename DrawFunc> static void DrawRangeRingsAndWeaponArcs(
-	const CUnit* unitPointedAt,
+template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
+	const std::vector<BuildInfo>& biQueue,
+	const CUnit* pointeeUnit,
+	const UnitDef* buildeeDef,
 	const DrawFunc unitDrawFunc,
 	GL::RenderDataBufferC* rdb,
 	Shader::IProgramObject* ipo,
-	bool onMiniMap
+	bool drawSelecteeShapes, // rings for pass 1, cones for pass 2
+	bool drawPointeeRing,
+	bool drawBuildeeRings,
+	bool drawOnMiniMap
 ) {
-	assert((unitDrawFunc == DrawUnitRangeRingFunc) || (unitDrawFunc == DrawUnitWeaponArcFunc));
+	assert((unitDrawFunc == DrawUnitWeaponRangeRingFunc) || (unitDrawFunc == DrawUnitWeaponAngleConeFunc));
+	assert(!drawPointeeRing || pointeeUnit != nullptr);
 
-	// TODO: grab the minimap transform
-	if (onMiniMap)
-		return;
+	drawPointeeRing  &= (unitDrawFunc == DrawUnitWeaponRangeRingFunc);
+	drawBuildeeRings &= (unitDrawFunc == DrawUnitWeaponRangeRingFunc);
 
-	for (const int unitID: selectedUnitsHandler.selectedUnits) {
-		const CUnit* unit = unitHandler.GetUnit(unitID);
+	if (drawPointeeRing)
+		unitDrawFunc(pointeeUnit, rdb, ipo);
 
-		// handled earlier in DrawMapStuff
-		if (unit == unitPointedAt)
-			continue;
+	if (drawBuildeeRings) {
+		// draw (primary) weapon range for queued turrets
+		for (const BuildInfo& bi: biQueue) {
+			if (buildeeDef->weapons.empty())
+				continue;
 
-		if (unit->maxRange <= 0.0f)
-			continue;
-		if (unit->weapons.empty())
-			continue;
-		// only consider (armed) static structures for the minimap
-		if (onMiniMap && !unit->unitDef->IsImmobileUnit())
-			continue;
+			const UnitDefWeapon& udw = buildeeDef->weapons[0];
+			const WeaponDef* wd = udw.def;
 
-		if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
-			continue;
-
-		unitDrawFunc(unit, rdb, ipo);
+			glBallisticCircle(rdb, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
+		}
 	}
 
-	// rings are batched (unlike arcs), have to use LINES
-	if (unitDrawFunc != DrawUnitRangeRingFunc)
-		return;
+	if (drawSelecteeShapes) {
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			const CUnit* unit = unitHandler.GetUnit(unitID);
 
+			// handled above
+			if (unit == pointeeUnit)
+				continue;
+
+			if (unit->maxRange <= 0.0f)
+				continue;
+			if (unit->weapons.empty())
+				continue;
+			// only consider (armed) static structures for the minimap
+			if (drawOnMiniMap && !unit->unitDef->IsImmobileUnit())
+				continue;
+
+			if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
+				continue;
+
+			unitDrawFunc(unit, rdb, ipo);
+		}
+	}
+
+	// unlike rings, cones are not batched for simplicity
+	// buffer will just be empty here if drawing the latter
+	assert(unitDrawFunc != DrawUnitWeaponAngleConeFunc || rdb->NumElems() == 0);
 	rdb->Submit(GL_LINES);
 }
 
@@ -3506,11 +3522,17 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_ALPHA_TEST);
+	} else {
+		// TODO: grab the minimap transform
+		return;
 	}
 
 
 	float3 tracePos = camera->GetPos();
 	float3 traceDir = mouse->dir;
+
+	const bool haveActiveCommand = (size_t(inCommand) < commands.size());
+	const bool activeBuildCommand = (haveActiveCommand && (commands[inCommand].type == CMDTYPE_ICON_BUILDING));
 
 	// setup for minimap proxying
 	const bool minimapInput = (activeReceiver != this && !mouse->offscreen && GetReceiverAt(mouse->lastx, mouse->lasty) == minimap);
@@ -3531,11 +3553,12 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
+
 	if (activeMousePress) {
 		int cmdIndex = -1;
 		int button = SDL_BUTTON_LEFT;
 
-		if (size_t(inCommand) < commands.size()) {
+		if (haveActiveCommand) {
 			cmdIndex = inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
@@ -3547,6 +3570,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 		if (mouse->buttons[button].pressed && (cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
 			const SCommandDescription& cmdDesc = commands[cmdIndex];
+
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
 					if (mouse->buttons[button].movement > 30) {
@@ -3676,7 +3700,12 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 
 	// draw the ranges for the unit that is being pointed at
-	const CUnit* pointedAt = nullptr;
+	const CUnit* pointeeUnit = nullptr;
+	const UnitDef* buildeeDef = nullptr;
+
+	const float maxTraceDist = globalRendering->viewRange * 1.4f;
+	      float rayTraceDist = -1.0f;
+
 
 	if (GetQueueKeystate()) {
 		const CUnit* unit = nullptr;
@@ -3686,241 +3715,245 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			unit = minimap->GetSelectUnit(tracePos);
 		} else {
 			// ignore the returned distance, we don't care about it here
-			TraceRay::GuiTraceRay(tracePos, traceDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, false);
+			TraceRay::GuiTraceRay(tracePos, traceDir, maxTraceDist, nullptr, unit, feature, false);
 		}
 
-		if (unit != nullptr && (gu->spectatingFullView || unit->IsInLosForAllyTeam(gu->myAllyTeam))) {
-			pointedAt = unit;
+		const bool   validUnit = (unit != nullptr);
+		const bool visibleUnit = (validUnit && (gu->spectatingFullView || unit->IsInLosForAllyTeam(gu->myAllyTeam)));
+		const bool   enemyUnit = (validUnit && unit->allyteam != gu->myAllyTeam && !gu->spectatingFullView);
 
-			const UnitDef* unitdef = unit->unitDef;
-			const bool enemyUnit = ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView);
+		if (visibleUnit) {
+			pointeeUnit = unit;
 
-			if (enemyUnit && unitdef->decoyDef != nullptr)
-				unitdef = unitdef->decoyDef;
+			const UnitDef*  unitDef = pointeeUnit->unitDef;
+			const UnitDef* decoyDef = unitDef->decoyDef;
 
-			DrawUnitDefRanges(unit, unitdef, unit->pos);
+			if (enemyUnit && decoyDef != nullptr)
+				unitDef = decoyDef;
 
-			// draw (primary) weapon range
-			if (unit->maxRange > 0.0f) {
-				glSetupRangeRingDrawState(shader);
-				glBallisticCircle(buffer, unit->weapons[0],  40, 0, GL_LINE_LOOP,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
-				glResetRangeRingDrawState(shader);
-			}
+			DrawUnitDefRanges(unit, unitDef, buffer, pointeeUnit->pos);
 
 			// draw decloak distance
-			if (unit->decloakDistance > 0.0f) {
-				glColor4fv(cmdColors.rangeDecloak);
-				if (unit->unitDef->decloakSpherical && globalRendering->drawdebug) {
-					GL::PushMatrix();
-					GL::Translate(unit->midPos.x, unit->midPos.y, unit->midPos.z);
-					GL::RotateX(90.0f);
-					GLUquadricObj* q = gluNewQuadric();
-					gluQuadricDrawStyle(q, GLU_LINE);
-					gluSphere(q, unit->decloakDistance, 10, 10);
-					gluDeleteQuadric(q);
-					GL::PopMatrix();
-				} else { // cylindrical
-					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
+			if (pointeeUnit->decloakDistance > 0.0f) {
+				if (pointeeUnit->unitDef->decloakSpherical && globalRendering->drawdebug) {
+					CMatrix44f mat;
+					mat.Translate(pointeeUnit->midPos);
+					mat.RotateX(-90.0f * math::DEG_TO_RAD);
+					mat.Scale(OnesVector * pointeeUnit->decloakDistance);
+
+					Shader::IProgramObject* cvShader = shaderHandler->GetExtProgramObject("[DebugColVolDrawer]");
+
+					cvShader->Enable();
+					cvShader->SetUniformMatrix4fv(0, false, mat);
+					cvShader->SetUniformMatrix4fv(1, false, camera->GetViewMatrix());
+					cvShader->SetUniformMatrix4fv(2, false, camera->GetProjectionMatrix());
+					cvShader->SetUniform4fv(3, cmdColors.rangeDecloak);
+
+					// spherical
+					gleBindMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
+					gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
+					gleBindMeshBuffers(nullptr);
+
+					cvShader->Disable();
+				} else {
+					// cylindrical
+					glSurfaceCircleRB(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
 				}
 			}
 
 			// draw interceptor range
-			if (unitdef->maxCoverage > 0.0f) {
-				const CWeapon* w = enemyUnit? unit->stockpileWeapon: nullptr; // will be checked if any missiles are ready
+			if (unitDef->maxCoverage > 0.0f) {
+				const CWeapon* w = enemyUnit? pointeeUnit->stockpileWeapon: nullptr; // will be checked if any missiles are ready
 
 				// if this isn't the interceptor, then don't use it
 				if (w != nullptr && !w->weaponDef->interceptor)
 					w = nullptr;
 
 				// shows as on if enemy, a non-stockpiled weapon, or if the stockpile has a missile
-				if (!enemyUnit || (w == nullptr) || w->numStockpiled) {
-					glColor4fv(cmdColors.rangeInterceptorOn);
-				} else {
-					glColor4fv(cmdColors.rangeInterceptorOff);
-				}
+				const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
+				const float4& color = colors[!enemyUnit || (w == nullptr) || w->numStockpiled > 0];
 
-				glSurfaceCircle(unit->pos, unitdef->maxCoverage, 40);
+				glSurfaceCircleRB(buffer, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
 			}
 		}
 	}
 
 
+	if (activeBuildCommand) {
+		// draw build distance for all immobile builders during build-commands
+		for (const auto bi: unitHandler.GetBuilderCAIs()) {
+			const CBuilderCAI* builderCAI = bi.second;
+			const CUnit* builder = builderCAI->owner;
+			const UnitDef* builderDef = builder->unitDef;
 
-	// draw buildings we are about to build
-	if ((size_t(inCommand) < commands.size()) && (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-		{
-			// draw build distance for all immobile builders during build commands
-			for (const auto bi: unitHandler.GetBuilderCAIs()) {
-				const CBuilderCAI* builderCAI = bi.second;
-				const CUnit* builder = builderCAI->owner;
-				const UnitDef* builderDef = builder->unitDef;
+			if (builder == pointeeUnit || builder->team != gu->myTeam)
+				continue;
+			if (!builderDef->builder)
+				continue;
 
-				if (builder == pointedAt || builder->team != gu->myTeam)
+			if (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder)) {
+				const float radius = builderDef->buildDistance;
+				const float* color = cmdColors.rangeBuild;
+
+				if (radius <= 0.0f)
 					continue;
-				if (!builderDef->builder)
-					continue;
 
-				if (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder)) {
-					const float radius = builderDef->buildDistance;
-					const float* color = cmdColors.rangeBuild;
-
-					if (radius > 0.0f) {
-						glDisable(GL_TEXTURE_2D);
-						glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
-						glSurfaceCircle(builder->pos, radius, 40);
-					}
-				}
+				glSurfaceCircleRB(buffer, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
 			}
 		}
 
-		const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-
-		if (unitdef != nullptr) {
-			const float dist = CGround::LineGroundWaterCol(tracePos, traceDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
-
-			if (dist > 0.0f) {
-				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-				const float bpDist = CGround::LineGroundWaterCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
-
-				// get the build information
-				const float3 cPos = tracePos + traceDir * dist;
-				const float3 bPos = bp.camPos + bp.dir * bpDist;
-
-				if (GetQueueKeystate() && bp.pressed) {
-					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
-					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
-
-					buildColors.clear();
-					buildColors.reserve(GetBuildPositions(bInfo, cInfo, tracePos, traceDir));
-				} else {
-					const BuildInfo bi(unitdef, cPos, buildFacing);
-
-					buildColors.clear();
-					buildColors.reserve(GetBuildPositions(bi, bi, tracePos, traceDir));
-				}
-
-				{
-					glSetupRangeRingDrawState(shader);
-
-					// draw (primary) weapon range
-					for (const BuildInfo& bi: buildInfos) {
-						if (unitdef->weapons.empty())
-							continue;
-
-						glBallisticCircle(buffer, unitdef->weapons[0].def,  40, 1, GL_LINES,  bi.pos, {unitdef->weapons[0].def->range, unitdef->weapons[0].def->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
-					}
-
-					buffer->Submit(GL_LINES);
-					glResetRangeRingDrawState(shader);
-				}
-
-				for (const BuildInfo& bi: buildInfos) {
-					const float3& buildPos = bi.pos;
-
-					DrawUnitDefRanges(nullptr, unitdef, buildPos);
-
-					// draw extraction range
-					if (unitdef->extractRange > 0.0f) {
-						glColor4fv(cmdColors.rangeExtract);
-						glSurfaceCircle(buildPos, unitdef->extractRange, 40);
-					}
-
-					// draw interceptor range
-					const WeaponDef* wd = unitdef->stockpileWeaponDef;
-					if ((wd != nullptr) && wd->interceptor) {
-						glColor4fv(cmdColors.rangeInterceptorOn);
-						glSurfaceCircle(buildPos, wd->coverageRange, 40);
-					}
-				}
+		buildeeDef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
+	}
 
 
-				if (!onMiniMap) {
-					// TODO: grab the minimap transform
-					unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
+	if (buildeeDef != nullptr) {
+		assert(activeBuildCommand);
 
-					// first pass; grid squares
-					for (const BuildInfo& bi: buildInfos) {
-						buildCommands.clear();
+		if ((rayTraceDist = CGround::LineGroundWaterCol(tracePos, traceDir, maxTraceDist, buildeeDef->floatOnWater, false)) > 0.0f) {
+			const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-						if (GetQueueKeystate()) {
-							const Command c = bi.CreateCommand();
+			const float bpDist = CGround::LineGroundWaterCol(bp.camPos, bp.dir, maxTraceDist, buildeeDef->floatOnWater, false);
 
-							for (const int unitID: selectedUnitsHandler.selectedUnits) {
-								const CUnit* su = unitHandler.GetUnit(unitID);
-								const CCommandAI* cai = su->commandAI;
+			// get the build-position information
+			const float3 cPos = tracePos + traceDir * rayTraceDist;
+			const float3 bPos = bp.camPos + bp.dir * bpDist;
 
-								for (const Command& cmd: cai->GetOverlapQueued(c)) {
-									buildCommands.push_back(cmd);
-								}
-							}
-						}
+			if (GetQueueKeystate() && bp.pressed) {
+				const BuildInfo cInfo = BuildInfo(buildeeDef, cPos, buildFacing);
+				const BuildInfo bInfo = BuildInfo(buildeeDef, bPos, buildFacing);
 
-						if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
-							buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
-						} else {
-							buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
-						}
-					}
+				buildColors.clear();
+				buildColors.reserve(GetBuildPositions(bInfo, cInfo, tracePos, traceDir));
+			} else {
+				const BuildInfo bi(buildeeDef, cPos, buildFacing);
 
-					unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
-					unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
+				buildColors.clear();
+				buildColors.reserve(GetBuildPositions(bi, bi, tracePos, traceDir));
+			}
 
-					// second pass; water-depth indicator lines
-					for (const BuildInfo& bi: buildInfos) {
-						unitDrawer->ShowUnitBuildSquares(bi, {}, false);
-					}
 
-					unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
-				}
+			for (const BuildInfo& bi: buildInfoQueue) {
+				DrawUnitDefRanges(nullptr, buildeeDef, buffer, bi.pos);
 
-				if (!onMiniMap) {
-					assert(buildInfos.size() == buildColors.size());
+				// draw extraction range
+				if (buildeeDef->extractRange > 0.0f)
+					glSurfaceCircleRB(buffer, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
 
-					for (size_t n = 0; n < buildInfos.size(); n++) {
-						const BuildInfo& bi = buildInfos[n];
-						const float4& bc = buildColors[n];
+				// draw interceptor range
+				const WeaponDef* wd = buildeeDef->stockpileWeaponDef;
 
-						GL::PushMatrix();
-						GL::LoadIdentity();
-						GL::Translate(bi.pos);
-						GL::RotateY(bi.buildFacing * 90.0f);
+				if (wd == nullptr || !wd->interceptor)
+					continue;
 
-						glColor4f(bc.x, bc.y, bc.z, bc.w);
-						CUnitDrawer::DrawObjectDefAlpha(bi.def, gu->myTeam, false);
-
-						GL::PopMatrix();
-						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
-					}
-				}
+				glSurfaceCircleRB(buffer, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
 			}
 		}
 	}
+
+
+	if (buffer->NumElems() > 0) {
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		buffer->Submit(GL_LINES);
+		shader->Disable();
+	}
+
+
+	if (rayTraceDist > 0.0f) {
+		assert(activeBuildCommand);
+		assert(buildeeDef != nullptr);
+
+		// TODO: grab the minimap transform
+		unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
+
+		// first pass; grid squares
+		for (const BuildInfo& bi: buildInfoQueue) {
+			buildCommands.clear();
+
+			if (GetQueueKeystate()) {
+				const Command c = bi.CreateCommand();
+
+				for (const int unitID: selectedUnitsHandler.selectedUnits) {
+					const CUnit* su = unitHandler.GetUnit(unitID);
+					const CCommandAI* cai = su->commandAI;
+
+					for (const Command& cmd: cai->GetOverlapQueued(c)) {
+						buildCommands.push_back(cmd);
+					}
+				}
+			}
+
+			if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
+				buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
+			} else {
+				buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
+			}
+		}
+
+		unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
+		unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
+
+		// second pass; water-depth indicator lines
+		for (const BuildInfo& bi: buildInfoQueue) {
+			unitDrawer->ShowUnitBuildSquares(bi, {}, false);
+		}
+
+		unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
+
+
+		if (!onMiniMap) {
+			assert(buildInfoQueue.size() == buildColors.size());
+
+			for (size_t n = 0; n < buildInfoQueue.size(); n++) {
+				const BuildInfo& bi = buildInfoQueue[n];
+				const float4& bc = buildColors[n];
+
+				GL::PushMatrix();
+				GL::LoadIdentity();
+				GL::Translate(bi.pos);
+				GL::RotateY(bi.buildFacing * 90.0f);
+
+				glColor4f(bc.x, bc.y, bc.z, bc.w);
+				CUnitDrawer::DrawObjectDefAlpha(bi.def, gu->myTeam, false);
+
+				GL::PopMatrix();
+				glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
+			}
+		}
+	}
+
 
 	{
 		// draw range circles (for immobile units) if attack orders are imminent
-		const int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
+		const int defaultCmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
 
-		const bool  playerAttackCmd = (size_t(inCommand) < commands.size() && commands[inCommand].id == CMD_ATTACK);
-		const bool defaultAttackCmd = (inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK);
-		const bool   drawWeaponArcs = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+		const bool  activeAttackCmd  = (haveActiveCommand && commands[inCommand].id == CMD_ATTACK);
+		const bool defaultAttackCmd  = (inCommand == -1 && defaultCmd > 0 && commands[defaultCmd].id == CMD_ATTACK);
+		const bool  drawPointeeRing  = (pointeeUnit != nullptr && pointeeUnit->maxRange > 0.0f);
+		const bool  drawBuildeeRings = (activeBuildCommand && rayTraceDist > 0.0f);
+		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
 
-		if (playerAttackCmd || defaultAttackCmd) {
-			static constexpr decltype(&glSetupRangeRingDrawState) setupDrawStateFuncs[] = {&glSetupRangeRingDrawState, &glSetupWeaponArcDrawState};
-			static constexpr decltype(&glResetRangeRingDrawState) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
-			static constexpr decltype(&DrawUnitRangeRingFunc    )       unitDrawFuncs[] = {&DrawUnitRangeRingFunc, &DrawUnitWeaponArcFunc};
+
+		if (activeAttackCmd || defaultAttackCmd || drawPointeeRing || drawBuildeeRings) {
+			static constexpr decltype(&glSetupRangeRingDrawState  ) setupDrawStateFuncs[] = {&glSetupRangeRingDrawState, &glSetupWeaponArcDrawState};
+			static constexpr decltype(&glResetRangeRingDrawState  ) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
+			static constexpr decltype(&DrawUnitWeaponRangeRingFunc)       unitDrawFuncs[] = {&DrawUnitWeaponRangeRingFunc, &DrawUnitWeaponAngleConeFunc};
 
 			shader->Enable();
 			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
-			for (int i = 0; i < (1 + drawWeaponArcs); i++) {
-				setupDrawStateFuncs[i](nullptr);
-				DrawRangeRingsAndWeaponArcs(pointedAt, unitDrawFuncs[i], buffer, shader, onMiniMap);
-				resetDrawStateFuncs[i](nullptr);
+			for (int i = 0; i < (1 + drawWeaponCones); i++) {
+				setupDrawStateFuncs[i]();
+				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
+				resetDrawStateFuncs[i]();
 			}
 
 			shader->Disable();
 		}
 	}
+
 
 	glLineWidth(1.0f);
 

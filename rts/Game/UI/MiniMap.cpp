@@ -36,6 +36,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
@@ -121,27 +122,12 @@ CMiniMap::CMiniMap()
 
 	UpdateGeometry();
 
-	circleLists = glGenLists(circleListsCount);
-	for (int cl = 0; cl < circleListsCount; cl++) {
-		glNewList(circleLists + cl, GL_COMPILE);
-		glBegin(GL_LINE_LOOP);
-		const int divs = (1 << (cl + 3));
-		for (int d = 0; d < divs; d++) {
-			const float rads = math::TWOPI * float(d) / float(divs);
-			glVertex3f(std::sin(rads), 0.0f, std::cos(rads));
-		}
-		glEnd();
-		glEndList();
-	}
-
 	// setup the buttons' texture and texture coordinates
-	buttonsTexture = 0;
 	CBitmap bitmap;
 	bool unfiltered = false;
 	if (bitmap.Load("bitmaps/minimapbuttons.png")) {
-		if ((bitmap.ysize == buttonSize) && (bitmap.xsize == (buttonSize * 4))) {
-			unfiltered = true;
-		}
+		unfiltered = ((bitmap.ysize == buttonSize) && (bitmap.xsize == (buttonSize * 4)));
+
 		glGenTextures(1, &buttonsTexture);
 		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
@@ -149,6 +135,7 @@ CMiniMap::CMiniMap()
 								 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
 		if (unfiltered) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -156,10 +143,13 @@ CMiniMap::CMiniMap()
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		}
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
 	const float xshift = unfiltered ? 0.0f : (0.5f / bitmap.xsize);
 	const float yshift = unfiltered ? 0.0f : (0.5f / bitmap.ysize);
+
 	    moveBox.xminTx = 0.50f + xshift;
 	    moveBox.xmaxTx = 0.75f - xshift;
 	  resizeBox.xminTx = 0.75f + xshift;
@@ -181,7 +171,6 @@ CMiniMap::CMiniMap()
 
 CMiniMap::~CMiniMap()
 {
-	glDeleteLists(circleLists, circleListsCount);
 	glDeleteTextures(1, &buttonsTexture);
 	glDeleteTextures(1, &minimapTex);
 }
@@ -303,59 +292,75 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 	const std::string command = StringToLower(words[0]);
 
-	if (command == "fullproxy") {
-		fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
-	}
-	else if (command == "icons") {
-		useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
-	}
-	else if (command == "unitexp") {
-		if (words.size() >= 2)
-			unitExponent = atof(words[1].c_str());
+	switch (hashString(command.c_str())) {
+		case hashString("fullproxy"): {
+			fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
+		} break;
+		case hashString("icons"): {
+			useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
+		} break;
+		case hashString("unitexp"): {
+			if (words.size() >= 2)
+				unitExponent = atof(words[1].c_str());
 
-		UpdateGeometry();
-	}
-	else if (command == "unitsize") {
-		if (words.size() >= 2)
-			unitBaseSize = atof(words[1].c_str());
+			UpdateGeometry();
+		} break;
+		case hashString("unitsize"): {
+			if (words.size() >= 2)
+				unitBaseSize = atof(words[1].c_str());
 
-		unitBaseSize = std::max(0.0f, unitBaseSize);
-		UpdateGeometry();
-	}
-	else if (command == "drawcommands") {
-		if (words.size() >= 2) {
-			drawCommands = std::max(0, atoi(words[1].c_str()));
-		} else {
-			drawCommands = (drawCommands > 0) ? 0 : 1;
-		}
-	}
-	else if (command == "drawprojectiles") {
-		drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
-	}
-	else if (command == "simplecolors") {
-		simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
-	}
+			unitBaseSize = std::max(0.0f, unitBaseSize);
+			UpdateGeometry();
+		} break;
+		case hashString("drawcommands"): {
+			if (words.size() >= 2) {
+				drawCommands = std::max(0, atoi(words[1].c_str()));
+			} else {
+				drawCommands = (drawCommands > 0) ? 0 : 1;
+			}
+		} break;
+		case hashString("drawprojectiles"): {
+			drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
+		} break;
+		case hashString("simplecolors"): {
+			simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
+		} break;
 
-	// the following commands can not be used in dualscreen mode
-	if (globalRendering->dualScreenMode)
-		return;
+		// the following commands can not be used in dualscreen mode
+		case hashString("geo"):
+		case hashString("geometry"): {
+			if (globalRendering->dualScreenMode)
+				return;
+			if (words.size() < 2)
+				return;
 
-	if ((command == "geo") || (command == "geometry")) {
-		if (words.size() < 2)
-			return;
+			ParseGeometry(words[1]);
+			UpdateGeometry();
+		} break;
 
-		ParseGeometry(words[1]);
-		UpdateGeometry();
-	}
-	else if ((command == "min") || (command == "minimize")) {
-		minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
-	}
-	else if ((command == "max") ||
-	         (command == "maximize") || (command == "maxspect")) {
-		const bool newMax = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !maximized;
-		if (newMax != maximized) {
-			ToggleMaximized(command == "maxspect");
-		}
+		case hashString("min"):
+		case hashString("minimize"): {
+			if (globalRendering->dualScreenMode)
+				return;
+
+			minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
+		} break;
+
+		case hashString("max"):
+		case hashString("maximize"):
+		case hashString("maxspect"): {
+			if (globalRendering->dualScreenMode)
+				return;
+
+			const bool isMaximized = maximized;
+			maximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !maximized;
+
+			if (isMaximized != maximized)
+				ToggleMaximized(command == "maxspect");
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
@@ -805,45 +810,33 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 
 /******************************************************************************/
 
-void CMiniMap::DrawCircle(const float3& pos, float radius) const
+void CMiniMap::DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const
 {
 	GL::PushMatrix();
 	GL::Translate(pos.x, pos.y, pos.z);
-	GL::Scale(radius, 1.0f, radius);
+	GL::Scale(pos.w, 1.0f, pos.w);
 
-	const float xPixels = radius * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
-	const float yPixels = radius * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+	const float xPixels = pos.w * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
+	const float yPixels = pos.w * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+
 	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
-	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
-	glCallList(circleLists + lodClamp);
+	const int divs = 1 << (Clamp(lod, 0, 6 - 1) + 3);
+
+	for (int d = 0; d < divs; d++) {
+		const float step = d * 1.0f / divs;
+		const float rads = math::TWOPI * step;
+
+		va->AddVertexC({std::sin(rads), 0.0f, std::cos(rads)}, SColor(&color.x));
+	}
+
+	va->DrawArrayC(GL_LINE_LOOP);
 
 	GL::PopMatrix();
 }
 
-void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize) const
+void CMiniMap::DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int)
 {
-	float verts[] = {
-		pos.x + xsize, 0.0f, pos.z + zsize,
-		pos.x - xsize, 0.0f, pos.z + zsize,
-		pos.x - xsize, 0.0f, pos.z - zsize,
-		pos.x + xsize, 0.0f, pos.z - zsize
-	};
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_LINE_LOOP, 0, 4);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-
-void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
-{
-	minimap->DrawCircle(pos, radius);
-}
-
-
-void CMiniMap::DrawSurfaceSquare(const float3& pos, float xsize, float ysize)
-{
-	minimap->DrawSquare(pos, xsize, ysize);
+	minimap->DrawCircle(va, pos, color);
 }
 
 
@@ -1055,8 +1048,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
 	if (useNormalizedCoors)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
-	setSurfaceCircleFunc(DrawSurfaceCircle);
-	setSurfaceSquareFunc(DrawSurfaceSquare);
+	setSurfaceCircleFuncVA(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
 
 	// clip everything outside of the minimap box
@@ -1102,8 +1094,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
 	glDisable(GL_CLIP_PLANE3);
 
 	cursorIcons.Enable(true);
-	setSurfaceCircleFunc(nullptr);
-	setSurfaceSquareFunc(nullptr);
+	setSurfaceCircleFuncVA(nullptr);
 }
 
 
@@ -1490,35 +1481,29 @@ void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+	const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 
 	for (const int unitID: selUnits) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		// LOS Ranges
-		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, unit->radarRadius);
-		}
-		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, unit->sonarRadius);
-		}
-		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, unit->jammerRadius);
-		}
+		if (unit->radarRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->radarRadius * 1.0f}, cmdColors.rangeRadar);
+
+		if (unit->sonarRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->sonarRadius * 1.0f}, cmdColors.rangeSonar);
+
+		if (unit->jammerRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->jammerRadius * 1.0f}, cmdColors.rangeJammer);
 
 		// Interceptor Ranges
 		for (const CWeapon* w: unit->weapons) {
-			auto& wd = *w->weaponDef;
-			if ((w->range > 300) && wd.interceptor) {
-				if (w->numStockpiled || !wd.stockpile) {
-					glColor3fv(cmdColors.rangeInterceptorOn);
-				} else {
-					glColor3fv(cmdColors.rangeInterceptorOff);
-				}
-				DrawCircle(unit->pos, wd.coverageRange);
-			}
+			const WeaponDef& wd = *w->weaponDef;
+
+			if ((w->range <= 300) || !wd.interceptor)
+				continue;
+
+			DrawCircle(GetVertexArray(), {unit->pos, wd.coverageRange}, colors[w->numStockpiled || !wd.stockpile]);
 		}
 	}
 }
@@ -1540,12 +1525,15 @@ void CMiniMap::DrawWorldStuff() const
 		// draw the queued commands
 		commandDrawer->DrawLuaQueuedUnitSetCommands();
 
+		#if 0
+		// TODO: pass the minimap transform (calls into CommandDrawer)
 		// NOTE: this needlessly adds to the CursorIcons list, but at least
 		//       they are not drawn  (because the input receivers are drawn
 		//       after the command queues)
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
 			selectedUnitsHandler.DrawCommands();
 		}
+		#endif
 	}
 
 

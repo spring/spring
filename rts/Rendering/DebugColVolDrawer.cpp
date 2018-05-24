@@ -8,6 +8,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -19,11 +20,6 @@
 
 
 static constexpr float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
-
-// [0] := VBO, [1] := IBO, [2] := VAO, [3 + i, 4 + i] := {#verts[i], #indcs[i]}
-static unsigned int COLVOL_MESH_BUFFERS[3 + 3 * 2] = {0, 0, 0,  0, 0, 0, 0, 0, 0};
-// [0] := cylinder divs, [1] := sphere rows, [2] := sphere cols
-static unsigned int COLVOL_MESH_PARAMS[3] = {20, 20, 20};
 
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol, Shader::IProgramObject* s, CMatrix44f m)
@@ -37,7 +33,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, Shader::IProg
 
 			s->SetUniformMatrix4fv(0, false, m);
 
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+			gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
@@ -67,7 +63,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, Shader::IProg
 
 			s->SetUniformMatrix4fv(0, false, m);
 
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 1);
+			gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_CYL);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
@@ -76,7 +72,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, Shader::IProg
 
 			s->SetUniformMatrix4fv(0, false, m);
 
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 0);
+			gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_BOX);
 		} break;
 	}
 }
@@ -96,7 +92,7 @@ static void DrawUnitDebugPieceTree(CMatrix44f m, const LocalModelPiece* lmp, con
 			DrawCollisionVolume(lmp->GetCollisionVolume(), s, pm);
 
 			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150)))
-				shader->SetUniform("u_color_rgba", DEFAULT_VOLUME_COLOR.x, DEFAULT_VOLUME_COLOR.y, DEFAULT_VOLUME_COLOR.z, DEFAULT_VOLUME_COLOR.w);
+				shader->SetUniform4fv("u_color_rgba", DEFAULT_VOLUME_COLOR);
 		}
 
 	for (unsigned int i = 0; i < lmp->children.size(); i++) {
@@ -141,7 +137,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o, Shader::IProgra
 		s->SetUniform4f(3, 1.0f, 0.0f, 0.0f, 0.35f);
 		s->SetUniformMatrix4fv(0, false, m);
 
-		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+		gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 
 		m.Translate(-o->relAimPos);
 	}
@@ -153,7 +149,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o, Shader::IProgra
 		s->SetUniform4f(3, 1.0f, 0.0f, 1.0f, 0.35f);
 		s->SetUniformMatrix4fv(0, false, m);
 
-		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+		gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 
 		s->SetUniform4fv(3, DEFAULT_VOLUME_COLOR);
 	}
@@ -198,7 +194,7 @@ static inline void DrawFeatureColVol(const CFeature* f, Shader::IProgramObject* 
 			s->SetUniform4f(3, 0.5f, 0.5f, 0.5f, 0.35f);
 			s->SetUniformMatrix4fv(0, false, m);
 
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+			gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 		}
 	}
 }
@@ -227,7 +223,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 		s->SetUniform4f(3, 1.0f, 1.0f, 0.0f, 0.4f);
 		s->SetUniformMatrix4fv(0, false, m);
 
-		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+		gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 
 
 		m.Translate(-w->aimFromPos);
@@ -236,7 +232,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 		s->SetUniform4f(3, 1.0f, 0.0f, 1.0f, 0.4f);
 		s->SetUniformMatrix4fv(0, false, m);
 
-		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+		gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 
 		m.Translate(-w->weaponMuzzlePos);
 		m.Translate(w->GetCurrentTargetPos());
@@ -244,7 +240,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 
 		s->SetUniform4f(3, 0.0f, 1.0f, 1.0f, 0.4f);
 		s->SetUniformMatrix4fv(0, false, m);
-		gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+		gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 
 		m.Translate(-w->GetCurrentTargetPos());
 	}
@@ -296,7 +292,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 			s->SetUniform4f(3, 0.5f, 0.5f, 0.5f, 0.35f);
 			s->SetUniformMatrix4fv(0, false, m);
 
-			gleDrawColVolMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], 2);
+			gleDrawMeshSubBuffer(&COLVOL_MESH_BUFFERS[0], GLE_MESH_TYPE_SPH);
 		}
 	}
 }
@@ -330,10 +326,10 @@ public:
 		glLineWidth(2.0f);
 		glDepthMask(GL_TRUE);
 
-		gleBindColVolMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
+		gleBindMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
 	}
 	void Disable() {
-		gleBindColVolMeshBuffers(nullptr);
+		gleBindMeshBuffers(nullptr);
 
 		glLineWidth(1.0f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -400,14 +396,14 @@ namespace DebugColVolDrawer
 		cvShader.SetUniformLocation("u_color_rgba"); // idx 3
 	}
 	void InitBuffers() {
-		memcpy(&COLVOL_MESH_BUFFERS[0], &COLVOL_MESH_PARAMS[0], 3 * sizeof(unsigned int));
-		gleGenColVolMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
+		memcpy(&COLVOL_MESH_BUFFERS[0], &COLVOL_MESH_PARAMS[0], GLE_MESH_TYPE_CNT * sizeof(COLVOL_MESH_PARAMS[0]));
+		gleGenMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
 	}
 
 	void KillShader() { cvShader.Release(false); }
 	void KillBuffers() {
-		gleDelColVolMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
-		memcpy(&COLVOL_MESH_BUFFERS[0], &COLVOL_MESH_PARAMS[0], 3 * sizeof(unsigned int));
+		gleDelMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
+		memcpy(&COLVOL_MESH_BUFFERS[0], &COLVOL_MESH_PARAMS[0], GLE_MESH_TYPE_CNT * sizeof(COLVOL_MESH_PARAMS[0]));
 	}
 
 	void Init() {
@@ -415,11 +411,13 @@ namespace DebugColVolDrawer
 		InitBuffers();
 
 		cvDrawer.Init(&cvShader);
+		shaderHandler->InsertExtProgramObject("[DebugColVolDrawer]", &cvShader);
 	}
 	void Kill() {
 		KillShader();
 		KillBuffers();
 
+		shaderHandler->RemoveExtProgramObject("[DebugColVolDrawer]", &cvShader);
 		cvDrawer.Kill();
 	}
 

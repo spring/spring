@@ -69,8 +69,8 @@ void GL::InitRenderBuffers() {
 	for (int i = 0; i < 2; i++) {
 		SETUP_RBUFFER( 0, i, 1 << 18, 1 << 16);
 		SETUP_RBUFFER( N, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER( C, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER(FC, i, 1 << 10, 1 <<  8);
+		SETUP_RBUFFER( C, i, 1 << 20, 1 << 16); // more heavily used
+		SETUP_RBUFFER(FC, i, 1 << 10, 1 <<  8); // less heavily used
 		SETUP_RBUFFER( T, i, 1 << 18, 1 << 16);
 
 		SETUP_RBUFFER(T4, i, 1 << 18, 1 << 16);

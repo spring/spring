@@ -14,33 +14,29 @@ namespace Shader {
 };
 
 
-/*
- *  Draw a circle / rectangle on top of the top surface (ground/water).
- *  Note: Uses the current color.
- */
-typedef void (*SurfaceCircleFunc)(const float3& center, float radius, unsigned int res);
-typedef void (*SurfaceSquareFunc)(const float3& center, float xsize, float zsize);
+// Draw a circle on top of the map surface (ground/water).
+typedef void (*SurfaceCircleFuncVA)(CVertexArray* va, const float4& center, const float4& color, unsigned int res);
+typedef void (*SurfaceCircleFuncRB)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
 
-extern SurfaceCircleFunc glSurfaceCircle;
-extern SurfaceSquareFunc glSurfaceSquare;
+extern SurfaceCircleFuncVA glSurfaceCircleVA;
+extern SurfaceCircleFuncRB glSurfaceCircleRB;
 
-extern void setSurfaceCircleFunc(SurfaceCircleFunc func);
-extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
+extern void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func);
+extern void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func);
 
 
 
 
-extern void glSetupRangeRingDrawState(Shader::IProgramObject* ipo);
-extern void glSetupWeaponArcDrawState(Shader::IProgramObject* ipo);
-extern void glResetRangeRingDrawState(Shader::IProgramObject* ipo);
-extern void glResetWeaponArcDrawState(Shader::IProgramObject* ipo);
+extern void glSetupRangeRingDrawState();
+extern void glResetRangeRingDrawState();
+extern void glSetupWeaponArcDrawState();
+extern void glResetWeaponArcDrawState();
 
 // params.x := radius, params.y := slope, params.z := gravity
 extern void glBallisticCircle(
 	GL::RenderDataBufferC* rdBuffer,
 	const CWeapon* weapon,
 	uint32_t circleRes,
-	uint32_t submitCtr,
 	uint32_t lineMode,
 	const float3& center,
 	const float3& params,
@@ -50,7 +46,6 @@ extern void glBallisticCircle(
 	GL::RenderDataBufferC* rdBuffer,
 	const WeaponDef* weaponDef,
 	uint32_t circleRes,
-	uint32_t submitCtr,
 	uint32_t lineMode,
 	const float3& center,
 	const float3& params,
@@ -74,9 +69,21 @@ template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQu
 
 
 
-void gleGenColVolMeshBuffers(unsigned int* meshData);
-void gleDelColVolMeshBuffers(unsigned int* meshData);
-void gleBindColVolMeshBuffers(const unsigned int* meshData);
-void gleDrawColVolMeshSubBuffer(const unsigned int* meshData, unsigned int meshType);
+enum {
+	GLE_MESH_TYPE_BOX = 0,
+	GLE_MESH_TYPE_CYL = 1,
+	GLE_MESH_TYPE_SPH = 2,
+	GLE_MESH_TYPE_CNT = 3, // count
+};
+
+void gleGenMeshBuffers(unsigned int* meshData);
+void gleDelMeshBuffers(unsigned int* meshData);
+void gleBindMeshBuffers(const unsigned int* meshData);
+void gleDrawMeshSubBuffer(const unsigned int* meshData, unsigned int meshType);
+
+// [0] := VBO, [1] := IBO, [2] := VAO, [3 + i, 4 + i] := {#verts[i], #indcs[i]}
+extern unsigned int COLVOL_MESH_BUFFERS[3 + GLE_MESH_TYPE_CNT * 2];
+// [0] := cylinder divs, [1] := sphere rows, [2] := sphere cols
+extern unsigned int COLVOL_MESH_PARAMS[3];
 
 #endif

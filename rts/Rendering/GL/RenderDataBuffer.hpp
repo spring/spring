@@ -481,8 +481,10 @@ namespace GL {
 
 			std::swap(prvElemPos, trdb.prvElemPos);
 			std::swap(curElemPos, trdb.curElemPos);
+			std::swap(sumElemPos, trdb.sumElemPos);
 			std::swap(prvIndxPos, trdb.prvIndxPos);
 			std::swap(curIndxPos, trdb.curIndxPos);
+			std::swap(sumIndxPos, trdb.sumIndxPos);
 			return *this;
 		}
 
@@ -505,8 +507,11 @@ namespace GL {
 		void Reset() {
 			prvElemPos = 0;
 			curElemPos = 0;
+			sumElemPos = 0;
+
 			prvIndxPos = 0;
 			curIndxPos = 0;
+			sumIndxPos = 0;
 		}
 
 
@@ -539,6 +544,7 @@ namespace GL {
 			if (NumElems() > 0)
 				rdb->Submit(primType, prvElemPos, NumElems());
 
+			sumElemPos += NumElems();
 			prvElemPos = curElemPos;
 		}
 		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->SubmitIndexed(primType, dataIndx, dataSize); }
@@ -547,11 +553,14 @@ namespace GL {
 				rdb->SubmitIndexed(primType, prvIndxPos, NumIndcs());
 
 			// TODO: allow multiple batches with the same set of indices?
+			sumIndxPos += NumIndcs();
 			prvIndxPos = curIndxPos;
 		}
 
 		size_t NumElems() const { return (curElemPos - prvElemPos); }
 		size_t NumIndcs() const { return (curIndxPos - prvIndxPos); }
+		size_t SumElems() const { return sumElemPos; }
+		size_t SumIndcs() const { return sumIndxPos; }
 
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
 		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
@@ -565,8 +574,11 @@ namespace GL {
 		// these must never exceed rdb->GetNum{Elems,Indcs}<{Vertex,Index}ArrayType>()
 		size_t prvElemPos = 0;
 		size_t curElemPos = 0;
+		size_t sumElemPos = 0;
+
 		size_t prvIndxPos = 0;
 		size_t curIndxPos = 0;
+		size_t sumIndxPos = 0;
 	};
 	#endif
 
