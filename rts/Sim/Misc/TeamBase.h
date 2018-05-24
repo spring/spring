@@ -104,7 +104,7 @@ protected:
 	 *
 	 * @see #SetAdvantage()
 	 */
-	float incomeMultiplier;
+	float incomeMultiplier = 1.0f;
 
 	/**
 	 * Side/Factions name, eg. "ARM" or "CORE".
