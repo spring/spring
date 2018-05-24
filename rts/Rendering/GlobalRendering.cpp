@@ -481,7 +481,6 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		return false;
 	}
 
-
 	// redundant, but harmless
 	SDL_GL_MakeCurrent(sdlWindows[0], glContexts[0]);
 	SDL_DisableScreenSaver();
@@ -1139,6 +1138,10 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 
 bool CGlobalRendering::CheckGLStencilBufferBits(int minBufferBits) const
 {
+	#ifdef HEADLESS
+	return true;
+	#endif
+
 	GLint ctxBufferBits = 0;
 	glGetIntegerv(GL_STENCIL_BITS, &ctxBufferBits);
 
