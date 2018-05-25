@@ -3865,61 +3865,71 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		assert(buildeeDef != nullptr);
 
 		// TODO: grab the minimap transform
-		unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
+		if (!buildInfoQueue.empty()) {
+			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
 
-		// first pass; grid squares
-		for (const BuildInfo& bi: buildInfoQueue) {
-			buildCommands.clear();
+			// first pass; grid squares
+			for (const BuildInfo& bi: buildInfoQueue) {
+				buildCommands.clear();
 
-			if (GetQueueKeystate()) {
-				const Command c = bi.CreateCommand();
+				if (GetQueueKeystate()) {
+					const Command c = bi.CreateCommand();
 
-				for (const int unitID: selectedUnitsHandler.selectedUnits) {
-					const CUnit* su = unitHandler.GetUnit(unitID);
-					const CCommandAI* cai = su->commandAI;
+					for (const int unitID: selectedUnitsHandler.selectedUnits) {
+						const CUnit* su = unitHandler.GetUnit(unitID);
+						const CCommandAI* cai = su->commandAI;
 
-					for (const Command& cmd: cai->GetOverlapQueued(c)) {
-						buildCommands.push_back(cmd);
+						for (const Command& cmd: cai->GetOverlapQueued(c)) {
+							buildCommands.push_back(cmd);
+						}
 					}
+				}
+
+				if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
+					buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
+				} else {
+					buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
 				}
 			}
 
-			if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
-				buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
-			} else {
-				buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
+			unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
+			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
+
+			// second pass; water-depth indicator lines
+			for (const BuildInfo& bi: buildInfoQueue) {
+				unitDrawer->ShowUnitBuildSquares(bi, {}, false);
 			}
+
+			unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
 		}
 
-		unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
-		unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
-
-		// second pass; water-depth indicator lines
-		for (const BuildInfo& bi: buildInfoQueue) {
-			unitDrawer->ShowUnitBuildSquares(bi, {}, false);
-		}
-
-		unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
-
-
-		if (!onMiniMap) {
+		if (!onMiniMap && !buildInfoQueue.empty()) {
+			// render a pending line/area-build queue
+			assert((buildInfoQueue.front()).def == (buildInfoQueue.back()).def);
 			assert(buildInfoQueue.size() == buildColors.size());
 
-			for (size_t n = 0; n < buildInfoQueue.size(); n++) {
-				const BuildInfo& bi = buildInfoQueue[n];
-				const float4& bc = buildColors[n];
+			const auto setupStateFunc = [&](const BuildInfo&, const S3DModel* mdl) {
+				unitDrawer->SetupAlphaDrawing(false, true);
+				unitDrawer->PushModelRenderState(mdl);
+				// TODO: tint model by buildColors[&bi - &buildInfoQueue[0]]
+				unitDrawer->SetTeamColour(gu->myTeam, float2(0.25f, 1.0f));
+				return (unitDrawer->GetDrawerState(DRAWER_STATE_SEL));
+			};
+			const auto resetStateFunc = [&](const BuildInfo&, const S3DModel* mdl) {
+				unitDrawer->PopModelRenderState(mdl);
+				unitDrawer->ResetAlphaDrawing(false);
+			};
+			const auto nextModelFunc = [&](const BuildInfo& bi, const S3DModel* mdl) -> const S3DModel* {
+				return ((mdl == nullptr)? bi.def->LoadModel(): mdl);
+			};
+			const auto drawModelFunc = [&](const BuildInfo& bi, const S3DModel* mdl, const IUnitDrawerState* uds) {
+				unitDrawer->DrawStaticModelRaw(mdl, uds, bi.pos, bi.buildFacing);
+			};
 
-				GL::PushMatrix();
-				GL::LoadIdentity();
-				GL::Translate(bi.pos);
-				GL::RotateY(bi.buildFacing * 90.0f);
+			unitDrawer->DrawStaticModelBatch<BuildInfo>(buildInfoQueue, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
 
-				glColor4f(bc.x, bc.y, bc.z, bc.w);
-				CUnitDrawer::DrawObjectDefAlpha(bi.def, gu->myTeam, false);
 
-				GL::PopMatrix();
-				glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
-			}
+			glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 		}
 	}
 

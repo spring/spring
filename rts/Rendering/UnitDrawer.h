@@ -5,6 +5,7 @@
 
 #include <array>
 #include <vector>
+#include <functional>
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
@@ -249,6 +250,27 @@ public:
 
 	static void DrawObjectDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 	static void DrawObjectDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+
+	/// {GuiHandler::DrawMapStuff,CursorIcons::DrawBuilds}: draw a static model without setting up any state
+	void DrawStaticModelRaw(const S3DModel* mdl, const IUnitDrawerState* uds, const float3& pos, int buildFacing);
+
+
+	template<typename BatchElem> void DrawStaticModelBatch(
+		const std::vector<BatchElem>& batchElems,
+		const std::function<const IUnitDrawerState*(const BatchElem&, const S3DModel*)>& setupStateFunc,
+		const std::function<                   void(const BatchElem&, const S3DModel*)>& resetStateFunc,
+		const std::function<const S3DModel*(const BatchElem&, const S3DModel*                         )>& nextModelFunc,
+		const std::function<           void(const BatchElem&, const S3DModel*, const IUnitDrawerState*)>& drawModelFunc
+	) {
+		const S3DModel* model = nextModelFunc(batchElems.front(), nullptr);
+		const IUnitDrawerState* state = setupStateFunc(batchElems.front(), model);
+
+		for (const BatchElem& batchElem: batchElems) {
+			drawModelFunc(batchElem, model = nextModelFunc(batchElem, model), state);
+		}
+
+		resetStateFunc(batchElems.back(), model);
+	}
 
 	static bool ObjectVisibleReflection(const float3 objPos, const float3 camPos, float maxRadius);
 

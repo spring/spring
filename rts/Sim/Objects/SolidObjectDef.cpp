@@ -65,8 +65,6 @@ void SolidObjectDef::PreloadModel() const
 {
 	if (model != nullptr)
 		return;
-	if (modelName.empty())
-		return;
 
 	modelLoader.PreloadModel(modelName);
 }
@@ -75,8 +73,6 @@ S3DModel* SolidObjectDef::LoadModel() const
 {
 	if (model != nullptr)
 		return model;
-	if (modelName.empty())
-		return nullptr;
 
 	return (model = modelLoader.LoadModel(modelName));
 }
