@@ -33,15 +33,20 @@ ISMFRenderState* ISMFRenderState::GetInstance(bool nopState, bool luaShaders) {
 
 
 bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
+	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
+
 	const std::string names[GLSL_SHADER_COUNT - 1] = {
 		"SMFShaderGLSL-Standard",
 		"SMFShaderGLSL-Deferred",
 	};
 	const std::string defs =
-		("#define SMF_TEXSQUARE_SIZE " + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n") +
-		("#define SMF_INTENSITY_MULT " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n") +
-		("#define SMF_CLIP_PLANE_IDX " + IntToString(            IWater::ClipPlaneIndex()) + "\n") +
-		("#define SMF_FRAGDATA_COUNT " + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n");
+		("#define SMF_TEXSQUARE_SIZE "     + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n") +
+		("#define SMF_INTENSITY_MULT "     + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n") +
+		("#define SMF_CLIP_PLANE_IDX "     + IntToString(            IWater::ClipPlaneIndex()) + "\n") +
+		("#define SMF_FRAGDATA_COUNT "     + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n") +
+		("#define NUM_DYNAMIC_MAP_LIGHTS " + IntToString(    lightHandler->NumConfigLights()) + "\n") +
+		("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(GL::LightHandler::MaxConfigLights()) + "\n") +
+		("#define MAX_LIGHT_UNIFORM_VECS " + IntToString(GL::LightHandler::MaxUniformVecs()) + "\n");
 
 	if (useLuaShaders) {
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
@@ -93,7 +98,7 @@ void SMFRenderStateGLSL::Update(
 		assert(luaMapShaderData == nullptr);
 
 		const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
-		const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
+		// const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
 		const int2 normTexSize = smfMap->GetTextureSize(MAP_BASE_NORMALS_TEX);
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
@@ -113,10 +118,6 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetFlag("SMF_BLEND_NORMALS",                   (smfMap->GetBlendNormalsTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_LIGHT_EMISSION",                  (smfMap->GetLightEmissionTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_PARALLAX_MAPPING",                (smfMap->GetParallaxHeightTexture() != 0));
-
-			glslShaders[n]->SetFlag("NUM_DYNAMIC_MAP_LIGHTS", lightHandler->NumConfigLights());
-			glslShaders[n]->SetFlag("MAX_DYNAMIC_MAP_LIGHTS", GL::LightHandler::MaxConfigLights());
-			glslShaders[n]->SetFlag("MAX_LIGHT_UNIFORM_VECS", GL::LightHandler::MaxUniformVecs());
 
 			// both are runtime set in ::Enable, but ATI drivers need values from the beginning
 			glslShaders[n]->SetFlag("HAVE_SHADOWS", false);
