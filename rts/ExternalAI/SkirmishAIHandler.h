@@ -72,7 +72,7 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	std::vector<uint8_t> GetSkirmishAIsByPlayer(const int playerId);
+	std::vector<uint8_t> GetSkirmishAIsByPlayer(const int playerId) const;
 
 	/**
 	 * @brief All active Skirmish AIs
