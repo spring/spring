@@ -1185,13 +1185,13 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->GetLeader());
 	lua_pushboolean(L, team->isDead);
-	lua_pushboolean(L, !skirmishAIHandler.GetSkirmishAIsInTeam(teamID).empty()); // hasAIs
+	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(teamID));
 	lua_pushsstring(L, team->GetSide());
 	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
 
 	const TeamBase::customOpts& teamOpts(team->GetAllValues());
 
-	lua_createtable(L, teamOpts.size(), 0);
+	lua_createtable(L, 0, teamOpts.size());
 
 	for (const auto& pair: teamOpts) {
 		lua_pushsstring(L, pair.first);
@@ -1473,17 +1473,20 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushsstring(L, player->countryCode);
 	lua_pushnumber(L, player->rank);
+	// same as select(4, GetTeamInfo(teamID=player->team))
+	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(player->team));
 
 	const PlayerBase::customOpts& playerOpts = player->GetAllValues();
 
-	lua_createtable(L, playerOpts.size(), 0);
+	lua_createtable(L, 0, playerOpts.size());
 
 	for (const auto& pair: playerOpts) {
 		lua_pushsstring(L, pair.first);
 		lua_pushsstring(L, pair.second);
 		lua_rawset(L, -3);
 	}
-	return 10;
+
+	return 11;
 }
 
 
@@ -1528,7 +1531,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	if (teamAIs.empty())
 		return numVals;
 
-	const size_t skirmishAIId    = *(teamAIs.begin());
+	const size_t skirmishAIId    = teamAIs[0];
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
 	// this is synced AI info
@@ -1572,7 +1575,7 @@ int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
 	const AllyTeam& ally = teamHandler.GetAllyTeam(allyteam);
 	const AllyTeam::customOpts& allyTeamOpts = ally.GetAllValues();
 
-	lua_createtable(L, allyTeamOpts.size(), 0);
+	lua_createtable(L, 0, allyTeamOpts.size());
 
 	for (const auto& pair: allyTeamOpts) {
 		lua_pushsstring(L, pair.first);
@@ -2800,11 +2803,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 
 		if (unitTeam != nullptr && unitTeam->HasLeader()) {
 			tooltip = playerHandler.Player(unitTeam->GetLeader())->name;
-
-			const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
-
-			if (!teamAIs.empty())
-				tooltip = "AI@" + tooltip;
+			tooltip = (skirmishAIHandler.HasSkirmishAIsInTeam(unit->team)? "AI@": "") + tooltip;
 		}
 	} else {
 		if (decoyDef == nullptr) {
