@@ -109,7 +109,7 @@ size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 	return (iter - aiInstanceData.begin());
 }
 
-std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId) const
 {
 	std::vector<uint8_t> skirmishAIs;
 
@@ -126,7 +126,7 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, 
 	return skirmishAIs;
 }
 
-std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId) const
 {
 	std::vector<uint8_t> skirmishAIs;
 
