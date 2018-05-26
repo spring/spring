@@ -280,7 +280,7 @@ void LuaMaterial::Parse(
 		}
 
 		if (key == "usecamera") {
-			useCamera = lua_isboolean(L, -1) && lua_toboolean(L, -1);
+			LOG_L(L_WARNING, "[LuaMaterial::%s] '%s' parameter is deprecated", __func__, key.c_str());
 			continue;
 		}
 
@@ -321,15 +321,6 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	}
 	glActiveTexture(GL_TEXTURE0);
 
-	if (useCamera != prev.useCamera) {
-		if (useCamera) {
-			GL::PopMatrix();
-		} else {
-			GL::PushMatrix();
-			GL::LoadIdentity();
-		}
-	}
-
 	if (cullingMode != prev.cullingMode) {
 		if (cullingMode != 0) {
 			glEnable(GL_CULL_FACE);
@@ -363,9 +354,6 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 			return cmp;
 		}
 	}
-
-	if (a.useCamera != b.useCamera)
-		return ((!a.useCamera) * 2 - 1);
 
 	if (a.cullingMode != b.cullingMode)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
@@ -472,7 +460,6 @@ void LuaMaterial::Print(const string& indent) const
 		textures[t].Print(buf);
 	}
 
-	LOG("%suseCamera   = %s", indent.c_str(), (useCamera ? "true" : "false"));
 	LOG("%scullingMode = %s", indent.c_str(), CULL_TO_STR(cullingMode));
 }
 

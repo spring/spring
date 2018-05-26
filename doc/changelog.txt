@@ -15,6 +15,8 @@ Lua:
  - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
  - allow setting terrain-type hardness and name via Spring.SetTerrainTypeData
+ ! add extra boolean return-value to Spring.GetPlayerInfo between 'rank' (#9) and 'customPlayerKeys' (#11)
+   select(10, Spring.GetPlayerInfo(player)) is now equal to select(4, Spring.GetTeamInfo(player.team))
  ! return the terrain-type index from Spring.GetGroundInfo and Spring.GetTerrainTypeData
    these functions now push [number index, string name, ...] rather than [string name, ...]
    onto the stack
@@ -43,12 +45,14 @@ Lua:
  - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
  - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
  - remove gl.PointSize, gl.PointSprite, gl.PointParameter
- - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen
+ - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen, gl.MultiTexCoord
  - remove gl.CreateList, gl.CallList, gl.DeleteList
  - remove gl.DrawListAtUnit
  - remove gl.EdgeFlag
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list handling
+ - remove 'useCamera' LuaMaterial parameter
+ - remove 'identities' gl.ActiveFBO argument
  - add `VFS.GAME` as a synonym to `VFS.MOD`
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this

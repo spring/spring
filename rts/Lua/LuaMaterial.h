@@ -217,14 +217,8 @@ public:
 
 class LuaMaterial {
 	public:
-		LuaMaterial(LuaMatType matType = LuaMatType(-1)):
-		  type(matType), // default invalid
-		  order(0),
-		  texCount(0),
-		  cullingMode(0),
-
-		  useCamera(true)
-		{}
+		LuaMaterial() = default;
+		LuaMaterial(LuaMatType matType): type(matType) {}
 
 		void Parse(
 			lua_State* L,
@@ -252,19 +246,18 @@ class LuaMaterial {
 	public:
 		static const int MAX_TEX_UNITS = 16;
 
-		LuaMatType type;
+		// default invalid
+		LuaMatType type = LuaMatType(-1);
 
-		int order; // for manually adjusting rendering order
-		int texCount;
+		int order = 0; // for manually adjusting rendering order
+		int texCount = 0;
 
 		// [0] := standard, [1] := deferred
 		LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatTexture  textures[MAX_TEX_UNITS];
 
-		GLenum cullingMode;
-
-		bool useCamera;
+		GLenum cullingMode = 0;
 
 		static const LuaMaterial defMat;
 };
