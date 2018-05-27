@@ -812,10 +812,7 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 {
 	Notification n;
 	n.pos = pos;
-	n.color[0] = color.x;
-	n.color[1] = color.y;
-	n.color[2] = color.z;
-	n.color[3] = alpha;
+	n.color = {color, alpha};
 	n.creationTime = gu->gameTime;
 
 	notes.push_back(n);
@@ -918,9 +915,7 @@ void CMiniMap::Update()
 	nextDrawScreen = spring_gettime() + spring_msecs(1000.0f / refreshRate);
 
 	fbo.Bind();
-	if (minimapTexSize != curDim)
-		ResizeTextureCache();
-
+	ResizeTextureCache();
 	fbo.Bind();
 	UpdateTextureCache();
 
@@ -931,10 +926,16 @@ void CMiniMap::Update()
 
 void CMiniMap::ResizeTextureCache()
 {
-	minimapTexSize = curDim;
-	multisampledFBO = (fbo.GetMaxSamples() > 1);
+	#ifdef HEADLESS
+	return;
+	#endif
 
-	if (multisampledFBO) {
+	if (minimapTexSize == curDim)
+		return;
+
+	minimapTexSize = curDim;
+
+	if ((multisampledFBO = (fbo.GetMaxSamples() > 1))) {
 		// multisampled FBO we are render to
 		fbo.Detach(GL_COLOR_ATTACHMENT0); // delete old RBO
 		fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
@@ -1416,7 +1417,7 @@ void CMiniMap::DrawNotes()
 			continue;
 		}
 
-		SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
+		SColor color(&ni->color.x);
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;

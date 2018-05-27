@@ -10,7 +10,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/Color.h"
-#include "System/float3.h"
+#include "System/float4.h"
 #include "System/type2.h"
 #include "System/Matrix44f.h"
 
@@ -198,7 +198,7 @@ protected:
 	struct Notification {
 		float creationTime;
 		float3 pos;
-		float color[4];
+		float4 color;
 	};
 	std::deque<Notification> notes;
 
