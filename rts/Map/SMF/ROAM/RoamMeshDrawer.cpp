@@ -16,7 +16,7 @@
 #include "System/Log/ILog.h"
 
 #ifdef DRAW_DEBUG_IN_MINIMAP
-	#include "Game/UI/MiniMap.h"
+#include "Game/UI/MiniMap.h"
 #endif
 
 #include <cmath>
@@ -258,22 +258,38 @@ void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawInMiniMap()
 {
 	#ifdef DRAW_DEBUG_IN_MINIMAP
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f,  true, true);
-	minimap->ApplyConstraintsMatrix();
+	// HACK:
+	//   MiniMap::{Update->UpdateTextureCache->DrawForReal->DrawInMM} runs before DrawWorld, so
+	//   lastDrawFrames[cam->GetCamType()] will always be one behind globalRendering->drawFrame
+	//   (which is incremented at the end of SwapBuffers) for visible patches
+	globalRendering->drawFrame -= 1;
 
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::Translate(UpVector);
-	GL::Scale(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = rdbc->GetShader();
 
-	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+	const CMatrix44f& viewMat = minimap->GetViewMat(1);
+	const CMatrix44f& projMat = minimap->GetProjMat(1);
+
+	prog->Enable();
+	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 
 	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
-		if (!p.IsVisible(CCameraHandler::GetActiveCamera())) {
-			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
-		}
+		const float2 patchPos = {p.coors.x * 1.0f, p.coors.y * 1.0f};
+
+		if (p.IsVisible(CCameraHandler::GetActiveCamera()))
+			continue;
+
+		rdbc->SafeAppend({{patchPos.x                    , patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
+		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
+		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
+		rdbc->SafeAppend({{patchPos.x                    , patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
 	}
 
-	glSpringMatrix2dResetPV(true, true);
+	rdbc->Submit(GL_QUADS);
+	prog->Disable();
+
+	globalRendering->drawFrame += 1;
 	#endif
 }
 

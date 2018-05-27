@@ -8,6 +8,7 @@
 #include "LuaHandle.h"
 #include "LuaTextures.h"
 #include "Game/Camera.h"
+#include "Game/UI/MiniMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
@@ -109,16 +110,23 @@ static const spring::unsynced_map<std::string, LuaMatTexture::Type> luaMatTexTyp
 };
 
 static const spring::unsynced_map<unsigned int, LuaMatrixType> luaMatrixTypeMap = {
-	{hashString("view"),                  LUAMATRICES_VIEW                 },
-	{hashString("projection"),            LUAMATRICES_PROJECTION           },
-	{hashString("viewprojection"),        LUAMATRICES_VIEWPROJECTION       },
-	{hashString("viewinverse"),           LUAMATRICES_VIEWINVERSE          },
-	{hashString("projectioninverse"),     LUAMATRICES_PROJECTIONINVERSE    },
+	{hashString("view"                 ), LUAMATRICES_VIEW                 },
+	{hashString(    "projection"       ), LUAMATRICES_PROJECTION           },
+	{hashString("viewprojection"       ), LUAMATRICES_VIEWPROJECTION       },
+	{hashString("viewinverse"          ), LUAMATRICES_VIEWINVERSE          },
+	{hashString(    "projectioninverse"), LUAMATRICES_PROJECTIONINVERSE    },
 	{hashString("viewprojectioninverse"), LUAMATRICES_VIEWPROJECTIONINVERSE},
-	{hashString("billboard"),             LUAMATRICES_BILLBOARD            },
-	{hashString("shadow"),                LUAMATRICES_SHADOW               },
+	{hashString(            "billboard"), LUAMATRICES_BILLBOARD            },
+	{hashString(               "shadow"), LUAMATRICES_SHADOW               },
 
-	// backward compability
+	{hashString(  "mmview"   ),           LUAMATRICES_MINIMAP_DRAWVIEW     },
+	{hashString(  "mmproj"   ),           LUAMATRICES_MINIMAP_DRAWPROJ     },
+	{hashString("dimmview"   ),           LUAMATRICES_MINIMAP_DIMMVIEW     },
+	{hashString("dimmproj"   ),           LUAMATRICES_MINIMAP_DIMMPROJ     },
+	{hashString("dimmviewlua"),           LUAMATRICES_MINIMAP_DIMMVIEW_LUA },
+	{hashString("dimmprojlua"),           LUAMATRICES_MINIMAP_DIMMPROJ_LUA },
+
+	// backward compatibility
 	{hashString("camera"),    LUAMATRICES_VIEW             },
 	{hashString("camprj"),    LUAMATRICES_PROJECTION       },
 	{hashString("caminv"),    LUAMATRICES_VIEWINVERSE      },
@@ -162,8 +170,9 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 {
 	// skipped for performance reasons (this function gets called a lot)
 	// StringToLowerInPlace(name);
+	const LuaMatrixType matType = GetLuaMatrixType(name);
 
-	switch (GetLuaMatrixType(name)) {
+	switch (matType) {
 		case LUAMATRICES_SHADOW:
 			return &shadowHandler.GetShadowViewMatrix();
 		case LUAMATRICES_VIEW:
@@ -180,6 +189,20 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 			return &camera->GetViewProjectionMatrixInverse();
 		case LUAMATRICES_BILLBOARD:
 			return &camera->GetBillBoardMatrix();
+
+		case LUAMATRICES_MINIMAP_DRAWVIEW    :
+		case LUAMATRICES_MINIMAP_DIMMVIEW    :
+		case LUAMATRICES_MINIMAP_DIMMVIEW_LUA: {
+			if (minimap != nullptr)
+				return &minimap->GetViewMat(matType - LUAMATRICES_MINIMAP_DRAWVIEW);
+		} break;
+		case LUAMATRICES_MINIMAP_DRAWPROJ    :
+		case LUAMATRICES_MINIMAP_DIMMPROJ    :
+		case LUAMATRICES_MINIMAP_DIMMPROJ_LUA: {
+			if (minimap != nullptr)
+				return &minimap->GetProjMat(matType - LUAMATRICES_MINIMAP_DRAWPROJ);
+		} break;
+
 		case LUAMATRICES_NONE:
 			break;
 	}
