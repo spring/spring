@@ -79,9 +79,11 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	difBox.x2 = 0.38f;
 	difBox.y2 = 0.65f;
 
-	if (!bm.Load("bitmaps/graphPaper.bmp")) {
-		throw content_error("Could not load bitmaps/graphPaper.bmp");
-	}
+	CBitmap bm;
+	if (!bm.Load("bitmaps/graphPaper.bmp"))
+		bm.AllocDummy(SColor(255, 255, 255, 255));
+
+	graphTex = bm.CreateTexture();
 }
 
 CEndGameBox::~CEndGameBox()
@@ -183,9 +185,6 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	if (graphTex == 0)
-		graphTex = bm.CreateTexture();
-
 	if (!enabled)
 		return;
 
