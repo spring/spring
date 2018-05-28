@@ -989,11 +989,11 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 		GL::PushMatrix();
 		GL::Scale(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
 
-		minimap->DrawForReal(true);
+		minimap->DrawForReal(true, false, true);
 
 		GL::PopMatrix();
 	} else {
-		minimap->DrawForReal(false);
+		minimap->DrawForReal(false, false, true);
 	}
 
 	return 0;
@@ -1542,8 +1542,7 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 		tu1 = luaL_checknumber(L, 8);
 		tv1 = luaL_checknumber(L, 9);
 		useTxcd = true;
-	}
-	else {
+	} else {
 		if (lua_isboolean(L, 6)) {
 			useTxcd = lua_toboolean(L, 6);
 			if (useTxcd) {
@@ -1566,9 +1565,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int xie = std::max(0, std::min(mapxi, int((xe + 0.5f) / SQUARE_SIZE)));
 	const int zis = std::max(0, std::min(mapzi, int((zs + 0.5f) / SQUARE_SIZE)));
 	const int zie = std::max(0, std::min(mapzi, int((ze + 0.5f) / SQUARE_SIZE)));
-	if ((xis >= xie) || (zis >= zie)) {
+	if ((xis >= xie) || (zis >= zie))
 		return 0;
-	}
 
 	if (!useTxcd) {
 		for (int xib = xis; xib < xie; xib++) {
@@ -1586,12 +1584,12 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 			glEnd();
 		}
-	}
-	else {
+	} else {
 		const float tuStep = (tu1 - tu0) / float(xie - xis);
 		const float tvStep = (tv1 - tv0) / float(zie - zis);
 
 		float tub = tu0;
+
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
 			const float xb = xib * SQUARE_SIZE;

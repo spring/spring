@@ -203,21 +203,18 @@ void CMiniMap::ParseGeometry(const string& geostr)
 
 void CMiniMap::ToggleMaximized(bool _maxspect)
 {
-	if (maximized) {
-		curPos.x = oldPos.x;
-		curPos.y = oldPos.y;
-		curDim.x = oldDim.x;
-		curDim.y = oldDim.y;
-	} else {
-		oldPos.x = curPos.x;
-		oldPos.y = curPos.y;
-		oldDim.x = curDim.x;
-		oldDim.y = curDim.y;
+	if ((maximized = !maximized)) {
+		// stash current geometry
+		oldPos = curPos;
+		oldDim = curDim;
 		maxspect = _maxspect;
-		SetMaximizedGeometry();
+	} else {
+		// restore previous geometry
+		curPos = oldPos;
+		curDim = oldDim;
 	}
 
-	maximized = !maximized;
+	// needed for SetMaximizedGeometry
 	UpdateGeometry();
 }
 
@@ -232,7 +229,7 @@ void CMiniMap::SetMaximizedGeometry()
 		return;
 	}
 
-	const float mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
+	const float  mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
 	const float viewRatio = globalRendering->aspectRatio;
 
 	if (mapRatio > viewRatio) {
@@ -348,10 +345,10 @@ void CMiniMap::ConfigCommand(const std::string& line)
 			if (globalRendering->dualScreenMode)
 				return;
 
-			const bool isMaximized = maximized;
-			maximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !maximized;
+			const bool   isMaximized = maximized;
+			const bool wantMaximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !isMaximized;
 
-			if (isMaximized != maximized)
+			if (isMaximized != wantMaximized)
 				ToggleMaximized(command == "maxspect");
 		} break;
 
@@ -364,10 +361,8 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 void CMiniMap::SetGeometry(int px, int py, int sx, int sy)
 {
-	curPos.x = px;
-	curPos.y = py;
-	curDim.x = sx;
-	curDim.y = sy;
+	curPos = {px, py};
+	curDim = {sx, sy};
 
 	UpdateGeometry();
 }
@@ -421,7 +416,7 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(curDim.y);
 	const float mapx = float(mapDims.mapx * SQUARE_SIZE);
 	const float mapy = float(mapDims.mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
+	const float ref  = unitBaseSize / math::pow((200.0f * 200.0f), unitExponent);
 	const float dpr  = ref * math::pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
@@ -434,37 +429,49 @@ void CMiniMap::UpdateGeometry()
 	mapBox.ymin = globalRendering->viewSizeY - (curPos.y + curDim.y);
 	mapBox.ymax = mapBox.ymin + curDim.y - 1;
 
-	if (!maximized) {
-		// right to left
+	// FIXME:
+	//   also need to make sure we can leave maximized-mode when !maxspect (in
+	//   which case the buttons should be drawn on top of map, not outside it)
+	if (!maximized || maxspect) {
+		// work right (resizeBox) to left (minimizeBox)
 		resizeBox.xmax   = mapBox.xmax;
 		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
+
 		moveBox.xmax     = resizeBox.xmax   - buttonSize;
 		moveBox.xmin     = resizeBox.xmin   - buttonSize;
+
 		maximizeBox.xmax = moveBox.xmax     - buttonSize;
 		maximizeBox.xmin = moveBox.xmin     - buttonSize;
+
 		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
 		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
+
 		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
 		const int ymax = ymin + (buttonSize - 1);
 		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
 		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
+
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = mapBox.xmax;
 		buttonBox.ymin = ymin - 3;
 		buttonBox.ymax = ymax;
 	} else {
-		// left to right
+		// work left to right
 		minimizeBox.xmin = mapBox.xmin;
 		minimizeBox.xmax = minimizeBox.xmin + (buttonSize - 1);
+
 		maximizeBox.xmin = minimizeBox.xmin + buttonSize;
 		maximizeBox.xmax = minimizeBox.xmax + buttonSize;
+
 		// dead buttons
-		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin = 0;
+		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin =  0;
 		resizeBox.xmax = resizeBox.ymax = moveBox.xmax = moveBox.ymax = -1;
+
 		const int ymin = mapBox.ymin;
 		const int ymax = ymin + (buttonSize - 1);
 		maximizeBox.ymin = minimizeBox.ymin = ymin;
 		maximizeBox.ymax = minimizeBox.ymax = ymax;
+
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = maximizeBox.xmax;
 		buttonBox.ymin = ymin - 3;
@@ -497,13 +504,13 @@ void CMiniMap::SelectUnits(int x, int y)
 
 	if (fullProxy && (bp.movement > 4)) {
 		// use a selection box
-		const float3 newPos = GetMapPosition(x, y);
-		const float3 oldPos = GetMapPosition(bp.x, bp.y);
+		const float3 newMapPos = GetMapPosition(x, y);
+		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
 
-		const float xmin = std::min(oldPos.x, newPos.x);
-		const float xmax = std::max(oldPos.x, newPos.x);
-		const float zmin = std::min(oldPos.z, newPos.z);
-		const float zmax = std::max(oldPos.z, newPos.z);
+		const float xmin = std::min(oldMapPos.x, newMapPos.x);
+		const float xmax = std::max(oldMapPos.x, newMapPos.x);
+		const float zmin = std::min(oldMapPos.z, newMapPos.z);
+		const float zmax = std::max(oldMapPos.z, newMapPos.z);
 
 		const float4  planeRight(-RgtVector,  xmin);
 		const float4   planeLeft( RgtVector, -xmax);
@@ -919,7 +926,7 @@ void CMiniMap::Update()
 	fbo.Bind();
 	UpdateTextureCache();
 
-	// no need, gets done in CGame
+	// gets done in CGame
 	// fbo.Unbind();
 }
 
@@ -993,7 +1000,7 @@ void CMiniMap::UpdateTextureCache()
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			DrawForReal(false, true);
+			DrawForReal(false, true, false);
 
 		curPos = tmpPos;
 	}
@@ -1043,7 +1050,7 @@ void CMiniMap::Draw()
 		}
 
 		// draw the frameborder
-		if (!maximized && !globalRendering->dualScreenMode) {
+		if (!globalRendering->dualScreenMode) {
 			DrawFrame(rdBufferC);
 			DrawButtons(rdBufferC, rdBufferTC);
 		}
@@ -1051,20 +1058,23 @@ void CMiniMap::Draw()
 		glPopAttrib();
 	}
 
-	// Draw Minimap itself
-	DrawForReal(true);
+	// draw minimap itself
+	DrawForReal(true, false, false);
 }
 
 
-void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
+
+void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall)
 {
 	if (minimized)
 		return;
 
 	glActiveTexture(GL_TEXTURE0);
 
-	if ((!updateTex) && RenderCachedTexture(useNormalizedCoors))
+	if (!updateTex) {
+		RenderCachedTexture(useNormalizedCoors);
 		return;
+	}
 
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -1183,8 +1193,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 	if (selecting && fullProxy && (bp.movement > 4)) {
-		const float3 oldPos = GetMapPosition(bp.x, bp.y);
-		const float3 newPos = GetMapPosition(mouse->lastx, mouse->lasty);
+		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
+		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
 		glColor4fv(cmdColors.mouseBox);
 		//glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
 		//            (GLenum)cmdColors.MouseBoxBlendDst());
@@ -1193,10 +1203,10 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertexQ2d0(oldPos.x, oldPos.z);
-			va->AddVertexQ2d0(newPos.x, oldPos.z);
-			va->AddVertexQ2d0(newPos.x, newPos.z);
-			va->AddVertexQ2d0(oldPos.x, newPos.z);
+			va->AddVertexQ2d0(oldMapPos.x, oldMapPos.z);
+			va->AddVertexQ2d0(newMapPos.x, oldMapPos.z);
+			va->AddVertexQ2d0(newMapPos.x, newMapPos.z);
+			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
 		va->DrawArray2d0(GL_LINE_LOOP);
 
 		glLineWidth(1.0f);
