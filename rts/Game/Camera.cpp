@@ -97,11 +97,7 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 {
-	if (globalRendering->viewSizeY <= 0) {
-		lppScale = 0.0f;
-	} else {
-		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
-	}
+	lppScale = (2.0f * tanHalfFov) * globalRendering->pixelY;
 
 	// should be set before UpdateMatrices
 	UpdateViewRange();
