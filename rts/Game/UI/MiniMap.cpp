@@ -36,6 +36,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
@@ -1068,7 +1069,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (useGeom) {
+	if (useNormalizedCoors) {
 		glPushMatrix();
 
 		// switch to normalized minimap coords
@@ -1102,7 +1103,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	DrawUnitIcons();
 	DrawWorldStuff();
 
-	if (useGeom)
+	if (useNormalizedCoors)
 		glPopMatrix();
 
 	glPopAttrib();
@@ -1122,7 +1123,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 
 	// Finish
 	// Reset of GL state
-	if (useGeom && globalRendering->dualScreenMode)
+	if (useNormalizedCoors && globalRendering->dualScreenMode)
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	// disable ClipPlanes
@@ -1438,7 +1439,7 @@ void CMiniMap::DrawNotes()
 
 
 
-bool CMiniMap::RenderCachedTexture(bool useGeom)
+bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 {
 	if (!renderToTexture)
 		return false;
@@ -1448,7 +1449,7 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
-	if (useGeom) {
+	if (useNormalizedCoors) {
 		glPushMatrix();
 		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
 		glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
@@ -1467,7 +1468,7 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 
 	DrawCameraFrustumAndMouseSelection();
 
-	if (useGeom)
+	if (useNormalizedCoors)
 		glPopMatrix();
 
 	glDisable(GL_TEXTURE_2D);

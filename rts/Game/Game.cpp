@@ -1226,7 +1226,7 @@ bool CGame::Draw() {
 
 	SCOPED_SPECIAL_TIMER("Draw");
 
-	SetDrawMode(Game::NormalDraw);
+	SetDrawMode(gameNormalDraw);
 
 	{
 		SCOPED_TIMER("Draw::DrawGenesis");
