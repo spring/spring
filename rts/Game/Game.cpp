@@ -1144,7 +1144,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	}
 
-	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const bool newSimFrame = (lastSimFrame != gs->frameNum);
 	const bool forceUpdate = (unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED));
 
@@ -1160,12 +1159,13 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	lineDrawer.UpdateLineStipple();
 
 
-	if (doDrawWorld) {
+	{
 		worldDrawer.Update(newSimFrame);
 
 		CNamedTextures::Update();
 		CFontTexture::Update();
 	}
+
 	// always update InfoTexture and SoundListener at <= 30Hz (even when paused)
 	if (newSimFrame || forceUpdate) {
 		lastUnsyncedUpdateTime = currentTime;
@@ -1222,10 +1222,11 @@ bool CGame::Draw() {
 	if (UpdateUnsynced(currentTimePreUpdate))
 		return false;
 
+	const spring_time currentTimePreDraw = spring_gettime();
+
 	SCOPED_SPECIAL_TIMER("Draw");
 
-	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-	const spring_time currentTimePreDraw = spring_gettime();
+	SetDrawMode(Game::NormalDraw);
 
 	{
 		SCOPED_TIMER("Draw::DrawGenesis");
@@ -1280,22 +1281,21 @@ bool CGame::Draw() {
 	{
 		minimap->Update();
 
-		if (doDrawWorld)
-			worldDrawer.GenerateIBLTextures();
+		// note: neither this call nor DrawWorld can be made conditional on minimap->GetMaximized()
+		// minimap never covers entire screen when maximized unless map aspect-ratio matches screen
+		// (unlikely); the minimap update also depends on GenerateIBLTextures for unbinding its FBO
+		worldDrawer.GenerateIBLTextures();
 
 		camera->Update();
 
-		if (doDrawWorld)
-			worldDrawer.Draw();
-
+		worldDrawer.Draw();
 		worldDrawer.ResetMVPMatrices();
 	}
 
 	{
 		SCOPED_TIMER("Draw::Screen");
 
-		if (doDrawWorld)
-			eventHandler.DrawScreenEffects();
+		eventHandler.DrawScreenEffects();
 
 		hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
 		debugDrawerAI->Draw();
@@ -1305,8 +1305,7 @@ bool CGame::Draw() {
 		DrawInterfaceWidgets();
 		mouse->DrawCursor();
 
-		if (doDrawWorld)
-			eventHandler.DrawScreenPost();
+		eventHandler.DrawScreenPost();
 	}
 
 	glEnable(GL_DEPTH_TEST);

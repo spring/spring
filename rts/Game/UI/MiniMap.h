@@ -30,7 +30,7 @@ public:
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	void Draw();
-	void DrawForReal(bool useGeom = true, bool updateTex = false);
+	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false, bool luaCall = false);
 	void Update();
 
 	void ConfigCommand(const std::string& command);
