@@ -48,6 +48,7 @@ std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
 	for (int i = 1; root.KeyExists(i); i++) {
 		std::string shortName;
 		std::string description;
+		std::string version;
 		// Lua AIs can be specified in two different formats:
 		shortName = root.GetString(i, "");
 		if (!shortName.empty()) {
@@ -65,6 +66,8 @@ std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
 			if (shortName.empty()) {
 				continue;
 			}
+			
+			version = optTbl.GetString("version", "<not-versioned>");
 
 			description = optTbl.GetString("desc", shortName);
 		}
@@ -80,9 +83,8 @@ std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
 
 		ii.key = SKIRMISH_AI_PROPERTY_VERSION;
 		ii.valueType = INFO_VALUE_TYPE_STRING;
-		ii.valueTypeString = "<not-versioned>";
-		ii.desc = "Lua Skirmish AIs do not have a version, "
-				"because they are fully defined by the mods version already.";
+		ii.valueTypeString = version;
+		ii.desc = "The version of this Lua Skirmish AI";
 		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_NAME;
