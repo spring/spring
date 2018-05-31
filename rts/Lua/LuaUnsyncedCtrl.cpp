@@ -2636,7 +2636,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	const bool onlyLocal = (lua_isnumber(L, 5)) ? bool(luaL_optnumber(L, 5, 1)) : luaL_optboolean(L, 5, true);
 
 	if (onlyLocal) {
-		inMapDrawerModel->AddPoint(pos, text, gu->myPlayerNum);
+		inMapDrawerModel->AddPoint(pos, text, luaL_optnumber(L, 6, gu->myPlayerNum));
 	} else {
 		inMapDrawer->SendPoint(pos, text, true);
 	}
@@ -2659,7 +2659,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const bool onlyLocal = (lua_isnumber(L, 7)) ? bool(luaL_optnumber(L, 7, 0)) : luaL_optboolean(L, 7, false);
 
 	if (onlyLocal) {
-		inMapDrawerModel->AddLine(pos1, pos2, gu->myPlayerNum);
+		inMapDrawerModel->AddLine(pos1, pos2, luaL_optnumber(L, 8, gu->myPlayerNum));
 	} else {
 		inMapDrawer->SendLine(pos1, pos2, true);
 	}
