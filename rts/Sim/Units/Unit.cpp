@@ -675,20 +675,22 @@ void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
 	// error-direction is fixed until next delta
 	if (updateError)
 		posErrorVector += posErrorDelta;
+	if (!updateDelta)
+		return;
 
-	if (updateDelta) {
-		if ((--nextPosErrorUpdate) <= 0) {
-			float3 newPosError = gsRNG.NextVector();
-			newPosError.y *= 0.2f;
+	if ((--nextPosErrorUpdate) > 0)
+		return;
 
-			if (posErrorVector.dot(newPosError) < 0.0f) {
-				newPosError = -newPosError;
-			}
+	constexpr float errorScale = 1.0f / 256.0f;
+	constexpr float errorMults[] = {1.0f, -1.0f};
 
-			posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
-			nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
-		}
-	}
+	float3 newPosError = gsRNG.NextVector();
+
+	newPosError.y *= 0.2f;
+	newPosError *= errorMults[posErrorVector.dot(newPosError) < 0.0f];
+
+	posErrorDelta = (newPosError - posErrorVector) * errorScale;
+	nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
 }
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
@@ -696,10 +698,9 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	// drop unit from position
 	fallSpeed = mix(unitDef->unitFallSpeed, parent->unitDef->fallSpeed, unitDef->unitFallSpeed <= 0.0f);
 
-	speed.y = 0.0f;
-	frontdir = parentDir;
-	frontdir.y = 0.0f;
+	frontdir = parentDir * XZVector;
 
+	SetVelocityAndSpeed(speed * XZVector);
 	Move(UpVector * ((parentPos.y - height) - pos.y), true);
 	UpdateMidAndAimPos();
 	SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
@@ -1709,10 +1710,7 @@ bool CUnit::IsIdle() const
 	if (beingBuilt)
 		return false;
 
-	if (!commandAI->commandQue.empty())
-		return false;
-
-	return true;
+	return (commandAI->commandQue.empty());
 }
 
 
