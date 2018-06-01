@@ -4,13 +4,12 @@
 
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
 #include "System/Platform/Threading.h"
 
 bool CMoveMath::noHoverWaterMove = false;
@@ -229,24 +228,25 @@ CMoveMath::BlockType CMoveMath::ObjectBlockType(const MoveDef& moveDef, const CS
 	if (IsNonBlocking(moveDef, collidee, collider))
 		return BLOCK_NONE;
 
-	if (!collidee->immobile) {
-		// mobile obstacle (must be a unit) --> if
-		// moving, it is probably following a path
-		if (collidee->IsMoving())
-			return BLOCK_MOVING;
+	if (collidee->immobile)
+		return ((CrushResistant(moveDef, collidee))? BLOCK_STRUCTURE: BLOCK_NONE);
 
-		// idling (no orders) mobile unit
-		if ((static_cast<const CUnit*>(collidee))->IsIdle())
-			return BLOCK_MOBILE;
+	// mobile obstacle, must be a unit
+	const CUnit* u = static_cast<const CUnit*>(collidee);
+	const AMoveType* mt = u->moveType;
 
-		// busy mobile unit
-		return BLOCK_MOBILE_BUSY;
-	}
+	// if moving, unit is probably following a path
+	if (u->IsMoving())
+		return BLOCK_MOVING;
 
-	if (CrushResistant(moveDef, collidee))
+	// not moving and not pushable, treat as blocking
+	if (mt->IsPushResistant())
 		return BLOCK_STRUCTURE;
 
-	return BLOCK_NONE;
+	// otherwise, unit is idling (no orders) or busy with a command
+	// being-built units never count as idle, but should perhaps be
+	// considered BLOCK_STRUCTURE
+	return ((u->IsIdle())? BLOCK_MOBILE: BLOCK_MOBILE_BUSY);
 }
 
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
