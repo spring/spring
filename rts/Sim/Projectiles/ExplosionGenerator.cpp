@@ -10,15 +10,11 @@
 #include "ExpGenSpawnable.h"
 #include "ExpGenSpawnableMemberInfo.h"
 #include "Game/Camera.h"
-#include "Game/GlobalUnsynced.h"
+#include "Game/GlobalUnsynced.h" // guRNG
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/Textures/ColorMap.h"
-#include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/DirtProjectile.h"
 #include "Rendering/Env/Particles/Classes/ExploSpikeProjectile.h"
@@ -28,10 +24,11 @@
 #include "Rendering/Env/Particles/Classes/WakeProjectile.h"
 #include "Rendering/Env/Particles/Classes/WreckProjectile.h"
 
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+
 #include "System/creg/STL_Map.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Log/DefaultFilter.h"
@@ -97,12 +94,14 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 {
 	unsigned int flags = 0;
 
-	if (table.GetBool("ground",     false)) { flags |= CCustomExplosionGenerator::SPW_GROUND;     }
-	if (table.GetBool("water",      false)) { flags |= CCustomExplosionGenerator::SPW_WATER;      }
-	if (table.GetBool("air",        false)) { flags |= CCustomExplosionGenerator::SPW_AIR;        }
-	if (table.GetBool("underwater", false)) { flags |= CCustomExplosionGenerator::SPW_UNDERWATER; }
-	if (table.GetBool("unit",       false)) { flags |= CCustomExplosionGenerator::SPW_UNIT;       }
-	if (table.GetBool("nounit",     false)) { flags |= CCustomExplosionGenerator::SPW_NO_UNIT;    }
+	flags |= (CEG_SPWF_GROUND     * table.GetBool(    "ground", false));
+	flags |= (CEG_SPWF_WATER      * table.GetBool(    "water" , false));
+	flags |= (CEG_SPWF_VOIDGROUND * table.GetBool("voidground", false));
+	flags |= (CEG_SPWF_VOIDWATER  * table.GetBool("voidwater" , false));
+	flags |= (CEG_SPWF_AIR        * table.GetBool(       "air", false));
+	flags |= (CEG_SPWF_UNDERWATER * table.GetBool("underwater", false));
+	flags |= (CEG_SPWF_UNIT       * table.GetBool(      "unit", false));
+	flags |= (CEG_SPWF_NO_UNIT    * table.GetBool(    "nounit", false));
 
 	return flags;
 }
@@ -110,6 +109,9 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float groundHeight)
 {
 	unsigned int flags = 0;
+
+	const unsigned int voidGroundMask = 1 - mapRendering->voidGround;
+	const unsigned int voidWaterMask  = 1 - mapRendering->voidWater ;
 
 	const float waterDistance = math::fabsf(height);
 	const float exploAltitude = height - groundHeight;
@@ -119,24 +121,30 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
+	//
+	// underground, don't spawn CEG at all
 	if (exploAltitude < -groundLenienceDist)
-		return flags; // underground, don't spawn CEG
+		return flags;
 
+	// above water, (void)ground or air
 	if (height >= waterLenienceDist) {
-		// above water
-		flags |= (CCustomExplosionGenerator::SPW_AIR    * (exploAltitude >= groundLenienceDist)); // air
-		flags |= (CCustomExplosionGenerator::SPW_GROUND * (exploAltitude <  groundLenienceDist)); // ground
+		flags |= (CEG_SPWF_AIR        * (exploAltitude >= groundLenienceDist)                       );
+		flags |= (CEG_SPWF_GROUND     * (exploAltitude <  groundLenienceDist) * (    voidGroundMask));
+		flags |= (CEG_SPWF_VOIDGROUND * (exploAltitude <  groundLenienceDist) * (1 - voidGroundMask));
 		return flags;
 	}
 
+	// ground (h > -2) or (void)water surface
 	if (waterDistance < waterLenienceDist) {
-		// water surface
-		flags |= (CCustomExplosionGenerator::SPW_GROUND * (groundHeight >  -2.0f)); // shallow water (use ground fx)
-		flags |= (CCustomExplosionGenerator::SPW_WATER  * (groundHeight <= -2.0f)); // water (surface)
+		flags |= (CEG_SPWF_GROUND     * (groundHeight >  -2.0f) * (    voidGroundMask));
+		flags |= (CEG_SPWF_VOIDGROUND * (groundHeight >  -2.0f) * (1 - voidGroundMask));
+		flags |= (CEG_SPWF_WATER      * (groundHeight <= -2.0f) * (    voidWaterMask ));
+		flags |= (CEG_SPWF_VOIDWATER  * (groundHeight <= -2.0f) * (1 - voidWaterMask ));
 		return flags;
 	}
 
-	flags |= (CCustomExplosionGenerator::SPW_UNDERWATER /* * (height <= -5.0f)*/); // under water
+	flags |= (CEG_SPWF_UNDERWATER     /* * (height <= -5.0f)*/ * (    voidWaterMask));
+	// flags |= (CEG_SPWF_UNDERVOIDWATER /* * (height <= -5.0f)*/ * (1 - voidWaterMask));
 	return flags;
 }
 
@@ -208,11 +216,8 @@ void CExplosionGeneratorHandler::Kill()
 	std::memset(aliasParserMem, 0, sizeof(aliasParserMem));
 	std::memset(explTblRootMem, 0, sizeof(explTblRootMem));
 
-	// delete CStdExplGen
-	egMemPool.free(explosionGenerators[0]);
-
-	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
-		egMemPool.free(explosionGenerators[n]);
+	for (IExplosionGenerator*& eg: explosionGenerators) {
+		egMemPool.free(eg);
 	}
 
 	explosionGenerators.clear();
@@ -406,27 +411,25 @@ bool CStdExplosionGenerator::Explosion(
 	float3 camVect = camera->GetPos() - pos;
 
 	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, groundHeight);
-	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
-	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
-	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);
-	const bool uwExplosion     = ((flags & CCustomExplosionGenerator::SPW_UNDERWATER) != 0);
+	const bool    airExplosion = ((flags & CCustomExplosionGenerator::CEG_SPWF_AIR       ) != 0);
+	const bool groundExplosion = ((flags & CCustomExplosionGenerator::CEG_SPWF_GROUND    ) != 0);
+	const bool  waterExplosion = ((flags & CCustomExplosionGenerator::CEG_SPWF_WATER     ) != 0);
+	const bool     uwExplosion = ((flags & CCustomExplosionGenerator::CEG_SPWF_UNDERWATER) != 0);
 
 	// limit the visual effects based on the radius
-	damage /= 20.0f;
-	damage = std::min(damage, radius * 1.5f);
-	damage *= gfxMod;
-	damage = std::max(damage, 0.0f);
+	damage = std::min(damage * 0.05f, radius * 1.5f);
+	damage = std::max(damage * gfxMod, 0.0f);
 
 	const float sqrtDmg = math::sqrt(damage);
-	const float camLength = camVect.Length();
+	const float camLength = camVect.LengthNormalize();
 	float moveLength = radius * 0.03f;
 
-	if (camLength > 0.0f) { camVect /= camLength; }
-	if (camLength < moveLength + 2) { moveLength = camLength - 2; }
+	if (camLength < (moveLength + 2.0f))
+		moveLength = camLength - 2.0f;
 
 	const float3 npos = pos + camVect * moveLength;
 
-	projMemPool.alloc<CHeatCloudProjectile>(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
+	projMemPool.alloc<CHeatCloudProjectile>(owner, npos, UpVector * 0.3f, 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
 	if (projectileHandler.GetParticleSaturation() < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
@@ -434,36 +437,37 @@ bool CStdExplosionGenerator::Explosion(
 		float smokeDamageSQRT  = 0.0f;
 		float smokeDamageISQRT = 0.0f;
 
-		if (uwExplosion) { smokeDamage *= 0.3f; }
-		if (airExplosion || waterExplosion) { smokeDamage *= 0.6f; }
+		smokeDamage *= (1.0f - (                   uwExplosion) * 0.7f);
+		smokeDamage *= (1.0f - (airExplosion || waterExplosion) * 0.4f);
 
 		if (smokeDamage > 0.01f) {
 			smokeDamageSQRT = math::sqrt(smokeDamage);
 			smokeDamageISQRT = 1.0f / (smokeDamageSQRT * 0.35f);
 		}
 
-		for (int a = 0; a < smokeDamage * 0.6f; ++a) {
+		for (int a = 0, n = smokeDamage * 0.6f; a < n; ++a) {
 			const float3 speed(
 				(-0.1f + guRNG.NextFloat() * 0.2f),
 				( 0.1f + guRNG.NextFloat() * 0.3f) * smokeDamageISQRT,
 				(-0.1f + guRNG.NextFloat() * 0.2f)
 			);
 
-			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + guRNG.NextFloat() * 0.7f);
-
+			// smoke always goes up
 			float3 dir = guRNG.NextVector() * smokeDamage;
 			dir.y = math::fabsf(dir.y);
-			const float3 npos = pos + dir;
 
-			projMemPool.alloc<CSmokeProjectile2>(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
+			const float time = 40.0f + smokeDamageSQRT * 15.0f;
+			const float mult = 0.8f + guRNG.NextFloat() * 0.7f;
+
+			projMemPool.alloc<CSmokeProjectile2>(owner, pos, pos + dir, speed, time * mult, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
 		}
 
 		if (groundExplosion) {
-			const int numDirt = std::min(20.0f, damage * 0.8f);
-			const float explSpeedMod = 0.7f + std::min(30.0f, damage) / GAME_SPEED;
-			const float3 color(0.15f, 0.1f, 0.05f);
+			constexpr float3 color(0.15f, 0.1f, 0.05f);
 
-			for (int a = 0; a < numDirt; ++a) {
+			const float explSpeedMod = 0.7f + std::min(30.0f, damage) / GAME_SPEED;
+
+			for (int a = 0, n = std::min(20.0f, damage * 0.8f); a < n; ++a) {
 				const float3 explSpeed = float3(
 					(0.5f - guRNG.NextFloat()) * 1.5f,
 					 1.7f + guRNG.NextFloat()  * 1.6f,
@@ -481,10 +485,9 @@ bool CStdExplosionGenerator::Explosion(
 		}
 
 		if (!airExplosion && !uwExplosion && waterExplosion) {
-			const int numDirt = std::min(40.f, damage * 0.8f);
-			const float3 color(1.0f, 1.0f, 1.0f);
+			constexpr float3 color(1.0f, 1.0f, 1.0f);
 
-			for (int a = 0; a < numDirt; ++a) {
+			for (int a = 0, n = std::min(40.0f, damage * 0.8f); a < n; ++a) {
 				const float3 speed(
 					(    0.5f - guRNG.NextFloat()) * 0.2f,
 					(a * 0.1f + guRNG.NextFloat()  * 0.8f),
@@ -509,10 +512,9 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (damage >= 20.0f && !uwExplosion && !airExplosion) {
-			const int numDebris = (guRNG.NextInt(6)) + 3 + int(damage * 0.04f);
 			const float explSpeedMod = (0.7f + std::min(30.0f, damage) / 23);
 
-			for (int a = 0; a < numDebris; ++a) {
+			for (int a = 0, n = (guRNG.NextInt(6)) + 3 + int(damage * 0.04f); a < n; ++a) {
 				const float3 explSpeed = (altitude < 4.0f)?
 					float3((0.5f - guRNG.NextFloat()) * 2.0f, 1.8f + guRNG.NextFloat() * 1.8f, (0.5f - guRNG.NextFloat()) * 2.0f):
 					float3(guRNG.NextVector() * 2);
@@ -527,9 +529,7 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (uwExplosion) {
-			const int numBubbles = (damage * 0.7f);
-
-			for (int a = 0; a < numBubbles; ++a) {
+			for (int a = 0, n = (damage * 0.7f); a < n; ++a) {
 				projMemPool.alloc<CBubbleProjectile>(
 					owner,
 					pos + guRNG.NextVector() * radius * 0.5f,
@@ -542,9 +542,7 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (waterExplosion && !uwExplosion && !airExplosion) {
-			const int numWake = (damage * 0.5f);
-
-			for (int a = 0; a < numWake; ++a) {
+			for (int a = 0, n = (damage * 0.5f); a < n; ++a) {
 				projMemPool.alloc<CWakeProjectile>(
 					owner,
 					pos + guRNG.NextVector() * radius * 0.2f,
@@ -558,15 +556,13 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (radius > 10.0f && damage > 4.0f) {
-			const int numSpike = int(sqrtDmg) + 8;
 			const float explSpeedMod = (8 + damage * 3.0f) / (9 + sqrtDmg * 0.7f) * 0.35f;
 
-			for (int a = 0; a < numSpike; ++a) {
+			for (int a = 0, n = int(sqrtDmg) + 8; a < n; ++a) {
 				float3 explSpeed = (guRNG.NextVector()).SafeNormalize() * explSpeedMod;
 
-				if (!airExplosion && !waterExplosion && (explSpeed.y < 0.0f)) {
+				if (!airExplosion && !waterExplosion && (explSpeed.y < 0.0f))
 					explSpeed.y = -explSpeed.y;
-				}
 
 				projMemPool.alloc<CExploSpikeProjectile>(
 					owner,
@@ -588,8 +584,8 @@ bool CStdExplosionGenerator::Explosion(
 		if (flashSize > 5.f && ttl > 15.f) {
 			const float flashAlpha = std::min(0.8f, damage * 0.01f);
 
-			float circleAlpha = 0;
-			float circleGrowth = 0;
+			float circleAlpha = 0.0f;
+			float circleGrowth = 0.0f;
 
 			if (radius > 40.0f && damage > 12.0f) {
 				circleAlpha = std::min(0.5f, damage * 0.01f);
@@ -618,10 +614,10 @@ bool CStdExplosionGenerator::Explosion(
 void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir)
 {
 	float val = 0.0f;
-	void* ptr = NULL;
 	float buffer[16];
+	void* ptr = nullptr;
 
-	std::memset(&buffer[0], 0, 16 * sizeof(float));
+	std::memset(&buffer[0], 0, sizeof(buffer));
 
 	for (;;) {
 		switch (*(code++)) {
@@ -672,6 +668,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				code += 4;
 				break;
 			}
+
 			case OP_LOADP: {
 				ptr = *(void**) code;
 				code += sizeof(void*);
@@ -681,9 +678,10 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				std::uint16_t offset = *(std::uint16_t*) code;
 				code += 2;
 				*(void**) (instance + offset) = ptr;
-				ptr = NULL;
+				ptr = nullptr;
 				break;
 			}
+
 			case OP_DIR: {
 				std::uint16_t offset = *(std::uint16_t*) code;
 				code += 2;
@@ -746,14 +744,14 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
 	const string& script,
 	SExpGenSpawnableMemberInfo& memberInfo,
-	string& code)
-{
+	string& code
+) {
 	const std::string content = script.substr(0, script.find(';', 0));
 	const bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
 
-	if (content == "dir") { // first see if we can match any keywords
-		// if the user uses a keyword assume he knows that it is put on the right datatype for now
-		if (memberInfo.length < 3 || !isFloat) // dir has to be float3
+	if (content == "dir") {
+		// dir keyword; type has to be float3
+		if (memberInfo.length < 3 || !isFloat)
 			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
 		code += OP_DIR;
@@ -793,8 +791,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 
 	//Floats or Ints
-
-	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
+	assert(isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
 
 	if (isFloat) {
 		switch (memberInfo.size) {
@@ -842,7 +839,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		if (p >= script.size())
 			continue;
 
-		char* endp = NULL;
+		char* endp = nullptr;
 
 		if (!useInt) {
 			// strtod&co expect C-style strings with NULLs,
@@ -945,7 +942,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		expGenParams.groundFlash.circleGrowth = gndTable.GetFloat("circleGrowth", 0.0f);
 		expGenParams.groundFlash.color        = gndTable.GetFloat3("color", float3(1.0f, 1.0f, 0.8f));
 
-		expGenParams.groundFlash.flags = SPW_GROUND | GetFlagsFromTable(gndTable);
+		expGenParams.groundFlash.flags = CEG_SPWF_GROUND | GetFlagsFromTable(gndTable);
 		expGenParams.groundFlash.ttl = ttl;
 	}
 
@@ -973,13 +970,13 @@ bool CCustomExplosionGenerator::Explosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
+	unsigned int flags = GetFlagsFromHeight(pos.y, CGround::GetHeightReal(pos.x, pos.z));
 
-	unsigned int flags = GetFlagsFromHeight(pos.y, groundHeight);
-	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND) != 0);
+	const bool   unitCollision = (hit != nullptr);
+	const bool groundExplosion = ((flags & CEG_SPWF_GROUND) != 0);
 
-	if (hit) flags |= SPW_UNIT;
-	else     flags |= SPW_NO_UNIT;
+	flags |= (CEG_SPWF_UNIT    * (    unitCollision));
+	flags |= (CEG_SPWF_NO_UNIT * (1 - unitCollision));
 
 	const std::vector<ProjectileSpawnInfo>& spawnInfo = expGenParams.projectiles;
 	const GroundFlashInfo& groundFlash = expGenParams.groundFlash;
@@ -987,6 +984,7 @@ bool CCustomExplosionGenerator::Explosion(
 	for (int a = 0; a < spawnInfo.size(); a++) {
 		const ProjectileSpawnInfo& psi = spawnInfo[a];
 
+		// spawn projectiles only if at least one bit matches
 		if ((psi.flags & flags) == 0)
 			continue;
 
@@ -1025,16 +1023,14 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 
 	std::cout << "{" << std::endl;
 
-	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci) {
-		creg::Class* c = *ci;
-
+	for (creg::Class* c: classes) {
 		if (!c->IsSubclassOf(CExpGenSpawnable::StaticClass()) || c == CExpGenSpawnable::StaticClass())
 			continue;
 
 		if (c->flags & creg::CF_Synced)
 			continue;
 
-		if (ci != classes.begin())
+		if (c != classes.front())
 			std::cout << "," << std::endl;
 
 		std::cout << "  \"" << c->name << "\": {" << std::endl;
