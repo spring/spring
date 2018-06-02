@@ -190,14 +190,16 @@ public:
 	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) override;
 	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
 
-
+	// spawn-flags
 	enum {
-		SPW_WATER      =  1,
-		SPW_GROUND     =  2,
-		SPW_AIR        =  4,
-		SPW_UNDERWATER =  8,
-		SPW_UNIT       = 16,  // only execute when the explosion hits a unit
-		SPW_NO_UNIT    = 32,  // only execute when the explosion doesn't hit a unit (environment)
+		CEG_SPWF_WATER      = 1 << 0,
+		CEG_SPWF_GROUND     = 1 << 1,
+		CEG_SPWF_VOIDWATER  = 1 << 2,
+		CEG_SPWF_VOIDGROUND = 1 << 3,
+		CEG_SPWF_AIR        = 1 << 4,
+		CEG_SPWF_UNDERWATER = 1 << 5,  // TODO: UNDERVOIDWATER?
+		CEG_SPWF_UNIT       = 1 << 6,  // only execute when the explosion hits a unit
+		CEG_SPWF_NO_UNIT    = 1 << 7,  // only execute when the explosion doesn't hit a unit (environment)
 	};
 
 	enum {
