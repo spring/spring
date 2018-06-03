@@ -99,7 +99,7 @@ public:
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
 public:
-	void ReallocAtlases();
+	void ReallocAtlases(bool pre);
 protected:
 	void UpdateGlyphAtlasTexture();
 private:

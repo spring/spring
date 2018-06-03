@@ -117,12 +117,12 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 }
 
 
-void CglFont::ReallocAtlases()
+void CglFont::ReallocAtlases(bool pre)
 {
 	if (font != nullptr)
-		static_cast<CFontTexture*>(font)->ReallocAtlases();
+		static_cast<CFontTexture*>(font)->ReallocAtlases(pre);
 	if (smallFont != nullptr)
-		static_cast<CFontTexture*>(smallFont)->ReallocAtlases();
+		static_cast<CFontTexture*>(smallFont)->ReallocAtlases(pre);
 }
 
 

@@ -711,8 +711,12 @@ void SpringApp::Reload(const std::string script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	#if 0
+	// rely only on defrag for now since WindowManagerHelper also keeps a global bitmap
+	CglFont::ReallocAtlases(true);
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
-	CglFont::ReallocAtlases();
+	CglFont::ReallocAtlases(false);
+	#endif
 
 	LOG("[SpringApp::%s][8]", __func__);
 
