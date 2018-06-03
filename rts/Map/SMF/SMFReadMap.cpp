@@ -194,11 +194,9 @@ void CSMFReadMap::CreateSpecularTex()
 	{
 		CBitmap specularTexBM;
 
-		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
-			// maps wants specular lighting, but no moderation
-			specularTexBM.channels = 4;
+		// maps wants specular lighting, but no moderation
+		if (!specularTexBM.Load(mapInfo->smf.specularTexName))
 			specularTexBM.AllocDummy(SColor(255, 255, 255, 255));
-		}
 
 		specularTex.SetRawTexID(specularTexBM.CreateTexture());
 		specularTex.SetRawSize(int2(specularTexBM.xsize, specularTexBM.ysize));
@@ -252,11 +250,9 @@ void CSMFReadMap::CreateSplatDetailTextures()
 
 		// if a map supplies an intensity- AND a distribution-texture for
 		// detail-splat blending, the regular detail-texture is not used
-		if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
-			// default detail-texture should be all-grey
-			splatDetailTexBM.channels = 4;
-			splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
-		}
+		// default detail-texture should be all-grey
+		if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName))
+			splatDetailTexBM.AllocDummy(SColor(127, 127, 127, 127));
 
 		splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(texAnisotropyLevels[true], 0.0f, true));
 		splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
@@ -265,10 +261,8 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	{
 		CBitmap splatDistrTexBM;
 
-		if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
-			splatDistrTexBM.channels = 4;
-			splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
-		}
+		if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName))
+			splatDistrTexBM.AllocDummy(SColor(255, 0, 0, 0));
 
 		splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(texAnisotropyLevels[true], 0.0f, true));
 		splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
@@ -285,8 +279,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		CBitmap splatDetailNormalTextureBM;
 
 		if (!splatDetailNormalTextureBM.Load(mapInfo->smf.splatDetailNormalTexNames[i])) {
-			splatDetailNormalTextureBM.channels = 4;
-			splatDetailNormalTextureBM.Alloc(1, 1);
+			splatDetailNormalTextureBM.Alloc(1, 1, 4);
 			splatDetailNormalTextureBM.GetRawMem()[0] = 127; // RGB is packed standard normal map
 			splatDetailNormalTextureBM.GetRawMem()[1] = 127;
 			splatDetailNormalTextureBM.GetRawMem()[2] = 255; // With a single upward (+Z) pointing vector

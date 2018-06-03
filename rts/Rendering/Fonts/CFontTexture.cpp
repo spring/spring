@@ -363,10 +363,12 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, texture(0)
 	, textureSpaceMatrix(0)
 {
+	atlasGlyphs.reserve(1024);
+
 	if (fontSize <= 0)
 		fontSize = 14;
 
-	static const int FT_INTERNAL_DPI = 64;
+	static constexpr int FT_INTERNAL_DPI = 64;
 	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
 
 	fontFamily = "unknown";
@@ -701,15 +703,38 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	glNewList(textureSpaceMatrix, GL_COMPILE);
 	glEndList();
 
+	atlasUpdate = {};
 	atlasUpdate.Alloc(texWidth = wantedTexWidth = width, texHeight = wantedTexHeight = height, 1);
+
+	atlasUpdateShadow = {};
 	atlasUpdateShadow.Alloc(width, height, 1);
 #endif
 }
 
-void CFontTexture::ReallocAtlases()
+void CFontTexture::ReallocAtlases(bool pre)
 {
 #ifndef HEADLESS
 	assert(!atlasUpdate.Empty());
+
+
+	static std::vector<uint8_t> atlasMem;
+	static std::vector<uint8_t> atlasShadowMem;
+
+	if (pre) {
+		atlasMem.clear();
+		atlasMem.resize(atlasUpdate.GetMemSize());
+
+		atlasShadowMem.clear();
+		atlasShadowMem.resize(atlasUpdateShadow.GetMemSize());
+
+		memcpy(atlasMem.data(), atlasUpdate.GetRawMem(), atlasUpdate.GetMemSize());
+		memcpy(atlasShadowMem.data(), atlasUpdateShadow.GetRawMem(), atlasUpdateShadow.GetMemSize());
+
+		atlasUpdate = {};
+		atlasUpdateShadow = {};
+		return;
+	}
+
 
 	const int xsize = atlasUpdate.xsize;
 	const int ysize = atlasUpdate.ysize;
@@ -717,6 +742,10 @@ void CFontTexture::ReallocAtlases()
 	// NB: pool has already been wiped here, do not return memory to it but just realloc
 	atlasUpdate.Alloc(xsize, ysize, 1);
 	atlasUpdateShadow.Alloc(xsize, ysize, 1);
+
+	memcpy(atlasUpdate.GetRawMem(), atlasMem.data(), atlasMem.size());
+	memcpy(atlasUpdateShadow.GetRawMem(), atlasShadowMem.data(), atlasShadowMem.size());
+
 
 	if (atlasGlyphs.empty())
 		return;
