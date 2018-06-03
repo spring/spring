@@ -283,10 +283,6 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 	: xsize(_xsize)
 	, ysize(_ysize)
 	, channels(_channels)
-
-	#ifndef BITMAP_NO_OPENGL
-	, textype(GL_TEXTURE_2D)
-	#endif
 	, compressed(false)
 {
 	assert(GetMemSize() > 0);
