@@ -70,7 +70,7 @@ public:
 
 	int32_t xsize = 0;
 	int32_t ysize = 0;
-	int32_t channels = 0;
+	int32_t channels = 4;
 
 	#ifndef BITMAP_NO_OPENGL
 	// GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
