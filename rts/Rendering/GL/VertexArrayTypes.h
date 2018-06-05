@@ -77,7 +77,7 @@ static_assert(sizeof(SColor) == sizeof(float), "");
 // #define VA_TYPE_OFFSET(T, n) (static_cast<uint8_t*>(nullptr) + sizeof(T) * (n))
 #define VA_TYPE_OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
 #else
-#define CONSTQUAL constexpr
+#define CONSTQUAL const
 #define VA_TYPE_OFFSET(T, n) ((const T*)(0) + (n))
 #endif
 
