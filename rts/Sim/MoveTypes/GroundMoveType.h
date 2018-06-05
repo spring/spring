@@ -7,6 +7,7 @@
 
 #include "MoveType.h"
 #include "Sim/Path/IPathController.hpp"
+#include "System/float4.h"
 #include "System/Sync/SyncedFloat3.h"
 
 struct UnitDef;
@@ -25,6 +26,11 @@ public:
 		std::array<std::pair<unsigned int,  bool*>, 3>  bools;
 		std::array<std::pair<unsigned int, short*>, 1> shorts;
 		std::array<std::pair<unsigned int, float*>, 9> floats;
+	};
+	struct PathRequest {
+		float4 goal; // .xyz := pos, .w := radius
+		uint8_t numTries = 0;
+		uint8_t numFails = 0;
 	};
 
 	void PostLoad();
@@ -165,6 +171,7 @@ private:
 
 private:
 	GMTDefaultPathController pathController;
+	PathRequest pathRequest;
 
 	SyncedFloat3 currWayPoint;
 	SyncedFloat3 nextWayPoint;

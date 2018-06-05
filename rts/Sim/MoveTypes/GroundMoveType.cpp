@@ -58,6 +58,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 // so the assertion can be less strict
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
+#define MINIMUM_NONZERO_SPEED         0.01f
 // magic number to reduce damage taken from collisions
 // between a very heavy and a very light CSolidObject
 #define COLLISION_DAMAGE_MULT         0.02f
@@ -182,8 +183,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	turnSpeed(0.0f),
 	turnAccel(0.0f),
 
-	accRate(0.01f),
-	decRate(0.01f),
+	accRate(MINIMUM_NONZERO_SPEED),
+	decRate(MINIMUM_NONZERO_SPEED),
 	myGravity(0.0f),
 
 	maxReverseDist(0.0f),
@@ -238,8 +239,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	turnRate = std::max(owner->unitDef->turnRate, 1.0f);
 	turnAccel = turnRate * mix(0.333f, 0.033f, owner->moveDef->speedModClass == MoveDef::Ship);
 
-	accRate = std::max(0.01f, owner->unitDef->maxAcc);
-	decRate = std::max(0.01f, owner->unitDef->maxDec);
+	accRate = std::max(MINIMUM_NONZERO_SPEED, owner->unitDef->maxAcc);
+	decRate = std::max(MINIMUM_NONZERO_SPEED, owner->unitDef->maxDec);
 
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(owner->unitDef->myGravity), mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
@@ -373,46 +374,45 @@ void CGroundMoveType::UpdateOwnerAccelAndHeading()
 
 void CGroundMoveType::SlowUpdate()
 {
+	bool forceRepath = false;
+
 	if (owner->GetTransporter() != nullptr) {
-		if (progressState == Active)
-			StopEngine(false);
+		StopEngine(false);
+		AMoveType::SlowUpdate();
+		return;
+	}
 
-	} else {
-		if (progressState == Active) {
-			if (pathID != 0) {
-				if (idling) {
-					numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
-				} else {
-					numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
-				}
-
-				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
-					// case A: we have a path but are not moving
-					LOG_L(L_DEBUG, "[%s] unit %i has pathID %i but %i ETA failures", __func__, owner->id, pathID, numIdlingUpdates);
-
-					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						ReRequestPath(true);
-					} else {
-						// unit probably ended up on a non-traversable
-						// square, or got stuck in a non-moving crowd
-						Fail(false);
-					}
-				}
-			} else {
-				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG, "[%s] unit %i has no path", __func__, owner->id);
-				ReRequestPath(true);
-			}
-
-			if (wantRepath)
-				ReRequestPath(true);
+	if (pathID != 0) {
+		if (idling) {
+			numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
+		} else {
+			numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
 		}
 
-		// move us into the map, and update <oldPos>
-		// to prevent any extreme changes in <speed>
-		if (!owner->IsFlying() && !owner->pos.IsInBounds())
-			owner->Move(oldPos = owner->pos.cClampInBounds(), false);
+		// case A: we have a path but are not moving
+		// unit probably ended up on a non-traversable
+		// square, or got stuck in a non-moving crowd
+		const bool remIdleUpdates = (numIdlingUpdates < (SHORTINT_MAXVALUE / turnRate));
+		const bool remIdleSlowUps = (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES);
+
+		if (!remIdleUpdates && !(forceRepath = remIdleSlowUps))
+			Fail(false);
+
+	} else {
+		// case B: we want to be moving but don't have a path
+		// note that progressState can be Failed, which would
+		// previously prevent Arrive from working and is *not*
+		// reset to Active if the re-request succeeds
+		forceRepath = (pathRequest.numFails > 0 && pathRequest.numTries < 10);
 	}
+
+	if (wantRepath || forceRepath)
+		ReRequestPath(true);
+
+	// move us into the map, and update <oldPos>
+	// to prevent any extreme changes in <speed>
+	if (!owner->IsFlying() && !owner->pos.IsInBounds())
+		owner->Move(oldPos = owner->pos.cClampInBounds(), false);
 
 	AMoveType::SlowUpdate();
 }
@@ -424,6 +424,10 @@ void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRad
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
 	extraRadius = deltaRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+
+	pathRequest.goal = {goalPos, goalRadius + extraRadius};
+	pathRequest.numTries = 0;
+	pathRequest.numFails = 0;
 
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
@@ -457,6 +461,10 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
 	extraRadius = deltaRadius * (1 - owner->moveDef->TestMoveSquare(nullptr, moveGoalPos, ZeroVector, true, true));
+
+	pathRequest.goal = {goalPos, goalRadius + extraRadius};
+	pathRequest.numTries = 0;
+	pathRequest.numFails = 0;
 
 	atGoal = (moveGoalPos.SqDistance2D(owner->pos) < Square(goalRadius + extraRadius));
 	atEndOfPath = false;
@@ -589,7 +597,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 	wantedSpeed = newWantedSpeed;
 
 	// round low speeds to zero
-	if (wantedSpeed <= 0.0f && currentSpeed < 0.01f) {
+	if (wantedSpeed <= 0.0f && currentSpeed < MINIMUM_NONZERO_SPEED) {
 		currentSpeed = 0.0f;
 		deltaSpeed = 0.0f;
 		return;
@@ -761,7 +769,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	if (startSkidding)
 		owner->script->StartSkidding(newSpeed);
 
-	if (newSpeed.SqLength2D() >= 0.01f)
+	if (newSpeed.SqLength2D() >= MINIMUM_NONZERO_SPEED)
 		skidDir = newSpeed.Normalize2D();
 
 	skidRotVector = skidDir.cross(UpVector) * startSkidding;
@@ -1297,11 +1305,15 @@ unsigned int CGroundMoveType::GetNewPath()
 
 	if (useRawMovement)
 		return newPathID;
+
 	// avoid frivolous requests if called from outside StartMoving*()
-	if ((owner->pos - goalPos).SqLength2D() <= Square(goalRadius + extraRadius))
+	if ((owner->pos - pathRequest.goal).SqLength2D() <= Square(pathRequest.goal.w))
 		return newPathID;
 
-	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius + extraRadius, true)) != 0) {
+	pathRequest.numTries++;
+
+	// need the pos stored in request; we might be a re-request and StopMoving changes it to Here
+	if ((newPathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos = pathRequest.goal, pathRequest.goal.w, true)) != 0) {
 		atGoal = false;
 		atEndOfPath = false;
 
@@ -1318,15 +1330,11 @@ unsigned int CGroundMoveType::GetNewPath()
 }
 
 void CGroundMoveType::ReRequestPath(bool forceRequest) {
-	if (forceRequest) {
-		StopEngine(false);
-		StartEngine(false);
-		wantRepath = false;
+	if ((wantRepath = !forceRequest))
 		return;
-	}
 
-	wantRepath = true;
-	return;
+	StopEngine(false);
+	StartEngine(false);
 }
 
 
@@ -1524,26 +1532,23 @@ void CGroundMoveType::StopEngine(bool callScript, bool hardStop) {
 /* Called when the unit arrives at its goal. */
 void CGroundMoveType::Arrived(bool callScript)
 {
-	// can only "arrive" if the engine is active
-	if (progressState == Active) {
-		StopEngine(callScript);
+	StopEngine(callScript);
 
-		if (owner->team == gu->myTeam)
-			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
+	if (owner->team == gu->myTeam)
+		Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 
-		// and the action is done
-		progressState = Done;
+	// and the action is done
+	progressState = Done;
 
-		// update the position-parameter of our queue's front CMD_MOVE
-		// this is needed in case we Arrive()'ed non-directly (through
-		// colliding with another unit that happened to share our goal)
-		if (!owner->commandAI->HasMoreMoveCommands())
-			static_cast<CMobileCAI*>(owner->commandAI)->SetFrontMoveCommandPos(owner->pos);
+	// update the position-parameter of our queue's front CMD_MOVE
+	// this is needed in case we Arrive()'ed non-directly (through
+	// colliding with another unit that happened to share our goal)
+	if (!owner->commandAI->HasMoreMoveCommands())
+		static_cast<CMobileCAI*>(owner->commandAI)->SetFrontMoveCommandPos(owner->pos);
 
-		owner->commandAI->SlowUpdate();
+	owner->commandAI->SlowUpdate();
 
-		LOG_L(L_DEBUG, "[%s] unit %i arrived", __func__, owner->id);
-	}
+	LOG_L(L_DEBUG, "[%s] unit %i arrived", __func__, owner->id);
 }
 
 /*
@@ -1562,6 +1567,8 @@ void CGroundMoveType::Fail(bool callScript)
 
 	eventHandler.UnitMoveFailed(owner);
 	eoh->UnitMoveFailed(*owner);
+
+	pathRequest.numFails++;
 }
 
 
@@ -2380,7 +2387,7 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 
 	if (!newSpeedVector.same(ZeroVector)) {
 		// use the simplest possible Euler integration
-		owner->SetVelocityAndSpeed(newSpeedVector);
+		owner->SetVelocityAndSpeed(newSpeedVector * (newSpeedVector.SqLength() > Square(MINIMUM_NONZERO_SPEED)));
 		owner->Move(owner->speed, true);
 
 		// NOTE:
@@ -2426,9 +2433,12 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 
 bool CGroundMoveType::UpdateOwnerSpeed(float oldSpeedAbs, float newSpeedAbs, float newSpeedRaw)
 {
-	const bool oldSpeedAbsGTZ = (oldSpeedAbs > 0.01f);
-	const bool newSpeedAbsGTZ = (newSpeedAbs > 0.01f);
-	const bool newSpeedRawLTZ = (newSpeedRaw < 0.0f );
+	oldSpeedAbs = mix(oldSpeedAbs, 0.0f, oldSpeedAbs <= MINIMUM_NONZERO_SPEED);
+	newSpeedAbs = mix(newSpeedAbs, 0.0f, newSpeedAbs <= MINIMUM_NONZERO_SPEED);
+
+	const bool oldSpeedAbsGTZ = (oldSpeedAbs > MINIMUM_NONZERO_SPEED);
+	const bool newSpeedAbsGTZ = (newSpeedAbs > MINIMUM_NONZERO_SPEED);
+	const bool newSpeedRawLTZ = (newSpeedRaw <                  0.0f); // reverse if true
 
 	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, newSpeedAbsGTZ);
 
