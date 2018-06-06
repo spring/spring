@@ -1473,8 +1473,6 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushsstring(L, player->countryCode);
 	lua_pushnumber(L, player->rank);
-	// same as select(4, GetTeamInfo(teamID=player->team))
-	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(player->team));
 
 	const PlayerBase::customOpts& playerOpts = player->GetAllValues();
 
@@ -1485,6 +1483,9 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 		lua_pushsstring(L, pair.second);
 		lua_rawset(L, -3);
 	}
+
+	// same as select(4, GetTeamInfo(teamID=player->team))
+	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(player->team));
 
 	return 11;
 }
