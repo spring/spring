@@ -15,8 +15,8 @@ Lua:
  - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
  - allow setting terrain-type hardness and name via Spring.SetTerrainTypeData
- ! add extra boolean return-value to Spring.GetPlayerInfo between 'rank' (#9) and 'customPlayerKeys' (#11)
-   select(10, Spring.GetPlayerInfo(player)) is now equal to select(4, Spring.GetTeamInfo(player.team))
+ - add extra boolean return-value to Spring.GetPlayerInfo (#11, after 'customPlayerKeys') 
+   select(11, Spring.GetPlayerInfo(player)) is now equal to select(4, Spring.GetTeamInfo(player.team))
  ! return the terrain-type index from Spring.GetGroundInfo and Spring.GetTerrainTypeData
    these functions now push [number index, string name, ...] rather than [string name, ...]
    onto the stack
