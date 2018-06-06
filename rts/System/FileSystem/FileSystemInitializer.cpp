@@ -6,6 +6,7 @@
 #include "VFSHandler.h"
 #include "System/LogOutput.h"
 #include "System/SafeUtil.h"
+#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Misc.h"
@@ -32,12 +33,17 @@ static void ClearThreadReg() {}
 volatile bool FileSystemInitializer::initSuccess = false;
 volatile bool FileSystemInitializer::initFailure = false;
 
-void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const bool safemode)
+void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const std::string& configName, const bool safemode)
 {
 	dataDirLocater.LocateDataDirs();
 	dataDirLocater.ChangeCwdToWriteDir();
 
 	ConfigHandler::Instantiate(configSource, safemode);
+
+	if (configName.empty())
+		return;
+
+	configHandler->SetString("name", StringReplace(configName, " ", "_"));
 }
 
 
