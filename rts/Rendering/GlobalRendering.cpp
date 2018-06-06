@@ -470,6 +470,15 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	if ((glContexts[1] = CreateGLContext(minCtx, sdlWindows[1])) == nullptr)
 		return false;
 
+	{
+		#ifndef HEADLESS
+		glewExperimental = true;
+		#endif
+		glewInit();
+		// glewInit sets GL_INVALID_ENUM, get rid of it
+		glGetError();
+	}
+
 	if (!CheckGLContextVersion(minCtx)) {
 		handleerror(nullptr, "minimum required OpenGL version not supported, aborting", "ERROR", MBF_OK | MBF_EXCL);
 		return false;
@@ -522,13 +531,6 @@ void CGlobalRendering::KillSDL() const {
 
 
 void CGlobalRendering::PostInit() {
-	#ifndef HEADLESS
-	glewExperimental = true;
-	#endif
-	glewInit();
-	// glewInit sets GL_INVALID_ENUM, get rid of it
-	glGetError();
-
 	char sdlVersionStr[64] = "";
 	char glVidMemStr[64] = "unknown";
 
@@ -1144,7 +1146,10 @@ bool CGlobalRendering::CheckGLStencilBufferBits(int minBufferBits) const
 	#endif
 
 	GLint ctxBufferBits = 0;
-	glGetIntegerv(GL_STENCIL_BITS, &ctxBufferBits);
+
+	// GL4.5, must be GL_STENCIL for default FB
+	// glGetNamedFramebufferAttachmentParameteriv(0, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &ctxBufferBits);
+	glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &ctxBufferBits);
 
 	return (ctxBufferBits >= minBufferBits);
 }
