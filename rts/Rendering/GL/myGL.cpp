@@ -146,8 +146,8 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
-	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
-	static           const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
+	static const const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
+	static       const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
 
 	if (qcriProcAddr == nullptr)
 		return false;
