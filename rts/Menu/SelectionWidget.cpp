@@ -156,10 +156,11 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	vfsHandler->AddArchive(userMod, true);
 	vfsHandler->AddArchive(userMap, true);
 
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
-	for(int i=0; i<luaAIInfos.size(); i++) {
-		for (int j=0; j<luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
+	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
+
+	for (size_t i = 0; i < luaAIInfos.size(); i++) {
+		for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
+			if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
 				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
 		}
 	}

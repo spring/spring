@@ -67,15 +67,15 @@ void CSkirmishAIHandler::LoadPreGame() {
 		return;
 
 	// extract all Lua AI implementation short names
-	const std::vector< std::vector<InfoItem> >& luaAIImpls = luaAIImplHandler.LoadInfos();
+	const CLuaAIImplHandler::InfoItemVector& luaAIImpls = luaAIImplHandler.LoadInfoItems();
 
-	for (auto impl = luaAIImpls.cbegin(); impl != luaAIImpls.cend(); ++impl) {
-		for (auto info = impl->cbegin(); info != impl->cend(); ++info) {
-			if (info->key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
+	for (const auto& impl: luaAIImpls) {
+		for (const auto& info: impl) {
+			if (info.key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
 				continue;
 
-			assert(info->valueType == INFO_VALUE_TYPE_STRING);
-			luaAIShortNames.insert(info->valueTypeString);
+			assert(info.valueType == INFO_VALUE_TYPE_STRING);
+			luaAIShortNames.insert(info.valueTypeString);
 		}
 	}
 
