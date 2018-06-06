@@ -28,6 +28,8 @@ public:
 		std::array<std::pair<unsigned int, float*>, 9> floats;
 	};
 	struct PathRequest {
+		CR_DECLARE_STRUCT(PathRequest)
+
 		float4 goal; // .xyz := pos, .w := radius
 		uint8_t numTries = 0;
 		uint8_t numFails = 0;

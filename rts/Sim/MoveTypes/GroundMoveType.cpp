@@ -83,6 +83,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CGroundMoveType, (
 	CR_IGNORED(pathController),
+	CR_MEMBER(pathRequest),
 
 	CR_MEMBER(currWayPoint),
 	CR_MEMBER(nextWayPoint),
@@ -139,6 +140,13 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(useRawMovement),
 
 	CR_POSTLOAD(PostLoad)
+))
+
+CR_BIND(CGroundMoveType::PathRequest, )
+CR_REG_METADATA(CGroundMoveType::PathRequest, (
+	CR_MEMBER(goal),
+	CR_MEMBER(numTries),
+	CR_MEMBER(numFails)
 ))
 
 
