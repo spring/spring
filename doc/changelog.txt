@@ -47,6 +47,9 @@ Lua:
    and continuously in radar since (same rule as `GetUnitLosState(x).typed` and typed engine icons)
  - the GiveOrder* family of callouts can now accept a number for command params,
    equivalent to providing an array with one member (use it to save on arrays)
+ - MarkerAdd{Point,Line} now have an extra optional argument (after localOnly: 6th for point, 8th for line):
+   the playerID of the player who should appear as the author of the drawing (if missing, defaults to the local player).
+   Only has an effect when localOnly is true.
 
 
 AI:
