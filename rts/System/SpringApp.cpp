@@ -69,7 +69,6 @@
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/UriParser.h"
-#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -153,7 +152,7 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
 	spring_time::setstarttime(spring_time::gettime(true));
 
 	LOG_DISABLE();
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, "", safemode);
 	FileSystemInitializer::InitializeLogOutput();
 	LOG_ENABLE();
 }
@@ -168,13 +167,18 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 SpringApp::SpringApp(int argc, char** argv)
 {
-	// initializes configHandler which we need
+	// {--,/}help overrides all other flags and causes exit(),
+	// even in the unusual event it is not given as first arg
+	if (argc > 1 && strstr(argv[1], "help") != nullptr)
+		ConsolePrintInitialize("", false);
+
 	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+	// also initializes configHandler and logOutput
 	ParseCmdLine(argc, argv);
 
-	FileSystemInitializer::InitializeLogOutput();
 
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
@@ -454,7 +458,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 #ifdef USING_CREG
 		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
 #else
-		LOG_L(L_ERROR, "[SpringApp::%s] CREG is not enabled!\n", __func__);
 		exit(EXIT_FAILURE); //Do not fail tests
 #endif
 	}
@@ -471,14 +474,12 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		exit(EXIT_SUCCESS);
 	}
 
+	CTextureAtlas::SetDebug(FLAGS_textureatlas);
+
 	// if this fails, configHandler remains null
-	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
-
-	if (FLAGS_textureatlas)
-		CTextureAtlas::SetDebug(true);
-
-	if (!FLAGS_name.empty())
-		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
+	// logOutput's init depends on configHandler
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
+	FileSystemInitializer::InitializeLogOutput();
 }
 
 

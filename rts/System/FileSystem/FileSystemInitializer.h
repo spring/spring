@@ -8,7 +8,7 @@
 class FileSystemInitializer {
 public:
 	/// call in defined order!
-	static void PreInitializeConfigHandler(const std::string& configSource = "", const bool safemode = false);
+	static void PreInitializeConfigHandler(const std::string& configSource = "", const std::string& configName = "", const bool safemode = false);
 	static void InitializeLogOutput(const std::string& filename = "");
 	static bool Initialize();
 	static void InitializeThr(bool* retPtr) { *retPtr = Initialize(); }
