@@ -228,7 +228,7 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		vfsHandler->AddArchive(mapArchiveName, false);
 
 	const AILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	const std::vector< std::vector<InfoItem> >& luaAIInfos = luaAIImplHandler.LoadInfos();
+	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
 
 	lua_createtable(L, skirmishAIKeys.size() + luaAIInfos.size(), 0);
 
@@ -238,9 +238,9 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		lua_newtable(L); {
 
 			for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
-				if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME) {
+				if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
 					HSTR_PUSH_STRING(L, "shortName", luaAIInfos[i][j].GetValueAsString());
-				} else if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_VERSION) {
+				} else if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_VERSION) {
 					HSTR_PUSH_STRING(L, "version", luaAIInfos[i][j].GetValueAsString());
 				}
 			}

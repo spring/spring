@@ -157,7 +157,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	vfsHandler->AddArchive(userMod, true);
 	vfsHandler->AddArchive(userMap, true);
 
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
+	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
 
 	for (size_t i = 0; i < luaAIInfos.size(); i++) {
 		for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
