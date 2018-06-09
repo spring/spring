@@ -40,7 +40,6 @@ public:
 	State myState;
 
 	int lastFrameResponse;
-	int speedControl;
 
 	bool isLocal;
 	bool isReconn;

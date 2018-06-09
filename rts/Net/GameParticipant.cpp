@@ -11,7 +11,7 @@ GameParticipant::GameParticipant()
 : id(-1)
 , myState(UNCONNECTED)
 , lastFrameResponse(0)
-, speedControl(0)
+
 , isLocal(false)
 , isReconn(false)
 , isMidgameJoin(false)
