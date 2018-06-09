@@ -33,9 +33,7 @@ public:
 
 public:
 	struct PlayerTrafficInfo {
-		PlayerTrafficInfo() : total(0) {}
-
-		int total;
+		int total = 0;
 
 		spring::unordered_map<int, int> packets;
 	};
@@ -135,15 +133,15 @@ private:
 	void StartPlaying();
 
 public:
-	Game::DrawMode gameDrawMode;
+	Game::DrawMode gameDrawMode = Game::NotDrawing;
 
 	unsigned char gameID[16];
 
-	int lastSimFrame;
-	int lastNumQueuedSimFrames;
+	int lastSimFrame = -1;
+	int lastNumQueuedSimFrames = -1;
 
 	// number of Draw() calls per 1000ms
-	unsigned int numDrawFrames;
+	unsigned int numDrawFrames = 0;
 
 	spring_time frameStartTime;
 	spring_time lastSimFrameTime;
@@ -156,46 +154,50 @@ public:
 	spring_time lastUnsyncedUpdateTime;
 	spring_time skipLastDrawTime;
 
-	float updateDeltaSeconds;
+	float updateDeltaSeconds = 0.0f;
 	/// Time in seconds, stops at game end
-	float totalGameTime;
+	float totalGameTime = 0.0f;
 
-	int chatSound;
+	int chatSound = -1;
 
-	bool windowedEdgeMove;
-	bool fullscreenEdgeMove;
+	bool windowedEdgeMove = false;
+	bool fullscreenEdgeMove = false;
 
-	bool hideInterface;
-	bool showFPS;
-	bool showClock;
-	bool showSpeed;
+	bool hideInterface = false;
+	bool showFPS = true;
+	bool showClock = true;
+	bool showSpeed = true;
 
-	bool skipping;
-	bool playing;
-	bool paused; // unsynced
+	bool skipping = false;
+	bool playing = false;
+	bool paused = false; // unsynced
 
 	/// Prevents spectator msgs from being seen by players
-	bool noSpectatorChat;
-
-	/// <playerID, <packetCode, total bytes> >
-	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
+	bool noSpectatorChat = false;
 
 	// to smooth out SimFrame calls
-	float msgProcTimeLeft;  ///< How many SimFrame() calls we still may do.
-	float consumeSpeedMult; ///< How fast we should eat NETMSG_NEWFRAMEs.
+	float msgProcTimeLeft = 0.0f;  ///< How many SimFrame() calls we still may do.
+	float consumeSpeedMult = 1.0f; ///< How fast we should eat NETMSG_NEWFRAMEs.
 
-	int skipStartFrame;
-	int skipEndFrame;
-	int skipTotalFrames;
-	float skipSeconds;
-	bool skipSoundmute;
-	float skipOldSpeed;
-	float skipOldUserSpeed;
+
+	#if 0
+	int skipStartFrame = 0;
+	int skipEndFrame = 0;
+	int skipTotalFrames = 0;
+	float skipSeconds = 0.0f;
+	bool skipSoundmute = false;
+	float skipOldSpeed = 0.0f;
+	float skipOldUserSpeed = 0.0f;
+	#endif
+
 
 	/**
 	 * @see CGameServer#speedControl
 	 */
-	int speedControl;
+	int speedControl = -1;
+
+	// 0 := 1/f rate, 1 := 30/s rate
+	int luaGCControl = 0;
 
 private:
 	JobDispatcher jobDispatcher;
@@ -204,11 +206,14 @@ private:
 
 	CWorldDrawer worldDrawer;
 
+	/// <playerID, <packetCode, total bytes> >
+	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
+
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
 
-	volatile bool finishedLoading;
-	bool gameOver;
+	volatile bool finishedLoading = false;
+	bool gameOver = false;
 };
 
 

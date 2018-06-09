@@ -124,8 +124,11 @@
 #undef CreateDirectory
 
 CONFIG(bool, GameEndOnConnectionLoss).defaultValue(true);
+// CONFIG(bool, LuaCollectGarbageOnSimFrame).defaultValue(true);
+
 CONFIG(bool, WindowedEdgeMove).defaultValue(true).description("Sets whether moving the mouse cursor to the screen edge will move the camera across the map.");
 CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdgeMove, just for fullscreen mode");
+
 CONFIG(bool, ShowFPS).defaultValue(false).description("Displays current framerate.");
 CONFIG(bool, ShowClock).defaultValue(true).headlessValue(false).description("Displays a clock on the top-right corner of the screen showing the elapsed time of the current game.");
 CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game speed.");
@@ -182,6 +185,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
 
+	#if 0
 	CR_IGNORED(skipStartFrame),
 	CR_IGNORED(skipEndFrame),
 	CR_IGNORED(skipTotalFrames),
@@ -189,6 +193,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(skipSoundmute),
 	CR_IGNORED(skipOldSpeed),
 	CR_IGNORED(skipOldUserSpeed),
+	#endif
 
 	CR_MEMBER(speedControl),
 
@@ -204,12 +209,7 @@ CR_REG_METADATA(CGame, (
 
 
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
-	: gameDrawMode(Game::NotDrawing)
-	, lastSimFrame(-1)
-	, lastNumQueuedSimFrames(-1)
-	, numDrawFrames(0)
-
-	, frameStartTime(spring_gettime())
+	: frameStartTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
 	, lastFrameTime(spring_gettime())
@@ -220,29 +220,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastUnsyncedUpdateTime(spring_gettime())
 	, skipLastDrawTime(spring_gettime())
 
-	, updateDeltaSeconds(0.0f)
-	, totalGameTime(0)
-	, hideInterface(false)
-
-	, skipping(false)
-	, playing(false)
-	, paused(false)
-
-	, noSpectatorChat(false)
-	, msgProcTimeLeft(0.0f)
-	, consumeSpeedMult(1.0f)
-	, skipStartFrame(0)
-	, skipEndFrame(0)
-	, skipTotalFrames(0)
-	, skipSeconds(0.0f)
-	, skipSoundmute(false)
-	, skipOldSpeed(0.0f)
-	, skipOldUserSpeed(0.0f)
-	, speedControl(-1)
-
 	, saveFile(saveFile)
-	, finishedLoading(false)
-	, gameOver(false)
 {
 	game = this;
 
@@ -330,9 +308,12 @@ void CGame::AddTimedJobs()
 		j.f = [this]() -> bool {
 			SCOPED_TIMER("Misc::CollectGarbage");
 
+			const float simFrameDeltaTime = (spring_gettime() - lastSimFrameNetPacketTime).toMilliSecsf();
+			const float gcForcedDeltaTime = (5.0f * 1000.0f) / (GAME_SPEED * gs->speedFactor);
+
 			// SimFrame handles gc when not paused, this all other cases
 			// do not check the global synced state, never true in demos
-			if ((spring_gettime() - lastSimFrameNetPacketTime).toMilliSecsf() > ((5.0f * 1000.0f) / (GAME_SPEED * gs->speedFactor)))
+			if (luaGCControl == 1 || simFrameDeltaTime > gcForcedDeltaTime)
 				eventHandler.CollectGarbage();
 
 			CInputReceiver::CollectGarbage();
@@ -1504,7 +1485,9 @@ void CGame::SimFrame() {
 
 			// keep garbage-collection rate tied to sim-speed
 			// (fixed 30Hz gc is not enough while catching up)
-			eventHandler.CollectGarbage();
+			if (luaGCControl == 0)
+				eventHandler.CollectGarbage();
+
 			eventHandler.GameFrame(gs->frameNum);
 		}
 
@@ -1729,10 +1712,9 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 
 void CGame::StartSkip(int toFrame) {
 	return; // FIXME: desyncs
-/*
-	if (skipping) {
+	#if 0
+	if (skipping)
 		LOG_L(L_ERROR, "skipping appears to be busted (%i)", skipping);
-	}
 
 	skipStartFrame = gs->frameNum;
 	skipEndFrame = toFrame;
@@ -1759,12 +1741,12 @@ void CGame::StartSkip(int toFrame) {
 	skipLastDrawTime = spring_gettime();
 
 	skipping = true;
-*/
+	#endif
 }
 
 void CGame::EndSkip() {
 	return; // FIXME
-/*
+	#if 0
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;
@@ -1773,17 +1755,17 @@ void CGame::EndSkip() {
 	gs->speedFactor     = skipOldSpeed;
 	gs->wantedSpeedFactor = skipOldUserSpeed;
 
-	if (!skipSoundmute) {
+	if (!skipSoundmute)
 		sound->Mute(); // sounds back on
-	}
 
 	LOG("Skipped %.1f seconds", skipSeconds);
-*/
+	#endif
 }
 
 
 
 void CGame::DrawSkip(bool blackscreen) {
+	#if 0
 	const int framesLeft = (skipEndFrame - gs->frameNum);
 
 	if (blackscreen) {
@@ -1808,6 +1790,7 @@ void CGame::DrawSkip(bool blackscreen) {
 	glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
 	glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
 	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
+	#endif
 }
 
 
