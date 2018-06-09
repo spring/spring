@@ -196,6 +196,7 @@ CR_REG_METADATA(CGame, (
 	#endif
 
 	CR_MEMBER(speedControl),
+	CR_MEMBER(luaGCControl),
 
 	CR_IGNORED(jobDispatcher),
 	CR_IGNORED(curKeyChain),
