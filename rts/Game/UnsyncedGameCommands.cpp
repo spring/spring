@@ -1400,6 +1400,31 @@ public:
 };
 
 
+class LuaGarbageCollectControlExecutor: public IUnsyncedActionExecutor {
+public:
+	LuaGarbageCollectControlExecutor() : IUnsyncedActionExecutor(
+		"LuaGCControl",
+		"Toggle between 1/f and 30/s Lua garbage collection rate"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		constexpr const char* strs[] = {"1/f", "30/s"};
+
+		const std::string& args = action.GetArgs();
+
+		if (!args.empty()) {
+			LOG("Lua garbage collection rate: %s", strs[game->luaGCControl = Clamp(atoi(args.c_str()), 0, 1)]);
+		} else {
+			LOG("Lua garbage collection rate: %s", strs[game->luaGCControl = 1 - game->luaGCControl]);
+		}
+
+		return true;
+	}
+};
+
+
+
 
 class GameInfoActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3235,6 +3260,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ClearMapMarksActionExecutor());
 	AddActionExecutor(new NoLuaDrawActionExecutor());
 	AddActionExecutor(new LuaUIActionExecutor());
+	AddActionExecutor(new LuaGarbageCollectControlExecutor());
 	AddActionExecutor(new MiniMapActionExecutor());
 	AddActionExecutor(new GroundDecalsActionExecutor());
 
