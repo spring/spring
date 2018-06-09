@@ -97,7 +97,7 @@ public:
 	void SetFreeTexture(bool b) { freeTexture = b; }
 	void SetName(const std::string& s) { name = s; }
 
-	static void SetDebug(bool b) { debug = true; }
+	static void SetDebug(bool b) { debug = b; }
 	static bool GetDebug() { return debug; }
 
 protected:
