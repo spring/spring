@@ -28,8 +28,8 @@ namespace GL {
 		static constexpr unsigned int MaxConfigLights()       { return MAX_LIGHTS; }
 		                 unsigned int NumConfigLights() const { return  maxLights; }
 
-		static constexpr unsigned int MaxUniformVecs()       { return (MaxConfigLights() * (sizeof(RawLight) / sizeof(float))); }
-		                 unsigned int NumUniformVecs() const { return (NumConfigLights() * (sizeof(RawLight) / sizeof(float))); }
+		static constexpr unsigned int MaxUniformVecs()       { return (MaxConfigLights() * (sizeof(RawLight) / sizeof(float4))); }
+		                 unsigned int NumUniformVecs() const { return (NumConfigLights() * (sizeof(RawLight) / sizeof(float4))); }
 
 	private:
 		static constexpr unsigned int MAX_LIGHTS = 32;
