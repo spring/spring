@@ -16,6 +16,12 @@
 static spring::unordered_map<std::string, std::string> lastSet;
 static spring::unordered_set<std::string> errorsSet;
 
+static unsigned int glPushDepth = 0;
+static spring::unordered_map<GLenum, std::vector<GLboolean>> flagStates;
+static std::vector<GLenum4> blendFuncs;
+static std::vector<GLenum> depthFuncs;
+static std::vector<GLboolean4> colorMasks;
+
 template<typename T, typename F>
 static void VERIFYGL(F func, GLenum pname, T defaultValue, std::string pstr, std::string area) {
 	if (errorsSet.find(area + pstr) == errorsSet.end()) {
@@ -66,39 +72,107 @@ static void VERIFYGL4(F func, GLenum pname, T default0, T default1, T default2, 
 
 void _wrap_glEnable(GLenum pname, std::string pstr, std::string location)
 {
-	if (Threading::IsMainThread())
+
+	GLboolean state;
+	glGetBooleanv(pname, &state);
+	LOG_L(L_DEBUG, "[%s]: %s (%u) changed from %u to %u", location.c_str(), pstr.c_str(), pname, state, true);
+
+	if (Threading::IsMainThread()) {
 		lastSet[pstr] = location;
+		if (glPushDepth > 0) {
+			while (flagStates[pname].size() < glPushDepth - 1)
+				flagStates[pname].push_back(state);
+			flagStates[pname].push_back(state);
+		}
+		else {
+			std::vector<GLboolean> states;
+			states.push_back(state);
+			flagStates[pname] = states;
+		}
+	}
 
 	glEnable(pname);
 }
 
 void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
 {
-	if (Threading::IsMainThread())
+	GLboolean state;
+	glGetBooleanv(pname, &state);
+	LOG_L(L_DEBUG, "[%s]: %s (%u) changed from %u to %u", location.c_str(), pstr.c_str(), pname, state, true);
+
+	if (Threading::IsMainThread()) {
 		lastSet[pstr] = location;
+		if (glPushDepth > 0) {
+			while (flagStates[pname].size() < glPushDepth - 1)
+				flagStates[pname].push_back(state);
+			flagStates[pname].push_back(state);
+		}
+	}
 
 	glDisable(pname);
 }
 
 void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 {
+	GLint srgb, drgb, sa, da;
+	glGetIntegerv(GL_BLEND_SRC_RGB, &srgb);
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, &sa);
+	glGetIntegerv(GL_BLEND_DST_RGB, &drgb);
+	glGetIntegerv(GL_BLEND_DST_ALPHA, &da);
+	LOG_L(L_DEBUG,
+		  "[%s]: (GL_BLEND_SRC_RGB, GL_BLEND_SRC_ALPHA, GL_BLEND_DST_RGB, GL_BLEND_DST_ALPHA) changed from (0x%04x, 0x%04x, 0x%04x, 0x%04x) to (0x%04x, 0x%04x, 0x%04x, 0x%04x)",
+		  location.c_str(), srgb, sa, drgb, da, sfactor, sfactor, dfactor, dfactor);
+
 	if (Threading::IsMainThread()) {
 		lastSet["GL_BLEND_SRC_RGB"] = location;
 		lastSet["GL_BLEND_SRC_ALPHA"] = location;
 		lastSet["GL_BLEND_DST_RGB"] = location;
 		lastSet["GL_BLEND_DST_ALPHA"] = location;
+		if (glPushDepth > 0) {
+			GLenum4 funcs;
+			funcs.x = srgb;
+			funcs.y = drgb;
+			funcs.z = sa;
+			funcs.w = da;
+			while (blendFuncs.size() <= glPushDepth - 1) {
+				blendFuncs.push_back(funcs);
+			}
+			blendFuncs.push_back(funcs);
+		}
 	}
+
 	glBlendFunc(sfactor, dfactor);
 }
 
 void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha, std::string location)
 {
+	GLint srgb, drgb, sa, da;
+	glGetIntegerv(GL_BLEND_SRC_RGB, &srgb);
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, &sa);
+	glGetIntegerv(GL_BLEND_DST_RGB, &drgb);
+	glGetIntegerv(GL_BLEND_DST_ALPHA, &da);
+	LOG_L(L_DEBUG,
+		  "[%s]: (GL_BLEND_SRC_RGB, GL_BLEND_SRC_ALPHA, GL_BLEND_DST_RGB, GL_BLEND_DST_ALPHA) changed from (0x%04x, 0x%04x, 0x%04x, 0x%04x) to (0x%04x, 0x%04x, 0x%04x, 0x%04x)",
+		  location.c_str(), srgb, sa, drgb, da, srcRGB, srcAlpha, dstRGB, dstAlpha);
+
 	if (Threading::IsMainThread()) {
 		lastSet["GL_BLEND_SRC_RGB"] = location;
 		lastSet["GL_BLEND_SRC_ALPHA"] = location;
 		lastSet["GL_BLEND_DST_RGB"] = location;
 		lastSet["GL_BLEND_DST_ALPHA"] = location;
+		if (glPushDepth > 0) {
+			GLenum4 funcs;
+			funcs.x = srgb;
+			funcs.y = drgb;
+			funcs.z = sa;
+			funcs.w = da;
+			while (blendFuncs.size() <= glPushDepth - 1) {
+				blendFuncs.push_back(funcs);
+			}
+			blendFuncs.push_back(funcs);
+		}
 	}
+
 	glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
 }
 
@@ -128,8 +202,23 @@ void _wrap_glColor4fv(const GLfloat *v, std::string location)
 
 void _wrap_glDepthMask(GLboolean flag, std::string location)
 {
-	if (Threading::IsMainThread())
+	GLboolean state;
+	glGetBooleanv(GL_DEPTH_WRITEMASK, &state);
+	LOG_L(L_DEBUG, "[%s]: GL_DEPTH_WRITEMASK changed from %u to %u", location.c_str(), state, flag);
+
+	if (Threading::IsMainThread()) {
 		lastSet["GL_DEPTH_WRITEMASK"] = location;
+		if (glPushDepth > 0) {
+			while (flagStates[GL_DEPTH_WRITEMASK].size() < glPushDepth - 1)
+				flagStates[GL_DEPTH_WRITEMASK].push_back(state);
+			flagStates[GL_DEPTH_WRITEMASK].push_back(state);
+		}
+		else {
+			std::vector<GLboolean> states;
+			states.push_back(state);
+			flagStates[GL_DEPTH_WRITEMASK] = states;
+		}
+	}
 
 	glDepthMask(flag);
 }
@@ -137,18 +226,130 @@ void _wrap_glDepthMask(GLboolean flag, std::string location)
 
 void _wrap_glDepthFunc(GLenum func, std::string location)
 {
-	if (Threading::IsMainThread())
+	GLint depthFunc;
+	glGetIntegerv(GL_DEPTH_FUNC, &depthFunc);
+	LOG_L(L_DEBUG, "[%s]: GL_DEPTH_FUNC changed from 0x%04x to 0x%04x", location.c_str(), depthFunc, func);
+
+	if (Threading::IsMainThread()) {
 		lastSet["GL_DEPTH_FUNC"] = location;
+		if (glPushDepth > 0) {
+			while (depthFuncs.size() <= glPushDepth - 1) {
+				depthFuncs.push_back((GLenum)(depthFunc));
+			}
+			depthFuncs.push_back((GLenum)(depthFunc));
+		}
+	}
 
 	glDepthFunc(func);
 }
 
 void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha, std::string location)
 {
-	if (Threading::IsMainThread())
+	GLboolean cmask[4];
+	glGetBooleanv(GL_COLOR_WRITEMASK, cmask);
+	LOG_L(L_DEBUG,
+		  "[%s]: GL_COLOR_WRITEMASK changed from (%u, %u, %u, %u) to (%u, %u, %u, %u)",
+		  location.c_str(), cmask[0], cmask[1], cmask[2], cmask[3], red, green, blue, alpha);
+
+	if (Threading::IsMainThread()) {
 		lastSet["GL_COLOR_WRITEMASK"] = location;
+		if (glPushDepth > 0) {
+			GLboolean4 mask;
+			mask.x = cmask[0];
+			mask.y = cmask[1];
+			mask.z = cmask[2];
+			mask.w = cmask[3];
+			while (colorMasks.size() <= glPushDepth - 1) {
+				colorMasks.push_back(mask);
+			}
+			colorMasks.push_back(mask);
+		}
+	}
 
 	glColorMask(red, green, blue, alpha);
+}
+
+void _wrap_glPushAttrib(GLenum cap, std::string location)
+{
+	LOG_L(L_ERROR, "[%s]: glPushAttrib is a deprecated function!", location.c_str());
+	if (Threading::IsMainThread()) {
+		// Extend all the already pushed variables
+		if(glPushDepth > 0) {
+			for ( auto it = flagStates.begin(); it != flagStates.end(); ++it )
+				it->second.push_back(it->second.back());
+			if (blendFuncs.size() > 0)
+				blendFuncs.push_back(blendFuncs.back());
+			if (depthFuncs.size() > 0)
+				depthFuncs.push_back(depthFuncs.back());
+			if (colorMasks.size() > 0)
+				colorMasks.push_back(colorMasks.back());
+		}
+		glPushDepth += 1;
+		LOG_L(L_DEBUG, "[%s]: glPushAttrib depth = %u", location.c_str(), glPushDepth);
+	}
+	else {
+		LOG_L(L_ERROR, "[%s]: Non-thread-safe glPushAttrib call!", location.c_str());
+	}
+
+	// glPushAttrib(cap);
+}
+
+void _wrap_glPopAttrib(std::string location)
+{
+	LOG_L(L_ERROR, "[%s]: glPopAttrib is a deprecated function!", location.c_str());
+	if (Threading::IsMainThread()) {
+		if (glPushDepth == 0) {
+			LOG_L(L_ERROR, "[%s]: glPushAttrib depth = %u while calling glPopAttrib!", location.c_str(), glPushDepth);
+		}
+		else {
+			// Restore the pushed values
+			for ( auto it = flagStates.begin(); it != flagStates.end(); ++it ) {
+				GLboolean state = it->second.back();
+				it->second.pop_back();
+				if (it->first == GL_DEPTH_WRITEMASK) {
+					glDepthMask(state);
+				}
+				else {
+					if (state) {
+						glEnable(it->first);
+					}
+					else {
+						glDisable(it->first);
+					}
+				}
+			}
+			if (blendFuncs.size() > 0) {
+				GLenum4 funcs = blendFuncs.back();
+				blendFuncs.pop_back();
+				glBlendFuncSeparate(funcs.x, funcs.y, funcs.z, funcs.w);
+			}
+			if (depthFuncs.size() > 0) {
+				GLenum func = depthFuncs.back();
+				depthFuncs.pop_back();
+				glDepthFunc(func);
+			}
+			if (colorMasks.size() > 0) {
+				GLboolean4 mask = colorMasks.back();
+				colorMasks.pop_back();
+				glColorMask(mask.x, mask.y, mask.z, mask.w);
+			}
+
+			glPushDepth -= 1;
+			LOG_L(L_DEBUG, "[%s]: glPushAttrib depth = %u", location.c_str(), glPushDepth);
+
+			if (glPushDepth == 0) {
+				spring::clear_unordered_map(flagStates);
+				blendFuncs.clear();
+				depthFuncs.clear();
+				colorMasks.clear();
+			}
+		}
+	}
+	else {
+		LOG_L(L_ERROR, "[%s]: Non-thread-safe glPopAttrib call!", location.c_str());
+	}
+
+	// glPopAttrib();
 }
 
 void CGLStateChecker::VerifyState(std::string area) {

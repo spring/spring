@@ -56,6 +56,8 @@
 	#define glDepthMask(flag) _wrap_glDepthMask(flag, FILEPOS)
 	#define glDepthFunc(func) _wrap_glDepthFunc(func, FILEPOS)
 	#define glColorMask(r, g, b, a) _wrap_glColorMask(r, g, b, a, FILEPOS)
+	#define glPushAttrib(i) _wrap_glPushAttrib(i, FILEPOS)
+	#define glPopAttrib() _wrap_glPopAttrib(FILEPOS)
 #endif
 
 
@@ -78,6 +80,18 @@ extern void _wrap_glDepthMask(GLboolean flag, std::string location);
 extern void _wrap_glDepthFunc(GLenum func, std::string location);
 
 extern void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha, std::string location);
+
+extern void _wrap_glPushAttrib(GLenum cap, std::string location);
+
+extern void _wrap_glPopAttrib(std::string location);
+
+typedef struct {
+    GLenum x,y,z,w;
+} GLenum4;
+
+typedef struct {
+    GLboolean x,y,z,w;
+} GLboolean4;
 
 class CGLStateChecker
 {
