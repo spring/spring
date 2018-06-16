@@ -628,10 +628,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 		SetStunned(true);
 
 		paralyzeDamage = 100.0f * maxHealth;
-		health = std::max(health, 0.0f);
 	}
-	#else
-	health = std::max(health, 0.0f);
 	#endif
 }
 
