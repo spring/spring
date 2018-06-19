@@ -44,7 +44,7 @@ endmacro (FindJavaLib path_var libName additionalSearchDirs)
 # Returns the name of the first sub-dir (in alphabetical descending order)
 # under dir.
 macro    (GetFirstSubDirName name_var dir)
-	file(GLOB dirContent RELATIVE "${dir}" FOLLOW_SYMLINKS "${dir}/*")
+	file(GLOB dirContent RELATIVE "${dir}" "${dir}/*")
 	foreach    (dirPart ${dirContent})
 		if    (IS_DIRECTORY "${dir}/${dirPart}")
 			set(${name_var} ${dirPart})

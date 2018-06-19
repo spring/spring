@@ -164,7 +164,7 @@ EndFunction (MakeGlobal)
 
 # Find all CMakeLists.txt files in sub-directories
 Macro    (GetListOfSubModules list_var)
-	File(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" FOLLOW_SYMLINKS "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
+	File(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
 	# Strip away the "/CMakeLists.txt" parts, so we end up with just a list of dirs,
 	# for example: AAI;RAI;KAIK
 	# GLOB can prefix with "//" or "/" (perhaps changed in cmake 3.1.0), this double replace will support both "//" and "/"
