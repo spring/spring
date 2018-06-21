@@ -2748,11 +2748,17 @@ unsigned CGameServer::BindConnection(
 	if (clientVersion != refClientVersion.second) {
 		errMsg = "client version '" + clientVersion + "' mismatch, reference is '" + refClientVersion.second + "' set by '" + refClientVersion.first + "'";
 	} else {
+		struct ConnectionFlags {
+			const char* error;
+			bool allowConnect;
+			bool forceNewLink;
+		};
+
 		// find the player in the current list
 		const auto pred = [&clientName](const GameParticipant& gp) { return (clientName == gp.name); };
 		const auto iter = std::find_if(players.begin(), players.end(), pred);
 
-		const auto GetConnectionFlags = [&](const GameParticipant& gp) -> std::tuple<const char*, bool, bool> {
+		const auto GetConnectionFlags = [&](const GameParticipant& gp) -> ConnectionFlags {
 			if (gp.isFromDemo)
 				return {"User name duplicated in the demo", false, false};
 
@@ -2780,15 +2786,15 @@ unsigned CGameServer::BindConnection(
 
 		if (iter != players.end()) {
 			const GameParticipant& gameParticipant = *iter;
-			const auto& gpConnectionFlags = GetConnectionFlags(gameParticipant);
+			const ConnectionFlags& gpConnectionFlags = GetConnectionFlags(gameParticipant);
 
-			if (std::get<1>(gpConnectionFlags)) {
+			if (gpConnectionFlags.allowConnect) {
 				// allowed, possibly with new link
 				newPlayerNumber = gameParticipant.id;
-				killExistingLink = std::get<2>(gpConnectionFlags);
+				killExistingLink = gpConnectionFlags.forceNewLink;
 			} else {
 				// disallowed
-				errMsg = std::get<0>(gpConnectionFlags);
+				errMsg = gpConnectionFlags.error;
 			}
 		}
 
