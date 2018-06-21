@@ -943,7 +943,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 		s += CTooltipConsole::MakeUnitStatsString(stats);
 
-		std::string ctrlName = "";
+		const char* ctrlName = "";
 
 		if (ctrlTeam == MULTI_TEAM) {
 			ctrlName = "(Multiple teams)";
@@ -951,7 +951,8 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			ctrlName = teamHandler.Team(ctrlTeam)->GetControllerName();
 		}
 
-		s += "\n\xff\xff\xff\xff" + ctrlName;
+		s += "\n\xff\xff\xff\xff";
+		s += ctrlName;
 		return s;
 	}
 }

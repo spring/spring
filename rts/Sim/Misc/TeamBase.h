@@ -19,11 +19,17 @@ public:
 
 	TeamBase();
 	virtual ~TeamBase() {}
+	virtual void UpdateControllerName() {}
 
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const { return customValues; }
 
-	const std::string& GetSide() const { return side; }
+	const char* GetSideName() const { return sideName; }
+	const char* GetControllerName(bool update = true) const {
+		if (update)
+			const_cast<TeamBase*>(this)->UpdateControllerName();
+		return controllerName;
+	}
 
 	void SetStartPos(const float3& pos) { startPos = pos; }
 	const float3& GetStartPos() const { return startPos; }
@@ -109,7 +115,8 @@ protected:
 	/**
 	 * Side/Factions name, eg. "ARM" or "CORE".
 	 */
-	std::string side;
+	char sideName[32];
+	char controllerName[256];
 
 	float3 startPos;
 

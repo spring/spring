@@ -40,6 +40,8 @@ public:
 	void AddPlayer(int playerNum);
 	void KillAIs();
 
+	void UpdateControllerName() override;
+
 	void SetDefaultStartPos();
 	void ClampStartPosInStartBox(float3* pos) const;
 
@@ -48,15 +50,13 @@ public:
 	unsigned int GetNumUnits() const { return numUnits; }
 	bool AtUnitLimit() const { return (numUnits >= maxUnits); }
 
-	TeamStatistics& GetCurrentStats() { return statHistory.back(); }
 	const TeamStatistics& GetCurrentStats() const { return statHistory.back(); }
+	      TeamStatistics& GetCurrentStats()       { return statHistory.back(); }
 
 	CTeam& operator = (const TeamBase& base) {
 		TeamBase::operator = (base);
 		return *this;
 	}
-
-	std::string GetControllerName() const;
 
 	enum AddType {
 		AddBuilt,

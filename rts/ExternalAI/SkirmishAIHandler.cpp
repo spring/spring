@@ -113,14 +113,15 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, 
 {
 	std::vector<uint8_t> skirmishAIs;
 
-	// just loop over everything
-	for (const SkirmishAIData& aiData: aiInstanceData) {
+	for (const auto& p: skirmishAIDataMap) {
+		const SkirmishAIData& aiData = p.second;
+
 		if (aiData.team != teamId)
 			continue;
 		if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
 			continue;
 
-		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
+		skirmishAIs.push_back(p.first);
 	}
 
 	return skirmishAIs;
@@ -130,12 +131,13 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPl
 {
 	std::vector<uint8_t> skirmishAIs;
 
-	// just loop over everything
-	for (const SkirmishAIData& aiData: aiInstanceData) {
+	for (const auto& p: skirmishAIDataMap) {
+		const SkirmishAIData& aiData = p.second;
+
 		if (aiData.hostPlayer != hostPlayerId)
 			continue;
 
-		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
+		skirmishAIs.push_back(p.first);
 	}
 
 	return skirmishAIs;
