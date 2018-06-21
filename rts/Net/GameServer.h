@@ -76,7 +76,7 @@ public:
 
 	static void Reload(const std::shared_ptr<const CGameSetup> newGameSetup);
 
-	void AddLocalClient(const std::string& myName, const std::string& myVersion);
+	void AddLocalClient(const std::string& myName, const std::string& myVersion, const std::string& myPlatform);
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
 
 	void Initialize();
@@ -136,9 +136,18 @@ private:
 	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw);
 	void ResignPlayer(const int playerNum);
 
-	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
+	bool CheckPlayerPassword(const int playerNum, const std::string& pw) const;
 
-	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
+	unsigned BindConnection(
+		std::shared_ptr<netcode::CConnection> clientLink,
+		std::string clientName,
+		const std::string& clientPassword,
+		const std::string& clientVersion,
+		const std::string& clientPlatform,
+		bool isLocal,
+		bool reconnect = false,
+		int netloss = 0
+	);
 
 	void CheckForGameStart(bool forced = false);
 	void StartGame(bool forced);
@@ -220,6 +229,8 @@ private:
 
 	// std::map<asio::ip::udp::endpoint, int> rejectedConnections;
 	std::map<std::string, int> rejectedConnections;
+
+	std::pair<std::string, std::string> refClientVersion;
 
 	float medianCpu;
 	int medianPing;

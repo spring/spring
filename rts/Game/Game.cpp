@@ -59,6 +59,8 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Net/GameServer.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -107,13 +109,12 @@
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/myMath.h"
-#include "Net/GameServer.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/SafeUtil.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/Misc.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
@@ -1028,7 +1029,7 @@ bool CGame::Update()
 
 	if (!gameOver) {
 		if (clientNet->NeedsReconnect())
-			clientNet->AttemptReconnect(SpringVersion::GetFull());
+			clientNet->AttemptReconnect(SpringVersion::GetFull(), Platform::GetPlatformStr());
 
 		if (clientNet->CheckTimeout(0, gs->PreSimFrame()))
 			GameEnd({}, true);
