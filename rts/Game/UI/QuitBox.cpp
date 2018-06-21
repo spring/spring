@@ -165,10 +165,7 @@ void CQuitBox::Draw()
 	font->glPrint(box.x1 +     quitBox.x1 + 0.025f, box.y1 + (    quitBox.y1 +     quitBox.y2) / 2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Quit To System");
 
 	for (int teamNum = startTeam, teamPos = 0; teamNum < MAX_QUIT_TEAMS && teamPos < numTeamsDisp; ++teamNum, ++teamPos) {
-		int actualTeamNum = teamNum;
-
-		if (teamNum >= gu->myTeam)
-			actualTeamNum++;
+		const int actualTeamNum = teamNum + (teamNum >= gu->myTeam);
 
 		const CTeam* team = teamHandler.Team(actualTeamNum);
 
@@ -181,7 +178,7 @@ void CQuitBox::Draw()
 
 
 		if (teamHandler.Ally(gu->myAllyTeam, teamHandler.AllyTeam(actualTeamNum))) {
-			ally = " <Ally>)";
+			ally = " <Ally>";
 		} else {
 			ally = " <Enemy>";
 		}
