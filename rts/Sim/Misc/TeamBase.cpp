@@ -18,7 +18,8 @@ CR_REG_METADATA(TeamBase, (
 	CR_MEMBER(teamStartNum),
 	CR_MEMBER(teamAllyteam),
 	CR_MEMBER(incomeMultiplier),
-	CR_MEMBER(side),
+	CR_MEMBER(sideName),
+	CR_MEMBER(controllerName),
 	CR_MEMBER(startPos),
 	CR_MEMBER(customValues)
 ))
@@ -41,6 +42,9 @@ uint8_t TeamBase::teamDefaultColor[TeamBase::NUM_DEFAULT_TEAM_COLORS][4] =
 TeamBase::TeamBase() {
 	std::memset(    color, 255, sizeof(color));
 	std::memset(origColor, 255, sizeof(color));
+
+	std::memset(      sideName, 0, sizeof(      sideName));
+	std::memset(controllerName, 0, sizeof(controllerName));
 
 	// NB: sync-safe so long as TeamHandler destroys all teams on reload
 	customValues.reserve(8);
@@ -66,7 +70,7 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 			leader = std::atoi(value.c_str());
 		} break;
 		case hashString("side"): {
-			side = StringToLower(value);
+			StringToLower(value.c_str(), sideName, std::min(value.size(), sizeof(sideName) - 1));
 		} break;
 		case hashString("allyteam"): {
 			teamAllyteam = std::atoi(value.c_str());

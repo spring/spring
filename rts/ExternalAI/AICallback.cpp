@@ -272,7 +272,7 @@ int CAICallback::GetPlayerTeam(int playerId)
 const char* CAICallback::GetTeamSide(int teamId)
 {
 	if (teamHandler.IsValidTeam(teamId))
-		return (teamHandler.Team(teamId)->GetSide().c_str());
+		return (teamHandler.Team(teamId)->GetSideName());
 
 	return nullptr;
 }

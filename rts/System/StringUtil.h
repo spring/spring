@@ -29,9 +29,13 @@
 	struct _UTIL_CONCAT(doOnce, __LINE__) { _UTIL_CONCAT(doOnce, __LINE__)() { code; } }; static _UTIL_CONCAT(doOnce, __LINE__) _UTIL_CONCAT(doOnceVar, __LINE__);
 
 
+static inline void StringToLower(const char* in, char* out, size_t len) {
+	std::transform(in, in + len, out, (int (*)(int)) tolower);
+}
+
 static inline void StringToLowerInPlace(std::string& s)
 {
-	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
+	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int)) tolower);
 }
 
 static inline std::string StringToLower(std::string s)

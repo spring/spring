@@ -1186,7 +1186,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushnumber(L,  team->GetLeader());
 	lua_pushboolean(L, team->isDead);
 	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(teamID));
-	lua_pushsstring(L, team->GetSide());
+	lua_pushstring(L, team->GetSideName());
 	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
 
 	const TeamBase::customOpts& teamOpts(team->GetAllValues());
