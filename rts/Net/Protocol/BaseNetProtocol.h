@@ -106,7 +106,7 @@ public:
 
 	PacketType SendSetAllied(uint8_t playerNum, uint8_t whichAllyTeam, uint8_t state);
 
-	PacketType SendCreateNewPlayer( uint8_t playerNum, bool spectator, uint8_t teamNum, std::string playerName);
+	PacketType SendCreateNewPlayer( uint8_t playerNum, bool spectator, uint8_t teamNum, const std::string& playerName);
 
 	PacketType SendClientData(uint8_t playerNum, const std::vector<uint8_t>& data);
 

@@ -35,7 +35,7 @@ PacketType CBaseNetProtocol::SendQuit(const std::string& reason)
 {
 	// NOTE:
 	//   transmit size as uint16, but calculate it using uint32's so overflow is safe
-	//   the extra null-terminator +1 is no longer necessary, PackPacket handles this
+	//   the extra null-terminator +1 is necessary, PackPacket adds a byte for strings
 	// const uint32_t headerSize = sizeof(static_cast<uint8_t>(NETMSG_QUIT)) + sizeof(static_cast<uint16_t>(packetSize));
 	const uint32_t payloadSize = reason.size() + 1;
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
@@ -217,12 +217,27 @@ PacketType CBaseNetProtocol::SendAttemptConnect(
 	int32_t netloss,
 	bool reconnect
 ) {
-	const uint32_t payloadSize = sizeof(NETWORK_VERSION) + sizeof(netloss) + sizeof(static_cast<uint8_t>(reconnect)) + name.size() + passwd.size() + version.size() + platform.size();
+	const uint32_t payloadSize =
+		sizeof(NETWORK_VERSION) +
+		sizeof(static_cast<uint8_t>(netloss)) +
+		sizeof(static_cast<uint8_t>(reconnect)) +
+		(name.size() + 1) +
+		(passwd.size() + 1) +
+		(version.size() + 1) +
+		(platform.size() + 1);
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
 	PackPacket* packet = new PackPacket(packetSize, NETMSG_ATTEMPTCONNECT);
-	*packet << static_cast<uint16_t>(packetSize) << NETWORK_VERSION << name << passwd << version << platform << uint8_t(reconnect) << uint8_t(netloss);
+	*packet << static_cast<uint16_t>(packetSize);
+	*packet << NETWORK_VERSION;
+	*packet << name;
+	*packet << passwd;
+	*packet << version;
+	*packet << platform;
+	*packet << uint8_t(reconnect);
+	*packet << uint8_t(netloss);
+
 	return PacketType(packet);
 }
 
@@ -471,7 +486,7 @@ PacketType CBaseNetProtocol::SendSetAllied(uint8_t playerNum, uint8_t whichAllyT
 }
 
 
-PacketType CBaseNetProtocol::SendCreateNewPlayer(uint8_t playerNum, bool spectator, uint8_t teamNum, std::string playerName )
+PacketType CBaseNetProtocol::SendCreateNewPlayer(uint8_t playerNum, bool spectator, uint8_t teamNum, const std::string& playerName )
 {
 	const uint32_t payloadSize = sizeof(playerNum) + sizeof(spectator) + sizeof(teamNum) + (playerName.size() + 1);
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
