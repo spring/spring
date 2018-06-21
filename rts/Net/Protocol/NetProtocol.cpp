@@ -41,14 +41,14 @@ CNetProtocol::~CNetProtocol()
 }
 
 
-void CNetProtocol::InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion)
+void CNetProtocol::InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion, const std::string& clientPlatform)
 {
 	userName = clientSetup->myPlayerName;
 	userPasswd = clientSetup->myPasswd;
 
 	serverConn.reset(new netcode::UDPConnection(configHandler->GetInt("SourcePort"), clientSetup->hostIP, clientSetup->hostPort));
 	serverConn->Unmute();
-	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, clientVersion, globalConfig.networkLossFactor));
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, clientVersion, clientPlatform, globalConfig.networkLossFactor));
 	serverConn->Flush(true);
 
 	LOG("[NetProto::%s] connecting to IP %s on port %i using name %s", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort, userName.c_str());
@@ -63,12 +63,12 @@ void CNetProtocol::InitLocalClient()
 }
 
 
-void CNetProtocol::AttemptReconnect(const std::string& myVersion)
+void CNetProtocol::AttemptReconnect(const std::string& myVersion, const std::string& myPlatform)
 {
 	netcode::UDPConnection conn(*serverConn);
 
 	conn.Unmute();
-	conn.SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig.networkLossFactor, true));
+	conn.SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, myPlatform, globalConfig.networkLossFactor, true));
 	conn.Flush(true);
 
 	LOG("[NetProto::%s] reconnecting to server... %ds", __func__, dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());

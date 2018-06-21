@@ -209,14 +209,20 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uint8_t playerNum, uint8_t 
 }
 
 
-PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int32_t netloss, bool reconnect)
-{
-	const uint32_t payloadSize = sizeof(NETWORK_VERSION) + sizeof(netloss) + sizeof(static_cast<uint8_t>(reconnect)) + name.size() + passwd.size() + version.size();
+PacketType CBaseNetProtocol::SendAttemptConnect(
+	const std::string& name,
+	const std::string& passwd,
+	const std::string& version,
+	const std::string& platform,
+	int32_t netloss,
+	bool reconnect
+) {
+	const uint32_t payloadSize = sizeof(NETWORK_VERSION) + sizeof(netloss) + sizeof(static_cast<uint8_t>(reconnect)) + name.size() + passwd.size() + version.size() + platform.size();
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
-	PackPacket* packet = new PackPacket(packetSize , NETMSG_ATTEMPTCONNECT);
-	*packet << static_cast<uint16_t>(packetSize) << NETWORK_VERSION << name << passwd << version << uint8_t(reconnect) << uint8_t(netloss);
+	PackPacket* packet = new PackPacket(packetSize, NETMSG_ATTEMPTCONNECT);
+	*packet << static_cast<uint16_t>(packetSize) << NETWORK_VERSION << name << passwd << version << platform << uint8_t(reconnect) << uint8_t(netloss);
 	return PacketType(packet);
 }
 

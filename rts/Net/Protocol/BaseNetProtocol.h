@@ -65,7 +65,7 @@ public:
 	PacketType SendLuaDrawTime(uint8_t playerNum, int32_t mSec);
 	PacketType SendDirectControl(uint8_t playerNum);
 	PacketType SendDirectControlUpdate(uint8_t playerNum, uint8_t status, int16_t heading, int16_t pitch);
-	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int32_t netloss, bool reconnect = false);
+	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, const std::string& platform, int32_t netloss, bool reconnect = false);
 	PacketType SendRejectConnect(const std::string& reason);
 	PacketType SendShare(uint8_t playerNum, uint8_t shareTeam, uint8_t bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uint8_t playerNum, uint8_t myTeam, float metalShareFraction, float energyShareFraction);

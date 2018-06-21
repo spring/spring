@@ -34,7 +34,7 @@ public:
 	/**
 	 * @brief Initialise in client mode (remote server)
 	*/
-	void InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion);
+	void InitClient(std::shared_ptr<ClientSetup> clientSetup, const std::string& clientVersion, const std::string& clientPlatform);
 
 	/**
 	 * @brief Initialise in client mode (local server)
@@ -44,7 +44,7 @@ public:
 	/// Are we still connected (or did the connection time-out)?
 	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
-	void AttemptReconnect(const std::string& myVersion);
+	void AttemptReconnect(const std::string& myVersion, const std::string& myPlatform);
 
 	bool NeedsReconnect();
 
