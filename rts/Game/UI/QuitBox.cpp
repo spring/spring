@@ -185,7 +185,7 @@ void CQuitBox::Draw()
 		const char* dead = "";
 
 		if (teamHandler.Ally(gu->myAllyTeam, teamHandler.AllyTeam(actualTeamNum))) {
-			ally = " <Ally>)";
+			ally = " <Ally>";
 		} else {
 			ally = " <Enemy>";
 		}
