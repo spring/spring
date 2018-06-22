@@ -691,7 +691,7 @@ bool CWeapon::AutoTarget()
 void CWeapon::SlowUpdate()
 {
 	errorVectorAdd = (gsRNG.NextVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
-	predictSpeedMod = 1.0f + (gsRNG.NextFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
+	predictSpeedMod = 1.0f + (gsRNG.NextFloat() - 0.5f) * 2 * ExperienceErrorScale();
 
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";
