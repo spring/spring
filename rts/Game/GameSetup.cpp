@@ -546,10 +546,21 @@ bool CGameSetup::Init(const std::string& buf)
 		mapHashRaw.fill(0);
 		modHashRaw.fill(0);
 
-		if (mapHashHexStr.size() == (sha512::SHA_LEN * 2))
+		// assume that single-character strings represent old-style dummy CRC's
+		mapHashHex[0] = (mapHashHexStr.size() == 1)? mapHashHexStr[0]: 0;
+		modHashHex[0] = (modHashHexStr.size() == 1)? modHashHexStr[0]: 0;
+
+		if (mapHashHexStr.size() == (sha512::SHA_LEN * 2)) {
 			std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
-		if (modHashHexStr.size() == (sha512::SHA_LEN * 2))
+		} else {
+			LOG_L(L_WARNING, "[GameSetup::%s] DS map-hash string \"%s\" should contain %u characters", __func__, mapHashHexStr.c_str(), sha512::SHA_LEN * 2);
+		}
+
+		if (modHashHexStr.size() == (sha512::SHA_LEN * 2)) {
 			std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+		} else {
+			LOG_L(L_WARNING, "[GameSetup::%s] DS mod-hash string \"%s\" should contain %u characters", __func__, modHashHexStr.c_str(), sha512::SHA_LEN * 2);
+		}
 
 		sha512::read_digest(mapHashHex, mapHashRaw);
 		sha512::read_digest(modHashHex, modHashRaw);
