@@ -595,11 +595,11 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 			this,                                    // owner
 			nullptr,                                 // hitUnit
 			nullptr,                                 // hitFeature
-			d->craterAreaOfEffect,
-			d->damageAreaOfEffect,
-			d->edgeEffectiveness,
-			d->explosionSpeed,
-			(d->GetDefault() > 500.0f)? 1.0f: 2.0f,  // gfxMod
+			da->craterAreaOfEffect,
+			da->damageAreaOfEffect,
+			da->edgeEffectiveness,
+			da->explosionSpeed,
+			(da->GetDefault() > 500.0f)? 1.0f: 2.0f, // gfxMod
 			false,                                   // impactOnly
 			false,                                   // ignoreOwner
 			true,                                    // damageGround
