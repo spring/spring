@@ -579,60 +579,40 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	blockHeightChanges = false;
 	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
 
-	if (!deathScriptFinished) {
-		const WeaponDef* wd;
-		const DynDamageArray* d;
-		if (selfDestruct) {
-			wd = unitDef->selfdExpWeaponDef;
-			d = selfdExpDamages;
-		} else {
-			wd = unitDef->deathExpWeaponDef;
-			d = deathExpDamages;
-		}
+	if (deathScriptFinished)
+		return;
 
-		if (wd != nullptr) {
-			assert(d != nullptr);
-			CExplosionParams params = {
-				pos,
-				ZeroVector,
-				*d,
-				wd,
-				this,                                    // owner
-				nullptr,                                 // hitUnit
-				nullptr,                                 // hitFeature
-				d->craterAreaOfEffect,
-				d->damageAreaOfEffect,
-				d->edgeEffectiveness,
-				d->explosionSpeed,
-				(d->GetDefault() > 500.0f)? 1.0f: 2.0f,  // gfxMod
-				false,                                   // impactOnly
-				false,                                   // ignoreOwner
-				true,                                    // damageGround
-				-1u                                      // projectileID
-			};
+	const WeaponDef* wd = selfDestruct? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
+	const DynDamageArray* da = selfDestruct? selfdExpDamages: deathExpDamages;
 
-			helper->Explosion(params);
-		}
+	if (wd != nullptr) {
+		assert(da != nullptr);
+		CExplosionParams params = {
+			pos,
+			ZeroVector,
+			*da,
+			wd,
+			this,                                    // owner
+			nullptr,                                 // hitUnit
+			nullptr,                                 // hitFeature
+			da->craterAreaOfEffect,
+			da->damageAreaOfEffect,
+			da->edgeEffectiveness,
+			da->explosionSpeed,
+			(da->GetDefault() > 500.0f)? 1.0f: 2.0f, // gfxMod
+			false,                                   // impactOnly
+			false,                                   // ignoreOwner
+			true,                                    // damageGround
+			-1u                                      // projectileID
+		};
 
-		recentDamage += (maxHealth * 2.0f * selfDestruct);
-
-		// start running the unit's kill-script
-		script->Killed();
+		helper->Explosion(params);
 	}
 
-	#if 0
-	// put the unit in a pseudo-zombie state until Killed finishes
-	// disabled, better let Lua decide how it wants to handle this
-	if (!deathScriptFinished) {
-		SetVelocity(ZeroVector);
-		SetStunned(true);
+	recentDamage += (maxHealth * 2.0f * selfDestruct);
 
-		paralyzeDamage = 100.0f * maxHealth;
-		health = std::max(health, 0.0f);
-	}
-	#else
-	health = std::max(health, 0.0f);
-	#endif
+	// start running the unit's kill-script
+	script->Killed();
 }
 
 
