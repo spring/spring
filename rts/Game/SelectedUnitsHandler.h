@@ -22,7 +22,7 @@ public:
 
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
-	void AiOrder(int unitid, const Command& c, int playerID);
+	void AINetOrder(int unitID, int playerID, const Command& c);
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	bool CommandsChanged() const { return possibleCommandsChanged; }
 	void NetOrder(Command& c, int playerId);
@@ -36,7 +36,7 @@ public:
 		int commandPage;
 	};
 	AvailableCommandsStruct GetAvailableCommands();
-	void GiveCommand(Command c, bool fromUser = true);
+	void GiveCommand(const Command& c, bool fromUser = true);
 	void AddUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	void ClearSelected();

@@ -33,7 +33,7 @@ static const auto idPairComp = [](const std::pair<float, int>& a, const std::pai
 CSelectedUnitsHandlerAI selectedUnitsAI;
 
 
-inline void CSelectedUnitsHandlerAI::AddUnitSetMaxSpeedCommand(CUnit* unit, unsigned char options)
+inline void CSelectedUnitsHandlerAI::AddUnitSetMaxSpeedCommandNet(CUnit* unit, unsigned char options)
 {
 	// this sets the WANTED maximum speed of <unit>
 	// (via the CommandAI --> MoveType chain) to be
@@ -45,10 +45,10 @@ inline void CSelectedUnitsHandlerAI::AddUnitSetMaxSpeedCommand(CUnit* unit, unsi
 	if (!cai->CanSetMaxSpeed())
 		return;
 
-	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, unit->moveType->GetMaxSpeed()), false);
+	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, unit->moveType->GetMaxSpeed()), true);
 }
 
-inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommand(CUnit* unit, unsigned char options)
+inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommandNet(CUnit* unit, unsigned char options)
 {
 	// sets the wanted speed of this unit to that of the
 	// group's current-slowest member (groupMinMaxSpeed
@@ -58,11 +58,11 @@ inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommand(CUnit* unit, uns
 	if (!cai->CanSetMaxSpeed())
 		return;
 
-	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, groupMinMaxSpeed), false);
+	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, groupMinMaxSpeed), true);
 }
 
 
-static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
+static inline bool MayRequireSetMaxSpeedCommand(const Command& c)
 {
 	switch (c.GetID()) {
 		// this is not a complete list
@@ -79,39 +79,44 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 	return true;
 }
 
-void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
+void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 {
 	const std::vector<int>& netSelected = selectedUnitsHandler.netSelected[player];
 
 	const int nbrOfSelectedUnits = netSelected.size();
-	const int cmd_id = c.GetID();
+	const int cmdID = c.GetID();
 
-	if (nbrOfSelectedUnits < 1) {
-		// no units to command
-	}
-	else if ((cmd_id == CMD_ATTACK) && (
+	// no units to command
+	if (nbrOfSelectedUnits < 1)
+		return;
+
+	if ((cmdID == CMD_ATTACK) && (
 			(c.GetParamsCount() == 6) ||
 			((c.GetParamsCount() == 4) && (c.GetParam(3) > 0.001f))
 		))
 	{
-		SelectAttack(c, player);
+		SelectAttackNet(c, player);
+		return;
 	}
-	else if (nbrOfSelectedUnits == 1) {
+
+	if (nbrOfSelectedUnits == 1) {
 		// a single unit selected
 		CUnit* unit = unitHandler.GetUnit(*netSelected.begin());
 
-		if (unit != nullptr) {
-			unit->commandAI->GiveCommand(c, true);
+		if (unit == nullptr)
+			return;
 
-			if (MayRequireSetMaxSpeedCommand(c))
-				AddUnitSetMaxSpeedCommand(unit, c.options);
+		unit->commandAI->GiveCommand(c, true);
 
-			if (cmd_id == CMD_WAIT) {
-				if (player == gu->myPlayerNum) {
-					waitCommandsAI.AcknowledgeCommand(c);
-				}
-			}
+		if (MayRequireSetMaxSpeedCommand(c))
+			AddUnitSetMaxSpeedCommandNet(unit, c.options);
+
+		if (cmdID == CMD_WAIT) {
+			if (player == gu->myPlayerNum)
+				waitCommandsAI.AcknowledgeCommand(c);
 		}
+
+		return;
 	}
 
 	// User Move Front Command:
@@ -129,8 +134,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 	//   CTRL:      Group Locked/Speed command  (maintain relative positions)
 	//   ALT+CTRL:  Group Locked       command  (maintain relative positions)
 	//
-
-	else if (((cmd_id == CMD_MOVE) || (cmd_id == CMD_FIGHT)) && (c.GetParamsCount() == 6)) {
+	if (((cmdID == CMD_MOVE) || (cmdID == CMD_FIGHT)) && (c.GetParamsCount() == 6)) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		MakeFormationFrontOrder(&c, player);
@@ -144,13 +148,16 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 				continue;
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommand(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.options);
 			} else {
-				AddUnitSetMaxSpeedCommand(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.options);
 			}
 		}
+
+		return;
 	}
-	else if ((cmd_id == CMD_MOVE) && (c.options & ALT_KEY)) {
+
+	if ((cmdID == CMD_MOVE) && (c.options & ALT_KEY)) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
@@ -175,14 +182,16 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 				continue;
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommand(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.options);
 			} else {
-				AddUnitSetMaxSpeedCommand(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.options);
 			}
 		}
+
+		return;
 	}
-	else if ((c.options & CONTROL_KEY) &&
-	         ((cmd_id == CMD_MOVE) || (cmd_id == CMD_PATROL) || (cmd_id == CMD_FIGHT))) {
+
+	if ((c.options & CONTROL_KEY) && ((cmdID == CMD_MOVE) || (cmdID == CMD_PATROL) || (cmdID == CMD_FIGHT))) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
@@ -203,16 +212,18 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 			uc.params[CMDPARAM_MOVE_X] += difPos.x;
 			uc.params[CMDPARAM_MOVE_Y] += difPos.y;
 			uc.params[CMDPARAM_MOVE_Z] += difPos.z;
-			unit->commandAI->GiveCommand(uc, false);
+			unit->commandAI->GiveCommand(uc, true);
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommand(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.options);
 			} else {
-				AddUnitSetMaxSpeedCommand(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.options);
 			}
 		}
+
+		return;
 	}
-	else {
+	{
 		for (const int unitID: netSelected) {
 			CUnit* unit = unitHandler.GetUnit(unitID);
 
@@ -221,15 +232,15 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command &c, int player)
 
 			// appending a CMD_SET_WANTED_MAX_SPEED command to
 			// every command is a little bit wasteful, n'est pas?
-			unit->commandAI->GiveCommand(c, false);
+			unit->commandAI->GiveCommand(c, true);
 
 			if (!MayRequireSetMaxSpeedCommand(c))
 				continue;
 
-			AddUnitSetMaxSpeedCommand(unit, c.options);
+			AddUnitSetMaxSpeedCommandNet(unit, c.options);
 		}
 
-		if (cmd_id != CMD_WAIT)
+		if (cmdID != CMD_WAIT)
 			return;
 		if (player != gu->myPlayerNum)
 			return;
@@ -488,7 +499,7 @@ float3 CSelectedUnitsHandlerAI::MoveToPos(
 }
 
 
-void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
+void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 {
 	// reuse for sorting targets, no overlap with MakeFormationFrontOrder
 	sortedUnitPairs.clear();
@@ -534,7 +545,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 				if (!commandAI->WillCancelQueued(attackCmd))
 					continue;
 
-				commandAI->GiveCommand(attackCmd, false);
+				commandAI->GiveCommand(attackCmd, true);
 			}
 		}
 
@@ -591,9 +602,9 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 			if (queueing && commandAI->WillCancelQueued(attackCmd))
 				continue;
 
-			commandAI->GiveCommand(attackCmd, false);
+			commandAI->GiveCommand(attackCmd, true);
 
-			AddUnitSetMaxSpeedCommand(unit, attackCmd.options);
+			AddUnitSetMaxSpeedCommandNet(unit, attackCmd.options);
 			// following commands are always queued
 			attackCmd.options |= SHIFT_KEY;
 		}
