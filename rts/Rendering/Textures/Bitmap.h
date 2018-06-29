@@ -17,7 +17,7 @@ struct SDL_Surface;
 
 class CBitmap {
 public:
-	CBitmap();
+	CBitmap() = default;
 	CBitmap(const uint8_t* data, int xsize, int ysize, int channels = 4);
 	CBitmap(const CBitmap& bmp): CBitmap() { *this = bmp; }
 	CBitmap(CBitmap&& bmp): CBitmap() { *this = std::move(bmp); }
@@ -68,17 +68,19 @@ public:
 	size_t GetMemSize() const { return (xsize * ysize * channels); }
 
 
-	int32_t xsize;
-	int32_t ysize;
-	int32_t channels;
+	int32_t xsize = 0;
+	int32_t ysize = 0;
+	int32_t channels = 4;
 
 	#ifndef BITMAP_NO_OPENGL
-	int32_t textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
+	// GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
+	// not set to anything until Load is called
+	int32_t textype = 0;
 
 	nv_dds::CDDSImage ddsimage;
-	#endif // !BITMAP_NO_OPENGL
+	#endif
 
-	bool compressed;
+	bool compressed = false;
 
 private:
 	// managed by pool

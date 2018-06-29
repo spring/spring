@@ -76,6 +76,7 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	difBox.x2 = 0.38f;
 	difBox.y2 = 0.65f;
 
+	CBitmap bm;
 	if (!bm.Load("bitmaps/graphPaper.bmp"))
 		bm.AllocDummy(SColor(255, 255, 255, 255));
 

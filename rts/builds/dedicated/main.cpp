@@ -166,35 +166,44 @@ int main(int argc, char* argv[])
 		rng.Seed(randSeed);
 		dsGameData->SetRandomSeed(rng.NextInt());
 
+		{
+			sha512::raw_digest dsMapChecksum;
+			sha512::raw_digest dsModChecksum;
+			sha512::hex_digest dsMapChecksumHex;
+			sha512::hex_digest dsModChecksumHex;
 
-		sha512::raw_digest dsMapChecksum;
-		sha512::raw_digest dsModChecksum;
+			std::memcpy(dsMapChecksum.data(), &dsGameSetup->dsMapHash[0], sizeof(dsGameSetup->dsMapHash));
+			std::memcpy(dsModChecksum.data(), &dsGameSetup->dsModHash[0], sizeof(dsGameSetup->dsModHash));
+			sha512::dump_digest(dsMapChecksum, dsMapChecksumHex);
+			sha512::dump_digest(dsModChecksum, dsModChecksumHex);
 
-		std::memcpy(dsMapChecksum.data(), &dsGameSetup->dsMapHash[0], sizeof(dsGameSetup->dsMapHash));
-		std::memcpy(dsModChecksum.data(), &dsGameSetup->dsModHash[0], sizeof(dsGameSetup->dsModHash));
+			LOG("[script-checksums]\n\tmap=%s\n\tmod=%s", dsMapChecksumHex.data(), dsModChecksumHex.data());
 
-		// use script-provided hashes if they exist; these
-		// are only used for some client-side sanity checks
-		if (std::find_if(dsMapChecksum.begin(), dsMapChecksum.end(), [](uint8_t byte) { return (byte != 0); }) != dsMapChecksum.end()) {
-			dsGameData->SetMapChecksum(dsMapChecksum.data());
-			dsGameSetup->LoadStartPositions(false); // reduced mode
-		} else {
-			dsGameData->SetMapChecksum(&archiveScanner->GetArchiveCompleteChecksumBytes(dsGameSetup->mapName)[0]);
+			// use script-provided hashes if any byte is non-zero; these
+			// are only used by some client-side (pregame) sanity checks
+			const auto hashPred = [](uint8_t byte) { return (byte != 0); };
 
-			CFileHandler f("maps/" + dsGameSetup->mapName);
-			if (!f.FileExists())
-				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
+			if (std::find_if(dsMapChecksum.begin(), dsMapChecksum.end(), hashPred) != dsMapChecksum.end()) {
+				dsGameData->SetMapChecksum(dsMapChecksum.data());
+				dsGameSetup->LoadStartPositions(false); // reduced mode
+			} else {
+				dsGameData->SetMapChecksum(&archiveScanner->GetArchiveCompleteChecksumBytes(dsGameSetup->mapName)[0]);
 
-			dsGameSetup->LoadStartPositions(); // full mode
-		}
+				CFileHandler f("maps/" + dsGameSetup->mapName);
+				if (!f.FileExists())
+					vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
 
-		if (std::find_if(dsModChecksum.begin(), dsModChecksum.end(), [](uint8_t byte) { return (byte != 0); }) != dsModChecksum.end()) {
-			dsGameData->SetModChecksum(dsModChecksum.data());
-		} else {
-			const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
-			const sha512::raw_digest& modCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(modArchive);
+				dsGameSetup->LoadStartPositions(); // full mode
+			}
 
-			dsGameData->SetModChecksum(&modCheckSum[0]);
+			if (std::find_if(dsModChecksum.begin(), dsModChecksum.end(), hashPred) != dsModChecksum.end()) {
+				dsGameData->SetModChecksum(dsModChecksum.data());
+			} else {
+				const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
+				const sha512::raw_digest& modCheckSum = archiveScanner->GetArchiveCompleteChecksumBytes(modArchive);
+
+				dsGameData->SetModChecksum(&modCheckSum[0]);
+			}
 		}
 
 		LOG("starting server...");

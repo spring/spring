@@ -80,6 +80,7 @@ public:
 	int2 GetCfgWinRes(bool fullScrn) const;
 
 	bool CheckGLMultiSampling() const;
+	bool CheckGLStencilBufferBits(int minBufferBits) const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool CheckGLEWContextVersion(const int2& curCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);

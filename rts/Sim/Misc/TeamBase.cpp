@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "TeamBase.h"
-
 #include <cstdlib> // atoi
 #include <cstring> // memset
 #include <sstream>
 
+#include "TeamBase.h"
 #include "System/StringUtil.h"
 #include "System/StringHash.h"
 #include "System/creg/STL_Map.h"
@@ -19,13 +18,14 @@ CR_REG_METADATA(TeamBase, (
 	CR_MEMBER(teamStartNum),
 	CR_MEMBER(teamAllyteam),
 	CR_MEMBER(incomeMultiplier),
-	CR_MEMBER(side),
+	CR_MEMBER(sideName),
+	CR_MEMBER(controllerName),
 	CR_MEMBER(startPos),
 	CR_MEMBER(customValues)
 ))
 
 
-unsigned char TeamBase::teamDefaultColor[TeamBase::NUM_DEFAULT_TEAM_COLORS][4] =
+uint8_t TeamBase::teamDefaultColor[TeamBase::NUM_DEFAULT_TEAM_COLORS][4] =
 {
 	{  90,  90, 255, 255}, // blue
 	{ 200,   0,   0, 255}, // red
@@ -39,14 +39,15 @@ unsigned char TeamBase::teamDefaultColor[TeamBase::NUM_DEFAULT_TEAM_COLORS][4] =
 	{ 171, 171, 131, 255}  // tan
 };
 
-TeamBase::TeamBase() :
-	leader(-1),
-	teamStartNum(-1),
-	teamAllyteam(-1),
-	incomeMultiplier(1.0f)
-{
+TeamBase::TeamBase() {
 	std::memset(    color, 255, sizeof(color));
 	std::memset(origColor, 255, sizeof(color));
+
+	std::memset(      sideName, 0, sizeof(      sideName));
+	std::memset(controllerName, 0, sizeof(controllerName));
+
+	// NB: sync-safe so long as TeamHandler destroys all teams on reload
+	customValues.reserve(8);
 }
 
 void TeamBase::SetValue(const std::string& key, const std::string& value)
@@ -69,7 +70,7 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 			leader = std::atoi(value.c_str());
 		} break;
 		case hashString("side"): {
-			side = StringToLower(value);
+			StringToLower(value.c_str(), sideName, std::min(value.size(), sizeof(sideName) - 1));
 		} break;
 		case hashString("allyteam"): {
 			teamAllyteam = std::atoi(value.c_str());
@@ -100,14 +101,3 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 	}
 }
 
-
-void TeamBase::SetAdvantage(float advantage) {
-
-	advantage = std::max(0.0f, advantage);
-
-	SetIncomeMultiplier(advantage + 1.0f);
-}
-
-void TeamBase::SetIncomeMultiplier(float incomeMultiplier) {
-	this->incomeMultiplier = std::max(0.0f, incomeMultiplier);
-}

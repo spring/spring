@@ -89,25 +89,25 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
 
 
 /// frames until a synccheck will time out and a warning is given out
-static const unsigned SYNCCHECK_TIMEOUT = 300;
+static constexpr unsigned SYNCCHECK_TIMEOUT = 300;
 
 /// used to prevent msg spam
-static const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
+static constexpr unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
 /// The time interval in msec for sending player statistics to each client
 static const spring_time playerInfoTime = spring_secs(2);
 
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
-static const unsigned serverKeyframeInterval = 16;
+static constexpr unsigned serverKeyframeInterval = 16;
 
 /// players incoming bandwidth new allowance every X milliseconds
-static const unsigned playerBandwidthInterval = 100;
+static constexpr unsigned playerBandwidthInterval = 100;
 
 /// every 10 sec we'll broadcast current frame in a message that skips queue & cache
 /// to let clients that are fast-forwarding to current point to know their loading %
-static const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
+static constexpr unsigned gameProgressFrameInterval = GAME_SPEED * 10;
 
-static const unsigned syncResponseEchoInterval = GAME_SPEED * 2;
+static constexpr unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
 
 //FIXME remodularize server commands, so they get registered in word completion etc.
@@ -126,7 +126,7 @@ std::set<std::string> CGameServer::commandBlacklist;
 
 
 
-CGameServer* gameServer = NULL;
+CGameServer* gameServer = nullptr;
 
 CGameServer::CGameServer(
 	const std::shared_ptr<const ClientSetup> newClientSetup,
@@ -378,12 +378,12 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 }
 
 
-void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
+void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion, const std::string& myPlatform)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	assert(!HasLocalClient());
 
-	localClientNumber = BindConnection(myName, "", myVersion, true, std::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(std::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()), myName, "", myVersion, myPlatform, true);
 }
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
@@ -1849,20 +1849,25 @@ void CGameServer::HandleConnectionAttempts()
 				throw netcode::UnpackPacketException("Invalid message ID");
 
 			netcode::UnpackPacket msg(packet, 3);
-			std::string name, passwd, version;
-			unsigned char reconnect, netloss;
-			unsigned short netversion;
+			std::string name;
+			std::string passwd;
+			std::string version;
+			std::string platform;
+			uint8_t reconnect;
+			uint8_t netloss;
+			uint16_t netversion;
 			msg >> netversion;
 			msg >> name;
 			msg >> passwd;
 			msg >> version;
+			msg >> platform;
 			msg >> reconnect;
 			msg >> netloss;
 
 			if (netversion != NETWORK_VERSION)
 				throw netcode::UnpackPacketException(spring::format("Wrong network version: received %d, required %d", (int)netversion, (int)NETWORK_VERSION));
 
-			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
+			BindConnection(UDPNet->AcceptConnection(), name, passwd, version, platform, false, reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
 			const asio::ip::udp::endpoint endp = prev->GetEndpoint();
 			const asio::ip::address addr = endp.address();
@@ -2670,7 +2675,7 @@ void CGameServer::ResignPlayer(const int player)
 }
 
 
-bool CGameServer::CheckPlayersPassword(const int playerNum, const std::string& pw) const
+bool CGameServer::CheckPlayerPassword(const int playerNum, const std::string& pw) const
 {
 	if (playerNum >= players.size()) // new player
 		return true;
@@ -2694,12 +2699,14 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 
 	GameParticipant& p = players[playerNum];
 	assert(p.myState == GameParticipant::UNCONNECTED); // we only add _new_ players here, we don't handle reconnects here!
+
 	p.id = playerNum;
 	p.name = name;
 	p.spectator = spectator;
 	p.team = team;
 	p.isMidgameJoin = true;
 	p.isFromDemo = fromDemo;
+
 	if (!passwd.empty())
 		p.SetValue("password", passwd);
 
@@ -2709,73 +2716,116 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 }
 
 
-unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
-{
-	Message(spring::format("%s attempt from %s", (reconnect ? "Reconnection" : "Connection"), name.c_str()));
-	Message(spring::format(" -> Version: %s", version.c_str()));
-	Message(spring::format(" -> Address: %s", link->GetFullAddress().c_str()), false);
+unsigned CGameServer::BindConnection(
+	std::shared_ptr<netcode::CConnection> clientLink,
+	std::string clientName,
+	const std::string& clientPassword,
+	const std::string& clientVersion,
+	const std::string& clientPlatform,
+	bool isLocal,
+	bool reconnect,
+	int netloss
+) {
+	Message(spring::format("%s attempt from %s", (reconnect ? "Reconnection" : "Connection"), clientName.c_str()));
+	Message(spring::format(" -> Version: %s [%s]", clientVersion.c_str(), clientPlatform.c_str()));
+	Message(spring::format(" -> Address: %s", clientLink->GetFullAddress().c_str()), false);
 
-	if (link->CanReconnect())
+	if (clientLink->CanReconnect())
 		canReconnect = true;
+	// first client to connect determines the reference version
+	// the proliferation of maintenance builds since 104.0 means
+	// comparing just NETWORK_VERSION is no longer strict enough
+	if (refClientVersion.second.empty())
+		refClientVersion = {clientName, clientVersion};
 
-	std::string errmsg = "";
-	bool terminate = false;
+	std::string errMsg;
 
 	size_t newPlayerNumber = players.size();
 
-	// find the player in the current list
-	for (GameParticipant& p: players) {
-		if (name != p.name)
-			continue;
+	bool killExistingLink = false;
+	// bool reconnectAllowed = canReconnect;
 
-		if (p.isFromDemo) {
-			errmsg = "User name duplicated in the demo";
-		} else
-		if (!p.link) {
-			if (reconnect)
-				errmsg = "User is not ingame";
-			else if (canReconnect || !gameHasStarted)
-				newPlayerNumber = p.id;
-			else
-				errmsg = "Game has already started";
-		}
-		else {
-			bool reconnectAllowed = canReconnect && p.link->CheckTimeout(-1);
-			if (!reconnect && reconnectAllowed) {
-				newPlayerNumber = p.id;
-				terminate = true;
+	if (clientVersion != refClientVersion.second) {
+		errMsg = "client version '" + clientVersion + "' mismatch, reference is '" + refClientVersion.second + "' set by '" + refClientVersion.first + "'";
+	} else {
+		struct ConnectionFlags {
+			const char* error;
+			bool allowConnect;
+			bool forceNewLink;
+		};
+
+		// find the player in the current list
+		const auto pred = [&clientName](const GameParticipant& gp) { return (clientName == gp.name); };
+		const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+		const auto GetConnectionFlags = [&](const GameParticipant& gp) -> ConnectionFlags {
+			if (gp.isFromDemo)
+				return {"User name duplicated in the demo", false, false};
+
+			if (!gp.link) {
+				// not an existing connection
+				if (reconnect)
+					return {"User is not ingame", false, false};
+				if (canReconnect || !gameHasStarted)
+					return {"", true, false};
+
+				return {"Game has already started", false, false};
 			}
-			else if (reconnect && reconnectAllowed && p.link->GetFullAddress() != link->GetFullAddress())
-				newPlayerNumber = p.id;
+
+			if (!canReconnect || !gp.link->CheckTimeout(-1))
+				return {"User can not reconnect", false, false};
+
+			if (!reconnect)
+				return {"", true, true};
+
+			if (gp.link->GetFullAddress() != clientLink->GetFullAddress())
+				return {"", true, false};
+
+			return {"User is already ingame", false, false};
+		};
+
+		if (iter != players.end()) {
+			const GameParticipant& gameParticipant = *iter;
+			const ConnectionFlags& gpConnectionFlags = GetConnectionFlags(gameParticipant);
+
+			if (gpConnectionFlags.allowConnect) {
+				// allowed, possibly with new link
+				newPlayerNumber = gameParticipant.id;
+				killExistingLink = gpConnectionFlags.forceNewLink;
+			} else {
+				// disallowed
+				errMsg = gpConnectionFlags.error;
+			}
+		}
+
+		// not found in the original start script, allow spectator join?
+		if (errMsg.empty() && newPlayerNumber >= players.size()) {
+			// add tilde prefix to "anonymous" spectators (#4949)
+			if (!demoReader && allowSpecJoin)
+				clientName = "~" + clientName;
+
+			if (demoReader || allowSpecJoin)
+				AddAdditionalUser(clientName, clientPassword);
 			else
-				errmsg = "User is already ingame";
+				errMsg = "User name not authorized to connect";
 		}
-		break;
+
+		// check user's password; disabled for local host
+		if (errMsg.empty() && !isLocal)
+			if (!CheckPlayerPassword(newPlayerNumber, clientPassword))
+				errMsg = "Incorrect password";
+
+		// do not respond before we are sure we want to, and never respond to
+		// reconnection attempts since it could interfere with the protocol and
+		// desync
+		if (!reconnect)
+			clientLink->Unmute();
 	}
-
-	// not found in the original start script, allow spector join?
-	if (errmsg.empty() && newPlayerNumber >= players.size()) {
-		if (!demoReader && allowSpecJoin) { //add prefix to "anonymous" spectators (#4949)
-			name = std::string("~") + name;
-		}
-		if (demoReader || allowSpecJoin)
-			AddAdditionalUser(name, passwd);
-		else
-			errmsg = "User name not authorized to connect";
-	}
-
-	// check user's password
-	if (errmsg.empty() && !isLocal) // disable pw check for local host
-		if (!CheckPlayersPassword(newPlayerNumber, passwd))
-			errmsg = "Incorrect password";
-
-	if (!reconnect) // don't respond before we are sure we want to do it
-		link->Unmute(); // never respond to reconnection attempts, it could interfere with the protocol and desync
 
 	// >> Reject Connection <<
-	if (!errmsg.empty() || newPlayerNumber >= players.size()) {
-		Message(spring::format(" -> %s", errmsg.c_str()));
-		link->SendData(CBaseNetProtocol::Get().SendQuit(spring::format("Connection rejected: %s", errmsg.c_str())));
+	if (!errMsg.empty() || newPlayerNumber >= players.size()) {
+		Message(spring::format(" -> %s", errMsg.c_str()));
+		clientLink->SendData(CBaseNetProtocol::Get().SendQuit(spring::format("Connection rejected: %s", errMsg.c_str())));
 		return 0;
 	}
 
@@ -2784,31 +2834,36 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newPlayer.isReconn = gameHasStarted;
 
 	// there is a running link already -> terminate it
-	if (terminate) {
+	if (killExistingLink) {
 		Message(spring::format(PlayerLeft, newPlayer.GetType(), newPlayer.name.c_str(), " terminating existing connection"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
-		newPlayer.link.reset(); // prevent sending a quit message since this might kill the new connection
+
+		// prevent sending a quit message since that might kill the new connection
+		newPlayer.link.reset();
 		newPlayer.Kill("Terminating connection");
-		if (hostif)
+
+		if (hostif != nullptr)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
 	}
 
 	// inform the player about himself if it's a midgame join
 	if (newPlayer.isMidgameJoin)
-		link->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
+		clientLink->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer(newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name));
 
 	// there is an open link -> reconnect
-	if (newPlayer.link) {
-		newPlayer.link->ReconnectTo(*link);
-		if (UDPNet)
+	if (newPlayer.link != nullptr) {
+		newPlayer.link->ReconnectTo(*clientLink);
+
+		if (UDPNet != nullptr)
 			UDPNet->UpdateConnections();
+
 		Message(spring::format(" -> Connection reestablished (id %i)", newPlayerNumber));
 		newPlayer.link->SetLossFactor(netloss);
 		newPlayer.link->Flush(!gameHasStarted);
 		return newPlayerNumber;
 	}
 
-	newPlayer.Connected(link, isLocal);
+	newPlayer.Connected(clientLink, isLocal);
 	newPlayer.SendData(std::shared_ptr<const RawPacket>(myGameData->Pack()));
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
@@ -2817,35 +2872,45 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
 		newPlayer.SendData(p);
 
-	if (demoReader == NULL || myGameSetup->demoName.empty()) {
+	if (demoReader == nullptr || myGameSetup->demoName.empty()) {
 		// player wants to play -> join team
 		if (!newPlayer.spectator) {
-			unsigned newPlayerTeam = newPlayer.team;
-			if (!teams[newPlayerTeam].IsActive()) { // create new team
+			const unsigned newPlayerTeam = newPlayer.team;
+
+			if (!teams[newPlayerTeam].IsActive()) {
+				// create new team
 				newPlayer.SetReadyToStart(myGameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 				teams[newPlayerTeam].SetActive(true);
 			}
+
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
 		}
 	}
 
 	// new connection established
 	Message(spring::format(" -> Connection established (given id %i)", newPlayerNumber));
-	link->SetLossFactor(netloss);
-	link->Flush(!gameHasStarted);
+	clientLink->SetLossFactor(netloss);
+	clientLink->Flush(!gameHasStarted);
 	return newPlayerNumber;
 }
 
 
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
-	if (!msg.msg.empty()) { // silently drop empty chat messages
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-		if (hostif && msg.fromPlayer >= 0 && msg.fromPlayer != SERVER_PLAYER) {
-			// do not echo packets to the autohost
-			hostif->SendPlayerChat(msg.fromPlayer, msg.destination, msg.msg);
-		}
-	}
+	// silently drop empty chat messages
+	if (msg.msg.empty())
+		return;
+
+	Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+
+	if (hostif == nullptr)
+		return;
+
+	// do not echo packets to the autohost
+	if (msg.fromPlayer < 0 || msg.fromPlayer == SERVER_PLAYER)
+		return;
+
+	hostif->SendPlayerChat(msg.fromPlayer, msg.destination, msg.msg);
 }
 
 

@@ -227,7 +227,7 @@ class LuaOpenGL {
 		static int Vertex(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
-		static int MultiTexCoord(lua_State* L);
+		static int MultiTexCoord(lua_State* L) { return 0; }
 		static int SecondaryColor(lua_State* L) { return 0; }
 		static int FogCoord(lua_State* L) { return 0; }
 		static int EdgeFlag(lua_State* L) { return 0; }

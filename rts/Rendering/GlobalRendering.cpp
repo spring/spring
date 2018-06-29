@@ -470,8 +470,23 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	if ((glContexts[1] = CreateGLContext(minCtx, sdlWindows[1])) == nullptr)
 		return false;
 
+	{
+		#ifndef HEADLESS
+		glewExperimental = true;
+		#endif
+		glewInit();
+		// glewInit sets GL_INVALID_ENUM, get rid of it
+		glGetError();
+	}
+
 	if (!CheckGLContextVersion(minCtx)) {
 		handleerror(nullptr, "minimum required OpenGL version not supported, aborting", "ERROR", MBF_OK | MBF_EXCL);
+		return false;
+	}
+
+	// always require a proper stencil-buffer
+	if (!CheckGLStencilBufferBits(8)) {
+		handleerror(nullptr, "insufficient OpenGL stencil-buffer support, aborting", "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
@@ -516,13 +531,6 @@ void CGlobalRendering::KillSDL() const {
 
 
 void CGlobalRendering::PostInit() {
-	#ifndef HEADLESS
-	glewExperimental = true;
-	#endif
-	glewInit();
-	// glewInit sets GL_INVALID_ENUM, get rid of it
-	glGetError();
-
 	char sdlVersionStr[64] = "";
 	char glVidMemStr[64] = "unknown";
 
@@ -617,6 +625,8 @@ void CGlobalRendering::CheckGLExtensions() const
 	#define CHECK_REQ_EXT(ext) CheckExt(#ext, ext,  true)
 	#define CHECK_OPT_EXT(ext) CheckExt(#ext, ext, false)
 
+	CHECK_REQ_EXT(GLEW_ARB_multisample); // 1.3 (MSAA)
+
 	CHECK_REQ_EXT(GLEW_ARB_vertex_buffer_object); // 1.5 (VBO)
 	CHECK_REQ_EXT(GLEW_ARB_pixel_buffer_object); // 2.1 (PBO)
 	CHECK_REQ_EXT(GLEW_ARB_framebuffer_object); // 3.0 (FBO)
@@ -640,7 +650,8 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_OPT_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
 	CHECK_OPT_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
 	CHECK_OPT_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
-	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1
+	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1 (gl{Get}ProgramBinary)
+	CHECK_REQ_EXT(GLEW_ARB_separate_shader_objects); // 4.1 (glProgramParameteri)
 
 	CHECK_REQ_EXT(GLEW_ARB_texture_compression);
 	CHECK_REQ_EXT(GLEW_EXT_texture_compression_s3tc);
@@ -1113,14 +1124,10 @@ void CGlobalRendering::InitGLState()
 /**
  * @brief multisample verify
  * @return whether verification passed
- *
- * Tests whether FSAA was actually enabled
  */
 bool CGlobalRendering::CheckGLMultiSampling() const
 {
 	if (msaaLevel == 0)
-		return false;
-	if (!GLEW_ARB_multisample)
 		return false;
 
 	GLint buffers = 0;
@@ -1130,6 +1137,21 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 	glGetIntegerv(GL_SAMPLES, &samples);
 
 	return (buffers != 0 && samples != 0);
+}
+
+bool CGlobalRendering::CheckGLStencilBufferBits(int minBufferBits) const
+{
+	#ifdef HEADLESS
+	return true;
+	#endif
+
+	GLint ctxBufferBits = 0;
+
+	// GL4.5, must be GL_STENCIL for default FB
+	// glGetNamedFramebufferAttachmentParameteriv(0, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &ctxBufferBits);
+	glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &ctxBufferBits);
+
+	return (ctxBufferBits >= minBufferBits);
 }
 
 bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const

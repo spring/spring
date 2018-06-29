@@ -476,8 +476,9 @@ void LuaOpenGL::DisableCommon(DrawMode mode)
 void LuaOpenGL::EnableDrawGenesis()
 {
 	EnableCommon(DRAW_GENESIS);
+
 	resetMatrixFunc = ResetGenesisMatrices;
-	ResetGenesisMatrices();
+	resetMatrixFunc();
 }
 
 
@@ -697,17 +698,15 @@ void LuaOpenGL::ResetDrawScreenCommon()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
-	GL::MatrixMode(GL_TEXTURE   ); GL::PushMatrix();
-	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix();
-	GL::MatrixMode(GL_MODELVIEW ); GL::PushMatrix();
-
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
 		drawMode = DRAW_NONE;
 	}
+
 	EnableCommon(DRAW_MINIMAP);
+
 	resetMatrixFunc = ResetMiniMapMatrices;
-	ResetMiniMapMatrices();
+	resetMatrixFunc();
 }
 
 
@@ -715,23 +714,21 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
-	} else {
-		if (safeMode) {
-			glPopAttrib();
-		} else {
-			ResetGLState();
-		}
-		resetMatrixFunc = ResetScreenMatrices;
-		ResetScreenMatrices();
-		prevDrawMode = DRAW_NONE;
-		drawMode = DRAW_SCREEN;
+		return;
 	}
 
-	GL::MatrixMode(GL_TEXTURE   ); GL::PopMatrix();
-	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW ); GL::PopMatrix();
-}
+	if (safeMode) {
+		glPopAttrib();
+	} else {
+		ResetGLState();
+	}
 
+	resetMatrixFunc = ResetScreenMatrices;
+	resetMatrixFunc();
+
+	prevDrawMode = DRAW_NONE;
+	drawMode = DRAW_SCREEN;
+}
 
 void LuaOpenGL::ResetDrawInMiniMap()
 {
@@ -750,17 +747,15 @@ void LuaOpenGL::ResetDrawInMiniMap()
 
 void LuaOpenGL::EnableDrawInMiniMapBackground()
 {
-	GL::MatrixMode(GL_TEXTURE   ); GL::PushMatrix();
-	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix();
-	GL::MatrixMode(GL_MODELVIEW ); GL::PushMatrix();
-
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
 		drawMode = DRAW_NONE;
 	}
+
 	EnableCommon(DRAW_MINIMAP_BACKGROUND);
+
 	resetMatrixFunc = ResetMiniMapMatrices;
-	ResetMiniMapMatrices();
+	resetMatrixFunc();
 }
 
 
@@ -768,23 +763,21 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP_BACKGROUND);
-	} else {
-		if (safeMode) {
-			glPopAttrib();
-		} else {
-			ResetGLState();
-		}
-		resetMatrixFunc = ResetScreenMatrices;
-		ResetScreenMatrices();
-		prevDrawMode = DRAW_NONE;
-		drawMode = DRAW_SCREEN;
+		return;
 	}
 
-	GL::MatrixMode(GL_TEXTURE   ); GL::PopMatrix();
-	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW ); GL::PopMatrix();
-}
+	if (safeMode) {
+		glPopAttrib();
+	} else {
+		ResetGLState();
+	}
 
+	resetMatrixFunc = ResetScreenMatrices;
+	resetMatrixFunc();
+
+	prevDrawMode = DRAW_NONE;
+	drawMode = DRAW_SCREEN;
+}
 
 void LuaOpenGL::ResetDrawInMiniMapBackground()
 {
@@ -879,11 +872,6 @@ void LuaOpenGL::ResetScreenMatrices()
 void LuaOpenGL::ResetMiniMapMatrices()
 {
 	assert(minimap != nullptr);
-
-	// engine draws minimap in 0..1 range, lua uses 0..minimapSize{X,Y}
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); minimap->ApplyConstraintsMatrix();
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity(); GL::Scale(1.0f / minimap->GetSizeX(), 1.0f / minimap->GetSizeY(), 1.0f);
 }
 
 
@@ -1001,11 +989,11 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 		GL::PushMatrix();
 		GL::Scale(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
 
-		minimap->DrawForReal(true);
+		minimap->DrawForReal(true, false, true);
 
 		GL::PopMatrix();
 	} else {
-		minimap->DrawForReal(false);
+		minimap->DrawForReal(false, false, true);
 	}
 
 	return 0;
@@ -1497,9 +1485,31 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 		const float   slope = luaL_checkfloat(L, 6);
 		const float gravity = luaL_optfloat(L, 7, mapInfo->map.gravity);
 
-		glBallisticCircle(wd, luaL_checkint(L, 5), pos, {radius, slope, gravity});
+		const float4 defColor = cmdColors.rangeAttack;
+		const float4 argColor = {luaL_optfloat(L, 8, defColor.x), luaL_optfloat(L, 9, defColor.y), luaL_optfloat(L, 10, defColor.z), 1.0f};
+
+		GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
+		Shader::IProgramObject* shader = (luaL_optboolean(L, 11, true))? buffer->GetShader(): nullptr;
+
+		#if 1
+		// if null, expect caller to supply a shader
+		if (shader != nullptr) {
+			shader->Enable();
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		}
+		#endif
+
+		glSetupRangeRingDrawState();
+		glBallisticCircle(buffer, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
+		glResetRangeRingDrawState();
+
+		#if 1
+		if (shader != nullptr)
+			shader->Disable();
+		#endif
 	} else {
-		glSurfaceCircle(pos, luaL_checkfloat(L, 4), luaL_checkint(L, 5));
+		glSurfaceCircleVA(GetVertexArray(), {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
 	}
 
 	return 0;
@@ -1532,8 +1542,7 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 		tu1 = luaL_checknumber(L, 8);
 		tv1 = luaL_checknumber(L, 9);
 		useTxcd = true;
-	}
-	else {
+	} else {
 		if (lua_isboolean(L, 6)) {
 			useTxcd = lua_toboolean(L, 6);
 			if (useTxcd) {
@@ -1556,9 +1565,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int xie = std::max(0, std::min(mapxi, int((xe + 0.5f) / SQUARE_SIZE)));
 	const int zis = std::max(0, std::min(mapzi, int((zs + 0.5f) / SQUARE_SIZE)));
 	const int zie = std::max(0, std::min(mapzi, int((ze + 0.5f) / SQUARE_SIZE)));
-	if ((xis >= xie) || (zis >= zie)) {
+	if ((xis >= xie) || (zis >= zie))
 		return 0;
-	}
 
 	if (!useTxcd) {
 		for (int xib = xis; xib < xie; xib++) {
@@ -1576,12 +1584,12 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 			glEnd();
 		}
-	}
-	else {
+	} else {
 		const float tuStep = (tu1 - tu0) / float(xie - xis);
 		const float tvStep = (tv1 - tv0) / float(zie - zis);
 
 		float tub = tu0;
+
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
 			const float xb = xib * SQUARE_SIZE;
@@ -1909,79 +1917,6 @@ int LuaOpenGL::TexCoord(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.TexCoord()");
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::MultiTexCoord(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int texNum = luaL_checkint(L, 1);
-	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
-		luaL_error(L, "Bad texture unit passed to gl.MultiTexCoord()");
-	}
-	const GLenum texUnit = GL_TEXTURE0 + texNum;
-
-	const int args = lua_gettop(L) - 1; // number of arguments
-
-	if (args == 1) {
-		if (lua_isnumber(L, 2)) {
-			const float x = lua_tofloat(L, 2);
-			glMultiTexCoord1f(texUnit, x);
-			return 0;
-		}
-		if (!lua_istable(L, 2)) {
-			luaL_error(L, "Bad data passed to gl.MultiTexCoord()");
-		}
-		lua_rawgeti(L, 2, 1);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.MultiTexCoord()");
-		}
-		const float x = lua_tofloat(L, -1);
-		lua_rawgeti(L, 2, 2);
-		if (!lua_isnumber(L, -1)) {
-			glMultiTexCoord1f(texUnit, x);
-			return 0;
-		}
-		const float y = lua_tofloat(L, -1);
-		lua_rawgeti(L, 2, 3);
-		if (!lua_isnumber(L, -1)) {
-			glMultiTexCoord2f(texUnit, x, y);
-			return 0;
-		}
-		const float z = lua_tofloat(L, -1);
-		lua_rawgeti(L, 2, 4);
-		if (!lua_isnumber(L, -1)) {
-			glMultiTexCoord3f(texUnit, x, y, z);
-			return 0;
-		}
-		const float w = lua_tofloat(L, -1);
-		glMultiTexCoord4f(texUnit, x, y, z, w);
-		return 0;
-	}
-
-	if (args == 2) {
-		const float x = luaL_checkfloat(L, 2);
-		const float y = luaL_checkfloat(L, 3);
-		glMultiTexCoord2f(texUnit, x, y);
-	}
-	else if (args == 3) {
-		const float x = luaL_checkfloat(L, 2);
-		const float y = luaL_checkfloat(L, 3);
-		const float z = luaL_checkfloat(L, 4);
-		glMultiTexCoord3f(texUnit, x, y, z);
-	}
-	else if (args == 4) {
-		const float x = luaL_checkfloat(L, 2);
-		const float y = luaL_checkfloat(L, 3);
-		const float z = luaL_checkfloat(L, 4);
-		const float w = luaL_checkfloat(L, 5);
-		glMultiTexCoord4f(texUnit, x, y, z, w);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.MultiTexCoord()");
 	}
 	return 0;
 }

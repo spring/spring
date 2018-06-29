@@ -276,7 +276,7 @@ void CTeam::AddPlayer(int playerNum)
 
 void CTeam::KillAIs()
 {
-	for (const auto& id: skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum)) {
+	for (const uint8_t id: skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum)) {
 		skirmishAIHandler.SetLocalKillFlag(id, 2 /* = team died */);
 	}
 }
@@ -305,7 +305,9 @@ void CTeam::ResetResourceState()
 void CTeam::SlowUpdate()
 {
 	TeamStatistics& currentStats = GetCurrentStats();
-	float eShare = 0.0f, mShare = 0.0f;
+
+	float eShare = 0.0f;
+	float mShare = 0.0f;
 
 	// calculate the total amount of resources that all
 	// (allied) teams can collectively receive through
@@ -335,7 +337,8 @@ void CTeam::SlowUpdate()
 	const float eExcess = std::max(0.0f, res.energy - (resStorage.energy * resShare.energy));
 	const float mExcess = std::max(0.0f, res.metal  - (resStorage.metal  * resShare.metal));
 
-	float de = 0.0f, dm = 0.0f;
+	float de = 0.0f;
+	float dm = 0.0f;
 	if (eShare > 0.0f) { de = std::min(1.0f, eExcess / eShare); }
 	if (mShare > 0.0f) { dm = std::min(1.0f, mExcess / mShare); }
 
@@ -423,36 +426,43 @@ void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 	}
 }
 
-std::string CTeam::GetControllerName() const {
-	std::string s;
+void CTeam::UpdateControllerName() {
+	// format is "Joe[, AI: ABCAI 0.1 ('Killer')[, AI: DEFAI 1.2 ('Slayer')[, ...]]]"
+	memset(controllerName, 0, sizeof(controllerName));
 
-	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
-	if (HasLeader()) {
-		const CPlayer* leadPlayer = playerHandler.Player(leader);
-
-		if (leadPlayer->team != this->teamNum) {
-			const CTeam*   realLeadPlayerTeam = teamHandler.Team(leadPlayer->team);
-			const CPlayer* realLeadPlayer     = NULL;
-
-			if (realLeadPlayerTeam->HasLeader()) {
-				realLeadPlayer = playerHandler.Player(realLeadPlayerTeam->GetLeader());
-				s = realLeadPlayer->name;
-			} else {
-				s = "N/A"; // weird
-			}
-		} else {
-			s = leadPlayer->name;
-		}
-
-		for (const auto& aiId: skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum)) {
-			const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiId);
-			const std::string prefix = "AI: " + aiData->shortName + " " + aiData->version + " ";
-			const std::string pstfix = "(nick: " + aiData->name + ")";
-			s += ", " + prefix + pstfix;
-		}
-	} else {
-		s = UncontrolledPlayerName;
+	if (!HasLeader()) {
+		std::snprintf(controllerName, sizeof(controllerName), "%s", UncontrolledPlayerName.c_str());
+		return;
 	}
 
-	return s;
+	const CPlayer* leadPlayer = playerHandler.Player(leader);
+	char* ptr = controllerName;
+
+	if (leadPlayer->team == this->teamNum) {
+		ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", leadPlayer->name.c_str());
+	} else {
+		const CTeam*   realLeadPlayerTeam = teamHandler.Team(leadPlayer->team);
+		const CPlayer* realLeadPlayer     = nullptr;
+
+		if (realLeadPlayerTeam->HasLeader()) {
+			realLeadPlayer = playerHandler.Player(realLeadPlayerTeam->GetLeader());
+
+			ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", realLeadPlayer->name.c_str());
+		} else {
+			ptr += std::snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), "%s", "N/A"); // weird
+		}
+	}
+
+	for (const auto& aiId: skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum)) {
+		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(aiId);
+
+		const char* vs = aiData->version.c_str();
+		const char* sn = aiData->shortName.c_str();
+		const char* nn = aiData->name.c_str();
+
+		ptr += snprintf(ptr, sizeof(controllerName) - (ptr - controllerName), ", AI: %s %s ('%s')", sn, vs, nn);
+	}
+
+	controllerName[sizeof(controllerName) - 1] = 0;
 }
+

@@ -311,18 +311,23 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 
 	CExplosionCreator::FireExplosionEvent(params);
 
-	if (weaponDef != nullptr) {
+	{
+		if (weaponDef == nullptr)
+			return;
+
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
 		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, realHeight);
-		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
+		const unsigned int soundMask = CCustomExplosionGenerator::CEG_SPWF_WATER | CCustomExplosionGenerator::CEG_SPWF_UNDERWATER;
 
+		// 0 or 1, use regular sound if explosion went off in voidwater
 		const int soundNum = ((soundFlags & soundMask) != 0);
 		const int soundID = soundSet.getID(soundNum);
 
-		if (soundID > 0) {
-			Channels::Battle->PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
-		}
+		if (soundID <= 0)
+			return;
+
+		Channels::Battle->PlaySample(soundID, params.pos, soundSet.getVolume(soundNum));
 	}
 }
 

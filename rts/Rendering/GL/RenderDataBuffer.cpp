@@ -7,10 +7,11 @@
 #include "RenderDataBuffer.hpp"
 
 // global general-purpose buffers
-static GL::RenderDataBuffer gRenderBuffer0[2];
-static GL::RenderDataBuffer gRenderBufferN[2];
-static GL::RenderDataBuffer gRenderBufferC[2];
-static GL::RenderDataBuffer gRenderBufferT[2];
+static GL::RenderDataBuffer gRenderBuffer0 [2];
+static GL::RenderDataBuffer gRenderBufferN [2];
+static GL::RenderDataBuffer gRenderBufferC [2];
+static GL::RenderDataBuffer gRenderBufferFC[2];
+static GL::RenderDataBuffer gRenderBufferT [2];
 
 static GL::RenderDataBuffer gRenderBufferT4[2];
 static GL::RenderDataBuffer gRenderBufferTN[2];
@@ -20,10 +21,11 @@ static GL::RenderDataBuffer gRenderBuffer2D0[2];
 static GL::RenderDataBuffer gRenderBuffer2DT[2];
 
 
-static GL::RenderDataBuffer0 tRenderBuffer0[2];
-static GL::RenderDataBufferN tRenderBufferN[2];
-static GL::RenderDataBufferC tRenderBufferC[2];
-static GL::RenderDataBufferT tRenderBufferT[2];
+static GL::RenderDataBuffer0 tRenderBuffer0 [2];
+static GL::RenderDataBufferN tRenderBufferN [2];
+static GL::RenderDataBufferC tRenderBufferC [2];
+static GL::RenderDataBufferC tRenderBufferFC[2];
+static GL::RenderDataBufferT tRenderBufferT [2];
 
 static GL::RenderDataBufferT4 tRenderBufferT4[2];
 static GL::RenderDataBufferTN tRenderBufferTN[2];
@@ -33,10 +35,11 @@ static GL::RenderDataBuffer2D0 tRenderBuffer2D0[2];
 static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
 
 
-GL::RenderDataBuffer0* GL::GetRenderBuffer0() { return &tRenderBuffer0[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferN* GL::GetRenderBufferN() { return &tRenderBufferN[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferC* GL::GetRenderBufferC() { return &tRenderBufferC[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferT* GL::GetRenderBufferT() { return &tRenderBufferT[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferN* GL::GetRenderBufferN () { return &tRenderBufferN [0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferC* GL::GetRenderBufferC () { return &tRenderBufferC [0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferC* GL::GetRenderBufferFC() { return &tRenderBufferFC[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferT* GL::GetRenderBufferT () { return &tRenderBufferT [0 /*globalRendering->drawFrame & 1*/ ]; }
 
 GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return &tRenderBufferT4[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return &tRenderBufferTN[0 /*globalRendering->drawFrame & 1*/ ]; }
@@ -53,8 +56,8 @@ void GL::InitRenderBuffers() {
 	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, "", ""}, {GL_FRAGMENT_SHADER, "", ""}};
 
 
-	#define SETUP_RBUFFER(T) tRenderBuffer ## T[i].Setup(&gRenderBuffer ## T[i], &GL::VA_TYPE_ ## T ## _ATTRS)
-	#define CREATE_SHADER(T, VS_CODE, FS_CODE)                                                                             \
+	#define SETUP_RBUFFER(T, i, ne, ni) tRenderBuffer ## T[i].Setup(&gRenderBuffer ## T[i], &GL::VA_TYPE_ ## T ## _ATTRS, ne, ni)
+	#define CREATE_SHADER(T, i, VS_CODE, FS_CODE)                                                                          \
 		do {                                                                                                               \
 			GL::RenderDataBuffer::FormatShader ## T(vsBuffer, vsBuffer + sizeof(vsBuffer), "", "", VS_CODE, "VS");         \
 			GL::RenderDataBuffer::FormatShader ## T(fsBuffer, fsBuffer + sizeof(fsBuffer), "", "", FS_CODE, "FS");         \
@@ -64,31 +67,33 @@ void GL::InitRenderBuffers() {
 		} while (false)
 
 	for (int i = 0; i < 2; i++) {
-		SETUP_RBUFFER(0);
-		SETUP_RBUFFER(N);
-		SETUP_RBUFFER(C);
-		SETUP_RBUFFER(T);
+		SETUP_RBUFFER( 0, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER( N, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER( C, i, 1 << 20, 1 << 16); // more heavily used
+		SETUP_RBUFFER(FC, i, 1 << 10, 1 <<  8); // less heavily used
+		SETUP_RBUFFER( T, i, 1 << 18, 1 << 16);
 
-		SETUP_RBUFFER(T4);
-		SETUP_RBUFFER(TN);
-		SETUP_RBUFFER(TC);
+		SETUP_RBUFFER(T4, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER(TN, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER(TC, i, 1 << 18, 1 << 16);
 
-		SETUP_RBUFFER(2D0);
-		SETUP_RBUFFER(2DT);
+		SETUP_RBUFFER(2D0, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER(2DT, i, 1 << 18, 1 << 16);
 	}
 
 	for (int i = 0; i < 2; i++) {
-		CREATE_SHADER(0, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
-		CREATE_SHADER(N, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
-		CREATE_SHADER(C, "", "\tf_color_rgba = v_color_rgba * (1.0 / 255.0);\n");
-		CREATE_SHADER(T, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
+		CREATE_SHADER( 0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER( N, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER( C, i, "", "\tf_color_rgba = v_color_rgba      * (1.0 / 255.0);\n");
+		CREATE_SHADER(FC, i, "", "\tf_color_rgba = v_color_rgba_flat * (1.0 / 255.0);\n");
+		CREATE_SHADER( T, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
 
-		CREATE_SHADER(T4, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_stuv.st);\n");
-		CREATE_SHADER(TN, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
-		CREATE_SHADER(TC, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st) * v_color_rgba * (1.0 / 255.0);\n");
+		CREATE_SHADER(T4, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_stuv.st);\n");
+		CREATE_SHADER(TN, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
+		CREATE_SHADER(TC, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st) * v_color_rgba * (1.0 / 255.0);\n");
 
-		CREATE_SHADER(2D0, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
-		CREATE_SHADER(2DT, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
+		CREATE_SHADER(2D0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER(2DT, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
 	}
 
 	#undef CREATE_SHADER
@@ -97,10 +102,11 @@ void GL::InitRenderBuffers() {
 
 void GL::KillRenderBuffers() {
 	for (int i = 0; i < 2; i++) {
-		gRenderBuffer0[i].Kill();
-		gRenderBufferN[i].Kill();
-		gRenderBufferC[i].Kill();
-		gRenderBufferT[i].Kill();
+		gRenderBuffer0 [i].Kill();
+		gRenderBufferN [i].Kill();
+		gRenderBufferC [i].Kill();
+		gRenderBufferFC[i].Kill();
+		gRenderBufferT [i].Kill();
 
 		gRenderBufferT4[i].Kill();
 		gRenderBufferTN[i].Kill();
@@ -119,10 +125,11 @@ void GL::SwapRenderBuffers() {
 	tRenderBufferC[1 - (globalRendering->drawFrame & 1)].Reset();
 	tRenderBufferT[1 - (globalRendering->drawFrame & 1)].Reset();
 	#else
-	std::swap(tRenderBuffer0[0], tRenderBuffer0[1]);
-	std::swap(tRenderBufferN[0], tRenderBufferN[1]);
-	std::swap(tRenderBufferC[0], tRenderBufferC[1]);
-	std::swap(tRenderBufferT[0], tRenderBufferT[1]);
+	std::swap(tRenderBuffer0 [0], tRenderBuffer0 [1]);
+	std::swap(tRenderBufferN [0], tRenderBufferN [1]);
+	std::swap(tRenderBufferC [0], tRenderBufferC [1]);
+	std::swap(tRenderBufferFC[0], tRenderBufferFC[1]);
+	std::swap(tRenderBufferT [0], tRenderBufferT [1]);
 
 	std::swap(tRenderBufferT4[0], tRenderBufferT4[1]);
 	std::swap(tRenderBufferTN[0], tRenderBufferTN[1]);
@@ -131,10 +138,11 @@ void GL::SwapRenderBuffers() {
 	std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[1]);
 	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
 
-	tRenderBuffer0[0].Reset();
-	tRenderBufferN[0].Reset();
-	tRenderBufferC[0].Reset();
-	tRenderBufferT[0].Reset();
+	tRenderBuffer0 [0].Reset();
+	tRenderBufferN [0].Reset();
+	tRenderBufferC [0].Reset();
+	tRenderBufferFC[0].Reset();
+	tRenderBufferT [0].Reset();
 
 	tRenderBufferT4[0].Reset();
 	tRenderBufferTN[0].Reset();
@@ -212,11 +220,13 @@ char* GL::RenderDataBuffer::FormatShaderType(
 	const char* type,
 	const char* name
 ) {
-	constexpr const char* vecTypes[] = {"vec2", "vec3", "vec4"};
+	constexpr const char*  vecTypes[] = {"vec2", "vec3", "vec4"};
+	constexpr const char* typeQuals[] = {"", "flat"};
+
 	constexpr const char* vsInpFmt = "layout(location = %d) in %s %s;\n";
-	constexpr const char* vsOutFmt = "out %s v_%s;\n"; // prefix VS outs by "v_"
-	constexpr const char* fsInpFmt = "in %s v_%s;\n";
-	constexpr const char* fsOutFmt = "layout(location = 0) out vec4 f_%s;\n"; // prefix (single fixed) FS out by "f_"
+	constexpr const char* vsOutFmt = "%s out %s v_%s;\n"; // prefix VS outs by "v_"
+	constexpr const char* fsInpFmt = "%s in %s v_%s;\n";
+	constexpr const char* fsOutFmt = "layout(location = 0) out vec4 f_%s;\n"; // prefix (single, fixed) FS out by "f_"
 
 	{
 		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "// %s input attributes\n", type);
@@ -227,9 +237,12 @@ char* GL::RenderDataBuffer::FormatShaderType(
 			assert(a.count >= 2);
 			assert(a.count <= 4);
 
+			const char*  vecType = vecTypes[a.count - 2];
+			const char* typeQual = typeQuals[strstr(a.name + 2, typeQuals[1]) != nullptr];
+
 			switch (type[0]) {
-				case 'V': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsInpFmt, a.index, vecTypes[a.count - 2], a.name); } break;
-				case 'F': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), fsInpFmt, vecTypes[a.count - 2], a.name + 2); } break;
+				case 'V': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsInpFmt, a.index, vecType, a.name); } break;
+				case 'F': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), fsInpFmt, typeQual, vecType, a.name + 2); } break;
 				default: {} break;
 			}
 		}
@@ -246,7 +259,10 @@ char* GL::RenderDataBuffer::FormatShaderType(
 					assert(a.name[0] == 'a');
 					assert(a.name[1] == '_');
 
-					ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsOutFmt, vecTypes[a.count - 2], a.name + 2);
+					const char*  vecType = vecTypes[a.count - 2];
+					const char* typeQual = typeQuals[strstr(a.name + 2, typeQuals[1]) != nullptr];
+
+					ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsOutFmt, typeQual, vecType, a.name + 2);
 				}
 			} break;
 			case 'F': {
@@ -296,8 +312,7 @@ char* GL::RenderDataBuffer::FormatShaderType(
 		}
 	}
 
-	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "}\n");
-	return ptr;
+	return (ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "}\n"));
 }
 
 

@@ -180,18 +180,12 @@ void CQuitBox::Draw()
 		if (team->gaia)
 			continue;
 
-		if (shareTeam == actualTeamNum) {
-			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-		} else {
-			glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-		}
-
-		const char* name = (team->GetControllerName()).c_str();
+		const char* name = team->GetControllerName();
 		const char* ally = "";
 		const char* dead = "";
 
 		if (teamHandler.Ally(gu->myAllyTeam, teamHandler.AllyTeam(actualTeamNum))) {
-			ally = " <Ally>)";
+			ally = " <Ally>";
 		} else {
 			ally = " <Enemy>";
 		}
@@ -203,6 +197,7 @@ void CQuitBox::Draw()
 			ally = " <Gaia>";
 		}
 
+		font->SetTextColor(1.0f, 1.0f, 1.0f, 0.4f + 0.4f * (shareTeam == actualTeamNum));
 		font->glFormat(
 			box.x1 + teamBox.x1 + 0.002f,
 			box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,

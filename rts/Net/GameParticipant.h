@@ -3,6 +3,7 @@
 #ifndef _GAME_PARTICIPANT_H
 #define _GAME_PARTICIPANT_H
 
+#include <map>
 #include <memory>
 
 #include "Game/Players/PlayerBase.h"
@@ -39,7 +40,6 @@ public:
 	State myState;
 
 	int lastFrameResponse;
-	int speedControl;
 
 	bool isLocal;
 	bool isReconn;

@@ -65,14 +65,14 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	std::vector<uint8_t> GetSkirmishAIsInTeam(const int teamId, const int playerId = -1);
+	std::vector<uint8_t> GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId = -1) const;
 
 	/**
 	 * @brief Skirmish AIs hosted by a player
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	std::vector<uint8_t> GetSkirmishAIsByPlayer(const int playerId);
+	std::vector<uint8_t> GetSkirmishAIsByPlayer(const int playerId) const;
 
 	/**
 	 * @brief All active Skirmish AIs
@@ -97,8 +97,12 @@ public:
 	 */
 	bool RemoveSkirmishAI(const size_t skirmishAIId);
 
+	bool HasSkirmishAIsInTeam(const int teamId, const int hostPlayerId = -1) const {
+		return (GetSkirmishAIsInTeam(teamId, hostPlayerId) != std::vector<uint8_t>{});
+	}
 
 	size_t GetNumSkirmishAIs() const { return numSkirmishAIs; }
+	// size_t GetNumSkirmishAIsInTeam(const int teamId, const int hostPlayerId = -1) const { ... }
 
 
 	/**

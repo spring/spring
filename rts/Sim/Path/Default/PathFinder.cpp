@@ -73,13 +73,6 @@ static constexpr float3 PF_DIRECTION_VECTORS_3D[] = {
 };
 
 
-CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
-{
-	blockCheckFunc = blockCheckFuncs[threadSafe];
-	dummyCacheItem = CPathCache::CacheItem{IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
-}
-
-
 void CPathFinder::InitStatic() {
 	static_assert(PF_DIRECTION_COSTS[PATHOPT_LEFT                ] ==        1.0f, "");
 	static_assert(PF_DIRECTION_COSTS[PATHOPT_RIGHT               ] ==        1.0f, "");
@@ -117,7 +110,15 @@ void CPathFinder::InitStatic() {
 		temp.SafeNormalize();
 		assert(temp == PF_DIRECTION_VECTORS_3D[i]);
 	}
+}
 
+
+void CPathFinder::Init(bool threadSafe)
+{
+	IPathFinder::Init(1);
+
+	blockCheckFunc = blockCheckFuncs[threadSafe];
+	dummyCacheItem = CPathCache::CacheItem{IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
 }
 
 

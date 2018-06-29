@@ -28,6 +28,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
@@ -36,6 +37,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
@@ -59,8 +61,7 @@ CONFIG(int, MiniMapDrawCommands).defaultValue(1).headlessValue(0).minimumValue(0
 CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true).headlessValue(false);
 CONFIG(bool, SimpleMiniMapColors).defaultValue(false);
 
-CONFIG(bool, MiniMapRenderToTexture).defaultValue(true).safemodeValue(false).description("Asynchronous render MiniMap to a texture independent of screen FPS.");
-CONFIG(int, MiniMapRefreshRate).defaultValue(0).minimumValue(0).description("The refresh rate of the async MiniMap texture. Needs MiniMapRenderToTexture to be true. Value of \"0\" autoselects between 10-60FPS.");
+CONFIG(int, MiniMapRefreshRate).defaultValue(0).minimumValue(0).description("Refresh rate of asynchronous MiniMap texture updates. Value of \"0\" autoselects between 10-60FPS.");
 
 
 
@@ -71,28 +72,8 @@ CONFIG(int, MiniMapRefreshRate).defaultValue(0).minimumValue(0).description("The
 
 CMiniMap* minimap = nullptr;
 
-CMiniMap::CMiniMap()
-	: CInputReceiver(BACK)
-	, fullProxy(false)
-	, proxyMode(false)
-	, selecting(false)
-	, maxspect(false)
-	, maximized(false)
-	, minimized(false)
-	, mouseLook(false)
-	, mouseMove(false)
-	, mouseResize(false)
-	, slaveDrawMode(false)
-	, showButtons(false)
-	, useIcons(true)
-	, myColor(0.2f, 0.9f, 0.2f, 1.0f)
-	, allyColor(0.3f, 0.3f, 0.9f, 1.0f)
-	, enemyColor(0.9f, 0.2f, 0.2f, 1.0f)
-	, renderToTexture(true)
-	, multisampledFBO(false)
-	, minimapTex(0)
-	, lastClicked(nullptr)
- {
+CMiniMap::CMiniMap(): CInputReceiver(BACK)
+{
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
 
@@ -105,85 +86,88 @@ CMiniMap::CMiniMap()
 		ParseGeometry(configHandler->GetString("MiniMapGeometry"));
 	}
 
-	fullProxy = configHandler->GetBool("MiniMapFullProxy");
-	buttonSize = configHandler->GetInt("MiniMapButtonSize");
+	{
+		fullProxy = configHandler->GetBool("MiniMapFullProxy");
+		buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
-	unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
-	unitExponent = configHandler->GetFloat("MiniMapUnitExp");
+		unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
+		unitExponent = configHandler->GetFloat("MiniMapUnitExp");
 
-	cursorScale = configHandler->GetFloat("MiniMapCursorScale");
-	useIcons = configHandler->GetBool("MiniMapIcons");
-	drawCommands = configHandler->GetInt("MiniMapDrawCommands");
-	drawProjectiles = configHandler->GetBool("MiniMapDrawProjectiles");
-	simpleColors = configHandler->GetBool("SimpleMiniMapColors");
-	minimapRefreshRate = configHandler->GetInt("MiniMapRefreshRate");
-	renderToTexture = configHandler->GetBool("MiniMapRenderToTexture") && FBO::IsSupported();
+		cursorScale = configHandler->GetFloat("MiniMapCursorScale");
+		useIcons = configHandler->GetBool("MiniMapIcons");
+		drawCommands = configHandler->GetInt("MiniMapDrawCommands");
+		drawProjectiles = configHandler->GetBool("MiniMapDrawProjectiles");
+		simpleColors = configHandler->GetBool("SimpleMiniMapColors");
+		minimapRefreshRate = configHandler->GetInt("MiniMapRefreshRate");
+	}
 
 	UpdateGeometry();
 
-	circleLists = glGenLists(circleListsCount);
-	for (int cl = 0; cl < circleListsCount; cl++) {
-		glNewList(circleLists + cl, GL_COMPILE);
-		glBegin(GL_LINE_LOOP);
-		const int divs = (1 << (cl + 3));
-		for (int d = 0; d < divs; d++) {
-			const float rads = math::TWOPI * float(d) / float(divs);
-			glVertex3f(std::sin(rads), 0.0f, std::cos(rads));
-		}
-		glEnd();
-		glEndList();
-	}
 
 	// setup the buttons' texture and texture coordinates
-	buttonsTexture = 0;
 	CBitmap bitmap;
 	bool unfiltered = false;
+
 	if (bitmap.Load("bitmaps/minimapbuttons.png")) {
-		if ((bitmap.ysize == buttonSize) && (bitmap.xsize == (buttonSize * 4))) {
-			unfiltered = true;
-		}
-		glGenTextures(1, &buttonsTexture);
-		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-								 bitmap.xsize, bitmap.ysize, 0,
-								 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+		glGenTextures(1, &buttonsTextureID);
+		glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		if (unfiltered) {
+
+		if ((unfiltered = (bitmap.ysize == buttonSize && bitmap.xsize == (buttonSize * 4)))) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		} else {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		}
+
 		glBindTexture(GL_TEXTURE_2D, 0);
+
+		resizeBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
+		moveBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
+		maximizeBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
+		minimizeBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
+
+	} else {
+		bitmap.AllocDummy({255, 255, 255, 255});
+		buttonsTextureID = bitmap.CreateTexture();
+
+		resizeBox.color = {0.1f, 0.1f, 0.8f, 0.8f}; // blue
+		moveBox.color = {0.0f, 0.8f, 0.0f, 0.8f}; // green
+		maximizeBox.color = {0.8f, 0.8f, 0.0f, 0.8f}; // yellow
+		minimizeBox.color = {0.8f, 0.0f, 0.0f, 0.8f}; // red
 	}
-	const float xshift = unfiltered ? 0.0f : (0.5f / bitmap.xsize);
-	const float yshift = unfiltered ? 0.0f : (0.5f / bitmap.ysize);
-	    moveBox.xminTx = 0.50f + xshift;
-	    moveBox.xmaxTx = 0.75f - xshift;
-	  resizeBox.xminTx = 0.75f + xshift;
-	  resizeBox.xmaxTx = 1.00f - xshift;
-	minimizeBox.xminTx = 0.00f + xshift;
-	minimizeBox.xmaxTx = 0.25f - xshift;
-	maximizeBox.xminTx = 0.25f + xshift;
-	maximizeBox.xmaxTx = 0.50f - xshift;
-	    moveBox.yminTx = 1.00f - yshift;
-	  resizeBox.yminTx = 1.00f - yshift;
-	minimizeBox.yminTx = 1.00f - yshift;
-	maximizeBox.yminTx = 1.00f - yshift;
-	    moveBox.ymaxTx = 0.00f + yshift;
-	  resizeBox.ymaxTx = 0.00f + yshift;
-	minimizeBox.ymaxTx = 0.00f + yshift;
-	maximizeBox.ymaxTx = 0.00f + yshift;
+
+	{
+		const float xshift = unfiltered ? 0.0f : (0.5f / bitmap.xsize);
+		const float yshift = unfiltered ? 0.0f : (0.5f / bitmap.ysize);
+
+			moveBox.xminTx = 0.50f + xshift;
+			moveBox.xmaxTx = 0.75f - xshift;
+		  resizeBox.xminTx = 0.75f + xshift;
+		  resizeBox.xmaxTx = 1.00f - xshift;
+		minimizeBox.xminTx = 0.00f + xshift;
+		minimizeBox.xmaxTx = 0.25f - xshift;
+		maximizeBox.xminTx = 0.25f + xshift;
+		maximizeBox.xmaxTx = 0.50f - xshift;
+			moveBox.yminTx = 1.00f - yshift;
+		  resizeBox.yminTx = 1.00f - yshift;
+		minimizeBox.yminTx = 1.00f - yshift;
+		maximizeBox.yminTx = 1.00f - yshift;
+			moveBox.ymaxTx = 0.00f + yshift;
+		  resizeBox.ymaxTx = 0.00f + yshift;
+		minimizeBox.ymaxTx = 0.00f + yshift;
+		maximizeBox.ymaxTx = 0.00f + yshift;
+	}
 }
 
 
 CMiniMap::~CMiniMap()
 {
-	glDeleteLists(circleLists, circleListsCount);
-	glDeleteTextures(1, &buttonsTexture);
-	glDeleteTextures(1, &minimapTex);
+	glDeleteTextures(1, &buttonsTextureID);
+	glDeleteTextures(1, &minimapTextureID);
 }
 
 
@@ -219,21 +203,18 @@ void CMiniMap::ParseGeometry(const string& geostr)
 
 void CMiniMap::ToggleMaximized(bool _maxspect)
 {
-	if (maximized) {
-		curPos.x = oldPos.x;
-		curPos.y = oldPos.y;
-		curDim.x = oldDim.x;
-		curDim.y = oldDim.y;
-	} else {
-		oldPos.x = curPos.x;
-		oldPos.y = curPos.y;
-		oldDim.x = curDim.x;
-		oldDim.y = curDim.y;
+	if ((maximized = !maximized)) {
+		// stash current geometry
+		oldPos = curPos;
+		oldDim = curDim;
 		maxspect = _maxspect;
-		SetMaximizedGeometry();
+	} else {
+		// restore previous geometry
+		curPos = oldPos;
+		curDim = oldDim;
 	}
 
-	maximized = !maximized;
+	// needed for SetMaximizedGeometry
 	UpdateGeometry();
 }
 
@@ -245,21 +226,22 @@ void CMiniMap::SetMaximizedGeometry()
 		curDim.x = curDim.y;
 		curPos.x = (globalRendering->viewSizeX - globalRendering->viewSizeY) / 2;
 		curPos.y = 0;
-	} else {
-		const float mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
-		const float viewRatio = globalRendering->aspectRatio;
+		return;
+	}
 
-		if (mapRatio > viewRatio) {
-			curPos.x = 0;
-			curDim.x = globalRendering->viewSizeX;
-			curDim.y = globalRendering->viewSizeX / mapRatio;
-			curPos.y = (globalRendering->viewSizeY - curDim.y) / 2;
-		} else {
-			curPos.y = 0;
-			curDim.y = globalRendering->viewSizeY;
-			curDim.x = globalRendering->viewSizeY * mapRatio;
-			curPos.x = (globalRendering->viewSizeX - curDim.x) / 2;
-		}
+	const float  mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
+	const float viewRatio = globalRendering->aspectRatio;
+
+	if (mapRatio > viewRatio) {
+		curPos.x = 0;
+		curDim.x = globalRendering->viewSizeX;
+		curDim.y = globalRendering->viewSizeX / mapRatio;
+		curPos.y = (globalRendering->viewSizeY - curDim.y) / 2;
+	} else {
+		curPos.y = 0;
+		curDim.y = globalRendering->viewSizeY;
+		curDim.x = globalRendering->viewSizeY * mapRatio;
+		curPos.x = (globalRendering->viewSizeX - curDim.x) / 2;
 	}
 }
 
@@ -303,59 +285,75 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 	const std::string command = StringToLower(words[0]);
 
-	if (command == "fullproxy") {
-		fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
-	}
-	else if (command == "icons") {
-		useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
-	}
-	else if (command == "unitexp") {
-		if (words.size() >= 2)
-			unitExponent = atof(words[1].c_str());
+	switch (hashString(command.c_str())) {
+		case hashString("fullproxy"): {
+			fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
+		} break;
+		case hashString("icons"): {
+			useIcons = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !useIcons;
+		} break;
+		case hashString("unitexp"): {
+			if (words.size() >= 2)
+				unitExponent = atof(words[1].c_str());
 
-		UpdateGeometry();
-	}
-	else if (command == "unitsize") {
-		if (words.size() >= 2)
-			unitBaseSize = atof(words[1].c_str());
+			UpdateGeometry();
+		} break;
+		case hashString("unitsize"): {
+			if (words.size() >= 2)
+				unitBaseSize = atof(words[1].c_str());
 
-		unitBaseSize = std::max(0.0f, unitBaseSize);
-		UpdateGeometry();
-	}
-	else if (command == "drawcommands") {
-		if (words.size() >= 2) {
-			drawCommands = std::max(0, atoi(words[1].c_str()));
-		} else {
-			drawCommands = (drawCommands > 0) ? 0 : 1;
-		}
-	}
-	else if (command == "drawprojectiles") {
-		drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
-	}
-	else if (command == "simplecolors") {
-		simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
-	}
+			unitBaseSize = std::max(0.0f, unitBaseSize);
+			UpdateGeometry();
+		} break;
+		case hashString("drawcommands"): {
+			if (words.size() >= 2) {
+				drawCommands = std::max(0, atoi(words[1].c_str()));
+			} else {
+				drawCommands = (drawCommands > 0) ? 0 : 1;
+			}
+		} break;
+		case hashString("drawprojectiles"): {
+			drawProjectiles = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !drawProjectiles;
+		} break;
+		case hashString("simplecolors"): {
+			simpleColors = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !simpleColors;
+		} break;
 
-	// the following commands can not be used in dualscreen mode
-	if (globalRendering->dualScreenMode)
-		return;
+		// the following commands can not be used in dualscreen mode
+		case hashString("geo"):
+		case hashString("geometry"): {
+			if (globalRendering->dualScreenMode)
+				return;
+			if (words.size() < 2)
+				return;
 
-	if ((command == "geo") || (command == "geometry")) {
-		if (words.size() < 2)
-			return;
+			ParseGeometry(words[1]);
+			UpdateGeometry();
+		} break;
 
-		ParseGeometry(words[1]);
-		UpdateGeometry();
-	}
-	else if ((command == "min") || (command == "minimize")) {
-		minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
-	}
-	else if ((command == "max") ||
-	         (command == "maximize") || (command == "maxspect")) {
-		const bool newMax = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !maximized;
-		if (newMax != maximized) {
-			ToggleMaximized(command == "maxspect");
-		}
+		case hashString("min"):
+		case hashString("minimize"): {
+			if (globalRendering->dualScreenMode)
+				return;
+
+			minimized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !minimized;
+		} break;
+
+		case hashString("max"):
+		case hashString("maximize"):
+		case hashString("maxspect"): {
+			if (globalRendering->dualScreenMode)
+				return;
+
+			const bool   isMaximized = maximized;
+			const bool wantMaximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !isMaximized;
+
+			if (isMaximized != wantMaximized)
+				ToggleMaximized(command == "maxspect");
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
@@ -363,10 +361,8 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 void CMiniMap::SetGeometry(int px, int py, int sx, int sy)
 {
-	curPos.x = px;
-	curPos.y = py;
-	curDim.x = sx;
-	curDim.y = sy;
+	curPos = {px, py};
+	curDim = {sx, sy};
 
 	UpdateGeometry();
 }
@@ -376,6 +372,7 @@ void CMiniMap::UpdateGeometry()
 {
 	// keep the same distance to the top
 	curPos.y -= (lastWindowSizeY - globalRendering->viewSizeY);
+
 	if (globalRendering->dualScreenMode) {
 		curDim.x = globalRendering->viewSizeX;
 		curDim.y = globalRendering->viewSizeY;
@@ -394,6 +391,23 @@ void CMiniMap::UpdateGeometry()
 		curPos.x = Clamp(curPos.x, 0, globalRendering->viewSizeX - curDim.x);
 	}
 
+
+	{
+		// heightmap to minimap
+		viewMats[1].LoadIdentity();
+		viewMats[1].Translate(UpVector);
+		viewMats[1].Scale({1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f});
+
+		// engine draws minimap in 0..1 range, Lua uses 0..minimapSize{X,Y}
+		viewMats[2].LoadIdentity();
+		viewMats[2].Scale({1.0f / curDim.x, 1.0f / curDim.y, 1.0f});
+
+		projMats[0] = CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f);
+		projMats[1] = CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, globalRendering->supportClipSpaceControl * 1.0f);
+		projMats[2] = projMats[1];
+	}
+
+
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
 
@@ -402,7 +416,7 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(curDim.y);
 	const float mapx = float(mapDims.mapx * SQUARE_SIZE);
 	const float mapy = float(mapDims.mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
+	const float ref  = unitBaseSize / math::pow((200.0f * 200.0f), unitExponent);
 	const float dpr  = ref * math::pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
@@ -415,37 +429,49 @@ void CMiniMap::UpdateGeometry()
 	mapBox.ymin = globalRendering->viewSizeY - (curPos.y + curDim.y);
 	mapBox.ymax = mapBox.ymin + curDim.y - 1;
 
-	if (!maximized) {
-		// right to left
+	// FIXME:
+	//   also need to make sure we can leave maximized-mode when !maxspect (in
+	//   which case the buttons should be drawn on top of map, not outside it)
+	if (!maximized || maxspect) {
+		// work right (resizeBox) to left (minimizeBox)
 		resizeBox.xmax   = mapBox.xmax;
 		resizeBox.xmin   = resizeBox.xmax - (buttonSize - 1);
+
 		moveBox.xmax     = resizeBox.xmax   - buttonSize;
 		moveBox.xmin     = resizeBox.xmin   - buttonSize;
+
 		maximizeBox.xmax = moveBox.xmax     - buttonSize;
 		maximizeBox.xmin = moveBox.xmin     - buttonSize;
+
 		minimizeBox.xmax = maximizeBox.xmax - buttonSize;
 		minimizeBox.xmin = maximizeBox.xmin - buttonSize;
+
 		const int ymin = (mapBox.ymax + 1) + 3; // 3 for the white|black|white
 		const int ymax = ymin + (buttonSize - 1);
 		resizeBox.ymin = moveBox.ymin = maximizeBox.ymin = minimizeBox.ymin = ymin;
 		resizeBox.ymax = moveBox.ymax = maximizeBox.ymax = minimizeBox.ymax = ymax;
+
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = mapBox.xmax;
 		buttonBox.ymin = ymin - 3;
 		buttonBox.ymax = ymax;
 	} else {
-		// left to right
+		// work left to right
 		minimizeBox.xmin = mapBox.xmin;
 		minimizeBox.xmax = minimizeBox.xmin + (buttonSize - 1);
+
 		maximizeBox.xmin = minimizeBox.xmin + buttonSize;
 		maximizeBox.xmax = minimizeBox.xmax + buttonSize;
+
 		// dead buttons
-		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin = 0;
+		resizeBox.xmin = resizeBox.ymin = moveBox.xmin = moveBox.ymin =  0;
 		resizeBox.xmax = resizeBox.ymax = moveBox.xmax = moveBox.ymax = -1;
+
 		const int ymin = mapBox.ymin;
 		const int ymax = ymin + (buttonSize - 1);
 		maximizeBox.ymin = minimizeBox.ymin = ymin;
 		maximizeBox.ymax = minimizeBox.ymax = ymax;
+
 		buttonBox.xmin = minimizeBox.xmin;
 		buttonBox.xmax = maximizeBox.xmax;
 		buttonBox.ymin = ymin - 3;
@@ -478,13 +504,13 @@ void CMiniMap::SelectUnits(int x, int y)
 
 	if (fullProxy && (bp.movement > 4)) {
 		// use a selection box
-		const float3 newPos = GetMapPosition(x, y);
-		const float3 oldPos = GetMapPosition(bp.x, bp.y);
+		const float3 newMapPos = GetMapPosition(x, y);
+		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
 
-		const float xmin = std::min(oldPos.x, newPos.x);
-		const float xmax = std::max(oldPos.x, newPos.x);
-		const float zmin = std::min(oldPos.z, newPos.z);
-		const float zmax = std::max(oldPos.z, newPos.z);
+		const float xmin = std::min(oldMapPos.x, newMapPos.x);
+		const float xmax = std::max(oldMapPos.x, newMapPos.x);
+		const float zmin = std::min(oldMapPos.z, newMapPos.z);
+		const float zmax = std::max(oldMapPos.z, newMapPos.z);
 
 		const float4  planeRight(-RgtVector,  xmin);
 		const float4   planeLeft( RgtVector, -xmax);
@@ -793,10 +819,7 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 {
 	Notification n;
 	n.pos = pos;
-	n.color[0] = color.x;
-	n.color[1] = color.y;
-	n.color[2] = color.z;
-	n.color[3] = alpha;
+	n.color = {color, alpha};
 	n.creationTime = gu->gameTime;
 
 	notes.push_back(n);
@@ -805,45 +828,47 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 
 /******************************************************************************/
 
-void CMiniMap::DrawCircle(const float3& pos, float radius) const
+void CMiniMap::DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const
 {
+	#if 0
+	CMatrix44f vm = viewMats[0];
+
+	vm.Translate(pos);
+	vm.Scale({pos.w, 1.0f, pos.w});
+	#else
 	GL::PushMatrix();
 	GL::Translate(pos.x, pos.y, pos.z);
-	GL::Scale(radius, 1.0f, radius);
+	GL::Scale(pos.w, 1.0f, pos.w);
+	#endif
 
-	const float xPixels = radius * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
-	const float yPixels = radius * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+	const float xPixels = pos.w * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
+	const float yPixels = pos.w * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+
 	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
-	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
-	glCallList(circleLists + lodClamp);
+	const int divs = 1 << (Clamp(lod, 0, 6 - 1) + 3);
 
+	for (int d = 0; d < divs; d++) {
+		const float step = d * 1.0f / divs;
+		const float rads = math::TWOPI * step;
+
+		#if 0
+		va->AddVertexC(vm * float3{std::sin(rads), 0.0f, std::cos(rads)}, SColor(&color.x));
+		#else
+		va->AddVertexC({std::sin(rads), 0.0f, std::cos(rads)}, SColor(&color.x));
+		#endif
+	}
+
+	va->DrawArrayC(GL_LINE_LOOP);
+
+	#if 0
+	#else
 	GL::PopMatrix();
+	#endif
 }
 
-void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize) const
+void CMiniMap::DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int)
 {
-	float verts[] = {
-		pos.x + xsize, 0.0f, pos.z + zsize,
-		pos.x - xsize, 0.0f, pos.z + zsize,
-		pos.x - xsize, 0.0f, pos.z - zsize,
-		pos.x + xsize, 0.0f, pos.z - zsize
-	};
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_LINE_LOOP, 0, 4);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-
-void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
-{
-	minimap->DrawCircle(pos, radius);
-}
-
-
-void CMiniMap::DrawSurfaceSquare(const float3& pos, float xsize, float ysize)
-{
-	minimap->DrawSquare(pos, xsize, ysize);
+	minimap->DrawCircle(va, pos, color);
 }
 
 
@@ -871,15 +896,6 @@ void CMiniMap::LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
-void CMiniMap::ApplyConstraintsMatrix() const
-{
-	if (renderToTexture)
-		return;
-
-	EnterNormalizedCoors(false, false);
-}
-
-
 /******************************************************************************/
 
 void CMiniMap::Update()
@@ -889,9 +905,6 @@ void CMiniMap::Update()
 	tmpPos = curPos;
 
 	if (minimized || curDim.x == 0 || curDim.y == 0)
-		return;
-
-	if (!renderToTexture)
 		return;
 
 	static spring_time nextDrawScreen = spring_gettime();
@@ -909,38 +922,40 @@ void CMiniMap::Update()
 	nextDrawScreen = spring_gettime() + spring_msecs(1000.0f / refreshRate);
 
 	fbo.Bind();
-	if (minimapTexSize != curDim)
-		ResizeTextureCache();
-
+	ResizeTextureCache();
 	fbo.Bind();
 	UpdateTextureCache();
 
-	// no need, gets done in CGame
+	// gets done in CGame
 	// fbo.Unbind();
 }
 
 
 void CMiniMap::ResizeTextureCache()
 {
+	#ifdef HEADLESS
+	return;
+	#endif
+
+	if (minimapTexSize == curDim)
+		return;
+
 	minimapTexSize = curDim;
-	multisampledFBO = (fbo.GetMaxSamples() > 1);
 
-	if (multisampledFBO) {
+	if ((multisampledFBO = (fbo.GetMaxSamples() > 1))) {
 		// multisampled FBO we are render to
-		fbo.Detach(GL_COLOR_ATTACHMENT0_EXT); // delete old RBO
-		fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
-		//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
+		fbo.Detach(GL_COLOR_ATTACHMENT0); // delete old RBO
+		fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
+		//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
 
-		if (!fbo.CheckStatus("MINIMAP")) {
-			fbo.Detach(GL_COLOR_ATTACHMENT0_EXT);
-			multisampledFBO = false;
-		}
+		if (!(multisampledFBO = fbo.CheckStatus("MINIMAP")))
+			fbo.Detach(GL_COLOR_ATTACHMENT0);
 	}
 
-	glDeleteTextures(1, &minimapTex);
-	glGenTextures(1, &minimapTex);
+	glDeleteTextures(1, &minimapTextureID);
+	glGenTextures(1, &minimapTextureID);
 
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glBindTexture(GL_TEXTURE_2D, minimapTextureID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -950,23 +965,32 @@ void CMiniMap::ResizeTextureCache()
 	if (multisampledFBO) {
 		// resolve FBO with attached final texture target
 		fboResolve.Bind();
-		fboResolve.AttachTexture(minimapTex);
+		fboResolve.AttachTexture(minimapTextureID);
 
-		renderToTexture &= fboResolve.CheckStatus("MINIMAP-RESOLVE");
-		return;
+		if (fboResolve.CheckStatus("MINIMAP-RESOLVE"))
+			return;
+
+		throw opengl_error("[MiniMap::ResizeTextureCache] bad multisample framebuffer");
 	}
 
 	// directly render to texture without multisampling (fallback solution)
 	fbo.Bind();
-	fbo.AttachTexture(minimapTex);
+	fbo.AttachTexture(minimapTextureID);
 
-	renderToTexture &= fbo.CheckStatus("MINIMAP-RESOLVE");
+	if (fbo.CheckStatus("MINIMAP-RESOLVE"))
+		return;
+
+	throw opengl_error("[MiniMap::ResizeTextureCache] bad fallback framebuffer");
 }
 
 
 void CMiniMap::UpdateTextureCache()
 {
+	#if 0
+	viewMats[0].LoadIdentity();
+	#else
 	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
+	#endif
 
 	{
 		curPos = {0, 0};
@@ -975,7 +999,8 @@ void CMiniMap::UpdateTextureCache()
 			glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			DrawForReal(false, true);
+
+			DrawForReal(false, true, false);
 
 		curPos = tmpPos;
 	}
@@ -1014,34 +1039,42 @@ void CMiniMap::Draw()
 		glDisable(GL_TEXTURE_2D);
 		GL::MatrixMode(GL_MODELVIEW);
 
+		GL::RenderDataBufferC * rdBufferC  = GL::GetRenderBufferC ();
+		GL::RenderDataBufferTC* rdBufferTC = GL::GetRenderBufferTC();
+
 		if (minimized) {
-			DrawMinimizedButton();
+			DrawMinimizedButton(rdBufferC, rdBufferTC);
 			glPopAttrib();
 			glEnable(GL_TEXTURE_2D);
 			return;
 		}
 
 		// draw the frameborder
-		if (!globalRendering->dualScreenMode && !maximized)
-			DrawFrame();
+		if (!globalRendering->dualScreenMode) {
+			DrawFrame(rdBufferC);
+			DrawButtons(rdBufferC, rdBufferTC);
+		}
 
 		glPopAttrib();
 	}
 
-	// Draw Minimap itself
-	DrawForReal(true);
+	// draw minimap itself
+	DrawForReal(true, false, false);
 }
 
 
-void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
+
+void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall)
 {
 	if (minimized)
 		return;
 
 	glActiveTexture(GL_TEXTURE0);
 
-	if ((!updateTex) && RenderCachedTexture(useNormalizedCoors))
+	if (!updateTex) {
+		RenderCachedTexture(useNormalizedCoors);
 		return;
+	}
 
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -1055,8 +1088,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
 	if (useNormalizedCoors)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
-	setSurfaceCircleFunc(DrawSurfaceCircle);
-	setSurfaceSquareFunc(DrawSurfaceSquare);
+	setSurfaceCircleFuncVA(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
 
 	// clip everything outside of the minimap box
@@ -1102,8 +1134,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex)
 	glDisable(GL_CLIP_PLANE3);
 
 	cursorIcons.Enable(true);
-	setSurfaceCircleFunc(nullptr);
-	setSurfaceSquareFunc(nullptr);
+	setSurfaceCircleFuncVA(nullptr);
 }
 
 
@@ -1121,7 +1152,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glEnable(GL_CLIP_PLANE2);
 	glEnable(GL_CLIP_PLANE3);
 
-	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
+	// switch to top-down map/world coords (NB: z and y are swapped wrt real map/world coords)
 	GL::PushMatrix();
 	GL::Translate(0.0f, +1.0f, 0.0f);
 	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
@@ -1131,7 +1162,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+		cam->GetFrustumSides(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
 		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
 		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
@@ -1140,7 +1171,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		va->Initialize();
 		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
 
-		for (auto& fl: negSides) {
+		for (const auto& fl: negSides) {
 			if (fl.minz < fl.maxz) {
 				va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
 				va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
@@ -1162,8 +1193,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 	if (selecting && fullProxy && (bp.movement > 4)) {
-		const float3 oldPos = GetMapPosition(bp.x, bp.y);
-		const float3 newPos = GetMapPosition(mouse->lastx, mouse->lasty);
+		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
+		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
 		glColor4fv(cmdColors.mouseBox);
 		//glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
 		//            (GLenum)cmdColors.MouseBoxBlendDst());
@@ -1172,10 +1203,10 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertexQ2d0(oldPos.x, oldPos.z);
-			va->AddVertexQ2d0(newPos.x, oldPos.z);
-			va->AddVertexQ2d0(newPos.x, newPos.z);
-			va->AddVertexQ2d0(oldPos.x, newPos.z);
+			va->AddVertexQ2d0(oldMapPos.x, oldMapPos.z);
+			va->AddVertexQ2d0(newMapPos.x, oldMapPos.z);
+			va->AddVertexQ2d0(newMapPos.x, newMapPos.z);
+			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
 		va->DrawArray2d0(GL_LINE_LOOP);
 
 		glLineWidth(1.0f);
@@ -1195,166 +1226,188 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 }
 
 
-void CMiniMap::DrawFrame()
-{
-	// outline
-	glLineWidth(1.0f);
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(curPos.x            - 2 + 0.5f) * globalRendering->pixelX, float(curPos.y            - 2 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x            - 2 + 0.5f) * globalRendering->pixelX, float(curPos.y + curDim.y + 2 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x + curDim.x + 2 - 0.5f) * globalRendering->pixelX, float(curPos.y + curDim.y + 2 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x + curDim.x + 2 - 0.5f) * globalRendering->pixelX, float(curPos.y            - 2 + 0.5f) * globalRendering->pixelY);
-	glEnd();
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(curPos.x            - 1 + 0.5f) * globalRendering->pixelX, float(curPos.y            - 1 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x            - 1 + 0.5f) * globalRendering->pixelX, float(curPos.y + curDim.y + 1 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x + curDim.x + 1 - 0.5f) * globalRendering->pixelX, float(curPos.y + curDim.y + 1 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(curPos.x + curDim.x + 1 - 0.5f) * globalRendering->pixelX, float(curPos.y            - 1 + 0.5f) * globalRendering->pixelY);
-	glEnd();
 
-	DrawButtons();
-}
-
-
-void CMiniMap::DrawMinimizedButton()
+void CMiniMap::DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC)
 {
 	const int bs = buttonSize + 0;
 
-	float xmin = (globalRendering->viewPosX + 1) * globalRendering->pixelX;
-	float xmax = (globalRendering->viewPosX + 1 + bs) * globalRendering->pixelX;
-	float ymin = 1.0f - (1 + bs) * globalRendering->pixelY;
-	float ymax = 1.0f - (1) * globalRendering->pixelY;
+	const float px = globalRendering->pixelX;
+	const float py = globalRendering->pixelY;
 
-	if (!buttonsTexture) {
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-		glRectf(xmin, ymin, xmax, ymax);
-	} else {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		const IntBox& mb = minimizeBox;
-		glBegin(GL_QUADS);
-			glTexCoord2f(mb.xminTx, mb.yminTx); glVertex2f(xmin, ymin);
-			glTexCoord2f(mb.xmaxTx, mb.yminTx); glVertex2f(xmax, ymin);
-			glTexCoord2f(mb.xmaxTx, mb.ymaxTx); glVertex2f(xmax, ymax);
-			glTexCoord2f(mb.xminTx, mb.ymaxTx); glVertex2f(xmin, ymax);
-		glEnd();
-		glDisable(GL_TEXTURE_2D);
+	const float xmin = (globalRendering->viewPosX + 1     ) * px;
+	const float xmax = (globalRendering->viewPosX + 1 + bs) * px;
+	const float ymin = 1.0f - (1 + bs) * py;
+	const float ymax = 1.0f - (1     ) * py;
+
+	{
+		glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
+
+		rdBufferTC->GetShader()->Enable();
+		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+		rdBufferTC->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferTC->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferTC->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferTC->SafeAppend({{xmin, ymax, 0.0f}, minimizeBox.xminTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferTC->Submit(GL_QUADS);
+		rdBufferTC->GetShader()->Disable();
 	}
+	{
+		rdBufferC->GetShader()->Enable();
 
-	// highlight
-	if ((mouse->lastx+1 <= buttonSize) && (mouse->lasty+1 <= buttonSize)) {
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-		glRectf(xmin, ymin, xmax, ymax);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		// highlight
+		if ((mouse->lastx + 1 <= buttonSize) && (mouse->lasty + 1 <= buttonSize)) {
+			// glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			rdBufferC->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+			rdBufferC->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+			rdBufferC->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+			rdBufferC->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+			rdBufferC->Submit(GL_QUADS);
+			// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		// outline
+		rdBufferC->SafeAppend({{xmin - 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{xmin - 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{xmax + 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{xmax + 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->Submit(GL_LINE_LOOP);
+		rdBufferC->GetShader()->Disable();
 	}
+}
 
+
+
+void CMiniMap::IntBox::DrawBox(GL::RenderDataBufferC* rdBufferC) const
+{
+	const float vsx = globalRendering->viewSizeX;
+	const float vsy = globalRendering->viewSizeY;
+
+	const float tlx =         (xmin      / vsx);
+	const float tly = 1.0f -  (ymin      / vsy);
+	const float brx =        ((xmax + 1) / vsx);
+	const float bry = 1.0f - ((ymax + 1) / vsy);
+
+	rdBufferC->SafeAppend({{tlx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	rdBufferC->SafeAppend({{brx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	rdBufferC->SafeAppend({{brx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	rdBufferC->SafeAppend({{tlx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+}
+
+void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const
+{
+	const float px = globalRendering->pixelX;
+	const float py = globalRendering->pixelY;
+
+	rdBufferTC->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color});
+	rdBufferTC->SafeAppend({{(xmax + 1) * px, 1.0f - (ymin    ) * py, 0.0f}, xmaxTx, yminTx, color});
+	rdBufferTC->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color});
+	rdBufferTC->SafeAppend({{(xmin    ) * px, 1.0f - (ymax + 1) * py, 0.0f}, xminTx, ymaxTx, color});
+}
+
+
+void CMiniMap::DrawFrame(GL::RenderDataBufferC* rdBufferC)
+{
 	// outline
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_LINE_LOOP);
-		glVertex2f(xmin - 0.5f * globalRendering->pixelX, ymax + 0.5f * globalRendering->pixelY);
-		glVertex2f(xmin - 0.5f * globalRendering->pixelX, ymin - 0.5f * globalRendering->pixelY);
-		glVertex2f(xmax + 0.5f * globalRendering->pixelX, ymin - 0.5f * globalRendering->pixelY);
-		glVertex2f(xmax + 0.5f * globalRendering->pixelX, ymax + 0.5f * globalRendering->pixelY);
-	glEnd();
+	glLineWidth(1.0f);
+
+	const float px = globalRendering->pixelX;
+	const float py = globalRendering->pixelY;
+
+	rdBufferC->GetShader()->Enable();
+	rdBufferC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	rdBufferC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+
+	rdBufferC->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	rdBufferC->Submit(GL_LINE_LOOP);
+
+	rdBufferC->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	rdBufferC->Submit(GL_LINE_LOOP);
+
+	rdBufferC->GetShader()->Disable();
 }
 
-
-void CMiniMap::IntBox::DrawBox() const
-{
-	glRectf(float(xmin)/globalRendering->viewSizeX, 1.0f - float(ymin)/globalRendering->viewSizeY, float(xmax+1)/globalRendering->viewSizeX, 1.0f - float(ymax+1)/globalRendering->viewSizeY);
-}
-
-
-void CMiniMap::IntBox::DrawTextureBox() const
-{
-	glBegin(GL_QUADS);
-		glTexCoord2f(xminTx, yminTx); glVertex2f(float(xmin) * globalRendering->pixelX, 1.0f - float(ymin) * globalRendering->pixelY);
-		glTexCoord2f(xmaxTx, yminTx); glVertex2f(float(xmax+1) * globalRendering->pixelX, 1.0f - float(ymin) * globalRendering->pixelY);
-		glTexCoord2f(xmaxTx, ymaxTx); glVertex2f(float(xmax+1) * globalRendering->pixelX, 1.0f - float(ymax+1) * globalRendering->pixelY);
-		glTexCoord2f(xminTx, ymaxTx); glVertex2f(float(xmin) * globalRendering->pixelX, 1.0f - float(ymax+1) * globalRendering->pixelY);
-	glEnd();
-}
-
-
-void CMiniMap::DrawButtons()
+void CMiniMap::DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC)
 {
 	const int x = mouse->lastx;
 	const int y = mouse->lasty;
 
 	// update the showButtons state
 	if (!showButtons) {
-		if (mapBox.Inside(x, y) && (buttonSize > 0) && !globalRendering->dualScreenMode) {
-			showButtons = true;
-		} else {
+		if (!(showButtons = (mapBox.Inside(x, y) && (buttonSize > 0) && !globalRendering->dualScreenMode)))
 			return;
-		}
-	}	else if (!mouseMove && !mouseResize &&
-	           !mapBox.Inside(x, y) && !buttonBox.Inside(x, y)) {
+
+	} else if (!mouseMove && !mouseResize && !mapBox.Inside(x, y) && !buttonBox.Inside(x, y)) {
 		showButtons = false;
 		return;
 	}
 
-	if (buttonsTexture) {
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	{
+		glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
 
-		resizeBox.DrawTextureBox();
-		moveBox.DrawTextureBox();
-		maximizeBox.DrawTextureBox();
-		minimizeBox.DrawTextureBox();
+		rdBufferTC->GetShader()->Enable();
+		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
 
-		glDisable(GL_TEXTURE_2D);
-	} else {
-		glColor4f(0.1f, 0.1f, 0.8f, 0.8f); resizeBox.DrawBox();   // blue
-		glColor4f(0.0f, 0.8f, 0.0f, 0.8f); moveBox.DrawBox();     // green
-		glColor4f(0.8f, 0.8f, 0.0f, 0.8f); maximizeBox.DrawBox(); // yellow
-		glColor4f(0.8f, 0.0f, 0.0f, 0.8f); minimizeBox.DrawBox(); // red
+		resizeBox.DrawTextureBox(rdBufferTC);
+		moveBox.DrawTextureBox(rdBufferTC);
+		maximizeBox.DrawTextureBox(rdBufferTC);
+		minimizeBox.DrawTextureBox(rdBufferTC);
+
+		rdBufferTC->Submit(GL_QUADS);
+		rdBufferTC->GetShader()->Disable();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	// highlight
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-	if (mouseResize || (!mouseMove && resizeBox.Inside(x, y))) {
-		if (!buttonsTexture) { glColor4f(0.3f, 0.4f, 1.0f, 0.9f); }
-		resizeBox.DrawBox();
-	}
-	else if (mouseMove || (!mouseResize && moveBox.Inside(x, y))) {
-		if (!buttonsTexture) { glColor4f(1.0f, 1.0f, 1.0f, 0.3f); }
-		moveBox.DrawBox();
-	}
-	else if (!mouseMove && !mouseResize) {
-		if (minimizeBox.Inside(x, y)) {
-			if (!buttonsTexture) { glColor4f(1.0f, 0.2f, 0.2f, 0.6f); }
-			minimizeBox.DrawBox();
-		} else if (maximizeBox.Inside(x, y)) {
-			if (!buttonsTexture) { glColor4f(1.0f, 1.0f, 1.0f, 0.3f); }
-			maximizeBox.DrawBox();
+
+	// matrices are already set in DrawFrame
+	rdBufferC->GetShader()->Enable();
+
+	{
+		// highlight
+		// glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		if (mouseResize || (!mouseMove && resizeBox.Inside(x, y))) {
+			resizeBox.DrawBox(rdBufferC);
+		} else if (mouseMove || (!mouseResize && moveBox.Inside(x, y))) {
+			moveBox.DrawBox(rdBufferC);
+		} else if (!mouseMove && !mouseResize) {
+			if (minimizeBox.Inside(x, y)) {
+				minimizeBox.DrawBox(rdBufferC);
+			} else if (maximizeBox.Inside(x, y)) {
+				maximizeBox.DrawBox(rdBufferC);
+			}
 		}
+
+		rdBufferC->Submit(GL_QUADS);
+		// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// outline the button box
-	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * globalRendering->pixelY);
-	glEnd();
+	{
+		const float px = globalRendering->pixelX;
+		const float py = globalRendering->pixelY;
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * globalRendering->pixelY);
-		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * globalRendering->pixelY);
-	glEnd();
+		// outline the button box
+		rdBufferC->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		rdBufferC->Submit(GL_LINE_LOOP);
+
+		rdBufferC->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferC->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		rdBufferC->Submit(GL_LINE_LOOP);
+	}
+
+	rdBufferC->GetShader()->Disable();
 }
 
 
@@ -1374,7 +1427,7 @@ void CMiniMap::DrawNotes()
 			continue;
 		}
 
-		SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
+		SColor color(&ni->color.x);
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
@@ -1409,11 +1462,8 @@ void CMiniMap::DrawNotes()
 
 bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 {
-	if (!renderToTexture)
-		return false;
-
 	glPushAttrib(GL_COLOR_BUFFER_BIT);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glBindTexture(GL_TEXTURE_2D, minimapTextureID);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
@@ -1490,35 +1540,29 @@ void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+	const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 
 	for (const int unitID: selUnits) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		// LOS Ranges
-		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, unit->radarRadius);
-		}
-		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, unit->sonarRadius);
-		}
-		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, unit->jammerRadius);
-		}
+		if (unit->radarRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->radarRadius * 1.0f}, cmdColors.rangeRadar);
+
+		if (unit->sonarRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->sonarRadius * 1.0f}, cmdColors.rangeSonar);
+
+		if (unit->jammerRadius && !unit->beingBuilt && unit->activated)
+			DrawCircle(GetVertexArray(), {unit->pos, unit->jammerRadius * 1.0f}, cmdColors.rangeJammer);
 
 		// Interceptor Ranges
 		for (const CWeapon* w: unit->weapons) {
-			auto& wd = *w->weaponDef;
-			if ((w->range > 300) && wd.interceptor) {
-				if (w->numStockpiled || !wd.stockpile) {
-					glColor3fv(cmdColors.rangeInterceptorOn);
-				} else {
-					glColor3fv(cmdColors.rangeInterceptorOff);
-				}
-				DrawCircle(unit->pos, wd.coverageRange);
-			}
+			const WeaponDef& wd = *w->weaponDef;
+
+			if ((w->range <= 300) || !wd.interceptor)
+				continue;
+
+			DrawCircle(GetVertexArray(), {unit->pos, wd.coverageRange}, colors[w->numStockpiled || !wd.stockpile]);
 		}
 	}
 }
@@ -1540,12 +1584,15 @@ void CMiniMap::DrawWorldStuff() const
 		// draw the queued commands
 		commandDrawer->DrawLuaQueuedUnitSetCommands();
 
+		#if 0
+		// TODO: pass the minimap transform (calls into CommandDrawer)
 		// NOTE: this needlessly adds to the CursorIcons list, but at least
 		//       they are not drawn  (because the input receivers are drawn
 		//       after the command queues)
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
 			selectedUnitsHandler.DrawCommands();
 		}
+		#endif
 	}
 
 

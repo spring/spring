@@ -52,21 +52,36 @@ static size_t GetNumThreads() {
 
 
 
-CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
-	: IPathFinder(BLOCK_SIZE)
-	, BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1)
-	, nextOffsetMessageIdx(0)
-	, nextCostMessageIdx(0)
-	, pathChecksum(0)
-	, fileHashCode(CalcHash(__func__))
-	, offsetBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
-	, costBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
-	, parentPathFinder(pf)
-	, nextPathEstimator(nullptr)
-	, blockUpdatePenalty(0)
+void CPathEstimator::Init(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
 {
-	vertexCosts.resize(moveDefHandler.GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
-	maxSpeedMods.resize(moveDefHandler.GetNumMoveDefs(), 0.001f);
+	IPathFinder::Init(BLOCK_SIZE);
+
+	{
+		BLOCKS_TO_UPDATE = SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1;
+
+		blockUpdatePenalty = 0;
+		nextOffsetMessageIdx = 0;
+		nextCostMessageIdx = 0;
+
+		pathChecksum = 0;
+		fileHashCode = CalcHash(__func__);
+
+		offsetBlockNum = {nbrOfBlocks.x * nbrOfBlocks.y};
+		costBlockNum = {nbrOfBlocks.x * nbrOfBlocks.y};
+
+		parentPathFinder = pf;
+		nextPathEstimator = nullptr;
+	}
+	{
+		vertexCosts.clear();
+		vertexCosts.resize(moveDefHandler.GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
+		maxSpeedMods.clear();
+		maxSpeedMods.resize(moveDefHandler.GetNumMoveDefs(), 0.001f);
+
+		updatedBlocks.clear();
+		consumedBlocks.clear();
+		offsetBlocksSortedByCost.clear();
+	}
 
 	CPathEstimator*  childPE = this;
 	CPathEstimator* parentPE = dynamic_cast<CPathEstimator*>(pf);
@@ -117,7 +132,7 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 }
 
 
-CPathEstimator::~CPathEstimator()
+void CPathEstimator::Kill()
 {
 	pcMemPool.free(pathCache[0]);
 	pcMemPool.free(pathCache[1]);
@@ -129,12 +144,15 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	const unsigned int numThreads = GetNumThreads();
 
 	if (threads.size() != numThreads) {
+		threads.clear();
 		threads.resize(numThreads);
+		pathFinders.clear();
 		pathFinders.resize(numThreads);
 	}
 
 	// always use PF for initialization, later PE maybe used
-	pathFinders[0] = pfMemPool.alloc<CPathFinder>();
+	// TODO: pooling these will not help much, need to reuse
+	pathFinders[0] = pfMemPool.alloc<CPathFinder>(true);
 
 	// Not much point in multithreading these...
 	InitBlocks();
@@ -151,8 +169,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		const char* fmtStrs[4] = {
 			"[%s] creating PE%u cache with %u PF threads (%u MB)",
 			"[%s] creating PE%u cache with %u PF thread (%u MB)",
-			"[%s] writing PE%u %s-cache to file",
-			"[%s] written PE%u %s-cache to file",
+			"[%s] writing PE%u cache to file %s",
+			"[%s] written PE%u cache to file %s",
 		};
 
 		{
@@ -165,7 +183,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		spring::barrier pathBarrier(numExtraThreads + 1);
 
 		for (unsigned int i = 1; i <= numExtraThreads; i++) {
-			pathFinders[i] = pfMemPool.alloc<CPathFinder>();
+			pathFinders[i] = pfMemPool.alloc<CPathFinder>(true);
 			threads[i] = std::move(spring::thread(&CPathEstimator::CalcOffsetsAndPathCosts, this, i, &pathBarrier));
 		}
 

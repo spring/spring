@@ -58,7 +58,7 @@ GLAPI void APIENTRY glUseProgram(GLuint program) {}
 GLAPI GLuint APIENTRY glCreateProgram() { return 0; }
 //glCreateProgram = (PFNGLCREATEPROGRAMPROC) NULL;
 GLAPI void APIENTRY glDeleteProgram(GLuint program) {}
-GLAPI void APIENTRY glProgramParameteriEXT(GLuint program, GLenum pname, GLint value) {}
+GLAPI void APIENTRY glProgramParameteri(GLuint program, GLenum pname, GLint value) {}
 GLAPI void APIENTRY glLinkProgram(GLuint program) {}
 GLAPI void APIENTRY glGetProgramiv(GLuint program, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glGetProgramInfoLog(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog) {}

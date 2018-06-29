@@ -183,14 +183,14 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 }
 
 
-void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
+void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 {
 	if (gu->spectating && !gs->godMode)
 		return;
 	if (selectedUnits.empty())
 		return;
 
-	const int cmd_id = c.GetID();
+	const int cmdID = c.GetID();
 
 	if (fromUser) { // add some statistics
 		playerHandler.Player(gu->myPlayerNum)->currentStats.numCommands++;
@@ -201,7 +201,7 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 		}
 	}
 
-	if (cmd_id == CMD_GROUPCLEAR) {
+	if (cmdID == CMD_GROUPCLEAR) {
 		for (const int unitID: selectedUnits) {
 			CUnit* u = unitHandler.GetUnit(unitID);
 
@@ -213,12 +213,12 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 
-	if (cmd_id == CMD_GROUPSELECT) {
+	if (cmdID == CMD_GROUPSELECT) {
 		SelectGroup(unitHandler.GetUnit(*selectedUnits.begin())->group->id);
 		return;
 	}
 
-	if (cmd_id == CMD_GROUPADD) {
+	if (cmdID == CMD_GROUPADD) {
 		CGroup* group = nullptr;
 
 		for (const int unitID: selectedUnits) {
@@ -252,22 +252,22 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 
-	if (cmd_id == CMD_TIMEWAIT) {
+	if (cmdID == CMD_TIMEWAIT) {
 		waitCommandsAI.AddTimeWait(c);
 		return;
 	}
 
-	if (cmd_id == CMD_DEATHWAIT) {
+	if (cmdID == CMD_DEATHWAIT) {
 		waitCommandsAI.AddDeathWait(c);
 		return;
 	}
 
-	if (cmd_id == CMD_SQUADWAIT) {
+	if (cmdID == CMD_SQUADWAIT) {
 		waitCommandsAI.AddSquadWait(c);
 		return;
 	}
 
-	if (cmd_id == CMD_GATHERWAIT) {
+	if (cmdID == CMD_GATHERWAIT) {
 		waitCommandsAI.AddGatherWait(c);
 		return;
 	}
@@ -719,13 +719,13 @@ void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 	netSelected[playerId].clear();
 }
 
-void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
+void CSelectedUnitsHandler::AINetOrder(int unitID, int playerID, const Command& c)
 {
-	CUnit* unit = unitHandler.GetUnit(unitid);
+	CUnit* unit = unitHandler.GetUnit(unitID);
 	if (unit == nullptr)
 		return;
 
-	const CPlayer* player = playerHandler.Player(playerId);
+	const CPlayer* player = playerHandler.Player(playerID);
 	if (player == nullptr)
 		return;
 
@@ -735,11 +735,14 @@ void CSelectedUnitsHandler::AiOrder(int unitid, const Command &c, int playerId)
 		// due to e.g. LuaRules.
 
 		//LOG_L(L_WARNING, "Invalid order from player %i for (unit %i %s, team %i)",
-		//		playerId, unitid, unit->unitDefName.c_str(), unit->team);
+		//		playerID, unitID, unit->unitDefName.c_str(), unit->team);
 		return;
 	}
 
-	unit->commandAI->GiveCommand(c, false);
+	// always pulled from net, synced command by definition
+	// (fromSynced determines whether CMD_UNLOAD_UNITS uses
+	// synced or unsynced randomized position sampling, etc)
+	unit->commandAI->GiveCommand(c, true);
 }
 
 
@@ -954,7 +957,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 		s += CTooltipConsole::MakeUnitStatsString(stats);
 
-		std::string ctrlName = "";
+		const char* ctrlName = "";
 
 		if (ctrlTeam == MULTI_TEAM) {
 			ctrlName = "(Multiple teams)";
@@ -962,7 +965,8 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			ctrlName = teamHandler.Team(ctrlTeam)->GetControllerName();
 		}
 
-		s += "\n\xff\xff\xff\xff" + ctrlName;
+		s += "\n\xff\xff\xff\xff";
+		s += ctrlName;
 		return s;
 	}
 }

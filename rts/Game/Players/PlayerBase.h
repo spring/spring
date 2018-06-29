@@ -3,11 +3,11 @@
 #ifndef PLAYER_BASE_H
 #define PLAYER_BASE_H
 
+#include <string>
+
 #include "Game/Players/TeamController.h"
 #include "System/creg/creg_cond.h"
-
-#include <string>
-#include <map>
+#include "System/UnorderedMap.hpp"
 
 /**
  * @brief Acts as a base class for the various player-representing classes
@@ -17,23 +17,18 @@ class PlayerBase : public TeamController
 	CR_DECLARE(PlayerBase)
 
 public:
-	typedef std::map<std::string, std::string> customOpts;
+	typedef spring::unordered_map<std::string, std::string> customOpts;
 
-	/**
-	 * @brief Constructor assigning standard values
-	 */
 	PlayerBase();
 	virtual ~PlayerBase() {}
 
 	void SetValue(const std::string& key, const std::string& value);
-	const customOpts& GetAllValues() const {
-		return customValues;
-	}
+	const customOpts& GetAllValues() const { return customValues; }
 
 	const char* GetType(const bool capital = true) const {
-		if (capital) {
+		if (capital)
 			return spectator ? "Spectator" : "Player";
-		}
+
 		return spectator ? "spectator" : "player";
 	}
 
@@ -50,13 +45,13 @@ public:
 	const std::string& GetCountryCode() const { return countryCode; }
 
 // protected:
-	int rank;
-	float cpuUsage;
+	int rank = -1;
+	float cpuUsage = 0.0f;
 
-	bool spectator;
-	bool isFromDemo;
-	bool readyToStart;
-	bool desynced;
+	bool spectator = false;
+	bool isFromDemo = false;
+	bool readyToStart = false;
+	bool desynced = false;
 
 	std::string countryCode;
 

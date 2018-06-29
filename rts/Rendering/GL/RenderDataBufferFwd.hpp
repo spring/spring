@@ -5,6 +5,9 @@
 
 #include "VertexArrayTypes.h"
 
+namespace Shader {
+	struct IProgramObject;
+};
 namespace GL {
 	struct RenderDataBuffer;
 	template<typename T> struct TRenderDataBuffer;

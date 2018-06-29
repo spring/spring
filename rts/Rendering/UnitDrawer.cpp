@@ -388,7 +388,7 @@ void CUnitDrawer::Update()
 		// use the height at the current camera position
 		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
-		const float groundHeight = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
+		const float groundHeight = readMap->GetCurrAvgHeight();
 		const float overGround = camPos.y - groundHeight;
 
 		sqCamDistToGroundForIcons = overGround * overGround;
@@ -1103,23 +1103,6 @@ void CUnitDrawer::DrawIndividualLuaTrans(const CUnit* unit, bool noLuaCall)
 
 
 
-static void DIDResetPrevProjection(bool toScreen)
-{
-	if (!toScreen)
-		return;
-
-	GL::MatrixMode(GL_PROJECTION);
-	GL::PopMatrix();
-	GL::PushMatrix();
-}
-
-static void DIDResetPrevModelView()
-{
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::PopMatrix();
-	GL::PushMatrix();
-}
-
 static bool DIDCheckMatrixMode(int wantedMode)
 {
 	#if 1
@@ -1155,17 +1138,13 @@ void CUnitDrawer::DrawObjectDefOpaque(const SolidObjectDef* objectDef, int teamI
 	// NOTE:
 	//   unlike DrawIndividual(...) the model transform is
 	//   always provided by Lua, not taken from the object
-	//   (which does not exist here) so we must restore it
-	//   (by undoing the UnitDrawerState MVP setup)
-	//
-	//   assumes the Lua transform includes a LoadIdentity!
-	DIDResetPrevProjection(toScreen);
-	DIDResetPrevModelView();
-
-	// use the matrix stack to supply a transform
+	//   which does not exist here
+	//   if toScreen, caller must additionally account for
+	//   LuaOpenGL::SetupScreenMatrices
 	state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 	state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	model->Draw();
+
 	unitDrawer->PopIndividualOpaqueState(model, teamID, false);
 }
 
@@ -1188,17 +1167,28 @@ void CUnitDrawer::DrawObjectDefAlpha(const SolidObjectDef* objectDef, int teamID
 
 	unitDrawer->PushIndividualAlphaState(model, teamID, false);
 
-	DIDResetPrevProjection(toScreen);
-	DIDResetPrevModelView();
-
 	// use the matrix stack to supply a transform
 	state = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 	state->SetMatrices(GL::GetMatrix(), model->GetPieceMatrices());
 	model->Draw();
+
 	unitDrawer->PopIndividualAlphaState(model, teamID, false);
 }
 
 
+
+void CUnitDrawer::DrawStaticModelRaw(const S3DModel* mdl, const IUnitDrawerState* uds, const float3& pos, int buildFacing)
+{
+	if (!camera->InView(pos, mdl->GetDrawRadius()))
+		return;
+
+	CMatrix44f mat;
+	mat.Translate(pos);
+	mat.RotateY(-(buildFacing * 90.0f) * math::DEG_TO_RAD);
+
+	uds->SetMatrices(mat, mdl->GetPieceMatrices());
+	mdl->Draw();
+}
 
 
 
@@ -1486,12 +1476,16 @@ void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 // TODO: make this a lua callin!
 bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild)
 {
+	if (!camera->InView(buildInfo.pos))
+		return false;
+
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	const int x1 = buildInfo.pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
 	const int z1 = buildInfo.pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
 	const int x2 =              x1 + (buildInfo.GetXSize() *        SQUARE_SIZE);
 	const int z2 =              z1 + (buildInfo.GetZSize() *        SQUARE_SIZE);
+
 	const float h = CGameHelper::GetBuildHeight(buildInfo.pos, buildInfo.def, false);
 
 	if (testCanBuild) {

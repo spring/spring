@@ -73,31 +73,34 @@ void DefaultPathDrawer::DrawAll() const {
 
 void DefaultPathDrawer::DrawInMiniMap()
 {
-	const CPathEstimator* pe = pm->medResPE;
-
 	if (!IsEnabled() || (!gs->cheatEnabled && !gu->spectatingFullView))
 		return;
 
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f,  true, true);
-	minimap->ApplyConstraintsMatrix();
+	const CPathEstimator* pe = pm->medResPE;
 
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::Translate(UpVector);
-	GL::Scale(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = rdbc->GetShader();
 
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
+	const CMatrix44f& viewMat = minimap->GetViewMat(1);
+	const CMatrix44f& projMat = minimap->GetProjMat(1);
 
-	for (const int2& sb: pe->updatedBlocks) {
-		const int blockIdxX = sb.x * pe->GetBlockSize();
-		const int blockIdxY = sb.y * pe->GetBlockSize();
-		glRectf(blockIdxX, blockIdxY, blockIdxX + pe->GetBlockSize(), blockIdxY + pe->GetBlockSize());
+	prog->Enable();
+	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+
+	const int blkSize = pe->GetBlockSize();
+
+	for (const int2& blkIdx: pe->updatedBlocks) {
+		const float2 blkPos = {blkIdx.x * blkSize * 1.0f, blkIdx.y * blkSize * 1.0f};
+
+		rdbc->SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
+		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
+		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
+		rdbc->SafeAppend({{blkPos.x                 , blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
 	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glEnable(GL_TEXTURE_2D);
-
-	glSpringMatrix2dResetPV(true, true);
+	rdbc->Submit(GL_QUADS);
+	prog->Disable();
 }
 
 
@@ -288,7 +291,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 void DefaultPathDrawer::Draw() const {
-	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3);
 
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
@@ -320,30 +322,26 @@ void DefaultPathDrawer::Draw() const {
 		rdbc->Submit(GL_LINE_STRIP);
 	}
 
-	prog->Disable();
-
 	// draw path definitions (goal, radius)
 	for (const auto& p: pm->pathMap) {
-		Draw(&p.second.peDef);
+		Draw(&p.second.peDef, rdbc);
 	}
+
+	rdbc->Submit(GL_LINES);
+	prog->Disable();
 
 	glLineWidth(1);
 }
 
 
 
-void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
-	if (pfd->synced) {
-		glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
-	} else {
-		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
-	}
-	glSurfaceCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), 20);
+void DefaultPathDrawer::Draw(const CPathFinderDef* pfd, GL::RenderDataBufferC* rdbc) const {
+	constexpr float4 colors[] = {{0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}};
+
+	glSurfaceCircleRB(rdbc, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
-	glDisable(GL_TEXTURE_2D);
-
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
@@ -386,8 +384,6 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
-
-	glDisable(GL_TEXTURE_2D);
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
 	const int overlayPeriod = GAME_SPEED * 5;

@@ -8,7 +8,7 @@
 #include "GuiHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
@@ -147,19 +147,37 @@ void CCursorIcons::DrawTexts()
 void CCursorIcons::DrawBuilds()
 {
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
 	glEnable(GL_DEPTH_TEST);
-	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 
-	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
-		GL::PushMatrix();
-		GL::LoadIdentity();
-		GL::Translate(it->pos);
-		GL::RotateY(it->facing * 90.0f);
+	if (!buildIcons.empty()) {
+		const auto setupStateFunc = [&](const BuildIcon& bi, const S3DModel* mdl) {
+			unitDrawer->SetupAlphaDrawing(false, true);
+			unitDrawer->PushModelRenderState(mdl);
+			unitDrawer->SetTeamColour(bi.team, float2(0.25f, 1.0f));
+			return (unitDrawer->GetDrawerState(DRAWER_STATE_SEL));
+		};
+		const auto resetStateFunc = [&](const BuildIcon&, const S3DModel* mdl) {
+			unitDrawer->PopModelRenderState(mdl);
+			unitDrawer->ResetAlphaDrawing(false);
+		};
+		const auto nextModelFunc = [&](const BuildIcon& bi, const S3DModel* mdl) -> const S3DModel* {
+			const UnitDef* def = unitDefHandler->GetUnitDefByID(-bi.cmd);
+			const S3DModel* nxt = def->LoadModel();
 
-		CUnitDrawer::DrawObjectDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
+			if (mdl == nullptr || mdl == nxt)
+				return nxt;
 
-		GL::PopMatrix();
+			// icons are already sorted by type and team
+			unitDrawer->PopModelRenderState(mdl);
+			unitDrawer->PushModelRenderState(nxt);
+			unitDrawer->SetTeamColour(bi.team, float2(0.25f, 1.0f));
+			return nxt;
+		};
+		const auto drawModelFunc = [&](const BuildIcon& bi, const S3DModel* mdl, const IUnitDrawerState* uds) {
+			unitDrawer->DrawStaticModelRaw(mdl, uds, bi.pos, bi.facing);
+		};
+
+		unitDrawer->DrawStaticModelBatch<BuildIcon>(buildIcons, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
 	}
 
 	glDisable(GL_DEPTH_TEST);

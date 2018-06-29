@@ -5,13 +5,17 @@
 
 #include <string>
 #include <deque>
+
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "System/Color.h"
-#include "System/float3.h"
+#include "System/float4.h"
 #include "System/type2.h"
+#include "System/Matrix44f.h"
 
 
+class CVertexArray;
 class CUnit;
 namespace icon {
 	class CIconData;
@@ -30,7 +34,7 @@ public:
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	void Draw();
-	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false);
+	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false, bool luaCall = false);
 	void Update();
 
 	void ConfigCommand(const std::string& command);
@@ -69,9 +73,8 @@ public:
 	const unsigned char* GetAllyTeamIconColor() const { return &allyColor[0]; }
 	const unsigned char* GetEnemyTeamIconColor() const { return &enemyColor[0]; }
 
-	void EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const;
-	void LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const;
-	void ApplyConstraintsMatrix() const;
+	const CMatrix44f& GetViewMat(unsigned int idx) const { return viewMats[idx]; }
+	const CMatrix44f& GetProjMat(unsigned int idx) const { return projMats[idx]; }
 
 protected:
 	void ParseGeometry(const std::string& geostr);
@@ -90,22 +93,23 @@ protected:
 	void DrawCameraFrustumAndMouseSelection();
 	void SetClipPlanes(const bool lua) const;
 
-	void DrawFrame();
+	void EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const;
+	void LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const;
+
+	void DrawFrame(GL::RenderDataBufferC* rdBufferC);
 	void DrawNotes();
-	void DrawButtons();
-	void DrawMinimizedButton();
+	void DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
+	void DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
 
 	void DrawUnitHighlight(const CUnit* unit);
-	void DrawCircle(const float3& pos, float radius) const;
-	void DrawSquare(const float3& pos, float xsize, float zsize) const;
+	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
 	void UpdateTextureCache();
 	void ResizeTextureCache();
 
 protected:
-	static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);
-	static void DrawSurfaceSquare(const float3& pos, float xsize, float zsize);
+	static void DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int);
 
 protected:
 	int2 curPos;
@@ -121,70 +125,84 @@ protected:
 	float unitSizeY;
 	float unitSelectRadius;
 
-	bool fullProxy;
+	bool fullProxy = false;
 
-	bool proxyMode;
-	bool selecting;
-	bool maxspect;
-	bool maximized;
-	bool minimized;
-	bool mouseLook;
-	bool mouseMove;
-	bool mouseResize;
+	bool proxyMode = false;
+	bool selecting = false;
+	bool maxspect = false;
+	bool maximized = false;
+	bool minimized = false;
+	bool mouseLook = false;
+	bool mouseMove = false;
+	bool mouseResize = false;
 
-	bool slaveDrawMode;
+	bool slaveDrawMode = false;
+	bool simpleColors = false;
+
+	bool showButtons = false;
+	bool drawProjectiles = false;
+	bool useIcons = true;
+
+	bool multisampledFBO = false;
+
 
 	struct IntBox {
 		bool Inside(int x, int y) const {
 			return ((x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax));
 		}
-		void DrawBox() const;
-		void DrawTextureBox() const;
-		int xmin, xmax, ymin, ymax;
-		float xminTx, xmaxTx, yminTx, ymaxTx;  // texture coordinates
+		void DrawBox(GL::RenderDataBufferC* rdBufferC) const;
+		void DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const;
+
+		int xmin, xmax;
+		int ymin, ymax;
+
+		// texture coordinates
+		float xminTx, xmaxTx;
+		float yminTx, ymaxTx;
+
+		SColor color;
 	};
 
-	int buttonSize;
-	bool showButtons;
 	IntBox mapBox;
 	IntBox buttonBox;
 	IntBox moveBox;
 	IntBox resizeBox;
 	IntBox minimizeBox;
 	IntBox maximizeBox;
-	int lastWindowSizeX;
-	int lastWindowSizeY;
 
-	bool drawProjectiles;
-	bool useIcons;
+	int lastWindowSizeX = 0;
+	int lastWindowSizeY = 0;
+
+	int buttonSize = 0;
+
 	int drawCommands;
-	float cursorScale;
+	float cursorScale = 0.0f;
 
-	bool simpleColors;
-	SColor myColor;
-	SColor allyColor;
-	SColor enemyColor;
+	SColor myColor = {0.2f, 0.9f, 0.2f, 1.0f};
+	SColor allyColor = {0.3f, 0.3f, 0.9f, 1.0f};
+	SColor enemyColor = {0.9f, 0.2f, 0.2f, 1.0f};
 
-	bool renderToTexture;
+	// transforms for [0] := Draw, [1] := DrawInMiniMap, [2] := Lua DrawInMiniMap
+	CMatrix44f viewMats[3];
+	CMatrix44f projMats[3];
+
 	FBO fbo;
 	FBO fboResolve;
-	bool multisampledFBO;
-	GLuint minimapTex;
-	int2 minimapTexSize;
-	float minimapRefreshRate;
 
-	GLuint buttonsTexture;
-	GLuint circleLists; // 8 - 256 divs
-	static const int circleListsCount = 6;
+	int2 minimapTexSize;
+	float minimapRefreshRate = 0.0f;
+
+	GLuint minimapTextureID = 0;
+	GLuint buttonsTextureID = 0;
 
 	struct Notification {
 		float creationTime;
 		float3 pos;
-		float color[4];
+		float4 color;
 	};
 	std::deque<Notification> notes;
 
-	CUnit* lastClicked;
+	CUnit* lastClicked = nullptr;
 };
 
 

@@ -70,7 +70,6 @@
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/UriParser.h"
-#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -99,7 +98,7 @@
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
-CONFIG(unsigned, TextureMemPoolSize).defaultValue(64 * 1024 * 1024);
+CONFIG(unsigned, TextureMemPoolSize).defaultValue((64 + 16) * 1024 * 1024);
 CONFIG(bool, UseLuaMemPools).defaultValue(__archBits__ == 64).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
@@ -154,7 +153,7 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
 	spring_time::setstarttime(spring_time::gettime(true));
 
 	LOG_DISABLE();
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, "", safemode);
 	FileSystemInitializer::InitializeLogOutput();
 	LOG_ENABLE();
 }
@@ -169,13 +168,18 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 SpringApp::SpringApp(int argc, char** argv)
 {
-	// initializes configHandler which we need
+	// {--,/}help overrides all other flags and causes exit(),
+	// even in the unusual event it is not given as first arg
+	if (argc > 1 && strstr(argv[1], "help") != nullptr)
+		ConsolePrintInitialize("", false);
+
 	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+	// also initializes configHandler and logOutput
 	ParseCmdLine(argc, argv);
 
-	FileSystemInitializer::InitializeLogOutput();
 
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
@@ -456,7 +460,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 #ifdef USING_CREG
 		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
 #else
-		LOG_L(L_ERROR, "[SpringApp::%s] CREG is not enabled!\n", __func__);
 		exit(EXIT_FAILURE); //Do not fail tests
 #endif
 	}
@@ -473,14 +476,12 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		exit(EXIT_SUCCESS);
 	}
 
+	CTextureAtlas::SetDebug(FLAGS_textureatlas);
+
 	// if this fails, configHandler remains null
-	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
-
-	if (FLAGS_textureatlas)
-		CTextureAtlas::SetDebug(true);
-
-	if (!FLAGS_name.empty())
-		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
+	// logOutput's init depends on configHandler
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
+	FileSystemInitializer::InitializeLogOutput();
 }
 
 
@@ -711,10 +712,12 @@ void SpringApp::Reload(const std::string script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	#if 0
+	// rely only on defrag for now since WindowManagerHelper also keeps a global bitmap
+	CglFont::ReallocAtlases(true);
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
-
-	// normally not needed, but would allow switching fonts
-	// LoadFonts();
+	CglFont::ReallocAtlases(false);
+	#endif
 
 	LOG("[SpringApp::%s][8]", __func__);
 

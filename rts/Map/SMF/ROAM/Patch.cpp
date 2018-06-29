@@ -546,7 +546,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	float3 midPos;
 	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
 	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.y = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
+	midPos.y = readMap->GetCurrAvgHeight();
 
 	// Tessellate is called from multiple threads during both passes
 	// caller ensures that two patches that are neighbors or share a

@@ -1382,11 +1382,11 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 //////////////////////////
 //////////////////////////
 
-static std::vector< std::vector<InfoItem> > luaAIInfos;
+static CLuaAIImplHandler::InfoItemVector luaAIInfos;
 
 static void GetLuaAIInfo()
 {
-	luaAIInfos = luaAIImplHandler.LoadInfos();
+	luaAIInfos = luaAIImplHandler.LoadInfoItems();
 }
 
 
@@ -1485,7 +1485,7 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 		info.clear();
 
 		if (IsLuaAIIndex(aiIndex)) {
-			const std::vector<InfoItem>& iInfo = luaAIInfos[ToPureLuaAIIndex(aiIndex)];
+			const auto& iInfo = luaAIInfos[ToPureLuaAIIndex(aiIndex)];
 			info.insert(info.end(), iInfo.begin(), iInfo.end());
 		} else {
 			infoSet.clear();

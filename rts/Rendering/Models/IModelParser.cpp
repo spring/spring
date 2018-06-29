@@ -189,6 +189,8 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 {
 	assert(Threading::IsMainThread());
 
+	if (modelName.empty())
+		return;
 	if (!ThreadPool::HasThreads())
 		return;
 

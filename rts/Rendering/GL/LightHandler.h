@@ -14,11 +14,7 @@ namespace Shader {
 namespace GL {
 	struct LightHandler {
 	public:
-		LightHandler(): maxLights(0), lightHandle(0) {}
-		~LightHandler() { Kill(); }
-
-		void Init(unsigned int);
-		void Kill() {}
+		void Init(unsigned int cfgMaxLights);
 		void Update();
 
 		unsigned int AddLight(const GL::Light&);
@@ -32,8 +28,8 @@ namespace GL {
 		static constexpr unsigned int MaxConfigLights()       { return MAX_LIGHTS; }
 		                 unsigned int NumConfigLights() const { return  maxLights; }
 
-		static constexpr unsigned int MaxUniformVecs()       { return (MaxConfigLights() * (sizeof(RawLight) / sizeof(float))); }
-		                 unsigned int NumUniformVecs() const { return (NumConfigLights() * (sizeof(RawLight) / sizeof(float))); }
+		static constexpr unsigned int MaxUniformVecs()       { return (MaxConfigLights() * (sizeof(RawLight) / sizeof(float4))); }
+		                 unsigned int NumUniformVecs() const { return (NumConfigLights() * (sizeof(RawLight) / sizeof(float4))); }
 
 	private:
 		static constexpr unsigned int MAX_LIGHTS = 32;
@@ -50,8 +46,8 @@ namespace GL {
 		std::array<GL::Light, MAX_LIGHTS> glLights;
 		std::array<RawLight, MAX_LIGHTS> rawLights;
 
-		unsigned int maxLights;
-		unsigned int lightHandle;
+		unsigned int maxLights = 0;
+		unsigned int lightHandle = 0;
 	};
 }
 

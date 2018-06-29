@@ -5,7 +5,6 @@
 
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Textures/Bitmap.h"
 
 #include <vector>
 
@@ -71,7 +70,6 @@ protected:
 	std::vector<Stat> stats;
 
 	GLuint graphTex = 0;
-	CBitmap bm;
 };
 
 #endif // _END_GAME_BOX_H_

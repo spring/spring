@@ -67,15 +67,15 @@ void CSkirmishAIHandler::LoadPreGame() {
 		return;
 
 	// extract all Lua AI implementation short names
-	const std::vector< std::vector<InfoItem> >& luaAIImpls = luaAIImplHandler.LoadInfos();
+	const CLuaAIImplHandler::InfoItemVector& luaAIImpls = luaAIImplHandler.LoadInfoItems();
 
-	for (auto impl = luaAIImpls.cbegin(); impl != luaAIImpls.cend(); ++impl) {
-		for (auto info = impl->cbegin(); info != impl->cend(); ++info) {
-			if (info->key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
+	for (const auto& impl: luaAIImpls) {
+		for (const auto& info: impl) {
+			if (info.key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
 				continue;
 
-			assert(info->valueType == INFO_VALUE_TYPE_STRING);
-			luaAIShortNames.insert(info->valueTypeString);
+			assert(info.valueType == INFO_VALUE_TYPE_STRING);
+			luaAIShortNames.insert(info.valueTypeString);
 		}
 	}
 
@@ -109,33 +109,35 @@ size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 	return (iter - aiInstanceData.begin());
 }
 
-std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId) const
 {
 	std::vector<uint8_t> skirmishAIs;
 
-	// just loop over everything
-	for (const SkirmishAIData& aiData: aiInstanceData) {
+	for (const auto& p: skirmishAIDataMap) {
+		const SkirmishAIData& aiData = p.second;
+
 		if (aiData.team != teamId)
 			continue;
 		if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
 			continue;
 
-		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
+		skirmishAIs.push_back(p.first);
 	}
 
 	return skirmishAIs;
 }
 
-std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId)
+std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId) const
 {
 	std::vector<uint8_t> skirmishAIs;
 
-	// just loop over everything
-	for (const SkirmishAIData& aiData: aiInstanceData) {
+	for (const auto& p: skirmishAIDataMap) {
+		const SkirmishAIData& aiData = p.second;
+
 		if (aiData.hostPlayer != hostPlayerId)
 			continue;
 
-		skirmishAIs.push_back(&aiData - &aiInstanceData[0]);
+		skirmishAIs.push_back(p.first);
 	}
 
 	return skirmishAIs;

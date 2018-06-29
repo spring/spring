@@ -21,6 +21,7 @@
 #include "Game/UI/GameSetupDrawer.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaHandle.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -31,7 +32,6 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/TimeProfiler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/UnpackPacket.h"
@@ -715,7 +715,8 @@ void CGame::ClientReadNet()
 						c.PushParam(param);
 					}
 
-					selectedUnitsHandler.AiOrder(unitid, c, player);
+					// command originating from SkirmishAI or LuaUnsyncedCtrl
+					selectedUnitsHandler.AINetOrder(unitid, player, c);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());
@@ -789,12 +790,12 @@ void CGame::ClientReadNet()
 					// apply the commands
 					if (pairwise) {
 						for (int16_t x = 0; x < std::min(unitCount, commandCount); ++x) {
-							selectedUnitsHandler.AiOrder(unitIDs[x], commands[x], player);
+							selectedUnitsHandler.AINetOrder(unitIDs[x], player, commands[x]);
 						}
 					} else {
 						for (int16_t c = 0; c < commandCount; c++) {
 							for (int16_t u = 0; u < unitCount; u++) {
-								selectedUnitsHandler.AiOrder(unitIDs[u], commands[c], player);
+								selectedUnitsHandler.AINetOrder(unitIDs[u], player, commands[c]);
 							}
 						}
 					}

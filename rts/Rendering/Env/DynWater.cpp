@@ -41,6 +41,11 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
 #define WF_SIZE 4096
 #define WH_SIZE 2048
 */
+
+
+static inline void glVertexf3(const float3& v) { glVertex3f(v.r, v.g, v.b); }
+
+
 CDynWater::CDynWater()
 	: camPosX(0)
 	, camPosZ(0)

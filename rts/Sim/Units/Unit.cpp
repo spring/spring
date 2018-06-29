@@ -579,60 +579,40 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	blockHeightChanges = false;
 	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
 
-	if (!deathScriptFinished) {
-		const WeaponDef* wd;
-		const DynDamageArray* d;
-		if (selfDestruct) {
-			wd = unitDef->selfdExpWeaponDef;
-			d = selfdExpDamages;
-		} else {
-			wd = unitDef->deathExpWeaponDef;
-			d = deathExpDamages;
-		}
+	if (deathScriptFinished)
+		return;
 
-		if (wd != nullptr) {
-			assert(d != nullptr);
-			CExplosionParams params = {
-				pos,
-				ZeroVector,
-				*d,
-				wd,
-				this,                                    // owner
-				nullptr,                                 // hitUnit
-				nullptr,                                 // hitFeature
-				d->craterAreaOfEffect,
-				d->damageAreaOfEffect,
-				d->edgeEffectiveness,
-				d->explosionSpeed,
-				(d->GetDefault() > 500.0f)? 1.0f: 2.0f,  // gfxMod
-				false,                                   // impactOnly
-				false,                                   // ignoreOwner
-				true,                                    // damageGround
-				-1u                                      // projectileID
-			};
+	const WeaponDef* wd = selfDestruct? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
+	const DynDamageArray* da = selfDestruct? selfdExpDamages: deathExpDamages;
 
-			helper->Explosion(params);
-		}
+	if (wd != nullptr) {
+		assert(da != nullptr);
+		CExplosionParams params = {
+			pos,
+			ZeroVector,
+			*da,
+			wd,
+			this,                                    // owner
+			nullptr,                                 // hitUnit
+			nullptr,                                 // hitFeature
+			da->craterAreaOfEffect,
+			da->damageAreaOfEffect,
+			da->edgeEffectiveness,
+			da->explosionSpeed,
+			(da->GetDefault() > 500.0f)? 1.0f: 2.0f, // gfxMod
+			false,                                   // impactOnly
+			false,                                   // ignoreOwner
+			true,                                    // damageGround
+			-1u                                      // projectileID
+		};
 
-		recentDamage += (maxHealth * 2.0f * selfDestruct);
-
-		// start running the unit's kill-script
-		script->Killed();
+		helper->Explosion(params);
 	}
 
-	#if 0
-	// put the unit in a pseudo-zombie state until Killed finishes
-	// disabled, better let Lua decide how it wants to handle this
-	if (!deathScriptFinished) {
-		SetVelocity(ZeroVector);
-		SetStunned(true);
+	recentDamage += (maxHealth * 2.0f * selfDestruct);
 
-		paralyzeDamage = 100.0f * maxHealth;
-		health = std::max(health, 0.0f);
-	}
-	#else
-	health = std::max(health, 0.0f);
-	#endif
+	// start running the unit's kill-script
+	script->Killed();
 }
 
 
@@ -673,20 +653,22 @@ void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
 	// error-direction is fixed until next delta
 	if (updateError)
 		posErrorVector += posErrorDelta;
+	if (!updateDelta)
+		return;
 
-	if (updateDelta) {
-		if ((--nextPosErrorUpdate) <= 0) {
-			float3 newPosError = gsRNG.NextVector();
-			newPosError.y *= 0.2f;
+	if ((--nextPosErrorUpdate) > 0)
+		return;
 
-			if (posErrorVector.dot(newPosError) < 0.0f) {
-				newPosError = -newPosError;
-			}
+	constexpr float errorScale = 1.0f / 256.0f;
+	constexpr float errorMults[] = {1.0f, -1.0f};
 
-			posErrorDelta = (newPosError - posErrorVector) * (1.0f / 256.0f);
-			nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
-		}
-	}
+	float3 newPosError = gsRNG.NextVector();
+
+	newPosError.y *= 0.2f;
+	newPosError *= errorMults[posErrorVector.dot(newPosError) < 0.0f];
+
+	posErrorDelta = (newPosError - posErrorVector) * errorScale;
+	nextPosErrorUpdate = UNIT_SLOWUPDATE_RATE;
 }
 
 void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
@@ -694,10 +676,9 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	// drop unit from position
 	fallSpeed = mix(unitDef->unitFallSpeed, parent->unitDef->fallSpeed, unitDef->unitFallSpeed <= 0.0f);
 
-	speed.y = 0.0f;
-	frontdir = parentDir;
-	frontdir.y = 0.0f;
+	frontdir = parentDir * XZVector;
 
+	SetVelocityAndSpeed(speed * XZVector);
 	Move(UpVector * ((parentPos.y - height) - pos.y), true);
 	UpdateMidAndAimPos();
 	SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FALLING);
@@ -1706,10 +1687,7 @@ bool CUnit::IsIdle() const
 	if (beingBuilt)
 		return false;
 
-	if (!commandAI->commandQue.empty())
-		return false;
-
-	return true;
+	return (commandAI->commandQue.empty());
 }
 
 

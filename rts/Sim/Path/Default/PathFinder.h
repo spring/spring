@@ -3,7 +3,6 @@
 #ifndef PATH_FINDER_H
 #define PATH_FINDER_H
 
-#include <list>
 #include <vector>
 #include <deque>
 
@@ -19,9 +18,13 @@ class CPathFinderDef;
 
 class CPathFinder: public IPathFinder {
 public:
-	CPathFinder(bool threadSafe = true);
-
 	static void InitStatic();
+
+	CPathFinder() = default; // defer Init
+	CPathFinder(bool threadSafe) { Init(threadSafe); }
+
+	void Init(bool threadSafe);
+	void Kill() { IPathFinder::Kill(); }
 
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 

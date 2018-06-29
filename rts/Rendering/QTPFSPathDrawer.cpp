@@ -152,18 +152,17 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 
 	{
 		#ifdef QTPFS_DRAW_WAYPOINT_GROUND_CIRCLES
-		#error UNCONVERTED FFP CODE
-		glColor4ub(0, 0, 255, 255);
+		constexpr float4 color = {0.0f, 0.0f, 1.0f, 1.0f};
 
 		for (const auto& pair: paths) {
 			const QTPFS::IPath* path = pair.second;
 
 			for (unsigned int n = 0; n < path->NumPoints(); n++) {
-				glSurfaceCircle(path->GetPoint(n), path->GetRadius(), 16);
+				glSurfaceCircleRB(rdb, {path->GetPoint(n), path->GetRadius()}, color, 16);
 			}
 		}
 
-		glColor4ub(255, 255, 255, 255);
+		rdb->Submit(GL_LINES);
 		#endif
 	}
 

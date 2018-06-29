@@ -527,23 +527,47 @@ bool CGameSetup::Init(const std::string& buf)
 	if (!file.SectionExist("GAME"))
 		return false;
 
+	#ifdef DEDICATED
 	{
-		// Used by dedicated server only
+		// read script-provided hashes for dedicated server
 		const std::string mapHashHexStr = file.SGetValueDef("",  "GAME\\MapHash");
 		const std::string modHashHexStr = file.SGetValueDef("",  "GAME\\ModHash");
+
+		LOG_L(L_INFO, "[GameSetup::%s]\n\tmapHashHexStr=\"%s\"\n\tmodHashHexStr=\"%s\"", __func__, mapHashHexStr.c_str(), modHashHexStr.c_str());
 
 		sha512::hex_digest mapHashHex;
 		sha512::hex_digest modHashHex;
 		sha512::raw_digest mapHashRaw;
 		sha512::raw_digest modHashRaw;
 
-		std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
-		std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+		// zero-fill; {map,mod}HashHexStr might be empty or invalid SHA digests
+		mapHashHex.fill(0);
+		modHashHex.fill(0);
+		mapHashRaw.fill(0);
+		modHashRaw.fill(0);
+
+		// assume that single-character strings represent old-style dummy CRC's
+		mapHashHex[0] = (mapHashHexStr.size() == 1)? mapHashHexStr[0]: 0;
+		modHashHex[0] = (modHashHexStr.size() == 1)? modHashHexStr[0]: 0;
+
+		if (mapHashHexStr.size() == (sha512::SHA_LEN * 2)) {
+			std::copy(mapHashHexStr.begin(), mapHashHexStr.end(), mapHashHex.data());
+		} else {
+			LOG_L(L_WARNING, "[GameSetup::%s] DS map-hash string \"%s\" should contain %u characters", __func__, mapHashHexStr.c_str(), sha512::SHA_LEN * 2);
+		}
+
+		if (modHashHexStr.size() == (sha512::SHA_LEN * 2)) {
+			std::copy(modHashHexStr.begin(), modHashHexStr.end(), modHashHex.data());
+		} else {
+			LOG_L(L_WARNING, "[GameSetup::%s] DS mod-hash string \"%s\" should contain %u characters", __func__, modHashHexStr.c_str(), sha512::SHA_LEN * 2);
+		}
+
 		sha512::read_digest(mapHashHex, mapHashRaw);
 		sha512::read_digest(modHashHex, modHashRaw);
 		std::memcpy(dsMapHash, mapHashRaw.data(), sizeof(dsMapHash));
 		std::memcpy(dsModHash, modHashRaw.data(), sizeof(dsModHash));
 	}
+	#endif
 
 	file.GetTDef(mapSeed, unsigned(0), "GAME\\MapSeed");
 

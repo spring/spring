@@ -221,8 +221,8 @@ void CShareBox::Draw()
 		const int actualTeam = teamNum + (teamNum >= gu->myTeam);
 
 		const CTeam* team = teamHandler.Team(actualTeam);
-		const char* name = (team->GetControllerName()).c_str();
 
+		const char* name = team->GetControllerName();
 		const char* ally = "";
 		const char* dead = "";
 
@@ -233,7 +233,7 @@ void CShareBox::Draw()
 			font->SetTextColor(1.0f, 0.5f, 0.5f, 0.4f + 0.4f * (shareTeam == actualTeam));
 			ally = " <Enemy>";
 		}
-		if (teamHandler.Team(actualTeam)->isDead) {
+		if (team->isDead) {
 			font->SetTextColor(0.5f, 0.5f, 1.0f, 0.4f + 0.4f * (shareTeam == actualTeam));
 			dead = " <Dead>";
 		}
@@ -248,7 +248,7 @@ void CShareBox::Draw()
 			box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,
 			0.7f,
 			FONT_SCALE | FONT_NORM | FONT_BUFFERED,
-			"Team%i (%s)%s%s",
+			"Team %02i (%s)%s%s",
 			actualTeam,
 			name,
 			ally,

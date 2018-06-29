@@ -2,6 +2,7 @@
 
 #include "CommandDrawer.h"
 #include "LineDrawer.h"
+#include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/WaitCommandsAI.h"
@@ -19,8 +20,8 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
@@ -43,13 +44,24 @@ CommandDrawer* CommandDrawer::GetInstance() {
 
 
 void CommandDrawer::Draw(const CCommandAI* cai) const {
-	// note: {Air,Builder}CAI inherit from MobileCAI, so test that last
-	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai)); return; }
-	if ((dynamic_cast<const CBuilderCAI*>(cai)) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai)); return; }
-	if ((dynamic_cast<const CFactoryCAI*>(cai)) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai)); return; }
-	if ((dynamic_cast<const  CMobileCAI*>(cai)) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai)); return; }
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-	DrawCommands(cai);
+	// note: {Air,Builder}CAI inherit from MobileCAI, so test that last
+	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai), buffer); return; }
+	if ((dynamic_cast<const CBuilderCAI*>(cai)) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai), buffer); return; }
+	if ((dynamic_cast<const CFactoryCAI*>(cai)) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai), buffer); return; }
+	if ((dynamic_cast<const  CMobileCAI*>(cai)) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai), buffer); return; }
+
+	DrawCommands(cai, buffer);
+
+	// hand off all surface circles
+	// TODO: grab the minimap transform
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	buffer->Submit(GL_LINES);
+	shader->Disable();
 }
 
 
@@ -92,7 +104,7 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 	glEnable(GL_DEPTH_TEST);
 }
 
-void CommandDrawer::DrawCommands(const CCommandAI* cai) const
+void CommandDrawer::DrawCommands(const CCommandAI* cai, GL::RenderDataBufferC* rdb) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
@@ -133,17 +145,15 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 			} break;
 
 			default: {
-				DrawDefaultCommand(*ci, owner);
+				DrawDefaultCommand(*ci, owner, rdb);
 			} break;
 		}
 	}
-
-	lineDrawer.FinishPath();
 }
 
 
 
-void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
+void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai, GL::RenderDataBufferC* rdb) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
@@ -190,8 +200,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
-				glColor4fv(cmdColors.attack);
-				glSurfaceCircle(endPos, ci->params[3], 20.0f);
+				glSurfaceCircleRB(rdb, {endPos, ci->params[3]}, cmdColors.attack, 20.0f);
 				lineDrawer.RestartWithColor(cmdColors.attack);
 			} break;
 
@@ -211,17 +220,15 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 			} break;
 
 			default: {
-				DrawDefaultCommand(*ci, owner);
+				DrawDefaultCommand(*ci, owner, rdb);
 			} break;
 		}
 	}
-
-	lineDrawer.FinishPath();
 }
 
 
 
-void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
+void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, GL::RenderDataBufferC* rdb) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
@@ -247,8 +254,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				// draw metal extraction range
 				if (bi.def->extractRange > 0.0f) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
-					glColor4fv(cmdColors.rangeExtract);
-					glSurfaceCircle(bi.pos, bi.def->extractRange, 40.0f);
+					glSurfaceCircleRB(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
 					lineDrawer.Restart();
 				}
 			}
@@ -279,8 +285,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
-				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci.params[3], 20.0f);
+				glSurfaceCircleRB(rdb, {endPos, ci.params[3]}, cmdColors.restore, 20.0f);
 				lineDrawer.RestartWithColor(cmdColors.restore);
 			} break;
 
@@ -312,8 +317,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
-					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.params[3], 20.0f);
+					glSurfaceCircleRB(rdb, {endPos, ci.params[3]}, color, 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
 					assert(ci.params[0] >= 0.0f);
@@ -345,8 +349,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
-					glColor4fv(color);
-					glSurfaceCircle(endPos, ci.params[3], 20.0f);
+					glSurfaceCircleRB(rdb, {endPos, ci.params[3]}, color, 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
 					if (ci.params.size() >= 1) {
@@ -371,17 +374,15 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 			} break;
 
 			default: {
-				DrawDefaultCommand(ci, owner);
+				DrawDefaultCommand(ci, owner, rdb);
 			} break;
 		}
 	}
-
-	lineDrawer.FinishPath();
 }
 
 
 
-void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
+void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai, GL::RenderDataBufferC* rdb) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
@@ -443,7 +444,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			} break;
 
 			default: {
-				DrawDefaultCommand(ci, owner);
+				DrawDefaultCommand(ci, owner, rdb);
 			} break;
 		}
 
@@ -459,19 +460,16 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 			// draw metal extraction range
 			if (bi.def->extractRange > 0.0f) {
 				lineDrawer.Break(bi.pos, cmdColors.build);
-				glColor4fv(cmdColors.rangeExtract);
-				glSurfaceCircle(bi.pos, bi.def->extractRange, 40.0f);
+				glSurfaceCircleRB(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
 				lineDrawer.Restart();
 			}
 		}
 	}
-
-	lineDrawer.FinishPath();
 }
 
 
 
-void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
+void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai, GL::RenderDataBufferC* rdb) const
 {
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
@@ -535,8 +533,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
-					glColor4fv(cmdColors.load);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircleRB(rdb, {endPos, ci->params[3]}, cmdColors.load, 20.0f);
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(ci->params[0]));
@@ -553,8 +550,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
-					glColor4fv(cmdColors.unload);
-					glSurfaceCircle(endPos, ci->params[3], 20.0f);
+					glSurfaceCircleRB(rdb, {endPos, ci->params[3]}, cmdColors.unload, 20.0f);
 					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
 			} break;
@@ -570,12 +566,10 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 			} break;
 
 			default: {
-				DrawDefaultCommand(*ci, owner);
+				DrawDefaultCommand(*ci, owner, rdb);
 			} break;
 		}
 	}
-
-	lineDrawer.FinishPath();
 }
 
 
@@ -584,7 +578,7 @@ void CommandDrawer::DrawWaitIcon(const Command& cmd) const
 	waitCommandsAI.AddIcon(cmd, lineDrawer.GetLastPos());
 }
 
-void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) const
+void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner, GL::RenderDataBufferC* rdb) const
 {
 	// TODO add Lua callin perhaps, for more elaborate needs?
 	const CCommandColors::DrawData* dd = cmdColors.GetCustomCmdData(c.GetID());
@@ -592,25 +586,25 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 	if (dd == nullptr)
 		return;
 
-	const unsigned int paramsCount = c.params.size();
+	switch (c.params.size()) {
+		case  0: { return; } break;
+		case  1: {         } break;
+		case  2: {         } break;
+		default: {
+			const float3 endPos = c.GetPos(0) + UpVector * 3.0f;
 
-	if (paramsCount >= 3) {
-		const float3 endPos = c.GetPos(0) + UpVector * 3.0f;
+			if (!dd->showArea || (c.params.size() < 4)) {
+				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+			} else {
+				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
+				lineDrawer.Break(endPos, dd->color);
+				glSurfaceCircleRB(rdb, {endPos, c.params[3]}, dd->color, 20.0f);
+				lineDrawer.RestartWithColor(dd->color);
+			}
 
-		if (!dd->showArea || (paramsCount < 4)) {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-		} else {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-			lineDrawer.Break(endPos, dd->color);
-			glSurfaceCircle(endPos, c.params[3], 20.0f);
-			lineDrawer.RestartWithColor(dd->color);
-		}
-
-		return;
+			return;
+		} break;
 	}
-
-	if (paramsCount < 1)
-		return;
 
 	// allow a second param (ignored here) for custom commands
 	const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(c.params[0]));
@@ -643,7 +637,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		#if 0
 		// skip under-water positions
@@ -700,7 +695,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		// skip above-water positions
 		if (bi.pos.y >= 0.0f)
@@ -734,7 +730,8 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		if (!bi.Parse(c))
 			continue;
 
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		if (!camera->InView(bi.pos = CGameHelper::Pos2BuildPos(bi, false)))
+			continue;
 
 		if (bi.pos.y >= 0.0f)
 			continue;

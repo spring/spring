@@ -26,6 +26,8 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
 
+#define ENABLE_TEXMEMPOOL 1
+
 
 struct InitializeOpenIL {
 	InitializeOpenIL() { ilInit(); }
@@ -61,7 +63,7 @@ public:
 	}
 
 	uint8_t* AllocRaw(size_t size) {
-		#if 0
+		#if (ENABLE_TEXMEMPOOL == 0)
 		uint8_t* mem = new uint8_t[size];
 		#else
 		uint8_t* mem = nullptr;
@@ -105,7 +107,7 @@ public:
 			freeList[bestPair].first += size;
 			freeList[bestPair].second -= size;
 		} else {
-			// exact match
+			// exact match, erase
 			freeList[bestPair] = freeList.back();
 			freeList.pop_back();
 		}
@@ -117,13 +119,13 @@ public:
 	}
 
 
-	void Free(uint8_t* mem, size_t size) {
+	void Free(uint8_t*& mem, size_t size) {
 		std::lock_guard<spring::mutex> lck(bmpMutex);
 		FreeRaw(mem, size);
 	}
 
 	void FreeRaw(uint8_t*& mem, size_t size) {
-		#if 0
+		#if (ENABLE_TEXMEMPOOL == 0)
 		delete[] mem;
 		#else
 		if (mem == nullptr)
@@ -133,8 +135,23 @@ public:
 		memset(mem, 0, size);
 		freeList.emplace_back(mem - &memArray[0], size);
 
+		#if 0
+		{
+			// check if freed mem overlaps any existing chunks
+			const FreePair& p = freeList.back();
+
+			for (size_t i = 0, n = freeList.size() - 1; i < n; i++) {
+				const FreePair& c = freeList[i];
+
+				assert(!((p.first < c.first) && (p.first + p.second) > c.first));
+				assert(!((c.first < p.first) && (c.first + c.second) > p.first));
+			}
+		}
+		#endif
+
 		numFrees += 1;
 		freeSize += size;
+		allocSize -= size;
 
 		// most bitmaps are transient, so keep the list short
 		// longer-lived textures should be allocated ASAP s.t.
@@ -182,7 +199,10 @@ public:
 	}
 
 	bool DefragRaw() {
-		std::sort(freeList.begin(), freeList.end(), [](const FreePair& a, const FreePair& b) { return (a.first < b.first); });
+		const auto sortPred = [](const FreePair& a, const FreePair& b) { return (a.first < b.first); };
+		const auto accuPred = [](const FreePair& a, const FreePair& b) { return FreePair{0, a.second + b.second}; };
+
+		std::sort(freeList.begin(), freeList.end(), sortPred);
 
 		// merge adjacent chunks
 		for (size_t i = 0, n = freeList.size(); i < n; /**/) {
@@ -190,6 +210,8 @@ public:
 
 			for (size_t j = i; j < n; j++) {
 				FreePair& nextPair = freeList[j];
+
+				assert(!((currPair.first + currPair.second) > nextPair.first));
 
 				if ((currPair.first + currPair.second) != nextPair.first)
 					break;
@@ -200,6 +222,7 @@ public:
 				i += 1;
 			}
 		}
+
 
 		size_t i = 0;
 		size_t j = 0;
@@ -212,11 +235,14 @@ public:
 			i += 1;
 		}
 
+
 		if (j >= freeList.size())
 			return false;
 
 		// shrink
 		freeList.resize(j);
+
+		freeSize = std::accumulate(freeList.begin(), freeList.end(), FreePair{0, 0}, accuPred).second;
 		return true;
 	}
 };
@@ -248,17 +274,6 @@ static bool IsValidImageFormat(int format) {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBitmap::CBitmap()
-	: xsize(0)
-	, ysize(0)
-	, channels(4)
-	#ifndef BITMAP_NO_OPENGL
-	, textype(GL_TEXTURE_2D)
-	#endif
-	, compressed(false)
-{
-}
-
 CBitmap::~CBitmap()
 {
 	texMemPool.Free(mem, GetMemSize());
@@ -268,16 +283,15 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 	: xsize(_xsize)
 	, ysize(_ysize)
 	, channels(_channels)
-
-	#ifndef BITMAP_NO_OPENGL
-	, textype(GL_TEXTURE_2D)
-	#endif
 	, compressed(false)
 {
 	assert(GetMemSize() > 0);
 	mem = texMemPool.Alloc(GetMemSize());
 
 	if (data != nullptr) {
+		assert(!((mem < data) && (mem + GetMemSize()) > data));
+		assert(!((data < mem) && (data + GetMemSize()) > mem));
+
 		std::memcpy(mem, data, GetMemSize());
 	} else {
 		std::memset(mem, 0, GetMemSize());
@@ -292,6 +306,11 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 
 		if (bmp.mem != nullptr) {
 			assert(!bmp.compressed);
+			assert(bmp.GetMemSize() != 0);
+
+			assert(!((mem < bmp.GetRawMem()) && (mem + GetMemSize()) > bmp.GetRawMem()));
+			assert(!((bmp.GetRawMem() < mem) && (bmp.GetRawMem() + bmp.GetMemSize()) > mem));
+
 			mem = texMemPool.Alloc(bmp.GetMemSize());
 			std::memcpy(mem, bmp.mem, bmp.GetMemSize());
 		}
@@ -308,30 +327,24 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 		#endif
 	}
 
+	assert(GetMemSize() == bmp.GetMemSize());
+	assert((GetRawMem() != nullptr) == (bmp.GetRawMem() != nullptr));
 	return *this;
 }
 
 CBitmap& CBitmap::operator=(CBitmap&& bmp)
 {
 	if (this != &bmp) {
-		mem = bmp.mem;
-		bmp.mem = nullptr;
-
-		xsize = bmp.xsize;
-		ysize = bmp.ysize;
-		channels = bmp.channels;
-		compressed = bmp.compressed;
-
-		bmp.xsize = 0;
-		bmp.ysize = 0;
-		bmp.channels = 0;
-		bmp.compressed = false;
+		std::swap(mem, bmp.mem);
+		std::swap(xsize, bmp.xsize);
+		std::swap(ysize, bmp.ysize);
+		std::swap(channels, bmp.channels);
+		std::swap(compressed, bmp.compressed);
 
 		#ifndef BITMAP_NO_OPENGL
-		textype = bmp.textype;
-		bmp.textype = 0;
+		std::swap(textype, bmp.textype);
 
-		ddsimage = std::move(bmp.ddsimage);
+		std::swap(ddsimage, bmp.ddsimage);
 		#endif
 	}
 
@@ -347,6 +360,7 @@ void CBitmap::InitPool(size_t size)
 void CBitmap::Alloc(int w, int h, int c)
 {
 	mem = texMemPool.Alloc((xsize = w) * (ysize = h) * (channels = c));
+	memset(mem, 0, GetMemSize());
 }
 
 void CBitmap::AllocDummy(const SColor fill)
@@ -995,8 +1009,8 @@ void CBitmap::Blur(int iterations, float weight)
 
 	CBitmap* src = this;
 	CBitmap* dst = &tmp;
-	dst->channels = src->channels;
-	dst->Alloc(xsize, ysize);
+
+	dst->Alloc(xsize, ysize, channels);
 
 	for (int i = 0; i < iterations; ++i) {
 		for_mt(0, ysize, [&](const int y) {
@@ -1032,8 +1046,8 @@ void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 	}
 
 	for (int y = 0; y < src.ysize; ++y) {
-		const int pixelDst = (((ypos + y) * xsize) + xpos) * channels;
-		const int pixelSrc = ((y * src.xsize) + 0 ) * channels;
+		const int pixelDst = (((ypos + y) *     xsize) + xpos) * channels;
+		const int pixelSrc = ((        y  * src.xsize) +    0) * channels;
 
 		// copy the whole line
 		std::copy(&src.mem[pixelSrc], &src.mem[pixelSrc] + channels * src.xsize, &mem[pixelDst]);
