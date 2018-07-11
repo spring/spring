@@ -989,10 +989,8 @@ int LuaShaders::UniformSubroutine(lua_State* L)
 
 int LuaShaders::SetGeometryShaderParameter(lua_State* L)
 {
-	/*
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
-	*/
 
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
