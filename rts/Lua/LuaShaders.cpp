@@ -770,9 +770,6 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 
 int LuaShaders::GetSubroutineIndex(lua_State* L)
 {
-	if (!IS_GL_FUNCTION_AVAILABLE(glGetSubroutineIndex))
-		return 0;
-
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
 
@@ -974,8 +971,6 @@ int LuaShaders::UniformMatrix(lua_State* L)
 
 int LuaShaders::UniformSubroutine(lua_State* L)
 {
-	if (!IS_GL_FUNCTION_AVAILABLE(glUniformSubroutinesuiv))
-		return 0;
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
 
@@ -1012,17 +1007,13 @@ int LuaShaders::SetTesselationShaderParameter(lua_State* L)
 
 	if (lua_israwnumber(L, 2)) {
 		const GLint value =  (GLint)luaL_checkint(L, 2);
-		if (IS_GL_FUNCTION_AVAILABLE(glPatchParameteri)) {
-			glPatchParameteri(param, value);
-		}
+		glPatchParameteri(param, value);
 		return 0;
 	}
 	if (lua_istable(L, 2)) {
 		float tessArrayBuf[4] = {0.0f};
 		const int count = LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
-		if (IS_GL_FUNCTION_AVAILABLE(glPatchParameterfv)) {
-			glPatchParameterfv(param, &tessArrayBuf[0]);
-		}
+		glPatchParameterfv(param, &tessArrayBuf[0]);
 	}
 	return 0;
 }
