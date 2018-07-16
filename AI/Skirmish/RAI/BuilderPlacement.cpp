@@ -821,20 +821,18 @@ void cBuilderPlacement::EResourceEnterLOS(int enemy, EnemyInfo *E)
 		Resources[iR]->enemy = true;
 		E->RS = Resources[iR];
 
-		if( Resources[iR]->builderID > -1 && G->ValidateUnit(Resources[iR]->builderID) && int(cb->GetCurrentUnitCommands(Resources[iR]->builderID)->size())>0 && Resources[iR]->BuildOptions.find(-cb->GetCurrentUnitCommands(Resources[iR]->builderID)->begin()->id) != Resources[iR]->BuildOptions.end() )
+		if( Resources[iR]->builderID > -1 && G->ValidateUnit(Resources[iR]->builderID) && int(cb->GetCurrentUnitCommands(Resources[iR]->builderID)->size())>0 && Resources[iR]->BuildOptions.find(-cb->GetCurrentUnitCommands(Resources[iR]->builderID)->begin()->GetID()) != Resources[iR]->BuildOptions.end() )
 		{
 			if( Resources[iR]->builderUI->ud->canCapture )
 			{
-				Command c;
-				c.id = CMD_CAPTURE;
-				c.params.push_back(enemy);
+				Command c(CMD_CAPTURE);
+				c.PushParam(enemy);
 				cb->GiveOrder(Resources[iR]->builderID, &c);
 			}
 			else if ( Resources[iR]->builderUI->ud->canReclaim )
 			{
-				Command c;
-				c.id = CMD_RECLAIM;
-				c.params.push_back(enemy);
+				Command c(CMD_RECLAIM);
+				c.PushParam(enemy);
 				cb->GiveOrder(Resources[iR]->builderID, &c);
 			}
 		}

@@ -50,25 +50,21 @@ void cCombatManager::UnitIdle(const int& unit, UnitInfo *U)
 		Command c;
 		if( U->ud->canAttack && (U->E->inLOS || U->E->inRadar) )
 		{
-			c.id = CMD_ATTACK;
-			c.params.push_back(U->enemyID);
+			c = Command(CMD_ATTACK);
+			c.PushParam(U->enemyID);
 		}
 		else if( U->ud->canAttack && (U->udr->IsBomber && U->E->posLocked) )
 		{
-			c.id = CMD_ATTACK;
-			c.params.push_back(EPos.x);
-			c.params.push_back(EPos.y);
-			c.params.push_back(EPos.z);
+			c = Command(CMD_ATTACK);
+			c.PushPos(EPos);
 		}
 		else // cant see enemy or Mod Workaround: Combat Lords - cant be given attack orders
 		{
-			c.id = CMD_MOVE;
+			c = Command(CMD_MOVE);
 			EPos.x += -100.0 +rand()%201;
 			EPos.z += -100.0 +rand()%201;
 			G->CorrectPosition(EPos);
-			c.params.push_back(EPos.x);
-			c.params.push_back(EPos.y);
-			c.params.push_back(EPos.z);
+			c.PushPos(EPos);
 		}
 
 		cb->GiveOrder(unit, &c);
@@ -97,10 +93,10 @@ void cCombatManager::UnitDamaged(const int& unitID, UnitInfo* U, const int& atta
 		{
 			if( int(cb->GetCurrentUnitCommands(unitID)->size()) == 0 )
 				UnitIdle(unitID,U);
-			else if( cb->GetCurrentUnitCommands(unitID)->front().id != CMD_MOVE )
+			else if( cb->GetCurrentUnitCommands(unitID)->front().GetID() != CMD_MOVE )
 			{
 				if( cb->GetUnitHealth(unitID)/U->ud->health <= 0.66 ||
-					(cb->GetUnitHealth(unitID)/U->ud->health <= 0.9 && cb->GetCurrentUnitCommands(unitID)->front().id == CMD_CAPTURE) )
+					(cb->GetUnitHealth(unitID)/U->ud->health <= 0.9 && cb->GetCurrentUnitCommands(unitID)->front().GetID() == CMD_CAPTURE) )
 					UnitIdle(unitID,U);
 			}
 		}
@@ -147,11 +143,8 @@ bool cCombatManager::CommandDGun(const int& unitID, UnitInfo *U)
 			return true;
 		}
 	}
-	Command c;
-	c.id=CMD_DGUN;
-	c.params.push_back(EPos.x);
-	c.params.push_back(EPos.y);
-	c.params.push_back(EPos.z);
+	Command c(CMD_DGUN);
+	c.PushPos(EPos);
 	cb->GiveOrder(unitID, &c);
 	G->UpdateEventAdd(1,cb->GetCurrentFrame()+5,unitID,U);
 	return true;
@@ -168,9 +161,8 @@ bool cCombatManager::CommandCapture(const int& unitID, UnitInfo* U, const float&
 	if( !U->E->inLOS || (!cb->IsUnitParalyzed(U->enemyID) && 1.5*U->ud->speed < U->E->ud->speed) )
 		return false;
 
-	Command c;
-	c.id = CMD_CAPTURE;
-	c.params.push_back(U->enemyID);
+	Command c(CMD_CAPTURE);
+	c.PushParam(U->enemyID);
 	cb->GiveOrder(unitID, &c);
 	return true;
 }
@@ -182,9 +174,8 @@ bool cCombatManager::CommandTrap(const int& unitID, UnitInfo* U, const float& ED
 	if( U->ud->transportCapacity == 0 )
 		return false;
 
-	Command c;
-	c.id = CMD_LOAD_UNITS;
-	c.params.push_back(U->enemyID);
+	Command c(CMD_LOAD_UNITS);
+	c.PushParam(U->enemyID);
 	cb->GiveOrder(unitID, &c);
 	return true;
 }
@@ -206,11 +197,8 @@ bool cCombatManager::CommandManeuver(const int& unitID, UnitInfo *U, const float
 			Pos.x+=128-rand()%256;
 			Pos.z+=128-rand()%256;
 			G->CorrectPosition(Pos);
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.push_back(Pos.x);
-			c.params.push_back(Pos.y);
-			c.params.push_back(Pos.z);
+			Command c(CMD_MOVE);
+			c.PushPos(Pos);
 			cb->GiveOrder(unitID, &c);
 			G->UpdateEventAdd(1,int(GetNextUpdate(EDis,U)),unitID,U);
 			return true;
@@ -226,11 +214,10 @@ bool cCombatManager::CommandManeuver(const int& unitID, UnitInfo *U, const float
 		if( !G->TM->CanMoveToPos(U->area,Pos) )
 			return false;
 
-		Command c;
-		c.id = CMD_MOVE;
-		c.params.push_back(Pos.x);
-		c.params.push_back(cb->GetElevation(Pos.x,Pos.z));
-		c.params.push_back(Pos.z);
+		Command c(CMD_MOVE);
+		c.PushParam(Pos.x);
+		c.PushParam(cb->GetElevation(Pos.x,Pos.z));
+		c.PushParam(Pos.z);
 		cb->GiveOrder(unitID, &c);
 		G->UpdateEventAdd(1,int(GetNextUpdate(EDis,U)),unitID,U);
 		return true;
@@ -244,11 +231,8 @@ void cCombatManager::CommandRun(const int& unitID, UnitInfo *U, float3& EPos)
 	Pos.x+=Pos.x-EPos.x;
 	Pos.z+=Pos.z-EPos.z;
 	G->CorrectPosition(Pos);
-	Command c;
-	c.id = CMD_MOVE;
-	c.params.push_back(Pos.x);
-	c.params.push_back(Pos.y);
-	c.params.push_back(Pos.z);
+	Command c(CMD_MOVE);
+	c.PushPos(Pos);
 	cb->GiveOrder(unitID, &c);
 	G->UpdateEventAdd(1,cb->GetCurrentFrame()+210,unitID,U);
 }
