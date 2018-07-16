@@ -26,9 +26,8 @@
 static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 	assert(owner->unitDef->IsAirUnit());
 
-	if (owner->UsingScriptMoveType()) {
+	if (owner->UsingScriptMoveType())
 		return static_cast<CStrafeAirMoveType*>(owner->prevMoveType);
-	}
 
 	return static_cast<CStrafeAirMoveType*>(owner->moveType);
 }
@@ -83,28 +82,28 @@ CAirCAI::CAirCAI(CUnit* owner)
 void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
-	if ((c.GetID() != CMD_MOVE) && !AllowedCommand(c, true)) {
+	if ((c.GetID() != CMD_MOVE) && !AllowedCommand(c, true))
 		return;
-	} else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
-			(c.params[0] < 0.0f || c.params[2] < 0.0f
-			 || c.params[0] > mapDims.mapx*SQUARE_SIZE
-			 || c.params[2] > mapDims.mapy*SQUARE_SIZE))
+
+	if (c.GetID() == CMD_MOVE && c.GetNumParams() >= 3 &&
+			(c.GetParam(0) < 0.0f || c.GetParam(2) < 0.0f
+			 || c.GetParam(0) > (mapDims.mapx * SQUARE_SIZE)
+			 || c.GetParam(2) > (mapDims.mapy * SQUARE_SIZE)))
 	{
 		return;
 	}
 
-	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
+	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED)
 		return;
-	}
 
 	{
 		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
 
 		if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
-			if (c.params.empty())
+			if (c.GetNumParams() == 0)
 				return;
 
-			switch ((int) c.params[0]) {
+			switch ((int) c.GetParam(0)) {
 				case 0: { repairBelowHealth = 0.0f; break; }
 				case 1: { repairBelowHealth = 0.3f; break; }
 				case 2: { repairBelowHealth = 0.5f; break; }
@@ -125,10 +124,10 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 
 		if (c.GetID() == CMD_IDLEMODE) {
-			if (c.params.empty())
+			if (c.GetNumParams() == 0)
 				return;
 
-			switch ((int) c.params[0]) {
+			switch ((int) c.GetParam(0)) {
 				case 0: { airMT->autoLand = false; break; }
 				case 1: { airMT->autoLand = true;  break; }
 				default: { /*no op*/ } break;
@@ -147,16 +146,14 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 	}
 
-	if (!(c.options & SHIFT_KEY)
-			&& nonQueingCommands.find(c.GetID()) == nonQueingCommands.end())
-	{
+	if (!(c.GetOpts() & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		activeCommand = 0;
 		tempOrder = false;
 	}
 
-	if (c.GetID() == CMD_AREA_ATTACK && c.params.size() < 4) {
-		Command c2(CMD_ATTACK, c.options);
-		c2.params = c.params;
+	if (c.GetID() == CMD_AREA_ATTACK && c.GetNumParams() < 4) {
+		Command c2(CMD_ATTACK, c.GetOpts());
+		c2.CopyParams(c);
 		CCommandAI::GiveAllowedCommand(c2);
 		return;
 	}
@@ -170,7 +167,7 @@ void CAirCAI::SlowUpdate()
 	if (gs->paused)
 		return;
 
-	if (!commandQue.empty() && (commandQue.front().timeOut < gs->frameNum)) {
+	if (!commandQue.empty() && (commandQue.front().GetTimeOut() < gs->frameNum)) {
 		StopMoveAndFinishCommand();
 		return;
 	}
@@ -277,7 +274,7 @@ void CAirCAI::ExecuteMove(Command& c)
 
 void CAirCAI::ExecuteFight(Command& c)
 {
-	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+	assert((c.GetOpts() & INTERNAL_ORDER) || owner->unitDef->canFight);
 
 	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
 	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
@@ -289,12 +286,12 @@ void CAirCAI::ExecuteFight(Command& c)
 		inCommand = true;
 	}
 
-	if (c.params.size() < 3) {
+	if (c.GetNumParams() < 3) {
 		LOG_L(L_ERROR, "[ACAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
 		return;
 	}
 
-	if (c.params.size() >= 6) {
+	if (c.GetNumParams() >= 6) {
 		if (!inCommand) {
 			commandPos1 = c.GetPos(3);
 		}
@@ -317,7 +314,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		inCommand = true;
 		commandPos2 = goalPos;
 	}
-	if (c.params.size() >= 6) {
+	if (c.GetNumParams() >= 6) {
 		goalPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
 
@@ -344,7 +341,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			// noAutoTarget set (although the <enemy> CUnit*
 			// is technically not a user-target, we treat it
 			// as such) even when explicitly told to fight
-			Command nc(CMD_ATTACK, c.options, enemy->id);
+			Command nc(CMD_ATTACK, c.GetOpts(), enemy->id);
 			commandQue.push_front(nc);
 
 			tempOrder = true;
@@ -361,11 +358,11 @@ void CAirCAI::ExecuteFight(Command& c)
 
 			enemy = CGameHelper::GetClosestValidTarget(P, R, owner->allyteam, this);
 
-			if (enemy != NULL) {
+			if (enemy != nullptr) {
 				PushOrUpdateReturnFight();
 
 				// make the attack-command inherit <c>'s options
-				Command nc(CMD_ATTACK, c.options, enemy->id);
+				Command nc(CMD_ATTACK, c.GetOpts(), enemy->id);
 				commandQue.push_front(nc);
 
 				tempOrder = true;
@@ -399,17 +396,17 @@ void CAirCAI::ExecuteAttack(Command& c)
 	}
 
 	if (inCommand) {
-		if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
+		if (targetDied || (c.GetNumParams() == 1 && UpdateTargetLostTimer(int(c.GetParam(0))) == 0)) {
 			StopMoveAndFinishCommand();
 			return;
 		}
-		if (orderTarget != NULL) {
+		if (orderTarget != nullptr) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->DropCurrentAttackTarget();
 				StopMoveAndFinishCommand();
 				return;
 			}
-			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
+			if (!(c.GetOpts() & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
 				owner->DropCurrentAttackTarget();
 				StopMoveAndFinishCommand();
 				return;
@@ -418,8 +415,8 @@ void CAirCAI::ExecuteAttack(Command& c)
 	} else {
 		targetAge = 0;
 
-		if (c.params.size() == 1) {
-			CUnit* targetUnit = unitHandler.GetUnit(c.params[0]);
+		if (c.GetNumParams() == 1) {
+			CUnit* targetUnit = unitHandler.GetUnit(c.GetParam(0));
 
 			if (targetUnit == nullptr) {
 				StopMoveAndFinishCommand();
@@ -436,12 +433,12 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, false);
+			owner->AttackUnit(targetUnit, (c.GetOpts() & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
 		} else {
 			SetGoal(c.GetPos(0), owner->pos, cancelDistance);
-			owner->AttackGround(c.GetPos(0), (c.options & INTERNAL_ORDER) == 0, false);
+			owner->AttackGround(c.GetPos(0), (c.GetOpts() & INTERNAL_ORDER) == 0, false);
 
 			inCommand = true;
 		}
@@ -461,7 +458,7 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 	}
 
 	const float3& pos = c.GetPos(0);
-	const float radius = c.params[3];
+	const float radius = c.GetParam(3);
 
 	if (inCommand) {
 		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
@@ -485,7 +482,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 {
 	assert(owner->unitDef->canGuard);
 
-	const CUnit* guardee = unitHandler.GetUnit(c.params[0]);
+	const CUnit* guardee = unitHandler.GetUnit(c.GetParam(0));
 
 	if (guardee == nullptr) {
 		StopMoveAndFinishCommand();
@@ -507,12 +504,12 @@ void CAirCAI::ExecuteGuard(Command& c)
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		Command nc(CMD_ATTACK, c.options | INTERNAL_ORDER, guardee->lastAttacker->id);
+		Command nc(CMD_ATTACK, c.GetOpts() | INTERNAL_ORDER, guardee->lastAttacker->id);
 		commandQue.push_front(nc);
 		SlowUpdate();
 	} else {
-		Command c2(CMD_MOVE, c.options | INTERNAL_ORDER);
-		c2.timeOut = gs->frameNum + 60;
+		Command c2(CMD_MOVE, c.GetOpts() | INTERNAL_ORDER);
+		c2.SetTimeOut(gs->frameNum + 60);
 
 		if (guardee->pos.IsInBounds()) {
 			c2.PushPos(guardee->pos);
@@ -576,7 +573,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		return false;
 
 	const float3& pos = ac.GetPos(0);
-	const float radius = ac.params[3];
+	const float radius = ac.GetParam(3);
 
 	std::vector<int> enemyUnitIDs;
 	CGameHelper::GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
@@ -585,7 +582,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		float3 attackPos = pos + (gsRNG.NextVector() * radius);
 		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
-		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
+		owner->AttackGround(attackPos, (ac.GetOpts() & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);
 	} else {
 		// note: the range of randFloat() is inclusive of 1.0f
@@ -595,7 +592,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		CUnit* targetUnit = unitHandler.GetUnitUnsafe(unitID);
 
 		SetOrderTarget(targetUnit);
-		owner->AttackUnit(targetUnit, (ac.options & INTERNAL_ORDER) == 0, false);
+		owner->AttackUnit(targetUnit, (ac.GetOpts() & INTERNAL_ORDER) == 0, false);
 		SetGoal(targetUnit->pos, owner->pos);
 	}
 

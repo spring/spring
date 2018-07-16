@@ -2358,7 +2358,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(false), cmd.GetID(true), cmd.GetOpts(), cmd.GetNumParams(), cmd.GetParams()));
 
 	lua_pushboolean(L, true);
 	return 1;

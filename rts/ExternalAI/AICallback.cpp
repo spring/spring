@@ -372,7 +372,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 	if (unit->team != team)
 		return -5;
 
-	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(), c->aiCommandId, c->options, c->params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(false), c->GetID(true), c->GetOpts(), c->GetNumParams(), c->GetParams()));
 	return 0;
 }
 

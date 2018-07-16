@@ -1293,7 +1293,7 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 		for (; ci != unit->commandAI->commandQue.end(); ++ci) {
 			const Command& cmd = *ci;
 
-			if (cmd.GetID() < 0 && cmd.params.size() >= 3) {
+			if (cmd.GetID() < 0 && cmd.GetNumParams() >= 3) {
 				BuildInfo bi(cmd);
 				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
 

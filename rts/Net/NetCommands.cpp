@@ -615,19 +615,18 @@ void CGame::ClientReadNet()
 					uint16_t packetSize; pckt >> packetSize;
 					uint8_t playerNum; pckt >> playerNum;
 
-					const uint32_t numParams = (packetSize - 9) / sizeof(float);
-
 					if (!playerHandler.IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					int32_t cmdID;
 					uint8_t cmdOpt;
+					uint32_t numParams;
 
 					pckt >> cmdID;
 					pckt >> cmdOpt;
+					pckt >> numParams;
 
 					Command c(cmdID, cmdOpt);
-					c.params.reserve(numParams);
 
 					for (uint32_t a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
@@ -699,17 +698,21 @@ void CGame::ClientReadNet()
 
 					int32_t cmdID;
 					uint8_t cmdOpt;
+					uint32_t numParams;
 
 					pckt >> cmdID;
 					pckt >> cmdOpt;
+					pckt >> numParams;
 
 					Command c(cmdID, cmdOpt);
 
-					if (packetCode == NETMSG_AICOMMAND_TRACKED)
-						pckt >> c.aiCommandId;
+					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
+						pckt >> cmdID;
+						c.SetAICmdID(cmdID);
+					}
 
 					// insert the command parameters
-					for (int16_t a = 0; a < ((psize - 11) / 4); ++a) {
+					for (uint32_t a = 0; a < numParams; ++a) {
 						float param;
 						pckt >> param;
 						c.PushParam(param);
@@ -766,11 +769,10 @@ void CGame::ClientReadNet()
 					for (int16_t c = 0; c < commandCount; c++) {
 						int32_t cmdID;
 						uint8_t cmdOpt;
-						uint16_t paramCount;
+						uint16_t paramCount = 0;
 
 						if ((cmdID = sameCmdID) == 0)
 							pckt >> cmdID;
-
 						if ((cmdOpt = sameCmdOpt) == 0xFF)
 							pckt >> cmdOpt;
 
@@ -779,7 +781,7 @@ void CGame::ClientReadNet()
 						if ((paramCount = sameCmdParamSize) == 0xFFFF)
 							pckt >> paramCount;
 
-						for (int16_t p = 0; p < paramCount; p++) {
+						for (uint16_t p = 0; p < paramCount; p++) {
 							float param;
 							pckt >> param;
 							cmd.PushParam(param);

@@ -611,7 +611,7 @@ EXPORT(int) skirmishAiCallback_Engine_executeCommand(
 		case COMMAND_UNIT_BUILD: {
 			SBuildUnitCommand cmd;
 
-			cmd.toBuildUnitDefId = -rc->id;
+			cmd.toBuildUnitDefId = -rc->id[0];
 
 			if (rc->numParams >= 3) {
 				cmd.buildPos_posF3 = rc->params;
@@ -628,7 +628,7 @@ EXPORT(int) skirmishAiCallback_Engine_executeCommand(
 		default:
 		case COMMAND_UNIT_CUSTOM: {
 			SCustomUnitCommand cmd;
-			cmd.cmdId       = rc->id;
+			cmd.cmdId       = rc->id[0];
 			cmd.params_size = rc->numParams;
 			cmd.params      = rc->params;
 
@@ -1146,7 +1146,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 
 			// check if data is a known command
 			if (newCommand(commandData, commandTopic, unitHandler.MaxUnits(), &c)) {
-				c.aiCommandId = commandId;
+				c.SetAICmdID(commandId);
 
 				const SStopUnitCommand* cmd = static_cast<SStopUnitCommand*>(commandData);
 
@@ -3522,20 +3522,19 @@ EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getParams(
 	const char** params,
 	int paramsMaxSize
 ) {
-	const std::vector<std::string> ps = GetCallBack(skirmishAIId)->GetUnitCommands(unitId)->at(supportedCommandId)->params;
+	/*const*/ CAICallback* cb = GetCallBack(skirmishAIId);
+	const std::vector<const SCommandDescription*>* cq = cb->GetUnitCommands(unitId);
+	const std::vector<std::string>& ps = cq->at(supportedCommandId)->params;
+
 	const int paramsRealSize = ps.size();
 
-	size_t paramsSize = paramsRealSize;
-
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (int p = 0; p < paramsSize; p++) {
-			params[p] = ps.at(p).c_str();
+		for (unsigned int i = 0, n = std::min(paramsRealSize, paramsMaxSize); i < n; i++) {
+			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return paramsSize;
+	return (std::min(paramsRealSize, paramsMaxSize));
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getStockpile(int skirmishAIId, int unitId) {
@@ -3627,17 +3626,17 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int skirmishAIId, int u
 
 EXPORT(short) skirmishAiCallback_Unit_CurrentCommand_getOptions(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).options : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetOpts() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTag(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).tag : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetTag() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int skirmishAIId, int unitId, int commandId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).timeOut : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetTimeOut() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getParams(
@@ -3645,27 +3644,23 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getParams(
 	int unitId,
 	int commandId,
 	float* params,
-	int paramsMaxSize
+	int maxParams
 ) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
 
 	if (!CHECK_COMMAND_ID(q, commandId))
 		return -1;
 
-	const std::vector<float>& ps = q->at(commandId).params;
-	const int paramsRealSize = ps.size();
-
-	size_t paramsSize = paramsRealSize;
+	const float* cmdParams = q->at(commandId).GetParams();
+	const int numParams = q->at(commandId).GetNumParams();
 
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (size_t p = 0; p < paramsSize; p++) {
-			params[p] = ps.at(p);
+		for (unsigned int i = 0, n = std::min(numParams, maxParams); i < n; i++) {
+			params[i] = cmdParams[i];
 		}
 	}
 
-	return paramsSize;
+	return (std::min(numParams, maxParams));
 }
 
 #undef CHECK_COMMAND_ID
@@ -4967,21 +4962,18 @@ EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(
 	size_t paramsSize = paramsRealSize;
 
 	if (params != nullptr) {
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (size_t p = 0; p < paramsSize; ++p) {
-			params[p] = ps.at(p).c_str();
+		for (unsigned int i = 0, n = std::min(paramsRealSize, paramsMaxSize); i < n; i++) {
+			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return paramsSize;
+	return (std::min(paramsRealSize, paramsMaxSize));
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	//TODO: need to add support for new gui
 	return (guihandler->GetOrderPreview()).GetID();
 }
 
@@ -4989,50 +4981,43 @@ EXPORT(short) skirmishAiCallback_Group_OrderPreview_getOptions(int skirmishAIId,
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).options;
+	return (guihandler->GetOrderPreview()).GetOpts();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getTag(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).tag;
+	return (guihandler->GetOrderPreview()).GetTag();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getTimeOut(int skirmishAIId, int groupId) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	//TODO: need to add support for new gui
-	return (guihandler->GetOrderPreview()).timeOut;
+	return (guihandler->GetOrderPreview()).GetTimeOut();
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getParams(
 	int skirmishAIId,
 	int groupId,
 	float* params,
-	int paramsMaxSize
+	int maxParams
 ) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
-	const std::vector<float>& ps = guihandler->GetOrderPreview().params;
-	const int paramsRealSize = ps.size();
-
-	size_t paramsSize = paramsRealSize;
+	const Command& guiCommand = guihandler->GetOrderPreview();
+	const float* cmdParams = guiCommand.GetParams();
+	const int numParams = guiCommand.GetNumParams();
 
 	if (params != nullptr) {
-		// TODO: need to add support for new gui
-		paramsSize = std::min(paramsRealSize, paramsMaxSize);
-
-		for (int p = 0; p < paramsSize; p++) {
-			params[p] = ps[p];
+		for (unsigned int i = 0, n = std::min(numParams, maxParams); i < n; i++) {
+			params[i] = cmdParams[i];
 		}
 	}
 
-	return paramsSize;
+	return (std::min(numParams, maxParams));
 }
 
 EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) {

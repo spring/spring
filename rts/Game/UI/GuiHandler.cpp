@@ -1278,10 +1278,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 			Command c(cd.id);
 
 			if (cd.id != CMD_STOP) {
-				c.options = CreateOptions(rightMouseButton);
+				c.SetOpts(CreateOptions(rightMouseButton));
 
 				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE)))
-					c.options = c.options ^ SHIFT_KEY;
+					c.SetOpts(c.GetOpts() ^ SHIFT_KEY);
 			}
 
 			GiveCommand(c);
@@ -1848,23 +1848,23 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 				if ((cmdDesc.id < 0) || (cmdDesc.id == CMD_STOCKPILE)) {
 					if (action.extra == "+5") {
-						c.options = SHIFT_KEY;
+						c.SetOpts(SHIFT_KEY);
 					} else if (action.extra == "+20") {
-						c.options = CONTROL_KEY;
+						c.SetOpts(CONTROL_KEY);
 					} else if (action.extra == "+100") {
-						c.options = SHIFT_KEY | CONTROL_KEY;
+						c.SetOpts(SHIFT_KEY | CONTROL_KEY);
 					} else if (action.extra == "-1") {
-						c.options = RIGHT_MOUSE_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY);
 					} else if (action.extra == "-5") {
-						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY);
 					} else if (action.extra == "-20") {
-						c.options = RIGHT_MOUSE_KEY | CONTROL_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | CONTROL_KEY);
 					} else if (action.extra == "-100") {
-						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
+						c.SetOpts(RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY);
 					}
 				}
 				else if (action.extra.find("queued") != std::string::npos) {
-					c.options |= SHIFT_KEY;
+					c.SetOpts(c.GetOpts() | SHIFT_KEY);
 				}
 
 				GiveCommand(c);
@@ -1905,7 +1905,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					Command c(cd.id, 0, value = Clamp(value, minV, maxV));
 
 					if (action.extra.find("queued") != std::string::npos)
-						c.options = SHIFT_KEY;
+						c.SetOpts(SHIFT_KEY);
 
 					GiveCommand(c);
 					break;
@@ -2034,7 +2034,7 @@ Command CGuiHandler::GetOrderPreview()
 
 inline Command CheckCommand(Command c) {
 	// always allow queued commands, since conditions may change s.t. the command becomes valid
-	if (selectedUnitsHandler.selectedUnits.empty() || (c.options & SHIFT_KEY))
+	if (selectedUnitsHandler.selectedUnits.empty() || (c.GetOpts() & SHIFT_KEY))
 		return c;
 
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
@@ -2412,10 +2412,10 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 		} else {
 			const Command c = CGameHelper::GetBuildCommand(cameraPos, mouseDir);
 
-			if (c.GetID() < 0 && c.params.size() == 4) {
+			if (c.GetID() < 0 && c.GetNumParams() == 4) {
 				other.pos = c.GetPos(0);
 				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
-				other.buildFacing = int(c.params[3]);
+				other.buildFacing = int(c.GetParam(3));
 			}
 		}
 	}
