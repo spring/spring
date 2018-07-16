@@ -1838,7 +1838,7 @@ void CCommandAI::SlowUpdateMaxSpeed() {
 	if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 		return;
 
-	assert(!c.params.empty());
+	assert(!c.IsEmptyCommand());
 	owner->moveType->SetWantedMaxSpeed(c.GetParam(0));
 }
 
