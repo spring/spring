@@ -440,10 +440,10 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 			Command& c = resurrecterCAI->commandQue.front();
 
-			if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
+			if (c.GetID() != CMD_RESURRECT || c.GetNumParams() != 1)
 				continue;
 
-			if ((c.params[0] - unitHandler.MaxUnits()) != curResurrectee->id)
+			if ((c.GetParam(0) - unitHandler.MaxUnits()) != curResurrectee->id)
 				continue;
 
 			if (!teamHandler.Ally(allyteam, resurrecter->allyteam))
@@ -455,7 +455,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 			// prevent FinishCommand from removing this command when the
 			// feature is deleted, since it is needed to start the repair
 			// (WTF!)
-			c.params[0] = INT_MAX / 2;
+			c.SetParam(0, INT_MAX / 2);
 		}
 
 		// this takes one simframe to do the deletion

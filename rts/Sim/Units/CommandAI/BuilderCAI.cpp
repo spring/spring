@@ -376,10 +376,10 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 		return false;
 
 	// not an internal object targetted command
-	if (((cmd.options & INTERNAL_ORDER) == 0) || (cmd.params.size() != 1))
+	if (((cmd.GetOpts() & INTERNAL_ORDER) == 0) || (cmd.GetNumParams() != 1))
 		return false;
 
-	const int objID = cmd.params[0];
+	const int objID = cmd.GetParam(0);
 	const CWorldObject* obj = unitHandler.GetUnit(objID);
 
 	if (obj == nullptr) {
@@ -437,13 +437,13 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 	// don't guard yourself
 	if ((c.GetID() == CMD_GUARD) &&
-	    (c.params.size() == 1) && ((int)c.params[0] == owner->id)) {
+	    (c.GetNumParams() == 1) && ((int)c.GetParam(0) == owner->id)) {
 		return;
 	}
 
 	// stop building/reclaiming/... if the new command is not queued, i.e. replaces our current activity
 	// FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
-	if ((c.GetID() != CMD_WAIT && c.GetID() != CMD_SET_WANTED_MAX_SPEED) && !(c.options & SHIFT_KEY)) {
+	if ((c.GetID() != CMD_WAIT && c.GetID() != CMD_SET_WANTED_MAX_SPEED) && !(c.GetOpts() & SHIFT_KEY)) {
 		if (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 			building = false;
 			static_cast<CBuilder*>(owner)->StopBuild();
@@ -451,14 +451,14 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	}
 
 	if (buildOptions.find(c.GetID()) != buildOptions.end()) {
-		if (c.params.size() < 3)
+		if (c.GetNumParams() < 3)
 			return;
 
 		BuildInfo bi;
 		bi.pos = c.GetPos(0);
 
-		if (c.params.size() == 4)
-			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
+		if (c.GetNumParams() == 4)
+			bi.buildFacing = abs((int)c.GetParam(3)) % NUM_FACINGS;
 
 		bi.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 		bi.pos = CGameHelper::Pos2BuildPos(bi, true);
@@ -478,7 +478,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// if it is a nanoframe help to finish it
 		if (nanoFrame != nullptr) {
-			Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, nanoFrame->id);
+			Command c2(CMD_REPAIR, c.GetOpts() | INTERNAL_ORDER, nanoFrame->id);
 			CMobileCAI::GiveCommandReal(c2, fromSynced);
 			CMobileCAI::GiveCommandReal(c, fromSynced);
 			return;
@@ -585,8 +585,8 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		#if 1
 		// snap build-position to multiples of SQUARE_SIZE plus a half-square offset (4, 12, 20, ...)
-		bi.pos.x = math::floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
-		bi.pos.z = math::floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.x = math::floor(c.GetParam(0) / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+		bi.pos.z = math::floor(c.GetParam(2) / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		#endif
 
 		CFeature* f = nullptr;
@@ -714,9 +714,9 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 	if (!owner->unitDef->canRepair)
 		return;
 
-	if (c.params.size() == 1 || c.params.size() == 5) {
+	if (c.GetNumParams() == 1 || c.GetNumParams() == 5) {
 		// repair unit
-		CUnit* unit = unitHandler.GetUnit(c.params[0]);
+		CUnit* unit = unitHandler.GetUnit(c.GetParam(0));
 
 		if (unit == nullptr) {
 			StopMoveAndFinishCommand();
@@ -731,12 +731,12 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			}
 		}
 
-		if (c.params.size() == 5) {
+		if (c.GetNumParams() == 5) {
 			const float3& pos = c.GetPos(1);
-			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
+			const float radius = c.GetParam(4) + 100.0f; // do not walk too far outside repair area
 
 			if ((pos - unit->pos).SqLength2D() > radius * radius ||
-				(unit->IsMoving() && (((c.options & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || ownerBuilder->curBuild == unit)
+				(unit->IsMoving() && (((c.GetOpts() & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || ownerBuilder->curBuild == unit)
 				&& !IsInBuildRange(unit))) {
 				StopMoveAndFinishCommand();
 				return;
@@ -749,7 +749,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		canRepairUnit &= ((unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth)));
 		canRepairUnit &= ((unit != owner) || owner->unitDef->canSelfRepair);
 		canRepairUnit &= (!unit->soloBuilder || (unit->soloBuilder == owner));
-		canRepairUnit &= (!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
+		canRepairUnit &= (!(c.GetOpts() & INTERNAL_ORDER) || (c.GetOpts() & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
 		canRepairUnit &= (UpdateTargetLostTimer(unit->id) != 0);
 
 		if (canRepairUnit) {
@@ -759,20 +759,21 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		} else {
 			StopMoveAndFinishCommand();
 		}
-	} else if (c.params.size() == 4) {
+	} else if (c.GetNumParams() == 4) {
 		// area repair
 		const float3 pos = c.GetPos(0);
-		const float radius = c.params[3];
+		const float radius = c.GetParam(3);
 
 		ownerBuilder->StopBuild();
-		if (FindRepairTargetAndRepair(pos, radius, c.options, false, (c.options & META_KEY))) {
+		if (FindRepairTargetAndRepair(pos, radius, c.GetOpts(), false, (c.GetOpts() & META_KEY))) {
 			inCommand = false;
 			SlowUpdate();
 			return;
 		}
-		if (!(c.options & ALT_KEY)) {
+
+		if (!(c.GetOpts() & ALT_KEY))
 			StopMoveAndFinishCommand();
-		}
+
 	} else {
 		StopMoveAndFinishCommand();
 	}
@@ -785,18 +786,18 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 	if (!owner->unitDef->canCapture)
 		return;
 
-	if (c.params.size() == 1 || c.params.size() == 5) {
+	if (c.GetNumParams() == 1 || c.GetNumParams() == 5) {
 		// capture unit
-		CUnit* unit = unitHandler.GetUnit(c.params[0]);
+		CUnit* unit = unitHandler.GetUnit(c.GetParam(0));
 
 		if (unit == nullptr) {
 			StopMoveAndFinishCommand();
 			return;
 		}
 
-		if (c.params.size() == 5) {
+		if (c.GetNumParams() == 5) {
 			const float3& pos = c.GetPos(1);
-			const float radius = c.params[4] + 100; // do not walk too far outside capture area
+			const float radius = c.GetParam(4) + 100.0f; // do not walk too far outside capture area
 
 			if (((pos - unit->pos).SqLength2D() > (radius * radius) ||
 				(ownerBuilder->curCapture == unit && unit->IsMoving() && !IsInBuildRange(unit)))) {
@@ -812,21 +813,22 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		} else {
 			StopMoveAndFinishCommand();
 		}
-	} else if (c.params.size() == 4) {
+	} else if (c.GetNumParams() == 4) {
 		// area capture
 		const float3 pos = c.GetPos(0);
-		const float radius = c.params[3];
+		const float radius = c.GetParam(3);
 
 		ownerBuilder->StopBuild();
 
-		if (FindCaptureTargetAndCapture(pos, radius, c.options, (c.options & META_KEY))) {
+		if (FindCaptureTargetAndCapture(pos, radius, c.GetOpts(), (c.GetOpts() & META_KEY))) {
 			inCommand = false;
 			SlowUpdate();
 			return;
 		}
-		if (!(c.options & ALT_KEY)) {
+
+		if (!(c.GetOpts() & ALT_KEY))
 			StopMoveAndFinishCommand();
-		}
+
 	} else {
 		StopMoveAndFinishCommand();
 	}
@@ -838,7 +840,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (!owner->unitDef->canGuard)
 		return;
 
-	CUnit* guardee = unitHandler.GetUnit(c.params[0]);
+	CUnit* guardee = unitHandler.GetUnit(c.GetParam(0));
 
 	if (guardee == nullptr) {
 		StopMoveAndFinishCommand();
@@ -883,15 +885,15 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		}
 
 		const bool pushRepairCommand =
-			(  b->curBuild != NULL) &&
-			(  b->curBuild->soloBuilder == NULL || b->curBuild->soloBuilder == owner) &&
+			(  b->curBuild != nullptr) &&
+			(  b->curBuild->soloBuilder == nullptr || b->curBuild->soloBuilder == owner) &&
 			(( b->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 			( !b->curBuild->beingBuilt && owner->unitDef->canRepair));
 
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options, b->curBuild->id);
+			Command nc(CMD_REPAIR, c.GetOpts(), b->curBuild->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -902,24 +904,22 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 	if (CFactory* fac = dynamic_cast<CFactory*>(guardee)) {
 		const bool pushRepairCommand =
-			(  fac->curBuild != NULL) &&
-			(  fac->curBuild->soloBuilder == NULL || fac->curBuild->soloBuilder == owner) &&
+			(  fac->curBuild != nullptr) &&
+			(  fac->curBuild->soloBuilder == nullptr || fac->curBuild->soloBuilder == owner) &&
 			(( fac->curBuild->beingBuilt && owner->unitDef->canAssist) ||
 			 (!fac->curBuild->beingBuilt && owner->unitDef->canRepair));
 
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options, fac->curBuild->id);
-
-			commandQue.push_front(nc);
+			commandQue.push_front(Command(CMD_REPAIR, c.GetOpts(), fac->curBuild->id));
 			inCommand = false;
 			// SlowUpdate();
 			return;
 		}
 	}
 
-	if (!(c.options & CONTROL_KEY) && IsUnitBeingReclaimed(guardee, owner))
+	if (!(c.GetOpts() & CONTROL_KEY) && IsUnitBeingReclaimed(guardee, owner))
 		return;
 
 	const float3 pos    = guardee->pos;
@@ -930,21 +930,19 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 		const bool pushRepairCommand =
 			(  guardee->health < guardee->maxHealth) &&
-			(  guardee->soloBuilder == NULL || guardee->soloBuilder == owner) &&
+			(  guardee->soloBuilder == nullptr || guardee->soloBuilder == owner) &&
 			(( guardee->beingBuilt && owner->unitDef->canAssist) ||
 			 (!guardee->beingBuilt && owner->unitDef->canRepair));
 
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc(CMD_REPAIR, c.options, guardee->id);
-
-			commandQue.push_front(nc);
+			commandQue.push_front(Command(CMD_REPAIR, c.GetOpts(), guardee->id));
 			inCommand = false;
 			return;
-		} else {
-			NonMoving();
 		}
+
+		NonMoving();
 	} else {
 		StopSlowGuard();
 	}
@@ -957,8 +955,8 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 	if (!owner->unitDef->canReclaim)
 		return;
 
-	if (c.params.size() == 1 || c.params.size() == 5) {
-		const int signedId = (int) c.params[0];
+	if (c.GetNumParams() == 1 || c.GetNumParams() == 5) {
+		const int signedId = (int) c.GetParam(0);
 
 		if (signedId < 0) {
 			LOG_L(L_WARNING, "Trying to reclaim unit or feature with id < 0 (%i), aborting.", signedId);
@@ -968,7 +966,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		const unsigned int uid = signedId;
 
 		const bool checkForBetterTarget = ((++randomCounter % 5) == 0);
-		if (checkForBetterTarget && (c.options & INTERNAL_ORDER) && (c.params.size() >= 5)) {
+		if (checkForBetterTarget && (c.GetOpts() & INTERNAL_ORDER) && (c.GetNumParams() >= 5)) {
 			// regular check if there is a closer reclaim target
 			CSolidObject* obj;
 			if (uid >= unitHandler.MaxUnits()) {
@@ -978,19 +976,19 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			}
 			if (obj) {
 				const float3& pos = c.GetPos(1);
-				const float radius = c.params[4];
+				const float radius = c.GetParam(4);
 				const float curdist = pos.SqDistance2D(obj->pos);
 
-				const bool recUnits = !!(c.options & META_KEY);
-				const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
-				const bool recSpecial = !!(c.options & CONTROL_KEY);
+				const bool recUnits = !!(c.GetOpts() & META_KEY);
+				const bool recEnemyOnly = (c.GetOpts() & META_KEY) && (c.GetOpts() & CONTROL_KEY);
+				const bool recSpecial = !!(c.GetOpts() & CONTROL_KEY);
 
 				ReclaimOption recopt = REC_NORESCHECK;
 				if (recUnits)     recopt |= REC_UNITS;
 				if (recEnemyOnly) recopt |= REC_ENEMYONLY;
 				if (recSpecial)   recopt |= REC_SPECIAL;
 
-				const int rid = FindReclaimTarget(pos, radius, c.options, recopt, curdist);
+				const int rid = FindReclaimTarget(pos, radius, c.GetOpts(), recopt, curdist);
 				if ((rid > 0) && (rid != uid)) {
 					StopMoveAndFinishCommand();
 					RemoveUnitFromReclaimers(owner);
@@ -1005,7 +1003,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 			if (feature != nullptr) {
 				bool featureBeingResurrected = IsFeatureBeingResurrected(feature->id, owner);
-				featureBeingResurrected &= (c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY);
+				featureBeingResurrected &= (c.GetOpts() & INTERNAL_ORDER) && !(c.GetOpts() & CONTROL_KEY);
 
 				if (featureBeingResurrected || !ReclaimObject(feature)) {
 					StopMoveAndFinishCommand();
@@ -1022,9 +1020,9 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		} else { // reclaim unit
 			CUnit* unit = unitHandler.GetUnit(uid);
 
-			if (unit != nullptr && c.params.size() == 5) {
+			if (unit != nullptr && c.GetNumParams() == 5) {
 				const float3& pos = c.GetPos(1);
-				const float radius = c.params[4] + 100.0f; // do not walk too far outside reclaim area
+				const float radius = c.GetParam(4) + 100.0f; // do not walk too far outside reclaim area
 
 				const bool outOfReclaimRange =
 					(pos.SqDistance2D(unit->pos) > radius * radius) ||
@@ -1055,13 +1053,13 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 			RemoveUnitFromFeatureReclaimers(owner);
 		}
-	} else if (c.params.size() == 4) {
+	} else if (c.GetNumParams() == 4) {
 		// area reclaim
 		const float3 pos = c.GetPos(0);
-		const float radius = c.params[3];
-		const bool recUnits = !!(c.options & META_KEY);
-		const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
-		const bool recSpecial = !!(c.options & CONTROL_KEY);
+		const float radius = c.GetParam(3);
+		const bool recUnits = !!(c.GetOpts() & META_KEY);
+		const bool recEnemyOnly = (c.GetOpts() & META_KEY) && (c.GetOpts() & CONTROL_KEY);
+		const bool recSpecial = !!(c.GetOpts() & CONTROL_KEY);
 
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
@@ -1072,13 +1070,13 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		if (recEnemyOnly) recopt |= REC_ENEMYONLY;
 		if (recSpecial)   recopt |= REC_SPECIAL;
 
-		if (FindReclaimTargetAndReclaim(pos, radius, c.options, recopt)) {
+		if (FindReclaimTargetAndReclaim(pos, radius, c.GetOpts(), recopt)) {
 			inCommand = false;
 			SlowUpdate();
 			return;
 		}
 
-		if (!(c.options & ALT_KEY))
+		if (!(c.GetOpts() & ALT_KEY))
 			StopMoveAndFinishCommand();
 
 	} else {
@@ -1106,14 +1104,14 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	if (!owner->unitDef->canResurrect)
 		return;
 
-	if (c.params.size() == 1) {
-		const unsigned int id = (unsigned int) c.params[0];
+	if (c.GetNumParams() == 1) {
+		const unsigned int id = (unsigned int) c.GetParam(0);
 
 		if (id >= unitHandler.MaxUnits()) { // resurrect feature
 			CFeature* feature = featureHandler.GetFeature(id - unitHandler.MaxUnits());
 
 			if (feature && feature->udef != nullptr) {
-				if (((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
+				if (((c.GetOpts() & INTERNAL_ORDER) && !(c.GetOpts() & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					RemoveUnitFromResurrecters(owner);
 					StopMoveAndFinishCommand();
@@ -1126,7 +1124,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 				if (ownerBuilder->lastResurrected && unitHandler.GetUnitUnsafe(ownerBuilder->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair (by overwriting the current order)
-					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER, ownerBuilder->lastResurrected);
+					c = Command(CMD_REPAIR, c.GetOpts() | INTERNAL_ORDER, ownerBuilder->lastResurrected);
 
 					ownerBuilder->lastResurrected = 0;
 					inCommand = false;
@@ -1139,19 +1137,20 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 			RemoveUnitFromResurrecters(owner);
 			StopMoveAndFinishCommand();
 		}
-	} else if (c.params.size() == 4) {
+	} else if (c.GetNumParams() == 4) {
 		// area resurrect
 		const float3 pos = c.GetPos(0);
-		const float radius = c.params[3];
+		const float radius = c.GetParam(3);
 
-		if (FindResurrectableFeatureAndResurrect(pos, radius, c.options, (c.options & META_KEY))) {
+		if (FindResurrectableFeatureAndResurrect(pos, radius, c.GetOpts(), (c.GetOpts() & META_KEY))) {
 			inCommand = false;
 			SlowUpdate();
 			return;
 		}
-		if (!(c.options & ALT_KEY)) {
+
+		if (!(c.GetOpts() & ALT_KEY))
 			StopMoveAndFinishCommand();
-		}
+
 	} else {
 		// wrong number of parameters
 		RemoveUnitFromResurrecters(owner);
@@ -1165,11 +1164,10 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 	if (!owner->unitDef->canPatrol)
 		return;
 
-	if (c.params.size() < 3) {
+	if (c.GetNumParams() < 3)
 		return;
-	}
 
-	Command temp(CMD_FIGHT, c.options|INTERNAL_ORDER, c.GetPos(0));
+	Command temp(CMD_FIGHT, c.GetOpts() | INTERNAL_ORDER, c.GetPos(0));
 
 	commandQue.push_back(c);
 	commandQue.pop_front();
@@ -1182,21 +1180,21 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 
 void CBuilderCAI::ExecuteFight(Command& c)
 {
-	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
+	assert((c.GetOpts() & INTERNAL_ORDER) || owner->unitDef->canFight);
 
 	if (tempOrder) {
 		tempOrder = false;
 		inCommand = true;
 	}
-	if (c.params.size() < 3) {
+	if (c.GetNumParams() < 3) {
 		LOG_L(L_ERROR, "[BuilderCAI::%s] invalid CMD_FIGHT for builder %d (%s)", __func__, owner->id, owner->unitDef->humanName.c_str());
 		return;
 	}
 
-	if (c.params.size() >= 6) {
-		if (!inCommand) {
+	if (c.GetNumParams() >= 6) {
+		if (!inCommand)
 			commandPos1 = c.GetPos(3);
-		}
+
 	} else {
 		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
 		// rotated (only shortened) if we reach this because the previous return
@@ -1216,17 +1214,16 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	}
 
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-	if (c.params.size() >= 6) {
+
+	if (c.GetNumParams() >= 6)
 		pos = curPosOnLine;
-	}
 
-	if (pos != owner->moveType->goalPos) {
+	if (pos != owner->moveType->goalPos)
 		SetGoal(pos, owner->pos);
-	}
 
-	const bool resurrectMode = !!(c.options & ALT_KEY);
-	const bool reclaimEnemyMode = !!(c.options & META_KEY);
-	const bool reclaimEnemyOnlyMode = (c.options & CONTROL_KEY) && (c.options & META_KEY);
+	const bool resurrectMode = !!(c.GetOpts() & ALT_KEY);
+	const bool reclaimEnemyMode = !!(c.GetOpts() & META_KEY);
+	const bool reclaimEnemyOnlyMode = (c.GetOpts() & CONTROL_KEY) && (c.GetOpts() & META_KEY);
 
 	ReclaimOption recopt;
 	if (resurrectMode)        recopt |= REC_NONREZ;
@@ -1236,7 +1233,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	const float searchRadius = (owner->immobile ? 0 : (300 * owner->moveState)) + ownerBuilder->buildDistance;
 
 	if (!reclaimEnemyOnlyMode && (owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
-	    FindRepairTargetAndRepair(curPosOnLine, searchRadius, c.options, true, resurrectMode)){
+	    FindRepairTargetAndRepair(curPosOnLine, searchRadius, c.GetOpts(), true, resurrectMode)){
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC1 != gs->frameNum) {  //avoid infinite loops
@@ -1246,7 +1243,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (!reclaimEnemyOnlyMode && resurrectMode && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
-	    FindResurrectableFeatureAndResurrect(curPosOnLine, searchRadius, c.options, false)) {
+	    FindResurrectableFeatureAndResurrect(curPosOnLine, searchRadius, c.GetOpts(), false)) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC2 != gs->frameNum) {  //avoid infinite loops
@@ -1256,7 +1253,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, searchRadius, c.options, recopt)) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, searchRadius, c.GetOpts(), recopt)) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops
@@ -1288,8 +1285,8 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			StopMoveAndFinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
-		const float3 pos(c.params[0], CGround::GetHeightReal(c.params[0], c.params[2]), c.params[2]);
-		const float radius = std::min(c.params[3], 200.0f);
+		const float3 pos(c.GetParam(0), CGround::GetHeightReal(c.GetParam(0), c.GetParam(2)), c.GetParam(2));
+		const float radius = std::min(c.GetParam(3), 200.0f);
 
 		if (MoveInBuildRange(pos, radius * 0.7f)) {
 			ownerBuilder->StartRestore(pos, radius);
@@ -1372,11 +1369,11 @@ bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = cq.front();
-		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
+		if (c.GetID() != CMD_RECLAIM || (c.GetNumParams() != 1 && c.GetNumParams() != 5)) {
 			rm.push_back(u->id);
 			continue;
 		}
-		const int cmdUnitId = (int)c.params[0];
+		const int cmdUnitId = (int)c.GetParam(0);
 		if (cmdUnitId == unit->id && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
@@ -1407,11 +1404,11 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = cq.front();
-		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
+		if (c.GetID() != CMD_RECLAIM || (c.GetNumParams() != 1 && c.GetNumParams() != 5)) {
 			rm.push_back(u->id);
 			continue;
 		}
-		const int cmdFeatureId = (int)c.params[0];
+		const int cmdFeatureId = (int)c.GetParam(0);
 		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
@@ -1442,11 +1439,11 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = cq.front();
-		if (c.GetID() != CMD_RESURRECT || c.params.size() != 1) {
+		if (c.GetID() != CMD_RESURRECT || c.GetNumParams() != 1) {
 			rm.push_back(u->id);
 			continue;
 		}
-		const int cmdFeatureId = (int)c.params[0];
+		const int cmdFeatureId = (int)c.GetParam(0);
 		if (cmdFeatureId-unitHandler.MaxUnits() == featureId && (!friendUnit || teamHandler.Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;

@@ -4132,7 +4132,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 	// t["options"] = {key1 = val1, ...}
 	LuaUtils::PushCommandOptionsTable(L, cmd, true);
 
-	HSTR_PUSH_NUMBER(L, "tag", cmd.tag);
+	HSTR_PUSH_NUMBER(L, "tag", cmd.GetTag());
 }
 
 

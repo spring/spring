@@ -885,10 +885,10 @@ void LuaUtils::PushCommandParamsTable(lua_State* L, const Command& cmd, bool sub
 		HSTR_PUSH(L, "params");
 	}
 
-	lua_createtable(L, cmd.params.size(), 0);
+	lua_createtable(L, cmd.GetNumParams(), 0);
 
-	for (unsigned int p = 0; p < cmd.params.size(); p++) {
-		lua_pushnumber(L, cmd.params[p]);
+	for (unsigned int p = 0; p < cmd.GetNumParams(); p++) {
+		lua_pushnumber(L, cmd.GetParam(p));
 		lua_rawseti(L, -2, p + 1);
 	}
 
@@ -904,13 +904,13 @@ void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool su
 	}
 
 	lua_createtable(L, 0, 7);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",      !!(cmd.options & ALT_KEY        ));
-	HSTR_PUSH_BOOL(L, "ctrl",     !!(cmd.options & CONTROL_KEY    ));
-	HSTR_PUSH_BOOL(L, "shift",    !!(cmd.options & SHIFT_KEY      ));
-	HSTR_PUSH_BOOL(L, "right",    !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "meta",     !!(cmd.options & META_KEY       ));
-	HSTR_PUSH_BOOL(L, "internal", !!(cmd.options & INTERNAL_ORDER ));
+	HSTR_PUSH_NUMBER(L, "coded", cmd.GetOpts());
+	HSTR_PUSH_BOOL(L, "alt",      !!(cmd.GetOpts() & ALT_KEY        ));
+	HSTR_PUSH_BOOL(L, "ctrl",     !!(cmd.GetOpts() & CONTROL_KEY    ));
+	HSTR_PUSH_BOOL(L, "shift",    !!(cmd.GetOpts() & SHIFT_KEY      ));
+	HSTR_PUSH_BOOL(L, "right",    !!(cmd.GetOpts() & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",     !!(cmd.GetOpts() & META_KEY       ));
+	HSTR_PUSH_BOOL(L, "internal", !!(cmd.GetOpts() & INTERNAL_ORDER ));
 
 	if (subtable) {
 		lua_rawset(L, -3);
@@ -928,7 +928,7 @@ void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command
 	PushCommandParamsTable(L, cmd, false);
 	PushCommandOptionsTable(L, cmd, false);
 
-	lua_pushnumber(L, cmd.tag);
+	lua_pushnumber(L, cmd.GetTag());
 }
 
 void LuaUtils::ParseCommandOptions(
@@ -938,29 +938,33 @@ void LuaUtils::ParseCommandOptions(
 	const int idx
 ) {
 	if (lua_isnumber(L, idx)) {
-		cmd.options = (unsigned char)lua_tonumber(L, idx);
+		cmd.SetOpts(lua_tonumber(L, idx));
 	} else if (lua_istable(L, idx)) {
 		for (lua_pushnil(L); lua_next(L, idx) != 0; lua_pop(L, 1)) {
 			// "key" = value (table format of CommandNotify)
 			if (lua_israwstring(L, -2)) {
-				const std::string key = lua_tostring(L, -2);
-
 				// we do not care about the "coded" key (not a boolean value)
 				if (!lua_isboolean(L, -1))
 					continue;
 
 				const bool value = lua_toboolean(L, -1);
 
-				if (key == "right") {
-					cmd.options |= (RIGHT_MOUSE_KEY * value);
-				} else if (key == "alt") {
-					cmd.options |= (ALT_KEY * value);
-				} else if (key == "ctrl") {
-					cmd.options |= (CONTROL_KEY * value);
-				} else if (key == "shift") {
-					cmd.options |= (SHIFT_KEY * value);
-				} else if (key == "meta") {
-					cmd.options |= (META_KEY * value);
+				switch (hashString(lua_tostring(L, -2))) {
+					case hashString("right"): {
+						cmd.SetOpts(cmd.GetOpts() | (RIGHT_MOUSE_KEY * value));
+					} break;
+					case hashString("alt"): {
+						cmd.SetOpts(cmd.GetOpts() | (ALT_KEY * value));
+					} break;
+					case hashString("ctrl"): {
+						cmd.SetOpts(cmd.GetOpts() | (CONTROL_KEY * value));
+					} break;
+					case hashString("shift"): {
+						cmd.SetOpts(cmd.GetOpts() | (SHIFT_KEY * value));
+					} break;
+					case hashString("meta"): {
+						cmd.SetOpts(cmd.GetOpts() | (META_KEY * value));
+					} break;
 				}
 
 				continue;
@@ -973,18 +977,22 @@ void LuaUtils::ParseCommandOptions(
 				if (!lua_isstring(L, -1))
 					continue;
 
-				const std::string value = lua_tostring(L, -1);
-
-				if (value == "right") {
-					cmd.options |= RIGHT_MOUSE_KEY;
-				} else if (value == "alt") {
-					cmd.options |= ALT_KEY;
-				} else if (value == "ctrl") {
-					cmd.options |= CONTROL_KEY;
-				} else if (value == "shift") {
-					cmd.options |= SHIFT_KEY;
-				} else if (value == "meta") {
-					cmd.options |= META_KEY;
+				switch (hashString(lua_tostring(L, -1))) {
+					case hashString("right"): {
+						cmd.SetOpts(cmd.GetOpts() | RIGHT_MOUSE_KEY);
+					} break;
+					case hashString("alt"): {
+						cmd.SetOpts(cmd.GetOpts() | ALT_KEY);
+					} break;
+					case hashString("ctrl"): {
+						cmd.SetOpts(cmd.GetOpts() | CONTROL_KEY);
+					} break;
+					case hashString("shift"): {
+						cmd.SetOpts(cmd.GetOpts() | SHIFT_KEY);
+					} break;
+					case hashString("meta"): {
+						cmd.SetOpts(cmd.GetOpts() | META_KEY);
+					} break;
 				}
 			}
 		}

@@ -987,7 +987,7 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		selectionChanged = false;
 	}
 
-	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.GetOpts(), c.GetNumParams(), c.GetParams()));
 }
 
 
@@ -1008,29 +1008,33 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 		return;
 
 	uint32_t totalParams = 0;
-	uint8_t sameCmdOpt = commands[0].options;
 
-	int sameCmdID = commands[0].GetID();
-	int sameCmdParamSize = commands[0].params.size();
+	// if all commands share the same ID / options / number of parameters,
+	// insert only these values into the packet to save a bit of bandwidth
+	uint8_t sameCmdOpt = commands[0].GetOpts();
+	int32_t sameCmdID = commands[0].GetID();
+	int32_t sameCmdParamSize = commands[0].GetNumParams();
 
-	for (unsigned c = 0; c < commandCount; c++) {
-		totalParams += commands[c].params.size();
+	for (unsigned int c = 0; c < commandCount; c++) {
+		totalParams += commands[c].GetNumParams();
+
 		if (sameCmdID != 0 && sameCmdID != commands[c].GetID())
 			sameCmdID = 0;
-		if (sameCmdOpt != 0xFF && sameCmdOpt != commands[c].options)
+		if (sameCmdOpt != 0xFF && sameCmdOpt != commands[c].GetOpts())
 			sameCmdOpt = 0xFF;
-		if (sameCmdParamSize != 0xFFFF && sameCmdParamSize != commands[c].params.size())
+		if (sameCmdParamSize != 0xFFFF && sameCmdParamSize != commands[c].GetNumParams())
 			sameCmdParamSize = 0xFFFF;
 	}
 
-	unsigned msgLen = 0;
+	unsigned int psize = ((sameCmdID == 0) ? 4 : 0) + ((sameCmdOpt == 0xFF) ? 1 : 0) + ((sameCmdParamSize == 0xFFFF) ? 2 : 0);
+	unsigned int msgLen = 0;
+
 	msgLen += (1 + 2 + 1 + 1 + 1 + 4 + 1 + 2); // msg type, msg size, player ID, AI ID, pairwise, sameCmdID, sameCmdOpt, sameCmdParamSize
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
-	int psize = ((sameCmdID == 0) ? 4 : 0) + ((sameCmdOpt == 0xFF) ? 1 : 0) + ((sameCmdParamSize == 0xFFFF) ? 2 : 0);
-	msgLen += commandCount * psize; // id, options, params size
-	msgLen += totalParams * 4;
+	msgLen += (commandCount * psize); // id, options, params size
+	msgLen += (totalParams * 4);
 
 	if (msgLen > 8192) {
 		LOG_L(L_WARNING, "Discarded oversized NETMSG_AICOMMANDS packet: %i", msgLen);
@@ -1055,16 +1059,19 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 
 	*packet << static_cast<uint16_t>(commandCount);
 
-	for (unsigned i = 0; i < commandCount; ++i) {
+	for (unsigned int i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
 
 		if (sameCmdID == 0)
 			*packet << static_cast<uint32_t>(cmd.GetID());
 		if (sameCmdOpt == 0xFF)
-			*packet << cmd.options;
+			*packet << cmd.GetOpts();
 		if (sameCmdParamSize == 0xFFFF)
-			*packet << static_cast<uint16_t>(cmd.params.size());
-		*packet << cmd.params;
+			*packet << static_cast<uint16_t>(cmd.GetNumParams());
+
+		for (unsigned int j = 0, n = cmd.GetNumParams(); j < n; j++) {
+			*packet << cmd.GetParam(j);
+		}
 	}
 
 	clientNet->Send(std::shared_ptr<netcode::RawPacket>(packet));

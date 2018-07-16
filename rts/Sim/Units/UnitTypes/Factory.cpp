@@ -440,7 +440,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		// copy factory orders for new unit
 		for (auto ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
 			Command c = *ci;
-			c.options |= SHIFT_KEY;
+			c.SetOpts(c.GetOpts() | SHIFT_KEY);
 
 			if (c.GetID() == CMD_MOVE) {
 				float xjit = gsRNG.NextFloat() * math::TWOPI;

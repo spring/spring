@@ -90,11 +90,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 	if (nbrOfSelectedUnits < 1)
 		return;
 
-	if ((cmdID == CMD_ATTACK) && (
-			(c.GetParamsCount() == 6) ||
-			((c.GetParamsCount() == 4) && (c.GetParam(3) > 0.001f))
-		))
-	{
+	if ((cmdID == CMD_ATTACK) && ((c.GetNumParams() == 6) || ((c.GetNumParams() == 4) && (c.GetParam(3) > 0.001f)))) {
 		SelectAttackNet(c, player);
 		return;
 	}
@@ -109,7 +105,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 		unit->commandAI->GiveCommand(c, true);
 
 		if (MayRequireSetMaxSpeedCommand(c))
-			AddUnitSetMaxSpeedCommandNet(unit, c.options);
+			AddUnitSetMaxSpeedCommandNet(unit, c.GetOpts());
 
 		if (cmdID == CMD_WAIT) {
 			if (player == gu->myPlayerNum)
@@ -134,12 +130,12 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 	//   CTRL:      Group Locked/Speed command  (maintain relative positions)
 	//   ALT+CTRL:  Group Locked       command  (maintain relative positions)
 	//
-	if (((cmdID == CMD_MOVE) || (cmdID == CMD_FIGHT)) && (c.GetParamsCount() == 6)) {
-		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
+	if (((cmdID == CMD_MOVE) || (cmdID == CMD_FIGHT)) && (c.GetNumParams() == 6)) {
+		CalculateGroupData(player, !!(c.GetOpts() & SHIFT_KEY));
 
 		MakeFormationFrontOrder(&c, player);
 
-		const bool groupSpeed = !!(c.options & CONTROL_KEY);
+		const bool groupSpeed = !!(c.GetOpts() & CONTROL_KEY);
 
 		for (const int unitID: netSelected) {
 			CUnit* unit = unitHandler.GetUnit(unitID);
@@ -148,17 +144,17 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 				continue;
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommandNet(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.GetOpts());
 			} else {
-				AddUnitSetMaxSpeedCommandNet(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.GetOpts());
 			}
 		}
 
 		return;
 	}
 
-	if ((cmdID == CMD_MOVE) && (c.options & ALT_KEY)) {
-		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
+	if ((cmdID == CMD_MOVE) && (c.GetOpts() & ALT_KEY)) {
+		CalculateGroupData(player, !!(c.GetOpts() & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
 		const float3 pos(c.GetParam(0), c.GetParam(1), c.GetParam(2));
@@ -173,7 +169,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 
 		MakeFormationFrontOrder(&c, player);
 
-		const bool groupSpeed = !!(c.options & CONTROL_KEY);
+		const bool groupSpeed = !!(c.GetOpts() & CONTROL_KEY);
 
 		for (const int unitID: netSelected) {
 			CUnit* unit = unitHandler.GetUnit(unitID);
@@ -182,20 +178,20 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 				continue;
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommandNet(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.GetOpts());
 			} else {
-				AddUnitSetMaxSpeedCommandNet(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.GetOpts());
 			}
 		}
 
 		return;
 	}
 
-	if ((c.options & CONTROL_KEY) && ((cmdID == CMD_MOVE) || (cmdID == CMD_PATROL) || (cmdID == CMD_FIGHT))) {
-		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
+	if ((c.GetOpts() & CONTROL_KEY) && ((cmdID == CMD_MOVE) || (cmdID == CMD_PATROL) || (cmdID == CMD_FIGHT))) {
+		CalculateGroupData(player, !!(c.GetOpts() & SHIFT_KEY));
 
-		const bool groupSpeed = !(c.options & ALT_KEY);
-		const bool queueing = (c.options & SHIFT_KEY);
+		const bool groupSpeed = !(c.GetOpts() & ALT_KEY);
+		const bool queueing = (c.GetOpts() & SHIFT_KEY);
 
 		for (const int unitID: netSelected) {
 			CUnit* unit = unitHandler.GetUnit(unitID);
@@ -209,15 +205,15 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 			const float3 midPos = (queueing? LastQueuePosition(unit): float3(unit->midPos));
 			const float3 difPos = midPos - groupCenterCoor;
 
-			uc.params[CMDPARAM_MOVE_X] += difPos.x;
-			uc.params[CMDPARAM_MOVE_Y] += difPos.y;
-			uc.params[CMDPARAM_MOVE_Z] += difPos.z;
+			uc.SetParam(CMDPARAM_MOVE_X, uc.GetParam(CMDPARAM_MOVE_X) + difPos.x);
+			uc.SetParam(CMDPARAM_MOVE_Y, uc.GetParam(CMDPARAM_MOVE_Y) + difPos.y);
+			uc.SetParam(CMDPARAM_MOVE_Z, uc.GetParam(CMDPARAM_MOVE_Z) + difPos.z);
 			unit->commandAI->GiveCommand(uc, true);
 
 			if (groupSpeed) {
-				AddGroupSetMaxSpeedCommandNet(unit, c.options);
+				AddGroupSetMaxSpeedCommandNet(unit, c.GetOpts());
 			} else {
-				AddUnitSetMaxSpeedCommandNet(unit, c.options);
+				AddUnitSetMaxSpeedCommandNet(unit, c.GetOpts());
 			}
 		}
 
@@ -237,7 +233,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 			if (!MayRequireSetMaxSpeedCommand(c))
 				continue;
 
-			AddUnitSetMaxSpeedCommandNet(unit, c.options);
+			AddUnitSetMaxSpeedCommandNet(unit, c.GetOpts());
 		}
 
 		if (cmdID != CMD_WAIT)
@@ -494,7 +490,7 @@ float3 CSelectedUnitsHandlerAI::MoveToPos(
 	pos.z = formationRightPos.z + (movePos.x * (formationDir.z / formationDir.y)) + (movePos.z * (formationDir.x / formationDir.y));
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 
-	frontcmds->emplace_back(unit->id, Command(command->GetID(), command->options, pos));
+	frontcmds->emplace_back(unit->id, Command(command->GetID(), command->GetOpts(), pos));
 	return retPos;
 }
 
@@ -505,8 +501,8 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 	sortedUnitPairs.clear();
 	targetUnitIDs.clear();
 
-	if (cmd.params.size() == 4) {
-		SelectCircleUnits(cmd.GetPos(0), cmd.params[3], player, targetUnitIDs);
+	if (cmd.GetNumParams() == 4) {
+		SelectCircleUnits(cmd.GetPos(0), cmd.GetParam(3), player, targetUnitIDs);
 	} else {
 		SelectRectangleUnits(cmd.GetPos(0), cmd.GetPos(3), player, targetUnitIDs);
 	}
@@ -514,7 +510,7 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 	if (targetUnitIDs.empty())
 		return;
 
-	const bool queueing = !!(cmd.options & SHIFT_KEY);
+	const bool queueing = !!(cmd.GetOpts() & SHIFT_KEY);
 	const std::vector<int>& selected = selectedUnitsHandler.netSelected[player];
 
 	const unsigned int targetsCount = targetUnitIDs.size();
@@ -525,11 +521,11 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 		return;
 
 
-	Command attackCmd(CMD_ATTACK, cmd.options, 0.0f);
+	Command attackCmd(CMD_ATTACK, cmd.GetOpts(), 0.0f);
 
 	// delete the attack commands and bail for CONTROL_KEY
-	if (cmd.options & CONTROL_KEY) {
-		attackCmd.options |= SHIFT_KEY;
+	if (cmd.GetOpts() & CONTROL_KEY) {
+		attackCmd.SetOpts(attackCmd.GetOpts() | SHIFT_KEY);
 
 		for (unsigned int s = 0; s < selectedCount; s++) {
 			const CUnit* unit = unitHandler.GetUnit(selected[s]);
@@ -540,7 +536,7 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 			CCommandAI* commandAI = unit->commandAI;
 
 			for (unsigned int t = 0; t < targetsCount; t++) {
-				attackCmd.params[0] = targetUnitIDs[t];
+				attackCmd.SetParam(0, targetUnitIDs[t]);
 
 				if (!commandAI->WillCancelQueued(attackCmd))
 					continue;
@@ -587,7 +583,7 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 	// give the commands; clear queueing-flag for the first
 	for (unsigned int s = 0; s < selectedCount; s++) {
 		if (!queueing)
-			attackCmd.options &= ~SHIFT_KEY;
+			attackCmd.SetOpts(attackCmd.GetOpts() & ~SHIFT_KEY);
 
 		CUnit* unit = unitHandler.GetUnit(selected[s]);
 
@@ -597,16 +593,16 @@ void CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int player)
 		CCommandAI* commandAI = unit->commandAI;
 
 		for (unsigned t = 0; t < targetsCount; t++) {
-			attackCmd.params[0] = sortedUnitPairs[t].second;
+			attackCmd.SetParam(0, sortedUnitPairs[t].second);
 
 			if (queueing && commandAI->WillCancelQueued(attackCmd))
 				continue;
 
 			commandAI->GiveCommand(attackCmd, true);
 
-			AddUnitSetMaxSpeedCommandNet(unit, attackCmd.options);
+			AddUnitSetMaxSpeedCommandNet(unit, attackCmd.GetOpts());
 			// following commands are always queued
-			attackCmd.options |= SHIFT_KEY;
+			attackCmd.SetOpts(attackCmd.GetOpts() | SHIFT_KEY);
 		}
 	}
 }
@@ -707,7 +703,7 @@ float3 CSelectedUnitsHandlerAI::LastQueuePosition(const CUnit* unit)
 	for (auto it = queue.rbegin(); it != queue.rend(); ++it) {
 		const Command& cmd = *it;
 
-		if (cmd.params.size() >= 3)
+		if (cmd.GetNumParams() >= 3)
 			return cmd.GetPos(0);
 	}
 

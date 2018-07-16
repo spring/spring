@@ -4,13 +4,8 @@
 #define COMMAND_H
 
 #include <string>
-#include <climits> // for INT_MAX
-
-#ifdef BUILDING_AI
-#include <vector>
-#else
-#include "System/SafeVector.h"
-#endif
+#include <climits> // INT_MAX
+#include <cstring> // memset
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
@@ -102,6 +97,9 @@
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
 
+// maximum number of parameters for any (default and custom) command type
+#define MAX_COMMAND_PARAMS 10
+
 
 #ifdef __GNUC__
 	#define _deprecated __attribute__ ((deprecated))
@@ -120,10 +118,10 @@ enum {
 	MOVESTATE_ROAM     =  2,
 };
 enum {
-	FIRESTATE_NONE       = -1,
-	FIRESTATE_HOLDFIRE   =  0,
-	FIRESTATE_RETURNFIRE =  1,
-	FIRESTATE_FIREATWILL =  2,
+	FIRESTATE_NONE          = -1,
+	FIRESTATE_HOLDFIRE      =  0,
+	FIRESTATE_RETURNFIRE    =  1,
+	FIRESTATE_FIREATWILL    =  2,
 	FIRESTATE_FIREATNEUTRAL =  3,
 };
 
@@ -136,8 +134,7 @@ extern "C" {
 
 	// this must have C linkage
 	struct RawCommand {
-		int id;
-		int aiCommandId;
+		int id[2];
 		int timeOut;
 
 		unsigned int numParams;
@@ -166,9 +163,9 @@ private:
 
 public:
 	Command()
-		: id(0)
-		, aiCommandId(-1)
 	{
+		memset(params, 0, sizeof(params));
+
 		SetFlags(INT_MAX, 0, 0);
 	}
 
@@ -177,65 +174,71 @@ public:
 	}
 
 	Command& operator = (const Command& c) {
-		id = c.id;
-		aiCommandId = c.aiCommandId;
+		id[0]     = c.id[0];
+		id[1]     = c.id[1];
+		numParams = c.numParams;
 
 		SetFlags(c.timeOut, c.tag, c.options);
-
-		params = c.params;
+		CopyParams(c);
 		return *this;
 	}
 
 	Command(const float3& pos)
-		: id(0)
-		, aiCommandId(-1)
 	{
+		memset(params, 0, sizeof(params));
+
 		PushPos(pos);
 		SetFlags(INT_MAX, 0, 0);
 	}
 
-	Command(const int cmdID)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		SetFlags(INT_MAX, 0, 0);
 	}
 
-	Command(const int cmdID, const float3& pos)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID, const float3& pos)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		PushPos(pos);
 		SetFlags(INT_MAX, 0, 0);
 	}
 
-	Command(const int cmdID, const unsigned char cmdOptions)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID, unsigned char cmdOptions)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
-	Command(const int cmdID, const unsigned char cmdOptions, const float param)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID, unsigned char cmdOptions, float param)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		PushParam(param);
 		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
-	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID, unsigned char cmdOptions, const float3& pos)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		PushPos(pos);
 		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
-	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
-		: id(cmdID)
-		, aiCommandId(-1)
+	Command(int cmdID, unsigned char cmdOptions, float param, const float3& pos)
 	{
+		memcpy(id, &cmdID, sizeof(cmdID));
+		memset(params, 0, sizeof(params));
+
 		PushParam(param);
 		PushPos(pos);
 		SetFlags(INT_MAX, 0, cmdOptions);
@@ -245,11 +248,11 @@ public:
 
 	RawCommand ToRawCommand() {
 		RawCommand rc;
-		rc.id          = id;
-		rc.aiCommandId = aiCommandId;
-		rc.timeOut     = timeOut;
+		rc.id[0]   = id[0];
+		rc.id[1]   = id[1];
+		rc.timeOut = timeOut;
 
-		rc.numParams   = params.size();
+		rc.numParams   = numParams;
 		rc.tag         = tag;
 		rc.options     = options;
 		rc.params      = &params[0];
@@ -257,11 +260,12 @@ public:
 	}
 
 	void FromRawCommand(const RawCommand& rc) {
-		id          = rc.id;
-		aiCommandId = rc.aiCommandId;
+		id[0]     = rc.id[0];
+		id[1]     = rc.id[1];
+		numParams = rc.numParams;
 
+		memset(params, 0, sizeof(params));
 		SetFlags(rc.timeOut, rc.tag, rc.options);
-		params.reserve(rc.numParams);
 
 		for (unsigned int n = 0; n < rc.numParams; n++) {
 			PushParam(rc.params[n]);
@@ -272,9 +276,9 @@ public:
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
 	bool IsObjectCommand(int& cpos) const {
-		const unsigned int psize = params.size();
+		const unsigned int psize = numParams;
 
-		switch (id) {
+		switch (GetID()) {
 			case CMD_ATTACK:
 			case CMD_FIGHT:
 			case CMD_MANUALFIRE:
@@ -301,7 +305,7 @@ public:
 				Command icmd((int)params[1], (unsigned char)params[2]);
 
 				for (int p = 3; p < psize; p++)
-					icmd.params.push_back(params[p]);
+					icmd.PushParam(params[p]);
 
 				if (!icmd.IsObjectCommand(cpos))
 					return false;
@@ -314,7 +318,7 @@ public:
 	}
 
 	bool IsMoveCommand() const {
-		switch (id) {
+		switch (GetID()) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
 			case CMD_CAPTURE:
@@ -350,77 +354,98 @@ public:
 	}
 
 	bool IsAreaCommand() const {
-		switch (id) {
+		switch (GetID()) {
 			case CMD_CAPTURE:
 			case CMD_LOAD_UNITS:
 			case CMD_RECLAIM:
 			case CMD_REPAIR:
 			case CMD_RESURRECT:
 				// params[0..2] always holds the position, params[3] the radius
-				return (params.size() == 4);
+				return (numParams == 4);
 			case CMD_UNLOAD_UNITS:
-				return (params.size() == 5);
+				return (numParams == 5);
 			case CMD_AREA_ATTACK:
 				return true;
 		}
 		return false;
 	}
-	bool IsBuildCommand() const { return (id < 0); }
 
-	void PushParam(float par) { params.push_back(par); }
-	float GetParam(size_t idx) const { return params[idx]; }
+	bool IsBuildCommand() const { return (GetID() < 0); }
+	bool IsEmptyCommand() const { return (numParams == 0); }
 
-	/// const safe_vector<float>& GetParams() const { return params; }
-	const size_t GetParamsCount() const { return params.size(); }
+	int GetID(bool idx = false) const { return id[idx]; }
+	int GetTimeOut() const { return timeOut; }
+	unsigned int GetNumParams() const { return numParams; }
+	unsigned int GetTag() const { return tag; }
+	unsigned char GetOpts() const { return options; }
 
-	void SetID(int id) _deprecated { this->id = id; params.clear(); }
-	int GetID() const { return id; }
+	const float* GetParams() const { return &params[0]; }
+	float GetParam(unsigned int idx) const { return ((idx >= numParams)? 0.0f: params[idx]); }
 
-	void PushPos(const float3& pos)
-	{
-		params.push_back(pos.x);
-		params.push_back(pos.y);
-		params.push_back(pos.z);
+
+	bool SetParam(unsigned int idx, float param) {
+		if (idx >= numParams)
+			return false;
+		params[idx] = param;
+		return true;
+	}
+	bool PushParam(float param) {
+		if (numParams >= MAX_COMMAND_PARAMS)
+			return false;
+		params[numParams++] = param;
+		return true;
 	}
 
-	void PushPos(const float* pos)
-	{
-		params.push_back(pos[0]);
-		params.push_back(pos[1]);
-		params.push_back(pos[2]);
+	bool PushPos(const float3& pos) { return (PushPos(&pos.x)); }
+	bool PushPos(const float* pos) {
+		if ((numParams + 3) > MAX_COMMAND_PARAMS)
+			return false;
+
+		params[numParams++] = pos[0];
+		params[numParams++] = pos[1];
+		params[numParams++] = pos[2];
+		return true;
 	}
 
-	float3 GetPos(const int idx) const {
+	float3 GetPos(unsigned int idx) const {
 		float3 p;
-		p.x = params[idx    ];
+		if ((idx + 3) > numParams)
+			return p;
+		p.x = params[idx + 0];
 		p.y = params[idx + 1];
 		p.z = params[idx + 2];
 		return p;
 	}
 
-	void SetPos(const int idx, const float3& p) {
-		if (params.size() < 3)
-			params.resize(3);
-		params[idx    ] = p.x;
+	bool SetPos(unsigned int idx, const float3& p) {
+		if ((idx + 3) > numParams)
+			return false;
+
+		params[idx + 0] = p.x;
 		params[idx + 1] = p.y;
 		params[idx + 2] = p.z;
+		return true;
 	}
 
-	void SetFlags(int cmdTimeOut, int cmdTag, int cmdOpts) {
-		timeOut = cmdTimeOut;
-		tag     = cmdTag;
-		options = cmdOpts;
+	void SetAICmdID(int cmdID) { id[1] = cmdID; }
+	void SetTimeOut(int cmdTimeOut) { timeOut = cmdTimeOut; }
+	void SetTag(unsigned int cmdTag) { tag = cmdTag; }
+	void SetOpts(unsigned char cmdOpts) { options = cmdOpts; }
+	void SetFlags(int cmdTimeOut, unsigned int cmdTag, unsigned char cmdOpts) {
+		SetTimeOut(cmdTimeOut);
+		SetTag(cmdTag);
+		SetOpts(cmdOpts);
 	}
 
-public:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
+	void CopyParams(const Command& c) {
+		memset(params, 0, sizeof(params));
+		memcpy(params, c.params, sizeof(params));
+	}
 
-	/**
-	 * AI Command callback id (passed in on handleCommand, returned
-	 * in CommandFinished event)
-	 */
-	int aiCommandId;
+private:
+	/// [0] := CMD_xxx code (custom codes can also be used)
+	/// [1] := AI Command callback id (passed in on handleCommand, returned in CommandFinished event)
+	int id[2] = {0, -1};
 
 	/**
 	 * Remove this command after this frame (absolute).
@@ -431,20 +456,18 @@ public:
 	 * - MAX_INT
 	 * - currenFrame + 60
 	 */
-	int timeOut;
+	int timeOut = INT_MAX;
+
+	unsigned int numParams = 0;
 
 	/// unique id within a CCommandQueue
-	unsigned int tag;
+	unsigned int tag = 0;
 
 	/// option bits (RIGHT_MOUSE_KEY, ...)
-	unsigned char options;
+	unsigned char options = 0;
 
 	/// command parameters
-	#ifdef BUILDING_AI
-	std::vector<float> params;
-	#else
-	safe_vector<float> params;
-	#endif
+	float params[MAX_COMMAND_PARAMS];
 };
 
 #endif // COMMAND_H
