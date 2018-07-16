@@ -119,12 +119,12 @@ void cBuilder::UnitCreated(const int& unit, UnitInfo *U)
 		if(	BQ[iBQ]->creationUDID==U->ud->id && BQ[iBQ]->builderID > -1 && G->ValidateUnit(BQ[iBQ]->builderID) && int(cb->GetCurrentUnitCommands(BQ[iBQ]->builderID)->size())>0 )
 		{
 			const Command *c=&cb->GetCurrentUnitCommands(BQ[iBQ]->builderID)->front();
-			if( c->id == -U->ud->id )
+			if( c->GetID() == -U->ud->id )
 			{
-				if( int(c->params.size()) >= 3 ) // (0.73b1): for some reason human issued build commands do not have params
+				if( c->GetNumParams() >= 3 ) // (0.73b1): for some reason human issued build commands do not have params
 				{
-					float fx = cb->GetUnitPos(unit).x - c->params.at(0);
-					float fz = cb->GetUnitPos(unit).z - c->params.at(2);
+					float fx = cb->GetUnitPos(unit).x - c->GetParam(0);
+					float fz = cb->GetUnitPos(unit).z - c->GetParam(2);
 					float fx2 = cb->GetUnitPos(unit).x - cb->GetUnitPos(BQ[iBQ]->builderID).x;
 					float fz2 = cb->GetUnitPos(unit).z - cb->GetUnitPos(BQ[iBQ]->builderID).z;
 					float fMarginOfError=BQ[iBQ]->builderUI->ud->buildDistance + 50;
@@ -159,7 +159,7 @@ void cBuilder::UnitCreated(const int& unit, UnitInfo *U)
 			if(	cb->GetCurrentUnitCommands(iU->first)->size() > 0 )
 			{
 				const Command *c=&cb->GetCurrentUnitCommands(iU->first)->front();
-				if( c->id == -U->ud->id && int(c->params.size()) == 0 )
+				if( c->GetID() == -U->ud->id && int(c->GetNumParams()) == 0 )
 				{
 					float fx2 = cb->GetUnitPos(unit).x - cb->GetUnitPos(iU->first).x;
 					float fz2 = cb->GetUnitPos(unit).z - cb->GetUnitPos(iU->first).z;
@@ -210,8 +210,7 @@ void cBuilder::UnitFinished(const int& unit, UnitInfo *U)
 			{
 				if( pUCQ->BQ->builderUI->ud->speed == 0 )
 				{
-					Command c;
-					c.id=CMD_MOVE;
+					Command c(CMD_MOVE);
 					float3 fPos=cb->GetUnitPos(unit);
 					fPos.x+=-100+rand()%201;
 					if( cb->GetBuildingFacing(pUCQ->BQ->builderID) == 2 )
@@ -219,9 +218,7 @@ void cBuilder::UnitFinished(const int& unit, UnitInfo *U)
 					else
 						fPos.z+=150+rand()%201;
 					G->CorrectPosition(fPos);
-					c.params.push_back(fPos.x);
-					c.params.push_back(fPos.y);
-					c.params.push_back(fPos.z);
+					c.PushPos(fPos);
 					cb->GiveOrder(unit,&c);
 					G->UpdateEventAdd(1,cb->GetCurrentFrame()+150,unit,U);
 				}
@@ -417,7 +414,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		}
 		else
 		{
-			c.id=-U->BuildQ->creationUDID;
+			c = Command(-U->BuildQ->creationUDID);
 			HaveOrders=true;
 		}
 	}
@@ -737,7 +734,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				for(set<int>::iterator iU=iP->second->UnitsActive.begin(); iU!=iP->second->UnitsActive.end() && !bPrerequisiteOptionsChecked; ++iU )
 					if( UBuilder.find(*iU) != UBuilder.end() && UBuilder.find(*iU)->second->BuildQ == 0 && *iU != unit )
 					{
-						if( int(cb->GetCurrentUnitCommands(*iU)->size()) == 0 || cb->GetCurrentUnitCommands(*iU)->front().id == CMD_WAIT )
+						if( int(cb->GetCurrentUnitCommands(*iU)->size()) == 0 || cb->GetCurrentUnitCommands(*iU)->front().GetID() == CMD_WAIT )
 							G->UpdateEventAdd(1,0,*iU,UBuilder.find(*iU)->second);
 						bPrerequisiteOptionsChecked=true;
 					}
@@ -792,7 +789,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		{
 			BQAssignBuilder(iBest,unit,U);
 			HaveOrders=true;
-			c.id=-U->BuildQ->creationUDID;
+			c = Command(-U->BuildQ->creationUDID);
 		}
 	}
 /*
@@ -814,9 +811,9 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 
 		if( int(U->URepair.size()) > 0 )
 		{
-			c.id = CMD_REPAIR;
-			c.params.push_back(U->URepair.begin()->first);
-			cb->GiveOrder(unit, &c);
+			Command cr(CMD_REPAIR);
+			cr.PushParam(U->URepair.begin()->first);
+			cb->GiveOrder(unit, &cr);
 			return;
 		}
 	}
@@ -839,13 +836,11 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			if( iBest != -1 )
 			{
 //				*l<<"\n "+U->ud->humanName+" is resurrecting.";
-				c.id=CMD_RESURRECT;
-//				c.params.push_back(iBest);
-				c.params.push_back(debPos.x); // ! Work Around:  Spring-Version(v0.74b3)
-				c.params.push_back(debPos.y);
-				c.params.push_back(debPos.z);
-				c.params.push_back(25.0f);
-				cb->GiveOrder(unit, &c);
+				Command cr(CMD_RESURRECT);
+//				cr.PushParam(iBest);
+				cr.PushPos(debPos); // ! Work Around:  Spring-Version(v0.74b3)
+				cr.PushParam(25.0f);
+				cb->GiveOrder(unit, &cr);
 				float fTime=Pos.distance(debPos)/(U->ud->speed/3.0);
 				G->UpdateEventAdd(1,cb->GetCurrentFrame()+1500+30*int(fTime),unit,U);
 				ResDebris.erase(iBest);
@@ -862,9 +857,9 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		if( int(Decomission.size()) > 0 && G->TM->CanMoveToPos(U->area,cb->GetUnitPos(*Decomission.begin())) )
 		{
 //			*l<<"\n "+U->ud->humanName+" is Reclaim/Decomissioning.";
-			c.id=CMD_RECLAIM;
-			c.params.push_back(*Decomission.begin());
-			cb->GiveOrder(unit, &c);
+			Command cr(CMD_RECLAIM);
+			cr.PushParam(*Decomission.begin());
+			cb->GiveOrder(unit, &cr);
 			return;
 		}
 		if( int(FeatureDebris.size()) > 0 && G->TM->CanMoveToPos(U->area,FeatureDebris.begin()->second) )
@@ -876,12 +871,10 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			if( cb->GetFeatures(F,1,i->second,20.0) == 1 )
 			{
 //				*l<<"\n "+U->ud->humanName+" is Reclaim/Clearing.";
-				c.id=CMD_RECLAIM;
-				c.params.push_back(fPos.x); // ! Work Around:  Spring-Version(v0.74b3)
-				c.params.push_back(fPos.y);
-				c.params.push_back(fPos.z);
-				c.params.push_back(80.0);
-				cb->GiveOrder(unit, &c);
+				Command cr(CMD_RECLAIM);
+				cr.PushPos(fPos); // ! Work Around:  Spring-Version(v0.74b3)
+				cr.PushParam(80.0);
+				cb->GiveOrder(unit, &cr);
 
 				float fTime=cb->GetUnitPos(unit).distance(fPos)/(U->ud->speed/3.0);
 				G->UpdateEventAdd(1,cb->GetCurrentFrame()+150+30*int(fTime),unit,U);
@@ -911,13 +904,11 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				if( iBest != -1 )
 				{
 //					*l<<"\n "+U->ud->humanName+" is Reclaim/E Gathering.";
-					c.id=CMD_RECLAIM;
-//					c.params.push_back(iBest);
-					c.params.push_back(debPos.x); // ! Work Around:  Spring-Version(v0.74b3)
-					c.params.push_back(debPos.y);
-					c.params.push_back(debPos.z);
-					c.params.push_back(25.0f);
-					cb->GiveOrder(unit, &c);
+					Command cr(CMD_RECLAIM);
+//					cr.PushParam(iBest);
+					cr.PushPos(debPos); // ! Work Around:  Spring-Version(v0.74b3)
+					cr.PushParam(25.0f);
+					cb->GiveOrder(unit, &cr);
 
 					float fTime=Pos.distance(debPos)/(U->ud->speed/3.0);
 					G->UpdateEventAdd(1,cb->GetCurrentFrame()+1500+30*int(fTime),unit,U);
@@ -945,12 +936,10 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				if( iBest != -1 )
 				{
 //					*l<<"\n "+U->ud->humanName+" is Reclaim/M Gathering.";
-					c.id=CMD_RECLAIM;
-					c.params.push_back(debPos.x); // ! Work Around:  Spring-Version(v0.74b3)
-					c.params.push_back(debPos.y);
-					c.params.push_back(debPos.z);
-					c.params.push_back(25.0f);
-					cb->GiveOrder(unit, &c);
+					Command cr(CMD_RECLAIM);
+					cr.PushPos(debPos); // ! Work Around:  Spring-Version(v0.74b3)
+					cr.PushParam(25.0f);
+					cb->GiveOrder(unit, &cr);
 					float fTime=Pos.distance(debPos)/(U->ud->speed/3.0);
 					G->UpdateEventAdd(1,cb->GetCurrentFrame()+1500+30*int(fTime),unit,U);
 					EnergyDebris.erase(iBest);
@@ -979,18 +968,18 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			int iRan=rand()%int(build.size());
 			BQAdd(U->udr->BuildOptions.find(build.at(iRan))->second,0,1);
 			BQAssignBuilder(BQSize[0]-1,unit,U);
-			c.id=-U->BuildQ->creationUDID;
+			c = Command(-U->BuildQ->creationUDID);
 			HaveOrders=true;
 		}
 	}
-	if( HaveOrders && c.id < 0 ) // Has Build Orders
+	if( HaveOrders && c.GetID() < 0 ) // Has Build Orders
 	{
 		if( int(U->BuildQ->creationID.size()) > 0 )
 		{	// Resuming a construction
 //			*l<<"\n "+U->ud->humanName+" is Repair/Building";
-			c.id = CMD_REPAIR;
-			c.params.push_back(U->BuildQ->creationID.front());
-			cb->GiveOrder(unit, &c);
+			Command cr(CMD_REPAIR);
+			cr.PushParam(U->BuildQ->creationID.front());
+			cb->GiveOrder(unit, &cr);
 			return;
 		}
 
@@ -1002,16 +991,16 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				if( U->ud->canCapture )
 				{
 //					*l<<"\n "+U->ud->humanName+" is Capture/Building.";
-					c.id = CMD_CAPTURE;
-					c.params.push_back(U->BuildQ->RS->unitID);
-					cb->GiveOrder(unit, &c);
+					Command cc(CMD_CAPTURE);
+					cc.PushParam(U->BuildQ->RS->unitID);
+					cb->GiveOrder(unit, &cc);
 				}
 				else if( U->ud->canReclaim )
 				{
 //					*l<<"\n "+U->ud->humanName+" is Reclaim/Building.";
-					c.id = CMD_RECLAIM;
-					c.params.push_back(U->BuildQ->RS->unitID);
-					cb->GiveOrder(unit, &c);
+					Command cr(CMD_RECLAIM);
+					cr.PushParam(U->BuildQ->RS->unitID);
+					cb->GiveOrder(unit, &cr);
 				}
 				else
 				{
@@ -1039,9 +1028,9 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			else if( U->BuildQ->RS != 0 && U->BuildQ->RS->unitID > -1 && cb->GetUnitTeam(U->BuildQ->RS->builderID) == cb->GetUnitTeam(U->BuildQ->RS->unitID) && U->ud->canReclaim )
 			{	// removing an old extractor while upgrading it
 //				*l<<"\n "+U->ud->humanName+" is Reclaim/Upgrade/Building.";
-				c.id = CMD_RECLAIM;
-				c.params.push_back(U->BuildQ->RS->unitID);
-				cb->GiveOrder(unit, &c);
+				Command cr(CMD_RECLAIM);
+				cr.PushParam(U->BuildQ->RS->unitID);
+				cb->GiveOrder(unit, &cr);
 				return;
 			}
 			else
@@ -1060,9 +1049,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			}
 		}
 //		*l<<"\n "+U->ud->humanName+" is Building a "+bd->humanName+"("<<-c.id<<") at (x"<<position.x<<",z"<<position.z<<",y"<<position.y<<")";
-		c.params.push_back(position.x);
-		c.params.push_back(position.y);
-		c.params.push_back(position.z);
+		c.PushPos(position);
 
 		if( U->BuildQ->creationUD->ud->movedata == 0 && int(U->BuildQ->creationUD->BuildOptions.size()) > 0 )
 		{	// decides if a factory should face the opposite direction due to bad terrain
@@ -1074,13 +1061,13 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 //			positionL.y=cb->GetElevation(positionL.x,positionL.z);
 			if( position.z/8 >= cb->GetMapHeight()-5-(U->BuildQ->creationUD->ud->zsize/2) ||
 				(cb->CanBuildAt(bd,positionL) && !cb->CanBuildAt(bd,positionH) ) )
-				c.params.push_back(2);
+				c.PushParam(2);
 		}
 		if( U->ud->buildSpeed == 0 )
 		{	// Work-Around for the mod: fibre v13.1
 			// This is more experimental than anything meaningful
-			if( c.params.size() == 3 )
-				c.params.push_back(0);
+			if( c.GetNumParams() == 3 )
+				c.PushParam(0);
 			G->UpdateEventAdd(1,cb->GetCurrentFrame()+300,unit,U);
 		}
 		cb->GiveOrder(unit, &c);
@@ -1109,11 +1096,11 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			if( BestIndex > 0 )
 			{
 //				*l<<"\n "+U->ud->humanName+" is Assisting "<<BQ[BestIndex]->builderUI->ud->humanName;
-				c.id = CMD_GUARD;
-				c.params.push_back(BQ[BestIndex]->builderID);
-				//c.timeOut=cb->GetCurrentFrame()+360;
+				Command cg(CMD_GUARD);
+				cg.PushParam(BQ[BestIndex]->builderID);
+				//cg.SetTimeOut(cb->GetCurrentFrame()+360);
 				G->UpdateEventAdd(1,cb->GetCurrentFrame()+600,unit,U);
-				cb->GiveOrder(unit, &c);
+				cb->GiveOrder(unit, &cg);
 				return;
 			}
 		}
@@ -1123,10 +1110,10 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			{
 				if( i->second->BuildQ != 0 )
 				{
-					c.id = CMD_GUARD;
-					c.params.push_back(i->first);
+					Command cg(CMD_GUARD);
+					cg.PushParam(i->first);
 					G->UpdateEventAdd(1,cb->GetCurrentFrame()+600,unit,U);
-					cb->GiveOrder(unit, &c);
+					cb->GiveOrder(unit, &cg);
 					return;
 				}
 			}
@@ -1135,8 +1122,8 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 
 //	*l<<"\n "+U->ud->humanName+" is Waiting";
 //	G->UpdateEventAdd(1,cb->GetCurrentFrame()+600,unit,U);
-	c.id = CMD_WAIT;
-	c.timeOut=cb->GetCurrentFrame()+600;
+	c = Command(CMD_WAIT);
+	c.SetTimeOut(cb->GetCurrentFrame()+600);
 
 	// Wait commands are usually issued so that I know a unit that is doing nothing
 	// is suppose to be doing nothing, but eventually this command broke the factories.
@@ -1163,14 +1150,11 @@ bool cBuilder::UBuilderMoveFailed(const int& unit, UnitInfo *U)
 		if( U->ud->canReclaim )
 		{
 //			*l<<" "+UBuilder.find(unit)->second.ud->name+" is Reclaiming ";
-			Command c;
-			c.id=CMD_RECLAIM;
+			Command c(CMD_RECLAIM);
 			float3 fPos = cb->GetUnitPos(unit);
-			c.params.push_back(fPos.x); // ! Work Around:  Spring-Version(v0.74b3)
-			c.params.push_back(fPos.y);
-			c.params.push_back(fPos.z);
-			c.params.push_back(90.0);
-			//c.params.push_back(F[0]);
+			c.PushPos(fPos); // ! Work Around:  Spring-Version(v0.74b3)
+			c.PushParam(90.0);
+			//c.PushParam(F[0]);
 
 			G->UpdateEventAdd(1,cb->GetCurrentFrame()+1200,unit,U);
 			cb->GiveOrder(unit, &c);
@@ -1200,14 +1184,14 @@ void cBuilder::HandleEvent(const IGlobalAI::PlayerCommandEvent *pce)
 			UnitInfo* U = UBuilder.find(*i)->second;
 			if( U->BuildQ != 0 )
 			{
-				if( pce->command.options == RIGHT_MOUSE_KEY && pce->command.id < 0 )
+				if( pce->command.GetOpts() == RIGHT_MOUSE_KEY && pce->command.GetID() < 0 )
 				{
-					if( int(U->BuildQ->creationID.size())>0 && U->BuildQ->creationUDID == -pce->command.id )
+					if( int(U->BuildQ->creationID.size())>0 && U->BuildQ->creationUDID == -pce->command.GetID() )
 					{
 						G->UnitDestroyed(U->BuildQ->creationID.front(),-1);
 					}
 				}
-				else if( pce->command.options != SHIFT_KEY )
+				else if( pce->command.GetOpts() != SHIFT_KEY )
 					BQAssignBuilder(U->BuildQ->index,-1,0);
 			}
 		}

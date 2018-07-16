@@ -65,16 +65,12 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 			}
 
 			EnemyInfo *E = &G->Enemies.find(*iE)->second;
-			Command c;
-			c.id = CMD_ATTACK;
+			Command c(CMD_ATTACK);
 			if( E->inLOS || E->inRadar )
-				c.params.push_back(*iE);
+				c.PushParam(*iE);
 			else
 			{
-				float3 Pos = G->CM->GetEnemyPosition(*iE,E);
-				c.params.push_back(Pos.x);
-				c.params.push_back(Pos.y);
-				c.params.push_back(Pos.z);
+				c.PushPos(G->CM->GetEnemyPosition(*iE,E));
 			}
 			cb->GiveOrder(unit,&c);
 			return;
@@ -87,8 +83,7 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 			((G->UDH->BLEnergy->UDefActive == 0 && G->UDH->BLEnergyL->UDefActive == 0)
 				|| 0.66*cb->GetEnergyIncome() > udr->SWeapon->energycost/udr->SWeapon->reload) )
 		{
-			Command c;
-			c.id = CMD_STOCKPILE;
+			Command c(CMD_STOCKPILE);
 			cb->GiveOrder(unit, &c);
 			return;
 		}
@@ -97,8 +92,7 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 	UnitInfo *UI = &G->Units.find(unit)->second;
 	if( UI->udrBL->task <= 1 )
 	{
-		Command c;
-		c.id = CMD_WAIT;
+		Command c(CMD_WAIT);
 		cb->GiveOrder(unit, &c);
 	}
 }

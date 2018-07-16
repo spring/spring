@@ -309,9 +309,8 @@ void cRAI::UnitFinished(int unit)
 	UM->UnitFinished(unit,U);
 	if( U->ud->highTrajectoryType == 2 && rand()%4 == 0 )
 	{	// Nothing too meanful, just a degree of randomness
-		Command c;
-		c.id = CMD_TRAJECTORY;
-		c.params.push_back(1);
+		Command c(CMD_TRAJECTORY);
+		c.PushParam(1);
 		cb->GiveOrder(unit,&c);
 	}
 	if( U->ud->speed == 0 )
@@ -579,9 +578,8 @@ void cRAI::UnitDamaged(int unit,int attacker,float damage,float3 dir)
 		{
 			if( int(i->second->URepair.size()) == 0 && !IsHumanControled(i->first,i->second) )
 			{
-				Command c;
-				c.id = CMD_REPAIR;
-				c.params.push_back(unit);
+				Command c(CMD_REPAIR);
+				c.PushParam(unit);
 				cb->GiveOrder(i->first, &c);
 			}
 			if( i->second->URepair.find(unit) == i->second->URepair.end() )
@@ -589,11 +587,10 @@ void cRAI::UnitDamaged(int unit,int attacker,float damage,float3 dir)
 		}
 		if( U->ud->canReclaim && attacker > -1 && U->udr->IsNano() && cb->GetUnitPos(unit).distance2D(cb->GetUnitPos(attacker)) < U->ud->buildDistance && !IsHumanControled(unit,U) )
 		{
-			if( cb->GetCurrentUnitCommands(unit)->size() == 0 || (cb->GetCurrentUnitCommands(unit)->front().id != CMD_REPAIR && cb->GetCurrentUnitCommands(unit)->front().id != CMD_RECLAIM) )
+			if( cb->GetCurrentUnitCommands(unit)->size() == 0 || (cb->GetCurrentUnitCommands(unit)->front().GetID() != CMD_REPAIR && cb->GetCurrentUnitCommands(unit)->front().GetID() != CMD_RECLAIM) )
 			{
-				Command c;
-				c.id = CMD_RECLAIM;
-				c.params.push_back(attacker);
+				Command c(CMD_RECLAIM);
+				c.PushParam(attacker);
 				cb->GiveOrder(unit, &c);
 			}
 		}
@@ -634,8 +631,7 @@ void cRAI::UnitMoveFailed(int unit)
 		return;
 	}
 
-	Command c;
-	c.id=CMD_WAIT;
+	Command c(CMD_WAIT);
 	//c.timeOut=cb->GetCurrentFrame()+120;
 	cb->GiveOrder(unit,&c);
 	UpdateEventAdd(1,cb->GetCurrentFrame()+90,unit,U);
@@ -697,9 +693,9 @@ int cRAI::HandleEvent(int msg,const void* data)
 		{
 			const IGlobalAI::PlayerCommandEvent* pce = (const IGlobalAI::PlayerCommandEvent*) data;
 			bool ImportantCommand=false;
-			if( pce->command.id < 0 )
+			if( pce->command.GetID() < 0 )
 				ImportantCommand = true;
-			switch( pce->command.id )
+			switch( pce->command.GetID() )
 			{
 			case CMD_MOVE:
 			case CMD_PATROL:
@@ -734,7 +730,7 @@ int cRAI::HandleEvent(int msg,const void* data)
 			{
 				B->HandleEvent(pce);
 			}
-			else if( pce->command.id == CMD_SELFD )
+			else if( pce->command.GetID() == CMD_SELFD )
 			{
 				for( vector<int>::const_iterator i=pce->units.begin(); i!=pce->units.end(); ++i )
 					UnitDestroyed(*i,-1);
@@ -786,8 +782,7 @@ void cRAI::Update()
 					}
 					else
 					{	// doesn't seem to work for factories  Spring-Version(v0.76b1)
-						Command c;
-						c.id=CMD_STOP;
+						Command c(CMD_STOP);
 						cb->GiveOrder(eventList[0]->unitID, &c);
 						UpdateEventRemove(eventList[0]);
 					}
@@ -806,7 +801,7 @@ void cRAI::Update()
 				if( !eventList[0]->unitI->inCombat &&
 					!IsHumanControled(eventList[0]->unitID,eventList[0]->unitI) &&
 					eventList[0]->unitI->BuildQ != 0 &&
-					cb->GetCurrentUnitCommands(eventList[0]->unitID)->front().id < 0 )
+					cb->GetCurrentUnitCommands(eventList[0]->unitID)->front().GetID() < 0 )
 				{
 					if( eventList[0]->lastPosition == 0 )
 						eventList[0]->lastPosition = new float3;
@@ -818,15 +813,13 @@ void cRAI::Update()
 						if( abs(int(position.x-conPosition.x)) + 4.0 < 8.0*eventList[0]->unitI->ud->xsize/2.0 + 8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0 &&
 							abs(int(position.z-conPosition.z)) + 4.0 < 8.0*eventList[0]->unitI->ud->zsize/2.0 + 8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0 )
 						{	// most likely, the commander built something on top of himself
-							Command c;
-							c.id = CMD_RECLAIM;
-							c.params.push_back(eventList[0]->unitI->BuildQ->creationID.front());
+							Command c(CMD_RECLAIM);
+							c.PushParam(eventList[0]->unitI->BuildQ->creationID.front());
 							cb->GiveOrder(eventList[0]->unitID,&c);
 							if( B->BP->NeedResourceSite(eventList[0]->unitI->BuildQ->creationUD->ud) )
 							{
-								c.params.clear();
-								c.id = CMD_MOVE;
-								c.options = SHIFT_KEY;
+								c = Command(CMD_MOVE);
+								c.SetOpts(SHIFT_KEY);
 								float3 newPos;
 								if( position.x < conPosition.x )
 									newPos.x = (position.x - ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
@@ -837,9 +830,7 @@ void cRAI::Update()
 								else
 									newPos.z = (position.z + ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
 								CorrectPosition(newPos);
-								c.params.push_back(newPos.x);
-								c.params.push_back(newPos.y);
-								c.params.push_back(newPos.z);
+								c.PushPos(newPos);
 								cb->GiveOrder(eventList[0]->unitID,&c);
 							}
 						}
@@ -849,8 +840,7 @@ void cRAI::Update()
 //						if( eventList[0]->unitI->area == 0 && TM->udMobileType.find(eventList[0]->unitI->ud->id)->second != 0 )
 //						{} // trapped forever
 						eventList[0]->unitI->lastUnitIdleFrame = -1;
-						Command c;
-						c.id = CMD_MOVE;
+						Command c(CMD_MOVE);
 						float f = (40.0+(rand()%401)/10.0);
 						float3 newPos = position;
 						if( rand()%2 == 0 )
@@ -864,9 +854,7 @@ void cRAI::Update()
 							newPos.z -= f;
 
 						CorrectPosition(newPos);
-						c.params.push_back(newPos.x);
-						c.params.push_back(newPos.y);
-						c.params.push_back(newPos.z);
+						c.PushPos(newPos);
 						cb->GiveOrder(eventList[0]->unitID,&c);
 						*eventList[0]->lastPosition = position;
 					}

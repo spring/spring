@@ -515,9 +515,8 @@ void cPowerManager::GiveCloakOrder(const int &unitID, UnitInfo *U, bool state )
 {
 	if( U != 0 )
 		U->CloakUI->active = state;
-	Command c;
-	c.id=CMD_CLOAK;
-	c.params.push_back(state);
+	Command c(CMD_CLOAK);
+	c.PushParam(state);
 	cb->GiveOrder(unitID, &c);
 }
 
@@ -525,8 +524,7 @@ void cPowerManager::GiveOnOffOrder(const int &unitID, UnitInfo *U, bool state )
 {
 	if( U != 0 )
 		U->OnOffUI->active = state;
-	Command c;
-	c.id=CMD_ONOFF;
-	c.params.push_back(state);
+	Command c(CMD_ONOFF);
+	c.PushParam(state);
 	cb->GiveOrder(unitID, &c);
 }

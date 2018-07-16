@@ -139,16 +139,14 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 				Command c;
 				if( cb->GetUnitPos(unit).distance2D(U->group->M->ScoutPoint) < 400.0f )
 				{
-					c.id = CMD_WAIT;
-					c.timeOut = cb->GetCurrentFrame()+900;
+					c = Command(CMD_WAIT);
+					c.SetTimeOut(cb->GetCurrentFrame()+900);
 //					G->UpdateEventAdd(1,cb->GetCurrentFrame()+300,unit,U);
 				}
 				else
 				{
-					c.id = CMD_MOVE;
-					c.params.push_back(U->group->M->ScoutPoint.x);
-					c.params.push_back(U->group->M->ScoutPoint.y);
-					c.params.push_back(U->group->M->ScoutPoint.z);
+					c = Command(CMD_MOVE);
+					c.PushPos(U->group->M->ScoutPoint);
 				}
 				cb->GiveOrder(unit, &c);
 			}
@@ -157,16 +155,14 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 				Command c;
 				if( cb->GetUnitPos(unit).distance2D(U->group->M->RallyPoint) < 400.0f )
 				{
-					c.id = CMD_WAIT;
-					c.timeOut = cb->GetCurrentFrame()+900;
+					c = Command(CMD_WAIT);
+					c.SetTimeOut(cb->GetCurrentFrame()+900);
 //					G->UpdateEventAdd(1,cb->GetCurrentFrame()+900,unit,U);
 				}
 				else
 				{
-					c.id = CMD_MOVE;
-					c.params.push_back(U->group->M->RallyPoint.x);
-					c.params.push_back(U->group->M->RallyPoint.y);
-					c.params.push_back(U->group->M->RallyPoint.z);
+					c = Command(CMD_MOVE);
+					c.PushPos(U->group->M->RallyPoint);
 				}
 				cb->GiveOrder(unit, &c);
 			}
@@ -182,11 +178,8 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 
 				if( Pos.x - S->SL->position.x > 100 || Pos.x - S->SL->position.x < -100 || Pos.z - S->SL->position.z > 100 || Pos.z - S->SL->position.z < -100 )
 				{
-					Command c;
-					c.id = CMD_MOVE;
-					c.params.push_back(S->SL->position.x);
-					c.params.push_back(S->SL->position.y);
-					c.params.push_back(S->SL->position.z);
+					Command c(CMD_MOVE);
+					c.PushPos(S->SL->position);
 					cb->GiveOrder(unit, &c);
 				}
 				return;
@@ -198,12 +191,8 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 				UnitIdle(unit,U);
 				return;
 			}
-			Command c;
-			c.id = CMD_MOVE;
-			float3 movePos=G->GetRandomPosition(U->area);
-			c.params.push_back(movePos.x);
-			c.params.push_back(movePos.y);
-			c.params.push_back(movePos.z);
+			Command c(CMD_MOVE);
+			c.PushPos(G->GetRandomPosition(U->area));
 			cb->GiveOrder(unit, &c);
 		}
 		break;
@@ -226,24 +215,20 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 				U->E = &G->Enemies.find(U->enemyID)->second;
 				U->enemyEff = G->CM->CanAttack(U,U->E,G->CM->GetEnemyPosition(U->enemyID,U->E));
 
-				c.id = CMD_ATTACK;
-				c.params.push_back(U->enemyID);
+				c = Command(CMD_ATTACK);
+				c.PushParam(U->enemyID);
 				cb->GiveOrder(unit,&c);
 				return;
 			}
 
-			c.id = CMD_MOVE;
-			float3 movePos=G->GetRandomPosition(U->area);
-			c.params.push_back(movePos.x);
-			c.params.push_back(movePos.y);
-			c.params.push_back(movePos.z);
+			c = Command(CMD_MOVE);
+			c.PushPos(G->GetRandomPosition(U->area));
 			cb->GiveOrder(unit, &c);
 		}
 		break;
 	case TASK_SUPPORT:
 		{
-			Command c;
-			c.id = CMD_WAIT;
+			Command c(CMD_WAIT);
 			cb->GiveOrder(unit, &c);
 		}
 		break;
@@ -252,8 +237,7 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 			sTransportUnitInfo *T = &UTrans.find(unit)->second;
 			if( T->AssistID == -1 )
 			{
-				Command c;
-				c.id = CMD_WAIT;
+				Command c(CMD_WAIT);
 				cb->GiveOrder(unit, &c);
 
 				G->UpdateEventAdd(1,cb->GetCurrentFrame()+450,unit,U);
