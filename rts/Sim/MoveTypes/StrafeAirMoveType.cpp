@@ -12,7 +12,6 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
@@ -91,6 +90,8 @@ static const unsigned int FLOAT_MEMBER_HASHES[] = {
 
 #undef MEMBER_CHARPTR_HASH
 #undef MEMBER_LITERAL_HASH
+
+extern AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6];
 
 
 
@@ -295,7 +296,7 @@ static float GetElevatorDeflection(
 				minPitch = hdif / maxElevatorSpeedf2;
 			}
 
-			if (collidee != NULL && avoidCollision && frontdir.dot(collidee->pos + collidee->speed * 20.0f - pos - spd * 20.0f) < 0.0f) {
+			if (collidee != nullptr && avoidCollision && frontdir.dot(collidee->pos + collidee->speed * 20.0f - pos - spd * 20.0f) < 0.0f) {
 				elevator = (updir.dot(collidee->midPos - owner->midPos) > 0.0f)? -1 : 1;
 			} else {
 				const float hdif = goalDir.dot(updir);
@@ -366,13 +367,13 @@ static int SelectLoopBackManeuver(
 		return CStrafeAirMoveType::MANEUVER_FLY_STRAIGHT;
 
 	if (groundDist > TurnRadius(turnRadius, spd.w)) {
-		if (math::fabs(frontdir.y) <= 0.2f && gsRNG.NextFloat() > 0.3f) {
+		if (math::fabs(frontdir.y) <= 0.2f && gsRNG.NextFloat() > 0.3f)
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN_INV;
-		}
+
 	} else {
-		if (frontdir.y > -0.2f && gsRNG.NextFloat() > 0.7f) {
+		if (frontdir.y > -0.2f && gsRNG.NextFloat() > 0.7f)
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN;
-		}
+
 	}
 
 	return CStrafeAirMoveType::MANEUVER_FLY_STRAIGHT;
@@ -842,10 +843,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
-	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
-
-	if (UseSmoothMesh())
-		gHeight = std::max(smoothGround.GetHeight(pos.x, pos.z), gHeight);
+	const float groundHeight = amtGetGroundHeightFuncs[5 * UseSmoothMesh()](pos.x, pos.z);
 
 	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
@@ -892,9 +890,9 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
 	}
 
-	const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // roll
-	const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // yaw
-	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
+	const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // roll
+	const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // yaw
+	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
 
 	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
 	return (allowUnlockYawRoll || forceUnlockYawRoll);
@@ -919,9 +917,7 @@ void CStrafeAirMoveType::UpdateTakeOff()
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
-	const float currentHeight = pos.y - (owner->unitDef->canSubmerge?
-		CGround::GetHeightReal(pos.x, pos.z):
-		CGround::GetHeightAboveWater(pos.x, pos.z));
+	const float currentHeight = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
 	const float yawSign = Sign((goalPos - pos).dot(rightdir));
 
 	frontdir += (rightdir * yawSign * (maxRudder * spd.y));
@@ -952,13 +948,13 @@ void CStrafeAirMoveType::UpdateLanding()
 	SyncedFloat3& updir    = owner->updir;
 
 	if (!HaveLandingPos()) {
-		reservedLandingPos = FindLandingPos();
+		reservedLandingPos = FindLandingPos(pos + frontdir * BrakingDistance(maxSpeed, decRate));
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
 		if (HaveLandingPos()) {
 			const float3 originalPos = pos;
-			wantedHeight = 0;
+			wantedHeight = 0.0f;
 
 			owner->Move(reservedLandingPos, false);
 			owner->Block();
@@ -977,7 +973,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	}
 
 	SetGoal(reservedLandingPos);
-	UpdateLandingHeight();
+	UpdateLandingHeight(wantedHeight);
 
 	const float3 reservedLandingPosDir = reservedLandingPos - pos;
 	const float3 brakeSpot = pos + frontdir * BrakingDistance(owner->speed.Length2D(), decRate);
@@ -1015,24 +1011,23 @@ void CStrafeAirMoveType::UpdateLanding()
 			frontSpeed = spd.dot2D(frontdir);
 		}
 
-		if (frontSpeed < 0.0f) {
+		if (frontSpeed < 0.0f)
 			owner->SetVelocityAndSpeed(UpVector * owner->speed);
-		}
 
 		const float landPosDistXZ = reservedLandingPosDir.Length2D() + 0.1f;
 		const float landPosDistY = reservedLandingPosDir.y;
 		const float curSpeedXZ = spd.Length2D();
+
 		owner->SetVelocity(spd - UpVector * spd.y);
 
 		if (landPosDistXZ > curSpeedXZ && curSpeedXZ > 0.1f) {
 			owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, landPosDistY * curSpeedXZ / landPosDistXZ));
 		} else {
-			const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
-				CGround::GetHeightReal(owner->pos.x, owner->pos.z):
-				CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
-			if (localAltitude > wantedHeight) {
-				owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, wantedHeight - localAltitude));
-			}
+			const float localAltitude = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+			const float deltaAltitude = wantedHeight - localAltitude;
+
+			if (deltaAltitude < 0.0f)
+				owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, deltaAltitude));
 		}
 
 		owner->SetSpeed(spd);
@@ -1216,35 +1211,31 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 
 
-float3 CStrafeAirMoveType::FindLandingPos()
+float3 CStrafeAirMoveType::FindLandingPos(float3 landPos)
 {
-	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
-	const float brDist = BrakingDistance(maxSpeed, decRate);
-	landRadiusSq = Square(brDist);
 
-	float3 tryPos = owner->pos + owner->frontdir * brDist;
-	tryPos.y = CGround::GetHeightReal(tryPos.x, tryPos.z);
+	if (((landPos.y = CGround::GetHeightReal(landPos)) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(ud->floatOnWater || ud->canSubmerge)))
+		return -OnesVector;
 
-	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
-		return ret;
+	const int2 os = {owner->xsize, owner->zsize};
+	const int2 mp = owner->GetMapPos(landPos = landPos.cClampInBounds());
 
-	tryPos.ClampInBounds();
-
-	const int2 mp = owner->GetMapPos(tryPos);
-
-	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
-		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
+	for (int z = mp.y; z < (mp.y + os.y); z++) {
+		for (int x = mp.x; x < (mp.x + os.x); x++) {
 			if (groundBlockingObjectMap.GroundBlocked(x, z, owner))
-				return ret;
+				return -OnesVector;
 		}
 	}
 
-	// FIXME: better use ud->maxHeightDif?
-	if (CGround::GetSlope(tryPos.x, tryPos.z) > 0.03f)
-		return ret;
+	// FIXME: better compare against ud->maxHeightDif?
+	if (CGround::GetSlope(landPos.x, landPos.z) > 0.03f)
+		return -OnesVector;
 
-	return tryPos;
+	// update this only for valid landing positions
+	landRadiusSq = landPos.SqDistance(owner->pos);
+
+	return landPos;
 }
 
 

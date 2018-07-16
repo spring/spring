@@ -5,13 +5,13 @@
 #include "Game/Players/Player.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
@@ -73,6 +73,9 @@ static bool UnitHasLoadCmd(const CCommandAI* cai) {
 
 static bool UnitIsBusy(const CUnit* u) { return (UnitIsBusy(u->commandAI)); }
 static bool UnitHasLoadCmd(const CUnit* u) { return (UnitHasLoadCmd(u->commandAI)); }
+
+
+extern AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6];
 
 
 
@@ -367,13 +370,13 @@ void CHoverAirMoveType::UpdateTakeoff()
 
 	UpdateAirPhysics();
 
-	const float altitude = owner->unitDef->canSubmerge?
-		(pos.y - CGround::GetHeightReal(pos.x, pos.z)):
-		(pos.y - CGround::GetHeightAboveWater(pos.x, pos.z));
+	const float curAltitude = amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+	const float minAltitude = orgWantedHeight * 0.8f;
 
-	if (altitude > orgWantedHeight * 0.8f) {
-		SetState(AIRCRAFT_FLYING);
-	}
+	if (curAltitude <= minAltitude)
+		return;
+
+	SetState(AIRCRAFT_FLYING);
 }
 
 
@@ -440,24 +443,21 @@ void CHoverAirMoveType::UpdateFlying()
 
 	// Direction to where we would like to be
 	float3 goalVec = goalPos - pos;
+	float3 goalDir = goalVec;
 
 	// don't change direction for waypoints we just flew over and missed slightly
 	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands()) {
-		float3 goalDir = goalVec;
-
-		if ((goalDir != ZeroVector) && (goalVec.dot(goalDir.UnsafeANormalize()) < 1.0f)) {
+		if ((goalDir != ZeroVector) && (goalVec.dot(goalDir.UnsafeANormalize()) < 1.0f))
 			goalVec = owner->frontdir;
-		}
+
 	}
 
 	const float goalDistSq2D = goalVec.SqLength2D();
-	const float gHeight = UseSmoothMesh()?
-		std::max(smoothGround.GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z)):
-		CGround::GetHeightAboveWater(pos.x, pos.z);
+	const float groundHeight = amtGetGroundHeightFuncs[4 * UseSmoothMesh()](pos.x, pos.z);
 
 	const bool closeToGoal = (flyState == FLY_ATTACKING)?
 		(goalDistSq2D < (             400.0f)):
-		(goalDistSq2D < (maxDrift * maxDrift)) && (math::fabs(gHeight + wantedHeight - pos.y) < maxDrift);
+		(goalDistSq2D < (maxDrift * maxDrift)) && (math::fabs(groundHeight + wantedHeight - pos.y) < maxDrift);
 
 	if (closeToGoal) {
 		switch (flyState) {
@@ -606,8 +606,8 @@ void CHoverAirMoveType::UpdateLanding()
 			// found a landing spot
 			reservedLandingPos = pos;
 			goalPos = pos;
-			wantedHeight = 0;
-			UpdateLandingHeight();
+
+			UpdateLandingHeight(0.0f);
 
 			const float3 originalPos = pos;
 
@@ -836,9 +836,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// if this aircraft uses the smoothmesh, these values are
 	// calculated with respect to that (for changing vertical
 	// speed, but not for ground collision)
-	float curAbsHeight = owner->unitDef->canSubmerge?
-		CGround::GetHeightReal(pos.x, pos.z):
-		CGround::GetHeightAboveWater(pos.x, pos.z);
+	float curAbsHeight = amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
 
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
@@ -853,11 +851,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
 	}
 
-	if (UseSmoothMesh()) {
-		curAbsHeight = owner->unitDef->canSubmerge?
-			smoothGround.GetHeight(pos.x, pos.z):
-			smoothGround.GetHeightAboveWater(pos.x, pos.z);
-	}
+	curAbsHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + owner->unitDef->canSubmerge](pos.x, pos.z);
 
 	// restore original vertical speed, then compute new
 	UpdateVerticalSpeed(spd, pos.y - curAbsHeight, yspeed);
@@ -1001,13 +995,14 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 
 	const UnitDef* ud = owner->unitDef;
 
-	if ((CGround::GetApproximateHeight(pos.x, pos.z) < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
+	if ((CGround::GetApproximateHeight(pos) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(ud->floatOnWater || ud->canSubmerge)))
 		return false;
 
+	const int2 os = {owner->xsize, owner->zsize};
 	const int2 mp = owner->GetMapPos(pos);
 
-	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
-		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
+	for (int z = mp.y; z < (mp.y + os.y); z++) {
+		for (int x = mp.x; x < (mp.x + os.x); x++) {
 			if (groundBlockingObjectMap.GroundBlocked(x, z, owner))
 				return false;
 		}
