@@ -339,15 +339,11 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 		glDrawBuffer((GLenum)lua_toint(L, index));
 		return true;
 	}
-	else if (lua_istable(L, index) && GLEW_ARB_draw_buffers) {
-		const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	if (lua_istable(L, index) && GLEW_ARB_draw_buffers) {
+		int buffers[32] = {GL_NONE};
+		const int count = LuaUtils::ParseIntArray(L, index, buffers, sizeof(buffers) / sizeof(buffers[0]));
 
-		std::vector<GLenum> buffers;
-		for (int i = 1; lua_checkgeti(L, table, i) != 0; lua_pop(L, 1), i++) {
-			buffers.push_back((GLenum)luaL_checkint(L, -1));
-		}
-
-		glDrawBuffersARB(buffers.size(), &buffers.front());
+		glDrawBuffersARB(count, reinterpret_cast<const GLenum*>(&buffers[0]));
 		return true;
 	}
 
