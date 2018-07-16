@@ -41,7 +41,7 @@ public:
 	void SetState(AircraftState state) override;
 	void UpdateTakeOff();
 
-	float3 FindLandingPos();
+	float3 FindLandingPos(float3 landPos);
 
 	void SetMaxSpeed(float speed) override;
 	float BrakingDistance(float speed, float rate) const override;

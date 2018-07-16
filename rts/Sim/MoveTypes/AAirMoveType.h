@@ -14,6 +14,7 @@ class AAirMoveType : public AMoveType
 {
 	CR_DECLARE(AAirMoveType)
 public:
+	typedef float(*GetGroundHeightFunc)(float, float);
 
 	enum AircraftState {
 		AIRCRAFT_LANDED,
@@ -42,7 +43,7 @@ public:
 
 	void LandAt(float3 pos, float distanceSq);
 	void ClearLandingPos() { reservedLandingPos = -OnesVector; }
-	void UpdateLandingHeight();
+	void UpdateLandingHeight(float newWantedHeight);
 	void UpdateLanding();
 
 	bool CanApplyImpulse(const float3&) { return true; }

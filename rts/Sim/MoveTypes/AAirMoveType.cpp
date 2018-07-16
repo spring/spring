@@ -7,6 +7,7 @@
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -36,6 +37,26 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(lastColWarningType)
 ))
+
+
+
+static inline float AAMTGetGroundHeightAW(float x, float z) { return CGround::GetHeightAboveWater(x, z); }
+static inline float AAMTGetGroundHeight  (float x, float z) { return CGround::GetHeightReal      (x, z); }
+static inline float AAMTGetSmoothGroundHeightAW(float x, float z) { return smoothGround.GetHeightAboveWater(x, z); }
+static inline float AAMTGetSmoothGroundHeight  (float x, float z) { return smoothGround.GetHeight          (x, z); }
+static inline float HAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetApproximateHeight(x, z)); }
+static inline float SAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetHeightAboveWater(x, z)); }
+
+AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6] = {
+	AAMTGetGroundHeightAW,       // canSubmerge=0 useSmoothMesh=0
+	AAMTGetGroundHeight  ,       // canSubmerge=1 useSmoothMesh=0
+	AAMTGetSmoothGroundHeightAW, // canSubmerge=0 useSmoothMesh=1
+	AAMTGetSmoothGroundHeight,   // canSubmerge=1 useSmoothMesh=1
+	HAMTGetMaxGroundHeight,      // HoverAirMoveType::UpdateFlying
+	SAMTGetMaxGroundHeight,      // StrafeAirMoveType::UpdateFlying
+};
+
+
 
 AAirMoveType::AAirMoveType(CUnit* unit):
 	AMoveType(unit),
@@ -86,7 +107,7 @@ bool AAirMoveType::UseSmoothMesh() const {
 
 	const bool closeGoalPos = (goalPos.SqDistance2D(owner->pos) < Square(landRadiusSq * 2.0f));
 	const bool transportCmd = ((fc.GetID() == CMD_LOAD_UNITS) || (fc.GetID() == CMD_UNLOAD_UNIT));
-	const bool forceDisable = ((transportCmd && closeGoalPos) || (aircraftState != AIRCRAFT_FLYING));
+	const bool forceDisable = ((transportCmd && closeGoalPos) || (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_HOVERING));
 
 	return !forceDisable;
 }
@@ -121,9 +142,7 @@ void AAirMoveType::UpdateLanded()
 	// lowered) later and we do not want to end up hovering
 	// in mid-air or sink below it
 	// let gravity do the job instead of teleporting
-	const float minHeight = owner->unitDef->canSubmerge?
-		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
-		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z);
+	const float minHeight = amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](owner->pos.x, owner->pos.z);
 	const float curHeight = owner->pos.y;
 
 	if (curHeight > minHeight) {
@@ -159,15 +178,14 @@ void AAirMoveType::LandAt(float3 pos, float distanceSq)
 	owner->Block();
 	owner->Move(originalPos, false);
 
-	const float gh = CGround::GetHeightReal(reservedLandingPos.x, reservedLandingPos.z);
-	wantedHeight = reservedLandingPos.y - (owner->unitDef->canSubmerge ? gh : std::max(0.0f, gh));
+	wantedHeight = reservedLandingPos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](reservedLandingPos.x, reservedLandingPos.z);
 }
 
 
-void AAirMoveType::UpdateLandingHeight()
+void AAirMoveType::UpdateLandingHeight(float newWantedHeight)
 {
-	const float gh = CGround::GetHeightReal(reservedLandingPos.x, reservedLandingPos.z);
-	reservedLandingPos.y = wantedHeight + (owner->unitDef->canSubmerge ? gh : std::max(0.0f, gh));
+	wantedHeight = newWantedHeight;
+	reservedLandingPos.y = wantedHeight + amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](reservedLandingPos.x, reservedLandingPos.z);
 }
 
 
@@ -180,9 +198,7 @@ void AAirMoveType::UpdateLanding()
 	const float distSq = reservedLandingPos.SqDistance(pos);
 
 
-	const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
-		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
-		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
+	const float localAltitude = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](owner->pos.x, owner->pos.z);
 
 	if (distSq <= radiusSq || (distSq < landRadiusSq && localAltitude < wantedHeight + radius)) {
 		SetState(AIRCRAFT_LANDED);
