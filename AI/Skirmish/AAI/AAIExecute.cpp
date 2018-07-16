@@ -189,14 +189,8 @@ bool AAIExecute::InitBuildingAt(const UnitDef *def, float3 *pos, bool water)
 
 void AAIExecute::MoveUnitTo(int unit, float3 *position)
 {
-	Command c;
-
-	c.id = CMD_MOVE;
-
-	c.params.resize(3);
-	c.params[0] = position->x;
-	c.params[1] = position->y;
-	c.params[2] = position->z;
+	Command c(CMD_MOVE);
+	c.PushPos(*position);
 
 	//ai->Getcb()->GiveOrder(unit, &c);
 	GiveOrder(&c, unit, "MoveUnitTo");
@@ -205,8 +199,7 @@ void AAIExecute::MoveUnitTo(int unit, float3 *position)
 
 void AAIExecute::stopUnit(int unit)
 {
-	Command c;
-	c.id = CMD_STOP;
+	Command c(CMD_STOP);
 
 	//ai->Getcb()->GiveOrder(unit, &c);
 	GiveOrder(&c, unit, "StopUnit");
@@ -2389,9 +2382,8 @@ void AAIExecute::CheckRessources()
 			{
 				if(ai->Getcb()->IsUnitActivated(*maker))
 				{
-					Command c;
-					c.id = CMD_ONOFF;
-					c.params.push_back(0);
+					Command c(CMD_ONOFF);
+					c.PushParam(0);
 					//ai->Getcb()->GiveOrder(*maker, &c);
 					GiveOrder(&c, *maker, "ToggleMMaker");
 
@@ -2413,9 +2405,8 @@ void AAIExecute::CheckRessources()
 
 				if(averageEnergySurplus > usage * 0.7f)
 				{
-					Command c;
-					c.id = CMD_ONOFF;
-					c.params.push_back(1);
+					Command c(CMD_ONOFF);
+					c.PushParam(1);
 					//ai->Getcb()->GiveOrder(*maker, &c);
 					GiveOrder(&c, *maker, "ToggleMMaker");
 
@@ -3276,13 +3267,11 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 
 		if(pos.x > 0)
 		{
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.resize(3);
+			Command c(CMD_MOVE);
 
-			c.params[0] = pos.x;
-			c.params[1] = ai->Getcb()->GetElevation(pos.x, pos.z);
-			c.params[2] = pos.z;
+			c.PushParam(pos.x);
+			c.PushParam(ai->Getcb()->GetElevation(pos.x, pos.z));
+			c.PushParam(pos.z);
 
 			//ai->Getcb()->GiveOrder(unit_id, &c);
 			GiveOrder(&c, unit_id, "Fallback");

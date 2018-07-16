@@ -121,8 +121,7 @@ void AAIConstructor::Update()
 				if(ai->Getbt()->IsStatic(this->def_id))
 				{
 					// give build order
-					Command c;
-					c.id = -def_id;
+					Command c(-def_id);
 					ai->Getcb()->GiveOrder(unit_id, &c);
 					construction_def_id = def_id;
 					assert(ai->Getbt()->IsValidUnitDefID(def_id));
@@ -141,12 +140,8 @@ void AAIConstructor::Update()
 					if(pos.x > 0)
 					{
 						// give build order
-						Command c;
-						c.id = -def_id;
-						c.params.resize(3);
-						c.params[0] = pos.x;
-						c.params[1] = pos.y;
-						c.params[2] = pos.z;
+						Command c(-def_id);
+						c.PushPos(pos);
 
 						ai->Getcb()->GiveOrder(unit_id, &c);
 						construction_def_id = def_id;
@@ -210,11 +205,10 @@ void AAIConstructor::Update()
 						else
 							c.id = CMD_RECLAIM;
 
-						c.params.resize(4);
-						c.params[0] = pos.x;
-						c.params[1] = ai->Getcb()->GetElevation(pos.x, pos.z);
-						c.params[2] = pos.z;
-						c.params[3] = 500.0;
+						c.PushParam(pos.x);
+						c.PushParam(ai->Getcb()->GetElevation(pos.x, pos.z));
+						c.PushParam(pos.z);
+						c.PushParam(500.0);
 
 						//ai->Getcb()->GiveOrder(unit_id, &c);
 						task = RECLAIMING;
@@ -353,9 +347,8 @@ void AAIConstructor::GiveReclaimOrder(int unit_id)
 
 	task = RECLAIMING;
 
-	Command c;
-	c.id = CMD_RECLAIM;
-	c.params.push_back(unit_id);
+	Command c(CMD_RECLAIM);
+	c.PushParam(unit_id);
 	//ai->Getcb()->GiveOrder(this->unit_id, &c);
 	ai->Getexecute()->GiveOrder(&c, this->unit_id, "Builder::GiveRelaimOrder");
 }
@@ -386,12 +379,8 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 		construction_category = ai->Getbt()->units_static[id_building].category;
 
 		// order builder to construct building
-		Command c;
-		c.id = - id_building;
-		c.params.resize(3);
-		c.params[0] = build_pos.x;
-		c.params[1] = build_pos.y;
-		c.params[2] = build_pos.z;
+		Command c(-id_building);
+		c.PushPos(build_pos);
 
 		ai->Getcb()->GiveOrder(unit_id, &c);
 
@@ -409,18 +398,10 @@ void AAIConstructor::AssistConstruction(int constructor, int target_unit)
 {
 	if(target_unit == -1)
 	{
-		Command c;
 		// Check if the target can be assisted at all. If not, try to repair it instead
-		const UnitDef *def;
-		def = ai->Getcb()->GetUnitDef(constructor);
-		if(def->canBeAssisted)
-		{
-			c.id = CMD_GUARD;
-		} else
-		{
-			c.id = CMD_REPAIR;
-		}
-		c.params.push_back(constructor);
+		const UnitDef* def = ai->Getcb()->GetUnitDef(constructor);
+		Command c(def->canBeAssisted? CMD_GUARD: CMD_REPAIR);
+		c.PushParam(constructor);
 		//ai->Getcb()->GiveOrder(unit_id, &c);
 		ai->Getexecute()->GiveOrder(&c, unit_id, "Builder::Assist");
 
@@ -429,9 +410,8 @@ void AAIConstructor::AssistConstruction(int constructor, int target_unit)
 	}
 	else
 	{
-		Command c;
-		c.id = CMD_REPAIR;
-		c.params.push_back(target_unit);
+		Command c(CMD_REPAIR);
+		c.PushParam(target_unit);
 		//ai->Getcb()->GiveOrder(unit_id, &c);
 		ai->Getexecute()->GiveOrder(&c, unit_id, "Builder::Assist");
 
@@ -456,9 +436,8 @@ void AAIConstructor::TakeOverConstruction(AAIBuildTask *build_task)
 	construction_category = ai->Getbt()->units_static[construction_def_id].category;
 	build_pos = build_task->build_pos;
 
-	Command c;
-	c.id = CMD_REPAIR;
-	c.params.push_back(build_task->unit_id);
+	Command c(CMD_REPAIR);
+	c.PushParam(build_task->unit_id);
 
 	task = BUILDING;
 	ai->Getcb()->GiveOrder(unit_id, &c);
@@ -509,8 +488,7 @@ void AAIConstructor::StopAssisting()
 	task = UNIT_IDLE;
 	assistance = -1;
 
-	Command c;
-	c.id = CMD_STOP;
+	Command c(CMD_STOP);
 	//ai->Getcb()->GiveOrder(unit_id, &c);
 	ai->Getexecute()->GiveOrder(&c, unit_id, "Builder::StopAssisting");
 }
@@ -594,11 +572,10 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 
 		if(pos.x > 0)
 		{
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.push_back(pos.x);
-			c.params.push_back(ai->Getcb()->GetElevation(pos.x, pos.z));
-			c.params.push_back(pos.z);
+			Command c(CMD_MOVE);
+			c.PushParam(pos.x);
+			c.PushParam(ai->Getcb()->GetElevation(pos.x, pos.z));
+			c.PushParam(pos.z);
 
 			ai->Getexecute()->GiveOrder(&c, unit_id, "BuilderRetreat");
 			//ai->Getcb()->GiveOrder(unit_id, &c);
