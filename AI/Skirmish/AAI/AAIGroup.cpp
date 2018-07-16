@@ -69,9 +69,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 	task_importance = 0;
 	task = GROUP_IDLE;
 
-	lastCommand.id = CMD_STOP;
-	lastCommand.params.resize(3);
-
+	lastCommand = Command(CMD_STOP);
 	lastCommandFrame = 0;
 
 	target_sector = 0;
@@ -152,15 +150,11 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type, int continent_id)
 			// send unit to rally point of the group
 			if(rally_point.x > 0)
 			{
-				Command c;
-				c.id = CMD_MOVE;
-				c.params.resize(3);
-				c.params[0] = rally_point.x;
-				c.params[1] = rally_point.y;
-				c.params[2] = rally_point.z;
+				Command c(CMD_MOVE);
+				c.PushPos(rally_point);
 
 				if(category != AIR_ASSAULT)
-					c.options |= SHIFT_KEY;
+					c.SetOpts(c.GetOpts() | SHIFT_KEY);
 
 				//ai->Getcb()->GiveOrder(unit_id, &c);
 				ai->Getexecute()->GiveOrder(&c, unit_id, "Group::AddUnit");
@@ -286,10 +280,7 @@ void AAIGroup::Update()
 	{
 		float range;
 		float3 pos;
-		Command c;
-
-		c.id = CMD_MOVE;
-		c.params.resize(3);
+		Command c(CMD_MOVE);
 
 		for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
 		{
@@ -301,9 +292,10 @@ void AAIGroup::Update()
 
 				if(pos.x > 0)
 				{
-					c.params[0] = pos.x;
-					c.params[1] = ai->Getcb()->GetElevation(pos.x, pos.z);
-					c.params[2] = pos.z;
+					c = Command(CMD_MOVE);
+					c.PushParam(pos.x);
+					c.PushParam(ai->Getcb()->GetElevation(pos.x, pos.z));
+					c.PushParam(pos.z);
 
 					//ai->Getcb()->GiveOrder(unit->x, &c);
 					ai->Getexecute()->GiveOrder(&c, unit->x, "GroupFallBack");
@@ -350,11 +342,8 @@ void AAIGroup::TargetUnitKilled()
 		// air groups retreat to rally point
 		if(category == AIR_ASSAULT)
 		{
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.push_back(rally_point.x);
-			c.params.push_back(rally_point.y);
-			c.params.push_back(rally_point.z);
+			Command c(CMD_MOVE);
+			c.PushPos(rally_point);
 
 			GiveOrder(&c, 90, MOVING, "Group::TargetUnitKilled");
 		}
@@ -364,35 +353,33 @@ void AAIGroup::TargetUnitKilled()
 void AAIGroup::AttackSector(AAISector *dest, float importance)
 {
 	float3 pos;
-	Command c;
-	c.id = CMD_FIGHT;
-	c.params.resize(3);
+	Command c(CMD_FIGHT);
 
 	// get position of the group
-	pos = GetGroupPos();
+	c.PushPos(pos = GetGroupPos());
 
 	int group_x = pos.x/ai->Getmap()->xSectorSize;
 	int group_y = pos.z/ai->Getmap()->ySectorSize;
 
-	c.params[0] = (dest->left + dest->right)/2;
-	c.params[2] = (dest->bottom + dest->top)/2;
+	c.SetParam(0, (dest->left + dest->right)/2);
+	c.SetParam(2, (dest->bottom + dest->top)/2);
 
 	// choose location that way that attacking units must cross the entire sector
 	if(dest->x > group_x)
-		c.params[0] = (dest->left + 7 * dest->right)/8;
+		c.SetParam(0, (dest->left + 7 * dest->right)/8);
 	else if(dest->x < group_x)
-		c.params[0] = (7 * dest->left + dest->right)/8;
+		c.SetParam(0, (7 * dest->left + dest->right)/8);
 	else
-		c.params[0] = (dest->left + dest->right)/2;
+		c.SetParam(0, (dest->left + dest->right)/2);
 
 	if(dest->y > group_y)
-		c.params[2] = (7 * dest->bottom + dest->top)/8;
+		c.SetParam(2, (7 * dest->bottom + dest->top)/8);
 	else if(dest->y < group_y)
-		c.params[2] = (dest->bottom + 7 * dest->top)/8;
+		c.SetParam(2, (dest->bottom + 7 * dest->top)/8);
 	else
-		c.params[2] = (dest->bottom + dest->top)/2;
+		c.SetParam(2, (dest->bottom + dest->top)/2);
 
-	c.params[1] = ai->Getcb()->GetElevation(c.params[0], c.params[2]);
+	c.SetParam(1, ai->Getcb()->GetElevation(c.GetParam(0), c.GetParam(2)));
 
 	// move group to that sector
 	GiveOrder(&c, importance + 8, UNIT_ATTACKING, "Group::AttackSector");
@@ -403,14 +390,11 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 
 void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 {
-	Command cmd;
+	Command cmd((enemy_pos != nullptr)? CMD_FIGHT: CMD_GUARD);
 
 	if(enemy_pos)
 	{
-		cmd.id = CMD_FIGHT;
-		cmd.params.push_back(enemy_pos->x);
-		cmd.params.push_back(enemy_pos->y);
-		cmd.params.push_back(enemy_pos->z);
+		cmd.PushPos(*enemy_pos);
 
 		GiveOrder(&cmd, importance, DEFENDING, "Group::Defend");
 
@@ -418,8 +402,7 @@ void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 	}
 	else
 	{
-		cmd.id = CMD_GUARD;
-		cmd.params.push_back(unit);
+		cmd.PushParam(unit);
 
 		GiveOrder(&cmd, importance, GUARDING, "Group::Defend");
 
@@ -435,11 +418,8 @@ void AAIGroup::Retreat(float3 *pos)
 {
 	this->task = GROUP_RETREATING;
 
-	Command c;
-	c.id = CMD_MOVE;
-	c.params.push_back(pos->x);
-	c.params.push_back(pos->y);
-	c.params.push_back(pos->z);
+	Command c(CMD_MOVE);
+	c.PushPos(*pos);
 
 	GiveOrder(&c, 105, MOVING, "Group::Retreat");
 
@@ -569,11 +549,8 @@ void AAIGroup::UnitIdle(int unit)
 	// special behaviour of aircraft in non air only mods
 	if(category == AIR_ASSAULT && task != GROUP_IDLE && !cfg->AIR_ONLY_MOD)
 	{
-		Command c;
-		c.id = CMD_MOVE;
-		c.params.push_back(rally_point.x);
-		c.params.push_back(rally_point.y);
-		c.params.push_back(rally_point.z);
+		Command c(CMD_MOVE);
+		c.PushPos(rally_point);
 
 		GiveOrder(&c, 100, MOVING, "Group::Idle_a");
 
@@ -604,9 +581,8 @@ void AAIGroup::UnitIdle(int unit)
 
 					if(unit >= 0)
 					{
-						Command c;
-						c.id = CMD_GUARD;
-						c.params.push_back(unit);
+						Command c(CMD_GUARD);
+						c.PushParam(unit);
 
 						GiveOrder(&c, 110, GUARDING, "Group::Idle_b");
 					}
@@ -620,35 +596,33 @@ void AAIGroup::UnitIdle(int unit)
 			// idle assault units are ordered to attack the current target sector
 			if(group_unit_type == ASSAULT_UNIT)
 			{
-				Command c;
-				c.id = CMD_FIGHT;
-				c.params.resize(3);
+				Command c(CMD_FIGHT);
 
 				// get position of the group
-				pos = ai->Getcb()->GetUnitPos(unit);
+				c.PushPos(pos = ai->Getcb()->GetUnitPos(unit));
 
 				int pos_x = pos.x/ai->Getmap()->xSectorSize;
 				int pos_y = pos.z/ai->Getmap()->ySectorSize;
 
-				c.params[0] = (target_sector->left + target_sector->right)/2;
-				c.params[2] = (target_sector->bottom + target_sector->top)/2;
+				c.SetParam(0, (target_sector->left + target_sector->right)/2);
+				c.SetParam(2, (target_sector->bottom + target_sector->top)/2);
 
 				// choose location that way that attacking units must cross the entire sector
 				if(target_sector->x > pos_x)
-					c.params[0] = (target_sector->left + 7 * target_sector->right)/8;
+					c.SetParam(0, (target_sector->left + 7 * target_sector->right)/8);
 				else if(target_sector->x < pos_x)
-					c.params[0] = (7 * target_sector->left + target_sector->right)/8;
+					c.SetParam(0, (7 * target_sector->left + target_sector->right)/8);
 				else
-					c.params[0] = (target_sector->left + target_sector->right)/2;
+					c.SetParam(0, (target_sector->left + target_sector->right)/2);
 
 				if(target_sector->y > pos_y)
-					c.params[2] = (7 * target_sector->bottom + target_sector->top)/8;
+					c.SetParam(2, (7 * target_sector->bottom + target_sector->top)/8);
 				else if(target_sector->y < pos_y)
-					c.params[2] = (target_sector->bottom + 7 * target_sector->top)/8;
+					c.SetParam(2, (target_sector->bottom + 7 * target_sector->top)/8);
 				else
-					c.params[2] = (target_sector->bottom + target_sector->top)/2;
+					c.SetParam(2, (target_sector->bottom + target_sector->top)/2);
 
-				c.params[1] = ai->Getcb()->GetElevation(c.params[0], c.params[2]);
+				c.SetParam(1, ai->Getcb()->GetElevation(c.GetParam(0), c.GetParam(2)));
 
 				// move group to that sector
 				GiveOrder(&c, 110, UNIT_ATTACKING, "Group::Idle_c");
@@ -679,11 +653,8 @@ void AAIGroup::UnitIdle(int unit)
 
 void AAIGroup::BombTarget(int target_id, float3 *target_pos)
 {
-	Command c;
-	c.id = CMD_ATTACK;
-	c.params.push_back(target_pos->x);
-	c.params.push_back(target_pos->y);
-	c.params.push_back(target_pos->z);
+	Command c(CMD_ATTACK);
+	c.PushPos(*target_pos);
 
 	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::BombTarget");
 
@@ -694,11 +665,8 @@ void AAIGroup::BombTarget(int target_id, float3 *target_pos)
 
 void AAIGroup::DefendAirSpace(float3 *pos)
 {
-	Command c;
-	c.id = CMD_PATROL;
-	c.params.push_back(pos->x);
-	c.params.push_back(pos->y);
-	c.params.push_back(pos->z);
+	Command c(CMD_PATROL);
+	c.PushPos(*pos);
 
 	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::DefendAirSpace");
 
@@ -707,9 +675,8 @@ void AAIGroup::DefendAirSpace(float3 *pos)
 
 void AAIGroup::AirRaidUnit(int unit_id)
 {
-	Command c;
-	c.id = CMD_ATTACK;
-	c.params.push_back(unit_id);
+	Command c(CMD_ATTACK);
+	c.PushParam(unit_id);
 
 	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::AirRaidUnit");
 
@@ -754,11 +721,8 @@ void AAIGroup::GetNewRallyPoint()
 		// send idle groups to new rally point
 		if(task == GROUP_IDLE)
 		{
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.push_back(rally_point.x);
-			c.params.push_back(rally_point.y);
-			c.params.push_back(rally_point.z);
+			Command c(CMD_MOVE);
+			c.PushPos(rally_point);
 
 			GiveOrder(&c, 90, HEADING_TO_RALLYPOINT, "Group::RallyPoint");
 		}

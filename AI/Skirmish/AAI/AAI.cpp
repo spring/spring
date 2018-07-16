@@ -473,9 +473,8 @@ void AAI::UnitFinished(int unit)
 			// cloak scout if cloakable
 			if (def->canCloak)
 			{
-				Command c;
-				c.id = CMD_CLOAK;
-				c.params.push_back(1);
+				Command c(CMD_CLOAK);
+				c.PushParam(1);
 
 				cb->GiveOrder(unit, &c);
 			}

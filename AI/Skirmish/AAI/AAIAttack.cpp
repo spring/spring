@@ -144,9 +144,8 @@ void AAIAttack::AttackSector(AAISector *sector)
 
 			if(unit >= 0)
 			{
-				Command c;
-				c.id = CMD_GUARD;
-				c.params.push_back(unit);
+				Command c(CMD_GUARD);
+				c.PushParam(unit);
 
 				(*group)->GiveOrder(&c, 110, GUARDING, "Group::AttackSector");
 			}
