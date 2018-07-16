@@ -636,6 +636,7 @@ void CGlobalRendering::CheckGLExtensions() const
 	#ifdef GLEW_ARB_buffer_storage
 	CHECK_REQ_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
 	#endif
+	CHECK_REQ_EXT(GLEW_ARB_draw_buffers); // 2.0 (MRT)
 	CHECK_REQ_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
 	CHECK_REQ_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)

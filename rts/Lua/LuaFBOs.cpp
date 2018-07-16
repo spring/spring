@@ -332,18 +332,16 @@ bool LuaFBOs::ApplyAttachment(
 bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 {
 	if (lua_isnumber(L, index)) {
-		glDrawBuffer((GLenum)lua_toint(L, index));
+		glDrawBuffer(static_cast<GLenum>(lua_toint(L, index)));
 		return true;
 	}
-	else if (lua_istable(L, index) && GLEW_ARB_draw_buffers) {
-		const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	if (lua_istable(L, index)) {
+		static_assert(sizeof(GLenum) == sizeof(int), "");
 
-		std::vector<GLenum> buffers;
-		for (int i = 1; lua_checkgeti(L, table, i) != 0; lua_pop(L, 1), i++) {
-			buffers.push_back((GLenum)luaL_checkint(L, -1));
-		}
+		int buffers[32] = {GL_NONE};
+		const int count = LuaUtils::ParseIntArray(L, index, buffers, sizeof(buffers) / sizeof(buffers[0]);
 
-		glDrawBuffersARB(buffers.size(), &buffers.front());
+		glDrawBuffers(count, reinterpret_cast<const GLenum*>(&buffers[0]));
 		return true;
 	}
 
@@ -396,15 +394,16 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	// parse the initialization table
 	if (lua_istable(L, table)) {
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const std::string& key = lua_tostring(L, -2);
-				const GLenum type = ParseAttachment(key);
-				if (type != 0) {
-					ApplyAttachment(L, -1, fboPtr, type);
-				}
-				else if (key == "drawbuffers") {
-					ApplyDrawBuffers(L, -1);
-				}
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			const std::string& key = lua_tostring(L, -2);
+			const GLenum type = ParseAttachment(key);
+			if (type != 0) {
+				ApplyAttachment(L, -1, fboPtr, type);
+			}
+			else if (key == "drawbuffers") {
+				ApplyDrawBuffers(L, -1);
 			}
 		}
 	}
