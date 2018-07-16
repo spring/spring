@@ -272,6 +272,16 @@ bool CEventHandler::AllowUnitTransport(const CUnit* transporter, const CUnit* tr
 	return ControlIterateDefTrue(listAllowUnitTransport, &CEventClient::AllowUnitTransport, transporter, transportee);
 }
 
+bool CEventHandler::AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, bool allowed)
+{
+	return ControlIterateDefTrue(listAllowUnitTransportLoad, &CEventClient::AllowUnitTransportLoad, transporter, transportee, allowed);
+}
+
+bool CEventHandler::AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, bool allowed)
+{
+	return ControlIterateDefTrue(listAllowUnitTransportUnload, &CEventClient::AllowUnitTransportUnload, transporter, transportee, allowed);
+}
+
 bool CEventHandler::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 {
 	return ControlIterateDefTrue(listAllowUnitCloak, &CEventClient::AllowUnitCloak, unit, enemy);

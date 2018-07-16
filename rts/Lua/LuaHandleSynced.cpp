@@ -207,9 +207,9 @@ bool CUnsyncedLuaHandle::DrawUnit(const CUnit* unit)
 	if (!success)
 		return false;
 
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool draw = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return draw;
 }
 
 
@@ -234,9 +234,9 @@ bool CUnsyncedLuaHandle::DrawFeature(const CFeature* feature)
 	if (!success)
 		return false;
 
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool draw = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return draw;
 }
 
 
@@ -263,9 +263,9 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 	if (!success)
 		return false;
 
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool draw = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return draw;
 }
 
 
@@ -293,9 +293,9 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 	if (!success)
 		return false;
 
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool draw = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return draw;
 }
 
 
@@ -476,9 +476,9 @@ bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 	if (!RunCallIn(L, cmdStr, 7, 1))
 		return true;
 
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool remove = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval; // return 'true' to remove the command
+	return remove; // return 'true' to remove the command
 }
 
 
@@ -500,9 +500,9 @@ bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool 
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -532,9 +532,9 @@ bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -559,9 +559,9 @@ bool CSyncedLuaHandle::AllowUnitTransfer(const CUnit* unit, int newTeam, bool ca
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -586,21 +586,21 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
 bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit* transportee)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 8, __func__);
+	luaL_checkstack(L, 2 + 6, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return true; // the call is not defined
+		return true;
 
 	lua_pushnumber(L, transporter->id);
 	lua_pushnumber(L, transporter->unitDef->id);
@@ -609,14 +609,62 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit*
 	lua_pushnumber(L, transportee->unitDef->id);
 	lua_pushnumber(L, transportee->team);
 
-	// call the function
 	if (!RunCallIn(L, cmdStr, 6, 1))
 		return true;
 
-	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
+}
+
+bool CSyncedLuaHandle::AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, bool allowed)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 6, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return allowed;
+
+	lua_pushnumber(L, transporter->id);
+	lua_pushnumber(L, transporter->unitDef->id);
+	lua_pushnumber(L, transporter->team);
+	lua_pushnumber(L, transportee->id);
+	lua_pushnumber(L, transportee->unitDef->id);
+	lua_pushnumber(L, transportee->team);
+
+	if (!RunCallIn(L, cmdStr, 6, 1))
+		return true;
+
+	const bool allow = luaL_optboolean(L, -1, allowed);
+	lua_pop(L, 1);
+	return allow;
+}
+
+bool CSyncedLuaHandle::AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, bool allowed)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 6, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return allowed;
+
+	lua_pushnumber(L, transporter->id);
+	lua_pushnumber(L, transporter->unitDef->id);
+	lua_pushnumber(L, transporter->team);
+	lua_pushnumber(L, transportee->id);
+	lua_pushnumber(L, transportee->unitDef->id);
+	lua_pushnumber(L, transportee->team);
+
+	if (!RunCallIn(L, cmdStr, 6, 1))
+		return true;
+
+	const bool allow = luaL_optboolean(L, -1, allowed);
+	lua_pop(L, 1);
+	return allow;
 }
 
 
@@ -642,9 +690,9 @@ bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 	if (!RunCallIn(L, cmdStr, 2, 1))
 		return true;
 
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 bool CSyncedLuaHandle::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)
@@ -676,9 +724,9 @@ bool CSyncedLuaHandle::AllowUnitDecloak(const CUnit* unit, const CSolidObject* o
 
 	assert(lua_isboolean(L, -1));
 
-	const bool retval = lua_toboolean(L, -1);
+	const bool allow = lua_toboolean(L, -1);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -702,9 +750,9 @@ bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef, int te
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -728,9 +776,9 @@ bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder, const CFeatur
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -752,9 +800,9 @@ bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const string& type, float 
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -777,9 +825,9 @@ bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam, const cha
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -802,9 +850,9 @@ bool CSyncedLuaHandle::AllowDirectUnitControl(int playerID, const CUnit* unit)
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -826,9 +874,9 @@ bool CSyncedLuaHandle::AllowBuilderHoldFire(const CUnit* unit, int action)
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -857,9 +905,9 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, int teamID, unsigned cha
 		return true;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, true);
+	const bool allow = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
-	return retval;
+	return allow;
 }
 
 
@@ -883,9 +931,9 @@ bool CSyncedLuaHandle::MoveCtrlNotify(const CUnit* unit, int data)
 		return false;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool disable = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return disable;
 }
 
 
@@ -915,9 +963,9 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 		return false;
 
 	// get the results
-	const bool retval = luaL_optboolean(L, -1, false);
+	const bool stop = luaL_optboolean(L, -1, false);
 	lua_pop(L, 1);
-	return retval;
+	return stop;
 }
 
 

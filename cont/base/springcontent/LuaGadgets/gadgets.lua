@@ -1138,13 +1138,46 @@ function gadgetHandler:AllowUnitTransport(
   transporteeID, transporteeUnitDefID, transporteeTeam
 )
   for _,g in r_ipairs(self.AllowUnitTransportList) do
-    if (not g:AllowUnitTransport(transporterID, transporterUnitDefID, transporterTeam,
-                                 transporteeID, transporteeUnitDefID, transporteeTeam)) then
+    if (not g:AllowUnitTransport(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam
+    )) then
       return false
     end
   end
   return true
 end
+
+function gadgetHandler:AllowUnitTransportLoad(
+  transporterID, transporterUnitDefID, transporterTeam,
+  transporteeID, transporteeUnitDefID, transporteeTeam
+)
+  for _,g in r_ipairs(self.AllowUnitTransportLoadList) do
+    if (not g:AllowUnitTransportLoad(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam
+    )) then
+      return false
+    end
+  end
+  return true
+end
+
+function gadgetHandler:AllowUnitTransportUnload(
+  transporterID, transporterUnitDefID, transporterTeam,
+  transporteeID, transporteeUnitDefID, transporteeTeam
+)
+  for _,g in r_ipairs(self.AllowUnitTransportUnloadList) do
+    if (not g:AllowUnitTransportUnload(
+      transporterID, transporterUnitDefID, transporterTeam,
+      transporteeID, transporteeUnitDefID, transporteeTeam
+    )) then
+      return false
+    end
+  end
+  return true
+end
+
 
 function gadgetHandler:AllowUnitCloak(unitID, enemyID)
   for _,g in r_ipairs(self.AllowUnitCloakList) do

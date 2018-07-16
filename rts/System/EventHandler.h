@@ -140,6 +140,8 @@ class CEventHandler
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part);
 		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee);
+		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, bool allowed);
+		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, bool allowed);
 		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy);
 		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon);
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos);
