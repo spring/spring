@@ -339,7 +339,7 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 		static_assert(sizeof(GLenum) == sizeof(int), "");
 
 		int buffers[32] = {GL_NONE};
-		const int count = LuaUtils::ParseIntArray(L, index, buffers, sizeof(buffers) / sizeof(buffers[0]);
+		const int count = LuaUtils::ParseIntArray(L, index, buffers, sizeof(buffers) / sizeof(buffers[0]));
 
 		glDrawBuffers(count, reinterpret_cast<const GLenum*>(&buffers[0]));
 		return true;

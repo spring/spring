@@ -1349,17 +1349,18 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			{
 				SetTransportee(unit);
 
-				const float sqDist = unit->pos.SqDistance2D(owner->pos);
-				const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
-
 				CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
+				const float sqUnitDist = unit->pos.SqDistance2D(owner->pos);
+				const float loadRadius = owner->unitDef->loadingRadius;
+
+				const bool inLoadingRadius = (sqUnitDist <= Square(loadRadius));
 				// subtract 1 square to account for PFS/GMT inaccuracy
-				const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+				const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(loadRadius - SQUARE_SIZE));
 				const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != nullptr && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
 
 				if (outOfRange || moveCloser)
-					SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
+					SetGoal(unit->pos, owner->pos, std::min(64.0f, loadRadius));
 
 				if (inLoadingRadius) {
 					if (am != nullptr) {
@@ -1408,7 +1409,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 					return;
 				}
 
-				if (owner->moveType->progressState != AMoveType::Failed || sqDist >= Square(200.0f))
+				if (owner->moveType->progressState != AMoveType::Failed || sqUnitDist >= Square(200.0f))
 					return;
 
 				// if we're pretty close already but CGroundMoveType fails because it considers
