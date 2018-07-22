@@ -998,6 +998,13 @@ function gadgetHandler:TeamChanged(teamID)
 end
 
 
+function gadgetHandler:SyncedPlayerChanged(playerID)
+  for _,g in r_ipairs(self.SyncedPlayerChangedList) do
+    g:SyncedPlayerChanged(playerID)
+  end
+end
+
+
 function gadgetHandler:PlayerChanged(playerID)
   for _,g in r_ipairs(self.PlayerChangedList) do
     g:PlayerChanged(playerID)

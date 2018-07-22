@@ -110,6 +110,7 @@ local flexCallIns = {
   'GameSetup',
   'TeamDied',
   'TeamChanged',
+  'SyncedPlayerChanged',
   'PlayerChanged',
   'PlayerAdded',
   'PlayerRemoved',
@@ -1661,6 +1662,13 @@ function widgetHandler:TeamChanged(teamID)
   return
 end
 
+
+function widgetHandler:SyncedPlayerChanged(playerID)
+  for _,w in ipairs(self.SyncedPlayerChangedList) do
+    w:SyncedPlayerChanged(playerID)
+  end
+  return
+end
 
 function widgetHandler:PlayerChanged(playerID)
   for _,w in ipairs(self.PlayerChangedList) do

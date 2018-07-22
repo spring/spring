@@ -38,6 +38,7 @@ CALLIN_LIST = {
 	"PlayerChanged",
 	"PlayerAdded",
 	"PlayerRemoved",
+	"SyncedPlayerChanged",
 
 	-- team callins
 	"TeamDied",

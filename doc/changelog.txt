@@ -74,6 +74,7 @@ Lua:
  - MarkerAdd{Point,Line} now have an extra optional argument (after localOnly: 6th for point, 8th for line):
    the playerID of the player who should appear as the author of the drawing (if missing, defaults to the local player).
    Only has an effect when localOnly is true.
+ - add SyncedPlayerChanged callin: similar to PlayerChanged, not called for demo-watching spectators but available for synced Lua
 
 
 AI:
