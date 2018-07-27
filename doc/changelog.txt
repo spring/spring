@@ -74,6 +74,20 @@ Lua:
  - MarkerAdd{Point,Line} now have an extra optional argument (after localOnly: 6th for point, 8th for line):
    the playerID of the player who should appear as the author of the drawing (if missing, defaults to the local player).
    Only has an effect when localOnly is true.
+ - Added tesselation shaders support to gl.CreateShader. New stages have "tcs" and "tes" names and defined similarly to existing
+   "fragment", "vertex", "compute" stages. Also added gl.SetTesselationShaderParameter to define tesselation parameters from OpenGL
+   host.
+ - Added support for Subroutine Uniform (gl.UniformSubroutine, gl.GetSubroutineIndex)
+ - Added a few OpenGL constants:
+   1) shader types GL.VERTEX_SHADER, GL.TESS_CONTROL_SHADER, GL.TESS_EVALUATION_SHADER, GL.GEOMETRY_SHADER_EXT, GL.FRAGMENT_SHADER.
+   They are mostly useful as one of the arguments to the new Lua gl.UniformSubroutine and gl.GetSubroutineIndex callouts.
+   2) geometry shader parameter types GL.GEOMETRY_INPUT_TYPE_EXT, GL.GEOMETRY_OUTPUT_TYPE_EXT, GL.GEOMETRY_VERTICES_OUT_EXT.
+   These are used in SetGeometryShaderParameter callout (formerly known as SetShaderParameter)
+   3) tesselation shader parameter types GL.PATCH_VERTICES, GL.PATCH_DEFAULT_OUTER_LEVEL, GL.PATCH_DEFAULT_INNER_LEVEL.
+   The first is mandatory for tesselation to work, the other two are optional and can be used on the OpenGL host side instead of
+   writing the tesselation control shader.
+   4) New vertex primitive type GL.PATCHES
+ ! Renamed SetShaderParameter to SetGeometryShaderParameter to avoid confusion of what kind shader parameters belongs to.
 
 
 AI:
