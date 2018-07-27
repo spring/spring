@@ -47,6 +47,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UniformInt);
 	REGISTER_LUA_CFUNC(UniformArray);
 	REGISTER_LUA_CFUNC(UniformMatrix);
+	REGISTER_LUA_CFUNC(UniformSubroutine);
 
 	REGISTER_LUA_CFUNC(SetGeometryShaderParameter);
 	REGISTER_LUA_CFUNC(SetTesselationShaderParameter);
@@ -998,11 +999,6 @@ int LuaShaders::SetGeometryShaderParameter(lua_State* L)
 
 int LuaShaders::SetTesselationShaderParameter(lua_State* L)
 {
-	/*
-	if (activeShaderDepth <= 0)
-		CheckDrawingEnabled(L, __func__);
-	*/
-
 	const GLenum param = (GLenum)luaL_checkint(L, 1);
 
 	if (lua_israwnumber(L, 2)) {
