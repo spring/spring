@@ -16,7 +16,6 @@
 
 #include <string>
 #include <vector>
-#include <numeric>
 
 struct ActiveUniform {
 	GLint size = 0;
