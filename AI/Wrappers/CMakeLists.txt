@@ -24,7 +24,7 @@ set(DEPS_AI_WRAPPERS "")
 foreach    (aiWrapperDir ${AI_WRAPPER_DIRS})
 	# exclude CUtils here, as it was already included before
 	if    (NOT "${aiWrapperDir}" STREQUAL "CUtils")
-		Add_Subdirectory(${aiWrapperDir})
+		add_subdirectory(${aiWrapperDir})
 		if(TARGET ${aiWrapperDir}-AIWrapper)
 			list(APPEND DEPS_AI_WRAPPERS ${aiWrapperDir}-AIWrapper)
 		endif()

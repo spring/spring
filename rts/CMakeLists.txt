@@ -7,26 +7,26 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
+set(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 option(TRACE_SYNC "Enable sync tracker" FALSE)
 if (TRACE_SYNC)
-	ADD_DEFINITIONS(-DTRACE_SYNC)
+	add_definitions(-DTRACE_SYNC)
 endif (TRACE_SYNC)
 
 option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
-	ADD_DEFINITIONS(-DSYNCDEBUG)
-	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-		Message(WARNING "It is recommended to set CMAKE_BUILD_TYPE to DEBUG for a SYNCDEBUG build")
-	EndIf  ()
-	If     (NOT SYNCCHECK)
-		Message(FATAL_ERROR "You need SYNCCHECK=TRUE for a SYNCDEBUG build")
-	EndIf  ()
-	If     (NOT TRACE_SYNC)
-		Message(WARNING "It is recommended to use TRACE_SYNC=TRUE for a SYNCDEBUG build")
-	EndIf  ()
+	add_definitions(-DSYNCDEBUG)
+	if     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+		message(WARNING "It is recommended to set CMAKE_BUILD_TYPE to DEBUG for a SYNCDEBUG build")
+	endif  ()
+	if     (NOT SYNCCHECK)
+		message(FATAL_ERROR "You need SYNCCHECK=TRUE for a SYNCDEBUG build")
+	endif  ()
+	if     (NOT TRACE_SYNC)
+		message(WARNING "It is recommended to use TRACE_SYNC=TRUE for a SYNCDEBUG build")
+	endif  ()
 endif (SYNCDEBUG)
 
 option(DEBUG_GLSTATE "enable GL_STATE_CHECKER" FALSE)
@@ -35,56 +35,56 @@ if(DEBUG_GLSTATE)
 endif()
 
 ### give error when not found
-FIND_PACKAGE_STATIC(DevIL REQUIRED)
+find_package_static(DevIL REQUIRED)
 
 ### Assemble common incude dirs
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
-INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${IL_INCLUDE_DIR})
+include_directories(BEFORE lib/lua/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/AL)
+include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${IL_INCLUDE_DIR})
 
 ### Assemble common libraries
-Add_Subdirectory(System/Sound)
+add_subdirectory(System/Sound)
 if    (NO_SOUND)
-	ADD_DEFINITIONS(-DNO_SOUND)
+	add_definitions(-DNO_SOUND)
 endif (NO_SOUND)
 
 ### Find include directories and add platform specific libraries
-IF    (UNIX AND NOT MINGW)
-	IF    (PREFER_STATIC_LIBS)
+if    (UNIX AND NOT MINGW)
+	if    (PREFER_STATIC_LIBS)
 		PREFER_STATIC_LIBS()
-		FIND_LIBRARY(C_LIBRARY c)
-		FIND_LIBRARY(MATH_LIBRARY m)
+		find_library(C_LIBRARY c)
+		find_library(MATH_LIBRARY m)
 		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
 		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
 		UNPREFER_STATIC_LIBS()
 
-		LIST(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
-		#LIST(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
-	ENDIF (PREFER_STATIC_LIBS)
+		list(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
+		#list(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
+	endif (PREFER_STATIC_LIBS)
 
 	# Needed for dynamically loading shared libraries (on some OS)
-	LIST(APPEND engineCommonLibraries ${CMAKE_DL_LIBS})
+	list(APPEND engineCommonLibraries ${CMAKE_DL_LIBS})
 
 	# Needed for backtrace* on some systems
-	IF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-		LIST(APPEND engineCommonLibraries execinfo)
-	ENDIF(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-ENDIF (UNIX AND NOT MINGW)
+	if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+		list(APPEND engineCommonLibraries execinfo)
+	endif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+endif (UNIX AND NOT MINGW)
 
-FIND_PACKAGE_STATIC(ZLIB REQUIRED)
-LIST(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
-LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket archives assimp gflags)
+find_package_static(ZLIB REQUIRED)
+list(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
+list(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+list(APPEND engineCommonLibraries lua luasocket archives assimp gflags)
 if (ENABLE_STREFLOP)
-LIST(APPEND engineCommonLibraries streflop)
+	list(APPEND engineCommonLibraries streflop)
 endif ()
 
 include_directories(${ZLIB_INCLUDE_DIR})
 
 IF (WIN32)
-	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
+	list(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
 ENDIF (WIN32)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
@@ -94,17 +94,17 @@ else()
 	set(USE_TCMALLOC_DEFAULT TRUE)
 endif()
 
-FIND_PACKAGE_STATIC(TCMalloc)
+find_package_static(TCMalloc)
 option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" ${USE_TCMALLOC_DEFAULT})
 if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
-	MESSAGE(STATUS "Using tcmalloc")
-	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
+	message(STATUS "Using tcmalloc")
+	list(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
 endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 
 
 if(UNIX)
-	FIND_PACKAGE_STATIC(Libunwind REQUIRED)
-	LIST(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
+	find_package_static(Libunwind REQUIRED)
+	list(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
 	if(LIBUNWIND_FOUND)
 		message(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
 	else()
@@ -115,16 +115,16 @@ endif()
 
 
 ### Assemble engine sources
-Add_Subdirectory(Game)
-Add_Subdirectory(Lua)
-Add_Subdirectory(ExternalAI)
-Add_Subdirectory(Rendering)
-Add_Subdirectory(aGui)
-Add_Subdirectory(Menu)
-Add_Subdirectory(Map)
-Add_Subdirectory(Net)
-Add_Subdirectory(Sim)
-#Add_Subdirectory(System) # this is already added in ../
+add_subdirectory(Game)
+add_subdirectory(Lua)
+add_subdirectory(ExternalAI)
+add_subdirectory(Rendering)
+add_subdirectory(aGui)
+add_subdirectory(Menu)
+add_subdirectory(Map)
+add_subdirectory(Net)
+add_subdirectory(Sim)
+#add_subdirectory(System) # this is already added in ../
 
 MakeGlobalVar(engineSources
 		${sources_engine_Game}
@@ -142,4 +142,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/assimp/include) #FIXME: hack
 file(GLOB_RECURSE engineHeaders "*.h" "*.hpp" "*.inl")
 
 
-Add_Subdirectory(builds)
+add_subdirectory(builds)

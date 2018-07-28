@@ -4,18 +4,18 @@
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./spring
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
+set(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
-INCLUDE_DIRECTORIES(${gflags_BINARY_DIR}/include)
+include_directories(${ENGINE_SRC_ROOT_DIR})
+include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
+include_directories(${gflags_BINARY_DIR}/include)
 
-ADD_DEFINITIONS(-DTOOLS)
+add_definitions(-DTOOLS)
 
-SET(demoToolSpringSources
+set(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
 	${ENGINE_SRC_ROOT_DIR}/Game/Players/PlayerStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
@@ -37,16 +37,14 @@ SET(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 )
 
-ADD_EXECUTABLE(demotool EXCLUDE_FROM_ALL DemoTool ${demoToolSpringSources})
-IF (MINGW)
+add_executable(demotool EXCLUDE_FROM_ALL DemoTool ${demoToolSpringSources})
+if (MINGW)
 	# To enable console output/force a console window to open
-	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-ENDIF (MINGW)
+	set_target_properties(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+endif (MINGW)
 add_definitions(-DNOT_USING_CREG)
-TARGET_LINK_LIBRARIES(demotool
+target_link_libraries(demotool
 		${SPRING_MINIZIP_LIBRARY}
 		gflags
 	)
-Add_Dependencies(demotool generateVersionFiles)
-
-
+add_dependencies(demotool generateVersionFiles)

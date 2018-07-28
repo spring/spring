@@ -4,8 +4,8 @@
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./spring
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-ADD_EXECUTABLE(dirchange EXCLUDE_FROM_ALL dirchange)
-SET_TARGET_PROPERTIES(dirchange PROPERTIES OUTPUT_NAME "dch")
+add_executable(dirchange EXCLUDE_FROM_ALL dirchange)
+set_target_properties(dirchange PROPERTIES OUTPUT_NAME "dch")

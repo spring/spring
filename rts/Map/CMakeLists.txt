@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_Map
+set(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/BaseGroundDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/BasicMapDamage.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Ground.cpp"
@@ -25,4 +25,3 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/RoamMeshDrawer.cpp"
 		PARENT_SCOPE
 	)
-
