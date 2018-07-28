@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_Lua
+set(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaBitOps.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCMD.cpp"

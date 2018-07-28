@@ -17,7 +17,7 @@
 # Define macros and functions to be used in this file and by Java Skirmish AIs
 
 # includes rts/build/cmake/UtilJava.cmake
-INCLUDE(UtilJava)
+include(UtilJava)
 
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
@@ -38,7 +38,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
-	Set(BUILD_THIS_SKIRMISHAI FALSE)
+	set(BUILD_THIS_SKIRMISHAI FALSE)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
@@ -250,7 +250,7 @@ if    (AI_TYPES_JAVA)
 		# this hack is needed for FindJNI.cmake to use the JDK we want it to use,
 		# as otherwise it might not find one at all (eg. in the case of OpenJDK)
 		if    ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
-			SET(ENV{JAVA_HOME} "${JAVA_HOME}")
+			set(ENV{JAVA_HOME} "${JAVA_HOME}")
 		endif ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
 		FIND_PACKAGE(JNI REQUIRED)
 		if (JAVA_INCLUDE_PATH)
@@ -538,7 +538,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	endif (MINGW)
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
 	add_library(${myNativeTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${myVersionDepFile})
-	Add_Dependencies(${myNativeTarget} generateVersionFiles)
+	add_dependencies(${myNativeTarget} generateVersionFiles)
 	target_link_libraries(${myNativeTarget} CUtils streflop)
 	set_target_properties(${myNativeTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myNativeTarget} PROPERTIES OUTPUT_NAME   "AIInterface")

@@ -49,7 +49,7 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 		set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 		FixLibName(${myTarget})
 
-		Add_Dependencies(${myTarget} generateVersionFiles)
+		add_dependencies(${myTarget} generateVersionFiles)
 		target_link_libraries(${myTarget} ${additionalLibraries})
 		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
@@ -115,7 +115,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	target_link_libraries(${myTarget} CUtils)
 	FixLibName(${myTarget})
 
-	Add_Dependencies(${myTarget} generateVersionFiles)
+	add_dependencies(${myTarget} generateVersionFiles)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files

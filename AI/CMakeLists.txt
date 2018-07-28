@@ -68,10 +68,10 @@ endmacro (AIMessage type msg)
 find_package(AWK)
 
 # CUtils has to come first, because the Interfaces use it too
-Add_Subdirectory(Wrappers/CUtils)
-Add_Subdirectory(Interfaces)
-Add_Subdirectory(Wrappers)
-Add_Subdirectory(Skirmish)
+add_subdirectory(Wrappers/CUtils)
+add_subdirectory(Interfaces)
+add_subdirectory(Wrappers)
+add_subdirectory(Skirmish)
 
 set(DEPS_AI_ALL
 		${DEPS_AI_INTERFACES}
