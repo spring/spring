@@ -4,16 +4,16 @@
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./spring
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-ADD_DEFINITIONS(-DHEADLESS)
-ADD_DEFINITIONS(-DNO_SOUND)
-ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
-REMOVE_DEFINITIONS(-DAVI_CAPTURING)
+add_definitions(-DHEADLESS)
+add_definitions(-DNO_SOUND)
+add_definitions(-DBITMAP_NO_OPENGL)
+remove_definitions(-DAVI_CAPTURING)
 
 include_directories(${OPENAL_INCLUDE_DIR})
-IF    (MINGW OR APPLE OR MSVC)
+if    (MINGW OR APPLE OR MSVC)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with gl, glu and SDL.
@@ -21,47 +21,46 @@ IF    (MINGW OR APPLE OR MSVC)
 	# OS X:
 	# Cocoa requires the SDL libary, whenever the SDL headers are used,
 	# due to some #define magic, which is practically impossible to workaround.
-	FIND_PACKAGE(OpenGL REQUIRED)
-	FIND_PACKAGE(SDL2 REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
-ELSE  ()
+	find_package(OpenGL REQUIRED)
+	find_package(SDL2 REQUIRED)
+	include_directories(${SDL2_INCLUDE_DIR})
+else  ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
-ENDIF ()
+	include_directories(${CMAKE_SOURCE_DIR}/include)
+	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
+endif ()
 
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
-LIST(APPEND engineHeadlessLibraries headlessStubs)
-LIST(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
-LIST(APPEND engineHeadlessLibraries engineSystemNet)
-LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
-LIST(APPEND engineHeadlessLibraries no-sound)
-LIST(APPEND engineHeadlessLibraries engineSim)
-LIST(APPEND engineHeadlessLibraries pr-downloader_static)
+list(APPEND engineHeadlessLibraries headlessStubs)
+list(APPEND engineHeadlessLibraries ${SPRING_SIM_LIBRARIES})
+list(APPEND engineHeadlessLibraries engineSystemNet)
+list(APPEND engineHeadlessLibraries ${engineCommonLibraries})
+list(APPEND engineHeadlessLibraries no-sound)
+list(APPEND engineHeadlessLibraries engineSim)
+list(APPEND engineHeadlessLibraries pr-downloader_static)
 
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
+include_directories(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
+include_directories(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+include_directories(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 
 ### Build the executable
-ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON})
-TARGET_LINK_LIBRARIES(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
+add_executable(engine-headless ${engineSources} ${ENGINE_ICON})
+target_link_libraries(engine-headless no-sound ${engineHeadlessLibraries} no-sound)
 
-IF    (MINGW)
+if    (MINGW)
 	# To enable console output/force a console window to open
-	SET_TARGET_PROPERTIES(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
-ENDIF (MINGW)
+	set_target_properties(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+endif (MINGW)
 
 
 ### Install the executable
-INSTALL(TARGETS engine-headless DESTINATION ${BINDIR})
+install(TARGETS engine-headless DESTINATION ${BINDIR})
 
 # Only build & install spring-headless executable & dependencies
 # use cases:
 # * make spring-headless
 # * make install-spring-headless
 CreateEngineBuildAndInstallTarget(headless)
-

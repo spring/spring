@@ -7,7 +7,7 @@
 #enable_language(Java)
 
 # includes rts/build/cmake/UtilJava.cmake
-INCLUDE(UtilJava)
+include(UtilJava)
 
 
 set(myName               "JavaOO")

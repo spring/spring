@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_Rendering
+set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/AVIGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugColVolDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/DebugDrawerAI.cpp"
