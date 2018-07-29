@@ -74,6 +74,8 @@ Lua:
  - MarkerAdd{Point,Line} now have an extra optional argument (after localOnly: 6th for point, 8th for line):
    the playerID of the player who should appear as the author of the drawing (if missing, defaults to the local player).
    Only has an effect when localOnly is true.
+ - add `paralyze.paralyzeDeclineRate` to modinfo, controls how many seconds it takes for EMP to decline by 100%%
+ - expose `Game.paralyzeDeclineRate` and `Game.paralyzeOnMaxHealth`
  - Added tesselation shaders support to gl.CreateShader. New stages have "tcs" and "tes" names and defined similarly to existing
    "fragment", "vertex", "compute" stages. Also added gl.SetTesselationShaderParameter to define tesselation parameters from OpenGL
    host.

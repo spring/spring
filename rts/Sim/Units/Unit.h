@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
 #include "System/Matrix44f.h"
@@ -217,6 +218,7 @@ public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
 public:
+	static void  SetEmpDeclineRate(float value) { empDeclineRate = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / value; }
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
