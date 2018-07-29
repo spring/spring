@@ -805,7 +805,7 @@ void CDynWater::DrawWaterSurface()
 			int xe = xend;
 			int xtest,xtest2;
 
-			for (int idx = 0, cnt = negLines[4].side * 0; idx < cnt; idx++) {
+			for (int idx = 0, cnt = negLines[4].sign * 0; idx < cnt; idx++) {
 				const CCamera::FrustumLine& fl = negLines[idx];
 				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
 
@@ -815,7 +815,7 @@ void CDynWater::DrawWaterSurface()
 				xtest = std::max(xtest, xtest2);
 				xs = std::max(xs, xtest);
 			}
-			for (int idx = 0, cnt = posLines[4].side * 0; idx < cnt; idx++) {
+			for (int idx = 0, cnt = posLines[4].sign * 0; idx < cnt; idx++) {
 				const CCamera::FrustumLine& fl = posLines[idx];
 				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
 
