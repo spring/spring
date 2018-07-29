@@ -2,7 +2,6 @@
 
 #include <cstring>
 #include <ostream>
-#include <deque>
 
 #include "PathFinder.h"
 #include "PathFinderDef.h"
@@ -22,11 +21,16 @@
 #define ENABLE_DIAG_TESTS 1
 
 using namespace Bitwise;
+using MMBT = CMoveMath::BlockTypes;
 
 PFMemPool pfMemPool;
 
 
-static const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
+static constexpr uint32_t squareMobileBlockBits =
+	uint32_t(MMBT::BLOCK_MOBILE_BUSY) |
+	uint32_t(MMBT::BLOCK_MOBILE     ) |
+	uint32_t(MMBT::BLOCK_MOVING     );
+
 static const CPathFinder::BlockCheckFunc blockCheckFuncs[2] = {
 	CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe,
 	CMoveMath::IsBlockedNoSpeedModCheck
@@ -164,14 +168,14 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 	//   goal until owner reaches it
 	for (blkStepCtr += int2{1, 1}; (blkStepCtr.x > 0 && blkStepCtr.y > 0); blkStepCtr -= int2{1, 1}) {
 		{
-			if ((blockCheckFunc(moveDef, fwdTestBlk.x, fwdTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
+			if ((blockCheckFunc(moveDef, fwdTestBlk.x, fwdTestBlk.y, owner) & MMBT::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
 			if (CMoveMath::GetPosSpeedMod(moveDef, fwdTestBlk.x, fwdTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
 		}
 
 		{
-			if ((blockCheckFunc(moveDef, revTestBlk.x, revTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
+			if ((blockCheckFunc(moveDef, revTestBlk.x, revTestBlk.y, owner) & MMBT::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
 			if (CMoveMath::GetPosSpeedMod(moveDef, revTestBlk.x, revTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
@@ -249,7 +253,7 @@ void CPathFinder::TestNeighborSquares(
 	const CSolidObject* owner
 ) {
 	struct SquareState {
-		CMoveMath::BlockType blockMask = CMoveMath::BLOCK_IMPASSABLE;
+		CMoveMath::BlockType blockMask = MMBT::BLOCK_IMPASSABLE;
 		float speedMod = 0.0f;
 		bool insideMap = true;
 		bool insideDef = false;
@@ -260,7 +264,7 @@ void CPathFinder::TestNeighborSquares(
 	const int2 squarePos = square->nodePos;
 
 	const bool startSquareExpanded = (openBlocks.empty() && testedBlocks < 8);
-	const bool startSquareBlocked = (startSquareExpanded && (blockCheckFunc(moveDef, squarePos.x, squarePos.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0);
+	const bool startSquareBlocked = (startSquareExpanded && (blockCheckFunc(moveDef, squarePos.x, squarePos.y, owner) & MMBT::BLOCK_STRUCTURE) != 0);
 
 	// precompute structure-blocked state and speedmod for all neighbors
 	for (SquareState& sqState: ngbStates) {
@@ -279,7 +283,7 @@ void CPathFinder::TestNeighborSquares(
 			continue;
 
 		// IsBlockedNoSpeedModCheck; very expensive call but with a ~20% (?) chance of early-out
-		if ((sqState.blockMask = blockCheckFunc(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner)) & CMoveMath::BLOCK_STRUCTURE) {
+		if ((sqState.blockMask = blockCheckFunc(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner)) & MMBT::BLOCK_STRUCTURE) {
 			blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
 			dirtyBlocks.push_back(ngbSquareIdx);
 			continue;
@@ -393,20 +397,33 @@ bool CPathFinder::TestBlock(
 	assert(static_cast<unsigned>(square.x) < nbrOfBlocks.x);
 	assert(static_cast<unsigned>(square.y) < nbrOfBlocks.y);
 	assert((blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_BLOCKED)) == 0);
-	assert((blockStatus & CMoveMath::BLOCK_STRUCTURE) == 0);
+	assert((blockStatus & MMBT::BLOCK_STRUCTURE) == 0);
 	assert(speedMod != 0.0f);
 
-	if (pfDef.testMobile && moveDef.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
-		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
-			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_BUSY_MULT];
-		} else if (blockStatus & CMoveMath::BLOCK_MOBILE) {
-			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_IDLE_MULT];
-		} else { // (blockStatus & CMoveMath::BLOCK_MOVING)
-			speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_MOVE_MULT];
+	if (pfDef.testMobile && moveDef.avoidMobilesOnPath) {
+		switch (blockStatus & squareMobileBlockBits) {
+			case (uint32_t(MMBT::BLOCK_MOBILE_BUSY) | uint32_t(MMBT::BLOCK_MOBILE) | uint32_t(MMBT::BLOCK_MOVING)):   // 111
+			case (uint32_t(MMBT::BLOCK_MOBILE_BUSY) | uint32_t(MMBT::BLOCK_MOBILE) | uint32_t(MMBT::BLOCK_NONE  )):   // 110
+			case (uint32_t(MMBT::BLOCK_MOBILE_BUSY) | uint32_t(MMBT::BLOCK_NONE  ) | uint32_t(MMBT::BLOCK_MOVING)):   // 101
+			case (uint32_t(MMBT::BLOCK_MOBILE_BUSY) | uint32_t(MMBT::BLOCK_NONE  ) | uint32_t(MMBT::BLOCK_NONE  )): { // 100
+				speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_BUSY_MULT];
+			} break;
+
+			case (uint32_t(MMBT::BLOCK_NONE       ) | uint32_t(MMBT::BLOCK_MOBILE) | uint32_t(MMBT::BLOCK_MOVING)):   // 011
+			case (uint32_t(MMBT::BLOCK_NONE       ) | uint32_t(MMBT::BLOCK_MOBILE) | uint32_t(MMBT::BLOCK_NONE  )): { // 010
+				speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_IDLE_MULT];
+			} break;
+
+			case (uint32_t(MMBT::BLOCK_NONE       ) | uint32_t(MMBT::BLOCK_NONE  ) | uint32_t(MMBT::BLOCK_MOVING)): { // 001
+				speedMod *= moveDef.speedModMults[MoveDef::SPEEDMOD_MOBILE_MOVE_MULT];
+			} break;
+
+			default: {
+			} break;
 		}
 	}
 
-	const float heatCost  = (pfDef.testMobile) ? (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveDef, ((owner != NULL)? owner->id: -1U)) : 0.0f;
+	const float heatCost  = (pfDef.testMobile) ? (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveDef, ((owner != nullptr)? owner->id: -1U)) : 0.0f;
 	//const float flowCost  = (pfDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir) : 0.0f;
 	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, pfDef.synced);
 
@@ -482,18 +499,17 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfD
 
 		// for path adjustment (cutting corners)
 		// make sure we don't match anything
-		std::deque<int2> prvSquares = {square, square};
+		int2 prvSquares[2] = {square, square};
 
 		while (true) {
 			foundPath.squares.push_back(square);
 			foundPath.path.emplace_back(square.x * SQUARE_SIZE, CMoveMath::yLevel(moveDef, square.x, square.y), square.y * SQUARE_SIZE);
 
 			// try to cut corners
-			assert(prvSquares.size() == 2);
 			AdjustFoundPath(moveDef, foundPath, prvSquares[0], prvSquares[1], square);
 
-			prvSquares.pop_front();
-			prvSquares.push_back(square);
+			prvSquares[0] = prvSquares[1];
+			prvSquares[1] = square;
 
 			if (blockIdx == mStartBlockIdx)
 				break;

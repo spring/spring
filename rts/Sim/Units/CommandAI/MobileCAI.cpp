@@ -1065,8 +1065,13 @@ void CMobileCAI::NonMoving()
 		return;
 
 	// pick a perimeter point and hope for the best
-	float3 buggerVec = gsRNG.NextVector2D();
-	float3 buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+	float3 buggerVec;
+	float3 buggerPos = -OnesVector;
+
+	for (int i = 0; i < 16 && !buggerPos.IsInMap(); i++) {
+		buggerVec = gsRNG.NextVector2D();
+		buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+	}
 
 	#if 0
 	if ((buggerPos.x == lastBuggerGoalPos.x) && (buggerPos.z == lastBuggerGoalPos.z)) {
