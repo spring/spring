@@ -112,6 +112,14 @@ GLAPI void APIENTRY glRenderbufferStorage(GLenum target, GLenum internalformat, 
 GLAPI void APIENTRY glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI GLboolean APIENTRY glIsRenderbuffer(GLuint renderbuffer) { return GL_FALSE; }
 
+//Subroutines
+GLAPI void APIENTRY glUniformSubroutinesuiv (GLenum shadertype, GLsizei count, const GLuint *indices) {}
+GLAPI GLuint APIENTRY glGetSubroutineIndex (GLuint program, GLenum shadertype, const GLchar *name) { return -1; }
+
+//Tesselation
+GLAPI void APIENTRY glPatchParameteri (GLenum pname, GLint value) {};
+GLAPI void APIENTRY glPatchParameterfv (GLenum pname, const GLfloat *values) {};
+
 GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
