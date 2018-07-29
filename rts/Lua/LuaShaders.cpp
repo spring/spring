@@ -62,7 +62,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 
 LuaShaders::LuaShaders()
 {
-	programs.push_back(Program(0));
+	programs.emplace_back(0);
 }
 
 
@@ -517,9 +517,8 @@ int LuaShaders::CreateShader(lua_State* L)
 	bool success;
 	const GLuint vertObj = CompileObject(L, shdrDefs, vertSrcs, GL_VERTEX_SHADER, success);
 
-	if (!success) {
+	if (!success)
 		return 0;
-	}
 
 	const GLuint tcsObj = CompileObject(L, shdrDefs, tcsSrcs, GL_TESS_CONTROL_SHADER, success);
 
@@ -560,26 +559,26 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (vertObj != 0) {
 		glAttachShader(prog, vertObj);
-		p.objects.push_back(Object(vertObj, GL_VERTEX_SHADER));
+		p.objects.emplace_back(vertObj, GL_VERTEX_SHADER);
 	}
 
 	if (tcsObj != 0) {
 		glAttachShader(prog, tcsObj);
-		p.objects.push_back(Object(tcsObj, GL_TESS_CONTROL_SHADER));
+		p.objects.emplace_back(tcsObj, GL_TESS_CONTROL_SHADER);
 	}
 	if (tesObj != 0) {
 		glAttachShader(prog, tesObj);
-		p.objects.push_back(Object(tesObj, GL_TESS_EVALUATION_SHADER));
+		p.objects.emplace_back(tesObj, GL_TESS_EVALUATION_SHADER);
 	}
 
 	if (geomObj != 0) {
 		glAttachShader(prog, geomObj);
-		p.objects.push_back(Object(geomObj, GL_GEOMETRY_SHADER_EXT));
+		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER_EXT);
 		ApplyGeometryParameters(L, 1, prog); // done before linking
 	}
 	if (fragObj != 0) {
 		glAttachShader(prog, fragObj);
-		p.objects.push_back(Object(fragObj, GL_FRAGMENT_SHADER));
+		p.objects.emplace_back(fragObj, GL_FRAGMENT_SHADER);
 	}
 
 	GLint linkStatus;
