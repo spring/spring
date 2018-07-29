@@ -788,24 +788,20 @@ float3 CShadowHandler::CalcShadowProjectionPos(CCamera* cam, float3* frustumPoin
 	float3 projPos;
 	float3 frustumCenter;
 
-	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-	cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
+	cam->CalcFrustumLines(0.0f, 0.0f, 1.0f, true);
+	cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
 
-	const std::vector<CCamera::FrustumLine>& sides = cam->GetNegFrustumSides();
-
-	// if this happens, radius should reduce to zero
-	if (sides.empty())
-		return projPos;
+	const CCamera::FrustumLine* lines = cam->GetNegFrustumLines();
 
 	// only need points on these lines
 	const unsigned int planes[] = {CCamera::FRUSTUM_PLANE_LFT, CCamera::FRUSTUM_PLANE_RGT};
 
 	for (unsigned int n = 0; n < 2; n++) {
-		const CCamera::FrustumLine& line = sides[ planes[n] ];
+		const CCamera::FrustumLine& fl = lines[ planes[n] ];
 
 		// calculate xz-coordinates
-		const float z0 = line.minz, x0 = line.base + (line.dir * z0);
-		const float z1 = line.maxz, x1 = line.base + (line.dir * z1);
+		const float z0 = fl.minz, x0 = fl.base + (fl.dir * z0);
+		const float z1 = fl.maxz, x1 = fl.base + (fl.dir * z1);
 
 		// clamp points to map edges
 		const float cx0 = Clamp(x0, 0.0f, float3::maxxpos);
@@ -836,8 +832,8 @@ void CShadowHandler::CalcMinMaxView()
 	// with the xz-plane
 	CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_VISCUL);
 
-	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-	cam->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);
+	cam->CalcFrustumLines(0.0f, 0.0f, 1.0f, true);
+	cam->ClipFrustumLines(-20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f, true);
 
 	shadowProjMinMax.x = -100.0f;
 	shadowProjMinMax.y =  100.0f;
@@ -854,18 +850,18 @@ void CShadowHandler::CalcMinMaxView()
 		maxSize *= 1.2f;
 	}
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine>& posSides = cam->GetPosFrustumSides();
-	std::vector<CCamera::FrustumLine>::const_iterator fli;
+	const CCamera::FrustumLine* lines = cam->GetNegFrustumLines();
 
-	if (!negSides.empty()) {
-		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
-			if (fli->minz < fli->maxz) {
+	{
+		for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
+			const CCamera::FrustumLine& fl = lines[idx];
+
+			if (fl.minz < fl.maxz) {
 				float3 p[5];
-				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0f, fli->minz);
-				p[1] = float3(fli->base + fli->dir * fli->maxz, 0.0f, fli->maxz);
-				p[2] = float3(fli->base + fli->dir * fli->minz, readMap->initMaxHeight + 200, fli->minz);
-				p[3] = float3(fli->base + fli->dir * fli->maxz, readMap->initMaxHeight + 200, fli->maxz);
+				p[0] = float3(fl.base + fl.dir * fl.minz, 0.0f, fl.minz);
+				p[1] = float3(fl.base + fl.dir * fl.maxz, 0.0f, fl.maxz);
+				p[2] = float3(fl.base + fl.dir * fl.minz, readMap->initMaxHeight + 200, fl.minz);
+				p[3] = float3(fl.base + fl.dir * fl.maxz, readMap->initMaxHeight + 200, fl.maxz);
 				p[4] = projMidPos[2];
 
 				for (int a = 0; a < 5; ++a) {
@@ -884,11 +880,6 @@ void CShadowHandler::CalcMinMaxView()
 		if (shadowProjMinMax.y >  maxSize) { shadowProjMinMax.y =  maxSize; }
 		if (shadowProjMinMax.z < -maxSize) { shadowProjMinMax.z = -maxSize; }
 		if (shadowProjMinMax.w >  maxSize) { shadowProjMinMax.w =  maxSize; }
-	} else {
-		shadowProjMinMax.x = -maxSize;
-		shadowProjMinMax.y =  maxSize;
-		shadowProjMinMax.z = -maxSize;
-		shadowProjMinMax.w =  maxSize;
 	}
 
 	// xScale = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;

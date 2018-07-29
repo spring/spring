@@ -3,8 +3,9 @@
 #ifndef _CAMERA_CONTROLLER_H
 #define _CAMERA_CONTROLLER_H
 
+#include <algorithm>
+#include <array>
 #include <string>
-#include <map>
 
 #include "System/float3.h"
 
@@ -12,7 +13,75 @@
 class CCameraController
 {
 public:
-	typedef std::map<std::string, float> StateMap;
+	struct StateMap {
+	public:
+		typedef std::pair<std::string, float> MapPair;
+		typedef std::array<MapPair, 32> ArrayMap;
+
+		typedef ArrayMap::iterator iterator;
+		typedef ArrayMap::const_iterator const_iterator;
+
+		iterator begin() { return (map.begin()); }
+		iterator end() { return (map.begin() + numPairs); }
+
+		const_iterator cbegin() const { return (map.cbegin()); }
+		const_iterator cend() const { return (map.cbegin() + numPairs); }
+
+		const_iterator find(const std::string& s) const {
+			const auto pair = std::make_pair(s, 0.0f);
+			const auto pred = [](const MapPair& a, const MapPair& b) { return (a.first < b.first); };
+			const auto iter = std::lower_bound(cbegin(), cend(), pair, pred);
+			if (iter == cend() || iter->first != s)
+				return (cend());
+			return iter;
+		}
+
+		float operator [](const std::string& s) const {
+			const auto iter = find(s);
+			if (iter == cend())
+				return 0.0f;
+			return iter->second;
+		}
+
+		float& operator [](const std::string& s) {
+			const auto iter = find(s);
+
+			if (iter == cend()) {
+				assert(numPairs < map.size());
+				map[numPairs++] = std::make_pair(s, 0.0f);
+
+				// inefficient on repeated insertions, but map size is a small constant
+				for (size_t i = numPairs - 1; i > 0; i--) {
+					if (map[i - 1].first < map[i].first)
+						return map[i].second;
+
+					std::swap(map[i - 1], map[i]);
+				}
+
+				return map[0].second;
+			}
+
+			return map[iter - cbegin()].second;
+		}
+
+		bool operator == (const StateMap& sm) const {
+			return (numPairs == sm.numPairs && map == sm.map);
+		}
+
+		bool empty() const { return (numPairs == 0); }
+		void clear() {
+			numPairs = 0;
+
+			for (auto& pair: map) {
+				pair = {};
+			}
+		}
+
+	private:
+		ArrayMap map;
+
+		size_t numPairs = 0;
+	};
 
 public:
 	CCameraController();

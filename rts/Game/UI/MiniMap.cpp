@@ -1162,20 +1162,23 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
 		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-		cam->GetFrustumSides(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
-		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
+		cam->CalcFrustumLines(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
+		cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
 
-		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
+		const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
+		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
 
-		for (const auto& fl: negSides) {
-			if (fl.minz < fl.maxz) {
-				va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
-				va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
-			}
+		for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
+			const CCamera::FrustumLine& fl = negLines[idx];
+
+			if (fl.minz >= fl.maxz)
+				continue;
+
+			va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
+			va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
 		}
 
 		glLineWidth(2.5f);

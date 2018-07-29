@@ -118,6 +118,12 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 
 void CCamera::UpdateFrustum()
 {
+	const float2 tanHalfFOVs = {math::tan(GetHFOV() * 0.5f * math::DEG_TO_RAD), tanHalfFov}; // horz, vert
+
+	// scale-factors for {x,y}-axes
+	float2 nAxisScales;
+	float2 fAxisScales;
+
 	switch (projType) {
 		case PROJTYPE_PERSP: {
 			// NOTE: "-" because we want normals
@@ -128,12 +134,18 @@ void CCamera::UpdateFrustum()
 			frustumPlanes[FRUSTUM_PLANE_BOT] = (forwardy -    up).UnsafeANormalize();
 			frustumPlanes[FRUSTUM_PLANE_RGT] = (forwardx + right).UnsafeANormalize();
 			frustumPlanes[FRUSTUM_PLANE_LFT] = (forwardx - right).UnsafeANormalize();
+
+			nAxisScales = {frustumScales.z * tanHalfFOVs.x, frustumScales.z * tanHalfFOVs.y}; // x, y
+			fAxisScales = {frustumScales.w * tanHalfFOVs.x, frustumScales.w * tanHalfFOVs.y}; // x, y
 		} break;
 		case PROJTYPE_ORTHO: {
 			frustumPlanes[FRUSTUM_PLANE_TOP] =     up;
 			frustumPlanes[FRUSTUM_PLANE_BOT] =    -up;
 			frustumPlanes[FRUSTUM_PLANE_RGT] =  right;
 			frustumPlanes[FRUSTUM_PLANE_LFT] = -right;
+
+			nAxisScales = {frustumScales.x, frustumScales.y};
+			fAxisScales = {frustumScales.x, frustumScales.y};
 		} break;
 		default: {
 			assert(false);
@@ -142,6 +154,15 @@ void CCamera::UpdateFrustum()
 
 	frustumPlanes[FRUSTUM_PLANE_FRN] = -forward;
 	frustumPlanes[FRUSTUM_PLANE_BCK] =  forward;
+
+	frustumVerts[0] = pos + (forward * frustumScales.z) + (right * -nAxisScales.x) + (up *  nAxisScales.y);
+	frustumVerts[1] = pos + (forward * frustumScales.z) + (right *  nAxisScales.x) + (up *  nAxisScales.y);
+	frustumVerts[2] = pos + (forward * frustumScales.z) + (right *  nAxisScales.x) + (up * -nAxisScales.y);
+	frustumVerts[3] = pos + (forward * frustumScales.z) + (right * -nAxisScales.x) + (up * -nAxisScales.y);
+	frustumVerts[4] = pos + (forward * frustumScales.w) + (right * -fAxisScales.x) + (up *  fAxisScales.y);
+	frustumVerts[5] = pos + (forward * frustumScales.w) + (right *  fAxisScales.x) + (up *  fAxisScales.y);
+	frustumVerts[6] = pos + (forward * frustumScales.w) + (right *  fAxisScales.x) + (up * -fAxisScales.y);
+	frustumVerts[7] = pos + (forward * frustumScales.w) + (right * -fAxisScales.x) + (up * -fAxisScales.y);
 
 	if (camType == CAMTYPE_VISCUL)
 		return;
@@ -255,30 +276,80 @@ void CCamera::UpdateViewRange()
 
 
 
-static inline bool AABBInOriginPlane(
-	const float3& camPos,
-	const float3& mins,
-	const float3& maxs,
-	const float3& normal,
-	const float offset
-) {
-	float3 fp; // far point
-	fp.x = (normal.x > 0.0f) ? mins.x : maxs.x;
-	fp.y = (normal.y > 0.0f) ? mins.y : maxs.y;
-	fp.z = (normal.z > 0.0f) ? mins.z : maxs.z;
-	return (normal.dot(fp - camPos) < offset);
-}
-
-
+// axis-aligned bounding box test (AABB)
 bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
-	// orthographic plane offsets along each respective normal; [0] = LFT&RGT, [1] = TOP&BOT
-	const float planeOffsets[2] = {frustumScales.x, frustumScales.y};
+	const float3 boxCenter = (maxs + mins) * 0.5f;
+	const float3 boxScales = (maxs - mins) * 0.5f;
 
-	// axis-aligned bounding box test (AABB)
-	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
-		if (!AABBInOriginPlane(pos, mins, maxs, frustumPlanes[i], planeOffsets[i >> 1])) {
-			return false;
+	if (!InView(boxCenter, boxScales.Length()))
+		return false;
+
+	// orthographic plane offsets along each respective normal; [0] = LFT&RGT, [1] = TOP&BOT
+	const float xyPlaneOffsets[2] = {frustumScales.x, frustumScales.y};
+	const float zwPlaneOffsets[2] = {frustumScales.z, frustumScales.w};
+
+
+	// [i*2+0] := point, [i*2+1] := normal
+	const float3 boxFaces[6 * 2] = {
+		boxCenter + FwdVector * boxScales.z,  FwdVector, // front
+		boxCenter - FwdVector * boxScales.z, -FwdVector, // back
+		boxCenter + RgtVector * boxScales.x,  RgtVector, // right
+		boxCenter - RgtVector * boxScales.x, -RgtVector, // left
+		boxCenter +  UpVector * boxScales.y,   UpVector, // top
+		boxCenter -  UpVector * boxScales.y,  -UpVector, // bottom
+	};
+	const float3 boxVerts[8] = {
+		// bottom
+		{mins.x,  mins.y,  mins.z},
+		{maxs.x,  mins.y,  mins.z},
+		{maxs.x,  mins.y,  maxs.z},
+		{mins.x,  mins.y,  maxs.z},
+		// top
+		{mins.x,  maxs.y,  mins.z},
+		{maxs.x,  maxs.y,  mins.z},
+		{maxs.x,  maxs.y,  maxs.z},
+		{mins.x,  maxs.y,  maxs.z},
+	};
+
+	{
+		// test box planes
+		for (unsigned int i = 0; i < 6; i++) {
+			unsigned int n = 0;
+
+			for (unsigned int j = 0; j < 8; j++) {
+				n += (boxFaces[i * 2 + 1].dot(frustumVerts[j] - boxFaces[i * 2 + 0]) > 0.0f);
+			}
+
+			if (n == 8)
+				return false;
+		}
+	}
+	{
+		// test cam planes (LRTB)
+		for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
+			unsigned int n = 0;
+
+			for (unsigned int j = 0; j < 8; j++) {
+				n += (frustumPlanes[i].dot(boxVerts[j] - pos) > xyPlaneOffsets[i >> 1]);
+			}
+
+			// fully in front of this plane, so outside frustum (normals point outward)
+			if (n == 8)
+				return false;
+		}
+	}
+	{
+		// test cam planes (NF)
+		for (unsigned int i = FRUSTUM_PLANE_FRN; i < FRUSTUM_PLANE_CNT; i++) {
+			unsigned int n = 0;
+
+			for (unsigned int j = 0; j < 8; j++) {
+				n += (frustumPlanes[i].dot(boxVerts[j] - (pos + forward * zwPlaneOffsets[i & 1])) > 0.0f);
+			}
+
+			if (n == 8)
+				return false;
 		}
 	}
 
@@ -289,28 +360,27 @@ bool CCamera::InView(const float3& p, float radius) const
 {
 	// use arrays because neither float2 nor float4 have an operator[]
 	const float xyPlaneOffsets[2] = {frustumScales.x, frustumScales.y};
-	const float  zPlaneOffsets[2] = {frustumScales.z, frustumScales.w};
+	const float zwPlaneOffsets[2] = {frustumScales.z, frustumScales.w};
 
 	const float3 objectVector = p - pos;
 
-	assert(FRUSTUM_PLANE_LFT == 0);
-	assert(FRUSTUM_PLANE_FRN == 4);
+	static_assert(FRUSTUM_PLANE_LFT == 0, "");
+	static_assert(FRUSTUM_PLANE_FRN == 4, "");
 
 	#if 0
 	// test if <p> is in front of the near-plane
-	if (objectVector.dot(frustumPlanes[FRUSTUM_PLANE_FRN]) > (zPlaneOffsets[0] + radius))
+	if (objectVector.dot(frustumPlanes[FRUSTUM_PLANE_FRN]) > (zwPlaneOffsets[0] + radius))
 		return false;
 	#endif
 
 	// test if <p> is in front of a side-plane (LRTB)
 	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
-		if (objectVector.dot(frustumPlanes[i]) > (xyPlaneOffsets[i >> 1] + radius)) {
+		if (objectVector.dot(frustumPlanes[i]) > (xyPlaneOffsets[i >> 1] + radius))
 			return false;
-		}
 	}
 
 	// test if <p> is behind the far-plane
-	return (objectVector.dot(frustumPlanes[FRUSTUM_PLANE_BCK]) <= (zPlaneOffsets[1] + radius));
+	return !(objectVector.dot(frustumPlanes[FRUSTUM_PLANE_BCK]) > (zwPlaneOffsets[1] + radius));
 }
 
 
@@ -323,10 +393,17 @@ void CCamera::SetVFOV(const float angle)
 }
 
 float CCamera::GetHFOV() const {
-	const float hAspect = (viewport[2] * 1.0f) / viewport[3];
-	const float fovFact = math::tan(fov * 0.5f) * hAspect;
+	const float hAspect = (viewport[2] * 1.0f) / viewport[3]; // globalRendering->aspectRatio
+	const float fovFact = tanHalfFov * hAspect;
 	return (2.0f * math::atan(fovFact) * math::RAD_TO_DEG);
 }
+#if 0
+float CCamera::CalcTanHalfHFOV() const {
+	const float half_h_fov_deg = math::atan(thvfov * h_aspect_ratio) * math::RAD_TO_DEG;
+	const float half_h_fov_rad = half_h_fov_deg * math::DEG_TO_RAD;
+	return (math::tan(half_h_fov_rad));
+}
+#endif
 
 
 
@@ -468,31 +545,32 @@ inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, co
 
 
 
-void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negOnly) {
-
-	frustumLines[FRUSTUM_SIDE_POS].clear();
-	frustumLines[FRUSTUM_SIDE_NEG].clear();
-
+void CCamera::CalcFrustumLines(float miny, float maxy, float scale, bool neg) {
+	const float3 params = {miny, maxy, scale};
 	// only non-zero for orthographic cameras
-	const float3 posOffsets[FRUSTUM_PLANE_FRN] = {
+	const float3 planeOffsets[FRUSTUM_PLANE_FRN] = {
 		-right * frustumScales.x,
 		 right * frustumScales.x,
 		    up * frustumScales.y,
 		   -up * frustumScales.y,
 	};
 
+	// reset counts per side
+	frustumLines[FRUSTUM_SIDE_POS][4].sign = 0;
+	frustumLines[FRUSTUM_SIDE_NEG][4].sign = 0;
+
 	// note: order does not matter
-	for (unsigned int i = 0; i < FRUSTUM_PLANE_FRN; i++) {
-		GetFrustumSide(frustumPlanes[i], posOffsets[i],  miny, maxy, scale, negOnly? FRUSTUM_SIDE_NEG: FRUSTUM_SIDE_POS);
+	for (unsigned int i = FRUSTUM_PLANE_LFT, side = neg? FRUSTUM_SIDE_NEG: FRUSTUM_SIDE_POS; i < FRUSTUM_PLANE_FRN; i++) {
+		CalcFrustumLine(frustumPlanes[i], planeOffsets[i],  params, side);
 	}
+
+	assert(!neg || frustumLines[FRUSTUM_SIDE_NEG][4].sign == 4);
 }
 
-void CCamera::GetFrustumSide(
+void CCamera::CalcFrustumLine(
 	const float3& normal,
 	const float3& offset,
-	float miny,
-	float maxy,
-	float scale,
+	const float3& params,
 	unsigned int side
 ) {
 	// compose an orthonormal axis-system around <normal>
@@ -503,16 +581,15 @@ void CCamera::GetFrustumSide(
 	float3 pInt;
 
 	// prevent DIV0 when calculating line.dir
-	if (math::fabs(xdir.z) < 0.001f)
-		xdir.z = 0.001f;
+	xdir.z = std::max(std::fabs(xdir.z), 0.001f) * std::copysign(1.0f, xdir.z);
 
 	if (ydir.y != 0.0f) {
 		// if normal is angled toward the sky instead of the ground,
 		// subtract <miny> from the camera's y-position, else <maxy>
 		if (normal.y > 0.0f) {
-			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - miny) / ydir.y);
+			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - params.x) / ydir.y);
 		} else {
-			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - maxy) / ydir.y);
+			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - params.y) / ydir.y);
 		}
 	}
 
@@ -524,40 +601,46 @@ void CCamera::GetFrustumSide(
 	//   one step along +y); the world z-axis is inverted wrt. a regular Carthesian grid, so the
 	//   DC is also inverted
 	FrustumLine line;
-	line.dir  = (xdir.x / xdir.z);
-	line.base = (pInt.x - (pInt.z * line.dir)) / scale;
+
 	line.sign = Sign(int(xdir.z <= 0.0f));
+	line.dir  = (xdir.x / xdir.z);
+	line.base = (pInt.x - (pInt.z * line.dir)) / params.z;
 	line.minz = (                      0.0f) - (mapDims.mapy);
 	line.maxz = (mapDims.mapy * SQUARE_SIZE) + (mapDims.mapy);
 
+	int  index = (line.sign == 1 || side == FRUSTUM_SIDE_NEG);
+	int& count = frustumLines[index][4].sign;
+
 	// store all lines in [NEG] (regardless of actual sign) if wanted by caller
-	frustumLines[line.sign == 1 || side == FRUSTUM_SIDE_NEG].push_back(line);
+	frustumLines[index][count++] = line;
 }
 
-void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
+void CCamera::ClipFrustumLines(const float zmin, const float zmax, bool neg)
+{
+	auto& lines = frustumLines[neg];
 
-	std::vector<FrustumLine>& lines = frustumLines[neg];
-	std::vector<FrustumLine>::iterator fli, fli2;
-
-	for (fli = lines.begin(); fli != lines.end(); ++fli) {
-		for (fli2 = lines.begin(); fli2 != lines.end(); ++fli2) {
-			if (fli == fli2)
+	for (int i = 0, cnt = lines[4].sign; i < cnt; i++) {
+		for (int j = 0; j < cnt; j++) {
+			if (i == j)
 				continue;
 
-			const float dbase = fli->base - fli2->base;
-			const float ddir = fli->dir - fli2->dir;
+			FrustumLine& fli = lines[i];
+			FrustumLine& flj = lines[j];
+
+			const float dbase = fli.base - flj.base;
+			const float ddir = fli.dir - flj.dir;
 
 			if (ddir == 0.0f)
 				continue;
 
 			const float colz = -(dbase / ddir);
 
-			if ((fli2->sign * ddir) > 0.0f) {
-				if ((colz > fli->minz) && (colz < zmax))
-					fli->minz = colz;
+			if ((flj.sign * ddir) > 0.0f) {
+				if ((colz > fli.minz) && (colz < zmax))
+					fli.minz = colz;
 			} else {
-				if ((colz < fli->maxz) && (colz > zmin))
-					fli->maxz = colz;
+				if ((colz < fli.maxz) && (colz > zmin))
+					fli.maxz = colz;
 			}
 		}
 	}
@@ -580,9 +663,7 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
 		const int screenH = globalRendering->viewSizeY;
-		const int screenW = globalRendering->dualScreenMode?
-			(globalRendering->viewSizeX << 1):
-			(globalRendering->viewSizeX     );
+		const int screenW = globalRendering->viewSizeX << globalRendering->dualScreenMode;
 
 		const float width  = configHandler->GetFloat("EdgeMoveWidth");
 		const bool dynamic = configHandler->GetBool("EdgeMoveDynamic");
