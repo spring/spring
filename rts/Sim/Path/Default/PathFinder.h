@@ -4,7 +4,6 @@
 #define PATH_FINDER_H
 
 #include <vector>
-#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
