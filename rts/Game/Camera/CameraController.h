@@ -21,11 +21,11 @@ public:
 		typedef ArrayMap::iterator iterator;
 		typedef ArrayMap::const_iterator const_iterator;
 
-		iterator begin() { return (map.begin()); }
-		iterator end() { return (map.begin() + numPairs); }
+		iterator begin() { return (pairsMap.begin()); }
+		iterator end() { return (pairsMap.begin() + numPairs); }
 
-		const_iterator cbegin() const { return (map.cbegin()); }
-		const_iterator cend() const { return (map.cbegin() + numPairs); }
+		const_iterator cbegin() const { return (pairsMap.cbegin()); }
+		const_iterator cend() const { return (pairsMap.cbegin() + numPairs); }
 
 		const_iterator find(const std::string& s) const {
 			const auto pair = std::make_pair(s, 0.0f);
@@ -47,38 +47,42 @@ public:
 			const auto iter = find(s);
 
 			if (iter == cend()) {
-				assert(numPairs < map.size());
-				map[numPairs++] = std::make_pair(s, 0.0f);
+				// Spring.SetCameraState might be handed a table larger than we can hold
+				if (numPairs == pairsMap.size())
+					return dummyPair.second;
+
+				pairsMap[numPairs++] = std::make_pair(s, 0.0f);
 
 				// inefficient on repeated insertions, but map size is a small constant
 				for (size_t i = numPairs - 1; i > 0; i--) {
-					if (map[i - 1].first < map[i].first)
-						return map[i].second;
+					if (pairsMap[i - 1].first < pairsMap[i].first)
+						return pairsMap[i].second;
 
-					std::swap(map[i - 1], map[i]);
+					std::swap(pairsMap[i - 1], pairsMap[i]);
 				}
 
-				return map[0].second;
+				return pairsMap[0].second;
 			}
 
-			return map[iter - cbegin()].second;
+			return pairsMap[iter - cbegin()].second;
 		}
 
 		bool operator == (const StateMap& sm) const {
-			return (numPairs == sm.numPairs && map == sm.map);
+			return (numPairs == sm.numPairs && pairsMap == sm.pairsMap);
 		}
 
 		bool empty() const { return (numPairs == 0); }
 		void clear() {
 			numPairs = 0;
 
-			for (auto& pair: map) {
+			for (auto& pair: pairsMap) {
 				pair = {};
 			}
 		}
 
 	private:
-		ArrayMap map;
+		ArrayMap pairsMap;
+		MapPair dummyPair;
 
 		size_t numPairs = 0;
 	};

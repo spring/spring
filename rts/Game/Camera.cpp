@@ -118,8 +118,6 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 
 void CCamera::UpdateFrustum()
 {
-	const float2 tanHalfFOVs = {math::tan(GetHFOV() * 0.5f * math::DEG_TO_RAD), tanHalfFov}; // horz, vert
-
 	// scale-factors for {x,y}-axes
 	float2 nAxisScales;
 	float2 fAxisScales;
@@ -129,6 +127,8 @@ void CCamera::UpdateFrustum()
 			// NOTE: "-" because we want normals
 			const float3 forwardy = (-forward *                                          tanHalfFov );
 			const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
+
+			const float2 tanHalfFOVs = {math::tan(GetHFOV() * 0.5f * math::DEG_TO_RAD), tanHalfFov}; // horz, vert
 
 			frustumPlanes[FRUSTUM_PLANE_TOP] = (forwardy +    up).UnsafeANormalize();
 			frustumPlanes[FRUSTUM_PLANE_BOT] = (forwardy -    up).UnsafeANormalize();
