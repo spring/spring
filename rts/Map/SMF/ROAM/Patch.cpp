@@ -717,7 +717,7 @@ void Patch::UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const in
 	assert(cam->GetCamType() < CCamera::CAMTYPE_VISCUL);
 	checker.ResetState(cam, &patches[0], numPatchesX, patches.size() / numPatchesX);
 
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, &checker, 1e9, PATCH_SIZE);
 	#endif
 }

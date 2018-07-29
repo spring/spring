@@ -134,7 +134,7 @@ void CBasicMeshDrawer::Update(const DrawPass::e& drawPass) {
 
 	patchVisTestDrawer.ResetState(activeCam, meshPatch, numPatchesX);
 
-	activeCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	activeCam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(activeCam, &patchVisTestDrawer, 1e9, PATCH_SIZE);
 
 	drawPassLOD = CalcDrawPassLOD(activeCam, drawPass);

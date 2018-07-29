@@ -3,8 +3,6 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 
-#include <vector>
-
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
@@ -13,11 +11,13 @@ class CCamera
 {
 public:
 	struct FrustumLine {
-		float base;
-		float dir;
-		int sign;
-		float minz;
-		float maxz;
+		int sign = 0;
+
+		float base = 0.0f;
+		float dir = 0.0f;
+
+		float minz = 0.0f;
+		float maxz = 0.0f;
 	};
 
 	enum {
@@ -85,27 +85,25 @@ public:
 	void SetRotY(const float y) { SetRot(float3(rot.x,     y, rot.z)); }
 	void SetRotZ(const float z) { SetRot(float3(rot.x, rot.y,     z)); }
 
-	float3 CalcPixelDir(int x,int y) const;
+	float3 CalcPixelDir(int x, int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 
-	bool InView(const float3& p, float radius = 0) const;
+	bool InView(const float3& p, float radius = 0.0f) const;
 	bool InView(const float3& mins, const float3& maxs) const;
 
-	void GetFrustumSides(float miny, float maxy, float scale, bool negOnly = false);
-	void GetFrustumSide(
+	void CalcFrustumLines(float miny, float maxy, float scale, bool neg = false);
+	void CalcFrustumLine(
 		const float3& normal,
 		const float3& offset,
-		float miny,
-		float maxy,
-		float scale,
+		const float3& params,
 		unsigned int side
 	);
 
-	void ClipFrustumLines(bool left, const float zmin, const float zmax);
+	void ClipFrustumLines(const float zmin, const float zmax, bool neg);
 	void SetFrustumScales(const float4 scales) { frustumScales = scales; }
 
-	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
-	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
+	const FrustumLine* GetPosFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_POS][0]; }
+	const FrustumLine* GetNegFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_NEG][0]; }
 
 	void SetClipCtrlMatrix(const CMatrix44f& mat) { clipControlMatrix = mat; }
 	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
@@ -157,15 +155,13 @@ public:
 
 
 	float ProjectedDistance(const float3 objPos) const {
-		const float3 diff = objPos - GetPos();
-		const float dist = diff.dot(GetDir());
-		return dist;
+		return (forward.dot(objPos - pos));
 	}
 
 	/*
 	float ProjectedDistanceShadow(const float3 objPos, const float3 sunDir) const {
 		// FIXME: fix it, cap it for shallow shadows?
-		const float3 diff = (GetPos() - objPos);
+		const float3 diff = pos - objPos;
 		const float  dot  = diff.dot(sunDir);
 		const float3 gap  = diff - (sunDir * dot);
 		return (gap.Length());
@@ -205,6 +201,7 @@ public:
 public:
 	// frustum-volume planes (infinite)
 	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
+	float3 frustumVerts[8];
 	// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
 	float4 frustumScales;
 
@@ -224,8 +221,8 @@ private:
 	CMatrix44f billboardMatrix;
 	CMatrix44f clipControlMatrix;
 
-	// positive sides [0], negative sides [1]
-	std::vector<FrustumLine> frustumLines[2];
+	// positive (right-to-left) lines [0], negative (left-to-right) lines [1]
+	FrustumLine frustumLines[2][4 + 1];
 
 	// CAMTYPE_*
 	unsigned int camType;

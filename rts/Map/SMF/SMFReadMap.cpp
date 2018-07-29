@@ -773,7 +773,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 		// recently had Update() called on it
 		cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_VISCUL);
 		// for other cameras, KISS and just assume caller has done this
-		cam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+		cam->CalcFrustumLines(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	}
 
 	// figure out the camera's own quad
@@ -792,10 +792,8 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 	const int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
 	const int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
-	const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine>& posSides = cam->GetPosFrustumSides();
-
-	std::vector<CCamera::FrustumLine>::const_iterator fli;
+	const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
+	const CCamera::FrustumLine* posLines = cam->GetPosFrustumLines();
 
 	// iterate over quads row-wise between the left and right frustum lines
 	for (int y = sy; y <= ey; y++) {
@@ -804,9 +802,11 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 		float xtest, xtest2;
 
 		// find the starting x-coordinate
-		for (fli = negSides.cbegin(); fli != negSides.cend(); ++fli) {
-			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
-			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
+		for (int idx = 0, cnt = negLines[4].sign; idx < cnt; idx++) {
+			const CCamera::FrustumLine& fl = negLines[idx];
+
+			xtest  = ((fl.base + fl.dir * ( y * quadSize)            ));
+			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::min(xtest, xtest2);
 			xtest /= quadSize;
@@ -816,9 +816,11 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 		}
 
 		// find the ending x-coordinate
-		for (fli = posSides.cbegin(); fli != posSides.cend(); ++fli) {
-			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
-			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
+		for (int idx = 0, cnt = posLines[4].sign; idx < cnt; idx++) {
+			const CCamera::FrustumLine& fl = posLines[idx];
+
+			xtest  = ((fl.base + fl.dir *  (y * quadSize)           ));
+			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::max(xtest, xtest2);
 			xtest /= quadSize;

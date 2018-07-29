@@ -450,7 +450,7 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {
 	const auto it = sm.find("mode");
 
-	if (it != sm.end()) {
+	if (it != sm.cend()) {
 		const unsigned int camMode = it->second;
 		const unsigned int oldMode = currCamCtrlNum;
 
@@ -532,7 +532,7 @@ bool CCameraHandler::LoadViewData(const ViewData& vd)
 
 	const auto it = vd.find("mode");
 
-	if (it != vd.end()) {
+	if (it != vd.cend()) {
 		const unsigned int camMode = it->second;
 		const unsigned int curMode = currCamCtrlNum;
 

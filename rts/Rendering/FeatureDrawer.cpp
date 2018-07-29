@@ -682,7 +682,7 @@ void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFa
 		(drawer.GetCamQuads()).swap(camVisibleQuads[cam->GetCamType()]);
 		(drawer.GetRdrProxies()).swap(featureDrawer->modelRenderers);
 
-		cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+		cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 		readMap->GridVisibility(cam, &drawer, featureDrawDistance, DRAW_QUAD_SIZE, extraSize);
 
 		(drawer.GetCamQuads()).swap(camVisibleQuads[cam->GetCamType()]);

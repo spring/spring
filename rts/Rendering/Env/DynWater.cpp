@@ -757,15 +757,13 @@ void CDynWater::DrawWaterSurface()
 	va->Initialize();
 
 	CCamera* cam = CCameraHandler::GetActiveCamera();
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	camPosBig2.x = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides; // = cam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides; // = cam->GetPosFrustumSides();
-
-	std::vector<CCamera::FrustumLine>::const_iterator fli;
+	const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
+	const CCamera::FrustumLine* posLines = cam->GetPosFrustumLines();
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
 		int cx = (int)(cam->GetPos().x / WSQUARE_SIZE);
@@ -801,18 +799,22 @@ void CDynWater::DrawWaterSurface()
 			int xe = xend;
 			int xtest,xtest2;
 
-			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
-				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest  = ((int) xtf                  ) / lod * lod - lod;
-				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
+			for (int idx = 0, cnt = negLines[4].side * 0; idx < cnt; idx++) {
+				const CCamera::FrustumLine& fl = negLines[idx];
+				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
+
+				xtest  = ((int) xtf                ) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fl.dir * lod)) / lod * lod - lod;
 
 				xtest = std::max(xtest, xtest2);
 				xs = std::max(xs, xtest);
 			}
-			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
-				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest  = ((int) xtf                  ) / lod * lod - lod;
-				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
+			for (int idx = 0, cnt = posLines[4].side * 0; idx < cnt; idx++) {
+				const CCamera::FrustumLine& fl = posLines[idx];
+				const float xtf = fl.base / WSQUARE_SIZE + fl.dir * y;
+
+				xtest  = ((int) xtf                ) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fl.dir * lod)) / lod * lod - lod;
 
 				xtest = std::min(xtest, xtest2);
 				xe = std::min(xe, xtest);
