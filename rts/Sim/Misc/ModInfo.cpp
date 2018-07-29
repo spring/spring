@@ -55,6 +55,7 @@ void CModInfo::ResetState()
 	unitExpReloadScale = 0.0f;
 
 	paralyzeOnMaxHealth = true;
+	paralyzeDeclineRate = 40.f;
 
 	transportGround            = 1;
 	transportHover             = 0;
@@ -181,6 +182,7 @@ void CModInfo::Init(const char* modArchive)
 		// paralyze
 		const LuaTable& paralyzeTbl = root.SubTable("paralyze");
 		paralyzeOnMaxHealth = paralyzeTbl.GetBool("paralyzeOnMaxHealth", true);
+		paralyzeDeclineRate = paralyzeTbl.GetFloat("paralyzeDeclineRate", 40.0);
 	}
 
 	{

@@ -268,8 +268,7 @@ void CUnit::InitStatic()
 {
 	spawnFeature = true;
 
-	//! SlowUpdate runs every 16th simframe (a second has GAME_SPEED=30 gameframes!)
-	empDeclineRate = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+	SetEmpDeclineRate(modInfo.paralyzeDeclineRate);
 	expGrade       = 0.0f;
 
 	SetExpMultiplier(modInfo.unitExpMultiplier);
