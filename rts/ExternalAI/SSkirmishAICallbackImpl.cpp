@@ -1428,7 +1428,7 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId
 		char tmpRes[1024];
 
 		if (!skirmishAiCallback_DataDirs_locatePath(skirmishAIId, tmpRes, sizeof(tmpRes), "", true, true, true, false)) {
-			char errorMsg[sizeof(tmpRes)];
+			char errorMsg[1093];
 			SNPRINTF(errorMsg, sizeof(tmpRes),
 					"Unable to create writable data-dir for Skirmish AI (ID:%i): %s",
 					skirmishAIId, tmpRes);

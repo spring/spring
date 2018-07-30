@@ -320,7 +320,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		writeableDataDirs[interfaceId] = tmpRes;
 
 		if (!exists) {
-			char errorMsg[1024];
+			char errorMsg[1086];
 
 			SNPRINTF(errorMsg, sizeof(errorMsg),
 				"Unable to create writable data-dir for interface %i: %s",
