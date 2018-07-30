@@ -69,7 +69,7 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 
 void IUnitDrawerState::EnableTexturesCommon() const {
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
@@ -82,7 +82,7 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 
 void IUnitDrawerState::DisableTexturesCommon() const {
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE0);
 }

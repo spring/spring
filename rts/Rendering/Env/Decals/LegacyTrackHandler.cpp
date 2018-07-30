@@ -304,7 +304,7 @@ void LegacyTrackHandler::BindTextures()
 	}
 
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -316,7 +316,7 @@ void LegacyTrackHandler::KillTextures()
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	if (shadowHandler.ShadowsLoaded())
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE2);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);

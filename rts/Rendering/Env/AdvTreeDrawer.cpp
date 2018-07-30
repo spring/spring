@@ -252,7 +252,7 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex());
 
-		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.SetupShadowTexSampler(GL_TEXTURE0);
 
 		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(10, false, shadowHandler.GetShadowViewMatrixRaw());
 		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(11, shadowHandler.GetShadowParams());
@@ -291,7 +291,7 @@ void CAdvTreeDrawer::ResetDrawState()
 		// barkTex
 		// glActiveTexture(GL_TEXTURE1);
 
-		shadowHandler.ResetShadowTexSampler(GL_TEXTURE0, true);
+		shadowHandler.ResetShadowTexSampler(GL_TEXTURE0);
 	} else {
 		glActiveTexture(GL_TEXTURE0);
 	}

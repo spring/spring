@@ -28,12 +28,12 @@ public:
 	bool GetFullRead() const override { return false; }
 	int  GetReadAllyTeam() const override { return NoAccessTeam; }
 
-	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
+	void UnsyncedHeightMapUpdate(const SRectangle& rect) override { needUpdate = true; }
 
 public:
 	// IInfoTexture interface
 	void Update() override;
-	bool IsUpdateNeeded() override;
+	bool IsUpdateNeeded() override { return needUpdate; }
 
 private:
 	void UpdateCPU();

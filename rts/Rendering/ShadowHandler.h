@@ -23,9 +23,9 @@ public:
 	void Kill();
 	void Reload(const char* argv);
 
-	void SetupShadowTexSampler(unsigned int texUnit, bool enable = false) const;
+	void SetupShadowTexSampler(unsigned int texUnit) const;
 	void SetupShadowTexSamplerRaw() const;
-	void ResetShadowTexSampler(unsigned int texUnit, bool disable = false) const;
+	void ResetShadowTexSampler(unsigned int texUnit) const;
 	void ResetShadowTexSamplerRaw() const;
 	void CreateShadows();
 

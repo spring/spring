@@ -164,9 +164,10 @@ void CHeightTexture::Update()
 	fbo.Bind();
 	glViewport(0, 0,  texSize.x, texSize.y);
 	glDisable(GL_BLEND);
+
 	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
 
@@ -180,21 +181,5 @@ void CHeightTexture::Update()
 	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
-
-	// cleanup
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
 }
 
-
-void CHeightTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
-{
-	needUpdate = true;
-}
-
-
-bool CHeightTexture::IsUpdateNeeded()
-{
-	return needUpdate;
-}

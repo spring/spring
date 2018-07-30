@@ -569,14 +569,10 @@ void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 }
 
 
-void CShadowHandler::SetupShadowTexSampler(unsigned int texUnit, bool enable) const
+void CShadowHandler::SetupShadowTexSampler(unsigned int texUnit) const
 {
 	glActiveTexture(texUnit);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-
-	// support FFP context
-	if (enable)
-		glEnable(GL_TEXTURE_2D);
 
 	SetupShadowTexSamplerRaw();
 }
@@ -590,13 +586,10 @@ void CShadowHandler::SetupShadowTexSamplerRaw() const
 	// glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_ALPHA);
 }
 
-void CShadowHandler::ResetShadowTexSampler(unsigned int texUnit, bool disable) const
+void CShadowHandler::ResetShadowTexSampler(unsigned int texUnit) const
 {
 	glActiveTexture(texUnit);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	if (disable)
-		glDisable(GL_TEXTURE_2D);
 
 	ResetShadowTexSamplerRaw();
 }

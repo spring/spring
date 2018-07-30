@@ -591,7 +591,6 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 	{
 		UpdateGlyphAtlasTexture();
 
-		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 		if (curShader == defShader) {
@@ -652,7 +651,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		//glEnable(GL_TEXTURE_2D);
+
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 		if (curShader == defShader) {
@@ -947,7 +946,7 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	}
 
-	//glEnable(GL_TEXTURE_2D);
+
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
