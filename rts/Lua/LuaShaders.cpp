@@ -984,6 +984,7 @@ int LuaShaders::UniformSubroutine(lua_State* L)
 	const GLenum shaderType = (GLenum)luaL_checkint(L, 1);
 	const GLuint index = (GLuint)luaL_checknumber(L, 2);
 	glUniformSubroutinesuiv(shaderType, 1, &index); //this supports array and even array of arrays, but let's keep it simple
+	return 0;
 }
 
 int LuaShaders::SetGeometryShaderParameter(lua_State* L)
