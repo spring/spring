@@ -195,7 +195,7 @@ std::string FileSystemAbstraction::GetFileModificationDate(const std::string& fi
 	const struct tm* clk = std::gmtime(&t);
 	const char* fmt = "%d%02d%02d%02d%02d%02d";
 
-	char buf[20];
+	char buf[67];
 	SNPRINTF(buf, sizeof(buf), fmt, 1900 + clk->tm_year, clk->tm_mon + 1, clk->tm_mday, clk->tm_hour, clk->tm_min, clk->tm_sec);
 	return buf;
 }
