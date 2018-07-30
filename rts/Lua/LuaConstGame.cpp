@@ -116,13 +116,18 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedNumber(L, "requireSonarUnderWater", modInfo.requireSonarUnderWater);
 
-	sha512::hex_digest mapHexDigest;
-	sha512::hex_digest modHexDigest;
-	sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(mapInfo->map.name), mapHexDigest);
-	sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(modInfo.filename), modHexDigest);
+	LuaPushNamedBool  (L, "paralyzeOnMaxHealth", modInfo.paralyzeOnMaxHealth);
+	LuaPushNamedNumber(L, "paralyzeDeclineRate", modInfo.paralyzeDeclineRate);
 
-	LuaPushNamedString(L, "mapChecksum", mapHexDigest.data());
-	LuaPushNamedString(L, "modChecksum", modHexDigest.data());
+	{
+		sha512::hex_digest mapHexDigest;
+		sha512::hex_digest modHexDigest;
+		sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(mapInfo->map.name), mapHexDigest);
+		sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(modInfo.filename), modHexDigest);
+
+		LuaPushNamedString(L, "mapChecksum", mapHexDigest.data());
+		LuaPushNamedString(L, "modChecksum", modHexDigest.data());
+	}
 
 	// needed for LuaIntro which also pushes ConstGame entries
 	// (but it probably doesn't need to know about categories)

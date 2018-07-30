@@ -268,14 +268,13 @@ void CUnit::InitStatic()
 {
 	spawnFeature = true;
 
-	//! SlowUpdate runs every 16th simframe (a second has GAME_SPEED=30 gameframes!)
-	empDeclineRate = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
-	expGrade       = 0.0f;
-
+	// numerator was 2*UNIT_SLOWUPDATE_RATE/GAME_SPEED which equals 1 since 99.0
+	SetEmpDeclineRate(1.0f / modInfo.paralyzeDeclineRate);
 	SetExpMultiplier(modInfo.unitExpMultiplier);
 	SetExpPowerScale(modInfo.unitExpPowerScale);
 	SetExpHealthScale(modInfo.unitExpHealthScale);
 	SetExpReloadScale(modInfo.unitExpReloadScale);
+	SetExpGrade(0.0f);
 
 	CBuilderCAI::InitStatic();
 	unitToolTipMap.Clear();

@@ -217,6 +217,7 @@ public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
 public:
+	static void  SetEmpDeclineRate(float value) { empDeclineRate = value; }
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }

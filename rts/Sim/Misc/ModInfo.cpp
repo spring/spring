@@ -53,6 +53,7 @@ void CModInfo::ResetState()
 	unitExpPowerScale  = 0.0f;
 	unitExpHealthScale = 0.0f;
 	unitExpReloadScale = 0.0f;
+	paralyzeDeclineRate = 40.0f;
 
 	paralyzeOnMaxHealth = true;
 
@@ -118,21 +119,21 @@ void CModInfo::Init(const char* modArchive)
 		pfRawDistMult = system.GetFloat("pathFinderRawDistMult", pfRawDistMult);
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", pfUpdateRate);
 
-		allowTake = system.GetBool("allowTake", true);
+		allowTake = system.GetBool("allowTake", allowTake);
 	}
 
 	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 
-		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", true);
-		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
-		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
-		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
-		allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", false);
-		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", false);
-		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
-		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
+		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", allowDirectionalPathing);
+		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", allowAircraftToLeaveMap);
+		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", allowAircraftToHitGround);
+		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", allowPushingEnemyUnits);
+		allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", allowCrushingAlliedUnits);
+		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", allowUnitCollisionDamage);
+		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", allowUnitCollisionOverlap);
+		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
 	}
 
@@ -140,7 +141,7 @@ void CModInfo::Init(const char* modArchive)
 		// construction
 		const LuaTable& constructionTbl = root.SubTable("construction");
 
-		constructionDecay = constructionTbl.GetBool("constructionDecay", true);
+		constructionDecay = constructionTbl.GetBool("constructionDecay", constructionDecay);
 		constructionDecayTime = (int)(constructionTbl.GetFloat("constructionDecayTime", 6.66) * GAME_SPEED);
 		constructionDecaySpeed = std::max(constructionTbl.GetFloat("constructionDecaySpeed", 0.03), 0.01f);
 	}
@@ -150,37 +151,38 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& reclaimTbl = root.SubTable("reclaim");
 
 		multiReclaim  = reclaimTbl.GetInt("multiReclaim",  0);
-		reclaimMethod = reclaimTbl.GetInt("reclaimMethod", 1);
-		reclaimUnitMethod = reclaimTbl.GetInt("unitMethod", 1);
-		reclaimUnitEnergyCostFactor = reclaimTbl.GetFloat("unitEnergyCostFactor", 0.0);
-		reclaimUnitEfficiency = reclaimTbl.GetFloat("unitEfficiency", 1.0);
-		reclaimFeatureEnergyCostFactor = reclaimTbl.GetFloat("featureEnergyCostFactor", 0.0);
-		reclaimAllowEnemies = reclaimTbl.GetBool("allowEnemies", true);
-		reclaimAllowAllies = reclaimTbl.GetBool("allowAllies", true);
+		reclaimMethod = reclaimTbl.GetInt("reclaimMethod", reclaimMethod);
+		reclaimUnitMethod = reclaimTbl.GetInt("unitMethod", reclaimUnitMethod);
+		reclaimUnitEnergyCostFactor = reclaimTbl.GetFloat("unitEnergyCostFactor", reclaimUnitEnergyCostFactor);
+		reclaimUnitEfficiency = reclaimTbl.GetFloat("unitEfficiency", reclaimUnitEfficiency);
+		reclaimFeatureEnergyCostFactor = reclaimTbl.GetFloat("featureEnergyCostFactor", reclaimFeatureEnergyCostFactor);
+		reclaimAllowEnemies = reclaimTbl.GetBool("allowEnemies", reclaimAllowEnemies);
+		reclaimAllowAllies = reclaimTbl.GetBool("allowAllies", reclaimAllowAllies);
 	}
 
 	{
 		// repair
 		const LuaTable& repairTbl = root.SubTable("repair");
-		repairEnergyCostFactor = repairTbl.GetFloat("energyCostFactor", 0.0);
+		repairEnergyCostFactor = repairTbl.GetFloat("energyCostFactor", repairEnergyCostFactor);
 	}
 
 	{
 		// resurrect
 		const LuaTable& resurrectTbl = root.SubTable("resurrect");
-		resurrectEnergyCostFactor  = resurrectTbl.GetFloat("energyCostFactor",  0.5);
+		resurrectEnergyCostFactor  = resurrectTbl.GetFloat("energyCostFactor", resurrectEnergyCostFactor);
 	}
 
 	{
 		// capture
 		const LuaTable& captureTbl = root.SubTable("capture");
-		captureEnergyCostFactor = captureTbl.GetFloat("energyCostFactor", 0.0);
+		captureEnergyCostFactor = captureTbl.GetFloat("energyCostFactor", captureEnergyCostFactor);
 	}
 
 	{
 		// paralyze
 		const LuaTable& paralyzeTbl = root.SubTable("paralyze");
-		paralyzeOnMaxHealth = paralyzeTbl.GetBool("paralyzeOnMaxHealth", true);
+		paralyzeDeclineRate = paralyzeTbl.GetFloat("paralyzeDeclineRate", paralyzeDeclineRate);
+		paralyzeOnMaxHealth = paralyzeTbl.GetBool("paralyzeOnMaxHealth", paralyzeOnMaxHealth);
 	}
 
 	{
@@ -237,10 +239,10 @@ void CModInfo::Init(const char* modArchive)
 		separateJammers = sensors.GetBool("separateJammers", true);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
-		// so the max value is CReadMap::numHeightMipMaps - 1
+		// so the maximum value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
-		// airLosMipLevel doesn't have such restrictions, it's just used in various
-		// bitshifts with signed integers
+		// airLosMipLevel doesn't have such restrictions, it's just
+		// used in various bitshifts with signed integers
 		airMipLevel = los.GetInt("airMipLevel", 1);
 		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
