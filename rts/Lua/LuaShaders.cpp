@@ -247,30 +247,30 @@ static bool ParseUniformsTable(
 	constexpr const char* fieldNames[] = {"uniform", "uniformInt", "uniformFloat", "uniformMatrix"};
 	          const char* fieldName    = fieldNames[type];
 
-	lua_getfield(L, index, fieldName);
-
 	ActiveUniform tmpUniform;
 
-	if (lua_istable(L, -1)) {
-		const int table = lua_gettop(L);
+	lua_getfield(L, index, fieldName);
 
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	if (lua_istable(L, -1)) {
+		const int tableIdx = lua_gettop(L);
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2))
 				continue;
 
-			const std::string name = lua_tostring(L, -2);
-			const GLint loc = glGetUniformLocation(progName, name.c_str());
+			const char* uniformName = lua_tostring(L, -2);
+			const GLint uniformLoc = glGetUniformLocation(progName, uniformName);
 
-			if (loc < 0)
+			if (uniformLoc < 0)
 				continue;
 
 			std::memset(tmpUniform.name, 0, sizeof(tmpUniform.name));
-			std::strncpy(tmpUniform.name, name.c_str(), std::min(sizeof(tmpUniform.name) - 1, name.size()));
+			std::strncpy(tmpUniform.name, uniformName, std::min(sizeof(tmpUniform.name) - 1, std::strlen(uniformName)));
 
 			const auto iter = std::lower_bound(activeUniforms.begin(), activeUniforms.end(), tmpUniform, uniformPred);
 
-			if (iter == activeUniforms.end() || std::strcmp(iter->name, name.c_str()) != 0) {
-				LOG_L(L_WARNING, "[%s] uniform \"%s\" from table \"%s\" not active in shader", __func__, name.c_str(), fieldName);
+			if (iter == activeUniforms.end() || std::strcmp(iter->name, uniformName) != 0) {
+				LOG_L(L_WARNING, "[%s] uniform \"%s\" from table \"%s\" not active in shader", __func__, uniformName, fieldName);
 				continue;
 			}
 
@@ -303,12 +303,12 @@ static bool ParseUniformsTable(
 				case GL_FLOAT_MAT4: { type = UNIFORM_TYPE_FLOAT_MATRIX; } break;
 
 				default: {
-					LOG_L(L_WARNING, "[%s] value for uniform \"%s\" from table \"%s\" (GL-type 0x%x) set as int", __func__, name.c_str(), fieldName, iter->type);
+					LOG_L(L_WARNING, "[%s] value for uniform \"%s\" from table \"%s\" (GL-type 0x%x) set as int", __func__, uniformName, fieldName, iter->type);
 					type = UNIFORM_TYPE_INT;
 				} break;
 			}
 
-			ParseUniformType(L, loc, type);
+			ParseUniformType(L, uniformLoc, type);
 		}
 	}
 
@@ -319,8 +319,11 @@ static bool ParseUniformsTable(
 
 static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 {
+	bool ret = true;
+
 	GLint currentProgram = 0;
 	GLint numUniforms = 0;
+	GLsizei uniformLen = 0;
 
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
 	glUseProgram(progName);
@@ -335,19 +338,25 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 	if (numUniforms > 0) {
 		uniforms.resize(numUniforms);
 
-		for (size_t n = 0; n < uniforms.size(); n++) {
-			glGetActiveUniform(progName, n, sizeof(uniforms[0].name) - 1, nullptr, &uniforms[n].size, &uniforms[n].type, &uniforms[n].name[0]);
+		for (ActiveUniform& u: uniforms) {
+			glGetActiveUniform(progName, &u - &uniforms[0], sizeof(ActiveUniform::name) - 1, &uniformLen, &u.size, &u.type, &u.name[0]);
+
+			if (u.name[uniformLen - 1] != ']')
+				continue;
+
+			// strip "[0]" postfixes from array-uniform names
+			u.name[uniformLen - 3] = 0;
+			u.name[uniformLen - 2] = 0;
+			u.name[uniformLen - 1] = 0;
 		}
 
 		std::sort(uniforms.begin(), uniforms.end(), uniformPred);
 	}
 
-	bool ret = true;
-
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName)) ret = false;
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName);
 
 	glUseProgram(currentProgram);
 	return ret;
@@ -510,9 +519,8 @@ int LuaShaders::CreateShader(lua_State* L)
 		return 0;
 
 	// tables might have contained empty strings
-	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty() && tcsSrcs.empty() && tesSrcs.empty()) {
+	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty() && tcsSrcs.empty() && tesSrcs.empty())
 		return 0;
-	}
 
 	bool success;
 	const GLuint vertObj = CompileObject(L, shdrDefs, vertSrcs, GL_VERTEX_SHADER, success);
