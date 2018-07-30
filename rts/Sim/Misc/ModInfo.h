@@ -89,14 +89,20 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+
 	float unitExpMultiplier;
 	float unitExpPowerScale;
 	float unitExpHealthScale;
 	float unitExpReloadScale;
 
+
 	// Paralyze behaviour
+	/// time it takes for paralysis to decay by 100% in seconds
+	float paralyzeDeclineRate;
+
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
+
 
 	// Transportation behaviour
 	/// 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
