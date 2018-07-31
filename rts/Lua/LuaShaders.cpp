@@ -472,9 +472,9 @@ static bool ParseShaderTable(
 static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
 	constexpr struct { const char* name; GLenum param; } parameters[] = {
-		{ "geoInputType",   GL_GEOMETRY_INPUT_TYPE_EXT },
-		{ "geoOutputType",  GL_GEOMETRY_OUTPUT_TYPE_EXT },
-		{ "geoOutputVerts", GL_GEOMETRY_VERTICES_OUT_EXT }
+		{ "geoInputType",   GL_GEOMETRY_INPUT_TYPE },
+		{ "geoOutputType",  GL_GEOMETRY_OUTPUT_TYPE },
+		{ "geoOutputVerts", GL_GEOMETRY_VERTICES_OUT }
 	};
 
 	constexpr size_t count = sizeof(parameters) / sizeof(parameters[0]);
@@ -542,7 +542,7 @@ int LuaShaders::CreateShader(lua_State* L)
 		glDeleteShader(tcsObj);
 		return 0;
 	}
-	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
+	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER, success);
 
 	if (!success) {
 		glDeleteShader(vertObj);
@@ -581,7 +581,7 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (geomObj != 0) {
 		glAttachShader(prog, geomObj);
-		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER_EXT);
+		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER);
 		ApplyGeometryParameters(L, 1, prog); // done before linking
 	}
 	if (fragObj != 0) {
