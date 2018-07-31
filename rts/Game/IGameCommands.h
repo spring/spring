@@ -4,12 +4,12 @@
 #define I_GAME_COMMANDS_H
 
 #include "System/StringUtil.h"
+#include "System/UnorderedMap.hpp"
 
 // These two are required for the destructors
 #include "SyncedActionExecutor.h"
 #include "UnsyncedActionExecutor.h"
 
-#include <map>
 #include <string>
 #include <stdexcept>
 
@@ -18,12 +18,10 @@ template<class actionExecutor_t>
 class IGameCommands
 {
 protected:
-	IGameCommands() {}
-	virtual ~IGameCommands();
+	IGameCommands() { actionExecutors.reserve(64); }
+	virtual ~IGameCommands() { RemoveAllActionExecutors(); }
 
 public:
-	typedef std::map<std::string, actionExecutor_t*> actionExecutorsMap_t;
-
 	/**
 	 * Registers the default action-executors for chat commands.
 	 * These are all the ones that are not logically tied to a specific
@@ -52,7 +50,14 @@ public:
 	 * Deregisters all currently registered action-executor for chat commands.
 	 * @see RemoveActionExecutor
 	 */
-	void RemoveAllActionExecutors();
+	void RemoveAllActionExecutors() {
+		for (const auto& pair: actionExecutors) {
+			delete pair.second;
+		}
+
+		actionExecutors.clear();
+		sortedExecutors.clear();
+	}
 
 	/**
 	 * Returns the action-executor for the given command (case-insensitive).
@@ -66,11 +71,25 @@ public:
 	 * Returns the map of currently registered lower-case commands with their
 	 * respective action-executors.
 	 */
-	const actionExecutorsMap_t& GetActionExecutors() const { return actionExecutors; }
+	const spring::unsynced_map<std::string, actionExecutor_t*>& GetActionExecutors() const { return actionExecutors; }
+	const std::vector< std::pair<std::string, actionExecutor_t*> >& GetSortedActionExecutors() {
+		using P = typename decltype(sortedExecutors)::value_type;
+
+		// no need for caching, very rarely called
+		sortedExecutors.clear();
+		sortedExecutors.reserve(actionExecutors.size());
+
+		for (const auto& pair: actionExecutors) {
+			sortedExecutors.emplace_back(pair);
+		}
+
+		std::sort(sortedExecutors.begin(), sortedExecutors.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+		return sortedExecutors;
+	}
 
 private:
-	// XXX maybe use a hash_map here, for faster lookup
-	actionExecutorsMap_t actionExecutors;
+	spring::unsynced_map<std::string, actionExecutor_t*> actionExecutors;
+	std::vector< std::pair<std::string, actionExecutor_t*> > sortedExecutors;
 };
 
 
@@ -79,11 +98,6 @@ private:
  * Because this is a template enabled class,
  * the implementations have to be in the same file.
  */
-
-template<class actionExecutor_t>
-IGameCommands<actionExecutor_t>::~IGameCommands() {
-	RemoveAllActionExecutors();
-}
 
 template<class actionExecutor_t>
 void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* executor)
@@ -100,8 +114,7 @@ void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* execut
 template<class actionExecutor_t>
 void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& command)
 {
-	const std::string commandLower = StringToLower(command);
-	const typename actionExecutorsMap_t::iterator aei = actionExecutors.find(commandLower);
+	const auto aei = actionExecutors.find(StringToLower(command));
 
 	if (aei == actionExecutors.end())
 		return;
@@ -114,27 +127,15 @@ void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& co
 
 
 template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::RemoveAllActionExecutors()
-{
-	while (!actionExecutors.empty()) {
-		RemoveActionExecutor(actionExecutors.begin()->first);
-	}
-}
-
-
-template<class actionExecutor_t>
 const actionExecutor_t* IGameCommands<actionExecutor_t>::GetActionExecutor(const std::string& command) const
 {
-	const actionExecutor_t* executor = nullptr;
+	const auto aei = actionExecutors.find(StringToLower(command));
 
-	const std::string commandLower = StringToLower(command);
-	const typename actionExecutorsMap_t::const_iterator aei = actionExecutors.find(commandLower);
+	if (aei == actionExecutors.end())
+		return nullptr;
 
 	// an executor for this command is registered
-	if (aei != actionExecutors.end())
-		executor = aei->second;
-
-	return executor;
+	return aei->second;
 }
 
 

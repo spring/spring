@@ -1102,12 +1102,17 @@ public:
 
 
 class ChatActionExecutor : public IUnsyncedActionExecutor {
-
-	ChatActionExecutor(const std::string& commandPostfix, const std::string& userInputPrefix, bool setUserInputPrefix)
-		: IUnsyncedActionExecutor("Chat" + commandPostfix,
-			"Starts waiting for intput to be sent to " + commandPostfix)
-		, userInputPrefix(userInputPrefix)
-		, setUserInputPrefix(setUserInputPrefix)
+public:
+	ChatActionExecutor(
+		const std::string& _commandPostfix,
+		const std::string& _userInputPrefix,
+		bool _setUserInputPrefix
+	): IUnsyncedActionExecutor(
+		"Chat" + _commandPostfix,
+		"Starts waiting for intput to be sent to " + _commandPostfix
+	),
+		userInputPrefix(_userInputPrefix),
+		setUserInputPrefix(_setUserInputPrefix)
 	{}
 
 public:
@@ -1117,15 +1122,7 @@ public:
 		gameTextInput.PromptInput(setUserInputPrefix? &userInputPrefix: nullptr);
 		gameConsoleHistory.ResetPosition();
 		inMapDrawer->SetDrawMode(false);
-
 		return true;
-	}
-
-	static void RegisterCommandVariants() {
-		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("",     "",   false));
-		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("All",  "",   true));
-		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("Ally", "a:", true));
-		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("Spec", "s:", true));
 	}
 
 private:
@@ -2976,42 +2973,33 @@ public:
 
 class CommandListActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CommandListActionExecutor() : IUnsyncedActionExecutor("CommandList",
-			"Prints all the available chat commands with description"
-			" (if available) to the console") {}
+	CommandListActionExecutor() : IUnsyncedActionExecutor(
+		"CommandList",
+		"Prints all the available chat commands with description (if available) to the console"
+	) {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		LOG("Chat commands plus description");
 		LOG("==============================");
-		PrintToConsole(syncedGameCommands->GetActionExecutors());
-		PrintToConsole(unsyncedGameCommands->GetActionExecutors());
+
+		PrintToConsole(syncedGameCommands->GetSortedActionExecutors());
+		PrintToConsole(unsyncedGameCommands->GetSortedActionExecutors());
 		return true;
 	}
 
 	template<class action_t, bool synced_v>
 	static void PrintExecutorToConsole(const IActionExecutor<action_t, synced_v>* executor) {
-
-		LOG("/%-30s  %s  %s",
-				executor->GetCommand().c_str(),
-				(executor->IsSynced() ? "(synced)  " : "(unsynced)"),
-				executor->GetDescription().c_str());
+		const std::string& cmd = executor->GetCommand();
+		const std::string& dsc = executor->GetDescription();
+		LOG("/%-30s  (%s)  %s", cmd.c_str(), (executor->IsSynced()? "  synced" : "unsynced"), dsc.c_str());
 	}
 
 private:
-	void PrintToConsole(const std::map<std::string, ISyncedActionExecutor*>& executors) const {
-
-		std::map<std::string, ISyncedActionExecutor*>::const_iterator aei;
-		for (aei = executors.begin(); aei != executors.end(); ++aei) {
-			PrintExecutorToConsole(aei->second);
-		}
-	}
-
-	void PrintToConsole(const std::map<std::string, IUnsyncedActionExecutor*>& executors) const {
-
-		std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei;
-		for (aei = executors.begin(); aei != executors.end(); ++aei) {
-			PrintExecutorToConsole(aei->second);
+	template<typename TActionExec>
+	static void PrintToConsole(const std::vector< std::pair<std::string, TActionExec*> >& executors) {
+		for (const auto& p: executors) {
+			PrintExecutorToConsole(p.second);
 		}
 	}
 };
@@ -3128,8 +3116,8 @@ bool CGame::ActionReleased(const Action& action)
 
 
 
-void UnsyncedGameCommands::AddDefaultActionExecutors() {
-
+void UnsyncedGameCommands::AddDefaultActionExecutors()
+{
 	AddActionExecutor(new SelectActionExecutor());
 	AddActionExecutor(new SelectUnitsActionExecutor());
 	AddActionExecutor(new SelectCycleActionExecutor());
@@ -3184,7 +3172,12 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new GroupIDActionExecutor(8));
 	AddActionExecutor(new GroupIDActionExecutor(9));
 	AddActionExecutor(new LastMessagePositionActionExecutor());
-	ChatActionExecutor::RegisterCommandVariants();
+
+	AddActionExecutor(new ChatActionExecutor("",     "",   false));
+	AddActionExecutor(new ChatActionExecutor("All",  "",   true));
+	AddActionExecutor(new ChatActionExecutor("Ally", "a:", true));
+	AddActionExecutor(new ChatActionExecutor("Spec", "s:", true));
+
 	AddActionExecutor(new TrackActionExecutor());
 	AddActionExecutor(new TrackOffActionExecutor());
 	AddActionExecutor(new TrackModeActionExecutor());
@@ -3300,9 +3293,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
 #endif
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
-	if (modInfo.allowTake) {
+	if (modInfo.allowTake)
 		AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
-	}
+
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
 	AddActionExecutor(new CommandListActionExecutor());

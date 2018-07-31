@@ -478,8 +478,8 @@ public:
 
 
 
-void SyncedGameCommands::AddDefaultActionExecutors() {
-
+void SyncedGameCommands::AddDefaultActionExecutors()
+{
 	AddActionExecutor(new CheatActionExecutor());
 	AddActionExecutor(new NoHelpActionExecutor());
 	AddActionExecutor(new NoSpecDrawActionExecutor());
@@ -499,17 +499,17 @@ void SyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DesyncActionExecutor());
 #endif // defined DEBUG
 	AddActionExecutor(new AtmActionExecutor());
-	if (modInfo.allowTake) {
+	if (modInfo.allowTake)
 		AddActionExecutor(new TakeActionExecutor());
-	}
+
 	AddActionExecutor(new SkipActionExecutor());
 }
 
 
-SyncedGameCommands* SyncedGameCommands::singleton = NULL;
+SyncedGameCommands* SyncedGameCommands::singleton = nullptr;
 
 void SyncedGameCommands::CreateInstance() {
-	if (singleton == NULL) {
+	if (singleton == nullptr) {
 		singleton = new SyncedGameCommands();
 	} else {
 		throw std::logic_error("SyncedGameCommands singleton is already initialized");
