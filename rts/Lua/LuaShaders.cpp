@@ -1000,7 +1000,7 @@ int LuaShaders::UniformSubroutine(lua_State* L)
 int LuaShaders::SetGeometryShaderParameter(lua_State* L)
 {
 	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
-		return;
+		return 0;
 
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
