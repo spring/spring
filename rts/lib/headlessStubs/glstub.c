@@ -84,6 +84,14 @@ GLAPI void APIENTRY glUniform1iv(GLint location, GLsizei count, const GLint *val
 GLAPI void APIENTRY glUniform2iv(GLint location, GLsizei count, const GLint *value) {}
 GLAPI void APIENTRY glUniform3iv(GLint location, GLsizei count, const GLint *value) {}
 GLAPI void APIENTRY glUniform4iv(GLint location, GLsizei count, const GLint *value) {}
+
+//Subroutines
+GLAPI void APIENTRY glUniformSubroutinesuiv (GLenum shadertype, GLsizei count, const GLuint *indices) {}
+GLAPI GLuint APIENTRY glGetSubroutineIndex (GLuint program, GLenum shadertype, const GLchar *name) { return -1; }
+//Tesselation
+GLAPI void APIENTRY glPatchParameteri (GLenum pname, GLint value) {};
+GLAPI void APIENTRY glPatchParameterfv (GLenum pname, const GLfloat *values) {};
+
 GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}

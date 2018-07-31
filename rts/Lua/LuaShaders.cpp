@@ -41,12 +41,15 @@ bool LuaShaders::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetActiveUniforms);
 	REGISTER_LUA_CFUNC(GetUniformLocation);
+	REGISTER_LUA_CFUNC(GetSubroutineIndex);
 	REGISTER_LUA_CFUNC(Uniform);
 	REGISTER_LUA_CFUNC(UniformInt);
 	REGISTER_LUA_CFUNC(UniformArray);
 	REGISTER_LUA_CFUNC(UniformMatrix);
+	REGISTER_LUA_CFUNC(UniformSubroutine);
 
-	REGISTER_LUA_CFUNC(SetShaderParameter);
+	REGISTER_LUA_CFUNC(SetGeometryShaderParameter);
+	REGISTER_LUA_CFUNC(SetTesselationShaderParameter);
 
 	REGISTER_LUA_CFUNC(GetShaderLog);
 
@@ -59,7 +62,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 
 LuaShaders::LuaShaders()
 {
-	programs.push_back(Program(0));
+	programs.emplace_back(0);
 }
 
 
@@ -244,30 +247,30 @@ static bool ParseUniformsTable(
 	constexpr const char* fieldNames[] = {"uniform", "uniformInt", "uniformFloat", "uniformMatrix"};
 	          const char* fieldName    = fieldNames[type];
 
-	lua_getfield(L, index, fieldName);
-
 	ActiveUniform tmpUniform;
 
-	if (lua_istable(L, -1)) {
-		const int table = lua_gettop(L);
+	lua_getfield(L, index, fieldName);
 
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+	if (lua_istable(L, -1)) {
+		const int tableIdx = lua_gettop(L);
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2))
 				continue;
 
-			const std::string name = lua_tostring(L, -2);
-			const GLint loc = glGetUniformLocation(progName, name.c_str());
+			const char* uniformName = lua_tostring(L, -2);
+			const GLint uniformLoc = glGetUniformLocation(progName, uniformName);
 
-			if (loc < 0)
+			if (uniformLoc < 0)
 				continue;
 
 			std::memset(tmpUniform.name, 0, sizeof(tmpUniform.name));
-			std::strncpy(tmpUniform.name, name.c_str(), std::min(sizeof(tmpUniform.name) - 1, name.size()));
+			std::strncpy(tmpUniform.name, uniformName, std::min(sizeof(tmpUniform.name) - 1, std::strlen(uniformName)));
 
 			const auto iter = std::lower_bound(activeUniforms.begin(), activeUniforms.end(), tmpUniform, uniformPred);
 
-			if (iter == activeUniforms.end() || std::strcmp(iter->name, name.c_str()) != 0) {
-				LOG_L(L_WARNING, "[%s] uniform \"%s\" from table \"%s\" not active in shader", __func__, name.c_str(), fieldName);
+			if (iter == activeUniforms.end() || std::strcmp(iter->name, uniformName) != 0) {
+				LOG_L(L_WARNING, "[%s] uniform \"%s\" from table \"%s\" not active in shader", __func__, uniformName, fieldName);
 				continue;
 			}
 
@@ -300,12 +303,12 @@ static bool ParseUniformsTable(
 				case GL_FLOAT_MAT4: { type = UNIFORM_TYPE_FLOAT_MATRIX; } break;
 
 				default: {
-					LOG_L(L_WARNING, "[%s] value for uniform \"%s\" from table \"%s\" (GL-type 0x%x) set as int", __func__, name.c_str(), fieldName, iter->type);
+					LOG_L(L_WARNING, "[%s] value for uniform \"%s\" from table \"%s\" (GL-type 0x%x) set as int", __func__, uniformName, fieldName, iter->type);
 					type = UNIFORM_TYPE_INT;
 				} break;
 			}
 
-			ParseUniformType(L, loc, type);
+			ParseUniformType(L, uniformLoc, type);
 		}
 	}
 
@@ -316,8 +319,11 @@ static bool ParseUniformsTable(
 
 static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 {
+	bool ret = true;
+
 	GLint currentProgram = 0;
 	GLint numUniforms = 0;
+	GLsizei uniformLen = 0;
 
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
 	glUseProgram(progName);
@@ -332,19 +338,25 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 	if (numUniforms > 0) {
 		uniforms.resize(numUniforms);
 
-		for (size_t n = 0; n < uniforms.size(); n++) {
-			glGetActiveUniform(progName, n, sizeof(uniforms[0].name) - 1, nullptr, &uniforms[n].size, &uniforms[n].type, &uniforms[n].name[0]);
+		for (ActiveUniform& u: uniforms) {
+			glGetActiveUniform(progName, &u - &uniforms[0], sizeof(ActiveUniform::name) - 1, &uniformLen, &u.size, &u.type, &u.name[0]);
+
+			if (u.name[uniformLen - 1] != ']')
+				continue;
+
+			// strip "[0]" postfixes from array-uniform names
+			u.name[uniformLen - 3] = 0;
+			u.name[uniformLen - 2] = 0;
+			u.name[uniformLen - 1] = 0;
 		}
 
 		std::sort(uniforms.begin(), uniforms.end(), uniformPred);
 	}
 
-	bool ret = true;
-
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName)) ret = false;
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName);
+	ret = ret && ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName);
 
 	glUseProgram(currentProgram);
 	return ret;
@@ -490,6 +502,8 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	std::vector<std::string> shdrDefs;
 	std::vector<std::string> vertSrcs;
+	std::vector<std::string> tcsSrcs;
+	std::vector<std::string> tesSrcs;
 	std::vector<std::string> geomSrcs;
 	std::vector<std::string> fragSrcs;
 
@@ -498,13 +512,17 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (!ParseShaderTable(L, 1,   "vertex", vertSrcs))
 		return 0;
+	if (!ParseShaderTable(L, 1,      "tcs",  tcsSrcs))
+		return 0;
+	if (!ParseShaderTable(L, 1,      "tes",  tesSrcs))
+		return 0;
 	if (!ParseShaderTable(L, 1, "geometry", geomSrcs))
 		return 0;
 	if (!ParseShaderTable(L, 1, "fragment", fragSrcs))
 		return 0;
 
 	// tables might have contained empty strings
-	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty())
+	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty() && tcsSrcs.empty() && tesSrcs.empty())
 		return 0;
 
 	bool success;
@@ -513,10 +531,26 @@ int LuaShaders::CreateShader(lua_State* L)
 	if (!success)
 		return 0;
 
+	const GLuint tcsObj = CompileObject(L, shdrDefs, tcsSrcs, GL_TESS_CONTROL_SHADER, success);
+
+	if (!success) {
+		glDeleteShader(vertObj);
+		return 0;
+	}
+
+	const GLuint tesObj = CompileObject(L, shdrDefs, tesSrcs,  GL_TESS_EVALUATION_SHADER, success);
+
+	if (!success) {
+		glDeleteShader(vertObj);
+		glDeleteShader(tcsObj);
+		return 0;
+	}
 	const GLuint geomObj = CompileObject(L, shdrDefs, geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
 
 	if (!success) {
 		glDeleteShader(vertObj);
+		glDeleteShader(tcsObj);
+		glDeleteShader(tesObj);
 		return 0;
 	}
 
@@ -524,6 +558,8 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (!success) {
 		glDeleteShader(vertObj);
+		glDeleteShader(tcsObj);
+		glDeleteShader(tesObj);
 		glDeleteShader(geomObj);
 		return 0;
 	}
@@ -534,16 +570,26 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	if (vertObj != 0) {
 		glAttachShader(prog, vertObj);
-		p.objects.push_back(Object(vertObj, GL_VERTEX_SHADER));
+		p.objects.emplace_back(vertObj, GL_VERTEX_SHADER);
 	}
+
+	if (tcsObj != 0) {
+		glAttachShader(prog, tcsObj);
+		p.objects.emplace_back(tcsObj, GL_TESS_CONTROL_SHADER);
+	}
+	if (tesObj != 0) {
+		glAttachShader(prog, tesObj);
+		p.objects.emplace_back(tesObj, GL_TESS_EVALUATION_SHADER);
+	}
+
 	if (geomObj != 0) {
 		glAttachShader(prog, geomObj);
-		p.objects.push_back(Object(geomObj, GL_GEOMETRY_SHADER_EXT));
+		p.objects.emplace_back(geomObj, GL_GEOMETRY_SHADER_EXT);
 		ApplyGeometryParameters(L, 1, prog); // done before linking
 	}
 	if (fragObj != 0) {
 		glAttachShader(prog, fragObj);
-		p.objects.push_back(Object(fragObj, GL_FRAGMENT_SHADER));
+		p.objects.emplace_back(fragObj, GL_FRAGMENT_SHADER);
 	}
 
 	GLint linkStatus;
@@ -725,13 +771,32 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 	if (progName == 0)
 		return 0;
 
-	const std::string name = luaL_checkstring(L, 2);
-	const GLint location = glGetUniformLocation(progName, name.c_str());
+	const char* name = luaL_checkstring(L, 2);
+	const GLint location = glGetUniformLocation(progName, name);
 
 	lua_pushnumber(L, location);
 	return 1;
 }
 
+int LuaShaders::GetSubroutineIndex(lua_State* L)
+{
+	if (!IS_GL_FUNCTION_AVAILABLE(glGetSubroutineIndex))
+		return 0;
+
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	const GLuint progName = shaders.GetProgramName(L, 1);
+
+	if (progName == 0)
+		return 0;
+
+	const GLenum shaderType = (GLenum)luaL_checkint(L, 2);
+
+	const char* name = luaL_checkstring(L, 3);
+	const GLint location = glGetSubroutineIndex(progName, shaderType, name);
+
+	lua_pushnumber(L, location);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -917,9 +982,26 @@ int LuaShaders::UniformMatrix(lua_State* L)
 	return 0;
 }
 
-
-int LuaShaders::SetShaderParameter(lua_State* L)
+int LuaShaders::UniformSubroutine(lua_State* L)
 {
+	if (!IS_GL_FUNCTION_AVAILABLE(glUniformSubroutinesuiv))
+		return 0;
+	if (activeShaderDepth <= 0)
+		CheckDrawingEnabled(L, __func__);
+
+	const GLenum shaderType = (GLenum)luaL_checkint(L, 1);
+	const GLuint index = (GLuint)luaL_checknumber(L, 2);
+
+	// this supports array and even array of arrays, but let's keep it simple
+	glUniformSubroutinesuiv(shaderType, 1, &index);
+	return 0;
+}
+
+int LuaShaders::SetGeometryShaderParameter(lua_State* L)
+{
+	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
+		return;
+
 	if (activeShaderDepth <= 0)
 		CheckDrawingEnabled(L, __func__);
 
@@ -931,9 +1013,27 @@ int LuaShaders::SetShaderParameter(lua_State* L)
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	if (IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
-		glProgramParameteriEXT(progName, param, value);
+	glProgramParameteri(progName, param, value);
+	return 0;
+}
 
+int LuaShaders::SetTesselationShaderParameter(lua_State* L)
+{
+	if (!IS_GL_FUNCTION_AVAILABLE(glPatchParameteri))
+		return 0;
+
+	const GLenum param = (GLenum)luaL_checkint(L, 1);
+
+	if (lua_israwnumber(L, 2)) {
+		const GLint value =  (GLint)luaL_checkint(L, 2);
+		glPatchParameteri(param, value);
+		return 0;
+	}
+	if (lua_istable(L, 2)) {
+		float tessArrayBuf[4] = {0.0f};
+		const int count = LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
+		glPatchParameterfv(param, &tessArrayBuf[0]);
+	}
 	return 0;
 }
 
