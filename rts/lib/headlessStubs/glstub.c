@@ -161,7 +161,7 @@ GLAPI GLhandleARB APIENTRY glCreateShaderObjectARB(GLenum shaderType) {
 	return 0;
 }
 
-GLAPI void APIENTRY glShaderSourceARB(GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length) {}
+GLAPI void APIENTRY glShaderSourceARB(GLhandleARB shaderObj, GLsizei count, const GLcharARB* const*string, const GLint *length) {}
 GLAPI void APIENTRY glCompileShaderARB(GLhandleARB shaderObj) {}
 GLAPI GLhandleARB APIENTRY glCreateProgramObjectARB() {
 	return 0;
