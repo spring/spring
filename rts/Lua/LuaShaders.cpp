@@ -768,8 +768,8 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 	if (progName == 0)
 		return 0;
 
-	const std::string name = luaL_checkstring(L, 2);
-	const GLint location = glGetUniformLocation(progName, name.c_str());
+	const char* name = luaL_checkstring(L, 2);
+	const GLint location = glGetUniformLocation(progName, name);
 
 	lua_pushnumber(L, location);
 	return 1;
@@ -785,8 +785,8 @@ int LuaShaders::GetSubroutineIndex(lua_State* L)
 
 	const GLenum shaderType = (GLenum)luaL_checkint(L, 2);
 
-	const std::string name = luaL_checkstring(L, 3);
-	const GLint location = glGetSubroutineIndex(progName, shaderType, name.c_str());
+	const char* name = luaL_checkstring(L, 3);
+	const GLint location = glGetSubroutineIndex(progName, shaderType, name);
 
 	lua_pushnumber(L, location);
 	return 1;
