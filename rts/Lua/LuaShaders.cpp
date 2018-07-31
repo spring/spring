@@ -1013,7 +1013,7 @@ int LuaShaders::SetGeometryShaderParameter(lua_State* L)
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	glProgramParameteri(progName, param, value);
+	glProgramParameteriEXT(progName, param, value);
 	return 0;
 }
 

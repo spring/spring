@@ -37,11 +37,10 @@ GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1,
 GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
-GLAPI GLuint APIENTRY glCreateProgram() {
-	return 0;
-}
+GLAPI GLuint APIENTRY glCreateProgram() { return 0; }
 //glCreateProgram = (PFNGLCREATEPROGRAMPROC) NULL;
 GLAPI void APIENTRY glDeleteProgram(GLuint program) {}
+GLAPI void APIENTRY glProgramParameteri(GLuint program, GLenum pname, GLint value) {}
 GLAPI void APIENTRY glProgramParameteriEXT(GLuint program, GLenum pname, GLint value) {}
 GLAPI void APIENTRY glLinkProgram(GLuint program) {}
 GLAPI void APIENTRY glGetProgramiv(GLuint program, GLenum pname, GLint *params) {}
