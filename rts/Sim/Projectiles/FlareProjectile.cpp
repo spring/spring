@@ -135,8 +135,3 @@ void CFlareProjectile::Draw(CVertexArray* va)
 	}
 }
 
-
-int CFlareProjectile::GetProjectilesCount() const
-{
-	return subPos.size();
-}

@@ -16,7 +16,7 @@ public:
 	void Update() override;
 	void Draw(CVertexArray* va) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return (subProjPos.size()); }
 
 public:
 	int activateFrame;
