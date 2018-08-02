@@ -959,7 +959,7 @@ unsigned short CUnit::CalcLosStatus(int at) const
 	const unsigned short currStatus = losStatus[at];
 
 	unsigned short newStatus = currStatus;
-	unsigned short mask = ~(currStatus >> 8);
+	unsigned short mask = ~(currStatus >> LOS_MASK_SHIFT);
 
 	if (losHandler->InLos(this, at)) {
 		newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
