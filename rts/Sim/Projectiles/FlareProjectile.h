@@ -19,7 +19,7 @@ public:
 	void Update() override;
 	void Draw(GL::RenderDataBufferTC* va) const override;
 
-	int GetProjectilesCount() const override { return (subPos.size()); }
+	int GetProjectilesCount() const override { return (subProjPos.size()); }
 
 public:
 	int activateFrame;
