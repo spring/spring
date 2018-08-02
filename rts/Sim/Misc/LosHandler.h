@@ -174,7 +174,7 @@ public:
 
 	std::vector<CLosMap> losMaps;
 	std::deque<SLosInstance> instances;
-	std::deque<int> freeIDs;
+	std::vector<int> freeIDs;
 
 private:
 	struct DelayedInstance {

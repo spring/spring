@@ -88,7 +88,7 @@ void ILosType::Init(const int mipLevel_, LosType type_)
 	type = type_;
 	algoType = ((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE);
 
-
+	freeIDs.reserve(4096);
 	losMaps.resize(teamHandler.ActiveAllyTeams());
 
 	const float* ctrHeightMap = readMap->GetCenterHeightMapSynced();

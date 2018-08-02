@@ -32,7 +32,9 @@ public:
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
+
 private:
+	float3 UpdateTargeting();
 	void UpdateWobble();
 	void UpdateDance();
 

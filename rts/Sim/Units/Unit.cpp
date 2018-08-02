@@ -103,8 +103,10 @@ CUnit::CUnit()
 , commandAI(nullptr)
 , script(nullptr)
 
-, los(ILosType::LOS_TYPE_COUNT, nullptr)
-, losStatus(teamHandler.ActiveAllyTeams(), 0)
+, los{nullptr}
+, losStatus{0}
+
+, incomingMissiles{nullptr}
 
 , deathSpeed(ZeroVector)
 , lastMuzzleFlameDir(UpVector)
@@ -208,6 +210,8 @@ CUnit::CUnit()
 , stunned(false)
 {
 	assert(unitMemPool.alloced(this));
+	static_assert((sizeof(los) / sizeof(los[0])) == ILosType::LOS_TYPE_COUNT, "");
+	static_assert((sizeof(losStatus) / sizeof(losStatus[0])) == MAX_TEAMS, "");
 }
 
 CUnit::~CUnit()
@@ -455,8 +459,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
-		Command c(CMD_MOVE_STATE, 0, moveState);
-		commandAI->GiveCommand(c);
+		commandAI->GiveCommand(Command(CMD_MOVE_STATE, 0, moveState));
 	}
 
 	if (commandAI->CanChangeFireState()) {
@@ -471,8 +474,7 @@ void CUnit::PostInit(const CUnit* builder)
 			fireState = unitDef->fireState;
 		}
 
-		Command c(CMD_FIRE_STATE, 0, fireState);
-		commandAI->GiveCommand(c);
+		commandAI->GiveCommand(Command(CMD_FIRE_STATE, 0, fireState));
 	}
 
 	// Lua might call SetUnitHealth within UnitCreated
@@ -631,7 +633,7 @@ void CUnit::ForcedMove(const float3& newPos)
 
 float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
-	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < losStatus.size());
+	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < teamHandler.ActiveAllyTeams());
 
 	const bool b0 = (1     ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
 	const bool b1 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
@@ -1784,12 +1786,19 @@ void CUnit::DependentDied(CObject* o)
 {
 	TransporteeKilled(o);
 
-	if (o == curTarget.unit) { DropCurrentAttackTarget(); }
-	if (o == soloBuilder)    { soloBuilder  = nullptr; }
-	if (o == transporter)    { transporter  = nullptr; }
-	if (o == lastAttacker)   { lastAttacker = nullptr; }
+	if (o == curTarget.unit)
+		DropCurrentAttackTarget();
+	if (o == soloBuilder)
+		soloBuilder = nullptr;
+	if (o == transporter)
+		transporter  = nullptr;
+	if (o == lastAttacker)
+		lastAttacker = nullptr;
 
-	spring::VectorErase(incomingMissiles, static_cast<CMissileProjectile*>(o));
+	const auto missileIter = std::find(incomingMissiles.begin(), incomingMissiles.end(), static_cast<CMissileProjectile*>(o));
+
+	if (missileIter != incomingMissiles.end())
+		*missileIter = nullptr;
 
 	CSolidObject::DependentDied(o);
 }
@@ -2359,14 +2368,18 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	if (!unitDef->canDropFlare)
 		return;
 
-	spring::VectorInsertUnique(incomingMissiles, missile);
-	AddDeathDependence(missile, DEPENDENCE_INCOMING);
+	// always drop a flare for dramatic effect; only the
+	// first <N> missiles have a chance to go after this
+	if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
+		projMemPool.alloc<CFlareProjectile>(pos, speed, this, int((lastFlareDrop = gs->frameNum) + unitDef->flareDelay * (1 + gsRNG.NextFloat()) * 15));
 
-	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
+	const auto missileIter = std::find(incomingMissiles.begin(), incomingMissiles.end(), nullptr);
+
+	if (missileIter == incomingMissiles.end())
 		return;
 
-	projMemPool.alloc<CFlareProjectile>(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gsRNG.NextFloat()) * 15));
-	lastFlareDrop = gs->frameNum;
+	// no risk of duplicates; only caller is MissileProjectile ctor
+	AddDeathDependence(*missileIter = missile, DEPENDENCE_INCOMING);
 }
 
 
