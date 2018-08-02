@@ -4959,8 +4959,6 @@ EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(
 	const std::vector<std::string>& ps = GetCallBack(skirmishAIId)->GetGroupCommands(groupId)->at(supportedCommandId)->params;
 	const int paramsRealSize = ps.size();
 
-	size_t paramsSize = paramsRealSize;
-
 	if (params != nullptr) {
 		for (unsigned int i = 0, n = std::min(paramsRealSize, paramsMaxSize); i < n; i++) {
 			params[i] = ps.at(i).c_str();
