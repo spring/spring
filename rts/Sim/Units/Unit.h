@@ -281,17 +281,19 @@ public:
 
 	std::vector<CWeapon*> weapons;
 
-	/// which squares the unit can currently observe
-	std::vector<SLosInstance*> los;
+	/// which squares the unit can currently observe, per los-type
+	std::array<SLosInstance*, /*ILosType::LOS_TYPE_COUNT*/ 7> los;
 
-	/// indicate the los/radar status the allyteam has on this unit
-	std::vector<unsigned short> losStatus;
+	/// indicates the los/radar status each allyteam has on this unit
+	/// should technically be MAX_ALLYTEAMS, but #allyteams <= #teams
+	std::array<unsigned short, /*MAX_TEAMS*/ 255> losStatus;
 
 	/// quads the unit is part of
 	std::vector<int> quads;
 
 	std::vector<TransportedUnit> transportedUnits;
-	std::vector<CMissileProjectile*> incomingMissiles;
+	// incoming projectiles for which flares can cause retargeting
+	std::array<CMissileProjectile*, /*MAX_INCOMING_MISSILES*/ 8> incomingMissiles;
 
 
 	float3 deathSpeed;
