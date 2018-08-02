@@ -37,11 +37,13 @@ namespace icon {
 #define LOS_PREVLOS    (1 << 2)  // the unit has previously been in los from the allyteam
 #define LOS_CONTRADAR  (1 << 3)  // the unit has continuously been in radar since it was last inlos by the allyteam
 
+#define LOS_MASK_SHIFT 4
+
 // LOS mask bits  (masked bits are not automatically updated)
-#define LOS_INLOS_MASK     (1 << 8)   // do not update LOS_INLOS
-#define LOS_INRADAR_MASK   (1 << 9)   // do not update LOS_INRADAR
-#define LOS_PREVLOS_MASK   (1 << 10)  // do not update LOS_PREVLOS
-#define LOS_CONTRADAR_MASK (1 << 11)  // do not update LOS_CONTRADAR
+#define LOS_INLOS_MASK     (LOS_INLOS << LOS_MASK_SHIFT)   // do not update LOS_INLOS
+#define LOS_INRADAR_MASK   (LOS_INRADAR << LOS_MASK_SHIFT)   // do not update LOS_INRADAR
+#define LOS_PREVLOS_MASK   (LOS_PREVLOS << LOS_MASK_SHIFT)  // do not update LOS_PREVLOS
+#define LOS_CONTRADAR_MASK (LOS_CONTRADAR << LOS_MASK_SHIFT)  // do not update LOS_CONTRADAR
 
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
@@ -290,7 +292,7 @@ public:
 
 	/// indicates the los/radar status each allyteam has on this unit
 	/// should technically be MAX_ALLYTEAMS, but #allyteams <= #teams
-	std::array<unsigned short, /*MAX_TEAMS*/ 255> losStatus;
+	std::array<unsigned char, /*MAX_TEAMS*/ 255> losStatus;
 
 	/// quads the unit is part of
 	std::vector<int> quads;

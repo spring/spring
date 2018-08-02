@@ -1900,10 +1900,10 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	const unsigned short losStatus = unit->losStatus[allyTeam];
-	const unsigned char  oldMask = losStatus >> 8;
+	const unsigned char losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldMask = losStatus >> LOS_MASK_SHIFT;
 	const unsigned char  newMask = ParseLosBits(L, 3, oldMask);
-	const unsigned short state = (newMask << 8) | (losStatus & 0x00FF);
+	const unsigned char state = (newMask << LOS_MASK_SHIFT) | (losStatus & 0x0F);
 
 	unit->losStatus[allyTeam] = state;
 	unit->SetLosStatus(allyTeam, unit->CalcLosStatus(allyTeam));
@@ -1924,11 +1924,11 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 	if (!teamHandler.IsValidAllyTeam(allyTeam))
 		luaL_error(L, "bad allyTeam");
 
-	const unsigned short losStatus = unit->losStatus[allyTeam];
-	const unsigned char  oldState = losStatus & 0xFF;
+	const unsigned char losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldState = losStatus & 0x0F;
 	const unsigned char  newState = ParseLosBits(L, 3, oldState);
 
-	unit->SetLosStatus(allyTeam, (losStatus & 0xFF00) | newState);
+	unit->SetLosStatus(allyTeam, (losStatus & 0xF0) | newState);
 	return 0;
 }
 
