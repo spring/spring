@@ -757,8 +757,8 @@ void CBumpWater::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 void CBumpWater::UploadCoastline(const bool forceFull)
 {
-	//! optimize update area (merge overlapping areas etc.)
-	heightmapUpdates.Optimize();
+	// optimize update area (merge overlapping areas etc.)
+	heightmapUpdates.Process();
 
 	//! limit the to be updated areas
 	unsigned int currentPixels = 0;

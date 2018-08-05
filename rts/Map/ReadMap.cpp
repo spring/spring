@@ -20,7 +20,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
-#include "System/Misc/RectangleOptimizer.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/SafeUtil.h"
 
@@ -424,7 +423,7 @@ void CReadMap::UpdateDraw(bool firstCall)
 	if (unsyncedHeightMapUpdates.empty())
 		return;
 
-	CRectangleOptimizer::container unsyncedHeightMapUpdatesSwap;
+	static CRectangleOverlapHandler unsyncedHeightMapUpdatesSwap;
 
 	{
 		if (!unsyncedHeightMapUpdates.empty())
@@ -433,13 +432,14 @@ void CReadMap::UpdateDraw(bool firstCall)
 	{
 		if (!firstCall) {
 			if (!unsyncedHeightMapUpdatesTemp.empty()) {
-				unsyncedHeightMapUpdatesTemp.Optimize();
+				unsyncedHeightMapUpdatesTemp.Process();
 
 				int updateArea = unsyncedHeightMapUpdatesTemp.GetTotalArea() * 0.0625f + (50 * 50);
 
 				while (updateArea > 0 && !unsyncedHeightMapUpdatesTemp.empty()) {
 					const SRectangle& rect = unsyncedHeightMapUpdatesTemp.front();
 					updateArea -= rect.GetArea();
+
 					unsyncedHeightMapUpdatesSwap.push_back(rect);
 					unsyncedHeightMapUpdatesTemp.pop_front();
 				}
@@ -451,7 +451,7 @@ void CReadMap::UpdateDraw(bool firstCall)
 	}
 
 	if (!unsyncedHeightMapUpdatesTemp.empty())
-		unsyncedHeightMapUpdates.splice(unsyncedHeightMapUpdates.end(), unsyncedHeightMapUpdatesTemp);
+		unsyncedHeightMapUpdates.append(unsyncedHeightMapUpdatesTemp);
 
 	// unsyncedHeightMapUpdatesTemp is now guaranteed empty
 	for (const SRectangle& rect: unsyncedHeightMapUpdatesSwap) {
@@ -460,6 +460,8 @@ void CReadMap::UpdateDraw(bool firstCall)
 	for (const SRectangle& rect: unsyncedHeightMapUpdatesSwap) {
 		eventHandler.UnsyncedHeightMapUpdate(rect);
 	}
+
+	unsyncedHeightMapUpdatesSwap.clear();
 }
 
 
