@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Misc/RectangleOptimizer.h"
+#include "System/Misc/RectangleOverlapHandler.h"
 #include "System/Log/ILog.h"
 #include <vector>
 #include <stdlib.h>
 #include <time.h>
 
-#define BOOST_TEST_MODULE RectangleOptimizer
+#define BOOST_TEST_MODULE RectangleOverlapHandler
 #include <boost/test/unit_test.hpp>
 
 static inline float randf()
@@ -19,7 +19,7 @@ static const int size = 100;
 static const int count_rects = 15;
 
 
-int Test(std::vector<int>& testMap, CRectangleOptimizer& ro)
+int Test(std::vector<int>& testMap, CRectangleOverlapHandler& ro)
 {
 	//! clear testMap
 	testMap.resize(size * size, 0);
@@ -38,7 +38,7 @@ int Test(std::vector<int>& testMap, CRectangleOptimizer& ro)
 	}
 
 	//! fill testMap with original areas
-	for (CRectangleOptimizer::iterator it = ro.begin(); it != ro.end(); ++it) {
+	for (CRectangleOverlapHandler::iterator it = ro.begin(); it != ro.end(); ++it) {
 		const SRectangle& rect = *it;
 		for (int z=rect.z1; z<rect.z2; ++z) { //FIXME <=
 			for (int x=rect.x1; x<rect.x2; ++x) { //FIXME <=
@@ -48,10 +48,10 @@ int Test(std::vector<int>& testMap, CRectangleOptimizer& ro)
 	}
 
 	//! optimize
-	ro.Optimize();
+	ro.Process();
 
 	//! fill testMap with optimized
-	for (CRectangleOptimizer::iterator it = ro.begin(); it != ro.end(); ++it) {
+	for (CRectangleOverlapHandler::iterator it = ro.begin(); it != ro.end(); ++it) {
 		const SRectangle& rect = *it;
 		for (int z=rect.z1; z<rect.z2; ++z) { //FIXME <=
 			for (int x=rect.x1; x<rect.x2; ++x) { //FIXME <=
@@ -75,7 +75,7 @@ int Test(std::vector<int>& testMap, CRectangleOptimizer& ro)
 }
 
 
-static inline bool TestArea(std::vector<int>& testMap, CRectangleOptimizer& ro)
+static inline bool TestArea(std::vector<int>& testMap, CRectangleOverlapHandler& ro)
 {
 	for (int i=0; i<testRuns; ++i) {
 		if (Test(testMap, ro) > 0)
@@ -85,7 +85,7 @@ static inline bool TestArea(std::vector<int>& testMap, CRectangleOptimizer& ro)
 }
 
 
-static inline bool TestOverlapping(std::vector<int>& testMap, CRectangleOptimizer& ro)
+static inline bool TestOverlapping(std::vector<int>& testMap, CRectangleOverlapHandler& ro)
 {
 	for (int i=0; i<testRuns; ++i) {
 		if (Test(testMap, ro) < 0)
@@ -95,12 +95,12 @@ static inline bool TestOverlapping(std::vector<int>& testMap, CRectangleOptimize
 }
 
 
-BOOST_AUTO_TEST_CASE( RectangleOptimizer )
+BOOST_AUTO_TEST_CASE( RectangleOverlapHandler )
 {
 	srand( time(NULL) );
 
 	std::vector<int> testMap(size * size, 0);
-	CRectangleOptimizer ro;
+	CRectangleOverlapHandler ro;
 
 	BOOST_CHECK_MESSAGE(TestArea(testMap, ro),
 			"Optimized rectangles don't cover the same area!");

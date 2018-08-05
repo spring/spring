@@ -13,7 +13,7 @@
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/creg/creg_cond.h"
-#include "System/Misc/RectangleOptimizer.h"
+#include "System/Misc/RectangleOverlapHandler.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
 #define USE_HEIGHTMAP_DIGESTS
@@ -250,8 +250,8 @@ protected:
 	static std::vector<float3> centerNormals2D;
 
 
-	CRectangleOptimizer unsyncedHeightMapUpdates;
-	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
+	CRectangleOverlapHandler unsyncedHeightMapUpdates;
+	CRectangleOverlapHandler unsyncedHeightMapUpdatesTemp;
 
 private:
 	// these combine the various synced and unsynced arrays

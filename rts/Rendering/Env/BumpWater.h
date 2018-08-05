@@ -9,7 +9,7 @@
 #include "IWater.h"
 
 #include "System/EventClient.h"
-#include "System/Misc/RectangleOptimizer.h"
+#include "System/Misc/RectangleOverlapHandler.h"
 
 
 namespace Shader {
@@ -64,7 +64,7 @@ private:
 	};
 
 	std::vector<CoastAtlasRect> coastmapAtlasRects;
-	CRectangleOptimizer heightmapUpdates;
+	CRectangleOverlapHandler heightmapUpdates;
 
 	void UploadCoastline(const bool forceFull = false);
 	void UpdateCoastmap(const bool initialize = false);

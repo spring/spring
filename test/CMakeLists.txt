@@ -145,11 +145,11 @@ endif()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
 ################################################################################
-### RectangleOptimizer
-	set(test_name RectangleOptimizer)
+### RectangleOverlapHandler
+	set(test_name RectangleOverlapHandler)
 	Set(test_src
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/RectangleOptimizer.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Misc/RectangleOptimizer.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/RectangleOverlapHandler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/RectangleOverlapHandler.cpp"
 			${test_Log_sources}
 		)
 
