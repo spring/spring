@@ -8,6 +8,7 @@
 CR_BIND(CRectangleOverlapHandler, )
 CR_REG_METADATA(CRectangleOverlapHandler, (
 	CR_MEMBER(rectangles),
+	CR_MEMBER(frontIdx),
 	CR_MEMBER(needsUpdate)
 ))
 
