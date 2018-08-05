@@ -322,9 +322,16 @@ else  (LDGOLD_FOUND)
 endif (LDGOLD_FOUND)
 
 
-### C++11
-Message(STATUS "Compiling with C++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+### C++11/14
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+	Message(STATUS "Compiling with C++14")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+else()
+	Message(STATUS "Compiling with C++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+endif()
+
+
 add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
 add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 
