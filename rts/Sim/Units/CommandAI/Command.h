@@ -304,7 +304,7 @@ public:
 
 				Command icmd((int)params[1], (unsigned char)params[2]);
 
-				for (int p = 3; p < psize; p++)
+				for (unsigned int p = 3; p < psize; p++)
 					icmd.PushParam(params[p]);
 
 				if (!icmd.IsObjectCommand(cpos))
