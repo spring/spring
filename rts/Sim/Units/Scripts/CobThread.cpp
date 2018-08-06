@@ -26,6 +26,9 @@ CR_REG_METADATA(CCobThread, (
 	CR_MEMBER(waitAxis),
 	CR_MEMBER(waitPiece),
 
+	CR_MEMBER(callStackSize),
+	CR_MEMBER(dataStackSize),
+
 	CR_IGNORED(errorCounter),
 
 	CR_MEMBER(cbType),
