@@ -50,6 +50,8 @@ CCobThread::CCobThread(CCobInstance* _cobInst)
 	, cobFile(_cobInst->cobFile)
 {
 	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
+	callStack.fill({});
+	dataStack.fill(0);
 }
 
 
@@ -66,10 +68,13 @@ CCobThread& CCobThread::operator = (CCobThread&& t) {
 	waitAxis = t.waitAxis;
 	waitPiece = t.waitPiece;
 
+	callStackSize = t.callStackSize;
+	dataStackSize = t.dataStackSize;
+
 	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
 
-	callStack = std::move(t.callStack);
-	dataStack = std::move(t.dataStack);
+	std::memcpy(callStack.begin(), t.callStack.begin(), callStackSize * sizeof(callStack[0]));
+	std::memcpy(dataStack.begin(), t.dataStack.begin(), dataStackSize * sizeof(dataStack[0]));
 	// execTrace = std::move(t.execTrace);
 
 	state = t.state;
@@ -93,10 +98,13 @@ CCobThread& CCobThread::operator = (const CCobThread& t) {
 	waitAxis = t.waitAxis;
 	waitPiece = t.waitPiece;
 
+	callStackSize = t.callStackSize;
+	dataStackSize = t.dataStackSize;
+
 	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
 
-	callStack = t.callStack;
-	dataStack = t.dataStack;
+	std::memcpy(callStack.begin(), t.callStack.begin(), callStackSize * sizeof(callStack[0]));
+	std::memcpy(dataStack.begin(), t.dataStack.begin(), dataStackSize * sizeof(dataStack[0]));
 	// execTrace = t.execTrace;
 
 	state = t.state;
@@ -116,18 +124,14 @@ void CCobThread::Start(int functionId, int sigMask, const std::array<int, 1 + MA
 	paramCount = args[0];
 	signalMask = sigMask;
 
-	CallInfo ci;
+	CallInfo& ci = PushCallStackRef();
 	ci.functionId = functionId;
 	ci.returnAddr = -1;
 	ci.stackTop   = 0;
 
-	callStack.push_back(ci);
-
 	// copy arguments; args[0] holds the count
-	if (paramCount > 0) {
-		dataStack.resize(paramCount);
-		dataStack.assign(args.begin() + 1, args.begin() + 1 + paramCount);
-	}
+	if ((dataStackSize = paramCount) > 0)
+		std::memcpy(dataStack.begin(), args.begin() + 1, paramCount * sizeof(args[0]));
 
 	// add to scheduler
 	if (schedule)
@@ -158,30 +162,29 @@ const std::string& CCobThread::GetName()
 
 int CCobThread::CheckStack(unsigned int size, bool warn)
 {
-	if (size <= dataStack.size())
+	if (size <= dataStackSize)
 		return size;
 
 	if (warn) {
 		char msg[512];
 		const char* fmt =
-			"stack-size mismatch: need %u but have %lu arguments "
+			"stack-size mismatch: need %u but have %d arguments "
 			"(too many passed to function or too few returned?)";
 
-		SNPRINTF(msg, sizeof(msg), fmt, size, dataStack.size());
+		SNPRINTF(msg, sizeof(msg), fmt, size, dataStackSize);
 		ShowError(msg);
 	}
 
-	return (dataStack.size());
+	return dataStackSize;
 }
 
 void CCobThread::InitStack(unsigned int n, CCobThread* t)
 {
-	dataStack.clear();
-	dataStack.reserve(n);
+	dataStack.fill(0);
 
 	// move n arguments from caller's stack onto our own
 	for (unsigned int i = 0; i < n; ++i) {
-		dataStack.push_back(t->POP());
+		PushDataStack(t->PopDataStack());
 	}
 }
 
@@ -365,17 +368,6 @@ static const char* GetOpcodeName(int opcode)
 #endif
 
 
-int CCobThread::POP()
-{
-	if (!dataStack.empty()) {
-		const int r = dataStack.back();
-		dataStack.pop_back();
-		return r;
-	}
-
-	return 0;
-}
-
 bool CCobThread::Tick()
 {
 	assert(state != Sleep);
@@ -394,10 +386,10 @@ bool CCobThread::Tick()
 		switch (opcode) {
 			case PUSH_CONSTANT: {
 				r1 = GET_LONG_PC();
-				dataStack.push_back(r1);
+				PushDataStack(r1);
 			} break;
 			case SLEEP: {
-				r1 = POP();
+				r1 = PopDataStack();
 				wakeTime = cobEngine->GetCurrentTime() + r1;
 				state = Sleep;
 
@@ -407,36 +399,32 @@ bool CCobThread::Tick()
 			case SPIN: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();         // speed
-				r4 = POP();         // accel
+				r3 = PopDataStack();         // speed
+				r4 = PopDataStack();         // accel
 				cobInst->Spin(r1, r2, r3, r4);
 			} break;
 			case STOP_SPIN: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();         // decel
+				r3 = PopDataStack();         // decel
 
 				cobInst->StopSpin(r1, r2, r3);
 			} break;
 			case RETURN: {
-				retCode = POP();
+				retCode = PopDataStack();
 
-				if (callStack.back().returnAddr == -1) {
+				if (LocalReturnAddr() == -1) {
 					state = Dead;
 
 					// leave values intact on stack in case caller wants to check them
-					// callStack.pop_back();
+					// callStackSize -= 1;
 					return false;
 				}
 
 				// return to caller
-				pc = callStack.back().returnAddr;
-
-				while (dataStack.size() > callStack.back().stackTop) {
-					dataStack.pop_back();
-				}
-
-				callStack.pop_back();
+				pc = LocalReturnAddr();
+				dataStackSize = std::min(dataStackSize, LocalStackFrame());
+				callStackSize -= 1;
 			} break;
 
 
@@ -476,11 +464,11 @@ bool CCobThread::Tick()
 				if (cobFile->scriptLengths[r1] == 0)
 					break;
 
-				CallInfo ci;
+				CallInfo& ci = PushCallStackRef();
 				ci.functionId = r1;
 				ci.returnAddr = pc;
-				ci.stackTop = dataStack.size() - r2;
-				callStack.push_back(ci);
+				ci.stackTop = dataStackSize - r2;
+
 				paramCount = r2;
 
 				// call cobFile->scriptNames[r1]
@@ -493,13 +481,13 @@ bool CCobThread::Tick()
 
 			case POP_STATIC: {
 				r1 = GET_LONG_PC();
-				r2 = POP();
+				r2 = PopDataStack();
 
 				if (static_cast<size_t>(r1) < cobInst->staticVars.size())
 					cobInst->staticVars[r1] = r2;
 			} break;
 			case POP_STACK: {
-				POP();
+				PopDataStack();
 			} break;
 
 
@@ -523,25 +511,25 @@ bool CCobThread::Tick()
 
 			case CREATE_LOCAL_VAR: {
 				if (paramCount == 0) {
-					dataStack.push_back(0);
+					PushDataStack(0);
 				} else {
 					paramCount--;
 				}
 			} break;
 			case GET_UNIT_VALUE: {
-				r1 = POP();
+				r1 = PopDataStack();
 				if ((r1 >= LUA0) && (r1 <= LUA9)) {
-					dataStack.push_back(luaArgs[r1 - LUA0]);
+					PushDataStack(luaArgs[r1 - LUA0]);
 					break;
 				}
 				r1 = cobInst->GetUnitVal(r1, 0, 0, 0, 0);
-				dataStack.push_back(r1);
+				PushDataStack(r1);
 			} break;
 
 
 			case JUMP_NOT_EQUAL: {
 				r1 = GET_LONG_PC();
-				r2 = POP();
+				r2 = PopDataStack();
 
 				if (r2 == 0)
 					pc = r1;
@@ -550,52 +538,52 @@ bool CCobThread::Tick()
 			case JUMP: {
 				r1 = GET_LONG_PC();
 				// this seem to be an error in the docs..
-				//r2 = cobFile->scriptOffsets[callStack.back().functionId] + r1;
+				//r2 = cobFile->scriptOffsets[LocalFunctionID()] + r1;
 				pc = r1;
 			} break;
 
 
 			case POP_LOCAL_VAR: {
 				r1 = GET_LONG_PC();
-				r2 = POP();
-				dataStack[callStack.back().stackTop + r1] = r2;
+				r2 = PopDataStack();
+				dataStack[LocalStackFrame() + r1] = r2;
 			} break;
 			case PUSH_LOCAL_VAR: {
 				r1 = GET_LONG_PC();
-				r2 = dataStack[callStack.back().stackTop + r1];
-				dataStack.push_back(r2);
+				r2 = dataStack[LocalStackFrame() + r1];
+				PushDataStack(r2);
 			} break;
 
 
 			case BITWISE_AND: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(r1 & r2);
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(r1 & r2);
 			} break;
 			case BITWISE_OR: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(r1 | r2);
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(r1 | r2);
 			} break;
 			case BITWISE_XOR: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(r1 ^ r2);
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(r1 ^ r2);
 			} break;
 			case BITWISE_NOT: {
-				r1 = POP();
-				dataStack.push_back(~r1);
+				r1 = PopDataStack();
+				PushDataStack(~r1);
 			} break;
 
 			case EXPLODE: {
 				r1 = GET_LONG_PC();
-				r2 = POP();
+				r2 = PopDataStack();
 				cobInst->Explode(r1, r2);
 			} break;
 
 			case PLAY_SOUND: {
 				r1 = GET_LONG_PC();
-				r2 = POP();
+				r2 = PopDataStack();
 				cobInst->PlayUnitSound(r1, r2);
 			} break;
 
@@ -603,112 +591,112 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 
 				if (static_cast<size_t>(r1) < cobInst->staticVars.size())
-					dataStack.push_back(cobInst->staticVars[r1]);
+					PushDataStack(cobInst->staticVars[r1]);
 			} break;
 
 			case SET_NOT_EQUAL: {
-				r1 = POP();
-				r2 = POP();
+				r1 = PopDataStack();
+				r2 = PopDataStack();
 
-				dataStack.push_back(int(r1 != r2));
+				PushDataStack(int(r1 != r2));
 			} break;
 			case SET_EQUAL: {
-				r1 = POP();
-				r2 = POP();
+				r1 = PopDataStack();
+				r2 = PopDataStack();
 
-				dataStack.push_back(int(r1 == r2));
+				PushDataStack(int(r1 == r2));
 			} break;
 
 			case SET_LESS: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
-				dataStack.push_back(int(r1 < r2));
+				PushDataStack(int(r1 < r2));
 			} break;
 			case SET_LESS_OR_EQUAL: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
-				dataStack.push_back(int(r1 <= r2));
+				PushDataStack(int(r1 <= r2));
 			} break;
 
 			case SET_GREATER: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
-				dataStack.push_back(int(r1 > r2));
+				PushDataStack(int(r1 > r2));
 			} break;
 			case SET_GREATER_OR_EQUAL: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
-				dataStack.push_back(int(r1 >= r2));
+				PushDataStack(int(r1 >= r2));
 			} break;
 
 			case RAND: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 				r3 = gsRNG.NextInt(r2 - r1 + 1) + r1;
-				dataStack.push_back(r3);
+				PushDataStack(r3);
 			} break;
 			case EMIT_SFX: {
-				r1 = POP();
+				r1 = PopDataStack();
 				r2 = GET_LONG_PC();
 				cobInst->EmitSfx(r1, r2);
 			} break;
 			case MUL: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(r1 * r2);
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(r1 * r2);
 			} break;
 
 
 			case SIGNAL: {
-				r1 = POP();
+				r1 = PopDataStack();
 				cobInst->Signal(r1);
 			} break;
 			case SET_SIGNAL_MASK: {
-				r1 = POP();
+				r1 = PopDataStack();
 				signalMask = r1;
 			} break;
 
 
 			case TURN: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 				r3 = GET_LONG_PC(); // piece
 				r4 = GET_LONG_PC(); // axis
 
 				cobInst->Turn(r3, r4, r1, r2);
 			} break;
 			case GET: {
-				r5 = POP();
-				r4 = POP();
-				r3 = POP();
-				r2 = POP();
-				r1 = POP();
+				r5 = PopDataStack();
+				r4 = PopDataStack();
+				r3 = PopDataStack();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 				if ((r1 >= LUA0) && (r1 <= LUA9)) {
-					dataStack.push_back(luaArgs[r1 - LUA0]);
+					PushDataStack(luaArgs[r1 - LUA0]);
 					break;
 				}
 				r6 = cobInst->GetUnitVal(r1, r2, r3, r4, r5);
-				dataStack.push_back(r6);
+				PushDataStack(r6);
 			} break;
 			case ADD: {
-				r2 = POP();
-				r1 = POP();
-				dataStack.push_back(r1 + r2);
+				r2 = PopDataStack();
+				r1 = PopDataStack();
+				PushDataStack(r1 + r2);
 			} break;
 			case SUB: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 				r3 = r1 - r2;
-				dataStack.push_back(r3);
+				PushDataStack(r3);
 			} break;
 
 			case DIV: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
 				if (r2 != 0) {
 					r3 = r1 / r2;
@@ -716,16 +704,16 @@ bool CCobThread::Tick()
 					r3 = 1000; // infinity!
 					ShowError("division by zero");
 				}
-				dataStack.push_back(r3);
+				PushDataStack(r3);
 			} break;
 			case MOD: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
 				if (r2 != 0) {
-					dataStack.push_back(r1 % r2);
+					PushDataStack(r1 % r2);
 				} else {
-					dataStack.push_back(0);
+					PushDataStack(0);
 					ShowError("modulo division by zero");
 				}
 			} break;
@@ -734,20 +722,20 @@ bool CCobThread::Tick()
 			case MOVE: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r4 = POP();
-				r3 = POP();
+				r4 = PopDataStack();
+				r3 = PopDataStack();
 				cobInst->Move(r1, r2, r3, r4);
 			} break;
 			case MOVE_NOW: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();
+				r3 = PopDataStack();
 				cobInst->MoveNow(r1, r2, r3);
 			} break;
 			case TURN_NOW: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();
+				r3 = PopDataStack();
 				cobInst->TurnNow(r1, r2, r3);
 			} break;
 
@@ -777,8 +765,8 @@ bool CCobThread::Tick()
 
 
 			case SET: {
-				r2 = POP();
-				r1 = POP();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 
 				if ((r1 >= LUA0) && (r1 <= LUA9)) {
 					luaArgs[r1 - LUA0] = r2;
@@ -790,35 +778,35 @@ bool CCobThread::Tick()
 
 
 			case ATTACH: {
-				r3 = POP();
-				r2 = POP();
-				r1 = POP();
+				r3 = PopDataStack();
+				r2 = PopDataStack();
+				r1 = PopDataStack();
 				cobInst->AttachUnit(r2, r1);
 			} break;
 			case DROP: {
-				r1 = POP();
+				r1 = PopDataStack();
 				cobInst->DropUnit(r1);
 			} break;
 
 			// like bitwise ops, but only on values 1 and 0
 			case LOGICAL_NOT: {
-				r1 = POP();
-				dataStack.push_back(int(r1 == 0));
+				r1 = PopDataStack();
+				PushDataStack(int(r1 == 0));
 			} break;
 			case LOGICAL_AND: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(int(r1 && r2));
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(int(r1 && r2));
 			} break;
 			case LOGICAL_OR: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(int(r1 || r2));
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(int(r1 || r2));
 			} break;
 			case LOGICAL_XOR: {
-				r1 = POP();
-				r2 = POP();
-				dataStack.push_back(int((!!r1) ^ (!!r2)));
+				r1 = PopDataStack();
+				r2 = PopDataStack();
+				PushDataStack(int((!!r1) ^ (!!r2)));
 			} break;
 
 
@@ -832,7 +820,7 @@ bool CCobThread::Tick()
 
 				int i;
 				for (i = 0; i < MAX_WEAPONS_PER_UNIT; ++i)
-					if (callStack.back().functionId == cobFile->scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
+					if (LocalFunctionID() == cobFile->scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
 						break;
 
 				// if true, we are in a Fire-script and should show a special flare effect
@@ -845,7 +833,7 @@ bool CCobThread::Tick()
 
 			default: {
 				const char* name = cobFile->name.c_str();
-				const char* func = cobFile->scriptNames[callStack.back().functionId].c_str();
+				const char* func = cobFile->scriptNames[LocalFunctionID()].c_str();
 
 				LOG_L(L_ERROR, "[COBThread::%s] unknown opcode %x (in %s:%s at %x)", __func__, opcode, name, func, pc - 1);
 
@@ -872,13 +860,13 @@ void CCobThread::ShowError(const char* msg)
 	if ((errorCounter = std::max(errorCounter - 1, 0)) == 0)
 		return;
 
-	if (callStack.empty()) {
+	if (callStackSize == 0) {
 		LOG_L(L_ERROR, "[COBThread::%s] %s outside script execution (?)", __func__, msg);
 		return;
 	}
 
 	const char* name = cobFile->name.c_str();
-	const char* func = cobFile->scriptNames[callStack.back().functionId].c_str();
+	const char* func = cobFile->scriptNames[LocalFunctionID()].c_str();
 
 	LOG_L(L_ERROR, "[COBThread::%s] %s (in %s:%s at %x)", __func__, msg, name, func, pc - 1);
 }
@@ -890,7 +878,7 @@ void CCobThread::LuaCall()
 	const int r2 = GET_LONG_PC(); // arg count
 
 	// setup the parameter array
-	const int size = (int) dataStack.size();
+	const int size = dataStackSize;
 	const int argCount = std::min(r2, MAX_LUA_COB_ARGS);
 	const int start = std::max(0, size - r2);
 	const int end = std::min(size, start + argCount);
@@ -900,9 +888,9 @@ void CCobThread::LuaCall()
 	}
 
 	if (r2 >= size) {
-		dataStack.clear();
+		dataStackSize = 0;
 	} else {
-		dataStack.resize(size - r2);
+		dataStackSize = size - r2;
 	}
 
 	if (!luaRules) {
