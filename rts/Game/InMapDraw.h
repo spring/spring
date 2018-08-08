@@ -57,6 +57,12 @@ public:
 	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
 
 private:
+	float lastLeftClickTime = 0.0f;
+	float lastDrawTime = 0.0f;
+
+	float3 lastPos = OnesVector;
+	float3 waitingPoint;
+
 	/**
 	 * Whether we are in draw mode.
 	 * This is true for example, when the draw-mode-key is currently held down.
@@ -66,12 +72,6 @@ private:
 	 * Whether the point currently beeing drawn is one with label or not??? TODO check this
 	 */
 	bool wantLabel = false;
-
-	float lastLeftClickTime = 0.0f;
-	float lastDrawTime = 0.0f;
-
-	float3 lastPos = OnesVector;
-	float3 waitingPoint;
 
 	/// whether spectators can send out MAPDRAW net-messages (synced)
 	bool allowSpecMapDrawing = true;
