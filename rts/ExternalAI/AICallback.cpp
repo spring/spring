@@ -13,6 +13,7 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Map/MapInfo.h"
@@ -39,7 +40,6 @@
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
-#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -1654,7 +1654,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 }
 
 
-int CAICallback::GetFileSize(const char *filename)
+int CAICallback::GetFileSize(const char* filename)
 {
 	CFileHandler fh (filename);
 
@@ -1727,13 +1727,13 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 float3 CAICallback::GetMousePos() {
 	verify();
 	if (gu->myAllyTeam == teamHandler.AllyTeam(team))
-		return inMapDrawer->GetMouseMapPos();
+		return mouse->GetWorldMapPos();
 
 	return ZeroVector;
 }
 
 
-void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, bool includeAllies)
+void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int maxPoints, bool includeAllies)
 {
 	verify();
 
@@ -1741,26 +1741,29 @@ void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, boo
 	// information for the AIs ally team will not be available to
 	// prevent cheating.
 	/*
-	if (gu->myAllyTeam != teamHandler.AllyTeam(team)) {
+	if (gu->myAllyTeam != teamHandler.AllyTeam(team))
 		return 0;
-	}
 	*/
 
-	std::list<int> includeTeamIDs;
-	// include our team
-	includeTeamIDs.push_back(team);
+	std::array<int, MAX_TEAMS> includeTeamIDs;
 
-	// include the team colors of all our allies
-	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
-		if (teamHandler.AlliedTeams(team, t)) {
-			includeTeamIDs.push_back(t);
-		}
+	// include our team; first non-entry is indicated by -1
+	includeTeamIDs[0] = team;
+	includeTeamIDs[1] = -1;
+
+	// include the teams of all our allies, exclude Gaia
+	for (int i = 1, t = 0, n = std::min(teamHandler.ActiveTeams(), MAX_TEAMS - 1); t < n; ++t) {
+		if (!teamHandler.AlliedTeams(team, t))
+			continue;
+
+		includeTeamIDs[i++] = t;
+		includeTeamIDs[i  ] = -1;
 	}
 
-	inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs);
+	inMapDrawer->GetPoints(pm, maxPoints, includeTeamIDs);
 }
 
-void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool includeAllies)
+void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int maxLines, bool includeAllies)
 {
 	verify();
 
@@ -1768,23 +1771,26 @@ void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool 
 	// information for the AIs ally team will not be available to
 	// prevent cheating.
 	/*
-	if (gu->myAllyTeam != teamHandler.AllyTeam(team)) {
+	if (gu->myAllyTeam != teamHandler.AllyTeam(team))
 		return 0;
-	}
 	*/
 
-	std::list<int> includeTeamIDs;
-	// include our team
-	includeTeamIDs.push_back(team);
+	std::array<int, MAX_TEAMS> includeTeamIDs;
 
-	// include the team colors of all our allies
-	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
-		if (teamHandler.AlliedTeams(team, t)) {
-			includeTeamIDs.push_back(t);
-		}
+	// include our team; first non-entry is indicated by -1
+	includeTeamIDs[0] = team;
+	includeTeamIDs[1] = -1;
+
+	// include the teams of all our allies, exclude Gaia
+	for (int i = 1, t = 0, n = std::min(teamHandler.ActiveTeams(), MAX_TEAMS - 1); t < n; ++t) {
+		if (!teamHandler.AlliedTeams(team, t))
+			continue;
+
+		includeTeamIDs[i++] = t;
+		includeTeamIDs[i  ] = -1;
 	}
 
-	inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs);
+	inMapDrawer->GetLines(lm, maxLines, includeTeamIDs);
 }
 
 

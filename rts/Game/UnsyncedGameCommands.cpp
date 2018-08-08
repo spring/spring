@@ -547,8 +547,9 @@ public:
 			"Draws a label on the map at the current mouse-pointer position") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const float3 pos = inMapDrawer->GetMouseMapPos();
-		if (pos.x >= 0) {
+		const float3 pos = mouse->GetWorldMapPos();
+
+		if (pos.x >= 0.0f) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
 		} else {

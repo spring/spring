@@ -510,10 +510,23 @@ void CMouseHandler::DrawSelectionBox()
 }
 
 
+float3 CMouseHandler::GetWorldMapPos() const
+{
+	const float3 cameraPos = camera->GetPos();
+	const float3 cursorVec = dir * globalRendering->viewRange * 1.4f;
+
+	const float dist = CGround::LineGroundCol(cameraPos, cameraPos + cursorVec, false);
+
+	if (dist < 0.0f)
+		return -OnesVector;
+
+	return ((cameraPos + dir * dist).cClampInBounds());
+}
+
 // CALLINFO:
 // LuaUnsyncedRead::GetCurrentTooltip
 // CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
-std::string CMouseHandler::GetCurrentTooltip()
+std::string CMouseHandler::GetCurrentTooltip() const
 {
 	if (!offscreen) {
 		std::string s;
