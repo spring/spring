@@ -508,7 +508,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const float3 pos = inMapDrawer->GetMouseMapPos();
+		const float3 pos = mouse->GetWorldMapPos();
 
 		if (pos.x >= 0.0f) {
 			inMapDrawer->SetDrawMode(false);

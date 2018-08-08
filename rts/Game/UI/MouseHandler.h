@@ -32,7 +32,6 @@ public:
 
 	void Update();
 	void UpdateCursors();
-	std::string GetCurrentTooltip();
 
 	void HideMouse();
 	void ShowMouse();
@@ -64,8 +63,12 @@ public:
 		return nullptr;
 	}
 
+	float3 GetWorldMapPos() const;
+
+	std::string GetCurrentTooltip() const;
+
 	const std::string& GetCurrentCursor() const { return newCursor; }
-	const float&  GetCurrentCursorScale() const { return cursorScale; }
+	float GetCurrentCursorScale() const { return cursorScale; }
 
 	void ToggleHwCursor(const bool& enable);
 

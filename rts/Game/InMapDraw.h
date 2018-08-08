@@ -3,11 +3,11 @@
 #ifndef IN_MAP_DRAW_H
 #define IN_MAP_DRAW_H
 
-#include <memory>
 #include <string>
+#include <array>
 #include <vector>
-#include <list>
 
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
 #include "System/Net/RawPacket.h"
 
@@ -40,8 +40,8 @@ public:
 
 	void PromptLabel(const float3& pos);
 
-	void GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::list<int>& teamIDs);
-	void GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::list<int>& teamIDs);
+	void GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::array<int, MAX_TEAMS>& teamIDs);
+	void GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::array<int, MAX_TEAMS>& teamIDs);
 
 	void SetDrawMode(bool drawMode) { this->drawMode = drawMode; }
 	bool IsDrawMode() const { return drawMode; }
@@ -56,30 +56,29 @@ public:
 	void SetLuaMapDrawingAllowed(bool state);
 	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
 
-	float3 GetMouseMapPos();
-
 private:
 	/**
 	 * Whether we are in draw mode.
 	 * This is true for example, when the draw-mode-key is currently held down.
 	 */
-	bool drawMode;
+	bool drawMode = false;
 	/**
 	 * Whether the point currently beeing drawn is one with label or not??? TODO check this
 	 */
-	bool wantLabel;
+	bool wantLabel = false;
 
-	float lastLeftClickTime;
-	float lastDrawTime;
-	float3 lastPos;
+	float lastLeftClickTime = 0.0f;
+	float lastDrawTime = 0.0f;
+
+	float3 lastPos = OnesVector;
 	float3 waitingPoint;
 
 	/// whether spectators can send out MAPDRAW net-messages (synced)
-	bool allowSpecMapDrawing;
+	bool allowSpecMapDrawing = true;
 	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
-	bool allowLuaMapDrawing;
+	bool allowLuaMapDrawing = true;
 
-	CNotificationPeeper* notificationPeeper;
+	uint8_t notificationPeeperMem[64];
 };
 
 extern CInMapDraw* inMapDrawer;
