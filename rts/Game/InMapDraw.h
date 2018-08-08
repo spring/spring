@@ -78,7 +78,7 @@ private:
 	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
 	bool allowLuaMapDrawing = true;
 
-	uint8_t notificationPeeperMem[64];
+	uint8_t notificationPeeperMem[96];
 };
 
 extern CInMapDraw* inMapDrawer;
