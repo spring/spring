@@ -11,6 +11,10 @@ extern "C" {
 #endif
 #define GLAPI
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
 // from gl.h & glext.h
 GLAPI void APIENTRY glClientActiveTextureARB(GLenum texture) {}
 GLAPI void APIENTRY glClientActiveTexture(GLenum texture) {}

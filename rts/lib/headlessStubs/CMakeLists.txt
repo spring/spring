@@ -1,7 +1,6 @@
 SET(headlessStubsSources
 		"glewstub"
 		"glstub"
-		"glustub"
 		"sdlstub"
 	)
 
