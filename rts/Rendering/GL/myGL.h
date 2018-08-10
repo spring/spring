@@ -10,10 +10,14 @@
 
 
 
-#if       defined(HEADLESS)
+#if defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
-	#include <GL/glew.h>
+	#if defined(__APPLE__)
+		#include <OpenGL/glew.h>
+	#else
+		#include <GL/glew.h>
+	#endif
 #endif // defined(HEADLESS)
 
 

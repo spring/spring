@@ -13,9 +13,13 @@
 # include <windows.h>
 #endif
 
-#include <GL/gl.h>
-#include <GL/glext.h> //gl.h may not include all extensions
-
+#if defined(__APPLE__)
+	#include <OpenGL/gl.h> // NB: wrong header for GL3+ core funcs
+	#include <OpenGL/glext.h>
+#else
+	#include <GL/gl.h>
+	#include <GL/glext.h> // gl.h may not include all extensions
+#endif
 
 #endif // _GL_STUB_H_
 
