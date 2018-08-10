@@ -15,6 +15,11 @@ extern "C" {
 #define APIENTRY
 #endif
 
+#ifndef GL_TRUE
+#define GL_TRUE 1
+#define GL_FALSE 0
+#endif
+
 // from gl.h & glext.h
 GLAPI void APIENTRY glClientActiveTextureARB(GLenum texture) {}
 GLAPI void APIENTRY glClientActiveTexture(GLenum texture) {}
@@ -163,7 +168,12 @@ GLAPI void APIENTRY glGetShaderSource(GLuint shader, GLsizei bufSize, GLsizei *l
 GLAPI void APIENTRY glCompileShader(GLuint shader) {}
 GLAPI void APIENTRY glGetShaderiv(GLuint shader, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glGetShaderInfoLog(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog) {}
-GLAPI void APIENTRY glShaderSource (GLuint shader, GLsizei count, const GLchar* *string, const GLint *length) {}
+#ifdef __APPLE__
+// MacOS buildbot GL headers are ancient, need the extra const
+GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint *length) {}
+#else
+GLAPI void APIENTRY glShaderSource(GLuint shader, GLsizei count, const GLchar* *string, const GLint *length) {}
+#endif
 
 GLAPI void APIENTRY glUniform1fARB(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2fARB(GLint location, GLfloat v0, GLfloat v1) {}
@@ -252,9 +262,9 @@ GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {}
 GLAPI void APIENTRY glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data) {}
 
-GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) { return (GLvoid*) NULL; }
+GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) { return (GLvoid*) 0; }
 GLAPI void APIENTRY glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length) {}
-GLAPI GLvoid* APIENTRY glMapBuffer(GLenum target, GLenum access) { return (GLvoid*) NULL; }
+GLAPI GLvoid* APIENTRY glMapBuffer(GLenum target, GLenum access) { return (GLvoid*) 0; }
 GLAPI GLboolean APIENTRY glUnmapBuffer(GLenum target) { return GL_FALSE; }
 
 GLAPI void APIENTRY glMultiTexCoord2i(GLenum target, GLint s, GLint t) {}
