@@ -13,7 +13,6 @@ namespace GL {
 	template<typename T> struct TRenderDataBuffer;
 
 	typedef TRenderDataBuffer<VA_TYPE_0> RenderDataBuffer0;
-	typedef TRenderDataBuffer<VA_TYPE_N> RenderDataBufferN;
 	typedef TRenderDataBuffer<VA_TYPE_C> RenderDataBufferC;
 	typedef TRenderDataBuffer<VA_TYPE_T> RenderDataBufferT;
 

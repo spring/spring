@@ -8,7 +8,6 @@
 
 // global general-purpose buffers
 static GL::RenderDataBuffer gRenderBuffer0 [2];
-static GL::RenderDataBuffer gRenderBufferN [2];
 static GL::RenderDataBuffer gRenderBufferC [2];
 static GL::RenderDataBuffer gRenderBufferFC[2];
 static GL::RenderDataBuffer gRenderBufferT [2];
@@ -22,7 +21,6 @@ static GL::RenderDataBuffer gRenderBuffer2DT[2];
 
 
 static GL::RenderDataBuffer0 tRenderBuffer0 [2];
-static GL::RenderDataBufferN tRenderBufferN [2];
 static GL::RenderDataBufferC tRenderBufferC [2];
 static GL::RenderDataBufferC tRenderBufferFC[2];
 static GL::RenderDataBufferT tRenderBufferT [2];
@@ -36,7 +34,6 @@ static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
 
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferN* GL::GetRenderBufferN () { return &tRenderBufferN [0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferC* GL::GetRenderBufferC () { return &tRenderBufferC [0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferC* GL::GetRenderBufferFC() { return &tRenderBufferFC[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferT* GL::GetRenderBufferT () { return &tRenderBufferT [0 /*globalRendering->drawFrame & 1*/ ]; }
@@ -68,7 +65,6 @@ void GL::InitRenderBuffers() {
 
 	for (int i = 0; i < 2; i++) {
 		SETUP_RBUFFER( 0, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER( N, i, 1 << 18, 1 << 16);
 		SETUP_RBUFFER( C, i, 1 << 20, 1 << 16); // more heavily used
 		SETUP_RBUFFER(FC, i, 1 << 10, 1 <<  8); // less heavily used
 		SETUP_RBUFFER( T, i, 1 << 18, 1 << 16);
@@ -83,7 +79,6 @@ void GL::InitRenderBuffers() {
 
 	for (int i = 0; i < 2; i++) {
 		CREATE_SHADER( 0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
-		CREATE_SHADER( N, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 		CREATE_SHADER( C, i, "", "\tf_color_rgba = v_color_rgba      * (1.0 / 255.0);\n");
 		CREATE_SHADER(FC, i, "", "\tf_color_rgba = v_color_rgba_flat * (1.0 / 255.0);\n");
 		CREATE_SHADER( T, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
@@ -103,7 +98,6 @@ void GL::InitRenderBuffers() {
 void GL::KillRenderBuffers() {
 	for (int i = 0; i < 2; i++) {
 		gRenderBuffer0 [i].Kill();
-		gRenderBufferN [i].Kill();
 		gRenderBufferC [i].Kill();
 		gRenderBufferFC[i].Kill();
 		gRenderBufferT [i].Kill();
@@ -121,12 +115,10 @@ void GL::SwapRenderBuffers() {
 	#if 0
 	// NB: called before frame is incremented
 	tRenderBuffer0[1 - (globalRendering->drawFrame & 1)].Reset();
-	tRenderBufferN[1 - (globalRendering->drawFrame & 1)].Reset();
 	tRenderBufferC[1 - (globalRendering->drawFrame & 1)].Reset();
 	tRenderBufferT[1 - (globalRendering->drawFrame & 1)].Reset();
 	#else
 	std::swap(tRenderBuffer0 [0], tRenderBuffer0 [1]);
-	std::swap(tRenderBufferN [0], tRenderBufferN [1]);
 	std::swap(tRenderBufferC [0], tRenderBufferC [1]);
 	std::swap(tRenderBufferFC[0], tRenderBufferFC[1]);
 	std::swap(tRenderBufferT [0], tRenderBufferT [1]);
@@ -139,7 +131,6 @@ void GL::SwapRenderBuffers() {
 	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
 
 	tRenderBuffer0 [0].Reset();
-	tRenderBufferN [0].Reset();
 	tRenderBufferC [0].Reset();
 	tRenderBufferFC[0].Reset();
 	tRenderBufferT [0].Reset();

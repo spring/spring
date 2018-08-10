@@ -48,12 +48,10 @@ public:
 	// standard API
 	inline void AddVertex0(const float3& p);
 	inline void AddVertex0(float x, float y, float z);
-	inline void AddVertexN(const float3& p, const float3& n);
 	inline void AddVertexT(const float3& p, float tx, float ty);
 	inline void AddVertexC(const float3& p, const unsigned char* c);
 	inline void AddVertexTC(const float3& p, float tx, float ty, const unsigned char* c);
 	inline void AddVertexTN(const float3& p, float tx, float ty, const float3& n);
-	inline void AddVertexTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt); 
 	inline void AddVertex2d0(float x, float z);
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
 	inline void AddVertex2dT(const float2 p, const float2 tc) { AddVertex2dT(p.x,p.y, tc.x,tc.y); }
@@ -62,11 +60,9 @@ public:
 	// same as the AddVertex... functions just without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
 	inline void AddVertexQ0(const float3& f3);
-	inline void AddVertexQN(const float3& p, const float3& n);
 	inline void AddVertexQC(const float3& p, const unsigned char* c);
 	inline void AddVertexQT(const float3& p, float tx, float ty);
 	inline void AddVertexQTN(const float3& p, float tx, float ty, const float3& n);
-	inline void AddVertexQTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt);
 	inline void AddVertexQTC(const float3& p, float tx, float ty, const unsigned char* c);
 	inline void AddVertexQ2d0(float x, float z);
 	inline void AddVertexQ2dT(float x, float y, float tx, float ty);
@@ -89,12 +85,10 @@ public:
 	// Render the VA
 	void DrawArray0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_0);
 	void DrawArray2d0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2D0);
-	void DrawArrayN(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_N);
 	void DrawArrayT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_T);
 	void DrawArrayC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_C);
 	void DrawArrayTC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TC);
 	void DrawArrayTN(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TN);
-	void DrawArrayTNT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TNT);
 	void DrawArray2dT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
 	void DrawArray2dTC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DTC);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = sizeof(float) * VA_SIZE_2DT);

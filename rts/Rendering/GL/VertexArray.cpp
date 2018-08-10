@@ -222,22 +222,6 @@ void CVertexArray::DrawArray2d0(const int drawType, unsigned int stride)
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void CVertexArray::DrawArrayN(const int drawType, unsigned int stride)
-{
-	if (drawIndex() == 0)
-		return;
-
-	CheckEndStrip();
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 3);
-	DrawArrays(drawType, stride);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-
 void CVertexArray::DrawArrayC(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
@@ -340,46 +324,6 @@ void CVertexArray::DrawArrayTN(const int drawType, unsigned int stride)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
-
-void CVertexArray::DrawArrayTNT(const int drawType, unsigned int stride)
-{
-	if (drawIndex() == 0)
-		return;
-
-	CheckEndStrip();
-
-	#define SET_ENABLE_ACTIVE_TEX(texUnit)            \
-		glClientActiveTexture(texUnit);               \
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	#define SET_DISABLE_ACTIVE_TEX(texUnit)           \
-		glClientActiveTexture(texUnit);               \
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-
-	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE0); glTexCoordPointer(2, GL_FLOAT, stride, drawArray +  3);
-	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE1); glTexCoordPointer(2, GL_FLOAT, stride, drawArray +  3); // FIXME? (format-specific)
-	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE5); glTexCoordPointer(3, GL_FLOAT, stride, drawArray +  8);
-	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE6); glTexCoordPointer(3, GL_FLOAT, stride, drawArray + 11);
-
-	glVertexPointer(3, GL_FLOAT, stride, drawArray + 0);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 5);
-
-	DrawArrays(drawType, stride);
-
-	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE6);
-	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE5);
-	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE1);
-	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE0);
-
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
-	#undef SET_ENABLE_ACTIVE_TEX
-	#undef SET_DISABLE_ACTIVE_TEX
-}
-
 
 void CVertexArray::DrawArrayTC(const int drawType, unsigned int stride)
 {
