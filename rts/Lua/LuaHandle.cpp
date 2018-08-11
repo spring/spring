@@ -24,6 +24,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/Unit.h"
@@ -990,11 +991,19 @@ void CLuaHandle::UnitDamaged(
 	lua_pushnumber(L, weaponDefID);
 	lua_pushnumber(L, projectileID);
 
-	if (attacker != nullptr && GetHandleFullRead(L)) {
-		lua_pushnumber(L, attacker->id);
-		lua_pushnumber(L, attacker->unitDef->id);
-		lua_pushnumber(L, attacker->team);
-		argCount += 3;
+	if (GetHandleFullRead(L)) {
+		const CProjectile *const proj = projectileHandler.GetProjectileBySyncedID(projectileID);
+		if (attacker != nullptr) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, proj != nullptr ? proj->GetTeamID() : attacker->team);
+			argCount += 3;
+		} else if (proj != nullptr) {
+			lua_pushnil(L);
+			lua_pushnil(L);
+			lua_pushnumber(L, proj->GetTeamID());
+			argCount += 3;
+		}
 	}
 
 	// call the routine
