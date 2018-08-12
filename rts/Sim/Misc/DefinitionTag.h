@@ -5,9 +5,9 @@
 #ifndef DEFINTION_TAG_H
 #define DEFINTION_TAG_H
 
-#include <assert.h>
+#include <cassert>
 #include "System/Misc/NonCopyable.h"
-#include <map>
+
 #include <vector>
 #include <sstream>
 #include <string>

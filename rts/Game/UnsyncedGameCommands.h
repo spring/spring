@@ -3,7 +3,6 @@
 #ifndef UNSYNCED_GAME_COMMANDS_H
 #define UNSYNCED_GAME_COMMANDS_H
 
-#include <map>
 #include <string>
 
 #include "IGameCommands.h"

@@ -409,7 +409,7 @@ bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Actio
 			continue;
 
 		// the key was used, ignore it (ex: alt+a)
-		ignoreNextChar = keyCodes->IsPrintable(key);
+		ignoreNextChar = keyCodes.IsPrintable(key);
 		break;
 	}
 
@@ -420,7 +420,7 @@ bool GameControllerTextInput::ConsumePressedKey(int key, const std::vector<Actio
 bool GameControllerTextInput::ConsumeReleasedKey(int key) const {
 	if (!userWriting)
 		return false;
-	if (keyCodes->IsPrintable(key))
+	if (keyCodes.IsPrintable(key))
 		return true;
 
 	return (key == SDLK_RETURN || key == SDLK_BACKSPACE || key == SDLK_DELETE || key == SDLK_HOME || key == SDLK_END || key == SDLK_RIGHT || key == SDLK_LEFT);

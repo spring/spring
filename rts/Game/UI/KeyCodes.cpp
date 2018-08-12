@@ -1,84 +1,98 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cctype>
-
+#include <SDL_keycode.h>
 
 #include "KeyCodes.h"
-#include "SDL_keycode.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/SDL1_keysym.h"
 #include "System/StringUtil.h"
 
-CKeyCodes* keyCodes = NULL;
+CKeyCodes keyCodes;
 
 
 int CKeyCodes::GetCode(const std::string& name) const
 {
-	const auto it = nameToCode.find(name);
-	if (it == nameToCode.end()) {
+	const auto pred = [](const NameCodePair& a, const NameCodePair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(nameToCode.begin(), nameToCode.end(), NameCodePair{name, 0}, pred);
+
+	if (iter == nameToCode.end() || iter->first != name)
 		return -1;
-	}
-	return it->second;
+
+	return iter->second;
 }
 
 
 std::string CKeyCodes::GetName(int code) const
 {
-	const auto it = codeToName.find(code);
-	if (it == codeToName.end()) {
-		return IntToString(code, "0x%03X");
-	}
-	return it->second;
-}
+	const auto pred = [](const CodeNamePair& a, const CodeNamePair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(codeToName.begin(), codeToName.end(), CodeNamePair{0, ""}, pred);
 
+	if (iter == codeToName.end() || iter->first != code)
+		return IntToString(code, "0x%03X");
+
+	return iter->second;
+}
 
 std::string CKeyCodes::GetDefaultName(int code) const
 {
-	const auto it = defaultCodeToName.find(code);
-	if (it == defaultCodeToName.end()) {
+	const auto pred = [](const CodeNamePair& a, const CodeNamePair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(defaultCodeToName.begin(), defaultCodeToName.end(), CodeNamePair{0, ""}, pred);
+
+	if (iter == defaultCodeToName.end() || iter->first != code)
 		return IntToString(code, "0x%03X");
-	}
-	return it->second;
+
+	return iter->second;
 }
 
 
 bool CKeyCodes::AddKeySymbol(const std::string& name, int code)
 {
-	if ((code < 0) || !IsValidLabel(name)) {
+	if ((code < 0) || !IsValidLabel(name))
 		return false;
-	}
 
 	const std::string keysym = StringToLower(name);
 
 	// do not allow existing keysyms to be renamed
-	const auto name_it = nameToCode.find(keysym);
-	if (name_it != nameToCode.end()) {
-		return false;
-	}
-	nameToCode[keysym] = code;
+	const auto namePred = [](const NameCodePair& a, const NameCodePair& b) { return (a.first < b.first); };
+	const auto nameIter = std::lower_bound(nameToCode.begin(), nameToCode.end(), NameCodePair{keysym, 0}, namePred);
 
+	if (nameIter != nameToCode.end() && nameIter->first == name)
+		return false;
+
+	nameToCode.emplace_back(keysym, code);
 	// assumes that the user would rather see their own names
-	codeToName[code] = keysym;
+	codeToName.emplace_back(code, keysym);
+
+	// swap into position
+	for (size_t i = nameToCode.size() - 1; i > 0; i--) {
+		if (nameToCode[i - 1].first < nameToCode[i].first)
+			break;
+
+		std::swap(nameToCode[i - 1], nameToCode[i]);
+	}
+	for (size_t i = codeToName.size() - 1; i > 0; i--) {
+		if (codeToName[i - 1].first < codeToName[i].first)
+			break;
+
+		std::swap(codeToName[i - 1], codeToName[i]);
+	}
+
 	return true;
 }
 
 
 bool CKeyCodes::IsValidLabel(const std::string& label)
 {
-	if (label.empty()) {
+	if (label.empty())
 		return false;
-	}
-	if (!isalpha(label[0])) {
-		return false;
-	}
-	for (const char& c: label) {
-		if (!isalnum(c) && (c != '_')) {
-			return false;
-		}
-	}
-	return true;
-}
 
+	if (!isalpha(label[0]))
+		return false;
+
+	// if any character is not alpha-numeric *and* not space, reject label as invalid
+	return (std::find_if(label.begin(), label.end(), [](char c) { return (!isalnum(c) && (c != '_')); }) == label.end());
+}
 
 bool CKeyCodes::IsModifier(int code)
 {
@@ -97,36 +111,36 @@ bool CKeyCodes::IsModifier(int code)
 }
 
 
-bool CKeyCodes::IsPrintable(int code)
+bool CKeyCodes::IsPrintable(int code) const
 {
-	return (printableCodes.find(code) != printableCodes.end());
-}
+	const auto pred = [](int a, int b) { return (a < b); };
+	const auto iter = std::lower_bound(printableCodes.begin(), printableCodes.end(), code);
 
+	return (iter != printableCodes.end() && *iter == code);
+}
 
 
 void CKeyCodes::AddPair(const std::string& name, const int code, const bool printable)
 {
-	if (nameToCode.find(name) == nameToCode.end()) {
-		nameToCode[name] = code;
-	}
-	if (codeToName.find(code) == codeToName.end()) {
-		codeToName[code] = name;
-	}
-	if (printable)
-		printableCodes.insert(code);
-}
+	nameToCode.emplace_back(name, code);
+	codeToName.emplace_back(code, name);
 
+	if (!printable)
+		return;
 
-CKeyCodes::CKeyCodes()
-{
-	Reset();
+	printableCodes.push_back(code);
 }
 
 
 void CKeyCodes::Reset()
 {
 	nameToCode.clear();
+	nameToCode.reserve(64);
 	codeToName.clear();
+	codeToName.reserve(64);
+
+	printableCodes.clear();
+	printableCodes.reserve(64);
 	
 	AddPair("backspace", SDLK_BACKSPACE);
 	AddPair("tab",       SDLK_TAB);
@@ -141,9 +155,10 @@ void CKeyCodes::Reset()
 
 	// ASCII mapped keysyms
 	for (unsigned char i = ' '; i <= 'z'; ++i) {
-		if (!isupper(i)) {
-			AddPair(std::string(1, i), i, true);
-		}
+		if (isupper(i))
+			continue;
+
+		AddPair(std::string(1, i), i, true);
 	}
 
 	AddPair("§", 0xA7, true);
@@ -151,7 +166,7 @@ void CKeyCodes::Reset()
 	AddPair("tilde", SDLK_BACKQUOTE, true);
 	AddPair("backquote", SDLK_BACKQUOTE, true);
 
-	/* Numeric keypad */
+	// Numeric keypad
 	AddPair("numpad0", SDLK_KP_0, true);
 	AddPair("numpad1", SDLK_KP_1, true);
 	AddPair("numpad2", SDLK_KP_2, true);
@@ -170,7 +185,7 @@ void CKeyCodes::Reset()
 	AddPair("numpad=", SDLK_KP_EQUALS, true);
 	AddPair("numpad_enter", SDLK_KP_ENTER);
 
-	/* Arrows + Home/End pad */
+	// Arrows + Home/End pad
 	AddPair("up",       SDLK_UP);
 	AddPair("down",     SDLK_DOWN);
 	AddPair("right",    SDLK_RIGHT);
@@ -181,7 +196,7 @@ void CKeyCodes::Reset()
 	AddPair("pageup",   SDLK_PAGEUP);
 	AddPair("pagedown", SDLK_PAGEDOWN);
 
-	/* Function keys */
+	// Function keys
 	AddPair("f1",  SDLK_F1);
 	AddPair("f2",  SDLK_F2);
 	AddPair("f3",  SDLK_F3);
@@ -198,7 +213,7 @@ void CKeyCodes::Reset()
 	AddPair("f14", SDLK_F14);
 	AddPair("f15", SDLK_F15);
 
-	/* Key state modifier keys */
+	// Key state modifier keys
 	//AddPair("numlock", SDLK_NUMLOCK);
 	//AddPair("capslock", SDLK_CAPSLOCK);
 	//AddPair("scrollock", SDLK_SCROLLOCK);
@@ -206,39 +221,29 @@ void CKeyCodes::Reset()
 	AddPair("ctrl",  SDLK_LCTRL);
 	AddPair("alt",   SDLK_LALT);
 	AddPair("meta",  SDLK_LGUI);
-	// I doubt these can be used correctly anyway (without special support in other parts of the spring code...)
-	//AddPair("super", SDLK_LSUPER);    /* Left "Windows" key */
-	//AddPair("mode", SDLK_MODE);       /* "Alt Gr" key */
-	//AddPair("compose", SDLK_COMPOSE); /* Multi-key compose key */
+	// these can not be used correctly anyway (without special support in other parts of Spring code...)
+	//AddPair("super", SDLK_LSUPER);    // Left "Windows" key
+	//AddPair("mode", SDLK_MODE);       // "Alt Gr" key
+	//AddPair("compose", SDLK_COMPOSE); // Multi-key compose key
 
-	/* Miscellaneous function keys */
+	// Miscellaneous function keys
 	AddPair("help", SDLK_HELP);
 	AddPair("printscreen", SDLK_PRINTSCREEN);
 	AddPair("print", SDLK_PRINTSCREEN);
 	//AddPair("sysreq", SDLK_SYSREQ);
 	//AddPair("break", SDLK_BREAK);
 	//AddPair("menu", SDLK_MENU);
-	//AddPair("power", SDLK_POWER);     /* Power Macintosh power key */
-	//AddPair("euro", SDLK_EURO);       /* Some european keyboards */
-	//AddPair("undo", SDLK_UNDO);       /* Atari keyboard has Undo */
+	//AddPair("power", SDLK_POWER);     // Power Macintosh power key
+	//AddPair("euro", SDLK_EURO);       // Some european keyboards
+	//AddPair("undo", SDLK_UNDO);       // Atari keyboard has Undo
 
-	//XXX Do they work? > NO
-	/*AddPair("joyx", 400);
-	AddPair("joyy", 401);
-	AddPair("joyz", 402);
-	AddPair("joyw", 403);
-	AddPair("joy0", 300);
-	AddPair("joy1", 301);
-	AddPair("joy2", 302);
-	AddPair("joy3", 303);
-	AddPair("joy4", 304);
-	AddPair("joy5", 305);
-	AddPair("joy6", 306);
-	AddPair("joy7", 307);
-	AddPair("joyup",    320);
-	AddPair("joydown",  321);
-	AddPair("joyleft",  322);
-	AddPair("joyright", 323);*/
+	std::sort(nameToCode.begin(), nameToCode.end(), [](const NameCodePair& a, const NameCodePair& b) { return (a.first < b.first); });
+	std::sort(codeToName.begin(), codeToName.end(), [](const CodeNamePair& a, const CodeNamePair& b) { return (a.first < b.first); });
+	std::sort(printableCodes.begin(), printableCodes.end());
+
+	nameToCode.erase(std::unique(nameToCode.begin(), nameToCode.end(), [](const NameCodePair& a, const NameCodePair& b) { return (a.first == b.first); }));
+	codeToName.erase(std::unique(codeToName.begin(), codeToName.end(), [](const CodeNamePair& a, const CodeNamePair& b) { return (a.first == b.first); }));
+	printableCodes.erase(std::unique(printableCodes.begin(), printableCodes.end()));
 
 	// remember our defaults
 	defaultNameToCode = nameToCode;
@@ -253,7 +258,6 @@ void CKeyCodes::PrintNameToCode() const
 	}
 }
 
-
 void CKeyCodes::PrintCodeToName() const
 {
 	for (const auto& p: codeToName) {
@@ -265,21 +269,23 @@ void CKeyCodes::PrintCodeToName() const
 void CKeyCodes::SaveUserKeySymbols(FILE* file) const
 {
 	bool output = false;
+
 	for (const auto& p: nameToCode) {
-		const std::string& keysym = p.first;
-		const auto def_it = defaultNameToCode.find(keysym);
-		if (def_it == defaultNameToCode.end()) {
-			// this keysym is not standard
-			const int code = p.second;
-			std::string name = GetDefaultName(code);
-			fprintf(file, "keysym  %-10s  %s\n", keysym.c_str(), name.c_str());
-			output = true;
-		}
+		const auto defSymPred = [](const NameCodePair& a, const NameCodePair& b) { return (a.first < b.first); };
+		const auto defSymIter = std::lower_bound(defaultNameToCode.begin(), defaultNameToCode.end(), NameCodePair{p.first, 0}, defSymPred);
+
+		if (defSymIter != defaultNameToCode.end() && defSymIter->first == p.first)
+			continue;
+
+		// this keysym is not standard
+		const std::string& extSymName = p.first;
+		const std::string& defSymName = GetDefaultName(p.second);
+		fprintf(file, "keysym  %-10s  %s\n", extSymName.c_str(), defSymName.c_str());
+		output = true;
 	}
 
-	if (output) {
-		fprintf(file, "\n");
-	}
-	
-	return;
+	if (!output)
+		return;
+
+	fprintf(file, "\n");
 }

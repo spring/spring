@@ -67,12 +67,10 @@ std::string CKeySet::GetString(bool useDefaultKeysym) const
 	std::string name;
 	std::string modstr;
 
-	if (keyCodes != NULL) {
-		if (useDefaultKeysym) {
-			name = keyCodes->GetDefaultName(key);
-		} else {
-			name = keyCodes->GetName(key);
-		}
+	if (useDefaultKeysym) {
+		name = keyCodes.GetDefaultName(key);
+	} else {
+		name = keyCodes.GetName(key);
 	}
 	
 #ifndef DISALLOW_RELEASE_BINDINGS
@@ -132,9 +130,8 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 	}
 
 	// remove ''s, if present
-	if ((s.size() >= 2) && (s[0] == '\'') && (s[s.size() - 1] == '\'')) {
+	if ((s.size() >= 2) && (s[0] == '\'') && (s[s.size() - 1] == '\''))
 		s = s.substr(1, s.size() - 2);
-	}
 
 	if (s.find("0x") == 0) {
 		const char* start = (s.c_str() + 2);
@@ -146,20 +143,18 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 			return false;
 		}
 	} else {
-		if ((keyCodes != NULL) && (key = keyCodes->GetCode(s)) < 0) {
+		if ((key = keyCodes.GetCode(s)) < 0) {
 			Reset();
 			if (showerror) LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
 			return false;
 		}
 	}
 
-	if (keyCodes != NULL && keyCodes->IsModifier(key)) {
+	if (keyCodes.IsModifier(key))
 		modifiers |= KS_ANYMOD;
-	}
 
-	if (AnyMod()) {
+	if (AnyMod())
 		ClearModifiers();
-	}
 	
 	return true;
 }

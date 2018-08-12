@@ -2139,21 +2139,26 @@ int LuaUnsyncedRead::GetModKeyState(lua_State* L)
 
 int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 {
-	lua_newtable(L);
-	for (auto key: KeyInput::GetPressedKeys()) {
-		if (key.second) {
-			const int keyCode = SDL21_keysyms(key.first);
+	const auto& keys = KeyInput::GetPressedKeys();
 
-			// [keyCode] = true
-			lua_pushboolean(L, true);
-			lua_rawseti(L, -2, keyCode);
+	lua_createtable(L, keys.size(), 0);
 
-			// ["keyName"] = true
-			lua_pushsstring(L, keyCodes->GetName(keyCode));
-			lua_pushboolean(L, true);
-			lua_rawset(L, -3);
-		}
+	for (auto key: keys) {
+		if (!key.second)
+			continue;
+
+		const int keyCode = SDL21_keysyms(key.first);
+
+		// [keyCode] = true
+		lua_pushboolean(L, true);
+		lua_rawseti(L, -2, keyCode);
+
+		// ["keyName"] = true
+		lua_pushsstring(L, keyCodes.GetName(keyCode));
+		lua_pushboolean(L, true);
+		lua_rawset(L, -3);
 	}
+
 	return 1;
 }
 
@@ -2170,10 +2175,7 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	if (keyCodes == nullptr)
-		return 0;
-
-	lua_pushnumber(L, SDL21_keysyms(keyCodes->GetCode(luaL_checksstring(L, 1))));
+	lua_pushnumber(L, SDL21_keysyms(keyCodes.GetCode(luaL_checksstring(L, 1))));
 	return 1;
 }
 
@@ -2181,8 +2183,8 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = SDL12_keysyms(luaL_checkint(L, 1));
-	lua_pushsstring(L, (keyCodes != nullptr)? keyCodes->GetName(keycode): "");
-	lua_pushsstring(L, (keyCodes != nullptr)? keyCodes->GetDefaultName(keycode): "");
+	lua_pushsstring(L, keyCodes.GetName(keycode));
+	lua_pushsstring(L, keyCodes.GetDefaultName(keycode));
 	return 2;
 }
 

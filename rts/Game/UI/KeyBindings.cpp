@@ -434,7 +434,7 @@ static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = 
 	if ((nextpos != std::string::npos) && ParseKeyChain(keystr, kc, nextpos))
 		return true;
 
-	keystr.replace(cpos, 1, IntToString(keyCodes->GetCode(","), "%#x"));
+	keystr.replace(cpos, 1, IntToString(keyCodes.GetCode(","), "%#x"));
 	return ParseKeyChain(keystr, kc, cpos);
 }
 
@@ -573,7 +573,7 @@ bool CKeyBindings::AddKeySymbol(const std::string& keysym, const std::string& co
 		LOG_L(L_WARNING, "AddKeySymbol: could not parse key: %s", code.c_str());
 		return false;
 	}
-	if (!keyCodes->AddKeySymbol(keysym, ks.Key())) {
+	if (!keyCodes.AddKeySymbol(keysym, ks.Key())) {
 		LOG_L(L_WARNING, "AddKeySymbol: could not add: %s", keysym.c_str());
 		return false;
 	}
@@ -638,10 +638,10 @@ void CKeyBindings::PushAction(const Action& action)
 		Print();
 	}
 	else if (action.command == "keysyms") {
-		keyCodes->PrintNameToCode(); //TODO move to CKeyCodes?
+		keyCodes.PrintNameToCode(); //TODO move to CKeyCodes?
 	}
 	else if (action.command == "keycodes") {
-		keyCodes->PrintCodeToName(); //TODO move to CKeyCodes?
+		keyCodes.PrintCodeToName(); //TODO move to CKeyCodes?
 	}
 	else {
 		ExecuteCommand(action.rawline);
@@ -686,7 +686,7 @@ bool CKeyBindings::ExecuteCommand(const std::string& line)
 	}
 	else if (command == "unbindall") {
 		bindings.clear();
-		keyCodes->Reset();
+		keyCodes.Reset();
 		Bind("enter", "chat"); // bare minimum
 	}
 	else {
@@ -763,11 +763,11 @@ bool CKeyBindings::FileSave(FILE* out) const
 	fprintf(out, "\n");
 
 	// save the user defined key symbols
-	keyCodes->SaveUserKeySymbols(out);
+	keyCodes.SaveUserKeySymbols(out);
 
 	// save the fake meta key (if it has been defined)
 	if (fakeMetaKey >= 0)
-		fprintf(out, "fakemeta  %s\n\n", keyCodes->GetName(fakeMetaKey).c_str());
+		fprintf(out, "fakemeta  %s\n\n", keyCodes.GetName(fakeMetaKey).c_str());
 
 	// save the bindings
 	for (const auto& p: bindings) {

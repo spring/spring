@@ -15,7 +15,6 @@
 
 #include <algorithm>
 #include <numeric>
-#include <map>
 #include <cctype>
 #include <cstring>
 #include <fstream>
