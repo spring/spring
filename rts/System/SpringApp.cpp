@@ -273,7 +273,7 @@ bool SpringApp::Init()
 	#ifndef HEADLESS
 	agui::gui = new agui::Gui();
 	#endif
-	keyCodes = new CKeyCodes();
+	keyCodes.Reset();
 
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
@@ -904,7 +904,6 @@ void SpringApp::Kill(bool fromRun)
 	#ifndef HEADLESS
 	spring::SafeDelete(agui::gui);
 	#endif
-	spring::SafeDelete(keyCodes);
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
 
