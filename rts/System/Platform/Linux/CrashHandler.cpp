@@ -8,9 +8,8 @@
 #include <cstdio>
 #include <string>
 
+#include <array>
 #include <deque>
-#include <map>
-#include <set>
 #include <vector>
 #include <new>
 
@@ -39,6 +38,9 @@
 
 #if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
+#else
+// NB: Mac/CrashHandler.cpp #include's this compilation unit
+#define ADDR2LINE "atos"
 #endif
 
 static const int MAX_STACKTRACE_DEPTH = 100;
@@ -71,6 +73,7 @@ struct StackFrame {
 };
 
 typedef std::vector<StackFrame> StackTrace;
+typedef std::pair<std::string, uintptr_t> PathAddrPair;
 
 static int reentrances = 0;
 
@@ -266,65 +269,70 @@ static int CommonStringLength(const std::string& str1, const std::string& str2)
  * Finds the base memory address in the running process for all the libraries
  * involved in the crash.
  */
-static void FindBaseMemoryAddresses(const StackTrace& stacktrace, std::map<std::string, uintptr_t>& baseMemAddrPaths)
+static unsigned int FindBaseMemoryAddresses(const StackTrace& stacktrace, std::array<PathAddrPair, 1024>& baseMemAddrPaths)
 {
 	// store all paths which we have to find
-	std::set<std::string> nonFoundPaths;
+	std::array<PathAddrPair, 1024> notFoundPaths;
 
-	for (const StackFrame& sf: stacktrace) {
-		baseMemAddrPaths[sf.path] = 0;
-	}
+	unsigned int numAddrPairs = 0;
 
-	// pair<std::string, uintptr_t>
-	for (const auto& addrPair: baseMemAddrPaths) {
-		nonFoundPaths.insert(addrPair.first);
-	}
+	const auto AddressPred = [&](const StackFrame& sf) { baseMemAddrPaths[numAddrPairs++] = {sf.path, 0}; };
+	const auto SortCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first >  b.first); };
+	const auto FindCompare = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first <  b.first); };
+	const auto  UniquePred = [](const PathAddrPair& a, const PathAddrPair& b) { return (a.first == b.first); };
 
-	// /proc/self/maps contains the base addresses for all loaded dynamic
-	// libaries of the current process + other stuff (which we are not interested in)
+	std::for_each(stacktrace.begin(), stacktrace.begin() + std::min(stacktrace.size(), baseMemAddrPaths.size()), AddressPred);
+	// sort in descending order, then reverse s.t. empty strings do not end up in front
+	std::sort(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs, SortCompare);
+	std::reverse(baseMemAddrPaths.begin(), baseMemAddrPaths.begin() + numAddrPairs);
+
+	const auto begUniquePaths = baseMemAddrPaths.begin();
+	const auto endUniquePaths = std::unique(begUniquePaths, begUniquePaths + numAddrPairs, UniquePred);
+
+	std::for_each(begUniquePaths, begUniquePaths + (numAddrPairs = endUniquePaths - begUniquePaths), [&](const PathAddrPair& p) { notFoundPaths[&p - begUniquePaths] = p; });
+
+	// /proc/self/maps contains the base addresses for all loaded dynamic libs
+	// of the current process + other stuff (which we are not interested in)
 	FILE* mapsFile = fopen("/proc/self/maps", "rb");
 
 	if (mapsFile == nullptr)
-		return;
+		return 0;
 
 	// format of /proc/self/maps:
 	// (column names)  address           perms offset  dev   inode      pathname
 	// (example 32bit) 08048000-08056000 r-xp 00000000 03:0c 64593      /usr/sbin/gpm
 	// (example 64bit) ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0   [vsyscall]
-	unsigned long int memStartAddr;
-	unsigned long int binAddrOffset;
+	unsigned long int memStartAddr = 0;
+	unsigned long int binAddrOffset = 0;
 
 	char binPathName[512];
 	char binAddrLine[512];
 
 	// read and parse all lines
-	while (!nonFoundPaths.empty() && (fgets(binAddrLine, sizeof(binAddrLine) - 1, mapsFile) != nullptr)) {
+	while (numAddrPairs > 0 && fgets(binAddrLine, sizeof(binAddrLine) - 1, mapsFile) != nullptr) {
 		if (sscanf(binAddrLine, "%lx-%*x %*s %lx %*s %*u %s", &memStartAddr, &binAddrOffset, binPathName) != 3)
 			continue;
 
 		if (binAddrOffset != 0)
 			continue;
 
-		// start of binary's memory space
-		std::string matchingPath;
 
 		// go through all paths of the binaries involved in the stacktrace
 		// for each, check if the current line contains this binary
-		for (const std::string& nonFoundPath: nonFoundPaths) {
-			if (nonFoundPath == binPathName) {
-				matchingPath = nonFoundPath;
-				break;
-			}
-		}
+		const auto end = notFoundPaths.begin() + (endUniquePaths - begUniquePaths);
+		const auto iter = std::lower_bound(notFoundPaths.begin(), end, PathAddrPair{binPathName, 0}, FindCompare);
 
-		if (matchingPath.empty())
+		if (iter == end || iter->second == uintptr_t(-1) || iter->first != binPathName)
 			continue;
 
-		baseMemAddrPaths[matchingPath] = memStartAddr;
-		nonFoundPaths.erase(matchingPath);
+		baseMemAddrPaths[iter - notFoundPaths.begin()].second = memStartAddr;
+		notFoundPaths[iter - notFoundPaths.begin()].second = uintptr_t(-1);
+
+		numAddrPairs -= 1;
 	}
 
 	fclose(mapsFile);
+	return (endUniquePaths - begUniquePaths);
 }
 
 /**
@@ -390,16 +398,12 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 
 static bool ContainsDriverLib(const std::string& path)
 {
-	static const std::array<std::string, 6> glDrivers({
+	static const     std::function<bool(const char*)> strCmpPred = [&](const char* s) { return (strstr(path.c_str(), s) != nullptr); };
+	static constexpr std::array<const char*, 6> glDrivers({
 		"libGLcore.so", "psb_dri.so", "i965_dri.so", "fglrx_dri.so", "amdgpu_dri.so", "libnvidia-glcore.so"
 	});
 
-	for (const std::string& driver: glDrivers) {
-		if (path.find(driver) != std::string::npos)
-			return true;
-	}
-
-	return false;
+	return (std::find_if(glDrivers.begin(), glDrivers.end(), strCmpPred) != glDrivers.end());
 }
 
 
@@ -464,23 +468,23 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 
 
 	// detect base memory-addresses of all libs found in the stacktrace
-	std::map<std::string, uintptr_t> baseMemAddrPaths;
+	std::array<PathAddrPair, 1024> baseMemAddrPaths;
 	std::deque<size_t> stackFrameIndices;
 
 	std::string       execCommandString;
 	std::stringstream execCommandBuffer;
 
-	FindBaseMemoryAddresses(stacktrace, baseMemAddrPaths);
-
-
 	LOG_L(L_DEBUG, "[%s][5]", __func__);
 
 	// finally translate it; nested s.t. the outer loop covers
 	// all the entries for one library (fewer addr2line calls)
-	for (const auto& baseMemAddrPair: baseMemAddrPaths) {
+	for (unsigned int j = 0, numAddrPairs = FindBaseMemoryAddresses(stacktrace, baseMemAddrPaths); j < numAddrPairs; j++) {
+		const PathAddrPair& baseMemAddrPair = baseMemAddrPaths[j];
+
 		const std::string& modulePath = baseMemAddrPair.first;
 		const std::string symbolFile = LocateSymbolFile(modulePath);
 
+		assert(!modulePath.empty());
 		LOG_L(L_DEBUG, "[%s][6] modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
 
 		{
@@ -582,7 +586,6 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 	}
 
 	LOG_L(L_DEBUG, "[%s][7]", __func__);
-	return;
 }
 
 
