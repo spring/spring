@@ -349,7 +349,8 @@ GLAPI void APIENTRY glGetTexLevelParameteriv(GLenum target, GLint level, GLenum 
 
 GLAPI void APIENTRY glInitNames() {}
 
-GLAPI GLboolean APIENTRY glIsTexture(GLuint texture) { return 0; }
+GLAPI GLboolean APIENTRY glIsEnabled (GLenum cap) { return GL_FALSE; }
+GLAPI GLboolean APIENTRY glIsTexture(GLuint texture) { return GL_FALSE; }
 
 GLAPI void APIENTRY glLightf(GLenum light, GLenum pname, GLfloat param) {}
 GLAPI void APIENTRY glLightModelfv(GLenum pname, const GLfloat *params) {}
