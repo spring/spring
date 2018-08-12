@@ -50,7 +50,8 @@ namespace GL {
 	};
 
 
-	void SetMatrixStatePointer(bool mainThread);
+	MatrixState* SetMatrixStatePointer(bool mainThread);
+	MatrixState* GetMatrixStatePointer();
 
 
 	void MatrixMode(unsigned int glMode);
@@ -76,5 +77,6 @@ namespace GL {
 	void RotateZ(float a);
 }
 
+#define glMatrixStatePtr GL::GetMatrixStatePointer()
 #endif
 

@@ -57,6 +57,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/GeometryBuffer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glStateDebug.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/LightHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GL/AttribState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/MatrixState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/RenderDataBuffer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArray.cpp"

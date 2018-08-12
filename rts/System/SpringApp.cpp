@@ -49,7 +49,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/MatrixState.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -242,7 +241,9 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
 
+	GL::SetAttribStatePointer(true);
 	GL::SetMatrixStatePointer(true);
+
 	CCameraHandler::InitStatic();
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 

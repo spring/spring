@@ -21,6 +21,7 @@
 #endif // defined(HEADLESS)
 
 
+#include "AttribState.hpp"
 #include "MatrixState.hpp"
 #include "glStateDebug.h"
 

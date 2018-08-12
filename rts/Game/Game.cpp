@@ -36,7 +36,6 @@
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/GL/MatrixState.hpp"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -353,6 +352,8 @@ void CGame::LoadGame(const std::string& mapName)
 	//   when LoadingMT=1 (!!!)
 	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
+
+	GL::SetAttribStatePointer(Threading::IsMainThread());
 	GL::SetMatrixStatePointer(Threading::IsMainThread());
 
 	auto& globalQuit = gu->globalQuit;
