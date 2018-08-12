@@ -50,7 +50,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	// typedef std::function<bool(const AddrPathPair&, const AddrPathPair&)> AddrPathComp;
 
 	std::array<AddrPathPair, 1024> addrPathMap;
-	std::queue<size_t> stackFrameIndices;
+	std::deque<size_t> stackFrameIndices;
 	std::ostringstream execCommandBuffer;
 	std::string execCommandString;
 
@@ -123,7 +123,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		for (const StackFrame& stackFrame: stacktrace) {
 			if (stackFrame.path == modulePath) {
 				execCommandBuffer << " " << std::hex << stackFrame.ip;
-				indices.push(i);
+				stackFrameIndices.push_back(i);
 			}
 			i++;
 		}
@@ -141,8 +141,8 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 			char line[2048];
 
 			while (fgets_addr2line(line, sizeof(line), cmdOut) != nullptr) {
-				i = indices.front();
-				indices.pop();
+				i = stackFrameIndices.front();
+				stackFrameIndices.pop_front();
 
 				StackEntry entry;
 				entry.funcname = std::string(line);
