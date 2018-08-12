@@ -201,6 +201,7 @@ void CTimeProfiler::ResetState() {
 	while (!ulk.try_lock()) {}
 
 	profiles.clear();
+	profiles.reserve(128);
 	sortedProfiles.clear();
 	#ifdef THREADPOOL
 	threadProfiles.clear();
