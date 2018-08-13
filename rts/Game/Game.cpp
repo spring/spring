@@ -695,7 +695,7 @@ void CGame::LoadInterface()
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 	resourceBar = new CResourceBar();
-	selectionKeys = new CSelectionKeyHandler();
+	selectionKeys.Init();
 
 	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
 		grouphandlers.push_back(new CGroupHandler(t));
@@ -843,7 +843,7 @@ void CGame::KillInterface()
 	spring::SafeDelete(resourceBar);
 	spring::SafeDelete(tooltip); // CTooltipConsole*
 	keyBindings.Kill();
-	spring::SafeDelete(selectionKeys); // CSelectionKeyHandler*
+	selectionKeys.Kill(); // CSelectionKeyHandler*
 	spring::SafeDelete(inMapDrawerModel);
 	spring::SafeDelete(inMapDrawer);
 

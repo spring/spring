@@ -246,8 +246,13 @@ void CKeyCodes::Reset()
 	printableCodes.erase(std::unique(printableCodes.begin(), printableCodes.end()));
 
 	// remember our defaults
-	defaultNameToCode = nameToCode;
-	defaultCodeToName = codeToName;
+	defaultNameToCode.clear();
+	defaultNameToCode.resize(nameToCode.size());
+	defaultCodeToName.clear();
+	defaultCodeToName.resize(codeToName.size());
+
+	std::copy(nameToCode.begin(), nameToCode.end(), defaultNameToCode.begin());
+	std::copy(codeToName.begin(), codeToName.end(), defaultCodeToName.begin());
 }
 
 
