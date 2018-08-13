@@ -15,8 +15,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/Building.h"
 #include "System/Log/ILog.h"
+#include "System/myMath.h"
 #include "System/StringHash.h"
 #include "System/UnorderedSet.hpp"
 
@@ -110,10 +110,10 @@ namespace {
 	DECLARE_FILTER_EX(name, 0, condition, ,)
 
 
-	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0)
-	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != nullptr)
-	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0)
-	DECLARE_FILTER(Aircraft, unit->unitDef->canfly)
+	DECLARE_FILTER(Builder, unit->unitDef->IsBuilderUnit())
+	DECLARE_FILTER(Building, unit->unitDef->IsBuildingUnit())
+	DECLARE_FILTER(Transport, unit->unitDef->IsTransportUnit())
+	DECLARE_FILTER(Aircraft, unit->unitDef->IsAirUnit())
 	DECLARE_FILTER(Weapons, !unit->weapons.empty())
 	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty())
 	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
@@ -273,7 +273,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 			ReadDelimiter(selectString);
 
-			const float maxDist = atof(ReadToken(selectString).c_str());
+			const float maxDist = Square(atof(ReadToken(selectString).c_str()));
 			const float gndDist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange, false);
 
 			float3 mp = camera->GetPos() + mouse->dir * gndDist;
@@ -291,7 +291,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 					if (cylindrical)
 						up.y = 0.0f;
 
-					if (mp.SqDistance(up) >= Square(maxDist))
+					if (mp.SqDistance(up) >= maxDist)
 						continue;
 
 					selection.push_back(unit);
@@ -306,7 +306,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 					if (cylindrical)
 						up.y = 0.0f;
 
-					if (mp.SqDistance(up) >= Square(maxDist))
+					if (mp.SqDistance(up) >= maxDist)
 						continue;
 
 					selection.push_back(unit);
