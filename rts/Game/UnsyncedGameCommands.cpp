@@ -207,7 +207,7 @@ public:
 			"<chat command description: Select>") {} // TODO
 
 	bool Execute(const UnsyncedAction& action) const {
-		selectionKeys->DoSelection(action.GetArgs()); //TODO give it a return argument?
+		selectionKeys.DoSelection(action.GetArgs()); //TODO give it a return argument?
 		return true;
 	}
 };
