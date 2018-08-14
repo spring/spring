@@ -499,9 +499,10 @@ void CMobileCAI::ExecutePatrol(Command& c)
 {
 	assert(owner->unitDef->canPatrol);
 	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
+		LOG_L(L_ERROR, "[MobileCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
 		return;
 	}
+
 	Command temp(CMD_FIGHT, c.GetOpts() | INTERNAL_ORDER, c.GetPos(0));
 
 	commandQue.push_back(c);
@@ -541,13 +542,13 @@ void CMobileCAI::ExecuteFight(Command& c)
 		tempOrder = false;
 	}
 	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[MCAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
+		LOG_L(L_ERROR, "[MobileCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
 		return;
 	}
 	if (c.GetNumParams() >= 6) {
-		if (!inCommand) {
+		if (!inCommand)
 			commandPos1 = c.GetPos(3);
-		}
+
 	} else {
 		// Some hackery to make sure the line (commandPos1,commandPos2) is NOT
 		// rotated (only shortened) if we reach this because the previous return

@@ -287,7 +287,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	}
 
 	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[ACAI::%s][f=%d][id=%d] CMD_FIGHT #params < 3", __FUNCTION__, gs->frameNum, owner->id);
+		LOG_L(L_ERROR, "[AirCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
 		return;
 	}
 

@@ -1187,7 +1187,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		inCommand = true;
 	}
 	if (c.GetNumParams() < 3) {
-		LOG_L(L_ERROR, "[BuilderCAI::%s] invalid CMD_FIGHT for builder %d (%s)", __func__, owner->id, owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR, "[BuilderCAI::%s][f=%d][id=%d][#c.params=%d min=3]", __func__, gs->frameNum, owner->id, c.GetNumParams());
 		return;
 	}
 
