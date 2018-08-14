@@ -370,7 +370,7 @@ void CHoverAirMoveType::UpdateTakeoff()
 
 	UpdateAirPhysics();
 
-	const float curAltitude = amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+	const float curAltitude = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
 	const float minAltitude = orgWantedHeight * 0.8f;
 
 	if (curAltitude <= minAltitude)
