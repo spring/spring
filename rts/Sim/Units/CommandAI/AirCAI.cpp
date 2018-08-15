@@ -514,11 +514,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 		if (guardee->pos.IsInBounds()) {
 			c2.PushPos(guardee->pos);
 		} else {
-			float3 clampedGuardeePos = guardee->pos;
-
-			clampedGuardeePos.ClampInBounds();
-
-			c2.PushPos(clampedGuardeePos);
+			c2.PushPos(guardee->pos.cClampInBounds());
 		}
 
 		commandQue.push_front(c2);

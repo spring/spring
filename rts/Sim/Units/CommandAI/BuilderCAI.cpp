@@ -542,8 +542,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 		// in the first place (in this case).
 		StopMoveAndFinishCommand();
 	} else {
-		Command c2(CMD_RECLAIM, 0, f->id + unitHandler.MaxUnits());
-		commandQue.push_front(c2);
+		commandQue.push_front(Command(CMD_RECLAIM, 0, f->id + unitHandler.MaxUnits()));
 		// this assumes that the reclaim command can never return directly
 		// without having reclaimed the target
 		SlowUpdate();
@@ -1573,19 +1572,17 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos, float radius, u
 {
 	const int rid = FindReclaimTarget(pos, radius, cmdopt, recoptions);
 
-	if (rid >= 0) {
-		if (!(recoptions & REC_NORESCHECK)) {
-			// FIGHT commands always resource check
-			PushOrUpdateReturnFight();
-		}
+	if (rid < 0)
+		return false;
 
-		Command cmd(CMD_RECLAIM, cmdopt | INTERNAL_ORDER, rid, pos);
-			cmd.PushParam(radius);
-		commandQue.push_front(cmd);
-		return true;
-	}
+	// FIGHT commands always resource check
+	if (!(recoptions & REC_NORESCHECK))
+		PushOrUpdateReturnFight();
 
-	return false;
+	Command c(CMD_RECLAIM, cmdopt | INTERNAL_ORDER, rid, pos);
+	c.PushParam(radius);
+	commandQue.push_front(c);
+	return true;
 }
 
 
@@ -1624,8 +1621,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	}
 
 	if (best) {
-		Command c2(CMD_RESURRECT, options | INTERNAL_ORDER, unitHandler.MaxUnits() + best->id);
-		commandQue.push_front(c2);
+		commandQue.push_front(Command(CMD_RESURRECT, options | INTERNAL_ORDER, unitHandler.MaxUnits() + best->id));
 		return true;
 	}
 
@@ -1687,7 +1683,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 {
 	QuadFieldQuery qfQuery;
 	quadField.GetUnitsExact(qfQuery, pos, radius, false);
-	const CUnit* bestUnit = NULL;
+	const CUnit* bestUnit = nullptr;
 
 	const float maxSpeed = owner->moveType->GetMaxSpeed();
 	float unitSpeed = 0.0f;
@@ -1785,13 +1781,12 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		if (attackEnemy)
 			PushOrUpdateReturnFight();
 
-		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER, bestUnit->id, pos);
-			cmd.PushParam(radius);
-		commandQue.push_front(cmd);
+		Command c(CMD_REPAIR, options | INTERNAL_ORDER, bestUnit->id, pos);
+		c.PushParam(radius);
+		commandQue.push_front(c);
 	} else {
 		PushOrUpdateReturnFight(); // attackEnemy must be true
-		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER, bestUnit->id);
-		commandQue.push_front(cmd);
+		commandQue.push_front(Command(CMD_ATTACK, options | INTERNAL_ORDER, bestUnit->id));
 	}
 
 	return true;

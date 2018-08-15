@@ -390,8 +390,7 @@ void CFactoryCAI::SlowUpdate()
 				} break;
 				default: {
 					CCommandAI::SlowUpdate();
-					break;
-				}
+				} break;
 			}
 		}
 
@@ -413,14 +412,16 @@ void CFactoryCAI::ExecuteStop(Command& c)
 
 int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
-	if (pointed) {
-		if (teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (owner->unitDef->canGuard) {
-				return CMD_GUARD;
-			}
-		}
-	}
-	return CMD_MOVE;
+	if (pointed == nullptr)
+		return CMD_MOVE;
+
+	if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam))
+		return CMD_MOVE;
+
+	if (!owner->unitDef->canGuard)
+		return CMD_MOVE;
+
+	return CMD_GUARD;
 }
 
 

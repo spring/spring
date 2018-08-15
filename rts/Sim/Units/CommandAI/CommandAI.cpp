@@ -984,8 +984,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	if (c.GetID() == CMD_ATTACK) {
 		// avoid weaponless units moving to 0 distance when given attack order
 		if (owner->weapons.empty() && (!owner->unitDef->canKamikaze)) {
-			Command c2(CMD_STOP);
-			commandQue.push_back(c2);
+			commandQue.push_back(Command(CMD_STOP));
 			return;
 		}
 	}
@@ -1284,6 +1283,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 			}
 		}
 	}
+
 	return q.end();
 }
 
