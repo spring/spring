@@ -141,7 +141,7 @@ void CUnitHandler::Kill()
 {
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
-		u->delayedWreckLevel = -1;
+		u->KilledScriptFinished(-1);
 		unitMemPool.free(u);
 	}
 
