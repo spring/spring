@@ -10,6 +10,7 @@ CR_REG_METADATA(Command, (
 	CR_MEMBER(id),
 
 	CR_MEMBER(timeOut),
+	CR_MEMBER(pageIndex),
 	CR_MEMBER(numParams),
 	CR_MEMBER(tag),
 	CR_MEMBER(options),
