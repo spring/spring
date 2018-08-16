@@ -114,7 +114,7 @@ bool CKeyCodes::IsModifier(int code)
 bool CKeyCodes::IsPrintable(int code) const
 {
 	const auto pred = [](int a, int b) { return (a < b); };
-	const auto iter = std::lower_bound(printableCodes.begin(), printableCodes.end(), code);
+	const auto iter = std::lower_bound(printableCodes.begin(), printableCodes.end(), code, pred);
 
 	return (iter != printableCodes.end() && *iter == code);
 }
