@@ -60,6 +60,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/Map/MapParser.cpp"
 	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
 	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
+	"${ENGINE_SRC_ROOT}/Sim/Units/CommandAI/Command.cpp" ## LuaUtils::ParseCommand*
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
