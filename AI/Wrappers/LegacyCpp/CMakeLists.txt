@@ -52,6 +52,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${mySourceDir}/MoveData"
 		"${mySourceDir}/UnitDef"
 		"${rts}/ExternalAI/AISCommands"
+		"${rts}/Sim/Units/CommandAI/Command"
 		"${rts}/System/float3"
 		${ai_common_SRC}
 		)
