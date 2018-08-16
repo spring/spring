@@ -600,7 +600,7 @@ struct SBuildUnitCommand {
 	int timeOut;
 
 	int toBuildUnitDefId;
-	const float* buildPos_posF3;
+	float* buildPos_posF3;
 	/// set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
 	int facing;
 }; //$ COMMAND_UNIT_BUILD Unit_build REF:toBuildUnitDefId->UnitDef
@@ -760,7 +760,7 @@ struct SMoveUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toPos_posF3;
+	float* toPos_posF3;
 }; //$ COMMAND_UNIT_MOVE Unit_moveTo
 
 struct SPatrolUnitCommand {
@@ -778,7 +778,7 @@ struct SPatrolUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toPos_posF3;
+	float* toPos_posF3;
 }; //$ COMMAND_UNIT_PATROL Unit_patrolTo
 
 struct SFightUnitCommand {
@@ -796,7 +796,7 @@ struct SFightUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toPos_posF3;
+	float* toPos_posF3;
 }; //$ COMMAND_UNIT_FIGHT Unit_fight
 
 struct SAttackUnitCommand {
@@ -834,7 +834,7 @@ struct SAttackAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toAttackPos_posF3;
+	float* toAttackPos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_ATTACK_AREA Unit_attackArea
 
@@ -994,7 +994,7 @@ struct SSetBaseUnitCommand {
 	 */
 	int timeOut;
 
-	const float* basePos_posF3;
+	float* basePos_posF3;
 }; //$ COMMAND_UNIT_SET_BASE Unit_setBase
 
 //struct SInternalUnitCommand {
@@ -1065,7 +1065,7 @@ struct SLoadUnitsAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_LOAD_UNITS_AREA Unit_loadUnitsInArea
 
@@ -1102,7 +1102,7 @@ struct SUnloadUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toPos_posF3;
+	float* toPos_posF3;
 	int toUnloadUnitId;
 }; //$ COMMAND_UNIT_UNLOAD_UNIT Unit_unload REF:toUnloadUnitId->Unit
 
@@ -1121,7 +1121,7 @@ struct SUnloadUnitsAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* toPos_posF3;
+	float* toPos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_UNLOAD_UNITS_AREA Unit_unloadUnitsInArea
 
@@ -1194,7 +1194,7 @@ struct SReclaimAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_RECLAIM_AREA Unit_reclaimInArea
 
@@ -1265,7 +1265,7 @@ struct SDGunPosUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 }; //$ COMMAND_UNIT_D_GUN_POS Unit_dGunPosition
 
 struct SRestoreAreaUnitCommand {
@@ -1283,7 +1283,7 @@ struct SRestoreAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_RESTORE_AREA Unit_restoreArea
 
@@ -1358,7 +1358,7 @@ struct SResurrectAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_RESURRECT_AREA Unit_resurrectInArea
 
@@ -1395,7 +1395,7 @@ struct SCaptureAreaUnitCommand {
 	 */
 	int timeOut;
 
-	const float* pos_posF3;
+	float* pos_posF3;
 	float radius;
 }; //$ COMMAND_UNIT_CAPTURE_AREA Unit_captureInArea
 
@@ -1469,7 +1469,7 @@ struct SCustomUnitCommand {
 	int timeOut;
 
 	int cmdId;
-	const float* params;
+	float* params;
 	int params_size;
 }; //$ COMMAND_UNIT_CUSTOM Unit_executeCustomCommand ARRAY:params
 
