@@ -17,6 +17,12 @@ CR_REG_METADATA(Command, (
 	CR_MEMBER(params)
 ))
 
+CR_BIND_TEMPLATE(CommandParamsPool, )
+CR_REG_METADATA_TEMPLATE(CommandParamsPool, (
+	CR_MEMBER(pages),
+	CR_MEMBER(indcs)
+))
+
 
 Command::~Command() {
 	if (!IsPooledCommand())
