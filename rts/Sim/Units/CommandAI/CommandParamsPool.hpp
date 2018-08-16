@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "System/creg/creg_cond.h"
+
 template<typename T, size_t N, size_t S> struct TCommandParamsPool {
 public:
 	const T* GetPtr(unsigned int i, unsigned int j     ) const { assert(i < pages.size()); return (pages[i].data( ) + j); }
@@ -49,6 +51,8 @@ public:
 	}
 
 private:
+	CR_DECLARE_STRUCT(TCommandParamsPool)
+
 	std::vector< std::vector<T> > pages;
 	std::vector<unsigned int> indcs;
 };
