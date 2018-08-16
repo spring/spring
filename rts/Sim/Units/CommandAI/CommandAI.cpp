@@ -970,8 +970,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	bool first;
 	if (CancelCommands(c, commandQue, first) > 0) {
 		if (first) {
-			Command stopCommand(CMD_STOP);
-			commandQue.push_front(stopCommand);
+			commandQue.push_front(Command(CMD_STOP));
 			SlowUpdate();
 		}
 		return;

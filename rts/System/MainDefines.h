@@ -68,6 +68,13 @@
 #endif
 
 
+#ifdef __GNUC__
+	#define _deprecated __attribute__ ((deprecated))
+#else
+	#define _deprecated
+#endif
+
+
 #ifdef _MSC_VER
 	/* Microsoft Visual C++ 7.0: MSC_VER = 1300
 	   Microsoft Visual C++ 7.1: MSC_VER = 1310 */
