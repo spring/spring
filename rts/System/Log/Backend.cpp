@@ -3,23 +3,67 @@
 #include <cstdio>
 #include <cstdarg>
 #include <cstring>
-#include <set>
+
+#include <algorithm>
+#include <array>
 
 #include "Backend.h"
 #include "DefaultFilter.h"
 #include "LogUtil.h"
 #include "System/MainDefines.h"
 
+#define MAX_LOG_SINKS 8
 
-namespace {
-	std::set<log_sink_ptr>& log_formatter_getSinks() {
-		static std::set<log_sink_ptr> sinks;
-		return sinks;
+namespace log_formatter {
+	static size_t numSinks = 0;
+
+	static std::array<log_sink_ptr, MAX_LOG_SINKS> sinks = {nullptr};
+	static std::array<log_cleanup_ptr, MAX_LOG_SINKS> cleanupFuncs = {nullptr};
+
+	size_t getNumSinks() { return numSinks; }
+
+	bool insert_sink(log_sink_ptr sink) {
+		const auto iter = std::find(sinks.begin(), sinks.end(), nullptr);
+
+		// too many sinks
+		if (iter == sinks.end())
+			return false;
+		// check for duplicates
+		if (false && std::find(sinks.begin(), sinks.end(), sink) != sinks.end())
+			return false;
+
+		numSinks += 1;
+		return (*iter = sink, true);
+	}
+	bool remove_sink(log_sink_ptr sink) {
+		const auto iter = std::find(sinks.begin(), sinks.end(), sink);
+
+		if (iter == sinks.end())
+			return false;
+
+		numSinks -= 1;
+		return (*iter = nullptr, true);
 	}
 
-	std::set<log_cleanup_ptr>& log_formatter_getCleanupFuncs() {
-		static std::set<log_cleanup_ptr> cleanupFuncs;
-		return cleanupFuncs;
+	bool insert_func(log_cleanup_ptr func) {
+		const auto iter = std::find(cleanupFuncs.begin(), cleanupFuncs.end(), nullptr);
+
+		// too many funcs (same maximum as sinks)
+		if (iter == cleanupFuncs.end())
+			return false;
+		// check for duplicates
+		if (false && std::find(cleanupFuncs.begin(), cleanupFuncs.end(), func) != cleanupFuncs.end())
+			return false;
+
+		return (*iter = func, true);
+	}
+	bool remove_func(log_cleanup_ptr func) {
+		const auto iter = std::find(cleanupFuncs.begin(), cleanupFuncs.end(), func);
+
+		if (iter == cleanupFuncs.end())
+			return false;
+
+		return (*iter = nullptr, true);
 	}
 }
 
@@ -36,11 +80,11 @@ static _threadlocal log_record_t prv_record = {{0}, "", "",  0, 0};
 
 extern void log_formatter_format(log_record_t* log, va_list arguments);
 
-void log_backend_registerSink(log_sink_ptr sink) { log_formatter_getSinks().insert(sink); }
-void log_backend_unregisterSink(log_sink_ptr sink) { log_formatter_getSinks().erase(sink); }
+void log_backend_registerSink(log_sink_ptr sink) { log_formatter::insert_sink(sink); }
+void log_backend_unregisterSink(log_sink_ptr sink) { log_formatter::remove_sink(sink); }
 
-void log_backend_registerCleanup(log_cleanup_ptr cleanupFunc) { log_formatter_getCleanupFuncs().insert(cleanupFunc); }
-void log_backend_unregisterCleanup(log_cleanup_ptr cleanupFunc) { log_formatter_getCleanupFuncs().erase(cleanupFunc); }
+void log_backend_registerCleanup(log_cleanup_ptr cleanupFunc) { log_formatter::insert_func(cleanupFunc); }
+void log_backend_unregisterCleanup(log_cleanup_ptr cleanupFunc) { log_formatter::remove_func(cleanupFunc); }
 
 
 /**
@@ -52,9 +96,9 @@ void log_backend_unregisterCleanup(log_cleanup_ptr cleanupFunc) { log_formatter_
 // formats and routes the record to all sinks
 void log_backend_record(int level, const char* section, const char* fmt, va_list arguments)
 {
-	const auto& sinks = log_formatter_getSinks();
+	const auto& sinks = log_formatter::sinks;
 
-	if (sinks.empty())
+	if (log_formatter::getNumSinks() == 0)
 		return;
 
 	cur_record.sec = section;
@@ -77,6 +121,9 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 
 	// sink the record into each registered sink
 	for (log_sink_ptr fptr: sinks) {
+		if (fptr == nullptr)
+			continue;
+
 		fptr(level, section, cur_record.msg);
 	}
 
@@ -88,7 +135,10 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 
 /// Passes on a cleanup request to all sinks
 void log_backend_cleanup() {
-	for (log_cleanup_ptr fptr: log_formatter_getCleanupFuncs()) {
+	for (log_cleanup_ptr fptr: log_formatter::cleanupFuncs) {
+		if (fptr == nullptr)
+			continue;
+
 		fptr();
 	}
 }
