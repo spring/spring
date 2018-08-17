@@ -74,8 +74,6 @@ static inline void test_log_sl(int line, std::stringstream& logStream,
 	}
 }
 
-static LogStream ls;
-
 #define TLOG_SL(section, level, fmt, ...) \
 	test_log_sl(__LINE__, ls.logStream, LOG_IS_ENABLED_S(section, level), section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
@@ -119,11 +117,7 @@ namespace {
 // test if logging works very early & very late in program live-time
 static PrePostMainLogTest prePostMainLogTest;
 
-TEST_CASE("PreMainLog")
-{
-	TLOG("static ctor log test");
-}
-
+static LogStream ls;
 
 TEST_CASE("Default")
 {
