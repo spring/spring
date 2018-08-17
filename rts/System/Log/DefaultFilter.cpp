@@ -4,18 +4,20 @@
 #include <cstdarg>
 #include <cassert>
 
-#include <memory>
-#include <stack>
 #include <string>
 
-#include <map>
-#include <set>
+#include <algorithm>
+#include <array>
+#include <stack>
+#include <vector>
 
 #include "DefaultFilter.h"
 #include "Level.h"
 #include "Section.h"
 #include "ILog.h"
+#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
+
 
 
 #ifdef __cplusplus
@@ -41,28 +43,23 @@ struct log_filter_section_compare {
 #endif
 
 
-namespace {
+namespace log_filter {
 	static int minLogLevel = LOG_LEVEL_ALL;
 	static int repeatLimit = 1;
 
-	std::map<const char*, int, log_filter_section_compare>& log_filter_getSectionMinLevels() {
-		static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
-		return sectionMinLevels;
-	}
-
-	std::set<const char*, log_filter_section_compare>& log_filter_getRegisteredSections() {
-		static std::set<const char*, log_filter_section_compare> sections;
-		return sections;
-	}
-/*
-	void inline log_filter_printSectionMinLevels(const char* func) {
+	#if 0
+	void inline printSectionMinLevels(const char* func) {
 		printf("[%s][caller=%s]\n", __func__, func);
 
-		for (const auto& p: log_filter_getSectionMinLevels()) {
+		for (const auto& p: sectionMinLevels) {
 			printf("\tsectionName=\"%s\" minLevel=%d\n", p.first, p.second);
 		}
 	}
-*/
+	#endif
+
+	// both sorted according to log_filter_section_compare
+	static std::vector< std::pair<const char*, int> > sectionMinLevels;
+	static std::vector<           const char*       > registeredSections;
 }
 
 #ifdef __cplusplus
@@ -70,8 +67,8 @@ extern "C" {
 #endif
 
 
-static inline int log_filter_section_getDefaultMinLevel(const char* section) {
-
+static inline int log_filter_section_getDefaultMinLevel(const char* section)
+{
 	if (LOG_SECTION_IS_DEFAULT(section)) {
 #ifdef DEBUG
 		return LOG_LEVEL_DEBUG;
@@ -85,8 +82,8 @@ static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 	}
 }
 
-static inline void log_filter_checkCompileTimeMinLevel(int level) {
-
+static inline void log_filter_checkCompileTimeMinLevel(int level)
+{
 	if (level >= _LOG_LEVEL_MIN)
 		return;
 
@@ -95,19 +92,19 @@ static inline void log_filter_checkCompileTimeMinLevel(int level) {
 		return;
 
 	LOG_L(L_WARNING,
-		"Tried to set minimum log level %i, but it was set to"
+		"[%s] tried to set minimum log level %i, but it was set to"
 		" %i at compile-time -> effective min-level is %i.",
-		level, _LOG_LEVEL_MIN, _LOG_LEVEL_MIN
+		__func__, level, _LOG_LEVEL_MIN, _LOG_LEVEL_MIN
 	);
 }
 
 
 
-int log_filter_global_getMinLevel() { return minLogLevel; }
-void log_filter_global_setMinLevel(int level) { log_filter_checkCompileTimeMinLevel(level); minLogLevel = level; }
+int log_filter_global_getMinLevel() { return log_filter::minLogLevel; }
+void log_filter_global_setMinLevel(int level) { log_filter_checkCompileTimeMinLevel(log_filter::minLogLevel = level); }
 
-int log_filter_getRepeatLimit() { return repeatLimit; }
-void log_filter_setRepeatLimit(int limit) { repeatLimit = limit; }
+int log_filter_getRepeatLimit() { return log_filter::repeatLimit; }
+void log_filter_setRepeatLimit(int limit) { log_filter::repeatLimit = limit; }
 
 
 
@@ -115,10 +112,13 @@ int log_filter_section_getMinLevel(const char* section)
 {
 	int level = -1;
 
-	const auto& sectionMinLevels = log_filter_getSectionMinLevels();
-	const auto sectionMinLevel = sectionMinLevels.find(section);
+	using P = decltype(log_filter::sectionMinLevels)::value_type;
 
-	if (sectionMinLevel == sectionMinLevels.end()) {
+	const auto& sectionMinLevels = log_filter::sectionMinLevels;
+	const auto sectionComparer = [](const P& a, const P& b) { return (log_filter_section_compare()(a.first, b.first)); };
+	const auto sectionMinLevel = std::lower_bound(sectionMinLevels.begin(), sectionMinLevels.end(), P{section, 0}, sectionComparer);
+
+	if (sectionMinLevel == sectionMinLevels.end() || strcmp(sectionMinLevel->first, section) != 0) {
 		level = log_filter_section_getDefaultMinLevel(section);
 	} else {
 		level = sectionMinLevel->second;
@@ -133,8 +133,8 @@ void log_filter_section_setMinLevel(int level, const char* section)
 {
 	log_filter_checkCompileTimeMinLevel(level);
 
-	auto& registeredSections = log_filter_getRegisteredSections();
-	auto& sectionMinLevels = log_filter_getSectionMinLevels();
+	auto& registeredSections = log_filter::registeredSections;
+	auto& sectionMinLevels = log_filter::sectionMinLevels;
 
 	// NOTE:
 	//   <section> might not be in the registered set if called from Lua
@@ -143,21 +143,48 @@ void log_filter_section_setMinLevel(int level, const char* section)
 	//   which lives on the heap into the min-level map it could become
 	//   dangling because of Lua garbage collection but this is not even
 	//   allowed by Section.h (!)
-	const auto it = registeredSections.find(section);
+	const auto registeredSection = std::lower_bound(registeredSections.begin(), registeredSections.end(), section, log_filter_section_compare());
 
-	if (it == registeredSections.end()) {
+	if (registeredSection == registeredSections.end() || strcmp(*registeredSection, section) != 0) {
 		LOG_L(L_WARNING, "[%s] section \"%s\" is not registered", __func__, section);
 		return;
 	}
 
 	// take the pointer from the registered set
 	// (same string but will not become garbage)
-	section = *it;
+	section = *registeredSection;
 
 	if (level == log_filter_section_getDefaultMinLevel(section)) {
-		sectionMinLevels.erase(section);
-	} else {
-		sectionMinLevels[section] = level;
+		using P = decltype(log_filter::sectionMinLevels)::value_type;
+
+		const auto sectionComparer = [](const P& a, const P& b) { return (log_filter_section_compare()(a.first, b.first)); };
+		const auto sectionMinLevel = std::lower_bound(sectionMinLevels.begin(), sectionMinLevels.end(), P{section, 0}, sectionComparer);
+
+		if (sectionMinLevel == sectionMinLevels.end() || strcmp(sectionMinLevel->first, section) != 0)
+			return;
+
+		// erase
+		for (size_t i = sectionMinLevel - sectionMinLevels.begin(), j = sectionMinLevels.size() - 1; i < j; i++) {
+			sectionMinLevels[i].first  = std::move(sectionMinLevels[i + 1].first );
+			sectionMinLevels[i].second = std::move(sectionMinLevels[i + 1].second);
+		}
+
+		sectionMinLevels.pop_back();
+		return;
+	}
+
+	// no better place for this (see also log_frontend_register_section)
+	if (sectionMinLevels.empty())
+		sectionMinLevels.reserve(8);
+
+	sectionMinLevels.emplace_back(section, level);
+
+	// swap into position
+	for (size_t i = sectionMinLevels.size() - 1; i > 0; i--) {
+		if (log_filter_section_compare()(sectionMinLevels[i - 1].first, sectionMinLevels[i].first))
+			break;
+
+		std::swap(sectionMinLevels[i - 1], sectionMinLevels[i]);
 	}
 }
 
@@ -180,21 +207,18 @@ void log_enable_and_disable(const bool enable)
 }
 
 int log_filter_section_getNumRegisteredSections() {
-	return (log_filter_getRegisteredSections().size());
+	return (log_filter::registeredSections.size());
 }
 
 const char* log_filter_section_getRegisteredIndex(int index) {
-	const auto& registeredSections = log_filter_getRegisteredSections();
+	const auto& registeredSections = log_filter::registeredSections;
 
 	if (index < 0)
-		return NULL;
+		return nullptr;
 	if (index >= static_cast<int>(registeredSections.size()))
-		return NULL;
+		return nullptr;
 
-	auto si = registeredSections.begin();
-
-	std::advance(si, index);
-	return (*si);
+	return registeredSections[index];
 }
 
 static void log_filter_record(int level, const char* section, const char* fmt, va_list arguments)
@@ -230,13 +254,25 @@ void log_frontend_register_section(const char* section) {
 	if (LOG_SECTION_IS_DEFAULT(section))
 		return;
 
-	auto& registeredSections = log_filter_getRegisteredSections();
-	auto si = registeredSections.find(section);
+	auto& registeredSections = log_filter::registeredSections;
+	auto registeredSection = std::lower_bound(registeredSections.begin(), registeredSections.end(), section, log_filter_section_compare());
 
-	if (si != registeredSections.end())
+	if (registeredSection != registeredSections.end() && strcmp(*registeredSection, section) == 0)
 		return;
 
-	registeredSections.insert(section);
+	// no better place for this (see also log_filter_section_setMinLevel)
+	if (registeredSections.empty())
+		registeredSections.reserve(8);
+
+	registeredSections.emplace_back(section);
+
+	// swap into position
+	for (size_t i = registeredSections.size() - 1; i > 0; i--) {
+		if (log_filter_section_compare()(registeredSections[i - 1], registeredSections[i]))
+			break;
+
+		std::swap(registeredSections[i - 1], registeredSections[i]);
+	}
 }
 
 void log_frontend_register_runtime_section(int level, const char* section_cstr_tmp) {
@@ -275,8 +311,9 @@ void log_frontend_cleanup() {
 spring::unsynced_set<const char*> log_filter_section_getRegisteredSet()
 {
 	spring::unsynced_set<const char*> outSet;
+	outSet.reserve(log_filter::registeredSections.size());
 
-	for (const auto& key: log_filter_getRegisteredSections()) {
+	for (const auto& key: log_filter::registeredSections) {
 		outSet.insert(key);
 	}
 
@@ -285,20 +322,31 @@ spring::unsynced_set<const char*> log_filter_section_getRegisteredSet()
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
-	static spring::unordered_map<std::string, std::unique_ptr<const char[]>> cache;
+	// cache for log_frontend_register_runtime_section; services LuaUnsyced
+	static std::array<char[1024], 64> cache;
+	static spring::unordered_map<size_t, size_t> index;
 
-	const auto str = std::string(section_cstr_tmp);
-	const auto it = cache.find(str);
+	// see if hash(str) is already mapped to a cache-index
+	const auto iter = index.find(hashString(section_cstr_tmp));
 
-	if (it != cache.end())
-		return (it->second.get());
+	static_assert(sizeof(cache[0]) == 1024, "");
 
-	char* section_cstr = new char[str.size() + 1];
+	if (iter != index.end())
+		return cache[iter->second];
 
-	strcpy(&section_cstr[0], section_cstr_tmp);
-	section_cstr[str.size()] = '\0';
+	// too many sections
+	if (index.size() == cache.size())
+		return "";
+	// too long section-name
+	if (strlen(section_cstr_tmp) >= sizeof(cache[0]))
+		return "";
 
-	cache[str].reset(const_cast<const char*>(section_cstr));
-	return section_cstr;
+	if (index.empty())
+		index.reserve(cache.size());
+
+	strncpy(&cache[index.size()][0], section_cstr_tmp, sizeof(cache[0]));
+	index.emplace(hashString(section_cstr_tmp), index.size());
+
+	return &cache[index.size() - 1][0];
 }
 
