@@ -91,9 +91,6 @@
 
 // start catch_user_interfaces.h
 
-namespace Catch {
-    unsigned int rngSeed();
-}
 
 // end catch_user_interfaces.h
 // start catch_tag_alias_autoregistrar.h
@@ -3346,7 +3343,6 @@ namespace Catch {
     struct RunTests { enum InWhatOrder {
         InDeclarationOrder,
         InLexicographicalOrder,
-        InRandomOrder
     }; };
     struct UseColour { enum YesOrNo {
         Auto,
@@ -3379,7 +3375,6 @@ namespace Catch {
         virtual TestSpec const& testSpec() const = 0;
         virtual bool hasTestFilters() const = 0;
         virtual RunTests::InWhatOrder runOrder() const = 0;
-        virtual unsigned int rngSeed() const = 0;
         virtual int benchmarkResolutionMultiple() const = 0;
         virtual UseColour::YesOrNo useColour() const = 0;
         virtual std::vector<std::string> const& getSectionsToRun() const = 0;
@@ -3419,7 +3414,6 @@ namespace Catch {
         bool libIdentify = false;
 
         int abortAfter = -1;
-        unsigned int rngSeed = 0;
         int benchmarkResolutionMultiple = 100;
 
         Verbosity verbosity = Verbosity::Normal;
@@ -3476,7 +3470,6 @@ namespace Catch {
         bool warnAboutNoTests() const override;
         ShowDurations::OrNot showDurations() const override;
         RunTests::InWhatOrder runOrder() const override;
-        unsigned int rngSeed() const override;
         int benchmarkResolutionMultiple() const override;
         UseColour::YesOrNo useColour() const override;
         bool shouldDebugBreak() const override;
@@ -6616,16 +6609,8 @@ namespace Catch {
                     config.runOrder = RunTests::InDeclarationOrder;
                 else if( startsWith( "lexical", order ) )
                     config.runOrder = RunTests::InLexicographicalOrder;
-                else if( startsWith( "random", order ) )
-                    config.runOrder = RunTests::InRandomOrder;
                 else
                     return clara::ParserResult::runtimeError( "Unrecognised ordering: '" + order + "'" );
-                return ParserResult::ok( ParseResultType::Matched );
-            };
-        auto const setRngSeed = [&]( std::string const& seed ) {
-                if( seed != "time" )
-                    return clara::detail::convertInto( seed, config.rngSeed );
-                config.rngSeed = static_cast<unsigned int>( std::time(nullptr) );
                 return ParserResult::ok( ParseResultType::Matched );
             };
         auto const setColourUsage = [&]( std::string const& useColour ) {
@@ -6729,9 +6714,6 @@ namespace Catch {
             | Opt( setTestOrder, "decl|lex|rand" )
                 ["--order"]
                 ( "test case order (defaults to decl)" )
-            | Opt( setRngSeed, "'time'|number" )
-                ["--rng-seed"]
-                ( "set a specific seed for random numbers" )
             | Opt( setColourUsage, "yes|no" )
                 ["--use-colour"]
                 ( "should output be colourised" )
@@ -6851,7 +6833,6 @@ namespace Catch {
     bool Config::warnAboutNoTests() const              { return !!(m_data.warnings & WarnAbout::NoTests); }
     ShowDurations::OrNot Config::showDurations() const { return m_data.showDurations; }
     RunTests::InWhatOrder Config::runOrder() const     { return m_data.runOrder; }
-    unsigned int Config::rngSeed() const               { return m_data.rngSeed; }
     int Config::benchmarkResolutionMultiple() const    { return m_data.benchmarkResolutionMultiple; }
     UseColour::YesOrNo Config::useColour() const       { return m_data.useColour; }
     bool Config::shouldDebugBreak() const              { return m_data.shouldDebugBreak; }
@@ -8503,43 +8484,7 @@ namespace Catch {
     #endif
 #endif
 // end catch_output_redirect.cpp
-// start catch_random_number_generator.cpp
 
-// start catch_random_number_generator.h
-
-#include <algorithm>
-#include <random>
-
-namespace Catch {
-
-    struct IConfig;
-
-    std::mt19937& rng();
-    void seedRng( IConfig const& config );
-    unsigned int rngSeed();
-
-}
-
-// end catch_random_number_generator.h
-namespace Catch {
-
-    std::mt19937& rng() {
-        static std::mt19937 s_rng;
-        return s_rng;
-    }
-
-    void seedRng( IConfig const& config ) {
-        if( config.rngSeed() != 0 ) {
-            std::srand( config.rngSeed() );
-            rng().seed( config.rngSeed() );
-        }
-    }
-
-    unsigned int rngSeed() {
-        return getCurrentContext().getConfig()->rngSeed();
-    }
-}
-// end catch_random_number_generator.cpp
 // start catch_registry_hub.cpp
 
 // start catch_test_case_registry_impl.h
@@ -9054,8 +8999,6 @@ namespace Catch {
         double duration = 0;
         m_shouldReportUnexpected = true;
         m_lastAssertionInfo = { "TEST_CASE"_sr, testCaseInfo.lineInfo, StringRef(), ResultDisposition::Normal };
-
-        seedRng(*m_config);
 
         Timer timer;
         try {
@@ -9579,8 +9522,6 @@ namespace Catch {
         try
         {
             config(); // Force config to be constructed
-
-            seedRng( *m_config );
 
             if( m_configData.filenamesAsTags )
                 applyFilenamesAsTags( *m_config );
@@ -10262,10 +10203,6 @@ namespace Catch {
         switch( config.runOrder() ) {
             case RunTests::InLexicographicalOrder:
                 std::sort( sorted.begin(), sorted.end() );
-                break;
-            case RunTests::InRandomOrder:
-                seedRng( config );
-                std::shuffle( sorted.begin(), sorted.end(), rng() );
                 break;
             case RunTests::InDeclarationOrder:
                 // already in declaration order
@@ -12282,8 +12219,6 @@ void ConsoleReporter::lazyPrintRunInfo() {
         << " is a Catch v" << libraryVersion() << " host application.\n"
         << "Run with -? for options\n\n";
 
-    if (m_config->rngSeed() != 0)
-        stream << "Randomness seeded to: " << m_config->rngSeed() << "\n\n";
 
     currentTestRunInfo.used = true;
 }
