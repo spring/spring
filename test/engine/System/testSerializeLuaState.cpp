@@ -3,8 +3,8 @@
 #include "System/creg/Serializer.h"
 #include "System/creg/SerializeLuaState.h"
 
-#define BOOST_TEST_MODULE SerializeLuaState
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 
 static int handlepanic(lua_State* L)
@@ -43,7 +43,7 @@ void LuaRoot::Serialize(creg::ISerializer* s) {
 	creg::SerializeLuaState(s, &L);
 }
 
-BOOST_AUTO_TEST_CASE( SerializeLuaState )
+TEST_CASE("SerializeLuaState")
 {
 	int context = 1;
 	creg::SetLuaContext(&context, l_alloc, handlepanic);
@@ -80,6 +80,4 @@ BOOST_AUTO_TEST_CASE( SerializeLuaState )
 
 	lua_close(loadedRoot->L);
 	delete loadedRoot;
-
-	BOOST_CHECK_MESSAGE(true, "Failed lua serialization!");
 }

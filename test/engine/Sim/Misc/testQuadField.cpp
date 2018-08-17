@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BOOST_TEST_MODULE QuadField
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 static inline float randf()
 {
@@ -16,7 +16,7 @@ static inline float randf()
 
 
 
-BOOST_AUTO_TEST_CASE( QuadField )
+TEST_CASE("QuadField")
 {
 	srand( time(nullptr) );
 
@@ -96,5 +96,6 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		if (fail) break;
 	}
 
-	BOOST_CHECK_MESSAGE(!fail, "Too less quads returned!");
+	INFO("Too little quads returned!");
+	CHECK_FALSE(fail);
 }

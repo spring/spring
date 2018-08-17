@@ -154,8 +154,7 @@ else  (UNIX AND NOT MINGW)
 
 
 	if(MSVC)
-		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
-		set(Boost_USE_STATIC_LIBS ON)
+		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
 	else()
@@ -451,8 +450,6 @@ else  (MSVC)
 	if    (MINGW)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
 	endif (MINGW)
-
-	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 
 	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} ${CXX_RELWITHDEBINFO_DEFINES}")

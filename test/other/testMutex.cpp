@@ -20,10 +20,10 @@
 	#include <windows.h>
 #endif
 
-#define BOOST_TEST_MODULE Mutex
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+InitSpringTime ist;
 
 #ifndef _WIN32
 	typedef uint32_t futex;
@@ -78,8 +78,7 @@ spring_time Test(const char* name, voidFnc pre, voidFnc post)
 }
 
 
-
-BOOST_AUTO_TEST_CASE( Mutex )
+TEST_CASE("Mutex")
 {
 
 	spring::mutex spmtx;
@@ -112,11 +111,11 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	DeleteCriticalSection(&cs);
 #endif
 
-	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
-	//BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
+	//CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
+	//CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
 }
 
-BOOST_AUTO_TEST_CASE( ConditionVariable )
+TEST_CASE("ConditionVariable")
 {
 	spring::mutex m;
 	spring::condition_variable_any cv;

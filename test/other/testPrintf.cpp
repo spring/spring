@@ -14,9 +14,10 @@
 #include <cmath>
 
 
-#define BOOST_TEST_MODULE Printf
-#include <boost/test/unit_test.hpp>
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
+
+InitSpringTime ist;
 
 
 static char s[128];
@@ -78,7 +79,7 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 
 
 
-BOOST_AUTO_TEST_CASE( SpringFormat )
+TEST_CASE("SpringFormat")
 {
 	streflop::streflop_init<streflop::Simple>();
 
@@ -103,7 +104,7 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 #ifdef WIN32
 		if (!std::isnan(f)) // window's printf doesn't support signed NaNs
 #endif
-		BOOST_CHECK(strcmp(s1, s2) == 0);
+		CHECK(strcmp(s1, s2) == 0);
 	};
 
 	// test #1
@@ -120,12 +121,12 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 		const float f = RandFloat(1e-22, 1e22);
 		sprintf(s1, "%+.5f", f);
 		spring_lua_format(f, "+.5", s2);
-		BOOST_CHECK(strcmp(s1, s2) == 0);
+		CHECK(strcmp(s1, s2) == 0);
 	}
 }
 
 
-BOOST_AUTO_TEST_CASE( Printf )
+TEST_CASE("Printf")
 {
 	LOG("\n");
 	LOG("----------------------");
@@ -136,14 +137,12 @@ BOOST_AUTO_TEST_CASE( Printf )
 	for (const auto& p: testNumbers) {
 		__mingw_sprintf(s, FMT_STRING, p.first);
 		LOG("%20s [%s]", s, p.second);
-		BOOST_WARN(strcmp(s, p.second) == 0);
 	}
 
 	LOG("\n__builtin_sprintf:");
 	for (const auto& p: testNumbers) {
 		__builtin_sprintf(s, FMT_STRING, p.first);
 		LOG("%20s [%s]", s, p.second);
-		BOOST_WARN(strcmp(s, p.second) == 0); // it's known to not sync `Mingw vs. Linux`
 	}
 #endif
 
@@ -151,19 +150,18 @@ BOOST_AUTO_TEST_CASE( Printf )
 	for (const auto& p: testNumbers) {
 		sprintf(s, FMT_STRING, p.first);
 		LOG("%20s [%s]", s, p.second);
-		BOOST_WARN(strcmp(s, p.second) == 0); // not sync Mingw vs Linux
 	}
 
 	LOG("\nspring_lua_ftoa:");
 	for (const auto& p: testNumbers) {
 		spring_lua_ftoa(p.first, s);
 		LOG("%20s [%s]", s, p.second);
-		BOOST_CHECK(strcmp(s, p.second) == 0);
+		CHECK(strcmp(s, p.second) == 0);
 	}
 }
 
 
-BOOST_AUTO_TEST_CASE( Roundings )
+TEST_CASE("Roundings")
 {
 	LOG("\n");
 	LOG("----------------");
@@ -182,12 +180,12 @@ BOOST_AUTO_TEST_CASE( Roundings )
 	for (const auto& p: testNumbers) {
 		spring_lua_format(std::get<0>(p), std::get<2>(p), s);
 		LOG("%f -\"%%%sf\"-> %s [%s]", std::get<0>(p), std::get<2>(p), s, std::get<1>(p));
-		BOOST_CHECK(strcmp(s, std::get<1>(p)) == 0);
+		CHECK(strcmp(s, std::get<1>(p)) == 0);
 	}
 }
 
 
-BOOST_AUTO_TEST_CASE( Precision )
+TEST_CASE("Precision")
 {
 	LOG("\n");
 	LOG("----------------");
@@ -222,7 +220,7 @@ BOOST_AUTO_TEST_CASE( Precision )
 		if (!inPrecisionRange) {
 			LOG_L(L_ERROR, "number=%e maxError=%e printf=%s [error=%e] spring=%s [error=%e]", f, maxDiff, s1, diffPrintf, s2, diffSpring);
 		}
-		BOOST_CHECK(inPrecisionRange);
+		CHECK(inPrecisionRange);
 	};
 
 	for (const auto& p: testNumbers) {
@@ -239,7 +237,7 @@ BOOST_AUTO_TEST_CASE( Precision )
 }
 
 
-BOOST_AUTO_TEST_CASE( Performance )
+TEST_CASE("Performance")
 {
 	LOG("\n");
 	LOG("----------------");

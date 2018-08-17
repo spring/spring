@@ -3,10 +3,11 @@
 #endif
 #include "System/Sync/SyncedPrimitive.h"
 
-#define BOOST_TEST_MODULE SyncedPrimitive
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
-BOOST_AUTO_TEST_CASE(ImplicitConversions)
+
+TEST_CASE("ImplicitConversions")
 {
 	// NOTE: this is a compile time test only
 

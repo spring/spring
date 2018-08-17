@@ -5,12 +5,11 @@
 #include "System/Log/LogUtil.h"
 #include "System/StringUtil.h" // IntToString() -> header only
 
-#define BOOST_TEST_MODULE ILog
-#include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp>
-using boost::test_tools::output_test_stream;
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 #include <cstdarg>
+#include <sstream>
 
 
 
@@ -42,17 +41,16 @@ namespace {
 		std::string GetTempLogFile() {
 
 			char* tmpName = tmpnam(NULL);
-			BOOST_REQUIRE_MESSAGE((tmpName != NULL),
-					"Failed to fetch a temporary log file name");
+			assert(tmpName != NULL);
 			return tmpName;
 		}
 
-		output_test_stream logStream;
+		std::stringstream logStream;
 		std::string logFile;
 	};
 }
 
-static inline void test_log_sl(int line, output_test_stream& logStream,
+static inline void test_log_sl(int line, std::stringstream& logStream,
 		bool enabled, const char* section, int level, const char* fmt, ...)
 {
 	if (enabled) {
@@ -66,16 +64,20 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 				+ ((level != LOG_LEVEL_INFO) ? (std::string(log_util_levelToString(level)) + ": ") : "")
 				+ logMessage
 				+ "\n";
-		BOOST_CHECK_MESSAGE(logStream.is_equal(expected.c_str()),
-				"line(" << line << ") Expected: \"" << expected.c_str() << "\"");
+
+		INFO("line(" << line << ") Expected: \"" << expected.c_str() << "\"");
+		CHECK(logStream.str() == expected);
+		logStream.str(std::string());
 	} else {
-		BOOST_CHECK_MESSAGE(logStream.is_empty(),
-				"line(" << line << ") Expected: \"\"");
+		INFO("line(" << line << ") Expected: \"\"");
+		CHECK(logStream.gcount() == 0);
 	}
 }
 
+static LogStream ls;
+
 #define TLOG_SL(section, level, fmt, ...) \
-	test_log_sl(__LINE__, logStream, LOG_IS_ENABLED_S(section, level), section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
+	test_log_sl(__LINE__, ls.logStream, LOG_IS_ENABLED_S(section, level), section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
 
 #define TLOG_S(section, fmt, ...) \
 	TLOG_SL(section, L_INFO, fmt, ##__VA_ARGS__)
@@ -91,10 +93,10 @@ namespace {
 	public:
 		PrePostMainLogTest() {
 
-			//output_test_stream logStream;
+			//std::stringstream logStream;
 			//log_sink_stream_setLogStream(&logStream);
-			LOG( "static ctor log test");
-			// We can not use Boost Test here, cause it is not yet initialized,
+			LOG("static ctor log test");
+			// We can not use Catch here, cause it is not yet initialized,
 			// so we depend on asserts spread throught the logging system.
 			//TLOG("static ctor log test");
 			//log_sink_stream_setLogStream(NULL);
@@ -102,10 +104,10 @@ namespace {
 
 		~PrePostMainLogTest() {
 
-			//output_test_stream logStream;
+			//std::stringstream logStream;
 			//log_sink_stream_setLogStream(&logStream);
-			LOG( "static dtor log test");
-			// We can not use Boost Test here, cause it is already
+			LOG("static dtor log test");
+			// We can not use Catch here, cause it is already
 			// uninitialized, so we depend on asserts spread throught the
 			// logging system.
 			//TLOG("static dtor log test");
@@ -114,21 +116,23 @@ namespace {
 	};
 }
 
-
-BOOST_FIXTURE_TEST_SUITE(everything, LogStream)
-
 // test if logging works very early & very late in program live-time
 static PrePostMainLogTest prePostMainLogTest;
 
+TEST_CASE("PreMainLog")
+{
+	TLOG("static ctor log test");
+}
 
-BOOST_AUTO_TEST_CASE(Default)
+
+TEST_CASE("Default")
 {
 	LOG( "Testing default logging level (INFO)");
 	TLOG("Testing default logging level (INFO)");
 }
 
 
-BOOST_AUTO_TEST_CASE(Levels)
+TEST_CASE("Levels")
 {
 	LOG_L( L_ERROR, "Static min log level is: %i", _LOG_LEVEL_MIN);
 	TLOG_L(L_ERROR, "Static min log level is: %i", _LOG_LEVEL_MIN);
@@ -147,7 +151,7 @@ BOOST_AUTO_TEST_CASE(Levels)
 }
 
 
-BOOST_AUTO_TEST_CASE(IsSingleInstruction)
+TEST_CASE("IsSingleInstruction")
 {
 	// do NOT add braces here, as that would invalidate the test!
 	int x = 0;
@@ -175,13 +179,13 @@ static bool TestDefaultSection2()
 }
 
 
-BOOST_AUTO_TEST_CASE(Sections)
+TEST_CASE("Sections")
 {
 	LOG( "Testing logging section: <default> (level: default)");
 	TLOG("Testing logging section: <default> (level: default)");
 
-	BOOST_CHECK(TestDefaultSection1());
-	BOOST_CHECK(TestDefaultSection2());
+	CHECK(TestDefaultSection1());
+	CHECK(TestDefaultSection2());
 
 	LOG_L( L_INFO, "Testing logging section: <default> (level: info)");
 	TLOG_L(L_INFO, "Testing logging section: <default> (level: info)");
@@ -207,7 +211,7 @@ BOOST_AUTO_TEST_CASE(Sections)
 }
 
 
-BOOST_AUTO_TEST_CASE(IsEnabled)
+TEST_CASE("IsEnabled")
 {
 	if (LOG_IS_ENABLED_STATIC(L_DEBUG)) {
 		// *do heavy, log-output related processing here*
@@ -234,7 +238,4 @@ BOOST_AUTO_TEST_CASE(IsEnabled)
 	}
 	TLOG_SL(   "other-one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_S");
 }
-
-
-BOOST_AUTO_TEST_SUITE_END()
 

@@ -2,81 +2,69 @@
 If (MINGW)
 	RemoveFlag("-mwindows")
 EndIf (MINGW)
+# defines spring_test_compile_fail macro
+INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
+IF    (UNIX AND (NOT APPLE) AND (NOT MINGW))
+	FIND_LIBRARY(REALTIME_LIBRARY rt)
 
-If    (NOT Boost_FOUND)
-	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
-Else  (NOT Boost_FOUND)
-	# defines spring_test_compile_fail macro
-	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
+	IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+		MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std::chrono when statically linked!")
+	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+ELSE  (UNIX AND (NOT APPLE) AND (NOT MINGW))
+	SET(REALTIME_LIBRARY "")
+ENDIF (UNIX AND (NOT APPLE) AND (NOT MINGW))
 
-	IF    (UNIX AND (NOT APPLE) AND (NOT MINGW))
-		FIND_LIBRARY(REALTIME_LIBRARY rt)
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
 
-		IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-			MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std::chrono when statically linked!")
-		ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-	ELSE  (UNIX AND (NOT APPLE) AND (NOT MINGW))
-		SET(REALTIME_LIBRARY "")
-	ENDIF (UNIX AND (NOT APPLE) AND (NOT MINGW))
+SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
+INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR}/lib/asio/include)
 
-	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-	INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
+add_definitions(-DSYNCCHECK -DUNIT_TEST)
+REMOVE_DEFINITIONS(-DTHREADPOOL)
 
-	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
-	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
-	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR}/lib/asio/include)
+If (WIN32)
+	EXECUTE_PROCESS(COMMAND ping -6 ::1 -n 1
+		RESULT_VARIABLE IPV6_RET
+		ERROR_QUIET)
+Else(WIN32)
+	EXECUTE_PROCESS(COMMAND ping6 ::1 -c 1
+		RESULT_VARIABLE IPV6_RET
+		ERROR_QUIET)
+EndIf (WIN32)
 
-	If	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
-		#Win32 tests links static
-		add_definitions(-DBOOST_TEST_DYN_LINK)
-	EndIf	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
+if (NOT ${IPV6_RET} EQUAL 0)
+	add_definitions(-DNO_IPV6)
+	Message(STATUS "No ipv6 support, disabling test")
+endif (NOT ${IPV6_RET} EQUAL 0)
 
-	add_definitions(-DSYNCCHECK -DUNIT_TEST)
-	REMOVE_DEFINITIONS(-DTHREADPOOL)
+Set(test_Log_sources
+		"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
+		"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
+		"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
+		"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
+	)
 
-	If (WIN32)
-		EXECUTE_PROCESS(COMMAND ping -6 ::1 -n 1
-			RESULT_VARIABLE IPV6_RET
-			ERROR_QUIET)
-	Else(WIN32)
-		EXECUTE_PROCESS(COMMAND ping6 ::1 -c 1
-			RESULT_VARIABLE IPV6_RET
-			ERROR_QUIET)
-	EndIf (WIN32)
+Add_Custom_Target(tests)
+add_custom_target(check ${CMAKE_CTEST_COMMAND} --output-on-failure -V
+	DEPENDS engine-headless)
+add_custom_target(install-tests)
 
-	if (NOT ${IPV6_RET} EQUAL 0)
-		add_definitions(-DNO_IPV6)
-		Message(STATUS "No ipv6 support, disabling test")
-	endif (NOT ${IPV6_RET} EQUAL 0)
-
-	Set(test_Log_sources
-			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
-			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
-			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
-		)
-
-	Add_Custom_Target(tests)
-	add_custom_target(check ${CMAKE_CTEST_COMMAND} --output-on-failure -V
-		DEPENDS engine-headless)
-	add_custom_target(install-tests)
-
-	macro (add_spring_test target sources libraries flags)
-		ADD_TEST(NAME test${target} COMMAND test_${target})
-		add_dependencies(tests test_${target})
-		add_dependencies(check test_${target})
-		add_dependencies(install-tests test_${target})
-		add_executable(test_${target} EXCLUDE_FROM_ALL ${sources})
-		target_link_libraries(test_${target} ${libraries})
-		set_target_properties(test_${target} PROPERTIES COMPILE_FLAGS "${flags}")
-		#install(TARGETS test_${target} DESTINATION ${BINDIR})
-	endmacro()
+macro (add_spring_test target sources libraries flags)
+	ADD_TEST(NAME test${target} COMMAND test_${target})
+	add_dependencies(tests test_${target})
+	add_dependencies(check test_${target})
+	add_dependencies(install-tests test_${target})
+	add_executable(test_${target} EXCLUDE_FROM_ALL ${sources})
+	target_link_libraries(test_${target} ${libraries})
+	set_target_properties(test_${target} PROPERTIES COMPILE_FLAGS "${flags}")
+	#install(TARGETS test_${target} DESTINATION ${BINDIR})
+endmacro()
 
 ################################################################################
 ### UDPListener
@@ -103,7 +91,6 @@ if(NOT DEFINED ENV{CI})
 
 	set(test_libs
 		engineSystemNet
-		${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 		${REALTIME_LIBRARY}
 		${WINMM_LIBRARY}
 		${WS2_32_LIBRARY}
@@ -125,7 +112,7 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
@@ -139,7 +126,7 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
@@ -154,7 +141,7 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG")
@@ -174,7 +161,6 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
@@ -196,7 +182,6 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
@@ -214,7 +199,6 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
@@ -233,16 +217,11 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${REALTIME_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
-	if (Boost_TIMER_FOUND)
-		LIST(APPEND test_libs ${Boost_TIMER_LIBRARY})
-		set(test_flags "${test_flags} -DBoost_TIMER_FOUND")
-	endif (Boost_TIMER_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
@@ -255,7 +234,7 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 
 	# positive tests (should compile fine)
@@ -280,9 +259,7 @@ endif()
 			${test_Log_sources}
 		)
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_FILESYSTEM_LIBRARY}
-			${Boost_REGEX_LIBRARY}
+			""
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_${test_name} generateVersionFiles)
@@ -296,8 +273,7 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_REGEX_LIBRARY}
+			""
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTEST")
@@ -318,8 +294,7 @@ endif()
 			)
 
 		set(test_libs
-				${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-				${Boost_REGEX_LIBRARY}
+				""
 			)
 
 		add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
@@ -339,7 +314,6 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${CMAKE_DL_LIBS}
 			unitsync
 		)
@@ -362,7 +336,6 @@ endif()
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -385,7 +358,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 		)
 
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 			${WS2_32_LIBRARY}
 		)
@@ -401,7 +373,7 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 			${test_Log_sources}
 		)
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -415,7 +387,7 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 			${test_Log_sources}
 		)
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -435,7 +407,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 	set(test_libs
 			streflop
 			lua
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 			headlessStubs
 		)
@@ -457,7 +428,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 		)
 	set(test_libs
 			streflop
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${WINMM_LIBRARY}
 		)
 	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
@@ -471,7 +441,7 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 			${test_Log_sources}
 		)
 	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			""
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
@@ -491,7 +461,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 		)
 	set(test_libs
 			lua
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			headlessStubs
 		)
 	set(test_flags "-DNOT_USING_STREFLOP")
@@ -499,7 +468,6 @@ add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSY
 	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
 
 ################################################################################
-EndIf (NOT Boost_FOUND)
 
 add_subdirectory(headercheck)
 

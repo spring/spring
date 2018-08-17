@@ -8,9 +8,10 @@
 #include "System/FastMath.h"
 
 
-#define BOOST_TEST_MODULE SQRT
-#include <boost/test/unit_test.hpp>
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
+
+InitSpringTime ist;
 
 
 static inline float randf() {
@@ -22,7 +23,7 @@ static inline float RandFloat(const float min, const float max) {
 
 
 
-BOOST_AUTO_TEST_CASE( SQRT )
+TEST_CASE("SQRT")
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
@@ -63,16 +64,10 @@ BOOST_AUTO_TEST_CASE( SQRT )
 			hash[4] += streflop::sqrt(RandFloat(0.f, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
-BOOST_AUTO_TEST_CASE( ISQRT )
+TEST_CASE("ISQRT")
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
@@ -101,16 +96,10 @@ BOOST_AUTO_TEST_CASE( ISQRT )
 			hash[2] += fastmath::isqrt_sse(RandFloat(0.f, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
-BOOST_AUTO_TEST_CASE( SinCos )
+TEST_CASE("SinCos")
 {
 	srand( 0 );
 	int iterations = 0xFFFFF;
@@ -139,16 +128,10 @@ BOOST_AUTO_TEST_CASE( SinCos )
 			hash[2] += streflop::sin(RandFloat(0.f, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
-BOOST_AUTO_TEST_CASE( Floor )
+TEST_CASE("Floor")
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
@@ -177,16 +160,10 @@ BOOST_AUTO_TEST_CASE( Floor )
 			hash[2] += streflop::floor(RandFloat(0.f, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
-BOOST_AUTO_TEST_CASE( Pow )
+TEST_CASE("Pow")
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
@@ -209,17 +186,11 @@ BOOST_AUTO_TEST_CASE( Pow )
 			hash[1] += streflop::pow(RandFloat(0.f, 1e6), RandFloat(0.f, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
 
-BOOST_AUTO_TEST_CASE( Abs )
+TEST_CASE("Abs")
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
@@ -242,17 +213,11 @@ BOOST_AUTO_TEST_CASE( Abs )
 			hash[1] += streflop::fabs(RandFloat(-1e6, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }
 
 
 
-BOOST_AUTO_TEST_CASE( Tan )
+TEST_CASE("Tan")
 {
 	srand( 0 );
 	int iterations = 0xFFFFF;
@@ -275,10 +240,4 @@ BOOST_AUTO_TEST_CASE( Tan )
 			hash[1] += streflop::tan(RandFloat(-1e6, 1e6));
 		}
 	}
-
-	bool b = true;
-	for (float f: hash) {
-		b &= (f == hash[0]);
-	}
-	BOOST_WARN(b);
 }

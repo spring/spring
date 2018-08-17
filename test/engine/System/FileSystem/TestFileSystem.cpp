@@ -1,14 +1,13 @@
-
-#include "System/FileSystem/FileSystem.h"
-
 #include <string>
 #include <cstdio>
 #include <sys/stat.h>
 #include "System/Log/ILog.h"
 
-#define BOOST_TEST_MODULE FileSystem
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
+// needs to be included after catch
+#include "System/FileSystem/FileSystem.h"
 
 namespace {
 	struct PrepareFileSystem {
@@ -42,7 +41,7 @@ namespace {
 				fclose(testFile);
 				testFile = NULL;
 			} else {
-				BOOST_FAIL("Failed to create test-file " + filePath);
+				FAIL("Failed to create test-file " + filePath);
 			}
 		}
 		std::string GetTempDir() {
@@ -52,10 +51,10 @@ namespace {
 					testCwd = oldDir + tmpDir;
 					FileSystem::CreateDirectory(testCwd);
 					if (!FileSystem::DirIsWritable(testCwd)) {
-						BOOST_FAIL("Failed to create temporary test dir");
+						FAIL("Failed to create temporary test dir");
 					}
 				} else {
-					BOOST_FAIL("Failed to get temporary file name");
+					FAIL("Failed to get temporary file name");
 				}
 			}
 			return testCwd;
@@ -67,66 +66,66 @@ namespace {
 	};
 }
 
-BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
+PrepareFileSystem pfs;
 
-BOOST_AUTO_TEST_CASE(FileExists)
+TEST_CASE("FileExists")
 {
-	BOOST_CHECK(FileSystem::FileExists("testFile.txt"));
-	BOOST_CHECK(!FileSystem::FileExists("testFile99.txt"));
-	BOOST_CHECK(!FileSystem::FileExists("testDir"));
-	BOOST_CHECK(!FileSystem::FileExists("testDir99"));
+	CHECK(FileSystem::FileExists("testFile.txt"));
+	CHECK_FALSE(FileSystem::FileExists("testFile99.txt"));
+	CHECK_FALSE(FileSystem::FileExists("testDir"));
+	CHECK_FALSE(FileSystem::FileExists("testDir99"));
 }
 
 
-BOOST_AUTO_TEST_CASE(GetFileSize)
+TEST_CASE("GetFileSize")
 {
-	BOOST_CHECK(FileSystem::GetFileSize("testFile.txt") == 1);
-	BOOST_CHECK(FileSystem::GetFileSize("testFile99.txt") == -1);
-	BOOST_CHECK(FileSystem::GetFileSize("testDir") == -1);
-	BOOST_CHECK(FileSystem::GetFileSize("testDir99") == -1);
+	CHECK(FileSystem::GetFileSize("testFile.txt") == 1);
+	CHECK(FileSystem::GetFileSize("testFile99.txt") == -1);
+	CHECK(FileSystem::GetFileSize("testDir") == -1);
+	CHECK(FileSystem::GetFileSize("testDir99") == -1);
 }
 
 
-BOOST_AUTO_TEST_CASE(GetFileModificationDate)
+TEST_CASE("GetFileModificationDate")
 {
-	BOOST_CHECK(FileSystem::GetFileModificationDate("testDir") != "");
-	BOOST_CHECK(FileSystem::GetFileModificationDate("testFile.txt") != "");
-	BOOST_CHECK(FileSystem::GetFileModificationDate("not_there") == "");
+	CHECK(FileSystem::GetFileModificationDate("testDir") != "");
+	CHECK(FileSystem::GetFileModificationDate("testFile.txt") != "");
+	CHECK(FileSystem::GetFileModificationDate("not_there") == "");
 }
 
 
-BOOST_AUTO_TEST_CASE(CreateDirectory)
+TEST_CASE("CreateDirectory")
 {
 	// create & exists
-	BOOST_CHECK(FileSystem::DirIsWritable("./"));
-	BOOST_CHECK(FileSystem::DirExists("testDir"));
-	BOOST_CHECK(FileSystem::DirExists("testDir///"));
-	BOOST_CHECK(FileSystem::DirExists("testDir////./"));
-	BOOST_CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
-	BOOST_CHECK(!FileSystem::ComparePaths("testDir", "test Dir2"));
-	BOOST_CHECK(FileSystem::CreateDirectory("testDir")); // already exists
-	BOOST_CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
-	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
+	CHECK(FileSystem::DirIsWritable("./"));
+	CHECK(FileSystem::DirExists("testDir"));
+	CHECK(FileSystem::DirExists("testDir///"));
+	CHECK(FileSystem::DirExists("testDir////./"));
+	CHECK(FileSystem::ComparePaths("testDir", "testDir////./"));
+	CHECK_FALSE(FileSystem::ComparePaths("testDir", "test Dir2"));
+	CHECK(FileSystem::CreateDirectory("testDir")); // already exists
+	CHECK(FileSystem::CreateDirectory("testDir1")); // should be created
+	CHECK(FileSystem::CreateDirectory("test Dir2")); // should be created
 
 	// check if exists & no overwrite
-	BOOST_CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
-	BOOST_CHECK(FileSystem::DirIsWritable("test Dir2"));
-	BOOST_CHECK(!FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
+	CHECK(FileSystem::CreateDirectory("test Dir2")); // already exists
+	CHECK(FileSystem::DirIsWritable("test Dir2"));
+	CHECK_FALSE(FileSystem::CreateDirectory("testFile.txt")); // file with this name already exists
 
 	// delete temporaries
-	BOOST_CHECK(FileSystem::DeleteFile("testDir1"));
-	BOOST_CHECK(FileSystem::DeleteFile("test Dir2"));
+	CHECK(FileSystem::DeleteFile("testDir1"));
+	CHECK(FileSystem::DeleteFile("test Dir2"));
 
 	// check if really deleted
-	BOOST_CHECK(!FileSystem::DirExists("testDir1"));
-	BOOST_CHECK(!FileSystem::DirExists("test Dir2"));
+	CHECK_FALSE(FileSystem::DirExists("testDir1"));
+	CHECK_FALSE(FileSystem::DirExists("test Dir2"));
 }
 
 
-BOOST_AUTO_TEST_CASE(GetDirectory)
+TEST_CASE("GetDirectory")
 {
 #define CHECK_DIR_EXTRACTION(path, dir) \
-		BOOST_CHECK(FileSystem::GetDirectory(path) == dir)
+		CHECK(FileSystem::GetDirectory(path) == dir)
 
 	CHECK_DIR_EXTRACTION("testFile.txt", "");
 	CHECK_DIR_EXTRACTION("./foo/testFile.txt", "./foo/");
@@ -135,10 +134,10 @@ BOOST_AUTO_TEST_CASE(GetDirectory)
 }
 
 
-BOOST_AUTO_TEST_CASE(GetNormalizedPath)
+TEST_CASE("GetNormalizedPath")
 {
 #define CHECK_NORM_PATH(path, normPath) \
-		BOOST_CHECK(FileSystem::GetNormalizedPath(path) == normPath)
+		CHECK(FileSystem::GetNormalizedPath(path) == normPath)
 
 	CHECK_NORM_PATH("/home/userX/.spring/foo/bar///./../test.log", "/home/userX/.spring/foo/test.log");
 	CHECK_NORM_PATH("./symLinkToHome/foo/bar///./../test.log", "./symLinkToHome/foo/test.log");
@@ -146,6 +145,3 @@ BOOST_AUTO_TEST_CASE(GetNormalizedPath)
 
 #undef CHECK_NORM_PATH
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
