@@ -426,6 +426,8 @@ public:
 		}
 	}
 
+	void Serialize(creg::ISerializer* s);
+
 private:
 	/// [0] := CMD_xxx code (custom codes can also be used)
 	/// [1] := AI Command callback id (passed in on handleCommand, returned in CommandFinished event)
