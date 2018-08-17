@@ -242,7 +242,7 @@ TEST_CASE("UnitSync")
 	// PreInit tests
 	us::SetSpringConfigFile("/tmp/foo.cfg");
 	CHECK(us::GetWritableDataDirectory() == nullptr);
-	if ((errmsg = us::GetNextError()) != nullptr) {
+	if ((errmsg = us::GetNextError()) == nullptr) {
 		FAIL_CHECK("No error on GetWritableDataDirectory before init"); // there's an error cause we called GetWritableDataDirectory() before Init()!
 	}
 
