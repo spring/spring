@@ -348,5 +348,7 @@ TEST_CASE("UnitSync")
 
 	// Check if VFS is deinit'ed
 	CHECK(us::GetWritableDataDirectory() == nullptr);
-	CHECK_ERROR_MESSAGE(errmsg);
+	if ((errmsg = us::GetNextError()) == nullptr) {
+		FAIL_CHECK("No error on GetWritableDataDirectory before init"); // there's an error cause we called GetWritableDataDirectory() after UnInit()!
+	}
 }
