@@ -241,7 +241,7 @@ TEST_CASE("UnitSync")
 	const char* errmsg;
 	// PreInit tests
 	us::SetSpringConfigFile("/tmp/foo.cfg");
-	CHECK(us::GetWritableDataDirectory() == NULL);
+	CHECK(us::GetWritableDataDirectory() == nullptr);
 	CHECK_ERROR_MESSAGE(errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
 
 	// Check if unitsync function IsSpringReleaseVersion matches VersionGenerated.h
@@ -345,6 +345,6 @@ TEST_CASE("UnitSync")
 	CHECK_ERROR_MESSAGE(errmsg);
 
 	// Check if VFS is deinit'ed
-	CHECK(us::GetWritableDataDirectory() == NULL);
+	CHECK(us::GetWritableDataDirectory() == nullptr);
 	CHECK_ERROR_MESSAGE(errmsg);
 }
