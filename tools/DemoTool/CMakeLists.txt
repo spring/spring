@@ -44,7 +44,6 @@ IF (MINGW)
 ENDIF (MINGW)
 add_definitions(-DNOT_USING_CREG)
 TARGET_LINK_LIBRARIES(demotool
-		${Boost_REGEX_LIBRARY}
 		${SPRING_MINIZIP_LIBRARY}
 		gflags
 	)
