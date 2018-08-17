@@ -10,7 +10,7 @@ CR_REG_METADATA(Command, (
 	CR_MEMBER(id),
 
 	CR_MEMBER(timeOut),
-	CR_MEMBER(pageIndex),
+	CR_IGNORED(pageIndex),
 	CR_MEMBER(numParams),
 	CR_MEMBER(tag),
 	CR_MEMBER(options),
@@ -89,7 +89,8 @@ void Command::Serialize(creg::ISerializer* s) {
 			s->Serialize(&p, sizeof(p));
 		}
 	} else {
-		for (unsigned int i = 0; i < numParams; i++) {
+		unsigned int tempNumParams = numParams;
+		for (numParams = 0; numParams < tempNumParams;) {
 			float p;
 			s->Serialize(&p, sizeof(p));
 			PushParam(p);
