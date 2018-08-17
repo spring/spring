@@ -15,15 +15,9 @@ CR_REG_METADATA(Command, (
 	CR_MEMBER(tag),
 	CR_MEMBER(options),
 
-	CR_MEMBER(params)
+	CR_IGNORED(params),
+	CR_SERIALIZER(Serialize)
 ))
-
-CR_BIND_TEMPLATE(CommandParamsPool, )
-CR_REG_METADATA_TEMPLATE(CommandParamsPool, (
-	CR_MEMBER(pages),
-	CR_MEMBER(indcs)
-))
-
 
 Command::~Command() {
 	if (!IsPooledCommand())
@@ -88,3 +82,17 @@ bool Command::PushParam(float param) {
 	return true;
 }
 
+void Command::Serialize(creg::ISerializer* s) {
+	if (s->IsWriting()) {
+		for (unsigned int i = 0; i < numParams; i++) {
+			float p = GetParam(i);
+			s->Serialize(&p, sizeof(p));
+		}
+	} else {
+		for (unsigned int i = 0; i < numParams; i++) {
+			float p;
+			s->Serialize(&p, sizeof(p));
+			PushParam(p);
+		}
+	}
+}

@@ -51,8 +51,6 @@ public:
 	}
 
 private:
-	CR_DECLARE_STRUCT(TCommandParamsPool)
-
 	std::vector< std::vector<T> > pages;
 	std::vector<unsigned int> indcs;
 };
