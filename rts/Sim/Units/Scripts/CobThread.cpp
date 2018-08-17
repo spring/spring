@@ -121,6 +121,8 @@ CCobThread& CCobThread::operator = (const CCobThread& t) {
 
 void CCobThread::Start(int functionId, int sigMask, const std::array<int, 1 + MAX_COB_ARGS>& args, bool schedule)
 {
+	assert(callStackSize == 0);
+
 	state = Run;
 	pc = cobFile->scriptOffsets[functionId];
 
@@ -133,8 +135,10 @@ void CCobThread::Start(int functionId, int sigMask, const std::array<int, 1 + MA
 	ci.stackTop   = 0;
 
 	// copy arguments; args[0] holds the count
-	if ((dataStackSize = paramCount) > 0)
-		std::memcpy(dataStack.begin(), args.begin() + 1, paramCount * sizeof(args[0]));
+	// handled by InitStack if thread has a parent that STARTs it,
+	// in which case args[0] is 0 and stack already contains data
+	if (paramCount > 0)
+		std::memcpy(dataStack.begin(), args.begin() + 1, (dataStackSize = paramCount) * sizeof(args[0]));
 
 	// add to scheduler
 	if (schedule)
@@ -183,6 +187,7 @@ int CCobThread::CheckStack(unsigned int size, bool warn)
 
 void CCobThread::InitStack(unsigned int n, CCobThread* t)
 {
+	assert(dataStackSize == 0);
 	dataStack.fill(0);
 
 	// move n arguments from caller's stack onto our own
