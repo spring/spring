@@ -219,7 +219,7 @@ static bool TestLuaParser()
 /******************************************************************************/
 /******************************************************************************/
 
-#define CHECK_ERROR_MESSAGE(s) if ((s = us::GetNextError()) != NULL) { FAIL_CHECK(s); }
+#define CHECK_ERROR_MESSAGE(s) if ((s = us::GetNextError()) != nullptr) { FAIL_CHECK(s); }
 
 static std::string GetGameName(int gameidx)
 {
@@ -333,7 +333,7 @@ TEST_CASE("UnitSync")
 	}
 
 	// Check Config Interface
-	CHECK(us::GetSpringConfigFile() != NULL);
+	CHECK(us::GetSpringConfigFile() != nullptr);
 	us::SetSpringConfigInt("_unitsync_test", 1);
 	CHECK(us::GetSpringConfigInt("_unitsync_test", 1e9) == 1);
 	us::DeleteSpringConfigKey("_unitsync_test");
