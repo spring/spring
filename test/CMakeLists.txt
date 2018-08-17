@@ -62,7 +62,7 @@ macro (add_spring_test target sources libraries flags)
 	add_dependencies(install-tests test_${target})
 	add_executable(test_${target} EXCLUDE_FROM_ALL ${sources})
 	target_link_libraries(test_${target} ${libraries})
-	set_target_properties(test_${target} PROPERTIES COMPILE_FLAGS "${flags}")
+	set_target_properties(test_${target} PROPERTIES COMPILE_FLAGS "${flags} ${CXX11_FLAGS}")
 	#install(TARGETS test_${target} DESTINATION ${BINDIR})
 endmacro()
 
@@ -341,7 +341,7 @@ endif()
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		LIST(APPEND test_libs atomic)
 	endif()
-add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
 
 
