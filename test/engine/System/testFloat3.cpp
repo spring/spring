@@ -8,9 +8,10 @@
 #include "System/Log/ILog.h"
 #include "System/Misc/SpringTime.h"
 
-#define BOOST_TEST_MODULE Float3
-#include <boost/test/unit_test.hpp>
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
+
+InitSpringTime ist;
 
 
 static inline float randf() {
@@ -70,14 +71,14 @@ static inline bool equals_sse(const float3& f1, const float3& f2)
 
 
 
-BOOST_AUTO_TEST_CASE( Float3 )
+TEST_CASE("Float3")
 {
-	BOOST_CHECK_MESSAGE(offsetof(float3, x) == 0,             "offsetof(float3, x) == 0");
-	BOOST_CHECK_MESSAGE(offsetof(float3, y) == sizeof(float), "offsetof(float3, y) == sizeof(float)");
-	BOOST_CHECK_MESSAGE(sizeof(float3) == 3 * sizeof(float),  "sizeof(float3) == 3 * sizeof(float)");
+	CHECK(offsetof(float3, x) == 0);
+	CHECK(offsetof(float3, y) == sizeof(float));
+	CHECK(sizeof(float3) == 3 * sizeof(float));
 }
 
-BOOST_AUTO_TEST_CASE( Float34_comparison )
+TEST_CASE("Float34_comparison")
 {
 	const float nearZero = float3::cmp_eps()*0.1f;
 	const float nearOne = 1.0f + nearZero;
@@ -98,24 +99,24 @@ BOOST_AUTO_TEST_CASE( Float34_comparison )
 	const float4 f4_Big(big, big, big, big);
 	const float4 f4_NearBig(nearBig, nearBig, nearBig, nearBig);
 
-	BOOST_CHECK(f3_NearZero == f3_Zero);
-	BOOST_CHECK(f3_Zero == f3_NearZero);
-	BOOST_CHECK(f4_NearZero == f4_Zero);
-	BOOST_CHECK(f4_Zero == f4_NearZero);
+	CHECK(f3_NearZero == f3_Zero);
+	CHECK(f3_Zero == f3_NearZero);
+	CHECK(f4_NearZero == f4_Zero);
+	CHECK(f4_Zero == f4_NearZero);
 
-	BOOST_CHECK(f3_NearOne == f3_One);
-	BOOST_CHECK(f3_One == f3_NearOne);
-	BOOST_CHECK(f4_NearOne == f4_One);
-	BOOST_CHECK(f4_One == f4_NearOne);
+	CHECK(f3_NearOne == f3_One);
+	CHECK(f3_One == f3_NearOne);
+	CHECK(f4_NearOne == f4_One);
+	CHECK(f4_One == f4_NearOne);
 
-	BOOST_CHECK(f3_NearBig == f3_Big);
-	BOOST_CHECK(f3_Big == f3_NearBig);
-	BOOST_CHECK(f4_NearBig == f4_Big);
-	BOOST_CHECK(f4_Big == f4_NearBig);
+	CHECK(f3_NearBig == f3_Big);
+	CHECK(f3_Big == f3_NearBig);
+	CHECK(f4_NearBig == f4_Big);
+	CHECK(f4_Big == f4_NearBig);
 }
 
 
-BOOST_AUTO_TEST_CASE( Float34_comparison_Performance )
+TEST_CASE("Float34_comparison_Performance")
 {
 	srand( 0 );
 	std::array<float3, 100> v;
@@ -234,5 +235,5 @@ BOOST_AUTO_TEST_CASE( Float34_comparison_Performance )
 		}
 	}
 
-	BOOST_CHECK((b[0] == b[1]) && (b[2] == b[3]) && (b[1] == b[2]) && (b[3] == b[4]));
+	CHECK(((b[0] == b[1]) && (b[2] == b[3]) && (b[1] == b[2]) && (b[3] == b[4])));
 }

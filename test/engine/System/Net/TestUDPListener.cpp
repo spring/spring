@@ -3,8 +3,8 @@
 #include "System/Log/ILog.h"
 
 
-#define BOOST_TEST_MODULE UDPListener
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 class SocketTest {
 public:
@@ -17,19 +17,21 @@ public:
 #else
 		const std::string& err = netcode::UDPListener::TryBindSocket(port, socket, "127.0.0.1");
 #endif
-		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
+		INFO(err);
+		CHECK(err.empty() == result);
 
 	}
 	void TestHost(const char* address, bool result = true)
 	{
 		const std::string& err = netcode::UDPListener::TryBindSocket(11111, socket, address);
-		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
+		INFO(err);
+		CHECK(err.empty() == result);
 	}
 private:
 	std::shared_ptr<asio::ip::udp::socket> socket;
 };
 
-BOOST_AUTO_TEST_CASE(TryBindSocket)
+TEST_CASE("TryBindSocket")
 {
 	SocketTest t;
 

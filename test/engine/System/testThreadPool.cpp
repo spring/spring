@@ -11,15 +11,15 @@
 #include <atomic>
 #include <future>
 
-#define BOOST_TEST_MODULE ThreadPool
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 
-// BOOST.TEST is not threadsafe
-#define SAFE_BOOST_CHECK( P )                \
+// Catch is not threadsafe
+#define SAFE_CHECK( P )                \
 	do {                                     \
 		std::lock_guard<spring::mutex> _(m); \
-		BOOST_CHECK( (P) );                  \
+		CHECK( (P) );                  \
 	} while (0);
 
 struct do_once {
@@ -27,8 +27,8 @@ struct do_once {
 	~do_once() { printf("[%s]\n", __func__); ThreadPool::SetThreadCount(0); } // cleanup after last test
 };
 
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
-BOOST_GLOBAL_FIXTURE(do_once);
+InitSpringTime ist;
+do_once doonce;
 
 
 // static do_once o;
@@ -38,47 +38,47 @@ static constexpr int NUM_RUNS = 5000;
 static           int NUM_THREADS = 0;
 
 
-BOOST_AUTO_TEST_CASE( test_for_mt )
+TEST_CASE("test_for_mt")
 {
 	LOG("[%s::test_for_mt] {NUM,MAX}_THREADS={%d,%d}", __func__, NUM_THREADS = ThreadPool::GetMaxThreads(), ThreadPool::MAX_THREADS);
 
 	std::atomic<int> cnt(0);
 
-	BOOST_CHECK(cnt.is_lock_free());
+	CHECK(cnt.is_lock_free());
 
 	std::vector<int> nums(NUM_RUNS, 0);
 	std::vector<int> runs(NUM_THREADS, 0);
 
 	ThreadPool::SetThreadCount(NUM_THREADS);
-	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
+	CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 
 	for_mt(0, NUM_RUNS, 2, [&](const int i) {
 		const int threadnum = ThreadPool::GetThreadNum();
-		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
-		SAFE_BOOST_CHECK(threadnum >= 0);
-		SAFE_BOOST_CHECK(i < NUM_RUNS);
-		SAFE_BOOST_CHECK(i >= 0);
+		SAFE_CHECK(threadnum < NUM_THREADS);
+		SAFE_CHECK(threadnum >= 0);
+		SAFE_CHECK(i < NUM_RUNS);
+		SAFE_CHECK(i >= 0);
 		assert(i < NUM_RUNS);
 		runs[threadnum]++;
 		nums[i] = 1;
 		++cnt;
 	});
-	BOOST_CHECK(cnt == NUM_RUNS / 2);
+	CHECK(cnt == NUM_RUNS / 2);
 
 	int rounds = 0;
 	for (size_t i = 0; i < runs.size(); i++) {
 		rounds += runs[i];
 	}
-	BOOST_CHECK(rounds == (NUM_RUNS / 2));
+	CHECK(rounds == (NUM_RUNS / 2));
 
 	for (int i = 0; i < NUM_RUNS; i++) {
-		BOOST_CHECK((i % 2) == (1 - nums[i]));
+		CHECK((i % 2) == (1 - nums[i]));
 	}
 }
 
 
 
-BOOST_AUTO_TEST_CASE( test_stepped_for_mt )
+TEST_CASE("test_stepped_for_mt")
 {
 	LOG("[%s::test_stepped_for_mt]", __func__);
 
@@ -92,14 +92,14 @@ BOOST_AUTO_TEST_CASE( test_stepped_for_mt )
 		hash += i;
 	}
 
-	BOOST_CHECK(hash == hashMT);
+	CHECK(hash == hashMT);
 	assert(hash == hashMT);
 }
 
-BOOST_AUTO_TEST_CASE( test_parallel )
+TEST_CASE("test_parallel")
 {
 	LOG("[%s::test_parallel]", __func__);
-	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
+	CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 
 	std::vector<int> runs(NUM_THREADS, 0);
 
@@ -107,59 +107,59 @@ BOOST_AUTO_TEST_CASE( test_parallel )
 	// threadnum=0 only in the special case that the pool is actually empty (NUM_THREADS=1)
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
-		SAFE_BOOST_CHECK(threadnum >           0 || runs.size() == 1);
-		SAFE_BOOST_CHECK(threadnum < NUM_THREADS                    );
+		SAFE_CHECK(threadnum >           0 || runs.size() == 1);
+		SAFE_CHECK(threadnum < NUM_THREADS                    );
 		runs[threadnum]++;
 	});
 
 	for (int i = 0; i < NUM_THREADS; i++) {
-		BOOST_CHECK(runs[i] == 1 || (i == 0 && NUM_THREADS != 1));
+		CHECK((runs[i] == 1 || (i == 0 && NUM_THREADS != 1)));
 	}
 }
 
-BOOST_AUTO_TEST_CASE( test_parallel_reduce )
+TEST_CASE("test_parallel_reduce")
 {
 	LOG("[%s::test_parallel_reduce]", __func__);
 
 	const auto ReduceFunc = [](int a, std::shared_ptr< std::future<int> >& b) -> int { return (a + (b.get())->get()); };
 	const auto TestFunc = []() -> int {
 		const int threadnum = ThreadPool::GetThreadNum();
-		SAFE_BOOST_CHECK(threadnum >= 0);
-		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
+		SAFE_CHECK(threadnum >= 0);
+		SAFE_CHECK(threadnum < NUM_THREADS);
 		return threadnum;
 	};
 
 	const int result = parallel_reduce(TestFunc, ReduceFunc);
-	BOOST_CHECK(result == ((NUM_THREADS - 1) * ((NUM_THREADS - 1) + 1)) / 2);
+	CHECK(result == ((NUM_THREADS - 1) * ((NUM_THREADS - 1) + 1)) / 2);
 }
 
-BOOST_AUTO_TEST_CASE( test_nested_for_mt )
+TEST_CASE("test_nested_for_mt")
 {
 	LOG("[%s::test_nested_for_mt]", __func__);
 
 	for_mt(0, 100, [&](const int y) {
 		for_mt(0, 100, [&](const int x) {
 			const int threadnum = ThreadPool::GetThreadNum();
-			SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
-			SAFE_BOOST_CHECK(threadnum >= 0);
+			SAFE_CHECK(threadnum < NUM_THREADS);
+			SAFE_CHECK(threadnum >= 0);
 		});
 	});
 }
 
-BOOST_AUTO_TEST_CASE( test_nested_parallel )
+TEST_CASE("test_nested_parallel")
 {
 	#if 0
 	parallel([&] {
 		parallel([&] {
 			const int threadnum = ThreadPool::GetThreadNum();
-			SAFE_BOOST_CHECK(threadnum >= 0);
-			SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
+			SAFE_CHECK(threadnum >= 0);
+			SAFE_CHECK(threadnum < NUM_THREADS);
 		});
 	});
 	#endif
 }
 
-BOOST_AUTO_TEST_CASE( test_throw_for_mt )
+TEST_CASE("test_throw_for_mt")
 {
 	//FIXME FAILS ATM
 	/*try {
@@ -171,21 +171,21 @@ BOOST_AUTO_TEST_CASE( test_throw_for_mt )
 	}*/
 }
 
-BOOST_AUTO_TEST_CASE( test_null_for_mt )
+TEST_CASE("test_null_for_mt")
 {
 	for_mt(0, -100, [&](const int i) {
-		SAFE_BOOST_CHECK(false); // shouldn't be called once
+		SAFE_CHECK(false); // shouldn't be called once
 	});
 	for_mt(0, 0, [&](const int i) {
-		SAFE_BOOST_CHECK(false); // shouldn't be called once
+		SAFE_CHECK(false); // shouldn't be called once
 	});
 	for_mt(100, 10, -1, [&](const int i) {
-		SAFE_BOOST_CHECK(false); // shouldn't be called once
+		SAFE_CHECK(false); // shouldn't be called once
 	});
 }
 
 
-BOOST_AUTO_TEST_CASE( test_sse_for_mt )
+TEST_CASE("test_sse_for_mt")
 {
 	LOG("[%s::test_sse_for_mt]", __func__);
 
@@ -198,8 +198,8 @@ BOOST_AUTO_TEST_CASE( test_sse_for_mt )
 		const float r = rngs[ThreadPool::GetThreadNum()].NextFloat() * 1000.0f;
 		const float s = math::sqrt(r); // test SSE intrinsics (should be 100% reentrant)
 
-		SAFE_BOOST_CHECK(!std::isinf(s));
-		SAFE_BOOST_CHECK(!std::isnan(s));
+		SAFE_CHECK(!std::isinf(s));
+		SAFE_CHECK(!std::isnan(s));
 	});
 }
 
@@ -247,7 +247,7 @@ static void for_vs_for_mt_kernel(const int numRuns, const spring_time kernelLoad
 	LOG("\t\tmt runtime: %.0f%%", (t_formt.toMilliSecsf() / t_for.toMilliSecsf()) * 100.0f);
 }
 
-BOOST_AUTO_TEST_CASE( test_for_vs_for_mt )
+TEST_CASE("test_for_vs_for_mt")
 {
 	for_vs_for_mt_kernel(100,  spring_time::fromMicroSecs(10));
 	for_vs_for_mt_kernel(1000, spring_time::fromMicroSecs(5));
@@ -280,7 +280,7 @@ static void test_parallel_reaction_times_aux(int numRuns)
 }
 
 
-BOOST_AUTO_TEST_CASE( test_parallel_reaction_times )
+TEST_CASE("test_parallel_reaction_times")
 {
 	LOG("[%s::test_parallel_reaction_times]", __func__);
 
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE( test_parallel_reaction_times )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_for_mt_reaction_times )
+TEST_CASE("test_for_mt_reaction_times")
 {
 	constexpr int RUNS = 10;
 
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE( test_for_mt_reaction_times )
 }
 
 
-BOOST_AUTO_TEST_CASE( test_parallel_gtn_cost )
+TEST_CASE("test_parallel_gtn_cost")
 {
 	std::vector<float> costs(NUM_THREADS);
 	std::atomic<int> threads(0);

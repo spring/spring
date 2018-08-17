@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BOOST_TEST_MODULE RectangleOverlapHandler
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 static inline float randf()
 {
@@ -95,15 +95,15 @@ static inline bool TestOverlapping(std::vector<int>& testMap, CRectangleOverlapH
 }
 
 
-BOOST_AUTO_TEST_CASE( RectangleOverlapHandler )
+TEST_CASE("RectangleOverlapHandler")
 {
 	srand( time(NULL) );
 
 	std::vector<int> testMap(size * size, 0);
 	CRectangleOverlapHandler ro;
 
-	BOOST_CHECK_MESSAGE(TestArea(testMap, ro),
-			"Optimized rectangles don't cover the same area!");
-	BOOST_CHECK_MESSAGE(TestOverlapping(testMap, ro),
-			"Optimized rectangles still overlap!");
+	INFO("Optimized rectangles don't cover the same area!");
+	CHECK(TestArea(testMap, ro));
+	INFO("Optimized rectangles still overlap!");
+	CHECK(TestOverlapping(testMap, ro));
 }

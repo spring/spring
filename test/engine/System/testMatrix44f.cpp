@@ -10,9 +10,9 @@
 #include "System/Sync/HsiehHash.h"
 
 
-#define BOOST_TEST_MODULE Matrix44f
-#include <boost/test/unit_test.hpp>
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
+InitSpringTime ist;
 
 static const int testRuns = 40000000;
 
@@ -256,7 +256,7 @@ _noinline static int TestSSE()
 }
 
 
-BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
+TEST_CASE("Matrix44VectorMultiply")
 {
 
 	for (int i = 0; i < 16; ++i) {
@@ -267,14 +267,14 @@ BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 	}
 
 	const int correctHash = TestSpring();
-	BOOST_CHECK(TestFPU1() == correctHash);
-	BOOST_CHECK(TestFPU2() == correctHash);
-	BOOST_CHECK(TestSSE()  == correctHash);
+	CHECK(TestFPU1() == correctHash);
+	CHECK(TestFPU2() == correctHash);
+	CHECK(TestSSE()  == correctHash);
 
 	spring_clock::PopTickRate();
 }
 
-BOOST_AUTO_TEST_CASE( Matrix44MatrixMultiply )
+TEST_CASE("Matrix44MatrixMultiply")
 {
 	for (int i = 0; i < 16; ++i) {
 		if ((i != 7) && (i != 3)) {
@@ -283,10 +283,4 @@ BOOST_AUTO_TEST_CASE( Matrix44MatrixMultiply )
 			m[i] = 0.0f;
 		}
 	}
-
-	// only BOOST_WARN (= no error on fail) cause it hash won't be same, still results sync and are `same` as fpu
-	const int correctHash = TestMMSpring();
-	BOOST_WARN(TestMMFpu()     == correctHash);
-	BOOST_WARN(TestMMSpring2() == correctHash);
-	BOOST_WARN(TestMMSSE()     == correctHash);
 }

@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BOOST_TEST_MODULE Ellipsoid
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
 
 
 static inline float3 randfloat3()
@@ -42,7 +42,7 @@ static inline float getdistSq(float x, float y, float z, float a, float b, float
 //We Fail if after half the iterations we have error > 5%
 #define FAIL_THRESHOLD 0.05f
 
-BOOST_AUTO_TEST_CASE( Ellipsoid )
+TEST_CASE("Ellipsoid")
 {
 	srand( time(NULL) );
 	unsigned failCount = 0;
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 
 
 		//Iterations
-		for (int i = 0; true; ) { 
+		for (int i = 0; true; ) {
 			const float cost = math::cos(theta);
 			const float sint = math::sin(theta);
 			const float sinp = math::sin(phi);
@@ -157,5 +157,6 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 		printf("Iteration %d:\n\tError: (Mean: %f, Dev: %f, Max: %f)\n\tPercent remaining: %.3f%%\n", i, meanError, devError, maxError[i], pct);
 	}
 
-	BOOST_CHECK_MESSAGE(failCount < MAX_FAILS, "Inaccurate ellipsoid distance approximation!");
+	INFO("Inaccurate ellipsoid distance approximation!");
+	CHECK(failCount < MAX_FAILS);
 }
