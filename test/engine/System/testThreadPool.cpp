@@ -24,7 +24,6 @@
 
 struct do_once {
 	do_once() { printf("[%s]\n", __func__); Threading::DetectCores(); } // make GetMaxThreads() work
-	~do_once() { printf("[%s]\n", __func__); ThreadPool::SetThreadCount(0); } // cleanup after last test
 };
 
 InitSpringTime ist;
@@ -337,5 +336,11 @@ TEST_CASE("test_parallel_gtn_cost")
 	}
 
 	LOG("[%s::test_parallel_gtn_cost] %.6fms (avg)", __func__, totalCost / threads);
+}
+
+TEST_CASE("Cleanup")
+{
+	ThreadPool::SetThreadCount(0);
+	CHECK(ThreadPool::GetNumThreads() == 1);
 }
 
