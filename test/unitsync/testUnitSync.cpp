@@ -243,6 +243,9 @@ TEST_CASE("UnitSync")
 	us::SetSpringConfigFile("/tmp/foo.cfg");
 	CHECK(us::GetWritableDataDirectory() == nullptr);
 	CHECK_ERROR_MESSAGE(errmsg); // there's an error cause we called GetWritableDataDirectory() before Init()!
+	if ((errmsg = us::GetNextError()) != nullptr) {
+		FAIL_CHECK("No error on GetWritableDataDirectory before init");
+	}
 
 	// Check if unitsync function IsSpringReleaseVersion matches VersionGenerated.h
 	CHECK(us::IsSpringReleaseVersion() == (SPRING_VERSION_ENGINE_RELEASE == 1));
