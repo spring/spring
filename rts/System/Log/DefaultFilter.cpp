@@ -324,10 +324,11 @@ const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
 	// cache for log_frontend_register_runtime_section; services LuaUnsyced
 	static std::array<char[1024], 64> cache;
-	static spring::unordered_map<size_t, size_t> index;
+	static spring::unordered_map<std::string, size_t> index;
 
-	// see if hash(str) is already mapped to a cache-index
-	const auto iter = index.find(hashString(section_cstr_tmp));
+	// see if str is already mapped to a cache-index
+	const auto str = std::string(section_cstr_tmp);
+	const auto iter = index.find(str);
 
 	static_assert(sizeof(cache[0]) == 1024, "");
 
@@ -338,14 +339,14 @@ const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 	if (index.size() == cache.size())
 		return "";
 	// too long section-name
-	if (strlen(section_cstr_tmp) >= sizeof(cache[0]))
+	if (str.size() >= sizeof(cache[0]))
 		return "";
 
 	if (index.empty())
 		index.reserve(cache.size());
 
 	strncpy(&cache[index.size()][0], section_cstr_tmp, sizeof(cache[0]));
-	index.emplace(hashString(section_cstr_tmp), index.size());
+	index.emplace(str, index.size());
 
 	return &cache[index.size() - 1][0];
 }

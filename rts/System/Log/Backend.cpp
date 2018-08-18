@@ -15,55 +15,51 @@
 #define MAX_LOG_SINKS 8
 
 namespace log_formatter {
-	static size_t numSinks = 0;
-
 	static std::array<log_sink_ptr, MAX_LOG_SINKS> sinks = {nullptr};
 	static std::array<log_cleanup_ptr, MAX_LOG_SINKS> cleanupFuncs = {nullptr};
 
-	size_t getNumSinks() { return numSinks; }
+	static size_t numSinks = 0;
+	static size_t numFuncs = 0;
 
-	bool insert_sink(log_sink_ptr sink) {
-		const auto iter = std::find(sinks.begin(), sinks.end(), nullptr);
+	template<typename T, size_t S> bool array_insert(std::array<T, S>& array, T value, size_t& count) {
+		const auto iter = std::find(array.begin(), array.end(), nullptr);
 
-		// too many sinks
-		if (iter == sinks.end())
+		// too many elems
+		if (iter == array.end())
 			return false;
 		// check for duplicates
-		if (false && std::find(sinks.begin(), sinks.end(), sink) != sinks.end())
+		if (false && std::find(array.begin(), array.end(), value) != array.end())
 			return false;
 
-		numSinks += 1;
-		return (*iter = sink, true);
+		return (*iter = value, ++count);
+	}
+	template<typename T, size_t S> bool array_remove(std::array<T, S>& array, T value, size_t& count) {
+		const auto iter = std::find(array.begin(), array.end(), value);
+
+		if (iter == array.end())
+			return false;
+
+		// remove without leaving holes
+		for (size_t i = iter - array.begin(), j = array.size() - 1; i < j; i++) {
+			array[i] = array[i + 1];
+		}
+
+		return (array[--count] = nullptr, true);
+	}
+
+
+	bool insert_sink(log_sink_ptr sink) {
+		return (array_insert(sinks, sink, numSinks));
 	}
 	bool remove_sink(log_sink_ptr sink) {
-		const auto iter = std::find(sinks.begin(), sinks.end(), sink);
-
-		if (iter == sinks.end())
-			return false;
-
-		numSinks -= 1;
-		return (*iter = nullptr, true);
+		return (array_remove(sinks, sink, numSinks));
 	}
 
 	bool insert_func(log_cleanup_ptr func) {
-		const auto iter = std::find(cleanupFuncs.begin(), cleanupFuncs.end(), nullptr);
-
-		// too many funcs (same maximum as sinks)
-		if (iter == cleanupFuncs.end())
-			return false;
-		// check for duplicates
-		if (false && std::find(cleanupFuncs.begin(), cleanupFuncs.end(), func) != cleanupFuncs.end())
-			return false;
-
-		return (*iter = func, true);
+		return (array_insert(cleanupFuncs, func, numFuncs));
 	}
 	bool remove_func(log_cleanup_ptr func) {
-		const auto iter = std::find(cleanupFuncs.begin(), cleanupFuncs.end(), func);
-
-		if (iter == cleanupFuncs.end())
-			return false;
-
-		return (*iter = nullptr, true);
+		return (array_remove(cleanupFuncs, func, numFuncs));
 	}
 }
 
@@ -98,7 +94,7 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 {
 	const auto& sinks = log_formatter::sinks;
 
-	if (log_formatter::getNumSinks() == 0)
+	if (log_formatter::numSinks == 0)
 		return;
 
 	cur_record.sec = section;
@@ -118,13 +114,10 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 	if (cur_record.cnt >= log_filter_getRepeatLimit())
 		return;
 
-
 	// sink the record into each registered sink
-	for (log_sink_ptr fptr: sinks) {
-		if (fptr == nullptr)
-			continue;
-
-		fptr(level, section, cur_record.msg);
+	for (size_t i = 0; i < log_formatter::numSinks; i++) {
+		assert(sinks[i] != nullptr);
+		sinks[i](level, section, cur_record.msg);
 	}
 
 	if (cur_record.cnt > 0)
@@ -135,11 +128,11 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 
 /// Passes on a cleanup request to all sinks
 void log_backend_cleanup() {
-	for (log_cleanup_ptr fptr: log_formatter::cleanupFuncs) {
-		if (fptr == nullptr)
-			continue;
+	const auto& funcs = log_formatter::cleanupFuncs;
 
-		fptr();
+	for (size_t i = 0; i < log_formatter::numFuncs; i++) {
+		assert(funcs[i] != nullptr);
+		funcs[i]();
 	}
 }
 
