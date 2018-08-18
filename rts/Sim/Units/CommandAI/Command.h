@@ -418,13 +418,7 @@ public:
 		SetOpts(cmdOpts);
 	}
 
-	void CopyParams(const Command& c) {
-		assert(IsEmptyCommand());
-
-		for (unsigned int i = 0; i < c.numParams; i++) {
-			PushParam(c.GetParam(i));
-		}
-	}
+	void CopyParams(const Command& c);
 
 	void Serialize(creg::ISerializer* s);
 
