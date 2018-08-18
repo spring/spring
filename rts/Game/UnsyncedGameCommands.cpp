@@ -2751,8 +2751,8 @@ public:
 			"Invoke an artificial crash by performing a division-by-Zero", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		float a = 0.0f;
-		LOG("Result: %f", 1.0f/a);
+		float a = 0.0f; //can't be constexpr since MSVC dies
+		LOG("Result: %f", 1.0f / a);
 		return true;
 	}
 };

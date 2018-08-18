@@ -3,6 +3,7 @@
 #ifndef TEAM_BASE_H
 #define TEAM_BASE_H
 
+#include <algorithm>
 #include <string>
 
 #include "System/float3.h"

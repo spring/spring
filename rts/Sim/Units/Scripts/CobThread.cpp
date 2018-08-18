@@ -76,8 +76,8 @@ CCobThread& CCobThread::operator = (CCobThread&& t) {
 
 	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
 
-	std::memcpy(callStack.begin(), t.callStack.begin(), callStackSize * sizeof(callStack[0]));
-	std::memcpy(dataStack.begin(), t.dataStack.begin(), dataStackSize * sizeof(dataStack[0]));
+	std::memcpy(callStack.data(), t.callStack.data(), callStackSize * sizeof(callStack[0]));
+	std::memcpy(dataStack.data(), t.dataStack.data(), dataStackSize * sizeof(dataStack[0]));
 	// execTrace = std::move(t.execTrace);
 
 	state = t.state;
@@ -106,8 +106,8 @@ CCobThread& CCobThread::operator = (const CCobThread& t) {
 
 	std::memcpy(luaArgs, t.luaArgs, sizeof(luaArgs));
 
-	std::memcpy(callStack.begin(), t.callStack.begin(), callStackSize * sizeof(callStack[0]));
-	std::memcpy(dataStack.begin(), t.dataStack.begin(), dataStackSize * sizeof(dataStack[0]));
+	std::memcpy(callStack.data(), t.callStack.data(), callStackSize * sizeof(callStack[0]));
+	std::memcpy(dataStack.data(), t.dataStack.data(), dataStackSize * sizeof(dataStack[0]));
 	// execTrace = t.execTrace;
 
 	state = t.state;
@@ -138,7 +138,7 @@ void CCobThread::Start(int functionId, int sigMask, const std::array<int, 1 + MA
 	// handled by InitStack if thread has a parent that STARTs it,
 	// in which case args[0] is 0 and stack already contains data
 	if (paramCount > 0)
-		std::memcpy(dataStack.begin(), args.begin() + 1, (dataStackSize = paramCount) * sizeof(args[0]));
+		std::memcpy(dataStack.data(), args.data() + 1, (dataStackSize = paramCount) * sizeof(args[0]));
 
 	// add to scheduler
 	if (schedule)

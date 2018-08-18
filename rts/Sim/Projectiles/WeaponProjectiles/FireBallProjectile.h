@@ -4,6 +4,7 @@
 #define _FIRE_BALL_PROJECTILE_H
 
 #include "WeaponProjectile.h"
+#include <algorithm>
 #include <deque>
 
 class CFireBallProjectile : public CWeaponProjectile

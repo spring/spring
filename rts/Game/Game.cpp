@@ -185,7 +185,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(msgProcTimeLeft),
 	CR_IGNORED(consumeSpeedMult),
 
-	#if 0
+/*
 	CR_IGNORED(skipStartFrame),
 	CR_IGNORED(skipEndFrame),
 	CR_IGNORED(skipTotalFrames),
@@ -193,7 +193,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(skipSoundmute),
 	CR_IGNORED(skipOldSpeed),
 	CR_IGNORED(skipOldUserSpeed),
-	#endif
+*/
 
 	CR_MEMBER(speedControl),
 	CR_MEMBER(luaGCControl),
