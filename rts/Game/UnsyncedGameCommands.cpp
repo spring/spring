@@ -2793,7 +2793,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		constexpr float a = 0.0f;
+		float a = 0.0f; //can't be constexpr since MSVC dies
 		LOG("Result: %f", 1.0f / a);
 		return true;
 	}

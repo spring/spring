@@ -3,6 +3,7 @@
 #ifndef UNITHANDLER_H
 #define UNITHANDLER_H
 
+#include <array>
 #include <vector>
 
 #include "Sim/Misc/GlobalConstants.h"
