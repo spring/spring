@@ -82,6 +82,21 @@ bool Command::PushParam(float param) {
 	return true;
 }
 
+void Command::CopyParams(const Command& c) {
+	// clear existing params
+	if (IsPooledCommand())
+		cmdParamsPool.ReleasePage(pageIndex);
+
+	pageIndex = -1u;
+	numParams = 0;
+
+	assert(IsEmptyCommand());
+
+	for (unsigned int i = 0; i < c.numParams; i++) {
+		PushParam(c.GetParam(i));
+	}
+}
+
 void Command::Serialize(creg::ISerializer* s) {
 	if (s->IsWriting()) {
 		for (unsigned int i = 0; i < numParams; i++) {
@@ -89,7 +104,7 @@ void Command::Serialize(creg::ISerializer* s) {
 			s->Serialize(&p, sizeof(p));
 		}
 	} else {
-		unsigned int tempNumParams = numParams;
+		const unsigned int tempNumParams = numParams;
 		for (numParams = 0; numParams < tempNumParams;) {
 			float p;
 			s->Serialize(&p, sizeof(p));
