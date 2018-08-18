@@ -199,8 +199,8 @@ public:
 	}
 
 	bool DefragRaw() {
-		constexpr auto sortPred = [](const FreePair& a, const FreePair& b) { return (a.first < b.first); };
-		constexpr auto accuPred = [](const FreePair& a, const FreePair& b) { return FreePair{0, a.second + b.second}; };
+		auto sortPred = [](const FreePair& a, const FreePair& b) { return (a.first < b.first); };
+		auto accuPred = [](const FreePair& a, const FreePair& b) { return FreePair{0, a.second + b.second}; };
 
 		std::sort(freeList.begin(), freeList.end(), sortPred);
 
