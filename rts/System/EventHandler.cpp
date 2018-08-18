@@ -179,9 +179,12 @@ void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 		if (ec == ecIt)
 			return; // already in the list
 
-		if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
-		         ((ec->GetOrder() == ecIt->GetOrder()) &&
-		          (ec->GetName()  <  ecIt->GetName()))) { // should not happen
+		if (ec->GetOrder() < ecIt->GetOrder()) {
+			ecList.insert(it, ec);
+			return;
+		}
+		// should not happen
+		if ((ec->GetOrder() == ecIt->GetOrder()) && (ec->GetName() < ecIt->GetName())) {
 			ecList.insert(it, ec);
 			return;
 		}
@@ -190,18 +193,15 @@ void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 	ecList.push_back(ec);
 }
 
-
 void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 {
-	// FIXME: efficient, hardly
-	EventClientList newList;
-	newList.reserve(ecList.size());
-	for (size_t i = 0; i < ecList.size(); i++) {
-		if (ec != ecList[i]) {
-			newList.push_back(ecList[i]);
-		}
-	}
-	ecList.swap(newList);
+	const auto ecIt = std::find(ecList.begin(), ecList.end(), ec);
+
+	// erase does not accept end()
+	if (ecIt == ecList.end())
+		return;
+
+	ecList.erase(ecIt);
 }
 
 
