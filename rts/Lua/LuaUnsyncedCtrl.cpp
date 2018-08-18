@@ -1454,6 +1454,8 @@ int LuaUnsyncedCtrl::SetMapShader(lua_State* L)
 		luaMapShaderData.shaderIDs[i] = shaders.GetProgramName(lua_tonumber(L, i + 1));
 	}
 
+	luaMapShaderData.setDefaultUniforms = luaL_optboolean(L, 3, false);
+
 	groundDrawer->SetLuaShader(&luaMapShaderData);
 	return 0;
 }
