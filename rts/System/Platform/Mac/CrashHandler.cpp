@@ -20,6 +20,7 @@
 
 
 static bool HaveAddr2LineMac()
+{
 	static int i = -1;
 
 	if (i == -1) {
@@ -107,7 +108,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	//   This is nested so that the outer loop covers all the entries for one library -- this means fewer atos calls.
 	for (unsigned int j = 0; j < numAddrPairs; j++) {
 		const AddrPathPair& addrPathPair = addrPathMap[j];
-		const std::string& modulePath = it->second;
+		const std::string& modulePath = addrPathPair.second;
 
 		LOG_L(L_DEBUG, "modulePath: %s", modulePath.c_str());
 
@@ -115,7 +116,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		execCommandString.clear();
 		stackFrameIndices.clear();
 
-		execCommandBuffer << ADDR2LINE << " -o " << modulePath << " -arch x86_64 -l " << std::hex << it->first;
+		execCommandBuffer << ADDR2LINE << " -o " << modulePath << " -arch x86_64 -l " << std::hex << addrPathPair.first;
 
 		// insert requested addresses that should be translated by atos
 		int i = 0;
@@ -140,7 +141,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		if (cmdOut != nullptr) {
 			char line[2048];
 
-			while (fgets_addr2line(line, sizeof(line), cmdOut) != nullptr) {
+			while (fgets(line, sizeof(line), cmdOut) != nullptr) {
 				i = stackFrameIndices.front();
 				stackFrameIndices.pop_front();
 
@@ -160,9 +161,6 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 {
 	// Print out the translated StackTrace
-	unsigned numLine = 0;
-	unsigned hiddenLines = 0;
-
 	for (const StackFrame& stackFrame: stacktrace) {
 		for (const StackEntry& stackEntry: stackFrame.entries) {
 			LOG_I(logLevel, "[%02u]   %s", stackEntry.level, stackEntry.funcname.c_str());
