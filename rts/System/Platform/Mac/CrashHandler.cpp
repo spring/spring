@@ -20,13 +20,15 @@
 
 
 static bool HaveAddr2LineMac()
+{
 	static int i = -1;
 
 	if (i == -1) {
 		FILE* f = popen(ADDR2LINE " --help 2>/dev/null", "r");
 
-		if ((i = (f == nullptr)) == 1)
+        if ((i = (f == nullptr)) == 1) {
 			return false;
+        }
 
 		pclose(f);
 	}
