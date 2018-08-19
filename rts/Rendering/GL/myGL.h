@@ -13,11 +13,7 @@
 #if defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
-	#if defined(__APPLE__)
-		#include <OpenGL/glew.h>
-	#else
-		#include <GL/glew.h>
-	#endif
+    #include <GL/glew.h>
 #endif // defined(HEADLESS)
 
 
