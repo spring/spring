@@ -259,10 +259,10 @@ struct S3DModel
 	void EnableAttribs() const;
 	void DisableAttribs() const;
 
-	void BindVertexArray() const { glBindVertexArray(vertexArray); }
+//    void BindVertexArray() const { glBindVertexArray(vertexArray); }
 	void BindElemsBuffer() const { glBindBuffer(GL_ARRAY_BUFFER, elemsBuffer); }
 	void BindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indcsBuffer); }
-	void UnbindVertexArray() const { glBindVertexArray(0); }
+//    void UnbindVertexArray() const { glBindVertexArray(0); }
 	void UnbindElemsBuffer() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
 	void UnbindIndcsBuffer() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
 
