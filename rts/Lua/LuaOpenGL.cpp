@@ -36,6 +36,8 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Map/SMF/SMFReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/LineDrawer.h"
@@ -4625,37 +4627,78 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 
 int LuaOpenGL::GetMapRendering(lua_State* L)
 {
-	const char* key = luaL_checkstring(L, 1);
+	const string key = luaL_checkstring(L, 1);
 
-	switch (hashString(key)) {
-		// float4
-		case hashString("splatTexScales"): {
-			lua_pushnumber(L, mapRendering->splatTexScales[0]);
-			lua_pushnumber(L, mapRendering->splatTexScales[1]);
-			lua_pushnumber(L, mapRendering->splatTexScales[2]);
-			lua_pushnumber(L, mapRendering->splatTexScales[3]);
-			return 4;
-		} break;
-		case hashString("splatTexMults"): {
-			lua_pushnumber(L, mapRendering->splatTexMults[0]);
-			lua_pushnumber(L, mapRendering->splatTexMults[1]);
-			lua_pushnumber(L, mapRendering->splatTexMults[2]);
-			lua_pushnumber(L, mapRendering->splatTexMults[3]);
-			return 4;
-		} break;
-		// boolean
-		case hashString("voidWater"): {
-			lua_pushboolean(L, mapRendering->voidWater);
-			return 1;
-		} break;
-		case hashString("voidGround"): {
-			lua_pushboolean(L, mapRendering->voidGround);
-			return 1;
-		} break;
-		case hashString("splatDetailNormalDiffuseAlpha"): {
-			lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
-			return 1;
-		} break;
+	// float4
+	if (key == "splatTexScales") {
+		lua_pushnumber(L, mapRendering->splatTexScales[0]);
+		lua_pushnumber(L, mapRendering->splatTexScales[1]);
+		lua_pushnumber(L, mapRendering->splatTexScales[2]);
+		lua_pushnumber(L, mapRendering->splatTexScales[3]);
+		return 4;
+	} else if (key == "splatTexMults") {
+		lua_pushnumber(L, mapRendering->splatTexMults[0]);
+		lua_pushnumber(L, mapRendering->splatTexMults[1]);
+		lua_pushnumber(L, mapRendering->splatTexMults[2]);
+		lua_pushnumber(L, mapRendering->splatTexMults[3]);
+		return 4;
+	}
+	// boolean
+	else if (key == "voidWater") {
+		lua_pushboolean(L, mapRendering->voidWater);
+		return 1;
+	} else if (key == "voidGround") {
+		lua_pushboolean(L, mapRendering->voidGround);
+		return 1;
+	} else if (key == "specularLighting") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetSpecularTexture() != 0);
+		return 1;
+	} else if (key == "splatDetailTexture") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+		                   smfMap->GetSplatDetailTexture() != 0);
+		return 1;
+	} else if (key == "splatDetailNormalTexture") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+		                   smfMap->HaveSplatNormalTexture());
+		return 1;
+	} else if (key == "splatDetailNormalDiffuseAlpha") {
+		lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
+		return 1;
+	} else if (key == "waterAbsortion") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->HasVisibleWater());
+		return 1;
+	} else if (key == "skyReflection") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetSkyReflectModTexture() != 0);
+		return 1;
+	} else if (key == "blendNormals") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetBlendNormalsTexture() != 0);
+		return 1;
+	} else if (key == "lightEmission") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetLightEmissionTexture() != 0);
+		return 1;
+	} else if (key == "parallaxMapping") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		lua_pushboolean(L, smfMap->GetParallaxHeightTexture() != 0);
+		return 1;
+	} else if (key == "baseDynamicMapLight") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+		const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+		lua_pushnumber(L, lightHandler->GetBaseLight());
+		return 1;
+	} else if (key == "maxDynamicMapLight") {
+		CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+		CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+		const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+		lua_pushnumber(L, lightHandler->GetMaxLights());
+		return 1;
 	}
 
 	luaL_error(L, "[%s] unknown key %s", __func__, key);
