@@ -43,7 +43,7 @@ static bool HaveAddr2LineMac()
  */
 static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel)
 {
-	LOG_L(L_DEBUG, "TranslateStackTrace[1]");
+	LOG_L(L_DEBUG, "[%s][1] #stacktrace=%u", __func__, static_cast<unsigned int>(stacktrace.size()));
 
 	const pid_t pid = getpid();
 
@@ -73,16 +73,16 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 			stackFrame.path = "";
 		}
 
-		LOG_L(L_DEBUG, "symbol = \"%s\", path = \"%s\", addr = 0x%lx", stackFrame.symbol.c_str(), path, stackFrame.ip);
+		LOG_L(L_DEBUG, "\tsymbol = \"%s\", path = \"%s\", addr = 0x%lx", stackFrame.symbol.c_str(), path, stackFrame.ip);
 	}
 
-	LOG_L(L_DEBUG, "TranslateStackTrace[2]");
+	LOG_L(L_DEBUG, "[%s][2]", __func__);
 
 	// check if atos is available
 	if (!HaveAddr2LineMac())
 		LOG_L(L_WARNING, " %s not found!", ADDR2LINE);
 
-	LOG_L(L_DEBUG, "TranslateStackTrace[3] (#stacktrace=%u)", static_cast<unsigned int>(stacktrace.size()));
+	LOG_L(L_DEBUG, "[%s][3]", __func__);
 
 	unsigned int numAddrPairs = 0;
 	for (const StackFrame& stackFrame: stacktrace) {
@@ -102,7 +102,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	// sort by address
 	std::sort(addrPathMap.begin(), addrPathMap.begin() + numAddrPairs, [](const AddrPathPair& a, const AddrPathPair& b) { return (a.first < b.first); });
 
-	LOG_L(L_DEBUG, "TranslateStackTrace[4]");
+	LOG_L(L_DEBUG, "[%s][4]", __func__);
 
 	// Finally translate it:
 	//   This is nested so that the outer loop covers all the entries for one library -- this means fewer atos calls.
@@ -110,7 +110,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		const AddrPathPair& addrPathPair = addrPathMap[j];
 		const std::string& modulePath = addrPathPair.second;
 
-		LOG_L(L_DEBUG, "modulePath: %s", modulePath.c_str());
+		LOG_L(L_DEBUG, "\tmodulePath: %s", modulePath.c_str());
 
 		execCommandBuffer.str("");
 		execCommandString.clear();
@@ -134,7 +134,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		execCommandBuffer << " 2>/dev/null";
 		execCommandString = std::move(execCommandBuffer.str());
 
-		LOG_L(L_DEBUG, "> %s", execCommandString.c_str());
+		LOG_L(L_DEBUG, "\t> %s", execCommandString.c_str());
 
 		FILE* cmdOut = popen(execCommandString.c_str(), "r");
 
@@ -155,7 +155,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		}
 	}
 
-	LOG_L(L_DEBUG, "TranslateStackTrace[5]");
+	LOG_L(L_DEBUG, "[%s][5]", __func__);
 }
 
 static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
@@ -163,7 +163,7 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 	// Print out the translated StackTrace
 	for (const StackFrame& stackFrame: stacktrace) {
 		for (const StackEntry& stackEntry: stackFrame.entries) {
-			LOG_I(logLevel, "[%02u]   %s", stackEntry.level, stackEntry.funcname.c_str());
+			LOG_I(logLevel, "[%02u]   %s", stackFrame.level, stackEntry.funcname.c_str());
 		}
 	}
 }
