@@ -128,7 +128,7 @@ public:
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
-	void setFlags(
+	void UpdatingUniforms(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const unsigned int n
 	);
@@ -142,6 +142,7 @@ public:
 	bool CanDrawForward() const { return true; }
 	bool CanDrawDeferred() const { return true; }
 
+	void EnablingUniforms(const CSMFGroundDrawer* smfGroundDrawer);
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 
