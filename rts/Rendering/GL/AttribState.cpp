@@ -82,7 +82,6 @@ void GL::AttribState::Init() {
 	glSetStateFuncs[0] = glDisable;
 	glSetStateFuncs[1] = glEnable;
 
-	PushBits(0);
 	// copy initial GL state from GlobalRendering::InitGLState, stateless rendering stopgap
 	// TODO: GL_{COLOR_LOGIC_OP,SAMPLE_ALPHA_TO_COVERAGE,PRIMITIVE_RESTART,CLIP_DISTANCEi}?
 	PushDepthClamp(glIsEnabled(GL_DEPTH_CLAMP));
