@@ -121,8 +121,8 @@ void CQuitBox::Draw()
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// draw the background box

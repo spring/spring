@@ -99,10 +99,10 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	if (!globalRendering->drawSky)
 		return;
 
-	glDisable(GL_BLEND);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->DisableAlphaTest();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
@@ -123,8 +123,8 @@ void CSkyBox::Draw(Game::DrawMode mode)
 		vtxPos = vtxPtr;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->EnableDepthTest();
 	#endif
 }
 

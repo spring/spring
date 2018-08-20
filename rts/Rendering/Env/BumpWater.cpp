@@ -725,7 +725,7 @@ void CBumpWater::UpdateWater(CGame* game)
 	if (reflection > 0) DrawReflection(game);
 	if (reflection || refraction) {
 		FBO::Unbind();
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 }
 
@@ -843,12 +843,12 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 void CBumpWater::UpdateCoastmap(const bool initialize)
 {
 	coastFBO.Bind();
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
-	blurShader->Enable();
 
-	glDisable(GL_BLEND);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
+	blurShader->Enable();
+	glAttribStatePtr->PushBits(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableDepthTest();
 
 	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, coastUpdateTexture);
@@ -860,7 +860,7 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 
-	glViewport(0, 0, mapDims.mapx, mapDims.mapy);
+	glAttribStatePtr->ViewPort(0, 0, mapDims.mapx, mapDims.mapy);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	// initial stage; n=0
 	coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
@@ -890,7 +890,7 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 		// (5*2) processing stages; n=1 to n=10 inclusive
 		for (int i = 0; i < 5; ++i) {
 			coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
-			glViewport(0, 0, atlasSizeX, atlasSizeY);
+			glAttribStatePtr->ViewPort(0, 0, atlasSizeX, atlasSizeY);
 			blurShader->SetUniform2i(2, 1, i * 2 + 1);
 
 			{
@@ -910,7 +910,7 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 
 
 			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
-			glViewport(0, 0, mapDims.mapx, mapDims.mapy);
+			glAttribStatePtr->ViewPort(0, 0, mapDims.mapx, mapDims.mapy);
 			blurShader->SetUniform2i(2, 0, i * 2 + 2);
 
 			{
@@ -930,9 +930,9 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 	}
 
 
-	blurShader->Disable();
 	coastFBO.Detach(GL_COLOR_ATTACHMENT1);
-	glPopAttrib();
+	blurShader->Disable();
+	glAttribStatePtr->PopBits();
 
 	// NB: not needed during init, but no reason to leave bound after ::Update
 	coastFBO.Unbind();
@@ -950,7 +950,7 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 	glDeleteTextures(1, &coastUpdateTexture);
 	coastmapAtlasRects.clear();
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -983,15 +983,13 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	}
 
 	dynWavesFBO.Bind();
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->PushBits(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->BlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+	glAttribStatePtr->BlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (modFrameNum + 1) / 600.0f);
 
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
-	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-	glBlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (modFrameNum + 1) / 600.0f);
-
-	glEnable(GL_BLEND);
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
 
 
 	GL::RenderDataBuffer2DT* buffer = GL::GetRenderBuffer2DT();
@@ -1001,7 +999,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
-	glViewport(0, 0, normalTextureX, normalTextureY);
+	glAttribStatePtr->ViewPort(0, 0, normalTextureX, normalTextureY);
 
 		for (uint8_t y = 0; y < tiles; ++y) {
 			for (uint8_t x = 0; x < tiles; ++x) {
@@ -1019,11 +1017,12 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	buffer->Submit(GL_QUADS);
 	shader->Disable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// redundant?
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PopBits();
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	glPopAttrib();
 	dynWavesFBO.Unbind();
 
 	glBindTexture(GL_TEXTURE_2D, normalTexture);
@@ -1082,13 +1081,13 @@ void CBumpWater::Draw()
 		glCopyTexSubImage2D(screenCopyTarget, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableAlphaTest();
 
 	if (refraction < 2)
-		glDepthMask(GL_FALSE);
+		glAttribStatePtr->DisableDepthMask();
 
 	if (refraction > 0)
-		glDisable(GL_BLEND);
+		glAttribStatePtr->DisableBlendMask();
 
 
 	waterShader->SetFlag("opt_shadows", (shadowHandler.ShadowsLoaded()));
@@ -1122,9 +1121,9 @@ void CBumpWater::Draw()
 	if (useUniforms)
 		SetUniforms();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	waterPlaneBuffer.Submit(mix(GL_TRIANGLES, GL_TRIANGLE_STRIP, endlessOcean), 0, waterPlaneBuffer.GetNumElems<VA_TYPE_0>());
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	waterShader->Disable();
 
@@ -1135,10 +1134,10 @@ void CBumpWater::Draw()
 	}
 
 	if (refraction < 2)
-		glDepthMask(GL_TRUE);
+		glAttribStatePtr->EnableDepthMask();
 
 	if (refraction > 0)
-		glEnable(GL_BLEND);
+		glAttribStatePtr->EnableBlendMask();
 
 
 	if (occlusionQuery != 0) {
@@ -1155,7 +1154,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	camera->Update();
 
-	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1216,9 +1215,9 @@ void CBumpWater::OcclusionQuery()
 	if (wasVisibleLastFrame)
 		return;
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glDepthMask(GL_FALSE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glAttribStatePtr->DepthMask(GL_FALSE);
+	glAttribStatePtr->EnableDepthTest();
 
 	// default color-only shader
 	Shader::IProgramObject* waterPlaneShader = &waterPlaneBuffer.GetShader();
@@ -1233,7 +1232,7 @@ void CBumpWater::OcclusionQuery()
 
 	waterPlaneShader->Disable();
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->DepthMask(GL_TRUE);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 

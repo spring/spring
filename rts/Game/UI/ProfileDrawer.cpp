@@ -325,7 +325,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	buffer->Submit(GL_QUADS);
 
 	// draw the graph lines
-	glLineWidth(3.0f);
+	glAttribStatePtr->LineWidth(3.0f);
 
 	for (const auto& p: sortedProfiles) {
 		const CTimeProfiler::TimeRecord& tr = p.second;
@@ -353,7 +353,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 		buffer->Submit(GL_LINE_STRIP);
 	}
 
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 }
 
 

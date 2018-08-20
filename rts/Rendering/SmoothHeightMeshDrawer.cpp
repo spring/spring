@@ -14,8 +14,8 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 	if (!drawEnabled)
 		return;
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glLineWidth(1.0f);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glAttribStatePtr->LineWidth(1.0f);
 
 	const float quadSize = 4.0f * smoothGround.GetResolution();
 	const unsigned int numQuadsX = smoothGround.GetFMaxX() / quadSize;
@@ -49,6 +49,6 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 	buffer->Submit(GL_QUADS);
 	shader->Disable();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

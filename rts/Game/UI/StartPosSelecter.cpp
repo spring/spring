@@ -99,7 +99,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 #if 0
 void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IProgramObject* shader) const
 {
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
@@ -160,7 +160,7 @@ void CStartPosSelecter::DrawStartBox(GL::RenderDataBufferC* buffer, Shader::IPro
 	buffer->Submit(GL_QUADS);
 	shader->Disable();
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 }
 #endif
 
@@ -186,21 +186,21 @@ void CStartPosSelecter::Draw()
 	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) * globalRendering->pixelY;
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	{
 		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	{
 		shader->Enable();

@@ -365,38 +365,38 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 void LuaOpenGL::ResetGLState()
 {
-	glDisable(GL_DEPTH_TEST); // ::DepthTest
-	glDepthFunc(GL_LEQUAL); // ::DepthTest
-	glDepthMask(GL_FALSE); // ::DepthMask
+	glAttribStatePtr->DisableDepthTest(); // ::DepthTest
+	glAttribStatePtr->DepthFunc(GL_LEQUAL); // ::DepthTest
+	glAttribStatePtr->DisableDepthMask(); // ::DepthMask
 	#if 0
-	glDisable(GL_DEPTH_CLAMP); // ::DepthClamp
+	glAttribStatePtr->DisableDepthClamp(); // ::DepthClamp
 	#endif
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // ::ColorMask, ::*DrawWorldShadow (!)
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // ::ColorMask, ::*DrawWorldShadow (!)
 
-	glEnable(GL_BLEND); // ::Blending
+	glAttribStatePtr->EnableBlendMask(); // ::Blending
 	#if 0
 	glBlendEquation(GL_FUNC_ADD); // ::BlendEquation*
 	#endif
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ::Blending, ::BlendFunc*
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ::Blending, ::BlendFunc*
 
-	glDisable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	#if 0
 	glDisable(GL_COLOR_LOGIC_OP); // ::LogicOp
 	glLogicOp(GL_INVERT); // ::LogicOp
 	#endif
 
-	glDisable(GL_CULL_FACE); // ::Culling
-	glCullFace(GL_BACK); // ::Culling
+	glAttribStatePtr->DisableCullFace(); // ::Culling
+	glAttribStatePtr->CullFace(GL_BACK); // ::Culling
 
 	#if 0
-	glDisable(GL_SCISSOR_TEST); // ::Scissor
+	glAttribStatePtr->DisableScissorTest(); // ::Scissor
 	#endif
 
 	#if 0
-	glDisable(GL_STENCIL_TEST); // ::StencilTest
-	glStencilMask(~0); // ::StencilMask*
+	glAttribStatePtr->DisableStencilTest(); // ::StencilTest
+	glAttribStatePtr->StencilMask(~0); // ::StencilMask*
 	// glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
 	#endif
 
@@ -405,11 +405,11 @@ void LuaOpenGL::ResetGLState()
 	// glDisable(GL_TEXTURE_2D);
 	#endif
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // ::PolygonMode
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL); // ::PolygonMode
 	#if 0
-	glDisable(GL_POLYGON_OFFSET_FILL); // ::PolygonOffset, ::*DrawWorldShadow (!)
-	glDisable(GL_POLYGON_OFFSET_LINE);
-	glDisable(GL_POLYGON_OFFSET_POINT);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE); // ::PolygonOffset, ::*DrawWorldShadow (!)
+	glAttribStatePtr->PolygonOffsetLine(GL_FALSE);
+	glAttribStatePtr->PolygonOffsetPoint(GL_FALSE);
 	#endif
 
 	#if 0
@@ -418,7 +418,7 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_CLIP_PLANE4); // ::ClipPlane
 	glDisable(GL_CLIP_PLANE5); // ::ClipPlane
 	#endif
-	glLineWidth(1.0f); // ::LineWidth
+	glAttribStatePtr->LineWidth(1.0f); // ::LineWidth
 
 	#if 0
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // ::Color, ::Shape
@@ -433,7 +433,7 @@ void LuaOpenGL::ResetGLState()
 //  Common routines
 //
 
-const GLbitfield AttribBits =
+constexpr GLbitfield AttribBits =
 	GL_COLOR_BUFFER_BIT |
 	GL_DEPTH_BUFFER_BIT |
 	GL_ENABLE_BIT       |
@@ -450,7 +450,7 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 	if (!safeMode)
 		return;
 
-	glPushAttrib(AttribBits);
+	glAttribStatePtr->PushBits(AttribBits);
 	ResetGLState();
 }
 
@@ -461,7 +461,7 @@ void LuaOpenGL::DisableCommon(DrawMode mode)
 	drawMode = DRAW_NONE;
 
 	if (safeMode)
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 
 	glUseProgram(0);
 
@@ -569,9 +569,9 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	EnableCommon(DRAW_WORLD_SHADOW);
 	resetMatrixFunc = ResetWorldShadowMatrices;
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	// FIXME: map/proj/tree passes
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
@@ -580,7 +580,7 @@ void LuaOpenGL::EnableDrawWorldShadow()
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Disable();
@@ -597,9 +597,9 @@ void LuaOpenGL::ResetDrawWorldShadow()
 	ResetWorldShadowMatrices();
 	ResetGLState();
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 }
 
 
@@ -718,7 +718,7 @@ void LuaOpenGL::DisableDrawInMiniMap()
 	}
 
 	if (safeMode) {
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 	} else {
 		ResetGLState();
 	}
@@ -767,7 +767,7 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 	}
 
 	if (safeMode) {
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 	} else {
 		ResetGLState();
 	}
@@ -1228,7 +1228,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawUnit);
 	const bool fullModel = luaL_optboolean(L, 5, true);
 
-	glPushAttrib(GL_ENABLE_BIT);
+	glAttribStatePtr->PushEnableBit();
 
 	typedef void(             *RawDrawMemFunc)(const CUnit*, bool, bool, bool);
 	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool);
@@ -1254,7 +1254,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	if (!useLuaMat)
 		(unit->GetLuaMaterialData())->PopLODCount();
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return 0;
 }
 
@@ -1344,7 +1344,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 	const bool useLuaMat = GLObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawFeature);
 
-	glPushAttrib(GL_ENABLE_BIT);
+	glAttribStatePtr->PushEnableBit();
 
 	typedef void(                *RawDrawMemFunc)(const CFeature*, bool, bool);
 	typedef void(CFeatureDrawer::*MatDrawMemFunc)(const CFeature*, bool);
@@ -1370,7 +1370,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 	if (!useLuaMat)
 		(feature->GetLuaMaterialData())->PopLODCount();
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return 0;
 }
 
@@ -1569,6 +1569,37 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 		return 0;
 
 	if (!useTxcd) {
+		#if 0
+		GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
+		Shader::IProgramObject* ipo = rdb->GetShader();
+
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+		for (int xib = xis; xib < xie; xib++) {
+			const int xit = xib + 1;
+			const float xb = xib * SQUARE_SIZE;
+			const float xt = xb + SQUARE_SIZE;
+
+			for (int zi = zis; zi <= zie; zi++) {
+				const int ziOff = zi * mapxi;
+				const float yb = heightmap[ziOff + xib];
+				const float yt = heightmap[ziOff + xit];
+				const float z = zi * SQUARE_SIZE;
+
+				rdb->SafeAppend({xt, yt, z});
+				rdb->SafeAppend({xb, yb, z});
+			}
+
+			rdb->Submit(GL_TRIANGLE_STRIP);
+		}
+
+		ipo->Disable();
+		#endif
+
+
+
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
 			const float xb = xib * SQUARE_SIZE;
@@ -1589,6 +1620,43 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 		const float tvStep = (tv1 - tv0) / float(zie - zis);
 
 		float tub = tu0;
+
+
+
+		#if 0
+		GL::RenderDataBufferT* rdb = GL::GetRenderBufferT();
+		Shader::IProgramObject* ipo = rdb->GetShader();
+
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+		for (int xib = xis; xib < xie; xib++) {
+			const int xit = xib + 1;
+			const float xb = xib * SQUARE_SIZE;
+			const float xt = xb + SQUARE_SIZE;
+			const float tut = tub + tuStep;
+			float tv = tv0;
+
+			for (int zi = zis; zi <= zie; zi++) {
+				const int ziOff = zi * mapxi;
+				const float yb = heightmap[ziOff + xib];
+				const float yt = heightmap[ziOff + xit];
+				const float z = zi * SQUARE_SIZE;
+
+				rdb->SafeAppend({{xt, yt, z}, tut, tv});
+				rdb->SafeAppend({{xb, yb, z}, tub, tv});
+
+				tv += tvStep;
+			}
+
+			rdb->Submit(GL_TRIANGLE_STRIP);
+		}
+
+		ipo->Disable();
+		#endif
+
+
 
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
@@ -2062,13 +2130,13 @@ int LuaOpenGL::Scissor(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
 		if (luaL_checkboolean(L, 1)) {
-			glEnable(GL_SCISSOR_TEST);
+			glAttribStatePtr->EnableScissorTest();
 		} else {
-			glDisable(GL_SCISSOR_TEST);
+			glAttribStatePtr->DisableScissorTest();
 		}
 	}
 	else if (args == 4) {
-		glEnable(GL_SCISSOR_TEST);
+		glAttribStatePtr->EnableScissorTest();
 		const GLint   x =   (GLint)luaL_checkint(L, 1);
 		const GLint   y =   (GLint)luaL_checkint(L, 2);
 		const GLsizei w = (GLsizei)luaL_checkint(L, 3);
@@ -2096,7 +2164,7 @@ int LuaOpenGL::Viewport(lua_State* L)
 	if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
 	if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
 
-	glViewport(x, y, w, h);
+	glAttribStatePtr->ViewPort(x, y, w, h);
 	return 0;
 }
 
@@ -2108,14 +2176,13 @@ int LuaOpenGL::ColorMask(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
 		if (luaL_checkboolean(L, 1)) {
-			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+			glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		} else {
-			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+			glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		}
 	}
 	else if (args == 4) {
-		glColorMask(luaL_checkboolean(L, 1), luaL_checkboolean(L, 2),
-		            luaL_checkboolean(L, 3), luaL_checkboolean(L, 4));
+		glAttribStatePtr->ColorMask(luaL_checkboolean(L, 1), luaL_checkboolean(L, 2), luaL_checkboolean(L, 3), luaL_checkboolean(L, 4));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.ColorMask()");
@@ -2128,9 +2195,9 @@ int LuaOpenGL::DepthMask(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	if (luaL_checkboolean(L, 1)) {
-		glDepthMask(GL_TRUE);
+		glAttribStatePtr->EnableDepthMask();
 	} else {
-		glDepthMask(GL_FALSE);
+		glAttribStatePtr->DisableDepthMask();
 	}
 	return 0;
 }
@@ -2141,20 +2208,19 @@ int LuaOpenGL::DepthTest(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
+	if (args != 1)
 		luaL_error(L, "Incorrect arguments to gl.DepthTest()");
-	}
 
 	if (lua_isboolean(L, 1)) {
 		if (lua_toboolean(L, 1)) {
-			glEnable(GL_DEPTH_TEST);
+			glAttribStatePtr->EnableDepthTest();
 		} else {
-			glDisable(GL_DEPTH_TEST);
+			glAttribStatePtr->DisableDepthTest();
 		}
 	}
 	else if (lua_isnumber(L, 1)) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc((GLenum)lua_tonumber(L, 1));
+		glAttribStatePtr->EnableDepthTest();
+		glAttribStatePtr->DepthFunc((GLenum)lua_tonumber(L, 1));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.DepthTest()");
@@ -2168,9 +2234,9 @@ int LuaOpenGL::DepthClamp(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	luaL_checktype(L, 1, LUA_TBOOLEAN);
 	if (lua_toboolean(L, 1)) {
-		glEnable(GL_DEPTH_CLAMP);
+		glAttribStatePtr->EnableDepthClamp();
 	} else {
-		glDisable(GL_DEPTH_CLAMP);
+		glAttribStatePtr->DisableDepthClamp();
 	}
 	return 0;
 }
@@ -2181,20 +2247,20 @@ int LuaOpenGL::Culling(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
+	if (args != 1)
 		luaL_error(L, "Incorrect arguments to gl.Culling()");
-	}
+
 
 	if (lua_isboolean(L, 1)) {
 		if (lua_toboolean(L, 1)) {
-			glEnable(GL_CULL_FACE);
+			glAttribStatePtr->EnableCullFace();
 		} else {
-			glDisable(GL_CULL_FACE);
+			glAttribStatePtr->DisableCullFace();
 		}
 	}
 	else if (lua_isnumber(L, 1)) {
-		glEnable(GL_CULL_FACE);
-		glCullFace((GLenum)lua_tonumber(L, 1));
+		glAttribStatePtr->EnableCullFace();
+		glAttribStatePtr->CullFace((GLenum)lua_tonumber(L, 1));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.Culling()");
@@ -2208,9 +2274,8 @@ int LuaOpenGL::LogicOp(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 1) {
+	if (args != 1)
 		luaL_error(L, "Incorrect arguments to gl.LogicOp()");
-	}
 
 	if (lua_isboolean(L, 1)) {
 		if (lua_toboolean(L, 1)) {
@@ -2238,37 +2303,41 @@ int LuaOpenGL::Blending(lua_State* L)
 	if (args == 1) {
 		if (lua_isboolean(L, 1)) {
 			if (lua_toboolean(L, 1)) {
-				glEnable(GL_BLEND);
+				glAttribStatePtr->EnableBlendMask();
 			} else {
-				glDisable(GL_BLEND);
+				glAttribStatePtr->DisableBlendMask();
 			}
 		}
 		else if (lua_israwstring(L, 1)) {
-			const string mode = lua_tostring(L, 1);
-			if (mode == "add") {
-				glBlendFunc(GL_ONE, GL_ONE);
-				glEnable(GL_BLEND);
-			}
-			else if (mode == "alpha_add") {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				glEnable(GL_BLEND);
-			}
-			else if ((mode == "alpha") ||
-			         (mode == "reset")) {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glEnable(GL_BLEND);
-			}
-			else if (mode == "color") {
-				glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
-				glEnable(GL_BLEND);
-			}
-			else if (mode == "modulate") {
-				glBlendFunc(GL_DST_COLOR, GL_ZERO);
-				glEnable(GL_BLEND);
-			}
-			else if (mode == "disable") {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glDisable(GL_BLEND);
+			switch (hashString(lua_tostring(L, 1))) {
+				case hashString("add"): {
+					glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
+					glAttribStatePtr->EnableBlendMask();
+				} break;
+				case hashString("alpha_add"): {
+					glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
+					glAttribStatePtr->EnableBlendMask();
+				} break;
+
+				case hashString("alpha"):
+				case hashString("reset"): {
+					glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					glAttribStatePtr->EnableBlendMask();
+				} break;
+				case hashString("color"): {
+					glAttribStatePtr->BlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+					glAttribStatePtr->EnableBlendMask();
+				} break;
+				case hashString("modulate"): {
+					glAttribStatePtr->BlendFunc(GL_DST_COLOR, GL_ZERO);
+					glAttribStatePtr->EnableBlendMask();
+				} break;
+				case hashString("disable"): {
+					glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					glAttribStatePtr->DisableBlendMask();
+				} break;
+				default: {
+				} break;
 			}
 		}
 		else {
@@ -2278,8 +2347,8 @@ int LuaOpenGL::Blending(lua_State* L)
 	else if (args == 2) {
 		const GLenum src = (GLenum)luaL_checkint(L, 1);
 		const GLenum dst = (GLenum)luaL_checkint(L, 2);
-		glBlendFunc(src, dst);
-		glEnable(GL_BLEND);
+		glAttribStatePtr->BlendFunc(src, dst);
+		glAttribStatePtr->EnableBlendMask();
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.Blending()");
@@ -2302,7 +2371,7 @@ int LuaOpenGL::BlendFunc(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	const GLenum src = (GLenum)luaL_checkint(L, 1);
 	const GLenum dst = (GLenum)luaL_checkint(L, 2);
-	glBlendFunc(src, dst);
+	glAttribStatePtr->BlendFunc(src, dst);
 	return 0;
 }
 
@@ -2337,13 +2406,13 @@ int LuaOpenGL::AlphaTest(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
 		if (luaL_checkboolean(L, 1)) {
-			glEnable(GL_ALPHA_TEST);
+			glAttribStatePtr->EnableAlphaTest();
 		} else {
-			glDisable(GL_ALPHA_TEST);
+			glAttribStatePtr->DisableAlphaTest();
 		}
 	}
 	else if (args == 2) {
-		glEnable(GL_ALPHA_TEST);
+		glAttribStatePtr->EnableAlphaTest();
 		glAlphaFunc((GLenum)luaL_checkint(L, 1), (GLfloat)luaL_checkint(L, 2));
 	}
 	else {
@@ -2358,7 +2427,7 @@ int LuaOpenGL::PolygonMode(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	const GLenum face = (GLenum)luaL_checkint(L, 1);
 	const GLenum mode = (GLenum)luaL_checkint(L, 2);
-	glPolygonMode(face, mode);
+	glAttribStatePtr->PolygonMode(face, mode);
 	return 0;
 }
 
@@ -2370,20 +2439,20 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
 		if (luaL_checkboolean(L, 1)) {
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glEnable(GL_POLYGON_OFFSET_LINE);
-			glEnable(GL_POLYGON_OFFSET_POINT);
+			glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+			glAttribStatePtr->PolygonOffsetLine(GL_TRUE);
+			glAttribStatePtr->PolygonOffsetPoint(GL_TRUE);
 		} else {
-			glDisable(GL_POLYGON_OFFSET_FILL);
-			glDisable(GL_POLYGON_OFFSET_LINE);
-			glDisable(GL_POLYGON_OFFSET_POINT);
+			glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
+			glAttribStatePtr->PolygonOffsetLine(GL_FALSE);
+			glAttribStatePtr->PolygonOffsetPoint(GL_FALSE);
 		}
 	}
 	else if (args == 2) {
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glEnable(GL_POLYGON_OFFSET_LINE);
-		glEnable(GL_POLYGON_OFFSET_POINT);
-		glPolygonOffset((GLfloat)luaL_checkfloat(L, 1), (GLfloat)luaL_checkfloat(L, 2));
+		glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+		glAttribStatePtr->PolygonOffsetLine(GL_TRUE);
+		glAttribStatePtr->PolygonOffsetPoint(GL_TRUE);
+		glAttribStatePtr->PolygonOffset((GLfloat)luaL_checkfloat(L, 1), (GLfloat)luaL_checkfloat(L, 2));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.PolygonOffset()");
@@ -2399,9 +2468,9 @@ int LuaOpenGL::StencilTest(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	luaL_checktype(L, 1, LUA_TBOOLEAN);
 	if (lua_toboolean(L, 1)) {
-		glEnable(GL_STENCIL_TEST);
+		glAttribStatePtr->EnableStencilTest();
 	} else {
-		glDisable(GL_STENCIL_TEST);
+		glAttribStatePtr->DisableStencilTest();
 	}
 	return 0;
 }
@@ -2411,7 +2480,7 @@ int LuaOpenGL::StencilMask(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	const GLuint mask = luaL_checkint(L, 1);
-	glStencilMask(mask);
+	glAttribStatePtr->StencilMask(mask);
 	return 0;
 }
 
@@ -2422,7 +2491,7 @@ int LuaOpenGL::StencilFunc(lua_State* L)
 	const GLenum func = luaL_checkint(L, 1);
 	const GLint  ref  = luaL_checkint(L, 2);
 	const GLuint mask = luaL_checkint(L, 3);
-	glStencilFunc(func, ref, mask);
+	glAttribStatePtr->StencilFunc(func, ref, mask);
 	return 0;
 }
 
@@ -2433,7 +2502,7 @@ int LuaOpenGL::StencilOp(lua_State* L)
 	const GLenum fail  = luaL_checkint(L, 1);
 	const GLenum zfail = luaL_checkint(L, 2);
 	const GLenum zpass = luaL_checkint(L, 3);
-	glStencilOp(fail, zfail, zpass);
+	glAttribStatePtr->StencilOper(fail, zfail, zpass);
 	return 0;
 }
 
@@ -2526,7 +2595,7 @@ int LuaOpenGL::LineWidth(lua_State* L)
 {
 	const float width = luaL_checkfloat(L, 1);
 	if (width <= 0.0f) luaL_argerror(L, 1, "Incorrect Width (must be greater zero)");
-	glLineWidth(width);
+	glAttribStatePtr->LineWidth(width);
 	return 0;
 }
 
@@ -2653,9 +2722,8 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const string name = textures.Create(tex);
-	if (name.empty()) {
+	if (name.empty())
 		return 0;
-	}
 
 	lua_pushsstring(L, name);
 	return 1;
@@ -2664,9 +2732,9 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 
 int LuaOpenGL::DeleteTexture(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (lua_isnil(L, 1))
 		return 0;
-	}
+
 	const string texture = luaL_checksstring(L, 1);
 	if (texture[0] == LuaTextures::prefix) { // '!'
 		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
@@ -2762,14 +2830,13 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 		return 0;
 
 	GLint currentFBO = 0;
-	if (drawMode == DRAW_WORLD_SHADOW) {
+	if (drawMode == DRAW_WORLD_SHADOW)
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
-	}
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, tex->fbo);
 
-	glPushAttrib(GL_VIEWPORT_BIT);
-	glViewport(0, 0, tex->xsize, tex->ysize);
+	glAttribStatePtr->PushBits(GL_VIEWPORT_BIT);
+	glAttribStatePtr->ViewPort(0, 0, tex->xsize, tex->ysize);
 	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix(); GL::LoadIdentity();
 	GL::MatrixMode(GL_MODELVIEW);  GL::PushMatrix(); GL::LoadIdentity();
 
@@ -2777,13 +2844,12 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 
 	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
 	GL::MatrixMode(GL_MODELVIEW);  GL::PopMatrix();
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.RenderToTexture: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RenderToTexture: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -3098,9 +3164,8 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
+	if (args != 0)
 		luaL_error(L, "gl.PushMatrix takes no arguments");
-	}
 
 	if (!GetLuaContextData(L)->glMatrixTracker.PushMatrix())
 		luaL_error(L, "Matrix stack overflow");
@@ -3115,9 +3180,8 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
+	if (args != 0)
 		luaL_error(L, "gl.PopMatrix takes no arguments");
-	}
 
 	if (!GetLuaContextData(L)->glMatrixTracker.PopMatrix())
 		luaL_error(L, "Matrix stack underflow");
@@ -3138,9 +3202,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 		matModes.push_back(mode);
 	}
 
-	if (!lua_isfunction(L, arg)) {
+	if (!lua_isfunction(L, arg))
 		luaL_error(L, "Incorrect arguments to gl.PushPopMatrix()");
-	}
 
 	if (arg == 1) {
 		GL::PushMatrix();
@@ -3164,8 +3227,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	}
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.PushPopMatrix: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.PushPopMatrix: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -3193,9 +3255,10 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 
 		if (lua_isnumber(L, 2)) {
 			const int index = lua_toint(L, 2);
-			if ((index < 0) || (index >= 16)) {
+
+			if ((index < 0) || (index >= 16))
 				return 0;
-			}
+
 			lua_pushnumber(L, matrix[index]);
 			return 1;
 		}
@@ -3209,15 +3272,15 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 	else if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 
-		if (!matptr) {
+		if (matptr == nullptr)
 			luaL_error(L, "Incorrect arguments to gl.GetMatrixData(name)");
-		}
 
 		if (lua_isnumber(L, 2)) {
 			const int index = lua_toint(L, 2);
-			if ((index < 0) || (index >= 16)) {
+
+			if ((index < 0) || (index >= 16))
 				return 0;
-			}
+
 			lua_pushnumber(L, (*matptr)[index]);
 			return 1;
 		}
@@ -3242,7 +3305,7 @@ int LuaOpenGL::PushAttrib(lua_State* L)
 		mask = -mask;
 		mask |= GL_ALL_ATTRIB_BITS;
 	}
-	glPushAttrib((GLbitfield)mask);
+	glAttribStatePtr->PushBits((GLbitfield)mask);
 	return 0;
 }
 
@@ -3250,7 +3313,7 @@ int LuaOpenGL::PushAttrib(lua_State* L)
 int LuaOpenGL::PopAttrib(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return 0;
 }
 
@@ -3265,17 +3328,15 @@ int LuaOpenGL::UnsafeState(lua_State* L)
 		funcLoc++;
 		reverse = lua_toboolean(L, 2);
 	}
-	if (!lua_isfunction(L, funcLoc)) {
+	if (!lua_isfunction(L, funcLoc))
 		luaL_error(L, "expecting a function");
-	}
 
-	reverse ? glDisable(state) : glEnable(state);
+	reverse ? glDisable(state) : glAttribStatePtr->Enable(state);
 	const int error = lua_pcall(L, lua_gettop(L) - funcLoc, 0, 0);
-	reverse ? glEnable(state) : glDisable(state);
+	reverse ? glAttribStatePtr->Enable(state) : glAttribStatePtr->Disable(state);
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.UnsafeState: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.UnsafeState: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
 	return 0;
@@ -3332,15 +3393,13 @@ static int PixelFormatSize(GLenum f)
 static void PushPixelData(lua_State* L, int fSize, const float*& data)
 {
 	if (fSize == 1) {
-		lua_pushnumber(L, *data);
-		data++;
+		lua_pushnumber(L, *(data++));
 	} else {
-		lua_newtable(L);
+		lua_createtable(L, fSize, 0);
 		for (int e = 1; e <= fSize; e++) {
 			lua_pushnumber(L, e);
-			lua_pushnumber(L, *data);
+			lua_pushnumber(L, *(data++));
 			lua_rawset(L, -3);
-			data++;
 		}
 	}
 }
@@ -3353,14 +3412,12 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 	const GLint w = luaL_checkint(L, 3);
 	const GLint h = luaL_checkint(L, 4);
 	const GLenum format = luaL_optint(L, 5, GL_RGBA);
-	if ((w <= 0) || (h <= 0)) {
+	if ((w <= 0) || (h <= 0))
 		return 0;
-	}
 
 	int fSize = PixelFormatSize(format);
-	if (fSize < 0) {
+	if (fSize < 0)
 		fSize = 4; // good enough?
-	}
 
 	float* data = new float[(h * w) * fSize * sizeof(float)];
 	glReadPixels(x, y, w, h, format, GL_FLOAT, data);
@@ -3612,48 +3669,52 @@ int LuaOpenGL::GetShadowMapParams(lua_State* L)
 
 int LuaOpenGL::GetAtmosphere(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 0) {
+	if (lua_gettop(L) == 0) {
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
 		return 3;
 	}
 
-	const string param = luaL_checkstring(L, 1);
-	if (param == "pos") {
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
-		return 3;
-	}
+	const char* param = luaL_checkstring(L, 1);
+	const float* data = nullptr;
 
-	const float3* data = nullptr;
+	switch (hashString(param)) {
+		// float
+		case hashString("fogStart"): {
+			lua_pushnumber(L, sky->fogStart);
+			return 1;
+		} break;
+		case hashString("fogEnd"): {
+			lua_pushnumber(L, sky->fogEnd);
+			return 1;
+		} break;
 
-	// float
-	if (param == "fogStart") {
-		lua_pushnumber(L, sky->fogStart);
-		return 1;
-	} else if (param == "fogEnd") {
-		lua_pushnumber(L, sky->fogEnd);
-		return 1;
-	// float3
-	} else if (param == "fogColor") {
-		data = &sky->fogColor;
-	} else if (param == "skyColor") {
-		data = &sky->skyColor;
-	} else if (param == "skyDir") {
-		//data = &sky->sunColor;
-	} else if (param == "sunColor") {
-		data = &sky->sunColor;
-	} else if (param == "cloudColor") {
-		data = &sky->cloudColor;
+		// float3
+		case hashString("pos"): {
+			data = &sky->GetLight()->GetLightDir().x;
+		} break;
+		case hashString("fogColor"): {
+			data = &sky->fogColor.x;
+		} break;
+		case hashString("skyColor"): {
+			data = &sky->skyColor.x;
+		} break;
+		case hashString("skyDir"): {
+			// data = &sky->sunColor.x;
+		} break;
+		case hashString("sunColor"): {
+			data = &sky->sunColor.x;
+		} break;
+		case hashString("cloudColor"): {
+			data = &sky->cloudColor.x;
+		} break;
 	}
 
 	if (data != nullptr) {
-		lua_pushnumber(L, data->x);
-		lua_pushnumber(L, data->y);
-		lua_pushnumber(L, data->z);
+		lua_pushnumber(L, data[0]);
+		lua_pushnumber(L, data[1]);
+		lua_pushnumber(L, data[2]);
 		return 3;
 	}
 
@@ -3662,60 +3723,57 @@ int LuaOpenGL::GetAtmosphere(lua_State* L)
 
 int LuaOpenGL::GetSun(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 0) {
+	if (lua_gettop(L) == 0) {
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
 		return 3;
 	}
 
-	const string param = luaL_checkstring(L, 1);
-	if (param == "pos") {
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
-		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
-		return 3;
-	}
+	const char* param = luaL_checkstring(L, 1);
+	const float* data = nullptr;
 
 	const bool unitMode = lua_israwstring(L, 2) && (strcmp(lua_tostring(L, 2), "unit") == 0);
 
-	const float3* data = nullptr;
-
-	if (param == "shadowDensity") {
-		if (!unitMode) {
-			lua_pushnumber(L, sunLighting->groundShadowDensity);
-		} else {
-			lua_pushnumber(L, sunLighting->modelShadowDensity);
-		}
-		return 1;
-	}
-	else if (param == "diffuse") {
-		if (!unitMode) {
-			data = &sunLighting->groundDiffuseColor;
-		} else {
-			data = &sunLighting->modelDiffuseColor;
-		}
-	}
-	else if (param == "ambient") {
-		if (!unitMode) {
-			data = &sunLighting->groundAmbientColor;
-		} else {
-			data = &sunLighting->modelAmbientColor;
-		}
-	}
-	else if (param == "specular") {
-		if (!unitMode) {
-			data = &sunLighting->groundSpecularColor;
-		} else {
-			data = &sunLighting->modelSpecularColor;
-		}
+	switch (hashString(param)) {
+		case hashString("pos"): {
+			data = &sky->GetLight()->GetLightDir().x;
+		} break;
+		case hashString("shadowDensity"): {
+			if (!unitMode) {
+				lua_pushnumber(L, sunLighting->groundShadowDensity);
+			} else {
+				lua_pushnumber(L, sunLighting->modelShadowDensity);
+			}
+			return 1;
+		} break;
+		case hashString("diffuse"): {
+			if (!unitMode) {
+				data = &sunLighting->groundDiffuseColor.x;
+			} else {
+				data = &sunLighting->modelDiffuseColor.x;
+			}
+		} break;
+		case hashString("ambient"): {
+			if (!unitMode) {
+				data = &sunLighting->groundAmbientColor.x;
+			} else {
+				data = &sunLighting->modelAmbientColor.x;
+			}
+		} break;
+		case hashString("specular"): {
+			if (!unitMode) {
+				data = &sunLighting->groundSpecularColor.x;
+			} else {
+				data = &sunLighting->modelSpecularColor.x;
+			}
+		} break;
 	}
 
 	if (data != nullptr) {
-		lua_pushnumber(L, data->x);
-		lua_pushnumber(L, data->y);
-		lua_pushnumber(L, data->z);
+		lua_pushnumber(L, data[0]);
+		lua_pushnumber(L, data[1]);
+		lua_pushnumber(L, data[2]);
 		return 3;
 	}
 
@@ -3724,158 +3782,189 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 int LuaOpenGL::GetWaterRendering(lua_State* L)
 {
-//	const int args = lua_gettop(L); // number of arguments
+	const char* key = luaL_checkstring(L, 1);
 
-	const string key = luaL_checkstring(L, 1);
+	switch (hashString(key)) {
+		// float3
+		case hashString("absorb"): {
+			lua_pushnumber(L, waterRendering->absorb[0]);
+			lua_pushnumber(L, waterRendering->absorb[1]);
+			lua_pushnumber(L, waterRendering->absorb[2]);
+			return 3;
+		} break;
+		case hashString("baseColor"): {
+			lua_pushnumber(L, waterRendering->baseColor[0]);
+			lua_pushnumber(L, waterRendering->baseColor[1]);
+			lua_pushnumber(L, waterRendering->baseColor[2]);
+			return 3;
+		} break;
+		case hashString("minColor"): {
+			lua_pushnumber(L, waterRendering->minColor[0]);
+			lua_pushnumber(L, waterRendering->minColor[1]);
+			lua_pushnumber(L, waterRendering->minColor[2]);
+			return 3;
+		} break;
+		case hashString("surfaceColor"): {
+			lua_pushnumber(L, waterRendering->surfaceColor[0]);
+			lua_pushnumber(L, waterRendering->surfaceColor[1]);
+			lua_pushnumber(L, waterRendering->surfaceColor[2]);
+			return 3;
+		} break;
+		case hashString("diffuseColor"): {
+			lua_pushnumber(L, waterRendering->diffuseColor[0]);
+			lua_pushnumber(L, waterRendering->diffuseColor[1]);
+			lua_pushnumber(L, waterRendering->diffuseColor[2]);
+			return 3;
+		} break;
+		case hashString("specularColor"): {
+			lua_pushnumber(L, waterRendering->specularColor[0]);
+			lua_pushnumber(L, waterRendering->specularColor[1]);
+			lua_pushnumber(L, waterRendering->specularColor[2]);
+			return 3;
+		} break;
+		case hashString("planeColor"): {
+			lua_pushnumber(L, waterRendering->planeColor.x);
+			lua_pushnumber(L, waterRendering->planeColor.y);
+			lua_pushnumber(L, waterRendering->planeColor.z);
+			return 3;
+		}
+		// string
+		case hashString("texture"): {
+			lua_pushsstring(L, waterRendering->texture);
+			return 1;
+		} break;
+		case hashString("foamTexture"): {
+			lua_pushsstring(L, waterRendering->foamTexture);
+			return 1;
+		} break;
+		case hashString("normalTexture"): {
+			lua_pushsstring(L, waterRendering->normalTexture);
+			return 1;
+		}
+		// scalar
+		case hashString("repeatX"): {
+			lua_pushnumber(L, waterRendering->repeatX);
+			return 1;
+		} break;
+		case hashString("repeatY"): {
+			lua_pushnumber(L, waterRendering->repeatY);
+			return 1;
+		} break;
+		case hashString("surfaceAlpha"): {
+			lua_pushnumber(L, waterRendering->surfaceAlpha);
+			return 1;
+		} break;
+		case hashString("ambientFactor"): {
+			lua_pushnumber(L, waterRendering->ambientFactor);
+			return 1;
+		} break;
+		case hashString("diffuseFactor"): {
+			lua_pushnumber(L, waterRendering->diffuseFactor);
+			return 1;
+		} break;
+		case hashString("specularFactor"): {
+			lua_pushnumber(L, waterRendering->specularFactor);
+			return 1;
+		} break;
+		case hashString("specularPower"): {
+			lua_pushnumber(L, waterRendering->specularPower);
+			return 1;
+		} break;
+		case hashString("fresnelMin"): {
+			lua_pushnumber(L, waterRendering->fresnelMin);
+			return 1;
+		} break;
+		case hashString("fresnelMax"): {
+			lua_pushnumber(L, waterRendering->fresnelMax);
+			return 1;
+		} break;
+		case hashString("fresnelPower"): {
+			lua_pushnumber(L, waterRendering->fresnelPower);
+			return 1;
+		} break;
+		case hashString("reflectionDistortion"): {
+			lua_pushnumber(L, waterRendering->reflDistortion);
+			return 1;
+		} break;
+		case hashString("blurBase"): {
+			lua_pushnumber(L, waterRendering->blurBase);
+			return 1;
+		} break;
+		case hashString("blurExponent"): {
+			lua_pushnumber(L, waterRendering->blurExponent);
+			return 1;
+		} break;
+		case hashString("perlinStartFreq"): {
+			lua_pushnumber(L, waterRendering->perlinStartFreq);
+			return 1;
+		} break;
+		case hashString("perlinLacunarity"): {
+			lua_pushnumber(L, waterRendering->perlinLacunarity);
+			return 1;
+		} break;
+		case hashString("perlinAmplitude"): {
+			lua_pushnumber(L, waterRendering->perlinAmplitude);
+			return 1;
+		} break;
+		case hashString("numTiles"): {
+			lua_pushnumber(L, waterRendering->numTiles);
+			return 1;
+		}
+		// boolean
+		case hashString("shoreWaves"): {
+			lua_pushboolean(L, waterRendering->shoreWaves);
+			return 1;
+		} break;
+		case hashString("forceRendering"): {
+			lua_pushboolean(L, waterRendering->forceRendering);
+			return 1;
+		} break;
+		case hashString("hasWaterPlane"): {
+			lua_pushboolean(L, waterRendering->hasWaterPlane);
+			return 1;
+		} break;
+	}
 
-	// float3
-	if (key == "absorb") {
-		lua_pushnumber(L, waterRendering->absorb[0]);
-		lua_pushnumber(L, waterRendering->absorb[1]);
-		lua_pushnumber(L, waterRendering->absorb[2]);
-		return 3;
-	} else if (key == "baseColor") {
-		lua_pushnumber(L, waterRendering->baseColor[0]);
-		lua_pushnumber(L, waterRendering->baseColor[1]);
-		lua_pushnumber(L, waterRendering->baseColor[2]);
-		return 3;
-	} else if (key == "minColor") {
-		lua_pushnumber(L, waterRendering->minColor[0]);
-		lua_pushnumber(L, waterRendering->minColor[1]);
-		lua_pushnumber(L, waterRendering->minColor[2]);
-		return 3;
-	} else if (key == "surfaceColor") {
-		lua_pushnumber(L, waterRendering->surfaceColor[0]);
-		lua_pushnumber(L, waterRendering->surfaceColor[1]);
-		lua_pushnumber(L, waterRendering->surfaceColor[2]);
-		return 3;
-	} else if (key == "diffuseColor") {
-		lua_pushnumber(L, waterRendering->diffuseColor[0]);
-		lua_pushnumber(L, waterRendering->diffuseColor[1]);
-		lua_pushnumber(L, waterRendering->diffuseColor[2]);
-		return 3;
-	} else if (key == "specularColor") {
-		lua_pushnumber(L, waterRendering->specularColor[0]);
-		lua_pushnumber(L, waterRendering->specularColor[1]);
-		lua_pushnumber(L, waterRendering->specularColor[2]);
-		return 3;
-	} else if (key == "planeColor") {
-		lua_pushnumber(L, waterRendering->planeColor.x);
-		lua_pushnumber(L, waterRendering->planeColor.y);
-		lua_pushnumber(L, waterRendering->planeColor.z);
-		return 3;
-	}
-	// string
-	else if (key == "texture") {
-		lua_pushsstring(L, waterRendering->texture);
-		return 1;
-	} else if (key == "foamTexture") {
-		lua_pushsstring(L, waterRendering->foamTexture);
-		return 1;
-	} else if (key == "normalTexture") {
-		lua_pushsstring(L, waterRendering->normalTexture);
-		return 1;
-	}
-	// scalar
-	else if (key == "repeatX") {
-		lua_pushnumber(L, waterRendering->repeatX);
-		return 1;
-	} else if (key == "repeatY") {
-		lua_pushnumber(L, waterRendering->repeatY);
-		return 1;
-	} else if (key == "surfaceAlpha") {
-		lua_pushnumber(L, waterRendering->surfaceAlpha);
-		return 1;
-	} else if (key == "ambientFactor") {
-		lua_pushnumber(L, waterRendering->ambientFactor);
-		return 1;
-	} else if (key == "diffuseFactor") {
-		lua_pushnumber(L, waterRendering->diffuseFactor);
-		return 1;
-	} else if (key == "specularFactor") {
-		lua_pushnumber(L, waterRendering->specularFactor);
-		return 1;
-	} else if (key == "specularPower") {
-		lua_pushnumber(L, waterRendering->specularPower);
-		return 1;
-	} else if (key == "fresnelMin") {
-		lua_pushnumber(L, waterRendering->fresnelMin);
-		return 1;
-	} else if (key == "fresnelMax") {
-		lua_pushnumber(L, waterRendering->fresnelMax);
-		return 1;
-	} else if (key == "fresnelPower") {
-		lua_pushnumber(L, waterRendering->fresnelPower);
-		return 1;
-	} else if (key == "reflectionDistortion") {
-		lua_pushnumber(L, waterRendering->reflDistortion);
-		return 1;
-	} else if (key == "blurBase") {
-		lua_pushnumber(L, waterRendering->blurBase);
-		return 1;
-	} else if (key == "blurExponent") {
-		lua_pushnumber(L, waterRendering->blurExponent);
-		return 1;
-	} else if (key == "perlinStartFreq") {
-		lua_pushnumber(L, waterRendering->perlinStartFreq);
-		return 1;
-	} else if (key == "perlinLacunarity") {
-		lua_pushnumber(L, waterRendering->perlinLacunarity);
-		return 1;
-	} else if (key == "perlinAmplitude") {
-		lua_pushnumber(L, waterRendering->perlinAmplitude);
-		return 1;
-	} else if (key == "numTiles") {
-		lua_pushnumber(L, waterRendering->numTiles);
-		return 1;
-	}
-	// boolean
-	else if (key == "shoreWaves") {
-		lua_pushboolean(L, waterRendering->shoreWaves);
-		return 1;
-	} else if (key == "forceRendering") {
-		lua_pushboolean(L, waterRendering->forceRendering);
-		return 1;
-	} else if (key == "hasWaterPlane") {
-		lua_pushboolean(L, waterRendering->hasWaterPlane);
-		return 1;
-	}
-
-	luaL_error(L, "Unknown key %s", key.c_str());
+	luaL_error(L, "[%s] unknown key %s", __func__, key);
 	return 0;
 }
 
 int LuaOpenGL::GetMapRendering(lua_State* L)
 {
-	const string key = luaL_checkstring(L, 1);
+	const char* key = luaL_checkstring(L, 1);
 
-	// float4
-	if (key == "splatTexScales") {
-		lua_pushnumber(L, mapRendering->splatTexScales[0]);
-		lua_pushnumber(L, mapRendering->splatTexScales[1]);
-		lua_pushnumber(L, mapRendering->splatTexScales[2]);
-		lua_pushnumber(L, mapRendering->splatTexScales[3]);
-		return 4;
-	} else if (key == "splatTexMults") {
-		lua_pushnumber(L, mapRendering->splatTexMults[0]);
-		lua_pushnumber(L, mapRendering->splatTexMults[1]);
-		lua_pushnumber(L, mapRendering->splatTexMults[2]);
-		lua_pushnumber(L, mapRendering->splatTexMults[3]);
-		return 4;
-	}
-	// boolean
-	else if (key == "voidWater") {
-		lua_pushboolean(L, mapRendering->voidWater);
-		return 1;
-	} else if (key == "voidGround") {
-		lua_pushboolean(L, mapRendering->voidGround);
-		return 1;
-	} else if (key == "splatDetailNormalDiffuseAlpha") {
-		lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
-		return 1;
+	switch (hashString(key)) {
+		// float4
+		case hashString("splatTexScales"): {
+			lua_pushnumber(L, mapRendering->splatTexScales[0]);
+			lua_pushnumber(L, mapRendering->splatTexScales[1]);
+			lua_pushnumber(L, mapRendering->splatTexScales[2]);
+			lua_pushnumber(L, mapRendering->splatTexScales[3]);
+			return 4;
+		} break;
+		case hashString("splatTexMults"): {
+			lua_pushnumber(L, mapRendering->splatTexMults[0]);
+			lua_pushnumber(L, mapRendering->splatTexMults[1]);
+			lua_pushnumber(L, mapRendering->splatTexMults[2]);
+			lua_pushnumber(L, mapRendering->splatTexMults[3]);
+			return 4;
+		} break;
+		// boolean
+		case hashString("voidWater"): {
+			lua_pushboolean(L, mapRendering->voidWater);
+			return 1;
+		} break;
+		case hashString("voidGround"): {
+			lua_pushboolean(L, mapRendering->voidGround);
+			return 1;
+		} break;
+		case hashString("splatDetailNormalDiffuseAlpha"): {
+			lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
+			return 1;
+		} break;
 	}
 
-	luaL_error(L, "Unknown key %s", key.c_str());
+	luaL_error(L, "[%s] unknown key %s", __func__, key);
 	return 0;
 }
 

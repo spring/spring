@@ -128,7 +128,7 @@ static void DrawObjectDebugPieces(const CSolidObject* o, Shader::IProgramObject*
 
 static inline void DrawObjectMidAndAimPos(const CSolidObject* o, Shader::IProgramObject* s, CMatrix44f& m)
 {
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
 	if (o->aimPos != o->midPos) {
 		// draw the aim-point
@@ -154,7 +154,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o, Shader::IProgra
 		s->SetUniform4fv(3, DEFAULT_VOLUME_COLOR);
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 }
 
 
@@ -211,7 +211,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 	CMatrix44f m;
 	const CollisionVolume* v = u->GetCollisionVolume(nullptr);
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
 	for (const CWeapon* w: u->weapons) {
 		if (!w->HaveTarget())
@@ -245,7 +245,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 		m.Translate(-w->GetCurrentTargetPos());
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 
 	{
 		DrawObjectMidAndAimPos(u, s, m = u->GetTransformMatrix(false));
@@ -315,25 +315,25 @@ public:
 		ipo->SetUniformMatrix4fv(1, false, camera->GetViewMatrix());
 		ipo->SetUniformMatrix4fv(2, false, camera->GetProjectionMatrix());
 
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_ALPHA_TEST);
+		glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
+		glAttribStatePtr->DisableCullFace();
+		glAttribStatePtr->DisableAlphaTest();
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glLineWidth(2.0f);
-		glDepthMask(GL_TRUE);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glAttribStatePtr->LineWidth(2.0f);
+		glAttribStatePtr->EnableDepthMask();
 
 		gleBindMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
 	}
 	void Disable() {
 		gleBindMeshBuffers(nullptr);
 
-		glLineWidth(1.0f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glPopAttrib();
+		glAttribStatePtr->LineWidth(1.0f);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glAttribStatePtr->PopBits();
 
 		ipo->Disable();
 	}

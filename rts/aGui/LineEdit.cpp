@@ -44,7 +44,7 @@ void LineEdit::DrawSelf()
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
 	DrawBox(GL_TRIANGLE_STRIP);
 
-	glLineWidth(1.49f);
+	glAttribStatePtr->LineWidth(1.49f);
 	if (hasFocus) {
 		gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
 		DrawBox(GL_LINE_LOOP, 0, 2);

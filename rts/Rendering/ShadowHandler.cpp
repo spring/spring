@@ -402,9 +402,9 @@ void CShadowHandler::DrawShadowPasses()
 {
 	inShadowPass = true;
 
-	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
 
 		eventHandler.DrawWorldShadow();
 
@@ -442,7 +442,7 @@ void CShadowHandler::DrawShadowPasses()
 
 		currentShadowPass = SHADOWGEN_PROGRAM_LAST;
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 
 	inShadowPass = false;
 }
@@ -609,14 +609,12 @@ void CShadowHandler::CreateShadows()
 	//   together with VP restoration
 	shadowMapFBO.Bind();
 
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
@@ -641,8 +639,7 @@ void CShadowHandler::CreateShadows()
 	CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
 
-
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 

@@ -562,12 +562,12 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 
 void CSelectedUnitsHandler::Draw()
 {
-	glDepthMask(false);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND); // for line smoothing
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glLineWidth(cmdColors.UnitBoxLineWidth());
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask(); // for line smoothing
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glAttribStatePtr->LineWidth(cmdColors.UnitBoxLineWidth());
 
 	SColor udColor(cmdColors.unitBox);
 	SColor mdColor(cmdColors.unitBox);
@@ -680,11 +680,11 @@ void CSelectedUnitsHandler::Draw()
 
 	shader->Disable();
 
-	glLineWidth(1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
+	glAttribStatePtr->LineWidth(1.0f);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 
@@ -874,7 +874,6 @@ void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 void CSelectedUnitsHandler::DrawCommands()
 {
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
 
 	lineDrawer.Configure(cmdColors.UseColorRestarts(),
 	                     cmdColors.UseRestartColor(),
@@ -882,10 +881,11 @@ void CSelectedUnitsHandler::DrawCommands()
 	                     cmdColors.RestartAlpha());
 	lineDrawer.SetupLineStipple();
 
-	glEnable(GL_BLEND);
-	glBlendFunc((GLenum) cmdColors.QueuedBlendSrc(), (GLenum) cmdColors.QueuedBlendDst());
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc((GLenum) cmdColors.QueuedBlendSrc(), (GLenum) cmdColors.QueuedBlendDst());
 
-	glLineWidth(cmdColors.QueuedLineWidth());
+	glAttribStatePtr->LineWidth(cmdColors.QueuedLineWidth());
 
 	if (selectedGroup != -1) {
 		const auto& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
@@ -902,9 +902,9 @@ void CSelectedUnitsHandler::DrawCommands()
 	// draw the commands from AIs
 	waitCommandsAI.DrawCommands();
 
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 }
 
 

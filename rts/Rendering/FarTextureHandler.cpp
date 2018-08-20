@@ -143,9 +143,9 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
 	fbo.CheckStatus("FARTEXTURE");
 
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_BLEND);
-	glFrontFace(GL_CW);
+	glAttribStatePtr->PushBits(GL_ALL_ATTRIB_BITS);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->FrontFace(GL_CW);
 
 	// NOTE:
 	//   the icons are RTT'ed using a snapshot of the
@@ -183,7 +183,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		// setup viewport
 		const int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 
-		glViewport(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
+		glAttribStatePtr->ViewPort(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// draw (static-pose) model
@@ -197,8 +197,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->PopModelRenderState(model);
 	unitDrawer->ResetOpaqueDrawing(false);
 
-	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glPopAttrib();
+	// glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->PopBits();
 
 	fbo.Detach(GL_DEPTH_ATTACHMENT);
 	fbo.Unbind();
@@ -271,8 +271,8 @@ void CFarTextureHandler::Draw()
 
 	// render currently queued far-icons
 	if (!renderQueue.empty()) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, farTextureID);
 
@@ -291,7 +291,7 @@ void CFarTextureHandler::Draw()
 		buffer->Submit(GL_QUADS);
 		shader->Disable();
 
-		glDisable(GL_ALPHA_TEST);
+		glAttribStatePtr->DisableAlphaTest();
 	}
 
 	renderQueue.clear();

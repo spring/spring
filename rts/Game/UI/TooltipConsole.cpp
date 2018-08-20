@@ -11,6 +11,7 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -26,7 +27,6 @@
 
 
 CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
-CONFIG(bool, TooltipOutlineFont).defaultValue(true).headlessValue(false);
 
 CTooltipConsole* tooltip = nullptr;
 
@@ -42,8 +42,6 @@ CTooltipConsole::CTooltipConsole()
 		w = 0.41f;
 		h = 0.10f;
 	}
-
-	outFont = configHandler->GetBool("TooltipOutlineFont");
 }
 
 
@@ -55,14 +53,8 @@ void CTooltipConsole::Draw()
 
 	const std::string& s = mouse->GetCurrentTooltip();
 
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if (!outFont) {
-		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
-		glRectf(x, y, (x + w), (y + h));
-	}
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	const float fontSize = (h * globalRendering->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
 
@@ -70,13 +62,7 @@ void CTooltipConsole::Draw()
 	const float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	smallFont->SetColors(); //default
-
-	if (outFont) {
-		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, s);
-	} else {
-		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_NORM | FONT_BUFFERED, s);
-	}
-
+	smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, s);
 	smallFont->DrawBufferedGL4();
 }
 

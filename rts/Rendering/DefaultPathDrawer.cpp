@@ -59,14 +59,14 @@ DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
 void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
 	if (enabled && (gs->cheatEnabled || gu->spectating)) {
-		glPushAttrib(GL_ENABLE_BIT);
+		glAttribStatePtr->PushEnableBit();
 
 		Draw(); // draw paths and goals
 		Draw(pm->maxResPF); // draw PF grid-overlay
 		Draw(pm->medResPE); // draw PE grid-overlay (med-res)
 		Draw(pm->lowResPE); // draw PE grid-overlay (low-res)
 
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 	}
 }
 
@@ -291,7 +291,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 void DefaultPathDrawer::Draw() const {
-	glLineWidth(3);
+	glAttribStatePtr->LineWidth(3);
 
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
@@ -330,7 +330,7 @@ void DefaultPathDrawer::Draw() const {
 	rdbc->Submit(GL_LINES);
 	prog->Disable();
 
-	glLineWidth(1);
+	glAttribStatePtr->LineWidth(1);
 }
 
 

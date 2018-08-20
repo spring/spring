@@ -129,7 +129,7 @@ CGrassDrawer::CGrassDrawer(): CEventClient("[GrassDrawer]", 199992, false)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		// ??
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	// create shaders and finalize
@@ -492,18 +492,18 @@ void CGrassDrawer::SetupStateShadow()
 	EnableShader(GRASS_PROGRAM_SHADOW);
 
 	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->DisableCullFace();
 
-	glPolygonOffset(5.0f, 15.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffset(5.0f, 15.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 }
 
 void CGrassDrawer::ResetStateShadow()
 {
-	glEnable(GL_CULL_FACE);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
+	glAttribStatePtr->DisableAlphaTest();
 
 	grassShaders[GRASS_PROGRAM_CURR]->Disable();
 }
@@ -557,16 +557,16 @@ void CGrassDrawer::SetupStateOpaque()
 	}
 
 	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 void CGrassDrawer::ResetStateOpaque()
 {
 	grassShaders[GRASS_PROGRAM_CURR]->Disable();
 
-	glEnable(GL_BLEND);
+	glAttribStatePtr->EnableBlendMask();
 }
 
 void CGrassDrawer::Draw()
@@ -581,7 +581,7 @@ void CGrassDrawer::Draw()
 		return;
 
 	SCOPED_TIMER("Draw::World::Foliage::Grass");
-	glPushAttrib(GL_CURRENT_BIT);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!blockDrawer.inViewQuads.empty()) {
 		SetupStateOpaque();
@@ -589,7 +589,7 @@ void CGrassDrawer::Draw()
 		ResetStateOpaque();
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 

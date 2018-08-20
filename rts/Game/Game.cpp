@@ -1294,7 +1294,7 @@ bool CGame::Draw() {
 		eventHandler.DrawScreenPost();
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 	GL::LoadIdentity();
 
 	if (videoCapturing->AllowRecord()) {

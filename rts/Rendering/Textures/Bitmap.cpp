@@ -802,7 +802,8 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 
 unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const
 {
-	glPushAttrib(GL_TEXTURE_BIT);
+	assert(Threading::IsMainThread());
+	glAttribStatePtr->PushTextureBit();
 
 	if (texID == 0)
 		glGenTextures(1, &texID);
@@ -814,7 +815,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
-			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (!ddsimage.upload_texture2D(0, GL_TEXTURE_2D)) {
@@ -832,7 +832,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::Texture3D:
-			glEnable(GL_TEXTURE_3D);
 			glBindTexture(GL_TEXTURE_3D, texID);
 
 			if (!ddsimage.upload_texture3D()) {
@@ -848,7 +847,6 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 
 		case nv_dds::TextureCubemap:
-			glEnable(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
 
 			if (!ddsimage.upload_textureCubemap()) {
@@ -870,7 +868,7 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lo
 			break;
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return texID;
 }
 #else  // !BITMAP_NO_OPENGL

@@ -119,9 +119,9 @@ bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool 
 void CInfoTextureCombiner::Update()
 {
 	fbo.Bind();
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glEnable(GL_BLEND);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->EnableBlendMask();
 
 	shader->Enable();
 	shader->BindTextures();
@@ -138,8 +138,8 @@ void CInfoTextureCombiner::Update()
 	rdb->Submit(GL_QUADS);
 	shader->Disable();
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	FBO::Unbind();
 

@@ -17,7 +17,7 @@ void HorizontalLayout::DrawSelf()
 	if (borderWidth <= 0.0f)
 		return;
 
-	glLineWidth(borderWidth);
+	glAttribStatePtr->LineWidth(borderWidth);
 	gui->SetColor(1.0f, 1.0f, 1.0f, Opacity());
 	DrawBox(GL_LINE_LOOP, 0, 2);
 }

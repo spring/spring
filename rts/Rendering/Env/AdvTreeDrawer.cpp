@@ -278,9 +278,9 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(15, false, &projMat.m[0]);
 
 
-	glDepthMask(GL_TRUE);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
+	glAttribStatePtr->DisableBlendMask();
 }
 
 void CAdvTreeDrawer::ResetDrawState()
@@ -304,11 +304,11 @@ void CAdvTreeDrawer::ResetDrawState()
 void CAdvTreeDrawer::SetupShadowDrawState() { SetupShadowDrawState(CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW), shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE)); }
 void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo)
 {
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->DisableCullFace();
 
-	glPolygonOffset(1, 1);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, treeGen.GetBarkTex()); // alpha-mask
@@ -327,8 +327,8 @@ void CAdvTreeDrawer::SetupShadowDrawState(const CCamera* cam, Shader::IProgramOb
 	treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(3, false, CMatrix44f::Identity());
 
 
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glEnable(GL_ALPHA_TEST);
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
+	glAttribStatePtr->EnableAlphaTest();
 }
 
 void CAdvTreeDrawer::ResetShadowDrawState()
@@ -338,9 +338,9 @@ void CAdvTreeDrawer::ResetShadowDrawState()
 	treeShaders[TREE_PROGRAM_ACTIVE]->Disable();
 	treeShaders[TREE_PROGRAM_ACTIVE] = nullptr;
 
-	glEnable(GL_CULL_FACE);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
+	glAttribStatePtr->DisableAlphaTest();
 }
 
 

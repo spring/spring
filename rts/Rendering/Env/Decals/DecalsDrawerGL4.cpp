@@ -512,16 +512,16 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 	const int2 atlasSize = atlas.GetAtlasSize();
 
-	glViewport(0, 0, atlasSize.x, atlasSize.y);
+	glAttribStatePtr->ViewPort(0, 0, atlasSize.x, atlasSize.y);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ZERO);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_ZERO);
+	glAttribStatePtr->DisableDepthTest();
 
 
 	{
@@ -558,7 +558,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 
 	fb.Unbind();
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, atlasTex);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -770,16 +770,16 @@ void CDecalsDrawerGL4::Draw()
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	glDepthMask(GL_FALSE);
-	glEnable(GL_DEPTH_CLAMP);
-	//glEnable(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_LESS, 1.0f);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_SRC_ALPHA);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_FRONT);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableDepthClamp();
+	// glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_LESS, 1.0f);
 
 
 	const CMatrix44f& viewProjMat    = camera->GetViewProjectionMatrix();
@@ -820,13 +820,13 @@ void CDecalsDrawerGL4::Draw()
 	// Draw
 	DrawDecals();
 
-	glDisable(GL_DEPTH_CLAMP);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableDepthClamp();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	decalShader->Disable();
 	//if (setTimerQuery) drawTimerQuery.Stop();
@@ -1150,18 +1150,18 @@ void CDecalsDrawerGL4::UpdateOverlap()
 		return; // early-exit before GL stuff is done
 
 	fboOverlap.Bind();
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glAttribStatePtr->PushBits(GL_ALL_ATTRIB_BITS);
 
-	glViewport(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
+	glAttribStatePtr->ViewPort(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
 
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, atlasTex);
 
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.0f);
-	glEnable(GL_STENCIL_TEST);
-	glStencilMask(0xFF);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
+	glAttribStatePtr->EnableStencilTest();
+	glAttribStatePtr->StencilMask(0xFF);
 
 
 	{
@@ -1197,7 +1197,7 @@ void CDecalsDrawerGL4::UpdateOverlap()
 		shader->Disable();
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	//fboOverlap.Unbind();
 }
 
@@ -1286,8 +1286,8 @@ void CDecalsDrawerGL4::UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb)
 	// glClearColor(0.0f, 0.5f, 0.0f, 1.0f);
 	// glClear(GL_COLOR_BUFFER_BIT);
 
-	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-	glStencilOp(GL_INCR_WRAP, GL_INCR_WRAP, GL_INCR_WRAP);
+	glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0xFF);
+	glAttribStatePtr->StencilOper(GL_INCR_WRAP, GL_INCR_WRAP, GL_INCR_WRAP);
 
 	{
 		for (const Decal& d: decals) {
@@ -1310,8 +1310,8 @@ void CDecalsDrawerGL4::UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb)
 
 void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap, GL::RenderDataBufferTC* rdb)
 {
-	glStencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glAttribStatePtr->StencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
+	glAttribStatePtr->StencilOper(GL_KEEP, GL_KEEP, GL_KEEP);
 
 
 	for (int i: candidatesForOverlap) {
@@ -1372,8 +1372,8 @@ std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries(GL::RenderDataBuff
 	// free one decal (+ remove it from the overlap texture)
 	int numFreedDecals = 0;
 
-	glStencilFunc(GL_ALWAYS, 0, 0xFF);
-	glStencilOp(GL_DECR_WRAP, GL_DECR_WRAP, GL_DECR_WRAP);
+	glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0xFF);
+	glAttribStatePtr->StencilOper(GL_DECR_WRAP, GL_DECR_WRAP, GL_DECR_WRAP);
 
 
 	for (auto it = candidatesForRemoval.begin(); it != eraseIt; ++it) {

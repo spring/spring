@@ -233,8 +233,8 @@ void CGameInfo::Draw()
 	box.y2 = 0.5f + (height * 0.5f);
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	// draw the boxes
 	for (size_t i = 0; i < labels.size(); i++) {

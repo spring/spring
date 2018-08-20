@@ -879,7 +879,7 @@ void CMiniMap::EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const
 
 	// switch to normalized minimap coords
 	if (dualScreen) {
-		glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
+		glAttribStatePtr->ViewPort(curPos.x, curPos.y, curDim.x, curDim.y);
 	} else {
 		GL::Translate(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
 	}
@@ -893,7 +893,7 @@ void CMiniMap::LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const
 		GL::PopMatrix();
 
 	if (dualScreen)
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
 /******************************************************************************/
@@ -996,7 +996,7 @@ void CMiniMap::UpdateTextureCache()
 		curPos = {0, 0};
 
 			// draw minimap into FBO
-			glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
+			glAttribStatePtr->ViewPort(0, 0, minimapTexSize.x, minimapTexSize.y);
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
@@ -1030,12 +1030,12 @@ void CMiniMap::Draw()
 	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
 	// Draw Border
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glPushAttrib(GL_DEPTH_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		glDepthMask(GL_FALSE);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->PushDepthBufferBit();
+		glAttribStatePtr->DisableDepthTest();
+		glAttribStatePtr->DepthFunc(GL_LEQUAL);
+		glAttribStatePtr->DisableDepthMask();
 		glDisable(GL_TEXTURE_2D);
 		GL::MatrixMode(GL_MODELVIEW);
 
@@ -1044,7 +1044,7 @@ void CMiniMap::Draw()
 
 		if (minimized) {
 			DrawMinimizedButton(rdBufferC, rdBufferTC);
-			glPopAttrib();
+			glAttribStatePtr->PopBits();
 			glEnable(GL_TEXTURE_2D);
 			return;
 		}
@@ -1055,7 +1055,7 @@ void CMiniMap::Draw()
 			DrawButtons(rdBufferC, rdBufferTC);
 		}
 
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 	}
 
 	// draw minimap itself
@@ -1064,6 +1064,11 @@ void CMiniMap::Draw()
 
 
 
+// Update->UpdateTextureCache->DrawForReal(false)->RenderCachedTexture
+// Draw->DrawForReal(true)->RenderCachedTexture
+// LuaOpenGL::DrawMiniMap->DrawForReal(true OR false)->RenderCachedTexture
+//
+// DrawForReal->DrawBackground->{readMap->DrawMiniMap (with multi-texturing, can not use standard renderbuffer shader!}
 void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall)
 {
 	if (minimized)
@@ -1076,12 +1081,12 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 		return;
 	}
 
-	glPushAttrib(GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
+	glAttribStatePtr->PushDepthBufferBit();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->DepthFunc(GL_LEQUAL);
+	glAttribStatePtr->DisableDepthMask();
 	glDisable(GL_TEXTURE_2D);
 	GL::MatrixMode(GL_MODELVIEW);
 
@@ -1111,7 +1116,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	if (useNormalizedCoors)
 		LeaveNormalizedCoors(true, false);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	glEnable(GL_TEXTURE_2D);
 
 	// allow Lua scripts to draw into the minimap
@@ -1181,14 +1186,14 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 			va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
 		}
 
-		glLineWidth(2.5f);
+		glAttribStatePtr->LineWidth(2.5f);
 		glColor4f(0, 0, 0, 0.5f);
 		va->DrawArray2d0(GL_LINES);
 
-		glLineWidth(1.5f);
+		glAttribStatePtr->LineWidth(1.5f);
 		glColor4f(1, 1, 1, 0.75f);
 		va->DrawArray2d0(GL_LINES);
-		glLineWidth(1.0f);
+		glAttribStatePtr->LineWidth(1.0f);
 	}
 
 
@@ -1199,9 +1204,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
 		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
 		glColor4fv(cmdColors.mouseBox);
-		//glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
-		//            (GLenum)cmdColors.MouseBoxBlendDst());
-		glLineWidth(cmdColors.MouseBoxLineWidth());
+		//glAttribStatePtr->BlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(), (GLenum)cmdColors.MouseBoxBlendDst());
+		glAttribStatePtr->LineWidth(cmdColors.MouseBoxLineWidth());
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
@@ -1212,8 +1216,8 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
 		va->DrawArray2d0(GL_LINE_LOOP);
 
-		glLineWidth(1.0f);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->LineWidth(1.0f);
+		//glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	DrawNotes();
@@ -1260,13 +1264,13 @@ void CMiniMap::DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderD
 
 		// highlight
 		if ((mouse->lastx + 1 <= buttonSize) && (mouse->lasty + 1 <= buttonSize)) {
-			// glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 			rdBufferC->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 			rdBufferC->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 			rdBufferC->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 			rdBufferC->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 			rdBufferC->Submit(GL_QUADS);
-			// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 		// outline
@@ -1312,7 +1316,7 @@ void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const
 void CMiniMap::DrawFrame(GL::RenderDataBufferC* rdBufferC)
 {
 	// outline
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
@@ -1465,10 +1469,10 @@ void CMiniMap::DrawNotes()
 
 bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 {
-	glPushAttrib(GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->PushColorBufferBit();
 	glBindTexture(GL_TEXTURE_2D, minimapTextureID);
 	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->DisableBlendMask();
 
 	if (useNormalizedCoors)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
@@ -1481,15 +1485,15 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 		glTexCoord2f(0.0, 1.0); glVertex2f(0.0f, 1.0f);
 	glEnd();
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	DrawCameraFrustumAndMouseSelection();
 	LeaveNormalizedCoors(useNormalizedCoors, useNormalizedCoors && globalRendering->dualScreenMode);
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 	return true;
 }
 
@@ -1497,7 +1501,6 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 void CMiniMap::DrawBackground() const
 {
 	glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
-	//glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// don't mirror the map texture with flipped cameras
 	GL::MatrixMode(GL_TEXTURE);
@@ -1506,10 +1509,10 @@ void CMiniMap::DrawBackground() const
 	GL::MatrixMode(GL_MODELVIEW);
 
 		// draw the map
-		glDisable(GL_ALPHA_TEST);
-		glDisable(GL_BLEND);
+		glAttribStatePtr->DisableAlphaTest();
+		glAttribStatePtr->DisableBlendMask();
 			readMap->DrawMinimap();
-		glEnable(GL_BLEND);
+		glAttribStatePtr->EnableBlendMask();
 
 	GL::MatrixMode(GL_TEXTURE);
 	GL::PopMatrix();
@@ -1527,12 +1530,12 @@ void CMiniMap::DrawUnitIcons() const
 	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.0f);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
 
 	unitDrawer->DrawUnitMiniMapIcons();
 
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableAlphaTest();
 	glDisable(GL_TEXTURE_2D);
 
 	GL::PopMatrix();
@@ -1599,9 +1602,9 @@ void CMiniMap::DrawWorldStuff() const
 	}
 
 
-	glLineWidth(2.5f);
+	glAttribStatePtr->LineWidth(2.5f);
 	lineDrawer.DrawAll(true);
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0)

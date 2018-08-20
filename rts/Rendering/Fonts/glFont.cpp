@@ -576,11 +576,10 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 		if ((curShader = shader) == defShader)
 			curShader->Enable();
 
-		// NOTE: FFP
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->DisableDepthTest();
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
 
@@ -622,7 +621,8 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glPopAttrib();
+
+		glAttribStatePtr->PopBits();
 	}
 
 	curShader = nullptr;
@@ -646,11 +646,10 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		if ((curShader = shader) == defShader)
 			curShader->Enable();
 
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+		glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->DisableDepthTest();
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
@@ -681,7 +680,8 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glPopAttrib();
+
+		glAttribStatePtr->PopBits();
 	}
 
 	curShader = nullptr;
@@ -949,10 +949,10 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str)
@@ -996,7 +996,8 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 
 	curShader = nullptr;
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	if (threadSafety)

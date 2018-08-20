@@ -164,18 +164,18 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 
 
 void ITreeDrawer::SetupState() const {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.005f);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.005f);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void ITreeDrawer::ResetState() const {
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 

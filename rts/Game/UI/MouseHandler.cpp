@@ -494,13 +494,13 @@ void CMouseHandler::DrawSelectionBox()
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
+	glAttribStatePtr->PushEnableBit();
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
 	            (GLenum)cmdColors.MouseBoxBlendDst());
 
-	glLineWidth(cmdColors.MouseBoxLineWidth());
+	glAttribStatePtr->LineWidth(cmdColors.MouseBoxLineWidth());
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
@@ -509,9 +509,9 @@ void CMouseHandler::DrawSelectionBox()
 	buffer->Submit(GL_LINE_LOOP);
 	shader->Disable();
 
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 

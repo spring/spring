@@ -81,8 +81,8 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	if (regularLines.empty() && stippleLines.empty())
 		return;
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->PushEnableBit();
+	glAttribStatePtr->DisableDepthTest();
 	glDisable(GL_LINE_STIPPLE);
 
 
@@ -119,7 +119,7 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	}
 
 	shader->Disable();
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 
 	regularLines.clear();
 	stippleLines.clear();

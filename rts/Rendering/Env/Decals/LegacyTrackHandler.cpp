@@ -264,11 +264,11 @@ void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 
 	#ifndef USE_DECALHANDLER_STATE
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glDepthMask(0);
-		glPolygonOffset(-10.0f, -20.0f);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->EnablePolyOfsFill();
+		glAttribStatePtr->DisableDepthMask();
+		glAttribStatePtr->PolygonOffset(-10.0f, -20.0f);
 
 		BindTextures();
 		BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
@@ -280,8 +280,8 @@ void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 		decalShaders[DECAL_SHADER_CURR]->Disable();
 		KillTextures();
 
-		glDisable(GL_POLYGON_OFFSET_FILL);
-		glDisable(GL_BLEND);
+		glAttribStatePtr->DisablePolyOfsFill();
+		glAttribStatePtr->DisableBlendMask();
 	}
 	#else
 	{

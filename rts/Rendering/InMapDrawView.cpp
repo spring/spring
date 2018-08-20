@@ -193,19 +193,19 @@ void CInMapDrawView::Draw()
 	readMap->GridVisibility(nullptr, &drawer, 1e9, CInMapDrawModel::DRAW_QUAD_SIZE);
 
 
-	glDepthMask(GL_FALSE);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
 
 	{
 		// draw lines
-		glLineWidth(3.0f);
+		glAttribStatePtr->LineWidth(3.0f);
 		linesShader->Enable();
 		linesShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 		linesShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		linesBuffer->Submit(GL_LINES);
 		linesShader->Disable();
-		glLineWidth(1.0f);
+		glAttribStatePtr->LineWidth(1.0f);
 	}
 	{
 		// draw points
@@ -238,5 +238,6 @@ void CInMapDrawView::Draw()
 		visibleLabels.clear();
 	}
 
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->EnableDepthMask();
 }
+

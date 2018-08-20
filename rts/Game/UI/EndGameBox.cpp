@@ -210,8 +210,8 @@ void CEndGameBox::Draw()
 	Shader::IProgramObject* shaderT = bufferT->GetShader();
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// Large Box

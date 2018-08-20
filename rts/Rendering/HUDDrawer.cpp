@@ -190,7 +190,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 
 void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 {
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
 	// draw the reticle in world coordinates
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
@@ -283,21 +283,21 @@ void HUDDrawer::Draw(const CUnit* unit)
 	if (unit == nullptr || !draw)
 		return;
 
-	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PushBits(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (unit->moveType->useHeading) {
 		DrawUnitDirectionArrow(unit);
 		DrawCameraDirectionArrow(unit);
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 
 	DrawModel(unit);
 	DrawWeaponStates(unit);
 	DrawTargetReticle(unit);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }

@@ -18,7 +18,7 @@ void VerticalLayout::DrawSelf()
 		return;
 
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
-	glLineWidth(borderWidth);
+	glAttribStatePtr->LineWidth(borderWidth);
 	gui->SetColor(1.f,1.f,1.f, Opacity());
 	DrawBox(GL_LINE_LOOP, 0, 2);
 }

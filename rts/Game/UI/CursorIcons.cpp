@@ -49,11 +49,11 @@ void CCursorIcons::SetCustomType(int cmdID, const std::string& cursor)
 
 void CCursorIcons::Draw()
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.01f);
-	glDepthMask(GL_FALSE);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
+	glAttribStatePtr->DisableDepthMask();
 
 	Sort();
 	DrawCursors();
@@ -62,7 +62,7 @@ void CCursorIcons::Draw()
 	Clear();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -119,7 +119,7 @@ void CCursorIcons::DrawTexts()
 	if (texts.empty())
 		return;
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	const unsigned int fontFlags = (FONT_OUTLINE * guihandler->GetOutlineFonts()) | FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM | FONT_BUFFERED;
 
@@ -146,8 +146,8 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->EnableDepthTest();
 
 	if (!buildIcons.empty()) {
 		const auto setupStateFunc = [&](const BuildIcon& bi, const S3DModel* mdl) {
@@ -180,7 +180,7 @@ void CCursorIcons::DrawBuilds()
 		unitDrawer->DrawStaticModelBatch<BuildIcon>(buildIcons, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
 	}
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 }
 
 

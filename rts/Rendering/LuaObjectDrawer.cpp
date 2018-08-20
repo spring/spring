@@ -175,10 +175,8 @@ static void ResetLuaAlphaFeatureDrawState(unsigned int modelType, bool deferredP
 // shadow-pass state management funcs
 // FIXME: setup face culling for S3O?
 static void SetupDefShadowUnitDrawState(unsigned int modelType, bool deferredPass) {
-	glDisable(GL_TEXTURE_2D);
-
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
@@ -190,7 +188,7 @@ static void ResetDefShadowUnitDrawState(unsigned int modelType, bool deferredPas
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	po->Disable();
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
 // NOTE: incomplete (FeatureDrawer::DrawShadowPass sets more state)
@@ -370,16 +368,16 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	inDrawPass = true;
 	inAlphaBin = (matType == LUAMAT_ALPHA || matType == LUAMAT_ALPHA_REFLECT);
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+	glAttribStatePtr->PushBits(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
 	if (inAlphaBin) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.1f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.1f);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	} else {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 	}
 
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
@@ -392,7 +390,7 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	LuaMaterial::defMat.Execute(*prevMat, deferredPass);
 	luaMatHandler.ClearBins(objType, matType);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 
 	inAlphaBin = false;
 	inDrawPass = false;

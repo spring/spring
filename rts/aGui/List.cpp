@@ -222,7 +222,7 @@ void List::DrawSelf()
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 	font->SetTextDepth(depth);
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
 	float sbX = b.GetPos()[0];
 	float sbY1 = b.GetPos()[1] + (itemHeight + itemSpacing);
@@ -238,18 +238,18 @@ void List::DrawSelf()
 			b.DrawBox(GL_TRIANGLE_STRIP);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1,0,0,opacity/2.f);
-			glLineWidth(1.49f);
+			glAttribStatePtr->LineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP, 0, 2);
-			glLineWidth(1.0f);
+			glAttribStatePtr->LineWidth(1.0f);
 		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
 			gui->SetColor(0,0,0.2f,opacity);
 			b.DrawBox(GL_TRIANGLE_STRIP);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1,1,1,opacity/2.f);
-			glLineWidth(1.49f);
+			glAttribStatePtr->LineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP, 0, 2);
-			glLineWidth(1.0f);
+			glAttribStatePtr->LineWidth(1.0f);
 		}
 
 		font->glPrint(pos[0] + borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, *ii);
@@ -289,9 +289,9 @@ void List::DrawSelf()
 		scrollbar.DrawBox(GL_TRIANGLE_STRIP);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gui->SetColor(1,1,1,opacity/2.f);
-		glLineWidth(1.49f);
+		glAttribStatePtr->LineWidth(1.49f);
 		scrollbar.DrawBox(GL_LINE_LOOP, 0, 2);
-		glLineWidth(1.0f);
+		glAttribStatePtr->LineWidth(1.0f);
 		return;
 	}
 

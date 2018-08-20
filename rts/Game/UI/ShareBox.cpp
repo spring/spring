@@ -120,8 +120,8 @@ void CShareBox::Draw()
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// outer box
@@ -188,9 +188,9 @@ void CShareBox::Draw()
 			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.02f, box.y1 + unitBox.y1 + 0.010f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
 			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.03f, box.y1 + unitBox.y1 + 0.040f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
 
-			glLineWidth(3);
+			glAttribStatePtr->LineWidth(3);
 			buffer->Submit(GL_LINE_STRIP);
-			glLineWidth(1);
+			glAttribStatePtr->LineWidth(1);
 		}
 
 		shader->Disable();

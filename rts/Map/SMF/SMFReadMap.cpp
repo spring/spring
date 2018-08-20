@@ -711,7 +711,7 @@ void CSMFReadMap::UpdateShadingTexture()
 
 void CSMFReadMap::DrawMinimap() const
 {
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableAlphaTest();
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);

@@ -162,8 +162,8 @@ void CHeightTexture::Update()
 		return UpdateCPU();
 
 	fbo.Bind();
-	glViewport(0, 0,  texSize.x, texSize.y);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->ViewPort(0, 0,  texSize.x, texSize.y);
+	glAttribStatePtr->DisableBlendMask();
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
@@ -178,7 +178,7 @@ void CHeightTexture::Update()
 	rdb->Submit(GL_QUADS);
 	shader->Disable();
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	FBO::Unbind();
 }

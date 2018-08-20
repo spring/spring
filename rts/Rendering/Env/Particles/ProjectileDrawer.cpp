@@ -572,8 +572,8 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	if (container.empty())
 		return;
 
-	glPushAttrib(GL_POLYGON_BIT);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->PushPolygonBit();
+	glAttribStatePtr->DisableCullFace();
 
 	flyingPieceVAO.Bind();
 
@@ -598,7 +598,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 		flyingPieceVAO.Unbind();
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -635,12 +635,12 @@ void CProjectileDrawer::DrawProjectilePass(Shader::IProgramObject*, bool drawRef
 void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 {
 	if (fxBuffer->NumElems() > 0) {
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glActiveTexture(GL_TEXTURE0);
 
-		glAlphaFunc(GL_GREATER, 0.0f);
-		glEnable(GL_ALPHA_TEST);
-		glDepthMask(GL_FALSE);
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->DisableDepthMask();
 
 		// send event after the default state has been set, allows overriding
 		// it for specific cases such as proper blending with depth-aware fog
@@ -660,9 +660,9 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 }
 
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glDisable(GL_BLEND);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableDepthMask();
 
 	sortedProjectiles[0].clear();
 	sortedProjectiles[1].clear();
@@ -673,11 +673,11 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 	DrawProjectilePass(fxShader, drawReflection, drawRefraction);
 
-	glEnable(GL_BLEND);
+	glAttribStatePtr->EnableBlendMask();
 
 	DrawParticlePass(fxShader, drawReflection, drawRefraction);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -712,7 +712,7 @@ void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
 
 void CProjectileDrawer::DrawShadowPass()
 {
-	glPushAttrib(GL_ENABLE_BIT);
+	glAttribStatePtr->PushEnableBit();
 
 	fxBuffer = GL::GetRenderBufferTC();
 	fxShader = nullptr;
@@ -720,7 +720,7 @@ void CProjectileDrawer::DrawShadowPass()
 	DrawProjectileShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE));
 	DrawParticleShadowPass(shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PARTICLE));
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -789,18 +789,18 @@ void CProjectileDrawer::DrawGroundFlashes()
 	if (gfc.empty())
 		return;
 
-	glDepthMask(GL_FALSE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
+
+	glAttribStatePtr->PolygonOffset(-20.0f, -1000.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
-
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.01f);
-
-	glPolygonOffset(-20, -1000);
-	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	gfBuffer = GL::GetRenderBufferTC();
 	gfShader = gfBuffer->GetShader();
@@ -823,18 +823,18 @@ void CProjectileDrawer::DrawGroundFlashes()
 			gfBuffer->Submit(GL_QUADS);
 
 			if ((depthTest = gf->depthTest)) {
-				glEnable(GL_DEPTH_TEST);
+				glAttribStatePtr->EnableDepthTest();
 			} else {
-				glDisable(GL_DEPTH_TEST);
+				glAttribStatePtr->DisableDepthTest();
 			}
 		}
 		if (depthMask != gf->depthMask) {
 			gfBuffer->Submit(GL_QUADS);
 
 			if ((depthMask = gf->depthMask)) {
-				glDepthMask(GL_TRUE);
+				glAttribStatePtr->EnableDepthMask();
 			} else {
-				glDepthMask(GL_FALSE);
+				glAttribStatePtr->DisableDepthMask();
 			}
 		}
 
@@ -844,12 +844,12 @@ void CProjectileDrawer::DrawGroundFlashes()
 	gfBuffer->Submit(GL_QUADS);
 	gfShader->Disable();
 
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_ALPHA_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 
@@ -860,13 +860,13 @@ void CProjectileDrawer::UpdatePerlin() {
 		return;
 
 	perlinNoiseFBO.Bind();
-	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, PerlinData::noiseTexSize, PerlinData::noiseTexSize);
+	glAttribStatePtr->ViewPort(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, PerlinData::noiseTexSize, PerlinData::noiseTexSize);
 
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
+	glAttribStatePtr->DisableAlphaTest();
 
 	unsigned char col[4];
 	const float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
@@ -892,7 +892,7 @@ void CProjectileDrawer::UpdatePerlin() {
 		const float tsize = 8.0f / size;
 
 		if (a == 0)
-			glDisable(GL_BLEND);
+			glAttribStatePtr->DisableBlendMask();
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinData.blendWeights[a]) * 16 * size);
@@ -905,7 +905,7 @@ void CProjectileDrawer::UpdatePerlin() {
 		buffer->Submit(GL_QUADS);
 
 		if (a == 0)
-			glEnable(GL_BLEND);
+			glAttribStatePtr->EnableBlendMask();
 
 		for (int b = 0; b < 4; ++b)
 			col[b] = int(perlinData.blendWeights[a] * 16 * size);
@@ -925,11 +925,11 @@ void CProjectileDrawer::UpdatePerlin() {
 
 
 	perlinNoiseFBO.Unbind();
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthMask();
 }
 
 void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)

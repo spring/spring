@@ -52,10 +52,9 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (!gs->cheatEnabled && !gu->spectating)
 		return;
 
-	glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
 
 	visibleNodes.clear();
 	visibleNodes.reserve(256);
@@ -79,7 +78,7 @@ void QTPFSPathDrawer::DrawAll() const {
 		DrawCosts(visibleNodes);
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const {
@@ -87,13 +86,13 @@ void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<co
 		DrawNode(node, rdb, &NODE_COLORS[node->moveCostAvg != QTPFS_POSITIVE_INFINITY][0]);
 	}
 
-	glLineWidth(2);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glAttribStatePtr->LineWidth(2.0f);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	rdb->Submit(GL_QUADS);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glLineWidth(1);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->LineWidth(1.0f);
 }
 
 void QTPFSPathDrawer::DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) const {
@@ -142,7 +141,7 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 	const QTPFS::PathCache& pathCache = pm->pathCaches[md->pathType];
 	const QTPFS::PathCache::PathMap& paths = pathCache.GetLivePaths();
 
-	glLineWidth(4);
+	glAttribStatePtr->LineWidth(4.0f);
 
 	{
 		for (const auto& pair: paths) {
@@ -166,7 +165,7 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 		#endif
 	}
 
-	glLineWidth(1);
+	glAttribStatePtr->LineWidth(1.0f);
 
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
@@ -258,9 +257,9 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 			DrawNodeLink(pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz)), poppedNode, rdb);
 		}
 
-		glLineWidth(2);
+		glAttribStatePtr->LineWidth(2);
 		rdb->Submit(GL_LINES);
-		glLineWidth(1);
+		glAttribStatePtr->LineWidth(1);
 	}
 }
 

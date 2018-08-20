@@ -71,11 +71,11 @@ void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func) { glSurfaceCircleRB = (fun
 
 
 // default for glBallisticCircle
-void glSetupRangeRingDrawState() { glDisable(GL_DEPTH_TEST); }
-void glResetRangeRingDrawState() { glEnable(GL_DEPTH_TEST); }
+void glSetupRangeRingDrawState() { glAttribStatePtr->DisableDepthTest(); }
+void glResetRangeRingDrawState() { glAttribStatePtr->EnableDepthTest(); }
 // default for glDrawCone
-void glSetupWeaponArcDrawState() { glEnable(GL_CULL_FACE); }
-void glResetWeaponArcDrawState() { glDisable(GL_CULL_FACE); }
+void glSetupWeaponArcDrawState() { glAttribStatePtr->EnableCullFace(); }
+void glResetWeaponArcDrawState() { glAttribStatePtr->DisableCullFace(); }
 
 
 
@@ -255,35 +255,35 @@ void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t con
 
 void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 {
-	glDepthMask(GL_FALSE);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_DEPTH_CLAMP);
+	glAttribStatePtr->DisableDepthMask();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->EnableDepthClamp();
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-		glEnable(GL_STENCIL_TEST);
-		glStencilMask(0x1);
-		glStencilFunc(GL_ALWAYS, 0, 0x1);
-		glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
+		glAttribStatePtr->EnableStencilTest();
+		glAttribStatePtr->StencilMask(0x1);
+		glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0x1);
+		glAttribStatePtr->StencilOper(GL_KEEP, GL_INCR, GL_KEEP);
 		drawFunc(data); // draw
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
-	glStencilFunc(GL_NOTEQUAL, 0, 0x1);
-	glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
+	glAttribStatePtr->StencilFunc(GL_NOTEQUAL, 0, 0x1);
+	glAttribStatePtr->StencilOper(GL_ZERO, GL_ZERO, GL_ZERO); // clear as we go
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_FRONT);
 
 	drawFunc(data);   // draw
 
-	glDisable(GL_DEPTH_CLAMP);
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthClamp();
+	glAttribStatePtr->DisableStencilTest();
+	glAttribStatePtr->DisableCullFace();
+	glAttribStatePtr->EnableDepthTest();
 }
 
 

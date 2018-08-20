@@ -90,8 +90,8 @@ void Gui::Draw()
 {
 	Clean();
 
-	//glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
+	// glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->EnableBlendMask();
 
 	shader->Enable();
 	SetColor(1.0f, 1.0f, 1.0f, 1.0f);

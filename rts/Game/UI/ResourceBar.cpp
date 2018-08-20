@@ -73,8 +73,8 @@ void CResourceBar::Draw()
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DisableAlphaTest();
 
 
 	const float metalx = box.x1 + 0.01f;

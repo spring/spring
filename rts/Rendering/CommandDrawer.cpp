@@ -77,7 +77,7 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 		return;
 
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 
 	lineDrawer.Configure(cmdColors.UseColorRestarts(),
 	                     cmdColors.UseRestartColor(),
@@ -85,11 +85,10 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 	                     cmdColors.RestartAlpha());
 	lineDrawer.SetupLineStipple();
 
-	glEnable(GL_BLEND);
-	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
-	            (GLenum)cmdColors.QueuedBlendDst());
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc((GLenum)cmdColors.QueuedBlendSrc(), (GLenum)cmdColors.QueuedBlendDst());
 
-	glLineWidth(cmdColors.QueuedLineWidth());
+	glAttribStatePtr->LineWidth(cmdColors.QueuedLineWidth());
 
 	for (auto ui = luaQueuedUnitSet.cbegin(); ui != luaQueuedUnitSet.cend(); ++ui) {
 		const CUnit* unit = unitHandler.GetUnit(*ui);
@@ -100,8 +99,8 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 		Draw(unit->commandAI);
 	}
 
-	glLineWidth(1.0f);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->LineWidth(1.0f);
+	glAttribStatePtr->EnableDepthTest();
 }
 
 void CommandDrawer::DrawCommands(const CCommandAI* cai, GL::RenderDataBufferC* rdb) const

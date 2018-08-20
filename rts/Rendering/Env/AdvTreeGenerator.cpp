@@ -121,7 +121,7 @@ bool CAdvTreeGenerator::GenBarkTextures(const std::string& leafTexFile)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bmp.xsize, bmp.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bmp.GetRawMem());
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->DisableCullFace();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, leafTex);
@@ -384,14 +384,14 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 
 void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
-	glViewport(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
+	glAttribStatePtr->ViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->DisableBlendMask();
 
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glEnable(GL_ALPHA_TEST);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->DisableDepthTest();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -417,7 +417,7 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 		}
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& end)
@@ -587,12 +587,11 @@ void CAdvTreeGenerator::DrawPineBranch(const float3& start, const float3& dir, f
 
 void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsize)
 {
-	glViewport(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
+	glAttribStatePtr->ViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
-	glDisable(GL_BLEND);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -663,6 +662,6 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 		}
 	}
 
-	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 

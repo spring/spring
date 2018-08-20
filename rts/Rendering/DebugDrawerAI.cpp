@@ -47,8 +47,8 @@ void DebugDrawerAI::Draw() {
 	if (skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty())
 		return;
 
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_LINE_BIT);
+	glAttribStatePtr->DisableDepthTest();
 
 	// draw data for the (AI) team being spectated
 	GL::RenderDataBufferC* bufferC = GL::GetRenderBufferC();
@@ -57,7 +57,7 @@ void DebugDrawerAI::Draw() {
 	graphs[gu->myTeam].Draw(bufferC, bufferC->GetShader());
 	texsets[gu->myTeam].Draw(bufferT, bufferT->GetShader());
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -312,7 +312,7 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 				color[2] = line.lineColor.z * 255;
 				color[3] = 255;
 
-				glLineWidth(line.lineWidth);
+				glAttribStatePtr->LineWidth(line.lineWidth);
 
 				for (auto pit = data.begin(); pit != data.end(); ++pit) {
 					auto npit = pit; ++npit;
@@ -327,7 +327,7 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 				}
 
 				buffer->Submit(GL_LINE_STRIP);
-				glLineWidth(1.0f);
+				glAttribStatePtr->LineWidth(1.0f);
 
 				lineNum += 1;
 			}

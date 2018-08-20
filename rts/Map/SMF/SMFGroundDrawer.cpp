@@ -349,8 +349,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, DrawPass::TerrainDeferred);
 
 		if (alphaTest) {
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+			glAttribStatePtr->EnableAlphaTest();
+			glAttribStatePtr->AlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
 
 		if (HaveLuaRenderState())
@@ -358,9 +358,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 
 		meshDrawer->DrawMesh(drawPass);
 
-		if (alphaTest) {
-			glDisable(GL_ALPHA_TEST);
-		}
+		if (alphaTest)
+			glAttribStatePtr->DisableAlphaTest();
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
@@ -388,14 +387,14 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
-		glPushAttrib((GL_ENABLE_BIT * alphaTest) | (GL_POLYGON_BIT * wireframe));
+		glAttribStatePtr->PushBits((GL_ENABLE_BIT * alphaTest) | (GL_POLYGON_BIT * wireframe));
 
 		if (wireframe)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		if (alphaTest) {
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+			glAttribStatePtr->EnableAlphaTest();
+			glAttribStatePtr->AlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
 
 		if (HaveLuaRenderState())
@@ -403,7 +402,7 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		meshDrawer->DrawMesh(drawPass);
 
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
@@ -419,22 +418,20 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
 
-	if (drawDeferred) {
-		// do the deferred pass first, will allow us to re-use
-		// its output at some future point and eventually draw
-		// the entire map deferred
+	// do the deferred pass first, will allow us to re-use
+	// its output at some future point and eventually draw
+	// the entire map deferred
+	if (drawDeferred)
 		DrawDeferredPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
-	}
 
-	if (drawForward) {
+	if (drawForward)
 		DrawForwardPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
-	}
 
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->DisableCullFace();
 
 	if (drawPass != DrawPass::Normal)
 		return;
@@ -456,22 +453,22 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_NOP];
 
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
 	glActiveTexture(GL_TEXTURE0);
 
 
-	glEnable(GL_BLEND);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireframe + GL_FILL * (1 - wireframe));
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
+
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireframe + GL_FILL * (1 - wireframe));
 
 	#if 0
 	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.9f);
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.9f);
 	}
 	#endif
 
@@ -483,13 +480,13 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 	#if 0
 	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
-		glDisable(GL_ALPHA_TEST);
+		glAttribStatePtr->DisableAlphaTest();
 	#endif
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->DisableBlendMask();
 
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->DisableCullFace();
 
 
 	smfRenderStates[RENDER_STATE_SEL] = prvState;
@@ -505,8 +502,8 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+	glAttribStatePtr->PolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
 		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
@@ -516,7 +513,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();
 
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
 

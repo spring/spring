@@ -434,9 +434,8 @@ void CFeatureDrawer::DrawAlphaPass(bool aboveWater)
 	{
 		assert((unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha());
 		unitDrawer->SetupAlphaDrawing(false, aboveWater);
-
-		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDepthMask(GL_TRUE);
+		glAttribStatePtr->PushBits(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glAttribStatePtr->EnableDepthMask();
 
 		// needed for now; not always called directly after Draw()
 		GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, true);
@@ -447,8 +446,7 @@ void CFeatureDrawer::DrawAlphaPass(bool aboveWater)
 			unitDrawer->PopModelRenderState(modelType);
 		}
 
-		glPopAttrib();
-
+		glAttribStatePtr->PopBits();
 		unitDrawer->ResetAlphaDrawing(false);
 	}
 
@@ -492,7 +490,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
 
-				glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
+				glAttribStatePtr->AlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
 				DrawFeatureDefTrans(f, false, false);
 			}
 		}
@@ -506,14 +504,14 @@ void CFeatureDrawer::DrawShadowPass()
 {
 	inShadowPass = true;
 
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	po->Enable();
 	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
 	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
+
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
 	{
 		assert((CCameraHandler::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
@@ -522,33 +520,32 @@ void CFeatureDrawer::DrawShadowPass()
 		// the pass below will ignore any features whose tag != this value
 		GetVisibleFeatures(CCameraHandler::GetActiveCamera(), 0, false);
 
-		// need the alpha-mask for transparent features
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
-
 		// needed for 3do models (else they will use any currently bound texture)
 		// note: texture0 is by default a 1x1 texture with rgba(0,0,0,255)
 		// (we are just interested in the 255 alpha here)
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+		// need the alpha-mask for transparent features
+		glAttribStatePtr->PushColorBufferBit();
+		glAttribStatePtr->EnableAlphaTest();
+		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
+
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface
 		// culling for them
-		glDisable(GL_CULL_FACE);
+		glAttribStatePtr->DisableCullFace();
 		DrawOpaqueFeatures(MODELTYPE_3DO);
-		glEnable(GL_CULL_FACE);
+		glAttribStatePtr->EnableCullFace();
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
-		glPopAttrib();
+		glAttribStatePtr->PopBits();
 	}
 
 	po->Disable();
-
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_FEATURE, false);

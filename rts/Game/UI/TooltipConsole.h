@@ -46,7 +46,6 @@ class CTooltipConsole : public CInputReceiver {
 
 	protected:
 		float x, y, w, h;
-		bool outFont;
 };
 
 extern CTooltipConsole* tooltip;

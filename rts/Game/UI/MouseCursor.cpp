@@ -282,9 +282,9 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	cursorMat.Translate(matParams.x, matParams.y, 0.0f);
 	cursorMat.Scale({matParams.z, matParams.w, 1.0f});
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.01f);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
 
 	glBindTexture(GL_TEXTURE_2D, frames[currentFrame].image.texture);
 

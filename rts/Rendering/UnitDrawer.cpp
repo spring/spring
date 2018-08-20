@@ -109,8 +109,8 @@ static const void KillShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 static const void PushRenderState3DO() {
 	BindOpaqueTexAtlas(nullptr);
 
-	glPushAttrib(GL_POLYGON_BIT);
-	glDisable(GL_CULL_FACE);
+	glAttribStatePtr->PushPolygonBit();
+	glAttribStatePtr->DisableCullFace();
 }
 
 static const void PushRenderStateS3O() {
@@ -119,9 +119,9 @@ static const void PushRenderStateS3O() {
 
 static const void PushRenderStateASS() { /* no-op */ }
 
-static const void PopRenderState3DO() { glPopAttrib(); }
-static const void PopRenderStateS3O() {    /* no-op */ }
-static const void PopRenderStateASS() {    /* no-op */ }
+static const void PopRenderState3DO() { glAttribStatePtr->PopBits(); }
+static const void PopRenderStateS3O() {                  /* no-op */ }
+static const void PopRenderStateASS() {                  /* no-op */ }
 
 
 static const void SetTeamColorDummy(const IUnitDrawerState* state, int team, const float2 alpha) {}
@@ -413,7 +413,7 @@ void CUnitDrawer::Draw()
 
 	farTextureHandler->Draw();
 
-	glDisable(GL_ALPHA_TEST);
+	glAttribStatePtr->DisableAlphaTest();
 }
 
 void CUnitDrawer::DrawOpaquePass(bool deferredPass)
@@ -517,11 +517,11 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 void CUnitDrawer::DrawUnitIcons()
 {
 	// draw unit icons and radar blips
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.05f);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.05f);
 
 	// A2C effectiveness is limited below four samples
 	if (globalRendering->msaaLevel >= 4)
@@ -563,8 +563,11 @@ void CUnitDrawer::DrawUnitIcons()
 	}
 
 
+	if (globalRendering->msaaLevel >= 4)
+		glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+
 	shader->Disable();
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -657,11 +660,10 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 
 void CUnitDrawer::DrawShadowPass()
 {
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glEnable(GL_ALPHA_TEST);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
@@ -675,9 +677,9 @@ void CUnitDrawer::DrawShadowPass()
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface
 		// culling for them
-		glDisable(GL_CULL_FACE);
+		glAttribStatePtr->DisableCullFace();
 		DrawOpaqueUnitsShadow(MODELTYPE_3DO);
-		glEnable(GL_CULL_FACE);
+		glAttribStatePtr->EnableCullFace();
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
 			// note: just use DrawOpaqueUnits()? would
@@ -689,8 +691,8 @@ void CUnitDrawer::DrawShadowPass()
 
 	po->Disable();
 
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_POLYGON_OFFSET_FILL);
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
@@ -760,17 +762,16 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
-
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.1f);
-	glDepthMask(GL_FALSE);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.1f);
+	glAttribStatePtr->DisableDepthMask();
 
 	if (water->DrawReflectionPass() || water->DrawRefractionPass()) {
 		// IWater enables GL_CLIP_DISTANCE{0,1}
@@ -787,7 +788,7 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -796,7 +797,7 @@ void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 {
 	{
 		SetupAlphaDrawing(false, aboveWater);
-		glDisable(GL_ALPHA_TEST);
+		glAttribStatePtr->DisableAlphaTest();
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			PushModelRenderState(modelType);
@@ -805,7 +806,7 @@ void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 			PopModelRenderState(modelType);
 		}
 
-		glEnable(GL_ALPHA_TEST);
+		glAttribStatePtr->EnableAlphaTest();
 		ResetAlphaDrawing(false);
 	}
 
@@ -989,14 +990,12 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
-
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
-
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glEnable(GL_ALPHA_TEST);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->EnableCullFace();
+	glAttribStatePtr->CullFace(GL_BACK);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	// pick base shaders (GLSL); not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
@@ -1014,7 +1013,7 @@ void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -1036,9 +1035,9 @@ void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, b
 	// these are not handled by Setup*Drawing but CGame
 	// easier to assume they no longer have the correct
 	// values at this point
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->PushBits(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->EnableDepthTest();
 
 	SetupOpaqueDrawing(deferredPass);
 	PushModelRenderState(model);
@@ -1058,7 +1057,7 @@ void CUnitDrawer::PopIndividualOpaqueState(const S3DModel* model, int teamID, bo
 	PopModelRenderState(model);
 	ResetOpaqueDrawing(deferredPass);
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 void CUnitDrawer::PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
@@ -1208,9 +1207,9 @@ static const void DrawModelWireBuildStage(
 ) {
 	state->SetBuildClipPlanes(upperPlane, lowerPlane);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 static const void DrawModelFlatBuildStage(
@@ -1233,11 +1232,12 @@ static const void DrawModelFillBuildStage(
 	bool noLuaCall
 ) {
 	state->SetBuildClipPlanes(upperPlane, lowerPlane);
+	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
-	glDisable(GL_POLYGON_OFFSET_FILL);
+
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
 static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
@@ -1437,11 +1437,10 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	if (!testCanBuild)
 		return;
 
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
@@ -1464,10 +1463,8 @@ void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	buffer->Submit(GL_LINES);
 	shader->Disable();
 
-
-	glEnable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	// glDisable(GL_BLEND);
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 

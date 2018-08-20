@@ -209,9 +209,9 @@ void CWorldDrawer::ResetMVPMatrices() const
 {
 	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
 
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -223,10 +223,10 @@ void CWorldDrawer::Draw() const
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableDepthMask();
+	glAttribStatePtr->EnableDepthTest();
+	glAttribStatePtr->DisableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 	sky->Draw(Game::NormalDraw);
@@ -297,8 +297,8 @@ void CWorldDrawer::DrawOpaqueObjects() const
 void CWorldDrawer::DrawAlphaObjects() const
 {
 	// transparent objects
-	glEnable(GL_BLEND);
-	glDepthFunc(GL_LEQUAL);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->DepthFunc(GL_LEQUAL);
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Alpha");
@@ -378,7 +378,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 		if (cpos.y >= 0.0f)
 			return;
 
-		glDepthMask(GL_FALSE);
+		glAttribStatePtr->DisableDepthMask();
 
 		{
 			shader->Enable();
@@ -408,13 +408,13 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 			buffer->Submit(GL_QUAD_STRIP);
 		}
 
-		glDepthMask(GL_TRUE);
+		glAttribStatePtr->EnableDepthMask();
 	}
 
 	{
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->DisableDepthTest();
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// draw water-coloration quad in raw screenspace
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());

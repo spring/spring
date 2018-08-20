@@ -2522,19 +2522,18 @@ void CGuiHandler::Draw()
 	if ((iconsCount <= 0) && (luaUI == nullptr))
 		return;
 
-	glPushAttrib(GL_ENABLE_BIT);
+	glAttribStatePtr->PushEnableBit();
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GEQUAL, 0.01f);
+	glAttribStatePtr->DisableDepthTest();
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableAlphaTest();
+	glAttribStatePtr->AlphaFunc(GL_GEQUAL, 0.01f);
 
 	if (iconsCount > 0)
 		DrawMenu();
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
@@ -2928,7 +2927,7 @@ void CGuiHandler::DrawMenu()
 	{
 		for (bool outline: {true, false}) {
 			// LED outlines and filled interiors; latter must come second
-			glPolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
+			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[outline]);
 
 			for (int iconIdx: menuIconIndices) {
 				const IconInfo& icon = icons[iconIdx];
@@ -2972,7 +2971,7 @@ void CGuiHandler::DrawMenu()
 		shaderC->Enable();
 	}
 	{
-		glBlendFunc(GL_ONE, GL_ONE);
+		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
 
 		// (default and custom) icon background highlights; use additive blending
 		for (int iconIdx: menuIconIndices) {
@@ -2990,10 +2989,10 @@ void CGuiHandler::DrawMenu()
 		}
 
 		bufferC->Submit(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	{
-		glPolygonMode(GL_FRONT_AND_BACK, polyModes[1]);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[1]);
 
 		// (default and custom) icon frame highlights
 		for (int iconIdx: menuIconIndices) {
@@ -3066,11 +3065,11 @@ void CGuiHandler::DrawMenu()
 
 		// should be submitted as GL_LINE_LOOP, but this is faster
 		bufferC->Submit(GL_QUADS);
-		glPolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
+		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
 	if (numDisabledIcons > 0) {
-		glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		glAttribStatePtr->BlendFunc(GL_DST_COLOR, GL_ZERO);
 
 		// darken disabled commands
 		for (int iconIdx: menuIconIndices) {
@@ -3088,7 +3087,7 @@ void CGuiHandler::DrawMenu()
 		}
 
 		bufferC->Submit(GL_QUADS);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	{
@@ -3516,12 +3515,11 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 void CGuiHandler::DrawMapStuff(bool onMiniMap)
 {
 	if (!onMiniMap) {
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_FALSE);
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_ALPHA_TEST);
+		glAttribStatePtr->EnableDepthTest();
+		glAttribStatePtr->DisableDepthMask();
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->DisableAlphaTest();
 	} else {
 		// TODO: grab the minimap transform
 		return;
@@ -3691,10 +3689,10 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	}
 
 	if (!onMiniMap) {
-		glBlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
-		glLineWidth(cmdColors.SelectedLineWidth());
+		glAttribStatePtr->BlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
+		glAttribStatePtr->LineWidth(cmdColors.SelectedLineWidth());
 	} else {
-		glLineWidth(1.49f);
+		glAttribStatePtr->LineWidth(1.49f);
 	}
 
 
@@ -3929,7 +3927,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			unitDrawer->DrawStaticModelBatch<BuildInfo>(buildInfoQueue, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
 
 
-			glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
+			glAttribStatePtr->BlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 		}
 	}
 
@@ -3965,11 +3963,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	}
 
 
-	glLineWidth(1.0f);
+	glAttribStatePtr->LineWidth(1.0f);
 
 	if (!onMiniMap) {
-		glDepthMask(GL_TRUE);
-		glDisable(GL_BLEND);
+		glAttribStatePtr->EnableDepthMask();
+		glAttribStatePtr->DisableBlendMask();
 	}
 }
 
@@ -4026,8 +4024,8 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	markerMat.RotateY(-360.0f * (spinTime * 0.5f) * math::DEG_TO_RAD);
 
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * markerMat);
@@ -4038,7 +4036,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	buffer->SubmitIndexed(GL_TRIANGLES);
 	shader->Disable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -4091,9 +4089,9 @@ void CGuiHandler::DrawCentroidCursor()
 	if (mc == nullptr)
 		return;
 
-	glDisable(GL_DEPTH_TEST);
+	glAttribStatePtr->DisableDepthTest();
 	mc->Draw((int)winPos.x, globalRendering->viewSizeY - (int)winPos.y, 1.0f);
-	glEnable(GL_DEPTH_TEST);
+	glAttribStatePtr->EnableDepthTest();
 }
 
 
@@ -4145,14 +4143,14 @@ void CGuiHandler::DrawFormationFrontOrder(
 		pos1 += (pos1 - pos2);
 		buffer->SafeAppend({pos1, {&color.x}});
 		buffer->SafeAppend({pos2, {&color.x}});
-		glLineWidth(2.0f);
+		glAttribStatePtr->LineWidth(2.0f);
 		buffer->Submit(GL_LINES);
 		return;
 	}
 	#endif
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	{
 		shader->Enable();
@@ -4170,9 +4168,9 @@ void CGuiHandler::DrawFormationFrontOrder(
 		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
 		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
 
-		glDisable(GL_DEPTH_TEST);
+		glAttribStatePtr->DisableDepthTest();
 		buffer->Submit(GL_QUADS);
-		glEnable(GL_DEPTH_TEST);
+		glAttribStatePtr->EnableDepthTest();
 	}
 
 	pos1 += (pos1 - pos2);
@@ -4338,8 +4336,8 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 	cylData.shader = ipo;
 
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glAttribStatePtr->EnableBlendMask();
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 		glDrawVolume(DrawCylinderShape, &cylData);
 	}
@@ -4347,8 +4345,8 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 		assert(ipo->IsBound());
 
 		// draw the center line
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLineWidth(2.0f);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->LineWidth(2.0f);
 
 		const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
 
@@ -4357,7 +4355,7 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 		rdb->Submit(GL_LINES);
 		ipo->Disable();
 
-		glLineWidth(1.0f);
+		glAttribStatePtr->LineWidth(1.0f);
 	}
 }
 
@@ -4372,10 +4370,10 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 	boxData.buffer = rdb;
 	boxData.shader = ipo;
 
-	glEnable(GL_BLEND);
+	glAttribStatePtr->EnableBlendMask();
 
 	if (!invColorSelect) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDrawVolume(DrawBoxShape, &boxData);
 	} else {
 		glEnable(GL_COLOR_LOGIC_OP);
@@ -4393,8 +4391,8 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 
 		assert(ipo->IsBound());
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLineWidth(2.0f);
+		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glAttribStatePtr->LineWidth(2.0f);
 
 		rdb->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
 		rdb->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
@@ -4407,7 +4405,7 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		rdb->Submit(GL_LINES);
 		ipo->Disable();
 
-		glLineWidth(1.0f);
+		glAttribStatePtr->LineWidth(1.0f);
 	}
 }
 

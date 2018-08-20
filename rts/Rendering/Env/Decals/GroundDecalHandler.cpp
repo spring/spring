@@ -550,11 +550,11 @@ void CGroundDecalHandler::Draw()
 	if (!GetDrawDecals())
 		return;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-10.0f, -20.0f);
-	glDepthMask(0);
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->EnablePolyOfsFill();
+	glAttribStatePtr->PolygonOffset(-10.0f, -20.0f);
+	glAttribStatePtr->DisableDepthMask();
 
 	BindShader(sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT);
 	BindTextures();
@@ -562,8 +562,8 @@ void CGroundDecalHandler::Draw()
 	DrawDecals();
 	KillTextures();
 
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_BLEND);
+	glAttribStatePtr->DisablePolyOfsFill();
+	glAttribStatePtr->DisableBlendMask();
 }
 
 void CGroundDecalHandler::BindTextures()

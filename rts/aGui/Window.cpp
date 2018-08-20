@@ -48,7 +48,7 @@ void Window::DrawSelf()
 	gui->SetColor(0.7f, 0.7f, 0.7f, opacity);
 	DrawBox(GL_TRIANGLE_STRIP, 1);
 	// edges
-	glLineWidth(2.0f);
+	glAttribStatePtr->LineWidth(2.0f);
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
 	DrawBox(GL_LINE_LOOP, 0, 2);
 

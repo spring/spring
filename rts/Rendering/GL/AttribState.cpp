@@ -46,24 +46,32 @@ GL::AttribState* GL::GetAttribStatePointer(               ) { return (          
 
 
 GL::AttribState::AttribState() {
-	attribBitsStack.fill(0);
-	depthClampStack.fill(GL_FALSE);
-	depthTestStack.fill(GL_FALSE);
-	depthMaskStack.fill(GL_FALSE);
-	depthFuncStack.fill(GL_INVALID_ENUM);
-	alphaTestStack.fill(GL_FALSE);
-	alphaFuncStack.fill({GL_INVALID_ENUM, 0.0f});
-	blendFuncStack.fill({GL_INVALID_ENUM, GL_INVALID_ENUM});
-	blendFlagStack.fill(GL_FALSE);
-	stencilTestStack.fill(GL_FALSE);
-	scissorTestStack.fill(GL_FALSE);
-	polyModeStack.fill({GL_INVALID_ENUM, GL_INVALID_ENUM});
-	pofsCtrlStack.fill({0.0f, 0.0f});
-	pofsFlagStack[0].fill(GL_FALSE);
-	frontFaceStack.fill(GL_INVALID_ENUM);
-	cullFaceStack.fill(GL_INVALID_ENUM);
-	cullFlagStack.fill(GL_FALSE);
-	colorMaskStack.fill({GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE});
+	attribBitsStack.Fill(0);
+	depthClampStack.Fill(GL_FALSE);
+	depthTestStack.Fill(GL_FALSE);
+	depthMaskStack.Fill(GL_FALSE);
+	depthFuncStack.Fill(GL_INVALID_ENUM);
+	alphaTestStack.Fill(GL_FALSE);
+	alphaFuncStack.Fill({GL_INVALID_ENUM, 0.0f});
+	blendFuncStack.Fill({GL_INVALID_ENUM, GL_INVALID_ENUM});
+	blendMaskStack.Fill(GL_FALSE);
+	scissorTestStack.Fill(GL_FALSE);
+	stencilTestStack.Fill(GL_FALSE);
+	stencilMaskStack.Fill(0);
+	stencilFuncStack.Fill({GL_INVALID_ENUM,               0,               0});
+	stencilOperStack.Fill({GL_INVALID_ENUM, GL_INVALID_ENUM, GL_INVALID_ENUM});
+	polyModeStack.Fill({GL_INVALID_ENUM, GL_INVALID_ENUM});
+	pofsCtrlStack.Fill({0.0f, 0.0f});
+	pofsFlagStack[0].Fill(GL_FALSE);
+	pofsFlagStack[1].Fill(GL_FALSE);
+	pofsFlagStack[2].Fill(GL_FALSE);
+	frontFaceStack.Fill(GL_INVALID_ENUM);
+	cullFaceStack.Fill(GL_INVALID_ENUM);
+	cullFlagStack.Fill(GL_FALSE);
+	blendColorStack.Fill({0.0f, 0.0f, 0.0f, 0.0f});
+	colorMaskStack.Fill({GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE});
+	viewportStack.Fill({0, 0, 0, 0});
+	lineWidthStack.Fill(0.0f);
 }
 
 void GL::AttribState::Init() {
@@ -74,8 +82,9 @@ void GL::AttribState::Init() {
 	glSetStateFuncs[0] = glDisable;
 	glSetStateFuncs[1] = glEnable;
 
-	// set initial GL defaults, stateless rendering stopgap
-	// TODO: stencil state, GL_{COLOR_LOGIC_OP,SAMPLE_ALPHA_TO_COVERAGE,PRIMITIVE_RESTART,CLIP_DISTANCEi}?
+	PushBits(0);
+	// copy initial GL state from GlobalRendering::InitGLState, stateless rendering stopgap
+	// TODO: GL_{COLOR_LOGIC_OP,SAMPLE_ALPHA_TO_COVERAGE,PRIMITIVE_RESTART,CLIP_DISTANCEi}?
 	PushDepthClamp(glIsEnabled(GL_DEPTH_CLAMP));
 	PushDepthTest(glIsEnabled(GL_DEPTH_TEST));
 	PushDepthMask(glGetIntT(GL_DEPTH_WRITEMASK));
@@ -85,427 +94,567 @@ void GL::AttribState::Init() {
 	// FIXME: does not return proper values until glBlendFunc has been called
 	// PushBlendFunc(glGetIntT(GL_BLEND_SRC_ALPHA), glGetIntT(GL_BLEND_DST_ALPHA));
 	PushBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	PushBlendFlag(glIsEnabled(GL_BLEND));
-	PushStencilTest(glIsEnabled(GL_STENCIL_TEST));
+	PushBlendMask(glIsEnabled(GL_BLEND));
 	PushScissorTest(glIsEnabled(GL_SCISSOR_TEST));
+	PushStencilTest(glIsEnabled(GL_STENCIL_TEST));
 	// FIXME: return values are for front- and back-facing polygons resp.
 	// PushPolygonMode(glGetIntT<PolyModeState, 2>(GL_POLYGON_MODE));
 	PushPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	PushPolygonOffset(glGetFloatT(GL_POLYGON_OFFSET_FACTOR), glGetFloatT(GL_POLYGON_OFFSET_UNITS));
 	PushPolygonOffsetFill(glIsEnabled(GL_POLYGON_OFFSET_FILL));
+	PushPolygonOffsetPoint(glIsEnabled(GL_POLYGON_OFFSET_POINT));
+	PushPolygonOffsetLine(glIsEnabled(GL_POLYGON_OFFSET_LINE));
 	PushFrontFace(glGetIntT(GL_FRONT_FACE)); // GL_CCW
 	PushCullFace(glGetIntT(GL_CULL_FACE_MODE)); // GL_BACK
 	PushCullFlag(glIsEnabled(GL_CULL_FACE));
+	PushBlendColor(glGetFloatT<BlendColorState, 4>(GL_BLEND_COLOR));
 	PushColorMask(glGetIntT<ColorMaskState, 4>(GL_COLOR_WRITEMASK));
+	PushViewPort(glGetIntT<ViewPortState, 4>(GL_VIEWPORT));
+	PushLineWidth(glGetFloatT(GL_LINE_WIDTH));
 }
 
 
 void GL::AttribState::Enable(uint32_t attrib) {
 	switch (attrib) {
-		case GL_DEPTH_CLAMP : { glEnable( depthClampStack[ depthClampStackSize - 1] = GL_TRUE); } break;
-		case GL_DEPTH_TEST  : { glEnable(  depthTestStack[  depthTestStackSize - 1] = GL_TRUE); } break;
-		case GL_ALPHA_TEST  : { glEnable(  alphaTestStack[  alphaTestStackSize - 1] = GL_TRUE); } break;
-		case GL_BLEND       : { glEnable(  blendFlagStack[  blendFlagStackSize - 1] = GL_TRUE); } break;
-		case GL_STENCIL_TEST: { glEnable(stencilTestStack[stencilTestStackSize - 1] = GL_TRUE); } break;
-		case GL_SCISSOR_TEST: { glEnable(scissorTestStack[scissorTestStackSize - 1] = GL_TRUE); } break;
-		case GL_CULL_FACE   : { glEnable(   cullFaceStack[   cullFaceStackSize - 1] = GL_TRUE); } break;
-		default             : {                                                                 } break;
+		case GL_DEPTH_CLAMP         : { EnableDepthClamp  (); return; } break; // unofficial
+		case GL_DEPTH_TEST          : { EnableDepthTest   (); return; } break;
+		case GL_ALPHA_TEST          : { EnableAlphaTest   (); return; } break;
+		case GL_BLEND               : { EnableBlendMask   (); return; } break;
+		case GL_SCISSOR_TEST        : { EnableScissorTest (); return; } break;
+		case GL_STENCIL_TEST        : { EnableStencilTest (); return; } break;
+		case GL_CULL_FACE           : { EnableCullFace    (); return; } break;
+		case GL_POLYGON_OFFSET_FILL : { EnablePolyOfsFill (); return; } break;
+		case GL_POLYGON_OFFSET_POINT: { EnablePolyOfsPoint(); return; } break;
+		case GL_POLYGON_OFFSET_LINE : { EnablePolyOfsLine (); return; } break;
+		default                     : { glEnable(attrib);             } break; // untracked
 	}
 }
 
 void GL::AttribState::Disable(uint32_t attrib) {
 	switch (attrib) {
-		case GL_DEPTH_CLAMP : { glDisable( depthClampStack[ depthClampStackSize - 1] = GL_FALSE); } break;
-		case GL_DEPTH_TEST  : { glDisable(  depthTestStack[  depthTestStackSize - 1] = GL_FALSE); } break;
-		case GL_ALPHA_TEST  : { glDisable(  alphaTestStack[  alphaTestStackSize - 1] = GL_FALSE); } break;
-		case GL_BLEND       : { glDisable(  blendFlagStack[  blendFlagStackSize - 1] = GL_FALSE); } break;
-		case GL_STENCIL_TEST: { glDisable(stencilTestStack[stencilTestStackSize - 1] = GL_FALSE); } break;
-		case GL_SCISSOR_TEST: { glDisable(scissorTestStack[scissorTestStackSize - 1] = GL_FALSE); } break;
-		case GL_CULL_FACE   : { glDisable(   cullFaceStack[   cullFaceStackSize - 1] = GL_FALSE); } break;
-		default             : {                                                                   } break;
+		case GL_DEPTH_CLAMP         : { DisableDepthClamp  (); return; } break; // unofficial
+		case GL_DEPTH_TEST          : { DisableDepthTest   (); return; } break;
+		case GL_ALPHA_TEST          : { DisableAlphaTest   (); return; } break;
+		case GL_BLEND               : { DisableBlendMask   (); return; } break;
+		case GL_SCISSOR_TEST        : { DisableScissorTest (); return; } break;
+		case GL_STENCIL_TEST        : { DisableStencilTest (); return; } break;
+		case GL_CULL_FACE           : { DisableCullFace    (); return; } break;
+		case GL_POLYGON_OFFSET_FILL : { DisablePolyOfsFill (); return; } break;
+		case GL_POLYGON_OFFSET_POINT: { DisablePolyOfsPoint(); return; } break;
+		case GL_POLYGON_OFFSET_LINE : { DisablePolyOfsLine (); return; } break;
+		default                     : { glDisable(attrib);             } break; // untracked
 	}
 }
 
 
-void GL::AttribState::Push(uint32_t attribBits) {
-	assert(attribBitsStackSize < attribBitsStack.size());
-	attribBitsStack[attribBitsStackSize++] = attribBits;
+void GL::AttribState::EnableDepthMask   () {          DepthMask(GL_TRUE); }
+void GL::AttribState::EnableDepthClamp  () {         DepthClamp(GL_TRUE); }
+void GL::AttribState::EnableDepthTest   () {          DepthTest(GL_TRUE); }
+void GL::AttribState::EnableAlphaTest   () {          AlphaTest(GL_TRUE); }
+void GL::AttribState::EnableBlendMask   () {          BlendMask(GL_TRUE); }
+void GL::AttribState::EnableScissorTest () {        ScissorTest(GL_TRUE); }
+void GL::AttribState::EnableStencilTest () {        StencilTest(GL_TRUE); }
+void GL::AttribState::EnableCullFace    () {           CullFlag(GL_TRUE); }
+void GL::AttribState::EnablePolyOfsFill () { PolygonOffsetFill (GL_TRUE); }
+void GL::AttribState::EnablePolyOfsPoint() { PolygonOffsetPoint(GL_TRUE); }
+void GL::AttribState::EnablePolyOfsLine () { PolygonOffsetLine (GL_TRUE); }
 
-	if ((attribBits & GL_ENABLE_BIT) != 0) {
-		assert(  depthTestStackSize <   depthTestStack.size());
-		assert(stencilTestStackSize < stencilTestStack.size());
-		assert(scissorTestStackSize < scissorTestStack.size());
+void GL::AttribState::DisableDepthMask   () {          DepthMask(GL_FALSE); }
+void GL::AttribState::DisableDepthClamp  () {         DepthClamp(GL_FALSE); }
+void GL::AttribState::DisableDepthTest   () {          DepthTest(GL_FALSE); }
+void GL::AttribState::DisableAlphaTest   () {          AlphaTest(GL_FALSE); }
+void GL::AttribState::DisableBlendMask   () {          BlendMask(GL_FALSE); }
+void GL::AttribState::DisableScissorTest () {        ScissorTest(GL_FALSE); }
+void GL::AttribState::DisableStencilTest () {        StencilTest(GL_FALSE); }
+void GL::AttribState::DisableCullFace    () {           CullFlag(GL_FALSE); }
+void GL::AttribState::DisablePolyOfsFill () { PolygonOffsetFill (GL_FALSE); }
+void GL::AttribState::DisablePolyOfsPoint() { PolygonOffsetPoint(GL_FALSE); }
+void GL::AttribState::DisablePolyOfsLine () { PolygonOffsetLine (GL_FALSE); }
 
-		  depthTestStack[  depthTestStackSize] =   depthTestStack[  depthTestStackSize - 1];
-		stencilTestStack[stencilTestStackSize] = stencilTestStack[stencilTestStackSize - 1];
-		scissorTestStack[scissorTestStackSize] = scissorTestStack[scissorTestStackSize - 1];
 
-		  depthTestStackSize++;
-		stencilTestStackSize++;
-		scissorTestStackSize++;
+void GL::AttribState::PushAllBits() { PushBits(GL_ALL_ATTRIB_BITS); }
+void GL::AttribState::PushBits(uint32_t attribBits) {
+	attribBitsStack.Push(attribBits);
+
+	// NOTE:
+	//   depth-test is also part of GL_DEPTH_BUFFER_BIT, stencil-test of GL_STENCIL_BUFFER_BIT, etc
+	//   this potential overlap means the {alpha, depth, ...}-tests have to be handled individually
+	const bool    pushAlphaTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_COLOR_BUFFER_BIT) != 0);
+	const bool    pushDepthTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_DEPTH_BUFFER_BIT) != 0);
+	const bool  pushScissorTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_SCISSOR_BIT) != 0);
+	const bool  pushStencilTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits & GL_STENCIL_BUFFER_BIT) != 0);
+	const bool pushCullFaceFlag = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_POLYGON_BIT) != 0);
+	const bool  pushPolyOfsFlag = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_POLYGON_BIT) != 0);
+	const bool    pushBlendMask = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_COLOR_BUFFER_BIT) != 0);
+
+	if (pushAlphaTest)
+		PushAlphaTest();
+
+	#if 0
+	// FIXME: just copying the state should be sufficient
+	if (pushDepthTest)
+		depthTestStack.Push(depthTestStack.Top());
+	#else
+	if (pushDepthTest)
+		PushDepthTest();
+	#endif
+
+	if (pushScissorTest)
+		PushScissorTest();
+
+	if (pushStencilTest)
+		PushStencilTest();
+
+	if (pushCullFaceFlag)
+		PushCullFlag();
+
+	if (pushPolyOfsFlag) {
+		PushPolygonOffsetFill();
+		PushPolygonOffsetPoint();
+		PushPolygonOffsetLine();
 	}
 
+	if (pushBlendMask)
+		PushBlendMask();
+
+
 	if ((attribBits & GL_POLYGON_BIT) != 0) {
-		assert( polyModeStackSize <  polyModeStack.size());
-		assert( pofsCtrlStackSize <  pofsCtrlStack.size());
-		assert( cullFaceStackSize <  cullFaceStack.size());
-		assert(frontFaceStackSize < frontFaceStack.size());
+		PushPolygonMode();
+		PushPolygonOffset();
+		PushCullFace();
+		PushFrontFace();
+	}
 
-		 polyModeStack[  polyModeStackSize] =  polyModeStack[ polyModeStackSize - 1];
-		 pofsCtrlStack[  pofsCtrlStackSize] =  pofsCtrlStack[ pofsCtrlStackSize - 1];
-		 cullFaceStack[  cullFaceStackSize] =  cullFaceStack[ cullFaceStackSize - 1];
-		frontFaceStack[ frontFaceStackSize] = frontFaceStack[frontFaceStackSize - 1];
+	// TODO: clear-value?
+	if ((attribBits & GL_DEPTH_BUFFER_BIT) != 0) {
+		PushDepthFunc();
+		PushDepthMask();
+	}
 
-		 polyModeStackSize++;
-		 pofsCtrlStackSize++;
-		 cullFaceStackSize++;
-		frontFaceStackSize++;
+	// TODO: logic-op, clear-color?
+	if ((attribBits & GL_COLOR_BUFFER_BIT) != 0) {
+		PushAlphaFunc();
+		PushBlendFunc();
+		PushBlendColor();
+		PushColorMask();
+	}
+
+	if ((attribBits & GL_STENCIL_BUFFER_BIT) != 0) {
+		PushStencilMask();
+		PushStencilFunc();
+		PushStencilOper();
+	}
+
+	#if 0
+	// TODO: scissor-rect
+	if ((attribBits & GL_SCISSOR_BIT) != 0) {
+	}
+
+	if ((attribBits & GL_TEXTURE_BIT) != 0) {
+	}
+	#endif
+
+	if ((attribBits & GL_VIEWPORT_BIT) != 0)
+		PushViewPort();
+
+	// TODO: stipple?
+	if ((attribBits & GL_LINE_BIT) != 0)
+		PushLineWidth();
+}
+
+void GL::AttribState::PopBits() {
+	const uint32_t attribBits = attribBitsStack.Pop(false);
+
+	const bool    popAlphaTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_COLOR_BUFFER_BIT) != 0);
+	const bool    popDepthTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_DEPTH_BUFFER_BIT) != 0);
+	const bool  popScissorTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_SCISSOR_BIT) != 0);
+	const bool  popStencilTest = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits & GL_STENCIL_BUFFER_BIT) != 0);
+	const bool popCullFaceFlag = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_POLYGON_BIT) != 0);
+	const bool  popPolyOfsFlag = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &        GL_POLYGON_BIT) != 0);
+	const bool    popBlendMask = ((attribBits & GL_ENABLE_BIT) != 0 || (attribBits &   GL_COLOR_BUFFER_BIT) != 0);
+
+	if (popAlphaTest)
+		PopAlphaTest();
+
+	if (popDepthTest)
+		PopDepthTest();
+
+	if (popScissorTest)
+		PopScissorTest();
+
+	if (popStencilTest)
+		PopStencilTest();
+
+	if (popCullFaceFlag)
+		PopCullFlag();
+
+	if (popPolyOfsFlag) {
+		PopPolygonOffsetFill();
+		PopPolygonOffsetPoint();
+		PopPolygonOffsetLine();
+	}
+
+	if (popBlendMask)
+		PopBlendMask();
+
+
+	if ((attribBits & GL_POLYGON_BIT) != 0) {
+		PopPolygonMode();
+		PopPolygonOffset();
+		PopCullFace();
+		PopFrontFace();
 	}
 
 	if ((attribBits & GL_DEPTH_BUFFER_BIT) != 0) {
-		assert(depthFuncStackSize < depthFuncStack.size());
-
-		depthFuncStack[depthFuncStackSize] = depthFuncStack[depthFuncStackSize - 1];
-		depthFuncStackSize++;
+		PopDepthFunc();
+		PopDepthMask();
 	}
 
 	if ((attribBits & GL_COLOR_BUFFER_BIT) != 0) {
-		assert(colorMaskStackSize < colorMaskStack.size());
+		PopAlphaFunc();
+		PopBlendFunc();
+		PopBlendColor();
+		PopColorMask();
+	}
 
-		colorMaskStack[colorMaskStackSize] = colorMaskStack[colorMaskStackSize - 1];
-		colorMaskStackSize++;
+	if ((attribBits & GL_STENCIL_BUFFER_BIT) != 0) {
+		PopStencilMask();
+		PopStencilFunc();
+		PopStencilOper();
 	}
 
 	#if 0
-	if ((attribBits & GL_STENCIL_BUFFER_BIT) != 0) {
-	}
-
 	if ((attribBits & GL_SCISSOR_BIT) != 0) {
 	}
-	#endif
-}
 
-void GL::AttribState::Pop() {
-	assert(attribBitsStackSize > 0);
-	--attribBitsStackSize;
-
-	if ((attribBitsStack[attribBitsStackSize] & GL_ENABLE_BIT) != 0) {
-		assert(  depthTestStackSize > 0);
-		assert(stencilTestStackSize > 0);
-		assert(scissorTestStackSize > 0);
-
-		DepthTest(depthTestStack[--depthTestStackSize]);
-		StencilTest(stencilTestStack[--stencilTestStackSize]);
-		ScissorTest(scissorTestStack[--scissorTestStackSize]);
-	}
-
-	if ((attribBitsStack[attribBitsStackSize] & GL_POLYGON_BIT) != 0) {
-		assert(polyModeStackSize > 0);
-		assert(pofsCtrlStackSize > 0);
-		assert(cullFaceStackSize > 0);
-		assert(frontFaceStackSize > 0);
-
-		PolygonMode(polyModeStack[--polyModeStackSize]);
-		PolygonOffset(pofsCtrlStack[--pofsCtrlStackSize]);
-		CullFace(cullFaceStack[--cullFaceStackSize]);
-		FrontFace(frontFaceStack[--frontFaceStackSize]);
-	}
-
-	if ((attribBitsStack[attribBitsStackSize] & GL_DEPTH_BUFFER_BIT) != 0) {
-		assert(depthFuncStackSize > 0);
-		DepthFunc(depthFuncStack[--depthFuncStackSize]);
-	}
-
-	if ((attribBitsStack[attribBitsStackSize] & GL_COLOR_BUFFER_BIT) != 0) {
-		assert(colorMaskStackSize > 0);
-		ColorMask(colorMaskStack[--colorMaskStackSize]);
-	}
-
-	#if 0
-	if ((attribBitsStack[attribBitsStackSize] & GL_STENCIL_BUFFER_BIT) != 0) {
-	}
-
-	if ((attribBitsStack[attribBitsStackSize] & GL_SCISSOR_BIT) != 0) {
+	if ((attribBits & GL_TEXTURE_BIT) != 0) {
 	}
 	#endif
+
+	if ((attribBits & GL_VIEWPORT_BIT) != 0)
+		PopViewPort();
+
+	if ((attribBits & GL_LINE_BIT) != 0)
+		PopLineWidth();
 }
+
+
+void GL::AttribState::PushEnableBit() { PushBits(GL_ENABLE_BIT); }
+void GL::AttribState::PushCurrentBit() { PushBits(GL_CURRENT_BIT); }
+void GL::AttribState::PushPolygonBit() { PushBits(GL_POLYGON_BIT); }
+void GL::AttribState::PushColorBufferBit() { PushBits(GL_COLOR_BUFFER_BIT); }
+void GL::AttribState::PushDepthBufferBit() { PushBits(GL_DEPTH_BUFFER_BIT); }
+void GL::AttribState::PushStencilBufferBit() { PushBits(GL_STENCIL_BUFFER_BIT); }
+void GL::AttribState::PushScissorBit() { PushBits(GL_SCISSOR_BIT); }
+void GL::AttribState::PushTextureBit() { PushBits(GL_TEXTURE_BIT); }
+void GL::AttribState::PushViewPortBit() { PushBits(GL_VIEWPORT_BIT); }
 
 
 void GL::AttribState::DepthClamp(bool enable) {
-	assert(depthClampStackSize > 0);
-	glSetStateFuncs[  depthClampStack[depthClampStackSize - 1] = enable  ](GL_DEPTH_CLAMP);
+	glSetStateFuncs[depthClampStack.Top() = enable](GL_DEPTH_CLAMP);
 }
 void GL::AttribState::PushDepthClamp(bool enable) {
-	assert(depthClampStackSize < depthClampStack.size());
-	glSetStateFuncs[  depthClampStack[depthClampStackSize++] = enable  ](GL_DEPTH_CLAMP);
+	glSetStateFuncs[depthClampStack.Push(enable)](GL_DEPTH_CLAMP);
 }
 void GL::AttribState::PopDepthClamp() {
-	assert(depthClampStackSize > 0);
-	glSetStateFuncs[  depthClampStack[--depthClampStackSize]  ](GL_DEPTH_CLAMP);
+	glSetStateFuncs[depthClampStack.Pop(true)](GL_DEPTH_CLAMP);
 }
 
 
 void GL::AttribState::DepthTest(bool enable) {
-	assert(depthTestStackSize > 0);
-	glSetStateFuncs[  depthTestStack[depthTestStackSize - 1] = enable  ](GL_DEPTH_TEST);
+	glSetStateFuncs[depthTestStack.Top() = enable](GL_DEPTH_TEST);
 }
 void GL::AttribState::PushDepthTest(bool enable) {
-	assert(depthTestStackSize < depthTestStack.size());
-	glSetStateFuncs[  depthTestStack[depthTestStackSize++] = enable  ](GL_DEPTH_TEST);
+	glSetStateFuncs[depthTestStack.Push(enable)](GL_DEPTH_TEST);
 }
 void GL::AttribState::PopDepthTest() {
-	assert(depthTestStackSize > 0);
-	glSetStateFuncs[  depthTestStack[--depthTestStackSize]  ](GL_DEPTH_TEST);
+	glSetStateFuncs[depthTestStack.Pop(true)](GL_DEPTH_TEST);
 }
 
 
 void GL::AttribState::DepthMask(bool enable) {
-	assert(depthMaskStackSize > 0);
-	glDepthMask(depthMaskStack[depthMaskStackSize - 1] = enable);
+	glDepthMask(depthMaskStack.Top() = enable);
 }
 void GL::AttribState::PushDepthMask(bool enable) {
-	assert(depthMaskStackSize < depthMaskStack.size());
-	glDepthMask(depthMaskStack[depthMaskStackSize++] = enable);
+	glDepthMask(depthMaskStack.Push(enable));
 }
 void GL::AttribState::PopDepthMask() {
-	assert(depthMaskStackSize > 0);
-	glDepthMask(depthMaskStack[--depthMaskStackSize]);
+	glDepthMask(depthMaskStack.Pop(true));
 }
 
 
-void GL::AttribState::DepthFunc(uint32_t dtFunc) {
-	assert(depthFuncStackSize > 0);
-	glDepthFunc(depthFuncStack[depthFuncStackSize - 1] = dtFunc);
+void GL::AttribState::DepthFunc(uint32_t func) {
+	glDepthFunc(depthFuncStack.Top() = func);
 }
-void GL::AttribState::PushDepthFunc(uint32_t dtFunc) {
-	assert(depthFuncStackSize < depthFuncStack.size());
-	glDepthFunc(depthFuncStack[depthFuncStackSize++] = dtFunc);
+void GL::AttribState::PushDepthFunc(uint32_t func) {
+	glDepthFunc(depthFuncStack.Push(func));
 }
 void GL::AttribState::PopDepthFunc() {
-	assert(depthFuncStackSize > 0);
-	glDepthFunc(depthFuncStack[--depthFuncStackSize]);
+	glDepthFunc(depthFuncStack.Pop(true));
 }
 
 
 void GL::AttribState::AlphaTest(bool enable) {
-	assert(alphaTestStackSize > 0);
-	glSetStateFuncs[  alphaTestStack[alphaTestStackSize - 1] = enable  ](GL_ALPHA_TEST);
+	glSetStateFuncs[alphaTestStack.Top() = enable](GL_ALPHA_TEST);
 }
 void GL::AttribState::PushAlphaTest(bool enable) {
-	assert(alphaTestStackSize < alphaTestStack.size());
-	glSetStateFuncs[  alphaTestStack[alphaTestStackSize++] = enable  ](GL_ALPHA_TEST);
+	glSetStateFuncs[alphaTestStack.Push(enable)](GL_ALPHA_TEST);
 }
 void GL::AttribState::PopAlphaTest() {
-	assert(alphaTestStackSize > 0);
-	glSetStateFuncs[  alphaTestStack[--alphaTestStackSize]  ](GL_ALPHA_TEST);
+	glSetStateFuncs[alphaTestStack.Pop(true)](GL_ALPHA_TEST);
 }
 
 
-void GL::AttribState::AlphaFunc(uint32_t atFunc, float refVal) {
-	assert(alphaFuncStackSize > 0);
-	glAlphaFunc(alphaFuncStack[alphaFuncStackSize - 1].atFunc = atFunc, alphaFuncStack[alphaFuncStackSize - 1].refVal = refVal);
+void GL::AttribState::AlphaFunc(uint32_t func, float rval) {
+	glAlphaFunc(
+		(alphaFuncStack.Top()).func = func,
+		(alphaFuncStack.Top()).rval = rval
+	);
 }
-void GL::AttribState::PushAlphaFunc(uint32_t atFunc, float refVal) {
-	assert(alphaFuncStackSize < alphaFuncStack.size());
-	alphaFuncStack[alphaFuncStackSize++] = {atFunc, refVal};
-	glAlphaFunc(atFunc, refVal);
+void GL::AttribState::PushAlphaFunc(uint32_t func, float rval) {
+	AlphaFunc(alphaFuncStack.Push({func, rval}));
 }
 void GL::AttribState::PopAlphaFunc() {
-	assert(alphaFuncStackSize > 0);
-	--alphaFuncStackSize;
-	glAlphaFunc(alphaFuncStack[alphaFuncStackSize].atFunc, alphaFuncStack[alphaFuncStackSize].refVal);
+	AlphaFunc(alphaFuncStack.Pop(true));
 }
 
 
 void GL::AttribState::BlendFunc(uint32_t srcFac, uint32_t dstFac) {
-	assert(blendFuncStackSize > 0);
-	glBlendFunc(blendFuncStack[blendFuncStackSize - 1].srcFac = srcFac, blendFuncStack[blendFuncStackSize - 1].dstFac = dstFac);
+	glBlendFunc(
+		(blendFuncStack.Top()).srcFac = srcFac,
+		(blendFuncStack.Top()).dstFac = dstFac
+	);
 }
 void GL::AttribState::PushBlendFunc(uint32_t srcFac, uint32_t dstFac) {
-	assert(blendFuncStackSize < blendFuncStack.size());
-	blendFuncStack[blendFuncStackSize++] = {srcFac, dstFac};
-	glBlendFunc(srcFac, dstFac);
+	BlendFunc(blendFuncStack.Push({srcFac, dstFac}));
 }
 void GL::AttribState::PopBlendFunc() {
-	assert(blendFuncStackSize > 0);
-	--blendFuncStackSize;
-	glBlendFunc(blendFuncStack[blendFuncStackSize].srcFac, blendFuncStack[blendFuncStackSize].dstFac);
+	BlendFunc(blendFuncStack.Pop(true));
 }
 
 
-void GL::AttribState::BlendFlag(bool enable) {
-	assert(blendFlagStackSize > 0);
-	glSetStateFuncs[  blendFlagStack[blendFlagStackSize - 1] = enable  ](GL_BLEND);
+void GL::AttribState::BlendMask(bool enable) {
+	glSetStateFuncs[blendMaskStack.Top() = enable](GL_BLEND);
 }
-void GL::AttribState::PushBlendFlag(bool enable) {
-	assert(blendFlagStackSize < blendFlagStack.size());
-	glSetStateFuncs[  blendFlagStack[blendFlagStackSize++] = enable  ](GL_BLEND);
+void GL::AttribState::PushBlendMask(bool enable) {
+	glSetStateFuncs[blendMaskStack.Push(enable)](GL_BLEND);
 }
-void GL::AttribState::PopBlendFlag() {
-	assert(blendFlagStackSize > 0);
-	glSetStateFuncs[  blendFlagStack[--blendFlagStackSize]  ](GL_BLEND);
-}
-
-
-void GL::AttribState::StencilTest(bool enable) {
-	assert(stencilTestStackSize > 0);
-	glSetStateFuncs[  stencilTestStack[stencilTestStackSize - 1] = enable  ](GL_STENCIL_TEST);
-}
-void GL::AttribState::PushStencilTest(bool enable) {
-	assert(stencilTestStackSize < stencilTestStack.size());
-	glSetStateFuncs[  stencilTestStack[stencilTestStackSize++] = enable  ](GL_STENCIL_TEST);
-}
-void GL::AttribState::PopStencilTest() {
-	assert(stencilTestStackSize > 0);
-	glSetStateFuncs[  stencilTestStack[--stencilTestStackSize]  ](GL_STENCIL_TEST);
+void GL::AttribState::PopBlendMask() {
+	glSetStateFuncs[blendMaskStack.Pop(true)](GL_BLEND);
 }
 
 
 void GL::AttribState::ScissorTest(bool enable) {
-	assert(scissorTestStackSize > 0);
-	glSetStateFuncs[  scissorTestStack[scissorTestStackSize - 1] = enable  ](GL_SCISSOR_TEST);
+	glSetStateFuncs[scissorTestStack.Top() = enable](GL_SCISSOR_TEST);
 }
 void GL::AttribState::PushScissorTest(bool enable) {
-	assert(scissorTestStackSize < scissorTestStack.size());
-	glSetStateFuncs[  scissorTestStack[scissorTestStackSize++] = enable  ](GL_SCISSOR_TEST);
+	glSetStateFuncs[scissorTestStack.Push(enable)](GL_SCISSOR_TEST);
 }
 void GL::AttribState::PopScissorTest() {
-	assert(scissorTestStackSize > 0);
-	glSetStateFuncs[  scissorTestStack[--scissorTestStackSize]  ](GL_SCISSOR_TEST);
+	glSetStateFuncs[scissorTestStack.Pop(true)](GL_SCISSOR_TEST);
+}
+
+
+void GL::AttribState::StencilTest(bool enable) {
+	glSetStateFuncs[stencilTestStack.Top() = enable](GL_STENCIL_TEST);
+}
+void GL::AttribState::PushStencilTest(bool enable) {
+	glSetStateFuncs[stencilTestStack.Push(enable)](GL_STENCIL_TEST);
+}
+void GL::AttribState::PopStencilTest() {
+	glSetStateFuncs[stencilTestStack.Pop(true)](GL_STENCIL_TEST);
+}
+
+
+void GL::AttribState::StencilMask(uint32_t mask) {
+	glStencilMask(stencilMaskStack.Top() = mask);
+}
+void GL::AttribState::PushStencilMask(uint32_t mask) {
+	glStencilMask(stencilMaskStack.Push(mask));
+}
+void GL::AttribState::PopStencilMask() {
+	glStencilMask(stencilMaskStack.Pop(true));
+}
+
+void GL::AttribState::StencilFunc(uint32_t func, int32_t rval, uint32_t mask) {
+	glStencilFunc(
+		(stencilFuncStack.Top()).func = func,
+		(stencilFuncStack.Top()).rval = rval,
+		(stencilFuncStack.Top()).mask = mask
+	);
+}
+void GL::AttribState::PushStencilFunc(uint32_t func, int32_t rval, uint32_t mask) {
+	StencilFunc(stencilFuncStack.Push({func, rval, mask}));
+}
+void GL::AttribState::PopStencilFunc() {
+	StencilFunc(stencilFuncStack.Pop(true));
+}
+
+void GL::AttribState::StencilOper(uint32_t sfail, uint32_t zfail, uint32_t zpass) {
+	glStencilOp(
+		(stencilOperStack.Top()).sfail = sfail,
+		(stencilOperStack.Top()).zfail = zfail,
+		(stencilOperStack.Top()).zpass = zpass
+	);
+}
+void GL::AttribState::PushStencilOper(uint32_t sfail, uint32_t zfail, uint32_t zpass) {
+	StencilOper(stencilOperStack.Push({sfail, zfail, zpass}));
+}
+void GL::AttribState::PopStencilOper() {
+	StencilOper(stencilOperStack.Top());
 }
 
 
 void GL::AttribState::PolygonMode(uint32_t side, uint32_t mode) {
-	assert(polyModeStackSize > 0);
-	glPolygonMode(polyModeStack[polyModeStackSize - 1].side = side, polyModeStack[polyModeStackSize - 1].mode = mode);
+	glPolygonMode(
+		(polyModeStack.Top()).side = side,
+		(polyModeStack.Top()).mode = mode
+	);
 }
 void GL::AttribState::PushPolygonMode(uint32_t side, uint32_t mode) {
-	assert(polyModeStackSize < polyModeStack.size());
-	polyModeStack[polyModeStackSize++] = {side, mode};
-	glPolygonMode(side, mode);
+	PolygonMode(polyModeStack.Push({side, mode}));
 }
 void GL::AttribState::PopPolygonMode() {
-	assert(polyModeStackSize > 0);
-	--polyModeStackSize;
-	glPolygonMode(polyModeStack[polyModeStackSize].side, polyModeStack[polyModeStackSize].mode);
+	PolygonMode(polyModeStack.Pop(true));
 }
 
 
 void GL::AttribState::PolygonOffset(float factor, float units) {
-	assert(pofsCtrlStackSize > 0);
-	glPolygonOffset(pofsCtrlStack[pofsCtrlStackSize - 1].factor = factor, pofsCtrlStack[pofsCtrlStackSize - 1].units = units);
+	glPolygonOffset(
+		(pofsCtrlStack.Top()).factor = factor,
+		(pofsCtrlStack.Top()).units  = units
+	);
 }
 void GL::AttribState::PushPolygonOffset(float factor, float units) {
-	assert(pofsCtrlStackSize < pofsCtrlStack.size());
-	pofsCtrlStack[pofsCtrlStackSize++] = {factor, units};
-	glPolygonOffset(factor, units);
+	PolygonOffset(pofsCtrlStack.Push({factor, units}));
 }
 void GL::AttribState::PopPolygonOffset() {
-	assert(pofsCtrlStackSize > 0);
-	--pofsCtrlStackSize;
-	glPolygonOffset(pofsCtrlStack[pofsCtrlStackSize].factor, pofsCtrlStack[pofsCtrlStackSize].units);
+	PolygonOffset(pofsCtrlStack.Pop(true));
 }
 
 
 
 void GL::AttribState::PolygonOffsetFill(bool enable) {
-	assert(pofsFlagStackSize[0] < pofsFlagStack[0].size());
-	glSetStateFuncs[  pofsFlagStack[0][  pofsFlagStackSize[0] - 1  ] = enable  ](GL_POLYGON_OFFSET_FILL);
+	glSetStateFuncs[pofsFlagStack[0].Top() = enable](GL_POLYGON_OFFSET_FILL);
 }
 void GL::AttribState::PushPolygonOffsetFill(bool enable) {
-	assert(pofsFlagStackSize[0] < pofsFlagStack[0].size());
-	glSetStateFuncs[  pofsFlagStack[0][  pofsFlagStackSize[0]++  ] = enable  ](GL_POLYGON_OFFSET_FILL);
+	glSetStateFuncs[pofsFlagStack[0].Push(enable)](GL_POLYGON_OFFSET_FILL);
 }
 void GL::AttribState::PopPolygonOffsetFill() {
-	assert(pofsFlagStackSize[0] > 0);
-	glSetStateFuncs[  pofsFlagStack[0][  --pofsFlagStackSize[0]  ]  ](GL_POLYGON_OFFSET_FILL);
+	glSetStateFuncs[pofsFlagStack[0].Pop(true)](GL_POLYGON_OFFSET_FILL);
 }
 
-#if 0
 void GL::AttribState::PolygonOffsetPoint(bool enable) {
-	assert(pofsFlagStackSize[1] < pofsFlagStack[1].size());
-	glSetStateFuncs[  pofsFlagStack[1][  pofsFlagStackSize[1] - 1  ] = enable  ](GL_POLYGON_OFFSET_POINT);
+	glSetStateFuncs[pofsFlagStack[1].Top() = enable](GL_POLYGON_OFFSET_POINT);
 }
 void GL::AttribState::PushPolygonOffsetPoint(bool enable) {
-	assert(pofsFlagStackSize[1] < pofsFlagStack[1].size());
-	glSetStateFuncs[  pofsFlagStack[1][  pofsFlagStackSize[1]++  ] = enable  ](GL_POLYGON_OFFSET_POINT);
+	glSetStateFuncs[pofsFlagStack[1].Push(enable)](GL_POLYGON_OFFSET_POINT);
 }
 void GL::AttribState::PopPolygonOffsetPoint() {
-	assert(pofsFlagStackSize[1] > 0);
-	glSetStateFuncs[  pofsFlagStack[1][  --pofsFlagStackSize[1]  ]  ](GL_POLYGON_OFFSET_POINT);
+	glSetStateFuncs[pofsFlagStack[1].Pop(true)](GL_POLYGON_OFFSET_POINT);
 }
 
 void GL::AttribState::PolygonOffsetLine(bool enable) {
-	assert(pofsFlagStackSize[2] < pofsFlagStack[2].size());
-	glSetStateFuncs[  pofsFlagStack[2][  pofsFlagStackSize[2] - 1  ] = enable  ](GL_POLYGON_OFFSET_LINE);
+	glSetStateFuncs[pofsFlagStack[2].Top() = enable](GL_POLYGON_OFFSET_LINE);
 }
 void GL::AttribState::PushPolygonOffsetLine(bool enable) {
-	assert(pofsFlagStackSize[2] < pofsFlagStack[2].size());
-	glSetStateFuncs[  pofsFlagStack[2][  pofsFlagStackSize[2]++  ] = enable  ](GL_POLYGON_OFFSET_LINE);
+	glSetStateFuncs[pofsFlagStack[2].Push(enable)](GL_POLYGON_OFFSET_LINE);
 }
 void GL::AttribState::PopPolygonOffsetLine() {
-	assert(pofsFlagStackSize[2] > 0);
-	glSetStateFuncs[  pofsFlagStack[2][  --pofsFlagStackSize[2]  ]  ](GL_POLYGON_OFFSET_LINE);
+	glSetStateFuncs[pofsFlagStack[2].Pop(true)](GL_POLYGON_OFFSET_LINE);
 }
-#endif
 
+
+
+void GL::AttribState::ViewPort(int32_t x, int32_t y, int32_t w, int32_t h) {
+	glViewport(
+		(viewportStack.Top()).x = x,
+		(viewportStack.Top()).y = y,
+		(viewportStack.Top()).w = w,
+		(viewportStack.Top()).h = h
+	);
+}
+void GL::AttribState::PushViewPort(int32_t x, int32_t y, int32_t w, int32_t h) {
+	ViewPort(viewportStack.Push({x, y, w, h}));
+}
+void GL::AttribState::PopViewPort() {
+	ViewPort(viewportStack.Pop(true));
+}
 
 
 void GL::AttribState::FrontFace(uint32_t face) {
-	assert(frontFaceStackSize > 0);
-	glFrontFace(frontFaceStack[frontFaceStackSize - 1] = face);
+	glFrontFace(frontFaceStack.Top() = face);
 }
 void GL::AttribState::PushFrontFace(uint32_t face) {
-	assert(frontFaceStackSize < frontFaceStack.size());
-	glFrontFace(frontFaceStack[frontFaceStackSize++] = face);
+	glFrontFace(frontFaceStack.Push(face));
 }
 void GL::AttribState::PopFrontFace() {
-	assert(frontFaceStackSize > 0);
-	glFrontFace(frontFaceStack[--frontFaceStackSize]);
+	glFrontFace(frontFaceStack.Pop(true));
 }
 
 
 void GL::AttribState::CullFace(uint32_t face) {
-	assert(cullFaceStackSize > 0);
-	glCullFace(cullFaceStack[cullFaceStackSize - 1] = face);
+	glCullFace(cullFaceStack.Top() = face);
 }
 void GL::AttribState::PushCullFace(uint32_t face) {
-	assert(cullFaceStackSize < cullFaceStack.size());
-	glCullFace(cullFaceStack[cullFaceStackSize++] = face);
+	glCullFace(cullFaceStack.Push(face));
 }
 void GL::AttribState::PopCullFace() {
-	assert(cullFaceStackSize > 0);
-	glCullFace(cullFaceStack[--cullFaceStackSize]);
+	glCullFace(cullFaceStack.Pop(true));
 }
 
 
 void GL::AttribState::CullFlag(bool enable) {
-	assert(cullFlagStackSize > 0);
-	glSetStateFuncs[  cullFlagStack[cullFlagStackSize - 1] = enable  ](GL_CULL_FACE);
+	glSetStateFuncs[cullFlagStack.Top() = enable](GL_CULL_FACE);
 }
 void GL::AttribState::PushCullFlag(bool enable) {
-	assert(cullFlagStackSize < cullFlagStack.size());
-	glSetStateFuncs[  cullFlagStack[cullFlagStackSize++] = enable  ](GL_CULL_FACE);
+	glSetStateFuncs[cullFlagStack.Push(enable)](GL_CULL_FACE);
 }
 void GL::AttribState::PopCullFlag() {
-	assert(cullFlagStackSize > 0);
-	glSetStateFuncs[  cullFlagStack[--cullFlagStackSize]  ](GL_CULL_FACE);
+	glSetStateFuncs[cullFlagStack.Pop(true)](GL_CULL_FACE);
+}
+
+
+void GL::AttribState::BlendColor(float r, float g, float b, float a) {
+	glBlendColor(
+		(blendColorStack.Top()).r = r,
+		(blendColorStack.Top()).g = g,
+		(blendColorStack.Top()).b = b,
+		(blendColorStack.Top()).a = a
+	);
+}
+void GL::AttribState::PushBlendColor(float r, float g, float b, float a) {
+	BlendColor(blendColorStack.Push({r, g, b, a}));
+}
+void GL::AttribState::PopBlendColor() {
+	BlendColor(blendColorStack.Pop(true));
 }
 
 
 void GL::AttribState::ColorMask(bool r, bool g, bool b, bool a) {
-	assert(colorMaskStackSize > 0);
-	glColorMask(colorMaskStack[colorMaskStackSize - 1].r = r, colorMaskStack[colorMaskStackSize - 1].g = g, colorMaskStack[colorMaskStackSize - 1].b = b, colorMaskStack[colorMaskStackSize - 1].a = a);
+	glColorMask(
+		(colorMaskStack.Top()).r = r,
+		(colorMaskStack.Top()).g = g,
+		(colorMaskStack.Top()).b = b,
+		(colorMaskStack.Top()).a = a
+	);
 }
 void GL::AttribState::PushColorMask(bool r, bool g, bool b, bool a) {
-	assert(colorMaskStackSize < colorMaskStack.size());
-	glColorMask(colorMaskStack[colorMaskStackSize].r = r, colorMaskStack[colorMaskStackSize].g = g, colorMaskStack[colorMaskStackSize].b = b, colorMaskStack[colorMaskStackSize].a = a);
-	colorMaskStackSize++;
+	ColorMask(colorMaskStack.Push({r, g, b, a}));
 }
 void GL::AttribState::PopColorMask() {
-	assert(colorMaskStackSize > 0);
-	--colorMaskStackSize;
-	glColorMask(colorMaskStack[colorMaskStackSize].r, colorMaskStack[colorMaskStackSize].g, colorMaskStack[colorMaskStackSize].b, colorMaskStack[colorMaskStackSize].a);
+	ColorMask(colorMaskStack.Pop(true));
+}
+
+
+void GL::AttribState::LineWidth(float w) {
+	glLineWidth(lineWidthStack.Top() = w);
+}
+void GL::AttribState::PushLineWidth(float w) {
+	glLineWidth(lineWidthStack.Push(w));
+}
+void GL::AttribState::PopLineWidth() {
+	glLineWidth(lineWidthStack.Pop(true));
 }
 
 

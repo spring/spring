@@ -54,7 +54,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {

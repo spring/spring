@@ -163,17 +163,17 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 {
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
-	glPushAttrib(GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->PushDepthBufferBit();
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!skyOnly) {
-		glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
+		glAttribStatePtr->EnableDepthMask();
+		glAttribStatePtr->EnableDepthTest();
 	} else {
 		// do not need depth-testing for the sky alone
-		glDepthMask(GL_FALSE);
-		glDisable(GL_DEPTH_TEST);
+		glAttribStatePtr->DisableDepthMask();
+		glAttribStatePtr->DisableDepthTest();
 	}
 
 	{
@@ -242,7 +242,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		prvCam->Update();
 	}
 
-	glPopAttrib();
+	glAttribStatePtr->PopBits();
 }
 
 
