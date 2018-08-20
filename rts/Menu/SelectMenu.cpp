@@ -155,10 +155,10 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		playDemo->Clicked.connect(std::bind(&SelectMenu::Demo, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
-		Button* editsettings = new Button("Edit settings", menu);
+		Button* editsettings = new Button("Edit Settings", menu);
 		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
 
-		Button* directConnect = new Button("Direct connect", menu);
+		Button* directConnect = new Button("Direct Connect", menu);
 		directConnect->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
 
 		Button* quit = new Button("Quit", menu);
