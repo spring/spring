@@ -297,7 +297,7 @@ bool ParseUnitTexture(LuaMatTexture& texUnit, const std::string& texture)
 
 static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texName)
 {
-	const size_t texNameHash = HsiehHash(texName.c_str(), texName.size(), 0);
+	const size_t texNameHash = hashString(texName.c_str());
 	const auto luaMatTexIt = luaMatTextures.find(texNameHash);
 
 	// see if this texture has been requested before
@@ -318,41 +318,37 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 		return false;
 
 
-	const size_t prefixHash = HsiehHash(texName.c_str(), sepIdx, 0);
+	// TODO: add $*_gbuffer_*
+	switch (hashString(texName.c_str(), sepIdx)) {
+		case hashString("$ssmf_splat_normals"): {
+			// last character becomes the index, clamped in ReadMap
+			// (data remains 0 if suffix is not ":X" with X a digit)
+			texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALS;
+			texUnit.data = reinterpret_cast<const void*>(0);
 
-	// TODO: use constexpr hashes plus switch, also add $*_gbuffer_*
-	static const size_t prefixHashes[] = {
-		HsiehHash("$ssmf_splat_normals", sizeof("$ssmf_splat_normals") - 1, 0),
-		HsiehHash(              "$info", sizeof(              "$info") - 1, 0),
-		HsiehHash(             "$extra", sizeof(             "$extra") - 1, 0),
-	};
-
-
-	if (prefixHash == prefixHashes[0]) {
-		// last character becomes the index, clamped in ReadMap
-		// (data remains 0 if suffix is not ":X" with X a digit)
-		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALS;
-		texUnit.data = reinterpret_cast<const void*>(0);
-
-		if ((sepIdx + 2) == texName.size() && std::isdigit(texName.back())) {
-			texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
-		}
-
-		luaMatTextures[texNameHash] = texUnit;
-		return true;
-	}
-
-	if (prefixHash == prefixHashes[1] || prefixHash == prefixHashes[2]) {
-		// try to find a matching info-texture based on suffix
-		CInfoTexture* itex = infoTextureHandler->GetInfoTexture(texName.substr(sepIdx + 1));
-
-		if (itex != nullptr && itex->GetName() != "dummy") {
-			texUnit.type = LuaMatTexture::LUATEX_INFOTEX_SUFFIX;
-			texUnit.data = itex; // fast, and barely preserves RTTI
+			if ((sepIdx + 2) == texName.size() && std::isdigit(texName.back()))
+				texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
 
 			luaMatTextures[texNameHash] = texUnit;
 			return true;
-		}
+		} break;
+
+		case hashString("$info"):
+		case hashString("$extra"): {
+			// try to find a matching (non-dummy) info-texture based on suffix
+			CInfoTexture* itex = infoTextureHandler->GetInfoTexture(texName.substr(sepIdx + 1));
+
+			if (itex != nullptr && dynamic_cast<const CDummyInfoTexture*>(itex) == nullptr) {
+				texUnit.type = LuaMatTexture::LUATEX_INFOTEX_SUFFIX;
+				texUnit.data = itex; // fast, and barely preserves RTTI
+
+				luaMatTextures[texNameHash] = texUnit;
+				return true;
+			}
+		} break;
+
+		default: {
+		} break;
 	}
 
 	return false;
