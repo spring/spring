@@ -689,7 +689,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 
 	{
 		// invert culling; index-pattern for T and R borders is also inverted
-		glFrontFace(GL_CW);
+		glAttribStatePtr->FrontFace(GL_CW);
 
 		if (drawPass != DrawPass::Shadow) {
 			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare( px  ,  0); DrawBorderMeshPatch(meshPatches[ 0 * numPatchesX +  px  ], activeCam, MAP_BORDER_T); }
@@ -700,7 +700,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 		}
 	}
 	{
-		glFrontFace(GL_CCW);
+		glAttribStatePtr->FrontFace(GL_CCW);
 
 		if (drawPass != DrawPass::Shadow) {
 			for (uint32_t px = 0; px < numPatchesX; px++) { smfGroundDrawer->SetupBigSquare(px, npym1); DrawBorderMeshPatch(meshPatches[npym1 * numPatchesX + px], activeCam, MAP_BORDER_B); }

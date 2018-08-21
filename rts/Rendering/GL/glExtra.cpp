@@ -215,9 +215,9 @@ void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t con
 	const float radsPerDiv = math::TWOPI * invConeDiv;
 
 	switch (cullFace) {
-		case GL_FRONT: { glCullFace(cullFace); } break;
-		case GL_BACK : { glCullFace(cullFace); } break;
-		default      : {                       } break;
+		case GL_FRONT: { glAttribStatePtr->CullFace(cullFace); } break;
+		case GL_BACK : { glAttribStatePtr->CullFace(cullFace); } break;
+		default      : {                                       } break;
 	}
 
 	#if 0

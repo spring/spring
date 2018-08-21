@@ -614,12 +614,12 @@ void CGroundDecalHandler::BindShader(const float3& ambientColor)
 void CGroundDecalHandler::DrawDecals()
 {
 	// draw building decals
-	glPolygonOffset(-10, -200);
+	glAttribStatePtr->PolygonOffset(-10.0f, -200.0f);
 	DrawObjectDecals();
 
 	// draw explosion decals
 	glBindTexture(GL_TEXTURE_2D, scarTex);
-	glPolygonOffset(-10, -400);
+	glAttribStatePtr->PolygonOffset(-10.0f, -400.0f);
 	AddScars();
 	DrawScars();
 

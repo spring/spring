@@ -50,11 +50,11 @@ void GL::GeometryBuffer::SetDepthRange(float nearDepth, float farDepth) const {
 		// TODO: need to inform shaders about this, modify PM instead
 		glDepthRangef(nearDepth, farDepth);
 		glClearDepth(farDepth);
-		glDepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
+		glAttribStatePtr->DepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
 	}
 	#else
 	glClearDepth(std::max(nearDepth, farDepth));
-	glDepthFunc(GL_LEQUAL);
+	glAttribStatePtr->DepthFunc(GL_LEQUAL);
 	#endif
 }
 

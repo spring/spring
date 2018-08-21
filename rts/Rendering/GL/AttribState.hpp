@@ -277,6 +277,7 @@ namespace GL {
 
 	private:
 		template<typename T, size_t S> struct ArrayStack {
+		static_assert((S & (S - 1)) == 0);
 		public:
 			void Fill(const T& v) { stack.fill(v); }
 

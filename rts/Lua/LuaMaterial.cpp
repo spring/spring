@@ -323,10 +323,10 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 
 	if (cullingMode != prev.cullingMode) {
 		if (cullingMode != 0) {
-			glEnable(GL_CULL_FACE);
-			glCullFace(cullingMode);
+			glAttribStatePtr->EnableCullFace();
+			glAttribStatePtr->CullFace(cullingMode);
 		} else {
-			glDisable(GL_CULL_FACE);
+			glAttribStatePtr->DisableCullFace();
 		}
 	}
 }

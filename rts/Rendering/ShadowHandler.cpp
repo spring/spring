@@ -434,7 +434,7 @@ void CShadowHandler::DrawShadowPasses()
 		// no longer required since border geometry will fully hide them
 		// (could just disable culling of terrain faces entirely, but we
 		// also want to prevent overdraw in low-angle passes)
-		// glCullFace(GL_FRONT);
+		// glAttribStatePtr->CullFace(GL_FRONT);
 		if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0) {
 			currentShadowPass = SHADOWGEN_PROGRAM_MAP;
 			readMap->GetGroundDrawer()->DrawShadowPass();
