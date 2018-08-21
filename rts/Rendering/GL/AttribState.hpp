@@ -277,7 +277,7 @@ namespace GL {
 
 	private:
 		template<typename T, size_t S> struct ArrayStack {
-		static_assert((S & (S - 1)) == 0);
+		static_assert((S & (S - 1)) == 0, "stack size must be a power of two");
 		public:
 			void Fill(const T& v) { stack.fill(v); }
 
@@ -312,7 +312,6 @@ namespace GL {
 			uint8_t size = 0;
 		};
 
-		// NOTE: stack sizes must be a power of two
 		ArrayStack<uint32_t        , 64>  attribBitsStack;
 		ArrayStack<bool            , 64>  depthClampStack;
 		ArrayStack<bool            , 64>   depthTestStack;
