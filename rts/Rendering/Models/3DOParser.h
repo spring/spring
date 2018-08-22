@@ -65,6 +65,39 @@ struct S3DOPrimitive
 
 struct S3DOPiece: public S3DModelPiece
 {
+	S3DOPiece() = default;
+	S3DOPiece(const S3DOPiece&) = delete;
+	S3DOPiece(S3DOPiece&& p) { *this = std::move(p); }
+
+	S3DOPiece& operator = (const S3DOPiece& p) = delete;
+	S3DOPiece& operator = (S3DOPiece&& p) {
+		#if 0
+		// piece is never actually moved, just need the operator for pool
+		emitPos = p.emitPos;
+		emitDir = p.emitDir;
+
+		verts = std::move(p.verts);
+		prims = std::move(p.prims);
+
+		vertexAttribs = std::move(p.vertexAttribs);
+		vertexIndices = std::move(p.vertexIndices);
+		#endif
+		return *this;
+	}
+
+	void Clear() override {
+		S3DModelPiece::Clear();
+
+		verts.clear();
+		prims.clear();
+
+		vertexAttribs.clear();
+		vertexIndices.clear();
+
+		emitPos = ZeroVector;
+		emitDir = ZeroVector;
+	}
+
 	unsigned int GetVertexCount() const override { return (vertexAttribs.size()); }
 	unsigned int GetVertexDrawIndexCount() const override { return (vertexIndices.size()); }
 
@@ -104,27 +137,31 @@ public:
 	std::vector<float3> verts; //FIXME
 	std::vector<S3DOPrimitive> prims;
 
-	float3 emitPos;
-	float3 emitDir;
-
 	std::vector<S3DOVertex> vertexAttribs;
 	std::vector<unsigned int> vertexIndices;
+
+	float3 emitPos;
+	float3 emitDir;
 };
 
 
 class C3DOParser: public IModelParser
 {
 public:
-	C3DOParser();
+	void Init() override;
+	void Kill() override;
 
-	S3DModel Load(const std::string& name);
+	S3DModel Load(const std::string& name) override;
 
-private:
+	S3DOPiece* AllocPiece();
 	S3DOPiece* LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf);
 
 private:
 	spring::unordered_set<std::string> teamTextures;
+	std::vector<S3DOPiece> piecePool;
+	spring::mutex poolMutex;
 
+	unsigned int numPoolPieces = 0;
 };
 
 #endif // SPRING_3DOPARSER_H

@@ -122,7 +122,7 @@ static void READ_PRIMITIVE(TA3DO::_Primitive& p, const std::vector<unsigned char
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-C3DOParser::C3DOParser()
+void C3DOParser::Init()
 {
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
@@ -130,6 +130,22 @@ C3DOParser::C3DOParser()
 	while (!parser.Eof()) {
 		teamTextures.insert(StringToLower(parser.GetCleanLine()));
 	}
+
+	numPoolPieces = 0;
+}
+
+void C3DOParser::Kill()
+{
+	teamTextures.clear();
+	LOG_L(L_INFO, "[3DOParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
 }
 
 
@@ -308,6 +324,24 @@ void S3DOPiece::GetPrimitives(
 }
 
 
+S3DOPiece* C3DOParser::AllocPiece()
+{
+	std::lock_guard<spring::mutex> lock(poolMutex);
+
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
+}
+
 S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf)
 {
 	model->numPieces++;
@@ -316,12 +350,13 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, co
 	int curOffset = pos;
 	READ_3DOBJECT(me, fileBuf, curOffset);
 
-	S3DOPiece* piece = new S3DOPiece();
-		piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset)));
-		piece->parent = parent;
-		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
-		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
-		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
+	S3DOPiece* piece = AllocPiece();
+
+	piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset)));
+	piece->parent = parent;
+	piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
+	piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
+	piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
 
 	piece->SetGlobalOffset(CMatrix44f::Identity());
 	piece->GetVertices(&me, fileBuf);

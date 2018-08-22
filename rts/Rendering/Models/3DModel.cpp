@@ -284,19 +284,6 @@ void S3DModel::FlattenPieceTreeRec(S3DModelPiece* piece) {
 }
 
 
-void S3DModel::DeletePieces()
-{
-	assert(!pieceObjects.empty());
-
-	for (size_t n = 0; n < pieceObjects.size(); n++) {
-		spring::SafeDelete(pieceObjects[n]);
-	}
-
-	pieceObjects.clear();
-}
-
-
-
 /** ****************************************************************************************************
  * S3DModelPiece
  */

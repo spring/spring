@@ -21,7 +21,28 @@ typedef SVertexData SAssVertex;
 
 struct SAssPiece: public S3DModelPiece
 {
-	SAssPiece(): numTexCoorChannels(0) {}
+	SAssPiece() = default;
+	SAssPiece(const SAssPiece&) = delete;
+	SAssPiece(SAssPiece&& p) { *this = std::move(p); }
+
+	SAssPiece& operator = (const SAssPiece& p) = delete;
+	SAssPiece& operator = (SAssPiece&& p) {
+		#if 0
+		// piece is never actually moved, just need the operator for pool
+		vertices = std::move(p.vertices);
+		indices = std::move(p.indices);
+		#endif
+		return *this;
+	}
+
+	void Clear() override {
+		S3DModelPiece::Clear();
+
+		vertices.clear();
+		indices.clear();
+
+		numTexCoorChannels = 0;
+	}
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
@@ -39,7 +60,7 @@ public:
 	std::vector<SAssVertex> vertices;
 	std::vector<unsigned int> indices;
 
-	unsigned int numTexCoorChannels;
+	unsigned int numTexCoorChannels = 0;
 };
 
 
@@ -49,16 +70,12 @@ public:
 	typedef spring::unordered_map<std::string, S3DModelPiece*> ModelPieceMap;
 	typedef spring::unordered_map<std::string, std::string> ParentNameMap;
 
-	CAssParser();
-	~CAssParser();
+	void Init() override;
+	void Kill() override;
 
-	S3DModel Load(const std::string& modelFileName);
-	ModelType GetType() const { return MODELTYPE_ASS; }
+	S3DModel Load(const std::string& modelFileName) override;
 
 private:
-	unsigned int maxIndices;
-	unsigned int maxVertices;
-
 	static void SetPieceName(
 		SAssPiece* piece,
 		const S3DModel* model,
@@ -84,7 +101,9 @@ private:
 		const aiNode* pieceNode,
 		const aiScene* scene
 	);
-	static SAssPiece* LoadPiece(
+
+	SAssPiece* AllocPiece();
+	SAssPiece* LoadPiece(
 		S3DModel* model,
 		const aiNode* pieceNode,
 		const aiScene* scene,
@@ -103,6 +122,14 @@ private:
 		const std::string& modelPath,
 		const std::string& modelName
 	);
+
+private:
+	unsigned int maxIndices = 0;
+	unsigned int maxVertices = 0;
+	unsigned int numPoolPieces = 0;
+
+	std::vector<SAssPiece> piecePool;
+	spring::mutex poolMutex;
 };
 
 #endif /* ASS_PARSER_H */
