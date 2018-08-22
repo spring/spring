@@ -909,14 +909,26 @@ void CGame::KillSimulation()
 
 void CGame::ResizeEvent()
 {
-	if (minimap != nullptr)
-		minimap->UpdateGeometry();
+	LOG("[Game::%s][1]", __func__);
 
-	// reload water renderer (it may depend on screen resolution)
-	water = IWater::GetWater(water, water->GetID());
+	{
+		ScopedOnceTimer timer("Game::ViewResize");
 
-	gameTextInput.ViewResize();
-	eventHandler.ViewResize();
+		if (minimap != nullptr)
+			minimap->UpdateGeometry();
+
+		// reload water renderer (it may depend on screen resolution)
+		water = IWater::GetWater(water, water->GetID());
+	}
+
+	LOG("[Game::%s][2]", __func__);
+
+	{
+		ScopedOnceTimer timer("EventHandler::ViewResize");
+
+		gameTextInput.ViewResize();
+		eventHandler.ViewResize();
+	}
 }
 
 

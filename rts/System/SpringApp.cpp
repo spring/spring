@@ -949,42 +949,71 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				} break;
 				// case SDL_WINDOWEVENT_RESIZED: // always preceded by CHANGED
 				case SDL_WINDOWEVENT_SIZE_CHANGED: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SIZE_CHANGED][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					Watchdog::ClearTimer(WDT_MAIN, true);
 
-					SaveWindowPosAndSize();
-					globalRendering->UpdateGLConfigs();
-					globalRendering->UpdateGLGeometry();
-					globalRendering->InitGLState();
-					UpdateInterfaceGeometry();
+					{
+						ScopedOnceTimer timer("GlobalRendering::UpdateGL");
 
-					activeController->ResizeEvent();
-					mouseInput->InstallWndCallback();
+						SaveWindowPosAndSize();
+						globalRendering->UpdateGLConfigs();
+						globalRendering->UpdateGLGeometry();
+						globalRendering->InitGLState();
+						UpdateInterfaceGeometry();
+					}
+					{
+						ScopedOnceTimer timer("ActiveController::ResizeEvent");
+
+						activeController->ResizeEvent();
+						mouseInput->InstallWndCallback();
+					}
+
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SIZE_CHANGED][2]\n", __func__);
 				} break;
 				case SDL_WINDOWEVENT_MAXIMIZED:
 				case SDL_WINDOWEVENT_RESTORED:
 				case SDL_WINDOWEVENT_SHOWN: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SHOWN][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					// reactivate sounds and other
 					globalRendering->active = true;
 
-					if (ISound::IsInitialized())
+					if (ISound::IsInitialized()) {
+						ScopedOnceTimer timer("Sound::Iconified");
 						sound->Iconified(false);
+					}
 
-					if (globalRendering->fullScreen)
+					if (globalRendering->fullScreen) {
+						ScopedOnceTimer timer("FBO::GLContextReinit");
 						FBO::GLContextReinit();
+					}
 
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_SHOWN][2]\n", __func__);
 				} break;
 				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
+					LOG("%s", "");
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_HIDDEN][1] fullScreen=%d", __func__, globalRendering->fullScreen);
+
 					// deactivate sounds and other
 					globalRendering->active = false;
 
-					if (ISound::IsInitialized())
+					if (ISound::IsInitialized()) {
+						ScopedOnceTimer timer("Sound::Iconified");
 						sound->Iconified(true);
+					}
 
-					if (globalRendering->fullScreen)
+					if (globalRendering->fullScreen) {
+						ScopedOnceTimer timer("FBO::GLContextLost");
 						FBO::GLContextLost();
+					}
 
+					LOG("[SpringApp::%s][SDL_WINDOWEVENT_HIDDEN][2]\n", __func__);
 				} break;
+
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
 					// update keydown table
 					KeyInput::Update(0, keyBindings.GetFakeMetaKey());
@@ -1022,12 +1051,11 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 					// and make sure to un-capture mouse
 					globalRendering->SetWindowInputGrabbing(false);
-					break;
-				}
+				} break;
+
 				case SDL_WINDOWEVENT_CLOSE: {
 					gu->globalQuit = true;
-					break;
-				}
+				} break;
 			};
 		} break;
 		case SDL_QUIT: {
