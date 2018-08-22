@@ -105,11 +105,8 @@ struct S3DModelPiece {
 		mins = DEF_MIN_SIZE;
 		maxs = DEF_MAX_SIZE;
 
-		vboStartElem = 0;
-		vboStartIndx = 0;
-
 		DeleteDistList();
-		shatterIndices.Release();
+		vboShatterIndices = std::move(VBO());
 
 		hasBakedMat = false;
 		dummyPadding = false;

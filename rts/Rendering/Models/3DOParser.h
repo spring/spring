@@ -14,6 +14,36 @@
 #include "System/UnorderedSet.hpp"
 
 
+namespace TA3DO {
+	typedef struct _3DObject
+	{
+		int VersionSignature;
+		int NumberOfVertices;
+		int NumberOfPrimitives;
+		int SelectionPrimitive;
+		int XFromParent;
+		int YFromParent;
+		int ZFromParent;
+		int OffsetToObjectName;
+		int Always_0;
+		int OffsetToVertexArray;
+		int OffsetToPrimitiveArray;
+		int OffsetToSiblingObject;
+		int OffsetToChildObject;
+	} _3DObject;
+
+	typedef struct _Primitive
+	{
+		int PaletteEntry;
+		int NumberOfVertexIndexes;
+		int Always_0;
+		int OffsetToVertexIndexArray;
+		int OffsetToTextureName;
+		int Unknown_1;
+		int Unknown_2;
+		int Unknown_3;
+	} _Primitive;
+};
 
 struct S3DOVertex
 {
@@ -28,7 +58,7 @@ struct S3DOVertex
 
 struct S3DOPrimitive
 {
-	std::vector<int>    indices;  ///< indices to S3DOPiece::vertexPos
+	std::vector<int>    indices;  ///< indices to S3DOPiece::verts
 	std::vector<float3> vnormals; ///< per-vertex normals
 
 	// the raw normal for this primitive (-v0v1.cross(v0v2))
@@ -74,9 +104,6 @@ struct S3DOPiece: public S3DModelPiece
 		emitDir = ZeroVector;
 	}
 
-	unsigned int GetVertexCount() const override { return (vertexAttribs.size()); }
-	unsigned int GetVertexDrawIndexCount() const override { return (vertexIndices.size()); }
-
 	void UploadGeometryVBOs() override;
 	void DrawForList() const override;
 
@@ -96,8 +123,26 @@ public:
 	void SetMinMaxExtends();
 	void CalcNormals();
 
+	void GetVertices(const TA3DO::_3DObject* o, const std::vector<unsigned char>& fileBuf);
+	void GetPrimitives(
+		const S3DModel* model,
+		int pos,
+		int num,
+		int excludePrim,
+		const std::vector<unsigned char>& fileBuf,
+		const spring::unordered_set<std::string>& teamTextures
+	);
+
+	bool IsBasePlate(const S3DOPrimitive* face) const;
+
+	C3DOTextureHandler::UnitTexture* GetTexture(
+		const TA3DO::_Primitive* p,
+		const std::vector<unsigned char>& fileBuf,
+		const spring::unordered_set<std::string>& teamTextures
+	) const;
+
 public:
-	std::vector<float3>    vertexPos; //FIXME
+	std::vector<float3> verts; //FIXME
 	std::vector<S3DOPrimitive> prims;
 
 	std::vector<S3DOVertex> vertexAttribs;
@@ -111,36 +156,6 @@ public:
 class C3DOParser: public IModelParser
 {
 public:
-	typedef struct _3DObject
-	{
-		int VersionSignature;
-		int NumberOfVertices;
-		int NumberOfPrimitives;
-		int SelectionPrimitive;
-		int XFromParent;
-		int YFromParent;
-		int ZFromParent;
-		int OffsetToObjectName;
-		int Always_0;
-		int OffsetToVertexArray;
-		int OffsetToPrimitiveArray;
-		int OffsetToSiblingObject;
-		int OffsetToChildObject;
-	} _3DObject;
-
-	typedef struct _Primitive
-	{
-		int PaletteEntry;
-		int NumberOfVertexIndexes;
-		int Always_0;
-		int OffsetToVertexIndexArray;
-		int OffsetToTextureName;
-		int Unknown_1;
-		int Unknown_2;
-		int Unknown_3;
-	} _Primitive;
-
-public:
 	void Init() override;
 	void Kill() override;
 
@@ -150,14 +165,11 @@ public:
 	S3DOPiece* LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf);
 
 private:
-	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const;
+	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, TA3DO::_Primitive* p, const std::vector<unsigned char>& fileBuf) const;
 	static bool IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face);
 
-	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf);
-	void GetVertices(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
-
 private:
-	spring::unordered_set<std::string> teamtex;
+	spring::unordered_set<std::string> teamTextures;
 	std::vector<S3DOPiece> piecePool;
 	spring::mutex poolMutex;
 
