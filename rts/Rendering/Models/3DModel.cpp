@@ -47,35 +47,20 @@ CR_REG_METADATA(LocalModel, (
 
 
 /** ****************************************************************************************************
- * S3DModel
- */
-void S3DModel::DeletePieces()
-{
-	assert(!pieces.empty());
-
-	for (size_t n = 0; n < pieces.size(); n++) {
-		spring::SafeDelete(pieces[n]);
-	}
-
-	pieces.clear();
-}
-
-
-
-/** ****************************************************************************************************
  * S3DModelPiece
  */
-
-S3DModelPiece::~S3DModelPiece()
-{
-	glDeleteLists(dispListID, 1);
-}
 
 void S3DModelPiece::CreateDispList()
 {
 	glNewList(dispListID = glGenLists(1), GL_COMPILE);
 	DrawForList();
 	glEndList();
+}
+
+void S3DModelPiece::DeleteDistList()
+{
+	glDeleteLists(dispListID, 1);
+	dispListID = 0;
 }
 
 void S3DModelPiece::DrawStatic() const

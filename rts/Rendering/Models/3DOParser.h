@@ -41,6 +41,42 @@ struct S3DOPrimitive
 
 struct S3DOPiece: public S3DModelPiece
 {
+	S3DOPiece() = default;
+	S3DOPiece(const S3DOPiece&) = delete;
+	S3DOPiece(S3DOPiece&& p) { *this = std::move(p); }
+
+	S3DOPiece& operator = (const S3DOPiece& p) = delete;
+	S3DOPiece& operator = (S3DOPiece&& p) {
+		#if 0
+		// piece is never actually moved, just need the operator for pool
+		emitPos = p.emitPos;
+		emitDir = p.emitDir;
+
+		verts = std::move(p.verts);
+		prims = std::move(p.prims);
+
+		vertexAttribs = std::move(p.vertexAttribs);
+		vertexIndices = std::move(p.vertexIndices);
+		#endif
+		return *this;
+	}
+
+	void Clear() override {
+		S3DModelPiece::Clear();
+
+		verts.clear();
+		prims.clear();
+
+		vertexAttribs.clear();
+		vertexIndices.clear();
+
+		emitPos = ZeroVector;
+		emitDir = ZeroVector;
+	}
+
+	unsigned int GetVertexCount() const override { return (vertexAttribs.size()); }
+	unsigned int GetVertexDrawIndexCount() const override { return (vertexIndices.size()); }
+
 	void UploadGeometryVBOs() override;
 	void DrawForList() const override;
 
@@ -64,11 +100,11 @@ public:
 	std::vector<float3>    vertexPos; //FIXME
 	std::vector<S3DOPrimitive> prims;
 
-	float3 emitPos;
-	float3 emitDir;
-
 	std::vector<S3DOVertex> vertexAttribs;
 	std::vector<unsigned int> vertexIndices;
+
+	float3 emitPos;
+	float3 emitDir;
 };
 
 
@@ -105,22 +141,27 @@ public:
 	} _Primitive;
 
 public:
-	C3DOParser();
+	void Init() override;
+	void Kill() override;
 
 	S3DModel Load(const std::string& name);
 
-private:
-	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf);
+	S3DOPiece* AllocPiece();
+	S3DOPiece* LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf);
 
+private:
 	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const;
 	static bool IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face);
 
 	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf);
-	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
+	void GetVertices(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
 
 private:
 	spring::unordered_set<std::string> teamtex;
+	std::vector<S3DOPiece> piecePool;
+	spring::mutex poolMutex;
 
+	unsigned int numPoolPieces = 0;
 };
 
 #endif // SPRING_3DOPARSER_H

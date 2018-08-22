@@ -122,7 +122,7 @@ static void READ_PRIMITIVE(C3DOParser::_Primitive& p, const std::vector<unsigned
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-C3DOParser::C3DOParser()
+void C3DOParser::Init()
 {
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
@@ -130,6 +130,22 @@ C3DOParser::C3DOParser()
 	while (!parser.Eof()) {
 		teamtex.insert(StringToLower(parser.GetCleanLine()));
 	}
+
+	numPoolPieces = 0;
+}
+
+void C3DOParser::Kill()
+{
+	teamTextures.clear();
+	LOG_L(L_INFO, "[3DOParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
 }
 
 
@@ -154,11 +170,11 @@ S3DModel C3DOParser::Load(const std::string& name)
 		model.name = name;
 		model.type = MODELTYPE_3DO;
 		model.textureType = 0;
-		model.numPieces  = 0;
+		model.numPieces   = 0;
 		model.mins = DEF_MIN_SIZE;
 		model.maxs = DEF_MAX_SIZE;
 
-	model.FlattenPieceTree(LoadPiece(&model, 0, nullptr, &model.numPieces, fileBuf));
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, 0, fileBuf));
 
 	// set after the extrema are known
 	model.radius = model.CalcDrawRadius();
@@ -169,7 +185,7 @@ S3DModel C3DOParser::Load(const std::string& name)
 }
 
 
-void C3DOParser::GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf)
+void C3DOParser::GetVertices(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf)
 {
 	int curOffset = o->OffsetToVertexArray;
 	object->vertexPos.resize(o->NumberOfVertices);
@@ -294,36 +310,54 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 }
 
 
-S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf)
+S3DOPiece* C3DOParser::AllocPiece()
 {
-	(*numobj)++;
+	std::lock_guard<spring::mutex> lock(poolMutex);
 
-	_3DObject me;
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
+}
+
+S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf)
+{
+	model->numPieces++;
+
+	TA3DO::_3DObject me;
 	int curOffset = pos;
 	READ_3DOBJECT(me, fileBuf, curOffset);
 
-	std::string s = GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset);
-	StringToLowerInPlace(s);
+	S3DOPiece* piece = AllocPiece();
 
-	S3DOPiece* piece = new S3DOPiece();
-		piece->name = s;
-		piece->parent = parent;
-		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
-		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
-		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
-		piece->goffset = piece->offset + ((parent != nullptr)? parent->goffset: ZeroVector);
+	piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset)));
+	piece->parent = parent;
+	piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
+	piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
+	piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
 
-	GetVertexes(&me, piece, fileBuf);
-	GetPrimitives(piece, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf);
+	piece->SetGlobalOffset(CMatrix44f::Identity());
+	piece->GetVertices(&me, fileBuf);
+	piece->GetPrimitives(model, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf, teamTextures);
+
 	piece->CalcNormals();
 	piece->SetMinMaxExtends();
+	piece->GenTriangleGeometry();
 
-	switch (piece->vertexPos.size()) {
-		case 0: { piece->emitDir = FwdVector; } break;
-		case 1: { piece->emitDir = piece->vertexPos[0]; } break;
+	switch (piece->verts.size()) {
+		case 0: { piece->emitDir =    FwdVector   ; } break;
+		case 1: { piece->emitDir = piece->verts[0]; } break;
 		default: {
-			piece->emitPos = piece->vertexPos[0];
-			piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
+			piece->emitPos = piece->verts[0];
+			piece->emitDir = piece->verts[1] - piece->verts[0];
 		} break;
 	}
 
@@ -333,10 +367,10 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	if (me.OffsetToChildObject > 0)
-		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj, fileBuf));
+		piece->children.push_back(LoadPiece(model, piece, me.OffsetToChildObject, fileBuf));
 
 	if (me.OffsetToSiblingObject > 0)
-		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj, fileBuf));
+		parent->children.push_back(LoadPiece(model, parent, me.OffsetToSiblingObject, fileBuf));
 
 	return piece;
 }

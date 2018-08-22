@@ -17,6 +17,19 @@
 
 
 
+void CS3OParser::Init() { numPoolPieces = 0; }
+void CS3OParser::Kill() {
+	LOG_L(L_INFO, "[S3OParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
+}
+
 S3DModel CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
@@ -57,24 +70,44 @@ S3DModel CS3OParser::Load(const std::string& name)
 	return model;
 }
 
+
+SS3OPiece* CS3OParser::AllocPiece()
+{
+	std::lock_guard<spring::mutex> lock(poolMutex);
+
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
+}
+
 SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned char* buf, int offset)
 {
 	model->numPieces++;
 
 	// retrieve piece data
-	Piece* fp = (Piece*)&buf[offset]; fp->swap();
+	Piece* fp = reinterpret_cast<Piece*>(&buf[offset]); fp->swap();
 	Vertex* vertexList = reinterpret_cast<Vertex*>(&buf[fp->vertices]);
 	const int* indexList = reinterpret_cast<int*>(&buf[fp->vertexTable]);
 	const int* childList = reinterpret_cast<int*>(&buf[fp->children]);
 
 	// create piece
-	SS3OPiece* piece = new SS3OPiece();
-		piece->offset.x = fp->xoffset;
-		piece->offset.y = fp->yoffset;
-		piece->offset.z = fp->zoffset;
-		piece->primType = fp->primitiveType;
-		piece->name = (char*) &buf[fp->name];
-		piece->parent = parent;
+	SS3OPiece* piece = AllocPiece();
+
+	piece->offset.x = fp->xoffset;
+	piece->offset.y = fp->yoffset;
+	piece->offset.z = fp->zoffset;
+	piece->primType = fp->primitiveType;
+	piece->name = (char*) &buf[fp->name];
+	piece->parent = parent;
 
 	// retrieve vertices
 	piece->SetVertexCount(fp->numVertices);

@@ -123,20 +123,30 @@ public:
 };
 
 
-CAssParser::CAssParser()
+void CAssParser::Init()
 {
 	// FIXME: non-optimal, maybe compute these ourselves (pre-TL cache size!)
 	maxIndices = std::max(globalRendering->glslMaxRecommendedIndices, 1024);
 	maxVertices = std::max(globalRendering->glslMaxRecommendedVertices, 1024);
+	numPoolPieces = 0;
 
 	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
-	// Create a logger for debugging model loading issues
+	// create a logger for debugging model loading issues
 	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
 }
 
-CAssParser::~CAssParser()
+void CAssParser::Kill()
 {
 	Assimp::DefaultLogger::kill();
+	LOG_L(L_INFO, "[AssParser::%s] allocated %u pieces", __func__, numPoolPieces);
+
+	// reuse piece innards when reloading
+	// piecePool.clear();
+	for (unsigned int i = 0; i < numPoolPieces; i++) {
+		piecePool[i].Clear();
+	}
+
+	numPoolPieces = 0;
 }
 
 
@@ -525,6 +535,24 @@ static LuaTable GetPieceTableRecursively(
 }
 
 
+SAssPiece* CAssParser::AllocPiece()
+{
+	std::lock_guard<spring::mutex> lock(poolMutex);
+
+	// lazily reserve pool here instead of during Init
+	// this way games using only one model-type do not
+	// cause redundant allocation
+	if (piecePool.empty())
+		piecePool.resize(MAX_MODEL_OBJECTS * 16);
+
+	if (numPoolPieces >= piecePool.size()) {
+		throw std::bad_alloc();
+		return nullptr;
+	}
+
+	return &piecePool[numPoolPieces++];
+}
+
 SAssPiece* CAssParser::LoadPiece(
 	S3DModel* model,
 	const aiNode* pieceNode,
@@ -535,7 +563,7 @@ SAssPiece* CAssParser::LoadPiece(
 ) {
 	++model->numPieces;
 
-	SAssPiece* piece = new SAssPiece();
+	SAssPiece* piece = AllocPiece();
 
 	if (pieceNode->mParent == nullptr) {
 		// set the model's root piece ASAP, needed in SetPiece*Name
