@@ -57,7 +57,7 @@ void S3DModelPiece::CreateDispList()
 	glEndList();
 }
 
-void S3DModelPiece::DeleteDistList()
+void S3DModelPiece::DeleteDispList()
 {
 	glDeleteLists(dispListID, 1);
 	dispListID = 0;
