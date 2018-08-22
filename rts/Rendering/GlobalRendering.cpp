@@ -975,12 +975,16 @@ void CGlobalRendering::SaveWindowPosAndSize()
 
 void CGlobalRendering::UpdateGLConfigs()
 {
+	LOG("[GR::%s]", __func__);
+
 	// re-read configuration value
 	verticalSync->SetInterval();
 }
 
 void CGlobalRendering::UpdateGLGeometry()
 {
+	LOG("[GR::%s]", __func__);
+
 	ReadWindowPosAndSize();
 	SetDualScreenParams();
 	UpdateViewPortGeometry();
@@ -989,6 +993,8 @@ void CGlobalRendering::UpdateGLGeometry()
 
 void CGlobalRendering::InitGLState()
 {
+	LOG("[GR::%s]", __func__);
+
 	glShadeModel(GL_SMOOTH);
 
 	glClearDepth(1.0f);
@@ -1016,7 +1022,8 @@ void CGlobalRendering::InitGLState()
 	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	gluPerspective(45.0f, aspectRatio, 2.8f, MAX_VIEW_RANGE);
 
-	SwapBuffers(true, true);
+	// this does not accomplish much
+	// SwapBuffers(true, true);
 	LogDisplayMode(sdlWindows[0]);
 }
 
