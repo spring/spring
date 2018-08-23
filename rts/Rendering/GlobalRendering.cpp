@@ -937,22 +937,30 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	const int2 newRes = GetCfgWinRes(fullScreen);
 	const int2 maxRes = GetMaxWinRes();
 
-	LOG("[GR::%s] key=%s val=%s (cfgFullScreen=%d sdlFullScreen=%d) newRes=<%d,%d>", __func__, key.c_str(), value.c_str(), fullScreen, fullScreenFlag == SDL_WINDOW_FULLSCREEN, newRes.x, newRes.y);
+	LOG("[GR::%s][1] key=%s val=%s (cfgFullScreen=%d sdlFullScreen=%d) newRes=<%d,%d>", __func__, key.c_str(), value.c_str(), fullScreen, fullScreenFlag == SDL_WINDOW_FULLSCREEN, newRes.x, newRes.y);
 
 	// if currently in fullscreen mode, neither SDL_SetWindowSize nor SDL_SetWindowBordered will work
 	// need to first drop to windowed mode before changing these properties, then switch modes again
 	// the maximized-flag also has to be cleared, otherwise going from native fullscreen to windowed
 	// ignores the configured *ResolutionWindowed values
 	// (SDL_SetWindowDisplayMode sets the mode used by fullscreen windows which is not what we want)
+	#if 0
 	if (fullScreenFlag == SDL_WINDOW_FULLSCREEN) {
 		SDL_SetWindowFullscreen(sdlWindows[0], 0);
 		SDL_RestoreWindow(sdlWindows[0]);
 	}
+	#endif
 
+	if (SDL_SetWindowFullscreen(sdlWindows[0], 0) != 0)
+		LOG("[GR::%s][2][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
+
+	SDL_RestoreWindow(sdlWindows[0]);
+	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	SDL_SetWindowSize(sdlWindows[0], newRes.x, newRes.y);
 	SDL_SetWindowBordered(sdlWindows[0], borderless ? SDL_FALSE : SDL_TRUE);
-	SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
-	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+
+	if (SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen) != 0)
+		LOG("[GR::%s][3][SDL_SetWindowFullscreen] err=\"%s\"", __func__, SDL_GetError());
 
 	if (newRes == maxRes)
 		SDL_MaximizeWindow(sdlWindows[0]);
