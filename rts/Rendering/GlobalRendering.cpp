@@ -896,7 +896,7 @@ void CGlobalRendering::LogGLSupportInfo() const
 
 void CGlobalRendering::LogDisplayMode(SDL_Window* window) const
 {
-	// print final mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
+	// print final mode (call after UpdateViewPortGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(window, &dmode);
 
@@ -1131,32 +1131,37 @@ void CGlobalRendering::UpdateGLGeometry()
 
 void CGlobalRendering::InitGLState()
 {
-	LOG("[GR::%s]", __func__);
+	LOG("[GR::%s] glAttribStatePtr=%p", __func__, glAttribStatePtr);
 
-	glClearDepth(1.0f);
-	glDepthRange(0.0f, 1.0f);
+	if (glAttribStatePtr == nullptr) {
+		glClearDepth(1.0f);
+		glDepthRange(0.0f, 1.0f);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
-	#ifdef GLEW_ARB_clip_control
-	// avoid precision loss with default DR transform
-	if (supportClipSpaceControl)
-		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-	#endif
+		#ifdef GLEW_ARB_clip_control
+		// avoid precision loss with default DR transform
+		if (supportClipSpaceControl)
+			glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+		#endif
 
-	// MSAA rasterization
-	if ((msaaLevel *= CheckGLMultiSampling()) != 0) {
-		glEnable(GL_MULTISAMPLE);
+		// MSAA rasterization
+		if ((msaaLevel *= CheckGLMultiSampling()) != 0) {
+			glEnable(GL_MULTISAMPLE);
+		} else {
+			glDisable(GL_MULTISAMPLE);
+		}
+
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
+		// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
 	} else {
-		glDisable(GL_MULTISAMPLE);
+		// resize event, no need to reinitialize state in modern times
+		glAttribStatePtr->ViewPort(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	}
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
-	// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
 
 	// this does not accomplish much
 	// SwapBuffers(true, true);
