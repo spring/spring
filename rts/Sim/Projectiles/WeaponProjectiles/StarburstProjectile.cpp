@@ -106,7 +106,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 void CStarburstProjectile::Collision()
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision();
 
@@ -117,7 +117,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(unit);
 
@@ -128,7 +128,7 @@ void CStarburstProjectile::Collision(CUnit* unit)
 void CStarburstProjectile::Collision(CFeature* feature)
 {
 	if (leaveSmokeTrail)
-		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_LIFETIME, 0.7f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(feature);
 
@@ -301,14 +301,14 @@ void CStarburstProjectile::UpdateSmokeTrail()
 
 	smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 		owner(),
-		weaponDef->visuals.texture2,
 		pos, oldSmoke,
 		dir, oldSmokeDir,
-		SMOKE_LIFETIME,
-		7.0f,
-		0.7f,
 		trailAge == SMOKE_INTERVAL,
-		false
+		false,
+		7.0f,
+		SMOKE_LIFETIME,
+		0.7f,
+		weaponDef->visuals.texture2
 	);
 
 	numParts = 0;
@@ -344,7 +344,6 @@ void CStarburstProjectile::Draw(CVertexArray* va)
 			SColor col = lightYellow * Clamp(alpha, 0.0f, 1.0f);
 			col.a = 1;
 
-			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
