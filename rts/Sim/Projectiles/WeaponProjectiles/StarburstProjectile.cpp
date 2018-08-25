@@ -251,6 +251,7 @@ void CStarburstProjectile::UpdateTrajectory()
 
 void CStarburstProjectile::InitTracerParts()
 {
+	const unsigned int maxAgeMods = MAX_NUM_AGEMODS;
 	const unsigned int numAgeMods = static_cast<unsigned int>((speed.w + 0.6f) / TRACER_PARTS_STEP);
 
 	for (unsigned int i = 0; i < NUM_TRACER_PARTS; ++i) {
@@ -260,9 +261,9 @@ void CStarburstProjectile::InitTracerParts()
 		tracerPart.dir = dir;
 
 		tracerPart.speedf = speed.w;
-		tracerPart.numAgeMods = std::min(MAX_NUM_AGEMODS, numAgeMods);
+		tracerPart.numAgeMods = std::min(maxAgeMods, numAgeMods);
 
-		for (unsigned int j = 0; j < MAX_NUM_AGEMODS; j++) {
+		for (unsigned int j = 0; j < maxAgeMods; j++) {
 			tracerPart.ageMods[j] = 1.0f;
 		}
 	}
