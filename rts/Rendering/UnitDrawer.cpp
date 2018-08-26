@@ -35,6 +35,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
@@ -46,7 +47,6 @@
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/SafeUtil.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
 
@@ -69,6 +69,8 @@ CUnitDrawer* unitDrawer = nullptr;
 // scope might happen after ~EventHandler which is
 // referenced by ~EventClient
 static uint8_t unitDrawerMem[sizeof(CUnitDrawer)];
+
+static FixedDynMemPool<sizeof(GhostSolidObject), MAX_UNITS / 1000, MAX_UNITS / 32> ghostMemPool;
 
 
 static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
@@ -338,7 +340,7 @@ void CUnitDrawer::Kill()
 
 				// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
 				groundDecals->GhostDestroyed(gso);
-				spring::SafeDelete(*it);
+				ghostMemPool.free(gso);
 			}
 
 			dgb.clear();
@@ -945,7 +947,7 @@ void CUnitDrawer::UpdateGhostedBuildings()
 				// obtained LOS on the ghost of a dead building
 				if (!gso->DecRef()) {
 					groundDecals->GhostDestroyed(gso);
-					spring::SafeDelete(gso);
+					ghostMemPool.free(gso);
 				}
 
 				dgb[i] = dgb.back();
@@ -1827,7 +1829,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 		if (addNewGhost && canSeeGhost) {
 			if (gso == nullptr) {
-				gso = new GhostSolidObject();
+				gso = ghostMemPool.alloc<GhostSolidObject>();
 				gso->pos    = u->pos;
 				gso->model  = gsoModel;
 				gso->decal  = nullptr;

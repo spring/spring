@@ -4113,55 +4113,60 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 		fSize = 4; // good enough?
 	}
 
-	float* data = new float[(h * w) * fSize * sizeof(float)];
-	glReadPixels(x, y, w, h, format, GL_FLOAT, data);
+	CBitmap bmp;
+	bmp.Alloc(w, h, fSize * sizeof(float));
+	glReadPixels(x, y, w, h, format, GL_FLOAT, reinterpret_cast<float*>(bmp.GetRawMem()));
 
 	int retCount = 0;
 
+	const float* data = reinterpret_cast<const float*>(bmp.GetRawMem());
 	const float* d = data;
 
 	if ((w == 1) && (h == 1)) {
+		// single pixel
 		for (int e = 0; e < fSize; e++) {
 			lua_pushnumber(L, data[e]);
 		}
-		retCount = fSize;
+		return fSize;
 	}
-	else if ((w == 1) && (h > 1)) {
-		lua_newtable(L);
+
+	if ((w == 1) && (h > 1)) {
+		lua_createtable(L, h, 0);
+		// single column
 		for (int i = 1; i <= h; i++) {
 			lua_pushnumber(L, i);
 			PushPixelData(L, fSize, d);
 			lua_rawset(L, -3);
 		}
-		retCount = 1;
+
+		return 1;
 	}
-	else if ((w > 1) && (h == 1)) {
-		lua_newtable(L);
+
+	if ((w > 1) && (h == 1)) {
+		lua_createtable(L, w, 0);
+		// single row
 		for (int i = 1; i <= w; i++) {
 			lua_pushnumber(L, i);
 			PushPixelData(L, fSize, d);
 			lua_rawset(L, -3);
 		}
-		retCount = 1;
+
+		return 1;
 	}
-	else {
-		lua_newtable(L);
-		for (int x = 1; x <= w; x++) {
-			lua_pushnumber(L, x);
-			lua_newtable(L);
-			for (int y = 1; y <= h; y++) {
-				lua_pushnumber(L, y);
-				PushPixelData(L, fSize, d);
-				lua_rawset(L, -3);
-			}
+
+	lua_createtable(L, w, 0);
+	for (int x = 1; x <= w; x++) {
+		lua_pushnumber(L, x);
+		lua_createtable(L, h, 0);
+		for (int y = 1; y <= h; y++) {
+			lua_pushnumber(L, y);
+			PushPixelData(L, fSize, d);
 			lua_rawset(L, -3);
 		}
-		retCount = 1;
+		lua_rawset(L, -3);
 	}
 
-	delete[] data;
-
-	return retCount;
+	return 1;
 }
 
 
