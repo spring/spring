@@ -152,7 +152,7 @@ void SMFRenderStateGLSL::UpdatingUniforms(
 	const CSMFGroundDrawer* smfGroundDrawer,
 	const unsigned int n
 ) {
-	assert((n >= GLSL_SHADER_STANDARD) && (n < GLSL_SHADER_DEFERRED));
+	assert((n >= GLSL_SHADER_STANDARD) && (n <= GLSL_SHADER_DEFERRED));
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const int2 normTexSize = smfMap->GetTextureSize(MAP_BASE_NORMALS_TEX);
@@ -219,9 +219,15 @@ void SMFRenderStateGLSL::Update(
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			glslShaders[n]->LoadFromID(luaMapShaderData->shaderIDs[n]);
 			if(setLuaUniforms) {
+				if (currentLuaMapShaderData != luaMapShaderData) {
+					// Time to renew the uniform locs
+					glslShaders[n]->uniformStates.clear();
+				}
 				glUseProgram(glslShaders[n]->GetObjID());
+				glslShaders[n]->IProgramObject::Enable();
 				UpdatingUniforms(smfGroundDrawer, n);
 				glUseProgram(0);
+				glslShaders[n]->IProgramObject::Disable();
 			}
 		}
 	} else {
@@ -268,6 +274,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->Validate();
 		}
 	}
+	currentLuaMapShaderData = (LuaMapShaderData*)luaMapShaderData;
 }
 
 bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
@@ -535,10 +542,12 @@ void SMFRenderStateGLSL::EnablingUniforms(const CSMFGroundDrawer* smfGroundDrawe
 }
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
+
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
 		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
 		if (setLuaUniforms) {
+			glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Enable();
 			EnablingUniforms(smfGroundDrawer);
 		}
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
@@ -563,6 +572,7 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 		}
 		glActiveTexture(GL_TEXTURE0);
 		glUseProgram(0);
+		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Disable();
 		return;
 	}
 
@@ -625,6 +635,10 @@ void SMFRenderStateARB::UpdateCurrentShaderSky(const ISkyLight* skyLight) const 
 }
 
 void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
+	if (useLuaShaders && !setLuaUniforms) {
+		return;
+	}
+
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);

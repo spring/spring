@@ -121,7 +121,11 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
-	SMFRenderStateGLSL(bool lua): useLuaShaders(lua), setLuaUniforms(false) {
+	SMFRenderStateGLSL(bool lua)
+		: useLuaShaders(lua)
+		, setLuaUniforms(false)
+		, currentLuaMapShaderData(nullptr)
+	{
 		glslShaders.fill(nullptr);
 	}
 	~SMFRenderStateGLSL() { glslShaders.fill(nullptr); }
@@ -168,6 +172,9 @@ private:
 
 	// if true, default flags and uniforms should be set to lua shaders
 	bool setLuaUniforms;
+
+	// To check if the shader has been changed
+	LuaMapShaderData* currentLuaMapShaderData;
 };
 
 #endif
