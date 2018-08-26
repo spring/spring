@@ -18,6 +18,8 @@ struct LuaMapShaderData {
 	// [0] := standard program from gl.CreateShader
 	// [1] := deferred program from gl.CreateShader
 	unsigned int shaderIDs[2];
+	// Should Spring set the default map shader uniforms?
+	bool setDefaultUniforms;
 };
 
 class CBaseGroundDrawer

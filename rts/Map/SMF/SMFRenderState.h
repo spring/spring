@@ -56,6 +56,10 @@ struct SMFRenderStateFFP: public ISMFRenderState {
 public:
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer) { return false; }
 	void Kill() {}
+	void setFlags(
+			const CSMFGroundDrawer* smfGroundDrawer,
+			const unsigned int n
+	);
 	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
@@ -117,11 +121,21 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
-	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { glslShaders.fill(nullptr); }
+	SMFRenderStateGLSL(bool lua)
+		: useLuaShaders(lua)
+		, setLuaUniforms(false)
+		, currentLuaMapShaderData(nullptr)
+	{
+		glslShaders.fill(nullptr);
+	}
 	~SMFRenderStateGLSL() { glslShaders.fill(nullptr); }
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
+	void UpdatingUniforms(
+		const CSMFGroundDrawer* smfGroundDrawer,
+		const unsigned int n
+	);
 	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
@@ -132,6 +146,7 @@ public:
 	bool CanDrawForward() const { return true; }
 	bool CanDrawDeferred() const { return true; }
 
+	void EnablingUniforms(const CSMFGroundDrawer* smfGroundDrawer);
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 
@@ -154,6 +169,12 @@ private:
 
 	// if true, shader programs for this state are Lua-defined
 	bool useLuaShaders;
+
+	// if true, default flags and uniforms should be set to lua shaders
+	bool setLuaUniforms;
+
+	// To check if the shader has been changed
+	LuaMapShaderData* currentLuaMapShaderData;
 };
 
 #endif

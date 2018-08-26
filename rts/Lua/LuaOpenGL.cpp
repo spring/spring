@@ -36,6 +36,8 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Map/SMF/SMFReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/LineDrawer.h"
@@ -4657,8 +4659,65 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			lua_pushboolean(L, mapRendering->voidGround);
 			return 1;
 		} break;
+		case hashString("specularLighting"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSpecularTexture() != 0);
+			return 1;
+		} break;
+		case hashString("splatDetailTexture"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+			                   smfMap->GetSplatDetailTexture() != 0);
+			return 1;
+		} break;
+		case hashString("splatDetailNormalTexture"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+			                   smfMap->HaveSplatNormalTexture());
+			return 1;
+		} break;
 		case hashString("splatDetailNormalDiffuseAlpha"): {
 			lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
+			return 1;
+		} break;
+		case hashString("waterAbsortion"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->HasVisibleWater());
+			return 1;
+		} break;
+		case hashString("skyReflection"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSkyReflectModTexture() != 0);
+			return 1;
+		} break;
+		case hashString("blendNormals"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetBlendNormalsTexture() != 0);
+			return 1;
+		} break;
+		case hashString("lightEmission"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetLightEmissionTexture() != 0);
+			return 1;
+		} break;
+		case hashString("parallaxMapping"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetParallaxHeightTexture() != 0);
+			return 1;
+		} break;
+		// float
+		case hashString("baseDynamicMapLight"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+			lua_pushnumber(L, lightHandler->GetBaseLight());
+			return 1;
+		} break;
+		case hashString("maxDynamicMapLight"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+			lua_pushnumber(L, lightHandler->GetMaxLights());
 			return 1;
 		} break;
 	}
