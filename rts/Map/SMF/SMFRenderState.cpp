@@ -214,15 +214,27 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		glUseProgram(shader->GetObjID());
+		// Set some uniforms tha t are not prone to be set using GetMapShaderUniform
+		const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
+		      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
+		if (cLightHandler->NumConfigLights() > 0) {
+			mLightHandler->Update();
+			shader->SetUniform4v<const char*, float>("fwdDynLights", cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+		}
+		switch (drawPass) {
+			case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
+			case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+			default: {} break;
+		}
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
 	}
-
-	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 

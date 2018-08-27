@@ -4021,21 +4021,6 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			lua_pushboolean(L, infoTextureHandler->IsEnabled());
 			return 1;
 		} break;
-		// float
-		case hashString("baseDynamicMapLight"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
-			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
-			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
-			lua_pushnumber(L, lightHandler->GetBaseLight());
-			return 1;
-		} break;
-		case hashString("maxDynamicMapLight"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
-			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
-			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
-			lua_pushnumber(L, lightHandler->GetMaxLights());
-			return 1;
-		} break;
 	}
 
 	luaL_error(L, "[%s] unknown key %s", __func__, key);
@@ -4169,10 +4154,31 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 		else if (key == "groundShadowDensity") {
 			lua_pushnumber(L, sunLighting->groundShadowDensity);
 		}
+		else if (key == "viewMat") {
+			lua_createtable(L, 16, 0);
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, camera->GetViewMatrix()[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "viewMatInv") {
+			lua_createtable(L, 16, 0);
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, camera->GetViewMatrixInverse()[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "viewProjMat") {
+			lua_createtable(L, 16, 0);
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, camera->GetViewProjectionMatrix()[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
 		else if (key == "shadowMat") {
 			lua_createtable(L, 16, 0);
 			for (int i = 0; i < 16; i++) {
-				lua_pushnumber(L, shadowHandler.GetShadowMatrixRaw()[i]);
+				lua_pushnumber(L, shadowHandler.GetShadowViewMatrix()[i]);
 				lua_rawseti(L, -2, i + 1);
 			}
 		}
@@ -4186,6 +4192,22 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 			lua_rawseti(L, -2, 3);
 			lua_pushnumber(L, shadowHandler.GetShadowParams().w);
 			lua_rawseti(L, -2, 4);
+		}
+		else if (key == "fogParams") {
+			lua_createtable(L, 4, 0);
+			lua_pushnumber(L, sky->fogStart);
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, sky->fogEnd);
+			lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, globalRendering->viewRange);
+			lua_rawseti(L, -2, 3);
+		}
+		else if (key == "fogColor") {
+			lua_createtable(L, 4, 0);
+			for (int i = 0; i < 4; i++) {
+				lua_pushnumber(L, sky->fogColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
 		}
 		else if (key == "waterMinColor") {
 			lua_createtable(L, 3, 0);
