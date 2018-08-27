@@ -36,6 +36,8 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Map/SMF/SMFReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/LineDrawer.h"
@@ -382,6 +384,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSun);
 	REGISTER_LUA_CFUNC(GetWaterRendering);
 	REGISTER_LUA_CFUNC(GetMapRendering);
+	REGISTER_LUA_CFUNC(GetMapShaderUniform);
 
 	if (canUseShaders)
 		LuaShaders::PushEntries(L);
@@ -4657,14 +4660,287 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			lua_pushboolean(L, mapRendering->voidGround);
 			return 1;
 		} break;
+		case hashString("specularLighting"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSpecularTexture() != 0);
+			return 1;
+		} break;
+		case hashString("splatDetailTexture"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+			                   smfMap->GetSplatDetailTexture() != 0);
+			return 1;
+		} break;
+		case hashString("splatDetailNormalTexture"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
+			                   smfMap->HaveSplatNormalTexture());
+			return 1;
+		} break;
 		case hashString("splatDetailNormalDiffuseAlpha"): {
 			lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
+			return 1;
+		} break;
+		case hashString("waterAbsortion"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->HasVisibleWater());
+			return 1;
+		} break;
+		case hashString("skyReflection"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetSkyReflectModTexture() != 0);
+			return 1;
+		} break;
+		case hashString("blendNormals"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetBlendNormalsTexture() != 0);
+			return 1;
+		} break;
+		case hashString("lightEmission"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetLightEmissionTexture() != 0);
+			return 1;
+		} break;
+		case hashString("parallaxMapping"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			lua_pushboolean(L, smfMap->GetParallaxHeightTexture() != 0);
+			return 1;
+		} break;
+		// float
+		case hashString("baseDynamicMapLight"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+			lua_pushnumber(L, lightHandler->GetBaseLight());
+			return 1;
+		} break;
+		case hashString("maxDynamicMapLight"): {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+			lua_pushnumber(L, lightHandler->GetMaxLights());
 			return 1;
 		} break;
 	}
 
 	luaL_error(L, "[%s] unknown key %s", __func__, key);
 	return 0;
+}
+
+int LuaOpenGL::GetMapShaderUniform(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.GetMapShaderUniform(table)");
+	}
+
+	// Store the arguments in a list
+	std::vector<string> keys;
+	const int table = lua_gettop(L);
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -1)) {
+			LOG_L(L_WARNING, "gl.GetMapShaderUniform: bad uniform name type");
+			return 0;
+		}
+		keys.push_back(lua_tostring(L, -1));
+	}
+
+	lua_createtable(L, keys.size(), 0);
+	int count = 1;
+	for (auto key : keys) {
+		if (key == "diffuseTex") {
+			lua_pushnumber(L, 0);
+		}
+		else if (key == "detailTex") {
+			lua_pushnumber(L, 2);
+		}
+		else if (key == "shadowTex") {
+			lua_pushnumber(L, 4);
+		}
+		else if (key == "normalsTex") {
+			lua_pushnumber(L, 5);
+		}
+		else if (key == "specularTex") {
+			lua_pushnumber(L, 6);
+		}
+		else if (key == "splatDetailTex") {
+			lua_pushnumber(L, 7);
+		}
+		else if (key == "splatDistrTex") {
+			lua_pushnumber(L, 8);
+		}
+		else if (key == "skyReflectTex") {
+			lua_pushnumber(L, 9);
+		}
+		else if (key == "skyReflectModTex") {
+			lua_pushnumber(L, 10);
+		}
+		else if (key == "blendNormalsTex") {
+			lua_pushnumber(L, 11);
+		}
+		else if (key == "lightEmissionTex") {
+			lua_pushnumber(L, 12);
+		}
+		else if (key == "parallaxHeightTex") {
+			lua_pushnumber(L, 13);
+		}
+		else if (key == "infoTex") {
+			lua_pushnumber(L, 14);
+		}
+		else if (key == "splatDetailNormalTex1") {
+			lua_pushnumber(L, 15);
+		}
+		else if (key == "splatDetailNormalTex2") {
+			lua_pushnumber(L, 16);
+		}
+		else if (key == "splatDetailNormalTex3") {
+			lua_pushnumber(L, 17);
+		}
+		else if (key == "splatDetailNormalTex4") {
+			lua_pushnumber(L, 18);
+		}
+		else if (key == "mapSizePO2") {
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, mapDims.pwr2mapx * SQUARE_SIZE * 1.0f);
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, mapDims.pwr2mapy * SQUARE_SIZE * 1.0f);
+			lua_rawseti(L, -2, 2);
+		}
+		else if (key == "mapSize") {
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, mapDims.mapx * SQUARE_SIZE * 1.0f);
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, mapDims.mapy * SQUARE_SIZE * 1.0f);
+			lua_rawseti(L, -2, 2);
+		}
+		else if (key == "lightDir") {
+			lua_createtable(L, 4, 0);
+			for (int i = 0; i < 4; i++) {
+				lua_pushnumber(L, sky->GetLight()->GetLightDir()[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "cameraPos") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, FwdVector[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "groundAmbientColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, sunLighting->groundAmbientColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "groundDiffuseColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, sunLighting->groundDiffuseColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "groundSpecularColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, sunLighting->groundSpecularColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "groundSpecularExponent") {
+			lua_pushnumber(L, sunLighting->specularExponent);
+		}
+		else if (key == "groundShadowDensity") {
+			lua_pushnumber(L, sunLighting->groundShadowDensity);
+		}
+		else if (key == "shadowMat") {
+			lua_createtable(L, 16, 0);
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, shadowHandler.GetShadowMatrixRaw()[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "shadowParams") {
+			lua_createtable(L, 4, 0);
+			lua_pushnumber(L, shadowHandler.GetShadowParams().x);
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, shadowHandler.GetShadowParams().y);
+			lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, shadowHandler.GetShadowParams().z);
+			lua_rawseti(L, -2, 3);
+			lua_pushnumber(L, shadowHandler.GetShadowParams().w);
+			lua_rawseti(L, -2, 4);
+		}
+		else if (key == "waterMinColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, waterRendering->minColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "waterBaseColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, waterRendering->baseColor[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "waterAbsorbColor") {
+			lua_createtable(L, 3, 0);
+			for (int i = 0; i < 3; i++) {
+				lua_pushnumber(L, waterRendering->absorb[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "splatTexScales") {
+			lua_createtable(L, 4, 0);
+			for (int i = 0; i < 4; i++) {
+				lua_pushnumber(L, mapRendering->splatTexScales[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "splatTexMults") {
+			lua_createtable(L, 4, 0);
+			for (int i = 0; i < 4; i++) {
+				lua_pushnumber(L, mapRendering->splatTexMults[i]);
+				lua_rawseti(L, -2, i + 1);
+			}
+		}
+		else if (key == "infoTexIntensityMul") {
+			lua_pushnumber(L, 1.0f);
+		}
+		else if (key == "normalTexGen") {
+			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+			const int2 normTexSize = smfMap->GetTextureSize(MAP_BASE_NORMALS_TEX);
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, 1.0f / ((normTexSize.x - 1) * SQUARE_SIZE));
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, 1.0f / ((normTexSize.y - 1) * SQUARE_SIZE));
+			lua_rawseti(L, -2, 2);
+		}
+		else if (key == "specularTexGen") {
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, 1.0f / (   mapDims.mapx     * SQUARE_SIZE));
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, 1.0f / (   mapDims.mapy     * SQUARE_SIZE));
+			lua_rawseti(L, -2, 2);
+		}
+		else if (key == "infoTexGen") {
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, 1.0f / (   mapDims.pwr2mapx * SQUARE_SIZE));
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, 1.0f / (   mapDims.pwr2mapy * SQUARE_SIZE));
+			lua_rawseti(L, -2, 2);
+		}
+		else {
+			LOG_L(L_WARNING, "gl.Material: invalid map uniform '%s'", key.c_str());
+			lua_pushnil(L);
+		}
+		lua_rawseti(L, -2, count++);
+	}
+    
+	return 1;
 }
 
 /******************************************************************************/
