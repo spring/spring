@@ -51,6 +51,7 @@
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -4706,6 +4707,14 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			lua_pushboolean(L, smfMap->GetParallaxHeightTexture() != 0);
 			return 1;
 		} break;
+		case hashString("haveShadows"): {
+			lua_pushboolean(L, shadowHandler.ShadowsLoaded());
+			return 1;
+		} break;
+		case hashString("haveInfoTex"): {
+			lua_pushboolean(L, infoTextureHandler->IsEnabled());
+			return 1;
+		} break;
 		// float
 		case hashString("baseDynamicMapLight"): {
 			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
@@ -4823,7 +4832,7 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 		else if (key == "cameraPos") {
 			lua_createtable(L, 3, 0);
 			for (int i = 0; i < 3; i++) {
-				lua_pushnumber(L, FwdVector[i]);
+				lua_pushnumber(L, camera->GetPos()[i]);
 				lua_rawseti(L, -2, i + 1);
 			}
 		}
@@ -4908,7 +4917,7 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 			}
 		}
 		else if (key == "infoTexIntensityMul") {
-			lua_pushnumber(L, 1.0f);
+			lua_pushnumber(L, float(infoTextureHandler->InMetalMode()) + 1.0f);
 		}
 		else if (key == "normalTexGen") {
 			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
@@ -4933,10 +4942,18 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 			lua_pushnumber(L, 1.0f / (   mapDims.pwr2mapy * SQUARE_SIZE));
 			lua_rawseti(L, -2, 2);
 		}
+		else if (key == "mapHeights") {
+			lua_createtable(L, 2, 0);
+			lua_pushnumber(L, readMap->GetCurrMinHeight());
+			lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, readMap->GetCurrMaxHeight());
+			lua_rawseti(L, -2, 2);
+		}
 		else {
 			LOG_L(L_WARNING, "gl.Material: invalid map uniform '%s'", key.c_str());
 			lua_pushnil(L);
 		}
+
 		lua_rawseti(L, -2, count++);
 	}
     
