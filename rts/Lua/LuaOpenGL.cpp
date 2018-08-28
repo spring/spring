@@ -4278,7 +4278,7 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 				lua_rawseti(L, -2, 2);
 			} break;
 			default: {
-				LOG_L(L_WARNING, "gl.Material: invalid map uniform '%s'", keys[count - 1]);
+				LOG_L(L_WARNING, "gl.GetMapShaderUniform: invalid map uniform '%s'", keys[count - 1]);
 				lua_pushnil(L);
 			} break;
 		}
