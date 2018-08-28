@@ -214,15 +214,29 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		glUseProgram(shader->GetObjID());
+		// Set some uniforms that are not prone to be set using GetMapShaderUniform
+		shader->IProgramObject::Enable();
+		const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
+		      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
+		if (cLightHandler->NumConfigLights() > 0) {
+			mLightHandler->Update();
+			shader->SetUniform4v<const char*, float>("fwdDynLights", cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+		}
+		switch (drawPass) {
+			case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
+			case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+			default: {} break;
+		}
+		shader->IProgramObject::Disable();
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
 	}
-
-	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 
@@ -305,8 +319,12 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
 	// needs to be set even for Lua shaders, is unknowable otherwise
+	if (useLuaShaders)
+		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Enable();
 	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
+	if (useLuaShaders)
+		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Disable();
 }
 
 
