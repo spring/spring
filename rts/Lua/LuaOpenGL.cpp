@@ -4634,6 +4634,9 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 
 int LuaOpenGL::GetMapRendering(lua_State* L)
 {
+	CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
+	CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
+	const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
 	const char* key = luaL_checkstring(L, 1);
 
 	switch (hashString(key)) {
@@ -4667,13 +4670,11 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			return 1;
 		} break;
 		case hashString("splatDetailTexture"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
 			                   smfMap->GetSplatDetailTexture() != 0);
 			return 1;
 		} break;
 		case hashString("splatDetailNormalTexture"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetSplatDistrTexture() != 0 &&
 			                   smfMap->HaveSplatNormalTexture());
 			return 1;
@@ -4683,27 +4684,22 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 			return 1;
 		} break;
 		case hashString("waterAbsortion"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->HasVisibleWater());
 			return 1;
 		} break;
 		case hashString("skyReflection"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetSkyReflectModTexture() != 0);
 			return 1;
 		} break;
 		case hashString("blendNormals"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetBlendNormalsTexture() != 0);
 			return 1;
 		} break;
 		case hashString("lightEmission"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetLightEmissionTexture() != 0);
 			return 1;
 		} break;
 		case hashString("parallaxMapping"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
 			lua_pushboolean(L, smfMap->GetParallaxHeightTexture() != 0);
 			return 1;
 		} break;
@@ -4717,16 +4713,10 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 		} break;
 		// float
 		case hashString("baseDynamicMapLight"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
-			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
-			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
 			lua_pushnumber(L, lightHandler->GetBaseLight());
 			return 1;
 		} break;
-		case hashString("maxDynamicMapLight"): {
-			CSMFReadMap* smfMap = (CSMFReadMap*)readMap;
-			CSMFGroundDrawer* groundDrawer = (CSMFGroundDrawer*)smfMap->GetGroundDrawer();
-			const GL::LightHandler* lightHandler = groundDrawer->GetLightHandler();
+		case hashString("maxDynamicMapLights"): {
 			lua_pushnumber(L, lightHandler->GetMaxLights());
 			return 1;
 		} break;
@@ -4748,17 +4738,20 @@ int LuaOpenGL::GetMapShaderUniform(lua_State* L)
 	const int table = lua_gettop(L);
 	unsigned int numKeys = 0;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (numKeys >= keys.size())
+			break;
+
 		if (!lua_israwstring(L, -1)) {
 			LOG_L(L_WARNING, "gl.GetMapShaderUniform: bad uniform name type");
 			return 0;
 		}
-		const char *s = lua_tostring(L, -1);
-		strncpy(keys[numKeys], s, 64);
-		keys[numKeys][63] = '\0';
-		numKeys = Clamp(numKeys + 1, 0u, 256u);
+
+		strncpy(keys[numKeys], lua_tostring(L, -1), sizeof(keys[0]));
+		keys[numKeys++][sizeof(keys[0]) - 1] = '\0';
+		numKeys++;
 	}
 
-	lua_createtable(L, keys.size(), 0);
+	lua_createtable(L, numKeys, 0);
 	for (unsigned int count = 0; count < numKeys; count++) {
 		switch (hashString(keys[count])) {
 			case hashString("diffuseTex"): {
