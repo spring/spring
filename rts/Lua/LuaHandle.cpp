@@ -1687,6 +1687,17 @@ void CLuaHandle::ViewResize()
 	RunCallIn(L, cmdStr, 1, 0);
 }
 
+void CLuaHandle::SunChanged()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	// call the routine
+	RunCallIn(L, cmdStr, 0, 0);
+}
 
 bool CLuaHandle::DefaultCommand(const CUnit* unit,
                                 const CFeature* feature, int& cmd)
