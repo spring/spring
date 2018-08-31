@@ -37,13 +37,27 @@
 IMouseInput* mouseInput = nullptr;
 
 
-IMouseInput::IMouseInput()
+IMouseInput::IMouseInput(bool relModeWarp)
 {
 	inputCon = input.AddHandler(std::bind(&IMouseInput::HandleSDLMouseEvent, this, std::placeholders::_1));
+	// Windows 10 FCU (Fall Creators Update) causes spurious SDL_MOUSEMOTION
+	// events to be generated with SDL_HINT_MOUSE_RELATIVE_MODE_WARP enabled
+	//
+	// while Spring did not previously set this hint and SDL defaults to raw
+	// input, the update also affects MMB scrolling via SDL_WarpMouseInWindow
+	// (our ancient manually implemented method of achieving relative motion)
+	//
+	// win32 SDL hides these events in 2.0.8 only if mouse->relative_mode_warp
+	// (which configures relative mouse mode to *internally* use mouse warping
+	// instead of raw input and gets toggled by SDL_SetRelativeMouseMode based
+	// on the hint given here); the alternative to RMW would be to *duplicate*
+	// the SDL patch in WarpPos
+	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, relModeWarp? "1": "0");
 }
 
 IMouseInput::~IMouseInput()
 {
+	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
 	inputCon.disconnect();
 }
 
@@ -140,11 +154,11 @@ public:
 
 		if (cur_wndproc != (LONG_PTR)SpringWndProc) {
 			sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
-			SetWindowLongPtr(wnd,GWLP_WNDPROC, (LONG_PTR)SpringWndProc);
+			SetWindowLongPtr(wnd, GWLP_WNDPROC, (LONG_PTR)SpringWndProc);
 		}
 	}
 
-	CWin32MouseInput()
+	CWin32MouseInput(bool relModeWarp): IMouseInput(relModeWarp)
 	{
 		inst = this;
 		hCursor = nullptr;
@@ -152,25 +166,11 @@ public:
 		wnd = 0;
 
 		InstallWndCallback();
-		// Windows 10 FCU (Fall Creators Update) causes spurious SDL_MOUSEMOTION
-		// events to be generated with SDL_HINT_MOUSE_RELATIVE_MODE_WARP enabled
-		//
-		// while Spring did not previously set this hint and SDL defaults to raw
-		// input, the update also affects MMB scrolling via SDL_WarpMouseInWindow
-		// (our ancient manually implemented method of achieving relative motion)
-		//
-		// win32 SDL hides these events in 2.0.8 only if mouse->relative_mode_warp
-		// (which configures relative mouse mode to *internally* use mouse warping
-		// instead of raw input and gets toggled by SDL_SetRelativeMouseMode based
-		// on the hint given here); the alternative to RMW would be to *duplicate*
-		// the SDL patch in SetPosSDL
-		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1");
 	}
 	~CWin32MouseInput()
 	{
 		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
-		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
 	}
 };
 
@@ -227,13 +227,13 @@ bool IMouseInput::WarpPos(int2 pos)
 
 
 
-IMouseInput* IMouseInput::GetInstance()
+IMouseInput* IMouseInput::GetInstance(bool relModeWarp)
 {
 	if (mouseInput == nullptr) {
 #if defined(WIN32) && !defined(HEADLESS)
-		mouseInput = new (mouseInputMem) CWin32MouseInput();
+		mouseInput = new (mouseInputMem) CWin32MouseInput(relModeWarp);
 #else
-		mouseInput = new (mouseInputMem) IMouseInput();
+		mouseInput = new (mouseInputMem) IMouseInput(relModeWarp);
 #endif
 	}
 
@@ -241,7 +241,7 @@ IMouseInput* IMouseInput::GetInstance()
 }
 
 void IMouseInput::FreeInstance(IMouseInput* mouseInp) {
-	assert(mouseInp == &mouseInputMem[0]);
+	assert(mouseInp == reinterpret_cast<IMouseInput*>(&mouseInputMem[0]));
 	spring::SafeDestruct(mouseInp);
 	memset(mouseInputMem, 0, sizeof(mouseInputMem));
 }

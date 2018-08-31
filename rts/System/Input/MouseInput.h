@@ -12,10 +12,11 @@
 class IMouseInput
 {
 public:
-	static IMouseInput* GetInstance();
+	static IMouseInput* GetInstance(bool relModeWarp);
 	static void FreeInstance(IMouseInput*);
 
-	IMouseInput ();
+	IMouseInput() = default;
+	IMouseInput(bool relModeWarp);
 	virtual ~IMouseInput();
 
 	virtual void InstallWndCallback() {}
