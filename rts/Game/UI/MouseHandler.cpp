@@ -625,7 +625,8 @@ void CMouseHandler::WarpMouse(int x, int y)
 	lastx = x + globalRendering->viewPosX;
 	lasty = y + globalRendering->viewPosY;
 
-	mouseInput->SetWarpPos({lastx, lasty});
+	mouseInput->SetPos({lastx, lasty});
+	mouseInput->WarpPos(mouseInput->GetPos());
 }
 
 
@@ -648,7 +649,9 @@ void CMouseHandler::ShowMouse()
 		SDL_ShowCursor(SDL_DISABLE);
 	}
 
-	mouseInput->SetWarpPos(globalRendering->GetScreenCenter());
+	// force a warp back to center
+	mouseInput->SetPos(globalRendering->GetScreenCenter());
+	mouseInput->WarpPos(mouseInput->GetPos());
 }
 
 void CMouseHandler::HideMouse()
