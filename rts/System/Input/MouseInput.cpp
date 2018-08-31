@@ -40,6 +40,7 @@ IMouseInput* mouseInput = nullptr;
 IMouseInput::IMouseInput(bool relModeWarp)
 {
 	inputCon = input.AddHandler(std::bind(&IMouseInput::HandleSDLMouseEvent, this, std::placeholders::_1));
+	#ifndef HEADLESS
 	// Windows 10 FCU (Fall Creators Update) causes spurious SDL_MOUSEMOTION
 	// events to be generated with SDL_HINT_MOUSE_RELATIVE_MODE_WARP enabled
 	//
@@ -53,11 +54,14 @@ IMouseInput::IMouseInput(bool relModeWarp)
 	// on the hint given here); the alternative to RMW would be to *duplicate*
 	// the SDL patch in WarpPos
 	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, relModeWarp? "1": "0");
+	#endif
 }
 
 IMouseInput::~IMouseInput()
 {
+	#ifndef HEADLESS
 	SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
+	#endif
 	inputCon.disconnect();
 }
 
