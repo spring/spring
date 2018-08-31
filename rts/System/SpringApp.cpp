@@ -262,7 +262,6 @@ bool SpringApp::Init()
 	CInfoConsole::InitStatic();
 	CMouseHandler::InitStatic();
 
-	mouseInput = IMouseInput::GetInstance();
 	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
 
 	// Global structures
@@ -914,7 +913,6 @@ void SpringApp::Kill(bool fromRun)
 
 	CInfoConsole::KillStatic();
 	CMouseHandler::KillStatic();
-	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);
 	gs->Kill();

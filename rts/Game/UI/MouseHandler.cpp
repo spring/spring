@@ -72,7 +72,7 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 CMouseHandler::CMouseHandler()
 {
-	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
+	const int2 mousepos = mouseInput->GetPos();
 
 	lastx = mousepos.x;
 	lasty = mousepos.y;
@@ -107,11 +107,15 @@ CMouseHandler::~CMouseHandler()
 void CMouseHandler::InitStatic()
 {
 	assert(mouse == nullptr);
+	assert(mouseInput == nullptr);
+
+	mouseInput = IMouseInput::GetInstance();
 	mouse = new CMouseHandler();
 }
 
 void CMouseHandler::KillStatic()
 {
+	IMouseInput::FreeInstance(mouseInput);
 	spring::SafeDelete(mouse);
 }
 
@@ -620,7 +624,7 @@ void CMouseHandler::WarpMouse(int x, int y)
 	lastx = x + globalRendering->viewPosX;
 	lasty = y + globalRendering->viewPosY;
 
-	mouseInput->SetPos(int2(lastx, lasty));
+	mouseInput->SetWarpPos({lastx, lasty});
 }
 
 
@@ -632,7 +636,9 @@ void CMouseHandler::ShowMouse()
 	hide = false;
 	cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
 
-	// don't use SDL_ShowCursor here, it would cause a flicker with hwCursor
+	SDL_SetRelativeMouseMode(SDL_FALSE);
+
+	// don't use SDL_ShowCursor here since it would cause flickering with hwCursor
 	// (by switching between default cursor and later the real one, e.g. `attack`)
 	// instead update state and cursor at the same time
 	if (hardwareCursor) {
@@ -640,17 +646,24 @@ void CMouseHandler::ShowMouse()
 	} else {
 		SDL_ShowCursor(SDL_DISABLE);
 	}
-}
 
+	mouseInput->SetWarpPos(globalRendering->GetScreenCenter());
+}
 
 void CMouseHandler::HideMouse()
 {
 	if (hide)
 		return;
 
+	hide = true;
 	hwHide = true;
+
 	SDL_ShowCursor(SDL_DISABLE);
-	mouseInput->SetWMMouseCursor(nullptr);
+	// signal that we are only interested in relative motion events when MMB-scrolling
+	// this way the mouse position will never change so it is also unnecessary to call
+	// SDL_WarpMouseInWindow with associated warts (i.e. filtering of motion events by
+	// hand...); technically supercedes SDL_ShowCursor as well
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	const int2 screenCenter = globalRendering->GetScreenCenter();
 
@@ -659,8 +672,8 @@ void CMouseHandler::HideMouse()
 	lastx = screenCenter.x;
 	lasty = screenCenter.y;
 
+	mouseInput->SetWMMouseCursor(nullptr);
 	mouseInput->SetPos(screenCenter);
-	hide = true;
 }
 
 

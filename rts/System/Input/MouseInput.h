@@ -20,8 +20,11 @@ public:
 
 	virtual void InstallWndCallback() {}
 
-	virtual int2 GetPos() { return mousepos; }
-	void SetPos(int2 pos);
+	int2 GetPos() const { return mousepos; }
+
+	bool SetPos(int2 pos);
+	bool WarpPos(int2 pos);
+	bool SetWarpPos(int2 pos) { return (SetPos(pos) && WarpPos(pos)); }
 
 	bool HandleSDLMouseEvent(const SDL_Event& event);
 
