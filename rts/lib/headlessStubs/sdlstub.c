@@ -98,6 +98,7 @@ extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
 }
 
+extern DECLSPEC int SDLCALL SDL_SetRelativeMouseMode(SDL_bool enabled) { return SDL_FALSE; }
 extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
 }
 
@@ -122,16 +123,11 @@ extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int i, int j) {
 extern DECLSPEC void SDLCALL SDL_SetModState(SDL_Keymod modstate) {
 }
 
-extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) {
-	return 0;
-}
+extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) { return 0; }
+extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) { return 0; }
 
-extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) {
-	return 0;
-}
-
-extern DECLSPEC void SDLCALL SDL_PumpEvents() {
-}
+extern DECLSPEC void SDLCALL SDL_FlushEvent(Uint32 type) {}
+extern DECLSPEC void SDLCALL SDL_PumpEvents() {}
 
 extern DECLSPEC void SDLCALL SDL_SetWindowTitle(SDL_Window* window, const char* title) {
 }
