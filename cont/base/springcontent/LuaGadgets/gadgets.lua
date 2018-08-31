@@ -1876,6 +1876,12 @@ function gadgetHandler:DrawInMiniMap(mmsx, mmsy)
 end
 
 
+function gadgetHandler:SunChanged()
+  for _,g in r_ipairs(self.SunChangedList) do
+    g:SunChanged()
+  end
+end
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 

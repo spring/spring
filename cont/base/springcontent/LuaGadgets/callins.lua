@@ -151,6 +151,8 @@ CALLIN_LIST = {
 	"DrawShield",
 	"DrawProjectile",
 
+	"SunChanged",
+
 	-- unsynced message callins
 	"RecvFromSynced",
 	"RecvSkirmishAIMessage",

@@ -160,6 +160,7 @@ local flexCallIns = {
   'DrawScreenEffects',
   'DrawScreenPost',
   'DrawInMiniMap',
+  'SunChanged',
   'RecvSkirmishAIMessage',
 }
 local flexCallInMap = {}
@@ -1353,6 +1354,13 @@ function widgetHandler:DrawInMiniMap(xSize, ySize)
   return
 end
 
+
+function widgetHandler:SunChanged()
+  for _,w in ripairs(self.SunChangedList) do
+    w:SunChanged()
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --
