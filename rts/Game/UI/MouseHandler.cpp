@@ -522,7 +522,7 @@ void CMouseHandler::DrawSelectionBox()
 }
 
 
-float3 CMouseHandler::GetCursorCameraDir(int x, int y) const { (hideCursor? camera->GetDir() : camera->CalcPixelDir(x, y)); }
+float3 CMouseHandler::GetCursorCameraDir(int x, int y) const { return (hideCursor? camera->GetDir() : camera->CalcPixelDir(x, y)); }
 float3 CMouseHandler::GetWorldMapPos() const
 {
 	const float3 cameraPos = camera->GetPos();
