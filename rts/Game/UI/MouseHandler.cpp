@@ -102,7 +102,7 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
-	if (hwHide)
+	if (hwHideCursor)
 		SDL_ShowCursor(SDL_ENABLE);
 
 	configHandler->RemoveObserver(this);
@@ -120,8 +120,8 @@ void CMouseHandler::InitStatic()
 
 void CMouseHandler::KillStatic()
 {
-	IMouseInput::FreeInstance(mouseInput);
 	spring::SafeDelete(mouse);
+	IMouseInput::FreeInstance(mouseInput);
 }
 
 
@@ -221,10 +221,10 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 
 	// calculating deltas (scroll{x,y} = last{x,y} - screenCenter.{x,y})
 	// is not required when using relative motion mode, can add directly
-	scrollx += (dx * hide);
-	scrolly += (dy * hide);
+	scrollx += (dx * hideCursor);
+	scrolly += (dy * hideCursor);
 
-	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+	dir = GetCursorCameraDir(x, y);
 
 	if (locked) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
@@ -232,7 +232,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	}
 
 	const int movedPixels = (int)fastmath::sqrt_sse(float(dx*dx + dy*dy));
-	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
+	buttons[SDL_BUTTON_LEFT ].movement += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
 	if (game != nullptr && !game->IsGameOver())
@@ -257,27 +257,23 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
-	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
-
 	if (game != nullptr && !game->IsGameOver())
 		playerHandler.Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
-	ButtonPressEvt& bp = buttons[button];
+	ButtonPressEvt& bp = buttons[activeButtonIdx = button];
 	bp.chorded  = (buttons[SDL_BUTTON_LEFT].pressed || buttons[SDL_BUTTON_RIGHT].pressed);
 	bp.pressed  = true;
 	bp.time     = gu->gameTime;
 	bp.x        = x;
 	bp.y        = y;
 	bp.camPos   = camera->GetPos();
-	bp.dir      = dir;
+	bp.dir      = (dir = GetCursorCameraDir(x, y));
 	bp.movement = 0;
-
-	activeButtonIdx = button;
 
 	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
 
-	if (inMapDrawer && inMapDrawer->IsDrawMode()) {
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode()) {
 		inMapDrawer->MousePress(x, y, button);
 		return;
 	}
@@ -329,8 +325,14 @@ void CMouseHandler::MousePress(int x, int y, int button)
  * GetSelectionBoxCoeff
  *  returns the topright & bottomleft corner positions of the SelectionBox in (cam->right, cam->up)-space
  */
-void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft)
-{
+void CMouseHandler::GetSelectionBoxCoeff(
+	const float3& pos1,
+	const float3& dir1,
+	const float3& pos2,
+	const float3& dir2,
+	float2& topright,
+	float2& btmleft
+) {
 	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
 	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
 	float3 gpos1 = pos1 + dir1 * dist;
@@ -368,11 +370,11 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
-	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+	dir = GetCursorCameraDir(x, y);
 
 	buttons[button].pressed = false;
 
-	if (inMapDrawer && inMapDrawer->IsDrawMode()){
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode()) {
 		inMapDrawer->MouseRelease(x, y, button);
 		return;
 	}
@@ -461,7 +463,7 @@ void CMouseHandler::MouseWheel(float delta)
 
 void CMouseHandler::DrawSelectionBox()
 {
-	dir = hide ? camera->GetDir() : camera->CalcPixelDir(lastx, lasty);
+	dir = GetCursorCameraDir(lastx, lasty);
 
 	if (activeReceiver)
 		return;
@@ -515,6 +517,7 @@ void CMouseHandler::DrawSelectionBox()
 }
 
 
+float3 CMouseHandler::GetCursorCameraDir(int x, int y) const { (hideCursor? camera->GetDir() : camera->CalcPixelDir(x, y)); }
 float3 CMouseHandler::GetWorldMapPos() const
 {
 	const float3 cameraPos = camera->GetPos();
@@ -594,7 +597,7 @@ void CMouseHandler::Update()
 {
 	SetCursor(newCursor);
 
-	if (!hide)
+	if (!hideCursor)
 		return;
 
 	const int2 screenCenter = globalRendering->GetScreenCenter();
@@ -629,22 +632,17 @@ void CMouseHandler::WarpMouse(int x, int y)
 
 void CMouseHandler::ShowMouse()
 {
-	if (!hide)
+	if (!hideCursor)
 		return;
 
-	hide = false;
-	cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
+	hideCursor = false;
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
 	// don't use SDL_ShowCursor here since it would cause flickering with hwCursor
 	// (by switching between default cursor and later the real one, e.g. `attack`)
 	// instead update state and cursor at the same time
-	if (hardwareCursor) {
-		hwHide = true;
-	} else {
-		SDL_ShowCursor(SDL_DISABLE);
-	}
+	ToggleHwCursor(hardwareCursor);
 
 	// force a warp back to center
 	mouseInput->SetPos(globalRendering->GetScreenCenter());
@@ -653,17 +651,17 @@ void CMouseHandler::ShowMouse()
 
 void CMouseHandler::HideMouse()
 {
-	if (hide)
+	if (hideCursor)
 		return;
 
-	hide = true;
-	hwHide = true;
+	hideCursor = true;
+	hwHideCursor = true;
 
 	SDL_ShowCursor(SDL_DISABLE);
 	// signal that we are only interested in relative motion events when MMB-scrolling
 	// this way the mouse position will never change so it is also unnecessary to call
-	// SDL_WarpMouseInWindow with associated warts (i.e. filtering of motion events by
-	// hand...); technically supercedes SDL_ShowCursor as well
+	// SDL_WarpMouseInWindow and handle the associated wart of filtering motion events
+	// technically supercedes SDL_ShowCursor as well
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	const int2 screenCenter = globalRendering->GetScreenCenter();
@@ -681,24 +679,26 @@ void CMouseHandler::HideMouse()
 void CMouseHandler::ToggleMiddleClickScroll()
 {
 	if (locked) {
-		locked = false;
 		ShowMouse();
 	} else {
-		locked = true;
 		HideMouse();
 	}
+
+	locked = !locked;
+	mmbScroll = !mmbScroll;
 }
 
 
-void CMouseHandler::ToggleHwCursor(const bool& enable)
+void CMouseHandler::ToggleHwCursor(bool enable)
 {
-	hardwareCursor = enable;
-	if (hardwareCursor) {
-		hwHide = true;
+	if ((hardwareCursor = enable)) {
+		hwHideCursor = true;
 	} else {
 		mouseInput->SetWMMouseCursor(nullptr);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
+
+	// force hardware cursor rebinding, otherwise we get a standard b&w cursor
 	cursorText = "none";
 }
 
@@ -726,14 +726,14 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool forceRebind
 		activeCursorIdx = cursorCommandMap[""];
 	}
 
-	if (!hardwareCursor || hide)
+	if (!hardwareCursor || hideCursor)
 		return;
 
 	if (loadedCursors[activeCursorIdx].IsHWValid()) {
-		hwHide = false;
+		hwHideCursor = false;
 		loadedCursors[activeCursorIdx].BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
 	} else {
-		hwHide = true;
+		hwHideCursor = true;
 		SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetWMMouseCursor(nullptr);
 	}
@@ -864,7 +864,7 @@ void CMouseHandler::DrawCursor()
 		return;
 	}
 
-	if (hide)
+	if (hideCursor)
 		return;
 
 	if (hardwareCursor && loadedCursors[activeCursorIdx].IsHWValid())

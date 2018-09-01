@@ -1984,11 +1984,12 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 	lua_pushnumber(L, mouse->lastx - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - mouse->lasty - 1);
 
-	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
+	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT  ].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
-	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
+	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT ].pressed);
 	lua_pushboolean(L, mouse->offscreen);
-	return 6;
+	lua_pushboolean(L, mouse->mmbScroll);
+	return 7;
 }
 
 

@@ -62,6 +62,7 @@ public:
 		return nullptr;
 	}
 
+	float3 GetCursorCameraDir(int x, int y) const;
 	float3 GetWorldMapPos() const;
 
 	std::string GetCurrentTooltip() const;
@@ -69,7 +70,7 @@ public:
 	const std::string& GetCurrentCursor() const { return newCursor; }
 	float GetCurrentCursorScale() const { return cursorScale; }
 
-	void ToggleHwCursor(const bool& enable);
+	void ToggleHwCursor(bool enable);
 
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -77,11 +78,17 @@ public:
 private:
 	void SetCursor(const std::string& cmdName, const bool forceRebind = false);
 
-	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
-
 	void DrawScrollCursor();
 	void DrawFPSCursor();
 
+	static void GetSelectionBoxCoeff(
+		const float3& pos1,
+		const float3& dir1,
+		const float3& pos2,
+		const float3& dir2,
+		float2& topright,
+		float2& btmleft
+	);
 
 public:
 	int lastx = -1;
@@ -89,15 +96,17 @@ public:
 	int activeButtonIdx = -1;
 	int activeCursorIdx = -1;
 
+	/// true if movement is locked, i.e. during MMB-scroll or in FPS-mode
 	bool locked = false;
-	/// Stores if the mouse was locked or not before going into direct control,
-	/// so we can restore it when we return to normal.
+	/// stores if mouse was locked before going into FPS-mode,
+	/// so we can restore it when we return to normal control
 	bool wasLocked = false;
 	bool offscreen = false;
+	bool mmbScroll = false;
 
 private:
-	bool hide = true;
-	bool hwHide = true;
+	bool hideCursor = true;
+	bool hwHideCursor = true;
 	bool hardwareCursor = false;
 	bool invertMouse = false;
 
