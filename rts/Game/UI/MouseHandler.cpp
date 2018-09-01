@@ -219,10 +219,10 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	// MouseInput passes negative coordinates when cursor leaves the window
 	offscreen = (x < 0 && y < 0);
 
-	const int2 screenCenter = globalRendering->GetScreenCenter();
-
-	scrollx += (lastx - screenCenter.x);
-	scrolly += (lasty - screenCenter.y);
+	// calculating deltas (scroll{x,y} = last{x,y} - screenCenter.{x,y})
+	// is not required when using relative motion mode, can add directly
+	scrollx += (dx * hide);
+	scrolly += (dy * hide);
 
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
@@ -599,9 +599,11 @@ void CMouseHandler::Update()
 
 	const int2 screenCenter = globalRendering->GetScreenCenter();
 
-	// Update MiddleClickScrolling
-	scrollx *= 0.5f;
-	scrolly *= 0.5f;
+	// smoothly decay scroll{x,y} to zero s.t the cursor arrows
+	// indicate magnitude and direction of mouse movement while
+	// MMB-scrolling
+	scrollx *= 0.9f;
+	scrolly *= 0.9f;
 	lastx = screenCenter.x;
 	lasty = screenCenter.y;
 
@@ -966,3 +968,4 @@ void CMouseHandler::ConfigNotify(const std::string& key, const std::string& valu
 	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 }
+
