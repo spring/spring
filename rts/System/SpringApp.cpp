@@ -851,7 +851,7 @@ int SpringApp::PostKill(Threading::Error&& e)
 	Threading::SetThreadError(std::move(e));
 
 	// gu always exists, though thread might be too late to interrupt Run
-	return (gu->globalQuit |= true);
+	return (gu->globalQuit = true);
 }
 
 /**
@@ -876,6 +876,9 @@ void SpringApp::Kill(bool fromRun)
 	LOG("[SpringApp::%s][2]", __func__);
 	LuaVFSDownload::Free(true);
 
+	// save window state early for the same reason as client demo
+	if (globalRendering != nullptr)
+		SaveWindowPosAndSize();
 	// see ::Reload
 	if (game != nullptr)
 		game->KillLua(false);
@@ -918,9 +921,6 @@ void SpringApp::Kill(bool fromRun)
 
 	LOG("[SpringApp::%s][7]", __func__);
 	shaderHandler->ClearAll();
-
-	if (globalRendering != nullptr)
-		SaveWindowPosAndSize();
 
 	CGlobalRendering::KillStatic();
 	CLuaSocketRestrictions::KillStatic();
