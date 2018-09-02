@@ -1150,12 +1150,14 @@ end
 
 function gadgetHandler:AllowUnitTransportLoad(
   transporterID, transporterUnitDefID, transporterTeam,
-  transporteeID, transporteeUnitDefID, transporteeTeam
+  transporteeID, transporteeUnitDefID, transporteeTeam,
+  loadPosX, loadPosY, loadPosZ
 )
   for _,g in r_ipairs(self.AllowUnitTransportLoadList) do
     if (not g:AllowUnitTransportLoad(
       transporterID, transporterUnitDefID, transporterTeam,
-      transporteeID, transporteeUnitDefID, transporteeTeam
+      transporteeID, transporteeUnitDefID, transporteeTeam,
+      loadPosX, loadPosY, loadPosZ
     )) then
       return false
     end
@@ -1165,12 +1167,14 @@ end
 
 function gadgetHandler:AllowUnitTransportUnload(
   transporterID, transporterUnitDefID, transporterTeam,
-  transporteeID, transporteeUnitDefID, transporteeTeam
+  transporteeID, transporteeUnitDefID, transporteeTeam,
+  unloadPosX, unloadPosY, unloadPosZ
 )
   for _,g in r_ipairs(self.AllowUnitTransportUnloadList) do
     if (not g:AllowUnitTransportUnload(
       transporterID, transporterUnitDefID, transporterTeam,
-      transporteeID, transporteeUnitDefID, transporteeTeam
+      transporteeID, transporteeUnitDefID, transporteeTeam,
+      unloadPosX, unloadPosY, unloadPosZ
     )) then
       return false
     end
