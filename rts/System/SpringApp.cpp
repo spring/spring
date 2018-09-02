@@ -140,8 +140,8 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 
 int spring::exitCode = spring::EXIT_CODE_SUCCESS;
 
-static unsigned int numReloads = 0;
-static unsigned int numKilleds = 0;
+static unsigned int reloadCount = 0;
+static unsigned int killedCount = 0;
 
 
 
@@ -755,7 +755,7 @@ void SpringApp::Reload(const std::string script)
 		activeController = RunScript(script);
 	}
 
-	LOG("[SpringApp::%s][13] numReloads=%u\n\n\n", __func__, ++numReloads);
+	LOG("[SpringApp::%s][13] reloadCount=%u\n\n\n", __func__, ++reloadCount);
 }
 
 /**
@@ -793,15 +793,16 @@ bool SpringApp::Update()
  */
 int SpringApp::Run()
 {
-	Threading::Error* thrErr = nullptr;
+	// always lives at the same address
+	const Threading::Error* threadError = Threading::GetThreadError();
 
 	// initialize crash reporting
 	CrashHandler::Install();
 
 	// note: exceptions thrown by other threads are *not* caught here
 	try {
-		if (!Init())
-			return spring::EXIT_CODE_FAILURE;
+		if ((gu->globalQuit |= !Init()))
+			spring::exitCode = spring::EXIT_CODE_FAILURE;
 
 		while (!gu->globalQuit) {
 			Watchdog::ClearTimer(WDT_MAIN);
@@ -817,20 +818,18 @@ int SpringApp::Run()
 	} CATCH_SPRING_ERRORS
 
 	// no exception from main, check if some other thread interrupted our regular loop
-	// in case one did, ErrorMessageBox will call ShutDown and forcibly exit the process
-	if (!(thrErr = Threading::GetThreadError())->Empty())
-		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+	// in case one did, ErrorMessageBox will call ::Kill and forcibly exit the process
+	if (!threadError->Empty())
+		ErrorMessageBox("  [thread] " + threadError->message, threadError->caption, threadError->flags);
 
 	try {
-		if (globalRendering != nullptr) {
-			SaveWindowPosAndSize();
-			Kill(true);
-		}
+		Kill(true);
 	} CATCH_SPRING_ERRORS
 
-	// no exception from main, but a thread might have thrown *during* ShutDown
-	if (!(thrErr = Threading::GetThreadError())->Empty())
-		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+	// no exception from main, but a thread might have thrown *during* ::Kill
+	// do not attempt to call Kill a second time, just show the error message
+	if (!threadError->Empty())
+		LOG_L(L_ERROR, "  [thread] errorMsg=\"%s\" msgCaption=\"%s\"", threadError->message.c_str(), threadError->caption.c_str());
 
 	// cleanup signal handlers, etc
 	CrashHandler::Remove();
@@ -851,10 +850,8 @@ int SpringApp::PostKill(Threading::Error&& e)
 	// checked by Run() after Init()
 	Threading::SetThreadError(std::move(e));
 
-	if (gu == nullptr)
-		return 0;
-
-	return (gu->globalQuit = true);
+	// gu always exists, though thread might be too late to interrupt Run
+	return (gu->globalQuit |= true);
 }
 
 /**
@@ -864,14 +861,15 @@ void SpringApp::Kill(bool fromRun)
 {
 	assert(Threading::IsMainThread());
 
-	if (numKilleds > 0) {
+	if (killedCount > 0) {
 		assert(!fromRun);
 		return;
 	}
 	if (!fromRun)
 		Watchdog::ClearTimer();
 
-	numKilleds += 1;
+	// block any (main-thread) exceptions thrown here from causing another Kill
+	killedCount += 1;
 
 	LOG("[SpringApp::%s][1] fromRun=%d", __func__, fromRun);
 	ThreadPool::SetThreadCount(0);
@@ -920,6 +918,10 @@ void SpringApp::Kill(bool fromRun)
 
 	LOG("[SpringApp::%s][7]", __func__);
 	shaderHandler->ClearAll();
+
+	if (globalRendering != nullptr)
+		SaveWindowPosAndSize();
+
 	CGlobalRendering::KillStatic();
 	CLuaSocketRestrictions::KillStatic();
 
@@ -933,7 +935,7 @@ void SpringApp::Kill(bool fromRun)
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __func__);
 
-	numKilleds -= 1;
+	killedCount -= 1;
 }
 
 

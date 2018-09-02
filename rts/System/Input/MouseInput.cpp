@@ -245,8 +245,9 @@ IMouseInput* IMouseInput::GetInstance(bool relModeWarp)
 }
 
 void IMouseInput::FreeInstance(IMouseInput* mouseInp) {
-	assert(mouseInp == reinterpret_cast<IMouseInput*>(&mouseInputMem[0]));
+	assert(mouseInp == mouseInput);
 	spring::SafeDestruct(mouseInp);
 	memset(mouseInputMem, 0, sizeof(mouseInputMem));
+	mouseInput = nullptr;
 }
 
