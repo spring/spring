@@ -253,6 +253,7 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
+
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
 	KillSDL();
@@ -500,7 +501,7 @@ void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clea
 void CGlobalRendering::DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context) {
 	if (window == sdlWindows[0]) {
 		WindowManagerHelper::SetIconSurface(window, nullptr);
-		SDL_SetWindowGrab(window, SDL_FALSE);
+		SetWindowInputGrabbing(false);
 	}
 
 	SDL_GL_MakeCurrent(window, nullptr);
@@ -872,13 +873,8 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
 {
-	if (enable) {
-		SDL_SetWindowGrab(sdlWindows[0], SDL_TRUE);
-		return true;
-	}
-
-	SDL_SetWindowGrab(sdlWindows[0], SDL_FALSE);
-	return false;
+	SDL_SetWindowGrab(sdlWindows[0], enable? SDL_TRUE: SDL_FALSE);
+	return enable;
 }
 
 bool CGlobalRendering::ToggleWindowInputGrabbing()

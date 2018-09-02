@@ -73,8 +73,8 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 
 			SpringApp::Kill(false);
 		} break;
-		case 0: {         } break; // thread failed to post, ESPA
-		case 1: { return; } break; // thread posted successfully
+		case 0: { assert(false); } break; // [unreachable] thread failed to post, ESPA
+		case 1: {        return; } break; // thread posted successfully
 	}
 
 	ExitSpringProcessAux(false, false);
@@ -84,15 +84,15 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
-	#if (!defined(DEDICATED))
-	// the thread that throws up this message-box will be blocked
-	// until it is clicked away which can cause spurious detected
-	// hangs, so deregister it here (by passing an empty error)
-	SpringApp::PostKill({});
-	#endif
-
 	#if (!defined(DEDICATED) && !defined(HEADLESS))
-	Platform::MsgBox(msg, caption, flags);
+	if (Threading::IsMainThread()) {
+		// the thread that throws up this message-box will be blocked
+		// until it is clicked away which can cause spurious detected
+		// hangs, so deregister it here (by forwarding an empty error)
+		// note: main also does the talking for other threads via Run
+		SpringApp::PostKill({});
+		Platform::MsgBox(msg, caption, flags);
+	}
 	#endif
 
 	ExitSpringProcess(msg, caption, flags);
