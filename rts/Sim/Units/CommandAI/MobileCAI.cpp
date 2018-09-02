@@ -1369,9 +1369,10 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 					SetGoal(unit->pos, owner->pos, std::min(64.0f, loadRadius));
 
 				if (inLoadingRadius) {
+					float3 wantedPos = unit->pos;
+
 					if (am != nullptr) {
 						// handle air transports differently
-						float3 wantedPos = unit->pos;
 						wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, unit);
 
 						// calls am->StartMoving() which sets forceHeading to false (and also
@@ -1387,11 +1388,11 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 						am->maxDrift = 1.0f;
 
 						// FIXME: kill the hardcoded constants, use the command's radius
-						const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
-						const bool b2 = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
-						const bool b3 = (owner->updir.dot(UpVector) > 0.995f);
+						const bool isInRange = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
+						const bool isAligned = (std::abs(owner->heading - unit->heading) < AIRTRANSPORT_DOCKING_ANGLE);
+						const bool isUpright = (owner->updir.dot(UpVector) > 0.995f);
 
-						if (!eventHandler.AllowUnitTransportLoad(owner, unit, b1 && b2 && b3))
+						if (!eventHandler.AllowUnitTransportLoad(owner, unit, wantedPos, isInRange && isAligned && isUpright))
 							return;
 
 						am->SetAllowLanding(false);
@@ -1403,7 +1404,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 
 						StopMoveAndFinishCommand();
 					} else {
-						if (!eventHandler.AllowUnitTransportLoad(owner, unit, true))
+						if (!eventHandler.AllowUnitTransportLoad(owner, unit, wantedPos, true))
 							return;
 
 						inCommand = true;
@@ -1896,7 +1897,7 @@ void CMobileCAI::UnloadLand(Command& c)
 	wantedPos.y = owner->GetTransporteeWantedHeight(wantedPos, transportee);
 
 	if ((am = dynamic_cast<CHoverAirMoveType*>(owner->moveType)) == nullptr) {
-		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, true))
+		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, true))
 			return;
 
 		inCommand = true;
@@ -1917,11 +1918,11 @@ void CMobileCAI::UnloadLand(Command& c)
 
 		// FIXME: kill the hardcoded constants, use the command's radius
 		// NOTE: 2D distance-check would mean units get dropped from air
-		const bool b1 = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
-		const bool b2 = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
-		const bool b3 = (owner->updir.dot(UpVector) > 0.99f);
+		const bool isInRange = (owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS));
+		const bool isAligned = (std::abs(owner->heading - am->GetForcedHeading()) < AIRTRANSPORT_DOCKING_ANGLE);
+		const bool isUpright = (owner->updir.dot(UpVector) > 0.99f);
 
-		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, b1 && b2 && b3))
+		if (!eventHandler.AllowUnitTransportUnload(owner, transportee, wantedPos, isInRange && isAligned && isUpright))
 			return;
 
 		wantedPos.y -= transportee->radius;

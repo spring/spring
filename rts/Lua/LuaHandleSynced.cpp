@@ -617,13 +617,18 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit*
 	return allow;
 }
 
-bool CSyncedLuaHandle::AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, bool allowed)
-{
+bool CSyncedLuaHandle::AllowUnitTransportLoad(
+	const CUnit* transporter,
+	const CUnit* transportee,	
+	const float3& loadPos,
+	bool allowed
+) {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 2 + 6, __func__);
+	luaL_checkstack(L, 2 + 9, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
+	// use engine default if callin does not exist
 	if (!cmdStr.GetGlobalFunc(L))
 		return allowed;
 
@@ -633,19 +638,27 @@ bool CSyncedLuaHandle::AllowUnitTransportLoad(const CUnit* transporter, const CU
 	lua_pushnumber(L, transportee->id);
 	lua_pushnumber(L, transportee->unitDef->id);
 	lua_pushnumber(L, transportee->team);
+	lua_pushnumber(L, loadPos.x);
+	lua_pushnumber(L, loadPos.y);
+	lua_pushnumber(L, loadPos.z);
 
-	if (!RunCallIn(L, cmdStr, 6, 1))
+	if (!RunCallIn(L, cmdStr, 9, 1))
 		return true;
 
+	// ditto if it does but returns nothing
 	const bool allow = luaL_optboolean(L, -1, allowed);
 	lua_pop(L, 1);
 	return allow;
 }
 
-bool CSyncedLuaHandle::AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, bool allowed)
-{
+bool CSyncedLuaHandle::AllowUnitTransportUnload(
+	const CUnit* transporter,
+	const CUnit* transportee,
+	const float3& unloadPos,
+	bool allowed
+) {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 2 + 6, __func__);
+	luaL_checkstack(L, 2 + 9, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
@@ -658,8 +671,11 @@ bool CSyncedLuaHandle::AllowUnitTransportUnload(const CUnit* transporter, const 
 	lua_pushnumber(L, transportee->id);
 	lua_pushnumber(L, transportee->unitDef->id);
 	lua_pushnumber(L, transportee->team);
+	lua_pushnumber(L, unloadPos.x);
+	lua_pushnumber(L, unloadPos.y);
+	lua_pushnumber(L, unloadPos.z);
 
-	if (!RunCallIn(L, cmdStr, 6, 1))
+	if (!RunCallIn(L, cmdStr, 9, 1))
 		return true;
 
 	const bool allow = luaL_optboolean(L, -1, allowed);

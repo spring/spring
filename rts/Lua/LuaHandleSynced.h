@@ -59,8 +59,8 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;
 		bool AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part) override;
 		bool AllowUnitTransport(const CUnit* transporter, const CUnit* transportee) override;
-		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, bool allowed) override;
-		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, bool allowed) override;
+		bool AllowUnitTransportLoad(const CUnit* transporter, const CUnit* transportee, const float3& loadPos, bool allowed) override;
+		bool AllowUnitTransportUnload(const CUnit* transporter, const CUnit* transportee, const float3& unloadPos, bool allowed) override;
 		bool AllowUnitCloak(const CUnit* unit, const CUnit* enemy) override;
 		bool AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon) override;
 		bool AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos) override;
