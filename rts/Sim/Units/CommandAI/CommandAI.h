@@ -93,8 +93,8 @@ public:
 	virtual void ExecuteStop(Command& c);
 
 	void UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd);
-	void UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc);
-	void InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, SCommandDescription&& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, SCommandDescription&& cmdDesc);
 	bool RemoveCommandDescription(unsigned int cmdDescIdx);
 
 	void UpdateNonQueueingCommands();

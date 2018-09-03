@@ -115,7 +115,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Repair";
 		c.tooltip   = c.name + ": Repairs another unit";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 	else if (owner->unitDef->canAssist) {
 		SCommandDescription c;
@@ -127,7 +127,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Assist";
 		c.tooltip   = c.name + ": Help build something";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canReclaim) {
@@ -140,7 +140,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Reclaim";
 		c.tooltip   = c.name + ": Sucks in the metal/energy content of a unit/feature\nand adds it to your storage";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canRestore && !mapDamage->Disabled()) {
@@ -154,7 +154,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.tooltip   = c.name + ": Restores an area of the map to its original height";
 		c.mouseicon = c.name;
 
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canResurrect) {
@@ -167,7 +167,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Resurrect";
 		c.tooltip   = c.name + ": Resurrects a unit from a feature";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 	if (owner->unitDef->canCapture) {
 		SCommandDescription c;
@@ -179,7 +179,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Capture";
 		c.tooltip   = c.name + ": Captures a unit from the enemy";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	for (const auto& bi: ownerBuilder->unitDef->buildOptions) {
@@ -206,7 +206,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
 			buildOptions.insert(c.id);
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 	}
 

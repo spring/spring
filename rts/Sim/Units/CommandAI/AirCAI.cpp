@@ -73,7 +73,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.name      = "Area attack";
 		c.tooltip   = c.name + ": Sets the aircraft to attack enemy units within a circle";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	basePos = owner->pos;
