@@ -34,7 +34,10 @@ CR_REG_METADATA(CCommandDescriptionCache, (
 	// FIXME: std::pair type deduction
 	CR_IGNORED(index),
 	CR_MEMBER(slots),
-	CR_MEMBER(cache)
+	CR_MEMBER(cache),
+
+	CR_MEMBER(numCmdDescrs),
+	CR_MEMBER(numFreeSlots)
 ))
 
 
