@@ -89,7 +89,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	for (int a = 0; a < teamHandler.ActiveTeams(); a++) {
 		s->SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
-	s->SerializeObjectInstance(commandDescriptionCache, commandDescriptionCache->GetClass());
+	s->SerializeObjectInstance(&commandDescriptionCache, commandDescriptionCache.GetClass());
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
 }
 

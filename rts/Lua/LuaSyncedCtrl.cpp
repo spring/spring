@@ -4711,7 +4711,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	SCommandDescription cmdDesc = *cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
-	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);
+	unit->commandAI->UpdateCommandDescription(cmdDescIdx, std::move(cmdDesc));
 	return 0;
 }
 
@@ -4745,7 +4745,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 	SCommandDescription cd;
 
 	ParseCommandDescription(L, tableIdx, cd);
-	unit->commandAI->InsertCommandDescription(cmdDescIdx, cd);
+	unit->commandAI->InsertCommandDescription(cmdDescIdx, std::move(cd));
 	return 0;
 }
 

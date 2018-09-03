@@ -66,7 +66,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Move";
 		c.tooltip   = c.name + ": Order ready built units to move to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canPatrol) {
@@ -79,7 +79,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order ready built units to patrol to one or more waypoints";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canFight) {
@@ -92,7 +92,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order ready built units to take action while moving to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canGuard) {
@@ -105,7 +105,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order ready built units to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	CFactory* fac = static_cast<CFactory*>(owner);
@@ -134,7 +134,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
 			buildOptions[c.id] = 0;
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 	}
 }
@@ -427,22 +427,21 @@ int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CFactoryCAI::UpdateIconName(int cmdID, const int& numQueued)
 {
-	for (auto pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
-		const SCommandDescription* cd = *pci;
+	for (const SCommandDescription*& cd: possibleCommands) {
 		if (cd->id != cmdID)
 			continue;
 
 		char t[32];
 		SNPRINTF(t, 10, "%d", numQueued);
 
-		SCommandDescription c = *cd;
-		c.params.clear();
+		SCommandDescription ucd = *cd;
+		ucd.params.clear();
 
 		if (numQueued > 0)
-			c.params.push_back(t);
+			ucd.params.push_back(t);
 
-		commandDescriptionCache->DecRef(*cd);
-		*pci = commandDescriptionCache->GetPtr(c);
+		commandDescriptionCache.DecRef(*cd);
+		cd = commandDescriptionCache.GetPtr(std::move(ucd));
 		break;
 	}
 

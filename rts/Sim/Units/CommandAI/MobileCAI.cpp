@@ -141,7 +141,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canmove) {
@@ -156,7 +156,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.params.push_back("1000000"); // max distance
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canPatrol) {
@@ -169,7 +169,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order the unit to patrol to one or more waypoints";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canFight) {
@@ -182,7 +182,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order the unit to take action while moving to a position";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canGuard) {
@@ -195,7 +195,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order a unit to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
-		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+		possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 	}
 
 	if (owner->unitDef->canfly) {
@@ -217,7 +217,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("LandAt 30");
 			c.params.push_back("LandAt 50");
 			c.params.push_back("LandAt 80");
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 		{
 			SCommandDescription c;
@@ -235,7 +235,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("1");
 			c.params.push_back(" Fly ");
 			c.params.push_back("Land");
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 	}
 
@@ -250,7 +250,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Load units";
 			c.tooltip   = c.name + ": Sets the transport to load a unit or units within an area";
 			c.mouseicon = c.name;
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 		{
 			SCommandDescription c;
@@ -262,7 +262,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Unload units";
 			c.tooltip   = c.name + ": Sets the transport to unload units in an area";
 			c.mouseicon = c.name;
-			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
+			possibleCommands.push_back(commandDescriptionCache.GetPtr(std::move(c)));
 		}
 	}
 
