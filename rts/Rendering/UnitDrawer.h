@@ -147,8 +147,8 @@ public:
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
-	ModelRenderContainer<CUnit>* GetOpaqueModelRenderer(int modelType) { return &opaqueModelRenderers[modelType]; }
-	ModelRenderContainer<CUnit>* GetAlphaModelRenderer(int modelType) { return &alphaModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>& GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
