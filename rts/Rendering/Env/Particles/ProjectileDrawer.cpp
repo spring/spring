@@ -22,7 +22,6 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -258,7 +257,7 @@ void CProjectileDrawer::Init() {
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
+		modelRenderers[modelType].Init();
 	}
 
 	LoadWeaponTextures();
@@ -273,7 +272,7 @@ void CProjectileDrawer::Kill() {
 	spring::SafeDelete(groundFXAtlas);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		spring::SafeDelete(modelRenderers[modelType]);
+		modelRenderers[modelType].Kill();
 	}
 
 	smokeTextures.clear();
@@ -425,11 +424,12 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
-	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
+	const auto& mdlRenderer = modelRenderers[modelType];
+	// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-		CUnitDrawer::BindModelTypeTexture(modelType, binIt->first);
-		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
+		DrawProjectilesSet(mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i)), drawReflection, drawRefraction);
 	}
 
 	DrawFlyingPieces(modelType);
@@ -477,10 +477,11 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 {
-	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
+	const auto& mdlRenderer = modelRenderers[modelType];
+	// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-		DrawProjectilesSetShadow(binIt->second);
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		DrawProjectilesSetShadow(mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i)));
 	}
 
 	DrawFlyingPieces(modelType);
@@ -524,18 +525,16 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	points->Initialize();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		const auto& projectileBin = modelRenderers[modelType]->GetProjectileBin();
+		const auto& mdlRenderer = modelRenderers[modelType];
+		// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
-		if (projectileBin.empty())
-			continue;
+		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+			const auto& projectileBin = mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i));
 
-		for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
-			const auto& projectileSet = binIt->second;
+			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
+			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
 
-			lines->EnlargeArrays(projectileSet.size() * 2, 0, VA_SIZE_C);
-			points->EnlargeArrays(projectileSet.size(), 0, VA_SIZE_C);
-
-			for (CProjectile* p: projectileSet) {
+			for (CProjectile* p: projectileBin) {
 				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
@@ -953,8 +952,8 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
+	if (p->model != nullptr) {
+		modelRenderers[MDL_TYPE(p)].AddObject(p);
 	} else {
 		renderProjectiles.push_back(const_cast<CProjectile*>(p));
 	}
@@ -962,8 +961,8 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 
 void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 {
-	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
+	if (p->model != nullptr) {
+		modelRenderers[MDL_TYPE(p)].DelObject(p);
 	} else {
 		auto it = std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p));
 		assert(it != renderProjectiles.end());

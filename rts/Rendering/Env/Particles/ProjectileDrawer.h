@@ -10,6 +10,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 #include "System/UnorderedSet.hpp"
@@ -19,7 +20,6 @@ class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-class IModelRenderContainer;
 class LuaTable;
 
 namespace Shader {
@@ -160,7 +160,7 @@ private:
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
+	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
 
 	ProjectileDistanceComparator zSortCmp;
 

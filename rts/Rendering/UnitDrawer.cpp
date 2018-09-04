@@ -29,7 +29,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/Models/ModelRenderContainer.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
@@ -259,8 +258,8 @@ void CUnitDrawer::Init() {
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
-		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
+		opaqueModelRenderers[modelType].Init();
+		alphaModelRenderers[modelType].Init();
 	}
 
 	unitsByIcon.reserve(unitDefHandler->NumUnitDefs());
@@ -344,8 +343,8 @@ void CUnitDrawer::Kill()
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		spring::SafeDelete(opaqueModelRenderers[modelType]);
-		spring::SafeDelete(alphaModelRenderers[modelType]);
+		opaqueModelRenderers[modelType].Kill();
+		alphaModelRenderers[modelType].Kill();
 	}
 
 	unsortedUnits.clear();
@@ -449,15 +448,13 @@ void CUnitDrawer::DrawOpaquePass(bool deferredPass)
 
 void CUnitDrawer::DrawOpaqueUnits(int modelType, bool drawReflection, bool drawRefraction)
 {
-	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	const auto& mdlRenderer = opaqueModelRenderers[modelType];
+	// const auto& unitBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (const auto& unitBinPair: unitBin) {
-		const auto& unitSet = unitBinPair.second;
-		const int textureType = unitBinPair.first;
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+		BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-		BindModelTypeTexture(modelType, textureType);
-
-		for (CUnit* unit: unitSet) {
+		for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
 			DrawOpaqueUnit(unit, drawReflection, drawRefraction);
 		}
 	}
@@ -642,18 +639,16 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 
 
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
-	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	const auto& mdlRenderer = opaqueModelRenderers[modelType];
+	// const auto& unitBinKeys = mdlRenderer.GetObjectBinKeys();
 
-	for (const auto& unitBinPair: unitBin) {
-		const auto& unitSet = unitBinPair.second;
-		const int textureType = unitBinPair.first;
-
+	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		// only need to bind the atlas once for 3DO's, but KISS
-		assert((modelType != MODELTYPE_3DO) || (textureType == 0));
-		shadowTexBindFuncs[modelType](textureHandlerS3O.GetTexture(textureType));
+		assert((modelType != MODELTYPE_3DO) || (mdlRenderer.GetObjectBinKey(i) == 0));
+		shadowTexBindFuncs[modelType](textureHandlerS3O.GetTexture(mdlRenderer.GetObjectBinKey(i)));
 
-		for (const auto& unitSetP: unitSet) {
-			DrawOpaqueUnitShadow(unitSetP);
+		for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+			DrawOpaqueUnitShadow(unit);
 		}
 
 		shadowTexKillFuncs[modelType](nullptr);
@@ -819,13 +814,13 @@ void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 void CUnitDrawer::DrawAlphaUnits(int modelType)
 {
 	{
-		const auto mdlRenderer = alphaModelRenderers[modelType];
-		const auto& unitBin = mdlRenderer->GetUnitBin();
+		const auto& mdlRenderer = alphaModelRenderers[modelType];
+		// const auto& unitBinKeys = mdlRenderer.GetObjectBinKeys();
 
-		for (const auto& binElem: unitBin) {
-			BindModelTypeTexture(modelType, binElem.first);
+		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+			BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CUnit* unit: binElem.second) {
+			for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
 				DrawAlphaUnit(unit, modelType, false);
 			}
 		}
@@ -1695,9 +1690,9 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 	if (u->model != nullptr) {
 		if (cloaked) {
-			alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			alphaModelRenderers[MDL_TYPE(u)].AddObject(u);
 		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)].AddObject(u);
 		}
 	}
 
@@ -1748,8 +1743,8 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 	if (u->model != nullptr) {
 		// delete from both; cloaked state is unreliable at this point
-		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		alphaModelRenderers[MDL_TYPE(u)].DelObject(u);
+		opaqueModelRenderers[MDL_TYPE(u)].DelObject(u);
 	}
 
 	spring::VectorErase(unsortedUnits, u);
@@ -1763,8 +1758,8 @@ void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (u->model != nullptr) {
-		alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		alphaModelRenderers[MDL_TYPE(u)].AddObject(u);
+		opaqueModelRenderers[MDL_TYPE(u)].DelObject(u);
 	}
 }
 
@@ -1772,8 +1767,8 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (u->model != nullptr) {
-		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)].AddObject(u);
+		alphaModelRenderers[MDL_TYPE(u)].DelObject(u);
 	}
 }
 
