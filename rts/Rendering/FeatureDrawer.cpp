@@ -170,6 +170,13 @@ void CFeatureDrawer::Init()
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
 	camVisDrawFrames.fill(0);
 
+	for (RdrContProxy& p: modelRenderers) {
+		p.SetLastDrawFrame(0);
+		(p.GetRenderer(MODELTYPE_3DO)).Init();
+		(p.GetRenderer(MODELTYPE_S3O)).Init();
+		(p.GetRenderer(MODELTYPE_ASS)).Init();
+	}
+
 	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
 		camVisibleQuads[n].clear();
 		camVisibleQuads[n].reserve(256);
@@ -181,7 +188,14 @@ void CFeatureDrawer::Kill()
 	eventHandler.RemoveClient(this);
 	autoLinkedEvents.clear();
 
-	modelRenderers.clear();
+	// reuse inner containers when reloading
+	// modelRenderers.clear();
+	for (RdrContProxy& p: modelRenderers) {
+		(p.GetRenderer(MODELTYPE_3DO)).Kill();
+		(p.GetRenderer(MODELTYPE_S3O)).Kill();
+		(p.GetRenderer(MODELTYPE_ASS)).Kill();
+	}
+
 	unsortedFeatures.clear();
 
 	geomBuffer = nullptr;
@@ -214,8 +228,8 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		spring::VectorErase(unsortedFeatures, f);
 	}
-	if (f->model && f->drawQuad >= 0) {
-		modelRenderers[f->drawQuad].GetRenderer(MDL_TYPE(f))->DelFeature(f);
+	if (f->model != nullptr && f->drawQuad >= 0) {
+		modelRenderers[f->drawQuad].GetRenderer(MDL_TYPE(f)).DelObject(f);
 		f->drawQuad = -1;
 	}
 
@@ -247,12 +261,11 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 	assert(oldDrawQuad < drawQuadsX * drawQuadsY);
 	assert(newDrawQuad < drawQuadsX * drawQuadsY && newDrawQuad >= 0);
 
-	if (feature->model) {
-		if (oldDrawQuad >= 0) {
-			modelRenderers[oldDrawQuad].GetRenderer(MDL_TYPE(feature))->DelFeature(feature);
-		}
+	if (feature->model != nullptr) {
+		if (oldDrawQuad >= 0)
+			modelRenderers[oldDrawQuad].GetRenderer(MDL_TYPE(feature)).DelObject(feature);
 
-		modelRenderers[newDrawQuad].GetRenderer(MDL_TYPE(feature))->AddFeature(feature);
+		modelRenderers[newDrawQuad].GetRenderer(MDL_TYPE(feature)).AddObject(feature);
 	}
 
 	feature->drawQuad = newDrawQuad;
@@ -327,13 +340,13 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
-		const auto mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
-		const auto& featureBin = mdlRenderer->GetFeatureBin();
+		const auto& mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
+		// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 
-		for (const auto& binElem: featureBin) {
-			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
+		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+			CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CFeature* f: binElem.second) {
+			for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
 				// fartex, opaque, shadow are allowed here
 				switch (f->drawFlag) {
 					case CFeature::FD_NODRAW_FLAG: {                              continue; } break;
@@ -499,13 +512,13 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
-		const auto mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
-		const auto& featureBin = mdlRenderer->GetFeatureBin();
+		const auto& mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
+		// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 
-		for (const auto& binElem: featureBin) {
-			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
+		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+			CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CFeature* f: binElem.second) {
+			for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
 				// only alpha is allowed here
 				switch (f->drawFlag) {
 					case CFeature::FD_NODRAW_FLAG: { continue; } break;
@@ -632,11 +645,12 @@ void CFeatureDrawer::FlagVisibleFeatures(
 		auto& mdlRenderProxy = featureDrawer->modelRenderers[ quads[n] ];
 
 		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
-			auto mdlRenderer = mdlRenderProxy.GetRenderer(i);
-			auto& featureBin = mdlRenderer->GetFeatureBinMutable();
+			const auto& mdlRenderer = mdlRenderProxy.GetRenderer(i);
+			// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 
-			for (auto& binElem: featureBin) {
-				for (CFeature* f: binElem.second) {
+
+			for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
+				for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
 					assert(quads[n] == f->drawQuad);
 
 					// clear marker; will be set at most once below

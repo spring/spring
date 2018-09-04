@@ -8,6 +8,7 @@
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/UnitDrawerState.hpp"
 #include "Rendering/UnitDefImage.h"
 #include "System/EventClient.h"
@@ -18,7 +19,6 @@ struct SolidObjectDef;
 struct UnitDef;
 struct S3DModel;
 
-class IModelRenderContainer;
 class CSolidObject;
 class CUnit;
 class CVertexArray;
@@ -147,8 +147,8 @@ public:
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
-	IModelRenderContainer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IModelRenderContainer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>* GetOpaqueModelRenderer(int modelType) { return &opaqueModelRenderers[modelType]; }
+	ModelRenderContainer<CUnit>* GetAlphaModelRenderer(int modelType) { return &alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
@@ -273,8 +273,8 @@ private:
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
-	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> opaqueModelRenderers;
+	std::array<ModelRenderContainer<CUnit>, MODELTYPE_OTHER> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)

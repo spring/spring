@@ -6,85 +6,105 @@
 #define MDL_TYPE(o) (o->model->type)
 #define TEX_TYPE(o) (o->model->textureType)
 
-#include "System/UnorderedMap.hpp"
-#include "Rendering/Models/3DModel.h"
+#include <array>
+#include <vector>
 
+#include "Rendering/Models/3DModel.h"
+#include "System/ContainerUtil.h"
+
+#if 0
 class CUnit;
 class CFeature;
 class CProjectile;
+#endif
 
-class IModelRenderContainer {
+template<typename TObject>
+class ModelRenderContainer {
+private:
+	// [0] stores the number of texture-type keys, i.e. non-empty bins
+	// note there can be no more texture-types than S3DModel instances
+	std::array<int, 1 + MAX_MODEL_OBJECTS> objectBinKeys;
+	std::array<std::vector<TObject*>, MAX_MODEL_OBJECTS> objectBins;
+
+	unsigned int numObjects = 0;
+
 public:
-	static IModelRenderContainer* GetInstance(int);
+	void Kill() {}
+	void Init() {
+		objectBinKeys.fill(0);
 
-	IModelRenderContainer(int mdlType): modelType(mdlType) {
-		numUnits = 0;
-		numFeatures = 0;
-		numProjectiles = 0;
+		// reuse inner vectors when reloading
+		for (auto& bin: objectBins) {
+			bin.clear();
+		}
+
+		numObjects = 0;
 	}
-	virtual ~IModelRenderContainer();
 
-	virtual void AddUnit(const CUnit*);
-	virtual void DelUnit(const CUnit*);
+
+	void AddObject(const TObject* o) {
+		auto& bin = objectBins[TEX_TYPE(o)];
+		auto& keys = objectBinKeys;
+
+		if (bin.empty()) {
+			bin.reserve(256);
+
+			const auto beg = keys.begin() + 1;
+			const auto end = keys.begin() + 1 + keys[0];
+
+			if (std::find(beg, end, TEX_TYPE(o)) == end)
+				keys[ ++keys[0] ] = TEX_TYPE(o);
+		}
+
+		// cast since updating an object's draw-position requires mutability
+		if (!spring::VectorInsertUnique(bin, const_cast<TObject*>(o)))
+			assert(false);
+
+		numObjects += 1;
+	}
+
+	void DelObject(const TObject* o) {
+		assert(TEX_TYPE(o) < objectBins.size());
+
+		auto& bin = objectBins[TEX_TYPE(o)];
+		auto& keys = objectBinKeys;
+
+		// object can be legally absent from this container
+		// e.g. UnitDrawer invokes DelObject on both opaque
+		// and alpha containers (since it does not know the
+		// cloaked state)
+		if (spring::VectorErase(bin, const_cast<TObject*>(o)))
+			numObjects -= 1;
+
+		if (!bin.empty())
+			return;
+
+		// keep the empty bin, just remove it from the key-set
+		// TODO: might want to keep these in sorted order
+		const auto beg = keys.begin() + 1;
+		const auto end = keys.begin() + 1 + keys[0];
+		const auto  it = std::find(beg, end, TEX_TYPE(o));
+
+		if (it == end)
+			return;
+
+		keys[*it] = keys[ keys[0]-- ];
+	}
+
+
+	unsigned int GetNumObjects() const { return numObjects; }
+	unsigned int GetNumObjectBins() const { return objectBinKeys[0]; }
+
+	int GetObjectBinKey(unsigned int i) const { return objectBinKeys[1 + i]; }
 
 public:
-	virtual void AddFeature(const CFeature*);
-	virtual void DelFeature(const CFeature*);
+	typedef typename std::remove_reference<decltype(objectBins[0])>::type ObjectBin;
 
-	virtual void AddProjectile(const CProjectile*);
-	virtual void DelProjectile(const CProjectile*);
+	const decltype(objectBinKeys)& GetObjectBinKeys() const { return objectBinKeys; }
 
-	unsigned int GetNumUnits() const { return numUnits; }
-	unsigned int GetNumFeatures() const { return numFeatures; }
-	unsigned int GetNumProjectiles() const { return numProjectiles; }
-
-protected:
-	typedef std::vector<      CUnit*>       UnitSet;
-	typedef std::vector<   CFeature*>    FeatureSet;
-	typedef std::vector<CProjectile*> ProjectileSet;
-
-	// textureType ==> modelSet
-	typedef spring::unordered_map<int,       UnitSet>       UnitRenderBin;
-	typedef spring::unordered_map<int,    FeatureSet>    FeatureRenderBin;
-	typedef spring::unordered_map<int, ProjectileSet> ProjectileRenderBin;
-
-	UnitRenderBin units;              // all opaque or all cloaked
-	FeatureRenderBin features;        // all (opaque and fade) or all shadow
-	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
-
-	int modelType;
-
-	unsigned int numUnits;
-	unsigned int numFeatures;
-	unsigned int numProjectiles;
-
-public:
-	const UnitSet& GetUnitSet(int texType) { return units[texType]; }
-	const FeatureSet& GetFeatureSet(int texType) { return features[texType]; }
-	const ProjectileSet& GetProjectileSet(int texType) { return projectiles[texType]; }
-
-	const UnitRenderBin& GetUnitBin() const { return units; }
-	const FeatureRenderBin& GetFeatureBin() const { return features; }
-	const ProjectileRenderBin& GetProjectileBin() const { return projectiles; }
-
-	UnitRenderBin& GetUnitBinMutable() { return units; }
-	FeatureRenderBin& GetFeatureBinMutable() { return features; }
-	ProjectileRenderBin& GetProjectileBinMutable() { return projectiles; }
-};
-
-class ModelRenderContainer3DO: public IModelRenderContainer {
-public:
-	ModelRenderContainer3DO(): IModelRenderContainer(MODELTYPE_3DO) {}
-};
-
-class ModelRenderContainerS3O: public IModelRenderContainer {
-public:
-	ModelRenderContainerS3O(): IModelRenderContainer(MODELTYPE_S3O) {}
-};
-
-class ModelRenderContainerASS: public IModelRenderContainer {
-public:
-	ModelRenderContainerASS(): IModelRenderContainer(MODELTYPE_ASS) {}
+	const ObjectBin& GetObjectBin       (int key) const { return objectBins[key]; }
+	      ObjectBin& GetObjectBinMutable(int key)       { return objectBins[key]; }
 };
 
 #endif
+
