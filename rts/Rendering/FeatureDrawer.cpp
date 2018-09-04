@@ -607,17 +607,16 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 	const CCamera* playerCam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-	for (unsigned int n = 0; n < quads.size(); n++) {
-		auto& mdlRenderProxy = featureDrawer->modelRenderers[ quads[n] ];
+	for (int quad: quads) {
+		auto& mdlRenderProxy = featureDrawer->modelRenderers[quad];
 
 		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
 			const auto& mdlRenderer = mdlRenderProxy.GetRenderer(i);
 			// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 
-
-			for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
-				for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
-					assert(quads[n] == f->drawQuad);
+			for (unsigned int j = 0, n = mdlRenderer.GetNumObjectBins(); j < n; j++) {
+				for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(j))) {
+					assert(quad == f->drawQuad);
 
 					// clear marker; will be set at most once below
 					f->drawFlag = CFeature::FD_NODRAW_FLAG;
