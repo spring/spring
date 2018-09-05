@@ -54,7 +54,6 @@ public:
 			#endif
 
 			keys[ ++keys[0] ] = TEX_TYPE(o);
-printf("[%s][this=%p][X] o->id=%d textype=%d #keys=%u\n", __func__, this, o->id, TEX_TYPE(o), keys[0]);
 		}
 
 		// cast since updating an object's draw-position requires mutability
