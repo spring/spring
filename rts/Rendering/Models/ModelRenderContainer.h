@@ -54,6 +54,7 @@ public:
 			#endif
 
 			keys[ ++keys[0] ] = TEX_TYPE(o);
+printf("[%s][this=%p][X] o->id=%d textype=%d #keys=%u\n", __func__, this, o->id, TEX_TYPE(o), keys[0]);
 		}
 
 		// cast since updating an object's draw-position requires mutability
@@ -69,19 +70,18 @@ public:
 		// object can be legally absent from this container
 		// e.g. UnitDrawer invokes DelObject on both opaque
 		// and alpha containers (since it does not know the
-		// cloaked state)
+		// cloaked state) which also means the tex-type key
+		// might not exist here
 		numObjects -= spring::VectorErase(bin, const_cast<TObject*>(o));
 
 		if (!bin.empty())
 			return;
 
-		// keep the empty bin, just remove it from the key-set
-		// TODO: might want to keep these in sorted order
+		// keep empty bin, just remove it from the key-set
+		// TODO: might want to (re)sort keys, less jumping
 		const auto beg = keys.begin() + 1;
 		const auto end = keys.begin() + 1 + keys[0];
 		const auto  it = std::find(beg, end, TEX_TYPE(o));
-
-		assert(it != end);
 
 		if (it == end)
 			return;
