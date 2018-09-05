@@ -12,12 +12,6 @@
 #include "Rendering/Models/3DModel.h"
 #include "System/ContainerUtil.h"
 
-#if 0
-class CUnit;
-class CFeature;
-class CProjectile;
-#endif
-
 template<typename TObject>
 class ModelRenderContainer {
 private:
@@ -27,6 +21,9 @@ private:
 	std::array<std::vector<TObject*>, MAX_MODEL_OBJECTS> objectBins;
 
 	unsigned int numObjects = 0;
+
+	typedef           decltype(objectBinKeys)              BinKeySet;
+	typedef  typename decltype(objectBins   )::value_type  ObjectBin;
 
 public:
 	void Kill() {}
@@ -49,18 +46,18 @@ public:
 		if (bin.empty()) {
 			bin.reserve(256);
 
+			#ifdef DEBUG
 			const auto beg = keys.begin() + 1;
 			const auto end = keys.begin() + 1 + keys[0];
 
-			if (std::find(beg, end, TEX_TYPE(o)) == end)
-				keys[ ++keys[0] ] = TEX_TYPE(o);
+			assert(std::find(beg, end, TEX_TYPE(o)) == end);
+			#endif
+
+			keys[ ++keys[0] ] = TEX_TYPE(o);
 		}
 
 		// cast since updating an object's draw-position requires mutability
-		if (!spring::VectorInsertUnique(bin, const_cast<TObject*>(o)))
-			assert(false);
-
-		numObjects += 1;
+		numObjects += spring::VectorInsertUnique(bin, const_cast<TObject*>(o));
 	}
 
 	void DelObject(const TObject* o) {
@@ -73,8 +70,7 @@ public:
 		// e.g. UnitDrawer invokes DelObject on both opaque
 		// and alpha containers (since it does not know the
 		// cloaked state)
-		if (spring::VectorErase(bin, const_cast<TObject*>(o)))
-			numObjects -= 1;
+		numObjects -= spring::VectorErase(bin, const_cast<TObject*>(o));
 
 		if (!bin.empty())
 			return;
@@ -84,6 +80,8 @@ public:
 		const auto beg = keys.begin() + 1;
 		const auto end = keys.begin() + 1 + keys[0];
 		const auto  it = std::find(beg, end, TEX_TYPE(o));
+
+		assert(it != end);
 
 		if (it == end)
 			return;
@@ -97,13 +95,8 @@ public:
 
 	int GetObjectBinKey(unsigned int i) const { return objectBinKeys[1 + i]; }
 
-public:
-	typedef typename std::remove_reference<decltype(objectBins[0])>::type ObjectBin;
-
-	const decltype(objectBinKeys)& GetObjectBinKeys() const { return objectBinKeys; }
-
-	const ObjectBin& GetObjectBin       (int key) const { return objectBins[key]; }
-	      ObjectBin& GetObjectBinMutable(int key)       { return objectBins[key]; }
+	const BinKeySet& GetObjectBinKeys() const { return objectBinKeys; }
+	const ObjectBin& GetObjectBin(int key) const { return objectBins[key]; }
 };
 
 #endif
