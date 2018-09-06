@@ -2101,12 +2101,15 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		return 0;
 	}
 
-	std::vector<std::string> processArgs;
+	std::array<std::string, 32> processArgs;
+
+	processArgs[0] = springFullName;
+	processArgs[1] = " ";
 
 	#if 0
 	// arguments to Spring binary given by Lua code, if any
 	if (!springArgs.empty())
-		processArgs.push_back(springArgs);
+		processArgs[1] = springArgs;
 	#endif
 
 	if (!scriptText.empty()) {
@@ -2116,7 +2119,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		scriptFile.write(scriptText.c_str(), scriptText.size());
 		scriptFile.close();
 
-		processArgs.push_back(scriptFullName);
+		processArgs[2] = scriptFullName;
 	}
 
 	#ifdef _WIN32
@@ -2127,7 +2130,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 	spring::SafeDelete(gameServer);
 
 	LOG("[%s] Spring \"%s\" should be restarting", __func__, springFullName.c_str());
-	Platform::ExecuteProcess(springFullName, processArgs, newProcess);
+	Platform::ExecuteProcess(processArgs, newProcess);
 
 	// only reached on execvp failure
 	return 1;
