@@ -484,8 +484,10 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 		const std::string& modulePath = baseMemAddrPair.first;
 		const std::string symbolFile = LocateSymbolFile(modulePath);
 
-		assert(!modulePath.empty());
-		LOG_L(L_DEBUG, "[%s][6] modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
+		if (modulePath.empty())
+			LOG_L(L_ERROR, "[%s][6] addrPair=%u/%u modulePath=N/A (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, baseMemAddrPair.second, symbolFile.c_str());
+		else
+			LOG_L(L_DEBUG, "[%s][6] addrPair=%u/%u modulePath=%s (addr: 0x%lx) symbolFile=%s", __func__, j, numAddrPairs, modulePath.c_str(), baseMemAddrPair.second, symbolFile.c_str());
 
 		{
 			stackFrameIndices.clear();
