@@ -50,6 +50,7 @@
 #include <cstring>
 #include <cerrno>
 #include <deque>
+#include <vector>
 
 #include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
@@ -484,17 +485,22 @@ namespace Platform
 	}
 
 
-	std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess)
+	std::string ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess)
 	{
+		std::string execError = "ExecuteProcess failure";
+
+		// "The array of pointers must be terminated by a NULL pointer."
+		// --> always include one extra argument string and leave it NULL
+		std::array<char*, (sizeof(args) / sizeof(args[0])) + 1> argPointers;
+		std::array<char[4096], (sizeof(args) / sizeof(args[0]))> processArgs;
+
 		// "The first argument, by convention, should point to
 		// the filename associated with the file being executed."
 		// NOTE:
 		//   spaces in the first argument or quoted file paths
-		//   are not supported on Windows, so translate <file>
+		//   are not supported on Windows, so translate args[0]
 		//   to a short path there
-		args.insert(args.begin(), GetShortFileName(file));
-
-		std::string execError;
+		args[0] = GetShortFileName(args[0]);
 
 		if (asSubprocess) {
 			#ifdef WIN32
@@ -504,26 +510,34 @@ namespace Platform
 			ZeroMemory(&si, sizeof(si)); si.cb = sizeof(si);
 			ZeroMemory(&pi, sizeof(pi));
 
-			std::vector<char> argsVec;
-			std::string argsStr;
+			char* flatArgsStr = &processArgs[0][0];
 
-			for (size_t a = 0; a < args.size(); ++a) {
-				argsStr.append(args[a] + ' ');
+			{
+				size_t i = 0;
+				size_t n = sizeof(processArgs);
+
+				// flatten args, i.e. from {"s0", "s1", "s2"} to "s0 s1 s2"
+				for (size_t a = 0; a < args.size(); ++a, ++i) {
+					if (args[a].empty())
+						break;
+					if ((i + args[a].size()) >= n)
+						break;
+
+					memcpy(&flatArgsStr[i                  ], args[a].data(), args[a].size());
+					memset(&flatArgsStr[i += args[a].size()], ' ', 1);
+				}
+
+				memset(&flatArgsStr[ std::min(i, n - 1) ], '\0', 1);
 			}
 
-			argsVec.assign(argsStr.begin(), argsStr.end());
-			argsVec.push_back('\0');
-
-			LOG("[%s] Windows start process arguments: %s", __func__, argsStr.c_str());
-
-			if (!CreateProcess(nullptr, argsVec.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi))
-				LOG("[%s] Error creating subprocess (%lu)", __func__, GetLastError());
+			if (!CreateProcess(nullptr, flatArgsStr, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi))
+				LOG("[%s] error %lu creating subprocess with arguments \"%s\"", __func__, GetLastError(), flatArgsStr);
 
 			#else
 
 			int pid;
 			if ((pid = fork()) < 0) {
-				LOG("[%s] Error forking process", __func__);
+				LOG("[%s] error forking process", __func__);
 			} else if (pid != 0) {
 				// TODO: Maybe useful to return the subprocess ID (pid)?
 			}
@@ -532,15 +546,15 @@ namespace Platform
 			return execError;
 		}
 
-
-		// "The array of pointers must be terminated by a NULL pointer."
-		// --> include one extra argument string and leave it NULL
-		std::vector<char*> processArgs(args.size() + 1, nullptr);
 		for (size_t a = 0; a < args.size(); ++a) {
-			const std::string& arg = args[a];
-			const size_t argSize = arg.length() + 1;
+			if (args[a].empty())
+				break;
 
-			STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
+			memset(&processArgs[a][0], 0, sizeof(processArgs[a]));
+			memcpy(&processArgs[a][0], args[a].c_str(), std::min(args[a].size(), sizeof(processArgs[a]) - 1));
+
+			argPointers[a    ] = &processArgs[a][0];
+			argPointers[a + 1] = nullptr;
 		}
 
 		#ifdef WIN32
@@ -549,14 +563,10 @@ namespace Platform
 			#define EXECVP execvp
 		#endif
 
-		if (EXECVP(args[0].c_str(), &processArgs[0]) == -1)
+		if (EXECVP(args[0].c_str(), &argPointers[0]) == -1)
 			LOG("[%s] error: \"%s\" %s (%d)", __func__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 
 		#undef EXECVP
-
-		for (size_t a = 0; a < args.size(); ++a) {
-			delete[] processArgs[a];
-		}
 
 		return execError;
 	}

@@ -4,7 +4,7 @@
 #define PLATFORM_MISC_H
 
 #include <string>
-#include <vector>
+#include <array>
 
 namespace Platform
 {
@@ -98,11 +98,11 @@ uint32_t DequeChunkSize();
 /**
  * Executes a native binary, file and args have to be not escaped!
  * http://linux.die.net/man/3/execvp
- * @param  file path to an executable, eg. "/usr/bin/games/spring"
- * @param  args arguments to the executable, eg. {"-f". "/tmp/test.txt"}
+ * @param  args[0  ] path to an executable, eg. "/usr/bin/games/spring"
+ * @param  args[1:n] arguments to the executable, eg. {"-f", "/tmp/test.txt"}
  * @return error message, or "" on success
  */
-std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess = false);
+std::string ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess = false);
 }
 
 #endif // PLATFORM_MISC_H

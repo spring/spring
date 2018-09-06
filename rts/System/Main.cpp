@@ -74,19 +74,21 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
  */
 int main(int argc, char* argv[])
 {
-// PROFILE builds exit on execv ...
-// HEADLESS run mostly in parallel for testing purposes, 100% omp threads wouldn't help then
+// PROFILE builds exit on execv, HEADLESS does not use the GPU
 #if !defined(PROFILE) && !defined(HEADLESS)
+#define MAX_ARGS 32
+
 	if (SetNvOptimusProfile(FileSystem::GetFilename(argv[0]))) {
 		// prepare for restart
-		std::vector<std::string> args(argc - 1);
+		std::array<std::string, MAX_ARGS> args;
 
-		for (int i = 1; i < argc; i++)
-			args[i - 1] = argv[i];
+		for (int i = 0, n = std::min(argc, MAX_ARGS); i < n; i++)
+			args[i] = argv[i];
 
 		// ExecProc normally does not return; if it does the retval is an error-string
-		ErrorMessageBox(Platform::ExecuteProcess(argv[0], args), "Execv error:", MBF_OK | MBF_EXCL);
+		ErrorMessageBox(Platform::ExecuteProcess(args), "Execv error:", MBF_OK | MBF_EXCL);
 	}
+#undef MAX_ARGS
 #endif
 
 	return (Run(argc, argv));
