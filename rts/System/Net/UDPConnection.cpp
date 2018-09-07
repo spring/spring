@@ -516,7 +516,7 @@ void UDPConnection::UpdateResendRequests()
 	size_t j = 0;
 
 	for (size_t i = 0, n = resendRequested.size(); i < n; i++) {
-		if (erasedResendChunks.find(resendRequested[i].first) == erasedResendChunks.end())
+		if (erasedResendChunks.find(resendRequested[i].first) != erasedResendChunks.end())
 			continue;
 
 		resendRequested[j++] = resendRequested[i];
