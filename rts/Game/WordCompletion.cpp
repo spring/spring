@@ -49,7 +49,7 @@ void CWordCompletion::Sort() {
 }
 
 void CWordCompletion::Filter() {
-	words.erase(std::unique(words.begin(), words.end(), [](const WordEntry& a, const WordEntry& b) { return (a.first == b.first); }));
+	words.erase(std::unique(words.begin(), words.end(), [](const WordEntry& a, const WordEntry& b) { return (a.first == b.first); }), words.end());
 }
 
 
