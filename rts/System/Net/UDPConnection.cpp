@@ -2,7 +2,6 @@
 
 #include "UDPConnection.h"
 
-#include <memory>
 #include <cinttypes>
 
 
@@ -157,40 +156,37 @@ Packet::Packet(const unsigned char* data, unsigned length)
 
 	if (nakType > 0) {
 		naks.reserve(nakType);
+
 		for (int i = 0; i != nakType; ++i) {
-			if (buf.Remaining() >= sizeof(naks[i])) {
-				if (naks.size() <= i) {
-					naks.push_back(0);
-				}
-				buf.Unpack(naks[i]);
-			} else {
+			if (buf.Remaining() < sizeof(naks[i]))
 				break;
-			}
+
+			if (naks.size() <= i)
+				naks.push_back(0);
+
+			buf.Unpack(naks[i]);
 		}
 	}
+
+	chunks.reserve(buf.Remaining() / Chunk::headerSize);
 
 	while (buf.Remaining() > Chunk::headerSize) {
 		ChunkPtr temp(new Chunk);
 		buf.Unpack(temp->chunkNumber);
 		buf.Unpack(temp->chunkSize);
-		if (buf.Remaining() >= temp->chunkSize) {
-			buf.Unpack(temp->data, temp->chunkSize);
-			chunks.push_back(temp);
-		} else {
-			// defective, ignore
+
+		// defective, ignore
+		if (buf.Remaining() < temp->chunkSize)
 			break;
-		}
+
+		buf.Unpack(temp->data, temp->chunkSize);
+		chunks.push_back(temp);
 	}
 }
 
-Packet::Packet(int _lastContinuous, int _nak)
-	: lastContinuous(_lastContinuous)
-	, nakType(_nak)
+
+unsigned Packet::GetSize() const
 {
-}
-
-unsigned Packet::GetSize() const {
-
 	unsigned size = headerSize + naks.size();
 
 	for (auto chk = chunks.begin(); chk != chunks.end(); ++chk)
@@ -199,8 +195,8 @@ unsigned Packet::GetSize() const {
 	return size;
 }
 
-std::uint8_t Packet::GetChecksum() const {
-
+std::uint8_t Packet::GetChecksum() const
+{
 	CRC crc;
 	crc << lastContinuous;
 	crc << (unsigned int)nakType;
@@ -282,6 +278,14 @@ void UDPConnection::Init()
 
 	lastInOrder = -1;
 	waitingPackets.clear();
+	waitingPackets.reserve(256);
+	incomingChunkNums.clear();
+	incomingChunkNums.reserve(256);
+
+	resendRequested.clear();
+	resendRequested.reserve(256);
+	erasedResendChunks.clear();
+	erasedResendChunks.reserve(256);
 
 	#ifdef ENABLE_DEBUG_STATS
 	sumDeltaFramePacketRecvTime = 0.0f;
@@ -322,7 +326,7 @@ void UDPConnection::Init()
 }
 
 void UDPConnection::ReconnectTo(CConnection& conn) {
-	dynamic_cast<UDPConnection &>(conn).CopyConnection(*this);
+	dynamic_cast<UDPConnection&>(conn).CopyConnection(*this);
 }
 
 void UDPConnection::CopyConnection(UDPConnection &conn) {
@@ -473,6 +477,56 @@ void UDPConnection::Update()
 	Flush(false);
 }
 
+void UDPConnection::UpdateWaitingPackets()
+{
+	size_t j = 0;
+
+	// erase processed packets
+	for (size_t i = 0, n = waitingPackets.size(); i < n; i++) {
+		if (waitingPackets[i].second == nullptr)
+			continue;
+
+		waitingPackets[j++] = waitingPackets[i];
+	}
+
+	waitingPackets.resize(j);
+}
+
+void UDPConnection::UpdateResendRequests()
+{
+	using P = decltype(resendRequested)::value_type;
+
+	const auto cmpPred = [](const P& a, const P& b) { return (a.first <  b.first); };
+	const auto dupPred = [](const P& a, const P& b) { return (a.first == b.first); };
+
+	// sort by chunk-number
+	std::sort(resendRequested.begin(), resendRequested.end(), cmpPred);
+
+	// filter duplicates
+	const auto beg = resendRequested.begin();
+	const auto end = resendRequested.end();
+	const auto iter = std::unique(beg, end, dupPred);
+
+	resendRequested.erase(iter, end);
+
+	if (erasedResendChunks.empty())
+		return;
+
+	// remove chunks that no longer need resending
+	size_t j = 0;
+
+	for (size_t i = 0, n = resendRequested.size(); i < n; i++) {
+		if (erasedResendChunks.find(resendRequested[i].first) == erasedResendChunks.end())
+			continue;
+
+		resendRequested[j++] = resendRequested[i];
+	}
+
+	resendRequested.resize(j);
+	erasedResendChunks.clear();
+}
+
+
 void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	#ifdef ENABLE_DEBUG_STATS
@@ -489,17 +543,19 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 //		return;
 
 	if (incoming.GetChecksum() != incoming.checksum) {
-		LOG_L(L_ERROR, "Discarding incoming corrupted packet: CRC %d, LEN %d", incoming.checksum, incoming.GetSize());
+		LOG_L(L_ERROR, "\t[%s] discarding incoming corrupted packet: CRC %d, LEN %d", __func__, incoming.checksum, incoming.GetSize());
 		return;
 	}
 
 	if (incoming.lastContinuous < 0 && lastInOrder >= 0 &&
 		(unackedChunks.empty() || unackedChunks[0]->chunkNumber > 0)) {
-		LOG_L(L_WARNING, "Discarding superfluous reconnection attempt");
+		LOG_L(L_WARNING, "\t[%s] discarding superfluous reconnection attempt", __func__);
 		return;
 	}
 
+
 	AckChunks(incoming.lastContinuous);
+	UpdateResendRequests();
 
 	if (!unackedChunks.empty()) {
 		const int nextCont = incoming.lastContinuous + 1;
@@ -512,7 +568,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 
 					if (unAckPos >= 0 && unAckPos < unackedChunks.size()) {
 						assert(unackedChunks[unAckPos]->chunkNumber == nextCont + i);
-						RequestResend(unackedChunks[unAckPos]);
+						RequestResend(unackedChunks[unAckPos], true);
 					}
 				}
 			} else if (incoming.nakType > 0) {
@@ -522,39 +578,48 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 					if (unAckDiff + incoming.naks[i] < 0)
 						continue;
 
-					while (unAckPos < unAckDiff + incoming.naks[i]) {
+					while (unAckPos < (unAckDiff + incoming.naks[i])) {
 						// if there are gaps in the array, assume that further resends are not needed
 						if (unAckPos < unackedChunks.size())
-							resendRequested.erase(unackedChunks[unAckPos]->chunkNumber);
+							erasedResendChunks.insert(unackedChunks[unAckPos]->chunkNumber);
 
 						++unAckPos;
 					}
 
 					if (unAckPos < unackedChunks.size()) {
-						assert(unackedChunks[unAckPos]->chunkNumber == nextCont + incoming.naks[i]);
-						RequestResend(unackedChunks[unAckPos]);
+						assert(unackedChunks[unAckPos]->chunkNumber == (nextCont + incoming.naks[i]));
+						RequestResend(unackedChunks[unAckPos], true);
 					}
 
 					++unAckPos;
 				}
 			}
+
+			UpdateResendRequests();
 		}
 	}
 
-	for (auto ci = incoming.chunks.begin(); ci != incoming.chunks.end(); ++ci) {
-		const std::shared_ptr<netcode::Chunk>& c = *ci;
 
-		if ((lastInOrder >= c->chunkNumber) || (waitingPackets.find(c->chunkNumber) != waitingPackets.end())) {
+	for (const std::shared_ptr<netcode::Chunk>& c: incoming.chunks) {
+		if ((lastInOrder >= c->chunkNumber) || incomingChunkNums.find(c->chunkNumber) != incomingChunkNums.end()) {
 			++droppedChunks;
 			continue;
 		}
 
-		waitingPackets.emplace(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
+		waitingPackets.emplace_back(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
+		incomingChunkNums.insert(c->chunkNumber);
 	}
 
 
+	using P = decltype(waitingPackets)::value_type;
+
+	const auto cmpPred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto binFind = [&](int cn) { return std::lower_bound(waitingPackets.begin(), waitingPackets.end(), P{cn, nullptr}, cmpPred); };
+
+	std::sort(waitingPackets.begin(), waitingPackets.end(), cmpPred);
+
 	// process all in-order packets that we have waiting
-	for (auto wpi = waitingPackets.find(lastInOrder + 1); wpi != waitingPackets.end(); wpi = waitingPackets.find(lastInOrder + 1)) {
+	for (auto wpi = binFind(lastInOrder + 1); wpi != waitingPackets.end() && wpi->first == (lastInOrder + 1); ++wpi) {
 		waitBuffer.clear();
 
 		if (fragmentBuffer.data != nullptr) {
@@ -565,9 +630,17 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			fragmentBuffer.Delete();
 		}
 
-		lastInOrder++;
 		std::copy(wpi->second->data, wpi->second->data + wpi->second->length, std::back_inserter(waitBuffer));
-		waitingPackets.erase(wpi);
+
+		incomingChunkNums.erase(wpi->first);
+		// waitingPackets.erase(wpi);
+
+		// mark as processed
+		wpi->second = nullptr;
+
+		// next expected chunk-number
+		lastInOrder++;
+
 
 		for (unsigned pos = 0; pos < waitBuffer.size(); ) {
 			const unsigned char* bufp = &waitBuffer[pos];
@@ -614,7 +687,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 					break;
 				}
 
-				LOG_L(L_ERROR, "Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktLength);
+				LOG_L(L_ERROR, "\t[%s] discarding incoming invalid packet: ID %d, LEN %d", __func__, (int)*bufp, pktLength);
 
 				// if the packet is invalid, skip a single byte
 				// until we encounter a good packet
@@ -622,6 +695,8 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			}
 		}
 	}
+
+	UpdateWaitingPackets();
 }
 
 void UDPConnection::Flush(const bool forced)
@@ -649,8 +724,8 @@ void UDPConnection::Flush(const bool forced)
 		unsigned pos = 0;
 
 		// Manually fragment packets to respect configured UDP_MTU.
-		// This is an attempt to fix the bug where players drop out of the game if
-		// someone in the game gives a large order.
+		// This is an attempt to fix the bug where players drop out
+		// of the game if someone in the game gives a large order.
 		bool partialPacket = false;
 		bool sendMore = true;
 
@@ -663,9 +738,9 @@ void UDPConnection::Flush(const bool forced)
 
 				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
 					LOG_L(L_ERROR,
-						"Discarding outgoing invalid packet: ID %d, LEN %d",
-						((packet->length > 0) ? (int)packet->data[0] : -1),
-						packet->length);
+						"[UDPConnection::%s] discarding outgoing invalid packet: ID %d, LEN %d",
+						__func__, ((packet->length > 0) ? (int)packet->data[0] : -1), packet->length
+					);
 					outgoingData.pop_front();
 				} else {
 					const unsigned numBytes = std::min((unsigned)maxChunkSize - pos, packet->length);
@@ -739,6 +814,7 @@ std::string UDPConnection::Statistics() const
 		"\t%u bytes recv'd in %u packets (%.3f bytes/packet)\n",
 		"\t{%.3fx, %.3fx} relative protocol overhead {up, down}\n",
 		"\t%u incoming chunks dropped, %u outgoing chunks resent\n",
+		"\t%u incoming chunks processed\n",
 	};
 
 	std::string msg = "[UDPConnection::Statistics]\n";
@@ -746,6 +822,7 @@ std::string UDPConnection::Statistics() const
 	msg += spring::format(fmts[1], dataRecv, recvPackets, spring::SafeDivide(dataRecv * 1.0f, recvPackets * 1.0f));
 	msg += spring::format(fmts[2], spring::SafeDivide(sentOverhead * 1.0f, dataSent * 1.0f), spring::SafeDivide(recvOverhead * 1.0f, dataRecv * 1.0f));
 	msg += spring::format(fmts[3], droppedChunks, resentChunks);
+	msg += spring::format(fmts[4], lastInOrder + 1);
 	return msg;
 }
 
@@ -767,7 +844,7 @@ void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length
 	ChunkPtr buf(new Chunk);
 	buf->chunkNumber = packetNum;
 	buf->chunkSize = length;
-	std::copy(data, data+length, std::back_inserter(buf->data));
+	std::copy(data, data + length, std::back_inserter(buf->data));
 	newChunks.push_back(buf);
 	lastChunkCreatedTime = spring_gettime();
 }
@@ -826,7 +903,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		// resend last packet if we didn't get an ack within reasonable time
 		// and don't plan sending out a new chunk either
 		if (newChunks.empty())
-			RequestResend(*unackedChunks.rbegin());
+			RequestResend(*unackedChunks.rbegin(), false);
 
 		lastUnackResentTime = curTime;
 	}
@@ -842,11 +919,16 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	int maxResend = resendRequested.size();
 	int unackPrevSize = unackedChunks.size();
 
-	std::map<std::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
-	std::map<std::int32_t, ChunkPtr>::iterator resMidIter;
-	std::map<std::int32_t, ChunkPtr>::iterator resMidIterStart;
-	std::map<std::int32_t, ChunkPtr>::iterator resMidIterEnd;
-	std::map<std::int32_t, ChunkPtr>::reverse_iterator resRevIter;
+	decltype(resendRequested)::iterator resFwdIter = resendRequested.begin();
+	decltype(resendRequested)::iterator resMidIter;
+	decltype(resendRequested)::iterator resMidIterStart;
+	decltype(resendRequested)::iterator resMidIterEnd;
+	decltype(resendRequested)::reverse_iterator resRevIter;
+
+	// resend chunk size
+	const auto CalcResendSize = [&]() {
+		return ((UseMinLossFactor() || (rev == 0)) ? resFwdIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize()));
+	};
 
 	if (!UseMinLossFactor()) {
 		// keep resend reasonable, or it could cause a tremendous flood of packets
@@ -894,38 +976,37 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		bool sent = false;
 
 		while (true) {
-			const size_t bufferSize = buf.GetSize();
-			const size_t resendSize = ((UseMinLossFactor() || (rev == 0)) ? resIter->second->GetSize() : ((rev == 1) ? resRevIter->second->GetSize() : resMidIter->second->GetSize())); // resend chunk size
-
-			const bool canResend = (maxResend > 0) && ((bufferSize + resendSize) <= mtu);
-			const bool canSendNew = !newChunks.empty() && ((bufferSize + newChunks[0]->GetSize()) <= mtu);
+			// NB: if maxResend equals 0, then resendRequested is empty and iterators will be invalid
+			const bool canResend = (maxResend > 0) && ((buf.GetSize() + CalcResendSize()) <= mtu);
+			const bool canSendNew = !newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu);
 
 			if (!canResend && !canSendNew)
 				break;
 
-			// alternate between send and resend to make sure none is starved
+			// alternate between send and resend to make sure neither is starved
 			resend = !resend;
 
 			if (resend && canResend) {
 				if (UseMinLossFactor()) {
-					buf.chunks.push_back(resIter->second);
-					resIter = resendRequested.erase(resIter);
+					if (erasedResendChunks.find(resFwdIter->first) == erasedResendChunks.end())
+						buf.chunks.push_back(resFwdIter->second);
+
+					erasedResendChunks.insert((resFwdIter++)->first);
 				} else {
 					// on a lossy connection, just keep resending until it is acked
-					// alternate between sending from front, middle and back of list of requested
+					// alternate between sending from front, middle and back of requested
 					// chunks, since this improves performance on high latency connections
 					switch (rev) {
 						case 0: {
-							buf.chunks.push_back(resIter->second);
-							++resIter;
+							buf.chunks.push_back((resFwdIter++)->second);
 						} break;
 						case 1: {
-							buf.chunks.push_back(resRevIter->second);
-							++resRevIter;
+							buf.chunks.push_back((resRevIter++)->second);
 						} break;
 						case 2:
 						case 3: {
 							buf.chunks.push_back(resMidIter->second);
+
 							lastMidChunk = resMidIter->first;
 
 							if ((++resMidIter) == resMidIterEnd)
@@ -957,13 +1038,18 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			break;
 	}
 
-	if (UseMinLossFactor())
-		return;
 
-	// on a lossy connection the packet will be sent multiple times
-	for (int i = unackPrevSize; i < unackedChunks.size(); ++i) {
-		RequestResend(unackedChunks[i]);
+	if (UseMinLossFactor()) {
+		UpdateResendRequests();
+		return;
 	}
+
+	// on a lossy connection chunks can be sent multiple times, see switch above
+	for (int i = unackPrevSize; i < unackedChunks.size(); ++i) {
+		RequestResend(unackedChunks[i], true);
+	}
+
+	UpdateResendRequests();
 }
 
 void UDPConnection::SendPacket(Packet& pkt)
@@ -989,28 +1075,36 @@ void UDPConnection::SendPacket(Packet& pkt)
 
 void UDPConnection::AckChunks(int lastAck)
 {
-	while (!unackedChunks.empty() && (lastAck >= (*unackedChunks.begin())->chunkNumber))
+	while (!unackedChunks.empty() && (lastAck >= (*unackedChunks.begin())->chunkNumber)) {
 		unackedChunks.pop_front();
+	}
 
 	// resend requested and later acked, happens every now and then
-	while (!resendRequested.empty() && lastAck >= resendRequested.begin()->first)
-		resendRequested.erase(resendRequested.begin());
+	for (size_t i = 0, n = resendRequested.size(); i < n; i++) {
+		if (lastAck < resendRequested[i].first)
+			break;
+
+		erasedResendChunks.insert(resendRequested[i].first);
+	}
 }
 
-void UDPConnection::RequestResend(ChunkPtr ptr)
+void UDPConnection::RequestResend(ChunkPtr ptr, bool noSort)
 {
-	// filter out duplicates
-	if (resendRequested.find(ptr->chunkNumber) == resendRequested.end())
-		resendRequested[ptr->chunkNumber] = ptr;
+	resendRequested.emplace_back(ptr->chunkNumber, ptr);
+
+	if (noSort)
+		return;
+
+	// swap into position; duplicates are filtered out later
+	for (size_t i = resendRequested.size() - 1; i > 0; i--) {
+		if (resendRequested[i - 1].first < resendRequested[i].first)
+			break;
+
+		std::swap(resendRequested[i - 1], resendRequested[i]);
+	}
 }
 
-UDPConnection::BandwidthUsage::BandwidthUsage()
-	: lastTime(0)
-	, trafficSinceLastTime(1)
-	, prelTrafficSinceLastTime(0)
-	, average(0.0)
-{
-}
+
 
 void UDPConnection::BandwidthUsage::UpdateTime(unsigned newTime)
 {
@@ -1048,7 +1142,7 @@ void UDPConnection::Close(bool flush) {
 		try {
 			mySocket->close();
 		} catch (const asio::system_error& ex) {
-			LOG_L(L_ERROR, "Failed closing UDP connection: %s", ex.what());
+			LOG_L(L_ERROR, "[UDPConnection::%s] error \"%s\" closing socket", __func__, ex.what());
 		}
 	}
 	closed = true;
