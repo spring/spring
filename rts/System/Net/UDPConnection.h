@@ -186,7 +186,7 @@ private:
 	/// outgoing stuff (pure data without header) waiting to be sent
 	std::deque< std::shared_ptr<const RawPacket> > outgoingData;
 	/// packets we have received but not yet read
-	std::vector< std::pair<int, RawPacket*> > waitingPackets;
+	std::vector< std::pair<int, RawPacket> > waitingPackets;
 	spring::unordered_set<int> incomingChunkNums;
 
 

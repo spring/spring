@@ -341,9 +341,7 @@ void UDPConnection::InitConnection(ip::udp::endpoint address, std::shared_ptr<ip
 UDPConnection::~UDPConnection()
 {
 	fragmentBuffer.Delete();
-
-	for (auto& it: waitingPackets)
-		delete it.second;
+	waitingPackets.clear();
 
 	Flush(true);
 }
@@ -483,10 +481,10 @@ void UDPConnection::UpdateWaitingPackets()
 
 	// erase processed packets
 	for (size_t i = 0, n = waitingPackets.size(); i < n; i++) {
-		if (waitingPackets[i].second == nullptr)
+		if ((waitingPackets[i].second).length == 0)
 			continue;
 
-		waitingPackets[j++] = waitingPackets[i];
+		waitingPackets[j++] = std::move(waitingPackets[i]);
 	}
 
 	waitingPackets.resize(j);
@@ -606,7 +604,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			continue;
 		}
 
-		waitingPackets.emplace_back(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
+		waitingPackets.emplace_back(c->chunkNumber, std::move(RawPacket(&c->data[0], c->data.size())));
 		incomingChunkNums.insert(c->chunkNumber);
 	}
 
@@ -614,7 +612,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 	using P = decltype(waitingPackets)::value_type;
 
 	const auto cmpPred = [](const P& a, const P& b) { return (a.first < b.first); };
-	const auto binFind = [&](int cn) { return std::lower_bound(waitingPackets.begin(), waitingPackets.end(), P{cn, nullptr}, cmpPred); };
+	const auto binFind = [&](int cn) { return std::lower_bound(waitingPackets.begin(), waitingPackets.end(), P{cn, RawPacket{}}, cmpPred); };
 
 	std::sort(waitingPackets.begin(), waitingPackets.end(), cmpPred);
 
@@ -630,13 +628,13 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			fragmentBuffer.Delete();
 		}
 
-		std::copy(wpi->second->data, wpi->second->data + wpi->second->length, std::back_inserter(waitBuffer));
+		std::copy(wpi->second.data, wpi->second.data + wpi->second.length, std::back_inserter(waitBuffer));
 
 		incomingChunkNums.erase(wpi->first);
 		// waitingPackets.erase(wpi);
 
 		// mark as processed
-		wpi->second = nullptr;
+		(wpi->second).Delete();
 
 		// next expected chunk-number
 		lastInOrder++;
