@@ -113,6 +113,8 @@ namespace Shader {
 
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
+		virtual void EnableRaw() {}
+		virtual void DisableRaw() {}
 		virtual void Link() = 0;
 		virtual bool Validate() = 0;
 		virtual void Release() = 0;
@@ -328,8 +330,8 @@ namespace Shader {
 
 		void Enable() override;
 		void Disable() override { DisableRaw(); }
-		void EnableRaw();
-		void DisableRaw();
+		void EnableRaw() override;
+		void DisableRaw() override;
 		void Link();
 		bool Validate();
 		void Release();
