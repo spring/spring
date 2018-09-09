@@ -567,8 +567,12 @@ void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
 	// needs to be set even for Lua shaders, is unknowable otherwise
+	if (useLuaShaders)
+		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Enable();
 	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
+	if (useLuaShaders)
+		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Disable();
 }
 
 
