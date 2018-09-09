@@ -82,7 +82,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 			uptime = weaponDef->uptime * GAME_SPEED;
 
 		if (weaponDef->flighttime == 0)
-			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
+			ttl = std::min(3000.0f, uptime + myrange / maxSpeed + 100);
 	}
 
 	oldSmokeDir = dir;

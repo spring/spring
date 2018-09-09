@@ -36,10 +36,10 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(drawPos),
 
+	CR_MEMBER(myrange),
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
 	CR_MEMBER(sortDistOffset),
-	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -55,33 +55,8 @@ CR_REG_METADATA(CProjectile,
 
 
 CProjectile::CProjectile()
-	: synced(false)
-	, weapon(false)
-	, piece(false)
-	, hitscan(false)
-
-	, luaDraw(false)
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-
-	, castShadow(false)
-	, drawSorted(true)
-
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDist(0.0f)
-	, sortDistOffset(0.0f)
-	, tempNum(0)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	: myrange(0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 }
 
@@ -100,27 +75,8 @@ CProjectile::CProjectile(
 	, piece(isPiece)
 	, hitscan(isHitScan)
 
-	, luaDraw(false)
-	, luaMoveCtrl(false)
-	, checkCol(true)
-	, ignoreWater(false)
-	, deleteMe(false)
-	, callEvent(true)
-
-	, castShadow(false)
-	, drawSorted(true)
-
-	, dir(ZeroVector) // set via Init()
-	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
-	, sortDistOffset(0.f)
-
-	, ownerID(-1u)
-	, teamID(-1u)
-	, allyteamID(-1)
-	, cegID(-1u)
-
-	, projectileType(-1u)
-	, collisionFlags(0)
+	, myrange(/*params.weaponDef->range*/0.0f)
+	, mygravity((mapInfo != nullptr)? mapInfo->map.gravity: 0.0f)
 {
 	SetRadiusAndHeight(1.7f, 0.0f);
 	Init(owner, ZeroVector);
@@ -221,3 +177,4 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
+
