@@ -216,7 +216,7 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		glslShaders[GLSL_SHADER_CURRENT]->EnableRaw();
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
@@ -285,7 +285,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	if (useLuaShaders) {
 		glActiveTexture(GL_TEXTURE0);
-		glUseProgram(0);
+		glslShaders[GLSL_SHADER_CURRENT]->DisableRaw();
 		return;
 	}
 

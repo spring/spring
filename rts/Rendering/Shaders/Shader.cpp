@@ -242,13 +242,16 @@ namespace Shader {
 
 	void GLSLProgramObject::Enable() {
 		MaybeReload(false);
+		EnableRaw();
+	}
+
+	void EnableRaw() {
 		glUseProgram(glid);
 		IProgramObject::Enable();
 	}
-
-	void GLSLProgramObject::Disable() {
-		glUseProgram(0);
+	void DisableRaw() {
 		IProgramObject::Disable();
+		glUseProgram(0);
 	}
 
 

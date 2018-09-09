@@ -351,7 +351,9 @@ namespace Shader {
 		}
 
 		void Enable() override;
-		void Disable() override;
+		void Disable() override { DisableRaw(); }
+		void EnableRaw();
+		void DisableRaw();
 		bool CreateAndLink() override;
 		bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) override;
 		bool CopyUniformsAndValidate(unsigned int srcProgID) { return (CopyUniformsAndValidate(glid, srcProgID)); }
