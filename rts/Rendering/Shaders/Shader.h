@@ -326,8 +326,10 @@ namespace Shader {
 		GLSLProgramObject(const std::string& poName);
 		~GLSLProgramObject() { Release(); }
 
-		void Enable();
-		void Disable();
+		void Enable() override;
+		void Disable() override { DisableRaw(); }
+		void EnableRaw();
+		void DisableRaw();
 		void Link();
 		bool Validate();
 		void Release();

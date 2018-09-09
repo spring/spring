@@ -483,7 +483,7 @@ void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& draw
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		glslShaders[GLSL_SHADER_CURRENT]->EnableRaw();
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
@@ -535,7 +535,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	if (useLuaShaders) {
 		glActiveTexture(GL_TEXTURE0);
-		glUseProgram(0);
+		glslShaders[GLSL_SHADER_CURRENT]->DisableRaw();
 		return;
 	}
 
@@ -567,12 +567,8 @@ void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
 	// needs to be set even for Lua shaders, is unknowable otherwise
-	if (useLuaShaders)
-		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Enable();
 	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
-	if (useLuaShaders)
-		glslShaders[GLSL_SHADER_CURRENT]->IProgramObject::Disable();
 }
 
 

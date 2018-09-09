@@ -412,13 +412,16 @@ namespace Shader {
 
 	void GLSLProgramObject::Enable() {
 		RecompileIfNeeded(true);
-		glUseProgram(objID);
-		IProgramObject::Enable();
+		EnableRaw();
 	}
 
-	void GLSLProgramObject::Disable() {
-		glUseProgram(0);
+	void GLSLProgramObject::EnableRaw() {
+		glUseProgram(glid);
+		IProgramObject::Enable();
+	}
+	void GLSLProgramObject::DisableRaw() {
 		IProgramObject::Disable();
+		glUseProgram(0);
 	}
 
 	void GLSLProgramObject::Link() {
