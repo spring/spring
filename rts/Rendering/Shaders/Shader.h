@@ -155,6 +155,8 @@ namespace Shader {
 
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
+		virtual void EnableRaw() {}
+		virtual void DisableRaw() {}
 		virtual bool CreateAndLink() = 0;
 		virtual bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) = 0;
 		virtual void Link() = 0;
@@ -352,8 +354,8 @@ namespace Shader {
 
 		void Enable() override;
 		void Disable() override { DisableRaw(); }
-		void EnableRaw();
-		void DisableRaw();
+		void EnableRaw() override;
+		void DisableRaw() override;
 		bool CreateAndLink() override;
 		bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) override;
 		bool CopyUniformsAndValidate(unsigned int srcProgID) { return (CopyUniformsAndValidate(glid, srcProgID)); }
