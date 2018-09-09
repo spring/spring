@@ -352,8 +352,6 @@ public:
 	///< allyteam that this->team is part of
 	int allyteam = 0;
 
-	///< used to check if object has already been processed (in QuadField queries, etc)
-	int tempNum = 0;
 	///< [i] := frame on which hitModelPieces[i] was last hit
 	int pieceHitFrames[2] = {-1, -1};
 
