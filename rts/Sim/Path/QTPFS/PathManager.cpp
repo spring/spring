@@ -523,10 +523,10 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapCheckSumHe
 		mapCheckSumHexStr + "-" +
 		modCheckSumHexStr + "/";
 
-	char loadMsg[512] = {'\0'};
+	char loadMsg[1024] = {'\0'};
 	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %s, mod-checksum %s)";
 
-	sprintf(loadMsg, fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
+	snprintf(loadMsg, sizeof(loadMsg), fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
 	pmLoadScreen.AddLoadMessage(loadMsg);
 
 	return dir;
