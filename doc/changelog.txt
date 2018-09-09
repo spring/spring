@@ -90,6 +90,9 @@ Lua:
    writing the tesselation control shader.
    4) New vertex primitive type GL.PATCHES
  ! Renamed SetShaderParameter to SetGeometryShaderParameter to avoid confusion of what kind shader parameters belongs to.
+ ! Unit[Pre]Damaged's attackerTeam argument takes the team from projectile,
+   meaning it's still present if the attacker dies meanwhile,
+   and uses the value from the time of shooting if he gets captured.
 
 
 AI:

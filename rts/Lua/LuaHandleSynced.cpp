@@ -36,6 +36,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -1025,10 +1026,16 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 		lua_pushnumber(L, weaponDefID); inArgCount += 1;
 		lua_pushnumber(L, projectileID); inArgCount += 1;
 
+		const CProjectile *const proj = projectileHandler.GetProjectileBySyncedID(projectileID);
 		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
-			lua_pushnumber(L, attacker->team);
+			lua_pushnumber(L, proj != nullptr ? proj->GetTeamID() : attacker->team);
+			inArgCount += 3;
+		} else if (proj != nullptr) {
+			lua_pushnil(L);
+			lua_pushnil(L);
+			lua_pushnumber(L, proj->GetTeamID());
 			inArgCount += 3;
 		}
 	}
