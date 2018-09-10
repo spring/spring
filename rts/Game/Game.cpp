@@ -655,7 +655,7 @@ void CGame::LoadInterface()
 
 		// add the Skirmish AIs instance names to word completion (eg for chatting)
 		for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
-			wordCompletion.AddWordRaw(ai.second.name + " ", false, false, false);
+			wordCompletion.AddWordRaw(ai.second->name + " ", false, false, false);
 		}
 		// add the available Skirmish AI libraries to word completion, for /aicontrol
 		for (const auto& aiLib: aiLibManager->GetSkirmishAIKeys()) {

@@ -176,6 +176,7 @@ void SelectionWidget::UpdateAvailableScripts()
 	// maybe also merge it with StartScriptGen.cpp
 
 	availableScripts.clear();
+	availableScripts.reserve(16);
 	// load selected archives to get lua ais
 
 	AddAIScriptsFromArchive();
@@ -184,16 +185,13 @@ void SelectionWidget::UpdateAvailableScripts()
 	availableScripts.push_back(SandboxAI);
 
 	// add native ai's to the list, too (but second, lua ai's are prefered)
-	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
-	for (auto it = scriptList.cbegin(); it != scriptList.cend(); ++it) {
-		availableScripts.push_back(*it);
+	for (const auto& pair: CAIScriptHandler::Instance().GetScriptMap()) {
+		availableScripts.push_back(pair.first);
 	}
 
-	for (std::string &scriptName: availableScripts) {
-		if (scriptName == userScript) {
-			return;
-		}
-	}
+	if (std::find(availableScripts.begin(), availableScripts.end(), userScript) != availableScripts.end())
+		return;
+
 	SelectScript(SelectionWidget::NoScriptSelect);
 }
 
@@ -206,7 +204,7 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectScript, this, std::placeholders::_1));
 	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
-	for (std::string& scriptName: availableScripts) {
+	for (const std::string& scriptName: availableScripts) {
 		curSelect->list->AddItem(scriptName, "");
 	}
 

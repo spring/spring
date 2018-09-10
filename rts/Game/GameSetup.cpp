@@ -372,7 +372,7 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<st
 		data.name = uniqueName;
 		nameList.insert(data.name);
 
-		skirmishAIStartingData.push_back(data);
+		skirmishAIStartingData.emplace_back(std::move(data));
 	}
 }
 
