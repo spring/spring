@@ -82,6 +82,7 @@ void CSkirmishAIWrapper::PreInit(int aiID)
 		timerName += (" " + key.GetVersion());
 	}
 
+	LOG_L(L_INFO, "[AIWrapper::%s] creating callbacks for AI %d on team %d", __func__, skirmishAIId, teamId);
 	CreateCallback();
 }
 
@@ -175,7 +176,7 @@ void CSkirmishAIWrapper::Init() {
 	}
 
 	// init failed
-	LOG_L(L_ERROR, "Failed to handle init event: AI for team %d, error %d", teamId, error);
+	LOG_L(L_ERROR, "[AIWrapper::%s] handling EVENT_INIT for AI %d on team %d failed with error %d", __func__, skirmishAIId, teamId, error);
 	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 }
 

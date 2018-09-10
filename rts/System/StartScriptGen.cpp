@@ -76,7 +76,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 
 	const bool isSkirmishAITestScript = CAIScriptHandler::Instance().IsSkirmishAITestScript(ai);
 	if (isSkirmishAITestScript) {
-		SkirmishAIData aiData = CAIScriptHandler::Instance().GetSkirmishAIData(ai);
+		const SkirmishAIData& aiData = CAIScriptHandler::Instance().GetSkirmishAIData(ai);
 		TdfParser::TdfSection* ai = g->construct_subsection("AI0");
 		ai->add_name_value("Name", "Enemy");
 		ai->add_name_value("ShortName", aiData.shortName);

@@ -875,7 +875,7 @@ public:
 			"Prints a list of all currently active Skirmish AIs") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const spring::unordered_map<uint8_t, SkirmishAIData>& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		const auto& ais = skirmishAIHandler.GetAllSkirmishAIs();
 
 		if (ais.empty()) {
 			LOG("<There are no active Skirmish AIs in this game>");
@@ -891,21 +891,22 @@ public:
 				"(Hosting player name) or (Short name & Version)");
 
 		for (const auto& p: ais) {
-			const bool isLocal = (p.second.hostPlayer == gu->myPlayerNum);
+			const SkirmishAIData& aiData = *(p.second);
+			const bool isLocal = (aiData.hostPlayer == gu->myPlayerNum);
 			std::string lastPart;
 
 			if (isLocal) {
-				lastPart = "(Key:)  " + p.second.shortName + " " + p.second.version;
+				lastPart = "(Key:)  " + aiData.shortName + " " + aiData.version;
 			} else {
 				lastPart = "(Host:) " + playerHandler.Player(gu->myPlayerNum)->name;
 			}
 
 			LOG("%i | %i | %s | %s | %s | %s",
 					p.first,
-					p.second.team,
+					aiData.team,
 					(isLocal ? "yes" : "no "),
-					(p.second.isLuaAI ? "yes" : "no "),
-					p.second.name.c_str(),
+					(aiData.isLuaAI ? "yes" : "no "),
+					aiData.name.c_str(),
 					lastPart.c_str());
 		}
 

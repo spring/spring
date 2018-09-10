@@ -68,7 +68,7 @@ void CPlayer::SetControlledTeams()
 
 	// AI teams
 	for (const auto& p: skirmishAIHandler.GetAllSkirmishAIs()) {
-		const SkirmishAIData& sad = p.second;
+		const SkirmishAIData& sad = *(p.second);
 
 		if (sad.hostPlayer != playerNum)
 			continue;

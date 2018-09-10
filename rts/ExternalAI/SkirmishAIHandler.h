@@ -79,7 +79,7 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	const spring::unordered_map<uint8_t, SkirmishAIData>& GetAllSkirmishAIs() const { return skirmishAIDataMap; }
+	const spring::unordered_map<uint8_t, const SkirmishAIData*>& GetAllSkirmishAIs() const { return skirmishAIDataMap; }
 
 
 	/**
@@ -192,7 +192,7 @@ private:
 	/// temporarily stores reason for killing a Skirmish AI
 	std::array<int, MAX_AIS> aiKillFlags;
 
-	spring::unordered_map<uint8_t, SkirmishAIData> skirmishAIDataMap;
+	spring::unordered_map<uint8_t, const SkirmishAIData*> skirmishAIDataMap;
 	spring::unordered_set<std::string> luaAIShortNames;
 
 	// the current local AI ID that is executing, MAX_AIS if none (e.g. LuaUI)

@@ -114,7 +114,7 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, 
 	std::vector<uint8_t> skirmishAIs;
 
 	for (const auto& p: skirmishAIDataMap) {
-		const SkirmishAIData& aiData = p.second;
+		const SkirmishAIData& aiData = *(p.second);
 
 		if (aiData.team != teamId)
 			continue;
@@ -132,7 +132,7 @@ std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPl
 	std::vector<uint8_t> skirmishAIs;
 
 	for (const auto& p: skirmishAIDataMap) {
-		const SkirmishAIData& aiData = p.second;
+		const SkirmishAIData& aiData = *(p.second);
 
 		if (aiData.hostPlayer != hostPlayerId)
 			continue;
@@ -154,7 +154,7 @@ bool CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t 
 	aiInstanceData[skirmishAIId] = data;
 	localTeamAIs[data.team] = {};
 
-	skirmishAIDataMap.emplace(skirmishAIId, data);
+	skirmishAIDataMap.emplace(skirmishAIId, &aiInstanceData[skirmishAIId]);
 	CompleteSkirmishAI(skirmishAIId);
 
 	numSkirmishAIs += 1;
@@ -187,8 +187,7 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 	assert(IsLocalSkirmishAI(*aiData));
 
 	localTeamAIs[aiData->team] = *aiData;
-	aiData->isLuaAI = IsLuaAI(*aiData);
-	localTeamAIs[aiData->team].isLuaAI = aiData->isLuaAI;
+	localTeamAIs[aiData->team].isLuaAI = (aiData->isLuaAI = IsLuaAI(*aiData));
 
 	// create instantly
 	eoh->CreateSkirmishAI(skirmishAIId);

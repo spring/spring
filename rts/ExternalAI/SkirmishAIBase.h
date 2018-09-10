@@ -7,7 +7,6 @@
 #include "System/creg/creg_cond.h"
 
 #include <string>
-#include <map>
 
 
 /**
@@ -33,19 +32,9 @@ class SkirmishAIBase : public TeamController {
 
 public:
 	virtual ~SkirmishAIBase() {}
-	typedef std::map<std::string, std::string> customOpts;
 
-	/**
-	 * @brief Constructor assigning default values.
-	 */
-	SkirmishAIBase()
-		: TeamController()
-		, hostPlayer(-1)
-		, status(SKIRMAISTATE_CONSTRUCTED)
-		{}
-
-	int hostPlayer;
-	ESkirmishAIStatus status;
+	int hostPlayer = -1;
+	ESkirmishAIStatus status = SKIRMAISTATE_CONSTRUCTED;
 };
 
 /**
@@ -56,16 +45,8 @@ class SkirmishAIStatistics : public TeamControllerStatistics
 	CR_DECLARE_STRUCT(SkirmishAIStatistics)
 
 public:
-	/**
-	 * @brief Constructor assigning default values.
-	 */
-	SkirmishAIStatistics()
-		: TeamControllerStatistics()
-		, cpuTime(0)
-		{}
-
 	/// How much CPU time has been used by the AI (in ms?)
-	int cpuTime;
+	int cpuTime = 0;
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();
