@@ -11,42 +11,34 @@
 #include "System/Log/ILog.h"
 
 
-CZipArchiveFactory::CZipArchiveFactory()
-	: IArchiveFactory("sdz")
-{
-}
-
 IArchive* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
 	return new CZipArchive(filePath);
 }
 
 
-CZipArchive::CZipArchive(const std::string& archiveName)
-	: CBufferedArchive(archiveName)
+CZipArchive::CZipArchive(const std::string& archiveName): CBufferedArchive(archiveName)
 {
 	zip = unzOpen(archiveName.c_str());
-	if (!zip) {
+
+	if (zip == nullptr) {
 		LOG_L(L_ERROR, "Error opening \"%s\"", archiveName.c_str());
 		return;
 	}
 
 	// We need to map file positions to speed up opening later
-	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip))
-	{
+	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
 		unz_file_info info;
 		char fName[512];
 
-		unzGetCurrentFileInfo(zip, &info, fName, 512, nullptr, 0, nullptr, 0);
+		unzGetCurrentFileInfo(zip, &info, fName, sizeof(fName), nullptr, 0, nullptr, 0);
 
 		const std::string fLowerName = StringToLower(fName);
-		if (fLowerName.empty()) {
+		if (fLowerName.empty())
 			continue;
-		}
-		const char last = fLowerName[fLowerName.length() - 1];
-		if ((last == '/') || (last == '\\')) {
+
+		if ((fLowerName.back() == '/') || (fLowerName.back() == '\\'))
 			continue; // exclude directory names
-		}
 
 		FileData fd;
 		unzGetFilePos(zip, &fd.fp);
@@ -84,12 +76,14 @@ void CZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 	size = fileData[fid].size;
 }
 
+#if 0
 unsigned int CZipArchive::GetCrc32(unsigned int fid)
 {
 	assert(IsFileId(fid));
 
 	return fileData[fid].crc;
 }
+#endif
 
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more
@@ -97,9 +91,9 @@ unsigned int CZipArchive::GetCrc32(unsigned int fid)
 bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	// Prevent opening files on missing/invalid archives
-	if (!zip) {
+	if (zip == nullptr)
 		return false;
-	}
+
 	assert(IsFileId(fid));
 
 	unzGoToFilePos(zip, &fileData[fid].fp);
@@ -107,24 +101,20 @@ bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 	unz_file_info fi;
 	unzGetCurrentFileInfo(zip, &fi, nullptr, 0, nullptr, 0, nullptr, 0);
 
-	if (unzOpenCurrentFile(zip) != UNZ_OK) {
+	if (unzOpenCurrentFile(zip) != UNZ_OK)
 		return false;
-	}
 
 	buffer.resize(fi.uncompressed_size);
 
 	bool ret = true;
-	if (!buffer.empty() && unzReadCurrentFile(zip, &buffer[0], fi.uncompressed_size) != fi.uncompressed_size) {
+	if (!buffer.empty() && unzReadCurrentFile(zip, &buffer[0], fi.uncompressed_size) != fi.uncompressed_size)
 		ret = false;
-	}
 
-	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR) {
+	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
 		ret = false;
-	}
 
-	if (!ret) {
+	if (!ret)
 		buffer.clear();
-	}
 
 	return ret;
 }

@@ -36,19 +36,6 @@ static spring::recursive_mutex vfsMutex;
 static CVFSHandler* vfsHandlerGlobal = nullptr;
 
 
-CVFSHandler::CVFSHandler()
-{
-	LOG_L(L_DEBUG, "[%s]", __func__);
-}
-
-CVFSHandler::~CVFSHandler()
-{
-	LOG_L(L_INFO, "[%s] #archives=%lu", __func__, (long unsigned) archives.size());
-	DeleteArchives();
-}
-
-
-
 void CVFSHandler::GrabLock() { vfsMutex.lock(); }
 void CVFSHandler::FreeLock() { vfsMutex.unlock(); }
 
@@ -144,12 +131,19 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 		archives[archivePath] = ar;
 	}
 
+
+	files[Section::Temp].clear();
+	files[Section::Temp].reserve(ar->NumFiles());
+
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 		std::pair<std::string, int> fi = ar->FileInfo(fid);
 		std::string name = std::move(StringToLower(fi.first));
 
 		if (!overwrite) {
-			if (files[section].find(name) != files[section].end()) {
+			const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+			const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{name, FileData{}}, pred);
+
+			if (iter != files[section].end() && iter->first == name) {
 				LOG_L(L_DEBUG, "[VFSH::%s] skipping \"%s\", exists", __func__, name.c_str());
 				continue;
 			}
@@ -159,9 +153,16 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 			LOG_L(L_DEBUG, "[VFSH::%s] overriding \"%s\"", __func__, name.c_str());
 		}
 
-		files[section][name] = {ar, fi.second};
+		// can not add directly to files[section], would break lower_bound
+		// note: this means an archive can *internally* contain duplicates
+		files[Section::Temp].emplace_back(name, FileData{ar, fi.second});
 	}
 
+	for (size_t i = 0, n = files[Section::Temp].size(); i < n; i++) {
+		files[section].emplace_back(std::move(files[Section::Temp][i]));
+	}
+
+	std::stable_sort(files[section].begin(), files[section].end(), [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); });
 	return true;
 }
 
@@ -205,15 +206,28 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	if (ar == nullptr)
 		return true;
 
-	// remove the files loaded from the archive-to-remove
-	for (auto f = files[section].begin(); f != files[section].end(); ) {
-		if (f->second.ar == ar) {
-			LOG_L(L_DEBUG, "[VFHS::%s] removing \"%s\"", __func__, f->first.c_str());
-			f = files[section].erase(f);
-		} else {
-			 ++f;
-		}
+
+	for (auto& pair: files[section]) {
+		auto& name = pair.first;
+
+		if ((pair.second).ar != ar)
+			continue;
+
+		LOG_L(L_DEBUG, "[VFHS::%s] removing \"%s\"", __func__, name.c_str());
+
+		// mark entry for removal
+		name.clear();
 	}
+
+	{
+		const auto beg = files[section].begin();
+		const auto end = files[section].end();
+		const auto pos = std::remove_if(beg, end, [](const FileEntry& e) { return (e.first.empty()); });
+
+		// wipe entries belonging to the to-be-deleted archive
+		files[section].erase(pos, end);
+	}
+
 
 	delete ar;
 	archives.erase(archivePath);
@@ -224,7 +238,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 
 void CVFSHandler::DeleteArchives()
 {
-	LOG_L(L_INFO, "[VFSH::%s]", __func__);
+	LOG_L(L_INFO, "[VFSH::%s] #archives=%lu", __func__, (long unsigned) archives.size());
 
 	for (const auto& p: archives) {
 		LOG_L(L_INFO, "\tarchive=%s (%p)", (p.first).c_str(), p.second);
@@ -232,9 +246,11 @@ void CVFSHandler::DeleteArchives()
 	}
 
 	archives.clear();
+	archives.reserve(8192);
 
-	for (auto& fdm: files) {
-		fdm.clear();
+	for (auto& vec: files) {
+		vec.clear();
+		vec.reserve(2048);
 	}
 }
 
@@ -253,10 +269,11 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	assert(section < Section::Count);
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
-	const auto fi = files[section].find(normalizedFilePath);
+	const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{normalizedFilePath, FileData{}}, pred);
 
-	if (fi != files[section].end())
-		return fi->second;
+	if (iter != files[section].end() && iter->first == normalizedFilePath)
+		return iter->second;
 
 	// file does not exist in the VFS
 	return {nullptr, 0};
@@ -304,8 +321,12 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 	std::vector<std::string> dirFiles;
 	std::string dir = std::move(GetNormalizedPath(rawDir));
 
-	auto filesStart = files[section].begin();
-	auto filesEnd   = files[section].end();
+
+	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+
+	auto& filesVec = files[section];
+	auto  filesBeg = filesVec.begin();
+	auto  filesEnd = filesVec.end();
 
 	// non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
@@ -313,21 +334,21 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 			dir += "/";
 
 		// limit the iterator range; turn '/' into '0' for filesEnd
-		filesStart = files[section].lower_bound(dir); dir.back() += 1;
-		filesEnd   = files[section].upper_bound(dir); dir.back() -= 1;
+		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() += 1;
+		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() -= 1;
 	}
 
-	dirFiles.reserve(std::distance(filesStart, filesEnd));
+	dirFiles.reserve(std::distance(filesBeg, filesEnd));
 
-	for (; filesStart != filesEnd; ++filesStart) {
-		const std::string& path = FileSystem::GetDirectory(filesStart->first);
+	for (; filesBeg != filesEnd; ++filesBeg) {
+		const std::string& path = FileSystem::GetDirectory(filesBeg->first);
 
 		// Check if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) != 0)
 			continue;
 
 		// strip pathname
-		std::string name = std::move(filesStart->first.substr(dir.length()));
+		std::string name = std::move(filesBeg->first.substr(dir.length()));
 
 		// do not return files in subfolders
 		if ((name.find('/') != std::string::npos) || (name.find('\\') != std::string::npos))
@@ -353,8 +374,12 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 	std::vector<std::string>::iterator iter;
 	std::string dir = std::move(GetNormalizedPath(rawDir));
 
-	auto filesStart = files[section].begin();
-	auto filesEnd   = files[section].end();
+
+	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+
+	auto& filesVec = files[section];
+	auto  filesBeg = filesVec.begin();
+	auto  filesEnd = filesVec.end();
 
 	// non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
@@ -362,21 +387,21 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 			dir += "/";
 
 		// limit the iterator range (as in GetFilesInDir)
-		filesStart = files[section].lower_bound(dir); dir.back() += 1;
-		filesEnd   = files[section].upper_bound(dir); dir.back() -= 1;
+		filesBeg = std::lower_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() += 1;
+		filesEnd = std::upper_bound(filesVec.begin(), filesVec.end(), FileEntry{dir, FileData{}}, filesPred); dir.back() -= 1;
 	}
 
-	dirs.reserve(std::distance(filesStart, filesEnd));
+	dirs.reserve(std::distance(filesBeg, filesEnd));
 
-	for (; filesStart != filesEnd; ++filesStart) {
-		const std::string& path = FileSystem::GetDirectory(filesStart->first);
+	for (; filesBeg != filesEnd; ++filesBeg) {
+		const std::string& path = FileSystem::GetDirectory(filesBeg->first);
 
 		// test if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) != 0)
 			continue;
 
 		// strip pathname
-		const std::string& name = filesStart->first.substr(dir.length());
+		const std::string& name = filesBeg->first.substr(dir.length());
 		const std::string::size_type slash = name.find_first_of("/\\");
 
 		if (slash == std::string::npos)

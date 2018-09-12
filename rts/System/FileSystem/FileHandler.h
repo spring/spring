@@ -3,7 +3,6 @@
 #ifndef _FILE_HANDLER_H
 #define _FILE_HANDLER_H
 
-#include <set>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -67,11 +66,11 @@ protected:
 	virtual bool TryReadFromRawFS(const std::string& fileName);
 	virtual bool TryReadFromVFS(const std::string& fileName, int section);
 
-	static bool InsertRawFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
-	static bool InsertVFSFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern, int section);
+	static bool InsertRawFiles(std::vector<std::string>& fileSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSFiles(std::vector<std::string>& fileSet, const std::string& path, const std::string& pattern, int section);
 
-	static bool InsertRawDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
-	static bool InsertVFSDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern, int section);
+	static bool InsertRawDirs(std::vector<std::string>& dirSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSDirs(std::vector<std::string>& dirSet, const std::string& path, const std::string& pattern, int section);
 
 	std::string fileName;
 	std::ifstream ifs;

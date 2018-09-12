@@ -17,28 +17,24 @@ public:
 	void Generate();
 
 protected:
-	CMapGenerator(const CGameSetup* setup);
+	CMapGenerator(const CGameSetup* gs): setup(gs) {}
 
 	const CGameSetup* const setup;
 
-	std::vector<float>& GetHeightMap()
-	{ return heightMap; }
+	std::vector<float>& GetHeightMap() { return heightMap; }
 
-	virtual int2 GetGridSize() const
-	{ return int2(GetMapSize().x * CSMFReadMap::bigSquareSize, GetMapSize().y * CSMFReadMap::bigSquareSize); }
+	virtual int2 GetGridSize() const { return int2(GetMapSize().x * CSMFReadMap::bigSquareSize, GetMapSize().y * CSMFReadMap::bigSquareSize); }
 
 private:
-	void GenerateSMF(CVirtualArchive* archive);
-	void GenerateMapInfo(CVirtualArchive* archive);
-	void GenerateSMT(CVirtualArchive* archive);
+	void GenerateSMF(CVirtualFile*);
+	void GenerateMapInfo(CVirtualFile*);
+	void GenerateSMT(CVirtualFile*);
 
 	template<typename T>
-	void AppendToBuffer(CVirtualFile* file, const T& data)
-	{ AppendToBuffer(file, &data, sizeof(T)); }
+	void AppendToBuffer(CVirtualFile* file, const T& data) { AppendToBuffer(file, &data, sizeof(T)); }
 
 	template<typename T>
-	void SetToBuffer(CVirtualFile* file, const T& data, int position)
-	{ SetToBuffer(file, &data, sizeof(T), position); }
+	void SetToBuffer(CVirtualFile* file, const T& data, int position) { SetToBuffer(file, &data, sizeof(T), position); }
 
 	void AppendToBuffer(CVirtualFile* file, const void* data, int size);
 	void SetToBuffer(CVirtualFile* file, const void* data, int size, int position);

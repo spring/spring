@@ -20,7 +20,7 @@ extern "C" {
  */
 class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
-	CSevenZipArchiveFactory();
+	CSevenZipArchiveFactory(): IArchiveFactory("sd7") {}
 	bool CheckForSolid() const { return true; }
 private:
 	IArchive* DoCreateArchive(const std::string& filePath) const;
@@ -36,13 +36,15 @@ public:
 	CSevenZipArchive(const std::string& name);
 	virtual ~CSevenZipArchive();
 
-	virtual bool IsOpen();
+	bool IsOpen() override;
 
-	virtual unsigned int NumFiles() const;
-	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
-	virtual bool HasLowReadingCost(unsigned int fid) const;
-	virtual unsigned GetCrc32(unsigned int fid);
+	unsigned int NumFiles() const override;
+	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	bool HasLowReadingCost(unsigned int fid) const override;
+	#if 0
+	unsigned GetCrc32(unsigned int fid);
+	#endif
 
 private:
 	UInt32 blockIndex;

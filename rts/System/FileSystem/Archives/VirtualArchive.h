@@ -5,8 +5,10 @@
 
 #include "ArchiveFactory.h"
 #include "IArchive.h"
+
 #include <vector>
 #include <string>
+
 
 class CVirtualArchive;
 
@@ -38,41 +40,40 @@ extern CVirtualArchiveFactory* virtualArchiveFactory;
 class CVirtualFile
 {
 public:
-	CVirtualFile(int fid, const std::string& name);
-	virtual ~CVirtualFile();
+	CVirtualFile(int _fid, const std::string& _name): name(_name), fid(_fid) {}
 
+	void WriteZip(void* zf) const;
+
+public:
 	std::vector<std::uint8_t> buffer;
 
-	const std::string& GetName() const
-	{ return name; }
-
-	int GetFID() const
-	{ return fid; }
-
-private:
 	const std::string name;
 	int fid;
 };
 
+
 /**
  * An opened virtual archive, as archives get deleted after being
- * opened with IArchiveFactory::DoCreateArchive all the data in a virtual archive is lost.
- * Therefore an 'opened' class is created and the actual archive is preserved
+ * opened with IArchiveFactory::DoCreateArchive all the data in a
+ * virtual archive is lost.
+ * Therefore an 'opened' class is created and the actual archive is
+ * preserved
  */
 class CVirtualArchiveOpen : public IArchive
 {
 public:
 	CVirtualArchiveOpen(CVirtualArchive* archive, const std::string& fileName);
-	virtual ~CVirtualArchiveOpen();
 
-	virtual bool IsOpen();
-	virtual unsigned int NumFiles() const;
-	virtual bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
-	virtual void FileInfo( unsigned int fid, std::string& name, int& size ) const;
+	// virtual archives are stored in memory and as such always open
+	bool IsOpen() override { return true; }
+	unsigned int NumFiles() const override;
+	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
 
 private:
 	CVirtualArchive* archive;
 };
+
 
 /**
  * A virtual archive
@@ -80,31 +81,28 @@ private:
 class CVirtualArchive
 {
 public:
-	CVirtualArchive(const std::string& fileName);
-	virtual ~CVirtualArchive();
+	CVirtualArchive(const std::string& _fileName): fileName(_fileName) {}
 
 	CVirtualArchiveOpen* Open();
-	CVirtualFile* AddFile(const std::string& file);
+	CVirtualFile* GetFilePtr(unsigned int fid) { return &files[fid]; }
 
-	unsigned int NumFiles() const;
-	bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
-	void FileInfo( unsigned int fid, std::string& name, int& size ) const;
+	unsigned int AddFile(const std::string& file);
+	unsigned int NumFiles() const { return (files.size()); }
 
-	const std::string& GetFileName() const
-	{ return fileName; }
+	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	void FileInfo(unsigned int fid, std::string& name, int& size) const;
 
-	const std::map<std::string, unsigned int>& GetNameIndex() const
-	{ return lcNameIndex; }
+	const std::string& GetFileName() const { return fileName; }
+	const spring::unordered_map<std::string, unsigned int>& GetNameIndex() const { return lcNameIndex; }
 
 	void WriteToFile();
 
 private:
 	friend class CVirtualArchiveOpen;
 
-	std::vector<CVirtualFile*> files;
 	std::string fileName;
-	std::map<std::string, unsigned int> lcNameIndex;
-
+	std::vector<CVirtualFile> files;
+	spring::unordered_map<std::string, unsigned int> lcNameIndex;
 };
 
 #endif // _VIRTUAL_ARCHIVE_H

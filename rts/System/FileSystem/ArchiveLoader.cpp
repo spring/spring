@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <algorithm>
 
 #include "ArchiveLoader.h"
 
@@ -14,71 +15,65 @@
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
 
-#include "System/SafeUtil.h"
-
+static CPoolArchiveFactory sdpArchiveFactory;
+static CDirArchiveFactory sddArchiveFactory;
+static CZipArchiveFactory sdzArchiveFactory;
+static CSevenZipArchiveFactory sd7ArchiveFactory;
+static CVirtualArchiveFactory sdvArchiveFactory;
 
 CArchiveLoader::CArchiveLoader()
 {
-	// TODO maybe move ArchiveFactory registration to some external place
-	AddFactory(new CPoolArchiveFactory());
-	AddFactory(new CDirArchiveFactory());
-	AddFactory(new CZipArchiveFactory());
-	AddFactory(new CSevenZipArchiveFactory());
-	AddFactory(new CVirtualArchiveFactory());
-}
+	using P = decltype(archiveFactories)::value_type;
 
-CArchiveLoader::~CArchiveLoader()
-{
-	std::map<std::string, IArchiveFactory*>::iterator afi;
-	for (afi = archiveFactories.begin(); afi != archiveFactories.end(); ++afi) {
-		spring::SafeDelete(afi->second);
-	}
+	archiveFactories[ARCHIVE_TYPE_SDP] = {sdpArchiveFactory.GetDefaultExtension(), &sdpArchiveFactory};
+	archiveFactories[ARCHIVE_TYPE_SDD] = {sddArchiveFactory.GetDefaultExtension(), &sddArchiveFactory};
+	archiveFactories[ARCHIVE_TYPE_SDZ] = {sdzArchiveFactory.GetDefaultExtension(), &sdzArchiveFactory};
+	archiveFactories[ARCHIVE_TYPE_SD7] = {sd7ArchiveFactory.GetDefaultExtension(), &sd7ArchiveFactory};
+	archiveFactories[ARCHIVE_TYPE_SDV] = {sdvArchiveFactory.GetDefaultExtension(), &sdvArchiveFactory};
+
+	std::sort(archiveFactories.begin(), archiveFactories.end(), [](const P& a, const P& b) { return (a.first < b.first); });
 }
 
 
-CArchiveLoader& CArchiveLoader::GetInstance()
+const CArchiveLoader& CArchiveLoader::GetInstance()
 {
-	static CArchiveLoader singleton;
+	static const CArchiveLoader singleton;
 	return singleton;
 }
 
 
 bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 {
-	const std::string ext = FileSystem::GetExtension(fileName);
+	const std::string fileExt = FileSystem::GetExtension(fileName);
 
-	return (archiveFactories.find(ext) != archiveFactories.end());
+	using P = decltype(archiveFactories)::value_type;
+
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
+
+	return (iter != archiveFactories.end() && iter->first == fileExt);
 }
 
 
 IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::string& type) const
 {
-	IArchive* ret = NULL;
+	IArchive* ret = nullptr;
 
-	const std::string ext = type.empty() ? FileSystem::GetExtension(fileName) : type;
+	const std::string fileExt = type.empty() ? FileSystem::GetExtension(fileName) : type;
 	const std::string filePath = dataDirsAccess.LocateFile(fileName);
 
-	const std::map<std::string, IArchiveFactory*>::const_iterator afi
-			= archiveFactories.find(ext);
+	using P = decltype(archiveFactories)::value_type;
 
-	if (afi != archiveFactories.end()) {
-		ret = afi->second->CreateArchive(filePath);
-	}
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
 
-	if (ret && ret->IsOpen()) {
+	if (iter != archiveFactories.end() && iter->first == fileExt)
+		ret = iter->second->CreateArchive(filePath);
+
+	if (ret != nullptr && ret->IsOpen())
 		return ret;
-	}
 
 	delete ret;
-	return NULL;
+	return nullptr;
 }
 
-
-void CArchiveLoader::AddFactory(IArchiveFactory* archiveFactory)
-{
-	assert(archiveFactory != NULL);
-	// ensure unique extensions
-	assert(archiveFactories.find(archiveFactory->GetDefaultExtension()) == archiveFactories.end());
-
-	archiveFactories[archiveFactory->GetDefaultExtension()] = archiveFactory;
-}
