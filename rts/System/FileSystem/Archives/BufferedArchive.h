@@ -3,10 +3,8 @@
 #ifndef _BUFFERED_ARCHIVE_H
 #define _BUFFERED_ARCHIVE_H
 
-#include <map>
-#include "System/Threading/SpringThreading.h"
-
 #include "IArchive.h"
+#include "System/Threading/SpringThreading.h"
 
 /**
  * Provides a helper implementation for archive types that can only uncompress
@@ -15,18 +13,16 @@
 class CBufferedArchive : public IArchive
 {
 public:
-	CBufferedArchive(const std::string& name, bool cache = true);
+	CBufferedArchive(const std::string& name, bool cached = true): IArchive(name) { noCache = !cached; }
 	virtual ~CBufferedArchive() {}
 
-	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 
 protected:
 	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 
-	spring::mutex archiveLock; // neither 7zip nor zlib are threadsafe
-
 	struct FileBuffer {
-		FileBuffer(): populated(false), exists(false) {}
+		FileBuffer() = default;
 		FileBuffer(const FileBuffer& fb) = delete;
 		FileBuffer(FileBuffer&& fb) { *this = std::move(fb); }
 
@@ -39,15 +35,22 @@ protected:
 			return *this;
 		}
 
-		bool populated; // files may be empty (0 bytes)
-		bool exists;
+		bool populated = false; // files may be empty (0 bytes)
+		bool exists = false;
+
 		std::vector<std::uint8_t> data;
 	};
 
-	std::vector<FileBuffer> cache; // cache[fileId]
+	// indexed by file-id
+	std::vector<FileBuffer> cache;
+	// neither 7zip (.sd7) nor minizip (.sdz) are threadsafe
+	// zlib (used to extract pool archive .gz entries) should
+	// not need this, but currently each buffered GetFileImpl
+	// call is protected
+	spring::mutex archiveLock;
 
 private:
-	bool caching;
+	bool noCache = false;
 };
 
 #endif // _BUFFERED_ARCHIVE_H

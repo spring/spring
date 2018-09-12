@@ -14,10 +14,6 @@
 #include <cstring> // strcpy,memset
 #include <sstream>
 
-CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
-{
-}
-
 void CMapGenerator::Generate()
 {
 	// create archive for map
@@ -31,9 +27,9 @@ void CMapGenerator::Generate()
 
 	// generate map and fill archive files
 	GenerateMap();
-	GenerateSMF(archive);
-	GenerateMapInfo(archive);
-	GenerateSMT(archive);
+	GenerateSMF(archive->GetFilePtr(archive->AddFile("maps/generated.smf")));
+	GenerateMapInfo(archive->GetFilePtr(archive->AddFile("mapinfo.lua")));
+	GenerateSMT(archive->GetFilePtr(archive->AddFile("maps/generated.smt")));
 
 	// add archive to VFS
 	archiveScanner->ScanArchive(setup->mapName + "." + virtualArchiveFactory->GetDefaultExtension());
@@ -52,10 +48,8 @@ void CMapGenerator::SetToBuffer(CVirtualFile* file, const void* data, int size, 
 	std::copy((std::uint8_t*)data, (std::uint8_t*)data + size, file->buffer.begin() + position);
 }
 
-void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
+void CMapGenerator::GenerateSMF(CVirtualFile* fileSMF)
 {
-	CVirtualFile* fileSMF = archive->AddFile("maps/generated.smf");
-
 	SMFHeader smfHeader;
 	MapTileHeader smfTile;
 	MapFeatureHeader smfFeature;
@@ -163,11 +157,8 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	AppendToBuffer(fileSMF, smfFeature);
 }
 
-void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
+void CMapGenerator::GenerateMapInfo(CVirtualFile* fileMapInfo)
 {
-
-	CVirtualFile* fileMapInfo = archive->AddFile("mapinfo.lua");
-
 	//Open template mapinfo.lua
 	vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 	const std::string luaTemplate = "mapgenerator/mapinfo_template.lua";
@@ -196,10 +187,8 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	fileMapInfo->buffer.assign(luaInfo.begin(), luaInfo.end());
 }
 
-void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
+void CMapGenerator::GenerateSMT(CVirtualFile* fileSMT)
 {
-	CVirtualFile* fileSMT = archive->AddFile("maps/generated.smt");
-
 	constexpr int32_t tileSize = 32;
 	constexpr int32_t tileBPP = 3;
 

@@ -855,32 +855,32 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		return;
 	}
 
-	const LuaTable& archiveCache = p.GetRoot();
-	const LuaTable& archives = archiveCache.SubTable("archives");
-	const LuaTable& brokenArchives = archiveCache.SubTable("brokenArchives");
+	const LuaTable& archiveCacheTbl = p.GetRoot();
+	const LuaTable& archivesTbl = archiveCacheTbl.SubTable("archives");
+	const LuaTable& brokenArchivesTbl = archiveCacheTbl.SubTable("brokenArchives");
 
 	// Do not load old version caches
-	const int ver = archiveCache.GetInt("internalVer", (INTERNAL_VER + 1));
+	const int ver = archiveCacheTbl.GetInt("internalVer", (INTERNAL_VER + 1));
 	if (ver != INTERNAL_VER)
 		return;
 
-	for (int i = 1; archives.KeyExists(i); ++i) {
-		const LuaTable& curArchive = archives.SubTable(i);
-		const LuaTable& archived = curArchive.SubTable("archivedata");
+	for (int i = 1; archivesTbl.KeyExists(i); ++i) {
+		const LuaTable& curArchiveTbl = archivesTbl.SubTable(i);
+		const LuaTable& archivedTbl = curArchiveTbl.SubTable("archivedata");
 
-		const std::string curArchiveName = curArchive.GetString("name", "");
-		const std::string& hexDigestStr = curArchive.GetString("checksum", "");
+		const std::string curArchiveName = curArchiveTbl.GetString("name", "");
+		const std::string& hexDigestStr = curArchiveTbl.GetString("checksum", "");
 
 		ArchiveInfo& ai = archiveInfos[StringToLower(curArchiveName)];
 		ArchiveInfo tmp; // used to compare against all-zero hash
 
 		ai.origName = curArchiveName;
-		ai.path     = curArchive.GetString("path", "");
+		ai.path     = curArchiveTbl.GetString("path", "");
 
 		// do not use LuaTable.GetInt() for 32-bit integers: the Spring lua
 		// library uses 32-bit floats to represent numbers, which can only
 		// represent 2^24 consecutive integers
-		ai.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
+		ai.modified = strtoul(curArchiveTbl.GetString("modified", "0").c_str(), 0, 10);
 
 		// convert digest-string back to raw checksum
 		if (hexDigestStr.size() == (sha512::SHA_LEN * 2)) {
@@ -895,7 +895,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ai.hashed = (memcmp(ai.checksum, tmp.checksum, sha512::SHA_LEN) != 0);
 
 
-		ai.archiveData = CArchiveScanner::ArchiveData(archived, true);
+		ai.archiveData = CArchiveScanner::ArchiveData(archivedTbl, true);
 		if (ai.archiveData.IsMap()) {
 			AddDependency(ai.archiveData.GetDependencies(), GetMapHelperContentName());
 		} else if (ai.archiveData.IsGame()) {
@@ -903,11 +903,11 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		}
 	}
 
-	for (int i = 1; brokenArchives.KeyExists(i); ++i) {
-		const LuaTable& curArchive = brokenArchives.SubTable(i);
+	for (int i = 1; brokenArchivesTbl.KeyExists(i); ++i) {
+		const LuaTable& curArchive = brokenArchivesTbl.SubTable(i);
 		const std::string& name = StringToLower(curArchive.GetString("name", ""));
 
-		BrokenArchive& ba = this->brokenArchives[name];
+		BrokenArchive& ba = brokenArchives[name];
 		ba.path = curArchive.GetString("path", "");
 		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
 		ba.updated = false;

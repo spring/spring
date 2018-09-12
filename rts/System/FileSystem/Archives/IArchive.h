@@ -5,10 +5,10 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <cinttypes>
 
 #include "System/Sync/SHA512.hpp"
+#include "System/UnorderedMap.hpp"
 
 /**
  * @brief Abstraction of different archive types
@@ -125,8 +125,10 @@ public:
 
 
 protected:
-	/// must be populated by the subclass
-	std::map<std::string, unsigned int> lcNameIndex;
+	// Spring expects the contents of archives to be case-independent
+	// this map (which must be populated by subclass archives) is kept
+	// to allow converting back from lowercase to original case
+	spring::unordered_map<std::string, unsigned int> lcNameIndex;
 
 private:
 	/// "ExampleArchive.sdd"

@@ -59,24 +59,22 @@ static Bool Utf16_To_Utf8(char *dest, size_t *destLen, const UInt16 *src, size_t
 	return False;
 }
 
-CSevenZipArchiveFactory::CSevenZipArchiveFactory()
-	: IArchiveFactory("sd7")
-{
-}
+
 
 int CSevenZipArchive::GetFileName(const CSzArEx* db, int i)
 {
-	size_t len = SzArEx_GetFileNameUtf16(db, i, NULL);
+	const size_t len = SzArEx_GetFileNameUtf16(db, i, nullptr);
 
 	if (len > tempBufSize) {
-		SzFree(NULL, tempBuf);
+		SzFree(nullptr, tempBuf);
 		tempBufSize = len;
-		tempBuf = (UInt16 *)SzAlloc(NULL, tempBufSize * sizeof(tempBuf[0]));
-		if (tempBuf == 0) {
+		tempBuf = (UInt16 *)SzAlloc(nullptr, tempBufSize * sizeof(tempBuf[0]));
+
+		if (tempBuf == 0)
 			return SZ_ERROR_MEM;
-		}
 	}
-	tempBuf[len-1] = 0;
+
+	tempBuf[len - 1] = 0;
 	return SzArEx_GetFileNameUtf16(db, i, tempBuf);
 }
 
@@ -87,22 +85,23 @@ IArchive* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) 
 
 static inline const char* GetErrorStr(int err)
 {
-	switch(err) {
-	case SZ_OK:
-		return "OK";
-	case SZ_ERROR_FAIL:
-		return "Extracting failed";
-	case SZ_ERROR_CRC:
-		return "CRC error (archive corrupted?)";
-	case SZ_ERROR_INPUT_EOF:
-		return "Unexpected end of file (truncated?)";
-	case SZ_ERROR_MEM:
-		return "Out of memory";
-	case SZ_ERROR_UNSUPPORTED:
-		return "Unsupported archive";
-	case SZ_ERROR_NO_ARCHIVE:
-		return "Archive not found";
+	switch (err) {
+		case SZ_OK:
+			return "OK";
+		case SZ_ERROR_FAIL:
+			return "Extracting failed";
+		case SZ_ERROR_CRC:
+			return "CRC error (archive corrupted?)";
+		case SZ_ERROR_INPUT_EOF:
+			return "Unexpected end of file (truncated?)";
+		case SZ_ERROR_MEM:
+			return "Out of memory";
+		case SZ_ERROR_UNSUPPORTED:
+			return "Unsupported archive";
+		case SZ_ERROR_NO_ARCHIVE:
+			return "Archive not found";
 	}
+
 	return "Unknown error";
 }
 
@@ -112,7 +111,7 @@ static inline std::string GetSystemErrorStr(WRes wres)
 #ifdef USE_WINDOWS_FILE
 	LPSTR messageBuffer = nullptr;
 	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-								 NULL, wres, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+								 nullptr, wres, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
 
 	std::string errorstr(messageBuffer, size);
 
@@ -131,9 +130,9 @@ static inline std::string GetSystemErrorStr(WRes wres)
 CSevenZipArchive::CSevenZipArchive(const std::string& name):
 	CBufferedArchive(name, false),
 	blockIndex(0xFFFFFFFF),
-	outBuffer(NULL),
+	outBuffer(nullptr),
 	outBufferSize(0),
-	tempBuf(NULL),
+	tempBuf(nullptr),
 	tempBufSize(0),
 	isOpen(false)
 {
@@ -209,7 +208,7 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 			std::string fileName = fd.origName;
 			StringToLowerInPlace(fileName);
 			fileData.push_back(fd);
-			lcNameIndex[fileName] = fileData.size()-1;
+			lcNameIndex[fileName] = fileData.size() - 1;
 		}
 	}
 
@@ -219,15 +218,15 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 
 CSevenZipArchive::~CSevenZipArchive()
 {
-	if (outBuffer) {
+	if (outBuffer != nullptr)
 		IAlloc_Free(&allocImp, outBuffer);
-	}
-	if (isOpen) {
+
+	if (isOpen)
 		File_Close(&archiveStream.file);
-	}
+
 	SzArEx_Free(&db, &allocImp);
-	SzFree(NULL, tempBuf);
-	tempBuf = NULL;
+	SzFree(nullptr, tempBuf);
+	tempBuf = nullptr;
 	tempBufSize = 0;
 }
 
@@ -248,16 +247,16 @@ bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& 
 	// Get 7zip to decompress it
 	size_t offset;
 	size_t outSizeProcessed;
-	SRes res;
 
-	res = SzArEx_Extract(&db, &lookStream.s, fileData[fid].fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
+	const SRes res = SzArEx_Extract(&db, &lookStream.s, fileData[fid].fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
+
 	if (res == SZ_OK) {
 		buffer.resize(outSizeProcessed);
-		memcpy(&buffer[0], (char*)outBuffer+offset, outSizeProcessed);
+		memcpy(&buffer[0], (char*)outBuffer + offset, outSizeProcessed);
 		return true;
-	} else {
-		return false;
 	}
+
+	return false;
 }
 
 void CSevenZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
@@ -286,8 +285,11 @@ bool CSevenZipArchive::HasLowReadingCost(unsigned int fid) const
 			|| (fd.packedSize <= COST_LIMIT_DISC_READ));
 }
 
+#if 0
 unsigned int CSevenZipArchive::GetCrc32(unsigned int fid)
 {
 	assert(IsFileId(fid));
 	return fileData[fid].crc;
 }
+#endif
+

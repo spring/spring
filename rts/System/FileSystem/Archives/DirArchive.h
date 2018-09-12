@@ -30,13 +30,12 @@ class CDirArchive : public IArchive
 {
 public:
 	CDirArchive(const std::string& archiveName);
-	virtual ~CDirArchive();
 
-	virtual bool IsOpen();
+	bool IsOpen() override { return true; }
 
-	virtual unsigned int NumFiles() const;
-	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
+	unsigned int NumFiles() const override { return (searchFiles.size()); }
+	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
 
 private:
 	/// "ExampleArchive.sdd/"

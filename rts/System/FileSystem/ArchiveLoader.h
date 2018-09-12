@@ -9,6 +9,15 @@
 class IArchive;
 class IArchiveFactory;
 
+enum {
+	ARCHIVE_TYPE_SDP = 0, // pool
+	ARCHIVE_TYPE_SDD = 1, // dir
+	ARCHIVE_TYPE_SDZ = 2, // zip
+	ARCHIVE_TYPE_SD7 = 3, // 7zip
+	ARCHIVE_TYPE_SDV = 4, // virtual
+	ARCHIVE_TYPE_CNT = 5,
+};
+
 /**
  * Engine side interface for loading of different archive types.
  * This loader is responsible for offering access to different archive types,
@@ -17,27 +26,19 @@ class IArchiveFactory;
 class CArchiveLoader
 {
 	CArchiveLoader();
-	~CArchiveLoader();
 
 public:
-	static CArchiveLoader& GetInstance();
+	static const CArchiveLoader& GetInstance();
 
 	/// Returns true if the indicated file is in fact an archive
 	bool IsArchiveFile(const std::string& fileName) const;
 
 	/// Returns a pointer to a new'ed suitable subclass of IArchive
-	IArchive* OpenArchive(const std::string& fileName,
-			const std::string& type = "") const;
-
-	/**
-	 * Registers an archive factory, which handles a single type of archive.
-	 * @param archiveFactory has to be new'ed, will be delete'ed
-	 */
-	void AddFactory(IArchiveFactory* archiveFactory);
+	IArchive* OpenArchive(const std::string& fileName, const std::string& type = "") const;
 
 private:
 	/// maps the default-extension to the corresponding archive factory
-	std::map<std::string, IArchiveFactory*> archiveFactories;
+	std::array< std::pair<std::string, IArchiveFactory*>, ARCHIVE_TYPE_CNT> archiveFactories;
 };
 
 #define archiveLoader CArchiveLoader::GetInstance()

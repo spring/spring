@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <set>
 #include <fstream>
 #include <algorithm>
 #include <cassert>
@@ -195,12 +194,15 @@ int CFileHandler::ReadString(void* buf, int length)
 	assert(length > 0);
 	const int pos = GetPos();
 	const int rlen = Read(buf, length);
-	if (rlen < length) ((char*)buf)[rlen] = 0;
+
+	if (rlen < length)
+		((char*)buf)[rlen] = 0;
+
 	const int slen = strlen((const char*)buf);
-	if (rlen > 0) {
-		const int send = pos + slen + 1;
-		Seek(send, std::ios_base::beg);
-	}
+
+	if (rlen > 0)
+		Seek(pos + slen + 1, std::ios_base::beg);
+
 	return slen;
 }
 
@@ -268,93 +270,108 @@ std::string CFileHandler::GetFileExt() const
 
 /******************************************************************************/
 
-std::vector<string> CFileHandler::FindFiles(const string& path,
-		const string& pattern)
+std::vector<string> CFileHandler::FindFiles(const string& path, const string& pattern)
 {
 #ifndef TOOLS
 	return DirList(path, pattern, SPRING_VFS_ALL);
 #else
-	return std::vector<std::string>();
+	return {};
 #endif
 }
 
 
 /******************************************************************************/
 
-std::vector<string> CFileHandler::DirList(const string& path,
-		const string& pattern, const string& modes)
-{
+std::vector<string> CFileHandler::DirList(
+	const string& path,
+	const string& pattern,
+	const string& modes
+) {
+	std::vector<string> fileSet;
 
-	std::vector<string> fileVec;
 #ifndef TOOLS
-	const string pat = pattern.empty() ? "*" : pattern;
-	std::set<string> fileSet;
+	const std::string& pat = (pattern.empty())? "*" : pattern;
+
 	for (char c: modes) {
-		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		const CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+
 		if (section != CVFSHandler::Section::Error)
 			InsertVFSFiles(fileSet, path, pat, section);
 
 		if (c == SPRING_VFS_RAW[0])
 			InsertRawFiles(fileSet, path, pat);
 	}
-	std::set<string>::const_iterator it;
-	for (it = fileSet.begin(); it != fileSet.end(); ++it) {
-		fileVec.push_back(*it);
-	}
+
+	std::stable_sort(fileSet.begin(), fileSet.end());
+	fileSet.erase(std::unique(fileSet.begin(), fileSet.end()), fileSet.end());
 #endif
-	return fileVec;
+
+	return fileSet;
 }
 
 
-bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
-		const string& path, const string& pattern)
-{
+bool CFileHandler::InsertRawFiles(
+	std::vector<string>& fileSet,
+	const string& path,
+	const string& pattern
+) {
 #ifndef TOOLS
-	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern);
-	std::vector<string>::const_iterator fi;
-	for (fi = found.begin(); fi != found.end(); ++fi) {
-		fileSet.insert(fi->c_str());
+	std::vector<string> found = std::move(dataDirsAccess.FindFiles(path, pattern));
+
+	fileSet.reserve(fileSet.size() + found.size());
+
+	for (std::string& f: found) {
+		fileSet.emplace_back(std::move(f));
 	}
 #endif
+
 	return true;
 }
 
 
-bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
-		const string& path, const string& pattern, int section)
-{
+bool CFileHandler::InsertVFSFiles(
+	std::vector<string>& fileSet,
+	const string& path,
+	const string& pattern,
+	int section
+) {
 #ifndef TOOLS
-	if (!vfsHandler)
+	if (vfsHandler == nullptr)
 		return false;
 
 	std::string prefix = path;
 	if (path.find_last_of("\\/") != (path.size() - 1))
 		prefix += '/';
 
-	const spring::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern), spring::regex::icase);
+	const spring::regex regexpattern{FileSystem::ConvertGlobToRegex(pattern), spring::regex::icase};
 	const std::vector<string>& found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
 
-	for (const std::string& fi: found) {
-		if (!spring::regex_match(fi, regexpattern))
+	fileSet.reserve(fileSet.size() + found.size());
+
+	for (const std::string& f: found) {
+		if (!spring::regex_match(f, regexpattern))
 			continue;
 
-		fileSet.insert(prefix + fi);
+		fileSet.emplace_back(std::move(prefix + f));
 	}
 #endif
+
 	return true;
 }
 
 
 /******************************************************************************/
 
-std::vector<string> CFileHandler::SubDirs(const string& path,
-		const string& pattern, const string& modes)
-{
-	std::vector<string> dirVec;
-#ifndef TOOLS
-	const string pat = pattern.empty() ? "*" : pattern;
+std::vector<string> CFileHandler::SubDirs(
+	const string& path,
+	const string& pattern,
+	const string& modes
+) {
+	std::vector<string> dirSet;
 
-	std::set<string> dirSet;
+#ifndef TOOLS
+	const std::string& pat = (pattern.empty())? "*" : pattern;
+
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
 		if (section != CVFSHandler::Section::Error)
@@ -363,60 +380,65 @@ std::vector<string> CFileHandler::SubDirs(const string& path,
 		if (c == SPRING_VFS_RAW[0])
 			InsertRawDirs(dirSet, path, pat);
 	}
-	std::set<string>::const_iterator it;
-	for (it = dirSet.begin(); it != dirSet.end(); ++it) {
-		dirVec.push_back(*it);
-	}
+
+	std::stable_sort(dirSet.begin(), dirSet.end());
+	dirSet.erase(std::unique(dirSet.begin(), dirSet.end()), dirSet.end());
 #endif
-	return dirVec;
+
+	return dirSet;
 }
 
 
-bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
-		const string& path, const string& pattern)
-{
+bool CFileHandler::InsertRawDirs(
+	std::vector<string>& dirSet,
+	const string& path,
+	const string& pattern
+) {
 #ifndef TOOLS
-	spring::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-	                          spring::regex::icase);
+	const spring::regex regexpattern{FileSystem::ConvertGlobToRegex(pattern), spring::regex::icase};
 
-	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern,
-	                                            FileQueryFlags::ONLY_DIRS);
-	std::vector<string>::const_iterator fi;
-	for (fi = found.begin(); fi != found.end(); ++fi) {
-		const string& dir = *fi;
-		if (spring::regex_match(dir, regexpattern)) {
-			dirSet.insert(dir);
-		}
+	std::vector<string> found = std::move(dataDirsAccess.FindFiles(path, pattern, FileQueryFlags::ONLY_DIRS));
+
+	dirSet.reserve(dirSet.size() + found.size());
+
+	for (std::string& dir: found) {
+		if (!spring::regex_match(dir, regexpattern))
+			continue;
+
+		dirSet.emplace_back(std::move(dir));
 	}
 #endif
+
 	return true;
 }
 
 
-bool CFileHandler::InsertVFSDirs(std::set<string>& dirSet,
-		const string& path, const string& pattern, int section)
-{
+bool CFileHandler::InsertVFSDirs(
+	std::vector<string>& dirSet,
+	const string& path,
+	const string& pattern, int section
+) {
 #ifndef TOOLS
-	if (!vfsHandler) {
+	if (vfsHandler == nullptr)
 		return false;
-	}
 
 	string prefix = path;
-	if (path.find_last_of("\\/") != (path.size() - 1)) {
+	if (path.find_last_of("\\/") != (path.size() - 1))
 		prefix += '/';
-	}
 
-	spring::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			spring::regex::icase);
+	const spring::regex regexpattern{FileSystem::ConvertGlobToRegex(pattern), spring::regex::icase};
+	const std::vector<string>& found = vfsHandler->GetDirsInDir(path, (CVFSHandler::Section) section);
 
-	const std::vector<string> &found = vfsHandler->GetDirsInDir(path, (CVFSHandler::Section) section);
-	std::vector<string>::const_iterator fi;
-	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (spring::regex_match(*fi, regexpattern)) {
-			dirSet.insert(prefix + *fi);
-		}
+	dirSet.reserve(dirSet.size() + found.size());
+
+	for (const std::string& f: found) {
+		if (!spring::regex_match(f, regexpattern))
+			continue;
+
+		dirSet.emplace_back(std::move(prefix + f));
 	}
 #endif
+
 	return true;
 }
 
@@ -426,21 +448,20 @@ bool CFileHandler::InsertVFSDirs(std::set<string>& dirSet,
 string CFileHandler::AllowModes(const string& modes, const string& allowed)
 {
 	string newModes;
-	for (unsigned i = 0; i < modes.size(); i++) {
-		if (allowed.find(modes[i]) != string::npos) {
-			newModes += modes[i];
+	for (char mode: modes) {
+		if (allowed.find(mode) != string::npos) {
+			newModes += mode;
 		}
 	}
 	return newModes;
 }
 
-
 string CFileHandler::ForbidModes(const string& modes, const string& forbidden)
 {
 	string newModes;
-	for (unsigned i = 0; i < modes.size(); i++) {
-		if (forbidden.find(modes[i]) == string::npos) {
-			newModes += modes[i];
+	for (char mode: modes) {
+		if (forbidden.find(mode) == string::npos) {
+			newModes += mode;
 		}
 	}
 	return newModes;

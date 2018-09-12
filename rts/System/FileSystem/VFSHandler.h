@@ -4,10 +4,11 @@
 #define _VFS_HANDLER_H
 
 #include <array>
-#include <map>
 #include <string>
 #include <vector>
 #include <cinttypes>
+
+#include "System/UnorderedMap.hpp"
 
 class IArchive;
 
@@ -19,14 +20,15 @@ class IArchive;
 class CVFSHandler
 {
 public:
-	CVFSHandler();
-	~CVFSHandler();
+	CVFSHandler() { DeleteArchives(); }
+	~CVFSHandler() { DeleteArchives(); }
 
 	enum Section {
 		Mod,
 		Map,
 		Base,
 		Menu,
+		Temp,
 		Count,
 		Error
 	};
@@ -109,9 +111,10 @@ private:
 		IArchive* ar;
 		int size;
 	};
+	typedef std::pair<std::string, FileData> FileEntry;
 
-	std::array<std::map<std::string, FileData>, Section::Count> files;
-	std::map<std::string, IArchive*> archives;
+	std::array<std::vector<FileEntry>, Section::Count> files;
+	spring::unordered_map<std::string, IArchive*> archives;
 
 private:
 	std::string GetNormalizedPath(const std::string& rawPath);

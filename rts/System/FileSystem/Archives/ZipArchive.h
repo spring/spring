@@ -17,7 +17,8 @@
  */
 class CZipArchiveFactory : public IArchiveFactory {
 public:
-	CZipArchiveFactory();
+	CZipArchiveFactory(): IArchiveFactory("sdz") {}
+
 private:
 	IArchive* DoCreateArchive(const std::string& filePath) const;
 };
@@ -32,11 +33,13 @@ public:
 	CZipArchive(const std::string& archiveName);
 	virtual ~CZipArchive();
 
-	virtual bool IsOpen();
+	bool IsOpen() override;
 
-	virtual unsigned int NumFiles() const;
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
-	virtual unsigned int GetCrc32(unsigned int fid);
+	unsigned int NumFiles() const override;
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+	#if 0
+	unsigned int GetCrc32(unsigned int fid);
+	#endif
 
 protected:
 	unzFile zip;
@@ -49,7 +52,7 @@ protected:
 	};
 	std::vector<FileData> fileData;
 
-	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 };
 
 #endif // _ZIP_ARCHIVE_H
