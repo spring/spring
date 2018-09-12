@@ -91,6 +91,10 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 			}
 			break;
 		}
+		case SDL_TEXTINPUT: {
+			content.insert(cursorPos, ev.text.text);
+			cursorPos+=strlen(ev.text.text);
+		} break;	
 		case SDL_KEYDOWN: {
 			if (!hasFocus) {
 				break;
@@ -136,16 +140,7 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 				case SDLK_RETURN: {
 					DefaultAction.emit();
 					return true;
-				}
-				default:
-				{
-					auto currentUnicode = ev.key.keysym.sym;
-					// only ASCII supported ATM
-					if ((currentUnicode >= 32) && (currentUnicode <= 126)) {
-						char buf[2] = { (const char)currentUnicode, 0 };
-						content.insert(cursorPos++, buf);
-					}
-				}
+				}				
 			}
 			break;
 		}
