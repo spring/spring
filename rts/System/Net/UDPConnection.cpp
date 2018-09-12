@@ -477,17 +477,12 @@ void UDPConnection::Update()
 
 void UDPConnection::UpdateWaitingPackets()
 {
-	size_t j = 0;
+	const auto beg = waitingPackets.begin();
+	const auto end = waitingPackets.end();
+	const auto pos = std::remove_if(beg, end, [](const std::pair<int, RawPacket>& p) { return ((p.second).length == 0); });
 
 	// erase processed packets
-	for (size_t i = 0, n = waitingPackets.size(); i < n; i++) {
-		if ((waitingPackets[i].second).length == 0)
-			continue;
-
-		waitingPackets[j++] = std::move(waitingPackets[i]);
-	}
-
-	waitingPackets.resize(j);
+	waitingPackets.erase(pos, end);
 }
 
 void UDPConnection::UpdateResendRequests()
@@ -500,28 +495,29 @@ void UDPConnection::UpdateResendRequests()
 	// sort by chunk-number
 	std::sort(resendRequested.begin(), resendRequested.end(), cmpPred);
 
-	// filter duplicates
-	const auto beg = resendRequested.begin();
-	const auto end = resendRequested.end();
-	const auto iter = std::unique(beg, end, dupPred);
+	{
+		const auto beg = resendRequested.begin();
+		const auto end = resendRequested.end();
+		const auto iter = std::unique(beg, end, dupPred);
 
-	resendRequested.erase(iter, end);
+		// filter duplicates
+		resendRequested.erase(iter, end);
+	}
 
 	if (erasedResendChunks.empty())
 		return;
 
-	// remove chunks that no longer need resending
-	size_t j = 0;
+	{
+		const auto pred = [&](const std::pair<std::int32_t, ChunkPtr>& p) { return (erasedResendChunks.find(p.first) != erasedResendChunks.end()); };
 
-	for (size_t i = 0, n = resendRequested.size(); i < n; i++) {
-		if (erasedResendChunks.find(resendRequested[i].first) != erasedResendChunks.end())
-			continue;
+		const auto beg = resendRequested.begin();
+		const auto end = resendRequested.end();
+		const auto pos = std::remove_if(beg, end, pred);
 
-		resendRequested[j++] = resendRequested[i];
+		// remove chunks that no longer need resending
+		resendRequested.erase(pos, end);
+		erasedResendChunks.clear();
 	}
-
-	resendRequested.resize(j);
-	erasedResendChunks.clear();
 }
 
 
