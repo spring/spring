@@ -15,6 +15,7 @@ namespace QTPFS {
 
 	struct QTNode;
 	struct IPath;
+	struct NodeLayer;
 	struct PathSearch;
 
 	namespace PathSearchTrace {
@@ -33,7 +34,7 @@ private:
 	void DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const;
 	void DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) const;
 
-	void GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const;
+	void GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::NodeLayer& nl, std::vector<const QTPFS::QTNode*>& nodes) const;
 
 	void DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) const;
 	void DrawPath(const QTPFS::IPath* path, GL::RenderDataBufferC* rdb) const;

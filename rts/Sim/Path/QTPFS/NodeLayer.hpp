@@ -5,10 +5,11 @@
 
 #include <limits>
 #include <vector>
-#include <deque> // for QTPFS_STAGGERED_LAYER_UPDATES
+#include <deque>
 #include <cinttypes>
 
 #include "System/Rectangle.h"
+#include "Node.hpp"
 #include "PathDefines.hpp"
 
 struct MoveDef;
@@ -37,6 +38,10 @@ namespace QTPFS {
 		static size_t MaxSpeedBinTypeValue() { return (std::numeric_limits<SpeedBinType>::max()); }
 
 		NodeLayer();
+		NodeLayer(NodeLayer&& nl) = default;
+
+		NodeLayer& operator = (const NodeLayer& nl) = delete;
+		NodeLayer& operator = (NodeLayer&& nl) = default;
 
 		void Init(unsigned int layerNum);
 		void Clear();
@@ -53,8 +58,8 @@ namespace QTPFS {
 		bool Update(
 			const SRectangle& r,
 			const MoveDef* md,
-			const std::vector<float>* luSpeedMods = NULL,
-			const std::vector<  int>* luBlockBits = NULL
+			const std::vector<float>* luSpeedMods = nullptr,
+			const std::vector<  int>* luBlockBits = nullptr
 		);
 
 		void ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum);
@@ -66,12 +71,29 @@ namespace QTPFS {
 		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
 		      INode* GetNode(unsigned int i)       { return nodeGrid[i]; }
 
+		const INode* GetPoolNode(unsigned int i) const { return &poolNodes[i]; }
+		      INode* GetPoolNode(unsigned int i)       { return &poolNodes[i]; }
+
+		void FreePoolNode(unsigned int nodeIndex) { nodeIndcs.push_back(nodeIndex); }
+		unsigned int AllocPoolNode(const INode* parent, unsigned int childID,  unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
+			unsigned int idx = -1u;
+
+			if (nodeIndcs.empty())
+				return idx;
+
+			poolNodes[idx = nodeIndcs.back()].Init(parent, childID, x1, z1, x2, z2);
+			nodeIndcs.pop_back();
+
+			return idx;
+		}
+
 		const std::vector<SpeedBinType>& GetOldSpeedBins() const { return oldSpeedBins; }
 		const std::vector<SpeedBinType>& GetCurSpeedBins() const { return curSpeedBins; }
 		const std::vector<SpeedModType>& GetOldSpeedMods() const { return oldSpeedMods; }
 		const std::vector<SpeedModType>& GetCurSpeedMods() const { return curSpeedMods; }
 
 		std::vector<INode*>& GetNodes() { return nodeGrid; }
+
 		void RegisterNode(INode* n);
 
 		void SetNumLeafNodes(unsigned int n) { numLeafNodes = n; }
@@ -88,12 +110,17 @@ namespace QTPFS {
 			memFootPrint += (oldSpeedMods.size() * sizeof(SpeedModType));
 			memFootPrint += (curSpeedBins.size() * sizeof(SpeedBinType));
 			memFootPrint += (oldSpeedBins.size() * sizeof(SpeedBinType));
-			memFootPrint += (nodeGrid.size() * sizeof(INode*));
+			memFootPrint += (nodeGrid.size() * sizeof(decltype(nodeGrid)::value_type));
+			memFootPrint += (poolNodes.size() * sizeof(decltype(poolNodes)::value_type));
+			memFootPrint += (nodeIndcs.size() * sizeof(decltype(nodeIndcs)::value_type));
 			return memFootPrint;
 		}
 
 	private:
 		std::vector<INode*> nodeGrid;
+
+		std::vector<QTNode> poolNodes;
+		std::vector<unsigned int> nodeIndcs;
 
 		std::vector<SpeedModType> curSpeedMods;
 		std::vector<SpeedModType> oldSpeedMods;

@@ -37,19 +37,19 @@ namespace QTPFS {
 		bool operator >= (const INode* n) const { return (fCost >= n->fCost); }
 
 		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
-		virtual void Serialize(std::fstream&, NodeLayer&, unsigned int*, bool) = 0;
+		virtual void Serialize(std::fstream&, NodeLayer&, unsigned int*, unsigned int, bool) = 0;
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) = 0;
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
 		virtual bool UpdateNeighborCache(const std::vector<INode*>& nodes) = 0;
 
-		virtual void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float3& point) = 0;
-		virtual const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const = 0;
+		virtual void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float2& point) = 0;
+		virtual const float2& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const = 0;
 		#endif
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const SRectangle& r) const;
 		float GetDistance(const INode* n, unsigned int type) const;
-		float3 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos, float alpha) const;
+		float2 GetNeighborEdgeTransitionPoint(const INode* ngb, const float3& pos, float alpha) const;
 		SRectangle ClipRectangle(const SRectangle& r) const;
 
 		#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
@@ -88,15 +88,15 @@ namespace QTPFS {
 		// NOTE:
 		//     storing the heap-index is an *UGLY* break of abstraction,
 		//     but the only way to keep the cost of resorting acceptable
-		unsigned int nodeNumber;
-		unsigned int heapIndex;
+		unsigned int nodeNumber = -1u;
+		unsigned int heapIndex = -1u;
 
-		float fCost;
-		float gCost;
-		float hCost;
+		float fCost = 0.0f;
+		float gCost = 0.0f;
+		float hCost = 0.0f;
 
 		// points back to previous node in path
-		INode* prevNode;
+		INode* prevNode = nullptr;
 
 	#ifdef QTPFS_VIRTUAL_NODE_FUNCTIONS
 	};
@@ -108,14 +108,21 @@ namespace QTPFS {
 	struct QTNode: public INode {
 	#endif
 	public:
-		QTNode(
+		QTNode() = default;
+		QTNode(const QTNode& n) = delete;
+		QTNode(QTNode&& n) = default;
+
+		QTNode& operator = (const QTNode& n) = delete;
+		QTNode& operator = (QTNode&& n) = default;
+
+		static void InitStatic();
+
+		void Init(
 			const QTNode* parent,
 			unsigned int nn,
 			unsigned int x1, unsigned int z1,
 			unsigned int x2, unsigned int z2
 		);
-
-		static void InitStatic();
 
 		// NOTE:
 		//     root-node identifier is always 0
@@ -123,18 +130,17 @@ namespace QTPFS {
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
-		std::uint64_t GetMemFootPrint() const;
-		std::uint64_t GetCheckSum() const;
+		std::uint64_t GetMemFootPrint(const NodeLayer& nl) const;
+		std::uint64_t GetCheckSum(const NodeLayer& nl) const;
 
-		void Delete();
-		void PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur);
-		void Tesselate(NodeLayer& nl, const SRectangle& r);
-		void Serialize(std::fstream& fStream, NodeLayer& nodeLayer, unsigned int* streamSize, bool readMode);
+		void PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur, unsigned int depth);
+		void Tesselate(NodeLayer& nl, const SRectangle& r, unsigned int depth);
+		void Serialize(std::fstream& fStream, NodeLayer& nodeLayer, unsigned int* streamSize, unsigned int depth, bool readMode);
 
-		bool IsLeaf() const;
-		bool CanSplit(bool forced) const;
+		bool IsLeaf() const { return (childBaseIndex == -1u); }
+		bool CanSplit(unsigned int depth, bool forced) const;
 
-		bool Split(NodeLayer& nl, bool forced);
+		bool Split(NodeLayer& nl, unsigned int depth, bool forced);
 		bool Merge(NodeLayer& nl);
 
 		unsigned int GetMaxNumNeighbors() const;
@@ -142,8 +148,8 @@ namespace QTPFS {
 		const std::vector<INode*>& GetNeighbors(const std::vector<INode*>&);
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
-		void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float3& point) { netpoints[ngbIdx] = point; }
-		const float3& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return netpoints[ngbIdx]; }
+		void SetNeighborEdgeTransitionPoint(unsigned int ngbIdx, const float2& point) { netpoints[ngbIdx] = point; }
+		const float2& GetNeighborEdgeTransitionPoint(unsigned int ngbIdx) const { return netpoints[ngbIdx]; }
 
 		unsigned int xmin() const { return (_xminxmax  & 0xFFFF); }
 		unsigned int zmin() const { return (_zminzmax  & 0xFFFF); }
@@ -153,7 +159,6 @@ namespace QTPFS {
 		unsigned int zmid() const { return ((zmin() + zmax()) >> 1); }
 		unsigned int xsize() const { return (xmax() - xmin()); }
 		unsigned int zsize() const { return (zmax() - zmin()); }
-		unsigned int depth() const { return _depth; }
 		unsigned int area() const { return (xsize() * zsize()); }
 
 		// true iff this node is fully open (partially open nodes have larger but non-infinite cost)
@@ -187,25 +192,21 @@ namespace QTPFS {
 		static unsigned int MIN_SIZE_Z;
 		static unsigned int MAX_DEPTH;
 
-		unsigned int _depth;
-		unsigned int _xminxmax;
-		unsigned int _zminzmax;
+		unsigned int _xminxmax = 0;
+		unsigned int _zminzmax = 0;
 
-		float speedModSum;
-		float speedModAvg;
-		float moveCostAvg;
+		float speedModSum =  0.0f;
+		float speedModAvg =  0.0f;
+		float moveCostAvg = -1.0f;
 
-		unsigned int searchState;
-		unsigned int currMagicNum;
-		unsigned int prevMagicNum;
+		unsigned int searchState = 0;
+		unsigned int currMagicNum = 0;
+		unsigned int prevMagicNum = -1u;
 
-		std::array<QTNode*, QTNODE_CHILD_COUNT> children;
+		unsigned int childBaseIndex;
+
 		std::vector<INode*> neighbors;
-
-		// NOTE:
-		//   these should be float2's, but profiling shows float3's to be *faster* and
-		//   float3's are also more convenient to work with (so we take the memory hit)
-		std::vector<float3> netpoints;
+		std::vector<float2> netpoints;
 	};
 }
 

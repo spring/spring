@@ -59,7 +59,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	visibleNodes.clear();
 	visibleNodes.reserve(256);
 
-	GetVisibleNodes(pm->nodeTrees[md->pathType], visibleNodes);
+	GetVisibleNodes(pm->nodeTrees[md->pathType], pm->nodeLayers[md->pathType], visibleNodes);
 
 	if (!visibleNodes.empty()) {
 		GL::RenderDataBufferC* rdb = GL::GetRenderBufferC();
@@ -117,21 +117,21 @@ void QTPFSPathDrawer::DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) 
 
 
 
-void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const {
+void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::NodeLayer& nl, std::vector<const QTPFS::QTNode*>& nodes) const {
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
 		return;
 	}
 
-	for (unsigned int i = 0; i < nt->children.size(); i++) {
-		const QTPFS::QTNode* n = nt->children[i];
-		const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
-		const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+	for (unsigned int i = 0; i < QTNODE_CHILD_COUNT; i++) {
+		const QTPFS::QTNode* cn = nl.GetPoolNode(nt->childBaseIndex + i);
+		const float3 mins = float3(cn->xmin() * SQUARE_SIZE, 0.0f, cn->zmin() * SQUARE_SIZE);
+		const float3 maxs = float3(cn->xmax() * SQUARE_SIZE, 0.0f, cn->zmax() * SQUARE_SIZE);
 
 		if (!camera->InView(mins, maxs))
 			continue;
 
-		GetVisibleNodes(nt->children[i], nodes);
+		GetVisibleNodes(cn, nl, nodes);
 	}
 }
 
