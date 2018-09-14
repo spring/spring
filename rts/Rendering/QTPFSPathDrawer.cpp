@@ -58,7 +58,7 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	std::vector<const QTPFS::QTNode*> nodes;
 	std::vector<const QTPFS::QTNode*>::const_iterator nodesIt;
 
-	GetVisibleNodes(nt, nodes);
+	GetVisibleNodes(nt, pm->nodeLayers[md->pathType], nodes);
 
 	va->Initialize();
 	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
@@ -74,41 +74,23 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	glLineWidth(1);
 }
 
-void QTPFSPathDrawer::DrawNodeTreeRec(
-	const QTPFS::QTNode* nt,
-	const MoveDef* md,
-	CVertexArray* va
-) const {
-	if (nt->IsLeaf()) {
-		DrawNode(nt, md, va, false, true, false);
-	} else {
-		for (unsigned int i = 0; i < nt->children.size(); i++) {
-			const QTPFS::QTNode* n = nt->children[i];
-			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
-			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
 
-			if (!camera->InView(mins, maxs))
-				continue;
 
-			DrawNodeTreeRec(nt->children[i], md, va);
-		}
-	}
-}
-
-void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const {
+void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::NodeLayer& nl, std::vector<const QTPFS::QTNode*>& nodes) const {
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
-	} else {
-		for (unsigned int i = 0; i < nt->children.size(); i++) {
-			const QTPFS::QTNode* n = nt->children[i];
-			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
-			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+		return;
+	}
 
-			if (!camera->InView(mins, maxs))
-				continue;
+	for (unsigned int i = 0; i < QTNODE_CHILD_COUNT; i++) {
+		const QTPFS::QTNode* cn = nl.GetPoolNode(nt->childBaseIndex + i);
+		const float3 mins = float3(cn->xmin() * SQUARE_SIZE, 0.0f, cn->zmin() * SQUARE_SIZE);
+		const float3 maxs = float3(cn->xmax() * SQUARE_SIZE, 0.0f, cn->zmax() * SQUARE_SIZE);
 
-			GetVisibleNodes(nt->children[i], nodes);
-		}
+		if (!camera->InView(mins, maxs))
+			continue;
+
+		GetVisibleNodes(cn, nl, nodes);
 	}
 }
 

@@ -53,7 +53,16 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 	xsize = mapDims.mapx;
 	zsize = mapDims.mapy;
 
-	nodeGrid.resize(xsize * zsize, NULL);
+	nodeGrid.resize(xsize * zsize, nullptr);
+
+	if (poolNodes.empty()) {
+		poolNodes.resize(1 + (1024 * 1024) / 8);
+		nodeIndcs.resize(1 + (1024 * 1024) / 8);
+	}
+	{
+		std::for_each(nodeIndcs.begin(), nodeIndcs.end(), [&](const unsigned int& i) { nodeIndcs[&i - &nodeIndcs[0]] = &i - &nodeIndcs[0]; });
+		std::reverse(nodeIndcs.begin(), nodeIndcs.end());
+	}
 
 	curSpeedMods.resize(xsize * zsize,  0);
 	oldSpeedMods.resize(xsize * zsize,  0);

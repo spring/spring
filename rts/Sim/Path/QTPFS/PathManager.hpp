@@ -140,10 +140,10 @@ namespace QTPFS {
 		std::string GetCacheDirName(const std::string& mapCheckSumHexStr, const std::string& modCheckSumHexStr) const;
 		void Serialize(const std::string& cacheFileDir);
 
-		std::vector<NodeLayer> nodeLayers;
-		std::vector<QTNode*> nodeTrees;
-		std::vector<PathCache> pathCaches;
-		std::vector< std::vector<IPathSearch*> > pathSearches;
+		static std::vector<NodeLayer> nodeLayers;
+		static std::vector<QTNode*> nodeTrees;
+		static std::vector<PathCache> pathCaches;
+		static std::vector< std::vector<IPathSearch*> > pathSearches;
 
 		spring::unordered_map<unsigned int, unsigned int> pathTypes;
 		spring::unordered_map<unsigned int, PathSearchTrace::Execution*> pathTraces;

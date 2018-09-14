@@ -185,7 +185,7 @@ namespace QTPFS {
 		float3 srcPoint;
 		float3 tgtPoint;
 
-		float3 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
+		float2 netPoints[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
 
 		float gDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];
 		float hDists[QTPFS_MAX_NETPOINTS_PER_NODE_EDGE];

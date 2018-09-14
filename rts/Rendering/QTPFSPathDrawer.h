@@ -15,6 +15,7 @@ namespace QTPFS {
 
 	struct QTNode;
 	struct IPath;
+	struct NodeLayer;
 	struct PathSearch;
 
 	namespace PathSearchTrace {
@@ -37,13 +38,7 @@ private:
 	};
 
 	void DrawNodeTree(const MoveDef* md) const;
-	void DrawNodeTreeRec(
-		const QTPFS::QTNode* nt,
-		const MoveDef* md,
-		CVertexArray* va
-	) const;
-
-	void GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const;
+	void GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::NodeLayer& nl, std::vector<const QTPFS::QTNode*>& nodes) const;
 
 	void DrawPaths(const MoveDef* md) const;
 	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;

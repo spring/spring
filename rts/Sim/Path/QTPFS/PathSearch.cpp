@@ -33,12 +33,12 @@ void QTPFS::PathSearch::Initialize(
 	pathCache = cache;
 
 	searchRect = searchArea;
-	searchExec = NULL;
+	searchExec = nullptr;
 
 	srcNode = nodeLayer->GetNode(srcPoint.x / SQUARE_SIZE, srcPoint.z / SQUARE_SIZE);
 	tgtNode = nodeLayer->GetNode(tgtPoint.x / SQUARE_SIZE, tgtPoint.z / SQUARE_SIZE);
-	curNode = NULL;
-	nxtNode = NULL;
+	curNode = nullptr;
+	nxtNode = nullptr;
 	minNode = srcNode;
 }
 
@@ -75,12 +75,11 @@ bool QTPFS::PathSearch::Execute(
 	// nodes can represent many terrain squares, some of which can still
 	// be passable and allow a unit to move within a node)
 	// NOTE: we need to make sure such paths do not have infinite cost!
-	if (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY) {
+	if (srcNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		srcNode->SetMoveCost(0.0f);
-	}
 
 	ResetState(srcNode);
-	UpdateNode(srcNode, NULL, 0);
+	UpdateNode(srcNode, nullptr, 0);
 
 	while (!openNodes.empty()) {
 		IterateNodes(nodeLayer->GetNodes());
@@ -93,14 +92,12 @@ bool QTPFS::PathSearch::Execute(
 		haveFullPath = (curNode == tgtNode);
 		havePartPath = (minNode != srcNode);
 
-		if (haveFullPath) {
+		if (haveFullPath)
 			openNodes.reset();
-		}
 	}
 
-	if (srcNode->GetMoveCost() == 0.0f) {
+	if (srcNode->GetMoveCost() == 0.0f)
 		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
-	}
 
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
@@ -123,7 +120,7 @@ bool QTPFS::PathSearch::Execute(
 
 void QTPFS::PathSearch::ResetState(INode* node) {
 	// will be copied into srcNode by UpdateNode()
-	netPoints[0] = srcPoint;
+	netPoints[0] = {srcPoint.x, srcPoint.z};
 
 	gDists[0] = 0.0f;
 	hDists[0] = srcPoint.distance(tgtPoint);
@@ -131,7 +128,7 @@ void QTPFS::PathSearch::ResetState(INode* node) {
 	hCosts[0] = hDists[0] * hCostMult;
 
 	for (unsigned int i = 1; i < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; i++) {
-		netPoints[i] = ZeroVector;
+		netPoints[i] = {0.0f, 0.0f};
 
 		gDists[i] = 0.0f;
 		hDists[i] = 0.0f;
@@ -192,7 +189,8 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& allNodes) {
 
 void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes) {
 	// if curNode equals srcNode, this is just the original srcPoint
-	const float3 curPoint = curNode->GetNeighborEdgeTransitionPoint(0);
+	const float2& curPoint2 = curNode->GetNeighborEdgeTransitionPoint(0);
+	const float3  curPoint  = {curPoint2.x, 0.0f, curPoint2.y};
 
 	for (unsigned int i = 0; i < nxtNodes.size(); i++) {
 		// NOTE:
@@ -234,8 +232,8 @@ void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes
 
 			// cannot use squared-distances because that will bias paths
 			// towards smaller nodes (eg. 1^2 + 1^2 + 1^2 + 1^2 != 4^2)
-			gDists[0] = curPoint.distance(netPoints[0]);
-			hDists[0] = tgtPoint.distance(netPoints[0]);
+			gDists[0] = curPoint.distance({netPoints[0].x, 0.0f, netPoints[0].y});
+			hDists[0] = tgtPoint.distance({netPoints[0].x, 0.0f, netPoints[0].y});
 			gCosts[0] =
 				curNode->GetPathCost(NODE_PATH_COST_G) +
 				curNode->GetMoveCost() * gDists[0] +
@@ -252,8 +250,8 @@ void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes
 		for (unsigned int j = 0; j < QTPFS_MAX_NETPOINTS_PER_NODE_EDGE; j++) {
 			netPoints[j] = curNode->GetNeighborEdgeTransitionPoint(1 + i * QTPFS_MAX_NETPOINTS_PER_NODE_EDGE + j);
 
-			gDists[j] = curPoint.distance(netPoints[j]);
-			hDists[j] = tgtPoint.distance(netPoints[j]);
+			gDists[j] = curPoint.distance({netPoints[j].x, 0.0f, netPoints[j].y});
+			hDists[j] = tgtPoint.distance({netPoints[j].x, 0.0f, netPoints[j].y});
 			gCosts[j] =
 				curNode->GetPathCost(NODE_PATH_COST_G) +
 				curNode->GetMoveCost() * gDists[j] +
@@ -318,7 +316,8 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		float3 prvPoint = tgtPoint;
 
 		while ((prvNode != nullptr) && (tmpNode != srcNode)) {
-			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(0);
+			const float2& tmpPoint2 = tmpNode->GetNeighborEdgeTransitionPoint(0);
+			const float3  tmpPoint  = {tmpPoint2.x, 0.0f, tmpPoint2.y};
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
 			assert(!math::isnan(tmpPoint.x) && !math::isnan(tmpPoint.z));
@@ -329,15 +328,14 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 			assert(tmpNode != prvNode);
 			assert(tmpPoint != prvPoint || tmpNode == tgtNode);
 
-			if (tmpPoint != prvPoint) {
+			if (tmpPoint != prvPoint)
 				points.push_front(tmpPoint);
-			}
 
 			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure the back-pointers can never become dangling
 			// (if smoothing IS enabled, we delay this until we reach
 			// SmoothPath() because we still need them there)
-			tmpNode->SetPrevNode(NULL);
+			tmpNode->SetPrevNode(nullptr);
 			#endif
 
 			prvPoint = tmpPoint;
