@@ -15,6 +15,7 @@
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
+CONFIG(bool, CubeTexGenerateMipMaps).defaultValue(false);
 
 CubeMapHandler cubeMapHandler;
 
@@ -23,14 +24,15 @@ bool CubeMapHandler::Init() {
 	skyReflectionTexID = 0;
 
 	reflectionTexSize = configHandler->GetInt("CubeTexSizeReflection");
-
 	currReflectionFace = 0;
+
+	generateMipMaps = configHandler->GetBool("CubeTexGenerateMipMaps");
 
 	{
 		glGenTextures(1, &envReflectionTexID);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, envReflectionTexID);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, generateMipMaps? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, generateMipMaps? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -66,12 +68,11 @@ bool CubeMapHandler::Init() {
 		reflectionCubeFBO.Bind();
 		reflectionCubeFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT, reflectionTexSize, reflectionTexSize);
 		reflectionCubeFBO.Unbind();
-	} else {
-		Free();
-		return false;
+		return true;
 	}
 
-	return true;
+	Free();
+	return false;
 }
 
 void CubeMapHandler::Free() {
@@ -127,6 +128,12 @@ void CubeMapHandler::UpdateReflectionTexture()
 		// touch the FBO at least once per frame
 		currReflectionFace += 1;
 		currReflectionFace %= 6;
+	}
+
+	if (generateMipMaps && currReflectionFace == 0) {
+		glBindTexture(GL_TEXTURE_CUBE_MAP, envReflectionTexID);
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	}
 }
 

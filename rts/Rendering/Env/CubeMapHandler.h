@@ -28,6 +28,7 @@ private:
 	unsigned int currReflectionFace;
 
 	bool mapSkyReflections;
+	bool generateMipMaps;
 
 	FBO reflectionCubeFBO;
 };
