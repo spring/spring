@@ -17,6 +17,7 @@
 
 CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
+CONFIG(bool, CubeTexGenerateMipMaps).defaultValue(false);
 
 CubeMapHandler cubeMapHandler;
 
@@ -34,54 +35,55 @@ bool CubeMapHandler::Init() {
 	currReflectionFace = 0;
 	specularTexIter = 0;
 
-	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
+	mapSkyReflections = (!mapInfo->smf.skyReflectModTexName.empty());
+	generateMipMaps = configHandler->GetBool("CubeTexGenerateMipMaps");
 
 	{
 		glGenTextures(1, &specularTexID);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, specularTexID);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0));
 	}
 
 	{
 		glGenTextures(1, &envReflectionTexID);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, envReflectionTexID);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, envReflectionTexID);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, generateMipMaps? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, generateMipMaps? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
 	if (mapSkyReflections) {
 		glGenTextures(1, &skyReflectionTexID);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, skyReflectionTexID);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyReflectionTexID);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
 
@@ -92,12 +94,11 @@ bool CubeMapHandler::Init() {
 		reflectionCubeFBO.Bind();
 		reflectionCubeFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT, reflTexSize, reflTexSize);
 		reflectionCubeFBO.Unbind();
-	} else {
-		Free();
-		return false;
+		return true;
 	}
 
-	return true;
+	Free();
+	return false;
 }
 
 void CubeMapHandler::Free() {
@@ -131,12 +132,12 @@ void CubeMapHandler::UpdateReflectionTexture()
 	reflectionCubeFBO.Bind();
 
 	switch (currReflectionFace) {
-		case 0: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, false); } break;
-		case 1: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, false); } break;
-		case 2: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector,  false); } break;
-		case 3: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector,  false); } break;
-		case 4: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, false); } break;
-		case 5: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, false); } break;
+		case 0: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X,  RgtVector, false); } break;
+		case 1: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, -RgtVector, false); } break;
+		case 2: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,  UpVector,  false); } break;
+		case 3: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, -UpVector,  false); } break;
+		case 4: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,  FwdVector, false); } break;
+		case 5: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, -FwdVector, false); } break;
 		default: {} break;
 	}
 
@@ -145,12 +146,12 @@ void CubeMapHandler::UpdateReflectionTexture()
 		// by reusing data from previous frame we could also
 		// make terrain reflect itself, not just the sky
 		switch (currReflectionFace) {
-			case  6: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, true); } break;
-			case  7: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, true); } break;
-			case  8: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector,  true); } break;
-			case  9: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector,  true); } break;
-			case 10: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, true); } break;
-			case 11: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, true); } break;
+			case  6: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X,  RgtVector, true); } break;
+			case  7: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, -RgtVector, true); } break;
+			case  8: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,  UpVector,  true); } break;
+			case  9: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, -UpVector,  true); } break;
+			case 10: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,  FwdVector, true); } break;
+			case 11: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, -FwdVector, true); } break;
 			default: {} break;
 		}
 
@@ -160,6 +161,12 @@ void CubeMapHandler::UpdateReflectionTexture()
 		// touch the FBO at least once per frame
 		currReflectionFace += 1;
 		currReflectionFace %= 6;
+	}
+
+	if (generateMipMaps && currReflectionFace == 0) {
+		glBindTexture(GL_TEXTURE_CUBE_MAP, envReflectionTexID);
+		glGenerateMipmapEXT(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	}
 }
 
@@ -188,12 +195,12 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 		#if 0
 		switch (glType) {
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
 			default: {} break;
 		}
 
@@ -203,12 +210,12 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		#if 1
 		// work around CCameraHandler::GetRgtFromRot bugs
 		switch (glType) {
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { /*fwd =  Rgt*/ curCam->right =  FwdVector; curCam->up =   UpVector; } break;
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { /*fwd = -Rgt*/ curCam->right = -FwdVector; curCam->up =   UpVector; } break;
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { /*fwd =   Up*/ curCam->right =  RgtVector; curCam->up = -FwdVector; } break;
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { /*fwd =  -Up*/ curCam->right =  RgtVector; curCam->up =  FwdVector; } break;
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { /*fwd =  Fwd*/ curCam->right = -RgtVector; curCam->up =   UpVector; } break;
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { /*fwd = -Fwd*/ curCam->right =  RgtVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { /*fwd =  Rgt*/ curCam->right =  FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { /*fwd = -Rgt*/ curCam->right = -FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { /*fwd =   Up*/ curCam->right =  RgtVector; curCam->up = -FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { /*fwd =  -Up*/ curCam->right =  RgtVector; curCam->up =  FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { /*fwd =  Fwd*/ curCam->right = -RgtVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { /*fwd = -Fwd*/ curCam->right =  RgtVector; curCam->up =   UpVector; } break;
 			default: {} break;
 		}
 
@@ -256,24 +263,24 @@ void CubeMapHandler::UpdateSpecularTexture()
 	if (!unitDrawer->UseAdvShading())
 		return;
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, specularTexID);
 
 	int specularTexRow = specularTexIter / 3; //FIXME WTF
 
 	switch (specularTexIter % 3) {
 		case 0: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 1: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 2: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 	}

@@ -36,7 +36,9 @@ private:
 
 	unsigned int currReflectionFace;
 	unsigned int specularTexIter;
+
 	bool mapSkyReflections;
+	bool generateMipMaps;
 
 	std::vector<unsigned char> specTexBuf;
 
