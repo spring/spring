@@ -13,32 +13,21 @@ public:
 	void Free();
 
 	void UpdateReflectionTexture();
-	void UpdateSpecularTexture();
 
 	unsigned int GetEnvReflectionTextureID() const { return envReflectionTexID; }
 	unsigned int GetSkyReflectionTextureID() const { return skyReflectionTexID; }
-	unsigned int GetSpecularTextureID() const { return specularTexID; }
-	unsigned int GetReflectionTextureSize() const { return reflTexSize; }
-	unsigned int GetSpecularTextureSize() const { return specTexSize; }
+	unsigned int GetReflectionTextureSize() const { return reflectionTexSize; }
 
 private:
 	void CreateReflectionFace(unsigned int, const float3&, bool);
-	void CreateSpecularFacePart(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
-	void CreateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&);
-	void UpdateSpecularFace(unsigned int, unsigned int, const float3&, const float3&, const float3&, unsigned int, unsigned char*);
 
 	unsigned int envReflectionTexID; // sky and map
 	unsigned int skyReflectionTexID; // sky only
-	unsigned int specularTexID;
 
-	unsigned int reflTexSize;
-	unsigned int specTexSize;
-
+	unsigned int reflectionTexSize;
 	unsigned int currReflectionFace;
-	unsigned int specularTexIter;
-	bool mapSkyReflections;
 
-	std::vector<unsigned char> specTexBuf;
+	bool mapSkyReflections;
 
 	FBO reflectionCubeFBO;
 };

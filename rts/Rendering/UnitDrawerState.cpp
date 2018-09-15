@@ -74,9 +74,6 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetEnvReflectionTextureID());
 
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
-
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -128,53 +125,58 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
 		modelShaders[n]->SetUniformLocation("shadowTex");         // idx  2
 		modelShaders[n]->SetUniformLocation("reflectTex");        // idx  3 (cube)
-		modelShaders[n]->SetUniformLocation("specularTex");       // idx  4 (cube)
-		modelShaders[n]->SetUniformLocation("sunDir");            // idx  5
 
-		modelShaders[n]->SetUniformLocation("pieceMatrices[0]");  // idx  6
-		modelShaders[n]->SetUniformLocation("modelMatrix");       // idx  7
-		modelShaders[n]->SetUniformLocation("viewMatrix");        // idx  8
-		modelShaders[n]->SetUniformLocation("projMatrix");        // idx  9
-		modelShaders[n]->SetUniformLocation("fogParams");         // idx 10
-		modelShaders[n]->SetUniformLocation("waterClipPlane");    // idx 11
-		modelShaders[n]->SetUniformLocation("upperClipPlane");    // idx 12
-		modelShaders[n]->SetUniformLocation("lowerClipPlane");    // idx 13
+		modelShaders[n]->SetUniformLocation("sunDir");            // idx  4
 
-		modelShaders[n]->SetUniformLocation("cameraPos");         // idx 14
-		modelShaders[n]->SetUniformLocation("teamColor");         // idx 15
-		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 16
-		modelShaders[n]->SetUniformLocation("fogColor");          // idx 17
-		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 18
-		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 19
-		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 20
-		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 21
-		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 22
-		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 23
-		modelShaders[n]->SetUniformLocation("fwdDynLights");      // idx 23
+		modelShaders[n]->SetUniformLocation("pieceMatrices[0]");  // idx  5
+		modelShaders[n]->SetUniformLocation("modelMatrix");       // idx  6
+		modelShaders[n]->SetUniformLocation("viewMatrix");        // idx  7
+		modelShaders[n]->SetUniformLocation("projMatrix");        // idx  8
+		modelShaders[n]->SetUniformLocation("fogParams");         // idx  9
+		modelShaders[n]->SetUniformLocation("waterClipPlane");    // idx 10
+		modelShaders[n]->SetUniformLocation("upperClipPlane");    // idx 11
+		modelShaders[n]->SetUniformLocation("lowerClipPlane");    // idx 12
+
+		modelShaders[n]->SetUniformLocation("cameraPos");         // idx 13
+		modelShaders[n]->SetUniformLocation("teamColor");         // idx 14
+		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 15
+		modelShaders[n]->SetUniformLocation("fogColor");          // idx 16
+		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 17
+		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 18
+		modelShaders[n]->SetUniformLocation("sunSpecular");       // idx 19
+		modelShaders[n]->SetUniformLocation("specularExponent");  // idx 20
+		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 21
+		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 22
+		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 23
+		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 24
+		modelShaders[n]->SetUniformLocation("fwdDynLights");      // idx 24
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
 		modelShaders[n]->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
 		modelShaders[n]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
-		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-		modelShaders[n]->SetUniform3fv(5, sky->GetLight()->GetLightDir());
-		modelShaders[n]->SetUniform3fv(10, &fogParams.x);
+
+		modelShaders[n]->SetUniform3fv(4, sky->GetLight()->GetLightDir());
+		modelShaders[n]->SetUniform3fv(9, &fogParams.x);
+		modelShaders[n]->SetUniform4fv(10, IWater::ModelNullClipPlane());
 		modelShaders[n]->SetUniform4fv(11, IWater::ModelNullClipPlane());
 		modelShaders[n]->SetUniform4fv(12, IWater::ModelNullClipPlane());
-		modelShaders[n]->SetUniform4fv(13, IWater::ModelNullClipPlane());
-		modelShaders[n]->SetUniform3fv(14, &cameraPos.x);
-		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
-		modelShaders[n]->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
+		modelShaders[n]->SetUniform3fv(13, &cameraPos.x);
+		modelShaders[n]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetProjectionMatrix());
+		modelShaders[n]->SetUniform4f(14, 0.0f, 0.0f, 0.0f, 0.0f);
 		modelShaders[n]->SetUniform4f(15, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform4f(16, 0.0f, 0.0f, 0.0f, 0.0f);
-		modelShaders[n]->SetUniform4fv(17, sky->fogColor);
-		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(20, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(21, false, shadowHandler.GetShadowViewMatrixRaw());
-		modelShaders[n]->SetUniform4fv(22, shadowHandler.GetShadowParams());
-		// modelShaders[n]->SetUniform1f(23, 0.0f); // alphaPass
+		modelShaders[n]->SetUniform4fv(16, sky->fogColor);
+		modelShaders[n]->SetUniform3fv(17, &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelSpecularColor[0]);
+		modelShaders[n]->SetUniform1f(20, sunLighting->specularExponent);
+
+		modelShaders[n]->SetUniform1f(21, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniformMatrix4fv(22, false, shadowHandler.GetShadowViewMatrixRaw());
+		modelShaders[n]->SetUniform4fv(23, shadowHandler.GetShadowParams());
+		// modelShaders[n]->SetUniform1f(24, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -204,15 +206,15 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 
 	if (cLightHandler->NumConfigLights() > 0) {
 		mLightHandler->Update();
-		shader->SetUniform4fv(23, cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+		shader->SetUniform4fv(24, cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
 	}
 
-	shader->SetUniform3fv(10, &fogParams.x);
-	shader->SetUniform3fv(14, &cameraPos.x);
-	shader->SetUniformMatrix4fv(8, false, camera->GetViewMatrix());
-	shader->SetUniformMatrix4fv(9, false, camera->GetProjectionMatrix());
-	shader->SetUniformMatrix4fv(21, false, shadowHandler.GetShadowViewMatrixRaw());
-	shader->SetUniform4fv(22, shadowHandler.GetShadowParams());
+	shader->SetUniform3fv(9, &fogParams.x);
+	shader->SetUniform3fv(13, &cameraPos.x);
+	shader->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4fv(8, false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4fv(22, false, shadowHandler.GetShadowViewMatrixRaw());
+	shader->SetUniform4fv(23, shadowHandler.GetShadowParams());
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
@@ -231,10 +233,12 @@ void UnitDrawerStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform3fv(5, skyLight->GetLightDir());
-		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(20, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniform3fv(4, skyLight->GetLightDir());
+		modelShaders[n]->SetUniform3fv(17, &sunLighting->modelAmbientColor.x);
+		modelShaders[n]->SetUniform3fv(18, &sunLighting->modelDiffuseColor.x);
+		modelShaders[n]->SetUniform3fv(19, &sunLighting->modelSpecularColor.x);
+		modelShaders[n]->SetUniform1f(20, sunLighting->specularExponent);
+		modelShaders[n]->SetUniform1f(21, sunLighting->modelShadowDensity);
 		modelShaders[n]->Disable();
 	}
 }
@@ -242,12 +246,12 @@ void UnitDrawerStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, std::move(GetTeamColor(team, alpha.x)));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha.x)));
 }
 
 void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(16, color);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, color);
 }
 
 
@@ -261,9 +265,9 @@ void UnitDrawerStateGLSL::SetMatrices(const CMatrix44f& modelMat, const CMatrix4
 		assert(po->IsBound());
 
 		if (numPieceMats > 0)
-			po->SetUniformMatrix4fv(6, -int(std::min(numPieceMats, dummyPieceMatrices.size())), false, &pieceMats[0].m[0]);
+			po->SetUniformMatrix4fv(5, -int(std::min(numPieceMats, dummyPieceMatrices.size())), false, &pieceMats[0].m[0]);
 
-		po->SetUniformMatrix4fv(7, false, modelMat);
+		po->SetUniformMatrix4fv(6, false, modelMat);
 	} else {
 		po = shadowHandler.GetCurrentShadowGenProg();
 
@@ -283,15 +287,15 @@ void UnitDrawerStateGLSL::SetWaterClipPlane(const DrawPass::e& drawPass) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
 	switch (drawPass) {
-		case DrawPass::WaterReflection: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelReflClipPlane()); } break;
-		case DrawPass::WaterRefraction: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, IWater::ModelRefrClipPlane()); } break;
+		case DrawPass::WaterReflection: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, IWater::ModelReflClipPlane()); } break;
+		case DrawPass::WaterRefraction: { modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, IWater::ModelRefrClipPlane()); } break;
 		default                       : {                                                                                     } break;
 	}
 }
 
 void UnitDrawerStateGLSL::SetBuildClipPlanes(const float4& upper, const float4& lower) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(12, upper);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(13, lower);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(11, upper);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(12, lower);
 }
 

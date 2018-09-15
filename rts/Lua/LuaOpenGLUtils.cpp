@@ -45,7 +45,6 @@ static const spring::unsynced_map<std::string, LuaMatTexture::Type> luaMatTexTyp
 	{"$units2", LuaMatTexture::LUATEX_3DOTEXTURE},
 
 	// cubemaps
-	{"$specular", LuaMatTexture::LUATEX_SPECULAR},
 	{"$reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
 	{"$map_reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
 	{"$sky_reflection", LuaMatTexture::LUATEX_SKY_REFLECTION},
@@ -363,7 +362,6 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 	// %-34:1       --  featureDef 34 s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
-	// $specular    --  specular cube map
 	// $reflection  --  reflection cube map
 	// $heightmap   --  ground heightmap
 	// ...          --  named textures
@@ -437,9 +435,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			switch ((texUnit.type = GetLuaMatTextureType(image))) {
 				case LuaMatTexture::LUATEX_NONE: {
 					// name not found in table, check for special case overrides
-					if (!ParseNamedSubTexture(texUnit, image)) {
+					if (!ParseNamedSubTexture(texUnit, image))
 						return false;
-					}
 				} break;
 
 				case LuaMatTexture::LUATEX_3DOTEXTURE: {
@@ -545,9 +542,6 @@ GLuint LuaMatTexture::GetTextureID() const
 		} break;
 		case LUATEX_SKY_REFLECTION: {
 			texID = cubeMapHandler.GetSkyReflectionTextureID();
-		} break;
-		case LUATEX_SPECULAR: {
-			texID = cubeMapHandler.GetSpecularTextureID();
 		} break;
 
 
@@ -655,8 +649,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		} break;
 
 		case LUATEX_MAP_REFLECTION:
-		case LUATEX_SKY_REFLECTION:
-		case LUATEX_SPECULAR: {
+		case LUATEX_SKY_REFLECTION: {
 			texType = GL_TEXTURE_CUBE_MAP_ARB;
 		} break;
 
@@ -836,9 +829,6 @@ int2 LuaMatTexture::GetSize() const
 			// note: same size as regular refltex
 			return sqint2(cubeMapHandler.GetReflectionTextureSize());
 		} break;
-		case LUATEX_SPECULAR: {
-			return sqint2(cubeMapHandler.GetSpecularTextureSize());
-		} break;
 
 
 		case LUATEX_SHADOWMAP: {
@@ -973,7 +963,6 @@ void LuaMatTexture::Print(const string& indent) const
 
 		STRING_CASE(typeName, LUATEX_MAP_REFLECTION);
 		STRING_CASE(typeName, LUATEX_SKY_REFLECTION);
-		STRING_CASE(typeName, LUATEX_SPECULAR);
 
 		STRING_CASE(typeName, LUATEX_SHADOWMAP);
 		STRING_CASE(typeName, LUATEX_HEIGHTMAP);

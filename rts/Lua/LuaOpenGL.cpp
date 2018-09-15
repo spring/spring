@@ -2609,7 +2609,6 @@ int LuaOpenGL::Texture(lua_State* L)
 	// %-34:1       --  featureDef 34 s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
-	// $specular    --  specular cube map
 	// $reflection  --  reflection cube map
 	// $heightmap   --  ground heightmap
 	// ...          --  named textures

@@ -7,15 +7,15 @@ const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
 
 uniform sampler2D diffuseTex;
 uniform sampler2D shadingTex;
-uniform samplerCube specularTex;
 uniform samplerCube reflectTex;
 #ifdef use_normalmapping
 uniform sampler2D normalMap;
 #endif
 
 uniform vec3 sunDir;
-uniform vec3 sunDiffuse;
-uniform vec3 sunAmbient;
+uniform vec3 sunDiffuse; // model
+uniform vec3 sunAmbient; // model
+uniform vec3 sunSpecular; // model
 
 #if (USE_SHADOWS == 1)
 uniform sampler2DShadow shadowTex;
@@ -23,6 +23,7 @@ uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 uniform float shadowDensity;
 #endif
+uniform float specularExponent;
 
 uniform vec4 fogColor;
 // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
@@ -147,7 +148,7 @@ void main(void)
 	vec4 diffuseColor = texture(diffuseTex, texCoord0);
 	vec4 shadingColor = texture(shadingTex, texCoord0);
 
-	vec3 specularColor = texture(specularTex, reflectDir).rgb * shadingColor.g * 4.0;
+	vec3 specularColor = sunSpecular * pow(max(0.0, dot(wsNormal, sunDir)), specularExponent) * shadingColor.g * 4.0;
 	vec3  reflectColor = texture(reflectTex,  reflectDir).rgb;
 
 

@@ -14,7 +14,6 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
 
 CubeMapHandler cubeMapHandler;
@@ -22,34 +21,10 @@ CubeMapHandler cubeMapHandler;
 bool CubeMapHandler::Init() {
 	envReflectionTexID = 0;
 	skyReflectionTexID = 0;
-	specularTexID = 0;
 
-	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
-	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
-
-	specTexBuf.clear();
-	specTexBuf.resize(specTexSize * 4, 0);
+	reflectionTexSize = configHandler->GetInt("CubeTexSizeReflection");
 
 	currReflectionFace = 0;
-	specularTexIter = 0;
-
-	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
-
-	{
-		glGenTextures(1, &specularTexID);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, specularTexID);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0));
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0));
-	}
 
 	{
 		glGenTextures(1, &envReflectionTexID);
@@ -59,15 +34,15 @@ bool CubeMapHandler::Init() {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
-	if (mapSkyReflections) {
+	if ((mapSkyReflections = !mapInfo->smf.skyReflectModTexName.empty())) {
 		glGenTextures(1, &skyReflectionTexID);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skyReflectionTexID);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -75,12 +50,12 @@ bool CubeMapHandler::Init() {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
 
@@ -89,7 +64,7 @@ bool CubeMapHandler::Init() {
 
 	if (reflectionCubeFBO.IsValid()) {
 		reflectionCubeFBO.Bind();
-		reflectionCubeFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT, reflTexSize, reflTexSize);
+		reflectionCubeFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT, reflectionTexSize, reflectionTexSize);
 		reflectionCubeFBO.Unbind();
 	} else {
 		Free();
@@ -100,10 +75,6 @@ bool CubeMapHandler::Init() {
 }
 
 void CubeMapHandler::Free() {
-	if (specularTexID != 0) {
-		glDeleteTextures(1, &specularTexID);
-		specularTexID = 0;
-	}
 	if (envReflectionTexID != 0) {
 		glDeleteTextures(1, &envReflectionTexID);
 		envReflectionTexID = 0;
@@ -224,7 +195,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 			curCam->SetDir(camDir);
 			#endif
 
-			curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
+			curCam->UpdateLoadViewPort(0, 0, reflectionTexSize, reflectionTexSize);
 			// update matrices (not dirs or viewport)
 			curCam->Update(false, true, false);
 
@@ -243,88 +214,5 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	}
 
 	glAttribStatePtr->PopBits();
-}
-
-
-void CubeMapHandler::UpdateSpecularTexture()
-{
-	glBindTexture(GL_TEXTURE_CUBE_MAP, specularTexID);
-
-	int specularTexRow = specularTexIter / 3; //FIXME WTF
-
-	switch (specularTexIter % 3) {
-		case 0: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			break;
-		}
-		case 1: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, &specTexBuf[0]);
-			break;
-		}
-		case 2: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
-			break;
-		}
-	}
-
-	// update one face of one row per frame
-	specularTexIter += 1;
-	specularTexIter %= (specTexSize * 3);
-}
-
-void CubeMapHandler::CreateSpecularFacePart(
-	unsigned int texType,
-	unsigned int size,
-	const float3& cdir,
-	const float3& xdif,
-	const float3& ydif,
-	unsigned int y,
-	unsigned char* buf)
-{
-	// TODO move to a shader
-	for (int x = 0; x < size; ++x) {
-		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
-		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
-		const float spec = std::min(1.0f, std::pow(dot, sunLighting->specularExponent) + std::pow(dot, 3.0f) * 0.25f);
-
-		buf[x * 4 + 0] = (sunLighting->modelSpecularColor.x * spec * 255);
-		buf[x * 4 + 1] = (sunLighting->modelSpecularColor.y * spec * 255);
-		buf[x * 4 + 2] = (sunLighting->modelSpecularColor.z * spec * 255);
-		buf[x * 4 + 3] = 255;
-	}
-}
-
-void CubeMapHandler::CreateSpecularFace(
-	unsigned int texType,
-	unsigned int size,
-	const float3& cdir,
-	const float3& xdif,
-	const float3& ydif)
-{
-	std::vector<unsigned char> buf(size * size * 4, 0);
-
-	for (int y = 0; y < size; ++y) {
-		CreateSpecularFacePart(texType, size, cdir, xdif, ydif, y, &buf[y * size * 4]);
-	}
-
-	//! note: no mipmaps, cubemap linear filtering is broken
-	glTexImage2D(texType, 0, GL_RGBA8, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, &buf[0]);
-}
-
-void CubeMapHandler::UpdateSpecularFace(
-	unsigned int texType,
-	unsigned int size,
-	const float3& cdir,
-	const float3& xdif,
-	const float3& ydif,
-	unsigned int y,
-	unsigned char* buf)
-{
-	CreateSpecularFacePart(texType, size, cdir, xdif, ydif, y, buf);
-
-	glTexSubImage2D(texType, 0, 0, y, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 }
 

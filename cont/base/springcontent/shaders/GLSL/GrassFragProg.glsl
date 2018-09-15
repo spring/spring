@@ -8,16 +8,18 @@ uniform sampler2D bladeTex;
 uniform sampler2DShadow shadowMap;
 uniform float groundShadowDensity;
 #endif
+uniform float specularExponent;
 uniform float infoTexIntensityMul;
 
 #ifdef HAVE_INFOTEX
 uniform sampler2D infoMap;
 #endif
 
-uniform samplerCube specularTex;
-uniform vec3 specularLightColor;
-uniform vec3 ambientLightColor;
+uniform vec3 diffuseLightColor; // model (unused)
+uniform vec3 specularLightColor; // model
+uniform vec3 ambientLightColor; // model
 uniform vec3 camDir;
+uniform vec3 sunDir;
 uniform vec4 fogColor;
 
 
@@ -49,10 +51,10 @@ void main() {
 
 
 	vec3 reflectDir = reflect(camDir, normalize(wsNormal));
-	vec3 specular   = texture(specularTex, reflectDir).rgb;
+	vec3 specular   = specularLightColor * pow(max(0.0, dot(wsNormal, sunDir)), specularExponent);
 
 	// TODO: make specular distr. customizable?
-	fragColor.rgb = matColor.rgb * ambientDiffuseLightTerm + 0.1 * specular * specularLightColor;
+	fragColor.rgb = matColor.rgb * ambientDiffuseLightTerm + 0.1 * specular;
 	fragColor.a   = matColor.a;
 
 #ifdef HAVE_SHADOWS

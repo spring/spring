@@ -185,10 +185,6 @@ void CWorldDrawer::GenerateIBLTextures() const
 
 	if (sky->GetLight()->Update()) {
 		{
-			SCOPED_TIMER("Draw::World::UpdateSpecTex");
-			cubeMapHandler.UpdateSpecularTexture();
-		}
-		{
 			SCOPED_TIMER("Draw::World::UpdateSkyTex");
 			sky->UpdateSkyTexture();
 		}

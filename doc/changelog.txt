@@ -42,6 +42,7 @@ Lua:
    for the *first* tree and gl.Feature(treeID, false, true) for the *last*
    [more efficient; call gl.Feature(treeID, true, true) to render a single
    tree with default state]
+ ! remove the $specular named texture
  - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
  - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
  - remove gl.PointSize, gl.PointSprite, gl.PointParameter

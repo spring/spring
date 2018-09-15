@@ -210,8 +210,8 @@ bool CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("shadingTex",      2);
 		grassShaders[i]->SetUniform("infoMap",         3);
 		grassShaders[i]->SetUniform("shadowMap",       4);
-		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
+		grassShaders[i]->SetUniform("specularExponent", sunLighting->specularExponent);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 		grassShaders[i]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
@@ -347,6 +347,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	ipo->SetUniform3v("camRight",  &camera->GetRight().x);
 
 	ipo->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	ipo->SetUniform("specularExponent"   , sunLighting->specularExponent);
 	ipo->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
 	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
@@ -367,7 +368,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	ipo->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);
 	ipo->SetUniform3v("diffuseLightColor",  &sunLighting->modelDiffuseColor.x);
 	ipo->SetUniform3v("specularLightColor", &sunLighting->modelSpecularColor.x);
-	ipo->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
+	ipo->SetUniform3v("sunDir",             &sky->GetLight()->GetLightDir().x);
 	ipo->SetUniform3v("fogParams",          &fogParams.x);
 }
 
@@ -544,8 +545,6 @@ void CGrassDrawer::SetupStateOpaque()
 			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 		glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-		glActiveTexture(GL_TEXTURE5);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler.GetSpecularTextureID());
 	}
 
 	// bind shader
