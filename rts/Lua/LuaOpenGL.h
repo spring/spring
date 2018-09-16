@@ -210,6 +210,7 @@ class LuaOpenGL {
 
 		static int Texture(lua_State* L);
 		static int CreateTexture(lua_State* L);
+		static int ChangeTextureParams(lua_State* L);
 		static int DeleteTexture(lua_State* L);
 		static int DeleteTextureFBO(lua_State* L);
 		static int TextureInfo(lua_State* L);
