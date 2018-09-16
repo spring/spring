@@ -8,9 +8,7 @@
 
 #include <cstring>
 
-CONFIG(bool, HeightMapTexture).defaultValue(true);
-
-HeightMapTexture* heightMapTexture = NULL;
+HeightMapTexture* heightMapTexture = nullptr;
 HeightMapTexture::HeightMapTexture()
 	: CEventClient("[HeightMapTexture]", 2718965, false)
 {
@@ -32,18 +30,11 @@ HeightMapTexture::~HeightMapTexture()
 
 void HeightMapTexture::Init()
 {
-	if (readMap == NULL) {
+	if (readMap == nullptr)
 		return;
-	}
 
-	if (!configHandler->GetBool("HeightMapTexture")) {
+	if (!GLEW_ARB_texture_float || !GLEW_ARB_texture_non_power_of_two)
 		return;
-	}
-
-	if (!GLEW_ARB_texture_float ||
-	    !GLEW_ARB_texture_non_power_of_two) {
-		return;
-	}
 
 	xSize = mapDims.mapxp1;
 	ySize = mapDims.mapyp1;
@@ -76,7 +67,7 @@ void HeightMapTexture::Kill()
 
 void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	if (texID == 0) {
+	if (texID == 0)
 		return;
 
 	const int sizeX = rect.x2 - rect.x1 + 1;

@@ -115,7 +115,7 @@ void main(void)
 	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
 
-	specular *= (shadingColor.g * 4.0);
+	specular *= (extraColor.g * 4.0);
 	// no highlights if in shadow; decrease light to ambient level
 	specular *= shadow;
 	light = mix(sunAmbient, light, shadow);
