@@ -87,14 +87,14 @@ std::string LuaTextures::Create(const Texture& tex)
 	newTex.fboDepth = fboDepth;
 
 	if (freeIndices.empty()) {
-		textureVec.emplace_back(std::move(newTex));
 		textureMap.insert(buf, textureVec.size());
+		textureVec.emplace_back(std::move(newTex));
 		return buf;
 	}
 
 	// recycle
+	textureMap[buf] = freeIndices.back();
 	textureVec[freeIndices.back()] = std::move(newTex);
-	textureMap.insert(buf, freeIndices.back());
 	freeIndices.pop_back();
 	return buf;
 }

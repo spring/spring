@@ -28,8 +28,6 @@ public:
 	}
 
 	struct Texture {
-		Texture() = default;
-
 		GLuint id = 0;
 
 		// FIXME: obsolete, use raw FBO's
