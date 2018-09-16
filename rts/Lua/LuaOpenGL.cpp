@@ -3743,6 +3743,10 @@ int LuaOpenGL::GetSun(lua_State* L)
 		case hashString("pos"): {
 			data = &sky->GetLight()->GetLightDir().x;
 		} break;
+		case hashString("specularExponent"): {
+			lua_pushnumber(L, sunLighting->specularExponent);
+			return 1;
+		} break;
 		case hashString("shadowDensity"): {
 			if (!unitMode) {
 				lua_pushnumber(L, sunLighting->groundShadowDensity);
