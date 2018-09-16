@@ -30,8 +30,6 @@ public:
 	struct Texture {
 		Texture() = default;
 
-		std::string name;
-
 		GLuint id = 0;
 
 		// FIXME: obsolete, use raw FBO's

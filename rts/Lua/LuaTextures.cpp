@@ -61,10 +61,8 @@ std::string LuaTextures::Create(const Texture& tex)
 		if (tex.fboDepth != 0) {
 			glGenRenderbuffersEXT(1, &fboDepth);
 			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, fboDepth);
-			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24,
-			                         tex.xsize, tex.ysize);
-			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-			                             GL_RENDERBUFFER_EXT, fboDepth);
+			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, tex.xsize, tex.ysize);
+			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fboDepth);
 		}
 
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, tex.target, texID, 0);
@@ -85,21 +83,20 @@ std::string LuaTextures::Create(const Texture& tex)
 
 	Texture newTex = tex;
 	newTex.id = texID;
-	newTex.name = buf;
 	newTex.fbo = fbo;
 	newTex.fboDepth = fboDepth;
 
 	if (freeIndices.empty()) {
-		textureMap[newTex.name] = textureVec.size();
-		textureVec.push_back(newTex);
-	} else {
-		// recycle
-		textureMap[newTex.name] = freeIndices.back();
-		textureVec[freeIndices.back()] = newTex;
-		freeIndices.pop_back();
+		textureVec.emplace_back(std::move(newTex));
+		textureMap.insert(buf, textureVec.size());
+		return buf;
 	}
 
-	return newTex.name;
+	// recycle
+	textureVec[freeIndices.back()] = std::move(newTex);
+	textureMap.insert(buf, freeIndices.back());
+	freeIndices.pop_back();
+	return buf;
 }
 
 
@@ -112,6 +109,7 @@ bool LuaTextures::Bind(const std::string& name) const
 		glBindTexture(tex.target, tex.id);
 		return true;
 	}
+
 	return false;
 }
 
@@ -149,8 +147,10 @@ bool LuaTextures::FreeFBO(const std::string& name)
 		return false;
 
 	Texture& tex = textureVec[it->second];
-	glDeleteFramebuffers(1, &tex.fbo);
-	glDeleteRenderbuffers(1, &tex.fboDepth);
+
+	glDeleteFramebuffersEXT(1, &tex.fbo);
+	glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+
 	tex.fbo = 0;
 	tex.fboDepth = 0;
 	return true;
@@ -182,7 +182,7 @@ void LuaTextures::ApplyParams(const Texture& tex) const
 	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
 	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
 	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 
 	if (tex.aniso != 0.0f && GLEW_EXT_texture_filter_anisotropic)
 		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
