@@ -108,13 +108,14 @@ void main(void)
 	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
 
 	vec3 reflectDir = reflect(cameraDir, normal);
-	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
+	vec3 specular   = textureCube(specularTex, reflectDir).rgb;
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 
 	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
 
+	specular *= (shadingColor.g * 4.0);
 	// no highlights if in shadow; decrease light to ambient level
 	specular *= shadow;
 	light = mix(sunAmbient, light, shadow);
