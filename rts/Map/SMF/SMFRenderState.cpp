@@ -214,15 +214,21 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
+
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
-		glslShaders[GLSL_SHADER_CURRENT]->EnableRaw();
+		shader->EnableRaw();
+		// Set the clip plane even for Lua shaders, is unknowable otherwise
+		switch (drawPass) {
+			case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
+			case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+			default: {} break;
+		}
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
 		glActiveTexture(GL_TEXTURE0);
 		return;
 	}
-
-	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 
