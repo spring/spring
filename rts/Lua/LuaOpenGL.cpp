@@ -2739,8 +2739,7 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* tex = textures.GetInfo(texName);	
 
-	//LuaTextures::Texture newTex = *tex;
-	LuaTextures::Texture newTex;
+	LuaTextures::Texture newTex = *tex;
 
 	if (lua_istable(L, 2)) {
 		const int table = 2;
