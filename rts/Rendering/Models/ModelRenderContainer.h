@@ -85,7 +85,7 @@ public:
 		if (it == end)
 			return;
 
-		keys[*it] = keys[ keys[0]-- ];
+		*it = keys[ keys[0]-- ];
 	}
 
 
