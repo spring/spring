@@ -2737,9 +2737,7 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 	const std::string& texName = luaL_checkstring(L, 1);
 
 	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* tex = textures.GetInfo(texName);	
-
-	LuaTextures::Texture newTex = *tex;
+	LuaTextures::Texture* tex = const_cast<LuaTextures::Texture*>(textures.GetInfo(texName));
 
 	if (lua_istable(L, 2)) {
 		const int table = 2;
@@ -2748,28 +2746,28 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 				const string key = lua_tostring(L, -2);
 				if (lua_israwnumber(L, -1)) {
 					if (key == "target") {
-						newTex.target = (GLenum)lua_tonumber(L, -1);
+						tex->target = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "format") {
-						newTex.format = (GLint)lua_tonumber(L, -1);
+						tex->format = (GLint)lua_tonumber(L, -1);
 					} else if (key == "min_filter") {
-						newTex.min_filter = (GLenum)lua_tonumber(L, -1);
+						tex->min_filter = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "mag_filter") {
-						newTex.mag_filter = (GLenum)lua_tonumber(L, -1);
+						tex->mag_filter = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "wrap_s") {
-						newTex.wrap_s = (GLenum)lua_tonumber(L, -1);
+						tex->wrap_s = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "wrap_t") {
-						newTex.wrap_t = (GLenum)lua_tonumber(L, -1);
+						tex->wrap_t = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "wrap_r") {
-						newTex.wrap_r = (GLenum)lua_tonumber(L, -1);
+						tex->wrap_r = (GLenum)lua_tonumber(L, -1);
 					} else if (key == "aniso") {
-						newTex.aniso = (GLfloat)lua_tonumber(L, -1);
+						tex->aniso = (GLfloat)lua_tonumber(L, -1);
 					}
 				}
 			}
 		}
 	}		
 
-	textures.ChangeParams(newTex);
+	textures.ChangeParams(*tex);
 }
 
 int LuaOpenGL::DeleteTexture(lua_State* L)
