@@ -87,7 +87,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specula
 		vec4 lightAmbiColor = fwdDynLights[j + 4];
 
 		vec3 wsLightVec = normalize(wsLightPos.xyz - worldPos.xyz);
-		vec3 wsHalfVec = normalize((camDir + wsLightVec) * 0.5);
+		vec3 wsHalfVec = normalize(camDir + wsLightVec);
 
 		float lightAngle    = fwdDynLights[j + 5].x; // fov
 		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
@@ -148,7 +148,7 @@ void main(void)
 	vec4 diffuseColor = texture(diffuseTex, texCoord0);
 	vec4 shadingColor = texture(shadingTex, texCoord0);
 
-	vec3 specularColor = sunSpecular * pow(max(0.0, dot(wsNormal, normalize(sunDir + cameraDir * -1.0))), specularExponent);
+	vec3 specularColor = sunSpecular * pow(max(0.001, dot(wsNormal, normalize(sunDir + cameraDir * -1.0))), specularExponent);
 	vec3  reflectColor = texture(reflectTex,  reflectDir).rgb;
 
 
@@ -171,7 +171,7 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 0)
-	fragColor.rgb += DynamicLighting(wsNormal, cameraDir, diffuseColor.rgb, vec4(specularColor, 4.0));
+	fragColor.rgb += DynamicLighting(wsNormal, cameraDir * -1.0, diffuseColor.rgb, vec4(specularColor, 4.0));
 	#endif
 
 	#if (DEFERRED_MODE == 1)
