@@ -63,6 +63,8 @@ public:
 	};
 
 	std::string Create(const Texture& tex);
+	void ChangeParams(const Texture& tex) const;
+	void ApplyParams(const Texture& tex) const;
 	bool Bind(const std::string& name) const;
 	bool Free(const std::string& name);
 	bool FreeFBO(const std::string& name);
