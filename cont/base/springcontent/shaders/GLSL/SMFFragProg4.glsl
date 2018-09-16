@@ -243,7 +243,7 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 }
 
 
-vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
+vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specularColor) {
 	vec3 light = vec3(0.0);
 
 	#ifndef SMF_SPECULAR_LIGHTING
@@ -263,7 +263,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
 		vec4 lightAmbiColor = fwdDynLights[j + 4];
 
 		vec3 wsLightVec = normalize(wsLightPos.xyz - vertexPos.xyz);
-		vec3 wsHalfVec = normalize((wsNormal + wsLightVec) * 0.5);
+		vec3 wsHalfVec = normalize((camDir + wsLightVec) * 0.5);
 
 		float lightAngle    = fwdDynLights[j + 5].x; // fov
 		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
@@ -463,7 +463,7 @@ void main() {
 		float specularPow = max(0.0, pow(cosAngleSpecular, specularExp));
 
 		fragColor.rgb += (specularColor.rgb * specularPow * shadowCoeff);
-		fragColor.rgb += DynamicLighting(normalVec, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
+		fragColor.rgb += DynamicLighting(normalVec, cameraDir, diffuseColor.rgb, vec4(specularColor.rgb, specularExp));
 	#endif
 
 

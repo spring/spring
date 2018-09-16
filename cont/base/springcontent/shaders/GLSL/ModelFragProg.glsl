@@ -72,7 +72,7 @@ float GetShadowCoeff(float zBias) {
 	return 1.0;
 }
 
-vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
+vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specularColor) {
 	vec3 light = vec3(0.0);
 
 	#if (NUM_DYNAMIC_MODEL_LIGHTS > 0)
@@ -87,7 +87,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 diffuseColor, vec4 specularColor) {
 		vec4 lightAmbiColor = fwdDynLights[j + 4];
 
 		vec3 wsLightVec = normalize(wsLightPos.xyz - worldPos.xyz);
-		vec3 wsHalfVec = normalize((wsNormal + wsLightVec) * 0.5);
+		vec3 wsHalfVec = normalize((camDir + wsLightVec) * 0.5);
 
 		float lightAngle    = fwdDynLights[j + 5].x; // fov
 		float lightRadius   = fwdDynLights[j + 5].y; // or const. atten.
@@ -148,13 +148,14 @@ void main(void)
 	vec4 diffuseColor = texture(diffuseTex, texCoord0);
 	vec4 shadingColor = texture(shadingTex, texCoord0);
 
-	vec3 specularColor = sunSpecular * pow(max(0.0, dot(wsNormal, sunDir)), specularExponent) * shadingColor.g * 4.0;
+	vec3 specularColor = sunSpecular * pow(max(0.0, dot(wsNormal, normalize(sunDir + cameraDir * -1.0))), specularExponent);
 	vec3  reflectColor = texture(reflectTex,  reflectDir).rgb;
 
 
 	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * shadingColor.a; // apply one-bit mask
 
+	specularColor *= (shadingColor.g * 4.0);
 	// no highlights if in shadow; decrease light to ambient level
 	specularColor *= shadow;
 	sunLightColor = mix(sunAmbient, sunLightColor, shadow);
@@ -170,7 +171,7 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 0)
-	fragColor.rgb += DynamicLighting(wsNormal, diffuseColor.rgb, vec4(specularColor, 4.0));
+	fragColor.rgb += DynamicLighting(wsNormal, cameraDir, diffuseColor.rgb, vec4(specularColor, 4.0));
 	#endif
 
 	#if (DEFERRED_MODE == 1)

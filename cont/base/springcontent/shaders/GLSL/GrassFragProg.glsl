@@ -49,9 +49,9 @@ void main() {
 	matColor.rgb *= texture(grassShadingTex, shadingTexCoords.pq).rgb;
 	matColor.rgb *= texture(shadingTex, shadingTexCoords.st).rgb * 2.0;
 
-
+	// TODO: make camDir point at a vertex
 	vec3 reflectDir = reflect(camDir, normalize(wsNormal));
-	vec3 specular   = specularLightColor * pow(max(0.0, dot(wsNormal, sunDir)), specularExponent);
+	vec3 specular   = specularLightColor * pow(max(0.0, dot(wsNormal, normalize(sunDir + camDir * -1.0))), specularExponent);
 
 	// TODO: make specular distr. customizable?
 	fragColor.rgb = matColor.rgb * ambientDiffuseLightTerm + 0.1 * specular;
