@@ -40,15 +40,7 @@ std::string LuaTextures::Create(const Texture& tex)
 		return "";
 	}
 
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, tex.wrap_t);
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
-	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-
-	if (tex.aniso != 0.0f)
-		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
+	ApplyParams(tex);
 
 	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
 
@@ -108,6 +100,32 @@ std::string LuaTextures::Create(const Texture& tex)
 	return newTex.name;
 }
 
+void LuaTextures::ApplyParams(const Texture& tex) const
+{
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, tex.wrap_t);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
+	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+
+	if (tex.aniso != 0.0f)
+		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
+}
+
+void LuaTextures::ChangeParams(const Texture& tex)  const
+{
+	GLint currentBinding;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(tex.target, texID);
+
+	ApplyParams(tex);
+
+	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
+}
 
 bool LuaTextures::Bind(const std::string& name) const
 {	
