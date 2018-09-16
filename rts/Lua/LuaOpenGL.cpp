@@ -274,6 +274,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Texture);
 	REGISTER_LUA_CFUNC(CreateTexture);
+	REGISTER_LUA_CFUNC(ChangeTextureParams);
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
@@ -3077,50 +3078,126 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 	if (tex.ysize <= 0) luaL_argerror(L, 2, "Texture Size must be greater than zero!");
 
 	if (lua_istable(L, 3)) {
-		const int table = 3;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string key = lua_tostring(L, -2);
-				if (lua_israwnumber(L, -1)) {
-					if (key == "target") {
+		constexpr int tableIdx = 3;
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+			if (!lua_israwstring(L, -2))
+				continue;
+
+			if (lua_israwnumber(L, -1)) {
+				switch (hashString(lua_tostring(L, -2))) {
+					case hashString("target"): {
 						tex.target = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "format") {
+					} break;
+					case hashString("format"): {
 						tex.format = (GLint)lua_tonumber(L, -1);
-					} else if (key == "min_filter") {
+					} break;
+
+					case hashString("min_filter"): {
 						tex.min_filter = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "mag_filter") {
+					} break;
+					case hashString("mag_filter"): {
 						tex.mag_filter = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "wrap_s") {
+					} break;
+
+					case hashString("wrap_s"): {
 						tex.wrap_s = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "wrap_t") {
+					} break;
+					case hashString("wrap_t"): {
 						tex.wrap_t = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "wrap_r") {
+					} break;
+					case hashString("wrap_r"): {
 						tex.wrap_r = (GLenum)lua_tonumber(L, -1);
-					} else if (key == "aniso") {
+					} break;
+
+					case hashString("aniso"): {
 						tex.aniso = (GLfloat)lua_tonumber(L, -1);
-					}
+					} break;
+
+					default: {
+					} break;
 				}
-				else if (lua_isboolean(L, -1)) {
-					if (key == "border") {
+
+				continue;
+			}
+
+			if (lua_isboolean(L, -1)) {
+				switch (hashString(lua_tostring(L, -2))) {
+					case hashString("border"): {
 						tex.border   = lua_toboolean(L, -1) ? 1 : 0;
-					} else if (key == "fbo") {
+					} break;
+					case hashString("fbo"): {
 						tex.fbo      = lua_toboolean(L, -1) ? 1 : 0;
-					} else if (key == "fboDepth") {
+					} break;
+					case hashString("fboDepth"): {
 						tex.fboDepth = lua_toboolean(L, -1) ? 1 : 0;
-					}
+					} break;
+					default: {
+					} break;
 				}
+
+				continue;
 			}
 		}
 	}
 
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-	const string name = textures.Create(tex);
-	if (name.empty()) {
+	const string& texName = textures.Create(tex);
+	if (texName.empty())
 		return 0;
+
+	lua_pushsstring(L, texName);
+	return 1;
+}
+
+int LuaOpenGL::ChangeTextureParams(lua_State* L)
+{
+	if (!lua_isstring(L, 1))
+		return 0;
+	if (!lua_istable(L, 2))
+		return 0;
+
+	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+	LuaTextures::Texture* tex = textures.GetInfo(luaL_checkstring(L, 1));
+
+	if (tex == nullptr)
+		return 0;
+
+	constexpr int tableIdx = 2;
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2) || !lua_israwnumber(L, -1))
+			continue;
+
+		switch (hashString(lua_tostring(L, -2))) {
+			case hashString("target"): {
+				tex->target = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("format"): {
+				tex->format = (GLint)lua_tonumber(L, -1);
+			} break;
+			case hashString("min_filter"): {
+				tex->min_filter = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("mag_filter"): {
+				tex->mag_filter = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("wrap_s"): {
+				tex->wrap_s = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("wrap_t"): {
+				tex->wrap_t = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("wrap_r"): {
+				tex->wrap_r = (GLenum)lua_tonumber(L, -1);
+			} break;
+			case hashString("aniso"): {
+				tex->aniso = (GLfloat)lua_tonumber(L, -1);
+			} break;
+			default: {
+			} break;
+		}
 	}
 
-	lua_pushsstring(L, name);
-	return 1;
+	textures.ChangeParams(*tex);
 }
 
 
@@ -3130,7 +3207,7 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 		return 0;
 	}
 	const string texture = luaL_checksstring(L, 1);
-	if (texture[0] == LuaTextures::prefix) { // '!'
+	if (texture[0] == LuaTextures::prefix) {
 		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		lua_pushboolean(L, textures.Free(texture));
 	} else {
@@ -3143,9 +3220,8 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 // FIXME: obsolete
 int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (!lua_isstring(L, 1))
 		return 0;
-	}
 
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	lua_pushboolean(L, textures.FreeFBO(luaL_checksstring(L, 1)));

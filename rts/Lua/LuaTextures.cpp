@@ -40,15 +40,7 @@ std::string LuaTextures::Create(const Texture& tex)
 		return "";
 	}
 
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, tex.wrap_t);
-	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
-	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
-	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-
-	if ((tex.aniso != 0.0f) && GLEW_EXT_texture_filter_anisotropic)
-		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
+	ApplyParams(tex);
 
 	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
 
@@ -75,11 +67,9 @@ std::string LuaTextures::Create(const Texture& tex)
 			                             GL_RENDERBUFFER_EXT, fboDepth);
 		}
 
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-		                          tex.target, texID, 0);
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, tex.target, texID, 0);
 
-		const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-		if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
 			glDeleteTextures(1, &texID);
 			glDeleteFramebuffersEXT(1, &fbo);
 			glDeleteRenderbuffersEXT(1, &fboDepth);
@@ -159,8 +149,8 @@ bool LuaTextures::FreeFBO(const std::string& name)
 		return false;
 
 	Texture& tex = textureVec[it->second];
-	glDeleteFramebuffersEXT(1, &tex.fbo);
-	glDeleteRenderbuffersEXT(1, &tex.fboDepth);
+	glDeleteFramebuffers(1, &tex.fbo);
+	glDeleteRenderbuffers(1, &tex.fboDepth);
 	tex.fbo = 0;
 	tex.fboDepth = 0;
 	return true;
@@ -172,6 +162,7 @@ void LuaTextures::FreeAll()
 	for (auto it = textureMap.begin(); it != textureMap.end(); ++it) {
 		const Texture& tex = textureVec[it->second];
 		glDeleteTextures(1, &tex.id);
+
 		if (GLEW_EXT_framebuffer_object) {
 			glDeleteFramebuffersEXT(1, &tex.fbo);
 			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
@@ -181,6 +172,29 @@ void LuaTextures::FreeAll()
 	textureMap.clear();
 	textureVec.clear();
 	freeIndices.clear();
+}
+
+
+void LuaTextures::ApplyParams(const Texture& tex) const
+{
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, tex.wrap_t);
+	glTexParameteri(tex.target, GL_TEXTURE_WRAP_R, tex.wrap_r);
+	glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, tex.min_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
+	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+
+	if (tex.aniso != 0.0f && GLEW_EXT_texture_filter_anisotropic)
+		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
+}
+
+void LuaTextures::ChangeParams(const Texture& tex)  const
+{
+	GLint currentBinding = 0;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
+	glBindTexture(tex.target, tex.id);
+	ApplyParams(tex);
+	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
 }
 
 
@@ -194,16 +208,3 @@ size_t LuaTextures::GetIdx(const std::string& name) const
 	return (size_t(-1));
 }
 
-const LuaTextures::Texture* LuaTextures::GetInfo(const std::string& name) const
-{
-	const size_t idx = GetIdx(name);
-
-	if (idx != size_t(-1))
-		return &textureVec[idx];
-
-	return nullptr;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
