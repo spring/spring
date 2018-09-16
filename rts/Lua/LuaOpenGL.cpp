@@ -2748,6 +2748,7 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 
 	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const string& texName = textures.Create(tex);
+
 	if (texName.empty())
 		return 0;
 
