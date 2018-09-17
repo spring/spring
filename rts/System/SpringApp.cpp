@@ -179,7 +179,6 @@ SpringApp::SpringApp(int argc, char** argv)
 	// also initializes configHandler and logOutput
 	ParseCmdLine(argc, argv);
 
-
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
@@ -191,6 +190,10 @@ SpringApp::SpringApp(int argc, char** argv)
 	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
 	// ditto for unsynced Lua states (which do not use guRNG)
 	spring_lua_unsynced_srand(nullptr);
+
+	CLogOutput::LogSectionInfo();
+	CLogOutput::LogConfigInfo();
+	CLogOutput::LogSystemInfo(); // needs spring_clock
 }
 
 /**
@@ -476,10 +479,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	// logOutput's init depends on configHandler
 	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
 	FileSystemInitializer::InitializeLogOutput();
-
-	CLogOutput::LogSectionInfo();
-	CLogOutput::LogConfigInfo();
-	CLogOutput::LogSystemInfo();
 }
 
 
