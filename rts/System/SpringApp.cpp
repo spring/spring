@@ -187,9 +187,6 @@ SpringApp::SpringApp(int argc, char** argv)
 	// as our clock anymore)
 	spring_time::setstarttime(spring_time::gettime(true));
 
-	CLogOutput::LogConfigInfo();
-	CLogOutput::LogSystemInfo();
-
 	// gu does not exist yet, pre-seed for ShowSplashScreen
 	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
 	// ditto for unsynced Lua states (which do not use guRNG)
@@ -479,6 +476,10 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	// logOutput's init depends on configHandler
 	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_name, FLAGS_safemode);
 	FileSystemInitializer::InitializeLogOutput();
+
+	CLogOutput::LogSectionInfo();
+	CLogOutput::LogConfigInfo();
+	CLogOutput::LogSystemInfo();
 }
 
 

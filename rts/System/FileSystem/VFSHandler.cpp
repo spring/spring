@@ -193,7 +193,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	assert(!archivePath.empty());
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "[VFHS::%s(archiveName=\"%s\")]", __func__, archivePath.c_str());
+	LOG_L(L_INFO, "[VFHS::%s(archiveName=\"%s\")]", __func__, archivePath.c_str());
 
 	const auto it = archives.find(archivePath);
 

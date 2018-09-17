@@ -14,6 +14,7 @@
 
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
+#include "System/Log/ILog.h"
 
 static CPoolArchiveFactory sdpArchiveFactory;
 static CDirArchiveFactory sddArchiveFactory;
@@ -72,6 +73,8 @@ IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::st
 
 	if (ret != nullptr && ret->IsOpen())
 		return ret;
+
+	LOG_L(L_INFO, "[ArchiveLoader::%s(name=\"%s\" type=\"%s\")] could not load or open archive %p", __func__, fileName.c_str(), type.c_str(), ret);
 
 	delete ret;
 	return nullptr;

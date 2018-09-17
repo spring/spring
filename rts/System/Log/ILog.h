@@ -118,7 +118,7 @@ extern void log_frontend_cleanup();
 #define _UNIQUE_IDENT(prefix)   _STR_CONCAT(prefix##__, _STR_CONCAT(_STR_CONCAT(__COUNTER__, __), __LINE__))
 
 // Register a section (only the first time the code is run)
-#if       defined(__cplusplus)
+#if defined(__cplusplus)
 	/*
 	 * This would also be C++ compatible, but a bit slower.
 	 * It can be used globally (outside of a function), where it would register
@@ -126,19 +126,23 @@ extern void log_frontend_cleanup();
 	 * When placed somewhere in a function, it will only register the function
 	 * when and if that code is called.
 	 */
-	#define _LOG_REGISTER_SECTION_SUB(section, className) \
-		struct className { \
-			className() { \
-				_LOG_REGISTER_SECTION_RAW(section); \
-			} \
+	#define _LOG_REGISTER_SECTION_SUB(section, className)         \
+		struct className {                                        \
+			className() {                                         \
+				_LOG_REGISTER_SECTION_RAW(section);               \
+			}                                                     \
 		} _UNIQUE_IDENT(secReg);
+
 	#define _LOG_REGISTER_SECTION(section) \
 		_LOG_REGISTER_SECTION_SUB(section, _UNIQUE_IDENT(SectionRegistrator))
+
 	#define _LOG_REGISTER_SECTION_GLOBAL(section) \
-		namespace { \
-			_LOG_REGISTER_SECTION(section) \
+		namespace {                               \
+			_LOG_REGISTER_SECTION(section)        \
 		} // namespace
+
 #else  // defined(__cplusplus)
+
 	/*
 	 * This would also be C++ compatible, but it is a bit slower.
 	 * Still, branch-prediction should work well here.
@@ -146,13 +150,13 @@ extern void log_frontend_cleanup();
 	 * only register a section when the invoking code is executed, instead of
 	 * before main() is called.
 	 */
-	#define _LOG_REGISTER_SECTION(section) \
-		{ \
-			static bool sectionRegistered = false; \
-			if (sectionRegistered) { \
-				sectionRegistered = true; \
-				_LOG_REGISTER_SECTION_RAW(section); \
-			} \
+	#define _LOG_REGISTER_SECTION(section)           \
+		{                                            \
+			static bool sectionRegistered = false;   \
+			if (!sectionRegistered) {                \
+				sectionRegistered = true;            \
+				_LOG_REGISTER_SECTION_RAW(section);  \
+			}                                        \
 		}
 	#define _LOG_REGISTER_SECTION_GLOBAL(section)
 #endif // defined(__cplusplus)

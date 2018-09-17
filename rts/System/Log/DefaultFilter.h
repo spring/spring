@@ -10,7 +10,6 @@
  */
 
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,14 +95,14 @@ void log_enable_and_disable(const bool enable);
 #endif
 
 #ifdef __cplusplus
-#include "System/UnorderedSet.hpp"
+#include <array>
 
 
 /**
  * Returns the registered sections.
  * This is simply to be more C++ friendly.
  */
-spring::unsynced_set<const char*> log_filter_section_getRegisteredSet();
+const char** log_filter_section_getRegisteredSet();
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp);
 
