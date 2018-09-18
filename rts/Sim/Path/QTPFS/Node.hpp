@@ -203,7 +203,7 @@ namespace QTPFS {
 		unsigned int currMagicNum = 0;
 		unsigned int prevMagicNum = -1u;
 
-		unsigned int childBaseIndex;
+		unsigned int childBaseIndex = -1u;
 
 		std::vector<INode*> neighbors;
 		std::vector<float2> netpoints;

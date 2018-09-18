@@ -71,17 +71,21 @@ namespace QTPFS {
 		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
 		      INode* GetNode(unsigned int i)       { return nodeGrid[i]; }
 
-		const INode* GetPoolNode(unsigned int i) const { return &poolNodes[i]; }
-		      INode* GetPoolNode(unsigned int i)       { return &poolNodes[i]; }
+		const INode* GetPoolNode(unsigned int i) const { return &poolNodes[i / POOL_CHUNK_SIZE][i % POOL_CHUNK_SIZE]; }
+		      INode* GetPoolNode(unsigned int i)       { return &poolNodes[i / POOL_CHUNK_SIZE][i % POOL_CHUNK_SIZE]; }
 
 		void FreePoolNode(unsigned int nodeIndex) { nodeIndcs.push_back(nodeIndex); }
+
 		unsigned int AllocPoolNode(const INode* parent, unsigned int childID,  unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
 			unsigned int idx = -1u;
 
 			if (nodeIndcs.empty())
 				return idx;
 
-			poolNodes[idx = nodeIndcs.back()].Init(parent, childID, x1, z1, x2, z2);
+			if (poolNodes[(idx = nodeIndcs.back()) / POOL_CHUNK_SIZE].empty())
+				poolNodes[idx / POOL_CHUNK_SIZE].resize(POOL_CHUNK_SIZE);
+
+			poolNodes[idx / POOL_CHUNK_SIZE][idx % POOL_CHUNK_SIZE].Init(parent, childID, x1, z1, x2, z2);
 			nodeIndcs.pop_back();
 
 			return idx;
@@ -111,7 +115,10 @@ namespace QTPFS {
 			memFootPrint += (curSpeedBins.size() * sizeof(SpeedBinType));
 			memFootPrint += (oldSpeedBins.size() * sizeof(SpeedBinType));
 			memFootPrint += (nodeGrid.size() * sizeof(decltype(nodeGrid)::value_type));
-			memFootPrint += (poolNodes.size() * sizeof(decltype(poolNodes)::value_type));
+			// memFootPrint += (poolNodes.size() * sizeof(decltype(poolNodes)::value_type));
+			for (size_t i = 0, n = NUM_POOL_CHUNKS; i < n; i++) {
+				memFootPrint += (poolNodes[i].size() * sizeof(QTNode));
+			}
 			memFootPrint += (nodeIndcs.size() * sizeof(decltype(nodeIndcs)::value_type));
 			return memFootPrint;
 		}
@@ -119,7 +126,7 @@ namespace QTPFS {
 	private:
 		std::vector<INode*> nodeGrid;
 
-		std::vector<QTNode> poolNodes;
+		std::vector<QTNode> poolNodes[16];
 		std::vector<unsigned int> nodeIndcs;
 
 		std::vector<SpeedModType> curSpeedMods;
@@ -130,6 +137,10 @@ namespace QTPFS {
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
 		std::deque<LayerUpdate> layerUpdates;
 		#endif
+
+		static constexpr unsigned int NUM_POOL_CHUNKS = sizeof(poolNodes) / sizeof(poolNodes[0]);
+		static constexpr unsigned int POOL_TOTAL_SIZE = (1024 * 1024) / 2;
+		static constexpr unsigned int POOL_CHUNK_SIZE = POOL_TOTAL_SIZE / NUM_POOL_CHUNKS;
 
 		// NOTE:
 		//   we need a fixed range that does not become wider / narrower

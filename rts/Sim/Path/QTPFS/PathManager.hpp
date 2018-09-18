@@ -168,10 +168,10 @@ namespace QTPFS {
 		bool haveCacheDir;
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		spring::thread* updateThread;
-		spring::mutex* mutexThreadUpdate;
-		spring::condition_variable* condThreadUpdate;
-		spring::condition_variable* condThreadUpdated;
+		spring::thread updateThread;
+		spring::mutex mutexThreadUpdate;
+		spring::condition_variable condThreadUpdate;
+		spring::condition_variable condThreadUpdated;
 		#endif
 	};
 }

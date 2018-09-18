@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "System/Threading/ThreadPool.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
@@ -22,7 +23,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringThreading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
@@ -38,50 +38,66 @@
 
 namespace QTPFS {
 	struct PMLoadScreen {
-		PMLoadScreen(): loading(true) {}
+	public:
+		PMLoadScreen() { loadMessages.reserve(8); }
 		~PMLoadScreen() { assert(loadMessages.empty()); }
 
-		void SetLoading(bool b) { loading = b; }
-		void AddLoadMessage(const std::string& msg) {
-			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
-			loadMessages.push_back(msg);
+		void Kill() { loading = false; }
+		void Show(const std::function<void(QTPFS::PathManager*)>& lf, QTPFS::PathManager* pm) {
+			Init(lf, pm);
+			Loop();
+			Join();
 		}
-		void SetLoadMessage(const std::string& msg) {
-			#ifdef QTPFS_NO_LOADSCREEN
-			LOG("%s", msg.c_str());
-			#else
-			loadscreen->SetLoadMessage(msg);
-			#endif
-		}
-		void SetLoadMessages() {
-			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 
-			while (!loadMessages.empty()) {
-				SetLoadMessage(loadMessages.front());
-				loadMessages.pop_front();
-			}
+		void AddMessage(std::string&& msg) {
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
+			loadMessages.emplace_back(std::move(msg));
+		}
+
+	private:
+		void Init(const std::function<void(QTPFS::PathManager*)>& lf, QTPFS::PathManager* pm) {
+			// must be set here to handle reloading
+			loading = true;
+			loadThread = spring::thread(std::bind(lf, pm));
 		}
 		void Loop() {
 			while (loading) {
 				spring::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 				// need this to be always executed after waking up
-				SetLoadMessages();
+				SetMessages();
 			}
 
 			// handle any leftovers
-			SetLoadMessages();
+			SetMessages();
+		}
+		void Join() {
+			loadThread.join();
+		}
+
+		void SetMessages() {
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
+
+			for (std::string& msg: loadMessages) {
+				#ifdef QTPFS_NO_LOADSCREEN
+				LOG("%s", msg.c_str());
+				#else
+				loadscreen->SetLoadMessage(std::move(msg));
+				#endif
+			}
+
+			loadMessages.clear();
 		}
 
 	private:
-		std::deque<std::string> loadMessages;
+		std::vector<std::string> loadMessages;
 		spring::mutex loadMessageMutex;
+		spring::thread loadThread;
 
-		volatile bool loading;
+		std::atomic<bool> loading = {false};
 	};
 
 	static PMLoadScreen pmLoadScreen;
-	static spring::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
 		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -138,13 +154,8 @@ QTPFS::PathManager::~PathManager() {
 	// at this point the thread is waiting, so notify it
 	// (nodeTrees has been cleared already, guaranteeing
 	// that no "final" iteration shall execute)
-	condThreadUpdate->notify_one();
-	updateThread->join();
-
-	delete updateThread;
-	delete mutexThreadUpdate;
-	delete condThreadUpdate;
-	delete condThreadUpdated;
+	condThreadUpdate.notify_one();
+	updateThread.join();
 	#endif
 }
 
@@ -152,15 +163,13 @@ std::int64_t QTPFS::PathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		pmLoadThread = spring::thread(std::bind(&PathManager::Load, this));
-		pmLoadScreen.Loop();
-		pmLoadThread.join();
+		pmLoadScreen.Show(&PathManager::Load, this);
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		mutexThreadUpdate = new spring::mutex();
-		condThreadUpdate = new spring::condition_variable();
-		condThreadUpdated = new spring::condition_variable();
-		updateThread = new spring::thread(std::bind(&PathManager::ThreadUpdate, this));
+		mutexThreadUpdate = spring::mutex();
+		condThreadUpdate = spring::condition_variable();
+		condThreadUpdated = spring::condition_variable();
+		updateThread = spring::thread(std::bind(&PathManager::ThreadUpdate, this));
 		#endif
 	}
 
@@ -176,8 +185,6 @@ void QTPFS::PathManager::InitStatic() {
 }
 
 void QTPFS::PathManager::Load() {
-	pmLoadScreen.SetLoading(true);
-
 	// NOTE: offset *must* start at a non-zero value
 	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
@@ -246,8 +253,9 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.AddLoadMessage("[" + std::string(__func__) + "] " + sumStr + memStr);
-		pmLoadScreen.SetLoading(false);
+
+		pmLoadScreen.AddMessage("[" + std::string(__func__) + "] " + sumStr + memStr);
+		pmLoadScreen.Kill();
 	}
 }
 
@@ -288,7 +296,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
 		sprintf(loadMsg, fmtString, __func__, ThreadPool::GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 
 		#ifndef NDEBUG
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
@@ -298,7 +306,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 		for_mt(0, nodeLayers.size(), [&,loadMsg](const int layerNum){
 			#ifndef NDEBUG
 			sprintf(loadMsg, preFmtStr, layerNum, ThreadPool::GetThreadNum());
-			pmLoadScreen.AddLoadMessage(loadMsg);
+			pmLoadScreen.AddMessage(loadMsg);
 			#endif
 
 			// construct each tree from scratch IFF no cache-dir exists
@@ -316,14 +324,14 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 
 			#ifndef NDEBUG
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-			pmLoadScreen.AddLoadMessage(loadMsg);
+			pmLoadScreen.AddMessage(loadMsg);
 			#endif
 		});
 	}
 	#else
 	{
 		sprintf(loadMsg, fmtString, __func__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 
 		SpawnSpringThreads(&PathManager::InitNodeLayersThread, rect);
 	}
@@ -354,7 +362,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
 		#ifndef NDEBUG
 		sprintf(loadMsg, preFmtStr, layerNum, threadNum);
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 
 		InitNodeLayer(layerNum, rect);
@@ -366,7 +374,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 
 		#ifndef NDEBUG
 		sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 	}
 }
@@ -534,7 +542,7 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapCheckSumHe
 	const char* fmtString = "[PathManager::%s] using cache-dir \"%s\" (map-checksum %s, mod-checksum %s)";
 
 	snprintf(loadMsg, sizeof(loadMsg), fmtString, __func__, dir.c_str(), mapCheckSumHexStr.c_str(), modCheckSumHexStr.c_str());
-	pmLoadScreen.AddLoadMessage(loadMsg);
+	pmLoadScreen.AddMessage(loadMsg);
 
 	return dir;
 }
@@ -601,7 +609,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 		#ifndef NDEBUG
 		sprintf(loadMsg, fmtString, __func__, i, md->name.c_str());
-		pmLoadScreen.AddLoadMessage(loadMsg);
+		pmLoadScreen.AddMessage(loadMsg);
 		#endif
 
 		nodeTrees[i]->Serialize(*fileStreams[i], nodeLayers[i], &fileSizes[i], 0, haveCacheDir);
@@ -661,13 +669,13 @@ void QTPFS::PathManager::Update() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
 
-	std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
+	std::lock_guard<spring::mutex> lock(mutexThreadUpdate);
 
 	// allow ThreadUpdate to run one iteration
-	condThreadUpdate->notify_one();
+	condThreadUpdate.notify_one();
 
 	// wait for the ThreadUpdate iteration to finish
-	condThreadUpdated->wait(lock);
+	condThreadUpdated.wait(lock);
 
 	streflop::streflop_init<streflop::Simple>();
 	#else
@@ -679,10 +687,10 @@ __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
-		std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
+		std::lock_guard<spring::mutex> lock(mutexThreadUpdate);
 
 		// wait for green light from Update
-		condThreadUpdate->wait(lock);
+		condThreadUpdate.wait(lock);
 
 		// if we were notified from the destructor, then structures
 		// are no longer valid and there is no point to finish this
@@ -732,7 +740,7 @@ void QTPFS::PathManager::ThreadUpdate() {
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 		// tell Update we are finished with this iteration
-		condThreadUpdated->notify_one();
+		condThreadUpdated.notify_one();
 	}
 	#endif
 }
@@ -969,8 +977,8 @@ unsigned int QTPFS::PathManager::RequestPath(
 	float3 sourcePoint,
 	float3 targetPoint,
 	float radius,
-	bool synced)
-{
+	bool synced
+) {
 	// in misc since it is called from many points
 	SCOPED_TIMER("Misc::Path::RequestPath");
 
