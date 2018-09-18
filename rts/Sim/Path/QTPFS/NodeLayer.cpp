@@ -55,11 +55,11 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 
 	nodeGrid.resize(xsize * zsize, nullptr);
 
-	if (poolNodes.empty()) {
-		poolNodes.resize(1 + (1024 * 1024) / 8);
-		nodeIndcs.resize(1 + (1024 * 1024) / 8);
-	}
 	{
+		// chunks are reserved OTF
+		nodeIndcs.clear();
+		nodeIndcs.resize(POOL_TOTAL_SIZE);
+
 		std::for_each(nodeIndcs.begin(), nodeIndcs.end(), [&](const unsigned int& i) { nodeIndcs[&i - &nodeIndcs[0]] = &i - &nodeIndcs[0]; });
 		std::reverse(nodeIndcs.begin(), nodeIndcs.end());
 	}
