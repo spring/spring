@@ -100,6 +100,8 @@ public:
 	typedef typename RNG::val_type rng_val_type;
 	typedef typename RNG::res_type rng_res_type;
 
+	static_assert(std::numeric_limits<float>::digits == 24, "sign plus mantissa bits should be 24");
+
 	void Seed(rng_val_type seed) { SetSeed(seed); }
 	void SetSeed(rng_val_type seed, bool init = false) {
 		// use address of this object as sequence-id for unsynced RNG, modern systems have ASLR
@@ -118,13 +120,16 @@ public:
 	rng_res_type operator()(              ) { return (gen. next( )); }
 	rng_res_type operator()(rng_res_type N) { return (gen.bnext(N)); }
 
-	static constexpr rng_res_type min() { return RNG::min_res; }
-	static constexpr rng_res_type max() { return RNG::max_res; }
+	static constexpr rng_res_type  min() { return RNG::min_res; }
+	static constexpr rng_res_type  max() { return RNG::max_res; }
+	static constexpr rng_res_type ndig() { return std::numeric_limits<float>::digits; }
 
+	// [0, N)
 	rng_res_type NextInt(rng_res_type N = max()) { return ((*this)(N)); }
 
-	float NextFloat(rng_res_type N = max()) { return ((NextInt(N) * 1.0f) / N); } // [0,1) rounded to multiple of 1/N
-	float NextFloat32() { return (math::ldexp(NextInt(max()), -32)); } // [0,1) rounded to multiple of 1/(2^32)
+	float NextFloat() { return (NextFloat01(1 << ndig())); }
+	float NextFloat01(rng_res_type N) { return ((NextInt(N) * 1.0f) / N); } // [0,1) rounded to multiple of 1/N
+	float NextFloat24() { return (math::ldexp(NextInt(1 << ndig()), -ndig())); } // [0,1) rounded to multiple of 1/(2^#digits)
 
 	float3 NextVector2D() { return (NextVector(0.0f)); }
 	float3 NextVector(float y = 1.0f) {
