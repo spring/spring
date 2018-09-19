@@ -37,7 +37,7 @@ namespace QTPFS {
 		static size_t MaxSpeedModTypeValue() { return (std::numeric_limits<SpeedModType>::max()); }
 		static size_t MaxSpeedBinTypeValue() { return (std::numeric_limits<SpeedBinType>::max()); }
 
-		NodeLayer();
+		NodeLayer() = default;
 		NodeLayer(NodeLayer&& nl) = default;
 
 		NodeLayer& operator = (const NodeLayer& nl) = delete;
@@ -74,9 +74,12 @@ namespace QTPFS {
 		const INode* GetPoolNode(unsigned int i) const { return &poolNodes[i / POOL_CHUNK_SIZE][i % POOL_CHUNK_SIZE]; }
 		      INode* GetPoolNode(unsigned int i)       { return &poolNodes[i / POOL_CHUNK_SIZE][i % POOL_CHUNK_SIZE]; }
 
-		void FreePoolNode(unsigned int nodeIndex) { nodeIndcs.push_back(nodeIndex); }
+		INode* AllocRootNode(const INode* parent, unsigned int nn,  unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
+			rootNode.Init(parent, nn, x1, z1, x2, z2);
+			return &rootNode;
+		}
 
-		unsigned int AllocPoolNode(const INode* parent, unsigned int childID,  unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
+		unsigned int AllocPoolNode(const INode* parent, unsigned int nn,  unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
 			unsigned int idx = -1u;
 
 			if (nodeIndcs.empty())
@@ -85,11 +88,14 @@ namespace QTPFS {
 			if (poolNodes[(idx = nodeIndcs.back()) / POOL_CHUNK_SIZE].empty())
 				poolNodes[idx / POOL_CHUNK_SIZE].resize(POOL_CHUNK_SIZE);
 
-			poolNodes[idx / POOL_CHUNK_SIZE][idx % POOL_CHUNK_SIZE].Init(parent, childID, x1, z1, x2, z2);
+			poolNodes[idx / POOL_CHUNK_SIZE][idx % POOL_CHUNK_SIZE].Init(parent, nn, x1, z1, x2, z2);
 			nodeIndcs.pop_back();
 
 			return idx;
 		}
+
+		void FreePoolNode(unsigned int nodeIndex) { nodeIndcs.push_back(nodeIndex); }
+
 
 		const std::vector<SpeedBinType>& GetOldSpeedBins() const { return oldSpeedBins; }
 		const std::vector<SpeedBinType>& GetCurSpeedBins() const { return curSpeedBins; }
@@ -138,6 +144,9 @@ namespace QTPFS {
 		std::deque<LayerUpdate> layerUpdates;
 		#endif
 
+		// root lives outside pool s.t. all four children of a given node are always in one chunk
+		QTNode rootNode;
+
 		static constexpr unsigned int NUM_POOL_CHUNKS = sizeof(poolNodes) / sizeof(poolNodes[0]);
 		static constexpr unsigned int POOL_TOTAL_SIZE = (1024 * 1024) / 2;
 		static constexpr unsigned int POOL_CHUNK_SIZE = POOL_TOTAL_SIZE / NUM_POOL_CHUNKS;
@@ -150,15 +159,15 @@ namespace QTPFS {
 		static float        MIN_SPEEDMOD_VALUE;
 		static float        MAX_SPEEDMOD_VALUE;
 
-		unsigned int layerNumber;
-		unsigned int numLeafNodes;
-		unsigned int updateCounter;
+		unsigned int layerNumber = 0;
+		unsigned int numLeafNodes = 0;
+		unsigned int updateCounter = 0;
 
-		unsigned int xsize;
-		unsigned int zsize;
+		unsigned int xsize = 0;
+		unsigned int zsize = 0;
 
-		float maxRelSpeedMod;
-		float avgRelSpeedMod;
+		float maxRelSpeedMod = 0.0f;
+		float avgRelSpeedMod = 0.0f;
 	};
 }
 

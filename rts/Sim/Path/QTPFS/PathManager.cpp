@@ -383,7 +383,7 @@ void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& 
 	NodeLayer& nl = nodeLayers[layerNum];
 
 	nl.Init(layerNum);
-	nl.RegisterNode(nodeTrees[layerNum] = nl.GetPoolNode(nl.AllocPoolNode(nullptr, 0,  r.x1, r.z1,  r.x2, r.z2)));
+	nl.RegisterNode(nodeTrees[layerNum] = nl.AllocRootNode(nullptr, 0,  r.x1, r.z1,  r.x2, r.z2));
 }
 
 
