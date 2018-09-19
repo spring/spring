@@ -192,6 +192,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
 	REGISTER_LUA_CFUNC(GetViewSizes);
+	REGISTER_LUA_CFUNC(GetViewRange);
 
 	REGISTER_LUA_CFUNC(DrawMiniMap);
 	REGISTER_LUA_CFUNC(SlaveMiniMap);
@@ -946,6 +947,11 @@ int LuaOpenGL::GetViewSizes(lua_State* L)
 	return 2;
 }
 
+int LuaOpenGL::GetViewRange(lua_State* L)
+{
+	lua_pushnumber(L, globalRendering->viewRange);
+	return 1;
+}
 
 int LuaOpenGL::SlaveMiniMap(lua_State* L)
 {
@@ -3820,6 +3826,10 @@ int LuaOpenGL::GetSun(lua_State* L)
 	switch (hashString(param)) {
 		case hashString("pos"): {
 			data = &sky->GetLight()->GetLightDir().x;
+		} break;
+		case hashString("specularExponent"): {
+			lua_pushnumber(L, sunLighting->specularExponent);
+			return 1;
 		} break;
 		case hashString("shadowDensity"): {
 			if (!unitMode) {
