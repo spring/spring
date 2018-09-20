@@ -1101,8 +1101,8 @@ int LuaOpenGL::GetViewSizes(lua_State* L)
 	return 2;
 }
 
-
 int LuaOpenGL::GetViewRange(lua_State* L)
+{
 	lua_pushnumber(L, globalRendering->viewRange);
 	return 1;
 }
