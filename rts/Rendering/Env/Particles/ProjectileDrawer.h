@@ -13,6 +13,7 @@
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
+#include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"
 
 class CSolidObject;
@@ -154,15 +155,16 @@ private:
 
 	VAO flyingPieceVAO;
 
+	ProjectileDistanceComparator zSortCmp;
+
 
 	std::vector<const AtlasedTexture*> smokeTextures;
 
-	/// projectiles without a model
+	spring::unsynced_map<CProjectile*, size_t> renderProjectileMap;
+	/// projectiles without a model, e.g. nano-particles
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
 	std::array<ModelRenderContainer<CProjectile>, MODELTYPE_OTHER> modelRenderers;
-
-	ProjectileDistanceComparator zSortCmp;
 
 	/// {[0] := unsorted, [1] := distance-sorted} projectiles;
 	/// used to render particle effects in back-to-front order
