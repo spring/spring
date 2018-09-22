@@ -98,9 +98,9 @@ void CProjectileDrawer::Init() {
 		if (resSmokeTexturesTable.IsValid()) {
 			for (smokeTexCount = 0; true; smokeTexCount++) {
 				const std::string& tex = resSmokeTexturesTable.GetString(smokeTexCount + 1, "");
-				if (tex.empty()) {
+				if (tex.empty())
 					break;
-				}
+
 				const std::string texName = "bitmaps/" + tex;
 				const std::string smokeName = "ismoke" + IntToString(smokeTexCount, "%02i");
 
@@ -191,10 +191,10 @@ void CProjectileDrawer::Init() {
 	perlintex       = &textureAtlas->GetTexture("perlintex");
 	flametex        = &textureAtlas->GetTexture("flame");
 
+	smokeTextures.reserve(smokeTexCount);
+
 	for (int i = 0; i < smokeTexCount; i++) {
-		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
-		const AtlasedTexture* smokeTex = &textureAtlas->GetTexture(smokeName);
-		smokeTextures.push_back(smokeTex);
+		smokeTextures.push_back(&textureAtlas->GetTexture("ismoke" + IntToString(i, "%02i")));
 	}
 
 	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
@@ -254,6 +254,9 @@ void CProjectileDrawer::Init() {
 	}
 
 
+	renderProjectileMap.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
+	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[modelType].Init();
 	}
@@ -275,6 +278,7 @@ void CProjectileDrawer::Kill() {
 
 	smokeTextures.clear();
 
+	renderProjectileMap.clear();
 	renderProjectiles.clear();
 	sortedProjectiles[0].clear();
 	sortedProjectiles[1].clear();
@@ -935,18 +939,26 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 	if (p->model != nullptr) {
 		modelRenderers[MDL_TYPE(p)].AddObject(p);
 	} else {
+		renderProjectileMap.insert(const_cast<CProjectile*>(p), renderProjectiles.size());
 		renderProjectiles.push_back(const_cast<CProjectile*>(p));
 	}
 }
 
-void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
+void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* p)
 {
 	if (p->model != nullptr) {
 		modelRenderers[MDL_TYPE(p)].DelObject(p);
 	} else {
-		auto it = std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p));
-		assert(it != renderProjectiles.end());
-		renderProjectiles.erase(it);
+		const auto it = renderProjectileMap.find(const_cast<CProjectile*>(p));
+
+		assert(it != renderProjectileMap.end());
+		assert(it->second < renderProjectiles.size());
+
+		renderProjectiles[it->second] = renderProjectiles.back();
+		renderProjectileMap[renderProjectiles.back()] = it->second;
+
+		renderProjectiles.pop_back();
+		renderProjectileMap.erase(it);
 	}
 }
 
