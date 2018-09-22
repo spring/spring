@@ -97,7 +97,7 @@
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
-CONFIG(unsigned, TextureMemPoolSize).defaultValue(64 * 2);
+CONFIG(unsigned, TextureMemPoolSize).defaultValue(64 * 2).minimumValue(1);
 CONFIG(bool, UseLuaMemPools).defaultValue(__archBits__ == 64).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
@@ -711,6 +711,8 @@ void SpringApp::Reload(const std::string script)
 	CglFont::ReallocAtlases(true);
 	CBitmap::InitPool(configHandler->GetInt("TextureMemPoolSize"));
 	CglFont::ReallocAtlases(false);
+	#else
+	CBitmap::InitPool(0);
 	#endif
 
 	LOG("[SpringApp::%s][8]", __func__);
