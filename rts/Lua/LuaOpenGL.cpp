@@ -2811,6 +2811,7 @@ int LuaOpenGL::ChangeTextureParams(lua_State* L)
 	}
 
 	textures.ChangeParams(*tex);
+	return 0;
 }
 
 
