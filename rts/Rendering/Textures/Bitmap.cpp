@@ -354,8 +354,13 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp)
 
 void CBitmap::InitPool(size_t size)
 {
-	// config-size is in MB
-	texMemPool.Resize(size * 1024 * 1024);
+	if (size == 0) {
+		// indicates a reload
+		texMemPool.Defrag();
+	} else {
+		// config-size is in MB
+		texMemPool.Resize(size * 1024 * 1024);
+	}
 }
 
 void CBitmap::Alloc(int w, int h, int c)
