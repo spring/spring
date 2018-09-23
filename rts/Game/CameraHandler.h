@@ -26,8 +26,9 @@ public:
 		CAMERA_MODE_ROTOVERHEAD = 3,
 		CAMERA_MODE_FREE        = 4,
 		CAMERA_MODE_OVERVIEW    = 5,
-		CAMERA_MODE_DUMMY       = 6,
-		CAMERA_MODE_LAST        = 7,
+		CAMERA_MODE_AR          = 6,
+		CAMERA_MODE_DUMMY       = 7,
+		CAMERA_MODE_LAST        = 8,
 	};
 
 public:
