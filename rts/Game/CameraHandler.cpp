@@ -16,6 +16,7 @@
 #include "Camera/FreeController.h"
 #include "Camera/OverviewController.h"
 #include "Camera/SpringController.h"
+#include "Camera/ARController.h"
 #include "Players/Player.h"
 #include "UI/UnitTracker.h"
 #include "Rendering/GlobalRendering.h"
@@ -46,7 +47,8 @@ CONFIG(int, CamMode)
 		(int)CCameraHandler::CAMERA_MODE_SPRING,
 		(int)CCameraHandler::CAMERA_MODE_ROTOVERHEAD,
 		(int)CCameraHandler::CAMERA_MODE_FREE,
-		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
+		(int)CCameraHandler::CAMERA_MODE_OVERVIEW,
+		(int)CCameraHandler::CAMERA_MODE_AR
 	))
 	.minimumValue(0)
 	.maximumValue(CCameraHandler::CAMERA_MODE_DUMMY - 1);
@@ -169,15 +171,18 @@ void CCameraHandler::InitControllers()
 	static_assert(sizeof(     CSpringController) <= sizeof(camControllerMem[CAMERA_MODE_SPRING     ]), "");
 	static_assert(sizeof(CRotOverheadController) <= sizeof(camControllerMem[CAMERA_MODE_ROTOVERHEAD]), "");
 	static_assert(sizeof(       CFreeController) <= sizeof(camControllerMem[CAMERA_MODE_FREE       ]), "");
-	static_assert(sizeof(   COverviewController) <= sizeof(camControllerMem[CAMERA_MODE_OVERVIEW   ]), "");
+	static_assert(sizeof(   COverviewController) <= sizeof(camControllerMem[CAMERA_MODE_AR  ]), "");
+	static_assert(sizeof(   CARController) <= sizeof(camControllerMem[CAMERA_MODE_OVERVIEW   ]), "");
 
 	// FPS camera must always be the first one in the list
-	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])         CFPSController();
-	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])    COverheadController();
-	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])      CSpringController();
-	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) CRotOverheadController();
-	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])        CFreeController();
-	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])    COverviewController();
+	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])   CFPSController();
+	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])   COverheadController();
+	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])   CSpringController();
+	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) 	CRotOverheadController();
+	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])   CFreeController();
+	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])   COverviewController();
+	camControllers[CAMERA_MODE_AR  		  ]	= new (camControllerMem[CAMERA_MODE_AR   	   ])   CARController();
+
 }
 
 void CCameraHandler::KillControllers()
@@ -487,6 +492,9 @@ void CCameraHandler::PushAction(const Action& action)
 		} break;
 		case hashString("viewov"): {
 			SetCameraMode(CAMERA_MODE_OVERVIEW);
+		} break;
+		case hashString("viewar"): {
+			SetCameraMode(CAMERA_MODE_AR);
 		} break;
 
 		case hashString("viewtaflip"): {
