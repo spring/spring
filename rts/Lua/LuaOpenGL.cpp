@@ -343,8 +343,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RunQuery);
 	REGISTER_LUA_CFUNC(GetQuery);
 
-	REGISTER_LUA_CFUNC(GetGlobalTexNames);
-	REGISTER_LUA_CFUNC(GetGlobalTexCoords);
 	REGISTER_LUA_CFUNC(GetShadowMapParams);
 
 	REGISTER_LUA_CFUNC(GetAtmosphere);
