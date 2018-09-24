@@ -26,6 +26,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
+#include "System/EventHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
@@ -252,8 +253,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		InverseOrSetBool(gs->editDefsEnabled, action.GetArgs());
-		LogSystemStatus("Unit-, Feature- & Weapon-Def editing",
-				gs->editDefsEnabled);
+		LogSystemStatus("Unit-, Feature- & Weapon-Def editing", gs->editDefsEnabled);
 		return true;
 	}
 };
@@ -271,23 +271,26 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 	const char* msgs[] = {
 		"synced %s scripts require cheating to %s",
 		"cannot execute /%s %s before first gameframe",
+		"%s %s callins %s",
 	};
 
 	if (arg == "reload" || arg == "enable") {
 		if (!gs->cheatEnabled || gs->PreSimFrame()) {
 			LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
-		} else {
-			if (handler != nullptr && arg == "enable") {
-				LOG_L(L_WARNING, "%s is already loaded", luaName);
-			} else {
-				LuaSyncedHandler::ReloadHandler();
+			return;
+		}
 
-				if (handler != nullptr) {
-					LOG("%s loaded", luaName);
-				} else {
-					LOG_L(L_ERROR, "%s loading failed", luaName);
-				}
-			}
+		if (handler != nullptr && arg == "enable") {
+			LOG_L(L_WARNING, "%s is already loaded", luaName);
+			return;
+		}
+
+		LuaSyncedHandler::ReloadHandler();
+
+		if (handler != nullptr) {
+			LOG("%s loaded", luaName);
+		} else {
+			LOG_L(L_ERROR, "%s loading failed", luaName);
 		}
 
 		return;
@@ -296,20 +299,45 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 	if (arg == "disable") {
 		if (!gs->cheatEnabled || gs->PreSimFrame()) {
 			LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
-		} else {
-			LuaSyncedHandler::FreeHandler();
-
-			LOG("%s disabled", luaName);
+			return;
 		}
 
+		LuaSyncedHandler::FreeHandler();
+
+		LOG("%s disabled", luaName);
 		return;
 	}
 
+	if (arg == "scallins" || arg == "ucallins") {
+		CLuaHandle* slh = &handler->syncedLuaHandle;
+		CLuaHandle* ulh = &handler->unsyncedLuaHandle;
+		CLuaHandle*  lh = (arg[0] == 's')? slh: ulh;
+
+		constexpr const char* types[] = {"unsynced",  "synced"};
+		constexpr const char* modes[] = {"disabled", "enabled"};
+
+		if (!gs->cheatEnabled || gs->PreSimFrame()) {
+			LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
+			return;
+		}
+
+		if (eventHandler.HasClient(lh)) {
+			eventHandler.RemoveClient(lh);
+		} else {
+			eventHandler.AddClient(lh);
+		}
+
+		LOG(msgs[2], luaName, types[lh == slh], modes[eventHandler.HasClient(lh)]);
+		return;
+	}
+
+	// not a special arg, forward
 	if (handler != nullptr) {
 		handler->GotChatMsg(arg, action.GetPlayerID());
-	} else {
-		LOG("%s is not loaded", luaName);
+		return;
 	}
+
+	LOG("%s is not loaded", luaName);
 }
 
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
