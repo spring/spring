@@ -51,6 +51,7 @@ Lua:
  - remove gl.DrawListAtUnit
  - remove gl.Shape
  - remove gl.EdgeFlag
+ - remove gl.GetGlobalTex{Names,Coords}
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list handling
  - remove 'useCamera' LuaMaterial parameter

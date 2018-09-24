@@ -313,8 +313,6 @@ class LuaOpenGL {
 		static int RunQuery(lua_State* L);
 		static int GetQuery(lua_State* L);
 
-		static int GetGlobalTexNames(lua_State* L);
-		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);
 
 		static int GetAtmosphere(lua_State* L);
