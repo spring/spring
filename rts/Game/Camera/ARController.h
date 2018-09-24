@@ -28,7 +28,6 @@ public:
 	void Update();
 
 private:
-	float screenDivideRatio; 
 	float mouseScale;
 };
 
