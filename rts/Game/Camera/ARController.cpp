@@ -15,7 +15,6 @@ CONFIG(float, ARMouseScale).defaultValue(0.01f);
 CONFIG(int, ARScrollSpeed).defaultValue(10);
 CONFIG(bool, AREnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, ARFOV).defaultValue(45.0f);
-CONFIG(float, ARScreenDivideRatio).defaultValue(0.5f);
 
 
 CARController::CARController()
@@ -24,7 +23,6 @@ CARController::CARController()
 	scrollSpeed = configHandler->GetInt("ARScrollSpeed") * 0.1f;
 	enabled     = configHandler->GetBool("AREnabled");
 	fov         = configHandler->GetFloat("ARFOV");
-	screenDivideRatio = configHandler->GetFloat("ARScreenDivideRatio");
 }
 
 
@@ -42,7 +40,6 @@ void CARController::MouseMove(float3 move)
 
 void CARController::ScreenEdgeMove(float3 move)
 {
-	KeyMove(move);
 }
 
 
@@ -80,7 +77,6 @@ void CARController::SwitchTo(const int oldCam, const bool showText)
 
 void CARController::GetState(StateMap& sm) const
 {
-	sm["screenDivideRatio"] = screenDivideRatio;
 	CCameraController::GetState(sm);
 }
 
@@ -88,7 +84,6 @@ void CARController::GetState(StateMap& sm) const
 bool CARController::SetState(const StateMap& sm)
 {
 
-	SetStateFloat(sm, "screenDivideRatio", screenDivideRatio);
 	CCameraController::SetState(sm);
 
 	return true;
