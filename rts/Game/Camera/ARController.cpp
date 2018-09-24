@@ -54,9 +54,6 @@ void CARController::MouseWheelMove(float move)
 
 void CARController::Update()
 {
-	pos.x = pos.x;
-	pos.z = pos.z;
-	pos.y = pos.y;
 }
 
 void CARController::SetPos(const float3& newPos)
