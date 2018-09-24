@@ -179,10 +179,10 @@ void CCameraHandler::InitControllers()
 	camControllers[CAMERA_MODE_FIRSTPERSON] = new (camControllerMem[CAMERA_MODE_FIRSTPERSON])   CFPSController();
 	camControllers[CAMERA_MODE_OVERHEAD   ] = new (camControllerMem[CAMERA_MODE_OVERHEAD   ])   COverheadController();
 	camControllers[CAMERA_MODE_SPRING     ] = new (camControllerMem[CAMERA_MODE_SPRING     ])   CSpringController();
-	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD]) 	CRotOverheadController();
+	camControllers[CAMERA_MODE_ROTOVERHEAD] = new (camControllerMem[CAMERA_MODE_ROTOVERHEAD])   CRotOverheadController();
 	camControllers[CAMERA_MODE_FREE       ] = new (camControllerMem[CAMERA_MODE_FREE       ])   CFreeController();
 	camControllers[CAMERA_MODE_OVERVIEW   ] = new (camControllerMem[CAMERA_MODE_OVERVIEW   ])   COverviewController();
-	camControllers[CAMERA_MODE_AR  		  ]	= new (camControllerMem[CAMERA_MODE_AR   	   ])   CARController();
+	camControllers[CAMERA_MODE_AR         ]	= new (camControllerMem[CAMERA_MODE_AR         ])   CARController();
 
 }
 
