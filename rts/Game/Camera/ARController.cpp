@@ -28,13 +28,13 @@ CARController::CARController()
 
 void CARController::KeyMove(float3 move)
 {
-	Update();
+	
 }
 
 
 void CARController::MouseMove(float3 move)
 {
-	Update();
+
 }
 
 
@@ -46,7 +46,7 @@ void CARController::ScreenEdgeMove(float3 move)
 void CARController::MouseWheelMove(float move)
 {
 
-	Update();
+	
 }
 
 void CARController::Update()
