@@ -1767,44 +1767,6 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 }
 
 
-int LuaOpenGL::Shape(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	if (!lua_istable(L, 2)) {
-		luaL_error(L, "Incorrect arguments to gl.Shape(type, elements[])");
-	}
-
-	const GLuint type = (GLuint)luaL_checkint(L, 1);
-
-	glBegin(type);
-
-	const int table = 2;
-	int i = 1;
-	for (lua_rawgeti(L, table, i);
-	     lua_istable(L, -1);
-	     lua_pop(L, 1), i++, lua_rawgeti(L, table, i)) {
-		VertexData vd;
-		if (!ParseVertexData(L, vd)) {
-			luaL_error(L, "Shape: bad vertex data");
-			break;
-		}
-		if (vd.hasColor) { glColor4fv(vd.color);   }
-		if (vd.hasTxcd)  { glTexCoord2fv(vd.txcd); }
-		if (vd.hasNorm)  { glNormal3fv(vd.norm);   }
-		if (vd.hasVert)  { glVertex3fv(vd.vert);   } // always last
-	}
-	if (!lua_isnil(L, -1)) {
-		luaL_error(L, "Shape: bad vertex data, not a table");
-	}
-	// lua_pop(L, 1);
-
-	glEnd();
-
-	return 0;
-}
-
-
 /******************************************************************************/
 
 int LuaOpenGL::BeginEnd(lua_State* L)
