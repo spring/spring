@@ -1432,10 +1432,10 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 	PACK_CAMERA_VECTOR(forward, GetDir());
 	PACK_CAMERA_VECTOR(up, GetUp());
 	PACK_CAMERA_VECTOR(right, GetRight());
-	PACK_CAMERA_VECTOR(topFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_TOP]);
-	PACK_CAMERA_VECTOR(botFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_BOT]);
-	PACK_CAMERA_VECTOR(lftFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_LFT]);
-	PACK_CAMERA_VECTOR(rgtFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_RGT]);
+	PACK_CAMERA_VECTOR(topFrustumPlane, GetFrustumPlane(CCamera::FRUSTUM_PLANE_TOP));
+	PACK_CAMERA_VECTOR(botFrustumPlane, GetFrustumPlane(CCamera::FRUSTUM_PLANE_BOT));
+	PACK_CAMERA_VECTOR(lftFrustumPlane, GetFrustumPlane(CCamera::FRUSTUM_PLANE_LFT));
+	PACK_CAMERA_VECTOR(rgtFrustumPlane, GetFrustumPlane(CCamera::FRUSTUM_PLANE_RGT));
 
 	return 1;
 }

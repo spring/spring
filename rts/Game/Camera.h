@@ -7,19 +7,10 @@
 #include "System/Matrix44f.h"
 
 
-class CCamera
-{
+struct AABB;
+
+class CCamera {
 public:
-	struct FrustumLine {
-		int sign = 0;
-
-		float base = 0.0f;
-		float dir = 0.0f;
-
-		float minz = 0.0f;
-		float maxz = 0.0f;
-	};
-
 	enum {
 		CAMTYPE_PLAYER = 0, // main camera
 		CAMTYPE_UWREFL = 1, // used for underwater reflections
@@ -61,6 +52,31 @@ public:
 		MOVE_STATE_SLW = 7, // slow
 	};
 
+	struct Frustum {
+	public:
+		bool IntersectAABB(const AABB& b) const;
+
+	public:
+		// corners
+		float3 verts[8];
+		// normals
+		float3 planes[FRUSTUM_PLANE_CNT];
+		// ntr - ntl, ntl - nbl, ftl - ntl, ftr - ntr, fbr - nbr, fbl - nbl
+		float3 edges[6];
+
+		// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
+		float4 scales;
+	};
+	struct FrustumLine {
+		int sign = 0;
+
+		float base = 0.0f;
+		float dir = 0.0f;
+
+		float minz = 0.0f;
+		float maxz = 0.0f;
+	};
+
 public:
 	CCamera(unsigned int cameraType = CAMTYPE_PLAYER, unsigned int projectionType = PROJTYPE_PERSP);
 
@@ -100,7 +116,7 @@ public:
 	);
 
 	void ClipFrustumLines(const float zmin, const float zmax, bool neg);
-	void SetFrustumScales(const float4 scales) { frustumScales = scales; }
+	void SetFrustumScales(const float4 scales) { frustum.scales = scales; }
 
 	const FrustumLine* GetPosFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_POS][0]; }
 	const FrustumLine* GetNegFrustumLines() const { return &frustumLines[FRUSTUM_SIDE_NEG][0]; }
@@ -127,6 +143,10 @@ public:
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 	const CMatrix44f& GetClipControlMatrix() const { return clipControlMatrix; }
+
+	const float3& GetFrustumVert (unsigned int i) const { return frustum.verts [i]; }
+	const float3& GetFrustumPlane(unsigned int i) const { return frustum.planes[i]; }
+	const float3& GetFrustumEdge (unsigned int i) const { return frustum.edges [i]; }
 
 	void LoadMatrices() const;
 	void LoadViewPort() const;
@@ -188,26 +208,19 @@ private:
 
 public:
 	float3 pos;
-	float3 rot;        ///< x = inclination, y = azimuth (to the -z axis!), z = roll
-	float3 forward;    ///< local z-axis
-	float3 right;      ///< local x-axis
-	float3 up;         ///< local y-axis
-
-	float fov;         ///< vertical viewing angle, in degrees
-	float halfFov;     ///< half the fov in radians
-	float tanHalfFov;  ///< math::tan(halfFov)
-	float lppScale;    ///< length-per-pixel scale
-
-public:
-	// frustum-volume planes (infinite)
-	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
-	float3 frustumVerts[8];
-	// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
-	float4 frustumScales;
+	float3 rot;                   ///< x = inclination, y = azimuth (to the -z axis!), z = roll
+	float3 forward = FwdVector;   ///< local z-axis
+	float3 right   = RgtVector;   ///< local x-axis
+	float3 up      =  UpVector;   ///< local y-axis
 
 	// Lua-controlled parameters, player-camera only
 	float3 posOffset;
 	float3 tiltOffset;
+
+	float fov        = 0.0f;  ///< vertical viewing angle, in degrees
+	float halfFov    = 0.0f;  ///< half the fov in radians
+	float tanHalfFov = 0.0f;  ///< math::tan(halfFov)
+	float lppScale   = 0.0f;  ///< length-per-pixel scale
 
 	int viewport[4];
 
@@ -221,13 +234,14 @@ private:
 	CMatrix44f billboardMatrix;
 	CMatrix44f clipControlMatrix;
 
+	Frustum frustum;
 	// positive (right-to-left) lines [0], negative (left-to-right) lines [1]
 	FrustumLine frustumLines[2][4 + 1];
 
 	// CAMTYPE_*
-	unsigned int camType;
+	unsigned int camType = -1u;
 	// PROJTYPE_*
-	unsigned int projType;
+	unsigned int projType = -1u;
 
 	bool movState[8]; // fwd, back, left, right, up, down, fast, slow
 	bool rotState[4]; // unused
