@@ -104,7 +104,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		("#define MDL_FRAGDATA_COUNT "       + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n");
 
 	const float3 cameraPos = camera->GetPos();
-	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n]);
@@ -197,7 +197,7 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	EnableCommon(ud, deferredPass);
 
 	const float3 cameraPos = camera->GetPos();
-	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 	Shader::IProgramObject* shader = modelShaders[MODEL_SHADER_ACTIVE];
 

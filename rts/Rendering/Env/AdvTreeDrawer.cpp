@@ -264,7 +264,7 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 
 	const float3& cameraDirX = cam->GetRight();
 	const float3& cameraDirY = cam->GetUp();
-	const float3   fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3   fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 	const CMatrix44f& treeMat = CMatrix44f::Identity();
 	const CMatrix44f& viewMat = camera->GetViewMatrix();

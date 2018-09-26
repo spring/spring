@@ -3,11 +3,10 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 
+#include "System/AABB.hpp"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
-
-struct AABB;
 
 class CCamera {
 public:
@@ -54,6 +53,7 @@ public:
 
 	struct Frustum {
 	public:
+		bool IntersectSphere(const float3& cp, const float4& sp) const;
 		bool IntersectAABB(const AABB& b) const;
 
 	public:
@@ -104,8 +104,9 @@ public:
 	float3 CalcPixelDir(int x, int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 
-	bool InView(const float3& p, float radius = 0.0f) const;
-	bool InView(const float3& mins, const float3& maxs) const;
+	bool InView(const float3& point, float radius = 0.0f) const { return (frustum.IntersectSphere(pos, {point, radius})); }
+	bool InView(const float3& mins, const float3& maxs) const { return (InView(AABB{mins, maxs})); }
+	bool InView(const AABB& aabb) const { return (InView(aabb.CalcCenter(), aabb.CalcRadius()) && frustum.IntersectAABB(aabb)); }
 
 	void CalcFrustumLines(float miny, float maxy, float scale, bool neg = false);
 	void CalcFrustumLine(
@@ -159,6 +160,8 @@ public:
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
+	float GetNearPlaneDist() const { return frustum.scales.z; }
+	float GetFarPlaneDist() const { return frustum.scales.w; }
 
 	float3 GetMoveVectorFromState(bool fromKeyState) const;
 

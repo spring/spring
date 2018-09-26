@@ -369,7 +369,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	{
-		const float4 cpos = {camera->GetPos(), globalRendering->viewRange * 0.5f};
+		const float4 cpos = {camera->GetPos(), camera->GetFarPlaneDist() * 0.5f};
 
 		if (cpos.y >= 0.0f)
 			return;

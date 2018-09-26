@@ -686,8 +686,8 @@ float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const CMatrix44f&
 	}
 
 	projScales.y = projScales.x;
-	projScales.z = globalRendering->zNear;
-	projScales.w = globalRendering->viewRange;
+	projScales.z = cam->GetNearPlaneDist();
+	projScales.w = cam->GetFarPlaneDist();
 	return (shadowProjScales = projScales);
 }
 
@@ -851,7 +851,7 @@ void CShadowHandler::CalcMinMaxView()
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
 	float borderSize = 270.0f;
-	float maxSize = globalRendering->viewRange * 0.75f;
+	float maxSize = camera->GetFarPlaneDist() * 0.75f;
 
 	if (shadowMapSize == 1024) {
 		borderSize *= 1.5f;

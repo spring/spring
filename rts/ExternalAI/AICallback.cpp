@@ -1350,7 +1350,7 @@ bool CAICallback::GetValue(int id, void* data)
 		} break;
 
 		case AIVAL_GUI_VIEW_RANGE: {
-			*(float*) data = globalRendering->viewRange;
+			*(float*) data = camera->GetFarPlaneDist();
 		} break;
 		case AIVAL_GUI_SCREENX: {
 			*(float*) data = globalRendering->viewSizeX;

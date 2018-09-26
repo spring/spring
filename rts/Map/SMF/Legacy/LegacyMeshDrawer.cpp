@@ -549,7 +549,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 	viewRadius += (viewRadius & 1);
 
 	// Compute count of LODs needed/visible
-	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
+	neededLod   = std::max(1, int((camera->GetFarPlaneDist() * 0.125f) / viewRadius) << 1);
 	neededLod   = std::min(neededLod, std::min(mapDims.mapx, mapDims.mapy));
 }
 

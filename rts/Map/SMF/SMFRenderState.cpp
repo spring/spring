@@ -104,7 +104,7 @@ void SMFRenderStateGLSL::Update(
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
 		const float3 cameraPos = camera->GetPos();
-		const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+		const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapRendering->voidWater);
@@ -236,7 +236,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	const float3 cameraPos = camera->GetPos();
-	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
 	shader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());

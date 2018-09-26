@@ -5,6 +5,7 @@
 
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/Matrix44f.h"
 
 struct AABB {
 public:
@@ -39,20 +40,26 @@ public:
 		return (n == 3);
 	};
 
-	void CalcCorners(float3 verts[8]) const {
-		verts[0] = {mins.x, mins.y, mins.z};
-		verts[1] = {mins.x, mins.y, maxs.z};
-		verts[2] = {mins.x, maxs.y, mins.z};
-		verts[3] = {mins.x, maxs.y, maxs.z};
-
-		verts[4] = {maxs.x, mins.y, mins.z};
-		verts[5] = {maxs.x, mins.y, maxs.z};
-		verts[6] = {maxs.x, maxs.y, mins.z};
-		verts[7] = {maxs.x, maxs.y, maxs.z};
+	void CalcCorners(float3 verts[8]) const { CalcCorners(CMatrix44f::Identity(), verts); }
+	void CalcCorners(const CMatrix44f& mat, float3 verts[8]) const {
+		// bottom
+		verts[0] = mat * float3{mins.x, mins.y, mins.z};
+		verts[1] = mat * float3{mins.x, mins.y, maxs.z};
+		verts[2] = mat * float3{maxs.x, mins.y, mins.z};
+		verts[3] = mat * float3{maxs.x, mins.y, maxs.z};
+		// top
+		verts[4] = mat * float3{mins.x, maxs.y, mins.z};
+		verts[5] = mat * float3{mins.x, maxs.y, maxs.z};
+		verts[6] = mat * float3{maxs.x, maxs.y, mins.z};
+		verts[7] = mat * float3{maxs.x, maxs.y, maxs.z};
 	}
 
+	float3 CalcCenter(const CMatrix44f& mat) const { return (mat * CalcCenter()); }
 	float3 CalcCenter() const { return ((maxs + mins) * 0.5f); }
 	float3 CalcScales() const { return ((maxs - mins) * 0.5f); }
+
+	float CalcRadiusSq() const { return (CalcScales().SqLength()); }
+	float CalcRadius() const { return (CalcScales().Length()); }
 
 public:
 	float3 mins;
