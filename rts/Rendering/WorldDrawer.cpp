@@ -395,7 +395,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 		glEnableClientState(GL_VERTEX_ARRAY);
 
 		const float3& cpos = camera->GetPos();
-		const float vr = globalRendering->viewRange * 0.5f;
+		const float vr = camera->GetFarPlaneDist() * 0.5f;
 
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);

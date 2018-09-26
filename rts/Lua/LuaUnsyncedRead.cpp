@@ -1507,7 +1507,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const CUnit* unit = nullptr;
 	const CFeature* feature = nullptr;
 
-	const float rawRange = globalRendering->viewRange * 1.4f;
+	const float rawRange = camera->GetFarPlaneDist() * 1.4f;
 	const float badRange = rawRange - 300.0f;
 
 	const float3 camPos = camera->GetPos();

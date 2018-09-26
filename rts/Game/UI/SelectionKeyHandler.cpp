@@ -274,7 +274,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			ReadDelimiter(selectString);
 
 			const float maxDist = Square(atof(ReadToken(selectString).c_str()));
-			const float gndDist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange, false);
+			const float gndDist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * camera->GetFarPlaneDist(), false);
 
 			float3 mp = camera->GetPos() + mouse->dir * gndDist;
 

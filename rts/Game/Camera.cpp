@@ -8,7 +8,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/AABB.hpp"
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -249,7 +248,7 @@ void CCamera::UpdateViewRange()
 	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
 	const float maxDistToBorder  = math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
 
-	const float angleViewRange   = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
+	const float  angleViewRange  = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
 	const float heightViewRange  = (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f;
 
 	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
@@ -259,29 +258,19 @@ void CCamera::UpdateViewRange()
 	// view-angle dependent (i.e. FPS-view)
 	wantedViewRange = std::max(wantedViewRange, angleViewRange);
 
+	// NOTE: factor is always >= 1, not what we want when near ground
 	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
 
 	frustum.scales.z = CGlobalRendering::NEAR_PLANE * factor;
 	frustum.scales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
-
-	globalRendering->zNear     = frustum.scales.z;
-	globalRendering->viewRange = frustum.scales.w;
 }
 
 
 
+#if 0
 // axis-aligned bounding box test (AABB)
-bool CCamera::InView(const float3& mins, const float3& maxs) const
+bool CCamera::InView(const AABB& aabb) const
 {
-	const float3 boxCenter = (maxs + mins) * 0.5f;
-	const float3 boxScales = (maxs - mins) * 0.5f;
-
-	if (!InView(boxCenter, boxScales.Length()))
-		return false;
-
-	return (frustum.IntersectAABB({mins, maxs}));
-
-	#if 0
 	// orthographic plane offsets along each respective normal; [0] = LFT&RGT, [1] = TOP&BOT
 	const float xyPlaneOffsets[2] = {frustum.scales.x, frustum.scales.y};
 	const float zwPlaneOffsets[2] = {frustum.scales.z, frustum.scales.w};
@@ -384,35 +373,8 @@ bool CCamera::InView(const float3& mins, const float3& maxs) const
 	}
 
 	return true;
-	#endif
 }
-
-bool CCamera::InView(const float3& p, float radius) const
-{
-	// use arrays because neither float2 nor float4 have an operator[]
-	const float xyPlaneOffsets[2] = {frustum.scales.x, frustum.scales.y};
-	const float zwPlaneOffsets[2] = {frustum.scales.z, frustum.scales.w};
-
-	const float3 objectVector = p - pos;
-
-	static_assert(FRUSTUM_PLANE_LFT == 0, "");
-	static_assert(FRUSTUM_PLANE_FRN == 4, "");
-
-	#if 0
-	// test if <p> is in front of the near-plane
-	if (objectVector.dot(frustum.planes[FRUSTUM_PLANE_FRN]) > (zwPlaneOffsets[0] + radius))
-		return false;
-	#endif
-
-	// test if <p> is in front of a side-plane (LRTB)
-	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
-		if (objectVector.dot(frustum.planes[i]) > (xyPlaneOffsets[i >> 1] + radius))
-			return false;
-	}
-
-	// test if <p> is behind the far-plane
-	return !(objectVector.dot(frustum.planes[FRUSTUM_PLANE_BCK]) > (zwPlaneOffsets[1] + radius));
-}
+#endif
 
 
 
@@ -506,19 +468,20 @@ float3 CCamera::CalcPixelDir(int x, int y) const
 	const float dx = float(x - globalRendering->viewPosX - (vsx >> 1)) / vsy * (tanHalfFov * 2.0f);
 	const float dy = float(y -                             (vsy >> 1)) / vsy * (tanHalfFov * 2.0f);
 
-	const float3 dir = (forward - up * dy + right * dx).Normalize();
-	return dir;
+	return ((forward - up * dy + right * dx).Normalize());
 }
 
 
 float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
 	// same as gluProject()
-	const float4 v = viewProjectionMatrix * float4(objPos, 1.0f);
+	const float4 projPos = viewProjectionMatrix * float4(objPos, 1.0f);
+	const float3 clipPos = projPos / projPos.w;
+
 	float3 winPos;
-	winPos.x = viewport[0] + viewport[2] * (v.x / v.w + 1.0f) * 0.5f;
-	winPos.y = viewport[1] + viewport[3] * (v.y / v.w + 1.0f) * 0.5f;
-	winPos.z =                             (v.z / v.w + 1.0f) * 0.5f;
+	winPos.x = viewport[0] + viewport[2] * (clipPos.x + 1.0f) * 0.5f;
+	winPos.y = viewport[1] + viewport[3] * (clipPos.y + 1.0f) * 0.5f;
+	winPos.z =                             (clipPos.z + 1.0f) * 0.5f;
 	return winPos;
 }
 
@@ -711,8 +674,8 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 		if (((screenH - 1) - distToEdge.y) < distToEdge.y) distToEdge.y = -((screenH - 1) - distToEdge.y);
 
 		if (configHandler->GetBool("EdgeMoveDynamic")) {
-			move.x = Clamp(float(border.x - std::abs(distToEdge.x)) / border.x, 0.f, 1.f);
-			move.y = Clamp(float(border.y - std::abs(distToEdge.y)) / border.y, 0.f, 1.f);
+			move.x = Clamp(float(border.x - std::abs(distToEdge.x)) / border.x, 0.0f, 1.0f);
+			move.y = Clamp(float(border.y - std::abs(distToEdge.y)) / border.y, 0.0f, 1.0f);
 		} else {
 			move.x = int(std::abs(distToEdge.x) < border.x);
 			move.y = int(std::abs(distToEdge.y) < border.y);
@@ -729,6 +692,34 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 }
 
 
+
+bool CCamera::Frustum::IntersectSphere(const float3& cp, const float4& sp) const
+{
+	// need a vector since planes do not carry origin-distance
+	const float3 vec = sp - cp;
+
+	// use arrays because neither float2 nor float4 have an operator[]
+	const float xyPlaneOffsets[2] = {scales.x, scales.y};
+	const float zwPlaneOffsets[2] = {scales.z, scales.w};
+
+	static_assert(FRUSTUM_PLANE_LFT == 0, "");
+	static_assert(FRUSTUM_PLANE_FRN == 4, "");
+
+	#if 0
+	// test if <sp> is in front of the near-plane
+	if (vec.dot(planes[FRUSTUM_PLANE_FRN]) > (zwPlaneOffsets[0] + sp.w))
+		return false;
+	#endif
+
+	// test if <sp> is in front of a side-plane (LRTB)
+	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
+		if (vec.dot(planes[i]) > (xyPlaneOffsets[i >> 1] + sp.w))
+			return false;
+	}
+
+	// test if <sp> is behind the far-plane
+	return !(vec.dot(planes[FRUSTUM_PLANE_BCK]) > (zwPlaneOffsets[1] + sp.w));
+}
 
 bool CCamera::Frustum::IntersectAABB(const AABB& b) const
 {

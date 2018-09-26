@@ -5,9 +5,11 @@
 #include "BasicSky.h"
 #include "AdvSky.h"
 #include "SkyBox.h"
+#include "Game/Camera.h"
 #include "Game/TraceRay.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
@@ -85,9 +87,9 @@ bool ISky::SunVisible(const float3 pos) const {
 
 	// cast a ray *toward* the sun from <pos>
 	// sun is visible if no terrain blocks it
-	const float3& sunDir = skyLight->GetLightDir();
-	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, false);
+	const float3& sunDir = skyLight.GetLightDir();
+	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, camera->GetFarPlaneDist(), nullptr, hitUnit, hitFeature, false, true, false);
 
-	return (sunDist < 0.0f || sunDist >= globalRendering->viewRange);
+	return (sunDist < 0.0f || sunDist >= camera->GetFarPlaneDist());
 }
 

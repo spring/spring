@@ -333,12 +333,17 @@ void CMouseHandler::GetSelectionBoxCoeff(
 	float2& topright,
 	float2& btmleft
 ) {
-	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
-	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * camera->GetFarPlaneDist() * 1.4f, false);
+
+	if (dist < 0.0f)
+		dist = camera->GetFarPlaneDist() * 1.4f;
+
 	float3 gpos1 = pos1 + dir1 * dist;
 
-	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
-	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * camera->GetFarPlaneDist() * 1.4f, false);
+	if (dist < 0.0f)
+		dist = camera->GetFarPlaneDist() * 1.4f;
+
 	float3 gpos2 = pos2 + dir2 * dist;
 
 	const float3 cdir1 = (gpos1 - camera->GetPos()).ANormalize();
@@ -439,7 +444,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
+			TraceRay::GuiTraceRay(camera->GetPos(), dir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, false);
 			lastClicked = unit;
 
 			const bool selectType = (bp.lastRelease >= (gu->gameTime - doubleClickTime) && unit == _lastClicked);
@@ -521,7 +526,7 @@ float3 CMouseHandler::GetCursorCameraDir(int x, int y) const { return (hideCurso
 float3 CMouseHandler::GetWorldMapPos() const
 {
 	const float3 cameraPos = camera->GetPos();
-	const float3 cursorVec = dir * globalRendering->viewRange * 1.4f;
+	const float3 cursorVec = dir * camera->GetFarPlaneDist() * 1.4f;
 
 	const float dist = CGround::LineGroundCol(cameraPos, cameraPos + cursorVec, false);
 
@@ -568,7 +573,7 @@ std::string CMouseHandler::GetCurrentTooltip() const
 	if (!buildTip.empty())
 		return buildTip;
 
-	const float range = globalRendering->viewRange * 1.4f;
+	const float range = camera->GetFarPlaneDist() * 1.4f;
 	float dist = 0.0f;
 
 	const CUnit* unit = nullptr;

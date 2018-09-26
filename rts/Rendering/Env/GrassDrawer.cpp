@@ -1086,3 +1086,4 @@ void CGrassDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		}
 	}
 }
+

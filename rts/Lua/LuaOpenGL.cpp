@@ -1103,8 +1103,9 @@ int LuaOpenGL::GetViewSizes(lua_State* L)
 
 int LuaOpenGL::GetViewRange(lua_State* L)
 {
-	lua_pushnumber(L, globalRendering->viewRange);
-	return 1;
+	lua_pushnumber(L, camera->GetNearPlaneDist());
+	lua_pushnumber(L, camera->GetFarPlaneDist());
+	return 2;
 }
 
 

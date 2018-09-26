@@ -111,8 +111,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
 	CR_IGNORED(aspectRatio),
-	CR_IGNORED(zNear),
-	CR_IGNORED(viewRange),
 
 	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
@@ -189,9 +187,6 @@ CGlobalRendering::CGlobalRendering()
 	, pixelY(0.01f)
 
 	, aspectRatio(1.0f)
-
-	, zNear(NEAR_PLANE)
-	, viewRange(MAX_VIEW_RANGE)
 
 	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))

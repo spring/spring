@@ -548,8 +548,8 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 		float mapRayDist = 0.0f;
 
-		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
-			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, readMap->GetCurrMinHeight());
+		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
+			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), cam->GetFarPlaneDist(), readMap->GetCurrMinHeight());
 		if (mapRayDist < 0.0f)
 			return lodIndx;
 
