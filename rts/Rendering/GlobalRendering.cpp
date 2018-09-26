@@ -106,8 +106,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
 	CR_IGNORED(aspectRatio),
-	CR_IGNORED(zNear),
-	CR_IGNORED(viewRange),
 
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
@@ -183,9 +181,6 @@ CGlobalRendering::CGlobalRendering()
 	, pixelY(0.01f)
 
 	, aspectRatio(1.0f)
-
-	, zNear(NEAR_PLANE)
-	, viewRange(MAX_VIEW_RANGE)
 
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))

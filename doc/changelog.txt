@@ -26,13 +26,14 @@ Lua:
  - add a 3rd param to DefaultCommand callin: the current default command
     works with the above: gadgets receive the default engine cmd,
     widgets then receive what gadgets returned (possibly engine default)
- - add Spring.GetGlobalLos(allyTeamID) -> bool to LuaSyncedRead
- - add Spring.IsNoCostEnabled() -> bool to LuaSyncedRead
+ - add  Spring.GetGlobalLos(allyTeamID) -> bool  to LuaSyncedRead
+ - add  Spring.IsNoCostEnabled() -> bool  to LuaSyncedRead
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
  - add Spring.Get{Unit,Feature}PieceTransformMatrices to LuaUnsyncedRead
+ - add gl.GetViewRange to LuaOpenGL
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
  - add DrawGrass callin (enabled by /drawgrass 2; supersedes engine rendering)

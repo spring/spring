@@ -171,14 +171,6 @@ public:
 	 */
 	float aspectRatio;
 
-	/**
-	 * @brief view range
-	 *
-	 * Player's view range
-	 */
-	float zNear;
-	float viewRange;
-
 
 	int forceCoreContext;
 	int forceSwapBuffers;

@@ -1092,7 +1092,7 @@ bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 	const CUnit* targetUnit = nullptr;
 	const CFeature* targetFeature = nullptr;
 
-	const float viewRange = globalRendering->viewRange * 1.4f;
+	const float viewRange = camera->GetFarPlaneDist() * 1.4f;
 	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
@@ -1608,7 +1608,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 		if ((ir == minimap) && (minimap->FullProxy())) {
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 		} else {
-			const float viewRange = globalRendering->viewRange * 1.4f;
+			const float viewRange = camera->GetFarPlaneDist() * 1.4f;
 			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, nullptr, unit, feature, true);
 			const float3 hit = cameraPos + mouseDir * dist;
 
@@ -2111,17 +2111,17 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_MAP: {
-			float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * globalRendering->viewRange * 1.4f), false);
+			float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * camera->GetFarPlaneDist() * 1.4f), false);
 
 			if (dist < 0.0f)
-				dist = CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, cameraPos.y + (mouseDir.y * globalRendering->viewRange * 1.4f));
+				dist = CGround::LinePlaneCol(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, cameraPos.y + (mouseDir.y * camera->GetFarPlaneDist() * 1.4f));
 
 			return CheckCommand(Command(commands[tempInCommand].id, CreateOptions(button), cameraPos + (mouseDir * dist)));
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
+			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, unitdef->floatOnWater, false);
 
 			if (dist < 0.0f)
 				return defaultRet;
@@ -2136,7 +2136,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[SDL_BUTTON_LEFT].camPos;
 				const float3 camTraceDir = mouse->buttons[SDL_BUTTON_LEFT].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float isectDist = CGround::LineGroundWaterCol(camTracePos, camTraceDir, traceDist, unitdef->floatOnWater, false);
 
 				GetBuildPositions(BuildInfo(unitdef, camTracePos + camTraceDir * isectDist, buildFacing), bi, cameraPos, mouseDir);
@@ -2171,7 +2171,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, true);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, true);
 
 			if (unit == nullptr)
 				return defaultRet;
@@ -2187,7 +2187,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const CUnit* unit = nullptr;
 			const CFeature* feature = nullptr;
 
-			const float traceDist = globalRendering->viewRange * 1.4f;
+			const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 			const float isectDist = TraceRay::GuiTraceRay(cameraPos, mouseDir, traceDist, nullptr, unit, feature, true);
 
 			if (isectDist > (traceDist - 300.0f))
@@ -2207,7 +2207,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			const float3 camTracePos = mouse->buttons[button].camPos;
 			const float3 camTraceDir = mouse->buttons[button].dir;
 
-			const float traceDist = globalRendering->viewRange * 1.4f;
+			const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 			const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 			      float outerDist = -1.0f;
 
@@ -2251,9 +2251,9 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (mouse->buttons[button].movement < 4) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
-				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
+				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, NULL, unit, feature, true);
 
-				if (dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
+				if (dist2 > (camera->GetFarPlaneDist() * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
 					return defaultRet;
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
@@ -2281,7 +2281,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[button].camPos;
 				const float3 camTraceDir = mouse->buttons[button].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 				      float outerDist = -1.0f;
 
@@ -2310,7 +2310,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float outerDist = TraceRay::GuiTraceRay(cameraPos, mouseDir, traceDist, nullptr, unit, feature, true);
 
 				if (outerDist > (traceDist - 300.0f))
@@ -2331,7 +2331,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const float3 camTracePos = mouse->buttons[button].camPos;
 				const float3 camTraceDir = mouse->buttons[button].dir;
 
-				const float traceDist = globalRendering->viewRange * 1.4f;
+				const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 				const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 				      float outerDist = -1.0f;
 
@@ -2403,7 +2403,7 @@ size_t CGuiHandler::GetBuildPositions(const BuildInfo& startInfo, const BuildInf
 		const CUnit* unit = nullptr;
 		const CFeature* feature = nullptr;
 
-		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, startInfo.def->floatOnWater);
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, startInfo.def->floatOnWater);
 
 		if (unit != nullptr) {
 			other.def = unit->unitDef;
@@ -3597,7 +3597,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
-						const float traceDist = globalRendering->viewRange * 1.4f;
+						const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 						const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 						      float outerDist = -1.0f;
 
@@ -3659,7 +3659,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
-						const float traceDist = globalRendering->viewRange * 1.4f;
+						const float traceDist = camera->GetFarPlaneDist() * 1.4f;
 						const float innerDist = CGround::LineGroundCol(camTracePos, camTracePos + camTraceDir * traceDist, false);
 						      float outerDist = -1.0f;
 
@@ -3701,7 +3701,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	const CUnit* pointeeUnit = nullptr;
 	const UnitDef* buildeeDef = nullptr;
 
-	const float maxTraceDist = globalRendering->viewRange * 1.4f;
+	const float maxTraceDist = camera->GetFarPlaneDist() * 1.4f;
 	      float rayTraceDist = -1.0f;
 
 
@@ -4109,12 +4109,12 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 
-	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * camera->GetFarPlaneDist() * 1.4f, false);
 
 	if (buttonDist < 0.0f)
 		return;
 
-	const float cameraDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+	const float cameraDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * camera->GetFarPlaneDist() * 1.4f, false);
 
 	if (cameraDist < 0.0f)
 		return;

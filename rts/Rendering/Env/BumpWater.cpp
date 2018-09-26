@@ -452,7 +452,7 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniform1i(12, 9);
 		waterShader->SetUniform2f(16, 0.0f, 0.0f);
 		waterShader->SetUniform3f(17, sky->fogColor.x, sky->fogColor.y, sky->fogColor.z);
-		waterShader->SetUniform3f(18, sky->fogStart, sky->fogEnd, globalRendering->viewRange);
+		waterShader->SetUniform3f(18, sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist());
 		waterShader->Disable();
 		waterShader->Validate();
 
