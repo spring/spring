@@ -52,8 +52,8 @@ void ISky::SetupFog() {
 
 	glFogfv(GL_FOG_COLOR, fogColor);
 	glFogi(GL_FOG_MODE,   GL_LINEAR);
-	glFogf(GL_FOG_START,  globalRendering->viewRange * fogStart);
-	glFogf(GL_FOG_END,    globalRendering->viewRange * fogEnd);
+	glFogf(GL_FOG_START,  camera->GetFarPlaneDist() * fogStart);
+	glFogf(GL_FOG_END,    camera->GetFarPlaneDist() * fogEnd);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 }
 
@@ -87,7 +87,7 @@ bool ISky::SunVisible(const float3 pos) const {
 
 	// cast a ray *toward* the sun from <pos>
 	// sun is visible if no terrain blocks it
-	const float3& sunDir = skyLight.GetLightDir();
+	const float3& sunDir = skyLight->GetLightDir();
 	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, camera->GetFarPlaneDist(), nullptr, hitUnit, hitFeature, false, true, false);
 
 	return (sunDist < 0.0f || sunDist >= camera->GetFarPlaneDist());
