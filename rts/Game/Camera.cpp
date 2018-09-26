@@ -51,12 +51,8 @@ CCamera* CCamera::GetActive()
 
 void CCamera::CopyState(const CCamera* cam)
 {
-	memcpy(frustum.verts , cam->frustum.verts , sizeof(frustum.verts ));
-	memcpy(frustum.planes, cam->frustum.planes, sizeof(frustum.planes));
-	memcpy(frustum.edges , cam->frustum.edges , sizeof(frustum.edges ));
-
 	// note: xy-scales are only relevant for CAMTYPE_SHADOW
-	frustum.scales = cam->frustum.scales;
+	frustum    = cam->frustum;
 
 	forward    = cam->GetForward();
 	right      = cam->GetRight();
