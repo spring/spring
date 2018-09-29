@@ -256,7 +256,6 @@ void CProjectileDrawer::Init() {
 	flyingPieceVAO.Generate();
 
 
-	renderProjectileMap.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
 	renderProjectiles.reserve(projectileHandler.maxParticles + projectileHandler.maxNanoParticles);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -280,7 +279,6 @@ void CProjectileDrawer::Kill() {
 
 	smokeTextures.clear();
 
-	renderProjectileMap.clear();
 	renderProjectiles.clear();
 	sortedProjectiles[0].clear();
 	sortedProjectiles[1].clear();
@@ -958,26 +956,29 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
 	if (p->model != nullptr) {
 		modelRenderers[MDL_TYPE(p)].AddObject(p);
-	} else {
-		renderProjectileMap.insert(const_cast<CProjectile*>(p), renderProjectiles.size());
-		renderProjectiles.push_back(const_cast<CProjectile*>(p));
+		return;
 	}
+
+	const_cast<CProjectile*>(p)->SetRenderIndex(renderProjectiles.size());
+	renderProjectiles.push_back(const_cast<CProjectile*>(p));
 }
 
 void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* p)
 {
 	if (p->model != nullptr) {
 		modelRenderers[MDL_TYPE(p)].DelObject(p);
-	} else {
-		const auto it = renderProjectileMap.find(const_cast<CProjectile*>(p));
-
-		assert(it != renderProjectileMap.end());
-		assert(it->second < renderProjectiles.size());
-
-		renderProjectiles[it->second] = renderProjectiles.back();
-		renderProjectileMap[renderProjectiles.back()] = it->second;
-
-		renderProjectiles.pop_back();
-		renderProjectileMap.erase(it);
+		return;
 	}
+
+	const unsigned int idx = p->GetRenderIndex();
+
+	if (idx >= renderProjectiles.size()) {
+		assert(false);
+		return;
+	}
+
+	renderProjectiles[idx] = renderProjectiles.back();
+	renderProjectiles[idx]->SetRenderIndex(idx);
+
+	renderProjectiles.pop_back();
 }
