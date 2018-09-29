@@ -1036,6 +1036,9 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		const auto it = std::remove_if(archiveInfos.begin(), archiveInfos.end(), [](const ArchiveInfo& i) { return (!i.updated); });
 		const auto jt = std::remove_if(brokenArchives.begin(), brokenArchives.end(), [](const BrokenArchive& i) { return (!i.updated); });
 
+		archiveInfos.erase(it, archiveInfos.end());
+		brokenArchives.erase(jt, brokenArchives.end());
+
 		archiveInfosIndex.clear();
 		brokenArchivesIndex.clear();
 
