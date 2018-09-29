@@ -6,11 +6,11 @@
 #include <cstring> // memset
 #include <string>
 #include <deque>
-#include <map>
 #include <vector>
 
 #include "System/Info.h"
 #include "System/Sync/SHA512.hpp"
+#include "System/UnorderedMap.hpp"
 
 class IArchive;
 class IFileFilter;
@@ -46,7 +46,7 @@ public:
 	class ArchiveData
 	{
 	public:
-		ArchiveData() {};
+		ArchiveData() {}
 		ArchiveData(const LuaTable& archiveTable, bool fromCache);
 
 		/*
@@ -68,7 +68,7 @@ public:
 		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu
 		bool GetOnlyLocal() const { return GetInfoValueBool("onlyLocal"); }              /// if true spring will not listen for incoming connections
 
-		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
+		const std::vector< std::pair<std::string, InfoItem> >& GetInfo() const { return infoItems; }
 		std::vector<InfoItem> GetInfoItems() const;
 
 		const std::vector<std::string>& GetDependencies() const { return dependencies; }
@@ -83,7 +83,7 @@ public:
 		void SetInfoItemValueBool(const std::string& key, bool value);
 
 		bool IsValid(std::string& error) const;
-		bool IsEmpty() const { return info.empty(); }
+		bool IsEmpty() const { return infoItems.empty(); }
 
 		bool IsMap() const { const int mt = GetModType(); return (mt == modtype::map); }
 		bool IsGame() const { const int mt = GetModType(); return (mt == modtype::hidden || mt == modtype::primary); }
@@ -100,12 +100,12 @@ public:
 		float GetInfoValueFloat(const std::string& key) const;
 		bool GetInfoValueBool(const std::string& key) const;
 
-		InfoItem* GetInfoItem(const std::string& key);
 		const InfoItem* GetInfoItem(const std::string& key) const;
 
-		InfoItem& EnsureInfoItem(const std::string& key);
+		// NB: may invalidate existing references
+		InfoItem& GetAddInfoItem(const std::string& key);
 
-		std::map<std::string, InfoItem> info;
+		std::vector< std::pair<std::string, InfoItem> > infoItems;
 
 		std::vector<std::string> dependencies; /// Archives we depend on
 		std::vector<std::string> replaces;     /// This archive obsoletes these archives
@@ -143,6 +143,7 @@ public:
 	void CheckArchive(const std::string& name, const sha512::raw_digest& serverChecksum, sha512::raw_digest& clientChecksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	void ScanAllDirs();
+	void Clear();
 	void Reload();
 
 	std::string ArchiveFromName(const std::string& s) const;
@@ -158,9 +159,10 @@ private:
 		ArchiveInfo() {
 			memset(checksum, 0, sizeof(checksum));
 		}
-		std::string path;
-		std::string origName;     ///< Could be useful to have the non-lowercased name around
-		std::string replaced;     ///< If not empty, use that archive instead
+
+		std::string path;         // FileSystem::GetDirectory(origName)
+		std::string origName;     // non-lowercased name
+		std::string replaced;     // if not empty, use this archive instead
 		ArchiveData archiveData;
 
 		uint32_t modified = 0;
@@ -170,7 +172,8 @@ private:
 		bool hashed = false;
 	};
 	struct BrokenArchive {
-		std::string path;
+		std::string name;         // lower-case
+		std::string path;         // FileSystem::GetDirectory(origName)
 		std::string problem;
 
 		uint32_t modified = 0;
@@ -178,6 +181,9 @@ private:
 	};
 
 private:
+	ArchiveInfo& GetAddArchiveInfo(const std::string& lcfn);
+	BrokenArchive& GetAddBrokenArchive(const std::string& lcfn);
+
 	void ScanDirs(const std::vector<std::string>& dirs);
 	void ScanDir(const std::string& curPath, std::deque<std::string>& foundArchives);
 
@@ -226,11 +232,15 @@ private:
 	static bool CheckCompression(const IArchive* ar, const std::string& fullName, std::string& error);
 
 private:
-	std::map<std::string, ArchiveInfo> archiveInfos;
-	std::map<std::string, BrokenArchive> brokenArchives;
+	spring::unordered_map<std::string, size_t> archiveInfosIndex;
+	spring::unordered_map<std::string, size_t> brokenArchivesIndex;
 
-	bool isDirty;
+	std::vector<ArchiveInfo> archiveInfos;
+	std::vector<BrokenArchive> brokenArchives;
+
 	std::string cachefile;
+
+	bool isDirty = false;
 };
 
 extern CArchiveScanner* archiveScanner;
