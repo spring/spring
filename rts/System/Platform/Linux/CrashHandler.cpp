@@ -47,6 +47,14 @@ static const int MAX_STACKTRACE_DEPTH = 100;
 static const std::string INVALID_LINE_INDICATOR = "#####";
 static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
 
+static const char* glDriverNames[] = {
+	"libGLcore.so",
+	"psb_dri.so",
+	"i965_dri.so",
+	"fglrx_dri.so",
+	"amdgpu_dri.so",
+	"libnvidia-glcore.so"
+};
 static const char* saiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* iaiLibWarning = "This stack trace indicates a problem with an AI Interface library.";
 static const char* oglLibWarning =
@@ -398,12 +406,13 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 
 static bool ContainsDriverLib(const std::string& path)
 {
-	static const     std::function<bool(const char*)> strCmpPred = [&](const char* s) { return (strstr(path.c_str(), s) != nullptr); };
-	static constexpr std::array<const char*, 6> glDrivers({
-		"libGLcore.so", "psb_dri.so", "i965_dri.so", "fglrx_dri.so", "amdgpu_dri.so", "libnvidia-glcore.so"
-	});
+	bool ret = false;
 
-	return (std::find_if(glDrivers.begin(), glDrivers.end(), strCmpPred) != glDrivers.end());
+	for (size_t i = 0, n = sizeof(glDriverNames) / sizeof(glDriverNames[0]); i < n && !ret; i++) {
+		ret = (strstr(path.c_str(), glDriverNames[i]) != nullptr);
+	}
+
+	return ret;
 }
 
 
