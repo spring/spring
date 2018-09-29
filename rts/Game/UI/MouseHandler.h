@@ -110,6 +110,7 @@ private:
 	bool hwHideCursor = true;
 	bool hardwareCursor = false;
 	bool invertMouse = false;
+	bool ignoreMove = false;
 
 	float cursorScale = 1.0f;
 	float dragScrollThreshold = 0.0f;
