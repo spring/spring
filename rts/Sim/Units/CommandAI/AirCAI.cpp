@@ -581,8 +581,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		owner->AttackGround(attackPos, (ac.GetOpts() & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);
 	} else {
-		// note: the range of randFloat() is inclusive of 1.0f
-		const unsigned int unitIdx = std::min<int>(gsRNG.NextFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
+		const unsigned int unitIdx = gsRNG.NextInt(enemyUnitIDs.size()); // [0, size - 1]
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
 		CUnit* targetUnit = unitHandler.GetUnitUnsafe(unitID);
