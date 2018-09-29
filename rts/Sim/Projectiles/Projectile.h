@@ -82,8 +82,10 @@ public:
 
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
+	unsigned int GetRenderIndex() const { return renderIndex; }
 
 	void SetCustomExplosionGeneratorID(unsigned int id) { cegID = id; }
+	void SetRenderIndex(unsigned int idx) { renderIndex = idx; }
 
 	// UNSYNCED ONLY
 	CMatrix44f GetTransformMatrix(float posOffsetMult = 0.0f) const;
@@ -125,6 +127,7 @@ protected:
 
 	unsigned int projectileType = -1u;
 	unsigned int collisionFlags = 0;
+	unsigned int renderIndex = -1u;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
