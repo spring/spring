@@ -111,20 +111,26 @@ size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 
 std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId) const
 {
-	std::vector<uint8_t> skirmishAIs;
+	std::vector<uint8_t> ids;
 
-	for (const auto& p: skirmishAIDataMap) {
-		const SkirmishAIData& aiData = *(p.second);
+	if (!skirmishAIDataMap.empty()) {
+		ids.reserve(skirmishAIDataMap.size());
 
-		if (aiData.team != teamId)
-			continue;
-		if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
-			continue;
+		for (const auto& p: skirmishAIDataMap) {
+			const SkirmishAIData& aiData = *(p.second);
 
-		skirmishAIs.push_back(p.first);
+			if (aiData.team != teamId)
+				continue;
+			if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
+				continue;
+
+			ids.push_back(p.first);
+		}
+
+		std::sort(ids.begin(), ids.end());
 	}
 
-	return skirmishAIs;
+	return ids;
 }
 
 std::vector<uint8_t> CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId) const

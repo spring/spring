@@ -226,8 +226,6 @@ void CGameServer::Initialize()
 		clientDrawFilter.fill({spring_notime, 0});
 		clientMuteFilter.fill({false, false});
 
-		usedSkirmishAIIds.fill(false);
-
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
 		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
 		const std::vector<SkirmishAIData>& aiStartData = myGameSetup->GetAIStartingDataCont();
@@ -251,19 +249,29 @@ void CGameServer::Initialize()
 		for (size_t n = 0; n < players.size(); n++)
 			players[n].id = n;
 
+		skirmishAIs.clear();
+		skirmishAIs.resize(MAX_AIS, {false, {}});
+		freeSkirmishAIs.clear();
+		freeSkirmishAIs.resize(MAX_AIS, 0);
+
+		std::for_each(freeSkirmishAIs.begin(), freeSkirmishAIs.end(), [&](const uint8_t& id) { freeSkirmishAIs[&id - &freeSkirmishAIs[0]] = &id - &freeSkirmishAIs[0]; });
+		std::reverse(freeSkirmishAIs.begin(), freeSkirmishAIs.end());
+
 		for (const SkirmishAIData& skd: aiStartData) {
 			const uint8_t skirmishAIId = ReserveSkirmishAIId();
+
 			if (skirmishAIId == MAX_AIS) {
-				Message(spring::format("Too many AIs (%d) in game setup", aiStartData.size()));
+				Message(spring::format("Too many AIs (%d) specified in game-setup script", aiStartData.size()));
 				break;
 			}
+
 			players[skd.hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
-			ais[skirmishAIId] = skd;
+			skirmishAIs[skirmishAIId] = std::make_pair(true, skd);
 
 			teams[skd.team].SetActive(true);
-			if (!teams[skd.team].HasLeader()) {
+
+			if (!teams[skd.team].HasLeader())
 				teams[skd.team].SetLeader(skd.hostPlayer);
-			}
 		}
 	}
 
@@ -343,8 +351,11 @@ void CGameServer::WriteDemoData()
 
 	/*
 	// TODO?
-	for (size_t i = 0; i < ais.size(); ++i) {
-		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
+	for (size_t i = 0; i < skirmishAIs.size(); ++i) {
+		if (!skirmishAIs[i].first)
+			continue;
+
+		demoRecorder->SetSkirmishAIStats(i, skirmishAIs[i].second.lastStats);
 	}
 	for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler.Team(i)->statHistory);
@@ -575,7 +586,7 @@ void CGameServer::Broadcast(std::shared_ptr<const netcode::RawPacket> packet)
 	}
 
 	if (canReconnect || allowSpecJoin || !gameHasStarted)
-		AddToPacketCache(packet);
+		packetCache.push_back(packet);
 
 	if (demoRecorder != nullptr)
 		demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
@@ -948,7 +959,8 @@ void CGameServer::LagProtection()
 		//if the current cpu of the target is smaller than the aimed cpu target but the clamp will cap it
 		// the clamp will throttle it to the wanted one, otherwise it's a simple linear proportion aiming
 		// to keep cpu load constant
-		float newSpeed = internalSpeed/refCpuUsage*wantedCpuUsage;
+		float newSpeed = internalSpeed / refCpuUsage * wantedCpuUsage;
+
 		newSpeed = Clamp(newSpeed, 0.1f, userSpeedFactor);
 		//average to smooth the speed change over time to reduce the impact of cpu spikes in the players
 		newSpeed = (newSpeed + internalSpeed) * 0.5f;
@@ -980,6 +992,7 @@ static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& pla
 	return playersInTeam;
 }
 
+
 /**
  * Duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
  * as playerHandler is not available on the server
@@ -989,24 +1002,49 @@ static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, co
 	return getPlayersInTeam(players, teamId).size();
 }
 
-/// has to be consistent with Game.cpp/CSkirmishAIHandler
-static std::vector<unsigned char> getSkirmishAIIds(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId, const int hostPlayer = -2)
-{
-	std::vector<unsigned char> skirmishAIIds;
-	for (std::map<unsigned char, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
-		if ((ai->second.team == teamId) && ((hostPlayer == -2) || (ai->second.hostPlayer == hostPlayer)))
-			skirmishAIIds.push_back(ai->first);
+/// has to be consistent with Game.cpp/CSkirmishAIHandler (CSkirmishAIHandler::GetSkirmishAIsInTeam)
+static std::vector<uint8_t> getSkirmishAIIds(
+	const std::vector< std::pair<bool, GameSkirmishAI> >& skirmAIs,
+	const std::vector<uint8_t>& freeAIs,
+	const int teamId,
+	const int hostPlayerId = -2
+) {
+	std::vector<uint8_t> ids;
+
+	if (freeAIs.size() < MAX_AIS) {
+		ids.reserve(MAX_AIS - freeAIs.size());
+
+		for (const auto& p: skirmAIs) {
+			const GameSkirmishAI& aiData = p.second;
+
+			if (!p.first)
+				continue;
+
+			if (aiData.team != teamId)
+				continue;
+			if ((hostPlayerId >= 0) && (aiData.hostPlayer != hostPlayerId))
+				continue;
+
+			ids.push_back(&p - &skirmAIs[0]);
+		}
+
+		// not strictly necessary, only contents have to match client
+		std::sort(ids.begin(), ids.end());
 	}
-	return skirmishAIIds;
+
+	return ids;
 }
 
 /**
  * Duplicates functionality of CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
  * as skirmishAIHandler is not available on the server
  */
-static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishAI>& ais, const int teamId)
-{
-	return getSkirmishAIIds(ais, teamId).size();
+static int countNumSkirmishAIsInTeam(
+	const std::vector< std::pair<bool, GameSkirmishAI> >& skirmAIs,
+	const std::vector<uint8_t>& freeAIs,
+	const int teamId
+) {
+	return getSkirmishAIIds(skirmAIs, freeAIs, teamId).size();
 }
 
 
@@ -1161,7 +1199,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			if (myGameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				if (team >= teams.size()) {
 					Message(spring::format("Invalid teamID %d in NETMSG_STARTPOS from player %d", team, player));
-				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
+				} else if (getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
 					Message(spring::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d", player, team));
 				} else {
 					teams[team].SetStartPos(float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])));
@@ -1462,8 +1500,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						break;
 					}
 
-					const std::vector<unsigned char>& totAIsInGiverTeam = getSkirmishAIIds(ais, giverTeam);
-					const std::vector<unsigned char>& myAIsInGiverTeam  = getSkirmishAIIds(ais, giverTeam, player);
+					const std::vector<uint8_t>& totAIsInGiverTeam = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam);
+					const std::vector<uint8_t>& myAIsInGiverTeam  = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam, player);
 
 					const int numPlayersInGiverTeam          = countNumPlayersInTeam(players, giverTeam);
 					const size_t numControllersInGiverTeam   = numPlayersInGiverTeam + totAIsInGiverTeam.size();
@@ -1498,7 +1536,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						// player is giving stuff from one of his AI teams
 						if (numPlayersInGiverTeam == 0) {
 							// kill the first AI
-							ais.erase(myAIsInGiverTeam[0]);
+							skirmishAIs[ myAIsInGiverTeam[0] ] = std::make_pair(false, GameSkirmishAI{});
+							freeSkirmishAIs.push_back(myAIsInGiverTeam[0]);
+
 							giveAwayOk = true;
 						} else {
 							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, players[player].name.c_str(), giverTeam), true);
@@ -1646,12 +1686,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 #endif // SYNCDEBUG
 */
-				ais[skirmishAIId].team = aiTeamId;
-				ais[skirmishAIId].name = aiName;
-				ais[skirmishAIId].hostPlayer = playerId;
+				skirmishAIs[skirmishAIId].second.team = aiTeamId;
+				skirmishAIs[skirmishAIId].second.name = aiName;
+				skirmishAIs[skirmishAIId].second.hostPlayer = playerId;
 
 				if (!tai->HasLeader()) {
-					tai->SetLeader(ais[skirmishAIId].hostPlayer);
+					tai->SetLeader(skirmishAIs[skirmishAIId].second.hostPlayer);
 					tai->SetActive(true);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
@@ -1661,32 +1701,35 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 		}
 		case NETMSG_AI_STATE_CHANGED: {
 			const unsigned char playerId     = inbuf[1];
+			const unsigned char skirmishAIId = inbuf[2];
+
 			if (playerId != a) {
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 				break;
 			}
-			const unsigned char skirmishAIId = inbuf[2];
+
 			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
 
-			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
-			if (!skirmishAIId_valid) {
+			if (!skirmishAIs[skirmishAIId].first) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (-1), (int)newState));
 				break;
 			}
 
-			const unsigned aiTeamId          = ais[skirmishAIId].team;
+			const unsigned aiTeamId          = skirmishAIs[skirmishAIId].second.team;
 			const unsigned playerTeamId      = players[playerId].team;
+
 			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
-			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(skirmishAIs, freeSkirmishAIs, aiTeamId);
 
 			GameTeam* tpl                    = &teams[playerTeamId];
 			GameTeam* tai                    = &teams[aiTeamId];
 
-			const bool weAreAIHost           = (ais[skirmishAIId].hostPlayer == playerId);
+			const bool weAreAIHost           = (skirmishAIs[skirmishAIId].second.hostPlayer == playerId);
 			const bool weAreLeader           = (tai->GetLeader() == playerId);
 			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
 			const bool singlePlayer          = (players.size() <= 1);
-			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
+
+			const ESkirmishAIStatus oldState = skirmishAIs[skirmishAIId].second.status;
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (int)aiTeamId, (int)newState));
@@ -1694,15 +1737,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 			Broadcast(packet); // forward data
 
-			ais[skirmishAIId].status = newState;
-			if (newState == SKIRMAISTATE_DEAD) {
+			if ((skirmishAIs[skirmishAIId].second.status = newState) == SKIRMAISTATE_DEAD) {
 				if (oldState == SKIRMAISTATE_RELOADING) {
 					// skip resetting this AIs management state,
 					// as it will be reinitialized instantly
 				} else {
-					ais.erase(skirmishAIId);
+					skirmishAIs[skirmishAIId] = std::make_pair(false, GameSkirmishAI{});
+					freeSkirmishAIs.push_back(skirmishAIId);
 					players[playerId].linkData.erase(skirmishAIId);
-					FreeSkirmishAIId(skirmishAIId);
+
 					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 						// team has no controller left now
 						tai->SetActive(false);
@@ -2654,8 +2697,8 @@ void CGameServer::ResignPlayer(const int player)
 		if (teams[t].GetLeader() != player)
 			continue;
 
-		const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
-		const std::vector<unsigned char>& teamAIs  = getSkirmishAIIds(ais, t);
+		const std::vector<int>& teamPlayers = getPlayersInTeam(players, t);
+		const std::vector<uint8_t>& teamAIs = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, t);
 
 		if ((teamPlayers.size() + teamAIs.size()) == 0) {
 			// no controllers left in team
@@ -2663,7 +2706,7 @@ void CGameServer::ResignPlayer(const int player)
 			teams[t].SetLeader(-1);
 		} else if (teamPlayers.empty()) {
 			// no human player left in team
-			teams[t].SetLeader(ais[teamAIs[0]].hostPlayer);
+			teams[t].SetLeader(skirmishAIs[teamAIs[0]].second.hostPlayer);
 		} else {
 			// still human controllers left in team
 			teams[t].SetLeader(teamPlayers[0]);
@@ -2681,12 +2724,9 @@ bool CGameServer::CheckPlayerPassword(const int playerNum, const std::string& pw
 		return true;
 
 	const GameParticipant::customOpts& opts = players[playerNum].GetAllValues();
-	auto it = opts.find("password");
+	const auto it = opts.find("password");
 
-	if (it == opts.end() || it->second == pw)
-		return true;
-
-	return false;
+	return (it == opts.end() || it->second == pw);
 }
 
 
@@ -2868,10 +2908,6 @@ unsigned CGameServer::BindConnection(
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playerNum, the player can start loading
-	// throw at him all stuff he missed until now
-	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
-		newPlayer.SendData(p);
-
 	if (demoReader == nullptr || myGameSetup->demoName.empty()) {
 		// player wants to play -> join team
 		if (!newPlayer.spectator) {
@@ -2886,6 +2922,10 @@ unsigned CGameServer::BindConnection(
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
 		}
 	}
+
+	// finally send player all packets he missed until now
+	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
+		newPlayer.SendData(p);
 
 	// new connection established
 	Message(spring::format(" -> Connection established (given id %i)", newPlayerNumber));
@@ -2939,19 +2979,11 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 
 uint8_t CGameServer::ReserveSkirmishAIId()
 {
-	// find the first free id
-	for (uint8_t n = 0; n < MAX_AIS; n++) {
-		if (!usedSkirmishAIIds[n]) {
-			usedSkirmishAIIds[n] = true;
-			return n;
-		}
-	}
+	if (freeSkirmishAIs.empty())
+		return MAX_AIS;
 
-	return MAX_AIS;
+	const uint8_t id = freeSkirmishAIs.back();
+	freeSkirmishAIs.pop_back();
+	return id;
 }
 
-
-void CGameServer::AddToPacketCache(std::shared_ptr<const netcode::RawPacket> &pckt)
-{
-	packetCache.push_back(pckt);
-}

@@ -180,8 +180,6 @@ private:
 	void Message(const std::string& message, bool broadcast = true, bool internal = false);
 	void PrivateMessage(int playerNum, const std::string& message);
 
-	void AddToPacketCache(std::shared_ptr<const netcode::RawPacket>& pckt);
-
 	float GetDemoTime() const;
 
 private:
@@ -215,8 +213,8 @@ private:
 	float userSpeedFactor;
 	float internalSpeed;
 
-	std::map<unsigned char, GameSkirmishAI> ais;
-	std::array<bool, MAX_AIS> usedSkirmishAIIds;
+	std::vector< std::pair<bool, GameSkirmishAI> > skirmishAIs;
+	std::vector<uint8_t> freeSkirmishAIs;
 
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
@@ -268,7 +266,6 @@ private:
 	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0, int playerNum = -1);
 
 	uint8_t ReserveSkirmishAIId();
-	void FreeSkirmishAIId(uint8_t skirmishAIId) { usedSkirmishAIIds[skirmishAIId] = false; }
 
 	unsigned localClientNumber;
 
