@@ -212,6 +212,14 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	lastx = std::abs(x);
 	lasty = std::abs(y);
 
+	// switching to MMB-mode while user is moving mouse can generate
+	// a spurious event in the opposite direction (if cursor happens
+	// to pass the center pixel) which would cause a camera position
+	// jump, so always ignore one SDL_MOUSEMOTION after entering it
+	dx *= (1 - ignoreMove);
+	dy *= (1 - ignoreMove);
+
+	ignoreMove = false;
 	// MouseInput passes negative coordinates when cursor leaves the window
 	offscreen = (x < 0 && y < 0);
 
@@ -691,6 +699,7 @@ void CMouseHandler::ToggleMiddleClickScroll()
 
 	locked = !locked;
 	mmbScroll = !mmbScroll;
+	ignoreMove = mmbScroll;
 }
 
 
