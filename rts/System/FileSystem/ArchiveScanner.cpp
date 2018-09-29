@@ -603,7 +603,6 @@ CArchiveScanner::ArchiveInfo& CArchiveScanner::GetAddArchiveInfo(const std::stri
 	auto aiPair = std::make_pair(aiIter, false);
 
 	if (aiIter == archiveInfosIndex.end()) {
-		assert(false);
 		aiPair = archiveInfosIndex.insert(lcfn, archiveInfos.size());
 		aiIter = aiPair.first;
 		archiveInfos.emplace_back();
