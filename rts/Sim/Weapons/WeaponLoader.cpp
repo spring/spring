@@ -36,11 +36,13 @@ void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
 void CWeaponLoader::LoadWeapons(CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
+	const UnitDefWeapon* udWeapons = &unitDef->GetWeapon(0);
 
-	unit->weapons.reserve(unitDef->weapons.size());
+	unsigned int i = 0;
+	unsigned int n = 0;
 
-	for (const UnitDefWeapon& defWeapon: unitDef->weapons) {
-		CWeapon* weapon = LoadWeapon(unit, defWeapon.def);
+	for (unit->weapons.reserve(n = unitDef->NumWeapons()); i < n; i++) {
+		CWeapon* weapon = LoadWeapon(unit, udWeapons[i].def);
 
 		weapon->SetWeaponNum(unit->weapons.size());
 		unit->weapons.push_back(weapon);
@@ -52,7 +54,7 @@ void CWeaponLoader::InitWeapons(CUnit* unit)
 	const UnitDef* unitDef = unit->unitDef;
 
 	for (size_t n = 0; n < unit->weapons.size(); n++) {
-		InitWeapon(unit, unit->weapons[n], &unitDef->weapons[n]);
+		InitWeapon(unit, unit->weapons[n], &unitDef->GetWeapon(n));
 	}
 }
 

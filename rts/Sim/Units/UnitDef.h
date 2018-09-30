@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Rendering/Icon.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
@@ -21,23 +22,24 @@ class LuaTable;
 
 
 struct UnitDefWeapon {
-	UnitDefWeapon();
+	UnitDefWeapon() = default;
 	UnitDefWeapon(const WeaponDef* weaponDef);
 	UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponTable);
 	UnitDefWeapon(const UnitDefWeapon& udw) { *this = udw; }
 
 	// unused
-	std::string name;
+	// std::string name;
 
-	const WeaponDef* def;
-	int slavedTo;
+	const WeaponDef* def = nullptr;
 
-	float maxMainDirAngleDif;
+	int slavedTo = 0;
 
-	unsigned int badTargetCat;
-	unsigned int onlyTargetCat;
+	float maxMainDirAngleDif = -1.0f;
 
-	float3 mainDir;
+	unsigned int badTargetCat = 0;
+	unsigned int onlyTargetCat = 0;
+
+	float3 mainDir = FwdVector;
 };
 
 
@@ -61,29 +63,37 @@ public:
 	bool IsAirUnit()           const { return (pathType == -1U &&  canfly); }
 	bool IsStrafingAirUnit()   const { return (IsAirUnit() && !(IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
 	bool IsHoveringAirUnit()   const { return (IsAirUnit() &&  (IsBuilderUnit() || IsTransportUnit() || hoverAttack)); }
-	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
-	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
+	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && HasWeapon(0) && !HasBomberWeapon(0)); }
+	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && HasWeapon(0) &&  HasBomberWeapon(0)); }
 
 	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
-	bool CanChangeFireState() const { return (canFireControl && (!weapons.empty() || canKamikaze || IsFactoryUnit())); }
-	bool HasBomberWeapon() const;
+	bool CanChangeFireState() const { return (canFireControl && (HasWeapons() || canKamikaze || IsFactoryUnit())); }
 
+	bool HasWeapons() const { return (HasWeapon(0)); }
+	bool HasWeapon(unsigned int idx) const { return (weapons[idx].def != nullptr); }
+	bool HasBomberWeapon(unsigned int idx) const;
+
+	unsigned int NumWeapons() const {
+		unsigned int n = 0;
+
+		while (n < MAX_WEAPONS_PER_UNIT && weapons[n].def != nullptr) {
+			n++;
+		}
+
+		return n;
+	}
+
+	const UnitDefWeapon& GetWeapon(unsigned int idx) const { return weapons[idx]; }
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
 	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[idx] = egID; }
+	void SetCrashExplosionGeneratorID(unsigned int idx, unsigned int egID) { crashExplGenIDs[idx] = egID; }
 
-	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const {
-		if (modelExplGenIDs.empty())
-			return -1u;
-		return (modelExplGenIDs[idx % modelExplGenIDs.size()]);
-	}
-	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const {
-		if (pieceExplGenIDs.empty())
-			return -1u;
-		return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]);
-	}
+	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const { return (modelExplGenIDs[idx % modelExplGenIDs.size()]); }
+	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const { return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]); }
+	unsigned int GetCrashExplosionGeneratorID(unsigned int idx) const { return (crashExplGenIDs[idx % crashExplGenIDs.size()]); }
 
 public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
@@ -188,7 +198,7 @@ public:
 	std::string categoryString;
 	std::string buildPicName;
 
-	std::vector<UnitDefWeapon> weapons;
+	std::array<UnitDefWeapon, MAX_WEAPONS_PER_UNIT> weapons;
 
 	///< The unrotated yardmap for buildings
 	///< (only non-mobile ground units can have these)
@@ -197,12 +207,14 @@ public:
 	///< buildingMask used to disallow construction on certain map squares
 	std::uint16_t buildingMask;
 
-	std::vector<std::string> modelCEGTags;
-	std::vector<std::string> pieceCEGTags;
+	std::array<std::string, 8> modelCEGTags;
+	std::array<std::string, 8> pieceCEGTags;
+	std::array<std::string, 8> crashCEGTags;
 
 	// TODO: privatize
-	std::vector<unsigned int> modelExplGenIDs;
-	std::vector<unsigned int> pieceExplGenIDs;
+	std::array<unsigned int, 8> modelExplGenIDs;
+	std::array<unsigned int, 8> pieceExplGenIDs;
+	std::array<unsigned int, 8> crashExplGenIDs;
 
 	spring::unordered_map<int, std::string> buildOptions;
 

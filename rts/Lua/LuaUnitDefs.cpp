@@ -347,26 +347,26 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 static int CategorySetFromString(lua_State* L, const void* data)
 {
 	const string& str = *((const string*)data);
-	const string lower = StringToLower(str);
-	const vector<string> &cats = CSimpleParser::Tokenize(lower, 0);
-	return BuildCategorySet(L, cats);
+	const string& lower = StringToLower(str);
+
+	return BuildCategorySet(L, CSimpleParser::Tokenize(lower, 0));
 }
 
 
 static int WeaponsTable(lua_State* L, const void* data)
 {
-	const vector<UnitDefWeapon>& weapons =
-		*((const vector<UnitDefWeapon>*)data);
+	const auto& udWeapons = *reinterpret_cast<const decltype(UnitDef::weapons)*>(data);
 
 	lua_newtable(L);
 
-	for (size_t i = 0; i < weapons.size(); i++) {
-		const UnitDefWeapon& udw = weapons[i];
-		const WeaponDef* weapon = udw.def;
+	for (size_t i = 0; i < udWeapons.size() && udWeapons[i].def != nullptr; i++) {
+		const UnitDefWeapon& udw = udWeapons[i];
+		const WeaponDef* wd = udw.def;
+
 		lua_pushnumber(L, i + LUA_WEAPON_BASE_INDEX);
 		lua_newtable(L); {
-			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
-			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
+			HSTR_PUSH_NUMBER(L, "weaponDef",   wd->id);
+			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo - 1 + LUA_WEAPON_BASE_INDEX);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
 			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);

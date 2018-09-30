@@ -12,6 +12,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
@@ -458,15 +459,16 @@ bool CStrafeAirMoveType::Update()
 		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
 
-			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+			const CPlayer* fpsPlayer = owner->fpsControlPlayer;
+			const FPSUnitController& fpsCon = fpsPlayer->fpsController;
 
 			float aileron = 0.0f;
 			float elevator = 0.0f;
 
-			if (con.forward) elevator -= 1.0f;
-			if (con.back   ) elevator += 1.0f;
-			if (con.right  ) aileron  += 1.0f;
-			if (con.left   ) aileron  -= 1.0f;
+			elevator -= (1.0f * fpsCon.forward);
+			elevator += (1.0f * fpsCon.back   );
+			aileron  += (1.0f * fpsCon.right  );
+			aileron  -= (1.0f * fpsCon.left   );
 
 			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
 			maneuverState = MANEUVER_FLY_STRAIGHT;
@@ -539,7 +541,11 @@ bool CStrafeAirMoveType::Update()
 			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y)
 				owner->ForcedKillUnit(nullptr, true, false);
 
-			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100.0f + guRNG.NextFloat() * 50.0f, 5, 0.2f, 0.4f);
+			if (crashExpGenID == -1u) {
+				projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, (100.0f + guRNG.NextFloat() * 50.0f), 5.0f, 0.2f, 0.4f);
+			} else {
+				explGenHandler.GenExplosion(crashExpGenID, owner->midPos, owner->frontdir, 1.0f, 0.0f, 1.0f, owner, nullptr);
+			}
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();
