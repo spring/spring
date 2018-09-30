@@ -4,11 +4,11 @@
 # * ${BUILD_DIR}/maphelper.sdz
 # * ${BUILD_DIR}/cursors.sdz
 
-FIND_PACKAGE(SevenZip REQUIRED)
+find_package(SevenZip REQUIRED)
 
 add_custom_target(basecontent ALL)
 
-MACRO(CreateBaseContentArchive outputdir filename files)
+macro(CreateBaseContentArchive outputdir filename files)
 	### FIXME: find a nicer way to silence 7z
 	if(UNIX)
 		set(QUIET ">/dev/null")
@@ -34,7 +34,7 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 	### Install content
 	install(FILES "${outputfile}"
 		DESTINATION ${DATADIR}/${outputdir})
-ENDMACRO()
+endmacro()
 
 file(MAKE_DIRECTORY "${Spring_BINARY_DIR}/base")
 file(MAKE_DIRECTORY "${Spring_BINARY_DIR}/base/spring")
@@ -43,6 +43,3 @@ add_subdirectory(bitmaps)
 add_subdirectory(springcontent)
 add_subdirectory(maphelper)
 add_subdirectory(cursors)
-
-
-

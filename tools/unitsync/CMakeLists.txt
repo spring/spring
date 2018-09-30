@@ -31,22 +31,23 @@ ELSE  (MINGW OR MSVC)
 ENDIF (MINGW OR MSVC)
 
 
-ADD_DEFINITIONS(-DUNITSYNC)
-ADD_DEFINITIONS(${PIC_FLAG})
-ADD_DEFINITIONS(-DNOT_USING_CREG)
-ADD_DEFINITIONS(-DHEADLESS)
-ADD_DEFINITIONS(-DNO_SOUND)
-ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
-#ADD_DEFINITIONS(-DENABLE_DEPRECATED_FUNCTIONS)
-REMOVE_DEFINITIONS(-DTHREADPOOL)
+add_definitions(-DUNITSYNC)
+add_definitions(-fPIC)
+add_definitions(${PIC_FLAG})
+add_definitions(-DNOT_USING_CREG)
+add_definitions(-DHEADLESS)
+add_definitions(-DNO_SOUND)
+add_definitions(-DBITMAP_NO_OPENGL)
+#add_definitions(-DENABLE_DEPRECATED_FUNCTIONS)
+remove_definitions(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
-INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT})
-Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
+include_directories(${SPRING_MINIZIP_INCLUDE_DIR})
+include_directories(${ENGINE_SRC_ROOT}/lib/lua/include)
+include_directories(${ENGINE_SRC_ROOT}/lib/7zip)
+include_directories(${ENGINE_SRC_ROOT})
+include_directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 
 set(main_files
@@ -85,9 +86,9 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/StringUtil.cpp"
 	)
 if (WIN32)
-	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
+	list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
 else (WIN32)
-        LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
+        list(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
 endif (WIN32)
 
 set(unitsync_files
@@ -103,7 +104,7 @@ set(unitsync_files
 
 # Add list of all exported functions to .def file to prevent decoration
 if (MSVC)
-	LIST(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
+	list(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
 endif ()
 
 # HACK unitsync should actually be MODULE (not SHARED),
@@ -121,10 +122,10 @@ install (TARGETS unitsync
 	RUNTIME DESTINATION ${LIBDIR}
 	LIBRARY DESTINATION ${LIBDIR})
 
-Add_Subdirectory(test)
+add_subdirectory(test)
 
-OPTION(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
-If     (UNITSYNC_PYTHON_BINDINGS)
+option(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
+if (UNITSYNC_PYTHON_BINDINGS)
 	# only add this if the submodule is present
-	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-EndIf()
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
+endif()

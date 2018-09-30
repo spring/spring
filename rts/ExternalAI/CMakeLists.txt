@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_ExternalAI
+set(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/AICallback.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AICheats.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIInterfaceKey.cpp"
@@ -21,4 +21,3 @@ SET(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIWrapper.cpp"
 		PARENT_SCOPE
 	)
-

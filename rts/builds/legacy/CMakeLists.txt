@@ -4,14 +4,14 @@
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./spring
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
 ### Assemble libraries
-FIND_PACKAGE(SDL2 REQUIRED)
-SET(engineIncludes ${SDL2_INCLUDE_DIR})
-SET(engineLibraries ${SDL2_LIBRARY})
+find_package(SDL2 REQUIRED)
+set(engineIncludes ${SDL2_INCLUDE_DIR})
+set(engineLibraries ${SDL2_LIBRARY})
 if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
 	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
 endif()
@@ -29,61 +29,60 @@ IF    (FONTCONFIG_FOUND)
 	ADD_DEFINITIONS(-DUSE_FONTCONFIG)
 	IF    (PREFER_STATIC_LIBS)
 		PREFER_STATIC_LIBS()
-		FIND_LIBRARY(EXPAT_LIBRARY expat)
+		find_library(EXPAT_LIBRARY expat)
 		UNPREFER_STATIC_LIBS()
-		LIST(APPEND engineLibraries ${EXPAT_LIBRARY})
-	ENDIF (PREFER_STATIC_LIBS)
-ENDIF (FONTCONFIG_FOUND)
+		list(APPEND engineLibraries ${EXPAT_LIBRARY})
+	endif (PREFER_STATIC_LIBS)
+endif (FONTCONFIG_FOUND)
 
 FindFreetypeHack() # hack to find different named freetype.dll
-FIND_PACKAGE_STATIC(Freetype REQUIRED)
+find_package_static(Freetype REQUIRED)
 foreach(f ${FREETYPE_INCLUDE_DIRS})
-	LIST(APPEND engineIncludes ${f})
+	list(APPEND engineIncludes ${f})
 endforeach(f)
-LIST(APPEND engineLibraries ${FREETYPE_LIBRARY})
+list(APPEND engineLibraries ${FREETYPE_LIBRARY})
 
-IF    (PREFER_STATIC_LIBS)
+if    (PREFER_STATIC_LIBS)
 	# dependencies of FreeType
-	FIND_PACKAGE_STATIC(BZip2 REQUIRED)
-	LIST(APPEND engineLibraries ${BZIP2_LIBRARIES})
-ENDIF (PREFER_STATIC_LIBS)
+	find_package_static(BZip2 REQUIRED)
+	list(APPEND engineLibraries ${BZIP2_LIBRARIES})
+endif (PREFER_STATIC_LIBS)
 
-IF    (UNIX)
-	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
-ENDIF (UNIX)
+if    (UNIX)
+	find_package(X11 REQUIRED)
+	list(APPEND engineLibraries ${X11_Xcursor_LIB} ${X11_X11_LIB})
+endif (UNIX)
 
-IF (APPLE)
-	FIND_LIBRARY(COREFOUNDATION_LIBRARY Foundation)
-	LIST(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
-ENDIF (APPLE)
+if (APPLE)
+	find_library(COREFOUNDATION_LIBRARY Foundation)
+	list(APPEND engineLibraries ${COREFOUNDATION_LIBRARY})
+endif (APPLE)
 
 if    (USE_LIBSQUISH)
-	LIST(APPEND engineLibraries squish rgetc1)
+	list(APPEND engineLibraries squish rgetc1)
 endif (USE_LIBSQUISH)
 
-LIST(APPEND engineLibraries ${sound-impl})
-LIST(APPEND engineLibraries engineSystemNet)
-LIST(APPEND engineLibraries ${engineCommonLibraries})
-LIST(APPEND engineLibraries engineaGui)
-LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
-LIST(APPEND engineLibraries engineSim)
-LIST(APPEND engineLibraries pr-downloader_static)
+list(APPEND engineLibraries ${sound-impl})
+list(APPEND engineLibraries engineSystemNet)
+list(APPEND engineLibraries ${engineCommonLibraries})
+list(APPEND engineLibraries engineaGui)
+list(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
+list(APPEND engineLibraries engineSim)
+list(APPEND engineLibraries pr-downloader_static)
 
 ### Assemble external incude dirs
-LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
-LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
-LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
+list(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
+list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
-INCLUDE_DIRECTORIES(${engineIncludes})
+include_directories(${engineIncludes})
 
 ### Build the executable
-ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(engine-legacy ${engineLibraries})
+add_executable(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+target_link_libraries(engine-legacy ${engineLibraries})
 
 
 ### Install the executable
-INSTALL(TARGETS engine-legacy DESTINATION ${BINDIR})
+install(TARGETS engine-legacy DESTINATION ${BINDIR})
 
 CreateEngineBuildAndInstallTarget(legacy)
-

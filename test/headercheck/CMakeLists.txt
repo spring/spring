@@ -1,6 +1,6 @@
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
-OPTION(HEADERCHECK "adds the target headercheck which compiles every header file, default disabled because it adds many targets" OFF)
+option(HEADERCHECK "adds the target headercheck which compiles every header file, default disabled because it adds many targets" OFF)
 if(HEADERCHECK)
 include_directories(
 		${Spring_SOURCE_DIR}/rts
@@ -11,7 +11,7 @@ include_directories(
 		${OPENAL_INCLUDE_DIR}
 	)
 
-FILE(GLOB_RECURSE headers
+file(GLOB_RECURSE headers
 		${Spring_SOURCE_DIR}/tools/unitsync/*.h
 		${Spring_SOURCE_DIR}/rts/ExternalAI/*.h
 		${Spring_SOURCE_DIR}/rts/Game/*.h
@@ -26,25 +26,25 @@ FILE(GLOB_RECURSE headers
 
 set(headerchecklibs "")
 
-FOREACH( HEADER ${headers} )
+foreach( HEADER ${headers} )
 
 	#pseudo unique name
 	string(REPLACE "${Spring_SOURCE_DIR}" "" PLIST "${HEADER}")
 	string(REPLACE "/" ";" PLIST "${PLIST}")
-	SET(TEST_NAME "headercheck_")
+	set(TEST_NAME "headercheck_")
 
 	foreach(name ${PLIST})
-		SET(TEST_NAME "${TEST_NAME}_${name}")
+		set(TEST_NAME "${TEST_NAME}_${name}")
 	endforeach()
 
-	SET(TEST_FILE ${CMAKE_CURRENT_BINARY_DIR}/src-generated/${TEST_NAME}.cpp)
+	set(TEST_FILE ${CMAKE_CURRENT_BINARY_DIR}/src-generated/${TEST_NAME}.cpp)
 
 	# create test file
 	configure_file( headercheck.cpp.in ${TEST_FILE} )
 	# add library
 	add_library( ${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_FILE} )
 	list(APPEND headerchecklibs ${TEST_NAME})
-ENDFOREACH( HEADER )
+endforeach( HEADER )
 
 add_custom_target(headercheck DEPENDS ${headerchecklibs})
 
