@@ -34,7 +34,8 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(lastColWarning),
 
-	CR_MEMBER(lastColWarningType)
+	CR_MEMBER(lastColWarningType),
+	CR_MEMBER(crashExpGenID)
 ))
 
 
