@@ -26,10 +26,15 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
 
+static std::array<uint8_t, 2048> udWeaponCounts;
+
 WeaponMemPool weaponMemPool;
 
-void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
-void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
+static_assert((sizeof(UnitDef::weapons) / sizeof(UnitDef::weapons[0])) == MAX_WEAPONS_PER_UNIT, "");
+static_assert(MAX_WEAPONS_PER_UNIT < std::numeric_limits<decltype(udWeaponCounts)::value_type>::max(), "");
+
+void CWeaponLoader::InitStatic() { udWeaponCounts.fill(MAX_WEAPONS_PER_UNIT + 1); weaponMemPool.reserve(128); }
+void CWeaponLoader::KillStatic() { udWeaponCounts.fill(MAX_WEAPONS_PER_UNIT + 1); weaponMemPool.clear(); }
 
 
 
@@ -41,7 +46,10 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 	unsigned int i = 0;
 	unsigned int n = 0;
 
-	for (unit->weapons.reserve(n = unitDef->NumWeapons()); i < n; i++) {
+	if ((n = udWeaponCounts.at(unitDef->id)) > MAX_WEAPONS_PER_UNIT)
+		n = (udWeaponCounts.at(unitDef->id) = unitDef->NumWeapons());
+
+	for (unit->weapons.reserve(n); i < n; i++) {
 		CWeapon* weapon = LoadWeapon(unit, udWeapons[i].def);
 
 		weapon->SetWeaponNum(unit->weapons.size());
