@@ -248,8 +248,8 @@ if    (PREFER_STATIC_LIBS)
 	# dependencies of DevIL
 	find_package_static(JPEG REQUIRED)
 	find_package_static(PNG REQUIRED)
-	find_package_static(TifF REQUIRED)
-	find_package_static(Gif REQUIRED)
+	find_package_static(TIFF REQUIRED)
+	find_package_static(GIF REQUIRED)
 endif (PREFER_STATIC_LIBS)
 
 if    (WIN32)
