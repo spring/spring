@@ -106,7 +106,7 @@ struct S3DModelPiece {
 		maxs = DEF_MAX_SIZE;
 
 		DeleteDispList();
-		vboShatterIndices = std::move(VBO());
+		DeleteBuffers();
 
 		hasBakedMat = false;
 		dummyPadding = false;
@@ -140,6 +140,12 @@ public:
 	void DrawStatic() const;
 	void CreateDispList();
 	void DeleteDispList();
+	void DeleteBuffers() {
+		vboIndices = {};
+		vboAttributes = {};
+		vboShatterIndices = {};
+	}
+
 	unsigned int GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
