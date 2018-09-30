@@ -22,16 +22,6 @@
 
 /******************************************************************************/
 
-UnitDefWeapon::UnitDefWeapon()
-: def(NULL)
-, slavedTo(0)
-, maxMainDirAngleDif(-1.0f)
-, badTargetCat(0)
-, onlyTargetCat(0)
-, mainDir(FwdVector)
-{
-}
-
 UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef) {
 	*this = UnitDefWeapon();
 	this->def = weaponDef;
@@ -629,20 +619,26 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
 	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
 	const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
+	const LuaTable& crashCEGTable = sfxTable.SubTable("crashExplosionGenerators");
 
 	std::vector<int> modelCEGKeys; modelCEGTable.GetKeys(modelCEGKeys);
 	std::vector<int> pieceCEGKeys; pieceCEGTable.GetKeys(pieceCEGKeys);
+	std::vector<int> crashCEGKeys; crashCEGTable.GetKeys(crashCEGKeys);
 
-	for (unsigned int n = 0; n < modelCEGKeys.size(); n++) {
-		modelCEGTags.push_back(modelCEGTable.GetString(modelCEGKeys[n], ""));
+	for (unsigned int i = 0, n = std::min(modelCEGTags.size(), modelCEGKeys.size()); i < n; i++) {
+		modelCEGTags[i] = modelCEGTable.GetString(modelCEGKeys[i], "");
 	}
-	for (unsigned int n = 0; n < pieceCEGKeys.size(); n++) {
-		pieceCEGTags.push_back(pieceCEGTable.GetString(pieceCEGKeys[n], ""));
+	for (unsigned int i = 0, n = std::min(pieceCEGTags.size(), pieceCEGKeys.size()); i < n; i++) {
+		pieceCEGTags[i] = pieceCEGTable.GetString(pieceCEGKeys[i], "");
+	}
+	for (unsigned int i = 0, n = std::min(crashCEGTags.size(), crashCEGKeys.size()); i < n; i++) {
+		crashCEGTags[i] = crashCEGTable.GetString(crashCEGKeys[i], "");
 	}
 
 	// filled in later by UnitDrawer
-	modelExplGenIDs.resize(modelCEGTags.size(), -1u);
-	pieceExplGenIDs.resize(pieceCEGTags.size(), -1u);
+	modelExplGenIDs.fill(-1u);
+	pieceExplGenIDs.fill(-1u);
+	crashExplGenIDs.fill(-1u);
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
@@ -653,7 +649,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 {
 	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
 
-	for (int w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
+	for (int k = 0, w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
 		LuaTable wTable;
 		string wdName = weaponsTable.GetString(w + 1, "");
 
@@ -668,22 +664,26 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 			wd = weaponDefHandler->GetWeaponDef(wdName);
 
 		if (wd == nullptr) {
+			// allow any of the first three weapons to be null; these will be
+			// replaced by NoWeapon's if there is a valid WeaponDef among this
+			// set
 			if (w <= 3)
-				continue; // allow empty weapons among the first 3
+				continue;
 
+			// otherwise stop trying
 			break;
 		}
 
-		while (weapons.size() < w) {
+		while (k < w) {
 			if (noWeaponDef == nullptr) {
 				LOG_L(L_ERROR, "[%s] missing NOWEAPON for WeaponDef %s (#%d) of UnitDef %s", __func__, wdName.c_str(), w, humanName.c_str());
 				break;
 			}
 
-			weapons.emplace_back(noWeaponDef);
+			weapons[k++] = {noWeaponDef};
 		}
 
-		weapons.emplace_back(wd, wTable);
+		weapons[k++] = {wd, wTable};
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);
 
@@ -740,15 +740,15 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 		YardMapStatus ys = YARDMAP_BLOCKED;
 
 		switch (c) {
-			case 'g': ys = YARDMAP_GEO; needGeo = true; break;
-			case 'y': ys = YARDMAP_OPEN;    break;
-			case 'c': ys = YARDMAP_YARD;    break;
-			case 'i': ys = YARDMAP_YARDINV; break;
-			//case 'w': { ys = YARDMAP_WALKABLE; } break; //FIXME
+			case 'g': { ys = YARDMAP_GEO; needGeo = true; } break;
+			case 'y': { ys = YARDMAP_OPEN;                } break;
+			case 'c': { ys = YARDMAP_YARD;                } break;
+			case 'i': { ys = YARDMAP_YARDINV;             } break;
+		//	case 'w': { ys = YARDMAP_WALKABLE;            } break; //FIXME
 			case 'w':
 			case 'x':
 			case 'f':
-			case 'o': ys = YARDMAP_BLOCKED; break;
+			case 'o': { ys = YARDMAP_BLOCKED;             } break;
 			default:
 				unknownChars += (unknownChars.find_first_of(c) == std::string::npos);
 		}
@@ -807,12 +807,9 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::HasBomberWeapon() const {
-	if (weapons.empty())
-		return false;
-	if (weapons[0].def == nullptr)
-		return false;
-
-	return (weapons[0].def->IsAircraftWeapon());
+bool UnitDef::HasBomberWeapon(unsigned int idx) const {
+	// checked by Is*AirUnit
+	assert(HasWeapon(idx));
+	return (weapons[idx].def->IsAircraftWeapon());
 }
 

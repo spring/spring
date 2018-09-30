@@ -54,31 +54,33 @@ public:
 public:
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
-	float3 reservedLandingPos;
-	float landRadiusSq;
+	float3 reservedLandingPos = -OnesVector;
 
-	float wantedHeight;
+	float landRadiusSq = 0.0f;
+	float wantedHeight = 80.0f;
 	/// to reset altitude back
-	float orgWantedHeight;
+	float orgWantedHeight = 0.0f;
 
-	float accRate;
-	float decRate;
-	float altitudeRate;
+	float accRate = 1.0f;
+	float decRate = 1.0f;
+	float altitudeRate = 3.0f;
 
 	/// mods can use this to disable plane collisions
-	bool collide;
+	bool collide = true;
 	/// controls use of smoothGround for determining altitude
-	bool useSmoothMesh;
-	bool autoLand;
+	bool useSmoothMesh = false;
+	bool autoLand = true;
 
 protected:
 	void CheckForCollision();
 
 	/// unit found to be dangerously close to our path
-	CUnit* lastColWarning;
+	CUnit* lastColWarning = nullptr;
 
 	/// 1=generally forward of us, 2=directly in path
-	int lastColWarningType;
+	int lastColWarningType = 0;
+
+	unsigned int crashExpGenID = -1u;
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

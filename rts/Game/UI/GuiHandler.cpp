@@ -3759,7 +3759,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					DrawUnitDefRanges(nullptr, buildeeDef, buildPos);
 
 					// draw (primary) weapon range
-					if (!buildeeDef->weapons.empty()) {
+					if (buildeeDef->HasWeapons()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
 						glBallisticCircle(buildeeDef->weapons[0].def, 40, buildPos, {buildeeDef->weapons[0].def->range, buildeeDef->weapons[0].def->heightmod, mapInfo->map.gravity});
@@ -4363,4 +4363,5 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 /******************************************************************************/
 /******************************************************************************/
+
 

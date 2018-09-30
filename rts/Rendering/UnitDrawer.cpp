@@ -259,9 +259,12 @@ void CUnitDrawer::Init() {
 		for (unsigned int k = 0; k < ud.modelCEGTags.size(); k++) {
 			ud.SetModelExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(ud.modelCEGTags[k]));
 		}
+		// piece- and crash-generators can only be custom so the prefix is not required game-side
 		for (unsigned int k = 0; k < ud.pieceCEGTags.size(); k++) {
-			// these can only be custom EG's so prefix is not required game-side
 			ud.SetPieceExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[k]));
+		}
+		for (unsigned int k = 0; k < ud.crashCEGTags.size(); k++) {
+			ud.SetCrashExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + ud.crashCEGTags[k]));
 		}
 	}
 

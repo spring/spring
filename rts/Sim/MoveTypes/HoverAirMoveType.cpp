@@ -12,6 +12,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
@@ -902,21 +903,21 @@ bool CHoverAirMoveType::Update()
 		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
 
-			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+			const CPlayer* fpsPlayer = owner->fpsControlPlayer;
+			const FPSUnitController& fpsCon = fpsPlayer->fpsController;
 
-			const float3 forward = con.viewDir;
+			const float3 forward = fpsCon.viewDir;
 			const float3 right = forward.cross(UpVector);
 			const float3 nextPos = lastPos + owner->speed;
 
 			float3 flatForward = forward;
 			flatForward.Normalize2D();
 
-			wantedSpeed = ZeroVector;
-
-			if (con.forward) wantedSpeed += flatForward;
-			if (con.back   ) wantedSpeed -= flatForward;
-			if (con.right  ) wantedSpeed += right;
-			if (con.left   ) wantedSpeed -= right;
+			wantedSpeed  = ZeroVector;
+			wantedSpeed += (flatForward * fpsCon.forward);
+			wantedSpeed -= (flatForward * fpsCon.back   );
+			wantedSpeed += (      right * fpsCon.right  );
+			wantedSpeed -= (      right * fpsCon.left   );
 
 			wantedSpeed.Normalize();
 			wantedSpeed *= maxSpeed;
@@ -957,8 +958,11 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			// Spawn unsynced smoke projectile
-			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100 + guRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
+			if (crashExpGenID == -1u) {
+				projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, (100.0f + guRNG.NextFloat() * 50.0f), 5.0f, 0.2f, 0.4f);
+			} else {
+				explGenHandler.GenExplosion(crashExpGenID, owner->midPos, owner->frontdir, 1.0f, 0.0f, 1.0f, owner, nullptr);
+			}
 		} break;
 	}
 
