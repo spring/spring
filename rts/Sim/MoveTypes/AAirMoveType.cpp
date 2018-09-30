@@ -1,17 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "AAirMoveType.h"
-#include "MoveMath/MoveMath.h"
 
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Scripts/UnitScript.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 
@@ -60,25 +59,7 @@ AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6] = {
 
 AAirMoveType::AAirMoveType(CUnit* unit):
 	AMoveType(unit),
-	aircraftState(AIRCRAFT_LANDED),
-
-	reservedLandingPos(-1.0f, -1.0f, -1.0f),
-
-	landRadiusSq(0.0f),
-	wantedHeight(80.0f),
-	orgWantedHeight(0.0f),
-
-	accRate(1.0f),
-	decRate(1.0f),
-	altitudeRate(3.0f),
-
-	collide(true),
-	useSmoothMesh(false),
-	autoLand(true),
-
-	lastColWarning(nullptr),
-
-	lastColWarningType(0)
+	aircraftState(AIRCRAFT_LANDED)
 {
 	// creg
 	if (unit == nullptr)
@@ -94,6 +75,8 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
 
 	useHeading = false;
+
+	crashExpGenID = owner->unitDef->GetCrashExplosionGeneratorID(guRNG.NextInt());
 }
 
 

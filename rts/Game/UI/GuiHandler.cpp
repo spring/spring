@@ -3470,10 +3470,10 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 	if (drawBuildeeRings) {
 		// draw (primary) weapon range for queued turrets
 		for (const BuildInfo& bi: biQueue) {
-			if (buildeeDef->weapons.empty())
+			if (!buildeeDef->HasWeapons())
 				continue;
 
-			const UnitDefWeapon& udw = buildeeDef->weapons[0];
+			const UnitDefWeapon& udw = buildeeDef->GetWeapon(0);
 			const WeaponDef* wd = udw.def;
 
 			glBallisticCircle(rdb, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
