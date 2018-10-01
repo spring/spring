@@ -2,18 +2,14 @@
 
 
 #include "StrafeAirMoveType.h"
-#include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -93,6 +89,7 @@ static const unsigned int FLOAT_MEMBER_HASHES[] = {
 #undef MEMBER_LITERAL_HASH
 
 extern AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6];
+extern AAirMoveType::EmitCrashTrailFunc amtEmitCrashTrailFuncs[2];
 
 
 
@@ -541,11 +538,7 @@ bool CStrafeAirMoveType::Update()
 			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y)
 				owner->ForcedKillUnit(nullptr, true, false);
 
-			if (crashExpGenID == -1u) {
-				projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, (100.0f + guRNG.NextFloat() * 50.0f), 5.0f, 0.2f, 0.4f);
-			} else {
-				explGenHandler.GenExplosion(crashExpGenID, owner->midPos, owner->frontdir, 1.0f, 0.0f, 1.0f, owner, nullptr);
-			}
+			amtEmitCrashTrailFuncs[crashExpGenID != -1u](owner, crashExpGenID);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();

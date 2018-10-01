@@ -15,6 +15,7 @@ class AAirMoveType : public AMoveType
 	CR_DECLARE(AAirMoveType)
 public:
 	typedef float(*GetGroundHeightFunc)(float, float);
+	typedef void(*EmitCrashTrailFunc)(CUnit*, unsigned int);
 
 	enum AircraftState {
 		AIRCRAFT_LANDED,
@@ -24,7 +25,7 @@ public:
 		AIRCRAFT_TAKEOFF,
 		/// this is what happens to aircraft with dontLand=1 in fbi
 		AIRCRAFT_HOVERING
-	} aircraftState;
+	};
 
 	AAirMoveType(CUnit* unit);
 	virtual ~AAirMoveType() {}
@@ -51,7 +52,12 @@ public:
 
 	void DependentDied(CObject* o);
 
+protected:
+	void CheckForCollision();
+
 public:
+	AircraftState aircraftState = AIRCRAFT_LANDED;
+
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 reservedLandingPos = -OnesVector;
@@ -72,8 +78,6 @@ public:
 	bool autoLand = true;
 
 protected:
-	void CheckForCollision();
-
 	/// unit found to be dangerously close to our path
 	CUnit* lastColWarning = nullptr;
 
