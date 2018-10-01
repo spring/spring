@@ -58,6 +58,8 @@ matrix:
       python: 2.7
       compiler: ""
       env: ""
+      before_install: ""
+      install: ""
       before_script:
         - pip install cmakelint
       script:
