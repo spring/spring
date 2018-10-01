@@ -54,9 +54,10 @@ notifications:
 matrix:
   include:
     - language: python
+      name: CMake lint
       python: 2.7
-      compiler: ''
-      env: ''
+      compiler: ""
+      env: ""
       before_script:
         - pip install cmakelint
       script:
