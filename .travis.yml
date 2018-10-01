@@ -55,6 +55,8 @@ matrix:
   include:
     - language: python
       python: 2.7
+      compiler: ''
+      env: ''
       before_script:
         - pip install cmakelint
       script:
