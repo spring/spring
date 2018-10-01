@@ -3,17 +3,13 @@
 
 #include "HoverAirMoveType.h"
 #include "Game/Players/Player.h"
-#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -77,6 +73,7 @@ static bool UnitHasLoadCmd(const CUnit* u) { return (UnitHasLoadCmd(u->commandAI
 
 
 extern AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6];
+extern AAirMoveType::EmitCrashTrailFunc amtEmitCrashTrailFuncs[2];
 
 
 
@@ -958,11 +955,7 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			if (crashExpGenID == -1u) {
-				projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, (100.0f + guRNG.NextFloat() * 50.0f), 5.0f, 0.2f, 0.4f);
-			} else {
-				explGenHandler.GenExplosion(crashExpGenID, owner->midPos, owner->frontdir, 1.0f, 0.0f, 1.0f, owner, nullptr);
-			}
+			amtEmitCrashTrailFuncs[crashExpGenID != -1u](owner, crashExpGenID);
 		} break;
 	}
 

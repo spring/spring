@@ -77,7 +77,7 @@ public:
 	unsigned int NumWeapons() const {
 		unsigned int n = 0;
 
-		while (n < MAX_WEAPONS_PER_UNIT && weapons[n].def != nullptr) {
+		while (n < weapons.size() && HasWeapon(n)) {
 			n++;
 		}
 
