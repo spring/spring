@@ -69,6 +69,31 @@ static uint8_t unitDrawerMem[sizeof(CUnitDrawer)];
 static FixedDynMemPool<sizeof(GhostSolidObject), MAX_UNITS / 1000, MAX_UNITS / 32> ghostMemPool;
 
 
+static void LoadUnitExplosionGenerators() {
+	using F = decltype(&UnitDef::SetModelExplosionGeneratorID);
+	using T = decltype(UnitDef::modelCEGTags);
+	using S = T::value_type;
+
+	const auto LoadGenerators = [](UnitDef* ud, const F setExplGenID, const T& explGenTags, const S& explGenPrefix) {
+		for (const S& explGenTag: explGenTags) {
+			if (explGenTag.empty())
+				continue;
+
+			(ud->*setExplGenID)(&explGenTag - &explGenTags[0], explGenHandler.LoadGeneratorID(explGenPrefix + explGenTag));
+		}
+	};
+
+	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
+		UnitDef* ud = const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
+
+		// piece- and crash-generators can only be custom so the prefix is not required to be given game-side
+		LoadGenerators(ud, &UnitDef::SetModelExplosionGeneratorID, ud->modelCEGTags,                "");
+		LoadGenerators(ud, &UnitDef::SetPieceExplosionGeneratorID, ud->pieceCEGTags, CEG_PREFIX_STRING);
+		LoadGenerators(ud, &UnitDef::SetCrashExplosionGeneratorID, ud->crashCEGTags, CEG_PREFIX_STRING);
+	}
+}
+
+
 static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
@@ -242,23 +267,7 @@ void CUnitDrawer::Init() {
 	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);
 	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
 
-
-	// load unit explosion generators and decals
-	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
-		UnitDef& ud = *const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
-
-		for (unsigned int k = 0; k < ud.modelCEGTags.size(); k++) {
-			ud.SetModelExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(ud.modelCEGTags[k]));
-		}
-		// piece- and crash-generators can only be custom so the prefix is not required game-side
-		for (unsigned int k = 0; k < ud.pieceCEGTags.size(); k++) {
-			ud.SetPieceExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[k]));
-		}
-		for (unsigned int k = 0; k < ud.crashCEGTags.size(); k++) {
-			ud.SetCrashExplosionGeneratorID(k, explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + ud.crashCEGTags[k]));
-		}
-	}
-
+	LoadUnitExplosionGenerators();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		opaqueModelRenderers[modelType].Init();
