@@ -83,9 +83,9 @@ endif ()
 
 include_directories(${ZLIB_INCLUDE_DIR})
 
-IF (WIN32)
+if (WIN32)
 	list(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
-ENDIF (WIN32)
+endif (WIN32)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	#tcmalloc on freebsd is broken, default disable it (#4754)

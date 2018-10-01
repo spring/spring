@@ -9,26 +9,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 
-LIST(APPEND unitsync_libs ${CMAKE_DL_LIBS})
-LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
-LIST(APPEND unitsync_libs ${ZLIB_LIBRARY})
-LIST(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
+list(APPEND unitsync_libs ${CMAKE_DL_LIBS})
+list(APPEND unitsync_libs 7zip lua headlessStubs archives)
+list(APPEND unitsync_libs ${ZLIB_LIBRARY})
+list(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
-IF (WIN32)
-	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
-ENDIF (WIN32)
+if (WIN32)
+	list(APPEND unitsync_libs ${WINMM_LIBRARY})
+endif (WIN32)
 
-IF    (MINGW OR MSVC)
+if    (MINGW OR MSVC)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
-	FIND_PACKAGE(SDL2 REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
-ELSE  (MINGW OR MSVC)
+	find_package(SDL2 REQUIRED)
+	include_directories(${SDL2_INCLUDE_DIR})
+else  (MINGW OR MSVC)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
-ENDIF (MINGW OR MSVC)
+	include_directories(${CMAKE_SOURCE_DIR}/include/SDL2)
+endif (MINGW OR MSVC)
 
 
 add_definitions(-DUNITSYNC)
@@ -110,9 +110,9 @@ endif ()
 # HACK unitsync should actually be MODULE (not SHARED),
 #   but the python bindings need it as SHARED,
 #   to be able to link to it
-ADD_LIBRARY(unitsync SHARED ${unitsync_files})
-Add_Dependencies(unitsync generateVersionFiles)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
+add_library(unitsync SHARED ${unitsync_files})
+add_dependencies(unitsync generateVersionFiles)
+target_link_libraries(unitsync ${unitsync_libs})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
