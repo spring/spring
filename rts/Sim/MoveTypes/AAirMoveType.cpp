@@ -5,8 +5,11 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -47,6 +50,14 @@ static inline float AAMTGetSmoothGroundHeight  (float x, float z) { return smoot
 static inline float HAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetApproximateHeight(x, z)); }
 static inline float SAMTGetMaxGroundHeight(float x, float z) { return std::max(smoothGround.GetHeight(x, z), CGround::GetHeightAboveWater(x, z)); }
 
+static inline void AAMTEmitEngineTrail(CUnit* owner, unsigned int) {
+	projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, (100.0f + guRNG.NextFloat() * 50.0f), 5.0f, 0.2f, 0.4f);
+}
+static inline void AAMTEmitCustomTrail(CUnit* owner, unsigned int id) {
+	explGenHandler.GenExplosion(id, owner->midPos, owner->frontdir, 1.0f, 0.0f, 1.0f, owner, nullptr);
+}
+
+
 AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6] = {
 	AAMTGetGroundHeightAW,       // canSubmerge=0 useSmoothMesh=0
 	AAMTGetGroundHeight  ,       // canSubmerge=1 useSmoothMesh=0
@@ -56,11 +67,14 @@ AAirMoveType::GetGroundHeightFunc amtGetGroundHeightFuncs[6] = {
 	SAMTGetMaxGroundHeight,      // StrafeAirMoveType::UpdateFlying
 };
 
+AAirMoveType::EmitCrashTrailFunc amtEmitCrashTrailFuncs[2] = {
+	AAMTEmitEngineTrail,
+	AAMTEmitCustomTrail,
+};
 
 
-AAirMoveType::AAirMoveType(CUnit* unit):
-	AMoveType(unit),
-	aircraftState(AIRCRAFT_LANDED)
+
+AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 {
 	// creg
 	if (unit == nullptr)
