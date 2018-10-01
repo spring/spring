@@ -51,3 +51,11 @@ notifications:
       - chat.freenode.net#taspring
     on_success: change
     on_failure: change
+matrix:
+  include:
+    - language: python
+      python: 2.7
+      before_script:
+        - pip install cmakelint
+      script:
+        - find . -name 'CMakeLists.txt' -not -path './rts/lib/*' -exec cmakelint --filter=-whitespace/tabs,-linelength,-whitespace/extra,-whitespace/mismatch {} \;
