@@ -14,26 +14,10 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/StringUtil.h"
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-/*
-static void LuaPushNamedColor(lua_State* L,
-                              const string& name, const float3& color)
-{
-	lua_pushsstring(L, name);
-	lua_newtable(L);
-	lua_pushnumber(L, color.x); lua_rawseti(L, -2, 1);
-	lua_pushnumber(L, color.y); lua_rawseti(L, -2, 2);
-	lua_pushnumber(L, color.z); lua_rawseti(L, -2, 3);
-	lua_rawset(L, -3);
-}
-*/
 
 
 bool LuaConstGame::PushEntries(lua_State* L)
@@ -66,12 +50,14 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 
 	if (readMap != nullptr) {
-		//FIXME make this available in LoadScreen already!
+		// FIXME: make this available in LoadScreen (LuaIntro) already!
+		// requires pre-parsing the map header and filling in mapDims
 		LuaPushNamedNumber(L, "mapX",            mapDims.mapx / 64);
 		LuaPushNamedNumber(L, "mapY",            mapDims.mapy / 64);
 		LuaPushNamedNumber(L, "mapSizeX",        mapDims.mapx * SQUARE_SIZE);
 		LuaPushNamedNumber(L, "mapSizeZ",        mapDims.mapy * SQUARE_SIZE);
 	}
+
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
 
@@ -135,7 +121,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		const std::vector<string>& cats = CCategoryHandler::Instance()->GetCategoryNames(~0);
 
 		lua_pushliteral(L, "springCategories");
-		lua_newtable(L);
+		lua_createtable(L, 0, cats.size());
 
 		for (unsigned int i = 0; i < cats.size(); i++) {
 			LuaPushNamedNumber(L, StringToLower(cats[i]), i);
@@ -145,14 +131,14 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 
 	{
-		lua_pushliteral(L, "armorTypes");
-		lua_newtable(L);
-
 		// NB: empty for LuaIntro which also pushes ConstGame entries
 		const std::vector<std::string>& typeList = damageArrayHandler.GetTypeList();
 
+		lua_pushliteral(L, "armorTypes");
+		lua_createtable(L, typeList.size(), typeList.size());
+
 		for (size_t i = 0; i < typeList.size(); i++) {
-			// bidirectional map
+			// bidirectional map (k,v) and (v,k)
 			lua_pushsstring(L, typeList[i]);
 			lua_pushnumber(L, i);
 			lua_rawset(L, -3);
@@ -165,7 +151,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	// environmental damage types
 	lua_pushliteral(L, "envDamageTypes");
-	lua_newtable(L);
+	lua_createtable(L, 0, 7);
 		LuaPushNamedNumber(L, "Debris",          -CSolidObject::DAMAGE_EXPLOSION_DEBRIS );
 		LuaPushNamedNumber(L, "GroundCollision", -CSolidObject::DAMAGE_COLLISION_GROUND );
 		LuaPushNamedNumber(L, "ObjectCollision", -CSolidObject::DAMAGE_COLLISION_OBJECT );
@@ -177,7 +163,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	// weapon avoidance and projectile collision flags
 	lua_pushliteral(L, "collisionFlags");
-	lua_newtable(L);
+	lua_createtable(L, 0, 8);
 		LuaPushNamedNumber(L, "noEnemies",    Collision::NOENEMIES   );
 		LuaPushNamedNumber(L, "noFriendlies", Collision::NOFRIENDLIES);
 		LuaPushNamedNumber(L, "noFeatures",   Collision::NOFEATURES  );
@@ -188,6 +174,15 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		LuaPushNamedNumber(L, "noUnits",      Collision::NOUNITS     );
 	lua_rawset(L, -3);
 
+	// MoveDef speed-modifier types
+	lua_pushliteral(L, "speedModClasses");
+	lua_createtable(L, 0, 5);
+		LuaPushNamedNumber(L, "Tank" , MoveDef::SpeedModClass::Tank );
+		LuaPushNamedNumber(L, "KBot" , MoveDef::SpeedModClass::KBot );
+		LuaPushNamedNumber(L, "Hover", MoveDef::SpeedModClass::Hover);
+		LuaPushNamedNumber(L, "Boat" , MoveDef::SpeedModClass::Ship );
+		LuaPushNamedNumber(L, "Ship" , MoveDef::SpeedModClass::Ship );
+	lua_rawset(L, -3);
 	return true;
 }
 
