@@ -433,41 +433,34 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 static int MoveDefTable(lua_State* L, const void* data)
 {
-	const unsigned int mdType = *static_cast<const unsigned int*>(data);
-	const MoveDef* md = nullptr;
+	const unsigned int mdPathType = *static_cast<const unsigned int*>(data);
 
-	lua_newtable(L);
-
-	if (mdType == -1u)
+	if (mdPathType == -1u) {
+		lua_newtable(L);
 		return 1;
-
-	if ((md = moveDefHandler.GetMoveDefByPathType(mdType)) == nullptr)
-		return 1;
-
-	HSTR_PUSH_NUMBER(L, "id", md->pathType);
-
-	// TODO: remove after 102
-	switch (md->speedModClass) {
-		case MoveDef::Tank:  { HSTR_PUSH_CSTRING(L, "family",  "tank"); HSTR_PUSH_CSTRING(L, "type", "ground"); break; }
-		case MoveDef::KBot:  { HSTR_PUSH_CSTRING(L, "family",  "kbot"); HSTR_PUSH_CSTRING(L, "type", "ground"); break; }
-		case MoveDef::Hover: { HSTR_PUSH_CSTRING(L, "family", "hover"); HSTR_PUSH_CSTRING(L, "type",  "hover"); break; }
-		case MoveDef::Ship:  { HSTR_PUSH_CSTRING(L, "family",  "ship"); HSTR_PUSH_CSTRING(L, "type",   "ship"); break; }
 	}
 
-	HSTR_PUSH_NUMBER(L, "smClass",       md->speedModClass);
-	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);
-	HSTR_PUSH_NUMBER(L, "zsize",         md->zsize);
-	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
-	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
-	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
-	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
+	// can never return null
+	const MoveDef* md = moveDefHandler.GetMoveDefByPathType(mdPathType);
+
+	assert(md->pathType == mdPathType);
+	lua_createtable(L, 0, 13);
+
+	HSTR_PUSH_NUMBER(L, "id"           , md->pathType);
+	HSTR_PUSH_NUMBER(L, "smClass"      , md->speedModClass);
+	HSTR_PUSH_NUMBER(L, "xsize"        , md->xsize);
+	HSTR_PUSH_NUMBER(L, "zsize"        , md->zsize);
+	HSTR_PUSH_NUMBER(L, "depth"        , md->depth);
+	HSTR_PUSH_NUMBER(L, "maxSlope"     , md->maxSlope);
+	HSTR_PUSH_NUMBER(L, "slopeMod"     , md->slopeMod);
+	HSTR_PUSH_NUMBER(L, "depthMod"     , md->depthModParams[MoveDef::DEPTHMOD_LIN_COEFF]);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
-	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);
-	HSTR_PUSH_NUMBER(L, "heatMod",       md->heatMod);
-	HSTR_PUSH_NUMBER(L, "heatProduced",  md->heatProduced);
+	HSTR_PUSH_BOOL  (L, "heatMapping"  , md->heatMapping);
+	HSTR_PUSH_NUMBER(L, "heatMod"      , md->heatMod);
+	HSTR_PUSH_NUMBER(L, "heatProduced" , md->heatProduced);
 
-	HSTR_PUSH_STRING(L, "name", md->name);
+	HSTR_PUSH_STRING(L, "name"         , md->name);
 
 	return 1;
 }
@@ -476,12 +469,11 @@ static int MoveDefTable(lua_State* L, const void* data)
 static int TotalEnergyOut(lua_State* L, const void* data)
 {
 	const UnitDef& ud = *static_cast<const UnitDef*>(data);
+
 	const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
 	const float tidalEnergy = (ud.tidalGenerator * mapInfo->map.tidalStrength);
-	float windEnergy = 0.0f;
-	if (ud.windGenerator > 0.0f) {
-		windEnergy = (0.25f * (wind.GetMinWind() + wind.GetMaxWind()));
-	}
+	const float windEnergy = (0.25f * (wind.GetMinWind() + wind.GetMaxWind())) * (ud.windGenerator > 0.0f);
+
 	lua_pushnumber(L, basicEnergy + tidalEnergy + windEnergy); // CUSTOM
 	return 1;
 }
