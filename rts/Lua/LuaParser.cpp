@@ -159,10 +159,12 @@ void LuaParser::SetupEnv(bool synced)
 	AddFunc("TimeCheck", TimeCheck);
 	EndTable();
 
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
 	// not relevant for most LuaParsers, but entries are of value to defsParser
 	GetTable("Game");
 	LuaConstGame::PushEntries(L);
 	EndTable();
+	#endif
 
 	GetTable("Engine");
 	LuaConstEngine::PushEntries(L);
