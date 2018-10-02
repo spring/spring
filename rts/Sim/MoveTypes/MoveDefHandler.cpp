@@ -79,14 +79,16 @@ static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName,
 	if (speedModClass != -1)
 		return Clamp(MoveDef::SpeedModClass(speedModClass), MoveDef::Tank, MoveDef::Ship);
 
+	const auto modClassStr = moveDefTable.GetString("speedModClass", moveDefName);
+
 	// name-based fallbacks
-	if (moveDefName.find( "boat") != string::npos)
+	if (modClassStr.find( "boat") != string::npos)
 		return MoveDef::Ship;
-	if (moveDefName.find( "ship") != string::npos)
+	if (modClassStr.find( "ship") != string::npos)
 		return MoveDef::Ship;
-	if (moveDefName.find("hover") != string::npos)
+	if (modClassStr.find("hover") != string::npos)
 		return MoveDef::Hover;
-	if (moveDefName.find( "tank") != string::npos)
+	if (modClassStr.find( "tank") != string::npos)
 		return MoveDef::Tank;
 
 	return MoveDef::KBot;
