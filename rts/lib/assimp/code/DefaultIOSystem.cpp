@@ -132,7 +132,7 @@ bool IOSystem::ComparePaths (const char* one, const char* second) const
 
 // ------------------------------------------------------------------------------------------------
 // Convert a relative path into an absolute path
-inline void make_absolutePath (const char* in, char* _out)
+inline void MakeAbsolutePath (const char* in, char* _out)
 {
     ai_assert(in && _out);
     char* ret;
@@ -162,8 +162,8 @@ bool DefaultIOSystem::ComparePaths (const char* one, const char* second) const
     char temp1[PATHLIMIT];
     char temp2[PATHLIMIT];
 
-    make_absolutePath (one, temp1);
-    make_absolutePath (second, temp2);
+    MakeAbsolutePath (one, temp1);
+    MakeAbsolutePath (second, temp2);
 
     return !ASSIMP_stricmp(temp1,temp2);
 }
