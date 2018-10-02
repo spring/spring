@@ -471,6 +471,13 @@ void CGame::LoadDefs(LuaParser* defsParser)
 		defsParser->GetTable("Game");
 		defsParser->AddInt( "gameSpeed",  GAME_SPEED);
 		defsParser->AddInt("squareSize", SQUARE_SIZE);
+		defsParser->GetTable("speedModClasses");
+		defsParser->AddInt( "Tank", MoveDef::SpeedModClass::Tank );
+		defsParser->AddInt( "KBot", MoveDef::SpeedModClass::KBot );
+		defsParser->AddInt("Hover", MoveDef::SpeedModClass::Hover);
+		defsParser->AddInt( "Ship", MoveDef::SpeedModClass::Ship );
+		defsParser->AddInt( "Boat", MoveDef::SpeedModClass::Ship );
+		defsParser->EndTable();
 		defsParser->EndTable();
 		defsParser->GetTable("Spring");
 		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
