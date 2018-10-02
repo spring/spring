@@ -3395,7 +3395,7 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_MoveData_getName(int skirmishAIId
 
 
 EXPORT(int) skirmishAiCallback_UnitDef_getWeaponMounts(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->weapons.size();
+	return getUnitDefById(skirmishAIId, unitDefId)->NumWeapons();
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_WeaponMount_getName(int skirmishAIId, int unitDefId, int weaponMountId) {
