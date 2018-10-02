@@ -6,7 +6,7 @@
 # * Java_AIINTERFACE_TARGET
 #
 # Functions and macros defined in this file:
-# * ConfigureJavaSkirmishAI
+# * configure_java_skirmish_ai
 #
 
 #enable_language(Java)
@@ -21,16 +21,16 @@ include(UtilJava)
 
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
-macro    (ConfigureJavaSkirmishAI wrapperNames)
+macro    (configure_java_skirmish_ai wrapperNames)
 	# Assemble meta data
 	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
-	GetLastPathPart(dirName ${myDir})
+	get_last_path_part(dirName ${myDir})
 	set(myName          "${dirName}")
 	set(myJarFile       "SkirmishAI")
 	set(myBinJarFile    "${myJarFile}.jar")
 	set(mySrcJarFile    "${myJarFile}-src.jar")
 	set(myJLibDir       "${myDir}/data/jlib")
-	GetVersionPlusDepFile(myVersion myVersionDepFile)
+	get_version_plus_dep_file(myVersion myVersionDepFile)
 	set(myTarget        "${myName}")
 	set(myInstLibsDir   "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
 	set(myInstDataDir   "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
@@ -42,16 +42,16 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	If    (NOT BUILD_THIS_SKIRMISHAI)
-		Message("warning: ${myName} Skirmish AI will not be built!")
-	EndIf (NOT BUILD_THIS_SKIRMISHAI)
+	if    (NOT BUILD_THIS_SKIRMISHAI)
+		message("warning: ${myName} Skirmish AI will not be built!")
+	endif (NOT BUILD_THIS_SKIRMISHAI)
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
 		file(MAKE_DIRECTORY "${myBuildDir}/jlib")
 
 		set(configString "default")
-		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion} (config: ${configString})")
+		skirmish_ai_message(STATUS "Found Skirmish AI: ${myName} ${myVersion} (config: ${configString})")
 
 		# Assemble project generated targets (and their libraries) we depend on
 		set(myDependTargets  "${Java_AIINTERFACE_TARGET}")
@@ -83,7 +83,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 
 
 		# If main Java package is "my.ai.pkg", this has to be set to "my".
-		GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
+		get_first_sub_dir_name(firstSrcSubDir ${mySourceDir})
 		set(myJavaPkgFirstPart "${firstSrcSubDir}")
 
 		# Assemble additional meta data
@@ -102,14 +102,14 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 		add_dependencies(${myTarget} ${myBinaryTarget} ${mySourceTarget})
 
 		# Create our full Java class-path
-		CreateClasspath(myJavaLibs ${myJLibDir})
-		ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
+		create_classpath(myJavaLibs ${myJLibDir})
+		concat_classpaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 		foreach    (wrapperName ${wrapperNames})
-			ConcatClasspaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
+			concat_classpaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
 		endforeach (wrapperName)
 
 		# Locate the manifest file
-		FindManifestFile("${myDir}" myManifestFile)
+		find_manifest_file("${myDir}" myManifestFile)
 		if    (myManifestFile)
 			set(myBinJarArgs "cmf" "${myManifestFile}")
 		else  (myManifestFile)
@@ -211,7 +211,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			endif (EXISTS ${wrapperJLibDir})
 		endforeach (wrapperName)
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigureJavaSkirmishAI wrapperNames)
+endmacro (configure_java_skirmish_ai wrapperNames)
 
 
 ### END: MACROS_AND_FUNCTIONS
@@ -266,16 +266,16 @@ endif (AI_TYPES_JAVA)
 
 # Check if dependencies of the interface are met
 if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
+	set_global(BUILD_${myName}_AIINTERFACE TRUE)
 else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
+	set_global(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
 endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
-	GetVersionPlusDepFile(myVersion myVersionDepFile)
+	get_version_plus_dep_file(myVersion myVersionDepFile)
 	set(myTarget       "${myName}-AIInterface")
 	set(myGenTarget    "${myTarget}-generateSources")
 	set(myNativeTarget "${myTarget}-native")
@@ -284,15 +284,15 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	set(myJavaSourceDirRel   "${mySourceDirRel}/java")
 	set(myNativeSourceDirRel "${mySourceDirRel}/native")
-	MakeAbsolute(mySourceDir       "${myDir}" "${mySourceDirRel}")
-	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
-	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
+	make_absolute(mySourceDir       "${myDir}" "${mySourceDirRel}")
+	make_absolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
+	make_absolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
-	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
+	ai_interface_message(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
-	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
-	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
-	SetGlobal(${myName}_AIINTERFACE_TARGET_GENERATE_SOURCES ${myGenTarget})
+	set_global(${myName}_AIINTERFACE_VERS   ${myVersion})
+	set_global(${myName}_AIINTERFACE_TARGET ${myTarget})
+	set_global(${myName}_AIINTERFACE_TARGET_GENERATE_SOURCES ${myGenTarget})
 
 
 	# Init some vars
@@ -310,18 +310,18 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myJavaGeneratedSourceDir   "${myGeneratedSourceDir}/java")
 	set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")
-	CreateClasspath(myJavaLibs ${myJLibDir})
+	create_classpath(myJavaLibs ${myJLibDir})
 	set(myClassPath                ".${PATH_DELIM_H}${myJavaLibs}${PATH_DELIM_H}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
-	SetGlobal(SOURCE_ROOT_${myName}_AIINTERFACE      "${myDir}")
-	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
-	SetGlobal(${myName}_AIINTERFACE_JAR_BIN          "${myBuildDir}/${myBinJarFile}")
-	SetGlobal(${myName}_AIINTERFACE_JAR_SRC          "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIINTERFACE_POM              "${myBuildDir}/pom-generated.xml")
-	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
-	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
-	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
+	set_global(SOURCE_ROOT_${myName}_AIINTERFACE      "${myDir}")
+	set_global(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
+	set_global(${myName}_AIINTERFACE_JAR_BIN          "${myBuildDir}/${myBinJarFile}")
+	set_global(${myName}_AIINTERFACE_JAR_SRC          "${myBuildDir}/${mySrcJarFile}")
+	set_global(${myName}_AIINTERFACE_POM              "${myBuildDir}/pom-generated.xml")
+	set_global(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
+	set_global(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
+	set_global(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
 
 
 	# Generate sources
@@ -521,7 +521,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_dependencies(generateSources ${myGenTarget})
 
 	# Locate the manifest file
-	FindManifestFile("${myDir}" myManifestFile)
+	find_manifest_file("${myDir}" myManifestFile)
 	if    (myManifestFile)
 		set(myBinJarArgs "cmf" "${myManifestFile}")
 	else  (myManifestFile)
@@ -542,7 +542,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	target_link_libraries(${myNativeTarget} CUtils streflop)
 	set_target_properties(${myNativeTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myNativeTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
-	FixLibName(${myNativeTarget})
+	fix_lib_name(${myNativeTarget})
 
 
 	# Build the java part

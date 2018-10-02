@@ -5,7 +5,7 @@ remove_definitions (-DTRACE_SYNC -DSYNCDEBUG)
 remove_definitions (-DTHREADPOOL)
 
 # deactivate signaling-NANs for this library
-RemoveFlag("-fsignaling-nans")
+remove_flag("-fsignaling-nans")
 
 # Place executables and shared libs under "build-dir/",
 # instead of under "build-dir/rts/"
@@ -185,4 +185,4 @@ install(TARGETS engine-dedicated DESTINATION ${BINDIR})
 # use cases:
 # * make spring-dedicated
 # * make install-spring-dedicated
-CreateEngineBuildAndInstallTarget(dedicated)
+create_engine_build_and_install_target(dedicated)

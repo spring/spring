@@ -8,7 +8,7 @@ find_package(SevenZip REQUIRED)
 
 add_custom_target(basecontent ALL)
 
-macro(CreateBaseContentArchive outputdir filename files)
+macro(create_base_content_archive outputdir filename files)
 	### FIXME: find a nicer way to silence 7z
 	if(UNIX)
 		set(QUIET ">/dev/null")

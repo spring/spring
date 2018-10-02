@@ -53,12 +53,12 @@ endif (NO_SOUND)
 ### Find include directories and add platform specific libraries
 if    (UNIX AND NOT MINGW)
 	if    (PREFER_STATIC_LIBS)
-		PREFER_STATIC_LIBS()
+		prefer_static_libs()
 		find_library(C_LIBRARY c)
 		find_library(MATH_LIBRARY m)
 		#FIND_LIBRARY(PTHREAD_LIBRARY pthread)
 		#FIND_LIBRARY(OMP_LIBRARY gomp) FIXME it's hidden in some subfolders
-		UNPREFER_STATIC_LIBS()
+		unprefer_static_libs()
 
 		list(APPEND engineCommonLibraries ${C_LIBRARY} ${MATH_LIBRARY})
 		#list(APPEND engineCommonLibraries ${PTHREAD_LIBRARY} ${OMP_LIBRARY})
@@ -126,7 +126,7 @@ add_subdirectory(Net)
 add_subdirectory(Sim)
 #add_subdirectory(System) # this is already added in ../
 
-MakeGlobalVar(engineSources
+make_global_var(engineSources
 		${sources_engine_Game}
 		${sources_engine_Net}
 		${sources_engine_Lua}
