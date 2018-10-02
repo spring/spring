@@ -148,10 +148,10 @@ if( CMAKE_COMPILER_IS_GNUCXX)
 	# FIXME: hack to avoid linkers to remove not referenced symbols. required because of
 	# https://springrts.com/mantis/view.php?id=4511
 	if(APPLE)
-		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-force_load" engineSim)
+		make_global_var(SPRING_SIM_LIBRARIES "-Wl,-force_load" engineSim)
 	else()
-		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-whole-archive" engineSim "-Wl,-no-whole-archive")
+		make_global_var(SPRING_SIM_LIBRARIES "-Wl,-whole-archive" engineSim "-Wl,-no-whole-archive")
 	endif()
 else()
-	MakeGlobalVar(SPRING_SIM_LIBRARIES engineSim)
+	make_global_var(SPRING_SIM_LIBRARIES engineSim)
 endif()

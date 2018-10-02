@@ -7,7 +7,7 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-FIND_PACKAGE_STATIC(ZLIB REQUIRED)
+find_package_static(ZLIB REQUIRED)
 
 list(APPEND unitsync_libs ${CMAKE_DL_LIBS})
 list(APPEND unitsync_libs 7zip lua headlessStubs archives)
@@ -116,7 +116,7 @@ target_link_libraries(unitsync ${unitsync_libs})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
-FixLibName(unitsync)
+fix_lib_name(unitsync)
 
 install (TARGETS unitsync
 	RUNTIME DESTINATION ${LIBDIR}

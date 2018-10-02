@@ -6,4 +6,4 @@ set(additionalSources      "")
 set(additionalCompileFlags "")
 set(additionalLibraries    ${LegacyCpp_AIWRAPPER_TARGET} CUtils)
 
-ConfigureNativeSkirmishAI(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)
+configure_native_skirmish_ai(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)
