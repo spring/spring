@@ -466,12 +466,7 @@ void CGame::LoadDefs(LuaParser* defsParser)
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
 		defsParser->SetupLua(true);
-		// customize the defs environment; LuaParser has no access to ConstGame
-		// these and other constants should really be moved over to ConstEngine
-		defsParser->GetTable("Game");
-		defsParser->AddInt( "gameSpeed",  GAME_SPEED);
-		defsParser->AddInt("squareSize", SQUARE_SIZE);
-		defsParser->EndTable();
+		// customize the defs environment; LuaParser has no access to LuaSyncedRead
 		defsParser->GetTable("Spring");
 		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
 		defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);

@@ -4,7 +4,7 @@
 #include "LuaParser.h"
 
 #include <algorithm>
-#include <limits.h>
+#include <climits>
 
 #include "lib/streflop/streflop_cond.h"
 
@@ -12,6 +12,7 @@
 #include "System/float4.h"
 #include "LuaInclude.h"
 
+#include "LuaConstGame.h"
 #include "LuaConstEngine.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
@@ -156,6 +157,11 @@ void LuaParser::SetupEnv(bool synced)
 	AddFunc("Echo", LuaUtils::Echo);
 	AddFunc("Log", LuaUtils::Log);
 	AddFunc("TimeCheck", TimeCheck);
+	EndTable();
+
+	// not relevant for most LuaParsers, but entries are of value to defsParser
+	GetTable("Game");
+	LuaConstGame::PushEntries(L);
 	EndTable();
 
 	GetTable("Engine");
