@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 
 
-SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
+set(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
 # enable flag overrides for compilers
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_MODULES_SPRING}/OverrideFlags.cmake")
@@ -158,7 +158,7 @@ else  (UNIX AND NOT MINGW)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
 	else()
-		INCLUDE_DIRECTORIES(rts/lib/mingw-std-threads)
+		include_directories(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
 
@@ -280,7 +280,7 @@ if    (VALGRIND_FOUND)
 endif (VALGRIND_FOUND)
 
 include (CheckSymbolExists)
-CHECK_SYMBOL_EXISTS(strnlen string.h HAVE_STRNLEN)
+check_symbol_exists(strnlen string.h HAVE_STRNLEN)
 if (NOT HAVE_STRNLEN)
 	message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
 endif()
@@ -322,16 +322,16 @@ if    (LDGOLD_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
 else  (LDGOLD_FOUND)
-	Message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
+	message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
 endif (LDGOLD_FOUND)
 
 
 ### C++11/14
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-	Message(STATUS "Compiling with C++14")
+	message(STATUS "Compiling with C++14")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 else()
-	Message(STATUS "Compiling with C++11")
+	message(STATUS "Compiling with C++11")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
 endif()
 
@@ -407,7 +407,7 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
-		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
+		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
 
 	if    (MARCH_FLAG)

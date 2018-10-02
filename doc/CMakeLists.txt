@@ -13,9 +13,9 @@ if    (UNIX)
 			OUTPUT_QUIET
 			ERROR_STRIP_TRAILING_WHITESPACE)
 		if    (ASCIIDOC_RESULT EQUAL 0)
-			MakeGlobalVar(CREATE_MAN_PAGES TRUE)
+			make_global_var(CREATE_MAN_PAGES TRUE)
 		else  (ASCIIDOC_RESULT EQUAL 0)
-			MakeGlobalVar(CREATE_MAN_PAGES FALSE)
+			make_global_var(CREATE_MAN_PAGES FALSE)
 			message(STATUS "MAN pages will not be generated/installed (utility asciidoc is broken)")
 		endif (ASCIIDOC_RESULT EQUAL 0)
 	else  (SEVENZIP_FOUND AND ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
@@ -93,15 +93,15 @@ if     (USERDOCS_HTML)
 		set(userdoc_INSTALL_HTML TRUE)
 
 		# Generates "${name}.html" from "${name}(.markdown)"
-		macro    (Userdoc_GenerateHtml name var_srcFile)
+		macro    (userdoc_generate_html name var_srcFile)
 			set(DST_FILE_${name} "${CMAKE_CURRENT_BINARY_DIR}/${name}.html")
 
 			if     (PANDOC_FOUND)
-				Pandoc_MdToHtml(  convert_command_${name}
+				pandoc_md_to_html(  convert_command_${name}
 						"${${var_srcFile}}" "${DST_FILE_${name}}"
 						"Spring RTS Game Engine - ${name}")
 			else   ()
-				Markdown_MdToHtml(convert_command_${name}
+				markdown_md_to_html(convert_command_${name}
 						"${${var_srcFile}}" "${DST_FILE_${name}}")
 			endif  ()
 			add_custom_command(
@@ -114,7 +114,7 @@ if     (USERDOCS_HTML)
 			list(APPEND userdoc_html_generated "${DST_FILE_${name}}")
 
 			set_source_files_properties("${DST_FILE_${name}}" PROPERTIES GENERATED TRUE)
-		endmacro (Userdoc_GenerateHtml)
+		endmacro (userdoc_generate_html)
 	else   (PANDOC_FOUND OR MARKDOWN_FOUND)
 		message(WARNING "user-docs generation (html/text) is not possible (disable with USERDOCS_HTML=FALSE); missing utility: pandoc or markdown")
 	endif  (PANDOC_FOUND OR MARKDOWN_FOUND)
@@ -125,7 +125,7 @@ endif  (USERDOCS_HTML)
 if     (USERDOCS_PLAIN OR userdoc_INSTALL_HTML)
 	set(userdoc_plain "")
 
-	macro    (Userdoc_Enlist name)
+	macro    (userdoc_enlist name)
 		set(userdoc_file_plain_${name} "${CMAKE_SOURCE_DIR}/${name}.markdown")
 		if     (NOT EXISTS "${userdoc_file_plain_${name}}")
 			set(userdoc_file_plain_${name} "${CMAKE_SOURCE_DIR}/${name}")
@@ -134,16 +134,16 @@ if     (USERDOCS_PLAIN OR userdoc_INSTALL_HTML)
 		list(APPEND userdoc_plain "${userdoc_file_plain_${name}}")
 
 		if     (userdoc_INSTALL_HTML)
-			Userdoc_GenerateHtml("${name}" userdoc_file_plain_${name})
+			userdoc_generate_html("${name}" userdoc_file_plain_${name})
 		endif  (userdoc_INSTALL_HTML)
-	endmacro (Userdoc_Enlist)
+	endmacro (userdoc_enlist)
 
-	Userdoc_Enlist("AUTHORS")
-	Userdoc_Enlist("README")
-	Userdoc_Enlist("COPYING")
-	Userdoc_Enlist("FAQ")
-	Userdoc_Enlist("LICENSE")
-	Userdoc_Enlist("THANKS")
+	userdoc_enlist("AUTHORS")
+	userdoc_enlist("README")
+	userdoc_enlist("COPYING")
+	userdoc_enlist("FAQ")
+	userdoc_enlist("LICENSE")
+	userdoc_enlist("THANKS")
 endif  (USERDOCS_PLAIN OR userdoc_INSTALL_HTML)
 
 set(userdoc_INSTALL_PLAIN ${USERDOCS_PLAIN})

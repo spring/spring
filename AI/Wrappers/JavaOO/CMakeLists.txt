@@ -23,9 +23,9 @@ endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
+	set_global(BUILD_${myName}_AIWRAPPER TRUE)
 else  (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
+	set_global(BUILD_${myName}_AIWRAPPER FALSE)
 	message("warning: Java OO AI Wrapper will not be built!")
 endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
@@ -33,16 +33,16 @@ endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName M
 # Build
 if    (BUILD_${myName}_AIWRAPPER)
 	set(myDir        "${CMAKE_CURRENT_SOURCE_DIR}")
-	GetLastPathPart(dirName ${myDir})
+	get_last_path_part(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
 	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
 	set(mySourceDirRel     "src/main/java")
-	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	AIWrapperMessage(STATUS "Found AI Wrapper: ${myName}")
+	ai_wrapper_message(STATUS "Found AI Wrapper: ${myName}")
 
 
 	# Build library
@@ -58,21 +58,21 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myBinJarFile                 "${myJarFile}.jar")
 	set(mySrcJarFile                 "${myJarFile}-src.jar")
 	set(myJLibDir                    "${myDir}/jlib")
-	FindJavaLib(vecmath_jar "vecmath" "${myJLibDir}")
+	find_java_lib(vecmath_jar "vecmath" "${myJLibDir}")
 	set(myJLibs                      "${vecmath_jar}")
 	set(jAiIntJavaSourceDir          "${JAVA_SRC_DIR_Java_AIINTERFACE}")
 	set(jAiIntJavaGeneratedSourceDir "${JAVA_GEN_SRC_DIR_Java_AIINTERFACE}")
 	set(myClassPath                  "${myJLibs}${PATH_DELIM_H}${CLASSPATH_Java_AIINTERFACE}")
 
-	SetGlobal(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
-	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
-	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
-	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
+	set_global(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
+	set_global(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
+	set_global(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
+	set_global(${myName}_AIWRAPPER_TARGET        "${myTarget}")
+	set_global(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
+	set_global(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Locate the manifest file
-	FindManifestFile("${myDir}" myManifestFile)
+	find_manifest_file("${myDir}" myManifestFile)
 	if    (myManifestFile)
 		set(myBinJarArgs "cmf" "${myManifestFile}")
 	else  (myManifestFile)

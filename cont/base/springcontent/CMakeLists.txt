@@ -182,5 +182,5 @@ set(FILES
 	LuaIntro/Addons/bg_texture.lua
 )
 
-CreateBaseContentArchive("base" "springcontent.sdz" "${FILES}")
+create_base_content_archive("base" "springcontent.sdz" "${FILES}")
 

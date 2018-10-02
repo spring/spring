@@ -1,6 +1,6 @@
 # See README.md for usage instructions
 if (MINGW)
-	RemoveFlag("-mwindows")
+	remove_flag("-mwindows")
 endif (MINGW)
 # defines spring_test_compile_fail macro
 include(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)

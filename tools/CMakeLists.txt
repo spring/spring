@@ -17,7 +17,7 @@ add_subdirectory(pr-downloader)
 # add install-pr-downloader target
 set(myInstallDeps pr-downloader)
 set(myInstallDirs "tools/pr-downloader")
-CreateInstallTarget("pr-downloader" myInstallDeps myInstallDirs)
+create_install_target("pr-downloader" myInstallDeps myInstallDirs)
 
 # This is not part of the official source package
 if    (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dirchange)

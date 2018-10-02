@@ -64,4 +64,4 @@ install(TARGETS engine-headless DESTINATION ${BINDIR})
 # use cases:
 # * make spring-headless
 # * make install-spring-headless
-CreateEngineBuildAndInstallTarget(headless)
+create_engine_build_and_install_target(headless)

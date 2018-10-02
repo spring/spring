@@ -20,9 +20,9 @@ endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 
 # Check dependencies of the wrapper are met
 if    (AIWRAPPERS_NATIVE)
-	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
+	set_global(BUILD_${myName}_AIWRAPPER TRUE)
 else  (AIWRAPPERS_NATIVE)
-	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
+	set_global(BUILD_${myName}_AIWRAPPER FALSE)
 	message ("warning: Legacy C++ AI Wrapper will not be built!")
 endif (AIWRAPPERS_NATIVE)
 
@@ -30,17 +30,17 @@ endif (AIWRAPPERS_NATIVE)
 # Build
 if    (BUILD_${myName}_AIWRAPPER)
 	set(myDir        "${CMAKE_CURRENT_SOURCE_DIR}")
-	GetLastPathPart(dirName ${myDir})
+	get_last_path_part(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
 	set(myCregTarget "${myName}-Creg-AIWrapper")
-	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	AIWrapperMessage(STATUS "Found AI Wrapper: ${myTarget}")
-	AIWrapperMessage(STATUS "Found AI Wrapper: ${myCregTarget}")
+	ai_wrapper_message(STATUS "Found AI Wrapper: ${myTarget}")
+	ai_wrapper_message(STATUS "Found AI Wrapper: ${myCregTarget}")
 
-	SetGlobal(${myName}_AIWRAPPER_TARGET      ${myTarget})
-	SetGlobal(${myName}_Creg_AIWRAPPER_TARGET ${myCregTarget})
+	set_global(${myName}_AIWRAPPER_TARGET      ${myTarget})
+	set_global(${myName}_Creg_AIWRAPPER_TARGET ${myCregTarget})
 
 	# Assemble the Legacy C++ AI sources
 	set(mySources

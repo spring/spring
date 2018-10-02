@@ -2,7 +2,7 @@
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
-MakeGlobalVar(sources_engine_System_common
+make_global_var(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Color.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
@@ -68,9 +68,9 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
 if    (NO_CREG)
-	MakeGlobalVar(sources_engine_System_creg )
+	make_global_var(sources_engine_System_creg )
 else  (NO_CREG)
-	MakeGlobalVar(sources_engine_System_creg
+	make_global_var(sources_engine_System_creg
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/SerializeLuaState.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
@@ -78,7 +78,7 @@ else  (NO_CREG)
 			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
 		)
 endif (NO_CREG)
-MakeGlobalVar(sources_engine_System_FileSystem
+make_global_var(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveNameResolver.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
@@ -95,7 +95,7 @@ MakeGlobalVar(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SimpleParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/VFSHandler.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Log
+make_global_var(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
@@ -103,16 +103,16 @@ MakeGlobalVar(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogSinkHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)
-MakeGlobalVar(sources_engine_System_Log_sinkStream
+make_global_var(sources_engine_System_Log_sinkStream
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/StreamSink.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Log_sinkConsole
+make_global_var(sources_engine_System_Log_sinkConsole
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/ConsoleSink.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Log_sinkFile
+make_global_var(sources_engine_System_Log_sinkFile
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/FileSink.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Log_sinkOutputDebugString
+make_global_var(sources_engine_System_Log_sinkOutputDebugString
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
 	)
 set(sources_engine_System_Platform_Linux
@@ -179,30 +179,30 @@ set(sources_engine_System
 
 ### only use the target platform related directory
 if     (APPLE)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Mac})
-	MakeGlobalVar(sources_engine_System
+	make_global_var(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Mac})
+	make_global_var(sources_engine_System
 			${sources_engine_System}
 			${sources_engine_System_Platform_Mac}
 			${sources_engine_System_Threading}
 		)
 elseif (UNIX)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Linux})
-	MakeGlobalVar(sources_engine_System
+	make_global_var(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Linux})
+	make_global_var(sources_engine_System
 			${sources_engine_System}
 			${sources_engine_System_Platform_Linux}
 			${sources_engine_System_Threading}
 		)
 
 elseif (WIN32)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Windows})
-	MakeGlobalVar(sources_engine_System
+	make_global_var(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Windows})
+	make_global_var(sources_engine_System
 			${sources_engine_System}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
 			${sources_engine_System_Threading}
 		)
 else()
-	MakeGlobalVar(sources_engine_System
+	make_global_var(sources_engine_System
 			${sources_engine_System}
 			${sources_engine_System_Threading}
 		)
