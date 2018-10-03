@@ -515,7 +515,10 @@ void CGameSetup::RemapAllyteams()
 // TODO: RemapSkirmishAIs()
 bool CGameSetup::Init(const std::string& buf)
 {
-	ResetState();
+	if (!setupText.empty()) {
+		throw content_error("initializing a non-empty GameSetup instance");
+		return false;
+	}
 
 	// Copy buffer contents
 	setupText = buf;

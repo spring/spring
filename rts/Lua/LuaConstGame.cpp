@@ -42,69 +42,67 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 		LuaPushNamedNumber(L, "windMin" , wind.GetMinWind());
 		LuaPushNamedNumber(L, "windMax" , wind.GetMaxWind());
-	}
 
-	// map-damage; enabled iff !mapInfo->map.notDeformable
-	if (mapDamage != nullptr)
+		// map-damage; enabled iff !mapInfo->map.notDeformable
 		LuaPushNamedBool(L, "mapDamage", !mapDamage->Disabled());
+	}
 
 	if (readMap != nullptr) {
 		// FIXME: make this available in LoadScreen (LuaIntro) already
 		// requires pre-parsing the map header and filling in mapDims
-		LuaPushNamedNumber(L, "mapX",     mapDims.mapx / 64);
-		LuaPushNamedNumber(L, "mapY",     mapDims.mapy / 64);
+		LuaPushNamedNumber(L, "mapX"    , mapDims.mapx / 64);
+		LuaPushNamedNumber(L, "mapY"    , mapDims.mapy / 64);
 		LuaPushNamedNumber(L, "mapSizeX", mapDims.mapx * SQUARE_SIZE);
 		LuaPushNamedNumber(L, "mapSizeZ", mapDims.mapy * SQUARE_SIZE);
 	}
 
 	if (mapInfo != nullptr) {
 		// map-info
-		LuaPushNamedString(L, "mapName",          mapInfo->map.name);
-		LuaPushNamedString(L, "mapHumanName",     mapInfo->map.description); //! deprecated
-		LuaPushNamedString(L, "mapDescription",   mapInfo->map.description);
-		LuaPushNamedNumber(L, "mapHardness",      mapInfo->map.hardness);
+		LuaPushNamedString(L, "mapName"        ,  mapInfo->map.name);
+		LuaPushNamedString(L, "mapDescription" ,  mapInfo->map.description);
+		LuaPushNamedNumber(L, "mapHardness"    ,  mapInfo->map.hardness);
 		LuaPushNamedNumber(L, "extractorRadius",  mapInfo->map.extractorRadius);
-		LuaPushNamedNumber(L, "tidal",            mapInfo->map.tidalStrength);
-		LuaPushNamedNumber(L, "waterDamage",      mapInfo->water.damage);
-		LuaPushNamedNumber(L, "gravity",         -mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
+		LuaPushNamedNumber(L, "tidal"          ,  mapInfo->map.tidalStrength);
+		LuaPushNamedNumber(L, "waterDamage"    ,  mapInfo->water.damage);
+		LuaPushNamedNumber(L, "gravity"        , -mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
 	}
 
 	if (!modInfo.filename.empty()) {
 		// mod-info; values are meaningless prior to LoadGame
-		LuaPushNamedString(L, "gameName",        modInfo.humanName);
-		LuaPushNamedString(L, "gameShortName",   modInfo.shortName);
-		LuaPushNamedString(L, "gameVersion",     modInfo.version);
-		LuaPushNamedString(L, "gameMutator",     modInfo.mutator);
-		LuaPushNamedString(L, "gameDesc",        modInfo.description);
+		LuaPushNamedString(L, "gameName"     , modInfo.humanName);
+		LuaPushNamedString(L, "gameShortName", modInfo.shortName);
+		LuaPushNamedString(L, "gameVersion"  , modInfo.version);
+		LuaPushNamedString(L, "gameMutator"  , modInfo.mutator);
+		LuaPushNamedString(L, "gameDesc"     , modInfo.description);
 
-		LuaPushNamedString(L, "modName",         modInfo.humanNameVersioned);
-		LuaPushNamedString(L, "modShortName",    modInfo.shortName);
-		LuaPushNamedString(L, "modVersion",      modInfo.version);
-		LuaPushNamedString(L, "modMutator",      modInfo.mutator);
-		LuaPushNamedString(L, "modDesc",         modInfo.description);
+		LuaPushNamedString(L, "modName"      , modInfo.humanNameVersioned);
+		LuaPushNamedString(L, "modShortName" , modInfo.shortName);
+		LuaPushNamedString(L, "modVersion"   , modInfo.version);
+		LuaPushNamedString(L, "modMutator"   , modInfo.mutator);
+		LuaPushNamedString(L, "modDesc"      , modInfo.description);
 
-		LuaPushNamedBool  (L, "constructionDecay",      modInfo.constructionDecay);
-		LuaPushNamedNumber(L, "constructionDecayTime",  modInfo.constructionDecayTime);
+		LuaPushNamedBool  (L, "constructionDecay"     , modInfo.constructionDecay);
+		LuaPushNamedNumber(L, "constructionDecayTime" , modInfo.constructionDecayTime);
 		LuaPushNamedNumber(L, "constructionDecaySpeed", modInfo.constructionDecaySpeed);
 
-		LuaPushNamedNumber(L, "multiReclaim",                   modInfo.multiReclaim);
-		LuaPushNamedNumber(L, "reclaimMethod",                  modInfo.reclaimMethod);
-		LuaPushNamedNumber(L, "reclaimUnitMethod",              modInfo.reclaimUnitMethod);
-		LuaPushNamedNumber(L, "reclaimUnitEnergyCostFactor",    modInfo.reclaimUnitEnergyCostFactor);
-		LuaPushNamedNumber(L, "reclaimUnitEfficiency",          modInfo.reclaimUnitEfficiency);
+		LuaPushNamedNumber(L, "multiReclaim"                  , modInfo.multiReclaim);
+		LuaPushNamedNumber(L, "reclaimMethod"                 , modInfo.reclaimMethod);
+		LuaPushNamedNumber(L, "reclaimUnitMethod"             , modInfo.reclaimUnitMethod);
+		LuaPushNamedNumber(L, "reclaimUnitEnergyCostFactor"   , modInfo.reclaimUnitEnergyCostFactor);
+		LuaPushNamedNumber(L, "reclaimUnitEfficiency"         , modInfo.reclaimUnitEfficiency);
 		LuaPushNamedNumber(L, "reclaimFeatureEnergyCostFactor", modInfo.reclaimFeatureEnergyCostFactor);
-		LuaPushNamedBool  (L, "reclaimAllowEnemies",            modInfo.reclaimAllowEnemies);
-		LuaPushNamedBool  (L, "reclaimAllowAllies",             modInfo.reclaimAllowAllies);
-		LuaPushNamedNumber(L, "repairEnergyCostFactor",         modInfo.repairEnergyCostFactor);
-		LuaPushNamedNumber(L, "resurrectEnergyCostFactor",      modInfo.resurrectEnergyCostFactor);
-		LuaPushNamedNumber(L, "captureEnergyCostFactor",        modInfo.captureEnergyCostFactor);
+		LuaPushNamedBool  (L, "reclaimAllowEnemies"           , modInfo.reclaimAllowEnemies);
+		LuaPushNamedBool  (L, "reclaimAllowAllies"            , modInfo.reclaimAllowAllies);
+		LuaPushNamedNumber(L, "repairEnergyCostFactor"        , modInfo.repairEnergyCostFactor);
+		LuaPushNamedNumber(L, "resurrectEnergyCostFactor"     , modInfo.resurrectEnergyCostFactor);
+		LuaPushNamedNumber(L, "captureEnergyCostFactor"       , modInfo.captureEnergyCostFactor);
 
-		LuaPushNamedNumber(L, "transportAir",    modInfo.transportAir);
-		LuaPushNamedNumber(L, "transportShip",   modInfo.transportShip);
-		LuaPushNamedNumber(L, "transportHover",  modInfo.transportHover);
+		LuaPushNamedNumber(L, "transportAir"   , modInfo.transportAir);
+		LuaPushNamedNumber(L, "transportShip"  , modInfo.transportShip);
+		LuaPushNamedNumber(L, "transportHover" , modInfo.transportHover);
 		LuaPushNamedNumber(L, "transportGround", modInfo.transportGround);
-		LuaPushNamedNumber(L, "fireAtKilled",    modInfo.fireAtKilled);
-		LuaPushNamedNumber(L, "fireAtCrashing",  modInfo.fireAtCrashing);
+		LuaPushNamedNumber(L, "fireAtKilled"   , modInfo.fireAtKilled);
+		LuaPushNamedNumber(L, "fireAtCrashing" , modInfo.fireAtCrashing);
 
 		LuaPushNamedNumber(L, "requireSonarUnderWater", modInfo.requireSonarUnderWater);
 
@@ -165,27 +163,27 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		// environmental damage types
 		lua_pushliteral(L, "envDamageTypes");
 		lua_createtable(L, 0, 7);
-			LuaPushNamedNumber(L, "Debris",          -CSolidObject::DAMAGE_EXPLOSION_DEBRIS );
+			LuaPushNamedNumber(L, "Debris"         , -CSolidObject::DAMAGE_EXPLOSION_DEBRIS );
 			LuaPushNamedNumber(L, "GroundCollision", -CSolidObject::DAMAGE_COLLISION_GROUND );
 			LuaPushNamedNumber(L, "ObjectCollision", -CSolidObject::DAMAGE_COLLISION_OBJECT );
-			LuaPushNamedNumber(L, "Fire",            -CSolidObject::DAMAGE_EXTSOURCE_FIRE   );
-			LuaPushNamedNumber(L, "Water",           -CSolidObject::DAMAGE_EXTSOURCE_WATER  );
-			LuaPushNamedNumber(L, "Killed",          -CSolidObject::DAMAGE_EXTSOURCE_KILLED );
-			LuaPushNamedNumber(L, "Crushed",         -CSolidObject::DAMAGE_EXTSOURCE_CRUSHED);
+			LuaPushNamedNumber(L, "Fire"           , -CSolidObject::DAMAGE_EXTSOURCE_FIRE   );
+			LuaPushNamedNumber(L, "Water"          , -CSolidObject::DAMAGE_EXTSOURCE_WATER  );
+			LuaPushNamedNumber(L, "Killed"         , -CSolidObject::DAMAGE_EXTSOURCE_KILLED );
+			LuaPushNamedNumber(L, "Crushed"        , -CSolidObject::DAMAGE_EXTSOURCE_CRUSHED);
 		lua_rawset(L, -3);
 	}
 	{
 		// weapon avoidance and projectile collision flags
 		lua_pushliteral(L, "collisionFlags");
 		lua_createtable(L, 0, 8);
-			LuaPushNamedNumber(L, "noEnemies",    Collision::NOENEMIES   );
+			LuaPushNamedNumber(L, "noEnemies"   , Collision::NOENEMIES   );
 			LuaPushNamedNumber(L, "noFriendlies", Collision::NOFRIENDLIES);
-			LuaPushNamedNumber(L, "noFeatures",   Collision::NOFEATURES  );
-			LuaPushNamedNumber(L, "noNeutrals",   Collision::NONEUTRALS  );
-			LuaPushNamedNumber(L, "noFirebases",  Collision::NOFIREBASES );
-			LuaPushNamedNumber(L, "noGround",     Collision::NOGROUND    );
-			LuaPushNamedNumber(L, "noCloaked",    Collision::NOCLOAKED   );
-			LuaPushNamedNumber(L, "noUnits",      Collision::NOUNITS     );
+			LuaPushNamedNumber(L, "noFeatures"  , Collision::NOFEATURES  );
+			LuaPushNamedNumber(L, "noNeutrals"  , Collision::NONEUTRALS  );
+			LuaPushNamedNumber(L, "noFirebases" , Collision::NOFIREBASES );
+			LuaPushNamedNumber(L, "noGround"    , Collision::NOGROUND    );
+			LuaPushNamedNumber(L, "noCloaked"   , Collision::NOCLOAKED   );
+			LuaPushNamedNumber(L, "noUnits"     , Collision::NOUNITS     );
 		lua_rawset(L, -3);
 	}
 	{

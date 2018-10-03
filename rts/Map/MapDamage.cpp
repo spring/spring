@@ -10,9 +10,10 @@
 static CDummyMapDamage dummyMapDamage;
 static CBasicMapDamage basicMapDamage;
 
-IMapDamage* mapDamage = nullptr;
+// never null
+IMapDamage* mapDamage = &dummyMapDamage;
 
-IMapDamage* IMapDamage::GetMapDamage()
+IMapDamage* IMapDamage::InitMapDamage()
 {
 	if (mapInfo->map.notDeformable) {
 		dummyMapDamage.Init();
@@ -25,5 +26,11 @@ IMapDamage* IMapDamage::GetMapDamage()
 
 	basicMapDamage.Init();
 	return &basicMapDamage;
+}
+
+void IMapDamage::FreeMapDamage(IMapDamage* p)
+{
+	assert(p == mapDamage);
+	mapDamage = &dummyMapDamage;
 }
 
