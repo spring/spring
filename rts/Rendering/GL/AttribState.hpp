@@ -55,6 +55,11 @@ namespace GL {
 		void PushViewPortBit();
 
 
+		void DepthRange(float zn, float zf);
+		void PushDepthRange(float zn, float zf);
+		void PushDepthRange() { PushDepthRange(depthRangeStack.Top()); }
+		void PopDepthRange();
+
 		// depth-clamp (GLboolean)
 		void DepthClamp(bool enable);
 		void PushDepthClamp(bool enable);
@@ -209,7 +214,18 @@ namespace GL {
 		void PushLineWidth() { PushLineWidth(lineWidthStack.Top()); }
 		void PopLineWidth();
 
+		// uncaptured state
+		void Clear(uint32_t bits);
+		void ClearAccum(float r, float g, float b, float a);
+		void ClearColor(float r, float g, float b, float a);
+		void ClearDepth(float depth);
+		void ClearStencil(uint32_t rval);
+
 	private:
+		struct DepthRangeState {
+			float zn;
+			float zf;
+		};
 		struct AlphaFuncState {
 			uint32_t func;
 			float rval;
@@ -255,6 +271,7 @@ namespace GL {
 			int32_t h;
 		};
 
+		void DepthRange(const DepthRangeState& v) { DepthRange(v.zn, v.zf); }
 		void AlphaFunc(const AlphaFuncState& v) { AlphaFunc(v.func, v.rval); }
 		void BlendFunc(const BlendFuncState& v) { BlendFunc(v.srcFac, v.dstFac); }
 		void BlendColor(const BlendColorState& v) { BlendColor(v.r, v.g, v.b, v.a); }
@@ -265,6 +282,7 @@ namespace GL {
 		void PolygonOffset(const PolyOffsetState& v) { PolygonOffset(v.factor, v.units); }
 		void ViewPort(const ViewPortState& v) { ViewPort(v.x, v.y, v.w, v.h); }
 
+		void PushDepthRange(const DepthRangeState& v) { PushDepthRange(v.zn, v.zf); }
 		void PushAlphaFunc(const AlphaFuncState& v) { PushAlphaFunc(v.func, v.rval); }
 		void PushBlendFunc(const BlendFuncState& v) { PushBlendFunc(v.srcFac, v.dstFac); }
 		void PushBlendColor(const BlendColorState& v) { PushBlendColor(v.r, v.g, v.b, v.a); }
@@ -313,6 +331,7 @@ namespace GL {
 		};
 
 		ArrayStack<uint32_t        , 64>  attribBitsStack;
+		ArrayStack<DepthRangeState , 64>  depthRangeStack;
 		ArrayStack<bool            , 64>  depthClampStack;
 		ArrayStack<bool            , 64>   depthTestStack;
 		ArrayStack<bool            , 64>   depthMaskStack;

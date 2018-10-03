@@ -107,6 +107,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(pixelY),
 	CR_IGNORED(aspectRatio),
 
+	CR_IGNORED(gammaExponent),
+
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
@@ -181,6 +183,8 @@ CGlobalRendering::CGlobalRendering()
 	, pixelY(0.01f)
 
 	, aspectRatio(1.0f)
+
+	, gammaExponent(1.0f)
 
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
@@ -1128,7 +1132,7 @@ void CGlobalRendering::InitGLState()
 
 	if (glAttribStatePtr == nullptr) {
 		glClearDepth(1.0f);
-		glDepthRange(0.0f, 1.0f);
+		glDepthRangef(0.0f, 1.0f);
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);

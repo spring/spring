@@ -149,7 +149,8 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 22
 		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 23
 		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 24
-		modelShaders[n]->SetUniformLocation("fwdDynLights");      // idx 24
+		modelShaders[n]->SetUniformLocation("gammaExponent");     // idx 24
+		modelShaders[n]->SetUniformLocation("fwdDynLights");      // idx 25
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -177,6 +178,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformMatrix4fv(22, false, shadowHandler.GetShadowViewMatrixRaw());
 		modelShaders[n]->SetUniform4fv(23, shadowHandler.GetShadowParams());
 		// modelShaders[n]->SetUniform1f(24, 0.0f); // alphaPass
+		modelShaders[n]->SetUniform1f(24, globalRendering->gammaExponent);
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -206,7 +208,7 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 
 	if (cLightHandler->NumConfigLights() > 0) {
 		mLightHandler->Update();
-		shader->SetUniform4fv(24, cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
+		shader->SetUniform4fv(25, cLightHandler->NumUniformVecs(), cLightHandler->GetRawLightDataPtr());
 	}
 
 	shader->SetUniform3fv(9, &fogParams.x);
@@ -215,6 +217,7 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	shader->SetUniformMatrix4fv(8, false, camera->GetProjectionMatrix());
 	shader->SetUniformMatrix4fv(22, false, shadowHandler.GetShadowViewMatrixRaw());
 	shader->SetUniform4fv(23, shadowHandler.GetShadowParams());
+	shader->SetUniform1f(24, globalRendering->gammaExponent);
 }
 
 void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {

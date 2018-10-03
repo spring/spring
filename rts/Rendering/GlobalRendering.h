@@ -171,6 +171,8 @@ public:
 	 */
 	float aspectRatio;
 
+	float gammaExponent;
+
 
 	int forceCoreContext;
 	int forceSwapBuffers;

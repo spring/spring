@@ -21,6 +21,8 @@ uniform vec3 groundSpecularColor;
 uniform float groundSpecularExponent;
 uniform float groundShadowDensity;
 
+uniform float gammaExponent;
+
 uniform vec2 mapHeights; // min & max height on the map
 
 uniform vec4 lightDir;
@@ -476,6 +478,7 @@ void main() {
 	fragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 	#endif
 }
 

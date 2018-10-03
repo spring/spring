@@ -51,6 +51,8 @@ uniform mat4 projMatrix;
 
 
 uniform float frame;
+// neither added via SetupUniforms nor as a constant definition
+uniform float gammaExponent;
 
 uniform vec3 eyePos;
 uniform vec3 fogColor;
@@ -404,5 +406,7 @@ void main()
 
 		fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
 	}
+
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 }
 

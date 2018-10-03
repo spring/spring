@@ -2977,8 +2977,8 @@ int LuaOpenGL::Clear(lua_State* L)
 				luaL_error(L, "Incorrect arguments to gl.Clear(bits, r, g, b, a)");
 
 			switch (bits) {
-				case GL_COLOR_BUFFER_BIT: { glClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
-				case GL_ACCUM_BUFFER_BIT: { glClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
+				case GL_COLOR_BUFFER_BIT: { glAttribStatePtr->ClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
+				case GL_ACCUM_BUFFER_BIT: { glAttribStatePtr->ClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
 				default: {} break;
 			}
 		} break;
@@ -2987,14 +2987,14 @@ int LuaOpenGL::Clear(lua_State* L)
 				luaL_error(L, "Incorrect arguments to gl.Clear(bits, val)");
 
 			switch (bits) {
-				case GL_DEPTH_BUFFER_BIT: { glClearDepth((GLfloat)lua_tonumber(L, 2)); } break;
-				case GL_STENCIL_BUFFER_BIT: { glClearStencil((GLint)lua_tonumber(L, 2)); } break;
+				case GL_DEPTH_BUFFER_BIT: { glAttribStatePtr->ClearDepth((GLfloat)lua_tonumber(L, 2)); } break;
+				case GL_STENCIL_BUFFER_BIT: { glAttribStatePtr->ClearStencil((GLint)lua_tonumber(L, 2)); } break;
 				default: {} break;
 			}
 		} break;
 	}
 
-	glClear(bits);
+	glAttribStatePtr->Clear(bits);
 	return 0;
 }
 

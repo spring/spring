@@ -195,8 +195,8 @@ void CPathTexture::Update()
 		updateProcess = 0;
 		fbo.Bind();
 		glAttribStatePtr->ViewPort(0,0, texSize.x, texSize.y);
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 		glAttribStatePtr->ViewPort(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 		FBO::Unbind();
 		return;

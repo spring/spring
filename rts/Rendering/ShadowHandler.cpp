@@ -615,7 +615,7 @@ void CShadowHandler::CreateShadows()
 	glAttribStatePtr->EnableDepthTest();
 	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT);
 
 
 	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);

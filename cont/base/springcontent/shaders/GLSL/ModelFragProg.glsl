@@ -24,6 +24,7 @@ uniform vec4 shadowParams;
 uniform float shadowDensity;
 #endif
 uniform float specularExponent;
+uniform float gammaExponent;
 
 uniform vec4 fogColor;
 // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
@@ -187,6 +188,7 @@ void main(void)
 	#else
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor); // fog
 	fragColor.rgb = mix(fragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 	fragColor.a   = alpha;
 	#endif
 }

@@ -1780,8 +1780,8 @@ void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
 
 	if (blackscreen) {
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 	}
 
 	font->SetTextColor(0.5f, 1.0f, 0.5f, 1.0f);

@@ -393,8 +393,8 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 	glAttribStatePtr->EnableAlphaTest();
 	glAttribStatePtr->DisableDepthTest();
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CreateGranTexBranch(ZeroVector, float3(0.93f, 0.93f, 0.0f));
 
@@ -593,8 +593,8 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	glAttribStatePtr->EnableAlphaTest();
 	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	CMatrix44f leafMat;

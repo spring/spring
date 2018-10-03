@@ -40,20 +40,20 @@ void GL::GeometryBuffer::Kill(bool dtor) {
 
 void GL::GeometryBuffer::Clear() const {
 	assert(bound);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void GL::GeometryBuffer::SetDepthRange(float nearDepth, float farDepth) const {
 	#if 0
 	if (globalRendering->supportClipSpaceControl) {
 		// TODO: need to inform shaders about this, modify PM instead
-		glDepthRangef(nearDepth, farDepth);
-		glClearDepth(farDepth);
+		glAttribStatePtr->DepthRange(nearDepth, farDepth);
+		glAttribStatePtr->ClearDepth(farDepth);
 		glAttribStatePtr->DepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
 	}
 	#else
-	glClearDepth(std::max(nearDepth, farDepth));
+	glAttribStatePtr->ClearDepth(std::max(nearDepth, farDepth));
 	glAttribStatePtr->DepthFunc(GL_LEQUAL);
 	#endif
 }

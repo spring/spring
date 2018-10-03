@@ -997,8 +997,8 @@ void CMiniMap::UpdateTextureCache()
 
 			// draw minimap into FBO
 			glAttribStatePtr->ViewPort(0, 0, minimapTexSize.x, minimapTexSize.y);
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 			DrawForReal(false, true, false);
 

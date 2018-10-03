@@ -232,7 +232,7 @@ void ShowSplashScreen(
 	glActiveTexture(GL_TEXTURE0);
 
 	for (spring_time t0 = spring_now(), t1 = t0; !testDoneFunc(); t1 = spring_now()) {
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, splashTex);
 
 		shader->Enable();

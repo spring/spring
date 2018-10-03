@@ -271,6 +271,7 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	shaderProg->SetUniform("u_diffuse_tex_sqr", -1, -1);
 	shaderProg->SetUniform("u_diffuse_tex", 0);
 	shaderProg->SetUniform("u_detail_tex", 2);
+	shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 	shaderProg->Disable();
 }
 
@@ -475,6 +476,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	shaderProg->Enable();
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shaderProg->SetUniform<const char*, float>("u_gamma_exponent", globalRendering->gammaExponent);
 	meshDrawer->DrawBorderMesh(drawPass); // calls back into ::SetupBigSquare
 	shaderProg->Disable();
 

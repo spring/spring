@@ -65,8 +65,8 @@ CFarTextureHandler::CFarTextureHandler()
 	fbo.AttachTexture(farTextureID);
 
 	if (fbo.CheckStatus("FARTEXTURE")) {
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 	}
 	fbo.Unbind();
 
@@ -184,7 +184,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		const int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 
 		glAttribStatePtr->ViewPort(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT);
 
 		// draw (static-pose) model
 		state->SetMatrices(iconMat, model->GetPieceMatrices());

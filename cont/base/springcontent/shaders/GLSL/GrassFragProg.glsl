@@ -9,6 +9,7 @@ uniform sampler2DShadow shadowMap;
 uniform float groundShadowDensity;
 #endif
 uniform float specularExponent;
+uniform float gammaExponent;
 uniform float infoTexIntensityMul;
 
 #ifdef HAVE_INFOTEX
@@ -69,5 +70,6 @@ void main() {
 #endif
 
 	fragColor.rgb = mix(fogColor.rgb, fragColor.rgb, fogFactor);
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
 }
 

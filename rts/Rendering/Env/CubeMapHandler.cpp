@@ -145,8 +145,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
 	glAttribStatePtr->PushDepthBufferBit();
-	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+	glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!skyOnly) {
 		glAttribStatePtr->EnableDepthMask();
@@ -165,16 +165,16 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 		#if 0
 		switch (glType) {
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { glAttribStatePtr->ClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { glAttribStatePtr->ClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { glAttribStatePtr->ClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { glAttribStatePtr->ClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { glAttribStatePtr->ClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
 			default: {} break;
 		}
 
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		#endif
 
 		#if 1

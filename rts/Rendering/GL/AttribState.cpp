@@ -1,9 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
+#include <cmath>
 #include <cstring>
 
 #include "AttribState.hpp"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "System/MainDefines.h"
 
@@ -47,6 +49,7 @@ GL::AttribState* GL::GetAttribStatePointer(               ) { return (          
 
 GL::AttribState::AttribState() {
 	attribBitsStack.Fill(0);
+	depthRangeStack.Fill({0.0f, 1.0f});
 	depthClampStack.Fill(GL_FALSE);
 	depthTestStack.Fill(GL_FALSE);
 	depthMaskStack.Fill(GL_FALSE);
@@ -84,6 +87,7 @@ void GL::AttribState::Init() {
 
 	// copy initial GL state from GlobalRendering::InitGLState, stateless rendering stopgap
 	// TODO: GL_{COLOR_LOGIC_OP,SAMPLE_ALPHA_TO_COVERAGE,PRIMITIVE_RESTART,CLIP_DISTANCEi}?
+	PushDepthRange(glGetFloatT<DepthRangeState, 2>(GL_DEPTH_RANGE));
 	PushDepthClamp(glIsEnabled(GL_DEPTH_CLAMP));
 	PushDepthTest(glIsEnabled(GL_DEPTH_TEST));
 	PushDepthMask(glGetIntT(GL_DEPTH_WRITEMASK));
@@ -347,6 +351,17 @@ void GL::AttribState::PushStencilBufferBit() { PushBits(GL_STENCIL_BUFFER_BIT); 
 void GL::AttribState::PushScissorBit() { PushBits(GL_SCISSOR_BIT); }
 void GL::AttribState::PushTextureBit() { PushBits(GL_TEXTURE_BIT); }
 void GL::AttribState::PushViewPortBit() { PushBits(GL_VIEWPORT_BIT); }
+
+
+void GL::AttribState::DepthRange(float zn, float zf) {
+	glDepthRangef((depthRangeStack.Top()).zn = zn, (depthRangeStack.Top()).zf = zf);
+}
+void GL::AttribState::PushDepthRange(float zn, float zf) {
+	DepthRange(depthRangeStack.Push({zn, zf}));
+}
+void GL::AttribState::PopDepthRange() {
+	DepthRange(depthRangeStack.Pop(true));
+}
 
 
 void GL::AttribState::DepthClamp(bool enable) {
@@ -654,6 +669,28 @@ void GL::AttribState::PushLineWidth(float w) {
 }
 void GL::AttribState::PopLineWidth() {
 	glLineWidth(lineWidthStack.Pop(true));
+}
+
+
+void GL::AttribState::Clear(uint32_t bits) {
+	glClear(bits);
+}
+void GL::AttribState::ClearAccum(float r, float g, float b, float a) { glClearAccum(r, g, b, a); }
+void GL::AttribState::ClearColor(float r, float g, float b, float a) {
+	const float gammaExp = globalRendering->gammaExponent;
+
+	// easier to apply correction here than at every caller
+	r = std::pow(r, gammaExp);
+	g = std::pow(g, gammaExp);
+	b = std::pow(b, gammaExp);
+
+	glClearColor(r, g, b, a);
+}
+void GL::AttribState::ClearDepth(float depth) {
+	glClearDepth(depth);
+}
+void GL::AttribState::ClearStencil(uint32_t rval) {
+	glClearStencil(rval);
 }
 
 
