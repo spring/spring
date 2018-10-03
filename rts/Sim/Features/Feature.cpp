@@ -605,6 +605,11 @@ bool CFeature::UpdatePosition()
 		return true;
 	}
 
+	// position updates should not stop before speed drops to zero, but
+	// the epsilon-comparison can cause this to happen on level terrain
+	// nullify the vector to prevent visual extrapolation jitter
+	SetVelocityAndSpeed(mix({ZeroVector, 0.0f}, speed * moveCtrl.velocityMask, moveCtrl.enabled));
+
 	return (moveCtrl.enabled);
 }
 
@@ -647,7 +652,7 @@ void CFeature::StartFire()
 	if (fireTime != 0 || !def->burnable)
 		return;
 
-	fireTime = 200 + (int)(gsRNG.NextFloat() * GAME_SPEED);
+	fireTime = 200 + gsRNG.NextInt(GAME_SPEED);
 	featureHandler.SetFeatureUpdateable(this);
 
 	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
@@ -693,10 +698,10 @@ void CFeature::EmitGeoSmoke()
 	if (projectileHandler.GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
 		return;
 
-	const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
+	const float3 pPos = guRNG.NextVector() * 10.0f + (pos - UpVector * 10.0f);
 	const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
 
-	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
+	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, 50 + guRNG.NextInt(7), this);
 }
 
 
