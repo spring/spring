@@ -228,12 +228,16 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		char vsBuf[65536];
 		char fsBuf[65536];
 
-		const char* vsVars = "uniform float planeOffset;\n";
+		const char* vsVars =
+			"uniform float u_plane_offset;\n"
+			"uniform float u_gamma_exponent;\n";
 		const char* vsCode =
-			"\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz + vec3(0.0, planeOffset, 0.0), 1.0);\n"
+			"\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz + vec3(0.0, u_plane_offset, 0.0), 1.0);\n"
 			"\tv_color_rgba = a_color_rgba;\n";
 		const char* fsVars = "const float v_color_mult = 1.0 / 255.0;\n";
-		const char* fsCode = "\tf_color_rgba = v_color_rgba * v_color_mult;\n";
+		const char* fsCode =
+			"\tf_color_rgba = v_color_rgba * v_color_mult;\n"
+			"\tf_color_rgba.rgb = pow(f_color_rgba.rgb, vec3(u_gamma_exponent));\n";
 
 		GL::RenderDataBuffer::FormatShaderC(vsBuf, vsBuf + sizeof(vsBuf), "", vsVars, vsCode, "VS");
 		GL::RenderDataBuffer::FormatShaderC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
@@ -245,7 +249,8 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		shaderProg->Enable();
 		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniform("planeOffset", 0.0f);
+		shaderProg->SetUniform("u_plane_offset", 0.0f);
+		shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 		shaderProg->Disable();
 	}
 }
@@ -286,7 +291,8 @@ void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	shader->SetUniform("planeOffset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
+	shader->SetUniform("u_plane_offset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
+	shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 	buffer.Submit(GL_TRIANGLE_STRIP, 0, buffer.GetNumElems<VA_TYPE_C>());
 	shader->Disable();
 }
