@@ -63,4 +63,4 @@ matrix:
       before_script:
         - pip install cmakelint
       script:
-        - find . -name 'CMakeLists.txt' -not -path './rts/lib/*' -exec cmakelint --config=.cmakelintrc {} \;
+        - find . \( -name "CMakeLists.txt" -o -name "*.cmake" \) -not -path './rts/lib/*' -exec cmakelint --config=.cmakelintrc {} \;
