@@ -1496,6 +1496,27 @@ public:
 
 
 
+class GammaExponentActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GammaExponentActionExecutor() : IUnsyncedActionExecutor("GammaExponent", "Sets gamma-correction exponent") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		const std::string& args = action.GetArgs();
+
+		if (args.empty())
+			return false;
+
+		const float rawGammaExp = atof(args.c_str());
+		const float modGammaExp = Clamp(rawGammaExp, 0.0f, 1.0f);
+
+		LOG("gamma-correction exponent set to %f", globalRendering->gammaExponent = modGammaExp);
+		return true;
+	}
+};
+
+
+
 class IncreaseViewRadiusActionExecutor : public IUnsyncedActionExecutor {
 public:
 	IncreaseViewRadiusActionExecutor() : IUnsyncedActionExecutor("IncreaseViewRadius", "Increase terrain tessellation level") {
@@ -3259,6 +3280,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(new HideInterfaceActionExecutor());
 	AddActionExecutor(new HardwareCursorActionExecutor());
 	AddActionExecutor(new FullscreenActionExecutor());
+	AddActionExecutor(new GammaExponentActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
 	AddActionExecutor(new GroundDetailActionExecutor());

@@ -11,6 +11,7 @@ uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 uniform float shadowDensity;
 uniform float decalAlpha;
+uniform float gammaExponent;
 
 
 in vec4 vertexPos;
@@ -46,6 +47,7 @@ void main() {
 	shadeCol = mix(groundAmbientColor, shadeInt, shadowCoeff * shadeInt.a);
 
 	fragColor = decalInt * shadeCol;
-	fragColor.a = decalInt.a * baseColor.a * decalAlpha;
+	fragColor.rgb = pow(fragColor.rgb, vec3(gammaExponent));
+	fragColor.a   = decalInt.a * baseColor.a * decalAlpha;
 }
 

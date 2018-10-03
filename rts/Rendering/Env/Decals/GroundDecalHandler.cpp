@@ -197,6 +197,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowParams");       // idx 10
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("shadowDensity");      // idx 11
 	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("decalAlpha");         // idx 12
+	decalShaders[DECAL_SHADER_GLSL]->SetUniformLocation("gammaExponent");      // idx 13
 
 	decalShaders[DECAL_SHADER_GLSL]->Enable();
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
@@ -206,6 +207,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform4f(4, invMapSize.x, invMapSize.y, invMapSize.z, invMapSize.w);
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(11, sunLighting->groundShadowDensity);
 	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(12, 1.0f);
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(13, globalRendering->gammaExponent);
 	decalShaders[DECAL_SHADER_GLSL]->Disable();
 	decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -608,6 +610,7 @@ void CGroundDecalHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(7, false, camera->GetProjectionMatrix());
 		decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(9, false, shadowHandler.GetShadowViewMatrixRaw());
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(10, shadowHandler.GetShadowParams());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform1f(13, globalRendering->gammaExponent);
 	}
 }
 

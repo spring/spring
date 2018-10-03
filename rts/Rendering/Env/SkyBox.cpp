@@ -79,6 +79,7 @@ void CSkyBox::LoadBuffer()
 
 	shaderProg->Enable();
 	shaderProg->SetUniform("u_skycube_tex", 0);
+	shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shaderProg->Disable();
@@ -113,10 +114,15 @@ void CSkyBox::Draw(Game::DrawMode mode)
 		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
 		*(vtxPos++) = {{0.0f, 0.0f}, -camera->CalcPixelDir(                         0, globalRendering->viewSizeY)};
 	}
+	{
+		GL::RenderDataBuffer* buffer = &skyBox;
+		Shader::IProgramObject* shader = &buffer->GetShader();
 
-	skyBox.EnableShader();
-	skyBox.Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
-	skyBox.DisableShader();
+		shader->Enable();
+		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
+		skyBox.Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
+		shader->Disable();
+	}
 
 	// wraparound
 	if ((vtxPos - vtxPtr) >= (SKYBOX_BUFFER_LEN))

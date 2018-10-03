@@ -7,6 +7,7 @@ uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 
 uniform float groundShadowDensity;
+uniform float gammaExponent;
 
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
@@ -41,6 +42,7 @@ void main() {
 
 	fFragColor.rgb = diffuseCol.rgb * shadeInt.rgb;
 	fFragColor.rgb = mix(fogColor.rgb, fFragColor.rgb, vFogFactor);
+	fFragColor.rgb = pow(fFragColor.rgb, vec3(gammaExponent));
 
 	fFragColor.a = diffuseCol.a;
 }

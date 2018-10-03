@@ -514,8 +514,8 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 	glAttribStatePtr->ViewPort(0, 0, atlasSize.x, atlasSize.y);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
-	glClear(GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
 
@@ -1281,10 +1281,10 @@ std::vector<int> CDecalsDrawerGL4::CandidatesForOverlap() const
 
 void CDecalsDrawerGL4::UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb)
 {
-	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT);
-	// glClearColor(0.0f, 0.5f, 0.0f, 1.0f);
-	// glClear(GL_COLOR_BUFFER_BIT);
+	glAttribStatePtr->ClearStencil(0);
+	glAttribStatePtr->Clear(GL_STENCIL_BUFFER_BIT);
+	// glAttribStatePtr->ClearColor(0.0f, 0.5f, 0.0f, 1.0f);
+	// glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 	glAttribStatePtr->StencilFunc(GL_ALWAYS, 0, 0xFF);
 	glAttribStatePtr->StencilOper(GL_INCR_WRAP, GL_INCR_WRAP, GL_INCR_WRAP);

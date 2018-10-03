@@ -249,8 +249,8 @@ void CAdvWater::UpdateWater(CGame* game)
 		bumpFBO.Bind();
 		glViewport(0, 0, 128, 128);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 		glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
 
@@ -308,8 +308,8 @@ void CAdvWater::UpdateWater(CGame* game)
 
 
 	reflectFBO.Bind();
-	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	const double clipPlaneEqs[2 * 4] = {
 		0.0, 1.0, 0.0, 0.0,

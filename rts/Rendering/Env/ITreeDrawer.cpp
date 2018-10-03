@@ -226,7 +226,7 @@ void ITreeDrawer::DrawTree(const CFeature* f, bool setupState, bool resetState)
 	}
 
 	// TODO: check if in shadow-pass
-	atd->DrawTree(f->pos, fd->drawType, 13);
+	atd->DrawTree(f->pos, fd->drawType, CAdvTreeDrawer::TREE_MAT_IDX);
 
 	if (resetState) {
 		atd->ResetDrawState();

@@ -213,6 +213,7 @@ bool CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("specularExponent", sunLighting->specularExponent);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
+		grassShaders[i]->SetUniform("gammaExponent", globalRendering->gammaExponent);
 		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 		grassShaders[i]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
 		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
@@ -349,6 +350,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	ipo->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	ipo->SetUniform("specularExponent"   , sunLighting->specularExponent);
 	ipo->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
+	ipo->SetUniform("gammaExponent"      , globalRendering->gammaExponent);
 	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
 	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 

@@ -167,6 +167,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 
+			glslShaders[n]->SetUniform("gammaExponent", globalRendering->gammaExponent);
+
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
@@ -252,6 +254,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
 	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	shader->SetUniform<const char*, float>("gammaExponent", globalRendering->gammaExponent);
 
 	if (cLightHandler->NumConfigLights() > 0) {
 		mLightHandler->Update();

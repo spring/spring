@@ -387,8 +387,8 @@ void glSpringMatrix2dResetPV(bool pv, bool pp) {
 
 void ClearScreen()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

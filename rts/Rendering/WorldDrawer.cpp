@@ -216,8 +216,8 @@ void CWorldDrawer::Draw() const
 {
 	SCOPED_TIMER("Draw::World");
 
-	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	glAttribStatePtr->EnableDepthMask();
 	glAttribStatePtr->EnableDepthTest();

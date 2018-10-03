@@ -232,8 +232,8 @@ CBumpWater::CBumpWater()
 
 		if ((shoreWaves = coastFBO.CheckStatus("BUMPWATER(Coastmap)"))) {
 			// initialize texture
-			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
 			// fill with current heightmap/coastmap
 			UnsyncedHeightMapUpdate(SRectangle(0, 0, mapDims.mapx, mapDims.mapy));
@@ -424,6 +424,7 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("windVector");    // idx 16
 		waterShader->SetUniformLocation("fogColor");      // idx 17
 		waterShader->SetUniformLocation("fogParams");     // idx 18
+		waterShader->SetUniformLocation("gammaExponent"); // idx 19
 
 		if (!waterShader->IsValid()) {
 			const char* fmt = "water-shader compilation error: %s";
@@ -453,6 +454,7 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniform2f(16, 0.0f, 0.0f);
 		waterShader->SetUniform3f(17, sky->fogColor.x, sky->fogColor.y, sky->fogColor.z);
 		waterShader->SetUniform3f(18, sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist());
+		waterShader->SetUniform1f(19, globalRendering->gammaExponent);
 		waterShader->Disable();
 		waterShader->Validate();
 
@@ -1097,6 +1099,7 @@ void CBumpWater::Draw()
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 	waterShader->SetUniform2f(16, windVec.x, windVec.z);
+	waterShader->SetUniform1f(19, globalRendering->gammaExponent);
 	waterShader->SetUniformMatrix4fv(14, false, camera->GetViewMatrix());
 	waterShader->SetUniformMatrix4fv(15, false, camera->GetProjectionMatrix());
 
@@ -1155,8 +1158,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	camera->Update();
 
 	glAttribStatePtr->ViewPort(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// TODO: disable shader fog or add special underwater settings
 	const float3 oldsun = sunLighting->modelDiffuseColor;
@@ -1176,8 +1179,8 @@ void CBumpWater::DrawReflection(CGame* game)
 {
 	reflectFBO.Bind();
 
-	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glAttribStatePtr->ClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
+	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCameraHandler::GetActiveCamera();

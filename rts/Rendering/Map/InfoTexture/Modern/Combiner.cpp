@@ -47,8 +47,9 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CInfoTextureCombiner");
-		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-		if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		if (fbo.IsValid())
+			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 		FBO::Unbind();
 
 		// create mipmaps
@@ -99,8 +100,9 @@ bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool 
 	if (clear) {
 		// clear
 		fbo.Bind();
-		glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-		if (fbo.IsValid()) glClear(GL_COLOR_BUFFER_BIT);
+		glAttribStatePtr->ClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+		if (fbo.IsValid())
+			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 		FBO::Unbind();
 
 		// create mipmaps
