@@ -587,7 +587,7 @@ void CGame::PostLoadSimulation(LuaParser* defsParser)
 	//   Lua which can vary each run with {mod,map}options, etc
 	//   --> need a way to let Lua flush it or re-calculate map
 	//   checksum (over heightmap + blockmap, not raw archive)
-	mapDamage = IMapDamage::GetMapDamage();
+	mapDamage = IMapDamage::InitMapDamage();
 	pathManager = IPathManager::GetInstance(modInfo.pathFinderSystem);
 
 	// load map-specific features
@@ -874,6 +874,7 @@ void CGame::KillSimulation()
 
 	LOG("[Game::%s][3]", __func__);
 	IPathManager::FreeInstance(pathManager);
+	IMapDamage::FreeMapDamage(mapDamage);
 
 	spring::SafeDelete(readMap);
 	smoothGround.Kill();

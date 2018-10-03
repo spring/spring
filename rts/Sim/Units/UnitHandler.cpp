@@ -112,7 +112,6 @@ void CUnitHandler::Init() {
 		// in that case the per-team limit is recalculated for every
 		// other team in the respective allyteam
 		maxUnits = CalcMaxUnits();
-
 		maxUnitRadius = 0.0f;
 	}
 	{
@@ -144,26 +143,31 @@ void CUnitHandler::Kill()
 		u->KilledScriptFinished(-1);
 		unitMemPool.free(u);
 	}
+	{
+		// do not clear in ctor because creg-loaded objects would be wiped out
+		unitMemPool.clear();
 
-	// do not clear in ctor because creg-loaded objects would be wiped out
-	unitMemPool.clear();
+		units.clear();
 
-	units.clear();
+		for (int teamNum = 0; teamNum < MAX_TEAMS; teamNum++) {
+			// reuse inner vectors when reloading
+			// unitsByDefs[teamNum].clear();
 
-	for (int teamNum = 0; teamNum < MAX_TEAMS; teamNum++) {
-		// reuse inner vectors when reloading
-		// unitsByDefs[teamNum].clear();
-
-		for (size_t defID = 0; defID < unitsByDefs[teamNum].size(); defID++) {
-			unitsByDefs[teamNum][defID].clear();
+			for (size_t defID = 0; defID < unitsByDefs[teamNum].size(); defID++) {
+				unitsByDefs[teamNum][defID].clear();
+			}
 		}
+
+		activeUnits.clear();
+		unitsToBeRemoved.clear();
+
+		// only iterated by unsynced code, GetBuilderCAIs has no synced callers
+		builderCAIs.clear();
 	}
-
-	activeUnits.clear();
-	unitsToBeRemoved.clear();
-
-	// only iterated by unsynced code, GetBuilderCAIs has no synced callers
-	builderCAIs.clear();
+	{
+		maxUnits = 0;
+		maxUnitRadius = 0.0f;
+	}
 }
 
 

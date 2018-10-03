@@ -8,7 +8,8 @@
 class IMapDamage
 {
 public:
-	static IMapDamage* GetMapDamage();
+	static IMapDamage* InitMapDamage();
+	static void FreeMapDamage(IMapDamage*);
 
 public:
 	virtual ~IMapDamage() {}
