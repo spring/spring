@@ -11,6 +11,8 @@ Sim:
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
 
 Lua:
+ ! remove Game.mapHumanName
+ ! remove UnitDefs[i].moveDef.{family,type}
  - let Spring.SelectUnitArray select enemy units with godmode enabled
  - let Unit*Collision callins skip engine collision handling if true is returned (from any synced gadget)
  - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)

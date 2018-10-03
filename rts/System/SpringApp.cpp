@@ -729,6 +729,8 @@ void SpringApp::Reload(const std::string script)
 
 	gu->ResetState();
 	gs->ResetState();
+	// will be reconstructed from given script
+	gameSetup->ResetState();
 
 	profiler.ResetState();
 	modInfo.ResetState();
