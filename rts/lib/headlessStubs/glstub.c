@@ -533,6 +533,7 @@ GLAPI void APIENTRY glEndConditionalRenderNV() {}
 GLAPI void APIENTRY glPrimitiveRestartIndex(GLuint index) {}
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
 GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}
+GLAPI void APIENTRY glDepthRangef(GLfloat nearVal, GLfloat farVal) {}
 GLAPI void APIENTRY glDepthRange(GLdouble nearVal, GLdouble farVal) {}
 
 #ifdef __cplusplus

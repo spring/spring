@@ -88,7 +88,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	smfRenderStates[RENDER_STATE_SEL] = SelectRenderState(DrawPass::Normal);
 
 
-
 	if (drawWaterPlane) {
 		CreateWaterPlanes( true);
 		CreateWaterPlanes(false);
@@ -228,13 +227,13 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		char vsBuf[65536];
 		char fsBuf[65536];
 
-		const char* vsVars =
-			"uniform float u_plane_offset;\n"
-			"uniform float u_gamma_exponent;\n";
+		const char* vsVars = "uniform float u_plane_offset;\n";
 		const char* vsCode =
 			"\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz + vec3(0.0, u_plane_offset, 0.0), 1.0);\n"
 			"\tv_color_rgba = a_color_rgba;\n";
-		const char* fsVars = "const float v_color_mult = 1.0 / 255.0;\n";
+		const char* fsVars =
+			"uniform float u_gamma_exponent;\n"
+			"const float v_color_mult = 1.0 / 255.0;\n";
 		const char* fsCode =
 			"\tf_color_rgba = v_color_rgba * v_color_mult;\n"
 			"\tf_color_rgba.rgb = pow(f_color_rgba.rgb, vec3(u_gamma_exponent));\n";
