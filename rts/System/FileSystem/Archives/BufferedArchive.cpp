@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "BufferedArchive.h"
+#include "System/GlobalConfig.h"
 
 #include <cassert>
 
@@ -9,7 +10,7 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	std::lock_guard<spring::mutex> lck(archiveLock);
 	assert(IsFileId(fid));
 
-	if (noCache)
+	if (noCache || !globalConfig.vfsCacheArchiveFiles)
 		return GetFileImpl(fid, buffer);
 
 	if (fid >= cache.size())
