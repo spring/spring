@@ -2,8 +2,18 @@
 
 #include "BufferedArchive.h"
 #include "System/GlobalConfig.h"
+#include "System/Log/ILog.h"
 
 #include <cassert>
+
+CBufferedArchive::~CBufferedArchive()
+{
+	// filter archives for which only {map,mod}info.lua was accessed
+	if (cacheSize <= 1 || fileCount <= 1)
+		return;
+
+	LOG_L(L_INFO, "[%s][name=%s] %u bytes cached in %u files", __func__, archiveFile.c_str(), cacheSize, fileCount);
+}
 
 bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
@@ -22,6 +32,9 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	if (!cache[fid].populated) {
 		cache[fid].exists = GetFileImpl(fid, cache[fid].data);
 		cache[fid].populated = true;
+
+		cacheSize += cache[fid].data.size();
+		fileCount += cache[fid].exists;
 	}
 
 	buffer = cache[fid].data;
