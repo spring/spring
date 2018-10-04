@@ -13,7 +13,13 @@
 class CBufferedArchive : public IArchive
 {
 public:
-	CBufferedArchive(const std::string& name, bool cached = true): IArchive(name) { noCache = !cached; }
+	CBufferedArchive(const std::string& name, bool cached = true): IArchive(name) {
+		if ((noCache = !cached))
+			return;
+
+		cache.resize(1024);
+	}
+
 	virtual ~CBufferedArchive() {}
 
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;

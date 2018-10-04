@@ -56,7 +56,7 @@ CONFIG(int, TeamHighlight)
 CONFIG(bool, UseNetMessageSmoothingBuffer).defaultValue(true);
 
 CONFIG(bool, LuaWritableConfigFile).defaultValue(true);
-
+CONFIG(bool, VFSCacheArchiveFiles).defaultValue(true);
 
 GlobalConfig globalConfig;
 
@@ -86,6 +86,7 @@ void GlobalConfig::Init()
 
 	useNetMessageSmoothingBuffer = configHandler->GetBool("UseNetMessageSmoothingBuffer");
 	luaWritableConfigFile = configHandler->GetBool("LuaWritableConfigFile");
+	vfsCacheArchiveFiles = configHandler->GetBool("VFSCacheArchiveFiles");
 
 	teamHighlight = configHandler->GetInt("TeamHighlight");
 }
