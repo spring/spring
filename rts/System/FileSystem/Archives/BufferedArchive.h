@@ -20,7 +20,7 @@ public:
 		cache.resize(1024);
 	}
 
-	virtual ~CBufferedArchive() {}
+	virtual ~CBufferedArchive();
 
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 
@@ -56,6 +56,9 @@ protected:
 	spring::mutex archiveLock;
 
 private:
+	uint32_t cacheSize = 0;
+	uint32_t fileCount = 0;
+
 	bool noCache = false;
 };
 
