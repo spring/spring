@@ -130,7 +130,7 @@ protected:
 	// to allow converting back from lowercase to original case
 	spring::unordered_map<std::string, unsigned int> lcNameIndex;
 
-private:
+protected:
 	/// "ExampleArchive.sdd"
 	const std::string archiveFile;
 };
