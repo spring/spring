@@ -308,6 +308,8 @@ endif()
 	set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/unitsync/testUnitSync.cpp"
 			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
+			## -DUNITSYNC is not passed onto VFS code, which references globalConfig
+			"${ENGINE_SOURCE_DIR}/System/GlobalConfig.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}

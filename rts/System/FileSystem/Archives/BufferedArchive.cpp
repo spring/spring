@@ -12,11 +12,9 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 
 	if (noCache)
 		return GetFileImpl(fid, buffer);
-	#ifndef UNITSYNC
 	// engine-only
 	if (!globalConfig.vfsCacheArchiveFiles)
 		return GetFileImpl(fid, buffer);
-	#endif
 
 	if (fid >= cache.size())
 		cache.resize(std::max(size_t(fid + 1), cache.size() * 2));
