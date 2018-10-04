@@ -62,6 +62,8 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
 	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
 	"${ENGINE_SRC_ROOT}/Sim/Units/CommandAI/Command.cpp" ## LuaUtils::ParseCommand*
+	## -DUNITSYNC is not passed onto VFS code, which references globalConfig
+	"${ENGINE_SRC_ROOT}/System/GlobalConfig.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
