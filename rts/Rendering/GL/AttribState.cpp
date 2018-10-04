@@ -257,8 +257,10 @@ void GL::AttribState::PushBits(uint32_t attribBits) {
 	}
 	#endif
 
-	if ((attribBits & GL_VIEWPORT_BIT) != 0)
+	if ((attribBits & GL_VIEWPORT_BIT) != 0) {
 		PushViewPort();
+		PushDepthRange();
+	}
 
 	// TODO: stipple?
 	if ((attribBits & GL_LINE_BIT) != 0)
@@ -334,8 +336,10 @@ void GL::AttribState::PopBits() {
 	}
 	#endif
 
-	if ((attribBits & GL_VIEWPORT_BIT) != 0)
+	if ((attribBits & GL_VIEWPORT_BIT) != 0) {
 		PopViewPort();
+		PopDepthRange();
+	}
 
 	if ((attribBits & GL_LINE_BIT) != 0)
 		PopLineWidth();
