@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string>
 
-// as defiend here: http://www.brynosaurus.com/cachedir/spec.html
+// as defiend here (DEAD LINK): http://www.brynosaurus.com/cachedir/spec.html
 const std::string CacheDir::tagFile_name          = "CACHEDIR.TAG";
 const std::string CacheDir::tagFile_content       = "Signature: 8a477f597d28d172789f06886806bc55";
 const size_t      CacheDir::tagFile_content_size  = 43;
