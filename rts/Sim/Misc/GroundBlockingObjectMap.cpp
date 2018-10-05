@@ -1,16 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <assert.h>
+#include <cassert>
 
 #include "GroundBlockingObjectMap.h"
 #include "GlobalConstants.h"
 #include "Map/ReadMap.h"
 #include "Sim/Path/IPathManager.h"
-#include "System/creg/STL_Map.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/ContainerUtil.h"
 
 CGroundBlockingObjectMap groundBlockingObjectMap;
+
+CR_BIND_TEMPLATE(BlockingMapCell, )
+CR_REG_METADATA_TEMPLATE(BlockingMapCell, (
+	CR_MEMBER(arrObjs),
+	CR_MEMBER(vecObjs),
+	CR_MEMBER(arrSize)
+))
 
 CR_BIND(CGroundBlockingObjectMap, )
 CR_REG_METADATA(CGroundBlockingObjectMap, (
@@ -38,7 +43,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = zminSqr; zSqr < zmaxSqr; zSqr++) {
 		for (int xSqr = xminSqr; xSqr < xmaxSqr; xSqr++) {
-			spring::VectorInsertUnique(GetCellUnsafe(xSqr + zSqr * mapDims.mapx), object, true);
+			groundBlockingMap[xSqr + zSqr * mapDims.mapx].insert_unique(object);
 		}
 	}
 
@@ -63,12 +68,11 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 		for (int x = xminSqr; x < xmaxSqr; x++) {
 			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
 			// cells (the unit->moveDef footprint can have different dimensions)
-			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 
-			if ((object->GetGroundBlockingMaskAtPos(testPos) & mask) == 0)
+			if ((object->GetGroundBlockingMaskAtPos({x * SQUARE_SIZE * 1.0f, 0.0f, z * SQUARE_SIZE * 1.0f}) & mask) == 0)
 				continue;
 
-			spring::VectorInsertUnique(GetCellUnsafe(x + (z) * mapDims.mapx), object, true);
+			groundBlockingMap[x + z * mapDims.mapx].insert_unique(object);
 		}
 	}
 
@@ -91,7 +95,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			spring::VectorErase(GetCellUnsafe(z * mapDims.mapx + x), object);
+			groundBlockingMap[z * mapDims.mapx + x].erase(object);
 		}
 	}
 
@@ -131,7 +135,7 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, const CSolidObject* i
 
 	// check if the first object in <cell> is NOT the ignoree
 	// if so the ground is definitely blocked at this location
-	if (*(cell.cbegin()) != ignoreObj)
+	if (cell[0] != ignoreObj)
 		return true;
 
 	// otherwise the ground is considered blocked only if there

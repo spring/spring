@@ -123,7 +123,9 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
-			for (const CSolidObject* collidee: cell) {
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CSolidObject* collidee = cell[i];
+
 				if (((ret |= ObjectBlockType(moveDef, collidee, collider)) & BLOCK_STRUCTURE) == 0)
 					continue;
 
@@ -258,8 +260,8 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 	const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
 
-	for (const CSolidObject* collidee: cell) {
-		r |= ObjectBlockType(moveDef, collidee, collider);
+	for (size_t i = 0, n = cell.size(); i < n; i++) {
+		r |= ObjectBlockType(moveDef, cell[i], collider);
 	}
 
 	return r;
@@ -283,7 +285,9 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(zOffset + x);
 
-			for (CSolidObject* collidee: cell) {
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				CSolidObject* collidee = cell[i];
+
 				if (collidee->tempNum == tempNum)
 					continue;
 
