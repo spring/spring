@@ -12,8 +12,8 @@ CGroundBlockingObjectMap groundBlockingObjectMap;
 
 CR_BIND_TEMPLATE(BlockingMapCell, )
 CR_REG_METADATA_TEMPLATE(BlockingMapCell, (
-	CR_MEMBER(arrObjs),
-	CR_MEMBER(vecObjs),
+	CR_MEMBER(arr),
+	CR_MEMBER(vec),
 	CR_MEMBER(arrSize)
 ))
 
