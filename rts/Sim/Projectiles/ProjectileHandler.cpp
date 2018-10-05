@@ -688,27 +688,31 @@ void CProjectileHandler::AddNanoParticle(
 	const float3 endPos,
 	const UnitDef* unitDef,
 	int teamNum,
-	bool highPriority)
-{
-	const float priority = highPriority? HIGH_NANO_PRIO: NORMAL_NANO_PRIO;
+	bool highPriority
+) {
+	const float priority = mix(NORMAL_NANO_PRIO, HIGH_NANO_PRIO, highPriority);
+	const float emitProb = 1.0f - GetNanoParticleSaturation(priority);
 
-	if (currentNanoParticles >= (maxNanoParticles * priority))
+	if (emitProb < guRNG.NextFloat())
 		return;
 	if (!unitDef->showNanoSpray)
 		return;
 
-	float3 dif = (endPos - startPos);
+	float3 dif = endPos - startPos;
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 
 	dif /= l;
-	dif += guRNG.NextVector() * 0.15f;
+	dif += (guRNG.NextVector() * 0.15f);
 
-	const float3 udColor = unitDef->nanoColor;
-	const uint8_t* tColor = (teamHandler.Team(teamNum))->color;
+	const     float3 udColor = unitDef->nanoColor;
+	constexpr float  udAlpha = 20 / 256.0f; // denom=255 is not constexpr-able
+
+	const     uint8_t* tColor = (teamHandler.Team(teamNum))->color;
+	constexpr uint8_t  tAlpha = udAlpha * 256;
 
 	const SColor colors[2] = {
-		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),
-		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
+		{udColor.r, udColor.g, udColor.b, udAlpha},
+		{tColor[0], tColor[1], tColor[2],  tAlpha},
 	};
 
 	projMemPool.alloc<CNanoProjectile>(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
@@ -721,33 +725,37 @@ void CProjectileHandler::AddNanoParticle(
 	int teamNum,
 	float radius,
 	bool inverse,
-	bool highPriority)
-{
-	const float priority = highPriority? HIGH_NANO_PRIO: NORMAL_NANO_PRIO;
+	bool highPriority
+) {
+	const float priority = mix(NORMAL_NANO_PRIO, HIGH_NANO_PRIO, highPriority);
+	const float emitProb = 1.0f - GetNanoParticleSaturation(priority);
 
-	if (currentNanoParticles >= (maxNanoParticles * priority))
+	if (emitProb < guRNG.NextFloat())
 		return;
 	if (!unitDef->showNanoSpray)
 		return;
 
-	float3 dif = (endPos - startPos);
-	const float l = fastmath::apxsqrt2(dif.SqLength());
-	dif /= l;
+	float3 dif = endPos - startPos;
+	const float len = fastmath::apxsqrt2(dif.SqLength());
 
-	float3 error = guRNG.NextVector() * (radius / l);
+	dif /= len;
+	dif += (guRNG.NextVector() * (radius / len));
 
-	const float3 udColor = unitDef->nanoColor;
-	const uint8_t* tColor = (teamHandler.Team(teamNum))->color;
+	const     float3 udColor = unitDef->nanoColor;
+	constexpr float  udAlpha = 20 / 256.0f;
+
+	const     uint8_t* tColor = (teamHandler.Team(teamNum))->color;
+	constexpr uint8_t  tAlpha = udAlpha * 256;
 
 	const SColor colors[2] = {
-		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),
-		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
+		{udColor.r, udColor.g, udColor.b, udAlpha},
+		{tColor[0], tColor[1], tColor[2],  tAlpha},
 	};
 
 	if (!inverse) {
-		projMemPool.alloc<CNanoProjectile>(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos, dif * 3.0f, int(len / 3.0f), colors[globalRendering->teamNanospray]);
 	} else {
-		projMemPool.alloc<CNanoProjectile>(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos + dif * len, -dif * 3.0f, int(len / 3.0f), colors[globalRendering->teamNanospray]);
 	}
 }
 
@@ -773,12 +781,12 @@ CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
 }
 
 
-float CProjectileHandler::GetParticleSaturation(const bool withRandomization) const
+float CProjectileHandler::GetParticleSaturation(bool randomized) const
 {
 	// use the random mult to weaken the max limit a little
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
-	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * guRNG.NextFloat());
+	return (GetCurrentParticles() / float(maxParticles)) * (1.0f + int(randomized) * 0.3f * guRNG.NextFloat());
 }
 
 int CProjectileHandler::GetCurrentParticles() const

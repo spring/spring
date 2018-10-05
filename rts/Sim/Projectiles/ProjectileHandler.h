@@ -53,7 +53,8 @@ public:
 
 	void Update();
 
-	float GetParticleSaturation(const bool withRandomization = true) const;
+	float GetNanoParticleSaturation(float priority) const { return std::min(1.0f, (currentNanoParticles / (maxNanoParticles * priority))); }
+	float GetParticleSaturation(bool randomized = true) const;
 	int   GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
