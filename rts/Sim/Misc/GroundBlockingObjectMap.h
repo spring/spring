@@ -10,7 +10,102 @@
 #include "System/float3.h"
 
 
-typedef std::vector<CSolidObject*> BlockingMapCell;
+template<typename T, size_t S> struct ArrayVector {
+public:
+	CR_DECLARE_STRUCT(ArrayVector)
+
+	ArrayVector() = default;
+	ArrayVector(size_t n) { vec.reserve(n); }
+	ArrayVector(const ArrayVector& c) = delete;
+	ArrayVector(ArrayVector&& c) { *this = std::move(c); }
+
+	ArrayVector& operator = (const ArrayVector& c) = delete;
+	ArrayVector& operator = (ArrayVector&& c) {
+		arr = c.arr;
+		vec = std::move(c.vec);
+
+		arrSize = c.arrSize;
+		return *this;
+	}
+
+	void clear() {
+		arr.fill(nullptr);
+		vec.clear();
+
+		arrSize = 0;
+	}
+
+
+	T* operator [] (size_t i) const {
+		assert(i < size());
+		assert(i < arrSize || (i - arrSize) < vec.size());
+
+		return ((i < arrSize)? arr[i]: vec[i - arrSize]);
+	}
+
+
+	size_t size() const { return (arrSize + vec.size()); }
+
+	bool empty() const { return (arrSize == 0); }
+	bool contains(const T* o) const {
+		if (empty())
+			return false;
+
+		const auto ab = arr.begin();
+		const auto ae = arr.begin() + arrSize;
+
+		return ((std::find(ab, ae, o) != ae) || (std::find(vec.begin(), vec.end(), o) != vec.end()));
+	}
+
+	bool insert_unique(T* o) { return (!contains(o) && insert(o)); }
+	bool insert(T* o) {
+		if (arrSize < S) {
+			arr[arrSize++] = o;
+		} else {
+			vec.push_back(o);
+		}
+		return true;
+	}
+
+	bool erase(T* o) {
+		const auto it = std::find(arr.begin(), arr.end(), o);
+
+		if (it != arr.end()) {
+			if (vec.empty()) {
+				*it = arr[--arrSize];
+				arr[arrSize] = nullptr;
+			} else {
+				// never allow a hole between array and vector parts
+				*it = vec.back();
+				vec.pop_back();
+			}
+
+			return true;
+		}
+
+		const auto jt = std::find(vec.begin(), vec.end(), o);
+
+		if (jt != vec.end()) {
+			*jt = vec.back();
+			vec.pop_back();
+			return true;
+		}
+
+		return false;
+	}
+
+public:
+	std::array<T*, S> arr;
+	std::vector<T*> vec;
+
+	// how many objects currently exist in arr; vec will
+	// always be empty if this is smaller than arr.size()
+	size_t arrSize = 0;
+};
+
+
+
+typedef ArrayVector<CSolidObject, 8> BlockingMapCell;
 typedef std::vector<BlockingMapCell> BlockingMap;
 
 class CGroundBlockingObjectMap
@@ -51,7 +146,7 @@ public:
 		if (cell.empty())
 			return nullptr;
 
-		return (*cell.begin());
+		return cell[0];
 	}
 
 
@@ -62,9 +157,7 @@ public:
 		if (mapSquare >= groundBlockingMap.size())
 			return false;
 
-		const BlockingMapCell& cell = GetCellUnsafeConst(mapSquare);
-		const auto it = std::find(cell.cbegin(), cell.cend(), obj);
-		return (it != cell.cend());
+		return (groundBlockingMap[mapSquare].contains(obj));
 	}
 
 
