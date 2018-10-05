@@ -61,7 +61,7 @@ public:
 
 	/**
 	 * Returns whether isolation-mode is enabled.
-	 * In isolation-mode, we will only use a singel data-dir.
+	 * In isolation-mode, we will only use a single data-dir.
 	 * This defaults to false, but can be set to true by setting the env var
 	 * SPRING_ISOLATED.
 	 * @see #GetIsolationModeDir
