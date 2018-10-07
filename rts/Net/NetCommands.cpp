@@ -175,7 +175,7 @@ void CGame::UpdateNumQueuedSimFrames()
 	} else {
 		// Modified SPRING95 behaviour
 		// Aim at staying 2 sim frames behind.
-		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (numQueuedFrames/2) - 1;
+		consumeSpeedMult = GAME_SPEED * gs->speedFactor + (numQueuedFrames / 2) - 1;
 	}
 
 	// await one sim frame if queue is dry
@@ -540,15 +540,17 @@ void CGame::ClientReadNet()
 			} break;
 
 			case NETMSG_KEYFRAME: {
-				const int32_t serverFrameNum = *(int32_t*)(inbuf + 1);
+				if (!gameOver) {
+					const int32_t serverFrameNum = *(int32_t*)(inbuf + 1);
 
-				if (gs->frameNum != (serverFrameNum - 1)) {
-					LOG_L(L_ERROR, "[Game::%s] keyframe difference: %i (client: %d, server: %d)", __func__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
-					break;
+					if (gs->frameNum != (serverFrameNum - 1)) {
+						LOG_L(L_ERROR, "[Game::%s] keyframe difference: %i (client: %d, server: %d)", __func__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
+						break;
+					}
+
+					// fall-through and run SimFrame() iff this message really came from the server
+					clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 				}
-
-				// fall-through and run SimFrame() iff this message really came from the server
-				clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1000.0f;
