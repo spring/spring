@@ -25,34 +25,6 @@ CARController::CARController()
 	fov         = configHandler->GetFloat("ARFOV");
 }
 
-
-void CARController::KeyMove(float3 move)
-{
-	
-}
-
-
-void CARController::MouseMove(float3 move)
-{
-
-}
-
-
-void CARController::ScreenEdgeMove(float3 move)
-{
-}
-
-
-void CARController::MouseWheelMove(float move)
-{
-
-	
-}
-
-void CARController::Update()
-{
-}
-
 void CARController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
