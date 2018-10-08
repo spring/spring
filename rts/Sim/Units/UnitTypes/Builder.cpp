@@ -427,6 +427,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 
 		assert(resurrecteeDef == resurrectee->unitDef);
 		resurrectee->SetSoloBuilder(this, resurrecteeDef);
+		resurrectee->SetHeading(curResurrectee->heading, !resurrectee->upright);
 
 		// TODO: make configurable if this should happen
 		resurrectee->health *= 0.05f;
