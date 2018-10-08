@@ -373,7 +373,7 @@ public:
 
 private:
 	void ParseWeaponsTable(const LuaTable& weaponsTable);
-	void CreateYardMap(std::string yardMapStr);
+	void CreateYardMap(std::string&& yardMapStr);
 
 	float realMetalCost;
 	float realEnergyCost;
