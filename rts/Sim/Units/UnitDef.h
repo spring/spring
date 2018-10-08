@@ -87,13 +87,18 @@ public:
 	const UnitDefWeapon& GetWeapon(unsigned int idx) const { return weapons[idx]; }
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
-	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
-	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[idx] = egID; }
-	void SetCrashExplosionGeneratorID(unsigned int idx, unsigned int egID) { crashExplGenIDs[idx] = egID; }
 
-	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const { return (modelExplGenIDs[idx % modelExplGenIDs.size()]); }
-	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const { return (pieceExplGenIDs[idx % pieceExplGenIDs.size()]); }
-	unsigned int GetCrashExplosionGeneratorID(unsigned int idx) const { return (crashExplGenIDs[idx % crashExplGenIDs.size()]); }
+	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[1 + idx] = egID; modelExplGenIDs[0] += (egID != -1u); }
+	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[1 + idx] = egID; pieceExplGenIDs[0] += (egID != -1u); }
+	void SetCrashExplosionGeneratorID(unsigned int idx, unsigned int egID) { crashExplGenIDs[1 + idx] = egID; crashExplGenIDs[0] += (egID != -1u); }
+
+	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const { return modelExplGenIDs[1 + idx]; }
+	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const { return pieceExplGenIDs[1 + idx]; }
+	unsigned int GetCrashExplosionGeneratorID(unsigned int idx) const { return crashExplGenIDs[1 + idx]; }
+
+	unsigned int GetModelExplosionGeneratorCount() const { return modelExplGenIDs[0]; }
+	unsigned int GetPieceExplosionGeneratorCount() const { return pieceExplGenIDs[0]; }
+	unsigned int GetCrashExplosionGeneratorCount() const { return crashExplGenIDs[0]; }
 
 public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
@@ -211,10 +216,11 @@ public:
 	std::array<std::string, 8> pieceCEGTags;
 	std::array<std::string, 8> crashCEGTags;
 
-	// TODO: privatize
-	std::array<unsigned int, 8> modelExplGenIDs;
-	std::array<unsigned int, 8> pieceExplGenIDs;
-	std::array<unsigned int, 8> crashExplGenIDs;
+	// *ExplGenIDs[0] stores the number of valid CEG's (TODO: privatize)
+	// valid CEG id's are all in front s.t. they can be randomly sampled
+	std::array<unsigned int, 1 + 8> modelExplGenIDs;
+	std::array<unsigned int, 1 + 8> pieceExplGenIDs;
+	std::array<unsigned int, 1 + 8> crashExplGenIDs;
 
 	spring::unordered_map<int, std::string> buildOptions;
 

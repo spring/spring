@@ -55,40 +55,44 @@ CPieceProjectile::CPieceProjectile(
 	omp((lmp != nullptr) ? lmp->original : nullptr),
 	smokeTrail(nullptr)
 {
-	checkCol = false;
-
 	if (owner != nullptr) {
-		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler.GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		const UnitDef* ud = owner->unitDef;
+
+		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExplosionGeneratorCount() > 0) {
+			cegID = guRNG.NextInt(ud->GetPieceExplosionGeneratorCount());
+			cegID = ud->GetPieceExplosionGeneratorID(cegID);
+
+			explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		}
 
 		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
+	{
+		// neither spinVector nor spinParams technically need to be
+		// synced, but since instances of this class are themselves
+		// synced and have LuaSynced{Ctrl, Read} exposure we treat
+		// them that way for consistency
+		spinVec = gsRNG.NextVector();
+		spinSpeed = gsRNG.NextFloat() * 20.0f;
+		spinAngle = 0.0f;
 
-	oldSmokePos = pos;
-	oldSmokeDir = speed;
-	oldSmokeDir.Normalize();
+		oldSmokePos = pos;
+		oldSmokeDir = speed;
 
-	// neither spinVec nor spinSpeed technically
-	// needs to be synced, but since instances of
-	// this class are themselves synced and have
-	// LuaSynced{Ctrl, Read} exposure we treat
-	// them that way for consistency
-	spinAngle = 0.0f;
-	spinVec = gsRNG.NextVector().Normalize();
-	spinSpeed = gsRNG.NextFloat() * 20;
+		spinVec.Normalize();
+		oldSmokeDir.Normalize();
+	}
 
 	for (auto& ftp: fireTrailPoints) {
-		ftp.pos = pos;
-		ftp.size = 0.f;
+		ftp = {pos, 0.0f};
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
-	castShadow = true;
 
-	if (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10) {
-		useAirLos = true;
-	}
+	checkCol = false;
+	castShadow = true;
+	useAirLos = (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10.0f);
 
 	projectileHandler.AddProjectile(this);
 	assert(!detached);

@@ -80,18 +80,22 @@ AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 	if (unit == nullptr)
 		return;
 
-	assert(owner->unitDef != nullptr);
+	const UnitDef* ud = owner->unitDef;
 
 	oldGoalPos = unit->pos;
+
 	// same as {Ground, HoverAir}MoveType::accRate
-	accRate = std::max(0.01f, unit->unitDef->maxAcc);
-	decRate = std::max(0.01f, unit->unitDef->maxDec);
-	altitudeRate = std::max(0.01f, unit->unitDef->verticalSpeed);
+	accRate = std::max(0.01f, ud->maxAcc);
+	decRate = std::max(0.01f, ud->maxDec);
+	altitudeRate = std::max(0.01f, ud->verticalSpeed);
 	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
 
 	useHeading = false;
 
-	crashExpGenID = owner->unitDef->GetCrashExplosionGeneratorID(guRNG.NextInt());
+	if (ud->GetCrashExplosionGeneratorCount() > 0) {
+		crashExpGenID = guRNG.NextInt(ud->GetCrashExplosionGeneratorCount());
+		crashExpGenID = ud->GetCrashExplosionGeneratorID(crashExpGenID);
+	}
 }
 
 
