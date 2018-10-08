@@ -84,7 +84,7 @@ public:
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
 	unsigned int GetRenderIndex() const { return renderIndex; }
 
-	void SetCustomExplosionGeneratorID(unsigned int id) { cegID = id; }
+	void SetCustomExpGenID(unsigned int id) { cegID = id; }
 	void SetRenderIndex(unsigned int idx) { renderIndex = idx; }
 
 	// UNSYNCED ONLY

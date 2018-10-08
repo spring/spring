@@ -13,6 +13,8 @@
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
 
+#define MAX_UNITDEF_EXPGEN_IDS 8
+
 
 struct Command;
 struct WeaponDef;
@@ -88,17 +90,18 @@ public:
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 
-	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[1 + idx] = egID; modelExplGenIDs[0] += (egID != -1u); }
-	void SetPieceExplosionGeneratorID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[1 + idx] = egID; pieceExplGenIDs[0] += (egID != -1u); }
-	void SetCrashExplosionGeneratorID(unsigned int idx, unsigned int egID) { crashExplGenIDs[1 + idx] = egID; crashExplGenIDs[0] += (egID != -1u); }
+	void SetModelExpGenID(unsigned int idx, unsigned int egID) { modelExplGenIDs[1 + idx] = egID; modelExplGenIDs[0] += (egID != -1u); }
+	void SetPieceExpGenID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[1 + idx] = egID; pieceExplGenIDs[0] += (egID != -1u); }
+	void SetCrashExpGenID(unsigned int idx, unsigned int egID) { crashExplGenIDs[1 + idx] = egID; crashExplGenIDs[0] += (egID != -1u); }
 
-	unsigned int GetModelExplosionGeneratorID(unsigned int idx) const { return modelExplGenIDs[1 + idx]; }
-	unsigned int GetPieceExplosionGeneratorID(unsigned int idx) const { return pieceExplGenIDs[1 + idx]; }
-	unsigned int GetCrashExplosionGeneratorID(unsigned int idx) const { return crashExplGenIDs[1 + idx]; }
+	// UnitScript::EmitSFX can pass in any index, unlike PieceProjectile and AAirMoveType code
+	unsigned int GetModelExpGenID(unsigned int idx) const { return modelExplGenIDs[1 + (idx % MAX_UNITDEF_EXPGEN_IDS)]; }
+	unsigned int GetPieceExpGenID(unsigned int idx) const { return pieceExplGenIDs[1 + (idx                         )]; }
+	unsigned int GetCrashExpGenID(unsigned int idx) const { return crashExplGenIDs[1 + (idx                         )]; }
 
-	unsigned int GetModelExplosionGeneratorCount() const { return modelExplGenIDs[0]; }
-	unsigned int GetPieceExplosionGeneratorCount() const { return pieceExplGenIDs[0]; }
-	unsigned int GetCrashExplosionGeneratorCount() const { return crashExplGenIDs[0]; }
+	unsigned int GetModelExpGenCount() const { return modelExplGenIDs[0]; }
+	unsigned int GetPieceExpGenCount() const { return pieceExplGenIDs[0]; }
+	unsigned int GetCrashExpGenCount() const { return crashExplGenIDs[0]; }
 
 public:
 	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
@@ -212,15 +215,15 @@ public:
 	///< buildingMask used to disallow construction on certain map squares
 	std::uint16_t buildingMask;
 
-	std::array<std::string, 8> modelCEGTags;
-	std::array<std::string, 8> pieceCEGTags;
-	std::array<std::string, 8> crashCEGTags;
+	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> modelCEGTags;
+	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> pieceCEGTags;
+	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> crashCEGTags;
 
 	// *ExplGenIDs[0] stores the number of valid CEG's (TODO: privatize)
 	// valid CEG id's are all in front s.t. they can be randomly sampled
-	std::array<unsigned int, 1 + 8> modelExplGenIDs;
-	std::array<unsigned int, 1 + 8> pieceExplGenIDs;
-	std::array<unsigned int, 1 + 8> crashExplGenIDs;
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> modelExplGenIDs;
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> pieceExplGenIDs;
+	std::array<unsigned int, 1 + MAX_UNITDEF_EXPGEN_IDS> crashExplGenIDs;
 
 	spring::unordered_map<int, std::string> buildOptions;
 

@@ -618,7 +618,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 		std::vector<int> cegKeys;
 		std::array<const LuaTable*, 3> cegTbls = {&modelCEGTable, &pieceCEGTable, &crashCEGTable};
-		std::array<std::string, 8>* cegTags[3] = {&modelCEGTags, &pieceCEGTags, &crashCEGTags};
+		std::array<std::string, MAX_UNITDEF_EXPGEN_IDS>* cegTags[3] = {&modelCEGTags, &pieceCEGTags, &crashCEGTags};
 
 		for (int i = 0; i < 3; i++) {
 			cegKeys.clear();
