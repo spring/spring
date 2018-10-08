@@ -704,7 +704,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 
 
-void UnitDef::CreateYardMap(std::string yardMapStr)
+void UnitDef::CreateYardMap(std::string&& yardMapStr)
 {
 	// if a unit is immobile but does *not* have a yardmap
 	// defined, assume it is not supposed to be a building
