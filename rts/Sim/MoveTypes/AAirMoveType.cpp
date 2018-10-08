@@ -92,9 +92,9 @@ AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 
 	useHeading = false;
 
-	if (ud->GetCrashExplosionGeneratorCount() > 0) {
-		crashExpGenID = guRNG.NextInt(ud->GetCrashExplosionGeneratorCount());
-		crashExpGenID = ud->GetCrashExplosionGeneratorID(crashExpGenID);
+	if (ud->GetCrashExpGenCount() > 0) {
+		crashExpGenID = guRNG.NextInt(ud->GetCrashExpGenCount());
+		crashExpGenID = ud->GetCrashExpGenID(crashExpGenID);
 	}
 }
 

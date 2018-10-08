@@ -554,13 +554,13 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 			if ((sfxType & SFX_CEG) != 0) {
 				// emit defined explosion-generator (can only be custom, not standard)
 				// index is made valid by callee, an ID of -1 means CEG failed to load
-				explGenHandler.GenExplosion(ud->GetModelExplosionGeneratorID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
+				explGenHandler.GenExplosion(ud->GetModelExpGenID(sfxType - SFX_CEG), absPos, absDir, unit->cegDamage, 1.0f, 0.0f, unit, nullptr);
 				return true;
 			}
 
 			if ((sfxType & SFX_FIRE_WEAPON) != 0) {
 				// make a weapon fire from the piece
-				const unsigned index = sfxType - SFX_FIRE_WEAPON;
+				const unsigned int index = sfxType - SFX_FIRE_WEAPON;
 
 				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("[US::EmitSFX::FIRE_WEAPON] invalid weapon index");

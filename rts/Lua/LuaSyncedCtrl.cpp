@@ -3395,7 +3395,7 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 
 	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
 	if (explGenHandler.GetGenerator(cegID) != nullptr)
-		proj->SetCustomExplosionGeneratorID(cegID);
+		proj->SetCustomExpGenID(cegID);
 
 	lua_pushnumber(L, cegID);
 	return 1;

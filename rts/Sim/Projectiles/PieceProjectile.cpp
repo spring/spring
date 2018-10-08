@@ -58,9 +58,9 @@ CPieceProjectile::CPieceProjectile(
 	if (owner != nullptr) {
 		const UnitDef* ud = owner->unitDef;
 
-		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExplosionGeneratorCount() > 0) {
-			cegID = guRNG.NextInt(ud->GetPieceExplosionGeneratorCount());
-			cegID = ud->GetPieceExplosionGeneratorID(cegID);
+		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExpGenCount() > 0) {
+			cegID = guRNG.NextInt(ud->GetPieceExpGenCount());
+			cegID = ud->GetPieceExpGenID(cegID);
 
 			explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
 		}
