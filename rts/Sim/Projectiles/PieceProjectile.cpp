@@ -57,8 +57,14 @@ CPieceProjectile::CPieceProjectile(
 	model = owner->model;
 
 	{
-		if ((explFlags & PF_NoCEGTrail) == 0)
-			explGenHandler.GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		const UnitDef* ud = owner->unitDef;
+
+		if ((explFlags & PF_NoCEGTrail) == 0 && ud->GetPieceExplosionGeneratorCount() > 0) {
+			cegID = guRNG.NextInt(ud->GetPieceExplosionGeneratorCount());
+			cegID = ud->GetPieceExplosionGeneratorID(cegID);
+
+			explGenHandler.GenExplosion(cegID, pos, speed, 100, 0.0f, 0.0f, nullptr, nullptr);
+		}
 
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}

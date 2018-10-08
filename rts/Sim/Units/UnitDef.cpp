@@ -56,7 +56,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 UnitDef::UnitDef()
 	: SolidObjectDef()
 	, cobID(-1)
-	, decoyDef(NULL)
+	, decoyDef(nullptr)
 	, metalUpkeep(0.0f)
 	, energyUpkeep(0.0f)
 	, metalMake(0.0f)
@@ -124,13 +124,13 @@ UnitDef::UnitDef()
 	, flankingBonusMax(0.0f)
 	, flankingBonusMin(0.0f)
 	, flankingBonusMobilityAdd(0.0f)
-	, shieldWeaponDef(NULL)
-	, stockpileWeaponDef(NULL)
+	, shieldWeaponDef(nullptr)
+	, stockpileWeaponDef(nullptr)
 	, maxWeaponRange(0.0f)
 	, maxCoverage(0.0f)
-	, deathExpWeaponDef(NULL)
-	, selfdExpWeaponDef(NULL)
-	, buildPic(NULL)
+	, deathExpWeaponDef(nullptr)
+	, selfdExpWeaponDef(nullptr)
+	, buildPic(nullptr)
 	, selfDCountdown(0)
 	, builder(false)
 	, activateWhenBuilt(false)
@@ -479,8 +479,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	iconType = icon::iconHandler->GetIcon(udTable.GetString("iconType", "default"));
 
-	shieldWeaponDef    = NULL;
-	stockpileWeaponDef = NULL;
+	shieldWeaponDef    = nullptr;
+	stockpileWeaponDef = nullptr;
 
 	maxWeaponRange = 0.0f;
 	maxCoverage = 0.0f;
@@ -526,8 +526,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		}
 
 		if (seismicSignature == -1.0f) {
-			const bool isTank = (moveDef != NULL && moveDef->speedModClass == MoveDef::Tank);
-			const bool isKBot = (moveDef != NULL && moveDef->speedModClass == MoveDef::KBot);
+			const bool isTank = (moveDef != nullptr && moveDef->speedModClass == MoveDef::Tank);
+			const bool isKBot = (moveDef != nullptr && moveDef->speedModClass == MoveDef::KBot);
 
 			// seismic signatures only make sense for certain mobile ground units
 			if (isTank || isKBot) {
@@ -541,10 +541,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	if (IsAirUnit()) {
 		if (IsFighterAirUnit() || IsBomberAirUnit()) {
 			// double turn-radius for bombers if not set explicitly
-			if (IsBomberAirUnit() && turnRadius == 500.0f) {
-				turnRadius *= 2.0f;
-			}
-
+			turnRadius *= (1.0f + (IsBomberAirUnit() && turnRadius == 500.0f));
 			maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
 		}
 	}
@@ -555,17 +552,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
 	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", udTable.GetString("explodeAs", "")));
-	if (deathExpWeaponDef == NULL) {
-		deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
-		if (deathExpWeaponDef == NULL) {
-			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and explodeAs for %s is missing!", unitName.c_str());
-		}
+
+	if (deathExpWeaponDef == nullptr && (deathExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON")) == nullptr) {
+		LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and explodeAs for %s is missing!", unitName.c_str());
 	}
-	if (selfdExpWeaponDef == NULL) {
-		selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON");
-		if (selfdExpWeaponDef == NULL) {
-			LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and selfDestructAs for %s is missing!", unitName.c_str());
-		}
+	if (selfdExpWeaponDef == nullptr && (selfdExpWeaponDef = weaponDefHandler->GetWeaponDef("NOWEAPON")) == nullptr) {
+		LOG_L(L_ERROR, "Couldn't find WeaponDef NOWEAPON and selfDestructAs for %s is missing!", unitName.c_str());
 	}
 
 	power = udTable.GetFloat("power", (metal + (energy / 60.0f)));
@@ -584,9 +576,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
 	buildingMask = (std::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
-	if (IsImmobileUnit()) {
+	if (IsImmobileUnit())
 		CreateYardMap(udTable.GetString("yardMap", ""));
-	}
 
 	decalDef.Parse(udTable);
 
@@ -609,39 +600,46 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseCollisionVolume(udTable);
 	ParseSelectionVolume(udTable);
 
+	{
+		const LuaTable& buildsTable = udTable.SubTable("buildOptions");
+		const LuaTable& paramsTable = udTable.SubTable("customParams");
 
-	const LuaTable& buildsTable = udTable.SubTable("buildOptions");
+		if (buildsTable.IsValid())
+			buildsTable.GetMap(buildOptions);
 
-	if (buildsTable.IsValid())
-		buildsTable.GetMap(buildOptions);
-
-
-	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
-	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
-	const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
-	const LuaTable& crashCEGTable = sfxTable.SubTable("crashExplosionGenerators");
-
-	std::vector<int> modelCEGKeys; modelCEGTable.GetKeys(modelCEGKeys);
-	std::vector<int> pieceCEGKeys; pieceCEGTable.GetKeys(pieceCEGKeys);
-	std::vector<int> crashCEGKeys; crashCEGTable.GetKeys(crashCEGKeys);
-
-	for (unsigned int i = 0, n = std::min(modelCEGTags.size(), modelCEGKeys.size()); i < n; i++) {
-		modelCEGTags[i] = modelCEGTable.GetString(modelCEGKeys[i], "");
+		// custom parameters table
+		paramsTable.GetMap(customParams);
 	}
-	for (unsigned int i = 0, n = std::min(pieceCEGTags.size(), pieceCEGKeys.size()); i < n; i++) {
-		pieceCEGTags[i] = pieceCEGTable.GetString(pieceCEGKeys[i], "");
-	}
-	for (unsigned int i = 0, n = std::min(crashCEGTags.size(), crashCEGKeys.size()); i < n; i++) {
-		crashCEGTags[i] = crashCEGTable.GetString(crashCEGKeys[i], "");
-	}
+	{
+		const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
+		const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
+		const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
+		const LuaTable& crashCEGTable = sfxTable.SubTable("crashExplosionGenerators");
 
-	// filled in later by UnitDrawer
-	modelExplGenIDs.fill(-1u);
-	pieceExplGenIDs.fill(-1u);
-	crashExplGenIDs.fill(-1u);
+		std::vector<int> cegKeys;
+		std::array<const LuaTable*, 3> cegTbls = {&modelCEGTable, &pieceCEGTable, &crashCEGTable};
+		std::array<std::string, 8>* cegTags[3] = {&modelCEGTags, &pieceCEGTags, &crashCEGTags};
 
-	// custom parameters table
-	udTable.SubTable("customParams").GetMap(customParams);
+		for (int i = 0; i < 3; i++) {
+			cegKeys.clear();
+			cegKeys.reserve(cegTags[i]->size());
+
+			cegTbls[i]->GetKeys(cegKeys);
+
+			// get at most N tags, discard the rest
+			for (unsigned int j = 0, n = std::min(cegTags[i]->size(), cegKeys.size()); j < n; j++) {
+				(*cegTags[i])[j] = cegTbls[i]->GetString(cegKeys[j], "");
+			}
+
+			// move empty tags to the back
+			std::remove_if(cegTags[i]->begin(), cegTags[i]->end(), [](const std::string& tag) { return (tag.empty()); });
+		}
+
+		// filled in later by UnitDrawer
+		modelExplGenIDs.fill(-1u); modelExplGenIDs[0] = 0;
+		pieceExplGenIDs.fill(-1u); pieceExplGenIDs[0] = 0;
+		crashExplGenIDs.fill(-1u); crashExplGenIDs[0] = 0;
+	}
 }
 
 
@@ -651,7 +649,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 	for (int k = 0, w = 0; w < MAX_WEAPONS_PER_UNIT; w++) {
 		LuaTable wTable;
-		string wdName = weaponsTable.GetString(w + 1, "");
+		std::string wdName = weaponsTable.GetString(w + 1, "");
 
 		if (wdName.empty()) {
 			wTable = weaponsTable.SubTable(w + 1);
@@ -714,25 +712,30 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	if (yardMapStr.empty())
 		return;
 
-	yardmap.resize(xsize * zsize);
+	const bool highResMap = (tolower(yardMapStr[0]) == 'h');
 
-	StringToLowerInPlace(yardMapStr);
+	const unsigned int hxSize = xsize >> (1 - highResMap);
+	const unsigned int hzSize = zsize >> (1 - highResMap);
+	const unsigned int ymSize = hxSize * hzSize;
 
-	const bool highResMap = (yardMapStr[0] == 'h');
-
-	const unsigned int hxsize = xsize >> (1 - highResMap);
-	const unsigned int hzsize = zsize >> (1 - highResMap);
-
-	// if high-res yardmap, start at second character
+	// if high-res yardmap, start reading at second character
 	unsigned int ymReadIdx = highResMap;
 	unsigned int ymCopyIdx = 0;
 
-	std::vector<YardMapStatus> defYardMap(hxsize * hzsize, YARDMAP_BLOCKED);
+	std::array<YardMapStatus, 256 * 256> defYardMap;
 	std::string unknownChars;
+
+	if (ymSize > defYardMap.size()) {
+		LOG_L(L_WARNING, "%s: yardmap too big by %u characters", name.c_str(), static_cast<unsigned int>(ymSize - defYardMap.size()));
+		return;
+	}
+
+	yardmap.resize(xsize * zsize);
+	defYardMap.fill(YARDMAP_BLOCKED);
 
 	// read the yardmap from the LuaDef string
 	while (ymReadIdx < yardMapStr.size()) {
-		const unsigned char c = yardMapStr[ymReadIdx++];
+		const unsigned char c = tolower(yardMapStr[ymReadIdx++]);
 
 		if (isspace(c))
 			continue;
@@ -753,17 +756,18 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 				unknownChars += (unknownChars.find_first_of(c) == std::string::npos);
 		}
 
-		if (ymCopyIdx < defYardMap.size()) {
-			defYardMap[ymCopyIdx++] = ys;
-		}
+		if (ymCopyIdx >= ymSize)
+			continue;
+
+		defYardMap[ymCopyIdx++] = ys;
 	}
 
 	// print warnings
-	if (ymCopyIdx > defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap contains " _STPF_ " excess char(s)!", name.c_str(), ymCopyIdx - defYardMap.size());
+	if (ymCopyIdx > ymSize)
+		LOG_L(L_WARNING, "%s: Given yardmap contains %u excess char(s)!", name.c_str(), ymCopyIdx - ymSize);
 
-	if (ymCopyIdx > 0 && ymCopyIdx < defYardMap.size())
-		LOG_L(L_WARNING, "%s: Given yardmap requires " _STPF_ " extra char(s)!", name.c_str(), defYardMap.size() - ymCopyIdx);
+	if (ymCopyIdx > 0 && ymCopyIdx < ymSize)
+		LOG_L(L_WARNING, "%s: Given yardmap requires %u extra char(s)!", name.c_str(), ymSize - ymCopyIdx);
 
 	if (!unknownChars.empty())
 		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
@@ -773,7 +777,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	// otherwise the given yardmap will be upsampled)
 	for (unsigned int bmz = 0; bmz < zsize; bmz++) {
 		for (unsigned int bmx = 0; bmx < xsize; bmx++) {
-			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxsize);
+			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxSize);
 			const YardMapStatus yardMapChar = defYardMap[yardMapIdx];
 
 			yardmap[bmx + bmz * xsize] = yardMapChar;

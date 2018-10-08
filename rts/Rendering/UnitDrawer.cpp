@@ -77,7 +77,7 @@ static void LoadUnitExplosionGenerators() {
 	const auto LoadGenerators = [](UnitDef* ud, const F setExplGenID, const T& explGenTags, const S& explGenPrefix) {
 		for (const S& explGenTag: explGenTags) {
 			if (explGenTag.empty())
-				continue;
+				break;
 
 			(ud->*setExplGenID)(&explGenTag - &explGenTags[0], explGenHandler.LoadGeneratorID(explGenPrefix + explGenTag));
 		}
