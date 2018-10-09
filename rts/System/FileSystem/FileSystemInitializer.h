@@ -3,6 +3,7 @@
 #ifndef FILE_SYSTEM_INITIALIZER_H
 #define FILE_SYSTEM_INITIALIZER_H
 
+#include <atomic>
 #include <string>
 
 class FileSystemInitializer {
@@ -19,8 +20,8 @@ public:
 	static bool Initialized() { return (initSuccess || initFailure); }
 
 private:
-	static volatile bool initSuccess;
-	static volatile bool initFailure;
+	static std::atomic<bool> initSuccess;
+	static std::atomic<bool> initFailure;
 };
 
 #endif // FILE_SYSTEM_INITIALIZER_H

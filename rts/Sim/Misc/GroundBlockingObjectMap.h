@@ -3,6 +3,7 @@
 #ifndef GROUNDBLOCKINGOBJECTMAP_H
 #define GROUNDBLOCKINGOBJECTMAP_H
 
+#include <array>
 #include <vector>
 
 #include "Sim/Objects/SolidObject.h"
@@ -95,12 +96,12 @@ public:
 	}
 
 public:
-	std::array<T*, S> arr;
-	std::vector<T*> vec;
-
 	// how many objects currently exist in arr; vec will
 	// always be empty if this is smaller than arr.size()
 	size_t arrSize = 0;
+
+	std::array<T*, S> arr;
+	std::vector<T*> vec;
 };
 
 

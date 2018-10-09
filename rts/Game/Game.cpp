@@ -164,8 +164,9 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(chatSound),
 	CR_MEMBER(hideInterface),
 
+	// FIXME: atomic type deduction
 	CR_IGNORED(finishedLoading),
-	CR_MEMBER(gameOver),
+	CR_IGNORED(gameOver),
 
 	CR_IGNORED(gameDrawMode),
 	CR_IGNORED(windowedEdgeMove),
@@ -359,7 +360,7 @@ void CGame::LoadGame(const std::string& mapName)
 	LuaParser defsParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true}, {false});
 
 	try {
-		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, !Threading::IsMainThread());
+		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit.load(), !Threading::IsMainThread());
 
 		LoadMap(mapName);
 		LoadDefs(&defsParser);
@@ -372,7 +373,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	try {
-		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		PreLoadSimulation(&defsParser);
 		PreLoadRendering();
@@ -382,7 +383,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	try {
-		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		PostLoadSimulation(&defsParser);
 		PostLoadRendering();
@@ -392,7 +393,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	try {
-		LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+		LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		LoadInterface();
 		LoadLua();
@@ -402,7 +403,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	try {
-		LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+		LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		LoadFinalize();
 		LoadSkirmishAIs();
@@ -412,7 +413,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	try {
-		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
 		if (!globalQuit && saveFile != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
@@ -427,7 +428,7 @@ void CGame::LoadGame(const std::string& mapName)
 	AddTimedJobs();
 
 	finishedLoading = true;
-	globalQuit |= forcedQuit;
+	globalQuit = globalQuit | forcedQuit;
 }
 
 
@@ -1915,9 +1916,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			return true;
 	}
 
-	const std::set<std::string>& serverCommands = CGameServer::GetCommandBlackList();
-
-	if (serverCommands.find(action.command) != serverCommands.end()) {
+	if (CGameServer::IsServerCommand(action.command)) {
 		CommandMessage pckt(action, gu->myPlayerNum);
 		clientNet->Send(pckt.Pack());
 		return true;

@@ -3,6 +3,7 @@
 #ifndef NET_PROTOCOL_H
 #define NET_PROTOCOL_H
 
+#include <atomic>
 #include <string>
 #include <memory>
 
@@ -108,7 +109,7 @@ public:
 	unsigned int GetNumWaitingPingPackets() const;
 
 private:
-	volatile bool keepUpdating;
+	std::atomic<bool> keepUpdating;
 
 	std::unique_ptr<netcode::CConnection> serverConn;
 	std::unique_ptr<CDemoRecorder> demoRecorder;

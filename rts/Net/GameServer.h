@@ -5,6 +5,7 @@
 
 // #include <asio/ip/udp.hpp>
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <array>
@@ -100,7 +101,12 @@ public:
 
 	void UpdateSpeedControl(int speedCtrl);
 	static std::string SpeedControlToString(int speedCtrl);
-	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
+
+	static bool IsServerCommand(const std::string& cmd) {
+		const auto pred = [](const std::string& a, const std::string& b) { return (a < b); };
+		const auto iter = std::lower_bound(commandBlacklist.begin(), commandBlacklist.end(), cmd, pred);
+		return (iter != commandBlacklist.end() && *iter == cmd);
+	}
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
@@ -189,7 +195,6 @@ private:
 	std::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
-	volatile bool quitServer;
 	int serverFrameNum;
 
 	spring_time serverStartTime;
@@ -270,7 +275,7 @@ private:
 	unsigned localClientNumber;
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set
-	static std::set<std::string> commandBlacklist;
+	static std::array<std::string, 23> commandBlacklist;
 
 	std::unique_ptr<netcode::UDPListener> UDPNet;
 	std::unique_ptr<CDemoReader> demoReader;
@@ -282,9 +287,10 @@ private:
 
 	mutable spring::recursive_mutex gameServerMutex;
 
-	volatile bool gameHasStarted;
-	volatile bool generatedGameID;
-	volatile bool reloadingServer;
+	std::atomic<bool> gameHasStarted;
+	std::atomic<bool> generatedGameID;
+	std::atomic<bool> reloadingServer;
+	std::atomic<bool> quitServer;
 
 	int linkMinPacketSize;
 

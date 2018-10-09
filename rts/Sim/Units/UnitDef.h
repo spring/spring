@@ -90,9 +90,9 @@ public:
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 
-	void SetModelExpGenID(unsigned int idx, unsigned int egID) { modelExplGenIDs[1 + idx] = egID; modelExplGenIDs[0] += (egID != -1u); }
-	void SetPieceExpGenID(unsigned int idx, unsigned int egID) { pieceExplGenIDs[1 + idx] = egID; pieceExplGenIDs[0] += (egID != -1u); }
-	void SetCrashExpGenID(unsigned int idx, unsigned int egID) { crashExplGenIDs[1 + idx] = egID; crashExplGenIDs[0] += (egID != -1u); }
+	void AddModelExpGenID(unsigned int egID) { modelExplGenIDs[1 + modelExplGenIDs[0]] = egID; modelExplGenIDs[0] += (egID != -1u); }
+	void AddPieceExpGenID(unsigned int egID) { pieceExplGenIDs[1 + pieceExplGenIDs[0]] = egID; pieceExplGenIDs[0] += (egID != -1u); }
+	void AddCrashExpGenID(unsigned int egID) { crashExplGenIDs[1 + crashExplGenIDs[0]] = egID; crashExplGenIDs[0] += (egID != -1u); }
 
 	// UnitScript::EmitSFX can pass in any index, unlike PieceProjectile and AAirMoveType code
 	unsigned int GetModelExpGenID(unsigned int idx) const { return modelExplGenIDs[1 + (idx % MAX_UNITDEF_EXPGEN_IDS)]; }

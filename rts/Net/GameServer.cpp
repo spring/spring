@@ -121,8 +121,7 @@ static const std::array<std::string, 23> SERVER_COMMANDS = {
 	"singlestep", "spec", "specbynum"
 };
 
-
-std::set<std::string> CGameServer::commandBlacklist;
+std::array<std::string, 23> CGameServer::commandBlacklist = SERVER_COMMANDS;
 
 
 
@@ -275,8 +274,9 @@ void CGameServer::Initialize()
 		}
 	}
 
-	for (unsigned int n = 0; n < SERVER_COMMANDS.size(); n++) {
-		commandBlacklist.insert(SERVER_COMMANDS[n]);
+	{
+		// std::copy(SERVER_COMMANDS.begin(), SERVER_COMMANDS.end(), commandBlacklist.begin());
+		std::sort(commandBlacklist.begin(), commandBlacklist.end());
 	}
 
 	if (configHandler->GetBool("ServerRecordDemos")) {
@@ -1780,11 +1780,13 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				CommandMessage msg(packet);
 
 				if (static_cast<unsigned>(msg.GetPlayerID()) == a) {
-					if ((commandBlacklist.find(msg.GetAction().command) != commandBlacklist.end()) && players[a].isLocal) {
+					const bool serverCommand = IsServerCommand(msg.GetAction().command);
+
+					if (serverCommand && players[a].isLocal) {
 						// command is restricted to server but player is allowed to execute it
 						PushAction(msg.GetAction(), false);
 					}
-					else if (commandBlacklist.find(msg.GetAction().command) == commandBlacklist.end()) {
+					else if (!serverCommand) {
 						// command is safe
 						Broadcast(packet);
 					}
