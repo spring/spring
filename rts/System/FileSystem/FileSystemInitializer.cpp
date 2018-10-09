@@ -30,8 +30,8 @@ static void ClearThreadReg() {}
 #endif
 
 
-volatile bool FileSystemInitializer::initSuccess = false;
-volatile bool FileSystemInitializer::initFailure = false;
+std::atomic<bool> FileSystemInitializer::initSuccess = {false};
+std::atomic<bool> FileSystemInitializer::initFailure = {false};
 
 void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const std::string& configName, const bool safemode)
 {

@@ -3,6 +3,8 @@
 #ifndef _GLOBAL_UNSYNCED_H
 #define _GLOBAL_UNSYNCED_H
 
+#include <atomic>
+
 #include "System/creg/creg_cond.h"
 #include "System/GlobalRNG.h"
 
@@ -166,8 +168,8 @@ public:
 	* Global boolean indicating whether the user
 	* wants to quit
 	*/
-	volatile bool globalQuit = false;
-	volatile bool globalReload = false;
+	std::atomic<bool> globalQuit = {false};
+	std::atomic<bool> globalReload = {false};
 };
 
 

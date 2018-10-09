@@ -3,6 +3,7 @@
 #ifndef _SOUND_H_
 #define _SOUND_H_
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -112,8 +113,8 @@ private:
 	/// we do not play if minimized / iconified
 	bool appIsIconified;
 
-	volatile bool soundThreadQuit;
-	volatile bool canLoadDefs;
+	std::atomic<bool> soundThreadQuit;
+	std::atomic<bool> canLoadDefs;
 };
 
 #endif // _SOUND_H_

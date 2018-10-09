@@ -714,6 +714,7 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 
 	const bool highResMap = (tolower(yardMapStr[0]) == 'h');
 
+	// determine number of characters to parse from str
 	const unsigned int hxSize = xsize >> (1 - highResMap);
 	const unsigned int hzSize = zsize >> (1 - highResMap);
 	const unsigned int ymSize = hxSize * hzSize;
@@ -723,10 +724,9 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 	unsigned int ymCopyIdx = 0;
 
 	std::array<YardMapStatus, 256 * 256> defYardMap;
-	std::string unknownChars;
 
 	if (ymSize > defYardMap.size()) {
-		LOG_L(L_WARNING, "%s: yardmap too big by %u characters", name.c_str(), static_cast<unsigned int>(ymSize - defYardMap.size()));
+		LOG_L(L_WARNING, "[%s] %s: footprint{x=%u,z=%u} too large to create %s-res yardmap", __func__, name.c_str(), xsize, zsize, highResMap? "high": "low");
 		return;
 	}
 
@@ -735,52 +735,44 @@ void UnitDef::CreateYardMap(std::string&& yardMapStr)
 
 	// read the yardmap from the LuaDef string
 	while (ymReadIdx < yardMapStr.size()) {
-		const unsigned char c = tolower(yardMapStr[ymReadIdx++]);
+		const char c = tolower(yardMapStr[ymReadIdx++]);
 
 		if (isspace(c))
 			continue;
-
-		YardMapStatus ys = YARDMAP_BLOCKED;
+		// continue rather than break s.t. the excess-count can be shown
+		if ((ymCopyIdx++) >= ymSize)
+			continue;
 
 		switch (c) {
-			case 'g': { ys = YARDMAP_GEO; needGeo = true; } break;
-			case 'y': { ys = YARDMAP_OPEN;                } break;
-			case 'c': { ys = YARDMAP_YARD;                } break;
-			case 'i': { ys = YARDMAP_YARDINV;             } break;
-		//	case 'w': { ys = YARDMAP_WALKABLE;            } break; //FIXME
+			case 'g': { defYardMap[ymCopyIdx - 1] = YARDMAP_GEO; needGeo = true; } break;
+			case 'y': { defYardMap[ymCopyIdx - 1] = YARDMAP_OPEN;                } break;
+			case 'c': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARD;                } break;
+			case 'i': { defYardMap[ymCopyIdx - 1] = YARDMAP_YARDINV;             } break;
+		//	case 'w': { defYardMap[ymCopyIdx - 1] = YARDMAP_WALKABLE;            } break; // TODO?
 			case 'w':
 			case 'x':
 			case 'f':
-			case 'o': { ys = YARDMAP_BLOCKED;             } break;
-			default:
-				unknownChars += (unknownChars.find_first_of(c) == std::string::npos);
+			case 'o': { defYardMap[ymCopyIdx - 1] = YARDMAP_BLOCKED;             } break;
+			default : {                                                          } break;
 		}
-
-		if (ymCopyIdx >= ymSize)
-			continue;
-
-		defYardMap[ymCopyIdx++] = ys;
 	}
 
 	// print warnings
 	if (ymCopyIdx > ymSize)
-		LOG_L(L_WARNING, "%s: Given yardmap contains %u excess char(s)!", name.c_str(), ymCopyIdx - ymSize);
+		LOG_L(L_WARNING, "[%s] %s: given yardmap contains %u excess char(s)!", __func__, name.c_str(), ymCopyIdx - ymSize);
 
 	if (ymCopyIdx > 0 && ymCopyIdx < ymSize)
-		LOG_L(L_WARNING, "%s: Given yardmap requires %u extra char(s)!", name.c_str(), ymSize - ymCopyIdx);
-
-	if (!unknownChars.empty())
-		LOG_L(L_WARNING, "%s: Given yardmap contains unknown char(s) \"%s\"!", name.c_str(), unknownChars.c_str());
+		LOG_L(L_WARNING, "[%s] %s: given yardmap requires %u extra char(s)!", __func__, name.c_str(), ymSize - ymCopyIdx);
 
 	// write the final yardmap at blocking-map resolution
 	// (in case of a high-res map this becomes a 1:1 copy,
-	// otherwise the given yardmap will be upsampled)
+	// otherwise the given yardmap will be upsampled 2:1)
 	for (unsigned int bmz = 0; bmz < zsize; bmz++) {
 		for (unsigned int bmx = 0; bmx < xsize; bmx++) {
-			const unsigned int yardMapIdx = (bmx >> (1 - highResMap)) + ((bmz >> (1 - highResMap)) * hxSize);
-			const YardMapStatus yardMapChar = defYardMap[yardMapIdx];
+			const unsigned int ymx = bmx >> (1 - highResMap);
+			const unsigned int ymz = bmz >> (1 - highResMap);
 
-			yardmap[bmx + bmz * xsize] = yardMapChar;
+			yardmap[bmx + bmz * xsize] = defYardMap[ymx + ymz * hxSize];
 		}
 	}
 }

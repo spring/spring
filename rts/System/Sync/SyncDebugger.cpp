@@ -63,8 +63,8 @@ CSyncDebugger::CSyncDebugger()
 	: history(NULL)
 	, historybt(NULL)
 	, historyIndex(0)
-	, disable_history(false)
-	, may_enable_history(false)
+	, disableHistory(false)
+	, mayEnableHistory(false)
 	, flop(0)
 	, waitingForBlockResponse(false)
 {
@@ -98,8 +98,8 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 
 	//cleanup
 	historyIndex = 0;
-	disable_history = false;
-	may_enable_history = false;
+	disableHistory = false;
+	mayEnableHistory = false;
 	flop = 0;
 	players.clear();
 	players.resize(numPlayers);
@@ -252,8 +252,9 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 			if (gs->frameNum != *(int*)&inbuf[1]) {
 				logger.AddLine("Client: received checksum request for frame %d instead of %d", *(int*)&inbuf[1], gs->frameNum);
 			} else {
-				disable_history = true; // no more additions to the history until we're done
-				may_enable_history = false;
+				disableHistory = true; // no more additions to the history until we're done
+				mayEnableHistory = false;
+
 				ClientSendChecksumResponse();
 				logger.AddLine("Client: checksum response sent");
 			}
@@ -273,8 +274,9 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 		case NETMSG_SD_RESET:
 			logger.CloseSession();
 			LOG("Client: Done!");
-// 			disable_history = false;
-			may_enable_history = true;
+
+// 			disableHistory = false;
+			mayEnableHistory = true;
 			syncDebugPacket = true;
 			break;
 	}
@@ -285,8 +287,8 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 
 void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
-	if (!disable_history) {
-		//this will set disable_history = true once received so only one sync errors is handled at a time.
+	if (!disableHistory) {
+		//this will set disableHistory = true once received so only one sync errors is handled at a time.
 	}
 }
 
@@ -495,8 +497,8 @@ void CSyncDebugger::ServerDumpStack()
 
 void CSyncDebugger::Reset()
 {
-	if (may_enable_history)
-		disable_history = false;
+	if (mayEnableHistory)
+		disableHistory = false;
 }
 
 #endif // SYNCDEBUG

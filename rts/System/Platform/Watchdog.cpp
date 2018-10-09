@@ -54,9 +54,9 @@ namespace Watchdog
 			#endif
 		}
 
-		volatile Threading::NativeThreadHandle thread;
-		volatile Threading::NativeThreadId threadid;
-		volatile unsigned int numreg;
+		std::atomic<Threading::NativeThreadHandle> thread;
+		std::atomic<Threading::NativeThreadId> threadid;
+		std::atomic<unsigned int> numreg;
 
 		spring_time timer;
 
@@ -70,9 +70,9 @@ namespace Watchdog
 			, active(false)
 			, regorder(0)
 		{}
-		volatile bool primary;
-		volatile bool active;
-		volatile unsigned int regorder;
+		std::atomic<bool> primary;
+		std::atomic<bool> active;
+		std::atomic<unsigned int> regorder;
 	};
 
 	// NOTE:
@@ -85,8 +85,10 @@ namespace Watchdog
 	static std::map<std::string, unsigned int> threadNameToNum;
 
 	static spring::thread hangDetectorThread;
+	static std::atomic<bool> hangDetectorThreadInterrupted = {false};
+
 	static spring_time hangTimeout = spring_msecs(0);
-	static volatile bool hangDetectorThreadInterrupted = false;
+
 
 	static inline void UpdateActiveThreads(Threading::NativeThreadId num) {
 		unsigned int active = WDT_COUNT;

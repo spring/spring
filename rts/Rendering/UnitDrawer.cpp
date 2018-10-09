@@ -70,23 +70,17 @@ static FixedDynMemPool<sizeof(GhostSolidObject), MAX_UNITS / 1000, MAX_UNITS / 3
 
 
 static void LoadUnitExplosionGenerators() {
-	using F = decltype(&UnitDef::SetModelExpGenID);
+	using F = decltype(&UnitDef::AddModelExpGenID);
 	using T = decltype(UnitDef::modelCEGTags);
 	using S = T::value_type;
 
-	const auto LoadGenerators = [](UnitDef* ud, const F setExplGenID, const T& explGenTags, const S& explGenPrefix) {
-		unsigned int idx = 0;
-		unsigned int ceg = 0;
-
+	const auto LoadGenerators = [](UnitDef* ud, const F addExplGenID, const T& explGenTags, const S& explGenPrefix) {
 		for (const S& explGenTag: explGenTags) {
 			if (explGenTag.empty())
 				break;
 
 			// build a contiguous range of valid ID's
-			if ((ceg = explGenHandler.LoadGeneratorID(explGenPrefix + explGenTag)) == -1u)
-				continue;
-
-			(ud->*setExplGenID)(idx++, ceg);
+			(ud->*addExplGenID)(explGenHandler.LoadGeneratorID(explGenPrefix + explGenTag));
 		}
 	};
 
@@ -94,9 +88,9 @@ static void LoadUnitExplosionGenerators() {
 		UnitDef* ud = const_cast<UnitDef*>(unitDefHandler->GetUnitDefByID(i + 1));
 
 		// piece- and crash-generators can only be custom so the prefix is not required to be given game-side
-		LoadGenerators(ud, &UnitDef::SetModelExpGenID, ud->modelCEGTags,                "");
-		LoadGenerators(ud, &UnitDef::SetPieceExpGenID, ud->pieceCEGTags, CEG_PREFIX_STRING);
-		LoadGenerators(ud, &UnitDef::SetCrashExpGenID, ud->crashCEGTags, CEG_PREFIX_STRING);
+		LoadGenerators(ud, &UnitDef::AddModelExpGenID, ud->modelCEGTags,                "");
+		LoadGenerators(ud, &UnitDef::AddPieceExpGenID, ud->pieceCEGTags, CEG_PREFIX_STRING);
+		LoadGenerators(ud, &UnitDef::AddCrashExpGenID, ud->crashCEGTags, CEG_PREFIX_STRING);
 	}
 }
 

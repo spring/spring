@@ -3,6 +3,7 @@
 #ifndef _GAME_H
 #define _GAME_H
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -65,7 +66,7 @@ private:
 	void KillSimulation();
 
 public:
-	volatile bool IsFinishedLoading() const { return finishedLoading; }
+	bool IsFinishedLoading() const { return finishedLoading; }
 	bool IsGameOver() const { return gameOver; }
 	bool IsLagging(float maxLatency = 500.0f) const;
 
@@ -212,8 +213,8 @@ private:
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
 
-	volatile bool finishedLoading = false;
-	bool gameOver = false;
+	std::atomic<bool> finishedLoading = {false};
+	std::atomic<bool> gameOver = {false};
 };
 
 
