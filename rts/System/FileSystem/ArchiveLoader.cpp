@@ -4,7 +4,7 @@
 
 #include "ArchiveLoader.h"
 
-#include "Archives/ArchiveFactory.h"
+#include "Archives/IArchiveFactory.h"
 #include "Archives/IArchive.h"
 #include "Archives/PoolArchive.h"
 #include "Archives/DirArchive.h"

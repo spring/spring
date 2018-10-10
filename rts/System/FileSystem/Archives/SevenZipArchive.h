@@ -8,7 +8,7 @@ extern "C" {
 #include "lib/7z/7z.h"
 }
 
-#include "ArchiveFactory.h"
+#include "IArchiveFactory.h"
 #include "BufferedArchive.h"
 #include <vector>
 #include <string>

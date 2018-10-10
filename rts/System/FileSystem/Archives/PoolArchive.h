@@ -6,7 +6,7 @@
 #include <zlib.h>
 #include <cstring>
 
-#include "ArchiveFactory.h"
+#include "IArchiveFactory.h"
 #include "BufferedArchive.h"
 
 
