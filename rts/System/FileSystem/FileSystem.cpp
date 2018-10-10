@@ -155,7 +155,7 @@ bool FileSystem::TouchFile(std::string filePath)
 	if (f == nullptr)
 		return false;
 	fclose(f);
-	return (access(filePath.c_str(), R_OK) == 0); // check for read access
+	return access(filePath.c_str(), R_OK) == 0; // check for read access
 }
 
 
@@ -274,7 +274,7 @@ bool FileSystem::CheckFile(const std::string& file)
 	// symlink-, hardlink-, you name it-attacks are all very well possible.
 	// The check is just meant to "enforce" certain coding behaviour.
 	//
-	return (file.find("..") == std::string::npos);
+	return file.find("..") == std::string::npos;
 }
 
 bool FileSystem::Remove(std::string file)

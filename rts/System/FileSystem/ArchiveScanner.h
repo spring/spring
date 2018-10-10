@@ -85,10 +85,10 @@ public:
 		bool IsValid(std::string& error) const;
 		bool IsEmpty() const { return infoItems.empty(); }
 
-		bool IsMap() const { const int mt = GetModType(); return (mt == modtype::map); }
-		bool IsGame() const { const int mt = GetModType(); return (mt == modtype::hidden || mt == modtype::primary); }
-		bool IsBase() const { const int mt = GetModType(); return (mt == modtype::base); }
-		bool IsMenu() const { const int mt = GetModType(); return (mt == modtype::menu); }
+		bool IsMap() const { const int mt = GetModType(); return mt == modtype::map; }
+		bool IsGame() const { const int mt = GetModType(); return mt == modtype::hidden || mt == modtype::primary; }
+		bool IsBase() const { const int mt = GetModType(); return mt == modtype::base; }
+		bool IsMenu() const { const int mt = GetModType(); return mt == modtype::menu; }
 
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);

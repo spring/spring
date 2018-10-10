@@ -32,7 +32,7 @@ CArchiveLoader::CArchiveLoader()
 	archiveFactories[ARCHIVE_TYPE_SD7] = {sd7ArchiveFactory.GetDefaultExtension(), &sd7ArchiveFactory};
 	archiveFactories[ARCHIVE_TYPE_SDV] = {sdvArchiveFactory.GetDefaultExtension(), &sdvArchiveFactory};
 
-	std::sort(archiveFactories.begin(), archiveFactories.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+	std::sort(archiveFactories.begin(), archiveFactories.end(), [](const P& a, const P& b) { return a.first < b.first; });
 }
 
 
@@ -49,10 +49,10 @@ bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 
 	using P = decltype(archiveFactories)::value_type;
 
-	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto pred = [](const P& a, const P& b) { return a.first < b.first; };
 	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
 
-	return (iter != archiveFactories.end() && iter->first == fileExt);
+	return iter != archiveFactories.end() && iter->first == fileExt;
 }
 
 
@@ -65,7 +65,7 @@ IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::st
 
 	using P = decltype(archiveFactories)::value_type;
 
-	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
+	const auto pred = [](const P& a, const P& b) { return a.first < b.first; };
 	const auto iter = std::lower_bound(archiveFactories.begin(), archiveFactories.end(), P{fileExt, nullptr}, pred);
 
 	if (iter != archiveFactories.end() && iter->first == fileExt)
