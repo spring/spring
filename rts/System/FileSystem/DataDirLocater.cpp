@@ -163,9 +163,8 @@ void DataDirLocater::AddDir(const std::string& dir)
 		const DataDir newDataDir(SubstEnvVars(dir));
 		bool alreadyAdded = false;
 
-		std::vector<DataDir>::const_iterator ddi;
-		for (ddi = dataDirs.begin(); ddi != dataDirs.end(); ++ddi) {
-			if (FileSystem::ComparePaths(newDataDir.path, ddi->path)) {
+		for (const auto& dd : dataDirs) {
+			if (FileSystem::ComparePaths(newDataDir.path, dd.path)) {
 				alreadyAdded = true;
 				break;
 			}
@@ -202,18 +201,18 @@ void DataDirLocater::FilterUsableDataDirs()
 	// (I did not bother filtering out non-consecutive duplicates because then
 	//  there is the question which of the multiple instances to purge.)
 
-	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if (d->path != previous) {
-			if (DeterminePermissions(&*d)) {
-				newDatadirs.push_back(*d);
-				previous = d->path;
-				if (d->writable) {
-					LOG("Using read-write data directory: %s", d->path.c_str());
+	for (auto& dd : dataDirs) {
+		if (dd.path != previous) {
+			if (DeterminePermissions(&dd)) {
+				newDatadirs.push_back(dd);
+				previous = dd.path;
+				if (dd.writable) {
+					LOG("Using read-write data directory: %s", dd.path.c_str());
 				} else {
-					LOG("Using read-only data directory: %s",  d->path.c_str());
+					LOG("Using read-only data directory: %s",  dd.path.c_str());
 				}
 			} else {
-				LOG_L(L_DEBUG, "Potentional data directory: %s", d->path.c_str());
+				LOG_L(L_DEBUG, "Potentional data directory: %s", dd.path.c_str());
 			}
 		}
 	}
