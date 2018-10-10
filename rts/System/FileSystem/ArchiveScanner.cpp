@@ -820,8 +820,8 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 	std::vector<std::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
 		err = "Error reading " + fileName;
-		if (ar->GetArchiveName().find(".sdp") != std::string::npos)
-			err += " (archive's rapid tag: " + GetRapidTagFromPackage(FileSystem::GetBasename(ar->GetArchiveName())) + ")";
+		if (ar->GetArchiveFile().find(".sdp") != std::string::npos)
+			err += " (archive's rapid tag: " + GetRapidTagFromPackage(FileSystem::GetBasename(ar->GetArchiveFile())) + ")";
 
 		return false;
 	}
