@@ -19,6 +19,7 @@ CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 
 CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(aircraftState),
+	CR_MEMBER(collisionState),
 
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),
@@ -35,9 +36,8 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(useSmoothMesh),
 	CR_MEMBER(autoLand),
 
-	CR_MEMBER(lastColWarning),
+	CR_MEMBER(lastCollidee),
 
-	CR_MEMBER(lastColWarningType),
 	CR_MEMBER(crashExpGenID)
 ))
 
@@ -90,7 +90,7 @@ AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 	altitudeRate = std::max(0.01f, ud->verticalSpeed);
 	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
 
-	useHeading = false;
+	UseHeading(false);
 
 	if (ud->GetCrashExpGenCount() > 0) {
 		crashExpGenID = guRNG.NextInt(ud->GetCrashExpGenCount());
@@ -115,21 +115,23 @@ bool AAirMoveType::UseSmoothMesh() const {
 }
 
 void AAirMoveType::DependentDied(CObject* o) {
-	if (o == lastColWarning) {
-		lastColWarning = nullptr;
-		lastColWarningType = 0;
+	if (o == lastCollidee) {
+		lastCollidee = nullptr;
+		collisionState = COLLISION_NOUNIT;
 	}
 }
 
 bool AAirMoveType::Update() {
 	// NOTE: useHeading is never true by default for aircraft (AAirMoveType
-	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
-	// specifically for HoverAirMoveType's)
-	if (useHeading)
+	// forces it to false, while only CUnit::{Attach,Detach}Unit manipulate
+	// it specifically for HoverAirMoveType's)
+	if (UseHeading()) {
 		SetState(AIRCRAFT_TAKEOFF);
+		UseHeading(false);
+	}
 
-	// this return value is never used
-	return (useHeading = false);
+	// prevent UnitMoved event spam
+	return false;
 }
 
 void AAirMoveType::UpdateLanded()
@@ -232,18 +234,19 @@ void AAirMoveType::CheckForCollision()
 	const SyncedFloat3& pos = owner->midPos;
 	const SyncedFloat3& forward = owner->frontdir;
 
-	const float3 midTestPos = pos + forward * 121.0f;
-	QuadFieldQuery qfQuery;
-	quadField.GetUnitsExact(qfQuery, midTestPos, 115.0f);
-
 	float dist = 200.0f;
 
-	if (lastColWarning) {
-		DeleteDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
-		lastColWarning = nullptr;
-		lastColWarningType = 0;
+	QuadFieldQuery qfQuery;
+	quadField.GetUnitsExact(qfQuery, pos + forward * 121.0f, dist);
+
+	if (lastCollidee != nullptr) {
+		DeleteDeathDependence(lastCollidee, DEPENDENCE_LASTCOLWARN);
+
+		lastCollidee = nullptr;
+		collisionState = COLLISION_NOUNIT;
 	}
 
+	// find closest potential collidee
 	for (CUnit* unit: *qfQuery.units) {
 		if (unit == owner || !unit->unitDef->canfly)
 			continue;
@@ -258,17 +261,17 @@ void AAirMoveType::CheckForCollision()
 		const float3 ortoDif = dif - forwardDif;
 		const float frontLength = forwardDif.Length();
 		// note: radii are multiplied by two
-		const float minOrtoDif = (unit->radius + owner->radius) * 2.0f + frontLength * 0.1f + 10;
+		const float minOrtoDif = (unit->radius + owner->radius) * 2.0f + frontLength * 0.1f + 10.0f;
 
 		if (ortoDif.SqLength() < (minOrtoDif * minOrtoDif)) {
 			dist = frontLength;
-			lastColWarning = const_cast<CUnit*>(unit);
+			lastCollidee = const_cast<CUnit*>(unit);
 		}
 	}
 
-	if (lastColWarning != nullptr) {
-		lastColWarningType = 2;
-		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
+	if (lastCollidee != nullptr) {
+		collisionState = COLLISION_DIRECT;
+		AddDeathDependence(lastCollidee, DEPENDENCE_LASTCOLWARN);
 		return;
 	}
 
@@ -276,12 +279,15 @@ void AAirMoveType::CheckForCollision()
 		if (u == owner)
 			continue;
 
-		if ((u->midPos - pos).SqLength() < (dist * dist))
-			lastColWarning = u;
+		if ((u->midPos - pos).SqLength() > Square((owner->radius + u->radius) * 2.0f))
+			continue;
+
+		lastCollidee = u;
 	}
 
-	if (lastColWarning != nullptr) {
-		lastColWarningType = 1;
-		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
+	if (lastCollidee != nullptr) {
+		collisionState = COLLISION_NEARBY;
+		AddDeathDependence(lastCollidee, DEPENDENCE_LASTCOLWARN);
+		return;
 	}
 }

@@ -35,10 +35,6 @@ AMoveType::AMoveType(CUnit* owner):
 	oldPos((owner != nullptr)? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
-	useHeading(true),
-
-	progressState(Done),
-
 	maxSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
 	maxSpeedDef((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
 	maxWantedSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),

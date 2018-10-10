@@ -56,7 +56,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 		glTranslatef(0.0f, 0.0f, -unit->radius);
 		glScalef(1.0f / unit->radius, 1.0f / unit->radius, 1.0f / unit->radius);
 
-		if (unit->moveType->useHeading) {
+		if (unit->moveType->UseHeading()) {
 			glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
 		} else {
@@ -76,7 +76,7 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 {
 	glDisable(GL_TEXTURE_2D);
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
@@ -98,7 +98,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 {
 	glDisable(GL_TEXTURE_2D);
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
@@ -296,3 +296,4 @@ void HUDDrawer::Draw(const CUnit* unit)
 		DrawTargetReticle(unit);
 	PopState();
 }
+
