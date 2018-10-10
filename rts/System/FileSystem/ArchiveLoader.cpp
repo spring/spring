@@ -24,14 +24,16 @@ static CVirtualArchiveFactory sdvArchiveFactory;
 
 CArchiveLoader::CArchiveLoader()
 {
+	const auto AddFactory = [&](unsigned archiveType, IArchiveFactory& factory) {
+		archiveFactories[archiveType] = {factory.GetDefaultExtension(), &factory};
+	};
+	AddFactory(ARCHIVE_TYPE_SDP, sdpArchiveFactory);
+	AddFactory(ARCHIVE_TYPE_SDD, sddArchiveFactory);
+	AddFactory(ARCHIVE_TYPE_SDZ, sdzArchiveFactory);
+	AddFactory(ARCHIVE_TYPE_SD7, sd7ArchiveFactory);
+	AddFactory(ARCHIVE_TYPE_SDV, sdvArchiveFactory);
+
 	using P = decltype(archiveFactories)::value_type;
-
-	archiveFactories[ARCHIVE_TYPE_SDP] = {sdpArchiveFactory.GetDefaultExtension(), &sdpArchiveFactory};
-	archiveFactories[ARCHIVE_TYPE_SDD] = {sddArchiveFactory.GetDefaultExtension(), &sddArchiveFactory};
-	archiveFactories[ARCHIVE_TYPE_SDZ] = {sdzArchiveFactory.GetDefaultExtension(), &sdzArchiveFactory};
-	archiveFactories[ARCHIVE_TYPE_SD7] = {sd7ArchiveFactory.GetDefaultExtension(), &sd7ArchiveFactory};
-	archiveFactories[ARCHIVE_TYPE_SDV] = {sdvArchiveFactory.GetDefaultExtension(), &sdvArchiveFactory};
-
 	std::sort(archiveFactories.begin(), archiveFactories.end(), [](const P& a, const P& b) { return a.first < b.first; });
 }
 
