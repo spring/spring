@@ -87,7 +87,7 @@ public:
 	CVirtualFile* GetFilePtr(unsigned int fid) { return &files[fid]; }
 
 	unsigned int AddFile(const std::string& file);
-	unsigned int NumFiles() const { return (files.size()); }
+	unsigned int NumFiles() const { return files.size(); }
 
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
 	void FileInfo(unsigned int fid, std::string& name, int& size) const;

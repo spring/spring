@@ -103,7 +103,7 @@ static const std::string GetArchivePath(const std::string& name) {
 	if (filename == name)
 		return "";
 
-	return (archiveScanner->GetArchivePath(filename) + filename);
+	return archiveScanner->GetArchivePath(filename) + filename;
 }
 
 
@@ -140,7 +140,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 		std::string name = std::move(StringToLower(fi.first));
 
 		if (!overwrite) {
-			const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+			const auto pred = [](const FileEntry& a, const FileEntry& b) { return a.first < b.first; };
 			const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{name, FileData{}}, pred);
 
 			if (iter != files[section].end() && iter->first == name) {
@@ -162,7 +162,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 		files[section].emplace_back(std::move(files[Section::Temp][i]));
 	}
 
-	std::stable_sort(files[section].begin(), files[section].end(), [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); });
+	std::stable_sort(files[section].begin(), files[section].end(), [](const FileEntry& a, const FileEntry& b) { return a.first < b.first; });
 	return true;
 }
 
@@ -222,7 +222,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	{
 		const auto beg = files[section].begin();
 		const auto end = files[section].end();
-		const auto pos = std::remove_if(beg, end, [](const FileEntry& e) { return (e.first.empty()); });
+		const auto pos = std::remove_if(beg, end, [](const FileEntry& e) { return e.first.empty(); });
 
 		// wipe entries belonging to the to-be-deleted archive
 		files[section].erase(pos, end);
@@ -269,7 +269,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	assert(section < Section::Count);
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
-	const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+	const auto pred = [](const FileEntry& a, const FileEntry& b) { return a.first < b.first; };
 	const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{normalizedFilePath, FileData{}}, pred);
 
 	if (iter != files[section].end() && iter->first == normalizedFilePath)
@@ -291,7 +291,7 @@ bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t
 	if (fileData.ar == nullptr)
 		return false;
 
-	return (fileData.ar->GetFile(normalizedPath, buffer));
+	return fileData.ar->GetFile(normalizedPath, buffer);
 }
 
 bool CVFSHandler::FileExists(const std::string& filePath, Section section)
@@ -304,7 +304,7 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 	if (fileData.ar == nullptr)
 		return false;
 
-	return (fileData.ar->FileExists(normalizedPath));
+	return fileData.ar->FileExists(normalizedPath);
 }
 
 
@@ -322,7 +322,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 	std::string dir = std::move(GetNormalizedPath(rawDir));
 
 
-	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return a.first < b.first; };
 
 	auto& filesVec = files[section];
 	auto  filesBeg = filesVec.begin();
@@ -375,7 +375,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 	std::string dir = std::move(GetNormalizedPath(rawDir));
 
 
-	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+	const auto filesPred = [](const FileEntry& a, const FileEntry& b) { return a.first < b.first; };
 
 	auto& filesVec = files[section];
 	auto  filesBeg = filesVec.begin();

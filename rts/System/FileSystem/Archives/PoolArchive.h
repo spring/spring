@@ -80,7 +80,7 @@ public:
 
 	bool IsOpen() override { return isOpen; }
 
-	unsigned NumFiles() const override { return (files.size()); }
+	unsigned NumFiles() const override { return files.size(); }
 	void FileInfo(unsigned int fid, std::string& name, int& size) const override {
 		assert(IsFileId(fid));
 		name = files[fid].name;
@@ -116,7 +116,7 @@ protected:
 	};
 	struct FileStat {
 		// inverted cmp for descending order
-		bool operator < (const FileStat& s) const { return (readTime > s.readTime); }
+		bool operator < (const FileStat& s) const { return readTime > s.readTime; }
 
 		uint64_t fileIndx;
 		uint64_t readTime;

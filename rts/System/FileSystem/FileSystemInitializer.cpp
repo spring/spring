@@ -90,7 +90,7 @@ bool FileSystemInitializer::Initialize()
 	// in case of an exception, ErrorMessageBox takes care of this
 	ClearThreadReg();
 
-	return (initSuccess && !initFailure);
+	return initSuccess && !initFailure;
 }
 
 void FileSystemInitializer::Cleanup(bool deallocConfigHandler)

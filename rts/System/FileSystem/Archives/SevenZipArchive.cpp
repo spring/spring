@@ -281,8 +281,8 @@ bool CSevenZipArchive::HasLowReadingCost(unsigned int fid) const
 	// * small meta-files in small solid blocks
 	// * big ones in separate solid blocks
 	// * for non-solid archives anyway
-	return (((fd.unpackedSize - fd.size) <= COST_LIMIT_UNPACK_OVERSIZE)
-			|| (fd.packedSize <= COST_LIMIT_DISC_READ));
+	return (fd.unpackedSize - fd.size) <= COST_LIMIT_UNPACK_OVERSIZE
+			|| fd.packedSize <= COST_LIMIT_DISC_READ;
 }
 
 #if 0
