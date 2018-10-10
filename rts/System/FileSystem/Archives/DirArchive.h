@@ -39,7 +39,7 @@ public:
 
 private:
 	/// "ExampleArchive.sdd/"
-	std::string dirName;
+	const std::string dirName;
 
 	std::vector<std::string> searchFiles;
 };
