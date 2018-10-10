@@ -2721,8 +2721,8 @@ public:
 
 class CrashActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CrashActionExecutor() : IUnsyncedActionExecutor("Crash",
-			"Invoke an artificial crash through a NULL-pointer dereference (SIGSEGV)", true) {}
+	CrashActionExecutor() : IUnsyncedActionExecutor("Crash", "Invoke an artificial crash through a NULL-pointer dereference (SIGSEGV)", true) {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		int* a = 0;
@@ -2731,12 +2731,30 @@ public:
 	}
 };
 
+class HangActionExecutor : public IUnsyncedActionExecutor {
+public:
+	HangActionExecutor() : IUnsyncedActionExecutor("Hang", "Invoke an artificial hang", true) {
+	}
 
+	bool Execute(const UnsyncedAction& action) const {
+		const std::string& args = action.GetArgs();
+
+		const spring_time t0 = spring_now();
+		const spring_time t1 = t0 + spring_time((args.empty())? 20.0f * 1000.0f: atof(args.c_str()) * 1000.0f);
+
+		for (spring_time t = t0; t < t1; t = spring_now()) {
+			// prevent compiler from removing this
+			SCOPED_TIMER("HangAction::Execute");
+		}
+
+		return true;
+	}
+};
 
 class ExceptionActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ExceptionActionExecutor() : IUnsyncedActionExecutor("Exception",
-			"Invoke an artificial crash by throwing an std::runtime_error", true) {}
+	ExceptionActionExecutor() : IUnsyncedActionExecutor("Exception", "Invoke an artificial crash by throwing an std::runtime_error", true) {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		throw std::runtime_error("Exception test");
@@ -2744,12 +2762,10 @@ public:
 	}
 };
 
-
-
 class DivByZeroActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DivByZeroActionExecutor() : IUnsyncedActionExecutor("DivByZero",
-			"Invoke an artificial crash by performing a division-by-Zero", true) {}
+	DivByZeroActionExecutor() : IUnsyncedActionExecutor("DivByZero", "Invoke an artificial crash by performing a division-by-zero", true) {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
 		float a = 0.0f; //can't be constexpr since MSVC dies
@@ -3276,6 +3292,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(new WireTreeActionExecutor());
 	AddActionExecutor(new WireWaterActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
+	AddActionExecutor(new HangActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());
 	AddActionExecutor(new GiveActionExecutor());
