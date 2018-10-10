@@ -21,14 +21,14 @@
 class IArchive
 {
 protected:
-	IArchive(const std::string& archiveName): archiveFile(archiveName) {
+	IArchive(const std::string& archiveFile): archiveFile(archiveFile) {
 	}
 
 public:
 	virtual ~IArchive() {}
 
 	virtual bool IsOpen() = 0;
-	const std::string& GetArchiveName() const { return archiveFile; }
+	const std::string& GetArchiveFile() const { return archiveFile; }
 
 	/**
 	 * @return The amount of files in the archive, does not change during

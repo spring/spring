@@ -98,14 +98,14 @@ CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 
 CPoolArchive::~CPoolArchive()
 {
-	const std::string& name = GetArchiveName();
+	const std::string& archiveFile = GetArchiveFile();
 	const std::pair<uint64_t, uint64_t>& sums = GetSums();
 
 	const unsigned long numZipFiles = files.size();
 	const unsigned long sumInflSize = sums.first / 1024;
 	const unsigned long sumReadTime = sums.second / (1000 * 1000);
 
-	LOG_L(L_INFO, "[%s] name=\"%s\" numZipFiles=%lu sumInflSize=%lukb sumReadTime=%lums", __func__, name.c_str(), numZipFiles, sumInflSize, sumReadTime);
+	LOG_L(L_INFO, "[%s] archiveFile=\"%s\" numZipFiles=%lu sumInflSize=%lukb sumReadTime=%lums", __func__, archiveFile.c_str(), numZipFiles, sumInflSize, sumReadTime);
 
 	std::partial_sort(stats.begin(), stats.begin() + std::min(stats.size(), size_t(10)), stats.end());
 
