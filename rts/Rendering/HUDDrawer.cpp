@@ -36,7 +36,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	viewMat.Translate(0.0f, 0.0f, -unit->radius);
 	viewMat.Scale({1.0f / unit->radius, 1.0f / unit->radius, 1.0f / unit->radius});
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		viewMat.RotateX(  90.0f * math::DEG_TO_RAD);
 		viewMat.RotateZ(-180.0f * math::DEG_TO_RAD);
 	} else {
@@ -288,7 +288,7 @@ void HUDDrawer::Draw(const CUnit* unit)
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	if (unit->moveType->useHeading) {
+	if (unit->moveType->UseHeading()) {
 		DrawUnitDirectionArrow(unit);
 		DrawCameraDirectionArrow(unit);
 	}

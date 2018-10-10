@@ -2595,7 +2595,7 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 		unitLoader->RestoreGround(unit);
 
 	if (dynamic_cast<CHoverAirMoveType*>(moveType) != nullptr)
-		unit->moveType->useHeading = false;
+		unit->moveType->UseHeading(false);
 
 	TransportedUnit tu;
 		tu.unit = unit;
@@ -2632,7 +2632,7 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 		unit->unloadingTransportId = id;
 
 		if (dynamic_cast<CHoverAirMoveType*>(moveType) != nullptr)
-			unit->moveType->useHeading = true;
+			unit->moveType->UseHeading(true);
 
 		// de-stun detaching units in case we are not a fire-platform
 		unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));

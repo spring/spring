@@ -89,9 +89,9 @@ public:
 	float crashElevator = 0.0f;
 	float crashRudder = 0.0f;
 
-	float lastRudderPos = 0.0f;
-	float lastElevatorPos = 0.0f;
-	float lastAileronPos = 0.0f;
+	float lastRudderPos[2] = {0.0f, 0.0f};
+	float lastElevatorPos[2] = {0.0f, 0.0f};
+	float lastAileronPos[2] = {0.0f, 0.0f};
 };
 
 #endif // _AIR_MOVE_TYPE_H_

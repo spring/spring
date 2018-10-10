@@ -99,7 +99,7 @@ static float TurnRadius(const float rawRadius, const float rawSpeed) {
 
 static float GetAileronDeflection(
 	const CUnit* owner,
-	const CUnit* collidee,
+	const CUnit* /*collidee*/,
 	const float3& pos,
 	const float4& spd,
 	const SyncedFloat3& rightdir,
@@ -111,13 +111,13 @@ static float GetAileronDeflection(
 	float maxAileron,
 	float maxBank,
 	float goalDotRight,
-	float aGoalDotFront,
-	bool avoidCollision,
-	bool attacking
+	float goalDotFront,
+	bool /*avoidCollision*/,
+	bool isAttacking
 ) {
 	float aileron = 0.0f;
 
-	if (attacking) {
+	if (isAttacking) {
 		const float maxAileronSpeedf = maxAileron * spd.w;
 		const float maxAileronSpeedf2 = maxAileronSpeedf * 4.0f;
 		const float minPredictedHeight = pos.y + spd.y * 60.0f * math::fabs(frontdir.y) + std::min(0.0f, updir.y * 1.0f) * (GAME_SPEED * 5);
@@ -186,7 +186,7 @@ static float GetAileronDeflection(
 
 static float GetRudderDeflection(
 	const CUnit* owner,
-	const CUnit* collidee,
+	const CUnit* /*collidee*/,
 	const float3& pos,
 	const float4& spd,
 	const SyncedFloat3& rightdir,
@@ -198,13 +198,13 @@ static float GetRudderDeflection(
 	float maxRudder,
 	float,
 	float goalDotRight,
-	float aGoalDotFront,
-	bool avoidCollision,
-	bool attacking
+	float goalDotFront,
+	bool /*avoidCollision*/,
+	bool isAttacking
 ) {
 	float rudder = 0.0f;
 
-	if (attacking) {
+	if (isAttacking) {
 		if (pos.y > (groundHeight + 30.0f)) {
 			const float maxRudderSpeedf = maxRudder * spd.w;
 
@@ -216,7 +216,7 @@ static float GetRudderDeflection(
 				if (maxRudderSpeedf > 0.0f) {
 					rudder = goalDotRight / maxRudderSpeedf;
 
-					if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+					if (math::fabs(rudder) < 0.01f && goalDotFront < 0.0f) {
 						// target almost straight behind us, we have to choose a direction
 						rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f;
 					}
@@ -235,7 +235,7 @@ static float GetRudderDeflection(
 				if (maxRudderSpeedf > 0.0f) {
 					rudder = goalDotRight / maxRudderSpeedf;
 
-					if (math::fabs(rudder) < 0.01f && aGoalDotFront < 0.0f) {
+					if (math::fabs(rudder) < 0.01f && goalDotFront < 0.0f) {
 						// target almost straight behind us, we have to choose a direction
 						rudder = (goalDotRight < 0.0f) ? -0.01f : 0.01f;
 					}
@@ -263,14 +263,14 @@ static float GetElevatorDeflection(
 	float maxElevator,
 	float maxPitch,
 	float goalDotRight,
-	float aGoalDotFront,
+	float goalDotFront,
 	bool avoidCollision,
-	bool attacking
+	bool isAttacking
 ) {
 	float elevator = 0.0f;
 	float upside = (updir.y >= -0.3f) * 2.0f - 1.0f;
 
-	if (attacking) {
+	if (isAttacking) {
 		if (spd.w < 1.5f) {
 			if (frontdir.y < 0.0f) {
 				elevator = upside;
@@ -314,19 +314,22 @@ static float GetElevatorDeflection(
 		}
 	} else {
 		if (spd.w > 0.8f) {
-			bool notColliding = true;
+			bool colliding = false;
 
 			if (avoidCollision) {
-				const float3 dir = collidee->midPos - owner->midPos;
-				const float3 sdir = collidee->speed - spd;
+				const float3 cvec = collidee->midPos - owner->midPos;
+				const float3 svec = collidee->speed - spd;
 
-				if (frontdir.dot(dir + sdir * 20) < 0) {
-					elevator = updir.dot(dir) > 0 ? -1 : 1;
-					notColliding = false;
-				}
+				// pitch down or up based on relative direction to
+				// a (collisionState == COLLISION_DIRECT) collidee
+				// this usually just results in jittering, callers
+				// disable it
+				// FIXME? dot < 0 means collidee is behind us
+				if ((colliding = (frontdir.dot(cvec + svec * 20.0f) < 0.0f)))
+					elevator = Sign(updir.dot(cvec) * -1.0f);
 			}
 
-			if (notColliding) {
+			if (!colliding) {
 				const float maxElevatorSpeedf = maxElevator * 20.0f * spd.w * spd.w;
 				const float gHeightAW = CGround::GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
 				const float hdif = std::max(groundHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * spd.w * 20.0f;
@@ -336,9 +339,8 @@ static float GetElevatorDeflection(
 				} else if (hdif > maxElevatorSpeedf && frontdir.y < maxPitch) {
 					elevator = 1.0f;
 				} else if (maxElevatorSpeedf > 0.0f) {
-					if (math::fabs(frontdir.y) < maxPitch) {
+					if (math::fabs(frontdir.y) < maxPitch)
 						elevator = hdif / maxElevatorSpeedf;
-					}
 				}
 			}
 		} else {
@@ -352,6 +354,36 @@ static float GetElevatorDeflection(
 
 	return elevator;
 }
+
+static float3 GetControlSurfaceAngles(
+	const CUnit* owner,
+	const CUnit* collidee,
+	const float3& pos,
+	const float4& spd,
+	const SyncedFloat3& rightdir,
+	const SyncedFloat3& updir,
+	const SyncedFloat3& frontdir,
+	const float3& goalDir,
+	const float3& maxBodyAngles, // .x := maxBank, .y := maxYaw, .z := maxPitch
+	const float3& maxCtrlAngles, // .x := maxAileron, .y := maxRudder, .z := maxElevator
+	const float3* prvCtrlAngles,
+	float groundHeight,
+	float wantedHeight,
+	float goalDotRight,
+	float goalDotFront,
+	bool avoidCollision,
+	bool isAttacking
+) {
+	float3 ctrlAngles;
+
+	ctrlAngles.x = GetRudderDeflection  (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.y, maxBodyAngles.y,  goalDotRight, goalDotFront,  avoidCollision, isAttacking); // yaw
+	ctrlAngles.y = GetElevatorDeflection(owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.z, maxBodyAngles.z,  goalDotRight, goalDotFront,  avoidCollision, isAttacking); // pitch
+	ctrlAngles.z = GetAileronDeflection (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.x, maxBodyAngles.x,  goalDotRight, goalDotFront,  avoidCollision, isAttacking); // roll
+
+	// let the previous control angles have some authority
+	return (ctrlAngles * 0.85f + prvCtrlAngles[0] * 0.1f + prvCtrlAngles[1] * 0.05f);
+}
+
 
 static int SelectLoopBackManeuver(
 	const SyncedFloat3& frontdir,
@@ -428,10 +460,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner): AAirMoveType(owner)
 	crashElevator  = gsRNG.NextFloat();
 	crashRudder    = gsRNG.NextFloat() - 0.5f;
 
-	lastRudderPos = 0.0f;
-	lastElevatorPos = 0.0f;
-	lastAileronPos = 0.0f;
-
 	SetMaxSpeed(maxSpeedDef);
 }
 
@@ -448,7 +476,7 @@ bool CStrafeAirMoveType::Update()
 	// otherwise we might fall through the map when stunned
 	// (the kill-on-impact code is not reached in that case)
 	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
-		UpdateAirPhysics(0.0f * lastRudderPos, lastAileronPos, lastElevatorPos, 0.0f, ZeroVector);
+		UpdateAirPhysics(0.0f * lastRudderPos[0], lastAileronPos[0], lastElevatorPos[0], 0.0f, ZeroVector);
 		return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
@@ -560,16 +588,21 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 	const float3& pos = owner->pos;
 
 #ifdef DEBUG_AIRCRAFT
-	if (lastColWarningType == 1) {
-		const int g = geometricObjects->AddLine(pos, lastColWarning->pos, 10, 1, 1);
-		geometricObjects->SetColor(g, 0.2f, 1, 0.2f, 0.6f);
-	} else if (lastColWarningType == 2) {
-		const int g = geometricObjects->AddLine(pos, lastColWarning->pos, 10, 1, 1);
-		if (owner->frontdir.dot(lastColWarning->midPos + lastColWarning->speed * 20.0f - owner->midPos - spd * 20.0f) < 0) {
-			geometricObjects->SetColor(g, 1, 0.2f, 0.2f, 0.6f);
-		} else {
-			geometricObjects->SetColor(g, 1, 1, 0.2f, 0.6f);
-		}
+	switch (collisionState) {
+		case COLLISION_NEARBY: {
+			const int g = geometricObjects->AddLine(pos, lastCollidee->pos, 10, 1, 1);
+			geometricObjects->SetColor(g, 0.2f, 1, 0.2f, 0.6f);
+		} break;
+		case COLLISION_DIRECT: {
+			const int g = geometricObjects->AddLine(pos, lastCollidee->pos, 10, 1, 1);
+			if (owner->frontdir.dot(lastCollidee->midPos + lastCollidee->speed * 20.0f - owner->midPos - spd * 20.0f) < 0) {
+				geometricObjects->SetColor(g, 1, 0.2f, 0.2f, 0.6f);
+			} else {
+				geometricObjects->SetColor(g, 1, 1, 0.2f, 0.6f);
+			}
+		} break;
+		default: {
+		} break;
 	}
 #endif
 
@@ -773,9 +806,8 @@ void CStrafeAirMoveType::UpdateAttack()
 		return;
 	}
 
-	if (((gs->frameNum + owner->id) & 3) == 0) {
+	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
-	}
 
 	      float3 rightDir2D = rightdir;
 	const float3 difGoalPos = (goalPos - oldGoalPos) * SQUARE_SIZE;
@@ -798,22 +830,26 @@ void CStrafeAirMoveType::UpdateAttack()
 
 	float goalDotRight = goalDir.dot(rightDir2D.Normalize2D());
 
-	const float aGoalDotFront = goalDir.dot(frontdir);
-	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
+	const float goalDotFront   = goalDir.dot(frontdir);
+	const float goalDotFront01 = goalDotFront * 0.5f + 0.501f; // [0,1]
 
-	if (goalDotFront != 0.0f) {
-		goalDotRight /= goalDotFront;
-	}
+	if (goalDotFront01 != 0.0f)
+		goalDotRight /= goalDotFront01;
 
 	{
+		const float3  maxBodyAngles    = {maxBank, 0.0f, maxPitch};
+		const float3  maxCtrlAngles    = {maxAileron, maxRudder, maxElevator};
+		const float3  prvCtrlAngles[2] = {{lastAileronPos[0], lastRudderPos[0], lastElevatorPos[0]}, {lastAileronPos[1], lastRudderPos[1], lastElevatorPos[1]}};
+		const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  gHeightAW, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, true);
+
 		const CUnit* attackee = owner->curTarget.unit;
 
-		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // roll
-		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // yaw
-		const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // pitch
-		const float engine   = ((attackee == NULL) || attackee->unitDef->IsGroundUnit())? 1.0f: std::min(1.0f, (goalDist / owner->maxRange + 1.0f - goalDir.dot(frontdir) * 0.7f));
+		// limit thrust when in range of (air) target and directly behind it
+		const float rangeLim = goalDist / owner->maxRange;
+		const float angleLim = 1.0f - goalDotFront * 0.7f;
+		const float   engine = ((attackee == nullptr) || attackee->unitDef->IsGroundUnit())? 1.0f: std::min(1.0f, rangeLim + angleLim);
 
-		UpdateAirPhysics(rudder, aileron, elevator, engine, owner->frontdir);
+		UpdateAirPhysics(curCtrlAngles.x, curCtrlAngles.z, curCtrlAngles.y, engine, frontdir);
 	}
 }
 
@@ -859,9 +895,8 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	const float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
 
 
-	float goalDotRight = goalDir2D.dot(rightDir2D);
-
-	const float aGoalDotFront = goalDir2D.dot(frontdir);
+	const float goalDotFront = goalDir2D.dot(frontdir);
+	      float goalDotRight = goalDir2D.dot(rightDir2D);
 
 	// If goal-position is behind us and goal-distance is less
 	// than our turning radius, turn the other way.
@@ -869,31 +904,32 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// goal-position is not in front within a 45 degree arc.
 	// This is to prevent becoming stuck in a small circle
 	// around goal-position.
-	if ((goalDist2D < turnRadius * 0.5f && goalDir2D.dot(frontdir) < 0.7f) || (goalDist2D < turnRadius && goalDir2D.dot(frontdir) < -0.1f)) {
-		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2)
-			goalDotRight *= -1.0f;
-	}
+	if ((goalDist2D < turnRadius * 0.5f && goalDir2D.dot(frontdir) < 0.7f) || (goalDist2D < turnRadius && goalDir2D.dot(frontdir) < -0.1f))
+		goalDotRight *= ((!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) * -2.0f + 1.0f);
 
-	if (lastColWarning != nullptr) {
-		const float3 otherDif = lastColWarning->pos - pos;
+	// try to steer (yaw) away from nearby aircraft in front of us
+	if (lastCollidee != nullptr) {
+		const float3 collideeVec = lastCollidee->pos - pos;
 
-		const float otherLength = otherDif.Length();
-		const float otherThreat = (otherLength > 0.0f)?
-			std::max(1200.0f, goalDist2D) / otherLength * 0.036f:
+		const float collideeDist = collideeVec.Length();
+		const float relativeDist = (collideeDist > 0.0f)?
+			std::max(1200.0f, goalDist2D) / collideeDist * 0.036f:
 			0.0f;
 
-		const float3 otherDir = (otherLength > 0.0f)?
-			(otherDif / otherLength):
+		const float3 collideeDir = (collideeDist > 0.0f)?
+			(collideeVec / collideeDist):
 			ZeroVector;
 
-		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
+		goalDotRight -= (collideeDir.dot(rightdir) * relativeDist * std::max(0.0f, collideeDir.dot(frontdir)));
 	}
 
-	const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // roll
-	const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // yaw
-	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, groundHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
+	const float3  maxBodyAngles    = {maxBank, 0.0f, maxPitch};
+	const float3  maxCtrlAngles    = {maxAileron, maxRudder, maxElevator};
+	const float3  prvCtrlAngles[2] = {{lastAileronPos[0], lastRudderPos[0], lastElevatorPos[0]}, {lastAileronPos[1], lastRudderPos[1], lastElevatorPos[1]}};
+	const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir2D,  maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  groundHeight, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, false);
 
-	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
+	UpdateAirPhysics(curCtrlAngles.x * yprMults.x, curCtrlAngles.z * yprMults.z, curCtrlAngles.y * yprMults.y, engine, owner->frontdir);
+
 	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
 
@@ -916,10 +952,15 @@ void CStrafeAirMoveType::UpdateTakeOff()
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
-	const float currentHeight = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
-	const float yawSign = Sign((goalPos - pos).dot(rightdir));
+	const float3 goalDir = (goalPos - pos).Normalize();
 
-	frontdir += (rightdir * yawSign * (maxRudder * spd.y));
+	const float yawWeight = maxRudder * spd.y;
+	const float dirWeight = Clamp(goalDir.dot(rightdir), -1.0f, 1.0f);
+	// this tends to alternate between -1 and +1 when goalDir and rightdir are ~orthogonal
+	// const float yawSign = Sign(goalDir.dot(rightdir));
+	const float currentHeight = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+
+	frontdir += (rightdir * dirWeight * yawWeight);
 	frontdir.Normalize();
 	rightdir = frontdir.cross(updir);
 
@@ -1052,8 +1093,12 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 	bool nextPosInBounds = true;
 
-	lastAileronPos = aileron;
-	lastElevatorPos = elevator;
+	lastRudderPos[1] = lastRudderPos[0];
+	lastRudderPos[0] = rudder;
+	lastAileronPos[1] = lastAileronPos[0];
+	lastAileronPos[0] = aileron;
+	lastElevatorPos[1] = lastElevatorPos[0];
+	lastElevatorPos[0] = elevator;
 
 	const float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	const float speedf = spd.w;

@@ -57,6 +57,9 @@ public:
 	virtual bool IsReversing() const { return false; }
 	virtual bool IsPushResistant() const { return false; }
 
+	bool UseHeading(      ) const { return (useHeading    ); }
+	bool UseHeading(bool b)       { return (useHeading = b); }
+
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
@@ -81,15 +84,12 @@ public:
 	float3 oldPos;             // owner position at last Update()
 	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate()
 
-	/// TODO: probably should move the code in CUnit that reads this into the movement classes
-	bool useHeading;
-
 	enum ProgressState {
 		Done   = 0,
 		Active = 1,
 		Failed = 2
 	};
-	ProgressState progressState;
+	ProgressState progressState = Done;
 
 protected:
 	float maxSpeed;            // current maximum speed owner is allowed to reach (changes with eg. guard orders)
@@ -98,6 +98,8 @@ protected:
 
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
 	float waterline;
+
+	bool useHeading = true;
 };
 
 #endif // MOVETYPE_H

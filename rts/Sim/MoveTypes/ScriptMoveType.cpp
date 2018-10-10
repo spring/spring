@@ -65,10 +65,8 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	collideStop(false),
 	scriptNotify(0)
 {
-	useHeading = false; // use the transformation matrix instead of heading
-
-	oldPos = owner? owner->pos: ZeroVector;
-	oldSlowUpdatePos = oldPos;
+	// use the transformation matrix instead of heading
+	UseHeading(false);
 }
 
 

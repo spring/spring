@@ -747,16 +747,13 @@ void CHoverAirMoveType::UpdateVerticalSpeed(const float4& spd, float curRelHeigh
 
 	owner->SetVelocity((spd * XZVector) + (UpVector * curVertSpeed));
 
-	if (lastColWarningType == 2) {
-		const float3 dir = lastColWarning->midPos - owner->midPos;
-		const float3 sdir = lastColWarning->speed - spd;
+	if (collisionState == COLLISION_DIRECT) {
+		const float3 dir = lastCollidee->midPos - owner->midPos;
+		const float3 sdir = lastCollidee->speed - spd;
 
 		if (spd.dot(dir + sdir * 20.0f) < 0.0f) {
-			if (lastColWarning->midPos.y > owner->pos.y) {
-				wh -= 30.0f;
-			} else {
-				wh += 50.0f;
-			}
+			wh -= (30.0f * (lastCollidee->midPos.y >  owner->pos.y));
+			wh += (50.0f * (lastCollidee->midPos.y <= owner->pos.y));
 		}
 	}
 
