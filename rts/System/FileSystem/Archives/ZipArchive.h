@@ -3,7 +3,7 @@
 #ifndef _ZIP_ARCHIVE_H
 #define _ZIP_ARCHIVE_H
 
-#include "ArchiveFactory.h"
+#include "IArchiveFactory.h"
 #include "BufferedArchive.h"
 #include "minizip/unzip.h"
 

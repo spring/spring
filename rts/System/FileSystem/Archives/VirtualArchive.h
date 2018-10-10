@@ -3,7 +3,7 @@
 #ifndef _VIRTUAL_ARCHIVE_H
 #define _VIRTUAL_ARCHIVE_H
 
-#include "ArchiveFactory.h"
+#include "IArchiveFactory.h"
 #include "IArchive.h"
 
 #include <vector>
