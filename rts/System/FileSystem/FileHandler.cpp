@@ -234,7 +234,7 @@ bool CFileHandler::Eof() const
 		return ifs.eof();
 
 	if (!fileBuffer.empty())
-		return filePos >= fileSize;
+		return (filePos >= fileSize);
 
 	return true;
 }

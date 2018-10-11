@@ -40,7 +40,7 @@ public:
 	 * archive.
 	 */
 	inline bool IsFileId(unsigned int fileId) const {
-		return fileId < NumFiles();
+		return (fileId < NumFiles());
 	}
 	/**
 	 * Returns true if the file exists in this archive.
@@ -49,7 +49,7 @@ public:
 	 * @return true if the file exists in this archive, false otherwise
 	 */
 	bool FileExists(const std::string& normalizedFilePath) const {
-		return lcNameIndex.find(normalizedFilePath) != lcNameIndex.end();
+		return (lcNameIndex.find(normalizedFilePath) != lcNameIndex.end());
 	}
 
 	/**

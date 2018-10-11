@@ -190,11 +190,11 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 
 std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower)
 {
-	const auto pred = [&keyLower](const KnownInfoTag& t) { return t.name == keyLower; };
+	const auto pred = [&keyLower](const KnownInfoTag& t) { return (t.name == keyLower); };
 	const auto iter = std::find_if(knownTags.cbegin(), knownTags.cend(), pred);
 
 	if (iter != knownTags.cend())
-		return iter->desc;
+		return (iter->desc);
 
 	return "<custom property>";
 }
@@ -202,7 +202,7 @@ std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& k
 
 bool CArchiveScanner::ArchiveData::IsReservedKey(const std::string& keyLower)
 {
-	return keyLower == "depend" || keyLower == "replace";
+	return ((keyLower == "depend") || (keyLower == "replace"));
 }
 
 
@@ -211,12 +211,12 @@ bool CArchiveScanner::ArchiveData::IsValid(std::string& err) const
 	using P = decltype(infoItems)::value_type;
 
 	const auto HasInfoItem = [this](const std::string& name) {
-		const auto pred = [](const P& a, const P& b) { return a.first < b.first; };
+		const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
 		const auto iter = std::lower_bound(infoItems.begin(), infoItems.end(), decltype(infoItems)::value_type{name, {}}, pred);
-		return iter != infoItems.end() && iter->first == name;
+		return (iter != infoItems.end() && iter->first == name);
 	};
 
-	const auto pred = [&](const KnownInfoTag& t) { return t.required && HasInfoItem(t.name); };
+	const auto pred = [&](const KnownInfoTag& t) { return (t.required && HasInfoItem(t.name)); };
 	const auto iter = std::find_if(knownTags.cbegin(), knownTags.cend(), pred);
 
 	if (iter == knownTags.cend())
@@ -234,7 +234,7 @@ const InfoItem* CArchiveScanner::ArchiveData::GetInfoItem(const std::string& key
 
 	const std::string& lcKey = StringToLower(key);
 
-	const auto pred = [](const P& a, const P& b) { return a.first < b.first; };
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(infoItems.begin(), infoItems.end(), P{lcKey, {}}, pred);
 
 	if (iter != infoItems.end() && iter->first == lcKey)
@@ -254,7 +254,7 @@ InfoItem& CArchiveScanner::ArchiveData::GetAddInfoItem(const std::string& key)
 
 	using P = decltype(infoItems)::value_type;
 
-	const auto pred = [](const P& a, const P& b) { return a.first < b.first; };
+	const auto pred = [](const P& a, const P& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(infoItems.begin(), infoItems.end(), P{keyLower, {}}, pred);
 
 	if (iter == infoItems.end() || iter->first != keyLower) {
@@ -268,15 +268,15 @@ InfoItem& CArchiveScanner::ArchiveData::GetAddInfoItem(const std::string& key)
 		// swap into position
 		for (size_t i = infoItems.size() - 1; i > 0; i--) {
 			if (infoItems[i - 1].first < infoItems[i].first)
-				return infoItems[i].second;
+				return (infoItems[i].second);
 
 			std::swap(infoItems[i - 1], infoItems[i]);
 		}
 
-		return infoItems[0].second;
+		return (infoItems[0].second);
 	}
 
-	return iter->second;
+	return (iter->second);
 }
 
 void CArchiveScanner::ArchiveData::SetInfoItemValueString(const std::string& key, const std::string& value)
@@ -331,7 +331,7 @@ std::string CArchiveScanner::ArchiveData::GetInfoValueString(const std::string& 
 		if (infoItem->valueType == INFO_VALUE_TYPE_STRING)
 			return infoItem->valueTypeString;
 
-		return infoItem->GetValueAsString();
+		return (infoItem->GetValueAsString());
 	}
 
 	return "";
@@ -342,7 +342,7 @@ int CArchiveScanner::ArchiveData::GetInfoValueInteger(const std::string& key) co
 	const InfoItem* infoItem = GetInfoItem(key);
 
 	if ((infoItem != nullptr) && (infoItem->valueType == INFO_VALUE_TYPE_INTEGER))
-		return infoItem->value.typeInteger;
+		return (infoItem->value.typeInteger);
 
 	return 0;
 }
@@ -352,7 +352,7 @@ float CArchiveScanner::ArchiveData::GetInfoValueFloat(const std::string& key) co
 	const InfoItem* infoItem = GetInfoItem(key);
 
 	if ((infoItem != nullptr) && (infoItem->valueType == INFO_VALUE_TYPE_FLOAT))
-		return infoItem->value.typeFloat;
+		return (infoItem->value.typeFloat);
 
 	return 0.0f;
 }
@@ -362,7 +362,7 @@ bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) cons
 	const InfoItem* infoItem = GetInfoItem(key);
 
 	if ((infoItem != nullptr) && (infoItem->valueType == INFO_VALUE_TYPE_BOOL))
-		return infoItem->value.typeBool;
+		return (infoItem->value.typeBool);
 
 	return false;
 }
@@ -397,7 +397,7 @@ CArchiveScanner::~CArchiveScanner()
 uint32_t CArchiveScanner::GetNumScannedArchives()
 {
 	// needs to be a static since archiveScanner remains null until ctor returns
-	return numScannedArchives.load();
+	return (numScannedArchives.load());
 }
 
 
@@ -755,7 +755,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 		BrokenArchive& ba = brokenArchives[baIter->second];
 
 		if (*modified == ba.modified && fpath == ba.path)
-			return ba.updated = true;
+			return (ba.updated = true);
 	}
 
 
@@ -1012,7 +1012,7 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 
 void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 {
-	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return dep == exclude; });
+	auto it = std::remove_if(deps.begin(), deps.end(), [&](const std::string& dep) { return (dep == exclude); });
 	deps.erase(it, deps.end());
 }
 
@@ -1030,11 +1030,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	// First delete all outdated information
 	{
-		std::stable_sort(archiveInfos.begin(), archiveInfos.end(), [](const ArchiveInfo& a, const ArchiveInfo& b) { return a.origName < b.origName; });
-		std::stable_sort(brokenArchives.begin(), brokenArchives.end(), [](const BrokenArchive& a, const BrokenArchive& b) { return a.name < b.name; });
+		std::stable_sort(archiveInfos.begin(), archiveInfos.end(), [](const ArchiveInfo& a, const ArchiveInfo& b) { return (a.origName < b.origName); });
+		std::stable_sort(brokenArchives.begin(), brokenArchives.end(), [](const BrokenArchive& a, const BrokenArchive& b) { return (a.name < b.name); });
 
-		const auto it = std::remove_if(archiveInfos.begin(), archiveInfos.end(), [](const ArchiveInfo& i) { return !i.updated; });
-		const auto jt = std::remove_if(brokenArchives.begin(), brokenArchives.end(), [](const BrokenArchive& i) { return !i.updated; });
+		const auto it = std::remove_if(archiveInfos.begin(), archiveInfos.end(), [](const ArchiveInfo& i) { return (!i.updated); });
+		const auto jt = std::remove_if(brokenArchives.begin(), brokenArchives.end(), [](const BrokenArchive& i) { return (!i.updated); });
 
 		archiveInfos.erase(it, archiveInfos.end());
 		brokenArchives.erase(jt, brokenArchives.end());
@@ -1129,7 +1129,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 {
 	std::stable_sort(data.begin(), data.end(), [](const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b) {
-		return a.GetNameVersioned() < b.GetNameVersioned();
+		return (a.GetNameVersioned() < b.GetNameVersioned());
 	});
 }
 
@@ -1197,8 +1197,8 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 	// VectorInsertUnique'ing via AddDependency can become a performance hog
 	// for very long dependency chains, prefer to sort and remove duplicates
-	const auto& NameCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return a.first  < b.first; };
-	const auto& IndxCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return a.second < b.second; };
+	const auto& NameCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.first  < b.first ); };
+	const auto& IndxCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.second < b.second); };
 
 	std::vector<          std::string         > retArchives;
 	std::vector<std::pair<std::string, size_t>> tmpArchives[2];
@@ -1310,11 +1310,11 @@ std::vector<std::string> CArchiveScanner::GetMaps() const
 std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 {
 	// Convert map name to map archive
-	const auto pred = [&s](const decltype(archiveInfos)::value_type& p) { return p.archiveData.GetNameVersioned() == s; };
+	const auto pred = [&s](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == s); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
-		return iter->archiveData.GetMapFile();
+		return (iter->archiveData.GetMapFile());
 
 	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "map file of %s not found", s.c_str());
 	return s;
@@ -1402,7 +1402,7 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 	const auto aii = archiveInfosIndex.find(StringToLower(archiveName));
 
 	if (aii != archiveInfosIndex.end())
-		return archiveInfos[aii->second].archiveData.GetNameVersioned();
+		return (archiveInfos[aii->second].archiveData.GetNameVersioned());
 
 	return archiveName;
 }
@@ -1410,7 +1410,7 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 
 std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 {
-	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return p.archiveData.GetNameVersioned() == name; };
+	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == name); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
@@ -1421,7 +1421,7 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& name) const
 {
-	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return p.archiveData.GetNameVersioned() == name; };
+	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == name); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
@@ -1448,14 +1448,14 @@ int CArchiveScanner::GetMetaFileClass(const std::string& filePath)
 	const auto it = metaFileClasses.find(lowerFilePath);
 
 	if (it != metaFileClasses.end())
-		return it->second;
+		return (it->second);
 
 //	if (ext == "smf") // to generate minimap
 //		return 1;
 
 	for (const auto& p: metaDirClasses) {
 		if (StringStartsWith(lowerFilePath, p.first))
-			return p.second;
+			return (p.second);
 	}
 
 	return 0;

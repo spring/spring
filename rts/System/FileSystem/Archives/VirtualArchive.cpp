@@ -93,7 +93,7 @@ unsigned int CVirtualArchive::AddFile(const std::string& name)
 	lcNameIndex[name] = files.size();
 	files.emplace_back(files.size(), name);
 
-	return files.size() - 1;
+	return (files.size() - 1);
 }
 
 void CVirtualArchive::WriteToFile()

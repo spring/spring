@@ -31,7 +31,7 @@ public:
 	std::string GetCleanLine();
 
 	bool Eof() const {
-		return curPos >= file.size();
+		return (curPos >= file.size());
 	}
 
 private:
