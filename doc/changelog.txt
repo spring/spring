@@ -74,6 +74,8 @@ Lua:
  ! Renamed SetShaderParameter to SetGeometryShaderParameter to avoid confusion of what kind shader parameters belongs to.
  - Added VFS.GetLoadedArchives() -> { string archiveName1, string archiveName2 ... }
  - Added VFS.GetArchivePath(string archiveName1) -> string archivePathOnDisk
+ - Added VFS.GetFileAbsolutePath(string vfsFilePath) -> string filePathOnDisk
+ - Added VFS.GetArchiveContainingFile(string vfsFilePath) -> string archiveName
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through

@@ -25,6 +25,9 @@ class LuaVFS {
 		static int DirList(lua_State* L, bool synced);
 		static int SubDirs(lua_State* L, bool synced);
 
+		static int GetFileAbsolutePath(lua_State* L);
+		static int GetArchiveContainingFile(lua_State* L);
+
 		static int SyncInclude(lua_State* L);
 		static int SyncLoadFile(lua_State* L);
 		static int SyncFileExists(lua_State* L);

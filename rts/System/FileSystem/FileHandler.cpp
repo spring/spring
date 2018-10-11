@@ -268,6 +268,48 @@ std::string CFileHandler::GetFileExt() const
 	return FileSystem::GetExtension(fileName);
 }
 
+std::string CFileHandler::GetFileAbsolutePath(const std::string& filePath, const std::string& modes)
+{
+	for (char c: modes) {
+#ifndef TOOLS
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+			return vfsHandler->GetFileAbsolutePath(filePath, section);
+
+		if ((c == SPRING_VFS_RAW[0]) && FileSystem::FileExists(dataDirsAccess.LocateFile(filePath)))
+			return dataDirsAccess.LocateFile(filePath);
+#endif
+		if (c == SPRING_VFS_PWD[0]) {
+#ifndef TOOLS
+			if (!FileSystem::IsAbsolutePath(filePath)) {
+				const std::string fullpath(Platform::GetOrigCWD() + filePath);
+				if (FileSystem::FileExists(fullpath))
+					return fullpath;
+			}
+#else
+			const std::string fullpath(filePath);
+			if (FileSystem::FileExists(fullpath))
+				return fullpath;
+#endif
+		}
+	}
+
+	return "";
+}
+
+std::string CFileHandler::GetArchiveContainingFile(const std::string& filePath, const std::string& modes)
+{
+	for (char c: modes) {
+#ifndef TOOLS
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+			return vfsHandler->GetFileArchiveName(filePath, section);
+#endif
+	}
+
+	return "";
+}
+
 /******************************************************************************/
 
 std::vector<string> CFileHandler::FindFiles(const string& path, const string& pattern)
