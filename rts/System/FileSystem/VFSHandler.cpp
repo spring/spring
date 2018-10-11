@@ -307,8 +307,17 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 	return (fileData.ar->FileExists(normalizedPath));
 }
 
-
-
+std::vector<std::string> CVFSHandler::GetAllArchiveNames() const
+{
+	std::vector<std::string> ret;
+	for (const auto& archive: archives) {
+		const auto& archiveFile = archive.second->GetArchiveFile();
+		const auto& baseName = FileSystem::GetFilename(archiveFile);
+		const auto& archiveName = archiveScanner->NameFromArchive(baseName);
+		ret.push_back(archiveName);
+	}
+	return ret;
+}
 
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, Section section)
 {
