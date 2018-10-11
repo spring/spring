@@ -316,13 +316,13 @@ std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Sectio
 	const FileData& fileData = GetFileData(normalizedPath, section);
 
 	// Only directory archives have an absolute path on disk
-	auto dirArchive = dynamic_cast<CDirArchive*>(fileData.ar);
-	if (!dirArchive) {
+	const auto dirArchive = dynamic_cast<const CDirArchive*>(fileData.ar);
+
+	if (dirArchive == nullptr)
 		return "";
-	}
 
 	const std::string& origFilePath = dirArchive->GetOrigFileName(dirArchive->FindFile(filePath));
-	return fileData.ar->GetArchiveFile() + "/" + origFilePath;
+	return (fileData.ar->GetArchiveFile() + "/" + origFilePath);
 }
 
 std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section section)
@@ -341,12 +341,15 @@ std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section
 std::vector<std::string> CVFSHandler::GetAllArchiveNames() const
 {
 	std::vector<std::string> ret;
+	ret.reserve(archives.size());
+
 	for (const auto& archive: archives) {
 		const auto& archiveFile = archive.second->GetArchiveFile();
 		const auto& baseName = FileSystem::GetFilename(archiveFile);
 		const auto& archiveName = archiveScanner->NameFromArchive(baseName);
 		ret.push_back(archiveName);
 	}
+
 	return ret;
 }
 
