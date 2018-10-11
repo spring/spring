@@ -17,7 +17,7 @@ public:
 	static void Reload();
 
 	// either result counts
-	static bool Initialized() { return initSuccess || initFailure; }
+	static bool Initialized() { return (initSuccess || initFailure); }
 
 private:
 	static std::atomic<bool> initSuccess;

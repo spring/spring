@@ -41,7 +41,7 @@ static uint32_t parse_uint32(uint8_t c[4])
 
 static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 {
-	return gzread(file, reinterpret_cast<char*>(buf), len) == len;
+	return (gzread(file, reinterpret_cast<char*>(buf), len) == len);
 }
 
 

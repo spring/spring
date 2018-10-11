@@ -35,9 +35,9 @@ public:
 
 	static bool FileExists(const std::string& filePath, const std::string& modes);
 	// true if any of TryReadFrom{RawFS,PWD,VFS} succeed
-	bool FileExists() const { return fileSize >= 0; }
+	bool FileExists() const { return (fileSize >= 0); }
 	// true if (and only if) TryReadFromVFS succeeds
-	bool IsBuffered() const { return !fileBuffer.empty(); }
+	bool IsBuffered() const { return (!fileBuffer.empty()); }
 
 	bool Eof() const;
 	int GetPos();

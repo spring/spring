@@ -60,7 +60,7 @@ CZipArchive::~CZipArchive()
 
 bool CZipArchive::IsOpen()
 {
-	return zip != nullptr;
+	return (zip != nullptr);
 }
 
 unsigned int CZipArchive::NumFiles() const

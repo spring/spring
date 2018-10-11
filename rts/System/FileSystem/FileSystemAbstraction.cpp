@@ -67,8 +67,8 @@ bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 	return isFsRoot;
 }
 
-bool FileSystemAbstraction::IsPathSeparator(char aChar) { return aChar == cPS_WIN32 || aChar == cPS_POSIX; }
-bool FileSystemAbstraction::IsNativePathSeparator(char aChar) { return aChar == cPS; }
+bool FileSystemAbstraction::IsPathSeparator(char aChar) { return ((aChar == cPS_WIN32) || (aChar == cPS_POSIX)); }
+bool FileSystemAbstraction::IsNativePathSeparator(char aChar) { return (aChar == cPS); }
 
 bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path)
 {
@@ -167,9 +167,9 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 		return false;
 
 #ifdef WIN32
-	return _access(StripTrailingSlashes(file).c_str(), 4) == 0;
+	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
-	return access(file.c_str(), R_OK | F_OK) == 0;
+	return (access(file.c_str(), R_OK | F_OK) == 0);
 #endif
 }
 
@@ -217,9 +217,9 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 	//return f.is_absolute();
 
 #ifdef WIN32
-	return path.length() > 1 && path[1] == ':';
+	return ((path.length() > 1) && (path[1] == ':'));
 #else
-	return path.length() > 0 && path[0] == '/';
+	return ((path.length() > 0) && (path[0] == '/'));
 #endif
 }
 
@@ -287,13 +287,13 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 bool FileSystemAbstraction::FileExists(const std::string& file)
 {
 	struct stat info;
-	return stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode);
+	return ((stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode)));
 }
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
 	struct stat info;
-	return stat(StripTrailingSlashes(dir).c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+	return ((stat(StripTrailingSlashes(dir).c_str(), &info) == 0 && S_ISDIR(info.st_mode)));
 }
 
 
@@ -334,7 +334,7 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 	unlink(testfile.c_str());
 	return true;
 #else
-	return access(dir.c_str(), W_OK) == 0;
+	return (access(dir.c_str(), W_OK) == 0);
 #endif
 }
 
@@ -350,7 +350,7 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 	if (ret1 || ret2)
 		return false;
 
-	return info1.st_dev == info2.st_dev && info1.st_ino == info2.st_ino;
+	return (info1.st_dev == info2.st_dev) && (info1.st_ino == info2.st_ino);
 #else
 	HANDLE h1 = CreateFile(
 		path1.c_str(),

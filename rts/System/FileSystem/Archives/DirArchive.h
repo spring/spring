@@ -33,7 +33,7 @@ public:
 
 	bool IsOpen() override { return true; }
 
-	unsigned int NumFiles() const override { return searchFiles.size(); }
+	unsigned int NumFiles() const override { return (searchFiles.size()); }
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
 
