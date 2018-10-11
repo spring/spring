@@ -58,25 +58,26 @@ int LuaArchive::GetGames(lua_State* L)
 	const auto& archives = archiveScanner->GetPrimaryMods();
 
 	lua_createtable(L, archives.size(), 0);
-	unsigned int count = 0;
+
 	for (const auto& archiveData: archives) {
 		lua_pushsstring(L, archiveData.GetNameVersioned());
-		lua_rawseti(L, -2, ++count);
+		lua_rawseti(L, -2, 1 + (&archiveData - &archives[0]));
 	}
+
 	return 1;
 }
-
 
 int LuaArchive::GetAllArchives(lua_State* L)
 {
 	const auto& archives = archiveScanner->GetAllArchives();
 
 	lua_createtable(L, archives.size(), 0);
-	unsigned int count = 0;
+
 	for (const auto& archiveData: archives) {
 		lua_pushsstring(L, archiveData.GetNameVersioned());
-		lua_rawseti(L, -2, ++count);
+		lua_rawseti(L, -2, 1 + (&archiveData - &archives[0]));
 	}
+
 	return 1;
 }
 
@@ -84,7 +85,8 @@ int LuaArchive::GetAllArchives(lua_State* L)
 int LuaArchive::HasArchive(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
-	CArchiveScanner::ArchiveData archiveData = archiveScanner->GetArchiveData(archiveName);
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
+
 	lua_pushboolean(L, !archiveData.IsEmpty());
 	return 1;
 }
@@ -104,9 +106,8 @@ int LuaArchive::GetArchivePath(lua_State* L)
 	const auto archive = archiveScanner->ArchiveFromName(luaL_checksstring(L, 1));
 	const std::string archivePath = archiveScanner->GetArchivePath(archive) + archive;
 
-	if (archivePath == "") {
+	if (archivePath.empty())
 		return 0;
-	}
 
 	lua_pushsstring(L, archivePath);
 	return 1;
@@ -117,16 +118,18 @@ int LuaArchive::GetArchiveInfo(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
 	const auto archiveData = archiveScanner->GetArchiveData(archiveName);
-	if (archiveData.IsEmpty()) {
+
+	if (archiveData.IsEmpty())
 		return 0;
-	}
 
 	lua_createtable(L, 0, archiveData.GetInfo().size());
+
 	for (const auto& pair: archiveData.GetInfo()) {
 		const std::string& itemName = pair.first;
 		const InfoItem& itemData    = pair.second;
 
 		lua_pushsstring(L, itemName);
+
 		switch (itemData.valueType) {
 			case INFO_VALUE_TYPE_STRING: {
 				lua_pushsstring(L, itemData.valueTypeString);
@@ -142,6 +145,7 @@ int LuaArchive::GetArchiveInfo(lua_State* L)
 			} break;
 			default: assert(false);
 		}
+
 		lua_rawset(L, -3);
 	}
 
@@ -153,9 +157,9 @@ int LuaArchive::GetArchiveDependencies(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
 	const auto archiveData = archiveScanner->GetArchiveData(archiveName);
-	if (archiveData.IsEmpty()) {
+
+	if (archiveData.IsEmpty())
 		return 0;
-	}
 
 	LuaUtils::PushStringVector(L, archiveData.GetDependencies());
 	return 1;
@@ -166,9 +170,9 @@ int LuaArchive::GetArchiveReplaces(lua_State* L)
 {
 	const std::string archiveName = luaL_checksstring(L, 1);
 	const auto archiveData = archiveScanner->GetArchiveData(archiveName);
-	if (archiveData.IsEmpty()) {
+
+	if (archiveData.IsEmpty())
 		return 0;
-	}
 
 	LuaUtils::PushStringVector(L, archiveData.GetReplaces());
 	return 1;
@@ -201,9 +205,9 @@ int LuaArchive::GetNameFromRapidTag(lua_State* L)
 {
 	const std::string rapidName = luaL_checksstring(L, 1);
 	const std::string archiveName = GetRapidPackageFromTag(rapidName);
-	if (archiveName == rapidName) {
+
+	if (archiveName == rapidName)
 		return 0;
-	}
 
 	lua_pushsstring(L, archiveScanner->NameFromArchive(archiveName));
 	return 1;

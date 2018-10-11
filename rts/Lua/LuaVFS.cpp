@@ -315,30 +315,27 @@ int LuaVFS::SyncSubDirs(lua_State* L)
 	return SubDirs(L, true);
 }
 
-
 int LuaVFS::UnsyncSubDirs(lua_State* L)
 {
 	return SubDirs(L, false);
 }
 
+
 int LuaVFS::GetFileAbsolutePath(lua_State* L)
 {
-	const string filename = luaL_checkstring(L, 1);
+	const std::string filename = luaL_checkstring(L, 1);
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
 	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
-	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false))) {
+	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false)))
 		return 0;
-	}
 
-	const string absolutePath = CFileHandler::GetFileAbsolutePath(
-		filename, GetModes(L, 2, false));
+	const std::string& absolutePath = CFileHandler::GetFileAbsolutePath(filename, GetModes(L, 2, false));
 
-	if (absolutePath == "") {
+	if (absolutePath.empty())
 		return 0;
-	}
 
 	lua_pushsstring(L, absolutePath);
 	return 1;
@@ -349,22 +346,19 @@ int LuaVFS::GetFileAbsolutePath(lua_State* L)
 
 int LuaVFS::GetArchiveContainingFile(lua_State* L)
 {
-	const string filename = luaL_checkstring(L, 1);
+	const std::string filename = luaL_checkstring(L, 1);
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
 	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
-	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false))) {
+	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false)))
 		return 0;
-	}
 
-	const string archiveName = CFileHandler::GetArchiveContainingFile(
-		filename, GetModes(L, 2, false));
+	const std::string& archiveName = CFileHandler::GetArchiveContainingFile(filename, GetModes(L, 2, false));
 
-	if (archiveName == "") {
+	if (archiveName.empty())
 		return 0;
-	}
 
 	lua_pushsstring(L, archiveName);
 	return 1;
