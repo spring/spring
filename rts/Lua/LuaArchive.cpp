@@ -27,7 +27,9 @@ bool LuaArchive::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGames);
 	REGISTER_LUA_CFUNC(GetAllArchives);
 	REGISTER_LUA_CFUNC(HasArchive);
+	REGISTER_LUA_CFUNC(GetLoadedArchives);
 
+	REGISTER_LUA_CFUNC(GetArchivePath);
 	REGISTER_LUA_CFUNC(GetArchiveInfo);
 	REGISTER_LUA_CFUNC(GetArchiveDependencies);
 	REGISTER_LUA_CFUNC(GetArchiveReplaces);
@@ -89,8 +91,29 @@ int LuaArchive::HasArchive(lua_State* L)
 	return 1;
 }
 
+
+int LuaArchive::GetLoadedArchives(lua_State* L)
+{
+	LuaUtils::PushStringVector(L, vfsHandler->GetAllArchiveNames());
+	return 1;
+}
+
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaArchive::GetArchivePath(lua_State* L)
+{
+	const auto archive = archiveScanner->ArchiveFromName(luaL_checksstring(L, 1));
+	const string archivePath = archiveScanner->GetArchivePath(archive) + archive;
+
+	if (archivePath == "") {
+		return 0;
+	}
+
+	lua_pushsstring(L, archivePath);
+	return 1;
+}
+
 
 int LuaArchive::GetArchiveInfo(lua_State* L)
 {

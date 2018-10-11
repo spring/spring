@@ -57,6 +57,11 @@ public:
 	bool FileExists(const std::string& filePath, Section section);
 
 	/**
+	 * Returns a collection of all loaded archives.
+	 */
+	std::vector<std::string> GetAllArchiveNames() const;
+
+	/**
 	 * Reads the contents of a file from within the VFS.
 	 * @param filePath raw file path, for example "maps/myMap.smf",
 	 *   case-insensitive
