@@ -73,10 +73,14 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 CMouseHandler::CMouseHandler()
 {
-	const int2 mousepos = mouseInput->GetPos();
+	const int2 screenCenter = globalRendering->GetScreenCenter();
 
-	lastx = mousepos.x;
-	lasty = mousepos.y;
+	// initially center the cursor
+	mouseInput->SetPos(screenCenter);
+	mouseInput->WarpPos(screenCenter);
+
+	dir = GetCursorCameraDir(lastx = screenCenter.x, lasty = screenCenter.y);
+
 
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
