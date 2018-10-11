@@ -45,6 +45,8 @@ public:
 
 	bool LoadStringData(std::string& data);
 	std::string GetFileExt() const;
+	static std::string GetFileAbsolutePath(const std::string& filePath, const std::string& modes);
+	static std::string GetArchiveContainingFile(const std::string& filePath, const std::string& modes);
 
 	std::vector<std::uint8_t>& GetBuffer() { return fileBuffer; }
 

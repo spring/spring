@@ -76,11 +76,15 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 {
 	PushCommon(L);
 
-	HSTR_PUSH_CFUNC(L, "Include",        UnsyncInclude);
-	HSTR_PUSH_CFUNC(L, "LoadFile",       UnsyncLoadFile);
-	HSTR_PUSH_CFUNC(L, "FileExists",     UnsyncFileExists);
-	HSTR_PUSH_CFUNC(L, "DirList",        UnsyncDirList);
-	HSTR_PUSH_CFUNC(L, "SubDirs",        UnsyncSubDirs);
+	HSTR_PUSH_CFUNC(L, "Include",             UnsyncInclude);
+	HSTR_PUSH_CFUNC(L, "LoadFile",            UnsyncLoadFile);
+	HSTR_PUSH_CFUNC(L, "FileExists",          UnsyncFileExists);
+	HSTR_PUSH_CFUNC(L, "DirList",             UnsyncDirList);
+	HSTR_PUSH_CFUNC(L, "SubDirs",             UnsyncSubDirs);
+
+	HSTR_PUSH_CFUNC(L, "GetFileAbsolutePath",      GetFileAbsolutePath);
+	HSTR_PUSH_CFUNC(L, "GetArchiveContainingFile", GetArchiveContainingFile);
+
 	HSTR_PUSH_CFUNC(L, "UseArchive",     UseArchive);
 	HSTR_PUSH_CFUNC(L, "CompressFolder", CompressFolder);
 	HSTR_PUSH_CFUNC(L, "MapArchive",     MapArchive);
@@ -315,6 +319,55 @@ int LuaVFS::SyncSubDirs(lua_State* L)
 int LuaVFS::UnsyncSubDirs(lua_State* L)
 {
 	return SubDirs(L, false);
+}
+
+int LuaVFS::GetFileAbsolutePath(lua_State* L)
+{
+	const string filename = luaL_checkstring(L, 1);
+
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
+
+	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false))) {
+		return 0;
+	}
+
+	const string absolutePath = CFileHandler::GetFileAbsolutePath(
+		filename, GetModes(L, 2, false));
+
+	if (absolutePath == "") {
+		return 0;
+	}
+
+	lua_pushsstring(L, absolutePath);
+	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaVFS::GetArchiveContainingFile(lua_State* L)
+{
+	const string filename = luaL_checkstring(L, 1);
+
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
+
+	if (!CFileHandler::FileExists(filename, GetModes(L, 2, false))) {
+		return 0;
+	}
+
+	const string archiveName = CFileHandler::GetArchiveContainingFile(
+		filename, GetModes(L, 2, false));
+
+	if (archiveName == "") {
+		return 0;
+	}
+
+	lua_pushsstring(L, archiveName);
+	return 1;
 }
 
 

@@ -57,6 +57,22 @@ public:
 	bool FileExists(const std::string& filePath, Section section);
 
 	/**
+	 * Returns the absolute path of a VFS file (does not work for dirs).
+	 * @param filePath VFS relative file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return absoluteFilePath if the file exists in the VFS, "" otherwise
+	 */
+	std::string GetFileAbsolutePath(const std::string& filePath, Section section);
+
+	/**
+	 * Returns the archive name containing a VFS file (does not work for dirs).
+	 * @param filePath VFS relative file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return archiveName if the file exists in the VFS, "" otherwise
+	 */
+	std::string GetFileArchiveName(const std::string& filePath, Section section);
+
+	/**
 	 * Returns a collection of all loaded archives.
 	 */
 	std::vector<std::string> GetAllArchiveNames() const;

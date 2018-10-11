@@ -10,6 +10,7 @@
 #include "ArchiveScanner.h"
 #include "FileSystem.h"
 #include "System/FileSystem/Archives/IArchive.h"
+#include "System/FileSystem/Archives/DirArchive.h"
 #include "System/Threading/SpringThreading.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -305,6 +306,36 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 		return false;
 
 	return (fileData.ar->FileExists(normalizedPath));
+}
+
+std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Section section)
+{
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+
+	const std::string& normalizedPath = GetNormalizedPath(filePath);
+	const FileData& fileData = GetFileData(normalizedPath, section);
+
+	// Only directory archives have an absolute path on disk
+	auto dirArchive = dynamic_cast<CDirArchive*>(fileData.ar);
+	if (!dirArchive) {
+		return "";
+	}
+
+	const std::string& origFilePath = dirArchive->GetOrigFileName(dirArchive->FindFile(filePath));
+	return fileData.ar->GetArchiveFile() + "/" + origFilePath;
+}
+
+std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section section)
+{
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+
+	const std::string& normalizedPath = GetNormalizedPath(filePath);
+	const auto& fileData = GetFileData(normalizedPath, section);
+	const auto& archiveFile = fileData.ar->GetArchiveFile();
+	const auto& baseName = FileSystem::GetFilename(archiveFile);
+	const auto& archiveName = archiveScanner->NameFromArchive(baseName);
+
+	return archiveName;
 }
 
 std::vector<std::string> CVFSHandler::GetAllArchiveNames() const
