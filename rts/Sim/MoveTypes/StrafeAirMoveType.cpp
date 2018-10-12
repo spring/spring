@@ -791,7 +791,7 @@ void CStrafeAirMoveType::UpdateAttack()
 
 
 
-bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float thrust)
+bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float wantedThrottle)
 {
 	const float3& pos = owner->pos;
 	const float4& spd = owner->speed;
@@ -869,7 +869,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float thrust)
 	const float3  prvCtrlAngles[2] = {{lastRudderPos[0], lastElevatorPos[0], lastAileronPos[0]}, {lastRudderPos[1], lastElevatorPos[1], lastAileronPos[1]}};
 	const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir2D,  maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  groundHeight, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, false);
 
-	UpdateAirPhysics({curCtrlAngles * yprInputLocks, thrust}, owner->frontdir);
+	UpdateAirPhysics({curCtrlAngles * yprInputLocks, wantedThrottle}, owner->frontdir);
 
 	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
