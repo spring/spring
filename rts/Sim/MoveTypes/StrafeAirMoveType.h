@@ -5,6 +5,8 @@
 
 #include "AAirMoveType.h"
 
+struct float4;
+
 /**
  * Air movement type definition
  */
@@ -29,15 +31,9 @@ public:
 
 	void UpdateManeuver();
 	void UpdateAttack();
-	bool UpdateFlying(float wantedHeight, float engine);
+	bool UpdateFlying(float wantedHeight, float thrust);
 	void UpdateLanding();
-	void UpdateAirPhysics(
-		float rudder,
-		float aileron,
-		float elevator,
-		float engine,
-		const float3& engineVector
-	);
+	void UpdateAirPhysics(const float4& controlInputs, const float3& thrustVector);
 	void SetState(AircraftState state) override;
 	void UpdateTakeOff();
 
