@@ -69,9 +69,10 @@ public:
 	}
 
 	bool erase(T* o) {
-		const auto it = std::find(arr.begin(), arr.end(), o);
+		const auto ae = arr.begin() + arrSize;
+		const auto it = std::find(arr.begin(), ae, o);
 
-		if (it != arr.end()) {
+		if (it != ae) {
 			if (vec.empty()) {
 				*it = arr[--arrSize];
 				arr[arrSize] = nullptr;
