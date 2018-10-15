@@ -45,12 +45,12 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 // SetupVP loads/pushes view first, then proj
 // SetupPV loads/pushes proj first, then view
 // pv := pushView, pp := pushProj
-void glSpringMatrix2dSetupVP(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
+// void glSpringMatrix2dSetupVP(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
 void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
 // ResetVP pops view first, then proj
 // ResetPV pops proj first, then view
 // pv := popView, pp := popProj
-void glSpringMatrix2dResetVP(bool pv = false, bool pp = false);
+// void glSpringMatrix2dResetVP(bool pv = false, bool pp = false);
 void glSpringMatrix2dResetPV(bool pv = false, bool pp = false);
 
 void ClearScreen();

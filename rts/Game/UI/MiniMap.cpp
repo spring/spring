@@ -1058,8 +1058,10 @@ void CMiniMap::Draw()
 		glAttribStatePtr->PopBits();
 	}
 
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
 	// draw minimap itself
 	DrawForReal(true, false, false);
+	glSpringMatrix2dResetPV();
 }
 
 

@@ -1284,7 +1284,7 @@ bool CGame::Draw() {
 		camera->Update();
 
 		worldDrawer.Draw();
-		worldDrawer.ResetMVPMatrices();
+		worldDrawer.SetupScreenState();
 	}
 
 	{

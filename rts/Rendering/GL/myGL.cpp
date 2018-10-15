@@ -351,25 +351,10 @@ static void LoadViewMat2D(bool push) {
 }
 
 
-void glSpringMatrix2dSetupVP(float l, float r, float b, float t, float n, float f,  bool pv, bool pp)
-{
-	LoadViewMat2D(pv);
-	LoadProjMat2D(l, r, b, t, n, f,  pp);
-}
 void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float f,  bool pv, bool pp)
 {
 	LoadProjMat2D(l, r, b, t, n, f,  pp);
 	LoadViewMat2D(pv);
-}
-
-void glSpringMatrix2dResetVP(bool pv, bool pp) {
-	GL::MatrixMode(GL_MODELVIEW);
-	if (pv)
-		GL::PopMatrix();
-
-	GL::MatrixMode(GL_PROJECTION);
-	if (pp)
-		GL::PopMatrix();
 }
 
 void glSpringMatrix2dResetPV(bool pv, bool pp) {

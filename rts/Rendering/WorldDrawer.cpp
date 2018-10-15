@@ -201,10 +201,8 @@ void CWorldDrawer::GenerateIBLTextures() const
 	camera->LoadViewPort();
 }
 
-void CWorldDrawer::ResetMVPMatrices() const
+void CWorldDrawer::SetupScreenState() const
 {
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-
 	glAttribStatePtr->DisableDepthTest();
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
