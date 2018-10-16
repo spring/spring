@@ -42,8 +42,11 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
-	void SetWantedAltitude(float altitude);
-	void SetDefaultAltitude(float altitude);
+	void SetWantedAltitude(float altitude) { wantedHeight = mix(orgWantedHeight, altitude, altitude != 0.0f); }
+	void SetDefaultAltitude(float altitude) {
+		wantedHeight = altitude;
+		orgWantedHeight = altitude;
+	}
 
 	bool HaveLandingPos() const { return (reservedLandingPos.x != -1.0f); }
 
@@ -79,9 +82,11 @@ public:
 
 	/// mods can use this to disable plane collisions
 	bool collide = true;
+	bool autoLand = true;
 	/// controls use of smoothGround for determining altitude
 	bool useSmoothMesh = false;
-	bool autoLand = true;
+	bool canSubmerge = false;
+	bool floatOnWater = false;
 
 protected:
 	/// unit found to be dangerously close to our path

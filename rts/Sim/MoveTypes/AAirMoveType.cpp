@@ -33,8 +33,10 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(altitudeRate),
 
 	CR_MEMBER(collide),
-	CR_MEMBER(useSmoothMesh),
 	CR_MEMBER(autoLand),
+	CR_MEMBER(useSmoothMesh),
+	CR_MEMBER(canSubmerge),
+	CR_MEMBER(floatOnWater),
 
 	CR_MEMBER(lastCollidee),
 
@@ -89,6 +91,11 @@ AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 	decRate = std::max(0.01f, ud->maxDec);
 	altitudeRate = std::max(0.01f, ud->verticalSpeed);
 	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
+
+	collide = ud->collide;
+	useSmoothMesh = ud->useSmoothMesh;
+	canSubmerge = ud->canSubmerge;
+	floatOnWater = ud->floatOnWater;
 
 	UseHeading(false);
 
@@ -208,21 +215,6 @@ void AAirMoveType::UpdateLanding()
 		SetState(AIRCRAFT_LANDED);
 		owner->SetVelocityAndSpeed(UpVector * owner->speed);
 	}
-}
-
-void AAirMoveType::SetWantedAltitude(float altitude)
-{
-	if (altitude == 0.0f) {
-		wantedHeight = orgWantedHeight;
-	} else {
-		wantedHeight = altitude;
-	}
-}
-
-void AAirMoveType::SetDefaultAltitude(float altitude)
-{
-	wantedHeight = altitude;
-	orgWantedHeight = altitude;
 }
 
 

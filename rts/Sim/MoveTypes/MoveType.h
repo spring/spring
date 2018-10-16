@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/Object.h"
 #include "System/float3.h"
+#include "System/myMath.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 #include <algorithm>
@@ -75,6 +76,8 @@ public:
 		const float dist = 0.5f * rate * time * time;
 		return dist;
 	}
+
+	float CalcScriptMoveRate(float speed, float nsteps) const { return Clamp(math::floor((speed / maxSpeed) * nsteps), 0.0f, nsteps - 1.0f); }
 	float CalcStaticTurnRadius() const;
 
 public:

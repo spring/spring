@@ -372,7 +372,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner): AAirMoveType(owner)
 
 	isFighter = owner->unitDef->IsFighterAirUnit();
 	loopbackAttack = owner->unitDef->canLoopbackAttack && isFighter;
-	collide = owner->unitDef->collide;
 
 	wingAngle = owner->unitDef->wingAngle;
 	crashDrag = 1.0f - owner->unitDef->crashDrag;
@@ -395,8 +394,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner): AAirMoveType(owner)
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
 	attackSafetyDistance = 0.0f;
-
-	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	maxRudder   *= (0.99f + gsRNG.NextFloat() * 0.02f);
 	maxElevator *= (0.99f + gsRNG.NextFloat() * 0.02f);
@@ -899,7 +896,7 @@ void CStrafeAirMoveType::UpdateTakeOff()
 	const float dirWeight = Clamp(goalDir.dot(rightdir), -1.0f, 1.0f);
 	// this tends to alternate between -1 and +1 when goalDir and rightdir are ~orthogonal
 	// const float yawSign = Sign(goalDir.dot(rightdir));
-	const float currentHeight = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+	const float currentHeight = pos.y - amtGetGroundHeightFuncs[canSubmerge](pos.x, pos.z);
 
 	frontdir += (rightdir * dirWeight * yawWeight);
 	frontdir.Normalize();
@@ -1004,7 +1001,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		if (landPosDistXZ > curSpeedXZ && curSpeedXZ > 0.1f) {
 			owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, landPosDistY * curSpeedXZ / landPosDistXZ));
 		} else {
-			const float localAltitude = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+			const float localAltitude = pos.y - amtGetGroundHeightFuncs[canSubmerge](pos.x, pos.z);
 			const float deltaAltitude = wantedHeight - localAltitude;
 
 			if (deltaAltitude < 0.0f)
@@ -1227,9 +1224,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 float3 CStrafeAirMoveType::FindLandingPos(float3 landPos)
 {
-	const UnitDef* ud = owner->unitDef;
-
-	if (((landPos.y = CGround::GetHeightReal(landPos)) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(ud->floatOnWater || ud->canSubmerge)))
+	if (((landPos.y = CGround::GetHeightReal(landPos)) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(floatOnWater || canSubmerge)))
 		return -OnesVector;
 
 	const int2 os = {owner->xsize, owner->zsize};
