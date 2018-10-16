@@ -119,10 +119,9 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	wantedHeight = owner->unitDef->wantedHeight + gsRNG.NextFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;
+
 	dontLand = owner->unitDef->DontLand();
-	collide = owner->unitDef->collide;
 	bankingAllowed = owner->unitDef->bankingAllowed;
-	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// prevent weapons from being updated and firing while on the ground
 	owner->dontUseWeapons = true;
@@ -264,7 +263,7 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 	forceHeading = false;
 	wantedHeight = orgWantedHeight;
 
-	// close in a little to avoid the command AI to override the pos constantly
+	// close in a little to avoid the command AI overriding pos constantly
 	distance -= 15.0f;
 
 	// Ignore the exact same order
@@ -368,7 +367,7 @@ void CHoverAirMoveType::UpdateTakeoff()
 
 	UpdateAirPhysics();
 
-	const float curAltitude = pos.y - amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
+	const float curAltitude = pos.y - amtGetGroundHeightFuncs[canSubmerge](pos.x, pos.z);
 	const float minAltitude = orgWantedHeight * 0.8f;
 
 	if (curAltitude <= minAltitude)
@@ -404,9 +403,8 @@ void CHoverAirMoveType::UpdateHovering()
 		deltaDir -= owner->speed;
 	}
 
-	if (deltaDir.SqLength2D() > (maxSpeed * maxSpeed)) {
+	if (deltaDir.SqLength2D() > (maxSpeed * maxSpeed))
 		deltaDir *= (maxSpeed / NOZERO(math::sqrt(deltaDir.SqLength2D())));
-	}
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
@@ -447,7 +445,6 @@ void CHoverAirMoveType::UpdateFlying()
 	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands()) {
 		if ((goalDir != ZeroVector) && (goalVec.dot(goalDir.UnsafeANormalize()) < 1.0f))
 			goalVec = owner->frontdir;
-
 	}
 
 	const float goalDistSq2D = goalVec.SqLength2D();
@@ -597,7 +594,7 @@ void CHoverAirMoveType::UpdateFlying()
 
 void CHoverAirMoveType::UpdateLanding()
 {
-	const float3& pos = owner->pos;
+	const float3 pos = owner->pos;
 
 	if (!HaveLandingPos()) {
 		if (CanLandAt(pos)) {
@@ -607,11 +604,9 @@ void CHoverAirMoveType::UpdateLanding()
 
 			UpdateLandingHeight(0.0f);
 
-			const float3 originalPos = pos;
-
 			owner->Move(reservedLandingPos, false);
 			owner->Block();
-			owner->Move(originalPos, false);
+			owner->Move(pos, false);
 			owner->script->StopMoving();
 		} else {
 			if (goalPos.SqDistance2D(pos) < (30.0f * 30.0f)) {
@@ -624,11 +619,11 @@ void CHoverAirMoveType::UpdateLanding()
 			}
 
 			flyState = FLY_LANDING;
+
 			UpdateFlying();
 			return;
 		}
 	}
-
 
 
 	flyState = FLY_LANDING;
@@ -638,8 +633,8 @@ void CHoverAirMoveType::UpdateLanding()
 
 	if (distSq2D > landRadiusSq) {
 		const float tmpWantedHeight = wantedHeight;
-		SetGoal(reservedLandingPos);
 
+		SetGoal(reservedLandingPos);
 		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
@@ -650,7 +645,6 @@ void CHoverAirMoveType::UpdateLanding()
 	wantedSpeed = ZeroVector;
 
 	AAirMoveType::UpdateLanding();
-
 	UpdateAirPhysics();
 }
 
@@ -745,6 +739,7 @@ void CHoverAirMoveType::UpdateVerticalSpeed(const float4& spd, float curRelHeigh
 	float wh = wantedHeight; // wanted RELATIVE height (altitude)
 	float ws = 0.0f;         // wanted vertical speed
 
+	// first restore original vertical speed
 	owner->SetVelocity((spd * XZVector) + (UpVector * curVertSpeed));
 
 	if (collisionState == COLLISION_DIRECT) {
@@ -759,16 +754,10 @@ void CHoverAirMoveType::UpdateVerticalSpeed(const float4& spd, float curRelHeigh
 
 	if (curRelHeight < wh) {
 		ws = altitudeRate;
-
-		if ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y) {
-			ws = 0.0f;
-		}
+		ws *= (1.0f - ((spd.y > 0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 1.5f) < spd.y));
 	} else {
 		ws = -altitudeRate;
-
-		if ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y) {
-			ws = 0.0f;
-		}
+		ws *= (1.0f - ((spd.y < -0.0001f) && (((wh - curRelHeight) / spd.y) * accRate * 0.7f) < -spd.y));
 	}
 
 	ws *= (1 - owner->beingBuilt);
@@ -796,8 +785,21 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	const float3& pos = owner->pos;
 	const float4& spd = owner->speed;
 
+	// division by .w cancels out here
+	//  const float3 brakePos = pos + (spd / spd.w) * BrakingDistance(spd.w, decRate) * 4.0f;
+	//  const float3 brakePos = pos + (spd / spd.w) * ((0.5f * spd.w * spd.w) / decRate) * 4.0f;
+	const float3 brakePos = pos + spd * ((0.5f * spd.w) / decRate) * 4.0f;
+
 	// copy vertical speed
-	const float yspeed = spd.y;
+	const float verticalSpeed = spd.y;
+	const float ownerMinHeight = owner->midPos.y - owner->radius;
+
+	// absolute ground heights at pos and brakePos
+	// if this aircraft uses the smoothmesh, these values are
+	// calculated with respect to that when changing vertical
+	// speed (but not for ground collision)
+	float cpGroundHeight = amtGetGroundHeightFuncs[canSubmerge](     pos.x,      pos.z);
+	float bpGroundHeight = amtGetGroundHeightFuncs[canSubmerge](brakePos.x, brakePos.z);
 
 	if (((gs->frameNum + owner->id) & 3) == 0)
 		CheckForCollision();
@@ -805,51 +807,55 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// cancel out vertical speed, acc and dec are applied in xz-plane
 	owner->SetVelocity(spd * XZVector);
 
-	const float3 deltaSpeed = wantedSpeed - spd;
-	const float deltaDotSpeed = deltaSpeed.dot(spd);
-	const float deltaSpeedSq = deltaSpeed.SqLength();
-
-	if (deltaDotSpeed >= 0.0f) {
-		// accelerate
-		if (deltaSpeedSq < Square(accRate)) {
-			owner->SetVelocity(wantedSpeed);
-		} else {
-			if (deltaSpeedSq > 0.0f)
-				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * accRate));
-		}
-	} else {
-		// deccelerate
-		if (deltaSpeedSq < Square(decRate)) {
-			owner->SetVelocity(wantedSpeed);
-		} else {
-			if (deltaSpeedSq > 0.0f)
-				owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSq) * decRate));
-		}
-	}
-
-	// absolute and relative ground height at (pos.x, pos.z)
-	// if this aircraft uses the smoothmesh, these values are
-	// calculated with respect to that (for changing vertical
-	// speed, but not for ground collision)
-	float curAbsHeight = amtGetGroundHeightFuncs[owner->unitDef->canSubmerge](pos.x, pos.z);
-
 	// always stay above the actual terrain (therefore either the value of
 	// <midPos.y - radius> or pos.y must never become smaller than the real
-	// ground height)
+	// ground height; prefer to use radius since this leaves more clearance
+	// between model and ground)
 	// note: unlike StrafeAirMoveType, UpdateTakeoff and UpdateLanding call
 	// UpdateAirPhysics() so we ignore terrain while we are in those states
 	if (modInfo.allowAircraftToHitGround) {
-		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
-		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
+		const bool cpGroundContact = (cpGroundHeight > ownerMinHeight);
+		const bool bpGroundContact = (bpGroundHeight > ownerMinHeight);
+		const bool   handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
-		if (groundContact && handleContact)
-			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
+		// hard avoidance in case soft constraint fails
+		if (cpGroundContact && handleContact)
+			owner->Move(UpVector * (cpGroundHeight - ownerMinHeight + 0.01f), true);
+
+		// soft avoidance
+		if (bpGroundContact && handleContact)
+			wantedSpeed = UpVector * altitudeRate;
 	}
 
-	curAbsHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + owner->unitDef->canSubmerge](pos.x, pos.z);
+	{
+		const float3 deltaSpeed = wantedSpeed - spd;
 
-	// restore original vertical speed, then compute new
-	UpdateVerticalSpeed(spd, pos.y - curAbsHeight, yspeed);
+		// apply {acc,dec}eleration as wanted
+		const float deltaSpeedSqr = deltaSpeed.SqLength();
+		const float deltaSpeedRate = mix(accRate, decRate, deltaSpeed.dot(spd) < 0.0f);
+
+		if (deltaSpeedSqr < Square(deltaSpeedRate)) {
+			owner->SetVelocity(wantedSpeed);
+		} else {
+			owner->SetVelocity(spd + (deltaSpeed / math::sqrt(deltaSpeedSqr) * deltaSpeedRate));
+		}
+	}
+
+
+	// cpGroundHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + canSubmerge](     pos.x,      pos.z);
+	bpGroundHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + canSubmerge](brakePos.x, brakePos.z);
+
+	// compute new vertical speed
+	// NOTE:
+	//   if altitudeRate is too small then aircraft can disappear
+	//   below cliffs (with terrain collision disabled) unless it
+	//   stops moving forward, which needs to happen some time in
+	//   advance to not break immersion
+	//   since true terrain-following is expensive, instead sample
+	//   the ground height N braking distances ahead and base next
+	//   VS on that
+	// UpdateVerticalSpeed(spd, pos.y - cpGroundHeight, verticalSpeed);
+	UpdateVerticalSpeed(spd, pos.y - bpGroundHeight, verticalSpeed);
 
 	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds())
 		owner->Move(spd, true);
@@ -858,20 +864,16 @@ void CHoverAirMoveType::UpdateAirPhysics()
 
 void CHoverAirMoveType::UpdateMoveRate()
 {
-	int curRate = 0;
+	int curMoveRate = 1;
 
 	// currentspeed is not used correctly for vertical movement, so compensate with this hax
-	if ((aircraftState == AIRCRAFT_LANDING) || (aircraftState == AIRCRAFT_TAKEOFF)) {
-		curRate = 1;
-	} else {
-		curRate = (owner->speed.w / maxSpeed) * 3;
-		curRate = std::max(0, std::min(curRate, 2));
-	}
+	if (aircraftState != AIRCRAFT_LANDING && aircraftState != AIRCRAFT_TAKEOFF)
+		curMoveRate = CalcScriptMoveRate(owner->speed.w, 3.0f);
 
-	if (curRate != lastMoveRate) {
-		owner->script->MoveRate(curRate);
-		lastMoveRate = curRate;
-	}
+	if (curMoveRate == lastMoveRate)
+		return;
+
+	owner->script->MoveRate(lastMoveRate = curMoveRate);
 }
 
 
@@ -987,9 +989,7 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 	if (!pos.IsInBounds())
 		return false;
 
-	const UnitDef* ud = owner->unitDef;
-
-	if ((CGround::GetApproximateHeight(pos) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(ud->floatOnWater || ud->canSubmerge)))
+	if ((CGround::GetApproximateHeight(pos) < 0.0f) && ((mapInfo->water.damage > 0.0f) || !(floatOnWater || canSubmerge)))
 		return false;
 
 	const int2 os = {owner->xsize, owner->zsize};
