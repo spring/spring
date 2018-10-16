@@ -87,7 +87,7 @@ void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 void CSmokeProjectile2::Update()
 {
 	wantedPos += speed;
-	wantedPos += wind.GetCurrentWind() * age * 0.05f;
+	wantedPos += (envResHandler.GetCurrentWindVec() * age * 0.05f);
 
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;

@@ -98,8 +98,8 @@ void CFireProjectile::Update()
 		if (!(ttl & 31)) {
 			// copy on purpose, since the below can call Lua
 			QuadFieldQuery qfQuery;
-			quadField.GetFeaturesExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
-			quadField.GetUnitsExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			quadField.GetFeaturesExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
+			quadField.GetUnitsExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
 
 			for (CFeature* f: *qfQuery.features) {
 				if (gsRNG.NextFloat() > 0.8f) {
@@ -120,7 +120,7 @@ void CFireProjectile::Update()
 			break;
 		}
 
-		pi.pos += (speed + wind.GetCurrentWind() * pi.age * 0.05f + pi.posDif * 0.1f);
+		pi.pos += (speed + envResHandler.GetCurrentWindVec() * pi.age * 0.05f + pi.posDif * 0.1f);
 		pi.posDif *= 0.9f;
 	}
 

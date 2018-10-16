@@ -40,8 +40,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		// simulation; values are meaningless prior to LoadGame
 		LuaPushNamedNumber(L, "maxUnits", unitHandler.MaxUnits());
 
-		LuaPushNamedNumber(L, "windMin" , wind.GetMinWind());
-		LuaPushNamedNumber(L, "windMax" , wind.GetMaxWind());
+		// NB: not constants
+		LuaPushNamedNumber(L, "windMin" , envResHandler.GetMinWindStrength());
+		LuaPushNamedNumber(L, "windMax" , envResHandler.GetMaxWindStrength());
 
 		// map-damage; enabled iff !mapInfo->map.notDeformable
 		LuaPushNamedBool(L, "mapDamage", !mapDamage->Disabled());
@@ -62,7 +63,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		LuaPushNamedString(L, "mapDescription" ,  mapInfo->map.description);
 		LuaPushNamedNumber(L, "mapHardness"    ,  mapInfo->map.hardness);
 		LuaPushNamedNumber(L, "extractorRadius",  mapInfo->map.extractorRadius);
-		LuaPushNamedNumber(L, "tidal"          ,  mapInfo->map.tidalStrength);
+		LuaPushNamedNumber(L, "tidal"          ,  mapInfo->map.tidalStrength); // NB: not constant
 		LuaPushNamedNumber(L, "waterDamage"    ,  mapInfo->water.damage);
 		LuaPushNamedNumber(L, "gravity"        , -mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
 	}

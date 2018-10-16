@@ -545,8 +545,8 @@ CBumpWater::CBumpWater()
 	glEndList();
 
 /*
-	windndir = wind.GetCurrentDirection();
-	windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f);
+	windndir = envResHandler.GetCurrentWindDir();
+	windStrength = (smoothstep(0.0f, 12.0f, envResHandler.GetCurrentWindStrength()) * 0.5f + 4.0f);
 	windVec = windndir * windStrength;
 */
 	windVec = float3(20.0, 0.0, 20.0);
@@ -669,9 +669,9 @@ void CBumpWater::Update()
 
 /*
 	windndir *= 0.995f;
-	windndir -= wind.GetCurrentDirection() * 0.005f;
+	windndir -= envResHandler.GetCurrentWindDir() * 0.005f;
 	windStrength *= 0.9999f;
-	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
+	windStrength += (smoothstep(0.0f, 12.0f, envResHandler.GetCurrentWindStrength()) * 0.5f + 4.0f) * 0.0001f;
 	windVec   = windndir * windStrength;
 */
 	SCOPED_TIMER("Update::WorldDrawer::BumpWater");
@@ -1237,3 +1237,4 @@ void CBumpWater::OcclusionQuery()
 	}
 #endif
 }
+

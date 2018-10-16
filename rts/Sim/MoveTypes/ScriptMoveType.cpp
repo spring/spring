@@ -12,7 +12,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL))
+CR_BIND_DERIVED(CScriptMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
@@ -102,7 +102,7 @@ bool CScriptMoveType::Update()
 		// NOTE: only gravitational acc. is allowed to build up velocity
 		// NOTE: strong wind plus low gravity can cause substantial drift
 		const float3 gravVec = UpVector * (mapInfo->map.gravity * gravityFactor);
-		const float3 windVec =            (wind.GetCurrentWind() * windFactor);
+		const float3 windVec =            (envResHandler.GetCurrentWindVec() * windFactor);
 		const float3 unitVec = useRelVel?
 			(owner->frontdir *  relVel.z) +
 			(owner->updir    *  relVel.y) +

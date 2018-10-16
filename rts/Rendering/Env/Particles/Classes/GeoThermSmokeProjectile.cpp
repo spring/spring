@@ -35,7 +35,7 @@ void CGeoThermSmokeProjectile::Update()
 	//   due to UpVector being added each frame --> if |speed| grows LARGER
 	//   than speed.w then newSpeed will be adjusted downward and vice versa
 	CWorldObject::SetVelocity(speed + UpVector);
-	CWorldObject::SetVelocity(speed + XZVector * (wind.GetCurrentWind() / GAME_SPEED));
+	CWorldObject::SetVelocity(speed + XZVector * (envResHandler.GetCurrentWindVec() / GAME_SPEED));
 
 	const float curSpeed = fastmath::sqrt_builtin(speed.SqLength());
 	const float newSpeed = speed.w * (speed.w / curSpeed);

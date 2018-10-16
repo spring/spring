@@ -123,6 +123,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetMapOptions);
 	REGISTER_LUA_CFUNC(GetModOptions);
 
+	REGISTER_LUA_CFUNC(GetTidal);
 	REGISTER_LUA_CFUNC(GetWind);
 
 	REGISTER_LUA_CFUNC(GetHeadingFromVector);
@@ -901,15 +902,21 @@ int LuaSyncedRead::GetGameSeconds(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetTidal(lua_State* L)
+{
+	lua_pushnumber(L, envResHandler.GetCurrentTidalStrength());
+	return 1;
+}
+
 int LuaSyncedRead::GetWind(lua_State* L)
 {
-	lua_pushnumber(L, wind.GetCurrentWind().x);
-	lua_pushnumber(L, wind.GetCurrentWind().y);
-	lua_pushnumber(L, wind.GetCurrentWind().z);
-	lua_pushnumber(L, wind.GetCurrentStrength());
-	lua_pushnumber(L, wind.GetCurrentDirection().x);
-	lua_pushnumber(L, wind.GetCurrentDirection().y);
-	lua_pushnumber(L, wind.GetCurrentDirection().z);
+	lua_pushnumber(L, envResHandler.GetCurrentWindVec().x);
+	lua_pushnumber(L, envResHandler.GetCurrentWindVec().y);
+	lua_pushnumber(L, envResHandler.GetCurrentWindVec().z);
+	lua_pushnumber(L, envResHandler.GetCurrentWindStrength());
+	lua_pushnumber(L, envResHandler.GetCurrentWindDir().x);
+	lua_pushnumber(L, envResHandler.GetCurrentWindDir().y);
+	lua_pushnumber(L, envResHandler.GetCurrentWindDir().z);
 	return 7;
 }
 
