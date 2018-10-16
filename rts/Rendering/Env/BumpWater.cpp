@@ -471,8 +471,8 @@ CBumpWater::CBumpWater()
 	GenOcclusionQuery(configHandler->GetBool("BumpWaterOcclusionQuery"));
 
 	#if 0
-	windDir = wind.GetCurrentDirection();
-	windVec = windDir * (windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f));
+	windDir = envResHandler.GetCurrentWindDir();
+	windVec = windDir * (windStrength = (smoothstep(0.0f, 12.0f, envResHandler.GetCurrentWindStrength()) * 0.5f + 4.0f));
 	#endif
 }
 
@@ -692,10 +692,10 @@ void CBumpWater::UpdateWind()
 {
 	#if 0
 	windStrength *= 0.9999f;
-	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
+	windStrength += (smoothstep(0.0f, 12.0f, envResHandler.GetCurrentWindStrength()) * 0.5f + 4.0f) * 0.0001f;
 
 	windDir *= 0.995f;
-	windDir -= (wind.GetCurrentDirection() * 0.005f);
+	windDir -= (envResHandler.GetCurrentWindDir() * 0.005f);
 	windVec  = windDir * windStrength;
 	#endif
 }

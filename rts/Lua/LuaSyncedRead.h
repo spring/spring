@@ -38,6 +38,7 @@ class LuaSyncedRead {
 		static int GetGameRulesParam(lua_State* L);
 		static int GetGameRulesParams(lua_State* L);
 
+		static int GetTidal(lua_State* L);
 		static int GetWind(lua_State* L);
 
 		static int GetHeadingFromVector(lua_State* L);

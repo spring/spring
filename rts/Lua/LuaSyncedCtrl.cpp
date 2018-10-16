@@ -33,6 +33,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -42,7 +43,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/BuildingMaskMap.h"
+#include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -293,6 +294,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
+
+	REGISTER_LUA_CFUNC(SetTidal);
+	REGISTER_LUA_CFUNC(SetWind);
 
 	REGISTER_LUA_CFUNC(SetSquareBuildingMask);
 
@@ -4135,6 +4139,21 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedCtrl::SetTidal(lua_State* L)
+{
+	envResHandler.LoadTidal(luaL_optnumber(L, 1, envResHandler.GetCurrentTidalStrength()));
+	return 0;
+}
+
+int LuaSyncedCtrl::SetWind(lua_State* L)
+{
+	envResHandler.LoadWind(luaL_optnumber(L, 1, envResHandler.GetMinWindStrength()), luaL_optnumber(L, 2, envResHandler.GetMaxWindStrength()));
+	return 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 {
 	const int x = luaL_checkint(L, 1);
@@ -4553,15 +4572,15 @@ int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 
 	// NOTE: for testing, should be using modrules.tdf
 	if (gs->cheatEnabled) {
-		if (lua_isnumber(L, 2)) {
+		if (lua_isnumber(L, 2))
 			CUnit::SetExpPowerScale(lua_tofloat(L, 2));
-		}
-		if (lua_isnumber(L, 3)) {
+
+		if (lua_isnumber(L, 3))
 			CUnit::SetExpHealthScale(lua_tofloat(L, 3));
-		}
-		if (lua_isnumber(L, 4)) {
+
+		if (lua_isnumber(L, 4))
 			CUnit::SetExpReloadScale(lua_tofloat(L, 4));
-		}
+
 	}
 	return 0;
 }

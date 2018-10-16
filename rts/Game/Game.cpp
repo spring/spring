@@ -251,7 +251,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	// clear left-over receivers in case we reloaded
 	gameCommandConsole.ResetState();
 
-	wind.ResetState();
+	envResHandler.ResetState();
 
 	modInfo.Init(modName.c_str());
 
@@ -597,7 +597,8 @@ void CGame::PostLoadSimulation(LuaParser* defsParser)
 	if (saveFile == nullptr)
 		featureHandler.LoadFeaturesFromMap();
 
-	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
+	envResHandler.LoadTidal(mapInfo->map.tidalStrength);
+	envResHandler.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
 
 	inMapDrawerModel = new CInMapDrawModel();
@@ -1513,7 +1514,7 @@ void CGame::SimFrame() {
 			SCOPED_TIMER("Sim::Script");
 			unitScriptEngine->Tick(33);
 		}
-		wind.Update();
+		envResHandler.Update();
 		losHandler->Update();
 		// dead ghosts have to be updated in sim, after los,
 		// to make sure they represent the current knowledge correctly.

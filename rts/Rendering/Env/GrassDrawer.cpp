@@ -331,7 +331,7 @@ void CGrassDrawer::CreateGrassBladeTex(uint8_t* buf)
 
 
 void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
-	const float3 windSpeed = wind.GetCurrentDirection() * wind.GetCurrentStrength() * mapInfo->grass.bladeWaveScale;
+	const float3 windSpeed = envResHandler.GetCurrentWindVec() * mapInfo->grass.bladeWaveScale;
 	const float3 fogParams = {sky->fogStart, sky->fogEnd, camera->GetFarPlaneDist()};
 
 	Shader::IProgramObject* ipo = (grassShaders[GRASS_PROGRAM_CURR] = grassShaders[type]);

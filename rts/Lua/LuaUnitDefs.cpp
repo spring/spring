@@ -17,7 +17,6 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -466,20 +465,6 @@ static int MoveDefTable(lua_State* L, const void* data)
 }
 
 
-static int TotalEnergyOut(lua_State* L, const void* data)
-{
-	const UnitDef& ud = *static_cast<const UnitDef*>(data);
-
-	const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
-	const float tidalEnergy = (ud.tidalGenerator * mapInfo->map.tidalStrength);
-	const float windEnergy = (0.25f * (wind.GetMinWind() + wind.GetMaxWind())) * (ud.windGenerator > 0.0f);
-
-	lua_pushnumber(L, basicEnergy + tidalEnergy + windEnergy); // CUSTOM
-	return 1;
-}
-
-
-
 #define TYPE_FUNC(FuncName, LuaType)                           \
 	static int FuncName(lua_State* L, const void* data)        \
 	{                                                          \
@@ -592,7 +577,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_DEPRECATED_FUNCTION("type", ud, ReturnEmptyString);
 	ADD_DEPRECATED_FUNCTION("maxSlope", ud, ReturnMinusOne);
 
-	ADD_FUNCTION("totalEnergyOut", ud, TotalEnergyOut);
+	ADD_DEPRECATED_LUADEF_KEY("totalEnergyOut");
 
 	ADD_FUNCTION("modCategories",      ud.categoryString,  CategorySetFromString);
 	ADD_FUNCTION("springCategories",   ud.category,        CategorySetFromBits);

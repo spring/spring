@@ -435,9 +435,6 @@ public:
 
 	SResourcePack cost;
 
-	/// energy added each halftick
-	float energyTickMake; //FIXME???
-
 	/// how much metal the unit currently extracts from the ground
 	float metalExtract;
 

@@ -166,7 +166,6 @@ CUnit::CUnit()
 , stealth(false)
 , sonarStealth(false)
 , cost(100.0f, 0.0f)
-, energyTickMake(0.0f)
 , metalExtract(0.0f)
 , buildTime(100.0f)
 , recentDamage(0.0f)
@@ -400,8 +399,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	useHighTrajectory = (unitDef->highTrajectoryType == 1);
 
-	energyTickMake = unitDef->energyMake + unitDef->tidalGenerator * mapInfo->map.tidalStrength;
-
 	harvestStorage.metal  = unitDef->harvestMetalStorage;
 	harvestStorage.energy = unitDef->harvestEnergyStorage;
 
@@ -436,7 +433,7 @@ void CUnit::PostInit(const CUnit* builder)
 	Block();
 
 	if (unitDef->windGenerator > 0.0f)
-		wind.AddUnit(this);
+		envResHandler.AddGenerator(this);
 
 	UpdateTerrainType();
 	UpdatePhysicalState(0.1f);
@@ -496,7 +493,7 @@ void CUnit::PostLoad()
 	blockMap = (unitDef->GetYardMap()).data();
 
 	if (unitDef->windGenerator > 0.0f)
-		wind.AddUnit(this);
+		envResHandler.AddGenerator(this);
 
 	eventHandler.RenderUnitCreated(this, isCloaked);
 }
@@ -575,7 +572,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	SetGroup(nullptr);
 
 	if (unitDef->windGenerator > 0.0f)
-		wind.DelUnit(this);
+		envResHandler.DelGenerator(this);
 
 	blockHeightChanges = false;
 	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
@@ -1106,15 +1103,16 @@ void CUnit::SlowUpdate()
 		UseMetal(unitDef->metalUpkeep * 0.5f);
 
 		if (unitDef->windGenerator > 0.0f) {
-			if (wind.GetCurrentStrength() > unitDef->windGenerator) {
+			if (envResHandler.GetCurrentWindStrength() > unitDef->windGenerator) {
  				AddEnergy(unitDef->windGenerator * 0.5f);
 			} else {
- 				AddEnergy(wind.GetCurrentStrength() * 0.5f);
+				AddEnergy(envResHandler.GetCurrentWindStrength() * 0.5f);
 			}
 		}
 	}
 
-	AddEnergy(energyTickMake * 0.5f);
+	// FIXME: tidal part should be under "if (activated)"?
+	AddEnergy((unitDef->energyMake + unitDef->tidalGenerator * envResHandler.GetCurrentTidalStrength()) * 0.5f);
 
 
 	if (health < maxHealth) {
@@ -2911,7 +2909,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(harvestStorage),
 	CR_MEMBER(harvested),
 
-	CR_MEMBER(energyTickMake),
 	CR_MEMBER(metalExtract),
 
 	CR_MEMBER(cost),
