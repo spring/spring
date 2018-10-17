@@ -842,7 +842,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	}
 
 
-	// cpGroundHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + canSubmerge](     pos.x,      pos.z);
+	cpGroundHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + canSubmerge](     pos.x,      pos.z);
 	bpGroundHeight = amtGetGroundHeightFuncs[UseSmoothMesh() * 2 + canSubmerge](brakePos.x, brakePos.z);
 
 	// compute new vertical speed
@@ -854,8 +854,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	//   since true terrain-following is expensive, instead sample
 	//   the ground height N braking distances ahead and base next
 	//   VS on that
-	// UpdateVerticalSpeed(spd, pos.y - cpGroundHeight, verticalSpeed);
-	UpdateVerticalSpeed(spd, pos.y - bpGroundHeight, verticalSpeed);
+	UpdateVerticalSpeed(spd, pos.y - std::max(cpGroundHeight, bpGroundHeight), verticalSpeed);
 
 	if (modInfo.allowAircraftToLeaveMap || (pos + spd).IsInBounds())
 		owner->Move(spd, true);
