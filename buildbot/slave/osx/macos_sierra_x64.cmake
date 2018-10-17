@@ -9,8 +9,6 @@ set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
 set(PRD_JSONCPP_INTERNAL FALSE CACHE BOOL "")
 
-set(GLEW_INCLUDE_DIR "/usr/local/include/GL" CACHE STRING "")
-
 set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk" CACHE STRING "")
 
 include_directories("/usr/local/include")
