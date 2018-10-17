@@ -312,6 +312,7 @@ static float3 GetControlSurfaceAngles(
 	const SyncedFloat3& updir,
 	const SyncedFloat3& frontdir,
 	const float3& goalDir,
+	const float3& yprInputLocks,
 	const float3& maxBodyAngles, // .x := maxYaw, .y := maxPitch, .z := maxBank
 	const float3& maxCtrlAngles, // .x := maxRudder, .y := maxElevator, .z := maxAileron
 	const float3* prvCtrlAngles,
@@ -325,9 +326,9 @@ static float3 GetControlSurfaceAngles(
 	float3 ctrlAngles;
 
 	// yaw (rudder), pitch (elevator), roll (aileron)
-	ctrlAngles.x = GetRudderDeflection  (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.x, maxBodyAngles.x,  goalDotRight, goalDotFront,  avoidCollision, isAttacking);
-	ctrlAngles.y = GetElevatorDeflection(owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.y, maxBodyAngles.y,  goalDotRight, goalDotFront,  avoidCollision, isAttacking);
-	ctrlAngles.z = GetAileronDeflection (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.z, maxBodyAngles.z,  goalDotRight, goalDotFront,  avoidCollision, isAttacking);
+	ctrlAngles.x = (yprInputLocks.x != 0.0f)? GetRudderDeflection  (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.x, maxBodyAngles.x,  goalDotRight, goalDotFront,  avoidCollision, isAttacking): 0.0f;
+	ctrlAngles.y = (yprInputLocks.y != 0.0f)? GetElevatorDeflection(owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.y, maxBodyAngles.y,  goalDotRight, goalDotFront,  avoidCollision, isAttacking): 0.0f;
+	ctrlAngles.z = (yprInputLocks.z != 0.0f)? GetAileronDeflection (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.z, maxBodyAngles.z,  goalDotRight, goalDotFront,  avoidCollision, isAttacking): 0.0f;
 
 	// let the previous control angles have some authority
 	return (ctrlAngles * 0.7f + prvCtrlAngles[0] * 0.2f + prvCtrlAngles[1] * 0.1f);
@@ -773,7 +774,7 @@ void CStrafeAirMoveType::UpdateAttack()
 		const float3  maxBodyAngles    = {0.0f, maxPitch, maxBank};
 		const float3  maxCtrlAngles    = {maxRudder, maxElevator, maxAileron};
 		const float3  prvCtrlAngles[2] = {{lastRudderPos[0], lastElevatorPos[0], lastAileronPos[0]}, {lastRudderPos[1], lastElevatorPos[1], lastAileronPos[1]}};
-		const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  gHeightAW, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, true);
+		const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  OnesVector, maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  gHeightAW, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, true);
 
 		const CUnit* attackee = owner->curTarget.unit;
 
@@ -864,7 +865,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float wantedThrottle)
 	const float3  maxBodyAngles    = {0.0f, maxPitch, maxBank};
 	const float3  maxCtrlAngles    = {maxRudder, maxElevator, maxAileron};
 	const float3  prvCtrlAngles[2] = {{lastRudderPos[0], lastElevatorPos[0], lastAileronPos[0]}, {lastRudderPos[1], lastElevatorPos[1], lastAileronPos[1]}};
-	const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir2D,  maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  groundHeight, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, false);
+	const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir2D,  yprInputLocks, maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  groundHeight, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, false);
 
 	UpdateAirPhysics({curCtrlAngles * yprInputLocks, wantedThrottle}, owner->frontdir);
 
