@@ -68,19 +68,13 @@ CLuaUI* luaUI = NULL;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-static const char* GetVFSMode(bool lockedAccess)
+static const char* GetVFSMode()
 {
-	const char* accessMode = SPRING_VFS_RAW;
-
-	if (lockedAccess) {
-		if (!CLuaHandle::GetDevMode()) {
-			accessMode = SPRING_VFS_MOD;
-		} else {
-			accessMode = SPRING_VFS_RAW SPRING_VFS_ZIP;
-		}
+	if (CLuaHandle::GetDevMode()) {
+		return SPRING_VFS_RAW SPRING_VFS_ZIP;
+	} else {
+		return SPRING_VFS_MOD;
 	}
-
-	return accessMode;
 }
 
 /******************************************************************************/
@@ -111,15 +105,14 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
-	const bool luaLockedAccess = CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
 
-	const std::string mode = GetVFSMode(luaLockedAccess);
+	const std::string mode = GetVFSMode();
 	const std::string file = (CFileHandler::FileExists("luaui.lua", mode) ? "luaui.lua": "LuaUI/main.lua");
 	const std::string code = LoadFile(file, mode);
 
 	LOG("LuaUI Entry Point: \"%s\"", file.c_str());
-	LOG("LuaUI Access Lock: %s", (luaLockedAccess ? ((!CLuaHandle::GetDevMode()) ? "enabled": "bypassed"): "disabled" ));
+	LOG("Lua dev mode: %s", CLuaHandle::GetDevMode() ? "enabled": "disabled");
 	LOG("LuaSocket Enabled: %s", (luaSocketEnabled ? "yes": "no" ));
 
 	if (code.empty()) {
