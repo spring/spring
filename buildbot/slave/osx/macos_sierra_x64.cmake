@@ -2,8 +2,8 @@ set(CMAKE_SYSTEM_NAME "Darwin" CACHE STRING "")
 set(CMAKE_SYSTEM_VERSION "10.12" CACHE STRING "")
 set(TARGET_ARCH "x86_64" CACHE STRING "")
 
-set(CMAKE_C_COMPILER "/usr/local/Cellar/gcc\@6/6.4.0/bin/gcc-6" CACHE STRING "")
-set(CMAKE_CXX_COMPILER "/usr/local/Cellar/gcc\@6/6.4.0/bin/g++-6" CACHE STRING "")
+set(CMAKE_C_COMPILER "/usr/local/Cellar/gcc\@6/6.4.0_2/bin/gcc-6" CACHE STRING "")
+set(CMAKE_CXX_COMPILER "/usr/local/Cellar/gcc\@6/6.4.0_2/bin/g++-6" CACHE STRING "")
 
 set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
