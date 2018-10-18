@@ -76,6 +76,7 @@ private:
 public:
 	typedef std::vector<CObject*> TSyncSafeSet;
 	typedef std::vector<TSyncSafeSet> TDependenceMap;
+	typedef std::function<bool(const CObject*, int*)> TObjFilterPred;
 
 	bool detached;
 
@@ -107,8 +108,8 @@ protected:
 	const TDependenceMap& GetAllListening() const { return listening; }
 
 	template<size_t N> static void FilterDepObjects(
-		const CObject::TDependenceMap& depObjects,
-		const std::function<bool(const CObject*, int*)>& filterPred,
+		const TDependenceMap& depObjects,
+		const TObjFilterPred& filterPred,
 		std::array<int, N>& objectIDs
 	) {
 		objectIDs[0] = 0;
@@ -119,6 +120,9 @@ protected:
 			}
 		}
 	}
+
+	template<size_t N> void FilterListeners(const TObjFilterPred& fp, std::array<int, N>& ids) const { FilterDepObjects(listeners, fp, ids); }
+	template<size_t N> void FilterListening(const TObjFilterPred& fp, std::array<int, N>& ids) const { FilterDepObjects(listening, fp, ids); }
 
 protected:
 	spring::unordered_map<int, size_t> listenersDepTbl; // maps dependence-type to index into listeners
