@@ -2254,7 +2254,7 @@ int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->neutral = luaL_checkboolean(L, 2);
+	unit->SetNeutral(luaL_checkboolean(L, 2));
 	return 0;
 }
 

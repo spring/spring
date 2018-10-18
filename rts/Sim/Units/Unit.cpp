@@ -857,9 +857,8 @@ void CUnit::ReleaseTransportees(CUnit* attacker, bool selfDestruct, bool reclaim
 
 			// issue a move order so that units dropped from flying
 			// transports won't try to return to their pick-up spot
-			if (unitDef->canfly && transportee->unitDef->canmove) {
+			if (unitDef->canfly && transportee->unitDef->canmove)
 				transportee->commandAI->GiveCommand(Command(CMD_MOVE, transportee->pos));
-			}
 
 			transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
 			transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gsRNG.NextFloat()));
@@ -1491,23 +1490,30 @@ void CUnit::SetMass(float newMass)
 
 void CUnit::DoSeismicPing(float pingSize)
 {
-	float rx = gsRNG.NextFloat();
-	float rz = gsRNG.NextFloat();
+	const float rx = 0.5f - gsRNG.NextFloat();
+	const float rz = 0.5f - gsRNG.NextFloat();
+
+	const float3 rndVec = {rx, 0.0f, rz};
 
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) && losHandler->InSeismicDistance(this, gu->myAllyTeam)) {
-		const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam);
+		const float3 errVec = rndVec * losHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam);
+		const float3 pingPos = pos + errVec;
 
-		projMemPool.alloc<CSeismicGroundFlash>(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
+		projMemPool.alloc<CSeismicGroundFlash>(pingPos, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
+
 	for (int a = 0; a < teamHandler.ActiveAllyTeams(); ++a) {
-		if (losHandler->InSeismicDistance(this, a)) {
-			const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(a);
-			const float3 pingPos = (pos + err);
-			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
-			eoh->SeismicPing(a, *this, pingPos, pingSize);
-		}
+		if (!losHandler->InSeismicDistance(this, a))
+			continue;
+
+		const float3 errVec = rndVec * losHandler->GetAllyTeamRadarErrorSize(a);
+		const float3 pingPos = pos + errVec;
+
+		eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
+		eoh->SeismicPing(a, *this, pingPos, pingSize);
 	}
 }
+
 
 
 void CUnit::ChangeLos(int losRad, int airRad)
@@ -1597,81 +1603,111 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 void CUnit::ChangeTeamReset()
 {
-	// stop friendly units shooting at us
-	std::vector<CUnit*> alliedunits;
-
-	for (const auto& objs: GetAllListeners()) {
-		for (CObject* obj: objs) {
-			CUnit* u = dynamic_cast<CUnit*>(obj);
+	{
+		std::array<int, 1 + MAX_UNITS> alliedUnitIDs;
+		std::function<bool(const CObject*, int*)> alliedUnitPred = [&](const CObject* obj, int* id) {
+			const CUnit* u = dynamic_cast<const CUnit*>(obj);
 
 			if (u == nullptr)
-				continue;
+				return false;
 			if (!teamHandler.AlliedTeams(team, u->team))
-				continue;
+				return false;
 
-			alliedunits.push_back(u);
+			return (*id = u->id, true);
+		};
+
+		FilterDepObjects(GetAllListeners(), alliedUnitPred, alliedUnitIDs);
+
+		// stop friendly units shooting at us
+		for (int i = 0, n = alliedUnitIDs[0]; i < n; i++) {
+			CUnit* unit = unitHandler.GetUnit(alliedUnitIDs[1 + i]);
+			unit->StopAttackingAllyTeam(allyteam);
 		}
-	}
-	for (auto ui = alliedunits.cbegin(); ui != alliedunits.cend(); ++ui) {
-		(*ui)->StopAttackingAllyTeam(allyteam);
-	}
-	// and stop shooting at friendly ally teams
-	for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) {
-		if (teamHandler.Ally(t, allyteam))
-			StopAttackingAllyTeam(t);
+		// and stop shooting at friendly ally teams
+		for (int t = 0; t < teamHandler.ActiveAllyTeams(); ++t) {
+			if (teamHandler.Ally(t, allyteam))
+				StopAttackingAllyTeam(t);
+		}
 	}
 
 	// clear the commands (newUnitCommands for factories)
-	Command c(CMD_STOP);
-	commandAI->GiveCommand(c);
+	commandAI->GiveCommand(Command(CMD_STOP));
 
-	// clear the build commands for factories
-	CFactoryCAI* facAI = dynamic_cast<CFactoryCAI*>(commandAI);
-	if (facAI) {
-		const unsigned char options = RIGHT_MOUSE_KEY; // clear option
-		CCommandQueue& buildCommands = facAI->commandQue;
-		std::vector<Command> clearCommands;
-		clearCommands.reserve(buildCommands.size());
-		for (auto& cmd: buildCommands) {
-			clearCommands.emplace_back(cmd.GetID(), options);
+	{
+		// clear the build commands for factories
+		CFactoryCAI* facAI = dynamic_cast<CFactoryCAI*>(commandAI);
+
+		if (facAI != nullptr) {
+			std::vector<Command> clearCommands;
+			clearCommands.reserve(facAI->commandQue.size());
+
+			for (auto& cmd: facAI->commandQue) {
+				clearCommands.emplace_back(cmd.GetID(), RIGHT_MOUSE_KEY);
+			}
+			for (auto& cmd: clearCommands) {
+				facAI->GiveCommand(cmd);
+			}
 		}
-		for (auto& cmd: clearCommands) {
-			facAI->GiveCommand(cmd);
-		}
 	}
 
-	//FIXME reset to unitdef defaults
+	{
+		//FIXME reset to unitdef defaults
 
-	// deactivate to prevent the old give metal maker trick
-	// TODO remove, because it is *A specific
-	c = Command(CMD_ONOFF, 0, 0); // always off
-	commandAI->GiveCommand(c);
+		// deactivate to prevent the old give metal maker trick
+		// TODO remove, *A specific
+		commandAI->GiveCommand(Command(CMD_ONOFF, 0, 0));
+		// reset repeat state
+		commandAI->GiveCommand(Command(CMD_REPEAT, 0, 0));
 
-	// reset repeat state
-	c = Command(CMD_REPEAT, 0, 0);
-	commandAI->GiveCommand(c);
+		// reset cloak state
+		if (unitDef->canCloak)
+			commandAI->GiveCommand(Command(CMD_CLOAK, 0, 0));
 
-	// reset cloak state
-	if (unitDef->canCloak) {
-		c = Command(CMD_CLOAK, 0, 0); // always off
-		commandAI->GiveCommand(c);
-	}
-	// reset move state
-	if (unitDef->canmove || unitDef->builder) {
-		c = Command(CMD_MOVE_STATE, 0, MOVESTATE_MANEUVER);
-		commandAI->GiveCommand(c);
-	}
-	// reset fire state
-	if (commandAI->CanChangeFireState()) {
-		c = Command(CMD_FIRE_STATE, 0, FIRESTATE_FIREATWILL);
-		commandAI->GiveCommand(c);
-	}
-	// reset trajectory state
-	if (unitDef->highTrajectoryType > 1) {
-		c = Command(CMD_TRAJECTORY, 0, 0);
-		commandAI->GiveCommand(c);
+		// reset move state
+		if (unitDef->canmove || unitDef->builder)
+			commandAI->GiveCommand(Command(CMD_MOVE_STATE, 0, MOVESTATE_MANEUVER));
+
+		// reset fire state
+		if (commandAI->CanChangeFireState())
+			commandAI->GiveCommand(Command(CMD_FIRE_STATE, 0, FIRESTATE_FIREATWILL));
+
+		// reset trajectory state
+		if (unitDef->highTrajectoryType > 1)
+			commandAI->GiveCommand(Command(CMD_TRAJECTORY, 0, 0));
 	}
 }
+
+void CUnit::SetNeutral(bool b) {
+	// only intervene for units *becoming* neutral
+	if (!(neutral = b))
+		return;
+
+	std::array<int, 1 + MAX_UNITS> unitIDs;
+	std::function<bool(const CObject*, int*)> unitPred = [&](const CObject* obj, int* id) {
+		const CUnit* u = dynamic_cast<const CUnit*>(obj);
+
+		if (u == nullptr)
+			return false;
+
+		return (*id = u->id, true);
+	};
+
+	FilterDepObjects(GetAllListeners(), unitPred, unitIDs);
+
+	// stop any units targeting us manually or automatically
+	// TestTarget tests for neutrality only if !isUserTarget
+	for (int i = 0, n = unitIDs[0]; i < n; i++) {
+		CUnit* unit = unitHandler.GetUnit(unitIDs[1 + i]);
+		CCommandAI* cai = unit->commandAI;
+
+		if (unit->curTarget.type != Target_Unit || unit->curTarget.unit != this)
+			continue;
+
+		unit->DropCurrentAttackTarget();
+		cai->StopAttackingTargetIf([&](const CUnit* t) { return (t == this); });
+	}
+}
+
 
 bool CUnit::FloatOnWater() const {
 	if (moveDef != nullptr)
@@ -1692,10 +1728,9 @@ bool CUnit::IsIdle() const
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
-	if (targetUnit == this) {
-		// don't target ourself
+	// don't self-target
+	if (targetUnit == this)
 		return false;
-	}
 
 	if (targetUnit == nullptr) {
 		DropCurrentAttackTarget();
@@ -2394,6 +2429,22 @@ void CUnit::TempHoldFire(int cmdID)
 }
 
 
+#if 0
+void CUnit::StopAttackingTargetIf(
+	const std::function<bool(const SWeaponTarget&)>& weaponPred,
+	const std::function<bool(const CUnit*)>& commandPred
+) {
+	if (!pred(curTarget))
+		return;
+
+	DropCurrentAttackTarget();
+	commandAI->StopAttackingTargetIf(commandPred);
+
+	for (CWeapon* w: weapons) {
+		w->StopAttackingTargetIf(weaponPred);
+	}
+}
+#endif
 void CUnit::StopAttackingAllyTeam(int ally)
 {
 	if (lastAttacker != nullptr && lastAttacker->allyteam == ally) {

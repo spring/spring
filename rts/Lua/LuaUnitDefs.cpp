@@ -577,7 +577,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_DEPRECATED_FUNCTION("type", ud, ReturnEmptyString);
 	ADD_DEPRECATED_FUNCTION("maxSlope", ud, ReturnMinusOne);
 
-	ADD_DEPRECATED_LUADEF_KEY("totalEnergyOut");
+	///!!! ADD_DEPRECATED_LUADEF_KEY("totalEnergyOut");
+	ADD_FLOAT("totalEnergyOut", ud.energyMake);
 
 	ADD_FUNCTION("modCategories",      ud.categoryString,  CategorySetFromString);
 	ADD_FUNCTION("springCategories",   ud.category,        CategorySetFromBits);

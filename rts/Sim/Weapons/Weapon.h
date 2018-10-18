@@ -3,6 +3,7 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
+#include <functional>
 #include <vector>
 
 #include "System/Object.h"
@@ -88,7 +89,8 @@ public:
 	float SprayAngleExperience() const { return (sprayAngle * ExperienceErrorScale()); }
 	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
-	void StopAttackingAllyTeam(const int ally);
+	bool StopAttackingTargetIf(const std::function<bool(const SWeaponTarget&)>& pred);
+	bool StopAttackingAllyTeam(const int ally);
 
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
