@@ -1619,7 +1619,7 @@ void CUnit::ChangeTeamReset()
 			return (*id = u->id, true);
 		};
 
-		FilterDepObjects(GetAllListeners(), alliedUnitPred, alliedUnitIDs);
+		FilterListeners(alliedUnitPred, alliedUnitIDs);
 
 		// stop friendly units shooting at us
 		for (int i = 0, n = alliedUnitIDs[0]; i < n; i++) {
@@ -1695,7 +1695,7 @@ void CUnit::SetNeutral(bool b) {
 		return (*id = u->id, true);
 	};
 
-	FilterDepObjects(GetAllListeners(), unitPred, unitIDs);
+	FilterListeners(unitPred, unitIDs);
 
 	// stop any units targeting us manually or automatically
 	// TestTarget tests for neutrality only if !isUserTarget
