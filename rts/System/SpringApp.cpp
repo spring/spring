@@ -799,7 +799,7 @@ int SpringApp::Run()
 
 	// note: exceptions thrown by other threads are *not* caught here
 	try {
-		if ((gu->globalQuit = gu->globalQuit | !Init()))
+		if ((gu->globalQuit = !Init() || gu->globalQuit))
 			spring::exitCode = spring::EXIT_CODE_FAILURE;
 
 		while (!gu->globalQuit) {
@@ -810,7 +810,7 @@ int SpringApp::Run()
 				// copy; reloadScript is cleared by ResetState
 				Reload(gameSetup->reloadScript);
 			} else {
-				gu->globalQuit = (gu->globalQuit | !Update());
+				gu->globalQuit = (!Update() || gu->globalQuit);
 			}
 		}
 	} CATCH_SPRING_ERRORS
