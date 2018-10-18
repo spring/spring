@@ -3,6 +3,7 @@
 #ifndef _COMMAND_AI_H
 #define _COMMAND_AI_H
 
+#include <functional>
 #include <vector>
 
 #include "System/Object.h"
@@ -57,9 +58,7 @@ public:
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 
-	/**
-	 * Removes attack commands targeted at our new ally.
-	 */
+	void StopAttackingTargetIf(const std::function<bool(const CUnit*)>& pred);
 	void StopAttackingAllyTeam(int ally);
 
 	bool HasCommand(int cmdID) const;
@@ -108,7 +107,7 @@ public:
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
 	void UpdateStockpileIcon();
-	bool CanChangeFireState();
+	bool CanChangeFireState() const;
 
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 
@@ -136,7 +135,8 @@ protected:
 	virtual bool SelectNewAreaAttackTargetOrPos(const Command& ac) { return true; }
 
 	bool IsAttackCapable() const;
-	bool SkipParalyzeTarget(const CUnit* target);
+	bool SkipParalyzeTarget(const CUnit* target) const;
+
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
 	/**

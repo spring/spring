@@ -154,6 +154,7 @@ public:
 
 	bool CanUpdateWeapons() const;
 
+	void SetNeutral(bool b);
 	void SetStunned(bool stun);
 
 	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }

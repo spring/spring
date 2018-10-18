@@ -1734,26 +1734,16 @@ bool CCommandAI::HasCommand(int cmdID) const {
 
 bool CCommandAI::HasMoreMoveCommands(bool skipFirstCmd) const
 {
-	if (commandQue.empty())
-		return false;
+	const auto pred = [](const Command& c) { return (c.IsMoveCommand()); };
+	const auto iter = std::find_if(commandQue.begin() + int(skipFirstCmd && !commandQue.empty()), commandQue.end(), pred);
 
-	auto i = commandQue.begin();
-
-	if (skipFirstCmd)
-		++i;
-
-	for (; i != commandQue.end(); ++i) {
-		if (i->IsMoveCommand())
-			return true;
-	}
-
-	return false;
+	return (iter != commandQue.end());
 }
 
 
-bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
+bool CCommandAI::CanChangeFireState() const { return (owner->unitDef->CanChangeFireState()); }
+bool CCommandAI::SkipParalyzeTarget(const CUnit* target) const
 {
-	// check to see if we are about to paralyze a unit that is already paralyzed
 	if ((target == nullptr) || (owner->weapons.empty()))
 		return false;
 
@@ -1762,42 +1752,22 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 	if (!w->weaponDef->paralyzer)
 		return false;
 
-	// visible and stunned?
-	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands())
-		return true;
-
-	return false;
+	// skip units that are visible and already stunned
+	return ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands());
 }
 
-bool CCommandAI::CanChangeFireState() { return (owner->unitDef->CanChangeFireState()); }
 
+void CCommandAI::StopAttackingTargetIf(const std::function<bool(const CUnit*)>& pred)
+{
+	const auto hasTarget = [&](const Command& c) { return (c.GetNumParams() == 1 && (c.GetID() == CMD_FIGHT || c.GetID() == CMD_ATTACK)); };
+	const auto removeCmd = [&](const Command& c) { return (hasTarget(c) && pred(unitHandler.GetUnit(c.GetParam(0)))); };
+
+	commandQue.erase(std::remove_if(commandQue.begin(), commandQue.end(), removeCmd), commandQue.end());
+}
 
 void CCommandAI::StopAttackingAllyTeam(int ally)
 {
-	std::vector<int> todel;
-
-	// erasing in the middle invalidates all iterators
-	for (auto it = commandQue.begin(); it != commandQue.end(); ++it) {
-		const Command& c = *it;
-
-		if (c.GetNumParams() != 1)
-			continue;
-		if (c.GetID() != CMD_FIGHT && c.GetID() != CMD_ATTACK)
-			continue;
-
-		const CUnit* target = unitHandler.GetUnit(c.GetParam(0));
-
-		if (target == nullptr)
-			continue;
-		if (target->allyteam != ally)
-			continue;
-
-		todel.push_back(it - commandQue.begin());
-	}
-
-	for (auto it = todel.rbegin(); it != todel.rend(); ++it) {
-		commandQue.erase(commandQue.begin() + *it);
-	}
+	StopAttackingTargetIf([&](const CUnit* t) { return (t != nullptr && t->allyteam == ally); });
 }
 
 
@@ -1806,14 +1776,10 @@ void CCommandAI::SetScriptMaxSpeed(float speed, bool persistent) {
 	if (!persistent) {
 		// find the first CMD_SET_WANTED_MAX_SPEED and modify it
 		// NOTE:
-		//     this has no effect if the unit does not already have
-		//     such an order, and only lasts until a new move-order
-		//     is given (hence non-persistent)
-		CCommandQueue::iterator it;
-
-		for (it = commandQue.begin(); it != commandQue.end(); ++it) {
-			Command& c = *it;
-
+		//   this has no effect if the unit does not already have
+		//   such an order, and only lasts until a new move-order
+		//   is given (hence non-persistent)
+		for (Command& c: commandQue) {
 			if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 				continue;
 

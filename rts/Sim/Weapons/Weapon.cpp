@@ -1186,19 +1186,23 @@ float CWeapon::GetRange2D(const float yDiff) const
 {
 	const float rangeSq = range * range;
 	const float ydiffSq = yDiff * yDiff;
-	const float   root = rangeSq - ydiffSq;
+	const float    root = rangeSq - ydiffSq;
 	return (math::sqrt(std::max(root, 0.0f)));
 }
 
 
-void CWeapon::StopAttackingAllyTeam(const int ally)
+bool CWeapon::StopAttackingTargetIf(const std::function<bool(const SWeaponTarget&)>& pred)
 {
-	if (currentTarget.type != Target_Unit)
-		return;
-	if (currentTarget.unit->allyteam != ally)
-		return;
+	if (!pred(currentTarget))
+		return false;
 
 	DropCurrentTarget();
+	return true;
+}
+
+bool CWeapon::StopAttackingAllyTeam(const int ally)
+{
+	return (StopAttackingTargetIf([&](const SWeaponTarget& t) { return (t.type == Target_Unit && t.unit->allyteam == ally); }));
 }
 
 
