@@ -166,13 +166,13 @@ namespace QTPFS {
 		bool AllSquaresImpassable() const { return (moveCostAvg == QTPFS_POSITIVE_INFINITY); }
 
 		void SetMoveCost(float cost) { moveCostAvg = cost; }
-		float GetMoveCost() const { return moveCostAvg; }
-
 		void SetSearchState(unsigned int state) { searchState = state; }
-		unsigned int GetSearchState() const { return searchState; }
-
 		void SetMagicNumber(unsigned int number) { currMagicNum = number; }
+
+		float GetMoveCost() const { return moveCostAvg; }
+		unsigned int GetSearchState() const { return searchState; }
 		unsigned int GetMagicNumber() const { return currMagicNum; }
+		unsigned int GetChildBaseIndex() const { return childBaseIndex; }
 
 		static unsigned int MinSizeX() { return MIN_SIZE_X; }
 		static unsigned int MinSizeZ() { return MIN_SIZE_Z; }

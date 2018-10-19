@@ -7,16 +7,11 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
-// FIXME
-#define private public
-#define protected public
 #include "Sim/Path/QTPFS/Path.hpp"
 #include "Sim/Path/QTPFS/Node.hpp"
 #include "Sim/Path/QTPFS/NodeLayer.hpp"
 #include "Sim/Path/QTPFS/PathCache.hpp"
 #include "Sim/Path/QTPFS/PathManager.hpp"
-#undef protected
-#undef private
 
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/QTPFSPathDrawer.h"
@@ -59,7 +54,7 @@ void QTPFSPathDrawer::DrawAll() const {
 	visibleNodes.clear();
 	visibleNodes.reserve(256);
 
-	GetVisibleNodes(pm->nodeTrees[md->pathType], pm->nodeLayers[md->pathType], visibleNodes);
+	GetVisibleNodes(pm->GetNodeTree(md->pathType), pm->GetNodeLayer(md->pathType), visibleNodes);
 
 	if (!visibleNodes.empty()) {
 		GL::RenderDataBufferC* rdb = GL::GetRenderBufferC();
@@ -83,7 +78,7 @@ void QTPFSPathDrawer::DrawAll() const {
 
 void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const {
 	for (const QTPFS::QTNode* node: nodes) {
-		DrawNode(node, rdb, &NODE_COLORS[node->moveCostAvg != QTPFS_POSITIVE_INFINITY][0]);
+		DrawNode(node, rdb, &NODE_COLORS[!node->AllSquaresImpassable()][0]);
 	}
 
 	glAttribStatePtr->LineWidth(2.0f);
@@ -124,7 +119,7 @@ void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::Node
 	}
 
 	for (unsigned int i = 0; i < QTNODE_CHILD_COUNT; i++) {
-		const QTPFS::QTNode* cn = nl.GetPoolNode(nt->childBaseIndex + i);
+		const QTPFS::QTNode* cn = nl.GetPoolNode(nt->GetChildBaseIndex() + i);
 		const float3 mins = float3(cn->xmin() * SQUARE_SIZE, 0.0f, cn->zmin() * SQUARE_SIZE);
 		const float3 maxs = float3(cn->xmax() * SQUARE_SIZE, 0.0f, cn->zmax() * SQUARE_SIZE);
 
@@ -138,7 +133,7 @@ void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::Node
 
 
 void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) const {
-	const QTPFS::PathCache& pathCache = pm->pathCaches[md->pathType];
+	const QTPFS::PathCache& pathCache = pm->GetPathCache(md->pathType);
 	const QTPFS::PathCache::PathMap& paths = pathCache.GetLivePaths();
 
 	glAttribStatePtr->LineWidth(4.0f);
@@ -169,11 +164,14 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	for (const auto& pair: paths) {
-		const auto typeIt = pm->pathTypes.find(pair.first);
-		const auto traceIt = pm->pathTraces.find(pair.first);
+	const auto& pathTypes = pm->GetPathTypes();
+	const auto& pathTraces = pm->GetPathTraces();
 
-		if (typeIt == pm->pathTypes.end() || traceIt == pm->pathTraces.end())
+	for (const auto& pair: paths) {
+		const auto typeIt = pathTypes.find(pair.first);
+		const auto traceIt = pathTraces.find(pair.first);
+
+		if (typeIt == pathTypes.end() || traceIt == pathTraces.end())
 			continue;
 		// this only happens if source-node was equal to target-node
 		if (traceIt->second == nullptr)
@@ -230,7 +228,7 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 	unsigned int hmx = nodeIndices[0] % mapDims.mapx;
 	unsigned int hmz = nodeIndices[0] / mapDims.mapx;
 
-	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
+	const QTPFS::NodeLayer& nodeLayer = pm->GetNodeLayer(pathType);
 
 	const QTPFS::QTNode* pushedNode = nullptr;
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
@@ -315,7 +313,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != nullptr) {
-				const QTPFS::NodeLayer& nl = pm->nodeLayers[md->pathType];
+				const QTPFS::NodeLayer& nl = pm->GetNodeLayer(md->pathType);
 
 				const float smr = 1.0f / nl.GetMaxRelSpeedMod();
 				const bool los = (gs->cheatEnabled || gu->spectating);
