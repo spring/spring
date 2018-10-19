@@ -236,9 +236,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 
 		case CLegacyInfoTextureHandler::drawPathCost: {
-			const PathNodeStateBuffer& maxResStates = pm->GetMaxResPF()->GetBlockStates();
-			const PathNodeStateBuffer& medResStates = pm->GetMedResPE()->GetBlockStates();
-			const PathNodeStateBuffer& lowResStates = pm->GetLowResPE()->GetBlockStates();
+			const PathNodeStateBuffer& maxResStates = pm->GetMaxResPF()->blockStates;
+			const PathNodeStateBuffer& medResStates = pm->GetMedResPE()->blockStates;
+			const PathNodeStateBuffer& lowResStates = pm->GetLowResPE()->blockStates;
 
 			const unsigned int medResBlockSize = pm->GetMedResPE()->GetBlockSize(), medResBlocksX = pm->GetMedResPE()->GetNumBlocks().x;
 			const unsigned int lowResBlockSize = pm->GetLowResPE()->GetBlockSize(), lowResBlocksX = pm->GetLowResPE()->GetNumBlocks().x;

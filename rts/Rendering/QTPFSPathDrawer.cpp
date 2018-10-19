@@ -51,13 +51,12 @@ void QTPFSPathDrawer::DrawAll() const {
 }
 
 void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
-	QTPFS::QTNode* nt = pm->GetNodeTree(md->pathType);
 	CVertexArray* va = GetVertexArray();
 
 	std::vector<const QTPFS::QTNode*> nodes;
 	std::vector<const QTPFS::QTNode*>::const_iterator nodesIt;
 
-	GetVisibleNodes(nt, pm->GetNodeLayer(md->pathType), nodes);
+	GetVisibleNodes(pm->GetNodeTree(md->pathType), pm->GetNodeLayer(md->pathType), nodes);
 
 	va->Initialize();
 	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
@@ -200,6 +199,9 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const {
 	std::vector<unsigned int>::const_iterator it = nodeIndices.cbegin();
 
+	unsigned int hmx = (*it) % mapDims.mapx;
+	unsigned int hmz = (*it) / mapDims.mapx;
+
 	const QTPFS::NodeLayer& nodeLayer = pm->GetNodeLayer(pathType);
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 	const QTPFS::QTNode* pushedNode = nullptr;
@@ -207,8 +209,9 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 	DrawNode(poppedNode, nullptr, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
-		unsigned int hmx = (*it) % mapDims.mapx;
-		unsigned int hmz = (*it) / mapDims.mapx;
+		hmx = (*it) % mapDims.mapx;
+		hmz = (*it) / mapDims.mapx;
+
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
 		DrawNode(pushedNode, nullptr, va, true, false, false);
@@ -247,21 +250,19 @@ void QTPFSPathDrawer::DrawNode(
 	const unsigned char* color =
 		(!showCost)?
 			&colors[2][0]:
-		(node->moveCostAvg == QTPFS_POSITIVE_INFINITY)?
+		(node->AllSquaresImpassable())?
 			&colors[0][0]:
 			&colors[1][0];
 
 	if (!batchDraw) {
-		if (!camera->InView(verts[4])) {
+		if (!camera->InView(verts[4]))
 			return;
-		}
 
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_C);
 
-		if (!fillQuad) {
+		if (!fillQuad)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
 	}
 
 	va->AddVertexQC(verts[0], color);
@@ -342,7 +343,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const QTPFS::QTNode* node = static_cast<const QTPFS::QTNode*>(nl.GetNode(sqx, sqz));
 
 						const float sm = CMoveMath::GetPosSpeedMod(*md, sqx, sqz);
-						const SColor& smc = GetSpeedModColor((los || losSqr)? node->speedModAvg * smr: sm);
+						const SColor& smc = GetSpeedModColor((los || losSqr)? node->GetSpeedMod() * smr: sm);
 						#else
 						float scale = 1.0f;
 

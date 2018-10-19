@@ -66,13 +66,14 @@ namespace QTPFS {
 		virtual bool AllSquaresAccessible() const = 0;
 		virtual bool AllSquaresImpassable() const = 0;
 
-		virtual void SetMoveCost(float cost) = 0;
+		virtual float GetSpeedMod() const = 0;
 		virtual float GetMoveCost() const = 0;
 
+		virtual void SetMoveCost(float cost) = 0;
 		virtual void SetSearchState(unsigned int) = 0;
-		virtual unsigned int GetSearchState() const = 0;
-
 		virtual void SetMagicNumber(unsigned int) = 0;
+
+		virtual unsigned int GetSearchState() const = 0;
 		virtual unsigned int GetMagicNumber() const = 0;
 		#endif
 
@@ -169,6 +170,7 @@ namespace QTPFS {
 		void SetSearchState(unsigned int state) { searchState = state; }
 		void SetMagicNumber(unsigned int number) { currMagicNum = number; }
 
+		float GetSpeedMod() const { return speedModAvg; }
 		float GetMoveCost() const { return moveCostAvg; }
 		unsigned int GetSearchState() const { return searchState; }
 		unsigned int GetMagicNumber() const { return currMagicNum; }
