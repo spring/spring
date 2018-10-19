@@ -3,7 +3,7 @@
 #ifndef _ARCHIVE_LOADER_H
 #define _ARCHIVE_LOADER_H
 
-#include <map>
+#include <array>
 #include <string>
 
 class IArchive;
