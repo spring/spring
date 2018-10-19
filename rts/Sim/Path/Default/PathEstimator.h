@@ -66,6 +66,10 @@ public:
 	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 
+	const std::vector<float>& GetVertexCosts() const { return vertexCosts; }
+	const std::deque<int2>& GetUpdatedBlocks() const { return updatedBlocks; }
+
+
 protected: // IPathFinder impl
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const float3 sw, const float3 gw);

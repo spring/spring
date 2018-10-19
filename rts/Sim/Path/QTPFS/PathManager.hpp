@@ -70,6 +70,14 @@ namespace QTPFS {
 
 		int2 GetNumQueuedUpdates() const override;
 
+
+		const NodeLayer& GetNodeLayer(unsigned int pathType) const { return nodeLayers[pathType]; }
+		const QTNode* GetNodeTree(unsigned int pathType) const { return nodeTrees[pathType]; }
+		const PathCache& GetPathCache(unsigned int pathType) const { return pathCaches[pathType]; }
+
+		const spring::unordered_map<unsigned int, unsigned int>& GetPathTypes() const { return pathTypes; }
+		const spring::unordered_map<unsigned int, PathSearchTrace::Execution*>& GetPathTraces() const { return pathTraces; }
+
 	private:
 		void ThreadUpdate();
 		void Load();
