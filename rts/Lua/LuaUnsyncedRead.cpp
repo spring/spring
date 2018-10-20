@@ -2,6 +2,7 @@
 
 #include "LuaUnsyncedRead.h"
 
+#include "LuaConfig.h"
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -76,7 +77,6 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 /******************************************************************************/
 /******************************************************************************/

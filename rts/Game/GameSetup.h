@@ -29,6 +29,7 @@ public:
 	CGameSetup& operator = (CGameSetup&& gs) {
 		fixedAllies = gs.fixedAllies;
 		useLuaGaia = gs.useLuaGaia;
+		luaDevMode = gs.luaDevMode;
 		noHelperAIs = gs.noHelperAIs;
 
 		ghostedBuildings = gs.ghostedBuildings;
@@ -174,6 +175,7 @@ public:
 
 	bool fixedAllies;
 	bool useLuaGaia;
+	bool luaDevMode;
 	bool noHelperAIs;
 
 	bool ghostedBuildings;

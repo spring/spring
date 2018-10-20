@@ -2,6 +2,7 @@
 
 #include "LuaUnsyncedCtrl.h"
 
+#include "LuaConfig.h"
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -105,8 +106,6 @@ using std::max;
 // MinGW defines this for a WINAPI function
 #undef SendMessage
 #undef CreateDirectory
-
-const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 
 /******************************************************************************/
