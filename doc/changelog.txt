@@ -95,6 +95,7 @@ Misc:
  - model metadata for assimp/obj can now define pieces hierarchy
    by either nested tables or 'parent' key.
  - IME editing support for those with the proper SDL2 version/IME tool combination
+ ! Made lockluaui.txt obsolete: no longer necessary for it to exists in order to enable VFS for LuaUI
 
 Fixes:
  - fix #5803 (move goals cancelled when issued onto blocked terrain)
