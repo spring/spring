@@ -26,6 +26,7 @@ class CUnsyncedLuaHandle : public CLuaHandle
 		bool DrawFeature(const CFeature* feature) override;
 		bool DrawShield(const CUnit* unit, const CWeapon* weapon) override;
 		bool DrawProjectile(const CProjectile* projectile) override;
+		bool DrawMaterial(const LuaMaterial* material) override;
 
 	public: // all non-eventhandler callins
 		void RecvFromSynced(lua_State* srcState, int args); // not an engine call-in

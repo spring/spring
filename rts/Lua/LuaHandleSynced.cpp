@@ -26,6 +26,7 @@
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
 #include "LuaScream.h"
+#include "LuaMaterial.h"
 #include "LuaOpenGL.h"
 #include "LuaVFS.h"
 #include "LuaZip.h"
@@ -285,6 +286,34 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, projectile->id);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(L, cmdStr, 2, 1);
+	LuaOpenGL::SetDrawingEnabled(L, oldDrawState);
+
+	if (!success)
+		return false;
+
+	const bool draw = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return draw;
+}
+
+
+bool CUnsyncedLuaHandle::DrawMaterial(const LuaMaterial* material)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 4, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
+
+	const bool oldDrawState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	lua_pushnumber(L, material->uuid);
+	// lua_pushnumber(L, material->type);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(L, cmdStr, 2, 1);

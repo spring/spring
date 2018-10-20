@@ -277,6 +277,10 @@ void LuaMaterial::Parse(
 		}
 
 		// misc
+		if (key == "uuid") {
+			uuid = luaL_checkint(L, -1);
+			continue;
+		}
 		if (key == "order") {
 			order = luaL_checkint(L, -1);
 			continue;
@@ -474,6 +478,7 @@ void LuaMaterial::Print(const string& indent) const
 	(x==GL_FRONT) ? "front" : (x==GL_BACK) ? "back" : (x!=0) ? "false" : "unknown"
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
+	LOG("%suuid = %i", indent.c_str(), uuid);
 	LOG("%sorder = %i", indent.c_str(), order);
 
 	shaders[LuaMatShader::LUASHADER_PASS_FWD].Print(indent, false);

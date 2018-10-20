@@ -29,11 +29,19 @@ Lua:
     widgets then receive what gadgets returned (possibly engine default)
  - add  Spring.GetGlobalLos(allyTeamID) -> bool  to LuaSyncedRead
  - add  Spring.IsNoCostEnabled() -> bool  to LuaSyncedRead
+ - add Spring.SetWind(number minStrength, number maxStrength)
+ - add Spring.SetTidal(number strength)
+ - add Spring.GetTidal
+ - add Spring.{Unit,Feature}Rendering.SetProjectileLuaDraw
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
+ - add Spring.Get{Unit,Feature}PieceTransformMatrices to LuaUnsyncedRead
+ - add Spring.Ping callout
+ - add Pong callin
  - add gl.GetViewRange to LuaOpenGL
+ - add DrawMaterial callin
  - add `VFS.GAME` as a synonym to `VFS.MOD`
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
@@ -87,6 +95,24 @@ Misc:
  - fix stale thread-id cache in watchdog after reload
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
  - account for raw search in AICallback::GetPathLength
+<<<<<<< HEAD
+=======
+ - use hidden window for offscreen context rendering
+ - add /hang command
+ - add /luagccontrol command
+ - add /netping command
+ - add /netmsgsmoothing command
+ - add /distsortprojectiles command
+ - add /{more,less}grass and /drawgrass commands
+ - remove Basic{Sky,Water,TreeDrawer} (3DTrees is now always 1)
+ - remove /DynamicSky command and keybinding
+ - remove /{More,Less}Clouds commands
+ - remove 3DTrees config-setting
+ - remove /adv{map,model}shading commands
+ - remove Adv{Map,Unit}Shading config-settings
+ - remove ForceDisableShaders config-setting
+ - remove Use{V,P}BO config-settings
+>>>>>>> fe1b009... add "uuid" LuaMaterial key along with DrawMaterial callin
  - remove LuaShaders config-setting
  - change PitchAdjust config-setting from a boolean to an integer
    0 disables, 1 scales pitch by the square root of game speed, 2

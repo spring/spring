@@ -645,6 +645,7 @@ DRAW_ENTITY_CALLIN(Unit, (const CUnit* unit), (unit))
 DRAW_ENTITY_CALLIN(Feature, (const CFeature* feature), (feature))
 DRAW_ENTITY_CALLIN(Shield, (const CUnit* unit, const CWeapon* weapon), (unit, weapon))
 DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
+DRAW_ENTITY_CALLIN(Material, (const LuaMaterial* material), (material))
 
 /******************************************************************************/
 /******************************************************************************/

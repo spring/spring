@@ -214,13 +214,17 @@ string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 
 static bool IsDisallowedCallIn(const string& name)
 {
-	return
-		   (name == "Explosion")
-		|| (name == "DrawUnit")
-		|| (name == "DrawFeature")
-		|| (name == "DrawShield")
-		|| (name == "DrawProjectile")
-	;
+	switch (hashString(name.c_str())) {
+		case hashString("Explosion"     ): { return true; } break;
+		case hashString("DrawUnit"      ): { return true; } break;
+		case hashString("DrawFeature"   ): { return true; } break;
+		case hashString("DrawShield"    ): { return true; } break;
+		case hashString("DrawProjectile"): { return true; } break;
+		case hashString("DrawMaterial"  ): { return true; } break;
+		default                          : {              } break;
+	}
+
+	return false;
 }
 
 bool CLuaUI::HasCallIn(lua_State* L, const string& name)

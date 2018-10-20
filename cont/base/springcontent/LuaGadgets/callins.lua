@@ -150,6 +150,7 @@ CALLIN_LIST = {
 	"DrawFeature",
 	"DrawShield",
 	"DrawProjectile",
+	"DrawMaterial",
 
 	"SunChanged",
 

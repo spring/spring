@@ -202,17 +202,8 @@ public:
 
 class LuaMaterial {
 	public:
-		LuaMaterial(LuaMatType matType = LuaMatType(-1)):
-		  type(matType), // default invalid
-		  order(0),
-		  texCount(0),
-		  cullingMode(0),
-
-		  preList(0),
-		  postList(0),
-
-		  useCamera(true)
-		{}
+		LuaMaterial() = default;
+		LuaMaterial(LuaMatType matType): type(matType) {}
 
 		void Parse(
 			lua_State* L,
@@ -228,28 +219,32 @@ class LuaMaterial {
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
-		bool operator<(const LuaMaterial& m) const { return (Compare(*this, m) < 0); }
-		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+		bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
+		bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+
+		bool HasDrawCall() const { return (uuid >= 0); }
 
 	public:
-		static const int MAX_TEX_UNITS = 16;
+		static constexpr int MAX_TEX_UNITS = 16;
 
-		LuaMatType type;
+		// default invalid
+		LuaMatType type = LuaMatType(-1);
 
-		int order; // for manually adjusting rendering order
-		int texCount;
+		int uuid = -1; // user-set unique ID, enables Draw callin
+		int order = 0; // for manually adjusting rendering order
+		int texCount = 0;
 
 		// [0] := standard, [1] := deferred
 		LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatTexture  textures[MAX_TEX_UNITS];
 
-		GLenum cullingMode;
+		GLenum cullingMode = 0;
 
-		GLuint preList;
-		GLuint postList;
+		GLuint preList = 0;
+		GLuint postList = 0;
 
-		bool useCamera;
+		bool useCamera = true;
 
 		static const LuaMaterial defMat;
 };

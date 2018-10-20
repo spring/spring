@@ -1060,6 +1060,17 @@ function gadgetHandler:DrawProjectile(projectileID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawMaterial(materialID, drawMode)
+  for _,g in r_ipairs(self.DrawMaterialList) do
+    if (g:DrawMaterial(materialID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+
 function gadgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,g in r_ipairs(self.RecvSkirmishAIMessageList) do
     local dataRet = g:RecvSkirmishAIMessage(aiTeam, dataStr)

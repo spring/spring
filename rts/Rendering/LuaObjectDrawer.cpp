@@ -336,6 +336,7 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
 
 	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
+		assert(matType == it->type);
 		DrawMaterialBin(*it, prevMat, objType, matType, deferredPass, inAlphaBin);
 		prevMat = *it;
 	}
@@ -364,6 +365,11 @@ void LuaObjectDrawer::DrawMaterialBin(
 
 	// skip entire bin if we need a shader for this pass and have none
 	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
+		return;
+
+	// objType and matType can be inferred from the material's (custom) uuid
+	// deferredPass and alphaMatBin can be inferred from drawMode and matType
+	if (currBin->HasDrawCall() && eventHandler.DrawMaterial(currBin))
 		return;
 
 	// reset; also sort objects by team

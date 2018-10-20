@@ -14,7 +14,7 @@
 class CWeapon;
 struct Command;
 struct BuildInfo;
-
+class LuaMaterial;
 
 class CEventHandler
 {
@@ -276,6 +276,7 @@ class CEventHandler
 		bool DrawFeature(const CFeature* feature);
 		bool DrawShield(const CUnit* unit, const CWeapon* weapon);
 		bool DrawProjectile(const CProjectile* projectile);
+		bool DrawMaterial(const LuaMaterial* material);
 
 		/// @brief this UNSYNCED event is generated every GameServer::gameProgressFrameInterval
 		/// it skips network queuing and caching and can be used to calculate the current catchup
