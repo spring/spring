@@ -336,7 +336,7 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
 
 	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		assert(matType == it->type);
+		assert(matType == (*it)->type);
 		DrawMaterialBin(*it, prevMat, objType, matType, deferredPass, inAlphaBin);
 		prevMat = *it;
 	}
