@@ -243,12 +243,15 @@ class LuaMaterial {
 		bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
 		bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
 
+		bool HasDrawCall() const { return (uuid >= 0); }
+
 	public:
-		static const int MAX_TEX_UNITS = 16;
+		static constexpr int MAX_TEX_UNITS = 16;
 
 		// default invalid
 		LuaMatType type = LuaMatType(-1);
 
+		int uuid = -1; // user-set unique ID, enables Draw callin
 		int order = 0; // for manually adjusting rendering order
 		int texCount = 0;
 

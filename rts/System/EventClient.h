@@ -31,6 +31,7 @@ struct SRectangle;
 struct UnitDef;
 struct BuildInfo;
 struct FeatureDef;
+class LuaMaterial;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -341,6 +342,7 @@ class CEventClient
 		virtual bool DrawFeature(const CFeature* feature) { return false; }
 		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
 		virtual bool DrawProjectile(const CProjectile* projectile) { return false; }
+		virtual bool DrawMaterial(const LuaMaterial* material) { return false; }
 
 		virtual void GameProgress(int gameFrame);
 

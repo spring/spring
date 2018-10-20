@@ -22,16 +22,6 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
-static const spring::unordered_map<std::string, LuaMatType> matNameMap = {
-	{"alpha",          LUAMAT_ALPHA},
-	{"opaque",         LUAMAT_OPAQUE},
-	{"alpha_reflect",  LUAMAT_ALPHA_REFLECT},
-	{"opaque_reflect", LUAMAT_OPAQUE_REFLECT},
-	{"shadow",         LUAMAT_SHADOW},
-};
-
-
-
 static int material_index(lua_State* L)
 {
 	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
@@ -189,18 +179,23 @@ int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static LuaMatType ParseMaterialType(const std::string& matName)
+static LuaMatType ParseMaterialType(const char* matName)
 {
-	const auto it = matNameMap.find(StringToLower(matName));
+	switch (hashString(matName)) {
+		case hashString("alpha"         ): { return LUAMAT_ALPHA         ; } break;
+		case hashString("opaque"        ): { return LUAMAT_OPAQUE        ; } break;
+		case hashString("alpha_reflect" ): { return LUAMAT_ALPHA_REFLECT ; } break;
+		case hashString("opaque_reflect"): { return LUAMAT_OPAQUE_REFLECT; } break;
+		case hashString("shadow"        ): { return LUAMAT_SHADOW        ; } break;
+		default                          : {                               } break;
+	}
 
-	if (it == matNameMap.end())
-		return (LuaMatType) -1;
-
-	return it->second;
+	LOG_L(L_WARNING, "[%s] unknown Lua material type \"%s\"", __func__, matName);
+	return (LuaMatType) -1; 
 }
 
 
-static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const std::string& matName)
+static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const char* matName)
 {
 	LuaMatType matType = ParseMaterialType(matName);
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
@@ -314,7 +309,7 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 	if (obj == nullptr)
 		return 0;
 
-	const string matName = luaL_checkstring(L, 3);
+	const char* matName = luaL_checkstring(L, 3);
 	const LuaMatType matType = ParseMaterialType(matName);
 
 	LuaObjectMaterial* objMat = GetObjectMaterial(obj, matName);
