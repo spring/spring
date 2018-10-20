@@ -81,15 +81,18 @@ short GMTDefaultPathController::GetDeltaHeading(
 	float maxTurnSpeed,
 	float maxTurnAccel,
 	float turnBrakeDist,
-	float* curTurnSpeed
+	float* curTurnSpeedPtr
 ) const {
+	float curTurnSpeed = *curTurnSpeedPtr;
+	float maxSpeedFact = maxTurnAccel / maxTurnSpeed;
+
 	// negative --> RH turn, positive --> LH turn
 	// add lookahead term to avoid micro-overshoots
-	const short curDeltaHeading = newHeading - short(oldHeading + (*curTurnSpeed) * (maxTurnAccel / maxTurnSpeed));
+	const short curDeltaHeading = newHeading - short(oldHeading + curTurnSpeed * maxSpeedFact);
 
 	const float minTurnAccel = std::min(float(std::abs(curDeltaHeading)), maxTurnAccel);
 	const float rawTurnAccel = Clamp(Sign(curDeltaHeading) * maxTurnAccel, -minTurnAccel, minTurnAccel);
-	const float newTurnSpeed = Clamp((*curTurnSpeed) + rawTurnAccel * (1 - owner->IsInAir()), -maxTurnSpeed, maxTurnSpeed);
+	const float newTurnSpeed = Clamp(curTurnSpeed + rawTurnAccel * (1 - owner->IsInAir()), -maxTurnSpeed, maxTurnSpeed);
 
 	// predict the new angular difference
 	const short newDeltaHeading = newHeading - short(oldHeading + newTurnSpeed);
@@ -97,10 +100,10 @@ short GMTDefaultPathController::GetDeltaHeading(
 	// flip acceleration sign when overshooting
 	const float modTurnAccel = rawTurnAccel * TurnAccelerationSign(turnBrakeDist, curDeltaHeading, newDeltaHeading);
 
-	(*curTurnSpeed) += (modTurnAccel * (1 - owner->IsInAir()));
-	(*curTurnSpeed) = Clamp((*curTurnSpeed) * 0.99f, -maxTurnSpeed, maxTurnSpeed);
+	curTurnSpeed += (modTurnAccel * (1 - owner->IsInAir()));
+	curTurnSpeed = Clamp(curTurnSpeed, -maxTurnSpeed, maxTurnSpeed) * 0.99f;
 
-	return (*curTurnSpeed);
+	return (*curTurnSpeedPtr = curTurnSpeed);
 }
 
 bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {

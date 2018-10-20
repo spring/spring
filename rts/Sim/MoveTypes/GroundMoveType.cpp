@@ -235,7 +235,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// maxSpeed is set in AMoveType's ctor
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
 
-	turnRate = std::max(owner->unitDef->turnRate, 1.0f);
+	// SPRING_CIRCLE_DIVS is 65536, but turnRate can be at most
+	// 32767 since it is converted to (signed) shorts in places
+	turnRate = Clamp(owner->unitDef->turnRate, 1.0f, SPRING_CIRCLE_DIVS * 0.5f - 1.0f);
 	turnAccel = turnRate * mix(0.333f, 0.033f, owner->moveDef->speedModClass == MoveDef::Ship);
 
 	accRate = std::max(0.01f, owner->unitDef->maxAcc);
@@ -528,7 +530,7 @@ bool CGroundMoveType::FollowPath()
 		ASSERT_SYNCED(owner->pos);
 
 		prevWayPointDist = currWayPointDist;
-		currWayPointDist = owner->pos.distance2D(currWayPoint);
+		currWayPointDist = currWayPoint.distance2D(owner->pos);
 
 		{
 			// NOTE:
@@ -547,9 +549,9 @@ bool CGroundMoveType::FollowPath()
 
 		if (!atGoal) {
 			if (!idling) {
-				numIdlingUpdates = std::max(0, int(numIdlingUpdates - 1));
+				numIdlingUpdates -= (numIdlingUpdates > 0);
 			} else {
-				numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
+				numIdlingUpdates += (numIdlingUpdates < SHORTINT_MAXVALUE);
 			}
 		}
 
@@ -557,24 +559,29 @@ bool CGroundMoveType::FollowPath()
 		if (!atEndOfPath && !useRawMovement) {
 			SetNextWayPoint();
 		} else {
-			if (atGoal) {
+			if (atGoal)
 				Arrived(false);
-			}
 		}
 
-		// set direction to waypoint AFTER requesting it; should not be a null-vector
-		if (currWayPoint != owner->pos)
-			waypointDir = ((currWayPoint - owner->pos) * XZVector).SafeNormalize();
 
+		// set direction to waypoint AFTER requesting it; should not be a null-vector
+		float3 waypointVec;
+		float2 wpProjDists;
+
+		if (currWayPoint != owner->pos) {
+			waypointVec = (currWayPoint - owner->pos) * XZVector;
+			waypointDir = waypointVec / waypointVec.Length();
+			wpProjDists = {math::fabs(waypointVec.dot(flatFrontDir)), std::max(1.0f, currentSpeed * 1.05f)};
+		}
+
+		ASSERT_SYNCED(waypointVec);
 		ASSERT_SYNCED(waypointDir);
 
 		wantReverse = WantReverse(waypointDir, flatFrontDir);
 
-		// apply obstacle avoidance (steering)
-		const float3 rawWantedDir = waypointDir * Sign(int(!wantReverse));
-		const float3& modWantedDir = GetObstacleAvoidanceDir(rawWantedDir);
-
-		// ASSERT_SYNCED(modWantedDir);
+		// apply obstacle avoidance (steering), prevent unit from chasing its own tail if very close to waypoint
+		const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
+		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(flatFrontDir, rawWantedDir, wpProjDists.x > wpProjDists.y));
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
@@ -586,10 +593,8 @@ bool CGroundMoveType::FollowPath()
 
 void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool fpsMode)
 {
-	wantedSpeed = newWantedSpeed;
-
 	// round low speeds to zero
-	if (wantedSpeed <= 0.0f && currentSpeed < 0.01f) {
+	if ((wantedSpeed = newWantedSpeed) <= 0.0f && currentSpeed < 0.01f) {
 		currentSpeed = 0.0f;
 		deltaSpeed = 0.0f;
 		return;
@@ -2122,9 +2127,8 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 
 	const CWeapon* frontWeapon = owner->weapons.front();
 
-	if (!frontWeapon->weaponDef->waterweapon) {
+	if (!frontWeapon->weaponDef->waterweapon)
 		mainHeadingPos.y = std::max(mainHeadingPos.y, 0.0f);
-	}
 
 	float3 dir1 = frontWeapon->mainDir;
 	float3 dir2 = mainHeadingPos - owner->pos;
