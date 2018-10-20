@@ -705,6 +705,9 @@ void CGame::LoadLua()
 	// Lua components
 	ENTER_SYNCED_CODE();
 
+	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
+	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
+
 	loadscreen->SetLoadMessage("Loading LuaRules");
 	CLuaRules::LoadFreeHandler();
 

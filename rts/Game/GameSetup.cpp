@@ -23,6 +23,7 @@ CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(fixedAllies),
 	CR_IGNORED(useLuaGaia),
+	CR_IGNORED(luaDevMode),
 	CR_IGNORED(noHelperAIs),
 
 	CR_IGNORED(ghostedBuildings),
@@ -165,6 +166,7 @@ void CGameSetup::ResetState()
 {
 	fixedAllies = true;
 	useLuaGaia = true;
+	luaDevMode = false;
 	noHelperAIs = false;
 
 	ghostedBuildings = true;
@@ -583,6 +585,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
+	file.GetDef(luaDevMode,          "0", "GAME\\ModOptions\\LuaDevMode");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnitsPerTeam, "32000", "GAME\\ModOptions\\MaxUnits");
 	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
