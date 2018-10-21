@@ -9,6 +9,9 @@ set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
 set(PRD_JSONCPP_INTERNAL FALSE CACHE BOOL "")
 
+set(OPENAL_INCLUDE_DIR "/usr/local/Cellar/openal-soft/1.18.2/include/AL" CACHE STRING "")
+set(OPENAL_LIBRARY "/usr/local/Cellar/openal-soft/1.18.2/lib/libopenal.dylib" CACHE STRING "")
+
 set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk" CACHE STRING "")
 
 include_directories("/usr/local/include")
