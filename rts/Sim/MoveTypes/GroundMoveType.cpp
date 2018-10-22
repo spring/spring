@@ -1705,7 +1705,18 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		 (collider->   speed.dot(separationVector) > 0.0f));
 	#endif
 
+	float3 strafeVec;
+	float3 bounceVec;
+	float3 summedVec;
+
 	if (checkYardMap || checkTerrain) {
+		float3 sqrSumPosition; // .y is always 0
+		float2 sqrPenDistance; // .x = sum, .y = count
+
+		const float3 rightDir2D = (collider->rightdir * XZVector).SafeNormalize();
+		const float3 speedDir2D = (collider->speed    * XZVector).SafeNormalize();
+
+
 		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
 		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
 
@@ -1719,12 +1730,6 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 
 		const int xmin = std::min(-1, -xsh), xmax = std::max(1, xsh);
 		const int zmin = std::min(-1, -zsh), zmax = std::max(1, zsh);
-
-		float3 strafeVec;
-		float3 bounceVec;
-
-		float3 sqrSumPosition; // .y is always 0
-		float2 sqrPenDistance; // .x = sum, .y = count
 
 		if (DEBUG_DRAWING_ENABLED)
 			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
@@ -1742,15 +1747,14 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		//   if a unit is not affected by slopes) --> can be solved through
 		//   smoothing the cost-function, eg. blurring heightmap before PFS
 		//   sees it
-		const float3 speed2D = (collider->speed * XZVector).SafeNormalize2D();
-
+		//
 		for (int z = zmin; z <= zmax; z++) {
 			for (int x = xmin; x <= xmax; x++) {
 				const int xabs = xmid + x;
 				const int zabs = zmid + z;
 
 				if (checkTerrain) {
-					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, speed2D) > 0.01f)
+					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, speedDir2D) > 0.01f)
 						continue;
 				} else {
 					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
@@ -1768,11 +1772,11 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 				const float  squareColRadiusSum = colliderRadius + 5.656854249492381f;
 				const float   squareSepDistance = squareVec.Length2D() + 0.1f;
 				const float   squarePenDistance = std::min(squareSepDistance - squareColRadiusSum, 0.0f);
-				// const float  squareColSlideSign = -Sign(squarePos.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
+				// const float  squareColSlideSign = -Sign(squarePos.dot(rightDir2D) - (collider->pos).dot(rightDir2D));
 
 				// this tends to cancel out too much on average
-				// strafeVec += (collider->rightdir * sqColSlideSign);
-				bounceVec += (collider->rightdir * (collider->rightdir.dot(squareVec / squareSepDistance)));
+				// strafeVec += (rightDir2D * sqColSlideSign);
+				bounceVec += (rightDir2D * (rightDir2D.dot(squareVec / squareSepDistance)));
 
 				sqrPenDistance += float2(squarePenDistance, 1.0f);
 				sqrSumPosition += (squarePos * XZVector);
@@ -1783,7 +1787,8 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 			sqrSumPosition *= (1.0f / sqrPenDistance.y);
 			sqrPenDistance *= (1.0f / sqrPenDistance.y);
 
-			const float strafeSign = -Sign(sqrSumPosition.dot(collider->rightdir) - (collider->pos).dot(collider->rightdir));
+			const float strafeSign = -Sign(sqrSumPosition.dot(rightDir2D) - (collider->pos).dot(rightDir2D));
+			const float bounceSign =  Sign(rightDir2D.dot(bounceVec));
 			const float strafeScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
 			const float bounceScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
 
@@ -1793,13 +1798,19 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 			const float fpsStrafeScale = (strafeScale / (strafeScale + bounceScale)) * maxSpeedDef;
 			const float fpsBounceScale = (bounceScale / (strafeScale + bounceScale)) * maxSpeedDef;
 
-			strafeVec = collider->rightdir * strafeSign;
-			strafeVec = strafeVec.SafeNormalize2D() * mix(strafeScale, fpsStrafeScale, owner->UnderFirstPersonControl());
-			bounceVec = bounceVec.SafeNormalize2D() * mix(bounceScale, fpsBounceScale, owner->UnderFirstPersonControl());
+			// bounceVec always points along rightDir by construction
+			strafeVec = (rightDir2D * strafeSign) * mix(strafeScale, fpsStrafeScale, owner->UnderFirstPersonControl());
+			bounceVec = (rightDir2D * bounceSign) * mix(bounceScale, fpsBounceScale, owner->UnderFirstPersonControl());
+			summedVec = strafeVec + bounceVec;
 
 			// if checkTerrain is true, test only the center square
-			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
-				collider->Move(strafeVec + bounceVec, true);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + summedVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
+				collider->Move(summedVec, true);
+
+				// minimal hack to make FollowPath work at all turn-rates
+				// since waypointDir will undergo a (large) discontinuity
+				currWayPoint += summedVec;
+				nextWayPoint += summedVec;
 			} else {
 				collider->Move(oldPos - collider->pos, true);
 			}
@@ -1809,7 +1820,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		//   in many cases this does not mean we should request a new path
 		//   (and it can be counter-productive to do so since we might not
 		//   even *get* one)
-		return (canRequestPath && ((strafeVec + bounceVec) != ZeroVector));
+		return (canRequestPath && (summedVec != ZeroVector));
 	}
 
 	{
@@ -1821,11 +1832,15 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 - checkYardMap * false);
 		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap *  true);
 
-		const float3 strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
-		const float3 bounceVec = (   separationVector / sepDistance) * bounceScale;
+		strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
+		bounceVec = (   separationVector / sepDistance) * bounceScale;
+		summedVec = strafeVec + bounceVec;
 
-		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, true, true, true)) {
-			collider->Move(strafeVec + bounceVec, true);
+		if (colliderMD->TestMoveSquare(collider, collider->pos + summedVec, collider->speed, true, true, true)) {
+			collider->Move(summedVec, true);
+
+			currWayPoint += summedVec;
+			nextWayPoint += summedVec;
 		} else {
 			// move back to previous-frame position
 			// ChangeSpeed calculates speedMod without checking squares for *structure* blockage
