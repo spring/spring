@@ -93,9 +93,6 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED)
-		return;
-
 	{
 		CStrafeAirMoveType* airMT = GetStrafeAirMoveType(owner);
 

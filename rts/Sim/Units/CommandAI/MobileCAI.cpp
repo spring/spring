@@ -339,7 +339,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	// CMD_SWMS is non-queueing but should never cancel
 	// temporary (i.e. auto-generated) attack commands
 	const bool nonQueuedCmd = ((c.GetOpts() & SHIFT_KEY) == 0);
-	const bool canCancelTmp = (c.GetID() != CMD_SET_WANTED_MAX_SPEED);
+	const bool canCancelTmp = true;
 
 	if (nonQueuedCmd && canCancelTmp && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		tempOrder = false;
@@ -371,9 +371,6 @@ void CMobileCAI::SlowUpdate()
 	}
 
 	// when slow-guarding, regulate speed through {Start,Stop}SlowGuard
-	if (!slowGuard)
-		SlowUpdateMaxSpeed();
-
 	Execute();
 }
 
@@ -385,7 +382,6 @@ void CMobileCAI::Execute()
 	Command& c = commandQue.front();
 
 	switch (c.GetID()) {
-		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c);	return; }
 		case CMD_MOVE:                 { ExecuteMove(c);				return; }
 		case CMD_PATROL:               { ExecutePatrol(c);				return; }
 		case CMD_FIGHT:                { ExecuteFight(c);				return; }
@@ -402,22 +398,6 @@ void CMobileCAI::Execute()
 	}
 
 	CCommandAI::SlowUpdate();
-}
-
-/**
-* @brief executes the SWMS command
-*/
-void CMobileCAI::ExecuteSetWantedMaxSpeed(Command& c)
-{
-	const Command& backCmd = (commandQue.size() >= 2)? commandQue.back(): c;
-
-	// CMD_SWMS is not repeatable
-	if (repeatOrders && backCmd.GetID() != CMD_SET_WANTED_MAX_SPEED)
-		commandQue.push_back(commandQue.front());
-
-	FinishCommand();
-	SlowUpdate();
-	return;
 }
 
 /**
@@ -1250,14 +1230,9 @@ void CMobileCAI::StartSlowGuard(float speed) {
 	if (owner->moveType->GetMaxSpeed() < speed)
 		return;
 
-	const Command& c = (commandQue.size() > 1)? commandQue[1]: Command(CMD_STOP);
-
 	// when guarding, temporarily adopt the maximum
 	// (forward) speed of the guardee unit as our own
 	// WANTED maximum
-	if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-		return;
-
 	owner->moveType->SetWantedMaxSpeed(speed);
 }
 

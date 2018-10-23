@@ -443,7 +443,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 	// stop building/reclaiming/... if the new command is not queued, i.e. replaces our current activity
 	// FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
-	if ((c.GetID() != CMD_WAIT && c.GetID() != CMD_SET_WANTED_MAX_SPEED) && !(c.GetOpts() & SHIFT_KEY)) {
+	if ((c.GetID() != CMD_WAIT) && !(c.GetOpts() & SHIFT_KEY)) {
 		if (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 			building = false;
 			static_cast<CBuilder*>(owner)->StopBuild();

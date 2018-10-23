@@ -1423,11 +1423,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case ARMORED: {
-			if (param) {
-				unit->curArmorMultiple = unit->armoredMultiple;
-			} else {
-				unit->curArmorMultiple = 1;
-			}
+			unit->curArmorMultiple = mix(1.0f, unit->armoredMultiple, param != 0);
 			unit->armoredState = (param != 0);
 		} break;
 
@@ -1436,8 +1432,12 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case MAX_SPEED: {
-			// interpret negative values as non-persistent changes
-			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
+			if (param >= 0) {
+				unit->moveType->SetMaxSpeed(param / float(COBSCALE));
+			} else {
+				// temporarily (until the next command is issued) change unit's speed
+				unit->moveType->SetWantedMaxSpeed(-param / float(COBSCALE));
+			}
 		} break;
 
 		case CLOAKED: {

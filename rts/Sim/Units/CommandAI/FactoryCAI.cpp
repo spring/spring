@@ -146,8 +146,6 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	const int cmdID = c.GetID();
 
 	// move is always allowed for factories (passed to units it produces)
-	if (cmdID == CMD_SET_WANTED_MAX_SPEED)
-		return;
 	if ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))
 		return;
 
