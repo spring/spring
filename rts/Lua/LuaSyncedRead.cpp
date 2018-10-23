@@ -1475,7 +1475,11 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 			continue;
 
 		luaAIName = &aiData->shortName;
+		break;
 	}
+
+	if (luaAIName == nullptr)
+		return 0;
 
 	lua_pushsstring(L, luaAIName->c_str());
 	return 1;
