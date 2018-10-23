@@ -47,7 +47,6 @@ public:
 	virtual void ExecuteFight(Command& c);
 	virtual void ExecutePatrol(Command& c);
 	virtual void ExecuteMove(Command& c);
-	virtual void ExecuteSetWantedMaxSpeed(Command& c);
 	virtual void ExecuteLoadOnto(Command& c);
 
 	virtual void ExecuteUnloadUnit(Command& c);

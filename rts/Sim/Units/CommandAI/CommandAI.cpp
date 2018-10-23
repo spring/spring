@@ -897,18 +897,6 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 			}
 			return;
 		}
-		case CMD_SET_WANTED_MAX_SPEED: {
-			if (CanSetMaxSpeed() &&
-			    (commandQue.empty() ||
-			     (commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED))) {
-				// bail early, do not check for overlaps or queue cancelling
-				commandQue.push_back(c);
-				if (commandQue.size()==1 && !owner->beingBuilt) {
-					SlowUpdate();
-				}
-			}
-			return;
-		}
 		case CMD_WAIT: {
 			GiveWaitCommand(c);
 			return;
@@ -1253,10 +1241,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 		if ((cmdID == cmd2ID) || (cmdID < 0 && cmd2ID < 0) || attackAndFight) {
 			if (c.GetNumParams() == 1) {
 				// assume the param is a unit-ID or feature-ID
-				if ((c2.GetParam(0) == c.GetParam(0)) &&
-				    (cmd2ID != CMD_SET_WANTED_MAX_SPEED)) {
+				if (c2.GetParam(0) == c.GetParam(0))
 					return ci;
-				}
 			}
 			else if (c.GetNumParams() >= 3) {
 				if (cmdID < 0) {
@@ -1308,11 +1294,6 @@ int CCommandAI::CancelCommands(const Command& c, CCommandQueue& q, bool& first)
 		CCommandQueue::iterator lastErase = ci;
 
 		++ci;
-		if ((ci != q.end()) && (ci->GetID() == CMD_SET_WANTED_MAX_SPEED)) {
-			lastErase = ci;
-			cancelCount++;
-			++ci;
-		}
 
 		if ((ci != q.end()) && (ci->GetID() == CMD_WAIT)) {
 			waitCommandsAI.RemoveWaitCommand(owner, *ci);
@@ -1584,7 +1565,7 @@ void CCommandAI::FinishCommand()
 	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
 
 	const bool dontRepeat = (cmd.GetOpts() & INTERNAL_ORDER);
-	const bool pushCommand = (cmd.GetID() != CMD_STOP && cmd.GetID() != CMD_PATROL && cmd.GetID() != CMD_SET_WANTED_MAX_SPEED);
+	const bool pushCommand = (cmd.GetID() != CMD_STOP && cmd.GetID() != CMD_PATROL);
 
 	if (repeatOrders && !dontRepeat && pushCommand)
 		commandQue.push_back(cmd);
@@ -1768,45 +1749,5 @@ void CCommandAI::StopAttackingTargetIf(const std::function<bool(const CUnit*)>& 
 void CCommandAI::StopAttackingAllyTeam(int ally)
 {
 	StopAttackingTargetIf([&](const CUnit* t) { return (t != nullptr && t->allyteam == ally); });
-}
-
-
-
-void CCommandAI::SetScriptMaxSpeed(float speed, bool persistent) {
-	if (!persistent) {
-		// find the first CMD_SET_WANTED_MAX_SPEED and modify it
-		// NOTE:
-		//   this has no effect if the unit does not already have
-		//   such an order, and only lasts until a new move-order
-		//   is given (hence non-persistent)
-		for (Command& c: commandQue) {
-			if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-				continue;
-
-			c.SetParam(0, speed);
-			owner->moveType->SetWantedMaxSpeed(c.GetParam(0));
-			break;
-		}
-	} else {
-		// permanently change the unit's speed
-		owner->moveType->SetMaxSpeed(speed);
-	}
-}
-
-void CCommandAI::SlowUpdateMaxSpeed() {
-	if (commandQue.size() < 2)
-		return;
-
-	// grab the second command
-	const CCommandQueue::const_iterator it = ++(commandQue.begin());
-	const Command& c = *it;
-
-	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
-	// to the current command (and ignore them when it's their turn)
-	if (c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-		return;
-
-	assert(!c.IsEmptyCommand());
-	owner->moveType->SetWantedMaxSpeed(c.GetParam(0));
 }
 

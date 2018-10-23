@@ -38,13 +38,12 @@ public:
 	virtual bool IsAtGoalPos(const float3& pos, float radius) const { return (pos.SqDistance2D(goalPos) < (radius * radius)); }
 
 	// NOTE:
-	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
-	//     other code (CommandAI) modifies a unit's speed only
-	//     through SetMaxWantedSpeed, via SET_WANTED_MAX_SPEED
-	//     commands
+	//   SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
+	//   other code (CommandAI) modifies a unit's speed only
+	//   through SetMax*Wanted*Speed
 	// NOTE:
-	//     clamped because too much code in the derived
-	//     MoveType classes expects maxSpeed to be != 0
+	//   clamped because too much code in the derived
+	//   MoveType classes expects maxSpeed to be != 0
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
 	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
@@ -97,7 +96,7 @@ public:
 protected:
 	float maxSpeed;            // current maximum speed owner is allowed to reach (changes with eg. guard orders)
 	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
-	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
+	float maxWantedSpeed;      // maximum speed (temporarily) set by a CommandAI
 
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
 	float waterline;

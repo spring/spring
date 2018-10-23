@@ -36,16 +36,13 @@ CSelectedUnitsHandlerAI selectedUnitsAI;
 inline void CSelectedUnitsHandlerAI::AddUnitSetMaxSpeedCommandNet(CUnit* unit, unsigned char options)
 {
 	// this sets the WANTED maximum speed of <unit>
-	// (via the CommandAI --> MoveType chain) to be
 	// equal to its current ACTUAL maximum (not the
 	// UnitDef maximum, which can be overridden by
 	// scripts)
-	CCommandAI* cai = unit->commandAI;
-
-	if (!cai->CanSetMaxSpeed())
+	if (!unit->commandAI->CanSetMaxSpeed())
 		return;
 
-	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, unit->moveType->GetMaxSpeed()), true);
+	unit->moveType->SetWantedMaxSpeed(unit->moveType->GetMaxSpeed());
 }
 
 inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommandNet(CUnit* unit, unsigned char options)
@@ -53,12 +50,10 @@ inline void CSelectedUnitsHandlerAI::AddGroupSetMaxSpeedCommandNet(CUnit* unit, 
 	// sets the wanted speed of this unit to that of the
 	// group's current-slowest member (groupMinMaxSpeed
 	// is derived from GetMaxSpeed, not GetMaxSpeedDef)
-	CCommandAI* cai = unit->commandAI;
-
-	if (!cai->CanSetMaxSpeed())
+	if (!unit->commandAI->CanSetMaxSpeed())
 		return;
 
-	cai->GiveCommand(Command(CMD_SET_WANTED_MAX_SPEED, options, groupMinMaxSpeed), true);
+	unit->moveType->SetWantedMaxSpeed(groupMinMaxSpeed);
 }
 
 
@@ -157,7 +152,7 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 		CalculateGroupData(player, !!(c.GetOpts() & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
-		const float3 pos(c.GetParam(0), c.GetParam(1), c.GetParam(2));
+		const float3      pos = c.GetPos(0);
 		const float3 frontDir = ((pos - groupCenterCoor) * XZVector).ANormalize();
 		const float3  sideDir = frontDir.cross(UpVector);
 
@@ -226,8 +221,6 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 			if (unit == nullptr)
 				continue;
 
-			// appending a CMD_SET_WANTED_MAX_SPEED command to
-			// every command is a little bit wasteful, n'est pas?
 			unit->commandAI->GiveCommand(c, true);
 
 			if (!MayRequireSetMaxSpeedCommand(c))

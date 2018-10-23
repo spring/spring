@@ -8,6 +8,7 @@ Sim:
  - consider partially reclaimed wrecks nonfresh for area-resurrection commands
  ! remove undocumented BeamLaser range modifier (provided 30% extra when fired by mobile units)
  ! remove legacy (COB, though also affecting Lua) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
+ ! remove CMD_SET_WANTED_MAX_SPEED
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
 
 Lua:
