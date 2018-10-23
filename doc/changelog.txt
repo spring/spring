@@ -40,9 +40,9 @@ Lua:
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
  - add Spring.Get{Unit,Feature}PieceTransformMatrices to LuaUnsyncedRead
- - add Spring.Ping callout
- - add Pong callin
- - add gl.GetViewRange to LuaOpenGL
+ - add Spring.Ping callout and corresponding Pong callin
+ - add Spring.GetMapStartPositions callout
+ - add gl.GetViewRange callout
  - add DrawMaterial callin
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
