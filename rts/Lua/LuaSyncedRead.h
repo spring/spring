@@ -48,6 +48,7 @@ class LuaSyncedRead {
 
 		static int GetAllyTeamStartBox(lua_State* L);
 		static int GetTeamStartPosition(lua_State* L);
+		static int GetMapStartPositions(lua_State* L);
 
 		static int GetAllyTeamList(lua_State* L);
 		static int GetTeamList(lua_State* L);

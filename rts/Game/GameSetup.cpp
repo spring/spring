@@ -231,24 +231,14 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 	}
 }
 
-void CGameSetup::LoadStartPositionsFromMap()
+void CGameSetup::LoadStartPositionsFromMap(int numTeams, const std::function<bool(MapParser& mapParser, int teamNum)>& startPosPred)
 {
 	MapParser mapParser(MapFile());
 
 	if (!mapParser.IsValid())
 		throw content_error("MapInfo: " + mapParser.GetErrorLog());
 
-	for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		float3 pos;
-
-		// don't fail when playing with more players than
-		// start positions and we didn't use them anyway
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos))
-			throw content_error(mapParser.GetErrorLog());
-
-		// map should ensure positions are valid
-		// (but clients will always do clamping)
-		teamStartingData[a].SetStartPos(pos);
+	for (int a = 0; a < numTeams && startPosPred(mapParser, a); ++a) {
 	}
 }
 
@@ -257,22 +247,38 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's start-positions");
 
-	std::vector<int> teamStartNum(teamStartingData.size());
-	std::iota(teamStartNum.begin(), teamStartNum.end(), 0);
+	std::array<int, MAX_TEAMS> teamStartNums;
+	std::fill(teamStartNums.begin(), teamStartNums.end(), 0);
+	std::iota(teamStartNums.begin(), teamStartNums.begin() + teamStartingData.size(), 0);
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		CGlobalUnsyncedRNG rng;
 		rng.Seed(HsiehHash(setupText.c_str(), setupText.length(), 1234567));
-		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
+		std::random_shuffle(teamStartNums.begin(), teamStartNums.begin() + teamStartingData.size(), rng);
 	}
 
 	for (size_t i = 0; i < teamStartingData.size(); ++i)
-		teamStartingData[i].teamStartNum = teamStartNum[i];
+		teamStartingData[i].teamStartNum = teamStartNums[i];
 
-	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random) {
-		LoadStartPositionsFromMap();
-	}
+	if (startPosType != StartPos_Fixed && startPosType != StartPos_Random)
+		return;
+
+	LoadStartPositionsFromMap(teamStartingData.size(), [&](MapParser& mapParser, int teamNum) {
+		float3 pos;
+
+		// don't fail when playing with more players than
+		// start positions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[teamNum].teamStartNum, pos)) {
+			throw content_error(mapParser.GetErrorLog());
+			return false;
+		}
+
+		// map should ensure positions are valid
+		// (but clients will always do clamping)
+		teamStartingData[teamNum].SetStartPos(pos);
+		return true;
+	});
 }
 
 void CGameSetup::LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList)

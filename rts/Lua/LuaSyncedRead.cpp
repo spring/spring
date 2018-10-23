@@ -22,6 +22,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
+#include "Map/MapParser.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Models/IModelParser.h"
@@ -133,6 +134,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetAllyTeamStartBox);
 	REGISTER_LUA_CFUNC(GetTeamStartPosition);
+	REGISTER_LUA_CFUNC(GetMapStartPositions);
 
 	REGISTER_LUA_CFUNC(GetPlayerList);
 	REGISTER_LUA_CFUNC(GetTeamList);
@@ -954,7 +956,6 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 	return 1;
 }
 
-
 int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	const auto& modOpts = CGameSetup::GetModOptions();
@@ -1001,24 +1002,24 @@ int LuaSyncedRead::GetSideData(lua_State* L)
 		const string sideName = lua_tostring(L, 1);
 		const string& startUnit = sideParser.GetStartUnit(sideName);
 		const string& caseName  = sideParser.GetCaseName(sideName);
-		if (startUnit.empty()) {
+		if (startUnit.empty())
 			return 0;
-		}
+
 		lua_pushsstring(L, startUnit);
 		lua_pushsstring(L, caseName);
 		return 2;
 	}
-	else if (lua_israwnumber(L, 1)) {
+	if (lua_israwnumber(L, 1)) {
 		const unsigned int index = lua_toint(L, 1) - 1;
-		if (!sideParser.ValidSide(index)) {
+		if (!sideParser.ValidSide(index))
 			return 0;
-		}
+
 		lua_pushsstring(L, sideParser.GetSideName(index));
 		lua_pushsstring(L, sideParser.GetStartUnit(index));
 		lua_pushsstring(L, sideParser.GetCaseName(index));
 		return 3;
 	}
-	else {
+	{
 		lua_newtable(L);
 		const unsigned int sideCount = sideParser.GetCount();
 		for (unsigned int i = 0; i < sideCount; i++) {
@@ -1031,7 +1032,6 @@ int LuaSyncedRead::GetSideData(lua_State* L)
 		}
 		return 1;
 	}
-	return 0;
 }
 
 
@@ -1074,6 +1074,27 @@ int LuaSyncedRead::GetTeamStartPosition(lua_State* L)
 	lua_pushnumber(L, pos.z);
 	lua_pushboolean(L, team->HasValidStartPos());
 	return 4;
+}
+
+
+int LuaSyncedRead::GetMapStartPositions(lua_State* L)
+{
+	lua_createtable(L, MAX_TEAMS, 0);
+	gameSetup->LoadStartPositionsFromMap(MAX_TEAMS, [&](MapParser& mapParser, int teamNum) {
+		float3 pos;
+
+		if (!mapParser.GetStartPos(teamNum, pos))
+			return false;
+
+		lua_createtable(L, 3, 0);
+		lua_pushnumber(L, pos.x); lua_rawseti(L, -2, 1);
+		lua_pushnumber(L, pos.y); lua_rawseti(L, -2, 2);
+		lua_pushnumber(L, pos.z); lua_rawseti(L, -2, 3);
+		lua_rawseti(L, -2, 1 + teamNum); // [i] = {x,y,z}
+		return true;
+	});
+
+	return 1;
 }
 
 
@@ -1220,30 +1241,33 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 	if (!IsAlliedTeam(L, teamID))
 		return 0;
 
-	const string type = luaL_checkstring(L, 2);
-	if (type == "metal") {
-		lua_pushnumber(L, team->res.metal);
-		lua_pushnumber(L, team->resStorage.metal);
-		lua_pushnumber(L, team->resPrevPull.metal);
-		lua_pushnumber(L, team->resPrevIncome.metal);
-		lua_pushnumber(L, team->resPrevExpense.metal);
-		lua_pushnumber(L, team->resShare.metal);
-		lua_pushnumber(L, team->resPrevSent.metal);
-		lua_pushnumber(L, team->resPrevReceived.metal);
-		lua_pushnumber(L, team->resPrevExcess.metal);
-		return 9;
-	}
-	else if (type == "energy") {
-		lua_pushnumber(L, team->res.energy);
-		lua_pushnumber(L, team->resStorage.energy);
-		lua_pushnumber(L, team->resPrevPull.energy);
-		lua_pushnumber(L, team->resPrevIncome.energy);
-		lua_pushnumber(L, team->resPrevExpense.energy);
-		lua_pushnumber(L, team->resShare.energy);
-		lua_pushnumber(L, team->resPrevSent.energy);
-		lua_pushnumber(L, team->resPrevReceived.energy);
-		lua_pushnumber(L, team->resPrevExcess.energy);
-		return 9;
+	switch (luaL_checkstring(L, 2)[0]) {
+		case 'm': {
+			lua_pushnumber(L, team->res.metal);
+			lua_pushnumber(L, team->resStorage.metal);
+			lua_pushnumber(L, team->resPrevPull.metal);
+			lua_pushnumber(L, team->resPrevIncome.metal);
+			lua_pushnumber(L, team->resPrevExpense.metal);
+			lua_pushnumber(L, team->resShare.metal);
+			lua_pushnumber(L, team->resPrevSent.metal);
+			lua_pushnumber(L, team->resPrevReceived.metal);
+			lua_pushnumber(L, team->resPrevExcess.metal);
+			return 9;
+		} break;
+		case 'e': {
+			lua_pushnumber(L, team->res.energy);
+			lua_pushnumber(L, team->resStorage.energy);
+			lua_pushnumber(L, team->resPrevPull.energy);
+			lua_pushnumber(L, team->resPrevIncome.energy);
+			lua_pushnumber(L, team->resPrevExpense.energy);
+			lua_pushnumber(L, team->resShare.energy);
+			lua_pushnumber(L, team->resPrevSent.energy);
+			lua_pushnumber(L, team->resPrevReceived.energy);
+			lua_pushnumber(L, team->resPrevExcess.energy);
+			return 9;
+		} break;
+		default: {
+		} break;
 	}
 
 	return 0;
@@ -1287,22 +1311,25 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 
 	const TeamStatistics& stats = team->GetCurrentStats();
 
-	const string type = luaL_checkstring(L, 2);
-	if (type == "metal") {
-		lua_pushnumber(L, stats.metalUsed);
-		lua_pushnumber(L, stats.metalProduced);
-		lua_pushnumber(L, stats.metalExcess);
-		lua_pushnumber(L, stats.metalReceived);
-		lua_pushnumber(L, stats.metalSent);
-		return 5;
-	}
-	else if (type == "energy") {
-		lua_pushnumber(L, stats.energyUsed);
-		lua_pushnumber(L, stats.energyProduced);
-		lua_pushnumber(L, stats.energyExcess);
-		lua_pushnumber(L, stats.energyReceived);
-		lua_pushnumber(L, stats.energySent);
-		return 5;
+	switch (luaL_checkstring(L, 2)[0]) {
+		case 'm': {
+			lua_pushnumber(L, stats.metalUsed);
+			lua_pushnumber(L, stats.metalProduced);
+			lua_pushnumber(L, stats.metalExcess);
+			lua_pushnumber(L, stats.metalReceived);
+			lua_pushnumber(L, stats.metalSent);
+			return 5;
+		} break;
+		case 'e': {
+			lua_pushnumber(L, stats.energyUsed);
+			lua_pushnumber(L, stats.energyProduced);
+			lua_pushnumber(L, stats.energyExcess);
+			lua_pushnumber(L, stats.energyReceived);
+			lua_pushnumber(L, stats.energySent);
+			return 5;
+		} break;
+		default: {
+		} break;
 	}
 
 	return 0;
@@ -1438,7 +1465,7 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
-	std::string luaAIName;
+	const std::string* luaAIName = nullptr;
 	const std::vector<uint8_t>& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
 
 	for (uint8_t id: teamAIs) {
@@ -1447,10 +1474,10 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 		if (!aiData->isLuaAI)
 			continue;
 
-		luaAIName = aiData->shortName;
+		luaAIName = &aiData->shortName;
 	}
 
-	lua_pushsstring(L, luaAIName);
+	lua_pushsstring(L, luaAIName->c_str());
 	return 1;
 }
 
@@ -2259,7 +2286,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	const float dz = (p.z - z);                 \
 	const float dist = ((dx * dx) + (dz * dz)); \
 	if (dist > radSqr) {                        \
-		continue;                                 \
+		continue;                               \
 	}                                           \
 
 	QuadFieldQuery qfQuery;
@@ -2749,24 +2776,31 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const string key = luaL_checkstring(L, 2);
-
-	if (key == "los") {
-		lua_pushnumber(L, unit->losRadius);
-	} else if (key == "airLos") {
-		lua_pushnumber(L, unit->airLosRadius);
-	} else if (key == "radar") {
-		lua_pushnumber(L, unit->radarRadius);
-	} else if (key == "sonar") {
-		lua_pushnumber(L, unit->sonarRadius);
-	} else if (key == "seismic") {
-		lua_pushnumber(L, unit->seismicRadius);
-	} else if (key == "radarJammer") {
-		lua_pushnumber(L, unit->jammerRadius);
-	} else if (key == "sonarJammer") {
-		lua_pushnumber(L, unit->sonarJamRadius);
-	} else {
-		luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString("los"): {
+			lua_pushnumber(L, unit->losRadius);
+		} break;
+		case hashString("airLos"): {
+			lua_pushnumber(L, unit->airLosRadius);
+		} break;
+		case hashString("radar"): {
+			lua_pushnumber(L, unit->radarRadius);
+		} break;
+		case hashString("sonar"): {
+			lua_pushnumber(L, unit->sonarRadius);
+		} break;
+		case hashString("seismic"): {
+			lua_pushnumber(L, unit->seismicRadius);
+		} break;
+		case hashString("radarJammer"): {
+			lua_pushnumber(L, unit->jammerRadius);
+		} break;
+		case hashString("sonarJammer"): {
+			lua_pushnumber(L, unit->sonarJamRadius);
+		} break;
+		default: {
+			luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
+		} break;
 	}
 
 	return 1;
@@ -4254,10 +4288,9 @@ static void PackFactoryCounts(lua_State* L,
 			currentCount = 0;
 			break;
 		}
-		const int& cmdID = it->GetID();
-		if (noCmds && (cmdID >= 0)) {
+		const int cmdID = it->GetID();
+		if (noCmds && (cmdID >= 0))
 			continue;
-		}
 
 		if (entry == 0) {
 			currentCmd = cmdID;
