@@ -3,6 +3,7 @@
 #ifndef _GAME_SETUP_H
 #define _GAME_SETUP_H
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,7 @@
 #include "System/UnorderedSet.hpp"
 #include "System/creg/creg_cond.h"
 
+class MapParser;
 class TdfParser;
 
 class CGameSetup
@@ -102,6 +104,11 @@ public:
 	 * is not known before CPreGame recieves the gamedata from the server.
 	 */
 	void LoadStartPositions(bool withoutMap = false);
+	/**
+	 * @brief Load startpositions from map
+	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+	 */
+	void LoadStartPositionsFromMap(int numTeams, const std::function<bool(MapParser& mapParser, int teamNum)>& startPosPred);
 
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
 		const auto it = restrictedUnits.find(name);
@@ -121,12 +128,6 @@ public:
 	const std::string MapFile() const;
 
 private:
-	/**
-	 * @brief Load startpositions from map
-	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
-	 */
-	void LoadStartPositionsFromMap();
-
 	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
 	/**
 	 * @brief Load unit restrictions
