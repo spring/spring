@@ -113,7 +113,7 @@ public:
 	unsigned int startFrame = 0;
 	
 	//ArivalFrame of the Animation
-	unsigned int goalFrame = 0;
+	unsigned int durationInFrames = 0;
 	
 	//Last Frame to solve from
 	unsigned int lastSolveFrame = 0;
