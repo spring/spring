@@ -118,6 +118,9 @@ public:
 	//Last Frame to solve from
 	unsigned int lastSolveFrame = 0;
 	
+	//Frames of the Animation allready solved
+	unsigned int solvedFramesSoFar=0;
+	
 	//Plots the whole IK-Chain
 	void print();
 	
