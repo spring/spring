@@ -33,7 +33,12 @@ public:
 	IkChain();
 	
 	//Create the segments from a startPieceId and an endPieceID
-	IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID);
+	IkChain(int id, 
+		CUnit* unit, 
+		LocalModelPiece* startPiece, 
+		unsigned int startPieceID, 
+		unsigned int endPieceID,
+	        unsigned int frameLength);
 
 	//Flag set from outside of the IK-Chain - wether the target has changed, is set to false by the IK-Chain
 	bool GoalChanged=true;
@@ -53,7 +58,7 @@ public:
 
 	//IK is active or paused- paused IK-Chains can jolt 
 	bool IKActive ;
-
+	
 	//Setter
 	void SetActive (bool isActive);
 
@@ -103,7 +108,13 @@ public:
 	
 	//Initial Default direction of the Kinematik system
 	Point3f vecDefaultlDirection;
-
+	
+	//StartFrame of the Animation
+	unsigned int StartFrame = 0;
+	
+	//ArivalFrame of the Animation
+	unsigned int GoalFrame = 0;
+	
 	//Plots the whole IK-Chain
 	void print();
 	
