@@ -96,6 +96,9 @@ public:
 
 	// the goal Point also in World Coordinats
 	Point3f goalPoint;
+	
+	//the start Point in World Coordinates of the Animation
+	Point3f startPoint;
 
 	//Vector containing the Segments
 	std::vector <Segment> segments;
