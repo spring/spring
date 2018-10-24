@@ -63,8 +63,8 @@ public:
 	void SetActive (bool isActive);
 
 	//Solves the Inverse Kinematik Chain for a goal point
-	//arguments: frames - current active frame, becomes Startframe on  new motion
-	void solve(float frames );
+	//arguments: frame - current active frame, becomes Startframe on  new motion
+	void solve(float frame );
 	
 	//apply the resolved Kinematics to the actual Model
 	void applyIkTransformation(MotionBlend motionBlendMethod);
@@ -110,10 +110,13 @@ public:
 	Point3f vecDefaultlDirection;
 	
 	//StartFrame of the Animation
-	unsigned int StartFrame = 0;
+	unsigned int startFrame = 0;
 	
 	//ArivalFrame of the Animation
-	unsigned int GoalFrame = 0;
+	unsigned int goalFrame = 0;
+	
+	//Last Frame to solve from
+	unsigned int lastSolveFrame = 0;
 	
 	//Plots the whole IK-Chain
 	void print();
