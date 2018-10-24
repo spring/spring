@@ -1372,6 +1372,7 @@ int LuaSyncedCtrl::CreateUnitIKChain(lua_State* L){
 
 	CheckAllowGameChanges(L);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	unsigned int lengthInFrames=0;
 
 	if (unit == NULL) {
 		return 0;
@@ -1390,8 +1391,17 @@ int LuaSyncedCtrl::CreateUnitIKChain(lua_State* L){
 			luaL_error(L, "Endpiece of kinematikChain incorrekt");
 			return 0;	
 		}
+		
+	if (lua_isnumber(L,4) ){
+		lengthInFrames = (unsigned int) lua_tofloat(L,2);
+		if (lengthInFrames < 0 ) {
+			luaL_error(L, "Animationtime is smaller then zero");
+			return 0;	
+		}
+	}
+		
 
-	lua_pushnumber(L,  unit->CreateIKChain(startPiece, startPiece->scriptPieceIndex, endPiece->scriptPieceIndex));
+	lua_pushnumber(L,  unit->CreateIKChain(startPiece, startPiece->scriptPieceIndex, endPiece->scriptPieceIndex), lengthInFrames);
 	return 1;
 	}
 	
@@ -1461,7 +1471,7 @@ int LuaSyncedCtrl::SetUnitIKPieceSpeed(lua_State* L)
 
 	if ( lua_isnumber(L,2) && //IkchainID
 		 lua_isnumber(L,3) && //PieceID
-		(lua_isnumber(L,4) &&  lua_isnumber(L,5) && lua_isnumber(L,6)))
+		(lua_isnumber(L,4) //Frames till Animation is complete
 		{
 			//check wether this is a correct ikID
 			if (unit->isValidIKChain(lua_tofloat(L,2)) == false){
@@ -1476,7 +1486,7 @@ int LuaSyncedCtrl::SetUnitIKPieceSpeed(lua_State* L)
 			}
 
 
-			unit->SetIKPieceSpeed(lua_tofloat(L,2),lua_tofloat(L,3), lua_tofloat(L,4),lua_tofloat(L,5),lua_tofloat(L,6));
+			unit->SetIKPieceSpeed(lua_tofloat(L,2),lua_tofloat(L,3), lua_tofloat(L,4));
 			return 0;
 		}
 	luaL_error(L, "SetUnitIKPieceSpeed has missing/ wrong arguments");	
