@@ -23,8 +23,11 @@ bool IkChain::isValidIKPiece(float pieceID){
 return false;
 }
 
+//Activates the IkChain
 void IkChain::SetActive(bool isActive)
 {
+	if (!IKActive && isActive) lastSolveFrame = GetGameFrame();
+	
 	IKActive  = isActive;
 }
 
@@ -114,7 +117,7 @@ bool IkChain::initializePiecePath(LocalModelPiece* startPiece, unsigned int star
 	return initializationComplete;
 }
 
-IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID, unsigned int animationLengthInFrames)
+IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID)
 {
 	this->unit = unit;
 	
@@ -203,46 +206,89 @@ float IkChain::getMaxLength(){
 return totalDistance;
 }
 
-Point3f IkChain::TransformGoalToUnitspace(Point3f goal){
+//Transforms a given goal Point in World Coordnates into a Target in the IkBasePosition Coordinate System
+Point3f IkChain::TransformGoalToIKBasespace(Point3f goal){
+	//TODO Rotate and clamp the WoorldCoordinate into the Units Piece Coordinatesystem
 	float3 fGoal= float3(goal(0,0),goal(1,0),goal(2,0));
 	float3 unitPoint =unit->GetTransformMatrix()*fGoal;
+	
 	return Point3f(unitPoint.x ,unitPoint.y,unitPoint.z);
 }
 
-void IkChain::solve( float  frames) 
+//Set the Time a Animation needs to complete while active
+void IkChain::setAnimationLengthInFrames(unsigned int animationLengthInFrames){
+	durationInFrames = animationLengthInFrames;
+}
+
+//Transforms a given goal Point into a ikbase Centric Coordinate system
+float IkChain::setNewGoalPoint(Point3f goal, boolean isWorldCoordinate, unsigned int animationLengthInFrames) {
+	setAnimationLengthInFrames(animationLengthInFrames);
+	
+	GoalChanged = true;
+	Point3f ikBasePoint =GetIkBasePosition();
+	
+	if (!isWorldCoordinate ) goalPoint -= ikBasePoint;
+}
+
+//Calculates the percentage of execution of a active animation at the current frame
+float IkChain::getFrameInterpolationPercentage(int CurrentFrame) {
+
+	int framesToAdd = (CurrentFrame- lastSolvedFrame) ;
+		
+	return (solvedFramesSoFar +framesToAdd)/durationInFrames;
+}
+
+//Returns the World Cooordinate Position of the first semgents Piece
+Point3f IkChain::GetIkBasePosition(){
+	//TODO
+	float3 basePos = unit->GetPiecePosition(segments[0].pieceID);
+	return Point3f(basePos.x,basePos.y,basePos.z);
+}
+
+void IkChain::solve( int  frame) 
 {	
 	if (!IKActive) return;
-	
+
 	// prev and curr are for use of halving
 	// last is making sure the iteration gets a better solution than the last iteration,
 	// otherwise revert changes
-	Point3f goal_point;
-	goal_point = this->goalPoint;
+	float animationPercentage =  getFrameInterpolationPercentage(frame);
+	Point3f targetCoord;
+	if (isWorldCoordinate ){
+		targetCoord = TransformGoalToIKBasespace(goalPoint)
+	}else
+	{
+		targetCoord = goalPoint;
+	}
+		
+	Point3f targetPoint = mix(startPoint, targetCoord,animationPercentage);
+
+	
     float prev_err, curr_err, last_err = 9999;
     Point3f current_point;
     int max_iterations = 200;
     int count = 0;
     float err_margin = 0.01;
 
-    goal_point -= base;
-    if (goal_point.norm() > this->getMaxLength()) {
+    if (targetPoint.norm() > this->getMaxLength()) {
 		std::cout<<"Goal Point out of reachable sphere! Normalied to" << this->getMaxLength()<<std::endl;
-	    goal_point =  ( this->goalPoint.normalized() * this->getMaxLength());
+	    targetPoint =  ( this->targetPoint.normalized() * (this->getMaxLength()-0.01f));
 	}
 	
-    current_point = calculate_end_effector();
-	printPoint("Base Point:",base);
-	printPoint("Start Point:",current_point);
-	printPoint("Goal  Point:",goal_point);
+    	current_point = calculate_end_effector();
+	printPoint("Base Point:",GetIkBasePosition());
+	printPoint("Start Point:",startPoint);
+	printPoint("Goal  Point:",targetPoint);
+	
 	// save the first err
-    prev_err = (goal_point - current_point).norm();
+    prev_err = (targetPoint - current_point).norm();
     curr_err = prev_err;
     last_err = curr_err;
 
 	// while the current point is close enough, stop iterating
     while (curr_err > err_margin) {
 		// calculate the difference between the goal_point and current_point
-	    Vector3f dP = goal_point - current_point;
+	    Vector3f dP = targetPoint - current_point;
 
 		// create the jacovian
 	    int segment_size = segments.size();
@@ -298,7 +344,7 @@ void IkChain::solve( float  frames)
 		//cout << "goal_point: " << vectorString(goal_point) << endl;
 
 	    prev_err = curr_err;
-	    curr_err = (goal_point - current_point).norm();
+	    curr_err = (targetPoint - current_point).norm();
 
 	    int halving_count = 0;
 
@@ -342,7 +388,7 @@ void IkChain::solve( float  frames)
 			    segments[i].load_last_transformation();
 			}
 		    current_point = calculate_end_effector();
-		    curr_err = (goal_point - current_point).norm();
+		    curr_err = (targetPoint - current_point).norm();
 		    break;
 		}
 	    for(int i=0; i<segment_size; i++) {
@@ -360,6 +406,7 @@ void IkChain::solve( float  frames)
 	}
 
 	applyIkTransformation(OVERRIDE);
+	lastSolveFrame = GetGameFrame();
    }
 
 //Returns the Negated Accumulated Rotation
@@ -452,7 +499,7 @@ Point3f IkChain::calculate_end_effector(int segment_num /* = -1 */) {
 	// else don't mess with it
 
 	// start with base
-	reti = base;
+	reti = GetIkBasePosition();
 	for(int i=0; i<=segment_num_to_calc; i++) {
 		// add each segments end point vector to the base
 		reti += segments[i].get_end_point();
