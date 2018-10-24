@@ -1,7 +1,6 @@
 
 #include "IkChain.h"
 #include "Unit.h"
-//#include "point3f.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include <iostream>
@@ -115,10 +114,10 @@ bool IkChain::initializePiecePath(LocalModelPiece* startPiece, unsigned int star
 	return initializationComplete;
 }
 
-IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID )
+IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID, unsigned int animationLengthInFrames)
 {
-	this->unit= unit;
-	//segment_size=0;
+	this->unit = unit;
+	
 	//std::cout<< "start,endpiece"<<startPieceID <<" / " <<endPieceID <<std::endl;
 	  if( initializePiecePath(startPiece, (unsigned int) startPieceID, (unsigned int) endPieceID) == false) {
 		std::cout<<"Startpiece is beneath Endpiece - Endpiece could not be found"<<std::endl;
@@ -126,7 +125,7 @@ IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int 
 	 
 	// pre initialize all the Points - and the 
 	float3 piecePos= startPiece->GetAbsolutePos();
-	base		= Point3f(piecePos.x,piecePos.y,piecePos.z);
+	startPoint = Point3f(piecePos.x,piecePos.y,piecePos.z);
 	goalPoint   = Point3f(0,0,0);
 
 	IKActive= false;
@@ -160,7 +159,7 @@ void IkChain::print()
 	std::cout<<  "	[[ "<<std::endl;
 	printPoint("GoalPoint:", goalPoint(0,0),goalPoint(1,0),goalPoint(2,0));
 	printPoint("Clamped Goal:", transformed[0],transformed[1],transformed[2]);
-	printPoint("Base:", base(0,0),base(1,0),base(2,0));
+	printPoint("StartPoint:", startPoint(0,0),startPoint(1,0), startPoint(2,0));
 	std::cout<<"MaxLength: "<< getMaxLength()<<std::endl;
 	std::cout<<"isWorldCoordinate: "<<isWorldCoordinate <<std::endl;
 
@@ -210,8 +209,10 @@ Point3f IkChain::TransformGoalToUnitspace(Point3f goal){
 	return Point3f(unitPoint.x ,unitPoint.y,unitPoint.z);
 }
 
-void IkChain::solve( float  life_count) 
-{
+void IkChain::solve( float  frames) 
+{	
+	if (!IKActive) return;
+	
 	// prev and curr are for use of halving
 	// last is making sure the iteration gets a better solution than the last iteration,
 	// otherwise revert changes
