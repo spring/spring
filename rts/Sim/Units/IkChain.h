@@ -88,9 +88,6 @@ public:
 	//Identifier of the kinematik Chain
 	float IkChainID;
 
-	//The baseposition in WorldCoordinats
-	Point3f base;
-
 	//Set the Angle for the Transformation matrice
 	void SetTransformation(float valX, float valY, float valZ);
 
