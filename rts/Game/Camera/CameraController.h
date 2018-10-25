@@ -129,17 +129,19 @@ public:
 	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
 	
-	virtual void SetStreamingActive();
 	
-	//Data of the Streaming Service
-	bool streamingActive = false;
-	unsigned int ipStreamIpAdress;
-	unsigned int portNumber;
+	
+	
 
 protected:
+	void SetStreamingActive();
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
 	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
 
+	//Data of the Streaming Service
+	bool streamingActive = false;
+	float ipAdress;
+	float portNumber;
 
 	float fov;
 	float3 pos;
