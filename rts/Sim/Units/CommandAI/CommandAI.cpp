@@ -476,10 +476,7 @@ void CCommandAI::AddCommandDependency(const Command& c) {
 
 bool CCommandAI::IsAttackCapable() const
 {
-	const UnitDef* ud = owner->unitDef;
-	const bool b = (!ud->weapons.empty() || ud->canKamikaze || (ud->IsFactoryUnit()));
-
-	return (ud->canAttack && b);
+	return (owner->unitDef->CanAttack());
 }
 
 
@@ -1499,13 +1496,13 @@ void CCommandAI::SlowUpdate()
 
 int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
-	if (pointed) {
+	if (pointed != nullptr) {
 		if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (IsAttackCapable()) {
+			if (IsAttackCapable())
 				return CMD_ATTACK;
-			}
 		}
 	}
+
 	return CMD_STOP;
 }
 

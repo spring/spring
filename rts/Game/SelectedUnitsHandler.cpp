@@ -756,12 +756,6 @@ static const CUnit* targetUnit = nullptr;
 static const CFeature* targetFeature = nullptr;
 
 
-static inline bool CanDamage(const UnitDef* ud)
-{
-	return ((ud->canAttack && !ud->weapons.empty()) || ud->canKamikaze);
-}
-
-
 static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 {
 	// There is a lot more that could be done here to make better
@@ -769,14 +763,14 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 
 	if (targetUnit != nullptr) {
 		if (targetIsEnemy) {
-			const bool newCanDamage = CanDamage(newDef);
-			const bool oldCanDamage = CanDamage(oldDef);
+			const bool newCanDamage = newDef->CanDamage();
+			const bool oldCanDamage = oldDef->CanDamage();
 
 			if ( newCanDamage && !oldCanDamage)
 				return true;
 			if (!newCanDamage &&  oldCanDamage)
 				return false;
-			if (!CanDamage(targetUnit->unitDef)) {
+			if (!targetUnit->unitDef->CanDamage()) {
 				if ( newDef->canReclaim && !oldDef->canReclaim)
 					return true;
 				if (!newDef->canReclaim &&  oldDef->canReclaim)
