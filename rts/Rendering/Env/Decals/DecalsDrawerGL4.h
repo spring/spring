@@ -81,7 +81,10 @@ public:
 	//FIXME make eventClient!!!
 	void GhostDestroyed(GhostSolidObject* gb) override;
 	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override;
+
+	void AddSolidObject(CSolidObject* object) override { /*TODO*/ }
 	void ForceRemoveSolidObject(CSolidObject* object) override;
+
 	void OnDecalLevelChanged() override;
 
 	void ExplosionOccurred(const CExplosionParams&) override;

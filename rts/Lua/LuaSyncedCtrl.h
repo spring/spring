@@ -112,7 +112,8 @@ class LuaSyncedCtrl
 		static int AddUnitResource(lua_State* L);
 		static int UseUnitResource(lua_State* L);
 
-		static int RemoveBuildingDecal(lua_State* L);
+		static int AddObjectDecal(lua_State* L);
+		static int RemoveObjectDecal(lua_State* L);
 		static int AddGrass(lua_State* L);
 		static int RemoveGrass(lua_State* L);
 
