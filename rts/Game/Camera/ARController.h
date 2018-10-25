@@ -27,10 +27,7 @@ public:
 
 	void Update();
 	
-	//Data of the Streaming Service
-	boolean streamingActive = false;
-	unsigned int ipStreamIpAdress;
-	unsigned int portNumber;
+
 
 private:
 	float mouseScale;
