@@ -70,11 +70,14 @@ public:
 
 	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
-	bool CanChangeFireState() const { return (canFireControl && (HasWeapons() || canKamikaze || IsFactoryUnit())); }
+	bool CanChangeFireState() const { return (canFireControl && (canKamikaze || HasWeapons() || IsFactoryUnit())); }
 
 	bool HasWeapons() const { return (HasWeapon(0)); }
 	bool HasWeapon(unsigned int idx) const { return (weapons[idx].def != nullptr); }
 	bool HasBomberWeapon(unsigned int idx) const;
+
+	bool CanAttack() const { return (canAttack && (canKamikaze || HasWeapons() || IsFactoryUnit())); }
+	bool CanDamage() const { return (canKamikaze || (canAttack && HasWeapons())); }
 
 	unsigned int NumWeapons() const {
 		unsigned int n = 0;
