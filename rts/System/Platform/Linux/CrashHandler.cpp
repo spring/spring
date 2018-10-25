@@ -36,6 +36,7 @@
 #include "System/Platform/Watchdog.h"
 #endif
 
+
 #if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
 #else
@@ -43,9 +44,18 @@
 #define ADDR2LINE "atos"
 #endif
 
-static const int MAX_STACKTRACE_DEPTH = 100;
-static const std::string INVALID_LINE_INDICATOR = "#####";
-static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
+#if (defined(__FreeBSD__))
+// show function names, demangle
+#define ADDR2LINE_ARGS " -f -C"
+#else
+// unwind inlines, show addresses, see above
+#define ADDR2LINE_ARGS " -i -a  -f -C"
+#endif
+
+
+static constexpr int MAX_STACKTRACE_DEPTH = 100;
+static constexpr uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
+static const char* INVALID_LINE_INDICATOR = "#####";
 
 static const char* glDriverNames[] = {
 	"libGLcore.so",
@@ -71,12 +81,13 @@ struct StackEntry {
 };
 
 struct StackFrame {
-	int                   level = 0;      // level in the original unwinding (inlined functions share the same level as their "caller")
-	void*                 ip = nullptr;   // instruction pointer from libunwind or backtrace()
-	std::string           mangled;        // mangled name retrieved from libunwind (not printed, memoized for debugging)
-	std::string           symbol;         // backtrace_symbols output
-	uintptr_t             addr = 0;       // translated address / load address for OS X
-	std::string           path;           // translated library or module path
+	int                     level = 0;    // level in the original unwinding (inlined functions share the same level as their "caller")
+	void*                   ip = nullptr; // instruction pointer from libunwind or backtrace()
+	uintptr_t               addr = 0;     // translated address / load address for OS X
+
+	std::string             mangled;      // mangled name retrieved from libunwind (not printed, memoized for debugging)
+	std::string             symbol;       // backtrace_symbols output
+	std::string             path;         // translated library or module path
 	std::vector<StackEntry> entries;      // function names and lines (possibly several inlined) retrieved from addr2line
 };
 
@@ -505,8 +516,8 @@ static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 			execCommandBuffer.str("");
 
 			execCommandBuffer << ADDR2LINE;
-			execCommandBuffer << " -i -a -f -C";
-			execCommandBuffer << " --exe=\"" << symbolFile << "\"";
+			execCommandBuffer << ADDR2LINE_ARGS;
+			execCommandBuffer << " -e \"" << symbolFile << "\"";
 
 			// insert requested addresses that should be translated by addr2line
 			for (size_t i = 0, n = stacktrace.size(); i < n; i++) {
