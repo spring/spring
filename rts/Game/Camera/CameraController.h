@@ -129,6 +129,8 @@ public:
 	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
 	
+	virtual void SetStreamingActive();
+	
 	//Data of the Streaming Service
 	bool streamingActive = false;
 	unsigned int ipStreamIpAdress;
