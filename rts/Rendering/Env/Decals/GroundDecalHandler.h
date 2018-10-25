@@ -98,6 +98,8 @@ public:
 	void GhostDestroyed(GhostSolidObject* gb) override;
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+
+	void AddSolidObject(CSolidObject* object) override;
 	void ForceRemoveSolidObject(CSolidObject* object) override;
 	static void RemoveTrack(CUnit* unit);
 

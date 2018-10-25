@@ -896,6 +896,7 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 
 
 
+void CGroundDecalHandler::AddSolidObject(CSolidObject* object) { MoveSolidObject(object, object->pos); }
 void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& pos)
 {
 	if (!GetDrawDecals())
@@ -1014,7 +1015,7 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 
 
 void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) { RemoveSolidObject(object, gb); }
-void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { AddSolidObject(const_cast<CFeature*>(feature)); }
 
 void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
 	if ((event.weaponDef != nullptr) && !event.weaponDef->visuals.explosionScar)
@@ -1023,15 +1024,15 @@ void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
 	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
-void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
+void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { AddSolidObject(const_cast<CUnit*>(unit)); }
 void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 	RemoveSolidObject(const_cast<CUnit*>(unit), nullptr);
 }
 
-void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
+void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { AddSolidObject(const_cast<CFeature*>(feature)); }
 void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature) { RemoveSolidObject(const_cast<CFeature*>(feature), nullptr); }
 
 // FIXME: Add a RenderUnitLoaded event
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) { ForceRemoveSolidObject(const_cast<CUnit*>(unit)); }
-void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
+void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { AddSolidObject(const_cast<CUnit*>(unit)); }
 

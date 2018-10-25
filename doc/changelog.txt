@@ -34,6 +34,8 @@ Lua:
  - add Spring.SetTidal(number strength)
  - add Spring.GetTidal
  - add Spring.{Unit,Feature}Rendering.SetProjectileLuaDraw
+ - add Spring.AddObjectDecal
+ ! rename Spring.RemoveBuildingDecal to Spring.RemoveObjectDecal
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally

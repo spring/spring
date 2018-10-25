@@ -219,7 +219,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddUnitResource);
 	REGISTER_LUA_CFUNC(UseUnitResource);
 
-	REGISTER_LUA_CFUNC(RemoveBuildingDecal);
+	REGISTER_LUA_CFUNC(AddObjectDecal);
+	REGISTER_LUA_CFUNC(RemoveObjectDecal);
 	REGISTER_LUA_CFUNC(AddGrass);
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
@@ -2767,7 +2768,18 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 
 /******************************************************************************/
 
-int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
+int LuaSyncedCtrl::AddObjectDecal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	groundDecals->AddSolidObject(unit);
+	return 0;
+}
+
+int LuaSyncedCtrl::RemoveObjectDecal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
