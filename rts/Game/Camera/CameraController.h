@@ -128,6 +128,11 @@ public:
 
 	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
+	
+	//Data of the Streaming Service
+	bool streamingActive = false;
+	unsigned int ipStreamIpAdress;
+	unsigned int portNumber;
 
 protected:
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
@@ -155,6 +160,8 @@ protected:
 	float switchVal;
 
 	float pixelSize;
+	
+	
 };
 
 
