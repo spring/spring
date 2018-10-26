@@ -229,24 +229,27 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	if (owner == nullptr)
 		return;
 
-	assert(owner->unitDef != nullptr);
-	assert(owner->moveDef != nullptr);
+	const UnitDef* ud = owner->unitDef;
+	const MoveDef* md = owner->moveDef;
+
+	assert(ud != nullptr);
+	assert(md != nullptr);
 
 	// maxSpeed is set in AMoveType's ctor
-	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;
+	maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 
 	// SPRING_CIRCLE_DIVS is 65536, but turnRate can be at most
 	// 32767 since it is converted to (signed) shorts in places
-	turnRate = Clamp(owner->unitDef->turnRate, 1.0f, SPRING_CIRCLE_DIVS * 0.5f - 1.0f);
-	turnAccel = turnRate * mix(0.333f, 0.033f, owner->moveDef->speedModClass == MoveDef::Ship);
+	turnRate = Clamp(ud->turnRate, 1.0f, SPRING_CIRCLE_DIVS * 0.5f - 1.0f);
+	turnAccel = turnRate * mix(0.333f, 0.033f, md->speedModClass == MoveDef::Ship);
 
-	accRate = std::max(0.01f, owner->unitDef->maxAcc);
-	decRate = std::max(0.01f, owner->unitDef->maxDec);
+	accRate = std::max(0.01f, ud->maxAcc);
+	decRate = std::max(0.01f, ud->maxDec);
 
 	// unit-gravity must always be negative
-	myGravity = mix(-math::fabs(owner->unitDef->myGravity), mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
+	myGravity = mix(-math::fabs(ud->myGravity), mapInfo->map.gravity, ud->myGravity == 0.0f);
 
-	ownerRadius = owner->moveDef->CalcFootPrintRadius(1.0f);
+	ownerRadius = md->CalcFootPrintRadius(1.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -1308,8 +1311,8 @@ unsigned int CGroundMoveType::GetNewPath()
 		atGoal = false;
 		atEndOfPath = false;
 
-		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, WAYPOINT_RADIUS, true);
-		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, WAYPOINT_RADIUS, true);
+		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 
 		pathController.SetRealGoalPosition(newPathID, goalPos);
 		pathController.SetTempGoalPosition(newPathID, currWayPoint);
@@ -1354,8 +1357,8 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			// but still has the same ID; in this case (which is
 			// specific to QTPFS) we don't go through GetNewPath
 			//
-			cwp = pathManager->NextWayPoint(owner, pathID, 0, pos, WAYPOINT_RADIUS, true);
-			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, WAYPOINT_RADIUS, true);
+			cwp = pathManager->NextWayPoint(owner, pathID, 0, pos, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
+			nwp = pathManager->NextWayPoint(owner, pathID, 0, cwp, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
@@ -1369,22 +1372,24 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			}
 		}
 
-		// perform a turn-radius check: if the waypoint
-		// lies outside our turning circle, don't skip
-		// it (since we can steer toward this waypoint
-		// and pass it without slowing down)
-		// note that we take the DIAMETER of the circle
-		// to prevent sine-like "snaking" trajectories
+		// perform a turn-radius check: if the waypoint lies outside
+		// our turning circle, do not skip since we can steer toward
+		// this waypoint and pass it without slowing down
+		// note that the DIAMETER of the turning circle is calculated
+		// to prevent sine-like "snaking" trajectories; units capable
+		// of instant turns *and* high speeds also need special care
 		const int dirSign = Sign(int(!reversing));
+
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
-		const float turnRadius = (owner->speed.w * turnFrames) / math::TWOPI;
+		const float turnRadius = std::max((currentSpeed * turnFrames) * math::INVPI2, SQUARE_SIZE * 2.0f * 2.0f);
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
+		// wp outside turning circle
 		if (currWayPointDist > (turnRadius * 2.0f))
 			return false;
-
-		if (currWayPointDist > SQUARE_SIZE && waypointDot >= 0.995f)
+		// wp inside but ~straight ahead and not reached within one tick
+		if (currWayPointDist > std::max(SQUARE_SIZE * 1.0f, currentSpeed * 1.05f) && waypointDot >= 0.995f)
 			return false;
 
 		#else
@@ -1445,9 +1450,11 @@ void CGroundMoveType::SetNextWayPoint()
 	if (CanSetNextWayPoint()) {
 		pathController.SetTempGoalPosition(pathID, nextWayPoint);
 
-		// NOTE: pathfinder implementation should ensure waypoints are not equal
+		// NOTE:
+		//   pathfinder implementation should ensure waypoints are not equal
+		//   waypoint consumption radius has to at least equal current speed
 		currWayPoint = nextWayPoint;
-		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, WAYPOINT_RADIUS, true);
+		nextWayPoint = pathManager->NextWayPoint(owner, pathID, 0, currWayPoint, std::max(WAYPOINT_RADIUS, currentSpeed * 1.05f), true);
 	}
 
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
