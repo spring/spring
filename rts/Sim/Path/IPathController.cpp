@@ -84,9 +84,9 @@ short GMTDefaultPathController::GetDeltaHeading(
 		const short curDeltaHeading = newHeading - stopTurnHeading;
 
 		if (brakeDistFactor == 0) {
-			curTurnSpeed  = (Sign(curDeltaHeading) * std::min(std::abs(curDeltaHeading) * 1.0f, maxTurnAccel));
+			curTurnSpeed  = (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
 		} else {
-			curTurnSpeed += (Sign(curDeltaHeading) * std::min(std::abs(curDeltaHeading) * 1.0f, maxTurnAccel));
+			curTurnSpeed += (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
 		}
 	}
 
