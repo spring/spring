@@ -79,11 +79,11 @@ std::string GetModuleFile(std::string moduleName = "");
  */
 std::string GetModulePath(const std::string& moduleName = "");
 
-std::string GetOS();
+std::string GetOSVersionStr();
 std::string GetOSFamilyStr();
 std::string GetWordSizeStr();
-std::string GetPlatformStr(); // osFamilyStr + wordSizeStr
-
+std::string GetPlatformStr(); // OS family + wordsize
+std::string GetHardwareStr(); // processor + memory
 
 bool Is64Bit();
 bool Is32BitEmulation();

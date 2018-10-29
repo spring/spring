@@ -24,7 +24,7 @@ std::vector<std::uint8_t> ClientData::GetCompressed()
 	clientDataStream << SpringVersion::GetFull() << std::endl;
 	clientDataStream << SpringVersion::GetBuildEnvironment() << std::endl;
 	clientDataStream << SpringVersion::GetCompiler() << std::endl;
-	clientDataStream << Platform::GetOS() << std::endl;
+	clientDataStream << Platform::GetOSVersionStr() << std::endl;
 	clientDataStream << Platform::GetWordSizeStr() << std::endl;
 
 	const std::string& clientData = clientDataStream.str();
