@@ -60,11 +60,12 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 // magic number to reduce damage taken from collisions
 // between a very heavy and a very light CSolidObject
-#define COLLISION_DAMAGE_MULT         0.02f
+#define COLLISION_DAMAGE_MULT    0.02f
 
-#define MAX_IDLING_SLOWUPDATES           16
-#define IGNORE_OBSTACLES                  0
-#define WAIT_FOR_PATH                     1
+#define MAX_IDLING_SLOWUPDATES     16
+#define IGNORE_OBSTACLES            0
+#define WAIT_FOR_PATH               1
+#define MODEL_TURN_INERTIA          1
 
 #define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
 // Not using IsMoveCommand on purpose, as the following is changing the effective goalRadius
@@ -178,52 +179,11 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	mainHeadingPos(ZeroVector),
 	skidRotVector(UpVector),
 
-	turnRate(0.1f),
-	turnSpeed(0.0f),
-	turnAccel(0.0f),
-
-	accRate(0.01f),
-	decRate(0.01f),
-	myGravity(0.0f),
-
-	maxReverseDist(0.0f),
-	minReverseAngle(0.0f),
-	maxReverseSpeed(0.0f),
-	sqSkidSpeedMult(0.95f),
-
-	wantedSpeed(0.0f),
-	currentSpeed(0.0f),
-	deltaSpeed(0.0f),
-
-	currWayPointDist(0.0f),
-	prevWayPointDist(0.0f),
-
-	goalRadius(0.0f),
-	ownerRadius(0.0f),
-	extraRadius(0.0f),
-
-	skidRotSpeed(0.0f),
-	skidRotAccel(0.0f),
-
-	pathID(0),
-	nextObstacleAvoidanceFrame(0),
-
-	numIdlingUpdates(0),
-	numIdlingSlowUpdates(0),
-
 	wantedHeading(0),
 	minScriptChangeHeading((SPRING_CIRCLE_DIVS - 1) >> 1),
 
-	atGoal(false),
-	atEndOfPath(false),
-	wantRepath(false),
-
-	reversing(false),
-	idling(false),
 	pushResistant((owner != nullptr) && owner->unitDef->pushResistant),
-	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f)),
-	useMainHeading(false),
-	useRawMovement(false)
+	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f))
 {
 	// creg
 	if (owner == nullptr)
@@ -242,6 +202,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// 32767 since it is converted to (signed) shorts in places
 	turnRate = Clamp(ud->turnRate, 1.0f, SPRING_CIRCLE_DIVS * 0.5f - 1.0f);
 	turnAccel = turnRate * mix(0.333f, 0.033f, md->speedModClass == MoveDef::Ship);
+	#if (MODEL_TURN_INERTIA == 0)
+	turnSpeed = turnRate;
+	#endif
 
 	accRate = std::max(0.01f, ud->maxAcc);
 	decRate = std::max(0.01f, ud->maxDec);
@@ -574,7 +537,7 @@ bool CGroundMoveType::FollowPath()
 		if (currWayPoint != owner->pos) {
 			waypointVec = (currWayPoint - owner->pos) * XZVector;
 			waypointDir = waypointVec / waypointVec.Length();
-			wpProjDists = {math::fabs(waypointVec.dot(flatFrontDir)), std::max(1.0f, currentSpeed * 1.05f)};
+			wpProjDists = {math::fabs(waypointVec.dot(flatFrontDir)), 1.0f};
 		}
 
 		ASSERT_SYNCED(waypointVec);
@@ -584,7 +547,7 @@ bool CGroundMoveType::FollowPath()
 
 		// apply obstacle avoidance (steering), prevent unit from chasing its own tail if very close to waypoint
 		const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
-		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(flatFrontDir, rawWantedDir, wpProjDists.x > wpProjDists.y));
+		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(flatFrontDir, rawWantedDir, (wpProjDists.x > wpProjDists.y) && (!atGoal)));
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
@@ -664,7 +627,14 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				if (atEndOfPath) {
 					// at this point, Update() will no longer call SetNextWayPoint()
 					// and we must slow down to prevent entering an infinite circle
-					targetSpeed = std::min(targetSpeed, (currWayPointDist * math::PI) / (SPRING_CIRCLE_DIVS / turnRate));
+					#if (MODEL_TURN_INERTIA == 0)
+					const float absTurnSpeed = turnRate;
+					#else
+					const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
+					#endif
+					const float framesToTurn = SPRING_CIRCLE_DIVS / absTurnSpeed;
+
+					targetSpeed = std::min(targetSpeed, (currWayPointDist * math::PI) / framesToTurn);
 				}
 			}
 
@@ -712,7 +682,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	if (owner->GetTransporter() != nullptr)
 		return;
 
-	#if 0
+	#if (MODEL_TURN_INERTIA == 0)
 	const short rawDeltaHeading = pathController.GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
 	#else
 	// model rotational inertia (more realistic for ships)
@@ -725,8 +695,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 
 	owner->AddHeading(rawDeltaHeading, !owner->upright);
 
-	flatFrontDir = owner->frontdir;
-	flatFrontDir.Normalize2D();
+	flatFrontDir = (owner->frontdir * XZVector).Normalize();
 }
 
 
@@ -1380,8 +1349,14 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		// of instant turns *and* high speeds also need special care
 		const int dirSign = Sign(int(!reversing));
 
-		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
-		const float turnRadius = std::max((currentSpeed * turnFrames) * math::INVPI2, SQUARE_SIZE * 2.0f * 2.0f);
+		#if (MODEL_TURN_INERTIA == 0)
+		const float absTurnSpeed = turnRate;
+		#else
+		const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
+		#endif
+		const float framesToTurn = SPRING_CIRCLE_DIVS / absTurnSpeed;
+
+		const float turnRadius = std::max((currentSpeed * framesToTurn) * math::INVPI2, currentSpeed * 1.05f);
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
@@ -2324,17 +2299,16 @@ bool CGroundMoveType::UpdateDirectControl()
 	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }
 	if (unitCon.right) { ChangeHeading(owner->heading - turnRate); turnSign = -1.0f; }
 
-	if (selfCon.GetControllee() == owner) {
-		// local client is controlling us
+	// local client is controlling us
+	if (selfCon.GetControllee() == owner)
 		camera->SetRotY(camera->GetRot().y + turnRate * turnSign * TAANG2RAD);
-	}
 
 	return wantReverse;
 }
 
 float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) const
 {
-	float3 speedVector;
+	float3 newSpeedVector;
 
 	if (modInfo.allowGroundUnitGravity) {
 		// NOTE:
@@ -2345,49 +2319,52 @@ float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) co
 		const float dragCoeff = mix(0.99f, 0.9999f, owner->IsInAir());
 		const float slipCoeff = mix(0.95f, 0.9999f, owner->IsInAir());
 
+		const float3& ownerPos = owner->pos;
+		const float3& ownerSpd = owner->speed;
+
 		// use terrain-tangent vector because it does not
 		// depend on UnitDef::upright (unlike o->frontdir)
-		const float3& gndNormVec = GetGroundNormal(owner->pos);
+		const float3& gndNormVec = GetGroundNormal(ownerPos);
 		const float3  gndTangVec = gndNormVec.cross(owner->rightdir);
 
-		const float3 horSpeed = owner->speed * XZVector;
-		const float3 verSpeed = UpVector * owner->speed.y;
+		const int dirSign = Sign(flatFrontDir.dot(ownerSpd));
+		const int revSign = Sign(int(!reversing));
 
-		if (owner->moveDef->speedModClass != MoveDef::Hover || !modInfo.allowHoverUnitStrafing) {
+		const float3 horSpeed = ownerSpd * XZVector * dirSign * revSign;
+		const float3 verSpeed = UpVector * ownerSpd.y;
+
+		if (!modInfo.allowHoverUnitStrafing || owner->moveDef->speedModClass != MoveDef::Hover) {
 			const float3 accelVec = (gndTangVec * hAcc) + (UpVector * vAcc);
 			const float3 speedVec = (horSpeed + verSpeed) + accelVec;
 
-			speedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
-			speedVector += (    UpVector * speedVec.dot(    UpVector));
+			newSpeedVector += (flatFrontDir * speedVec.dot(flatFrontDir)) * dragCoeff;
+			newSpeedVector += (    UpVector * speedVec.dot(    UpVector));
 		} else {
 			// TODO: also apply to non-hovercraft on low-gravity maps?
-			speedVector += (              gndTangVec * (  std::max(0.0f,   owner->speed.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
-			speedVector += (   horSpeed - gndTangVec * (/*std::max(0.0f,*/ owner->speed.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
-			speedVector += (UpVector * (owner->speed + UpVector * vAcc).dot(UpVector));
+			newSpeedVector += (              gndTangVec * (  std::max(0.0f,   ownerSpd.dot(gndTangVec) + hAcc * 1.0f))) * dragCoeff;
+			newSpeedVector += (   horSpeed - gndTangVec * (/*std::max(0.0f,*/ ownerSpd.dot(gndTangVec) - hAcc * 0.0f )) * slipCoeff;
+			newSpeedVector += (UpVector * UpVector.dot(ownerSpd + UpVector * vAcc));
 		}
 
 		// never drop below terrain while following tangent
 		// (SPEED must be adjusted so that it does not keep
 		// building up when the unit is on the ground or is
 		// within one frame of hitting it)
-		const float oldGroundHeight = GetGroundHeight(owner->pos              );
-		const float newGroundHeight = GetGroundHeight(owner->pos + speedVector);
+		const float oldGroundHeight = GetGroundHeight(ownerPos                 );
+		const float newGroundHeight = GetGroundHeight(ownerPos + newSpeedVector);
 
-		if ((owner->pos.y + speedVector.y) <= newGroundHeight) {
-			speedVector.y = std::min(newGroundHeight - owner->pos.y, math::fabs(newGroundHeight - oldGroundHeight));
-		}
+		if ((ownerPos.y + newSpeedVector.y) <= newGroundHeight)
+			newSpeedVector.y = std::min(newGroundHeight - ownerPos.y, math::fabs(newGroundHeight - oldGroundHeight));
+
 	} else {
 		// LuaSyncedCtrl::SetUnitVelocity directly assigns
 		// to owner->speed which gets overridden below, so
 		// need to calculate hSpeedScale from it (not from
 		// currentSpeed) directly
-		const int    speedSign  = Sign(int(!reversing));
-		const float  speedScale = owner->speed.w * speedSign + hAcc;
-
-		speedVector = owner->frontdir * speedScale;
+		newSpeedVector = owner->frontdir * (owner->speed.w * Sign(int(!reversing)) + hAcc);
 	}
 
-	return speedVector;
+	return newSpeedVector;
 }
 
 
