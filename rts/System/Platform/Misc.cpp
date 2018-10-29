@@ -340,10 +340,10 @@ namespace Platform
 
 
 
-	std::string GetOS()
+	std::string GetOSVersionStr()
 	{
 	#if defined(WIN32)
-		return ("Microsoft Windows\n" + GetOSDisplayString() + "\n" + GetHardwareInfoString());
+		return (GetOSDisplayString());
 	#else
 		struct utsname info;
 		if (uname(&info) == 0)
@@ -389,6 +389,66 @@ namespace Platform
 	{
 		return (Platform::GetOSFamilyStr() + " " + Platform::GetWordSizeStr());
 	}
+
+	#if (defined(WIN32))
+	std::string GetHardwareStr() { return (GetHardwareInfoStr()); }
+	#else
+	std::string GetHardwareStr() {
+		std::string ret;
+
+		FILE* cpuInfo = fopen("/proc/cpuinfo", "r");
+		FILE* memInfo = fopen("/proc/meminfo", "r");
+
+		char buf[1024];
+		char tmp[1024];
+
+		if (cpuInfo != nullptr) {
+			while (fgets(buf, sizeof(buf), cpuInfo) != nullptr) {
+				if (strstr(buf, "model name") != nullptr) {
+					const char* s = strstr(buf, ": ") + 2;
+					const char* e = strstr(s, "\n");
+
+					memset(tmp, 0, sizeof(tmp));
+					memcpy(tmp, s, e - s);
+
+					ret += (std::string(tmp) + "; ");
+					break;
+				}
+			}
+
+			fclose(cpuInfo);
+		}
+
+		if (memInfo != nullptr) {
+			while (fgets(buf, sizeof(buf), memInfo) != nullptr) {
+				if (strstr(buf, "MemTotal") != nullptr) {
+					const char* s = strstr(buf, ": ") + 2;
+					const char* e = s;
+
+					for (     ; !std::isdigit(*s); s++) {}
+					for (e = s;  std::isdigit(*e); e++) {}
+
+					memset(tmp, 0, sizeof(tmp));
+					memcpy(tmp, s, e - s);
+
+					// sufficient up to 4TB
+					uint32_t kb = 0;
+
+					sscanf(tmp, "%u", &kb);
+					sprintf(tmp, "%u", kb / 1024);
+
+					ret += (std::string(tmp) + "MB RAM");
+					break;
+				}
+			}
+
+			fclose(memInfo);
+		}
+
+		return ret;
+	}
+	#endif
+
 
 
 	uint64_t FreeDiskSpace(const std::string& path) {

@@ -34,8 +34,10 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedBool(L, "glSupportClipSpaceControl", globalRendering->supportClipSpaceControl);
 	LuaPushNamedBool(L, "glSupportFragDepthLayout" , globalRendering->supportFragDepthLayout);
 
-	LuaPushNamedString(L, "osName", Platform::GetOS());
+	LuaPushNamedString(L, "osName", Platform::GetOSVersionStr());
+	LuaPushNamedString(L, "osVersion", Platform::GetOSVersionStr());
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamilyStr());
+	LuaPushNamedString(L, "hwInfo", Platform::GetHardwareStr());
 
 	return true;
 }
