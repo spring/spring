@@ -391,7 +391,7 @@ namespace Platform
 	}
 
 	#if (defined(WIN32))
-	std::string GetHardwareStr() { return (GetHardwareInfoStr()); }
+	std::string GetHardwareStr() { return (GetHardwareInfoString()); }
 	#else
 	std::string GetHardwareStr() {
 		std::string ret;
