@@ -8,6 +8,7 @@
 #endif
 
 #include <windows.h>
+#include "WinVersion.h"
 
 #ifndef PRODUCT_BUSINESS
 
@@ -254,7 +255,9 @@ std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExt
 
 	if (getExtra) {
 		// include service pack (if any) and build number
-		oss << ((strlen(osvi.szCSDVersion) > 0)? (" " << osvi.szCSDVersion): "");
+		oss << ((osvi.szCSDVersion[0] != 0)?               " ": "");
+		oss << ((osvi.szCSDVersion[0] != 0)? osvi.szCSDVersion: "");
+
 		oss << " (build " << osvi.dwBuildNumber << ")";
 	}
 
