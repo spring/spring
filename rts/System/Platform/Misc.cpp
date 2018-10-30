@@ -340,28 +340,39 @@ namespace Platform
 
 
 
-	std::string GetOSVersionStr()
+	std::string GetOSNameStr()
 	{
-	#if defined(WIN32)
-		return (GetOSDisplayString());
-	#else
+		#if defined(WIN32)
+		// "Windows Vista"
+		return (windows::GetDisplayString(true, false, false));
+		#else
+		// "Linux 3.16.0-45-generic"
+		// "Darwin 17.7.0"
 		struct utsname info;
 		if (uname(&info) == 0)
-			return (std::string(info.sysname) + " " + info.release + " " + info.version + " " + info.machine);
-
-		#if defined(__linux__)
-		return "Linux";
-		#elif defined(__FreeBSD__)
-		return "FreeBSD";
-		#elif defined(__APPLE__)
-		return "Mac OS X";
-		#else
-		#warning improve this
-		return "unknown OS";
+			return (std::string(info.sysname) + " " + info.release);
 		#endif
-	#endif
+
+		return {};
 	}
 
+	std::string GetOSVersionStr()
+	{
+		#if defined(WIN32)
+		// "Ultimate Edition, 32-bit Service Pack 1 (build 7601)"
+		return (windows::GetDisplayString(false, true, true));
+		#else
+		struct utsname info;
+		// "#60~14.04.1-Ubuntu SMP Fri Jul 24 21:16:23 UTC 2015 (x86_64)"
+		// "Darwin Kernel Version 17.7.0: Wed Sep 19 21:20:59 PDT 2018; root:xnu-4570.71.8~4/RELEASE_X86_64 (x86_64)"
+		if (uname(&info) == 0)
+			return (std::string(info.version) + " (" + info.machine + ")");
+
+		return {};
+		#endif
+	}
+
+	std::string GetOSDisplayStr() { return (GetOSNameStr() + " " + GetOSVersionStr()); }
 	std::string GetOSFamilyStr()
 	{
 		#if defined(WIN32)
@@ -371,7 +382,7 @@ namespace Platform
 		#elif defined(__FreeBSD__)
 		return "FreeBSD";
 		#elif defined(__APPLE__)
-		return "MacOSX";
+		return "MacOS";
 		#else
 		return "Unknown";
 		#endif
@@ -391,7 +402,7 @@ namespace Platform
 	}
 
 	#if (defined(WIN32))
-	std::string GetHardwareStr() { return (GetHardwareInfoString()); }
+	std::string GetHardwareStr() { return (windows::GetHardwareString()); }
 	#else
 	std::string GetHardwareStr() {
 		std::string ret;

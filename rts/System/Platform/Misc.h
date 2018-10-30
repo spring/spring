@@ -79,7 +79,9 @@ std::string GetModuleFile(std::string moduleName = "");
  */
 std::string GetModulePath(const std::string& moduleName = "");
 
+std::string GetOSNameStr();
 std::string GetOSVersionStr();
+std::string GetOSDisplayStr(); // name + version
 std::string GetOSFamilyStr();
 std::string GetWordSizeStr();
 std::string GetPlatformStr(); // OS family + wordsize
