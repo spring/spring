@@ -117,6 +117,7 @@ Misc:
  - use SHA2 content hashes rather than CRC32
 
 Fixes:
+ - fix #6060 (Max{Nano}Particles=0 still allowing 1 {nano}particle to spawn)
  - fix #6059 (units with high turnRate/brakeRate/acceleration moving unexpectedly)
  - fix #4268 (add Spring.AddObjectDecal)
  - fix #4755 (wrong usage of addr2line on FreeBSD)
