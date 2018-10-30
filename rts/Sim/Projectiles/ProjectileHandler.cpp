@@ -37,8 +37,8 @@
 #define HIGH_NANO_PRIO 1.0f
 
 
-CONFIG(int, MaxParticles).defaultValue(10000).headlessValue(1).minimumValue(1);
-CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1);
+CONFIG(int, MaxParticles).defaultValue(10000).headlessValue(0).minimumValue(0);
+CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(0).minimumValue(0);
 
 
 CR_BIND(CProjectileHandler, )
@@ -786,7 +786,11 @@ float CProjectileHandler::GetParticleSaturation(bool randomized) const
 	// use the random mult to weaken the max limit a little
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
-	return (GetCurrentParticles() / float(maxParticles)) * (1.0f + int(randomized) * 0.3f * guRNG.NextFloat());
+	const float total = std::max(1.0f, maxParticles * 1.0f);
+	const float fract = GetCurrentParticles() / total;
+	const float rmult = 1.0f + (int(randomized) * 0.3f * guRNG.NextFloat());
+
+	return (fract * rmult);
 }
 
 int CProjectileHandler::GetCurrentParticles() const

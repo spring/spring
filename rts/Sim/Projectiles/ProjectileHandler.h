@@ -48,13 +48,18 @@ public:
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
 
-	void SetMaxParticles(int value) { maxParticles = value; }
-	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
+	void SetMaxParticles(int value) { maxParticles = std::max(0, value); }
+	void SetMaxNanoParticles(int value) { maxNanoParticles = std::max(0, value); }
 
 	void Update();
 
-	float GetNanoParticleSaturation(float priority) const { return std::min(1.0f, (currentNanoParticles / (maxNanoParticles * priority))); }
 	float GetParticleSaturation(bool randomized = true) const;
+	float GetNanoParticleSaturation(float priority) const {
+		const float total = std::max(1.0f, maxNanoParticles * priority);
+		const float fract = currentNanoParticles / total;
+		return std::min(1.0f, fract);
+	}
+
 	int   GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
@@ -72,7 +77,7 @@ public:
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
 public:
-	int maxParticles = 0;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxParticles = 0;
 	int maxNanoParticles = 0;
 	int currentNanoParticles = 0;
 
