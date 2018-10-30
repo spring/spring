@@ -12,6 +12,8 @@ Sim:
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
 
 Lua:
+ - add Platform.osVersion; complements Platform.osName
+ - add Platform.hwConfig
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
  - let Spring.SelectUnitArray select enemy units with godmode enabled
@@ -112,8 +114,61 @@ Misc:
    by either nested tables or 'parent' key.
  - IME editing support for those with the proper SDL2 version/IME tool combination
  ! Made lockluaui.txt obsolete: no longer necessary for it to exists in order to enable VFS for LuaUI
+ - use SHA2 content hashes rather than CRC32
 
 Fixes:
+ - fix #6059 (units with high turnRate/brakeRate/acceleration moving unexpectedly)
+ - fix #4268 (add Spring.AddObjectDecal)
+ - fix #4755 (wrong usage of addr2line on FreeBSD)
+ - fix #4945 (add Spring.GetMapStartPositions)
+ - fix #4724 (Spring.SetUnitNeutral not informing any attackers)
+ - fix #5864 (gunships not limited by maxVelocity when climbing)
+ - fix #4515 (aircraft jitter when moving and turning)
+ - fix #6048 (falling features shaking on the ground instead of fully stopping)
+ - fix #6046 #5326 #5222 #4663 (false camera movement if entering MMB mode while moving cursor)
+ - fix #6019 (Spring.IsAABBInView bug)
+ - fix #6038 (noExplode weapons not obeying SetUnitWeaponState("range"))
+ - fix #6036 (no method to detect MMB camera-pan mode)
+ - fix #5956 (inverted mouse camera panning for Windows 10 Pro users)
+ - fix #6022 (uniformArray not initializing array-uniforms in gl.CreateShader)
+ - fix #6012 (air-transports not unloading properly)
+ - fix #6010 (HoverAirMoveType aircraft ignoring smooth-mesh when idle)
+ - fix #6009 (aircraft landing on damage-dealing water when idle)
+ - fix #6007 / #5989 (desyncs on CMD_UNLOAD_UNITS)
+ - fix #5993 (voidwater triggering water explosion effects)
+ - fix #5247 (maximized minimap producing graphical glitches)
+ - fix #5962 (minimap viewport rectangle larger than what actual screen shows)
+ - fix #5965
+ - fix #5977 (log-system memory corruption)
+ - fix #5964 (shields occasionally letting projectiles pass)
+ - fix #5948 (memory corruption with LoadingMT=1)
+ - fix #5947 (PFS failure if starting square inside concave corner)
+ - fix #5934 (crash on malformed build-commands)
+ - fix #5923 (wrong external format passed to gl{BuildMipmaps,TexImage2D})
+ - fix #5927 (memory corruption in text-wrapping)
+ - fix #2127 (units chasing after full transports)
+ - fix #4972 (builders doing redundant movement to clear build-sites)
+ - fix #5207 (units not following waypoints)
+ - fix #2354 (Spring.GetUnitWeaponState not matching Spring.SetUnitWeaponState due to experience)
+ - fix #5841 (allow setting colour of area selection for custom commands)
+ - fix #5884 (treat collidee as attacker on unit <-> unit collisions for UnitPreDamaged)
+ - fix #5716 (add Weapon::{avoid,collision}Flags to Spring.{Get,Set}UnitWeaponState)
+ - fix #5652 (maneuverBlockTime aircraft control parameter)
+ - fix #1225 (inaccurate preview range-rings)
+ - fix #5870 (zero-based months in rotating infolog filenames)
+ - fix #5862 (Spring.DestroyUnit + Spring.CreateUnit not supporting persistent ID's)
+ - fix #5860 (units failing to aim uphill at targets near cliff edges)
+ - fix #5863 (too strict matrix orthonormality check)
+ - fix #5855 (memory corruption when loading models)
+ - fix #5852 (units chasing after auto-generated targets going out of range even on hold-pos)
+ - fix #5854 (broken default formation-move visualization)
+ - fix #5851 (DynamicWater crash if foamTexture specified as .dds file)
+ - fix #5850 (squished loadscreens with BumpWater enabled)
+ - fix #5806 (CEG spikes from underwater explosions drawn on water surface)
+ - fix #5820 (broken by 3bd78acb00cab732af4278ed324c7ee5dbc7c517)
+ - fix #5805 (broken water reflections in FPS camera mode)
+ - fix infinite backtracking loop in PFS
+ - fix #5814 (broken slopemap indexing for terrain buildability tests)
  - fix #5803 (move goals cancelled when issued onto blocked terrain)
  - fix Spring.{G,S}etConfigFloat not being callable
  - fix Spring.GetPlayerRoster sometimes excluding active players

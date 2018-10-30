@@ -281,8 +281,8 @@ void CLogOutput::LogSystemInfo()
 	LOG("  Spring %s", SpringVersion::GetFull().c_str());
 	LOG("    Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
 	LOG("     Compiler Version: %s", SpringVersion::GetCompiler().c_str());
-	LOG("     Operating System: %s", Platform::GetOSVersionStr().c_str());
-	LOG("    Platform Hardware: %s", Platform::GetHardwareStr().c_str());
+	LOG("     Operating System: %s", Platform::GetOSDisplayStr().c_str());
+	LOG("      Hardware Config: %s", Platform::GetHardwareStr().c_str());
 	LOG("     Binary Word Size: %s", Platform::GetWordSizeStr().c_str());
 	LOG("        Process Clock: %s", spring_clock::GetName());
 	LOG("   Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
