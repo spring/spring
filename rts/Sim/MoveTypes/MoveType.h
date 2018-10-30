@@ -40,7 +40,7 @@ public:
 	// NOTE:
 	//   SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
 	//   other code (CommandAI) modifies a unit's speed only
-	//   through SetMax*Wanted*Speed
+	//   through Set*Wanted*MaxSpeed
 	// NOTE:
 	//   clamped because too much code in the derived
 	//   MoveType classes expects maxSpeed to be != 0

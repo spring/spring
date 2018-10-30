@@ -311,10 +311,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				return;
 
 			// toggle between the "land" and "fly" idle-modes
-			switch ((int) c.GetParam(0)) {
-				case 0: { airMT->autoLand = false; break; }
-				case 1: { airMT->autoLand =  true; break; }
-			}
+			airMT->autoLand = (int(c.GetParam(0)) == 1);
 
 			if (!airMT->owner->beingBuilt) {
 				if (!airMT->autoLand)
@@ -336,12 +333,11 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 	}
 
-	// CMD_SWMS is non-queueing but should never cancel
-	// temporary (i.e. auto-generated) attack commands
-	const bool nonQueuedCmd = ((c.GetOpts() & SHIFT_KEY) == 0);
-	const bool canCancelTmp = true;
+	// directly issued queueing commands always cancel temporary (i.e. auto-generated attack) orders
+	const bool directCmd = ((c.GetOpts() & SHIFT_KEY) == 0);
+	const bool queingCmd = (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end());
 
-	if (nonQueuedCmd && canCancelTmp && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
+	if (directCmd && queingCmd) {
 		tempOrder = false;
 
 		SetTransportee(nullptr);
