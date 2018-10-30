@@ -152,18 +152,12 @@ const std::string& GetCompiler()
 
 const std::string& GetBuildEnvironment()
 {
-	static const std::string environment = "boost-"
-#ifdef BOOST_VERSION
-	QUOTEME(BOOST_VERSION)
-#else
-	"unknown"
-#endif
-	", "
-#ifdef BOOST_STDLIB
-	BOOST_STDLIB;
-#else
-	"unknown stdlib";
-#endif
+	#ifdef __GLIBCXX__
+	static const std::string environment = "GNU libstdc++ version " QUOTEME(__GLIBCXX__);
+	#else
+	static const std::string environment = "GNU libstdc++ version " QUOTEME(__GLIBCPP__);
+	#endif
+
 	return environment;
 }
 
