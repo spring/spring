@@ -9,6 +9,8 @@
 #endif
 
 #include <windows.h>
+#include <ntdef.h>
+
 #include "WinVersion.h"
 
 #ifndef PRODUCT_BUSINESS
@@ -98,7 +100,7 @@ std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExt
 	// and what it returns depends on application manifest
 	PRTLGV pRTLGV = (PRTLGV) GetProcAddress(GetModuleHandle(TEXT("ntdll.dll")), "RtlGetVersion");
 
-	if (pRTLGV == nullptr || pRTLGV((OSVERSIONINFOW*) &osvi) != STATUS_SUCCESS)
+	if (pRTLGV == nullptr || !NT_SUCCESS(pRTLGV((OSVERSIONINFOW*) &osvi)))
 		return "error getting Windows version";
 
 	// RtlGetVersion exists since Windows 2000, which is ancient
@@ -273,8 +275,8 @@ std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExt
 
 	if (getExtra) {
 		// include service pack (if any) and build number
-		oss << ((osvi.szCSDVersion[0] != 0)?               " ": "");
-		oss << ((osvi.szCSDVersion[0] != 0)? osvi.szCSDVersion: "");
+		oss << ((osvi.szCSDVersion[0] != 0)?               " ":  "");
+		oss << ((osvi.szCSDVersion[0] != 0)? osvi.szCSDVersion: L"");
 
 		oss << " (build " << osvi.dwBuildNumber << ")";
 	}
