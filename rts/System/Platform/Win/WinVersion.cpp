@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 #include <sstream>
 #include <string>
 
@@ -11,7 +12,6 @@
 #include "WinVersion.h"
 
 #ifndef PRODUCT_BUSINESS
-
 #define PRODUCT_BUSINESS 0x00000006
 #define PRODUCT_BUSINESS_N 0x00000010
 #define PRODUCT_CLUSTER_SERVER 0x00000012
@@ -52,11 +52,7 @@
 #define PRODUCT_ULTIMATE_N 0x0000001C
 #define PRODUCT_WEB_SERVER 0x00000011
 #define PRODUCT_WEB_SERVER_CORE 0x0000001D
-
 #endif
-
-typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
-typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 
 #ifndef SM_SERVERR2
 #define SM_SERVERR2 89
@@ -81,31 +77,41 @@ typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 //   Windows XP               :  5.1
 //   Windows 2000             :  5.0
 //
+typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO); // GetNativeSystemInfo
+typedef LONG (WINAPI *PRTLGV)(OSVERSIONINFOW*); // RtlGetVersion
+typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD); // GetProductInfo
+
 std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExtra)
 {
-	OSVERSIONINFOEX osvi;
+	// need OSVERSIONINFO*EX*W for wSuiteMask etc
+	OSVERSIONINFOEXW osvi;
 	SYSTEM_INFO si;
-	PGNSI pGNSI;
-	BOOL bOsVersionInfoEx;
 	DWORD dwType;
 
-	ZeroMemory(&si, sizeof(SYSTEM_INFO));
-	ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+	ZeroMemory(&si, sizeof(si));
+	ZeroMemory(&osvi, sizeof(osvi));
 
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	osvi.dwOSVersionInfoSize = sizeof(osvi);
 
-	if (!(bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi)))
+
+	// use kernel call, GetVersionEx is deprecated in 8.1
+	// and what it returns depends on application manifest
+	PRTLGV pRTLGV = (PRTLGV) GetProcAddress(GetModuleHandle(TEXT("ntdll.dll")), "RtlGetVersion");
+
+	if (pRTLGV == nullptr || pRTLGV((OSVERSIONINFOW*) &osvi) != STATUS_SUCCESS)
 		return "error getting Windows version";
 
-	// call GetNativeSystemInfo if supported, GetSystemInfo otherwise
-	if ((pGNSI = (PGNSI) GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo")) != nullptr)
+	// RtlGetVersion exists since Windows 2000, which is ancient
+	assert(osvi.dwMajorVersion >= 5 && osvi.dwPlatformId == VER_PLATFORM_WIN32_NT);
+
+
+	// call GetNativeSystemInfo if supported for wProcessorArchitecture, GetSystemInfo otherwise
+	PGNSI pGNSI = (PGNSI) GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo");
+
+	if (pGNSI != nullptr)
 		pGNSI(&si);
 	else
 		GetSystemInfo(&si);
-
-	// blanket for ancient unsupported Windows versions
-	if (osvi.dwMajorVersion <= 4 || osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
-		return "unsupported Windows version";
 
 
 	std::ostringstream oss;
@@ -120,6 +126,18 @@ std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExt
 					case  0: { oss << ((osvi.wProductType == VER_NT_WORKSTATION)? "10": "Server 2016"); } break;
 					default: {                                                                          } break;
 				}
+			}
+
+			if (getVersion) {
+				     if (osvi.dwBuildNumber >= 18267) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?   "TBA Insider Update": ""); } // 19H1
+				else if (osvi.dwBuildNumber >= 17763) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?  "October 2018 Update": ""); } // Redstone 5
+				else if (osvi.dwBuildNumber >= 17134) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?    "April 2018 Update": ""); } // Redstone 4
+				else if (osvi.dwBuildNumber >= 16299) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)? "Fall Creators Update": ""); } // Redstone 3
+				else if (osvi.dwBuildNumber >= 15063) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?      "Creators Update": ""); } // Redstone 2
+				else if (osvi.dwBuildNumber >= 14393) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?   "Anniversary Update": ""); } // Redstone 1
+				else if (osvi.dwBuildNumber >= 10586) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?      "November Update": ""); } // Threshold 2
+				else if (osvi.dwBuildNumber >= 10240) { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?      "Initial Release": ""); } // Threshold 1
+				else                                  { oss << ((osvi.wProductType == VER_NT_WORKSTATION)?      "Preview Release": ""); }
 			}
 		} break;
 
