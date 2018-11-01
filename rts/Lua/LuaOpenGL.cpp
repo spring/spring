@@ -1716,7 +1716,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 			return false;
 		}
 
-		const string key = lua_tostring(L, -2);
+		const std::string key = lua_tostring(L, -2);
 
 		if ((key == "v") || (key == "vertex")) {
 			vd.vert[0] = 0.0f; vd.vert[1] = 0.0f; vd.vert[2] = 0.0f;
@@ -2780,7 +2780,7 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 	if (lua_isnil(L, 1))
 		return 0;
 
-	const string texture = luaL_checksstring(L, 1);
+	const std::string texture = luaL_checksstring(L, 1);
 	if (texture[0] == LuaTextures::prefix) {
 		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		lua_pushboolean(L, textures.Free(texture));
@@ -3526,7 +3526,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	const GLint y = (GLint)luaL_checknumber(L, 2);
 	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
 	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
-	const string filename = luaL_checkstring(L, 5);
+	const std::string filename = luaL_checkstring(L, 5);
 
 	if (!LuaIO::SafeWritePath(filename) || !LuaIO::IsSimplePath(filename)) {
 		LOG_L(L_WARNING, "gl.SaveImage: tried to write to illegal path localtion");
