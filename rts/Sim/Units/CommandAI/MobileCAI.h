@@ -92,13 +92,27 @@ protected:
 	bool slowGuard;
 	bool moveDir;
 
-	int cancelDistance;
+	int cancelDistance = 1024;
 
 	/// last frame certain types of area-commands were handled, helps avoid infinite loops
-	int lastCommandFrame;
-	int lastCloseInTry;
-	int lastBuggerOffTime;
-	int lastIdleCheck;
+	int lastCommandFrame = -1;
+	int lastCloseInTry = -1;
+	int lastBuggerOffTime = -BUGGER_OFF_TTL;
+	int lastIdleCheck = 0;
+	int numNonMovingCalls = 0;
+
+	static constexpr int MAX_CLOSE_IN_RETRY_TICKS = 30;
+	static constexpr int BUGGER_OFF_TTL = 200;
+
+	static constexpr float MAX_USERGOAL_TOLERANCE_DIST = 100.0f;
+	static constexpr float AIRTRANSPORT_DOCKING_RADIUS = 16.0f;
+	static constexpr float AIRTRANSPORT_DOCKING_ANGLE = 50.0f;
+
+	enum {
+		UNLOAD_LAND = 0,
+		UNLOAD_DROP = 1,
+		UNLOAD_LANDFLOOD = 2,
+	};
 
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
