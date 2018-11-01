@@ -495,8 +495,12 @@ bool CGroundMoveType::FollowPath()
 		ASSERT_SYNCED(nextWayPoint);
 		ASSERT_SYNCED(owner->pos);
 
+		const float3& opos = owner->pos;
+		const float3& ovel = owner->speed;
+		const float3&  ffd = flatFrontDir;
+
 		prevWayPointDist = currWayPointDist;
-		currWayPointDist = currWayPoint.distance2D(owner->pos);
+		currWayPointDist = currWayPoint.distance2D(opos);
 
 		{
 			// NOTE:
@@ -505,12 +509,19 @@ bool CGroundMoveType::FollowPath()
 			//   if our first command is a build-order, then goal-radius is set to our build-range
 			//   and we cannot increase tolerance safely (otherwise the unit might stop when still
 			//   outside its range and fail to start construction)
-			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
+			//
+			//   units moving faster than <minGoalDist> elmos per frame might overshoot their goal
+			//   the last two atGoal conditions will just cause flatFrontDir to be selected as the
+			//   "wanted" direction when this happens
+			const float curGoalDistSq = (opos - goalPos).SqLength2D();
 			const float minGoalDistSq = (UNIT_HAS_MOVE_CMD(owner))?
 				Square((goalRadius + extraRadius) * (numIdlingSlowUpdates + 1)):
 				Square((goalRadius + extraRadius)                             );
+			const float spdGoalDistSq = Square(currentSpeed * 1.05f);
 
 			atGoal |= (curGoalDistSq <= minGoalDistSq);
+			atGoal |= ((curGoalDistSq <= spdGoalDistSq) && !reversing && (ffd.dot(goalPos - opos) > 0.0f && ffd.dot(goalPos - (opos + ovel)) <= 0.0f));
+			atGoal |= ((curGoalDistSq <= spdGoalDistSq) &&  reversing && (ffd.dot(goalPos - opos) < 0.0f && ffd.dot(goalPos - (opos + ovel)) >= 0.0f));
 		}
 
 		if (!atGoal) {
@@ -532,22 +543,23 @@ bool CGroundMoveType::FollowPath()
 
 		// set direction to waypoint AFTER requesting it; should not be a null-vector
 		float3 waypointVec;
-		float2 wpProjDists;
+		// float3 wpProjDists;
 
-		if (currWayPoint != owner->pos) {
-			waypointVec = (currWayPoint - owner->pos) * XZVector;
+		if (currWayPoint != opos) {
+			waypointVec = (currWayPoint - opos) * XZVector;
 			waypointDir = waypointVec / waypointVec.Length();
-			wpProjDists = {math::fabs(waypointVec.dot(flatFrontDir)), 1.0f};
+			// wpProjDists = {math::fabs(waypointVec.dot(ffd)), 1.0f, math::fabs(waypointDir.dot(ffd))};
 		}
 
 		ASSERT_SYNCED(waypointVec);
 		ASSERT_SYNCED(waypointDir);
 
-		wantReverse = WantReverse(waypointDir, flatFrontDir);
+		wantReverse = WantReverse(waypointDir, ffd);
 
-		// apply obstacle avoidance (steering), prevent unit from chasing its own tail if very close to waypoint
+		// apply obstacle avoidance (steering), prevent unit from chasing its own tail if already at goal
 		const float3  rawWantedDir = waypointDir * Sign(int(!wantReverse));
-		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(flatFrontDir, rawWantedDir, (wpProjDists.x > wpProjDists.y) && (!atGoal)));
+		const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, !atGoal));
+		// const float3& modWantedDir = GetObstacleAvoidanceDir(mix(ffd, rawWantedDir, (!atGoal) && (wpProjDists.x > wpProjDists.y || wpProjDists.z < 0.995f)));
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
 		ChangeSpeed(maxWantedSpeed, wantReverse);
@@ -628,7 +640,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 					// at this point, Update() will no longer call SetNextWayPoint()
 					// and we must slow down to prevent entering an infinite circle
 					#if (MODEL_TURN_INERTIA == 0)
-					const float absTurnSpeed = turnRate;
+					const float absTurnSpeed = turnSpeed;
 					#else
 					const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
 					#endif
@@ -1350,7 +1362,7 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		const int dirSign = Sign(int(!reversing));
 
 		#if (MODEL_TURN_INERTIA == 0)
-		const float absTurnSpeed = turnRate;
+		const float absTurnSpeed = turnSpeed;
 		#else
 		const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
 		#endif
@@ -1694,12 +1706,15 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		float3 sqrSumPosition; // .y is always 0
 		float2 sqrPenDistance; // .x = sum, .y = count
 
+		const float3& pos = collider->pos;
+		const float3& vel = collider->speed;
+
 		const float3 rightDir2D = (collider->rightdir * XZVector).SafeNormalize();
 		const float3 speedDir2D = (collider->speed    * XZVector).SafeNormalize();
 
 
-		const int xmid = (collider->pos.x + collider->speed.x) / SQUARE_SIZE;
-		const int zmid = (collider->pos.z + collider->speed.z) / SQUARE_SIZE;
+		const int xmid = (pos.x + vel.x) / SQUARE_SIZE;
+		const int zmid = (pos.z + vel.z) / SQUARE_SIZE;
 
 		// mantis{3614,4217}
 		//   we cannot nicely bounce off terrain when checking only the center square
@@ -1713,7 +1728,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		const int zmin = std::min(-1, -zsh), zmax = std::max(1, zsh);
 
 		if (DEBUG_DRAWING_ENABLED)
-			geometricObjects->AddLine(collider->pos + (UpVector * 25.0f), collider->pos + (UpVector * 100.0f), 3, 1, 4);
+			geometricObjects->AddLine(pos + (UpVector * 25.0f), pos + (UpVector * 100.0f), 3, 1, 4);
 
 		// check for blocked squares inside collider's MoveDef footprint zone
 		// interpret each square as a "collidee" and sum up separation vectors
@@ -1742,18 +1757,18 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 						continue;
 				}
 
-				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), collider->pos.y, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
-				const float3 squareVec = collider->pos - squarePos;
+				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), pos.y, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
+				const float3 squareVec = pos - squarePos;
 
 				// ignore squares behind us (relative to velocity vector)
-				if (squareVec.dot(collider->speed) > 0.0f)
+				if (squareVec.dot(vel) > 0.0f)
 					continue;
 
 				// RHS magic constant is the radius of a square (sqrt(2*(SQUARE_SIZE>>1)*(SQUARE_SIZE>>1)))
 				const float  squareColRadiusSum = colliderRadius + 5.656854249492381f;
 				const float   squareSepDistance = squareVec.Length2D() + 0.1f;
 				const float   squarePenDistance = std::min(squareSepDistance - squareColRadiusSum, 0.0f);
-				// const float  squareColSlideSign = -Sign(squarePos.dot(rightDir2D) - (collider->pos).dot(rightDir2D));
+				// const float  squareColSlideSign = -Sign(squarePos.dot(rightDir2D) - pos.dot(rightDir2D));
 
 				// this tends to cancel out too much on average
 				// strafeVec += (rightDir2D * sqColSlideSign);
@@ -1768,7 +1783,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 			sqrSumPosition *= (1.0f / sqrPenDistance.y);
 			sqrPenDistance *= (1.0f / sqrPenDistance.y);
 
-			const float strafeSign = -Sign(sqrSumPosition.dot(rightDir2D) - (collider->pos).dot(rightDir2D));
+			const float strafeSign = -Sign(sqrSumPosition.dot(rightDir2D) - pos.dot(rightDir2D));
 			const float bounceSign =  Sign(rightDir2D.dot(bounceVec));
 			const float strafeScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
 			const float bounceScale = std::min(std::max(currentSpeed*0.0f, maxSpeedDef), std::max(0.1f, -sqrPenDistance.x * 0.5f));
@@ -1785,7 +1800,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 			summedVec = strafeVec + bounceVec;
 
 			// if checkTerrain is true, test only the center square
-			if (colliderMD->TestMoveSquare(collider, collider->pos + summedVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
+			if (colliderMD->TestMoveSquare(collider, pos + summedVec, vel, checkTerrain, checkYardMap, checkTerrain)) {
 				collider->Move(summedVec, true);
 
 				// minimal hack to make FollowPath work at all turn-rates
@@ -1793,7 +1808,8 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 				currWayPoint += summedVec;
 				nextWayPoint += summedVec;
 			} else {
-				collider->Move(oldPos - collider->pos, true);
+				// never move fully back to oldPos when dealing with yardmaps
+				collider->Move((oldPos - pos) + summedVec * 0.25f * checkYardMap, true);
 			}
 		}
 

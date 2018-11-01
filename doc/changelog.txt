@@ -114,19 +114,20 @@ Misc:
    by either nested tables or 'parent' key.
  - IME editing support for those with the proper SDL2 version/IME tool combination
  ! Made lockluaui.txt obsolete: no longer necessary for it to exists in order to enable VFS for LuaUI
- - use SHA2 content hashes rather than CRC32
+ - use SHA2 rather than CRC32 content hashes
 
 Fixes:
+ - fix #1968 (units not moving in direction of next queued [build-]command if current order blocked)
  - fix #6060 (Max{Nano}Particles=0 still allowing 1 {nano}particle to spawn)
  - fix #6059 (units with high turnRate/brakeRate/acceleration moving unexpectedly)
  - fix #4268 (add Spring.AddObjectDecal)
  - fix #4755 (wrong usage of addr2line on FreeBSD)
  - fix #4945 (add Spring.GetMapStartPositions)
  - fix #4724 (Spring.SetUnitNeutral not informing any attackers)
- - fix #5864 (gunships not limited by maxVelocity when climbing)
+ - fix #5864 (gunships not limited by maxVelocity when colliding with terrain)
  - fix #4515 (aircraft jitter when moving and turning)
  - fix #6048 (falling features shaking on the ground instead of fully stopping)
- - fix #6046 #5326 #5222 #4663 (false camera movement if entering MMB mode while moving cursor)
+ - fix #6046 #5326 #5222 #4663 (spurious camera position change if entering MMB mode while moving cursor)
  - fix #6019 (Spring.IsAABBInView bug)
  - fix #6038 (noExplode weapons not obeying SetUnitWeaponState("range"))
  - fix #6036 (no method to detect MMB camera-pan mode)

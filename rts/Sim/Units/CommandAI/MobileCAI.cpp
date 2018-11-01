@@ -27,15 +27,6 @@
 #include <assert.h>
 
 #define AUTO_GENERATE_ATTACK_ORDERS 1
-#define BUGGER_OFF_TTL 200
-#define MAX_CLOSE_IN_RETRY_TICKS 30
-#define MAX_USERGOAL_TOLERANCE_DIST 100.0f
-
-#define AIRTRANSPORT_DOCKING_RADIUS 16
-#define AIRTRANSPORT_DOCKING_ANGLE 50
-#define UNLOAD_LAND 0
-#define UNLOAD_DROP 1
-#define UNLOAD_LANDFLOOD 2
 
 // MobileCAI is not always assigned to aircraft
 static AAirMoveType* GetAirMoveType(const CUnit* owner) {
@@ -82,6 +73,7 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(lastCommandFrame),
 	CR_MEMBER(lastCloseInTry),
 	CR_MEMBER(lastBuggerOffTime),
+	CR_MEMBER(numNonMovingCalls),
 	CR_MEMBER(lastIdleCheck)
 ))
 
@@ -96,14 +88,7 @@ CMobileCAI::CMobileCAI():
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f),
-
-	cancelDistance(1024),
-
-	lastCommandFrame(-1),
-	lastCloseInTry(-1),
-	lastBuggerOffTime(-BUGGER_OFF_TTL),
-	lastIdleCheck(0)
+	moveDir(gsRNG.NextFloat() > 0.5f)
 {}
 
 
@@ -118,14 +103,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	tempOrder(false),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5f),
-
-	cancelDistance(1024),
-
-	lastCommandFrame(-1),
-	lastCloseInTry(-1),
-	lastBuggerOffTime(-BUGGER_OFF_TTL),
-	lastIdleCheck(0)
+	moveDir(gsRNG.NextFloat() > 0.5f)
 {
 	CalculateCancelDistance();
 
@@ -1009,67 +987,64 @@ void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
 	if (radius < 0.0f) {
+		// AttachUnit call
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
 		return;
 	}
 
 	lastBuggerOffTime = gs->frameNum;
+	// numNonMovingCalls = 0;
+
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
 }
 
 void CMobileCAI::NonMoving()
 {
+	// wait one SlowUpdate for more commands to enter the queue
+	// (so the bugger-off dir can be chosen more intelligently)
+	if (!commandQue.empty() && (++numNonMovingCalls) <= 1)
+		return;
+
 	if (owner->UsingScriptMoveType())
 		return;
 
 	if (lastBuggerOffTime <= (gs->frameNum - BUGGER_OFF_TTL))
 		return;
 
-	#if 0
-	float3 deltaPos = (owner->pos - buggerOffPos) * XZVector;
-	float3 buggerPos;
-
-	float buggerDist = deltaPos.Length();
-
-	if (buggerDist < 0.001f)
-		deltaPos = RgtVector * (buggerDist = 0.1f);
-	if (buggerDist >= buggerOffRadius)
-		return;
-	#endif
-
 	if (((owner->pos - buggerOffPos) * XZVector).SqLength() >= Square(buggerOffRadius * 1.5f))
 		return;
 
-	// pick a perimeter point and hope for the best
 	float3 buggerVec;
 	float3 buggerPos = -OnesVector;
 
-	for (int i = 0; i < 16 && !buggerPos.IsInMap(); i++) {
-		buggerVec = gsRNG.NextVector2D();
-		buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+	if (HasMoreMoveCommands()) {
+		size_t i = 0;
+		size_t j = 0;
+
+		for (i =     0; (i < commandQue.size() && !commandQue[i].IsMoveCommand()); i++) {}
+		for (j = i + 1; (j < commandQue.size() && !commandQue[j].IsMoveCommand()); j++) {}
+
+		if (i < commandQue.size() && j < commandQue.size()) {
+			buggerVec = commandQue[j].GetPos(0) - commandQue[i].GetPos(0);
+			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.25f;
+		}
 	}
 
-	#if 0
-	if ((buggerPos.x == lastBuggerGoalPos.x) && (buggerPos.z == lastBuggerGoalPos.z)) {
-		// randomize; gradually increase the amplitude of the random factor (radius)
-		lastBuggerGoalPos.y += 32.0f;
-		lastBuggerGoalPos.x = buggerPos.x;
-		lastBuggerGoalPos.z = buggerPos.z;
-
-		buggerPos.x += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
-		buggerPos.z += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
-	} else {
-		lastBuggerGoalPos.y = 0.0f;
-		lastBuggerGoalPos.x = buggerPos.x;
-		lastBuggerGoalPos.z = buggerPos.z;
+	if (buggerPos.x == -1.0f) {
+		// pick a random perimeter point and hope for the best
+		for (int i = 0; i < 16 && !buggerPos.IsInMap(); i++) {
+			buggerVec = gsRNG.NextVector2D();
+			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.5f;
+		}
 	}
-	#endif
 
 	Command c(CMD_MOVE, buggerPos);
 	// c.SetOpts(INTERNAL_ORDER);
 	c.SetTimeOut(gs->frameNum + BUGGER_OFF_TTL);
 	commandQue.push_front(c);
+
+	numNonMovingCalls = 0;
 }
 
 void CMobileCAI::FinishCommand()
