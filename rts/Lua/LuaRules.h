@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
 #include "LuaHandleSynced.h"
 #include "System/UnorderedMap.hpp"
 

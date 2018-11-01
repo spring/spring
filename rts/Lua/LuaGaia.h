@@ -4,7 +4,6 @@
 #define LUA_GAIA_H
 
 #include <string>
-using std::string;
 
 #include "LuaHandleSynced.h"
 
