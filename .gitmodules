@@ -22,3 +22,6 @@
 [submodule "tools/pr-downloader"]
 	path = tools/pr-downloader
 	url = git://github.com/spring/pr-downloader.git
+[submodule "rts/lib/openh264"]
+	path = rts/lib/openh264
+	url = https://github.com/cisco/openh264.git
