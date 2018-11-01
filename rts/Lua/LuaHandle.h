@@ -98,9 +98,9 @@ class CLuaHandle : public CEventClient
 #endif
 
 	public: // call-ins
-		bool WantsEvent(const string& name) override { return HasCallIn(L, name); }
-		virtual bool HasCallIn(lua_State* L, const string& name);
-		virtual bool UpdateCallIn(lua_State* L, const string& name);
+		bool WantsEvent(const std::string& name) override { return HasCallIn(L, name); }
+		virtual bool HasCallIn(lua_State* L, const std::string& name);
+		virtual bool UpdateCallIn(lua_State* L, const std::string& name);
 
 		void Load(IArchive* archive) override;
 
@@ -194,29 +194,29 @@ class CLuaHandle : public CEventClient
 		void MouseRelease(int x, int y, int button) override;
 		bool MouseWheel(bool up, float value) override;
 		bool IsAbove(int x, int y) override;
-		string GetTooltip(int x, int y) override;
+		std::string GetTooltip(int x, int y) override;
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) override;
 
 		bool CommandNotify(const Command& cmd) override;
 
-		bool AddConsoleLine(const string& msg, const string& section, int level) override;
+		bool AddConsoleLine(const std::string& msg, const std::string& section, int level) override;
 
 		bool GroupChanged(int groupID) override;
 
-		bool GameSetup(const string& state, bool& ready,
+		bool GameSetup(const std::string& state, bool& ready,
 		               const std::vector< std::pair<int, std::string> >& playerStates) override;
 
 		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
 
-		string WorldTooltip(const CUnit* unit,
+		std::string WorldTooltip(const CUnit* unit,
 		                    const CFeature* feature,
 		                    const float3* groundPos) override;
 
 		bool MapDrawCmd(int playerID, int type,
 		                const float3* pos0,
 		                const float3* pos1,
-		                const string* labe) override;
+		                const std::string* labe) override;
 
 		void ViewResize() override;
 
@@ -248,7 +248,7 @@ class CLuaHandle : public CEventClient
 
 		void CollectGarbage() override;
 
-		void DownloadQueued(int ID, const string& archiveName, const string& archiveType) override;
+		void DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType) override;
 		void DownloadStarted(int ID) override;
 		void DownloadFinished(int ID) override;
 		void DownloadFailed(int ID, int errorID) override;
@@ -256,15 +256,15 @@ class CLuaHandle : public CEventClient
 
 	public: // Non-eventhandler call-ins
 		void Shutdown();
-		bool GotChatMsg(const string& msg, int playerID);
-		bool RecvLuaMsg(const string& msg, int playerID);
+		bool GotChatMsg(const std::string& msg, int playerID);
+		bool RecvLuaMsg(const std::string& msg, int playerID);
 
 	public: // custom call-in  (inter-script calls)
-		bool HasXCall(const string& funcName) { return HasCallIn(L, funcName); }
+		bool HasXCall(const std::string& funcName) { return HasCallIn(L, funcName); }
 		int XCall(lua_State* srcState, const string& funcName);
 
 	protected:
-		CLuaHandle(const string& name, int order, bool userMode, bool synced);
+		CLuaHandle(const std::string& name, int order, bool userMode, bool synced);
 		virtual ~CLuaHandle();
 
 		void KillLua(bool inFreeHandler = false);
@@ -272,7 +272,7 @@ class CLuaHandle : public CEventClient
 		static void PushTracebackFuncToRegistry(lua_State* L);
 
 		bool AddBasicCalls(lua_State* L);
-		bool LoadCode(lua_State* L, const string& code, const string& debug);
+		bool LoadCode(lua_State* L, const std::string& code, const std::string& debug);
 		static bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
@@ -297,7 +297,7 @@ class CLuaHandle : public CEventClient
 		lua_State* L_GC;
 		luaContextData D;
 
-		string killMsg;
+		std::string killMsg;
 
 		vector<bool> watchUnitDefs;
 		vector<bool> watchFeatureDefs;
