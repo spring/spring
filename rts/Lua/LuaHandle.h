@@ -13,11 +13,6 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
-
-
 #define LUA_HANDLE_ORDER_RULES            100
 #define LUA_HANDLE_ORDER_UNITS            200
 #define LUA_HANDLE_ORDER_GAIA             300

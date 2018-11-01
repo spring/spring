@@ -9,7 +9,6 @@
 #endif
 
 #include <string>
-using std::string;
 
 #include "LuaIO.h"
 

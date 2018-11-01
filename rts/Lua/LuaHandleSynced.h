@@ -5,8 +5,6 @@
 
 #include <string>
 
-using std::string;
-
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
 #include "System/UnorderedMap.hpp"

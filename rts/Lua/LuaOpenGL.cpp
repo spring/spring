@@ -70,7 +70,6 @@
 #include "System/Config/ConfigHandler.h"
 
 using std::max;
-using std::string;
 
 #undef far // avoid collision with windef.h
 #undef near

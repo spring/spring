@@ -5,16 +5,13 @@
 
 #include <string>
 
-using std::string;
-
-
 #include "LuaInclude.h"
 #include "System/StringHash.h"
 
 
 struct LuaHashString {
 	public:
-		LuaHashString(const string& s)
+		LuaHashString(const std::string& s)
 		: str(s), hash(lua_calchash(s.c_str(), s.size())) {}
 
 		LuaHashString(const LuaHashString& hs)
@@ -27,9 +24,9 @@ struct LuaHashString {
 		}
 
 		inline unsigned int GetHash() const { return hash; }
-		inline const string& GetString() const { return str; }
+		inline const std::string& GetString() const { return str; }
 
-		void SetString(const string& s) {
+		void SetString(const std::string& s) {
 			str = s;
 			hash = lua_calchash(s.c_str(), s.size());
 		}
@@ -80,7 +77,7 @@ struct LuaHashString {
 			lua_pushstring(L, value);
 			lua_rawset(L, -3);
 		}
-		inline void PushString(lua_State* L, const string& value) const {
+		inline void PushString(lua_State* L, const std::string& value) const {
 			Push(L);
 			lua_pushsstring(L, value);
 			lua_rawset(L, -3);
@@ -93,7 +90,7 @@ struct LuaHashString {
 		}
 
 	private:
-		string str;
+		std::string str;
 		unsigned int hash;
 };
 
