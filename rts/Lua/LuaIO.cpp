@@ -50,14 +50,10 @@ static bool IsSafePath(const std::string& path)
 bool LuaIO::IsSimplePath(const std::string& path)
 {
 	// keep searches within the Spring directory
-	if ((path[0] == '/') || (path[0] == '\\') ||
-	    ((path.size() >= 2) && (path[1] == ':'))) {
+	if ((path[0] == '/') || (path[0] == '\\') || ((path.size() >= 2) && (path[1] == ':')))
 		return false;
-	}
-	if (path.find("..") != std::string::npos) {
-		return false;
-	}
-	return true;
+
+	return (path.find("..") == std::string::npos);
 }
 
 
@@ -75,11 +71,12 @@ bool LuaIO::SafeReadPath(const std::string& path)
 
 bool LuaIO::SafeWritePath(const std::string& path)
 {
-	std::array<std::string, 5> exeFiles = {"exe", "dll", "so", "bat", "com"};
+	const std::array<std::string, 5> exeFiles = {"exe", "dll", "so", "bat", "com"};
 	const std::string ext = FileSystem::GetExtension(path);
-	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext)) {
+
+	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext))
 		return false;
-	}
+
 	return dataDirsAccess.InWriteDir(path);
 }
 

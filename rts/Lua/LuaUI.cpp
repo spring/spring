@@ -271,7 +271,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event name
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
@@ -309,7 +309,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 
 	LUA_CALL_IN_CHECK(L);
 
-	luaL_checkstack(L, 6, __FUNCTION__);
+	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr("ShockFront");
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -366,13 +366,12 @@ bool CLuaUI::LayoutButtons(
 	menuName = "";
 
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 6, __FUNCTION__);
+	luaL_checkstack(L, 6, __func__);
 	const int top = lua_gettop(L);
 
 	static const LuaHashString cmdStr("LayoutButtons");
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-	}
 
 	lua_pushnumber(L, xButtons);
 	lua_pushnumber(L, yButtons);

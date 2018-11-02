@@ -1681,9 +1681,9 @@ int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
 
 int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
+
 	const string iconName  = luaL_checkstring(L, 1);
 	const string texName   = luaL_checkstring(L, 2);
 	const float  size      = luaL_optnumber(L, 3, 1.0f);
@@ -1697,9 +1697,9 @@ int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
+
 	const string iconName  = luaL_checkstring(L, 1);
 	lua_pushboolean(L, icon::iconHandler->FreeIcon(iconName));
 	return 1;
@@ -1713,53 +1713,54 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
 	const string path = luaL_checkstring(L, 1);
 
-	CFileHandler fhVFS(path, SPRING_VFS_ZIP);
-	CFileHandler fhRAW(path, SPRING_VFS_RAW);
+	CFileHandler vfsFile(path, SPRING_VFS_ZIP);
+	CFileHandler rawFile(path, SPRING_VFS_RAW);
 
-	if (!fhVFS.FileExists()) {
+	if (!vfsFile.FileExists()) {
 		luaL_error(L, "file \"%s\" not found in mod archive", path.c_str());
 		return 0;
 	}
 
-	if (fhRAW.FileExists()) {
+	if (rawFile.FileExists()) {
 		luaL_error(L, "cannot extract file \"%s\": already exists", path.c_str());
 		return 0;
 	}
 
 
-	string dname = FileSystem::GetDirectory(path);
-	string fname = FileSystem::GetFilename(path);
+	std::string dname = FileSystem::GetDirectory(path);
+	std::string fname = FileSystem::GetFilename(path);
 
 #ifdef WIN32
 	const size_t s = dname.size();
 	// get rid of any trailing slashes (CreateDirectory()
 	// fails on at least XP and Vista if they are present,
 	// ie. it creates the dir but actually returns false)
-	if ((s > 0) && ((dname[s - 1] == '/') || (dname[s - 1] == '\\'))) {
+	if ((s > 0) && ((dname[s - 1] == '/') || (dname[s - 1] == '\\')))
 		dname = dname.substr(0, s - 1);
-	}
 #endif
 
 	if (!dname.empty() && !FileSystem::CreateDirectory(dname))
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
 
-	const int numBytes = fhVFS.FileSize();
-	char* buffer = new char[numBytes];
 
-	fhVFS.Read(buffer, numBytes);
-
+	std::vector<char> buffer;
 	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
-	fstr.write((const char*) buffer, numBytes);
+
+	if (!vfsFile.isBuffered()) {
+		buffer.resize(vfsFile.FileSize(), 0);
+		vfsFile.Read(buffer.data(), buffer.size());
+	} else {
+		buffer = std::move(vfsFile.GetBuffer());
+	}
+
+	fstr.write((const char*) buffer.data(), buffer.size());
 	fstr.close();
 
 	if (!dname.empty()) {
-		LOG("Extracted file \"%s\" to directory \"%s\"",
-				fname.c_str(), dname.c_str());
+		LOG("[%s] extracted file \"%s\" to directory \"%s\"", __func__, fname.c_str(), dname.c_str());
 	} else {
-		LOG("Extracted file \"%s\"", fname.c_str());
+		LOG("[%s] extracted file \"%s\"", __func__, fname.c_str());
 	}
-
-	delete[] buffer;
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -1825,12 +1826,10 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	const int cmdIndex = lua_toint(L, 1) - CMD_INDEX_OFFSET;
-	int button = luaL_optint(L, 2, 1); // LMB
+	const int button = luaL_optint(L, 2, 1); // LMB
 
 	if (args <= 2) {
-		const bool rmb = button != SDL_BUTTON_LEFT;
-		const bool success = guihandler->SetActiveCommand(cmdIndex, rmb);
-		lua_pushboolean(L, success);
+		lua_pushboolean(L, guihandler->SetActiveCommand(cmdIndex, button != SDL_BUTTON_LEFT));
 		return 1;
 	}
 
@@ -1841,8 +1840,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	const bool meta  = luaL_checkboolean(L, 7);
 	const bool shift = luaL_checkboolean(L, 8);
 
-	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb,
-	                                                  alt, ctrl, meta, shift);
+	const bool success = guihandler->SetActiveCommand(cmdIndex, button, lmb, rmb, alt, ctrl, meta, shift);
 	lua_pushboolean(L, success);
 	return 1;
 }

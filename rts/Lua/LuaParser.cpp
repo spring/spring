@@ -582,7 +582,7 @@ int LuaParser::Include(lua_State* L)
 	if (lua_istable(L, 2)) {
 		lua_pushvalue(L, 2); // user fenv
 	} else {
-		LuaUtils::PushCurrentFuncEnv(L, __FUNCTION__);
+		LuaUtils::PushCurrentFuncEnv(L, __func__);
 	}
 
 	// set the include fenv to the current function's fenv
