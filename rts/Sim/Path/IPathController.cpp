@@ -75,22 +75,22 @@ short GMTDefaultPathController::GetDeltaHeading(
 	float curTurnSpeed = *curTurnSpeedPtr;
 	float absTurnSpeed = math::fabs(curTurnSpeed);
 
-	if (!owner->IsInAir()) {
-		// negative --> RH turn, positive --> LH turn
-		// add lookahead term to avoid micro-overshoots
-		// note that turnBrakeDist is always positive
-		const short brakeDistFactor = (absTurnSpeed >= maxTurnAccel);
-		const short stopTurnHeading = oldHeading + (turnBrakeDist * Sign(curTurnSpeed) * brakeDistFactor);
-		const short curDeltaHeading = newHeading - stopTurnHeading;
+	// negative delta represents a RH turn, positive a LH turn
+	// add lookahead term to avoid overshooting target heading
+	// note that turnBrakeDist is always positive
+	const short brakeDistFactor = (absTurnSpeed >= maxTurnAccel);
+	const short stopTurnHeading = oldHeading + (turnBrakeDist * Sign(curTurnSpeed) * brakeDistFactor);
+	const short curDeltaHeading = newHeading - stopTurnHeading;
 
-		if (brakeDistFactor == 0) {
-			curTurnSpeed  = (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
-		} else {
-			curTurnSpeed += (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
-		}
+	if (brakeDistFactor == 0) {
+		curTurnSpeed  = (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
+	} else {
+		curTurnSpeed += (Sign(curDeltaHeading) * std::min(math::fabs(curDeltaHeading * 1.0f), maxTurnAccel));
 	}
 
-	return (*curTurnSpeedPtr = Clamp(curTurnSpeed, -maxTurnSpeed, maxTurnSpeed));
+	// less realistic to nullify speed in air, but saves headaches
+	// (high-turnrate units leaving the ground do not behave well)
+	return (*curTurnSpeedPtr = Clamp(curTurnSpeed * (1 - owner->IsInAir()), -maxTurnSpeed, maxTurnSpeed));
 }
 
 bool GMTDefaultPathController::IgnoreTerrain(const MoveDef& md, const float3& pos) const {
