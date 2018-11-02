@@ -1758,10 +1758,10 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
 
 
-	std::vector<char> buffer;
+	std::vector<std::uint8_t> buffer;
 	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
 
-	if (!vfsFile.isBuffered()) {
+	if (!vfsFile.IsBuffered()) {
 		buffer.resize(vfsFile.FileSize(), 0);
 		vfsFile.Read(buffer.data(), buffer.size());
 	} else {
