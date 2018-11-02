@@ -84,11 +84,11 @@ bool CCameraController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "dx", dir.x);
 	SetStateFloat(sm, "dy", dir.y);
 	SetStateFloat(sm, "dz", dir.z);
-	
+
 	SetStateBool(sm, "streamingActive", streamingActive);
 	SetStateFloat(sm, "ipAdress", ipAdress);
 	SetStateFloat(sm, "portNumber", portNumber);
-	
+
 	SetStreamingActive();
 	return true;
 }
@@ -104,7 +104,7 @@ void CCameraController::GetState(StateMap& sm) const
 	sm["dx"] = dir.x;
 	sm["dy"] = dir.y;
 	sm["dz"] = dir.z;
-	
+
 	sm["streamingActive"] = streamingActive;
 	sm["ipAdress"] = ipAdress;
 	sm["portNumber"]= portNumber;
@@ -120,16 +120,16 @@ void CCameraController::SetStreamingActive() const
 		    streamTargetIp[1] = (ip >> 8) & 0xFF;
 		    streamTargetIp[2] = (ip >> 16) & 0xFF;
 		    streamTargetIp[3] = (ip >> 24) & 0xFF;
-	
+
 		 unsigned int port = (unsigned int) portNumber;
 		//TODO Call Library to establish stream
 	
 	}
-	
+
 	//Cleanup
 	if (!streamingActive){
 		//check for existing stream- deactivate thread and remove hooks
-	
+
 	}
 
 
