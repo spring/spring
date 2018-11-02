@@ -5784,7 +5784,7 @@ static int GetSolidObjectPieceMatrix(lua_State* L, const CSolidObject* o)
 
 	const CMatrix44f& mat = lmp->GetModelSpaceMatrix();
 
-	for (auto mi: mat.m) {
+	for (float mi: mat.m) {
 		lua_pushnumber(L, mi);
 	}
 

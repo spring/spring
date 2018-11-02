@@ -120,7 +120,7 @@ static bool FileExists(const std::string& filename)
  */
 bool LuaZipFileWriter::PushNew(lua_State* L, const std::string& filename, zipFile zip)
 {
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 
 	auto udata = static_cast<ZipFileWriterUserdata*>(lua_newuserdata(L, sizeof(ZipFileWriterUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileWriterUserdata));
@@ -273,7 +273,7 @@ struct ZipFileReaderUserdata {
  */
 bool LuaZipFileReader::PushNew(lua_State* L, const std::string& filename, IArchive* archive)
 {
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 
 	auto udata = static_cast<ZipFileReaderUserdata*>(lua_newuserdata(L, sizeof(ZipFileReaderUserdata)));
 	std::memset(udata, 0, sizeof(ZipFileReaderUserdata));
@@ -463,8 +463,7 @@ static zip_fileinfo* GenerateZipFileInfo(const std::string& path) {
 
 void RecurseZipFolder(const std::string& folderPath, zipFile& zip, const std::string& zipFolderPath, const std::string& modes) {
 	// recurse through all the subdirs
-	std::vector<std::string> folderPaths = CFileHandler::SubDirs(folderPath, "*", modes);
-	for (const std::string& childFolderPath : folderPaths) {
+	for (const std::string& childFolderPath : CFileHandler::SubDirs(folderPath, "*", modes)) {
 		const std::string childFolderName = FileSystem::GetFilename(childFolderPath.substr(0, childFolderPath.length() - 1));
 		const std::string childZipFolderPath = zipFolderPath + childFolderName + "/";
 
@@ -479,9 +478,8 @@ void RecurseZipFolder(const std::string& folderPath, zipFile& zip, const std::st
 		RecurseZipFolder(childFolderPath, zip, childZipFolderPath, modes);
 	}
 
-	//iterate through all the files and write them
-	std::vector<std::string> filePaths = CFileHandler::DirList(folderPath, "*", modes);
-	for (const std::string& filePath : filePaths) {
+	// iterate through all the files and write them
+	for (const std::string& filePath : CFileHandler::DirList(folderPath, "*", modes)) {
 		const std::string& fileName = FileSystem::GetFilename(filePath);
 		const std::string zipFilePath = zipFolderPath + fileName;
 
@@ -506,13 +504,13 @@ int LuaZipFolder::ZipFolder(lua_State* L, const std::string& folderPath, const s
 	char buf[1024] = {'\0'};
 
 	if (zipFolderFile == nullptr) {
-		SNPRINTF(buf, sizeof(buf), "[%s] could not open zipfile \"%s\" for writing", __FUNCTION__, zipFilePath.c_str());
+		SNPRINTF(buf, sizeof(buf), "[%s] could not open zipfile \"%s\" for writing", __func__, zipFilePath.c_str());
 		lua_pushstring(L, buf);
 		return 1;
 	}
 
 	if (!dataDirsAccess.InWriteDir(normFolderPath)) {
-		SNPRINTF(buf, sizeof(buf), "[%s] cannot zip \"%s\": outside writable data-directory", __FUNCTION__, normFolderPath.c_str());
+		SNPRINTF(buf, sizeof(buf), "[%s] cannot zip \"%s\": outside writable data-directory", __func__, normFolderPath.c_str());
 		lua_pushstring(L, buf);
 		zipClose(zipFolderFile, nullptr);
 		return 1;

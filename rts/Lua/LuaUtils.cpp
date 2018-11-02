@@ -365,11 +365,10 @@ static bool LowerKeysCheck(lua_State* L, int table, int alreadyCheckTable)
 
 static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 {
-	luaL_checkstack(L, 8, __FUNCTION__);
+	luaL_checkstack(L, 8, __func__);
 	const int table = lua_gettop(L);
-	if (LowerKeysCheck(L, table, alreadyCheckTable)) {
+	if (LowerKeysCheck(L, table, alreadyCheckTable))
 		return true;
-	}
 
 	// a new table for changed values
 	const int changed = table + 1;
@@ -415,12 +414,11 @@ static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 
 bool LuaUtils::LowerKeys(lua_State* L, int table)
 {
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
 
 	// table of processed tables
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 	lua_newtable(L);
 	const int checkedTableIdx = lua_gettop(L);
 
@@ -434,7 +432,7 @@ bool LuaUtils::LowerKeys(lua_State* L, int table)
 
 static bool CheckForNaNsReal(lua_State* L, const std::string& path)
 {
-	luaL_checkstack(L, 3, __FUNCTION__);
+	luaL_checkstack(L, 3, __func__);
 	const int table = lua_gettop(L);
 	bool foundNaNs = false;
 
@@ -469,11 +467,10 @@ static bool CheckForNaNsReal(lua_State* L, const std::string& path)
 
 bool LuaUtils::CheckTableForNaNs(lua_State* L, int table, const std::string& name)
 {
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
 
-	luaL_checkstack(L, 2, __FUNCTION__);
+	luaL_checkstack(L, 2, __func__);
 
 	// table of processed tables
 	lua_newtable(L);
