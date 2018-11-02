@@ -16,7 +16,7 @@
 #include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
 #include "System/Threading/SpringThreading.h"
 
-#include <assert.h>
+#include <cassert>
 
 CLuaRules* luaRules = nullptr;
 
@@ -57,8 +57,8 @@ CLuaRules::CLuaRules(): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
 
 CLuaRules::~CLuaRules()
 {
-	luaRules = NULL;
-	currentCobArgs = NULL;
+	luaRules = nullptr;
+	currentCobArgs = nullptr;
 }
 
 
@@ -98,7 +98,7 @@ bool CLuaRules::AddUnsyncedCode(lua_State* L)
 
 int CLuaRules::UnpackCobArg(lua_State* L)
 {
-	if (currentCobArgs == NULL) {
+	if (currentCobArgs == nullptr) {
 		luaL_error(L, "Error in UnpackCobArg(), no current args");
 	}
 	const int arg = luaL_checkint(L, 1) - 1;
@@ -198,7 +198,6 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	args[0] = 1; // success
 	lua_settop(L, top);
-	return;
 }
 
 

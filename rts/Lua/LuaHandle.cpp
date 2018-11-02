@@ -2184,10 +2184,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 	lua_pushnumber(L, level);
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, 2, 0))
-		return false;
-
-	return true;
+	return RunCallIn(L, cmdStr, 2, 0);
 }
 
 
@@ -2203,10 +2200,7 @@ bool CLuaHandle::GroupChanged(int groupID)
 	lua_pushnumber(L, groupID);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, 1, 0))
-		return false;
-
-	return true;
+	return RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -2328,9 +2322,9 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 	lua_newtable(L);
 
-	for (size_t n = 0; n < playerStates.size(); n++) {
-		lua_pushsstring(L, playerStates[n].second);
-		lua_rawseti(L, -2, playerStates[n].first);
+	for (const auto& playerState: playerStates) {
+		lua_pushsstring(L, playerState.second);
+		lua_rawseti(L, -2, playerState.first);
 	}
 
 	// call the routine
@@ -2694,17 +2688,17 @@ int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
 
 int CLuaHandle::CallOutGetCallInList(lua_State* L)
 {
-	vector<string> list;
-	eventHandler.GetEventList(list);
-	lua_createtable(L, 0, list.size());
-	for (unsigned int i = 0; i < list.size(); i++) {
-		lua_pushsstring(L, list[i]);
+	std::vector<std::string> eventList;
+	eventHandler.GetEventList(eventList);
+	lua_createtable(L, 0, eventList.size());
+	for (const auto& event : eventList) {
+		lua_pushsstring(L, event);
 		lua_newtable(L); {
 			lua_pushliteral(L, "unsynced");
-			lua_pushboolean(L, eventHandler.IsUnsynced(list[i]));
+			lua_pushboolean(L, eventHandler.IsUnsynced(event));
 			lua_rawset(L, -3);
 			lua_pushliteral(L, "controller");
-			lua_pushboolean(L, eventHandler.IsController(list[i]));
+			lua_pushboolean(L, eventHandler.IsController(event));
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);

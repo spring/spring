@@ -74,9 +74,7 @@ CUnsyncedLuaHandle::CUnsyncedLuaHandle(CSplitLuaHandle* _base, const string& _na
 }
 
 
-CUnsyncedLuaHandle::~CUnsyncedLuaHandle()
-{
-}
+CUnsyncedLuaHandle::~CUnsyncedLuaHandle() = default;
 
 
 bool CUnsyncedLuaHandle::Init(const string& code, const string& file)

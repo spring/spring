@@ -90,10 +90,10 @@ class CLuaHandle : public CEventClient
 		lua_State* GetLuaState() const { return L; }
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
-		LuaShaders& GetShaders(const lua_State* L = NULL) { return GetLuaContextData(L)->shaders; }
-		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
-		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
-		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
+		LuaShaders& GetShaders(const lua_State* L = nullptr) { return GetLuaContextData(L)->shaders; }
+		LuaTextures& GetTextures(const lua_State* L = nullptr) { return GetLuaContextData(L)->textures; }
+		LuaFBOs& GetFBOs(const lua_State* L = nullptr) { return GetLuaContextData(L)->fbos; }
+		LuaRBOs& GetRBOs(const lua_State* L = nullptr) { return GetLuaContextData(L)->rbos; }
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
 #endif
 

@@ -18,7 +18,7 @@
 
 struct DLEvent {
 	DLEvent(int _id): id(_id) {}
-	virtual ~DLEvent() {}
+	virtual ~DLEvent() = default;
 	virtual void Process() const = 0;
 
 	int id;
@@ -64,14 +64,14 @@ struct DownloadItem {
 	std::string filename;
 	DownloadEnum::Category cat;
 
-	DownloadItem() {}
+	DownloadItem() = default;
 	DownloadItem(int id_, const std::string& filename_, DownloadEnum::Category& cat_) : id(id_), filename(filename_), cat(cat_) {}
 };
 
 
 struct DownloadQueue {
 public:
-	DownloadQueue(): breakLoop(false) {}
+	DownloadQueue() = default;
 	~DownloadQueue() { Join(); }
 
 	void Pump();
@@ -85,7 +85,7 @@ private:
 	spring::mutex mutex;
 	spring::thread thread;
 
-	bool breakLoop;
+	bool breakLoop = false;
 };
 
 

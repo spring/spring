@@ -21,25 +21,25 @@ enum {
 static CLuaHandle* GetLuaHandle(lua_State* L, int index)
 {
 	int* addr = (int*) lua_touserdata(L, index);
-	if (addr == NULL) {
+	if (addr == nullptr) {
 		luaL_error(L, "Bad XCall target");
-		return NULL;
+		return nullptr;
 	}
 
 	const bool isSrcSynced = CLuaHandle::GetHandleSynced(L);
 	switch (*addr) {
 		case LUA_UI:
-			if (!luaUI) return NULL; // handle is not currently active
+			if (!luaUI) return nullptr; // handle is not currently active
 			return luaUI;
 		case LUA_RULES:
-			if (!luaRules) return NULL; // handle is not currently active
+			if (!luaRules) return nullptr; // handle is not currently active
 			return (isSrcSynced) ? static_cast<CLuaHandle*>(&luaRules->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaRules->unsyncedLuaHandle);
 		case LUA_GAIA:
-			if (!luaGaia) return NULL; // handle is not currently active
+			if (!luaGaia) return nullptr; // handle is not currently active
 			return (isSrcSynced) ? static_cast<CLuaHandle*>(&luaGaia->syncedLuaHandle) : static_cast<CLuaHandle*>(&luaGaia->unsyncedLuaHandle);
 		default:
 			luaL_error(L, "Bad XCall target");
-			return NULL;
+			return nullptr;
 	};
 }
 
@@ -56,7 +56,7 @@ static int HandleXCall(lua_State* L)
 	CLuaHandle* lh = GetLuaHandle(L, addrIndex);
 	const std::string funcName = luaL_checksstring(L, nameIndex);
 
-	if (lh == NULL) return 0;
+	if (lh == nullptr) return 0;
 	return lh->XCall(L, funcName);
 }
 
@@ -78,12 +78,12 @@ static int CallHook(lua_State* L)
 {
 	const int addrIndex = lua_upvalueindex(1);
 	CLuaHandle* lh = GetLuaHandle(L, addrIndex);
-	if (lh == NULL) return 0;
+	if (lh == nullptr) return 0;
 
 	const int args = lua_gettop(L); // arg 1 is the table
 	if (args <= 1) {
 		// is the handle currently active?
-		lua_pushboolean(L, (lh != NULL));
+		lua_pushboolean(L, (lh != nullptr));
 		return 1;
 	}
 	else if (args >= 2) {

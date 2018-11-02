@@ -1843,7 +1843,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	int button = luaL_optint(L, 2, 1); // LMB
 
 	if (args <= 2) {
-		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
+		const bool rmb = button != SDL_BUTTON_LEFT;
 		const bool success = guihandler->SetActiveCommand(cmdIndex, rmb);
 		lua_pushboolean(L, success);
 		return 1;
@@ -2314,12 +2314,11 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __func__, -1); // the value
-			if (unit != NULL && !unit->noSelect) {
+			if (unit != nullptr && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
 	}
-	return;
 }
 
 
