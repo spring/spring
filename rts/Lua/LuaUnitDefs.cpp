@@ -243,7 +243,7 @@ static int Pairs(lua_State* L)
 static int UnitDefToID(lua_State* L, const void* data)
 {
 	const UnitDef* ud = *((const UnitDef**)data);
-	if (ud == NULL) {
+	if (ud == nullptr) {
 		return 0;
 	}
 	lua_pushnumber(L, ud->id);
@@ -254,7 +254,7 @@ static int UnitDefToID(lua_State* L, const void* data)
 static int WeaponDefToID(lua_State* L, const void* data)
 {
 	const WeaponDef* wd = *((const WeaponDef**)data);
-	if (wd == NULL) {
+	if (wd == nullptr) {
 		return 0;
 	}
 	lua_pushnumber(L, wd->id);
@@ -265,7 +265,7 @@ static int WeaponDefToID(lua_State* L, const void* data)
 static int WeaponDefToName(lua_State* L, const void* data)
 {
 	const WeaponDef* wd = *((const WeaponDef**)data);
-	if (wd == NULL) {
+	if (wd == nullptr) {
 		return 0;
 	}
 	lua_pushsstring(L, wd->name);
@@ -290,9 +290,9 @@ static int CustomParamsTable(lua_State* L, const void* data)
 	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
 
-	for (auto it = params.cbegin(); it != params.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushsstring(L, it->second);
+	for (const auto& param: params) {
+		lua_pushsstring(L, param.first);
+		lua_pushsstring(L, param.second);
 		lua_rawset(L, -3);
 	}
 	return 1;
@@ -307,8 +307,8 @@ static int BuildOptions(lua_State* L, const void* data)
 	lua_newtable(L);
 	int count = 0;
 
-	for (auto it = buildOptions.cbegin(); it != buildOptions.cend(); ++it) {
-		const auto fit = unitDefIDsMap.find(it->second);
+	for (const auto& buildOption: buildOptions) {
+		const auto fit = unitDefIDsMap.find(buildOption.second);
 
 		if (fit != unitDefIDsMap.end()) {
 			count++;

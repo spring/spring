@@ -260,9 +260,9 @@ static bool RestoreTable(const LuaUtils::DataDump &d, lua_State* dst, int depth)
 	}
 
 	lua_newtable(dst);
-	for (std::vector<std::pair<LuaUtils::DataDump, LuaUtils::DataDump> >::const_iterator i = d.table.begin(); i != d.table.end(); ++i) {
-		RestoreData((*i).first, dst, depth);
-		RestoreData((*i).second, dst, depth);
+	for (const auto& di: d.table) {
+		RestoreData(di.first, dst, depth);
+		RestoreData(di.second, dst, depth);
 		lua_rawset(dst, -3);
 	}
 
@@ -291,8 +291,8 @@ int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &backup, lua_State* 
 	int count = backup.size();
 	lua_checkstack(dst, count + 3);
 
-	for (std::vector<DataDump>::const_iterator i = backup.begin(); i != backup.end(); ++i) {
-		RestoreData(*i, dst, 0);
+	for (const auto& dd: backup) {
+		RestoreData(dd, dst, 0);
 	}
 	lua_settop(dst, dstTop + count);
 
@@ -496,7 +496,7 @@ void* LuaUtils::GetUserData(lua_State* L, int index, const string& type)
 {
 	const char* tname = type.c_str();
 	void *p = lua_touserdata(L, index);
-	if (p != NULL) {                               // value is a userdata?
+	if (p != nullptr) {                               // value is a userdata?
 		if (lua_getmetatable(L, index)) {            // does it have a metatable?
 			lua_getfield(L, LUA_REGISTRYINDEX, tname); // get correct metatable
 			if (lua_rawequal(L, -1, -2)) {             // the correct mt?
@@ -505,7 +505,7 @@ void* LuaUtils::GetUserData(lua_State* L, int index, const string& type)
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 

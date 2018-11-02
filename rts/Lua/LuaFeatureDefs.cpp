@@ -61,8 +61,8 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	const std::array<const IndxFuncType, 3> indxFuncs = {{FeatureDefIndex, FeatureDefNewIndex, FeatureDefMetatable}};
 	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
-		const auto def = featureDefHandler->GetFeatureDefByID(it->id); // ObjectDefMapType::mapped_type
+	for (const auto& element : defsVec) {
+		const auto def = featureDefHandler->GetFeatureDefByID(element.id); // ObjectDefMapType::mapped_type
 
 		if (def == nullptr)
 			continue;
@@ -271,9 +271,9 @@ static int CustomParamsTable(lua_State* L, const void* data)
 	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
 
-	for (auto it = params.cbegin(); it != params.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushsstring(L, it->second);
+	for (const auto& param: params) {
+		lua_pushsstring(L, param.first);
+		lua_pushsstring(L, param.second);
 		lua_rawset(L, -3);
 	}
 

@@ -202,7 +202,7 @@ void CLuaUI::InitLuaSocket(lua_State* L) {
 
 string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 {
-	CFileHandler f(name, mode.c_str());
+	CFileHandler f(name, mode);
 
 	string code;
 	if (!f.LoadStringData(code))
@@ -279,10 +279,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 	lua_pushsstring(L, command);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, 1, 0))
-		return false;
-
-	return true;
+	return RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -334,6 +331,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	lua_pushnumber(L, dir.z);
 
 	// call the routine
+	// TODO: (bug?) Did we forget to return the result of RunCallIn?
 	if (!RunCallIn(L, cmdStr, 4, 0)) {
 		return;
 	}

@@ -16,7 +16,7 @@ struct NodeCostOverlay {
 public:
 	NodeCostOverlay() { Clear(); }
 	NodeCostOverlay(const NodeCostOverlay& o) = delete;
-	NodeCostOverlay(NodeCostOverlay&& o) {
+	NodeCostOverlay(NodeCostOverlay&& o) noexcept {
 		costs = std::move(o.costs);
 		sizex = o.sizex;
 		sizez = o.sizez;

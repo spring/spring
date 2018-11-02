@@ -1041,8 +1041,6 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 	} else {
 		param.los = luaL_optint(L, losIndex, param.los);
 	}
-
-	return;
 }
 
 
@@ -2272,7 +2270,8 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		unit->DropCurrentAttackTarget();
 		lua_pushboolean(L, true);
 		return 1;
-	} if (args >= 4 && !lua_isboolean(L, 3)) {
+	}
+	if (args >= 4 && !lua_isboolean(L, 3)) {
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
@@ -3222,7 +3221,7 @@ int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 {
 	CProjectile* pro = ParseProjectile(L, __func__, 1);
-	CWeaponProjectile* wpro = NULL;
+	CWeaponProjectile* wpro = nullptr;
 
 	if (pro == nullptr)
 		return 0;
@@ -3245,7 +3244,7 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 			const int type = luaL_checkint(L, 3);
 
 			CWorldObject* oldTargetObject = wpro->GetTargetObject();
-			CWorldObject* newTargetObject = NULL;
+			CWorldObject* newTargetObject = nullptr;
 
 			switch (type) {
 				case 'u': { newTargetObject = ParseUnit(L, __func__, 2); } break;
@@ -3267,8 +3266,8 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 				wpro->SetTargetObject(newTargetObject);
 			}
 
-			assert(newTargetObject == NULL || newTargetObject->id == id);
-			lua_pushboolean(L, oldTargetObject != NULL || newTargetObject != nullptr);
+			assert(newTargetObject == nullptr || newTargetObject->id == id);
+			lua_pushboolean(L, oldTargetObject != nullptr || newTargetObject != nullptr);
 			return 1;
 		} break;
 

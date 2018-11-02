@@ -674,8 +674,8 @@ int LuaParser::DontMessWithMyCase(lua_State* L)
 LuaTable::LuaTable()
 : path(""),
   isValid(false),
-  parser(NULL),
-  L(NULL),
+  parser(nullptr),
+  L(nullptr),
   refnum(LUA_NOREF)
 {
 }
@@ -683,7 +683,7 @@ LuaTable::LuaTable()
 
 LuaTable::LuaTable(LuaParser* _parser)
 {
-	assert(_parser != NULL);
+	assert(_parser != nullptr);
 
 	isValid = _parser->IsValid();
 	path    = "ROOT";

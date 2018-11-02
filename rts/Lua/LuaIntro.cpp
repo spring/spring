@@ -137,7 +137,7 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	luaIntro = NULL;
+	luaIntro = nullptr;
 }
 
 

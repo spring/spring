@@ -1,14 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include <stdio.h>
-#include <errno.h>
+#include <cstdio>
+#include <cerrno>
 
 #ifndef _MSC_VER	// this header file does not exist for the microsoft compiler
  #include <unistd.h>
 #endif
 
 #include <string>
+#include <array>
 
 #include "LuaIO.h"
 
@@ -74,13 +75,10 @@ bool LuaIO::SafeReadPath(const std::string& path)
 
 bool LuaIO::SafeWritePath(const std::string& path)
 {
-	const size_t numExtensions = 5;
-	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
+	std::array<std::string, 5> exeFiles = {"exe", "dll", "so", "bat", "com"};
 	const std::string ext = FileSystem::GetExtension(path);
-	for (size_t i = 0; i < numExtensions; ++i)
-	{
-		if (ext == exeFiles[i])
-			return false;
+	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext)) {
+		return false;
 	}
 	return dataDirsAccess.InWriteDir(path);
 }
@@ -95,11 +93,11 @@ FILE* LuaIO::fopen(lua_State* L, const char* path, const char* mode)
 	const std::string modeStr = StringToLower(mode);
 	if (modeStr.find_first_not_of("rwabt+") != std::string::npos) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 	if (!IsSafePath(path)) {
 		errno = EPERM; //EACCESS?
-		return NULL;
+		return nullptr;
 	}
 	return ::fopen(path, mode);
 }
@@ -111,10 +109,10 @@ FILE* LuaIO::popen(lua_State* L, const char* command, const char* type)
 	const std::string typeStr = StringToLower(type);
 	if (typeStr.find_first_not_of("rw") != std::string::npos) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 	errno = EINVAL;
-	return NULL;
+	return nullptr;
 }
 
 

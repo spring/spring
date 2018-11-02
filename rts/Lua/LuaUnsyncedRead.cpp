@@ -273,7 +273,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
 
 	if (readAllyTeam < 0)
-		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
+		return CLuaHandle::GetHandleFullRead(L) ? unit : nullptr;
 
 	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0)
 		return nullptr;
@@ -398,7 +398,7 @@ int LuaUnsyncedRead::GetProfilerRecordNames(lua_State* L)
 
 	for (size_t i = 0; i < sortedProfiles.size(); i++) {
 		lua_pushnumber(L, i + 1); // key
-		lua_pushsstring(L, sortedProfiles[i].first.c_str()); // val
+		lua_pushsstring(L, sortedProfiles[i].first); // val
 		lua_rawset(L, -3);
 	}
 
@@ -493,7 +493,7 @@ int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetMiniMapGeometry(lua_State* L)
 {
-	if (minimap == NULL) {
+	if (minimap == nullptr) {
 		return 0;
 	}
 	lua_pushnumber(L, minimap->GetPosX());
@@ -509,7 +509,7 @@ int LuaUnsyncedRead::GetMiniMapGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 {
-	if (minimap == NULL) {
+	if (minimap == nullptr) {
 		return 0;
 	}
 	if (!globalRendering->dualScreenMode) {
@@ -527,7 +527,7 @@ int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 
 int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 {
-	if (minimap == NULL) {
+	if (minimap == nullptr) {
 		return 0;
 	}
 
@@ -1348,7 +1348,7 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
 
-	if (groundTextures == NULL) {
+	if (groundTextures == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -1360,7 +1360,7 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
 
-	if (luaTexture == NULL) {
+	if (luaTexture == nullptr) {
 		// not a valid texture (name)
 		lua_pushboolean(L, false);
 		return 1;
@@ -1431,9 +1431,9 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	CCameraController::StateMap camState;
 	camHandler->GetState(camState);
 
-	for (auto it = camState.cbegin(); it != camState.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushnumber(L, it->second);
+	for (const auto& s: camState) {
+		lua_pushsstring(L, s.first);
+		lua_pushnumber(L, s.second);
 		lua_rawset(L, -3);
 	}
 
@@ -1786,13 +1786,13 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_createtable(L, 0, n);
 	lua_rawset(L, -3);
 
-	for (auto it = efxprops.filter_props_f.begin(); it != efxprops.filter_props_f.end(); ++it) {
-		const ALuint param = it->first;
+	for (const auto& filterProp: efxprops.filter_props_f) {
+		const ALuint param = filterProp.first;
 		const auto fit = alFilterParamToName.find(param);
 
 		if (fit != alFilterParamToName.end()) {
 			lua_pushsstring(L, fit->second); // name
-			lua_pushnumber(L, it->second);
+			lua_pushnumber(L, filterProp.second);
 			lua_rawset(L, -3);
 		}
 	}
@@ -1804,22 +1804,22 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	lua_createtable(L, 0, n);
 	lua_rawset(L, -3);
 
-	for (auto it = efxprops.reverb_props_f.begin(); it != efxprops.reverb_props_f.end(); ++it) {
-		const ALuint param = it->first;
+	for (const auto& reverbProp: efxprops.reverb_props_f) {
+		const ALuint param = reverbProp.first;
 		const auto fit = alParamToName.find(param);
 
 		if (fit != alParamToName.end()) {
 			lua_pushsstring(L, fit->second); // name
-			lua_pushnumber(L, it->second);
+			lua_pushnumber(L, reverbProp.second);
 			lua_rawset(L, -3);
 		}
 	}
-	for (auto it = efxprops.reverb_props_v.begin(); it != efxprops.reverb_props_v.end(); ++it) {
-		const ALuint param = it->first;
+	for (const auto& reverbProp: efxprops.reverb_props_v) {
+		const ALuint param = reverbProp.first;
 		const auto fit = alParamToName.find(param);
 
 		if (fit != alParamToName.end()) {
-			const float3& v = it->second;
+			const float3& v = reverbProp.second;
 
 			lua_pushsstring(L, fit->second); // name
 			lua_createtable(L, 3, 0);
@@ -1832,13 +1832,13 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	}
-	for (auto it = efxprops.reverb_props_i.begin(); it != efxprops.reverb_props_i.end(); ++it) {
-		const ALuint param = it->first;
+	for (const auto& reverbProp: efxprops.reverb_props_i) {
+		const ALuint param = reverbProp.first;
 		const auto fit = alParamToName.find(param);
 
 		if (fit != alParamToName.end()) {
 			lua_pushsstring(L, fit->second); // name
-			lua_pushboolean(L, it->second);
+			lua_pushboolean(L, reverbProp.second);
 			lua_rawset(L, -3);
 		}
 	}
@@ -2088,7 +2088,7 @@ int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 {
 	CInfoConsole* ic = infoConsole;
 
-	if (ic == NULL)
+	if (ic == nullptr)
 		return 0;
 
 	lua_newtable(L);
@@ -2109,7 +2109,7 @@ int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 {
 	CInfoConsole* ic = infoConsole;
-	if (ic == NULL) {
+	if (ic == nullptr) {
 		return true;
 	}
 
@@ -2367,13 +2367,13 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 	lua_createtable(L, 0, ggusUnitDefMap.size());
 
-	for (auto mit = ggusUnitDefMap.cbegin(); mit != ggusUnitDefMap.cend(); ++mit) {
-		const std::vector<const CUnit*>& v = mit->second;
+	for (const auto& el: ggusUnitDefMap) {
+		const std::vector<const CUnit*>& v = el.second;
 
 		if (v.empty())
 			continue;
 
-		lua_pushnumber(L, mit->first); // push the UnitDef index
+		lua_pushnumber(L, el.first); // push the UnitDef index
 		lua_createtable(L, v.size(), 0); {
 
 			for (size_t i = 0; i < v.size(); i++) {
@@ -2409,12 +2409,12 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 	lua_createtable(L, 0, ggucCountMap.size());
 
-	for (auto mit = ggucCountMap.begin(); mit != ggucCountMap.end(); ++mit) {
-		if (mit->second == 0)
+	for (const auto& el: ggucCountMap) {
+		if (el.second == 0)
 			continue;
 
-		lua_pushnumber(L, mit->second); // push the UnitDef unit count
-		lua_rawseti(L, -2, mit->first); // push the UnitDef index
+		lua_pushnumber(L, el.second); // push the UnitDef unit count
+		lua_rawseti(L, -2, el.first); // push the UnitDef index
 	}
 
 	return 1;

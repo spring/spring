@@ -947,9 +947,9 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 
 	lua_createtable(L, 0, mapOpts.size());
 
-	for (auto it = mapOpts.cbegin(); it != mapOpts.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushsstring(L, it->second);
+	for (const auto& mapOpt : mapOpts) {
+		lua_pushsstring(L, mapOpt.first);
+		lua_pushsstring(L, mapOpt.second);
 		lua_rawset(L, -3);
 	}
 
@@ -962,9 +962,9 @@ int LuaSyncedRead::GetModOptions(lua_State* L)
 
 	lua_createtable(L, 0, modOpts.size());
 
-	for (auto it = modOpts.cbegin(); it != modOpts.cend(); ++it) {
-		lua_pushsstring(L, it->first);
-		lua_pushsstring(L, it->second);
+	for (const auto& modOpt: modOpts) {
+		lua_pushsstring(L, modOpt.first);
+		lua_pushsstring(L, modOpt.second);
 		lua_rawset(L, -3);
 	}
 
@@ -1481,7 +1481,7 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 	if (luaAIName == nullptr)
 		return 0;
 
-	lua_pushsstring(L, luaAIName->c_str());
+	lua_pushsstring(L, *luaAIName);
 	return 1;
 }
 
@@ -1588,9 +1588,9 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 
 		lua_newtable(L);
 
-		for (auto o = aiData->options.begin(); o != aiData->options.end(); ++o) {
-			lua_pushsstring(L, o->first);
-			lua_pushsstring(L, o->second);
+		for (const auto& option: aiData->options) {
+			lua_pushsstring(L, option.first);
+			lua_pushsstring(L, option.second);
 			lua_rawset(L, -3);
 		}
 	} else {
@@ -1946,11 +1946,11 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	// push the counts
 	lua_createtable(L, 0, gtuDefCounts.size());
 
-	for (auto mit = gtuDefCounts.begin(); mit != gtuDefCounts.end(); ++mit) {
-		if (mit->second == 0)
+	for (const auto& gtuDefCount: gtuDefCounts) {
+		if (gtuDefCount.second == 0)
 			continue;
-		lua_pushnumber(L, mit->second);
-		lua_rawseti(L, -2, mit->first);
+		lua_pushnumber(L, gtuDefCount.second);
+		lua_rawseti(L, -2, gtuDefCount.first);
 		defCount++;
 	}
 	if (unknownCount > 0) {
@@ -2384,8 +2384,7 @@ struct Plane {
 static inline bool UnitInPlanes(const CUnit* unit, const vector<Plane>& planes)
 {
 	const float3& pos = unit->midPos;
-	for (int i = 0; i < (int)planes.size(); i++) {
-		const Plane& p = planes[i];
+	for (const Plane& p: planes) {
 		const float dist = (pos.x * p.x) + (pos.y * p.y) + (pos.z * p.z) + p.d;
 		if ((dist - unit->radius) > 0.0f) {
 			return false; // outside
@@ -3224,7 +3223,7 @@ int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	if (unit->transporter == 0)
+	if (unit->transporter == nullptr)
 		return 0;
 
 	lua_pushnumber(L, unit->transporter->id);
@@ -4192,11 +4191,11 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 	lua_createtable(L, std::min(count, commands.size()), 0);
 
 	// {[1] = cq[0], [2] = cq[1], ...}
-	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {
+	for (const auto& command: commands) {
 		if (c >= count)
 			break;
 
-		PackCommand(L, *ci);
+		PackCommand(L, command);
 		lua_rawseti(L, -2, ++c);
 	}
 }
@@ -5190,8 +5189,6 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, mapDims.mapxm1);
 	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, mapDims.mapym1);
 	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, mapDims.mapym1);
-
-	return;
 }
 
 
@@ -5789,8 +5786,8 @@ static int GetSolidObjectPieceMatrix(lua_State* L, const CSolidObject* o)
 
 	const CMatrix44f& mat = lmp->GetModelSpaceMatrix();
 
-	for (int m = 0; m < 16; m++) {
-		lua_pushnumber(L, mat.m[m]);
+	for (auto mi: mat.m) {
+		lua_pushnumber(L, mi);
 	}
 
 	return 16;
