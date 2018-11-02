@@ -202,9 +202,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// 32767 since it is converted to (signed) shorts in places
 	turnRate = Clamp(ud->turnRate, 1.0f, SPRING_CIRCLE_DIVS * 0.5f - 1.0f);
 	turnAccel = turnRate * mix(0.333f, 0.033f, md->speedModClass == MoveDef::Ship);
-	#if (MODEL_TURN_INERTIA == 0)
-	turnSpeed = turnRate;
-	#endif
 
 	accRate = std::max(0.01f, ud->maxAcc);
 	decRate = std::max(0.01f, ud->maxDec);
@@ -278,6 +275,7 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 	idling = true;
 	idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
 	idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
+
 	return true;
 }
 
@@ -639,11 +637,8 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				if (atEndOfPath) {
 					// at this point, Update() will no longer call SetNextWayPoint()
 					// and we must slow down to prevent entering an infinite circle
-					#if (MODEL_TURN_INERTIA == 0)
-					const float absTurnSpeed = turnSpeed;
-					#else
-					const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
-					#endif
+					// base ftt on maximum turning speed
+					const float absTurnSpeed = turnRate;
 					const float framesToTurn = SPRING_CIRCLE_DIVS / absTurnSpeed;
 
 					targetSpeed = std::min(targetSpeed, (currWayPointDist * math::PI) / framesToTurn);
@@ -1362,8 +1357,9 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 		const int dirSign = Sign(int(!reversing));
 
 		#if (MODEL_TURN_INERTIA == 0)
-		const float absTurnSpeed = turnSpeed;
+		const float absTurnSpeed = turnRate;
 		#else
+		// base ftt on current turning speed
 		const float absTurnSpeed = std::max(0.0001f, math::fabs(turnSpeed));
 		#endif
 		const float framesToTurn = SPRING_CIRCLE_DIVS / absTurnSpeed;
