@@ -275,6 +275,7 @@ bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, c
 	idling = true;
 	idling &= (math::fabs(posDif.y) < math::fabs(cmpEps.y * owner->pos.y));
 	idling &= (Square(currWayPointDist - prevWayPointDist) < ffd.dot(wpd));
+	idling &= (posDif.SqLength() < Square(owner->speed.w * 0.5f));
 
 	return true;
 }
@@ -2317,6 +2318,7 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	return wantReverse;
 }
+
 
 float3 CGroundMoveType::GetNewSpeedVector(const float hAcc, const float vAcc) const
 {
