@@ -65,9 +65,9 @@ namespace ArchiveNameResolver {
 		std::uint64_t matchingVersionInt = 0;
 
 		for (const auto& archiveData: found) {
-			if (lowerLazyName != StringToLower(archiveData.GetShortName())) {
+			if (lowerLazyName != StringToLower(archiveData.GetShortName()))
 				continue;
-			}
+
 			// find latest version of the game
 			std::uint64_t versionInt = ExtractVersionNumber(archiveData.GetVersion());
 

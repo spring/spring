@@ -279,7 +279,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	ph.objDataOffset = (int)stream->tellp();
 
 	// Insert dummy object with id 0
-	objects.push_back(ObjectRef(nullptr, 0, true, nullptr));
+	objects.emplace_back(nullptr, 0, true, nullptr);
 	ObjectRef* obj = &objects.back();
 	obj->classIndex = 0;
 

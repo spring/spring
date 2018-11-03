@@ -82,7 +82,7 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,GatherWait , (
 
 CWaitCommandsAI::CWaitCommandsAI()
 {
-	assert(sizeof(float) == sizeof(KeyType));
+	static_assert(sizeof(float) == sizeof(KeyType), "");
 }
 
 
