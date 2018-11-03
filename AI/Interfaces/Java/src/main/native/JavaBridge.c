@@ -729,7 +729,7 @@ static JNIEnv* java_getJNIEnv(bool preload)
 	JavaVM* jvm = NULL;
 
 	struct JavaVMInitArgs vm_args;
-	memset(&vm_args, 0, sizeof(vm_args));
+	// memset(&vm_args, 0, sizeof(vm_args));
 
 	jint res = 0;
 
@@ -762,7 +762,7 @@ static JNIEnv* java_getJNIEnv(bool preload)
 	} else {
 		simpleLog_logL(LOG_LEVEL_INFO, "creating JVM...");
 
-		if ((res = JNI_CreateJavaVM_f(&jvm, (void**) &env, &vm_args)) != 0 || (*env)->ExceptionCheck(env)) {
+		if ((res = JNI_CreateJavaVM_f(&jvm, (void**) &env, &vm_args)) != 0 || env == NULL || (*env)->ExceptionCheck(env)) {
 			simpleLog_logL(LOG_LEVEL_ERROR, "Failed to create Java VM: %i - %s", res, jniUtil_getJniRetValDescription(res));
 			goto end;
 		}
