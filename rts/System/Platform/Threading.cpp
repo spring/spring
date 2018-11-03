@@ -282,7 +282,7 @@ namespace Threading {
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
 		// If there is no object registered, need to return an "empty" shared_ptr
-		if (!threadCtls)
+		if (threadCtls == nullptr)
 			return std::shared_ptr<ThreadControls>();
 
 		return threadCtls;
