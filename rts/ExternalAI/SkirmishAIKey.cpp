@@ -33,9 +33,5 @@ SkirmishAIKey::SkirmishAIKey(
 	, interface(interface)
 {}
 
-SkirmishAIKey::SkirmishAIKey(const SkirmishAIKey& toCopy)
-	: shortName(toCopy.shortName)
-	, version(toCopy.version)
-	, interface(toCopy.interface)
-{}
+SkirmishAIKey::SkirmishAIKey(const SkirmishAIKey& toCopy) = default;
 

@@ -324,7 +324,7 @@ bool CAICallback::RemoveUnitFromGroup(int unitId)
 	if (unit == nullptr)
 		return false;
 
-	unit->SetGroup(0);
+	unit->SetGroup(nullptr);
 	return true;
 }
 
@@ -472,7 +472,7 @@ float CAICallback::GetUnitMaxHealth(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				maxHealth = unit->maxHealth;
 			} else {
 				const float scale = (decoyDef->health / unitDef->health);
@@ -501,7 +501,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				speed = unitDef->speed;
 			} else {
 				speed = decoyDef->speed;
@@ -529,7 +529,7 @@ float CAICallback::GetUnitPower(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				power = unit->power;
 			} else {
 				const float scale = (decoyDef->power / unitDef->power);
@@ -569,7 +569,7 @@ float CAICallback::GetUnitMaxRange(int unitId)
 		} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 			const UnitDef* unitDef = unit->unitDef;
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			if (decoyDef == NULL) {
+			if (decoyDef == nullptr) {
 				maxRange = unit->maxRange;
 			} else {
 				maxRange = decoyDef->maxWeaponRange;
@@ -601,7 +601,7 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 			if (((losStatus & LOS_INLOS) != 0) ||
 					((losStatus & prevMask) == prevMask)) {
 				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (decoyDef == NULL) {
+				if (decoyDef == nullptr) {
 					def = unitDef;
 				} else {
 					def = decoyDef;
@@ -1103,7 +1103,7 @@ void CAICallback::DrawUnit(
 
 bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int facing)
 {
-	CFeature* blockingF = NULL;
+	CFeature* blockingF = nullptr;
 	BuildInfo bi(unitDef, pos, facing);
 	bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 	return !!CGameHelper::TestUnitBuildSquare(bi, blockingF, teamHandler.AllyTeam(team), false);
@@ -1220,7 +1220,7 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs)
 		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
-		// if array is NULL, caller only wants to know the number of features
+		// if array is nullptr, caller only wants to know the number of features
 		if (featureIds != nullptr)
 			featureIds[numFeatureIDs] = f->id;
 
@@ -1246,7 +1246,7 @@ int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs, const float3& p
 		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
-		// if array is NULL, caller only wants to know the number of features
+		// if array is nullptr, caller only wants to know the number of features
 		if (featureIds != nullptr)
 			featureIds[numFeatureIDs] = f->id;
 
@@ -1487,7 +1487,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
 			LOG("Skirmish AI controlling team %i paused the game, reason: %s",
 					team,
-					cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
+					cmdData->reason != nullptr ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
 		} break;
@@ -1616,7 +1616,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				} else {
 					const UnitDef* unitDef = unit->unitDef;
 					const UnitDef* decoyDef = unitDef->decoyDef;
-					if (decoyDef == NULL) {
+					if (decoyDef == nullptr) {
 						(*(const UnitDef**)data) = unitDef;
 					} else {
 						(*(const UnitDef**)data) = decoyDef;
@@ -1826,7 +1826,7 @@ const float3* CAICallback::GetStartPos()
 #define AICALLBACK_CALL_LUA(HandleName)                                              \
 	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize) { \
 		if (lua ## HandleName == nullptr)                                            \
-			return NULL;                                                             \
+			return nullptr;                                                             \
                                                                                      \
 		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize);       \
 	}

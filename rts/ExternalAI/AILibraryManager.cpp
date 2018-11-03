@@ -85,8 +85,7 @@ void AILibraryManager::GatherInterfaceLibrariesInfos() {
 	T_dirs aiInterfaceDataDirs = std::move(dataDirsAccess.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR));
 	T_dupInt duplicateInterfaceInfoCheck;
 
-	for (auto dir = aiInterfaceDataDirs.cbegin(); dir != aiInterfaceDataDirs.cend(); ++dir) {
-		const std::string& possibleDataDir = *dir;
+	for (const auto& possibleDataDir: aiInterfaceDataDirs) {
 		const T_dirs& infoFiles = CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
 
 		if (infoFiles.empty())
@@ -114,24 +113,24 @@ void AILibraryManager::GatherInterfaceLibrariesInfos() {
 	}
 
 	// filter out interfaces that are specified multiple times
-	for (auto info = duplicateInterfaceInfoCheck.cbegin(); info != duplicateInterfaceInfoCheck.cend(); ++info) {
-		if (info->second.size() < 2)
+	for (const auto& info: duplicateInterfaceInfoCheck) {
+		if (info.second.size() < 2)
 			continue;
 
-		duplicateInterfaceInfos[info->first] = info->second;
+		duplicateInterfaceInfos[info.first] = info.second;
 
 		if (!LOG_IS_ENABLED(L_ERROR))
 			continue;
 
-		const std::string& isn = info->first.GetShortName();
-		const std::string& iv =  info->first.GetVersion();
+		const std::string& isn = info.first.GetShortName();
+		const std::string& iv =  info.first.GetVersion();
 		const std::string* lastDir = nullptr;
 
 		LOG_L(L_ERROR, "[%s] duplicate AI Interface Info found", __func__);
 		LOG_L(L_ERROR, "\tfor interface %s %s", isn.c_str(), iv.c_str());
 		LOG_L(L_ERROR, "\tin files");
 
-		for (const std::string& dir: info->second) {
+		for (const std::string& dir: info.second) {
 			LOG_L(L_ERROR, "\t%s", dir.c_str());
 			lastDir = &dir;
 		}
@@ -190,8 +189,7 @@ void AILibraryManager::GatherSkirmishAIsLibrariesInfosFromLuaFiles(T_dupSkirm du
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIOptions.lua
 	T_dirs skirmishAIDataDirs = dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 
-	for (auto dir = skirmishAIDataDirs.cbegin(); dir != skirmishAIDataDirs.cend(); ++dir) {
-		const std::string& possibleDataDir = *dir;
+	for (const auto& possibleDataDir : skirmishAIDataDirs) {
 		const T_dirs& infoFiles = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
 
 		if (infoFiles.empty())
@@ -219,13 +217,13 @@ void AILibraryManager::GatherSkirmishAIsLibrariesInfosFromLuaFiles(T_dupSkirm du
 void AILibraryManager::GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dupSkirm duplicateSkirmishAIInfoCheck) {
 	const T_interfaceInfos& intInfs = GetInterfaceInfos();
 
-	for (auto intInfIt = intInfs.begin(); intInfIt != intInfs.end(); ++intInfIt) {
+	for (const auto& intInf: intInfs) {
 		// only try to lookup Skirmish AI infos through the Interface library
 		// if it explicitly states support for this in InterfaceInfo.lua
-		if (!(intInfIt->second).IsLookupSupported())
+		if (intInf.second.IsLookupSupported())
 			continue;
 
-		const CAIInterfaceLibrary* intLib = FetchInterface((intInfIt->second).GetKey());
+		const CAIInterfaceLibrary* intLib = FetchInterface(intInf.second.GetKey());
 		const int aiCount = intLib->GetSkirmishAICount();
 
 		for (int aii = 0; aii < aiCount; ++aii) {
@@ -238,7 +236,7 @@ void AILibraryManager::GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dup
 			//   AIs. This is the duty of the AI Interface plugin.
 			CSkirmishAILibraryInfo skirmishAIInfo = CSkirmishAILibraryInfo(rawInfos, rawLuaOptions);
 
-			StoreSkirmishAILibraryInfos(duplicateSkirmishAIInfoCheck, skirmishAIInfo, intInfIt->first.ToString());
+			StoreSkirmishAILibraryInfos(duplicateSkirmishAIInfoCheck, skirmishAIInfo, intInf.first.ToString());
 		}
 	}
 }
@@ -287,7 +285,7 @@ std::vector<SkirmishAIKey> AILibraryManager::FittingSkirmishAIKeys(const Skirmis
 			continue;
 
 		// check if the AI version matches (if one is specified i.e. non-empty)
-		if (skirmishAIKey.GetVersion() != "" && skirmishAIKey.GetVersion() != aiKey.GetVersion())
+		if (!skirmishAIKey.GetVersion().empty() && skirmishAIKey.GetVersion() != aiKey.GetVersion())
 			continue;
 
 		matchedKeys.push_back(aiKey);
@@ -392,16 +390,16 @@ AIInterfaceKey AILibraryManager::FindFittingInterfaceSpecifier(
 	int minDiff = INT_MAX;
 	AIInterfaceKey fittingKey = AIInterfaceKey(); // unspecified key
 
-	for (auto key = keys.cbegin(); key != keys.cend(); ++key) {
-		if (shortName != key->GetShortName())
+	for (const auto& key: keys) {
+		if (shortName != key.GetShortName())
 			continue;
 
-		const int diff = AILibraryManager::VersionCompare(key->GetVersion(), minVersion);
+		const int diff = AILibraryManager::VersionCompare(key.GetVersion(), minVersion);
 
 		if (diff < 0 || diff >= minDiff)
 			continue;
 
-		fittingKey = *key;
+		fittingKey = key;
 		minDiff = diff;
 	}
 

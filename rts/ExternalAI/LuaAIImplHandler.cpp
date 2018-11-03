@@ -7,7 +7,7 @@
 //#include "ExternalAI/SkirmishAIKey.h"
 #include "System/Exceptions.h"
 
-#include <assert.h>
+#include <cassert>
 
 //CR_BIND(CLuaAIImplHandler,);
 //

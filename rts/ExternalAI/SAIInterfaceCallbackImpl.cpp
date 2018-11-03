@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-using std::sprintf;
-
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"
@@ -309,7 +307,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 	// fill up writeableDataDirs until interfaceId index is in there
 	// if it is not yet
 	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)interfaceId; ++wdd)
-		writeableDataDirs.push_back("");
+		writeableDataDirs.emplace_back("");
 
 	if (writeableDataDirs[interfaceId].empty()) {
 		char tmpRes[1024];
@@ -327,7 +325,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 				interfaceId, tmpRes);
 
 			aiInterfaceCallback_Log_exception(interfaceId, errorMsg, 1, true);
-			return NULL;
+			return nullptr;
 		}
 	}
 

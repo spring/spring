@@ -292,17 +292,17 @@ void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAI
 	if (!IsValidSkirmishAI(aiData))
 		return;
 
-	for (auto oi = options.cbegin(); oi != options.cend(); ++oi) {
-		if (oi->typeCode == opt_error)
+	for (const auto& option: options) {
+		if (option.typeCode == opt_error)
 			continue;
-		if (oi->typeCode == opt_section)
-			continue;
-
-		if (aiData.options.find(oi->key) != aiData.options.end())
+		if (option.typeCode == opt_section)
 			continue;
 
-		aiData.optionKeys.push_back(oi->key);
-		aiData.options[oi->key] = option_getDefString(*oi);
+		if (aiData.options.find(option.key) != aiData.options.end())
+			continue;
+
+		aiData.optionKeys.push_back(option.key);
+		aiData.options[option.key] = option_getDefString(option);
 	}
 }
 

@@ -190,7 +190,7 @@ static int teamModParamLosMask(int skirmishAIId, const CTeam* team) {
 	return losMask;
 }
 
-static inline int gameModParamLosMask(void) {
+static inline int gameModParamLosMask() {
 	return LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 }
 
@@ -1414,7 +1414,7 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId
 	// fill up writeableDataDirs until teamId index is in there
 	// if it is not yet
 	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)skirmishAIId; ++wdd) {
-		writeableDataDirs.push_back("");
+		writeableDataDirs.emplace_back("");
 	}
 
 	if (writeableDataDirs[skirmishAIId].empty()) {
@@ -1426,7 +1426,7 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId
 					"Unable to create writable data-dir for Skirmish AI (ID:%i): %s",
 					skirmishAIId, tmpRes);
 			skirmishAiCallback_Log_exception(skirmishAIId, errorMsg, 1, true);
-			return NULL;
+			return nullptr;
 		} else {
 			writeableDataDirs[skirmishAIId] = tmpRes;
 		}
@@ -3010,7 +3010,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(
 
 	int yardMapSize = yardMapInternal.size();
 
-	if ((yardMap != NULL) && !yardMapInternal.empty()) {
+	if ((yardMap != nullptr) && !yardMapInternal.empty()) {
 		yardMapSize = std::min(int(yardMapInternal.size()), yardMapMaxSize);
 
 		const int xsize = unitDef->xsize;
@@ -3298,7 +3298,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getBuildOptions(
 
 	size_t unitDefIdsSize = unitDefIdsRealSize;
 
-	if (unitDefIds != NULL) {
+	if (unitDefIds != nullptr) {
 		unitDefIdsSize = std::min(unitDefIdsRealSize, unitDefIdsMaxSize);
 
 		auto bb = bo.cbegin();
