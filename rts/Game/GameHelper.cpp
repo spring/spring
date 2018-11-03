@@ -60,7 +60,8 @@ void CGameHelper::Update()
 	// need to use explicit indexing because CUnit::DoDamage
 	// can add *new* WaitingDamage's for this frame while we
 	// are still iterating
-	for (const WaitingDamage& wd: waitingDamages[wdIdx]) {
+	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
+		const WaitingDamage& wd = waitingDamages[wdIdx][n];
 
 		CUnit* attackee = unitHandler.GetUnit(wd.targetID);
 		CUnit* attacker = unitHandler.GetUnit(wd.attackerID); // null if wd.attacker is -1
