@@ -48,7 +48,7 @@ namespace Watchdog
 		{
 			#ifndef WIN32
 			const auto& c = Threading::GetCurrentThreadControls();
-			assert(c.get() != nullptr);
+			assert(c);
 			// copy shared_ptr object, not shared_ptr*
 			ctls = c;
 			#endif

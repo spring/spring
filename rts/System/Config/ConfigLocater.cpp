@@ -9,7 +9,7 @@
 	#include <direct.h>
 	#include <windows.h>
 #endif
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "ConfigLocater.h"
 #include "Game/GameVersion.h"

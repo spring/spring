@@ -13,7 +13,7 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
-#include <limits.h>
+#include <climits>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>

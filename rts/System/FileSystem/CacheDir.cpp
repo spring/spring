@@ -4,7 +4,7 @@
 
 #include "FileSystem.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
 // as defiend here (DEAD LINK): http://www.brynosaurus.com/cachedir/spec.html

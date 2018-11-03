@@ -45,8 +45,7 @@ CCregLoadSaveHandler::CCregLoadSaveHandler()
 	: iss(nullptr)
 {}
 
-CCregLoadSaveHandler::~CCregLoadSaveHandler()
-{}
+CCregLoadSaveHandler::~CCregLoadSaveHandler() = default;
 
 #ifdef USING_CREG
 class CGameStateCollector

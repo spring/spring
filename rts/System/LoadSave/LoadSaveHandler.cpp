@@ -18,9 +18,7 @@ ILoadSaveHandler* ILoadSaveHandler::Create(bool usecreg)
 }
 
 
-ILoadSaveHandler::~ILoadSaveHandler()
-{
-}
+ILoadSaveHandler::~ILoadSaveHandler() = default;
 
 
 std::string ILoadSaveHandler::FindSaveFile(const std::string& file)

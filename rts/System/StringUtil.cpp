@@ -37,11 +37,11 @@ std::string StringStrip(const std::string& str, const std::string& chars)
 	std::string ret;
 	ret.reserve(str.size());
 
-	for (size_t n = 0; n < str.size(); n++) {
-		if (chars.find(str[n]) != std::string::npos)
+	for (const char c: str) {
+		if (chars.find(c) != std::string::npos)
 			continue;
 
-		ret.push_back(str[n]);
+		ret.push_back(c);
 	}
 
 	return ret;

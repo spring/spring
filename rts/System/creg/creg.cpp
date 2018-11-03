@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-#include <string.h>
+#include <cstring>
 
 #include "creg_cond.h"
 #include "System/UnorderedMap.hpp"
@@ -235,7 +235,7 @@ Class* System::GetClass(const std::string& name)
 {
 	const auto it = mapNameToClass().find(name);
 	if (it == mapNameToClass().end()) {
-		return NULL;
+		return nullptr;
 	}
 	return it->second;
 }

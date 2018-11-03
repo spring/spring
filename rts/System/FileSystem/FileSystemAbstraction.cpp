@@ -15,15 +15,15 @@
 #include <cassert>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include "System/SpringRegex.h"
 
 #ifndef _WIN32
 	#include <dirent.h>
 	#include <sstream>
 	#include <unistd.h>
-	#include <time.h>
+	#include <ctime>
 #else
 	#include <windows.h>
 	#include <io.h>

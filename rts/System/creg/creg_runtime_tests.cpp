@@ -203,7 +203,7 @@ static bool TestCregClasses3()
 
 			prevMember = memberMap[i];
 			if (prevMember == &alignmentFixMember)
-				prevMember = NULL;
+				prevMember = nullptr;
 		}
 
 

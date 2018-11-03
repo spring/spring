@@ -18,13 +18,13 @@
 
 void TdfParser::TdfSection::print(std::ostream & out) const
 {
-	for (auto it = sections.cbegin(), e = sections.cend(); it != e; ++it) {
-		out << "[" << it->first << "]\n{\n";
-		it->second->print(out);
+	for (const auto& section: sections) {
+		out << "[" << section.first << "]\n{\n";
+		section.second->print(out);
 		out << "}\n";
 	}
-	for (auto it = values.cbegin(), e = values.cend(); it != e; ++it) {
-		out << it->first << "=" << it->second << ";\n";
+	for (const auto& value: values) {
+		out << value.first << "=" << value.second << ";\n";
 	}
 }
 
@@ -74,8 +74,8 @@ void TdfParser::TdfSection::add_name_value(const std::string& name, const std::s
 
 TdfParser::TdfSection::~TdfSection()
 {
-	for (auto it = sections.cbegin(), e = sections.cend(); it != e; ++it) {
-		delete it->second;
+	for (auto& section: sections) {
+		delete section.second;
 	}
 }
 
@@ -91,9 +91,7 @@ TdfParser::TdfParser(std::string const& filename)
 	LoadFile(filename);
 }
 
-TdfParser::~TdfParser()
-{
-}
+TdfParser::~TdfParser() = default;
 
 void TdfParser::print(std::ostream & out) const {
 	root_section.print(out);
@@ -233,11 +231,7 @@ bool TdfParser::GetValue(bool& val, const std::string& location) const
 		int tempval;
 		std::istringstream stream(buf);
 		stream >> tempval;
-		if (tempval == 0) {
-			val = false;
-		} else {
-			val = true;
-		}
+		val = (tempval != 0);
 		return true;
 	} else {
 		return false;
@@ -281,20 +275,20 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 
 	if (!loclist[0].empty()) {
 		std::string searchpath;
-		for (unsigned int i = 0; i < loclist.size(); i++) {
-			searchpath += loclist[i];
-			if (sectionsptr->find(loclist[i]) == sectionsptr->end()) {
+		for (const auto& loc: loclist) {
+			searchpath += loc;
+			if (sectionsptr->find(loc) == sectionsptr->end()) {
 				LOG_L(L_WARNING, "Section %s missing in file %s",
 						searchpath.c_str(), filename.c_str());
 				return returnvec;
 			}
-			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;
+			sectionsptr = &sectionsptr->find(loc)->second->sections;
 			searchpath += '\\';
 		}
 	}
 
-	for (auto it = sectionsptr->begin(); it != sectionsptr->end(); ++it) {
-		returnvec.push_back(it->first);
+	for (const auto& s: *sectionsptr) {
+		returnvec.push_back(s.first);
 		StringToLowerInPlace(returnvec.back());
 	}
 
@@ -330,7 +324,7 @@ std::vector<std::string> TdfParser::GetLocationVector(std::string const& locatio
 	std::string::size_type start = 0;
 	std::string::size_type next = 0;
 
-	while ((next = lowerd.find_first_of("\\", start)) != std::string::npos) {
+	while ((next = lowerd.find_first_of('\\', start)) != std::string::npos) {
 		loclist.push_back(lowerd.substr(start, next-start));
 		start = next + 1;
 	}

@@ -69,7 +69,7 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 	enabledSections += StringToLower(configHandler->GetString("LogSections"));
 #endif
 
-	if (getenv("SPRING_LOG_SECTIONS") != NULL) {
+	if (getenv("SPRING_LOG_SECTIONS") != nullptr) {
 		// allow disabling all sections from the env var by setting it to "none"
 		envSections += getenv("SPRING_LOG_SECTIONS");
 		envSections = StringToLower(envSections);
@@ -90,13 +90,13 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 
 	// n=1 because <enabledSections> always starts with a ',' (if non-empty)
 	for (size_t n = 1; n < enabledSections.size(); ) {
-		const size_t k = enabledSections.find(",", n);
+		const size_t k = enabledSections.find(',', n);
 
 		if (k != std::string::npos) {
 			const std::string& sub = enabledSections.substr(n, k - n);
 
 			if (!sub.empty()) {
-				const size_t sepChr = sub.find(":");
+				const size_t sepChr = sub.find(':');
 
 				const std::string& logSec = (sepChr != std::string::npos)? sub.substr(         0,            sepChr): sub;
 				const std::string& logLvl = (sepChr != std::string::npos)? sub.substr(sepChr + 1, std::string::npos):  "";
@@ -172,7 +172,7 @@ void CLogOutput::RotateLogFile() const
 
 void CLogOutput::Initialize()
 {
-	assert(configHandler != NULL);
+	assert(configHandler != nullptr);
 
 	if (IsInitialized())
 		return;
@@ -183,7 +183,7 @@ void CLogOutput::Initialize()
 		RotateLogFile();
 
 	log_filter_setRepeatLimit(configHandler->GetInt("LogRepeatLimit")); // all sinks
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
+	log_file_addLogFile(filePath.c_str(), nullptr, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 
 	LOG("LogOutput initialized. Logging to %s", filePath.c_str());
 }

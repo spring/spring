@@ -13,7 +13,7 @@
 #include <vector>
 #include <new>
 
-#include <signal.h>
+#include <csignal>
 #include <execinfo.h>
 #include <SDL_events.h>
 #include <sys/resource.h> // getrlimits

@@ -960,7 +960,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		// do not use LuaTable.GetInt() for 32-bit integers: the Spring lua
 		// library uses 32-bit floats to represent numbers, which can only
 		// represent 2^24 consecutive integers
-		ai.modified = strtoul(curArchiveTbl.GetString("modified", "0").c_str(), 0, 10);
+		ai.modified = strtoul(curArchiveTbl.GetString("modified", "0").c_str(), nullptr, 10);
 
 		// convert digest-string back to raw checksum
 		if (hexDigestStr.size() == (sha512::SHA_LEN * 2)) {
@@ -990,7 +990,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		BrokenArchive& ba = GetAddBrokenArchive(name);
 		ba.name = name;
 		ba.path = curArchive.GetString("path", "");
-		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
+		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), nullptr, 10);
 		ba.updated = false;
 		ba.problem = curArchive.GetString("problem", "unknown");
 	}
@@ -1003,7 +1003,7 @@ static inline void SafeStr(FILE* out, const char* prefix, const std::string& str
 	if (str.empty())
 		return;
 
-	if ( (str.find_first_of("\\\"") != std::string::npos) || (str.find_first_of("\n") != std::string::npos )) {
+	if ((str.find_first_of("\\\"") != std::string::npos) || (str.find_first_of('\n') != std::string::npos )) {
 		fprintf(out, "%s[[%s]],\n", prefix, str.c_str());
 	} else {
 		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
@@ -1092,8 +1092,8 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 			if (!deps.empty()) {
 				fprintf(out, "\t\t\t\tdepend = {\n");
-				for (unsigned d = 0; d < deps.size(); d++) {
-					SafeStr(out, "\t\t\t\t\t", deps[d]);
+				for (const auto& dep: deps) {
+					SafeStr(out, "\t\t\t\t\t", dep);
 				}
 				fprintf(out, "\t\t\t\t},\n");
 			}
