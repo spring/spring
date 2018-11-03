@@ -158,10 +158,10 @@ void SelectionWidget::AddAIScriptsFromArchive()
 
 	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
 
-	for (size_t i = 0; i < luaAIInfos.size(); i++) {
-		for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
+	for (const auto& luaAIInfo: luaAIInfos) {
+		for (const auto& prop: luaAIInfo) {
+			if (prop.key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				availableScripts.push_back(prop.GetValueAsString());
 		}
 	}
 	vfsHandler->RemoveArchive(userMap);

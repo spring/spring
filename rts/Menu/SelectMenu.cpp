@@ -120,11 +120,11 @@ private:
 };
 
 SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
-: GuiElement(NULL)
+: GuiElement(nullptr)
 , clientSetup(setup)
-, conWindow(NULL)
-, settingsWindow(NULL)
-, curSelect(NULL)
+, conWindow(nullptr)
+, settingsWindow(nullptr)
+, curSelect(nullptr)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -289,9 +289,11 @@ void SelectMenu::ShowSettingsList()
 	const std::map<std::string, std::string> &data = configHandler->GetData();
 	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
 	const DataSorted dataSorted(data.begin(), data.end());
-	for(DataSorted::const_iterator iter = dataSorted.begin(); iter != dataSorted.end(); ++iter)
-		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
-	if(data.find(userSetting) != data.end())
+
+	for (const auto& item: dataSorted)
+		curSelect->list->AddItem(item.first + " = " + item.second, "");
+
+	if (data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
 	curSelect->list->RefreshQuery();
 }
@@ -309,7 +311,7 @@ void SelectMenu::CleanWindow() {
 	if (curSelect) {
 		ShowSettingsWindow(false, "");
 		agui::gui->RmElement(curSelect);
-		curSelect = NULL;
+		curSelect = nullptr;
 	}
 }
 
