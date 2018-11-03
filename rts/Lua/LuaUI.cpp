@@ -331,12 +331,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	lua_pushnumber(L, dir.z);
 
 	// call the routine
-	// TODO: (bug?) Did we forget to return the result of RunCallIn?
-	if (!RunCallIn(L, cmdStr, 4, 0)) {
-		return;
-	}
-
-	return;
+	RunCallIn(L, cmdStr, 4, 0);
 }
 
 
