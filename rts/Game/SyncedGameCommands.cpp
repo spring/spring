@@ -44,7 +44,7 @@ public:
 			"Enables/Disables cheating, which is required for a lot of other"
 			" commands to be usable") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->cheatEnabled, action.GetArgs());
 		LogSystemStatus("Cheating", gs->cheatEnabled);
 		return true;
@@ -57,9 +57,9 @@ public:
 	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp",
 			"Enables/Disables widgets (LuaUI control)") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->noHelperAIs, action.GetArgs());
-		selectedUnitsHandler.PossibleCommandChange(NULL);
+		selectedUnitsHandler.PossibleCommandChange(nullptr);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 		return true;
 	}
@@ -71,7 +71,7 @@ public:
 	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw",
 			"Allows/Disallows spectators to draw on the map") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		bool allowSpecMapDrawing = inMapDrawer->GetSpecMapDrawingAllowed();
 		InverseOrSetBool(allowSpecMapDrawing, action.GetArgs(), true);
 		inMapDrawer->SetSpecMapDrawingAllowed(allowSpecMapDrawing);
@@ -87,7 +87,7 @@ public:
 			"(even spectators) to control all units (even during "
 			"replays, which will DESYNC them)", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
 		LogSystemStatus("God-Mode", gs->godMode);
@@ -103,7 +103,7 @@ public:
 			"Enables/Disables global line-of-sight, which makes the whole map"
 			" permanently visible to everyone or to a specific allyteam", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		const std::string& args = action.GetArgs();
 		const unsigned int argAllyTeam = atoi(args.c_str());
 		const unsigned int maxAllyTeam = teamHandler.ActiveAllyTeams();
@@ -135,7 +135,7 @@ public:
 			"Enables/Disables everything-for-free, which allows everyone"
 			" to build everything for zero resource costs", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		bool isFree = unitDefHandler->GetNoCost();
 		InverseOrSetBool(isFree, action.GetArgs());
 		unitDefHandler->SetNoCost(isFree);
@@ -152,7 +152,7 @@ public:
 			"Places one or multiple units of a single or multiple types on the"
 			" map, instantly; by default to your own team", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		// not for autohosts
 		if (!playerHandler.IsValidPlayer(action.GetPlayerID()))
 			return false;
@@ -167,7 +167,7 @@ public:
 	DestroyActionExecutor() : ISyncedActionExecutor("Destroy",
 			"Destroys one or multiple units by unit-ID, instantly", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		std::stringstream argsStream(action.GetArgs());
 		LOG("Killing units: %s", action.GetArgs().c_str());
 
@@ -197,7 +197,7 @@ public:
 	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat",
 			"Enables/Disables spectators to use the chat") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(game->noSpectatorChat, action.GetArgs());
 		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
 		return true;
@@ -210,7 +210,7 @@ public:
 	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB",
 			"Reloads COB scripts", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
 		return true;
 	}
@@ -222,7 +222,7 @@ public:
 	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs",
 			"Reloads CEG scripts", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		explGenHandler.ReloadGenerators(action.GetArgs());
 		return true;
 	}
@@ -235,7 +235,7 @@ public:
 			"Enables/Disables Lua dev-mode (can cause desyncs if enabled)",
 			true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		bool devMode = CLuaHandle::GetDevMode();
 		InverseOrSetBool(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
@@ -251,7 +251,7 @@ public:
 			"Allows/Disallows editing of unit-, feature- and weapon-defs"
 			" through Lua", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->editDefsEnabled, action.GetArgs());
 		LogSystemStatus("Unit-, Feature- & Weapon-Def editing", gs->editDefsEnabled);
 		return true;
@@ -347,7 +347,7 @@ public:
 		" to send a chat message to LuaRules scripts"
 	) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		// NOTE:
 		//   previously only the host player (ID == 0) was allowed to issue these actions
 		//   prior to some server changes they worked even in demos with that restriction,
@@ -367,7 +367,7 @@ public:
 		" to send a chat message to LuaGaia scripts"
 	) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		if (!gs->useLuaGaia)
 			return false;
 
@@ -384,7 +384,7 @@ public:
 			"Allows one to create an artificial desync of the local client with"
 			" the rest of the participating hosts", true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		ASSERT_SYNCED(gu->myPlayerNum * 123.0f);
 		ASSERT_SYNCED(gu->myPlayerNum * 123);
 		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
@@ -420,7 +420,7 @@ public:
 			"Gives 1000 metal and 1000 energy to the issuing players team",
 			true) {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		const std::string& args = action.GetArgs();
 
 		const int team = playerHandler.Player(action.GetPlayerID())->team;
@@ -439,7 +439,7 @@ public:
 			"Transfers all units of allied teams without any "
 			"active players to the team of the issuing player") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		const CPlayer* actionPlayer = playerHandler.Player(action.GetPlayerID());
 
 		if (actionPlayer->spectator && !gs->cheatEnabled) {
@@ -483,7 +483,7 @@ public:
 	SkipActionExecutor() : ISyncedActionExecutor("Skip",
 			"Fast-forwards to a given frame, or stops fast-forwarding") {}
 
-	bool Execute(const SyncedAction& action) const {
+	bool Execute(const SyncedAction& action) const final {
 		if (action.GetArgs().find_first_of("start") == 0) {
 			std::istringstream buf(action.GetArgs().substr(6));
 			int targetFrame;
@@ -545,7 +545,7 @@ void SyncedGameCommands::CreateInstance() {
 }
 
 void SyncedGameCommands::DestroyInstance() {
-	if (singleton != NULL) {
+	if (singleton != nullptr) {
 		spring::SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init

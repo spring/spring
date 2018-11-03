@@ -42,7 +42,7 @@ std::string CSelectionKeyHandler::ReadToken(std::string& str)
 std::string CSelectionKeyHandler::ReadDelimiter(std::string& str)
 {
 	std::string ret = str.substr(0, 1);
-	if (str.size() >= 1) {
+	if (!str.empty()) {
 		str = str.substr(1, std::string::npos);
 	} else {
 		str = "";
@@ -69,7 +69,7 @@ namespace {
 			return map;
 		}
 
-		virtual ~Filter() {}
+		virtual ~Filter() = default;
 
 		/// Called immediately before the filter is used.
 		virtual void Prepare() {}

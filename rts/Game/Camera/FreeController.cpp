@@ -277,8 +277,6 @@ void CFreeController::KeyMove(float3 move)
 	else {
 		avel.y += (aspeed * -qx); // spin
 	}
-
-	return;
 }
 
 

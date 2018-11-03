@@ -459,8 +459,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 {
 	const std::vector<string>& args = CSimpleParser::Tokenize(line, 0);
-	for (int i = 0; i < (int)args.size(); i++) {
-		const std::string& arg = args[i];
+	for (const std::string& arg : args) {
 		if (arg == "clear") {
 			selectedUnitsHandler.ClearSelected();
 		} else if ((arg[0] == '+') || (arg[0] == '-')) {
@@ -1047,8 +1046,8 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 
 	// NOTE: does not check for invalid unitIDs
 	*packet << static_cast<uint16_t>(unitIDCount);
-	for (auto it = unitIDs.cbegin(); it != unitIDs.cend(); ++it) {
-		*packet << static_cast<int16_t>(*it);
+	for (const int unitID: unitIDs) {
+		*packet << static_cast<int16_t>(unitID);
 	}
 
 	*packet << static_cast<uint16_t>(commandCount);
@@ -1069,5 +1068,4 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 	}
 
 	clientNet->Send(std::shared_ptr<netcode::RawPacket>(packet));
-	return;
 }

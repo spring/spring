@@ -15,8 +15,7 @@ CR_REG_METADATA(PlayerStatistics, (
 
 
 PlayerStatistics::PlayerStatistics()
-	: TeamControllerStatistics()
-	, mousePixels(0)
+	: mousePixels(0)
 	, mouseClicks(0)
 	, keyPresses(0)
 {

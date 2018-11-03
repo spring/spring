@@ -731,8 +731,8 @@ void CGame::LoadSkirmishAIs()
 	if (!localAIs.empty()) {
 		loadscreen->SetLoadMessage("Loading Skirmish AIs");
 
-		for (auto ai = localAIs.begin(); ai != localAIs.end(); ++ai) {
-			skirmishAIHandler.CreateLocalSkirmishAI(*ai);
+		for (auto& localAI: localAIs) {
+			skirmishAIHandler.CreateLocalSkirmishAI(localAI);
 		}
 	}
 }
@@ -846,8 +846,8 @@ void CGame::KillInterface()
 
 	LOG("[Game::%s][2]", __func__);
 
-	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
-		spring::SafeDelete(grouphandlers[i]);
+	for (auto& grouphandler: grouphandlers) {
+		spring::SafeDelete(grouphandler);
 	}
 
 	grouphandlers.clear();
@@ -1477,8 +1477,8 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		eoh->Update();
 
-		for (size_t a = 0; a < grouphandlers.size(); a++)
-			grouphandlers[a]->Update();
+		for (auto& grouphandler: grouphandlers)
+			grouphandler->Update();
 
 		CPlayer* p = playerHandler.Player(gu->myPlayerNum);
 		FPSUnitController& c = p->fpsController;
@@ -1650,7 +1650,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	const std::string& s = msg.msg;
 
 	if (!s.empty()) {
-		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler.Player(msg.fromPlayer);
+		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? nullptr : playerHandler.Player(msg.fromPlayer);
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
 
 		string label;
@@ -1723,8 +1723,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 
 
 void CGame::StartSkip(int toFrame) {
-	return; // FIXME: desyncs
-	#if 0
+	#if 0 // FIXME: desyncs
 	if (skipping)
 		LOG_L(L_ERROR, "skipping appears to be busted (%i)", skipping);
 
@@ -1757,8 +1756,7 @@ void CGame::StartSkip(int toFrame) {
 }
 
 void CGame::EndSkip() {
-	return; // FIXME
-	#if 0
+	#if 0 // FIXME
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;

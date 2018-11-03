@@ -22,7 +22,7 @@ public:
 	~CMouseCursor();
 
 	CMouseCursor& operator = (const CMouseCursor& mc) = delete;
-	CMouseCursor& operator = (CMouseCursor&& mc);
+	CMouseCursor& operator = (CMouseCursor&& mc) noexcept;
 
 	CMouseCursor(const std::string& name, HotSpot hs);
 

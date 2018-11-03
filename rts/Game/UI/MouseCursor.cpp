@@ -53,12 +53,12 @@ CMouseCursor::~CMouseCursor()
 		IHardwareCursor::Free(hwCursor);
 	}
 
-	for (auto it = images.begin(); it != images.end(); ++it)
-		glDeleteTextures(1, &it->texture);
+	for (auto& image: images)
+		glDeleteTextures(1, &image.texture);
 }
 
 
-CMouseCursor& CMouseCursor::operator = (CMouseCursor&& mc) {
+CMouseCursor& CMouseCursor::operator = (CMouseCursor&& mc) noexcept {
 	images = std::move(mc.images);
 	frames = std::move(mc.frames);
 

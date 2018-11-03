@@ -11,9 +11,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
-using std::min;
-using std::max;
-
 CONFIG(int, FPSScrollSpeed).defaultValue(10);
 CONFIG(float, FPSMouseScale).defaultValue(0.01f);
 CONFIG(bool, FPSEnabled).defaultValue(true);

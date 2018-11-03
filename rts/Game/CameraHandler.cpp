@@ -403,7 +403,6 @@ void CCameraHandler::SaveView(const std::string& name)
 	vd["mode"] = currCamCtrlNum;
 
 	camControllers[currCamCtrlNum]->GetState(vd);
-	return;
 }
 
 bool CCameraHandler::LoadView(const std::string& name)

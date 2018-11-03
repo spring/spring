@@ -13,7 +13,7 @@
 #include "System/creg/STL_List.h"
 
 
-CInMapDrawModel* inMapDrawerModel = NULL;
+CInMapDrawModel* inMapDrawerModel = nullptr;
 
 const size_t CInMapDrawModel::DRAW_QUAD_SIZE = 32;
 
@@ -82,7 +82,7 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label))
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, nullptr, &label))
 		return false;
 
 
@@ -116,7 +116,7 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 	pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 2.0f;
 	pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, nullptr)) {
 		return false;
 	}
 
@@ -144,7 +144,7 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 	pos.ClampInBounds();
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, nullptr, nullptr)) {
 		return;
 	}
 
@@ -188,9 +188,9 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 
 void CInMapDrawModel::EraseAll()
 {
-	for (size_t n = 0; n < drawQuads.size(); n++) {
-		drawQuads[n].points.clear();
-		drawQuads[n].lines.clear();
+	for (auto& drawQuad: drawQuads) {
+		drawQuad.points.clear();
+		drawQuad.lines.clear();
 	}
 	numPoints = 0;
 	numLines = 0;
