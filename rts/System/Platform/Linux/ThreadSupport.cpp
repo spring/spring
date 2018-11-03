@@ -150,12 +150,12 @@ void SetCurrentThreadControls(bool isLoadThread)
 	#ifndef WIN32
 	if (isLoadThread) {
 		// do nothing if Load is actually Main (LoadingMT=0 case)
-		if (GetCurrentThreadControls()) {
+		if (GetCurrentThreadControls() != nullptr) {
 			return;
 		}
 	}
 
-	if (threadCtls) {
+	if (threadCtls != nullptr) {
 		// old shared_ptr will be deleted by the reset below
 		LOG_L(L_WARNING, "Setting a ThreadControls object on a thread that already has such an object registered.");
 	} else {
@@ -168,7 +168,7 @@ void SetCurrentThreadControls(bool isLoadThread)
 	{
 		threadCtls.reset(new Threading::ThreadControls());
 
-		assert(threadCtls);
+		assert(threadCtls != nullptr);
 
 		threadCtls->handle = GetCurrentThread();
 		threadCtls->thread_id = gettid();
@@ -190,7 +190,7 @@ void ThreadStart(
 	// Install the SIGUSR1 handler
 	SetCurrentThreadControls(false);
 
-	assert(threadCtls);
+	assert(threadCtls != nullptr);
 
 	if (ppCtlsReturn != nullptr)
 		*ppCtlsReturn = threadCtls;
