@@ -263,8 +263,8 @@ void CDemoRecorder::WriteWinnerList()
 	const size_t pos = demoStreams[isServerDemo].size();
 
 	// Write the array of winningAllyTeams.
-	for (char winningAllyTeam: winningAllyTeams) {
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(winningAllyTeam), sizeof(unsigned char));
+	for (size_t i = 0; i < winningAllyTeams.size(); i++) {
+		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&winningAllyTeams[i]), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();
