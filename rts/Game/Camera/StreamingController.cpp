@@ -1,12 +1,13 @@
 #include "openh264.h"	
-
+#include  "asio.h"
 
 StreamingController::StreamingController(inet 
 ipAdress, unsigned int port){
 	//open bit stream
-	
-	outStream  = new std::stream()<	
+	udp::endpoint endpoint(tcp::v4(), 13); 
+	udp::acceptor(io_service, endpoint);  
 
+	acceptor.accept(*stream.rdbuf(), ec);
 
 }
 
@@ -15,8 +16,7 @@ StreamingController::initStream() {
 	ASSERT_EQ (0, rv);
 	ASSERT_TRUE (encoder_ != NULL);
 
-	SEncParamBase param;
-	memset (&param, 0, sizeof (SEncParamBase));
+	SEncParamBase para	memset (&param, 0, sizeof (SEncParamBase));
 	param.iUsageType = usageType;
 	param.fMaxFrameRate = frameRate;
 	param.iPicWidth = width;
@@ -35,7 +35,8 @@ StreamingController::initStream() {
 
 }
 
-StreamingController::EncodePicture(){
+StreamingController::EncodePicture(int width, int 
+height ){
 	int frameSize = width * height * 3 / 2;
 	BufferedData buf;
 	buf.SetLength (frameSize);
@@ -59,11 +60,15 @@ StreamingController::EncodePicture(){
 	   if (info.eFrameType != videoFrameTypeSkip && cbk != 
 	NULL) {
 		//TODOo
-	outStream =  current ImageBuffer;
-	    //output bitstream
+
+ if (!ec) {
+		{
+	 stream <<  imageBufferToByteStream();
+		  } catch (std::exception& e) {
+		 std::cerr << e.what() << std::endl;
+		 }
+	
 	   }
-
-
 }
 
 
