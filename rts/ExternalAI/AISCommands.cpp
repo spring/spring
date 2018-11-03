@@ -3,8 +3,8 @@
 #include "Interface/AISCommands.h"
 #include "Sim/Units/CommandAI/Command.h"
 
-#include <limits.h>
-#include <stdlib.h>
+#include <climits>
+#include <cstdlib>
 
 int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 	int internalUnitCommandTopic;
