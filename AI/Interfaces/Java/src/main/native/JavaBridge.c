@@ -729,7 +729,7 @@ static JNIEnv* java_getJNIEnv(bool preload)
 	JavaVM* jvm = NULL;
 
 	struct JavaVMInitArgs vm_args;
-	// memset(&vm_args, 0, sizeof(vm_args));
+	memset(&vm_args, 0, sizeof(vm_args));
 
 	jint res = 0;
 
