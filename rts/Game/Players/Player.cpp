@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <assert.h>
+#include <cassert>
 
 
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -40,8 +40,7 @@ CR_REG_METADATA(CPlayer, (
 //////////////////////////////////////////////////////////////////////
 
 CPlayer::CPlayer()
-	: PlayerBase()
-	, active(false)
+	: active(false)
 	, playerNum(-1)
 	, ping(0)
 {

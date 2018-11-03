@@ -83,7 +83,7 @@ void CGroup::ClearUnits()
 {
 	while (!units.empty()) {
 		CUnit* unit = unitHandler.GetUnit(*units.begin());
-		unit->SetGroup(0);
+		unit->SetGroup(nullptr);
 	}
 	handler->PushGroupChange(id);
 }

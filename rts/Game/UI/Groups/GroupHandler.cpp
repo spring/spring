@@ -72,7 +72,7 @@ void CGroupHandler::Update()
 
 bool CGroupHandler::GroupCommand(int num)
 {
-	std::string cmd = "";
+	std::string cmd;
 
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {
@@ -177,7 +177,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	if (selectedUnitsHandler.IsGroupSelected(group->id))
 		selectedUnitsHandler.ClearSelected();
 
-	groups[group->id] = NULL;
+	groups[group->id] = nullptr;
 	freeGroups.push_back(group->id);
 	delete group;
 }

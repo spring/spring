@@ -256,8 +256,8 @@ void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 
 	const std::vector<int>& playerUnitIDs = selectedUnitsHandler.netSelected[player];
 
-	for (auto ui = playerUnitIDs.begin(); ui != playerUnitIDs.end(); ++ui) {
-		CUnit* unit = unitHandler.GetUnit(*ui);
+	for (const int unitID: playerUnitIDs) {
+		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		if (unit == nullptr)
 			continue;
@@ -302,8 +302,8 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int player)
 
 	if (formationCenterPos.distance(formationRightPos) < playerUnitIDs.size() + 33) {
 		// if the front is not long enough, treat as a standard move
-		for (auto ui = playerUnitIDs.begin(); ui != playerUnitIDs.end(); ++ui) {
-			CUnit* unit = unitHandler.GetUnit(*ui);
+		for (const auto unitID: playerUnitIDs) {
+			CUnit* unit = unitHandler.GetUnit(unitID);
 
 			if (unit == nullptr)
 				continue;

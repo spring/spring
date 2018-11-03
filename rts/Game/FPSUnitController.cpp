@@ -19,9 +19,9 @@
 
 
 FPSUnitController::FPSUnitController()
-	: targetUnit(NULL)
-	, controllee(NULL)
-	, controller(NULL)
+	: targetUnit(nullptr)
+	, controllee(nullptr)
+	, controller(nullptr)
 	, viewDir(FwdVector)
 	, targetPos(FwdVector)
 	, targetDist(1000.0f)

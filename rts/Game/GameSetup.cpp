@@ -355,7 +355,7 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<st
 		if (data.hostPlayer == -1)
 			throw content_error("missing AI.Host in GameSetup script");
 
-		if (data.shortName == "")
+		if (data.shortName.empty())
 			throw content_error("missing AI.ShortName in GameSetup script");
 
 		if (file.SectionExist(section + "Options")) {
@@ -477,11 +477,11 @@ void CGameSetup::RemapPlayers()
 	}
 
 	// relocate AI.hostPlayer field
-	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
-		if (playerRemap.find(skirmishAIStartingData[a].hostPlayer) == playerRemap.end())
+	for (auto& startData: skirmishAIStartingData) {
+		if (playerRemap.find(startData.hostPlayer) == playerRemap.end())
 			throw content_error("invalid AI.Host in GameSetup script");
 
-		skirmishAIStartingData[a].hostPlayer = playerRemap[skirmishAIStartingData[a].hostPlayer];
+		startData.hostPlayer = playerRemap[startData.hostPlayer];
 	}
 }
 
@@ -501,22 +501,22 @@ void CGameSetup::RemapTeams()
 	}
 
 	// relocate AI.team field
-	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
-		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
+	for (auto& startData: skirmishAIStartingData) {
+		if (teamRemap.find(startData.team) == teamRemap.end())
 			throw content_error("invalid AI.Team in GameSetup script");
 
-		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
+		startData.team = teamRemap[startData.team];
 	}
 }
 
 void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
-	for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end())
+	for (auto& startData: teamStartingData) {
+		if (allyteamRemap.find(startData.teamAllyteam) == allyteamRemap.end())
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 
-		teamStartingData[a].teamAllyteam = allyteamRemap[teamStartingData[a].teamAllyteam];
+		startData.teamAllyteam = allyteamRemap[startData.teamAllyteam];
 	}
 }
 

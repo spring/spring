@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -723,7 +723,7 @@ void CKeyBindings::BuildHotkeyMap()
 
 	for (const auto& p: bindings) {
 		for (const Action& action: p.second) {
-			HotkeyList& hl = hotkeys[action.command + ((action.extra == "") ? "" : " " + action.extra)];
+			HotkeyList& hl = hotkeys[action.command + (action.extra.empty() ? "" : " " + action.extra)];
 			hl.insert(action.boundWith);
 		}
 	}

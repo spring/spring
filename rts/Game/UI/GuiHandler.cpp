@@ -730,13 +730,11 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 
 	// build a set to better find unwanted commands
-	for (unsigned int i = 0; i < removeCmds.size(); i++) {
-		const size_t index = removeCmds[i];
-
-		if (index < cmds.size()) {
-			removeIDs.insert(index);
+	for (int removeCmd : removeCmds) {
+		if (removeCmd < cmds.size()) {
+			removeIDs.insert(removeCmd);
 		} else {
-			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, int(index));
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, removeCmd);
 		}
 	}
 
@@ -751,68 +749,64 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	cmds = tmpCmds;
 
 	// add the custom commands
-	for (unsigned int i = 0; i < customCmds.size(); i++) {
-		customCmds[i].hidden = true;
-		cmds.push_back(customCmds[i]);
+	for (auto& customCmd : customCmds) {
+		customCmd.hidden = true;
+		cmds.push_back(customCmd);
 	}
 	const size_t cmdCount = cmds.size();
 
 	// set commands to onlyTexture
-	for (unsigned int i = 0; i < onlyTextureCmds.size(); i++) {
-		const size_t index = onlyTextureCmds[i];
-
-		if (index < cmdCount) {
-			cmds[index].onlyTexture = true;
+	for (int onlyTextureCmd : onlyTextureCmds) {
+		if (onlyTextureCmd < cmdCount) {
+			cmds[onlyTextureCmd].onlyTexture = true;
 		} else {
-			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, int(index));
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, onlyTextureCmd);
 		}
 	}
 
 	// retexture commands
-	for (unsigned int i = 0; i < reTextureCmds.size(); i++) {
-		const size_t index = reTextureCmds[i].cmdIndex;
+	for (const auto& reTextureCmd : reTextureCmds) {
+		const size_t index = reTextureCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].iconname = reTextureCmds[i].texture;
+			cmds[index].iconname = reTextureCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// reNamed commands
-	for (unsigned int i = 0; i < reNamedCmds.size(); i++) {
-		const size_t index = reNamedCmds[i].cmdIndex;
+	for (const auto& reNamedCmd : reNamedCmds) {
+		const size_t index = reNamedCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].name = reNamedCmds[i].texture;
+			cmds[index].name = reNamedCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reTooltip commands
-	for (unsigned int i = 0; i < reTooltipCmds.size(); i++) {
-		const size_t index = reTooltipCmds[i].cmdIndex;
+	for (const auto& reTooltipCmd : reTooltipCmds) {
+		const size_t index = reTooltipCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			cmds[index].tooltip = reTooltipCmds[i].texture;
+			cmds[index].tooltip = reTooltipCmd.texture;
 		} else {
 			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reParams commands
-	for (unsigned int i = 0; i < reParamsCmds.size(); i++) {
-		const size_t index = reParamsCmds[i].cmdIndex;
+	for (const auto& reParamsCmd: reParamsCmds) {
+		const size_t index = reParamsCmd.cmdIndex;
 
 		if (index < cmdCount) {
-			const auto& params = reParamsCmds[i].params;
-
-			for (auto pit = params.cbegin(); pit != params.cend(); ++pit) {
-				const size_t p = pit->first;
+			for (const auto& param: reParamsCmd.params) {
+				const size_t p = param.first;
 
 				if (p < cmds[index].params.size()) {
-					cmds[index].params[p] = pit->second;
+					cmds[index].params[p] = param.second;
 				}
 			}
 		} else {
@@ -823,8 +817,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 	int nextPos = 0;
 	// build the iconList from the map
-	for (auto mit = iconMap.cbegin(); mit != iconMap.cend(); ++mit) {
-		const int iconPos = mit->first;
+	for (const auto& item: iconMap) {
+		const int iconPos = item.first;
 
 		if (iconPos < nextPos)
 			continue;
@@ -836,7 +830,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			}
 		}
 
-		iconList.push_back(mit->second); // cmdIndex
+		iconList.push_back(item.second); // cmdIndex
 		nextPos = iconPos + 1;
 	}
 
@@ -907,7 +901,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser)
 {
-	commandsToGive.push_back(std::pair<const Command, bool>(cmd, fromUser));
+	commandsToGive.emplace_back(std::pair<const Command, bool>(cmd, fromUser));
 }
 
 
@@ -1093,7 +1087,7 @@ bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 	const CFeature* targetFeature = nullptr;
 
 	const float viewRange = camera->GetFarPlaneDist() * 1.4f;
-	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
+	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, nullptr, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
 	if (dist <= 0.0f)
@@ -1353,7 +1347,7 @@ bool CGuiHandler::SetActiveCommand(
 	bool shift
 ) {
 	// use the button value instead of rightMouseButton
-	const bool effectiveRMB = (button == SDL_BUTTON_LEFT) ? false : true;
+	const bool effectiveRMB = button != SDL_BUTTON_LEFT;
 
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
@@ -1493,8 +1487,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 
 	depth++;
 
-	for (size_t p = 0; p < cmds.size(); p++) {
-		std::string copy = cmds[p];
+	for (std::string copy: cmds) {
 
 		ModGroup inMods;  // must match for the action to execute
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
@@ -2251,7 +2244,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (mouse->buttons[button].movement < 4) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
-				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, NULL, unit, feature, true);
+				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, true);
 
 				if (dist2 > (camera->GetFarPlaneDist() * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
 					return defaultRet;
@@ -3575,7 +3568,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
 
-						if (cmdDesc.params.size() > 0)
+						if (!cmdDesc.params.empty())
 							maxSize = atof(cmdDesc.params[0].c_str());
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());

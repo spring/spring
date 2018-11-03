@@ -45,9 +45,7 @@ static void StringListStats(
 	maxWidth = 0.0f;
 	maxHeight = 0.0f;
 
-	for (int i = 0; i < (int)list.size(); i++) {
-		const CGameInfo::FontString& fs = list[i];
-
+	for (const CGameInfo::FontString& fs : list) {
 		maxWidth = std::max(maxWidth, fs.width);
 		maxHeight = std::max(maxHeight, fs.height);
 	}
@@ -89,51 +87,51 @@ CGameInfo::CGameInfo()
 	char buf[1024];
 
 	if (gameSetup->hostDemo) {
-		labels.push_back("Playback:");
-		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
+		labels.emplace_back("Playback:");
+		values.emplace_back(FileSystem::GetBasename(gameSetup->demoName));
 	}
 
-	labels.push_back("Spring Version:");
-	values.push_back(SpringVersion::GetFull());
+	labels.emplace_back("Spring Version:");
+	values.emplace_back(SpringVersion::GetFull());
 
-	labels.push_back("Game Speed:");
-	values.push_back(gs->speedFactor);
+	labels.emplace_back("Game Speed:");
+	values.emplace_back(gs->speedFactor);
 
-	labels.push_back("Map Gravity:");
+	labels.emplace_back("Map Gravity:");
 	sprintf(buf, "%.2f (%.2f e/f^2)", -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED), -mapInfo->map.gravity);
-	values.push_back(buf);
+	values.emplace_back(buf);
 
-	labels.push_back("Map Hardness:");
+	labels.emplace_back("Map Hardness:");
 	sprintf(buf, "%.2f", mapInfo->map.hardness);
-	values.push_back(buf);
+	values.emplace_back(buf);
 
-	labels.push_back("Map Tidal:");
-	values.push_back(envResHandler.GetCurrentTidalStrength());
+	labels.emplace_back("Map Tidal:");
+	values.emplace_back(envResHandler.GetCurrentTidalStrength());
 
-	labels.push_back("Map Wind:");
+	labels.emplace_back("Map Wind:");
 	sprintf(buf, "%.2f - %.2f (%.2f)", envResHandler.GetMinWindStrength(), envResHandler.GetMaxWindStrength(), envResHandler.GetAverageWindStrength());
-	values.push_back(buf);
+	values.emplace_back(buf);
 
-	labels.push_back("Map Size:");
+	labels.emplace_back("Map Size:");
 	sprintf(buf, "%ix%i", mapDims.mapx / 64, mapDims.mapy / 64);
-	values.push_back(buf);
+	values.emplace_back(buf);
 
-	labels.push_back("Map Name:");
-	values.push_back(gameSetup->mapName);
+	labels.emplace_back("Map Name:");
+	values.emplace_back(gameSetup->mapName);
 
-	labels.push_back("Game Name:");
-	values.push_back(gameSetup->modName);
+	labels.emplace_back("Game Name:");
+	values.emplace_back(gameSetup->modName);
 
-	labels.push_back("PFS Name:");
+	labels.emplace_back("PFS Name:");
 	switch (pathManager->GetPathFinderType()) {
-		case NOPFS_TYPE: { values.push_back("NOPFS"  ); } break;
-		case HAPFS_TYPE: { values.push_back("HAPFS"  ); } break;
-		case QTPFS_TYPE: { values.push_back("QTPFS"  ); } break;
-		default        : { values.push_back("UNKNOWN"); } break; // not reachable
+		case NOPFS_TYPE: { values.emplace_back("NOPFS"  ); } break;
+		case HAPFS_TYPE: { values.emplace_back("HAPFS"  ); } break;
+		case QTPFS_TYPE: { values.emplace_back("QTPFS"  ); } break;
+		default        : { values.emplace_back("UNKNOWN"); } break; // not reachable
 	}
 
-	labels.push_back("CHEATS:");
-	values.push_back(""); // dynamic, set in Draw
+	labels.emplace_back("CHEATS:");
+	values.emplace_back(""); // dynamic, set in Draw
 }
 
 CGameInfo::~CGameInfo()
@@ -183,7 +181,7 @@ void CGameInfo::MouseRelease(int x, int y, int button)
 		return;
 
 	if (!IsAbove(x, y))
-	return;
+		return;
 
 	delete this;
 }

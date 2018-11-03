@@ -206,7 +206,7 @@ void CUnitTracker::SetCam()
 		return;
 	}
 
-	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == 0) {
+	if (lastFollowUnit != 0 && unitHandler.GetUnitUnsafe(lastFollowUnit) == nullptr) {
 		timeOut = 1;
 		lastFollowUnit = 0;
 	}

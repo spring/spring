@@ -82,7 +82,7 @@ CR_REG_METADATA_SUB(CWaitCommandsAI,GatherWait , (
 
 CWaitCommandsAI::CWaitCommandsAI()
 {
-	assert(sizeof(float) == sizeof(KeyType));
+	static_assert(sizeof(float) == sizeof(KeyType));
 }
 
 
@@ -522,8 +522,6 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 	selectedUnitsHandler.GiveCommand(waitCmd);
 
 	AddDeathDependence(unit, DEPENDENCE_WAITCMD);
-
-	return;
 }
 
 
@@ -543,10 +541,7 @@ CWaitCommandsAI::TimeWait::TimeWait(int _duration, CUnit* _unit)
 }
 
 
-CWaitCommandsAI::TimeWait::~TimeWait()
-{
-	// do nothing
-}
+CWaitCommandsAI::TimeWait::~TimeWait() = default; // do nothing
 
 
 void CWaitCommandsAI::TimeWait::DependentDied(CObject* object)
@@ -700,15 +695,10 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 	for (const int unitID: deathUnits) {
 		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
-
-	return;
 }
 
 
-CWaitCommandsAI::DeathWait::~DeathWait()
-{
-	// do nothing
-}
+CWaitCommandsAI::DeathWait::~DeathWait() = default; // do nothing
 
 
 void CWaitCommandsAI::DeathWait::DependentDied(CObject* object)
@@ -899,15 +889,10 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	}
 
 	UpdateText();
-
-	return;
 }
 
 
-CWaitCommandsAI::SquadWait::~SquadWait()
-{
-	// do nothing
-}
+CWaitCommandsAI::SquadWait::~SquadWait() = default; // do nothing
 
 
 void CWaitCommandsAI::SquadWait::DependentDied(CObject* object)
@@ -1044,16 +1029,10 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	for (const int unitID: waitUnits) {
 		AddDeathDependence((CObject*) unitHandler.GetUnit(unitID), DEPENDENCE_WAITCMD);
 	}
-
-	return;
 }
 
 
-CWaitCommandsAI::GatherWait::~GatherWait()
-{
-	// do nothing
-}
-
+CWaitCommandsAI::GatherWait::~GatherWait() = default; // do nothing
 
 void CWaitCommandsAI::GatherWait::DependentDied(CObject* object)
 {

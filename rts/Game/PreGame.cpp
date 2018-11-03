@@ -122,7 +122,7 @@ void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
 {
 	assert(clientSetup->isHost);
 	savefile = ILoadSaveHandler::Create(usecreg);
-	savefile->LoadGameStartInfo(save.c_str());
+	savefile->LoadGameStartInfo(save);
 
 	StartServer(savefile->scriptText);
 }
@@ -420,9 +420,9 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->remove("SourcePort", false);
 		//tgame->remove("IsHost", false);
 
-		for (auto it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
-			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
-				it->second->AddPair("isfromdemo", 1);
+		for (auto& section: tgame->sections) {
+			if (section.first.size() > 6 && section.first.substr(0, 6) == "player") {
+				section.second->AddPair("isfromdemo", 1);
 			}
 		}
 

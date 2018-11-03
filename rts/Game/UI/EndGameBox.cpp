@@ -47,8 +47,7 @@ bool CEndGameBox::enabled = true;
 CEndGameBox* CEndGameBox::endGameBox = nullptr;
 
 CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
-	: CInputReceiver()
-	, winners(winningAllyTeams)
+	: winners(winningAllyTeams)
 {
 	endGameBox = this;
 	box.x1 = 0.14f;
@@ -284,12 +283,12 @@ void CEndGameBox::Draw()
 			winnersText << "Game Over! Ally-team(s) ";
 			winnersText << winnersList.str() << " won!";
 
-			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, (winnersText.str()).c_str());
+			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, winnersText.str());
 		} else {
 			winnersText.str("");
 			winnersText << "Game Over! Your ally-team ";
 			winnersText << (playedAndWon? "won!": "lost!");
-			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, (winnersText.str()).c_str());
+			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, winnersText.str());
 		}
 	}
 
@@ -306,8 +305,8 @@ void CEndGameBox::Draw()
 		const char* headers[] = {"Name", "MC/m", "MP/m", "KP/m", "Cmds/m", "ACS"};
 		char values[6][100];
 
-		for (int a = 0; a < 6; ++a) {
-			font->glPrint(box.x1 + xpos, box.y1 + 0.55f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, headers[a]);
+		for (const auto& header: headers) {
+			font->glPrint(box.x1 + xpos, box.y1 + 0.55f, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, header);
 			xpos += 0.1f;
 		}
 
@@ -330,8 +329,8 @@ void CEndGameBox::Draw()
 			SNPRINTF(values[5], 100, "%i", (pStats.numCommands != 0)? (pStats.unitCommands / pStats.numCommands): 0);
 
 			xpos = 0.01f;
-			for (int a = 0; a < 6; ++a) {
-				font->glPrint(box.x1 + xpos, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, values[a]);
+			for (const auto& value: values) {
+				font->glPrint(box.x1 + xpos, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, value);
 				xpos += 0.1f;
 			}
 
@@ -377,8 +376,8 @@ void CEndGameBox::Draw()
 		float ypos = 0.55f;
 		float maxy = 1.0f;
 
-		for (size_t a = 0; a < stats.size(); ++a) {
-			font->glPrint(box.x1 + 0.01f, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, stats[a].name);
+		for (const auto& stat: stats) {
+			font->glPrint(box.x1 + 0.01f, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, stat.name);
 			ypos -= 0.02f;
 		}
 
@@ -545,39 +544,39 @@ void CEndGameBox::FillTeamStats()
 		if (pteam->gaia)
 			continue;
 
-		for (auto si = pteam->statHistory.cbegin(); si != pteam->statHistory.cend(); ++si) {
+		for (const auto& si: pteam->statHistory) {
 			stats[ 0].AddStat(team, 0);
 
-			stats[ 1].AddStat(team, si->metalUsed);
-			stats[ 2].AddStat(team, si->energyUsed);
-			stats[ 3].AddStat(team, si->metalProduced);
-			stats[ 4].AddStat(team, si->energyProduced);
+			stats[ 1].AddStat(team, si.metalUsed);
+			stats[ 2].AddStat(team, si.energyUsed);
+			stats[ 3].AddStat(team, si.metalProduced);
+			stats[ 4].AddStat(team, si.energyProduced);
 
-			stats[ 5].AddStat(team, si->metalExcess);
-			stats[ 6].AddStat(team, si->energyExcess);
+			stats[ 5].AddStat(team, si.metalExcess);
+			stats[ 6].AddStat(team, si.energyExcess);
 
-			stats[ 7].AddStat(team, si->metalReceived);
-			stats[ 8].AddStat(team, si->energyReceived);
+			stats[ 7].AddStat(team, si.metalReceived);
+			stats[ 8].AddStat(team, si.energyReceived);
 
-			stats[ 9].AddStat(team, si->metalSent);
-			stats[10].AddStat(team, si->energySent);
+			stats[ 9].AddStat(team, si.metalSent);
+			stats[10].AddStat(team, si.energySent);
 
-			stats[11].AddStat(team, si->metalProduced + si->metalReceived - (si->metalUsed + si->metalSent+si->metalExcess) );
-			stats[12].AddStat(team, si->energyProduced + si->energyReceived - (si->energyUsed + si->energySent+si->energyExcess) );
+			stats[11].AddStat(team, si.metalProduced + si.metalReceived - (si.metalUsed + si.metalSent+si.metalExcess) );
+			stats[12].AddStat(team, si.energyProduced + si.energyReceived - (si.energyUsed + si.energySent+si.energyExcess) );
 
-			stats[13].AddStat(team, si->unitsProduced + si->unitsReceived + si->unitsCaptured - (si->unitsDied + si->unitsSent + si->unitsOutCaptured));
-			stats[14].AddStat(team, si->unitsKilled);
+			stats[13].AddStat(team, si.unitsProduced + si.unitsReceived + si.unitsCaptured - (si.unitsDied + si.unitsSent + si.unitsOutCaptured));
+			stats[14].AddStat(team, si.unitsKilled);
 
-			stats[15].AddStat(team, si->unitsProduced);
-			stats[16].AddStat(team, si->unitsDied);
+			stats[15].AddStat(team, si.unitsProduced);
+			stats[16].AddStat(team, si.unitsDied);
 
-			stats[17].AddStat(team, si->unitsReceived);
-			stats[18].AddStat(team, si->unitsSent);
-			stats[19].AddStat(team, si->unitsCaptured);
-			stats[20].AddStat(team, si->unitsOutCaptured);
+			stats[17].AddStat(team, si.unitsReceived);
+			stats[18].AddStat(team, si.unitsSent);
+			stats[19].AddStat(team, si.unitsCaptured);
+			stats[20].AddStat(team, si.unitsOutCaptured);
 
-			stats[21].AddStat(team, si->damageDealt);
-			stats[22].AddStat(team, si->damageReceived);
+			stats[21].AddStat(team, si.damageDealt);
+			stats[22].AddStat(team, si.damageReceived);
 		}
 	}
 }

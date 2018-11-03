@@ -106,9 +106,7 @@ CShareBox::CShareBox()
 	}
 }
 
-CShareBox::~CShareBox()
-{
-}
+CShareBox::~CShareBox() = default;
 
 void CShareBox::Draw()
 {

@@ -123,7 +123,7 @@ bool GameControllerTextInput::SendPromptInput() {
 		return false;
 
 	std::string msg = userInput;
-	std::string pfx = "";
+	std::string pfx;
 
 	if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 		pfx = userInput.substr(0, 2);

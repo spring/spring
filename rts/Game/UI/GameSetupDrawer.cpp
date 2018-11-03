@@ -59,9 +59,7 @@ GameSetupDrawer::GameSetupDrawer():
 	lctrl_pressed = false;
 }
 
-GameSetupDrawer::~GameSetupDrawer()
-{
-}
+GameSetupDrawer::~GameSetupDrawer() = default;
 
 
 void GameSetupDrawer::Draw()

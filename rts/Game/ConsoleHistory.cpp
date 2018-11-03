@@ -7,17 +7,15 @@ CConsoleHistory gameConsoleHistory;
 void CConsoleHistory::Init()
 {
 	lines.clear();
-	lines.push_back(""); // queue is never empty
+	lines.emplace_back(""); // queue is never empty
 
 	ResetPosition();
-	return;
 }
 
 
 void CConsoleHistory::ResetPosition()
 {
 	pos = lines.end();
-	return;
 }
 
 
