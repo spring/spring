@@ -4,7 +4,7 @@
 #include <functional>
 #include <pthread.h>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <fstream>
 #include <sys/syscall.h>
 
@@ -124,7 +124,7 @@ static bool SetThreadSignalHandler()
 	sigemptyset(&sigSet);
 	sigaddset(&sigSet, SIGUSR1);
 
-	err = pthread_sigmask(SIG_UNBLOCK, &sigSet, NULL);
+	err = pthread_sigmask(SIG_UNBLOCK, &sigSet, nullptr);
 
 	if (err != 0) {
 		LOG_L(L_FATAL, "Error while setting new pthread's signal mask: %s", strerror(err));
@@ -136,7 +136,7 @@ static bool SetThreadSignalHandler()
 	sa.sa_sigaction = ThreadSIGUSR1Handler;
 	sa.sa_flags |= SA_SIGINFO;
 
-	if (sigaction(SIGUSR1, &sa, NULL)) {
+	if (sigaction(SIGUSR1, &sa, nullptr)) {
 		LOG_L(L_FATAL,"Error while installing pthread SIGUSR1 handler.");
 		return false;
 	}
@@ -150,12 +150,12 @@ void SetCurrentThreadControls(bool isLoadThread)
 	#ifndef WIN32
 	if (isLoadThread) {
 		// do nothing if Load is actually Main (LoadingMT=0 case)
-		if ((GetCurrentThreadControls()).get() != nullptr) {
+		if (GetCurrentThreadControls()) {
 			return;
 		}
 	}
 
-	if (threadCtls.get() != nullptr) {
+	if (threadCtls) {
 		// old shared_ptr will be deleted by the reset below
 		LOG_L(L_WARNING, "Setting a ThreadControls object on a thread that already has such an object registered.");
 	} else {
@@ -168,7 +168,7 @@ void SetCurrentThreadControls(bool isLoadThread)
 	{
 		threadCtls.reset(new Threading::ThreadControls());
 
-		assert(threadCtls.get() != nullptr);
+		assert(threadCtls);
 
 		threadCtls->handle = GetCurrentThread();
 		threadCtls->thread_id = gettid();
@@ -190,7 +190,7 @@ void ThreadStart(
 	// Install the SIGUSR1 handler
 	SetCurrentThreadControls(false);
 
-	assert(threadCtls.get() != nullptr);
+	assert(threadCtls);
 
 	if (ppCtlsReturn != nullptr)
 		*ppCtlsReturn = threadCtls;

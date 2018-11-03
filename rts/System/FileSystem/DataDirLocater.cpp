@@ -19,7 +19,7 @@
 #include "System/Platform/Win/win32.h"
 #include <sstream>
 #include <cassert>
-#include <string.h>
+#include <cstring>
 
 #include "FileSystem.h"
 #include "CacheDir.h"
@@ -187,11 +187,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
 
-	if (FileSystem::DirExists(dataDir->path)) {
-		return true;
-	}
-
-	return false;
+	return FileSystem::DirExists(dataDir->path);
 }
 
 void DataDirLocater::FilterUsableDataDirs()
@@ -267,7 +263,7 @@ void DataDirLocater::AddPortableDir()
 	// unitsyncs/unitsync-0.83.1.0.exe
 	const std::string curWorkDirParent = FileSystem::GetParent(dd_curWorkDir);
 
-	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
+	if (!curWorkDirParent.empty() && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
 		AddDirs(curWorkDirParent); // "../"
 	}
 	AddDirs(dd_curWorkDir);
@@ -315,7 +311,7 @@ void DataDirLocater::AddEtcDirs()
 	// Linux, FreeBSD, Solaris, Apple non-bundle
 
 	// settings in /etc
-	std::string dd_etc = "";
+	std::string dd_etc;
 	{
 		FILE* fileH = ::fopen("/etc/spring/datadir", "r");
 		if (fileH) {
@@ -495,18 +491,15 @@ bool DataDirLocater::IsInstallDirDataDir()
 	const std::string dir = Platform::GetModulePath();
 	const std::string fileExe = dir + "/" + GetSpringBinaryName();
 
-	if (!FileSystem::FileExists(fileExe))
-		return false;
+	return FileSystem::FileExists(fileExe);
 
 #else
 	const std::string dir = Platform::GetProcessExecutablePath();
 	const std::string fileUnitsync = dir + "/" + GetUnitsyncLibName();
 
-	if (!FileSystem::FileExists(fileUnitsync))
-		return false;
+	return FileSystem::FileExists(fileUnitsync);
 
 #endif
-	return true;
 }
 
 

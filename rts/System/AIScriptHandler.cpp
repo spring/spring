@@ -51,11 +51,11 @@ CAIScriptHandler::CAIScriptHandler()
 	scriptMap.clear();
 	scriptMap.reserve(skirmishAIKeys.size());
 
-	for (auto i = skirmishAIKeys.begin(), e = skirmishAIKeys.end(); i != e; ++i) {
+	for (const auto& aiKey: skirmishAIKeys) {
 		SkirmishAIData aiData;
 
-		aiData.shortName = i->GetShortName();
-		aiData.version   = i->GetVersion();
+		aiData.shortName = aiKey.GetShortName();
+		aiData.version   = aiKey.GetVersion();
 		aiData.isLuaAI   = false;
 
 		scriptMap.emplace_back(std::move("Player vs. AI: " + aiData.shortName + " " + aiData.version), std::move(aiData));

@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 
 #include <zlib.h>
-#include <string.h> //strnlen
+#include <cstring> //strnlen
 
 static const int bufsize = 4096;
 
@@ -60,13 +60,13 @@ template <typename Lambda>
 static bool GetRapidEntry(const std::string& file, RapidEntry* re, Lambda p)
 {
 	gzFile in = gzopen(file.c_str(), "rb");
-	if (in == NULL) {
+	if (in == nullptr) {
 		LOG_L(L_ERROR, "couldn't open %s", file.c_str());
 		return false;
 	}
 
 	char buf[bufsize];
-	while (gzgets(in, buf, bufsize) != NULL) {
+	while (gzgets(in, buf, bufsize) != nullptr) {
 		size_t len = strnlen(buf, bufsize);
 		if (len <= 2) continue; //line to short/invalid, skip
 		if (buf[len-1] == '\n') len--;

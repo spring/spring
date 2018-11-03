@@ -199,8 +199,9 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::vector<TeamStatistics>&
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
 
-	for (auto it = stats.cbegin(); it != stats.cend(); ++it)
-		teamStats[teamNum].push_back(*it);
+	for (const auto& stat: stats) {
+		teamStats[teamNum].push_back(stat);
+	}
 }
 
 
@@ -262,8 +263,8 @@ void CDemoRecorder::WriteWinnerList()
 	const size_t pos = demoStreams[isServerDemo].size();
 
 	// Write the array of winningAllyTeams.
-	for (size_t i = 0; i < winningAllyTeams.size(); i++) {
-		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(&winningAllyTeams[i]), sizeof(unsigned char));
+	for (char winningAllyTeam: winningAllyTeams) {
+		demoStreams[isServerDemo].append(reinterpret_cast<const char*>(winningAllyTeam), sizeof(unsigned char));
 	}
 
 	winningAllyTeams.clear();

@@ -17,9 +17,9 @@ std::string CTimeUtil::GetCurrentTimeStr()
 	lt = _localtime64(&long_time);
 
 	// Don't see how this can happen (according to docs _localtime64 only returns
-	// NULL if long_time is before 1/1/1970...) but a user's stacktrace indicated
-	// NULL newtime in the snprintf line...
-	if (lt == NULL) {
+	// nullptr if long_time is before 1/1/1970...) but a user's stacktrace indicated
+	// nullptr newtime in the snprintf line...
+	if (lt == nullptr) {
 		throw content_error("error: _localtime64 returned NULL");
 	}
 

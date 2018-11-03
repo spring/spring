@@ -61,16 +61,16 @@ void CEventHandler::AddClient(CEventClient* ec)
 {
 	ListInsert(handles, ec);
 
-	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
-		const EventInfo& ei = it->second;
+	for (const auto& element: eventMap) {
+		const EventInfo& ei = element.second;
 
 		if (!ei.HasPropBit(MANAGED_BIT))
 			continue;
 
-		if (!ec->WantsEvent(it->first))
+		if (!ec->WantsEvent(element.first))
 			continue;
 
-		InsertEvent(ec, it->first);
+		InsertEvent(ec, element.first);
 	}
 }
 
@@ -81,13 +81,13 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 
 	ListRemove(handles, ec);
 
-	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
-		const EventInfo& ei = it->second;
+	for (const auto& element: eventMap) {
+		const EventInfo& ei = element.second;
 
 		if (!ei.HasPropBit(MANAGED_BIT))
 			continue;
 
-		RemoveEvent(ec, it->first);
+		RemoveEvent(ec, element.first);
 	}
 }
 
@@ -99,8 +99,8 @@ void CEventHandler::GetEventList(std::vector<std::string>& list) const
 {
 	list.clear();
 
-	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
-		list.push_back(it->first);
+	for (const auto& element: eventMap) {
+		list.push_back(element.first);
 	}
 }
 

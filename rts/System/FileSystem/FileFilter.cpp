@@ -5,8 +5,8 @@
 
 #include "System/SpringRegex.h"
 
-#include <limits.h>
-#include <ctype.h>
+#include <climits>
+#include <cctype>
 #include <sstream>
 #include <vector>
 
@@ -17,17 +17,17 @@ using std::vector;
 class CFileFilter : public IFileFilter
 {
 public:
-	void AddRule(const string& rule);
-	bool Match(const string& filename) const;
+	void AddRule(const string& rule) override;
+	bool Match(const string& filename) const override;
 
 private:
 	string glob_to_regex(const string& glob);
 
 	struct Rule {
-		Rule() : negate(false) {}
+		Rule() = default;
 		string glob;
 		spring::regex regex;
-		bool negate;
+		bool negate = false;
 	};
 
 	vector<Rule> rules;
@@ -119,9 +119,9 @@ void CFileFilter::AddRule(const string& rule)
 bool CFileFilter::Match(const string& filename) const
 {
 	bool match = false;
-	for (vector<Rule>::const_iterator it = rules.begin(); it != rules.end(); ++it) {
-		if (spring::regex_search(filename, it->regex))
-			match = !it->negate;
+	for (const auto& rule: rules) {
+		if (spring::regex_search(filename, rule.regex))
+			match = !rule.negate;
 	}
 	return match;
 }

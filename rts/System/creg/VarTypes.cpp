@@ -9,7 +9,7 @@
 
 #include "System/StringUtil.h"
 
-#include <assert.h>
+#include <cassert>
 
 using namespace creg;
 

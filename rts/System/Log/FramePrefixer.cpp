@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 // GlobalSynced makes sure this can not be dangling
-static int* frameNumRef = NULL;
+static int* frameNumRef = nullptr;
 
 void log_framePrefixer_setFrameNumReference(int* frameNumReference)
 {
@@ -24,7 +24,7 @@ void log_framePrefixer_setFrameNumReference(int* frameNumReference)
 
 size_t log_framePrefixer_createPrefix(char* result, size_t resultSize)
 {
-	if (frameNumRef == NULL) {
+	if (frameNumRef == nullptr) {
 		if (resultSize > 0) {
 			result[0] = '\0';
 			return 1;

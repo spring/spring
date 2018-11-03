@@ -298,8 +298,8 @@ void CTimeProfiler::ResortProfilesRaw()
 		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
 
 		// either caller already has lock, or we are disabled and thread-safe
-		for (auto it = profiles.begin(); it != profiles.end(); ++it) {
-			sortedProfiles.emplace_back(it->first, it->second);
+		for (const auto& profile: profiles) {
+			sortedProfiles.emplace_back(profile.first, profile.second);
 		}
 
 		std::sort(sortedProfiles.begin(), sortedProfiles.end(), sortFunc);
@@ -323,12 +323,12 @@ void CTimeProfiler::RefreshProfilesRaw()
 {
 	// either called from ProfileDrawer or from Update; the latter
 	// makes the "/debuginfo profiling" command work when disabled
-	for (auto it = sortedProfiles.begin(); it != sortedProfiles.end(); ++it) {
-		TimeRecord& rec = it->second;
+	for (auto& sortedProfile: sortedProfiles) {
+		TimeRecord& rec = sortedProfile.second;
 
 		const bool showGraph = rec.showGraph;
 
-		rec = profiles[it->first];
+		rec = profiles[sortedProfile.first];
 		rec.showGraph = showGraph;
 	}
 }
@@ -420,9 +420,9 @@ void CTimeProfiler::PrintProfilingInfo() const
 
 	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
 
-	for (auto pi = sortedProfiles.begin(); pi != sortedProfiles.end(); ++pi) {
-		const std::string& name = pi->first;
-		const TimeRecord& tr = pi->second;
+	for (const auto& sortedProfile: sortedProfiles) {
+		const std::string& name = sortedProfile.first;
+		const TimeRecord& tr = sortedProfile.second;
 
 		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.stats.y * 100);
 	}

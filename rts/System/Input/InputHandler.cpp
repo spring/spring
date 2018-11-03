@@ -5,9 +5,7 @@
 
 InputHandler input;
 
-InputHandler::InputHandler()
-{
-}
+InputHandler::InputHandler() = default;
 
 void InputHandler::PushEvent(const SDL_Event& ev)
 {

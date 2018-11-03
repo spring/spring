@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -79,7 +79,7 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 				else if (flags & MBF_INFO) {
 					type = "--info";
 				}
-				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
+				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)nullptr);
 			}
 			if (kde && strstr(kde, "true")) {
 				if (flags & MBF_CRASH) {
@@ -91,9 +91,9 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 				else if (flags & MBF_INFO) {
 					type = "--msgbox";
 				}
-				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)NULL);
+				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)nullptr);
 			}
-			execlp("xmessage", "xmessage", "-title", caption2, "-buttons", "OK:0", "-default", "OK", "-center", msg2, (char*)NULL);
+			execlp("xmessage", "xmessage", "-title", caption2, "-buttons", "OK:0", "-default", "OK", "-center", msg2, (char*)nullptr);
 
 			// if execution reaches here, it means execlp failed
 			_exit(EXIT_FAILURE);

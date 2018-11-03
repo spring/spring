@@ -21,19 +21,19 @@ static_assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE isn't 0");
 
 class LuaContext{
 public:
-	LuaContext() : context(nullptr), frealloc(nullptr), panic(nullptr) { }
+	LuaContext() = default;
 	void* alloc(size_t n) const {
 		assert(context != nullptr && frealloc != nullptr);
-		return frealloc(context, NULL, 0, n);
+		return frealloc(context, nullptr, 0, n);
 	}
 	void SetContext(void* newLcd, lua_Alloc newfrealloc, lua_CFunction newPanic) { context = newLcd; frealloc = newfrealloc; panic = newPanic; }
 	lua_CFunction GetPanic() const { return panic; }
 	void* GetContext() const { return context; }
 	lua_Alloc Getfrealloc() const { return frealloc; }
 private:
-	void* context;
-	lua_Alloc frealloc;
-	lua_CFunction panic;
+	void* context = nullptr;
+	lua_Alloc frealloc = nullptr;
+	lua_CFunction panic = nullptr;
 };
 
 void freeProtector(void *m) {
@@ -813,8 +813,8 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		assert(base_ci == ci);
 		assert(end_ci == base_ci + size_ci - 1);
 
-		assert(hook == NULL);
-		assert(errorJmp == NULL);
+		assert(hook == nullptr);
+		assert(errorJmp == nullptr);
 	} else {
 		// adapted from stack_init lstate.cpp
 		base_ci = (CallInfo *) luaContext.alloc(size_ci * sizeof(*base_ci));
@@ -830,8 +830,8 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		base = ci->base = top;
 		ci->top = top + LUA_MINSTACK;
 
-		errorJmp = NULL;
-		hook = NULL;
+		errorJmp = nullptr;
+		hook = nullptr;
 	}
 }
 
@@ -839,12 +839,12 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 void creg_global_State::Serialize(creg::ISerializer* s)
 {
 	if (s->IsWriting()) {
-		assert(fopen_func  == NULL);
-		assert(popen_func  == NULL);
-		assert(pclose_func == NULL);
-		assert(system_func == NULL);
-		assert(remove_func == NULL);
-		assert(rename_func == NULL);
+		assert(fopen_func  == nullptr);
+		assert(popen_func  == nullptr);
+		assert(pclose_func == nullptr);
+		assert(system_func == nullptr);
+		assert(remove_func == nullptr);
+		assert(rename_func == nullptr);
 		char pointsToRoot = sweepgc == &rootgc ? 1 : 0;
 		s->SerializeInt(&pointsToRoot, sizeof(char));
 		// if it doesn't point into rootgc, it must point to some valid GCObject's
@@ -853,16 +853,16 @@ void creg_global_State::Serialize(creg::ISerializer* s)
 		if (sweepgc != &rootgc)
 			SerializePtr(s, (creg_GCObject**) &sweepgc);
 	} else {
-		buff.buffer = NULL;
+		buff.buffer = nullptr;
 		buff.buffsize = 0;
 		buff.n = 0;
 
-		fopen_func  = NULL;
-		popen_func  = NULL;
-		pclose_func = NULL;
-		system_func = NULL;
-		remove_func = NULL;
-		rename_func = NULL;
+		fopen_func  = nullptr;
+		popen_func  = nullptr;
+		pclose_func = nullptr;
+		system_func = nullptr;
+		remove_func = nullptr;
+		rename_func = nullptr;
 		char pointsToRoot;
 		s->SerializeInt(&pointsToRoot, sizeof(char));
 		if (pointsToRoot) {
