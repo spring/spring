@@ -117,11 +117,11 @@ private:
 
 
 SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
-: GuiElement(NULL)
+: GuiElement(nullptr)
 , clientSetup(setup)
-, conWindow(NULL)
-, settingsWindow(NULL)
-, curSelect(NULL)
+, conWindow(nullptr)
+, settingsWindow(nullptr)
+, curSelect(nullptr)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -288,8 +288,8 @@ void SelectMenu::ShowSettingsList()
 	const std::map<std::string, std::string>& data = configHandler->GetData();
 	const DataSorted dataSorted(data.begin(), data.end());
 
-	for (auto iter = dataSorted.cbegin(); iter != dataSorted.cend(); ++iter)
-		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
+	for (const auto& item: dataSorted)
+		curSelect->list->AddItem(item.first + " = " + item.second, "");
 
 	if (data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
@@ -310,7 +310,7 @@ void SelectMenu::CleanWindow() {
 	if (curSelect) {
 		ShowSettingsWindow(false, "");
 		agui::gui->RmElement(curSelect);
-		curSelect = NULL;
+		curSelect = nullptr;
 	}
 }
 
