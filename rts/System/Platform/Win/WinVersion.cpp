@@ -3,6 +3,8 @@
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <codecvt>
+#include <locale> // std::wstring_convert
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x500
@@ -274,11 +276,22 @@ std::string windows::GetDisplayString(bool getName, bool getVersion, bool getExt
 	}
 
 	if (getExtra) {
-		// include service pack (if any) and build number
-		oss << ((osvi.szCSDVersion[0] != 0)?               " ":  "");
-		oss << ((osvi.szCSDVersion[0] != 0)? osvi.szCSDVersion: L"");
+		// include build number and service pack (if any)
+		oss << " (build " << osvi.dwBuildNumber;
 
-		oss << " (build " << osvi.dwBuildNumber << ")";
+		if (osvi.szCSDVersion[0] != 0) {
+			static_assert(sizeof(wchar_t) >= sizeof(osvi.szCSDVersion[0]), "");
+
+			// Windows uses UTF16
+			std::wstring_convert<std::codecvt_utf16<wchar_t>, wchar_t> ws2s;
+
+			const std::wstring wstr(osvi.szCSDVersion);
+			const std::string nstr(ws2s.to_bytes(wstr));
+
+			oss << ", " << nstr;
+		}
+
+		oss << ")";
 	}
 
 	return oss.str();
