@@ -4666,7 +4666,7 @@ static int ParseStringVector(lua_State* L, int index, vector<string>& strvec)
 	while (true) {
 		lua_rawgeti(L, index, i);
 		if (lua_isstring(L, -1)) {
-			strvec.push_back(lua_tostring(L, -1));
+			strvec.emplace_back(lua_tostring(L, -1));
 			lua_pop(L, 1);
 			i++;
 		} else {
