@@ -247,7 +247,7 @@ static bool BackupTable(LuaUtils::DataDump &d, lua_State* src, int index, int de
 		LuaUtils::DataDump dk, dv;
 		BackupData(dk, src, -2, depth);
 		BackupData(dv, src, -1, depth);
-		d.table.push_back(std::pair<LuaUtils::DataDump, LuaUtils::DataDump>(dk ,dv));
+		d.table.emplace_back(dk ,dv);
 	}
 
 	return true;
@@ -278,7 +278,7 @@ int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &backup, lua_State* src, in
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
 	for (int i = startIndex; i <= endIndex; i++) {
-		backup.push_back(DataDump());
+		backup.emplace_back();
 		BackupData(backup.back(), src, i, 0);
 	}
 
@@ -653,7 +653,7 @@ int LuaUtils::ParseStringVector(lua_State* L, int index, vector<string>& vec)
 		lua_rawgeti(L, absIdx, (i + 1));
 
 		if (lua_isstring(L, -1)) {
-			vec.push_back(lua_tostring(L, -1));
+			vec.emplace_back(lua_tostring(L, -1));
 			lua_pop(L, 1);
 		} else {
 			lua_pop(L, 1);
