@@ -317,8 +317,8 @@ void CFreeController::MouseWheelMove(float move)
 	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
 	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
-	KeyInput::SetKeyModState(KMOD_CTRL, 0);
-	KeyInput::SetKeyModState(KMOD_SHIFT, 1);
+	KeyInput::SetKeyModState(KMOD_CTRL, false);
+	KeyInput::SetKeyModState(KMOD_SHIFT, true);
 
 	KeyMove(float3(0.0f, move, 0.0f));
 

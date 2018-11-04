@@ -47,7 +47,7 @@ void sha512::calc_digest(const uint8_t msg_bytes[], size_t len, uint8_t sha_byte
 
 	size_t ofs = len & (~static_cast<size_t>(BLK_LEN - 1));
 
-	assert(sizeof(STATE_CONSTS) == (NUM_STATE_CONSTS * sizeof(uint64_t)));
+	static_assert(sizeof(STATE_CONSTS) == (NUM_STATE_CONSTS * sizeof(uint64_t)), "");
 	std::memcpy(&state[0], &STATE_CONSTS[0], sizeof(STATE_CONSTS));
 	dm_compress(state, msg_bytes, ofs);
 

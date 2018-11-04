@@ -192,10 +192,9 @@ bool CMouseCursor::BuildFromFileNames(const std::string& name, int lastFrame)
 	// find the image file type to use
 	const char* ext = "";
 	const char* exts[] = {"png", "tga", "bmp"};
-	const int extCount = sizeof(exts) / sizeof(exts[0]);
 
-	for (int e = 0; e < extCount; e++) {
-		ext = exts[e];
+	for (auto& e: exts) {
+		ext = e;
 
 		if (CFileHandler::FileExists("anims/" + name + "_0." + std::string(ext), SPRING_VFS_RAW_FIRST))
 			break;

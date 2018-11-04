@@ -224,7 +224,7 @@ void COutputStreamSerializer::SerializeObjectPtr(void** ptr, creg::Class* objCla
 		int id;
 		ObjectRef* obj = FindObjectRef(*ptr, objClass, false);
 		if (!obj) {
-			objects.push_back(ObjectRef(*ptr, objects.size(), false, objClass));
+			objects.emplace_back(*ptr, objects.size(), false, objClass);
 			obj = &objects.back();
 			ptrToId[*ptr].push_back(obj);
 			pendingObjects.push_back(obj);
@@ -284,7 +284,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	obj->classIndex = 0;
 
 	// Insert the first object that will provide references to everything
-	objects.push_back(ObjectRef(rootObj, objects.size(), false, rootObjClass));
+	objects.emplace_back(rootObj, objects.size(), false, rootObjClass);
 	obj = &objects.back();
 	ptrToId[rootObj].push_back(obj);
 	pendingObjects.push_back(obj);

@@ -22,7 +22,7 @@
 #include "System/Log/ILog.h"
 
 #include <vector>
-#include <stdlib.h> // malloc(), calloc(), free()
+#include <cstdlib> // malloc(), calloc(), free()
 #include <sstream> // ostringstream
 #include <cstring>
 
