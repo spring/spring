@@ -7,10 +7,7 @@ CSimpleMapGenerator::CSimpleMapGenerator(const CGameSetup* setup) : CMapGenerato
 	GenerateInfo();
 }
 
-CSimpleMapGenerator::~CSimpleMapGenerator()
-{
-
-}
+CSimpleMapGenerator::~CSimpleMapGenerator() = default;
 
 void CSimpleMapGenerator::GenerateInfo()
 {
@@ -19,8 +16,8 @@ void CSimpleMapGenerator::GenerateInfo()
 
 void CSimpleMapGenerator::GenerateMap()
 {
-	startPositions.push_back(int2(20, 20));
-	startPositions.push_back(int2(500, 500));
+	startPositions.emplace_back(20, 20);
+	startPositions.emplace_back(500, 500);
 
 	mapDescription = "The Split Canyon";
 
