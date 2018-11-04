@@ -50,8 +50,8 @@ bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool pers
 
 void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
 {
-	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
-		Shader::IProgramObject* po = it->second;
+	for (const auto& item: poMap) {
+		Shader::IProgramObject* po = item.second;
 
 		// free the program object and its attachments
 		if (po == Shader::nullProgramObject)

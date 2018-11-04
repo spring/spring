@@ -121,8 +121,7 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 
 
 CSpherePartSpawner::CSpherePartSpawner()
-	: CProjectile()
-	, alpha(0.0f)
+	: alpha(0.0f)
 	, ttl(0)
 	, expansionSpeed(0.0f)
 	, color(ZeroVector)

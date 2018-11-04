@@ -3,7 +3,7 @@
 #include "IconHandler.h"
 
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <locale>
 #include <cctype>
 #include <cmath>
@@ -16,7 +16,6 @@
 #include "System/Exceptions.h"
 
 namespace icon {
-using std::string;
 
 CIconHandler* iconHandler = nullptr;
 CIconData CIconHandler::safetyData;
@@ -51,7 +50,7 @@ CIconHandler::~CIconHandler()
 }
 
 
-bool CIconHandler::LoadIcons(const string& filename)
+bool CIconHandler::LoadIcons(const std::string& filename)
 {
 	LuaParser luaParser(filename, SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
@@ -61,11 +60,10 @@ bool CIconHandler::LoadIcons(const string& filename)
 
 	const LuaTable iconTypes = luaParser.GetRoot();
 
-	std::vector<string> iconNames;
+	std::vector<std::string> iconNames;
 	iconTypes.GetKeys(iconNames);
 
-	for (size_t i = 0; i < iconNames.size(); i++) {
-		const string& iconName = iconNames[i];
+	for (const std::string& iconName : iconNames) {
 		const LuaTable iconTable = iconTypes.SubTable(iconName);
 		AddIcon(
 			iconName,
@@ -80,7 +78,7 @@ bool CIconHandler::LoadIcons(const string& filename)
 }
 
 
-bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
+bool CIconHandler::AddIcon(const std::string& iconName, const std::string& textureName,
                            float size, float distance, bool radAdj)
 {
 	unsigned int texID;
@@ -127,7 +125,7 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 }
 
 
-bool CIconHandler::FreeIcon(const string& iconName)
+bool CIconHandler::FreeIcon(const std::string& iconName)
 {
 	auto it = iconMap.find(iconName);
 	if (it == iconMap.end())
@@ -143,7 +141,7 @@ bool CIconHandler::FreeIcon(const string& iconName)
 }
 
 
-CIcon CIconHandler::GetIcon(const string& iconName) const
+CIcon CIconHandler::GetIcon(const std::string& iconName) const
 {
 	auto it = iconMap.find(iconName);
 

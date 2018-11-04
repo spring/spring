@@ -192,8 +192,7 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
 	texFiles.reserve(files.size() + CTAPalette::NUM_PALETTE_ENTRIES);
 
-	for (auto fi = files.begin(); fi != files.end(); ++fi) {
-		const std::string& s = *fi;
+	for (const std::string& s: files) {
 		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority

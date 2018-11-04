@@ -490,8 +490,8 @@ CBumpWater::~CBumpWater()
 
 	glDeleteTextures(1, &foamTexture);
 	glDeleteTextures(1, &normalTexture);
-	for (size_t i = 0; i < caustTextures.size(); ++i) {
-		glDeleteTextures(1, &caustTextures[i]);
+	for (auto tex : caustTextures) {
+		glDeleteTextures(1, &tex);
 	}
 
 	waterPlaneBuffer.Kill();
@@ -778,7 +778,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 		if ((currentPixels + cuRect1.GetArea() <= 512 * 512) || forceFull) {
 			currentPixels += cuRect1.GetArea();
-			coastmapAtlasRects.push_back(cuRect1);
+			coastmapAtlasRects.emplace_back(cuRect1);
 			heightmapUpdates.pop_front();
 			continue;
 		}

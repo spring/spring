@@ -25,8 +25,7 @@ CR_REG_METADATA(CBubbleProjectile, (
 
 
 CBubbleProjectile::CBubbleProjectile()
-	: CProjectile()
-	, ttl(0)
+	: ttl(0)
 	, alpha(0.0f)
 	, size(0.0f)
 	, startSize(0.0f)

@@ -52,7 +52,6 @@ CDirtProjectile::CDirtProjectile(
 }
 
 CDirtProjectile::CDirtProjectile() :
-	CProjectile(),
 	alpha(255.0f),
 	alphaFalloff(10.0f),
 	size(10.0f),

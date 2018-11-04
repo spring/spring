@@ -29,9 +29,7 @@ CR_REG_METADATA(CHeatCloudProjectile,
 
 
 CHeatCloudProjectile::CHeatCloudProjectile()
-	: CProjectile()
-
-	, heat(0.0f)
+	: heat(0.0f)
 	, maxheat(0.0f)
 	, heatFalloff(0.0f)
 	, size(0.0f)

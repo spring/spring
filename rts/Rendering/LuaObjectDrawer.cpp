@@ -382,10 +382,10 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;
 
-	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		assert(matType == (*it)->type);
-		DrawMaterialBin(*it, prevMat, objType, matType, deferredPass, inAlphaBin);
-		prevMat = *it;
+	for (const auto& bin: bins) {
+		assert(matType == bin->type);
+		DrawMaterialBin(bin, prevMat, objType, matType, deferredPass, inAlphaBin);
+		prevMat = bin;
 	}
 
 	LuaMaterial::defMat.Execute(*prevMat, deferredPass);

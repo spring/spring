@@ -338,8 +338,8 @@ void CAdvWater::UpdateWater(CGame* game)
 
 #else
 
-CAdvWater::CAdvWater() {}
-CAdvWater::~CAdvWater() {}
+CAdvWater::CAdvWater() = default;
+CAdvWater::~CAdvWater() = default;
 
 void CAdvWater::Draw() {}
 void CAdvWater::Draw(bool useBlending) {}

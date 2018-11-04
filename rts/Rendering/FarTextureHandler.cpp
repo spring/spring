@@ -59,7 +59,7 @@ CFarTextureHandler::CFarTextureHandler()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	fbo.Bind();
 	fbo.AttachTexture(farTextureID);
@@ -90,7 +90,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int farTextureNum, const int 
 
 	const int row = texnum       / (texSize.x / iconSize.x);
 	const int col = texnum - row * (texSize.x / iconSize.x);
-	return int2(col, row);
+	return { col, row };
 }
 
 /**

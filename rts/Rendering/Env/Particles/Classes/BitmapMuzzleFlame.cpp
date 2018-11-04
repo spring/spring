@@ -32,10 +32,9 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 ))
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame()
-	: CProjectile()
-	, sideTexture(NULL)
-	, frontTexture(NULL)
-	, colorMap(NULL)
+	: sideTexture(nullptr)
+	, frontTexture(nullptr)
+	, colorMap(nullptr)
 	, size(0.0f)
 	, length(0.0f)
 	, sizeGrowth(0.0f)

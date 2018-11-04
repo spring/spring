@@ -173,8 +173,8 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
-	for (auto ti = fboTexData.begin(); ti != fboTexData.end(); ++ti) {
-		const FBO::TexData& tex = ti->second;
+	for (auto& item: fboTexData) {
+		const FBO::TexData& tex = item.second;
 
 		if (glIsTexture(tex.id)) {
 			glBindTexture(tex.target, tex.id);
@@ -242,8 +242,8 @@ void FBO::Kill()
 	{
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-		for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
-			glDeleteRenderbuffers(1, &(*ri));
+		for (auto rboID: rboIDs) {
+			glDeleteRenderbuffers(1, &rboID);
 		}
 
 		rboIDs.clear();

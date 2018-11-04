@@ -26,8 +26,7 @@ CR_REG_METADATA(CExploSpikeProjectile,
 ))
 
 CExploSpikeProjectile::CExploSpikeProjectile()
-	: CProjectile()
-	, length(0.0f)
+	: length(0.0f)
 	, width(0.0f)
 	, alpha(0.0f)
 	, alphaDecay(0.0f)

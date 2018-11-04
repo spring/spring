@@ -31,7 +31,7 @@ static constexpr unsigned char NODE_COLORS[3][4] = {
 };
 
 
-QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
+QTPFSPathDrawer::QTPFSPathDrawer() {
 	pm = dynamic_cast<QTPFS::PathManager*>(pathManager);
 }
 

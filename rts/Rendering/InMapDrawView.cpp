@@ -98,11 +98,11 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 	GL::RenderDataBufferTC* pointBuffer = nullptr;
 	GL::RenderDataBufferC* linesBuffer = nullptr;
 
-	void ResetState() {
+	void ResetState() override {
 		pointBuffer = nullptr;
 		linesBuffer = nullptr;
 	}
-	void DrawQuad(int x, int y);
+	void DrawQuad(int x, int y) override ;
 
 private:
 	void DrawPoint(const CInMapDrawModel::MapPoint* point, GL::RenderDataBufferTC* buffer) const;
