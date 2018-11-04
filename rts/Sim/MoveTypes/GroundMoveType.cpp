@@ -1721,8 +1721,8 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		//   however, testing more squares means CD can (sometimes) disagree with PFS
 		//   in narrow passages --> still possible, but have to ensure we allow only
 		//   lateral (non-obstructing) bounces
-		const int xsh = colliderMD->xsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
-		const int zsh = colliderMD->zsizeh * (checkYardMap || (checkTerrain * colliderMD->allowTerrainCollisions));
+		const int xsh = colliderMD->xsizeh * (checkYardMap || (checkTerrain && colliderMD->allowTerrainCollisions));
+		const int zsh = colliderMD->zsizeh * (checkYardMap || (checkTerrain && colliderMD->allowTerrainCollisions));
 
 		const int xmin = std::min(-1, -xsh), xmax = std::max(1, xsh);
 		const int zmin = std::min(-1, -zsh), zmax = std::max(1, zsh);

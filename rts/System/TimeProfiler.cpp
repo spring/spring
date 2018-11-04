@@ -179,14 +179,16 @@ CTimeProfiler::CTimeProfiler()
 	ResetState();
 }
 
+#if 1
+CTimeProfiler::~CTimeProfiler() = default;
+#else
 CTimeProfiler::~CTimeProfiler()
 {
-	#if 0
 	// should not be needed, destructor runs after main returns and all threads are gone
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
-	#endif
 }
+#endif
 
 CTimeProfiler& CTimeProfiler::GetInstance()
 {

@@ -108,7 +108,7 @@ bool CKeySet::Parse(const std::string& token, bool showerror)
 
 	// parse the modifiers
 	while (!s.empty()) {
-		     if (ParseModifier(s, "up+",    "u+")) { modifiers |= KS_RELEASE; }
+		if      (ParseModifier(s, "up+",    "u+")) { modifiers |= KS_RELEASE; }
 		else if (ParseModifier(s, "any+",   "*+")) { modifiers |= KS_ANYMOD; }
 		else if (ParseModifier(s, "alt+",   "a+")) { modifiers |= KS_ALT; }
 		else if (ParseModifier(s, "ctrl+",  "c+")) { modifiers |= KS_CTRL; }
