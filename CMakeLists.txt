@@ -1,5 +1,31 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.6)
 
+find_program(
+  CLANG_TIDY_EXE
+  NAMES "clang-tidy"
+  DOC "Path to clang-tidy executable"
+)
+if(NOT CLANG_TIDY_EXE)
+  message(STATUS "clang-tidy not found.")
+else()
+  message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+  string(CONCAT CLANG_TIDY_CHECKS
+  	# disable all by default
+  	"-*"
+	# enable a few general categories
+	",bugprone-*,misc-*,modernize-*,performance-*,portability-*,readability-*,"
+	# disable checks that go against our style
+	",-readability-braces-around-statements"
+	# disable various other checks
+	",-readability-implicit-bool-conversion,-modernize-use-auto,-misc-unused-parameters"
+	",-readability-inconsistent-declaration-parameter-name,-readability-else-after-return,-modernize-use-using"
+	",-readability-named-parameter,-misc-macro-parentheses,-performance-unnecessary-value-param,-modernize-pass-by-value"
+	",-bugprone-integer-division,-readability-static-accessed-through-instance,-misc-string-integer-assignment"
+	",-readability-avoid-const-params-in-decls,-modernize-raw-string-literal")
+	# TODO: Consider adding other checks such as those below:
+	# clang-analyzer-*,cert-*,cppcoreguidelines-*,-cppcoreguidelines-pro-type-union-access
+  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=${CLANG_TIDY_CHECKS}")
+endif()
 
 set(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
