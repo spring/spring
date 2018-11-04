@@ -359,9 +359,9 @@ void CSMFReadMap::CreateNormalTex()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, nullptr);
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, nullptr);
 #endif
 }
 

@@ -459,14 +459,14 @@ void CMapInfo::ReadSound()
 
 	const LuaTable& filterTable = soundTable.SubTable("passfilter");
 
-	for (auto it = nameToALFilterParam.cbegin(); it != nameToALFilterParam.cend(); ++it) {
-		const std::string& name = it->first;
+	for (const auto& item: nameToALFilterParam) {
+		const std::string& name = item.first;
 		const int luaType = filterTable.GetType(name);
 
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint param = it->second;
+		const ALuint param = item.second;
 		const unsigned type = alParamType[param];
 
 		switch (type) {
@@ -479,14 +479,14 @@ void CMapInfo::ReadSound()
 
 	soundTable.SubTable("reverb");
 
-	for (auto it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
-		const std::string& name = it->first;
+	for (const auto& item: nameToALFilterParam) {
+		const std::string& name = item.first;
 		const int luaType = filterTable.GetType(name);
 
 		if (luaType == LuaTable::NIL)
 			continue;
 
-		const ALuint param = it->second;
+		const ALuint param = item.second;
 		const unsigned type = alParamType[param];
 
 		switch (type) {
