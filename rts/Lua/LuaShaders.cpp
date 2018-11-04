@@ -68,8 +68,8 @@ LuaShaders::LuaShaders()
 
 LuaShaders::~LuaShaders()
 {
-	for (unsigned int p = 0; p < programs.size(); p++) {
-		DeleteProgram(programs[p]);
+	for (auto& program: programs) {
+		DeleteProgram(program);
 	}
 
 	programs.clear();
@@ -477,13 +477,11 @@ static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 		{ "geoOutputVerts", GL_GEOMETRY_VERTICES_OUT }
 	};
 
-	constexpr size_t count = sizeof(parameters) / sizeof(parameters[0]);
-
-	for (size_t i = 0; i < count; i++) {
-		lua_getfield(L, table, parameters[i].name);
+	for (const auto& param: parameters) {
+		lua_getfield(L, table, param.name);
 
 		if (lua_israwnumber(L, -1))
-			glProgramParameteri(prog, parameters[i].param, /*type*/ lua_toint(L, -1));
+			glProgramParameteri(prog, param.param, /*type*/ lua_toint(L, -1));
 
 		lua_pop(L, 1);
 	}
@@ -1015,7 +1013,7 @@ int LuaShaders::SetTesselationShaderParameter(lua_State* L)
 	}
 	if (lua_istable(L, 2)) {
 		float tessArrayBuf[4] = {0.0f};
-		const int count = LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
+		LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
 		glPatchParameterfv(param, &tessArrayBuf[0]);
 	}
 	return 0;

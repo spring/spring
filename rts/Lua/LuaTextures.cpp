@@ -150,8 +150,8 @@ bool LuaTextures::FreeFBO(const std::string& name)
 
 void LuaTextures::FreeAll()
 {
-	for (auto it = textureMap.begin(); it != textureMap.end(); ++it) {
-		const Texture& tex = textureVec[it->second];
+	for (const auto& item: textureMap) {
+		const Texture& tex = textureVec[item.second];
 		glDeleteTextures(1, &tex.id);
 
 		glDeleteFramebuffers(1, &tex.fbo);
