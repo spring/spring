@@ -116,12 +116,12 @@ std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
 	std::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
-	if (ret.get() == nullptr)
+	if (ret == nullptr)
 		return ret;
 	if (ret->data[0] == NETMSG_GAMEDATA)
 		return ret;
 
-	if (demoRecorder.get() != nullptr)
+	if (demoRecorder != nullptr)
 		demoRecorder->SaveToDemo(ret->data, ret->length, GetPacketTime(frameNum));
 
 	return ret;
