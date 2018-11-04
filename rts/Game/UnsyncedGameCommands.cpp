@@ -2468,9 +2468,8 @@ public:
 		const auto& args = action.GetArgs();
 
 		if (!args.empty()) {
-			const int value = std::max(1, atoi(args.c_str()));
-			projectileHandler.SetMaxParticles(value);
-			LOG("Set maximum particles to: %i", value);
+			projectileHandler.SetMaxParticles(atoi(args.c_str()));
+			LOG("Set maximum particles to: %i", projectileHandler.maxParticles);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
@@ -2491,9 +2490,8 @@ public:
 		const auto& args = action.GetArgs();
 
 		if (!args.empty()) {
-			const int value = std::max(1, atoi(args.c_str()));
-			projectileHandler.SetMaxNanoParticles(value);
-			LOG("Set maximum nano-particles to: %i", value);
+			projectileHandler.SetMaxNanoParticles(atoi(args.c_str()));
+			LOG("Set maximum nano-particles to: %i", projectileHandler.maxNanoParticles);
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
