@@ -775,15 +775,15 @@ void CWaitCommandsAI::DeathWait::Draw() const
 		return;
 
 	float3 midPos;
-	for (size_t i = 0; i < unitPos.size(); i++) {
-		midPos += unitPos.at(i);
+	for (const auto& pos: unitPos) {
+		midPos += pos;
 	}
 	midPos /= (float)unitPos.size();
 
 	cursorIcons.AddIcon(CMD_DEATHWAIT, midPos);
 
-	for (size_t i = 0; i < unitPos.size(); i++) {
-		lineDrawer.StartPath(unitPos.at(i), cmdColors.start);
+	for (const auto& pos: unitPos) {
+		lineDrawer.StartPath(pos, cmdColors.start);
 		lineDrawer.DrawLine(midPos, cmdColors.deathWait);
 		lineDrawer.FinishPath();
 	}
