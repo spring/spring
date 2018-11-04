@@ -1988,6 +1988,9 @@ public:
 	bool Execute(const UnsyncedAction& action) const final {
 		const std::string& args = action.GetArgs();
 
+		if (mouse->offscreen)
+			return false;
+
 		if (args.empty()) {
 			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
