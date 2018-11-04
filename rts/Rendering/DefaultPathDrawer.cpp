@@ -48,7 +48,7 @@ static inline const SColor& GetBuildColor(const DefaultPathDrawer::BuildSquareSt
 
 
 
-DefaultPathDrawer::DefaultPathDrawer(): IPathDrawer()
+DefaultPathDrawer::DefaultPathDrawer()
 {
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }

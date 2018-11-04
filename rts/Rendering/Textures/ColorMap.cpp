@@ -107,7 +107,7 @@ CColorMap* CColorMap::LoadFromDefString(const std::string& dString)
 		vec.push_back(value);
 	}
 
-	CColorMap* map = NULL;
+	CColorMap* map = nullptr;
 
 	if (vec.empty()) {
 		map = CColorMap::LoadFromBitmapFile("bitmaps\\" + dString);
@@ -115,7 +115,7 @@ CColorMap* CColorMap::LoadFromDefString(const std::string& dString)
 		map = CColorMap::LoadFromFloatVector(vec);
 	}
 
-	if (map == NULL) {
+	if (map == nullptr) {
 		throw content_error("[ColorMap::LoadFromDefString] unable to load color-map " + dString);
 	}
 

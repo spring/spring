@@ -74,7 +74,7 @@ void CSkyBox::LoadBuffer()
 	skyBox.Init(true);
 	skyBox.TUpload<SkyBoxVertType, uint32_t, SkyBoxAttrType>(SKYBOX_BUFFER_LEN, 0, vertAttrs.size(),  nullptr, nullptr, vertAttrs.data());
 
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText.c_str(), ""}, {GL_FRAGMENT_SHADER, fsText.c_str(), ""}};
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText, ""}, {GL_FRAGMENT_SHADER, fsText, ""}};
 	Shader::IProgramObject* shaderProg = skyBox.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();

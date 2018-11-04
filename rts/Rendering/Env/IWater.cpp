@@ -48,8 +48,8 @@ void IWater::PushWaterMode(int nxtRendererMode)
 }
 
 void IWater::ApplyPushedChanges(CGame* game) {
-	for (auto i = waterModes.cbegin(); i != waterModes.cend(); ++i) {
-		water = GetWater(water, *i);
+	for (const auto& waterMode: waterModes) {
+		water = GetWater(water, waterMode);
 		LOG("Set water rendering mode to %i (%s)", water->GetID(), water->GetName());
 	}
 

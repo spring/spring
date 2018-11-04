@@ -26,7 +26,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 		inViewQuads.reserve(32);
 	}
 	void DrawQuad(int x, int y) override {
-		inViewQuads.push_back({x, y});
+		inViewQuads.emplace_back(x, y);
 	}
 
 public:
@@ -59,7 +59,7 @@ static CGlobalUnsyncedRNG rng;
 static CAdvTreeSquareDrawer squareDrawer;
 
 
-CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
+CAdvTreeDrawer::CAdvTreeDrawer()
 {
 	LoadTreeShaders();
 
@@ -129,9 +129,9 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 	tpb->Link();
 	tps->Link();
 
-	for (size_t i = 0; i < (sizeof(uniformNames) / sizeof(uniformNames[0])); i++) {
-		tpb->SetUniformLocation(uniformNames[i]);
-		tps->SetUniformLocation(uniformNames[i]);
+	for (const auto& uniformName: uniformNames) {
+		tpb->SetUniformLocation(uniformName);
+		tps->SetUniformLocation(uniformName);
 	}
 
 	for (Shader::IProgramObject* tp: {tpb, tps}) {
@@ -171,8 +171,7 @@ void CAdvTreeDrawer::Update()
 		}
 	}
 
-	for (int i = 0; i < 2; i++) {
-		std::vector<FallingTree>& v = fallingTrees[i];
+	for (std::vector<FallingTree>& v : fallingTrees) {
 
 		for (size_t n = 0; n < v.size(); /*no-op*/) {
 			FallingTree& ft = v[n];

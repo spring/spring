@@ -17,7 +17,6 @@
 #include "System/myMath.h"
 
 using std::max;
-using std::min;
 
 constexpr static unsigned int TEX_SIZE_C = 4;
 constexpr static unsigned int TEX_SIZE_X = 256;

@@ -95,7 +95,7 @@ void CWorldDrawer::InitPost() const
 	// CFeatureDrawer::InitStatic();
 
 	loadscreen->SetLoadMessage("Creating Water");
-	water = IWater::GetWater(NULL, -1);
+	water = IWater::GetWater(nullptr, -1);
 }
 
 

@@ -3,6 +3,8 @@
 
 #include "ProjectileDrawer.h"
 
+#include <algorithm>
+
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
@@ -225,14 +227,12 @@ void CProjectileDrawer::Init() {
 	seismictex = &groundFXAtlas->GetTexture("seismic");
 
 
-	for (int a = 0; a < 4; ++a) {
-		perlinData.blendWeights[a] = 0.0f;
-	}
+	std::fill(std::begin(perlinData.blendWeights), std::end(perlinData.blendWeights), 0.0f);
 
 	{
 		glGenTextures(8, perlinData.blendTextures);
-		for (int a = 0; a < 8; ++a) {
-			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a]);
+		for (const auto blendTexture: perlinData.blendTextures) {
+			glBindTexture(GL_TEXTURE_2D, blendTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, PerlinData::blendTexSize, PerlinData::blendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -309,8 +309,8 @@ void CProjectileDrawer::ParseAtlasTextures(
 	textureTable.GetMap(texturesMap);
 	textureTable.GetKeys(subTables);
 
-	for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
-		const std::string textureName = StringToLower(texturesMapIt->first);
+	for (auto& item: texturesMap) {
+		const std::string textureName = StringToLower(item.first);
 
 		// no textures added to this atlas are allowed
 		// to be overwritten later by other textures of
@@ -319,27 +319,27 @@ void CProjectileDrawer::ParseAtlasTextures(
 			blockedTextures.insert(textureName);
 
 		if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-			texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+			texAtlas->AddTexFromFile(item.first, "bitmaps/" + item.second);
 	}
 
 	texturesMap.clear();
 
-	for (size_t i = 0; i < subTables.size(); i++) {
-		const LuaTable& textureSubTable = textureTable.SubTable(subTables[i]);
+	for (const auto& subTable: subTables) {
+		const LuaTable& textureSubTable = textureTable.SubTable(subTable);
 
 		if (!textureSubTable.IsValid())
 			continue;
 
 		textureSubTable.GetMap(texturesMap);
 
-		for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
-			const std::string textureName = StringToLower(texturesMapIt->first);
+		for (auto& item: texturesMap) {
+			const std::string textureName = StringToLower(item.first);
 
 			if (blockTextures)
 				blockedTextures.insert(textureName);
 
 			if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-				texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+				texAtlas->AddTexFromFile(item.first, "bitmaps/" + item.second);
 		}
 
 		texturesMap.clear();
@@ -895,8 +895,7 @@ void CProjectileDrawer::UpdatePerlin() {
 		if (a == 0)
 			glAttribStatePtr->DisableBlendMask();
 
-		for (int b = 0; b < 4; ++b)
-			col[b] = int((1.0f - perlinData.blendWeights[a]) * 16 * size);
+		std::fill(std::begin(col), std::end(col), int((1.0f - perlinData.blendWeights[a]) * 16 * size));
 
 		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
 		buffer->SafeAppend({ZeroVector, 0,         0, col});
@@ -908,8 +907,7 @@ void CProjectileDrawer::UpdatePerlin() {
 		if (a == 0)
 			glAttribStatePtr->EnableBlendMask();
 
-		for (int b = 0; b < 4; ++b)
-			col[b] = int(perlinData.blendWeights[a] * 16 * size);
+		std::fill(std::begin(col), std::end(col), int(perlinData.blendWeights[a] * 16 * size));
 
 		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 1]);
 		buffer->SafeAppend({ZeroVector,     0,     0, col});

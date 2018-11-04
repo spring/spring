@@ -300,7 +300,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 
 class CDebugColVolQuadDrawer : public CReadMap::IQuadDrawer {
 public:
-	void ResetState() {
+	void ResetState() override {
 		unitIDs.clear();
 		unitIDs.reserve(32);
 		featureIDs.clear();
@@ -338,7 +338,7 @@ public:
 		ipo->Disable();
 	}
 
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) override {
 		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 
 		for (const CUnit* u: q.units) {
@@ -380,8 +380,8 @@ namespace DebugColVolDrawer
 		const std::string& vsText = Shader::GetShaderSource("GLSL/ColVolDebugVertProg.glsl");
 		const std::string& fsText = Shader::GetShaderSource("GLSL/ColVolDebugFragProg.glsl");
 
-		Shader::GLSLShaderObject vsShaderObj = {GL_VERTEX_SHADER, vsText.c_str(), ""};
-		Shader::GLSLShaderObject fsShaderObj = {GL_FRAGMENT_SHADER, fsText.c_str(), ""};
+		Shader::GLSLShaderObject vsShaderObj = {GL_VERTEX_SHADER, vsText, ""};
+		Shader::GLSLShaderObject fsShaderObj = {GL_FRAGMENT_SHADER, fsText, ""};
 
 		cvShader.AttachShaderObject(&vsShaderObj);
 		cvShader.AttachShaderObject(&fsShaderObj);

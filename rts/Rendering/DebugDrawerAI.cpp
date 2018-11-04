@@ -154,7 +154,7 @@ void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
 
 	Graph::GraphLine& line = lines[lineNum];
 
-	line.lineData.push_back(float3(x, y, 0.0f));
+	line.lineData.emplace_back(x, y, 0.0f);
 	line.lineMin.x = std::min(line.lineMin.x, x);
 	line.lineMin.y = std::min(line.lineMin.y, y);
 	line.lineMax.x = std::max(line.lineMax.x, x);
