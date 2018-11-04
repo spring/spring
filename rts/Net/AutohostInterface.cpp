@@ -6,7 +6,7 @@
 #include "System/Log/ILog.h"
 #include "System/Net/Socket.h"
 
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include <cinttypes>
 
