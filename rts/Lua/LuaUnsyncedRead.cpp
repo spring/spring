@@ -1323,7 +1323,7 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
 	std::string mode = infoTextureHandler->GetMode();
-	if (mode.empty())       { mode = "normal"; } else
+	if (mode == "")         { mode = "normal"; } else // NOLINT(readability-container-size-empty)
 	if (mode == "path")     { mode = "pathTraversability"; } else
 	if (mode == "heat")     { mode = "pathHeat"; } else
 	if (mode == "flow")     { mode = "pathFlow"; } else
