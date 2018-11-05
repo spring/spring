@@ -242,7 +242,7 @@ void FBO::Kill()
 	{
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-		for (auto rboID: rboIDs) {
+		for (const GLuint rboID: rboIDs) {
 			glDeleteRenderbuffers(1, &rboID);
 		}
 
