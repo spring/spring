@@ -246,7 +246,7 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 std::string& FileSystem::FixSlashes(std::string& path)
 {
 	const char sep = GetNativePathSeparator();
-	auto P = [](const char c) { return (c == '/' || c == '\\'); };
+	const auto P = [](const char c) { return (c == '/' || c == '\\'); };
 
 	std::replace_if(std::begin(path), std::end(path), P, sep);
 
