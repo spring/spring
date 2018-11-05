@@ -258,7 +258,7 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	std::string vsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderVertProg4.glsl"));
 	std::string fsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderFragProg4.glsl"));
 
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsCode.c_str(), ""}, {GL_FRAGMENT_SHADER, fsCode.c_str(), ""}};
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsCode, ""}, {GL_FRAGMENT_SHADER, fsCode, ""}};
 	Shader::IProgramObject* shaderProg = &borderShader;
 
 	borderShader.AttachShaderObject(&shaderObjs[0]);
@@ -304,8 +304,8 @@ ISMFRenderState* CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass
 	// [1] := default GLSL, same condition
 	const unsigned int stateEnums[2] = {RENDER_STATE_LUA, RENDER_STATE_SSP};
 
-	for (unsigned int n = 0; n < 2; n++) {
-		ISMFRenderState* state = smfRenderStates[ stateEnums[n] ];
+	for (const unsigned int stateEnum: stateEnums) {
+		ISMFRenderState* state = smfRenderStates[stateEnum];
 
 		if (!state->CanEnable(this))
 			continue;

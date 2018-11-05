@@ -777,7 +777,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 		if ((currentPixels + cuRect1.GetArea() <= 512 * 512) || forceFull) {
 			currentPixels += cuRect1.GetArea();
-			coastmapAtlasRects.push_back(cuRect1);
+			coastmapAtlasRects.emplace_back(cuRect1);
 			heightmapUpdates.pop_front();
 			continue;
 		}

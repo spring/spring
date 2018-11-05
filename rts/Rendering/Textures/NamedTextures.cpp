@@ -46,8 +46,8 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		for (auto it = texInfoMap.cbegin(); it != texInfoMap.cend(); ++it) {
-			const size_t texIdx = it->second;
+		for (const auto& item: texInfoMap) {
+			const size_t texIdx = item.second;
 			const GLuint texID = texInfoVec[texIdx].id;
 
 			if (shutdown || !texInfoVec[texIdx].persist) {
@@ -55,7 +55,7 @@ namespace CNamedTextures {
 				// always recycle non-persistent textures
 				freeIndices.push_back(texIdx);
 			} else {
-				tempMap[it->first] = it->second;
+				tempMap[item.first] = item.second;
 			}
 		}
 

@@ -79,7 +79,7 @@ static const int MAX_TEXTURE_UNITS = 32;
 /******************************************************************************/
 /******************************************************************************/
 
-void (*LuaOpenGL::resetMatrixFunc)(void) = nullptr;
+void (*LuaOpenGL::resetMatrixFunc)() = nullptr;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
@@ -918,7 +918,7 @@ int LuaOpenGL::GetString(lua_State* L)
 	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
 	const char* pstring = (const char*) glGetString(pname);
 
-	if (pstring != NULL) {
+	if (pstring != nullptr) {
 		lua_pushstring(L, pstring);
 	} else {
 		lua_pushstring(L, "[NULL]");
@@ -3104,7 +3104,7 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != NULL) {
+		if (matptr != nullptr) {
 			GL::MultMatrix(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
@@ -3177,8 +3177,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PushMatrix();
 	} else {
-		for (int i = 0; i < (int)matModes.size(); i++) {
-			GL::MatrixMode(matModes[i]);
+		for (const GLenum matMode: matModes) {
+			GL::MatrixMode(matMode);
 			GL::PushMatrix();
 		}
 	}
@@ -3189,8 +3189,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PopMatrix();
 	} else {
-		for (int i = 0; i < (int)matModes.size(); i++) {
-			GL::MatrixMode(matModes[i]);
+		for (const GLenum matMode: matModes) {
+			GL::MatrixMode(matMode);
 			GL::PopMatrix();
 		}
 	}
@@ -3232,8 +3232,8 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 			return 1;
 		}
 
-		for (int i = 0; i < 16; i++) {
-			lua_pushnumber(L, matrix[i]);
+		for (const GLfloat m: matrix) {
+			lua_pushnumber(L, m);
 		}
 
 		return 16;
@@ -3391,8 +3391,6 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 	CBitmap bmp;
 	bmp.Alloc(w, h, fSize * sizeof(float));
 	glReadPixels(x, y, w, h, format, GL_FLOAT, reinterpret_cast<float*>(bmp.GetRawMem()));
-
-	int retCount = 0;
 
 	const float* data = reinterpret_cast<const float*>(bmp.GetRawMem());
 	const float* d = data;

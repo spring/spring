@@ -848,7 +848,7 @@ public:
 	typedef std::vector<T*> ObjectList;
 	typedef std::vector< const ObjectList* > ObjectVector;
 
-	void ResetState() {
+	void ResetState() override {
 		objectLists.clear();
 		objectLists.reserve(64);
 
@@ -879,7 +879,7 @@ protected:
 
 class CVisUnitQuadDrawer: public CWorldObjectQuadDrawer<CUnit> {
 public:
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) override {
 		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.units;
 
@@ -889,7 +889,7 @@ public:
 
 class CVisFeatureQuadDrawer: public CWorldObjectQuadDrawer<CFeature> {
 public:
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) override {
 		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.features;
 
@@ -899,7 +899,7 @@ public:
 
 class CVisProjectileQuadDrawer: public CWorldObjectQuadDrawer<CProjectile> {
 public:
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) override {
 		const CQuadField::Quad& q = quadField.GetQuadAt(x, y);
 		const ObjectList* o = &q.projectiles;
 
@@ -1323,11 +1323,11 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
 	std::string mode = infoTextureHandler->GetMode();
-	     if (mode.empty())       { mode = "normal"; }
-	else if (mode == "path")     { mode = "pathTraversability"; }
-	else if (mode == "heat")     { mode = "pathHeat"; }
-	else if (mode == "flow")     { mode = "pathFlow"; }
-	else if (mode == "pathcost") { mode = "pathCost"; }
+	if (mode == "")         { mode = "normal"; } else // NOLINT(readability-container-size-empty)
+	if (mode == "path")     { mode = "pathTraversability"; } else
+	if (mode == "heat")     { mode = "pathHeat"; } else
+	if (mode == "flow")     { mode = "pathFlow"; } else
+	if (mode == "pathcost") { mode = "pathCost"; }
 
 	lua_pushsstring(L, mode);
 	return 1;

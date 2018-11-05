@@ -334,7 +334,7 @@ void CGameServer::Reload(const std::shared_ptr<const CGameSetup> newGameSetup)
 
 void CGameServer::WriteDemoData()
 {
-	if (demoRecorder == NULL)
+	if (demoRecorder == nullptr)
 		return;
 
 	// there is always at least one non-Gaia team (numTeams > 0)
@@ -369,13 +369,13 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
 	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
 
-	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
-		const std::string& sectionKey = StringToLower(it->first);
+	for (const auto& item: rootSec->sections) {
+		const std::string& sectionKey = StringToLower(item.first);
 
 		if (!StringStartsWith(sectionKey, "player"))
 			continue;
 
-		TdfParser::TdfSection* playerSec = it->second;
+		TdfParser::TdfSection* playerSec = item.second;
 		playerSec->remove("password", false);
 	}
 
@@ -409,7 +409,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 
 #ifndef DEDICATED
 	// disallow luasockets access to autohost interface
-	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP.c_str(), autohostPort, false);
+	luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, autohostIP, autohostPort, false);
 #endif
 
 	if (!hostif) {
@@ -436,7 +436,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 
 	if (!gameHasStarted) { return; }
 	if (serverFrameNum >= targetFrameNum) { return; }
-	if (demoReader == NULL) { return; }
+	if (demoReader == nullptr) { return; }
 
 	CommandMessage startMsg(spring::format("skip start %d", targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
@@ -450,7 +450,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 		gameTime = GetDemoTime();
 		modGameTime = demoReader->GetModGameTime() + 0.001f;
 
-		if (UDPNet == NULL) { continue; }
+		if (UDPNet == nullptr) { continue; }
 		if ((serverFrameNum % 20) != 0) { continue; }
 
 		// send data every few frames, as otherwise packets would grow too big
@@ -482,10 +482,10 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 bool CGameServer::SendDemoData(int targetFrameNum)
 {
 	bool ret = false;
-	netcode::RawPacket* buf = NULL;
+	netcode::RawPacket* buf = nullptr;
 
 	// if we reached EOS before, demoReader has become NULL
-	if (demoReader == NULL)
+	if (demoReader == nullptr)
 		return ret;
 
 	// get all packets from the stream up to <modGameTime>
@@ -687,7 +687,7 @@ void CGameServer::CheckSync()
 					continue;
 
 				// first time we have seen this checksum
-				checksums.push_back(std::pair<unsigned, unsigned>(pChecksum, 1));
+				checksums.emplace_back(pChecksum, 1);
 
 				if (maxChecksumCount == 0) {
 					maxChecksumCount = 1;
@@ -771,9 +771,9 @@ void CGameServer::CheckSync()
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin
 				// the resync checksum request packets to multiple clients in the same group.
-				for (auto g = desyncGroups.begin(); g != desyncGroups.end(); ++g) {
-					const std::string& playerNames = GetPlayerNames(g->second);
-					Message(spring::format(SyncError, playerNames.c_str(), outstandingSyncFrame, g->first, correctChecksum));
+				for (const auto& desyncGroup: desyncGroups) {
+					const std::string& playerNames = GetPlayerNames(desyncGroup.second);
+					Message(spring::format(SyncError, playerNames.c_str(), outstandingSyncFrame, desyncGroup.first, correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
@@ -1453,7 +1453,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL) {
+			if (demoReader == nullptr) {
 				if (!players[inbuf[1]].spectator)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
 				else
@@ -1466,7 +1466,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL)
+			if (demoReader == nullptr)
 				Broadcast(CBaseNetProtocol::Get().SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5])));
 			break;
 
@@ -1986,9 +1986,9 @@ void CGameServer::ServerReadNet()
 				Message(spring::format("Player %s sent invalid AI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cID));
 		}
 
-		for (std::map<unsigned char, GameParticipant::PlayerLinkData>::iterator lit = pld.begin(); lit != pld.end(); ++lit) {
-			int bandwidthUsage = lit->second.bandwidthUsage;
-			std::shared_ptr<netcode::CConnection>& link = lit->second.link;
+		for (auto& playerLink: pld) {
+			int bandwidthUsage = playerLink.second.bandwidthUsage;
+			std::shared_ptr<netcode::CConnection>& link = playerLink.second.link;
 
 			bool bwLimitWasReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
 			if (updateBandwidth >= 1.0f && globalConfig.linkIncomingSustainedBandwidth > 0)
@@ -2002,7 +2002,7 @@ void CGameServer::ServerReadNet()
 			bool bwLimitIsReached = globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth;
 			while (link) {
 				if (dropPacket)
-					dropPacket = (NULL != (packet = link->Peek(globalConfig.linkIncomingMaxWaitingPackets)));
+					dropPacket = (nullptr != (packet = link->Peek(globalConfig.linkIncomingMaxWaitingPackets)));
 				packet = (!bwLimitIsReached || dropPacket) ? link->GetData() : link->Peek(ahead++);
 				if (!packet)
 					break;
@@ -2020,17 +2020,17 @@ void CGameServer::ServerReadNet()
 				}
 			}
 			if (numDropped > 0) {
-				if (lit->first == MAX_AIS)
+				if (playerLink.first == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [packets dropped]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)playerLink.first));
 			}
 
 			if (!bwLimitWasReached && bwLimitIsReached) {
-				if (lit->first == MAX_AIS)
+				if (playerLink.first == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)playerLink.first));
 			}
 		}
 	}
@@ -2044,7 +2044,7 @@ void CGameServer::ServerReadNet()
 void CGameServer::GenerateAndSendGameID()
 {
 	// First and second dword are time based (current time and load time).
-	gameID.intArray[0] = (unsigned) time(NULL);
+	gameID.intArray[0] = (unsigned) time(nullptr);
 	for (int i = 4; i < 12; ++i)
 		gameID.charArray[i] = rng();
 
@@ -2081,7 +2081,7 @@ void CGameServer::GenerateAndSendGameID()
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
 
-	if (demoRecorder != NULL) {
+	if (demoRecorder != nullptr) {
 		demoRecorder->SetGameID(gameID.charArray);
 	}
 
@@ -2101,7 +2101,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		else if (players[a].myState < GameParticipant::INGAME) {
 			allReady = false;
 			break;
-		} else if (!players[a].spectator && teams[players[a].team].IsActive() && !players[a].IsReadyToStart() && demoReader == NULL) {
+		} else if (!players[a].spectator && teams[players[a].team].IsActive() && !players[a].IsReadyToStart() && demoReader == nullptr) {
 			allReady = false;
 			break;
 		}
@@ -2201,8 +2201,8 @@ void CGameServer::StartGame(bool forced)
 
 	Broadcast(CBaseNetProtocol::Get().SendStartPlaying(0));
 
-	if (hostif != NULL) {
-		if (demoRecorder != NULL) {
+	if (hostif != nullptr) {
+		if (demoRecorder != nullptr) {
 			hostif->SendStartPlaying(gameID.charArray, demoRecorder->GetName());
 		} else {
 			hostif->SendStartPlaying(gameID.charArray, "");
@@ -2384,7 +2384,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 	}
 	else if (action.command == "singlestep") {
 		if (isPaused) {
-			if (demoReader != NULL) {
+			if (demoReader != nullptr) {
 				// we only want to advance one frame at most, so
 				// the next time-index must be "close enough" not
 				// to move past more than 1 NETMSG_NEWFRAME
@@ -2404,10 +2404,10 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				const std::string& pwd = tokens[1];
 				int team = 0;
 				bool spectator = true;
-				if ( tokens.size() > 2 ) {
-					spectator = (tokens[2] == "0") ? false : true;
+				if (tokens.size() > 2) {
+					spectator = (tokens[2] != "0");
 				}
-				if ( tokens.size() > 3 ) {
+				if (tokens.size() > 3) {
 					team = atoi(tokens[3].c_str());
 				}
 				// note: this must only compare by name
@@ -2596,8 +2596,7 @@ std::string CGameServer::SpeedControlToString(int speedCtrl)
 	std::string desc = "<invalid>";
 	if (speedCtrl == 0) {
 		desc = "Maximum CPU";
-	} else
-	if (speedCtrl == 1) {
+	} else if (speedCtrl == 1) {
 		desc = "Average CPU";
 	}
 	return desc;

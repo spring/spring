@@ -3,7 +3,7 @@
 #include "glFont.h"
 #include "FontLogSection.h"
 
-#include <stdarg.h>
+#include <cstdarg>
 #include <stdexcept>
 
 #include "Game/Camera.h"
@@ -438,7 +438,7 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 	if (text.empty())
 		return lines;
 
-	lines.push_back("");
+	lines.emplace_back("");
 
 	for (int idx = 0, end = text.length(); idx < end; idx++) {
 		const char8_t& c = text[idx];
@@ -468,7 +468,7 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 				idx += ((idx + 1) < end && text[idx + 1] == 0x0a);
 			}
 			case 0x0a: {
-				lines.push_back("");
+				lines.emplace_back("");
 
 				#if 0
 				for (auto& color: colorCodeStack)
@@ -1123,7 +1123,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 		curColor[i + 1] = defColor[i + 1];
 	}
 
-	colLines.push_back("");
+	colLines.emplace_back("");
 	colColor.push_back(defColor);
 
 	int col = 0;
@@ -1146,7 +1146,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 			// column separator is horizontal tab
 			case '\t': {
 				if ((col += 1) >= colLines.size()) {
-					colLines.push_back("");
+					colLines.emplace_back("");
 					for (int i = 0; i < row; ++i)
 						colLines[col] += 0x0a;
 					colColor.push_back(defColor);

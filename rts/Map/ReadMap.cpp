@@ -407,9 +407,7 @@ unsigned int CReadMap::CalcTypemapChecksum()
 	unsigned int checksum = 0;
 	checksum = HsiehHash(&typeMap[0], typeMap.size() * sizeof(typeMap[0]), checksum);
 
-	for (unsigned int i = 0; i < CMapInfo::NUM_TERRAIN_TYPES; i++) {
-		const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[i];
-
+	for (const CMapInfo::TerrainType& tt : mapInfo->terrainTypes) {
 		checksum = HsiehHash(tt.name.c_str(), tt.name.size(), checksum);
 		checksum = HsiehHash(&tt.hardness, offsetof(CMapInfo::TerrainType, receiveTracks) - offsetof(CMapInfo::TerrainType, hardness), checksum);
 	}

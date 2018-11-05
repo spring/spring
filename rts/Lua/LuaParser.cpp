@@ -49,7 +49,6 @@ LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes
 	, rootRef(LUA_NOREF)
 	, currentRef(LUA_NOREF)
 
-	, valid(false)
 	, lowerKeys(true)
 	, lowerCppKeys(true)
 {
@@ -76,7 +75,6 @@ LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessMo
 	, rootRef(LUA_NOREF)
 	, currentRef(LUA_NOREF)
 
-	, valid(false)
 	, lowerKeys(true)
 	, lowerCppKeys(true)
 {
@@ -923,16 +921,16 @@ bool LuaTable::PushValue(const std::string& mixedKey) const
 
 	const int top = lua_gettop(L);
 
-	if (key.find(".") != std::string::npos) {
+	if (key.find('.') != std::string::npos) {
 		// nested key (e.g. "subtable.subsub.mahkey")
 		size_t lastpos = 0;
-		size_t dotpos = key.find(".");
+		size_t dotpos = key.find('.');
 
 		lua_pushvalue(L, -1);
 		do {
 			const std::string subTableName = key.substr(lastpos, dotpos);
 			lastpos = dotpos + 1;
-			dotpos = key.find(".", lastpos);
+			dotpos = key.find('.', lastpos);
 
 			lua_pushsstring(L, subTableName);
 			lua_gettable(L, -2);

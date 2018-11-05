@@ -593,7 +593,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 void Patch::Draw()
 {
 	glBindVertexArray(vertexArrays[0]);
-	glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, nullptr);
 	glBindVertexArray(0);
 }
 
@@ -679,7 +679,7 @@ void Patch::UpdateVisibility(CCamera* cam)
 class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
-	void ResetState() {}
+	void ResetState() final {}
 	void ResetState(CCamera* c, Patch* p, int npx, int npy) {
 		testCamera = c;
 		patchArray = p;
@@ -687,7 +687,7 @@ public:
 		numPatchesY = npy;
 	}
 
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) final {
 		assert(x >= 0 && x < numPatchesX);
 		assert(y >= 0 && y < numPatchesY);
 

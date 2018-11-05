@@ -173,8 +173,8 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
-	for (auto ti = fboTexData.begin(); ti != fboTexData.end(); ++ti) {
-		const FBO::TexData& tex = ti->second;
+	for (const auto& item: fboTexData) {
+		const FBO::TexData& tex = item.second;
 
 		if (glIsTexture(tex.id)) {
 			glBindTexture(tex.target, tex.id);

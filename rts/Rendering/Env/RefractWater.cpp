@@ -84,8 +84,8 @@ void CRefractWater::SetupWaterDepthTex()
 
 #else
 
-CRefractWater::CRefractWater() {}
-CRefractWater::~CRefractWater() {}
+CRefractWater::CRefractWater() = default;
+CRefractWater::~CRefractWater() = default;
 
 void CRefractWater::Draw() {}
 #endif

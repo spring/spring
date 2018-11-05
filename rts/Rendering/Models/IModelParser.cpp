@@ -60,7 +60,7 @@ static void RegisterModelFormats(CModelLoader::FormatMap& formats) {
 	size_t nxtIdx = 0;
 
 	// split the list, strip off the "*." extension prefixes
-	while ((nxtIdx = extensions.find(";", curIdx)) != std::string::npos) {
+	while ((nxtIdx = extensions.find(';', curIdx)) != std::string::npos) {
 		extension = extensions.substr(curIdx, nxtIdx - curIdx);
 		extension = extension.substr(extension.find("*.") + 2);
 		extension = StringToLower(extension);
@@ -185,8 +185,8 @@ std::string CModelLoader::FindModelPath(std::string name) const
 	const std::string& fileExt = FileSystem::GetExtension(name);
 
 	if (fileExt.empty()) {
-		for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
-			const std::string& formatExt = it->first;
+		for (const auto& format: formats) {
+			const std::string& formatExt = format.first;
 
 			if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
 				name.append("." + formatExt);
@@ -262,8 +262,8 @@ S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 		std::lock_guard<spring::mutex> lock(mutex);
 
 		// search in cache first
-		for (unsigned int n = 0; n < 2; n++) {
-			S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
+		for (const auto& ref: refs) {
+			S3DModel* cachedModel = LoadCachedModel(*ref, preload);
 
 			if (cachedModel != nullptr)
 				return cachedModel;

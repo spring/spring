@@ -51,7 +51,7 @@ public:
 		inViewQuads.reserve(32);
 	}
 	void DrawQuad(int x, int y) override {
-		inViewQuads.push_back({x, y});
+		inViewQuads.emplace_back(x, y);
 	}
 
 public:

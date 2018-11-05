@@ -20,7 +20,7 @@ protected:
 	AssVFSStream(const std::string& pFile, const std::string& pMode);
 
 public:
-	~AssVFSStream(void);
+	~AssVFSStream();
 	size_t Read( void* pvBuffer, size_t pSize, size_t pCount);
 	size_t Write( const void* pvBuffer, size_t pSize, size_t pCount);
 	aiReturn Seek( size_t pOffset, aiOrigin pOrigin);

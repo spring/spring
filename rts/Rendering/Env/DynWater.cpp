@@ -1277,8 +1277,8 @@ void CDynWater::DrawOuterSurface()
 
 #else
 
-CDynWater::CDynWater() {}
-CDynWater::~CDynWater() {}
+CDynWater::CDynWater() = default;
+CDynWater::~CDynWater() = default;
 
 void CDynWater::Draw() {}
 void CDynWater::UpdateWater(CGame* game) {}

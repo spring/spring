@@ -112,8 +112,8 @@ void CSMFMapFile::ReadHeightmap(float* sHeightMap, float* uHeightMap, float base
 	for (int y = 0; y < hmx * hmy; ++y) {
 		const float h = base + swabWord(temphm[y]) * mod;
 
-		if (sHeightMap != NULL) { sHeightMap[y] = h; }
-		if (uHeightMap != NULL) { uHeightMap[y] = h; }
+		if (sHeightMap != nullptr) { sHeightMap[y] = h; }
+		if (uHeightMap != nullptr) { uHeightMap[y] = h; }
 	}
 
 	delete[] temphm;

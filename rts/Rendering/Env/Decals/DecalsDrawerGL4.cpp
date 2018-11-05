@@ -359,7 +359,7 @@ static STex LoadTexture(const std::string& name)
 {
 	std::string fileName = name;
 
-	if (FileSystem::GetExtension(fileName) == "")
+	if (FileSystem::GetExtension(fileName).empty())
 		fileName += ".bmp";
 
 	std::string fullName = fileName;
@@ -468,12 +468,12 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	CQuadtreeAtlasAlloc atlas;
 	atlas.SetNonPowerOfTwo(true);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		if (it->second.id == 0)
+	for (const auto& texture: textures) {
+		if (texture.second.id == 0)
 			continue;
 
 		const float maxSize = 1024; //512;
-		int2 size = it->second.size;
+		int2 size = texture.second.size;
 		if (size.x > maxSize) {
 			size.y = size.y * (maxSize / size.x);
 			size.x = maxSize;
@@ -483,7 +483,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			size.y = maxSize;
 		}
 
-		atlas.AddEntry(it->first, size);
+		atlas.AddEntry(texture.first, size);
 	}
 	/*bool success =*/ atlas.Allocate();
 
@@ -667,7 +667,7 @@ void CDecalsDrawerGL4::ViewResize()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
 

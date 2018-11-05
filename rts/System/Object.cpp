@@ -36,7 +36,7 @@ static bool VectorEraseSorted(std::vector<CObject*>& v, CObject* o)
 
 
 
-CObject::CObject() : detached(false), listeners(), listening()
+CObject::CObject() : detached(false)
 {
 	// Note1: this static var is shared between all different types of classes synced & unsynced (CUnit, CFeature, CProjectile, ...)
 	//  Still it doesn't break syncness even when synced objects have different sync_ids between clients as long as the sync_id is

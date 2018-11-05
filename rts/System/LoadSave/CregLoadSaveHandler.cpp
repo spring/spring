@@ -53,7 +53,7 @@ class CGameStateCollector
 	CR_DECLARE_STRUCT(CGameStateCollector)
 
 public:
-	CGameStateCollector() {}
+	CGameStateCollector() = default;
 
 	void Serialize(creg::ISerializer* s);
 };

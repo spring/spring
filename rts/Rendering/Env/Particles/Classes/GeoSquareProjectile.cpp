@@ -25,7 +25,7 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1, const float3& p2, const float3& v1, const float3& v2, float xsize, float ysize)
-	: CProjectile((p1 + p2) * 0.5f, ZeroVector, NULL, false, false, false),
+	: CProjectile((p1 + p2) * 0.5f, ZeroVector, nullptr, false, false, false),
 	p1(p1),
 	p2(p2),
 	v1(v1),

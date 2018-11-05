@@ -88,7 +88,7 @@ std::string Shader::GetShaderSource(const std::string& srcData)
 
 	// otherwise assume srcData is the name of a file
 	std::string soPath = "shaders/" + srcData;
-	std::string soSource = "";
+	std::string soSource;
 
 	CFileHandler soFile(soPath);
 

@@ -369,7 +369,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 
 	texUnit.type   = LuaMatTexture::LUATEX_NONE;
 	texUnit.enable = false;
-	texUnit.data   = 0;
+	texUnit.data   = nullptr;
 	texUnit.state  = L; // can be NULL, but only for InfoTex shaders
 
 	if (image.empty())
