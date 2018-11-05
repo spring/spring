@@ -220,7 +220,7 @@ void AILibraryManager::GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dup
 	for (const auto& intInf: intInfs) {
 		// only try to lookup Skirmish AI infos through the Interface library
 		// if it explicitly states support for this in InterfaceInfo.lua
-		if (intInf.second.IsLookupSupported())
+		if (!intInf.second.IsLookupSupported())
 			continue;
 
 		const CAIInterfaceLibrary* intLib = FetchInterface(intInf.second.GetKey());
