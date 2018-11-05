@@ -6,9 +6,20 @@ later), see LICENSE.html */
 #define STREAMING_CONTROLLER_H
 
 
+#include <iostream>
+#include <boost/asio.hpp>
+
 class StreamingController {
 	public:
+		StreamingController(inet ipAdress, unsigned int port) : socket_(io_service, udp::endpoint(udp::v4(), 13));
+		~StreamingController() {
+			Dismantle();
+			};
+		
+		SEncParamBase param;
 		boost::asio::io_service io_service;
+		udp::resolver			resolver();
+		   
 		udp::iostream stream;
 
 		boost::system::error_code ec;

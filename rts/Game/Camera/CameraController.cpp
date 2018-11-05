@@ -122,14 +122,14 @@ void CCameraController::SetStreamingActive() const
 		    streamTargetIp[3] = (ip >> 24) & 0xFF;
 
 		 unsigned int port = (unsigned int) portNumber;
-		//TODO Call Library to establish stream
+		stream = new StreamController(streamTargetIp, port);
 	
 	}
 
 	//Cleanup
-	if (!streamingActive){
-		//check for existing stream- deactivate thread and remove hooks
-
+	if (!streamingActive && stream != null){
+		delete stream;
+		stream = null;
 	}
 
 

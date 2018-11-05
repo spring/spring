@@ -8,7 +8,7 @@
 #include <string>
 
 #include "System/float3.h"
-
+#include "StreamingController.h"
 
 class CCameraController
 {
@@ -134,6 +134,8 @@ public:
 	
 
 protected:
+	StreamingController* stream;
+	
 	void SetStreamingActive();
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
 	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
