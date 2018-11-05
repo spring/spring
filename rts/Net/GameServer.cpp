@@ -369,7 +369,7 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
 	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
 
-	for (auto& item: rootSec->sections) {
+	for (const auto& item: rootSec->sections) {
 		const std::string& sectionKey = StringToLower(item.first);
 
 		if (!StringStartsWith(sectionKey, "player"))
@@ -2596,8 +2596,7 @@ std::string CGameServer::SpeedControlToString(int speedCtrl)
 	std::string desc = "<invalid>";
 	if (speedCtrl == 0) {
 		desc = "Maximum CPU";
-	} else
-	if (speedCtrl == 1) {
+	} else if (speedCtrl == 1) {
 		desc = "Average CPU";
 	}
 	return desc;
