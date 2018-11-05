@@ -490,9 +490,8 @@ CBumpWater::~CBumpWater()
 
 	glDeleteTextures(1, &foamTexture);
 	glDeleteTextures(1, &normalTexture);
-	for (size_t i = 0; i < caustTextures.size(); ++i) {
-		glDeleteTextures(1, &caustTextures[i]);
-	}
+	// never empty
+	glDeleteTextures(caustTextures.size(), &caustTextures[0]);
 
 	waterPlaneBuffer.Kill();
 
