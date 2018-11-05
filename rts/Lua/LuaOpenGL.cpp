@@ -3177,7 +3177,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PushMatrix();
 	} else {
-		for (const auto matMode: matModes) {
+		for (const GLenum matMode: matModes) {
 			GL::MatrixMode(matMode);
 			GL::PushMatrix();
 		}
@@ -3189,7 +3189,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PopMatrix();
 	} else {
-		for (const auto matMode: matModes) {
+		for (const GLenum matMode: matModes) {
 			GL::MatrixMode(matMode);
 			GL::PopMatrix();
 		}
@@ -3232,7 +3232,7 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 			return 1;
 		}
 
-		for (const auto m: matrix) {
+		for (const GLfloat m: matrix) {
 			lua_pushnumber(L, m);
 		}
 
