@@ -173,7 +173,7 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
-	for (auto& item: fboTexData) {
+	for (const auto& item: fboTexData) {
 		const FBO::TexData& tex = item.second;
 
 		if (glIsTexture(tex.id)) {

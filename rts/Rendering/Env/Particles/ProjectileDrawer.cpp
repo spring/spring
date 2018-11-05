@@ -231,7 +231,7 @@ void CProjectileDrawer::Init() {
 
 	{
 		glGenTextures(8, perlinData.blendTextures);
-		for (const auto blendTexture: perlinData.blendTextures) {
+		for (const GLuint blendTexture: perlinData.blendTextures) {
 			glBindTexture(GL_TEXTURE_2D, blendTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -309,7 +309,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 	textureTable.GetMap(texturesMap);
 	textureTable.GetKeys(subTables);
 
-	for (auto& item: texturesMap) {
+	for (const auto& item: texturesMap) {
 		const std::string textureName = StringToLower(item.first);
 
 		// no textures added to this atlas are allowed
@@ -332,7 +332,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 
 		textureSubTable.GetMap(texturesMap);
 
-		for (auto& item: texturesMap) {
+		for (const auto& item: texturesMap) {
 			const std::string textureName = StringToLower(item.first);
 
 			if (blockTextures)

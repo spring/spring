@@ -490,7 +490,7 @@ CBumpWater::~CBumpWater()
 
 	glDeleteTextures(1, &foamTexture);
 	glDeleteTextures(1, &normalTexture);
-	for (auto tex : caustTextures) {
+	for (const GLuint tex : caustTextures) {
 		glDeleteTextures(1, &tex);
 	}
 
