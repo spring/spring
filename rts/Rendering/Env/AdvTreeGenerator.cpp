@@ -16,8 +16,6 @@
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 
-using std::max;
-
 constexpr static unsigned int TEX_SIZE_C = 4;
 constexpr static unsigned int TEX_SIZE_X = 256;
 constexpr static unsigned int TEX_SIZE_Y = 256;
@@ -256,7 +254,7 @@ void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const 
 	const float3 flatSun = sky->GetLight()->GetLightDir() * XZVector;
 
 	// cylinder faces
-	const int numSides = max(3.0f, size * 10.0f);
+	const int numSides = std::max(3.0f, size * 10.0f);
 
 	for (int a = 0; a < numSides; a++) {
 		const float curAngle = (a    ) / (float)numSides * math::TWOPI;

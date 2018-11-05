@@ -570,9 +570,9 @@ void LocalModel::UpdateBoundingVolume()
 	float3 bbMins = DEF_MIN_SIZE;
 	float3 bbMaxs = DEF_MAX_SIZE;
 
-	for (const auto& item: pieces) {
-		const CMatrix44f& matrix = item.GetModelSpaceMatrix();
-		const S3DModelPiece* piece = item.original;
+	for (const auto& lmPiece: pieces) {
+		const CMatrix44f& matrix = lmPiece.GetModelSpaceMatrix();
+		const S3DModelPiece* piece = lmPiece.original;
 
 		// skip empty pieces or bounds will not be sensible
 		if (!piece->HasGeometryData())
