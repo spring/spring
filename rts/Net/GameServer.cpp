@@ -1986,9 +1986,9 @@ void CGameServer::ServerReadNet()
 				Message(spring::format("Player %s sent invalid AI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cID));
 		}
 
-		for (auto& element: pld) {
-			int bandwidthUsage = element.second.bandwidthUsage;
-			std::shared_ptr<netcode::CConnection>& link = element.second.link;
+		for (auto& playerLink: pld) {
+			int bandwidthUsage = playerLink.second.bandwidthUsage;
+			std::shared_ptr<netcode::CConnection>& link = playerLink.second.link;
 
 			bool bwLimitWasReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
 			if (updateBandwidth >= 1.0f && globalConfig.linkIncomingSustainedBandwidth > 0)
@@ -2020,17 +2020,17 @@ void CGameServer::ServerReadNet()
 				}
 			}
 			if (numDropped > 0) {
-				if (element.first == MAX_AIS)
+				if (playerLink.first == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [packets dropped]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)element.first));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)playerLink.first));
 			}
 
 			if (!bwLimitWasReached && bwLimitIsReached) {
-				if (element.first == MAX_AIS)
+				if (playerLink.first == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)element.first));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)playerLink.first));
 			}
 		}
 	}
