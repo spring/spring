@@ -32,7 +32,8 @@ CR_REG_METADATA(CLaserProjectile,(
 
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, speedf(0.0f)
+	// NB: constant, assumes |speed=dir*projectileSpeed| never changes after creation
+	, speedf(speed.w)
 	, maxLength(0.0f)
 	, curLength(0.0f)
 	, intensity(0.0f)
@@ -43,13 +44,10 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	// FIXME: constant, assumes |speed| never changes after creation
-	speedf = speed.w;
-
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 
-		maxLength = weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED);
+		maxLength = weaponDef->duration * (speedf * GAME_SPEED);
 		intensity = weaponDef->intensity;
 		intensityFalloff = intensity * weaponDef->falloffRate;
 
@@ -92,10 +90,9 @@ void CLaserProjectile::UpdateIntensity() {
 	}
 
 	if (weaponDef->laserHardStop) {
-		if (curLength < maxLength && speed != ZeroVector) {
-			// bolt reached its max-range but wasn't fully extended yet
+		// bolt reached its max-range but wasn't fully extended yet
+		if (curLength < maxLength && speed != ZeroVector)
 			stayTime = 1 + int((maxLength - curLength) / speedf);
-		}
 
 		SetVelocityAndSpeed(ZeroVector);
 	} else {
@@ -109,15 +106,11 @@ void CLaserProjectile::UpdateLength() {
 	if (speed != ZeroVector) {
 		// expand bolt to maximum length if not
 		// stopped / collided OR after hardstop
-		curLength += speedf;
-		curLength = std::min(maxLength, curLength);
+		curLength = std::min(curLength + speedf, maxLength);
 	} else {
-		if (stayTime == 0) {
-			// contract bolt to zero length after stayTime
-			// expires (can be immediately if not hardstop)
-			curLength -= speedf;
-			curLength = std::max(curLength, 0.0f);
-		}
+		// contract bolt to zero length after stayTime
+		// expires (can be immediately if not hardstop)
+		curLength = std::max(curLength - speedf * (stayTime == 0), 0.0f);
 	}
 
 	stayTime = std::max(stayTime - 1, 0);
@@ -188,8 +181,8 @@ void CLaserProjectile::Draw(CVertexArray* va)
 		return;
 
 	float3 dif(pos - camera->GetPos());
-	const float camDist = dif.Length();
-	dif /= camDist;
+	const float camDist = dif.LengthNormalize();
+
 	float3 dir1(dif.cross(dir));
 	dir1.Normalize();
 	float3 dir2(dif.cross(dir1));
@@ -214,7 +207,7 @@ void CLaserProjectile::Draw(CVertexArray* va)
 		float texStartOffset;
 		float texEndOffset;
 		if (checkCol) { // expanding or contracting?
-			texStartOffset = 0;
+			texStartOffset = 0.0f;
 			texEndOffset   = (1.0f - (curLength / maxLength)) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		} else {
 			texStartOffset = (-1.0f + (curLength / maxLength) + ((float)stayTime * (speedf / maxLength))) * (weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
