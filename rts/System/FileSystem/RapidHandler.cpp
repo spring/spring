@@ -87,8 +87,7 @@ static bool GetRapidEntry(const std::string& file, RapidEntry* re, Lambda p)
 
 std::string GetRapidPackageFromTag(const std::string& tag)
 {
-	const auto& files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
-	for (const std::string& file: files) {
+	for (const std::string& file: dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE)) {
 		RapidEntry re;
 		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetTag() == tag; }))
 			return re.GetName();
@@ -98,8 +97,7 @@ std::string GetRapidPackageFromTag(const std::string& tag)
 
 std::string GetRapidTagFromPackage(const std::string& pkg)
 {
-	const auto& files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
-	for (const std::string& file: files) {
+	for (const std::string& file: dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE)) {
 		RapidEntry re;
 		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetPackageHash() == pkg; }))
 			return re.GetTag();
