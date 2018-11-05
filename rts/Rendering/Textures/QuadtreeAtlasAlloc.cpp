@@ -169,7 +169,7 @@ bool CQuadtreeAtlasAlloc::Allocate()
 
 	std::sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
 
-	for (auto& item: sortedEntries) {
+	for (const auto& item: sortedEntries) {
 		SAtlasEntry& entry = *item;
 		QuadTreeNode* node = FindPosInQuadTree(entry.size.x, entry.size.y);
 
