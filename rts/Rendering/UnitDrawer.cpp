@@ -2018,15 +2018,12 @@ void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, const std::string& tex
 
 	CBitmap bitmap;
 
-	if (!texName.empty()) {
-		bitmap.Load("unitpics/" + texName);
-	} else {
-		if (!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.AllocDummy(SColor(255, 0, 0, 255));
-		}
+	if (!LoadBuildPic(texName, bitmap) &&
+		!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
+	    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
+	    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
+	    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
+		bitmap.AllocDummy(SColor(255, 0, 0, 255));
 	}
 
 	unitImage->textureID = bitmap.CreateTexture();

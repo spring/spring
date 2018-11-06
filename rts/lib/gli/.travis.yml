@@ -1,0 +1,38 @@
+dist: trusty
+
+language: cpp
+
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env: COMPILER=g++-4.9
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages:
+            - clang-3.8
+      env: COMPILER=clang++-3.8
+
+compiler:
+  - clang
+
+before_script: 
+- cmake --version
+
+script:
+- mkdir ./build
+- cd ./build
+- cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
+- cmake --build .
+- ctest
+- cd ..
+

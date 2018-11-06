@@ -5,7 +5,10 @@
 #include <cstring>
 
 #include <IL/il.h>
-#include <SDL_video.h>
+#include <SDL_video.h> // SDL_Surface
+#include <lib/gli/inc/gl.hpp>
+#include <lib/gli/inc/core/flip.hpp>
+#include <lib/gli/inc/save.hpp>
 
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"
@@ -13,6 +16,7 @@
 #endif
 
 #include "Bitmap.h"
+#include "gli_dds_loader.hpp"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
@@ -283,7 +287,6 @@ CBitmap::CBitmap(const uint8_t* data, int _xsize, int _ysize, int _channels)
 	: xsize(_xsize)
 	, ysize(_ysize)
 	, channels(_channels)
-	, compressed(false)
 {
 	assert(GetMemSize() > 0);
 	mem = texMemPool.Alloc(GetMemSize());
@@ -395,48 +398,54 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	const bool loadDDS = (FileSystem::GetExtension(filename) == "dds"); // always lower-case
 	const bool flipDDS = (filename.find("unitpics") == std::string::npos); // keep buildpics as-is
 
+
 	#ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
 	#endif
 
+
+	#define BITMAP_USE_DDS_LOADER
+	#ifdef BITMAP_USE_DDS_LOADER
 	if (loadDDS) {
-#ifndef BITMAP_NO_OPENGL
+		#ifndef BITMAP_NO_OPENGL
 		compressed = true;
 		xsize = 0;
 		ysize = 0;
 		channels = 0;
 
-		ddsimage.clear();
-		if (!ddsimage.load(filename, flipDDS))
+		if (!ddsimage.empty())
+			ddsimage.clear();
+
+		ddsimage = spring::load_dds_image(filename.c_str());
+
+		if (ddsimage.empty())
 			return false;
 
-		xsize = ddsimage.get_width();
-		ysize = ddsimage.get_height();
-		channels = ddsimage.get_components();
-		switch (ddsimage.get_type()) {
-			case nv_dds::TextureFlat :
-				textype = GL_TEXTURE_2D;
-				break;
-			case nv_dds::Texture3D :
-				textype = GL_TEXTURE_3D;
-				break;
-			case nv_dds::TextureCubemap :
-				textype = GL_TEXTURE_CUBE_MAP;
-				break;
-			case nv_dds::TextureNone :
-			default :
-				break;
-		}
+		assert(ddsimage.format() != gli::FORMAT_UNDEFINED);
+
+		if (flipDDS)
+			ddsimage = gli::flip(ddsimage);
+
+		const gli::gl glTrans = {gli::gl::PROFILE_GL33};
+		const glm::tvec3<GLsizei> ddsSize = ddsimage.extent();
+
+		xsize = ddsSize.x;
+		ysize = ddsSize.y;
+		channels = 4; // FIXME: alpha?
+		textype = glTrans.translate(ddsimage.target());
 		return true;
-#else
+		#else
 		// allocate a dummy texture, dds aren't supported in headless
 		AllocDummy();
 		return true;
-#endif
+		#endif
 	}
 
-
 	compressed = false;
+	#else
+	compressed = loadDDS;
+	#endif
+
 	channels = 4;
 
 
@@ -461,7 +470,8 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	{
 		std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
 
-		ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+		// IL does not vertically flip DDS images by default, unlike nv_dds
+		ilOriginFunc((loadDDS && flipDDS)? IL_ORIGIN_LOWER_LEFT: IL_ORIGIN_UPPER_LEFT);
 		ilEnable(IL_ORIGIN_SET);
 
 		ILuint imageID = 0;
@@ -578,7 +588,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
 		#ifndef BITMAP_NO_OPENGL
-		return ddsimage.save(filename);
+		return (gli::save(ddsimage, filename));
 		#else
 		return false;
 		#endif
@@ -746,10 +756,10 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 
 #ifndef BITMAP_NO_OPENGL
-unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const
+unsigned int CBitmap::CreateTexture(float anisoLvl, float lodBias, bool mipmaps) const
 {
 	if (compressed)
-		return CreateDDSTexture(0, aniso, lodBias, mipmaps);
+		return CreateDDSTexture(0, anisoLvl, lodBias, mipmaps);
 
 	if (GetMemSize() == 0)
 		return 0;
@@ -759,9 +769,8 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
 	if (!globalRendering->supportNonPowerOfTwoTex && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize))) {
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
-		return bm.CreateTexture(aniso, mipmaps);
+		return bm.CreateTexture(anisoLvl, mipmaps);
 	}
-
 
 	constexpr unsigned int intFormats[] = {0, GL_R8 , GL_RG8, GL_RGB8, GL_RGBA8};
 	constexpr unsigned int extFormats[] = {0, GL_RED, GL_RG , GL_RGB , GL_RGBA }; // GL_R is not accepted for [1]
@@ -777,8 +786,8 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 
 	if (lodBias != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, lodBias);
-	if (aniso > 0.0f)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+	if (anisoLvl > 0.0f)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoLvl);
 
 	if (mipmaps) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -792,106 +801,26 @@ unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) co
 }
 
 
-static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float anisoLvl, float lodBias, bool mipmaps) const
 {
-	if (num_mipmaps > 0) {
-		// dds included the MipMaps use them
-		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	} else {
-		if (mipmaps && IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap)) {
-			// create the mipmaps at runtime
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glGenerateMipmap(target);
-		} else {
-			// no mipmaps
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		}
-	}
-}
-
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const
-{
+	assert(Threading::IsMainThread());
 	glPushAttrib(GL_TEXTURE_BIT);
-
-	if (texID == 0)
-		glGenTextures(1, &texID);
-
-	switch (ddsimage.get_type()) {
-		case nv_dds::TextureNone:
-			glDeleteTextures(1, &texID);
-			texID = 0;
-			break;
-
-		case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, texID);
-
-			if (!ddsimage.upload_texture2D(0, GL_TEXTURE_2D)) {
-				glDeleteTextures(1, &texID);
-				texID = 0;
-				break;
-			}
-
-			if (lodBias != 0.0f)
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, lodBias);
-			if (aniso > 0.0f)
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-
-			HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage.get_num_mipmaps());
-			break;
-
-		case nv_dds::Texture3D:
-			glEnable(GL_TEXTURE_3D);
-			glBindTexture(GL_TEXTURE_3D, texID);
-
-			if (!ddsimage.upload_texture3D()) {
-				glDeleteTextures(1, &texID);
-				texID = 0;
-				break;
-			}
-
-			if (lodBias != 0.0f)
-				glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_LOD_BIAS, lodBias);
-
-			HandleDDSMipmap(GL_TEXTURE_3D, mipmaps, ddsimage.get_num_mipmaps());
-			break;
-
-		case nv_dds::TextureCubemap:
-			glEnable(GL_TEXTURE_CUBE_MAP);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
-
-			if (!ddsimage.upload_textureCubemap()) {
-				glDeleteTextures(1, &texID);
-				texID = 0;
-				break;
-			}
-
-			if (lodBias != 0.0f)
-				glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_LOD_BIAS, lodBias);
-			if (aniso > 0.0f)
-				glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-
-			HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage.get_num_mipmaps());
-			break;
-
-		default:
-			assert(false);
-			break;
-	}
-
+	texID = spring::create_dds_texture(ddsimage, texID, anisoLvl, lodBias, mipmaps);
 	glPopAttrib();
 	return texID;
 }
+
 #else  // !BITMAP_NO_OPENGL
 
-unsigned int CBitmap::CreateTexture(float aniso, float lodBias, bool mipmaps) const {
+unsigned int CBitmap::CreateTexture(float anisoLvl, float lodBias, bool mipmaps) const {
 	return 0;
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, float lodBias, bool mipmaps) const {
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float anisoLvl, float lodBias, bool mipmaps) const {
 	return 0;
 }
 #endif // !BITMAP_NO_OPENGL
+
 
 
 void CBitmap::CreateAlpha(uint8_t red, uint8_t green, uint8_t blue)

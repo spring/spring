@@ -21,6 +21,8 @@ SET(GFLAGS_INSTALL_SHARED_LIBS        FALSE)
 SET(GFLAGS_INSTALL_STATIC_LIBS        FALSE)
 
 ADD_SUBDIRECTORY(gflags)
+## nothing to build
+## ADD_SUBDIRECTORY(gli)
 
 
 # to change assimp for springs need, see fix_assimp.sh

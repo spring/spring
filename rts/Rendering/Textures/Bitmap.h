@@ -5,9 +5,11 @@
 
 #include <string>
 #include <vector>
+
 #ifndef BITMAP_NO_OPENGL
-	#include "nv_dds.h"
+	#include <lib/gli/inc/texture.hpp>
 #endif // !BITMAP_NO_OPENGL
+
 #include "System/float3.h"
 #include "System/Color.h"
 
@@ -41,10 +43,10 @@ public:
 
 	bool Empty() const { return (mem == nullptr); } // implies size=0
 
-	unsigned int CreateTexture(float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
-	unsigned int CreateMipMapTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, true)); }
-	unsigned int CreateAnisoTexture(float aniso = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(aniso, lodBias, false)); }
-	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateTexture(float anisoLvl = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateMipMapTexture(float anisoLvl = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(anisoLvl, lodBias, true)); }
+	unsigned int CreateAnisoTexture(float anisoLvl = 0.0f, float lodBias = 0.0f) const { return (CreateTexture(anisoLvl, lodBias, false)); }
+	unsigned int CreateDDSTexture(unsigned int texID = 0, float anisoLvl = 0.0f, float lodBias = 0.0f, bool mipmaps = false) const;
 
 	void CreateAlpha(uint8_t red, uint8_t green, uint8_t blue);
 	void SetTransparent(const SColor& c, const SColor trans = SColor(0, 0, 0, 0));
@@ -77,7 +79,7 @@ public:
 	// not set to anything until Load is called
 	int32_t textype = 0;
 
-	nv_dds::CDDSImage ddsimage;
+	gli::texture ddsimage;
 	#endif
 
 	bool compressed = false;
