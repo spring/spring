@@ -226,6 +226,7 @@ unsigned int spring::create_dds_texture(
 
 #else
 #include <lib/gli/inc/texture.hpp>
+#include "gli_dds_loader.hpp"
 
 gli::texture spring::load_dds_image(const char* filename) { return {}; }
 
