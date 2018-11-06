@@ -13,7 +13,7 @@ StreamingController::StreamingController(inet ipAdress, unsigned int port){
 	
 }
 
-StreamingController::initStream() {
+StreamingController::initStream(void) {
 	int rv = WelsCreateSVCEncoder (&encoder_);
 	ASSERT_EQ (0, rv);
 	ASSERT_TRUE (encoder_ != NULL);
@@ -33,7 +33,7 @@ StreamingController::initStream() {
 	encoder_->SetOption (ENCODER_OPTION_SVC_ENCODE_PARAM_BASE, &param);
 }
 
-StreamingController::EncodePicture(int width, int height ){
+StreamingController::encodePicture(unsigned char* bufferPtr, int width, int height ){
 	int frameSize = width * height * 3 / 2;
 	BufferedData buf;
 	buf.SetLength (frameSize);
@@ -72,7 +72,7 @@ StreamingController::EncodePicture(int width, int height ){
 }
 
 
-StreamingController::Dismantle(){
+StreamingController::dismantle(){
 	
 	if (encoder_) { 
 		encoder_->Uninitialize(); 

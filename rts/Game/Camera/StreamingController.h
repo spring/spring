@@ -15,7 +15,13 @@ class StreamingController {
 		~StreamingController() {
 			Dismantle();
 			};
-		
+			
+			
+		void initStream(void); 
+		void encodePicture(unsigned char* bufferPtr, int width, int height );
+		void dismantle(void);
+			
+		//Dataset
 		SEncParamBase param;
 		boost::asio::io_service io_service;
 		udp::resolver			resolver();
@@ -31,4 +37,5 @@ class StreamingController {
 
 
 }
-#endif 
+
+#endif //STREAMING_CONTROLLER_H
