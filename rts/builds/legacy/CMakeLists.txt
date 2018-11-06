@@ -73,6 +73,8 @@ list(APPEND engineLibraries pr-downloader_static)
 ### Assemble external incude dirs
 list(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
 list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/gli/inc)
+list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/glm)
 list(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 include_directories(${engineIncludes})

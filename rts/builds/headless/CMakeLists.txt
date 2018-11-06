@@ -44,6 +44,8 @@ list(APPEND engineHeadlessLibraries pr-downloader_static)
 
 include_directories(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 include_directories(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+include_directories(${ENGINE_SRC_ROOT_DIR}/lib/gli/inc)
+include_directories(${ENGINE_SRC_ROOT_DIR}/lib/glm)
 include_directories(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 
