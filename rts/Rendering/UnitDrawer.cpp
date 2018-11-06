@@ -2018,11 +2018,13 @@ void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, const std::string& tex
 
 	CBitmap bitmap;
 
-	if (!LoadBuildPic(texName, bitmap) &&
+	if (
+		!LoadBuildPic(texName, bitmap) &&
 		!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
-	    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
-	    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
-	    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
+		!LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
+		!LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
+		!LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)
+	) {
 		bitmap.AllocDummy(SColor(255, 0, 0, 255));
 	}
 
