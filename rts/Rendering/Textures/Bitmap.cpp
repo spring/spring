@@ -423,7 +423,9 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 
 		assert(ddsimage.format() != gli::FORMAT_UNDEFINED);
 
-		if (flipDDS)
+		// gli can not (yet?) vertically flip 3DC-compressed textures
+		// users of these formats should invert the texcoords instead
+		if (flipDDS && (ddsimage.format() != gli::FORMAT_RG_ATI2N_UNORM_BLOCK16 && ddsimage.format() != gli::FORMAT_RG_ATI2N_SNORM_BLOCK16))
 			ddsimage = gli::flip(ddsimage);
 
 		const gli::gl glTrans = {gli::gl::PROFILE_GL33};

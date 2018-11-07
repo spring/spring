@@ -82,7 +82,7 @@ unsigned int spring::create_dds_texture(
 
 
 	const glm::tvec3<GLsizei> tex_size = dds_tex.extent();
-	const GLsizei numFaces = static_cast<GLsizei>(dds_tex.layers() * dds_tex.faces());
+	const GLsizei num_faces = static_cast<GLsizei>(dds_tex.layers() * dds_tex.faces());
 
 	switch (dds_tex.target()) {
 		case gli::TARGET_1D: {
@@ -97,7 +97,7 @@ unsigned int spring::create_dds_texture(
 				static_cast<GLint>(dds_tex.levels()),
 				gl_format.Internal,
 				tex_size.x,
-				(dds_tex.target() == gli::TARGET_2D)? tex_size.y : numFaces
+				(dds_tex.target() == gli::TARGET_2D)? tex_size.y : num_faces
 			);
 		} break;
 
@@ -110,7 +110,7 @@ unsigned int spring::create_dds_texture(
 				gl_format.Internal,
 				tex_size.x,
 				tex_size.y,
-				(dds_tex.target() == gli::TARGET_3D)? tex_size.z : numFaces
+				(dds_tex.target() == gli::TARGET_3D)? tex_size.z : num_faces
 			);
 		} break;
 

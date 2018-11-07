@@ -1998,12 +1998,7 @@ void CUnitDrawer::UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits)
 
 static bool LoadBuildPic(const std::string& filename, CBitmap& bitmap)
 {
-	if (CFileHandler::FileExists(filename, SPRING_VFS_RAW_FIRST)) {
-		bitmap.Load(filename);
-		return true;
-	}
-
-	return false;
+	return (!filename.empty() && CFileHandler::FileExists(filename, SPRING_VFS_RAW_FIRST) && bitmap.Load(filename));
 }
 
 void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, const std::string& texName)
@@ -2019,7 +2014,7 @@ void CUnitDrawer::SetUnitDefImage(const UnitDef* unitDef, const std::string& tex
 	CBitmap bitmap;
 
 	if (
-		!LoadBuildPic(texName, bitmap) &&
+		!LoadBuildPic("unitpics/" +                texName, bitmap) &&
 		!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
 		!LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		!LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
