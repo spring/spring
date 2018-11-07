@@ -56,7 +56,8 @@ public:
 	float GetParticleSaturation(bool randomized = true) const;
 	float GetNanoParticleSaturation(float priority) const {
 		const float total = std::max(1.0f, maxNanoParticles * priority);
-		const float fract = currentNanoParticles / total;
+		const float fract = std::max(int(currentNanoParticles >= maxNanoParticles), currentNanoParticles) / total;
+
 		return std::min(1.0f, fract);
 	}
 

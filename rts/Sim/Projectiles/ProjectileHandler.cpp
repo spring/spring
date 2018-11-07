@@ -783,11 +783,13 @@ CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
 
 float CProjectileHandler::GetParticleSaturation(bool randomized) const
 {
+	const int curParticles = GetCurrentParticles();
+
 	// use the random mult to weaken the max limit a little
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
 	const float total = std::max(1.0f, maxParticles * 1.0f);
-	const float fract = GetCurrentParticles() / total;
+	const float fract = std::max(int(curParticles >= maxParticles), curParticles) / total;
 	const float rmult = 1.0f + (int(randomized) * 0.3f * guRNG.NextFloat());
 
 	return (fract * rmult);
