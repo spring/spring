@@ -75,8 +75,9 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 	const std::array<const IndxFuncType, 3> indxFuncs = {{UnitDefIndex, UnitDefNewIndex, UnitDefMetatable}};
 	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
-	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
-		const auto def = unitDefHandler->GetUnitDefByID(it->id);
+	for (const auto& unitDef: defsVec) {
+		// FIXME: This makes no sense, we already have the def, it's valid.
+		const auto def = unitDefHandler->GetUnitDefByID(unitDef.id);
 
 		if (def == nullptr)
 			continue;
