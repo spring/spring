@@ -47,17 +47,17 @@ void float3::ClampInMap()
 
 float3 float3::min(const float3 v1, const float3 v2)
 {
-	return float3(std::min(v1.x, v2.x), std::min(v1.y, v2.y), std::min(v1.z, v2.z));
+	return {std::min(v1.x, v2.x), std::min(v1.y, v2.y), std::min(v1.z, v2.z)};
 }
 
 float3 float3::max(const float3 v1, const float3 v2)
 {
-	return float3(std::max(v1.x, v2.x), std::max(v1.y, v2.y), std::max(v1.z, v2.z));
+	return {std::max(v1.x, v2.x), std::max(v1.y, v2.y), std::max(v1.z, v2.z)};
 }
 
 float3 float3::fabs(const float3 v)
 {
-	return float3(std::fabs(v.x), std::fabs(v.y), std::fabs(v.z));
+	return {std::fabs(v.x), std::fabs(v.y), std::fabs(v.z)};
 }
 
 bool float3::equals(const float3& f, const float3& eps) const

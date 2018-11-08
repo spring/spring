@@ -249,6 +249,7 @@ namespace Watchdog
 		}
 
 		if (0 == --(threadInfo->numreg))
+			// FIXME: undefined behavior, destination object type 'Watchdog::WatchDogThreadInfo' is not TriviallyCopyable [bugprone-undefined-memory-manipulation]
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
 
 		registeredThreads[num] = &registeredThreadsData[WDT_COUNT];

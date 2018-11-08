@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-
+// NOLINTNEXTLINE{readability-redundant-declaration}
 bool log_frontend_isEnabled(int level, const char* section);
 
 
@@ -174,8 +174,8 @@ void log_filter_section_setMinLevel(int level, const char* section)
 
 		// erase
 		for (size_t i = sectionMinLevel - secLvls.begin(), j = --log_filter::numLevels; i < j; i++) {
-			secLvls[i].first  = std::move(secLvls[i + 1].first );
-			secLvls[i].second = std::move(secLvls[i + 1].second);
+			secLvls[i].first  = secLvls[i + 1].first;
+			secLvls[i].second = secLvls[i + 1].second;
 		}
 
 		return;
