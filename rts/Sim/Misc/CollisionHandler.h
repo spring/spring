@@ -38,7 +38,7 @@ public:
 	}
 
 	void Reset(const CollisionQuery* cq = nullptr) {
-		*this = (cq != nullptr) ? *cq : {};
+		*this = (cq != nullptr) ? *cq : CollisionQuery{};
 	}
 
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
