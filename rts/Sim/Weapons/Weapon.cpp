@@ -797,8 +797,8 @@ bool CWeapon::CheckTargetAngleConstraint(const float3 worldTargetDir, const floa
 float3 CWeapon::GetTargetBorderPos(
 	const CUnit* targetUnit,
 	const float3 rawTargetPos,
-	const float3 rawTargetDir) const
-{
+	const float3 rawTargetDir
+) const {
 	float3 targetBorderPos = rawTargetPos;
 
 	if (weaponDef->targetBorder == 0.0f)
@@ -956,9 +956,7 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 		return false;
 
 	// NOTE: mainDir is in unit-space
-	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
-
-	return (CheckTargetAngleConstraint(tmpTargetDir, worldMainDir));
+	return (CheckTargetAngleConstraint(tmpTargetDir, owner->GetObjectSpaceVec(mainDir)));
 }
 
 

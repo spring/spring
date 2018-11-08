@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
 #include "Map/ReadMap.h" // mapDims
@@ -388,10 +387,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	}
 
 	if (q != nullptr) {
-		// transform intersection points (iff not a special
-		// case, otherwise calling code should not use them)
-		if (q->b0 == CQ_POINT_ON_RAY) { q->p0 = m.Mul(q->p0); }
-		if (q->b1 == CQ_POINT_ON_RAY) { q->p1 = m.Mul(q->p1); }
+		q->SwapParams();
+		q->Transform(m);
 	}
 
 	return intersect;
