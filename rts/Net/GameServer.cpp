@@ -132,8 +132,7 @@ CGameServer::CGameServer(
 	const std::shared_ptr<const    GameData> newGameData,
 	const std::shared_ptr<const  CGameSetup> newGameSetup
 )
-: quitServer(false)
-, serverFrameNum(-1)
+: serverFrameNum(-1)
 
 , serverStartTime(spring_gettime())
 , readyTime(spring_notime)
@@ -168,6 +167,7 @@ CGameServer::CGameServer(
 , gameHasStarted(false)
 , generatedGameID(false)
 , reloadingServer(false)
+, quitServer(false)
 {
 	myClientSetup = newClientSetup;
 	myGameData = newGameData;
@@ -2159,7 +2159,7 @@ void CGameServer::StartGame(bool forced)
 			const unsigned int team = p.team;
 			const float3& teamStartPos = teams[team].GetStartPos();
 
-			if (false && !teams[team].HasLeader())
+			if (false && !teams[team].HasLeader()) // NOLINT{readability-simplify-boolean-expr}
 				continue;
 
 			teamStartPosSent[team] = true;
