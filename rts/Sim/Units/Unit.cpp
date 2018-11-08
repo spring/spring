@@ -552,11 +552,11 @@ IkChain* CUnit::getIKChain( float ikID)
 }
 
 //Create the IKChain and return the ikID
-float CUnit::CreateIKChain(LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID)
+float CUnit::CreateIKChain(LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID, unsigned int animationLength)
 {
 	//ikIds are unique per Unit
 	ikIDPool+= 1;
-	IkChain * kinematIkChain= new IkChain((int)ikIDPool, this, startPiece, startPieceID, endPieceID);
+	IkChain * kinematIkChain= new IkChain((int)ikIDPool, this, startPiece, startPieceID, endPieceID, animationLength);
 	IkChains.push_back(kinematIkChain);
 	kinematIkChain->print();
 	return kinematIkChain->IkChainID;	

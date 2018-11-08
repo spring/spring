@@ -9,23 +9,37 @@ later), see LICENSE.html */
 #include <iostream>
 #include <boost/asio.hpp>
 
+using boost::asio::ip::udp;
+
 class StreamingController {
 	public:
-		StreamingController(inet ipAdress, unsigned int port) : socket_(io_service, udp::endpoint(udp::v4(), 13));
+		StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port) : 
+		socket_(io_service, udp::endpoint(udp::v4(), 13));
 		~StreamingController() {
-			Dismantle();
+			dismantleEncoder();
 			};
-			
+		
 			
 		void initStream(void); 
-		void encodePicture(unsigned char* bufferPtr, int width, int height );
-		void dismantle(void);
+		
+		void handle_receive(const boost::system::error_code& error,  
+							std::size_t );
+
+		void handle_send(boost::shared_ptr<std::string> /*message*/,
+      					const boost::system::error_code& /*error*/,
+     					std::size_t /*bytes_transferred*/);
 			
-		//Dataset
+		//Encoder settings
 		SEncParamBase param;
-		boost::asio::io_service io_service;
-		udp::resolver			resolver();
+		void encodePicture(unsigned char* bufferPtr, int width, int height );
+		void dismantleEncoder(void);
+
 		   
+		//Server Settings
+		boost::asio::io_service io_service;
+		udp::resolver	resolver();
+		udp::socket socket_;
+  		udp::endpoint remote_endpoint_;
 		udp::iostream stream;
 
 		boost::system::error_code ec;
@@ -33,9 +47,6 @@ class StreamingController {
 
 
 	private:
-
-
-
 }
 
 #endif //STREAMING_CONTROLLER_H

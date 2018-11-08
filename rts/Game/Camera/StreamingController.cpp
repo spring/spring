@@ -1,15 +1,24 @@
 #include "StreamingController.h"	
 
 
-StreamingController::StreamingController(inet ipAdress, unsigned int port){
+StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port){
 	//open bit stream
-	udp::endpoint endpoint(tcp::v4(), 13); 
-	udp::acceptor(io_service, endpoint);  
-	acceptor.accept(*stream.rdbuf(), ec);
+	 socket_.async_receive_from(
+     boost::asio::buffer(recv_buffer_), remote_endpoint_,
+     boost::bind(&udp_server::handle_receive, this,
+     boost::asio::placeholders::error,
+     boost::asio::placeholders::bytes_transferred));
 	
-	boost::asio::io_service io_service;
-    udp_server server(io_service);
-    io_service.run();
+       try
+	  {
+	    boost::asio::io_service io_service;
+	    udp_server server(io_service);
+	    io_service.run();
+	  }
+	  catch (std::exception& e)
+	  {
+	    std::cerr << e.what() << std::endl;
+	  }
 	
 }
 
@@ -33,7 +42,16 @@ StreamingController::initStream(void) {
 	encoder_->SetOption (ENCODER_OPTION_SVC_ENCODE_PARAM_BASE, &param);
 }
 
-StreamingController::encodePicture(unsigned char* bufferPtr, int width, int height ){
+StreamingController::void handle_receive(const boost::system::error_code& error,
+      std::size_t /*bytes_transferred*/){
+
+}
+
+StreamingController::handle_send(
+								boost::shared_ptr<std::string> /*message*/,
+      							const boost::system::error_code& /*error*/,
+      							std::size_t /*bytes_transferred*/ ){
+	
 	int frameSize = width * height * 3 / 2;
 	BufferedData buf;
 	buf.SetLength (frameSize);
@@ -59,15 +77,13 @@ StreamingController::encodePicture(unsigned char* bufferPtr, int width, int heig
 	   if (info.eFrameType != videoFrameTypeSkip && cbk != 	NULL) {	
 
 		 if (!ec) {
-				{	
-				stream <<  imageBufferToByteStream();  
-				} 
-				catch (std::exception& e) {
-				 std::cerr << e.what() << std::endl;
+					{	
+					stream <<  imageBufferToByteStream();  
+					} 
+					catch (std::exception& e) {
+					 std::cerr << e.what() << std::endl;
+					 }
 				 }
-				 }
-			
-			   
 		}
 }
 

@@ -117,7 +117,7 @@ bool IkChain::initializePiecePath(LocalModelPiece* startPiece, unsigned int star
 	return initializationComplete;
 }
 
-IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID)
+IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID, unsigned int lengthInFrames)
 {
 	this->unit = unit;
 	
@@ -125,15 +125,18 @@ IkChain::IkChain(int id, CUnit* unit, LocalModelPiece* startPiece, unsigned int 
 	  if( initializePiecePath(startPiece, (unsigned int) startPieceID, (unsigned int) endPieceID) == false) {
 		std::cout<<"Startpiece is beneath Endpiece - Endpiece could not be found"<<std::endl;
 	  }
-	 
+	
+
+
 	// pre initialize all the Points - and the 
 	float3 piecePos= startPiece->GetAbsolutePos();
 	startPoint = Point3f(piecePos.x,piecePos.y,piecePos.z);
 	goalPoint   = Point3f(0,0,0);
 
-	IKActive= false;
+	IKActive= true;
 	IkChainID = id;
 	
+	setAnimationLengthInFrames( lengthInFrames);
 	SetTransformation(0,0,0);
 	
 }

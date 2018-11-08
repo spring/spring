@@ -42,14 +42,14 @@ unset(_expectedTargets)
 add_library(gflags_nothreads_static STATIC IMPORTED)
 
 set_target_properties(gflags_nothreads_static PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/picassoct/Development/SpringSource/flospring/spring/rts/lib/gflags/include"
+  INTERFACE_INCLUDE_DIRECTORIES "/home/picasso/Documents/springdev/spring/rts/lib/gflags/include"
 )
 
 # Import target "gflags_nothreads_static" for configuration "RELWITHDEBINFO"
 set_property(TARGET gflags_nothreads_static APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(gflags_nothreads_static PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "/home/picassoct/Development/SpringSource/flospring/spring/rts/lib/gflags/libgflags_nothreads.a"
+  IMPORTED_LOCATION_RELWITHDEBINFO "/home/picasso/Documents/springdev/spring/rts/lib/gflags/libgflags_nothreads.a"
   )
 
 # This file does not depend on other imported targets which have

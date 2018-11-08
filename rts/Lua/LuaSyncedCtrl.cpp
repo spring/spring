@@ -1401,7 +1401,7 @@ int LuaSyncedCtrl::CreateUnitIKChain(lua_State* L){
 	}
 		
 
-	lua_pushnumber(L,  unit->CreateIKChain(startPiece, startPiece->scriptPieceIndex, endPiece->scriptPieceIndex), lengthInFrames);
+	lua_pushnumber(L,  unit->CreateIKChain(startPiece, startPiece->scriptPieceIndex, endPiece->scriptPieceIndex, lengthInFrames));
 	return 1;
 	}
 	
