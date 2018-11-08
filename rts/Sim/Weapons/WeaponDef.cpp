@@ -310,6 +310,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	collisionFlags |= (Collision::NONEUTRALS   * (!wdTable.GetBool("collideNeutral",   true)));
 	collisionFlags |= (Collision::NOFIREBASES  * (!wdTable.GetBool("collideFireBase", false)));
 	collisionFlags |= (Collision::NOGROUND     * (!wdTable.GetBool("collideGround",    true)));
+	collisionFlags |= (Collision::NOCLOAKED    * (!wdTable.GetBool("collideCloaked",  false)));
 
 	//FIXME defaults depend on other tags
 	{
