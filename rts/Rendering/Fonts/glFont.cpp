@@ -1164,8 +1164,8 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 			}
 			case 0x0a: {
 				// LF
-				for (int i = 0; i < colLines.size(); ++i)
-					colLines[i] += 0x0a;
+				for (auto& colLine: colLines)
+					colLine += 0x0a;
 
 				if (colColor[0] != curColor) {
 					for (int i = 0; i < 4; ++i)

@@ -594,7 +594,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 		glClearErrors("GR", __func__, glDebugErrors);
 
 	// not swapping while still incrementing drawFrame can cause weirdness
-	if (false && !allowSwapBuffers && !forceSwapBuffers)
+	if (false && !allowSwapBuffers && !forceSwapBuffers) // NOLINT{readability-simplify-boolean-expr}
 		return;
 
 	const spring_time pre = spring_now();

@@ -334,9 +334,7 @@ void CUnitDrawer::Kill()
 			auto& lgb = liveGhostBuildings[allyTeam][modelType];
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
-			for (auto it = dgb.begin(); it != dgb.end(); ++it) {
-				GhostSolidObject* gso = *it;
-
+			for (GhostSolidObject* gso : dgb) {
 				if (gso->DecRef())
 					continue;
 
@@ -773,7 +771,7 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 {
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true); // NOLINT{readability-simplify-boolean-expr}
 
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
@@ -796,7 +794,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
-	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
+	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false); // NOLINT{readability-misleading-indentation}
 
 	glAttribStatePtr->PopBits();
 }
@@ -1520,25 +1518,25 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 		const SColor   featureSquareColors[] = {{0.9f, 0.8f, 0.0f, 0.7f}};
 		const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
-		for (unsigned int i = 0; i < buildableSquares.size(); i++) {
-			buffer->SafeAppend({buildableSquares[i]                                      , buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquares[i] + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquares[i] + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+		for (const auto& buildableSquare : buildableSquares) {
+			buffer->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			buffer->SafeAppend({buildableSquare + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
 		}
 
-		for (unsigned int i = 0; i < featureSquares.size(); i++) {
-			buffer->SafeAppend({featureSquares[i]                                      , featureSquareColors[0]});
-			buffer->SafeAppend({featureSquares[i] + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
-			buffer->SafeAppend({featureSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
-			buffer->SafeAppend({featureSquares[i] + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
+		for (const auto& featureSquare : featureSquares) {
+			buffer->SafeAppend({featureSquare                                      , featureSquareColors[0]});
+			buffer->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
+			buffer->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
+			buffer->SafeAppend({featureSquare + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
 		}
 
-		for (unsigned int i = 0; i < illegalSquares.size(); i++) {
-			buffer->SafeAppend({illegalSquares[i]                                      , illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquares[i] + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquares[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquares[i] + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
+		for (const auto& illegalSquare : illegalSquares) {
+			buffer->SafeAppend({illegalSquare                                      , illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			buffer->SafeAppend({illegalSquare + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
 		}
 
 		return canBuild;
@@ -1828,9 +1826,8 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	for (auto iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
-		(iconIt->second).clear();
-	}
+	for (auto& icon: unitsByIcon)
+		icon.second.clear();
 
 	for (CUnit* unit: unsortedUnits) {
 		// force an erase (no-op) followed by an insert

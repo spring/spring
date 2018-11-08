@@ -249,7 +249,7 @@ void UnitDrawerStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha.x)));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, GetTeamColor(team, alpha.x));
 }
 
 void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
