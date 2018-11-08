@@ -1623,7 +1623,7 @@ void CGroundMoveType::HandleObjectCollisions()
 	// handle collisions for even-numbered objects on even-numbered frames and vv.
 	// (temporal resolution is still high enough to not compromise accuracy much?)
 	// if ((collider->id & 1) == (gs->frameNum & 1)) {
-	{
+	if (!collider->beingBuilt) {
 		const UnitDef* colliderUD = collider->unitDef;
 		const MoveDef* colliderMD = collider->moveDef;
 
@@ -1669,6 +1669,9 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 	bool checkYardMap,
 	bool checkTerrain
 ) {
+	// while being built, units that overlap their factory yardmap should not be moved at all
+	assert(!collider->beingBuilt);
+
 	if (checkTerrain && (!collider->IsMoving() || collider->IsInAir()))
 		return false;
 
