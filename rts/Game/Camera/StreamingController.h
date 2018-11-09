@@ -13,8 +13,8 @@ using boost::asio::ip::udp;
 
 class StreamingController {
 	public:
-		StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port) : 
-		socket_(io_service, udp::endpoint(udp::v4(), 13));
+		StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port): 
+		socket_(io_service, udp::endpoint(udp::v4(), 13)) ;
 		~StreamingController() {
 			dismantleEncoder();
 			};
@@ -43,8 +43,6 @@ class StreamingController {
 		udp::iostream stream;
 
 		boost::system::error_code ec;
-	protected:
-
 
 	private:
 }

@@ -1,7 +1,8 @@
 #include "StreamingController.h"	
 
 
-StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port){
+StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port): 
+		socket_(io_service, udp::endpoint(udp::v4(), 13)){
 	//open bit stream
 	 socket_.async_receive_from(
      boost::asio::buffer(recv_buffer_), remote_endpoint_,
@@ -51,7 +52,7 @@ StreamingController::handle_send(
 								boost::shared_ptr<std::string> /*message*/,
       							const boost::system::error_code& /*error*/,
       							std::size_t /*bytes_transferred*/ ){
-	
+
 	int frameSize = width * height * 3 / 2;
 	BufferedData buf;
 	buf.SetLength (frameSize);
