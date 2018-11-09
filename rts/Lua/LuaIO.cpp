@@ -74,7 +74,7 @@ bool LuaIO::SafeWritePath(const std::string& path)
 	const std::array<std::string, 5> exeFiles = {"exe", "dll", "so", "bat", "com"};
 	const std::string ext = FileSystem::GetExtension(path);
 
-	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext))
+	if (std::find(std::begin(exeFiles), std::end(exeFiles), ext) != exeFiles.end())
 		return false;
 
 	return dataDirsAccess.InWriteDir(path);

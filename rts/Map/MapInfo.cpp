@@ -19,6 +19,7 @@
 #include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
+#include <array>
 #include <cassert>
 
 
