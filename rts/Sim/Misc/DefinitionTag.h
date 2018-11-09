@@ -8,6 +8,7 @@
 #include <cassert>
 #include "System/Misc/NonCopyable.h"
 
+#include <array>
 #include <vector>
 #include <sstream>
 #include <string>
