@@ -22,7 +22,7 @@ enum {
 struct CollisionQuery {
 public:
 	bool SwapParams() {
-		if (t0 <= t1)
+		if (!AllHit() || ValidRay())
 			return false;
 
 		std::swap(t1, t0);
@@ -41,9 +41,12 @@ public:
 		*this = (cq != nullptr) ? *cq : CollisionQuery{};
 	}
 
+	// t0 > t1 can happen when intersecting cylinder endcaps
+	bool ValidRay() const { return (t0 <= t1); }
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
 	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
 	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
+	bool AllHit() const { return (b0 != CQ_POINT_NO_INT && b1 != CQ_POINT_NO_INT); }
 	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT || b1 != CQ_POINT_NO_INT); }
 
 	const float3& GetIngressPos() const { return p0; }
