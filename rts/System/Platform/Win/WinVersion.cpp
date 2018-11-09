@@ -11,10 +11,12 @@
 #endif
 
 #include <windows.h>
-//#include <ntdef.h>
-
+#ifndef _MSC_VER
+#include <ntdef.h>
+#else
 typedef _Return_type_success_(return >= 0) LONG NTSTATUS;
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+#endif
 
 #include "WinVersion.h"
 
