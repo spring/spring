@@ -61,8 +61,10 @@ CSMFReadMap::CSMFReadMap(const std::string& mapName): CEventClient("[CSMFReadMap
 	haveSplatDetailDistribTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 	haveSplatNormalDistribTexture = false;
 
-	// FIXME: undefined behavior, destination object type 'MapTexture' is not TriviallyCopyable [bugprone-undefined-memory-manipulation]
-	memset(&splatNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatNormalTextures[0]));
+	for (const MapTexture& mapTex: splatNormalTextures) {
+		assert(!mapTex.HasLuaTex());
+		assert(mapTex.GetID() == 0);
+	}
 
 	for (const std::string& texName: mapInfo->smf.splatDetailNormalTexNames) {
 		haveSplatNormalDistribTexture |= !texName.empty();
