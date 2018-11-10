@@ -164,8 +164,10 @@ private:
 		std::string origName;     // non-lowercased name
 		std::string replaced;     // if not empty, use this archive instead
 		ArchiveData archiveData;
+		std::string archiveDataPath;
 
 		uint32_t modified = 0;
+		uint32_t modifiedArchiveData = 0;
 		uint8_t checksum[sha512::SHA_LEN];
 
 		bool updated = false;
@@ -208,7 +210,7 @@ private:
 	 */
 	bool GetArchiveChecksum(const std::string& filename, ArchiveInfo& archiveInfo);
 
-	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
+	bool CheckCachedData(const std::string& fullName, unsigned& modified, bool doChecksum);
 
 	/**
 	 * Returns a value > 0 if the file is rated as a meta-file.
