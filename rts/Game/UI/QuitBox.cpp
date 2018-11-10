@@ -383,7 +383,7 @@ void CQuitBox::MouseMove(int x, int y, int dx, int dy, int button)
 		const float tsz = sz / float(MAX_QUIT_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)lround(scr / tsz), MAX_QUIT_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_QUIT_TEAMS - numTeamsDisp));
 		return;
 	}
 

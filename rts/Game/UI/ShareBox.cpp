@@ -389,7 +389,7 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 		float tsz = sz / float(MAX_SHARE_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)lround(scr / tsz), MAX_SHARE_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_SHARE_TEAMS - numTeamsDisp));
 		return;
 	}
 
