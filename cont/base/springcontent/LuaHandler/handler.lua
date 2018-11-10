@@ -721,7 +721,7 @@ local function LoadConfigFile(filename, envParam)
 
 	local success, rvalue = pcall(VFS.Include, filename, envParam)
 	if (not success) then
-		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (' .. rvalue .. ')')
+		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (' .. tostring(rvalue) .. ')')
 	elseif (type(rvalue) ~= "table") then
 		Spring.Log(LUA_NAME, "warning", 'Failed to load: ' .. filename .. '  (table data expected, got ' .. type(rvalue) .. ')')
 	else

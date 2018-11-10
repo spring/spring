@@ -329,7 +329,7 @@ local function GetWidgetInfo(name, mode)
     setfenv(chunk, info)
     local success, err = pcall(chunk)
     if (not success) then
-      Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. err)
+      Spring.Log(section, LOG.INFO, 'not loading ' .. name .. ': ' .. tostring(err))
     end
   end
 
