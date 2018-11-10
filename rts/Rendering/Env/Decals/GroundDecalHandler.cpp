@@ -771,7 +771,7 @@ void CGroundDecalHandler::TestScarOverlaps(const Scar& scar)
 		for (int x = x1; x <= x2; ++x) {
 			auto& quad = scarField[y * scarFieldX + x];
 
-			// Can't tell if quad will change in below loop, so:
+			// The quad might change in the loop below
 			// NOLINTNEXTLINE{modernize-loop-convert}
 			for (size_t i = 0; i < quad.size(); i++) {
 				Scar& testScar = scars[ quad[i] ];

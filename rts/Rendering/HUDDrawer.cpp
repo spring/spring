@@ -163,7 +163,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 		if (wd->stockpile && !w->numStockpiled) {
 			if (w->numStockpileQued > 0) {
 				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
-				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Stockpiling (%i%%)", wd->description.c_str(), roundf(100.0f * w->buildPercent));
+				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Stockpiling (%i%%)", wd->description.c_str(), std::roundf(100.0f * w->buildPercent));
 			} else {
 				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
 				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: No ammo", wd->description.c_str());
@@ -173,7 +173,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 		}
 		if (w->reloadStatus > gs->frameNum) {
 			font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
-			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - roundf(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed)));
+			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - std::roundf(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed)));
 			continue;
 		}
 		if (!w->angleGood) {

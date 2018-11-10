@@ -599,7 +599,7 @@ void LocalModel::UpdateBoundingVolume()
 				float3(pMins.x,  pMaxs.y,  pMaxs.z),
 			};
 
-			for (const auto& v: verts) {
+			for (const float3& v: verts) {
 				const float3 vertex = matrix * v;
 
 				bbMins = float3::min(bbMins, vertex);
