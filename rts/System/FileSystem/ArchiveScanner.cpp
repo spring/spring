@@ -13,6 +13,7 @@
 #include "ArchiveLoader.h"
 #include "DataDirLocater.h"
 #include "Archives/IArchive.h"
+#include "Archives/DirArchive.h"
 #include "FileFilter.h"
 #include "DataDirsAccess.h"
 #include "FileSystem.h"
@@ -50,7 +51,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
  * but mapping them all, every time to make the list is)
  */
 
-constexpr int INTERNAL_VER = 14;
+constexpr int INTERNAL_VER = 15;
 
 
 /*
@@ -635,7 +636,7 @@ CArchiveScanner::BrokenArchive& CArchiveScanner::GetAddBrokenArchive(const std::
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
 	unsigned modifiedTime = 0;
-	if (CheckCachedData(fullName, &modifiedTime, doChecksum))
+	if (CheckCachedData(fullName, modifiedTime, doChecksum))
 		return;
 
 	isDirty = true;
@@ -671,17 +672,20 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 	ArchiveInfo ai;
 	ArchiveData& ad = ai.archiveData;
+	std::string archiveDataName;
 
 	// execute the respective .lua, otherwise assume this archive is a map
 	if (hasMapinfo) {
-		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
+		archiveDataName = "mapinfo.lua";
+		ScanArchiveLua(ar.get(), archiveDataName, ai, error);
 
 		if ((miMapFile = ad.GetMapFile()).empty()) {
 			LOG_L(L_WARNING, "[AS::%s] set the 'mapfile' key in mapinfo.lua of archive \"%s\" for faster loading!", __func__, fullName.c_str());
 			arMapFile = SearchMapFile(ar.get(), error);
 		}
 	} else if (hasModinfo) {
-		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
+		archiveDataName = "modinfo.lua";
+		ScanArchiveLua(ar.get(), archiveDataName, ai, error);
 	} else {
 		arMapFile = SearchMapFile(ar.get(), error);
 	}
@@ -727,11 +731,18 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		LOG_S(LOG_SECTION_ARCHIVESCANNER, "Found new game: %s", ad.GetNameVersioned().c_str());
 	} else {
 		// neither a map nor a mod: error
+		// FIXME: This seems pointless: error is not used and there is no return or throw??
 		error = "missing modinfo.lua/mapinfo.lua";
 	}
 
 	ai.path = fpath;
 	ai.modified = modifiedTime;
+	// Store modinfo.lua/mapinfo.lua modified timestamp for directory archives, as only they can change.
+	const auto dirArchive = dynamic_cast<const CDirArchive*>(ar.get());
+	if (dirArchive != nullptr && !archiveDataName.empty()) {
+		ai.archiveDataPath = ar->GetArchiveFile() + "/" + dirArchive->GetOrigFileName(dirArchive->FindFile(archiveDataName));
+		ai.modifiedArchiveData = FileSystemAbstraction::GetFileModificationTime(ai.archiveDataPath);
+	}
 	ai.origName = fn;
 	ai.updated = true;
 	ai.hashed = doChecksum && GetArchiveChecksum(fullName, ai);
@@ -743,10 +754,10 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 }
 
 
-bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum)
+bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& modified, bool doChecksum)
 {
 	// If stat fails, assume the archive is not broken nor cached
-	if ((*modified = FileSystemAbstraction::GetFileModificationTime(fullName)) == 0)
+	if ((modified = FileSystemAbstraction::GetFileModificationTime(fullName)) == 0)
 		return false;
 
 	const std::string& fn    = FileSystem::GetFilename(fullName);
@@ -760,7 +771,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 	if (baIter != brokenArchivesIndex.end()) {
 		BrokenArchive& ba = brokenArchives[baIter->second];
 
-		if (*modified == ba.modified && fpath == ba.path)
+		if (modified == ba.modified && fpath == ba.path)
 			return (ba.updated = true);
 	}
 
@@ -768,55 +779,59 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 	// Determine whether to rely on the cached info or not
 	const auto aiIter = archiveInfosIndex.find(lcfn);
 
-	if (aiIter != archiveInfosIndex.end()) {
-		ArchiveInfo& ai = archiveInfos[aiIter->second];
+	if (aiIter == archiveInfosIndex.end())
+		return false;
 
-		// This archive may have been obsoleted, do not process it if so
-		if (!ai.replaced.empty())
-			return true;
+	ArchiveInfo& ai = archiveInfos[aiIter->second];
 
-		if (*modified == ai.modified && fpath == ai.path) {
-			// archive found in cache, update checksum if wanted
-			// this also has to flag isDirty or ArchiveCache will
-			// not be rewritten even if the hash silently changed,
-			// e.g. after redownload
-			ai.updated = true;
+	// This archive may have been obsoleted, do not process it if so
+	if (!ai.replaced.empty())
+		return true;
 
-			if (doChecksum && !ai.hashed)
-				isDirty |= (ai.hashed = GetArchiveChecksum(fullName, ai));
+	bool archiveDataChanged = false;
+	// Check if the archive data file (modinfo.lua/mapinfo.lua) has changed
+	if (!ai.archiveDataPath.empty())
+		archiveDataChanged = (FileSystemAbstraction::GetFileModificationTime(ai.archiveDataPath) != ai.modifiedArchiveData);
 
-			return true;
-		}
 
-		if (ai.updated) {
-			LOG_L(L_ERROR, "[AS::%s] found a \"%s\" already in \"%s\", ignoring.", __func__, fullName.c_str(), (ai.path + ai.origName).c_str());
+	if (modified == ai.modified && fpath == ai.path && !archiveDataChanged) {
+		// archive found in cache, update checksum if wanted
+		// this also has to flag isDirty or ArchiveCache will
+		// not be rewritten even if the hash silently changed,
+		// e.g. after redownload
+		ai.updated = true;
 
-			if (baseContentArchives.find(aiIter->first) == baseContentArchives.end())
-				return true; // ignore
+		if (doChecksum && !ai.hashed)
+			isDirty |= (ai.hashed = GetArchiveChecksum(fullName, ai));
 
-			throw user_error(
-				std::string("duplicate base content detected:\n\t") + ai.path +
-				std::string("\n\t") + fpath +
-				std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
-		}
-
-		{
-			// If we are here, we could have invalid info in the cache
-			// Force a reread if it is a directory archive (.sdd), as
-			// st_mtime only reflects changes to the directory itself,
-			// not the contents.
-			const std::string& relcfn = StringToLower(archiveInfos[archiveInfos.size() - 1].origName);
-
-			ai = std::move(archiveInfos[archiveInfos.size() - 1]);
-
-			// remap
-			archiveInfosIndex.erase(relcfn);
-			archiveInfosIndex.insert(relcfn, aiIter->second);
-			archiveInfosIndex.erase(lcfn);
-			archiveInfos.pop_back();
-		}
+		return true;
 	}
 
+	if (ai.updated) {
+		LOG_L(L_ERROR, "[AS::%s] found a \"%s\" already in \"%s\", ignoring.", __func__, fullName.c_str(), (ai.path + ai.origName).c_str());
+
+		if (baseContentArchives.find(aiIter->first) == baseContentArchives.end())
+			return true; // ignore
+
+		throw user_error(
+			std::string("duplicate base content detected:\n\t") + ai.path +
+			std::string("\n\t") + fpath +
+			std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
+	}
+
+	// If we are here, we could have invalid info in the cache
+	// Force a reread if it is a directory archive (.sdd), as
+	// st_mtime only reflects changes to the directory itself,
+	// not the contents.
+	const std::string& relcfn = StringToLower(archiveInfos[archiveInfos.size() - 1].origName);
+
+	ai = std::move(archiveInfos[archiveInfos.size() - 1]);
+
+	// remap
+	archiveInfosIndex.erase(relcfn);
+	archiveInfosIndex.insert(relcfn, aiIter->second);
+	archiveInfosIndex.erase(lcfn);
+	archiveInfos.pop_back();
 	return false;
 }
 
@@ -945,7 +960,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	const LuaTable& brokenArchivesTbl = archiveCacheTbl.SubTable("brokenArchives");
 
 	// Do not load old version caches
-	const int ver = archiveCacheTbl.GetInt("internalVer", (INTERNAL_VER + 1));
+	const int ver = archiveCacheTbl.GetInt("internalver", (INTERNAL_VER + 1));
 	if (ver != INTERNAL_VER)
 		return;
 
@@ -960,13 +975,15 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ArchiveInfo& ai = GetAddArchiveInfo(curArchiveNameLC);
 		ArchiveInfo tmp; // used to compare against all-zero hash
 
-		ai.origName = curArchiveName;
-		ai.path     = curArchiveTbl.GetString("path", "");
+		ai.origName 	   = curArchiveName;
+		ai.path     	   = curArchiveTbl.GetString("path", "");
+		ai.archiveDataPath = curArchiveTbl.GetString("archiveDataPath", "");
 
 		// do not use LuaTable.GetInt() for 32-bit integers: the Spring lua
 		// library uses 32-bit floats to represent numbers, which can only
 		// represent 2^24 consecutive integers
 		ai.modified = strtoul(curArchiveTbl.GetString("modified", "0").c_str(), nullptr, 10);
+		ai.modifiedArchiveData = strtoul(curArchiveTbl.GetString("modifiedArchiveData", "0").c_str(), nullptr, 10);
 
 		// convert digest-string back to raw checksum
 		if (hexDigestStr.size() == (sha512::SHA_LEN * 2)) {
@@ -1075,6 +1092,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcInfo.modified);
 		fprintf(out, "\t\t\tchecksum = \"%s\",\n", hexDigest.data());
 		SafeStr(out, "\t\t\treplaced = ",          arcInfo.replaced);
+
+		if (!arcInfo.archiveDataPath.empty()) {
+			SafeStr(out, "\t\t\tarchiveDataPath = ",              arcInfo.archiveDataPath);
+			fprintf(out, "\t\t\tmodifiedArchiveData = \"%u\",\n", arcInfo.modifiedArchiveData);
+		}
 
 		// mod info?
 		const ArchiveData& archData = arcInfo.archiveData;
