@@ -40,6 +40,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -1777,6 +1778,16 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		}
 
 		va->DrawArray2dTC(GL_QUADS);
+	}
+}
+
+
+void CUnitDrawer::UpdateUnitDefMiniMapIcons(const UnitDef* ud)
+{
+	for (int teamNum = 0; teamNum < teamHandler.ActiveTeams(); teamNum++) {
+		for (const CUnit* unit: unitHandler.GetUnitsByTeamAndDef(teamNum, ud->id)) {
+			UpdateUnitMiniMapIcon(unit, true, false);
+		}
 	}
 }
 

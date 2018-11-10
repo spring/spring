@@ -100,9 +100,6 @@
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
-using std::min;
-using std::max;
-
 // MinGW defines this for a WINAPI function
 #undef SendMessage
 #undef CreateDirectory
@@ -2203,16 +2200,17 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 
-	if (decoyMapIt == decoyMap.end())
-		return 0;
+	if (decoyMapIt != decoyMap.end()) {
+		const auto& decoySet = decoyMapIt->second;
 
-	const auto& decoySet = decoyMapIt->second;
-
-	for (const int decoyDefID: decoySet) {
-		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
-		decoyDef->iconType = ud->iconType;
+		for (const int decoyDefID: decoySet) {
+			const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
+			decoyDef->iconType = ud->iconType;
+		}
 	}
 
+	// FIXME: the icon-system is garbage, rewrite it
+	unitDrawer->UpdateUnitDefMiniMapIcons(ud);
 	return 0;
 }
 

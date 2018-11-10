@@ -214,6 +214,7 @@ private:
 public:
 	void DrawUnitIcons();
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void UpdateUnitDefMiniMapIcons(const UnitDef* ud);
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
