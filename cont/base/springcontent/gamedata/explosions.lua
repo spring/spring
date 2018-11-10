@@ -106,7 +106,7 @@ local function LoadLuas(dir)
     setmetatable(edEnv, { __index = system })
     local success, eds = pcall(VFS.Include, filename, edEnv)
     if (not success) then
-      Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. eds)
+      Spring.Log(section, LOG.ERROR, 'Error parsing ' .. filename .. ': ' .. tostring(eds))
     elseif (eds == nil) then
       Spring.Log(section, LOG.ERROR, 'Missing return table from: ' .. filename)
     else

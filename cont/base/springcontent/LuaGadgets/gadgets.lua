@@ -212,7 +212,7 @@ function gadgetHandler:LoadGadget(filename)
   setfenv(chunk, gadget)
   local success, err = pcall(chunk)
   if (not success) then
-    Spring.Log(LOG_SECTION, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. err .. ')')
+    Spring.Log(LOG_SECTION, LOG.ERROR, 'Failed to load: ' .. basename .. '  (' .. tostring(err) .. ')')
     return nil
   end
   if (err == false) then
