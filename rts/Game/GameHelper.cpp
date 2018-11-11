@@ -647,13 +647,16 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float3& ownerPos = weaponOwner->pos;
 	const float3 testPos;
 
-	const float  baseRange = weapon->range;
-	const float scanRadius = baseRange + weapon->autoTargetRangeBoost;
-	const float  aimHeight = weapon->aimFromPos.y;
+	const float aimPosHeight = weapon->aimFromPos.y;
+	const float minMapHeight = std::max(0.0f, readMap->GetInitMinHeight());
 
 	// how much damage the weapon deals over 1 second
 	const float secDamage = weaponDmg->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const float heightMod = weaponDef->heightmod;
+
+	const float  baseRange = weapon->range;
+	const float rangeBoost = weapon->autoTargetRangeBoost;
+	const float scanRadius = weapon->GetRange2D(rangeBoost, (aimPosHeight - minMapHeight) * heightMod);
 
 	// [0] := default, [1,2,3,4,5,6] := target is {avoidee, in bad category, crashing, last attacker, paralyzed, outside unboosted range}
 	constexpr float tgtPriorityMults[] = {1.0f, 10.0f, 100.0f, 1000.0f, 0.5f, 4.0f, 100000.0f};
@@ -662,7 +665,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 	// copy on purpose since the below calls lua
 	QuadFieldQuery qfQuery;
-	quadField.GetQuads(qfQuery, ownerPos, scanRadius + (aimHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	quadField.GetQuads(qfQuery, ownerPos, scanRadius);
 
 	const int tempNum = gs->GetTempNum();
 
@@ -696,7 +699,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 					continue;
 				}
 
-				const float modRange = scanRadius + (aimHeight - targetPos.y) * heightMod;
+				const float modRange = weapon->GetRange2D(rangeBoost, (aimPosHeight - targetPos.y) * heightMod);
 				const float sqDist2D = ownerPos.SqDistance2D(targetPos);
 
 				if (sqDist2D > Square(modRange))

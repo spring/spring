@@ -33,8 +33,8 @@ public:
 	void UpdateWantedDir() override final { wantedDir = GetWantedDir(currentTargetPos - aimFromPos); }
 	void SlowUpdate() override final;
 
-	float GetRange2D(float yDiff, float rbFac, float hbFac) const { return (GetStaticRange2D({range, yDiff}, {projectileSpeed, gravity}, {rbFac, hbFac})); }
-	float GetRange2D(const float yDiff) const override final { return (GetRange2D(yDiff, rangeBoostFactor, heightBoostFactor)); }
+	float GetRange2D(float ydiff, float rbFac, float hbFac) const { return (GetStaticRange2D({range, ydiff}, {projectileSpeed, gravity}, {rbFac, hbFac})); }
+	float GetRange2D(float boost, float ydiff) const override final { return (GetRange2D(ydiff, rangeBoostFactor, heightBoostFactor)); }
 
 	// baseConsts{.x := weaponDefRange, .y := modHeightDif}
 	// projConsts{.x := speed, .y := gravity}
