@@ -655,6 +655,7 @@ bool CWeapon::AutoTarget()
 		// save the "best" bad target in case we have no other
 		// good targets (of higher priority) left in <targets>
 		const bool isBadTarget = (unit->category & badTargetCategory);
+
 		if (isBadTarget && (badTargetUnit != nullptr))
 			continue;
 
@@ -854,6 +855,7 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preF
 
 	if (!TestTarget(tgtPos, trg))
 		return false;
+
 	// auto-targeted units are allowed to be out of range
 	// (UpdateFire will still block firing at such units)
 	if (!trg.isAutoTarget && !TestRange(tgtPos, trg))
@@ -890,7 +892,6 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 				return false;
 			if (!trg.isUserTarget && trg.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL)
 				return false;
-
 			// don't fire at allied targets
 			if (!trg.isUserTarget && teamHandler.Ally(owner->allyteam, trg.unit->allyteam))
 				return false;
@@ -944,11 +945,11 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 
 	if (trg.type == Target_Pos || weaponDef->cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
-		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
+		weaponRange = GetRange2D(0.0f, heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
 		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
-			weaponRange = GetRange2D(0.0f);
+			weaponRange = GetRange2D(0.0f, 0.0f);
 		}
 	}
 
@@ -1180,10 +1181,10 @@ float CWeapon::GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float mod
 }
 
 
-float CWeapon::GetRange2D(const float yDiff) const
+float CWeapon::GetRange2D(float boost, float ydiff) const
 {
-	const float rangeSq = range * range;
-	const float ydiffSq = yDiff * yDiff;
+	const float rangeSq = Square(range + boost);
+	const float ydiffSq = Square(ydiff);
 	const float    root = rangeSq - ydiffSq;
 	return (math::sqrt(std::max(root, 0.0f)));
 }
