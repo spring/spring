@@ -13,12 +13,11 @@ using boost::asio::ip::udp;
 
 class StreamingController {
 	public:
-		StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port): 
+		StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port, GLint FBOtoStream): 
 		socket_(io_service, udp::endpoint(udp::v4(), 13)) ;
 		~StreamingController() {
 			dismantleEncoder();
 			};
-		
 			
 		void initStream(void); 
 		
@@ -28,10 +27,14 @@ class StreamingController {
 		void handle_send(boost::shared_ptr<std::string> /*message*/,
       					const boost::system::error_code& /*error*/,
      					std::size_t /*bytes_transferred*/);
-			
+
+		void setFBOBuffer(GLint FBOtoStream);
+		void initializeEncoder(void); 
+		void encodePicture( int width, int height );
+
 		//Encoder settings
 		SEncParamBase param;
-		void encodePicture(unsigned char* bufferPtr, int width, int height );
+
 		void dismantleEncoder(void);
 
 		   
@@ -45,6 +48,9 @@ class StreamingController {
 		boost::system::error_code ec;
 
 	private:
+
+		GLint targetFBO = 0;
+
 }
 
 #endif //STREAMING_CONTROLLER_H

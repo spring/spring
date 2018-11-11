@@ -1,7 +1,8 @@
 #include "StreamingController.h"	
 
 
-StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port): 
+<<<<<<< 068a6911c8e469fba7b08ba9ce5867f1b4865768
+StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port,, GLint FBOtoStream = 0): 
 		socket_(io_service, udp::endpoint(udp::v4(), 13)){
 	//open bit stream
 	 socket_.async_receive_from(
@@ -9,7 +10,8 @@ StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, u
      boost::bind(&udp_server::handle_receive, this,
      boost::asio::placeholders::error,
      boost::asio::placeholders::bytes_transferred));
-	
+		targetFBO = FBOtoStream;
+
        try
 	  {
 	    boost::asio::io_service io_service;
@@ -20,10 +22,11 @@ StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, u
 	  {
 	    std::cerr << e.what() << std::endl;
 	  }
+
 	
 }
 
-StreamingController::initStream(void) {
+void StreamingController::initializeEncoder(void) {
 	int rv = WelsCreateSVCEncoder (&encoder_);
 	ASSERT_EQ (0, rv);
 	ASSERT_TRUE (encoder_ != NULL);
@@ -41,7 +44,9 @@ StreamingController::initStream(void) {
 
 	//fill in instant param content
 	encoder_->SetOption (ENCODER_OPTION_SVC_ENCODE_PARAM_BASE, &param);
+	
 }
+
 
 StreamingController::void handle_receive(const boost::system::error_code& error,
       std::size_t /*bytes_transferred*/){
@@ -52,6 +57,11 @@ StreamingController::handle_send(
 								boost::shared_ptr<std::string> /*message*/,
       							const boost::system::error_code& /*error*/,
       							std::size_t /*bytes_transferred*/ ){
+	encodePictureAndStream(/*cellphonedisplaywidth, cellphonedisplayheight*/);
+}
+
+
+void StreamingController::encodePictureAndStream( int width, int height ){
 
 	int frameSize = width * height * 3 / 2;
 	BufferedData buf;
@@ -79,7 +89,7 @@ StreamingController::handle_send(
 
 		 if (!ec) {
 					{	
-					stream <<  imageBufferToByteStream();  
+						streamFBOBuffer(stream);  
 					} 
 					catch (std::exception& e) {
 					 std::cerr << e.what() << std::endl;
@@ -88,8 +98,20 @@ StreamingController::handle_send(
 		}
 }
 
+StreamingController::streamFBOBuffer(std::stream &encoderStream) {
+//As seen in LuaOpenGll.cpp - Line 2861
+	//Widget has to call  the drop Screenshot
 
-StreamingController::dismantle(){
+	//After each DrawFrame Call the last dropped texture 
+
+	encoderStream<<tex->fbo.toByteStream();
+
+
+
+}
+
+
+StreamingController::dismantleEncoder(){
 	
 	if (encoder_) { 
 		encoder_->Uninitialize(); 
