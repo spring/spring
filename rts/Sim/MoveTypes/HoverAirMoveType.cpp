@@ -556,7 +556,7 @@ void CHoverAirMoveType::UpdateFlying()
 		//   wantedSpeed is a vector, so even aircraft with turnRate=0
 		//   are coincidentally able to reach any goal by side-strafing
 		wantedHeading = GetHeadingFromVector(goalVec.x, goalVec.z);
-		wantedSpeed = (goalVec / goalDist) * goalSpeed;
+		wantedSpeed = (goalVec / goalDist) * std::min(goalSpeed, maxWantedSpeed);
 	} else {
 		// switch to hovering (if !CanLand()))
 		if (!UnitIsBusy(owner)) {
@@ -915,7 +915,7 @@ bool CHoverAirMoveType::Update()
 			wantedSpeed -= (      right * fpsCon.left   );
 
 			wantedSpeed.Normalize();
-			wantedSpeed *= maxSpeed;
+			wantedSpeed *= maxWantedSpeed;
 
 			if (!nextPos.IsInBounds())
 				owner->SetVelocityAndSpeed(ZeroVector);
