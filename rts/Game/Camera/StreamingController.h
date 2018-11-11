@@ -8,6 +8,7 @@ later), see LICENSE.html */
 
 #include <iostream>
 #include <boost/asio.hpp>
+#include <openh264.hpp>
 
 using boost::asio::ip::udp;
 

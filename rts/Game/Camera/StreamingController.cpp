@@ -1,7 +1,5 @@
 #include "StreamingController.h"	
 
-
-<<<<<<< 068a6911c8e469fba7b08ba9ce5867f1b4865768
 StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port,, GLint FBOtoStream = 0): 
 		socket_(io_service, udp::endpoint(udp::v4(), 13)){
 	//open bit stream
