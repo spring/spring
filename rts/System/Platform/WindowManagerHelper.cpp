@@ -38,10 +38,7 @@ void SetIcon(CBitmap* bmp) {
 	}
 
 	// supplied bitmap is usable as icon, keep it
-	if (!SetIconSurface(globalRendering->GetWindow(0), bmp))
-		return;
-
-	windowIcon.bmp = std::move(*bmp);
+	SetIconSurface(globalRendering->GetWindow(0), bmp);
 }
 
 
@@ -50,6 +47,9 @@ bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
 		// only reached on exit
 		SDL_FreeSurface(windowIcon.surf);
 		SDL_SetWindowIcon(win, windowIcon.surf = nullptr);
+
+		// do not rely on static deinit, pool might be destructed first
+		windowIcon.bmp = CBitmap{};
 		return false;
 	}
 
@@ -63,6 +63,8 @@ bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
 
 	SDL_FreeSurface(windowIcon.surf);
 	SDL_SetWindowIcon(win, windowIcon.surf = surf);
+
+	windowIcon.bmp = std::move(*bmp);
 	return true;
 }
 
