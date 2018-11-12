@@ -1,14 +1,17 @@
 #include "StreamingController.h"	
 
-StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, unsigned int port,, GLint FBOtoStream = 0): 
-		socket_(io_service, udp::endpoint(udp::v4(), 13)){
+StreamingController::StreamingController(boost::asio::ip::address_v4 ipAdress, 
+										unsigned int port,, GLint FBOtoStream = 0): 
+										socket_(io_service, udp::endpoint(udp::v4(), 13),
+										GLint FBOtoStream){
 	//open bit stream
 	 socket_.async_receive_from(
      boost::asio::buffer(recv_buffer_), remote_endpoint_,
      boost::bind(&udp_server::handle_receive, this,
      boost::asio::placeholders::error,
      boost::asio::placeholders::bytes_transferred));
-		targetFBO = FBOtoStream;
+	 targetFBO = FBOtoStream;
+	 initializeEncoder();
 
        try
 	  {
@@ -70,6 +73,7 @@ void StreamingController::encodePictureAndStream( int width, int height ){
 	memset (&info, 0, sizeof (SFrameBSInfo));
 	SSourcePicture pic;
 	memset (&pic, 0, sizeof (SsourcePicture));
+
 	pic.iPicWidth = width;
 	pic.iPicHeight = height;
 	pic.iColorFormat = videoFormatI420;
@@ -103,9 +107,6 @@ StreamingController::streamFBOBuffer(std::stream &encoderStream) {
 	//After each DrawFrame Call the last dropped texture 
 
 	encoderStream<<tex->fbo.toByteStream();
-
-
-
 }
 
 

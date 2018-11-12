@@ -8,7 +8,7 @@ later), see LICENSE.html */
 
 #include <iostream>
 #include <boost/asio.hpp>
-#include <openh264.hpp>
+#include "lib/openh264/library/codec/api/codec_api.h"
 
 using boost::asio::ip::udp;
 
@@ -29,7 +29,7 @@ class StreamingController {
       					const boost::system::error_code& /*error*/,
      					std::size_t /*bytes_transferred*/);
 
-		void setFBOBuffer(GLint FBOtoStream);
+		void setFBOBuffer(GLint FBOtoStream) { targetFBO = FBOtoStream;};
 		void initializeEncoder(void); 
 		void encodePicture( int width, int height );
 

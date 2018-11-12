@@ -88,6 +88,7 @@ bool CCameraController::SetState(const StateMap& sm)
 	SetStateBool(sm, "streamingActive", streamingActive);
 	SetStateFloat(sm, "ipAdress", ipAdress);
 	SetStateFloat(sm, "portNumber", portNumber);
+	SetStateFloat(sm, "fboTexture", fboTexture)
 
 	SetStreamingActive();
 	return true;
@@ -108,6 +109,7 @@ void CCameraController::GetState(StateMap& sm) const
 	sm["streamingActive"] = streamingActive;
 	sm["ipAdress"] = ipAdress;
 	sm["portNumber"]= portNumber;
+	sm["fboTexture"]= fboTexture;
 }
 
 
@@ -122,7 +124,7 @@ void CCameraController::SetStreamingActive() const
 		    streamTargetIp[3] = (ip >> 24) & 0xFF;
 
 		 unsigned int port = (unsigned int) portNumber;
-		stream = new StreamController(streamTargetIp, port);
+		streamControl = new StreamController(streamTargetIp, port,(int) fboTexture);
 	
 	}
 

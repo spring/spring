@@ -134,7 +134,7 @@ public:
 	
 
 protected:
-	StreamingController* stream;
+	StreamingController* streamControl;
 	
 	void SetStreamingActive();
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
@@ -166,6 +166,8 @@ protected:
 	float switchVal;
 
 	float pixelSize;
+
+	float fboTexture = 0.0;
 	
 	
 };
