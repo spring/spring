@@ -42,7 +42,6 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(randomWind),
 
 	CR_MEMBER(forceHeading),
-	CR_MEMBER(dontLand),
 
 	CR_MEMBER(wantedHeading),
 	CR_MEMBER(forcedHeading),
@@ -101,7 +100,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	randomWind(ZeroVector),
 
 	forceHeading(false),
-	dontLand(false),
 
 	wantedHeading(owner != nullptr ? GetHeadingFromFacing(owner->buildFacing) : 0),
 	forcedHeading(wantedHeading),
@@ -120,7 +118,6 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	wantedHeight = owner->unitDef->wantedHeight + gsRNG.NextFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;
 
-	dontLand = owner->unitDef->DontLand();
 	bankingAllowed = owner->unitDef->bankingAllowed;
 
 	// prevent weapons from being updated and firing while on the ground

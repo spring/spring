@@ -83,6 +83,7 @@ public:
 	/// mods can use this to disable plane collisions
 	bool collide = true;
 	bool autoLand = true;
+	bool dontLand = false;
 	/// controls use of smoothGround for determining altitude
 	bool useSmoothMesh = false;
 	bool canSubmerge = false;

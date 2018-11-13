@@ -97,8 +97,6 @@ private:
 
 	/// force the aircraft to turn toward specific heading (for transports)
 	bool forceHeading;
-	/// Set to true when transporting stuff
-	bool dontLand;
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;

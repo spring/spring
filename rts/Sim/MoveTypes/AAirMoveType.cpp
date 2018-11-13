@@ -34,6 +34,7 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(collide),
 	CR_MEMBER(autoLand),
+	CR_MEMBER(dontLand),
 	CR_MEMBER(useSmoothMesh),
 	CR_MEMBER(canSubmerge),
 	CR_MEMBER(floatOnWater),
@@ -93,6 +94,7 @@ AAirMoveType::AAirMoveType(CUnit* unit): AMoveType(unit)
 	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
 
 	collide = ud->collide;
+	dontLand = ud->DontLand();
 	useSmoothMesh = ud->useSmoothMesh;
 	canSubmerge = ud->canSubmerge;
 	floatOnWater = ud->floatOnWater;
