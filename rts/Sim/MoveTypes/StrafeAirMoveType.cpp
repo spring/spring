@@ -331,7 +331,7 @@ static float3 GetControlSurfaceAngles(
 	ctrlAngles.z = (yprInputLocks.z != 0.0f)? GetAileronDeflection (owner, collidee,  pos, spd,  rightdir, updir, frontdir, goalDir,  groundHeight, wantedHeight,  maxCtrlAngles.z, maxBodyAngles.z,  goalDotRight, goalDotFront,  avoidCollision, isAttacking): 0.0f;
 
 	// let the previous control angles have some authority
-	return (ctrlAngles * 0.7f + prvCtrlAngles[0] * 0.2f + prvCtrlAngles[1] * 0.1f);
+	return (ctrlAngles * 0.6f + prvCtrlAngles[0] * 0.3f + prvCtrlAngles[1] * 0.1f);
 }
 
 
@@ -867,7 +867,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float wantedThrottle)
 	const float3  prvCtrlAngles[2] = {{lastRudderPos[0], lastElevatorPos[0], lastAileronPos[0]}, {lastRudderPos[1], lastElevatorPos[1], lastAileronPos[1]}};
 	const float3& curCtrlAngles    = GetControlSurfaceAngles(owner, lastCollidee,  pos, spd,  rightdir, updir, frontdir, goalDir2D,  yprInputLocks, maxBodyAngles, maxCtrlAngles, prvCtrlAngles,  groundHeight, wantedHeight,  goalDotRight, goalDotFront,  false && collisionState == COLLISION_DIRECT, false);
 
-	UpdateAirPhysics({curCtrlAngles * yprInputLocks, wantedThrottle}, owner->frontdir);
+	UpdateAirPhysics({curCtrlAngles, wantedThrottle}, owner->frontdir);
 
 	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
@@ -898,18 +898,20 @@ void CStrafeAirMoveType::UpdateTakeOff()
 	// this tends to alternate between -1 and +1 when goalDir and rightdir are ~orthogonal
 	// const float yawSign = Sign(goalDir.dot(rightdir));
 	const float currentHeight = pos.y - amtGetGroundHeightFuncs[canSubmerge](pos.x, pos.z);
+	const float minAccHeight = wantedHeight * 0.4f;
 
 	frontdir += (rightdir * dirWeight * yawWeight);
 	frontdir.Normalize();
 	rightdir = frontdir.cross(updir);
 
 	owner->SetVelocity(spd + (UpVector * accRate * GetVTOLAccelerationSign(currentHeight, wantedHeight, spd.y)));
+	owner->SetVelocity(spd + (owner->frontdir * accRate * (currentHeight > minAccHeight)));
 
 	// initiate forward motion before reaching wantedHeight
-	if (currentHeight > wantedHeight * 0.4f)
-		owner->SetVelocity(spd + (owner->frontdir * accRate));
-
-	if (currentHeight > wantedHeight)
+	// normally aircraft start taking off from the ground below wantedHeight,
+	// but state can also change to LANDING via StopMoving and then again to
+	// TAKEOFF (via StartMoving) while still in mid-air
+	if (currentHeight > wantedHeight || spd.SqLength2D() >= Square(maxWantedSpeed * 0.8f))
 		SetState(AIRCRAFT_FLYING);
 
 	owner->SetVelocityAndSpeed(spd * invDrag);
@@ -1319,10 +1321,11 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop, bool)
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING && aircraftState != AAirMoveType::AIRCRAFT_LANDING)
 		return;
 
-	if (owner->unitDef->DontLand() || !autoLand) {
+	if (dontLand || !autoLand) {
 		SetState(AIRCRAFT_FLYING);
 		return;
 	}
+
 	SetState(AIRCRAFT_LANDING);
 }
 
