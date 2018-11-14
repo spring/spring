@@ -75,7 +75,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
-	drawWaterPlane = false && waterRendering->hasWaterPlane;
+	drawWaterPlane = false && waterRendering->hasWaterPlane; // NOLINT{readability-simplify-boolean-expr}
 
 	smfRenderStates[RENDER_STATE_SSP]->Init(this);
 	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);

@@ -427,7 +427,7 @@ public: \
  * Registers a member variable that isn't saved/loaded
  */
 #define CR_IGNORED(Member) \
-	class_->AddMember( #Member, creg::IType::CreateIgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)), (creg::ClassMemberFlag) currentMemberFlags)
+	class_->AddMember( #Member, creg::IType::CreateIgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)), (creg::ClassMemberFlag) currentMemberFlags) // NOLINT{misc-sizeof-container}
 
 
 /** @def CR_MEMBER_UN

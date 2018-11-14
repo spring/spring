@@ -433,8 +433,7 @@ void DataDirLocater::Check()
 {
 	if (IsIsolationMode()) {
 		LOG("[DataDirLocater::%s] Isolation Mode!", __func__);
-	} else
-	if (IsPortableMode()) {
+	} else if (IsPortableMode()) {
 		LOG("[DataDirLocater::%s] Portable Mode!", __func__);
 	}
 

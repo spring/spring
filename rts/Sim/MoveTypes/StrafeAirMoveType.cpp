@@ -240,7 +240,7 @@ static float GetElevatorDeflection(
 		const float maxElevatorSpeedf  = std::max(0.01f, maxElevator       * spd.w        );
 		const float maxElevatorSpeedf2 = std::max(0.01f, maxElevatorSpeedf * spd.w * 20.0f);
 
-		const float ydirMult = (updir.dot(collidee->midPos - owner->midPos) > 0.0f);
+		// const float ydirMult = (updir.dot(collidee->midPos - owner->midPos) > 0.0f);
 		const float zdirMult = (frontdir.dot(collidee->pos + collidee->speed * 20.0f - pos - spd * 20.0f) < 0.0f);
 
 		float minPitch = 0.0f;

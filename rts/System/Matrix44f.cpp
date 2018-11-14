@@ -393,7 +393,7 @@ float4 CMatrix44f::operator* (const float4 v) const
 	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
-	return float4(fout[0], fout[1], fout[2], fout[3]);
+	return {fout[0], fout[1], fout[2], fout[3]};
 	#endif
 }
 

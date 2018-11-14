@@ -18,8 +18,8 @@ public:
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO() { assert(vboId == 0); }
 
-	VBO& operator = (const VBO& other) = delete;
-	VBO& operator = (VBO&& other);
+	VBO& operator=(const VBO& other) = delete;
+	VBO& operator=(VBO&& other) noexcept;
 
 	// NOTE: if declared in global scope, user has to call these before exit
 	void Release() {

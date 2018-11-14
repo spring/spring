@@ -148,8 +148,8 @@ bool CTextureAtlas::CreateTexture()
 
 			const AtlasedTexture tex(texCoords);
 
-			for (size_t n = 0; n < memTex.names.size(); ++n) {
-				textures[memTex.names[n]] = tex;
+			for (const auto& name: memTex.names) {
+				textures[name] = tex;
 			}
 
 			for (int y = 0; y < memTex.ysize; ++y) {

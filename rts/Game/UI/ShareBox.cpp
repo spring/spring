@@ -2,6 +2,8 @@
 
 #include "ShareBox.h"
 
+#include <cmath>
+
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -16,7 +18,6 @@
 #include "System/MsgStrings.h"
 
 #include <SDL_keycode.h>
-
 
 #define MAX_SHARE_TEAMS (teamHandler.ActiveTeams() - 1)
 int CShareBox::lastShareTeam = 0;
@@ -388,7 +389,7 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 		float tsz = sz / float(MAX_SHARE_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)(scr / tsz + 0.5), MAX_SHARE_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_SHARE_TEAMS - numTeamsDisp));
 		return;
 	}
 

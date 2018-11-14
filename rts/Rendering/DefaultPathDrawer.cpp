@@ -538,7 +538,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	}
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
-	if ((drawLowResPE || drawMedResPE) && false) {
+	if ((drawLowResPE || drawMedResPE) && false) { // NOLINT{readability-simplify-boolean-expr}
 		const PathNodeBuffer& openBlockBuffer = pe->openBlockBuffer;
 		char blockCostsStr[32];
 

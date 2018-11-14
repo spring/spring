@@ -31,12 +31,15 @@ namespace Watchdog
 	static unsigned int curorder = 0;
 
 	struct WatchDogThreadInfo {
-		WatchDogThreadInfo()
-			: threadid(0)
-			, numreg(0)
-			, timer(spring_notime)
-		{}
+		WatchDogThreadInfo() { ResetThreadInfo(); }
 
+		void ResetThreadInfo() {
+			timer = spring_notime;
+
+			thread = {};
+			threadid = {0};
+			numreg = {0};
+		}
 		void ResetThreadControls() {
 			#ifndef WIN32
 			// this is not auto-destructed (!)
@@ -54,11 +57,11 @@ namespace Watchdog
 			#endif
 		}
 
+		spring_time timer;
+
 		std::atomic<Threading::NativeThreadHandle> thread;
 		std::atomic<Threading::NativeThreadId> threadid;
 		std::atomic<unsigned int> numreg;
-
-		spring_time timer;
 
 		// not used on Windows
 		std::shared_ptr<Threading::ThreadControls> ctls;
@@ -190,6 +193,8 @@ namespace Watchdog
 		for (i = 0; i < WDT_COUNT; ++i) {
 			const WatchDogThreadInfo* threadInfo = &registeredThreadsData[i];
 
+			// determine first inactive thread; stop if thread
+			// is already registered under a different wdt-num
 			if (threadInfo->numreg == 0)
 				inact = std::min(i, inact);
 			else if (Threading::NativeThreadIdsEqual(threadInfo->threadid, threadId))
@@ -249,7 +254,7 @@ namespace Watchdog
 		}
 
 		if (0 == --(threadInfo->numreg))
-			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
+			threadInfo->ResetThreadInfo();
 
 		registeredThreads[num] = &registeredThreadsData[WDT_COUNT];
 		return true;

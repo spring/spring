@@ -3073,7 +3073,7 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != NULL) {
+		if (matptr != nullptr) {
 			GL::LoadMatrix(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");

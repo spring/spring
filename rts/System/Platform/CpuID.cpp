@@ -27,6 +27,7 @@ namespace springproc {
 
 #if (__is_x86_arch__ == 1 && defined(__GNUC__))
 	// function inlining breaks the asm
+	// NOLINTNEXTLINE{readability-non-const-parameter}
 	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
 		#ifndef __APPLE__
@@ -300,8 +301,8 @@ namespace springproc {
 		// affinity mask is a uint64_t, but spring uses uint32_t
 		assert(numProcessors <= (maxProcessors >> 1));
 
-		assert(sizeof(affinityMaskOfCores   ) == (maxProcessors * sizeof(affinityMaskOfCores   [0])));
-		assert(sizeof(affinityMaskOfPackages) == (maxProcessors * sizeof(affinityMaskOfPackages[0])));
+		static_assert(sizeof(affinityMaskOfCores   ) == (maxProcessors * sizeof(affinityMaskOfCores   [0])), "");
+		static_assert(sizeof(affinityMaskOfPackages) == (maxProcessors * sizeof(affinityMaskOfPackages[0])), "");
 
 		memset(affinityMaskOfCores   , 0, sizeof(affinityMaskOfCores   ));
 		memset(affinityMaskOfPackages, 0, sizeof(affinityMaskOfPackages));

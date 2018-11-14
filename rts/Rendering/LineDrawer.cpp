@@ -93,25 +93,25 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 
-	for (size_t i = 0, s = regularLines.size(); i < s; ++i) {
-		const size_t size = regularLines[i].verts.size();
+	for (const auto& regularLine : regularLines) {
+		const size_t size = regularLine.verts.size();
 
 		// TODO: batch lines of equal type
 		if (size > 0) {
-			buffer->SafeAppend(regularLines[i].verts.data(), size);
-			buffer->Submit(regularLines[i].glType);
+			buffer->SafeAppend(regularLine.verts.data(), size);
+			buffer->Submit(regularLine.glType);
 		}
 	}
 
 	if (!stippleLines.empty()) {
 		glEnable(GL_LINE_STIPPLE);
 
-		for (size_t i = 0, s = stippleLines.size(); i < s; ++i) {
-			const size_t size = stippleLines[i].verts.size();
+		for (const auto& stippleLine : stippleLines) {
+			const size_t size = stippleLine.verts.size();
 
 			if (size > 0) {
-				buffer->SafeAppend(stippleLines[i].verts.data(), size);
-				buffer->Submit(stippleLines[i].glType);
+				buffer->SafeAppend(stippleLine.verts.data(), size);
+				buffer->Submit(stippleLine.glType);
 			}
 		}
 

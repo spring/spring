@@ -29,6 +29,7 @@ namespace log_formatter {
 		if (iter == array.end())
 			return false;
 		// check for duplicates
+		// NOLINTNEXTLINE{readability-simplify-boolean-expr}
 		if (false && std::find(array.begin(), array.end(), value) != array.end())
 			return false;
 

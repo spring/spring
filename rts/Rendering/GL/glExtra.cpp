@@ -517,8 +517,8 @@ void gleGenMeshBuffers(unsigned int* meshData) {
 	}
 
 	{
-		for (size_t n = 0; n < CYL_INDCS.size(); n++) { CYL_INDCS[n] += (BOX_VERTS.size()                   ); }
-		for (size_t n = 0; n < SPH_INDCS.size(); n++) { SPH_INDCS[n] += (BOX_VERTS.size() + CYL_VERTS.size()); }
+		for (uint32_t& vtxIdx: CYL_INDCS) { vtxIdx += (BOX_VERTS.size()                   ); }
+		for (uint32_t& vtxIdx: SPH_INDCS) { vtxIdx += (BOX_VERTS.size() + CYL_VERTS.size()); }
 
 		// IBO
 		glGenBuffers(1, &meshData[1]);

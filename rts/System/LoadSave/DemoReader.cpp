@@ -29,7 +29,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDe
 	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
 
-	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
+	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic)) != 0
 		|| fileHeader.version != DEMOFILE_VERSION
 		|| fileHeader.headerSize != sizeof(fileHeader)
 		|| fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
@@ -38,7 +38,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDe
 		// debugging dev-version demos impossible (because the version is different
 		// each build.)
 #ifndef _DEBUG
-		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
+		|| (SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()) != 0)
 #endif
 		) {
 			const std::string demoMsg = std::string("Demofile ") + filename + " corrupt or created by a different version of Spring, expects version " + fileHeader.versionString + ".";

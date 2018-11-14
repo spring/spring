@@ -781,7 +781,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_NAMED: {
 			const CNamedTextures::TexInfo* namedTexInfo = CNamedTextures::GetInfo(*reinterpret_cast<const size_t*>(&data));
 
-			return int2(namedTexInfo->xsize, namedTexInfo->ysize);
+			return {namedTexInfo->xsize, namedTexInfo->ysize};
 		} break;
 
 		case LUATEX_LUATEXTURE: {
@@ -790,20 +790,20 @@ int2 LuaMatTexture::GetSize() const
 			const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(reinterpret_cast<lua_State*>(state));
 			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
 
-			return int2(luaTexture->xsize, luaTexture->ysize);
+			return {luaTexture->xsize, luaTexture->ysize};
 		} break;
 
 
 		case LUATEX_UNITTEXTURE1: {
 			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
-			return int2(texMat->tex1SizeX, texMat->tex1SizeY);
+			return {static_cast<int>(texMat->tex1SizeX), static_cast<int>(texMat->tex1SizeY)};
 		} break;
 		case LUATEX_UNITTEXTURE2: {
 			const CS3OTextureHandler::S3OTexMat* texMat = textureHandlerS3O.GetTexture(*reinterpret_cast<const int*>(&data));
-			return int2(texMat->tex2SizeX, texMat->tex2SizeY);
+			return {static_cast<int>(texMat->tex2SizeX), static_cast<int>(texMat->tex2SizeY)};
 		} break;
 		case LUATEX_3DOTEXTURE: {
-			return int2(textureHandler3DO.GetAtlasTexSizeX(), textureHandler3DO.GetAtlasTexSizeY());
+			return {static_cast<int>(textureHandler3DO.GetAtlasTexSizeX()), static_cast<int>(textureHandler3DO.GetAtlasTexSizeY())};
 		} break;
 
 
@@ -812,13 +812,13 @@ int2 LuaMatTexture::GetSize() const
 				const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
 				unitDrawer->GetUnitDefImage(ud); // forced existance
 				const UnitDefImage* bp = ud->buildPic;
-				return int2(bp->imageSizeX, bp->imageSizeY);
+				return {bp->imageSizeX, bp->imageSizeY};
 			}
 		} break;
 		case LUATEX_UNITRADARICON: {
 			const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
 			const icon::CIcon it = ud->iconType;
-			return int2(it->GetSizeX(), it->GetSizeY());
+			return {it->GetSizeX(), it->GetSizeY()};
 		} break;
 
 
@@ -836,7 +836,7 @@ int2 LuaMatTexture::GetSize() const
 		} break;
 		case LUATEX_HEIGHTMAP: {
 			if (heightMapTexture != nullptr)
-				return int2(heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY());
+				return {heightMapTexture->GetSizeX(), heightMapTexture->GetSizeY()};
 		} break;
 
 
@@ -903,9 +903,9 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_FONT:
-			return int2(font->GetTextureWidth(), font->GetTextureHeight());
+			return {font->GetTextureWidth(), font->GetTextureHeight()};
 		case LUATEX_FONTSMALL:
-			return int2(smallFont->GetTextureWidth(), smallFont->GetTextureHeight());
+			return {smallFont->GetTextureWidth(), smallFont->GetTextureHeight()};
 
 
 		case LUATEX_NONE:

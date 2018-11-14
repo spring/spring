@@ -2,6 +2,8 @@
 
 #include "QuitBox.h"
 
+#include <cmath>
+
 #include "MouseHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -21,7 +23,6 @@
 #include "System/MsgStrings.h"
 
 #include <SDL_keycode.h>
-
 
 #define MAX_QUIT_TEAMS (teamHandler.ActiveTeams() - 1)
 
@@ -382,7 +383,7 @@ void CQuitBox::MouseMove(int x, int y, int dx, int dy, int button)
 		const float tsz = sz / float(MAX_QUIT_TEAMS);
 
 		// ??
-		*(volatile int*) &startTeam = std::max(0, std::min((int)(scr / tsz + 0.5), MAX_QUIT_TEAMS - numTeamsDisp));
+		*(volatile int*) &startTeam = std::max(0, std::min((int)std::lround(scr / tsz), MAX_QUIT_TEAMS - numTeamsDisp));
 		return;
 	}
 

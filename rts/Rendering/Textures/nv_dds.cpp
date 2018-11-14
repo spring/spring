@@ -160,9 +160,9 @@
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
 
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstring>
+#include <cassert>
 
 // spring related
 #include "Rendering/GL/myGL.h"
@@ -647,7 +647,7 @@ bool CDDSImage::save(std::string filename, bool flipImage) const
 
     // open file
     FILE *fp = fopen(filename.c_str(), "wb");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         LOG_L(L_ERROR, "couldn't create texture %s", filename.c_str());
         return false;
     }
@@ -714,12 +714,9 @@ void CDDSImage::clear()
 
 bool CDDSImage::is_compressed() const
 {
-	if ((m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
-		(m_format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
-		(m_format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT))
-		return true;
-	else
-		return false;
+	return ((m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
+		   (m_format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
+		   (m_format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT));
 }
 
 #ifndef BITMAP_NO_OPENGL
@@ -1209,10 +1206,10 @@ CTexture::CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int 
 
 ///////////////////////////////////////////////////////////////////////////////
 // assignment operator
-CTexture &CTexture::operator= (const CTexture &rhs)
+CTexture &CTexture::operator=(const CTexture &rhs)
 {
 	if (this != &rhs) {
-		CSurface::operator = (rhs);
+		CSurface::operator=(rhs);
 
 		m_mipmaps.clear();
 		m_mipmaps.resize(rhs.get_num_mipmaps());
@@ -1224,10 +1221,10 @@ CTexture &CTexture::operator= (const CTexture &rhs)
     return *this;
 }
 
-CTexture &CTexture::operator= (CTexture &&rhs)
+CTexture &CTexture::operator=(CTexture &&rhs) noexcept
 {
 	if (this != &rhs) {
-		CSurface::operator = (rhs);
+		CSurface::operator=(rhs);
 
 		m_mipmaps.clear();
 		m_mipmaps.resize(rhs.get_num_mipmaps());
@@ -1266,7 +1263,7 @@ CSurface::CSurface()
     m_height(0),
     m_depth(0),
     m_size(0),
-    m_pixels(NULL)
+    m_pixels(nullptr)
 {
 }
 
@@ -1277,7 +1274,7 @@ CSurface::CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int 
     m_height(0),
     m_depth(0),
     m_size(0),
-    m_pixels(NULL)
+    m_pixels(nullptr)
 {
     create(w, h, d, imgsize, pixels);
 }
@@ -1303,7 +1300,7 @@ CSurface &CSurface::operator= (const CSurface &rhs)
 	return *this;
 }
 
-CSurface &CSurface::operator= (CSurface &&rhs)
+CSurface &CSurface::operator=(CSurface &&rhs) noexcept
 {
 	if (this != &rhs) {
 		clear();
@@ -1352,5 +1349,5 @@ void CSurface::create(unsigned int w, unsigned int h, unsigned int d, unsigned i
 void CSurface::clear()
 {
 	delete [] m_pixels;
-	m_pixels = NULL;
+	m_pixels = nullptr;
 }

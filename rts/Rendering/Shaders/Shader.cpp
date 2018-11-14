@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <array>
 #ifdef DEBUG
-	#include <string.h> // strncmp
+	#include <cstring> // strncmp
 #endif
 
 
@@ -398,7 +398,7 @@ namespace Shader {
 		// recompile if post-reload <hash> has no entry in cache (id 0), validate on success
 		// then add the pre-reload <_hash, _glid> program pair unless it already has an entry
 		// TODO: get rid of validation warnings (deprecated vars, etc) forcing the "|| true"
-		valid = (UpdateProg(hash) && (CopyUniformsAndValidate(glid, _glid) || true));
+		valid = (UpdateProg(hash) && (CopyUniformsAndValidate(glid, _glid) || true)); // NOLINT{readability-simplify-boolean-expr}
 
 		if (useCache && shaderCache.Push(_hash, _glid))
 			return;
