@@ -2,25 +2,26 @@
 
 #include "WindowManagerHelper.h"
 
-#include <string>
 #include <SDL_video.h>
 
+#include "Game/GameVersion.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
-#include "Game/GameVersion.h"
 
 
 namespace WindowManagerHelper {
 
 struct WindowIcon {
-	CBitmap bmp;
-	SDL_Surface* surf;
+	// do not rely on static (de)init, pool might not yet exist or be destructed first
+	uint8_t bmpMem[sizeof(CBitmap)] = {0};
+
+	CBitmap* bmp = nullptr;
+	SDL_Surface* surf = nullptr;
 };
 
-static WindowIcon windowIcon = {{}, nullptr};
 
-
+// LuaUnsyncedCtrl only
 void SetIcon(CBitmap* bmp) {
 	if (SpringVersion::IsHeadless())
 		return;
@@ -43,13 +44,17 @@ void SetIcon(CBitmap* bmp) {
 
 
 bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
+	static WindowIcon windowIcon;
+
+	if (windowIcon.bmp == nullptr)
+		windowIcon.bmp = new (windowIcon.bmpMem) CBitmap();
+
 	if (bmp == nullptr) {
 		// only reached on exit
 		SDL_FreeSurface(windowIcon.surf);
 		SDL_SetWindowIcon(win, windowIcon.surf = nullptr);
 
-		// do not rely on static deinit, pool might be destructed first
-		windowIcon.bmp = CBitmap{};
+		*(windowIcon.bmp) = {};
 		return false;
 	}
 
@@ -64,7 +69,7 @@ bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
 	SDL_FreeSurface(windowIcon.surf);
 	SDL_SetWindowIcon(win, windowIcon.surf = surf);
 
-	windowIcon.bmp = std::move(*bmp);
+	*(windowIcon.bmp) = std::move(*bmp);
 	return true;
 }
 
