@@ -463,8 +463,8 @@ static CMatrix44f ComposeScaleMatrix(const float4 scales)
 
 void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 {
-	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
-	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, lightMatrix)));
+	const CMatrix44f lightMatrix = ComposeLightMatrix(sky->GetLight());
+	const CMatrix44f scaleMatrix = ComposeScaleMatrix(GetShadowProjectionScales(playerCam, lightMatrix));
 
 	// convert xy-diameter to radius
 	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
@@ -479,9 +479,9 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 
 	// frustum-culling needs this form
 	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(std::move(lightMatrix.GetX()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(std::move(lightMatrix.GetY()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(lightMatrix.GetX()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(lightMatrix.GetY()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(lightMatrix.GetZ()));
 	viewMatrix[SHADOWMAT_TYPE_CULLING].Transpose(); // invert rotation (R^T == R^{-1})
 	viewMatrix[SHADOWMAT_TYPE_CULLING].Translate(-projMidPos[2]); // same as SetPos(mat * -pos)
 	#else
@@ -497,18 +497,18 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	//   or just let objects end up behind znear since InView only tests against
 	//   zfar
 	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(std::move(lightMatrix.GetX()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(std::move(lightMatrix.GetY()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(lightMatrix.GetX());
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(lightMatrix.GetY());
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(lightMatrix.GetZ());
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetPos(projMidPos[2]);
 	#endif
 
 	// shaders need this form, projection into SM-space is done by shadow2DProj()
 	// note: ShadowGenVertProg is a special case because it does not use uniforms
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
-	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetX(std::move(lightMatrix.GetX()));
-	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetY(std::move(lightMatrix.GetY()));
-	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetX(lightMatrix.GetX());
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetY(lightMatrix.GetY());
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(lightMatrix.GetZ());
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Scale(float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10])); // extract (X.x, Y.y, Z.z)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Transpose();
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -projMidPos[2]);

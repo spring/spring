@@ -8,20 +8,20 @@ CTAPalette palette;
 
 CTAPalette::CTAPalette()
 {
-	for (unsigned c = 0; c < NUM_PALETTE_ENTRIES; ++c) {
-		p[c][0] = 0;
-		p[c][1] = 0;
-		p[c][2] = 0;
-		p[c][3] = 255;
+	for (auto& color: p) {
+		color[0] = 0;
+		color[1] = 0;
+		color[2] = 0;
+		color[3] = 255;
 	}
 }
 
 void CTAPalette::Init(CFileHandler& paletteFile)
 {
-	for (unsigned c = 0; c < NUM_PALETTE_ENTRIES; ++c) {
-		for (unsigned c2 = 0; c2 < 4; ++c2) {
-			paletteFile.Read(&p[c][c2], 1);
+	for (auto& color: p) {
+		for (auto& channel: color) {
+			paletteFile.Read(&color, 1);
 		}
-		p[c][3] = 255;
+		color[3] = 255;
 	}
 }

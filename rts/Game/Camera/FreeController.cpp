@@ -359,7 +359,7 @@ float3 CFreeController::SwitchFrom() const
 {
 	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
 	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
-	return float3(x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z);
+	return {x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z};
 }
 
 

@@ -275,7 +275,7 @@ private:
 	std::vector<int> addedScars;
 
 	// stores indices into <scars> of reserved slots, per quad
-	std::vector< std::vector<int> > scarField;
+	std::vector<std::vector<int>> scarField;
 
 
 	int scarFieldX;

@@ -16,6 +16,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/myMath.h"
 
+#include <cmath>
 
 HUDDrawer* HUDDrawer::GetInstance()
 {

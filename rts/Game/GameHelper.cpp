@@ -60,6 +60,7 @@ void CGameHelper::Update()
 	// need to use explicit indexing because CUnit::DoDamage
 	// can add *new* WaitingDamage's for this frame while we
 	// are still iterating
+	// NOLINTNEXTLINE(modernize-loop-convert)
 	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
 		const WaitingDamage& wd = waitingDamages[wdIdx][n];
 
@@ -1223,8 +1224,8 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		CUnit* u = dynamic_cast<CUnit*>(so);
 
 		// blocking-map can lag behind because it is not updated every frame
-		assert(true || (so->pos.x >= xrange.x && so->pos.x <= xrange.y));
-		assert(true || (so->pos.z >= zrange.x && so->pos.z <= zrange.y));
+		assert(true || (so->pos.x >= xrange.x && so->pos.x <= xrange.y)); // NOLINT{misc-static-assert}
+		assert(true || (so->pos.z >= zrange.x && so->pos.z <= zrange.y)); // NOLINT{misc-static-assert}
 
 		if (f != nullptr) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {

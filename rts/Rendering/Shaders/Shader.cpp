@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #ifdef DEBUG
-	#include <string.h> // strncmp
+	#include <cstring> // strncmp
 #endif
 
 

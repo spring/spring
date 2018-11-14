@@ -26,7 +26,7 @@ public:
 	ShieldSegmentCollection(ShieldSegmentCollection&& ssc) { *this = std::move(ssc); }
 	~ShieldSegmentCollection() { Kill(); }
 
-	ShieldSegmentCollection& operator = (ShieldSegmentCollection&& ssc);
+	ShieldSegmentCollection& operator=(ShieldSegmentCollection&& ssc) noexcept;
 
 	void Init(CPlasmaRepulser*);
 	void Kill();

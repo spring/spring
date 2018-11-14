@@ -263,6 +263,7 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 
 #ifndef HEADLESS
+// NOLINTNEXTLINE{misc-misplaced-const}
 static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize)
 {
 #if defined(USE_FONTCONFIG)

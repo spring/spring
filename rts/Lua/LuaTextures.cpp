@@ -88,13 +88,13 @@ std::string LuaTextures::Create(const Texture& tex)
 
 	if (freeIndices.empty()) {
 		textureMap.insert(buf, textureVec.size());
-		textureVec.emplace_back(std::move(newTex));
+		textureVec.emplace_back(newTex);
 		return buf;
 	}
 
 	// recycle
 	textureMap[buf] = freeIndices.back();
-	textureVec[freeIndices.back()] = std::move(newTex);
+	textureVec[freeIndices.back()] = newTex;
 	freeIndices.pop_back();
 	return buf;
 }

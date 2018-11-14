@@ -331,7 +331,7 @@ void LocalModel::UpdateBoundingVolume()
 		if (vcount >= 8) {
 		#endif
 			// transform only the corners of the piece's bounding-box
-			const float3 pMins = piece->mins;
+			const float3 pMins = piece->mins; // NOLINT{readability-misleading-indentation}
 			const float3 pMaxs = piece->maxs;
 			const float3 verts[8] = {
 				// bottom
@@ -346,8 +346,8 @@ void LocalModel::UpdateBoundingVolume()
 				float3(pMins.x,  pMaxs.y,  pMaxs.z),
 			};
 
-			for (unsigned int k = 0; k < 8; k++) {
-				const float3 vertex = matrix * verts[k];
+			for (const float3& v: verts) {
+				const float3 vertex = matrix * v;
 
 				bbMins = float3::min(bbMins, vertex);
 				bbMaxs = float3::max(bbMaxs, vertex);
@@ -426,7 +426,7 @@ void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 		dirty = false;
 		updateChildMatrices = true;
 
-		pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
+		pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
 	}
 
 	if (updateChildMatrices) {
@@ -449,7 +449,7 @@ void LocalModelPiece::UpdateParentMatricesRec() const
 
 	dirty = false;
 
-	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
+	pieceSpaceMat = CalcPieceSpaceMatrix(pos, rot, original->scales);
 	modelSpaceMat = pieceSpaceMat;
 
 	if (parent != nullptr)

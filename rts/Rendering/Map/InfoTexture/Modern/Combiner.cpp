@@ -75,14 +75,11 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 	// WTF? fully reloaded from disk on every switch?
 	if (name == "los") {
 		disabled = !CreateShader("shaders/GLSL/infoLOS.lua", true, float4(0.5f, 0.5f, 0.5f, 1.0f));
-	} else
-	if (name == "metal") {
+	} else if (name == "metal") {
 		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true, float4(0.f, 0.f, 0.f, 1.0f));
-	} else
-	if (name == "height") {
+	} else if (name == "height") {
 		disabled = !CreateShader("shaders/GLSL/infoHeight.lua");
-	} else
-	if (name == "path") {
+	} else if (name == "path") {
 		disabled = !CreateShader("shaders/GLSL/infoPath.lua");
 	} else {
 		//FIXME allow "info:myluainfotex"

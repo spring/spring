@@ -511,7 +511,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	stream = s;
 	s->read((char*)&ph, sizeof(PackageHeader));
 
-	if (memcmp(ph.magic, CREG_PACKAGE_FILE_ID, 4))
+	if (memcmp(ph.magic, CREG_PACKAGE_FILE_ID, 4) != 0)
 		throw std::runtime_error("Incorrect object package file ID");
 
 	// Load references

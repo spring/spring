@@ -332,7 +332,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 	return *this;
 }
 
-CBitmap& CBitmap::operator=(CBitmap&& bmp)
+CBitmap& CBitmap::operator=(CBitmap&& bmp) noexcept
 {
 	if (this != &bmp) {
 		std::swap(mem, bmp.mem);

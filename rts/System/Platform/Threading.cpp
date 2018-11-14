@@ -315,7 +315,7 @@ namespace Threading {
 		//   those two threads are joined and respawned when reloading, KISS here
 		//   (while other threads never call Set*Thread more than once making the
 		//   is-cached flags redundant anyway)
-		if (true || !cachedThreadIDs[threadIndex])
+		if (true || !cachedThreadIDs[threadIndex]) // NOLINT{readability-simplify-boolean-expr}
 			nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
 
 		cachedThreadIDs[threadIndex] = true;

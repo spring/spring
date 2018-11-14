@@ -43,7 +43,7 @@ static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheret
 
 
 
-ShieldSegmentCollection& ShieldSegmentCollection::operator = (ShieldSegmentCollection&& ssc) {
+ShieldSegmentCollection& ShieldSegmentCollection::operator=(ShieldSegmentCollection&& ssc) noexcept {
 	shield = ssc.shield; ssc.shield = nullptr;
 	shieldTexture = ssc.shieldTexture; ssc.shieldTexture = nullptr;
 

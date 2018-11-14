@@ -40,9 +40,9 @@ struct QuadTreeNode {
 
 	int GetMinSize() {
 		int minsize = size;
-		for (int i = 0; i < 4; ++i) {
-			if (children[i]) {
-				minsize = std::min(minsize, children[i]->GetMinSize());
+		for (const auto& child: children) {
+			if (child != nullptr) {
+				minsize = std::min(minsize, child->GetMinSize());
 			}
 		}
 		return minsize;

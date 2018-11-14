@@ -22,7 +22,7 @@ public:
 	CBitmap(const CBitmap& bmp): CBitmap() { *this = bmp; }
 	CBitmap(CBitmap&& bmp): CBitmap() { *this = std::move(bmp); }
 	CBitmap& operator=(const CBitmap& bmp);
-	CBitmap& operator=(CBitmap&& bmp);
+	CBitmap& operator=(CBitmap&& bmp) noexcept;
 
 	~CBitmap();
 

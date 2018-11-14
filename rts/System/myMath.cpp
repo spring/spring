@@ -28,7 +28,10 @@ void CMyMath::Init()
 	}
 
 	unsigned checksum = 0;
+	// NOLINTNEXTLINE{modernize-loop-construct}
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
+		// TODO: Casting float pointer to unsigned pointer?
+		// Is there any guarantee that they will have the same alignment? Is this UB?
 		checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a].x;
 		checksum *= 33;
 		checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a].y;

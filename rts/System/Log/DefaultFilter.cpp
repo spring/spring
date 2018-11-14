@@ -22,13 +22,8 @@
 extern "C" {
 #endif
 
-
-bool log_frontend_isEnabled(int level, const char* section);
-
-
 extern void log_backend_record(int level, const char* section, const char* fmt, va_list arguments);
 extern void log_backend_cleanup();
-
 
 struct log_filter_section_compare {
 	inline bool operator()(const char* const& section1, const char* const& section2) const
@@ -174,8 +169,8 @@ void log_filter_section_setMinLevel(int level, const char* section)
 
 		// erase
 		for (size_t i = sectionMinLevel - secLvls.begin(), j = --log_filter::numLevels; i < j; i++) {
-			secLvls[i].first  = std::move(secLvls[i + 1].first );
-			secLvls[i].second = std::move(secLvls[i + 1].second);
+			secLvls[i].first  = secLvls[i + 1].first;
+			secLvls[i].second = secLvls[i + 1].second;
 		}
 
 		return;
