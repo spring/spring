@@ -41,7 +41,7 @@ static bool HaveAddr2LineMac()
  * Translates the module and address information from backtrace symbols into a vector of StackFrame objects,
  *   each with its own set of entries representing the function call and any inlined functions for that call.
  */
-static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel)
+static void TranslateStackTrace(StackTrace& stacktrace, const int logLevel)
 {
 	LOG_L(L_DEBUG, "[%s][1] #stacktrace=%u", __func__, static_cast<unsigned int>(stacktrace.size()));
 
