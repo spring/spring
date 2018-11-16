@@ -36,7 +36,6 @@ public:
 	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
 	void NonMoving();
 	void FinishCommand() override;
-	bool CanSetMaxSpeed() const override { return true; }
 	void StopSlowGuard();
 	void StartSlowGuard(float speed);
 	void ExecuteAttack(Command& c) override;

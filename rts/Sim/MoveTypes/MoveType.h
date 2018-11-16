@@ -60,6 +60,8 @@ public:
 	bool UseHeading(      ) const { return (useHeading    ); }
 	bool UseHeading(bool b)       { return (useHeading = b); }
 
+	bool UseWantedSpeed(bool groupOrder) const { return useWantedSpeed[groupOrder]; }
+
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
@@ -83,8 +85,8 @@ public:
 	CUnit* owner;
 
 	float3 goalPos;
-	float3 oldPos;             // owner position at last Update()
-	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate()
+	float3 oldPos;                          // owner position at last Update()
+	float3 oldSlowUpdatePos;                // owner position at last SlowUpdate()
 
 	enum ProgressState {
 		Done   = 0,
@@ -94,14 +96,15 @@ public:
 	ProgressState progressState = Done;
 
 protected:
-	float maxSpeed;            // current maximum speed owner is allowed to reach (changes with eg. guard orders)
-	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
-	float maxWantedSpeed;      // maximum speed (temporarily) set by a CommandAI
+	float maxSpeed;                         // current maximum speed owner is allowed to reach (changes with eg. guard orders)
+	float maxSpeedDef;                      // default maximum speed owner can reach (as defined by its UnitDef, never changes)
+	float maxWantedSpeed;                   // maximum speed (temporarily) set by a CommandAI
 
-	float maneuverLeash;       // maximum distance away a target can be and still be chased
+	float maneuverLeash;                    // maximum distance before target stops being chased
 	float waterline;
 
 	bool useHeading = true;
+	bool useWantedSpeed[2] = {true, true};  // if false, SelUnitsAI will not (re)set wanted-speed for {[0] := individual, [1] := formation} orders
 };
 
 #endif // MOVETYPE_H

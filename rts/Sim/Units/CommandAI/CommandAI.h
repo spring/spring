@@ -40,23 +40,25 @@ public:
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
 	void ClearTargetLock(const Command& fc);
+	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
+
 	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const { return true; }
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual void FinishCommand();
-	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
+
 	virtual void BuggerOff(const float3& pos, float radius) {}
+	virtual void StopMove() {}
+
+	void StopAttackingTargetIf(const std::function<bool(const CUnit*)>& pred);
+	void StopAttackingAllyTeam(int ally);
+
 	/**
 	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command
 	 */
-		bool WillCancelQueued(const Command& c);
-	virtual bool CanSetMaxSpeed() const { return false; }
-	virtual void StopMove() { return; }
-
-	void StopAttackingTargetIf(const std::function<bool(const CUnit*)>& pred);
-	void StopAttackingAllyTeam(int ally);
+	bool WillCancelQueued(const Command& c) const;
 
 	bool HasCommand(int cmdID) const;
 	bool HasMoreMoveCommands(bool skipFirstCmd = true) const;
@@ -67,8 +69,7 @@ public:
 	 * @return An iterator pointing at the command, or commandQue.end(),
 	 *   if no such queued command exists
 	 */
-	CCommandQueue::iterator GetCancelQueued(const Command& c,
-	                                        CCommandQueue& queue);
+	CCommandQueue::const_iterator GetCancelQueued(const Command& c, const CCommandQueue& queue) const;
 	/**
 	 * @brief Returns commands that overlap c, but will not be canceled by c
 	 * @return a vector containing commands that overlap c

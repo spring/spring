@@ -52,6 +52,32 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 
 
+#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
+static const unsigned int BOOL_MEMBER_HASHES[] = {
+	MEMBER_LITERAL_HASH(       "collide"),
+	MEMBER_LITERAL_HASH(      "dontLand"),
+	MEMBER_LITERAL_HASH(     "airStrafe"),
+	MEMBER_LITERAL_HASH( "useSmoothMesh"),
+	MEMBER_LITERAL_HASH("bankingAllowed"),
+};
+static const unsigned int FLOAT_MEMBER_HASHES[] = {
+	MEMBER_LITERAL_HASH( "wantedHeight"),
+	MEMBER_LITERAL_HASH(      "accRate"),
+	MEMBER_LITERAL_HASH(      "decRate"),
+	MEMBER_LITERAL_HASH(     "turnRate"),
+	MEMBER_LITERAL_HASH( "altitudeRate"),
+	MEMBER_LITERAL_HASH(  "currentBank"),
+	MEMBER_LITERAL_HASH( "currentPitch"),
+	MEMBER_LITERAL_HASH(     "maxDrift"),
+};
+
+#undef MEMBER_CHARPTR_HASH
+#undef MEMBER_LITERAL_HASH
+
+
+
 static bool UnitIsBusy(const CCommandAI* cai) {
 	// queued move-commands (or active build/repair/etc-commands) mean unit has to stay airborne
 	return (cai->inCommand || cai->HasMoreMoveCommands(false));
@@ -1128,33 +1154,8 @@ bool CHoverAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValu
 	if (AMoveType::SetMemberValue(memberHash, memberValue))
 		return true;
 
-	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
-	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-
 	#define     DONTLAND_MEMBER_IDX 1
 	#define WANTEDHEIGHT_MEMBER_IDX 0
-
-	static const unsigned int boolMemberHashes[] = {
-		MEMBER_LITERAL_HASH(       "collide"),
-		MEMBER_LITERAL_HASH(      "dontLand"),
-		MEMBER_LITERAL_HASH(     "airStrafe"),
-		MEMBER_LITERAL_HASH( "useSmoothMesh"),
-		MEMBER_LITERAL_HASH("bankingAllowed"),
-	};
-	static const unsigned int floatMemberHashes[] = {
-		MEMBER_LITERAL_HASH( "wantedHeight"),
-		MEMBER_LITERAL_HASH(      "accRate"),
-		MEMBER_LITERAL_HASH(      "decRate"),
-		MEMBER_LITERAL_HASH(     "turnRate"),
-		MEMBER_LITERAL_HASH( "altitudeRate"),
-		MEMBER_LITERAL_HASH(  "currentBank"),
-		MEMBER_LITERAL_HASH( "currentPitch"),
-		MEMBER_LITERAL_HASH(     "maxDrift"),
-	};
-
-	#undef MEMBER_CHARPTR_HASH
-	#undef MEMBER_LITERAL_HASH
-
 
 	// unordered_map etc. perform dynallocs, so KISS here
 	bool* boolMemberPtrs[] = {
@@ -1181,25 +1182,25 @@ bool CHoverAirMoveType::SetMemberValue(unsigned int memberHash, void* memberValu
 	};
 
 	// special cases
-	if (memberHash == boolMemberHashes[DONTLAND_MEMBER_IDX]) {
+	if (memberHash == BOOL_MEMBER_HASHES[DONTLAND_MEMBER_IDX]) {
 		SetAllowLanding(!(*(reinterpret_cast<bool*>(memberValue))));
 		return true;
 	}
-	if (memberHash == floatMemberHashes[WANTEDHEIGHT_MEMBER_IDX]) {
+	if (memberHash == FLOAT_MEMBER_HASHES[WANTEDHEIGHT_MEMBER_IDX]) {
 		SetDefaultAltitude(*(reinterpret_cast<float*>(memberValue)));
 		return true;
 	}
 
 	// note: <memberHash> should be calculated via HsiehHash
 	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
-		if (memberHash == boolMemberHashes[n]) {
+		if (memberHash == BOOL_MEMBER_HASHES[n]) {
 			*(boolMemberPtrs[n]) = *(reinterpret_cast<bool*>(memberValue));
 			return true;
 		}
 	}
 
 	for (unsigned int n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
-		if (memberHash == floatMemberHashes[n]) {
+		if (memberHash == FLOAT_MEMBER_HASHES[n]) {
 			*(floatMemberPtrs[n]) = *(reinterpret_cast<float*>(memberValue));
 			return true;
 		}

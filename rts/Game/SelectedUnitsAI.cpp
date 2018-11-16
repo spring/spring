@@ -29,31 +29,34 @@ static const auto ugPairComp = [](const TGroupPair& a, const TGroupPair& b) { re
 static const auto idPairComp = [](const std::pair<float, int>& a, const std::pair<float, int>& b) { return (a.first < b.first); };
 
 
-// Global object
 CSelectedUnitsHandlerAI selectedUnitsAI;
 
 
 inline void CSelectedUnitsHandlerAI::SetUnitWantedMaxSpeedNet(CUnit* unit)
 {
+	AMoveType* mt = unit->moveType;
+
+	if (!mt->UseWantedSpeed(false))
+		return;
+
 	// this sets the WANTED maximum speed of <unit>
 	// equal to its current ACTUAL maximum (not the
 	// UnitDef maximum, which can be overridden by
 	// scripts)
-	if (!unit->commandAI->CanSetMaxSpeed())
-		return;
-
-	unit->moveType->SetWantedMaxSpeed(unit->moveType->GetMaxSpeed());
+	mt->SetWantedMaxSpeed(mt->GetMaxSpeed());
 }
 
 inline void CSelectedUnitsHandlerAI::SetUnitGroupWantedMaxSpeedNet(CUnit* unit)
 {
+	AMoveType* mt = unit->moveType;
+
+	if (!mt->UseWantedSpeed(true))
+		return;
+
 	// sets the wanted speed of this unit to that of the
 	// group's current-slowest member (groupMinMaxSpeed
 	// is derived from GetMaxSpeed, not GetMaxSpeedDef)
-	if (!unit->commandAI->CanSetMaxSpeed())
-		return;
-
-	unit->moveType->SetWantedMaxSpeed(groupMinMaxSpeed);
+	mt->SetWantedMaxSpeed(groupMinMaxSpeed);
 }
 
 
@@ -243,7 +246,6 @@ void CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int player)
 // Calculate the outer limits and the center of the group coordinates.
 //
 void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
-	//Finding the highest, lowest and weighted central positional coordinates among the selected units.
 	float3 sumCoor;
 	float3 minCoor =  OnesVector * 100000.0f;
 	float3 maxCoor = -OnesVector * 100000.0f;
@@ -256,6 +258,7 @@ void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 
 	const std::vector<int>& playerUnitIDs = selectedUnitsHandler.netSelected[player];
 
+	// find highest, lowest and weighted central positional coordinates among selected units
 	for (const int unitID: playerUnitIDs) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 
@@ -270,7 +273,7 @@ void CSelectedUnitsHandlerAI::CalculateGroupData(int player, bool queueing) {
 		maxCoor  = float3::max(maxCoor, unitPos);
 		sumCoor += unitPos;
 
-		if (!unit->commandAI->CanSetMaxSpeed())
+		if (!unit->moveType->UseWantedSpeed(false))
 			continue;
 
 		mobileUnits++;
