@@ -1206,23 +1206,22 @@ void CCommandAI::ExecuteRemove(const Command& c)
 				// the removal may have corrupted the iterator
 				break;
 			}
-		}
-		while (ci != queue->end());
+		} while (ci != queue->end());
 	}
 
 	repeatOrders = prevRepeat;
 }
 
 
-bool CCommandAI::WillCancelQueued(const Command& c)
+bool CCommandAI::WillCancelQueued(const Command& c) const
 {
 	return (GetCancelQueued(c, commandQue) != commandQue.end());
 }
 
 
-CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQueue& q)
+CCommandQueue::const_iterator CCommandAI::GetCancelQueued(const Command& c, const CCommandQueue& q) const
 {
-	CCommandQueue::iterator ci = q.end();
+	CCommandQueue::const_iterator ci = q.end();
 
 	while (ci != q.begin()) {
 		--ci; //iterate from the end and dont check the current order
@@ -1243,8 +1242,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQu
 			}
 			else if (c.GetNumParams() >= 3) {
 				if (cmdID < 0) {
-					BuildInfo bc1(c);
-					BuildInfo bc2(c2);
+					const BuildInfo bc1(c);
+					const BuildInfo bc2(c2);
 
 					if (bc1.def == nullptr) continue;
 					if (bc2.def == nullptr) continue;
@@ -1279,7 +1278,8 @@ int CCommandAI::CancelCommands(const Command& c, CCommandQueue& q, bool& first)
 	int cancelCount = 0;
 
 	while (true) {
-		CCommandQueue::iterator ci = GetCancelQueued(c, q);
+		CCommandQueue::const_iterator cci = GetCancelQueued(c, q);
+		CCommandQueue::iterator ci = q.begin() + (cci - q.begin());
 
 		if (ci == q.end())
 			return cancelCount;
