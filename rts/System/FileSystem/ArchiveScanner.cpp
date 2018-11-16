@@ -1325,8 +1325,8 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& versionedMapNam
 	if (iter != archiveInfos.cend())
 		return (iter->archiveData.GetMapFile());
 
-	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "map file of %s not found", s.c_str());
-	return s;
+	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "map file of %s not found", versionedMapName.c_str());
+	return versionedMapName;
 }
 
 
@@ -1425,7 +1425,7 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& versionedName) c
 	if (iter != archiveInfos.cend())
 		return iter->origName;
 
-	return name;
+	return versionedName;
 }
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& versionedName) const
