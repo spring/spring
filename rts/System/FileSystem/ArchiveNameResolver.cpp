@@ -194,6 +194,11 @@ namespace ArchiveNameResolver {
 	{
 		if (!ParseRapidUri(lazyName, tag))
 			return false;
+
+		// NB:
+		//   this returns tag as-is (e.g. "zk:stable", unversioned) if no matching rapid entry exists
+		//   non-rapid archives should never have names that match rapid tags, otherwise dependencies
+		//   like "rapid://zk:stable" would be ambiguous
 		tag = GetRapidPackageFromTag(tag);
 		return !tag.empty();
 	}

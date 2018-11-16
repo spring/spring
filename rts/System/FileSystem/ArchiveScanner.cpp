@@ -164,18 +164,20 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 		replaces.push_back(_replaces.GetString(rep, ""));
 	}
 
+
 	// FIXME
 	// XXX HACK needed until lobbies, lobbyserver and unitsync are sorted out
 	// so they can uniquely identify different versions of the same mod.
 	// (at time of this writing they use name only)
-
+	//
 	// NOTE when changing this, this function is used both by the code that
 	// reads ArchiveCache.lua and the code that reads modinfo.lua from the mod.
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
-
+	//
 	const std::string& name = GetNameVersioned();
 	const std::string& version = GetVersion();
+
 	if (!version.empty()) {
 		if (name.find(version) == std::string::npos) {
 			SetInfoItemValueString("name", name + " " + version);
@@ -183,6 +185,7 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 			LOG_L(L_WARNING, "[%s] version \"%s\" included in name \"%s\"", __func__, version.c_str(), name.c_str());
 		}
 	}
+
 
 	if (GetName().empty())
 		SetInfoItemValueString("name_pure", name);
@@ -216,13 +219,16 @@ bool CArchiveScanner::ArchiveData::IsValid(std::string& err) const
 		return (iter != infoItems.end() && iter->first == name);
 	};
 
-	const auto pred = [&](const KnownInfoTag& t) { return (t.required && HasInfoItem(t.name)); };
+	// look for any info-item that is required but not present
+	// datums containing only optional items ("shortgame", etc)
+	// are allowed
+	const auto pred = [&](const KnownInfoTag& tag) { return (tag.required && !HasInfoItem(tag.name)); };
 	const auto iter = std::find_if(knownTags.cbegin(), knownTags.cend(), pred);
 
 	if (iter == knownTags.cend())
 		return true;
 
-	err = "Missing tag \"" + iter->name + "\".";
+	err = "Missing required tag \"" + iter->name + "\".";
 	return false;
 }
 
@@ -258,7 +264,7 @@ InfoItem& CArchiveScanner::ArchiveData::GetAddInfoItem(const std::string& key)
 	const auto iter = std::lower_bound(infoItems.begin(), infoItems.end(), P{keyLower, {}}, pred);
 
 	if (iter == infoItems.end() || iter->first != keyLower) {
-		// add a new info-item
+		// add a new info-item, sorted by lower-case key
 		InfoItem infoItem;
 		infoItem.key = key;
 		infoItem.valueType = INFO_VALUE_TYPE_INTEGER;
@@ -1136,6 +1142,7 @@ static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 {
 	std::vector<ArchiveData> ret;
+	ret.reserve(archiveInfos.size());
 
 	for (const ArchiveInfo& ai: archiveInfos) {
 		const ArchiveData& aid = ai.archiveData;
@@ -1156,6 +1163,7 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() cons
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 {
 	std::vector<ArchiveData> ret;
+	ret.reserve(archiveInfos.size());
 
 	for (const ArchiveInfo& ai: archiveInfos) {
 		const ArchiveData& aid = ai.archiveData;
@@ -1176,6 +1184,7 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() const
 {
 	std::vector<ArchiveData> ret;
+	ret.reserve(archiveInfos.size());
 
 	for (const ArchiveInfo& ai: archiveInfos) {
 		const ArchiveData& aid = ai.archiveData;
@@ -1236,7 +1245,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 			if (aii == archiveInfosIndex.end()) {
 				if (!HandleUnresolvedDep(lwrCaseName))
-					throw content_error("Archive \"" + lwrCaseName + "\" not found");
+					throw content_error("Dependent archive \"" + lwrCaseName + "\" not found");
 
 				return nullptr;
 			}
@@ -1307,10 +1316,10 @@ std::vector<std::string> CArchiveScanner::GetMaps() const
 	return ret;
 }
 
-std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
+std::string CArchiveScanner::MapNameToMapFile(const std::string& versionedMapName) const
 {
 	// Convert map name to map archive
-	const auto pred = [&s](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == s); };
+	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedMapName); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
@@ -1387,9 +1396,9 @@ void CArchiveScanner::CheckArchive(
 	throw content_error(msg);
 }
 
-std::string CArchiveScanner::GetArchivePath(const std::string& name) const
+std::string CArchiveScanner::GetArchivePath(const std::string& archiveName) const
 {
-	const auto aii = archiveInfosIndex.find(StringToLower(FileSystem::GetFilename(name)));
+	const auto aii = archiveInfosIndex.find(StringToLower(FileSystem::GetFilename(archiveName)));
 
 	if (aii == archiveInfosIndex.end())
 		return "";
@@ -1408,9 +1417,9 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 }
 
 
-std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
+std::string CArchiveScanner::ArchiveFromName(const std::string& versionedName) const
 {
-	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == name); };
+	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedName); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
@@ -1419,15 +1428,15 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 	return name;
 }
 
-CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& name) const
+CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& versionedName) const
 {
-	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == name); };
+	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedName); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
 		return iter->archiveData;
 
-	return ArchiveData();
+	return {};
 }
 
 
