@@ -146,11 +146,11 @@ public:
 	void Clear();
 	void Reload();
 
-	std::string ArchiveFromName(const std::string& s) const;
-	std::string NameFromArchive(const std::string& s) const;
-	std::string GetArchivePath(const std::string& name) const;
-	std::string MapNameToMapFile(const std::string& name) const;
-	ArchiveData GetArchiveData(const std::string& name) const;
+	std::string ArchiveFromName(const std::string& versionedName) const;
+	std::string NameFromArchive(const std::string& archiveName) const;
+	std::string GetArchivePath(const std::string& archiveName) const;
+	std::string MapNameToMapFile(const std::string& versionedMapName) const;
+	ArchiveData GetArchiveData(const std::string& versionedName) const;
 	ArchiveData GetArchiveDataByArchive(const std::string& archive) const;
 
 
