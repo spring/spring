@@ -33,6 +33,8 @@ public:
 	CZipArchive(const std::string& archiveName);
 	virtual ~CZipArchive();
 
+	int GetType() const override { return ARCHIVE_TYPE_SDZ; }
+
 	bool IsOpen() override;
 
 	unsigned int NumFiles() const override;

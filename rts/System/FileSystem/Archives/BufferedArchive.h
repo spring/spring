@@ -22,6 +22,8 @@ public:
 
 	virtual ~CBufferedArchive();
 
+	virtual int GetType() const override { return ARCHIVE_TYPE_BUF; }
+
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 
 protected:

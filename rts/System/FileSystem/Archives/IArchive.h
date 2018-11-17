@@ -7,6 +7,7 @@
 #include <vector>
 #include <cinttypes>
 
+#include "ArchiveTypes.h"
 #include "System/Sync/SHA512.hpp"
 #include "System/UnorderedMap.hpp"
 
@@ -26,6 +27,8 @@ protected:
 
 public:
 	virtual ~IArchive() {}
+
+	virtual int GetType() const = 0;
 
 	virtual bool IsOpen() = 0;
 	const std::string& GetArchiveFile() const { return archiveFile; }
