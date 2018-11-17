@@ -93,8 +93,8 @@ public:
 	float GetDescender() const { return fontDescender; }
 	int GetTexture() const { return texture; }
 
-	const std::string& GetFamily()   const { return fontFamily; }
-	const std::string& GetStyle()    const { return fontStyle; }
+	const std::string& GetFamily() const { return fontFamily; }
+	const std::string& GetStyle() const { return fontStyle; }
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 

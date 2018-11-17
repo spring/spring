@@ -287,10 +287,10 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 		std::vector<float2>& texcoords = spheretexcoords[texture];
 		texcoords.resize(ShieldSegmentCollection::NUM_SEGMENTS_Y * ShieldSegmentCollection::NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
 
-		const float xscale = (texture == NULL)? 0.0f: (texture->xend - texture->xstart) * 0.25f;
-		const float yscale = (texture == NULL)? 0.0f: (texture->yend - texture->ystart) * 0.25f;
-		const float xmid = (texture == NULL)? 0.0f: (texture->xstart + texture->xend) * 0.5f;
-		const float ymid = (texture == NULL)? 0.0f: (texture->ystart + texture->yend) * 0.5f;
+		const float xscale = (texture == nullptr)? 0.0f: (texture->xend - texture->xstart) * 0.25f;
+		const float yscale = (texture == nullptr)? 0.0f: (texture->yend - texture->ystart) * 0.25f;
+		const float xmid   = (texture == nullptr)? 0.0f: (texture->xstart + texture->xend) * 0.5f;
+		const float ymid   = (texture == nullptr)? 0.0f: (texture->ystart + texture->yend) * 0.5f;
 
 		for (int ypart_ = 0; ypart_ < ShieldSegmentCollection::NUM_SEGMENTS_Y; ++ypart_) {
 			for (int xpart_ = 0; xpart_ < ShieldSegmentCollection::NUM_SEGMENTS_X; ++xpart_) {

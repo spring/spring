@@ -185,9 +185,9 @@ std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #ifndef HEADLESS
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 {
-	if (lchar < 128 && rchar < 128) {
+	if (lchar < 128 && rchar < 128)
 		return (lchar << 7) | rchar; // 14bit used
-	}
+
 	return (lchar << 16) | rchar; // 32bit used
 }
 
@@ -202,59 +202,49 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	if (it != fontCache.end() && !it->second.expired())
 		return it->second.lock();
 
-	// get the file (no need to cache, takes too less time)
+	// get the file (no need to cache, takes too little time)
 	std::string fontPath(fontfile);
-	CFileHandler* f = new CFileHandler(fontPath);
-	if (!f->FileExists()) {
+	CFileHandler f(fontPath);
+
+	if (!f.FileExists()) {
 		// check in 'fonts/', too
-		if (fontPath.substr(0,6) != "fonts/") {
-			delete f;
-			fontPath = "fonts/" + fontPath;
-			f = new CFileHandler(fontPath);
+		if (fontPath.substr(0, 6) != "fonts/") {
+			f.Close();
+			f.Open(fontPath = "fonts/" + fontPath);
 		}
 
-		if (!f->FileExists()) {
-			delete f;
+		if (!f.FileExists())
 			throw content_error("Couldn't find font '" + fontfile + "'.");
-		}
 	}
 
 	// we need to keep a copy of the memory
-	const int filesize = f->FileSize();
+	const int filesize = f.FileSize();
+
 	std::weak_ptr<SP_Byte>& fontMemWeak = fontMemCache[fontPath];
 	std::shared_ptr<SP_Byte> fontMem = fontMemWeak.lock();
+
 	if (fontMemWeak.expired()) {
 		fontMem = std::make_shared<SP_Byte>(SP_Byte(filesize));
-		f->Read(fontMem.get()->data(), filesize);
+		f.Read(fontMem.get()->data(), filesize);
 		fontMemWeak = fontMem;
 	}
-	delete f;
 
 	// load the font
-	FT_Face face = NULL;
+	FT_Face face = nullptr;
 	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), fontMem.get()->data(), filesize, 0, &face);
-	auto shFace = std::make_shared<FontFace>(face, fontMem);
-	if (error) {
-		std::string msg = fontfile + ": FT_New_Face failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+
+	if (error != 0)
+		throw content_error(fontfile + ": FT_New_Face failed: " + GetFTError(error));
 
 	// set render size
-	error = FT_Set_Pixel_Sizes(face, 0, size);
-	if (error) {
-		std::string msg = fontfile + ": FT_Set_Pixel_Sizes failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+	if ((error = FT_Set_Pixel_Sizes(face, 0, size)) != 0)
+		throw content_error(fontfile + ": FT_Set_Pixel_Sizes failed: " + GetFTError(error));
 
 	// select unicode charmap
-	error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	if (error) {
-		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0)
+		throw content_error(fontfile + ": FT_Select_Charmap failed: " + GetFTError(error));
+
+	auto shFace = std::make_shared<FontFace>(face, fontMem);
 
 	fontCache[fontfile + IntToString(size)] = shFace;
 	return shFace;
@@ -379,10 +369,11 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	lastTextureUpdate = 0;
 	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
-	face = *shFace;
 
-	if (!face)
+	if (shFace == nullptr)
 		return;
+
+	face = *shFace;
 
 	fontFamily = face->family_name;
 	fontStyle  = face->style_name;
@@ -403,7 +394,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	for (char32_t i = 32; i < 127; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
-		for (char32_t j=32; j<127; ++j) {
+		for (char32_t j = 32; j < 127; ++j) {
 			const auto& rgl = GetGlyph(j);
 			const auto hash = GetKerningHash(i, j);
 			FT_Vector kerning;
@@ -545,6 +536,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
 #endif
 
+
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
@@ -570,7 +562,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 		if ((atlasUpdateShadow.xsize != wantedTexWidth) || (atlasUpdateShadow.ysize != wantedTexHeight))
 			atlasUpdateShadow = std::move(atlasUpdateShadow.CanvasResize(wantedTexWidth, wantedTexHeight, false));
 
-		for(char32_t i = start; i < end; ++i) {
+		for (char32_t i = start; i < end; ++i) {
 			const std::string glyphName  = IntToString(i);
 			const std::string glyphName2 = glyphName + "sh";
 
@@ -597,6 +589,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 		atlasGlyphs.clear();
 	}
 
+	// schedule a texture update
 	++curTextureUpdate;
 }
 
@@ -625,10 +618,8 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 	glyph.utf16 = ch;
 
 	// load glyph
-	FT_Error error = FT_Load_Glyph(*f, index, FT_LOAD_RENDER);
-	if (error) {
+	if (FT_Load_Glyph(*f, index, FT_LOAD_RENDER) != 0)
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
-	}
 
 	FT_GlyphSlot slot = f->face->glyph;
 
@@ -645,15 +636,15 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 	glyph.descender = ybearing - glyph.height;
 
 	// workaround bugs in FreeSansBold (in range 0x02B0 - 0x0300)
-	if (glyph.advance == 0 && glyph.size.w > 0) glyph.advance = glyph.size.w;
+	if (glyph.advance == 0 && glyph.size.w > 0)
+		glyph.advance = glyph.size.w;
 
 	const int width  = slot->bitmap.width;
 	const int height = slot->bitmap.rows;
 	const int olSize = 2 * outlineSize;
 
-	if (width<=0 || height<=0) {
+	if (width <= 0 || height <= 0)
 		return;
-	}
 
 	if (slot->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
 		LOG_L(L_ERROR, "invalid pixeldata mode");
@@ -808,3 +799,4 @@ void CFontTexture::UpdateTexture()
 	glPopAttrib();
 #endif
 }
+

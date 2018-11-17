@@ -21,7 +21,7 @@ CR_REG_METADATA(CMuzzleFlame,(
 
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
-	CProjectile(pos, speed, NULL, false, false, false),
+	CProjectile(pos, speed, nullptr, false, false, false),
 	size(size),
 	age(0)
 {

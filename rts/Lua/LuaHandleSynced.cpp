@@ -270,8 +270,7 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 
 bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 {
-	if (!(projectile->weapon || projectile->piece))
-		return false;
+	assert(projectile->weapon || projectile->piece);
 
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);

@@ -3374,7 +3374,7 @@ int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __func__, 1);
 
-	if (proj == NULL || !proj->piece)
+	if (proj == nullptr || !proj->piece)
 		return 0;
 
 	CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);

@@ -540,8 +540,9 @@ void S3DOPiece::CalcNormals()
 
 void S3DOPiece::SetMinMaxExtends()
 {
-	for (float3 vp: verts) {
+	for (const float3 vp: verts) {
 		mins = float3::min(mins, vp);
 		maxs = float3::max(maxs, vp);
 	}
 }
+

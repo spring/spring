@@ -348,7 +348,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 
 	texUnit.type   = LuaMatTexture::LUATEX_NONE;
 	texUnit.enable = false;
-	texUnit.data   = 0;
+	texUnit.data   = nullptr;
 	texUnit.state  = L; // can be NULL, but only for InfoTex shaders
 
 	if (image.empty())
@@ -414,9 +414,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			switch ((texUnit.type = GetLuaMatTextureType(image))) {
 				case LuaMatTexture::LUATEX_NONE: {
 					// name not found in table, check for special case overrides
-					if (!ParseNamedSubTexture(texUnit, image)) {
+					if (!ParseNamedSubTexture(texUnit, image))
 						return false;
-					}
 				} break;
 
 				case LuaMatTexture::LUATEX_3DOTEXTURE: {

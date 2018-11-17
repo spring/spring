@@ -177,9 +177,9 @@ void CFeatureDrawer::Init()
 		(p.GetRenderer(MODELTYPE_ASS)).Init();
 	}
 
-	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
-		camVisibleQuads[n].clear();
-		camVisibleQuads[n].reserve(256);
+	for (auto& camVisibleQuad: camVisibleQuads) {
+		camVisibleQuad.clear();
+		camVisibleQuad.reserve(256);
 	}
 }
 
@@ -606,9 +606,9 @@ class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	CFeatureQuadDrawer(int _numQuadsX): numQuadsX(_numQuadsX) {}
 
-	void ResetState() { numQuadsX = 0; }
+	void ResetState() override { numQuadsX = 0; }
 
-	void DrawQuad(int x, int y) {
+	void DrawQuad(int x, int y) override {
 		camQuads.push_back(y * numQuadsX + x);
 
 		// used so we do not iterate over non-visited renderers (in any pass)

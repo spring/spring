@@ -208,8 +208,6 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 }
 
 
-bool CUnitDefHandler::GetNoCost() { return noCost; }
-
 void CUnitDefHandler::SetNoCost(bool value)
 {
 	if (noCost == value)

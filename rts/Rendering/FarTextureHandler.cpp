@@ -91,7 +91,7 @@ int2 CFarTextureHandler::GetTextureCoordsInt(const int farTextureNum, const int 
 
 	const int row = texnum       / (texSize.x / iconSize.x);
 	const int col = texnum - row * (texSize.x / iconSize.x);
-	return int2(col, row);
+	return {col, row};
 }
 
 /**

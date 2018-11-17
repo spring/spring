@@ -1567,12 +1567,12 @@ bool CAICallback::IsDebugDrawerEnabled() const
 	return debugDrawerAI->GetDraw();
 }
 
-int CAICallback::GetNumUnitDefs ()
+int CAICallback::GetNumUnitDefs()
 {
 	return (unitDefHandler->NumUnitDefs());
 }
 
-void CAICallback::GetUnitDefList (const UnitDef** list)
+void CAICallback::GetUnitDefList(const UnitDef** list)
 {
 	for (unsigned int i = 0, n = unitDefHandler->NumUnitDefs(); i < n; i++) {
 		list[i] = unitDefHandler->GetUnitDefByID(i + 1);
@@ -1583,7 +1583,7 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
-	S3DModel* mdl = ud->LoadModel();
+	const S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 

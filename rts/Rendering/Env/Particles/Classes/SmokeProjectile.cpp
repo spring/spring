@@ -30,8 +30,6 @@ CR_REG_METADATA(CSmokeProjectile,
 
 
 CSmokeProjectile::CSmokeProjectile():
-	CProjectile(),
-
 	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),

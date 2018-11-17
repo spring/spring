@@ -113,9 +113,8 @@ const MoveDef* CPathTexture::GetSelectedMoveDef()
 
 const UnitDef* CPathTexture::GetCurrentBuildCmdUnitDef()
 {
-	if (forcedUnitDef >= 0) {
+	if (forcedUnitDef >= 0)
 		return unitDefHandler->GetUnitDefByID(forcedUnitDef);
-	}
 
 	if ((unsigned)guihandler->inCommand > guihandler->commands.size())
 		return nullptr;
@@ -162,8 +161,10 @@ bool CPathTexture::IsUpdateNeeded()
 
 	// newly build cmd active?
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
-	if (ud) {
-		const unsigned int buildDefID = ud ? -(ud->id + 1) : 0;
+
+	if (ud != nullptr) {
+		const unsigned int buildDefID = -(ud->id + 1);
+
 		if (buildDefID != lastSelectedPathType) {
 			lastSelectedPathType = buildDefID;
 			updateProcess = 0;
@@ -172,8 +173,10 @@ bool CPathTexture::IsUpdateNeeded()
 	} else {
 		// newly unit/moveType active?
 		const MoveDef* md = GetSelectedMoveDef();
-		if (md) {
-			const unsigned int pathType = md ? (md->pathType + 1) : 0;
+
+		if (md != nullptr) {
+			const unsigned int pathType = md->pathType + 1;
+
 			if (pathType != lastSelectedPathType) {
 				lastSelectedPathType = pathType;
 				updateProcess = 0;
@@ -183,11 +186,7 @@ bool CPathTexture::IsUpdateNeeded()
 	}
 
 	// nothing selected nor any build cmd active -> don't update
-	if (lastSelectedPathType == 0 && isCleared) {
-		return false;
-	}
-
-	return true;
+	return (lastSelectedPathType != 0 || !isCleared);
 }
 
 
@@ -197,7 +196,7 @@ void CPathTexture::Update()
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
 
 	// just clear
-	if (!(ud || md)) {
+	if (ud == nullptr && md == nullptr) {
 		isCleared = true;
 		updateProcess = 0;
 		fbo.Bind();
@@ -237,6 +236,7 @@ void CPathTexture::Update()
 				bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 				CFeature* f = nullptr;
+
 				if (CGameHelper::TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 					if (f != nullptr) {
 						status = OBJECTBLOCKED;
@@ -248,7 +248,7 @@ void CPathTexture::Update()
 				infoTexMem[idx - offset] = GetBuildColor(status);
 			}
 		}
-	} else if (md != NULL) {
+	} else if (md != nullptr) {
 		for_mt(start, updateProcess, [&](const int y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int2 sq = int2(x << 1, y << 1);
@@ -257,10 +257,10 @@ void CPathTexture::Update()
 				float scale = 1.0f;
 
 				if (losFullView || losHandler->InLos(SquareToFloat3(sq), gu->myAllyTeam)) {
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 				}
 
 				// NOTE: raw speedmods are not necessarily clamped to [0, 1]
@@ -274,5 +274,6 @@ void CPathTexture::Update()
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, texSize.x, updateProcess - start, GL_RGBA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset * sizeof(SColor)));
 	infoTexPBO.Unbind();
+
 	isCleared = false;
 }

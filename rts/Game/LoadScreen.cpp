@@ -20,7 +20,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"

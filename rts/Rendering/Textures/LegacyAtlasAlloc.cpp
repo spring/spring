@@ -54,8 +54,8 @@ bool CLegacyAtlasAlloc::Allocate()
 	std::vector<SAtlasEntry*> memtextures;
 	memtextures.reserve(entries.size());
 
-	for (auto it = entries.begin(); it != entries.end(); ++it) {
-		memtextures.push_back(&it->second);
+	for (auto& entry: entries) {
+		memtextures.push_back(&entry.second);
 	}
 
 	std::sort(memtextures.begin(), memtextures.end(), CLegacyAtlasAlloc::CompareTex);

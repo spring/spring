@@ -27,8 +27,8 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	: CProjectile(pos, speed, owner, false, false, false)
 
 	, gravity(ZeroVector)
-	, texture(NULL)
-	, colorMap(NULL)
+	, texture(nullptr)
+	, colorMap(nullptr)
 	, directional(false)
 	, life(0.0f)
 	, decayrate(0.0f)

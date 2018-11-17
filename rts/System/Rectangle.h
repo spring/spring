@@ -53,11 +53,10 @@ struct SRectangle {
 	}
 
 	bool operator< (const SRectangle& other) const {
-		if (x1 == other.x1) {
+		if (x1 == other.x1)
 			return (z1 < other.z1);
-		} else {
-			return (x1 < other.x1);
-		}
+
+		return (x1 < other.x1);
 	}
 
 	template<typename T>

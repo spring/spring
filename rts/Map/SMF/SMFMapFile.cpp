@@ -9,7 +9,6 @@
 #include <cassert>
 #include <cstring>
 
-using std::string;
 
 static bool CheckHeader(const SMFHeader& h)
 {
@@ -113,8 +112,8 @@ void CSMFMapFile::ReadHeightmap(float* sHeightMap, float* uHeightMap, float base
 	for (int y = 0; y < hmx * hmy; ++y) {
 		const float h = base + swabWord(temphm[y]) * mod;
 
-		if (sHeightMap != NULL) { sHeightMap[y] = h; }
-		if (uHeightMap != NULL) { uHeightMap[y] = h; }
+		if (sHeightMap != nullptr) { sHeightMap[y] = h; }
+		if (uHeightMap != nullptr) { uHeightMap[y] = h; }
 	}
 
 	delete[] temphm;
@@ -162,7 +161,7 @@ const char* CSMFMapFile::GetFeatureTypeName(int typeID) const
 }
 
 
-void CSMFMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
+void CSMFMapFile::GetInfoMapSize(const std::string& name, MapBitmapInfo* info) const
 {
 	if (name == "height") {
 		*info = MapBitmapInfo(header.mapx + 1, header.mapy + 1);
@@ -182,7 +181,7 @@ void CSMFMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
 }
 
 
-bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
+bool CSMFMapFile::ReadInfoMap(const std::string& name, void* data)
 {
 	if (name == "height") {
 		ReadHeightmap((unsigned short*)data);

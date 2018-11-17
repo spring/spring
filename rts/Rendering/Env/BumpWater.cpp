@@ -70,34 +70,31 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_BUMP_WATER)
 
 static void GLSLDefineConst4f(string& str, const string& name, const float x, const float y, const float z, const float w)
 {
-	str += spring::format(string("#define ")+name+" vec4(%.12f,%.12f,%.12f,%.12f)\n", x, y, z, w);
+	str += spring::format(string("#define ") + name + " vec4(%.12f,%.12f,%.12f,%.12f)\n", x, y, z, w);
 }
 
-static void GLSLDefineConstf4(string& str, const string& name, const float3& v, const float& alpha)
+static void GLSLDefineConstf4(string& str, const string& name, const float3& v, float alpha)
 {
-	str += spring::format(string("#define ")+name+" vec4(%.12f,%.12f,%.12f,%.12f)\n", v.x, v.y, v.z, alpha);
+	str += spring::format(string("#define ") + name + " vec4(%.12f,%.12f,%.12f,%.12f)\n", v.x, v.y, v.z, alpha);
 }
-
 
 static void GLSLDefineConstf3(string& str, const string& name, const float3& v)
 {
-	str += spring::format(string("#define ")+name+" vec3(%.12f,%.12f,%.12f)\n", v.x, v.y, v.z);
+	str += spring::format(string("#define ") + name + " vec3(%.12f,%.12f,%.12f)\n", v.x, v.y, v.z);
 }
 
-
-static void GLSLDefineConstf2(string& str, const string& name, const float& x, const float& y)
+static void GLSLDefineConstf2(string& str, const string& name, float x, float y)
 {
-	str += spring::format(string("#define ")+name+" vec2(%.12f,%.12f)\n", x, y);
+	str += spring::format(string("#define ") + name + " vec2(%.12f,%.12f)\n", x, y);
 }
 
-
-static void GLSLDefineConstf1(string& str, const string& name, const float& x)
+static void GLSLDefineConstf1(string& str, const string& name, float x)
 {
-	str += spring::format(string("#define ")+name+" %.12f\n", x);
+	str += spring::format(string("#define ") + name + " %.12f\n", x);
 }
 
 
-static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f, int* sizeX = NULL, int* sizeY = NULL)
+static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f, int* sizeX = nullptr, int* sizeY = nullptr)
 {
 	CBitmap bm;
 
@@ -106,7 +103,7 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 
 	const unsigned int texID = bm.CreateMipMapTexture(anisotropy);
 
-	if (sizeY != NULL) {
+	if (sizeY != nullptr) {
 		*sizeX = bm.xsize;
 		*sizeY = bm.ysize;
 	}

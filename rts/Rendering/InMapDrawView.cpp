@@ -12,7 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
 
-CInMapDrawView* inMapDrawerView = NULL;
+CInMapDrawView* inMapDrawerView = nullptr;
 
 
 /**

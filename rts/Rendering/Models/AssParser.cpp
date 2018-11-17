@@ -58,7 +58,7 @@ static const unsigned int ASS_LOGGING_OPTIONS =
 static inline float3 aiVectorToFloat3(const aiVector3D v)
 {
 	// no-op; AssImp's internal coordinate-system matches Spring's modulo handedness
-	return float3(v.x, v.y, v.z);
+	return {v.x, v.y, v.z};
 
 	// Blender --> Spring
 	// return float3(v.x, v.z, -v.y);
@@ -117,7 +117,7 @@ static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 class AssLogStream : public Assimp::LogStream
 {
 public:
-	void write(const char* message) {
+	void write(const char* message) override {
 		LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "Assimp: %s", message);
 	}
 };
@@ -362,9 +362,9 @@ void CAssParser::SetPieceName(
 			// root is always the first piece created, so safe to assign this
 			piece->name = "$$root$$";
 			return;
-		} else {
-			piece->name = "$$piece$$";
 		}
+
+		piece->name = "$$piece$$";
 	}
 
 	// find a new name if none given or if a piece with the same name already exists
@@ -452,9 +452,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
-			if (!IS_QNAN(aiNormal)) {
+			if (!IS_QNAN(aiNormal))
 				vertex.normal = (aiVectorToFloat3(aiNormal)).SafeANormalize();
-			}
 
 			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
@@ -519,7 +518,7 @@ static LuaTable GetPieceTableRecursively(
 {
 	LuaTable ret = table.SubTable(name);
 	if (ret.IsValid()) {
-		if (parentName.size() > 0)
+		if (!parentName.empty())
 			parentMap[name] = parentName;
 		return ret;
 	}

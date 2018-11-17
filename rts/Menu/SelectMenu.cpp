@@ -44,11 +44,9 @@ CONFIG(std::string, address).defaultValue("").description("Last Ip/hostname used
 CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
 CONFIG(std::string, MenuArchive).defaultValue("Spring Bitmaps").description("Archive name for the default Menu.");
 
-class ConnectWindow : public agui::Window
-{
+class ConnectWindow : public agui::Window {
 public:
-	ConnectWindow() : agui::Window("Connect to server")
-	{
+	ConnectWindow() : agui::Window("Connect to server") {
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -72,8 +70,7 @@ public:
 	agui::LineEdit* address;
 
 private:
-	void Finish(bool connect)
-	{
+	void Finish(bool connect) {
 		if (connect)
 			Connect.emit(address->GetContent());
 		else
@@ -81,11 +78,9 @@ private:
 	};
 };
 
-class SettingsWindow : public agui::Window
-{
+class SettingsWindow : public agui::Window {
 public:
-	SettingsWindow(std::string &name) : agui::Window(name)
-	{
+	SettingsWindow(std::string &name) : agui::Window(name) {
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -110,14 +105,16 @@ public:
 	agui::LineEdit* value;
 
 private:
-	void Finish(bool set)
-	{
+	void Finish(bool set) {
 		if (set)
 			OK.emit(title + " = " + value->GetContent());
 		else
 			WantClose.emit();
 	};
 };
+
+
+
 
 SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 : GuiElement(nullptr)
@@ -280,14 +277,15 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 
 void SelectMenu::ShowSettingsList()
 {
-	if (!curSelect) {
+	if (curSelect == nullptr) {
 		curSelect = new ListSelectWnd("Select setting");
 		curSelect->Selected.connect(std::bind(&SelectMenu::SelectSetting, this, std::placeholders::_1));
 		curSelect->WantClose.connect(std::bind(&SelectMenu::CleanWindow, this));
 	}
 	curSelect->list->RemoveAllItems();
-	const std::map<std::string, std::string> &data = configHandler->GetData();
+
 	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
+	const std::map<std::string, std::string>& data = configHandler->GetData();
 	const DataSorted dataSorted(data.begin(), data.end());
 
 	for (const auto& item: dataSorted)
@@ -295,6 +293,7 @@ void SelectMenu::ShowSettingsList()
 
 	if (data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
+
 	curSelect->list->RefreshQuery();
 }
 

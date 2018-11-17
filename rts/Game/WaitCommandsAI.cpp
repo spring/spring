@@ -343,7 +343,7 @@ void CWaitCommandsAI::AddIcon(const Command& cmd, const float3& pos) const
 
 CWaitCommandsAI::KeyType CWaitCommandsAI::Wait::keySource = 0;
 
-const string CWaitCommandsAI::Wait::noText = "";
+const std::string CWaitCommandsAI::Wait::noText;
 
 
 // static
@@ -558,10 +558,10 @@ void CWaitCommandsAI::TimeWait::AddUnit(CUnit* unit)
 
 void CWaitCommandsAI::TimeWait::RemoveUnit(CUnit* _unit)
 {
-	if (_unit == unit) {
-		delete this;
+	if (_unit != unit)
 		return;
-	}
+
+	delete this;
 }
 
 
@@ -578,24 +578,26 @@ void CWaitCommandsAI::TimeWait::Update()
 		if (!enabled) {
 			enabled = true;
 			endFrame = (gs->frameNum + duration);
+			return;
 		}
-		else {
-			if (endFrame <= gs->frameNum) {
-				SendWaitCommand(CUnitSet{unit->id});
 
-				if (!factory) {
-					delete this;
-					return;
-				} else {
-					enabled = false;
-				}
+		if (endFrame <= gs->frameNum) {
+			SendWaitCommand(CUnitSet{unit->id});
+
+			if (!factory) {
+				delete this;
+				return;
 			}
+
+			enabled = false;
 		}
-	}
-	else if (state == Queued) {
+
 		return;
 	}
-	else if (state == Missing) {
+	if (state == Queued)
+		return;
+
+	if (state == Missing) {
 		if (!factory) { // FIXME
 			delete this;
 			return;
@@ -604,17 +606,15 @@ void CWaitCommandsAI::TimeWait::Update()
 }
 
 
-const string& CWaitCommandsAI::TimeWait::GetStateText() const
+const std::string& CWaitCommandsAI::TimeWait::GetStateText() const
 {
-	static char buf[32];
+	char buf[32];
 	if (enabled) {
-		const int remaining =
-			1 + (std::max(0, (endFrame - gs->frameNum - 1)) / GAME_SPEED);
-		SNPRINTF(buf, sizeof(buf), "%i", remaining);
+		SNPRINTF(buf, sizeof(buf), "%i", 1 + (std::max(0, (endFrame - gs->frameNum - 1)) / GAME_SPEED));
 	} else {
 		SNPRINTF(buf, sizeof(buf), "%i", duration / GAME_SPEED);
 	}
-	static string text;
+	static std::string text;
 	text = buf;
 	return text;
 }

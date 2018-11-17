@@ -249,16 +249,15 @@ int LuaFonts::Print(lua_State* L)
 
 int LuaFonts::Begin(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	CglFont* f = tofont(L, 1);
 	f->Begin();
 	return 0;
 }
 
-
 int LuaFonts::End(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	CglFont* f = tofont(L, 1);
 	f->End();
 	return 0;
@@ -393,7 +392,7 @@ int LuaFonts::SetAutoOutlineColor(lua_State* L)
 
 int LuaFonts::BindTexture(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	CglFont* f = tofont(L, 1);
 

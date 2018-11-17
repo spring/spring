@@ -92,8 +92,6 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 	LoadDecalShaders();
 }
 
-
-
 CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
@@ -536,6 +534,7 @@ void CGroundDecalHandler::DrawScars() {
 		}
 
 		DrawGroundScar(scar);
+
 		i++;
 	}
 }
@@ -959,15 +958,15 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
 	assert(object);
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == NULL)
+	if (decal == nullptr)
 		return;
 
-	if (gb != NULL)
+	if (gb != nullptr)
 		gb->decal = decal;
 
-	decal->owner = NULL;
+	decal->owner = nullptr;
 	decal->gbOwner = gb;
-	object->groundDecal = NULL;
+	object->groundDecal = nullptr;
 }
 
 
@@ -978,12 +977,12 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 {
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
-	if (decal == NULL)
+	if (decal == nullptr)
 		return;
 
-	decal->owner = NULL;
+	decal->owner = nullptr;
 	decal->alpha = 0.0f;
-	object->groundDecal = NULL;
+	object->groundDecal = nullptr;
 }
 
 

@@ -64,8 +64,8 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	, particleSpeedSpread(0.0f)
 	, emitRot(0.0f)
 	, emitRotSpread(0.0f)
-	, texture(NULL)
-	, colorMap(NULL)
+	, texture(nullptr)
+	, colorMap(nullptr)
 	, directional(false)
 	, particleLife(0.0f)
 	, particleLifeSpread(0.0f)
@@ -160,11 +160,11 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == NULL) {
+	if (colorMap == nullptr) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == NULL) {
+	if (texture == nullptr) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("simpleparticle");
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no texture specified", __FUNCTION__);
 	}
@@ -230,11 +230,11 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	const float3 forward = up.cross(right);
 
 	// FIXME: should catch these earlier and for more projectile-types
-	if (colorMap == NULL) {
+	if (colorMap == nullptr) {
 		colorMap = CColorMap::LoadFromFloatVector(std::vector<float>(8, 1.0f));
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no color-map specified", __FUNCTION__);
 	}
-	if (texture == NULL) {
+	if (texture == nullptr) {
 		texture = &projectileDrawer->textureAtlas->GetTexture("sphereparticle");
 		LOG_L(L_WARNING, "[CSphereParticleSpawner::%s] no texture specified", __FUNCTION__);
 	}

@@ -81,7 +81,7 @@ static const int MAX_TEXTURE_UNITS = 32;
 /******************************************************************************/
 /******************************************************************************/
 
-void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
+void (*LuaOpenGL::resetMatrixFunc)() = nullptr;
 
 unsigned int LuaOpenGL::resetStateList = 0;
 
@@ -200,7 +200,6 @@ void LuaOpenGL::Free()
 
 	occlusionQueries.clear();
 }
-
 
 /******************************************************************************/
 /******************************************************************************/

@@ -46,8 +46,8 @@ namespace CNamedTextures {
 
 		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-		for (auto it = texInfoMap.cbegin(); it != texInfoMap.cend(); ++it) {
-			const size_t texIdx = it->second;
+		for (const auto& item: texInfoMap) {
+			const size_t texIdx = item.second;
 			const GLuint texID = texInfoVec[texIdx].id;
 
 			if (shutdown || !texInfoVec[texIdx].persist) {
@@ -55,7 +55,7 @@ namespace CNamedTextures {
 				// always recycle non-persistent textures
 				freeIndices.push_back(texIdx);
 			} else {
-				tempMap[it->first] = it->second;
+				tempMap[item.first] = item.second;
 			}
 		}
 
@@ -68,6 +68,7 @@ namespace CNamedTextures {
 
 	static void InsertTex(const std::string& texName, const TexInfo& texInfo, bool loadTex)
 	{
+		// caller (GenInsertTex) already has lock
 		if (!loadTex)
 			waitingTextures.push_back(texName);
 
@@ -132,7 +133,7 @@ namespace CNamedTextures {
 
 	static bool Load(const std::string& texName, unsigned int texID)
 	{
-		//! strip off the qualifiers
+		// strip off the qualifiers
 		std::string filename = texName;
 		bool border  = false;
 		bool clamped = false;
@@ -200,7 +201,7 @@ namespace CNamedTextures {
 			}
 		}
 
-		//! get the image
+		// get the image
 		CBitmap bitmap;
 		TexInfo texInfo;
 
@@ -221,7 +222,7 @@ namespace CNamedTextures {
 			const int xbits = count_bits_set(bitmap.xsize);
 			const int ybits = count_bits_set(bitmap.ysize);
 
-			//! make the texture
+			// make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			if (clamped) {

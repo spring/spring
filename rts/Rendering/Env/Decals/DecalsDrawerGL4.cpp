@@ -242,9 +242,8 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 
 	DetectMaxDecals();
 	LoadShaders();
-	if (!decalShader->IsValid()) {
+	if (!decalShader->IsValid())
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
-	}
 
 	glGenTextures(1, &depthTex);
 	CreateBoundingBoxVBOs();
@@ -275,8 +274,8 @@ CDecalsDrawerGL4::~CDecalsDrawerGL4()
 	glDeleteTextures(1, &atlasTex);
 
 	shaderHandler->ReleaseProgramObjects("[DecalsDrawerGL4]");
-	decalShader = NULL;
 
+	decalShader = nullptr;
 	decalDrawer = nullptr;
 }
 
@@ -361,7 +360,6 @@ void CDecalsDrawerGL4::LoadShaders()
 		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
-
 	decalShader->Disable();
 	decalShader->Validate();
 }
@@ -371,7 +369,7 @@ static STex LoadTexture(const std::string& name)
 {
 	std::string fileName = name;
 
-	if (FileSystem::GetExtension(fileName) == "")
+	if (FileSystem::GetExtension(fileName).empty())
 		fileName += ".bmp";
 
 	std::string fullName = fileName;
@@ -472,6 +470,7 @@ static inline void GetFallbacks(spring::unordered_map<std::string, STex>& textur
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
 	spring::unordered_map<std::string, STex> textures;
+
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
 	GetFallbacks(textures);
@@ -479,12 +478,12 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	CQuadtreeAtlasAlloc atlas;
 	atlas.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		if (it->second.id == 0)
+	for (const auto& texture: textures) {
+		if (texture.second.id == 0)
 			continue;
 
 		const float maxSize = 1024; //512;
-		int2 size = it->second.size;
+		int2 size = texture.second.size;
 		if (size.x > maxSize) {
 			size.y = size.y * (maxSize / size.x);
 			size.x = maxSize;
@@ -494,7 +493,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 			size.y = maxSize;
 		}
 
-		atlas.AddEntry(it->first, size);
+		atlas.AddEntry(texture.first, size);
 	}
 	/*bool success =*/ atlas.Allocate();
 
@@ -673,6 +672,7 @@ void CDecalsDrawerGL4::SunChanged()
 	//FIXME
 	if (uniformBlockSize != sizeof(SGLSLGroundLighting))
 		LOG("uniformBlockSize sizeof(SGLSLGroundLighting) %u " _STPF_, uniformBlockSize, sizeof(SGLSLGroundLighting));
+
 	assert(uniformBlockSize == sizeof(SGLSLGroundLighting));
 
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);

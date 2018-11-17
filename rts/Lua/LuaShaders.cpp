@@ -68,8 +68,8 @@ LuaShaders::LuaShaders()
 
 LuaShaders::~LuaShaders()
 {
-	for (unsigned int p = 0; p < programs.size(); p++) {
-		DeleteProgram(programs[p]);
+	for (auto& program: programs) {
+		DeleteProgram(program);
 	}
 
 	programs.clear();
@@ -1031,7 +1031,7 @@ int LuaShaders::SetTesselationShaderParameter(lua_State* L)
 	}
 	if (lua_istable(L, 2)) {
 		float tessArrayBuf[4] = {0.0f};
-		const int count = LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
+		LuaUtils::ParseFloatArray(L, 2, tessArrayBuf, 4);
 		glPatchParameterfv(param, &tessArrayBuf[0]);
 	}
 	return 0;

@@ -1300,36 +1300,8 @@ int LuaUtils::Log(lua_State* L)
 
 	const char* section = luaL_checkstring(L, 1);
 
-	int loglevel = 0;
-	if (lua_israwnumber(L, 2)) {
-		loglevel = lua_tonumber(L, 2);
-	}
-	else if (lua_israwstring(L, 2)) {
-		std::string loglvlstr = lua_tostring(L, 2);
-		StringToLowerInPlace(loglvlstr);
-		if (loglvlstr == "debug") {
-			loglevel = LOG_LEVEL_DEBUG;
-		}
-		else if (loglvlstr == "info") {
-			loglevel = LOG_LEVEL_INFO;
-		}
-		else if (loglvlstr == "notice") {
-			loglevel = LOG_LEVEL_INFO;
-		}
-		else if (loglvlstr == "warning") {
-			loglevel = LOG_LEVEL_WARNING;
-		}
-		else if (loglvlstr == "error") {
-			loglevel = LOG_LEVEL_ERROR;
-		}
-		else if (loglvlstr == "fatal") {
-			loglevel = LOG_LEVEL_FATAL;
-		}
-		else {
-			return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
-		}
-	}
-	else {
+	int loglevel = LuaUtils::ParseLogLevel(L, 2);
+	if (loglevel < 0) {
 		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	}
 

@@ -611,7 +611,7 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -629,10 +629,11 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, camera->InView(unit->midPos, unit->radius));
 	return 1;
 }
@@ -640,10 +641,11 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
@@ -673,10 +675,11 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->isIcon);
 	return 1;
 }
@@ -684,7 +687,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -696,53 +699,55 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitLuaDraw(lua_State* L)
 {
-	return (GetSolidObjectLuaDraw(L, ParseUnit(L, __FUNCTION__, 1)));
+	return (GetSolidObjectLuaDraw(L, ParseUnit(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 {
-	return (GetSolidObjectNoDraw(L, ParseUnit(L, __FUNCTION__, 1)));
+	return (GetSolidObjectNoDraw(L, ParseUnit(L, __func__, 1)));
 }
 
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->noMinimap);
 	return 1;
 }
 
 int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, unit->noSelect);
 	return 1;
 }
 
 int LuaUnsyncedRead::GetUnitSelectionVolumeData(lua_State* L)
 {
-	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __FUNCTION__, 1));
+	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __func__, 1));
 }
 
 int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 {
-	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __FUNCTION__, 1)));
+	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 {
-	return (GetSolidObjectNoDraw(L, ParseFeature(L, __FUNCTION__, 1)));
+	return (GetSolidObjectNoDraw(L, ParseFeature(L, __func__, 1)));
 }
 
 int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
 {
-	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __FUNCTION__, 1));
+	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __func__, 1));
 }
 
 
@@ -773,7 +778,7 @@ int LuaUnsyncedRead::GetFeatureTransformMatrix(lua_State* L) { return (GetObject
 
 int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -2267,7 +2272,7 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;

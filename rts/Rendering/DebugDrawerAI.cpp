@@ -166,7 +166,7 @@ void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
 
 	Graph::GraphLine& line = lines[lineNum];
 
-	line.lineData.push_back(float3(x, y, 0.0f));
+	line.lineData.emplace_back(x, y, 0.0f);
 	line.lineMin.x = std::min(line.lineMin.x, x);
 	line.lineMin.y = std::min(line.lineMin.y, y);
 	line.lineMax.x = std::max(line.lineMax.x, x);
@@ -199,19 +199,19 @@ void DebugDrawerAI::Graph::DelPoints(int lineNum, int numPoints) {
 	}
 
 	// recalculate the line scales
-	for (auto dit = line.lineData.begin(); dit != line.lineData.end(); ++dit) {
-		line.lineMin.x = std::min(line.lineMin.x, (*dit).x);
-		line.lineMin.y = std::min(line.lineMin.y, (*dit).y);
-		line.lineMax.x = std::max(line.lineMax.x, (*dit).x);
-		line.lineMax.y = std::max(line.lineMax.y, (*dit).y);
+	for (const float3& coor: line.lineData) {
+		line.lineMin.x = std::min(line.lineMin.x, coor.x);
+		line.lineMin.y = std::min(line.lineMin.y, coor.y);
+		line.lineMax.x = std::max(line.lineMax.x, coor.x);
+		line.lineMax.y = std::max(line.lineMax.y, coor.y);
 	}
 
 	// recalculate the graph scales
-	for (lit = lines.begin(); lit != lines.end(); ++lit) {
-		minScale.x = std::min((lit->second).lineMin.x, minScale.x);
-		minScale.y = std::min((lit->second).lineMin.y, minScale.y);
-		maxScale.x = std::max((lit->second).lineMax.x, maxScale.x);
-		maxScale.y = std::max((lit->second).lineMax.y, maxScale.y);
+	for (const auto& pair: lines) {
+		minScale.x = std::min((pair.second).lineMin.x, minScale.x);
+		minScale.y = std::min((pair.second).lineMin.y, minScale.y);
+		maxScale.x = std::max((pair.second).lineMax.x, maxScale.x);
+		maxScale.y = std::max((pair.second).lineMax.y, maxScale.y);
 	}
 
 	scale.x = maxScale.x - minScale.x;
@@ -243,8 +243,8 @@ void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
 }
 
 void DebugDrawerAI::Graph::Clear() {
-	for (auto it = lines.begin(); it != lines.end(); ++it) {
-		(it->second).lineData.clear();
+	for (auto& pair: lines) {
+		(pair.second).lineData.clear();
 	}
 }
 
@@ -403,23 +403,26 @@ void DebugDrawerAI::TexSet::DelTexture(int texHandle) {
 void DebugDrawerAI::TexSet::SetTexturePos(int texHandle, float x, float y) {
 	auto it = textures.find(texHandle);
 
-	if (it != textures.end()) {
-		(it->second).SetPos(float3(x, y, 0.0f));
-	}
+	if (it == textures.end())
+		return;
+
+	(it->second).SetPos(float3(x, y, 0.0f));
 }
 void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {
 	auto it = textures.find(texHandle);
 
-	if (it != textures.end()) {
-		(it->second).SetSize(float3(w, h, 0.0f));
-	}
+	if (it == textures.end())
+		return;
+
+	(it->second).SetSize(float3(w, h, 0.0f));
 }
 void DebugDrawerAI::TexSet::SetTextureLabel(int texHandle, const std::string& label) {
 	auto it = textures.find(texHandle);
 
-	if (it != textures.end()) {
-		(it->second).SetLabel(label);
-	}
+	if (it == textures.end())
+		return;
+
+	(it->second).SetLabel(label);
 }
 
 

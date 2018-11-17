@@ -1245,11 +1245,8 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 
 	unsigned int lightHandle = -1U;
 
-	if (lightHandler != NULL) {
-		if (ParseLight(L, light, 1, __FUNCTION__)) {
-			lightHandle = lightHandler->AddLight(light);
-		}
-	}
+	if (lightHandler != nullptr && ParseLight(L, light, 1, __func__))
+		lightHandle = lightHandler->AddLight(light);
 
 	lua_pushnumber(L, lightHandle);
 	return 1;
@@ -1265,11 +1262,8 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 
 	unsigned int lightHandle = -1U;
 
-	if (lightHandler != NULL) {
-		if (ParseLight(L, light, 1, __FUNCTION__)) {
-			lightHandle = lightHandler->AddLight(light);
-		}
-	}
+	if (lightHandler != nullptr && ParseLight(L, light, 1, __func__))
+		lightHandle = lightHandler->AddLight(light);
 
 	lua_pushnumber(L, lightHandle);
 	return 1;
@@ -1284,15 +1278,9 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 		return 0;
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
-	bool ret = false;
-
-	if (light != NULL) {
-		ret = ParseLight(L, *light, 2, __FUNCTION__);
-	}
-
-	lua_pushboolean(L, ret);
+	lua_pushboolean(L, (light != nullptr && ParseLight(L, *light, 2, __func__)));
 	return 1;
 }
 
@@ -1304,14 +1292,9 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 		return 0;
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
-	bool ret = false;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
-	if (light != NULL) {
-		ret = ParseLight(L, *light, 2, __FUNCTION__);
-	}
-
-	lua_pushboolean(L, ret);
+	lua_pushboolean(L, (light != nullptr && ParseLight(L, *light, 2, __func__)));
 	return 1;
 }
 
@@ -1380,7 +1363,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 		return 0;
 
 	if (!lua_isnumber(L, 2)) {
-		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
+		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __func__);
 		return 0;
 	}
 
@@ -1389,13 +1372,12 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
 	bool ret = false;
 
-	if (light != NULL) {
-		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __FUNCTION__);
-	}
+	if (light != nullptr)
+		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __func__);
 
 	lua_pushboolean(L, ret);
 	return 1;
@@ -1418,12 +1400,11 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 	bool ret = false;
 
-	if (light != NULL) {
-		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __FUNCTION__);
-	}
+	if (light != nullptr)
+		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __func__);
 
 	lua_pushboolean(L, ret);
 	return 1;
@@ -1755,7 +1736,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
 
 
-	std::vector<std::uint8_t> buffer;
+	std::vector<uint8_t> buffer;
 	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
 
 	if (!vfsFile.IsBuffered()) {

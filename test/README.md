@@ -2,7 +2,7 @@
 
 ## README
 
-These are [Unit Tests](http://en.wikipedia.org/wiki/Unit_tests) for the spring
+These are [Unit Tests](http://en.wikipedia.org/wiki/Unit_tests) for the Spring
 project. They are useful for automatically testing the engine source code for
 regressions.
 

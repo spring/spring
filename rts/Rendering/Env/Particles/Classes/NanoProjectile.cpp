@@ -23,7 +23,7 @@ CR_REG_METADATA(CNanoProjectile,
 ))
 
 
-CNanoProjectile::CNanoProjectile(): CProjectile()
+CNanoProjectile::CNanoProjectile()
 {
 	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -33,7 +33,7 @@ CNanoProjectile::CNanoProjectile(): CProjectile()
 }
 
 CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
-	: CProjectile(pos, speed, NULL, false, false, false)
+	: CProjectile(pos, speed, nullptr, false, false, false)
 	, deathFrame(gs->frameNum + lifeTime)
 	, color(c)
 {

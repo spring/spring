@@ -337,7 +337,7 @@ void CSMFReadMap::CreateShadingTex()
 	if (texAnisotropyLevels[false] != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, texAnisotropyLevels[false]);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mapDims.pwr2mapx, mapDims.pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mapDims.pwr2mapx, mapDims.pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	shadingTexBuffer.clear();
 	shadingTexBuffer.resize(mapDims.mapx * mapDims.mapy * 4, 0);
@@ -365,9 +365,9 @@ void CSMFReadMap::CreateNormalTex()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, nullptr);
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, nullptr);
 #endif
 }
 
@@ -690,9 +690,8 @@ void CSMFReadMap::UpdateShadingTexture()
 	//FIXME make configurable or FPS-dependent?
 	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128);
 
-	if (shadingTexUpdateProgress < 0) {
+	if (shadingTexUpdateProgress < 0)
 		return;
-	}
 
 	if (shadingTexUpdateProgress >= pixels) {
 		if (shadingTexUpdateNeeded) {

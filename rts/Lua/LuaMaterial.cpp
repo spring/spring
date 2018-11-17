@@ -767,33 +767,34 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 
 LuaMatRef::LuaMatRef(LuaMatBin* _bin)
 {
-	bin = _bin;
-	if (bin != nullptr) {
-		bin->Ref();
-	}
+	if ((bin = _bin) == nullptr)
+		return;
+
+	bin->Ref();
 }
 
 LuaMatRef::~LuaMatRef()
 {
-	if (bin != nullptr) {
-		bin->UnRef();
-	}
+	if (bin == nullptr)
+		return;
+
+	bin->UnRef();
 }
 
 LuaMatRef::LuaMatRef(const LuaMatRef& mr)
 {
-	bin = mr.bin;
-	if (bin != nullptr) {
-		bin->Ref();
-	}
+	if ((bin = mr.bin) == nullptr)
+		return;
+
+	bin->Ref();
 }
 
 
 void LuaMatRef::Reset()
 {
-	if (bin != nullptr) {
+	if (bin != nullptr)
 		bin->UnRef();
-	}
+
 	bin = nullptr;
 }
 
@@ -809,16 +810,16 @@ LuaMatRef& LuaMatRef::operator=(const LuaMatRef& mr)
 
 void LuaMatRef::AddUnit(CSolidObject* o)
 {
-	if (bin != nullptr) {
-		bin->AddUnit(o);
-	}
+	if (bin == nullptr)
+		return;
+	bin->AddUnit(o);
 }
 
 void LuaMatRef::AddFeature(CSolidObject* o)
 {
-	if (bin != nullptr) {
-		bin->AddFeature(o);
-	}
+	if (bin == nullptr)
+		return;
+	bin->AddFeature(o);
 }
 
 

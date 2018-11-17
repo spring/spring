@@ -276,9 +276,8 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 void HUDDrawer::Draw(const CUnit* unit)
 {
-	if (unit == NULL || !draw) {
+	if (unit == nullptr || !draw)
 		return;
-	}
 
 	PushState();
 		glDisable(GL_DEPTH_TEST);
@@ -297,4 +296,3 @@ void HUDDrawer::Draw(const CUnit* unit)
 		DrawTargetReticle(unit);
 	PopState();
 }
-

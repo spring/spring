@@ -79,7 +79,7 @@ CGroundFlash::CGroundFlash()
 	alwaysVisible = false;
 }
 
-CGroundFlash::CGroundFlash(const float3& _pos): CExpGenSpawnable()
+CGroundFlash::CGroundFlash(const float3& _pos)
 {
 	size = 0.0f;
 	depthTest = true;

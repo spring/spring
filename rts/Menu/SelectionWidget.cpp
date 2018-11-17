@@ -43,10 +43,11 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 {
 	SetPos(0.5f, 0.2f);
 	SetSize(0.4f, 0.2f);
-	curSelect = NULL;
+	curSelect = nullptr;
 
 	agui::VerticalLayout* vl = new agui::VerticalLayout(this);
 	vl->SetBorder(1.2f);
+
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
 	mod->Clicked.connect(std::bind(&SelectionWidget::ShowModList, this));
@@ -164,6 +165,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 				availableScripts.push_back(prop.GetValueAsString());
 		}
 	}
+
 	vfsHandler->RemoveArchive(userMap);
 	vfsHandler->RemoveArchive(userMod);
 }
@@ -211,6 +213,7 @@ void SelectionWidget::ShowScriptList()
 }
 
 
+
 void SelectionWidget::SelectDemo(const std::string& demo)
 {
 	CleanWindow();
@@ -223,8 +226,8 @@ void SelectionWidget::SelectMod(const std::string& mod)
 		CleanWindow();
 		return;
 	}
-	userMod = mod;
-	configHandler->SetString("LastSelectedMod", userMod);
+
+	configHandler->SetString("LastSelectedMod", userMod = mod);
 	modT->SetText(userMod);
 
 	//SelectScript(SelectionWidget::NoScriptSelect); //reset AI as LuaAI maybe doesn't exist in this game
@@ -234,8 +237,7 @@ void SelectionWidget::SelectMod(const std::string& mod)
 
 void SelectionWidget::SelectScript(const std::string& script)
 {
-	userScript = script;
-	configHandler->SetString("LastSelectedScript", userScript);
+	configHandler->SetString("LastSelectedScript", userScript = script);
 	scriptT->SetText(userScript);
 
 	CleanWindow();
@@ -243,13 +245,13 @@ void SelectionWidget::SelectScript(const std::string& script)
 
 void SelectionWidget::SelectMap(const std::string& map)
 {
-	userMap = map;
-	configHandler->SetString("LastSelectedMap", userMap);
+	configHandler->SetString("LastSelectedMap", userMap = map);
 	mapT->SetText(userMap);
 
 	UpdateAvailableScripts();
 	CleanWindow();
 }
+
 
 void SelectionWidget::CleanWindow()
 {
