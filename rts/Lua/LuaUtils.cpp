@@ -1300,10 +1300,9 @@ int LuaUtils::Log(lua_State* L)
 
 	const char* section = luaL_checkstring(L, 1);
 
-	int loglevel = LuaUtils::ParseLogLevel(L, 2);
-	if (loglevel < 0) {
+	const int loglevel = LuaUtils::ParseLogLevel(L, 2);
+	if (loglevel < 0)
 		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
-	}
 
 	LogMsg(L, section, loglevel, 3);
 	return 0;

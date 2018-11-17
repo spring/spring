@@ -160,11 +160,12 @@ private:
 			memset(checksum, 0, sizeof(checksum));
 		}
 
-		std::string path;         // FileSystem::GetDirectory(origName)
-		std::string origName;     // non-lowercased name
-		std::string replaced;     // if not empty, use this archive instead
+		std::string path;             // FileSystem::GetDirectory(origName)
+		std::string origName;         // non-lowercased name
+		std::string replaced;         // if not empty, use this archive instead
+		std::string archiveDataPath;  // path to {mod,map}info.lua for .sdd's
+
 		ArchiveData archiveData;
-		std::string archiveDataPath;
 
 		uint32_t modified = 0;
 		uint32_t modifiedArchiveData = 0;

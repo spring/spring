@@ -36,6 +36,8 @@ public:
 	CSevenZipArchive(const std::string& name);
 	virtual ~CSevenZipArchive();
 
+	int GetType() const override { return ARCHIVE_TYPE_SD7; }
+
 	bool IsOpen() override;
 
 	unsigned int NumFiles() const override;

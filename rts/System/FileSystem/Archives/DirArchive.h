@@ -31,6 +31,8 @@ class CDirArchive : public IArchive
 public:
 	CDirArchive(const std::string& archiveName);
 
+	int GetType() const override { return ARCHIVE_TYPE_SDD; }
+
 	bool IsOpen() override { return true; }
 
 	unsigned int NumFiles() const override { return (searchFiles.size()); }
