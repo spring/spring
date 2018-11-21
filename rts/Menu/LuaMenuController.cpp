@@ -39,14 +39,20 @@ CLuaMenuController::~CLuaMenuController()
 }
 
 
-void CLuaMenuController::Reset()
+bool CLuaMenuController::Reset()
 {
-	if (!Valid())
-		return;
+	if (!Valid()) {
+		// if no LuaMenu, cursor will not be updated (again) until game exists so force a reset
+		// calling ReloadCursors here is not possible since no archives are loaded at this point
+		mouse->ResetCursor();
+		return false;
+	}
 
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
+
 	mouse->ReloadCursors();
+	return true;
 }
 
 bool CLuaMenuController::Activate(const std::string& msg)
