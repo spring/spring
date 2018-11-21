@@ -141,6 +141,8 @@ void CMouseHandler::ReloadCursors()
 	cursorCommandMap.reserve(32);
 	cursorFileMap.clear();
 	cursorFileMap.reserve(32);
+	activeCursorName.clear();
+	queuedCursorName.clear();
 
 	cursorCommandMap["none"] = loadedCursors.size() - 1;
 	cursorFileMap["null"] = loadedCursors.size() - 1;
@@ -612,7 +614,7 @@ std::string CMouseHandler::GetCurrentTooltip() const
 
 void CMouseHandler::Update()
 {
-	SetCursor(newCursor);
+	SetCursor(queuedCursorName);
 
 	if (!hideCursor)
 		return;
@@ -717,7 +719,7 @@ void CMouseHandler::ToggleHwCursor(bool enable)
 	}
 
 	// force hardware cursor rebinding, otherwise we get a standard b&w cursor
-	cursorText = "none";
+	activeCursorName = "none";
 }
 
 
@@ -725,18 +727,17 @@ void CMouseHandler::ToggleHwCursor(bool enable)
 
 void CMouseHandler::ChangeCursor(const std::string& cmdName, const float scale)
 {
-	newCursor = cmdName;
+	queuedCursorName = cmdName;
 	cursorScale = scale;
 }
 
 
 void CMouseHandler::SetCursor(const std::string& cmdName, const bool forceRebind)
 {
-	if ((cursorText == cmdName) && !forceRebind)
+	if ((activeCursorName == cmdName) && !forceRebind)
 		return;
 
-	cursorText = cmdName;
-	const auto it = cursorCommandMap.find(cmdName);
+	const auto it = cursorCommandMap.find(activeCursorName = cmdName);
 
 	if (it != cursorCommandMap.end()) {
 		activeCursorIdx = it->second;
@@ -970,7 +971,7 @@ bool CMouseHandler::ReplaceMouseCursor(
 
 	// update current cursor if necessary
 	if (activeCursorIdx == fileIt->second)
-		SetCursor(cursorText, true);
+		SetCursor(activeCursorName, true);
 
 	return true;
 }

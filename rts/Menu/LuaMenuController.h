@@ -13,7 +13,7 @@ public:
 	~CLuaMenuController();
 
 	// Reloads the archives but not LuaMenu
-	void Reset();
+	bool Reset();
 	bool Activate(const std::string& msg);
 
 	static bool ActivateInstance(const std::string& msg);

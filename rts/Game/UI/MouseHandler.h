@@ -29,6 +29,10 @@ public:
 
 	void ChangeCursor(const std::string& cmdName, const float scale = 1.0f);
 	void ReloadCursors();
+	void ResetCursor() {
+		ChangeCursor("");
+		Update();
+	}
 
 	void Update();
 	void UpdateCursors();
@@ -68,7 +72,7 @@ public:
 
 	std::string GetCurrentTooltip() const;
 
-	const std::string& GetCurrentCursor() const { return newCursor; }
+	const std::string& GetCurrentCursor() const { return queuedCursorName; }
 	float GetCurrentCursorScale() const { return cursorScale; }
 
 	void ToggleHwCursor(bool enable);
@@ -144,8 +148,8 @@ public:
 	float3 dir;
 
 private:
-	std::string newCursor; /// cursor changes are delayed
-	std::string cursorText; /// current cursor name
+	std::string queuedCursorName; /// cursor changes are delayed until Update
+	std::string activeCursorName; /// current cursor name
 
 	std::vector<CMouseCursor> loadedCursors;
 	spring::unordered_map<std::string, size_t> cursorFileMap;
