@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/TAPalette.h"
 #include "System/float4.h"
 #include "System/UnorderedMap.hpp"
 
@@ -37,6 +38,8 @@ private:
 
 private:
 	spring::unordered_map<std::string, UnitTexture> textures;
+
+	CTAPalette palette;
 
 	GLuint atlas3do1 = 0;
 	GLuint atlas3do2 = 0;
