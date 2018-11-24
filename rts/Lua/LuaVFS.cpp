@@ -51,6 +51,8 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackS32", UnpackS32);
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
+	// compression should be safe in synced context
+	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
 	HSTR_PUSH_CFUNC(L, "CalculateHash", CalculateHash);
 
@@ -89,8 +91,6 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "CompressFolder", CompressFolder);
 	HSTR_PUSH_CFUNC(L, "MapArchive",     MapArchive);
 	HSTR_PUSH_CFUNC(L, "UnmapArchive",   UnmapArchive);
-
-	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
 	return true;
 }
@@ -656,8 +656,7 @@ int UnpackType(lua_State* L)
 	if (tableCount < 0)
 		tableCount = maxCount;
 
-	tableCount = std::min((int)maxCount, tableCount);
-	lua_newtable(L);
+	lua_createtable(L, tableCount = std::min((int)maxCount, tableCount), 0);
 	for (int i = 0; i < tableCount; i++) {
 		lua_pushnumber(L, *(reinterpret_cast<const T*>(str) + i));
 		lua_rawseti(L, -2, (i + 1));
@@ -672,7 +671,7 @@ int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<std::uint32_t>(L); }
 int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<std::int8_t>(L);   }
 int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<std::int16_t>(L);  }
 int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<std::int32_t>(L);  }
-int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
+int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);         }
 
 
 /******************************************************************************/

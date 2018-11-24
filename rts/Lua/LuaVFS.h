@@ -10,13 +10,12 @@ struct lua_State;
 
 class LuaVFS {
 	public:
+		static bool PushCommon(lua_State* L);
 		static bool PushSynced(lua_State* L);
 		static bool PushUnsynced(lua_State* L);
 
 	private:
 		static const std::string GetModes(lua_State* L, int index, bool synced);
-
-		static bool PushCommon(lua_State* L);
 
 		static int Include(lua_State* L, bool synced);
 		static int LoadFile(lua_State* L, bool synced);
