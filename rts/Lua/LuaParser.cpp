@@ -170,8 +170,10 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	GetTable("VFS");
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
 	// no LuaConstVFS, but this will do
 	LuaVFS::PushCommon(L);
+	#endif
 	AddFunc("DirList",    DirList);
 	AddFunc("SubDirs",    SubDirs);
 	AddFunc("Include",    Include);
