@@ -15,6 +15,7 @@
 #include "LuaConstGame.h"
 #include "LuaConstEngine.h"
 #include "LuaIO.h"
+#include "LuaVFS.h"
 #include "LuaUtils.h"
 
 #include "Game/GameVersion.h"
@@ -158,7 +159,7 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	#if (!defined(UNITSYNC) && !defined(DEDICATED))
-	// not relevant for most LuaParsers, but entries are of value to defsParser
+	// irrelevant for most LuaParsers except defsParser
 	GetTable("Game");
 	LuaConstGame::PushEntries(L);
 	EndTable();
@@ -169,6 +170,8 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	GetTable("VFS");
+	// no LuaConstVFS, but this will do
+	LuaVFS::PushCommon(L);
 	AddFunc("DirList",    DirList);
 	AddFunc("SubDirs",    SubDirs);
 	AddFunc("Include",    Include);
