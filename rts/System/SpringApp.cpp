@@ -167,11 +167,9 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 SpringApp::SpringApp(int argc, char** argv)
 {
-	// {--,/}help overrides all other flags and causes exit(),
-	// even in the unusual event it is not given as first arg
-	if (argc > 1 && strstr(argv[1], "help") != nullptr)
-		ConsolePrintInitialize("", false);
-
+	// NB
+	//   {--,/}help overrides all other flags and causes exit(),
+	//   even in the unusual event it is not given as first arg
 	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
