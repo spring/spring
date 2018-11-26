@@ -136,7 +136,8 @@ using std::string;
 using std::vector;
 
 static void flush_exit(int ec) {
-	// exit(1) is not a normal termination, force a flush
+	// exit(1) is supposed to be a normal termination, but force a flush
+	std::fprintf(stdout, "[gflags::%s]\n", __func__);
 	std::fflush(stdout);
 	std::exit(ec);
 }

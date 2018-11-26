@@ -260,6 +260,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
+	REGISTER_LUA_CFUNC(GarbageCollectCtrl);
 
 	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
 	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
@@ -2901,6 +2902,25 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	} else {
 		Watchdog::ClearTimer("main");
 	}
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::GarbageCollectCtrl(lua_State* L) {
+	luaContextData* ctxData = GetLuaContextData(L);
+	SLuaGarbageCollectCtrl& gcCtrl = ctxData->gcCtrl;
+
+	gcCtrl.itersPerBatch = std::max(0, luaL_optint(L, 1, gcCtrl.itersPerBatch));
+
+	gcCtrl.numStepsPerIter = std::max(0, luaL_optint(L, 2, gcCtrl.numStepsPerIter));
+	gcCtrl.minStepsPerIter = std::max(0, luaL_optint(L, 3, gcCtrl.minStepsPerIter));
+	gcCtrl.maxStepsPerIter = std::max(0, luaL_optint(L, 4, gcCtrl.maxStepsPerIter));
+
+	gcCtrl.minLoopRunTime = std::max(0.0f, luaL_optfloat(L, 5, gcCtrl.minLoopRunTime));
+	gcCtrl.maxLoopRunTime = std::max(0.0f, luaL_optfloat(L, 6, gcCtrl.maxLoopRunTime));
+
+	gcCtrl.baseRunTimeMult = std::max(0.0f, luaL_optfloat(L, 7, gcCtrl.baseRunTimeMult));
+	gcCtrl.baseMemLoadMult = std::max(0.0f, luaL_optfloat(L, 8, gcCtrl.baseMemLoadMult));
 
 	return 0;
 }
