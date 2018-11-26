@@ -4,6 +4,7 @@
 #define LUA_CONTEXT_DATA_H
 
 #include "Lua/LuaAllocState.h"
+#include "Lua/LuaGarbageCollectCtrl.h"
 #include "LuaMemPool.h"
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 #include "LuaShaders.h"
@@ -96,6 +97,7 @@ public:
 	int selectTeam;
 
 	SLuaAllocState allocState;
+	SLuaGarbageCollectCtrl gcCtrl;
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 	// NOTE:

@@ -304,8 +304,10 @@ void spring_lua_alloc_get_stats(SLuaAllocState* state)
 
 bool spring_lua_alloc_skip_gc(float gcLoadMult)
 {
-	// if memory load is smaller than 1/gcLoadMult run the GC less frequently
-	return (lguRNG.NextFloat() > (gcLoadMult * float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::maxAllocedBytes)));
+	// randomly skip a GC cycle with probability 1 - (weighted memory load ratio)
+	const float rawLoadRatio = float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::maxAllocedBytes);
+	const float modLoadRatio = gcLoadMult * rawLoadRatio;
+	return (lguRNG.NextFloat() > modLoadRatio);
 }
 
 bool spring_lua_alloc_get_error(SLuaAllocError* error)
