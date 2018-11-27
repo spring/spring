@@ -32,6 +32,7 @@ WEAPONTAG(bool, avoidFriendly).defaultValue(true);
 WEAPONTAG(bool, avoidFeature).defaultValue(true);
 WEAPONTAG(bool, avoidNeutral).defaultValue(false);
 WEAPONTAG(bool, avoidGround).defaultValue(true);
+WEAPONTAG(bool, avoidCloaked).defaultValue(false);
 WEAPONDUMMYTAG(bool, collideEnemy).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFriendly).defaultValue(true);
 WEAPONDUMMYTAG(bool, collideFeature).defaultValue(true);
