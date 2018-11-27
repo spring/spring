@@ -174,6 +174,7 @@ void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapo
 	weapon->avoidFlags |= (Collision::NOFRIENDLIES * (!weaponDef->avoidFriendly));
 	weapon->avoidFlags |= (Collision::NOFEATURES   * (!weaponDef->avoidFeature));
 	weapon->avoidFlags |= (Collision::NOGROUND     * (!weaponDef->avoidGround));
+	weapon->avoidFlags |= (Collision::NOCLOAKED    * (!weaponDef->avoidCloaked));
 
 	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
 

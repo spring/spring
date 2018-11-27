@@ -418,7 +418,8 @@ void CWeapon::UpdateFire()
 		return;
 
 	// pre-check if we got enough resources (so CobBlockShot gets only called when really possible to shoot)
-	auto shotRes = SResourcePack(weaponDef->metalcost, weaponDef->energycost);
+	const SResourcePack shotRes = {weaponDef->metalcost, weaponDef->energycost};
+
 	if (!weaponDef->stockpile && !owner->HaveResources(shotRes))
 		return;
 
@@ -468,9 +469,8 @@ bool CWeapon::UpdateStockpile()
 
 	if (numStockpileQued > 0) {
 		const float p = 1.0f / weaponDef->stockpileTime;
-		auto res = SResourcePack(weaponDef->metalcost * p, weaponDef->energycost * p);
 
-		if (owner->UseResources(res))
+		if (owner->UseResources({weaponDef->metalcost * p, weaponDef->energycost * p}))
 			buildPercent += p;
 
 		if (buildPercent >= 1) {
