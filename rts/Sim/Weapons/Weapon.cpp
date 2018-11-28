@@ -1183,9 +1183,9 @@ float CWeapon::GetStaticRange2D(const CWeapon* w, const WeaponDef* wd, float mod
 
 float CWeapon::GetRange2D(float boost, float ydiff) const
 {
-	const float rangeSq = Square(range + boost);
-	const float ydiffSq = Square(ydiff);
-	const float    root = rangeSq - ydiffSq;
+	const float rangeSq = Square(range + boost); // c^2 (hyp)
+	const float ydiffSq = Square(ydiff); // b^2 (opp)
+	const float    root = rangeSq - ydiffSq; // a^2 (adj)
 	return (math::sqrt(std::max(root, 0.0f)));
 }
 
