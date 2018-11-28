@@ -649,7 +649,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float3 testPos;
 
 	const float aimPosHeight = weapon->aimFromPos.y;
-	const float minMapHeight = std::max(0.0f, readMap->GetInitMinHeight());
+	const float minMapHeight = std::max(0.0f, readMap->GetCurrMinHeight());
 
 	// how much damage the weapon deals over 1 second
 	const float secDamage = weaponDmg->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
@@ -657,7 +657,10 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 	const float  baseRange = weapon->range;
 	const float rangeBoost = weapon->autoTargetRangeBoost;
-	const float scanRadius = weapon->GetRange2D(rangeBoost, (aimPosHeight - minMapHeight) * heightMod);
+	// find theoretical maximum range based on height above lowest point on map
+	// FIXME: root becomes negative for cannons collapsing range to 0, not legit
+	// const float scanRadius = weapon->GetRange2D(rangeBoost, (aimPosHeight - minMapHeight) * heightMod);
+	const float scanRadius = baseRange + rangeBoost + (aimPosHeight - minMapHeight) * heightMod;
 
 	// [0] := default, [1,2,3,4,5,6] := target is {avoidee, in bad category, crashing, last attacker, paralyzed, outside unboosted range}
 	constexpr float tgtPriorityMults[] = {1.0f, 10.0f, 100.0f, 1000.0f, 0.5f, 4.0f, 100000.0f};
