@@ -209,7 +209,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(ud->myGravity), mapInfo->map.gravity, ud->myGravity == 0.0f);
 
-	ownerRadius = md->CalcFootPrintRadius(1.0f);
+	ownerRadius = ud->CalcFootPrintRadius(1.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -1092,7 +1092,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	nextObstacleAvoidanceFrame = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
-	// const UnitDef* avoiderUD = avoider->unitDef;
+	const UnitDef* avoiderUD = avoider->unitDef;
 	const MoveDef* avoiderMD = avoider->moveDef;
 
 	// degenerate case: if facing anti-parallel to desired direction,
@@ -1111,7 +1111,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	// avoider always uses its never-rotated MoveDef footprint
 	// note: should increase radius for smaller turnAccel values
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
-	const float avoiderRadius = avoiderMD->CalcFootPrintRadius(1.0f);
+	const float avoiderRadius = avoiderUD->CalcFootPrintRadius(1.0f);
 
 	QuadFieldQuery qfQuery;
 	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
@@ -1141,9 +1141,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 		// use the avoidee's MoveDef footprint as radius if it is mobile
 		// use the avoidee's Unit (not UnitDef) footprint as radius otherwise
-		const float avoideeRadius = avoideeMobile?
-			avoideeMD->CalcFootPrintRadius(1.0f):
-			avoidee->CalcFootPrintRadius(1.0f);
+		const float avoideeRadius = avoidee->CalcFootPrintRadius(1.0f);
 		const float avoidanceRadiusSum = avoiderRadius + avoideeRadius;
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = avoideeMobile? (avoidee->mass / avoidanceMassSum): 1.0f;
@@ -1628,15 +1626,12 @@ void CGroundMoveType::HandleObjectCollisions()
 		const MoveDef* colliderMD = collider->moveDef;
 
 		// NOTE:
-		//   use the collider's MoveDef footprint as radius since it is
-		//   always mobile (its UnitDef footprint size may be different)
-		//
 		//   0.75 * math::sqrt(2) ~= 1, so radius is always that of a circle
 		//   _maximally bounded_ by the footprint rather than a circle
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
 		const float colliderSpeed = collider->speed.w;
-		const float colliderRadius = colliderMD->CalcFootPrintRadius(0.75f);
+		const float colliderRadius = colliderUD->CalcFootPrintRadius(0.75f);
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
@@ -1911,9 +1906,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
 		const float collideeSpeed = collidee->speed.w;
-		const float collideeRadius = collideeMobile?
-			collideeMD->CalcFootPrintRadius(0.75f):
-			collidee->CalcFootPrintRadius(0.75f);
+		const float collideeRadius = collidee->CalcFootPrintRadius(0.75f);
 
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
