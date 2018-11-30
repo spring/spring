@@ -491,6 +491,18 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	needGeo = false;
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
+	// Right now, units/features collisions are computed on top of the
+	// footprint. However, the footprint data used are the moveDef ones, in the
+	// first place, and just in case the unit is not mobile, the unitDef ones.
+	// That's great to can assign a footprint by movement class. But it is even
+	// better if you can optionally select different values per unit.
+	//
+	// To this end, we are initializing right now the footprint as 1 FOOTPRINT
+	// (16 elmos), eventually replacing it by the value set in the movement
+	// class. Finally, we are looking for unitDef defined footprint values
+	xsize = SPRING_FOOTPRINT_SCALE;
+	zsize = SPRING_FOOTPRINT_SCALE;
+
 	{
 		MoveDef* moveDef = nullptr;
 
@@ -517,6 +529,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		} else {
 			upright           |= (moveDef->speedModClass == MoveDef::Hover);
 			upright           |= (moveDef->speedModClass == MoveDef::Ship );
+			xsize              = moveDef->xsize;
+			zsize              = moveDef->zsize;
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
@@ -572,8 +586,14 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
 	onoffable = udTable.GetBool("onoffable", false);
 
-	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
-	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
+	// At this point, we already have valid footprint values, that can be
+	// optionally overrided.
+	if (udTable.KeyExists("footprintX")) {
+		xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
+	}
+	if (udTable.KeyExists("footprintZ")) {
+		zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
+	}
 
 	buildingMask = (std::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	if (IsImmobileUnit())
