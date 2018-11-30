@@ -209,7 +209,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(ud->myGravity), mapInfo->map.gravity, ud->myGravity == 0.0f);
 
-	ownerRadius = ud->CalcFootPrintRadius(1.0f);
+	ownerRadius = owner->CalcFootPrintRadius(1.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -1092,7 +1092,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	nextObstacleAvoidanceFrame = gs->frameNum + 1;
 
 	CUnit* avoider = owner;
-	const UnitDef* avoiderUD = avoider->unitDef;
+	// const UnitDef* avoiderUD = avoider->unitDef;
 	const MoveDef* avoiderMD = avoider->moveDef;
 
 	// degenerate case: if facing anti-parallel to desired direction,
@@ -1111,7 +1111,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	// avoider always uses its never-rotated MoveDef footprint
 	// note: should increase radius for smaller turnAccel values
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
-	const float avoiderRadius = avoiderUD->CalcFootPrintRadius(1.0f);
+	const float avoiderRadius = avoider->CalcFootPrintRadius(1.0f);
 
 	QuadFieldQuery qfQuery;
 	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
@@ -1631,7 +1631,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   _minimally bounding_ the footprint (assuming square shape)
 		//
 		const float colliderSpeed = collider->speed.w;
-		const float colliderRadius = colliderUD->CalcFootPrintRadius(0.75f);
+		const float colliderRadius = collider->CalcFootPrintRadius(0.75f);
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
