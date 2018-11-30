@@ -1848,6 +1848,16 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 	}
 }
 
+float getSATdist(
+	float3 dir,
+	float3 separation,
+	CSolidObject* visitor
+) {
+	return   math::fabs(dir.dot(separation))
+	       - math::fabs(visitor->zsize * 0.5f * SQUARE_SIZE * dir.dot(visitor->frontdir))
+	       - math::fabs(visitor->xsize * 0.5f * SQUARE_SIZE * dir.dot(visitor->rightdir));
+}
+
 void CGroundMoveType::HandleUnitCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
@@ -1912,6 +1922,13 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
+			continue;
+		// They are close enough to further analyse the collision. To do that
+		// we are using Separable Axes Theorem (SAT).
+		if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
 			continue;
 
 		if (unloadingCollidee) {
@@ -1981,11 +1998,11 @@ void CGroundMoveType::HandleUnitCollisions(
 			(colliderRadius * colliderRelRadius + collideeRadius * collideeRelRadius):
 			(colliderRadius                     + collideeRadius                    );
 
-		const float  sepDistance = separationVector.Length() + 0.1f;
+		const float  sepDistance  = separationVector.Length() + 0.1f;
 		const float  penDistance = std::max(collisionRadiusSum - sepDistance, 1.0f);
 		const float  sepResponse = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
-		const float3 sepDirection   = (separationVector / sepDistance);
+		const float3 sepDirection = (separationVector / sepDistance);
 		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		const float
@@ -2060,6 +2077,13 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float separationMinDistSq = collisionRadiusSum * collisionRadiusSum;
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
+			continue;
+		// They are close enough to further analyse the collision. To do that
+		// we are using Separable Axes Theorem (SAT).
+		if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
+			(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
 			continue;
 
 		if (CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
