@@ -1322,14 +1322,24 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
-	std::string mode = infoTextureHandler->GetMode();
-	if (mode == "")         { mode = "normal"; } else // NOLINT
-	if (mode == "path")     { mode = "pathTraversability"; } else
-	if (mode == "heat")     { mode = "pathHeat"; } else
-	if (mode == "flow")     { mode = "pathFlow"; } else
-	if (mode == "pathcost") { mode = "pathCost"; }
+	using P = std::pair<const char*, const char*>;
+	constexpr std::array<P, 5> modes = {
+		P(        "", "normal"            ),
+		P(    "path", "pathTraversability"),
+		P(    "heat", "pathHeat"          ),
+		P(    "flow", "pathFlow"          ),
+		P("pathcost", "pathCost"          ),
+	};
 
-	lua_pushsstring(L, mode); // NOLINT{readability-misleading-indentation}
+	const auto& mode = infoTextureHandler->GetMode();
+	const auto  iter = std::find_if(modes.begin(), modes.end(), [&mode](const P& p) { return (strcmp(p.first, mode.c_str()) == 0); });
+
+	if (iter != modes.end()) {
+		lua_pushstring(L, iter->second);
+	} else {
+		lua_pushstring(L, mode.c_str());
+	}
+
 	return 1;
 }
 

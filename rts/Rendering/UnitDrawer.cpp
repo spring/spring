@@ -771,7 +771,7 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 {
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true); // NOLINT{readability-simplify-boolean-expr}
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, /*deferredPass*/ false, true);
 
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
@@ -794,7 +794,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
-	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false); // NOLINT{readability-misleading-indentation}
+	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, /*deferredPass*/ false);
 
 	glAttribStatePtr->PopBits();
 }

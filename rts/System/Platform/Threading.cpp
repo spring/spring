@@ -38,9 +38,7 @@ namespace Threading {
 		THREAD_IDX_LAST = 5,
 	};
 
-	static bool cachedThreadIDs[THREAD_IDX_LAST] = {false, false, false, false, false};
 	static NativeThreadId nativeThreadIDs[THREAD_IDX_LAST] = {};
-
 	static Error threadError;
 
 	thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
@@ -315,10 +313,7 @@ namespace Threading {
 		//   those two threads are joined and respawned when reloading, KISS here
 		//   (while other threads never call Set*Thread more than once making the
 		//   is-cached flags redundant anyway)
-		if (true || !cachedThreadIDs[threadIndex]) // NOLINT{readability-simplify-boolean-expr}
-			nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
-
-		cachedThreadIDs[threadIndex] = true;
+		nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
 
 		if (!setControls)
 			return;

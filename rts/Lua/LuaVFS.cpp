@@ -582,32 +582,35 @@ template <typename T>
 int PackType(lua_State* L)
 {
 	std::vector<T> vals;
+	std::vector<char> buf;
 
 	if (lua_istable(L, 1)) {
+		vals.reserve(lua_objlen(L, 1));
+
 		for (int i = 1; lua_rawgeti(L, 1, i), lua_isnumber(L, -1); lua_pop(L, 1), i++) {
-			vals.push_back((T)lua_tonumber(L, -1));
+			vals.push_back(static_cast<T>(lua_tonumber(L, -1)));
 		}
 	} else {
-		const int args = lua_gettop(L);
-		for (int i = 1; i <= args; i++) {
-			if (!lua_isnumber(L, i))
+		vals.resize(lua_gettop(L));
+
+		for (size_t i = 0; i < vals.size(); i++) {
+			if (!lua_isnumber(L, i + 1))
 				break;
 
-			vals.push_back((T)lua_tonumber(L, i));
+			vals[i] = static_cast<T>(lua_tonumber(L, i + 1));
 		}
 	}
 
 	if (vals.empty())
 		return 0;
 
-	const int bufSize = sizeof(T) * vals.size();
-	char* buf = new char[bufSize];
-	for (int i = 0; i < (int)vals.size(); i++) {
-		memcpy(buf + (i * sizeof(T)), &vals[i], sizeof(T));
-	}
-	lua_pushlstring(L, buf, bufSize);
+	buf.resize(sizeof(T) * vals.size(), 0);
 
-	delete[] buf;
+	for (size_t i = 0; i < vals.size(); i++) {
+		memcpy(buf.data() + (i * sizeof(T)), &vals[i], sizeof(T));
+	}
+
+	lua_pushlstring(L, buf.data(), buf.size());
 	return 1;
 }
 
