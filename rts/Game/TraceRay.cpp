@@ -390,9 +390,11 @@ float GuiTraceRay(
 
 			if (u == exclude)
 				continue;
+			#if 0
 			// test this bit only in synced traces, rely on noSelect here
-			if (false && !u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)) // NOLINT{readability-simplify-boolean-expr}
+			if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
+			#endif
 			if (u->noSelect)
 				continue;
 			if (!unitVisible)
@@ -432,9 +434,11 @@ float GuiTraceRay(
 		for (const CFeature* f: quad.features) {
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
+			#if 0
 			// test this bit only in synced traces, rely on noSelect here
-			if (false && !f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS)) // NOLINT{misc-static-assert}
+			if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
+			#endif
 			if (f->noSelect)
 				continue;
 

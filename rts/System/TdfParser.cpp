@@ -81,12 +81,12 @@ TdfParser::TdfSection::~TdfSection()
 
 
 
-TdfParser::TdfParser(char const* buf, size_t size)
+TdfParser::TdfParser(const char* buf, size_t size)
 {
 	LoadBuffer(buf, size);
 }
 
-TdfParser::TdfParser(std::string const& filename)
+TdfParser::TdfParser(const std::string& filename)
 {
 	LoadFile(filename);
 }
@@ -127,7 +127,7 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 }
 
 
-void TdfParser::ParseBuffer(char const* buf, size_t size) {
+void TdfParser::ParseBuffer(const char* buf, size_t size) {
 	CVFSHandler* oldHandler = vfsHandler;
 	CVFSHandler  tmpHandler;
 
@@ -148,34 +148,34 @@ void TdfParser::ParseBuffer(char const* buf, size_t size) {
 	CVFSHandler::FreeLock();
 }
 
-void TdfParser::LoadBuffer(char const* buf, size_t size)
+void TdfParser::LoadBuffer(const char* buf, size_t size)
 {
 	this->filename = "buffer";
 	ParseBuffer(buf, size);
 }
 
 
-void TdfParser::LoadFile(std::string const& filename)
+void TdfParser::LoadFile(const std::string& filename)
 {
 
-	this->filename = filename;
-	CFileHandler file(filename);
-	if (!file.FileExists()) {
+	CFileHandler file(this->filename = filename);
+	std::vector<unsigned char> fileBuf;
+
+	if (!file.FileExists())
 		throw content_error("file " + filename + " not found");
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+		file.Read(fileBuf.data(), fileBuf.size());
+	} else {
+		fileBuf = std::move(file.GetBuffer());
 	}
 
-	const size_t fileBuf_size = file.FileSize();
-	//char* fileBuf = new char[fileBuf_size];
-	std::vector<char> fileBuf(fileBuf_size);
-
-	file.Read(fileBuf.data(), file.FileSize());
-	ParseBuffer(fileBuf.data(), fileBuf_size);
-
-	//delete[] fileBuf;
+	ParseBuffer(reinterpret_cast<const char*>(fileBuf.data()), fileBuf.size());
 }
 
 
-std::string TdfParser::SGetValueDef(std::string const& defaultValue, std::string const& location) const
+std::string TdfParser::SGetValueDef(const std::string& defaultValue, const std::string& location) const
 {
 	std::string lowerd = StringToLower(location);
 	std::string value;
@@ -186,7 +186,7 @@ std::string TdfParser::SGetValueDef(std::string const& defaultValue, std::string
 	return value;
 }
 
-bool TdfParser::SGetValue(std::string &value, std::string const& location) const
+bool TdfParser::SGetValue(std::string& value, const std::string& location) const
 {
 	std::string lowerd = StringToLower(location);
 	std::string searchpath; // for error-messages
@@ -238,7 +238,7 @@ bool TdfParser::GetValue(bool& val, const std::string& location) const
 	}
 }
 
-const TdfParser::valueMap_t& TdfParser::GetAllValues(std::string const& location) const
+const TdfParser::valueMap_t& TdfParser::GetAllValues(const std::string& location) const
 {
 	static valueMap_t emptymap;
 	std::string lowerd = StringToLower(location);
@@ -265,7 +265,7 @@ const TdfParser::valueMap_t& TdfParser::GetAllValues(std::string const& location
 	return sectionptr->values;
 }
 
-std::vector<std::string> TdfParser::GetSectionList(std::string const& location) const
+std::vector<std::string> TdfParser::GetSectionList(const std::string& location) const
 {
 	const std::string& lowerd = StringToLower(location);
 	const std::vector<std::string>& loclist = GetLocationVector(lowerd);
@@ -295,7 +295,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 	return returnvec;
 }
 
-bool TdfParser::SectionExist(std::string const& location) const
+bool TdfParser::SectionExist(const std::string& location) const
 {
 	const std::string& lowerd = StringToLower(location);
 	const std::vector<std::string>& loclist = GetLocationVector(lowerd);
@@ -316,7 +316,7 @@ bool TdfParser::SectionExist(std::string const& location) const
 	return true;
 }
 
-std::vector<std::string> TdfParser::GetLocationVector(std::string const& location) const
+std::vector<std::string> TdfParser::GetLocationVector(const std::string& location) const
 {
 	const std::string& lowerd = StringToLower(location);
 
@@ -333,12 +333,12 @@ std::vector<std::string> TdfParser::GetLocationVector(std::string const& locatio
 	return loclist;
 }
 
-float3 TdfParser::GetFloat3(float3 def, std::string const& location) const
+float3 TdfParser::GetFloat3(float3 def, const std::string& location) const
 {
 	std::string s = SGetValueDef("", location);
-	if (s.empty()) {
+	if (s.empty())
 		return def;
-	}
+
 	float3 ret;
 	ParseArray(s, &ret.x, 3);
 	return ret;

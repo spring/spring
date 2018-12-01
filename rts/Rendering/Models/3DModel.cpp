@@ -325,44 +325,28 @@ void LocalModel::UpdateBoundingVolume()
 		if (!piece->HasGeometryData())
 			continue;
 
-		#if 0
-		const unsigned int vcount = piece->GetVertexCount();
+		// transform only the corners of the piece's bounding-box
+		const float3 pMins = piece->mins;
+		const float3 pMaxs = piece->maxs;
+		const float3 verts[8] = {
+			// bottom
+			float3(pMins.x,  pMins.y,  pMins.z),
+			float3(pMaxs.x,  pMins.y,  pMins.z),
+			float3(pMaxs.x,  pMins.y,  pMaxs.z),
+			float3(pMins.x,  pMins.y,  pMaxs.z),
+			// top
+			float3(pMins.x,  pMaxs.y,  pMins.z),
+			float3(pMaxs.x,  pMaxs.y,  pMins.z),
+			float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
+			float3(pMins.x,  pMaxs.y,  pMaxs.z),
+		};
 
-		if (vcount >= 8) {
-		#endif
-			// transform only the corners of the piece's bounding-box
-			const float3 pMins = piece->mins; // NOLINT{readability-misleading-indentation}
-			const float3 pMaxs = piece->maxs;
-			const float3 verts[8] = {
-				// bottom
-				float3(pMins.x,  pMins.y,  pMins.z),
-				float3(pMaxs.x,  pMins.y,  pMins.z),
-				float3(pMaxs.x,  pMins.y,  pMaxs.z),
-				float3(pMins.x,  pMins.y,  pMaxs.z),
-				// top
-				float3(pMins.x,  pMaxs.y,  pMins.z),
-				float3(pMaxs.x,  pMaxs.y,  pMins.z),
-				float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
-				float3(pMins.x,  pMaxs.y,  pMaxs.z),
-			};
+		for (const float3& v: verts) {
+			const float3 vertex = matrix * v;
 
-			for (const float3& v: verts) {
-				const float3 vertex = matrix * v;
-
-				bbMins = float3::min(bbMins, vertex);
-				bbMaxs = float3::max(bbMaxs, vertex);
-			}
-		#if 0
-		} else {
-			// note: not as efficient because of branching and virtual calls
-			for (unsigned int k = 0; k < vcount; k++) {
-				const float3 vertex = matrix * piece->GetVertexPos(k);
-
-				bbMins = float3::min(bbMins, vertex);
-				bbMaxs = float3::max(bbMaxs, vertex);
-			}
+			bbMins = float3::min(bbMins, vertex);
+			bbMaxs = float3::max(bbMaxs, vertex);
 		}
-		#endif
 	}
 
 	// note: offset is relative to object->pos

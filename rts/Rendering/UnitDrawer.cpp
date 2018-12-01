@@ -757,7 +757,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, /*deferredPass*/ false, true);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -769,7 +769,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
-	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
+	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, /*deferredPass*/ false);
 
 	glPopAttrib();
 }
