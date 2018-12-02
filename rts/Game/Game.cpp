@@ -728,13 +728,16 @@ void CGame::LoadSkirmishAIs()
 	if (gameSetup->hostDemo)
 		return;
 
-	// create a Skirmish AI if required
+	// create Skirmish AI's if required
 	const std::vector<uint8_t>& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
+	const std::string timerName = std::string("Game::") + __func__;
 
 	if (!localAIs.empty()) {
+		ScopedOnceTimer timer(timerName);
 		loadscreen->SetLoadMessage("Loading Skirmish AIs");
 
-		for (auto& localAI: localAIs) {
+		for (uint8_t localAI: localAIs) {
+			ScopedOnceTimer subTimer(timerName + "::CreateAI(id=" + IntToString(localAI) + ")");
 			skirmishAIHandler.CreateLocalSkirmishAI(localAI);
 		}
 	}

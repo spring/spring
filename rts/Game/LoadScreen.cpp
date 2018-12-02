@@ -309,7 +309,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replaceLast)
 
 	loadMessages.emplace_back(text, replaceLast);
 
-	LOG("%s", text.c_str());
+	LOG("[LoadScreen::%s] text=\"%s\"", __func__, text.c_str());
 	LOG_CLEANUP();
 
 	// be paranoid about FPU state for the loading thread since some

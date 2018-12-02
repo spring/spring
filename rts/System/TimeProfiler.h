@@ -77,8 +77,8 @@ private:
 class ScopedOnceTimer
 {
 public:
-	ScopedOnceTimer(const std::string& name);
-	ScopedOnceTimer(const char* name);
+	ScopedOnceTimer(const std::string& name, const char* frmt = "[%s][%s] %ims");
+	ScopedOnceTimer(const char* name, const char* frmt = "[%s][%s] %ims");
 	~ScopedOnceTimer();
 
 	spring_time GetDuration() const;
@@ -86,7 +86,8 @@ public:
 protected:
 	const spring_time startTime;
 
-	std::string name;
+	char name[128];
+	char frmt[128];
 };
 
 
