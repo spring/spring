@@ -20,26 +20,18 @@ class CPlasmaRepulser;
 struct QuadFieldQuery;
 
 template<typename T>
-class ExclusiveVectors {
+class QueryVectorCache {
 public:
-	// There should at most be 2 concurrent users of each vector type
-	// using 3 to be safe, increase this number if the assertions below
-	// fail
-	static constexpr int MAX_CONCURRENT_VECTORS = 3;
+	typedef std::pair<bool, std::vector<T>> PairType;
 
-	ExclusiveVectors() {
-		for (auto& pair: vectors) {
-			pair.first = false;
-		}
-	}
-
-	std::vector<T>* GetVector() {
-		const auto pred = [](const std::pair<bool, std::vector<T>>& p) { return (!p.first); };
+	std::vector<T>* ReserveVector(size_t capa = 1024) {
+		const auto pred = [](const PairType& p) { return (!p.first); };
 		const auto iter = std::find_if(vectors.begin(), vectors.end(), pred);
 
 		if (iter != vectors.end()) {
 			iter->first = true;
 			iter->second.clear();
+			iter->second.reserve(capa);
 			return &iter->second;
 		}
 
@@ -47,17 +39,17 @@ public:
 		return nullptr;
 	}
 
-	void ReleaseAll() {
+	void ReserveAll(size_t capa) {
 		for (auto& pair: vectors) {
-			pair.first = false;
-			pair.second.clear();
+			ReserveVector(capa);
 		}
 	}
-	void ReleaseVector(std::vector<T>* released) {
+
+	void ReleaseVector(const std::vector<T>* released) {
 		if (released == nullptr)
 			return;
 
-		const auto pred = [&](const std::pair<bool, std::vector<T>>& p) { return (&p.second == released); };
+		const auto pred = [&](const PairType& p) { return (&p.second == released); };
 		const auto iter = std::find_if(vectors.begin(), vectors.end(), pred);
 
 		if (iter == vectors.end()) {
@@ -67,8 +59,16 @@ public:
 
 		iter->first = false;
 	}
-
-	std::array<std::pair<bool, std::vector<T>>, MAX_CONCURRENT_VECTORS> vectors;
+	void ReleaseAll() {
+		for (auto& pair: vectors) {
+			ReleaseVector(&pair.second);
+		}
+	}
+private:
+	// There should at most be 2 concurrent users of each vector type
+	// using 3 to be safe, increase this number if the assertions below
+	// fail
+	std::array<PairType, 3> vectors = {{{false, {}}, {false, {}}, {false, {}}}};
 };
 
 
@@ -228,14 +228,6 @@ public:
 	constexpr static unsigned int BASE_QUAD_SIZE = 128;
 
 private:
-	// optimized functions, somewhat less userfriendly
-	//
-	// when calling these, <begQuad> and <endQuad> are both expected
-	// to point to the *start* of an array of int's of size at least
-	// numQuadsX * numQuadsZ (eg. tempQuads) -- GetQuadsOnRay ensures
-	// this by itself, for GetQuads the callers take care of it
-	//
-
 	int2 WorldPosToQuadField(const float3 p) const;
 	int WorldPosToQuadFieldIdx(const float3 p) const;
 
@@ -243,11 +235,11 @@ private:
 	std::vector<Quad> baseQuads;
 
 	// preallocated vectors for Get*Exact functions
-	ExclusiveVectors<CUnit*> tempUnits;
-	ExclusiveVectors<CFeature*> tempFeatures;
-	ExclusiveVectors<CProjectile*> tempProjectiles;
-	ExclusiveVectors<CSolidObject*> tempSolids;
-	ExclusiveVectors<int> tempQuads;
+	QueryVectorCache<CUnit*> tempUnits;
+	QueryVectorCache<CFeature*> tempFeatures;
+	QueryVectorCache<CProjectile*> tempProjectiles;
+	QueryVectorCache<CSolidObject*> tempSolids;
+	QueryVectorCache<int> tempQuads;
 
 	int numQuadsX;
 	int numQuadsZ;

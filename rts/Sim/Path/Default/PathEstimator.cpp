@@ -169,8 +169,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		const char* fmtStrs[4] = {
 			"[%s] creating PE%u cache with %u PF threads (%u MB)",
 			"[%s] creating PE%u cache with %u PF thread (%u MB)",
-			"[%s] writing PE%u cache to file %s",
-			"[%s] written PE%u cache to file %s",
+			"[%s] writing PE%u cache-file %s-%x",
+			"[%s] written PE%u cache-file %s-%x",
 		};
 
 		{
@@ -196,12 +196,12 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		}
 
 
-		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, cacheFileName.c_str());
+		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, cacheFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
 
 		WriteFile(cacheFileName, mapName);
 
-		sprintf(calcMsg, fmtStrs[3], __func__, BLOCK_SIZE, cacheFileName.c_str());
+		sprintf(calcMsg, fmtStrs[3], __func__, BLOCK_SIZE, cacheFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
 	}
 

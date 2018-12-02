@@ -56,7 +56,7 @@ CDemoRecorder::~CDemoRecorder()
 void CDemoRecorder::SetStream()
 {
 	demoStreams[isServerDemo].clear();
-	demoStreams[isServerDemo].reserve(5 * 1024 * 1024);
+	demoStreams[isServerDemo].reserve(8 * 1024 * 1024);
 }
 
 void CDemoRecorder::SetFileHeader()

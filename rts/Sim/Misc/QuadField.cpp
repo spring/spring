@@ -118,6 +118,8 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 	assert((mapDims.y * SQUARE_SIZE) % quadSize == 0);
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
+	tempQuads.ReserveAll(numQuadsX * numQuadsZ);
+	tempQuads.ReleaseAll();
 
 #ifndef UNIT_TEST
 	for (Quad& quad: baseQuads) {
@@ -162,7 +164,7 @@ void CQuadField::GetQuads(QuadFieldQuery& qfq, float3 pos, float radius)
 {
 	pos.AssertNaNs();
 	pos.ClampInBounds();
-	qfq.quads = tempQuads.GetVector();
+	qfq.quads = tempQuads.ReserveVector();
 
 	const int2 min = WorldPosToQuadField(pos - radius);
 	const int2 max = WorldPosToQuadField(pos + radius);
@@ -192,7 +194,7 @@ void CQuadField::GetQuadsRectangle(QuadFieldQuery& qfq, const float3& mins, cons
 {
 	mins.AssertNaNs();
 	maxs.AssertNaNs();
-	qfq.quads = tempQuads.GetVector();
+	qfq.quads = tempQuads.ReserveVector();
 
 	const int2 min = WorldPosToQuadField(mins);
 	const int2 max = WorldPosToQuadField(maxs);
@@ -218,7 +220,7 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 {
 	dir.AssertNaNs();
 	start.AssertNaNs();
-	qfq.quads = tempQuads.GetVector();
+	qfq.quads = tempQuads.ReserveVector();
 
 	const float3 to = start + (dir * length);
 	const float3 invQuadSize = float3(1.0f / quadSizeX, 1.0f, 1.0f / quadSizeZ);
@@ -465,7 +467,7 @@ void CQuadField::GetUnits(QuadFieldQuery& qfq, const float3& pos, float radius)
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
 	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.GetVector();
+	qfq.units = tempUnits.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {
@@ -485,7 +487,7 @@ void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& pos, float rad
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
 	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.GetVector();
+	qfq.units = tempUnits.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {
@@ -515,7 +517,7 @@ void CQuadField::GetUnitsExact(QuadFieldQuery& qfq, const float3& mins, const fl
 	QuadFieldQuery qfQuery;
 	GetQuadsRectangle(qfQuery, mins, maxs);
 	const int tempNum = gs->GetTempNum();
-	qfq.units = tempUnits.GetVector();
+	qfq.units = tempUnits.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* unit: baseQuads[qi].units) {
@@ -544,7 +546,7 @@ void CQuadField::GetFeaturesExact(QuadFieldQuery& qfq, const float3& pos, float 
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
 	const int tempNum = gs->GetTempNum();
-	qfq.features = tempFeatures.GetVector();
+	qfq.features = tempFeatures.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CFeature* f: baseQuads[qi].features) {
@@ -574,7 +576,7 @@ void CQuadField::GetFeaturesExact(QuadFieldQuery& qfq, const float3& mins, const
 	QuadFieldQuery qfQuery;
 	GetQuadsRectangle(qfQuery, mins, maxs);
 	const int tempNum = gs->GetTempNum();
-	qfq.features = tempFeatures.GetVector();
+	qfq.features = tempFeatures.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CFeature* feature: baseQuads[qi].features) {
@@ -603,7 +605,7 @@ void CQuadField::GetProjectilesExact(QuadFieldQuery& qfq, const float3& pos, flo
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
 	const int tempNum = gs->GetTempNum();
-	qfq.projectiles = tempProjectiles.GetVector();
+	qfq.projectiles = tempProjectiles.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CProjectile* p: baseQuads[qi].projectiles) {
@@ -627,7 +629,7 @@ void CQuadField::GetProjectilesExact(QuadFieldQuery& qfq, const float3& mins, co
 	QuadFieldQuery qfQuery;
 	GetQuadsRectangle(qfQuery, mins, maxs);
 	const int tempNum = gs->GetTempNum();
-	qfq.projectiles = tempProjectiles.GetVector();
+	qfq.projectiles = tempProjectiles.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CProjectile* p: baseQuads[qi].projectiles) {
@@ -661,7 +663,7 @@ void CQuadField::GetSolidsExact(
 	QuadFieldQuery qfQuery;
 	GetQuads(qfQuery, pos, radius);
 	const int tempNum = gs->GetTempNum();
-	qfq.solids = tempSolids.GetVector();
+	qfq.solids = tempSolids.ReserveVector();
 
 	for (const int qi: *qfQuery.quads) {
 		for (CUnit* u: baseQuads[qi].units) {

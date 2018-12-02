@@ -1443,10 +1443,8 @@ EXPORT(bool) skirmishAiCallback_Cheats_isEnabled(int skirmishAIId) {
 
 EXPORT(bool) skirmishAiCallback_Cheats_setEnabled(int skirmishAIId, bool enabled)
 {
-	AI_CHEAT_FLAGS[skirmishAIId].first = enabled;
-
-	if (enabled && !AI_CHEAT_FLAGS[skirmishAIId].second) {
-		LOG("SkirmishAI (ID = %i, team ID = %i) is using cheats!", skirmishAIId, AI_TEAM_IDS[skirmishAIId]);
+	if ((AI_CHEAT_FLAGS[skirmishAIId].first = enabled) && !AI_CHEAT_FLAGS[skirmishAIId].second) {
+		LOG("[%s] SkirmishAI (id %i, team %i) is using cheats!", __func__, skirmishAIId, AI_TEAM_IDS[skirmishAIId]);
 		AI_CHEAT_FLAGS[skirmishAIId].second = true;
 	}
 
