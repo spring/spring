@@ -2093,8 +2093,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// we are applying Separable Axes Theorem (SAT), just in case the
 		// mod/game allows that, and at least one of the colliders requires it.
 		if (modInfo.useSATCollisionDetection &&
-			(colliderStretch > 0.1f) &&
-			(collidee->CalcFootPrintStretchingFactor() > 0.1f)) {
+			((colliderStretch > 0.1f) || (collidee->CalcFootPrintStretchingFactor() > 0.1f))) {
 			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
