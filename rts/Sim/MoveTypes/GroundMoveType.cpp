@@ -1625,13 +1625,14 @@ void CGroundMoveType::HandleObjectCollisions()
 		const UnitDef* colliderUD = collider->unitDef;
 		const MoveDef* colliderMD = collider->moveDef;
 
-		// NOTE:
-		//   0.75 * math::sqrt(2) ~= 1, so radius is always that of a circle
-		//   _maximally bounded_ by the footprint rather than a circle
-		//   _minimally bounding_ the footprint (assuming square shape)
-		//
 		const float colliderSpeed = collider->speed.w;
-		const float colliderRadius = collider->CalcFootPrintRadius(0.75f);
+		// NOTE:
+		//   We are considering a circle _maximally bounded_ by the footprint
+		//   rather than a circle _minimally bounding_ the footprint, assuming
+		//   square shape.
+		//   In case of non-square footprints we can later apply Separable Axes
+		//   theorem SAT
+		const float colliderRadius = std::max(collider->xsize, collider->zsize) * SQUARE_SIZE;
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
@@ -1916,7 +1917,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
 		const float collideeSpeed = collidee->speed.w;
-		const float collideeRadius = collidee->CalcFootPrintRadius(0.75f);
+		const float collideeRadius = std::max(collidee->xsize, collidee->zsize) * SQUARE_SIZE;
 
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -2070,7 +2071,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// const FeatureDef* collideeFD = collidee->def;
 
 		// use the collidee's Feature (not FeatureDef) footprint as radius
-		const float collideeRadius = collidee->CalcFootPrintRadius(0.75f);
+		const float collideeRadius = std::max(collidee->xsize, collidee->zsize) * SQUARE_SIZE;
 		const float collisionRadiusSum = colliderRadius + collideeRadius;
 
 		const float3 separationVector   = collider->pos - collidee->pos;
