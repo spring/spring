@@ -1632,7 +1632,7 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   square shape.
 		//   In case of non-square footprints we can later apply Separable Axes
 		//   theorem SAT
-		const float colliderRadius = std::max(collider->xsize, collider->zsize) * 0.5f * SQUARE_SIZE;
+		const float colliderRadius = collider->CalcMinimalBoundingFootPrintRadius();
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
@@ -1917,7 +1917,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
 		const float collideeSpeed = collidee->speed.w;
-		const float collideeRadius = std::max(collidee->xsize, collidee->zsize) * 0.5f * SQUARE_SIZE;
+		const float collideeRadius = collidee->CalcMinimalBoundingFootPrintRadius();
 
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -2073,7 +2073,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// const FeatureDef* collideeFD = collidee->def;
 
 		// use the collidee's Feature (not FeatureDef) footprint as radius
-		const float collideeRadius = std::max(collidee->xsize, collidee->zsize) * 0.5f * SQUARE_SIZE;
+		const float collideeRadius = collidee->CalcMinimalBoundingFootPrintRadius();
 		const float collisionRadiusSum = colliderRadius + collideeRadius;
 
 		const float3 separationVector   = collider->pos - collidee->pos;
@@ -2083,11 +2083,13 @@ void CGroundMoveType::HandleFeatureCollisions(
 			continue;
 		// They are close enough to further analyse the collision. To do that
 		// we are using Separable Axes Theorem (SAT).
-		if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
-			continue;
+		if (modInfo.useSATCollisionDetection) {
+			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
+				continue;
+		}
 
 		if (CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
