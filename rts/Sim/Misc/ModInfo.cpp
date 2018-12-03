@@ -31,6 +31,7 @@ void CModInfo::ResetState()
 	allowUnitCollisionOverlap = true;
 	allowGroundUnitGravity    = true;
 	allowHoverUnitStrafing    = true;
+	useSATCollisionDetection  = false;
 
 	constructionDecay      = true;
 	constructionDecayTime  = 1000;
@@ -135,6 +136,7 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", allowUnitCollisionOverlap);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
+		useSATCollisionDetection = movementTbl.GetBool("useSATCollisionDetection", useSATCollisionDetection);
 	}
 
 	{

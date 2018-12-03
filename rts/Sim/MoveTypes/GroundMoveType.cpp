@@ -1926,11 +1926,13 @@ void CGroundMoveType::HandleUnitCollisions(
 			continue;
 		// They are close enough to further analyse the collision. To do that
 		// we are using Separable Axes Theorem (SAT).
-		if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
-			(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
-			continue;
+		if (modInfo.useSATCollisionDetection) {
+			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
+				(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
+				continue;
+		}
 
 		if (unloadingCollidee) {
 			collidee->unloadingTransportId = collider->id;

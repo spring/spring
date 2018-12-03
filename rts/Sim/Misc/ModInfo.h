@@ -50,6 +50,7 @@ public:
 	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
 	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
 	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
+	bool useSATCollisionDetection;   //< determines if SAT-based collision detection should be considered
 
 	// Build behaviour
 	/// Should constructions without builders decay?
