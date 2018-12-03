@@ -1633,9 +1633,13 @@ void CGroundMoveType::HandleObjectCollisions()
 		//   In case of non-square footprints we can later apply Separable Axes
 		//   theorem SAT
 		const float colliderRadius = collider->CalcMinimalBoundingFootPrintRadius();
+		// NOTE:
+		//   colliderStretch = 0 for perfect squared footprints
+		//   colliderStretch = 1 for impossible line shaped footprints
+		const float colliderStretch = collider->CalcFootPrintStretchingFactor();
 
-		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
-		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
+		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderStretch, colliderUD, colliderMD);
+		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderStretch, colliderUD, colliderMD);
 
 		// blocked square collision (very performance hungry, process only every 2nd game frame)
 		// dangerous: reduces effective square-size from 8 to 4, but many ground units can move
@@ -1863,6 +1867,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
+	const float colliderStretch,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -1924,9 +1929,11 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
-		// They are close enough to further analyse the collision. To do that
-		// we are using Separable Axes Theorem (SAT).
-		if (modInfo.useSATCollisionDetection) {
+		// They are close enough to further analyse the collision. To this end
+		// we are applying Separable Axes Theorem (SAT), just in case the
+		// mod/game allows that, and at least one of the colliders requires it.
+		if (modInfo.useSATCollisionDetection &&
+			((colliderStretch > 0.1f) || (collidee->CalcFootPrintStretchingFactor() > 0.1f))) {
 			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
@@ -2057,6 +2064,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	CUnit* collider,
 	const float colliderSpeed,
 	const float colliderRadius,
+	const float colliderStretch,
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
@@ -2081,9 +2089,12 @@ void CGroundMoveType::HandleFeatureCollisions(
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
-		// They are close enough to further analyse the collision. To do that
-		// we are using Separable Axes Theorem (SAT).
-		if (modInfo.useSATCollisionDetection) {
+		// They are close enough to further analyse the collision. To this end
+		// we are applying Separable Axes Theorem (SAT), just in case the
+		// mod/game allows that, and at least one of the colliders requires it.
+		if (modInfo.useSATCollisionDetection &&
+			(colliderStretch > 0.1f) &&
+			(collidee->CalcFootPrintStretchingFactor() > 0.1f)) {
 			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
 				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||

@@ -132,6 +132,7 @@ private:
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
+		const float colliderStretch,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD
 	);
@@ -139,6 +140,7 @@ private:
 		CUnit* collider,
 		const float colliderSpeed,
 		const float colliderRadius,
+		const float colliderStretch,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD
 	);

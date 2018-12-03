@@ -229,6 +229,7 @@ public:
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
 	float CalcFootPrintRadius(float scale) const;
 	float CalcMinimalBoundingFootPrintRadius() const;
+	float CalcFootPrintStretchingFactor() const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
