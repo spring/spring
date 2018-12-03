@@ -368,7 +368,6 @@ bool MoveDef::TestMoveSquareRange(
 }
 
 
-float MoveDef::CalcFootPrintRadius(float scale) const { return ((math::sqrt((xsize * xsize + zsize * zsize)) * 0.5f * SQUARE_SIZE) * scale); }
 float MoveDef::GetDepthMod(float height) const {
 	// [DEPTHMOD_{MIN, MAX}_HEIGHT] are always >= 0,
 	// so we return early for positive height values
