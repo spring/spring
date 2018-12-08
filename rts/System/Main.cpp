@@ -55,8 +55,8 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	// on Windows execvp breaks lobbies (new process: new PID)
-	return (false && (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE));
+	// sic; on Windows execvp spawns a new process which breaks lobby state-tracking by PID
+	return (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE, false);
 #endif
 	return false;
 }
