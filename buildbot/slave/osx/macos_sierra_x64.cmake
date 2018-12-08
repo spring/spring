@@ -9,7 +9,7 @@ set(CMAKE_RANLIB "/usr/bin/ranlib" CACHE STRING "")
 
 set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
-set(PRD_JSONCPP_INTERNAL FALSE CACHE BOOL "")
+set(PRD_JSONCPP_INTERNAL TRUE CACHE BOOL "")
 
 set(OPENAL_INCLUDE_DIR "/usr/local/Cellar/openal-soft/1.18.2/include/AL" CACHE STRING "")
 set(OPENAL_LIBRARY "/usr/local/Cellar/openal-soft/1.18.2/lib/libopenal.dylib" CACHE STRING "")
