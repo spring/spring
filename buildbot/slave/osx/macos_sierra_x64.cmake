@@ -4,6 +4,8 @@ set(TARGET_ARCH "x86_64" CACHE STRING "")
 
 set(CMAKE_C_COMPILER "/usr/local/Cellar/gcc\@6/6.5.0/bin/gcc-6" CACHE STRING "")
 set(CMAKE_CXX_COMPILER "/usr/local/Cellar/gcc\@6/6.5.0/bin/g++-6" CACHE STRING "")
+set(CMAKE_AR "/usr/bin/ar" CACHE STRING "")
+set(CMAKE_RANLIB "/usr/bin/ranlib" CACHE STRING "") 
 
 set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
