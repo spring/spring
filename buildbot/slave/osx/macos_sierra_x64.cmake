@@ -7,7 +7,9 @@ set(CMAKE_CXX_COMPILER "/usr/local/Cellar/gcc\@6/6.5.0/bin/g++-6" CACHE STRING "
 set(CMAKE_AR "/usr/bin/ar" CACHE STRING "")
 set(CMAKE_RANLIB "/usr/bin/ranlib" CACHE STRING "") 
 
-set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
+#set(GLEW_INCLUDE_DIR "/usr/local/Cellar/glew/2.1.0/include" CACHE STRING "")
+
+#set(Boost_USE_STATIC_LIBS  TRUE CACHE BOOL "")
 
 set(PRD_JSONCPP_INTERNAL TRUE CACHE BOOL "")
 
