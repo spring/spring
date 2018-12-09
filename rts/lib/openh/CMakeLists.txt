@@ -30,11 +30,7 @@ ADD_LIBRARY(processing STATIC EXCLUDE_FROM_ALL ${openh264ressources})
 SET_TARGET_PROPERTIES(processing PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
 #add the header files to use the decoder/encorder in the project
+target_include_directories(code_api ${CMAKE_CURRENT_SOURCE_DIR}/openh264/codec/api/svc/)
 
-target_include_directories(code_api ${WORKING_DIRECTORY})
-
-
-#TODO work continous
-
-set_global(SPRING_OPENH264_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/rts/lib/openh264/codec/api/")
+set_global(SPRING_OPENH264_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/rts/lib/openh/openh264/")
 set_global(SPRING_OPENH264_LIBRARY encoder)
