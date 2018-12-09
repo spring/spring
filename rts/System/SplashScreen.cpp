@@ -190,7 +190,7 @@ void ShowSplashScreen(
 		"* archives scanned: %u",
 		"* scantime elapsed: %.1fms",
 		"Spring %s",
-		"This program is distributed under the GNU General Public License, see doc/LICENSE for more info",
+		"This program is distributed under the GNU General Public License, see doc/LICENSE for more information.",
 	};
 
 	char versionStrBuf[512];
