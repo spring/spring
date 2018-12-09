@@ -8,8 +8,8 @@
 
 // the positive x-axis points to the "left" in object-space and to the "right" in world-space
 // converting between them means flipping the sign of x-components of positions and directions
-const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
-const float COLLISION_VOLUME_EPS = 0.0000000001f;
+constexpr float3 WORLD_TO_OBJECT_SPACE = {-1.0f, 1.0f, 1.0f};
+constexpr float COLLISION_VOLUME_EPS = 0.0000000001f;
 
 struct LocalModelPiece;
 class CMatrix44f;
@@ -39,7 +39,8 @@ public:
 	};
 
 public:
-	CollisionVolume();
+	// base ctor (CREG-only)
+	CollisionVolume() = default;
 	CollisionVolume(const CollisionVolume* v) { *this = *v; }
 	CollisionVolume(
 		const char cvTypeChar,
@@ -96,7 +97,7 @@ public:
 	void SetDefaultToFootPrint(bool b) { defaultToFootPrint = b; }
 
 	int GetPrimaryAxis() const { return volumeAxes[0]; }
-	int GetSecondaryAxis(int axis) const { return volumeAxes[axis + 1]; }
+	int GetSecondaryAxis(int idx) const { return volumeAxes[1 + idx]; }
 
 	float GetBoundingRadius() const { return volumeBoundingRadius; }
 	float GetBoundingRadiusSq() const { return volumeBoundingRadiusSq; }
@@ -135,22 +136,26 @@ private:
 	float GetEllipsoidDistance(const float3& pv) const;
 
 private:
-	float3 fullAxisScales;              ///< full-length axis scales
-	float3 halfAxisScales;              ///< half-length axis scales
-	float3 halfAxisScalesSqr;           ///< half-length axis scales (squared)
-	float3 halfAxisScalesInv;           ///< half-length axis scales (inverted)
-	float3 axisOffsets;                 ///< offsets wrt. the model's mid-position (world-space)
+	float3 fullAxisScales    = OnesVector * 2.0f;  ///< full-length axis scales
+	float3 halfAxisScales    = OnesVector;         ///< half-length axis scales
+	float3 halfAxisScalesSqr = OnesVector;         ///< half-length axis scales (squared)
+	float3 halfAxisScalesInv = OnesVector;         ///< half-length axis scales (inverted)
+	float3 axisOffsets;                            ///< offsets wrt. the model's mid-position (world-space)
 
-	float volumeBoundingRadius;         ///< radius of minimally-bounding sphere around volume
-	float volumeBoundingRadiusSq;       ///< squared radius of minimally-bounding sphere
+	float volumeBoundingRadius   = 1.0f;           ///< radius of minimally-bounding sphere around volume
+	float volumeBoundingRadiusSq = 1.0f;           ///< squared radius of minimally-bounding sphere
 
-	int volumeType;                     ///< which COLVOL_TYPE_* shape we have
-	int volumeAxes[3];                  ///< [0] is prim. axis, [1] and [2] are sec. axes (all COLVOL_AXIS_*)
+	int8_t volumeType    = COLVOL_TYPE_SPHERE;     ///< which COLVOL_TYPE_* shape we have
+	int8_t volumeAxes[3] = {
+		COLVOL_AXIS_Z,
+		COLVOL_AXIS_X,
+		COLVOL_AXIS_Y
+	};
 
-	bool ignoreHits;                    /// if true, CollisionHandler does not check for hits against us
-	bool useContHitTest;                /// if true, CollisionHandler does continuous instead of discrete hit-testing
-	bool defaultToFootPrint;            /// if true, volume becomes a box with dimensions equal to a SolidObject's {x,z}size
-	bool defaultToPieceTree;            /// if true, volume is owned by a unit but defaults to piece-volume tree for hit-testing
+	bool ignoreHits = false;                       /// if true, CollisionHandler does not check for hits against us
+	bool useContHitTest = true;                    /// if true, CollisionHandler does continuous instead of discrete hit-testing
+	bool defaultToFootPrint = false;               /// if true, volume becomes a box with dimensions equal to a SolidObject's {x,z}size
+	bool defaultToPieceTree = false;               /// if true, volume is owned by a unit but defaults to piece-volume tree for hit-testing
 };
 
 #endif

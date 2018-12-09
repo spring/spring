@@ -41,6 +41,7 @@ inline static bool TestConeHelper(
 	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
+
 	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
 	const float  coneSize = cvRelDst * spread + 1.0f;
 
@@ -52,12 +53,12 @@ inline static bool TestConeHelper(
 
 	if (obj->GetBlockingMapID() < unitHandler.MaxUnits()) {
 		// obj is a unit
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
 	} else {
 		// obj is a feature
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
 	}
 
 	if (globalRendering->drawdebugtraceray) {
@@ -114,6 +115,7 @@ inline static bool TestTrajectoryConeHelper(
 	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
+
 	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
 	const float  coneSize = cvRelDst * spread + baseSize;
 
@@ -129,11 +131,11 @@ inline static bool TestTrajectoryConeHelper(
 	if (obj->GetBlockingMapID() < unitHandler.MaxUnits()) {
 		// first test the muzzle-position, then the impact-position
 		// (if neither is inside obstacle's CV, the weapon can fire)
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
 	} else {
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f);
+		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
 	}
 
 
