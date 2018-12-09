@@ -1235,6 +1235,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 		return ret;
 
 	ret = lua_toint(L, -1);
+
 	lua_pop(L, 1);
 	return ret;
 }
@@ -1245,10 +1246,8 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 	unsigned int targetID,
 	unsigned int attackerWeaponNum,
 	unsigned int attackerWeaponDefID,
-	float* targetPriority)
-{
-	assert(targetPriority != nullptr);
-
+	float* targetPriority
+) {
 	bool ret = true;
 
 	if (!watchWeaponDefs[attackerWeaponDefID])
@@ -1266,18 +1265,24 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 	lua_pushnumber(L, targetID);
 	lua_pushnumber(L, attackerWeaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, attackerWeaponDefID);
-	lua_pushnumber(L, *targetPriority);
+
+	if (targetPriority != nullptr) {
+		// Weapon::AutoTarget
+		lua_pushnumber(L, *targetPriority);
+	} else {
+		// {Air,Mobile}CAI::AutoGenerateTarget
+		lua_pushnil(L);
+	}
 
 	if (!RunCallInTraceback(L, cmdStr, 5, 2, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
+	if (targetPriority != nullptr)
+		*targetPriority = luaL_optnumber(L, -1, *targetPriority);
+
 	ret = luaL_optboolean(L, -2, false);
 
-	if (lua_isnumber(L, -1))
-		*targetPriority = lua_tonumber(L, -1);
-
 	lua_pop(L, 2);
-
 	return ret;
 }
 
@@ -1308,6 +1313,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 		return ret;
 
 	ret = luaL_optboolean(L, -1, false);
+
 	lua_pop(L, 1);
 	return ret;
 }
@@ -1319,6 +1325,11 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 
 int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 {
+	#if 0
+	spring_lua_synced_rand(L);
+	return 1;
+	#endif
+
 	switch (lua_gettop(L)) {
 		case 0: {
 			lua_pushnumber(L, gsRNG.NextFloat());
@@ -1327,12 +1338,13 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 
 		case 1: {
 			if (lua_isnumber(L, 1)) {
-				const int maxn = lua_toint(L, 1);
+				const int l = 1;
+				const int u = lua_toint(L, 1);
 
-				if (maxn < 1)
-					luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
+				if (u < 1)
+					luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", u);
 
-				lua_pushnumber(L, 1 + gsRNG.NextInt(maxn));
+				lua_pushnumber(L, 1 + gsRNG.NextInt(u));
 				return 1;
 			}
 		} break;
@@ -1347,9 +1359,8 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 
 				const float diff  = (upper - lower);
 				const float r = gsRNG.NextFloat(); // [0,1], not [0,1) ?
-				const int value = lower + (int)(r * (diff + 1));
 
-				lua_pushnumber(L, Clamp(value, lower, upper));
+				lua_pushnumber(L, Clamp(lower + int(r * (diff + 1)), lower, upper));
 				return 1;
 			}
 		} break;

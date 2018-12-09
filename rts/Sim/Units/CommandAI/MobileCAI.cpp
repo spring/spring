@@ -1112,49 +1112,64 @@ bool CMobileCAI::GenerateAttackCmd()
 	if (owner->fireState == FIRESTATE_HOLDFIRE)
 		return false;
 
-	const float extraRange = 200.0f * owner->moveState * owner->moveState;
-	const float maxRangeSq = Square(owner->maxRange + extraRange);
+	float  extraRadius = 200.0f * owner->moveState * owner->moveState;
+	float searchRadius = owner->maxRange + extraRadius;
+
 	int newAttackTargetId = -1;
 
-	if (owner->curTarget.type == Target_Unit) {
-		//FIXME when is this the case (unit has target, but CAI doesn't !?)
-		if (owner->pos.SqDistance2D(owner->curTarget.unit->pos) < maxRangeSq)
-			newAttackTargetId = owner->curTarget.unit->id;
-	} else {
-		if (owner->lastAttacker != nullptr) {
-			const bool freshAttack = (gs->frameNum < (owner->lastAttackFrame + GAME_SPEED * 7));
-			const bool canChaseAttacker = !(owner->unitDef->noChaseCategory & owner->lastAttacker->category);
+	// pass bogus target-id and weapon-number s.t. script knows context and can set radius
+	if (!eventHandler.AllowWeaponTarget(owner->id, -1, -1, 0, &searchRadius))
+		return false;
 
-			if (freshAttack && canChaseAttacker) {
-				if (owner->pos.SqDistance2D(owner->lastAttacker->pos) < maxRangeSq) {
-					newAttackTargetId = owner->lastAttacker->id;
-				}
+	const SWeaponTarget& curTarget = owner->curTarget;
+
+	const CUnit* tgt = nullptr;
+	const CWeapon* wpn = owner->weapons[0];
+
+	if (curTarget.type == Target_Unit) {
+		//FIXME when is this the case (unit has target, but CAI doesn't !?)
+		const float tgtDistSq = owner->pos.SqDistance2D((tgt = curTarget.unit)->pos);
+		const float maxDistSq = Square(searchRadius);
+
+		if (tgtDistSq < maxDistSq)
+			if (eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr))
+				newAttackTargetId = tgt->id;
+	} else {
+		if ((tgt = owner->lastAttacker) != nullptr) {
+			if (owner->pos.SqDistance2D(tgt->pos) < Square(searchRadius)) {
+				const bool allowAttackerChase = !(owner->unitDef->noChaseCategory & tgt->category);
+				const bool  keepAttackingLast = (gs->frameNum < (owner->lastAttackFrame + GAME_SPEED * 7));
+				const bool allowAttackingLast = (allowAttackerChase && keepAttackingLast && eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr));
+
+				if (allowAttackingLast)
+					newAttackTargetId = tgt->id;
 			}
 		}
 
-		if (newAttackTargetId < 0 &&
-		    owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)
-		) {
-			//Try getting target from weapons
+		if (newAttackTargetId < 0 && owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
+			// try getting target from weapons
 			for (CWeapon* w: owner->weapons) {
-				if (w->HaveTarget() || w->AutoTarget()) {
-					const auto t = w->GetCurrentTarget();
-					if (t.type == Target_Unit && IsValidTarget(t.unit)) {
-						newAttackTargetId = t.unit->id;
-						break;
-					}
-				}
+				const SWeaponTarget& wTgt = w->GetCurrentTarget();
+
+				if (w->HaveTarget() && !eventHandler.AllowWeaponTarget(owner->id, wTgt.unit->id, w->weaponNum, w->weaponDef->id, nullptr))
+					continue;
+
+				if (!w->HaveTarget() && !w->AutoTarget())
+					continue;
+
+				if (wTgt.type != Target_Unit || !IsValidTarget(wTgt.unit))
+					continue;
+
+				newAttackTargetId = wTgt.unit->id;
+				break;
 			}
 
-			//Get target from wherever
+			// get target from wherever
 			if (newAttackTargetId < 0) {
-				const float leashRadius = 150.0f * owner->moveState * owner->moveState;
-				const float searchRadius = owner->maxRange + leashRadius;
+				tgt = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
-				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
-
-				if (enemy != nullptr)
-					newAttackTargetId = enemy->id;
+				if (tgt != nullptr && eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr))
+					newAttackTargetId = tgt->id;
 			}
 		}
 	}
