@@ -79,8 +79,6 @@ private:
 	 * @see RemoveActionExecutor
 	 */
 	void RemoveAllActionExecutors() {
-		Disable();
-
 		for (const auto& pair: actionExecutors) {
 			pair.second->~TActionExecutor();
 		}
