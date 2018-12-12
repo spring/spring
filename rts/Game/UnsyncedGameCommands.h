@@ -3,8 +3,6 @@
 #ifndef UNSYNCED_GAME_COMMANDS_H
 #define UNSYNCED_GAME_COMMANDS_H
 
-#include <string>
-
 #include "IGameCommands.h"
 
 class IUnsyncedActionExecutor;
@@ -12,21 +10,16 @@ class IUnsyncedActionExecutor;
 
 class UnsyncedGameCommands : public IGameCommands<IUnsyncedActionExecutor>
 {
-	UnsyncedGameCommands() {}
-
 public:
-	/**
-	 * This function initialized a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
+	static UnsyncedGameCommands*& GetInstance() {
+		static UnsyncedGameCommands* singleton = nullptr;
+		return singleton;
+	}
+
 	static void CreateInstance();
-	static UnsyncedGameCommands* GetInstance() { return singleton; }
-	static void DestroyInstance();
+	static void DestroyInstance(bool reload);
 
-	void AddDefaultActionExecutors();
-
-private:
-	static UnsyncedGameCommands* singleton;
+	void AddDefaultActionExecutors() override;
 };
 
 #define unsyncedGameCommands UnsyncedGameCommands::GetInstance()
