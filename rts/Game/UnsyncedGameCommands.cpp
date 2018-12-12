@@ -1,5 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
 #include "UnsyncedGameCommands.h"
 
 #include "UnsyncedActionExecutor.h"
@@ -3215,206 +3214,213 @@ bool CGame::ActionReleased(const Action& action)
 
 void UnsyncedGameCommands::AddDefaultActionExecutors()
 {
-	AddActionExecutor(new SelectActionExecutor());
-	AddActionExecutor(new SelectUnitsActionExecutor());
-	AddActionExecutor(new SelectCycleActionExecutor());
-	AddActionExecutor(new DeselectActionExecutor());
-	AddActionExecutor(new ShadowsActionExecutor());
-	AddActionExecutor(new MapShadowPolyOffsetActionExecutor());
-	AddActionExecutor(new MapMeshDrawerActionExecutor());
-	AddActionExecutor(new MapBorderActionExecutor());
-	AddActionExecutor(new WaterActionExecutor());
-	AddActionExecutor(new SayActionExecutor());
-	AddActionExecutor(new SayPrivateActionExecutor());
-	AddActionExecutor(new SayPrivateByPlayerIDActionExecutor());
-	AddActionExecutor(new EchoActionExecutor());
-	AddActionExecutor(new SetActionExecutor());
-	AddActionExecutor(new SetOverlayActionExecutor());
-	AddActionExecutor(new EnableDrawInMapActionExecutor());
-	AddActionExecutor(new DrawLabelActionExecutor());
-	AddActionExecutor(new MouseActionExecutor(1));
-	AddActionExecutor(new MouseActionExecutor(2));
-	AddActionExecutor(new MouseActionExecutor(3));
-	AddActionExecutor(new MouseActionExecutor(4));
-	AddActionExecutor(new MouseActionExecutor(5));
-	AddActionExecutor(new ViewSelectionActionExecutor());
-	AddActionExecutor(new CameraMoveActionExecutor(0, "Forward"));
-	AddActionExecutor(new CameraMoveActionExecutor(1, "Back"));
-	AddActionExecutor(new CameraMoveActionExecutor(2, "Left"));
-	AddActionExecutor(new CameraMoveActionExecutor(3, "Right"));
-	AddActionExecutor(new CameraMoveActionExecutor(4, "Up"));
-	AddActionExecutor(new CameraMoveActionExecutor(5, "Down"));
-	AddActionExecutor(new CameraMoveActionExecutor(6, "Fast"));
-	AddActionExecutor(new CameraMoveActionExecutor(7, "Slow"));
-	AddActionExecutor(new AIKillReloadActionExecutor(true));
-	AddActionExecutor(new AIKillReloadActionExecutor(false));
-	AddActionExecutor(new AIControlActionExecutor());
-	AddActionExecutor(new AIListActionExecutor());
-	AddActionExecutor(new TeamActionExecutor());
-	AddActionExecutor(new SpectatorActionExecutor());
-	AddActionExecutor(new SpecTeamActionExecutor());
-	AddActionExecutor(new SpecFullViewActionExecutor());
-	AddActionExecutor(new AllyActionExecutor());
-	AddActionExecutor(new GroupActionExecutor());
-	AddActionExecutor(new GroupIDActionExecutor(0));
-	AddActionExecutor(new GroupIDActionExecutor(1));
-	AddActionExecutor(new GroupIDActionExecutor(2));
-	AddActionExecutor(new GroupIDActionExecutor(3));
-	AddActionExecutor(new GroupIDActionExecutor(4));
-	AddActionExecutor(new GroupIDActionExecutor(5));
-	AddActionExecutor(new GroupIDActionExecutor(6));
-	AddActionExecutor(new GroupIDActionExecutor(7));
-	AddActionExecutor(new GroupIDActionExecutor(8));
-	AddActionExecutor(new GroupIDActionExecutor(9));
-	AddActionExecutor(new LastMessagePositionActionExecutor());
+	if (!actionExecutors.empty())
+		return;
 
-	AddActionExecutor(new ChatActionExecutor("",     "",   false));
-	AddActionExecutor(new ChatActionExecutor("All",  "",   true));
-	AddActionExecutor(new ChatActionExecutor("Ally", "a:", true));
-	AddActionExecutor(new ChatActionExecutor("Spec", "s:", true));
+	AddActionExecutor(AllocActionExecutor<SelectActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SelectUnitsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SelectCycleActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DeselectActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShadowsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MapShadowPolyOffsetActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MapMeshDrawerActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MapBorderActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WaterActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SayActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SayPrivateActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SayPrivateByPlayerIDActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<EchoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SetActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SetOverlayActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<EnableDrawInMapActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DrawLabelActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(1));
+	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(2));
+	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(3));
+	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(4));
+	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(5));
+	AddActionExecutor(AllocActionExecutor<ViewSelectionActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(0, "Forward"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(1, "Back"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(2, "Left"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(3, "Right"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(4, "Up"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(5, "Down"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(6, "Fast"));
+	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(7, "Slow"));
+	AddActionExecutor(AllocActionExecutor<AIKillReloadActionExecutor>(true));
+	AddActionExecutor(AllocActionExecutor<AIKillReloadActionExecutor>(false));
+	AddActionExecutor(AllocActionExecutor<AIControlActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<AIListActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<TeamActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpectatorActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpecTeamActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpecFullViewActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<AllyActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GroupActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(0));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(1));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(2));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(3));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(4));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(5));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(6));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(7));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(8));
+	AddActionExecutor(AllocActionExecutor<GroupIDActionExecutor>(9));
+	AddActionExecutor(AllocActionExecutor<LastMessagePositionActionExecutor>());
 
-	AddActionExecutor(new TrackActionExecutor());
-	AddActionExecutor(new TrackOffActionExecutor());
-	AddActionExecutor(new TrackModeActionExecutor());
-	AddActionExecutor(new PauseActionExecutor());
-	AddActionExecutor(new DebugActionExecutor());
-	AddActionExecutor(new DebugGLActionExecutor());
-	AddActionExecutor(new DebugGLErrorsActionExecutor());
-	AddActionExecutor(new DebugColVolDrawerActionExecutor());
-	AddActionExecutor(new DebugPathDrawerActionExecutor());
-	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
-	AddActionExecutor(new MuteActionExecutor());
-	AddActionExecutor(new SoundActionExecutor());
-	AddActionExecutor(new SoundChannelEnableActionExecutor());
-	AddActionExecutor(new CreateVideoActionExecutor());
-	AddActionExecutor(new DrawGrassActionExecutor());
-	AddActionExecutor(new DrawTreesActionExecutor());
-	AddActionExecutor(new NetPingActionExecutor());
-	AddActionExecutor(new NetMsgSmoothingActionExecutor());
-	AddActionExecutor(new SpeedControlActionExecutor());
-	AddActionExecutor(new GameInfoActionExecutor());
-	AddActionExecutor(new HideInterfaceActionExecutor());
-	AddActionExecutor(new HardwareCursorActionExecutor());
-	AddActionExecutor(new FullscreenActionExecutor());
-	AddActionExecutor(new GammaExponentActionExecutor());
-	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
-	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
-	AddActionExecutor(new GroundDetailActionExecutor());
-	AddActionExecutor(new MoreGrassActionExecutor());
-	AddActionExecutor(new LessGrassActionExecutor());
-	AddActionExecutor(new MoreTreesActionExecutor());
-	AddActionExecutor(new LessTreesActionExecutor());
-	AddActionExecutor(new SpeedUpActionExecutor());
-	AddActionExecutor(new SlowDownActionExecutor());
-	AddActionExecutor(new ControlUnitActionExecutor());
-	AddActionExecutor(new ShowStandardActionExecutor());
-	AddActionExecutor(new ShowElevationActionExecutor());
-	AddActionExecutor(new ShowMetalMapActionExecutor());
-	AddActionExecutor(new ShowPathTravActionExecutor());
-	AddActionExecutor(new ShowPathHeatActionExecutor());
-	AddActionExecutor(new ShowPathFlowActionExecutor());
-	AddActionExecutor(new ShowPathCostActionExecutor());
-	AddActionExecutor(new ToggleLOSActionExecutor());
-	AddActionExecutor(new ToggleInfoActionExecutor());
-	AddActionExecutor(new ShowPathTypeActionExecutor());
-	AddActionExecutor(new ShareDialogActionExecutor());
-	AddActionExecutor(new QuitMessageActionExecutor());
-	AddActionExecutor(new QuitMenuActionExecutor());
-	AddActionExecutor(new QuitActionExecutor());
-	AddActionExecutor(new ReloadActionExecutor());
-	AddActionExecutor(new IncreaseGUIOpacityActionExecutor());
-	AddActionExecutor(new DecreaseGUIOpacityActionExecutor());
-	AddActionExecutor(new ScreenShotActionExecutor());
-	AddActionExecutor(new GrabInputActionExecutor());
-	AddActionExecutor(new ClockActionExecutor());
-	AddActionExecutor(new CrossActionExecutor());
-	AddActionExecutor(new FPSActionExecutor());
-	AddActionExecutor(new SpeedActionExecutor());
-	AddActionExecutor(new TeamHighlightActionExecutor());
-	AddActionExecutor(new InfoActionExecutor());
-	AddActionExecutor(new CmdColorsActionExecutor());
-	AddActionExecutor(new CtrlPanelActionExecutor());
-	AddActionExecutor(new FontActionExecutor());
-	AddActionExecutor(new VSyncActionExecutor());
-	AddActionExecutor(new SafeGLActionExecutor());
-	AddActionExecutor(new ResBarActionExecutor());
-	AddActionExecutor(new ToolTipActionExecutor());
-	AddActionExecutor(new ConsoleActionExecutor());
-	AddActionExecutor(new EndGraphActionExecutor());
-	AddActionExecutor(new FPSHudActionExecutor());
-	AddActionExecutor(new DebugDrawAIActionExecutor());
-	AddActionExecutor(new MapMarksActionExecutor());
-	AddActionExecutor(new AllMapMarksActionExecutor());
-	AddActionExecutor(new ClearMapMarksActionExecutor());
-	AddActionExecutor(new NoLuaDrawActionExecutor());
-	AddActionExecutor(new LuaUIActionExecutor());
-	AddActionExecutor(new LuaGarbageCollectControlExecutor());
-	AddActionExecutor(new MiniMapActionExecutor());
-	AddActionExecutor(new GroundDecalsActionExecutor());
+	AddActionExecutor(AllocActionExecutor<ChatActionExecutor>("",     "",   false));
+	AddActionExecutor(AllocActionExecutor<ChatActionExecutor>("All",  "",   true));
+	AddActionExecutor(AllocActionExecutor<ChatActionExecutor>("Ally", "a:", true));
+	AddActionExecutor(AllocActionExecutor<ChatActionExecutor>("Spec", "s:", true));
 
-	AddActionExecutor(new DistSortProjectilesActionExecutor());
-	AddActionExecutor(new MaxParticlesActionExecutor());
-	AddActionExecutor(new MaxNanoParticlesActionExecutor());
+	AddActionExecutor(AllocActionExecutor<TrackActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<TrackOffActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<TrackModeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<PauseActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugGLActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugGLErrorsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugColVolDrawerActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugPathDrawerActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugTraceRayDrawerActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MuteActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SoundActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SoundChannelEnableActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CreateVideoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DrawGrassActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DrawTreesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NetPingActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NetMsgSmoothingActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpeedControlActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GameInfoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<HideInterfaceActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<HardwareCursorActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FullscreenActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GammaExponentActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IncreaseViewRadiusActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DecreaseViewRadiusActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GroundDetailActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MoreGrassActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LessGrassActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MoreTreesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LessTreesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpeedUpActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SlowDownActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ControlUnitActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowStandardActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowElevationActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowMetalMapActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowPathTravActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowPathHeatActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowPathFlowActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowPathCostActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ToggleLOSActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ToggleInfoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShowPathTypeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ShareDialogActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<QuitMessageActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<QuitMenuActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<QuitActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ReloadActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<IncreaseGUIOpacityActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DecreaseGUIOpacityActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ScreenShotActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GrabInputActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ClockActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CrossActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FPSActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SpeedActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<TeamHighlightActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<InfoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CmdColorsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CtrlPanelActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FontActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<VSyncActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SafeGLActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ResBarActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ToolTipActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ConsoleActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<EndGraphActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FPSHudActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugDrawAIActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MapMarksActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<AllMapMarksActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ClearMapMarksActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NoLuaDrawActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LuaUIActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LuaGarbageCollectControlExecutor>());
+	AddActionExecutor(AllocActionExecutor<MiniMapActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GroundDecalsActionExecutor>());
 
-	AddActionExecutor(new GatherModeActionExecutor());
-	AddActionExecutor(new PasteTextActionExecutor());
-	AddActionExecutor(new BufferTextActionExecutor());
-	AddActionExecutor(new InputTextGeoActionExecutor());
-	AddActionExecutor(new DistIconActionExecutor());
-	AddActionExecutor(new DistDrawActionExecutor());
-	AddActionExecutor(new LODScaleActionExecutor());
-	AddActionExecutor(new AirMeshActionExecutor());
-	AddActionExecutor(new WireModelActionExecutor());
-	AddActionExecutor(new WireMapActionExecutor());
-	AddActionExecutor(new WireSkyActionExecutor());
-	AddActionExecutor(new WireTreeActionExecutor());
-	AddActionExecutor(new WireWaterActionExecutor());
-	AddActionExecutor(new CrashActionExecutor());
-	AddActionExecutor(new HangActionExecutor());
-	AddActionExecutor(new ExceptionActionExecutor());
-	AddActionExecutor(new DivByZeroActionExecutor());
-	AddActionExecutor(new GiveActionExecutor());
-	AddActionExecutor(new DestroyActionExecutor());
-	AddActionExecutor(new SendActionExecutor());
-	AddActionExecutor(new SaveGameActionExecutor());
-	AddActionExecutor(new DumpStateActionExecutor());
-	AddActionExecutor(new SaveActionExecutor(true));
-	AddActionExecutor(new SaveActionExecutor(false));
-	AddActionExecutor(new ReloadGameActionExecutor());
-	AddActionExecutor(new ReloadShadersActionExecutor());
-	AddActionExecutor(new DebugInfoActionExecutor());
+	AddActionExecutor(AllocActionExecutor<DistSortProjectilesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MaxParticlesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MaxNanoParticlesActionExecutor>());
+
+	AddActionExecutor(AllocActionExecutor<GatherModeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<PasteTextActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<BufferTextActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<InputTextGeoActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DistIconActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DistDrawActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LODScaleActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<AirMeshActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WireModelActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WireMapActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WireSkyActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WireTreeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<WireWaterActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CrashActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<HangActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ExceptionActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DivByZeroActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GiveActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DestroyActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SendActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SaveGameActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DumpStateActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(true));
+	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));
+	AddActionExecutor(AllocActionExecutor<ReloadGameActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ReloadShadersActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugInfoActionExecutor>());
 
 	// XXX are these redirects really required?
-	AddActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
+	AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("ATM"));
 #ifdef DEBUG
-	AddActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
+	AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("Desync"));
 #endif
-	AddActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
+	AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("Resync"));
 	if (modInfo.allowTake)
-		AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+		AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("Take"));
 
-	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
-	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
-	AddActionExecutor(new CommandListActionExecutor());
-	AddActionExecutor(new CommandHelpActionExecutor());
+	AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("LuaRules"));
+	AddActionExecutor(AllocActionExecutor<RedirectToSyncedActionExecutor>("LuaGaia"));
+	AddActionExecutor(AllocActionExecutor<CommandListActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<CommandHelpActionExecutor>());
 }
 
 
-UnsyncedGameCommands* UnsyncedGameCommands::singleton = nullptr;
+static uint8_t ugcSingletonMem[sizeof(UnsyncedGameCommands)];
 
 void UnsyncedGameCommands::CreateInstance() {
-	if (singleton == nullptr) {
-		singleton = new UnsyncedGameCommands();
-	} else {
-		throw std::logic_error("UnsyncedGameCommands singleton is already initialized");
-	}
+	UnsyncedGameCommands*& singleton = GetInstance();
+
+	if (singleton != nullptr)
+		return;
+
+	singleton = new (ugcSingletonMem) UnsyncedGameCommands();
 }
 
-void UnsyncedGameCommands::DestroyInstance() {
-	if (singleton != nullptr) {
-		spring::SafeDelete(singleton);
-	} else {
-		// this might happen during shutdown after an unclean init
-		LOG_L(L_WARNING, "UnsyncedGameCommands singleton was not initialized or is already destroyed");
-	}
+void UnsyncedGameCommands::DestroyInstance(bool reload) {
+	UnsyncedGameCommands*& singleton = GetInstance();
+
+	// executors should be inaccessible in between reloads
+	if (reload)
+		return;
+
+	spring::SafeDestruct(singleton);
+	std::memset(ugcSingletonMem, 0, sizeof(ugcSingletonMem));
 }
+

@@ -824,8 +824,8 @@ void CGame::KillMisc()
 
 	LOG("[Game::%s][3]", __func__);
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
-	UnsyncedGameCommands::DestroyInstance();
-	SyncedGameCommands::DestroyInstance();
+	UnsyncedGameCommands::DestroyInstance(gu->globalReload);
+	SyncedGameCommands::DestroyInstance(gu->globalReload);
 }
 
 void CGame::KillRendering()

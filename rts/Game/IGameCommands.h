@@ -6,15 +6,11 @@
 #include "System/StringUtil.h"
 #include "System/UnorderedMap.hpp"
 
-// These two are required for the destructors
-#include "SyncedActionExecutor.h"
-#include "UnsyncedActionExecutor.h"
-
+#include <array>
 #include <string>
-#include <stdexcept>
 
 
-template<class actionExecutor_t>
+template<class TActionExecutor>
 class IGameCommands
 {
 protected:
@@ -35,28 +31,14 @@ public:
 	 * @param executor has to be new'ed, will be delete'ed internally.
 	 * @see RemoveActionExecutor
 	 */
-	void AddActionExecutor(actionExecutor_t* executor);
+	void AddActionExecutor(TActionExecutor* executor) {
+		const std::string& commandLower = StringToLower(executor->GetCommand());
 
-	/**
-	 * Deregisters an action-executor for a chat command.
-	 * The action-executor corresponding to the given command
-	 * (case-insensitive) will be removed and delete'ed internally.
-	 * @param command used to lookup the action-executor to be removed.
-	 * @see AddActionExecutor
-	 */
-	void RemoveActionExecutor(const std::string& command);
+		// prevent registering a duplicate action-executor for command
+		if (actionExecutors.find(commandLower) != actionExecutors.end())
+			return;
 
-	/**
-	 * Deregisters all currently registered action-executor for chat commands.
-	 * @see RemoveActionExecutor
-	 */
-	void RemoveAllActionExecutors() {
-		for (const auto& pair: actionExecutors) {
-			delete pair.second;
-		}
-
-		actionExecutors.clear();
-		sortedExecutors.clear();
+		actionExecutors[commandLower] = executor;
 	}
 
 	/**
@@ -65,14 +47,18 @@ public:
 	 * @return the action-executor for the given command, or NULL, if none is
 	 *   registered.
 	 */
-	const actionExecutor_t* GetActionExecutor(const std::string& command) const;
+	const TActionExecutor* GetActionExecutor(const std::string& command) const {
+		const auto aei = actionExecutors.find(StringToLower(command));
 
-	/**
-	 * Returns the map of currently registered lower-case commands with their
-	 * respective action-executors.
-	 */
-	const spring::unsynced_map<std::string, actionExecutor_t*>& GetActionExecutors() const { return actionExecutors; }
-	const std::vector< std::pair<std::string, actionExecutor_t*> >& GetSortedActionExecutors() {
+		if (aei == actionExecutors.end())
+			return nullptr;
+
+		return aei->second;
+	}
+
+
+	const spring::unsynced_map<std::string, TActionExecutor*>& GetActionExecutors() const { return actionExecutors; }
+	const std::vector< std::pair<std::string, TActionExecutor*> >& GetSortedActionExecutors() {
 		using P = typename decltype(sortedExecutors)::value_type;
 
 		// no need for caching, very rarely called
@@ -88,55 +74,43 @@ public:
 	}
 
 private:
-	spring::unsynced_map<std::string, actionExecutor_t*> actionExecutors;
-	std::vector< std::pair<std::string, actionExecutor_t*> > sortedExecutors;
+	/**
+	 * Deregisters all currently registered action-executor for chat commands.
+	 * @see RemoveActionExecutor
+	 */
+	void RemoveAllActionExecutors() {
+		Disable();
+
+		for (const auto& pair: actionExecutors) {
+			pair.second->~TActionExecutor();
+		}
+
+		actionExecutors.clear();
+		sortedExecutors.clear();
+	}
+
+protected:
+	template<typename T, typename... A> T* AllocActionExecutor(A&&... a) {
+		constexpr size_t size = sizeof(T);
+
+		if ((actionExecMemIndex + size) > actionExecutorMem.size()) {
+			assert(false);
+			return nullptr;
+		}
+
+		return new (&actionExecutorMem[(actionExecMemIndex += size) - size]) T(std::forward<A>(a)...);
+	}
+
+protected:
+	// currently registered lower-case commands with their respective action-executors
+	spring::unsynced_map<std::string, TActionExecutor*> actionExecutors;
+	std::vector< std::pair<std::string, TActionExecutor*> > sortedExecutors;
+
+	std::array<uint8_t, 16384> actionExecutorMem;
+
+	size_t actionExecMemIndex = 0;
+	// size_t numActionExecutors = 0;
 };
 
-
-
-/*
- * Because this is a template enabled class,
- * the implementations have to be in the same file.
- */
-
-template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* executor)
-{
-	const std::string commandLower = StringToLower(executor->GetCommand());
-
-	// prevent registering a duplicate action-executor for command
-	if (actionExecutors.find(commandLower) != actionExecutors.end())
-		return;
-
-	actionExecutors[commandLower] = executor;
-}
-
-template<class actionExecutor_t>
-void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& command)
-{
-	const auto aei = actionExecutors.find(StringToLower(command));
-
-	if (aei == actionExecutors.end())
-		return;
-
-	// an executor for this command is registered; remove and delete
-	actionExecutor_t* executor = aei->second;
-	actionExecutors.erase(aei);
-	delete executor;
-}
-
-
-template<class actionExecutor_t>
-const actionExecutor_t* IGameCommands<actionExecutor_t>::GetActionExecutor(const std::string& command) const
-{
-	const auto aei = actionExecutors.find(StringToLower(command));
-
-	if (aei == actionExecutors.end())
-		return nullptr;
-
-	// an executor for this command is registered
-	return aei->second;
-}
-
-
 #endif // I_GAME_COMMANDS_H
+

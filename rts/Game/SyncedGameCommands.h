@@ -3,9 +3,6 @@
 #ifndef SYNCED_GAME_COMMANDS_H
 #define SYNCED_GAME_COMMANDS_H
 
-#include <map>
-#include <string>
-
 #include "IGameCommands.h"
 
 class ISyncedActionExecutor;
@@ -13,21 +10,16 @@ class ISyncedActionExecutor;
 
 class SyncedGameCommands : public IGameCommands<ISyncedActionExecutor>
 {
-	SyncedGameCommands() {}
-
 public:
-	/**
-	 * This function initialized a singleton instance,
-	 * if not yet done by a call to GetInstance()
-	 */
+	static SyncedGameCommands*& GetInstance() {
+		static SyncedGameCommands* singleton = nullptr;
+		return singleton;
+	}
+
 	static void CreateInstance();
-	static SyncedGameCommands* GetInstance() { return singleton; }
-	static void DestroyInstance();
+	static void DestroyInstance(bool reload);
 
-	void AddDefaultActionExecutors();
-
-private:
-	static SyncedGameCommands* singleton;
+	void AddDefaultActionExecutors() override;
 };
 
 #define syncedGameCommands SyncedGameCommands::GetInstance()

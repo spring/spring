@@ -1,5 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
 #include "SyncedGameCommands.h"
 
 #include "Action.h"
@@ -40,9 +39,12 @@ namespace { // prevents linking problems in case of duplicate symbols
 
 class CheatActionExecutor : public ISyncedActionExecutor {
 public:
-	CheatActionExecutor() : ISyncedActionExecutor("Cheat",
-			"Enables/Disables cheating, which is required for a lot of other"
-			" commands to be usable") {}
+	CheatActionExecutor() : ISyncedActionExecutor(
+		"Cheat",
+		"Enables/Disables cheating, which is required "
+		"for a lot of other commands to be usable"
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->cheatEnabled, action.GetArgs());
@@ -54,8 +56,8 @@ public:
 
 class NoHelpActionExecutor : public ISyncedActionExecutor {
 public:
-	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp",
-			"Enables/Disables widgets (LuaUI control)") {}
+	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp", "Enables/Disables widgets (LuaUI control)") {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->noHelperAIs, action.GetArgs());
@@ -68,8 +70,8 @@ public:
 
 class NoSpecDrawActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw",
-			"Allows/Disallows spectators to draw on the map") {}
+	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw", "Allows/Disallows spectators to draw on the map") {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		bool allowSpecMapDrawing = inMapDrawer->GetSpecMapDrawingAllowed();
@@ -82,10 +84,14 @@ public:
 
 class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
-	GodModeActionExecutor() : ISyncedActionExecutor("GodMode",
-			"Enables/Disables god-mode, which allows all players "
-			"(even spectators) to control all units (even during "
-			"replays, which will DESYNC them)", true) {}
+	GodModeActionExecutor() : ISyncedActionExecutor(
+		"GodMode",
+		"Enables/Disables god-mode, which allows all players "
+		"(even spectators) to control all units (even during "
+		"replays, which will DESYNC them)",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(gs->godMode, action.GetArgs());
@@ -99,12 +105,17 @@ public:
 
 class GlobalLosActionExecutor : public ISyncedActionExecutor {
 public:
-	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS",
-			"Enables/Disables global line-of-sight, which makes the whole map"
-			" permanently visible to everyone or to a specific allyteam", true) {}
+	GlobalLosActionExecutor() : ISyncedActionExecutor(
+		"GlobalLOS",
+		"Enables/Disables global line-of-sight, which makes the whole map"
+		" permanently visible to everyone or to a specific allyteam",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		const std::string& args = action.GetArgs();
+
 		const unsigned int argAllyTeam = atoi(args.c_str());
 		const unsigned int maxAllyTeam = teamHandler.ActiveAllyTeams();
 
@@ -131,16 +142,19 @@ public:
 
 class NoCostActionExecutor : public ISyncedActionExecutor {
 public:
-	NoCostActionExecutor() : ISyncedActionExecutor("NoCost",
-			"Enables/Disables everything-for-free, which allows everyone"
-			" to build everything for zero resource costs", true) {}
+	NoCostActionExecutor() : ISyncedActionExecutor(
+		"NoCost",
+		"Enables/Disables everything-for-free, which allows "
+		"everyone to build everything for zero resource costs",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		bool isFree = unitDefHandler->GetNoCost();
 		InverseOrSetBool(isFree, action.GetArgs());
 		unitDefHandler->SetNoCost(isFree);
-		LogSystemStatus("Everything-for-free (no resource costs for building)",
-				isFree);
+		LogSystemStatus("Everything-for-free (no resource costs for building)", isFree);
 		return true;
 	}
 };
@@ -148,9 +162,13 @@ public:
 
 class GiveActionExecutor : public ISyncedActionExecutor {
 public:
-	GiveActionExecutor() : ISyncedActionExecutor("Give",
-			"Places one or multiple units of a single or multiple types on the"
-			" map, instantly; by default to your own team", true) {}
+	GiveActionExecutor() : ISyncedActionExecutor(
+		"Give",
+		"Places one or multiple units of a single or multiple types "
+		"on the map, instantly; by default belonging to your own team",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		// not for autohosts
@@ -164,8 +182,8 @@ public:
 
 class DestroyActionExecutor : public ISyncedActionExecutor {
 public:
-	DestroyActionExecutor() : ISyncedActionExecutor("Destroy",
-			"Destroys one or multiple units by unit-ID, instantly", true) {}
+	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", "Destroys one or multiple units by unit-ID, instantly", true) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		std::stringstream argsStream(action.GetArgs());
@@ -194,8 +212,8 @@ public:
 
 class NoSpectatorChatActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat",
-			"Enables/Disables spectators to use the chat") {}
+	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat", "Enables/Disables spectators to use the chat") {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		InverseOrSetBool(game->noSpectatorChat, action.GetArgs());
@@ -207,8 +225,8 @@ public:
 
 class ReloadCobActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB",
-			"Reloads COB scripts", true) {}
+	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB", "Reloads COB scripts", true) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
@@ -219,8 +237,8 @@ public:
 
 class ReloadCegsActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs",
-			"Reloads CEG scripts", true) {}
+	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs", "Reloads CEG scripts", true) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		explGenHandler.ReloadGenerators(action.GetArgs());
@@ -231,9 +249,12 @@ public:
 
 class DevLuaActionExecutor : public ISyncedActionExecutor {
 public:
-	DevLuaActionExecutor() : ISyncedActionExecutor("DevLua",
-			"Enables/Disables Lua dev-mode (can cause desyncs if enabled)",
-			true) {}
+	DevLuaActionExecutor() : ISyncedActionExecutor(
+		"DevLua",
+		"Enables/Disables Lua dev-mode (can cause desyncs if enabled)",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		bool devMode = CLuaHandle::GetDevMode();
@@ -342,10 +363,12 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules",
+	LuaRulesActionExecutor() : ISyncedActionExecutor(
+		"LuaRules",
 		"Allows reloading or disabling LuaRules, and"
 		" to send a chat message to LuaRules scripts"
-	) {}
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		// NOTE:
@@ -362,10 +385,12 @@ public:
 
 class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia",
+	LuaGaiaActionExecutor() : ISyncedActionExecutor(
+		"LuaGaia",
 		"Allows reloading or disabling LuaGaia, and"
 		" to send a chat message to LuaGaia scripts"
-	) {}
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		if (!gs->useLuaGaia)
@@ -380,9 +405,13 @@ public:
 #ifdef DEBUG
 class DesyncActionExecutor : public ISyncedActionExecutor {
 public:
-	DesyncActionExecutor() : ISyncedActionExecutor("Desync",
-			"Allows one to create an artificial desync of the local client with"
-			" the rest of the participating hosts", true) {}
+	DesyncActionExecutor() : ISyncedActionExecutor(
+		"Desync",
+		"Allows creating an artificial desync of the local "
+		"client with the rest of the participating hosts",
+		true
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		ASSERT_SYNCED(gu->myPlayerNum * 123.0f);
@@ -416,9 +445,8 @@ public:
 
 class AtmActionExecutor : public ISyncedActionExecutor {
 public:
-	AtmActionExecutor() : ISyncedActionExecutor("Atm",
-			"Gives 1000 metal and 1000 energy to the issuing players team",
-			true) {}
+	AtmActionExecutor() : ISyncedActionExecutor("Atm", "Gives 1000 metal and 1000 energy to the issuing player's team", true) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		const std::string& args = action.GetArgs();
@@ -435,42 +463,41 @@ public:
 
 class TakeActionExecutor : public ISyncedActionExecutor {
 public:
-	TakeActionExecutor() : ISyncedActionExecutor("Take",
-			"Transfers all units of allied teams without any "
-			"active players to the team of the issuing player") {}
+	TakeActionExecutor() : ISyncedActionExecutor(
+		"Take",
+		"Transfers all units of allied teams without any "
+		"active players to the team of the issuing player"
+	) {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		const CPlayer* actionPlayer = playerHandler.Player(action.GetPlayerID());
 
-		if (actionPlayer->spectator && !gs->cheatEnabled) {
+		if (actionPlayer->spectator && !gs->cheatEnabled)
 			return false;
-		}
 
-		if (!game->playing) {
+		if (!game->playing)
 			return true;
-		}
 
 		for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
-			if (!teamHandler.AlliedTeams(a, actionPlayer->team)) {
+			if (!teamHandler.AlliedTeams(a, actionPlayer->team))
 				continue;
-			}
 
 			bool hasPlayer = false;
 
 			for (int b = 0; b < playerHandler.ActivePlayers(); ++b) {
 				const CPlayer* teamPlayer = playerHandler.Player(b);
 
-				if (!teamPlayer->active) { continue; }
-				if (teamPlayer->spectator) { continue; }
-				if (teamPlayer->team != a) { continue; }
+				if (!teamPlayer->active) continue;
+				if (teamPlayer->spectator) continue;
+				if (teamPlayer->team != a) continue;
 
 				hasPlayer = true;
 				break;
 			}
 
-			if (!hasPlayer) {
+			if (!hasPlayer)
 				teamHandler.Team(a)->GiveEverythingTo(actionPlayer->team);
-			}
 		}
 
 		return true;
@@ -480,8 +507,8 @@ public:
 
 class SkipActionExecutor : public ISyncedActionExecutor {
 public:
-	SkipActionExecutor() : ISyncedActionExecutor("Skip",
-			"Fast-forwards to a given frame, or stops fast-forwarding") {}
+	SkipActionExecutor() : ISyncedActionExecutor("Skip", "Fast-forwards to a given frame, or stops fast-forwarding") {
+	}
 
 	bool Execute(const SyncedAction& action) const final {
 		if (action.GetArgs().find_first_of("start") == 0) {
@@ -508,47 +535,54 @@ public:
 
 void SyncedGameCommands::AddDefaultActionExecutors()
 {
-	AddActionExecutor(new CheatActionExecutor());
-	AddActionExecutor(new NoHelpActionExecutor());
-	AddActionExecutor(new NoSpecDrawActionExecutor());
-	AddActionExecutor(new GodModeActionExecutor());
-	AddActionExecutor(new GlobalLosActionExecutor());
-	AddActionExecutor(new NoCostActionExecutor());
-	AddActionExecutor(new GiveActionExecutor());
-	AddActionExecutor(new DestroyActionExecutor());
-	AddActionExecutor(new NoSpectatorChatActionExecutor());
-	AddActionExecutor(new ReloadCobActionExecutor());
-	AddActionExecutor(new ReloadCegsActionExecutor());
-	AddActionExecutor(new DevLuaActionExecutor());
-	AddActionExecutor(new EditDefsActionExecutor());
-	AddActionExecutor(new LuaRulesActionExecutor());
-	AddActionExecutor(new LuaGaiaActionExecutor());
-#ifdef DEBUG
-	AddActionExecutor(new DesyncActionExecutor());
-#endif // defined DEBUG
-	AddActionExecutor(new AtmActionExecutor());
-	if (modInfo.allowTake)
-		AddActionExecutor(new TakeActionExecutor());
+	if (!actionExecutors.empty())
+		return;
 
-	AddActionExecutor(new SkipActionExecutor());
+	AddActionExecutor(AllocActionExecutor<CheatActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NoHelpActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NoSpecDrawActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GodModeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GlobalLosActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NoCostActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<GiveActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DestroyActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<NoSpectatorChatActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ReloadCobActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ReloadCegsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DevLuaActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<EditDefsActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LuaRulesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<LuaGaiaActionExecutor>());
+#ifdef DEBUG
+	AddActionExecutor(AllocActionExecutor<DesyncActionExecutor>());
+#endif // defined DEBUG
+	AddActionExecutor(AllocActionExecutor<AtmActionExecutor>());
+	if (modInfo.allowTake)
+		AddActionExecutor(AllocActionExecutor<TakeActionExecutor>());
+
+	AddActionExecutor(AllocActionExecutor<SkipActionExecutor>());
 }
 
 
-SyncedGameCommands* SyncedGameCommands::singleton = nullptr;
+static uint8_t sgcSingletonMem[sizeof(SyncedGameCommands)];
 
 void SyncedGameCommands::CreateInstance() {
-	if (singleton == nullptr) {
-		singleton = new SyncedGameCommands();
-	} else {
-		throw std::logic_error("SyncedGameCommands singleton is already initialized");
-	}
+	SyncedGameCommands*& singleton = GetInstance();
+
+	if (singleton != nullptr)
+		return;
+
+	singleton = new (sgcSingletonMem) SyncedGameCommands();
 }
 
-void SyncedGameCommands::DestroyInstance() {
-	if (singleton != nullptr) {
-		spring::SafeDelete(singleton);
-	} else {
-		// this might happen during shutdown after an unclean init
-		LOG_L(L_WARNING, "SyncedGameCommands singleton was not initialized or is already destroyed");
-	}
+void SyncedGameCommands::DestroyInstance(bool reload) {
+	SyncedGameCommands*& singleton = GetInstance();
+
+	// executors should be inaccessible in between reloads
+	if (reload)
+		return;
+
+	spring::SafeDestruct(singleton);
+	std::memset(sgcSingletonMem, 0, sizeof(sgcSingletonMem));
 }
+
