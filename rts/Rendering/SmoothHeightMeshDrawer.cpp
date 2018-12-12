@@ -1,45 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SmoothHeightMeshDrawer.h"
-#include "Game/UnsyncedGameCommands.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/float3.h"
 
-
-namespace { // prevents linking problems in case of duplicate symbols
-
-class AirMeshActionExecutor : public IUnsyncedActionExecutor {
-public:
-	static const std::string COMMAND_NAME;
-
-	AirMeshActionExecutor() : IUnsyncedActionExecutor(COMMAND_NAME,
-			"Show/Hide the smooth air-mesh map overlay") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		InverseOrSetBool(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
-		LogSystemStatus("smooth air-mesh map overlay", smoothHeightMeshDrawer->DrawEnabled());
-		return true;
-	}
-};
-
-const std::string AirMeshActionExecutor::COMMAND_NAME = "AirMesh";
-
-} // namespace (unnamed)
-
-
-SmoothHeightMeshDrawer::SmoothHeightMeshDrawer()
-		: drawEnabled(false)
-{
-	unsyncedGameCommands->AddActionExecutor(new AirMeshActionExecutor());
-}
-
-SmoothHeightMeshDrawer::~SmoothHeightMeshDrawer() {
-
-	if (unsyncedGameCommands != NULL) {
-		unsyncedGameCommands->RemoveActionExecutor(AirMeshActionExecutor::COMMAND_NAME);
-	}
-}
 
 SmoothHeightMeshDrawer* SmoothHeightMeshDrawer::GetInstance() {
 	static SmoothHeightMeshDrawer drawer;

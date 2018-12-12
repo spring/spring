@@ -52,6 +52,7 @@
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
@@ -3161,58 +3162,68 @@ private:
 // TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
 bool CGame::ActionReleased(const Action& action)
 {
-	const string& cmd = action.command;
+	switch (hashString(action.command.c_str())) {
+		case hashString("drawinmap"): {
+			inMapDrawer->SetDrawMode(false);
+		} break;
 
-	if (cmd == "drawinmap") {
-		inMapDrawer->SetDrawMode(false);
+		case hashString("moveforward"): {
+			camera->SetMovState(CCamera::MOVE_STATE_FWD, false);
+		} break;
+		case hashString("moveback"): {
+			camera->SetMovState(CCamera::MOVE_STATE_BCK, false);
+		} break;
+		case hashString("moveleft"): {
+			camera->SetMovState(CCamera::MOVE_STATE_LFT, false);
+		} break;
+		case hashString("moveright"): {
+			camera->SetMovState(CCamera::MOVE_STATE_RGT, false);
+		} break;
+		case hashString("moveup"): {
+			camera->SetMovState(CCamera::MOVE_STATE_UP, false);
+		} break;
+		case hashString("movedown"): {
+			camera->SetMovState(CCamera::MOVE_STATE_DWN, false);
+		} break;
+
+		case hashString("movefast"): {
+			camera->SetMovState(CCamera::MOVE_STATE_FST, false);
+		} break;
+		case hashString("moveslow"): {
+			camera->SetMovState(CCamera::MOVE_STATE_SLW, false);
+		} break;
+
+		case hashString("mouse1"): {
+			mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
+		} break;
+		case hashString("mouse2"): {
+			mouse->MouseRelease(mouse->lastx, mouse->lasty, 2);
+		} break;
+		case hashString("mouse3"): {
+			mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
+		} break;
+
+		#if 0
+		// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
+		// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
+		case hashString("mouse4"): {
+			mouse->MouseRelease(mouse->lastx, mouse->lasty, 4);
+		} break;
+		case hashString("mouse5"): {
+			mouse->MouseRelease(mouse->lastx, mouse->lasty, 5);
+		} break;
+		#endif
+
+		case hashString("mousestate"): {
+			mouse->ToggleMiddleClickScroll();
+		} break;
+		case hashString("gameinfoclose"): {
+			CGameInfo::Disable();
+		} break;
+
+		default: {
+		} break;
 	}
-	else if (cmd == "moveforward") {
-		camera->SetMovState(CCamera::MOVE_STATE_FWD, false);
-	}
-	else if (cmd == "moveback") {
-		camera->SetMovState(CCamera::MOVE_STATE_BCK, false);
-	}
-	else if (cmd == "moveleft") {
-		camera->SetMovState(CCamera::MOVE_STATE_LFT, false);
-	}
-	else if (cmd == "moveright") {
-		camera->SetMovState(CCamera::MOVE_STATE_RGT, false);
-	}
-	else if (cmd == "moveup") {
-		camera->SetMovState(CCamera::MOVE_STATE_UP, false);
-	}
-	else if (cmd == "movedown") {
-		camera->SetMovState(CCamera::MOVE_STATE_DWN, false);
-	}
-	else if (cmd == "movefast") {
-		camera->SetMovState(CCamera::MOVE_STATE_FST, false);
-	}
-	else if (cmd == "moveslow") {
-		camera->SetMovState(CCamera::MOVE_STATE_SLW, false);
-	}
-	else if (cmd == "mouse1") {
-		mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
-	}
-	else if (cmd == "mouse2") {
-		mouse->MouseRelease(mouse->lastx, mouse->lasty, 2);
-	}
-	else if (cmd == "mouse3") {
-		mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
-	}
-	else if (cmd == "mousestate") {
-		mouse->ToggleMiddleClickScroll();
-	}
-	else if (cmd == "gameinfoclose") {
-		CGameInfo::Disable();
-	}
-	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
-	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
-// 	else if (cmd == "mouse4") {
-// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 4);
-//	}
-// 	else if (cmd == "mouse5") {
-// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 5);
-//	}
 
 	return false;
 }
@@ -3234,6 +3245,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<MapMeshDrawerActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapBorderActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WaterActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<AdvModelShadingActionExecutor>()); // [maint]
+	AddActionExecutor(AllocActionExecutor<AdvMapShadingActionExecutor>()); // [maint]
 	AddActionExecutor(AllocActionExecutor<SayActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SayPrivateActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SayPrivateByPlayerIDActionExecutor>());
@@ -3297,8 +3310,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<SoundActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SoundChannelEnableActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<CreateVideoActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<DrawGrassActionExecutor>());
+	// [devel] AddActionExecutor(AllocActionExecutor<DrawGrassActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DrawTreesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DynamicSkyActionExecutor>()); // [maint]
 	AddActionExecutor(AllocActionExecutor<NetPingActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<NetMsgSmoothingActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SpeedControlActionExecutor>());
@@ -3306,12 +3320,12 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<HideInterfaceActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<HardwareCursorActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<FullscreenActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<GammaExponentActionExecutor>());
+	// [devel] AddActionExecutor(AllocActionExecutor<GammaExponentActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<IncreaseViewRadiusActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DecreaseViewRadiusActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<GroundDetailActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<MoreGrassActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<LessGrassActionExecutor>());
+	// [devel] AddActionExecutor(AllocActionExecutor<MoreGrassActionExecutor>());
+	// [devel] AddActionExecutor(AllocActionExecutor<LessGrassActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MoreTreesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LessTreesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SpeedUpActionExecutor>());
