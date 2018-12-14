@@ -17,7 +17,7 @@
 
 namespace icon {
 
-CIconHandler* iconHandler = nullptr;
+CIconHandler iconHandler;
 
 static CIconData dummyIconData[CIconHandler::ICON_DATA_OFFSET];
 
@@ -27,12 +27,21 @@ static CIconData dummyIconData[CIconHandler::ICON_DATA_OFFSET];
 //  CIconHandler
 //
 
-CIconHandler::~CIconHandler()
+void CIconHandler::Kill()
 {
 	glDeleteTextures(1, &defTexID);
 
+	defTexID = 0;
+	numIcons = 0;
+
 	dummyIconData[ SAFETY_DATA_IDX] = {};
 	dummyIconData[DEFAULT_DATA_IDX] = {};
+
+	iconMap.clear();
+
+	for (CIconData& id: iconData) {
+		id = {};
+	}
 }
 
 
@@ -53,6 +62,7 @@ bool CIconHandler::LoadIcons(const std::string& filename)
 
 	for (const std::string& iconName : iconNames) {
 		const LuaTable iconTable = iconTypes.SubTable(iconName);
+
 		AddIcon(
 			iconName,
 			iconTable.GetString("bitmap",       ""),
@@ -214,7 +224,8 @@ CIcon::CIcon()
 {
 	CIconData* data = nullptr;
 
-	if (iconHandler != nullptr) {
+	// use default data if handler is initialized
+	if (iconHandler.defTexID != 0) {
 		data = &dummyIconData[dataIdx = CIconHandler::DEFAULT_DATA_IDX];
 	} else {
 		data = &dummyIconData[dataIdx = CIconHandler::SAFETY_DATA_IDX];
@@ -226,28 +237,28 @@ CIcon::CIcon()
 
 CIcon::CIcon(unsigned int idx)
 {
-	iconHandler->GetIconDataMut(dataIdx = idx)->Ref();
+	iconHandler.GetIconDataMut(dataIdx = idx)->Ref();
 }
 
 CIcon::CIcon(const CIcon& icon)
 {
-	iconHandler->GetIconDataMut(dataIdx = icon.dataIdx)->Ref();
+	iconHandler.GetIconDataMut(dataIdx = icon.dataIdx)->Ref();
 }
 
 CIcon::~CIcon()
 {
 	// NB: icons can outlive the handler
-	UnRefData(iconHandler);
+	UnRefData(&iconHandler);
 }
 
 
 CIcon& CIcon::operator=(const CIcon& icon)
 {
 	if (dataIdx != icon.dataIdx) {
-		CIconData* iconData = iconHandler->GetIconDataMut(dataIdx);
+		CIconData* iconData = iconHandler.GetIconDataMut(dataIdx);
 
 		iconData->UnRef();
-		iconData = iconHandler->GetIconDataMut(dataIdx = icon.dataIdx);
+		iconData = iconHandler.GetIconDataMut(dataIdx = icon.dataIdx);
 		iconData->Ref();
 	}
 
@@ -262,8 +273,8 @@ void CIcon::UnRefData(CIconHandler* ih) {
 	dataIdx = CIconHandler::SAFETY_DATA_IDX;
 }
 
-const CIconData* CIcon::operator->()  const { return iconHandler->GetIconData(dataIdx); }
-const CIconData* CIcon::GetIconData() const { return iconHandler->GetIconData(dataIdx); }
+const CIconData* CIcon::operator->()  const { return iconHandler.GetIconData(dataIdx); }
+const CIconData* CIcon::GetIconData() const { return iconHandler.GetIconData(dataIdx); }
 
 
 

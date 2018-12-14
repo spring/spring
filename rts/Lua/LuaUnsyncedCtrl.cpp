@@ -1683,7 +1683,7 @@ int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 	const float  size      = luaL_optnumber(L, 3, 1.0f);
 	const float  dist      = luaL_optnumber(L, 4, 1.0f);
 	const bool   radAdjust = luaL_optboolean(L, 5, false);
-	lua_pushboolean(L, icon::iconHandler->AddIcon(iconName, texName,
+	lua_pushboolean(L, icon::iconHandler.AddIcon(iconName, texName,
 	                                        size, dist, radAdjust));
 	return 1;
 }
@@ -1694,8 +1694,7 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	const string iconName  = luaL_checkstring(L, 1);
-	lua_pushboolean(L, icon::iconHandler->FreeIcon(iconName));
+	lua_pushboolean(L, icon::iconHandler.FreeIcon(luaL_checkstring(L, 1)));
 	return 1;
 }
 
@@ -2172,7 +2171,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	if (ud == nullptr)
 		return 0;
 
-	ud->iconType = icon::iconHandler->GetIcon(luaL_checksstring(L, 2));
+	ud->iconType = icon::iconHandler.GetIcon(luaL_checksstring(L, 2));
 
 	// set decoys to the same icon
 	if (ud->decoyDef != nullptr)
