@@ -134,16 +134,17 @@ namespace icon {
 			bool LoadIcons(const std::string& filename);
 			unsigned int GetDefaultTexture();
 
-		private:
-			unsigned int defTexID = 0;
-			unsigned int numIcons = 0;
-
+		public:
 			static constexpr unsigned int  SAFETY_DATA_IDX = 0;
 			static constexpr unsigned int DEFAULT_DATA_IDX = 1;
 			static constexpr unsigned int ICON_DATA_OFFSET = 2;
 
 			static constexpr unsigned int DEFAULT_TEX_SIZE_X = 128;
 			static constexpr unsigned int DEFAULT_TEX_SIZE_Y = 128;
+
+		private:
+			unsigned int defTexID = 0;
+			unsigned int numIcons = 0;
 
 			spring::unordered_map<std::string, CIcon> iconMap;
 			std::array<CIconData, 2048> iconData;
