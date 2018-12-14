@@ -97,9 +97,11 @@ namespace icon {
 		friend class CIcon;
 
 		public:
-			CIconHandler() { LoadIcons("gamedata/icontypes.lua"); }
-			~CIconHandler();
+			CIconHandler() = default;
 			CIconHandler(const CIconHandler&) = delete; // no-copy
+
+			void Init() { LoadIcons("gamedata/icontypes.lua"); }
+			void Kill();
 
 			bool AddIcon(
 				const std::string& iconName,
@@ -150,7 +152,7 @@ namespace icon {
 			std::array<CIconData, 2048> iconData;
 	};
 
-	extern CIconHandler* iconHandler;
+	extern CIconHandler iconHandler;
 }
 
 #endif // ICON_HANDLER_H

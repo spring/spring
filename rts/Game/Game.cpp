@@ -503,7 +503,7 @@ void CGame::LoadDefs(LuaParser* defsParser)
 
 	{
 		loadscreen->SetLoadMessage("Loading Radar Icons");
-		icon::iconHandler = new icon::CIconHandler();
+		icon::iconHandler.Init();
 	}
 	{
 		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
@@ -831,7 +831,7 @@ void CGame::KillMisc()
 void CGame::KillRendering()
 {
 	LOG("[Game::%s][1]", __func__);
-	spring::SafeDelete(icon::iconHandler);
+	icon::iconHandler.Kill();
 	spring::SafeDelete(geometricObjects);
 	worldDrawer.Kill();
 }

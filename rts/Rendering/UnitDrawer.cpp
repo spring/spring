@@ -717,7 +717,7 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 	const icon::CIconData* iconData = nullptr;
 
 	if (useDefaultIcon) {
-		iconData = icon::iconHandler->GetDefaultIconData();
+		iconData = icon::iconHandler.GetDefaultIconData();
 	} else {
 		iconData = unit->unitDef->iconType.GetIconData();
 	}
@@ -1580,7 +1580,7 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 		return (unitDef->iconType.GetIconData());
 
 	if ((losStatus & LOS_INRADAR) != 0)
-		iconData = icon::iconHandler->GetDefaultIconData();
+		iconData = icon::iconHandler.GetDefaultIconData();
 
 	return iconData;
 }
