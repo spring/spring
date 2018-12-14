@@ -817,7 +817,7 @@ int2 LuaMatTexture::GetSize() const
 		} break;
 		case LUATEX_UNITRADARICON: {
 			const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
-			const icon::CIcon it = ud->iconType;
+			const icon::CIcon& it = ud->iconType;
 			return {it->GetSizeX(), it->GetSizeY()};
 		} break;
 
