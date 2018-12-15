@@ -148,6 +148,8 @@ public:
 
 	std::string ArchiveFromName(const std::string& versionedName) const;
 	std::string NameFromArchive(const std::string& archiveName) const;
+	std::string GameHumanNameFromArchive(const std::string& archiveName) const;
+	std::string  MapHumanNameFromArchive(const std::string& archiveName) const;
 	std::string GetArchivePath(const std::string& archiveName) const;
 	std::string MapNameToMapFile(const std::string& versionedMapName) const;
 	ArchiveData GetArchiveData(const std::string& versionedName) const;
