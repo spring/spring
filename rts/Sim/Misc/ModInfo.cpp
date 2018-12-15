@@ -6,6 +6,7 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
+#include "System/FileSystem/ArchiveNameResolver.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
@@ -89,6 +90,7 @@ void CModInfo::Init(const char* modArchive)
 {
 	filename = modArchive;
 	humanNameVersioned = archiveScanner->NameFromArchive(modArchive);
+	humanNameVersioned = ArchiveNameResolver::GetGame(humanNameVersioned);
 
 	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanNameVersioned);
 
