@@ -528,8 +528,9 @@ GLuint LuaMatTexture::GetTextureID() const
 		} break;
 
 		// object icon-textures
-		case LUATEX_UNITBUILDPIC: if (unitDefHandler != nullptr) {
-			texID = unitDrawer->GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
+		case LUATEX_UNITBUILDPIC: {
+			if (unitDefHandler != nullptr)
+				texID = unitDrawer->GetUnitDefImage(reinterpret_cast<const UnitDef*>(data));
 		} break;
 		case LUATEX_UNITRADARICON: {
 			texID = (reinterpret_cast<const UnitDef*>(data))->iconType->GetTextureID();
@@ -568,29 +569,30 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX: {
-			if (readMap != nullptr) {
-				// convert type=LUATEX_* to MAP_*
+			// convert type=LUATEX_* to MAP_*
+			if (readMap != nullptr)
 				texID = readMap->GetTexture(type - LUATEX_SMF_GRASS);
-			}
 		} break;
 
 		case LUATEX_SSMF_SNORMALS: {
-			if (readMap != nullptr) {
+			if (readMap != nullptr)
 				texID = readMap->GetTexture((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data));
-			}
 		} break;
 
 
 		// map info-overlay textures
-		case LUATEX_INFOTEX_SUFFIX: if (infoTextureHandler != nullptr) {
-			const CInfoTexture* cInfoTex = static_cast<const CInfoTexture*>(data);
-			      CInfoTexture* mInfoTex = const_cast<CInfoTexture*>(cInfoTex);
+		case LUATEX_INFOTEX_SUFFIX: {
+			if (infoTextureHandler != nullptr) {
+				const CInfoTexture* cInfoTex = static_cast<const CInfoTexture*>(data);
+				      CInfoTexture* mInfoTex = const_cast<CInfoTexture*>(cInfoTex);
 
-			texID = mInfoTex->GetTexture();
+				texID = mInfoTex->GetTexture();
+			}
 		} break;
 
-		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
-			texID = infoTextureHandler->GetCurrentInfoTexture();
+		case LUATEX_INFOTEX_ACTIVE: {
+			if (infoTextureHandler != nullptr)
+				texID = infoTextureHandler->GetCurrentInfoTexture();
 		} break;
 
 
