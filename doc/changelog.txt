@@ -88,6 +88,7 @@ Lua:
  - Added VFS.GetArchivePath(string archiveName1) -> string archivePathOnDisk
  - Added VFS.GetFileAbsolutePath(string vfsFilePath) -> string filePathOnDisk
  - Added VFS.GetArchiveContainingFile(string vfsFilePath) -> string archiveName
+ - add a 6th return value (feature->reclaimTime) to GetFeatureResources.
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
