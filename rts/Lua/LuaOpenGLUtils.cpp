@@ -730,22 +730,22 @@ void LuaMatTexture::Bind() const
 		// needed for shaders, not wanted otherwise)
 		if (enable) {
 			switch (texType) {
-				case GL_TEXTURE_2D:           {   glEnable(texType);   } break;
-				case GL_TEXTURE_CUBE_MAP_ARB: { /*glEnable(texType);*/ } break;
-				default:                      {                        } break;
+				case GL_TEXTURE_2D:       {   glEnable(texType);   } break;
+				case GL_TEXTURE_CUBE_MAP: { /*glEnable(texType);*/ } break;
+				default:                  {                        } break;
 			}
 		}
 	}
 
 	else if (!enable) {
 		switch (texType) {
-			case GL_TEXTURE_2D:           {   glDisable(texType);   } break;
-			case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(texType);*/ } break;
-			default:                      {                         } break;
+			case GL_TEXTURE_2D:       {   glDisable(texType);   } break;
+			case GL_TEXTURE_CUBE_MAP: { /*glDisable(texType);*/ } break;
+			default:                  {                         } break;
 		}
 	}
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP)
+	if (type == LUATEX_SHADOWMAP)
 		shadowHandler.SetupShadowTexSamplerRaw();
 
 }
@@ -756,16 +756,16 @@ void LuaMatTexture::Unbind() const
 	if (type == LUATEX_NONE)
 		return;
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP)
+	if (type == LUATEX_SHADOWMAP)
 		shadowHandler.ResetShadowTexSamplerRaw();
 
 	if (!enable)
 		return;
 
 	switch (GetTextureTarget()) {
-		case GL_TEXTURE_2D:           {   glDisable(GL_TEXTURE_2D);             } break;
-		case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(GL_TEXTURE_CUBE_MAP_ARB);*/ } break;
-		default:                      {                                         } break;
+		case GL_TEXTURE_2D:       {   glDisable(GL_TEXTURE_2D);         } break;
+		case GL_TEXTURE_CUBE_MAP: { /*glDisable(GL_TEXTURE_CUBE_MAP);*/ } break;
+		default:                  {                                     } break;
 	}
 }
 
@@ -853,29 +853,25 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX: {
-			if (readMap != nullptr) {
-				// convert type=LUATEX_* to MAP_*
+			// convert type=LUATEX_* to MAP_*
+			if (readMap != nullptr)
 				return (readMap->GetTextureSize(type - LUATEX_SMF_GRASS));
-			}
 		} break;
 
 		case LUATEX_SSMF_SNORMALS: {
-			if (readMap != nullptr) {
+			if (readMap != nullptr)
 				return (readMap->GetTextureSize((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data)));
-			}
 		} break;
 
 
 		case LUATEX_INFOTEX_SUFFIX: {
-			if (infoTextureHandler != nullptr) {
+			if (infoTextureHandler != nullptr)
 				return ((static_cast<const CInfoTexture*>(data))->GetTexSize());
-			}
 		} break;
 
 		case LUATEX_INFOTEX_ACTIVE: {
-			if (infoTextureHandler != nullptr) {
+			if (infoTextureHandler != nullptr)
 				return infoTextureHandler->GetCurrentInfoTextureSize();
-			}
 		} break;
 
 
@@ -885,9 +881,8 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MAP_GBUFFER_EMIT:
 		case LUATEX_MAP_GBUFFER_MISC:
 		case LUATEX_MAP_GBUFFER_ZVAL: {
-			if (readMap != nullptr) {
+			if (readMap != nullptr)
 				return (gdGeomBuff->GetWantedSize(readMap->GetGroundDrawer()->DrawDeferred()));
-			}
 		} break;
 
 		case LUATEX_MODEL_GBUFFER_NORM:
@@ -896,9 +891,8 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_MODEL_GBUFFER_EMIT:
 		case LUATEX_MODEL_GBUFFER_MISC:
 		case LUATEX_MODEL_GBUFFER_ZVAL: {
-			if (unitDrawer != nullptr) {
+			if (unitDrawer != nullptr)
 				return (udGeomBuff->GetWantedSize(unitDrawer->DrawDeferred()));
-			}
 		} break;
 
 
@@ -921,13 +915,6 @@ int2 LuaMatTexture::GetSize() const
 
 
 
-void LuaMatTexture::Finalize()
-{
-	// enable &= (type != LUATEX_NONE);
-	enableTexParams = true;
-}
-
-
 int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 {
 	if (a.type != b.type)
@@ -938,9 +925,6 @@ int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 
 	if (a.enable != b.enable)
 		return a.enable ? -1 : +1;
-
-	if (a.enableTexParams != b.enableTexParams)
-		return a.enableTexParams ? -1 : +1;
 
 	return 0;
 }

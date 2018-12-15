@@ -2553,7 +2553,7 @@ int LuaOpenGL::Texture(lua_State* L)
 	if (LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg))) {
 		lua_pushboolean(L, true);
 
-		tex.enable = true;
+		tex.Enable(true);
 		tex.Bind();
 	} else {
 		lua_pushboolean(L, false);

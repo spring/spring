@@ -233,7 +233,7 @@ static void ParseTexture(lua_State* L, int index, LuaMatTexture& texUnit) {
 
 	if (lua_isstring(L, index)) {
 		LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, index));
-		texUnit.enable = true;
+		texUnit.Enable(true);
 		return;
 	}
 
@@ -250,12 +250,12 @@ static void ParseTexture(lua_State* L, int index, LuaMatTexture& texUnit) {
 
 		if (key == "tex") {
 			LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, -1));
-			texUnit.enable = true;
+			texUnit.Enable(true);
 			continue;
 		}
 
 		if (key == "enable") {
-			texUnit.enable = lua_isboolean(L, -1) && lua_toboolean(L, -1);
+			texUnit.Enable(lua_isboolean(L, -1) && lua_toboolean(L, -1));
 			continue;
 		}
 	}
