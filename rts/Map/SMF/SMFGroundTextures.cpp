@@ -100,7 +100,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	bool smtHeaderOverride = false;
 	int curTile = 0;
 
-	const std::string smfDir = FileSystem::GetDirectory(gameSetup->MapFile());
+	const std::string& smfDir = FileSystem::GetDirectory(gameSetup->MapFileName());
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	if (!smf.smtFileNames.empty()) {

@@ -6,7 +6,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
-#include "System/FileSystem/ArchiveNameResolver.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
@@ -86,19 +85,20 @@ void CModInfo::ResetState()
 	allowTake = true;
 }
 
-void CModInfo::Init(const char* modArchive)
+void CModInfo::Init(const std::string& modFileName)
 {
-	filename = modArchive;
-	humanNameVersioned = archiveScanner->NameFromArchive(modArchive);
-	humanNameVersioned = ArchiveNameResolver::GetGame(humanNameVersioned);
+	{
+		filename = modFileName;
+		humanNameVersioned = archiveScanner->GameHumanNameFromArchive(modFileName);
 
-	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanNameVersioned);
+		const CArchiveScanner::ArchiveData& md = archiveScanner->GetArchiveData(humanNameVersioned);
 
-	humanName   = md.GetName();
-	shortName   = md.GetShortName();
-	version     = md.GetVersion();
-	mutator     = md.GetMutator();
-	description = md.GetDescription();
+		humanName   = md.GetName();
+		shortName   = md.GetShortName();
+		version     = md.GetVersion();
+		mutator     = md.GetMutator();
+		description = md.GetDescription();
+	}
 
 	// initialize the parser
 	LuaParser parser("gamedata/modrules.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);

@@ -62,6 +62,7 @@ private:
 
 	void GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet);
 
+private:
 	/**
 	@brief GameData we received from server
 
@@ -70,7 +71,7 @@ private:
 	std::shared_ptr<GameData> gameData;
 	std::shared_ptr<ClientSetup> clientSetup;
 
-	std::string modArchive;
+	std::string modFileName;
 	ILoadSaveHandler* savefile;
 
 	spring_time connectTimer;

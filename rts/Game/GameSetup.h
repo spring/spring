@@ -125,7 +125,7 @@ public:
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
 	const std::vector<std::string>& GetMutatorsCont() const { return mutatorsList; }
 
-	const std::string MapFile() const;
+	std::string MapFileName() const;
 
 private:
 	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);

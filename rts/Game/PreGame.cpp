@@ -207,8 +207,8 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 	// Load Game archive
 	vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
-	modArchive = archiveScanner->ArchiveFromName(setup->modName);
-	LOG("[PreGame::%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modArchive.c_str());
+	modFileName = archiveScanner->ArchiveFromName(setup->modName);
+	LOG("[PreGame::%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modFileName.c_str());
 }
 
 void CPreGame::StartServer(const std::string& setupscript)
@@ -382,11 +382,11 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(playerNum);
 				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
-				LOG("[PreGame::%s] received local player number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+				LOG("[PreGame::%s] received local player number %i (team %i, allyteam %i), creating LoadScreen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
 
-				CLoadScreen::CreateDeleteInstance(gameSetup->MapFile(), modArchive, savefile);
+				CLoadScreen::CreateDeleteInstance(std::move(gameSetup->MapFileName()), std::move(modFileName), savefile);
 
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
@@ -548,12 +548,13 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		std::fill(asModChecksum.begin(), asModChecksum.end(), 0);
 
 		try {
+			// gameSetup->MapFileName()
 			archiveScanner->CheckArchive(gameSetup->mapName, gdMapChecksum, asMapChecksum);
 		} catch (const content_error& ex) {
 			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 		}
 		try {
-			archiveScanner->CheckArchive(modArchive, gdModChecksum, asModChecksum);
+			archiveScanner->CheckArchive(modFileName, gdModChecksum, asModChecksum);
 		} catch (const content_error& ex) {
 			LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 		}

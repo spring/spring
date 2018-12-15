@@ -27,7 +27,7 @@ private:
 	CR_DECLARE_STRUCT(CGame)
 
 public:
-	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	CGame(const std::string& mapFileName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
 	void KillLua(bool dtor);
 

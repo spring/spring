@@ -3,6 +3,7 @@
 #ifndef MAP_INFO_H
 #define MAP_INFO_H
 
+#include "MapParser.h"
 #include "System/float3.h"
 #include "System/float4.h"
 
@@ -24,10 +25,10 @@ public:
 	static constexpr int NUM_TERRAIN_TYPES = 256;
 
 	/**
-	 * @param mapInfoFile mapinfo file, aka smf (full path)
-	 * @param mapName human readable mapname e.g. DeltaSiegeDry
+	 * @param mapFileName full path to map-file aka SMF
+	 * @param mapHumanName human-readable mapname e.g. DeltaSiegeDry
 	 */
-	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
+	CMapInfo(const std::string& mapInfoFile, const std::string& mapHumanName);
 	~CMapInfo();
 
 	/* The settings are just public members because:
@@ -57,22 +58,20 @@ public:
 		A::A() {}
 	 */
 
-	std::string GetStringValue(const std::string& key) const; // can be used before Load()
-
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {
-		std::string name;        ///< The filename as passed to the constructor.
-		std::string description; ///< "MAP\\Description"
+		std::string name;         ///< The human name as passed to the constructor.
+		std::string description;  ///< "MAP\\Description"
 		std::string author;
-		float hardness;          ///< "MAP\\MapHardness"
-		bool  notDeformable;
-		/** Stores the gravity as a negative number in units/frame^2
-		    (NOT positive units/second^2 as in the mapfile) */
-		float gravity;
+
+		float hardness;           ///< "MAP\\MapHardness"
+		float gravity;            ///< negative elmos/frame^2 (NOT positive elmos/second^2 as in mapfile)
 		float tidalStrength;
-		float maxMetal;        ///< what metal value 255 in the metal map is worth
-		float extractorRadius; ///< extraction radius for mines
+		float maxMetal;           ///< what metal value 255 in the metal map is worth
+		float extractorRadius;    ///< extraction radius for mines
 		float voidAlphaMin;
+
+		bool  notDeformable;
 		bool  voidWater;
 		bool  voidGround;
 	} map;
@@ -251,8 +250,8 @@ private:
 	void ReadPFSConstants();
 	void ReadSound();
 
-	MapParser* mapInfoParser; // map-info parser root table
-	LuaTable* resTableRoot; // resources parser root table
+	MapParser mapInfoParser; // map-info parser root table
+	LuaTable* resTableRoot; // resource-parser root table
 };
 
 extern const CMapInfo* mapInfo;
