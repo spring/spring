@@ -1435,6 +1435,17 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 }
 
 
+std::string CArchiveScanner::GameHumanNameFromArchive(const std::string& archiveName) const
+{
+	return (ArchiveNameResolver::GetGame(NameFromArchive(archiveName)));
+}
+
+std::string CArchiveScanner::MapHumanNameFromArchive(const std::string& archiveName) const
+{
+	return (ArchiveNameResolver::GetMap(NameFromArchive(archiveName)));
+}
+
+
 std::string CArchiveScanner::ArchiveFromName(const std::string& versionedName) const
 {
 	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedName); };
