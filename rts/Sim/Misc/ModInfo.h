@@ -12,7 +12,7 @@ public:
 	CModInfo() { ResetState(); }
 
 	void ResetState();
-	void Init(const char* modArchive);
+	void Init(const std::string& modFileName);
 
 	/**
 	 * The archive file name.

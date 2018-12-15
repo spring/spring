@@ -210,7 +210,7 @@ CR_REG_METADATA(CGame, (
 
 
 
-CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+CGame::CGame(const std::string& mapFileName, const std::string& modFileName, ILoadSaveHandler* saveFile)
 	: frameStartTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
@@ -253,11 +253,11 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	envResHandler.ResetState();
 
-	modInfo.Init(modName.c_str());
+	modInfo.Init(modFileName);
 
 	// needed for LuaIntro (pushes LuaConstGame)
 	assert(mapInfo == nullptr);
-	mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
+	mapInfo = new CMapInfo(mapFileName, gameSetup->mapName);
 
 	if (!sideParser.Load())
 		throw content_error(sideParser.GetErrorLog());
@@ -345,7 +345,7 @@ void CGame::AddTimedJobs()
 	}
 }
 
-void CGame::LoadGame(const std::string& mapName)
+void CGame::LoadGame(const std::string& mapFileName)
 {
 	// NOTE:
 	//   this is needed for LuaHandle::CallOut*UpdateCallIn
@@ -365,7 +365,7 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit.load(), !Threading::IsMainThread());
 
-		LoadMap(mapName);
+		LoadMap(mapFileName);
 		LoadDefs(&defsParser);
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
@@ -435,7 +435,7 @@ void CGame::LoadGame(const std::string& mapName)
 }
 
 
-void CGame::LoadMap(const std::string& mapName)
+void CGame::LoadMap(const std::string& mapFileName)
 {
 	ENTER_SYNCED_CODE();
 
@@ -447,7 +447,7 @@ void CGame::LoadMap(const std::string& mapName)
 
 		// simulation components
 		helper->Init();
-		readMap = CReadMap::LoadMap(mapName);
+		readMap = CReadMap::LoadMap(mapFileName);
 
 		// half size; building positions are snapped to multiples of 2*SQUARE_SIZE
 		buildingMaskMap.Init(mapDims.hmapx * mapDims.hmapy);

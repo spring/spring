@@ -18,7 +18,7 @@ class CLoadScreen : public CGameController
 public:
 	void SetLoadMessage(const std::string& text, bool replaceLast = false);
 
-	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	CLoadScreen(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
 	~CLoadScreen();
 
 	bool Init(); /// split from ctor; uses GetInstance()
@@ -29,8 +29,8 @@ public:
 	// accessed from Game::KillLua where we do not care
 	static CLoadScreen* GetInstance() { return singleton; }
 
-	static void CreateDeleteInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
-	static bool CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	static void CreateDeleteInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
+	static bool CreateInstance(std::string&& mapFileName, std::string&& modFileName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
 	bool Draw() override;
@@ -49,8 +49,8 @@ private:
 
 	std::vector< std::pair<std::string, bool> > loadMessages;
 
-	std::string mapName;
-	std::string modName;
+	std::string mapFileName;
+	std::string modFileName;
 
 	spring::recursive_mutex mutex;
 	spring::thread netHeartbeatThread;
