@@ -4733,6 +4733,7 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 	lua_pushnumber(L,  feature->resources.energy);
 	lua_pushnumber(L,  feature->def->energy);
 	lua_pushnumber(L,  feature->reclaimLeft);
+	lua_pushnumber(L,  feature->reclaimTime);
 	return 5;
 }
 
