@@ -315,7 +315,9 @@ CIconData::CIconData(
 CIconData::~CIconData()
 {
 	if (ownTexture) {
+		#ifndef HEADLESS
 		assert(texID != 0);
+		#endif
 		glDeleteTextures(1, &texID);
 	}
 
