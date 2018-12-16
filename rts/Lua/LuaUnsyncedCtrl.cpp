@@ -2886,14 +2886,15 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	if (lua_gettop(L) == 0) {
+		// clear for current thread
 		Watchdog::ClearTimer();
 		return 0;
 	}
 
 	if (lua_isstring(L, 1)) {
-		Watchdog::ClearTimer(lua_tostring(L, 1));
+		Watchdog::ClearTimer(lua_tostring(L, 1), luaL_optboolean(L, 2, false));
 	} else {
-		Watchdog::ClearTimer("main");
+		Watchdog::ClearTimer("main", luaL_optboolean(L, 2, false));
 	}
 
 	return 0;
