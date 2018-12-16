@@ -22,12 +22,9 @@ namespace Watchdog
 	void Uninstall();
 
 	//! Call this to reset the watchdog timer of the current thread
-	void ClearTimer(bool disable = false, Threading::NativeThreadId* _threadId = nullptr);
+	void ClearTimer(Threading::NativeThreadId* _threadId = nullptr, bool disable = false);
 	void ClearTimer(const WatchdogThreadnum num, bool disable = false);
-	void ClearTimer(const std::string& name, bool disable = false);
-	inline void ClearTimer(const char* name, bool disable = false) {
-		ClearTimer(std::string(name), disable);
-	}
+	void ClearTimer(const char* name, bool disable = false);
 	void ClearPrimaryTimers(bool disable = false);
 
 	//! Call these in the threads you want to monitor
