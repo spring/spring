@@ -51,19 +51,21 @@ CCamera* CCamera::GetActive()
 void CCamera::CopyState(const CCamera* cam)
 {
 	// note: xy-scales are only relevant for CAMTYPE_SHADOW
-	frustum    = cam->frustum;
+	frustum     = cam->frustum;
 
-	forward    = cam->GetForward();
-	right      = cam->GetRight();
-	up         = cam->GetUp();
+	forward     = cam->GetForward();
+	right       = cam->GetRight();
+	up          = cam->GetUp();
 
-	pos        = cam->GetPos();
-	rot        = cam->GetRot();
+	pos         = cam->GetPos();
+	rot         = cam->GetRot();
 
-	fov        = cam->GetVFOV();
-	halfFov    = cam->GetHalfFov();
-	tanHalfFov = cam->GetTanHalfFov();
-	lppScale   = cam->GetLPPScale();
+	fov         = cam->GetVFOV();
+	halfFov     = cam->GetHalfFov();
+	tanHalfFov  = cam->GetTanHalfFov();
+
+	lppScale    = cam->GetLPPScale();
+	aspectRatio = cam->GetAspectRatio();
 
 	// do not copy this, each camera knows its own type
 	// camType = cam->GetCamType();
@@ -85,6 +87,7 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 {
 	lppScale = (2.0f * tanHalfFov) * globalRendering->pixelY;
+	aspectRatio = globalRendering->aspectRatio;
 
 	// should be set before UpdateMatrices
 	UpdateViewRange();
@@ -92,7 +95,7 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 	if (updateDirs)
 		UpdateDirsFromRot(rot);
 	if (updateMats)
-		UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, globalRendering->aspectRatio);
+		UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, aspectRatio);
 	if (updatePort)
 		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
@@ -112,8 +115,8 @@ void CCamera::UpdateFrustum()
 	switch (projType) {
 		case PROJTYPE_PERSP: {
 			// NOTE: "-" because we want normals
-			const float3 forwardy = (-forward *                                          tanHalfFov );
-			const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
+			const float3 forwardy = (-forward *                         tanHalfFov );
+			const float3 forwardx = (-forward * math::tan(aspectRatio *    halfFov));
 
 			const float2 tanHalfFOVs = {math::tan(GetHFOV() * 0.5f * math::DEG_TO_RAD), tanHalfFov}; // horz, vert
 
@@ -386,9 +389,7 @@ void CCamera::SetVFOV(const float angle)
 }
 
 float CCamera::GetHFOV() const {
-	const float hAspect = (viewport[2] * 1.0f) / viewport[3]; // globalRendering->aspectRatio
-	const float fovFact = tanHalfFov * hAspect;
-	return (2.0f * math::atan(fovFact) * math::RAD_TO_DEG);
+	return (2.0f * math::atan(tanHalfFov * aspectRatio) * math::RAD_TO_DEG);
 }
 #if 0
 float CCamera::CalcTanHalfHFOV() const {
