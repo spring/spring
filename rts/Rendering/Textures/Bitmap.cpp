@@ -94,6 +94,9 @@ public:
 					continue;
 
 				// give up
+				LOG_L(L_ERROR,
+					"[TexMemPool::%s] Not enough memory to allocate bitmap of size %zu. Total pool memory is %zu",
+					__func__, size, memArray.size());
 				throw std::bad_alloc();
 				return mem;
 			}
