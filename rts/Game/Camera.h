@@ -153,7 +153,8 @@ public:
 	void LoadViewPort() const;
 	void UpdateLoadViewPort(int px, int py, int sx, int sy);
 
-	void SetVFOV(const float angle);
+	void SetVFOV(float angle);
+	void SetAspectRatio(float ar) { aspectRatio = ar; }
 
 	float GetVFOV() const { return fov; }
 	float GetHFOV() const;
@@ -162,6 +163,7 @@ public:
 	float GetLPPScale() const { return lppScale; }
 	float GetNearPlaneDist() const { return frustum.scales.z; }
 	float GetFarPlaneDist() const { return frustum.scales.w; }
+	float GetAspectRatio() const { return aspectRatio; }
 
 	float3 GetMoveVectorFromState(bool fromKeyState) const;
 
@@ -220,10 +222,11 @@ public:
 	float3 posOffset;
 	float3 tiltOffset;
 
-	float fov        = 0.0f;  ///< vertical viewing angle, in degrees
-	float halfFov    = 0.0f;  ///< half the fov in radians
-	float tanHalfFov = 0.0f;  ///< math::tan(halfFov)
-	float lppScale   = 0.0f;  ///< length-per-pixel scale
+	float fov         = 0.0f;  ///< vertical viewing angle, in degrees
+	float halfFov     = 0.0f;  ///< half the fov in radians
+	float tanHalfFov  = 0.0f;  ///< math::tan(halfFov)
+	float lppScale    = 0.0f;  ///< length-per-pixel scale
+	float aspectRatio = 0.0f;  ///< horizontal
 
 	int viewport[4];
 
