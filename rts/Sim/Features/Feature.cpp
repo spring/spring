@@ -42,6 +42,8 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimTime),
 	CR_MEMBER(reclaimLeft),
+
+	CR_MEMBER(defResources),
 	CR_MEMBER(resources),
 
 	CR_MEMBER(lastReclaimFrame),
@@ -74,31 +76,7 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 ))
 
 
-CFeature::CFeature()
-: CSolidObject()
-
-, isRepairingBeforeResurrect(false)
-, inUpdateQue(false)
-, deleteMe(false)
-, alphaFade(true)
-
-, drawAlpha(1.0f)
-, resurrectProgress(0.0f)
-, reclaimTime(0.0f)
-, reclaimLeft(1.0f)
-, resources(0.0f, 1.0f)
-
-, lastReclaimFrame(0)
-, fireTime(0)
-, smokeTime(0)
-
-, drawQuad(-2)
-, drawFlag(-1)
-
-, def(nullptr)
-, udef(nullptr)
-, myFire(nullptr)
-, solidOnTop(nullptr)
+CFeature::CFeature(): CSolidObject()
 {
 	assert(featureMemPool.alloced(this));
 
@@ -188,7 +166,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	maxHealth = def->health;
 	reclaimTime = def->reclaimTime;
 
-	resources = SResourcePack(def->metal, def->energy);
+	defResources = {def->metal, def->energy};
+	resources = {def->metal, def->energy};
 
 	crushResistance = def->crushResistance;
 
@@ -295,8 +274,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const float step = amount / reclaimTime;
 
 		// Work out how much that will cost
-		const float metalUse  = step * def->metal;
-		const float energyUse = step * def->energy;
+		const float metalUse  = step * defResources.metal;
+		const float energyUse = step * defResources.energy;
 		const bool canExecRepair = (builderTeam->res.metal >= metalUse && builderTeam->res.energy >= energyUse);
 		const bool repairAllowed = !canExecRepair ? false : eventHandler.AllowFeatureBuildStep(builder, this, step);
 
@@ -306,8 +285,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 			resources.metal  += metalUse;
 			resources.energy += energyUse;
-			resources.metal  = std::min(resources.metal, def->metal);
-			resources.energy = std::min(resources.energy, def->energy);
+			resources.metal  = std::min(resources.metal, defResources.metal);
+			resources.energy = std::min(resources.energy, defResources.energy);
 
 			reclaimLeft = Clamp(reclaimLeft + step, 0.0f, 1.0f);
 
@@ -350,8 +329,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	// stop the last bit giving too much resource
 	const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
 	const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
-	const float metalFraction  = std::min(def->metal  * fractionReclaimed, resources.metal);
-	const float energyFraction = std::min(def->energy * fractionReclaimed, resources.energy);
+	const float metalFraction  = std::min(defResources.metal  * fractionReclaimed, resources.metal);
+	const float energyFraction = std::min(defResources.energy * fractionReclaimed, resources.energy);
 	const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
 
 	SResourceOrder order;
@@ -382,8 +361,8 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 		if (oldChunk != newChunk) {
 			const float numChunks = oldChunk - newChunk;
-			order.add.metal  = std::min(numChunks * def->metal * chunkSize,  resources.metal);
-			order.add.energy = std::min(numChunks * def->energy * chunkSize, resources.energy);
+			order.add.metal  = std::min(numChunks * defResources.metal  * chunkSize, resources.metal);
+			order.add.energy = std::min(numChunks * defResources.energy * chunkSize, resources.energy);
 		}
 	}
 
@@ -444,8 +423,8 @@ void CFeature::DoDamage(
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
-			deathFeature->resources.metal  *= (def->metal != 0.0f)  ? resources.metal  / def->metal  : 1.0f;
-			deathFeature->resources.energy *= (def->energy != 0.0f) ? resources.energy / def->energy : 1.0f;
+			deathFeature->resources.metal  *= (defResources.metal  != 0.0f) ? resources.metal  / defResources.metal  : 1.0f;
+			deathFeature->resources.energy *= (defResources.energy != 0.0f) ? resources.energy / defResources.energy : 1.0f;
 		}
 
 		featureHandler.DeleteFeature(this);

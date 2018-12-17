@@ -124,34 +124,35 @@ public:
 	 * if they start rezzing, then they cannot reclaim again
 	 * until the corpse has been fully 'repaired'.
 	 */
-	bool isRepairingBeforeResurrect;
-	bool inUpdateQue;
-	bool deleteMe;
-	bool alphaFade; // unsynced
+	bool isRepairingBeforeResurrect = false;
+	bool inUpdateQue = false;
+	bool deleteMe = false;
+	bool alphaFade = true; // unsynced
 
-	float drawAlpha; // unsynced
-	float resurrectProgress;
-	float reclaimTime;
-	float reclaimLeft;
+	float drawAlpha = 1.0f; // unsynced
+	float resurrectProgress = 0.0f;
+	float reclaimTime = 0.0f;
+	float reclaimLeft = 1.0f;
 
-	SResourcePack resources;
+	SResourcePack defResources = {0.0f, 1.0f};
+	SResourcePack resources = {0.0f, 1.0f};
 
-	int lastReclaimFrame;
-	int fireTime;
-	int smokeTime;
+	int lastReclaimFrame = 0;
+	int fireTime = 0;
+	int smokeTime = 0;
 
-	int drawQuad; /// which drawQuad we are part of (unsynced)
-	int drawFlag; /// one of FD_*_FLAG (unsynced)
+	int drawQuad = -1; /// which drawQuad we are part of (unsynced)
+	int drawFlag = -2; /// one of FD_*_FLAG (unsynced)
 
-	const FeatureDef* def;
-	const UnitDef* udef; /// type of unit this feature should be resurrected to
+	const FeatureDef* def = nullptr;
+	const UnitDef* udef = nullptr; /// type of unit this feature should be resurrected to
 
 	MoveCtrl moveCtrl;
 
-	CFireProjectile* myFire;
+	CFireProjectile* myFire = nullptr;
 
 	/// object on top of us if we are a geothermal vent
-	CSolidObject* solidOnTop;
+	CSolidObject* solidOnTop = nullptr;
 
 
 private:

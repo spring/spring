@@ -2967,8 +2967,11 @@ int LuaSyncedCtrl::SetFeatureResources(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	feature->resources.metal  = std::max(0.0f, luaL_checknumber(L, 2));
-	feature->resources.energy = std::max(0.0f, luaL_checknumber(L, 3));
+	feature->defResources.metal  = std::max(0.0f, luaL_optfloat(L, 6, feature->defResources.metal));
+	feature->defResources.energy = std::max(0.0f, luaL_optfloat(L, 7, feature->defResources.energy));
+
+	feature->resources.metal  = Clamp(luaL_checknumber(L, 2), 0.0f, feature->defResources.metal );
+	feature->resources.energy = Clamp(luaL_checknumber(L, 3), 0.0f, feature->defResources.energy);
 
 	feature->reclaimTime = Clamp(luaL_optnumber(L, 4, feature->reclaimTime), 1.0f, 1000000.0f);
 	feature->reclaimLeft = Clamp(luaL_optnumber(L, 5, feature->reclaimLeft), 0.0f,       1.0f);
