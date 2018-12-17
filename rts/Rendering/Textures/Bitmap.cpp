@@ -370,8 +370,10 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp) noexcept
 void CBitmap::InitPool(size_t size)
 {
 	// only allow expansion; config-size is in MB
+	size *= (1024 * 1024);
+
 	if (size > texMemPool.Size())
-		texMemPool.Resize(size * 1024 * 1024);
+		texMemPool.Resize(size);
 
 	texMemPool.Defrag();
 }
