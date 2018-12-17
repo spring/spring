@@ -130,6 +130,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
+	CR_IGNORED(supportSeamlessCubeMaps),
 	CR_IGNORED(supportFragDepthLayout),
 	CR_IGNORED(glslMaxVaryings),
 	CR_IGNORED(glslMaxAttributes),
@@ -212,11 +213,13 @@ CGlobalRendering::CGlobalRendering()
 	, haveIntel(false)
 	, haveNvidia(false)
 	, atiHacks(false)
+
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
+	, supportSeamlessCubeMaps(false)
 	, supportFragDepthLayout(false)
 
 	, glslMaxVaryings(0)
@@ -765,6 +768,9 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_ARB_clip_control
 	supportClipSpaceControl = GLEW_ARB_clip_control;
 	#endif
+	#ifdef GLEW_ARB_seamless_cube_map
+	supportSeamlessCubeMaps = GLEW_ARB_seamless_cube_map;
+	#endif
 	// CC did not exist as an extension before GL4.5, too recent to enforce
 	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
@@ -882,6 +888,7 @@ void CGlobalRendering::LogGLSupportInfo() const
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
+	LOG("\tseamless cube-map support : %i (%i)", supportSeamlessCubeMaps, glewIsExtensionSupported("GL_ARB_seamless_cube_map"));
 	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
@@ -1143,6 +1150,11 @@ void CGlobalRendering::InitGLState()
 		// avoid precision loss with default DR transform
 		if (supportClipSpaceControl)
 			glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+		#endif
+
+		#ifdef GLEW_ARB_seamless_cube_map
+		if (supportSeamlessCubeMaps)
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		#endif
 
 		// MSAA rasterization

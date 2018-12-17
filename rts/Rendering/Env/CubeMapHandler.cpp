@@ -34,8 +34,8 @@ bool CubeMapHandler::Init() {
 		glBindTexture(GL_TEXTURE_CUBE_MAP, envReflectionTexID);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, generateMipMaps? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,                                           GL_LINEAR); // magnification doesn't use mips
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, globalRendering->supportSeamlessCubeMaps? GL_MIRRORED_REPEAT: GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, globalRendering->supportSeamlessCubeMaps? GL_MIRRORED_REPEAT: GL_CLAMP_TO_EDGE);
 
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, reflectionTexSize, reflectionTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
