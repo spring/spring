@@ -240,6 +240,7 @@ public:
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
+	bool supportSeamlessCubeMaps;
 	bool supportFragDepthLayout;
 
 	/**
