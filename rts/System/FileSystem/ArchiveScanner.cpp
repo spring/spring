@@ -1351,6 +1351,23 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& versionedMapNam
 
 sha512::raw_digest CArchiveScanner::GetArchiveSingleChecksumBytes(const std::string& filePath)
 {
+	// Ugly and potentially slow hack that prevents a segfault (from infinite recursion & stack overflow?)
+	// As generated archives don't exist, without this the check, the following invocations happen:
+	// ScanArchive calls ScanArchiveLua, which sets up a LuaParser than tries to LuaConstGame::PushEntries(L);
+	// That however has the following line, which ends up invoking ScanArchive again.. on and on
+	// sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(mapInfo->map.name), mapHexDigest);
+	const auto hasEnding = [](const std::string& fullString, const std::string& ending) -> bool {
+		if (fullString.length() >= ending.length()) {
+			return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+		} else {
+			return false;
+		}
+	};
+
+	if (hasEnding(filePath, ".sva")) {
+		return {};
+	}
+
 	// compute checksum for archive only when it is actually loaded by e.g. PreGame or LuaVFS
 	// (this updates its ArchiveInfo iff !CheckCachedData and marks the scanner as dirty s.t.
 	// cache will be rewritten on reload/shutdown)
