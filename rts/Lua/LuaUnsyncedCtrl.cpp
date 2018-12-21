@@ -2893,7 +2893,7 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	if (lua_gettop(L) == 0) {
 		// clear for current thread
-		Watchdog::ClearTimer((Threading::NativeThreadId*) nullptr, luaL_optboolean(L, 2, false));
+		Watchdog::ClearTimer();
 		return 0;
 	}
 
