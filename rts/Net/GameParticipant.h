@@ -3,12 +3,12 @@
 #ifndef _GAME_PARTICIPANT_H
 #define _GAME_PARTICIPANT_H
 
-#include <map>
 #include <memory>
 
 #include "Game/Players/PlayerBase.h"
 #include "Game/Players/PlayerStatistics.h"
 #include "System/Net/LoopbackConnection.h"
+#include "System/UnorderedMap.hpp"
 
 namespace netcode
 {
@@ -20,43 +20,49 @@ class GameParticipant : public PlayerBase
 {
 public:
 	GameParticipant();
-	void SendData(std::shared_ptr<const netcode::RawPacket> packet);
 
+	void SendData(std::shared_ptr<const netcode::RawPacket> packet);
 	void Connected(std::shared_ptr<netcode::CConnection> link, bool local);
 	void Kill(const std::string& reason, const bool flush = false);
 
 	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
 public:
-	int id;
+	int id = -1;
+	int lastFrameResponse = 0;
 
-	enum State
-	{
+	enum State {
 		UNCONNECTED,
 		CONNECTED,
 		INGAME,
 		DISCONNECTED
 	};
-	State myState;
+	State myState = UNCONNECTED;
 
-	int lastFrameResponse;
+	bool isLocal = false;
+	bool isReconn = false;
+	bool isMidgameJoin = false;
 
-	bool isLocal;
-	bool isReconn;
-	bool isMidgameJoin;
-	std::shared_ptr<netcode::CConnection> link;
 	PlayerStatistics lastStats;
 
-	struct PlayerLinkData {
-		PlayerLinkData(bool connect = true) : bandwidthUsage(0) { if (connect) link.reset(new netcode::CLoopbackConnection()); }
-		std::shared_ptr<netcode::CConnection> link;
-		int bandwidthUsage;
-	};
-	std::map<unsigned char, PlayerLinkData> linkData;
+	struct ClientLinkData {
+		ClientLinkData(bool connect = true) {
+			if (connect)
+				link.reset(new netcode::CLoopbackConnection());
+		}
 
-#ifdef SYNCCHECK
-	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
-#endif
+		std::shared_ptr<netcode::CConnection> link;
+
+		int bandwidthUsage = 0;
+		int numPacketsSent = 0;
+	};
+
+	std::shared_ptr<netcode::CConnection> clientLink;
+	spring::unordered_map<uint8_t, ClientLinkData> aiClientLinks;
+
+	#ifdef SYNCCHECK
+	spring::unordered_map<int, unsigned int> syncResponse; // syncResponse[frameNum] = checksum
+	#endif
 };
 
 #endif // _GAME_PARTICIPANT_H
