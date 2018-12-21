@@ -646,8 +646,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	isInScan = true;
 
 	struct ScanScope {
-		 ScanScope(bool* b) { *p =  true; p = b; }
-		~ScanScope(       ) { *p = false;        }
+		 ScanScope(bool* b) { p = b; *p =  true; }
+		~ScanScope(       ) {        *p = false; }
 
 		bool* p = nullptr;
 	};
