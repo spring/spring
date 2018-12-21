@@ -61,7 +61,7 @@ LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes
 	if (!setup.b)
 		return;
 
-	SetupLua(synced.b);
+	SetupLua(synced.b, false);
 }
 
 LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced, const boolean& setup)
@@ -87,7 +87,7 @@ LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessMo
 	if (!setup.b)
 		return;
 
-	SetupLua(synced.b);
+	SetupLua(synced.b, false);
 }
 
 
@@ -110,15 +110,15 @@ LuaParser::~LuaParser()
 }
 
 
-void LuaParser::SetupLua(bool synced)
+void LuaParser::SetupLua(bool isSyncedCtxt, bool isDefsParser)
 {
 	if ((L = LUA_OPEN(&D)) == nullptr)
 		return;
 
-	SetupEnv(synced);
+	SetupEnv(isSyncedCtxt, isDefsParser);
 }
 
-void LuaParser::SetupEnv(bool synced)
+void LuaParser::SetupEnv(bool isSyncedCtxt, bool isDefsParser)
 {
 	LUA_OPEN_LIB(L, luaopen_base);
 	LUA_OPEN_LIB(L, luaopen_math);
@@ -140,7 +140,7 @@ void LuaParser::SetupEnv(bool synced)
 
 	{
 		lua_getglobal(L, "math");
-		if (synced) {
+		if (isSyncedCtxt) {
 			LuaPushNamedCFunc(L, "random", Random);
 			LuaPushNamedCFunc(L, "randomseed", RandomSeed);
 		} else {
@@ -159,10 +159,14 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	#if (!defined(UNITSYNC) && !defined(DEDICATED))
-	// irrelevant for most LuaParsers except defsParser
-	GetTable("Game");
-	LuaConstGame::PushEntries(L);
-	EndTable();
+	if (isDefsParser) {
+		// irrelevant for most LuaParsers except defsParser
+		// adding it to others can cause infinite recursion
+		// (e.g. when scanning generated virtual archives)
+		GetTable("Game");
+		LuaConstGame::PushEntries(L);
+		EndTable();
+	}
 	#endif
 
 	GetTable("Engine");

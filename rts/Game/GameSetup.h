@@ -84,6 +84,7 @@ public:
 	static bool LoadSavedScript(const std::string& file, const std::string& script);
 	static bool ScriptLoaded();
 
+	// these act on the global GameSetup instance
 	static const spring::unordered_map<std::string, std::string>& GetMapOptions();
 	static const spring::unordered_map<std::string, std::string>& GetModOptions();
 	static const std::vector<PlayerBase>& GetPlayerStartingData();

@@ -300,7 +300,7 @@ bool SpringApp::InitPlatformLibs()
 #if defined(WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
-		// surpress dialog box if gdb helpers aren't found
+		// suppress dialog box if gdb helpers aren't found
 		const UINT oldErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 		if (LoadLibrary("gdbmacros.dll"))
