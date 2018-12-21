@@ -11,6 +11,7 @@
 #include "SelectionWidget.h"
 #include "System/AIScriptHandler.h"
 #include "Game/ClientSetup.h"
+#include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
 #include "Rendering/GL/myGL.h"
@@ -144,7 +145,7 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
-		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
+		/*agui::TextElement* title = */new agui::TextElement("Spring " + SpringVersion::GetFull(), menu); // will be deleted in menu
 		Button* testGame = new Button("Test Game", menu);
 		testGame->Clicked.connect(std::bind(&SelectMenu::Single, this));
 
@@ -265,12 +266,12 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 	else if (!show && settingsWindow) {
 		agui::gui->RmElement(settingsWindow);
 		settingsWindow = nullptr;
-		size_t p = name.find(" = ");
-		if(p != std::string::npos) {
-			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
+		const size_t p = name.find(" = ");
+		if (p != std::string::npos) {
+			configHandler->SetString(name.substr(0, p), name.substr(p + 3));
 			ShowSettingsList();
 		}
-		if(curSelect)
+		if (curSelect != nullptr)
 			curSelect->list->SetFocus(true);
 	}
 }
