@@ -8,27 +8,21 @@
 #include "System/Misc/SpringTime.h"
 
 GameParticipant::GameParticipant()
-: id(-1)
-, myState(UNCONNECTED)
-, lastFrameResponse(0)
-
-, isLocal(false)
-, isReconn(false)
-, isMidgameJoin(false)
 {
-	linkData[MAX_AIS] = PlayerLinkData(false);
+	aiClientLinks[MAX_AIS] = ClientLinkData(false);
 }
 
 void GameParticipant::SendData(std::shared_ptr<const netcode::RawPacket> packet)
 {
-	if (link)
-		link->SendData(packet);
+	if (clientLink != nullptr)
+		clientLink->SendData(packet);
 }
 
 void GameParticipant::Connected(std::shared_ptr<netcode::CConnection> _link, bool local)
 {
-	link = _link;
-	linkData[MAX_AIS].link.reset(new netcode::CLoopbackConnection());
+	clientLink = _link;
+	aiClientLinks[MAX_AIS].link.reset(new netcode::CLoopbackConnection());
+
 	isLocal = local;
 	myState = CONNECTED;
 	lastFrameResponse = 0;
@@ -36,21 +30,23 @@ void GameParticipant::Connected(std::shared_ptr<netcode::CConnection> _link, boo
 
 void GameParticipant::Kill(const std::string& reason, const bool flush)
 {
-	if (link) {
-		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
+	if (clientLink != nullptr) {
+		clientLink->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 
 		// make sure the Flush() performed by Close() has effect (forced flushes are undesirable)
 		// it will cause a slight lag in the game server during kick, but not a big deal
 		if (flush)
 			spring_sleep(spring_msecs(1000));
 
-		link->Close(flush);
-		link.reset();
+		clientLink->Close(flush);
+		clientLink.reset();
 	}
-	linkData[MAX_AIS].link.reset();
+
+	aiClientLinks[MAX_AIS].link.reset();
 #ifdef SYNCCHECK
 	syncResponse.clear();
 #endif
+
 	myState = DISCONNECTED;
 }
 
