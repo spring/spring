@@ -636,16 +636,30 @@ CArchiveScanner::BrokenArchive& CArchiveScanner::GetAddBrokenArchive(const std::
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
 	unsigned modifiedTime = 0;
+
+	assert(!isInScan);
+
 	if (CheckCachedData(fullName, modifiedTime, doChecksum))
 		return;
 
 	isDirty = true;
+	isInScan = true;
 
-	const std::string& fn    = FileSystem::GetFilename(fullName);
+	struct ScanScope {
+		 ScanScope(bool* b) { *p =  true; p = b; }
+		~ScanScope(       ) { *p = false;        }
+
+		bool* p = nullptr;
+	};
+
+	const ScanScope scanScope(&isInScan);
+
+	const std::string& fname = FileSystem::GetFilename(fullName);
 	const std::string& fpath = FileSystem::GetDirectory(fullName);
-	const std::string& lcfn  = StringToLower(fn);
+	const std::string& lcfn  = StringToLower(fname);
 
 	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
+
 	if (ar == nullptr || !ar->IsOpen()) {
 		LOG_L(L_WARNING, "[AS::%s] unable to open archive \"%s\"", __func__, fullName.c_str());
 
@@ -679,7 +693,9 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ScanArchiveLua(ar.get(), luaInfoFile = "mapinfo.lua", ai, error);
 
 		if ((miMapFile = ad.GetMapFile()).empty()) {
-			LOG_L(L_WARNING, "[AS::%s] set the 'mapfile' key in mapinfo.lua of archive \"%s\" for faster loading!", __func__, fullName.c_str());
+			if (ar->GetType() != ARCHIVE_TYPE_SDV)
+				LOG_L(L_WARNING, "[AS::%s] set the 'mapfile' key in mapinfo.lua of archive \"%s\" for faster loading!", __func__, fullName.c_str());
+
 			arMapFile = SearchMapFile(ar.get(), error);
 		}
 	} else if (hasModInfo) {
@@ -689,10 +705,9 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	}
 
 	if (!CheckCompression(ar.get(), fullName, error)) {
-		// for some reason, the archive is marked as broken
 		LOG_L(L_WARNING, "[AS::%s] failed to scan \"%s\" (%s)", __func__, fullName.c_str(), error.c_str());
 
-		// record it as broken, so we don't need to look inside everytime
+		// mark archive as broken, so we don't need to look inside everytime
 		BrokenArchive& ba = GetAddBrokenArchive(lcfn);
 		ba.name = lcfn;
 		ba.path = fpath;
@@ -741,7 +756,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ai.modifiedArchiveData = FileSystemAbstraction::GetFileModificationTime(ai.archiveDataPath);
 	}
 
-	ai.origName = fn;
+	ai.origName = fname;
 	ai.updated = true;
 	ai.hashed = doChecksum && GetArchiveChecksum(fullName, ai);
 
@@ -754,7 +769,14 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& modified, bool doChecksum)
 {
-	// If stat fails, assume the archive is not broken nor cached
+	// virtual archives do not exist on disk, and thus do not have a modification time
+	// they should still be scanned as normal archives so we only skip the cache-check
+	if (FileSystem::GetExtension(fullName) == "sva")
+		return false;
+
+	// if stat fails, assume the archive is not broken nor cached
+	// it would also fail in the case of virtual archives and cause
+	// warning-spam which is suppressed by the extension-test above
 	if ((modified = FileSystemAbstraction::GetFileModificationTime(fullName)) == 0)
 		return false;
 
@@ -766,7 +788,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 	const auto baIter = brokenArchivesIndex.find(fileNameLower);
 	const auto aiIter = archiveInfosIndex.find(fileNameLower);
 
-	// Determine whether this archive has earlier be found to be broken
+	// determine whether this archive has earlier be found to be broken
 	if (baIter != brokenArchivesIndex.end()) {
 		BrokenArchive& ba = brokenArchives[baIter->second];
 
@@ -775,19 +797,19 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 	}
 
 
-	// Determine whether to rely on the cached info or not
+	// determine whether to rely on the cached info or not
 	if (aiIter == archiveInfosIndex.end())
 		return false;
 
 	ArchiveInfo&  ai = archiveInfos[aiIter->second];
 	ArchiveInfo& rai = archiveInfos[archiveInfos.size() - 1];
 
-	// This archive may have been obsoleted, do not process it if so
+	// this archive may have been obsoleted, do not process it if so
 	if (!ai.replaced.empty())
 		return true;
 
 	const bool haveValidCacheData = (modified == ai.modified && filePath == ai.path);
-	// Check if the archive data file (modinfo.lua/mapinfo.lua) has changed
+	// check if the archive data file (modinfo.lua/mapinfo.lua) has changed
 	const bool archiveDataChanged = (!ai.archiveDataPath.empty() && FileSystemAbstraction::GetFileModificationTime(ai.archiveDataPath) != ai.modifiedArchiveData);
 
 	if (haveValidCacheData && !archiveDataChanged) {
@@ -815,10 +837,10 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 			std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
 	}
 
-	// If we are here, we could have invalid info in the cache
-	// Force a reread if it is a directory archive (.sdd), as
-	// st_mtime only reflects changes to the directory itself,
-	// not the contents.
+	// if we are here, we could have invalid info in the cache
+	// force a reread if it is a directory archive (.sdd), as
+	// st_mtime only reflects changes to the directory itself
+	// (not the contents)
 	//
 	// remap replacement archive
 	if (aiIter->second != (archiveInfos.size() - 1)) {
@@ -835,14 +857,19 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
 {
 	std::vector<std::uint8_t> buf;
+
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
 		err = "Error reading " + fileName;
+
 		if (ar->GetArchiveFile().find(".sdp") != std::string::npos)
 			err += " (archive's rapid tag: " + GetRapidTagFromPackage(FileSystem::GetBasename(ar->GetArchiveFile())) + ")";
 
 		return false;
 	}
-	LuaParser p(std::string((char*)(&buf[0]), buf.size()), SPRING_VFS_ZIP);
+
+	// NB: skips LuaConstGame::PushEntries(L) since that would invoke ScanArchive again
+	LuaParser p(std::string((char*)(buf.data()), buf.size()), SPRING_VFS_ZIP);
+
 	if (!p.Execute()) {
 		err = "Error in " + fileName + ": " + p.GetErrorLog();
 		return false;
@@ -1351,23 +1378,6 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& versionedMapNam
 
 sha512::raw_digest CArchiveScanner::GetArchiveSingleChecksumBytes(const std::string& filePath)
 {
-	// Ugly and potentially slow hack that prevents a segfault (from infinite recursion & stack overflow?)
-	// As generated archives don't exist, without this the check, the following invocations happen:
-	// ScanArchive calls ScanArchiveLua, which sets up a LuaParser than tries to LuaConstGame::PushEntries(L);
-	// That however has the following line, which ends up invoking ScanArchive again.. on and on
-	// sha512::dump_digest(archiveScanner->GetArchiveCompleteChecksumBytes(mapInfo->map.name), mapHexDigest);
-	const auto hasEnding = [](const std::string& fullString, const std::string& ending) -> bool {
-		if (fullString.length() >= ending.length()) {
-			return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-		} else {
-			return false;
-		}
-	};
-
-	if (hasEnding(filePath, ".sva")) {
-		return {};
-	}
-
 	// compute checksum for archive only when it is actually loaded by e.g. PreGame or LuaVFS
 	// (this updates its ArchiveInfo iff !CheckCachedData and marks the scanner as dirty s.t.
 	// cache will be rewritten on reload/shutdown)

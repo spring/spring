@@ -246,6 +246,7 @@ private:
 	std::string cachefile;
 
 	bool isDirty = false;
+	bool isInScan = false;
 };
 
 extern CArchiveScanner* archiveScanner;

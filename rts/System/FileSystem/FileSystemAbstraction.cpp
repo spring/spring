@@ -178,7 +178,7 @@ unsigned int FileSystemAbstraction::GetFileModificationTime(const std::string& f
 	struct stat info;
 
 	if (stat(file.c_str(), &info) != 0) {
-		LOG_L(L_WARNING, "Failed to get last modification time of file '%s' (error '%s')", file.c_str(), strerror(errno));
+		LOG_L(L_WARNING, "[FSA::%s] error '%s' getting last modification time of file '%s'", __func__, strerror(errno), file.c_str());
 		return 0;
 	}
 
@@ -253,7 +253,7 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 #endif
 
 	if (!dirCreated)
-		LOG_L(L_WARNING, "Could not create directory %s: %s", dir.c_str(), strerror(errno));
+		LOG_L(L_WARNING, "[FSA::%s] error '%s' creating directory '%s'", __func__, strerror(errno), dir.c_str());
 
 	return dirCreated;
 }
@@ -268,7 +268,7 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 			FormatMessageA(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &messageBuffer, 0, nullptr);
-			LOG_L(L_WARNING, "Could not delete directory %s: %s", file.c_str(), messageBuffer);
+			LOG_L(L_WARNING, "[FSA::%s] error '%s' deleting directory '%s'", __func__, messageBuffer, file.c_str());
 			LocalFree(messageBuffer);
 			return false;
 		}
@@ -276,7 +276,7 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 	}
 #endif
 	if (remove(file.c_str()) != 0) {
-		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
+		LOG_L(L_WARNING, "[FSA::%s] error '%s' deleting file '%s'", __func__, strerror(errno), file.c_str());
 		return false;
 	}
 

@@ -136,12 +136,12 @@ bool CGameSetup::ScriptLoaded() {
 const spring::unordered_map<std::string, std::string>& CGameSetup::GetMapOptions()
 {
 	// will always be empty if !ScriptLoaded
-	return gameSetup->GetMapOptionsCont();
+	return (gameSetup->GetMapOptionsCont());
 }
 
 const spring::unordered_map<std::string, std::string>& CGameSetup::GetModOptions()
 {
-	return gameSetup->GetModOptionsCont();
+	return (gameSetup->GetModOptionsCont());
 }
 
 
@@ -633,7 +633,6 @@ bool CGameSetup::Init(const std::string& buf)
 	modName = archiveScanner->GameHumanNameFromArchive(modName);
 
 	file.GetDef(onlyLocal, (archiveScanner->GetArchiveData(modName).GetOnlyLocal() ? "1" : "0"), "GAME\\OnlyLocal");
-
 	return true;
 }
 
