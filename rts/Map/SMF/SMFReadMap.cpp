@@ -302,10 +302,12 @@ void CSMFReadMap::CreateGrassTex()
 	grassShadingTex.SetRawSize(int2(1024, 1024));
 
 	CBitmap grassShadingTexBM;
-	if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
-		grassShadingTex.SetRawTexID(grassShadingTexBM.CreateMipMapTexture());
-		grassShadingTex.SetRawSize(int2(grassShadingTexBM.xsize, grassShadingTexBM.ysize));
-	}
+
+	if (!grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName))
+		grassShadingTexBM.AllocDummy();
+
+	grassShadingTex.SetRawTexID(grassShadingTexBM.CreateMipMapTexture());
+	grassShadingTex.SetRawSize(int2(grassShadingTexBM.xsize, grassShadingTexBM.ysize));
 }
 
 
@@ -314,7 +316,7 @@ void CSMFReadMap::CreateDetailTex()
 	CBitmap detailTexBM;
 
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName))
-		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
+		detailTexBM.AllocDummy();
 
 	detailTex.SetRawTexID(detailTexBM.CreateTexture(texAnisotropyLevels[false], 0.0f, true));
 	detailTex.SetRawSize(int2(detailTexBM.xsize, detailTexBM.ysize));
@@ -864,51 +866,56 @@ const char* CSMFReadMap::GetFeatureTypeName(int typeID) { return mapFile.GetFeat
 
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
-	char failMsg[512];
-
 	// get size
 	mapFile.GetInfoMapSize(name, bmInfo);
 
 	if (bmInfo->width <= 0)
 		return nullptr;
 
+	char errMsg[512];
 	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 
 	CBitmap infomapBM;
 	std::string texName;
-	if (name == "metal" && !mapInfo->smf.metalmapTexName.empty()) {
-		texName = mapInfo->smf.metalmapTexName;
-	} else if (name == "type" && !mapInfo->smf.typemapTexName.empty()) {
-		texName = mapInfo->smf.typemapTexName;
-	} else if (name == "grass" && !mapInfo->smf.grassmapTexName.empty()) {
-		texName = mapInfo->smf.grassmapTexName;
+
+	switch (hashString(name.c_str())) {
+		case hashString("metal"): { texName = mapInfo->smf.metalmapTexName; } break;
+		case hashString("type" ): { texName = mapInfo->smf.typemapTexName ; } break;
+		case hashString("grass"): { texName = mapInfo->smf.grassmapTexName; } break;
+		default: {
+			LOG_L(L_WARNING, "[SMFReadMap::%s] unknown texture-name \"%s\"", __func__, name.c_str());
+		} break;
 	}
 
+	// get data from mapinfo-override texture
 	if (!texName.empty() && !infomapBM.LoadGrayscale(texName))
-		throw content_error("[CSMFReadMap::GetInfoMap] cannot load: " + texName);
+		LOG_L(L_WARNING, "[SMFReadMap::%s] cannot load override-texture \"%s\"", __func__, texName.c_str());
 
 	if (!infomapBM.Empty()) {
 		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
 			memcpy(data, infomapBM.GetRawMem(), bmInfo->width * bmInfo->height);
 			return data;
 		}
-		sprintf(failMsg, "[CSMFReadMap::GetInfoMap] Invalid image dimensions: %s %ix%i != %ix%i",
-			texName.c_str(), infomapBM.xsize, infomapBM.ysize,
-			bmInfo->width, bmInfo->height);
-		throw content_error(failMsg);
+
+		snprintf(errMsg, sizeof(errMsg), "[SMFReadMap::%s] invalid dimensions for override-texture \"%s\": %ix%i != %ix%i",
+			__func__, texName.c_str(),
+			infomapBM.xsize, infomapBM.ysize,
+			bmInfo->width, bmInfo->height
+		);
+
+		throw content_error(errMsg);
 	}
 
-	// get data
-	if (!mapFile.ReadInfoMap(name, data)) {
-		delete[] data;
-		data = nullptr;
-	}
+	// get data from map itself
+	if (mapFile.ReadInfoMap(name, data))
+		return data;
 
-	return data;
+	delete[] data;
+	return nullptr;
 }
 
 
-void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
+void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char* data)
 {
 	delete[] data;
 }
