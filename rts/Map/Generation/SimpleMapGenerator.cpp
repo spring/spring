@@ -54,10 +54,5 @@ void CSimpleMapGenerator::GenerateMap()
 
 	const int2 gs = GetGridSize();
 	std::vector<float>& map = GetHeightMap();
-
-	for (int y = 0; y < gs.y; y++) {
-		for (int x = 0; x < gs.x; x++) {
-			map[y * gs.x + x] = 50.0f;
-		}
-	}
+	std::fill(map.begin(), map.end(), 50.0f);
 }
