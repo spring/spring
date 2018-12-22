@@ -385,6 +385,9 @@ const uint8_t* CBitmap::GetRawMem() const { return ((memIdx == size_t(-1))? null
 
 void CBitmap::Alloc(int w, int h, int c)
 {
+	if (!Empty())
+		texMemPool.Free(GetRawMem(), GetMemSize());
+
 	memIdx = texMemPool.AllocIdx((xsize = w) * (ysize = h) * (channels = c));
 	memset(GetRawMem(), 0, GetMemSize());
 }
@@ -392,6 +395,7 @@ void CBitmap::Alloc(int w, int h, int c)
 void CBitmap::AllocDummy(const SColor fill)
 {
 	compressed = false;
+
 	Alloc(1, 1, sizeof(SColor));
 	memcpy(GetRawMem(), &fill.r, sizeof(SColor));
 }
@@ -402,7 +406,9 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	SCOPED_TIMER("Misc::Bitmap::Load");
 	#endif
 
-	bool noAlpha = true;
+	bool isLoaded = false;
+	bool isValid  = false;
+	bool noAlpha  =  true;
 
 	const bool loadDDS = (FileSystem::GetExtension(filename) == "dds"); // always lower-case
 	const bool flipDDS = true; // default, also assumed by gl.TexRect
@@ -410,6 +416,7 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	const size_t curMemSize = GetMemSize();
 
 
+	channels = 4;
 	#ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
 	#endif
@@ -458,21 +465,18 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	compressed = loadDDS;
 	#endif
 
-	channels = 4;
-
 
 	CFileHandler file(filename);
+	std::vector<uint8_t> buffer;
 
 	if (!file.FileExists()) {
 		AllocDummy();
 		return false;
 	}
 
-	std::vector<uint8_t> buffer;
-
 	if (!file.IsBuffered()) {
-		buffer.resize(file.FileSize() + 2, 0);
-		file.Read(buffer.data(), file.FileSize());
+		buffer.resize(file.FileSize(), 0);
+		file.Read(buffer.data(), buffer.size());
 	} else {
 		// steal if file was loaded from VFS
 		buffer = std::move(file.GetBuffer());
@@ -482,7 +486,8 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 	{
 		std::lock_guard<spring::mutex> lck(texMemPool.GetMutex());
 
-		// IL does not vertically flip DDS images by default, unlike nv_dds
+		// do not preserve the image origin since IL does not
+		// vertically flip DDS images by default, unlike nv_dds
 		ilOriginFunc((loadDDS && flipDDS)? IL_ORIGIN_LOWER_LEFT: IL_ORIGIN_UPPER_LEFT);
 		ilEnable(IL_ORIGIN_SET);
 
@@ -494,41 +499,37 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 			// do not signal floating point exceptions in devil library
 			ScopedDisableFpuExceptions fe;
 
-			const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), buffer.size());
+			isLoaded = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), buffer.size());
+			isValid = (isLoaded && IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT)));
+			noAlpha = (isValid && (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4));
 
 			// FPU control word has to be restored as well
 			streflop::streflop_init<streflop::Simple>();
-
-			ilDisable(IL_ORIGIN_SET);
-
-			if (!success) {
-				AllocDummy();
-				return false;
-			}
 		}
 
-		{
-			if (!IsValidImageFormat(ilGetInteger(IL_IMAGE_FORMAT))) {
-				LOG_L(L_ERROR, "Invalid image format for %s: %d", filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
-				return false;
-			}
-		}
+		if (isValid) {
+			ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 
-		noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);
-		ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+			xsize = ilGetInteger(IL_IMAGE_WIDTH);
+			ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-		xsize = ilGetInteger(IL_IMAGE_WIDTH);
-		ysize = ilGetInteger(IL_IMAGE_HEIGHT);
-
-		{
 			texMemPool.FreeRaw(GetRawMem(), curMemSize);
 			memIdx = texMemPool.AllocIdxRaw(GetMemSize());
 
 			// ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, GetRawMem());
 			std::memcpy(GetRawMem(), ilGetData(), GetMemSize());
+		} else {
+			LOG_L(L_ERROR, "[BMP::%s] failed to load \"%s\" or invalid format %d", __func__, filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
 		}
 
+		ilDisable(IL_ORIGIN_SET);
 		ilDeleteImages(1, &imageID);
+	}
+
+	// has to be outside the mutex scope
+	if (!isValid) {
+		AllocDummy();
+		return false;
 	}
 
 	if (noAlpha) {
