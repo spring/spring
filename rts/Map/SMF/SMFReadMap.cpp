@@ -25,6 +25,7 @@
 #include "System/Threading/ThreadPool.h"
 #include "System/myMath.h"
 #include "System/SafeUtil.h"
+#include "System/StringHash.h"
 
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
