@@ -100,7 +100,6 @@ void CModInfo::Init(const std::string& modFileName)
 		description = md.GetDescription();
 	}
 
-	// initialize the parser
 	LuaParser parser("gamedata/modrules.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	parser.GetTable("Spring");
@@ -109,7 +108,7 @@ void CModInfo::Init(const std::string& modFileName)
 	parser.Execute();
 
 	if (!parser.IsValid())
-		LOG_L(L_ERROR, "Failed loading mod-rules, using defaults; error: %s", parser.GetErrorLog().c_str());
+		LOG_L(L_ERROR, "[ModInfo::%s] error \"%s\" loading mod-rules, using defaults", __func__, parser.GetErrorLog().c_str());
 
 	const LuaTable& root = parser.GetRoot();
 

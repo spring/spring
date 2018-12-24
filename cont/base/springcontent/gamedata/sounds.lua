@@ -1,7 +1,10 @@
---- Valid entries used by engine: IncomingChat, MultiSelect, MapPoint
---- other than that, you can give it any name and access it like before with filenames
 local Sounds = {
 	SoundItems = {
+		--[[
+		-- these four entries are played by the engine for corresponding events
+		-- the referenced .wav files are *not* supplied by base content, change
+		-- them if uncommenting an entry
+		-- any other name is free to use; sounds can also be referred to by file
 		IncomingChat = {
 			--- always play on the front speaker(s)
 			file = "sounds/beep4.wav",
@@ -13,12 +16,18 @@ local Sounds = {
 			in3d = "false",
 		},
 		MapPoint = {
-			--- respect where the point was set, but don't attuenuate in distace
-			--- also, when moving the camera, don't pitch it
+			--- respect where point was set, but don't attenuate over distance
+			--- also, when moving the camera, don't apply any pitch shift
 			file = "sounds/beep6.wav",
 			rolloff = 0,
 			dopplerscale = 0,
 		},
+		FailedCommand = {
+			file = "sounds/beep3.wav",
+		},
+		--]]
+
+
 		ExampleSound = {
 			--- some things you can do with this file
 
@@ -43,7 +52,7 @@ local Sounds = {
 			--- dopplerscale = 0 completely disables the effect
 			dopplerscale = 1,
 
-			--- when lots of sounds are played, sounds with lwoer priority are more likely to get cut off
+			--- when lots of sounds are played, sounds with lower priority are more likely to get cut off
 			--- priority > 0 will never be cut of (priorities can be negative)
 			priority = 0,
 
@@ -62,9 +71,6 @@ local Sounds = {
 
 			--- you can loop it for X miliseconds
 			looptime = 0,
-		},
-		FailedCommand = {
-			file = "sounds/beep3.wav",
 		},
 
 		default = {
