@@ -24,6 +24,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ContainerUtil.h"
+#include "System/TimeProfiler.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/StringUtil.h"
 
@@ -65,9 +66,7 @@ LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes
 }
 
 LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced, const boolean& setup)
-	: fileName("")
-	, fileModes("")
-	, textChunk(_textChunk)
+	: textChunk(_textChunk)
 	, accessModes(_accessModes)
 
 	, D(false, false)
@@ -196,12 +195,11 @@ void LuaParser::SetupEnv(bool isSyncedCtxt, bool isDefsParser)
 bool LuaParser::Execute()
 {
 	if (!IsValid()) {
-		errorLog = "could not initialize LUA library";
+		errorLog = "could not initialize Lua library";
 		return false;
 	}
 
-	rootRef = LUA_NOREF;
-
+	assert(rootRef == LUA_NOREF);
 	assert(initDepth == 0);
 	initDepth = -1;
 
@@ -213,26 +211,30 @@ bool LuaParser::Execute()
 		codeLabel = "text chunk";
 	}
 	else if (!fileName.empty()) {
-		codeLabel = fileName;
-		CFileHandler fh(fileName, fileModes);
+		CFileHandler fh(codeLabel = fileName, fileModes);
+
 		if (!fh.LoadStringData(code)) {
 			errorLog = "could not open file: " + fileName;
+
 			LUA_CLOSE(&L);
 			return false;
 		}
 	}
 	else {
 		errorLog = "invalid format or empty file";
+
 		LUA_CLOSE(&L);
 		return false;
 	}
 
-	int error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+	char errorBuf[4096] = {0};
+	int errorNum = 0;
 
-	if (error != 0) {
-		errorLog = lua_tostring(L, -1);
-		LOG_L(L_ERROR, "%i, %s, %s", error, codeLabel.c_str(), errorLog.c_str());
+	if ((errorNum = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str())) != 0) {
+		SNPRINTF(errorBuf, sizeof(errorBuf), "[loadbuf] error %d (\"%s\") in %s", errorNum, lua_tostring(L, -1), codeLabel.c_str());
 		LUA_CLOSE(&L);
+
+		errorLog = errorBuf;
 		return false;
 	}
 
@@ -242,21 +244,33 @@ bool LuaParser::Execute()
 
 		// do not signal floating point exceptions in user Lua code
 		ScopedDisableFpuExceptions fe;
-		error = lua_pcall(L, 0, 1, 0);
 
-		if (error != 0) {
-			errorLog = lua_tostring(L, -1);
-			LOG_L(L_ERROR, "%i, %s, %s", error, fileName.c_str(), errorLog.c_str());
+		if ((errorNum = lua_pcall(L, 0, 1, 0)) != 0) {
+			SNPRINTF(errorBuf, sizeof(errorBuf), "[pcall] error %d (\"%s\") in %s", errorNum, lua_tostring(L, -1), fileName.c_str());
 			LUA_CLOSE(&L);
+
+			errorLog = errorBuf;
 			return false;
 		}
 
+		#if 0
 		if (!lua_istable(L, 1)) {
-			errorLog = "missing return table from " + fileName;
-			LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
+			errorLog = "no return table from " + fileName;
+
 			LUA_CLOSE(&L);
 			return false;
 		}
+		#else
+		// make not returning a table (which may or may not be intentional)
+		// equivalent to returning an empty one; leave it to callers whether
+		// they consider this an error
+		if (!lua_istable(L, 1)) {
+			lua_pop(L, lua_gettop(L));
+			lua_newtable(L);
+
+			errorLog = "no return table from " + fileName;
+		}
+		#endif
 
 		if (lowerKeys)
 			LuaUtils::LowerKeys(L, 1);
@@ -266,8 +280,8 @@ bool LuaParser::Execute()
 
 	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	lua_settop(L, 0);
-	valid = true;
-	return true;
+
+	return (valid = true);
 }
 
 
@@ -473,24 +487,27 @@ void LuaParser::AddString(int key, const std::string& value)
 
 int LuaParser::TimeCheck(lua_State* L)
 {
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
 	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2))
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
 
-	const std::string name = lua_tostring(L, 1);
-	lua_remove(L, 1);
+	{
+		ScopedOnceTimer timer(lua_tostring(L, 1));
 
-	const spring_time startTime = spring_gettime();
+		lua_remove(L, 1);
 
-	if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
-		const std::string errmsg = lua_tostring(L, -1);
-		lua_pop(L, 1);
-		luaL_error(L, errmsg.c_str());
+		if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
+			const std::string errmsg = lua_tostring(L, -1);
+
+			lua_pop(L, 1);
+			luaL_error(L, errmsg.c_str());
+		}
 	}
 
-	const spring_time endTime = spring_gettime();
-
-	LOG("%s %ldms", name.c_str(), (long int) spring_tomsecs(endTime - startTime));
 	return lua_gettop(L);
+	#else
+	return 0;
+	#endif
 }
 
 
