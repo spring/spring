@@ -209,7 +209,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(ud->myGravity), mapInfo->map.gravity, ud->myGravity == 0.0f);
 
-	ownerRadius = owner->CalcFootPrintRadius(1.0f);
+	ownerRadius = md->CalcFootPrintRadius(1.0f);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -1111,7 +1111,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	// avoider always uses its never-rotated MoveDef footprint
 	// note: should increase radius for smaller turnAccel values
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
-	const float avoiderRadius = avoider->CalcFootPrintRadius(1.0f);
+	const float avoiderRadius = avoiderMD->CalcFootPrintRadius(1.0f);
 
 	QuadFieldQuery qfQuery;
 	quadField.GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
@@ -1141,7 +1141,9 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 		// use the avoidee's MoveDef footprint as radius if it is mobile
 		// use the avoidee's Unit (not UnitDef) footprint as radius otherwise
-		const float avoideeRadius = avoidee->CalcFootPrintRadius(1.0f);
+		const float avoideeRadius = avoideeMobile?
+			avoideeMD->CalcFootPrintRadius(1.0f):
+			avoidee->CalcFootPrintRadius(1.0f);
 		const float avoidanceRadiusSum = avoiderRadius + avoideeRadius;
 		const float avoidanceMassSum = avoider->mass + avoidee->mass;
 		const float avoideeMassScale = avoideeMobile? (avoidee->mass / avoidanceMassSum): 1.0f;
@@ -1625,18 +1627,22 @@ void CGroundMoveType::HandleObjectCollisions()
 		const UnitDef* colliderUD = collider->unitDef;
 		const MoveDef* colliderMD = collider->moveDef;
 
-		const float colliderSpeed = collider->speed.w;
 		// NOTE:
-		//   We are considering a circle _maximally bounded_ by the footprint
-		//   rather than a circle _minimally bounding_ the footprint, assuming
-		//   square shape.
+		//   use the collider's MoveDef footprint as radius since it is
+		//   always mobile (its UnitDef footprint size may be different)
+		//
+		//   0.75 * math::sqrt(2) ~= 1, so radius is always that of a circle
+		//   _maximally bounded_ by the footprint rather than a circle
+		//   _minimally bounding_ the footprint (assuming square shape)
 		//   In case of non-square footprints we can later apply Separable Axes
 		//   theorem SAT
-		const float colliderRadius = collider->CalcMinimalBoundingFootPrintRadius();
+		//
+		const float colliderSpeed = collider->speed.w;
+		const float colliderRadius = colliderMD->CalcMinimalBoundingFootPrintRadius();
 		// NOTE:
 		//   colliderStretch = 0 for perfect squared footprints
 		//   colliderStretch = 1 for impossible line shaped footprints
-		const float colliderStretch = collider->CalcFootPrintStretchingFactor();
+		const float colliderStretch = colliderMD->CalcFootPrintStretchingFactor();
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderStretch, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderStretch, colliderUD, colliderMD);
@@ -1856,11 +1862,44 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 float getSATdist(
 	float3 dir,
 	float3 separation,
-	CSolidObject* visitor
+	float xsize,
+	float zsize,
+	const CSolidObject* collidee
 ) {
 	return   math::fabs(dir.dot(separation))
-	       - math::fabs(visitor->zsize * 0.5f * SQUARE_SIZE * dir.dot(visitor->frontdir))
-	       - math::fabs(visitor->xsize * 0.5f * SQUARE_SIZE * dir.dot(visitor->rightdir));
+	       - math::fabs(zsize * dir.dot(collidee->frontdir))
+	       - math::fabs(xsize * dir.dot(collidee->rightdir));
+}
+
+bool checkSAT(
+	float3 separation,
+	const CSolidObject* collider,
+	const MoveDef* colliderMD,
+	const CSolidObject* collidee,
+	const MoveDef* collideeMD
+) {
+	float colliderXSize, colliderZSize, collideeXSize, collideeZSize;
+	if (colliderMD) {
+		colliderXSize = colliderMD->xsize * 0.5f * SQUARE_SIZE;
+		colliderZSize = colliderMD->zsize * 0.5f * SQUARE_SIZE;
+	}
+	else {
+		colliderXSize = collider->xsize * 0.5f * SQUARE_SIZE;
+		colliderZSize = collider->zsize * 0.5f * SQUARE_SIZE;
+	}
+	if (collideeMD) {
+		collideeXSize = collideeMD->xsize * 0.5f * SQUARE_SIZE;
+		collideeZSize = collideeMD->zsize * 0.5f * SQUARE_SIZE;
+	}
+	else {
+		collideeXSize = collidee->xsize * 0.5f * SQUARE_SIZE;
+		collideeZSize = collidee->zsize * 0.5f * SQUARE_SIZE;
+	}
+	// For efficiency purposes, we are returning treu when there is no collision
+	return (getSATdist(collider->frontdir, separation, collideeXSize, collideeZSize, collidee) > colliderZSize) ||
+	       (getSATdist(collider->rightdir, separation, collideeXSize, collideeZSize, collidee) > colliderXSize) ||
+	       (getSATdist(collidee->frontdir, separation, colliderXSize, colliderZSize, collider) > collideeZSize) ||
+	       (getSATdist(collidee->rightdir, separation, colliderXSize, colliderZSize, collider) > collideeZSize);
 }
 
 void CGroundMoveType::HandleUnitCollisions(
@@ -1922,7 +1961,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
 		const float collideeSpeed = collidee->speed.w;
-		const float collideeRadius = collidee->CalcMinimalBoundingFootPrintRadius();
+		const float collideeRadius = collideeMobile?
+			collideeMD->CalcMinimalBoundingFootPrintRadius():
+			collidee->CalcMinimalBoundingFootPrintRadius();
 
 		const float3 separationVector   = collider->pos - collidee->pos;
 		const float separationMinDistSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -1933,11 +1974,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		// we are applying Separable Axes Theorem (SAT), just in case the
 		// mod/game allows that, and at least one of the colliders requires it.
 		if (modInfo.useSATCollisionDetection &&
-			((colliderStretch > 0.1f) || (collidee->CalcFootPrintStretchingFactor() > 0.1f))) {
-			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
+			((colliderStretch > 0.1f) || (collideeMD->CalcFootPrintStretchingFactor() > 0.1f))) {
+			if (checkSAT(separationVector, collider, colliderMD, collidee, collideeMD))
 				continue;
 		}
 
@@ -2008,11 +2046,11 @@ void CGroundMoveType::HandleUnitCollisions(
 			(colliderRadius * colliderRelRadius + collideeRadius * collideeRelRadius):
 			(colliderRadius                     + collideeRadius                    );
 
-		const float  sepDistance  = separationVector.Length() + 0.1f;
+		const float  sepDistance = separationVector.Length() + 0.1f;
 		const float  penDistance = std::max(collisionRadiusSum - sepDistance, 1.0f);
 		const float  sepResponse = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
 
-		const float3 sepDirection = (separationVector / sepDistance);
+		const float3 sepDirection   = (separationVector / sepDistance);
 		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
 		const float
@@ -2094,10 +2132,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		// mod/game allows that, and at least one of the colliders requires it.
 		if (modInfo.useSATCollisionDetection &&
 			((colliderStretch > 0.1f) || (collidee->CalcFootPrintStretchingFactor() > 0.1f))) {
-			if ((getSATdist(collider->frontdir, separationVector, collidee) > collider->zsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collider->rightdir, separationVector, collidee) > collider->xsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collidee->frontdir, separationVector, collider) > collidee->zsize * 0.5f * SQUARE_SIZE) ||
-				(getSATdist(collidee->rightdir, separationVector, collider) > collidee->xsize * 0.5f * SQUARE_SIZE))
+			if (checkSAT(separationVector, collider, nullptr, collidee, nullptr))
 				continue;
 		}
 

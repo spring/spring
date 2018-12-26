@@ -48,7 +48,10 @@ struct MoveDef {
 	// aircraft and buildings defer to UnitDef::floatOnWater
 	bool FloatOnWater() const { return (speedModClass == MoveDef::Hover || speedModClass == MoveDef::Ship); }
 
+	float CalcFootPrintRadius(float scale) const;
+	float CalcMinimalBoundingFootPrintRadius() const;
 	float GetDepthMod(float height) const;
+	float CalcFootPrintStretchingFactor() const;
 
 	unsigned int GetCheckSum() const;
 
