@@ -86,9 +86,8 @@ CPlasmaRepulser::~CPlasmaRepulser()
 
 void CPlasmaRepulser::Init()
 {
-	radius = weaponDef->shieldRadius;
-	sqRadius = radius * radius;
-	curPower = mix(99999999999.0f, weaponDef->shieldStartingPower, weaponDef->shieldPower != 0.0f);
+	sqRadius = Square(radius = weaponDef->shieldRadius);
+	curPower = mix(10.0f * 1000.0f * 1000.0f, weaponDef->shieldStartingPower, weaponDef->shieldPower != 0.0f);
 
 	collisionVolume.InitSphere(radius);
 
@@ -252,9 +251,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPo
 	if (teamHandler.Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
-	if (weaponDef->shieldPower > 0.0f)
-		curPower -= (shieldDamage * damageMultiplier);
-
+	curPower -= (shieldDamage * damageMultiplier * (weaponDef->shieldPower > 0.0f));
 	return true;
 }
 
