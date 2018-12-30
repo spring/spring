@@ -164,6 +164,7 @@
 	SETUP_EVENT(AllowUnitTransportUnload, MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitCloak,           MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowUnitDecloak,         MANAGED_BIT | CONTROL_BIT)
+	SETUP_EVENT(AllowUnitKamikaze,        MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowFeatureCreation,     MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowFeatureBuildStep,    MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowResourceLevel,       MANAGED_BIT | CONTROL_BIT)

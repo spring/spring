@@ -1124,44 +1124,10 @@ void CUnit::SlowUpdate()
 	}
 
 	SlowUpdateCloak(false);
+	SlowUpdateKamikaze(fireState >= FIRESTATE_FIREATWILL);
 
-	if (unitDef->canKamikaze) {
-		if (fireState >= FIRESTATE_FIREATWILL) {
-			std::vector<int> nearbyUnits;
-			if (unitDef->kamikazeUseLOS) {
-				CGameHelper::GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
-			} else {
-				CGameHelper::GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
-			}
-
-			for (auto it = nearbyUnits.cbegin(); it != nearbyUnits.cend(); ++it) {
-				const CUnit* victim = unitHandler.GetUnitUnsafe(*it);
-				const float3 dif = pos - victim->pos;
-
-				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
-					if (victim->speed.dot(dif) <= 0.0f) {
-						// self destruct when target starts moving away from us, should maximize damage
-						KillUnit(nullptr, true, false);
-						return;
-					}
-				}
-			}
-		}
-
-		if (
-			   (curTarget.type == Target_Unit && (curTarget.unit->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
-			|| (curTarget.type == Target_Pos  && (curTarget.groundPos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
-		) {
-			KillUnit(nullptr, true, false);
-			return;
-		}
-	}
-
-	if (moveType->progressState == AMoveType::Active) {
-		if (seismicSignature && !GetTransporter()) {
-			DoSeismicPing((int)seismicSignature);
-		}
-	}
+	if (moveType->progressState == AMoveType::Active)
+		DoSeismicPing(seismicSignature);
 
 	CalculateTerrainType();
 	UpdateTerrainType();
@@ -1184,15 +1150,56 @@ void CUnit::SlowUpdateWeapons()
 	}
 }
 
-
-bool CUnit::HaveTarget() const
+void CUnit::SlowUpdateKamikaze(bool scanForTargets)
 {
-	return (curTarget.type != Target_None);
-//	for (const CWeapon* w: weapons) {
-//		if (w->HaveTarget())
-//			return true;
-//	}
-//	return false;
+	if (!unitDef->canKamikaze)
+		return;
+
+	if (scanForTargets) {
+		// if on FAW, actively look for targets close to us
+		std::vector<int> targetUnits;
+
+		if (unitDef->kamikazeUseLOS) {
+			CGameHelper::GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, targetUnits);
+		} else {
+			CGameHelper::GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, targetUnits);
+		}
+
+		for (int targetID: targetUnits) {
+			const CUnit* target = unitHandler.GetUnitUnsafe(targetID);
+
+			if (pos.SqDistance(target->pos) >= Square(unitDef->kamikazeDist))
+				continue;
+
+			if (!eventHandler.AllowUnitKamikaze(this, target, target->speed.dot(pos - target->pos) > 0.0f))
+				continue;
+
+			// (by default) self-destruct when target starts moving away from us, should maximize damage
+			KillUnit(nullptr, true, false);
+			return;
+		}
+	}
+
+	bool near = false;
+	bool kill = false;
+
+	switch (curTarget.type) {
+		case Target_Unit: {
+			near = (pos.SqDistance(curTarget.unit->pos) < Square(unitDef->kamikazeDist));
+			kill = (near && eventHandler.AllowUnitKamikaze(this, curTarget.unit, near));
+		} break;
+		case Target_Pos: {
+			near = (pos.SqDistance(curTarget.groundPos) < Square(unitDef->kamikazeDist));
+			kill = (near && eventHandler.AllowUnitKamikaze(this, this, near)); // weird
+		} break;
+		default: {
+		} break;
+	}
+
+	if (!kill)
+		return;
+
+	KillUnit(nullptr, true, false);
 }
 
 
@@ -1493,6 +1500,11 @@ void CUnit::SetMass(float newMass)
 
 void CUnit::DoSeismicPing(float pingSize)
 {
+	if (GetTransporter() != nullptr)
+		return;
+	if (pingSize <= 0.0f)
+		return;
+
 	const float rx = 0.5f - gsRNG.NextFloat();
 	const float rz = 0.5f - gsRNG.NextFloat();
 
@@ -2425,7 +2437,7 @@ void CUnit::TempHoldFire(int cmdID)
 		return;
 
 	// block the SlowUpdateWeapons cycle
-	dontFire = true;
+	SetHoldFire(true);
 
 	// clear current target (if any)
 	AttackUnit(nullptr, false, false);

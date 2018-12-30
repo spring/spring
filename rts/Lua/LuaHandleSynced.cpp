@@ -532,9 +532,11 @@ bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool 
 }
 
 
-bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
-                                  const CUnit* builder, const BuildInfo* buildInfo)
-{
+bool CSyncedLuaHandle::AllowUnitCreation(
+	const UnitDef* unitDef,
+	const CUnit* builder,
+	const BuildInfo* buildInfo
+) {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 9, __func__);
 
@@ -591,8 +593,7 @@ bool CSyncedLuaHandle::AllowUnitTransfer(const CUnit* unit, int newTeam, bool ca
 }
 
 
-bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
-                                   const CUnit* unit, float part)
+bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder, const CUnit* unit, float part)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __func__);
@@ -713,7 +714,7 @@ bool CSyncedLuaHandle::AllowUnitTransportUnload(
 bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 4, __func__);
+	luaL_checkstack(L, 2 + 2, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
@@ -740,7 +741,7 @@ bool CSyncedLuaHandle::AllowUnitCloak(const CUnit* unit, const CUnit* enemy)
 bool CSyncedLuaHandle::AllowUnitDecloak(const CUnit* unit, const CSolidObject* object, const CWeapon* weapon)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 5, __func__);
+	luaL_checkstack(L, 2 + 3, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
@@ -767,6 +768,27 @@ bool CSyncedLuaHandle::AllowUnitDecloak(const CUnit* unit, const CSolidObject* o
 	assert(lua_isboolean(L, -1));
 
 	const bool allow = lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return allow;
+}
+
+bool CSyncedLuaHandle::AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 2, __func__);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return allowed;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, target->id);
+
+	if (!RunCallIn(L, cmdStr, 2, 1))
+		return true;
+
+	const bool allow = luaL_optboolean(L, -1, allowed);
 	lua_pop(L, 1);
 	return allow;
 }

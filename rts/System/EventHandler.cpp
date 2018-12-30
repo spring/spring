@@ -292,6 +292,11 @@ bool CEventHandler::AllowUnitDecloak(const CUnit* unit, const CSolidObject* obje
 	return ControlIterateDefTrue(listAllowUnitDecloak, &CEventClient::AllowUnitDecloak, unit, object, weapon);
 }
 
+bool CEventHandler::AllowUnitKamikaze(const CUnit* unit, const CUnit* target, bool allowed)
+{
+	return ControlIterateDefTrue(listAllowUnitKamikaze, &CEventClient::AllowUnitKamikaze, unit, target, allowed);
+}
+
 
 bool CEventHandler::AllowFeatureCreation(const FeatureDef* featureDef, int allyTeamID, const float3& pos)
 {

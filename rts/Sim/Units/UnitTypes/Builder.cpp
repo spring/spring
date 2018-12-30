@@ -690,7 +690,7 @@ void CBuilder::StopBuild(bool callScript)
 	if (callScript)
 		script->StopBuilding();
 
-	ReleaseTempHoldFire();
+	SetHoldFire(false);
 }
 
 

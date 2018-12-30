@@ -62,9 +62,8 @@ public:
 	virtual void PreInit(const UnitLoadParams& params);
 	virtual void PostInit(const CUnit* builder);
 
-	virtual void SlowUpdate();
-	virtual void SlowUpdateWeapons();
 	virtual void Update();
+	virtual void SlowUpdate();
 
 	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
@@ -163,7 +162,10 @@ public:
 	unsigned short CalcLosStatus(int allyTeam);
 	void UpdateLosStatus(int allyTeam);
 
-	void SlowUpdateCloak(bool);
+	void SlowUpdateWeapons();
+	void SlowUpdateKamikaze(bool scanForTargets);
+	void SlowUpdateCloak(bool stunCheck);
+
 	bool ScriptCloak();
 	bool ScriptDecloak(const CSolidObject* object, const CWeapon* weapon);
 	bool GetNewCloakState(bool checkStun);
@@ -188,7 +190,7 @@ public:
 	void SetLastAttacker(CUnit* attacker);
 
 	void SetTransporter(CUnit* trans) { transporter = trans; }
-	inline CUnit* GetTransporter() const { return transporter; }
+	CUnit* GetTransporter() const { return transporter; }
 
 	bool AttachUnit(CUnit* unit, int piece, bool force = false);
 	bool CanTransport(const CUnit* unit) const;
@@ -208,8 +210,8 @@ public:
 	virtual void IncomingMissile(CMissileProjectile* missile);
 
 	void TempHoldFire(int cmdID);
-	void ReleaseTempHoldFire() { dontFire = false; }
-	bool HaveTarget() const;
+	void SetHoldFire(bool b) { dontFire = b; }
+	bool HaveTarget() const { return (curTarget.type != Target_None); }
 
 	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);

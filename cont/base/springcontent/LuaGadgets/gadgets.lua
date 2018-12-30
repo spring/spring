@@ -1215,6 +1215,17 @@ function gadgetHandler:AllowUnitDecloak(unitID, objectID, weaponID)
 end
 
 
+function gadgetHandler:AllowUnitKamikaze(unitID, targetID)
+  for _,g in r_ipairs(self.AllowUnitKamikazeList) do
+    if (not g:AllowUnitKamikaze(unitID, targetID)) then
+      return false
+    end
+  end
+
+  return true
+end
+
+
 function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam, featureID, featureDefID, part)
   for _,g in r_ipairs(self.AllowFeatureBuildStepList) do
     if (not g:AllowFeatureBuildStep(builderID, builderTeam, featureID, featureDefID, part)) then
