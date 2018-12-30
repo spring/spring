@@ -66,6 +66,8 @@
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
+#undef near
+
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
