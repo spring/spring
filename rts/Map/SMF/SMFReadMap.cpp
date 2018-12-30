@@ -305,8 +305,9 @@ void CSMFReadMap::CreateGrassTex()
 	CBitmap grassShadingTexBM;
 
 	if (!grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName))
-		grassShadingTexBM.AllocDummy();
+		return;
 
+	// override minimap
 	grassShadingTex.SetRawTexID(grassShadingTexBM.CreateMipMapTexture());
 	grassShadingTex.SetRawSize(int2(grassShadingTexBM.xsize, grassShadingTexBM.ysize));
 }
@@ -873,7 +874,6 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 	if (bmInfo->width <= 0)
 		return nullptr;
 
-	char errMsg[512];
 	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 
 	CBitmap infomapBM;
@@ -898,13 +898,11 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 			return data;
 		}
 
-		snprintf(errMsg, sizeof(errMsg), "[SMFReadMap::%s] invalid dimensions for override-texture \"%s\": %ix%i != %ix%i",
+		LOG_L(L_WARNING, "[SMFReadMap::%s] invalid dimensions for override-texture \"%s\": %ix%i != %ix%i",
 			__func__, texName.c_str(),
 			infomapBM.xsize, infomapBM.ysize,
 			bmInfo->width, bmInfo->height
 		);
-
-		throw content_error(errMsg);
 	}
 
 	// get data from map itself
