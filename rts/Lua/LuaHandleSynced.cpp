@@ -1005,8 +1005,8 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 {
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 8, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1023,7 +1023,7 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 	lua_pushnumber(L, build->team);
 
 	// call the function
-	if (!RunCallInTraceback(L, cmdStr, 6, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 6, 1, dbgTrace.GetErrFuncIdx(), false))
 		return false;
 
 	// get the results
@@ -1054,9 +1054,10 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 ) {
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 2 + 10, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -1087,7 +1088,7 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	//   RunCallInTraceback removes the error-handler by default
 	//   this has to be disabled when using ScopedDebugTraceBack
 	//   or it would mess up the stack
-	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, dbgTrace.GetErrFuncIdx(), false))
 		return false;
 
 	assert(newDamage != nullptr);
@@ -1127,8 +1128,8 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 9 + 2, __func__);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
@@ -1154,7 +1155,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	}
 
 	// call the routine
-	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, dbgTrace.GetErrFuncIdx(), false))
 		return false;
 
 	if (lua_isnumber(L, -2)) {
@@ -1189,9 +1190,10 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	assert((projectile != nullptr) || ((beamEmitter != nullptr) && (beamCarrier != nullptr)));
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 7 + 1, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -1224,7 +1226,7 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	lua_pushnumber(L, hitPos.z);
 
 	// call the routine
-	if (!RunCallInTraceback(L, cmdStr, 13, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 13, 1, dbgTrace.GetErrFuncIdx(), false))
 		return false;
 
 	// pop the return-value; must be true or false
@@ -1243,9 +1245,10 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 
 	LUA_CALL_IN_CHECK(L, -1);
 	luaL_checkstack(L, 2 + 3 + 1, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
@@ -1253,7 +1256,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 	lua_pushnumber(L, attackerWeaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, attackerWeaponDefID);
 
-	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 3, 1, dbgTrace.GetErrFuncIdx(), false))
 		return ret;
 
 	ret = lua_toint(L, -1);
@@ -1277,15 +1280,20 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2 + 5 + 2, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
+	// casts are only here to preserve -1's passed from *CAI as floats
+	const int siTargetID = static_cast<int>(targetID);
+	const int siAttackerWN = static_cast<int>(attackerWeaponNum);
+
 	lua_pushnumber(L, attackerID);
-	lua_pushnumber(L, targetID);
-	lua_pushnumber(L, attackerWeaponNum + LUA_WEAPON_BASE_INDEX);
+	lua_pushnumber(L, siTargetID);
+	lua_pushnumber(L, siAttackerWN + LUA_WEAPON_BASE_INDEX * (siAttackerWN >= 0));
 	lua_pushnumber(L, attackerWeaponDefID);
 
 	if (targetPriority != nullptr) {
@@ -1296,7 +1304,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 		lua_pushnil(L);
 	}
 
-	if (!RunCallInTraceback(L, cmdStr, 5, 2, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 5, 2, dbgTrace.GetErrFuncIdx(), false))
 		return ret;
 
 	if (targetPriority != nullptr)
@@ -1321,9 +1329,10 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2 + 3 + 1, __func__);
-	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
+	const LuaUtils::ScopedDebugTraceBack dbgTrace(L);
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
@@ -1331,7 +1340,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 	lua_pushnumber(L, interceptorWeapon->weaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, interceptorTarget->id);
 
-	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 3, 1, dbgTrace.GetErrFuncIdx(), false))
 		return ret;
 
 	ret = luaL_optboolean(L, -1, false);
