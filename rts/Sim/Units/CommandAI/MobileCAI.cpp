@@ -14,6 +14,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -1029,6 +1030,10 @@ void CMobileCAI::NonMoving()
 			buggerVec = commandQue[j].GetPos(0) - commandQue[i].GetPos(0);
 			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.25f;
 		}
+
+		// check if buggerPos is (still) reachable
+		if (!owner->moveDef->TestMoveSquare(nullptr, buggerPos, buggerVec))
+			buggerPos = -OnesVector;
 	}
 
 	if (buggerPos.x == -1.0f) {
