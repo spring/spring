@@ -537,6 +537,8 @@ bool CGroundMoveType::FollowPath()
 		} else {
 			if (atGoal)
 				Arrived(false);
+			else
+				ReRequestPath(false);
 		}
 
 
@@ -1698,6 +1700,9 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		 (collider->   speed.dot(separationVector) > 0.0f));
 	#endif
 
+	const float3& pos = collider->pos;
+	const float3& vel = collider->speed;
+
 	float3 strafeVec;
 	float3 bounceVec;
 	float3 summedVec;
@@ -1705,9 +1710,6 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 	if (checkYardMap || checkTerrain) {
 		float3 sqrSumPosition; // .y is always 0
 		float2 sqrPenDistance; // .x = sum, .y = count
-
-		const float3& pos = collider->pos;
-		const float3& vel = collider->speed;
 
 		const float3 rightDir2D = (collider->rightdir * XZVector).SafeNormalize();
 		const float3 speedDir2D = (collider->speed    * XZVector).SafeNormalize();
@@ -1824,7 +1826,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		const float  colRadiusSum = colliderRadius + collideeRadius;
 		const float   sepDistance = separationVector.Length() + 0.1f;
 		const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
-		const float  colSlideSign = -Sign(collidee->pos.dot(collider->rightdir) - collider->pos.dot(collider->rightdir));
+		const float  colSlideSign = -Sign(collidee->pos.dot(collider->rightdir) - pos.dot(collider->rightdir));
 
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 - checkYardMap * false);
 		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap *  true);
@@ -1833,7 +1835,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		bounceVec = (   separationVector / sepDistance) * bounceScale;
 		summedVec = strafeVec + bounceVec;
 
-		if (colliderMD->TestMoveSquare(collider, collider->pos + summedVec, collider->speed, true, true, true)) {
+		if (colliderMD->TestMoveSquare(collider, pos + summedVec, collider->speed, true, true, true)) {
 			collider->Move(summedVec, true);
 
 			currWayPoint += summedVec;
@@ -1845,7 +1847,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 			// this means deltaSpeed will be non-zero if stuck on an impassable square and hence
 			// the new speedvector which is constructed from deltaSpeed --> we would simply keep
 			// moving forward through obstacles if not counteracted by this
-			collider->Move((oldPos - collider->pos) * (collider->frontdir.dot(separationVector) < 0.25f), true);
+			collider->Move((oldPos - pos) + summedVec * 0.25f * (collider->frontdir.dot(separationVector) < 0.25f), true);
 		}
 
 		// same here
