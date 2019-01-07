@@ -18,29 +18,30 @@ public:
 	NullSound() {}
 	virtual ~NullSound() {}
 
-	bool HasSoundItem(const std::string& name) const { return false; }
-	size_t GetSoundId(const std::string& name) { return 0; }
+	bool HasSoundItem(const std::string& name) const override { return false; }
+	size_t GetDefSoundId(const std::string& name) override { return 0; }
+	size_t GetSoundId(const std::string& name) override { return 0; }
 
-	SoundItem* GetSoundItem(size_t id) { return nullptr; }
-	CSoundSource* GetNextBestSource(bool lock = true) { return nullptr; }
+	SoundItem* GetSoundItem(size_t id) override { return nullptr; }
+	CSoundSource* GetNextBestSource(bool lock = true) override { return nullptr; }
 
-	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) {}
-	void NewFrame() {}
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) override {}
+	void NewFrame() override {}
 
-	void ConfigNotify(const std::string& key, const std::string& value) {}
-	void PitchAdjust(const float newPitch) {}
+	void ConfigNotify(const std::string& key, const std::string& value) override {}
+	void PitchAdjust(const float newPitch) override {}
 
-	bool Mute() { return true; }
-	bool IsMuted() const { return true; }
+	bool Mute() override { return true; }
+	bool IsMuted() const override { return true; }
 
-	void Iconified(bool state) {}
+	void Iconified(bool state) override {}
 
-	void PrintDebugInfo();
-	bool SoundThreadQuit() const { return false; }
-	bool CanLoadSoundDefs() const { return true; }
+	void PrintDebugInfo() override;
+	bool SoundThreadQuit() const override { return false; }
+	bool CanLoadSoundDefs() const override { return true; }
 	bool LoadSoundDefsImpl(LuaParser* defsParser) { return false; }
 
-	const float3& GetListenerPos() const { return ZeroVector; }
+	const float3& GetListenerPos() const override { return ZeroVector; }
 };
 
 #endif // _NULL_SOUND_H_

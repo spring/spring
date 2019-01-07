@@ -513,7 +513,7 @@ void CGame::LoadDefs(LuaParser* defsParser)
 		soundDefsParser.EndTable();
 
 		sound->LoadSoundDefs(&soundDefsParser);
-		chatSound = sound->GetSoundId("IncomingChat");
+		chatSound = sound->GetDefSoundId("IncomingChat");
 	}
 
 	LEAVE_SYNCED_CODE();

@@ -50,21 +50,6 @@ spring::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: curDevice(nullptr)
-	, curContext(nullptr)
-	, sdlDeviceID(0)
-
-	, masterVolume(0.0f)
-
-	, pitchAdjustMode(0)
-	, frameSize(-1)
-
-	, listenerNeedsUpdate(false)
-	, mute(false)
-	, appIsIconified(false)
-
-	, soundThreadQuit(false)
-	, canLoadDefs(false)
 {
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
@@ -89,10 +74,10 @@ void CSound::Init()
 		pitchAdjustMode = configHandler->GetInt("PitchAdjust");
 		frameSize = -1;
 
-		listenerNeedsUpdate = false;
 		mute = false;
 		appIsIconified = false;
 
+		updateListener = false;
 		soundThreadQuit = false;
 		canLoadDefs = false;
 	}
@@ -173,6 +158,16 @@ bool CSound::HasSoundItem(const std::string& name) const
 	return (soundItemDefsMap.find(StringToLower(name)) != soundItemDefsMap.end());
 }
 
+
+size_t CSound::GetDefSoundId(const std::string& name)
+{
+	// only attempt to load if sounds.lua has an entry for this sound
+	if (!HasSoundItem(name))
+		return 0;
+
+	return (GetSoundId(name));
+}
+
 size_t CSound::GetSoundId(const std::string& name)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
@@ -180,17 +175,17 @@ size_t CSound::GetSoundId(const std::string& name)
 	if (soundSources.empty())
 		return 0;
 
-	const auto it = soundMap.find(name);
-	if (it != soundMap.end())
-		return it->second;
+	const auto soundMapIt = soundMap.find(name);
+	if (soundMapIt != soundMap.end())
+		return soundMapIt->second;
 
 	const auto itemDefIt = soundItemDefsMap.find(StringToLower(name));
 
 	if (itemDefIt != soundItemDefsMap.end())
 		return MakeItemFromDef(itemDefIt->second);
 
+	// name does not match any sounds.lua item, interpret as raw file reference
 	if (LoadSoundBuffer(name) > 0) {
-		// maybe raw filename?
 		SoundItemNameMap temp = defaultItemNameMap;
 		temp["file"] = name;
 		return MakeItemFromDef(temp);
@@ -199,6 +194,7 @@ size_t CSound::GetSoundId(const std::string& name)
 	LOG_L(L_ERROR, "[Sound::%s] could not find sound \"%s\"", __func__, name.c_str());
 	return 0;
 }
+
 
 SoundItem* CSound::GetSoundItem(size_t id) {
 	// id==0 is a special id and invalid
@@ -705,23 +701,14 @@ size_t CSound::MakeItemFromDef(const SoundItemNameMap& itemDef)
 	return itemID;
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup)
-{
-	myPos  = campos;
-	camDir = camdir;
-	camUp  = camup;
-	listenerNeedsUpdate = true;
-}
-
 
 void CSound::UpdateListenerReal()
 {
 	// call from sound thread, cause OpenAL calls tend to cause L2 misses and so are slow (no reason to call them from mainthread)
-	if (!listenerNeedsUpdate)
+	if (!updateListener)
 		return;
 
-	// not 100% threadsafe, but worst case we would skip a single listener update (and it runs at multiple Hz!)
-	listenerNeedsUpdate = false;
+	updateListener = false;
 
 	const float3 myPosInMeters = myPos * ELMOS_TO_METERS;
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
@@ -773,7 +760,7 @@ void CSound::PrintDebugInfo()
 
 bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 {
-	//! can be called from LuaUnsyncedCtrl too
+	// can be called from LuaUnsyncedCtrl too
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	defsParser->Execute();
@@ -806,14 +793,14 @@ bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 				bufmap["name"] = name;
 
 				if (name == "default") {
-					defaultItemNameMap = bufmap;
-					defaultItemNameMap.erase("name"); //must be empty for default item
+					defaultItemNameMap = std::move(bufmap);
+					defaultItemNameMap.erase("name"); // must be empty for default item
 					defaultItemNameMap.erase("file");
 					continue;
 				}
 
 				if (soundItemDefsMap.find(name) != soundItemDefsMap.end())
-					LOG_L(L_WARNING, "[%s] sound %s gets overwritten by %s", __func__, name.c_str(), fileName.c_str());
+					LOG_L(L_WARNING, "[%s] sound %s overwrites %s", __func__, fileName.c_str(), name.c_str());
 
 				if (!buf.KeyExists("file")) {
 					// no file, drop
@@ -821,35 +808,36 @@ bool CSound::LoadSoundDefsImpl(LuaParser* defsParser)
 					continue;
 				}
 
-				soundItemDefsMap[name] = bufmap;
+				soundItemDefsMap[name] = std::move(bufmap);
 
 				if (!buf.KeyExists("preload"))
 					continue;
 
-				MakeItemFromDef(bufmap);
+				MakeItemFromDef(soundItemDefsMap[name]);
 			}
 
 			LOG("[%s] parsed %i sounds from %s", __func__, (int)keys.size(), fileName.c_str());
 		}
 	}
 
-	//FIXME why do sounds w/o an own soundItemDef create (!=pointer) a new one from the defaultItemNameMap?
-	for (auto it = soundItemDefsMap.begin(); it != soundItemDefsMap.end(); ++it) {
-		SoundItemNameMap& snddef = it->second;
+	for (auto& pair: soundItemDefsMap) {
+		SoundItemNameMap& snddef = pair.second;
 
-		if (snddef.find("name") == snddef.end()) {
-			// uses defaultItemNameMap! update it!
-			const std::string file = snddef["file"];
+		if (snddef.find("name") != snddef.end())
+			continue;
 
-			snddef = defaultItemNameMap;
-			snddef["file"] = file;
-		}
+		// uses defaultItemNameMap! update it!
+		const std::string file = snddef["file"];
+
+		//FIXME why do sounds w/o an own soundItemDef create (!=pointer) a new one from the defaultItemNameMap?
+		snddef = defaultItemNameMap;
+		snddef["file"] = file;
 	}
 
 	return true;
 }
 
-//! only used internally, locked in caller's scope
+// only used internally, locked in caller's scope
 size_t CSound::LoadSoundBuffer(const std::string& path)
 {
 	const size_t id = SoundBuffer::GetId(path);
@@ -857,30 +845,26 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	if (id > 0)
 		return id; // file is loaded already
 
-	// reused across loads (safe, caller locks)
-	static std::vector<std::uint8_t> buf;
-
-
 	CFileHandler file("", "");
 
-	buf.clear();
-	buf.reserve(1024 * 1024);
+	loadBuffer.clear();
+	loadBuffer.reserve(1024 * 1024);
 
-	file.GetBuffer() = std::move(buf);
+	file.GetBuffer() = std::move(loadBuffer);
 	file.Open(path, SPRING_VFS_RAW_FIRST);
 
 	// steal back
-	buf = std::move(file.GetBuffer());
+	loadBuffer = std::move(file.GetBuffer());
 
 	if (!file.FileExists()) {
 		LOG_L(L_ERROR, "[%s] unable to open audio file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
 
-	if (buf.empty()) {
+	if (loadBuffer.empty()) {
 		// copy file into buffer manually if not in VFS
-		buf.resize(file.FileSize());
-		file.Read(buf.data(), file.FileSize());
+		loadBuffer.resize(file.FileSize());
+		file.Read(loadBuffer.data(), file.FileSize());
 	}
 
 
@@ -891,8 +875,8 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	// TODO: load asynchronously
 	switch (soundExt[0]) {
-		case 'w': { success = soundBuf.LoadWAV   (path, buf); } break; // wav
-		case 'o': { success = soundBuf.LoadVorbis(path, buf); } break; // ogg
+		case 'w': { success = soundBuf.LoadWAV   (path, loadBuffer); } break; // wav
+		case 'o': { success = soundBuf.LoadVorbis(path, loadBuffer); } break; // ogg
 		default : {
 			LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, soundExt.c_str());
 		} break;
