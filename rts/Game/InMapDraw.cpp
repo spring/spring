@@ -36,7 +36,7 @@ class CNotificationPeeper : public CEventClient
 public:
 	CNotificationPeeper(): CEventClient("NotificationPeeper", 99, false)
 	{
-		blipSoundID = sound->GetSoundId("MapPoint");
+		blipSoundID = sound->GetDefSoundId("MapPoint");
 	}
 
 	bool WantsEvent(const std::string& eventName) override {

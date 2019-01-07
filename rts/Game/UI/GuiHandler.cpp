@@ -73,7 +73,7 @@ CGuiHandler::CGuiHandler()
 	miniMapMarker = configHandler->GetBool("MiniMapMarker");
 	invertQueueKey = configHandler->GetBool("InvertQueueKey");
 
-	failedSound = sound->GetSoundId("FailedCommand");
+	failedSound = sound->GetDefSoundId("FailedCommand");
 }
 
 
