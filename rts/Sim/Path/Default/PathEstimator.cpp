@@ -33,7 +33,7 @@
 
 #define ENABLE_NETLOG_CHECKSUM 1
 
-
+CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of multithreaded pathcache generator at loading time.");
 
 PCMemPool pcMemPool;
