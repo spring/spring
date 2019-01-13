@@ -98,8 +98,10 @@ size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 
 
 	CBitmap bitmap;
-	if (!bitmap.Load(file))
-		throw content_error("Could not load texture from file " + file);
+	if (!bitmap.Load(file)) {
+		bitmap.Alloc(2, 2, 4);
+		LOG_L(L_WARNING, "[TexAtlas::%s] could not load texture from file \"%s\"", __func__, file.c_str());
+	}
 
 	// only suport RGBA for now
 	if (bitmap.channels != 4 || bitmap.compressed)
