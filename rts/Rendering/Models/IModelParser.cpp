@@ -351,19 +351,20 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 	S3DModel model;
 	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
 
-	if (parser != nullptr) {
-		try {
-			model = std::move(parser->Load(path));
-		} catch (const content_error& ex) {
-			{
-				std::lock_guard<spring::mutex> lock(mutex);
-				errors.emplace_back(name, ex.what());
-			}
-
-			model = std::move(CreateDummyModel(0));
-		}
-	} else {
+	if (parser == nullptr) {
 		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
+		return (CreateDummyModel(0));
+	}
+
+	try {
+		model = std::move(parser->Load(path));
+	} catch (const content_error& ex) {
+		{
+			std::lock_guard<spring::mutex> lock(mutex);
+			errors.emplace_back(name, ex.what());
+		}
+
+		model = std::move(CreateDummyModel(0));
 	}
 
 	return model;
