@@ -7,6 +7,7 @@
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
@@ -42,20 +43,21 @@ CColorMap::CColorMap(const std::vector<float>& vec)
 	nxsize = xsize - 1;
 	nysize = ysize - 1;
 
-	SColor* cmap = new SColor[xsize];
-	for (int i = 0; i < xsize; ++i) {
+	std::array<SColor, 4096> cmap;
+	for (size_t i = 0, n = std::min(size_t(xsize), cmap.size()); i < n; ++i) {
 		cmap[i] = SColor(&vec[i * 4]);
 	}
 	LoadMap(&cmap[0].r, xsize);
-	delete[] cmap;
 }
 
 CColorMap::CColorMap(const std::string& fileName)
 {
 	CBitmap bitmap;
 
-	if (!bitmap.Load(fileName))
-		throw content_error("Could not load texture from file " + fileName);
+	if (!bitmap.Load(fileName)) {
+		bitmap.Alloc(2, 2, 4);
+		LOG_L(L_WARNING, "[ColorMap::%s] could not load texture from file \"%s\"", __func__, fileName.c_str());
+	}
 
 	if (bitmap.compressed || (bitmap.channels != 4) || (bitmap.xsize < 2))
 		throw content_error("Unsupported bitmap format in file " + fileName);
