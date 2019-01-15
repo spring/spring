@@ -54,7 +54,7 @@ public:
 
 	int GetCancelDistance() { return cancelDistance; }
 
-	virtual bool IsValidTarget(const CUnit* enemy) const;
+	virtual bool IsValidTarget(const CUnit* enemy, CWeapon* weapon) const;
 	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const override;
 
 	void SetTransportee(CUnit* unit);

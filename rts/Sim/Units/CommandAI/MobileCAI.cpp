@@ -556,7 +556,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 	ExecuteMove(c);
 }
 
-bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
+bool CMobileCAI::IsValidTarget(const CUnit* enemy, CWeapon* weapon) const {
 	if (enemy == nullptr)
 		return false;
 
@@ -570,15 +570,18 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	if (enemy->IsNeutral())
 		return false;
 
+	// test if given weapon belonging to owner can target
+	// the enemy unit; indicates an auto-targeting context
+	if (weapon != nullptr)
+		return (weapon->TestTarget(enemy->pos, {enemy}) && (owner->moveState != MOVESTATE_HOLDPOS || weapon->TryTargetRotate(enemy, false, false)));
+
+	// test if any of owner's weapons can target the enemy unit
 	if (owner->weapons.empty())
 		return false;
 
-	// test if any weapon can target the enemy unit
 	for (CWeapon* w: owner->weapons) {
-		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) &&
-			(owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false, false))) {
+		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) && (owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false, false)))
 			return true;
-		}
 	}
 
 	return false;
@@ -610,7 +613,7 @@ void CMobileCAI::ExecuteGuard(Command& c)
 	const bool pushAttackCommand =
 		owner->unitDef->canAttack &&
 		(guardee->lastAttackFrame + 40 < gs->frameNum) &&
-		IsValidTarget(guardee->lastAttacker);
+		IsValidTarget(guardee->lastAttacker, nullptr);
 
 	if (pushAttackCommand) {
 		commandQue.push_front(Command(CMD_ATTACK, c.GetOpts(), guardee->lastAttacker->id));
@@ -1156,13 +1159,13 @@ bool CMobileCAI::GenerateAttackCmd()
 			for (CWeapon* w: owner->weapons) {
 				const SWeaponTarget& wTgt = w->GetCurrentTarget();
 
-				if (w->HaveTarget() && !eventHandler.AllowWeaponTarget(owner->id, wTgt.unit->id, w->weaponNum, w->weaponDef->id, nullptr))
-					continue;
-
+				// no current target, and nothing to auto-target
 				if (!w->HaveTarget() && !w->AutoTarget())
 					continue;
-
-				if (wTgt.type != Target_Unit || !IsValidTarget(wTgt.unit))
+				// maybe a current target, but invalid type or category etc
+				if (wTgt.type != Target_Unit || !IsValidTarget(wTgt.unit, w))
+					continue;
+				if (!eventHandler.AllowWeaponTarget(owner->id, wTgt.unit->id, w->weaponNum, w->weaponDef->id, nullptr))
 					continue;
 
 				newAttackTargetId = wTgt.unit->id;
