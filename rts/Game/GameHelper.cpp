@@ -478,7 +478,7 @@ namespace {
 				Enemy_InLos(nullptr, at), cai(cai) {}
 
 			bool Unit(const CUnit* u) {
-				return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
+				return Enemy_InLos::Unit(u) && cai->IsValidTarget(u, nullptr);
 			}
 		};
 

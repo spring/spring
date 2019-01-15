@@ -1311,7 +1311,6 @@ void CGroundMoveType::ReRequestPath(bool forceRequest) {
 	}
 
 	wantRepath = true;
-	return;
 }
 
 

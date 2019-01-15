@@ -238,13 +238,12 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 		tgt = CGameHelper::GetClosestValidTarget(owner->pos + owner->speed * 20.0f, searchRadius, owner->allyteam, this);
 	}
 
-	if (!IsValidTarget(tgt))
+	if (!IsValidTarget(tgt, const_cast<CWeapon*>(wpn)))
 		return false;
 	if (!eventHandler.AllowWeaponTarget(owner->id, tgt->id, wpn->weaponNum, wpn->weaponDef->id, nullptr))
 		return false;
 
-	Command nc(CMD_ATTACK, INTERNAL_ORDER, tgt->id);
-	commandQue.push_front(nc);
+	commandQue.push_front(Command(CMD_ATTACK, INTERNAL_ORDER, tgt->id));
 	inCommand = false;
 	return true;
 }
@@ -314,8 +313,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		goalPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 
 	// CMD_FIGHT is pretty useless if !canAttack, but we try to honour the modders wishes anyway...
-	if ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS) && (owner->maxRange > 0.0f) && ownerDef->canAttack)
-	{
+	if ((owner->fireState >= FIRESTATE_FIREATWILL) && (owner->moveState != MOVESTATE_HOLDPOS) && (owner->maxRange > 0.0f) && ownerDef->canAttack) {
 		CUnit* enemy = nullptr;
 
 		if (ownerDef->IsFighterAirUnit()) {
@@ -324,9 +322,8 @@ void CAirCAI::ExecuteFight(Command& c)
 
 			enemy = CGameHelper::GetClosestEnemyAircraft(nullptr, pos, 1000.0f * owner->moveState, owner->allyteam);
 		}
-		if (IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
-				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
-		{
+
+		if (IsValidTarget(enemy, nullptr) && (owner->moveState != MOVESTATE_MANEUVER || LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000)) {
 			// make the attack-command inherit <c>'s options
 			// (if <c> is internal, then so are the attacks)
 			//
@@ -335,8 +332,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			// noAutoTarget set (although the <enemy> CUnit*
 			// is technically not a user-target, we treat it
 			// as such) even when explicitly told to fight
-			Command nc(CMD_ATTACK, c.GetOpts(), enemy->id);
-			commandQue.push_front(nc);
+			commandQue.push_front(Command(CMD_ATTACK, c.GetOpts(), enemy->id));
 
 			tempOrder = true;
 			inCommand = false;
@@ -347,18 +343,17 @@ void CAirCAI::ExecuteFight(Command& c)
 			}
 
 			return;
-		} else {
+		}
+
+		{
 			const float3 ofs = owner->speed * 20.0f;
 			const float3 pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + ofs);
 
-			enemy = CGameHelper::GetClosestValidTarget(pos, 500.0f * owner->moveState, owner->allyteam, this);
-
-			if (enemy != nullptr) {
+			if ((enemy = CGameHelper::GetClosestValidTarget(pos, 500.0f * owner->moveState, owner->allyteam, this)) != nullptr) {
 				PushOrUpdateReturnFight();
 
 				// make the attack-command inherit <c>'s options
-				Command nc(CMD_ATTACK, c.GetOpts(), enemy->id);
-				commandQue.push_front(nc);
+				commandQue.push_front(Command(CMD_ATTACK, c.GetOpts(), enemy->id));
 
 				tempOrder = true;
 				inCommand = false;
@@ -496,11 +491,10 @@ void CAirCAI::ExecuteGuard(Command& c)
 		(owner->maxRange > 0.0f) &&
 		owner->unitDef->canAttack &&
 		((guardee->lastAttackFrame + 40) < gs->frameNum) &&
-		IsValidTarget(guardee->lastAttacker);
+		IsValidTarget(guardee->lastAttacker, nullptr);
 
 	if (pushAttackCommand) {
-		Command nc(CMD_ATTACK, c.GetOpts() | INTERNAL_ORDER, guardee->lastAttacker->id);
-		commandQue.push_front(nc);
+		commandQue.push_front(Command(CMD_ATTACK, c.GetOpts() | INTERNAL_ORDER, guardee->lastAttacker->id));
 		SlowUpdate();
 	} else {
 		Command c2(CMD_MOVE, c.GetOpts() | INTERNAL_ORDER);
@@ -518,7 +512,7 @@ void CAirCAI::ExecuteGuard(Command& c)
 
 int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
-	if (pointed) {
+	if (pointed != nullptr) {
 		if (!teamHandler.Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack)
 				return CMD_ATTACK;
@@ -532,9 +526,11 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 	return CMD_MOVE;
 }
 
-bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
-	if (!CMobileCAI::IsValidTarget(enemy)) return false;
-	if (enemy->IsCrashing()) return false;
+bool CAirCAI::IsValidTarget(const CUnit* enemy, CWeapon* weapon) const {
+	if (!CMobileCAI::IsValidTarget(enemy, weapon))
+		return false;
+	if (enemy->IsCrashing())
+		return false;
 	return (GetStrafeAirMoveType(owner)->isFighter || !enemy->unitDef->canfly);
 }
 
