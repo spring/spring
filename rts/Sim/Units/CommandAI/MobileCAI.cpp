@@ -1034,8 +1034,9 @@ void CMobileCAI::NonMoving()
 			buggerPos = buggerOffPos + buggerVec.Normalize() * buggerOffRadius * 1.25f;
 		}
 
-		// check if buggerPos is (still) reachable
-		if (!owner->moveDef->TestMoveSquare(nullptr, buggerPos, buggerVec))
+		// check if buggerPos is (still) reachable; aircraft
+		// (or all units) might want to ask the GBOM instead
+		if (owner->moveDef != nullptr && !owner->moveDef->TestMoveSquare(nullptr, buggerPos, buggerVec))
 			buggerPos = -OnesVector;
 	}
 
