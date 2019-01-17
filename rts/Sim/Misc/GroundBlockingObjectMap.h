@@ -107,7 +107,7 @@ public:
 
 
 
-typedef ArrayVector<CSolidObject, 8> BlockingMapCell;
+typedef ArrayVector<CSolidObject, 16> BlockingMapCell;
 typedef std::vector<BlockingMapCell> BlockingMap;
 
 class CGroundBlockingObjectMap
