@@ -103,6 +103,10 @@ private:
 
 
 // fixed-size dynamic version
+// page size per chunk, number of chunks, number of pages per chunk
+// at most <N * K> simultaneous allocations can be made from a pool
+// of size NxK, each of which consumes S bytes (N chunks with every
+// chunk consuming S * K bytes) excluding overhead
 template<size_t S, size_t N, size_t K> struct FixedDynMemPool {
 public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
@@ -122,6 +126,8 @@ public:
 			chunks[num_chunks].reset(new t_chunk_mem());
 
 			// reserve new indices; in reverse order since each will be popped from the back
+			indcs.reserve(K);
+
 			for (size_t j = 0; j < K; j++) {
 				indcs.push_back((num_chunks + 1) * K - j - 1);
 			}
