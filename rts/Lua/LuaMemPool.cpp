@@ -120,7 +120,7 @@ void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 		#if (LMP_USE_CHUNK_TABLE == 1)
 		"[LuaMemPool::%s][handle=%s (%s)] index=%zu {blocks,sizes}={%zu,%zu} {int,ext,rec}Allocs={%zu,%zu,%zu} {chunk,block}Bytes={%zu,%zu}",
 		#else
-		"[LuaMemPool::%s][handle=%s (%s)] index=%zu {numAllocs[*],allocSums[*]}={%u,%u} {int,ext,rec}Allocs={%zu,%zu,%zu} {chunk,block}Bytes={%zu,%zu}",
+		"[LuaMemPool::%s][handle=%s (%s)] index=%zu {numAllocs[*],allocSums[*]}={%zu,%zu} {int,ext,rec}Allocs={%zu,%zu,%zu} {chunk,block}Bytes={%zu,%zu}",
 		#endif
 		__func__,
 		handle,
