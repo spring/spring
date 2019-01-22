@@ -17,7 +17,15 @@ class LuaMemPool {
 public:
 	explicit LuaMemPool(bool isEnabled);
 	explicit LuaMemPool(size_t lmpIndex);
-	~LuaMemPool() { Clear(); poolImpl.Kill(); }
+
+	~LuaMemPool() {
+		Clear();
+
+		if (!LuaMemPool::enabled)
+			return;
+
+		poolImpl.Kill();
+	}
 
 	LuaMemPool(const LuaMemPool& p) = delete;
 	LuaMemPool(LuaMemPool&& p) = delete;
@@ -66,6 +74,11 @@ public:
 		allocStats[STAT_NRA] *= (1 - b);
 		allocStats[STAT_NCB] *= (1 - b);
 		allocStats[STAT_NBB] *= (1 - b);
+
+		#if (LMP_USE_CHUNK_TABLE == 0)
+		poolImpl.numAllocs.fill(0);
+		poolImpl.allocSums.fill(0);
+		#endif
 	}
 
 	void ClearTables() {
@@ -117,8 +130,8 @@ private:
 		std::array<uint8_t[sizeof(FixedDynMemPool<0, NUM_CHUNKS[NUM_POOLS - 1], 0>)], NUM_POOLS> memPools;
 		std::array<void*, NUM_POOLS> poolPtrs;
 
-		std::array<uint32_t, NUM_POOLS + 1> numAllocs;
-		std::array<uint32_t, NUM_POOLS + 1> allocSums;
+		std::array<size_t, NUM_POOLS + 1> numAllocs;
+		std::array<size_t, NUM_POOLS + 1> allocSums;
 
 	public:
 		static uint32_t CalcPoolIndex(uint32_t alloc) {
