@@ -424,7 +424,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 
 	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
-		DrawProjectilesSet(mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i)), drawReflection, drawRefraction);
+		DrawProjectilesSet(mdlRenderer.GetObjectBin(i), drawReflection, drawRefraction);
 	}
 
 	DrawFlyingPieces(modelType);
@@ -476,7 +476,7 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 	// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
 	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
-		DrawProjectilesSetShadow(mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i)));
+		DrawProjectilesSetShadow(mdlRenderer.GetObjectBin(i));
 	}
 
 	DrawFlyingPieces(modelType);
@@ -523,7 +523,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		// const auto& projBinKeys = mdlRenderer.GetObjectBinKeys();
 
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
-			const auto& projectileBin = mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i));
+			const auto& projectileBin = mdlRenderer.GetObjectBin(i);
 
 			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
 			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);

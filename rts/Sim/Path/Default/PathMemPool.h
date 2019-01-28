@@ -3,10 +3,10 @@
 #ifndef PATH_MEMPOOL_H
 #define PATH_MEMPOOL_H
 
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "PathCache.h"
 #include "PathEstimator.h"
 #include "PathFinder.h"
+#include "System/MemPoolTypes.h"
 
 typedef DynMemPool<sizeof(CPathCache    )> PCMemPool;
 typedef DynMemPool<sizeof(CPathEstimator)> PEMemPool;

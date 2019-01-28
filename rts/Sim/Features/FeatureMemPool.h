@@ -5,7 +5,7 @@
 
 #include "Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/SimObjectMemPool.h"
+#include "System/MemPoolTypes.h"
 
 #if (defined(__x86_64) || defined(__x86_64__))
 typedef StaticMemPool<MAX_FEATURES, sizeof(CFeature)> FeatureMemPool;

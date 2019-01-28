@@ -34,7 +34,6 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
@@ -46,6 +45,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
+#include "System/MemPoolTypes.h"
 #include "System/myMath.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
@@ -474,7 +474,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, bool drawReflection, bool drawR
 	for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 		BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-		for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+		for (CUnit* unit: mdlRenderer.GetObjectBin(i)) {
 			DrawOpaqueUnit(unit, drawReflection, drawRefraction);
 		}
 	}
@@ -634,7 +634,7 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		assert((modelType != MODELTYPE_3DO) || (mdlRenderer.GetObjectBinKey(i) == 0));
 		shadowTexBindFuncs[modelType](textureHandlerS3O.GetTexture(mdlRenderer.GetObjectBinKey(i)));
 
-		for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+		for (CUnit* unit: mdlRenderer.GetObjectBin(i)) {
 			DrawOpaqueUnitShadow(unit);
 		}
 
@@ -810,7 +810,7 @@ void CUnitDrawer::DrawAlphaUnits(int modelType)
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 			BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CUnit* unit: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+			for (CUnit* unit: mdlRenderer.GetObjectBin(i)) {
 				DrawAlphaUnit(unit, modelType, false);
 			}
 		}

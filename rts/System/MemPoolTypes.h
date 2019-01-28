@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SIMOBJECT_MEMPOOL_H
-#define SIMOBJECT_MEMPOOL_H
+#ifndef MEMPOOL_TYPES_H
+#define MEMPOOL_TYPES_H
 
 #include <cassert>
 #include <cstring> // memset

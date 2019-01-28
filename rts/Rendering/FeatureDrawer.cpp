@@ -346,7 +346,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 			CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+			for (CFeature* f: mdlRenderer.GetObjectBin(i)) {
 				// fartex, opaque, shadow are allowed here
 				switch (f->drawFlag) {
 					case CFeature::FD_NODRAW_FLAG: {                              continue; } break;
@@ -518,7 +518,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 			CUnitDrawer::BindModelTypeTexture(modelType, mdlRenderer.GetObjectBinKey(i));
 
-			for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(i))) {
+			for (CFeature* f: mdlRenderer.GetObjectBin(i)) {
 				// only alpha is allowed here
 				switch (f->drawFlag) {
 					case CFeature::FD_NODRAW_FLAG: { continue; } break;
@@ -649,7 +649,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 			// const auto& featureBinKeys = mdlRenderer.GetObjectBinKeys();
 
 			for (unsigned int j = 0, n = mdlRenderer.GetNumObjectBins(); j < n; j++) {
-				for (CFeature* f: mdlRenderer.GetObjectBin(mdlRenderer.GetObjectBinKey(j))) {
+				for (CFeature* f: mdlRenderer.GetObjectBin(j)) {
 					assert(quad == f->drawQuad);
 
 					// clear marker; will be set at most once below

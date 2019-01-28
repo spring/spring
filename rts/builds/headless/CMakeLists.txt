@@ -12,6 +12,7 @@ add_definitions(-DNO_SOUND)
 add_definitions(-DBITMAP_NO_OPENGL)
 remove_definitions(-DAVI_CAPTURING)
 
+set(OpenGL_GL_PREFERENCE LEGACY)
 include_directories(${OPENAL_INCLUDE_DIR})
 if    (MINGW OR APPLE OR MSVC)
 	# Windows:

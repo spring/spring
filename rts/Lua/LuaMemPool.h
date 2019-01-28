@@ -6,8 +6,8 @@
 #include <cstddef>
 #include <vector>
 
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "System/bitops.h"
+#include "System/MemPoolTypes.h"
 #include "System/UnorderedMap.hpp"
 
 #define LMP_USE_CHUNK_TABLE 0
