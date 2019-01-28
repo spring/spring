@@ -36,6 +36,7 @@
   uniform float frame;
   uniform vec3 eyePos;
 
+  varying float eyeVertexZ;
   varying vec3 eyeVec;
   varying vec3 ligVec;
   varying vec3 worldPos;
@@ -59,10 +60,11 @@
 //////////////////////////////////////////////////
 // Depth conversion
 #ifdef opt_depth
-  float pm15 = gl_ProjectionMatrix[2][3];
-  float pm11 = gl_ProjectionMatrix[2][3];
-  float convertDepthToZ(float d) {
-    return pm15 / (((d * 2.0) - 1.0) + pm11);
+  float pm14 = gl_ProjectionMatrix[3].z;
+  float pm10 = gl_ProjectionMatrix[2].z;
+
+  float ConvertDepthToEyeZ(float d) {
+    return (pm14 / (d * -2.0 + 1.0 - pm10));
   }
 #endif
 
@@ -173,10 +175,17 @@ vec3 GetNormal(out vec3 octave)
 float GetWaterDepthFromDepthBuffer(float waterdepth)
 {
 #ifdef opt_depth
-	float tz = texture2DRect(depthmap, screencoord).r;
-	float shallowScale = abs(convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z)) * 0.333;
-	shallowScale = clamp(shallowScale, 0.0, 1.0);
-	return shallowScale;
+	// calculate difference between texel-z and fragment-z; convert
+	// since both are non-linear mappings from 0=dr.min to 1=dr.max
+	// absolute differences larger than 3 elmos are clamped to 1
+	float  texZ = ConvertDepthToEyeZ(texture2DRect(depthmap, screencoord).r);
+	float fragZ = ConvertDepthToEyeZ(gl_FragCoord.z);
+	#if 0
+	float fragZ = eyeVertexZ;
+	#endif
+	float diffZ = abs(texZ - fragZ) * 0.333;
+
+	return clamp(diffZ, 0.0, 1.0);
 #else
 	return waterdepth;
 #endif
@@ -261,6 +270,7 @@ void main()
     return;
 #endif
 
+
   // GET WATERDEPTH
     float outside = 0.0;
     vec2 coast = vec2(0.0, 0.0);
@@ -282,8 +292,8 @@ void main()
   // AMBIENT & DIFFUSE
     vec3 reflectDir   = reflect(normalize(-ligVec), normal);
     float specular    = angle * pow( max(dot(reflectDir, eVec), 0.0) , SpecularPower) * SpecularFactor * shallowScale;
-    vec3 SunLow       = SunDir * vec3(1.0, 0.1 ,1.0);
-    float diffuse     = pow( max( dot(normal, SunLow) ,0.0 ) ,3.0) * DiffuseFactor;
+    vec3 SunLow       = SunDir * vec3(1.0, 0.1, 1.0);
+    float diffuse     = pow( max( dot(normal, SunLow), 0.0), 3.0) * DiffuseFactor;
     float ambient     = smoothstep(-1.3, 0.0, eyeNormalCos) * AmbientFactor;
     vec3 waterSurface = SurfaceColor.rgb + DiffuseColor * diffuse + vec3(ambient);
     float surfaceMix  = (SurfaceColor.a + diffuse) * shallowScale;
@@ -300,14 +310,16 @@ void main()
     vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz * refractDistortion * ScreenInverse ).rgb;
   #endif
     gl_FragColor.rgb = mix(refrColor, waterSurface, 0.1 + surfaceMix);
+
 #else
     gl_FragColor.rgb = waterSurface;
     gl_FragColor.a   = surfaceMix + specular;
 #endif
 
 
+
   // CAUSTICS
-    if (waterdepth>0.0) {
+    if (waterdepth > 0.0) {
       vec3 caust = texture2D(caustic, gl_TexCoord[0].pq * 75.0).rgb;
   #ifdef opt_refraction
       float caustBlend = smoothstep(CausticRange, 0.0, abs(waterdepth - CausticDepth));
@@ -317,6 +329,7 @@ void main()
       gl_FragColor.rgb += caust * (1.0 - waterdepth) * 0.6;
   #endif
     }
+
 
 
   // SHORE WAVES
