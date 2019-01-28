@@ -102,7 +102,7 @@ void main()
 	vertexPos.y = 3.0 * (cos(frame * 500.0 + vertexPosAttr.z) * sin(frame * 500.0 + vertexPosAttr.x / 1000.0));
 
 	// COMPUTE LIGHT VECTORS
-	eyeVec = eyePos - vertexPosAttr.xyz;
+	eyeVec = eyePos - vertexPos.xyz;
 	sunVec = normalize(SunDir * 20000.0 + MapMid - vertexPos.xyz);
 
 	// FOG eye-depth

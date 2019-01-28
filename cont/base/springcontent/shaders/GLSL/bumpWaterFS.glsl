@@ -95,11 +95,11 @@ vec2 reftexcoord = (gl_FragCoord.xy - ViewPos) * ScreenInverse;
 //////////////////////////////////////////////////
 // Depth conversion
 #ifdef opt_depth
-float convertDepthToZ(float d) {
-	float pm15 = projMatrix[2][3];
-	float pm11 = projMatrix[2][3];
+float ConvertDepthToEyeZ(float d) {
+	float pm14 = projMatrix[3].z;
+	float pm10 = projMatrix[2].z;
 
-	return pm15 / (((d * 2.0) - 1.0) + pm11);
+	return (pm14 / (d * -2.0 + 1.0 - pm10));
 }
 #endif
 
@@ -208,10 +208,14 @@ vec3 GetNormal(out vec3 octave)
 float GetWaterDepthFromDepthBuffer(float waterdepth)
 {
 	#ifdef opt_depth
-	float tz = texture(depthmap, screencoord).r;
-	float shallowScale = abs(convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z)) * 0.333;
-	shallowScale = clamp(shallowScale, 0.0, 1.0);
-	return shallowScale;
+	// calculate difference between texel-z and fragment-z; convert
+	// since both are non-linear mappings from 0=dr.min to 1=dr.max
+	// absolute differences larger than 3 elmos are clamped to 1
+	float  texZ = ConvertDepthToEyeZ(texture2DRect(depthmap, screencoord).r);
+	float fragZ = ConvertDepthToEyeZ(gl_FragCoord.z);
+	float diffZ = abs(texZ - fragZ) * 0.333;
+
+	return clamp(diffZ, 0.0, 1.0);
 	#else
 	return waterdepth;
 	#endif
