@@ -3,8 +3,8 @@
 #ifndef PROJECTILE_MEMPOOL_H
 #define PROJECTILE_MEMPOOL_H
 
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/MemPoolTypes.h"
 
 #if (defined(__x86_64) || defined(__x86_64__))
 typedef StaticMemPool<MAX_PROJECTILES, 868> ProjMemPool;

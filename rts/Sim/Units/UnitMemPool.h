@@ -5,7 +5,7 @@
 
 #include "UnitTypes/Builder.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/SimObjectMemPool.h"
+#include "System/MemPoolTypes.h"
 
 #if (defined(__x86_64) || defined(__x86_64__))
 // CBuilder is (currently) the largest derived unit-type

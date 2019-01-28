@@ -15,87 +15,87 @@
 template<typename TObject>
 class ModelRenderContainer {
 private:
-	// [0] stores the number of texture-type keys, i.e. non-empty bins
-	// note there can be no more texture-types than S3DModel instances
-	std::array<int, 1 + MAX_MODEL_OBJECTS> objectBinKeys;
-	std::array<std::vector<TObject*>, MAX_MODEL_OBJECTS> objectBins;
+	// note: there can be no more texture-types than S3DModel instances
+	std::array< int, MAX_MODEL_OBJECTS > keys;
+	std::vector< std::vector<TObject*> > bins;
 
-	unsigned int numObjects = 0;
+	typedef  typename decltype(bins)::value_type  ObjectBin;
 
-	typedef           decltype(objectBinKeys)              BinKeySet;
-	typedef  typename decltype(objectBins   )::value_type  ObjectBin;
+	size_t numObjs = 0;
+	size_t numBins = 0;
+
+private:
+	int CalcObjectBinIdx(const TObject* o) const { return (TEX_TYPE(o)); }
 
 public:
 	void Kill() {}
 	void Init() {
-		objectBinKeys.fill(0);
+		keys.fill(0);
+		bins.reserve(32);
 
 		// reuse inner vectors when reloading
-		for (auto& bin: objectBins) {
+		for (auto& bin: bins) {
 			bin.clear();
 		}
 
-		numObjects = 0;
+		numObjs = 0;
+		numBins = 0;
 	}
 
 
 	void AddObject(const TObject* o) {
-		auto& bin = objectBins[TEX_TYPE(o)];
-		auto& keys = objectBinKeys;
+		const auto kb = keys.begin();
+		const auto ke = keys.begin() + numBins;
+		const auto ki = std::find(kb, ke, CalcObjectBinIdx(o));
 
-		if (bin.empty()) {
+		if (ki == ke)
+			keys[numBins++] = CalcObjectBinIdx(o);
+
+		if (bins.size() < numBins)
+			bins.emplace_back();
+
+		auto& bin = bins[ki - kb];
+
+		if (bin.empty())
 			bin.reserve(256);
 
-			#ifdef DEBUG
-			const auto beg = keys.begin() + 1;
-			const auto end = keys.begin() + 1 + keys[0];
-
-			assert(std::find(beg, end, TEX_TYPE(o)) == end);
-			#endif
-
-			keys[ ++keys[0] ] = TEX_TYPE(o);
-		}
-
+		// numBins += (ki == ke);
 		// cast since updating an object's draw-position requires mutability
-		numObjects += spring::VectorInsertUnique(bin, const_cast<TObject*>(o));
+		numObjs += spring::VectorInsertUnique(bin, const_cast<TObject*>(o));
 	}
 
 	void DelObject(const TObject* o) {
-		assert(TEX_TYPE(o) < objectBins.size());
+		const auto kb = keys.begin();
+		const auto ke = keys.begin() + numBins;
+		const auto ki = std::find(kb, ke, CalcObjectBinIdx(o));
 
-		auto& bin = objectBins[TEX_TYPE(o)];
-		auto& keys = objectBinKeys;
+		if (ki == ke)
+			return;
+
+		auto& bin = bins[ki - kb];
 
 		// object can be legally absent from this container
 		// e.g. UnitDrawer invokes DelObject on both opaque
 		// and alpha containers (since it does not know the
 		// cloaked state) which also means the tex-type key
 		// might not exist here
-		numObjects -= spring::VectorErase(bin, const_cast<TObject*>(o));
+		numObjs -= spring::VectorErase(bin, const_cast<TObject*>(o));
+		numBins -= (bin.empty());
 
 		if (!bin.empty())
 			return;
 
 		// keep empty bin, just remove it from the key-set
-		// TODO: might want to (re)sort keys, less jumping
-		const auto beg = keys.begin() + 1;
-		const auto end = keys.begin() + 1 + keys[0];
-		const auto  it = std::find(beg, end, TEX_TYPE(o));
-
-		if (it == end)
-			return;
-
-		*it = keys[ keys[0]-- ];
+		std::swap(bins[ki - kb], bins[ke - 1 - kb]);
+		std::swap(*ki, *(ke - 1));
 	}
 
 
-	unsigned int GetNumObjects() const { return numObjects; }
-	unsigned int GetNumObjectBins() const { return objectBinKeys[0]; }
+	unsigned int GetNumObjects() const { return numObjs; }
+	unsigned int GetNumObjectBins() const { return numBins; }
+	unsigned int GetObjectBinKey(unsigned int idx) const { return keys[idx]; }
 
-	int GetObjectBinKey(unsigned int i) const { return objectBinKeys[1 + i]; }
-
-	const BinKeySet& GetObjectBinKeys() const { return objectBinKeys; }
-	const ObjectBin& GetObjectBin(int key) const { return objectBins[key]; }
+	const ObjectBin& GetObjectBin(unsigned int idx) const { return bins[idx]; }
 };
 
 #endif

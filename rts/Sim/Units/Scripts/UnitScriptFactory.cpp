@@ -9,7 +9,6 @@
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
