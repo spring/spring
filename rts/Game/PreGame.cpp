@@ -94,9 +94,10 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 
 CPreGame::~CPreGame()
 {
-	// delete leftover elements (remove once the gui is drawn ingame)
-	// but do not delete infoconsole, it is reused by CGame
-	agui::gui->Draw();
+	#ifndef HEADLESS
+	// delete leftover aGUI elements but not infoconsole, it is reused by CGame
+	agui::gui->Clean();
+	#endif
 
 	pregame = nullptr;
 }
