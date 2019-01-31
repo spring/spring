@@ -36,11 +36,6 @@ public:
 		SHADOWGEN_BIT_PROJ  = 8,
 		SHADOWGEN_BIT_TREE  = 16,
 	};
-	enum ShadowProjectionMode {
-		SHADOWPROMODE_MAP_CENTER = 0, // use center of map-geometry as projection target (constant res.)
-		SHADOWPROMODE_CAM_CENTER = 1, // use center of camera-frustum as projection target (variable res.)
-		SHADOWPROMODE_MIX_CAMMAP = 2, // use whichever mode maximizes resolution this frame
-	};
 	enum ShadowMapSizes {
 		MIN_SHADOWMAP_SIZE =   512,
 		DEF_SHADOWMAP_SIZE =  2048,
@@ -69,7 +64,7 @@ public:
 	const      float* GetShadowViewMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
 	const      float* GetShadowProjMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &projMatrix[idx].m[0]; }
 
-	const float4& GetShadowParams() const { return shadowTexProjCenter; }
+	const float4& GetShadowParams() const { return shadowProjParams; }
 
 	unsigned int GetShadowTextureID() const { return shadowTexture; }
 	unsigned int GetColorTextureID() const { return dummyColorTexture; }
@@ -82,38 +77,35 @@ public:
 	bool InShadowPass() const { return inShadowPass; }
 
 private:
+	void DrawShadowPasses();
 	void FreeTextures();
 
 	bool InitDepthTarget();
 	bool WorkaroundUnsupportedFboRenderTargets();
 
-	void DrawShadowPasses();
 	void LoadProjectionMatrix(const CCamera* shadowCam);
 	void LoadShadowGenShaders();
 
-	void SetShadowMapSizeFactors();
-	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
+	void SetShadowMatrix(CCamera* playerCam);
 	void SetShadowCamera(CCamera* shadowCam);
 
 	float4 GetShadowProjectionScales(CCamera*, const CMatrix44f&);
-	float3 CalcShadowProjectionPos(CCamera*, float3*);
+	float3 CalcShadowProjectionPos(CCamera*, float3*) const;
 
-	float GetOrthoProjectedMapRadius(const float3&, float3&);
-	float GetOrthoProjectedFrustumRadius(CCamera*, const CMatrix44f&, float3&);
+	float GetOrthoProjectedFrustumRadius(CCamera*, const CMatrix44f&, float3&) const;
 
 public:
-	int shadowConfig;
-	int shadowMapSize;
-	int shadowGenBits;
-	int shadowProMode;
+	int shadowConfig = 0;
+	int shadowMapSize = 0;
+	int shadowGenBits = 0;
 
 private:
 	unsigned int shadowTexture = 0;
 	unsigned int dummyColorTexture = 0;
 	unsigned int currentShadowPass = SHADOWGEN_PROGRAM_LAST;
 
-	bool shadowsLoaded;
-	bool inShadowPass;
+	bool shadowsLoaded = false;
+	bool inShadowPass = false;
 
 	static bool firstInit;
 	static bool shadowsSupported;
@@ -122,18 +114,17 @@ private:
 	// to write the (FBO) depth-buffer texture
 	std::array<Shader::IProgramObject*, SHADOWGEN_PROGRAM_LAST> shadowGenProgs;
 
-	float3 projMidPos[2 + 1];
+	float3 projMidPos;
 	float3 sunProjDir;
 
 	float4 shadowProjScales;
-	/// frustum bounding-rectangle corners; x1, x2, y1, y2
-	float4 shadowProjMinMax;
-	/// xmid, ymid, p17, p18
-	float4 shadowTexProjCenter;
+	/// .xy := scale, .zw := bias (unused)
+	float4 shadowProjParams = {0.5f, 0.5f, 0.5f, 0.5f};
 
 	// culling and drawing versions of both matrices
 	CMatrix44f projMatrix[2];
 	CMatrix44f viewMatrix[2];
+	CMatrix44f biasMatrix = {OnesVector * 0.5f,  RgtVector * 0.5f, UpVector * 0.5f, FwdVector * 0.5f};
 
 	FBO shadowMapFBO;
 };
