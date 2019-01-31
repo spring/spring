@@ -218,6 +218,7 @@ namespace GL {
 		void Clear(uint32_t bits);
 		void ClearAccum(float r, float g, float b, float a);
 		void ClearColor(float r, float g, float b, float a);
+		void ClearColor(const float* c) { ClearColor(c[0], c[1], c[2], c[3]); }
 		void ClearDepth(float depth);
 		void ClearStencil(uint32_t rval);
 

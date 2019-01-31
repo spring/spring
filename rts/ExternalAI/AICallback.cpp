@@ -1338,7 +1338,7 @@ bool CAICallback::GetValue(int id, void* data)
 			*(unsigned int*) data = readMap->GetMapChecksum();
 		} break;
 		case AIVAL_DEBUG_MODE: {
-			*(bool*) data = globalRendering->drawdebug;
+			*(bool*) data = globalRendering->drawDebug;
 		} break;
 
 		case AIVAL_GAME_PAUSED: {

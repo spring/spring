@@ -626,7 +626,7 @@ void CSelectedUnitsHandler::Draw()
 
 			if (moveDef == nullptr)
 				continue;
-			if (!globalRendering->drawdebug)
+			if (!globalRendering->drawDebug)
 				continue;
 
 			{

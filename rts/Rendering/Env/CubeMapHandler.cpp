@@ -162,20 +162,10 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 		CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
 		CCamera* curCam = CCameraHandler::GetActiveCamera();
 
-		#if 0
-		switch (glFace) {
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { glAttribStatePtr->ClearColor(1.0f, 0.0f, 0.0f, 1.0f); } break; // red
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { glAttribStatePtr->ClearColor(0.0f, 1.0f, 0.0f, 1.0f); } break; // green
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { glAttribStatePtr->ClearColor(0.0f, 0.0f, 1.0f, 1.0f); } break; // blue
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { glAttribStatePtr->ClearColor(1.0f, 1.0f, 0.0f, 1.0f); } break; // yellow
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { glAttribStatePtr->ClearColor(1.0f, 0.0f, 1.0f, 1.0f); } break; // purple
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { glAttribStatePtr->ClearColor(0.0f, 1.0f, 1.0f, 1.0f); } break; // cyan
-			default: {} break;
-		}
-
-		glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		#else
-		{
+		if (globalRendering->drawDebugCubeMap) {
+			glAttribStatePtr->ClearColor(&faceColors[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X].x);
+			glAttribStatePtr->Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		} else {
 			// env-reflections are only correct when drawn from an inverted
 			// perspective (meaning right becomes left and up becomes down)
 			curCam->forward  = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X][0];
@@ -202,7 +192,6 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 
 			game->SetDrawMode(Game::NormalDraw);
 		}
-		#endif
 
 		CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 		prvCam->Update();

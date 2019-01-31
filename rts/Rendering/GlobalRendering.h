@@ -105,8 +105,8 @@ public:
 	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
 
-	static constexpr int minWinSizeX = 400;
-	static constexpr int minWinSizeY = 300;
+	static constexpr int MIN_WIN_SIZE_X = 400;
+	static constexpr int MIN_WIN_SIZE_Y = 300;
 
 	static constexpr unsigned int NUM_GL_TIMER_QUERIES = 2;
 	static constexpr unsigned int FRAME_TIME_QUERY_IDX = NUM_GL_TIMER_QUERIES - 1;
@@ -204,8 +204,9 @@ public:
 	 *
 	 * Whether debugging info is drawn
 	 */
-	bool drawdebug;
-	bool drawdebugtraceray;
+	bool drawDebug;
+	bool drawDebugTraceRay;
+	bool drawDebugCubeMap;
 
 	bool glDebug;
 	bool glDebugErrors;

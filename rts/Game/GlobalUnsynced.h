@@ -36,7 +36,7 @@ public:
 	 * Defines how many frames per second should minimally be
 	 * rendered. To reach this number we will delay simframes.
 	 */
-	static constexpr int minFPS = 2;
+	static constexpr int minDrawFPS = 2;
 
 	/**
 	 * @brief simulation drawing balance

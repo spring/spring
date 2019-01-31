@@ -61,7 +61,7 @@ inline static bool TestConeHelper(
 		ret = ret || ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f);
 	}
 
-	if (globalRendering->drawdebugtraceray) {
+	if (globalRendering->drawDebugTraceRay) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -139,7 +139,7 @@ inline static bool TestTrajectoryConeHelper(
 	}
 
 
-	if (globalRendering->drawdebugtraceray) {
+	if (globalRendering->drawDebugTraceRay) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects

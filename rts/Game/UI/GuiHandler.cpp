@@ -3726,7 +3726,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			// draw decloak distance
 			if (pointeeUnit->decloakDistance > 0.0f) {
-				if (pointeeUnit->unitDef->decloakSpherical && globalRendering->drawdebug) {
+				if (pointeeUnit->unitDef->decloakSpherical && globalRendering->drawDebug) {
 					CMatrix44f mat;
 					mat.Translate(pointeeUnit->midPos);
 					mat.RotateX(-90.0f * math::DEG_TO_RAD);
@@ -3933,7 +3933,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		const bool defaultAttackCmd  = (inCommand == -1 && defaultCmd > 0 && commands[defaultCmd].id == CMD_ATTACK);
 		const bool  drawPointeeRing  = (pointeeUnit != nullptr && pointeeUnit->maxRange > 0.0f);
 		const bool  drawBuildeeRings = (activeBuildCommand && rayTraceDist > 0.0f);
-		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawDebug);
 
 
 		if (activeAttackCmd || defaultAttackCmd || drawPointeeRing || drawBuildeeRings) {
