@@ -19,8 +19,6 @@ void main() {
 
 	vec4 vertexPos = vec4(positionAttr, 1.0);
 	vec4 vertexShadowPos = shadowViewMat * modelPieceMat * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	gl_Position = shadowProjMat * vertexShadowPos;
 }

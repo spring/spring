@@ -64,8 +64,6 @@ layout(location = 0) out vec4 fragData[MDL_FRAGDATA_COUNT];
 float GetShadowCoeff(float zBias) {
 	#if (USE_SHADOWS == 1)
 	vec4 vertexShadowPos = shadowMatrix * worldPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 		vertexShadowPos.z  += zBias;
 
 	return mix(1.0, textureProj(shadowTex, vertexShadowPos), shadowDensity);

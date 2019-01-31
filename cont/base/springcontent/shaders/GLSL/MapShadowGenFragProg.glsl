@@ -27,8 +27,6 @@ void main() {
 	#if (SHADOWGEN_PER_FRAGMENT == 1)
 	// note: this voids glPolygonOffset calls
 	vec4 vertexShadowPos = shadowViewMat * vertexModelPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 		vertexShadowPos.z  += 0.00250;
 	vec4 vertexShadowClipPos = shadowProjMat * vertexShadowPos;
 

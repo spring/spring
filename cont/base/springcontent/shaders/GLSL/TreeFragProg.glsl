@@ -28,8 +28,6 @@ void main() {
 	#if (TREE_SHADOW == 1)
 	// per-fragment
 	vec4 vertexShadowPos = shadowMatrix * vVertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	float shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), groundShadowDensity);
 	#else

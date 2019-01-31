@@ -420,8 +420,6 @@ void main() {
 	#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
 	{
 		vec4 vertexShadowPos = shadowMat * vertexPos;
-			vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-			vertexShadowPos.xy += shadowParams.xy;
 
 		// shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
 		shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), groundShadowDensity);

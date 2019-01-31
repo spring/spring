@@ -25,8 +25,6 @@ out vec4 fragColor;
 void main() {
 	#ifdef HAVE_SHADOWS
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
 
 	float shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), shadowDensity);
 	#else
