@@ -66,6 +66,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 
