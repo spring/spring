@@ -3667,7 +3667,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
-				if (unit->unitDef->decloakSpherical && globalRendering->drawdebug) {
+				if (unit->unitDef->decloakSpherical && globalRendering->drawDebug) {
 					glPushMatrix();
 					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
 					glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
@@ -3822,7 +3822,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 		const bool  playerAttackCmd = (size_t(inCommand) < commands.size() && commands[inCommand].id == CMD_ATTACK);
 		const bool defaultAttackCmd = (inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK);
-		const bool   drawWeaponArcs = (!onMiniMap && gs->cheatEnabled && globalRendering->drawdebug);
+		const bool   drawWeaponArcs = (!onMiniMap && gs->cheatEnabled && globalRendering->drawDebug);
 
 		if (playerAttackCmd || defaultAttackCmd) {
 			for (const int unitID: selectedUnitsHandler.selectedUnits) {
@@ -4363,5 +4363,6 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 /******************************************************************************/
 /******************************************************************************/
+
 
 

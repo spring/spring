@@ -1242,7 +1242,7 @@ bool CGame::Draw() {
 			return false;
 	}
 
-	if (globalRendering->drawdebug) {
+	if (globalRendering->drawDebug) {
 		const float deltaFrameTime = (currentTimePreUpdate - lastSimFrameTime).toMilliSecsf();
 		const float deltaNetPacketProcTime  = (currentTimePreUpdate - lastNetPacketProcessTime ).toMilliSecsf();
 		const float deltaReceivedPacketTime = (currentTimePreUpdate - lastReceivedNetPacketTime).toMilliSecsf();

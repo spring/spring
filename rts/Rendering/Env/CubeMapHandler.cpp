@@ -197,25 +197,18 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 		CCamera* prvCam = CCameraHandler::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
 		CCamera* curCam = CCameraHandler::GetActiveCamera();
 
-		#if 0
-		switch (glType) {
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_X: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
-			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
-			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
-			default: {} break;
-		}
+		const float3* fd = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X];
+		const float4& fc = faceColors[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X];
 
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		#else
-		{
+		if (globalRendering->drawDebugCubeMap) {
+			glClearColor(fc.x, fc.y, fc.z, fc.w);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		} else {
 			// env-reflections are only correct when drawn from an inverted
 			// perspective (meaning right becomes left and up becomes down)
-			curCam->forward  = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X][0];
-			curCam->right    = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X][1] * -1.0f;
-			curCam->up       = faceDirs[glFace - GL_TEXTURE_CUBE_MAP_POSITIVE_X][2] * -1.0f;
+			curCam->forward  = fd[0];
+			curCam->right    = fd[1] * -1.0f;
+			curCam->up       = fd[2] * -1.0f;
 
 			// set vertical *and* horizontal FOV to 90 degrees
 			curCam->SetVFOV(90.0f);
@@ -237,7 +230,6 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 
 			game->SetDrawMode(CGame::gameNormalDraw);
 		}
-		#endif
 
 		CCameraHandler::SetActiveCamera(prvCam->GetCamType());
 		prvCam->Update();

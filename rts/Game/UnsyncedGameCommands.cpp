@@ -1234,10 +1234,19 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const final {
 		// toggle
-		ProfileDrawer::SetEnabled(globalRendering->drawdebug = !globalRendering->drawdebug);
-		profiler.SetEnabled(globalRendering->drawdebug);
+		ProfileDrawer::SetEnabled(globalRendering->drawDebug = !globalRendering->drawDebug);
+		profiler.SetEnabled(globalRendering->drawDebug);
+		return true;
+	}
+};
 
-		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
+class DebugCubeMapActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugCubeMapActionExecutor() : IUnsyncedActionExecutor("DebugCubeMap", "") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		globalRendering->drawDebugCubeMap = !globalRendering->drawDebugCubeMap;
 		return true;
 	}
 };
@@ -2792,8 +2801,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		globalRendering->drawdebugtraceray = !globalRendering->drawdebugtraceray;
-		LogSystemStatus("traceray debug rendering mode", globalRendering->drawdebugtraceray);
+		LogSystemStatus("traceray debug rendering mode", globalRendering->drawDebugTraceRay = !globalRendering->drawDebugTraceRay);
 		return true;
 	}
 };
@@ -3301,6 +3309,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<TrackModeActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<PauseActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<DebugCubeMapActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugGLActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugGLErrorsActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DebugColVolDrawerActionExecutor>());

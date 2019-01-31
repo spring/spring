@@ -75,7 +75,7 @@ void CGame::SendClientProcUsage()
 
 		if (playing) {
 			const float simProcUsage = (profiler.GetTimePercentage("Sim"));
-			const float drawProcUsage = (profiler.GetTimePercentage("Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+			const float drawProcUsage = (profiler.GetTimePercentage("Draw") / std::max(1.0f, globalRendering->FPS)) * GlobalUnsynced::minDrawFPS;
 			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too
@@ -208,7 +208,7 @@ void CGame::UpdateNetMessageProcessingTimeLeft()
 	} else {
 		// ensure ClientReadNet returns at least every 15 simframes
 		// so CGame can process keyboard input, and render etc.
-		msgProcTimeLeft = (GAME_SPEED / float(gu->minFPS) * gs->wantedSpeedFactor) * 1000.0f;
+		msgProcTimeLeft = (GAME_SPEED / float(GlobalUnsynced::minDrawFPS) * gs->wantedSpeedFactor) * 1000.0f;
 	}
 }
 
@@ -223,7 +223,7 @@ float CGame::GetNetMessageProcessingTimeLimit() const
 	const float minDrawFPS   =         CGlobalUnsynced::reconnectSimDrawBalance  * 1000.0f / std::max(0.01f, gu->avgDrawFrameTime);
 	const float simDrawRatio = maxSimFPS / minDrawFPS;
 
-	return Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / gu->minFPS);
+	return Clamp(simDrawRatio * gu->avgSimFrameTime, 5.0f, 1000.0f / GlobalUnsynced::minDrawFPS);
 }
 
 void CGame::ClientReadNet()

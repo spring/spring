@@ -86,8 +86,10 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawMapMarks),
 	CR_MEMBER(drawFog),
 
-	CR_MEMBER(drawdebug),
-	CR_MEMBER(drawdebugtraceray),
+	CR_MEMBER(drawDebug),
+	CR_MEMBER(drawDebugTraceRay),
+	CR_MEMBER(drawDebugCubeMap),
+
 	CR_MEMBER(glDebug),
 	CR_MEMBER(glDebugErrors),
 
@@ -204,14 +206,17 @@ CGlobalRendering::CGlobalRendering()
 	, drawMapMarks(true)
 	, drawFog(true)
 
-	, drawdebug(false)
-	, drawdebugtraceray(false)
+	, drawDebug(false)
+	, drawDebugTraceRay(false)
+	, drawDebugCubeMap(false)
+
 	, glDebug(false)
 	, glDebugErrors(false)
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
 	, active(true)
 	, compressTextures(false)
+
 	, haveATI(false)
 	, haveMesa(false)
 	, haveIntel(false)
@@ -406,7 +411,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	// get wanted resolution and context-version
 	const int2 winRes = GetCfgWinRes(fullScreen);
 	const int2 maxRes = GetMaxWinRes();
-	const int2 minRes = {minWinSizeX, minWinSizeY};
+	const int2 minRes = {MIN_WIN_SIZE_X, MIN_WIN_SIZE_Y};
 	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
 		int2{                  std::max(mesaGL[0] - '0', 3),                   std::max(mesaGL[2] - '0', 0)}:
 		int2{configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
@@ -912,8 +917,8 @@ int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 		res = GetMaxWinRes();
 
 	// limit minimum window size in windowed mode
-	res.x = std::max(res.x, minWinSizeX * (1 - fullScrn));
-	res.y = std::max(res.y, minWinSizeY * (1 - fullScrn));
+	res.x = std::max(res.x, MIN_WIN_SIZE_X * (1 - fullScrn));
+	res.y = std::max(res.y, MIN_WIN_SIZE_Y * (1 - fullScrn));
 	return res;
 }
 

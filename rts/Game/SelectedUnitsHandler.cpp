@@ -595,14 +595,17 @@ void CSelectedUnitsHandler::Draw()
 			const CUnit* unit = unitHandler.GetUnit(unitID);
 			const MoveDef* moveDef = unit->moveDef;
 
-			if (unit->isIcon) continue;
-			if (!IsUnitSelected(unit)) continue;
+			if (unit->isIcon)
+				continue;
+			if (!IsUnitSelected(unit))
+				continue;
 
 			const int
 				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
 				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
-				mhxsize = (moveDef == NULL)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
-				mhzsize = (moveDef == NULL)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
+				mhxsize = (moveDef == nullptr)? uhxsize: ((moveDef->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (moveDef == nullptr)? uhzsize: ((moveDef->zsize * SQUARE_SIZE) >> 1);
+
 			const float3 verts[8] = {
 				// UnitDef footprint corners
 				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
@@ -621,7 +624,7 @@ void CSelectedUnitsHandler::Draw()
 			va->AddVertexQC(verts[2], color1);
 			va->AddVertexQC(verts[3], color1);
 
-			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
+			if (globalRendering->drawDebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
 				va->AddVertexQC(verts[4], color2);
 				va->AddVertexQC(verts[5], color2);
 				va->AddVertexQC(verts[6], color2);
@@ -1069,3 +1072,4 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 
 	clientNet->Send(std::shared_ptr<netcode::RawPacket>(packet));
 }
+

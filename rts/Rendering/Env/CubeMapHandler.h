@@ -53,6 +53,14 @@ private:
 		{ FwdVector, -RgtVector,   UpVector}, // fwd = +z
 		{-FwdVector,  RgtVector,   UpVector}, // fwd = -z
 	};
+	const float4 faceColors[6] = {
+		{1.0f, 0.0f, 0.0f, 1.0f}, // red
+		{0.0f, 1.0f, 0.0f, 1.0f}, // green
+		{0.0f, 0.0f, 1.0f, 1.0f}, // blue
+		{1.0f, 1.0f, 0.0f, 1.0f}, // yellow
+		{1.0f, 0.0f, 1.0f, 1.0f}, // purple
+		{0.0f, 1.0f, 1.0f, 1.0f}, // cyan
+	};
 };
 
 extern CubeMapHandler cubeMapHandler;

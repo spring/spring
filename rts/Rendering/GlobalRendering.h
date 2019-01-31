@@ -79,6 +79,7 @@ public:
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
 
+
 public:
 	/**
 	 * @brief time offset
@@ -178,8 +179,9 @@ public:
 	 *
 	 * Whether debugging info is drawn
 	 */
-	bool drawdebug;
-	bool drawdebugtraceray;
+	bool drawDebug;
+	bool drawDebugTraceRay;
+	bool drawDebugCubeMap;
 
 	bool glDebug;
 	bool glDebugErrors;
@@ -289,21 +291,22 @@ public:
 	/**
 	* @brief max view range in elmos
 	*/
-	static const float MAX_VIEW_RANGE;
+	static constexpr float MAX_VIEW_RANGE = 8000.0f;
 
 	/**
 	* @brief near z-plane distance in elmos
 	*/
-	static const float NEAR_PLANE;
+	static constexpr float NEAR_PLANE = 2.8f;
 
 
 	/// magic constant to reduce overblending on SMF maps
-	/// (scales the MapInfo::light_t::ground*Color values)
-	static const float SMF_INTENSITY_MULT;
+	/// (scales the MapInfo::light_t::ground*Color values;
+	/// roughly equal to 210.0f / 255.0f)
+	static constexpr float SMF_INTENSITY_MULT = (210.0f / 256.0f) + (1.0f / 256.0f) - (1.0f / 2048.0f) - (1.0f / 4096.0f);
 
 
-	static const int minWinSizeX;
-	static const int minWinSizeY;
+	static constexpr int MIN_WIN_SIZE_X = 400;
+	static constexpr int MIN_WIN_SIZE_Y = 300;
 };
 
 extern CGlobalRendering* globalRendering;
