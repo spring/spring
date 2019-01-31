@@ -29,6 +29,7 @@
 #include "LuaUtils.h"
 //FIXME#include "LuaVBOs.h"
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -67,7 +68,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
-#include "System/Config/ConfigHandler.h"
 
 using std::max;
 
@@ -946,8 +946,13 @@ int LuaOpenGL::GetViewSizes(lua_State* L)
 
 int LuaOpenGL::GetViewRange(lua_State* L)
 {
-	lua_pushnumber(L, camera->GetNearPlaneDist());
-	lua_pushnumber(L, camera->GetFarPlaneDist());
+	constexpr int minCamType = CCamera::CAMTYPE_PLAYER;
+	constexpr int maxCamType = CCamera::CAMTYPE_ACTIVE;
+
+	const CCamera* cam = CCameraHandler::GetCamera(Clamp(luaL_optint(L, 1, CCamera::CAMTYPE_ACTIVE), minCamType, maxCamType));
+
+	lua_pushnumber(L, cam->GetNearPlaneDist());
+	lua_pushnumber(L, cam->GetFarPlaneDist());
 	return 2;
 }
 
