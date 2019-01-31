@@ -70,11 +70,6 @@ static uint8_t globalRenderingMem[sizeof(CGlobalRendering)];
 CGlobalRendering* globalRendering = nullptr;
 GlobalRenderingInfo globalRenderingInfo;
 
-const float CGlobalRendering::MAX_VIEW_RANGE     = 8000.0f;
-const float CGlobalRendering::NEAR_PLANE         =    2.8f;
-const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
-const int CGlobalRendering::minWinSizeX = 400;
-const int CGlobalRendering::minWinSizeY = 300;
 
 CR_BIND(CGlobalRendering, )
 
