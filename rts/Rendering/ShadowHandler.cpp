@@ -606,8 +606,14 @@ float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const CMatrix44f&
 	float4 projScales;
 	projScales.x = GetOrthoProjectedFrustumRadius(cam, projMat, projMidPos);
 	projScales.y = projScales.x;
+	#if 0
 	projScales.z = cam->GetNearPlaneDist();
 	projScales.w = cam->GetFarPlaneDist();
+	#else
+	// prefer slightly tighter fixed bounds
+	projScales.z = 0.0f;
+	projScales.w = readMap->GetBoundingRadius() * 2.0f;
+	#endif
 	return projScales;
 }
 
