@@ -464,10 +464,7 @@ static CMatrix44f ComposeScaleMatrix(const float4 scales)
 void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 {
 	const CMatrix44f lightMatrix = ComposeLightMatrix(sky->GetLight());
-	const CMatrix44f scaleMatrix = ComposeScaleMatrix(GetShadowProjectionScales(playerCam, lightMatrix));
-
-	// convert xy-diameter to radius
-	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
+	const CMatrix44f scaleMatrix = ComposeScaleMatrix(shadowProjScales = GetShadowProjectionScales(playerCam, lightMatrix));
 
 	#if 0
 	// reshape frustum (to maximize SM resolution); for culling we want
@@ -514,6 +511,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -projMidPos[2]);
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + scaleMatrix.GetPos()); // add z-bias
 
+
 	#if 0
 	// holds true in the non-KISS case, but needs an epsilon-tolerance equality test
 	assert((viewMatrix[0] * projMatrix[0]) == (viewMatrix[1] * projMatrix[1]));
@@ -522,6 +520,9 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 
 void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 {
+	// convert xy-diameter to radius
+	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
+
 	// first set matrices needed by shaders (including ShadowGenVertProg)
 	shadowCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);
 	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_DRAWING]);
@@ -678,9 +679,15 @@ float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const CMatrix44f&
 	}
 
 	projScales.y = projScales.x;
+	#if 0
 	projScales.z = cam->GetNearPlaneDist();
 	projScales.w = cam->GetFarPlaneDist();
-	return (shadowProjScales = projScales);
+	#else
+	// prefer slightly tighter fixed bounds
+	projScales.z = 0.0f;
+	projScales.w = readMap->GetBoundingRadius() * 2.0f;
+	#endif
+	return projScales;
 }
 
 float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projPos) {
