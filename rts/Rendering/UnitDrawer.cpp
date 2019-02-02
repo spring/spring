@@ -1786,7 +1786,7 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsBuildingUnit())
 		spring::VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
 
 	if (allyTeam != gu->myAllyTeam)
@@ -1798,7 +1798,7 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsBuildingUnit())
 		spring::VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
 
 	if (allyTeam != gu->myAllyTeam)
