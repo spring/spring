@@ -76,22 +76,24 @@ public:
 	struct BlockingMapCell {
 	public:
 		BlockingMapCell() = delete;
-		BlockingMapCell(const ArrCell& ac, const VecCell& vc): arrCell(ac), vecCell(vc) {
+		BlockingMapCell(const ArrCell& ac, const VecCell* vc): arrCell(ac), vecCell(vc) {
 		}
 
-		CSolidObject* operator [] (size_t i) const {
+		VecCell::value_type operator [] (size_t i) const {
 			assert(i < size());
-			assert(i < arrCell.GetNumObjs() || (i - arrCell.GetNumObjs()) < vecCell.size());
+			assert(i < arrCell.GetNumObjs() || (i - arrCell.GetNumObjs()) < vecCell[ arrCell.GetVecIndx() ].size());
 
-			return ((i < arrCell.GetNumObjs())? arrCell[i]: vecCell[i - arrCell.GetNumObjs()]);
+			return ((i < arrCell.GetNumObjs())? arrCell[i]: vecCell[ arrCell.GetVecIndx() ][ i - arrCell.GetNumObjs() ]);
 		}
 
-		size_t size() const { return (arrCell.GetNumObjs() + vecCell.size()); }
+		size_t size() const { return (arrCell.GetNumObjs() + vsize()); }
+		size_t vsize() const { return ((arrCell.Full())? vecCell[ arrCell.GetVecIndx() ].size(): 0); }
+
 		bool empty() const { return (arrCell.Empty()); }
 
 	private:
 		const ArrCell& arrCell;
-		const VecCell& vecCell;
+		const VecCell* vecCell;
 	};
 
 
@@ -164,7 +166,8 @@ public:
 
 	BlockingMapCell GetCellUnsafeConst(unsigned int mapSquare) const {
 		assert(mapSquare < arrCells.size());
-		return {GetArrCell(mapSquare), GetVecCell(mapSquare)};
+		// avoid vec-cell lookup unless needed
+		return {GetArrCell(mapSquare), vecCells.data()};
 	}
 
 private:
