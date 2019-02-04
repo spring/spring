@@ -84,22 +84,22 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 	Update(false, true, false);
 }
 
-void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
+void CCamera::Update(const UpdateParams& p)
 {
 	lppScale = (2.0f * tanHalfFov) * globalRendering->pixelY;
 	aspectRatio = globalRendering->aspectRatio;
 
 	// should be set before UpdateMatrices
-	UpdateViewRange();
-
-	if (updateDirs)
+	if (p.updateViewRange)
+		UpdateViewRange();
+	if (p.updateDirs)
 		UpdateDirsFromRot(rot);
-	if (updateMats)
+	if (p.updateMats)
 		UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, aspectRatio);
-	if (updatePort)
+	if (p.updateViewPort)
 		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
-	UpdateFrustum();
+	if (p.updateFrustum)
+		UpdateFrustum();
 
 	LoadMatrices();
 	// not done here

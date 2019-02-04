@@ -77,12 +77,24 @@ public:
 		float maxz = 0.0f;
 	};
 
+	struct UpdateParams {
+		bool updateDirs;
+		bool updateMats;
+		bool updateFrustum;
+		bool updateViewPort;
+		bool updateViewRange;
+	};
+
 public:
 	CCamera(unsigned int cameraType = CAMTYPE_PLAYER, unsigned int projectionType = PROJTYPE_PERSP);
 
 	void CopyState(const CCamera*);
 	void CopyStateReflect(const CCamera*);
-	void Update(bool updateDirs = true, bool updateMats = true, bool updatePort = true);
+
+	void Update(const UpdateParams& p);
+	void Update(bool updateDirs = true, bool updateMats = true, bool updateViewPort = true, bool updateViewRange = true) {
+		Update({updateDirs, updateMats, true, updateViewPort, updateViewRange});
+	}
 
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
