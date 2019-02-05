@@ -428,8 +428,8 @@ private:
 
 	/**
 	 * Remove this command after this frame (absolute).
-	 * This can only be set locally and is not sent over the network.
-	 * (used for temporary orders)
+	 * Mostly used for internal temporary orders, also
+	 * exposed to Lua.
 	 * Examples:
 	 * - 0
 	 * - MAX_INT
