@@ -95,22 +95,6 @@ PacketType CBaseNetProtocol::SendPathCheckSum(uint8_t playerNum, uint32_t checks
 }
 
 
-PacketType CBaseNetProtocol::SendCommand(uint8_t playerNum, int32_t id, uint8_t options, uint32_t numParams, const float* params)
-{
-	const uint32_t payloadSize = sizeof(playerNum) + sizeof(id) + sizeof(options) + sizeof(numParams) + (numParams * sizeof(float));
-	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
-	const uint32_t packetSize = headerSize + payloadSize;
-
-	PackPacket* packet = new PackPacket(packetSize, NETMSG_COMMAND);
-	*packet << static_cast<uint16_t>(packetSize) << playerNum << id << options << numParams;
-
-	for (uint32_t i = 0; i < numParams; i++) {
-		*packet << params[i];
-	}
-
-	return PacketType(packet);
-}
-
 PacketType CBaseNetProtocol::SendSelect(uint8_t playerNum, const std::vector<int16_t>& selectedUnitIDs)
 {
 	const uint32_t payloadSize = sizeof(playerNum) + (selectedUnitIDs.size() * sizeof(int16_t));
@@ -131,6 +115,27 @@ PacketType CBaseNetProtocol::SendPause(uint8_t playerNum, uint8_t bPaused)
 }
 
 
+PacketType CBaseNetProtocol::SendCommand(
+	uint8_t playerNum,
+	int32_t commandID,
+	int32_t timeout,
+	uint8_t options,
+	uint32_t numParams,
+	const float* params
+) {
+	const uint32_t payloadSize = sizeof(playerNum) + sizeof(commandID) + sizeof(timeout) + sizeof(options) + sizeof(numParams) + (numParams * sizeof(float));
+	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
+	const uint32_t packetSize = headerSize + payloadSize;
+
+	PackPacket* packet = new PackPacket(packetSize, NETMSG_COMMAND);
+	*packet << static_cast<uint16_t>(packetSize) << playerNum << commandID << timeout << options << numParams;
+
+	for (uint32_t i = 0; i < numParams; i++) {
+		*packet << params[i];
+	}
+
+	return PacketType(packet);
+}
 
 PacketType CBaseNetProtocol::SendAICommand(
 	uint8_t playerNum,
@@ -138,6 +143,7 @@ PacketType CBaseNetProtocol::SendAICommand(
 	int16_t unitID,
 	int32_t commandID,
 	int32_t aiCommandID,
+	int32_t timeout,
 	uint8_t options,
 	uint32_t numParams,
 	const float* params
@@ -145,7 +151,8 @@ PacketType CBaseNetProtocol::SendAICommand(
 	const int32_t commandTypeID = (aiCommandID != -1)? NETMSG_AICOMMAND_TRACKED: NETMSG_AICOMMAND;
 
 	const uint32_t payloadSize =
-		sizeof(playerNum) + sizeof(aiID) + sizeof(unitID) + sizeof(commandID) + sizeof(options) + sizeof(numParams) +
+		sizeof(playerNum) + sizeof(aiID) + sizeof(unitID) +
+		sizeof(commandID) + sizeof(timeout) + sizeof(options) + sizeof(numParams) +
 		(sizeof(commandTypeID) * (commandTypeID == NETMSG_AICOMMAND_TRACKED)) + (numParams * sizeof(float));
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;
@@ -155,7 +162,8 @@ PacketType CBaseNetProtocol::SendAICommand(
 		throw netcode::PackPacketException("[BaseNetProto::SendAICommand] maximum packet-size exceeded");
 
 	PackPacket* packet = new PackPacket(packetSize, commandTypeID);
-	*packet << static_cast<uint16_t>(packetSize) << playerNum << aiID << unitID << commandID << options << numParams;
+	*packet << static_cast<uint16_t>(packetSize) << playerNum << aiID << unitID;
+	*packet << commandID << timeout << options << numParams;
 
 	if (commandTypeID == NETMSG_AICOMMAND_TRACKED)
 		*packet << aiCommandID;
@@ -167,8 +175,15 @@ PacketType CBaseNetProtocol::SendAICommand(
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendAIShare(uint8_t playerNum, uint8_t aiID, uint8_t sourceTeam, uint8_t destTeam, float metal, float energy, const std::vector<int16_t>& unitIDs)
-{
+PacketType CBaseNetProtocol::SendAIShare(
+	uint8_t playerNum,
+	uint8_t aiID,
+	uint8_t sourceTeam,
+	uint8_t destTeam,
+	float metal,
+	float energy,
+	const std::vector<int16_t>& unitIDs
+) {
 	const uint32_t payloadSize = sizeof(playerNum) + sizeof(aiID) + sizeof(sourceTeam) + sizeof(destTeam) + (2 * sizeof(float)) + (unitIDs.size() * sizeof(int16_t));
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;

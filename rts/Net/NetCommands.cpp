@@ -621,14 +621,17 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					int32_t cmdID;
-					uint8_t cmdOpt;
+					int32_t cmdTimeOut;
+					uint8_t cmdOptions;
 					uint32_t numParams;
 
 					pckt >> cmdID;
-					pckt >> cmdOpt;
+					pckt >> cmdTimeOut;
+					pckt >> cmdOptions;
 					pckt >> numParams;
 
-					Command c(cmdID, cmdOpt);
+					Command c(cmdID, cmdOptions);
+					c.SetTimeOut(cmdTimeOut);
 
 					for (uint32_t a = 0; a < numParams; ++a) {
 						float param; pckt >> param;
@@ -689,24 +692,27 @@ void CGame::ClientReadNet()
 					int16_t psize; pckt >> psize;
 					uint8_t player; pckt >> player;
 					uint8_t aiID; pckt >> aiID;
-					int16_t unitid;
+					int16_t unitID;
 
 					if (!playerHandler.IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> unitid;
-					if (unitid < 0 || static_cast<size_t>(unitid) >= unitHandler.MaxUnits())
+					pckt >> unitID;
+					if (unitID < 0 || static_cast<size_t>(unitID) >= unitHandler.MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
 					int32_t cmdID;
-					uint8_t cmdOpt;
+					int32_t cmdTimeOut;
+					uint8_t cmdOptions;
 					uint32_t numParams;
 
 					pckt >> cmdID;
-					pckt >> cmdOpt;
+					pckt >> cmdTimeOut;
+					pckt >> cmdOptions;
 					pckt >> numParams;
 
-					Command c(cmdID, cmdOpt);
+					Command c(cmdID, cmdOptions);
+					c.SetTimeOut(cmdTimeOut);
 
 					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
 						pckt >> cmdID;
@@ -721,7 +727,7 @@ void CGame::ClientReadNet()
 					}
 
 					// command originating from SkirmishAI or LuaUnsyncedCtrl
-					selectedUnitsHandler.AINetOrder(unitid, player, c);
+					selectedUnitsHandler.AINetOrder(unitID, player, c);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());

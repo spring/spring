@@ -983,7 +983,7 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		selectionChanged = false;
 	}
 
-	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.GetOpts(), c.GetNumParams(), c.GetParams()));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.GetTimeOut(), c.GetOpts(), c.GetNumParams(), c.GetParams()));
 }
 
 
