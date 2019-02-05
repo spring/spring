@@ -944,6 +944,15 @@ void LuaUtils::ParseCommandOptions(
 			// "key" = value (table format of CommandNotify)
 			if (lua_israwstring(L, -2)) {
 				const std::string key = lua_tostring(L, -2);
+				
+				if (lua_isnumber(L, -1)) {
+					if (key == "timeout") {
+						const int timeOut = lua_tointeger(L, -1);
+						cmd.timeOut = abs(timeOut);
+					}
+					continue;
+				}
+				
 
 				// we do not care about the "coded" key (not a boolean value)
 				if (!lua_isboolean(L, -1))
