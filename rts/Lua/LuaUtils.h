@@ -98,8 +98,7 @@ class LuaUtils {
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
-		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, Command& cmd, const char* caller, int index);
+
 		static Command ParseCommand(lua_State* L, const char* caller, int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller, int table);
 		static void ParseCommandArray(lua_State* L, const char* caller, int table, vector<Command>& commands);
