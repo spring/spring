@@ -409,7 +409,7 @@ static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 	for (lua_pushnil(L); lua_next(L, changedTableIdx) != 0; lua_pop(L, 1)) {
 		lua_pushvalue(L, -2); // copy the key to the top
 		lua_pushvalue(L, -2); // copy the value to the top
-		lua_rawset(L, table);
+		lua_rawset(L, tableIdx);
 	}
 
 	lua_pop(L, 1); // pop the changed table
@@ -589,7 +589,7 @@ int LuaUtils::ParseStringArray(lua_State* L, int index, string* array, int size)
 	if (!lua_istable(L, index))
 		return -1;
 
-	for (int i = 0 absIdx = PosAbsLuaIndex(L, index); i < size; i++) {
+	for (int i = 0, absIdx = PosAbsLuaIndex(L, index); i < size; i++) {
 		lua_rawgeti(L, absIdx, (i + 1));
 
 		if (lua_isstring(L, -1)) {
