@@ -930,7 +930,7 @@ void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command
 }
 
 
-static void ParseCommandOptions(
+static bool ParseCommandOptions(
 	lua_State* L,
 	Command& cmd,
 	const char* caller,
@@ -938,14 +938,14 @@ static void ParseCommandOptions(
 ) {
 	if (lua_isnumber(L, idx)) {
 		cmd.SetOpts(lua_tonumber(L, idx));
-		return;
+		return true;
 	}
 
 	if (lua_istable(L, idx)) {
 		for (lua_pushnil(L); lua_next(L, idx) != 0; lua_pop(L, 1)) {
 			// "key" = value (table format of CommandNotify)
+			// ignore the "coded" key; not a boolean value
 			if (lua_israwstring(L, -2)) {
-				// we do not care about the "coded" key (not a boolean value)
 				if (!lua_isboolean(L, -1))
 					continue;
 
@@ -974,8 +974,6 @@ static void ParseCommandOptions(
 
 			// [idx] = "value", avoid 'n'
 			if (lua_israwnumber(L, -2)) {
-				//const int idx = lua_tonumber(L, -2);
-
 				if (!lua_isstring(L, -1))
 					continue;
 
@@ -999,12 +997,25 @@ static void ParseCommandOptions(
 			}
 		}
 
-		return;
+		return true;
 	}
 
 	luaL_error(L, "%s(): bad options-argument type", caller);
+	return false;
 }
 
+static bool ParseCommandTimeOut(
+	lua_State* L,
+	Command& cmd,
+	const char* caller,
+	const int idx
+) {
+	if (!lua_isnumber(L, idx))
+		return false;
+
+	cmd.SetTimeOut(lua_tonumber(L, idx));
+	return true;
+}
 
 Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 {
@@ -1037,6 +1048,8 @@ Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 
 	// options
 	ParseCommandOptions(L, cmd, caller, idIndex + 2);
+	// timeout
+	ParseCommandTimeOut(L, cmd, caller, idIndex + 3);
 
 	// XXX should do some sanity checking?
 	return cmd;
@@ -1083,6 +1096,12 @@ Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int tableI
 		// options
 		lua_rawgeti(L, tableIdx, 3);
 		ParseCommandOptions(L, cmd, caller, lua_gettop(L));
+		lua_pop(L, 1);
+	}
+	{
+		// timeout
+		lua_rawgeti(L, tableIdx, 4);
+		ParseCommandTimeOut(L, cmd, caller, lua_gettop(L));
 		lua_pop(L, 1);
 	}
 
