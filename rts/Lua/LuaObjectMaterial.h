@@ -84,8 +84,6 @@ class LuaObjectLODMaterial {
 
 class LuaObjectMaterial {
 	public:
-		LuaObjectMaterial() : lodCount(0), lastLOD(0) {}
-
 		bool SetLODCount(unsigned int count);
 		bool SetLastLOD(unsigned int count);
 
@@ -114,8 +112,8 @@ class LuaObjectMaterial {
 		}
 
 	private:
-		unsigned int lodCount;
-		unsigned int lastLOD;
+		unsigned int lodCount = 0;
+		unsigned int lastLOD = 0;
 		std::vector<LuaObjectLODMaterial> lodMats;
 };
 
@@ -124,11 +122,6 @@ class LuaObjectMaterial {
 
 struct LuaObjectMaterialData {
 public:
-	LuaObjectMaterialData() {
-		lodCount = 0;
-		currentLOD = 0;
-	}
-
 	bool Enabled() const { return (lodCount > 0); }
 	bool ValidLOD(unsigned int lod) const { return (lod < lodCount); }
 
@@ -154,16 +147,13 @@ public:
 	}
 
 	unsigned int CalcCurrentLOD(LuaObjType objType, float lodDist, unsigned int lastLOD) const {
-		if (lastLOD == 0)
+		if (lastLOD >= lodCount)
 			return 0;
 
 		// positive values only!
 		const float lpp = std::max(0.0f, lodDist * GLOBAL_LOD_FACTORS[objType]);
 
-		for (/* no-op */; lastLOD != 0; lastLOD--) {
-			if (lpp > lodLengths[lastLOD]) {
-				break;
-			}
+		for (/* no-op */; (lastLOD != 0 && lpp <= lodLengths[lastLOD]); lastLOD--) {
 		}
 
 		return lastLOD;
@@ -185,12 +175,12 @@ public:
 
 		lodLengths.resize(lodCount = count);
 
-		for (unsigned int i = oldCount; i < count; i++) {
+		for (unsigned int i = oldCount; i < lodCount; i++) {
 			lodLengths[i] = -1.0f;
 		}
 
 		for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-			luaMats[m].SetLODCount(count);
+			luaMats[m].SetLODCount(lodCount);
 		}
 	}
 
@@ -231,9 +221,9 @@ private:
 
 	// equal to lodLengths.size(); if non-zero, then at least
 	// one LOD-level has been assigned a custom Lua material
-	unsigned int lodCount;
+	unsigned int lodCount = 0;
 	// which LuaObjectLODMaterial should be used
-	unsigned int currentLOD;
+	unsigned int currentLOD = 0;
 
 	// length-per-pixel; see CalcCurrentLOD
 	std::vector<float> lodLengths;

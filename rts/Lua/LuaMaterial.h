@@ -36,6 +36,7 @@ LuaObjectMaterialData (helper to choose the current LOD) //FIXME rename
 #include "LuaOpenGLUtils.h"
 #include "LuaObjectMaterial.h" // for LuaMatRef
 #include "Rendering/GL/myGL.h"
+#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
 
@@ -73,18 +74,20 @@ class LuaMatShader {
 			}
 		}
 		// only accepts engine programs
-		void SetEngineTypeFromKey(const std::string& key) {
-			if (key == "3do") { type = LUASHADER_3DO; return; }
-			if (key == "s3o") { type = LUASHADER_S3O; return; }
-			if (key == "ass") { type = LUASHADER_ASS; return; }
-			type = LUASHADER_LAST;
+		void SetEngineTypeFromKey(const char* key) {
+			switch (hashString(key)) {
+				case hashString("3DO"): case hashString("3do"): { type = LUASHADER_3DO ; } break;
+				case hashString("S3O"): case hashString("s3o"): { type = LUASHADER_S3O ; } break;
+				case hashString("ASS"): case hashString("ass"): { type = LUASHADER_ASS ; } break;
+				default                                       : { type = LUASHADER_LAST; } break;
+			}
 		}
 
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
 
-		bool operator<(const LuaMatShader& mt) const { return (Compare(*this, mt)  < 0); }
-		bool operator==(const LuaMatShader& mt) const = delete;
-		bool operator!=(const LuaMatShader& mt) const = delete;
+		bool operator <  (const LuaMatShader& mt) const { return (Compare(*this, mt) < 0); }
+		bool operator == (const LuaMatShader& mt) const = delete;
+		bool operator != (const LuaMatShader& mt) const = delete;
 
 		// both passes require a (custom or engine) shader
 		bool ValidForPass(Pass pass) const { return (type != LUASHADER_LAST); }
@@ -120,8 +123,6 @@ public:
 	struct IUniform {
 		static_assert(GL_INVALID_INDEX == -1, "glGetUniformLocation is defined to return -1 (GL_INVALID_INDEX) for invalid names");
 
-		IUniform(): loc(GL_INVALID_INDEX) {}
-
 		virtual bool CanExec() const = 0;
 		virtual GLenum GetType() const = 0;
 
@@ -129,7 +130,7 @@ public:
 		bool IsValid() const { return (loc != GL_INVALID_INDEX); }
 
 	public:
-		GLint loc;
+		GLint loc = GL_INVALID_INDEX;
 	};
 
 private:
@@ -174,15 +175,14 @@ private:
 
 	template<typename Type> struct UniformInt : public IUniform {
 	public:
-		UniformInt(): cur(Type(0)), prv(Type(0)) {}
 		bool CanExec() const { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
 
 		GLenum GetType() const { return GL_INT; }
 	public:
-		Type cur;
-		Type prv;
+		Type cur = Type(0);
+		Type prv = Type(0);
 	};
 
 private:

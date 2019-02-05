@@ -219,7 +219,7 @@ static void ParseShader(lua_State* L, int index, LuaMatShader& shader)
 		} break;
 
 		case LUA_TSTRING: {
-			shader.SetEngineTypeFromKey(StringToLower(lua_tostring(L, index)));
+			shader.SetEngineTypeFromKey(lua_tostring(L, index));
 		} break;
 
 		default: {
@@ -317,16 +317,17 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 	if (objMat == nullptr)
 		return 0;
 
-	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 2) - 1);
+	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checkint(L, 2) - 1);
 
 	if (lodMat == nullptr)
 		return 0;
 
 	if (lua_isuserdata(L, 4)) {
 		LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 4, "MatRef");
-		if (matRef) {
+
+		if (matRef != nullptr)
 			lodMat->matref = **matRef;
-		}
+
 	} else {
 		lodMat->matref = ParseMaterial(L, 4, matType);
 	}
