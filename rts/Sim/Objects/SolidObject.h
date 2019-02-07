@@ -223,11 +223,15 @@ public:
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
+	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
+
 	float3 GetDragAccelerationVec(const float4& params) const;
 	float3 GetWantedUpDir(bool useGroundNormal) const;
 
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
-	float CalcFootPrintRadius(float scale) const;
+	float CalcFootPrintMinExteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintMaxInteriorRadius(float scale = 1.0f) const;
+	float CalcFootPrintAxisStretchFactor() const;
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 

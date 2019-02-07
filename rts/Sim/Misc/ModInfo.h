@@ -48,6 +48,7 @@ public:
 	bool allowCrushingAlliedUnits;   //< determines if allied (ground-)units can be crushed during collisions
 	bool allowUnitCollisionDamage;   //< determines if units take damage from (skidding) collisions
 	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowSepAxisCollisionTest;  //< determines if (ground-)units perform collision-testing via the SAT
 	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
 	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
 
