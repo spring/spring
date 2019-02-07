@@ -22,67 +22,81 @@ void CModInfo::ResetState()
 	mutator.clear();
 	description.clear();
 
-	allowDirectionalPathing   = true;
-	allowAircraftToLeaveMap   = true;
-	allowAircraftToHitGround  = true;
-	allowPushingEnemyUnits    = false;
-	allowCrushingAlliedUnits  = false;
-	allowUnitCollisionDamage  = false;
-	allowUnitCollisionOverlap = true;
-	allowGroundUnitGravity    = true;
-	allowHoverUnitStrafing    = true;
+	{
+		allowDirectionalPathing    = true;
+		allowAircraftToLeaveMap    = true;
+		allowAircraftToHitGround   = true;
+		allowPushingEnemyUnits     = false;
+		allowCrushingAlliedUnits   = false;
+		allowUnitCollisionDamage   = false;
+		allowUnitCollisionOverlap  = true;
+		allowSepAxisCollisionTest  = false;
+		allowGroundUnitGravity     = true;
+		allowHoverUnitStrafing     = true;
+	}
+	{
+		constructionDecay      = true;
+		constructionDecayTime  = 1000;
+		constructionDecaySpeed = 1.0f;
+	}
+	{
+		multiReclaim                   = 1;
+		reclaimMethod                  = 1;
+		reclaimUnitMethod              = 1;
+		reclaimUnitEnergyCostFactor    = 0.0f;
+		reclaimUnitEfficiency          = 1.0f;
+		reclaimFeatureEnergyCostFactor = 0.0f;
+		reclaimAllowEnemies            = true;
+		reclaimAllowAllies             = true;
+	}
+	{
+		repairEnergyCostFactor    = 0.0f;
+		resurrectEnergyCostFactor = 0.5f;
+		captureEnergyCostFactor   = 0.0f;
+	}
+	{
+		unitExpMultiplier  = 0.0f;
+		unitExpPowerScale  = 0.0f;
+		unitExpHealthScale = 0.0f;
+		unitExpReloadScale = 0.0f;
+	}
+	{
+		paralyzeDeclineRate = 40.0f;
+		paralyzeOnMaxHealth = true;
+	}
+	{
+		transportGround            = 1;
+		transportHover             = 0;
+		transportShip              = 0;
+		transportAir               = 0;
+		targetableTransportedUnits = 0;
+	}
+	{
+		fireAtKilled   = 0;
+		fireAtCrashing = 0;
+	}
+	{
+		flankingBonusModeDefault = 0;
+	}
+	{
+		losMipLevel = 0;
+		airMipLevel = 0;
+		radarMipLevel = 0;
 
-	constructionDecay      = true;
-	constructionDecayTime  = 1000;
-	constructionDecaySpeed = 1.0f;
+		requireSonarUnderWater = true;
+		alwaysVisibleOverridesCloaked = false;
+		separateJammers = true;
+	}
+	{
+		featureVisibility = FEATURELOS_NONE;
+	}
+	{
+		pathFinderSystem = NOPFS_TYPE;
+		pfRawDistMult    = 1.25f;
+		pfUpdateRate     = 0.007f;
 
-	multiReclaim                   = 1;
-	reclaimMethod                  = 1;
-	reclaimUnitMethod              = 1;
-	reclaimUnitEnergyCostFactor    = 0.0f;
-	reclaimUnitEfficiency          = 1.0f;
-	reclaimFeatureEnergyCostFactor = 0.0f;
-	reclaimAllowEnemies            = true;
-	reclaimAllowAllies             = true;
-
-	repairEnergyCostFactor    = 0.0f;
-	resurrectEnergyCostFactor = 0.5f;
-	captureEnergyCostFactor   = 0.0f;
-
-	unitExpMultiplier  = 0.0f;
-	unitExpPowerScale  = 0.0f;
-	unitExpHealthScale = 0.0f;
-	unitExpReloadScale = 0.0f;
-	paralyzeDeclineRate = 40.0f;
-
-	paralyzeOnMaxHealth = true;
-
-	transportGround            = 1;
-	transportHover             = 0;
-	transportShip              = 0;
-	transportAir               = 0;
-	targetableTransportedUnits = 0;
-
-	fireAtKilled   = 1;
-	fireAtCrashing = 1;
-
-	flankingBonusModeDefault = 0;
-
-	losMipLevel = 0;
-	airMipLevel = 0;
-	radarMipLevel = 0;
-
-	requireSonarUnderWater = true;
-	alwaysVisibleOverridesCloaked = false;
-	separateJammers = true;
-
-	featureVisibility = FEATURELOS_NONE;
-
-	pathFinderSystem = NOPFS_TYPE;
-	pfRawDistMult    = 1.25f;
-	pfUpdateRate     = 0.007f;
-
-	allowTake = true;
+		allowTake = true;
+	}
 }
 
 void CModInfo::Init(const std::string& modFileName)
@@ -134,6 +148,7 @@ void CModInfo::Init(const std::string& modFileName)
 		allowCrushingAlliedUnits = movementTbl.GetBool("allowCrushingAlliedUnits", allowCrushingAlliedUnits);
 		allowUnitCollisionDamage = movementTbl.GetBool("allowUnitCollisionDamage", allowUnitCollisionDamage);
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", allowUnitCollisionOverlap);
+		allowSepAxisCollisionTest = movementTbl.GetBool("allowSepAxisCollisionTest", allowSepAxisCollisionTest);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", allowGroundUnitGravity);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == QTPFS_TYPE));
 	}
@@ -190,20 +205,20 @@ void CModInfo::Init(const std::string& modFileName)
 		// fire-at-dead-units
 		const LuaTable& fireAtDeadTbl = root.SubTable("fireAtDead");
 
-		fireAtKilled   = fireAtDeadTbl.GetBool("fireAtKilled", false);
-		fireAtCrashing = fireAtDeadTbl.GetBool("fireAtCrashing", false);
+		fireAtKilled   = fireAtDeadTbl.GetBool("fireAtKilled", bool(fireAtKilled));
+		fireAtCrashing = fireAtDeadTbl.GetBool("fireAtCrashing", bool(fireAtCrashing));
 	}
 
 	{
 		// transportability
 		const LuaTable& transportTbl = root.SubTable("transportability");
 
-		transportAir    = transportTbl.GetBool("transportAir",   false);
-		transportShip   = transportTbl.GetBool("transportShip",  false);
-		transportHover  = transportTbl.GetBool("transportHover", false);
-		transportGround = transportTbl.GetBool("transportGround", true);
+		transportAir    = transportTbl.GetBool("transportAir",    bool(transportAir   ));
+		transportShip   = transportTbl.GetBool("transportShip",   bool(transportShip  ));
+		transportHover  = transportTbl.GetBool("transportHover",  bool(transportHover ));
+		transportGround = transportTbl.GetBool("transportGround", bool(transportGround));
 
-		targetableTransportedUnits = transportTbl.GetBool("targetableTransportedUnits", false);
+		targetableTransportedUnits = transportTbl.GetBool("targetableTransportedUnits", bool(targetableTransportedUnits));
 	}
 
 	{
@@ -235,9 +250,9 @@ void CModInfo::Init(const std::string& modFileName)
 		const LuaTable& sensors = root.SubTable("sensors");
 		const LuaTable& los = sensors.SubTable("los");
 
-		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
-		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
-		separateJammers = sensors.GetBool("separateJammers", true);
+		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", requireSonarUnderWater);
+		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", alwaysVisibleOverridesCloaked);
+		separateJammers = sensors.GetBool("separateJammers", separateJammers);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the maximum value is CReadMap::numHeightMipMaps - 1

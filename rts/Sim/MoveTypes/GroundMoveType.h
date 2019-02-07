@@ -88,9 +88,13 @@ public:
 	const SyncedFloat3& GetCurrWayPoint() const { return currWayPoint; }
 	const SyncedFloat3& GetNextWayPoint() const { return nextWayPoint; }
 
+	const float3& GetFlatFrontDir() const { return flatFrontDir; }
+	const float3& GetGroundNormal(const float3&) const;
+	float GetGroundHeight(const float3&) const;
+
 private:
 	float3 GetObstacleAvoidanceDir(const float3& desiredDir);
-	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
+	float3 Here() const;
 
 	#define SQUARE(x) ((x) * (x))
 	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * sqSkidSpeedMult)); }
@@ -106,8 +110,6 @@ private:
 	void SetNextWayPoint();
 	bool CanSetNextWayPoint();
 	void ReRequestPath(bool forceRequest);
-
-	float3 Here() const;
 
 	void StartEngine(bool callScript);
 	void StopEngine(bool callScript, bool hardStop = false);
@@ -130,15 +132,13 @@ private:
 
 	void HandleUnitCollisions(
 		CUnit* collider,
-		const float colliderSpeed,
-		const float colliderRadius,
+		const float3& colliderParams,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD
 	);
 	void HandleFeatureCollisions(
 		CUnit* collider,
-		const float colliderSpeed,
-		const float colliderRadius,
+		const float3& colliderParams,
 		const UnitDef* colliderUD,
 		const MoveDef* colliderMD
 	);
@@ -152,8 +152,6 @@ private:
 	void CheckCollisionSkid();
 	void CalcSkidRot();
 
-	const float3& GetGroundNormal(const float3&) const;
-	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
 	void UpdateOwnerAccelAndHeading();
@@ -197,7 +195,7 @@ private:
 
 	float goalRadius = 0.0f;                /// original radius passed to StartMoving*
 	float ownerRadius = 0.0f;               /// owner MoveDef footprint radius
-	float extraRadius = 0.0f;
+	float extraRadius = 0.0f;               /// max(0, ownerRadius - goalRadius) if goal-pos is valid, 0 otherwise
 
 	float skidRotSpeed = 0.0f;              /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel = 0.0f;              /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))

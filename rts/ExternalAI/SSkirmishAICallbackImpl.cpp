@@ -3376,7 +3376,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_getFollowGround(int skirmishAII
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_MoveData_isSubMarine(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->subMarine;
+	return getUnitDefMoveDefById(skirmishAIId, unitDefId)->isSubmarine;
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_MoveData_getName(int skirmishAIId, int unitDefId) {
