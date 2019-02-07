@@ -171,8 +171,8 @@ static CGroundMoveType::MemberData gmtMemberData = {
 namespace SAT {
 	static float CalcSeparatingDist(
 		const float3& axis,
-		const float3& xdir,
 		const float3& zdir,
+		const float3& xdir,
 		const float3& sepv,
 		const float2& size
 	) {
