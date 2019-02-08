@@ -365,19 +365,19 @@ static bool LowerKeysCheck(lua_State* L, int table, int alreadyCheckTable)
 static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 {
 	luaL_checkstack(L, 8, __func__);
-	const int tableIdx = lua_gettop(L);
-	if (LowerKeysCheck(L, tableIdx, alreadyCheckTable))
+
+	const int  sourceTableIdx = lua_gettop(L);
+	const int changedTableIdx = sourceTableIdx + 1;
+
+	if (LowerKeysCheck(L, sourceTableIdx, alreadyCheckTable))
 		return true;
 
 	// a new table for changed values
-	const int changedTableIdx = tableIdx + 1;
 	lua_newtable(L);
 
-	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
-		if (lua_istable(L, -1)) {
+	for (lua_pushnil(L); lua_next(L, sourceTableIdx) != 0; lua_pop(L, 1)) {
+		if (lua_istable(L, -1))
 			LowerKeysReal(L, alreadyCheckTable);
-			continue;
-		}
 
 		if (!lua_israwstring(L, -2))
 			continue;
@@ -385,31 +385,32 @@ static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 		const string rawKey = lua_tostring(L, -2);
 		const string lowerKey = StringToLower(rawKey);
 
-		if (rawKey != lowerKey) {
-			// removed the mixed case entry
-			lua_pushvalue(L, -2); // the key
-			lua_pushnil(L);
-			lua_rawset(L, tableIdx);
-			// does the lower case key alread exist in the table?
+		if (rawKey == lowerKey)
+			continue;
+
+		// removed the mixed case entry
+		lua_pushvalue(L, -2); // the key
+		lua_pushnil(L);
+		lua_rawset(L, sourceTableIdx);
+		// does the lower case key alread exist in the table?
+		lua_pushsstring(L, lowerKey);
+		lua_rawget(L, sourceTableIdx);
+
+		if (lua_isnil(L, -1)) {
+			// lower case does not exist, add it to the changed table
 			lua_pushsstring(L, lowerKey);
-			lua_rawget(L, tableIdx);
-
-			if (lua_isnil(L, -1)) {
-				// lower case does not exist, add it to the changed table
-				lua_pushsstring(L, lowerKey);
-				lua_pushvalue(L, -3); // the value
-				lua_rawset(L, changedTableIdx);
-			}
-
-			lua_pop(L, 1);
+			lua_pushvalue(L, -3); // the value
+			lua_rawset(L, changedTableIdx);
 		}
+
+		lua_pop(L, 1);
 	}
 
 	// copy the changed values into the table
 	for (lua_pushnil(L); lua_next(L, changedTableIdx) != 0; lua_pop(L, 1)) {
 		lua_pushvalue(L, -2); // copy the key to the top
 		lua_pushvalue(L, -2); // copy the value to the top
-		lua_rawset(L, tableIdx);
+		lua_rawset(L, sourceTableIdx);
 	}
 
 	lua_pop(L, 1); // pop the changed table
