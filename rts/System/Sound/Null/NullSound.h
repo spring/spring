@@ -19,6 +19,7 @@ public:
 	virtual ~NullSound() {}
 
 	bool HasSoundItem(const std::string& name) const override { return false; }
+	bool PreloadSoundItem(const std::string& name) override { return false; }
 	size_t GetDefSoundId(const std::string& name) override { return 0; }
 	size_t GetSoundId(const std::string& name) override { return 0; }
 

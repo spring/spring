@@ -261,6 +261,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
 	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
+	REGISTER_LUA_CFUNC(PreloadSoundItem);
 
 	REGISTER_LUA_CFUNC(CreateDecal);
 	REGISTER_LUA_CFUNC(DestroyDecal);
@@ -2948,6 +2949,13 @@ int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
 
 	fd->PreloadModel();
 	return 0;
+}
+
+
+int LuaUnsyncedCtrl::PreloadSoundItem(lua_State* L)
+{
+	lua_pushboolean(L, sound->PreloadSoundItem(luaL_checkstring(L, 1)));
+	return 1;
 }
 
 /******************************************************************************/
