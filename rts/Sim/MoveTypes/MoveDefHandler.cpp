@@ -48,7 +48,6 @@ CR_REG_METADATA(MoveDef, (
 
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(flowMapping)
-
 ))
 
 CR_REG_METADATA(MoveDefHandler, (
@@ -105,6 +104,8 @@ void MoveDefHandler::Init(LuaParser* defsParser)
 
 	if (!rootTable.IsValid())
 		throw content_error("[MoveDefHandler] error loading MoveDef entries");
+	if (rootTable.GetLength() > moveDefs.size())
+		throw content_error("[MoveDefHandler] too many MoveDef entries");
 
 	CRC crc;
 
@@ -113,8 +114,6 @@ void MoveDefHandler::Init(LuaParser* defsParser)
 		crc << terrType.hoverSpeed << terrType.shipSpeed;
 	}
 
-	if (rootTable.GetLength() > moveDefs.size())
-		throw content_error("[MoveDefHandler] too many MoveDef entries");
 
 	nameMap.clear();
 	nameMap.reserve(rootTable.GetLength());

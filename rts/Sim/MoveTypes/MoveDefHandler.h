@@ -134,7 +134,7 @@ struct MoveDef {
 	/// do we stick to the ground when in water?
 	bool followGround = true;
 	/// are we supposed to be a purely sub-surface ship?
-	bool isSubmarine = true;
+	bool isSubmarine = false;
 
 	/// do we try to pathfind around squares blocked by mobile units?
 	///
