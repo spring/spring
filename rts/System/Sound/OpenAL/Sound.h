@@ -10,6 +10,7 @@
 #include "System/Sound/ISound.h"
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 #include "System/Threading/SpringThreading.h"
 
 #include "SoundItem.h"
@@ -33,6 +34,7 @@ public:
 	void Kill() override;
 
 	bool HasSoundItem(const std::string& name) const override;
+	bool PreloadSoundItem(const std::string& name) override;
 	size_t GetDefSoundId(const std::string& name) override;
 	size_t GetSoundId(const std::string& name) override;
 
@@ -97,6 +99,7 @@ private:
 
 	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
+	spring::unordered_set<std::string> preloadSet;
 
 	std::vector<SoundItem> soundItems;
 	std::vector<CSoundSource> soundSources; // fixed-size

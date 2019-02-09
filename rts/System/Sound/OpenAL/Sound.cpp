@@ -38,6 +38,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
@@ -95,6 +96,8 @@ void CSound::Init()
 
 		soundMap.clear();
 		soundMap.reserve(256);
+		preloadSet.clear();
+		preloadSet.reserve(16);
 
 		defaultItemNameMap.clear();
 		soundItemDefsMap.clear();
@@ -152,10 +155,19 @@ void CSound::Cleanup() {
 
 bool CSound::HasSoundItem(const std::string& name) const
 {
+	// soundMap can be concurrently touched by GetSoundId if preloading
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+
 	if (soundMap.find(name) != soundMap.end())
 		return true;
 
 	return (soundItemDefsMap.find(StringToLower(name)) != soundItemDefsMap.end());
+}
+
+bool CSound::PreloadSoundItem(const std::string& name)
+{
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+	return ((preloadSet.insert(name)).second);
 }
 
 
@@ -253,64 +265,62 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (key == "snd_volmaster") {
-		masterVolume = std::atoi(value.c_str()) * 0.01f;
+	switch (hashString(key.c_str())) {
+		case hashString("snd_volmaster"): {
+			masterVolume = std::atoi(value.c_str()) * 0.01f;
 
-		if (!mute && !appIsIconified)
-			alListenerf(AL_GAIN, masterVolume);
+			if (!mute && !appIsIconified)
+				alListenerf(AL_GAIN, masterVolume);
 
-		return;
-	}
-	if (key == "snd_eaxpreset") {
-		efx.SetPreset(value);
-		return;
-	}
-	if (key == "snd_filter") {
-		float gainlf = 1.0f;
-		float gainhf = 1.0f;
-		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
-		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
-		efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
-		efx.CommitEffects();
-		return;
-	}
-	if (key == "UseEFX") {
-		if (std::atoi(value.c_str()) != 0) {
-			efx.Enable();
-		} else {
-			efx.Disable();
-		}
-		return;
-	}
-	if (key == "snd_volgeneral") {
-		Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volunitreply") {
-		Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volbattle") {
-		Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volui") {
-		Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "snd_volmusic") {
-		Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
-		return;
-	}
-	if (key == "PitchAdjust") {
-		const int tempPitchAdjustMode = std::atoi(value.c_str());
+		} break;
+		case hashString("snd_eaxpreset"): {
+			efx.SetPreset(value);
+		} break;
+		case hashString("snd_filter"): {
+			float gainlf = 1.0f;
+			float gainhf = 1.0f;
+			sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
+			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
+			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
+			efx.CommitEffects();
+		} break;
 
-		// reset adjustment factor if disabling
-		if (tempPitchAdjustMode == 0)
-			PitchAdjust(1.0f);
+		case hashString("UseEFX"): {
+			if (std::atoi(value.c_str()) != 0) {
+				efx.Enable();
+			} else {
+				efx.Disable();
+			}
+		} break;
 
-		pitchAdjustMode = tempPitchAdjustMode;
-		return;
+		case hashString("snd_volgeneral"): {
+			Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volunitreply"): {
+			Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volbattle"): {
+			Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volui"): {
+			Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+		case hashString("snd_volmusic"): {
+			Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		} break;
+
+		case hashString("PitchAdjust"): {
+			const int tempPitchAdjustMode = std::atoi(value.c_str());
+
+			// reset adjustment factor if disabling
+			if (tempPitchAdjustMode == 0)
+				PitchAdjust(1.0f);
+
+			pitchAdjustMode = tempPitchAdjustMode;
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
@@ -673,8 +683,17 @@ void CSound::Update()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (CSoundSource& source: soundSources)
+	while (!preloadSet.empty()) {
+		GetSoundId(*preloadSet.begin());
+		// don't loop forever, erase even if the sound fails to load
+		// can't do this in GetSoundId since it breaks the reference
+		// (preload items will still be pre-empted by regular calls)
+		preloadSet.erase(preloadSet.begin());
+	}
+
+	for (CSoundSource& source: soundSources) {
 		source.Update();
+	}
 
 	CheckError("[Sound::Update]");
 	UpdateListenerReal();
@@ -871,12 +890,9 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	SoundBuffer soundBuf;
 	const std::string& soundExt = file.GetFileExt();
 
-	bool success = false;
-
-	// TODO: load asynchronously
 	switch (soundExt[0]) {
-		case 'w': { success = soundBuf.LoadWAV   (path, loadBuffer); } break; // wav
-		case 'o': { success = soundBuf.LoadVorbis(path, loadBuffer); } break; // ogg
+		case 'w': { soundBuf.LoadWAV   (path, loadBuffer); } break; // wav
+		case 'o': { soundBuf.LoadVorbis(path, loadBuffer); } break; // ogg
 		default : {
 			LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, soundExt.c_str());
 		} break;
@@ -884,7 +900,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	CheckError("[Sound::LoadSoundBuffer]");
 
-	if (!success) {
+	if (soundBuf.GetLength() <= 0.0f) {
 		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
