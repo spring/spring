@@ -808,12 +808,7 @@ void CDecalsDrawerGL4::Draw()
 	glSpringBindTextures(0, textures.size(), &textures[0]);
 
 	if (shadowHandler.ShadowsLoaded()) {
-		CMatrix44f shadowMat = shadowHandler.GetShadowViewMatrix();
-		constexpr float3 offsetVec = {0.5f, 0.5f, 0.0f};
-
-		shadowMat.GetPos() += offsetVec;
-
-		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowMat.m);
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler.GetShadowViewMatrixRaw());
 		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);
 	}
 
@@ -899,8 +894,7 @@ void CDecalsDrawerGL4::GameFrame(int n)
 		Decal& d = decals[idx];
 		assert((d.owner == nullptr) && (d.type == Decal::BUILDING));
 
-		d.alpha -= d.alphaFalloff;
-		if (d.alpha > 0.f) {
+		if ((d.alpha -= d.alphaFalloff) > 0.0f) {
 			decalsToUpdate.push_back(idx);
 		} else {
 			FreeDecal(idx);
