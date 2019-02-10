@@ -85,9 +85,9 @@ struct FontFace {
 };
 
 static spring::unsynced_set<CFontTexture*> allFonts;
-static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontCache;
+static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontFaceCache;
 static spring::unsynced_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
-static spring::recursive_mutex m;
+static spring::recursive_mutex fontCacheMutex;
 
 
 
@@ -98,12 +98,22 @@ public:
 	FtLibraryHandler() {
 		const FT_Error error = FT_Init_FreeType(&lib);
 
-		if (error)
-			throw std::runtime_error(std::string("FT_Init_FreeType failed:") + GetFTError(error));
+		if (error != 0)
+			throw std::runtime_error(std::string("[") + __func__ + "] FT_Init_FreeType error \"" + GetFTError(error) + "\"");
 
         #ifdef USE_FONTCONFIG
-		if (!FcInit())
-			throw std::runtime_error("FontConfig failed");
+		char msgBuf[256];
+		char errBuf[256];
+
+		snprintf(msgBuf, sizeof(msgBuf), "%s::FontConfigInit (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+		snprintf(errBuf, sizeof(errBuf), "[%s] FcInit failure (version %d.%d.%d)", __func__, FC_MAJOR, FC_MINOR, FC_REVISION);
+
+		ScopedOnceTimer timer(msgBuf);
+
+		if (FcInit())
+			return;
+
+		throw std::runtime_error(errBuf);
 		#endif
 	}
 
@@ -113,6 +123,7 @@ public:
 		FcFini();
 		#endif
 	}
+
 
 	#ifdef USE_FONTCONFIG
 	bool CheckFontConfig() const { return (FcConfigUptoDate(nullptr)); }
@@ -125,7 +136,9 @@ public:
 		FcConfigBuildFonts(nullptr);
 		return true;
 	}
+
 	#else
+
 	bool CheckFontConfig() const { return false; }
 	bool BuildFontConfig(const char*) const { return false; }
 	#endif
@@ -138,7 +151,7 @@ public:
 
 		#else
 
-		std::lock_guard<spring::recursive_mutex> lk(m);
+		std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 		if (flag) {
 			singleton.reset(new FtLibraryHandler());
 			flag = false;
@@ -194,13 +207,15 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
-	auto it = fontCache.find(fontfile + IntToString(size));
-	if (it != fontCache.end() && !it->second.expired())
-		return it->second.lock();
+	const auto fontKey = fontfile + IntToString(size);
+	const auto fontIt = fontFaceCache.find(fontKey);
+
+	if (fontIt != fontFaceCache.end() && !fontIt->second.expired())
+		return fontIt->second.lock();
 
 	// get the file (no need to cache, takes too little time)
 	std::string fontPath(fontfile);
@@ -244,10 +259,7 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0)
 		throw content_error(fontfile + ": FT_Select_Charmap failed: " + GetFTError(error));
 
-	auto shFace = std::make_shared<FontFace>(face, fontMem);
-
-	fontCache[fontfile + IntToString(size)] = shFace;
-	return shFace;
+	return (fontFaceCache[fontKey] = std::make_shared<FontFace>(face, fontMem)).lock();
 }
 #endif
 
@@ -417,7 +429,7 @@ CFontTexture::~CFontTexture()
 
 void CFontTexture::Update() {
 	// called from Game::UpdateUnsynced
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 	for (auto& font: allFonts) {
 		font->UpdateGlyphAtlasTexture();
 	}
@@ -500,7 +512,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
@@ -749,7 +761,7 @@ void CFontTexture::ReallocAtlases(bool pre)
 void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
-	std::lock_guard<spring::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(fontCacheMutex);
 
 	if (curTextureUpdate == lastTextureUpdate)
 		return;
