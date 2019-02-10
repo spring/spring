@@ -184,27 +184,31 @@ size_t CSound::GetSoundId(const std::string& name)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
+	// do not preload-loop forever, erase even if the sound fails to load
+	// note: this breaks the name reference, has to be done when returning
+	// regular GetSoundId calls will pre-empt any preload items
 	if (soundSources.empty())
-		return 0;
+		return (preloadSet.erase(name), 0);
 
 	const auto soundMapIt = soundMap.find(name);
 	if (soundMapIt != soundMap.end())
-		return soundMapIt->second;
+		return (preloadSet.erase(name), soundMapIt->second);
 
 	const auto itemDefIt = soundItemDefsMap.find(StringToLower(name));
 
 	if (itemDefIt != soundItemDefsMap.end())
-		return MakeItemFromDef(itemDefIt->second);
+		return (preloadSet.erase(name), MakeItemFromDef(itemDefIt->second));
 
 	// name does not match any sounds.lua item, interpret as raw file reference
 	if (LoadSoundBuffer(name) > 0) {
-		SoundItemNameMap temp = defaultItemNameMap;
-		temp["file"] = name;
-		return MakeItemFromDef(temp);
+		SoundItemNameMap itemMap = defaultItemNameMap;
+		itemMap.erase("file");
+		itemMap.insert("file", name);
+		return (preloadSet.erase(name), MakeItemFromDef(itemMap));
 	}
 
 	LOG_L(L_ERROR, "[Sound::%s] could not find sound \"%s\"", __func__, name.c_str());
-	return 0;
+	return (preloadSet.erase(name), 0);
 }
 
 
@@ -685,10 +689,6 @@ void CSound::Update()
 
 	while (!preloadSet.empty()) {
 		GetSoundId(*preloadSet.begin());
-		// don't loop forever, erase even if the sound fails to load
-		// can't do this in GetSoundId since it breaks the reference
-		// (preload items will still be pre-empted by regular calls)
-		preloadSet.erase(preloadSet.begin());
 	}
 
 	for (CSoundSource& source: soundSources) {
