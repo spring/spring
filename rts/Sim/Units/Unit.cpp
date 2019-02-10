@@ -632,16 +632,16 @@ float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
 	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < teamHandler.ActiveAllyTeams());
 
-	const bool b0 = (1     ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
-	const bool b1 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
-	const bool b2 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsImmobileUnit()); // seen ghosted building, no error
-	const bool b3 = (1 - b0) && ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
+	const bool limitRead = (1            ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
+	const bool isVisible = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
+	const bool seenGhost = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsBuildingUnit()); // seen ghosted building, no error
+	const bool isOnRadar = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
 
-	switch ((b0 * 1) + (b1 * 2) + (b2 * 4) + (b3 * 8)) {
-		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !b0 &&  !b1 && !b2  && !b3
-		case  1: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; //  b0
-		case  8: { return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam)); } break; // !b0 &&  !b1 && !b2  &&  b3
-		default: {                                                                               } break; // !b0 && ( b1 ||  b2) && !b3
+	switch ((limitRead * 1) + (isVisible * 2) + (seenGhost * 4) + (isOnRadar * 8)) {
+		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !limitRead &&  !isVisible && !seenGhost  && !isOnRadar
+		case  1: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; //  limitRead
+		case  8: { return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam)); } break; // !limitRead &&  !isVisible && !seenGhost  &&  isOnRadar
+		default: {                                                                               } break; // !limitRead && ( isVisible ||  seenGhost) && !isOnRadar
 	}
 
 	return ZeroVector;
