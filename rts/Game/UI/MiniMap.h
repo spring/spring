@@ -32,13 +32,24 @@ public:
 	void MouseRelease(int x, int y, int button);
 	void MoveView(int x, int y);
 	bool IsAbove(int x, int y);
+
 	std::string GetTooltip(int x, int y);
+
 	void Draw();
-	void DrawForReal(bool useNormalizedCoors = true, bool updateTex = false, bool luaCall = false);
+	void DrawForReal();
 	void Update();
+
+	void RenderCachedTextureRaw();
+	void RenderCachedTextureNormalized(bool luaCall);
+	void RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix44f& projMat);
+
+	void RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* buffer);
+	void RenderMarkerNotificationRectangles(GL::RenderDataBufferC* buffer);
+
 
 	void ConfigCommand(const std::string& command);
 
+	CMatrix44f CalcNormalizedCoorMatrix(bool dualScreen, bool luaCall) const;
 	float3 GetMapPosition(int x, int y) const;
 	CUnit* GetSelectUnit(const float3& pos) const;
 
@@ -53,7 +64,6 @@ public:
 
 	void SetMinimized(bool state) { minimized = state; }
 	bool GetMinimized() const { return minimized; }
-
 	bool GetMaximized() const { return maximized; }
 
 	int GetPosX()  const { return curPos.x; }
@@ -85,21 +95,21 @@ protected:
 	void ProxyMousePress(int x, int y, int button);
 	void ProxyMouseRelease(int x, int y, int button);
 
-	bool RenderCachedTexture(bool useNormalizedCoors);
 	void DrawBackground() const;
 	void DrawUnitIcons() const;
 	void DrawUnitRanges() const;
 	void DrawWorldStuff() const;
-	void DrawCameraFrustumAndMouseSelection();
-	void SetClipPlanes(const bool lua) const;
+	void SetClipPlanes(bool lua) const;
 
-	void EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const;
-	void LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const;
+	void DrawFrame(GL::RenderDataBufferC* buffer);
+	bool DrawButtonQuads(GL::RenderDataBufferTC* buffer);
+	bool DrawButtonLoops(GL::RenderDataBufferC* buffer);
+	bool DrawButtons(GL::RenderDataBufferTC* tcbuffer, GL::RenderDataBufferC* cbuffer) {
+		return (DrawButtonQuads(tcbuffer) && DrawButtonLoops(cbuffer));
+	}
 
-	void DrawFrame(GL::RenderDataBufferC* rdBufferC);
-	void DrawNotes();
-	void DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
-	void DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC);
+	void DrawMinimizedButtonQuad(GL::RenderDataBufferTC* buffer);
+	void DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer);
 
 	void DrawUnitHighlight(const CUnit* unit);
 	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
@@ -150,8 +160,9 @@ protected:
 		bool Inside(int x, int y) const {
 			return ((x >= xmin) && (x <= xmax) && (y >= ymin) && (y <= ymax));
 		}
-		void DrawBox(GL::RenderDataBufferC* rdBufferC) const;
-		void DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const;
+
+		void DrawBox(GL::RenderDataBufferC* buffer) const;
+		void DrawTextureBox(GL::RenderDataBufferTC* buffer) const;
 
 		int xmin, xmax;
 		int ymin, ymax;

@@ -193,6 +193,7 @@ char* GL::RenderDataBuffer::FormatShaderBase(
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st*)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex1;\n"); // TNT (v_texcoor_uv1)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex2;\n"); // TNT (v_texcoor_uv2)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform float u_gamma_exponent = 1.0;\n"); // TODO: set for every shader
 		} break;
 		default: {} break;
 	}
@@ -302,6 +303,10 @@ char* GL::RenderDataBuffer::FormatShaderType(
 			default: {} break;
 		}
 	}
+
+	// assume shaders want this even if they specify main()
+	if (type[0] == 'F')
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tf_color_rgba.rgb = pow(f_color_rgba.rgb, vec3(u_gamma_exponent));\n");
 
 	return (ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "}\n"));
 }

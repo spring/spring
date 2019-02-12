@@ -996,14 +996,11 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 		luaL_error(L, "gl.DrawMiniMap() can only be used if the minimap is in slave mode");
 
 	if (luaL_optboolean(L, 1, true)) {
-		GL::PushMatrix();
-		GL::Scale(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
-
-		minimap->DrawForReal(true, false, true);
-
-		GL::PopMatrix();
+		// default transform
+		minimap->RenderCachedTextureNormalized(true);
 	} else {
-		minimap->DrawForReal(false, false, true);
+		// custom transform
+		minimap->RenderCachedTextureRaw();
 	}
 
 	return 0;

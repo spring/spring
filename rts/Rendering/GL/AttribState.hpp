@@ -50,9 +50,9 @@ namespace GL {
 		void PushColorBufferBit();
 		void PushDepthBufferBit();
 		void PushStencilBufferBit();
-		void PushScissorBit();
 		void PushTextureBit();
 		void PushViewPortBit();
+		void PushScissorBit();
 
 
 		void DepthRange(float zn, float zf);
@@ -178,6 +178,12 @@ namespace GL {
 		void PushViewPort() { PushViewPort(viewportStack.Top()); }
 		void PopViewPort();
 
+		// scissor (GLint)
+		void Scissor(int32_t x, int32_t y, int32_t w, int32_t h);
+		void PushScissor(int32_t x, int32_t y, int32_t w, int32_t h);
+		void PushScissor() { PushScissor(scissorStack.Top()); }
+		void PopScissor();
+
 		// front-face (GLuint)
 		void FrontFace(uint32_t face);
 		void PushFrontFace(uint32_t face);
@@ -271,6 +277,12 @@ namespace GL {
 			int32_t w;
 			int32_t h;
 		};
+		struct ScissorState {
+			int32_t x;
+			int32_t y;
+			int32_t w;
+			int32_t h;
+		};
 
 		void DepthRange(const DepthRangeState& v) { DepthRange(v.zn, v.zf); }
 		void AlphaFunc(const AlphaFuncState& v) { AlphaFunc(v.func, v.rval); }
@@ -282,6 +294,7 @@ namespace GL {
 		void PolygonMode(const PolyModeState& v) { PolygonMode(v.side, v.mode); }
 		void PolygonOffset(const PolyOffsetState& v) { PolygonOffset(v.factor, v.units); }
 		void ViewPort(const ViewPortState& v) { ViewPort(v.x, v.y, v.w, v.h); }
+		void Scissor(const ScissorState& v) { Scissor(v.x, v.y, v.w, v.h); }
 
 		void PushDepthRange(const DepthRangeState& v) { PushDepthRange(v.zn, v.zf); }
 		void PushAlphaFunc(const AlphaFuncState& v) { PushAlphaFunc(v.func, v.rval); }
@@ -293,6 +306,7 @@ namespace GL {
 		void PushPolygonMode(const PolyModeState& v) { PushPolygonMode(v.side, v.mode); }
 		void PushPolygonOffset(const PolyOffsetState& v) { PushPolygonOffset(v.factor, v.units); }
 		void PushViewPort(const ViewPortState& v) { PushViewPort(v.x, v.y, v.w, v.h); }
+		void PushScissor(const ScissorState& v) { PushScissor(v.x, v.y, v.w, v.h); }
 
 	private:
 		template<typename T, size_t S> struct ArrayStack {
@@ -355,6 +369,7 @@ namespace GL {
 		ArrayStack<BlendColorState , 64>  blendColorStack;
 		ArrayStack<ColorMaskState  , 64>   colorMaskStack;
 		ArrayStack<ViewPortState   , 64>    viewportStack;
+		ArrayStack< ScissorState   , 64>     scissorStack;
 		ArrayStack<float           , 64>   lineWidthStack;
 	};
 

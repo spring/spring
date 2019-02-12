@@ -74,6 +74,7 @@ GL::AttribState::AttribState() {
 	blendColorStack.Fill({0.0f, 0.0f, 0.0f, 0.0f});
 	colorMaskStack.Fill({GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE});
 	viewportStack.Fill({0, 0, 0, 0});
+	scissorStack.Fill({0, 0, 0, 0});
 	lineWidthStack.Fill(0.0f);
 }
 
@@ -113,6 +114,7 @@ void GL::AttribState::Init() {
 	PushBlendColor(glGetFloatT<BlendColorState, 4>(GL_BLEND_COLOR));
 	PushColorMask(glGetIntT<ColorMaskState, 4>(GL_COLOR_WRITEMASK));
 	PushViewPort(glGetIntT<ViewPortState, 4>(GL_VIEWPORT));
+	PushScissor(glGetIntT<ScissorState, 4>(GL_SCISSOR_BOX));
 	PushLineWidth(glGetFloatT(GL_LINE_WIDTH));
 }
 
@@ -249,10 +251,6 @@ void GL::AttribState::PushBits(uint32_t attribBits) {
 	}
 
 	#if 0
-	// TODO: scissor-rect
-	if ((attribBits & GL_SCISSOR_BIT) != 0) {
-	}
-
 	if ((attribBits & GL_TEXTURE_BIT) != 0) {
 	}
 	#endif
@@ -261,6 +259,9 @@ void GL::AttribState::PushBits(uint32_t attribBits) {
 		PushViewPort();
 		PushDepthRange();
 	}
+
+	if ((attribBits & GL_SCISSOR_BIT) != 0)
+		PushScissor();
 
 	// TODO: stipple?
 	if ((attribBits & GL_LINE_BIT) != 0)
@@ -329,9 +330,6 @@ void GL::AttribState::PopBits() {
 	}
 
 	#if 0
-	if ((attribBits & GL_SCISSOR_BIT) != 0) {
-	}
-
 	if ((attribBits & GL_TEXTURE_BIT) != 0) {
 	}
 	#endif
@@ -340,6 +338,9 @@ void GL::AttribState::PopBits() {
 		PopViewPort();
 		PopDepthRange();
 	}
+
+	if ((attribBits & GL_SCISSOR_BIT) != 0)
+		PopScissor();
 
 	if ((attribBits & GL_LINE_BIT) != 0)
 		PopLineWidth();
@@ -352,9 +353,9 @@ void GL::AttribState::PushPolygonBit() { PushBits(GL_POLYGON_BIT); }
 void GL::AttribState::PushColorBufferBit() { PushBits(GL_COLOR_BUFFER_BIT); }
 void GL::AttribState::PushDepthBufferBit() { PushBits(GL_DEPTH_BUFFER_BIT); }
 void GL::AttribState::PushStencilBufferBit() { PushBits(GL_STENCIL_BUFFER_BIT); }
-void GL::AttribState::PushScissorBit() { PushBits(GL_SCISSOR_BIT); }
 void GL::AttribState::PushTextureBit() { PushBits(GL_TEXTURE_BIT); }
 void GL::AttribState::PushViewPortBit() { PushBits(GL_VIEWPORT_BIT); }
+void GL::AttribState::PushScissorBit() { PushBits(GL_SCISSOR_BIT); }
 
 
 void GL::AttribState::DepthRange(float zn, float zf) {
@@ -597,6 +598,23 @@ void GL::AttribState::PushViewPort(int32_t x, int32_t y, int32_t w, int32_t h) {
 }
 void GL::AttribState::PopViewPort() {
 	ViewPort(viewportStack.Pop(true));
+}
+
+
+
+void GL::AttribState::Scissor(int32_t x, int32_t y, int32_t w, int32_t h) {
+	glScissor(
+		(scissorStack.Top()).x = x,
+		(scissorStack.Top()).y = y,
+		(scissorStack.Top()).w = w,
+		(scissorStack.Top()).h = h
+	);
+}
+void GL::AttribState::PushScissor(int32_t x, int32_t y, int32_t w, int32_t h) {
+	Scissor(scissorStack.Push({x, y, w, h}));
+}
+void GL::AttribState::PopScissor() {
+	Scissor(scissorStack.Pop(true));
 }
 
 

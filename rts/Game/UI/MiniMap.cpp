@@ -393,12 +393,13 @@ void CMiniMap::UpdateGeometry()
 
 
 	{
-		// heightmap to minimap
 		viewMats[1].LoadIdentity();
 		viewMats[1].Translate(UpVector);
+		// heightmap (squares) to minimap
 		viewMats[1].Scale({1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f});
+		// map (elmos) to minimap
+		// viewMats[1].Scale({1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
 
-		// engine draws minimap in 0..1 range, Lua uses 0..minimapSize{X,Y}
 		viewMats[2].LoadIdentity();
 		viewMats[2].Scale({1.0f / curDim.x, 1.0f / curDim.y, 1.0f});
 
@@ -484,17 +485,15 @@ void CMiniMap::UpdateGeometry()
 
 void CMiniMap::MoveView(int x, int y)
 {
-	const float3 clickPos = GetMapPosition(x, y);
-
 	camHandler->CameraTransition(0.0f);
-	camHandler->GetCurrentController().SetPos({clickPos.x, 0.0f, clickPos.z});
+	camHandler->GetCurrentController().SetPos(GetMapPosition(x, y) * XZVector);
 	unitTracker.Disable();
 }
 
 
 void CMiniMap::SelectUnits(int x, int y)
 {
-	const CUnit *_lastClicked = lastClicked;
+	const CUnit* _lastClicked = lastClicked;
 	lastClicked = nullptr;
 
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
@@ -565,13 +564,13 @@ bool CMiniMap::MousePress(int x, int y, int button)
 				mouseMove = true;
 				return true;
 			}
-			else if (resizeBox.Inside(x, y)) {
+			if (resizeBox.Inside(x, y)) {
 				mouseResize = true;
 				return true;
 			}
-			else if (minimizeBox.Inside(x, y) || maximizeBox.Inside(x, y)) {
+
+			if (minimizeBox.Inside(x, y) || maximizeBox.Inside(x, y))
 				return true;
-			}
 		}
 		if (inMap && !mouse->buttons[SDL_BUTTON_LEFT].chorded) {
 			selecting = true;
@@ -590,7 +589,7 @@ bool CMiniMap::MousePress(int x, int y, int button)
 
 			return true;
 		}
-		else if (fullProxy && (button == SDL_BUTTON_RIGHT)) {
+		if (fullProxy && (button == SDL_BUTTON_RIGHT)) {
 			proxyMode = true;
 			ProxyMousePress(x, y, button);
 			return true;
@@ -606,14 +605,8 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 	if (mouseMove) {
 		curPos.x += dx;
 		curPos.y -= dy;
-		curPos.x = std::max(0, curPos.x);
-
-		if (globalRendering->dualScreenMode) {
-			curPos.x = std::min((2 * globalRendering->viewSizeX) - curDim.x, curPos.x);
-		} else {
-			curPos.x = std::min(globalRendering->viewSizeX - curDim.x, curPos.x);
-		}
-		curPos.y = std::max(5, std::min(globalRendering->viewSizeY - curDim.y, curPos.y));
+		curPos.x  = std::max(0, std::min(globalRendering->viewSizeX * (1 + globalRendering->dualScreenMode) - curDim.x, curPos.x));
+		curPos.y  = std::max(5, std::min(globalRendering->viewSizeY                                         - curDim.y, curPos.y));
 
 		UpdateGeometry();
 		return;
@@ -623,13 +616,8 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		curPos.y -= dy;
 		curDim.x += dx;
 		curDim.y += dy;
-		curDim.y  = std::min(globalRendering->viewSizeY, curDim.y);
-
-		if (globalRendering->dualScreenMode) {
-			curDim.x = std::min(2 * globalRendering->viewSizeX, curDim.x);
-		} else {
-			curDim.x = std::min(globalRendering->viewSizeX, curDim.x);
-		}
+		curDim.x  = std::min(globalRendering->viewSizeX * (1 + globalRendering->dualScreenMode), curDim.x);
+		curDim.y  = std::min(globalRendering->viewSizeY                                        , curDim.y);
 
 		if (KeyInput::GetKeyModState(KMOD_SHIFT))
 			curDim.x = (curDim.y * mapDims.mapx) / mapDims.mapy;
@@ -872,28 +860,22 @@ void CMiniMap::DrawSurfaceCircle(CVertexArray* va, const float4& pos, const floa
 }
 
 
-void CMiniMap::EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const
+
+
+CMatrix44f CMiniMap::CalcNormalizedCoorMatrix(bool dualScreen, bool luaCall) const
 {
-	if (pushMatrix)
-		GL::PushMatrix();
+	CMatrix44f mat;
 
-	// switch to normalized minimap coords
-	if (dualScreen) {
-		glAttribStatePtr->ViewPort(curPos.x, curPos.y, curDim.x, curDim.y);
-	} else {
-		GL::Translate(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-	}
+	#if 0
+	// "Lua{OpenGL::ResetMiniMapMatrices} uses 0..minimapSize{X,Y}" no longer applies
+	if (luaCall)
+		mat.Scale({globalRendering->viewSizeX * 1.0f, globalRendering->viewSizeY * 1.0f, 1.0f});
+	#endif
+	if (!dualScreen)
+		mat.Translate(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
 
-	GL::Scale(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-}
-
-void CMiniMap::LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const
-{
-	if (popMatrix)
-		GL::PopMatrix();
-
-	if (dualScreen)
-		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	mat.Scale({curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f});
+	return mat;
 }
 
 /******************************************************************************/
@@ -907,9 +889,9 @@ void CMiniMap::Update()
 	if (minimized || curDim.x == 0 || curDim.y == 0)
 		return;
 
-	static spring_time nextDrawScreen = spring_gettime();
+	static spring_time nextDrawScreenTime = spring_gettime();
 
-	if (spring_gettime() <= nextDrawScreen)
+	if (spring_gettime() <= nextDrawScreenTime)
 		return;
 
 	float refreshRate = minimapRefreshRate;
@@ -919,7 +901,7 @@ void CMiniMap::Update()
 		const float mmapArea = (curDim.x * curDim.y) / viewArea;
 		refreshRate = (mmapArea >= 0.45f) ? 60 : (mmapArea > 0.15f) ? 25 : 15;
 	}
-	nextDrawScreen = spring_gettime() + spring_msecs(1000.0f / refreshRate);
+	nextDrawScreenTime = spring_gettime() + spring_msecs(1000.0f / refreshRate);
 
 	fbo.Bind();
 	ResizeTextureCache();
@@ -943,7 +925,6 @@ void CMiniMap::ResizeTextureCache()
 	minimapTexSize = curDim;
 
 	if ((multisampledFBO = (fbo.GetMaxSamples() > 1))) {
-		// multisampled FBO we are render to
 		fbo.Detach(GL_COLOR_ATTACHMENT0); // delete old RBO
 		fbo.CreateRenderBufferMultisample(GL_COLOR_ATTACHMENT0, GL_RGBA8, minimapTexSize.x, minimapTexSize.y, 4);
 		//fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, minimapTexSize.x, minimapTexSize.y);
@@ -1000,7 +981,7 @@ void CMiniMap::UpdateTextureCache()
 			glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
-			DrawForReal(false, true, false);
+			DrawForReal();
 
 		curPos = tmpPos;
 	}
@@ -1028,7 +1009,7 @@ void CMiniMap::Draw()
 		return;
 
 	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
-	// Draw Border
+
 	{
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1036,52 +1017,48 @@ void CMiniMap::Draw()
 		glAttribStatePtr->DisableDepthTest();
 		glAttribStatePtr->DepthFunc(GL_LEQUAL);
 		glAttribStatePtr->DisableDepthMask();
-		glDisable(GL_TEXTURE_2D);
-		GL::MatrixMode(GL_MODELVIEW);
-
-		GL::RenderDataBufferC * rdBufferC  = GL::GetRenderBufferC ();
-		GL::RenderDataBufferTC* rdBufferTC = GL::GetRenderBufferTC();
 
 		if (minimized) {
-			DrawMinimizedButton(rdBufferC, rdBufferTC);
+			DrawMinimizedButtonQuad(GL::GetRenderBufferTC());
+			DrawMinimizedButtonLoop(GL::GetRenderBufferC());
 			glAttribStatePtr->PopBits();
-			glEnable(GL_TEXTURE_2D);
 			return;
 		}
 
-		// draw the frameborder
+		// draw the frame border
 		if (!globalRendering->dualScreenMode) {
-			DrawFrame(rdBufferC);
-			DrawButtons(rdBufferC, rdBufferTC);
+			DrawFrame(GL::GetRenderBufferC());
+			DrawButtons(GL::GetRenderBufferTC(), GL::GetRenderBufferC());
 		}
 
 		glAttribStatePtr->PopBits();
 	}
 
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-	// draw minimap itself
-	DrawForReal(true, false, false);
-	glSpringMatrix2dResetPV();
+	{
+		// draw minimap itself
+		RenderCachedTextureNormalized(false);
+	}
 }
 
 
 
-// Update->UpdateTextureCache->DrawForReal(false)->RenderCachedTexture
-// Draw->DrawForReal(true)->RenderCachedTexture
-// LuaOpenGL::DrawMiniMap->DrawForReal(true OR false)->RenderCachedTexture
-//
-// DrawForReal->DrawBackground->{readMap->DrawMiniMap (with multi-texturing, can not use standard renderbuffer shader!}
-void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall)
+// MiniMap::UpdateTextureCache
+//   Matrix2dSetupPV
+//   DrawForReal()
+//     DrawBackground->ReadMap::DrawMiniMap (with multi-texturing, need custom shader)
+//   Matrix2dResetPV
+void CMiniMap::DrawForReal()
 {
 	if (minimized)
 		return;
 
 	glActiveTexture(GL_TEXTURE0);
 
-	if (!updateTex) {
-		RenderCachedTexture(useNormalizedCoors);
-		return;
-	}
+
+	setSurfaceCircleFuncVA(DrawSurfaceCircle);
+	cursorIcons.Enable(false);
+
+
 
 	glAttribStatePtr->PushDepthBufferBit();
 	glAttribStatePtr->EnableBlendMask();
@@ -1092,11 +1069,7 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	glDisable(GL_TEXTURE_2D);
 	GL::MatrixMode(GL_MODELVIEW);
 
-	if (useNormalizedCoors)
-		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
-	setSurfaceCircleFuncVA(DrawSurfaceCircle);
-	cursorIcons.Enable(false);
 
 	// clip everything outside of the minimap box
 	SetClipPlanes(false);
@@ -1115,9 +1088,6 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	DrawUnitIcons();
 	DrawWorldStuff();
 
-	if (useNormalizedCoors)
-		LeaveNormalizedCoors(true, false);
-
 	glAttribStatePtr->PopBits();
 	glEnable(GL_TEXTURE_2D);
 
@@ -1125,14 +1095,6 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 	SetClipPlanes(true);
 	eventHandler.DrawInMiniMap();
 
-	if (!updateTex) {
-		EnterNormalizedCoors(true, false);
-		DrawCameraFrustumAndMouseSelection();
-		LeaveNormalizedCoors(true, false);
-	}
-
-	// reset GL state after Lua
-	LeaveNormalizedCoors(false, useNormalizedCoors && globalRendering->dualScreenMode);
 
 	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
@@ -1148,146 +1110,66 @@ void CMiniMap::DrawForReal(bool useNormalizedCoors, bool updateTex, bool luaCall
 /******************************************************************************/
 /******************************************************************************/
 
-void CMiniMap::DrawCameraFrustumAndMouseSelection()
+void CMiniMap::DrawMinimizedButtonQuad(GL::RenderDataBufferTC* buffer)
 {
-	glDisable(GL_TEXTURE_2D);
-
-	// clip everything outside of the minimap box
-	SetClipPlanes(false);
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-	glEnable(GL_CLIP_PLANE2);
-	glEnable(GL_CLIP_PLANE3);
-
-	// switch to top-down map/world coords (NB: z and y are swapped wrt real map/world coords)
-	GL::PushMatrix();
-	GL::Translate(0.0f, +1.0f, 0.0f);
-	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
-
-	if (!minimap->maximized) {
-		// draw the camera frustum lines
-		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
-		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
-
-		cam->CalcFrustumLines(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
-		cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
-
-		const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
-
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4 * 2, 0, VA_SIZE_2D0);
-
-		for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
-			const CCamera::FrustumLine& fl = negLines[idx];
-
-			if (fl.minz >= fl.maxz)
-				continue;
-
-			va->AddVertexQ2d0((fl.dir * fl.minz) + fl.base, fl.minz);
-			va->AddVertexQ2d0((fl.dir * fl.maxz) + fl.base, fl.maxz);
-		}
-
-		glAttribStatePtr->LineWidth(2.5f);
-		glColor4f(0, 0, 0, 0.5f);
-		va->DrawArray2d0(GL_LINES);
-
-		glAttribStatePtr->LineWidth(1.5f);
-		glColor4f(1, 1, 1, 0.75f);
-		va->DrawArray2d0(GL_LINES);
-		glAttribStatePtr->LineWidth(1.0f);
-	}
-
-
-	// selection box
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-	if (selecting && fullProxy && (bp.movement > 4)) {
-		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
-		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
-		glColor4fv(cmdColors.mouseBox);
-		//glAttribStatePtr->BlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(), (GLenum)cmdColors.MouseBoxBlendDst());
-		glAttribStatePtr->LineWidth(cmdColors.MouseBoxLineWidth());
-
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_2D0);
-			va->AddVertexQ2d0(oldMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, oldMapPos.z);
-			va->AddVertexQ2d0(newMapPos.x, newMapPos.z);
-			va->AddVertexQ2d0(oldMapPos.x, newMapPos.z);
-		va->DrawArray2d0(GL_LINE_LOOP);
-
-		glAttribStatePtr->LineWidth(1.0f);
-		//glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	DrawNotes();
-
-	// disable ClipPlanes
-	glDisable(GL_CLIP_PLANE0);
-	glDisable(GL_CLIP_PLANE1);
-	glDisable(GL_CLIP_PLANE2);
-	glDisable(GL_CLIP_PLANE3);
-
-	GL::PopMatrix();
-	glEnable(GL_TEXTURE_2D);
-}
-
-
-
-void CMiniMap::DrawMinimizedButton(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC)
-{
-	const int bs = buttonSize + 0;
-
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
 
-	const float xmin = (globalRendering->viewPosX + 1     ) * px;
-	const float xmax = (globalRendering->viewPosX + 1 + bs) * px;
-	const float ymin = 1.0f - (1 + bs) * py;
-	const float ymax = 1.0f - (1     ) * py;
+	const float xmin = (globalRendering->viewPosX + 1             ) * px;
+	const float xmax = (globalRendering->viewPosX + 1 + buttonSize) * px;
+	const float ymin = 1.0f - (1 + buttonSize) * py;
+	const float ymax = 1.0f - (1             ) * py;
 
-	{
-		glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
+	glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
 
-		rdBufferTC->GetShader()->Enable();
-		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
-		rdBufferTC->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferTC->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferTC->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferTC->SafeAppend({{xmin, ymax, 0.0f}, minimizeBox.xminTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferTC->Submit(GL_QUADS);
-		rdBufferTC->GetShader()->Disable();
+	Shader::IProgramObject* shader = buffer->GetShader();
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	buffer->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{xmin, ymax, 0.0f}, minimizeBox.xminTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->Submit(GL_QUADS);
+	shader->Disable();
+}
+
+void CMiniMap::DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer)
+{
+	const float px = globalRendering->pixelX;
+	const float py = globalRendering->pixelY;
+
+	const float xmin = (globalRendering->viewPosX + 1             ) * px;
+	const float xmax = (globalRendering->viewPosX + 1 + buttonSize) * px;
+	const float ymin = 1.0f - (1 + buttonSize) * py;
+	const float ymax = 1.0f - (1             ) * py;
+
+	Shader::IProgramObject* shader = buffer->GetShader();
+	shader->Enable();
+
+	// highlight
+	if (((mouse->lastx + 1) <= buttonSize) && ((mouse->lasty + 1) <= buttonSize)) {
+		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		buffer->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+		buffer->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+		buffer->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+		buffer->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+		buffer->Submit(GL_QUADS);
+		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	{
-		rdBufferC->GetShader()->Enable();
 
-		// highlight
-		if ((mouse->lastx + 1 <= buttonSize) && (mouse->lasty + 1 <= buttonSize)) {
-			// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
-			rdBufferC->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-			rdBufferC->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-			rdBufferC->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-			rdBufferC->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-			rdBufferC->Submit(GL_QUADS);
-			// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
-
-		// outline
-		rdBufferC->SafeAppend({{xmin - 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{xmin - 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{xmax + 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{xmax + 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->Submit(GL_LINE_LOOP);
-		rdBufferC->GetShader()->Disable();
-	}
+	// outline
+	buffer->SafeAppend({{xmin - 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{xmin - 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{xmax + 0.5f * px, ymin - 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{xmax + 0.5f * px, ymax + 0.5f * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->Submit(GL_LINE_LOOP);
+	shader->Disable();
 }
 
 
 
-void CMiniMap::IntBox::DrawBox(GL::RenderDataBufferC* rdBufferC) const
+void CMiniMap::IntBox::DrawBox(GL::RenderDataBufferC* buffer) const
 {
 	const float vsx = globalRendering->viewSizeX;
 	const float vsy = globalRendering->viewSizeY;
@@ -1297,25 +1179,25 @@ void CMiniMap::IntBox::DrawBox(GL::RenderDataBufferC* rdBufferC) const
 	const float brx =        ((xmax + 1) / vsx);
 	const float bry = 1.0f - ((ymax + 1) / vsy);
 
-	rdBufferC->SafeAppend({{tlx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-	rdBufferC->SafeAppend({{brx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-	rdBufferC->SafeAppend({{brx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-	rdBufferC->SafeAppend({{tlx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	buffer->SafeAppend({{tlx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	buffer->SafeAppend({{brx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	buffer->SafeAppend({{brx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	buffer->SafeAppend({{tlx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 }
 
-void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* rdBufferTC) const
+void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* buffer) const
 {
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
 
-	rdBufferTC->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color});
-	rdBufferTC->SafeAppend({{(xmax + 1) * px, 1.0f - (ymin    ) * py, 0.0f}, xmaxTx, yminTx, color});
-	rdBufferTC->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color});
-	rdBufferTC->SafeAppend({{(xmin    ) * px, 1.0f - (ymax + 1) * py, 0.0f}, xminTx, ymaxTx, color});
+	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color});
+	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymin    ) * py, 0.0f}, xmaxTx, yminTx, color});
+	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color});
+	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymax + 1) * py, 0.0f}, xminTx, ymaxTx, color});
 }
 
 
-void CMiniMap::DrawFrame(GL::RenderDataBufferC* rdBufferC)
+void CMiniMap::DrawFrame(GL::RenderDataBufferC* buffer)
 {
 	// outline
 	glAttribStatePtr->LineWidth(1.0f);
@@ -1323,26 +1205,27 @@ void CMiniMap::DrawFrame(GL::RenderDataBufferC* rdBufferC)
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
 
-	rdBufferC->GetShader()->Enable();
-	rdBufferC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	rdBufferC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	Shader::IProgramObject* shader = buffer->GetShader();
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
 
-	rdBufferC->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-	rdBufferC->Submit(GL_LINE_LOOP);
+	buffer->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x + curDim.x + 2 - 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+	buffer->Submit(GL_LINE_LOOP);
 
-	rdBufferC->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-	rdBufferC->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-	rdBufferC->Submit(GL_LINE_LOOP);
+	buffer->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x            - 1 + 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y + curDim.y + 1 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->SafeAppend({{(curPos.x + curDim.x + 1 - 0.5f) * px, (curPos.y            - 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+	buffer->Submit(GL_LINE_LOOP);
 
-	rdBufferC->GetShader()->Disable();
+	shader->Disable();
 }
 
-void CMiniMap::DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBufferTC* rdBufferTC)
+bool CMiniMap::DrawButtonQuads(GL::RenderDataBufferTC* buffer)
 {
 	const int x = mouse->lastx;
 	const int y = mouse->lasty;
@@ -1350,51 +1233,57 @@ void CMiniMap::DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBuffe
 	// update the showButtons state
 	if (!showButtons) {
 		if (!(showButtons = (mapBox.Inside(x, y) && (buttonSize > 0) && !globalRendering->dualScreenMode)))
-			return;
+			return false;
 
-	} else if (!mouseMove && !mouseResize && !mapBox.Inside(x, y) && !buttonBox.Inside(x, y)) {
-		showButtons = false;
-		return;
-	}
+	} else if (!mouseMove && !mouseResize && !mapBox.Inside(x, y) && !buttonBox.Inside(x, y))
+		return (showButtons = false);
 
-	{
-		glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
+	glBindTexture(GL_TEXTURE_2D, buttonsTextureID);
 
-		rdBufferTC->GetShader()->Enable();
-		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		rdBufferTC->GetShader()->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-		resizeBox.DrawTextureBox(rdBufferTC);
-		moveBox.DrawTextureBox(rdBufferTC);
-		maximizeBox.DrawTextureBox(rdBufferTC);
-		minimizeBox.DrawTextureBox(rdBufferTC);
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
 
-		rdBufferTC->Submit(GL_QUADS);
-		rdBufferTC->GetShader()->Disable();
+	resizeBox.DrawTextureBox(buffer);
+	moveBox.DrawTextureBox(buffer);
+	maximizeBox.DrawTextureBox(buffer);
+	minimizeBox.DrawTextureBox(buffer);
 
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+	buffer->Submit(GL_QUADS);
+	shader->Disable();
 
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return true;
+}
+
+bool CMiniMap::DrawButtonLoops(GL::RenderDataBufferC* buffer)
+{
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	// matrices are already set in DrawFrame
-	rdBufferC->GetShader()->Enable();
+	shader->Enable();
 
 	{
+		const int x = mouse->lastx;
+		const int y = mouse->lasty;
+
 		// highlight
 		// glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		if (mouseResize || (!mouseMove && resizeBox.Inside(x, y))) {
-			resizeBox.DrawBox(rdBufferC);
+			resizeBox.DrawBox(buffer);
 		} else if (mouseMove || (!mouseResize && moveBox.Inside(x, y))) {
-			moveBox.DrawBox(rdBufferC);
+			moveBox.DrawBox(buffer);
 		} else if (!mouseMove && !mouseResize) {
 			if (minimizeBox.Inside(x, y)) {
-				minimizeBox.DrawBox(rdBufferC);
+				minimizeBox.DrawBox(buffer);
 			} else if (maximizeBox.Inside(x, y)) {
-				maximizeBox.DrawBox(rdBufferC);
+				maximizeBox.DrawBox(buffer);
 			}
 		}
 
-		rdBufferC->Submit(GL_QUADS);
+		buffer->Submit(GL_QUADS);
 		// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
@@ -1403,101 +1292,211 @@ void CMiniMap::DrawButtons(GL::RenderDataBufferC* rdBufferC, GL::RenderDataBuffe
 		const float py = globalRendering->pixelY;
 
 		// outline the button box
-		rdBufferC->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
-		rdBufferC->Submit(GL_LINE_LOOP);
+		buffer->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmin - 1 - 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymax + 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmax + 2 + 0.5f) * px, 1.0f - (buttonBox.ymin + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
+		buffer->Submit(GL_LINE_LOOP);
 
-		rdBufferC->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferC->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-		rdBufferC->Submit(GL_LINE_LOOP);
+		buffer->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmin - 0 - 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymax + 1 + 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{(buttonBox.xmax + 1 + 0.5f) * px, 1.0f - (buttonBox.ymin + 3 - 0.5f) * py, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->Submit(GL_LINE_LOOP);
 	}
 
-	rdBufferC->GetShader()->Disable();
+	shader->Disable();
+	return true;
 }
 
 
-void CMiniMap::DrawNotes()
+
+
+void CMiniMap::RenderCachedTextureRaw() {
+	const CMatrix44f& viewMat = GL::GetMatrix(GL_MODELVIEW );
+	const CMatrix44f& projMat = GL::GetMatrix(GL_PROJECTION);
+
+	RenderCachedTextureImpl(viewMat, projMat);
+}
+
+void CMiniMap::RenderCachedTextureNormalized(bool luaCall)
+{
+	const CMatrix44f& viewMat = CalcNormalizedCoorMatrix(globalRendering->dualScreenMode, luaCall);
+	const CMatrix44f& projMat = projMats[1];
+
+	RenderCachedTextureImpl(viewMat, projMat);
+}
+
+void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix44f& projMat)
+{
+	// switch to top-down map/world coords (NB: z and y are swapped wrt real map/world coords)
+	CMatrix44f miniMat = viewMat;
+
+	miniMat.Translate(UpVector);
+	miniMat.Scale({1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
+
+	if (globalRendering->dualScreenMode)
+		glAttribStatePtr->ViewPort(curPos.x, curPos.y, curDim.x, curDim.y);
+
+	glAttribStatePtr->PushBits(GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT);
+	glAttribStatePtr->DisableBlendMask();
+
+	{
+		GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+		Shader::IProgramObject* shader = buffer->GetShader();
+
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+
+		glBindTexture(GL_TEXTURE_2D, minimapTextureID);
+
+		buffer->SafeAppend({{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
+		buffer->Submit(GL_QUADS);
+
+		shader->Disable();
+	}
+
+	// clipping-planes are more work to set up
+	glAttribStatePtr->EnableScissorTest();
+	glAttribStatePtr->Scissor(curPos.x, curPos.y, curDim.x, curDim.y);
+
+	{
+		GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+		Shader::IProgramObject* shader = buffer->GetShader();
+
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, miniMat);
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+
+		RenderCameraFrustumLinesAndSelectionBox(buffer);
+		RenderMarkerNotificationRectangles(buffer);
+
+		shader->Disable();
+	}
+
+	glAttribStatePtr->EnableBlendMask();
+	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAttribStatePtr->PopBits();
+
+	if (globalRendering->dualScreenMode)
+		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+}
+
+void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* buffer)
+{
+	if (!maximized) {
+		// draw the camera frustum lines
+		// CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_SHADOW);
+		CCamera* cam = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+
+		cam->CalcFrustumLines(readMap->GetCurrAvgHeight(), readMap->GetCurrAvgHeight(), 1.0f, true);
+		cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
+
+		const CCamera::FrustumLine* negLines = cam->GetNegFrustumLines();
+
+		const SColor lineColors[] = {{0.0f, 0.0f, 0.0f, 0.5f}, {1.0f, 1.0f, 1.0f, 0.75f}};
+		constexpr float lineWidths[] = {2.5f, 1.5f};
+
+		for (unsigned int j = 0; j < 2; j++) {
+			for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
+				const CCamera::FrustumLine& fl = negLines[idx];
+
+				if (fl.minz >= fl.maxz)
+					continue;
+
+				buffer->SafeAppend({{(fl.dir * fl.minz) + fl.base, fl.minz, 0.0f}, lineColors[j]});
+				buffer->SafeAppend({{(fl.dir * fl.maxz) + fl.base, fl.maxz, 0.0f}, lineColors[j]});
+			}
+
+			glAttribStatePtr->LineWidth(lineWidths[j]);
+			buffer->Submit(GL_LINES);
+		}
+
+		glAttribStatePtr->LineWidth(1.0f);
+	}
+
+	if (selecting && fullProxy) {
+		// selection box
+		const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
+
+		if (bp.movement <= 4)
+			return;
+
+		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
+		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
+
+		// glAttribStatePtr->BlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(), (GLenum)cmdColors.MouseBoxBlendDst());
+		glAttribStatePtr->LineWidth(cmdColors.MouseBoxLineWidth());
+
+		buffer->SafeAppend({{oldMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
+		buffer->SafeAppend({{newMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
+		buffer->SafeAppend({{newMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
+		buffer->SafeAppend({{oldMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
+		buffer->Submit(GL_LINE_LOOP);
+
+		glAttribStatePtr->LineWidth(1.0f);
+		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+}
+
+void CMiniMap::RenderMarkerNotificationRectangles(GL::RenderDataBufferC* buffer)
 {
 	if (notes.empty())
 		return;
 
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	std::deque<Notification>::iterator ni = notes.begin();
-	while (ni != notes.end()) {
+
+	for (auto ni = notes.begin(); ni != notes.end(); ) {
 		const float age = gu->gameTime - ni->creationTime;
-		if (age > 2) {
+
+		if (age > 2.0f) {
 			ni = notes.erase(ni);
 			continue;
 		}
 
 		SColor color(&ni->color.x);
+
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
 			float size = baseSize - modage * baseSize * 0.9f;
-			if (size < 0){
-				if (size < -baseSize * 0.4f) {
+
+			if (size < 0) {
+				if (size < (-baseSize * 0.4f))
 					continue;
-				} else if (size > -baseSize * 0.2f) {
+
+				if (size > (-baseSize * 0.2f)) {
 					size = modage * baseSize * 0.9f - baseSize;
 				} else {
 					size = baseSize * 1.4f - modage * baseSize * 0.9f;
 				}
 			}
 			color.a = (255 * ni->color[3]) / (3 - a);
+
 			const float sinSize = fastmath::sin(rot) * size;
 			const float cosSize = fastmath::cos(rot) * size;
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
-			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
+
+			buffer->SafeAppend({{ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f}, {color}});
+			buffer->SafeAppend({{ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f}, {color}});
 		}
+
 		++ni;
 	}
-	va->DrawArrayC(GL_LINES);
+
+	buffer->Submit(GL_LINES);
 }
 
 
-
-bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
-{
-	glAttribStatePtr->PushColorBufferBit();
-	glBindTexture(GL_TEXTURE_2D, minimapTextureID);
-	glEnable(GL_TEXTURE_2D);
-	glAttribStatePtr->DisableBlendMask();
-
-	if (useNormalizedCoors)
-		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glBegin(GL_QUADS);
-		glTexCoord2f(0.0, 0.0); glVertex2f(0.0f, 0.0f);
-		glTexCoord2f(1.0, 0.0); glVertex2f(1.0f, 0.0f);
-		glTexCoord2f(1.0, 1.0); glVertex2f(1.0f, 1.0f);
-		glTexCoord2f(0.0, 1.0); glVertex2f(0.0f, 1.0f);
-	glEnd();
-
-	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	DrawCameraFrustumAndMouseSelection();
-	LeaveNormalizedCoors(useNormalizedCoors, useNormalizedCoors && globalRendering->dualScreenMode);
-
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glAttribStatePtr->PopBits();
-	return true;
-}
 
 
 void CMiniMap::DrawBackground() const
@@ -1567,7 +1566,7 @@ void CMiniMap::DrawUnitRanges() const
 		for (const CWeapon* w: unit->weapons) {
 			const WeaponDef& wd = *w->weaponDef;
 
-			if ((w->range <= 300) || !wd.interceptor)
+			if ((w->range <= 300.0f) || !wd.interceptor)
 				continue;
 
 			DrawCircle(GetVertexArray(), {unit->pos, wd.coverageRange}, colors[w->numStockpiled || !wd.stockpile]);
@@ -1597,9 +1596,8 @@ void CMiniMap::DrawWorldStuff() const
 		// NOTE: this needlessly adds to the CursorIcons list, but at least
 		//       they are not drawn  (because the input receivers are drawn
 		//       after the command queues)
-		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+		if ((drawCommands > 0) && guihandler->GetQueueKeystate())
 			selectedUnitsHandler.DrawCommands();
-		}
 		#endif
 	}
 
@@ -1618,7 +1616,7 @@ void CMiniMap::DrawWorldStuff() const
 }
 
 
-void CMiniMap::SetClipPlanes(const bool lua) const
+void CMiniMap::SetClipPlanes(bool lua) const
 {
 	if (lua) {
 		// prepare ClipPlanes for Lua's DrawInMinimap Modelview matrix
@@ -1630,8 +1628,7 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 
 		// set the modelview matrix to the same as used in Lua's DrawInMinimap
 		GL::PushMatrix();
-		GL::LoadIdentity();
-		GL::Scale(1.0f / curDim.x, 1.0f / curDim.y, 1.0f);
+		GL::LoadMatrix(viewMats[2]);
 
 		const double plane0[4] = { 0, -1, 0, double(curDim.y)};
 		const double plane1[4] = { 0,  1, 0,                0};
@@ -1658,6 +1655,3 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 	}
 }
 
-
-
-/******************************************************************************/
