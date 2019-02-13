@@ -53,7 +53,7 @@ public:
 	bool OnSlope(float minSlideTolerance);
 	bool IsReversing() const override { return reversing; }
 	bool IsPushResistant() const override { return pushResistant; }
-	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
+	bool WantToStop() const { return (pathID == 0 && (!useRawMovement || atEndOfPath)); }
 
 	void TriggerSkipWayPoint() {
 		currWayPoint.y = -1.0f;
@@ -171,11 +171,11 @@ private:
 	float3 flatFrontDir;
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
-	float3 skidRotVector;                      /// vector orthogonal to skidDir
+	float3 skidRotVector;                   /// vector orthogonal to skidDir
 
-	float turnRate = 0.1f;                     /// maximum angular speed (angular units/frame)
-	float turnSpeed = 0.0f;                    /// current angular speed (angular units/frame)
-	float turnAccel = 0.0f;                    /// angular acceleration (angular units/frame^2)
+	float turnRate = 0.1f;                  /// maximum angular speed (angular units/frame)
+	float turnSpeed = 0.0f;                 /// current angular speed (angular units/frame)
+	float turnAccel = 0.0f;                 /// angular acceleration (angular units/frame^2)
 
 	float accRate = 0.01f;
 	float decRate = 0.01f;
@@ -217,8 +217,8 @@ private:
 	bool idling = false;
 	bool pushResistant = false;
 	bool canReverse = false;
-	bool useMainHeading = false;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
-	bool useRawMovement = false;                /// if true, move towards goal without invoking PFS
+	bool useMainHeading = false;            /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
+	bool useRawMovement = false;            /// if true, move towards goal without invoking PFS (unrelated to MoveDef::allowRawMovement)
 };
 
 #endif // GROUNDMOVETYPE_H

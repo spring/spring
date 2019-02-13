@@ -594,6 +594,7 @@ void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRad
 
 	useMainHeading = false;
 	useRawMovement = true;
+
 	progressState = Active;
 
 	numIdlingUpdates = 0;
@@ -665,9 +666,11 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw)
 	// StartMoving-->StartEngine will follow
 	StopEngine(callScript, hardStop);
 
-	useMainHeading = false;
+	// force WantToStop to return true when useRawMovement is enabled
+	atEndOfPath |= useRawMovement;
 	// only a new StartMoving call can normally reset this
 	useRawMovement &= (!cancelRaw);
+	useMainHeading = false;
 
 	progressState = Done;
 }
@@ -725,7 +728,7 @@ bool CGroundMoveType::FollowPath()
 			}
 		}
 
-		// atEndOfPath never becomes true when useRawMovement
+		// atEndOfPath never becomes true when useRawMovement, except via StopMoving
 		if (!atEndOfPath && !useRawMovement) {
 			SetNextWayPoint();
 		} else {
