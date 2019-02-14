@@ -255,12 +255,12 @@ bool CGroundBlockingObjectMap::CellErase(unsigned int sqr, CSolidObject* o) {
 	VecCell* vc = nullptr;
 
 	if (ac.Erase(o)) {
-		if ((vc = &vecCells[ac.GetVecIndx()]) == &vecCells[0])
+		if (ac.GetVecIndx() == 0)
 			return true;
 
 		// never allow a hole between array and vector parts
-		assert(!vc->empty());
-		ac.Insert(spring::VectorBackPop(*vc));
+		assert(!vecCells[ac.GetVecIndx()].empty());
+		ac.Insert(spring::VectorBackPop(*(vc = &GetVecCell(sqr))));
 
 		goto CommonExit;
 	}
