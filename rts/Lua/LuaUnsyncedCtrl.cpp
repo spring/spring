@@ -499,96 +499,95 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
 	LuaParser soundDefsParser(luaL_checksstring(L, 1), SPRING_VFS_ZIP_FIRST, SPRING_VFS_ZIP_FIRST);
 
-	const bool success = sound->LoadSoundDefs(&soundDefsParser);
+	const bool retval = sound->LoadSoundDefs(&soundDefsParser);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, success);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
 	const int args = lua_gettop(L);
+	      int index = 3;
 
 	const unsigned int soundID = sound->GetSoundId(luaL_checksstring(L, 1));
 
-	if (soundID > 0) {
-		float volume = luaL_optfloat(L, 2, 1.0f);
-
-		float3 pos;
-		float3 speed;
-
-		int index = 3;
-
-		if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
-			pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
-			index += 3;
-
-			if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
-				speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				index += 3;
-			}
-		}
-
-		// last argument (with and without pos/speed arguments) is the optional channel
-		IAudioChannel* channel = Channels::General;
-
-		if (args >= index) {
-			if (lua_isstring(L, index)) {
-				switch (hashString(lua_tostring(L, index))) {
-					case hashString("Battle"):
-					case hashString("battle"):
-					case hashString("SFX"   ):
-					case hashString("sfx"   ): {
-						channel = Channels::Battle;
-					} break;
-
-					case hashString("UnitReply"):
-					case hashString("unitreply"):
-					case hashString("Voice"    ):
-					case hashString("voice"    ): {
-						channel = Channels::UnitReply;
-					} break;
-
-					case hashString("UserInterface"):
-					case hashString("userinterface"):
-					case hashString("UI"           ):
-					case hashString("ui"           ): {
-						channel = Channels::UserInterface;
-					} break;
-
-					default: {
-					} break;
-				}
-			} else if (lua_isnumber(L, index)) {
-				switch (lua_toint(L, index)) {
-					case  1: { channel = Channels::Battle       ; } break;
-					case  2: { channel = Channels::UnitReply    ; } break;
-					case  3: { channel = Channels::UserInterface; } break;
-					default: {                                    } break;
-				}
-			}
-		}
-
-		if (index >= 6) {
-			if (index >= 9) {
-				channel->PlaySample(soundID, pos, speed, volume);
-			} else {
-				channel->PlaySample(soundID, pos, volume);
-			}
-		} else
-			channel->PlaySample(soundID, volume);
-	}
-
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, soundID > 0);
+	if (soundID == 0) {
+		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	return 0;
+	const float volume = luaL_optfloat(L, 2, 1.0f);
+
+	float3 pos;
+	float3 speed;
+
+	if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
+		pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
+		index += 3;
+
+		if (args >= 8 && lua_isnumber(L, 6) && lua_isnumber(L, 7) && lua_isnumber(L, 8)) {
+			speed = float3(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
+			index += 3;
+		}
+	}
+
+	// last argument (with and without pos/speed arguments) is the optional channel
+	IAudioChannel* channel = Channels::General;
+
+	if (args >= index) {
+		if (lua_isstring(L, index)) {
+			switch (hashString(lua_tostring(L, index))) {
+				case hashString("Battle"):
+				case hashString("battle"):
+				case hashString("SFX"   ):
+				case hashString("sfx"   ): {
+					channel = Channels::Battle;
+				} break;
+
+				case hashString("UnitReply"):
+				case hashString("unitreply"):
+				case hashString("Voice"    ):
+				case hashString("voice"    ): {
+					channel = Channels::UnitReply;
+				} break;
+
+				case hashString("UserInterface"):
+				case hashString("userinterface"):
+				case hashString("UI"           ):
+				case hashString("ui"           ): {
+					channel = Channels::UserInterface;
+				} break;
+
+				default: {
+				} break;
+			}
+		} else if (lua_isnumber(L, index)) {
+			switch (lua_toint(L, index)) {
+				case  1: { channel = Channels::Battle       ; } break;
+				case  2: { channel = Channels::UnitReply    ; } break;
+				case  3: { channel = Channels::UserInterface; } break;
+				default: {                                    } break;
+			}
+		}
+	}
+
+	if (index < 6) {
+		channel->PlaySample(soundID, volume);
+
+		lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+		return 1;
+	}
+
+	if (index >= 9) {
+		channel->PlaySample(soundID, pos, speed, volume);
+	} else {
+		channel->PlaySample(soundID, pos, volume);
+	}
+
+	lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+	return 1;
 }
 
 
@@ -599,12 +598,8 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, true);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, !CLuaHandle::GetHandleSynced(L));
+	return 1;
 }
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
@@ -632,8 +627,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 
 	//! only a preset name given?
 	if (lua_israwstring(L, 1)) {
-		const std::string presetname = lua_tostring(L, 1);
-		efx.SetPreset(presetname, false);
+		efx.SetPreset(lua_tostring(L, 1), false);
 		return 0;
 	}
 
@@ -699,20 +693,25 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				if (alParamType[param] == EFXParamTypes::VECTOR) {
 					float3 v;
 
-					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3) {
+					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3)
 						efxprops.reverb_props_v[param] = v;
-					}
 				}
+
+				continue;
 			}
-			else if (lua_isnumber(L, -1)) {
-				if (alParamType[param] == EFXParamTypes::FLOAT) {
+
+			if (lua_isnumber(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::FLOAT)
 					efxprops.reverb_props_f[param] = lua_tofloat(L, -1);
-				}
+
+				continue;
 			}
-			else if (lua_isboolean(L, -1)) {
-				if (alParamType[param] == EFXParamTypes::BOOL) {
+
+			if (lua_isboolean(L, -1)) {
+				if (alParamType[param] == EFXParamTypes::BOOL)
 					efxprops.reverb_props_i[param] = lua_toboolean(L, -1);
-				}
+
+				continue;
 			}
 		}
 	}
@@ -760,12 +759,13 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+
 	const int teamId = luaL_checkint(L, 5);
+	const int facing = luaL_checkint(L, 6);
 
 	if (!teamHandler.IsValidTeam(teamId))
 		return 0;
 
-	const int facing = luaL_checkint(L, 6);
 	cursorIcons.AddBuildIcon(-unitDefID, pos, teamId, facing);
 	return 0;
 }
@@ -774,11 +774,11 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
 	if (lua_istable(L, 1)) {
-		const bool isMap = luaL_optboolean(L, 2, false);
-		const int unitArg = isMap ? -2 : -1;
-		const int table = 1;
+		// second arg indicates if table is a map
+		const int unitArg = luaL_optboolean(L, 2, false)? -2 : -1;
+		const int tableIdx = 1;
 
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2))
 				continue;
 
@@ -937,15 +937,11 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 
 	const CMouseCursor::HotSpot hotSpot = (luaL_optboolean(L, 4, false))? CMouseCursor::TopLeft: CMouseCursor::Center;
 
-	const bool overwrite = luaL_optboolean(L, 3, true);
-	const bool assigned = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
+	const bool retval = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, luaL_optboolean(L, 3, true));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, assigned);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 
@@ -955,18 +951,14 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 	const string newName = luaL_checksstring(L, 2);
 
 	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if (luaL_optboolean(L, 3, false)) {
+	if (luaL_optboolean(L, 3, false))
 		hotSpot = CMouseCursor::TopLeft;
-	}
 
-	const bool worked = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
+	const bool retval = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, worked);
-		return 1;
-	}
-
-	return 0;
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 /******************************************************************************/
@@ -999,7 +991,6 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	const bool showArea = luaL_optboolean(L, 4, false);
 
 	cmdColors.SetCustomCmdData(cmdID, iconID, color, showArea);
-
 	return 0;
 }
 
@@ -1562,9 +1553,8 @@ int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	if (sky != nullptr) {
+	if (sky != nullptr)
 		sky->SetLuaTexture(ParseLuaTextureData(L, false));
-	}
 
 	return 0;
 }
@@ -1696,11 +1686,13 @@ int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
 
 	const string iconName  = luaL_checkstring(L, 1);
 	const string texName   = luaL_checkstring(L, 2);
+
 	const float  size      = luaL_optnumber(L, 3, 1.0f);
 	const float  dist      = luaL_optnumber(L, 4, 1.0f);
+
 	const bool   radAdjust = luaL_optboolean(L, 5, false);
-	lua_pushboolean(L, icon::iconHandler.AddIcon(iconName, texName,
-	                                        size, dist, radAdjust));
+
+	lua_pushboolean(L, icon::iconHandler.AddIcon(iconName, texName, size, dist, radAdjust));
 	return 1;
 }
 
@@ -2342,9 +2334,7 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 	if (!CanGiveOrders(L))
 		return 1;
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 1);
-
-	selectedUnitsHandler.GiveCommand(cmd);
+	selectedUnitsHandler.GiveCommand(LuaUtils::ParseCommand(L, __func__, 1));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2358,13 +2348,14 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 		return 1;
 	}
 
-	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+	const CUnit* unit = ParseCtrlUnit(L, __func__, 1);
+
 	if (unit == nullptr || unit->noSelect) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
+	const Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(false), cmd.GetID(true), cmd.GetTimeOut(), cmd.GetOpts(), cmd.GetNumParams(), cmd.GetParams()));
 
@@ -2383,18 +2374,13 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitMap(L, __func__, 1, unitIDs);
-	const int count = (int)unitIDs.size();
 
-	if (count <= 0) {
+	if (unitIDs.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, {LuaUtils::ParseCommand(L, __func__, 2)});
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2411,18 +2397,13 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	// unitIDs
 	vector<int> unitIDs;
 	ParseUnitArray(L, __func__, 1, unitIDs);
-	const int count = (int)unitIDs.size();
 
-	if (count <= 0) {
+	if (unitIDs.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
-
-	vector<Command> commands;
-	commands.push_back(cmd);
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, {LuaUtils::ParseCommand(L, __func__, 2)});
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2473,16 +2454,12 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
 
-	bool pairwise = false;
-	if (args >= 3)
-		pairwise = lua_toboolean(L, 3);
-
 	if (unitIDs.empty() || commands.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands, pairwise);
+	selectedUnitsHandler.SendCommandsToUnits(unitIDs, commands, (args >= 3 && lua_toboolean(L, 3)));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2960,7 +2937,11 @@ int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
 
 int LuaUnsyncedCtrl::PreloadSoundItem(lua_State* L)
 {
-	lua_pushboolean(L, sound->PreloadSoundItem(luaL_checkstring(L, 1)));
+	// always push false in synced context
+	const bool retval = sound->PreloadSoundItem(luaL_checkstring(L, 1));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
+
+	lua_pushboolean(L, retval && !synced);
 	return 1;
 }
 

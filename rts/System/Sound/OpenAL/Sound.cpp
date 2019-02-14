@@ -166,8 +166,12 @@ bool CSound::HasSoundItem(const std::string& name) const
 
 bool CSound::PreloadSoundItem(const std::string& name)
 {
+	#if 0
+	ThreadPool::Enqueue([name]() { sound->GetSoundId(name); });
+	#else
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	return ((preloadSet.insert(name)).second);
+	#endif
 }
 
 
@@ -231,10 +235,11 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		return nullptr;
 
 	// find a free source; pointer remains valid until thread exits
-	for (CSoundSource& src: soundSources) {
-		if (!src.IsPlaying(false))
-			return &src;
-	}
+	const auto pred = [](const CSoundSource& src) { return (!src.IsPlaying(false)); };
+	const auto iter = std::find_if(soundSources.begin(), soundSources.end(), pred);
+
+	if (iter != soundSources.end())
+		return &(*iter);
 
 	// check the next best free source
 	CSoundSource* bestSrc = nullptr;
@@ -245,10 +250,11 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		if (!src.IsPlaying(true))
 			return &src;
 		#endif
-		if (src.GetCurrentPriority() <= bestPriority) {
-			bestSrc = &src;
-			bestPriority = src.GetCurrentPriority();
-		}
+		if (src.GetCurrentPriority() > bestPriority)
+			continue;
+
+		bestSrc = &src;
+		bestPriority = src.GetCurrentPriority();
 	}
 
 	return bestSrc;
@@ -259,9 +265,9 @@ void CSound::PitchAdjust(const float newPitch)
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	switch (pitchAdjustMode) {
-		case 1: { CSoundSource::SetPitch(std::sqrt(newPitch)); } break;
-		case 2: { CSoundSource::SetPitch(          newPitch ); } break;
-		default: {} break;
+		case  1: { CSoundSource::SetPitch(std::sqrt(newPitch)); } break;
+		case  2: { CSoundSource::SetPitch(          newPitch ); } break;
+		default: {                                              } break;
 	}
 }
 
@@ -284,7 +290,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 			float gainlf = 1.0f;
 			float gainhf = 1.0f;
 			sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
-			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
+			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAIN  ] = gainlf;
 			efx.sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
 			efx.CommitEffects();
 		} break;
@@ -656,6 +662,7 @@ void CSound::UpdateThread(int cfgMaxSounds)
 	while (!soundThreadQuit) {
 		// update at roughly 30Hz
 		spring::this_thread::sleep_for(std::chrono::milliseconds(1000 / GAME_SPEED));
+
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}
@@ -687,7 +694,9 @@ void CSound::Update()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	while (!preloadSet.empty()) {
+	// limit consumption-rate to prevent source starvation
+	// lock is held, size can not be changed except by loop
+	for (size_t i = 0, n = std::min(size_t(4), preloadSet.size()); i < n; i++) {
 		GetSoundId(*preloadSet.begin());
 	}
 
