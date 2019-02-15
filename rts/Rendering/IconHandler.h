@@ -24,8 +24,8 @@ namespace icon {
 				float distance,
 				bool radiusAdjust,
 				bool ownTexture,
-				int xsize,
-				int ysize
+				unsigned int xsize,
+				unsigned int ysize
 			);
 			~CIconData();
 
