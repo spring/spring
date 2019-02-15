@@ -14,7 +14,6 @@
 #include "LuaTextures.h"
 
 #include "System/Log/ILog.h"
-#include "System/UnorderedMap.hpp"
 
 
 /******************************************************************************/
@@ -39,7 +38,7 @@ bool LuaFBOs::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteFBO);
 	REGISTER_LUA_CFUNC(IsValidFBO);
 	REGISTER_LUA_CFUNC(ActiveFBO);
-	REGISTER_LUA_CFUNC(UnsafeSetFBO);
+	REGISTER_LUA_CFUNC(RawBindFBO);
 	REGISTER_LUA_CFUNC(BlitFBO);
 
 	return true;
@@ -86,31 +85,27 @@ static GLenum GetBindingEnum(GLenum target)
 
 static GLenum ParseAttachment(const std::string& name)
 {
-	static const spring::unordered_map<std::string, GLenum> attachMap = {
-		{"depth"  , GL_DEPTH_ATTACHMENT},
-		{"stencil", GL_STENCIL_ATTACHMENT},
-		{"color0" , GL_COLOR_ATTACHMENT0},
-		{"color1" , GL_COLOR_ATTACHMENT1},
-		{"color2" , GL_COLOR_ATTACHMENT2},
-		{"color3" , GL_COLOR_ATTACHMENT3},
-		{"color4" , GL_COLOR_ATTACHMENT4},
-		{"color5" , GL_COLOR_ATTACHMENT5},
-		{"color6" , GL_COLOR_ATTACHMENT6},
-		{"color7" , GL_COLOR_ATTACHMENT7},
-		{"color8" , GL_COLOR_ATTACHMENT8},
-		{"color9" , GL_COLOR_ATTACHMENT9},
-		{"color10", GL_COLOR_ATTACHMENT10},
-		{"color11", GL_COLOR_ATTACHMENT11},
-		{"color12", GL_COLOR_ATTACHMENT12},
-		{"color13", GL_COLOR_ATTACHMENT13},
-		{"color14", GL_COLOR_ATTACHMENT14},
-		{"color15", GL_COLOR_ATTACHMENT15},
-	};
-
-	const auto it = attachMap.find(name);
-
-	if (it != attachMap.end())
-		return it->second;
+	switch (hashString(name.c_str())) {
+		case hashString(  "depth"): { return GL_DEPTH_ATTACHMENT  ; } break;
+		case hashString("stencil"): { return GL_STENCIL_ATTACHMENT; } break;
+		case hashString("color0" ): { return GL_COLOR_ATTACHMENT0 ; } break;
+		case hashString("color1" ): { return GL_COLOR_ATTACHMENT1 ; } break;
+		case hashString("color2" ): { return GL_COLOR_ATTACHMENT2 ; } break;
+		case hashString("color3" ): { return GL_COLOR_ATTACHMENT3 ; } break;
+		case hashString("color4" ): { return GL_COLOR_ATTACHMENT4 ; } break;
+		case hashString("color5" ): { return GL_COLOR_ATTACHMENT5 ; } break;
+		case hashString("color6" ): { return GL_COLOR_ATTACHMENT6 ; } break;
+		case hashString("color7" ): { return GL_COLOR_ATTACHMENT7 ; } break;
+		case hashString("color8" ): { return GL_COLOR_ATTACHMENT8 ; } break;
+		case hashString("color9" ): { return GL_COLOR_ATTACHMENT9 ; } break;
+		case hashString("color10"): { return GL_COLOR_ATTACHMENT10; } break;
+		case hashString("color11"): { return GL_COLOR_ATTACHMENT11; } break;
+		case hashString("color12"): { return GL_COLOR_ATTACHMENT12; } break;
+		case hashString("color13"): { return GL_COLOR_ATTACHMENT13; } break;
+		case hashString("color14"): { return GL_COLOR_ATTACHMENT14; } break;
+		case hashString("color15"): { return GL_COLOR_ATTACHMENT15; } break;
+		default                   : {                               } break;
+	}
 
 	return 0;
 }
@@ -258,7 +253,7 @@ bool LuaFBOs::AttachObject(
 		glFramebufferRenderbuffer(fbo->target, attachID, GL_RENDERBUFFER, 0);
 		return true;
 	}
-	else if (lua_israwstring(L, index)) {
+	if (lua_israwstring(L, index)) {
 		// custom texture
 		const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		const LuaTextures::Texture* tex = textures.GetInfo(lua_tostring(L, index));
@@ -274,23 +269,21 @@ bool LuaFBOs::AttachObject(
 		fbo->ysize = tex->ysize;
 		return true;
 	}
-	else {
-		// render buffer object
-		const LuaRBOs::RBO* rbo = (LuaRBOs::RBO*)LuaUtils::GetUserData(L, index, "RBO");
 
-		if (rbo == nullptr)
-			return false;
+	// render buffer object
+	const LuaRBOs::RBO* rbo = static_cast<LuaRBOs::RBO*>(LuaUtils::GetUserData(L, index, "RBO"));
 
-		if (attachTarget == 0)
-			attachTarget = rbo->target;
+	if (rbo == nullptr)
+		return false;
 
-		glFramebufferRenderbuffer(fbo->target, attachID, attachTarget, rbo->id);
-		fbo->xsize = rbo->xsize;
-		fbo->ysize = rbo->ysize;
-		return true;
-	}
+	if (attachTarget == 0)
+		attachTarget = rbo->target;
 
-	return false;
+	glFramebufferRenderbuffer(fbo->target, attachID, attachTarget, rbo->id);
+
+	fbo->xsize = rbo->xsize;
+	fbo->ysize = rbo->ysize;
+	return true;
 }
 
 
@@ -458,6 +451,7 @@ int LuaFBOs::IsValidFBO(lua_State* L)
 
 	GLint currentFBO;
 	glGetIntegerv(bindTarget, &currentFBO);
+
 	glBindFramebuffer(fboTarget, fbo->id);
 	const GLenum status = glCheckFramebufferStatus(fboTarget);
 	glBindFramebuffer(fboTarget, currentFBO);
@@ -495,7 +489,7 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 	glAttribStatePtr->PushViewPortBit();
 	glAttribStatePtr->ViewPort(0, 0, fbo->xsize, fbo->ysize);
 
-	GLint currentFBO;
+	GLint currentFBO = 0;
 	glGetIntegerv(bindTarget, &currentFBO);
 	glBindFramebuffer(fboTarget, fbo->id);
 
@@ -514,12 +508,13 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 }
 
 
-int LuaFBOs::UnsafeSetFBO(lua_State* L)
+int LuaFBOs::RawBindFBO(lua_State* L)
 {
 	//CheckDrawingEnabled(L, __func__);
 
 	if (lua_isnil(L, 1)) {
-		glBindFramebuffer((GLenum)luaL_optnumber(L, 2, GL_FRAMEBUFFER), 0);
+		// revert to default or specified FB
+		glBindFramebuffer((GLenum) luaL_optinteger(L, 2, GL_FRAMEBUFFER), luaL_optinteger(L, 3, 0));
 		return 0;
 	}
 		
@@ -528,8 +523,12 @@ int LuaFBOs::UnsafeSetFBO(lua_State* L)
 	if (fbo->id == 0)
 		return 0;
 
-	glBindFramebuffer((GLenum)luaL_optnumber(L, 2, fbo->target), fbo->id);
-	return 0;
+	GLint currentFBO = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+	glBindFramebuffer((GLenum) luaL_optinteger(L, 2, fbo->target), fbo->id);
+
+	lua_pushnumber(L, currentFBO);
+	return 1;
 }
 
 
