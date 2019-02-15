@@ -97,8 +97,8 @@ bool CIconHandler::AddIcon(
 	}
 
 	unsigned int texID = 0;
-	unsigned int xsize = 0;
-	unsigned int ysize = 0;
+	int xsize = 0;
+	int ysize = 0;
 
 	bool ownTexture = true;
 
@@ -292,8 +292,8 @@ CIconData::CIconData(
 	float _distance,
 	bool radAdj,
 	bool ownTex,
-	unsigned int _xsize,
-	unsigned int _ysize
+	int _xsize,
+	int _ysize
 )
 	: name(_name)
 	, refCount(0)

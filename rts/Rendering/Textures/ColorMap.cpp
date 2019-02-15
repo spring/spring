@@ -4,8 +4,6 @@
 #include <deque>
 #include <sstream>
 
-#include <array>
-
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "System/FileSystem/FileHandler.h"
