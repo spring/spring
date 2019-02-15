@@ -168,7 +168,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	glBindRenderbufferEXT(rbo.target, rbo.id);
 
 	// allocate the memory
-	if (rbo.samples > 0)
+	if (rbo.samples > 1)
 		glRenderbufferStorageMultisample(rbo.target, rbo.samples, rbo.format, rbo.xsize, rbo.ysize);
 	else
 		glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
