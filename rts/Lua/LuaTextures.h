@@ -37,6 +37,8 @@ public:
 		GLenum target = GL_TEXTURE_2D;
 		GLenum format = GL_RGBA8;
 
+		GLsizei samples = 0;
+
 		GLsizei xsize = 0;
 		GLsizei ysize = 0;
 		GLint border = 0;

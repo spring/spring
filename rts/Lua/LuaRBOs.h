@@ -34,6 +34,9 @@ class LuaRBOs {
 			GLuint id;
 			GLenum target;
 			GLenum format;
+
+			GLsizei samples;
+
 			GLsizei xsize;
 			GLsizei ysize;
 		};

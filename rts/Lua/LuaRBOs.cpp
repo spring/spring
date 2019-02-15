@@ -9,6 +9,10 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#include "System/myMath.h"
+
+#include "Rendering/GlobalRendering.h"
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -137,6 +141,8 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	rbo.target = GL_RENDERBUFFER_EXT;
 	rbo.format = GL_RGBA;
 
+	rbo.samples = 0;
+
 	const int table = 3;
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "target");
@@ -149,13 +155,23 @@ int LuaRBOs::CreateRBO(lua_State* L)
 			rbo.format = (GLenum)lua_tonumber(L, -1);
 		}
 		lua_pop(L, 1);
+		lua_getfield(L, table, "samples");
+		if (lua_isnumber(L, -1)) {
+			auto samples = (GLsizei)lua_tonumber(L, -1);
+			rbo.samples = std::min(samples, globalRendering->msaaLevel);
+			LOG_L(L_WARNING, "[LuaRBO::%s] Sanitized incorrect number of samples %d --> %d", __func__, samples, rbo.samples);
+		}
+		lua_pop(L, 1);
 	}
 
 	glGenRenderbuffersEXT(1, &rbo.id);
 	glBindRenderbufferEXT(rbo.target, rbo.id);
 
 	// allocate the memory
-	glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
+	if (rbo.samples > 0)
+		glRenderbufferStorageMultisample(rbo.target, rbo.samples, rbo.format, rbo.xsize, rbo.ysize);
+	else
+		glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
 
 	glBindRenderbufferEXT(rbo.target, 0);
 

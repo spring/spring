@@ -2591,6 +2591,13 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 						tex.format = (GLint)lua_tonumber(L, -1);
 					} break;
 
+					case hashString("samples"): {
+						auto samples = (GLint)lua_tonumber(L, -1);
+						tex.samples = Clamp(samples, 2, globalRendering->msaaLevel);
+						if (tex.samples != samples)
+							LOG_L(L_WARNING, "[LuaOpenGL::%s] Sanitized incorrect number of samples %d --> %d", __func__, samples, tex.samples);
+					} break;
+
 					case hashString("min_filter"): {
 						tex.min_filter = (GLenum)lua_tonumber(L, -1);
 					} break;

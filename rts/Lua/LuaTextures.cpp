@@ -30,9 +30,18 @@ std::string LuaTextures::Create(const Texture& tex)
 	}
 
 	glClearErrors("LuaTex", __func__, globalRendering->glDebugErrors);
-	glTexImage2D(tex.target, 0, tex.format,
-	             tex.xsize, tex.ysize, tex.border,
-	             dataFormat, dataType, nullptr);
+
+	bool ms = (tex.target == GL_TEXTURE_2D_MULTISAMPLE) && (tex.samples > 1);
+
+	if (!ms) {
+		glTexImage2D(tex.target, 0, tex.format,
+			tex.xsize, tex.ysize, tex.border,
+			dataFormat, dataType, nullptr);
+	}
+	else {
+		glTexImage2DMultisample(tex.target, tex.samples, tex.format,
+			tex.xsize, tex.ysize, GL_TRUE);
+	}
 
 	if (glGetError() != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
