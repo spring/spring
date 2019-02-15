@@ -100,7 +100,7 @@ public:
 					continue;
 
 				// give up
-				LOG_L(L_ERROR, "[TexMemPool::%s] failed to allocate bitmap of size %zu from pool of total size %zu", __func__, size, Size());
+				LOG_L(L_ERROR, "[TexMemPool::%s] failed to allocate bitmap of size " _STPF_ "u from pool of total size " _STPF_ "u", __func__, size, Size());
 				throw std::bad_alloc();
 				return mem;
 			}
@@ -194,7 +194,7 @@ public:
 			memArray.resize(size, 0);
 		}
 
-		LOG_L(L_INFO, "[TexMemPool::%s] poolSize=%zu allocSize=%zu texCount=%zu", __func__, size, allocSize, numAllocs - numFrees);
+		LOG_L(L_INFO, "[TexMemPool::%s] poolSize=" _STPF_ "u allocSize=" _STPF_ "u texCount=" _STPF_ "u", __func__, size, allocSize, numAllocs - numFrees);
 	}
 
 

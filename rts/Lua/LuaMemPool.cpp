@@ -6,6 +6,7 @@
 #include <new>
 
 #include "LuaMemPool.h"
+#include "System/MainDefines.h"
 #include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
@@ -118,7 +119,7 @@ void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	#if (LMP_USE_CHUNK_TABLE == 1)
 		LOG(
-			"[LuaMemPool::%s][handle=%s (%s)] index=%zu {blocks,sizes}={%zu,%zu} {int,ext,rec}Allocs={%zu,%zu,%zu} {chunk,block}Bytes={%zu,%zu}",
+			"[LuaMemPool::%s][handle=%s (%s)] index=" _STPF_ " {blocks,sizes}={" _STPF_ "," _STPF_ "} {int,ext,rec}Allocs={" _STPF_ "," _STPF_ "," _STPF_ "} {chunk,block}Bytes={" _STPF_ "," _STPF_ "}",
 			__func__,
 			handle,
 			lctype,
@@ -133,7 +134,7 @@ void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 		);
 	#else
 		LOG(
-			"[LuaMemPool::%s][handle=%s (%s)] index=%zu {numAllocs[*],allocSums[*]}={%zu,%zu} {int,ext,rec}Allocs={%zu,%zu,%zu} {chunk,block}Bytes={%zu,%zu}",
+			"[LuaMemPool::%s][handle=%s (%s)] index=" _STPF_ " {numAllocs[*],allocSums[*]}={" _STPF_ "," _STPF_ "} {int,ext,rec}Allocs={" _STPF_ "," _STPF_ "," _STPF_ "} {chunk,block}Bytes={" _STPF_ "," _STPF_ "}",
 			__func__,
 			handle,
 			lctype,

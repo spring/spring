@@ -217,7 +217,10 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//   Updating for all passes produces the optimal tessellation per
 	//   camera but consumes far too many cycles; force any non-shadow
 	//   pass to reuse MESH_NORMAL
-	SCOPED_TIMER(drawPass == DrawPass::Normal ? "Draw::World::Terrain::ROAM" : "Misc::ROAM");
+
+	// SCOPED_TIMER can't have dynamic values in a single call
+	//SCOPED_TIMER(drawPass == DrawPass::Normal ? "Draw::World::Terrain::ROAM" : "Misc::ROAM");
+	SCOPED_TIMER("Draw::World::Terrain::ROAM");
 
 	switch (drawPass) {
 		case DrawPass::Normal: { Update(); } break;
