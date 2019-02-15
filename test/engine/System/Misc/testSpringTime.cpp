@@ -282,7 +282,8 @@ TEST_CASE("ThreadSleepTime")
 TEST_CASE("Timer")
 {
 
-	ScopedTimer t2("test");
+	TimerNameRegistrar("test");
+	ScopedTimer t2(hashString("test"));
 	ScopedOnceTimer t("test");
 	sleep_spring(500);
 
