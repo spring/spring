@@ -12,30 +12,33 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Misc/NonCopyable.h"
 #include "System/float3.h"
+#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)
-#define SCOPED_TIMER(name) ScopedTimer __scopedTimer(name);
-#define SCOPED_SPECIAL_TIMER(name) ScopedTimer __scopedTimer(name, false, true)
-#define SCOPED_MT_TIMER(name) ScopedMtTimer __scopedTimer(name);
+#define SCOPED_TIMER(name) static TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name));
+#define SCOPED_SPECIAL_TIMER(name) TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name), false, true)
+#define SCOPED_MT_TIMER(name) TimerNameRegistrar __tnr(name); ScopedMtTimer __scopedTimer(hashString(name));
 
+
+class TimerNameRegistrar : public spring::noncopyable
+{
+public:
+    TimerNameRegistrar(const char* timerName);
+};
 
 class BasicTimer : public spring::noncopyable
 {
 public:
-	BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
-	BasicTimer(const std::string& timerName);
-	BasicTimer(const char* timerName);
+	//BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
+	BasicTimer(unsigned hash) : nameHash(hash), startTime(spring_gettime()) { }
 
-	const std::string& GetName() const { return name; }
 	spring_time GetDuration() const;
 
 protected:
 	const unsigned nameHash;
 	const spring_time startTime;
-
-	std::string name;
 };
 
 
@@ -48,8 +51,7 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const std::string& timerName, bool _autoShowGraph = false, bool _specialTimer = false);
-	ScopedTimer(const char* timerName, bool _autoShowGraph = false, bool _specialTimer = false);
+	ScopedTimer(const unsigned hash, bool _autoShowGraph = false, bool _specialTimer = false);
 	~ScopedTimer();
 
 private:
@@ -61,8 +63,7 @@ private:
 class ScopedMtTimer : public BasicTimer
 {
 public:
-	ScopedMtTimer(const std::string& timerName, bool _autoShowGraph = false);
-	ScopedMtTimer(const char* timerName, bool _autoShowGraph = false);
+	ScopedMtTimer(const unsigned hash, bool _autoShowGraph = false);
 	~ScopedMtTimer();
 
 private:
@@ -140,7 +141,7 @@ public:
 	const TimeRecord& GetTimeRecord(const char* name) const;
 	const TimeRecord& GetTimeRecordRaw(const char* name) const {
 		// do not default-create keys, breaks resorting
-		const auto it = profiles.find(name);
+		const auto it = profiles.find(hashString(name));
 		const static TimeRecord tr;
 
 		if (it == profiles.end())
@@ -171,7 +172,7 @@ public:
 	void PrintProfilingInfo() const;
 
 	void AddTime(
-		const std::string& name,
+		unsigned nameHash,
 		const spring_time startTime,
 		const spring_time deltaTime,
 		const bool showGraph = false,
@@ -179,7 +180,7 @@ public:
 		const bool threadTimer = false
 	);
 	void AddTimeRaw(
-		const std::string& name,
+		unsigned nameHash,
 		const spring_time startTime,
 		const spring_time deltaTime,
 		const bool showGraph,
@@ -187,7 +188,7 @@ public:
 	);
 
 private:
-	spring::unordered_map<std::string, TimeRecord> profiles;
+	spring::unordered_map<unsigned, TimeRecord> profiles;
 
 	std::vector< std::pair<std::string, TimeRecord> > sortedProfiles;
 	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfiles;
