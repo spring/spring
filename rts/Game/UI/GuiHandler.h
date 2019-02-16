@@ -219,6 +219,10 @@ private:
 	bool invColorSelect;
 	bool frontByEnds;
 
+	int dragCircleCommandThreshold;
+	int dragBoxCommandThreshold;
+	int dragFrontCommandThreshold;
+
 	bool useStencil;
 
 	int iconsPerPage;

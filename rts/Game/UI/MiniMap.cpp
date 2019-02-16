@@ -501,7 +501,7 @@ void CMiniMap::SelectUnits(int x, int y)
 
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-	if (fullProxy && (bp.movement > 4)) {
+	if (fullProxy && (bp.movement > mouse->dragSelectionThreshold)) {
 		// use a selection box
 		const float3 newMapPos = GetMapPosition(x, y);
 		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
@@ -1195,7 +1195,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	// selection box
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-	if (selecting && fullProxy && (bp.movement > 4)) {
+	if (selecting && fullProxy && (bp.movement > mouse->dragSelectionThreshold)) {
 		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
 		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
 		glColor4fv(cmdColors.mouseBox);
