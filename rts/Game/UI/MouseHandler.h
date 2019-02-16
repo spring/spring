@@ -117,20 +117,24 @@ private:
 	bool ignoreMove = false;
 
 	float cursorScale = 1.0f;
-	float dragScrollThreshold = 0.0f;
 
 	float scrollx = 0.0f;
 	float scrolly = 0.0f;
 
 public:
-	float doubleClickTime = 0.0f;
-	float scrollWheelSpeed = 0.0f;
-	int dragSelectionThreshold = 0;
-
 	/// locked mouse indicator size
 	float crossSize = 0.0f;
 	float crossAlpha = 0.0f;
 	float crossMoveScale = 0.0f;
+
+	float doubleClickTime = 0.0f;
+	float scrollWheelSpeed = 0.0f;
+	float dragScrollThreshold = 0.0f;
+
+	int dragSelectionThreshold = 0;
+	int dragBoxCommandThreshold = 0;
+	int dragCircleCommandThreshold = 0;
+	int dragFrontCommandThreshold = 0;
 
 
 	struct ButtonPressEvt {
