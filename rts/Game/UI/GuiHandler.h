@@ -26,6 +26,7 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
+	~CGuiHandler();
 
 	void Update();
 
@@ -112,6 +113,9 @@ public:
 	int inCommand;
 	int buildFacing;
 	int buildSpacing;
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 private:
 	void GiveCommand(const Command& cmd, bool fromUser = true);
@@ -218,6 +222,10 @@ private:
 	bool attackRect;
 	bool invColorSelect;
 	bool frontByEnds;
+
+	int dragCircleCommandThreshold = 0;
+	int dragBoxCommandThreshold = 0;
+	int dragFrontCommandThreshold = 0;
 
 	bool useStencil;
 
