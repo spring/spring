@@ -21,10 +21,12 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDemo(new CGZFileHandler(filename, SPRING_VFS_PWD_ALL))
 {
-	if (!playbackDemo->FileExists()) {
-		// file not found -> exception
-		throw user_error(std::string("Demofile not found: ") + filename);
-	}
+	if (FileSystem::GetExtension(filename) != "sdfz")
+		throw content_error("Unknown demo extension: " + FileSystem::GetExtension(filename));
+
+	// file not found -> exception
+	if (!playbackDemo->FileExists())
+		throw user_error("Demofile not found: " + filename);
 
 	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab();
@@ -51,8 +53,8 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDe
 
 	if (fileHeader.scriptSize != 0) {
 		std::vector<char> buf(fileHeader.scriptSize);
-		playbackDemo->Read(&buf[0], fileHeader.scriptSize);
-		setupScript = std::string(&buf[0], fileHeader.scriptSize);
+		playbackDemo->Read(buf.data(), buf.size());
+		setupScript = std::string(buf.data(), buf.size());
 	}
 
 	playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));
@@ -61,13 +63,13 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDe
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoReadTime = curTime - 0.01f;
 
-	long curPos = playbackDemo->GetPos();
+	const long curPos = playbackDemo->GetPos();
 	playbackDemo->Seek(0, std::ios::end);
 	playbackDemoSize = playbackDemo->GetPos();
+
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize;
-	}
-	else {
+	} else {
 		// Spring crashed while recording the demo: replay until EOF,
 		// but at most filesize bytes to block watching demo of running game.
 		// For this we must determine the file size.

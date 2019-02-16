@@ -2929,19 +2929,6 @@ public:
 
 
 
-class SaveGameActionExecutor : public IUnsyncedActionExecutor {
-public:
-	SaveGameActionExecutor() : IUnsyncedActionExecutor("SaveGame", "Save the game state to QuickSave.ssf (BROKEN)") {
-	}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		game->SaveGame("Saves/QuickSave.ssf", true, true);
-		return true;
-	}
-};
-
-
-
 class DumpStateActionExecutor: public IUnsyncedActionExecutor {
 public:
 	DumpStateActionExecutor(): IUnsyncedActionExecutor("DumpState", "dump game-state to file") {
@@ -2962,6 +2949,17 @@ public:
 
 
 
+class SaveGameActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SaveGameActionExecutor() : IUnsyncedActionExecutor("SaveGame", "Save the game state to QuickSave.ssf (BROKEN)") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		game->SaveGame("Saves/QuickSave.ssf", "");
+		return true;
+	}
+};
+
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -2976,18 +2974,12 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case 1: {
-				game->SaveGame("Saves/" + args[0] + ((usecreg)? ".ssf": ".slsf"), false, usecreg);
-			} break;
-			case 2: {
-				game->SaveGame("Saves/" + args[0] + ((usecreg)? ".ssf": ".slsf"), (args[1] == "-y"), usecreg);
-			} break;
-			default: {
-				return false;
-			} break;
+			case  1: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),      ""); return true; } break;
+			case  2: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"), args[1]); return true; } break;
+			default: {                                                                                      ; } break;
 		}
 
-		return true;
+		return false;
 	}
 private:
 	bool usecreg;

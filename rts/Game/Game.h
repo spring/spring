@@ -90,7 +90,7 @@ public:
 	void ParseInputTextGeometry(const std::string& geo);
 
 	void ReloadGame();
-	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
+	void SaveGame(const std::string& fileName, const std::string& saveArgs);
 
 	void ResizeEvent() override;
 
@@ -211,7 +211,7 @@ private:
 	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
 	/// for reloading the savefile
-	ILoadSaveHandler* saveFile;
+	ILoadSaveHandler* saveFileHandler;
 
 	std::atomic<bool> finishedLoading = {false};
 	std::atomic<bool> gameOver = {false};
