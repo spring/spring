@@ -54,6 +54,9 @@
 
 CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
+CONFIG(int, MouseDragCircleCommandThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a circular area command.");
+CONFIG(int, MouseDragBoxCommandThreshold).defaultValue(16).description("Distance in pixels which the mouse must be dragged to trigger a rectangular area command.");
+CONFIG(int, MouseDragFrontCommandThreshold).defaultValue(30).description("Distance in pixels which the mouse must be dragged to trigger a formation front command.");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -73,10 +76,19 @@ CGuiHandler::CGuiHandler()
 	miniMapMarker = configHandler->GetBool("MiniMapMarker");
 	invertQueueKey = configHandler->GetBool("InvertQueueKey");
 
+	dragCircleCommandThreshold = configHandler->GetInt("MouseDragCircleCommandThreshold");
+	dragBoxCommandThreshold = configHandler->GetInt("MouseDragBoxCommandThreshold");
+	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
+
 	failedSound = sound->GetDefSoundId("FailedCommand");
+	
+	configHandler->NotifyOnChange(this, {"MouseDragCircleCommandThreshold", "MouseDragBoxCommandThreshold", "MouseDragFrontCommandThreshold"});
 }
 
-
+CGuiHandler::~CGuiHandler()
+{
+	configHandler->RemoveObserver(this);
+}
 
 bool CGuiHandler::GetQueueKeystate() const
 {
@@ -2212,7 +2224,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			Command c(commands[tempInCommand].id, CreateOptions(button), innerPos);
 
-			if (mouse->buttons[button].movement > 30) {
+			if (mouse->buttons[button].movement > dragFrontCommandThreshold) {
 				// only create the front if the mouse has moved enough
 				if ((outerDist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * traceDist, false)) < 0.0f)
 					outerDist = CGround::LinePlaneCol(cameraPos, mouseDir, traceDist, innerPos.y);
@@ -2241,7 +2253,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			if (mouse->buttons[button].movement < 4) {
+			if (mouse->buttons[button].movement <= dragCircleCommandThreshold) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, camera->GetFarPlaneDist() * 1.4f, nullptr, unit, feature, true);
@@ -2299,7 +2311,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			if (mouse->buttons[button].movement < 16) {
+			if (mouse->buttons[button].movement <= dragBoxCommandThreshold) {
 				const CUnit* unit = nullptr;
 				const CFeature* feature = nullptr;
 
@@ -3564,7 +3576,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
-					if (mouse->buttons[button].movement > 30) {
+					if (mouse->buttons[button].movement > dragFrontCommandThreshold) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
 
@@ -3586,7 +3598,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					if (cmdDesc.params.size() == 1)
 						maxRadius = atof(cmdDesc.params[0].c_str());
 
-					if (mouse->buttons[button].movement > 4) {
+					if (mouse->buttons[button].movement > dragCircleCommandThreshold) {
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
@@ -3648,7 +3660,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 				case CMDTYPE_ICON_UNIT_OR_RECTANGLE: {
 					// draw rectangular area-command
-					if (mouse->buttons[button].movement >= 16) {
+					if (mouse->buttons[button].movement > dragBoxCommandThreshold) {
 						const float3 camTracePos = mouse->buttons[button].camPos;
 						const float3 camTraceDir = mouse->buttons[button].dir;
 
@@ -4400,5 +4412,15 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 
 		glAttribStatePtr->LineWidth(1.0f);
 	}
+}
+
+
+/******************************************************************************/
+
+void CGuiHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	dragCircleCommandThreshold = configHandler->GetInt("MouseDragCircleCommandThreshold");
+	dragBoxCommandThreshold = configHandler->GetInt("MouseDragBoxCommandThreshold");
+	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
 }
 

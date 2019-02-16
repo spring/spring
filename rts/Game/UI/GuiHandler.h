@@ -27,6 +27,7 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
+	~CGuiHandler();
 
 	void Update();
 
@@ -101,6 +102,9 @@ public:
 	void SetBuildSpacing(int spacing) { buildSpacing = std::max(spacing, 0); }
 
 	void LayoutIcons(bool useSelectionPage);
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 private:
 	void GiveCommand(const Command& cmd, bool fromUser = true);
@@ -233,6 +237,9 @@ private:
 	bool invColorSelect = true;
 	bool frontByEnds = false;
 
+	int dragCircleCommandThreshold = 0;
+	int dragBoxCommandThreshold = 0;
+	int dragFrontCommandThreshold = 0;
 
 	struct Box {
 		float x1 = 0.0f;
