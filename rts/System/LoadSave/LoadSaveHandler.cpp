@@ -1,30 +1,53 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <string>
-
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "LuaLoadSaveHandler.h"
-#include "System/Config/ConfigHandler.h"
+#include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 
 
-ILoadSaveHandler* ILoadSaveHandler::Create(bool usecreg)
+ILoadSaveHandler* ILoadSaveHandler::CreateHandler(const std::string& saveFile)
 {
-	if (usecreg)
-		return new CCregLoadSaveHandler();
-	else
-		return new CLuaLoadSaveHandler();
+	const std::string& ext = FileSystem::GetExtension(saveFile);
+
+	if (ext == "ssf")
+		return (new CCregLoadSaveHandler());
+	if (ext == "slsf")
+		return (new CLuaLoadSaveHandler());
+
+	throw content_error("Unknown save extension: " + ext);
 }
 
+bool ILoadSaveHandler::CreateSave(
+	const std::string& saveFile,
+	const std::string& saveArgs,
+	const std::string& mapName,
+	const std::string& modName
+) {
+	if (!FileSystem::CreateDirectory("Saves"))
+		return false;
 
-ILoadSaveHandler::~ILoadSaveHandler() = default;
+	if (saveArgs != "-y" && FileSystem::FileExists(saveFile)) {
+		LOG_L(L_WARNING, "[ILoadSaveHandler::%s] file \"%s\" already exists (use /save -y to override)", __func__, saveFile.c_str());
+		return false;
+	}
 
+	ILoadSaveHandler* ls = CreateHandler(saveFile);
+
+	ls->SaveInfo(mapName, modName);
+	ls->SaveGame(saveFile);
+	LOG("[ILoadSaveHandler::%s] saved game to file \"%s\"", __func__, saveFile.c_str());
+	delete ls;
+	return true;
+}
 
 std::string ILoadSaveHandler::FindSaveFile(const std::string& file)
 {
-	if (FileSystem::FileExists(file)) {
+	if (FileSystem::FileExists(file))
 		return file;
-	}
-	return FileSystem::EnsurePathSepAtEnd("Saves") + file;
+
+	return (FileSystem::EnsurePathSepAtEnd("Saves") + file);
 }
+

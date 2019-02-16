@@ -319,22 +319,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 
 		// save current game state
 		if (save) {
-			if (FileSystem::CreateDirectory("Saves")) {
-				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
-				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
-				saveFileName = "Saves/" + saveFileName + ".ssf";
+			const std::string currTimeStr = std::move(CTimeUtil::GetCurrentTimeStr());
+			const std::string saveFileName = currTimeStr + "_" + modInfo.filename + "_" + gameSetup->mapName;
 
-				if (!FileSystem::FileExists(saveFileName)) {
-					LOG("Saving game to %s", saveFileName.c_str());
-					ILoadSaveHandler* ls = ILoadSaveHandler::Create(true);
-					ls->mapName = gameSetup->mapName;
-					ls->modName = modInfo.filename;
-					ls->SaveGame(saveFileName);
-					delete ls;
-				} else {
-					LOG_L(L_ERROR, "File %s already exists, game NOT saved!", saveFileName.c_str());
-				}
-			}
+			ILoadSaveHandler::CreateSave("Saves/" + saveFileName + ".ssf", "", gameSetup->mapName, modInfo.filename);
 		}
 	}
 	else if (InBox(mx, my, box + menuBox)) {

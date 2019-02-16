@@ -202,7 +202,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(jobDispatcher),
 	CR_IGNORED(curKeyChain),
 	CR_IGNORED(worldDrawer),
-	CR_IGNORED(saveFile),
+	CR_IGNORED(saveFileHandler),
 
 	// Post Load
 	CR_POSTLOAD(PostLoad)
@@ -222,7 +222,7 @@ CGame::CGame(const std::string& mapFileName, const std::string& modFileName, ILo
 	, lastUnsyncedUpdateTime(spring_gettime())
 	, skipLastDrawTime(spring_gettime())
 
-	, saveFile(saveFile)
+	, saveFileHandler(saveFile)
 {
 	game = this;
 
@@ -292,7 +292,7 @@ CGame::~CGame()
 	KillSimulation();
 
 	LOG("[Game::%s][2]", __func__);
-	spring::SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
+	spring::SafeDelete(saveFileHandler); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 
 	LOG("[Game::%s][3]", __func__);
 	CCategoryHandler::RemoveInstance();
@@ -415,9 +415,9 @@ void CGame::LoadGame(const std::string& mapFileName)
 	try {
 		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
-		if (!globalQuit && saveFile != nullptr) {
+		if (!globalQuit && saveFileHandler != nullptr) {
 			loadscreen->SetLoadMessage("Loading Saved Game");
-			saveFile->LoadGame();
+			saveFileHandler->LoadGame();
 		}
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
@@ -591,7 +591,7 @@ void CGame::PostLoadSimulation(LuaParser* defsParser)
 	// load map-specific features
 	loadscreen->SetLoadMessage("Initializing Map Features");
 	featureDefHandler->LoadFeatureDefsFromMap();
-	if (saveFile == nullptr)
+	if (saveFileHandler == nullptr)
 		featureHandler.LoadFeaturesFromMap();
 
 	envResHandler.LoadTidal(mapInfo->map.tidalStrength);
@@ -742,7 +742,7 @@ void CGame::LoadSkirmishAIs()
 
 void CGame::LoadFinalize()
 {
-	if (saveFile == nullptr) {
+	if (saveFileHandler == nullptr) {
 		ENTER_SYNCED_CODE();
 		eventHandler.GamePreload();
 		LEAVE_SYNCED_CODE();
@@ -1448,7 +1448,7 @@ void CGame::StartPlaying()
 		}
 	}
 
-	if (saveFile == nullptr)
+	if (saveFileHandler == nullptr)
 		eventHandler.GameStart();
 }
 
@@ -1828,39 +1828,27 @@ void CGame::ReloadCOB(const string& msg, int player)
 
 bool CGame::IsLagging(float maxLatency) const
 {
-	const spring_time timeNow = spring_gettime();
-	const float diffTime = spring_tomsecs(timeNow - lastFrameTime);
+	const float deltaTime = spring_tomsecs(spring_gettime() - lastFrameTime);
+	const float sfLatency = maxLatency / gs->speedFactor;
 
-	return (!gs->paused && (diffTime > (maxLatency / gs->speedFactor)));
+	return (!gs->paused && (deltaTime > sfLatency));
 }
 
 
-void CGame::SaveGame(const std::string& filename, bool overwrite, bool usecreg)
+void CGame::SaveGame(const std::string& fileName, const std::string& saveArgs)
 {
-	if (!FileSystem::CreateDirectory("Saves"))
-		return;
-
-	if (overwrite || !FileSystem::FileExists(filename)) {
-		LOG("[Game::%s] saving game to %s", __func__, filename.c_str());
-		ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
-		ls->mapName = gameSetup->mapName;
-		ls->modName = gameSetup->modName;
-		ls->SaveGame(filename);
-		delete ls;
-	} else {
-		LOG_L(L_WARNING, "File %s already exists(use /save -y to override)", filename.c_str());
-	}
+	ILoadSaveHandler::CreateSave(fileName, saveArgs, gameSetup->mapName, gameSetup->modName);
 }
 
 
 void CGame::ReloadGame()
 {
-	if (saveFile) {
+	if (saveFileHandler != nullptr) {
 		// This reloads heightmap, triggers Load call-in, etc.
 		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
-		saveFile->LoadGame();
+		saveFileHandler->LoadGame();
 	} else {
-		LOG_L(L_WARNING, "We can only reload the game when it has been started from a savegame");
+		LOG_L(L_WARNING, "[Game::%s] can only reload the game when it has been started from a savegame", __func__);
 	}
 }
 

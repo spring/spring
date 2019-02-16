@@ -480,31 +480,21 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 
 CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 {
-	const std::string& ext = FileSystem::GetExtension(saveFile);
-
-	if (ext != "ssf" && ext != "slsf")
-		throw content_error(std::string("Unknown save extension: ") + ext);
-
 	clientSetup->isHost = true;
 
 	pregame = new CPreGame(clientSetup);
-	pregame->LoadSavefile(saveFile, ext == "ssf");
+	pregame->LoadSaveFile(saveFile);
 	return pregame;
 }
 
 
 CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
 {
-	const std::string& ext = FileSystem::GetExtension(demoFile);
-
-	if (ext != "sdfz")
-		throw content_error(std::string("Unknown demo extension: ") + ext);
-
 	clientSetup->isHost = true;
 	clientSetup->myPlayerName += " (spec)";
 
 	pregame = new CPreGame(clientSetup);
-	pregame->LoadDemo(demoFile);
+	pregame->LoadDemoFile(demoFile);
 	return pregame;
 }
 
@@ -535,7 +525,7 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	pregame = new CPreGame(clientSetup);
 
 	if (clientSetup->isHost)
-		pregame->LoadSetupscript(buf);
+		pregame->LoadSetupScript(buf);
 
 	return pregame;
 }

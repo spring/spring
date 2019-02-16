@@ -179,13 +179,10 @@ void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, con
 
 void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	filename = file;
-	const std::string realfile = dataDirsAccess.LocateFile(FindSaveFile(file));
+	const std::string realfile = dataDirsAccess.LocateFile(FindSaveFile(filename = file));
 
-	loadfile = archiveLoader.OpenArchive(realfile, "sdz");
-	if (!loadfile || !loadfile->IsOpen()) {
+	if ((loadfile = archiveLoader.OpenArchive(realfile, "sdz")) == nullptr || !loadfile->IsOpen())
 		throw content_error("Unable to open savegame \"" + filename + "\"");
-	}
 
 	scriptText = LoadEntireFile(FILE_STARTSCRIPT);
 }

@@ -40,9 +40,9 @@ public:
 	CPreGame(std::shared_ptr<ClientSetup> setup);
 	virtual ~CPreGame();
 
-	void LoadSetupscript(const std::string& script);
-	void LoadDemo(const std::string& demo);
-	void LoadSavefile(const std::string& save, bool usecreg);
+	void LoadSetupScript(const std::string& script);
+	void LoadDemoFile(const std::string& demo);
+	void LoadSaveFile(const std::string& save);
 
 	bool Draw() override;
 	bool Update() override;
@@ -72,7 +72,7 @@ private:
 	std::shared_ptr<ClientSetup> clientSetup;
 
 	std::string modFileName;
-	ILoadSaveHandler* savefile;
+	ILoadSaveHandler* saveFileHandler;
 
 	spring_time connectTimer;
 

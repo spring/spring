@@ -67,7 +67,7 @@ CPreGame* pregame = nullptr;
 
 CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
-	, savefile(nullptr)
+	, saveFileHandler(nullptr)
 	, connectTimer(spring_gettime())
 	, wantDemo(true)
 {
@@ -102,29 +102,28 @@ CPreGame::~CPreGame()
 	pregame = nullptr;
 }
 
-void CPreGame::LoadSetupscript(const std::string& script)
+void CPreGame::LoadSetupScript(const std::string& script)
 {
 	assert(clientSetup->isHost);
 	StartServer(script);
 }
 
-void CPreGame::LoadDemo(const std::string& demo)
+void CPreGame::LoadDemoFile(const std::string& demo)
 {
 	assert(clientSetup->isHost);
-
-	if (!configHandler->GetBool("DemoFromDemo"))
-		wantDemo = false;
+	wantDemo &= configHandler->GetBool("DemoFromDemo");
 
 	ReadDataFromDemo(demo);
 }
 
-void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
+void CPreGame::LoadSaveFile(const std::string& save)
 {
 	assert(clientSetup->isHost);
-	savefile = ILoadSaveHandler::Create(usecreg);
-	savefile->LoadGameStartInfo(save);
 
-	StartServer(savefile->scriptText);
+	saveFileHandler = ILoadSaveHandler::CreateHandler(save);
+	saveFileHandler->LoadGameStartInfo(save);
+
+	StartServer(saveFileHandler->GetScriptText());
 }
 
 int CPreGame::KeyPressed(int k, bool isRepeat)
@@ -387,7 +386,7 @@ void CPreGame::UpdateClientNet()
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
 
-				CLoadScreen::CreateDeleteInstance(std::move(gameSetup->MapFileName()), std::move(modFileName), savefile);
+				CLoadScreen::CreateDeleteInstance(std::move(gameSetup->MapFileName()), std::move(modFileName), saveFileHandler);
 
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
