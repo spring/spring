@@ -11,6 +11,7 @@
 #include "Game/Camera.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "System/myMath.h" // FACING
 
 #define DEFAULT_GUI_CONFIG "ctrlpanel.txt"
 
