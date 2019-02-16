@@ -6,6 +6,8 @@
 #include "System/myMath.h"
 #include "System/StringUtil.h"
 
+#include "System/Log/ILog.h"
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -31,16 +33,17 @@ std::string LuaTextures::Create(const Texture& tex)
 
 	glClearErrors("LuaTex", __func__, globalRendering->glDebugErrors);
 
-	bool ms = (tex.target == GL_TEXTURE_2D_MULTISAMPLE) && (tex.samples > 1);
-
-	if (!ms) {
+	if (tex.target == GL_TEXTURE_2D_MULTISAMPLE) {
+		glTexImage2DMultisample(tex.target, globalRendering->msaaLevel, tex.format,
+			tex.xsize, tex.ysize, GL_TRUE);
+	}
+	else if (tex.target == GL_TEXTURE_2D) {
 		glTexImage2D(tex.target, 0, tex.format,
 			tex.xsize, tex.ysize, tex.border,
 			dataFormat, dataType, nullptr);
 	}
 	else {
-		glTexImage2DMultisample(tex.target, tex.samples, tex.format,
-			tex.xsize, tex.ysize, GL_TRUE);
+		LOG_L(L_ERROR, "[LuaTextures::%s] Texture target (%d) is not supported yet", __func__, tex.target);
 	}
 
 	if (glGetError() != GL_NO_ERROR) {

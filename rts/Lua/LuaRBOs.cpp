@@ -70,7 +70,8 @@ void LuaRBOs::RBO::Init()
 	format = GL_RGBA;
 	xsize  = 0;
 	ysize  = 0;
-	samples = 0;
+
+	multisample = false;
 }
 
 
@@ -118,7 +119,7 @@ int LuaRBOs::meta_index(lua_State* L)
 	if (key == "format") { lua_pushnumber(L, rbo->format); return 1; }
 	if (key ==  "xsize") { lua_pushnumber(L, rbo->xsize ); return 1; }
 	if (key ==  "ysize") { lua_pushnumber(L, rbo->ysize ); return 1; }
-	if (key ==  "samples") { lua_pushnumber(L, rbo->samples); return 1; }
+	if (key ==  "multisample") { lua_pushboolean(L, rbo->multisample); return 1; }
 
 	return 0;
 }
@@ -153,11 +154,9 @@ int LuaRBOs::CreateRBO(lua_State* L)
 			rbo.format = (GLenum)lua_tonumber(L, -1);
 		}
 		lua_pop(L, 1);
-		lua_getfield(L, table, "samples");
-		if (lua_isnumber(L, -1)) {
-			auto samples = (GLsizei)lua_tonumber(L, -1);
-			rbo.samples = std::min(samples, globalRendering->msaaLevel);
-			LOG_L(L_WARNING, "[LuaRBO::%s] Sanitized incorrect number of samples %d --> %d", __func__, samples, rbo.samples);
+		lua_getfield(L, table, "multisample");
+		if (lua_isboolean(L, -1)) {
+			rbo.multisample = lua_toboolean(L, -1);
 		}
 		lua_pop(L, 1);
 	}
@@ -166,8 +165,9 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	glBindRenderbufferEXT(rbo.target, rbo.id);
 
 	// allocate the memory
-	if (rbo.samples > 1)
-		glRenderbufferStorageMultisample(rbo.target, rbo.samples, rbo.format, rbo.xsize, rbo.ysize);
+	// In theory glRenderbufferStorageEXT is an equivalent of glRenderbufferStorageMultisample(...,samples = 0,...), so these two calls be replaced with one later on.
+	if (rbo.multisample)
+		glRenderbufferStorageMultisample(rbo.target, globalRendering->msaaLevel, rbo.format, rbo.xsize, rbo.ysize);
 	else
 		glRenderbufferStorageEXT(rbo.target, rbo.format, rbo.xsize, rbo.ysize);
 
