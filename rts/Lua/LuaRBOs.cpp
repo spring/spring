@@ -70,6 +70,7 @@ void LuaRBOs::RBO::Init()
 	format = GL_RGBA;
 	xsize  = 0;
 	ysize  = 0;
+	samples = 0;
 }
 
 
@@ -101,7 +102,7 @@ void LuaRBOs::RBO::Free(lua_State* L)
 
 int LuaRBOs::meta_gc(lua_State* L)
 {
-	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
+	auto rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;
 }
@@ -117,6 +118,7 @@ int LuaRBOs::meta_index(lua_State* L)
 	if (key == "format") { lua_pushnumber(L, rbo->format); return 1; }
 	if (key ==  "xsize") { lua_pushnumber(L, rbo->xsize ); return 1; }
 	if (key ==  "ysize") { lua_pushnumber(L, rbo->ysize ); return 1; }
+	if (key ==  "samples") { lua_pushnumber(L, rbo->samples); return 1; }
 
 	return 0;
 }
@@ -138,10 +140,6 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 	rbo.xsize = (GLsizei)luaL_checknumber(L, 1);
 	rbo.ysize = (GLsizei)luaL_checknumber(L, 2);
-	rbo.target = GL_RENDERBUFFER_EXT;
-	rbo.format = GL_RGBA;
-
-	rbo.samples = 0;
 
 	const int table = 3;
 	if (lua_istable(L, table)) {
@@ -175,7 +173,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 
 	glBindRenderbufferEXT(rbo.target, 0);
 
-	RBO* rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));
+	auto rboPtr = static_cast<RBO*>(lua_newuserdata(L, sizeof(RBO)));
 	*rboPtr = rbo;
 
 	luaL_getmetatable(L, "RBO");
@@ -198,7 +196,7 @@ int LuaRBOs::DeleteRBO(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
+	auto rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 	rbo->Free(L);
 	return 0;
 }
