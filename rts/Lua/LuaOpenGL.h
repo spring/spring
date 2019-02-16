@@ -308,10 +308,18 @@ class LuaOpenGL {
 		static int ReadPixels(lua_State* L);
 		static int SaveImage(lua_State* L);
 
-		static int CreateQuery(lua_State* L);
-		static int DeleteQuery(lua_State* L);
-		static int RunQuery(lua_State* L);
-		static int GetQuery(lua_State* L);
+		// occlusion queries
+		static int CreateQuery(lua_State* L) { return (CreateOcclusionQuery(L)); }
+		static int DeleteQuery(lua_State* L) { return (DeleteOcclusionQuery(L)); }
+		static int RunQuery(lua_State* L) { return (RunOcclusionQuery(L)); }
+		static int GetQuery(lua_State* L) { return (GetOcclusionQuery(L)); }
+		static int CreateOcclusionQuery(lua_State* L);
+		static int DeleteOcclusionQuery(lua_State* L);
+		static int RunOcclusionQuery(lua_State* L);
+		static int GetOcclusionQuery(lua_State* L);
+		// timer queries
+		static int SetTimerQuery(lua_State* L);
+		static int GetTimerQuery(lua_State* L);
 
 		static int GetShadowMapParams(lua_State* L);
 

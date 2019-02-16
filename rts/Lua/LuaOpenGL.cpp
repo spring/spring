@@ -342,6 +342,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RunQuery);
 	REGISTER_LUA_CFUNC(GetQuery);
 
+	REGISTER_LUA_CFUNC(SetTimerQuery);
+	REGISTER_LUA_CFUNC(GetTimerQuery);
+
 	REGISTER_LUA_CFUNC(GetShadowMapParams);
 
 	REGISTER_LUA_CFUNC(GetAtmosphere);
@@ -3502,7 +3505,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 
 /******************************************************************************/
 
-int LuaOpenGL::CreateQuery(lua_State* L)
+int LuaOpenGL::CreateOcclusionQuery(lua_State* L)
 {
 	GLuint id;
 	glGenQueries(1, &id);
@@ -3522,13 +3525,13 @@ int LuaOpenGL::CreateQuery(lua_State* L)
 	return 1;
 }
 
-int LuaOpenGL::DeleteQuery(lua_State* L)
+int LuaOpenGL::DeleteOcclusionQuery(lua_State* L)
 {
 	if (lua_isnil(L, 1))
 		return 0;
 
 	if (!lua_islightuserdata(L, 1))
-		luaL_error(L, "gl.DeleteQuery(q) expects a userdata query");
+		luaL_error(L, "gl.DeleteOcclusionQuery(q) expects a userdata query");
 
 	const OcclusionQuery* qry = static_cast<const OcclusionQuery*>(lua_touserdata(L, 1));
 
@@ -3545,7 +3548,7 @@ int LuaOpenGL::DeleteQuery(lua_State* L)
 	return 0;
 }
 
-int LuaOpenGL::RunQuery(lua_State* L)
+int LuaOpenGL::RunOcclusionQuery(lua_State* L)
 {
 	static bool running = false;
 
@@ -3563,7 +3566,7 @@ int LuaOpenGL::RunQuery(lua_State* L)
 		return 0;
 
 	if (!lua_isfunction(L, 2))
-		luaL_error(L, "gl.RunQuery(q,f) expects a function");
+		luaL_error(L, "gl.RunOcclusionQuery(q,f) expects a function");
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -3574,17 +3577,17 @@ int LuaOpenGL::RunQuery(lua_State* L)
 	running = false;
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.RunQuery: error(%i) = %s", error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RunOcclusionQuery: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
 	return 0;
 }
 
-int LuaOpenGL::GetQuery(lua_State* L)
+int LuaOpenGL::GetOcclusionQuery(lua_State* L)
 {
 	if (!lua_islightuserdata(L, 1))
-		luaL_error(L, "gl.GetQuery(q) expects a userdata query");
+		luaL_error(L, "gl.GetOcclusionQuery(q) expects a userdata query");
 
 	const OcclusionQuery* qry = static_cast<const OcclusionQuery*>(lua_touserdata(L, 1));
 
@@ -3598,6 +3601,40 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 	lua_pushnumber(L, count);
 	return 1;
+}
+
+
+int LuaOpenGL::SetTimerQuery(lua_State* L)
+{
+	const uint32_t qi = luaL_checkinteger(L, 1);
+
+	// FRAME_REF and FRAME_END are reserved timestamps
+	if (qi <= CGlobalRendering::FRAME_REF_TIME_QUERY_IDX)
+		return 0;
+	if (qi >= CGlobalRendering::FRAME_END_TIME_QUERY_IDX)
+		return 0;
+
+	globalRendering->SetGLTimeStamp(qi);
+	return 0;
+}
+
+int LuaOpenGL::GetTimerQuery(lua_State* L)
+{
+	const uint32_t qi = luaL_checkinteger(L, 1);
+	const uint32_t qj = luaL_checkinteger(L, 2);
+
+	if (std::min(qi, qj) <= CGlobalRendering::FRAME_REF_TIME_QUERY_IDX)
+		return 0;
+	if (std::max(qi, qj) >= CGlobalRendering::FRAME_END_TIME_QUERY_IDX)
+		return 0;
+
+	const uint64_t dt = globalRendering->CalcGLDeltaTime(std::min(qi, qj), std::max(qi, qj));
+	const uint32_t lo = (dt >>  0u) & 0xFFFFFFFFu;
+	const uint32_t hi = (dt >> 32u) & 0xFFFFFFFFu;
+
+	lua_pushnumber(L, lo * 1.0f);
+	lua_pushnumber(L, hi * 1.0f);
+	return 2;
 }
 
 

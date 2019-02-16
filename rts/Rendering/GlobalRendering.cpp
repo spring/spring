@@ -254,7 +254,7 @@ CGlobalRendering::~CGlobalRendering()
 	// protect against aborted startup
 	if (glContexts[0] != nullptr) {
 		GL::KillRenderBuffers();
-		glDeleteQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+		glDeleteQueries(NUM_OPENGL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 	}
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
@@ -557,21 +557,21 @@ void CGlobalRendering::PostInit() {
 	ToggleGLDebugOutput(0, 0, 0);
 
 	GL::InitRenderBuffers();
-	glGenQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+	glGenQueries(NUM_OPENGL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 }
 
 
 void CGlobalRendering::SetGLTimeStamp(uint32_t queryIdx) const
 {
-	glQueryCounter(glTimerQueries[(NUM_GL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
+	glQueryCounter(glTimerQueries[(NUM_OPENGL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
 }
 
 uint64_t CGlobalRendering::CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const
 {
-	const uint32_t queryBase = NUM_GL_TIMER_QUERIES * (1 - (drawFrame & 1));
+	const uint32_t queryBase = NUM_OPENGL_TIMER_QUERIES * (1 - (drawFrame & 1));
 
-	assert(queryIdx0 < NUM_GL_TIMER_QUERIES);
-	assert(queryIdx1 < NUM_GL_TIMER_QUERIES);
+	assert(queryIdx0 < NUM_OPENGL_TIMER_QUERIES);
+	assert(queryIdx1 < NUM_OPENGL_TIMER_QUERIES);
 	assert(queryIdx0 < queryIdx1);
 
 	GLuint64 t0 = 0;

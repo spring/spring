@@ -108,8 +108,9 @@ public:
 	static constexpr int MIN_WIN_SIZE_X = 400;
 	static constexpr int MIN_WIN_SIZE_Y = 300;
 
-	static constexpr unsigned int NUM_GL_TIMER_QUERIES = 2;
-	static constexpr unsigned int FRAME_TIME_QUERY_IDX = NUM_GL_TIMER_QUERIES - 1;
+	static constexpr unsigned int NUM_OPENGL_TIMER_QUERIES = 8;
+	static constexpr unsigned int FRAME_REF_TIME_QUERY_IDX = 0;
+	static constexpr unsigned int FRAME_END_TIME_QUERY_IDX = NUM_OPENGL_TIMER_QUERIES - 1;
 
 public:
 	/**
@@ -307,7 +308,7 @@ private:
 	SDL_GLContext glContexts[2];
 
 	// double-buffered; results from frame N become available on frame N+1
-	unsigned int glTimerQueries[NUM_GL_TIMER_QUERIES * 2];
+	unsigned int glTimerQueries[NUM_OPENGL_TIMER_QUERIES * 2];
 };
 
 extern CGlobalRendering* globalRendering;
