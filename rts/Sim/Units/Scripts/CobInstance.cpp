@@ -77,7 +77,17 @@ void CCobInstance::Init()
 void CCobInstance::PostLoad()
 {
 	assert(unit != nullptr);
+	assert(cobFile == nullptr);
+
 	cobFile = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
+
+	for (int threadID: threadIDs) {
+		CCobThread* t = cobEngine->GetThread(threadID);
+
+		t->cobInst = this;
+		t->cobFile = cobFile;
+	}
+
 	Init();
 }
 

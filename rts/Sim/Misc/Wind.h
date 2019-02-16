@@ -55,7 +55,8 @@ private:
 
 	int windDirTimer = 0;
 
-	std::vector<int> generatorIDs;
+	std::vector<int> allGeneratorIDs;
+	std::vector<int> newGeneratorIDs;
 };
 
 extern EnvResourceHandler envResHandler;
