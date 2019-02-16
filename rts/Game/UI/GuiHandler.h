@@ -27,6 +27,7 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
+	~CGuiHandler();
 
 	void Update();
 

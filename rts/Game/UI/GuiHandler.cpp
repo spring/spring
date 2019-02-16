@@ -85,7 +85,10 @@ CGuiHandler::CGuiHandler()
 	configHandler->NotifyOnChange(this, {"MouseDragCircleCommandThreshold", "MouseDragBoxCommandThreshold", "MouseDragFrontCommandThreshold"});
 }
 
-
+CGuiHandler::~CGuiHandler()
+{
+	configHandler->RemoveObserver(this);
+}
 
 bool CGuiHandler::GetQueueKeystate() const
 {
