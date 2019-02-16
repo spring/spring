@@ -283,6 +283,8 @@ static bool ParseUniformsTable(
 				case GL_SAMPLER_2D_SHADOW: { type = UNIFORM_TYPE_INT; } break;
 				case GL_SAMPLER_CUBE     : { type = UNIFORM_TYPE_INT; } break;
 
+				case GL_SAMPLER_2D_MULTISAMPLE: { type = UNIFORM_TYPE_INT; } break;
+
 				case GL_INT     : { type = UNIFORM_TYPE_INT; } break;
 				case GL_INT_VEC2: { type = UNIFORM_TYPE_INT; } break;
 				case GL_INT_VEC3: { type = UNIFORM_TYPE_INT; } break;
