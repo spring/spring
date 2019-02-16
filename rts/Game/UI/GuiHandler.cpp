@@ -81,6 +81,8 @@ CGuiHandler::CGuiHandler()
 	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
 
 	failedSound = sound->GetDefSoundId("FailedCommand");
+	
+	configHandler->NotifyOnChange(this, {"MouseDragCircleCommandThreshold", "MouseDragBoxCommandThreshold", "MouseDragFrontCommandThreshold"});
 }
 
 
@@ -4407,5 +4409,15 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 
 		glAttribStatePtr->LineWidth(1.0f);
 	}
+}
+
+
+/******************************************************************************/
+
+void CGuiHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	dragCircleCommandThreshold = configHandler->GetInt("MouseDragCircleCommandThreshold");
+	dragBoxCommandThreshold = configHandler->GetInt("MouseDragBoxCommandThreshold");
+	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
 }
 

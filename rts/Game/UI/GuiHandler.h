@@ -102,6 +102,9 @@ public:
 
 	void LayoutIcons(bool useSelectionPage);
 
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 private:
 	void GiveCommand(const Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();

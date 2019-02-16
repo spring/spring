@@ -98,7 +98,7 @@ CMouseHandler::CMouseHandler()
 
 	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 
-	configHandler->NotifyOnChange(this, {"MouseDragScrollThreshold", "ScrollWheelSpeed"});
+	configHandler->NotifyOnChange(this, {"MouseDragScrollThreshold", "ScrollWheelSpeed", "MouseDragSelectionThreshold"});
 }
 
 CMouseHandler::~CMouseHandler()
@@ -984,5 +984,6 @@ void CMouseHandler::ConfigNotify(const std::string& key, const std::string& valu
 {
 	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
+	dragSelectionThreshold = configHandler->GetInt("MouseDragSelectionThreshold");
 }
 
