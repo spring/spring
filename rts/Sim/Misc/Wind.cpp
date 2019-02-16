@@ -64,13 +64,11 @@ void EnvResourceHandler::LoadWind(float minStrength, float maxStrength)
 
 bool EnvResourceHandler::AddGenerator(CUnit* u) {
 	// duplicates should never happen, no need to check
-	spring::VectorInsertUnique(allGeneratorIDs, u->id);
-	spring::VectorInsertUnique(newGeneratorIDs, u->id);
-	return true;
+	return (spring::VectorInsertUnique(newGeneratorIDs, u->id));
 }
 
 bool EnvResourceHandler::DelGenerator(CUnit* u) {
-	return (spring::VectorErase(allGeneratorIDs, u->id));
+	return (spring::VectorErase(newGeneratorIDs, u->id), spring::VectorErase(allGeneratorIDs, u->id));
 }
 
 
@@ -117,10 +115,10 @@ void EnvResourceHandler::Update()
 		for (const int unitID: newGeneratorIDs) {
 			// make newly added generators point in direction of wind
 			(unitHandler.GetUnit(unitID))->UpdateWind(curWindDir.x, curWindDir.z, curWindStrength);
+			allGeneratorIDs.push_back(unitID);
 		}
 
 		newGeneratorIDs.clear();
-
 	}
 
 	windDirTimer = (windDirTimer + 1) % (WIND_UPDATE_RATE + 1);
