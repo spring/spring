@@ -125,6 +125,7 @@ private:
 public:
 	float doubleClickTime = 0.0f;
 	float scrollWheelSpeed = 0.0f;
+	int dragSelectionThreshold = 0;
 
 	/// locked mouse indicator size
 	float crossSize = 0.0f;

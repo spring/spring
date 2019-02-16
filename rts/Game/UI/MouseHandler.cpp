@@ -51,6 +51,7 @@ CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mous
 CONFIG(bool, InvertMouse).defaultValue(false);
 CONFIG(bool, MouseRelativeModeWarp).defaultValue(true);
 CONFIG(float, DoubleClickTime).defaultValue(200.0f).description("Double click time in milliseconds.");
+CONFIG(int, MouseDragSelectionThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a selection box.");
 
 CONFIG(float, ScrollWheelSpeed)
 	.defaultValue(25.0f)
@@ -88,8 +89,8 @@ CMouseHandler::CMouseHandler()
 
 	invertMouse = configHandler->GetBool("InvertMouse");
 	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
-
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
+	dragSelectionThreshold = configHandler->GetInt("MouseDragSelectionThreshold");
 
 	crossSize      = configHandler->GetFloat("CrossSize");
 	crossAlpha     = configHandler->GetFloat("CrossAlpha");
@@ -423,7 +424,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
 			selectedUnitsHandler.ClearSelected();
 
-		if (bp.movement > 4) {
+		if (bp.movement > dragSelectionThreshold) {
 			// select box
 			float2 topright, btmleft;
 			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
@@ -489,7 +490,7 @@ void CMouseHandler::DrawSelectionBox()
 		return;
 	if (bp.chorded)
 		return;
-	if (bp.movement <= 4)
+	if (bp.movement <= dragSelectionThreshold)
 		return;
 
 	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())

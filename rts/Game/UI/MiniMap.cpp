@@ -501,7 +501,7 @@ void CMiniMap::SelectUnits(int x, int y)
 
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-	if (fullProxy && (bp.movement > 4)) {
+	if (fullProxy && (bp.movement > mouse->dragSelectionThreshold)) {
 		// use a selection box
 		const float3 newMapPos = GetMapPosition(x, y);
 		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);
@@ -1423,7 +1423,7 @@ void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* bu
 		// selection box
 		const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
-		if (bp.movement <= 4)
+		if (bp.movement <= mouse->dragSelectionThreshold)
 			return;
 
 		const float3 oldMapPos = GetMapPosition(bp.x, bp.y);

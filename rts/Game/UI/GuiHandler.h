@@ -233,6 +233,9 @@ private:
 	bool invColorSelect = true;
 	bool frontByEnds = false;
 
+	int dragCircleCommandThreshold = 0;
+	int dragBoxCommandThreshold = 0;
+	int dragFrontCommandThreshold = 0;
 
 	struct Box {
 		float x1 = 0.0f;
