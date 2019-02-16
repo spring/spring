@@ -26,7 +26,6 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
-	~CGuiHandler();
 
 	void Update();
 
@@ -103,19 +102,10 @@ public:
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
 	bool GetDrawSelectionInfo() const { return drawSelectionInfo; }
 
-	void SetBuildFacing(unsigned int facing);
-	void SetBuildSpacing(int spacing);
+	void SetBuildFacing(unsigned int facing) { buildFacing = facing % NUM_FACINGS; }
+	void SetBuildSpacing(int spacing) { buildSpacing = std::max(spacing, 0); }
 
 	void LayoutIcons(bool useSelectionPage);
-
-public:
-	std::vector<SCommandDescription> commands;
-	int inCommand;
-	int buildFacing;
-	int buildSpacing;
-
-	/// @see ConfigHandler::ConfigNotifyCallback
-	void ConfigNotify(const std::string& key, const std::string& value);
 
 private:
 	void GiveCommand(const Command& cmd, bool fromUser = true);
@@ -178,60 +168,73 @@ private:
 	int  GetIconPosCommand(int slot) const;
 	int  ParseIconSlot(const std::string& text) const;
 
+
+public:
+	int inCommand = -1;
+	int buildFacing = FACING_SOUTH;
+	int buildSpacing = 0;
+
 private:
-	bool needShift;
-	bool showingMetal;
-	bool autoShowMetal;
-	bool invertQueueKey;
-	bool activeMousePress;
-	bool forceLayoutUpdate;
-	int maxPage;
-	int activePage;
-	int defaultCmdMemory;
-	int explicitCommand;
-	int curIconCommand;
+	int maxPage = 0;
+	int activePage = 0;
+	int defaultCmdMemory = -1;
+	int explicitCommand = -1;
+	int curIconCommand = -1;
 
-	int actionOffset;
-	CKeySet lastKeySet;
+	int actionOffset = 0;
 
-	std::string menuName;
-	int xIcons, yIcons;
-	float xPos, yPos;
-	float textBorder;
-	float iconBorder;
-	float frameBorder;
-	float xIconSize, yIconSize;
-	float xSelectionPos, ySelectionPos;
-	int deadIconSlot;
-	int prevPageSlot;
-	int nextPageSlot;
-	bool dropShadows;
-	bool useOptionLEDs;
-	bool selectGaps;
-	bool selectThrough;
-	bool outlineFonts;
-	bool drawSelectionInfo;
+	int deadIconSlot = -1;
+	int prevPageSlot = -1;
+	int nextPageSlot = -1;
 
-	float frameAlpha;
-	float textureAlpha;
-	std::vector<int> fillOrder;
+	int xIcons = 2;
+	int yIcons = 8;
+	// number of slots taken up in <icons>
+	int iconsCount = 0;
+	int iconsPerPage = 0;
 
-	bool gatherMode;
-	bool miniMapMarker;
-	bool newAttackMode;
-	bool attackRect;
-	bool invColorSelect;
-	bool frontByEnds;
+	int failedSound = -1;
 
-	int dragCircleCommandThreshold = 0;
-	int dragBoxCommandThreshold = 0;
-	int dragFrontCommandThreshold = 0;
 
-	bool useStencil;
+	float xPos = 0.000f;
+	float yPos = 0.175f;
+	float textBorder = 0.003f;
+	float iconBorder = 0.003f;
+	float frameBorder = 0.003f;
+	float xIconSize = 0.060f;
+	float yIconSize = 0.060f;
+	float xSelectionPos = 0.018f;
+	float ySelectionPos = 0.127f;
 
-	int iconsPerPage;
-	float xIconStep, yIconStep;
-	float xBpos, yBpos; // center of the buildIconsFirst indicator
+	float xIconStep = 0.0f;
+	float yIconStep = 0.0f;
+	float xBpos = 0.0f;
+	float yBpos = 0.0f; // center of the buildIconsFirst indicator
+
+	float frameAlpha = -1.0f;
+	float textureAlpha = 0.8f;
+
+	bool needShift = false;
+	bool showingMetal = false;
+	bool autoShowMetal = false;
+	bool invertQueueKey = false;
+	bool activeMousePress = false;
+	bool forceLayoutUpdate = false;
+
+	bool dropShadows = true;
+	bool useOptionLEDs = true;
+	bool selectGaps = true;
+	bool selectThrough = false;
+	bool outlineFonts = false;
+	bool drawSelectionInfo = true;
+
+	bool gatherMode = false;
+	bool miniMapMarker = true;
+	bool newAttackMode = true;
+	bool attackRect = false;
+	bool invColorSelect = true;
+	bool frontByEnds = false;
+	bool useStencil = false;
 
 	struct Box {
 		float x1;
@@ -240,17 +243,18 @@ private:
 		float y2;
 	};
 	Box buttonBox;
+	CKeySet lastKeySet;
 
 	struct IconInfo {
 		int commandsID; // index into commands list (or -1)
 		Box visual;
 		Box selection;
 	};
-	std::vector<IconInfo> icons;
-	// number of slots taken up in <icons>
-	int iconsCount;
 
-	int failedSound;
+	std::string menuName;
+
+	std::vector<int> fillOrder;
+	std::vector<IconInfo> icons;
 
 	std::vector<std::string> layoutCommands;
 	std::vector< std::pair<Command, bool> > commandsToGive;
@@ -259,6 +263,9 @@ private:
 	std::vector<BuildInfo> buildInfos;
 	std::vector<Command> buildCommands;
 	std::vector<float4> buildColors;
+
+public:
+	std::vector<SCommandDescription> commands;
 };
 
 extern CGuiHandler* guihandler;

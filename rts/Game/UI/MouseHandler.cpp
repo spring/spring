@@ -54,18 +54,19 @@
 CONFIG(bool, HardwareCursor).defaultValue(false).description("Sets hardware mouse cursor rendering. If you have a low framerate, your mouse cursor will seem \"laggy\". Setting hardware cursor will render the mouse cursor separately from spring and the mouse will behave normally. Note, not all GPU drivers support it in fullscreen mode!");
 CONFIG(bool, InvertMouse).defaultValue(false);
 CONFIG(bool, MouseRelativeModeWarp).defaultValue(true);
-CONFIG(float, DoubleClickTime).defaultValue(200.0f).description("Double click time in milliseconds.");
-CONFIG(int, MouseDragSelectionThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a selection box.");
-
-CONFIG(float, ScrollWheelSpeed)
-	.defaultValue(25.0f)
-	.minimumValue(-255.f)
-	.maximumValue(255.f);
 
 CONFIG(float, CrossSize).defaultValue(12.0f);
 CONFIG(float, CrossAlpha).defaultValue(0.5f);
 CONFIG(float, CrossMoveScale).defaultValue(1.0f);
+
+CONFIG(float, DoubleClickTime).defaultValue(200.0f).description("Double click time in milliseconds.");
+CONFIG(float, ScrollWheelSpeed).defaultValue(25.0f).minimumValue(-255.f).maximumValue(255.f);
+
 CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
+CONFIG(int, MouseDragSelectionThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a selection box.");
+CONFIG(int, MouseDragCircleCommandThreshold).defaultValue(4).description("Distance in pixels which the mouse must be dragged to trigger a circular area command.");
+CONFIG(int, MouseDragBoxCommandThreshold).defaultValue(16).description("Distance in pixels which the mouse must be dragged to trigger a rectangular area command.");
+CONFIG(int, MouseDragFrontCommandThreshold).defaultValue(30).description("Distance in pixels which the mouse must be dragged to trigger a formation front command.");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,19 +91,29 @@ CMouseHandler::CMouseHandler()
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
-
 	invertMouse = configHandler->GetBool("InvertMouse");
-	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
-	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
-	dragSelectionThreshold = configHandler->GetInt("MouseDragSelectionThreshold");
 
 	crossSize      = configHandler->GetFloat("CrossSize");
 	crossAlpha     = configHandler->GetFloat("CrossAlpha");
 	crossMoveScale = configHandler->GetFloat("CrossMoveScale") * 0.005f;
 
-	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
+	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
+	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 
-	configHandler->NotifyOnChange(this, {"MouseDragScrollThreshold", "ScrollWheelSpeed", "MouseDragSelectionThreshold"});
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
+	dragSelectionThreshold = configHandler->GetInt("MouseDragSelectionThreshold");
+	dragBoxCommandThreshold = configHandler->GetInt("MouseDragBoxCommandThreshold");
+	dragCircleCommandThreshold = configHandler->GetInt("MouseDragCircleCommandThreshold");
+	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
+
+	configHandler->NotifyOnChange(this, {
+		"ScrollWheelSpeed",
+		"MouseDragScrollThreshold",
+		"MouseDragSelectionThreshold",
+		"MouseDragBoxCommandThreshold",
+		"MouseDragCircleCommandThreshold",
+		"MouseDragFrontCommandThreshold"
+	});
 }
 
 CMouseHandler::~CMouseHandler()
@@ -431,7 +442,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
 			selectedUnitsHandler.ClearSelected();
 
-		if (bp.movement > dragSelectionThreshold) {
+		if (bp.movement > 4) {
 			// select box
 			float2 topright, btmleft;
 			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
@@ -493,7 +504,7 @@ void CMouseHandler::DrawSelectionBox()
 
 	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-	if (bp.pressed && !bp.chorded && (bp.movement > dragSelectionThreshold) &&
+	if (bp.pressed && !bp.chorded && (bp.movement > 4) &&
 	   (!inMapDrawer || !inMapDrawer->IsDrawMode()))
 	{
 		float2 topright, btmleft;
@@ -985,8 +996,11 @@ bool CMouseHandler::ReplaceMouseCursor(
 
 void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
-	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 	dragSelectionThreshold = configHandler->GetInt("MouseDragSelectionThreshold");
+	dragBoxCommandThreshold = configHandler->GetInt("MouseDragBoxCommandThreshold");
+	dragCircleCommandThreshold = configHandler->GetInt("MouseDragCircleCommandThreshold");
+	dragFrontCommandThreshold = configHandler->GetInt("MouseDragFrontCommandThreshold");
 }
 
