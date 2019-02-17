@@ -142,7 +142,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	rbo.xsize = (GLsizei)luaL_checknumber(L, 1);
 	rbo.ysize = (GLsizei)luaL_checknumber(L, 2);
 
-	constexpr int table = 3;
+	constexpr int tableIdx = 3;
 	if (lua_istable(L, tableIdx)) {
 		{
 			lua_getfield(L, tableIdx, "target");
