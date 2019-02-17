@@ -529,7 +529,7 @@ int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string&
 
 int LuaVFS::ZlibCompress(lua_State* L)
 {
-	size_t inSize;
+	size_t inSize = 0;
 	const std::uint8_t* inData = reinterpret_cast<const std::uint8_t*>(luaL_checklstring(L, 1, &inSize));
 
 	const std::vector<std::uint8_t> compressed = std::move(zlib::deflate(inData, inSize));
@@ -544,7 +544,7 @@ int LuaVFS::ZlibCompress(lua_State* L)
 
 int LuaVFS::ZlibDecompress(lua_State* L)
 {
-	size_t inSize;
+	size_t inSize = 0;
 	const std::uint8_t* inData = reinterpret_cast<const std::uint8_t*>(luaL_checklstring(L, 1, &inSize));
 
 	const std::vector<std::uint8_t> uncompressed = std::move(zlib::inflate(inData, inSize));
@@ -560,15 +560,39 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 
 int LuaVFS::CalculateHash(lua_State* L)
 {
-	const std::string& sstr = luaL_checksstring(L, 1);
+	size_t slen = 0;
 
-	char* hash = CalcHash(sstr.c_str(), sstr.size(), luaL_checkint(L, 2));
+	const char* sstr = luaL_checklstring(L, 1, &slen);
+	const char* hash = "";
 
-	if (hash == nullptr)
-		return luaL_error(L, "Unsupported hash type");
+	enum {
+		HASHTYPE_MD5 = 0,
+		HASHTYPE_SHA = 1,
+	};
 
-	lua_pushsstring(L, std::string(hash));
-	free(hash);
+	switch (luaL_checkint(L, 2)) {
+		case HASHTYPE_MD5: {
+			// base64(MD5); pr-downloader only accepts type=0
+			lua_pushstring(L, hash = CalcHash(sstr, slen, HASHTYPE_MD5));
+			free((char*) hash);
+		} break;
+		case HASHTYPE_SHA: {
+			sha512::hex_digest hexHash;
+			sha512::raw_digest rawHash;
+
+			hexHash.fill(0);
+			rawHash.fill(0);
+
+			sha512::calc_digest({sstr, sstr + slen}, rawHash);
+			sha512::dump_digest(rawHash, hexHash);
+
+			lua_pushstring(L, hexHash.data());
+		} break;
+		default: {
+			luaL_error(L, "[VFS::%s] unsupported hash type", __func__);
+		} break;
+	}
+
 	return 1;
 }
 
