@@ -2594,6 +2594,12 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 						tex.format = (GLint)lua_tonumber(L, -1);
 					} break;
 
+					case hashString("samples"): {
+						// not Clamp(lua_tonumber(L, -1), 2, globalRendering->msaaLevel);
+						// AA sample count has to equal the default FB or blitting breaks
+						tex.samples = globalRendering->msaaLevel;
+					} break;
+
 					case hashString("min_filter"): {
 						tex.min_filter = (GLenum)lua_tonumber(L, -1);
 					} break;

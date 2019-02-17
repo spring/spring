@@ -464,6 +464,8 @@ GLAPI void APIENTRY glTexImage2D(GLenum target, GLint level,
   // printf( "glTexImage2D\n" );
 }
 
+GLAPI void APIENTRY glTexImage2DMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations) {}
+
 GLAPI void APIENTRY glClear(GLbitfield mask) {}
 GLAPI void APIENTRY glTexCoord2i(GLint s, GLint t ){}
 GLAPI void APIENTRY glVertex2f(GLfloat x, GLfloat y ) {}
