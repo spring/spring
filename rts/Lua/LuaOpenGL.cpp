@@ -3465,39 +3465,56 @@ int LuaOpenGL::SaveImage(lua_State* L)
 		return 0;
 	}
 
+    GLenum curReadBuffer = 0;
+	GLenum tgtReadBuffer = 0;
+
 	bool alpha = false;
-	bool yflip = false;
-	bool gray16b = false;
-	const int table = 6;
-	if (lua_istable(L, table)) {
-		lua_getfield(L, table, "alpha");
-		alpha = luaL_optboolean(L, -1, false);
+	bool yflip =  true;
+	bool gs16b = false;
+
+	constexpr int tableIdx = 6;
+
+	if (lua_istable(L, tableIdx)) {
+		lua_getfield(L, tableIdx, "alpha");
+		alpha = luaL_optboolean(L, -1, alpha);
 		lua_pop(L, 1);
 
-		lua_getfield(L, table, "yflip");
-		yflip = luaL_optboolean(L, -1, false);
+		lua_getfield(L, tableIdx, "yflip");
+		yflip = luaL_optboolean(L, -1, yflip);
 		lua_pop(L, 1);
 
-		lua_getfield(L, table, "grayscale16bit");
-		gray16b = luaL_optboolean(L, -1, false);
+		lua_getfield(L, tableIdx, "grayscale16bit");
+		gs16b = luaL_optboolean(L, -1, gs16b);
 		lua_pop(L, 1);
+
+		lua_getfield(L, tableIdx, "readbuffer");
+		tgtReadBuffer = luaL_optint(L, -1, tgtReadBuffer);
+		lua_pop(L, 1);
+	}
+
+	if (tgtReadBuffer != 0) {
+		glGetIntegerv(GL_READ_BUFFER, reinterpret_cast<GLint*>(&curReadBuffer));
+		glReadBuffer(tgtReadBuffer);
 	}
 
 	CBitmap bitmap;
 	bitmap.Alloc(width, height);
 
-	if (!gray16b) {
+	if (!gs16b) {
 		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-		if (!yflip)
+		if (yflip)
 			bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.Save(filename, !alpha));
 	} else {
 		// single channel only!
 		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.GetRawMem());
-		if (!yflip)
+		if (yflip)
 			bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.SaveFloat(filename));
 	}
+
+	if (tgtReadBuffer != 0)
+		glReadBuffer(curReadBuffer);
 
 	return 1;
 }
