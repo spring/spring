@@ -112,13 +112,13 @@ int LuaRBOs::meta_index(lua_State* L)
 	const RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
 
 	switch (hashString(luaL_checkstring(L, 2))) {
-		case hashString(  "valid"): { lua_pushboolean(L, glIsRenderbuffer(rbo->id)); return 1; } break;
-		case hashString( "target"): { lua_pushnumber(L, rbo->target );               return 1; } break;
-		case hashString( "format"): { lua_pushnumber(L, rbo->format );               return 1; } break;
-		case hashString(  "xsize"): { lua_pushnumber(L, rbo->xsize  );               return 1; } break;
-		case hashString(  "ysize"): { lua_pushnumber(L, rbo->ysize  );               return 1; } break;
-		case hashString("samples"): { lua_pushnumber(L, rbo->samples);               return 1; } break;
-		default                   : {                                                          } break;
+		case hashString(  "valid"): { lua_pushboolean(L, glIsRenderbufferEXT(rbo->id)); return 1; } break;
+		case hashString( "target"): { lua_pushnumber(L, rbo->target );                  return 1; } break;
+		case hashString( "format"): { lua_pushnumber(L, rbo->format );                  return 1; } break;
+		case hashString(  "xsize"): { lua_pushnumber(L, rbo->xsize  );                  return 1; } break;
+		case hashString(  "ysize"): { lua_pushnumber(L, rbo->ysize  );                  return 1; } break;
+		case hashString("samples"): { lua_pushnumber(L, rbo->samples);                  return 1; } break;
+		default                   : {                                                             } break;
 	}
 
 	return 0;
