@@ -68,7 +68,8 @@ bool EnvResourceHandler::AddGenerator(CUnit* u) {
 }
 
 bool EnvResourceHandler::DelGenerator(CUnit* u) {
-	return (spring::VectorErase(newGeneratorIDs, u->id), spring::VectorErase(allGeneratorIDs, u->id));
+	// id is never present in both
+	return (spring::VectorErase(newGeneratorIDs, u->id) || spring::VectorErase(allGeneratorIDs, u->id));
 }
 
 
