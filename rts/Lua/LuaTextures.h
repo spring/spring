@@ -37,8 +37,10 @@ public:
 		GLenum target = GL_TEXTURE_2D;
 		GLenum format = GL_RGBA8;
 
-		GLsizei xsize = 0;
-		GLsizei ysize = 0;
+		GLsizei xsize   = 0;
+		GLsizei ysize   = 0;
+		GLsizei samples = 0;
+
 		GLint border = 0;
 
 		GLenum min_filter = GL_LINEAR;

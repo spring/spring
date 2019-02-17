@@ -25,17 +25,18 @@ class LuaRBOs {
 
 	public:
 		struct RBO {
-			RBO() : index(-1u), id(0), target(0), format(0), xsize(0), ysize(0) {}
-
 			void Init();
 			void Free(lua_State* L);
 
-			GLuint index; // into LuaRBOs::rbos
-			GLuint id;
-			GLenum target;
-			GLenum format;
-			GLsizei xsize;
-			GLsizei ysize;
+			GLuint index = -1u; // into LuaRBOs::rbos
+			GLuint id    = 0;
+
+			GLenum target = 0;
+			GLenum format = 0;
+
+			GLsizei xsize   = 0;
+			GLsizei ysize   = 0;
+			GLsizei samples = 0;
 		};
 
 	private:
