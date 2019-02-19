@@ -277,6 +277,7 @@ namespace Threading {
 
 
 
+#ifndef WIN32
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
 		// If there is no object registered, need to return an "empty" shared_ptr
@@ -285,6 +286,7 @@ namespace Threading {
 
 		return threadCtls;
 	}
+#endif
 
 
 	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)

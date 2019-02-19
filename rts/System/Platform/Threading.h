@@ -25,7 +25,9 @@ namespace Threading {
 
 	class ThreadControls;
 
+#ifndef WIN32
 	extern thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
+#endif
 
 	/**
 	 * Generic types & functions to handle OS native threads
