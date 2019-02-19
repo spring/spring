@@ -1822,12 +1822,12 @@ const float3* CAICallback::GetStartPos()
 
 
 
-#define AICALLBACK_CALL_LUA(HandleName)                                              \
-	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize) { \
-		if (lua ## HandleName == nullptr)                                            \
-			return nullptr;                                                             \
-                                                                                     \
-		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize);       \
+#define AICALLBACK_CALL_LUA(HandleName)                                                               \
+	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize, size_t* outSize) { \
+		if (lua ## HandleName == nullptr)                                                             \
+			return nullptr;                                                                           \
+                                                                                                      \
+		return lua ## HandleName->RecvSkirmishAIMessage(team, inData, inSize, outSize);               \
 	}
 
 AICALLBACK_CALL_LUA(Rules)

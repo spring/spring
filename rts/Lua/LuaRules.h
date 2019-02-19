@@ -37,8 +37,8 @@ public: // call-ins
 	void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 	             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
-	const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize) {
-		return syncedLuaHandle.RecvSkirmishAIMessage(aiID, data, inSize);
+	const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize, size_t* outSize) {
+		return syncedLuaHandle.RecvSkirmishAIMessage(aiID, data, inSize, outSize);
 	}
 
 private:

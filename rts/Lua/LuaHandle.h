@@ -204,7 +204,7 @@ class CLuaHandle : public CEventClient
 		bool GameSetup(const std::string& state, bool& ready,
 		               const std::vector< std::pair<int, std::string> >& playerStates) override;
 
-		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
+		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize, size_t* outSize);
 
 		std::string WorldTooltip(const CUnit* unit,
 		                    const CFeature* feature,

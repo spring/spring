@@ -794,14 +794,15 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)  \
 			case COMMAND_CALL_LUA_ ## HANDLENAME: {  \
 				SCallLua ## HandleName ## Command* cmd = static_cast<SCallLua ## HandleName ## Command*>(commandData);  \
-				const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);  \
-				if (cmd->ret_outData != NULL) {  \
-					if (outData != NULL) {  \
-						const int len = std::min(int(strlen(outData)), MAX_RESPONSE_SIZE - 1);  \
-						strncpy(cmd->ret_outData, outData, len);  \
-						cmd->ret_outData[len] = '\0';  \
-					} else {  \
-						cmd->ret_outData[0] = '\0';  \
+				size_t len = 0;                                                                                         \
+				const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize, &len);                       \
+				if (cmd->ret_outData != NULL) {                                                                         \
+					if (outData != NULL) {                                                                              \
+						len = std::min(len, size_t(MAX_RESPONSE_SIZE - 1));                                             \
+						strncpy(cmd->ret_outData, outData, len);                                                        \
+						cmd->ret_outData[len] = '\0';                                                                   \
+					} else {                                                                                            \
+						cmd->ret_outData[0] = '\0';                                                                     \
 					}  \
 				}  \
 			} break;

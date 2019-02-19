@@ -2360,7 +2360,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 
 
-const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize)
+const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize, size_t* outSize)
 {
 	LUA_CALL_IN_CHECK(L, nullptr);
 	luaL_checkstack(L, 4, __func__);
@@ -2389,7 +2389,7 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 		return nullptr;
 
 	if (lua_isstring(L, -1))
-		outData = lua_tolstring(L, -1, nullptr);
+		outData = lua_tolstring(L, -1, outSize);
 
 	lua_pop(L, 1);
 	return outData;
