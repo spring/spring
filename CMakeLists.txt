@@ -152,6 +152,9 @@ else  (UNIX AND NOT MINGW)
 	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
 	add_definitions(-D__USE_MINGW_ANSI_STDIO=1) ## use __mingw_sprintf instead of __builtin_sprintf (it's used by lua in a synced way, and builtin doesn't sync)
 
+	if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+		add_definitions(-DWIN32)
+	endif()
 
 	if(MSVC)
 		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
@@ -233,7 +236,7 @@ if    (WIN32)
 		## stdout console
 		option(WINDOWS_CONSOLE "Show a visible cmd.exe with stdout when spring runs" FALSE)
 		if    (NOT WINDOWS_CONSOLE)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 		endif (NOT WINDOWS_CONSOLE)
 	endif(NOT MSVC)
 endif (WIN32)
@@ -453,7 +456,7 @@ else  (MSVC)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 	endif (UNIX)
 	if    (MINGW)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mthreads")
 	endif (MINGW)
 
 	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
