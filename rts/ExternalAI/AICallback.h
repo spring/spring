@@ -255,8 +255,8 @@ public:
 	// 2. if inSize is less than 0, the data size is calculated using strlen()
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
-	const char* CallLuaRules(const char* inData, int inSize = -1);
-	const char* CallLuaUI(const char* inData, int inSize = -1);
+	const char* CallLuaRules(const char* inData, int inSize, size_t* outSize);
+	const char* CallLuaUI(const char* inData, int inSize, size_t* outSize);
 
 	// never called, implemented in SSkirmishAICallbackImpl
 	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }
