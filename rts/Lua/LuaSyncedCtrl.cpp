@@ -3406,7 +3406,7 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	if (lua_isstring(L, 2)) {
-		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+		cegID = explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2));
 	} else {
 		cegID = luaL_checknumber(L, 2);
 	}
@@ -4517,15 +4517,9 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 	const float damage = luaL_optfloat(L,  9, 0.0f);
 	const float dmgMod = luaL_optfloat(L, 10, 1.0f);
 
-	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
-
-	if (lua_isstring(L, 1)) {
-		// args from Lua are assumed not to include the prefix
-		// (Spawn*C*EG implies only custom generators can fire)
-		cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
-	} else {
-		cegID = luaL_checknumber(L, 1);
-	}
+	// args from Lua are assumed not to include the prefix
+	// (Spawn*C*EG implies only custom generators can fire)
+	const unsigned int cegID = lua_isstring(L, 1)? explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 1)): luaL_checkint(L, 1);
 
 	lua_pushboolean(L, explGenHandler.GenExplosion(cegID, pos, dir, damage, radius, dmgMod, nullptr, nullptr));
 	lua_pushnumber(L, cegID);

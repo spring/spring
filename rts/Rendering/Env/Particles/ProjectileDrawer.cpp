@@ -403,15 +403,15 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (!wd.visuals.texNames[2].empty()) { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
 		if (!wd.visuals.texNames[3].empty()) { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
-		// these can only be custom EG's so prefix is not required game-side
+		// trails can only be custom EG's, prefix is not required game-side
 		if (!wd.visuals.ptrailExpGenTag.empty())
-			wd.ptrailExplosionGeneratorID = explGenHandler.LoadGeneratorID(CEG_PREFIX_STRING + wd.visuals.ptrailExpGenTag);
+			wd.ptrailExplosionGeneratorID = explGenHandler.LoadCustomGeneratorID(wd.visuals.ptrailExpGenTag.c_str());
 
 		if (!wd.visuals.impactExpGenTag.empty())
-			wd.impactExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.impactExpGenTag);
+			wd.impactExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.impactExpGenTag.c_str());
 
 		if (!wd.visuals.bounceExpGenTag.empty())
-			wd.bounceExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.bounceExpGenTag);
+			wd.bounceExplosionGeneratorID = explGenHandler.LoadGeneratorID(wd.visuals.bounceExpGenTag.c_str());
 	}
 }
 

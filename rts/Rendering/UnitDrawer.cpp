@@ -76,15 +76,14 @@ static FixedDynMemPool<sizeof(GhostSolidObject), MAX_UNITS / 1000, MAX_UNITS / 3
 static void LoadUnitExplosionGenerators() {
 	using F = decltype(&UnitDef::AddModelExpGenID);
 	using T = decltype(UnitDef::modelCEGTags);
-	using S = T::value_type;
 
-	const auto LoadGenerators = [](UnitDef* ud, const F addExplGenID, const T& explGenTags, const S& explGenPrefix) {
-		for (const S& explGenTag: explGenTags) {
-			if (explGenTag.empty())
+	const auto LoadGenerators = [](UnitDef* ud, const F addExplGenID, const T& explGenTags, const char* explGenPrefix) {
+		for (const auto& explGenTag: explGenTags) {
+			if (explGenTag[0] == 0)
 				break;
 
 			// build a contiguous range of valid ID's
-			(ud->*addExplGenID)(explGenHandler.LoadGeneratorID(explGenPrefix + explGenTag));
+			(ud->*addExplGenID)(explGenHandler.LoadGeneratorID(explGenTag, explGenPrefix));
 		}
 	};
 

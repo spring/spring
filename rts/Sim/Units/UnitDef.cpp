@@ -611,28 +611,32 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		paramsTable.GetMap(customParams);
 	}
 	{
-		const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
+		const LuaTable&      sfxTable =  udTable.SubTable("SFXTypes");
 		const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
 		const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
 		const LuaTable& crashCEGTable = sfxTable.SubTable("crashExplosionGenerators");
 
 		std::vector<int> cegKeys;
 		std::array<const LuaTable*, 3> cegTbls = {&modelCEGTable, &pieceCEGTable, &crashCEGTable};
-		std::array<std::string, MAX_UNITDEF_EXPGEN_IDS>* cegTags[3] = {&modelCEGTags, &pieceCEGTags, &crashCEGTags};
+		std::array<char[64], MAX_UNITDEF_EXPGEN_IDS>* cegTags[3] = {&modelCEGTags, &pieceCEGTags, &crashCEGTags};
 
 		for (int i = 0; i < 3; i++) {
+			auto& tagStrs = *cegTags[i];
+
 			cegKeys.clear();
-			cegKeys.reserve(cegTags[i]->size());
+			cegKeys.reserve(tagStrs.size());
 
 			cegTbls[i]->GetKeys(cegKeys);
 
 			// get at most N tags, discard the rest
-			for (unsigned int j = 0, n = std::min(cegTags[i]->size(), cegKeys.size()); j < n; j++) {
-				(*cegTags[i])[j] = cegTbls[i]->GetString(cegKeys[j], "");
-			}
+			for (unsigned int j = 0, k = 0; j < cegKeys.size() && k < tagStrs.size(); j++) {
+				const std::string& tag = cegTbls[i]->GetString(cegKeys[j], "");
 
-			// move empty tags to the back
-			std::remove_if(cegTags[i]->begin(), cegTags[i]->end(), [](const std::string& tag) { return (tag.empty()); });
+				if (tag.empty())
+					continue;
+
+				strncpy(tagStrs[k++], tag.c_str(), sizeof(tagStrs[0]));
+			}
 		}
 
 		// filled in later by UnitDrawer

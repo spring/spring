@@ -218,9 +218,9 @@ public:
 	///< buildingMask used to disallow construction on certain map squares
 	std::uint16_t buildingMask;
 
-	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> modelCEGTags;
-	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> pieceCEGTags;
-	std::array<std::string, MAX_UNITDEF_EXPGEN_IDS> crashCEGTags;
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> modelCEGTags = {0};
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> pieceCEGTags = {0};
+	std::array<char[64], MAX_UNITDEF_EXPGEN_IDS> crashCEGTags = {0};
 
 	// *ExplGenIDs[0] stores the number of valid CEG's (TODO: privatize)
 	// valid CEG id's are all in front s.t. they can be randomly sampled

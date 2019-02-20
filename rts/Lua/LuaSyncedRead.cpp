@@ -3976,9 +3976,7 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 
 int LuaSyncedRead::GetCEGID(lua_State* L)
 {
-	const unsigned int cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
-
-	lua_pushnumber(L, cegID);
+	lua_pushnumber(L, explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 1)));
 	return 1;
 }
 
