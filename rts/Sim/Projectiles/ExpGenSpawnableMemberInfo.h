@@ -64,7 +64,7 @@ struct SExpGenSpawnableMemberInfo
 
 #define CHECK_MEMBER_INFO_PTR(t, member, callback) \
 	static_assert(std::is_same<decltype(callback("")), decltype(member)>::value, "Member and callback type mismatch"); \
-	SET_MEMBER_INFO(memberInfo, MEMBER_HASH(member), offsetof_expgen(t, member), sizeof_expgen(t, member), 1, SExpGenSpawnableMemberInfo::TYPE_PTR, [](const std::string& s) { return (void *) callback(s); } );
+	SET_MEMBER_INFO(memberInfo, MEMBER_HASH(member), offsetof_expgen(t, member), sizeof_expgen(t, member), 1, SExpGenSpawnableMemberInfo::TYPE_PTR, [](const std::string& s) { return (void *) callback(s.c_str()); } );
 
 #define CHECK_MEMBER_INFO_BOOL(type, member) CHECK_MEMBER_INFO_INT(type, member)
 #define CHECK_MEMBER_INFO_SCOLOR(type, member) CHECK_MEMBER_INFO_INT(type, member.i)

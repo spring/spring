@@ -50,8 +50,10 @@ public:
 	void ParseExplosionTables();
 	void ReloadGenerators(const std::string&);
 
-	unsigned int LoadGeneratorID(const std::string& tag);
-	IExplosionGenerator* LoadGenerator(const std::string& tag);
+	unsigned int LoadCustomGeneratorID(const char* tag) { return (LoadGeneratorID(tag, CEG_PREFIX_STRING)); }
+	unsigned int LoadGeneratorID(const char* tag, const char* pre = "");
+
+	IExplosionGenerator* LoadGenerator(const char* tag, const char* pre = "");
 	IExplosionGenerator* GetGenerator(unsigned int expGenID);
 
 	bool GenExplosion(
@@ -77,8 +79,8 @@ protected:
 
 	std::vector<IExplosionGenerator*> explosionGenerators;
 
-	spring::unordered_map<std::string, unsigned int> expGenTagIdentMap;
-	spring::unordered_map<unsigned int, std::string> expGenIdentTagMap;
+	spring::unordered_map<unsigned int, unsigned int> expGenHashIdentMap; // hash->id
+	spring::unordered_map<unsigned int, std::array<char, 64>> expGenIdentNameMap; // id->name
 };
 
 
@@ -92,8 +94,8 @@ public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 
-	virtual bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) = 0;
-	virtual bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) { return true; }
+	virtual bool Load(CExplosionGeneratorHandler* handler, const char* tag) = 0;
+	virtual bool Reload(CExplosionGeneratorHandler* handler, const char* tag) { return true; }
 	virtual bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -121,7 +123,7 @@ class CStdExplosionGenerator: public IExplosionGenerator
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
 
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override { return false; }
+	bool Load(CExplosionGeneratorHandler* handler, const char* tag) override { return false; }
 	bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -186,8 +188,8 @@ public:
 	static unsigned int GetFlagsFromHeight(float height, float groundHeight);
 
 	/// @throws content_error/runtime_error on errors
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override;
-	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Load(CExplosionGeneratorHandler* handler, const char* tag) override;
+	bool Reload(CExplosionGeneratorHandler* handler, const char* tag) override;
 	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
 
 	// spawn-flags

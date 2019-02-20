@@ -1197,13 +1197,7 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 	const int piece = luaL_checkint(L, 1) - 1;
-	int type = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
-
-	if (lua_isstring(L, 2)) {
-		type = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2)) & SFX_GLOBAL;
-	} else {
-		type = luaL_checkint(L, 2);
-	}
+	const int type = lua_isnumber(L, 2)? luaL_checkint(L, 2): (explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2)) & SFX_GLOBAL);
 
 	activeScript->EmitSfx(type, piece);
 	return 0;
