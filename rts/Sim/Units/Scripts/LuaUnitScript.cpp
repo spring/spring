@@ -4,6 +4,7 @@
 
 #include "LuaUnitScript.h"
 
+#include "CobDefines.h"
 #include "CobInstance.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
@@ -13,6 +14,7 @@
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Lua/LuaUtils.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
@@ -1195,7 +1197,13 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int type = luaL_checkint(L, 2);
+	int type = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
+
+	if (lua_isstring(L, 2)) {
+		type = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2)) & SFX_ABSOLUTE;
+	} else {
+		type = luaL_checkint(L, 2);
+	}
 
 	activeScript->EmitSfx(type, piece);
 	return 0;
