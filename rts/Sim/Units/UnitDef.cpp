@@ -238,6 +238,14 @@ UnitDef::UnitDef()
 	, realEnergyUpkeep(0.0f)
 	, realBuildTime(0.0f)
 {
+	memset(&modelCEGTags[0], 0, sizeof(modelCEGTags));
+	memset(&pieceCEGTags[0], 0, sizeof(pieceCEGTags));
+	memset(&crashCEGTags[0], 0, sizeof(crashCEGTags));
+
+	// filled in later by UnitDrawer
+	modelExplGenIDs.fill(-1u); modelExplGenIDs[0] = 0;
+	pieceExplGenIDs.fill(-1u); pieceExplGenIDs[0] = 0;
+	crashExplGenIDs.fill(-1u); crashExplGenIDs[0] = 0;
 }
 
 
@@ -638,11 +646,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 				strncpy(tagStrs[k++], tag.c_str(), sizeof(tagStrs[0]));
 			}
 		}
-
-		// filled in later by UnitDrawer
-		modelExplGenIDs.fill(-1u); modelExplGenIDs[0] = 0;
-		pieceExplGenIDs.fill(-1u); pieceExplGenIDs[0] = 0;
-		crashExplGenIDs.fill(-1u); crashExplGenIDs[0] = 0;
 	}
 }
 
