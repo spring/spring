@@ -828,10 +828,9 @@ void LuaOpenGL::SetupScreenMatrices()
 
 void LuaOpenGL::RevertScreenMatrices()
 {
-	GL::MatrixMode(GL_TEXTURE);
-	GL::LoadIdentity();
-
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
 }
 
 
@@ -2439,54 +2438,6 @@ int LuaOpenGL::StencilOpSeparate(lua_State* L)
 
 
 /******************************************************************************/
-
-int LuaOpenGL::LineStipple(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 1) {
-		if (lua_isstring(L, 1)) { // we're ignoring the string value
-			const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
-			if ((stipPat != 0x0000) && (stipPat != 0xffff)) {
-				glEnable(GL_LINE_STIPPLE);
-				lineDrawer.SetupLineStipple();
-			} else {
-				glDisable(GL_LINE_STIPPLE);
-			}
-		}
-		else if (lua_isboolean(L, 1)) {
-			if (lua_toboolean(L, 1)) {
-				glEnable(GL_LINE_STIPPLE);
-			} else {
-				glDisable(GL_LINE_STIPPLE);
-			}
-		}
-		else {
-			luaL_error(L, "Incorrect arguments to gl.LineStipple()");
-		}
-	}
-	else if (args >= 2) {
-		GLint factor     =    (GLint)luaL_checkint(L, 1);
-		GLushort pattern = (GLushort)luaL_checkint(L, 2);
-		if ((args >= 3) && lua_isnumber(L, 3)) {
-			int shift = lua_toint(L, 3);
-			while (shift < 0) { shift += 16; }
-			shift = (shift % 16);
-			unsigned int pat = pattern & 0xFFFF;
-			pat = pat | (pat << 16);
-			pattern = pat >> shift;
-		}
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(factor, pattern);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.LineStipple()");
-	}
-	return 0;
-}
-
 
 int LuaOpenGL::LineWidth(lua_State* L)
 {
