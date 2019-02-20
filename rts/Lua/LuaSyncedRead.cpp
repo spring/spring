@@ -45,6 +45,7 @@
 #include "Sim/MoveTypes/StaticMoveType.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -259,6 +260,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetUnitRulesParam);
 	REGISTER_LUA_CFUNC(GetUnitRulesParams);
+
+	REGISTER_LUA_CFUNC(GetCEGID);
 
 	REGISTER_LUA_CFUNC(GetAllFeatures);
 	REGISTER_LUA_CFUNC(GetFeatureDefID);
@@ -3967,6 +3970,15 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "midz",   mid.z);
 	HSTR_PUSH_NUMBER(L, "minz",   m.mins.z);
 	HSTR_PUSH_NUMBER(L, "maxz",   m.maxs.z);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetCEGID(lua_State* L)
+{
+	const unsigned int cegID = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 1));
+
+	lua_pushnumber(L, cegID);
 	return 1;
 }
 
