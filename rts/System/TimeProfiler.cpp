@@ -22,28 +22,13 @@ static spring::unordered_map<unsigned, int> refCounters;
 static CGlobalUnsyncedRNG profileColorRNG;
 
 
-TimerNameRegistrar::TimerNameRegistrar(const char* timerName)
-{
-	unsigned nameHash = hashString(timerName);
-
-	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
-	const auto iter = hashToName.find(nameHash);
-	if (iter == hashToName.end()) {
-		hashToName.insert(std::pair<unsigned, std::string>(nameHash, timerName));
-	} else if (iter->second != timerName) {
-		LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, iter->second.c_str());
-		assert(false);
-	}
-}
-
-
 spring_time BasicTimer::GetDuration() const
 {
 	return spring_difftime(spring_gettime(), startTime);
 }
 
-ScopedTimer::ScopedTimer(const unsigned hash, bool _autoShowGraph, bool _specialTimer)
-	: BasicTimer(hash)
+ScopedTimer::ScopedTimer(const unsigned _nameHash, bool _autoShowGraph, bool _specialTimer)
+	: BasicTimer(_nameHash)
 
 	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
 	// note that address-comparison is intended here, timer names are (and must be) literals
@@ -103,8 +88,8 @@ spring_time ScopedOnceTimer::GetDuration() const
 
 
 
-ScopedMtTimer::ScopedMtTimer(unsigned hash, bool _autoShowGraph)
-	: BasicTimer(hash)
+ScopedMtTimer::ScopedMtTimer(unsigned _nameHash, bool _autoShowGraph)
+	: BasicTimer(_nameHash)
 	, autoShowGraph(_autoShowGraph)
 {
 }
@@ -122,7 +107,7 @@ ScopedMtTimer::~ScopedMtTimer()
 
 CTimeProfiler::CTimeProfiler()
 {
-	TimerNameRegistrar tnr("Misc::Profiler::AddTime");
+	RegisterTimer("Misc::Profiler::AddTime");
 	ResetState();
 }
 
@@ -136,10 +121,46 @@ CTimeProfiler::~CTimeProfiler()
 }
 #endif
 
+
 CTimeProfiler& CTimeProfiler::GetInstance()
 {
 	static CTimeProfiler tp;
 	return tp;
+}
+
+bool CTimeProfiler::RegisterTimer(const char* timerName)
+{
+	const unsigned nameHash = hashString(timerName);
+
+	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end()) {
+		hashToName.insert(nameHash, timerName);
+		return true;
+	}
+	if (iter->second == timerName)
+		return true;
+
+	LOG_L(L_ERROR, "[%s] timer hash collision: %s <=> %s", __func__, timerName, iter->second.c_str());
+	assert(false);
+	return false;
+}
+
+bool CTimeProfiler::UnRegisterTimer(const char* timerName)
+{
+	const unsigned nameHash = hashString(timerName);
+
+	std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end())
+		return false;
+
+	hashToName.erase(iter);
+	return true;
 }
 
 
@@ -246,12 +267,17 @@ void CTimeProfiler::ResortProfilesRaw()
 		// either caller already has lock, or we are disabled and thread-safe
 		{
 			std::lock_guard<spring::spinlock> lock(hashToNameMutex);
+
 			for (const auto& profile: profiles) {
 				const auto iter = hashToName.find(profile.first);
+
 				if (iter == hashToName.end()) {
-					LOG_L(L_ERROR, "Timer with hash %u wasn't found", profile.first);
+					LOG_L(L_ERROR, "[%s] timer with hash %u wasn't registered", __func__, profile.first);
 					assert(false);
+					hashToName.insert(profile.first, "???");
+					continue;
 				}
+
 				sortedProfiles.emplace_back(iter->second, profile.second);
 			}
 		}

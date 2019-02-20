@@ -25,6 +25,7 @@
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"
 
+#include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -75,11 +76,18 @@ void CSkirmishAIWrapper::PreInit(int aiID)
 		dieing = false;
 	}
 	{
-		timerName  = ""; // clear
-		timerName += ("AI::t:" + IntToString(teamId));
-		timerName += (" id:" + IntToString(skirmishAIId));
-		timerName += (" " + key.GetShortName());
-		timerName += (" " + key.GetVersion());
+		const std::string& kn = key.GetShortName();
+		const std::string& kv = key.GetVersion();
+
+		CTimeProfiler::UnRegisterTimer(GetTimerName());
+
+		memset(&timerName[0], 0, sizeof(timerName));
+		snprintf(GetTimerName(), sizeof(timerName) - sizeof(uint32_t) - 1, "AI::{id=%d team=%d name=%s version=%s}", teamId, skirmishAIId, kn.c_str(), kv.c_str());
+
+		const uint32_t hash = hashString(GetTimerName());
+		memcpy(&timerName[0], &hash, sizeof(hash));
+
+		CTimeProfiler::RegisterTimer(GetTimerName());
 	}
 
 	LOG_L(L_INFO, "[AIWrapper::%s] creating callbacks for AI %d on team %d", __func__, skirmishAIId, teamId);
@@ -102,7 +110,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	AILibraryManager* libManager = AILibraryManager::GetInstance();
 
 	{
-		SCOPED_TIMER(timerName.c_str());
+		ScopedTimer timer(GetTimerNameHash());
 
 		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr) {
 			SetDieing();
@@ -187,7 +195,7 @@ void CSkirmishAIWrapper::Kill()
 	Release(skirmishAIHandler.GetLocalKillFlag(skirmishAIId));
 
 	{
-		SCOPED_TIMER(timerName.c_str());
+		ScopedTimer timer(GetTimerNameHash());
 
 		if (initOk)
 			library->Release(skirmishAIId);
@@ -436,7 +444,7 @@ void CSkirmishAIWrapper::SeismicPing(
 
 
 int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const {
-	SCOPED_TIMER(timerName.c_str());
+	ScopedTimer timer(GetTimerNameHash());
 
 	if (!dieing || (topic == EVENT_RELEASE))
 		return library->HandleEvent(skirmishAIId, topic, data);
