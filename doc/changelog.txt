@@ -117,9 +117,9 @@ Lua:
  - Added VFS.GetArchiveContainingFile(string vfsFilePath) -> string archiveName
  - add a 6th return value (feature->reclaimTime) to GetFeatureResources.
  - Allow spawning of any CEG from any LUS:
-   EmitSFX("cegTag") param will emit the CEG with tag="cegTag"
-   EmitSFX(SFX.ABSOLUTE & cegID) will emit the CEG with id=cegID
-   Added Spring.GetCEGID("cegTag") to return CEG id from tag
+   EmitSFX(p, "cegTag") param will emit the CEG with tag="cegTag"
+   EmitSFX(p, SFX.GLOBAL & cegID) will emit the CEG with id=cegID
+   Added Spring.GetCEGID("cegTag") to get CEG id from tag
 
 
 AI:
