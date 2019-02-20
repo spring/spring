@@ -1200,7 +1200,7 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 	int type = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
 	if (lua_isstring(L, 2)) {
-		type = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2)) & SFX_ABSOLUTE;
+		type = explGenHandler.LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2)) & SFX_GLOBAL;
 	} else {
 		type = luaL_checkint(L, 2);
 	}
