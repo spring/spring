@@ -6,8 +6,6 @@
 #include "SkirmishAIKey.h"
 #include "System/Object.h"
 
-#include <string>
-
 class CSkirmishAILibrary;
 struct SSkirmishAICallback;
 
@@ -112,13 +110,19 @@ private:
 	 */
 	int HandleEvent(int topic, const void* data) const;
 
+	uint32_t GetTimerNameHash() const { return *reinterpret_cast<const uint32_t*>(&timerName[0]); }
+
+	const char* GetTimerName() const { return (timerName + sizeof(uint32_t)); }
+	      char* GetTimerName()       { return (timerName + sizeof(uint32_t)); }
+
 private:
 	SkirmishAIKey key;
 
 	const CSkirmishAILibrary* library = nullptr;
 	const SSkirmishAICallback* sCallback = nullptr;
 
-	std::string timerName;
+	// first 4 bytes store hash(timerName + 4)
+	char timerName[sizeof(uint32_t) + 60] = {0};
 
 
 	int skirmishAIId = -1;

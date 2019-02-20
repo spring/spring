@@ -15,24 +15,19 @@
 #include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
-// disable this if you want minimal profiling
-// (sim time is still measured because of game slowdown)
-#define SCOPED_TIMER(name) static TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name));
-#define SCOPED_SPECIAL_TIMER(name) TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name), false, true)
-#define SCOPED_MT_TIMER(name) TimerNameRegistrar __tnr(name); ScopedMtTimer __scopedTimer(hashString(name));
+// disable this if you want minimal profiling; simulation
+// time is still always measured because of game slowdown
+// NB: names are assumed to be compile-time literals
+#define SCOPED_TIMER(name)  static TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name));
+#define SCOPED_SPECIAL_TIMER(name)  static TimerNameRegistrar __stnr(name); ScopedTimer __scopedTimer(hashString(name), false, true)
+#define SCOPED_MT_TIMER(name)  CTimeProfiler::RegisterTimer(name); ScopedMtTimer __scopedTimer(hashString(name));
 
-
-class TimerNameRegistrar : public spring::noncopyable
-{
-public:
-    TimerNameRegistrar(const char* timerName);
-};
 
 class BasicTimer : public spring::noncopyable
 {
 public:
 	//BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
-	BasicTimer(unsigned hash) : nameHash(hash), startTime(spring_gettime()) { }
+	BasicTimer(unsigned _nameHash) : nameHash(_nameHash), startTime(spring_gettime()) { }
 
 	spring_time GetDuration() const;
 
@@ -51,7 +46,7 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const unsigned hash, bool _autoShowGraph = false, bool _specialTimer = false);
+	ScopedTimer(const unsigned _nameHash, bool _autoShowGraph = false, bool _specialTimer = false);
 	~ScopedTimer();
 
 private:
@@ -63,7 +58,7 @@ private:
 class ScopedMtTimer : public BasicTimer
 {
 public:
-	ScopedMtTimer(const unsigned hash, bool _autoShowGraph = false);
+	ScopedMtTimer(const unsigned _nameHash, bool _autoShowGraph = false);
 	~ScopedMtTimer();
 
 private:
@@ -101,31 +96,28 @@ public:
 
 	static CTimeProfiler& GetInstance();
 
-	struct TimeRecord {
-		TimeRecord()
-		: total(0.0f)
-		, current(0.0f)
+	static bool RegisterTimer(const char* name);
+	static bool UnRegisterTimer(const char* name);
 
-		, newPeak(false)
-		, newLagPeak(false)
-		, showGraph(false)
-		{
+
+	struct TimeRecord {
+		TimeRecord() {
 			memset(frames, 0, sizeof(frames));
 		}
 
 		static constexpr unsigned numFrames = 128;
 
-		spring_time total;
-		spring_time current;
+		spring_time total = spring_notime;
+		spring_time current = spring_notime;
 		spring_time frames[numFrames];
 
 		// .x := maximum dt, .y := time-percentage, .z := peak-percentage
 		float3 stats;
 		float3 color;
 
-		bool newPeak;
-		bool newLagPeak;
-		bool showGraph;
+		bool newPeak = false;
+		bool newLagPeak = false;
+		bool showGraph = false;
 	};
 
 public:
@@ -201,6 +193,15 @@ private:
 
 	// if false, AddTime is a no-op for (almost) all timers
 	std::atomic<bool> enabled;
+};
+
+
+class TimerNameRegistrar : public spring::noncopyable
+{
+public:
+	TimerNameRegistrar(const char* timerName) {
+		CTimeProfiler::RegisterTimer(timerName);
+	}
 };
 
 #define profiler (CTimeProfiler::GetInstance())
