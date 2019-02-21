@@ -14,8 +14,9 @@ struct lua_State;
 // Hack for creg:
 // Since CLuaUnitScript isn't creged, during loading it will
 // construct a CNullUnitScript instead.
-class CLuaUnitScript : public CNullUnitScript
+class CLuaUnitScript : public CUnitScript
 {
+	CR_DECLARE_DERIVED(CLuaUnitScript)
 private:
 	static CUnit* activeUnit;
 	static CUnitScript* activeScript;
@@ -39,6 +40,12 @@ public:
 	// the ctor and dtor still have to be public because scripts are pooled
 	CLuaUnitScript(lua_State* L, CUnit* unit);
 	virtual ~CLuaUnitScript();
+
+	// for creg use only
+	CLuaUnitScript() : CUnitScript(nullptr) {}
+
+	void PostLoad();
+	void Serialize(creg::ISerializer* s);
 
 protected:
 	void ShowScriptError(const std::string& msg) override;

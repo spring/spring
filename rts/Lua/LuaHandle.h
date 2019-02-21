@@ -84,8 +84,11 @@ class CLuaHandle : public CEventClient
 		// virtual bool PersistOnReload() const { return (GetName() == "LuaMenu"); }
 		virtual bool PersistOnReload() const { return false; }
 
-		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
+		// usec by LuaSyncedTable and creg save
 		lua_State* GetLuaState() const { return L; }
+		lua_State* GetLuaGCState() const { return L_GC; }
+		// used by creg load
+		void SetLuaStates(lua_State* L_, lua_State* L_GC_) { L = L_; L_GC = L_GC_; }
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 		LuaShaders& GetShaders(const lua_State* L = nullptr) { return GetLuaContextData(L)->shaders; }

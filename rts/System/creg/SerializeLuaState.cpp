@@ -5,6 +5,7 @@
 
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
+#include "System/Log/ILog.h"
 #include <deque>
 
 struct creg_lua_State;
@@ -253,6 +254,22 @@ struct creg_Udata {
 };
 
 ASSERT_SIZE(Udata)
+
+
+creg_Node* GetDummyNode()
+{
+	static creg_Node* dummyNode = nullptr;
+	if (dummyNode != nullptr)
+		return dummyNode;
+
+	lua_State* L = lua_open();
+	lua_newtable(L);
+	creg_Table* t = (creg_Table*) lua_topointer(L, -1);
+	dummyNode = t->node;
+	lua_close(L);
+
+	return dummyNode;
+}
 
 
 /*
@@ -666,8 +683,10 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 
 void creg_Node::Serialize(creg::ISerializer* s)
 {
-	SerializeInstance(s, &i_key.tvk);
-	SerializePtr(s, &i_key.nk.next);
+	if (i_val.tt != LUA_TNIL) {
+		SerializeInstance(s, &i_key.tvk);
+		SerializePtr(s, &i_key.nk.next);
+	}
 }
 
 
@@ -676,7 +695,23 @@ void creg_Table::Serialize(creg::ISerializer* s)
 	int sizenode = twoto(lsizenode);
 
 	SerializeCVector(s, &array, sizearray);
-	SerializeCVector(s, &node, sizenode);
+	bool empty;
+	creg_Node* dummy = GetDummyNode();
+	if (s->IsWriting())
+		empty = (node == dummy);
+
+	s->SerializeInt(&empty, sizeof(empty));
+
+	if (empty) {
+		if (!s->IsWriting()) {
+			node = dummy;
+		} else {
+			assert(node == dummy);
+		}
+	} else {
+		SerializeCVector(s, &node, sizenode);
+	}
+
 	ptrdiff_t lastfreeOffset;
 	if (s->IsWriting())
 		lastfreeOffset = lastfree - node;
@@ -744,7 +779,11 @@ void creg_CClosure::Serialize(creg::ISerializer* s)
 	}
 	creg::StringType sType;
 	if (s->IsWriting()) {
-		assert(funcToName.find(f) != funcToName.end());
+		//assert(funcToName.find(f) != funcToName.end());
+		if (funcToName.find(f) == funcToName.end()) {
+			LOG_L(L_ERROR, "Function 0x%p not found", f);
+			return;
+		}
 		std::string name = funcToName[f];
 		sType.Serialize(s, &name);
 	} else {
@@ -853,6 +892,10 @@ void creg_global_State::Serialize(creg::ISerializer* s)
 		if (sweepgc != &rootgc)
 			SerializePtr(s, (creg_GCObject**) &sweepgc);
 	} else {
+		frealloc = luaContext.Getfrealloc();
+		ud = luaContext.GetContext();
+		panic = luaContext.GetPanic();
+
 		buff.buffer = nullptr;
 		buff.buffsize = 0;
 		buff.n = 0;
@@ -886,15 +929,17 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 		clg->g.uvhead.next = nullptr;
 		clg->g.uvhead.v = nullptr;
 	} else {
-		//assert(*L == nullptr);
+		assert(*L == nullptr);
 		clg = (creg_LG*) luaContext.alloc(sizeof(creg_LG));
 		*L = (lua_State*) &(clg->l);
-		clg->g.ud = luaContext.GetContext();
-		clg->g.panic = luaContext.GetPanic();
-		clg->g.frealloc = luaContext.Getfrealloc();
 	}
 
 	SerializeInstance(s, clg);
+}
+
+void SerializeLuaThread(creg::ISerializer* s, lua_State** L)
+{
+	s->SerializeObjectPtr((void**)(L), creg_lua_State::StaticClass());
 }
 
 void RegisterCFunction(const char* name, lua_CFunction f)
@@ -957,8 +1002,8 @@ void AutoRegisterCFunctions(const std::string& handle, lua_State* L)
 	lua_pop(L,1);
 }
 
-void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic)
+void CopyLuaContext(lua_State* L)
 {
-	luaContext.SetContext(context, frealloc, panic);
+	luaContext.SetContext(G(L)->ud, G(L)->frealloc, G(L)->panic);
 }
 }
