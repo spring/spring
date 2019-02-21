@@ -694,6 +694,7 @@ bool CGroundMoveType::FollowPath()
 		const float3& opos = owner->pos;
 		const float3& ovel = owner->speed;
 		const float3&  ffd = flatFrontDir;
+		const float3&  cwp = currWayPoint;
 
 		prevWayPointDist = currWayPointDist;
 		currWayPointDist = currWayPoint.distance2D(opos);
@@ -721,11 +722,8 @@ bool CGroundMoveType::FollowPath()
 		}
 
 		if (!atGoal) {
-			if (!idling) {
-				numIdlingUpdates -= (numIdlingUpdates > 0);
-			} else {
-				numIdlingUpdates += (numIdlingUpdates < SHORTINT_MAXVALUE);
-			}
+			numIdlingUpdates -= ((numIdlingUpdates >                 0) * (1 - idling));
+			numIdlingUpdates += ((numIdlingUpdates < SHORTINT_MAXVALUE) *      idling );
 		}
 
 		// atEndOfPath never becomes true when useRawMovement, except via StopMoving
@@ -740,11 +738,12 @@ bool CGroundMoveType::FollowPath()
 
 
 		// set direction to waypoint AFTER requesting it; should not be a null-vector
+		// do not compare y-components since these usually differ and only x&z matter
 		float3 waypointVec;
 		// float3 wpProjDists;
 
-		if (currWayPoint != opos) {
-			waypointVec = (currWayPoint - opos) * XZVector;
+		if (!epscmp(cwp.x, opos.x, float3::cmp_eps()) || !epscmp(cwp.z, opos.z, float3::cmp_eps())) {
+			waypointVec = (cwp - opos) * XZVector;
 			waypointDir = waypointVec / waypointVec.Length();
 			// wpProjDists = {math::fabs(waypointVec.dot(ffd)), 1.0f, math::fabs(waypointDir.dot(ffd))};
 		}
