@@ -87,7 +87,7 @@ static uint8_t exploParserMem[sizeof(LuaParser)];
 static uint8_t aliasParserMem[sizeof(LuaParser)];
 static uint8_t explTblRootMem[sizeof(LuaTable )];
 
-static const/*expr*/ size_t CEG_PREFIX_STRLEN = strlen(CEG_PREFIX_STRING);
+static constexpr size_t CEG_PREFIX_STRLEN = sizeof(CEG_PREFIX_STRING) - 1;
 
 CExplosionGeneratorHandler explGenHandler;
 
