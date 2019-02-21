@@ -13,6 +13,8 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -35,6 +37,7 @@
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/GZFileHandler.h"
 #include "System/Threading/ThreadPool.h"
+#include "System/creg/SerializeLuaState.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -63,6 +66,7 @@ CR_REG_METADATA(CGameStateCollector, (
 	CR_SERIALIZER(Serialize)
 ))
 
+
 void CGameStateCollector::Serialize(creg::ISerializer* s)
 {
 	s->SerializeObjectInstance(gs, gs->GetClass());
@@ -90,6 +94,30 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	}
 	s->SerializeObjectInstance(&commandDescriptionCache, commandDescriptionCache.GetClass());
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
+}
+
+
+class CLuaStateCollector
+{
+	CR_DECLARE_STRUCT(CLuaStateCollector)
+
+public:
+	CLuaStateCollector() = default;
+	lua_State* L = nullptr;
+	lua_State* L_GC = nullptr;
+	void Serialize(creg::ISerializer* s);
+};
+
+CR_BIND(CLuaStateCollector, )
+CR_REG_METADATA(CLuaStateCollector, (
+	CR_IGNORED(L),
+	CR_IGNORED(L_GC),
+	CR_SERIALIZER(Serialize)
+))
+
+void CLuaStateCollector::Serialize(creg::ISerializer* s) {
+	creg::SerializeLuaState(s, &L);
+	creg::SerializeLuaThread(s, &L_GC);
 }
 
 static void WriteString(std::ostream& s, const std::string& str)
@@ -135,13 +163,29 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 		WriteString(oss, modName);
 		WriteString(oss, mapName);
 
-		CGameStateCollector gsc = CGameStateCollector();
+		CGameStateCollector gsc;
 
 		{
 			// save creg state
 			creg::COutputStreamSerializer os;
 			os.SavePackage(&oss, &gsc, gsc.GetClass());
 			PrintSize("Game", oss.tellp());
+
+			// save lua state
+			const int luaStart = oss.tellp();
+			if (luaGaia != nullptr) {
+				CLuaStateCollector lsc;
+				lsc.L = luaGaia->syncedLuaHandle.GetLuaState();
+				lsc.L_GC = luaGaia->syncedLuaHandle.GetLuaGCState();
+				os.SavePackage(&oss, &lsc, lsc.GetClass());
+			}
+			if (luaRules != nullptr) {
+				CLuaStateCollector lsc;
+				lsc.L = luaRules->syncedLuaHandle.GetLuaState();
+				lsc.L_GC = luaRules->syncedLuaHandle.GetLuaGCState();
+				os.SavePackage(&oss, &lsc, lsc.GetClass());
+			}
+			PrintSize("Lua", ((int)oss.tellp()) - luaStart);
 
 			// save AI state
 			const int aiStart = oss.tellp();

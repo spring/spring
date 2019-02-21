@@ -419,15 +419,14 @@ int LuaUnsyncedRead::GetLuaMemUsage(lua_State* L)
 	lua_pushnumber(L, lgs.numLuaAllocs / 1000.0f);
 
 	// [0] := unsynced, [1] := synced
-	extern const spring::unsynced_set<const lua_State*>* LUAHANDLE_STATES[2];
+	extern const spring::unsynced_set<const luaContextData*>* LUAHANDLE_CONTEXTS[2];
 
 	// sum up the individual (unsynced and synced) state footprints
 	for (bool synced: {false, true}) {
 		lgs.allocedBytes = {0};
 		lgs.numLuaAllocs = {0};
 
-		for (const lua_State* luaState: *LUAHANDLE_STATES[synced]) {
-			lcd = GetLuaContextData(luaState);
+		for (const luaContextData* lcd: *LUAHANDLE_CONTEXTS[synced]) {
 			lhs = &lcd->allocState;
 
 			lgs.allocedBytes += lhs->allocedBytes;

@@ -8,9 +8,10 @@
 
 namespace creg {
 	void SerializeLuaState(creg::ISerializer* s, lua_State** L);
+	void SerializeLuaThread(creg::ISerializer* s, lua_State** L);
 	void RegisterCFunction(const char* name, lua_CFunction f);
 	void AutoRegisterCFunctions(const std::string& handle, lua_State* L);
-	void SetLuaContext(void* context, lua_Alloc frealloc, lua_CFunction panic);
+	void CopyLuaContext(lua_State* L);
 }
 
 #endif //CR_BASIC_TYPES_H

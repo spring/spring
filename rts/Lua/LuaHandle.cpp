@@ -56,9 +56,9 @@ CONFIG(float, LuaGarbageCollectionMemLoadMult).defaultValue(1.33f).minimumValue(
 CONFIG(float, LuaGarbageCollectionRunTimeMult).defaultValue(5.0f).minimumValue(1.0f).description("in milliseconds");
 
 
-static spring::unsynced_set<const lua_State*>    SYNCED_LUAHANDLE_STATES;
-static spring::unsynced_set<const lua_State*>  UNSYNCED_LUAHANDLE_STATES;
-const  spring::unsynced_set<const lua_State*>*          LUAHANDLE_STATES[2] = {&UNSYNCED_LUAHANDLE_STATES, &SYNCED_LUAHANDLE_STATES};
+static spring::unsynced_set<const luaContextData*>    SYNCED_LUAHANDLE_CONTEXTS;
+static spring::unsynced_set<const luaContextData*>  UNSYNCED_LUAHANDLE_CONTEXTS;
+const  spring::unsynced_set<const luaContextData*>*          LUAHANDLE_CONTEXTS[2] = {&UNSYNCED_LUAHANDLE_CONTEXTS, &SYNCED_LUAHANDLE_CONTEXTS};
 
 bool CLuaHandle::devMode = false;
 
@@ -78,11 +78,11 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 }
 
 
-static void LUA_INSERT_STATE(const lua_State* L, const spring::unsynced_set<const lua_State*>* S) {
-	const_cast<  spring::unsynced_set<const lua_State*>*  >(S)->insert(L);
+static void LUA_INSERT_CONTEXT(const luaContextData* D, const spring::unsynced_set<const luaContextData*>* S) {
+	const_cast<  spring::unsynced_set<const luaContextData*>*  >(S)->insert(D);
 }
-static void LUA_ERASE_STATE(const lua_State* L, const spring::unsynced_set<const lua_State*>* S) {
-	const_cast<  spring::unsynced_set<const lua_State*>*  >(S)->erase(L);
+static void LUA_ERASE_CONTEXT(const luaContextData* D, const spring::unsynced_set<const luaContextData*>* S) {
+	const_cast<  spring::unsynced_set<const luaContextData*>*  >(S)->erase(D);
 }
 
 static int handlepanic(lua_State* L)
@@ -111,7 +111,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 
 	L = LUA_OPEN(&D);
 
-	LUA_INSERT_STATE(L, LUAHANDLE_STATES[D.synced]);
+	LUA_INSERT_CONTEXT(&D, LUAHANDLE_CONTEXTS[D.synced]);
 
 	L_GC = lua_newthread(L);
 	luaL_ref(L, LUA_REGISTRYINDEX);
@@ -152,7 +152,7 @@ void CLuaHandle::KillLua(bool inFreeHandler)
 	// must be done here: if called from a ctor, we want the
 	// state to become non-valid so that LoadHandler returns
 	// false and FreeHandler runs next
-	LUA_ERASE_STATE(L, LUAHANDLE_STATES[D.synced]);
+	LUA_ERASE_CONTEXT(&D, LUAHANDLE_CONTEXTS[D.synced]);
 	LUA_CLOSE(&L);
 }
 

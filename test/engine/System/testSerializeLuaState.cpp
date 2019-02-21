@@ -25,59 +25,67 @@ static void* l_alloc (void* ud, void* ptr, size_t osize, size_t nsize) {
 	}
 }
 
+struct FakeLuaHandle {
+	lua_State* L = nullptr;
+	lua_State* L_GC = nullptr;
+};
+
+FakeLuaHandle flh;
+
 
 struct LuaRoot {
 	CR_DECLARE_STRUCT(LuaRoot);
-	lua_State* L;
 	void Serialize(creg::ISerializer* s);
 };
 
 CR_BIND(LuaRoot, );
 CR_REG_METADATA(LuaRoot, (
-	CR_IGNORED(L),
 	CR_SERIALIZER(Serialize)
 ))
 
 
 void LuaRoot::Serialize(creg::ISerializer* s) {
-	creg::SerializeLuaState(s, &L);
+	creg::SerializeLuaState(s, &flh.L);
+	creg::SerializeLuaThread(s, &flh.L_GC);
 }
 
 TEST_CASE("SerializeLuaState")
 {
 	int context = 1;
-	creg::SetLuaContext(&context, l_alloc, handlepanic);
 
 
-	lua_State* L = lua_newstate(l_alloc, &context);
-	lua_atpanic(L, handlepanic);
-	SPRING_LUA_OPEN_LIB(L, luaopen_base);
-	SPRING_LUA_OPEN_LIB(L, luaopen_math);
-	SPRING_LUA_OPEN_LIB(L, luaopen_table);
-	SPRING_LUA_OPEN_LIB(L, luaopen_string);
-	lua_settop(L, 0);
-	creg::AutoRegisterCFunctions("Test::", L);
+	flh.L = lua_newstate(l_alloc, &context);
+	lua_atpanic(flh.L, handlepanic);
+	SPRING_LUA_OPEN_LIB(flh.L, luaopen_base);
+	SPRING_LUA_OPEN_LIB(flh.L, luaopen_math);
+	SPRING_LUA_OPEN_LIB(flh.L, luaopen_table);
+	SPRING_LUA_OPEN_LIB(flh.L, luaopen_string);
+	lua_settop(flh.L, 0);
+	creg::AutoRegisterCFunctions("Test::", flh.L);
+	flh.L_GC = lua_newthread(flh.L);
+	int idx = luaL_ref(flh.L, LUA_REGISTRYINDEX);
 
-	LuaRoot root = {L};
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
+	{
+		LuaRoot root;
+		creg::COutputStreamSerializer oser;
+		oser.SavePackage(&ss, &root, root.GetClass());
+	}
 
+	{
+		creg::CInputStreamSerializer iser;
+		void* loaded;
+		creg::Class* loadedCls;
+		creg::CopyLuaContext(flh.L);
+		LUA_CLOSE(&flh.L);
+		iser.LoadPackage(&ss, loaded, loadedCls);
+		LuaRoot* loadedRoot = (LuaRoot*) loaded;
+		delete loadedRoot;
+	}
 
-	creg::COutputStreamSerializer oser;
+	lua_rawgeti(flh.L, LUA_REGISTRYINDEX, idx);
+	lua_State* L_GC = lua_tothread(flh.L, -1);
+	CHECK(L_GC == flh.L_GC);
 
-	oser.SavePackage(&ss, &root, root.GetClass());
-
-	lua_close(L);
-
-
-
-	creg::CInputStreamSerializer iser;
-
-	void* loaded;
-	creg::Class* loadedCls;
-	iser.LoadPackage(&ss, loaded, loadedCls);
-
-	LuaRoot* loadedRoot = (LuaRoot*) loaded;
-
-	lua_close(loadedRoot->L);
-	delete loadedRoot;
+	lua_close(flh.L);
 }

@@ -12,7 +12,9 @@
 #include "LuaScriptNames.h"
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
+#include "Lua/LuaGaia.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Lua/LuaRules.h"
 #include "Lua/LuaUtils.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
@@ -21,6 +23,47 @@
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+
+CR_BIND_DERIVED(CLuaUnitScript, CUnitScript, )
+
+CR_REG_METADATA(CLuaUnitScript, (
+	CR_IGNORED(handle),
+	CR_IGNORED(L),
+	CR_MEMBER(scriptIndex),
+	CR_MEMBER(scriptNames),
+	CR_IGNORED(inKilled),
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+))
+
+void CLuaUnitScript::PostLoad()
+{
+	if (unit == nullptr)
+		return;
+
+	for (auto& p: unit->localModel.pieces) {
+		pieces.push_back(&p);
+	}
+	L = handle->GetLuaState();
+}
+
+
+void CLuaUnitScript::Serialize(creg::ISerializer* s) {
+	bool isLuaGaia;
+	if (s->IsWriting()) {
+		isLuaGaia = luaGaia != nullptr && handle == &luaGaia->syncedLuaHandle;
+		const bool isLuaRules = luaRules != nullptr && handle == &luaRules->syncedLuaHandle;
+		assert(isLuaGaia || isLuaRules);
+	}
+	s->SerializeInt(&isLuaGaia, sizeof(isLuaGaia));
+	if (!s->IsWriting()) {
+		CSplitLuaHandle* slh = isLuaGaia ? (CSplitLuaHandle*) luaGaia : (CSplitLuaHandle*) luaRules;
+		assert(slh != nullptr);
+		handle = &slh->syncedLuaHandle;
+		L = handle->GetLuaState();
+	}
+}
+
 
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)
 {
@@ -185,7 +228,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CNullUnitScript(unit)
+	: CUnitScript(unit)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
