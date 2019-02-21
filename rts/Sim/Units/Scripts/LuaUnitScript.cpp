@@ -1197,7 +1197,7 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int type = lua_isnumber(L, 2)? luaL_checkint(L, 2): (explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2)) & SFX_GLOBAL);
+	const int type = lua_isnumber(L, 2)? luaL_checkint(L, 2): (explGenHandler.LoadCustomGeneratorID(lua_tostring(L, 2)) | SFX_GLOBAL);
 
 	activeScript->EmitSfx(type, piece);
 	return 0;
