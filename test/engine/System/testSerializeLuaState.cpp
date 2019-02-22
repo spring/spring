@@ -60,10 +60,20 @@ TEST_CASE("SerializeLuaState")
 	SPRING_LUA_OPEN_LIB(flh.L, luaopen_math);
 	SPRING_LUA_OPEN_LIB(flh.L, luaopen_table);
 	SPRING_LUA_OPEN_LIB(flh.L, luaopen_string);
+
 	lua_settop(flh.L, 0);
 	creg::AutoRegisterCFunctions("Test::", flh.L);
 	flh.L_GC = lua_newthread(flh.L);
 	int idx = luaL_ref(flh.L, LUA_REGISTRYINDEX);
+	const char* code = "local co = coroutine.create(function ()\n local function f()\n coroutine.yield()\n end\n f()\n end);\ncoroutine.resume(co);\n";
+
+	int err = luaL_loadbuffer(flh.L, code, strlen(code), "yield");
+	if (err)
+	{
+		printf("%s\n", lua_tostring(flh.L, -1));
+		lua_pop(flh.L, 1);
+	}
+	lua_pcall(flh.L, 0, 0, 0);
 
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
 	{

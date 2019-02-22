@@ -899,26 +899,45 @@ void creg_stringtable::Serialize(creg::ISerializer* s)
 	SerializeCVector(s, &hash, size);
 }
 
+inline creg_Proto* GetProtoFromCallInfo(CallInfo* ci)
+{
+	return ((creg_TValue*) ci->func)->value.gc->cl.l.p;
+}
+
+inline bool InstructionInCode(const Instruction* inst, CallInfo* ci)
+{
+	const creg_Proto* p = GetProtoFromCallInfo(ci);
+	return (inst >= p->code) && (inst < (p->code + p->sizecode));
+}
 
 void creg_lua_State::Serialize(creg::ISerializer* s)
 {
 	int ci_offset;
 	int base_offset;
 	int top_offset;
+	int savedpc_offset;
 	if (s->IsWriting()) {
 		ci_offset = ci - base_ci;
 		base_offset = base - stack;
 		top_offset = top - stack;
 		assert(end_ci == base_ci + size_ci - 1);
 		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
+		assert(ci_offset == 0 || InstructionInCode(savedpc, ci - 1));
 
 		assert(hook == nullptr);
 		assert(errorJmp == nullptr);
+
+		if (ci_offset > 0) {
+			savedpc_offset = (savedpc - GetProtoFromCallInfo(ci - 1)->code);
+		}
 	}
 
 	s->SerializeInt(&ci_offset, sizeof(ci_offset));
 	s->SerializeInt(&base_offset, sizeof(base_offset));
 	s->SerializeInt(&top_offset, sizeof(top_offset));
+	if (ci_offset > 0) {
+		s->SerializeInt(&savedpc_offset, sizeof(savedpc_offset));
+	}
 
 	if (!s->IsWriting()) {
 		base_ci = (CallInfo *) luaContext.alloc(size_ci * sizeof(*base_ci));
@@ -929,6 +948,10 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		base = stack + base_offset;
 		top = stack + top_offset;
 		stack_last = stack + stacksize - EXTRA_STACK - 1;
+
+		if (ci_offset > 0) {
+			savedpc = (const Instruction *) savedpc_offset; // will be fixed in PostLoad
+		}
 	}
 
 	for (StkId st = stack; st < top; ++st) {
@@ -944,15 +967,18 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 			c_base_offset = c->base - stack;
 			c_top_offset = c->top - stack;
 			c_func_offset = c->func - stack;
-			if (base_ci != ci) {
-				c_savedpc_offset = c->savedpc == nullptr ? 0 : (c->savedpc - ((creg_TValue*) c->func)->value.gc->cl.l.p->code + 1);
+			if (c > base_ci && c < ci) {
+				assert(InstructionInCode(c->savedpc, c));
+				c_savedpc_offset = c->savedpc - GetProtoFromCallInfo(c)->code;
 			}
 		}
 		s->SerializeInt(&c_base_offset, sizeof(c_base_offset));
 		s->SerializeInt(&c_top_offset, sizeof(c_top_offset));
 		s->SerializeInt(&c_func_offset, sizeof(c_func_offset));
-		if (base_ci != ci) {
+		if (c > base_ci && c < ci) {
 			s->SerializeInt(&c_savedpc_offset, sizeof(c_savedpc_offset));
+		} else {
+			c_savedpc_offset = 0;
 		}
 		s->SerializeInt(&c->nresults, sizeof(c->nresults));
 		s->SerializeInt(&c->tailcalls, sizeof(c->tailcalls));
@@ -971,10 +997,12 @@ void creg_lua_State::PostLoad()
 	if (base_ci == ci)
 		return;
 
-	for (CallInfo *c = base_ci; c <= ci; ++c) {
+	for (CallInfo *c = base_ci + 1; c < ci; ++c) {
 		int c_savedpc_offset = * (int *) &c->savedpc;
-		c->savedpc = c_savedpc_offset == 0 ? nullptr : (((creg_TValue*) c->func)->value.gc->cl.l.p->code + c_savedpc_offset - 1);
+		c->savedpc = GetProtoFromCallInfo(c)->code + c_savedpc_offset;
 	}
+	int savedpc_offset = * (int *) &savedpc;
+	savedpc = GetProtoFromCallInfo(ci)->code + savedpc_offset;
 }
 
 
