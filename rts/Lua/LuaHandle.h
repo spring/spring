@@ -86,7 +86,7 @@ class CLuaHandle : public CEventClient
 		virtual bool PersistOnReload() const { return false; }
 		virtual bool SecondaryGLContext() const { return false; }
 
-		// usec by LuaSyncedTable and creg save
+		// used by LuaSyncedTable and creg save
 		lua_State* GetLuaState() const { return L; }
 		lua_State* GetLuaGCState() const { return L_GC; }
 		// used by creg load

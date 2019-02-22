@@ -53,7 +53,7 @@ public:
 	// creg only
 	CCobInstance(): CUnitScript(nullptr), cobFile(nullptr) {}
 	CCobInstance(CCobFile* cob, CUnit* unit): CUnitScript(unit), cobFile(cob) { Init(); }
-	virtual ~CCobInstance();
+	~CCobInstance();
 
 	void Init();
 	void PostLoad();
