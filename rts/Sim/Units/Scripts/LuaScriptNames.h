@@ -4,7 +4,7 @@
 #define LUASCRIPTNAMES_H
 
 #include <string>
-#include <vector>
+#include <array>
 
 #include "System/UnorderedMap.hpp"
 
@@ -62,7 +62,7 @@ enum {
 class CLuaUnitScriptNames
 {
 public:
-	static const std::vector<std::string>& GetScriptNames(); // LUAFN_* -> string
+	static const std::array<std::string, LUAFN_Last>& GetScriptNames(); // LUAFN_* -> string
 	static const spring::unordered_map<std::string, int>& GetScriptMap(); // string -> LUAFN_*
 
 	static int GetScriptNumber(const std::string& fname);

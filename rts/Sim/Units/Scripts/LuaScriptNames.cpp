@@ -4,16 +4,14 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 // script function-indices never change, so this is fine wrt. reloading
-static std::vector<std::string> scriptNames;
+static std::array<std::string, LUAFN_Last> scriptNames;
 static spring::unordered_map<std::string, int> scriptMap;
 
 
-const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
+const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames()
 {
-	if (!scriptNames.empty())
+	if (!scriptNames[LUAFN_Destroy].empty())
 		return scriptNames;
-
-	scriptNames.resize(LUAFN_Last);
 
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
@@ -59,10 +57,6 @@ const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_BlockShot]     = "BlockShot";
 	scriptNames[LUAFN_TargetWeight]  = "TargetWeight";
 
-	//for (size_t i = 0; i < scriptNames.size(); ++i) {
-	//	LOG_L(L_DEBUG, "LUAFN: %3d %s", i, scriptNames[i].c_str());
-	//}
-
 	return scriptNames;
 }
 
@@ -72,15 +66,13 @@ const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap
 	if (!scriptMap.empty())
 		return scriptMap;
 
-	const std::vector<std::string>& n = GetScriptNames();
+	const auto& n = GetScriptNames();
+
+	scriptMap.reserve(n.size());
 
 	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(std::pair<std::string, int>(n[i], i));
+		scriptMap.insert(n[i], i);
 	}
-
-	//for (auto it = scriptMap.cbegin(); it != scriptMap.cend(); ++it) {
-	//	LOG_L(L_DEBUG, "LUAFN: %s -> %3d", it->first.c_str(), it->second);
-	//}
 
 	return scriptMap;
 }
@@ -100,7 +92,7 @@ int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 const std::string& CLuaUnitScriptNames::GetScriptName(int num)
 {
 	const static std::string empty;
-	const std::vector<std::string>& n = GetScriptNames();
+	const auto& n = GetScriptNames();
 
 	if (num >= 0 && num < int(n.size()))
 		return n[num];

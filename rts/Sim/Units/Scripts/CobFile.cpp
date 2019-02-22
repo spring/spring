@@ -90,7 +90,7 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 	numStaticVars = 0;
 
 	name.assign(scriptName);
-	scriptIndex.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs), -1);
+	scriptIndex.fill(-1);
 
 	// figure out size needed and allocate it
 	const int size = in.FileSize();
@@ -126,13 +126,12 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 	for (int i = 0; i < ch.NumberOfScripts; ++i) {
 		int ofs = *(int *) &cobFileData[ch.OffsetToScriptNameOffsetArray + i * 4];
 		swabDWordInPlace(ofs);
-		const std::string s = &cobFileData[ofs];
-		scriptNames.push_back(s);
+		scriptNames.emplace_back(&cobFileData[ofs]);
 
-		if (s.find("lua_") == 0) {
-			luaScripts.push_back(LuaHashString(s.substr(4)));
+		if (scriptNames[scriptNames.size() - 1].find("lua_") == 0) {
+			luaScripts.emplace_back(scriptNames[scriptNames.size() - 1].substr(4));
 		} else {
-			luaScripts.push_back(LuaHashString(""));
+			luaScripts.emplace_back("");
 		}
 
 		ofs = *(int *) &cobFileData[ch.OffsetToScriptCodeIndexArray + i * 4];

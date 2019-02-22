@@ -273,7 +273,7 @@ public:
 
 
 	// sufficient for the largest UnitScript (CLuaUnitScript)
-	uint8_t usMemBuffer[240];
+	uint8_t usMemBuffer[368];
 	// sufficient for the largest AMoveType (CGroundMoveType)
 	// need two buffers since ScriptMoveType might be enabled
 	uint8_t amtMemBuffer[498];
