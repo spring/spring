@@ -235,7 +235,7 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
 {
 	scriptIndex.fill(LUA_NOREF);
-	scriptNames.reserve(LUA_NOREF);
+	scriptNames.reserve(scriptIndex.size());
 	pieces.reserve(unit->localModel.pieces.size());
 
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
