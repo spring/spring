@@ -912,10 +912,10 @@ inline bool InstructionInCode(const Instruction* inst, CallInfo* ci)
 
 void creg_lua_State::Serialize(creg::ISerializer* s)
 {
-	int ci_offset;
-	int base_offset;
-	int top_offset;
-	int savedpc_offset;
+	ptrdiff_t ci_offset;
+	ptrdiff_t base_offset;
+	ptrdiff_t top_offset;
+	ptrdiff_t savedpc_offset;
 	if (s->IsWriting()) {
 		ci_offset = ci - base_ci;
 		base_offset = base - stack;
@@ -959,10 +959,10 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 	}
 
 	for (CallInfo *c = base_ci; c <= ci; ++c) {
-		int c_base_offset;
-		int c_top_offset;
-		int c_func_offset;
-		int c_savedpc_offset;
+		ptrdiff_t c_base_offset;
+		ptrdiff_t c_top_offset;
+		ptrdiff_t c_func_offset;
+		ptrdiff_t c_savedpc_offset;
 		if (s->IsWriting()) {
 			c_base_offset = c->base - stack;
 			c_top_offset = c->top - stack;
@@ -998,10 +998,11 @@ void creg_lua_State::PostLoad()
 		return;
 
 	for (CallInfo *c = base_ci + 1; c < ci; ++c) {
-		int c_savedpc_offset = * (int *) &c->savedpc;
+		size_t c_savedpc_offset = * (size_t *) &c->savedpc;
 		c->savedpc = GetProtoFromCallInfo(c)->code + c_savedpc_offset;
 	}
-	int savedpc_offset = * (int *) &savedpc;
+
+	size_t savedpc_offset = * (size_t *) &savedpc;
 	savedpc = GetProtoFromCallInfo(ci)->code + savedpc_offset;
 }
 
