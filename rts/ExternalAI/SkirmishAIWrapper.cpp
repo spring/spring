@@ -227,17 +227,17 @@ void CSkirmishAIWrapper::Release(int reason) {
 
 static void streamCopy(/*const*/ std::istream* in, std::ostream* out)
 {
-	std::vector<char> buffer(128);
+	std::array<char, 128> buffer;
 	std::streampos start = in->tellg();
 
-	in->read(&buffer[0], buffer.size());
+	in->read(buffer.data(), buffer.size());
 
 	while (in->good()) {
-		out->write(&buffer[0], in->gcount());
-		in->read(&buffer[0], buffer.size());
+		out->write(buffer.data(), in->gcount());
+		in->read(buffer.data(), buffer.size());
 	}
 
-	out->write(&buffer[0], in->gcount());
+	out->write(buffer.data(), in->gcount());
 
 	in->clear();  // clear fail and eof bits
 	in->seekg(start, std::ios::beg);  // back to the start!
