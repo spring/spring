@@ -17,6 +17,9 @@ void CUnitScriptFactory::InitStatic()
 {
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CCobInstance   ), "");
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CNullUnitScript), "");
+
+	CCobUnitScriptNames::InitScriptNames();
+	CLuaUnitScriptNames::InitScriptNames();
 }
 
 

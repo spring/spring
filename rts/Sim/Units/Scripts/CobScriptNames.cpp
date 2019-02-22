@@ -9,10 +9,10 @@ static std::array<std::string, COBFN_NumUnitFuncs> scriptNames;
 static spring::unordered_map<std::string, int> scriptMap;
 
 
-const std::array<std::string, COBFN_NumUnitFuncs>& CCobUnitScriptNames::GetScriptNames()
+void CCobUnitScriptNames::InitScriptNames()
 {
-	if (!scriptNames[COBFN_Create].empty())
-		return scriptNames;
+	if (!scriptNames[COBFN_Destroy].empty())
+		return;
 
 	scriptNames[COBFN_Create]        = "Create";
 	scriptNames[COBFN_Destroy]       = "Destroy";
@@ -64,21 +64,11 @@ const std::array<std::string, COBFN_NumUnitFuncs>& CCobUnitScriptNames::GetScrip
 		scriptNames[COBFN_TargetWeight   + n] = "TargetWeight"  + wn;
 	}
 
-	return scriptNames;
-}
 
+	scriptMap.reserve(scriptNames.size() + 4 * 3);
 
-const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
-{
-	if (!scriptMap.empty())
-		return scriptMap;
-
-	const auto& n = GetScriptNames();
-
-	scriptMap.reserve(n.size() + 4 * 3);
-
-	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(n[i], i);
+	for (size_t i = 0; i < scriptNames.size(); ++i) {
+		scriptMap.insert(scriptNames[i], i);
 	}
 
 	// support the old naming scheme
@@ -94,9 +84,11 @@ const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap
 	scriptMap.insert("FirePrimary",      COBFN_FirePrimary                            );
 	scriptMap.insert("FireSecondary",    COBFN_FirePrimary    + COBFN_Weapon_Funcs * 1);
 	scriptMap.insert("FireTertiary",     COBFN_FirePrimary    + COBFN_Weapon_Funcs * 2);
-
-	return scriptMap;
 }
+
+
+const std::array<std::string, COBFN_NumUnitFuncs>& CCobUnitScriptNames::GetScriptNames() { return scriptNames; }
+const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap() { return scriptMap; }
 
 
 int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)
@@ -110,13 +102,12 @@ int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)
 	return -1;
 }
 
-const std::string& CCobUnitScriptNames::GetScriptName(int num)
+const std::string& CCobUnitScriptNames::GetScriptName(unsigned int num)
 {
 	const static std::string empty;
-	const auto& n = GetScriptNames();
 
-	if (num >= 0 && num < int(n.size()))
-		return n[num];
+	if (num < scriptNames.size())
+		return scriptNames[num];
 
 	return empty;
 }
