@@ -331,6 +331,8 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 					it.first->name,
 					classCounts[it.first],
 					it.second);
+			it.second = 0;
+			classCounts[it.first] = 0;
 		}
 	}
 

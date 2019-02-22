@@ -366,6 +366,7 @@ struct creg_lua_State {
 	struct lua_longjmp *errorJmp;  /* current error recover point */
 	ptrdiff_t errfunc;  /* current error handling function (stack index) */
 	void Serialize(creg::ISerializer* s);
+	void PostLoad();
 };
 
 ASSERT_SIZE(lua_State)
@@ -605,6 +606,7 @@ CR_REG_METADATA(creg_global_State, (
 	CR_SERIALIZER(Serialize)
 ))
 
+
 CR_BIND_POOL(creg_lua_State, , luaContext.alloc, freeProtector)
 CR_REG_METADATA(creg_lua_State, (
 	CR_COMMON_HEADER(),
@@ -633,7 +635,8 @@ CR_REG_METADATA(creg_lua_State, (
 	CR_IGNORED(gclist), //probably unneeded
 	CR_IGNORED(errorJmp),
 	CR_MEMBER(errfunc),
-	CR_SERIALIZER(Serialize)
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
 ))
 
 
@@ -899,33 +902,78 @@ void creg_stringtable::Serialize(creg::ISerializer* s)
 
 void creg_lua_State::Serialize(creg::ISerializer* s)
 {
-	// stack should be empty when saving!
+	int ci_offset;
+	int base_offset;
+	int top_offset;
 	if (s->IsWriting()) {
-		assert(base == top);
-		assert(ci->base == top);
-		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
-		assert(base_ci == ci);
+		ci_offset = ci - base_ci;
+		base_offset = base - stack;
+		top_offset = top - stack;
 		assert(end_ci == base_ci + size_ci - 1);
+		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
 
 		assert(hook == nullptr);
 		assert(errorJmp == nullptr);
-	} else {
-		// adapted from stack_init lstate.cpp
+	}
+
+	s->SerializeInt(&ci_offset, sizeof(ci_offset));
+	s->SerializeInt(&base_offset, sizeof(base_offset));
+	s->SerializeInt(&top_offset, sizeof(top_offset));
+
+	if (!s->IsWriting()) {
 		base_ci = (CallInfo *) luaContext.alloc(size_ci * sizeof(*base_ci));
-		ci = base_ci;
+		ci = base_ci + ci_offset;
 		end_ci = base_ci + size_ci - 1;
 
 		stack = (StkId) luaContext.alloc(stacksize * sizeof(*stack));
-		top = stack;
+		base = stack + base_offset;
+		top = stack + top_offset;
 		stack_last = stack + stacksize - EXTRA_STACK - 1;
+	}
 
-		ci->func = top;
-		setnilvalue(top++);
-		base = ci->base = top;
-		ci->top = top + LUA_MINSTACK;
+	for (StkId st = stack; st < top; ++st) {
+		SerializeInstance(s, (creg_TValue*) st);
+	}
 
-		errorJmp = nullptr;
-		hook = nullptr;
+	for (CallInfo *c = base_ci; c <= ci; ++c) {
+		int c_base_offset;
+		int c_top_offset;
+		int c_func_offset;
+		int c_savedpc_offset;
+		if (s->IsWriting()) {
+			c_base_offset = c->base - stack;
+			c_top_offset = c->top - stack;
+			c_func_offset = c->func - stack;
+			if (base_ci != ci) {
+				c_savedpc_offset = c->savedpc == nullptr ? 0 : (c->savedpc - ((creg_TValue*) c->func)->value.gc->cl.l.p->code + 1);
+			}
+		}
+		s->SerializeInt(&c_base_offset, sizeof(c_base_offset));
+		s->SerializeInt(&c_top_offset, sizeof(c_top_offset));
+		s->SerializeInt(&c_func_offset, sizeof(c_func_offset));
+		if (base_ci != ci) {
+			s->SerializeInt(&c_savedpc_offset, sizeof(c_savedpc_offset));
+		}
+		s->SerializeInt(&c->nresults, sizeof(c->nresults));
+		s->SerializeInt(&c->tailcalls, sizeof(c->tailcalls));
+		if (!s->IsWriting()) {
+			c->base = stack + c_base_offset;
+			c->top = stack + c_top_offset;
+			c->func = stack + c_func_offset;
+			c->savedpc = (const Instruction *) c_savedpc_offset; // will be fixed in PostLoad
+		}
+	}
+}
+
+
+void creg_lua_State::PostLoad()
+{
+	if (base_ci == ci)
+		return;
+
+	for (CallInfo *c = base_ci; c <= ci; ++c) {
+		int c_savedpc_offset = * (int *) &c->savedpc;
+		c->savedpc = c_savedpc_offset == 0 ? nullptr : (((creg_TValue*) c->func)->value.gc->cl.l.p->code + c_savedpc_offset - 1);
 	}
 }
 
