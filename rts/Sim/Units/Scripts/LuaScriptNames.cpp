@@ -8,10 +8,10 @@ static std::array<std::string, LUAFN_Last> scriptNames;
 static spring::unordered_map<std::string, int> scriptMap;
 
 
-const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames()
+void CLuaUnitScriptNames::InitScriptNames()
 {
 	if (!scriptNames[LUAFN_Destroy].empty())
-		return scriptNames;
+		return;
 
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
@@ -57,25 +57,17 @@ const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_BlockShot]     = "BlockShot";
 	scriptNames[LUAFN_TargetWeight]  = "TargetWeight";
 
-	return scriptNames;
-}
 
+	scriptMap.reserve(scriptNames.size());
 
-const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
-{
-	if (!scriptMap.empty())
-		return scriptMap;
-
-	const auto& n = GetScriptNames();
-
-	scriptMap.reserve(n.size());
-
-	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(n[i], i);
+	for (size_t i = 0; i < scriptNames.size(); ++i) {
+		scriptMap.insert(scriptNames[i], i);
 	}
-
-	return scriptMap;
 }
+
+
+const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames() { return scriptNames; }
+const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap() { return scriptMap; }
 
 
 int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
@@ -89,13 +81,12 @@ int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 	return -1;
 }
 
-const std::string& CLuaUnitScriptNames::GetScriptName(int num)
+const std::string& CLuaUnitScriptNames::GetScriptName(unsigned int num)
 {
 	const static std::string empty;
-	const auto& n = GetScriptNames();
 
-	if (num >= 0 && num < int(n.size()))
-		return n[num];
+	if (num < scriptNames.size())
+		return scriptNames[num];
 
 	return empty;
 }
