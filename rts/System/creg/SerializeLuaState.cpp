@@ -3,6 +3,12 @@
 
 #include "VarTypes.h"
 
+#ifndef UNIT_TEST
+#include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#endif
+
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
@@ -48,6 +54,9 @@ void* allocProtector(size_t size) {
 
 
 static LuaContext luaContext;
+
+// Used for hackish heuristic for deciphering lightuserdata
+static bool inClosure = false;
 
 // C functions in lua have to be specially registered in order to
 // be serialized correctly
@@ -663,13 +672,56 @@ void SerializeInstance(creg::ISerializer* s, T* t) {
 	s->SerializeObjectInstance(t, t->GetClass());
 }
 
+void SerializeLightUserData(creg::ISerializer* s, void **p)
+{
+	if (!inClosure) {
+		s->SerializeInt(p, sizeof(*p));
+		return;
+	}
+#ifndef UNIT_TEST
+	enum DefType {
+		DT_Feature,
+		DT_Unit,
+		DT_Weapon
+	} defType;
+
+	int idx;
+	if (s->IsWriting()) {
+		auto& fdVec = featureDefHandler->GetFeatureDefsVec();
+		auto& udVec = unitDefHandler->GetUnitDefsVec();
+		auto& wdVec = weaponDefHandler->GetWeaponDefsVec();
+		if (*p >= fdVec.data() && *p < fdVec.data() + fdVec.size()) {
+			idx = (int) ((const FeatureDef*) *p - fdVec.data());
+			defType = DT_Feature;
+		} else if (*p >= udVec.data() && *p < udVec.data() + udVec.size()){
+			idx = (int) ((const UnitDef*) *p - udVec.data());
+			defType = DT_Unit;
+		} else if (*p >= wdVec.data() && *p < wdVec.data() + wdVec.size()) {
+			idx = (int) ((const WeaponDef*) *p - wdVec.data());
+			defType = DT_Weapon;
+		} else {
+			assert(false);
+		}
+	}
+	s->SerializeInt(&idx, sizeof(idx));
+	s->SerializeInt(&defType, sizeof(defType));
+	if (!s->IsWriting()) {
+		switch(defType) {
+			case DT_Feature: { *p = (void *) featureDefHandler->GetFeatureDefByID(idx); break;}
+			case DT_Unit:    { *p = (void *) unitDefHandler->GetUnitDefByID(idx); break;}
+			case DT_Weapon:  { *p = (void *) weaponDefHandler->GetWeaponDefByID(idx); break;}
+		}
+	}
+#endif
+}
+
 
 void creg_TValue::Serialize(creg::ISerializer* s)
 {
 	switch(tt) {
 		case LUA_TNIL: { return; }
 		case LUA_TBOOLEAN: { s->SerializeInt(&value.b, sizeof(value.b)); return; }
-		case LUA_TLIGHTUSERDATA: { assert(false); return; } // No support for light user data atm
+		case LUA_TLIGHTUSERDATA: { SerializeLightUserData(s, &value.p); return; } // No support for light user data atm
 		case LUA_TNUMBER: { s->SerializeInt(&value.n, sizeof(value.n)); return; }
 		case LUA_TSTRING: { SerializePtr(s, &value.gc); return; }
 		case LUA_TTABLE: { SerializePtr(s, &value.gc); return; }
@@ -774,9 +826,12 @@ size_t creg_TString::GetSize()
 
 void creg_CClosure::Serialize(creg::ISerializer* s)
 {
+	inClosure = true;
 	for (unsigned i = 0; i < nupvalues; ++i) {
 		SerializeInstance(s, &upvalue[i]);
 	}
+	inClosure = false;
+
 	creg::StringType sType;
 	if (s->IsWriting()) {
 		//assert(funcToName.find(f) != funcToName.end());
