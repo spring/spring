@@ -93,7 +93,6 @@ const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap
 
 int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
-	const auto& scriptMap = GetScriptMap();
 	const auto it = scriptMap.find(fname);
 
 	if (it != scriptMap.end())
