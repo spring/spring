@@ -501,11 +501,13 @@ void SetThreadCount(int wantedNumThreads)
 	}
 
 
+	#if (!defined(UNITSYNC) && !defined(UNIT_TEST))
 	if (wantedNumThreads != 0) {
 		CTimeProfiler::RegisterTimer("ThreadPool::AddTask");
 		CTimeProfiler::RegisterTimer("ThreadPool::RunTask");
 		CTimeProfiler::RegisterTimer("ThreadPool::WaitFor");
 	}
+	#endif
 
 	if (curNumThreads < wtdNumThreads) {
 		SpawnThreads(wtdNumThreads, curNumThreads);
@@ -513,11 +515,13 @@ void SetThreadCount(int wantedNumThreads)
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
 
+	#if (!defined(UNITSYNC) && !defined(UNIT_TEST))
 	if (wantedNumThreads == 0) {
 		CTimeProfiler::UnRegisterTimer("ThreadPool::AddTask");
 		CTimeProfiler::UnRegisterTimer("ThreadPool::RunTask");
 		CTimeProfiler::UnRegisterTimer("ThreadPool::WaitFor");
 	}
+	#endif
 
 
 	#ifdef USE_TASK_STATS_TRACKING
