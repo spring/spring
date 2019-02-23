@@ -1017,7 +1017,6 @@ void CMiniMap::Draw()
 	if (slaveDrawMode)
 		return;
 
-	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
 	// Draw Border
 	{
 		glEnable(GL_BLEND);
@@ -1649,3 +1648,4 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 
 
 /******************************************************************************/
+

@@ -141,7 +141,7 @@ bool HasThreads() { return !workerThreads[false].empty(); }
 static bool DoTask(int tid, bool async)
 {
 	#ifndef UNIT_TEST
-	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+	SCOPED_MT_TIMER("ThreadPool::RunTask");
 	#endif
 
 	ITaskGroup* tg = nullptr;
@@ -251,7 +251,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 
 	{
 		#ifndef UNIT_TEST
-		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+		SCOPED_MT_TIMER("ThreadPool::WaitFor");
 		#endif
 
 		assert(!taskGroup->IsAsyncTask());
@@ -500,11 +500,25 @@ void SetThreadCount(int wantedNumThreads)
 		#endif
 	}
 
+
+	if (wantedNumThreads != 0) {
+		CTimeProfiler::RegisterTimer("ThreadPool::AddTask");
+		CTimeProfiler::RegisterTimer("ThreadPool::RunTask");
+		CTimeProfiler::RegisterTimer("ThreadPool::WaitFor");
+	}
+
 	if (curNumThreads < wtdNumThreads) {
 		SpawnThreads(wtdNumThreads, curNumThreads);
 	} else {
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
+
+	if (wantedNumThreads == 0) {
+		CTimeProfiler::UnRegisterTimer("ThreadPool::AddTask");
+		CTimeProfiler::UnRegisterTimer("ThreadPool::RunTask");
+		CTimeProfiler::UnRegisterTimer("ThreadPool::WaitFor");
+	}
+
 
 	#ifdef USE_TASK_STATS_TRACKING
 	if (workerThreads[false].empty()) {

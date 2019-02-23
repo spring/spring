@@ -342,8 +342,6 @@ void CUnitHandler::UpdateUnitMoveTypes()
 
 void CUnitHandler::UpdateUnitLosStates()
 {
-	SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
-
 	for (CUnit* unit: activeUnits) {
 		for (int at = 0; at < teamHandler.ActiveAllyTeams(); ++at) {
 			unit->UpdateLosStatus(at);

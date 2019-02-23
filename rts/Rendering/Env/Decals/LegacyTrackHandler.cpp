@@ -270,8 +270,6 @@ bool LegacyTrackHandler::GetDrawTracks() const
 
 void LegacyTrackHandler::Draw()
 {
-	SCOPED_TIMER("Draw::World::Decals::Tracks");
-
 	if (!GetDrawTracks())
 		return;
 

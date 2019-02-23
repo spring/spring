@@ -1151,10 +1151,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	// set camera
 	camHandler->UpdateController(playerHandler.Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
-	{
-		SCOPED_TIMER("Update::UnitDrawer");
-		unitDrawer->Update();
-	}
+	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 
 
@@ -1169,12 +1166,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if (newSimFrame || forceUpdate) {
 		lastUnsyncedUpdateTime = currentTime;
 
-		{
-			// TODO: should be moved to WorldDrawer::Update
-			SCOPED_TIMER("Update::InfoTexture");
-			infoTextureHandler->Update();
-		}
-
+		// TODO: should be moved to WorldDrawer::Update
+		infoTextureHandler->Update();
 		// TODO call only when camera changed
 		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
@@ -1207,7 +1200,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	commandDrawer->Update();
 
 	{
-		SCOPED_TIMER("Update::Update");
+		SCOPED_TIMER("Update::EventHandler");
 		eventHandler.Update();
 	}
 	eventHandler.DbgTimingInfo(TIMING_UNSYNCED, currentTime, spring_now());

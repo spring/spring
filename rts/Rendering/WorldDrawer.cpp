@@ -137,14 +137,12 @@ void CWorldDrawer::Kill()
 
 void CWorldDrawer::Update(bool newSimFrame)
 {
-	SCOPED_TIMER("Update::World");
+	SCOPED_TIMER("Update::WorldDrawer");
 	LuaObjectDrawer::Update(numUpdates == 0);
 	readMap->UpdateDraw(numUpdates == 0);
 
-	if (globalRendering->drawGround) {
-		SCOPED_TIMER("Update::World::Terrain");
+	if (globalRendering->drawGround)
 		(readMap->GetGroundDrawer())->Update();
-	}
 
 	// XXX: done in CGame, needs to get updated even when !doDrawWorld
 	// (it updates unitdrawpos which is used for maximized minimap too)
@@ -156,8 +154,13 @@ void CWorldDrawer::Update(bool newSimFrame)
 
 	if (newSimFrame) {
 		projectileDrawer->UpdateTextures();
-		sky->Update();
-		water->Update();
+
+		{
+			SCOPED_TIMER("Update::WorldDrawer::{Sky,Water}");
+
+			sky->Update();
+			water->Update();
+		}
 
 		// once every simframe is frequent enough here
 		// NB: errors will not be logged until frame 0
@@ -195,7 +198,7 @@ void CWorldDrawer::GenerateIBLTextures() const
 			sky->UpdateSkyTexture();
 		}
 		{
-			SCOPED_TIMER("Draw::World::UpdateShadingTexture");
+			SCOPED_TIMER("Draw::World::UpdateShadingTex");
 			readMap->UpdateShadingTexture();
 		}
 	}
@@ -287,10 +290,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	}
 
 	selectedUnitsHandler.Draw();
-	{
-		SCOPED_TIMER("Draw::World::PreUnit");
-		eventHandler.DrawWorldPreUnit();
-	}
+	eventHandler.DrawWorldPreUnit();
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Opaque");

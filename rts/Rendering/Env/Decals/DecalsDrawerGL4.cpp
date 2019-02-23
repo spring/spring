@@ -869,7 +869,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 void CDecalsDrawerGL4::Update()
 {
-	SCOPED_TIMER("Update::Update::DecalsDrawerGL4");
+	SCOPED_TIMER("Update::DecalsDrawerGL4");
 	UpdateOverlap();
 	OptimizeGroups();
 	UpdateDecalsVBO();
