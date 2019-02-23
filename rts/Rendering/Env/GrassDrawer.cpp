@@ -476,8 +476,6 @@ void CGrassDrawer::Update()
 	updateVisibility |= (prvUpdateCamDir != cam->GetDir());
 
 	if (updateVisibility) {
-		SCOPED_TIMER("Update::Update::Grass");
-
 		prvUpdateCamPos = cam->GetPos();
 		prvUpdateCamDir = cam->GetDir();
 
@@ -581,7 +579,6 @@ void CGrassDrawer::Draw()
 	if (!defDrawGrass || readMap->GetGrassShadingTexture() == 0)
 		return;
 
-	SCOPED_TIMER("Draw::World::Foliage::Grass");
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!blockDrawer.inViewQuads.empty()) {

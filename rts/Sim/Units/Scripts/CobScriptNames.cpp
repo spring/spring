@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+
 #include "CobScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/StringUtil.h"
@@ -87,8 +89,8 @@ void CCobUnitScriptNames::InitScriptNames()
 }
 
 
-const std::array<std::string, COBFN_NumUnitFuncs>& CCobUnitScriptNames::GetScriptNames() { return scriptNames; }
-const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap() { return scriptMap; }
+const std::array<std::string, COBFN_NumUnitFuncs>& CCobUnitScriptNames::GetScriptNames() { assert(!scriptMap.empty()); return scriptNames; }
+const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap() { assert(!scriptMap.empty()); return scriptMap; }
 
 
 int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)

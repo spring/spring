@@ -20,7 +20,7 @@
 // NB: names are assumed to be compile-time literals
 #define SCOPED_TIMER(name)  static TimerNameRegistrar __tnr(name); ScopedTimer __scopedTimer(hashString(name));
 #define SCOPED_SPECIAL_TIMER(name)  static TimerNameRegistrar __stnr(name); ScopedTimer __scopedTimer(hashString(name), false, true)
-#define SCOPED_MT_TIMER(name)  CTimeProfiler::RegisterTimer(name); ScopedMtTimer __scopedTimer(hashString(name));
+#define SCOPED_MT_TIMER(name)  ScopedMtTimer __scopedTimer(hashString(name));
 
 
 class BasicTimer : public spring::noncopyable

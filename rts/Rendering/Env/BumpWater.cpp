@@ -673,8 +673,6 @@ void CBumpWater::Update()
 
 	UpdateWind();
 
-	SCOPED_TIMER("Update::WorldDrawer::BumpWater");
-
 	if (dynWaves)
 		UpdateDynWaves();
 
@@ -706,9 +704,8 @@ void CBumpWater::UpdateWater(CGame* game)
 
 
 	if (occlusionQuery != 0 && !wasVisibleLastFrame) {
-		SCOPED_TIMER("Draw::World::Water::BumpWater");
-
 		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
+
 		if (occlusionQueryResult) {
 			glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &occlusionQueryResult);
 

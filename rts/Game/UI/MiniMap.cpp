@@ -1008,8 +1008,6 @@ void CMiniMap::Draw()
 	if (slaveDrawMode)
 		return;
 
-	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
-
 	{
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

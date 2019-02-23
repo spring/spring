@@ -259,8 +259,6 @@ bool LegacyTrackHandler::GetDrawTracks() const
 
 void LegacyTrackHandler::Draw(Shader::IProgramObject* shader)
 {
-	SCOPED_TIMER("Draw::World::Decals::Tracks");
-
 	if (!GetDrawTracks())
 		return;
 

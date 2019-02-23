@@ -254,7 +254,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 		      float fStartX = MIN_X_COOR + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "totaltime");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "sum-time");
 
 		// print percent of CPU time used within the last 500ms
 		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT | FONT_BUFFERED, "cur-%usage");
@@ -451,8 +451,6 @@ static void DrawInfoText(GL::RenderDataBufferC* buffer)
 
 void ProfileDrawer::DrawScreen()
 {
-	SCOPED_TIMER("Draw::Screen::DrawScreen::Profile");
-
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 

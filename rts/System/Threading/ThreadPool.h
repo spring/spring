@@ -688,7 +688,7 @@ static inline void for_mt(int start, int end, int step, F&& f)
 		return;
 	}
 
-	SCOPED_MT_TIMER("::ThreadWorkers (real)");
+	SCOPED_MT_TIMER("ThreadPool::AddTask");
 
 	// static, so TaskGroup's are recycled
 	static TaskPool<ForTaskGroup, F> pool;
@@ -727,7 +727,7 @@ static inline void parallel(F&& f)
 	if (!ThreadPool::HasThreads())
 		return f();
 
-	SCOPED_MT_TIMER("::ThreadWorkers (real)");
+	SCOPED_MT_TIMER("ThreadPool::AddTask");
 
 	// static, so TaskGroup's are recycled
 	static TaskPool<Parallel2TaskGroup, F> pool;
@@ -750,7 +750,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	if (!ThreadPool::HasThreads())
 		return f();
 
-	SCOPED_MT_TIMER("::ThreadWorkers (real)");
+	SCOPED_MT_TIMER("ThreadPool::AddTask");
 
 	typedef  typename std::result_of<F()>::type  RetType;
 	// typedef  typename std::shared_ptr< AsyncTask<F> >  TaskType;

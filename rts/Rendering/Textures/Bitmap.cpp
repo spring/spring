@@ -402,10 +402,6 @@ void CBitmap::AllocDummy(const SColor fill)
 
 bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 {
-	#ifndef BITMAP_NO_OPENGL
-	SCOPED_TIMER("Misc::Bitmap::Load");
-	#endif
-
 	bool isLoaded = false;
 	bool isValid  = false;
 	bool noAlpha  =  true;

@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+
 #include "LuaScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
 
@@ -66,8 +68,8 @@ void CLuaUnitScriptNames::InitScriptNames()
 }
 
 
-const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames() { return scriptNames; }
-const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap() { return scriptMap; }
+const std::array<std::string, LUAFN_Last>& CLuaUnitScriptNames::GetScriptNames() { assert(!scriptMap.empty()); return scriptNames; }
+const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap() { assert(!scriptMap.empty()); return scriptMap; }
 
 
 int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
