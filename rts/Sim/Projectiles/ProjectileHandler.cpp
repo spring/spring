@@ -563,8 +563,6 @@ void CProjectileHandler::CheckShieldCollisions(
 		if (!repulser->CanIntercept(interceptType, projAllyTeam))
 			continue;
 
-		CUnit* owner = repulser->owner;
-
 		// we sometimes get false inside hits due to the movement of the shield
 		// a very hacky solution is to nudge the start of the intersecting ray
 		// back (proportional to how far the shield moved last frame) so as to
@@ -574,7 +572,8 @@ void CProjectileHandler::CheckShieldCollisions(
 		const float3 rpvec  = ppos0 - ppos1;
 		const float3 rppos0 = ppos0 + rpvec * repulser->GetDeltaDist();
 
-		if (!CCollisionHandler::DetectHit(owner, &repulser->collisionVolume, owner->GetTransformMatrix(true), rppos0, ppos1, &cq))
+		// shield volumes are always spherical, transform directly
+		if (!CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, CMatrix44f{repulser->weaponMuzzlePos}, rppos0, ppos1, &cq))
 			continue;
 
 		if (cq.InsideHit() && repulser->weaponDef->exteriorShield && !repulser->IsRepulsing(wpro))

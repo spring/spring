@@ -133,7 +133,8 @@ void CPlasmaRepulser::Update()
 	}
 
 	UpdateWeaponVectors();
-	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
+	// CollisionHandler will cancel this out
+	collisionVolume.SetOffsets(-owner->relMidPos);
 
 	if (weaponMuzzlePos != lastMuzzlePos)
 		quadField.MovedRepulser(this);

@@ -336,6 +336,7 @@ inline bool CCollisionHandler::Intersect(
 	// for all CSolidObject types
 	//
 	CMatrix44f mr = m;
+
 	mr.Translate(o->relMidPos * s);
 	mr.Translate(v->GetOffsets());
 
@@ -352,20 +353,19 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	bool intersect = false;
 
 	// minimum and maximum (x, y, z) coordinates of transformed ray
-	const float rminx = std::min(pi0.x, pi1.x), rminy = std::min(pi0.y, pi1.y), rminz = std::min(pi0.z, pi1.z);
-	const float rmaxx = std::max(pi0.x, pi1.x), rmaxy = std::max(pi0.y, pi1.y), rmaxz = std::max(pi0.z, pi1.z);
-
+	const float3 rmin = float3::min(pi0, pi1);
+	const float3 rmax = float3::max(pi0, pi1);
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
-	const float vminx = -v->GetHScales().x, vminy = -v->GetHScales().y, vminz = -v->GetHScales().z;
-	const float vmaxx =  v->GetHScales().x, vmaxy =  v->GetHScales().y, vmaxz =  v->GetHScales().z;
+	const float3 vmin = -v->GetHScales();
+	const float3 vmax =  v->GetHScales();
 
 	// check if ray segment misses (bounding box around) volume
 	// (if so, then no further intersection tests are necessary)
-	if (rmaxx < vminx || rminx > vmaxx)
+	if (rmax.x < vmin.x || rmin.x > vmax.x)
 		return false;
-	if (rmaxy < vminy || rminy > vmaxy)
+	if (rmax.y < vmin.y || rmin.y > vmax.y)
 		return false;
-	if (rmaxz < vminz || rminz > vmaxz)
+	if (rmax.z < vmin.z || rmin.z > vmax.z)
 		return false;
 
 	switch (v->GetVolumeType()) {
@@ -396,8 +396,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
 {
-	// transform the volume-space points into (unit) sphere-space (requires fewer
-	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
+	// transform the volume-space points into (unit) sphere-space; requires fewer
+	// float-ops than solving the surface equation for arbitrary ellipsoid volumes
 	const float3 upi0 = pi0 * v->GetHIScales();
 	const float3 upi1 = pi1 * v->GetHIScales();
 	const float rSq = 1.0f;
@@ -410,8 +410,10 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			q->b0 = CQ_POINT_IN_VOL; q->p0 = ZeroVector;
 			q->b1 = CQ_POINT_IN_VOL; q->p1 = ZeroVector;
 		}
+
 		return true;
 	}
+
 
 	// get the ray direction in unit-sphere space
 	const float3 dir = (upi1 - upi0).SafeNormalize();
