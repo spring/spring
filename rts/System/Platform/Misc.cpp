@@ -684,7 +684,7 @@ namespace Platform
 			return false;
 
 		for (size_t i = 0, n = dwBufLen / sizeof(adapterInfo); i < n; i++) {
-			if ((macType != 0) && (adapterInfo[i].Type != mactype))
+			if ((macType != 0) && (adapterInfo[i].Type != macType))
 				continue;
 			if (adapterInfo[i].AddressLength != macAddr.size())
 				continue;
