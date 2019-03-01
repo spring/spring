@@ -29,7 +29,9 @@ public:
 
 	bool IsEnabled() const { return isEnabled; }
 	bool IsActive() const;
+
 	bool IsRepulsing(CWeaponProjectile* p) const;
+	bool IgnoreInteriorHit(CWeaponProjectile* p) const;
 
 	float GetDeltaDist() const { return (deltaMuzzlePos.Length()); }
 	float GetCurPower() const { return curPower; }

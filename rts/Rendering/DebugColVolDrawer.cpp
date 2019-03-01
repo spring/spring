@@ -169,9 +169,6 @@ static inline void DrawFeatureColVol(const CFeature* f)
 	if (!camera->InView(f->pos, f->GetDrawRadius()))
 		return;
 
-	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
-
 	glPushMatrix();
 		glMultMatrixf(f->GetTransformMatrixRef(false));
 		DrawObjectMidAndAimPos(f);
@@ -190,7 +187,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 			}
 		}
 
-		if (vCustomType || vCustomDims) {
+		if (v->HasCustomType() || v->HasCustomProp(f->radius)) {
 			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(f->radius, f->radius, f->radius);
@@ -209,8 +206,6 @@ static inline void DrawUnitColVol(const CUnit* u)
 		return;
 
 	const CollisionVolume* v = &u->collisionVolume;
-	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
 	GLUquadricObj* q = gluNewQuadric();
 	gluQuadricDrawStyle(q, GLU_FILL);
@@ -261,27 +256,37 @@ static inline void DrawUnitColVol(const CUnit* u)
 			glTranslatef3(u->relMidPos);
 		} else {
 			if (!v->IgnoreHits()) {
+				const int hitDeltaTime = gs->frameNum - u->lastAttackFrame;
+				const int setFadeColor = (u->lastAttackFrame > 0 && hitDeltaTime < 150);
+
 				// make it fade red under attack
-				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
-					glColor3f((1.0f - ((gs->frameNum - u->lastAttackFrame) / 150.0f)), 0.0f, 0.0f);
-				}
+				if (setFadeColor)
+					glColor3f(1.0f - (hitDeltaTime / 150.0f), 0.0f, 0.0f);
 
 				// if drawing this, disable the DrawObjectMidAndAimPos call
 				// DrawCollisionVolume((u->localModel).GetBoundingVolume());
 				DrawCollisionVolume(v);
 
-				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
+				if (setFadeColor)
 					glColorf4(DEFAULT_VOLUME_COLOR);
-				}
 			}
 		}
 		if (u->shieldWeapon != nullptr) {
-			const CPlasmaRepulser* shield = static_cast<const CPlasmaRepulser*>(u->shieldWeapon);
+			const CPlasmaRepulser* shieldWeapon = static_cast<const CPlasmaRepulser*>(u->shieldWeapon);
+			const CollisionVolume* shieldColVol = &shieldWeapon->collisionVolume;
+
 			glColor4f(0.0f, 0.0f, 0.6f, 0.35f);
-			DrawCollisionVolume(&shield->collisionVolume);
+
+			glPopMatrix();
+			glPushMatrix();
+			glMultMatrixf(CMatrix44f{shieldWeapon->weaponMuzzlePos});
+			DrawCollisionVolume(shieldColVol);
+			glPopMatrix();
+			glPushMatrix();
+			glMultMatrixf(u->GetTransformMatrix(false));
 		}
 
-		if (vCustomType || vCustomDims) {
+		if (v->HasCustomType() || v->HasCustomProp(u->radius)) {
 			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(u->radius, u->radius, u->radius);

@@ -3565,11 +3565,11 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 	const float3& pos = weapon->weaponMuzzlePos;
 	const float3* dir = &weapon->wantedDir;
 
-	const string& type = weapon->weaponDef->type;
-	if ((type == "TorpedoLauncher") ||
-	    (type == "MissileLauncher") ||
-	    (type == "StarburstLauncher")) {
-		dir = &weapon->weaponDir;
+	switch (weapon->weaponDef->projectileType) {
+		case WEAPON_MISSILE_PROJECTILE  : { dir = &weapon->weaponDir; } break;
+		case WEAPON_TORPEDO_PROJECTILE  : { dir = &weapon->weaponDir; } break;
+		case WEAPON_STARBURST_PROJECTILE: { dir = &weapon->weaponDir; } break;
+		default                         : {                           } break;
 	}
 
 	lua_pushnumber(L, pos.x);

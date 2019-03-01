@@ -571,12 +571,14 @@ void CProjectileHandler::CheckShieldCollisions(
 		// solution (keep track in the projectile which shields it's in)
 		const float3 rpvec  = ppos0 - ppos1;
 		const float3 rppos0 = ppos0 + rpvec * repulser->GetDeltaDist();
+		const float3 cvpos  = repulser->weaponMuzzlePos - repulser->owner->relMidPos;
 
 		// shield volumes are always spherical, transform directly
-		if (!CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, CMatrix44f{repulser->weaponMuzzlePos}, rppos0, ppos1, &cq))
+		// (CollisionHandler will cancel out the relmidpos offset)
+		if (!CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, CMatrix44f{cvpos}, rppos0, ppos1, &cq))
 			continue;
 
-		if (cq.InsideHit() && repulser->weaponDef->exteriorShield && !repulser->IsRepulsing(wpro))
+		if (cq.InsideHit() && repulser->IgnoreInteriorHit(wpro))
 			continue;
 
 		if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
