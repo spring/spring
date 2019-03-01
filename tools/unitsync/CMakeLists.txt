@@ -15,6 +15,7 @@ list(APPEND unitsync_libs ${ZLIB_LIBRARY})
 list(APPEND unitsync_libs ${SPRING_MINIZIP_LIBRARY})
 
 if (WIN32)
+	list(APPEND unitsync_libs ${IPHLPAPI_LIBRARY})
 	list(APPEND unitsync_libs ${WINMM_LIBRARY})
 endif (WIN32)
 
