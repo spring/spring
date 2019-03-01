@@ -3,7 +3,7 @@
 
 #include "LuaTextures.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 

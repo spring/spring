@@ -8,7 +8,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Sync/HsiehHash.h"
 
 

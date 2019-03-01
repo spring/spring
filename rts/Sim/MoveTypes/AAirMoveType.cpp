@@ -13,7 +13,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 

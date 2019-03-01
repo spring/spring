@@ -21,7 +21,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/EventHandler.h"
 #include "System/GlobalRNG.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"

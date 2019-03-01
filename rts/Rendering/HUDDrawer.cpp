@@ -16,7 +16,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <cmath>
 

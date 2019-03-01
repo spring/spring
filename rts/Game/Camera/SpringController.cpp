@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Input/KeyInput.h"
 
 

@@ -39,7 +39,7 @@
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SpringExitCode.h"
 #include "System/SpringFormat.h"
 #include "System/TdfParser.h"

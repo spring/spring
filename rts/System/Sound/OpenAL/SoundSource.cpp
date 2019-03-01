@@ -18,7 +18,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
 #include "System/StringUtil.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 static constexpr float ROLLOFF_FACTOR = 5.0f;

@@ -59,7 +59,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/creg/STL_List.h"
 #include "System/Sound/ISoundChannels.h"

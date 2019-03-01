@@ -9,7 +9,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 

@@ -4,7 +4,7 @@
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/float3.h"
 
 

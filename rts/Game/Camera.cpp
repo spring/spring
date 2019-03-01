@@ -9,7 +9,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/MatrixState.hpp"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"

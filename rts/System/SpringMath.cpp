@@ -4,7 +4,7 @@
 	#include <valgrind/valgrind.h>
 #endif
 
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
@@ -13,45 +13,49 @@
 #undef far
 #undef near
 
-float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
+float2 SpringMath::headingToVectorTable[NUM_HEADINGS];
 
-void CMyMath::Init()
+void SpringMath::Init()
 {
 	good_fpu_init();
 
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
-		float ang = (a - (NUM_HEADINGS / 2)) * math::TWOPI / NUM_HEADINGS;
-		float2 v;
-			v.x = math::sin(ang);
-			v.y = math::cos(ang);
-		headingToVectorTable[a] = v;
+		const float ang = (a - (NUM_HEADINGS / 2)) * math::TWOPI / NUM_HEADINGS;
+
+		headingToVectorTable[a].x = math::sin(ang);
+		headingToVectorTable[a].y = math::cos(ang);
 	}
 
 	unsigned checksum = 0;
+	unsigned uheading[2] = {0, 0};
+
 	// NOLINTNEXTLINE{modernize-loop-construct}
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
-		// TODO: Casting float pointer to unsigned pointer?
-		// Is there any guarantee that they will have the same alignment? Is this UB?
-		checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a].x;
+		memcpy(&uheading[0], &headingToVectorTable[a].x, sizeof(unsigned));
+		memcpy(&uheading[1], &headingToVectorTable[a].y, sizeof(unsigned));
+
+		checksum = 33 * checksum + uheading[0];
 		checksum *= 33;
-		checksum = 33 * checksum + *(unsigned*) &headingToVectorTable[a].y;
+		checksum = 33 * checksum + uheading[1];
 	}
 
 #ifdef USE_VALGRIND
 	if (RUNNING_ON_VALGRIND) {
 		// Valgrind doesn't allow us setting the FPU, so syncing is impossible
-		LOG_L(L_WARNING, "Valgrind detected sync checking disabled!");
+		LOG_L(L_WARNING, "[%s] valgrind detected, sync-checking disabled!", __func__);
 		return;
 	}
 #endif
 
 #if STREFLOP_ENABLED
-	if (checksum != HEADING_CHECKSUM) {
-		throw unsupported_error(
-			"Invalid headingToVectorTable checksum. Most likely"
-			" your streflop library was not compiled with the correct"
-			" options, or you are not using streflop at all.");
-	}
+	if (checksum == HEADING_CHECKSUM)
+		return;
+
+	throw unsupported_error(
+		"Invalid headingToVectorTable checksum. Most likely"
+		" your streflop library was not compiled with the correct"
+		" options, or you are not using streflop at all."
+	);
 #endif
 }
 
@@ -60,8 +64,8 @@ void CMyMath::Init()
 float3 GetVectorFromHAndPExact(const short int heading, const short int pitch)
 {
 	float3 ret;
-	float h = heading * TAANG2RAD;
-	float p = pitch * TAANG2RAD;
+	const float h = heading * TAANG2RAD;
+	const float p = pitch * TAANG2RAD;
 	ret.x = math::sin(h) * math::cos(p);
 	ret.y = math::sin(p);
 	ret.z = math::cos(h) * math::cos(p);
@@ -98,11 +102,10 @@ float3 ClosestPointOnLine(const float3 l1, const float3 l2, const float3 p)
 
 
 /**
- * How does it works?
- * We calculate the two intersection points ON the
- * ray as multiple of `dir` starting from `start`.
- * So we get 2 scalars, whereupon `near` defines the
- * new startpoint and `far` defines the new endpoint.
+ * calculates the two intersection points ON the ray
+ * as scalar multiples of `dir` starting from `start`;
+ * `near` defines the new startpoint and `far` defines
+ * the new endpoint.
  *
  * credits:
  * http://ompf.org/ray/ray_box.html
@@ -150,7 +153,7 @@ bool ClampLineInMap(float3& start, float3& end)
 	const float far  = ips.y;
 
 	if (far < 0.0f) {
-		//! outside of map!
+		// outside of map!
 		start = -OnesVector;
 		end   = -OnesVector;
 		return true;
@@ -160,7 +163,7 @@ bool ClampLineInMap(float3& start, float3& end)
 		end   = start + dir * std::min(far, 1.0f);
 		start = start + dir * std::max(near, 0.0f);
 
-		//! precision of near,far are limited, so better clamp it afterwards
+		// precision of near,far are limited, better clamp afterwards
 		end.ClampInMap();
 		start.ClampInMap();
 		return true;
@@ -179,16 +182,12 @@ bool ClampRayInMap(const float3 start, float3& end)
 	const float far  = ips.y;
 
 	if (far < 0.0f) {
-		//! outside of map!
 		end = start;
 		return true;
 	}
 
 	if (far < 1.0f || near > 0.0f) {
-		end = start + dir * std::min(far, 1.0f);
-
-		//! precision of near,far are limited, so better clamp it afterwards
-		end.ClampInMap();
+		end = (start + dir * std::min(far, 1.0f)).cClampInMap();
 		return true;
 	}
 
@@ -196,11 +195,18 @@ bool ClampRayInMap(const float3 start, float3& end)
 }
 
 
+float linearstep(const float edge0, const float edge1, const float value)
+{
+	const float v = Clamp(value, edge0, edge1);
+	const float x = (v - edge0) / (edge1 - edge0);
+	const float t = Clamp(x, 0.0f, 1.0f);
+	return t;
+}
+
 float smoothstep(const float edge0, const float edge1, const float value)
 {
-	if (value <= edge0) return 0.0f;
-	if (value >= edge1) return 1.0f;
-	const float x = (value - edge0) / (edge1 - edge0);
+	const float v = Clamp(value, edge0, edge1);
+	const float x = (v - edge0) / (edge1 - edge0);
 	const float t = Clamp(x, 0.0f, 1.0f);
 	return (t * t * (3.0f - 2.0f * t));
 }
@@ -211,15 +217,6 @@ float3 smoothstep(const float edge0, const float edge1, float3 vec)
 	vec.y = smoothstep(edge0, edge1, vec.y);
 	vec.z = smoothstep(edge0, edge1, vec.z);
 	return vec;
-}
-
-float linearstep(const float edge0, const float edge1, const float value)
-{
-	if (value <= edge0) return 0.0f;
-	if (value >= edge1) return 1.0f;
-	const float x = (value - edge0) / (edge1 - edge0);
-	const float t = Clamp(x, 0.0f, 1.0f);
-	return t;
 }
 
 

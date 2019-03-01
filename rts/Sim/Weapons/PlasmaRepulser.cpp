@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, )
 CR_REG_METADATA(CPlasmaRepulser, (

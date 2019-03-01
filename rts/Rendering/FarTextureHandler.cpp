@@ -9,7 +9,7 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 #define LOG_SECTION_FAR_TEXTURE_HANDLER "FarTextureHandler"

@@ -40,7 +40,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FastMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Sound/ISoundChannels.h"

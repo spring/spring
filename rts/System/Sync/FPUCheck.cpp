@@ -84,43 +84,37 @@ void good_fpu_control_registers(const char* text)
 #endif
 
 	// accepted/syncsafe FPU states:
-	int sse_a, sse_b, sse_c, x87_a, x87_b, x87_c;
-	{
-		sse_a = 0x1D00;
-		sse_b = 0x1F80;
-		sse_c = 0x1900; // signan
-		x87_a = 0x003A;
-		x87_b = 0x003F;
-		x87_c = 0x0032; // signan
-	}
+	constexpr int sse_a = 0x1D00;
+	constexpr int sse_b = 0x1F80;
+	constexpr int sse_c = 0x1900; // signan
+	constexpr int x87_a = 0x003A;
+	constexpr int x87_b = 0x003F;
+	constexpr int x87_c = 0x0032; // signan
 
-#if defined(STREFLOP_SSE)
-	// struct
+#ifdef STREFLOP_H
 	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
-	const int fsse = fenv.sse_mode & 0xFF80;
-	const int fx87 = fenv.x87_mode & 0x1F3F;
+	#if defined(STREFLOP_SSE)
+	const int sse_flag = fenv.sse_mode & 0xFF80;
+	const int x87_flag = fenv.x87_mode & 0x1F3F;
 
-	bool ret = ((fsse == sse_a) || (fsse == sse_b) || (fsse == sse_c)) &&
-	           ((fx87 == x87_a) || (fx87 == x87_b) || (fx87 == x87_c));
+	const bool ret_sse = ((sse_flag == sse_a) || (sse_flag == sse_b) || (sse_flag == sse_c));
+	const bool ret_x87 = ((x87_flag == x87_a) || (x87_flag == x87_b) || (x87_flag == x87_c));
+	const bool ret_all = (ret_sse && ret_x87);
 
-	if (!ret) {
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, fsse, sse_a, sse_b, text);
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, fx87, x87_a, x87_b, text);
+	if (!ret_all) {
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, sse_flag, sse_a, sse_b, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, x87_flag, x87_a, x87_b, text);
 
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__)
+		#if defined(__SUPPORT_SNAN__)
 		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
-	#endif
+		#endif
 	}
 
-#elif defined(STREFLOP_X87)
-	// short int
-	streflop::fpenv_t fenv;
-	streflop::fegetenv(&fenv);
-
+	#elif defined(STREFLOP_X87)
 	if ((fenv & 0x1F3F) == x87_a || (fenv & 0x1F3F) == x87_b || (fenv & 0x1F3F) == x87_c)
 		return;
 
@@ -131,37 +125,40 @@ void good_fpu_control_registers(const char* text)
 	#if defined(__SUPPORT_SNAN__)
 	streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
+	#endif
 #endif
 }
 
 void good_fpu_init()
 {
 	const unsigned int sseBits = springproc::GetProcSSEBits();
-		LOG("[%s] CPU SSE mask: %u, flags:", __func__, sseBits);
-		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
-		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
-		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
-		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
+	const unsigned int sseFlag = (sseBits >> 5) & 1;
 
 #ifdef STREFLOP_H
-	const bool hasSSE1 = (sseBits >> 5) & 1;
-
-	#ifdef STREFLOP_SSE
-	if (hasSSE1) {
-		LOG("\tusing streflop SSE FP-math mode, CPU supports SSE instructions");
-	} else {
-		throw unsupported_error("CPU is missing SSE instruction support");
-	}
+	#if (defined(STREFLOP_SSE))
+	LOG("[%s][STREFLOP_SSE]", __func__);
+	#elif (defined(STREFLOP_X87))
+	LOG("[%s][STREFLOP_X87]", __func__);
 	#else
-	if (hasSSE1) {
-		LOG_L(L_WARNING, "\tStreflop floating-point math is set to X87 mode");
-		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
-		LOG_L(L_WARNING, "\tThis CPU is SSE-capable; consider recompiling");
-	} else {
-		LOG_L(L_WARNING, "\tStreflop floating-point math is not SSE-enabled");
-		LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
-		LOG_L(L_WARNING, "\tThis CPU is not SSE-capable; it can only use X87 mode");
-	}
+	#error
+	#endif
+#endif
+
+	LOG("\tSSE 1.0 : %d,  SSE 2.0 : %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
+	LOG("\tSSE 3.0 : %d, SSSE 3.0 : %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
+	LOG("\tSSE 4.1 : %d,  SSE 4.2 : %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
+	LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
+
+#ifdef STREFLOP_H
+	#if (defined(STREFLOP_SSE))
+	if (sseFlag == 0)
+		throw unsupported_error("CPU is missing SSE 1.0 instruction support");
+	#elif (defined(STREFLOP_X87))
+	LOG_L(L_WARNING, "\tStreflop floating-point math is set to X87 mode");
+	LOG_L(L_WARNING, "\tThis may cause desyncs during multi-player games");
+	LOG_L(L_WARNING, "\tYour CPU is %s SSE-capable; consider %s", (sseFlag == 0)? "not": "", (sseFlag == 1)? "recompiling": "upgrading");
+	#else
+	#error
 	#endif
 
 	// Set single precision floating point math.
@@ -174,8 +171,7 @@ void good_fpu_init()
 	// probably should check if SSE was enabled during
 	// compilation and issue a warning about illegal
 	// instructions if so (or just die with an error)
-	LOG_L(L_WARNING, "Floating-point math is not controlled by streflop");
-	LOG_L(L_WARNING, "This makes keeping multi-player sync 99% impossible");
+	LOG_L(L_WARNING, "\tFPU math is not controlled by streflop; multi-player games will desync");
 #endif
 }
 #endif
@@ -216,22 +212,22 @@ namespace springproc {
 		if (GetProcMaxStandardLevel() >= 0x00000001U) {
 			rEAX = 0x00000001U; ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
 
-			int SSE42  = (rECX >> 20) & 1; bits |= ( SSE42 << 0); // SSE 4.2
-			int SSE41  = (rECX >> 19) & 1; bits |= ( SSE41 << 1); // SSE 4.1
-			int SSSE30 = (rECX >>  9) & 1; bits |= (SSSE30 << 2); // Supplemental SSE 3.0
-			int SSE30  = (rECX >>  0) & 1; bits |= ( SSE30 << 3); // SSE 3.0
+			const int SSE42  = (rECX >> 20) & 1; bits |= ( SSE42 << 0); // SSE 4.2
+			const int SSE41  = (rECX >> 19) & 1; bits |= ( SSE41 << 1); // SSE 4.1
+			const int SSSE30 = (rECX >>  9) & 1; bits |= (SSSE30 << 2); // Supplemental SSE 3.0
+			const int SSE30  = (rECX >>  0) & 1; bits |= ( SSE30 << 3); // SSE 3.0
 
-			int SSE20  = (rEDX >> 26) & 1; bits |= ( SSE20 << 4); // SSE 2.0
-			int SSE10  = (rEDX >> 25) & 1; bits |= ( SSE10 << 5); // SSE 1.0
-			int MMX    = (rEDX >> 23) & 1; bits |= ( MMX   << 6); // MMX
+			const int SSE20  = (rEDX >> 26) & 1; bits |= ( SSE20 << 4); // SSE 2.0
+			const int SSE10  = (rEDX >> 25) & 1; bits |= ( SSE10 << 5); // SSE 1.0
+			const int MMX    = (rEDX >> 23) & 1; bits |= ( MMX   << 6); // MMX
 		}
 
 		if (GetProcMaxExtendedLevel() >= 0x80000001U) {
 			rEAX = 0x80000001U; ExecCPUID(&rEAX, &rEBX, &rECX, &rEDX);
 
-			int SSE50A = (rECX >> 11) & 1; bits |= (SSE50A << 7); // SSE 5.0A
-			int SSE40A = (rECX >>  6) & 1; bits |= (SSE40A << 8); // SSE 4.0A
-			int MSSE   = (rECX >>  7) & 1; bits |= (MSSE   << 9); // Misaligned SSE
+			const int SSE50A = (rECX >> 11) & 1; bits |= (SSE50A << 7); // SSE 5.0A
+			const int SSE40A = (rECX >>  6) & 1; bits |= (SSE40A << 8); // SSE 4.0A
+			const int MSSE   = (rECX >>  7) & 1; bits |= (MSSE   << 9); // Misaligned SSE
 		}
 
 		return bits;

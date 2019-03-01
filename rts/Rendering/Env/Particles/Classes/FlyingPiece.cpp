@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArrayTypes.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 static constexpr float EXPLOSION_SPEED = 2.0f;

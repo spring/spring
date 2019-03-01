@@ -14,7 +14,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 constexpr static unsigned int TEX_SIZE_C = 4;
 constexpr static unsigned int TEX_SIZE_X = 256;

@@ -29,7 +29,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 
 #define PE_EXTRA_DEBUG_OVERLAYS 1

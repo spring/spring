@@ -4,7 +4,7 @@
 
 #include "VerticalSync.h"
 #include "GL/myGL.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 

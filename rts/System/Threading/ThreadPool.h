@@ -756,9 +756,9 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	// typedef  typename std::shared_ptr< AsyncTask<F> >  TaskType;
 	typedef           std::shared_ptr< std::future<RetType> >  FoldType;
 
-	// std::vector<TaskType> tasks(ThreadPool::GetNumThreads());
-	std::vector<AsyncTask<F>*> tasks(ThreadPool::GetNumThreads(), nullptr);
-	std::vector<FoldType> results(ThreadPool::GetNumThreads());
+	// std::array<TaskType, ThreadPool::MAX_THREADS> tasks;
+	std::array<AsyncTask<F>*, ThreadPool::MAX_THREADS> tasks;
+	std::array<FoldType, ThreadPool::MAX_THREADS> results;
 
 	// NOTE:
 	//   results become available in AsyncTask::ExecuteStep, and can allow
@@ -774,7 +774,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	tasks[0]->ExecuteLoop(0, false);
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
-	for (size_t i = 1; i < results.size(); ++i) {
+	for (size_t i = 1, n = ThreadPool::GetNumThreads(); i < n; ++i) {
 		// tasks[i] = std::move(std::make_shared<AsyncTask<F>>(std::forward<F>(f)));
 		tasks[i] = new AsyncTask<F>(std::forward<F>(f));
 		results[i] = std::move(tasks[i]->GetFuture());
@@ -785,7 +785,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 		ThreadPool::PushTaskGroup(tasks[i]);
 	}
 
-	return (std::accumulate(results.begin(), results.end(), 0, g));
+	return (std::accumulate(results.begin(), results.begin() + ThreadPool::GetNumThreads(), 0, g));
 }
 
 

@@ -4,7 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/MainDefines.h"
 #include "System/MathConstants.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 static              GL::MatrixState  glMatrixStates[2];
 static _threadlocal GL::MatrixState* glMatrixState = nullptr;

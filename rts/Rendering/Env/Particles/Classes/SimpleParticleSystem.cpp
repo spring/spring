@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 

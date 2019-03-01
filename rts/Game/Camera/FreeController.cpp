@@ -10,7 +10,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 using std::max;
 using std::min;

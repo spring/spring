@@ -45,7 +45,7 @@
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/MemPoolTypes.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);

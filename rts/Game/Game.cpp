@@ -107,7 +107,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"

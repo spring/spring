@@ -9,7 +9,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CResourceBar* resourceBar = nullptr;
 

@@ -18,7 +18,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <algorithm>
 #include <vector>

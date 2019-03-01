@@ -40,5 +40,8 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamilyStr());
 	LuaPushNamedString(L, "hwConfig", Platform::GetHardwareStr());
 
+	LuaPushNamedString(L, "sysInfoHash", Platform::GetSysInfoHash());
+	LuaPushNamedString(L, "macAddrHash", Platform::GetMacAddrHash());
+
 	return true;
 }

@@ -11,7 +11,7 @@
 #include "Lua/LuaMemPool.h"
 
 #include "System/GlobalRNG.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include "System/UnorderedMap.hpp"

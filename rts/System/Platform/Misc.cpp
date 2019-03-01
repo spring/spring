@@ -1,61 +1,68 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Misc.h"
+#if defined(__linux__)
+	#include <arpa/inet.h>
+	#include <ifaddrs.h>
+	#include <net/if.h>
+	#include <netinet/in.h>
+	#include <netpacket/packet.h>
 
-#ifdef __linux__
-#include <unistd.h>
-#include <dlfcn.h> // for dladdr(), dlopen()
-#include <sys/statvfs.h>
+	#include <sys/ioctl.h>
+	#include <sys/socket.h>
 
-#elif WIN32
-#include <io.h>
-#include <direct.h>
-#include <process.h>
-#include <shlobj.h>
-#include <shlwapi.h>
+#elif defined(WIN32)
+	#include <io.h>
+	#include <direct.h>
+	#include <process.h>
+	#include <shlobj.h>
+	#include <shlwapi.h>
+	#include <iphlpapi.h>
 
-#ifndef SHGFP_TYPE_CURRENT
-	#define SHGFP_TYPE_CURRENT 0
-#endif
-#include "System/Platform/Win/WinVersion.h"
+	#ifndef SHGFP_TYPE_CURRENT
+		#define SHGFP_TYPE_CURRENT 0
+	#endif
 
-#elif __APPLE__
-#include <unistd.h>
-#include <mach-o/dyld.h>
-#include <stdlib.h>
-#include <dlfcn.h> // for dladdr(), dlopen()
-#include <climits> // for PATH_MAX
-#include <sys/statvfs.h>
+#elif defined(__APPLE__)
+	#include <cstdlib>
+	#include <climits> // for PATH_MAX
 
-#elif defined __FreeBSD__
-#include <unistd.h>
-#include <dlfcn.h> // for dladdr(), dlopen()
-#include <sys/types.h>
-#include <sys/sysctl.h>
+	#include <mach-o/dyld.h>
+
+#elif defined( __FreeBSD__)
+	#include <sys/sysctl.h>
 
 #else
 
 #endif
 
 
-#if !defined(WIN32)
-#include <sys/utsname.h> // for uname()
-#include <sys/types.h> // for getpw
-#include <pwd.h> // for getpw
 
-#include <fstream>
+#if !defined(WIN32)
+#include <dlfcn.h> // for dladdr(), dlopen()
+#include <pwd.h> // for getpw*()
+#include <sys/statvfs.h>
+#include <sys/types.h>
+#include <sys/utsname.h> // for uname()
+#include <unistd.h>
 #endif
+
 
 
 #include <cstring>
 #include <cerrno>
-#include <deque>
+#include <fstream>
 #include <vector>
 
+#include "Misc.h"
+#include "System/CRC.h"
 #include "System/StringUtil.h"
-#include "System/SafeCStrings.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"
+#if defined(WIN32)
+#include "System/Platform/Win/WinVersion.h"
+#endif
+#include "System/Sync/SHA512.hpp"
+
 
 
 #if       defined WIN32
@@ -90,12 +97,10 @@ static HMODULE GetCurrentModule()
 static std::string GetUserDirFromEnvVar()
 {
 	#ifdef _WIN32
-	#define HOME_ENV_VAR "LOCALAPPDATA"
+	const char* home = getenv("LOCALAPPDATA");
 	#else
-	#define HOME_ENV_VAR "HOME"
+	const char* home = getenv("HOME");
 	#endif
-	const char* home = getenv(HOME_ENV_VAR);
-	#undef HOME_ENV_VAR
 
 	return (home == nullptr) ? "" : home;
 }
@@ -143,20 +148,13 @@ namespace Platform
 	}
 
 	#ifndef WIN32
-	static std::string GetRealPath(const std::string& path) {
+	static std::string GetRealPath(const std::string& path)
+	{
+		char realPath[65536] = {0};
+		char* realPathPtr = realpath(path.c_str(), &realPath[0]);
 
-		std::string realPath = path;
-
-		// using NULL here is not supported in very old systems,
-		// but should be no problem for spring
-		// see for older systems:
-		// http://stackoverflow.com/questions/4109638/what-is-the-safe-alternative-to-realpath
-		char* realPathC = realpath(path.c_str(), nullptr);
-
-		if (realPathC != nullptr) {
-			realPath.assign(realPathC);
-			free(realPathC);
-		}
+		if (realPathPtr == nullptr)
+			memcpy(realPath, path.c_str(), std::min(path.size(), sizeof(realPath)));
 
 		if (FileSystem::GetDirectory(realPath).empty())
 			return (GetProcessExecutablePath() + realPath);
@@ -173,47 +171,45 @@ namespace Platform
 	// Windows:         GetModuleFileName() with hModule = NULL
 	std::string GetProcessExecutableFile()
 	{
-		std::string procExeFilePath;
-
+		const char* procExeFilePath = "";
 		// error will only be used if procExeFilePath stays empty
 		const char* error = nullptr;
 
-	#ifdef __linux__
+		#if defined(__linux__)
 		char file[512];
 		const int ret = readlink("/proc/self/exe", file, sizeof(file) - 1);
 
 		if (ret >= 0) {
 			file[ret] = '\0';
-			procExeFilePath = std::string(file);
+			procExeFilePath = file;
 		} else {
 			error = "[linux] failed to read /proc/self/exe";
 		}
 
 
-	#elif WIN32
+		#elif defined(WIN32)
 		TCHAR procExeFile[MAX_PATH + 1];
 
-		// with NULL, it will return the handle
-		// for the main executable of the process
+		// main process executable handle
 		const HMODULE hModule = GetModuleHandle(nullptr);
 		const int ret = ::GetModuleFileName(hModule, procExeFile, sizeof(procExeFile));
 
 		if ((ret != 0) && (ret != sizeof(procExeFile))) {
-			procExeFilePath = std::string(procExeFile);
+			procExeFilePath = procExeFile;
 		} else {
 			error = "[win32] unknown";
 		}
 
 
-	#elif __APPLE__
+		#elif defined(__APPLE__)
 		uint32_t pathlen = PATH_MAX;
 		char path[PATH_MAX];
 
 		if (_NSGetExecutablePath(path, &pathlen) == 0)
-			procExeFilePath = GetRealPath(path);
+			procExeFilePath = path;
 
 
-	#elif defined(__FreeBSD__)
+		#elif defined(__FreeBSD__)
 		const int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
 		const long maxpath = pathconf("/", _PC_PATH_MAX);
 
@@ -224,14 +220,18 @@ namespace Platform
 			procExeFilePath = buf;
 
 
-	#else
+		#else
 		#error implement this
-	#endif
+		#endif
 
-		if (procExeFilePath.empty())
+		if (procExeFilePath[0] == 0)
 			LOG_L(L_WARNING, "[%s] could not get process executable file path, reason: %s", __func__, error);
 
+		#if defined(__APPLE__)
+		return GetRealPath(procExeFilePath);
+		#else
 		return procExeFilePath;
+		#endif
 	}
 
 	std::string GetProcessExecutablePath()
@@ -461,6 +461,34 @@ namespace Platform
 	#endif
 
 
+	std::string GetSysInfoHash() {
+		std::vector<uint8_t> sysInfo;
+
+		sha512::raw_digest rawHash;
+		sha512::hex_digest hexHash;
+
+		const std::string& oss = GetOSDisplayStr();
+		const std::string& hws = GetHardwareStr();
+		const std::string& wss = GetWordSizeStr();
+
+		sysInfo.clear();
+		sysInfo.resize((oss.size() + 1) + (hws.size() + 1) + (wss.size() + 1), 0);
+
+		std::snprintf(reinterpret_cast<char*>(sysInfo.data()), sysInfo.size(), "%s\n%s\n%s\n", oss.data(), hws.data(), wss.data());
+
+		sha512::calc_digest(sysInfo, rawHash);
+		sha512::dump_digest(rawHash, hexHash);
+
+		return {hexHash.data(), hexHash.data() + hexHash.size()};
+	}
+
+	std::string GetMacAddrHash() {
+		const std::array<uint8_t, 6>& rawAddr = GetRawMacAddr();
+		const std::string& hashStr = IntToString(CRC::CalcDigest(rawAddr.data(), rawAddr.size()), "%x");
+		return hashStr;
+	}
+
+
 
 	uint64_t FreeDiskSpace(const std::string& path) {
 		#ifdef WIN32
@@ -488,11 +516,6 @@ namespace Platform
 
 	uint32_t NativeWordSize() { return (sizeof(void*)); }
 	uint32_t SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
-	uint32_t DequeChunkSize() {
-		std::deque<int> q = {0, 1};
-		for (int i = 1; ((&q[i] - &q[i - 1]) == 1); q.push_back(++i));
-		return (q.size() - 1);
-	}
 
 
 	bool Is64Bit() { return (NativeWordSize() == 8); }
@@ -642,4 +665,92 @@ namespace Platform
 		return execError;
 	}
 
+
+
+
+
+
+
+	#if defined(WIN32) || defined(_WIN32)
+	bool GetMacType(std::array<uint8_t, 6>& macAddr, uint32_t macType) {
+		IP_ADAPTER_INFO adapterInfo[16];
+
+		DWORD dwBufLen = sizeof(adapterInfo);
+		DWORD dwStatus = GetAdaptersInfo(adapterInfo, &dwBufLen);
+
+		if (dwStatus == ERROR_BUFFER_OVERFLOW)
+			return false;
+		if (dwStatus != NO_ERROR)
+			return false;
+
+		for (size_t i = 0, n = dwBufLen / sizeof(adapterInfo); i < n; i++) {
+			if ((macType != 0) && (adapterInfo[i].Type != mactype))
+				continue;
+			if (adapterInfo[i].AddressLength != macAddr.size())
+				continue;
+
+			memcpy(macAddr.data(), adapterInfo[i].Address, adapterInfo[i].AddressLength);
+
+			if (std::find_if(macAddr.begin(), macAddr.end(), [](uint8_t byte) { return (byte != 0); }) != macAddr.end())
+				return true;
+		}
+
+		return false;
+	}
+
+	std::array<uint8_t, 6> GetRawMacAddr() {
+		std::array<uint8_t, 6> macAddr = {{0, 0, 0, 0, 0, 0}};
+
+		if (GetMacType(macAddr, MIB_IF_TYPE_ETHERNET))
+			return macAddr;
+		if (GetMacType(macAddr, IF_TYPE_IEEE80211))
+			return macAddr;
+
+		return (GetMacType(macAddr, 0), macAddr);
+	}
+
+	#elif defined(__APPLE__)
+
+	std::array<uint8_t, 6> GetRawMacAddr() {
+		// TODO: http://lists.freebsd.org/pipermail/freebsd-hackers/2004-June/007415.html
+		return {{0, 0, 0, 0, 0, 0}};
+	}
+
+	#else
+
+	std::array<uint8_t, 6> GetRawMacAddr() {
+		std::array<uint8_t, 6> macAddr = {{0, 0, 0, 0, 0, 0}};
+
+		ifaddrs* ifap = nullptr;
+
+		if (getifaddrs(&ifap) != 0)
+			return macAddr;
+
+		for (ifaddrs* iter = ifap; iter != nullptr; iter = iter->ifa_next) {
+			const sockaddr_ll* sal = reinterpret_cast<sockaddr_ll*>(iter->ifa_addr);
+
+			if (sal->sll_family != AF_PACKET)
+				continue;
+			if (sal->sll_halen != macAddr.size())
+				continue;
+
+			memcpy(macAddr.data(), sal->sll_addr, sal->sll_halen);
+
+			if (std::find_if(macAddr.begin(), macAddr.end(), [](uint8_t byte) { return (byte != 0); }) != macAddr.end())
+				break;
+		}
+
+		freeifaddrs(ifap);
+		return macAddr;
+	}
+	#endif
+
+	std::array<char, 18> GetHexMacAddr() {
+		std::array<uint8_t,  6> rawAddr = GetRawMacAddr();
+		std::array<   char, 18> hexAddr;
+
+		memset(hexAddr.data(), 0, hexAddr.size());
+		snprintf(hexAddr.data(), hexAddr.size(), "%02x:%02x:%02x:%02x:%02x:%02x", rawAddr[0], rawAddr[1], rawAddr[2], rawAddr[3], rawAddr[4], rawAddr[5]);
+		return hexAddr;
+	}
 } // namespace Platform

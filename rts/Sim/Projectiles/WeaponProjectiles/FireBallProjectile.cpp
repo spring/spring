@@ -11,7 +11,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/creg/STL_Deque.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )

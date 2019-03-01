@@ -24,7 +24,7 @@
 #include "System/FastMath.h"
 #include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 static constexpr int MIN_GROUND_DETAIL[] = {                               0,   4};
 static constexpr int MAX_GROUND_DETAIL[] = {CBasicMeshDrawer::LOD_LEVELS - 1, 200};

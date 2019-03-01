@@ -7,7 +7,7 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 CR_BIND_DERIVED(CBuilding, CUnit, )

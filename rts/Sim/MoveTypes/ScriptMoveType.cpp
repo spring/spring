@@ -10,7 +10,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CScriptMoveType, (

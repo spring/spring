@@ -29,7 +29,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FastMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/type2.h"
 #include "System/Sound/ISoundChannels.h"
@@ -547,7 +547,7 @@ void CGroundMoveType::SlowUpdate()
 					numIdlingSlowUpdates = std::max(0, int(numIdlingSlowUpdates - 1));
 				}
 
-				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
+				if (numIdlingUpdates > (SPRING_MAX_HEADING / turnRate)) {
 					// case A: we have a path but are not moving
 					LOG_L(L_DEBUG, "[%s] unit %i has pathID %i but %i ETA failures", __func__, owner->id, pathID, numIdlingUpdates);
 
@@ -722,8 +722,8 @@ bool CGroundMoveType::FollowPath()
 		}
 
 		if (!atGoal) {
-			numIdlingUpdates -= ((numIdlingUpdates >                 0) * (1 - idling));
-			numIdlingUpdates += ((numIdlingUpdates < SHORTINT_MAXVALUE) *      idling );
+			numIdlingUpdates -= ((numIdlingUpdates >                  0) * (1 - idling));
+			numIdlingUpdates += ((numIdlingUpdates < SPRING_MAX_HEADING) *      idling );
 		}
 
 		// atEndOfPath never becomes true when useRawMovement, except via StopMoving
@@ -815,7 +815,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 
 			if (!fpsMode && turnDeltaHeading != 0) {
 				// only auto-adjust speed for turns when not in FPS mode
-				const float reqTurnAngle = math::fabs(180.0f * short(owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
+				const float reqTurnAngle = math::fabs(180.0f * short(owner->heading - wantedHeading) / SPRING_MAX_HEADING);
 				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
 				const float turnMaxSpeed = mix(maxSpeed, maxReverseSpeed, reversing);
@@ -2558,7 +2558,7 @@ bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) cons
 	const float waypointAngle = Clamp(wpDir.dot(owner->frontdir), -1.0f, 0.0f);  // clamp to prevent NaN's; [-1, 0]
 	const float turnAngleDeg  = math::acosf(waypointAngle) * math::RAD_TO_DEG;   // in degrees; [90.0, 180.0]
 	const float fwdTurnAngle  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;    // in "headings"
-	const float revTurnAngle  = SHORTINT_MAXVALUE - fwdTurnAngle;                // 180 deg - angle
+	const float revTurnAngle  = SPRING_MAX_HEADING - fwdTurnAngle;               // 180 deg - angle
 
 	// values <= 0 preserve default behavior
 	if (maxReverseDist > 0.0f && minReverseAngle > 0.0f)

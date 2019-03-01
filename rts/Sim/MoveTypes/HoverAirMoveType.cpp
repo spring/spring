@@ -14,7 +14,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Matrix44f.h"
 #include "System/Sync/HsiehHash.h"
 
