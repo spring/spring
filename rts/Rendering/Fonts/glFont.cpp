@@ -12,7 +12,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"

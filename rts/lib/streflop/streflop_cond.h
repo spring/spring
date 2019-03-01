@@ -13,7 +13,7 @@
 #define STREFLOP_ENABLED 1
 #endif
 
-// these need to be known in FastMath.h and myMath.h which both include us
+// these need to be known in FastMath.h and SpringMath.h which both include us
 #ifdef __GNUC__
 	#define _const __attribute__((const))
 	#define _pure __attribute__((pure))

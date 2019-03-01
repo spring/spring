@@ -6,7 +6,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/Object.h"
 #include "System/float3.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 #include <algorithm>

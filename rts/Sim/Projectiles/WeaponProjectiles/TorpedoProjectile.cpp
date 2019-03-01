@@ -17,7 +17,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"

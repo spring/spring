@@ -10,7 +10,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 unsigned int QTPFS::NodeLayer::NUM_SPEEDMOD_BINS;
 float        QTPFS::NodeLayer::MIN_SPEEDMOD_VALUE;

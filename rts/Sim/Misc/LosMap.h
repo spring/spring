@@ -7,7 +7,7 @@
 
 #include <vector>
 #include "System/type2.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 struct SLosInstance;

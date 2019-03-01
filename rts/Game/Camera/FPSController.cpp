@@ -9,7 +9,7 @@
 #include "Map/ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CONFIG(int, FPSScrollSpeed).defaultValue(10);
 CONFIG(float, FPSMouseScale).defaultValue(0.01f);

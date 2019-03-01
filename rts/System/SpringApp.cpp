@@ -61,7 +61,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/MsgStrings.h"
 #include "System/SafeUtil.h"
 #include "System/SplashScreen.hpp"
@@ -207,7 +207,7 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Init()
 {
-	CMyMath::Init();
+	SpringMath::Init();
 	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
 	CGlobalRendering::InitStatic();

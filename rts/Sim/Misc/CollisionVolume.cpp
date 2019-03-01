@@ -5,7 +5,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 
 CR_BIND(CollisionVolume, )

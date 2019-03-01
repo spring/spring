@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CModInfo modInfo;
 

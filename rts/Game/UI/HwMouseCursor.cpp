@@ -19,7 +19,7 @@
 
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <SDL_config.h>
 #include <SDL_syswm.h>

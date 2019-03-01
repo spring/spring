@@ -11,6 +11,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/SpringMath.h"
 #include "System/creg/STL_Deque.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
@@ -143,3 +144,4 @@ int CFireBallProjectile::GetProjectilesCount() const
 	int numFire = std::min(10, numSparks);
 	return (numSparks + numFire);
 }
+

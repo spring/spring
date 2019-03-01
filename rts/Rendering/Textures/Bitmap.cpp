@@ -25,7 +25,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #define ENABLE_TEXMEMPOOL 1
 

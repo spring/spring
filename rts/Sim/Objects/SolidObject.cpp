@@ -9,7 +9,7 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 int CSolidObject::deletingRefID = -1;
 

@@ -44,7 +44,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for quadField.GetFeaturesExact(pos, radius)
 #include "System/SafeCStrings.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
 

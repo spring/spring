@@ -5,7 +5,7 @@
 #include "ReadMap.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #include <cassert>
 #include <limits>

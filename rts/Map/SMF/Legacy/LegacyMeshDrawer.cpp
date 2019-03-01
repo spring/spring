@@ -11,7 +11,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)

@@ -30,7 +30,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 
 #define DRAW_QUAD_SIZE 32

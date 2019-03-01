@@ -18,7 +18,7 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/Color.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 
 // the smokes life-time in frames

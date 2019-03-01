@@ -5,7 +5,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #define FLOW_EPSILON         0.01f
 #define FLOW_DECAY_ENABLED   0

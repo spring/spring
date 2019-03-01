@@ -12,7 +12,7 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
 CR_REG_METADATA(CGroundFlash, (

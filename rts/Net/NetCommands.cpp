@@ -31,7 +31,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/UnpackPacket.h"

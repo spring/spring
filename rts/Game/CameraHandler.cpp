@@ -19,7 +19,7 @@
 #include "Players/Player.h"
 #include "UI/UnitTracker.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
 #include "System/StringHash.h"
 #include "System/Config/ConfigHandler.h"

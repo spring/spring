@@ -1088,6 +1088,10 @@ EXPORT(void        ) SetSpringConfigFloat(const char* name, const float value);
 EXPORT(void        ) DeleteSpringConfigKey(const char* name);
 
 
+EXPORT(const char* ) GetSysInfoHash();
+EXPORT(const char* ) GetMacAddrHash();
+
+
 // from LuaParserAPI.cpp:
 
 EXPORT(void       ) lpClose();

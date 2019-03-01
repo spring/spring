@@ -69,7 +69,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/bitops.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/StringUtil.h"

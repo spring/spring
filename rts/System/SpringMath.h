@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef MYMATH_H
-#define MYMATH_H
+#ifndef SPRING_MATH_H
+#define SPRING_MATH_H
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/type2.h"
@@ -11,8 +11,8 @@
 #include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
 
-static constexpr int SHORTINT_MAXVALUE  = 32768;
-static constexpr int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
+static constexpr int SPRING_MAX_HEADING = 32768;
+static constexpr int SPRING_CIRCLE_DIVS = (SPRING_MAX_HEADING << 1);
 
 #define HEADING_CHECKSUM_1024 0x617a9968
 #define HEADING_CHECKSUM_4096 0x3d51b476
@@ -34,7 +34,7 @@ enum FacingMap {
 	NUM_FACINGS  = 4,
 };
 
-class CMyMath {
+class SpringMath {
 public:
 	static void Init();
 	static float2 headingToVectorTable[NUM_HEADINGS];
@@ -158,7 +158,7 @@ float GetRadFromXY(const float dx, const float dy) _const;
 float3 hs2rgb(float h, float s) _pure _warn_unused_result;
 
 
-#include "myMath.inl"
+#include "SpringMath.inl"
 
 #undef _const
 

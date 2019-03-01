@@ -11,7 +11,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/FastMath.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, )

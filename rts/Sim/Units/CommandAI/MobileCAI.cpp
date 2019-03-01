@@ -23,7 +23,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Log/ILog.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include <assert.h>
 

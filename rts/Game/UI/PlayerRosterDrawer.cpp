@@ -15,7 +15,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Misc/SpringTime.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 /******************************************************************************/
 

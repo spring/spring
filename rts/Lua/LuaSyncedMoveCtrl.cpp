@@ -16,7 +16,7 @@
 #include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 

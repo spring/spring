@@ -16,7 +16,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CONFIG(int, TreeRadius)
 	.defaultValue((int) (5.5f * 256))

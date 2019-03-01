@@ -17,7 +17,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"

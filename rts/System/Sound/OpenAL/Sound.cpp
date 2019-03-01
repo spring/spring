@@ -37,7 +37,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Platform/Threading.h"

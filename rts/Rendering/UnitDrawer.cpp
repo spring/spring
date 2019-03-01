@@ -46,7 +46,7 @@
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/MemPoolTypes.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
 

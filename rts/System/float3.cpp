@@ -2,7 +2,7 @@
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 CR_BIND(float3, )
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)))

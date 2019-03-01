@@ -4,7 +4,7 @@
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
 #include "System/Misc/SpringTime.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/GlobalRNG.h"
 
 #include <vector>

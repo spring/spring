@@ -15,7 +15,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Sync/HsiehHash.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (nullptr))

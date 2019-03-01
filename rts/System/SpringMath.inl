@@ -15,10 +15,10 @@ inline short int GetHeadingFromFacing(const int facing)
 {
 	switch (facing) {
 		case FACING_SOUTH: return      0;
-		case FACING_EAST:  return  16384;
+		case FACING_EAST : return  16384;
 		case FACING_NORTH: return  32767;
-		case FACING_WEST:  return -16384;
-		default: return 0;
+		case FACING_WEST : return -16384;
+		default          : return      0;
 	}
 }
 
@@ -26,11 +26,11 @@ inline int GetFacingFromHeading(const short int heading)
 {
 	if (heading >= 0) {
 		if (heading <  8192) { return FACING_SOUTH; }
-		if (heading < 24576) { return FACING_EAST; }
+		if (heading < 24576) { return FACING_EAST ; }
 		return FACING_NORTH;
 	} else {
 		if (heading >=  -8192) { return FACING_SOUTH; }
-		if (heading >= -24576) { return FACING_WEST; }
+		if (heading >= -24576) { return FACING_WEST ; }
 		return FACING_NORTH;
 	}
 }
@@ -46,10 +46,8 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 		const float d  = dx / (dz + 0.000001f * sz);
 		const float dd = d * d;
 
-		if (d > 1.0f) {
-			h = math::HALFPI - d / (dd + 0.28f);
-		} else if (d < -1.0f) {
-			h = -math::HALFPI - d / (dd + 0.28f);
+		if (math::fabs(d) > 1.0f) {
+			h = std::copysign(1.0f, d) * math::HALFPI - d / (dd + 0.28f);
 		} else {
 			h = d / (1.0f + 0.28f * dd);
 		}
@@ -65,21 +63,21 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 
 inline short int GetHeadingFromVector(const float dx, const float dz)
 {
-	constexpr float s = SHORTINT_MAXVALUE * math::INVPI;
+	constexpr float s = SPRING_MAX_HEADING * math::INVPI;
 	const     float h = GetHeadingFromVectorF(dx, dz) * s;
 
-	// Prevents h from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following
+	// Prevents h from going beyond SPRING_MAX_HEADING.
+	// If h goes beyond SPRING_MAX_HEADING, the following
 	// conversion to a short int crashes.
-	// if (h > SHORTINT_MAXVALUE) h = SHORTINT_MAXVALUE;
+	// if (h > SPRING_MAX_HEADING) h = SPRING_MAX_HEADING;
 	// return (short int) h;
 	int ih = (int) h;
 
 	// if ih represents due-north the modulo operation
 	// below would cause it to wrap around from -32768
 	// to 0 (which means due-south), so add 1
-	ih += (ih == -SHORTINT_MAXVALUE);
-	ih %= SHORTINT_MAXVALUE;
+	ih += (ih == -SPRING_MAX_HEADING);
+	ih %= SPRING_MAX_HEADING;
 	return (short int) ih;
 }
 
@@ -88,12 +86,12 @@ inline shortint2 GetHAndPFromVector(const float3 vec)
 {
 	shortint2 ret;
 
-	// Prevents ret.y from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following
+	// Prevents ret.y from going beyond SPRING_MAX_HEADING.
+	// If h goes beyond SPRING_MAX_HEADING, the following
 	// conversion to a short int crashes.
 	// this change destroys the whole meaning with using short ints....
-	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * math::INVPI));
-	iy %= SHORTINT_MAXVALUE;
+	int iy = (int) (math::asin(vec.y) * (SPRING_MAX_HEADING * math::INVPI));
+	iy %= SPRING_MAX_HEADING;
 	ret.y = (short int) iy;
 	ret.x = GetHeadingFromVector(vec.x, vec.z);
 	return ret;
@@ -110,8 +108,10 @@ inline float2 GetHAndPFromVectorF(const float3 vec)
 
 inline float3 GetVectorFromHeading(const short int heading)
 {
-	const int idx = heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2;
-	const float2 vec = CMyMath::headingToVectorTable[idx];
+	constexpr int div = (SPRING_MAX_HEADING / NUM_HEADINGS) * 2;
+	const     int idx = heading / div + NUM_HEADINGS / 2;
+
+	const float2 vec = SpringMath::headingToVectorTable[idx];
 	return float3(vec.x, 0.0f, vec.y);
 }
 
@@ -160,12 +160,12 @@ inline bool RadsAreEqual(const float f1, const float f2)
 inline float GetRadFromXY(const float dx, const float dy)
 {
 	if (dx != 0.0f) {
-		float a = math::atan(dy / dx);
+		const float a = math::atan(dy / dx);
 
 		if (dx < 0.0f)
-			a += math::PI;
-		else if (dy < 0.0f)
-			a += math::TWOPI;
+			return (a + math::PI);
+		if (dy < 0.0f)
+			return (a + math::TWOPI);
 
 		return a;
 	}

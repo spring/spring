@@ -21,7 +21,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/Log/ILog.h"
 
 static const CUnit* GetTrackableUnit(const CUnit* caiOwner, const CUnit* cmdUnit)
