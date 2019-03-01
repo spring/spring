@@ -282,7 +282,7 @@ static inline void DrawUnitColVol(const CUnit* u, Shader::IProgramObject* s)
 
 			s->SetUniform4f(3, 0.0f, 0.0f, 0.6f, 0.35f);
 
-			DrawCollisionVolume(shieldColVol, s, m);
+			DrawCollisionVolume(shieldColVol, s, CMatrix44f{shieldWeapon->weaponMuzzlePos});
 		}
 
 		if (v->HasCustomType() || v->HasCustomProp(u->radius)) {

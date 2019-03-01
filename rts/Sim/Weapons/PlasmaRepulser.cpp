@@ -100,8 +100,14 @@ void CPlasmaRepulser::Init()
 
 bool CPlasmaRepulser::IsRepulsing(CWeaponProjectile* p) const
 {
-	return weaponDef->shieldRepulser && std::find(repulsedProjectiles.begin(), repulsedProjectiles.end(), p) != repulsedProjectiles.end();
+	return (weaponDef->shieldRepulser && std::find(repulsedProjectiles.begin(), repulsedProjectiles.end(), p) != repulsedProjectiles.end());
 }
+
+bool CPlasmaRepulser::IgnoreInteriorHit(CWeaponProjectile* p) const
+{
+	return (weaponDef->exteriorShield && !IsRepulsing(p));
+}
+
 
 bool CPlasmaRepulser::IsActive() const
 {
@@ -133,8 +139,6 @@ void CPlasmaRepulser::Update()
 	}
 
 	UpdateWeaponVectors();
-	// CollisionHandler will cancel this out
-	collisionVolume.SetOffsets(-owner->relMidPos);
 
 	if (weaponMuzzlePos != lastMuzzlePos)
 		quadField.MovedRepulser(this);
