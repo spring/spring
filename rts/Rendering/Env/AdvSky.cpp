@@ -13,13 +13,13 @@
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 
 #define Y_PART 10.0
 #define X_PART 10.0
 
 #define CLOUD_DETAIL 6
-#define CLOUD_MASK (CLOUD_SIZE-1)
+#define CLOUD_MASK (CLOUD_SIZE - 1)
 
 
 CAdvSky::CAdvSky()

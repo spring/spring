@@ -14,7 +14,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"

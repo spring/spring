@@ -17,7 +17,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
 
 CONFIG(bool, DynamicSky).defaultValue(false).description("Sets whether the clouds in the sky will be procedurally generated and moved. Resource heavy!");
