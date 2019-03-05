@@ -938,9 +938,9 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 
 bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	const float3 tmpTargetDir = (tgtPos - aimFromPos).SafeNormalize();
-
 	const float heightDiff = tgtPos.y - aimFromPos.y;
+	const float targetDist = aimFromPos.SqDistance2D(tgtPos);
+
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
 	if (trg.type == Target_Pos || weaponDef->cylinderTargeting < 0.01f) {
@@ -948,16 +948,15 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 		weaponRange = GetRange2D(0.0f, heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
-		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
+		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod))
 			weaponRange = GetRange2D(0.0f, 0.0f);
-		}
 	}
 
-	if (aimFromPos.SqDistance2D(tgtPos) > (weaponRange * weaponRange))
+	if (targetDist > (weaponRange * weaponRange))
 		return false;
 
 	// NOTE: mainDir is in unit-space
-	return (CheckTargetAngleConstraint(tmpTargetDir, owner->GetObjectSpaceVec(mainDir)));
+	return (CheckTargetAngleConstraint((tgtPos - aimFromPos).SafeNormalize(), owner->GetObjectSpaceVec(mainDir)));
 }
 
 
