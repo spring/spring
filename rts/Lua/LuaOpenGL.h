@@ -3,7 +3,6 @@
 #ifndef LUA_GL_H
 #define LUA_GL_H
 
-#include <string>
 #include <vector>
 
 #include "Lua/LuaHandle.h"
@@ -158,6 +157,7 @@ class LuaOpenGL {
 
 		static int ConfigScreen(lua_State* L);
 
+		static int GetScreenViewTrans(lua_State* L);
 		static int GetViewSizes(lua_State* L);
 		static int GetViewRange(lua_State* L);
 
