@@ -70,14 +70,12 @@
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 
-using std::max;
-
 #undef far // avoid collision with windef.h
 #undef near
 
 CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
 
-static const int MAX_TEXTURE_UNITS = 32;
+static constexpr int MAX_TEXTURE_UNITS = 32;
 
 /******************************************************************************/
 /******************************************************************************/
