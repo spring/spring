@@ -135,12 +135,14 @@ LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const char* name)
 		case hashString(            "billboard"): { return LUAMATRICES_BILLBOARD            ; } break;
 		case hashString(               "shadow"): { return LUAMATRICES_SHADOW               ; } break;
 
+		#if 0
 		case hashString(  "mmview"   ): { return LUAMATRICES_MINIMAP_DRAWVIEW     ; } break;
 		case hashString(  "mmproj"   ): { return LUAMATRICES_MINIMAP_DRAWPROJ     ; } break;
 		case hashString("dimmview"   ): { return LUAMATRICES_MINIMAP_DIMMVIEW     ; } break;
 		case hashString("dimmproj"   ): { return LUAMATRICES_MINIMAP_DIMMPROJ     ; } break;
 		case hashString("dimmviewlua"): { return LUAMATRICES_MINIMAP_DIMMVIEW_LUA ; } break;
 		case hashString("dimmprojlua"): { return LUAMATRICES_MINIMAP_DIMMPROJ_LUA ; } break;
+		#endif
 
 		// backward compatibility
 		case hashString("camera"   ): { return LUAMATRICES_VIEW             ; } break;
