@@ -83,7 +83,7 @@ public:
 
 	bool PieceExists(unsigned int scriptPieceNum) const {
 		// NOTE: there can be NULL pieces present from the remapping in CobInstance
-		return ((scriptPieceNum < pieces.size()) && (pieces[scriptPieceNum] != NULL));
+		return ((scriptPieceNum < pieces.size()) && (pieces[scriptPieceNum] != nullptr));
 	}
 
 	LocalModelPiece* GetScriptLocalModelPiece(unsigned int scriptPieceNum) const {
@@ -94,16 +94,16 @@ public:
 	int ScriptToModel(int scriptPieceNum) const;
 	int ModelToScript(int lmodelPieceNum) const;
 
-#define SCRIPT_TO_LOCALPIECE_FUNC(x, y, z, w)                          \
-	x y(int scriptPieceNum) const {                                    \
-		if (!PieceExists(scriptPieceNum))                              \
-			return w;                                                  \
-		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum); \
-		return (p->z());                                               \
+#define SCRIPT_TO_LOCALPIECE_FUNC(RetType, ScriptFunc, PieceFunc)       \
+	RetType ScriptFunc(int scriptPieceNum) const {                      \
+		if (!PieceExists(scriptPieceNum))                               \
+			return {};                                                  \
+		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum);  \
+		return (p->PieceFunc());                                        \
 	}
 
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
-	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
+	SCRIPT_TO_LOCALPIECE_FUNC(    float3, GetPiecePos,    GetAbsolutePos     )
+	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix, GetModelSpaceMatrix)
 
 	bool GetEmitDirPos(int scriptPieceNum, float3& pos, float3& dir) const {
 		if (!PieceExists(scriptPieceNum))
