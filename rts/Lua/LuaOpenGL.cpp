@@ -90,8 +90,10 @@ LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
 
-float LuaOpenGL::screenWidth = 0.36f;
-float LuaOpenGL::screenDistance = 0.60f;
+float LuaOpenGL::screenWidth = 0.36f; // screen width (meters)
+float LuaOpenGL::screenDistance = 0.60f; // eye-to-screen (meters)
+
+static float3 screenViewTrans;
 
 std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
 
@@ -213,6 +215,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
+	REGISTER_LUA_CFUNC(GetScreenViewTrans);
 	REGISTER_LUA_CFUNC(GetViewSizes);
 	REGISTER_LUA_CFUNC(GetViewRange);
 
@@ -889,37 +892,36 @@ void LuaOpenGL::RevertWorldLighting()
 void LuaOpenGL::SetupScreenMatrices()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+
+	const int remScreenSize = globalRendering->screenSizeY - globalRendering->winSizeY; // remaining desktop size (ssy >= wsy)
+	const int bottomWinCoor = remScreenSize - globalRendering->winPosY; // *bottom*-left origin
+
+	const float vpx  = globalRendering->viewPosX + globalRendering->winPosX;
+	const float vpy  = globalRendering->viewPosY + bottomWinCoor;
+	const float vsx  = globalRendering->viewSizeX; // same as winSizeX except in dual-screen mode
+	const float vsy  = globalRendering->viewSizeY; // same as winSizeY
+	const float ssx  = globalRendering->screenSizeX;
+	const float ssy  = globalRendering->screenSizeY;
+	const float hssx = 0.5f * ssx;
+	const float hssy = 0.5f * ssy;
+
+	const float zplane = screenDistance * (ssx / screenWidth);
+	const float znear  = zplane * 0.5f;
+	const float zfar   = zplane * 2.0f;
+	const float zfact  = znear / zplane;
+
+	const float left   = (vpx - hssx) * zfact;
+	const float bottom = (vpy - hssy) * zfact;
+	const float right  = ((vpx + vsx) - hssx) * zfact;
+	const float top    = ((vpy + vsy) - hssy) * zfact;
+
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
-	const float dist   = screenDistance;         // eye-to-screen (meters)
-	const float width  = screenWidth;            // screen width (meters)
-	const float vppx   = float(globalRendering->winPosX + globalRendering->viewPosX); // view pixel pos x
-	const float vppy   = float(winPosY_bl + globalRendering->viewPosY); // view pixel pos y
-	const float vpsx   = float(globalRendering->viewSizeX);   // view pixel size x
-	const float vpsy   = float(globalRendering->viewSizeY);   // view pixel size y
-	const float spsx   = float(globalRendering->screenSizeX); // screen pixel size x
-	const float spsy   = float(globalRendering->screenSizeY); // screen pixel size x
-	const float halfSX = 0.5f * spsx;            // half screen pixel size x
-	const float halfSY = 0.5f * spsy;            // half screen pixel size y
-
-	const float zplane = dist * (spsx / width);
-	const float znear  = zplane * 0.5;
-	const float zfar   = zplane * 2.0;
-	const float factor = (znear / zplane);
-	const float left   = (vppx - halfSX) * factor;
-	const float bottom = (vppy - halfSY) * factor;
-	const float right  = ((vppx + vpsx) - halfSX) * factor;
-	const float top    = ((vppy + vpsy) - halfSY) * factor;
-	glFrustum(left, right, bottom, top, znear, zfar);
+	glLoadMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	// translate so that (0,0,0) is on the zplane,
-	// on the window's bottom left corner
-	const float distAdj = (zplane / znear);
-	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
+	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
+	glTranslatef3(screenViewTrans = {left / zfact, bottom / zfact, -zplane});
 }
 
 void LuaOpenGL::RevertScreenMatrices()
@@ -1072,7 +1074,7 @@ int LuaOpenGL::GetString(lua_State* L)
 	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
 	const char* pstring = (const char*) glGetString(pname);
 
-	if (pstring != NULL) {
+	if (pstring != nullptr) {
 		lua_pushstring(L, pstring);
 	} else {
 		lua_pushstring(L, "[NULL]");
@@ -1088,6 +1090,14 @@ int LuaOpenGL::ConfigScreen(lua_State* L)
 	screenWidth = luaL_checkfloat(L, 1);
 	screenDistance = luaL_checkfloat(L, 2);
 	return 0;
+}
+
+int LuaOpenGL::GetScreenViewTrans(lua_State* L)
+{
+	lua_pushnumber(L, screenViewTrans.x);
+	lua_pushnumber(L, screenViewTrans.y);
+	lua_pushnumber(L, screenViewTrans.z);
+	return 3;
 }
 
 
