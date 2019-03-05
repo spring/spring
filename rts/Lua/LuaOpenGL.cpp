@@ -69,12 +69,10 @@
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 
-using std::max;
-
 #undef far // avoid collision with windef.h
 #undef near
 
-static const int MAX_TEXTURE_UNITS = 32;
+static constexpr int MAX_TEXTURE_UNITS = 32;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -811,7 +809,7 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float zplane = screenDistance * (ssx / screenWidth);
 	const float znear  = zplane * 0.5;
 	const float zfar   = zplane * 2.0;
-	const float factor = (zplane / znear);
+	const float factor = zplane / znear;
 	const float left   = (vpx - hssx) / factor;
 	const float bottom = (vpy - hssy) / factor;
 	const float right  = ((vpx + vsx) - hssx) / factor;

@@ -31,106 +31,11 @@
 #include "System/Matrix44f.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
-#include "System/Sync/HsiehHash.h"
 
 
 
 // for "$info:los", etc
 static spring::unsynced_map<size_t, LuaMatTexture> luaMatTextures;
-
-static const spring::unsynced_map<std::string, LuaMatTexture::Type> luaMatTexTypeMap = {
-	// atlases
-	{"$units",  LuaMatTexture::LUATEX_3DOTEXTURE},
-	{"$units1", LuaMatTexture::LUATEX_3DOTEXTURE},
-	{"$units2", LuaMatTexture::LUATEX_3DOTEXTURE},
-
-	// cubemaps
-	{"$reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
-	{"$map_reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
-	{"$sky_reflection", LuaMatTexture::LUATEX_SKY_REFLECTION},
-
-	// specials
-	{"$shadow", LuaMatTexture::LUATEX_SHADOWMAP},
-	{"$heightmap", LuaMatTexture::LUATEX_HEIGHTMAP},
-
-	// SMF-maps
-	{"$grass", LuaMatTexture::LUATEX_SMF_GRASS},
-	{"$detail", LuaMatTexture::LUATEX_SMF_DETAIL},
-	{"$minimap", LuaMatTexture::LUATEX_SMF_MINIMAP},
-	{"$shading", LuaMatTexture::LUATEX_SMF_SHADING},
-	{"$normals", LuaMatTexture::LUATEX_SMF_NORMALS},
-	// SSMF-maps
-	{"$ssmf_normals",       LuaMatTexture::LUATEX_SSMF_NORMALS },
-	{"$ssmf_specular",      LuaMatTexture::LUATEX_SSMF_SPECULAR},
-	{"$ssmf_splat_distr",   LuaMatTexture::LUATEX_SSMF_SDISTRIB},
-	{"$ssmf_splat_detail",  LuaMatTexture::LUATEX_SSMF_SDETAIL },
-	{"$ssmf_splat_normals", LuaMatTexture::LUATEX_SSMF_SNORMALS},
-	{"$ssmf_sky_refl",      LuaMatTexture::LUATEX_SSMF_SKYREFL },
-	{"$ssmf_emission",      LuaMatTexture::LUATEX_SSMF_EMISSION},
-	{"$ssmf_parallax",      LuaMatTexture::LUATEX_SSMF_PARALLAX},
-
-
-	{"$info",         LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
-	{"$extra",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
-
-	{"$map_gb_nt", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
-	{"$map_gb_dt", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
-	{"$map_gb_st", LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC},
-	{"$map_gb_et", LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT},
-	{"$map_gb_mt", LuaMatTexture::LUATEX_MAP_GBUFFER_MISC},
-	{"$map_gb_zt", LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL},
-
-	{"$map_gbuffer_normtex", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
-	{"$map_gbuffer_difftex", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
-	{"$map_gbuffer_spectex", LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC},
-	{"$map_gbuffer_emittex", LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT},
-	{"$map_gbuffer_misctex", LuaMatTexture::LUATEX_MAP_GBUFFER_MISC},
-	{"$map_gbuffer_zvaltex", LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL},
-
-	{"$mdl_gb_nt", LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM},
-	{"$mdl_gb_dt", LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF},
-	{"$mdl_gb_st", LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC},
-	{"$mdl_gb_et", LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT},
-	{"$mdl_gb_mt", LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC},
-	{"$mdl_gb_zt", LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL},
-
-	{"$model_gbuffer_normtex", LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM},
-	{"$model_gbuffer_difftex", LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF},
-	{"$model_gbuffer_spectex", LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC},
-	{"$model_gbuffer_emittex", LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT},
-	{"$model_gbuffer_misctex", LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC},
-	{"$model_gbuffer_zvaltex", LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL},
-
-	{"$font"     , LuaMatTexture::LUATEX_FONT},
-	{"$smallfont", LuaMatTexture::LUATEX_FONTSMALL},
-	{"$fontsmall", LuaMatTexture::LUATEX_FONTSMALL},
-
-};
-
-static const spring::unsynced_map<unsigned int, LuaMatrixType> luaMatrixTypeMap = {
-	{hashString("view"                 ), LUAMATRICES_VIEW                 },
-	{hashString(    "projection"       ), LUAMATRICES_PROJECTION           },
-	{hashString("viewprojection"       ), LUAMATRICES_VIEWPROJECTION       },
-	{hashString("viewinverse"          ), LUAMATRICES_VIEWINVERSE          },
-	{hashString(    "projectioninverse"), LUAMATRICES_PROJECTIONINVERSE    },
-	{hashString("viewprojectioninverse"), LUAMATRICES_VIEWPROJECTIONINVERSE},
-	{hashString(            "billboard"), LUAMATRICES_BILLBOARD            },
-	{hashString(               "shadow"), LUAMATRICES_SHADOW               },
-
-	{hashString(  "mmview"   ),           LUAMATRICES_MINIMAP_DRAWVIEW     },
-	{hashString(  "mmproj"   ),           LUAMATRICES_MINIMAP_DRAWPROJ     },
-	{hashString("dimmview"   ),           LUAMATRICES_MINIMAP_DIMMVIEW     },
-	{hashString("dimmproj"   ),           LUAMATRICES_MINIMAP_DIMMPROJ     },
-	{hashString("dimmviewlua"),           LUAMATRICES_MINIMAP_DIMMVIEW_LUA },
-	{hashString("dimmprojlua"),           LUAMATRICES_MINIMAP_DIMMPROJ_LUA },
-
-	// backward compatibility
-	{hashString("camera"),    LUAMATRICES_VIEW             },
-	{hashString("camprj"),    LUAMATRICES_PROJECTION       },
-	{hashString("caminv"),    LUAMATRICES_VIEWINVERSE      },
-	{hashString("camprjinv"), LUAMATRICES_PROJECTIONINVERSE},
-};
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -146,28 +51,112 @@ void LuaOpenGLUtils::ResetState()
 
 LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name)
 {
-	const auto it = luaMatTexTypeMap.find(name);
+	switch (hashString(name.c_str())) {
+		// atlases
+		case hashString("$units" ): { return LuaMatTexture::LUATEX_3DOTEXTURE; } break;
+		case hashString("$units1"): { return LuaMatTexture::LUATEX_3DOTEXTURE; } break;
+		case hashString("$units2"): { return LuaMatTexture::LUATEX_3DOTEXTURE; } break;
 
-	if (it == luaMatTexTypeMap.end())
-		return LuaMatTexture::LUATEX_NONE;
+		// cubemaps
+		case hashString(    "$reflection"): { return LuaMatTexture::LUATEX_MAP_REFLECTION; } break;
+		case hashString("$map_reflection"): { return LuaMatTexture::LUATEX_MAP_REFLECTION; } break;
+		case hashString("$sky_reflection"): { return LuaMatTexture::LUATEX_SKY_REFLECTION; } break;
 
-	return it->second;
+		// specials
+		case hashString("$shadow"   ): { return LuaMatTexture::LUATEX_SHADOWMAP; } break;
+		case hashString("$heightmap"): { return LuaMatTexture::LUATEX_HEIGHTMAP; } break;
+
+		// SMF-maps
+		case hashString("$grass"  ): { return LuaMatTexture::LUATEX_SMF_GRASS; } break;
+		case hashString("$detail" ): { return LuaMatTexture::LUATEX_SMF_DETAIL; } break;
+		case hashString("$minimap"): { return LuaMatTexture::LUATEX_SMF_MINIMAP; } break;
+		case hashString("$shading"): { return LuaMatTexture::LUATEX_SMF_SHADING; } break;
+		case hashString("$normals"): { return LuaMatTexture::LUATEX_SMF_NORMALS; } break;
+		// SSMF-maps
+		case hashString("$ssmf_normals"      ): { return LuaMatTexture::LUATEX_SSMF_NORMALS ; } break;
+		case hashString("$ssmf_specular"     ): { return LuaMatTexture::LUATEX_SSMF_SPECULAR; } break;
+		case hashString("$ssmf_splat_distr"  ): { return LuaMatTexture::LUATEX_SSMF_SDISTRIB; } break;
+		case hashString("$ssmf_splat_detail" ): { return LuaMatTexture::LUATEX_SSMF_SDETAIL ; } break;
+		case hashString("$ssmf_splat_normals"): { return LuaMatTexture::LUATEX_SSMF_SNORMALS; } break;
+		case hashString("$ssmf_sky_refl"     ): { return LuaMatTexture::LUATEX_SSMF_SKYREFL ; } break;
+		case hashString("$ssmf_emission"     ): { return LuaMatTexture::LUATEX_SSMF_EMISSION; } break;
+		case hashString("$ssmf_parallax"     ): { return LuaMatTexture::LUATEX_SSMF_PARALLAX; } break;
+
+
+		case hashString("$info" ): { return LuaMatTexture::LUATEX_INFOTEX_ACTIVE; } break;
+		case hashString("$extra"): { return LuaMatTexture::LUATEX_INFOTEX_ACTIVE; } break;
+
+		case hashString("$map_gb_nt"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_NORM; } break;
+		case hashString("$map_gb_dt"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF; } break;
+		case hashString("$map_gb_st"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC; } break;
+		case hashString("$map_gb_et"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT; } break;
+		case hashString("$map_gb_mt"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_MISC; } break;
+		case hashString("$map_gb_zt"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL; } break;
+
+		case hashString("$map_gbuffer_normtex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_NORM; } break;
+		case hashString("$map_gbuffer_difftex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF; } break;
+		case hashString("$map_gbuffer_spectex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC; } break;
+		case hashString("$map_gbuffer_emittex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT; } break;
+		case hashString("$map_gbuffer_misctex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_MISC; } break;
+		case hashString("$map_gbuffer_zvaltex"): { return LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL; } break;
+
+		case hashString("$mdl_gb_nt"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM; } break;
+		case hashString("$mdl_gb_dt"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF; } break;
+		case hashString("$mdl_gb_st"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC; } break;
+		case hashString("$mdl_gb_et"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT; } break;
+		case hashString("$mdl_gb_mt"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC; } break;
+		case hashString("$mdl_gb_zt"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL; } break;
+
+		case hashString("$model_gbuffer_normtex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM; } break;
+		case hashString("$model_gbuffer_difftex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF; } break;
+		case hashString("$model_gbuffer_spectex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC; } break;
+		case hashString("$model_gbuffer_emittex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT; } break;
+		case hashString("$model_gbuffer_misctex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC; } break;
+		case hashString("$model_gbuffer_zvaltex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL; } break;
+
+		case hashString("$font"     ): { return LuaMatTexture::LUATEX_FONT     ; } break;
+		case hashString("$smallfont"): { return LuaMatTexture::LUATEX_FONTSMALL; } break;
+		case hashString("$fontsmall"): { return LuaMatTexture::LUATEX_FONTSMALL; } break;
+
+		default: {} break;
+	}
+
+	return LuaMatTexture::LUATEX_NONE;
 }
 
 LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const char* name)
 {
-	const auto it = luaMatrixTypeMap.find(hashString(name));
+	switch (hashString(name)) {
+		case hashString("view"                 ): { return LUAMATRICES_VIEW                 ; } break;
+		case hashString(    "projection"       ): { return LUAMATRICES_PROJECTION           ; } break;
+		case hashString("viewprojection"       ): { return LUAMATRICES_VIEWPROJECTION       ; } break;
+		case hashString("viewinverse"          ): { return LUAMATRICES_VIEWINVERSE          ; } break;
+		case hashString(    "projectioninverse"): { return LUAMATRICES_PROJECTIONINVERSE    ; } break;
+		case hashString("viewprojectioninverse"): { return LUAMATRICES_VIEWPROJECTIONINVERSE; } break;
+		case hashString(            "billboard"): { return LUAMATRICES_BILLBOARD            ; } break;
+		case hashString(               "shadow"): { return LUAMATRICES_SHADOW               ; } break;
 
-	if (it == luaMatrixTypeMap.end())
-		return LUAMATRICES_NONE;
+		case hashString(  "mmview"   ): { return LUAMATRICES_MINIMAP_DRAWVIEW     ; } break;
+		case hashString(  "mmproj"   ): { return LUAMATRICES_MINIMAP_DRAWPROJ     ; } break;
+		case hashString("dimmview"   ): { return LUAMATRICES_MINIMAP_DIMMVIEW     ; } break;
+		case hashString("dimmproj"   ): { return LUAMATRICES_MINIMAP_DIMMPROJ     ; } break;
+		case hashString("dimmviewlua"): { return LUAMATRICES_MINIMAP_DIMMVIEW_LUA ; } break;
+		case hashString("dimmprojlua"): { return LUAMATRICES_MINIMAP_DIMMPROJ_LUA ; } break;
 
-	return it->second;
+		// backward compatibility
+		case hashString("camera"   ): { return LUAMATRICES_VIEW             ; } break;
+		case hashString("camprj"   ): { return LUAMATRICES_PROJECTION       ; } break;
+		case hashString("caminv"   ): { return LUAMATRICES_VIEWINVERSE      ; } break;
+		case hashString("camprjinv"): { return LUAMATRICES_PROJECTIONINVERSE; } break;
+
+		default: {} break;
+	}
+
+	return LUAMATRICES_NONE;
 }
 
 const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 {
-	// skipped for performance reasons (this function gets called a lot)
-	// StringToLowerInPlace(name);
 	const LuaMatrixType matType = GetLuaMatrixType(name);
 
 	switch (matType) {
