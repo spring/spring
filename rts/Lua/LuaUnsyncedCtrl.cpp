@@ -830,12 +830,29 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
-	const float3 pos(luaL_checkfloat(L, 1),
-	                 luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3));
+	const float4 targetPos = {
+		luaL_checkfloat(L, 1),
+		luaL_checkfloat(L, 2),
+		luaL_checkfloat(L, 3),
+		luaL_optfloat(L, 4, 0.5f),
+	};
+	const float3 targetDir = {
+		luaL_optfloat(L, 5, (camera->GetDir()).x),
+		luaL_optfloat(L, 6, (camera->GetDir()).y),
+		luaL_optfloat(L, 7, (camera->GetDir()).z),
+	};
 
-	camHandler->CameraTransition(luaL_optfloat(L, 4, 0.5f));
-	camHandler->GetCurrentController().SetPos(pos);
+	if (targetPos.w >= 0.0f) {
+		camHandler->CameraTransition(targetPos.w);
+		camHandler->GetCurrentController().SetPos(targetPos);
+		camHandler->GetCurrentController().SetDir(targetDir);
+	} else {
+		// no transition, bypass controller
+		camera->SetPos(targetPos);
+		camera->SetDir(targetDir);
+		// camera->Update();
+	}
+
 	return 0;
 }
 
