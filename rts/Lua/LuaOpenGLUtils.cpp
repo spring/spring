@@ -57,6 +57,7 @@ LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name
 		case hashString("$units2"): { return LuaMatTexture::LUATEX_3DOTEXTURE; } break;
 
 		// cubemaps
+		case hashString(      "$specular"): { return LuaMatTexture::LUATEX_SPECULAR      ; } break;
 		case hashString(    "$reflection"): { return LuaMatTexture::LUATEX_MAP_REFLECTION; } break;
 		case hashString("$map_reflection"): { return LuaMatTexture::LUATEX_MAP_REFLECTION; } break;
 		case hashString("$sky_reflection"): { return LuaMatTexture::LUATEX_SKY_REFLECTION; } break;
