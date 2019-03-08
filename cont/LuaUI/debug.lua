@@ -59,14 +59,12 @@ function PrintCommandQueue(uid)
     local msg = ''
     local count = 0
     for i,cmd in pairs(queue) do
-      if (cmd ~= CMD.SET_WANTED_MAX_SPEED) then
-        local name = CommandNames[cmd]
-        if (name ~= nil) then
-          count = count + 1
-          msg = msg .. '  ' .. CommandNames[cmd] .. ','
-          if (count >= 8) then
-            break
-          end
+      local name = CommandNames[cmd]
+      if (name ~= nil) then
+        count = count + 1
+        msg = msg .. '  ' .. CommandNames[cmd] .. ','
+        if (count >= 8) then
+          break
         end
       end
     end
