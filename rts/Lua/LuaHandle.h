@@ -99,7 +99,7 @@ class CLuaHandle : public CEventClient
 
 	public: // call-ins
 		bool WantsEvent(const std::string& name) override { return HasCallIn(L, name); }
-		virtual bool HasCallIn(lua_State* L, const std::string& name);
+		virtual bool HasCallIn(lua_State* L, const std::string& name) const;
 		virtual bool UpdateCallIn(lua_State* L, const std::string& name);
 
 		void Load(IArchive* archive) override;
@@ -265,8 +265,8 @@ class CLuaHandle : public CEventClient
 		bool RecvLuaMsg(const std::string& msg, int playerID);
 
 	public: // custom call-in  (inter-script calls)
-		bool HasXCall(const std::string& funcName) { return HasCallIn(L, funcName); }
-		int XCall(lua_State* srcState, const string& funcName);
+		bool HasXCall(const std::string& funcName) const { return HasCallIn(L, funcName); }
+		int XCall(lua_State* srcState, const char* funcName);
 
 	protected:
 		CLuaHandle(const std::string& name, int order, bool userMode, bool synced);

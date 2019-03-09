@@ -40,7 +40,7 @@ public:
 	int GetFunctionId(const std::string& name);
 
 public:
-	int numStaticVars;
+	int numStaticVars = 0;
 
 	std::vector<int> code;
 	std::vector<std::string> scriptNames;

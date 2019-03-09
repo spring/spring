@@ -227,7 +227,7 @@ static bool IsDisallowedCallIn(const string& name)
 	return false;
 }
 
-bool CLuaUI::HasCallIn(lua_State* L, const string& name)
+bool CLuaUI::HasCallIn(lua_State* L, const string& name) const
 {
 	// never allow these calls
 	if (IsDisallowedCallIn(name))
@@ -272,7 +272,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2, __func__);
-	static const LuaHashString cmdStr("ConfigureLayout");
+	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
 
@@ -310,7 +310,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	LUA_CALL_IN_CHECK(L);
 
 	luaL_checkstack(L, 6, __func__);
-	static const LuaHashString cmdStr("ShockFront");
+	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false; //FIXME improve in GameHelper.cpp and pipe instead through eventHandler?
@@ -364,7 +364,7 @@ bool CLuaUI::LayoutButtons(
 	luaL_checkstack(L, 6, __func__);
 	const int top = lua_gettop(L);
 
-	static const LuaHashString cmdStr("LayoutButtons");
+	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 

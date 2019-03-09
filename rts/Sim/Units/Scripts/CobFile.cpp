@@ -82,30 +82,28 @@ do {									\
 } while (0)
 
 
-static std::vector<char> cobFileData;
+static std::vector<uint8_t> cobFileData;
 
 
 CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 {
-	numStaticVars = 0;
-
 	name.assign(scriptName);
 	scriptIndex.fill(-1);
 
-	// figure out size needed and allocate it
-	const int size = in.FileSize();
-
 	// handle errors (this is fairly fatal..)
-	if (size < 0) {
+	if (in.FileSize() < 0) {
 		LOG_L(L_FATAL, "[%s] could not find script \"%s\"", __func__, name.c_str());
 		return;
 	}
 
-	cobFileData.clear();
-	cobFileData.resize(size);
-
-	// read the entire thing, we will need it
-	in.Read(cobFileData.data(), size);
+	if (!in.IsBuffered()) {
+		cobFileData.clear();
+		cobFileData.resize(in.FileSize());
+		// read the entire thing, we will need it
+		in.Read(cobFileData.data(), cobFileData.size());
+	} else {
+		cobFileData = std::move(in.GetBuffer());
+	}
 
 	// time to parse
 	COBHeader ch;
@@ -126,10 +124,10 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 	for (int i = 0; i < ch.NumberOfScripts; ++i) {
 		int ofs = *(int *) &cobFileData[ch.OffsetToScriptNameOffsetArray + i * 4];
 		swabDWordInPlace(ofs);
-		scriptNames.emplace_back(&cobFileData[ofs]);
+		scriptNames.emplace_back(reinterpret_cast<const char*>(&cobFileData[ofs]));
 
 		if (scriptNames[scriptNames.size() - 1].find("lua_") == 0) {
-			luaScripts.emplace_back(scriptNames[scriptNames.size() - 1].substr(4));
+			luaScripts.emplace_back(scriptNames[scriptNames.size() - 1].c_str() + sizeof("lua_") - 1);
 		} else {
 			luaScripts.emplace_back("");
 		}
@@ -150,10 +148,10 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 	for (int i = 0; i < ch.NumberOfPieces; ++i) {
 		int ofs = *(int *) &cobFileData[ch.OffsetToPieceNameOffsetArray + i * 4];
 		swabDWordInPlace(ofs);
-		pieceNames.emplace_back(StringToLower(&cobFileData[ofs]));
+		pieceNames.emplace_back(StringToLower(reinterpret_cast<const char*>(&cobFileData[ofs])));
 	}
 
-	const int codeBytes = size - ch.OffsetToScriptCode;
+	const int codeBytes = int(cobFileData.size()) - ch.OffsetToScriptCode;
 	const int codeWords = codeBytes / 4 + 4;
 	code.resize(codeWords);
 	memcpy(code.data(), &cobFileData[ch.OffsetToScriptCode], codeBytes);
@@ -172,7 +170,7 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 			// FIXME: this probably isn't correct
 			swabDWordInPlace(ofs);
 
-			const std::string s = &cobFileData[ofs];
+			const std::string s = {reinterpret_cast<const char*>(&cobFileData[ofs])};
 
 			if (sound->HasSoundItem(s)) {
 				sounds.push_back(sound->GetSoundId(s));
@@ -185,18 +183,18 @@ CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 
 
 	// create a reverse mapping (name->int)
-	for (unsigned int i = 0; i < scriptNames.size(); ++i) {
+	for (size_t i = 0, n = scriptNames.size(); i < n; ++i) {
 		scriptMap[scriptNames[i]] = i;
 	}
 
 	// map common function names to indices
-	const spring::unordered_map<std::string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
+	for (const auto& pair: CCobUnitScriptNames::GetScriptMap()) {
+		const int fn = GetFunctionId(pair.first);
 
-	for (auto it = nameMap.begin(); it != nameMap.end(); ++it) {
-		const int fn = GetFunctionId(it->first);
-		if (fn >= 0) {
-			scriptIndex[it->second] = fn;
-		}
+		if (fn < 0)
+			continue;
+
+		scriptIndex[pair.second] = fn;
 	}
 }
 

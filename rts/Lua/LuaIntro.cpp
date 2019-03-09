@@ -315,7 +315,7 @@ void CLuaIntro::DrawLoadScreen()
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
-	static const LuaHashString cmdStr("DrawLoadScreen");
+	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L)) {
 		//LuaOpenGL::DisableCommon(LuaOpenGL::DRAW_SCREEN);
 		return; // the call is not defined
@@ -336,7 +336,7 @@ void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
-	static const LuaHashString cmdStr("LoadProgress");
+	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 

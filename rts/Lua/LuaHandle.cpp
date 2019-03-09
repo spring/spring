@@ -110,10 +110,10 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	D.gcCtrl.baseRunTimeMult = configHandler->GetFloat("LuaGarbageCollectionRunTimeMult");
 
 	L = LUA_OPEN(&D);
+	L_GC = lua_newthread(L);
 
 	LUA_INSERT_CONTEXT(&D, LUAHANDLE_CONTEXTS[D.synced]);
 
-	L_GC = lua_newthread(L);
 	luaL_ref(L, LUA_REGISTRYINDEX);
 
 	// needed for engine traceback
@@ -218,20 +218,20 @@ void CLuaHandle::CheckStack()
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
-		LOG_L(L_WARNING, "%s stack check: top = %i", GetName().c_str(), top);
+		LOG_L(L_WARNING, "[LuaHandle::%s] %s stack-top = %i", __func__, name.c_str(), top);
 		lua_settop(L, 0);
 	}
 }
 
 
-int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
+int CLuaHandle::XCall(lua_State* srcState, const char* funcName)
 {
 	const int top = lua_gettop(L);
 
 	// push the function
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
-		LOG_L(L_WARNING, "Tried to call non-linked Script.%s.%s()", GetName().c_str(), funcName.c_str());
+		LOG_L(L_WARNING, "[LuaHandle::%s] tried to cross-call unlinked Script.%s.%s()", __func__, name.c_str(), funcName);
 		return 0;
 	}
 
@@ -241,9 +241,9 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 		lua_insert(L, 1); // move the function to the beginning
 
 		// call the function
-		if (!RunCallIn(L, funcHash, top, LUA_MULTRET)) {
+		if (!RunCallIn(L, funcHash, top, LUA_MULTRET))
 			return 0;
-		}
+
 		retCount = lua_gettop(L);
 	} else {
 		const int srcCount = lua_gettop(srcState);
@@ -264,9 +264,9 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 		retCount = lua_gettop(L) - top;
 
 		lua_settop(srcState, 0); // pop all passed arguments on caller stack
-		if (retCount > 0) {
+		if (retCount > 0)
 			LuaUtils::CopyData(srcState, L, retCount); // push the new returned arguments on caller stack
-		}
+
 		lua_settop(L, top); // revert the callee stack
 	}
 
@@ -410,7 +410,7 @@ int CLuaHandle::RunCallInTraceback(
 	};
 
 	// TODO: use closure so we do not need to copy args
-	ScopedLuaCall call(this, L, (hs != nullptr)? (hs->GetString()).c_str(): "LUS::?", inArgs, outArgs, errFuncIndex, popErrorFunc);
+	ScopedLuaCall call(this, L, (hs != nullptr)? hs->GetString(): "LUS::?", inArgs, outArgs, errFuncIndex, popErrorFunc);
 	call.CheckFixStack(*ts);
 
 	return (call.GetError());
@@ -426,10 +426,10 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 		return true;
 
 	const auto& hn = GetName();
-	const auto& hsn = hs.GetString();
+	const char* hsn = hs.GetString();
 	const char* es = LuaErrorString(error);
 
-	LOG_L(L_ERROR, "[%s::%s] error=%i (%s) callin=%s trace=%s", hn.c_str(), __func__, error, es, hsn.c_str(), traceStr.c_str());
+	LOG_L(L_ERROR, "[%s::%s] error=%i (%s) callin=%s trace=%s", hn.c_str(), __func__, error, es, hsn, traceStr.c_str());
 
 	if (error == LUA_ERRMEM) {
 		// try to free some memory so other lua states can alloc again
@@ -461,7 +461,7 @@ bool CLuaHandle::LoadCode(lua_State* L, const string& code, const string& debug)
 		return false;
 	}
 
-	static const LuaHashString cmdStr("Initialize");
+	static const LuaHashString cmdStr(__func__);
 
 	// call Initialize immediately after load
 	return (RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false));
@@ -530,7 +530,7 @@ void CLuaHandle::Load(IArchive* archive)
 }
 
 
-bool CLuaHandle::HasCallIn(lua_State* L, const string& name)
+bool CLuaHandle::HasCallIn(lua_State* L, const string& name) const
 {
 	if (!IsValid())
 		return false;
@@ -1115,28 +1115,28 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs("UnitEnteredRadar");
+	static const LuaHashString hs(__func__);
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs("UnitEnteredLos");
+	static const LuaHashString hs(__func__);
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs("UnitLeftRadar");
+	static const LuaHashString hs(__func__);
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs("UnitLeftLos");
+	static const LuaHashString hs(__func__);
 	LosCallIn(hs, unit, allyTeam);
 }
 
