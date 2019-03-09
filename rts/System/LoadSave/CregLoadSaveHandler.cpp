@@ -148,6 +148,18 @@ static void ReadString(std::istream& s, std::string& str)
 }
 
 
+static void SaveLuaState(CSplitLuaHandle* handle, creg::COutputStreamSerializer& os, std::stringstream& oss)
+{
+	if (handle == nullptr)
+		return;
+
+	CLuaStateCollector lsc;
+	lsc.L = handle->syncedLuaHandle.GetLuaState();
+	lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
+	lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
+	os.SavePackage(&oss, &lsc, lsc.GetClass());
+}
+
 
 void CCregLoadSaveHandler::SaveGame(const std::string& path)
 {
@@ -173,18 +185,8 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 			// save lua state
 			const int luaStart = oss.tellp();
-			if (luaGaia != nullptr) {
-				CLuaStateCollector lsc;
-				lsc.L = luaGaia->syncedLuaHandle.GetLuaState();
-				lsc.L_GC = luaGaia->syncedLuaHandle.GetLuaGCState();
-				os.SavePackage(&oss, &lsc, lsc.GetClass());
-			}
-			if (luaRules != nullptr) {
-				CLuaStateCollector lsc;
-				lsc.L = luaRules->syncedLuaHandle.GetLuaState();
-				lsc.L_GC = luaRules->syncedLuaHandle.GetLuaGCState();
-				os.SavePackage(&oss, &lsc, lsc.GetClass());
-			}
+			SaveLuaState(luaGaia, os, oss);
+			SaveLuaState(luaRules, os, oss);
 			PrintSize("Lua", ((int)oss.tellp()) - luaStart);
 
 			// save AI state
