@@ -2694,17 +2694,16 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 	if (mCAI != nullptr)
 		HSTR_PUSH_NUMBER(L, "autorepairlevel", mCAI->repairBelowHealth);
 
-	const AMoveType* mt = unit->moveType;
-	if (mt != nullptr) {
-		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
-		if (hAMT != nullptr) {
-			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
-		} else {
-			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
-			if (sAMT != nullptr) {
-				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
-				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
-			}
+	const AMoveType* mt = unit->moveType; // never null
+	const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
+	const CStrafeAirMoveType* sAMT = nullptr;
+
+	if (hAMT != nullptr) {
+		HSTR_PUSH_BOOL(L, "autoland",        hAMT->autoLand);
+	} else {
+		if ((sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt)) != nullptr) {
+			HSTR_PUSH_BOOL(L, "autoland",        sAMT->autoLand);
+			HSTR_PUSH_BOOL(L, "loopbackattack",  sAMT->loopbackAttack);
 		}
 	}
 

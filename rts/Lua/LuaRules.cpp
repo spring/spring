@@ -117,8 +117,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 {
 	static int callDepth = 0;
 	if (callDepth >= 16) {
-		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() call overflow: %s",
-				name.GetString().c_str());
+		LOG_L(L_WARNING, "[LuaRules::%s] call overflow: %s", __func__, name.GetString());
 		args[0] = 0; // failure
 		return;
 	}
@@ -130,16 +129,14 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 	const int top = lua_gettop(L);
 
 	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
-		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() lua_checkstack() error: %s",
-				name.GetString().c_str());
+		LOG_L(L_WARNING, "[LuaRules::%s] lua_checkstack() error: %s", __func__, name.GetString());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;
 	}
 
 	if (!name.GetGlobalFunc(L)) {
-		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() missing function: %s",
-				name.GetString().c_str());
+		LOG_L(L_WARNING, "[LuaRules::%s] missing function: %s", __func__, name.GetString());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;

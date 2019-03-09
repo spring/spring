@@ -1098,14 +1098,14 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
-		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", (cmdStr.GetString()).c_str());
+		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", cmdStr.GetString());
 	}
 
 	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
-		LOG_L(L_WARNING, "%s(): 2nd return-value should be a number (impulseMult)", (cmdStr.GetString()).c_str());
+		LOG_L(L_WARNING, "%s(): 2nd return-value should be a number (impulseMult)", cmdStr.GetString());
 	}
 
 	lua_pop(L, outArgCount);
@@ -1162,14 +1162,14 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
-		LOG_L(L_WARNING, "%s(): 1st value returned should be a number (newDamage)", (cmdStr.GetString()).c_str());
+		LOG_L(L_WARNING, "%s(): 1st value returned should be a number (newDamage)", cmdStr.GetString());
 	}
 
 	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
-		LOG_L(L_WARNING, "%s(): 2nd value returned should be a number (impulseMult)", (cmdStr.GetString()).c_str());
+		LOG_L(L_WARNING, "%s(): 2nd value returned should be a number (impulseMult)", cmdStr.GetString());
 	}
 
 	lua_pop(L, outArgCount);

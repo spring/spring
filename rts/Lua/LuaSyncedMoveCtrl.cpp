@@ -116,8 +116,7 @@ static inline DerivedMoveType* ParseDerivedMoveType(lua_State* L, const char* ca
 	if (unit == nullptr)
 		return nullptr;
 
-	if (unit->moveType == nullptr)
-		return nullptr;
+	assert(unit->moveType != nullptr);
 
 	return (dynamic_cast<DerivedMoveType*>(unit->moveType));
 }

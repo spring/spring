@@ -489,9 +489,9 @@ int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetMiniMapGeometry(lua_State* L)
 {
-	if (minimap == nullptr) {
+	if (minimap == nullptr)
 		return 0;
-	}
+
 	lua_pushnumber(L, minimap->GetPosX());
 	lua_pushnumber(L, minimap->GetPosY());
 	lua_pushnumber(L, minimap->GetSizeX());
@@ -505,9 +505,9 @@ int LuaUnsyncedRead::GetMiniMapGeometry(lua_State* L)
 
 int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 {
-	if (minimap == nullptr) {
+	if (minimap == nullptr)
 		return 0;
-	}
+
 	if (!globalRendering->dualScreenMode) {
 		lua_pushboolean(L, false);
 	} else {
@@ -523,13 +523,11 @@ int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 
 int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 {
-	if (minimap == nullptr) {
+	if (minimap == nullptr)
 		return 0;
-	}
 
-	if (minimap->GetMinimized() || game->hideInterface) {
+	if (minimap->GetMinimized() || game->hideInterface)
 		return false;
-	}
 
 	const int x = luaL_checkint(L, 1) + globalRendering->viewPosX;
 	const int y = luaL_checkint(L, 2);
@@ -1842,7 +1840,8 @@ int LuaUnsyncedRead::GetGameSpeed(lua_State* L)
 	lua_pushnumber(L, gs->wantedSpeedFactor);
 	lua_pushnumber(L, gs->speedFactor);
 	lua_pushboolean(L, gs->paused);
-	return 3;
+	lua_pushboolean(L, game->paused); // local state; included for demos
+	return 4;
 }
 
 

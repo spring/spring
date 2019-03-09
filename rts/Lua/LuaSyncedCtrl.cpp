@@ -2509,8 +2509,8 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 
 	if (unit == nullptr)
 		return 0;
-	if (unit->moveType == nullptr)
-		return 0;
+
+	assert(unit->moveType != nullptr);
 
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 
