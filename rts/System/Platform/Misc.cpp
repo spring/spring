@@ -676,7 +676,7 @@ namespace Platform
 		IP_ADAPTER_INFO adapterInfo[16];
 
 		DWORD dwBufLen = sizeof(adapterInfo);
-		DWORD dwStatus = ERROR_BUFFER_OVERFLOW; // FIXME: GetAdaptersInfo(adapterInfo, &dwBufLen);
+		DWORD dwStatus = GetAdaptersInfo(adapterInfo, &dwBufLen);
 
 		if (dwStatus == ERROR_BUFFER_OVERFLOW)
 			return false;
