@@ -7,12 +7,12 @@
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/TimeProfiler.h"
 #endif
 
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
-#include "System/TimeProfiler.h"
 #include <deque>
 
 struct creg_lua_State;
@@ -1138,7 +1138,9 @@ void RecursiveAutoRegisterTable(const std::string& handle, lua_State* L, int dep
 
 void AutoRegisterCFunctions(const std::string& handle, lua_State* L)
 {
+#ifndef UNIT_TEST
 	ScopedOnceTimer timer("creg::AutoRegisterCFunctions(" + handle + ")");
+#endif
 	lua_pushvalue(L,LUA_GLOBALSINDEX);
 	RecursiveAutoRegisterTable(handle, L, 0);
 	lua_pop(L, 1);
