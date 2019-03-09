@@ -12,6 +12,7 @@
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
+#include "System/TimeProfiler.h"
 #include <deque>
 
 struct creg_lua_State;
@@ -1124,14 +1125,26 @@ void RecursiveAutoRegisterTable(const std::string& handle, lua_State* L, int dep
 
 			RecursiveAutoRegisterTable(handle + key + ".", L, depth + 1);
 		}
+
+		{ // handle metatables
+			int ret = lua_getmetatable(L, -1);
+			if (ret == 0)
+				continue;
+			RecursiveAutoRegisterTable(handle + key + ".__mt.", L, depth + 1);
+			lua_pop(L, 1);
+		}
 	}
 }
 
 void AutoRegisterCFunctions(const std::string& handle, lua_State* L)
 {
+	ScopedOnceTimer timer("creg::AutoRegisterCFunctions(" + handle + ")");
 	lua_pushvalue(L,LUA_GLOBALSINDEX);
 	RecursiveAutoRegisterTable(handle, L, 0);
-	lua_pop(L,1);
+	lua_pop(L, 1);
+	lua_getregistry(L);
+	RecursiveAutoRegisterTable(handle, L, 0);
+	lua_pop(L, 1);
 }
 
 void CopyLuaContext(lua_State* L)
