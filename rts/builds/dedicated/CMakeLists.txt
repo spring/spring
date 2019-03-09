@@ -172,7 +172,7 @@ add_executable(engine-dedicated
 	)
 target_link_libraries(engine-dedicated ${engineDedicatedLibraries})
 if    (MINGW)
-	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
+	target_link_libraries(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${IPHLPAPI_LIBRARY} ${WINMM_LIBRARY})
 endif (MINGW)
 if    (MSVC)
 	target_link_libraries(engine-dedicated ${DBGHELP_LIBRARY})
