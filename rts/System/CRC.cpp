@@ -28,7 +28,7 @@ uint32_t CRC::InitTable()
 
 uint32_t CRC::CalcDigest(const void* data, size_t size)
 {
-	return (InitTable(), CrcUpdate(CRC_INIT_VAL, data, size));
+	return (InitTable(), CRC_GET_DIGEST(CrcUpdate(CRC_INIT_VAL, data, size)));
 }
 
 uint32_t CRC::GetDigest() const
