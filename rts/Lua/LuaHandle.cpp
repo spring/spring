@@ -505,7 +505,7 @@ bool CLuaHandle::GotChatMsg(const string& msg, int playerID)
 	}
 
 	if (!processed && (this == luaUI)) {
-		processed = luaUI->ConfigCommand(msg); //FIXME deprecated
+		processed = luaUI->ConfigureLayout(msg); //FIXME deprecated
 	}
 	return processed;
 }
