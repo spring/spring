@@ -268,7 +268,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaUI::ConfigureLayout(const string& command) //FIXME rename to fit event name
+bool CLuaUI::ConfigureLayout(const string& command)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2, __func__);
