@@ -49,7 +49,9 @@ void CSkirmishAIHandler::ResetState()
 	skirmishAIDataMap.clear();
 	luaAIShortNames.clear();
 
+	numSkirmishAIs = 0;
 	currentAIId = MAX_AIS;
+
 	gameInitialized = false;
 }
 
@@ -168,7 +170,7 @@ bool CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t 
 }
 
 bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
-	if (!IsActiveSkirmishAI(skirmishAIId))
+	if (!IsValidSkirmishAI(aiInstanceData[skirmishAIId]))
 		return false;
 
 	localTeamAIs[ aiInstanceData[skirmishAIId].team ] = {};
@@ -222,7 +224,7 @@ const SkirmishAIData* CSkirmishAIHandler::GetLocalSkirmishAIInCreation(const int
 void CSkirmishAIHandler::SetLocalKillFlag(const size_t skirmishAIId, const int reason) {
 	const SkirmishAIData& aiData = aiInstanceData[skirmishAIId];
 
-	assert(IsActiveSkirmishAI(skirmishAIId)); // is valid id?
+	assert(IsValidSkirmishAI(aiInstanceData[skirmishAIId])); // is valid id?
 	assert(IsLocalSkirmishAI(aiData)); // is local AI?
 
 	aiKillFlags[skirmishAIId] = reason;
