@@ -6,7 +6,7 @@
 
 #include "Map/MapInfo.h"
 #include "System/EventHandler.h"
-#include "System/Sync/HsiehHash.h"
+#include "System/StringHash.h"
 
 /**
  * @brief sunLightingInst
@@ -74,7 +74,7 @@ void CSunLighting::Copy(const CSunLighting& sl) {
 	if (sl == (*this))
 		return;
 
-	for (unsigned int n = 0; n < sizeof(colors) / sizeof(colors[0]); n++)
+	for (size_t n = 0; n < sizeof(colors) / sizeof(colors[0]); n++)
 		*colors[n] = *sl.colors[n];
 
 	specularExponent    = sl.specularExponent;
@@ -89,40 +89,43 @@ void CSunLighting::Copy(const CSunLighting& sl) {
 }
 
 
-bool CSunLighting::SetValue(unsigned int keyHash, const float4 value) {
-	static const unsigned int keyHashes[] = {
-		HsiehHash("groundAmbientColor",  sizeof("groundAmbientColor" ) - 1, 0),
-		HsiehHash("groundDiffuseColor",  sizeof("groundDiffuseColor" ) - 1, 0),
-		HsiehHash("groundSpecularColor", sizeof("groundSpecularColor") - 1, 0),
+bool CSunLighting::SetValue(const char* key, const float4 value) {
+	switch (hashString(key)) {
+		case hashString("specularExponent"): {
+			specularExponent = value.x; return true;
+		} break;
+		case hashString("groundShadowDensity"): {
+			groundShadowDensity = value.x; return true;
+		} break;
+		case hashString("modelShadowDensity"): {
+			modelShadowDensity = value.x; return true;
+		} break;
 
-		HsiehHash("unitAmbientColor",  sizeof("unitAmbientColor" ) - 1, 0),
-		HsiehHash("unitDiffuseColor",  sizeof("unitDiffuseColor" ) - 1, 0),
-		HsiehHash("unitSpecularColor", sizeof("unitSpecularColor") - 1, 0),
+		case hashString("groundAmbientColor"): {
+			*(colors[0]) = value; return true;
+		} break;
+		case hashString("groundDiffuseColor"): {
+			*(colors[1]) = value; return true;
+		} break;
+		case hashString("groundSpecularColor"): {
+			*(colors[2]) = value; return true;
+		} break;
 
-		HsiehHash(   "specularExponent", sizeof(   "specularExponent") - 1, 0),
-		HsiehHash("groundShadowDensity", sizeof("groundShadowDensity") - 1, 0),
-		HsiehHash( "modelShadowDensity", sizeof( "modelShadowDensity") - 1, 0),
-	};
+		case hashString( "unitAmbientColor"):
+		case hashString("modelAmbientColor"): {
+			*(colors[3]) = value; return true;
+		} break;
+		case hashString( "unitDiffuseColor"):
+		case hashString("modelDiffuseColor"): {
+			*(colors[4]) = value; return true;
+		} break;
+		case hashString( "unitSpecularColor"):
+		case hashString("modelSpecularColor"): {
+			*(colors[5]) = value; return true;
+		} break;
 
-	// special casees
-	if (keyHash == keyHashes[6]) {
-		specularExponent = value.x;
-		return true;
-	}
-	if (keyHash == keyHashes[7]) {
-		groundShadowDensity = value.x;
-		return true;
-	}
-	if (keyHash == keyHashes[8]) {
-		modelShadowDensity = value.x;
-		return true;
-	}
-
-	for (unsigned int n = 0; n < sizeof(colors) / sizeof(colors[0]); n++) {
-		if (keyHash == keyHashes[n]) {
-			*(colors[n]) = value;
-			return true;
-		}
+		default: {
+		} break;
 	}
 
 	return false;
@@ -131,9 +134,8 @@ bool CSunLighting::SetValue(unsigned int keyHash, const float4 value) {
 
 bool CSunLighting::operator == (const CSunLighting& sl) const {
 	for (unsigned int n = 0; n < sizeof(colors) / sizeof(colors[0]); n++) {
-		if (colors[n] != sl.colors[n]) {
+		if (colors[n] != sl.colors[n])
 			return false;
-		}
 	}
 
 	if (groundShadowDensity != sl.groundShadowDensity)
