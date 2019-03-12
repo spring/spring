@@ -30,7 +30,7 @@
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
-static const unsigned int ASS_POSTPROCESS_OPTIONS =
+static constexpr unsigned int ASS_POSTPROCESS_OPTIONS =
 	  aiProcess_RemoveComponent
 	| aiProcess_FindInvalidData
 	| aiProcess_CalcTangentSpace
@@ -42,12 +42,12 @@ static const unsigned int ASS_POSTPROCESS_OPTIONS =
 	//| aiProcess_ImproveCacheLocality // FIXME crashes in an assert in VertexTriangleAdjancency.h (date 04/2011)
 	| aiProcess_SplitLargeMeshes;
 
-static const unsigned int ASS_IMPORTER_OPTIONS =
+static constexpr unsigned int ASS_IMPORTER_OPTIONS =
 	aiComponent_CAMERAS |
 	aiComponent_LIGHTS |
 	aiComponent_TEXTURES |
 	aiComponent_ANIMATIONS;
-static const unsigned int ASS_LOGGING_OPTIONS =
+static constexpr unsigned int ASS_LOGGING_OPTIONS =
 	Assimp::Logger::Debugging |
 	Assimp::Logger::Info |
 	Assimp::Logger::Err |
@@ -414,6 +414,8 @@ void CAssParser::SetPieceParentName(
 
 void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const aiScene* scene)
 {
+	std::vector<unsigned> meshVertexMapping;
+
 	// Get vertex data from node meshes
 	for (unsigned meshListIndex = 0; meshListIndex < pieceNode->mNumMeshes; ++meshListIndex) {
 		const unsigned int meshIndex = pieceNode->mMeshes[meshListIndex];
@@ -432,7 +434,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, cons
 		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
 		piece->indices.reserve(piece->indices.size() + mesh->mNumFaces * 3);
 
-		std::vector<unsigned> meshVertexMapping;
+		meshVertexMapping.clear();
+		meshVertexMapping.reserve(mesh->mNumVertices);
 
 		// extract vertex data per mesh
 		for (unsigned vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
@@ -449,8 +452,6 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, cons
 			piece->maxs = float3::max(piece->maxs, vertex.pos);
 
 			// vertex normal
-			LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching normal for vertex %d", vertexIndex);
-
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
 			if (!IS_QNAN(aiNormal))
@@ -458,13 +459,12 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const S3DModel* model, cons
 
 			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
-				LOG_SL(LOG_SECTION_PIECE, L_DEBUG, "Fetching tangent for vertex %d", vertexIndex);
-
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 
 				vertex.sTangent = (aiVectorToFloat3(aiTangent)).SafeANormalize();
 				vertex.tTangent = (aiVectorToFloat3(aiBitangent)).SafeANormalize();
+				vertex.tTangent *= -1.0f; // LH (assimp) to RH
 			}
 
 			// vertex tex-coords per channel
