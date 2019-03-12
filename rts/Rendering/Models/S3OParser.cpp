@@ -114,12 +114,19 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	// retrieve vertices
 	piece->SetVertexCount(fp->numVertices);
 	for (int a = 0; a < fp->numVertices; ++a) {
-		Vertex* v = (vertexList++);
+		Vertex* v = vertexList++;
 		v->swap();
 
 		SS3OVertex sv;
 		sv.pos = float3(v->xpos, v->ypos, v->zpos);
-		sv.normal = float3(v->xnormal, v->ynormal, v->znormal).SafeANormalize();
+		sv.normal = float3(v->xnormal, v->ynormal, v->znormal);
+
+		if (sv.normal.CheckNaNs()) {
+			sv.normal.SafeANormalize();
+		} else {
+			sv.normal = ZeroVector;
+		}
+
 		sv.texCoords[0] = float2(v->texu, v->texv);
 		sv.texCoords[1] = float2(v->texu, v->texv);
 		sv.pieceIndex = model->numPieces - 1;
@@ -130,8 +137,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	// retrieve draw indices
 	piece->SetIndexCount(fp->vertexTableSize);
 	for (int a = 0; a < fp->vertexTableSize; ++a) {
-		const int vertexDrawIdx = swabDWord(*(indexList++));
-		piece->SetIndex(a, vertexDrawIdx);
+		piece->SetIndex(a, swabDWord(*(indexList++)));
 	}
 
 	// post-process the piece
