@@ -10,6 +10,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
+#include "System/SpringMath.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -338,103 +339,81 @@ void SS3OPiece::SetVertexTangents()
 	if (!HasGeometryData())
 		return;
 
-	if (primType == S3O_PRIMTYPE_QUADS)
-		return;
-
-	unsigned stride = 0;
+	unsigned int stride = 0;
 
 	switch (primType) {
-		case S3O_PRIMTYPE_TRIANGLES: {
-			stride = 3;
-		} break;
-		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			stride = 1;
-		} break;
+		case S3O_PRIMTYPE_TRIANGLES     : { stride = 3; } break;
+		case S3O_PRIMTYPE_TRIANGLE_STRIP: { stride = 1; } break;
+		case S3O_PRIMTYPE_QUADS         : {     return; } break;
 	}
 
+	// set the triangle-level S- and T-tangents
 	// for triangle strips, the piece vertex _indices_ are defined
 	// by the draw order of the vertices numbered <v, v + 1, v + 2>
 	// for v in [0, n - 2]
-	const unsigned vrtMaxNr = (stride == 1)?
-		indices.size() - 2:
-		indices.size();
+	for (unsigned int i = 0, n = indices.size() - 2 * (stride == 1); i < n; i += stride) {
+		const bool flipWinding = ((primType == S3O_PRIMTYPE_TRIANGLE_STRIP) && ((i & 1) == 1));
 
-	// set the triangle-level S- and T-tangents
-	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
-		bool flipWinding = false;
-
-		if (primType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
-			flipWinding = ((vrtNr & 1) == 1);
-		}
-
-		const int v0idx = indices[vrtNr                      ];
-		const int v1idx = indices[vrtNr + (flipWinding? 2: 1)];
-		const int v2idx = indices[vrtNr + (flipWinding? 1: 2)];
+		const int v0idx = indices[i                      ];
+		const int v1idx = indices[i + (flipWinding? 2: 1)];
+		const int v2idx = indices[i + (flipWinding? 1: 2)];
 
 		if (v1idx == -1 || v2idx == -1) {
 			// not a valid triangle, skip
 			// to start of next tri-strip
-			vrtNr += 3; continue;
+			i += 3; continue;
 		}
 
-		const SS3OVertex* vrt0 = &vertices[v0idx];
-		const SS3OVertex* vrt1 = &vertices[v1idx];
-		const SS3OVertex* vrt2 = &vertices[v2idx];
+		SS3OVertex& v0 = vertices[v0idx];
+		SS3OVertex& v1 = vertices[v1idx];
+		SS3OVertex& v2 = vertices[v2idx];
 
-		const float3& p0 = vrt0->pos;
-		const float3& p1 = vrt1->pos;
-		const float3& p2 = vrt2->pos;
+		const float3& p0 = v0.pos;
+		const float3& p1 = v1.pos;
+		const float3& p2 = v2.pos;
 
-		const float2& tc0 = vrt0->texCoords[0];
-		const float2& tc1 = vrt1->texCoords[0];
-		const float2& tc2 = vrt2->texCoords[0];
+		const float2& tc0 = v0.texCoords[0];
+		const float2& tc1 = v1.texCoords[0];
+		const float2& tc2 = v2.texCoords[0];
 
-		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
-		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
-		const float z1z0 = p1.z - p0.z, z2z0 = p2.z - p0.z;
+		const float3 p10 = p1 - p0;
+		const float3 p20 = p2 - p0;
 
-		const float s1 = tc1.x - tc0.x, s2 = tc2.x - tc0.x;
-		const float t1 = tc1.y - tc0.y, t2 = tc2.y - tc0.y;
+		const float2 tc10 = tc1 - tc0;
+		const float2 tc20 = tc2 - tc0;
 
 		// if d is 0, texcoors are degenerate
-		const float d = (s1 * t2 - s2 * t1);
-		const bool  b = (d > -0.0001f && d < 0.0001f);
-		const float r = b? 1.0f: 1.0f / d;
+		const float d = (tc10.x * tc20.y - tc20.x * tc10.y);
+		const float r = (d > -0.0001f && d < 0.0001f)? 1.0f: 1.0f / d;
 
 		// note: not necessarily orthogonal to each other
-		// or to vertex normal (only to the triangle plane)
-		const float3 sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
-		const float3 tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
+		// or to vertex normal, only to the triangle plane
+		const float3 sdir = {tc20.y * p10.x - tc10.y * p20.x, tc20.y * p10.y - tc10.y * p20.y, tc20.y * p10.z - tc10.y * p20.z};
+		const float3 tdir = {tc10.x * p20.x - tc20.x * p10.x, tc10.x * p20.y - tc20.x * p10.y, tc10.x * p20.z - tc20.x * p10.z};
 
-		vertices[v0idx].sTangent += sdir;
-		vertices[v1idx].sTangent += sdir;
-		vertices[v2idx].sTangent += sdir;
+		v0.sTangent += (sdir * r);
+		v1.sTangent += (sdir * r);
+		v2.sTangent += (sdir * r);
 
-		vertices[v0idx].tTangent += tdir;
-		vertices[v1idx].tTangent += tdir;
-		vertices[v2idx].tTangent += tdir;
+		v0.tTangent += (tdir * r);
+		v1.tTangent += (tdir * r);
+		v2.tTangent += (tdir * r);
 	}
 
 	// set the smoothed per-vertex tangents
-	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
-		float3& n = vertices[vrtIdx].normal;
-		float3& s = vertices[vrtIdx].sTangent;
-		float3& t = vertices[vrtIdx].tTangent;
-		int h = 1;
+	for (unsigned int i = 0, n = vertices.size(); i < n; i++) {
+		float3& N = vertices[i].normal;
+		float3& T = vertices[i].sTangent;
+		float3& B = vertices[i].tTangent; // bi
 
-		if (math::isnan(n.x) || math::isnan(n.y) || math::isnan(n.z)) {
-			n = FwdVector;
-		}
-		if (s == ZeroVector) { s = RgtVector; }
-		if (t == ZeroVector) { t =  UpVector; }
+		N.AssertNaNs();
+		T.AssertNaNs();
+		B.AssertNaNs();
 
-		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
-		s = (s - n * n.dot(s));
-		s = s.SafeANormalize();
-		t = (s.cross(n)) * h;
+		const float bitangentAngle = B.dot(N.cross(T)); // dot(B,B')
+		const float handednessSign = Sign(bitangentAngle);
 
-		// t = (s.cross(n));
-		// h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
-		// t = t * h;
+		T = (T - N * N.dot(T));
+		B = (N.cross(T.SafeANormalize())) * handednessSign;
 	}
 }
