@@ -2765,7 +2765,7 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SetSunLighting()");
+		luaL_error(L, "[%s] argument should be a table", __func__);
 
 	CSunLighting sl = *sunLighting;
 
@@ -2773,23 +2773,23 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float4 color;
 			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
 
-			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), color))
+			if (sl.SetValue(key, color))
 				continue;
 
-			luaL_error(L, "Unknown array key %s", key.c_str());
+			luaL_error(L, "[%s] unknown array key %s", __func__, key);
 		}
 
 		if (lua_isnumber(L, -1)) {
-			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), lua_tofloat(L, -1)))
+			if (sl.SetValue(key, lua_tofloat(L, -1)))
 				continue;
 
-			luaL_error(L, "Unknown scalar key %s", key.c_str());
+			luaL_error(L, "[%s] unknown scalar key %s", __func__, key);
 		}
 	}
 

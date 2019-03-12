@@ -4551,20 +4551,21 @@ int LuaOpenGL::GetSun(lua_State* L)
 	}
 
 	const char* param = luaL_checkstring(L, 1);
+	const char* mode = lua_israwstring(L, 2)? lua_tostring(L, 2): "ground";
 	const float* data = nullptr;
 
-	const bool unitMode = lua_israwstring(L, 2) && (strcmp(lua_tostring(L, 2), "unit") == 0);
-
 	switch (hashString(param)) {
-		case hashString("pos"): {
+		case hashString("pos"):
+		case hashString("dir"): {
 			data = &sky->GetLight()->GetLightDir().x;
 		} break;
+
 		case hashString("specularExponent"): {
 			lua_pushnumber(L, sunLighting->specularExponent);
 			return 1;
 		} break;
 		case hashString("shadowDensity"): {
-			if (!unitMode) {
+			if (mode[0] != 'u') {
 				lua_pushnumber(L, sunLighting->groundShadowDensity);
 			} else {
 				lua_pushnumber(L, sunLighting->modelShadowDensity);
@@ -4572,21 +4573,21 @@ int LuaOpenGL::GetSun(lua_State* L)
 			return 1;
 		} break;
 		case hashString("diffuse"): {
-			if (!unitMode) {
+			if (mode[0] != 'u') {
 				data = &sunLighting->groundDiffuseColor.x;
 			} else {
 				data = &sunLighting->modelDiffuseColor.x;
 			}
 		} break;
 		case hashString("ambient"): {
-			if (!unitMode) {
+			if (mode[0] != 'u') {
 				data = &sunLighting->groundAmbientColor.x;
 			} else {
 				data = &sunLighting->modelAmbientColor.x;
 			}
 		} break;
 		case hashString("specular"): {
-			if (!unitMode) {
+			if (mode[0] != 'u') {
 				data = &sunLighting->groundSpecularColor.x;
 			} else {
 				data = &sunLighting->modelSpecularColor.x;
