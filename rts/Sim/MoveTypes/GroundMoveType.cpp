@@ -2110,7 +2110,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			// building (always axis-aligned, possibly has a yardmap)
 			// or semi-static collidee that should be handled as such
 			// this also handles two mutually push-resistant parties!
-			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), collideeUD->IsFactoryUnit(), false))
+			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), true, false))
 				ReRequestPath(false);
 
 			continue;
@@ -2214,7 +2214,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 			continue;
 
 		if (!collidee->IsMoving()) {
-			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), false, false))
+			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), true, false))
 				ReRequestPath(false);
 
 			continue;

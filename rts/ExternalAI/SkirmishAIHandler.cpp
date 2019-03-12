@@ -224,7 +224,7 @@ const SkirmishAIData* CSkirmishAIHandler::GetLocalSkirmishAIInCreation(const int
 void CSkirmishAIHandler::SetLocalKillFlag(const size_t skirmishAIId, const int reason) {
 	const SkirmishAIData& aiData = aiInstanceData[skirmishAIId];
 
-	assert(IsValidSkirmishAI(aiInstanceData[skirmishAIId])); // is valid id?
+	assert(IsValidSkirmishAI(aiData)); // is valid id?
 	assert(IsLocalSkirmishAI(aiData)); // is local AI?
 
 	aiKillFlags[skirmishAIId] = reason;
