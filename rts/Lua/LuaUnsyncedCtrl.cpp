@@ -2727,35 +2727,50 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float4 color;
 			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
 
-			if (key == "fogColor") {
-				sky->fogColor = color;
-			} else if (key == "skyColor") {
-				sky->skyColor = color;
-			} else if (key == "skyDir") {
-// 				sky->skyDir = color;
-			} else if (key == "sunColor") {
-				sky->sunColor = color;
-			} else if (key == "cloudColor") {
-				sky->cloudColor = color;
-			} else {
-				luaL_error(L, "Unknown array key %s", key.c_str());
+			switch (hashString(key)) {
+				case hashString("fogColor"): {
+					sky->fogColor = color;
+				} break;
+				case hashString("skyColor"): {
+					sky->skyColor = color;
+				} break;
+				case hashString("skyDir"): {
+					// sky->skyDir = color;
+				} break;
+				case hashString("sunColor"): {
+					sky->sunColor = color;
+				} break;
+				case hashString("cloudColor"): {
+					sky->cloudColor = color;
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown array key %s", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 
-		else if (lua_isnumber(L, -1)) {
-			if (key == "fogStart") {
-				sky->fogStart = lua_tofloat(L, -1);
-			} else if (key == "fogEnd") {
-				sky->fogEnd = lua_tofloat(L, -1);
-			} else {
-				luaL_error(L, "Unknown scalar key %s", key.c_str());
+		if (lua_isnumber(L, -1)) {
+			switch (hashString(key)) {
+				case hashString("fogStart"): {
+					sky->fogStart = lua_tofloat(L, -1);
+				} break;
+				case hashString("fogEnd"): {
+					sky->fogEnd = lua_tofloat(L, -1);
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown scalar key %s", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 	}
 
