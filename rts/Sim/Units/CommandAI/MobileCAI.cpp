@@ -1158,11 +1158,12 @@ bool CMobileCAI::GenerateAttackCmd()
 		if (newAttackTargetId < 0 && owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
 			// try getting target from weapons
 			for (CWeapon* w: owner->weapons) {
-				const SWeaponTarget& wTgt = w->GetCurrentTarget();
-
-				// no current target, and nothing to auto-target
+				// no current target, and cannot generate a target.
 				if (!w->HaveTarget() && !w->AutoTarget())
 					continue;
+				// Note that w->AutoTarget() modifies w->GetCurrentTarget() as a side effect.
+				const SWeaponTarget& wTgt = w->GetCurrentTarget();
+
 				// maybe a current target, but invalid type or category etc
 				if (wTgt.type != Target_Unit || !IsValidTarget(wTgt.unit, w))
 					continue;
