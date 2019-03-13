@@ -22,6 +22,7 @@
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/SafeUtil.h"
+#include "System/TimeProfiler.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -406,8 +407,7 @@ unsigned int CReadMap::CalcHeightmapChecksum()
 
 unsigned int CReadMap::CalcTypemapChecksum()
 {
-	unsigned int checksum = 0;
-	checksum = HsiehHash(&typeMap[0], typeMap.size() * sizeof(typeMap[0]), checksum);
+	unsigned int checksum = HsiehHash(&typeMap[0], typeMap.size() * sizeof(typeMap[0]), 0);
 
 	for (const CMapInfo::TerrainType& tt : mapInfo->terrainTypes) {
 		checksum = HsiehHash(tt.name.c_str(), tt.name.size(), checksum);
@@ -420,6 +420,8 @@ unsigned int CReadMap::CalcTypemapChecksum()
 
 void CReadMap::UpdateDraw(bool firstCall)
 {
+	SCOPED_TIMER("Update::ReadMap::UHM");
+
 	if (unsyncedHeightMapUpdates.empty())
 		return;
 
