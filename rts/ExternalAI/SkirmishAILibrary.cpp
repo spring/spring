@@ -59,8 +59,6 @@ bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_cal
 	if (ret == 0)
 		return true;
 
-	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
-
 	// init failed
 	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
 	const char* errorStr = "Failed to initialize an AI for team %d (ID: %d), error: %d";

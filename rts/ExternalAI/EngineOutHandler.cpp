@@ -97,6 +97,7 @@ void CEngineOutHandler::PreDestroy() {
 
 void CEngineOutHandler::Load(std::istream* s, const uint8_t skirmishAIId) {
 	AI_SCOPED_TIMER();
+	LOG_L(L_INFO, "[EOH::%s(id=%u)] active=%d", __func__, skirmishAIId, hostSkirmishAIs[skirmishAIId].Active());
 
 	auto& ai = hostSkirmishAIs[skirmishAIId];
 
@@ -108,6 +109,7 @@ void CEngineOutHandler::Load(std::istream* s, const uint8_t skirmishAIId) {
 
 void CEngineOutHandler::Save(std::ostream* s, const uint8_t skirmishAIId) {
 	AI_SCOPED_TIMER();
+	LOG_L(L_INFO, "[EOH::%s(id=%u)] active=%d", __func__, skirmishAIId, hostSkirmishAIs[skirmishAIId].Active());
 
 	auto& ai = hostSkirmishAIs[skirmishAIId];
 
@@ -128,14 +130,14 @@ void CEngineOutHandler::Update() {
 // Do only if the unit is not allied, in which case we know
 // everything about it anyway, and do not need to be informed
 #define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)    \
-	if (teamHandler.Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID))                  \
+	if (teamHandler.Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID))                   \
 		return;                                                              \
                                                                              \
 	for (uint8_t aiID: activeSkirmishAIs) {                                  \
 		auto& ai = hostSkirmishAIs[aiID];                                    \
-		const int aiAllyTeam = teamHandler.AllyTeam(ai.GetTeamId());        \
+		const int aiAllyTeam = teamHandler.AllyTeam(ai.GetTeamId());         \
                                                                              \
-		if (teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID)) {                   \
+		if (teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID)) {                    \
 			ai.FUNC;                                                         \
 		}                                                                    \
 	}
@@ -195,9 +197,9 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 	for (uint8_t aiID: activeSkirmishAIs) {                                     \
 		CSkirmishAIWrapper& aiWrapper = hostSkirmishAIs[aiID];                  \
                                                                                 \
-		const int aiAllyTeam = teamHandler.AllyTeam(aiWrapper.GetTeamId());    \
+		const int aiAllyTeam = teamHandler.AllyTeam(aiWrapper.GetTeamId());     \
                                                                                 \
-		const bool alliedAI = teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID);      \
+		const bool alliedAI = teamHandler.Ally(aiAllyTeam, ALLY_TEAM_ID);       \
 		const bool cheatingAI = aiWrapper.CheatEventsEnabled();                 \
                                                                                 \
 		if (alliedAI)                                                           \
@@ -515,6 +517,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 	SCOPED_TIMER("AI");
+	LOG_L(L_INFO, "[EOH::%s(id=%u)]", __func__, skirmishAIId);
 
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
@@ -553,6 +556,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 
 void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {
 	SCOPED_TIMER("AI");
+	LOG_L(L_INFO, "[EOH::%s(id=%u)]", __func__, skirmishAIId);
 
 	const int teamID = hostSkirmishAIs[skirmishAIId].GetTeamId();
 
@@ -568,6 +572,7 @@ void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {
 		assert(false);
 	}
 
+	// will trigger SkirmishAIHandler::RemoveSkirmishAI
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 }
 

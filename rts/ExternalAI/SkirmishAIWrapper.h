@@ -37,7 +37,7 @@ public:
 	void Serialize(creg::ISerializer* s) {}
 	void PostLoad() {
 		CreateCallback();
-		LoadSkirmishAI(true);
+		LoadLibrary(true);
 	}
 
 
@@ -54,15 +54,6 @@ public:
 
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	void Release(int reason = 0 /* = unspecified */);
-
-	/**
-	 * No events are forwarded to the Skirmish AI plugin
-	 * after this method has been called.
-	 * Do not call this if you want to kill a local AI, but use
-	 * the Skirmish AI Handler instead.
-	 * @see CSkirmishAIHandler::SetLocalKillFlag()
-	 */
-	void SetDieing() { dieing = true; }
 
 
 	// AI Events
@@ -95,15 +86,25 @@ public:
 
 	int GetSkirmishAIID() const { return skirmishAIId; }
 	int GetTeamId() const { return teamId; }
+
 	const SkirmishAIKey& GetKey() const { return key; }
+
+	/**
+	 * No events are forwarded to the Skirmish AI plugin
+	 * after this method has been called.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @see CSkirmishAIHandler::SetLocalKillFlag()
+	 */
+	void SetBlockEvents(bool enable) { blockEvents = enable; }
+	void SetCheatEvents(bool enable) { cheatEvents = enable; }
+
+	bool CheatEventsEnabled() const { return cheatEvents; }
 
 	bool Active() const { return (skirmishAIId != -1); }
 
-	void SetCheatEventsEnabled(bool enable) { cheatEvents = enable; }
-	bool CheatEventsEnabled() const { return cheatEvents; }
-
 private:
-	bool LoadSkirmishAI(bool postLoad);
+	bool LoadLibrary(bool postLoad);
 
 	/**
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
@@ -128,12 +129,11 @@ private:
 	int skirmishAIId = -1;
 	int teamId = -1;
 
-	bool initialized = false;
-	bool released = false;
+	bool initialized = false; // true after handling Init event
+	bool    released = false; // true after handling Release event
+	bool libraryInit = false; // CSkirmishAILibrary::Init retval
 	bool cheatEvents = false;
-
-	bool initOk = false;
-	bool dieing = false;
+	bool blockEvents = false;
 };
 
 #endif // SKIRMISH_AI_WRAPPER_H

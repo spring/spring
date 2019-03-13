@@ -144,11 +144,11 @@ public:
 	void SetLocalKillFlag(const size_t skirmishAIId, const int reason);
 
 	/**
-	 * Returns a value explaining why a Skirmish AI is dieing, or a value < 0
+	 * Returns a value explaining why a Skirmish AI was killed, or a value < 0
 	 * if it is not.
 	 * @param skirmishAIId index of the AI in question
 	 * @return for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
-	 * @see IsSkirmishAIDieing()
+	 * @see HasLocalKillFlag()
 	 */
 	int GetLocalKillFlag(const size_t skirmishAIId) const { return aiKillFlags[skirmishAIId]; }
 

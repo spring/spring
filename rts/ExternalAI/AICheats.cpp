@@ -45,7 +45,7 @@ bool CAICheats::OnlyPassiveCheats()
 void CAICheats::EnableCheatEvents(bool enable)
 {
 	// enable sending of EnemyCreated, etc. events
-	ai->SetCheatEventsEnabled(enable);
+	ai->SetCheatEvents(enable);
 }
 
 
