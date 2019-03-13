@@ -106,7 +106,7 @@ void CSkirmishAIWrapper::CreateCallback() {
 
 
 
-bool CSkirmishAIWrapper::LoadLibrary(bool postLoad) {
+bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 	AILibraryManager* libManager = AILibraryManager::GetInstance();
 
 	{
@@ -170,7 +170,7 @@ bool CSkirmishAIWrapper::LoadLibrary(bool postLoad) {
 
 
 void CSkirmishAIWrapper::Init() {
-	if (!LoadLibrary(false))
+	if (!InitLibrary(false))
 		return;
 
 	const SInitEvent evtData = {skirmishAIId, sCallback};
@@ -269,6 +269,7 @@ void CSkirmishAIWrapper::Load(std::istream* loadStream)
 		tmpFileStream.close();
 	}
 
+	assert(Active());
 	HandleEvent(EVENT_LOAD, &evtData);
 
 	FileSystem::DeleteFile(tmpFile);
@@ -279,6 +280,7 @@ void CSkirmishAIWrapper::Save(std::ostream* saveStream)
 	const std::string tmpFile = createTempFileName("save", teamId, skirmishAIId);
 	const SSaveEvent evtData = {tmpFile.c_str()};
 
+	assert(Active());
 	HandleEvent(EVENT_SAVE, &evtData);
 
 	if (!FileSystem::FileExists(tmpFile))

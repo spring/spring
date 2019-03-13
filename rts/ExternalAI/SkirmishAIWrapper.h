@@ -37,7 +37,7 @@ public:
 	void Serialize(creg::ISerializer* s) {}
 	void PostLoad() {
 		CreateCallback();
-		LoadLibrary(true);
+		InitLibrary(true);
 	}
 
 
@@ -104,7 +104,7 @@ public:
 	bool Active() const { return (skirmishAIId != -1); }
 
 private:
-	bool LoadLibrary(bool postLoad);
+	bool InitLibrary(bool postLoad);
 
 	/**
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
