@@ -26,9 +26,9 @@
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/LosHandler.h"
+#endif
 
 #define MAX_UHM_RECTS_PER_FRAME static_cast<size_t>(128)
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
