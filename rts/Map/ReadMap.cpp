@@ -26,6 +26,8 @@
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/LosHandler.h"
+
+#define MAX_UHM_RECTS_PER_FRAME static_cast<size_t>(128)
 #endif
 
 //////////////////////////////////////////////////////////////////////
@@ -421,6 +423,7 @@ void CReadMap::UpdateDraw(bool firstCall)
 	if (unsyncedHeightMapUpdates.empty())
 		return;
 
+	#if 0
 	static CRectangleOverlapHandler unsyncedHeightMapUpdatesSwap;
 
 	{
@@ -460,6 +463,22 @@ void CReadMap::UpdateDraw(bool firstCall)
 	}
 
 	unsyncedHeightMapUpdatesSwap.clear();
+
+	#else
+
+	// TODO: quadtree or whatever
+	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
+		UpdateHeightMapUnsynced(*(unsyncedHeightMapUpdates.begin() + i));
+	}
+
+	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
+		eventHandler.UnsyncedHeightMapUpdate(*(unsyncedHeightMapUpdates.begin() + i));
+	}
+
+	for (size_t i = 0, n = std::min(MAX_UHM_RECTS_PER_FRAME, unsyncedHeightMapUpdates.size()); i < n; i++) {
+		unsyncedHeightMapUpdates.pop_front();
+	}
+	#endif
 }
 
 
