@@ -47,10 +47,10 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	// handled in PostLoad
 	CR_IGNORED(initialized),
 	CR_IGNORED(released),
-	CR_MEMBER(cheatEvents),
+	CR_MEMBER(libraryInit),
 
-	CR_MEMBER(initOk),
-	CR_MEMBER(dieing),
+	CR_MEMBER(cheatEvents),
+	CR_MEMBER(blockEvents),
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
@@ -70,10 +70,10 @@ void CSkirmishAIWrapper::PreInit(int aiID)
 	{
 		initialized = false;
 		released = false;
-		cheatEvents = false;
+		libraryInit = false;
 
-		initOk = false;
-		dieing = false;
+		cheatEvents = false;
+		blockEvents = false;
 	}
 	{
 		const std::string& kn = key.GetShortName();
@@ -106,23 +106,21 @@ void CSkirmishAIWrapper::CreateCallback() {
 
 
 
-bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
+bool CSkirmishAIWrapper::LoadLibrary(bool postLoad) {
 	AILibraryManager* libManager = AILibraryManager::GetInstance();
 
 	{
 		ScopedTimer timer(GetTimerNameHash());
 
-		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr) {
-			SetDieing();
+		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr || !(libraryInit = library->Init(skirmishAIId, sCallback)))
 			skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
-		} else {
-			initOk = library->Init(skirmishAIId, sCallback);
-		}
 	}
 
 	// check if initialization went ok
-	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
+	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId)) {
+		SetBlockEvents(true);
 		return false;
+	}
 
 	libManager->FetchSkirmishAILibrary(key);
 
@@ -172,7 +170,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 
 void CSkirmishAIWrapper::Init() {
-	if (!LoadSkirmishAI(false))
+	if (!LoadLibrary(false))
 		return;
 
 	const SInitEvent evtData = {skirmishAIId, sCallback};
@@ -197,7 +195,7 @@ void CSkirmishAIWrapper::Kill()
 	{
 		ScopedTimer timer(GetTimerNameHash());
 
-		if (initOk)
+		if (libraryInit)
 			library->Release(skirmishAIId);
 
 		AILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
@@ -209,6 +207,12 @@ void CSkirmishAIWrapper::Kill()
 	{
 		library = nullptr;
 		sCallback = nullptr;
+	}
+	{
+		// mark as inactive for EngineOutHandler::{Load,Save}; AI data
+		// remains present in SkirmishAIHandler until RemoveSkirmishAI
+		skirmishAIId = -1;
+		teamId = -1;
 	}
 }
 
@@ -446,7 +450,7 @@ void CSkirmishAIWrapper::SeismicPing(
 int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const {
 	ScopedTimer timer(GetTimerNameHash());
 
-	if (!dieing || (topic == EVENT_RELEASE))
+	if (!blockEvents || (topic == EVENT_RELEASE))
 		return library->HandleEvent(skirmishAIId, topic, data);
 
 	// to prevent log error spam, signal: OK

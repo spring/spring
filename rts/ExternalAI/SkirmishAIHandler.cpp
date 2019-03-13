@@ -230,7 +230,7 @@ void CSkirmishAIHandler::SetLocalKillFlag(const size_t skirmishAIId, const int r
 	aiKillFlags[skirmishAIId] = reason;
 
 	if (!aiData.isLuaAI)
-		eoh->SetSkirmishAIDieing(skirmishAIId);
+		eoh->BlockSkirmishAIEvents(skirmishAIId);
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
 }
