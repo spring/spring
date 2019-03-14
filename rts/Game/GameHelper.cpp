@@ -658,8 +658,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float  baseRange = weapon->range;
 	const float rangeBoost = weapon->autoTargetRangeBoost;
 	// find theoretical maximum range based on height above lowest point on map
-	// FIXME: root becomes negative for cannons collapsing range to 0, not legit
-	// const float scanRadius = weapon->GetRange2D(rangeBoost, (aimPosHeight - minMapHeight) * heightMod);
+	// const float scanRadius = weapon->GetRange2D(rangeBoost, (minMapHeight - aimPosHeight) * heightMod);
 	const float scanRadius = baseRange + rangeBoost + (aimPosHeight - minMapHeight) * heightMod;
 
 	// [0] := default, [1,2,3,4,5,6] := target is {avoidee, in bad category, crashing, last attacker, paralyzed, outside unboosted range}
@@ -703,7 +702,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 					continue;
 				}
 
-				const float modRange = weapon->GetRange2D(rangeBoost, (aimPosHeight - targetPos.y) * heightMod);
+				const float modRange = weapon->GetRange2D(rangeBoost, (targetPos.y - aimPosHeight) * heightMod);
 				const float sqDist2D = ownerPos.SqDistance2D(targetPos);
 
 				if (sqDist2D > Square(modRange))
