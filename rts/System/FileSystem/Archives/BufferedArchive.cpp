@@ -26,17 +26,21 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	if (!globalConfig.vfsCacheArchiveFiles)
 		return GetFileImpl(fid, buffer);
 
-	if (fid >= cache.size())
-		cache.resize(std::max(size_t(fid + 1), cache.size() * 2));
+	// NumFiles is virtual, can't do this in ctor
+	if (cache.empty())
+		cache.resize(NumFiles());
 
-	if (!cache[fid].populated) {
-		cache[fid].exists = GetFileImpl(fid, cache[fid].data);
-		cache[fid].populated = true;
+	FileBuffer& fb = cache.at(fid);
 
-		cacheSize += cache[fid].data.size();
-		fileCount += cache[fid].exists;
+	if (!fb.populated) {
+		fb.exists = GetFileImpl(fid, fb.data);
+		fb.populated = true;
+
+		cacheSize += fb.data.size();
+		fileCount += fb.exists;
 	}
 
-	buffer = cache[fid].data;
-	return cache[fid].exists;
+	// TODO: zero-copy access
+	buffer = fb.data;
+	return fb.exists;
 }

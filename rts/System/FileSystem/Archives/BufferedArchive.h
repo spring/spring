@@ -14,10 +14,7 @@ class CBufferedArchive : public IArchive
 {
 public:
 	CBufferedArchive(const std::string& name, bool cached = true): IArchive(name) {
-		if ((noCache = !cached))
-			return;
-
-		cache.resize(1024);
+		noCache = !cached;
 	}
 
 	virtual ~CBufferedArchive();
@@ -35,13 +32,7 @@ protected:
 		FileBuffer(FileBuffer&& fb) { *this = std::move(fb); }
 
 		FileBuffer& operator = (const FileBuffer& fb) = delete;
-		FileBuffer& operator = (FileBuffer&& fb) {
-			populated = fb.populated;
-			exists = fb.exists;
-
-			data = std::move(fb.data);
-			return *this;
-		}
+		FileBuffer& operator = (FileBuffer&& fb) = default;
 
 		bool populated = false; // files may be empty (0 bytes)
 		bool exists = false;
