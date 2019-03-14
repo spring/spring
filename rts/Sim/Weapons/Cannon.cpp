@@ -179,10 +179,11 @@ float3 CCannon::CalcWantedDir(const float3& targetVec) const
 		// (introduced by extreme off-map unit positions; the term
 		// DFsq * Dsq * ... * dy should never even approach 1e38)
 		if (Dsq < 1e12f && math::fabs(dy) < 1e6f) {
-			const float root1 = v*v*v*v + 2.0f*v*v*g*dy - g*g*DFsq;
+			const float vsq = v * v;
+			const float root1 = vsq * vsq + 2.0f * vsq * g*dy - g*g*DFsq;
 
 			if (root1 >= 0.0f) {
-				const float root2 = 2.0f * DFsq * Dsq * (v * v + g * dy + (highTrajectory ? -1.0f : 1.0f) * math::sqrt(root1));
+				const float root2 = 2.0f * DFsq * Dsq * (vsq + g * dy + (highTrajectory ? -1.0f : 1.0f) * math::sqrt(root1));
 
 				if (root2 >= 0.0f) {
 					Vxz = math::sqrt(root2) / (2.0f * Dsq);
@@ -219,6 +220,7 @@ float CCannon::GetStaticRange2D(const float2& baseConsts, const float2& projCons
 		const float   speed2D = pc.x * speedFactor;
 		const float sqSpeed2D = speed2D * speed2D;
 
+		// take advantage of height-boost factor if firing downhill
 		if (heightDiff < -smoothHeight) {
 			heightDiff *= bf.y;
 		} else if (heightDiff < 0.0f) {
