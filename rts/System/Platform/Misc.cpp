@@ -484,7 +484,7 @@ namespace Platform
 
 	std::string GetMacAddrHash() {
 		const std::array<uint8_t, 6>& rawAddr = GetRawMacAddr();
-		const std::string& hashStr = IntToString(CRC::CalcDigest(rawAddr.data(), rawAddr.size()), "%x");
+		const std::string& hashStr = IntToString(CRC::CalcDigest(rawAddr.data(), rawAddr.size()), "%u");
 		return hashStr;
 	}
 

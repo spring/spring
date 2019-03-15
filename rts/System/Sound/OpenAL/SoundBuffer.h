@@ -15,9 +15,9 @@
 /**
  * @brief A buffer holding a sound
  *
- * One of this will be created for each wav-file used.
- * They are loaded on demand and unloaded when game ends.
- * They can be shared among multiple SoundItem
+ * One of these will be created for each {wav,ogg} sound-file loaded.
+ * All buffers are generated on demand and released when a game ends,
+ * and can be shared among multiple SoundItem instances.
  */
 class SoundBuffer : spring::noncopyable
 {
@@ -26,10 +26,12 @@ public:
 	/// can be played, but you won't hear anything
 	SoundBuffer() = default;
 	SoundBuffer(SoundBuffer&& sb) { *this = std::move(sb); }
+	~SoundBuffer() { Release(); }
 
 	SoundBuffer& operator = (SoundBuffer&& sb) {
 		filename = std::move(sb.filename);
 		id = sb.id;
+		sb.id = 0;
 		channels = sb.channels;
 		length = sb.length;
 		return *this;
@@ -37,6 +39,7 @@ public:
 
 	bool LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer);
 	bool LoadVorbis(const std::string& file, const std::vector<std::uint8_t>& buffer);
+	bool Release();
 
 	const std::string& GetFilename() const { return filename; }
 
@@ -75,7 +78,7 @@ private:
 	typedef spring::unsynced_map<std::string, size_t> bufferMapT;
 	typedef std::vector<SoundBuffer> bufferVecT;
 
-	static bufferMapT bufferMap; // filename, index into Buffers
+	static bufferMapT bufferMap; // filename, index into ::buffers
 	static bufferVecT buffers;
 };
 
