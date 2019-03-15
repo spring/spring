@@ -69,7 +69,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
 	if ((buffer.empty()) || memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
-		LOG_L(L_ERROR, "ReadWAV: invalid header: %s", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid header", __func__, file.c_str());
 		return false;
 	}
 
@@ -89,7 +89,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 #undef hswabdword
 
 	if (header->format_tag != 1) { // Microsoft PCM format?
-		LOG_L(L_ERROR, "ReadWAV (%s): invalid format tag", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid format tag", __func__, file.c_str());
 		return false;
 	}
 
@@ -98,7 +98,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
 		else {
-			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (mono)", file.c_str());
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of bits per sample (mono; %d)", __func__, file.c_str(), header->BitsPerSample);
 			return false;
 		}
 	}
@@ -106,19 +106,19 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
 		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
 		else {
-			LOG_L(L_ERROR, "ReadWAV (%s): invalid number of bits per sample (stereo)", file.c_str());
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of bits per sample (stereo; %d)", __func__, file.c_str(), header->BitsPerSample);
 			return false;
 		}
 	}
 	else {
-		LOG_L(L_ERROR, "ReadWAV (%s): invalid number of channels.", file.c_str());
+		LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%d)", __func__, file.c_str(), header->channels);
 		return false;
 	}
 
 	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
 		LOG_L(L_ERROR,
-				"WAV file %s has data length %i greater than actual data length %i",
-				file.c_str(), header->datalen,
+				"[%s(%s)] data length %i greater than actual data length %i",
+				__func__, file.c_str(), header->datalen,
 				(int)(buffer.size() - sizeof(WAVHeader)));
 
 //		LOG_L(L_WARNING, "OpenAL: size %d\n", size);
@@ -136,7 +136,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_
 	}
 
 	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
-		LOG_L(L_WARNING, "Loading audio failed for %s", file.c_str());
+		LOG_L(L_WARNING, "[%s(%s)] failed generating buffer", __func__, file.c_str());
 
 	filename = file;
 	channels = header->channels;
@@ -161,7 +161,7 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 	OggVorbis_File oggStream;
 	const int result = ov_open_callbacks(&buf, &oggStream, nullptr, 0, vorbisCallbacks);
 	if (result < 0) {
-		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		LOG_L(L_WARNING, "[%s(%s)] could not open Ogg stream (%s)", __func__, file.c_str(), ErrorString(result).c_str());
 		return false;
 	}
 
@@ -175,7 +175,7 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 	} else if (vorbisInfo->channels == 2) {
 		format = AL_FORMAT_STEREO16;
 	} else {
-		LOG_L(L_ERROR, "File %s: invalid number of channels: %i", file.c_str(), vorbisInfo->channels);
+		LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%i)", __func__, file.c_str(), vorbisInfo->channels);
 		return false;
 	}
 
@@ -193,13 +193,13 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 
 		switch ((read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section))) {
 			case OV_HOLE:
-				LOG_L(L_WARNING, "%s: garbage or corrupt page in stream (non-fatal)", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] garbage or corrupt page in stream (non-fatal)", __func__, file.c_str());
 				continue; // read next
 			case OV_EBADLINK:
-				LOG_L(L_WARNING, "%s: corrupted stream", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] corrupted stream", __func__, file.c_str());
 				return false; // abort
 			case OV_EINVAL:
-				LOG_L(L_WARNING, "%s: corrupted headers", file.c_str());
+				LOG_L(L_WARNING, "[%s(%s)] corrupted headers", __func__, file.c_str());
 				return false; // abort
 			default:
 				break; // all good
