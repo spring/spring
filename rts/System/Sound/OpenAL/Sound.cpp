@@ -98,6 +98,7 @@ void CSound::Init()
 		soundMap.reserve(256);
 		preloadSet.clear();
 		preloadSet.reserve(16);
+		failureSet.clear();
 
 		defaultItemNameMap.clear();
 		soundItemDefsMap.clear();
@@ -873,6 +874,10 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	if (id > 0)
 		return id; // file is loaded already
 
+	// do not keep generating AL buffers for files that previously failed to load, etc
+	if (failureSet.find(path) != failureSet.end())
+		return 0;
+
 	CFileHandler file("", "");
 
 	loadBuffer.clear();
@@ -911,6 +916,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	if (soundBuf.GetLength() <= 0.0f) {
 		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
+		failureSet.insert(path);
 		return 0;
 	}
 

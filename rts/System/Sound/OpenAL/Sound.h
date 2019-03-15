@@ -100,6 +100,7 @@ private:
 	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
 	spring::unordered_set<std::string> preloadSet;
+	spring::unordered_set<std::string> failureSet;
 
 	std::vector<SoundItem> soundItems;
 	std::vector<CSoundSource> soundSources; // fixed-size
