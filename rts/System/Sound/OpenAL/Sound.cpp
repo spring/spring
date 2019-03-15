@@ -891,13 +891,14 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	if (!file.FileExists()) {
 		LOG_L(L_ERROR, "[%s] unable to open audio file \"%s\"", __func__, path.c_str());
+		failureSet.insert(path);
 		return 0;
 	}
 
 	if (loadBuffer.empty()) {
 		// copy file into buffer manually if not in VFS
 		loadBuffer.resize(file.FileSize());
-		file.Read(loadBuffer.data(), file.FileSize());
+		file.Read(loadBuffer.data(), loadBuffer.size());
 	}
 
 

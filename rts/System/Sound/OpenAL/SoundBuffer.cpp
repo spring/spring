@@ -40,18 +40,19 @@ int	VorbisClose(void* datasource)
 }
 
 
-SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
+SoundBuffer::bufferMapT SoundBuffer::bufferMap;
 SoundBuffer::bufferVecT SoundBuffer::buffers;
 
 static std::vector<std::uint8_t> decodeBuffer;
+
 
 #pragma pack(push, 1)
 // Header copied from WavLib by Michael McTernan
 struct WAVHeader
 {
-	std::uint8_t riff[4];         // "RIFF"
+	std::uint8_t riff[4];        // "RIFF"
 	std::int32_t totalLength;
-	std::uint8_t wavefmt[8];      // WAVEfmt "
+	std::uint8_t wavefmt[8];     // WAVEfmt "
 	std::int32_t length;         // Remaining length 4 bytes
 	std::int16_t format_tag;
 	std::int16_t channels;       // Mono=1 Stereo=2
@@ -59,10 +60,11 @@ struct WAVHeader
 	std::int32_t AvgBytesPerSec;
 	std::int16_t BlockAlign;
 	std::int16_t BitsPerSample;
-	std::uint8_t data[4];         // "data"
+	std::uint8_t data[4];        // "data"
 	std::int32_t datalen;        // Raw data length 4 bytes
 };
 #pragma pack(pop)
+
 
 bool SoundBuffer::LoadWAV(const std::string& file, const std::vector<std::uint8_t>& buffer)
 {
@@ -208,12 +210,32 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 		pos += read;
 	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
-	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
+	if (!AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate))
+		LOG_L(L_WARNING, "[%s(%s)] failed generating buffer", __func__, file.c_str());
+
 	filename = file;
 	channels = vorbisInfo->channels;
 	length   = ov_time_total(&oggStream, -1);
 	return true;
 }
+
+
+bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate)
+{
+	alGenBuffers(1, &id);
+	if (!CheckError("SoundBuffer::alGenBuffers"))
+		return false;
+	alBufferData(id, format, (ALvoid*) data, datalength, rate);
+	return CheckError("SoundBuffer::alBufferData");
+}
+
+bool SoundBuffer::Release() {
+	if (id == 0)
+		return false;
+	alDeleteBuffers(1, &id);
+	return true;
+}
+
 
 int SoundBuffer::BufferSize() const
 {
@@ -242,7 +264,7 @@ SoundBuffer& SoundBuffer::GetById(const size_t id)
 
 size_t SoundBuffer::AllocedSize()
 {
-	int numBytes = 0;
+	size_t numBytes = 0;
 	for (auto it = ++buffers.cbegin(); it != buffers.cend(); ++it)
 		numBytes += it->BufferSize();
 	return numBytes;
@@ -256,14 +278,5 @@ size_t SoundBuffer::Insert(SoundBuffer&& buffer)
 	buffers.emplace_back(std::move(buffer));
 
 	return bufId;
-}
-
-bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate)
-{
-	alGenBuffers(1, &id);
-	if (!CheckError("SoundBuffer::AlGenBuffers"))
-		return false;
-	alBufferData(id, format, (ALvoid*) data, datalength, rate);
-	return CheckError("SoundBuffer::AlGenBufferData");
 }
 

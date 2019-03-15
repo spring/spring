@@ -40,7 +40,13 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 		fileCount += fb.exists;
 	}
 
+	if (!fb.exists)
+		return false;
+
+	if (buffer.size() != fb.data.size())
+		buffer.resize(fb.data.size());
+
 	// TODO: zero-copy access
-	buffer = fb.data;
-	return fb.exists;
+	std::copy(fb.data.begin(), fb.data.end(), buffer.begin());
+	return true;
 }
