@@ -45,14 +45,7 @@ CLuaRules::CLuaRules(): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
 	if (!IsValid())
 		return;
 
-	SetFullCtrl(true);
-	SetFullRead(true);
-	SetCtrlTeam(CEventClient::AllAccessTeam);
-	SetReadTeam(CEventClient::AllAccessTeam);
-	SetReadAllyTeam(CEventClient::AllAccessTeam);
-	SetSelectTeam(CEventClient::AllAccessTeam);
-
-	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD_BASE);
+	Init();
 }
 
 CLuaRules::~CLuaRules()
@@ -61,6 +54,26 @@ CLuaRules::~CLuaRules()
 	currentCobArgs = nullptr;
 }
 
+
+std::string CLuaRules::GetUnsyncedFileName() const
+{
+	return LuaRulesUnsyncedFilename;
+}
+
+std::string CLuaRules::GetSyncedFileName() const
+{
+	return LuaRulesSyncedFilename;
+}
+
+std::string CLuaRules::GetInitFileModes() const
+{
+	return SPRING_VFS_MOD_BASE;
+}
+
+int CLuaRules::GetInitSelectTeam() const
+{
+	return CEventClient::AllAccessTeam;
+}
 
 
 bool CLuaRules::AddSyncedCode(lua_State* L)

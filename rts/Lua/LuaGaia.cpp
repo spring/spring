@@ -36,19 +36,33 @@ CLuaGaia::CLuaGaia(): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 	if (!IsValid())
 		return;
 
-	SetFullCtrl(true);
-	SetFullRead(true);
-	SetCtrlTeam(CEventClient::AllAccessTeam);
-	SetReadTeam(CEventClient::AllAccessTeam);
-	SetReadAllyTeam(CEventClient::AllAccessTeam);
-	SetSelectTeam(teamHandler.GaiaTeamID());
-
-	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP_BASE);
+	Init();
 }
 
 CLuaGaia::~CLuaGaia()
 {
 	luaGaia = nullptr;
+}
+
+
+std::string CLuaGaia::GetUnsyncedFileName() const
+{
+	return LuaGaiaUnsyncedFilename;
+}
+
+std::string CLuaGaia::GetSyncedFileName() const
+{
+	return LuaGaiaSyncedFilename;
+}
+
+std::string CLuaGaia::GetInitFileModes() const
+{
+	return SPRING_VFS_MAP_BASE;
+}
+
+int CLuaGaia::GetInitSelectTeam() const
+{
+	return teamHandler.GaiaTeamID();
 }
 
 
