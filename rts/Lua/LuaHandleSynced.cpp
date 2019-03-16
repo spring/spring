@@ -1673,14 +1673,20 @@ bool CSplitLuaHandle::Init(bool onlyUnsynced)
 }
 
 
-bool CSplitLuaHandle::ReloadUnsynced()
+bool CSplitLuaHandle::FreeUnsynced()
 {
-	if (!unsyncedLuaHandle.IsValid()) {
+	if (!unsyncedLuaHandle.IsValid())
 		return false;
-	}
 
 	unsyncedLuaHandle.KillLua();
 	unsyncedLuaHandle.~CUnsyncedLuaHandle();
+
+	return true;
+}
+
+
+bool CSplitLuaHandle::LoadUnsynced()
+{
 	::new (&unsyncedLuaHandle) CUnsyncedLuaHandle(this, syncedLuaHandle.GetName(), syncedLuaHandle.GetOrder() + 1);
 
 	if (!unsyncedLuaHandle.IsValid()) {
@@ -1692,7 +1698,21 @@ bool CSplitLuaHandle::ReloadUnsynced()
 }
 
 
+bool CSplitLuaHandle::ReloadUnsynced()
+{
+	return FreeUnsynced(), LoadUnsynced();
+}
 
+
+bool CSplitLuaHandle::SwapSyncedHandle(lua_State* L, lua_State* L_GC)
+{
+	FreeUnsynced();
+	LUA_CLOSE(&syncedLuaHandle.L);
+	syncedLuaHandle.SetLuaStates(L, L_GC);
+	LoadUnsynced();
+
+	return IsValid();
+}
 
 
 string CSplitLuaHandle::LoadFile(const std::string& filename, const std::string& modes) const

@@ -45,7 +45,6 @@
 
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
-	: iss(nullptr)
 {}
 
 CCregLoadSaveHandler::~CCregLoadSaveHandler() = default;
@@ -103,6 +102,7 @@ class CLuaStateCollector
 
 public:
 	CLuaStateCollector() = default;
+	bool valid;
 	lua_State* L = nullptr;
 	lua_State* L_GC = nullptr;
 	void Serialize(creg::ISerializer* s);
@@ -110,12 +110,16 @@ public:
 
 CR_BIND(CLuaStateCollector, )
 CR_REG_METADATA(CLuaStateCollector, (
+	CR_MEMBER(valid),
 	CR_IGNORED(L),
 	CR_IGNORED(L_GC),
 	CR_SERIALIZER(Serialize)
 ))
 
 void CLuaStateCollector::Serialize(creg::ISerializer* s) {
+	if (!valid)
+		return;
+
 	creg::SerializeLuaState(s, &L);
 	creg::SerializeLuaThread(s, &L_GC);
 }
@@ -150,14 +154,38 @@ static void ReadString(std::istream& s, std::string& str)
 
 static void SaveLuaState(CSplitLuaHandle* handle, creg::COutputStreamSerializer& os, std::stringstream& oss)
 {
+	CLuaStateCollector lsc;
+	lsc.valid = handle == nullptr;
 	if (handle == nullptr)
 		return;
 
-	CLuaStateCollector lsc;
 	lsc.L = handle->syncedLuaHandle.GetLuaState();
 	lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
 	lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
 	os.SavePackage(&oss, &lsc, lsc.GetClass());
+}
+
+
+static void LoadLuaState(CSplitLuaHandle* handle, creg::CInputStreamSerializer& is, std::stringstream& iss)
+{
+	if (handle == nullptr)
+		return;
+
+
+	void* plsc;
+	creg::Class* plsccls = nullptr;
+
+	is.LoadPackage(&iss, plsc, plsccls);
+	assert(plsc && plsccls == CLuaStateCollector::StaticClass());
+
+	CLuaStateCollector* lsc = static_cast<CLuaStateCollector*>(plsc);
+
+	if (lsc->valid)
+		handle->SwapSyncedHandle(lsc->L, lsc->L_GC);
+
+	spring::SafeDelete(lsc);
+	return;
+
 }
 
 
@@ -175,19 +203,21 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 		WriteString(oss, modName);
 		WriteString(oss, mapName);
 
-		CGameStateCollector gsc;
 
 		{
-			// save creg state
 			creg::COutputStreamSerializer os;
-			os.SavePackage(&oss, &gsc, gsc.GetClass());
-			PrintSize("Game", oss.tellp());
 
-			// save lua state
+			// save lua state first as lua unit scripts depend on it
 			const int luaStart = oss.tellp();
 			SaveLuaState(luaGaia, os, oss);
 			SaveLuaState(luaRules, os, oss);
 			PrintSize("Lua", ((int)oss.tellp()) - luaStart);
+
+			// save creg state
+			CGameStateCollector gsc;
+			os.SavePackage(&oss, &gsc, gsc.GetClass());
+			PrintSize("Game", oss.tellp());
+
 
 			// save AI state
 			const int aiStart = oss.tellp();
@@ -245,8 +275,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 {
 	CGZFileHandler saveFile(dataDirsAccess.LocateFile(FindSaveFile(path)), SPRING_VFS_RAW_FIRST);
-	iss = new std::stringstream;
-	std::stringbuf *sbuf = iss->rdbuf();
+	std::stringbuf *sbuf = iss.rdbuf();
 	char buf[4096];
 	int len;
 	while ((len = saveFile.Read(buf, sizeof(buf))) > 0)
@@ -254,7 +283,7 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 
 	//Check for compatible save versions
 	std::string saveVersion;
-	ReadString(*iss, saveVersion);
+	ReadString(iss, saveVersion);
 	if (saveVersion != SpringVersion::GetSync()) {
 		if (SpringVersion::IsRelease()) {
 			throw content_error("File was saved by an incompatible engine version: " + saveVersion);
@@ -276,9 +305,9 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 	mapName = "";
 
 	// read our own header.
-	ReadString(*iss, scriptText);
-	ReadString(*iss, modName);
-	ReadString(*iss, mapName);
+	ReadString(iss, scriptText);
+	ReadString(iss, modName);
+	ReadString(iss, mapName);
 
 	CGameSetup::LoadSavedScript(path, scriptText);
 }
@@ -288,34 +317,40 @@ void CCregLoadSaveHandler::LoadGame()
 {
 #ifdef USING_CREG
 	ENTER_SYNCED_CODE();
+	{
+		creg::CInputStreamSerializer inputStream;
 
-	void* pGSC = nullptr;
-	creg::Class* gsccls = nullptr;
+		// load lua state first, as lua unit scripts depend on it
+		LoadLuaState(luaGaia, inputStream, iss);
+		LoadLuaState(luaRules, inputStream, iss);
 
-	// load creg state
-	creg::CInputStreamSerializer inputStream;
-	inputStream.LoadPackage(iss, pGSC, gsccls);
-	assert(pGSC && gsccls == CGameStateCollector::StaticClass());
+		// load creg state
+		void* pGSC = nullptr;
+		creg::Class* gsccls = nullptr;
 
-	// the only job of gsc is to collect gamestate data
-	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
-	spring::SafeDelete(gsc);
+		inputStream.LoadPackage(&iss, pGSC, gsccls);
+		assert(pGSC && gsccls == CGameStateCollector::StaticClass());
 
-	// load ai state
-	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
-		std::streamsize aiSize;
-		inputStream.SerializeInt(&aiSize, sizeof(aiSize));
+		// the only job of gsc is to collect gamestate data
+		CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
+		spring::SafeDelete(gsc);
 
-		std::vector<char> buffer(aiSize);
-		std::stringstream aiData;
-		iss->read(buffer.data(), buffer.size());
-		aiData.write(buffer.data(), buffer.size());
+		// load ai state
+		for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+			std::streamsize aiSize;
+			inputStream.SerializeInt(&aiSize, sizeof(aiSize));
 
-		eoh->Load(&aiData, ai.first);
+			std::vector<char> buffer(aiSize);
+			std::stringstream aiData;
+			iss.read(buffer.data(), buffer.size());
+			aiData.write(buffer.data(), buffer.size());
+
+			eoh->Load(&aiData, ai.first);
+		}
 	}
 
 	// cleanup
-	spring::SafeDelete(iss);
+	iss.str("");
 
 	gs->paused = false;
 	if (gameServer != nullptr) {
