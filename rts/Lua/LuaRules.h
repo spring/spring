@@ -41,6 +41,7 @@ public: // call-ins
 		return syncedLuaHandle.RecvSkirmishAIMessage(aiID, data, inSize, outSize);
 	}
 
+
 private:
 	CLuaRules();
 	virtual ~CLuaRules();
@@ -48,6 +49,11 @@ private:
 protected:
 	bool AddSyncedCode(lua_State* L);
 	bool AddUnsyncedCode(lua_State* L);
+
+	std::string GetUnsyncedFileName() const;
+	std::string GetSyncedFileName() const;
+	std::string GetInitFileModes() const;
+	int GetInitSelectTeam() const;
 
 	int UnpackCobArg(lua_State* L);
 

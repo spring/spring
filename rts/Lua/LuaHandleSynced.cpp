@@ -66,7 +66,7 @@ LuaRulesParams::Params  CSplitLuaHandle::gameParams;
 // ##     ## ##   ### ##    ##    ##    ##   ### ##    ## ##       ##     ##
 //  #######  ##    ##  ######     ##    ##    ##  ######  ######## ########
 
-CUnsyncedLuaHandle::CUnsyncedLuaHandle(CSplitLuaHandle* _base, const string& _name, int _order)
+CUnsyncedLuaHandle::CUnsyncedLuaHandle(CSplitLuaHandle* _base, const std::string& _name, int _order)
 	: CLuaHandle(_name, _order, false, false)
 	, base(*_base)
 {
@@ -77,7 +77,7 @@ CUnsyncedLuaHandle::CUnsyncedLuaHandle(CSplitLuaHandle* _base, const string& _na
 CUnsyncedLuaHandle::~CUnsyncedLuaHandle() = default;
 
 
-bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
+bool CUnsyncedLuaHandle::Init(const std::string& code, const std::string& file)
 {
 	if (!IsValid())
 		return false;
@@ -340,7 +340,7 @@ bool CUnsyncedLuaHandle::DrawMaterial(const LuaMaterial* material)
 // ##    ##    ##    ##   ### ##    ## ##       ##     ##
 //  ######     ##    ##    ##  ######  ######## ########
 
-CSyncedLuaHandle::CSyncedLuaHandle(CSplitLuaHandle* _base, const string& _name, int _order)
+CSyncedLuaHandle::CSyncedLuaHandle(CSplitLuaHandle* _base, const std::string& _name, int _order)
 	: CLuaHandle(_name, _order, false, true)
 	, base(*_base)
 	, origNextRef(-1)
@@ -356,7 +356,7 @@ CSyncedLuaHandle::~CSyncedLuaHandle()
 }
 
 
-bool CSyncedLuaHandle::Init(const string& code, const string& file)
+bool CSyncedLuaHandle::Init(const std::string& code, const std::string& file)
 {
 	if (!IsValid())
 		return false;
@@ -472,10 +472,10 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 // Call-Ins
 //
 
-bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
+bool CSyncedLuaHandle::SyncedActionFallback(const std::string& msg, int playerID)
 {
 	string cmd = msg;
-	const string::size_type pos = cmd.find_first_of(" \t");
+	const std::string::size_type pos = cmd.find_first_of(" \t");
 	if (pos != string::npos)
 		cmd.resize(pos);
 
@@ -646,7 +646,7 @@ bool CSyncedLuaHandle::AllowUnitTransport(const CUnit* transporter, const CUnit*
 
 bool CSyncedLuaHandle::AllowUnitTransportLoad(
 	const CUnit* transporter,
-	const CUnit* transportee,	
+	const CUnit* transportee,
 	const float3& loadPos,
 	bool allowed
 ) {
@@ -846,7 +846,7 @@ bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder, const CFeatur
 }
 
 
-bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const string& type, float level)
+bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const std::string& type, float level)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 5, __func__);
@@ -1500,7 +1500,7 @@ int CSyncedLuaHandle::AddSyncedActionFallback(lua_State* L)
 	std::string cmdRaw = "/" + std::string(luaL_checkstring(L, 1));
 	std::string cmd = cmdRaw;
 
-	const string::size_type pos = cmdRaw.find_first_of(" \t");
+	const std::string::size_type pos = cmdRaw.find_first_of(" \t");
 
 	if (pos != string::npos)
 		cmd.resize(pos);
@@ -1524,7 +1524,7 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 	std::string cmdRaw = "/" + std::string(luaL_checkstring(L, 1));
 	std::string cmd = cmdRaw;
 
-	const string::size_type pos = cmdRaw.find_first_of(" \t");
+	const std::string::size_type pos = cmdRaw.find_first_of(" \t");
 
 	if (pos != string::npos)
 		cmd.resize(pos);
@@ -1595,7 +1595,7 @@ SetWatchDef(Weapon)
 // ##    ## ##     ## ##     ## ##    ##  ##       ##     ##
 //  ######  ##     ## ##     ## ##     ## ######## ########
 
-CSplitLuaHandle::CSplitLuaHandle(const string& _name, int _order)
+CSplitLuaHandle::CSplitLuaHandle(const std::string& _name, int _order)
 	: syncedLuaHandle(this, _name, _order)
 	, unsyncedLuaHandle(this, _name, _order + 1)
 {
@@ -1610,31 +1610,92 @@ CSplitLuaHandle::~CSplitLuaHandle()
 }
 
 
-void CSplitLuaHandle::Init(const string& syncedFile, const string& unsyncedFile, const string& modes)
+bool CSplitLuaHandle::InitSynced()
 {
-	if (!IsValid())
-		return;
-
-	const string syncedCode   = LoadFile(syncedFile, modes);
-	const string unsyncedCode = LoadFile(unsyncedFile, modes);
-	if (syncedCode.empty() && unsyncedCode.empty()) {
+	if (!IsValid()) {
 		KillLua();
-		return;
+		return false;
 	}
 
-	const bool haveSynced   = syncedLuaHandle.Init(syncedCode, syncedFile);
-	const bool haveUnsynced = unsyncedLuaHandle.Init(unsyncedCode, unsyncedFile);
-
-	if (!IsValid() || (!haveSynced && !haveUnsynced)) {
+	const std::string syncedCode = LoadFile(GetSyncedFileName(), GetInitFileModes());
+	if (syncedCode.empty()) {
 		KillLua();
-		return;
+		return false;
 	}
 
-	CheckStack();
+	const bool haveSynced = syncedLuaHandle.Init(syncedCode, GetUnsyncedFileName());
+
+	if (!IsValid() || !haveSynced) {
+		KillLua();
+		return false;
+	}
+
+	syncedLuaHandle.CheckStack();
+	return true;
 }
 
 
-string CSplitLuaHandle::LoadFile(const string& filename, const string& modes) const
+bool CSplitLuaHandle::InitUnsynced()
+{
+	if (!IsValid()) {
+		KillLua();
+		return false;
+	}
+
+	const std::string unsyncedCode = LoadFile(GetUnsyncedFileName(), GetInitFileModes());
+	if (unsyncedCode.empty()) {
+		KillLua();
+		return false;
+	}
+
+	const bool haveUnsynced = unsyncedLuaHandle.Init(unsyncedCode, GetUnsyncedFileName());
+
+	if (!IsValid() || !haveUnsynced) {
+		KillLua();
+		return false;
+	}
+
+	unsyncedLuaHandle.CheckStack();
+	return true;
+}
+
+
+bool CSplitLuaHandle::Init(bool onlyUnsynced)
+{
+	SetFullCtrl(true);
+	SetFullRead(true);
+	SetCtrlTeam(CEventClient::AllAccessTeam);
+	SetReadTeam(CEventClient::AllAccessTeam);
+	SetReadAllyTeam(CEventClient::AllAccessTeam);
+	SetSelectTeam(GetInitSelectTeam());
+
+	return (onlyUnsynced || InitSynced()) && InitUnsynced();
+}
+
+
+bool CSplitLuaHandle::ReloadUnsynced()
+{
+	if (!unsyncedLuaHandle.IsValid()) {
+		return false;
+	}
+
+	unsyncedLuaHandle.KillLua();
+	unsyncedLuaHandle.~CUnsyncedLuaHandle();
+	::new (&unsyncedLuaHandle) CUnsyncedLuaHandle(this, syncedLuaHandle.GetName(), syncedLuaHandle.GetOrder() + 1);
+
+	if (!unsyncedLuaHandle.IsValid()) {
+		unsyncedLuaHandle.KillLua();
+		return false;
+	}
+
+	return Init(true);
+}
+
+
+
+
+
+string CSplitLuaHandle::LoadFile(const std::string& filename, const std::string& modes) const
 {
 	string vfsModes(modes);
 	if (CSyncedLuaHandle::devMode) {
@@ -1713,7 +1774,7 @@ int CSplitLuaHandle::CallAsTeam(lua_State* L)
 			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
 				continue;
 			}
-			const string key = lua_tostring(L, -2);
+			const std::string key = lua_tostring(L, -2);
 			const int teamID = lua_toint(L, -1);
 			if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams())) {
 				luaL_error(L, "Bad teamID in SetCtrlTeam");

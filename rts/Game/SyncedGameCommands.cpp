@@ -306,9 +306,9 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 			return;
 		}
 
-		LuaSyncedHandler::ReloadHandler();
+		bool success = LuaSyncedHandler::ReloadHandler();
 
-		if (handler != nullptr) {
+		if (success) {
 			LOG("%s loaded", luaName);
 		} else {
 			LOG_L(L_ERROR, "%s loading failed", luaName);
@@ -349,6 +349,19 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 		}
 
 		LOG(msgs[2], luaName, types[lh == slh], modes[eventHandler.HasClient(lh)]);
+		return;
+	}
+
+	if (arg == "reloadunsynced") {
+		bool success = handler->ReloadUnsynced();
+
+		if (success) {
+			LOG("unsynced %s loaded", luaName);
+		} else {
+			LOG_L(L_ERROR, "loading unsynced %s failed", luaName);
+		}
+
+
 		return;
 	}
 

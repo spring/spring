@@ -14,13 +14,19 @@ public:
 	static bool CanLoadHandler();
 	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
 	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+	static bool ReloadUnsyncedHandler();
 
 	static bool LoadHandler();
 	static bool FreeHandler();
 
 protected:
-	bool AddSyncedCode(lua_State* L) { return true; }
-	bool AddUnsyncedCode(lua_State* L) { return true; }
+	bool AddSyncedCode(lua_State* L) override { return true; }
+	bool AddUnsyncedCode(lua_State* L) override { return true; }
+
+	std::string GetUnsyncedFileName() const;
+	std::string GetSyncedFileName() const;
+	std::string GetInitFileModes() const;
+	int GetInitSelectTeam() const;
 
 private:
 	CLuaGaia();
