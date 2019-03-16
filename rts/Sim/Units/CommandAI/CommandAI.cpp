@@ -1259,7 +1259,7 @@ CCommandQueue::const_iterator CCommandAI::GetCancelQueued(const Command& c, cons
 
 					if ((c1p - c2p).SqLength2D() >= (COMMAND_CANCEL_DIST * COMMAND_CANCEL_DIST))
 						continue;
-					if ((c.GetOpts() & SHIFT_KEY) != 0 && (c.GetOpts() & INTERNAL_ORDER) != 0)
+					if ((c.GetOpts() & SHIFT_KEY) != 0 && c.IsInternalOrder())
 						continue;
 
 					return ci;
@@ -1359,7 +1359,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, const CComma
 					} else {
 						if ((cbi.pos - tbi.pos).SqLength2D() >= (COMMAND_CANCEL_DIST * COMMAND_CANCEL_DIST))
 							continue;
-						if ((c.GetOpts() & SHIFT_KEY) != 0 && (c.GetOpts() & INTERNAL_ORDER) != 0)
+						if ((c.GetOpts() & SHIFT_KEY) != 0 && c.IsInternalOrder())
 							continue;
 
 						v.push_back(t);
@@ -1422,10 +1422,10 @@ void CCommandAI::ExecuteAttack(Command& c)
 			}
 
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.GetOpts() & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+			owner->AttackUnit(targetUnit, !c.IsInternalOrder(), c.GetID() == CMD_MANUALFIRE);
 			inCommand = true;
 		} else {
-			owner->AttackGround(c.GetPos(0), (c.GetOpts() & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+			owner->AttackGround(c.GetPos(0), !c.IsInternalOrder(), c.GetID() == CMD_MANUALFIRE);
 			inCommand = true;
 		}
 	}
@@ -1561,7 +1561,7 @@ void CCommandAI::FinishCommand()
 
 	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
 
-	const bool dontRepeat = (cmd.GetOpts() & INTERNAL_ORDER);
+	const bool dontRepeat = (cmd.IsInternalOrder());
 	const bool pushCommand = (cmd.GetID() != CMD_STOP && cmd.GetID() != CMD_PATROL);
 
 	if (repeatOrders && !dontRepeat && pushCommand)

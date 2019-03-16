@@ -377,8 +377,8 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	if (owner->unitDef->canmove)
 		return false;
 
-	// not an internal object targetted command
-	if (((cmd.GetOpts() & INTERNAL_ORDER) == 0) || (cmd.GetNumParams() != 1))
+	// not an internal object-targeted command
+	if ((!cmd.IsInternalOrder() || (cmd.GetNumParams() != 1))
 		return false;
 
 	const int objID = cmd.GetParam(0);
@@ -737,7 +737,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float radius = c.GetParam(4) + 100.0f; // do not walk too far outside repair area
 
 			if ((pos - unit->pos).SqLength2D() > radius * radius ||
-				(unit->IsMoving() && (((c.GetOpts() & INTERNAL_ORDER) && !TargetInterceptable(unit, unit->speed.Length2D())) || ownerBuilder->curBuild == unit)
+				(unit->IsMoving() && ((c.IsInternalOrder() && !TargetInterceptable(unit, unit->speed.Length2D())) || ownerBuilder->curBuild == unit)
 				&& !IsInBuildRange(unit))) {
 				StopMoveAndFinishCommand();
 				return;
@@ -750,13 +750,12 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		canRepairUnit &= ((unit->beingBuilt) || (unit->unitDef->repairable && (unit->health < unit->maxHealth)));
 		canRepairUnit &= ((unit != owner) || owner->unitDef->canSelfRepair);
 		canRepairUnit &= (!unit->soloBuilder || (unit->soloBuilder == owner));
-		canRepairUnit &= (!(c.GetOpts() & INTERNAL_ORDER) || (c.GetOpts() & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
+		canRepairUnit &= (!c.IsInternalOrder() || (c.GetOpts() & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner));
 		canRepairUnit &= (UpdateTargetLostTimer(unit->id) != 0);
 
 		if (canRepairUnit) {
-			if (MoveInBuildRange(unit)) {
+			if (MoveInBuildRange(unit))
 				ownerBuilder->SetRepairTarget(unit);
-			}
 		} else {
 			StopMoveAndFinishCommand();
 		}
@@ -967,14 +966,16 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		const unsigned int uid = signedId;
 
 		const bool checkForBetterTarget = ((++randomCounter % 5) == 0);
-		if (checkForBetterTarget && (c.GetOpts() & INTERNAL_ORDER) && (c.GetNumParams() >= 5)) {
+		if (checkForBetterTarget && c.IsInternalOrder() && (c.GetNumParams() >= 5)) {
 			// regular check if there is a closer reclaim target
 			CSolidObject* obj;
+
 			if (uid >= unitHandler.MaxUnits()) {
 				obj = featureHandler.GetFeature(uid - unitHandler.MaxUnits());
 			} else {
 				obj = unitHandler.GetUnit(uid);
 			}
+
 			if (obj) {
 				const float3& pos = c.GetPos(1);
 				const float radius = c.GetParam(4);
@@ -1004,7 +1005,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 			if (feature != nullptr) {
 				bool featureBeingResurrected = IsFeatureBeingResurrected(feature->id, owner);
-				featureBeingResurrected &= (c.GetOpts() & INTERNAL_ORDER) && !(c.GetOpts() & CONTROL_KEY);
+				featureBeingResurrected &= (c.IsInternalOrder()) && !(c.GetOpts() & CONTROL_KEY);
 
 				if (featureBeingResurrected || !ReclaimObject(feature)) {
 					StopMoveAndFinishCommand();
@@ -1112,7 +1113,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 			CFeature* feature = featureHandler.GetFeature(id - unitHandler.MaxUnits());
 
 			if (feature && feature->udef != nullptr) {
-				if (((c.GetOpts() & INTERNAL_ORDER) && !(c.GetOpts() & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
+				if ((c.IsInternalOrder() && !(c.GetOpts() & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					RemoveUnitFromResurrecters(owner);
 					StopMoveAndFinishCommand();
@@ -1182,7 +1183,7 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 
 void CBuilderCAI::ExecuteFight(Command& c)
 {
-	assert((c.GetOpts() & INTERNAL_ORDER) || owner->unitDef->canFight);
+	assert(c.IsInternalOrder() || owner->unitDef->canFight);
 
 	if (tempOrder) {
 		tempOrder = false;

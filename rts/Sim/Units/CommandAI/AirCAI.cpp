@@ -271,7 +271,7 @@ void CAirCAI::ExecuteFight(Command& c)
 {
 	const UnitDef* ownerDef = owner->unitDef;
 
-	assert((c.GetOpts() & INTERNAL_ORDER) || ownerDef->canFight);
+	assert(c.IsInternalOrder() || ownerDef->canFight);
 
 	// FIXME: check owner->UsingScriptMoveType() and skip rest if true?
 	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
@@ -423,12 +423,12 @@ void CAirCAI::ExecuteAttack(Command& c)
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
 			SetOrderTarget(targetUnit);
-			owner->AttackUnit(targetUnit, (c.GetOpts() & INTERNAL_ORDER) == 0, false);
+			owner->AttackUnit(targetUnit, !c.IsInternalOrder(), false);
 
 			inCommand = true;
 		} else {
 			SetGoal(c.GetPos(0), owner->pos, cancelDistance);
-			owner->AttackGround(c.GetPos(0), (c.GetOpts() & INTERNAL_ORDER) == 0, false);
+			owner->AttackGround(c.GetPos(0), !c.IsInternalOrder(), false);
 
 			inCommand = true;
 		}
@@ -569,7 +569,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		float3 attackPos = pos + (gsRNG.NextVector() * radius);
 		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
-		owner->AttackGround(attackPos, (ac.GetOpts() & INTERNAL_ORDER) == 0, false);
+		owner->AttackGround(attackPos, !ac.IsInternalOrder(), false);
 		SetGoal(attackPos, owner->pos);
 	} else {
 		const unsigned int unitIdx = gsRNG.NextInt(enemyUnitIDs.size()); // [0, size - 1]
@@ -578,7 +578,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 		CUnit* targetUnit = unitHandler.GetUnitUnsafe(unitID);
 
 		SetOrderTarget(targetUnit);
-		owner->AttackUnit(targetUnit, (ac.GetOpts() & INTERNAL_ORDER) == 0, false);
+		owner->AttackUnit(targetUnit, !ac.IsInternalOrder(), false);
 		SetGoal(targetUnit->pos, owner->pos);
 	}
 

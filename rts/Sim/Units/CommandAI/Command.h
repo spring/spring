@@ -369,6 +369,7 @@ public:
 	bool IsBuildCommand() const { return (GetID() < 0); }
 	bool IsEmptyCommand() const { return (numParams == 0); }
 	bool IsPooledCommand() const { return (pageIndex != -1u); } // implies numParams > MAX_COMMAND_PARAMS
+	bool IsInternalOrder() const { return ((options & INTERNAL_ORDER) != 0); }
 
 	int GetID(bool idx = false) const { return id[idx]; }
 	int GetTimeOut() const { return timeOut; }
