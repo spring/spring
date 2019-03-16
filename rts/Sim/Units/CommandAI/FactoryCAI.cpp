@@ -327,7 +327,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, int& numQueued
 	// NOTE: the queue should not be empty at this point!
 	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
-	if (!repeatOrders || (buildCommand.GetOpts() & INTERNAL_ORDER))
+	if (!repeatOrders || buildCommand.IsInternalOrder())
 		numQueued--;
 
 	UpdateIconName(buildCommand.GetID(), numQueued);

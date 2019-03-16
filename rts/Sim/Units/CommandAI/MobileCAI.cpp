@@ -407,8 +407,8 @@ void CMobileCAI::ExecuteMove(Command& c)
 		return;
 	}
 
-
-	if (sqGoalDist >= cancelDistance || !HasMoreMoveCommands())
+	// bypass cancel-distance check for internal (BUGGER_OFF) move commands
+	if (sqGoalDist >= cancelDistance || c.IsInternalOrder() || !HasMoreMoveCommands())
 		return;
 
 	// fallback
@@ -473,7 +473,7 @@ void CMobileCAI::ExecutePatrol(Command& c)
 */
 void CMobileCAI::ExecuteFight(Command& c)
 {
-	assert((c.GetOpts() & INTERNAL_ORDER) || owner->unitDef->canFight);
+	assert(c.IsInternalOrder() || owner->unitDef->canFight);
 
 	if (c.GetNumParams() == 1 && !owner->weapons.empty()) {
 		CWeapon* w = owner->weapons.front();
@@ -683,7 +683,7 @@ void CMobileCAI::ExecuteObjectAttack(Command& c)
 
 	// tell weapons about the ordered target-unit
 	SWeaponTarget orderTgtInfo(orderTarget);
-	orderTgtInfo.isUserTarget = ((c.GetOpts() & INTERNAL_ORDER) == 0);
+	orderTgtInfo.isUserTarget = (!c.IsInternalOrder());
 	orderTgtInfo.isManualFire = (c.GetID() == CMD_MANUALFIRE);
 
 	const short targetHeading = GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z);
@@ -784,7 +784,7 @@ void CMobileCAI::ExecuteGroundAttack(Command& c)
 	const float3 attackPos = c.GetPos(0);
 	const float3 attackVec = attackPos - owner->pos;
 	const short  attackHeading = GetHeadingFromVector(attackVec.x, attackVec.z);
-	const SWeaponTarget attackTgtInfo(attackPos, (c.GetOpts() & INTERNAL_ORDER) == 0);
+	const SWeaponTarget attackTgtInfo(attackPos, !c.IsInternalOrder());
 
 	if (c.GetID() == CMD_MANUALFIRE) {
 		assert(owner->unitDef->canManualFire);
@@ -874,7 +874,7 @@ void CMobileCAI::ExecuteAttack(Command& c)
 				// FIXME: don't call SetGoal() if target is already in range of some weapon?
 				SetGoal(tgtErrPos - tgtPosDir * CalcTargetRadius(targetUnit, targetUnit->radius, 1.0f), owner->pos);
 				SetOrderTarget(targetUnit);
-				owner->AttackUnit(targetUnit, (c.GetOpts() & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+				owner->AttackUnit(targetUnit, !c.IsInternalOrder(), c.GetID() == CMD_MANUALFIRE);
 
 				inCommand = true;
 			} break;
@@ -1049,7 +1049,7 @@ void CMobileCAI::NonMoving()
 	}
 
 	Command c(CMD_MOVE, buggerPos);
-	// c.SetOpts(INTERNAL_ORDER);
+	c.SetOpts(INTERNAL_ORDER);
 	c.SetTimeOut(gs->frameNum + BUGGER_OFF_TTL);
 	commandQue.push_front(c);
 
@@ -1060,7 +1060,7 @@ void CMobileCAI::FinishCommand()
 {
 	SetTransportee(nullptr);
 
-	if (!((commandQue.front()).GetOpts() & INTERNAL_ORDER))
+	if (!commandQue[0].IsInternalOrder())
 		lastUserGoal = owner->pos;
 
 	tempOrder = false;
@@ -1288,7 +1288,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 				return;
 			}
 
-			if (c.GetOpts() & INTERNAL_ORDER) {
+			if (c.IsInternalOrder()) {
 				if (unit->commandAI->commandQue.empty()) {
 					if (!LoadStillValid(unit)) {
 						StopMoveAndFinishCommand();
