@@ -18,7 +18,7 @@ public:
 	void LoadGame();
 
 protected:
-	std::stringstream* iss;
+	std::stringstream iss;
 };
 
 #endif // CREG_LOAD_SAVE_HANDLER_H
