@@ -378,7 +378,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 		return false;
 
 	// not an internal object-targeted command
-	if ((!cmd.IsInternalOrder() || (cmd.GetNumParams() != 1))
+	if (!cmd.IsInternalOrder() || (cmd.GetNumParams() != 1))
 		return false;
 
 	const int objID = cmd.GetParam(0);
