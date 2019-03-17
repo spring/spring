@@ -192,7 +192,7 @@ class CSplitLuaHandle
 			return &ulh->base.syncedLuaHandle;
 		}
 
-		bool ReloadUnsynced();
+		bool ReloadUnsynced() { return (FreeUnsynced(), LoadUnsynced()); }
 		bool SwapSyncedHandle(lua_State* L, lua_State* L_GC);
 
 	protected:
