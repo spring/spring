@@ -282,7 +282,7 @@ public:
 
 
 template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
-	CSplitLuaHandle* handler,
+	CSplitLuaHandle*& handler,
 	const SyncedAction& action,
 	const char* luaName
 ) {
@@ -306,9 +306,10 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 			return;
 		}
 
-		bool success = LuaSyncedHandler::ReloadHandler();
+		// NB: also returns true if new handler loads but is freed again due to invalidity
+		LuaSyncedHandler::ReloadHandler();
 
-		if (success) {
+		if (handler != nullptr) {
 			LOG("%s loaded", luaName);
 		} else {
 			LOG_L(L_ERROR, "%s loading failed", luaName);
@@ -360,7 +361,6 @@ template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
 		} else {
 			LOG_L(L_ERROR, "loading unsynced %s failed", luaName);
 		}
-
 
 		return;
 	}

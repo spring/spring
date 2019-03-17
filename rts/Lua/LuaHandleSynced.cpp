@@ -1698,12 +1698,6 @@ bool CSplitLuaHandle::LoadUnsynced()
 }
 
 
-bool CSplitLuaHandle::ReloadUnsynced()
-{
-	return FreeUnsynced(), LoadUnsynced();
-}
-
-
 bool CSplitLuaHandle::SwapSyncedHandle(lua_State* L, lua_State* L_GC)
 {
 	FreeUnsynced();

@@ -85,19 +85,17 @@ namespace {
 
 
 
-#define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
-	bool HandlerType::LoadHandler() {                       \
-		{                                                   \
-			std::lock_guard<spring::mutex> lk(m_singleton); \
-                                                            \
-			if (HandlerInstance != nullptr)                 \
-				return (HandlerInstance->IsValid());        \
-			if (!HandlerType::CanLoadHandler())             \
-				return false;                               \
-                                                            \
-			HandlerInstance = new HandlerType();            \
-			return (HandlerInstance->IsValid());            \
-		}                                                   \
+#define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)  \
+	bool HandlerType::LoadHandler() {                    \
+		std::lock_guard<spring::mutex> lk(m_singleton);  \
+                                                         \
+		if (HandlerInstance != nullptr)                  \
+			return (HandlerInstance->IsValid());         \
+		if (!HandlerType::CanLoadHandler())              \
+			return false;                                \
+                                                         \
+		HandlerInstance = new HandlerType();             \
+		return (HandlerInstance->IsValid());             \
 	}
 
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
@@ -108,7 +106,7 @@ namespace {
 			return false;                                \
                                                          \
 		auto* inst = HandlerInstance;                    \
-		HandlerInstance = NULL;                          \
+		HandlerInstance = nullptr;                       \
 		inst->KillLua(true);                             \
 		delete inst;                                     \
 		return true;                                     \
