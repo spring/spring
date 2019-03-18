@@ -107,8 +107,9 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/SpringMath.h"
 #include "System/SafeUtil.h"
+#include "System/SpringExitCode.h"
+#include "System/SpringMath.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -433,6 +434,9 @@ void CGame::LoadGame(const std::string& mapFileName)
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
+
+	if (forcedQuit)
+		spring::exitCode = spring::EXIT_CODE_FORCED;
 
 	finishedLoading = true;
 	globalQuit = globalQuit | forcedQuit;
