@@ -213,9 +213,10 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 			PrintSize("Lua", ((int)oss.tellp()) - luaStart);
 
 			// save creg state
+			const int gameStart = oss.tellp();
 			CGameStateCollector gsc;
 			os.SavePackage(&oss, &gsc, gsc.GetClass());
-			PrintSize("Game", oss.tellp());
+			PrintSize("Game", oss.tellp() - gameStart);
 
 
 			// save AI state
