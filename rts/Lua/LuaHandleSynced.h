@@ -165,6 +165,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			SetWatchExplosionDef(L);
 			SetWatchProjectileDef(L);
 			SetWatchAllowTargetDef(L);
+			return 0;
 		}
 };
 
