@@ -73,8 +73,11 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
+	char tmp[512] = {0};
+
 	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
-		throw content_error("Error loading map: size from header doesn't match map size.");
+		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] header.{mapx=%d,mapy=%d} != mapDims.{mapx=%d,mapy=%d}", __func__, header.mapx, header.mapy, mapDims.mapx, mapDims.mapy);
+		throw content_error(tmp);
 	}
 
 	ifs->Seek(header.tilesPtr);
@@ -83,7 +86,8 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CSMFMapFile::ReadMapTileHeader(tileHeader, *ifs);
 
 	if (smfMap->tileCount <= 0) {
-		throw content_error("Error loading map: count of tiles is 0.");
+		snprintf(tmp, sizeof(tmp), "[SMFGroundTextures::%s] smfMap->tileCount=%d <= 0", __func__, smfMap->tileCount);
+		throw content_error(tmp);
 	}
 
 	tileMap.clear();
@@ -94,24 +98,17 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
 
 	bool smtHeaderOverride = false;
-	int curTile = 0;
 
 	const std::string& smfDir = FileSystem::GetDirectory(gameSetup->MapFileName());
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	if (!smf.smtFileNames.empty()) {
-		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
-			LOG_L(L_WARNING,
-				"mismatched number of .smt file "
-				"references between the map's .smd (" _STPF_ ")"
-				" and header (%d); ignoring .smd overrides",
-				smf.smtFileNames.size(), tileHeader.numTileFiles);
-		} else {
-			smtHeaderOverride = true;
+		if (!(smtHeaderOverride = (smf.smtFileNames.size() == tileHeader.numTileFiles))) {
+			LOG_L(L_WARNING, "[SMFGroundTextures::%s] smtFileNames.size()=" _STPF_ " != tileHeader.numTileFiles=%d", __func__, smf.smtFileNames.size(), tileHeader.numTileFiles);
 		}
 	}
 
-	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
+	for (int a = 0, curTile = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles = 0;
 		char fileNameBuffer[256] = {0};
 
@@ -126,17 +123,15 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 		CFileHandler tileFile(smtFilePath);
 
-		if (!tileFile.FileExists()) {
-			// try absolute path
-			smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a];
-			tileFile.Open(smtFilePath);
-		}
+		// try absolute path
+		if (!tileFile.FileExists())
+			tileFile.Open(smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a]);
 
 		if (!tileFile.FileExists()) {
 			LOG_L(L_WARNING,
-				"could not find .smt tile-file \"%s\" "
-				"(ALL %d MISSING TILES WILL BE MADE RED)",
-				smtFilePath.c_str(), numSmallTiles);
+				"[SMFGroundTextures::%s] could not find .smt tile-file %d (\"%s\"; ALL %d SMALL TILES WILL BE MADE RED)",
+				__func__, a, smtFilePath.c_str(), numSmallTiles
+			);
 
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
@@ -147,14 +142,16 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		CSMFMapFile::ReadMapTileFileHeader(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
-			char t[500];
-			sprintf(t, "[CSMFGroundTextures] file \"%s\" does not match .smt format", smtFilePath.c_str());
-			throw content_error(t);
+			snprintf(
+				tmp, sizeof(tmp),
+				"[SMFGroundTextures::%s] tile-file %d (path=\"%s\" magic=\"%s\" version=%d tileSize=%d comprType=%d) does not match .smt format",
+				__func__, a, smtFilePath.c_str(), tfh.magic, tfh.version, tfh.tileSize, tfh.compressionType
+			);
+			throw content_error(tmp);
 		}
 
 		for (int b = 0; b < numSmallTiles; ++b) {
-			tileFile.Read(&tiles[curTile * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
-			curTile++;
+			tileFile.Read(&tiles[(curTile++) * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
 		}
 	}
 
