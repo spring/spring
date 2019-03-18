@@ -31,6 +31,7 @@
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/SafeUtil.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -84,6 +85,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
 	s->SerializeObjectInstance(&buildingMaskMap, buildingMaskMap.GetClass());
 	s->SerializeObjectInstance(&projectileHandler, projectileHandler.GetClass());
+	CPlasmaRepulser::SerializeShieldSegmentCollectionPool(s);
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s->SerializeObjectInstance(&envResHandler, envResHandler.GetClass());
 	s->SerializeObjectInstance(&moveDefHandler, moveDefHandler.GetClass());

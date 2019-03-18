@@ -48,6 +48,8 @@ public:
 	void SetQuads(std::vector<int>&& q) { quads = std::move(q); }
 	void ClearQuads() { quads.clear(); }
 
+	static void SerializeShieldSegmentCollectionPool(creg::ISerializer* s);
+
 private:
 	void FireImpl(const bool scriptCall) override final {}
 

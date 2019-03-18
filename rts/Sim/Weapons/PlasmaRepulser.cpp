@@ -40,6 +40,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 
 
 struct ShieldSegmentCollectionPool {
+	CR_DECLARE_STRUCT(ShieldSegmentCollectionPool)
 public:
 	void InsertCollection(CPlasmaRepulser* r) {
 		if (sscs.empty())
@@ -73,7 +74,19 @@ private:
 	std::vector<ShieldSegmentCollection> sscs;
 };
 
+
+CR_BIND(ShieldSegmentCollectionPool, )
+CR_REG_METADATA(ShieldSegmentCollectionPool, (
+	CR_MEMBER(idcs),
+	CR_MEMBER(sscs)
+))
+
 static ShieldSegmentCollectionPool sscPool;
+
+void CPlasmaRepulser::SerializeShieldSegmentCollectionPool(creg::ISerializer* s)
+{
+	s->SerializeObjectInstance(&sscPool, sscPool.GetClass());
+}
 
 
 
@@ -146,7 +159,7 @@ void CPlasmaRepulser::Update()
 	deltaMuzzlePos = mix(weaponMuzzlePos - lastMuzzlePos, deltaMuzzlePos, lastMuzzlePos == ZeroVector);
 	lastMuzzlePos = weaponMuzzlePos;
 
-	#if 0 
+	#if 0
 	segmentCollections[this].UpdateColor();
 	#endif
 	sscPool.UpdateCollection(this);
