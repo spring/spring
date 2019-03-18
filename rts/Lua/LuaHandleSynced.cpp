@@ -361,9 +361,11 @@ bool CSyncedLuaHandle::Init(const std::string& code, const std::string& file)
 	if (!IsValid())
 		return false;
 
-	watchUnitDefs.resize(unitDefHandler->NumUnitDefs() + 1, false);
-	watchFeatureDefs.resize(featureDefHandler->NumFeatureDefs() + 1, false);
-	watchWeaponDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchUnitDefs[0].resize(unitDefHandler->NumUnitDefs() + 1, false);
+	watchFeatureDefs[0].resize(featureDefHandler->NumFeatureDefs() + 1, false);
+	watchWeaponDefs[0].resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchWeaponDefs[1].resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchWeaponDefs[2].resize(weaponDefHandler->NumWeaponDefs(), false);
 
 	// load the standard libraries
 	SPRING_LUA_OPEN_LIB(L, luaopen_base);
@@ -1240,7 +1242,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 {
 	int ret = -1;
 
-	if (!watchWeaponDefs[attackerWeaponDefID])
+	if (!watchWeaponDefs[2][attackerWeaponDefID])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, -1);
@@ -1275,7 +1277,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 ) {
 	bool ret = true;
 
-	if (!watchWeaponDefs[attackerWeaponDefID])
+	if (!watchWeaponDefs[2][attackerWeaponDefID])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
@@ -1324,7 +1326,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 ) {
 	bool ret = true;
 
-	if (!watchWeaponDefs[interceptorWeapon->weaponDef->id])
+	if (!watchWeaponDefs[2][interceptorWeapon->weaponDef->id])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
@@ -1551,26 +1553,61 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 }
 
 
-#define GetWatchDef(DefType)                                          \
-	int CSyncedLuaHandle::GetWatch ## DefType ## Def(lua_State* L) {  \
-		CSyncedLuaHandle* lhs = GetSyncedHandle(L);                   \
-		const unsigned int defID = luaL_checkint(L, 1);               \
-		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
-			return 0;                                                 \
-		}                                                             \
-		lua_pushboolean(L, lhs->watch ## DefType ## Defs[defID]);     \
-		return 1;                                                     \
+#define GetWatchDef(DefType)                                                \
+	int CSyncedLuaHandle::GetWatch ## DefType ## Def(lua_State* L) {        \
+		const CSyncedLuaHandle* lhs = GetSyncedHandle(L);                   \
+		const auto& arr = lhs->watch ## DefType ## Defs;                    \
+                                                                            \
+		const uint32_t defIdx = luaL_checkint(L, 1);                        \
+		      uint32_t vecIdx = 0;                                          \
+                                                                            \
+		bool ret = false;                                                   \
+                                                                            \
+		if (lua_gettop(L) == 1) {                                           \
+			if (defIdx >= arr[0].size())                                    \
+				return 0;                                                   \
+                                                                            \
+			for (const auto& vec: arr) {                                    \
+				ret |= vec[defIdx];                                         \
+			}                                                               \
+		} else {                                                            \
+			if ((vecIdx = luaL_checkint(L, 2)) >= arr.size())               \
+				return 0;                                                   \
+			if (defIdx >= arr[vecIdx].size())                               \
+				return 0;                                                   \
+                                                                            \
+			ret = arr[vecIdx][defIdx];                                      \
+		}                                                                   \
+                                                                            \
+		lua_pushboolean(L, ret);                                        	\
+		return 1;                                                           \
 	}
 
-#define SetWatchDef(DefType)                                          \
-	int CSyncedLuaHandle::SetWatch ## DefType ## Def(lua_State* L) {  \
-		CSyncedLuaHandle* lhs = GetSyncedHandle(L);                   \
-		const unsigned int defID = luaL_checkint(L, 1);               \
-		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
-			return 0;                                                 \
-		}                                                             \
-		lhs->watch ## DefType ## Defs[defID] = luaL_checkboolean(L, 2);   \
-		return 0;                                                     \
+#define SetWatchDef(DefType)                                                \
+	int CSyncedLuaHandle::SetWatch ## DefType ## Def(lua_State* L) {        \
+		CSyncedLuaHandle* lhs = GetSyncedHandle(L);                         \
+		auto& arr = lhs->watch ## DefType ## Defs;                          \
+                                                                            \
+		const uint32_t defIdx = luaL_checkint(L, 1);                        \
+		      uint32_t vecIdx = 0;                                          \
+                                                                            \
+		if (lua_gettop(L) == 2) {                                           \
+			if (defIdx >= arr[0].size())                                    \
+				return 0;                                                   \
+                                                                            \
+			for (auto& vec: arr) {                                          \
+				vec[defIdx] = luaL_checkboolean(L, 2);                      \
+			}                                                               \
+		} else {                                                            \
+			if ((vecIdx = luaL_checkint(L, 2)) >= arr.size())               \
+				return 0;                                                   \
+			if (defIdx >= arr[vecIdx].size())                               \
+				return 0;                                                   \
+                                                                            \
+			arr[vecIdx][defIdx] = luaL_checkboolean(L, 3);                  \
+		}                                                                   \
+                                                                            \
+		return 0;                                                           \
 	}
 
 GetWatchDef(Unit)
@@ -1712,14 +1749,14 @@ bool CSplitLuaHandle::SwapSyncedHandle(lua_State* L, lua_State* L_GC)
 string CSplitLuaHandle::LoadFile(const std::string& filename, const std::string& modes) const
 {
 	string vfsModes(modes);
-	if (CSyncedLuaHandle::devMode) {
+	if (CSyncedLuaHandle::devMode)
 		vfsModes = SPRING_VFS_RAW + vfsModes;
-	}
+
 	CFileHandler f(filename, vfsModes);
 	string code;
-	if (!f.LoadStringData(code)) {
+	if (!f.LoadStringData(code))
 		code.clear();
-	}
+
 	return code;
 }
 
@@ -1732,21 +1769,23 @@ int CSplitLuaHandle::LoadStringData(lua_State* L)
 	size_t len;
 	const char *str    = luaL_checklstring(L, 1, &len);
 	const char *chunkname = luaL_optstring(L, 2, str);
-	int status = luaL_loadbuffer(L, str, len, chunkname);
-	if (status != 0) {
+
+	if (luaL_loadbuffer(L, str, len, chunkname) != 0) {
 		lua_pushnil(L);
 		lua_insert(L, -2);
 		return 2; // nil, then the error message
 	}
+
 	// set the chunk's fenv to the current fenv
 	if (lua_istable(L, 3)) {
 		lua_pushvalue(L, 3);
 	} else {
 		LuaUtils::PushCurrentFuncEnv(L, __func__);
 	}
-	if (lua_setfenv(L, -2) == 0) {
-		luaL_error(L, "loadstring(): error with setfenv");
-	}
+
+	if (lua_setfenv(L, -2) == 0)
+		luaL_error(L, "[%s] error with setfenv", __func__);
+
 	return 1;
 }
 
@@ -1754,9 +1793,8 @@ int CSplitLuaHandle::LoadStringData(lua_State* L)
 int CSplitLuaHandle::CallAsTeam(lua_State* L)
 {
 	const int args = lua_gettop(L);
-	if ((args < 2) || !lua_isfunction(L, 2)) {
-		luaL_error(L, "Incorrect arguments to CallAsTeam()");
-	}
+	if ((args < 2) || !lua_isfunction(L, 2))
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	// save the current access
 	const bool prevFullCtrl    = CLuaHandle::GetHandleFullCtrl(L);
@@ -1769,9 +1807,10 @@ int CSplitLuaHandle::CallAsTeam(lua_State* L)
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
 		const int teamID = lua_toint(L, 1);
-		if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams())) {
-			luaL_error(L, "Bad teamID in SetCtrlTeam");
-		}
+
+		if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams()))
+			luaL_error(L, "[%s] bad teamID %d", __func__, teamID);
+
 		// ctrl
 		CLuaHandle::SetHandleCtrlTeam(L, teamID);
 		CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
@@ -1785,26 +1824,27 @@ int CSplitLuaHandle::CallAsTeam(lua_State* L)
 	else if (lua_istable(L, 1)) {
 		const int table = 1;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
+			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
 				continue;
-			}
-			const std::string key = lua_tostring(L, -2);
-			const int teamID = lua_toint(L, -1);
-			if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams())) {
-				luaL_error(L, "Bad teamID in SetCtrlTeam");
-			}
 
-			if (key == "ctrl") {
-				CLuaHandle::SetHandleCtrlTeam(L, teamID);
-				CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
-			}
-			else if (key == "read") {
-				CLuaHandle::SetHandleReadTeam(L, teamID);
-				CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler.AllyTeam(teamID));
-				CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
-			}
-			else if (key == "select") {
-				CLuaHandle::SetHandleSelectTeam(L, teamID);
+			const int teamID = lua_toint(L, -1);
+
+			if ((teamID < CEventClient::MinSpecialTeam) || (teamID >= teamHandler.ActiveTeams()))
+				luaL_error(L, "[%s] bad teamID %d", __func__, teamID);
+
+			switch (hashString(lua_tostring(L, -2))) {
+				case hashString("ctrl"): {
+					CLuaHandle::SetHandleCtrlTeam(L, teamID);
+					CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
+				} break;
+				case hashString("read"): {
+					CLuaHandle::SetHandleReadTeam(L, teamID);
+					CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler.AllyTeam(teamID));
+					CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
+				} break;
+				case hashString("select"): {
+					CLuaHandle::SetHandleSelectTeam(L, teamID);
+				} break;
 			}
 		}
 	}
@@ -1827,8 +1867,7 @@ int CSplitLuaHandle::CallAsTeam(lua_State* L)
 	CLuaHandle::SetHandleSelectTeam(L, prevSelectTeam);
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "error = %i, %s, %s",
-				error, "CallAsTeam", lua_tostring(L, -1));
+		LOG_L(L_ERROR, "[%s] error %i (%s)", __func__, error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
