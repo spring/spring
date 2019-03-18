@@ -122,6 +122,9 @@ void ShieldSegmentCollection::Kill()
 void ShieldSegmentCollection::PostLoad()
 {
 	lastAllowDrawFrame = -1;
+	if (shield == nullptr)
+		return;
+
 	const WeaponDef* wd = shield->weaponDef;
 
 	if ((allowDrawing = wd->IsVisibleShield())) {
