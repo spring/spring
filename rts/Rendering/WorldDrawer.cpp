@@ -41,6 +41,7 @@
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
+#include "System/Log/ILog.h"
 
 void CWorldDrawer::InitPre() const
 {
@@ -64,39 +65,61 @@ void CWorldDrawer::InitPre() const
 
 void CWorldDrawer::InitPost() const
 {
-	loadscreen->SetLoadMessage("Creating ShadowHandler");
-	shadowHandler.Init();
+	char buf[512] = {0};
 
-	// SMFGroundDrawer accesses InfoTextureHandler, create it first
-	loadscreen->SetLoadMessage("Creating InfoTextureHandler");
-	IInfoTextureHandler::Create();
+	{
+		loadscreen->SetLoadMessage("Creating ShadowHandler");
+		shadowHandler.Init();
+	}
+	{
+		// SMFGroundDrawer accesses InfoTextureHandler, create it first
+		loadscreen->SetLoadMessage("Creating InfoTextureHandler");
+		IInfoTextureHandler::Create();
+	}
+	try {
+		loadscreen->SetLoadMessage("Creating GroundDrawer");
+		readMap->InitGroundDrawer();
+	} catch (const content_error& e) {
+		memset(buf, 0, sizeof(buf));
+		snprintf(buf, sizeof(buf), "[WorldDrawer::%s] caught exception \"%s\"", __func__, e.what());
+	}
 
-	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readMap->InitGroundDrawer();
+	{
+		loadscreen->SetLoadMessage("Creating TreeDrawer");
+		treeDrawer = ITreeDrawer::GetTreeDrawer();
+		grassDrawer = new CGrassDrawer();
+	}
+	{
+		inMapDrawerView = new CInMapDrawView();
+		pathDrawer = IPathDrawer::GetInstance();
+	}
+	{
+		heightMapTexture = new HeightMapTexture();
+		farTextureHandler = new CFarTextureHandler();
+	}
+	{
+		IGroundDecalDrawer::Init();
+	}
+	{
+		loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 
-	loadscreen->SetLoadMessage("Creating TreeDrawer");
-	treeDrawer = ITreeDrawer::GetTreeDrawer();
-	grassDrawer = new CGrassDrawer();
+		CProjectileDrawer::InitStatic();
+		CUnitDrawer::InitStatic();
+		// see ::InitPre
+		// CFeatureDrawer::InitStatic();
+	}
 
-	inMapDrawerView = new CInMapDrawView();
-	pathDrawer = IPathDrawer::GetInstance();
+	// rethrow to force exit
+	if (buf[0] != 0)
+		throw content_error(buf);
 
-	heightMapTexture = new HeightMapTexture();
-	farTextureHandler = new CFarTextureHandler();
-
-	IGroundDecalDrawer::Init();
-
-	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
-
-	CProjectileDrawer::InitStatic();
-	CUnitDrawer::InitStatic();
-	// see ::LoadPre
-	// CFeatureDrawer::InitStatic();
-
-	loadscreen->SetLoadMessage("Creating Water");
-	water = IWater::GetWater(nullptr, -1);
-
-	sky->SetupFog();
+	{
+		loadscreen->SetLoadMessage("Creating Water");
+		water = IWater::GetWater(nullptr, -1);
+	}
+	{
+		sky->SetupFog();
+	}
 }
 
 
