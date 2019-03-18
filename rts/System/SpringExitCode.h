@@ -9,6 +9,7 @@ namespace spring {
 		EXIT_CODE_DESYNC  = -1,
 		EXIT_CODE_SUCCESS =  0,
 		EXIT_CODE_TIMEOUT =  1,
+		EXIT_CODE_FORCED  =  2,
 	};
 
 	// only here for validation tests
