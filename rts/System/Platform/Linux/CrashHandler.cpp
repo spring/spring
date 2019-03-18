@@ -1062,9 +1062,9 @@ namespace CrashHandler
 
 	void NewHandler() {
 		LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
+		std::set_new_handler(nullptr); // prevent recursion
 
 		OutputStacktrace();
-
 		ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 	}
 
