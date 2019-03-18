@@ -6,6 +6,8 @@
 #include <string>
 
 #include "System/float3.h"
+#include "System/type2.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/CommandAI/Command.h"
 
 struct UnitDef;
@@ -23,7 +25,21 @@ struct BuildInfo
 
 	int GetXSize() const;
 	int GetZSize() const;
+
 	bool Parse(const Command& c);
+	bool FootPrintOverlap(const float3& fpMid, const float2& fpDims) const {
+		const float xs = GetXSize() * SQUARE_SIZE * 0.5f;
+		const float zs = GetZSize() * SQUARE_SIZE * 0.5f;
+
+		const float2 bpMins = {pos.x - xs, pos.z - zs};
+		const float2 bpMaxs = {pos.x + xs, pos.z + zs};
+
+		const float2 fpMins = {fpMid.x - fpDims.x, fpMid.z - fpDims.y};
+		const float2 fpMaxs = {fpMid.x + fpDims.x, fpMid.z + fpDims.y};
+
+		// true for any of these implies no overlap
+		return (!((fpMins.x > bpMaxs.x) || (fpMaxs.x < bpMins.x)  ||  (fpMins.y > bpMaxs.y) || (fpMaxs.y < bpMins.y)));
+	}
 
 	int CreateCommandID() const;
 	void AddCommandParams(Command& cmd) const;
