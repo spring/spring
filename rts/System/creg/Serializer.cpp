@@ -378,6 +378,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	ptrToId.clear();
 	pendingObjects.clear();
 	objects.clear();
+	classSizes.clear();
 }
 
 //-------------------------------------------------------------------------
