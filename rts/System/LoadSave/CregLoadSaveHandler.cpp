@@ -216,7 +216,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 			const int gameStart = oss.tellp();
 			CGameStateCollector gsc;
 			os.SavePackage(&oss, &gsc, gsc.GetClass());
-			PrintSize("Game", oss.tellp() - gameStart);
+			PrintSize("Game", ((int)oss.tellp()) - gameStart);
 
 
 			// save AI state
