@@ -10,6 +10,7 @@
 #include "System/TimeProfiler.h"
 #endif
 
+#include "lib/lua/src/ltable.h"
 #include "System/UnorderedMap.hpp"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
@@ -35,13 +36,16 @@ public:
 		return frealloc(context, nullptr, 0, n);
 	}
 	void SetContext(void* newLcd, lua_Alloc newfrealloc, lua_CFunction newPanic) { context = newLcd; frealloc = newfrealloc; panic = newPanic; }
+	void SetMainthread(lua_State* L) { mainthread = L; }
 	lua_CFunction GetPanic() const { return panic; }
 	void* GetContext() const { return context; }
 	lua_Alloc Getfrealloc() const { return frealloc; }
+	lua_State* GetMainthread() const { return mainthread; }
 private:
 	void* context = nullptr;
 	lua_Alloc frealloc = nullptr;
 	lua_CFunction panic = nullptr;
+	lua_State* mainthread;
 };
 
 void freeProtector(void *m) {
@@ -132,6 +136,7 @@ struct creg_Table {
 	creg_GCObject *gclist;
 	int sizearray;  /* size of `array' array */
 	void Serialize(creg::ISerializer* s);
+	void PostLoad();
 };
 
 ASSERT_SIZE(Table)
@@ -477,7 +482,8 @@ CR_REG_METADATA(creg_Table, (
 	CR_IGNORED(lastfree), //serialized separately
 	CR_IGNORED(gclist), //probably unneeded
 	CR_MEMBER(sizearray),
-	CR_SERIALIZER(Serialize)
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
 ))
 
 
@@ -732,6 +738,7 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 		case LUA_TFUNCTION: { SerializePtr(s, &value.gc); return; }
 		case LUA_TUSERDATA: { SerializePtr(s, &value.gc); }
 		case LUA_TTHREAD: { SerializePtr(s, &value.gc); return; }
+		case LUA_TDEADKEY: { return; }
 		default: { assert(false); return; }
 	}
 }
@@ -739,10 +746,8 @@ void creg_TValue::Serialize(creg::ISerializer* s)
 
 void creg_Node::Serialize(creg::ISerializer* s)
 {
-	if (i_val.tt != LUA_TNIL) {
-		SerializeInstance(s, &i_key.tvk);
-		SerializePtr(s, &i_key.nk.next);
-	}
+	SerializeInstance(s, &i_key.tvk);
+	SerializePtr(s, &i_key.nk.next);
 }
 
 
@@ -776,6 +781,37 @@ void creg_Table::Serialize(creg::ISerializer* s)
 
 	if (!s->IsWriting())
 		lastfree = node + lastfreeOffset;
+}
+
+void creg_Table::PostLoad()
+{
+	// table may contain pointers as keys so will require reordering
+	int sizenode = twoto(lsizenode);
+
+	bool reorder = false;
+	for (int i = 0; i < sizenode; ++i) {
+		int tt = node[i].i_key.nk.tt;
+		if (tt != LUA_TNIL && tt != LUA_TBOOLEAN &&
+		    tt != LUA_TNUMBER && tt != LUA_TSTRING &&
+		    tt != LUA_TDEADKEY) {
+			reorder = true;
+			break;
+		}
+	}
+	if (!reorder)
+		return;
+
+	lua_State* L = luaContext.GetMainthread();
+	// see ltable.cpp
+	lsizenode = 0;
+	creg_Node* onode = node;
+	node = GetDummyNode();
+	lastfree = node;
+	for (int i = 0; i < sizenode; ++i) {
+		if (onode[i].i_val.tt != LUA_TNIL)
+			setobjt2t(L, luaH_set(L, (Table*) this, (TValue*) &(onode[i].i_key.tvk)), (TValue*) &(onode[i].i_val));
+	}
+	luaContext.Getfrealloc()(luaContext.GetContext(), onode, sizenode * sizeof(Node), 0);
 }
 
 
@@ -925,8 +961,8 @@ void creg_lua_State::Serialize(creg::ISerializer* s)
 		assert(stack_last == stack + stacksize - EXTRA_STACK - 1);
 		assert(ci_offset == 0 || InstructionInCode(savedpc, ci - 1));
 
-		assert(hook == nullptr);
-		assert(errorJmp == nullptr);
+		//assert(hook == nullptr);
+		//assert(errorJmp == nullptr);
 
 		if (ci_offset > 0) {
 			savedpc_offset = (savedpc - GetProtoFromCallInfo(ci - 1)->code);
@@ -1065,6 +1101,7 @@ void SerializeLuaState(creg::ISerializer* s, lua_State** L)
 		assert(*L == nullptr);
 		clg = (creg_LG*) luaContext.alloc(sizeof(creg_LG));
 		*L = (lua_State*) &(clg->l);
+		luaContext.SetMainthread(*L);
 	}
 
 	SerializeInstance(s, clg);
