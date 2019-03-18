@@ -358,15 +358,21 @@ void CGame::LoadGame(const std::string& mapFileName)
 	auto& globalQuit = gu->globalQuit;
 	bool  forcedQuit = false;
 
-	LuaParser defsParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true}, {false});
+	LuaParser baseDefsParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true}, {false});
+	LuaParser nullDefsParser("return {UnitDefs = {}, FeatureDefs = {}, WeaponDefs = {}, ArmorDefs = {}, MoveDefs = {}}", SPRING_VFS_ZIP, 0, {true}, {true});
+
+	LuaParser* defsParser = &baseDefsParser;
 
 	try {
 		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit.load(), !Threading::IsMainThread());
 
 		LoadMap(mapFileName);
-		LoadDefs(&defsParser);
+		LoadDefs(defsParser);
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
+
+		defsParser = &nullDefsParser;
+		defsParser->Execute();
 
 		// we can not (yet) do a clean early exit here because the dtor assumes
 		// all loading stages proceeded normally; just force automatic shutdown
@@ -376,7 +382,7 @@ void CGame::LoadGame(const std::string& mapFileName)
 	try {
 		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
-		PreLoadSimulation(&defsParser);
+		PreLoadSimulation(defsParser);
 		PreLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][2] forced quit with exception \"%s\"", __func__, e.what());
@@ -386,7 +392,7 @@ void CGame::LoadGame(const std::string& mapFileName)
 	try {
 		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
-		PostLoadSimulation(&defsParser);
+		PostLoadSimulation(defsParser);
 		PostLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());

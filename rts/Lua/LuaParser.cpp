@@ -65,7 +65,7 @@ LuaParser::LuaParser(const std::string& _fileName, const std::string& _fileModes
 	SetupLua(synced.b, false);
 }
 
-LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, const boolean& synced, const boolean& setup)
+LuaParser::LuaParser(const std::string& _textChunk, const std::string& _accessModes, int, const boolean& synced, const boolean& setup)
 	: textChunk(_textChunk)
 	, accessModes(_accessModes)
 
