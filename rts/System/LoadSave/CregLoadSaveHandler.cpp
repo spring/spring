@@ -155,32 +155,29 @@ static void ReadString(std::istream& s, std::string& str)
 static void SaveLuaState(CSplitLuaHandle* handle, creg::COutputStreamSerializer& os, std::stringstream& oss)
 {
 	CLuaStateCollector lsc;
-	lsc.valid = handle == nullptr;
-	if (handle == nullptr)
-		return;
-
-	lsc.L = handle->syncedLuaHandle.GetLuaState();
-	lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
-	lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
+	lsc.valid = (handle != nullptr) && handle->syncedLuaHandle.IsValid();
+	if (lsc.valid) {
+		lsc.L = handle->syncedLuaHandle.GetLuaState();
+		lsc.L_GC = handle->syncedLuaHandle.GetLuaGCState();
+		lua_gc(lsc.L_GC, LUA_GCCOLLECT, 0);
+	}
 	os.SavePackage(&oss, &lsc, lsc.GetClass());
 }
 
 
 static void LoadLuaState(CSplitLuaHandle* handle, creg::CInputStreamSerializer& is, std::stringstream& iss)
 {
-	if (handle == nullptr)
-		return;
-
-
 	void* plsc;
 	creg::Class* plsccls = nullptr;
 
+	if ((handle != nullptr) && handle->syncedLuaHandle.IsValid())
+		creg::CopyLuaContext(handle->syncedLuaHandle.GetLuaState());
+
 	is.LoadPackage(&iss, plsc, plsccls);
 	assert(plsc && plsccls == CLuaStateCollector::StaticClass());
-
 	CLuaStateCollector* lsc = static_cast<CLuaStateCollector*>(plsc);
 
-	if (lsc->valid)
+	if ((handle != nullptr) && handle->syncedLuaHandle.IsValid() && lsc->valid)
 		handle->SwapSyncedHandle(lsc->L, lsc->L_GC);
 
 	spring::SafeDelete(lsc);
