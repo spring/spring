@@ -15,6 +15,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 #include "System/StringUtil.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
@@ -345,39 +346,27 @@ void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
-
-static bool LowerKeysCheck(lua_State* L, int table, int alreadyCheckTable)
-{
-	bool checked = true;
-	lua_pushvalue(L, table);
-	lua_rawget(L, alreadyCheckTable);
-	if (lua_isnil(L, -1)) {
-		checked = false;
-		lua_pushvalue(L, table);
-		lua_pushboolean(L, true);
-		lua_rawset(L, alreadyCheckTable);
-	}
-	lua_pop(L, 1);
-	return checked;
-}
-
-
-static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
+static void LowerKeysReal(lua_State* L, spring::unsynced_set<const void*>& checkedSet)
 {
 	luaL_checkstack(L, 8, __func__);
 
 	const int  sourceTableIdx = lua_gettop(L);
 	const int changedTableIdx = sourceTableIdx + 1;
 
-	if (LowerKeysCheck(L, sourceTableIdx, alreadyCheckTable))
-		return true;
+	{
+		const void* p = lua_topointer(L, sourceTableIdx);
+		if (checkedSet.find(p) != checkedSet.end())
+			return;
+
+		checkedSet.insert(p);
+	}
 
 	// a new table for changed values
 	lua_newtable(L);
 
 	for (lua_pushnil(L); lua_next(L, sourceTableIdx) != 0; lua_pop(L, 1)) {
 		if (lua_istable(L, -1))
-			LowerKeysReal(L, alreadyCheckTable);
+			LowerKeysReal(L, checkedSet);
 
 		if (!lua_israwstring(L, -2))
 			continue;
@@ -414,7 +403,6 @@ static bool LowerKeysReal(lua_State* L, int alreadyCheckTable)
 	}
 
 	lua_pop(L, 1); // pop the changed table
-	return true;
 }
 
 
@@ -424,14 +412,13 @@ bool LuaUtils::LowerKeys(lua_State* L, int table)
 		return false;
 
 	// table of processed tables
-	luaL_checkstack(L, 2, __func__);
-	lua_newtable(L);
-	const int checkedTableIdx = lua_gettop(L);
+	spring::unsynced_set<const void*> checkedSet;
+	luaL_checkstack(L, 1, __func__);
 
 	lua_pushvalue(L, table); // push the table onto the top of the stack
-	LowerKeysReal(L, checkedTableIdx);
+	LowerKeysReal(L, checkedSet);
 
-	lua_pop(L, 2); // the lowered table, and the check table
+	lua_pop(L, 1); // the lowered table, and the check table
 	return true;
 }
 
