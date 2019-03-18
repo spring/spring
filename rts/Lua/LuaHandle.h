@@ -304,9 +304,12 @@ class CLuaHandle : public CEventClient
 
 		std::string killMsg;
 
-		vector<bool> watchUnitDefs;
-		vector<bool> watchFeatureDefs;
-		vector<bool> watchWeaponDefs; // for the Explosion call-in
+		// masks for [0] := Unit*Collision, UnitMoveFailed
+		std::array<std::vector<bool>, 1> watchUnitDefs;
+		// masks for [0] := UnitFeatureCollision
+		std::array<std::vector<bool>, 1> watchFeatureDefs;
+		// masks for [0] := Projectile*, [1] := Explosion, [2] := AllowWeapon*Target*
+		std::array<std::vector<bool>, 3> watchWeaponDefs;
 
 		int callinErrors;
 
