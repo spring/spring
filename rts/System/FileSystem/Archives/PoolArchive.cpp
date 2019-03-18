@@ -160,7 +160,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 
 
 	if (bytesRead != buffer.size()) {
-		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\"", __func__, path.c_str());
+		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\" (bytesRead=%d fileSize=%u)", __func__, path.c_str(), bytesRead, f->size);
 		buffer.clear();
 		return false;
 	}
