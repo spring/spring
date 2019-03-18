@@ -39,6 +39,7 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/GuiHandler.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 
