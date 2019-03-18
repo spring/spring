@@ -232,7 +232,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 		}
 
 		{
-			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
+			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb5");
 
 			if (file == nullptr) {
 				LOG_L(L_ERROR, "[LSH::%s] could not open save-file", __func__);
