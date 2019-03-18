@@ -6,6 +6,7 @@
 #include "CommandDescription.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/creg/STL_Pair.h"
 
 CR_BIND(SCommandDescription, )
 CR_REG_METADATA(SCommandDescription, (
@@ -31,8 +32,7 @@ CR_REG_METADATA(SCommandDescription, (
 
 CR_BIND(CCommandDescriptionCache, )
 CR_REG_METADATA(CCommandDescriptionCache, (
-	// FIXME: std::pair type deduction
-	CR_IGNORED(index),
+	CR_MEMBER(index),
 	CR_MEMBER(slots),
 	CR_MEMBER(cache),
 
