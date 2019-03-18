@@ -348,15 +348,11 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame
 
 	// figure out if object is soft- or hard-blocking
 	if (u->beingBuilt) {
-		if (!ownerBuilder->CanAssistUnit(u, bi.def)) {
-			if (u->immobile) {
-				// we can't or don't want assist finishing the nanoframe
-				return true;
-			} else {
-				// mobile unit blocks the position, wait till it is finished & moved
-				return false;
-			}
-		}
+		// we can't or don't want assist finishing the nanoframe
+		// if a mobile unit blocks the position, wait until it is
+		// finished & moved
+		if (!ownerBuilder->CanAssistUnit(u, bi.def))
+			return u->immobile;
 
 		// unfinished nanoframe, assist it
 		if (nanoFrame != nullptr && teamHandler.Ally(owner->allyteam, u->allyteam))
@@ -467,9 +463,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// We are a static building, check if the buildcmd is in range
 		if (!owner->unitDef->canmove) {
-			if (!IsInBuildRange(bi.pos, GetBuildOptionRadius(bi.def, c.GetID()))) {
+			if (!IsInBuildRange(bi.pos, GetBuildOptionRadius(bi.def, c.GetID())))
 				return;
-			}
 		}
 
 		const CUnit* nanoFrame = nullptr;
@@ -617,16 +612,13 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		if (ownerBuilder->curBuild == nullptr && !ownerBuilder->terraforming) {
 			building = false;
 			StopMoveAndFinishCommand();
-			return;
 		}
 
 		return;
 	}
 
-	build.pos = CGameHelper::Pos2BuildPos(build, true);
-
 	// keep moving until 3D distance to buildPos is LEQ our buildDistance
-	if (MoveInBuildRange(build.pos, 0.0f, true)) {
+	if (MoveInBuildRange(build.pos = CGameHelper::Pos2BuildPos(build, true), 0.0f, true)) {
 		if (IsBuildPosBlocked(build)) {
 			StopMoveAndFinishCommand();
 			return;
@@ -649,6 +641,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			building = true;
 			return;
 		}
+
 		// we can't reliably check if the unit-limit has been reached until
 		// the builder has reached the construction site, which is somewhat
 		// annoying (since greyed-out icons can still be clicked, etc)
@@ -663,6 +656,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			ReclaimFeature(f);
 			return;
 		}
+
 		if (!inWaitStance) {
 			const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 			const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
@@ -671,14 +665,18 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			// tell everything within the radius of the soon-to-be buildee
 			// to get out of the way; using the model radius is not correct
 			// because this can be shorter than half the footprint diagonal
-			CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, nullptr);
+			// exclude owner iff it is outside the buildee footprint
+			if (!build.FootPrintOverlap(owner->pos, owner->GetFootPrint(SQUARE_SIZE * 0.5f)))
+				CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, owner);
+			else
+				CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, nullptr);
+
 			NonMoving();
 			return;
 		}
 
 		return;
 	}
-
 
 	if (owner->moveType->progressState == AMoveType::Failed) {
 		if (++buildRetries > 5) {

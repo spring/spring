@@ -731,17 +731,21 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
 			}
 
-			if (u != nullptr && CanAssistUnit(u, buildInfo.def)) {
-				// StopBuild sets this to false, fix it here if picking up the same buildee again
-				terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
+			if (u != nullptr) {
+				if (CanAssistUnit(u, buildInfo.def)) {
+					// StopBuild sets this to false, fix it here if picking up the same buildee again
+					terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
 
-				AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
-				ScriptStartBuilding(u->pos, false);
-				return true;
+					AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
+					ScriptStartBuilding(u->pos, false);
+					return true;
+				}
+
+				// let BuggerOff handle this case (TODO: non-landed aircraft should not count)
+				if (buildInfo.FootPrintOverlap(u->pos, u->GetFootPrint(SQUARE_SIZE * 0.5f)))
+					return false;
 			}
-
-			return false;
-		}
+		} break;
 
 		case CGameHelper::BUILDSQUARE_RECLAIMABLE:
 			// caller should handle this
