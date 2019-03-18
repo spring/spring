@@ -361,11 +361,11 @@ bool CSyncedLuaHandle::Init(const std::string& code, const std::string& file)
 	if (!IsValid())
 		return false;
 
-	watchUnitDefs[0].resize(unitDefHandler->NumUnitDefs() + 1, false);
-	watchFeatureDefs[0].resize(featureDefHandler->NumFeatureDefs() + 1, false);
-	watchWeaponDefs[0].resize(weaponDefHandler->NumWeaponDefs(), false);
-	watchWeaponDefs[1].resize(weaponDefHandler->NumWeaponDefs(), false);
-	watchWeaponDefs[2].resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchUnitDefs.resize(unitDefHandler->NumUnitDefs() + 1, false);
+	watchFeatureDefs.resize(featureDefHandler->NumFeatureDefs() + 1, false);
+	watchExplosionDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchProjectileDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchAllowTargetDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
 
 	// load the standard libraries
 	SPRING_LUA_OPEN_LIB(L, luaopen_base);
@@ -417,6 +417,12 @@ bool CSyncedLuaHandle::Init(const std::string& code, const std::string& file)
 		LuaPushNamedCFunc(L, "SetWatchUnit",         SetWatchUnitDef);
 		LuaPushNamedCFunc(L, "GetWatchFeature",      GetWatchFeatureDef);
 		LuaPushNamedCFunc(L, "SetWatchFeature",      SetWatchFeatureDef);
+		LuaPushNamedCFunc(L, "GetWatchExplosion",    GetWatchExplosionDef);
+		LuaPushNamedCFunc(L, "SetWatchExplosion",    SetWatchExplosionDef);
+		LuaPushNamedCFunc(L, "GetWatchProjectile",   GetWatchProjectileDef);
+		LuaPushNamedCFunc(L, "SetWatchProjectile",   SetWatchProjectileDef);
+		LuaPushNamedCFunc(L, "GetWatchAllowTarget",  GetWatchAllowTargetDef);
+		LuaPushNamedCFunc(L, "SetWatchAllowTarget",  SetWatchAllowTargetDef);
 		LuaPushNamedCFunc(L, "GetWatchWeapon",       GetWatchWeaponDef);
 		LuaPushNamedCFunc(L, "SetWatchWeapon",       SetWatchWeaponDef);
 	lua_pop(L, 1);
@@ -1242,7 +1248,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 {
 	int ret = -1;
 
-	if (!watchWeaponDefs[2][attackerWeaponDefID])
+	if (!watchAllowTargetDefs[attackerWeaponDefID])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, -1);
@@ -1277,7 +1283,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 ) {
 	bool ret = true;
 
-	if (!watchWeaponDefs[2][attackerWeaponDefID])
+	if (!watchAllowTargetDefs[attackerWeaponDefID])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
@@ -1326,7 +1332,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 ) {
 	bool ret = true;
 
-	if (!watchWeaponDefs[2][interceptorWeapon->weaponDef->id])
+	if (!watchAllowTargetDefs[interceptorWeapon->weaponDef->id])
 		return ret;
 
 	LUA_CALL_IN_CHECK(L, true);
@@ -1553,70 +1559,70 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 }
 
 
+
 #define GetWatchDef(DefType)                                                \
 	int CSyncedLuaHandle::GetWatch ## DefType ## Def(lua_State* L) {        \
 		const CSyncedLuaHandle* lhs = GetSyncedHandle(L);                   \
-		const auto& arr = lhs->watch ## DefType ## Defs;                    \
+		const auto& vec = lhs->watch ## DefType ## Defs;                    \
                                                                             \
 		const uint32_t defIdx = luaL_checkint(L, 1);                        \
-		      uint32_t vecIdx = 0;                                          \
                                                                             \
-		bool ret = false;                                                   \
+		if (defIdx >= vec.size())                                           \
+			return 0;                                                       \
                                                                             \
-		if (lua_gettop(L) == 1) {                                           \
-			if (defIdx >= arr[0].size())                                    \
-				return 0;                                                   \
-                                                                            \
-			for (const auto& vec: arr) {                                    \
-				ret |= vec[defIdx];                                         \
-			}                                                               \
-		} else {                                                            \
-			if ((vecIdx = luaL_checkint(L, 2)) >= arr.size())               \
-				return 0;                                                   \
-			if (defIdx >= arr[vecIdx].size())                               \
-				return 0;                                                   \
-                                                                            \
-			ret = arr[vecIdx][defIdx];                                      \
-		}                                                                   \
-                                                                            \
-		lua_pushboolean(L, ret);                                        	\
+		lua_pushboolean(L, vec[defIdx]);                                    \
 		return 1;                                                           \
 	}
 
 #define SetWatchDef(DefType)                                                \
 	int CSyncedLuaHandle::SetWatch ## DefType ## Def(lua_State* L) {        \
 		CSyncedLuaHandle* lhs = GetSyncedHandle(L);                         \
-		auto& arr = lhs->watch ## DefType ## Defs;                          \
+		auto& vec = lhs->watch ## DefType ## Defs;                          \
                                                                             \
 		const uint32_t defIdx = luaL_checkint(L, 1);                        \
-		      uint32_t vecIdx = 0;                                          \
                                                                             \
-		if (lua_gettop(L) == 2) {                                           \
-			if (defIdx >= arr[0].size())                                    \
-				return 0;                                                   \
+		if (defIdx >= vec.size())                                           \
+			return 0;                                                       \
                                                                             \
-			for (auto& vec: arr) {                                          \
-				vec[defIdx] = luaL_checkboolean(L, 2);                      \
-			}                                                               \
-		} else {                                                            \
-			if ((vecIdx = luaL_checkint(L, 2)) >= arr.size())               \
-				return 0;                                                   \
-			if (defIdx >= arr[vecIdx].size())                               \
-				return 0;                                                   \
-                                                                            \
-			arr[vecIdx][defIdx] = luaL_checkboolean(L, 3);                  \
-		}                                                                   \
-                                                                            \
+		vec[defIdx] = luaL_checkboolean(L, 2);                              \
 		return 0;                                                           \
 	}
 
+int CSyncedLuaHandle::GetWatchWeaponDef(lua_State* L) {
+	bool watched = false;
+
+	// trickery to keep Script.GetWatchWeapon backward-compatible
+	{
+		GetWatchExplosionDef(L);
+		watched |= luaL_checkboolean(L, -1);
+		lua_pop(L, 1);
+	}
+	{
+		GetWatchProjectileDef(L);
+		watched |= luaL_checkboolean(L, -1);
+		lua_pop(L, 1);
+	}
+	{
+		GetWatchAllowTargetDef(L);
+		watched |= luaL_checkboolean(L, -1);
+		lua_pop(L, 1);
+	}
+
+	lua_pushboolean(L, watched);
+	return 1;
+}
+
 GetWatchDef(Unit)
 GetWatchDef(Feature)
-GetWatchDef(Weapon)
+GetWatchDef(Explosion)
+GetWatchDef(Projectile)
+GetWatchDef(AllowTarget)
 
 SetWatchDef(Unit)
 SetWatchDef(Feature)
-SetWatchDef(Weapon)
+SetWatchDef(Explosion)
+SetWatchDef(Projectile)
+SetWatchDef(AllowTarget)
 
 #undef GetWatchDef
 #undef SetWatchDef
