@@ -395,14 +395,18 @@ void CGame::LoadGame(const std::string& mapFileName)
 		forcedQuit = true;
 	}
 
-	try {
-		LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+	// skip Lua handlers in case of forced exit
+	// makes the specific error(s) more obvious
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
-		LoadInterface();
-		LoadLua();
-	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
-		forcedQuit = true;
+			LoadInterface();
+			LoadLua();
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
 	}
 
 	try {
@@ -711,16 +715,21 @@ void CGame::LoadLua()
 	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
 	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
 
-	loadscreen->SetLoadMessage("Loading LuaRules");
-	CLuaRules::LoadFreeHandler();
-
-	loadscreen->SetLoadMessage("Loading LuaGaia");
-	CLuaGaia::LoadFreeHandler();
+	{
+		loadscreen->SetLoadMessage("Loading LuaRules");
+		CLuaRules::LoadFreeHandler();
+	}
+	{
+		loadscreen->SetLoadMessage("Loading LuaGaia");
+		CLuaGaia::LoadFreeHandler();
+	}
 
 	LEAVE_SYNCED_CODE();
 
-	loadscreen->SetLoadMessage("Loading LuaUI");
-	CLuaUI::LoadFreeHandler();
+	{
+		loadscreen->SetLoadMessage("Loading LuaUI");
+		CLuaUI::LoadFreeHandler();
+	}
 }
 
 void CGame::LoadSkirmishAIs()
