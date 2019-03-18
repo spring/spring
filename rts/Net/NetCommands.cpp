@@ -1204,19 +1204,17 @@ void CGame::ClientReadNet()
 							#endif
 						} else {
 							// we will end up here for local AIs defined mid-game, eg. with /aicontrol
-							// copy, aiData will be invalid after the next line
-							const std::string aiName = aiData.name + " ";
-
+							wordCompletion.AddWord(aiData.name + " ", false, false, false);
 							skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
-							wordCompletion.AddWord(aiName, false, false, false);
 						}
 					} else {
 						SkirmishAIData aiData;
 						aiData.team       = aiTeamNum;
 						aiData.name       = aiName;
 						aiData.hostPlayer = playerNum;
-						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
+
 						wordCompletion.AddWord(aiData.name + " ", false, false, false);
+						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
 					}
 
 					if (!tai->HasLeader())
@@ -1256,47 +1254,49 @@ void CGame::ClientReadNet()
 				const size_t numPlayersInAITeam  = playerHandler.NumActivePlayersInTeam(aiTeamId);
 				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
 
-				CTeam* tai                       = teamHandler.Team(aiTeamId);
+				CTeam* aiTeam                    = teamHandler.Team(aiTeamId);
 
 				aiData->status = newState;
 
+				constexpr const char* types[] = {"remote", "local"};
+
 				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(aiNum);
-				} else if (newState == SKIRMAISTATE_DEAD) {
+					continue;
+				}
+
+				if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
-							LOG("Skirmish AI \"%s\" being reloaded for team %i ...", aiData->name.c_str(), aiTeamId);
+							LOG("[Game::%s] %s skirmish AI \"%s\" being created for team %i", __func__, types[true], aiData->name.c_str(), aiTeamId);
 							eoh->CreateSkirmishAI(aiNum);
 						}
 					} else {
-						const std::string aiInstanceName = aiData->name;
+						// this could be done in the above function as well, team has no controller left now
+						if ((numPlayersInAITeam + numAIsInAITeam) == 1)
+							aiTeam->SetLeader(-1);
+
+						LOG("[Game::%s] %s skirmish AI \"%s\" (ID: %i) being removed from team %i", __func__, types[isLocal], aiData->name.c_str(), aiNum, aiTeamId);
 
 						wordCompletion.RemoveWord(aiData->name + " ");
 						skirmishAIHandler.RemoveSkirmishAI(aiNum);
 
-						// not valid anymore after RemoveSkirmishAI()
-						aiData = nullptr;
-
-						// this could be done in the above function as well, team has no controller left now
-						if ((numPlayersInAITeam + numAIsInAITeam) == 1)
-							tai->SetLeader(-1);
-
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerNum);
+					}
 
-						LOG("Skirmish AI \"%s\" (ID:%i), which controlled team %i is now dead", aiInstanceName.c_str(), aiNum, aiTeamId);
-					}
-				} else if (newState == SKIRMAISTATE_ALIVE) {
-					if (isLocal) {
-						// short-name and version of the AI is unsynced data
-						// -> only available on the AI host
-						LOG("Skirmish AI \"%s\" (ID:%i, Short-Name:\"%s\", Version:\"%s\") took over control of team %i",
-							aiData->name.c_str(), aiNum,
-							aiData->shortName.c_str(),
-							aiData->version.c_str(), aiTeamId);
-					} else {
-						LOG("Skirmish AI \"%s\" (ID:%i) took over control of team %i", aiData->name.c_str(), aiNum, aiTeamId);
-					}
+					continue;
+				}
+
+				if (newState == SKIRMAISTATE_ALIVE) {
+					// short-name and version of the AI is unsynced data, only available on the AI host
+					LOG(
+						"[Game::%s] %s skirmish AI \"%s\" (ID: %i, Short-Name: \"%s\", Version: \"%s\") took over control of team %i",
+						__func__, types[isLocal],
+						isLocal? aiData->name.c_str(): "n/a", aiNum,
+						isLocal? aiData->shortName.c_str(): "n/a",
+						isLocal? aiData->version.c_str(): "n/a", aiTeamId
+					);
 				}
 			} break;
 
