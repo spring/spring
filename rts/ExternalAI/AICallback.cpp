@@ -1590,7 +1590,7 @@ float CAICallback::GetUnitDefRadius(int def)
 float CAICallback::GetUnitDefHeight(int def)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
-	S3DModel* mdl = ud->LoadModel();
+	const S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }
 
