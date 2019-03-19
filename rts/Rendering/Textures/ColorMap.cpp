@@ -18,15 +18,11 @@ static spring::unordered_map<unsigned int, CColorMap*> namedColorMaps;
 
 static size_t numColorMaps = 0;
 
-
-CR_BIND(CColorMap,)
-CR_REG_METADATA(CColorMap, (
-	CR_MEMBER(map),
-	CR_MEMBER( xsize),
-	CR_MEMBER(nxsize),
-	CR_MEMBER( ysize),
-	CR_MEMBER(nysize)
-))
+CColorMap* CColorMap::GetColorMapByID(int id)
+{
+	assert(colorMapsCache[id].id == id);
+	return &colorMapsCache[id];
+}
 
 
 CColorMap::CColorMap(const float* data, size_t size)
@@ -38,6 +34,7 @@ CColorMap::CColorMap(const float* data, size_t size)
 	ysize  = 1;
 	nxsize = xsize - 1;
 	nysize = ysize - 1;
+	id = numColorMaps;
 
 	std::array<SColor, 4096> cmap;
 
@@ -64,6 +61,7 @@ CColorMap::CColorMap(const std::string& fileName)
 	ysize  = bitmap.ysize;
 	nxsize = xsize - 1;
 	nysize = ysize - 1;
+	id = numColorMaps;
 
 	LoadMap(bitmap.GetRawMem(), xsize * ysize);
 }

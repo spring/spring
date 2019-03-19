@@ -6,6 +6,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/creg/DefTypes.h"
 
 CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
 
