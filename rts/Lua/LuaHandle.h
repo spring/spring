@@ -137,7 +137,8 @@ class CLuaHandle : public CEventClient
 			float damage,
 			int weaponDefID,
 			int projectileID,
-			bool paralyzer) override;
+			bool paralyzer
+		) override;
 		void UnitStunned(const CUnit* unit, bool stunned) override;
 		void UnitExperience(const CUnit* unit, float oldExperience) override;
 		void UnitHarvestStorageFull(const CUnit* unit) override;
@@ -173,7 +174,8 @@ class CLuaHandle : public CEventClient
 			const CUnit* attacker,
 			float damage,
 			int weaponDefID,
-			int projectileID) override;
+			int projectileID
+		) override;
 
 		void ProjectileCreated(const CProjectile* p) override;
 		void ProjectileDestroyed(const CProjectile* p) override;
@@ -212,14 +214,19 @@ class CLuaHandle : public CEventClient
 
 		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize, size_t* outSize);
 
-		std::string WorldTooltip(const CUnit* unit,
-		                    const CFeature* feature,
-		                    const float3* groundPos) override;
+		std::string WorldTooltip(
+			const CUnit* unit,
+			const CFeature* feature,
+			const float3* groundPos
+		) override;
 
-		bool MapDrawCmd(int playerID, int type,
-		                const float3* pos0,
-		                const float3* pos1,
-		                const std::string* labe) override;
+		bool MapDrawCmd(
+			int playerID,
+			int type,
+			const float3* pos0,
+			const float3* pos1,
+			const std::string* label
+		) override;
 
 		void ViewResize() override;
 
@@ -293,8 +300,10 @@ class CLuaHandle : public CEventClient
 		void RunDrawCallIn(const LuaHashString& hs);
 
 	protected:
-		bool userMode;
-		bool killMe; // set for handles that fail to RunCallIn
+		bool userMode = false;
+		bool killMe = false; // set for handles that fail to RunCallIn
+
+		int callinErrors = 0;
 
 		lua_State* L;
 		lua_State* L_GC;
@@ -307,8 +316,6 @@ class CLuaHandle : public CEventClient
 		std::vector<bool> watchProjectileDefs;  // callin masks for Projectile*
 		std::vector<bool> watchExplosionDefs;   // callin masks for Explosion
 		std::vector<bool> watchAllowTargetDefs; // callin masks for AllowWeapon*Target*
-
-		int callinErrors;
 
 	private: // call-outs
 		static int KillActiveHandle(lua_State* L);

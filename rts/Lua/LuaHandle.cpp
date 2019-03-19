@@ -101,7 +101,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	// by *other* states end up not being recycled which presently
 	// forces clearing the shared pool on reload
 	, D(_name != "LuaIntro" && name != "LuaMenu", true)
-	, callinErrors(0)
 {
 	D.owner = this;
 	D.synced = _synced;
@@ -1417,10 +1416,10 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	if (watchProjectileDefs.empty())
 		return;
 
-	if (!p->synced)
-		return;
 	if (!p->weapon && !p->piece)
 		return;
+
+	assert(p->synced);
 
 	const CUnit* owner = p->owner();
 	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): nullptr;
@@ -1428,6 +1427,8 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 
 	// if this weapon-type is not being watched, bail
 	if (p->weapon && (wd == nullptr || !watchProjectileDefs[wd->id]))
+		return;
+	if (p->piece && !watchProjectileDefs[watchProjectileDefs.size() - 1])
 		return;
 
 	LUA_CALL_IN_CHECK(L);
@@ -1453,10 +1454,10 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 	if (watchProjectileDefs.empty())
 		return;
 
-	if (!p->synced)
-		return;
 	if (!p->weapon && !p->piece)
 		return;
+
+	assert(p->synced);
 
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
@@ -1466,6 +1467,8 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		if (wd == nullptr || !watchProjectileDefs[wd->id])
 			return;
 	}
+	if (p->piece && !watchProjectileDefs[watchProjectileDefs.size() - 1])
+		return;
 
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
