@@ -11,8 +11,9 @@ CR_REG_METADATA(CExpGenSpawner,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(delay),
 		CR_MEMBER(damage),
-		CR_MEMBER(explosionGenerator),
-	CR_MEMBER_ENDFLAG(CM_Config)
+		CR_IGNORED(explosionGenerator),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -26,6 +27,16 @@ CExpGenSpawner::CExpGenSpawner() :
 	deleteMe = false;
 }
 
+void CExpGenSpawner::Serialize(creg::ISerializer* s) {
+	int generatorID;
+	if (s->IsWriting())
+		generatorID = explosionGenerator->GetGeneratorID();
+
+	s->SerializeInt(&generatorID, sizeof(generatorID));
+
+	if (!s->IsWriting())
+		explosionGenerator = explGenHandler.GetGenerator(generatorID);
+}
 
 void CExpGenSpawner::Update()
 {
