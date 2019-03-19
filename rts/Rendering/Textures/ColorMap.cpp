@@ -14,16 +14,18 @@
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
 
+
+// FIXME: leaks upon leaks
 static std::deque<CColorMap> colorMaps;
 static spring::unordered_map<std::string, CColorMap*> colorMapsMap;
 
 CR_BIND(CColorMap,)
 CR_REG_METADATA(CColorMap, (
-	CR_MEMBER_UN(map),
-	CR_MEMBER_UN(xsize),
-	CR_MEMBER_UN(nxsize),
-	CR_MEMBER_UN(ysize),
-	CR_MEMBER_UN(nysize)
+	CR_MEMBER(map),
+	CR_MEMBER(xsize),
+	CR_MEMBER(nxsize),
+	CR_MEMBER(ysize),
+	CR_MEMBER(nysize)
 ))
 
 CColorMap::CColorMap()

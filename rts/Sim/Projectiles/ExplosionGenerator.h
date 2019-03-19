@@ -89,7 +89,6 @@ protected:
 // Base explosion generator class
 class IExplosionGenerator
 {
-	CR_DECLARE(IExplosionGenerator)
 public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
@@ -118,8 +117,6 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE_DERIVED(CStdExplosionGenerator)
-
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
 
@@ -140,14 +137,8 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE_DERIVED(CCustomExplosionGenerator)
-	CR_DECLARE_SUB(ProjectileSpawnInfo)
-	CR_DECLARE_SUB(ExpGenParams)
-
 protected:
 	struct ProjectileSpawnInfo {
-		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
-
 		ProjectileSpawnInfo()
 			: spawnableID(0)
 			, count(0)
@@ -171,8 +162,6 @@ protected:
 	};
 
 	struct ExpGenParams {
-		CR_DECLARE_STRUCT(ExpGenParams)
-
 		std::vector<ProjectileSpawnInfo> projectiles;
 
 		GroundFlashInfo groundFlash;

@@ -14,6 +14,7 @@ class CExpGenSpawner : public CProjectile
 public:
 	CExpGenSpawner();
 	~CExpGenSpawner() {}
+	void Serialize(creg::ISerializer* s);
 
 	virtual void Update() override;
 
