@@ -11,6 +11,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/creg/DefTypes.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 #include "System/SpringMath.h"

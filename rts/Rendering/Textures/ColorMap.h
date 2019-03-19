@@ -16,7 +16,6 @@
  */
 class CColorMap
 {
-	CR_DECLARE_STRUCT(CColorMap)
 public:
 	CColorMap() = default;
 	/// Loads from a float vector
@@ -41,6 +40,7 @@ public:
 
 		xsize = 2; nxsize = 1;
 		ysize = 1; nysize = 0;
+		id = -1;
 	}
 
 private:
@@ -56,12 +56,14 @@ public:
 	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec) { return LoadFromRawVector(vec.data(), vec.size()); }
 	static CColorMap* LoadFromRawVector(const float* data, size_t size);
 
+	static CColorMap* GetColorMapByID(int id);
 	/**
 	 * Load from a string containing a number of float values or filename.
 	 * example: "1.0 0.5 1.0 ... "
 	 */
 	static CColorMap* LoadFromDefString(const std::string& defString);
 
+	int id = -1;
 private:
 	std::vector<SColor> map;
 

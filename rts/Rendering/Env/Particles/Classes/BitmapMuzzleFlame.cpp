@@ -10,6 +10,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/creg/DefTypes.h"
 #include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
