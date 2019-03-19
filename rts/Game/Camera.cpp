@@ -568,8 +568,11 @@ void CCamera::CalcFrustumLine(
 	const float3& params,
 	unsigned int side
 ) {
-	// compose an orthonormal axis-system around <normal>
-	float3 xdir = (normal.cross(UpVector)).UnsafeANormalize();
+	// compose an orthonormal axis-system around the frustum plane normal
+	// top plane normal can point straight up if camera is angled downward
+	const float3& aux = (std::fabs(normal.dot(UpVector)) < 0.01f)? FwdVector: UpVector;
+
+	float3 xdir = (normal.cross( aux)).UnsafeANormalize();
 	float3 ydir = (normal.cross(xdir)).UnsafeANormalize();
 
 	// intersection of vector from <pos> along <ydir> with xz-plane
