@@ -79,7 +79,7 @@ class LuaMatShader {
 				case hashStringLower("3DO"): { type = LUASHADER_3DO ; } break;
 				case hashStringLower("S3O"): { type = LUASHADER_S3O ; } break;
 				case hashStringLower("ASS"): { type = LUASHADER_ASS ; } break;
-				default                                       : { type = LUASHADER_LAST; } break;
+				default                    : { type = LUASHADER_LAST; } break;
 			}
 		}
 
