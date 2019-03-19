@@ -26,6 +26,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/IModelParser.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Map/BaseGroundDrawer.h"
@@ -48,6 +49,8 @@ void CWorldDrawer::InitPre() const
 	LuaObjectDrawer::Init();
 	DebugColVolDrawer::Init();
 	cursorIcons.Init();
+
+	CColorMap::InitStatic();
 
 	// these need to be loaded before featureHandler is created
 	// (maps with features have their models loaded at startup)

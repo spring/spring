@@ -355,6 +355,9 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		wd.visuals.texture3 = nullptr;
 		wd.visuals.texture4 = nullptr;
 
+		if (!wd.visuals.colorMapStr.empty())
+			wd.visuals.colorMap = CColorMap::LoadFromDefString(wd.visuals.colorMapStr);
+
 		if (wd.type == "Cannon") {
 			wd.visuals.texture1 = plasmatex;
 		} else if (wd.type == "AircraftBomb") {

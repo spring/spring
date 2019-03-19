@@ -1,56 +1,50 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstring>
-#include <deque>
+#include <cstring> // memcpy
 #include <sstream>
 
 #include <array>
 
 #include "ColorMap.h"
 #include "Bitmap.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
-#include "System/UnorderedMap.hpp"
-#include "System/StringUtil.h"
 #include "System/Exceptions.h"
+#include "System/StringHash.h"
+#include "System/UnorderedMap.hpp"
 
 
-// FIXME: leaks upon leaks
-static std::deque<CColorMap> colorMaps;
-static spring::unordered_map<std::string, CColorMap*> colorMapsMap;
+static std::array<CColorMap, 2048 + 1> colorMapsCache;
+static spring::unordered_map<unsigned int, CColorMap*> namedColorMaps;
+
+static size_t numColorMaps = 0;
+
 
 CR_BIND(CColorMap,)
 CR_REG_METADATA(CColorMap, (
 	CR_MEMBER(map),
-	CR_MEMBER(xsize),
+	CR_MEMBER( xsize),
 	CR_MEMBER(nxsize),
-	CR_MEMBER(ysize),
+	CR_MEMBER( ysize),
 	CR_MEMBER(nysize)
 ))
 
-CColorMap::CColorMap()
-	: map(2, SColor(128, 128, 128))
-	, xsize(2)
-	, nxsize(1)
-	, ysize(1)
-	, nysize(0)
-{
-}
 
-CColorMap::CColorMap(const std::vector<float>& vec)
+CColorMap::CColorMap(const float* data, size_t size)
 {
-	if (vec.size() < 8)
-		throw content_error("[ColorMap] too few colors in colormap (need at least two RGBA values)");
+	if (size < 8)
+		throw content_error("[ColorMap] less than two RGBA colors specified");
 
-	xsize  = (vec.size() - (vec.size() % 4)) / 4;
+	xsize  = (size - (size % 4)) / 4;
 	ysize  = 1;
 	nxsize = xsize - 1;
 	nysize = ysize - 1;
 
 	std::array<SColor, 4096> cmap;
+
 	for (size_t i = 0, n = std::min(size_t(xsize), cmap.size()); i < n; ++i) {
-		cmap[i] = SColor(&vec[i * 4]);
+		cmap[i] = SColor(&data[i * 4]);
 	}
+
 	LoadMap(&cmap[0].r, xsize);
 }
 
@@ -60,11 +54,11 @@ CColorMap::CColorMap(const std::string& fileName)
 
 	if (!bitmap.Load(fileName)) {
 		bitmap.Alloc(2, 2, 4);
-		LOG_L(L_WARNING, "[ColorMap::%s] could not load texture from file \"%s\"", __func__, fileName.c_str());
+		LOG_L(L_WARNING, "[ColorMap] could not load texture from file \"%s\"", fileName.c_str());
 	}
 
 	if (bitmap.compressed || (bitmap.channels != 4) || (bitmap.xsize < 2))
-		throw content_error("Unsupported bitmap format in file " + fileName);
+		throw content_error("[ColorMap] unsupported bitmap format in file " + fileName);
 
 	xsize  = bitmap.xsize;
 	ysize  = bitmap.ysize;
@@ -77,60 +71,91 @@ CColorMap::CColorMap(const std::string& fileName)
 
 void CColorMap::LoadMap(const unsigned char* buf, int num)
 {
+	map.clear();
 	map.resize(num);
+
 	std::memcpy(&map[0], buf, num * 4);
 }
 
 
+
+void CColorMap::InitStatic()
+{
+	namedColorMaps.clear();
+	namedColorMaps.reserve(colorMapsCache.size() - 1);
+
+	// reuse inner ColorMap vectors when reloading
+	// colorMapsCache.fill({});
+
+	for (CColorMap& cm: colorMapsCache) {
+		cm.Clear();
+	}
+
+	numColorMaps = 0;
+}
+
+
+
 CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 {
-	const std::string& lowFilename = StringToLower(fileName);
-	auto it = colorMapsMap.find(lowFilename);
-	if (it != colorMapsMap.end())
+	const auto it = namedColorMaps.find(hashStringLower(fileName.c_str()));
+
+	if (it != namedColorMaps.end())
 		return it->second;
 
-	colorMaps.emplace_back(fileName);
-	colorMapsMap[lowFilename] = &colorMaps.back();
-	return &colorMaps.back();
+	// hand out a dummy if cache is full
+	if (numColorMaps >= (colorMapsCache.size() - 1))
+		return &colorMapsCache[colorMapsCache.size() - 1];
+
+	colorMapsCache[numColorMaps] = {fileName};
+	namedColorMaps[hashStringLower(fileName.c_str())] = &colorMapsCache[numColorMaps];
+
+	return &colorMapsCache[numColorMaps++];
 }
 
-CColorMap* CColorMap::LoadFromFloatVector(const std::vector<float>& vec)
+CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
 {
-	colorMaps.emplace_back(vec);
-	return &colorMaps.back();
+	// ditto
+	if (numColorMaps >= (colorMapsCache.size() - 1))
+		return &colorMapsCache[colorMapsCache.size() - 1];
+
+	colorMapsCache[numColorMaps] = {data, size};
+	return &colorMapsCache[numColorMaps++];
 }
 
 
-CColorMap* CColorMap::LoadFromDefString(const std::string& dString)
+CColorMap* CColorMap::LoadFromDefString(const std::string& defString)
 {
 	std::stringstream stream;
-	std::vector<float> vec;
+	std::array<float, 4096> vec;
 
-	stream << dString;
-	float value;
+	stream << defString;
 
-	while (stream >> value) {
-		vec.push_back(value);
+	size_t count = 0;
+	float value = 0.0f;
+
+	while ((count < vec.size()) && (stream >> value)) {
+		vec[count++] = value;
 	}
 
-	CColorMap* map = nullptr;
+	if (count == 0)
+		return (CColorMap::LoadFromBitmapFile("bitmaps\\" + defString));
 
-	if (vec.empty()) {
-		map = CColorMap::LoadFromBitmapFile("bitmaps\\" + dString);
-	} else {
-		map = CColorMap::LoadFromFloatVector(vec);
-	}
-
-	if (map == nullptr) {
-		throw content_error("[ColorMap::LoadFromDefString] unable to load color-map " + dString);
-	}
-
-	return map;
+	return (CColorMap::LoadFromRawVector(vec.data(), count));
 }
 
 
 void CColorMap::GetColor(unsigned char* color, float pos)
 {
+	if (map.empty()) {
+		// dummy map, just return grey
+		color[0] = 128;
+		color[1] = 128;
+		color[2] = 128;
+		color[3] = 255;
+		return;
+	}
+
 	if (pos >= 1.0f) {
 		*reinterpret_cast<SColor*>(color) = map.back();
 		return;
@@ -150,3 +175,4 @@ void CColorMap::GetColor(unsigned char* color, float pos)
 	color[2] = ((col1[2] * ia) + (col2[2] * aa)) >> 8;
 	color[3] = ((col1[3] * ia) + (col2[3] * aa)) >> 8;
 }
+

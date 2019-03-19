@@ -4,7 +4,6 @@
 
 #include "Game/TraceRay.h"
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/Textures/ColorMap.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -230,7 +229,7 @@ WEAPONTAG(bool, laserHardStop).externalName("hardstop").defaultValue(false);
 WEAPONTAG(float3, rgbColor, visuals.color).defaultValue(float3(1.0f, 0.5f, 0.0f));
 WEAPONTAG(float3, rgbColor2, visuals.color2).defaultValue(float3(1.0f, 1.0f, 1.0f));
 WEAPONTAG(float, intensity).defaultValue(0.9f).description("Alpha transparency for non-model projectiles. Lower values are more opaque, but 0.0 will cause the projectile to disappear entirely.");
-WEAPONDUMMYTAG(std::string, colormap);
+WEAPONTAG(std::string, colormap, visuals.colorMapStr).defaultValue("");
 
 WEAPONTAG(std::string, textures1, visuals.texNames[0]).externalName("textures.1").fallbackName("texture1").defaultValue("");
 WEAPONTAG(std::string, textures2, visuals.texNames[1]).externalName("textures.2").fallbackName("texture2").defaultValue("");
@@ -489,15 +488,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
 
 		interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
-	}
-
-	{
-		const std::string& colormap = wdTable.GetString("colormap", "");
-
-		visuals.colorMap = nullptr;
-
-		if (!colormap.empty())
-			visuals.colorMap = CColorMap::LoadFromDefString(colormap);
 	}
 
 	ParseWeaponSounds(wdTable);
