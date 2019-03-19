@@ -39,6 +39,7 @@ CCamera::CCamera(unsigned int cameraType, unsigned int projectionType)
 	frustum.scales.w = CGlobalRendering::MAX_VIEW_RANGE;
 
 	SetVFOV(45.0f);
+	UpdateFrustum();
 }
 
 
