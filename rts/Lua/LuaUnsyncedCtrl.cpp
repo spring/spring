@@ -538,25 +538,19 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 	if (args >= index) {
 		if (lua_isstring(L, index)) {
-			switch (hashString(lua_tostring(L, index))) {
-				case hashString("Battle"):
-				case hashString("battle"):
-				case hashString("SFX"   ):
-				case hashString("sfx"   ): {
+			switch (hashStringLower(lua_tostring(L, index))) {
+				case hashStringLower("battle"):
+				case hashStringLower("sfx"   ): {
 					channel = Channels::Battle;
 				} break;
 
-				case hashString("UnitReply"):
-				case hashString("unitreply"):
-				case hashString("Voice"    ):
-				case hashString("voice"    ): {
+				case hashStringLower("unitreply"):
+				case hashStringLower("voice"    ): {
 					channel = Channels::UnitReply;
 				} break;
 
-				case hashString("UserInterface"):
-				case hashString("userinterface"):
-				case hashString("UI"           ):
-				case hashString("ui"           ): {
+				case hashStringLower("userinterface"):
+				case hashStringLower("ui"           ): {
 					channel = Channels::UserInterface;
 				} break;
 

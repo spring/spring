@@ -13,7 +13,10 @@ constexpr unsigned int hashString(const char* str, unsigned int length = -1u, un
 	return ((*str) != 0 && length > 0) ? hashString(str + 1, length - 1, hash + (hash << 5) + *str) : hash;
 }
 
-
+constexpr unsigned int hashStringLower(const char* str, unsigned int length = -1u, unsigned int hash = 5381u)
+{
+	return ((*str) != 0 && length > 0) ? hashStringLower(str + 1, length - 1, hash + (hash << 5) + (*str + ('a' - 'A') * (*str >= 'A' && *str <= 'Z'))) : hash;
+}
 
 template<unsigned int length, unsigned int step = (length >> 5) + 1, unsigned int idx = length, unsigned int stop = length % step>
 struct compileTimeHasher {
