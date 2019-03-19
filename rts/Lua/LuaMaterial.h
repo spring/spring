@@ -74,10 +74,10 @@ class LuaMatShader {
 			}
 		}
 		void SetEngineTypeFromKey(const char* key) {
-			switch (hashString(key)) {
-				case hashString("3DO"): case hashString("3do"): { type = LUASHADER_3DO ; } break;
-				case hashString("S3O"): case hashString("s3o"): { type = LUASHADER_S3O ; } break;
-				case hashString("ASS"): case hashString("ass"): { type = LUASHADER_ASS ; } break;
+			switch (hashStringLower(key)) {
+				case hashStringLower("3DO"): { type = LUASHADER_3DO ; } break;
+				case hashStringLower("S3O"): { type = LUASHADER_S3O ; } break;
+				case hashStringLower("ASS"): { type = LUASHADER_ASS ; } break;
 				default                                       : { type = LUASHADER_NONE; } break;
 			}
 		}
