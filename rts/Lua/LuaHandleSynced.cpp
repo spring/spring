@@ -364,7 +364,7 @@ bool CSyncedLuaHandle::Init(const std::string& code, const std::string& file)
 	watchUnitDefs.resize(unitDefHandler->NumUnitDefs() + 1, false);
 	watchFeatureDefs.resize(featureDefHandler->NumFeatureDefs() + 1, false);
 	watchExplosionDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
-	watchProjectileDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
+	watchProjectileDefs.resize(weaponDefHandler->NumWeaponDefs() + 1, false); // last bit controls piece-projectiles
 	watchAllowTargetDefs.resize(weaponDefHandler->NumWeaponDefs(), false);
 
 	// load the standard libraries
@@ -1567,6 +1567,11 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
                                                                             \
 		const uint32_t defIdx = luaL_checkint(L, 1);                        \
                                                                             \
+		if ((defIdx == -1u) && (&vec == &lhs->watchProjectileDefs)) {       \
+			lua_pushboolean(L, vec[vec.size() - 1]);                        \
+			return 1;                                                       \
+		}                                                                   \
+                                                                            \
 		if (defIdx >= vec.size())                                           \
 			return 0;                                                       \
                                                                             \
@@ -1580,6 +1585,11 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 		auto& vec = lhs->watch ## DefType ## Defs;                          \
                                                                             \
 		const uint32_t defIdx = luaL_checkint(L, 1);                        \
+                                                                            \
+		if ((defIdx == -1u) && (&vec == &lhs->watchProjectileDefs)) {       \
+			vec[vec.size() - 1] = luaL_checkboolean(L, 2);                  \
+			return 0;                                                       \
+		}                                                                   \
                                                                             \
 		if (defIdx >= vec.size())                                           \
 			return 0;                                                       \
