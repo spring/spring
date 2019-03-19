@@ -2679,35 +2679,86 @@ int LuaSyncedRead::ValidUnitID(lua_State* L)
 int LuaSyncedRead::GetUnitStates(lua_State* L)
 {
 	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
-	lua_createtable(L, 0, 9);
-	HSTR_PUSH_NUMBER(L, "firestate",  unit->fireState);
-	HSTR_PUSH_NUMBER(L, "movestate",  unit->moveState);
-	HSTR_PUSH_BOOL  (L, "repeat",     unit->commandAI->repeatOrders);
-	HSTR_PUSH_BOOL  (L, "cloak",      unit->wantCloak);
-	HSTR_PUSH_BOOL  (L, "active",     unit->activated);
-	HSTR_PUSH_BOOL  (L, "trajectory", unit->useHighTrajectory);
-
-	const CMobileCAI* mCAI = dynamic_cast<const CMobileCAI*>(unit->commandAI);
-	if (mCAI != nullptr)
-		HSTR_PUSH_NUMBER(L, "autorepairlevel", mCAI->repairBelowHealth);
-
 	const AMoveType* mt = unit->moveType; // never null
-	const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
-	const CStrafeAirMoveType* sAMT = nullptr;
+	const CMobileCAI* mCAI = dynamic_cast<const CMobileCAI*>(unit->commandAI);
 
-	if (hAMT != nullptr) {
-		HSTR_PUSH_BOOL(L, "autoland",        hAMT->autoLand);
-	} else {
-		if ((sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt)) != nullptr) {
-			HSTR_PUSH_BOOL(L, "autoland",        sAMT->autoLand);
-			HSTR_PUSH_BOOL(L, "loopbackattack",  sAMT->loopbackAttack);
+	const bool retTable = luaL_optboolean(L, 2,     true); // return state as table?
+	const bool binState = luaL_optboolean(L, 3, retTable); // include binary state? (activated, etc)
+	const bool amtState = luaL_optboolean(L, 4, retTable); // include (Air)MoveType state?
+
+	if (!retTable) {
+		{
+			lua_pushnumber(L, unit->fireState);
+			lua_pushnumber(L, unit->moveState);
+			lua_pushnumber(L, (mCAI != nullptr)? mCAI->repairBelowHealth: -1.0f);
 		}
+
+		if (binState) {
+			lua_pushboolean(L, unit->commandAI->repeatOrders);
+			lua_pushboolean(L, unit->wantCloak);
+			lua_pushboolean(L, unit->activated);
+			lua_pushboolean(L, unit->useHighTrajectory);
+		}
+
+		if (amtState) {
+			const CHoverAirMoveType* hAMT = nullptr;
+			const CStrafeAirMoveType* sAMT = nullptr;
+
+			if ((hAMT = dynamic_cast<const CHoverAirMoveType*>(mt)) != nullptr) {
+				lua_pushboolean(L, hAMT->autoLand);
+				lua_pushboolean(L, false);
+				return (3 + (binState * 4) + 2);
+			}
+
+			if ((sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt)) != nullptr) {
+				lua_pushboolean(L, sAMT->autoLand);
+				lua_pushboolean(L, sAMT->loopbackAttack);
+				return (3 + (binState * 4) + 2);
+			}
+		}
+
+		return (3 + (binState * 4) + (amtState * 2));
 	}
 
-	return 1;
+	{
+		lua_createtable(L, 0, 9);
+
+		{
+			HSTR_PUSH_NUMBER(L, "firestate",  unit->fireState);
+			HSTR_PUSH_NUMBER(L, "movestate",  unit->moveState);
+			HSTR_PUSH_NUMBER(L, "autorepairlevel", (mCAI != nullptr)? mCAI->repairBelowHealth: -1.0f);
+		}
+
+		if (binState) {
+			HSTR_PUSH_BOOL(L, "repeat",     unit->commandAI->repeatOrders);
+			HSTR_PUSH_BOOL(L, "cloak",      unit->wantCloak);
+			HSTR_PUSH_BOOL(L, "active",     unit->activated);
+			HSTR_PUSH_BOOL(L, "trajectory", unit->useHighTrajectory);
+		}
+
+		if (amtState) {
+			const CHoverAirMoveType* hAMT = nullptr;
+			const CStrafeAirMoveType* sAMT = nullptr;
+
+			if ((hAMT = dynamic_cast<const CHoverAirMoveType*>(mt)) != nullptr) {
+				HSTR_PUSH_BOOL(L, "autoland",       hAMT->autoLand);
+				HSTR_PUSH_BOOL(L, "loopbackattack", false);
+				return 1;
+			}
+
+			if ((sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt)) != nullptr) {
+				HSTR_PUSH_BOOL(L, "autoland",       sAMT->autoLand);
+				HSTR_PUSH_BOOL(L, "loopbackattack", sAMT->loopbackAttack);
+				return 1;
+			}
+		}
+
+		return 1;
+	}
 }
 
 
