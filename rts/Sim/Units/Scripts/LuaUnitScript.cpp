@@ -48,6 +48,10 @@ void CLuaUnitScript::PostLoad()
 	}
 
 	L = handle->GetLuaState();
+
+	hasSetSFXOccupy  = scriptIndex[LUAFN_SetSFXOccupy ] != LUA_NOREF;
+	hasRockUnit      = scriptIndex[LUAFN_RockUnit     ] != LUA_NOREF;
+	hasStartBuilding = scriptIndex[LUAFN_StartBuilding] != LUA_NOREF;
 }
 
 
