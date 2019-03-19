@@ -33,8 +33,10 @@ endif (MINGW OR MSVC)
 
 
 add_definitions(-DUNITSYNC)
-add_definitions(-fPIC)
-add_definitions(${PIC_FLAG})
+if (NOT WIN32)
+	add_definitions(-fPIC)
+	add_definitions(${PIC_FLAG})
+endif()
 add_definitions(-DNOT_USING_CREG)
 add_definitions(-DHEADLESS)
 add_definitions(-DNO_SOUND)
