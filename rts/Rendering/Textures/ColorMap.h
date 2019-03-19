@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "System/creg/creg_cond.h"
 #include "System/Color.h"
 
 /**
@@ -36,11 +35,12 @@ public:
 	 */
 	void GetColor(unsigned char* color, float pos);
 	void Clear() {
-		map.clear();
+		id = -1;
 
 		xsize = 2; nxsize = 1;
 		ysize = 1; nysize = 0;
-		id = -1;
+
+		map.clear();
 	}
 
 private:
@@ -49,6 +49,9 @@ private:
 public:
 	static void InitStatic();
 
+	// creg
+	static CColorMap* GetColorMapByID(int id);
+
 	/// Load colormap from a bitmap
 	static CColorMap* LoadFromBitmapFile(const std::string& fileName);
 
@@ -56,21 +59,23 @@ public:
 	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec) { return LoadFromRawVector(vec.data(), vec.size()); }
 	static CColorMap* LoadFromRawVector(const float* data, size_t size);
 
-	static CColorMap* GetColorMapByID(int id);
 	/**
 	 * Load from a string containing a number of float values or filename.
 	 * example: "1.0 0.5 1.0 ... "
 	 */
 	static CColorMap* LoadFromDefString(const std::string& defString);
 
+public:
+	// directly accessible for creg
 	int id = -1;
-private:
-	std::vector<SColor> map;
 
+private:
 	int  xsize = 2;
 	int nxsize = 1;
 	int  ysize = 1;
 	int nysize = 0;
+
+	std::vector<SColor> map;
 };
 
 #endif // COLOR_MAP_H

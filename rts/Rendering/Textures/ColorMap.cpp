@@ -10,19 +10,87 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/StringHash.h"
+#include "System/StringUtil.h"
 #include "System/UnorderedMap.hpp"
 
 
 static std::array<CColorMap, 2048 + 1> colorMapsCache;
-static spring::unordered_map<unsigned int, CColorMap*> namedColorMaps;
+static spring::unordered_map<std::string, CColorMap*> namedColorMaps;
 
 static size_t numColorMaps = 0;
+
+
+void CColorMap::InitStatic()
+{
+	namedColorMaps.clear();
+	namedColorMaps.reserve(colorMapsCache.size() - 1);
+
+	// reuse inner ColorMap vectors when reloading
+	// colorMapsCache.fill({});
+
+	for (CColorMap& cm: colorMapsCache) {
+		cm.Clear();
+	}
+
+	numColorMaps = 0;
+}
+
 
 CColorMap* CColorMap::GetColorMapByID(int id)
 {
 	assert(colorMapsCache[id].id == id);
 	return &colorMapsCache[id];
 }
+
+CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
+{
+	const auto fn = StringToLower(fileName);
+	const auto it = namedColorMaps.find(fn);
+
+	if (it != namedColorMaps.end())
+		return it->second;
+
+	// hand out a dummy if cache is full
+	if (numColorMaps >= (colorMapsCache.size() - 1))
+		return &colorMapsCache[colorMapsCache.size() - 1];
+
+	colorMapsCache[numColorMaps] = {fileName};
+	namedColorMaps[fn] = &colorMapsCache[numColorMaps];
+
+	return &colorMapsCache[numColorMaps++];
+}
+
+CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
+{
+	// ditto
+	if (numColorMaps >= (colorMapsCache.size() - 1))
+		return &colorMapsCache[colorMapsCache.size() - 1];
+
+	colorMapsCache[numColorMaps] = {data, size};
+	return &colorMapsCache[numColorMaps++];
+}
+
+
+CColorMap* CColorMap::LoadFromDefString(const std::string& defString)
+{
+	std::stringstream stream;
+	std::array<float, 4096> vec;
+
+	stream << defString;
+
+	size_t count = 0;
+	float value = 0.0f;
+
+	while ((count < vec.size()) && (stream >> value)) {
+		vec[count++] = value;
+	}
+
+	if (count == 0)
+		return (CColorMap::LoadFromBitmapFile("bitmaps\\" + defString));
+
+	return (CColorMap::LoadFromRawVector(vec.data(), count));
+}
+
 
 
 CColorMap::CColorMap(const float* data, size_t size)
@@ -74,74 +142,6 @@ void CColorMap::LoadMap(const unsigned char* buf, int num)
 
 	std::memcpy(&map[0], buf, num * 4);
 }
-
-
-
-void CColorMap::InitStatic()
-{
-	namedColorMaps.clear();
-	namedColorMaps.reserve(colorMapsCache.size() - 1);
-
-	// reuse inner ColorMap vectors when reloading
-	// colorMapsCache.fill({});
-
-	for (CColorMap& cm: colorMapsCache) {
-		cm.Clear();
-	}
-
-	numColorMaps = 0;
-}
-
-
-
-CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
-{
-	const auto it = namedColorMaps.find(hashStringLower(fileName.c_str()));
-
-	if (it != namedColorMaps.end())
-		return it->second;
-
-	// hand out a dummy if cache is full
-	if (numColorMaps >= (colorMapsCache.size() - 1))
-		return &colorMapsCache[colorMapsCache.size() - 1];
-
-	colorMapsCache[numColorMaps] = {fileName};
-	namedColorMaps[hashStringLower(fileName.c_str())] = &colorMapsCache[numColorMaps];
-
-	return &colorMapsCache[numColorMaps++];
-}
-
-CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
-{
-	// ditto
-	if (numColorMaps >= (colorMapsCache.size() - 1))
-		return &colorMapsCache[colorMapsCache.size() - 1];
-
-	colorMapsCache[numColorMaps] = {data, size};
-	return &colorMapsCache[numColorMaps++];
-}
-
-
-CColorMap* CColorMap::LoadFromDefString(const std::string& defString)
-{
-	std::stringstream stream;
-	std::array<float, 4096> vec;
-
-	stream << defString;
-
-	size_t count = 0;
-	float value = 0.0f;
-
-	while ((count < vec.size()) && (stream >> value)) {
-		vec[count++] = value;
-	}
-
-	if (count == 0)
-		return (CColorMap::LoadFromBitmapFile("bitmaps\\" + defString));
-
-	return (CColorMap::LoadFromRawVector(vec.data(), count));
-}
-
 
 void CColorMap::GetColor(unsigned char* color, float pos)
 {
