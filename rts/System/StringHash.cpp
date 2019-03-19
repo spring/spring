@@ -22,5 +22,5 @@ unsigned HashString(const char* s, size_t n)
 	return hash;
 }
 
-static_assert(hashStringLower("abcdABCDwxyz") == hashStringLower("ABCDabcdWXYZ"));
+static_assert(hashStringLower("abcdABCDwxyz") == hashStringLower("ABCDabcdWXYZ"), "hashStringLower does not work");
 
