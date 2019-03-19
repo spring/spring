@@ -572,7 +572,17 @@ void CCamera::CalcFrustumLine(
 	// top plane normal can point straight up if camera is angled downward
 	const float3& aux = (std::fabs(normal.dot(UpVector)) < 0.01f)? FwdVector: UpVector;
 	const float3  ort = normal.cross(aux);
-printf("[%s] N=<%f,%f,%f> X=<%f,%f,%f> dot=%f sql=%f\n", __func__, normal.x,normal.y,normal.z, ort.x,ort.y,ort.z, normal.dot(UpVector),normal.SqLength());
+
+if (ort.SqLength() <= float3::nrm_eps()) {
+	printf("[%s/1] N=<%f,%f,%f> X=<%f,%f,%f> dot=%f sql=%f\n", __func__, normal.x,normal.y,normal.z, ort.x,ort.y,ort.z, normal.dot(UpVector),ort.SqLength());
+	std::exit(0);
+}
+if (normal.cross(ort.UnsafeANormalize()).SqLength() <= float3::nrm_eps()) {
+	printf("[%s/2] N=<%f,%f,%f> X=<%f,%f,%f> dot=%f sql=%f\n", __func__, normal.x,normal.y,normal.z, ort.x,ort.y,ort.z, normal.dot(UpVector),ort.SqLength());
+	std::exit(0);
+}
+
+
 	float3 xdir = (normal.cross( aux)).UnsafeANormalize();
 	float3 ydir = (normal.cross(xdir)).UnsafeANormalize();
 
