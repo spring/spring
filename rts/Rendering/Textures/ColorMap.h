@@ -53,7 +53,7 @@ public:
 	static CColorMap* LoadFromBitmapFile(const std::string& fileName);
 
 	/// Takes a vector with float value 0.0-1.0, every 4 values make up a (RGBA) color
-	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec) { LoadFromRawVector(vec.data(), vec.size()); }
+	static CColorMap* LoadFromFloatVector(const std::vector<float>& vec) { return LoadFromRawVector(vec.data(), vec.size()); }
 	static CColorMap* LoadFromRawVector(const float* data, size_t size);
 
 	/**
