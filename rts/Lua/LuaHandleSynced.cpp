@@ -1377,7 +1377,6 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 
 		case 1: {
 			if (lua_isnumber(L, 1)) {
-				const int l = 1;
 				const int u = lua_toint(L, 1);
 
 				if (u < 1)

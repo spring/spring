@@ -4221,8 +4221,6 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 	bmp.Alloc(w, h, fSize * sizeof(float));
 	glReadPixels(x, y, w, h, format, GL_FLOAT, reinterpret_cast<float*>(bmp.GetRawMem()));
 
-	int retCount = 0;
-
 	const float* data = reinterpret_cast<const float*>(bmp.GetRawMem());
 	const float* d = data;
 
