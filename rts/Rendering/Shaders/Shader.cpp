@@ -296,9 +296,9 @@ namespace Shader {
 		for (const auto& p : uniformStates) {
 			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
 			if (!p.second.IsInitialized()) {
-				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()), int(curUsed));
 			} else {
-				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
 			}
 		}
 	#endif
