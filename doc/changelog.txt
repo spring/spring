@@ -93,6 +93,9 @@ Lua:
    EmitSfx(p, "cegTag") param will emit the CEG with tag="cegTag"
    EmitSfx(p, SFX.GLOBAL | cegID) will emit the CEG with id=cegID
    Added Spring.GetCEGID("cegTag") to get CEG id from tag
+ - Added Spring.GetUnitCurrentCommand(unitID) -> [cmdID, cmdOpts (coded), cmdTag[, cmdParam1[, cmdParam2 ... ]]]
+   Returns the first command in the unit's queue (or nil). Note: cmdOpts are represented by a single number
+   (usually a table otherwise), and params are returned on the stack as well. This function allocates no tables.
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
