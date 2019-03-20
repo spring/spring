@@ -104,7 +104,7 @@ namespace Platform
 	 * @param  args[1:n] arguments to the executable, eg. {"-f", "/tmp/test.txt"}
 	 * @return error message, or "" on success
 	 */
-	std::string ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess = false);
+	const char* ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess = false);
 
 
 	std::array<uint8_t,  6> GetRawMacAddr();

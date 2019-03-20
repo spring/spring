@@ -51,7 +51,7 @@ namespace Shader {
 			#endif
 
 			memset(name, 0, sizeof(name));
-			strncpy(name, _name, sizeof(name));
+			strncpy(name, _name, sizeof(name) - 1);
 		}
 
 		const int* GetIntValues() const { return &i[0]; }

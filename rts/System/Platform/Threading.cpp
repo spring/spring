@@ -82,9 +82,8 @@ namespace Threading {
 		const int numCPUs = std::min(CPU_COUNT(cpuSet), 32);
 
 		for (int n = numCPUs - 1; n >= 0; --n) {
-			if (CPU_ISSET(n, cpuSet)) {
+			if (CPU_ISSET(n, cpuSet))
 				coreMask |= (1 << n);
-			}
 		}
 
 		return coreMask;
@@ -96,9 +95,8 @@ namespace Threading {
 		const int numCPUs = std::min(CPU_COUNT(cpuSrcSet), 32);
 
 		for (int n = numCPUs - 1; n >= 0; --n) {
-			if ((coreMask & (1 << n)) != 0) {
+			if ((coreMask & (1 << n)) != 0)
 				CPU_SET(n, cpuDstSet);
-			}
 		}
 
 		CPU_AND(cpuDstSet, cpuDstSet, cpuSrcSet);
@@ -167,20 +165,23 @@ namespace Threading {
 	#endif
 	}
 
-	void SetAffinityHelper(const char *threadName, std::uint32_t affinity) {
-		const std::uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	void SetAffinityHelper(const char* threadName, std::uint32_t affinity) {
+		const std::uint32_t cpuMask = Threading::SetAffinity(affinity);
+
 		if (cpuMask == ~0u) {
 			LOG("[Threading] %s thread CPU affinity not set", threadName);
+			return;
 		}
-		else if (cpuMask != affinity) {
+		if (cpuMask != affinity) {
 			LOG("[Threading] %s thread CPU affinity mask set: %d (config is %d)", threadName, cpuMask, affinity);
+			return;
 		}
-		else if (cpuMask == 0) {
+		if (cpuMask == 0) {
 			LOG_L(L_ERROR, "[Threading] %s thread CPU affinity mask failed: %d", threadName, affinity);
+			return;
 		}
-		else {
-			LOG("[Threading] %s thread CPU affinity mask set: %d", threadName, cpuMask);
-		}
+
+		LOG("[Threading] %s thread CPU affinity mask set: %d", threadName, cpuMask);
 	}
 
 
@@ -378,7 +379,7 @@ namespace Threading {
 	}
 
 	// NB: no protection against two threads posting at the same time
-	void SetThreadError(Error&& err) { threadError = std::move(err); }
-	Error* GetThreadError() { return &threadError; }
+	const Error* GetThreadErrorC() { return &threadError; }
+	      Error* GetThreadErrorM() { return &threadError; }
 }
 

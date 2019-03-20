@@ -47,9 +47,9 @@ static void ExitSpringProcessAux(bool waitForExit, bool exitSuccess)
 
 
 #ifdef DEDICATED
-static void ExitSpringProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+static void ExitSpringProcess(const char* msg, const char* caption, unsigned int flags)
 {
-	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\"", __func__, msg.c_str(), caption.c_str());
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\"", __func__, msg, caption);
 
 	spring::SafeDelete(gameServer);
 	ExitSpringProcessAux(false, true);
@@ -57,9 +57,9 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 
 #else
 
-static void ExitSpringProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+static void ExitSpringProcess(const char* msg, const char* caption, unsigned int flags)
 {
-	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg, caption, Threading::IsMainThread());
 
 	switch (SpringApp::PostKill(Threading::Error(caption, msg, flags))) {
 		case -1: {
@@ -82,7 +82,7 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 #endif
 
 
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
+void ErrorMessageBox(const char* msg, const char* caption, unsigned int flags)
 {
 	#if (!defined(DEDICATED) && !defined(HEADLESS))
 	if (Threading::IsMainThread()) {
