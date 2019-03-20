@@ -813,9 +813,9 @@ int SpringApp::Run()
 	if (!threadError->Empty()) {
 		Threading::Error tempError;
 
-		strncat(tempError.caption,    threadError->caption, sizeof(tempError.caption));
-		strncat(tempError.message, "[thread::error::run] ", sizeof(tempError.message));
-		strncat(tempError.message,    threadError->message, sizeof(tempError.message));
+		strncat(tempError.caption,    threadError->caption, sizeof(tempError.caption) - 1);
+		strncat(tempError.message, "[thread::error::run] ", sizeof(tempError.message) - 1);
+		strncat(tempError.message,    threadError->message, sizeof(tempError.message) - 1);
 
 		ErrorMessageBox(tempError.message, tempError.caption, threadError->flags);
 	}
