@@ -4271,10 +4271,10 @@ int LuaSyncedRead::GetUnitCurrentCommand(lua_State* L)
 
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == nullptr)? &commandAI->commandQue : &factoryCAI->newUnitCommands;
-	if (queue.empty())
+	if (queue->empty())
 		return 0;
 
-	const Command& cmd = queue.front();
+	const Command& cmd = queue->front();
 	lua_pushnumber(L, cmd.GetID());
 	lua_pushnumber(L, cmd.GetOpts());
 	lua_pushnumber(L, cmd.GetTag());
