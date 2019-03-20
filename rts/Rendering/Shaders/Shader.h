@@ -212,16 +212,16 @@ namespace Shader {
 		int GetUniformLocation(const std::string& name) { return GetUniformState(name)->GetLocation(); }
 
 	private:
-		virtual int GetUniformLoc(const std::string& name) = 0;
+		virtual int GetUniformLoc(const char* name) = 0;
 		virtual int GetUniformType(const int idx) = 0;
 
-		UniformState* GetNewUniformState(const std::string name);
+		UniformState* GetNewUniformState(const char* name);
 		UniformState* GetUniformState(const std::string& name) {
 			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
 			const auto iter = uniformStates.find(hash);
 			if (iter != uniformStates.end())
 				return &iter->second;
-			return GetNewUniformState(name);
+			return GetNewUniformState(name.c_str());
 		}
 		UniformState* GetUniformState(const char* name) {
 			// (when inlined) hash might be compiletime const cause of constexpr of hashString
@@ -265,7 +265,7 @@ namespace Shader {
 		bool Validate() { return true; }
 		void Link() {}
 
-		int GetUniformLoc(const std::string& name) { return -1; }
+		int GetUniformLoc(const char* name) { return -1; }
 		int GetUniformType(const int idx) { return -1; }
 
 		void SetUniform1i(int idx, int   v0) {}
@@ -297,7 +297,7 @@ namespace Shader {
 		void Reload(bool reloadFromDisk, bool validate);
 		bool Validate() { return true; }
 
-		int GetUniformLoc(const std::string& name) { return -1; } // FIXME
+		int GetUniformLoc(const char* name) { return -1; } // FIXME
 		int GetUniformType(const int idx) { return -1; }
 		void SetUniformTarget(int target);
 		int GetUnitformTarget();
@@ -362,7 +362,7 @@ namespace Shader {
 
 	private:
 		int GetUniformType(const int idx);
-		int GetUniformLoc(const std::string& name);
+		int GetUniformLoc(const char* name);
 
 		void SetUniform(UniformState* uState, int   v0);
 		void SetUniform(UniformState* uState, float v0);
