@@ -821,7 +821,9 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 	for (int y = sy; y <= ey; y++) {
 		int sx = sxi;
 		int ex = exi;
-		float xtest, xtest2;
+
+		float xtest;
+		float xtest2;
 
 		// find the starting x-coordinate
 		for (int idx = 0, cnt = negLines[4].sign; idx < cnt; idx++) {
@@ -831,8 +833,9 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::min(xtest, xtest2);
-			xtest /= quadSize;
+			xtest = Clamp(xtest / quadSize, 0.0f, drawQuadsX * 1.0f);
 
+			// increase lower bound
 			if ((xtest - extraSize) > sx)
 				sx = ((int) xtest) - extraSize;
 		}
@@ -845,8 +848,9 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::max(xtest, xtest2);
-			xtest /= quadSize;
+			xtest = Clamp(xtest / quadSize, 0.0f, drawQuadsX * 1.0f);
 
+			// decrease upper bound
 			if ((xtest + extraSize) < ex)
 				ex = ((int) xtest) + extraSize;
 		}
