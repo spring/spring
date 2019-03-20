@@ -94,7 +94,7 @@ std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
 
 
 
-static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool allyCheck = true)
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool allyCheck = false)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
