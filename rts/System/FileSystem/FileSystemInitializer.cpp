@@ -13,7 +13,7 @@
 #include "System/Platform/Watchdog.h"
 
 #ifdef UNITSYNC
-void ErrorMessageBox(const std::string&, const std::string&, unsigned int) { throw; } // pass to US
+void ErrorMessageBox(const char*, const char*, unsigned int) { throw; } // pass to US
 #endif
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
