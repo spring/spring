@@ -248,6 +248,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitMoveTypeData);
 
 	REGISTER_LUA_CFUNC(GetUnitCommands);
+	REGISTER_LUA_CFUNC(GetUnitCurrentCommand);
 	REGISTER_LUA_CFUNC(GetFactoryCounts);
 	REGISTER_LUA_CFUNC(GetFactoryCommands);
 
@@ -4258,6 +4259,32 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 	}
 }
 
+int LuaSyncedRead::GetUnitCurrentCommand(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	if (unit == nullptr)
+		return 0;
+
+	const CCommandAI* commandAI = unit->commandAI;
+	if (commandAI == nullptr)
+		return 0;
+
+	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
+	const CCommandQueue* queue = (factoryCAI == nullptr)? &commandAI->commandQue : &factoryCAI->newUnitCommands;
+	if (queue.empty())
+		return 0;
+
+	const Command& cmd = queue.front();
+	lua_pushnumber(L, cmd.GetID());
+	lua_pushnumber(L, cmd.GetOpts());
+	lua_pushnumber(L, cmd.GetTag());
+
+	const unsigned int numParams = cmd.GetNumParams();
+	for (unsigned int i = 0; i < numParams; ++i)
+		lua_pushnumber(L, cmd.GetParam(i));
+
+	return 3 + numParams;
+}
 
 int LuaSyncedRead::GetUnitCommands(lua_State* L)
 {
