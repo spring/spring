@@ -2721,7 +2721,8 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 			}
 		}
 
-		return (3 + (binState * 4) + (amtState * 2));
+		// reached only if AMT vars were not pushed
+		return (3 + (binState * 4));
 	}
 
 	{
