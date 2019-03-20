@@ -1033,14 +1033,16 @@ namespace CrashHandler
 		if (!keepRunning) {
 			Remove();
 
-			std::ostringstream buf;
-			buf << "Spring has crashed:\n"
-				<< error << ".\n\n"
-				<< "A stacktrace has been written to:\n"
-				<< "  " << logOutput.GetFilePath();
+			char buf[8192];
+			char* ptr = buf;
+
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s", "Spring has crashed:\n");
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", error.c_str());
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", "A stacktrace has been written to:\n");
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", (logOutput.GetFilePath()).c_str());
 
 			// exit if we cought a critical signal; don't handle any further signals when exiting
-			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH);
+			ErrorMessageBox(buf, "Spring crashed", MBF_OK | MBF_CRASH);
 		}
 
 		// Re-enable signal handling for this signal
@@ -1061,7 +1063,7 @@ namespace CrashHandler
 	}
 
 	void NewHandler() {
-		std::set_new_handler(nullptr); // prevent recursion
+		std::set_new_handler(nullptr); // prevent recursion; OST or EMB might perform hidden allocs
 		LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 		OutputStacktrace();

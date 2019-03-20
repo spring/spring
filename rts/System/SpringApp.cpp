@@ -778,12 +778,13 @@ bool SpringApp::Update()
 int SpringApp::Run()
 {
 	// always lives at the same address
-	const Threading::Error* threadError = Threading::GetThreadError();
+	const Threading::Error* threadError = Threading::GetThreadErrorC();
 
 	// initialize crash reporting
 	CrashHandler::Install();
 
 	// note: exceptions thrown by other threads are *not* caught here
+	// ErrorMsgBox sets threadError if called from any non-main thread
 	try {
 		if ((gu->globalQuit = !Init() || gu->globalQuit))
 			spring::exitCode = spring::EXIT_CODE_FAILURE;
@@ -803,8 +804,15 @@ int SpringApp::Run()
 
 	// no exception from main, check if some other thread interrupted our regular loop
 	// in case one did, ErrorMessageBox will call ::Kill and forcibly exit the process
-	if (!threadError->Empty())
-		ErrorMessageBox("  [thread] " + threadError->message, threadError->caption, threadError->flags);
+	if (!threadError->Empty()) {
+		Threading::Error tempError;
+
+		strncat(tempError.caption,    threadError->caption, sizeof(tempError.caption));
+		strncat(tempError.message, "[thread::error::run] ", sizeof(tempError.message));
+		strncat(tempError.message,    threadError->message, sizeof(tempError.message));
+
+		ErrorMessageBox(tempError.message, tempError.caption, threadError->flags);
+	}
 
 	try {
 		Kill(true);
@@ -813,7 +821,7 @@ int SpringApp::Run()
 	// no exception from main, but a thread might have thrown *during* ::Kill
 	// do not attempt to call Kill a second time, just show the error message
 	if (!threadError->Empty())
-		LOG_L(L_ERROR, "  [thread] errorMsg=\"%s\" msgCaption=\"%s\"", threadError->message.c_str(), threadError->caption.c_str());
+		LOG_L(L_ERROR, "[SpringApp::%s] errorMsg=\"[thread::error::kill] %s\" msgCaption=\"%s\"", __func__, threadError->message, threadError->caption);
 
 	// cleanup signal handlers, etc
 	CrashHandler::Remove();
@@ -832,7 +840,7 @@ int SpringApp::PostKill(Threading::Error&& e)
 		return -1;
 
 	// checked by Run() after Init()
-	Threading::SetThreadError(std::move(e));
+	*(Threading::GetThreadErrorM()) = std::move(e);
 
 	// gu always exists, though thread might be too late to interrupt Run
 	return (gu->globalQuit = true);

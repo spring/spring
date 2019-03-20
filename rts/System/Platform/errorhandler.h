@@ -32,7 +32,7 @@
  *                 - MBF_INFO : Info
  *                 - MBF_CRASH: Crash
  */
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK);
+void ErrorMessageBox(const char* msg, const char* caption, unsigned int flags = MBF_OK);
 
 
 /**

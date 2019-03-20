@@ -579,9 +579,12 @@ namespace Platform
 	}
 
 
-	std::string ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess)
+	const char* ExecuteProcess(std::array<std::string, 32>& args, bool asSubprocess)
 	{
-		std::string execError = "ExecuteProcess failure";
+		static char execError[1024];
+
+		memset(execError, 0, sizeof(execError));
+		strcpy(execError, "ExecuteProcess failure");
 
 		// "The array of pointers must be terminated by a NULL pointer."
 		// --> always include one extra argument string and leave it NULL
@@ -657,8 +660,10 @@ namespace Platform
 			#define EXECVP execvp
 		#endif
 
-		if (EXECVP(args[0].c_str(), &argPointers[0]) == -1)
-			LOG("[%s] error: \"%s\" %s (%d)", __func__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
+		if (EXECVP(args[0].c_str(), &argPointers[0]) == -1) {
+			STRNCPY(execError, strerror(errno), sizeof(execError) - 1);
+			LOG("[%s] error: \"%s\" %s (%d)", __func__, args[0].c_str(), execError, errno);
+		}
 
 		#undef EXECVP
 

@@ -3,7 +3,6 @@
 #ifndef _MESSAGEBOX_H_
 #define _MESSAGEBOX_H_
 
-#include <string>
 #include "System/Platform/errorhandler.h" // MBF_OK, etc.
 
 namespace Platform {
@@ -13,7 +12,7 @@ namespace Platform {
 	 * @param  caption will appear in the title bar of the error window
 	 * @param  flags   @see errorhandler.h
 	 */
-	void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags);
+	void MsgBox(const char* message, const char* caption, unsigned int flags);
 }
 
 #endif // _MESSAGEBOX_H_

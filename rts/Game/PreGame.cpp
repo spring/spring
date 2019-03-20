@@ -315,7 +315,7 @@ void CPreGame::UpdateClientNet()
 
 					// force exit to system if no menu
 					LOG("[PreGame::%s] server requested quit or rejected connection (reason \"%s\")", __func__, message.c_str());
-					handleerror(nullptr, "server requested quit or rejected connection: " + message, "Quit message", MBF_OK | MBF_EXCL);
+					handleerror(nullptr, "server requested quit or rejected connection", "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_{QUIT,REJECT_CONNECT}] exception \"%s\"", __func__, ex.what());
 				}
@@ -323,7 +323,7 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_CREATE_NEWPLAYER: {
 				// server will send this first if we're using mid-game join
-				// feature, to let us know about ourselves (we won't be in
+				// feature to let us know about ourselves (we won't be in
 				// gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
@@ -335,7 +335,7 @@ void CPreGame::UpdateClientNet()
 
 					// since the >> operator uses dest size to extract data from
 					// the packet, we need to use temp variables of the same
-					// size of the packet, before converting to dest variable
+					// size of the packet before converting to dest variable
 					pckt >> playerNum;
 					pckt >> spectator;
 					pckt >> team;

@@ -436,7 +436,7 @@ void OutputStacktrace() {
 
 
 void NewHandler() {
-	std::set_new_handler(nullptr); // prevent recursion
+	std::set_new_handler(nullptr); // prevent recursion; OST or EMB might perform hidden allocs
 	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 	OutputStacktrace();

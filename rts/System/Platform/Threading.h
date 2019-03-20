@@ -15,9 +15,12 @@
 
 #include "System/Platform/Win/win32.h"
 #include "System/Threading/SpringThreading.h"
-#include <functional>
+
 #include <atomic>
+#include <functional>
+
 #include <cinttypes>
+#include <cstring>
 
 
 
@@ -154,28 +157,38 @@ namespace Threading {
 	 * Used to raise errors in the main-thread issued by worker-threads
 	 */
 	struct Error {
-		Error() : flags(0) {}
-		Error(const std::string& _caption, const std::string& _message, const unsigned int _flags) : caption(_caption), message(_message), flags(_flags) {}
+		Error() : flags(0) {
+			memset(caption, 0, sizeof(caption));
+			memset(message, 0, sizeof(message));
+		}
+		Error(const char* _caption, const char* _message, unsigned int _flags) : flags(_flags) {
+			strncpy(caption, _caption, sizeof(caption) - 1);
+			strncpy(message, _message, sizeof(message) - 1);
+		}
 		Error(const Error&) = delete;
 		Error(Error&& e) { *this = std::move(e); }
 
 		Error& operator = (const Error& e) = delete;
 		Error& operator = (Error&& e) {
-			caption = std::move(e.caption);
-			message = std::move(e.message);
-			flags = e.flags;
+			memcpy(caption, e.caption, sizeof(caption));
+			memcpy(message, e.message, sizeof(message));
+			memset(e.caption, 0, sizeof(caption));
+			memset(e.message, 0, sizeof(message));
+
+			flags = e.flags;	
+			e.flags = 0;
 			return *this;
 		}
 
-		bool Empty() const { return (caption.empty() && message.empty() && flags == 0); }
+		bool Empty() const { return (caption[0] == 0 && message[0] == 0 && flags == 0); }
 
-		std::string caption;
-		std::string message;
+		char caption[512];
+		char message[512];
 		unsigned int flags;
 	};
 
-	void SetThreadError(Error&& err);
-	Error* GetThreadError();
+	const Error* GetThreadErrorC();
+	      Error* GetThreadErrorM();
 }
 
 
