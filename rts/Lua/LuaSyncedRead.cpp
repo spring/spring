@@ -4262,6 +4262,7 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 int LuaSyncedRead::GetUnitCurrentCommand(lua_State* L)
 {
 	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
@@ -4271,10 +4272,13 @@ int LuaSyncedRead::GetUnitCurrentCommand(lua_State* L)
 
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == nullptr)? &commandAI->commandQue : &factoryCAI->newUnitCommands;
-	if (queue->empty())
+
+	const unsigned int cmdIndex = luaL_optint(L, 2, 0);
+
+	if (cmdIndex >= queue->size())
 		return 0;
 
-	const Command& cmd = queue->front();
+	const Command& cmd = queue->at(cmdIndex);
 	lua_pushnumber(L, cmd.GetID());
 	lua_pushnumber(L, cmd.GetOpts());
 	lua_pushnumber(L, cmd.GetTag());
