@@ -1,0 +1,6 @@
+TODO:
+-Make any stream to a testserver
+-Make a openh encoded stream to a testserver
+-Recive in app with openh https://github.com/OpenHEVC/ffmpeg
+-decode into a texturebuffer and overlay
+
