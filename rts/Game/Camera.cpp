@@ -418,7 +418,7 @@ float3 CCamera::GetRotFromDir(float3 fwd)
 	return r;
 }
 
-float3 CCamera::GetFwdFromRot(const float3 r)
+float3 CCamera::GetFwdFromRot(const float3& r)
 {
 	float3 fwd;
 	fwd.x = std::sin(r.x) *   std::sin(r.y);
@@ -427,7 +427,7 @@ float3 CCamera::GetFwdFromRot(const float3 r)
 	return fwd;
 }
 
-float3 CCamera::GetRgtFromRot(const float3 r)
+float3 CCamera::GetRgtFromRot(const float3& r)
 {
 	// FIXME:
 	//   right should always be "right" relative to forward
@@ -445,14 +445,14 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 }
 
 
-void CCamera::UpdateDirsFromRot(const float3 r)
+void CCamera::UpdateDirsFromRot(const float3& r)
 {
 	forward  = GetFwdFromRot(r);
 	right    = GetRgtFromRot(r);
 	up       = (right.cross(forward)).Normalize();
 }
 
-void CCamera::SetDir(const float3 dir)
+void CCamera::SetDir(const float3& dir)
 {
 	// if (dir == forward) return;
 	// update our axis-system from the angles
