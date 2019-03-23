@@ -155,12 +155,12 @@ void CCamera::UpdateFrustum()
 	frustum.verts[6] = pos + (forward * frustum.scales.w) + (right *  fAxisScales.x) + (up * -fAxisScales.y); // fbr
 	frustum.verts[7] = pos + (forward * frustum.scales.w) + (right * -fAxisScales.x) + (up * -fAxisScales.y); // fbl
 
-	frustum.edges[0] = frustum.verts[1] - frustum.verts[0]; // ntr - ntl (same as ftr - ftl)
-	frustum.edges[1] = frustum.verts[0] - frustum.verts[3]; // ntl - nbl (same as ftl - fbl)
-	frustum.edges[2] = frustum.verts[4] - frustum.verts[0]; // ftl - ntl
-	frustum.edges[3] = frustum.verts[5] - frustum.verts[1]; // ftr - ntr
-	frustum.edges[4] = frustum.verts[6] - frustum.verts[2]; // fbr - nbr
-	frustum.edges[5] = frustum.verts[7] - frustum.verts[3]; // fbl - nbl
+	frustum.edges[0] = (frustum.verts[1] - frustum.verts[0]).UnsafeANormalize(); // ntr - ntl (same as ftr - ftl)
+	frustum.edges[1] = (frustum.verts[0] - frustum.verts[3]).UnsafeANormalize(); // ntl - nbl (same as ftl - fbl)
+	frustum.edges[2] = (frustum.verts[4] - frustum.verts[0]).UnsafeANormalize(); // ftl - ntl
+	frustum.edges[3] = (frustum.verts[5] - frustum.verts[1]).UnsafeANormalize(); // ftr - ntr
+	frustum.edges[4] = (frustum.verts[6] - frustum.verts[2]).UnsafeANormalize(); // fbr - nbr
+	frustum.edges[5] = (frustum.verts[7] - frustum.verts[3]).UnsafeANormalize(); // fbl - nbl
 
 	if (camType == CAMTYPE_VISCUL)
 		return;
@@ -533,16 +533,16 @@ inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, co
 	viewMatrix[10] = -f.z;
 
 	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
-	viewMatrix[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
-	viewMatrix[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
-	viewMatrix[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
+	viewMatrix[12] = s.dot(-eye);
+	viewMatrix[13] = u.dot(-eye);
+	viewMatrix[14] = f.dot( eye);
 }
 
 
 
 
 void CCamera::CalcFrustumLines(float miny, float maxy, float scale, bool neg) {
-	const float3 params = {miny, maxy, scale};
+	const float3 isectParams = {miny, maxy, 1.0f / scale};
 	// only non-zero for orthographic cameras
 	const float3 planeOffsets[FRUSTUM_PLANE_FRN] = {
 		-right * frustum.scales.x,
@@ -557,7 +557,7 @@ void CCamera::CalcFrustumLines(float miny, float maxy, float scale, bool neg) {
 
 	// note: order does not matter
 	for (unsigned int i = FRUSTUM_PLANE_LFT, side = neg? FRUSTUM_SIDE_NEG: FRUSTUM_SIDE_POS; i < FRUSTUM_PLANE_FRN; i++) {
-		CalcFrustumLine(frustum.planes[i], planeOffsets[i],  params, side);
+		CalcFrustumLine(frustum.planes[i], planeOffsets[i],  isectParams, side);
 	}
 
 	assert(!neg || frustumLines[FRUSTUM_SIDE_NEG][4].sign == 4);
@@ -569,28 +569,30 @@ void CCamera::CalcFrustumLine(
 	const float3& params,
 	unsigned int side
 ) {
+	FrustumLine line;
+
 	// compose an orthonormal axis-system around the frustum plane normal
 	// top plane normal can point straight up if camera is angled downward
-	const float3& aux = (std::fabs(normal.dot(UpVector)) < 0.01f)? FwdVector: UpVector;
+	const float3 aux = (std::fabs(normal.dot(UpVector)) > 0.995f)? -forward: UpVector;
 
 	float3 xdir = (normal.cross( aux)).UnsafeANormalize();
 	float3 ydir = (normal.cross(xdir)).UnsafeANormalize();
-
 	// intersection of vector from <pos> along <ydir> with xz-plane
+	// (on <miny> if <normal> is angled toward the sky, else <maxy>)
 	float3 pInt;
 
 	// prevent DIV0 when calculating line.dir
+	xdir.z *= (std::fabs(xdir.z) > 0.001f);
 	xdir.z = std::max(std::fabs(xdir.z), 0.001f) * std::copysign(1.0f, xdir.z);
+	ydir.y = -std::fabs(ydir.y);
 
 	if (ydir.y != 0.0f) {
-		// if normal is angled toward the sky instead of the ground,
-		// subtract <miny> from the camera's y-position, else <maxy>
-		if (normal.y > 0.0f) {
-			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - params.x) / ydir.y);
-		} else {
-			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - params.y) / ydir.y);
-		}
+		const float py = params[normal.y <= 0.0f];
+		const float dy = pos.y + offset.y - py;
+
+		pInt = (pos + offset) - ydir * (dy / ydir.y);
 	}
+
 
 	// <line.dir> is the direction coefficient (0 ==> parallel to z-axis, inf ==> parallel to x-axis)
 	// in the xz-plane; <line.base> is the x-coordinate at which line intersects x-axis; <line.sign>
@@ -599,11 +601,10 @@ void CCamera::CalcFrustumLine(
 	//   (b.x / b.z) is actually the reciprocal of the DC (ie. the number of steps along +x for
 	//   one step along +y); the world z-axis is inverted wrt. a regular Carthesian grid, so the
 	//   DC is also inverted
-	FrustumLine line;
-
 	line.sign = Sign(int(xdir.z <= 0.0f));
 	line.dir  = (xdir.x / xdir.z);
-	line.base = (pInt.x - (pInt.z * line.dir)) / params.z;
+	line.base = (pInt.x * params.z) - ((pInt.z * params.z) * line.dir);
+
 	line.minz = (                      0.0f) - (mapDims.mapy);
 	line.maxz = (mapDims.mapy * SQUARE_SIZE) + (mapDims.mapy);
 
