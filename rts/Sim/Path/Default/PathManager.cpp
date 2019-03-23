@@ -44,13 +44,16 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	lowResPE->Kill();
-	medResPE->Kill();
-	maxResPF->Kill();
+	// Finalize is not called in case of forced exit
+	if (maxResPF != nullptr) {
+		lowResPE->Kill();
+		medResPE->Kill();
+		maxResPF->Kill();
 
-	maxResPF = nullptr;
-	medResPE = nullptr;
-	lowResPE = nullptr;
+		maxResPF = nullptr;
+		medResPE = nullptr;
+		lowResPE = nullptr;
+	}
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);

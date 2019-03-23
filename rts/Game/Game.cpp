@@ -416,14 +416,16 @@ void CGame::LoadGame(const std::string& mapFileName)
 		}
 	}
 
-	try {
-		LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
+	if (!forcedQuit) {
+		try {
+			LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit.load(), forcedQuit);
 
-		LoadFinalize();
-		LoadSkirmishAIs();
-	} catch (const content_error& e) {
-		LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
-		forcedQuit = true;
+			LoadFinalize();
+			LoadSkirmishAIs();
+		} catch (const content_error& e) {
+			LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
+			forcedQuit = true;
+		}
 	}
 
 	try {
