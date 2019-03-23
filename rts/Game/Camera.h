@@ -98,7 +98,7 @@ public:
 
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
-	void SetDir(const float3 dir);
+	void SetDir(const float3& dir);
 
 	const float3& GetPos() const { return pos; }
 	const float3& GetDir() const { return forward; }
@@ -108,7 +108,7 @@ public:
 	const float3& GetUp() const      { return up; }
 	const float3& GetRot() const     { return rot; }
 
-	void SetRot(const float3 r) { UpdateDirsFromRot(rot = r); }
+	void SetRot(const float3& r) { UpdateDirsFromRot(rot = r); }
 	void SetRotX(const float x) { SetRot(float3(    x, rot.y, rot.z)); }
 	void SetRotY(const float y) { SetRot(float3(rot.x,     y, rot.z)); }
 	void SetRotZ(const float z) { SetRot(float3(rot.x, rot.y,     z)); }
@@ -187,16 +187,16 @@ public:
 	static CCamera* GetActive();
 
 	static float3 GetRotFromDir(float3 fwd);
-	static float3 GetFwdFromRot(const float3 r);
-	static float3 GetRgtFromRot(const float3 r);
+	static float3 GetFwdFromRot(const float3& r);
+	static float3 GetRgtFromRot(const float3& r);
 
 
-	float ProjectedDistance(const float3 objPos) const {
+	float ProjectedDistance(const float3& objPos) const {
 		return (forward.dot(objPos - pos));
 	}
 
 	/*
-	float ProjectedDistanceShadow(const float3 objPos, const float3 sunDir) const {
+	float ProjectedDistanceShadow(const float3& objPos, const float3& sunDir) const {
 		// FIXME: fix it, cap it for shallow shadows?
 		const float3 diff = pos - objPos;
 		const float  dot  = diff.dot(sunDir);
@@ -221,7 +221,7 @@ private:
 	void glOrthoScaledSpring(const float sx, const float sy, const float zn, const float zf);
 	void gluLookAtSpring(const float3&, const float3&, const float3&);
 
-	void UpdateDirsFromRot(const float3 r);
+	void UpdateDirsFromRot(const float3& r);
 
 public:
 	float3 pos;
@@ -238,7 +238,7 @@ public:
 	float halfFov     = 0.0f;  ///< half the fov in radians
 	float tanHalfFov  = 0.0f;  ///< math::tan(halfFov)
 	float lppScale    = 0.0f;  ///< length-per-pixel scale
-	float aspectRatio = 0.0f;  ///< horizontal
+	float aspectRatio = 1.0f;  ///< horizontal
 
 	int viewport[4];
 
