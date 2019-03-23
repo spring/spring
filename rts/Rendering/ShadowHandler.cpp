@@ -668,9 +668,9 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix
 float3 CShadowHandler::CalcShadowProjectionPos(CCamera* cam, float3* frustumPoints) const
 {
 	float3 projPos;
-	float3 frustumCenter;
+	float2 mapPlanes = {readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f};
 
-	cam->CalcFrustumLines(0.0f, 0.0f, 1.0f, true);
+	cam->CalcFrustumLines(mapPlanes.x, mapPlanes.y, 1.0f, true);
 	cam->ClipFrustumLines(-100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f, true);
 
 	const CCamera::FrustumLine* lines = cam->GetNegFrustumLines();
@@ -691,16 +691,13 @@ float3 CShadowHandler::CalcShadowProjectionPos(CCamera* cam, float3* frustumPoin
 		const float cx1 = Clamp(x1, 0.0f, float3::maxxpos);
 		const float cz1 = Clamp(z1, 0.0f, float3::maxzpos);
 
-		frustumPoints[n * 2 + 0] = float3(cx0, CGround::GetHeightReal(cx0, cz0, false), cz0); // far-point
-		frustumPoints[n * 2 + 1] = float3(cx1, CGround::GetHeightReal(cx1, cz1, false), cz1); // near-point
+		frustumPoints[n * 2 + 0] = float3(cx0, mapPlanes.x, cz0); // far-point
+		frustumPoints[n * 2 + 1] = float3(cx1, mapPlanes.x, cz1); // near-point
 
-		frustumCenter += frustumPoints[n * 2 + 0];
-		frustumCenter += frustumPoints[n * 2 + 1];
+		projPos += frustumPoints[n * 2 + 0];
+		projPos += frustumPoints[n * 2 + 1];
 	}
 
-	projPos.x = frustumCenter.x * 0.25f;
-	projPos.z = frustumCenter.z * 0.25f;
-	projPos.y = CGround::GetHeightReal(projPos.x, projPos.z, false);
-	return projPos;
+	return (projPos * 0.25f);
 }
 

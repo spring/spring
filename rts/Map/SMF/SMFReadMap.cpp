@@ -818,7 +818,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::min(xtest, xtest2);
-			xtest = Clamp(xtest / quadSize, 0.0f, drawQuadsX * 1.0f);
+			xtest = Clamp(xtest / quadSize, -1.0f, drawQuadsX * 1.0f + 1.0f);
 
 			// increase lower bound
 			if ((xtest - extraSize) > sx)
@@ -829,11 +829,11 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 		for (int idx = 0, cnt = posLines[4].sign; idx < cnt; idx++) {
 			const CCamera::FrustumLine& fl = posLines[idx];
 
-			xtest  = ((fl.base + fl.dir *  (y * quadSize)           ));
+			xtest  = ((fl.base + fl.dir *  (y * quadSize)            ));
 			xtest2 = ((fl.base + fl.dir * ((y * quadSize) + quadSize)));
 
 			xtest = std::max(xtest, xtest2);
-			xtest = Clamp(xtest / quadSize, 0.0f, drawQuadsX * 1.0f);
+			xtest = Clamp(xtest / quadSize, -1.0f, drawQuadsX * 1.0f + 1.0f);
 
 			// decrease upper bound
 			if ((xtest + extraSize) < ex)
