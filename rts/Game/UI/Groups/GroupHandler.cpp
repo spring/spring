@@ -7,13 +7,13 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/CameraHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/creg/STL_Set.h"
 #include "System/Input/KeyInput.h"
 #include "System/Log/ILog.h"
 #include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
+#include "System/StringHash.h"
 
-std::vector<CGroupHandler*> grouphandlers;
+std::vector<CGroupHandler> uiGroupHandlers;
 
 CR_BIND(CGroupHandler, (0))
 CR_REG_METADATA(CGroupHandler, (
@@ -28,9 +28,7 @@ CR_REG_METADATA(CGroupHandler, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroupHandler::CGroupHandler(int teamId)
-: team(teamId)
-, firstUnusedGroup(FIRST_SPECIAL_GROUP)
+CGroupHandler::CGroupHandler(int teamId): team(teamId)
 {
 	for (int g = 0; g < FIRST_SPECIAL_GROUP; ++g) {
 		groups.push_back(new CGroup(g, this));
@@ -93,59 +91,67 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
 	CGroup* group = groups[num];
 
-	if ((cmd == "set") || (cmd == "add")) {
-		if (cmd == "set")
-			group->ClearUnits();
+	switch (hashString(cmd.c_str())) {
+		case hashString("set"):
+		case hashString("add"): {
+			if (cmd[0] == 's')
+				group->ClearUnits();
 
-		for (const int unitID: selectedUnitsHandler.selectedUnits) {
-			CUnit* u = unitHandler.GetUnit(unitID);
+			for (const int unitID: selectedUnitsHandler.selectedUnits) {
+				CUnit* u = unitHandler.GetUnit(unitID);
 
-			if (u == nullptr) {
-				assert(false);
-				continue;
+				if (u == nullptr) {
+					assert(false);
+					continue;
+				}
+
+				// change group, but do not call SUH::AddUnit while iterating
+				u->SetGroup(group, false, false);
+			}
+		} break;
+
+		case hashString("selectadd"): {
+			// do not select the group, just add its members to the current selection
+			for (const int unitID: group->units) {
+				selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
 			}
 
-			// change group, but do not call SUH::AddUnit while iterating
-			u->SetGroup(group, false, false);
-		}
-	}
-	else if (cmd == "selectadd")  {
-		// do not select the group, just add its members to the current selection
-		for (const int unitID: group->units) {
-			selectedUnitsHandler.AddUnit(unitHandler.GetUnit(unitID));
-		}
-		return true;
-	}
-	else if (cmd == "selectclear")  {
-		// do not select the group, just remove its members from the current selection
-		for (const int unitID: group->units) {
-			selectedUnitsHandler.RemoveUnit(unitHandler.GetUnit(unitID));
-		}
-		return true;
-	}
-	else if (cmd == "selecttoggle")  {
-		// do not select the group, just toggle its members with the current selection
-		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+			return true;
+		} break;
 
-		for (const int unitID: group->units) {
-			CUnit* unit = unitHandler.GetUnit(unitID);
-
-			if (selUnits.find(unitID) == selUnits.end()) {
-				selectedUnitsHandler.AddUnit(unit);
-			} else {
-				selectedUnitsHandler.RemoveUnit(unit);
+		case hashString("selectclear"): {
+			// do not select the group, just remove its members from the current selection
+			for (const int unitID: group->units) {
+				selectedUnitsHandler.RemoveUnit(unitHandler.GetUnit(unitID));
 			}
-		}
-		return true;
+
+			return true;
+		} break;
+
+		case hashString("selecttoggle"): {
+			// do not select the group, just toggle its members with the current selection
+			const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+			for (const int unitID: group->units) {
+				CUnit* unit = unitHandler.GetUnit(unitID);
+
+				if (selUnits.find(unitID) == selUnits.end()) {
+					selectedUnitsHandler.AddUnit(unit);
+				} else {
+					selectedUnitsHandler.RemoveUnit(unit);
+				}
+			}
+
+			return true;
+		} break;
 	}
 
 	if (group->units.empty())
 		return false;
 
 	if (selectedUnitsHandler.IsGroupSelected(num)) {
-		const float3 groupCenter = group->CalculateCenter();
 		camHandler->CameraTransition(0.5f);
-		camHandler->GetCurrentController().SetPos(groupCenter);
+		camHandler->GetCurrentController().SetPos(group->CalculateCenter());
 	}
 
 	selectedUnitsHandler.SelectGroup(num);
@@ -155,16 +161,13 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 CGroup* CGroupHandler::CreateNewGroup()
 {
 	if (freeGroups.empty()) {
-		CGroup* group = new CGroup(firstUnusedGroup++, this);
-		groups.push_back(group);
-		return group;
-	} else {
-		int id = freeGroups.back();
-		freeGroups.pop_back();
-		CGroup* group = new CGroup(id, this);
-		groups[id] = group;
-		return group;
+		groups.push_back(new CGroup(firstUnusedGroup++, this));
+		return (groups.back());
 	}
+
+	const int id = spring::VectorBackPop(freeGroups);
+
+	return (groups[id] = new CGroup(id, this));
 }
 
 void CGroupHandler::RemoveGroup(CGroup* group)

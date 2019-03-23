@@ -68,7 +68,7 @@ void CGroup::RemoveIfEmptySpecialGroup()
 		return;
 
 	//HACK so Global AI groups do not get erased DEPRECATED
-	if (handler->team != gu->myTeam)
+	if (handler->GetTeam() != gu->myTeam)
 		return;
 
 	handler->RemoveGroup(this);

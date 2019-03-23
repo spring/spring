@@ -194,8 +194,9 @@ void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 
 	if (fromUser) { // add some statistics
 		playerHandler.Player(gu->myPlayerNum)->currentStats.numCommands++;
+
 		if (selectedGroup != -1) {
-			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += uiGroupHandlers[gu->myTeam].groups[selectedGroup]->units.size();
 		} else {
 			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += selectedUnits.size();
 		}
@@ -439,7 +440,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 {
 	ClearSelected();
 	selectedGroup = num;
-	CGroup* group = grouphandlers[gu->myTeam]->groups[num];
+	CGroup* group = uiGroupHandlers[gu->myTeam].groups[num];
 
 	for (const int unitID: group->units) {
 		CUnit* u = unitHandler.GetUnit(unitID);
@@ -458,8 +459,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 
 void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 {
-	const std::vector<string>& args = CSimpleParser::Tokenize(line, 0);
-	for (const std::string& arg : args) {
+	for (const std::string& arg : CSimpleParser::Tokenize(line, 0)) {
 		if (arg == "clear") {
 			selectedUnitsHandler.ClearSelected();
 		} else if ((arg[0] == '+') || (arg[0] == '-')) {
@@ -589,7 +589,7 @@ void CSelectedUnitsHandler::Draw()
 		// if autoAddBuiltUnitsToSelectedGroup is true) so we check IsUnitSelected
 		// for each
 		if (selectedGroup != -1) {
-			const CGroupHandler* gh = grouphandlers[gu->myTeam];
+			const CGroupHandler* gh = &uiGroupHandlers[gu->myTeam];
 			const CGroup* g = gh->groups[selectedGroup];
 			unitSet = &g->units;
 		}
@@ -881,7 +881,7 @@ void CSelectedUnitsHandler::DrawCommands()
 	glAttribStatePtr->LineWidth(cmdColors.QueuedLineWidth());
 
 	if (selectedGroup != -1) {
-		const auto& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
+		const auto& groupUnits = uiGroupHandlers[gu->myTeam].groups[selectedGroup]->units;
 
 		for (const int unitID: groupUnits) {
 			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI);

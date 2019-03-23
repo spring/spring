@@ -708,8 +708,11 @@ void CGame::LoadInterface()
 	resourceBar = new CResourceBar();
 	selectionKeys.Init();
 
+	uiGroupHandlers.clear();
+	uiGroupHandlers.reserve(teamHandler.ActiveTeams());
+
 	for (int t = 0; t < teamHandler.ActiveTeams(); ++t) {
-		grouphandlers.push_back(new CGroupHandler(t));
+		uiGroupHandlers.emplace_back(t);
 	}
 
 	// note: disable is needed in case user reloads before StartPlaying
@@ -748,7 +751,7 @@ void CGame::LoadSkirmishAIs()
 		return;
 	// happens if LoadInterface was skipped or interrupted on forcedQuit
 	// the AI callback code expects this to be non-empty on construction
-	if (grouphandlers.empty())
+	if (uiGroupHandlers.empty())
 		return;
 
 	// create Skirmish AI's if required
@@ -868,18 +871,14 @@ void CGame::KillInterface()
 	spring::SafeDelete(minimap);
 	spring::SafeDelete(resourceBar);
 	spring::SafeDelete(tooltip); // CTooltipConsole*
+
+	LOG("[Game::%s][2]", __func__);
 	keyBindings.Kill();
 	selectionKeys.Kill(); // CSelectionKeyHandler*
 	spring::SafeDelete(inMapDrawerModel);
 	spring::SafeDelete(inMapDrawer);
 
-	LOG("[Game::%s][2]", __func__);
-
-	for (auto& grouphandler: grouphandlers) {
-		spring::SafeDelete(grouphandler);
-	}
-
-	grouphandlers.clear();
+	uiGroupHandlers.clear();
 }
 
 void CGame::KillSimulation()
@@ -1447,7 +1446,6 @@ void CGame::StartPlaying()
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler.Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
-//	grouphandler->team = gu->myTeam;
 
 	GameSetupDrawer::Disable();
 	CLuaUI::UpdateTeams();
@@ -1500,8 +1498,8 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		eoh->Update();
 
-		for (auto& grouphandler: grouphandlers)
-			grouphandler->Update();
+		for (auto& grouphandler: uiGroupHandlers)
+			grouphandler.Update();
 
 		CPlayer* p = playerHandler.Player(gu->myPlayerNum);
 		FPSUnitController& c = p->fpsController;
