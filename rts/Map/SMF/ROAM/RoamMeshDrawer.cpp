@@ -258,6 +258,9 @@ void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawInMiniMap()
 {
 	#ifdef DRAW_DEBUG_IN_MINIMAP
+	// DrawInMiniMap runs before DrawWorld
+	globalRendering->drawFrame -= 1;
+
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
@@ -272,15 +275,18 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
 	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
-		if (!p.IsVisible(CCameraHandler::GetActiveCamera())) {
-			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
-		}
+		if (p.IsVisible(CCameraHandler::GetActiveCamera()))
+			continue;
+
+		glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 	}
 
 	glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
+
+	globalRendering->drawFrame += 1;
 	#endif
 }
 
