@@ -743,6 +743,10 @@ void CGame::LoadSkirmishAIs()
 {
 	if (gameSetup->hostDemo)
 		return;
+	// happens if LoadInterface was skipped or interrupted on forcedQuit
+	// the AI callback code expects this to be non-empty on construction
+	if (grouphandlers.empty())
+		return;
 
 	// create Skirmish AI's if required
 	const std::vector<uint8_t>& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
