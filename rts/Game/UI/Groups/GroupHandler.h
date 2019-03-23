@@ -24,7 +24,7 @@ public:
 	~CGroupHandler();
 
 	/// lowest ID of the first group not reachable through a hot-key
-	static const size_t FIRST_SPECIAL_GROUP = 10;
+	static constexpr size_t FIRST_SPECIAL_GROUP = 10;
 
 	void Update();
 
@@ -36,20 +36,24 @@ public:
 
 	void PushGroupChange(int id);
 
+	int GetTeam() const { return team; }
+
 public:
 	std::vector<CGroup*> groups;
-	int team;
 
 protected:
 	std::vector<int> freeGroups;
+	std::vector<int> changedGroups;
+
+	int team = 0;
 	/**
 	 * The lowest ID not in use.
 	 * This is always greater or equal FIRST_SPECIAL_GROUP.
 	 */
-	int firstUnusedGroup;
-	std::vector<int> changedGroups;
+	int firstUnusedGroup = FIRST_SPECIAL_GROUP;
+
 };
 
-extern std::vector<CGroupHandler*> grouphandlers;
+extern std::vector<CGroupHandler> uiGroupHandlers;
 
 #endif	// _GROUP_HANDLER_H

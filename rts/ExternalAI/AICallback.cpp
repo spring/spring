@@ -120,7 +120,7 @@ CUnit* CAICallback::GetInLosAndRadarUnit(int unitId) const {
 
 CAICallback::CAICallback(int teamId)
 	: team(teamId)
-	, gh(grouphandlers[teamId])
+	, gh(&uiGroupHandlers[teamId])
 {}
 
 void CAICallback::SendStartPos(bool ready, float3 startPos)

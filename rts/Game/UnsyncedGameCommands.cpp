@@ -1080,7 +1080,7 @@ public:
 			const size_t firstCmdChar = actionArgs.find_first_not_of(" \t\n\r", 1);
 
 			if (firstCmdChar != std::string::npos) {
-				grouphandlers[gu->myTeam]->GroupCommand(teamId, actionArgs.substr(firstCmdChar));
+				uiGroupHandlers[gu->myTeam].GroupCommand(teamId, actionArgs.substr(firstCmdChar));
 			} else {
 				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 			}
@@ -1105,7 +1105,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const final {
 		if (!action.IsRepeat())
-			return grouphandlers[gu->myTeam]->GroupCommand(groupId);
+			return uiGroupHandlers[gu->myTeam].GroupCommand(groupId);
 
 		return false;
 	}

@@ -4901,7 +4901,7 @@ EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIdsMaxSize) {
-	const std::vector<CGroup*>& gs = grouphandlers[AI_TEAM_IDS[skirmishAIId]]->groups;
+	const std::vector<CGroup*>& gs = uiGroupHandlers[AI_TEAM_IDS[skirmishAIId]].groups;
 	const int groupIdsRealSize = gs.size();
 
 	int groupIdsSize = groupIdsRealSize;
