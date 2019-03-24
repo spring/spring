@@ -54,7 +54,7 @@ end
 
 
 function PrintCommandQueue(uid)
-  local queue = Spring.GetCommandQueue(uid)
+  local queue = Spring.GetCommandQueue(uid, -1)
   if (queue ~= nil) then
     local msg = ''
     local count = 0
