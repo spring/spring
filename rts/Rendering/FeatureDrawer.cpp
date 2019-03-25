@@ -185,7 +185,6 @@ void CFeatureDrawer::ConfigNotify(const std::string& key, const std::string& val
 	switch (hashString(key.c_str())) {
 		case hashString("FeatureDrawDistance"): {
 			featureDrawDistance = std::max(0.0f, std::strtof(value.c_str(), nullptr));
-			featureFadeDistance = std::min(featureFadeDistance, featureDrawDistance);
 		} break;
 		case hashString("FeatureFadeDistance"): {
 			featureFadeDistance = std::max(0.0f, std::strtof(value.c_str(), nullptr));
@@ -193,6 +192,8 @@ void CFeatureDrawer::ConfigNotify(const std::string& key, const std::string& val
 		default: {
 		} break;
 	}
+
+	featureFadeDistance = std::min(featureFadeDistance, featureDrawDistance);
 }
 
 
