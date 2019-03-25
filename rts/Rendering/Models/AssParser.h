@@ -76,6 +76,8 @@ public:
 	S3DModel Load(const std::string& modelFileName) override;
 
 private:
+	static void PreProcessFileBuffer(std::vector<unsigned char>& fileBuffer);
+
 	static void SetPieceName(
 		SAssPiece* piece,
 		const S3DModel* model,
