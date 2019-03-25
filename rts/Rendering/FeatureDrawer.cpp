@@ -126,6 +126,7 @@ void CFeatureDrawer::KillStatic(bool reload) {
 void CFeatureDrawer::Init()
 {
 	eventHandler.AddClient(this);
+	configHandler->NotifyOnChange(this, {"FeatureDrawDistance", "FeatureFadeDistance"});
 
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_FEATURE);
 
@@ -161,6 +162,7 @@ void CFeatureDrawer::Init()
 
 void CFeatureDrawer::Kill()
 {
+	configHandler->RemoveObserver(this);
 	eventHandler.RemoveClient(this);
 	autoLinkedEvents.clear();
 
@@ -177,6 +179,21 @@ void CFeatureDrawer::Kill()
 	geomBuffer = nullptr;
 }
 
+
+void CFeatureDrawer::ConfigNotify(const std::string& key, const std::string& value)
+{
+	switch (hashString(key.c_str())) {
+		case hashString("FeatureDrawDistance"): {
+			featureDrawDistance = std::max(0.0f, std::atof(value.c_str()));
+			featureFadeDistance = std::min(featureFadeDistance, featureDrawDistance);
+		} break;
+		case hashString("FeatureFadeDistance"): {
+			featureFadeDistance = std::max(0.0f, std::atof(value.c_str()));
+		} break;
+		default: {
+		} break;
+	}
+}
 
 
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)

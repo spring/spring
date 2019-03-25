@@ -28,6 +28,8 @@ public:
 	void Init();
 	void Kill();
 
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 	void UpdateDrawQuad(CFeature* feature);
 	void Update();
 
