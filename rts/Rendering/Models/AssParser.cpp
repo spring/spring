@@ -24,6 +24,7 @@
 #include "lib/assimp/include/assimp/Importer.hpp"
 #include "lib/assimp/include/assimp/DefaultLogger.hpp"
 
+#include <regex>
 
 
 #define IS_QNAN(f) (f != f)
@@ -157,13 +158,15 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
 
+	CFileHandler file(modelFilePath, SPRING_VFS_ZIP);
+
+	std::vector<unsigned char> fileBuf;
 	// load the lua metafile containing properties unique to Spring models (must return a table)
 	std::string metaFileName = modelFilePath + ".lua";
 
 	// try again without the model file extension
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		metaFileName = modelPath + modelName + ".lua";
-
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
 
@@ -179,16 +182,25 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
 
 
-	// create a model importer instance
 	Assimp::Importer importer;
 
-
-	// give the importer an IO class that handles Spring's VFS
-	importer.SetIOHandler(new AssVFSSystem());
 	// speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, ASS_IMPORTER_OPTIONS);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
 	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+		file.Read(fileBuf.data(), fileBuf.size());
+	} else {
+		fileBuf = std::move(file.GetBuffer());
+	}
+
+	if (modelTable.GetBool("nodenamesfromids", false)) {
+		assert(FileSystem::GetExtension(modelFilePath) == "dae");
+		PreProcessFileBuffer(fileBuf);
+	}
+
 
 	// Read the model file to build a scene object
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
@@ -198,17 +210,17 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	{
 		// ASSIMP spams many SIGFPEs atm in normal & tangent generation
 		ScopedDisableFpuExceptions fe;
-		scene = importer.ReadFile(modelFilePath, ASS_POSTPROCESS_OPTIONS);
+		scene = importer.ReadFileFromMemory(fileBuf.data(), fileBuf.size(), ASS_POSTPROCESS_OPTIONS);
 	}
 
-	if (scene != nullptr) {
-		LOG_SL(LOG_SECTION_MODEL, L_INFO,
-			"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
-			modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
-			scene->mNumTextures);
-	} else {
+	if (scene == nullptr)
 		throw content_error("[AssimpParser] Model Import: " + std::string(importer.GetErrorString()));
-	}
+
+	LOG_SL(LOG_SECTION_MODEL, L_INFO,
+		"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
+		modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
+		scene->mNumTextures
+	);
 
 	ModelPieceMap pieceMap;
 	ParentNameMap parentMap;
@@ -242,6 +254,49 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	return model;
 }
 
+
+void CAssParser::PreProcessFileBuffer(std::vector<unsigned char>& fileBuffer)
+{
+	// the Collada specification requires node uid's to be unique
+	// (names can be repeated) which certain exporters obey while
+	// others do not
+	// however, obedient exporters actually make life inconvenient
+	// for modellers since assimp's Collada importer extracts node
+	// names (aiNode::mName) from the *id* field
+	// as a workaround, let the model metadata decide if id's and
+	// names should be swapped before assimp processes the buffer
+	const std::regex nodePattern{"<node id=\"([a-zA-Z0-9_-]+)\" name=\"([a-zA-Z0-9_-]+)\" type=\"([a-zA-Z]+)\">"};
+
+	std::array<unsigned char, 1024> lineBuffer;
+	std::cmatch matchGroups;
+
+	const char* beg = reinterpret_cast<const char*>(fileBuffer.data());
+	const char* end = reinterpret_cast<const char*>(fileBuffer.data() + fileBuffer.size());
+
+	if (strstr(beg, "COLLADA") == nullptr)
+		return;
+
+	for (size_t i = 0, n = fileBuffer.size(); i < n; ) {
+		matchGroups = std::move(std::cmatch{});
+
+		if (!std::regex_search(beg + i, matchGroups, nodePattern))
+			break;
+
+		const std::string   id = std::move(matchGroups[1].str());
+		const std::string name = std::move(matchGroups[2].str());
+		const std::string type = std::move(matchGroups[3].str());
+
+		assert(matchGroups[0].first  >= beg && matchGroups[0].first  < end);
+		assert(matchGroups[0].second >= beg && matchGroups[0].second < end);
+
+		// just swap id and name fields; preserves line length
+		memset(lineBuffer.data(), 0, lineBuffer.size());
+		snprintf(reinterpret_cast<char*>(lineBuffer.data()), lineBuffer.size(), "<node id=\"%s\" name=\"%s\" type=\"%s\">", name.c_str(), id.c_str(), type.c_str());
+		memcpy(const_cast<char*>(matchGroups[0].first), lineBuffer.data(), matchGroups[0].length());
+
+		i = matchGroups[0].second - beg;
+	}
+}
 
 /*
 void CAssParser::CalculateModelMeshBounds(S3DModel* model, const aiScene* scene)
