@@ -31,9 +31,9 @@ static constexpr uint32_t squareMobileBlockBits =
 	uint32_t(MMBT::BLOCK_MOBILE     ) |
 	uint32_t(MMBT::BLOCK_MOVING     );
 
-static const CPathFinder::BlockCheckFunc blockCheckFuncs[2] = {
-	CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe,
-	CMoveMath::IsBlockedNoSpeedModCheck
+static constexpr CPathFinder::BlockCheckFunc blockCheckFuncs[2] = {
+	CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe, // alias for RangeIsBlocked
+	CMoveMath::IsBlockedNoSpeedModCheck // same as RangeIsBlocked without tempNum test
 };
 
 // both indexed by PATHOPT* bitmasks
