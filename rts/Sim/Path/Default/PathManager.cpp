@@ -565,20 +565,20 @@ float3 CPathManager::NextWayPoint(
 		// OR we are stuck on an impassable square
 		if (maxResPath.path.empty()) {
 			if (lowResPath.path.empty() && medResPath.path.empty()) {
-				if (multiPath->searchResult == IPath::Ok) {
-					waypoint = multiPath->finalGoal; break;
-				} else {
-					// reached in the CantGetCloser case for any max-res searches
-					// that start within their goal radius (ie. have no waypoints)
-					// RequestPath always puts startPos into maxResPath to handle
-					// this so waypoint will have been set to it (during previous
-					// iteration) if we end up here
-					break;
-				}
+				if (multiPath->searchResult == IPath::Ok)
+					waypoint = multiPath->finalGoal;
+
+				// [else]
+				// reached in the CantGetCloser case for any max-res searches
+				// that start within their goal radius (ie. have no waypoints)
+				// RequestPath always puts startPos into maxResPath to handle
+				// this so waypoint will have been set to it (during previous
+				// iteration) if we end up here
 			} else {
 				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
-				break;
 			}
+
+			break;
 		} else {
 			waypoint = maxResPath.path.back();
 			maxResPath.path.pop_back();
