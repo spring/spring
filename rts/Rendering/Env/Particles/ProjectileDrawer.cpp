@@ -6,11 +6,11 @@
 #include <algorithm>
 
 #include "Game/Camera.h"
-#include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
+#include "Game/UI/MiniMap.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapInfo.h"
+#include "Map/ReadMap.h" // mapDims
 #include "Rendering/GroundFlash.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
@@ -467,14 +467,13 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
 		return;
 
-	const CCamera* cam = CCameraHandler::GetActiveCamera();
-	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
+	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
 	// no-op if no model
 	DrawProjectileModel(pro);
 
-	pro->SetSortDist(cam->ProjectedDistance(pro->pos));
+	pro->SetSortDist(camera->ProjectedDistance(pro->pos));
 	sortedProjectiles[drawSorted && pro->drawSorted].push_back(pro);
 }
 
@@ -504,8 +503,7 @@ void CProjectileDrawer::DrawProjectileShadow(const CProjectile* p)
 	if (!CanDrawProjectile(p, p->owner()))
 		return;
 
-	const CCamera* cam = CCameraHandler::GetActiveCamera();
-	if (!cam->InView(p->drawPos, p->GetDrawRadius()))
+	if (!camera->InView(p->drawPos, p->GetDrawRadius()))
 		return;
 
 	// if this returns false, then projectile is
@@ -524,10 +522,8 @@ void CProjectileDrawer::DrawProjectileShadow(const CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	CVertexArray* lines = GetVertexArray();
-	CVertexArray* points = GetVertexArray();
-	lines->Initialize();
-	points->Initialize();
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		const auto& mdlRenderer = modelRenderers[modelType];
@@ -536,37 +532,27 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		for (unsigned int i = 0, n = mdlRenderer.GetNumObjectBins(); i < n; i++) {
 			const auto& projectileBin = mdlRenderer.GetObjectBin(i);
 
-			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
-			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
-
 			for (CProjectile* p: projectileBin) {
 				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
-				p->DrawOnMinimap(*lines, *points);
+				p->DrawOnMinimap(buffer);
 			}
 		}
 	}
 
-	lines->DrawArrayC(GL_LINES);
-	points->DrawArrayC(GL_POINTS);
+	for (CProjectile* p: renderProjectiles) {
+		if (!CanDrawProjectile(p, p->owner()))
+			continue;
 
-	if (!renderProjectiles.empty()) {
-		lines->Initialize();
-		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
-
-		for (CProjectile* p: renderProjectiles) {
-			if (!CanDrawProjectile(p, p->owner()))
-				continue;
-
-			p->DrawOnMinimap(*lines, *points);
-		}
-
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
+		p->DrawOnMinimap(buffer);
 	}
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, minimap->GetViewMat(0));
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, minimap->GetProjMat(0));
+	buffer->Submit(GL_LINES);
+	shader->Disable();
 }
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
@@ -901,8 +887,8 @@ void CProjectileDrawer::UpdatePerlin() {
 		std::fill(std::begin(col), std::end(col), int((1.0f - perlinData.blendWeights[a]) * 16 * size));
 
 		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
-		buffer->SafeAppend({ZeroVector, 0,         0, col});
-		buffer->SafeAppend({  UpVector, 0,     tsize, col});
+		buffer->SafeAppend({ZeroVector,     0,     0, col});
+		buffer->SafeAppend({  UpVector,     0, tsize, col});
 		buffer->SafeAppend({  XYVector, tsize, tsize, col});
 		buffer->SafeAppend({ RgtVector, tsize,     0, col});
 		buffer->Submit(GL_QUADS);

@@ -6,7 +6,6 @@
 #include "Game/Camera.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -66,9 +65,10 @@ void CNanoProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color});
 }
 
-void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CNanoProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::green);
+	va->SafeAppend({pos        , color4::green});
+	va->SafeAppend({pos + speed, color4::green});
 }
 
 

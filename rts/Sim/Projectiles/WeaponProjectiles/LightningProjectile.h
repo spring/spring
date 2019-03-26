@@ -18,7 +18,7 @@ public:
 
 	void Update() override;
 	void Draw(GL::RenderDataBufferTC* va) const override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void DrawOnMinimap(GL::RenderDataBufferC* va) override;
 
 	int GetProjectilesCount() const override { return (NUM_DISPLACEMENTS * 2); }
 

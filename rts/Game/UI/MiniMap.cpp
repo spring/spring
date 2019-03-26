@@ -393,6 +393,13 @@ void CMiniMap::UpdateGeometry()
 
 
 	{
+		// Draw{WorldStuff} transform
+		viewMats[0].LoadIdentity();
+		viewMats[0].Translate(UpVector);
+		viewMats[0].Scale({+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
+		viewMats[0].RotateX(90.0f * math::DEG_TO_RAD); // rotate to match real 'world' coordinates
+		viewMats[0].Scale(XZVector); // flatten; LuaOpenGL::DrawScreen uses persp-proj so z-values influence x&y
+
 		viewMats[1].LoadIdentity();
 		viewMats[1].Translate(UpVector);
 		// heightmap (squares) to minimap
@@ -1576,10 +1583,7 @@ void CMiniMap::DrawUnitRanges() const
 void CMiniMap::DrawWorldStuff() const
 {
 	GL::PushMatrix();
-	GL::Translate(0.0f, +1.0f, 0.0f);
-	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
-	GL::RotateX(-90.0f); // real 'world' coordinates
-	GL::Scale(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
+	GL::MultMatrix(viewMats[0]);
 
 	// draw the projectiles
 	if (drawProjectiles)

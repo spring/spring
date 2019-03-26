@@ -17,8 +17,6 @@
 class CUnit;
 class CFeature;
 class CMatrix44f;
-class CVertexArray;
-
 
 class CProjectile: public CExpGenSpawnable
 {
@@ -46,7 +44,7 @@ public:
 	virtual void Init(const CUnit* owner, const float3& offset) override;
 
 	virtual void Draw(GL::RenderDataBufferTC* va) const {}
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	virtual void DrawOnMinimap(GL::RenderDataBufferC* va);
 
 	virtual int GetProjectilesCount() const = 0;
 

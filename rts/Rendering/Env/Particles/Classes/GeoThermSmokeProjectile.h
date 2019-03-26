@@ -22,8 +22,6 @@ public:
 	void Update();
 	void UpdateDir();
 
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) {}
-
 	static void GeoThermDestroyed(const CFeature* geo);
 
 private:

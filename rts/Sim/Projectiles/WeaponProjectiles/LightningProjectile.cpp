@@ -4,7 +4,6 @@
 #include "Game/Camera.h"
 #include "LightningProjectile.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -30,7 +29,7 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	projectileType = WEAPON_LIGHTNING_PROJECTILE;
 	useAirLos = false;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		assert(weaponDef->IsHitScanWeapon());
 		color = weaponDef->visuals.color;
 	}
@@ -105,7 +104,7 @@ void CLightningProjectile::Draw(GL::RenderDataBufferTC* va) const
 	}
 }
 
-void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CLightningProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
 	const unsigned char lcolor[4] = {
 		(unsigned char)(color[0] * 255),
@@ -113,7 +112,8 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 		(unsigned char)(color[2] * 255),
 		                           255
 	};
-	lines.AddVertexQC(startPos,  lcolor);
-	lines.AddVertexQC(targetPos, lcolor);
+
+	va->SafeAppend({ startPos, lcolor});
+	va->SafeAppend({targetPos, lcolor});
 }
 

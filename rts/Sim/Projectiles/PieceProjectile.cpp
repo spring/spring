@@ -7,7 +7,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -243,9 +242,10 @@ void CPieceProjectile::Update()
 }
 
 
-void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CPieceProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::red);
+	va->SafeAppend({pos        , color4::red});
+	va->SafeAppend({pos + speed, color4::red});
 }
 
 

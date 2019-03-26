@@ -17,7 +17,7 @@ public:
 
 	void Update() override;
 	void Draw(GL::RenderDataBufferTC* va) const override;
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void DrawOnMinimap(GL::RenderDataBufferC* va) override;
 
 	// nano-particles use their own counter
 	int GetProjectilesCount() const override { return 0; }

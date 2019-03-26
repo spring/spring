@@ -5,7 +5,6 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -256,11 +255,11 @@ void CLargeBeamLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 	#undef WT2
 }
 
-void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CLargeBeamLaserProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
 	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
 
-	lines.AddVertexQC(startPos,  color);
-	lines.AddVertexQC(targetPos, color);
+	va->SafeAppend({ startPos, color});
+	va->SafeAppend({targetPos, color});
 }
 

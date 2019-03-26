@@ -3,7 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -345,9 +345,10 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
-void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CWeaponProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::yellow);
+	va->SafeAppend({pos        , color4::yellow});
+	va->SafeAppend({pos + speed, color4::yellow});
 }
 
 

@@ -4,7 +4,6 @@
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -167,11 +166,11 @@ void CBeamLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 	#undef WT1
 }
 
-void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CBeamLaserProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
 	const unsigned char color[4] = {edgeColStart[0], edgeColStart[1], edgeColStart[2], 255};
 
-	lines.AddVertexQC(startPos, color);
-	lines.AddVertexQC(targetPos, color);
+	va->SafeAppend({ startPos, color});
+	va->SafeAppend({targetPos, color});
 }
 

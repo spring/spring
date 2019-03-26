@@ -3,7 +3,7 @@
 #include "Projectile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -137,9 +137,10 @@ void CProjectile::Delete()
 }
 
 
-void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::whiteA);
+	va->SafeAppend({pos        , color4::whiteA});
+	va->SafeAppend({pos + speed, color4::whiteA});
 }
 
 

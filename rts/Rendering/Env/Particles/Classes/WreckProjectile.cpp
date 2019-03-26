@@ -8,7 +8,6 @@
 #include "Rendering/Colors.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -57,8 +56,9 @@ void CWreckProjectile::Draw(GL::RenderDataBufferTC* va) const
 	#undef wt
 }
 
-void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CWreckProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	points.AddVertexQC(pos, color4::redA);
+	va->SafeAppend({pos        , color4::redA});
+	va->SafeAppend({pos + speed, color4::redA});
 }
 
