@@ -5597,12 +5597,15 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 		losStatus = unit->losStatus[allyTeamID];
 	}
 
+	constexpr int currMask = LOS_INLOS   | LOS_INRADAR;
 	constexpr int prevMask = LOS_PREVLOS | LOS_CONTRADAR;
-	const bool isTyped = (losStatus & prevMask) == prevMask;
+
+	const bool isTyped = ((losStatus & prevMask) == prevMask);
 
 	if (luaL_optboolean(L, 3, false)) {
+		// return a numeric value
 		if (!CLuaHandle::GetHandleFullRead(L))
-			losStatus &= (isTyped ? prevMask : 0) | LOS_INLOS | LOS_INRADAR;
+			losStatus &= ((prevMask * isTyped) | currMask);
 
 		lua_pushnumber(L, losStatus);
 		return 1;
