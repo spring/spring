@@ -4,11 +4,13 @@
 
 #include <cmath>
 
+#include "Game/Camera.h"
+#include "Game/UI/CommandColors.h"
+#include "Game/UI/MiniMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Game/Camera.h"
-#include "Game/UI/CommandColors.h"
+#include "System/ContainerUtil.h"
 
 CLineDrawer lineDrawer;
 
@@ -53,69 +55,75 @@ void CLineDrawer::SetupLineStipple()
 
 void CLineDrawer::Restart()
 {
-	LinePair* ptr;
-	if (lineStipple) {
-		stippleLines.emplace_back();
-		ptr = &stippleLines.back();
-	} else {
-		regularLines.emplace_back();
-		ptr = &regularLines.back();
-	}
-	LinePair& p = *ptr;
+	LinePair& line = spring::VectorEmplaceBack(lineStipple? stippleLines: regularLines);
 
-	if (!useColorRestarts)	 {
-		p.glType = GL_LINE_STRIP;
+	if ((line.glType = useColorRestarts? GL_LINES: GL_LINE_STRIP) == GL_LINES)
+		return;
 
-		p.verts.push_back({lastPos, lastColor});
-	} else {
-		p.glType = GL_LINES;
-	}
+	line.verts.push_back({lastPos, lastColor});
 }
 
 
 void CLineDrawer::DrawAll(bool onMiniMap)
 {
-	// TODO: grab the minimap transform (DrawForReal->EnterNormalizedCoors->DrawWorldStuff)
-	if (onMiniMap)
-		return;
 	if (regularLines.empty() && stippleLines.empty())
 		return;
 
+	// batch lines of equal type
+	std::sort(regularLines.begin(), regularLines.end(), [](const LinePair& a, const LinePair& b) { return (a.glType < b.glType); });
+	std::sort(stippleLines.begin(), stippleLines.end(), [](const LinePair& a, const LinePair& b) { return (a.glType < b.glType); });
+
 	glAttribStatePtr->PushEnableBit();
 	glAttribStatePtr->DisableDepthTest();
-	glDisable(GL_LINE_STIPPLE);
+	glAttribStatePtr->Disable(GL_LINE_STIPPLE);
 
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
+
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 
-	for (const auto& regularLine : regularLines) {
-		const size_t size = regularLine.verts.size();
+	if (!regularLines.empty()) {
+		unsigned int glType = regularLines[0].glType;
 
-		// TODO: batch lines of equal type
-		if (size > 0) {
-			buffer->SafeAppend(regularLine.verts.data(), size);
-			buffer->Submit(regularLine.glType);
+		for (const auto& regularLine : regularLines) {
+			if (regularLine.verts.empty())
+				continue;
+
+			buffer->SafeAppend(regularLine.verts.data(), regularLine.verts.size());
+
+			if (regularLine.glType == glType)
+				continue;
+
+			buffer->Submit(glType = regularLine.glType);
 		}
+
+		buffer->Submit(regularLines[regularLines.size() - 1].glType);
 	}
 
 	if (!stippleLines.empty()) {
-		glEnable(GL_LINE_STIPPLE);
+		unsigned int glType = stippleLines[0].glType;
 
 		for (const auto& stippleLine : stippleLines) {
-			const size_t size = stippleLine.verts.size();
+			if (stippleLine.verts.empty())
+				continue;
 
-			if (size > 0) {
-				buffer->SafeAppend(stippleLine.verts.data(), size);
-				buffer->Submit(stippleLine.glType);
-			}
+			buffer->SafeAppend(stippleLine.verts.data(), stippleLine.verts.size());
+
+			if (stippleLine.glType == glType)
+				continue;
+
+			buffer->Submit(glType = stippleLine.glType);
 		}
 
-		glDisable(GL_LINE_STIPPLE);
+		// glAttribStatePtr->Enable(GL_LINE_STIPPLE);
+		buffer->Submit(stippleLines[stippleLines.size() - 1].glType);
+		// glAttribStatePtr->Disable(GL_LINE_STIPPLE);
 	}
 
 	shader->Disable();

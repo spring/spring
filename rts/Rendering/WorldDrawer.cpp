@@ -356,10 +356,10 @@ void CWorldDrawer::DrawMiscObjects() const
 
 	{
 		// note: duplicated in CMiniMap::DrawWorldStuff()
-		commandDrawer->DrawLuaQueuedUnitSetCommands();
+		commandDrawer->DrawLuaQueuedUnitSetCommands(false);
 
 		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate())
-			selectedUnitsHandler.DrawCommands();
+			selectedUnitsHandler.DrawCommands(false);
 	}
 
 	// either draw from here, or make {Dyn,Bump}Water use blending

@@ -49,7 +49,7 @@ public:
 	bool BuildIconsFirst() const { return buildIconsFirst; }
 
 	void PossibleCommandChange(CUnit* sender);
-	void DrawCommands();
+	void DrawCommands(bool onMiniMap);
 	std::string GetTooltip();
 	void SetCommandPage(int page);
 	void SendCommand(const Command& c);

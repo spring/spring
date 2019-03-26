@@ -5,6 +5,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
+#include "Game/UI/MiniMap.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/glExtra.h"
@@ -43,9 +44,12 @@ CommandDrawer* CommandDrawer::GetInstance() {
 
 
 
-void CommandDrawer::Draw(const CCommandAI* cai) const {
+void CommandDrawer::Draw(const CCommandAI* cai, bool onMiniMap) const {
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
 	// note: {Air,Builder}CAI inherit from MobileCAI, so test that last
 	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai), buffer); return; }
@@ -56,10 +60,9 @@ void CommandDrawer::Draw(const CCommandAI* cai) const {
 	DrawCommands(cai, buffer);
 
 	// hand off all surface circles
-	// TODO: grab the minimap transform
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 	buffer->Submit(GL_LINES);
 	shader->Disable();
 }
@@ -71,7 +74,7 @@ void CommandDrawer::AddLuaQueuedUnit(const CUnit* unit) {
 	luaQueuedUnitSet.insert(unit->id);
 }
 
-void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
+void CommandDrawer::DrawLuaQueuedUnitSetCommands(bool onMiniMap) const
 {
 	if (luaQueuedUnitSet.empty())
 		return;
@@ -96,7 +99,7 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
 		if (unit == nullptr || unit->commandAI == nullptr)
 			continue;
 
-		Draw(unit->commandAI);
+		Draw(unit->commandAI, onMiniMap);
 	}
 
 	glAttribStatePtr->LineWidth(1.0f);

@@ -1591,15 +1591,14 @@ void CMiniMap::DrawWorldStuff() const
 
 	{
 		// draw the queued commands
-		commandDrawer->DrawLuaQueuedUnitSetCommands();
+		commandDrawer->DrawLuaQueuedUnitSetCommands(true);
 
 		#if 0
-		// TODO: pass the minimap transform (calls into CommandDrawer)
 		// NOTE: this needlessly adds to the CursorIcons list, but at least
 		//       they are not drawn  (because the input receivers are drawn
 		//       after the command queues)
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate())
-			selectedUnitsHandler.DrawCommands();
+			selectedUnitsHandler.DrawCommands(true);
 		#endif
 	}
 
