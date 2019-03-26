@@ -26,9 +26,7 @@ void CLineDrawer::SetupLineStipple()
 {
 	const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
 
-	lineStipple = ((stipPat != 0x0000) && (stipPat != 0xffff));
-
-	if (!lineStipple)
+	if (!(lineStipple = ((stipPat != 0x0000) && (stipPat != 0xffff))))
 		return;
 
 	const unsigned int fullPat = (stipPat << 16) | (stipPat & 0x0000ffff);
@@ -60,7 +58,6 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 
 	glAttribStatePtr->PushEnableBit();
 	glAttribStatePtr->DisableDepthTest();
-	glAttribStatePtr->Disable(GL_LINE_STIPPLE);
 
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
@@ -69,45 +66,40 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
+	const auto DrawLines = [&](const std::vector<LinePair>& lines) {
+		if (lines.empty())
+			return;
+
+		unsigned int glType = lines[0].glType;
+
+		for (const auto& line: lines) {
+			const auto& verts = line.verts;
+
+			if (verts.empty())
+				continue;
+
+			buffer->SafeAppend(verts.data(), verts.size());
+
+			if (line.glType == glType)
+				continue;
+
+			buffer->Submit(glType = line.glType);
+		}
+
+		buffer->Submit(lines[lines.size() - 1].glType);
+	};
+
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 
-	if (!regularLines.empty()) {
-		unsigned int glType = regularLines[0].glType;
-
-		for (const auto& regularLine : regularLines) {
-			if (regularLine.verts.empty())
-				continue;
-
-			buffer->SafeAppend(regularLine.verts.data(), regularLine.verts.size());
-
-			if (regularLine.glType == glType)
-				continue;
-
-			buffer->Submit(glType = regularLine.glType);
-		}
-
-		buffer->Submit(regularLines[regularLines.size() - 1].glType);
+	{
+		DrawLines(regularLines);
 	}
-
-	if (!stippleLines.empty()) {
-		unsigned int glType = stippleLines[0].glType;
-
-		for (const auto& stippleLine : stippleLines) {
-			if (stippleLine.verts.empty())
-				continue;
-
-			buffer->SafeAppend(stippleLine.verts.data(), stippleLine.verts.size());
-
-			if (stippleLine.glType == glType)
-				continue;
-
-			buffer->Submit(glType = stippleLine.glType);
-		}
-
+	{
+		// [deprecated]
 		// glAttribStatePtr->Enable(GL_LINE_STIPPLE);
-		buffer->Submit(stippleLines[stippleLines.size() - 1].glType);
+		DrawLines(stippleLines);
 		// glAttribStatePtr->Disable(GL_LINE_STIPPLE);
 	}
 
