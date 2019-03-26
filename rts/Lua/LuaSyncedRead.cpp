@@ -5595,8 +5595,17 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 		losStatus = unit->losStatus[allyTeamID];
 	}
 
-	if (CLuaHandle::GetHandleFullRead(L) && luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, losStatus); // return a numeric value
+	constexpr int currMask = LOS_INLOS   | LOS_INRADAR;
+	constexpr int prevMask = LOS_PREVLOS | LOS_CONTRADAR;
+
+	const bool isTyped = ((losStatus & prevMask) == prevMask);
+
+	if (luaL_optboolean(L, 3, false)) {
+		// return a numeric value
+		if (!CLuaHandle::GetHandleFullRead(L))
+			losStatus &= ((prevMask * isTyped) | currMask);
+
+		lua_pushnumber(L, losStatus);
 		return 1;
 	}
 
@@ -5607,9 +5616,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 	if (losStatus & LOS_INRADAR) {
 		HSTR_PUSH_BOOL(L, "radar", true);
 	}
-	const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-	if ((losStatus & LOS_INLOS) ||
-	    ((losStatus & prevMask) == prevMask)) {
+	if ((losStatus & LOS_INLOS) || isTyped) {
 		HSTR_PUSH_BOOL(L, "typed", true);
 	}
 	return 1;
