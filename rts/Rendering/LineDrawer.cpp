@@ -15,21 +15,6 @@
 CLineDrawer lineDrawer;
 
 
-CLineDrawer::CLineDrawer()
-	: lineStipple(false)
-	, useColorRestarts(false)
-	, useRestartColor(false)
-	, restartAlpha(0.0f)
-	, stippleTimer(0.0f)
-	, lastPos(ZeroVector)
-	, restartColor(nullptr)
-	, lastColor(nullptr)
-{
-	regularLines.reserve(32);
-	stippleLines.reserve(32);
-}
-
-
 void CLineDrawer::UpdateLineStipple()
 {
 	stippleTimer += (globalRendering->lastFrameTime * 0.001f * cmdColors.StippleSpeed());

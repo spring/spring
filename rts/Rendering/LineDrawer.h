@@ -11,7 +11,10 @@
 
 class CLineDrawer {
 public:
-	CLineDrawer();
+	CLineDrawer() {
+		regularLines.reserve(128);
+		stippleLines.reserve(128);
+	}
 
 	void Configure(
 		bool useColorRestarts,
@@ -38,17 +41,17 @@ public:
 	void DrawAll(bool onMiniMap);
 
 private:
-	bool lineStipple;
-	bool useColorRestarts;
-	bool useRestartColor;
+	bool lineStipple = false;
+	bool useColorRestarts = false;
+	bool useRestartColor = false;
 
-	float restartAlpha;
-	float stippleTimer;
+	float restartAlpha = 0.0f;
+	float stippleTimer = 0.0f;
 
 	float3 lastPos;
 
-	const float* restartColor;
-	const float* lastColor;
+	const float* restartColor = nullptr;
+	const float* lastColor = nullptr;
 	
 	// queue all lines and draw them in one go later
 	struct LinePair {

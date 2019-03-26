@@ -1593,19 +1593,17 @@ void CMiniMap::DrawWorldStuff() const
 		// draw the queued commands
 		commandDrawer->DrawLuaQueuedUnitSetCommands(true);
 
-		#if 0
 		// NOTE: this needlessly adds to the CursorIcons list, but at least
 		//       they are not drawn  (because the input receivers are drawn
 		//       after the command queues)
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate())
 			selectedUnitsHandler.DrawCommands(true);
-		#endif
+
+		// draw lines batched by SelectedUnitsHandler
+		glAttribStatePtr->LineWidth(2.5f);
+		lineDrawer.DrawAll(true);
+		glAttribStatePtr->LineWidth(1.0f);
 	}
-
-
-	glAttribStatePtr->LineWidth(2.5f);
-	lineDrawer.DrawAll(true);
-	glAttribStatePtr->LineWidth(1.0f);
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0)
