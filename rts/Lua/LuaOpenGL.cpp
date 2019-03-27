@@ -94,7 +94,7 @@ std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
 
 
 
-static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool allyCheck = true)
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
@@ -111,8 +111,6 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool
 	if (readAllyTeam < 0)
 		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
 
-	if (allyCheck && teamHandler.Ally(readAllyTeam, unit->allyteam))
-		return unit;
 	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
 		return unit;
 
@@ -121,7 +119,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool
 
 static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 {
-	CUnit* unit = ParseUnit(L, caller, index, false);
+	CUnit* unit = ParseUnit(L, caller, index);
 
 	if (unit == nullptr)
 		return nullptr;
