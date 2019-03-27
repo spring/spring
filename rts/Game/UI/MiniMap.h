@@ -113,14 +113,14 @@ protected:
 
 	void DrawUnitHighlight(const CUnit* unit);
 	void DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color) const;
-	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
+
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
 	void UpdateTextureCache();
 	void ResizeTextureCache();
 
 protected:
-	static void DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int);
+	static void DrawSurfaceCircleFunc(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color, unsigned int);
 
 protected:
 	int2 curPos;

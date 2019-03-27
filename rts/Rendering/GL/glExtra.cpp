@@ -10,33 +10,7 @@
 #include "System/SpringMath.h"
 #include "System/Threading/ThreadPool.h"
 
-// center.w is radius
-static void DefSurfaceCircleVA(CVertexArray* va, const float4& center, const float4& color, unsigned int res)
-{
-	#if 0
-	float3 pos0;
-	float3 pos1;
-
-	for (unsigned int i = 0; i < res; ++i) {
-		const float step0 = ( i           ) * 1.0f / res;
-		const float step1 = ((i + 1) % res) * 1.0f / res;
-
-		pos0.x = center.x + (fastmath::sin(math::TWOPI * step0) * center.w);
-		pos0.z = center.z + (fastmath::cos(math::TWOPI * step0) * center.w);
-
-		pos1.x = center.x + (fastmath::sin(math::TWOPI * step1) * center.w);
-		pos1.z = center.z + (fastmath::cos(math::TWOPI * step1) * center.w);
-
-		pos0.y = CGround::GetHeightAboveWater(pos0.x, pos0.z, false) + 5.0f;
-		pos1.y = CGround::GetHeightAboveWater(pos1.x, pos1.z, false) + 5.0f;
-
-		va->AddVertexC(pos0, SColor(&color.x));
-		va->AddVertexC(pos1, SColor(&color.x));
-	}
-	#endif
-}
-
-static void DefSurfaceCircleRB(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res)
+static void WorldDrawSurfaceCircle(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res)
 {
 	float3 pos0;
 	float3 pos1;
@@ -60,12 +34,11 @@ static void DefSurfaceCircleRB(GL::RenderDataBufferC* rb, const float4& center, 
 	}
 }
 
+void SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc func) {
+	glSurfaceCircle = (func == nullptr)? WorldDrawSurfaceCircle: func;
+}
 
-SurfaceCircleFuncVA glSurfaceCircleVA = DefSurfaceCircleVA;
-SurfaceCircleFuncRB glSurfaceCircleRB = DefSurfaceCircleRB;
-
-void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func) { glSurfaceCircleVA = (func == nullptr)? DefSurfaceCircleVA: func; }
-void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func) { glSurfaceCircleRB = (func == nullptr)? DefSurfaceCircleRB: func; }
+DrawSurfaceCircleFunc glSurfaceCircle = WorldDrawSurfaceCircle;
 
 
 

@@ -14,18 +14,6 @@ namespace Shader {
 };
 
 
-// Draw a circle on top of the map surface (ground/water).
-typedef void (*SurfaceCircleFuncVA)(CVertexArray* va, const float4& center, const float4& color, unsigned int res);
-typedef void (*SurfaceCircleFuncRB)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
-
-extern SurfaceCircleFuncVA glSurfaceCircleVA;
-extern SurfaceCircleFuncRB glSurfaceCircleRB;
-
-extern void setSurfaceCircleFuncVA(SurfaceCircleFuncVA func);
-extern void setSurfaceCircleFuncRB(SurfaceCircleFuncRB func);
-
-
-
 
 extern void glSetupRangeRingDrawState();
 extern void glResetRangeRingDrawState();
@@ -58,7 +46,15 @@ extern void glBallisticCircle(
 extern void glDrawCone(GL::RenderDataBufferC* rdBuffer, uint32_t cullFace, uint32_t coneDivs, const float4& color);
 
 typedef void (*DrawVolumeFunc)(const void* data);
+// default implementation draws a circle on top of the world
+// map surface (ground/water); expects center.w to be radius
+typedef void (*DrawSurfaceCircleFunc)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
+
+extern DrawSurfaceCircleFunc glSurfaceCircle;
+
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
+extern void SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc func);
+
 
 template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQuadC(const TQuad& quad, const TColor& color, TRenderBuffer* buffer) {
 	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color});

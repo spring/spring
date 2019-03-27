@@ -3342,7 +3342,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 		if (center.w <= 0.0f)
 			return false;
 
-		glSurfaceCircleRB(rb, center, color, 40);
+		glSurfaceCircle(rb, center, color, 40);
 		return true;
 	};
 
@@ -3355,7 +3355,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 
 	// draw shield range for immobile units
 	if (shieldWD != nullptr)
-		glSurfaceCircleRB(rb, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
+		glSurfaceCircle(rb, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
 
 	// draw sensor and jammer ranges
 	if (unitDef->onoffable || unitDef->activateWhenBuilt) {
@@ -3381,7 +3381,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 	if (exploWD == nullptr)
 		return;
 
-	glSurfaceCircleRB(rb, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
+	glSurfaceCircle(rb, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
 }
 
 
@@ -3747,7 +3747,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					cvShader->Disable();
 				} else {
 					// cylindrical
-					glSurfaceCircleRB(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
+					glSurfaceCircle(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
 				}
 			}
 
@@ -3763,7 +3763,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 				const float4& color = colors[!enemyUnit || (w == nullptr) || w->numStockpiled > 0];
 
-				glSurfaceCircleRB(buffer, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
+				glSurfaceCircle(buffer, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
 			}
 		}
 	}
@@ -3788,7 +3788,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (radius <= 0.0f)
 					continue;
 
-				glSurfaceCircleRB(buffer, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
+				glSurfaceCircle(buffer, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
 			}
 		}
 
@@ -3827,7 +3827,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 				// draw extraction range
 				if (buildeeDef->extractRange > 0.0f)
-					glSurfaceCircleRB(buffer, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
+					glSurfaceCircle(buffer, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
 
 				// draw interceptor range
 				const WeaponDef* wd = buildeeDef->stockpileWeaponDef;
@@ -3835,7 +3835,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (wd == nullptr || !wd->interceptor)
 					continue;
 
-				glSurfaceCircleRB(buffer, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
+				glSurfaceCircle(buffer, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
 			}
 		}
 	}

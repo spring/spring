@@ -202,7 +202,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai, GL::RenderDataBufferC
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
-				glSurfaceCircleRB(rdb, {endPos, command.GetParam(3)}, cmdColors.attack, 20.0f);
+				glSurfaceCircle(rdb, {endPos, command.GetParam(3)}, cmdColors.attack, 20.0f);
 				lineDrawer.RestartWithColor(cmdColors.attack);
 			} break;
 
@@ -256,7 +256,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, GL::RenderDat
 				// draw metal extraction range
 				if (bi.def->extractRange > 0.0f) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
-					glSurfaceCircleRB(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
+					glSurfaceCircle(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
 					lineDrawer.Restart();
 				}
 			}
@@ -287,7 +287,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, GL::RenderDat
 
 				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
-				glSurfaceCircleRB(rdb, {endPos, ci.GetParam(3)}, cmdColors.restore, 20.0f);
+				glSurfaceCircle(rdb, {endPos, ci.GetParam(3)}, cmdColors.restore, 20.0f);
 				lineDrawer.RestartWithColor(cmdColors.restore);
 			} break;
 
@@ -319,7 +319,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, GL::RenderDat
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
-					glSurfaceCircleRB(rdb, {endPos, ci.GetParam(3)}, color, 20.0f);
+					glSurfaceCircle(rdb, {endPos, ci.GetParam(3)}, color, 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
 					assert(ci.GetParam(0) >= 0.0f);
@@ -351,7 +351,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai, GL::RenderDat
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, color);
 					lineDrawer.Break(endPos, color);
-					glSurfaceCircleRB(rdb, {endPos, ci.GetParam(3)}, color, 20.0f);
+					glSurfaceCircle(rdb, {endPos, ci.GetParam(3)}, color, 20.0f);
 					lineDrawer.RestartWithColor(color);
 				} else {
 					if (ci.GetNumParams() >= 1) {
@@ -462,7 +462,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai, GL::RenderDat
 			// draw metal extraction range
 			if (bi.def->extractRange > 0.0f) {
 				lineDrawer.Break(bi.pos, cmdColors.build);
-				glSurfaceCircleRB(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
+				glSurfaceCircle(rdb, {bi.pos, bi.def->extractRange}, cmdColors.rangeExtract, 40.0f);
 				lineDrawer.Restart();
 			}
 		}
@@ -535,7 +535,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai, GL::RenderDataB
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
-					glSurfaceCircleRB(rdb, {endPos, command.GetParam(3)}, cmdColors.load, 20.0f);
+					glSurfaceCircle(rdb, {endPos, command.GetParam(3)}, cmdColors.load, 20.0f);
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler.GetUnit(command.GetParam(0)));
@@ -552,7 +552,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai, GL::RenderDataB
 
 					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
-					glSurfaceCircleRB(rdb, {endPos, command.GetParam(3)}, cmdColors.unload, 20.0f);
+					glSurfaceCircle(rdb, {endPos, command.GetParam(3)}, cmdColors.unload, 20.0f);
 					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
 			} break;
@@ -600,7 +600,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner, GL:
 			} else {
 				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 				lineDrawer.Break(endPos, dd->color);
-				glSurfaceCircleRB(rdb, {endPos, c.GetParam(3)}, dd->color, 20.0f);
+				glSurfaceCircle(rdb, {endPos, c.GetParam(3)}, dd->color, 20.0f);
 				lineDrawer.RestartWithColor(dd->color);
 			}
 

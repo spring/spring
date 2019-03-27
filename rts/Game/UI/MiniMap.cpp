@@ -27,7 +27,6 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -37,6 +36,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 #include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
@@ -846,47 +846,9 @@ void CMiniMap::DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, cons
 	}
 }
 
-void CMiniMap::DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const
+void CMiniMap::DrawSurfaceCircleFunc(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color, unsigned int)
 {
-	#if 0
-	CMatrix44f vm = viewMats[0];
-
-	vm.Translate(pos);
-	vm.Scale({pos.w, 1.0f, pos.w});
-	#else
-	GL::PushMatrix();
-	GL::Translate(pos.x, pos.y, pos.z);
-	GL::Scale(pos.w, 1.0f, pos.w);
-	#endif
-
-	const float xPixels = pos.w * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
-	const float yPixels = pos.w * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
-
-	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
-	const int divs = 1 << (Clamp(lod, 0, 6 - 1) + 3);
-
-	for (int d = 0; d < divs; d++) {
-		const float step = d * 1.0f / divs;
-		const float rads = math::TWOPI * step;
-
-		#if 0
-		va->AddVertexC(vm * float3{std::sin(rads), 0.0f, std::cos(rads)}, SColor(&color.x));
-		#else
-		va->AddVertexC({std::sin(rads), 0.0f, std::cos(rads)}, SColor(&color.x));
-		#endif
-	}
-
-	va->DrawArrayC(GL_LINE_LOOP);
-
-	#if 0
-	#else
-	GL::PopMatrix();
-	#endif
-}
-
-void CMiniMap::DrawSurfaceCircle(CVertexArray* va, const float4& pos, const float4& color, unsigned int)
-{
-	minimap->DrawCircle(va, pos, color);
+	minimap->DrawCircle(buffer, pos, color);
 }
 
 
@@ -1082,8 +1044,8 @@ void CMiniMap::DrawForReal()
 
 	glActiveTexture(GL_TEXTURE0);
 
-	// LuaOpenGL::DrawGroundCircle
-	setSurfaceCircleFuncVA(DrawSurfaceCircle);
+	// reroute LuaOpenGL::DrawGroundCircle if it is called inside minimap
+	SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc);
 	cursorIcons.Enable(false);
 
 
@@ -1131,7 +1093,7 @@ void CMiniMap::DrawForReal()
 	glDisable(GL_CLIP_PLANE3);
 
 	cursorIcons.Enable(true);
-	setSurfaceCircleFuncVA(nullptr);
+	SetDrawSurfaceCircleFunc(nullptr);
 }
 
 

@@ -152,7 +152,7 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 			const QTPFS::IPath* path = pair.second;
 
 			for (unsigned int n = 0; n < path->NumPoints(); n++) {
-				glSurfaceCircleRB(rdb, {path->GetPoint(n), path->GetRadius()}, color, 16);
+				glSurfaceCircle(rdb, {path->GetPoint(n), path->GetRadius()}, color, 16);
 			}
 		}
 

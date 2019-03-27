@@ -1492,6 +1492,16 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
 
+	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = (luaL_optboolean(L, 11, true))? buffer->GetShader(): nullptr;
+
+	// if null, expect caller to supply a shader
+	if (shader != nullptr) {
+		shader->Enable();
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	}
+
 	if ((lua_gettop(L) >= 6) && lua_isnumber(L, 6)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 8, 0));
 
@@ -1505,29 +1515,15 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 		const float4 defColor = cmdColors.rangeAttack;
 		const float4 argColor = {luaL_optfloat(L, 8, defColor.x), luaL_optfloat(L, 9, defColor.y), luaL_optfloat(L, 10, defColor.z), 1.0f};
 
-		GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
-		Shader::IProgramObject* shader = (luaL_optboolean(L, 11, true))? buffer->GetShader(): nullptr;
-
-		#if 1
-		// if null, expect caller to supply a shader
-		if (shader != nullptr) {
-			shader->Enable();
-			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		}
-		#endif
-
 		glSetupRangeRingDrawState();
 		glBallisticCircle(buffer, wd,  luaL_checkint(L, 5), GL_LINE_LOOP,  pos, {radius, slope, gravity}, argColor);
 		glResetRangeRingDrawState();
-
-		#if 1
-		if (shader != nullptr)
-			shader->Disable();
-		#endif
 	} else {
-		glSurfaceCircleVA(GetVertexArray(), {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
+		glSurfaceCircle(buffer, {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
 	}
+
+	if (shader != nullptr)
+		shader->Disable();
 
 	return 0;
 }

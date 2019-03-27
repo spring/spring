@@ -335,7 +335,7 @@ void DefaultPathDrawer::Draw() const {
 void DefaultPathDrawer::Draw(const CPathFinderDef* pfd, GL::RenderDataBufferC* rdbc) const {
 	constexpr float4 colors[] = {{0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}};
 
-	glSurfaceCircleRB(rdbc, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
+	glSurfaceCircle(rdbc, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
