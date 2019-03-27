@@ -673,7 +673,7 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
 	CHECK_REQ_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
 	CHECK_REQ_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
-	CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
+	//CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
 	CHECK_OPT_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
 	CHECK_OPT_EXT(GLEW_ARB_texture_border_clamp); // 1.3
 
