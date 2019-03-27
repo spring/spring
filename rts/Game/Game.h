@@ -55,7 +55,7 @@ private:
 	void PreLoadRendering();
 	void PostLoadRendering();
 	void LoadInterface();
-	void LoadLua();
+	void LoadLua(bool onlySynced, bool onlyUnsynced);
 	void LoadSkirmishAIs();
 	void LoadFinalize();
 	void PostLoad();

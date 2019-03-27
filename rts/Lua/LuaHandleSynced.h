@@ -206,6 +206,7 @@ class CSplitLuaHandle
 
 		bool ReloadUnsynced() { return (FreeUnsynced(), LoadUnsynced()); }
 		bool SwapSyncedHandle(lua_State* L, lua_State* L_GC);
+		bool InitUnsynced();
 
 	protected:
 		CSplitLuaHandle(const std::string& name, int order);
@@ -213,8 +214,7 @@ class CSplitLuaHandle
 
 		std::string LoadFile(const std::string& filename, const std::string& modes) const;
 		bool InitSynced();
-		bool InitUnsynced();
-		bool Init(bool onlyUnsynced = false);
+		bool Init(bool onlySynced);
 		bool FreeUnsynced();
 		bool LoadUnsynced();
 

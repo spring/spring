@@ -1712,7 +1712,7 @@ bool CSplitLuaHandle::InitUnsynced()
 }
 
 
-bool CSplitLuaHandle::Init(bool onlyUnsynced)
+bool CSplitLuaHandle::Init(bool onlySynced)
 {
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -1721,7 +1721,7 @@ bool CSplitLuaHandle::Init(bool onlyUnsynced)
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
 	SetSelectTeam(GetInitSelectTeam());
 
-	return (onlyUnsynced || InitSynced()) && InitUnsynced();
+	return InitSynced() && (onlySynced || InitUnsynced());
 }
 
 
@@ -1746,17 +1746,14 @@ bool CSplitLuaHandle::LoadUnsynced()
 		return false;
 	}
 
-	return Init(true);
+	return InitUnsynced();
 }
 
 
 bool CSplitLuaHandle::SwapSyncedHandle(lua_State* L, lua_State* L_GC)
 {
-	FreeUnsynced();
 	LUA_CLOSE(&syncedLuaHandle.L);
 	syncedLuaHandle.SetLuaStates(L, L_GC);
-	LoadUnsynced();
-
 	return IsValid();
 }
 

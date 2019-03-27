@@ -98,6 +98,19 @@ namespace {
 		return (HandlerInstance->IsValid());             \
 	}
 
+#define DECL_LOAD_SPLIT_HANDLER(HandlerType, HandlerInstance) \
+	bool HandlerType::LoadHandler(bool onlySynced) {          \
+		std::lock_guard<spring::mutex> lk(m_singleton);       \
+                                                              \
+		if (HandlerInstance != nullptr)                       \
+			return (HandlerInstance->IsValid());              \
+		if (!HandlerType::CanLoadHandler())                   \
+			return false;                                     \
+                                                              \
+		HandlerInstance = new HandlerType(onlySynced);        \
+		return (HandlerInstance->IsValid());                  \
+	}
+
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
 	bool HandlerType::FreeHandler() {                    \
 		std::lock_guard<spring::mutex> lk(m_singleton);  \
