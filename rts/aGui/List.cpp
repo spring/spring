@@ -223,33 +223,28 @@ void List::DrawSelf()
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 	font->SetTextDepth(depth);
-	glAttribStatePtr->LineWidth(1.0f);
 
 	float sbX = b.GetPos()[0];
 	float sbY1 = b.GetPos()[1] + (itemHeight + itemSpacing);
 
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii) {
 		gui->SetColor(1.0f, 1.0f, 1.0f, opacity * 0.25f);
-		b.DrawBox(GL_LINE_LOOP, 0, 2);
+		b.DrawOutline();
 
 		if (nCurIndex == place) {
 			glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
 			gui->SetColor(0.2f, 0.0f, 0.0f, opacity);
-			b.DrawBox(GL_TRIANGLE_STRIP);
+			b.DrawBox();
 			glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1.0f, 0.0f, 0.0f, opacity / 2.0f);
-			glAttribStatePtr->LineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP, 0, 2);
-			glAttribStatePtr->LineWidth(1.0f);
+			b.DrawOutline();
 		} else if (b.MouseOver(mx, my)) {
 			glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE); // additive blending
 			gui->SetColor(0.0f, 0.0f, 0.2f, opacity);
-			b.DrawBox(GL_TRIANGLE_STRIP);
+			b.DrawBox();
 			glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
-			glAttribStatePtr->LineWidth(1.49f);
-			b.DrawBox(GL_LINE_LOOP, 0, 2);
-			glAttribStatePtr->LineWidth(1.0f);
+			b.DrawOutline();
 		}
 
 		font->glPrint(pos[0] + borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, *ii);
@@ -290,16 +285,14 @@ void List::DrawSelf()
 		b.SetSize(itemHeight + itemSpacing, sbHeight);
 
 		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 4.0f);
-		b.DrawBox(GL_LINE_LOOP, 0, 2);
+		b.DrawOutline();
 
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gui->SetColor(0.8f, 0.8f, 0.8f, opacity);
-		scrollbar.DrawBox(GL_TRIANGLE_STRIP);
+		scrollbar.DrawBox();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gui->SetColor(1.0f, 1.0f, 1.0f, opacity / 2.0f);
-		glAttribStatePtr->LineWidth(1.49f);
-		scrollbar.DrawBox(GL_LINE_LOOP, 0, 2);
-		glAttribStatePtr->LineWidth(1.0f);
+		scrollbar.DrawOutline();
 		return;
 	}
 

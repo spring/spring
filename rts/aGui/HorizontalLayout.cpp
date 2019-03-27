@@ -15,12 +15,11 @@ HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 
 void HorizontalLayout::DrawSelf()
 {
-	if (borderWidth <= 0.0f)
+	if (!visibleBorder)
 		return;
 
-	glAttribStatePtr->LineWidth(borderWidth);
 	gui->SetColor(1.0f, 1.0f, 1.0f, Opacity());
-	DrawBox(GL_LINE_LOOP, 0, 2);
+	DrawOutline();
 }
 
 void HorizontalLayout::GeometryChangeSelf()

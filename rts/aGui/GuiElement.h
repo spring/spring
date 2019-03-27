@@ -20,7 +20,8 @@ public:
 	virtual ~GuiElement();
 
 	void Draw();
-	void DrawBox(unsigned int mode, unsigned int indx = 0, unsigned int ofs = 0);
+	void DrawBox(unsigned int idx = 0);
+	void DrawOutline();
 
 	bool HandleEvent(const SDL_Event& ev);
 	bool MouseOver(int x, int y) const;

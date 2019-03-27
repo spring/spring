@@ -48,9 +48,9 @@ public:
 		array.Unbind();
 		verts.Unbind();
 	}
-	void Submit(unsigned int mode, unsigned int ofs = 0) {
+	void Submit(unsigned int mode, unsigned int size = 4) {
 		array.Bind();
-		glDrawArrays(mode, ofs, 4);
+		glDrawArrays(mode, 0, size);
 		array.Unbind();
 	}
 	void Delete() {
@@ -62,7 +62,7 @@ public:
 	VBO verts;
 };
 
-static std::vector<RenderElem> renderElems[2];
+static std::vector<RenderElem> renderElems[3];
 static std::vector<size_t> freeIndices;
 
 
@@ -74,22 +74,24 @@ int GuiElement::screenoffset[2];
 GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false), weight(1), elIndex(-1)
 {
 	if (renderElems[0].empty()) {
-		renderElems[0].reserve(16);
-		renderElems[1].reserve(16);
+		for (auto& rev: renderElems) {
+			rev.reserve(16);
+		}
 	}
 
 	if (freeIndices.empty()) {
 		elIndex = renderElems[0].size();
-
-		renderElems[0].emplace_back();
-		renderElems[1].emplace_back();
+		for (auto& rev: renderElems) {
+			rev.emplace_back();
+		}
 	} else {
 		elIndex = freeIndices.back();
 		freeIndices.pop_back();
 	}
 
-	renderElems[0][elIndex].Generate();
-	renderElems[1][elIndex].Generate();
+	for (auto& rev: renderElems) {
+		rev[elIndex].Generate();
+	}
 
 	std::memset(pos, 0, sizeof(pos));
 	std::memset(size, 0, sizeof(size));
@@ -107,20 +109,22 @@ GuiElement::~GuiElement()
 	for (auto i = children.begin(), e = children.end(); i != e; ++i) {
 		delete *i;
 	}
-
-	renderElems[0][elIndex].Delete();
-	renderElems[1][elIndex].Delete();
-
-	renderElems[0][elIndex] = std::move(RenderElem());
-	renderElems[1][elIndex] = std::move(RenderElem());
+	for (auto& rev: renderElems) {
+		rev[elIndex].Delete();
+		rev[elIndex] = std::move(RenderElem());
+	}
 
 	freeIndices.push_back(elIndex);
 }
 
 
 
-void GuiElement::DrawBox(unsigned int mode, unsigned int indx, unsigned int ofs) {
-	renderElems[indx][elIndex].Submit(mode, ofs);
+void GuiElement::DrawBox(unsigned int indx) {
+	renderElems[indx][elIndex].Submit(GL_TRIANGLE_STRIP, 4);
+}
+
+void GuiElement::DrawOutline() {
+	renderElems[2][elIndex].Submit(GL_TRIANGLE_STRIP, 10);
 }
 
 
@@ -135,29 +139,36 @@ void GuiElement::GeometryChangeSelfRaw(unsigned int bufIndx, unsigned int numByt
 
 void GuiElement::GeometryChangeSelf()
 {
-	VA_TYPE_T vaElems[6]; // two extra for edges
+	{
+		VA_TYPE_T vaElems[4];
+		for (int i = 0; i < 4; ++i) {
+			const bool bottom = (i & 1) == 0;
+			const bool right = (i & 2) == 0;
+			vaElems[i].p.x = pos[0] + right * size[0];
+			vaElems[i].p.y = pos[1] + !bottom * size[1];
+			vaElems[i].p.z = depth;
+			vaElems[i].s = right * 1.0f;
+			vaElems[i].t = bottom * 1.0f;
+		}
 
-	vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1] + size[1]; // BL
-	vaElems[1].p.x = pos[0] + size[0]; vaElems[1].p.y = pos[1] + size[1]; // BR
-	vaElems[2].p.x = pos[0]          ; vaElems[2].p.y = pos[1]          ; // TL
-	vaElems[3].p.x = pos[0] + size[0]; vaElems[3].p.y = pos[1]          ; // TR
-	vaElems[4].p.x = pos[0] + size[0]; vaElems[4].p.y = pos[1] + size[1]; // BR
-	vaElems[5].p.x = pos[0]          ; vaElems[5].p.y = pos[1] + size[1]; // BL
-	vaElems[0].p.z = depth;
-	vaElems[1].p.z = depth;
-	vaElems[2].p.z = depth;
-	vaElems[3].p.z = depth;
-	vaElems[4].p.z = depth;
-	vaElems[5].p.z = depth;
+		GeometryChangeSelfRaw(0, sizeof(vaElems), vaElems);
+	}
+	{
+		const float outlineWidth = 1.0f;
+		VA_TYPE_T vaElems[10];
+		for (int i = 0; i < 10; ++i) {
+			const bool outer = (i & 1) == 0;
+			const bool bottom = (i & 4) == 0;
+			const bool right = ((i + 2) & 4) == 0;
+			vaElems[i].p.x = pos[0] + right * size[0] + ((outer ^ right) * 2 - 1) * outlineWidth / screensize[0];
+			vaElems[i].p.y = pos[1] + !bottom * size[1] + ((outer ^ !bottom) * 2 - 1) * outlineWidth / screensize[1];
+			vaElems[i].p.z = depth;
+			vaElems[i].s = 0.0f;
+			vaElems[i].t = 0.0f;
+		}
 
-	vaElems[0].s = 0.0f; vaElems[0].t = 0.0f;
-	vaElems[1].s = 1.0f; vaElems[1].t = 0.0f;
-	vaElems[2].s = 0.0f; vaElems[2].t = 1.0f;
-	vaElems[3].s = 1.0f; vaElems[3].t = 1.0f;
-	vaElems[4].s = 0.0f; vaElems[4].t = 0.0f;
-	vaElems[5].s = 0.0f; vaElems[5].t = 0.0f;
-
-	GeometryChangeSelfRaw(0, sizeof(vaElems), vaElems);
+		GeometryChangeSelfRaw(2, sizeof(vaElems), vaElems);
+	}
 }
 
 void GuiElement::GeometryChange()

@@ -46,7 +46,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	curSelect = nullptr;
 
 	agui::VerticalLayout* vl = new agui::VerticalLayout(this);
-	vl->SetBorder(1.2f);
+	vl->SetBorder(true);
 
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);

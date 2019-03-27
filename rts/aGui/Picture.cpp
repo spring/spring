@@ -49,7 +49,7 @@ void Picture::DrawSelf()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	DrawBox(GL_TRIANGLE_STRIP);
+	DrawBox();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

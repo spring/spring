@@ -14,13 +14,12 @@ VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 
 void VerticalLayout::DrawSelf()
 {
-	if (borderWidth <= 0.0f)
+	if (!visibleBorder)
 		return;
 
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
-	glAttribStatePtr->LineWidth(borderWidth);
 	gui->SetColor(1.f,1.f,1.f, Opacity());
-	DrawBox(GL_LINE_LOOP, 0, 2);
+	DrawOutline();
 }
 
 void VerticalLayout::GeometryChangeSelf()

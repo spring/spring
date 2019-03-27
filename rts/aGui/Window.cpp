@@ -43,14 +43,13 @@ void Window::DrawSelf()
 	// background
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
-	DrawBox(GL_TRIANGLE_STRIP);
+	DrawBox();
 	// foreground
 	gui->SetColor(0.7f, 0.7f, 0.7f, opacity);
-	DrawBox(GL_TRIANGLE_STRIP, 1);
+	DrawBox(1);
 	// edges
-	glAttribStatePtr->LineWidth(2.0f);
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
-	DrawBox(GL_LINE_LOOP, 0, 2);
+	DrawOutline();
 
 	// string content
 	gui->SetDrawMode(Gui::DrawMode::FONT);
@@ -67,21 +66,16 @@ void Window::GeometryChangeSelf()
 	GuiElement::GeometryChangeSelf();
 
 	{
-		VA_TYPE_T vaElems[6]; // two extra for edges
-
-		vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1] + size[1]              ; // BL
-		vaElems[1].p.x = pos[0] + size[0]; vaElems[1].p.y = pos[1] + size[1]              ; // BR
-		vaElems[2].p.x = pos[0]          ; vaElems[2].p.y = pos[1] + size[1] - titleHeight; // TL
-		vaElems[3].p.x = pos[0] + size[0]; vaElems[3].p.y = pos[1] + size[1] - titleHeight; // TR
-		vaElems[4].p.x = pos[0] + size[0]; vaElems[4].p.y = pos[1] + size[1]              ; // BR
-		vaElems[5].p.x = pos[0]          ; vaElems[5].p.y = pos[1] + size[1]              ; // BL
-		
-		vaElems[0].p.z = depth;
-		vaElems[1].p.z = depth;
-		vaElems[2].p.z = depth;
-		vaElems[3].p.z = depth;
-		vaElems[4].p.z = depth;
-		vaElems[5].p.z = depth;
+		VA_TYPE_T vaElems[4];
+		for (int i = 0; i < 4; ++i) {
+			const bool bottom = (i & 1) == 0;
+			const bool right = (i & 2) == 0;
+			vaElems[i].p.x = pos[0] + right * size[0];
+			vaElems[i].p.y = pos[1] + size[1] - (!bottom) * titleHeight;
+			vaElems[i].p.z = depth;
+			vaElems[i].s = 0.0f;
+			vaElems[i].t = 0.0f;
+		}
 
 		GeometryChangeSelfRaw(1, sizeof(vaElems), vaElems);
 	}

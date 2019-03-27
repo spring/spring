@@ -6,16 +6,9 @@
 class Layout
 {
 public:
-	Layout()
+	void SetBorder(bool visible)
 	{
-		itemSpacing = 0.005f;
-		borderSpacing = 0.005f;
-		borderWidth = 0.0f;
-	};
-	
-	void SetBorder(float thickness)
-	{
-		borderWidth = thickness;
+		visibleBorder = visible;
 	};
 	void SetBorderSpacing(float width)
 	{
@@ -27,9 +20,9 @@ public:
 	};
 
 protected:
-	float borderSpacing;
-	float itemSpacing;
-	float borderWidth;
+	float borderSpacing = 0.005f;
+	float itemSpacing = 0.005f;
+	bool visibleBorder = false;
 };
 
 #endif
