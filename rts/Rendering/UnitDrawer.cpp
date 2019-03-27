@@ -1610,7 +1610,7 @@ inline float GetUnitIconScale(const CUnit* unit, const icon::CIconData* icon) {
 }
 
 
-void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const {
+void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, GL::RenderDataBufferTC* buffer) const {
 	if (unit->noMinimap)
 		return;
 	if (unit->IsInVoid())
@@ -1648,34 +1648,30 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 	const float y0 = iconPos.z - iconSizeY;
 	const float y1 = iconPos.z + iconSizeY;
 
-	va->AddVertex2dTC(x0, y0, 0.0f, 0.0f, color);
-	va->AddVertex2dTC(x1, y0, 1.0f, 0.0f, color);
-	va->AddVertex2dTC(x1, y1, 1.0f, 1.0f, color);
-	va->AddVertex2dTC(x0, y1, 0.0f, 1.0f, color);
+	buffer->SafeAppend({{x0, y0, 0.0f}, 0.0f, 0.0f, color});
+	buffer->SafeAppend({{x1, y0, 0.0f}, 1.0f, 0.0f, color});
+	buffer->SafeAppend({{x1, y1, 0.0f}, 1.0f, 1.0f, color});
+	buffer->SafeAppend({{x0, y1, 0.0f}, 0.0f, 1.0f, color});
 }
 
-void CUnitDrawer::DrawUnitMiniMapIcons() const {
-	CVertexArray* va = GetVertexArray();
-
-	for (const auto& p: unitsByIcon) {
-		const icon::CIconData* icon = p.first;
-		const std::vector<const CUnit*>& units = p.second;
+void CUnitDrawer::DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const {
+	for (const auto& iconPair: unitsByIcon) {
+		const icon::CIconData* icon = iconPair.first;
+		const std::vector<const CUnit*>& units = iconPair.second;
 
 		if (icon == nullptr)
 			continue;
 		if (units.empty())
 			continue;
 
-		va->Initialize();
-		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
 		icon->BindTexture();
 
 		for (const CUnit* unit: units) {
 			assert(unitIcons[unit->id] == icon);
-			DrawUnitMiniMapIcon(unit, va);
+			DrawUnitMiniMapIcon(unit, buffer);
 		}
 
-		va->DrawArray2dTC(GL_QUADS);
+		buffer->Submit(GL_QUADS);
 	}
 }
 

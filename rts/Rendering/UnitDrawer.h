@@ -146,8 +146,6 @@ public:
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
-	void DrawUnitMiniMapIcons() const;
-
 public:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
@@ -225,7 +223,9 @@ private:
 
 public:
 	void DrawUnitIcons();
-	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+	void DrawUnitMiniMapIcon(const CUnit* unit, GL::RenderDataBufferTC* buffer) const;
+	void DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const;
+
 private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);

@@ -404,7 +404,7 @@ void CMiniMap::UpdateGeometry()
 		viewMats[1].Translate(UpVector);
 		// heightmap (squares) to minimap
 		viewMats[1].Scale({1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f});
-		// map (elmos) to minimap
+		// worldmap (elmos) to minimap
 		// viewMats[1].Scale({1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
 
 		viewMats[2].LoadIdentity();
@@ -1515,21 +1515,27 @@ void CMiniMap::DrawBackground() const
 
 void CMiniMap::DrawUnitIcons() const
 {
-	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
-	GL::PushMatrix();
-	GL::Translate(0.0f, +1.0f, 0.0f);
-	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-	glEnable(GL_TEXTURE_2D);
+	// switch to top-down map/world coords (z and y are swapped wrt real map/world coords)
+	// viewMats[1] contains the wrong scale factor, viewMats[0] has an additional rotation
+	CMatrix44f viewMat;
+	viewMat.Translate(UpVector);
+	viewMat.Scale({+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniform("u_tex0", 0); // icon texture binding
+
 	glAttribStatePtr->EnableAlphaTest();
 	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
 
-	unitDrawer->DrawUnitMiniMapIcons();
+	unitDrawer->DrawUnitMiniMapIcons(buffer);
 
 	glAttribStatePtr->DisableAlphaTest();
-	glDisable(GL_TEXTURE_2D);
-
-	GL::PopMatrix();
+	shader->Disable();
 }
 
 
