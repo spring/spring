@@ -5592,7 +5592,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
 	unsigned short losStatus;
 	if (allyTeamID < 0) {
-		losStatus = (allyTeamID == CEventClient::AllAccessTeam) ? LOS_ALL_MASK_BITS : 0;
+		losStatus = (allyTeamID == CEventClient::AllAccessTeam) ? (LOS_ALL_MASK_BITS | LOS_ALL_BITS) : 0;
 	} else {
 		losStatus = unit->losStatus[allyTeamID];
 	}
