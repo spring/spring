@@ -1577,9 +1577,6 @@ void CMiniMap::DrawUnitRanges() const
 
 void CMiniMap::DrawWorldStuff() const
 {
-	GL::PushMatrix();
-	GL::MultMatrix(viewMats[0]);
-
 	// draw the projectiles
 	if (drawProjectiles)
 		projectileDrawer->DrawProjectilesMiniMap();
@@ -1605,8 +1602,6 @@ void CMiniMap::DrawWorldStuff() const
 		guihandler->DrawMapStuff(true);
 
 	DrawUnitRanges();
-
-	GL::PopMatrix();
 }
 
 

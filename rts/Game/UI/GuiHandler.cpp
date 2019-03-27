@@ -3435,6 +3435,7 @@ static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC
 }
 static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
 {
+	// never invoked on minimap
 	DrawUnitWeaponAngleCones(unit, rdb, ipo);
 }
 
@@ -3512,9 +3513,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glAttribStatePtr->DisableAlphaTest();
-	} else {
-		// TODO: grab the minimap transform
-		return;
 	}
 
 
@@ -3542,6 +3540,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
 
 	if (activeMousePress) {
@@ -3629,18 +3630,24 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						if (!onMiniMap) {
 							DrawSelectCircle(buffer, shader, {innerPos, radius}, color);
 						} else {
-							glColor4f(color[0], color[1], color[2], 0.5f);
-							glBegin(GL_TRIANGLE_FAN);
-
 							constexpr int divs = 256;
+
 							for (int i = 0; i <= divs; ++i) {
 								const float radians = math::TWOPI * (float)i / (float)divs;
-								float3 p(innerPos.x, 0.0f, innerPos.z);
-								p.x += (fastmath::sin(radians) * radius);
-								p.z += (fastmath::cos(radians) * radius);
-								glVertex3f(p.x, p.y, p.z);
+
+								float3 p;
+								p.x = innerPos.x + (fastmath::sin(radians) * radius);
+								p.z = innerPos.z + (fastmath::cos(radians) * radius);
+
+								buffer->SafeAppend({p, {color[0], color[1], color[2], 0.5f}});
 							}
-							glEnd();
+
+							// must waste a submit, code below assumes LINES
+							shader->Enable();
+							shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+							shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+							buffer->Submit(GL_TRIANGLE_FAN);
+							shader->Disable();
 						}
 					}
 				} break;
@@ -3666,13 +3673,17 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						if (!onMiniMap) {
 							DrawSelectBox(buffer, shader, innerPos, outerPos);
 						} else {
-							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-							glBegin(GL_QUADS);
-							glVertex3f(innerPos.x, 0.0f, innerPos.z);
-							glVertex3f(outerPos.x, 0.0f, innerPos.z);
-							glVertex3f(outerPos.x, 0.0f, outerPos.z);
-							glVertex3f(innerPos.x, 0.0f, outerPos.z);
-							glEnd();
+							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{outerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{innerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+
+							// must waste a submit, code below assumes LINES
+							shader->Enable();
+							shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+							shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+							buffer->Submit(GL_QUADS);
+							shader->Disable();
 						}
 					}
 				} break;
@@ -3735,8 +3746,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 					cvShader->Enable();
 					cvShader->SetUniformMatrix4fv(0, false, mat);
-					cvShader->SetUniformMatrix4fv(1, false, camera->GetViewMatrix());
-					cvShader->SetUniformMatrix4fv(2, false, camera->GetProjectionMatrix());
+					cvShader->SetUniformMatrix4fv(1, false, viewMat);
+					cvShader->SetUniformMatrix4fv(2, false, projMat);
 					cvShader->SetUniform4fv(3, cmdColors.rangeDecloak);
 
 					// spherical
@@ -3843,8 +3854,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	if (buffer->NumElems() > 0) {
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 		buffer->Submit(GL_LINES);
 		shader->Disable();
 	}
@@ -3854,7 +3865,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		assert(activeBuildCommand);
 		assert(buildeeDef != nullptr);
 
-		// TODO: grab the minimap transform
 		if (!buildInfoQueue.empty()) {
 			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
 
@@ -3941,8 +3951,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			static constexpr decltype(&DrawUnitWeaponRangeRingFunc)       unitDrawFuncs[] = {&DrawUnitWeaponRangeRingFunc, &DrawUnitWeaponAngleConeFunc};
 
 			shader->Enable();
-			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 
 			for (int i = 0; i < (1 + drawWeaponCones); i++) {
 				setupDrawStateFuncs[i]();

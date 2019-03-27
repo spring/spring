@@ -584,6 +584,7 @@ void CCamera::CalcFrustumLine(
 	// prevent DIV0 when calculating line.dir
 	xdir.z *= (std::fabs(xdir.z) > 0.001f);
 	xdir.z = std::max(std::fabs(xdir.z), 0.001f) * std::copysign(1.0f, xdir.z);
+	ydir.y = -std::fabs(ydir.y); // maintenance HACK for dot(N,-F)
 
 	if (ydir.y != 0.0f) {
 		const float py = params[normal.y <= 0.0f];

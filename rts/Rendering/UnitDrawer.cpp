@@ -1452,9 +1452,12 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
+	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
+	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
+
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 }
 
 void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
