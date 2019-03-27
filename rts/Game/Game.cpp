@@ -722,28 +722,25 @@ void CGame::LoadInterface()
 
 void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
 {
-	assert (!(onlySynced && onlyUnsynced));
+	assert(!(onlySynced && onlyUnsynced));
 	// Lua components
 	ENTER_SYNCED_CODE();
 	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
 	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
 
-	std::string prefix("Loading ");
-	prefix += (onlySynced ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
-	{
-		loadscreen->SetLoadMessage(prefix + "LuaRules");
-		if (onlyUnsynced && luaRules != nullptr) {
-			luaRules->InitUnsynced();
+	const std::string prefix = (onlySynced ? "Synced " : (onlyUnsynced ? "Unsynced " : ""));
+	const std::string names[] = {"LuaRules", "LuaGaia"};
+
+	CSplitLuaHandle* handles[] = {luaRules, luaGaia};
+	decltype(&CLuaRules::LoadFreeHandler) loaders[] = {CLuaRules::LoadFreeHandler, CLuaGaia::LoadFreeHandler};
+
+	for (int i = 0; i < 2; i++) {
+		loadscreen->SetLoadMessage("Loading " + prefix + names[i]);
+
+		if (onlyUnsynced && handles[i] != nullptr) {
+			handles[i]->InitUnsynced();
 		} else {
-			CLuaRules::LoadFreeHandler(onlySynced);
-		}
-	}
-	{
-		loadscreen->SetLoadMessage(prefix + "LuaGaia");
-		if (onlyUnsynced && luaGaia != nullptr) {
-			luaGaia->InitUnsynced();
-		} else {
-			CLuaGaia::LoadFreeHandler(onlySynced);
+			loaders[i](onlySynced);
 		}
 	}
 
@@ -1871,6 +1868,12 @@ void CGame::ReloadGame()
 	} else {
 		LOG_L(L_WARNING, "[Game::%s] can only reload the game when it has been started from a savegame", __func__);
 	}
+}
+
+void CGame::SaveGame(std::string&& fileName, std::string&& saveArgs)
+{
+	globalSaveFileData.name = std::move(fileName);
+	globalSaveFileData.args = std::move(saveArgs);
 }
 
 

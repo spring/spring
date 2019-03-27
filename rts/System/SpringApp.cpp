@@ -794,12 +794,8 @@ int SpringApp::Run()
 			Watchdog::ClearTimer(WDT_MAIN);
 			input.PushEvents();
 
-			if (!gu->globalSaveFile.empty()) {
-				ILoadSaveHandler::CreateSave(gu->globalSaveFile, gu->globalSaveFileArgs);
-
-				gu->globalSaveFile.clear();
-				gu->globalSaveFileArgs.clear();
-			}
+			// move to clear global data if a save is queued
+			ILoadSaveHandler::CreateSave(std::move(globalSaveFileData));
 
 			if (gu->globalReload) {
 				// copy; reloadScript is cleared by ResetState

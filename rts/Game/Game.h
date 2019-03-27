@@ -98,6 +98,7 @@ public:
 	void ParseInputTextGeometry(const std::string& geo);
 
 	void ReloadGame();
+	void SaveGame(std::string&& fileName, std::string&& saveArgs);
 
 	void ResizeEvent() override;
 
