@@ -785,7 +785,6 @@ void CWaitCommandsAI::DeathWait::Draw() const
 	for (const auto& pos: unitPos) {
 		lineDrawer.StartPath(pos, cmdColors.start);
 		lineDrawer.DrawLine(midPos, cmdColors.deathWait);
-		lineDrawer.FinishPath();
 	}
 
 	for (const int unitID: deathUnits) {
@@ -795,7 +794,6 @@ void CWaitCommandsAI::DeathWait::Draw() const
 			cursorIcons.AddIcon(CMD_SELFD, unit->midPos);
 			lineDrawer.StartPath(midPos, cmdColors.start);
 			lineDrawer.DrawLine(unit->midPos, cmdColors.deathWait);
-			lineDrawer.FinishPath();
 		}
 	}
 }

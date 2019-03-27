@@ -1006,11 +1006,6 @@ void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
 	lineDrawer.StartPath(pos, color);
 }
 
-void CAICallback::LineDrawerFinishPath()
-{
-	lineDrawer.FinishPath();
-}
-
 void CAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
 {
 	lineDrawer.DrawLine(endPos,color);

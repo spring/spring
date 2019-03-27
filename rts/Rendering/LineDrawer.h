@@ -12,8 +12,10 @@
 class CLineDrawer {
 public:
 	CLineDrawer() {
-		regularLines.reserve(128);
-		stippleLines.reserve(128);
+		for (int i = 0; i < 2; i++) {
+			regularLines[i].reserve(64);
+			stippleLines[i].reserve(64);
+		}
 	}
 
 	void Configure(
@@ -23,11 +25,11 @@ public:
 		float restartAlpha
 	);
 
+	void DrawAll(bool onMiniMap);
 	void SetupLineStipple();
 	void UpdateLineStipple();
 	               
 	void StartPath(const float3& pos, const float* color);
-	void FinishPath() const { /*noop, left for compatibility*/ };
 	void DrawLine(const float3& endPos, const float* color);
 	void DrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
 	void DrawIconAtLastPos(int cmdID);
@@ -36,9 +38,11 @@ public:
 	/// same as restart; only way for this to work would be using glGet so it's left broken
 	void RestartSameColor() { Restart(); }
 	void RestartWithColor(const float* color);
+
 	const float3& GetLastPos() const { return lastPos; }
 
-	void DrawAll(bool onMiniMap);
+	bool HaveRegularLines() const { return (!regularLines[0].empty() || !regularLines[1].empty()); }
+	bool HaveStippleLines() const { return (!stippleLines[0].empty() || !stippleLines[1].empty()); }
 
 private:
 	bool lineStipple = false;
@@ -52,15 +56,13 @@ private:
 
 	const float* restartColor = nullptr;
 	const float* lastColor = nullptr;
-	
-	// queue all lines and draw them in one go later
-	struct LinePair {
-		unsigned int glType;
-		std::vector<VA_TYPE_C> verts;
-	};
 
-	std::vector<LinePair> regularLines;
-	std::vector<LinePair> stippleLines;
+	typedef std::vector<VA_TYPE_C> Line;
+
+	// queue all lines and draw them in one go later
+	// [0] := GL_LINE_LOOP, [1] := GL_LINES (useColorRestarts)
+	std::vector<Line> regularLines[2];
+	std::vector<Line> stippleLines[2];
 };
 
 
@@ -106,14 +108,13 @@ inline void CLineDrawer::StartPath(const float3& pos, const float* color)
 
 inline void CLineDrawer::DrawLine(const float3& endPos, const float* color)
 {
-	LinePair* ptr = (lineStipple)? &stippleLines.back(): &regularLines.back();
-	LinePair& p = *ptr;
+	Line& line = (lineStipple)? stippleLines[useColorRestarts].back(): regularLines[useColorRestarts].back();
 
 	if (!useColorRestarts) {
-		p.verts.push_back({endPos, color});
+		line.push_back({endPos, color});
 	} else {
-		p.verts.push_back({lastPos, useRestartColor? restartColor: SColor{color[0], color[1], color[2], color[3] * restartAlpha}});
-		p.verts.push_back({endPos, color});
+		line.push_back({lastPos, useRestartColor? restartColor: SColor{color[0], color[1], color[2], color[3] * restartAlpha}});
+		line.push_back({endPos, color});
 	}
 
 	lastPos = endPos;

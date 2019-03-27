@@ -163,7 +163,6 @@ public:
 	float GetElevation(float x, float z);
 
 	void LineDrawerStartPath(const float3& pos, const float* color);
-	void LineDrawerFinishPath();
 	void LineDrawerDrawLine(const float3& endPos, const float* color);
 	void LineDrawerDrawLineAndIcon(int commandId, const float3& endPos, const float* color);
 	void LineDrawerDrawIconAtLastPos(int commandId);

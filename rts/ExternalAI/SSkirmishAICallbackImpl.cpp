@@ -831,9 +831,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(
 		} break;
 
 		case COMMAND_DRAWER_PATH_FINISH: {
-			//const SFinishPathDrawerCommand* cmd =
-			//		(SFinishPathDrawerCommand*) commandData;
-			clb->LineDrawerFinishPath();
+			// noop
 		} break;
 
 		case COMMAND_DRAWER_PATH_DRAW_LINE: {

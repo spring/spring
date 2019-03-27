@@ -38,23 +38,19 @@ void CLineDrawer::SetupLineStipple()
 
 void CLineDrawer::Restart()
 {
-	LinePair& line = spring::VectorEmplaceBack(lineStipple? stippleLines: regularLines);
+	Line& line = spring::VectorEmplaceBack(lineStipple? stippleLines[useColorRestarts]: regularLines[useColorRestarts]);
 
-	if ((line.glType = useColorRestarts? GL_LINES: GL_LINE_STRIP) == GL_LINES)
+	if (useColorRestarts)
 		return;
 
-	line.verts.push_back({lastPos, lastColor});
+	line.push_back({lastPos, lastColor});
 }
 
 
 void CLineDrawer::DrawAll(bool onMiniMap)
 {
-	if (regularLines.empty() && stippleLines.empty())
+	if (!HaveRegularLines() && !HaveStippleLines())
 		return;
-
-	// batch lines of equal type
-	std::sort(regularLines.begin(), regularLines.end(), [](const LinePair& a, const LinePair& b) { return (a.glType < b.glType); });
-	std::sort(stippleLines.begin(), stippleLines.end(), [](const LinePair& a, const LinePair& b) { return (a.glType < b.glType); });
 
 	glAttribStatePtr->PushEnableBit();
 	glAttribStatePtr->DisableDepthTest();
@@ -66,27 +62,15 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
-	const auto DrawLines = [&](const std::vector<LinePair>& lines) {
-		if (lines.empty())
-			return;
-
-		unsigned int glType = lines[0].glType;
-
+	const auto DrawLines = [&](const std::vector<Line>& lines, unsigned int glType) {
 		for (const auto& line: lines) {
-			const auto& verts = line.verts;
-
-			if (verts.empty())
+			if (line.empty())
 				continue;
 
-			buffer->SafeAppend(verts.data(), verts.size());
-
-			if (line.glType == glType)
-				continue;
-
-			buffer->Submit(glType = line.glType);
+			buffer->SafeAppend(line.data(), line.size());
 		}
 
-		buffer->Submit(lines[lines.size() - 1].glType);
+		buffer->Submit(glType);
 	};
 
 	shader->Enable();
@@ -94,19 +78,23 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 
 	{
-		DrawLines(regularLines);
+		DrawLines(regularLines[0], GL_LINE_LOOP);
+		DrawLines(regularLines[1], GL_LINES    );
 	}
 	{
 		// [deprecated]
 		// glAttribStatePtr->Enable(GL_LINE_STIPPLE);
-		DrawLines(stippleLines);
+		DrawLines(stippleLines[0], GL_LINE_LOOP);
+		DrawLines(stippleLines[1], GL_LINES    );
 		// glAttribStatePtr->Disable(GL_LINE_STIPPLE);
 	}
 
 	shader->Disable();
 	glAttribStatePtr->PopBits();
 
-	regularLines.clear();
-	stippleLines.clear();
+	for (int i = 0; i < 2; i++) {
+		regularLines[i].clear();
+		stippleLines[i].clear();
+	}
 }
 
