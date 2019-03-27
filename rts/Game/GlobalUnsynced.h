@@ -170,8 +170,6 @@ public:
 	*/
 	std::atomic<bool> globalQuit = {false};
 	std::atomic<bool> globalReload = {false};
-	std::string globalSaveFile;
-	std::string globalSaveFileArgs;
 };
 
 

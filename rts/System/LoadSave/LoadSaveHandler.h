@@ -6,14 +6,23 @@
 #include <string>
 
 
+struct SaveFileData {
+	std::string name; // "saves/quicksave.ssf"
+	std::string args; // "-y"
+};
+
 class ILoadSaveHandler
 {
 public:
 	static ILoadSaveHandler* CreateHandler(const std::string& saveFile);
-	static bool CreateSave(
-		const std::string& saveFile,
-		const std::string& saveArgs
-	);
+
+	static bool CreateSave(const std::string& saveFile, const std::string& saveArgs);
+	static bool CreateSave(SaveFileData fileData) {
+		if (fileData.name.empty())
+			return false;
+
+		return (CreateSave(fileData.name, fileData.args));
+	}
 
 protected:
 	static std::string FindSaveFile(const std::string& file);
@@ -38,5 +47,16 @@ protected:
 	std::string mapName;
 	std::string modName;
 };
+
+
+class DummyLoadSaveHandler: public ILoadSaveHandler {
+public:
+	void SaveGame(const std::string& file) override {}
+	void LoadGameStartInfo(const std::string& file) override {}
+	void LoadGame() override {}
+};
+
+
+extern SaveFileData globalSaveFileData;
 
 #endif // _LOAD_SAVE_HANDLER_H

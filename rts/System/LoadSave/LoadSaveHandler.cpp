@@ -4,9 +4,10 @@
 #include "CregLoadSaveHandler.h"
 #include "LuaLoadSaveHandler.h"
 #include "Game/GameSetup.h"
-#include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+
+SaveFileData globalSaveFileData;
 
 
 ILoadSaveHandler* ILoadSaveHandler::CreateHandler(const std::string& saveFile)
@@ -18,8 +19,10 @@ ILoadSaveHandler* ILoadSaveHandler::CreateHandler(const std::string& saveFile)
 	if (ext == "slsf")
 		return (new CLuaLoadSaveHandler());
 
-	throw content_error("Unknown save extension: " + ext);
+	LOG_L(L_WARNING, "[ILoadSaveHandler::%s] unknown save-file extension \"%s\"", __func__, ext.c_str());
+	return (new DummyLoadSaveHandler());
 }
+
 
 bool ILoadSaveHandler::CreateSave(
 	const std::string& saveFile,

@@ -43,7 +43,7 @@ public: // call-ins
 
 
 private:
-	CLuaRules(bool syncedOnly);
+	CLuaRules(bool onlySynced);
 	virtual ~CLuaRules();
 
 protected:

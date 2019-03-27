@@ -2940,7 +2940,9 @@ public:
 		switch (args.size()) {
 			case 2: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
 			case 3: { DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
-			default: { LOG_L(L_WARNING, "/DumpState: wrong syntax");  } break;
+			default: {
+				LOG_L(L_WARNING, "/DumpState: wrong syntax");
+			} break;
 		}
 
 		return true;
@@ -2960,13 +2962,12 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		std::vector<std::string> args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			// fall through
-			case  2: { gu->globalSaveFileArgs = args[1]; }
-			case  1: { gu->globalSaveFile = "Saves/" + args[0] + (usecreg ? ".ssf": ".slsf"); } return true;
-			default: {                                                                      ; } break;
+			case  1: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),                 ""); } return  true;
+			case  2: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"), std::move(args[1])); } return  true;
+			default: {                                                                                    ; }        break;
 		}
 
 		return false;
