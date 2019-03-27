@@ -31,21 +31,21 @@ const int* CLuaRules::currentCobArgs = nullptr;
 
 static spring::mutex m_singleton;
 
-DECL_LOAD_HANDLER(CLuaRules, luaRules)
+DECL_LOAD_SPLIT_HANDLER(CLuaRules, luaRules)
 DECL_FREE_HANDLER(CLuaRules, luaRules)
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaRules::CLuaRules(): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
+CLuaRules::CLuaRules(bool onlySynced): CSplitLuaHandle("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
 	currentCobArgs = nullptr;
 
 	if (!IsValid())
 		return;
 
-	Init();
+	Init(onlySynced);
 }
 
 CLuaRules::~CLuaRules()

@@ -24,19 +24,19 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
 static spring::mutex m_singleton;
 
-DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
+DECL_LOAD_SPLIT_HANDLER(CLuaGaia, luaGaia)
 DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaGaia::CLuaGaia(): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
+CLuaGaia::CLuaGaia(bool onlySynced): CSplitLuaHandle("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
 	if (!IsValid())
 		return;
 
-	Init();
+	Init(onlySynced);
 }
 
 CLuaGaia::~CLuaGaia()
