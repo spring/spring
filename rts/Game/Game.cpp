@@ -1870,12 +1870,6 @@ bool CGame::IsLagging(float maxLatency) const
 }
 
 
-void CGame::SaveGame(const std::string& fileName, const std::string& saveArgs)
-{
-	ILoadSaveHandler::CreateSave(fileName, saveArgs, gameSetup->mapName, gameSetup->modName);
-}
-
-
 void CGame::ReloadGame()
 {
 	if (saveFileHandler != nullptr) {

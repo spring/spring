@@ -2949,17 +2949,6 @@ public:
 
 
 
-class SaveGameActionExecutor : public IUnsyncedActionExecutor {
-public:
-	SaveGameActionExecutor() : IUnsyncedActionExecutor("SaveGame", "Save the game state to QuickSave.ssf (BROKEN)") {
-	}
-
-	bool Execute(const UnsyncedAction& action) const final {
-		game->SaveGame("Saves/QuickSave.ssf", "");
-		return true;
-	}
-};
-
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -2974,9 +2963,10 @@ public:
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case  1: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),      ""); return true; } break;
-			case  2: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"), args[1]); return true; } break;
-			default: {                                                                                      ; } break;
+			// fall through
+			case  2: { gu->globalSaveFileArgs = args[1]; }
+			case  1: { gu->globalSaveFile = "Saves/" + args[0] + (usecreg ? ".ssf": ".slsf"); } return true;
+			default: {                                                                      ; } break;
 		}
 
 		return false;
@@ -3379,7 +3369,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<GiveActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DestroyActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SendActionExecutor>());
-	AddActionExecutor(AllocActionExecutor<SaveGameActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<DumpStateActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(true));
 	AddActionExecutor(AllocActionExecutor<SaveActionExecutor>(false));

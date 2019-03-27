@@ -12,9 +12,7 @@ public:
 	static ILoadSaveHandler* CreateHandler(const std::string& saveFile);
 	static bool CreateSave(
 		const std::string& saveFile,
-		const std::string& saveArgs,
-		const std::string& mapName,
-		const std::string& modName
+		const std::string& saveArgs
 	);
 
 protected:
