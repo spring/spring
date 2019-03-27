@@ -18,7 +18,6 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/TimeUtil.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LoadSave/LoadSaveHandler.h"
 #include "System/MsgStrings.h"
 
 #include <SDL_keycode.h>
@@ -322,7 +321,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			const std::string currTimeStr = std::move(CTimeUtil::GetCurrentTimeStr());
 			const std::string saveFileName = currTimeStr + "_" + modInfo.filename + "_" + gameSetup->mapName;
 
-			ILoadSaveHandler::CreateSave("Saves/" + saveFileName + ".ssf", "", gameSetup->mapName, modInfo.filename);
+			gu->globalSaveFile = "Saves/" + saveFileName + ".ssf";
 		}
 	}
 	else if (InBox(mx, my, box + menuBox)) {

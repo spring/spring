@@ -79,6 +79,7 @@
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
+#include "System/LoadSave/LoadSaveHandler.h"
 #include "System/Log/ConsoleSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
@@ -792,6 +793,13 @@ int SpringApp::Run()
 		while (!gu->globalQuit) {
 			Watchdog::ClearTimer(WDT_MAIN);
 			input.PushEvents();
+
+			if (!gu->globalSaveFile.empty()) {
+				ILoadSaveHandler::CreateSave(gu->globalSaveFile, gu->globalSaveFileArgs);
+
+				gu->globalSaveFile.clear();
+				gu->globalSaveFileArgs.clear();
+			}
 
 			if (gu->globalReload) {
 				// copy; reloadScript is cleared by ResetState

@@ -3,6 +3,7 @@
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "LuaLoadSaveHandler.h"
+#include "Game/GameSetup.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
@@ -22,9 +23,7 @@ ILoadSaveHandler* ILoadSaveHandler::CreateHandler(const std::string& saveFile)
 
 bool ILoadSaveHandler::CreateSave(
 	const std::string& saveFile,
-	const std::string& saveArgs,
-	const std::string& mapName,
-	const std::string& modName
+	const std::string& saveArgs
 ) {
 	if (!FileSystem::CreateDirectory("Saves"))
 		return false;
@@ -36,7 +35,7 @@ bool ILoadSaveHandler::CreateSave(
 
 	ILoadSaveHandler* ls = CreateHandler(saveFile);
 
-	ls->SaveInfo(mapName, modName);
+	ls->SaveInfo(gameSetup->mapName, gameSetup->mapName);
 	ls->SaveGame(saveFile);
 	LOG("[ILoadSaveHandler::%s] saved game to file \"%s\"", __func__, saveFile.c_str());
 	delete ls;
