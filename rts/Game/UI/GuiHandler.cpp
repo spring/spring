@@ -3544,6 +3544,10 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+
 
 	if (activeMousePress) {
 		int cmdIndex = -1;
@@ -3573,7 +3577,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 
-						DrawFormationFrontOrder(button, maxSize, sizeDiv, onMiniMap, tracePos, traceDir);
+						DrawFormationFrontOrder(buffer, shader, tracePos, traceDir, button, maxSize, sizeDiv, onMiniMap);
 					}
 				} break;
 
@@ -3642,12 +3646,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 								buffer->SafeAppend({p, {color[0], color[1], color[2], 0.5f}});
 							}
 
+							assert(shader->IsBound());
 							// must waste a submit, code below assumes LINES
-							shader->Enable();
-							shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-							shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 							buffer->Submit(GL_TRIANGLE_FAN);
-							shader->Disable();
 						}
 					}
 				} break;
@@ -3678,12 +3679,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 							buffer->SafeAppend({{innerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 
+							assert(shader->IsBound());
 							// must waste a submit, code below assumes LINES
-							shader->Enable();
-							shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-							shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 							buffer->Submit(GL_QUADS);
-							shader->Disable();
 						}
 					}
 				} break;
@@ -3756,6 +3754,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					gleBindMeshBuffers(nullptr);
 
 					cvShader->Disable();
+					shader->Enable();
 				} else {
 					// cylindrical
 					glSurfaceCircle(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
@@ -3853,11 +3852,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 
 	if (buffer->NumElems() > 0) {
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+		assert(shader->IsBound());
 		buffer->Submit(GL_LINES);
-		shader->Disable();
 	}
 
 
@@ -3927,7 +3923,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			};
 
 			unitDrawer->DrawStaticModelBatch<BuildInfo>(buildInfoQueue, setupStateFunc, resetStateFunc, nextModelFunc, drawModelFunc);
-
+			shader->Enable(); // restore
 
 			glAttribStatePtr->BlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 		}
@@ -3950,17 +3946,13 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			static constexpr decltype(&glResetRangeRingDrawState  ) resetDrawStateFuncs[] = {&glResetRangeRingDrawState, &glResetWeaponArcDrawState};
 			static constexpr decltype(&DrawUnitWeaponRangeRingFunc)       unitDrawFuncs[] = {&DrawUnitWeaponRangeRingFunc, &DrawUnitWeaponAngleConeFunc};
 
-			shader->Enable();
-			shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-			shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+			assert(shader->IsBound());
 
 			for (int i = 0; i < (1 + drawWeaponCones); i++) {
 				setupDrawStateFuncs[i]();
 				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
 				resetDrawStateFuncs[i]();
 			}
-
-			shader->Disable();
 		}
 	}
 
@@ -3971,6 +3963,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		glAttribStatePtr->EnableDepthMask();
 		glAttribStatePtr->DisableBlendMask();
 	}
+
+	shader->Disable();
 }
 
 
@@ -4098,17 +4092,15 @@ void CGuiHandler::DrawCentroidCursor()
 
 
 void CGuiHandler::DrawFormationFrontOrder(
+	GL::RenderDataBufferC* buffer,
+	Shader::IProgramObject* shader,
+	const float3& cameraPos,
+	const float3& mouseDir,
 	int button,
 	float maxSize,
 	float sizeDiv,
-	bool onMinimap,
-	const float3& cameraPos,
-	const float3& mouseDir
+	bool onMiniMap
 ) {
-	// TODO: grab the minimap transform
-	if (onMinimap)
-		return;
-
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 
 	const float buttonDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * camera->GetFarPlaneDist() * 1.4f, false);
@@ -4126,6 +4118,7 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	ProcessFrontPositions(pos1, pos2);
 
+
 	const float3 zdir = ((pos1 - pos2).cross(UpVector)).ANormalize();
 	const float3 xdir = zdir.cross(UpVector);
 
@@ -4135,13 +4128,11 @@ void CGuiHandler::DrawFormationFrontOrder(
 	}
 
 
-	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
-	Shader::IProgramObject* shader = buffer->GetShader();
-
 	constexpr float4 color = {0.5f, 1.0f, 0.5f, 0.5f};
 
-	#if 0
-	if (onMinimap) {
+	assert(shader->IsBound());
+
+	if (onMiniMap) {
 		pos1 += (pos1 - pos2);
 		buffer->SafeAppend({pos1, {&color.x}});
 		buffer->SafeAppend({pos2, {&color.x}});
@@ -4149,16 +4140,11 @@ void CGuiHandler::DrawFormationFrontOrder(
 		buffer->Submit(GL_LINES);
 		return;
 	}
-	#endif
 
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	{
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-
 		// direction arrow
 		buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
 		buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
@@ -4198,7 +4184,6 @@ void CGuiHandler::DrawFormationFrontOrder(
 		}
 
 		buffer->Submit(GL_QUAD_STRIP);
-		shader->Disable();
 	}
 }
 
@@ -4240,6 +4225,8 @@ static void DrawCylinderShape(const void* data)
 	const float step = math::TWOPI / cylData->divs;
 
 	{
+		assert(cylData->shader->IsBound());
+
 		// sides
 		for (int i = 0; i <= cylData->divs; i++) {
 			const float radians = step * (i % cylData->divs);
@@ -4250,9 +4237,6 @@ static void DrawCylinderShape(const void* data)
 			cylData->buffer->SafeAppend({{x, params.y, z}, color});
 		}
 
-		cylData->shader->Enable();
-		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		cylData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		cylData->buffer->Submit(GL_QUAD_STRIP);
 	}
 	{
@@ -4291,9 +4275,7 @@ static void DrawBoxShape(const void* data)
 	const float3&  maxs = boxData->maxs;
 	const SColor& color = boxData->color;
 
-	boxData->shader->Enable();
-	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	boxData->shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	assert(boxData->shader->IsBound());
 
 	// top
 	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
@@ -4338,6 +4320,8 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 	cylData.shader = ipo;
 
 	{
+		assert(ipo->IsBound());
+
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -4355,7 +4339,6 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 		rdb->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
 		rdb->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
 		rdb->Submit(GL_LINES);
-		ipo->Disable();
 
 		glAttribStatePtr->LineWidth(1.0f);
 	}
@@ -4372,6 +4355,7 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 	boxData.buffer = rdb;
 	boxData.shader = ipo;
 
+	assert(ipo->IsBound());
 	glAttribStatePtr->EnableBlendMask();
 
 	if (!invColorSelect) {
@@ -4391,10 +4375,10 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
 		const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
 
-		assert(ipo->IsBound());
-
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glAttribStatePtr->LineWidth(2.0f);
+
+		assert(ipo->IsBound());
 
 		rdb->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
 		rdb->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
@@ -4405,7 +4389,8 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		rdb->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
 		rdb->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
 		rdb->Submit(GL_LINES);
-		ipo->Disable();
+		// leave enabled for caller (DrawMap)
+		// ipo->Disable();
 
 		glAttribStatePtr->LineWidth(1.0f);
 	}

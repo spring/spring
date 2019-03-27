@@ -148,7 +148,16 @@ private:
 
 
 	void DrawMiniMapMarker(const float3& cameraPos);
-	void DrawFormationFrontOrder(int button, float maxSize, float sizeDiv, bool onMiniMap, const float3& cameraPos, const float3& mouseDir);
+	void DrawFormationFrontOrder(
+		GL::RenderDataBufferC* buffer,
+		Shader::IProgramObject* shader,
+		const float3& cameraPos,
+		const float3& mouseDir,
+		int button,
+		float maxSize,
+		float sizeDiv,
+		bool onMiniMap
+	);
 	void DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float3& start, const float3& end);
 	void DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float4& pos, const float* color);
 

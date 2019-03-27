@@ -1455,9 +1455,12 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
+	#if 0
+	// done by caller (GuiHandler::DrawMap)
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	#endif
 }
 
 void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
@@ -1471,7 +1474,8 @@ void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	}
 
 	buffer->Submit(GL_LINES);
-	shader->Disable();
+	// leave enabled for caller
+	// shader->Disable();
 
 	glAttribStatePtr->EnableDepthTest();
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
