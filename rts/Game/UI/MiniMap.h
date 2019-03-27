@@ -15,7 +15,6 @@
 #include "System/Matrix44f.h"
 
 
-class CVertexArray;
 class CUnit;
 namespace icon {
 	class CIconData;
