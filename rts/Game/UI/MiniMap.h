@@ -112,6 +112,7 @@ protected:
 	void DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer);
 
 	void DrawUnitHighlight(const CUnit* unit);
+	void DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color) const;
 	void DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const;
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 

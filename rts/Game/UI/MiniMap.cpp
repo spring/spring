@@ -823,6 +823,29 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 
 /******************************************************************************/
 
+void CMiniMap::DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color) const
+{
+	const float xzScale = pos.w;
+	const float xPixels = xzScale * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
+	const float yPixels = xzScale * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+
+	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
+	const int divs = 1 << (Clamp(lod, 0, 6 - 1) + 3);
+
+	for (int d = 0; d < divs; d++) {
+		const float step0 = (d    ) * 1.0f / divs;
+		const float step1 = (d + 1) * 1.0f / divs;
+		const float rads0 = math::TWOPI * step0;
+		const float rads1 = math::TWOPI * step1;
+
+		const float3 vtx0 = {std::sin(rads0), 0.0f, std::cos(rads0)};
+		const float3 vtx1 = {std::sin(rads1), 0.0f, std::cos(rads1)};
+
+		buffer->SafeAppend({pos + vtx0 * xzScale, SColor(&color.x)});
+		buffer->SafeAppend({pos + vtx1 * xzScale, SColor(&color.x)});
+	}
+}
+
 void CMiniMap::DrawCircle(CVertexArray* va, const float4& pos, const float4& color) const
 {
 	#if 0
@@ -1059,7 +1082,7 @@ void CMiniMap::DrawForReal()
 
 	glActiveTexture(GL_TEXTURE0);
 
-
+	// LuaOpenGL::DrawGroundCircle
 	setSurfaceCircleFuncVA(DrawSurfaceCircle);
 	cursorIcons.Enable(false);
 
@@ -1554,18 +1577,25 @@ void CMiniMap::DrawUnitRanges() const
 	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 	const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMats[0]);
+
 	for (const int unitID: selUnits) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 
 		// LOS Ranges
-		if (unit->radarRadius && !unit->beingBuilt && unit->activated)
-			DrawCircle(GetVertexArray(), {unit->pos, unit->radarRadius * 1.0f}, cmdColors.rangeRadar);
+		if (unit->radarRadius > 0.0f && !unit->beingBuilt && unit->activated)
+			DrawCircle(buffer, {unit->pos, unit->radarRadius * 1.0f}, cmdColors.rangeRadar);
 
-		if (unit->sonarRadius && !unit->beingBuilt && unit->activated)
-			DrawCircle(GetVertexArray(), {unit->pos, unit->sonarRadius * 1.0f}, cmdColors.rangeSonar);
+		if (unit->sonarRadius > 0.0f && !unit->beingBuilt && unit->activated)
+			DrawCircle(buffer, {unit->pos, unit->sonarRadius * 1.0f}, cmdColors.rangeSonar);
 
-		if (unit->jammerRadius && !unit->beingBuilt && unit->activated)
-			DrawCircle(GetVertexArray(), {unit->pos, unit->jammerRadius * 1.0f}, cmdColors.rangeJammer);
+		if (unit->jammerRadius > 0.0f && !unit->beingBuilt && unit->activated)
+			DrawCircle(buffer, {unit->pos, unit->jammerRadius * 1.0f}, cmdColors.rangeJammer);
 
 		// Interceptor Ranges
 		for (const CWeapon* w: unit->weapons) {
@@ -1574,9 +1604,12 @@ void CMiniMap::DrawUnitRanges() const
 			if ((w->range <= 300.0f) || !wd.interceptor)
 				continue;
 
-			DrawCircle(GetVertexArray(), {unit->pos, wd.coverageRange}, colors[w->numStockpiled || !wd.stockpile]);
+			DrawCircle(buffer, {unit->pos, wd.coverageRange}, colors[w->numStockpiled || !wd.stockpile]);
 		}
 	}
+
+	buffer->Submit(GL_LINES);
+	shader->Disable();
 }
 
 
@@ -1599,7 +1632,7 @@ void CMiniMap::DrawWorldStuff() const
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate())
 			selectedUnitsHandler.DrawCommands(true);
 
-		// draw lines batched by SelectedUnitsHandler
+		// draw lines batched by the above calls
 		glAttribStatePtr->LineWidth(2.5f);
 		lineDrawer.DrawAll(true);
 		glAttribStatePtr->LineWidth(1.0f);
