@@ -731,7 +731,7 @@ void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
 	CLuaHandle::SetDevMode(gameSetup->luaDevMode);
 	LOG("[Game::%s] Lua developer mode %sabled", __func__, (CLuaHandle::GetDevMode()? "en": "dis"));
 
-	std:string prefix("Loading " + onlySynced ? "synced" : (onlyUnsynced ? " unsynced" : ""));
+	std::string prefix("Loading " + onlySynced ? "synced" : (onlyUnsynced ? " unsynced" : ""));
 	{
 		loadscreen->SetLoadMessage(prefix + "LuaRules");
 		if (onlyUnsynced && luaRules != nullptr) {
