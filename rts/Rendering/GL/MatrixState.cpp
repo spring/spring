@@ -137,6 +137,7 @@ static void CompareMatrices(const CMatrix44f& svm, const CMatrix44f& spm) {
 */
 
 #if 0
+void GL::PushMatrix(const CMatrix44f& m) { glMatrixState->Push(m); }
 void GL::PushMatrix() { glMatrixState->Push(glMatrixState->Top()); }
 void GL::PopMatrix() { glMatrixState->Pop(); }
 
@@ -173,6 +174,7 @@ void GL::RotateZ(float a) { glMatrixState->RotateZ(a);  glRotatef(a, 0.0f, 0.0f,
 
 #else
 
+void GL::PushMatrix(const CMatrix44f& m) { glPushMatrix(); glLoadMatrixf(m); }
 void GL::PushMatrix() { glPushMatrix(); }
 void GL::PopMatrix() { glPopMatrix(); }
 

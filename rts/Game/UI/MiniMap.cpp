@@ -13,17 +13,13 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
-#include "Game/Players/Player.h"
 #include "Game/UI/UnitTracker.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Lua/LuaUnsyncedCtrl.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/CommandDrawer.h"
-#include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
@@ -39,10 +35,8 @@
 #include "System/Exceptions.h"
 #include "System/StringHash.h"
 #include "System/StringUtil.h"
-#include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Sound/ISoundChannels.h"
 
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
 CONFIG(bool, MiniMapFullProxy).defaultValue(true);
@@ -102,6 +96,7 @@ CMiniMap::CMiniMap(): CInputReceiver(BACK)
 	}
 
 	UpdateGeometry();
+	LoadBuffer();
 
 
 	// setup the buttons' texture and texture coordinates
@@ -129,7 +124,6 @@ CMiniMap::CMiniMap(): CInputReceiver(BACK)
 		moveBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
 		maximizeBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
 		minimizeBox.color = {1.0f, 1.0f, 1.0f, 1.0f};
-
 	} else {
 		bitmap.AllocDummy({255, 255, 255, 255});
 		buttonsTextureID = bitmap.CreateTexture();
@@ -168,14 +162,57 @@ CMiniMap::~CMiniMap()
 {
 	glDeleteTextures(1, &buttonsTextureID);
 	glDeleteTextures(1, &minimapTextureID);
+
+	miniMap.Kill();
 }
 
 
+void CMiniMap::LoadBuffer()
+{
+	const std::string& vsText = Shader::GetShaderSource("GLSL/MiniMapVertProg.glsl");
+	const std::string& fsText = Shader::GetShaderSource("GLSL/MiniMapFragProg.glsl");
+
+	const float isx = mapDims.mapx / float(mapDims.pwr2mapx);
+	const float isy = mapDims.mapy / float(mapDims.pwr2mapy);
+
+	typedef Shader::ShaderInput MiniMapAttrType;
+
+	const std::array<MiniMapVertType, 4> verts = {{
+		{{0.0f, 0.0f}, {0.0f, 1.0f}},
+		{{0.0f, 1.0f}, {0.0f, 0.0f}},
+		{{1.0f, 1.0f}, {1.0f, 0.0f}},
+		{{1.0f, 0.0f}, {1.0f, 1.0f}},
+	}};
+	const std::array<MiniMapAttrType, 2> attrs = {{
+		{0,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_vertex_pos", VA_TYPE_OFFSET(float, 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_tex_coords", VA_TYPE_OFFSET(float, 2)},
+	}};
+
+	miniMap.Init(false);
+	miniMap.TUpload<MiniMapVertType, uint32_t, MiniMapAttrType>(verts.size(), 0, attrs.size(),  verts.data(), nullptr, attrs.data()); // no indices
+
+
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText, ""}, {GL_FRAGMENT_SHADER, fsText, ""}};
+	Shader::IProgramObject* shaderProg = miniMap.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+
+	shaderProg->Enable();
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shaderProg->SetUniform("u_shading_tex", 0);
+	shaderProg->SetUniform("u_minimap_tex", 1);
+	shaderProg->SetUniform("u_infomap_tex", 2);
+	shaderProg->SetUniform("u_texcoor_mul", isx, isy);
+	shaderProg->SetUniform("u_infotex_mul", 0.0f);
+	shaderProg->SetUniform("u_gamma_expon", 1.0f);
+	shaderProg->Disable();
+}
+
 void CMiniMap::ParseGeometry(const string& geostr)
 {
-	const std::string geodef = "2 2 200 200";
+	const char* geoStr = geostr.c_str();
+	const char* geoDef = "2 2 200 200";
 
-	if ((sscanf(geostr.c_str(), "%i %i %i %i", &curPos.x, &curPos.y, &curDim.x, &curDim.y) == 4) && (geostr == geodef)) {
+	if ((sscanf(geoStr, "%i %i %i %i", &curPos.x, &curPos.y, &curDim.x, &curDim.y) == 4) && (strcmp(geoStr, geoDef) == 0)) {
 		// default geometry
 		curDim.x = -200;
 		curDim.y = -200;
@@ -959,12 +996,6 @@ void CMiniMap::ResizeTextureCache()
 
 void CMiniMap::UpdateTextureCache()
 {
-	#if 0
-	viewMats[0].LoadIdentity();
-	#else
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
-	#endif
-
 	{
 		curPos = {0, 0};
 
@@ -973,12 +1004,11 @@ void CMiniMap::UpdateTextureCache()
 			glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
-			DrawForReal();
+			if (!minimized)
+				DrawForReal();
 
 		curPos = tmpPos;
 	}
-
-	glSpringMatrix2dResetPV(true, true);
 
 	// resolve multisampled FBO if there is one
 	if (!multisampledFBO)
@@ -989,7 +1019,8 @@ void CMiniMap::UpdateTextureCache()
 	glBlitFramebuffer(
 		0, 0, minimapTexSize.x, minimapTexSize.y,
 		0, 0, minimapTexSize.x, minimapTexSize.y,
-		GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		GL_COLOR_BUFFER_BIT, GL_NEAREST
+	);
 }
 
 
@@ -1032,16 +1063,9 @@ void CMiniMap::Draw()
 
 
 
-// MiniMap::UpdateTextureCache
-//   Matrix2dSetupPV
-//   DrawForReal()
-//     DrawBackground->ReadMap::DrawMiniMap (with multi-texturing, need custom shader)
-//   Matrix2dResetPV
+// MiniMap::UpdateTextureCache -> DrawForReal()
 void CMiniMap::DrawForReal()
 {
-	if (minimized)
-		return;
-
 	glActiveTexture(GL_TEXTURE0);
 
 	// reroute LuaOpenGL::DrawGroundCircle if it is called inside minimap
@@ -1056,41 +1080,33 @@ void CMiniMap::DrawForReal()
 	glAttribStatePtr->DisableDepthTest();
 	glAttribStatePtr->DepthFunc(GL_LEQUAL);
 	glAttribStatePtr->DisableDepthMask();
-	glDisable(GL_TEXTURE_2D);
-	GL::MatrixMode(GL_MODELVIEW);
 
+	{
+		// clip everything outside of the minimap box
+		// no real need for this: most objects are on the map
+		// most of the time, texture scissor handles the rest
+		// SetClipPlanes(false);
+		DrawBackground();
+	}
 
-
-	// clip everything outside of the minimap box
-	SetClipPlanes(false);
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-	glEnable(GL_CLIP_PLANE2);
-	glEnable(GL_CLIP_PLANE3);
-
-	DrawBackground();
-
-	// allow Lua scripts to overdraw the background image
-	SetClipPlanes(true);
-	eventHandler.DrawInMiniMapBackground();
-	SetClipPlanes(false);
+	{
+		// allow Lua scripts to overdraw the background image
+		// minimap matrices are accessible via LuaOpenGLUtils
+		// SetClipPlanes(true);
+		eventHandler.DrawInMiniMapBackground();
+		// SetClipPlanes(false);
+	}
 
 	DrawUnitIcons();
 	DrawWorldStuff();
 
 	glAttribStatePtr->PopBits();
-	glEnable(GL_TEXTURE_2D);
 
-	// allow Lua scripts to draw into the minimap
-	SetClipPlanes(true);
-	eventHandler.DrawInMiniMap();
-
-
-	// disable ClipPlanes
-	glDisable(GL_CLIP_PLANE0);
-	glDisable(GL_CLIP_PLANE1);
-	glDisable(GL_CLIP_PLANE2);
-	glDisable(GL_CLIP_PLANE3);
+	{
+		// allow Lua scripts to draw into the minimap
+		// SetClipPlanes(true);
+		eventHandler.DrawInMiniMap();
+	}
 
 	cursorIcons.Enable(true);
 	SetDrawSurfaceCircleFunc(nullptr);
@@ -1489,27 +1505,25 @@ void CMiniMap::RenderMarkerNotificationRectangles(GL::RenderDataBufferC* buffer)
 
 
 
-void CMiniMap::DrawBackground() const
+void CMiniMap::DrawBackground()
 {
-	glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
+	GL::RenderDataBuffer* buffer = &miniMap;
+	Shader::IProgramObject* shader = &buffer->GetShader();
 
-	// don't mirror the map texture with flipped cameras
-	GL::MatrixMode(GL_TEXTURE);
-	GL::PushMatrix();
-	GL::LoadIdentity();
-	GL::MatrixMode(GL_MODELVIEW);
+	// draw the map
+	glAttribStatePtr->DisableAlphaTest();
+	glAttribStatePtr->DisableBlendMask();
 
-		// draw the map
-		glAttribStatePtr->DisableAlphaTest();
-		glAttribStatePtr->DisableBlendMask();
-			readMap->DrawMinimap();
-		glAttribStatePtr->EnableBlendMask();
+	{
+		readMap->BindMiniMapTextures();
+		shader->Enable();
+		shader->SetUniform("u_infotex_mul", infoTextureHandler->IsEnabled() * 1.0f);
+		shader->SetUniform("u_gamma_expon", globalRendering->gammaExponent);
+		buffer->Submit(GL_QUADS, 0, buffer->GetNumElems<MiniMapVertType>());
+		shader->Disable();
+	}
 
-	GL::MatrixMode(GL_TEXTURE);
-	GL::PopMatrix();
-	GL::MatrixMode(GL_MODELVIEW);
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glAttribStatePtr->EnableBlendMask();
 }
 
 
@@ -1608,45 +1622,5 @@ void CMiniMap::DrawWorldStuff() const
 		guihandler->DrawMapStuff(true);
 
 	DrawUnitRanges();
-}
-
-
-void CMiniMap::SetClipPlanes(bool lua) const
-{
-	if (lua) {
-		// prepare ClipPlanes for Lua's DrawInMinimap Modelview matrix
-
-		// quote from glClipPlane spec:
-		// "When glClipPlane is called, equation is transformed by the inverse of the modelview matrix and stored in the resulting eye coordinates.
-		//  Subsequent changes to the modelview matrix have no effect on the stored plane-equation components."
-		// -> we have to use the same modelview matrix when calling glClipPlane and later draw calls
-
-		// set the modelview matrix to the same as used in Lua's DrawInMinimap
-		GL::PushMatrix();
-		GL::LoadMatrix(viewMats[2]);
-
-		const double plane0[4] = { 0, -1, 0, double(curDim.y)};
-		const double plane1[4] = { 0,  1, 0,                0};
-		const double plane2[4] = {-1,  0, 0, double(curDim.x)};
-		const double plane3[4] = { 1,  0, 0,                0};
-
-		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
-		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
-		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
-		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
-
-		GL::PopMatrix();
-	} else {
-		// clip everything outside of the minimap box
-		const double plane0[4] = { 0,-1, 0, 1};
-		const double plane1[4] = { 0, 1, 0, 0};
-		const double plane2[4] = {-1, 0, 0, 1};
-		const double plane3[4] = { 1, 0, 0, 0};
-
-		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
-		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
-		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
-		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
-	}
 }
 

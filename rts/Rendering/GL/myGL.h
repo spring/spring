@@ -38,17 +38,6 @@ void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
 
-// SetupVP loads/pushes view first, then proj
-// SetupPV loads/pushes proj first, then view
-// pv := pushView, pp := pushProj
-// void glSpringMatrix2dSetupVP(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
-void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
-// ResetVP pops view first, then proj
-// ResetPV pops proj first, then view
-// pv := popView, pp := popProj
-// void glSpringMatrix2dResetVP(bool pv = false, bool pp = false);
-void glSpringMatrix2dResetPV(bool pv = false, bool pp = false);
-
 void ClearScreen();
 
 void glClearErrors(const char* cls, const char* fnc, bool verbose = false);

@@ -112,7 +112,7 @@ public:
 	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex.GetID(); }
 
 public:
-	void DrawMinimap() const override;
+	void BindMiniMapTextures() const override;
 	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
 	void InitGroundDrawer() override;

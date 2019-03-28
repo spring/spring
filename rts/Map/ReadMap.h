@@ -123,8 +123,8 @@ public:
 	virtual bool SetLuaTexture(const MapTextureData&) { return false; }
 
 
-	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
-	virtual void DrawMinimap() const = 0;
+	/// binds textures used to draw the minimap in a quad with extents (0,0)-(1,1))
+	virtual void BindMiniMapTextures() const = 0;
 
 	/// Feature creation
 	virtual int GetNumFeatures() = 0;

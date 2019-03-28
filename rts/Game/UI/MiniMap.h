@@ -8,7 +8,7 @@
 
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
-#include "Rendering/GL/RenderDataBufferFwd.hpp"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/Color.h"
 #include "System/float4.h"
 #include "System/type2.h"
@@ -86,6 +86,7 @@ public:
 	const CMatrix44f& GetProjMat(unsigned int idx) const { return projMats[idx]; }
 
 protected:
+	void LoadBuffer();
 	void ParseGeometry(const std::string& geostr);
 	void ToggleMaximized(bool maxspect);
 	void SetMaximizedGeometry();
@@ -94,11 +95,10 @@ protected:
 	void ProxyMousePress(int x, int y, int button);
 	void ProxyMouseRelease(int x, int y, int button);
 
-	void DrawBackground() const;
+	void DrawBackground();
 	void DrawUnitIcons() const;
 	void DrawUnitRanges() const;
 	void DrawWorldStuff() const;
-	void SetClipPlanes(bool lua) const;
 
 	void DrawFrame(GL::RenderDataBufferC* buffer);
 	bool DrawButtonQuads(GL::RenderDataBufferTC* buffer);
@@ -128,12 +128,17 @@ protected:
 	int2 oldPos;
 	int2 oldDim;
 
-	float unitBaseSize;
-	float unitExponent;
+	int2 minimapTexSize;
 
-	float unitSizeX;
-	float unitSizeY;
-	float unitSelectRadius;
+
+	float minimapRefreshRate = 0.0f;
+
+	float unitBaseSize = 0.0f;
+	float unitExponent = 0.0f;
+
+	float unitSizeX = 0.0f;
+	float unitSizeY = 0.0f;
+	float unitSelectRadius = 0.0f;
 
 	bool fullProxy = false;
 
@@ -200,11 +205,16 @@ protected:
 	FBO fbo;
 	FBO fboResolve;
 
-	int2 minimapTexSize;
-	float minimapRefreshRate = 0.0f;
+	GL::RenderDataBuffer miniMap;
+
 
 	GLuint minimapTextureID = 0;
 	GLuint buttonsTextureID = 0;
+
+	struct MiniMapVertType {
+		float2 xy;
+		float2 tc;
+	};
 
 	struct Notification {
 		float creationTime;

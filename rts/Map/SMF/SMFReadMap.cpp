@@ -716,59 +716,27 @@ void CSMFReadMap::UpdateShadingTexture()
 }
 
 
-void CSMFReadMap::DrawMinimap() const
+void CSMFReadMap::BindMiniMapTextures() const
 {
-	glAttribStatePtr->DisableAlphaTest();
-
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glEnable(GL_TEXTURE_2D);
+	// tc (0,0) - (isx,isy)
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glEnable(GL_TEXTURE_2D);
+	// tc (0,0) - (1,1)
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, minimapTex.GetID());
 
+	glActiveTexture(GL_TEXTURE2);
+
+	// tc (0,0) - (isx,isy)
 	if (infoTextureHandler->IsEnabled()) {
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
+	} else {
+		// just bind this since HAVE_INFOTEX is not available to the minimap shader
+		glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 	}
-	glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	const float isx = mapDims.mapx / float(mapDims.pwr2mapx);
-	const float isy = mapDims.mapy / float(mapDims.pwr2mapy);
-
-	glColor4f(1, 1, 1, 1);
-	glBegin(GL_QUADS);
-		glTexCoord2f(0, isy);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0, 1);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0, isy);
-		glVertex2f(0, 0);
-		glTexCoord2f(0, 0);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0, 0);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0, 0);
-		glVertex2f(0, 1);
-		glTexCoord2f(isx, 0);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1, 0);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB, isx, 0);
-		glVertex2f(1, 1);
-		glTexCoord2f(isx, isy);
-		glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1, 1);
-		glMultiTexCoord2fARB(GL_TEXTURE2_ARB, isx, isy);
-		glVertex2f(1, 0);
-	glEnd();
-
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glDisable(GL_TEXTURE_2D);
-
-	glActiveTextureARB(GL_TEXTURE2_ARB);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glDisable(GL_TEXTURE_2D);
-
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 

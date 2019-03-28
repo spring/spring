@@ -315,43 +315,6 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 
 
-
-static void LoadProjMat2D(float l, float r, float b, float t, float n, float f,  bool push) {
-	GL::MatrixMode(GL_PROJECTION);
-
-	if (push)
-		GL::PushMatrix();
-
-	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, n, f));
-}
-
-static void LoadViewMat2D(bool push) {
-	GL::MatrixMode(GL_MODELVIEW);
-
-	if (push)
-		GL::PushMatrix();
-
-	GL::LoadIdentity();
-}
-
-
-void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float f,  bool pv, bool pp)
-{
-	LoadProjMat2D(l, r, b, t, n, f,  pp);
-	LoadViewMat2D(pv);
-}
-
-void glSpringMatrix2dResetPV(bool pv, bool pp) {
-	GL::MatrixMode(GL_PROJECTION);
-	if (pp)
-		GL::PopMatrix();
-
-	GL::MatrixMode(GL_MODELVIEW);
-	if (pv)
-		GL::PopMatrix();
-}
-
-
 /******************************************************************************/
 
 void ClearScreen()
@@ -362,6 +325,7 @@ void ClearScreen()
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
 
 
 /******************************************************************************/

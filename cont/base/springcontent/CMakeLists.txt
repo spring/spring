@@ -12,6 +12,8 @@ set(FILES
 	shaders/GLSL/infoLOS.lua
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
+	shaders/GLSL/MiniMapVertProg.glsl
+	shaders/GLSL/MiniMapFragProg.glsl
 	shaders/GLSL/MapShadowGenVertProg.glsl
 	shaders/GLSL/MapShadowGenFragProg.glsl
 	shaders/GLSL/ModelShadowGenVertProg.glsl
