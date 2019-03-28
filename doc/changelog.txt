@@ -124,8 +124,9 @@ Lua:
  - Added Spring.GetUnitCurrentCommand(unitID [, cmdIndex]) -> [cmdID, cmdOpts (coded), cmdTag[, cmdParam1[, cmdParam2 ... ]]]
    Returns the index-th command in the unit's queue (or nil). Note: cmdOpts are represented by a single number
    (usually a table otherwise), and params are returned on the stack as well. This function allocates no tables.
- - Added a second boolean parameter to Spring.Get{Player,Team}Info, if it is false the function will return nil in place
-   of the customKeys table (allocation optimisation)
+ ! Spring.GetTeamInfo: switched the last two return values around (incomeMultiplier is now 7th, customKeys is now 8th)
+ - Added a second boolean parameter to Spring.Get{Player,Team}Info, if it is false the function will not return
+   the (now) last return value, the customKeys table (allocation optimisation)
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
