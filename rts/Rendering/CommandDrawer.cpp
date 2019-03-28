@@ -11,6 +11,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -627,6 +628,7 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	assert(shader->IsBound());
 
@@ -658,22 +660,22 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 		const float z2 = bi.pos.z + zsize;
 
 		// above-water verts
-		buffer->SafeAppend({{x1, h + 1.0f, z1}, {buildQueueSquareColor}});
-		buffer->SafeAppend({{x1, h + 1.0f, z2}, {buildQueueSquareColor}});
-		buffer->SafeAppend({{x2, h + 1.0f, z2}, {buildQueueSquareColor}});
-		buffer->SafeAppend({{x2, h + 1.0f, z1}, {buildQueueSquareColor}});
+		wla->SafeAppend({{x1, h + 1.0f, z1}, {buildQueueSquareColor}});
+		wla->SafeAppend({{x1, h + 1.0f, z2}, {buildQueueSquareColor}});
+		wla->SafeAppend({{x2, h + 1.0f, z2}, {buildQueueSquareColor}});
+		wla->SafeAppend({{x2, h + 1.0f, z1}, {buildQueueSquareColor}});
 
 		if (bi.pos.y >= 0.0f)
 			continue;
 
 		// below-water verts
-		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
-	buffer->Submit(GL_QUADS);
+	wla->Submit(GL_QUADS);
 }
 
 void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
@@ -683,6 +685,7 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	assert(shader->IsBound());
 
@@ -713,13 +716,13 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		const float x2 = bi.pos.x + xsize;
 		const float z2 = bi.pos.z + zsize;
 
-		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
-	buffer->Submit(GL_QUADS);
+	wla->Submit(GL_QUADS);
 	#endif
 
 
@@ -748,17 +751,17 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		const float z2 = bi.pos.z + zsize;
 
 		// vertical lines for gauging depth
-		buffer->SafeAppend({{x1, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x2, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{x1, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		wla->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		wla->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x2, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		wla->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		wla->SafeAppend({{x1, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		wla->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
-	buffer->Submit(GL_LINES);
+	wla->Submit(GL_LINES);
 }
 
 

@@ -484,10 +484,10 @@ namespace GL {
 		void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }
 		void AssertSizeI(size_t ni) const { assert(CheckSizeI(ni)); }
 
-		void Append(const VertexArrayType& e) { AssertSizeE(1); Append(&e, 1); }
-		void Append(const  IndexArrayType  i) { AssertSizeI(1); Append(&i, 1); }
-		void Append(const VertexArrayType* e, size_t ne) { std::memcpy(&elemsMap[curElemPos], e, ne * sizeof(VertexArrayType)); curElemPos += ne; }
-		void Append(const  IndexArrayType* i, size_t ni) { std::memcpy(&indcsMap[curIndxPos], i, ni * sizeof( IndexArrayType)); curIndxPos += ni; }
+		void Append(const VertexArrayType& e) { Append(&e, 1); }
+		void Append(const  IndexArrayType  i) { Append(&i, 1); }
+		void Append(const VertexArrayType* e, size_t ne) { AssertSizeE(ne); std::memcpy(&elemsMap[curElemPos], e, ne * sizeof(VertexArrayType)); curElemPos += ne; }
+		void Append(const  IndexArrayType* i, size_t ni) { AssertSizeI(ni); std::memcpy(&indcsMap[curIndxPos], i, ni * sizeof( IndexArrayType)); curIndxPos += ni; }
 
 		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {

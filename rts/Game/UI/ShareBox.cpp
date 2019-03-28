@@ -10,8 +10,10 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Rendering/Fonts/glFont.h"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -183,13 +185,13 @@ void CShareBox::Draw()
 
 		// show "share units" tickmark
 		if (shareUnits) {
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.01f, box.y1 + unitBox.y1 + 0.025f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.02f, box.y1 + unitBox.y1 + 0.010f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
-			buffer->SafeAppend({{box.x1 + unitBox.x1 + 0.03f, box.y1 + unitBox.y1 + 0.040f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+			wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.01f, box.y1 + unitBox.y1 + 0.025f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.02f, box.y1 + unitBox.y1 + 0.010f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
+			wla->SafeAppend({{box.x1 + unitBox.x1 + 0.03f, box.y1 + unitBox.y1 + 0.040f, 0.0f}, {0.9f, 0.2f, 0.2f, 0.7f}});
 
-			glAttribStatePtr->LineWidth(3);
-			buffer->Submit(GL_LINE_STRIP);
-			glAttribStatePtr->LineWidth(1);
+			wla->Submit(GL_LINE_STRIP);
 		}
 
 		shader->Disable();

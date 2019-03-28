@@ -16,6 +16,7 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -566,7 +567,6 @@ void CSelectedUnitsHandler::Draw()
 	glAttribStatePtr->EnableBlendMask(); // for line smoothing
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glAttribStatePtr->LineWidth(cmdColors.UnitBoxLineWidth());
 
 	SColor udColor(cmdColors.unitBox);
 	SColor mdColor(cmdColors.unitBox);
@@ -581,6 +581,8 @@ void CSelectedUnitsHandler::Draw()
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+	wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, cmdColors.UnitBoxLineWidth(), camera->GetViewProjectionMatrix());
 
 	if (udColor.a > 0) {
 		const auto* unitSet = &selectedUnits;
@@ -617,10 +619,10 @@ void CSelectedUnitsHandler::Draw()
 					{drawPos.x + uhxsize * 1.0f, drawPos.y, drawPos.z - uhzsize * 1.0f},
 				};
 
-				buffer->SafeAppend({udVerts[0], udColor});
-				buffer->SafeAppend({udVerts[1], udColor});
-				buffer->SafeAppend({udVerts[2], udColor});
-				buffer->SafeAppend({udVerts[3], udColor});
+				wla->SafeAppend({udVerts[0], udColor});
+				wla->SafeAppend({udVerts[1], udColor});
+				wla->SafeAppend({udVerts[2], udColor});
+				wla->SafeAppend({udVerts[3], udColor});
 			}
 
 
@@ -641,14 +643,14 @@ void CSelectedUnitsHandler::Draw()
 					{drawPos.x + mhxsize * 1.0f, drawPos.y, drawPos.z - mhzsize * 1.0f},
 				};
 
-				buffer->SafeAppend({mdVerts[0], mdColor});
-				buffer->SafeAppend({mdVerts[1], mdColor});
-				buffer->SafeAppend({mdVerts[2], mdColor});
-				buffer->SafeAppend({mdVerts[3], mdColor});
+				wla->SafeAppend({mdVerts[0], mdColor});
+				wla->SafeAppend({mdVerts[1], mdColor});
+				wla->SafeAppend({mdVerts[2], mdColor});
+				wla->SafeAppend({mdVerts[3], mdColor});
 			}
 		}
 
-		buffer->Submit(GL_QUADS);
+		wla->Submit(GL_QUADS);
 	}
 
 	if (cmdColors.buildBox[3] > 0.0f) {
@@ -679,7 +681,6 @@ void CSelectedUnitsHandler::Draw()
 
 	shader->Disable();
 
-	glAttribStatePtr->LineWidth(1.0f);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->EnableDepthTest();
