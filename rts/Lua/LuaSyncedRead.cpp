@@ -1216,18 +1216,22 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(teamID));
 	lua_pushstring(L, team->GetSideName());
 	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
-
-	const TeamBase::customOpts& teamOpts(team->GetAllValues());
-
-	lua_createtable(L, 0, teamOpts.size());
-
-	for (const auto& pair: teamOpts) {
-		lua_pushsstring(L, pair.first);
-		lua_pushsstring(L, pair.second);
-		lua_rawset(L, -3);
-	}
 	lua_pushnumber(L, team->GetIncomeMultiplier());
-	return 8;
+
+	const bool getTeamOpts = luaL_optboolean(L, 2, true);
+	if (getTeamOpts) {
+		const TeamBase::customOpts& teamOpts(team->GetAllValues());
+
+		lua_createtable(L, 0, teamOpts.size());
+
+		for (const auto& pair: teamOpts) {
+			lua_pushsstring(L, pair.first);
+			lua_pushsstring(L, pair.second);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return 7 + getTeamOpts;
 }
 
 
@@ -1514,17 +1518,20 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	// same as select(4, GetTeamInfo(teamID=player->team))
 	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(player->team));
 
-	const PlayerBase::customOpts& playerOpts = player->GetAllValues();
+	const bool getPlayerOpts = luaL_optboolean(L, 2, true);
+	if (getPlayerOpts) {
+		const PlayerBase::customOpts& playerOpts = player->GetAllValues();
 
-	lua_createtable(L, 0, playerOpts.size());
+		lua_createtable(L, 0, playerOpts.size());
 
-	for (const auto& pair: playerOpts) {
-		lua_pushsstring(L, pair.first);
-		lua_pushsstring(L, pair.second);
-		lua_rawset(L, -3);
+		for (const auto& pair: playerOpts) {
+			lua_pushsstring(L, pair.first);
+			lua_pushsstring(L, pair.second);
+			lua_rawset(L, -3);
+		}
 	}
 
-	return 11;
+	return 10 + getPlayerOpts;
 }
 
 
