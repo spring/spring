@@ -9,6 +9,7 @@
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "System/Color.h"
 #include "System/float4.h"
 #include "System/type2.h"
@@ -42,7 +43,7 @@ public:
 	void RenderCachedTextureNormalized(bool luaCall);
 	void RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix44f& projMat);
 
-	void RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* buffer);
+	void RenderCameraFrustumLinesAndSelectionBox(GL::WideLineAdapterC* wla);
 	void RenderMarkerNotificationRectangles(GL::RenderDataBufferC* buffer);
 
 
@@ -112,6 +113,7 @@ protected:
 
 	void DrawUnitHighlight(const CUnit* unit);
 	void DrawCircle(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color) const;
+	void DrawCircleW(GL::WideLineAdapterC* buffer, const float4& pos, const float4& color) const;
 
 	const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
@@ -120,6 +122,7 @@ protected:
 
 protected:
 	static void DrawSurfaceCircleFunc(GL::RenderDataBufferC* buffer, const float4& pos, const float4& color, unsigned int);
+	static void DrawSurfaceCircleWFunc(GL::WideLineAdapterC* wla, const float4& pos, const float4& color, unsigned int);
 
 protected:
 	int2 curPos;

@@ -29,6 +29,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "System/SpringMath.h"
 #include "System/StringUtil.h"
 
@@ -288,14 +289,14 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 void DefaultPathDrawer::Draw() const {
-	glAttribStatePtr->LineWidth(3);
-
 	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	prog->Enable();
 	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	wla->Setup(rdbc, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, camera->GetViewProjectionMatrix());
 
 	// draw paths
 	for (const auto& p: pm->GetPathMap()) {
@@ -303,39 +304,37 @@ void DefaultPathDrawer::Draw() const {
 
 		// draw low-res segments of <path> (green)
 		for (const float3& pos: multiPath.lowResPath.path) {
-			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
+			wla->SafeAppend({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
 		}
 
 		// draw med-res segments of <path> (blue)
 		for (const float3& pos: multiPath.medResPath.path) {
-			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
+			wla->SafeAppend({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
 		}
 
 		// draw max-res segments of <path> (red)
 		for (const float3& pos: multiPath.maxResPath.path) {
-			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
+			wla->SafeAppend({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
 		}
 
-		rdbc->Submit(GL_LINE_STRIP);
+		wla->Submit(GL_LINE_STRIP);
 	}
 
 	// draw path definitions (goal, radius)
 	for (const auto& p: pm->GetPathMap()) {
-		Draw(&p.second.peDef, rdbc);
+		Draw(&p.second.peDef, wla);
 	}
 
-	rdbc->Submit(GL_LINES);
+	wla->Submit(GL_LINES);
 	prog->Disable();
-
-	glAttribStatePtr->LineWidth(1);
 }
 
 
 
-void DefaultPathDrawer::Draw(const CPathFinderDef* pfd, GL::RenderDataBufferC* rdbc) const {
+void DefaultPathDrawer::Draw(const CPathFinderDef* pfd, GL::WideLineAdapterC* wla) const {
 	constexpr float4 colors[] = {{0.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}};
 
-	glSurfaceCircle(rdbc, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
+	glSurfaceCircleW(wla, {pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius)}, colors[pfd->synced], 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {

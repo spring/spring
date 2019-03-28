@@ -5,6 +5,7 @@
 
 #include "myGL.h"
 #include "RenderDataBufferFwd.hpp"
+#include "WideLineAdapter.hpp"
 
 class CWeapon;
 struct WeaponDef;
@@ -12,7 +13,6 @@ struct WeaponDef;
 namespace Shader {
 	struct IProgramObject;
 };
-
 
 
 extern void glSetupRangeRingDrawState();
@@ -49,11 +49,13 @@ typedef void (*DrawVolumeFunc)(const void* data);
 // default implementation draws a circle on top of the world
 // map surface (ground/water); expects center.w to be radius
 typedef void (*DrawSurfaceCircleFunc)(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res);
+typedef void (*DrawSurfaceCircleWFunc)(GL::WideLineAdapterC* wla, const float4& center, const float4& color, unsigned int res);
 
 extern DrawSurfaceCircleFunc glSurfaceCircle;
+extern DrawSurfaceCircleWFunc glSurfaceCircleW;
 
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
-extern void SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc func);
+extern void SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc func, DrawSurfaceCircleWFunc funcw);
 
 
 template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQuadC(const TQuad& quad, const TColor& color, TRenderBuffer* buffer) {

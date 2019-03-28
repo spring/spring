@@ -12,6 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Sim/Features/FeatureMemPool.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
 #include "Sim/Misc/GlobalSynced.h"
@@ -325,7 +326,8 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	buffer->Submit(GL_QUADS);
 
 	// draw the graph lines
-	glAttribStatePtr->LineWidth(3.0f);
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+	wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 3.0f, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	for (const auto& p: sortedProfiles) {
 		const CTimeProfiler::TimeRecord& tr = p.second;
@@ -347,13 +349,11 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 			const float x = MIN_X_COOR + (a * steps_x);
 			const float y = 0.02f + (p * 0.96f);
 
-			buffer->SafeAppend({{x, y, 0.0f}, c});
+			wla->SafeAppend({{x, y, 0.0f}, c});
 		}
 
-		buffer->Submit(GL_LINE_STRIP);
+		wla->Submit(GL_LINE_STRIP);
 	}
-
-	glAttribStatePtr->LineWidth(1.0f);
 }
 
 

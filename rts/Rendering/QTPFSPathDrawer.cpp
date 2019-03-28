@@ -14,6 +14,7 @@
 #include "Sim/Path/QTPFS/PathManager.hpp"
 
 #include "Rendering/Fonts/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
@@ -59,13 +60,15 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (!visibleNodes.empty()) {
 		GL::RenderDataBufferC* rdb = GL::GetRenderBufferC();
 		Shader::IProgramObject* ipo = rdb->GetShader();
+		GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 		ipo->Enable();
 		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		wla->Setup(rdb, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, camera->GetViewProjectionMatrix());
 
-		DrawNodes(rdb, visibleNodes);
-		DrawPaths(md, rdb);
+		DrawNodes(wla, visibleNodes);
+		DrawPaths(md, rdb, wla);
 
 		ipo->Disable();
 
@@ -76,18 +79,18 @@ void QTPFSPathDrawer::DrawAll() const {
 	glAttribStatePtr->PopBits();
 }
 
-void QTPFSPathDrawer::DrawNodes(GL::RenderDataBufferC* rdb, const std::vector<const QTPFS::QTNode*>& nodes) const {
+void QTPFSPathDrawer::DrawNodes(GL::WideLineAdapterC* wla, const std::vector<const QTPFS::QTNode*>& nodes) const {
 	for (const QTPFS::QTNode* node: nodes) {
-		DrawNode(node, rdb, &NODE_COLORS[!node->AllSquaresImpassable()][0]);
+		DrawNodeW(node, wla, &NODE_COLORS[!node->AllSquaresImpassable()][0]);
 	}
 
-	glAttribStatePtr->LineWidth(2.0f);
+	wla->SetWidth(2.0f);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	rdb->Submit(GL_QUADS);
+	wla->Submit(GL_QUADS);
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glAttribStatePtr->LineWidth(1.0f);
+	wla->SetWidth(1.0f);
 }
 
 void QTPFSPathDrawer::DrawCosts(const std::vector<const QTPFS::QTNode*>& nodes) const {
@@ -132,15 +135,15 @@ void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, const QTPFS::Node
 
 
 
-void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) const {
+void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla) const {
 	const QTPFS::PathCache& pathCache = pm->GetPathCache(md->pathType);
 	const QTPFS::PathCache::PathMap& paths = pathCache.GetLivePaths();
 
-	glAttribStatePtr->LineWidth(4.0f);
+	wla->SetWidth(4.0f);
 
 	{
 		for (const auto& pair: paths) {
-			DrawPath(pair.second, rdb);
+			DrawPath(pair.second, wla);
 		}
 	}
 
@@ -152,16 +155,15 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 			const QTPFS::IPath* path = pair.second;
 
 			for (unsigned int n = 0; n < path->NumPoints(); n++) {
-				glSurfaceCircle(rdb, {path->GetPoint(n), path->GetRadius()}, color, 16);
+				glSurfaceCircleW(wla, {path->GetPoint(n), path->GetRadius()}, color, 16);
 			}
 		}
 
-		rdb->Submit(GL_LINES);
+		wla->Submit(GL_LINES);
 		#endif
 	}
 
-	glAttribStatePtr->LineWidth(1.0f);
-
+	wla->SetWidth(1.0f);
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	const auto& pathTypes = pm->GetPathTypes();
@@ -177,12 +179,12 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md, GL::RenderDataBufferC* rdb) c
 		if (traceIt->second == nullptr)
 			continue;
 
-		DrawSearchExecution(typeIt->second, traceIt->second, rdb);
+		DrawSearchExecution(typeIt->second, traceIt->second, rdb, wla);
 	}
 	#endif
 }
 
-void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, GL::RenderDataBufferC* rdb) const {
+void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, GL::WideLineAdapterC* wla) const {
 	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
 		float3 p0 = path->GetPoint(n + 0);
 		float3 p1 = path->GetPoint(n + 1);
@@ -193,14 +195,14 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, GL::RenderDataBufferC* 
 		p0.y = CGround::GetHeightReal(p0.x, p0.z, false);
 		p1.y = CGround::GetHeightReal(p1.x, p1.z, false);
 
-		rdb->SafeAppend({p0, PATH_COLOR});
-		rdb->SafeAppend({p1, PATH_COLOR});
+		wla->SafeAppend({p0, PATH_COLOR});
+		wla->SafeAppend({p1, PATH_COLOR});
 	}
 
-	rdb->Submit(GL_LINES);
+	wla->Submit(GL_LINES);
 }
 
-void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* se, GL::RenderDataBufferC* rdb) const {
+void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* se, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla) const {
 	// TODO: prevent overdraw so oft-visited nodes do not become darker
 	const std::vector<QTPFS::PathSearchTrace::Iteration>& searchIters = se->GetIterations();
 	      std::vector<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
@@ -220,11 +222,11 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 		const QTPFS::PathSearchTrace::Iteration& searchIter = *it;
 		const std::vector<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
 
-		DrawSearchIteration(pathType, nodeIndices, rdb);
+		DrawSearchIteration(pathType, nodeIndices, rdb, wla);
 	}
 }
 
-void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, GL::RenderDataBufferC* rdb) const {
+void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla) const {
 	unsigned int hmx = nodeIndices[0] % mapDims.mapx;
 	unsigned int hmz = nodeIndices[0] / mapDims.mapx;
 
@@ -248,26 +250,27 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 		rdb->Submit(GL_QUADS);
 	}
 	{
+		wla->SetWidth(2.0f);
+
 		for (size_t i = 1, n = nodeIndices.size(); i < n; i++) {
 			hmx = nodeIndices[i] % mapDims.mapx;
 			hmz = nodeIndices[i] / mapDims.mapx;
 
-			DrawNodeLink(pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz)), poppedNode, rdb);
+			DrawNodeLink(pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz)), poppedNode, wla);
 		}
 
-		glAttribStatePtr->LineWidth(2);
-		rdb->Submit(GL_LINES);
-		glAttribStatePtr->LineWidth(1);
+		wla->Submit(GL_LINES);
+		wla->SetWidth(1.0f);
 	}
 }
 
 
-
-void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC* rdb, const unsigned char* color) const {
 	#define xminw (node->xmin() * SQUARE_SIZE)
 	#define xmaxw (node->xmax() * SQUARE_SIZE)
 	#define zminw (node->zmin() * SQUARE_SIZE)
 	#define zmaxw (node->zmax() * SQUARE_SIZE)
+
+void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC* rdb, const unsigned char* color) const {
 
 	const float3 v0 = float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw);
 	const float3 v1 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw);
@@ -279,13 +282,26 @@ void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC*
 	rdb->SafeAppend({v2, color});
 	rdb->SafeAppend({v3, color});
 
+}
+
+void QTPFSPathDrawer::DrawNodeW(const QTPFS::QTNode* node, GL::WideLineAdapterC* wla, const unsigned char* color) const {
+	const float3 v0 = float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw);
+	const float3 v1 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw);
+	const float3 v2 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw);
+	const float3 v3 = float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw);
+
+	wla->SafeAppend({v0, color});
+	wla->SafeAppend({v1, color});
+	wla->SafeAppend({v2, color});
+	wla->SafeAppend({v3, color});
+}
+
 	#undef xminw
 	#undef xmaxw
 	#undef zminw
 	#undef zmaxw
-}
 
-void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::RenderDataBufferC* rdb) const {
+void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::WideLineAdapterC* wla) const {
 	#define xmidw(n) (n->xmid() * SQUARE_SIZE)
 	#define zmidw(n) (n->zmid() * SQUARE_SIZE)
 
@@ -296,8 +312,8 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 	if (!camera->InView(v0) && !camera->InView(v1))
 		return;
 
-	rdb->SafeAppend({v0, LINK_COLOR});
-	rdb->SafeAppend({v1, LINK_COLOR});
+	wla->SafeAppend({v0, LINK_COLOR});
+	wla->SafeAppend({v1, LINK_COLOR});
 
 	#undef xmidw
 	#undef zmidw

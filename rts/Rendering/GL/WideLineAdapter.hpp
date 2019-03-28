@@ -29,6 +29,13 @@ public:
 		transform = t;
 		invTransform = t.Invert();
 	}
+
+	void SetWidth(float w) {
+		assert(offset == 0);
+		width = w;
+	}
+
+	size_t NumElems() const { return offset; }
 	bool CheckSizeE(size_t ne) const { return ((offset + (ne - 1)) < (GL::GetWideLineBuffer()->size() / VAT_IN_FLOATS)); }
 
 	void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }

@@ -4,13 +4,15 @@
 #define DEFAULT_PATHDRAWER_HDR
 
 #include "IPathDrawer.h"
-#include "Rendering/GL/RenderDataBufferFwd.hpp"
+
+#include "GL/WideLineAdapter.hpp"
 
 class CPathManager;
 class CPathFinderDef;
 class CPathFinder;
 class CPathEstimator;
 struct UnitDef;
+
 
 struct DefaultPathDrawer: public IPathDrawer {
 public:
@@ -29,7 +31,7 @@ public:
 
 private:
 	void Draw() const;
-	void Draw(const CPathFinderDef*, GL::RenderDataBufferC*) const;
+	void Draw(const CPathFinderDef*, GL::WideLineAdapterC*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
 

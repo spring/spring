@@ -889,6 +889,35 @@ void CMiniMap::DrawSurfaceCircleFunc(GL::RenderDataBufferC* buffer, const float4
 }
 
 
+void CMiniMap::DrawCircleW(GL::WideLineAdapterC* wla, const float4& pos, const float4& color) const
+{
+	const float xzScale = pos.w;
+	const float xPixels = xzScale * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
+	const float yPixels = xzScale * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
+
+	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
+	const int divs = 1 << (Clamp(lod, 0, 6 - 1) + 3);
+
+	for (int d = 0; d < divs; d++) {
+		const float step0 = (d    ) * 1.0f / divs;
+		const float step1 = (d + 1) * 1.0f / divs;
+		const float rads0 = math::TWOPI * step0;
+		const float rads1 = math::TWOPI * step1;
+
+		const float3 vtx0 = {std::sin(rads0), 0.0f, std::cos(rads0)};
+		const float3 vtx1 = {std::sin(rads1), 0.0f, std::cos(rads1)};
+
+		wla->SafeAppend({pos + vtx0 * xzScale, SColor(&color.x)});
+		wla->SafeAppend({pos + vtx1 * xzScale, SColor(&color.x)});
+	}
+}
+
+void CMiniMap::DrawSurfaceCircleWFunc(GL::WideLineAdapterC* wla, const float4& pos, const float4& color, unsigned int)
+{
+	minimap->DrawCircleW(wla, pos, color);
+}
+
+
 
 
 CMatrix44f CMiniMap::CalcNormalizedCoorMatrix(bool dualScreen, bool luaCall) const
@@ -1067,7 +1096,7 @@ void CMiniMap::Draw()
 void CMiniMap::DrawForReal()
 {
 	// reroute LuaOpenGL::DrawGroundCircle if it is called inside minimap
-	SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc);
+	SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc, DrawSurfaceCircleWFunc);
 	cursorIcons.Enable(false);
 
 
@@ -1107,7 +1136,7 @@ void CMiniMap::DrawForReal()
 	}
 
 	cursorIcons.Enable(true);
-	SetDrawSurfaceCircleFunc(nullptr);
+	SetDrawSurfaceCircleFuncs(nullptr, nullptr);
 }
 
 
@@ -1203,9 +1232,6 @@ void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* buffer) const
 
 void CMiniMap::DrawFrame(GL::RenderDataBufferC* buffer)
 {
-	// outline
-	glAttribStatePtr->LineWidth(1.0f);
-
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
 
@@ -1371,12 +1397,14 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 	{
 		GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 		Shader::IProgramObject* shader = buffer->GetShader();
+		GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, miniMat);
 		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+		wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, miniMat * projMat);
 
-		RenderCameraFrustumLinesAndSelectionBox(buffer);
+		RenderCameraFrustumLinesAndSelectionBox(wla);
 		RenderMarkerNotificationRectangles(buffer);
 
 		shader->Disable();
@@ -1390,7 +1418,7 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 		glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
-void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* buffer)
+void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::WideLineAdapterC* wla)
 {
 	if (!maximized) {
 		// draw the camera frustum lines
@@ -1406,21 +1434,20 @@ void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* bu
 		constexpr float lineWidths[] = {2.5f, 1.5f};
 
 		for (unsigned int j = 0; j < 2; j++) {
+			wla->SetWidth(lineWidths[j]);
+
 			for (int idx = 0; idx < /*negLines[*/4/*].sign*/; idx++) {
 				const CCamera::FrustumLine& fl = negLines[idx];
 
 				if (fl.minz >= fl.maxz)
 					continue;
 
-				buffer->SafeAppend({{(fl.dir * fl.minz) + fl.base, fl.minz, 0.0f}, lineColors[j]});
-				buffer->SafeAppend({{(fl.dir * fl.maxz) + fl.base, fl.maxz, 0.0f}, lineColors[j]});
+				wla->SafeAppend({{(fl.dir * fl.minz) + fl.base, fl.minz, 0.0f}, lineColors[j]});
+				wla->SafeAppend({{(fl.dir * fl.maxz) + fl.base, fl.maxz, 0.0f}, lineColors[j]});
 			}
 
-			glAttribStatePtr->LineWidth(lineWidths[j]);
-			buffer->Submit(GL_LINES);
+			wla->Submit(GL_LINES);
 		}
-
-		glAttribStatePtr->LineWidth(1.0f);
 	}
 
 	if (selecting && fullProxy) {
@@ -1434,15 +1461,13 @@ void CMiniMap::RenderCameraFrustumLinesAndSelectionBox(GL::RenderDataBufferC* bu
 		const float3 newMapPos = GetMapPosition(mouse->lastx, mouse->lasty);
 
 		// glAttribStatePtr->BlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(), (GLenum)cmdColors.MouseBoxBlendDst());
-		glAttribStatePtr->LineWidth(cmdColors.MouseBoxLineWidth());
+		wla->SetWidth(cmdColors.MouseBoxLineWidth());
 
-		buffer->SafeAppend({{oldMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
-		buffer->SafeAppend({{newMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
-		buffer->SafeAppend({{newMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
-		buffer->SafeAppend({{oldMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
-		buffer->Submit(GL_LINE_LOOP);
-
-		glAttribStatePtr->LineWidth(1.0f);
+		wla->SafeAppend({{oldMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
+		wla->SafeAppend({{newMapPos.x, oldMapPos.z, 0.0f}, cmdColors.mouseBox});
+		wla->SafeAppend({{newMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
+		wla->SafeAppend({{oldMapPos.x, newMapPos.z, 0.0f}, cmdColors.mouseBox});
+		wla->Submit(GL_LINE_LOOP);
 		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }

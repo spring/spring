@@ -10,7 +10,8 @@
 #include "System/SpringMath.h"
 #include "System/Threading/ThreadPool.h"
 
-static void WorldDrawSurfaceCircle(GL::RenderDataBufferC* rb, const float4& center, const float4& color, unsigned int res)
+template<class T>
+static void WorldDrawSurfaceCircle(T* rb, const float4& center, const float4& color, unsigned int res)
 {
 	float3 pos0;
 	float3 pos1;
@@ -34,11 +35,13 @@ static void WorldDrawSurfaceCircle(GL::RenderDataBufferC* rb, const float4& cent
 	}
 }
 
-void SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc func) {
-	glSurfaceCircle = (func == nullptr)? WorldDrawSurfaceCircle: func;
+void SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc func, DrawSurfaceCircleWFunc funcw) {
+	glSurfaceCircle = (func == nullptr) ? WorldDrawSurfaceCircle<GL::RenderDataBufferC> : func;
+	glSurfaceCircleW = (funcw == nullptr) ? WorldDrawSurfaceCircle<GL::WideLineAdapterC> : funcw;
 }
 
-DrawSurfaceCircleFunc glSurfaceCircle = WorldDrawSurfaceCircle;
+DrawSurfaceCircleFunc glSurfaceCircle = WorldDrawSurfaceCircle<GL::RenderDataBufferC>;
+DrawSurfaceCircleWFunc glSurfaceCircleW = WorldDrawSurfaceCircle<GL::WideLineAdapterC>;
 
 
 

@@ -3336,13 +3336,13 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 /******************************************************************************/
 /******************************************************************************/
 
-static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::RenderDataBufferC* rb, const float3& pos)
+static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::WideLineAdapterC* wla, const float3& pos)
 {
 	const auto DrawCircleIf = [&](const float4& center, const float* color) {
 		if (center.w <= 0.0f)
 			return false;
 
-		glSurfaceCircle(rb, center, color, 40);
+		glSurfaceCircleW(wla, center, color, 40);
 		return true;
 	};
 
@@ -3355,7 +3355,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 
 	// draw shield range for immobile units
 	if (shieldWD != nullptr)
-		glSurfaceCircle(rb, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
+		glSurfaceCircleW(wla, {pos, shieldWD->shieldRadius}, cmdColors.rangeShield, 40);
 
 	// draw sensor and jammer ranges
 	if (unitDef->onoffable || unitDef->activateWhenBuilt) {
@@ -3381,7 +3381,7 @@ static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitDef, GL::Ren
 	if (exploWD == nullptr)
 		return;
 
-	glSurfaceCircle(rb, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
+	glSurfaceCircleW(wla, {pos, exploWD->damages.damageAreaOfEffect}, cmdColors.rangeSelfDestruct, 40);
 }
 
 
@@ -3540,6 +3540,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
@@ -3547,6 +3548,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, viewMat * projMat);
 
 
 	if (activeMousePress) {
@@ -3577,7 +3579,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						if (cmdDesc.params.size() > 1)
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 
-						DrawFormationFrontOrder(buffer, shader, tracePos, traceDir, button, maxSize, sizeDiv, onMiniMap);
+						DrawFormationFrontOrder(buffer, wla, shader, tracePos, traceDir, button, maxSize, sizeDiv, onMiniMap);
 					}
 				} break;
 
@@ -3632,7 +3634,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						}
 
 						if (!onMiniMap) {
-							DrawSelectCircle(buffer, shader, {innerPos, radius}, color);
+							DrawSelectCircle(buffer, wla, shader, {innerPos, radius}, color);
 						} else {
 							constexpr int divs = 256;
 
@@ -3672,7 +3674,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						const float3 outerPos = tracePos + traceDir * outerDist;
 
 						if (!onMiniMap) {
-							DrawSelectBox(buffer, shader, innerPos, outerPos);
+							DrawSelectBox(buffer, wla, shader, innerPos, outerPos);
 						} else {
 							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 							buffer->SafeAppend({{outerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
@@ -3691,9 +3693,9 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	if (!onMiniMap) {
 		glAttribStatePtr->BlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
-		glAttribStatePtr->LineWidth(cmdColors.SelectedLineWidth());
+		wla->SetWidth(cmdColors.SelectedLineWidth());
 	} else {
-		glAttribStatePtr->LineWidth(1.49f);
+		wla->SetWidth(1.49f);
 	}
 
 
@@ -3730,7 +3732,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			if (enemyUnit && decoyDef != nullptr)
 				unitDef = decoyDef;
 
-			DrawUnitDefRanges(unit, unitDef, buffer, pointeeUnit->pos);
+			DrawUnitDefRanges(unit, unitDef, wla, pointeeUnit->pos);
 
 			// draw decloak distance
 			if (pointeeUnit->decloakDistance > 0.0f) {
@@ -3757,7 +3759,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					shader->Enable();
 				} else {
 					// cylindrical
-					glSurfaceCircle(buffer, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
+					glSurfaceCircleW(wla, {pointeeUnit->pos, pointeeUnit->decloakDistance}, cmdColors.rangeDecloak, 40);
 				}
 			}
 
@@ -3773,7 +3775,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				const float4 colors[] = {cmdColors.rangeInterceptorOff, cmdColors.rangeInterceptorOn};
 				const float4& color = colors[!enemyUnit || (w == nullptr) || w->numStockpiled > 0];
 
-				glSurfaceCircle(buffer, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
+				glSurfaceCircleW(wla, {pointeeUnit->pos, unitDef->maxCoverage}, color, 40);
 			}
 		}
 	}
@@ -3798,7 +3800,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (radius <= 0.0f)
 					continue;
 
-				glSurfaceCircle(buffer, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
+				glSurfaceCircleW(wla, {builder->pos, radius}, {color[0], color[1], color[2], color[3] * 0.333f}, 40);
 			}
 		}
 
@@ -3833,11 +3835,11 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 
 			for (const BuildInfo& bi: buildInfoQueue) {
-				DrawUnitDefRanges(nullptr, buildeeDef, buffer, bi.pos);
+				DrawUnitDefRanges(nullptr, buildeeDef, wla, bi.pos);
 
 				// draw extraction range
 				if (buildeeDef->extractRange > 0.0f)
-					glSurfaceCircle(buffer, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
+					glSurfaceCircleW(wla, {bi.pos, buildeeDef->extractRange}, cmdColors.rangeExtract, 40);
 
 				// draw interceptor range
 				const WeaponDef* wd = buildeeDef->stockpileWeaponDef;
@@ -3845,17 +3847,22 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 				if (wd == nullptr || !wd->interceptor)
 					continue;
 
-				glSurfaceCircle(buffer, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
+				glSurfaceCircleW(wla, {bi.pos, wd->coverageRange}, cmdColors.rangeInterceptorOn, 40);
 			}
 		}
 	}
 
 
-	if (buffer->NumElems() > 0) {
+	if (wla->NumElems() > 0) {
 		assert(shader->IsBound());
-		buffer->Submit(GL_LINES);
+		wla->Submit(GL_LINES);
 	}
 
+	if (!onMiniMap) {
+		glAttribStatePtr->LineWidth(cmdColors.SelectedLineWidth());
+	} else {
+		glAttribStatePtr->LineWidth(1.49f);
+	}
 
 	if (rayTraceDist > 0.0f) {
 		assert(activeBuildCommand);
@@ -4093,6 +4100,7 @@ void CGuiHandler::DrawCentroidCursor()
 
 void CGuiHandler::DrawFormationFrontOrder(
 	GL::RenderDataBufferC* buffer,
+	GL::WideLineAdapterC* wla,
 	Shader::IProgramObject* shader,
 	const float3& cameraPos,
 	const float3& mouseDir,
@@ -4134,10 +4142,11 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	if (onMiniMap) {
 		pos1 += (pos1 - pos2);
-		buffer->SafeAppend({pos1, {&color.x}});
-		buffer->SafeAppend({pos2, {&color.x}});
-		glAttribStatePtr->LineWidth(2.0f);
-		buffer->Submit(GL_LINES);
+		wla->SetWidth(2.0f);
+		wla->SafeAppend({pos1, {&color.x}});
+		wla->SafeAppend({pos2, {&color.x}});
+		wla->Submit(GL_LINES);
+		wla->SetWidth(1.0f);
 		return;
 	}
 
@@ -4306,7 +4315,7 @@ static void DrawBoxShape(const void* data)
 }
 
 
-void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float4& pos, const float* color)
+void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo, const float4& pos, const float* color)
 {
 	CylinderData cylData;
 	cylData.center.x = pos.x;
@@ -4332,19 +4341,19 @@ void CGuiHandler::DrawSelectCircle(GL::RenderDataBufferC* rdb, Shader::IProgramO
 
 		// draw the center line
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glAttribStatePtr->LineWidth(2.0f);
+		wla->SetWidth(2.0f);
 
 		const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
 
-		rdb->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
-		rdb->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
-		rdb->Submit(GL_LINES);
+		wla->SafeAppend({base                    , {color[0], color[1], color[2], 0.9f}});
+		wla->SafeAppend({base + UpVector * 128.0f, {color[0], color[1], color[2], 0.9f}});
+		wla->Submit(GL_LINES);
 
-		glAttribStatePtr->LineWidth(1.0f);
+		wla->SetWidth(1.0f);
 	}
 }
 
-void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo, const float3& pos0, const float3& pos1)
+void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo, const float3& pos0, const float3& pos1)
 {
 	constexpr float4 colors[] = {{1.0f, 0.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 0.0f, 0.0f}};
 
@@ -4376,23 +4385,23 @@ void CGuiHandler::DrawSelectBox(GL::RenderDataBufferC* rdb, Shader::IProgramObje
 		const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
 
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glAttribStatePtr->LineWidth(2.0f);
+		wla->SetWidth(2.0f);
 
 		assert(ipo->IsBound());
 
-		rdb->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner1                    , {0.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner1 + UpVector * 128.0f, {0.0f, 1.0f, 0.0f, 0.9f}});
-		rdb->SafeAppend({corner2                    , {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner2 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
-		rdb->Submit(GL_LINES);
+		wla->SafeAppend({corner0                    , {1.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner0 + UpVector * 128.0f, {1.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner1                    , {0.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner1 + UpVector * 128.0f, {0.0f, 1.0f, 0.0f, 0.9f}});
+		wla->SafeAppend({corner2                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner2 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner3                    , {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->SafeAppend({corner3 + UpVector * 128.0f, {0.0f, 0.0f, 1.0f, 0.9f}});
+		wla->Submit(GL_LINES);
 		// leave enabled for caller (DrawMap)
 		// ipo->Disable();
 
-		glAttribStatePtr->LineWidth(1.0f);
+		wla->SetWidth(1.0f);
 	}
 }
 

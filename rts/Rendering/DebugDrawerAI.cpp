@@ -7,6 +7,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/bitops.h"
 
@@ -289,6 +290,9 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 
 	{
 		if (!lines.empty()) {
+			GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+			wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+
 			int lineNum = 0;
 			float linePad = (1.0f / lines.size()) * 0.5f;
 
@@ -312,7 +316,7 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 				color[2] = line.lineColor.z * 255;
 				color[3] = 255;
 
-				glAttribStatePtr->LineWidth(line.lineWidth);
+				wla->SetWidth(line.lineWidth);
 
 				for (auto pit = data.begin(); pit != data.end(); ++pit) {
 					auto npit = pit; ++npit;
@@ -322,12 +326,11 @@ void DebugDrawerAI::Graph::Draw(GL::RenderDataBufferC* buffer, Shader::IProgramO
 					const float px2 = (npit == data.end()) ? px1 : ((npit->x - minScale.x) / scale.x) * size.x;
 					const float py2 = (npit == data.end()) ? py1 : ((npit->y - minScale.y) / scale.y) * size.y;
 
-					buffer->SafeAppend({pos + float3(px1, py1, 0.0f), {color}});
-					buffer->SafeAppend({pos + float3(px2, py2, 0.0f), {color}});
+					wla->SafeAppend({pos + float3(px1, py1, 0.0f), {color}});
+					wla->SafeAppend({pos + float3(px2, py2, 0.0f), {color}});
 				}
 
-				buffer->Submit(GL_LINE_STRIP);
-				glAttribStatePtr->LineWidth(1.0f);
+				wla->Submit(GL_LINE_STRIP);
 
 				lineNum += 1;
 			}
