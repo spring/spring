@@ -23,7 +23,6 @@ struct S3DModel;
 
 class CSolidObject;
 class CUnit;
-class CVertexArray;
 
 struct Command;
 struct BuildInfo;

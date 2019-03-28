@@ -18,13 +18,12 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TextureAtlas.h"
-// #include "Sim/Misc/Wind.h"
+#include "Sim/Misc/Wind.h"
 #include "System/bitops.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FastMath.h"
@@ -473,6 +472,8 @@ CBumpWater::CBumpWater()
 	#if 0
 	windDir = envResHandler.GetCurrentWindDir();
 	windVec = windDir * (windStrength = (smoothstep(0.0f, 12.0f, envResHandler.GetCurrentWindStrength()) * 0.5f + 4.0f));
+	#else
+	windVec = guRNG.NextVector(0.0f) * mix(envResHandler.GetMinWindStrength(), envResHandler.GetMaxWindStrength(), guRNG.NextFloat());
 	#endif
 }
 

@@ -12,7 +12,6 @@
 
 #include "myGL.h"
 #include "MatrixState.hpp"
-#include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Matrix44f.h"
@@ -25,21 +24,6 @@
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
-static std::array<CVertexArray, 2> vertexArrays;
-static int currentVertexArray = 0;
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-CVertexArray* GetVertexArray()
-{
-	currentVertexArray += 1;
-	currentVertexArray %= vertexArrays.size();
-	return &vertexArrays[currentVertexArray];
-}
-
-/******************************************************************************/
 
 bool CheckAvailableVideoModes()
 {

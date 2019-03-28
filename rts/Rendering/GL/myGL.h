@@ -59,8 +59,6 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor);
 bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
 
 
-class CVertexArray* GetVertexArray();
-
 namespace GL {
 	struct RenderDataBuffer;
 	template<typename VertexArrayType> struct TRenderDataBuffer;

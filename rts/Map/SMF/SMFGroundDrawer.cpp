@@ -17,7 +17,6 @@
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"

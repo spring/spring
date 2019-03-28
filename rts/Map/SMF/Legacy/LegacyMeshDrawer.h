@@ -44,8 +44,8 @@ private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	int viewRadius;
-	int neededLod;
+	int viewRadius = 4;
+	int neededLod = 4;
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_

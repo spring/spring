@@ -19,7 +19,6 @@
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Colors.h"
 #include "Rendering/IconHandler.h"
