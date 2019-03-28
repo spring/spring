@@ -999,13 +999,13 @@ void CMiniMap::UpdateTextureCache()
 	{
 		curPos = {0, 0};
 
-			// draw minimap into FBO
-			glAttribStatePtr->ViewPort(0, 0, minimapTexSize.x, minimapTexSize.y);
-			glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
+		// draw minimap into FBO
+		glAttribStatePtr->ViewPort(0, 0, minimapTexSize.x, minimapTexSize.y);
+		glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT);
 
-			if (!minimized)
-				DrawForReal();
+		if (!minimized)
+			DrawForReal();
 
 		curPos = tmpPos;
 	}
@@ -1066,8 +1066,6 @@ void CMiniMap::Draw()
 // MiniMap::UpdateTextureCache -> DrawForReal()
 void CMiniMap::DrawForReal()
 {
-	glActiveTexture(GL_TEXTURE0);
-
 	// reroute LuaOpenGL::DrawGroundCircle if it is called inside minimap
 	SetDrawSurfaceCircleFunc(DrawSurfaceCircleFunc);
 	cursorIcons.Enable(false);
