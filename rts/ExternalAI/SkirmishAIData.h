@@ -48,7 +48,7 @@ public:
 	std::vector<std::string> optionKeys;
 	spring::unordered_map<std::string, std::string> options;
 
-	bool isLuaAI;
+	bool isLuaAI = false;
 
 	SkirmishAIStatistics currentStats;
 };

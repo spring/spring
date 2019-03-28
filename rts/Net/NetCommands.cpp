@@ -1190,7 +1190,7 @@ void CGame::ClientReadNet()
 					pckt >> aiTeamNum;
 					pckt >> aiName;
 
-					CTeam* tai = teamHandler.Team(aiTeamNum);
+					CTeam* aiTeam = teamHandler.Team(aiTeamNum);
 
 					if (playerNum == gu->myPlayerNum) {
 						// local player
@@ -1209,22 +1209,23 @@ void CGame::ClientReadNet()
 						}
 					} else {
 						SkirmishAIData aiData;
+						aiData.hostPlayer = playerNum;
 						aiData.team       = aiTeamNum;
 						aiData.name       = aiName;
-						aiData.hostPlayer = playerNum;
+						aiData.shortName  = "n/a"; // determines validity for GetSkirmishAI
 
 						wordCompletion.AddWord(aiData.name + " ", false, false, false);
 						skirmishAIHandler.AddSkirmishAI(aiData, aiNum);
 					}
 
-					if (!tai->HasLeader())
-						tai->SetLeader(playerNum);
+					if (!aiTeam->HasLeader())
+						aiTeam->SetLeader(playerNum);
 
 					CPlayer::UpdateControlledTeams();
 					eventHandler.PlayerChanged(playerNum);
 
 					if (playerNum == gu->myPlayerNum) {
-						LOG("Skirmish AI being created for team %i ...", aiTeamNum);
+						LOG("[Game::%s] local skirmish AI being created for team %i ...", __func__, aiTeamNum);
 						eoh->CreateSkirmishAI(aiNum);
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
