@@ -4273,10 +4273,7 @@ int LuaSyncedRead::GetUnitCurrentCommand(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == nullptr)
-		return 0;
-
+	const CCommandAI* commandAI = unit->commandAI; // never null
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == nullptr)? &commandAI->commandQue : &factoryCAI->newUnitCommands;
 
@@ -4306,31 +4303,11 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 		return 0;
 
 	const CCommandAI* commandAI = unit->commandAI;
-
-	if (commandAI == nullptr)
-		return 0;
-
 	// send the new unit commands for factories, otherwise the normal commands
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	const CCommandQueue* queue = (factoryCAI == nullptr)? &commandAI->commandQue : &factoryCAI->newUnitCommands;
 
-	// performance relevant `debug` message
-	if (lua_isnoneornil(L, 2)) {
-		static int calls = 0;
-		static spring_time nextWarning = spring_gettime();
-		calls++;
-		if (spring_gettime() >= nextWarning) { //spring_gettime() isn't sync-safe!
-			nextWarning = spring_gettime() + spring_secs(5);
-			if (calls > 1000) {
-				LOG_L(L_ERROR,
-					"[%s] called too often without a 2nd argument to define maxNumCmds returned in the table, please check your code!\n"
-					"Especially when you only read the first cmd or want to check if the queue is non-empty, this can be a huge performance leak!\n", __func__);
-			}
-			calls = 0;
-		}
-	}
-
-	const int  numCmds   = luaL_optint(L, 2, -1);
+	const int  numCmds   = luaL_checkint(L, 2); // must always be given, -1 is a performance pitfall
 	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
 	if (cmdsTable && (numCmds != 0)) {
@@ -4360,7 +4337,7 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 
 	const CCommandQueue& commandQue = factoryCAI->commandQue;
 
-	const int  numCmds   = luaL_optint(L, 2, -1);
+	const int  numCmds   = luaL_checkint(L, 2);
 	const bool cmdsTable = luaL_optboolean(L, 3, true); // deprecated, prefer to set 2nd arg to 0
 
 	if (cmdsTable && (numCmds != 0)) {
@@ -4464,57 +4441,54 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 		return 0;
 
 	const CCommandAI* commandAI = unit->commandAI;
-	if (commandAI == nullptr)
-		return 0;
-
 	const CCommandQueue& commandQue = commandAI->commandQue;
 
-	lua_newtable(L);
+	lua_createtable(L, commandQue.size(), 0);
 
 	int entry = 0;
 	int currentType = -1;
 	int currentCount = 0;
-	CCommandQueue::const_iterator it;
-	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
-		if (it->GetID() < 0) { // a build command
-			const int unitDefID = -(it->GetID());
 
-			if (canBuild) {
-				// skip build orders that this unit can not start
-				const UnitDef* order_ud = unitDefHandler->GetUnitDefByID(unitDefID);
-				const UnitDef* builder_ud = unit->unitDef;
+	for (const Command& cmd: commandQue) {
+		// not a build command
+		if (cmd.GetID() >= 0)
+			continue;
 
-				// if something is wrong, bail
-				if ((order_ud == nullptr) || (builder_ud == nullptr))
-					continue;
+		const int unitDefID = -cmd.GetID();
 
-				const string& orderName = StringToLower(order_ud->name);
-				const auto& bOpts = builder_ud->buildOptions;
-				auto it = bOpts.cbegin();
+		if (canBuild) {
+			// skip build orders that this unit can not start
+			const UnitDef* buildeeDef = unitDefHandler->GetUnitDefByID(unitDefID);
+			const UnitDef* builderDef = unit->unitDef;
 
-				for (; it != bOpts.cend(); ++it) {
-					if (it->second == orderName)
-						break;
-				}
-				// didn't find a matching entry
-				if (it == bOpts.end())
-					continue;
-			}
+			// if something is wrong, bail
+			if ((buildeeDef == nullptr) || (builderDef == nullptr))
+				continue;
 
-			if (currentType == unitDefID) {
-				currentCount++;
-			} else if (currentType == -1) {
-				currentType = unitDefID;
-				currentCount = 1;
-			} else {
-				entry++;
-				lua_newtable(L);
-				lua_pushnumber(L, currentCount);
-				lua_rawseti(L, -2, currentType);
-				lua_rawseti(L, -2, entry);
-				currentType = unitDefID;
-				currentCount = 1;
-			}
+			using P = decltype(UnitDef::buildOptions)::value_type;
+
+			const auto& buildOptCmp = [&](const P& e) { return (strcasecmp(e.second.c_str(), buildeeDef->name.c_str()) == 0); };
+			const auto& buildOpts = builderDef->buildOptions;
+			const auto  buildOptIt = std::find_if(buildOpts.cbegin(), buildOpts.cend(), buildOptCmp);
+
+			// didn't find a matching entry
+			if (buildOptIt == buildOpts.end())
+				continue;
+		}
+
+		if (currentType == unitDefID) {
+			currentCount++;
+		} else if (currentType == -1) {
+			currentType = unitDefID;
+			currentCount = 1;
+		} else {
+			entry++;
+			lua_newtable(L);
+			lua_pushnumber(L, currentCount);
+			lua_rawseti(L, -2, currentType);
+			lua_rawseti(L, -2, entry);
+			currentType = unitDefID;
+			currentCount = 1;
 		}
 	}
 
