@@ -1216,6 +1216,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(teamID));
 	lua_pushstring(L, team->GetSideName());
 	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
+	lua_pushnumber(L, team->GetIncomeMultiplier());
 
 	const bool getTeamOpts = luaL_optboolean(L, 2, true);
 	if (getTeamOpts) {
@@ -1228,11 +1229,9 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 			lua_pushsstring(L, pair.second);
 			lua_rawset(L, -3);
 		}
-	} else {
-		lua_pushnil(L);
 	}
-	lua_pushnumber(L, team->GetIncomeMultiplier());
-	return 8;
+
+	return 7 + getTeamOpts;
 }
 
 
