@@ -152,7 +152,6 @@ bool CPreGame::Draw()
 {
 	spring_msecs(10).sleep(true);
 	ClearScreen();
-	agui::gui->Draw();
 
 	font->Begin();
 
