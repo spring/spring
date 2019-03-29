@@ -10,7 +10,7 @@
 #include "MouseHandler.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
-#include "Rendering/GL/WideLineAdapter.hpp"
+#include "Rendering/GL/WideLineAdapterFwd.hpp"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/CommandAI/Command.h"
 

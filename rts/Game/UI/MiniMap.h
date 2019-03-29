@@ -9,7 +9,7 @@
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
-#include "Rendering/GL/WideLineAdapter.hpp"
+#include "Rendering/GL/WideLineAdapterFwd.hpp"
 #include "System/Color.h"
 #include "System/float4.h"
 #include "System/type2.h"

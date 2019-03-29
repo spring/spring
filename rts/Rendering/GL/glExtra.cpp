@@ -3,6 +3,7 @@
 
 #include "glExtra.h"
 #include "RenderDataBuffer.hpp"
+#include "WideLineAdapter.hpp"
 
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"

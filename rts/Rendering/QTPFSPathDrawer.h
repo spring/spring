@@ -7,7 +7,7 @@
 
 #include "IPathDrawer.h"
 #include "Rendering/GL/RenderDataBufferFwd.hpp"
-#include "Rendering/GL/WideLineAdapter.hpp"
+#include "Rendering/GL/WideLineAdapterFwd.hpp"
 
 struct MoveDef;
 

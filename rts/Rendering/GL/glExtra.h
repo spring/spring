@@ -5,7 +5,7 @@
 
 #include "myGL.h"
 #include "RenderDataBufferFwd.hpp"
-#include "WideLineAdapter.hpp"
+#include "WideLineAdapterFwd.hpp"
 
 class CWeapon;
 struct WeaponDef;

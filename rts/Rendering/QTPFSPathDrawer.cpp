@@ -19,6 +19,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "System/StringUtil.h"
 
 static std::vector<const QTPFS::QTNode*> visibleNodes;
@@ -265,13 +266,12 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 }
 
 
-	#define xminw (node->xmin() * SQUARE_SIZE)
-	#define xmaxw (node->xmax() * SQUARE_SIZE)
-	#define zminw (node->zmin() * SQUARE_SIZE)
-	#define zmaxw (node->zmax() * SQUARE_SIZE)
+#define xminw (node->xmin() * SQUARE_SIZE)
+#define xmaxw (node->xmax() * SQUARE_SIZE)
+#define zminw (node->zmin() * SQUARE_SIZE)
+#define zmaxw (node->zmax() * SQUARE_SIZE)
 
 void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC* rdb, const unsigned char* color) const {
-
 	const float3 v0 = float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw);
 	const float3 v1 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw);
 	const float3 v2 = float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw);
@@ -281,7 +281,6 @@ void QTPFSPathDrawer::DrawNode(const QTPFS::QTNode* node, GL::RenderDataBufferC*
 	rdb->SafeAppend({v1, color});
 	rdb->SafeAppend({v2, color});
 	rdb->SafeAppend({v3, color});
-
 }
 
 void QTPFSPathDrawer::DrawNodeW(const QTPFS::QTNode* node, GL::WideLineAdapterC* wla, const unsigned char* color) const {
@@ -296,10 +295,11 @@ void QTPFSPathDrawer::DrawNodeW(const QTPFS::QTNode* node, GL::WideLineAdapterC*
 	wla->SafeAppend({v3, color});
 }
 
-	#undef xminw
-	#undef xmaxw
-	#undef zminw
-	#undef zmaxw
+#undef xminw
+#undef xmaxw
+#undef zminw
+#undef zmaxw
+
 
 void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, GL::WideLineAdapterC* wla) const {
 	#define xmidw(n) (n->xmid() * SQUARE_SIZE)

@@ -23,6 +23,8 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/NamedTextures.h"

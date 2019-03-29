@@ -5,7 +5,7 @@
 
 #include "IPathDrawer.h"
 
-#include "GL/WideLineAdapter.hpp"
+#include "GL/WideLineAdapterFwd.hpp"
 
 class CPathManager;
 class CPathFinderDef;
