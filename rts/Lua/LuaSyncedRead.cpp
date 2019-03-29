@@ -1210,6 +1210,9 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
+	// read before modifying stack
+	const bool getTeamOpts = luaL_optboolean(L, 2, true);
+
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->GetLeader());
 	lua_pushboolean(L, team->isDead);
@@ -1218,7 +1221,6 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushnumber(L,  teamHandler.AllyTeam(team->teamNum));
 	lua_pushnumber(L, team->GetIncomeMultiplier());
 
-	const bool getTeamOpts = luaL_optboolean(L, 2, true);
 	if (getTeamOpts) {
 		const TeamBase::customOpts& teamOpts(team->GetAllValues());
 
@@ -1506,6 +1508,9 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	if (IsPlayerUnsynced(L, player))
 		return 0;
 
+	// read before modifying stack
+	const bool getPlayerOpts = luaL_optboolean(L, 2, true);
+
 	lua_pushsstring(L, player->name);
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
@@ -1518,7 +1523,6 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	// same as select(4, GetTeamInfo(teamID=player->team))
 	lua_pushboolean(L, skirmishAIHandler.HasSkirmishAIsInTeam(player->team));
 
-	const bool getPlayerOpts = luaL_optboolean(L, 2, true);
 	if (getPlayerOpts) {
 		const PlayerBase::customOpts& playerOpts = player->GetAllValues();
 
