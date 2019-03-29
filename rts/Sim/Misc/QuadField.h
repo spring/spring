@@ -40,7 +40,7 @@ public:
 	}
 
 	void ReserveAll(size_t capa) {
-		for (auto& pair: vectors) {
+		for (int i = 0; i < vectors.size(); ++i) {
 			ReserveVector(capa);
 		}
 	}
