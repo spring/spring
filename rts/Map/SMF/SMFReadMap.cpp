@@ -718,10 +718,6 @@ void CSMFReadMap::UpdateShadingTexture()
 
 void CSMFReadMap::BindMiniMapTextures() const
 {
-	// tc (0,0) - (isx,isy)
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
-
 	// tc (0,0) - (1,1)
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, minimapTex.GetID());
@@ -736,7 +732,9 @@ void CSMFReadMap::BindMiniMapTextures() const
 		glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 	}
 
+	// tc (0,0) - (isx,isy)
 	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 }
 
 
