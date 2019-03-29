@@ -1360,9 +1360,6 @@ bool CGame::Draw() {
 
 void CGame::DrawInputReceivers()
 {
-
-	glEnable(GL_TEXTURE_2D);
-
 	if (!hideInterface) {
 		{
 			SCOPED_TIMER("Draw::Screen::InputReceivers");
@@ -1381,8 +1378,6 @@ void CGame::DrawInputReceivers()
 			minimap->Draw();
 		}
 	}
-
-	glEnable(GL_TEXTURE_2D);
 }
 
 void CGame::DrawInterfaceWidgets()
@@ -1819,8 +1814,6 @@ void CGame::DrawSkip(bool blackscreen) {
 	font->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 	font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "(%i frames left)", framesLeft);
 	font->DrawBufferedGL4();
-
-	glDisable(GL_TEXTURE_2D);
 
 	const float b = 0.004f; // border
 	const float yn = 0.35f;

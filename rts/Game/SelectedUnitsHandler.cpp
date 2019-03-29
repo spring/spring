@@ -867,8 +867,6 @@ void CSelectedUnitsHandler::PossibleCommandChange(CUnit* sender)
 // CMiniMap::DrawForReal --> DrawCommands
 void CSelectedUnitsHandler::DrawCommands(bool onMiniMap)
 {
-	glDisable(GL_TEXTURE_2D);
-
 	lineDrawer.Configure(cmdColors.UseColorRestarts(),
 	                     cmdColors.UseRestartColor(),
 	                     cmdColors.restart,
