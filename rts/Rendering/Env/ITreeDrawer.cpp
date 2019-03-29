@@ -53,7 +53,6 @@ ITreeDrawer::~ITreeDrawer() {
 void ITreeDrawer::ConfigNotify(const std::string& key, const std::string& value)
 {
 	baseTreeDistance = float(std::max(0, std::atoi(value.c_str())));
-	drawTreeDistance = Clamp(baseTreeDistance, 1.0f, CGlobalRendering::MAX_VIEW_RANGE);
 }
 
 
