@@ -3,7 +3,7 @@
 #include "WideLineAdapter.hpp"
 
 std::vector<float>* GL::GetWideLineBuffer() {
-	static std::vector<float> vb(65536, 0.0f);
+	static std::vector<float> vb(sizeof(VA_TYPE_C) / sizeof(float) * 1024 * 64, 0.0f);
 	return &vb;
 }
 

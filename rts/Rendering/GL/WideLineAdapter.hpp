@@ -52,9 +52,17 @@ namespace GL {
 			assert(offset == 0);
 			width = w;
 		}
-
 		size_t NumElems() const { return offset; }
 		bool CheckSizeE(size_t ne) const { return ((offset + (ne - 1)) < (GL::GetWideLineBuffer()->size() / VAT_IN_FLOATS)); }
+private:
+		void EnlargeBuffer(size_t ne) {
+			assert(!CheckSizeE(ne));
+			auto* vec = GetWideLineBuffer();
+			do {
+				vec->resize(vec->size() * 2);
+			} while (!CheckSizeE(ne));
+		}
+public:
 
 		void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }
 
@@ -63,8 +71,11 @@ namespace GL {
 
 		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (ne == 0 || !CheckSizeE(ne))
+			if (ne == 0)
 				return;
+			if (!CheckSizeE(ne))
+				EnlargeBuffer(ne);
+
 			Append(e, ne);
 		}
 
@@ -76,6 +87,9 @@ namespace GL {
 				buffer->Submit(primType); // shouldn't do anything, but someone asked submit, so we submit
 				return;
 			}
+			// worst case of needed vertices
+			if (!CheckSizeE(offset * 4))
+				EnlargeBuffer(offset * 4);
 
 			VertexArrayType* va = reinterpret_cast<VertexArrayType*>(GetWideLineBuffer()->data());
 
@@ -97,6 +111,7 @@ namespace GL {
 				case GL_QUADS      : { lineCount = vertexCount;     break; }
 				default            : {           assert(false);     break; }
 			}
+
 
 			//TODO - smooth line connections, prevent quad overlap
 			for (size_t i = 0; i < lineCount; ++i) {
