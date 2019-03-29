@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <array>
 #include <vector>
-#include "System/Misc/NonCopyable.h"
 
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 #include "System/type2.h"
@@ -24,9 +24,9 @@ class QueryVectorCache {
 public:
 	typedef std::pair<bool, std::vector<T>> PairType;
 
-	std::vector<T>* ReserveVector(size_t capa = 1024) {
+	std::vector<T>* ReserveVector(size_t base = 0, size_t capa = 1024) {
 		const auto pred = [](const PairType& p) { return (!p.first); };
-		const auto iter = std::find_if(vectors.begin(), vectors.end(), pred);
+		const auto iter = std::find_if(vectors.begin() + base, vectors.end(), pred);
 
 		if (iter != vectors.end()) {
 			iter->first = true;
@@ -40,8 +40,8 @@ public:
 	}
 
 	void ReserveAll(size_t capa) {
-		for (int i = 0; i < vectors.size(); ++i) {
-			ReserveVector(capa);
+		for (size_t i = 0; i < vectors.size(); ++i) {
+			ReserveVector(i, capa);
 		}
 	}
 
