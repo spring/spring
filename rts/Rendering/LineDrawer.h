@@ -12,7 +12,7 @@
 class CLineDrawer {
 public:
 	CLineDrawer() {
-		for (int i = 0; i < regularLines.size(); i++) {
+		for (size_t i = 0; i < regularLines.size(); i++) {
 			regularLines[i].reserve(64);
 			stippleLines[i].reserve(64);
 		}
@@ -30,7 +30,7 @@ public:
 		const float* restartColor,
 		float restartAlpha
 	);
-	void SetWidth(LineWidth w);
+	void SetWidth(LineWidth w) { width = w; }
 
 	void DrawAll(bool onMiniMap);
 	void SetupLineStipple();
@@ -94,11 +94,6 @@ inline void CLineDrawer::Configure(bool ucr, bool urc, const float* rc, float ra
 
 	useRestartColor = urc;
 	useColorRestarts = ucr;
-}
-
-inline void CLineDrawer::SetWidth(LineWidth w)
-{
-	width = w;
 }
 
 

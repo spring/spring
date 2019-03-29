@@ -213,6 +213,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Fog);
 	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(LineStipple);
+	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
@@ -435,7 +436,6 @@ constexpr GLbitfield AttribBits =
 	GL_COLOR_BUFFER_BIT |
 	GL_DEPTH_BUFFER_BIT |
 	GL_ENABLE_BIT       |
-	GL_LINE_BIT         |
 	GL_POLYGON_BIT      |
 	GL_VIEWPORT_BIT;
 

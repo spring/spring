@@ -108,7 +108,7 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	shader->Disable();
 	glAttribStatePtr->PopBits();
 
-	for (int i = 0; i < regularLines.size(); i++) {
+	for (size_t i = 0; i < regularLines.size(); i++) {
 		regularLines[i].clear();
 		stippleLines[i].clear();
 	}

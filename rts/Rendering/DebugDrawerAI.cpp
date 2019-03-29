@@ -48,7 +48,7 @@ void DebugDrawerAI::Draw() {
 	if (skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty())
 		return;
 
-	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_LINE_BIT);
+	glAttribStatePtr->PushBits(GL_ENABLE_BIT);
 	glAttribStatePtr->DisableDepthTest();
 
 	// draw data for the (AI) team being spectated

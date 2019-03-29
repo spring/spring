@@ -184,6 +184,7 @@ class LuaOpenGL {
 		static int Fog(lua_State* L) { return 0; }
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L) { return 0; }
+		static int LineWidth(lua_State* L) { return 0; }
 		static int Blending(lua_State* L);
 		static int BlendEquation(lua_State* L);
 		static int BlendFunc(lua_State* L);
