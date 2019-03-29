@@ -311,17 +311,20 @@ namespace GL {
 			const T& Push(const T& v) {
 				// return the top element post-push
 				// assert(size < S);
-				stack[size] = v;
 
-				size += 1;
-				size &= (S - 1);
-				return stack[size - 1];
+				size += (size < S);
+				// size &= (S - 1);
+
+				return (stack[size - 1] = v);
 			}
 			const T& Pop(bool post) {
-				// assert(size > post);
 				// return the top element pre- or post-pop
-				size -= 1;
-				size &= (S - 1);
+				// assert(size > post);
+
+				post &= (size > 1);
+				size -= (size > 0);
+				// size &= (S - 1);
+
 				return stack[size - post];
 			}
 
