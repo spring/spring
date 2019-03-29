@@ -1403,7 +1403,7 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, miniMat);
 		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
-		wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, miniMat * projMat);
+		wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, projMat * miniMat);
 
 		RenderCameraFrustumLinesAndSelectionBox(wla);
 		RenderMarkerNotificationRectangles(buffer);
