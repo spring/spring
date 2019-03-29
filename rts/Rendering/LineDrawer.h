@@ -12,11 +12,17 @@
 class CLineDrawer {
 public:
 	CLineDrawer() {
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < regularLines.size(); i++) {
 			regularLines[i].reserve(64);
 			stippleLines[i].reserve(64);
 		}
 	}
+
+	enum LineWidth {
+		Default   = 0,
+		QueuedCmd = 1
+	};
+
 
 	void Configure(
 		bool useColorRestarts,
@@ -24,11 +30,12 @@ public:
 		const float* restartColor,
 		float restartAlpha
 	);
+	void SetWidth(LineWidth w);
 
 	void DrawAll(bool onMiniMap);
 	void SetupLineStipple();
 	void UpdateLineStipple();
-	               
+
 	void StartPath(const float3& pos, const float* color);
 	void DrawLine(const float3& endPos, const float* color);
 	void DrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
@@ -41,8 +48,8 @@ public:
 
 	const float3& GetLastPos() const { return lastPos; }
 
-	bool HaveRegularLines() const { return (!regularLines[0].empty() || !regularLines[1].empty()); }
-	bool HaveStippleLines() const { return (!stippleLines[0].empty() || !stippleLines[1].empty()); }
+	bool HaveRegularLines() const { for (auto& v: regularLines) { if (!v.empty()) return true; } return false; }
+	bool HaveStippleLines() const { for (auto& v: stippleLines) { if (!v.empty()) return true; } return false; }
 
 private:
 	bool lineStipple = false;
@@ -52,6 +59,8 @@ private:
 	float restartAlpha = 0.0f;
 	float stippleTimer = 0.0f;
 
+	LineWidth width = Default;
+
 	float3 lastPos;
 
 	const float* restartColor = nullptr;
@@ -60,9 +69,13 @@ private:
 	typedef std::vector<VA_TYPE_C> Line;
 
 	// queue all lines and draw them in one go later
-	// [0] := GL_LINE_LOOP, [1] := GL_LINES (useColorRestarts)
-	std::vector<Line> regularLines[2];
-	std::vector<Line> stippleLines[2];
+	// even := GL_LINE_LOOP, odd := GL_LINES (useColorRestarts)
+	// width:
+	// [0,1] := 1.0f or 2.5f on minimap
+	// [2,3] := cmdColors.QueuedLineWidth() or 2.5f on minimap
+
+	std::array<std::vector<Line>, 4> regularLines;
+	std::array<std::vector<Line>, 4> stippleLines;
 };
 
 
@@ -81,6 +94,11 @@ inline void CLineDrawer::Configure(bool ucr, bool urc, const float* rc, float ra
 
 	useRestartColor = urc;
 	useColorRestarts = ucr;
+}
+
+inline void CLineDrawer::SetWidth(LineWidth w)
+{
+	width = w;
 }
 
 
@@ -108,7 +126,8 @@ inline void CLineDrawer::StartPath(const float3& pos, const float* color)
 
 inline void CLineDrawer::DrawLine(const float3& endPos, const float* color)
 {
-	Line& line = (lineStipple)? stippleLines[useColorRestarts].back(): regularLines[useColorRestarts].back();
+	const int idx = width * 2 + useColorRestarts;
+	Line& line = (lineStipple)? stippleLines[idx].back(): regularLines[idx].back();
 
 	if (!useColorRestarts) {
 		line.push_back({endPos, color});

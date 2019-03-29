@@ -69,6 +69,7 @@ Lua:
  - remove gl.EdgeFlag
  - remove gl.GetGlobalTex{Names,Coords}
  - remove gl.LineStipple
+ - remove gl.LineWidth
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list handling
  - remove 'useCamera' LuaMaterial parameter

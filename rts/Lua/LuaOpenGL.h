@@ -204,7 +204,6 @@ class LuaOpenGL {
 		static int StencilFuncSeparate(lua_State* L);
 		static int StencilOpSeparate(lua_State* L);
 
-		static int LineWidth(lua_State* L);
 		static int PointSize(lua_State* L) { return 0; }
 		static int PointSprite(lua_State* L) { return 0; }
 		static int PointParameter(lua_State* L) { return 0; }

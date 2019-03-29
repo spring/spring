@@ -1636,9 +1636,7 @@ void CMiniMap::DrawWorldStuff() const
 			selectedUnitsHandler.DrawCommands(true);
 
 		// draw lines batched by the above calls
-		glAttribStatePtr->LineWidth(2.5f);
 		lineDrawer.DrawAll(true);
-		glAttribStatePtr->LineWidth(1.0f);
 	}
 
 	// draw the selection shape, and some ranges

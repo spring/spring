@@ -38,7 +38,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/FeatureDrawer.h"
@@ -234,7 +233,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilFuncSeparate);
 	REGISTER_LUA_CFUNC(StencilOpSeparate);
 
-	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(PointSize);
 
 	REGISTER_LUA_CFUNC(PointSprite);
@@ -419,7 +417,6 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_CLIP_PLANE4); // ::ClipPlane
 	glDisable(GL_CLIP_PLANE5); // ::ClipPlane
 	#endif
-	glAttribStatePtr->LineWidth(1.0f); // ::LineWidth
 
 	#if 0
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // ::Color, ::Shape
@@ -2442,14 +2439,6 @@ int LuaOpenGL::StencilOpSeparate(lua_State* L)
 
 
 /******************************************************************************/
-
-int LuaOpenGL::LineWidth(lua_State* L)
-{
-	const float width = luaL_checkfloat(L, 1);
-	if (width <= 0.0f) luaL_argerror(L, 1, "Incorrect Width (must be greater zero)");
-	glAttribStatePtr->LineWidth(width);
-	return 0;
-}
 
 
 int LuaOpenGL::Texture(lua_State* L)

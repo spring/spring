@@ -75,7 +75,6 @@ GL::AttribState::AttribState() {
 	colorMaskStack.Fill({GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE});
 	viewportStack.Fill({0, 0, 0, 0});
 	scissorStack.Fill({0, 0, 0, 0});
-	lineWidthStack.Fill(0.0f);
 }
 
 void GL::AttribState::Init() {
@@ -115,7 +114,6 @@ void GL::AttribState::Init() {
 	PushColorMask(glGetIntT<ColorMaskState, 4>(GL_COLOR_WRITEMASK));
 	PushViewPort(glGetIntT<ViewPortState, 4>(GL_VIEWPORT));
 	PushScissor(glGetIntT<ScissorState, 4>(GL_SCISSOR_BOX));
-	PushLineWidth(glGetFloatT(GL_LINE_WIDTH));
 }
 
 
@@ -263,9 +261,6 @@ void GL::AttribState::PushBits(uint32_t attribBits) {
 	if ((attribBits & GL_SCISSOR_BIT) != 0)
 		PushScissor();
 
-	// TODO: stipple?
-	if ((attribBits & GL_LINE_BIT) != 0)
-		PushLineWidth();
 }
 
 void GL::AttribState::PopBits() {
@@ -342,8 +337,6 @@ void GL::AttribState::PopBits() {
 	if ((attribBits & GL_SCISSOR_BIT) != 0)
 		PopScissor();
 
-	if ((attribBits & GL_LINE_BIT) != 0)
-		PopLineWidth();
 }
 
 
@@ -680,17 +673,6 @@ void GL::AttribState::PushColorMask(bool r, bool g, bool b, bool a) {
 }
 void GL::AttribState::PopColorMask() {
 	ColorMask(colorMaskStack.Pop(true));
-}
-
-
-void GL::AttribState::LineWidth(float w) {
-	glLineWidth(lineWidthStack.Top() = w);
-}
-void GL::AttribState::PushLineWidth(float w) {
-	glLineWidth(lineWidthStack.Push(w));
-}
-void GL::AttribState::PopLineWidth() {
-	glLineWidth(lineWidthStack.Pop(true));
 }
 
 

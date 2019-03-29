@@ -323,7 +323,6 @@ public:
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glAttribStatePtr->LineWidth(2.0f);
 		glAttribStatePtr->EnableDepthMask();
 
 		gleBindMeshBuffers(&COLVOL_MESH_BUFFERS[0]);
@@ -331,7 +330,6 @@ public:
 	void Disable() {
 		gleBindMeshBuffers(nullptr);
 
-		glAttribStatePtr->LineWidth(1.0f);
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glAttribStatePtr->PopBits();
 

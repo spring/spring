@@ -214,12 +214,6 @@ namespace GL {
 		void PushColorMask() { PushColorMask(colorMaskStack.Top()); }
 		void PopColorMask();
 
-		// line-width (GLfloat)
-		void LineWidth(float w);
-		void PushLineWidth(float w);
-		void PushLineWidth() { PushLineWidth(lineWidthStack.Top()); }
-		void PopLineWidth();
-
 		// uncaptured state
 		void Clear(uint32_t bits);
 		void ClearAccum(float r, float g, float b, float a);
@@ -370,7 +364,6 @@ namespace GL {
 		ArrayStack<ColorMaskState  , 64>   colorMaskStack;
 		ArrayStack<ViewPortState   , 64>    viewportStack;
 		ArrayStack< ScissorState   , 64>     scissorStack;
-		ArrayStack<float           , 64>   lineWidthStack;
 	};
 
 

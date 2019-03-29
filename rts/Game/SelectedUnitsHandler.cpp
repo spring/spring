@@ -872,13 +872,11 @@ void CSelectedUnitsHandler::DrawCommands(bool onMiniMap)
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
 	lineDrawer.SetupLineStipple();
+	lineDrawer.SetWidth(CLineDrawer::LineWidth::QueuedCmd);
 
 	glAttribStatePtr->DisableDepthTest();
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc((GLenum) cmdColors.QueuedBlendSrc(), (GLenum) cmdColors.QueuedBlendDst());
-
-	// glAttribStatePtr->LineWidth(cmdColors.QueuedLineWidth()); - FIXME, doesn't do anything since
-	// lineDrawer drawing is delayed.
 
 	if (selectedGroup != -1) {
 		const auto& groupUnits = uiGroupHandlers[gu->myTeam].groups[selectedGroup]->units;
@@ -895,7 +893,7 @@ void CSelectedUnitsHandler::DrawCommands(bool onMiniMap)
 	// draw the commands from AIs
 	waitCommandsAI.DrawCommands();
 
-	//glAttribStatePtr->LineWidth(1.0f);
+	lineDrawer.SetWidth(CLineDrawer::LineWidth::Default);
 
 	glAttribStatePtr->EnableDepthTest();
 }

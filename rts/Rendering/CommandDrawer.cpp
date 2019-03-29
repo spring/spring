@@ -88,12 +88,10 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands(bool onMiniMap) const
 	                     cmdColors.restart,
 	                     cmdColors.RestartAlpha());
 	lineDrawer.SetupLineStipple();
+	lineDrawer.SetWidth(CLineDrawer::LineWidth::QueuedCmd);
 
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc((GLenum)cmdColors.QueuedBlendSrc(), (GLenum)cmdColors.QueuedBlendDst());
-
-	// glAttribStatePtr->LineWidth(cmdColors.QueuedLineWidth()); - FIXME, doesn't do anything since
-	// lineDrawer drawing is delayed.
 
 	for (const int unitID: luaQueuedUnitSet) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
@@ -104,7 +102,7 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands(bool onMiniMap) const
 		Draw(unit->commandAI, onMiniMap);
 	}
 
-	//glAttribStatePtr->LineWidth(1.0f);
+	lineDrawer.SetWidth(CLineDrawer::LineWidth::Default);
 	glAttribStatePtr->EnableDepthTest();
 }
 
