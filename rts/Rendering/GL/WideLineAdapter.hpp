@@ -25,12 +25,18 @@ namespace GL {
 		void Setup(TRenderDataBuffer<VertexArrayType>* b, float x, float y, float w, const CMatrix44f& t, bool fixMinimap = false) {
 			assert(offset == 0);
 			buffer = b;
+
 			xScale = x;
 			yScale = y;
 			ixScale = 1.0f / x;
 			iyScale = 1.0f / y;
 			width = w;
+
 			transform = t;
+			#if 1
+			invTransform = t.Invert(&fixMinimap);
+			assert(fixMinimap);
+			#else
 			// minimap drops the y coord and makes the matrix non-invertable
 			if (fixMinimap) {
 				transform.m[6] = 0.00001f;
@@ -39,6 +45,7 @@ namespace GL {
 			bool success;
 			invTransform = transform.Invert(&success);
 			assert(success);
+			#endif
 		}
 
 		void SetWidth(float w) {
@@ -142,11 +149,14 @@ namespace GL {
 
 		TRenderDataBuffer<VertexArrayType>* buffer;
 		size_t offset = 0; // in sizeof(VertexArrayType) / sizeof(float)
-		float xScale;
-		float yScale;
-		float ixScale;
-		float iyScale;
-		float width;
+
+		float  xScale = 0.0f;
+		float  yScale = 0.0f;
+		float ixScale = 0.0f;
+		float iyScale = 0.0f;
+
+		float width = 0.0f;
+
 		CMatrix44f transform;
 		CMatrix44f invTransform;
 	};

@@ -436,7 +436,7 @@ void CMiniMap::UpdateGeometry()
 		viewMats[0].Translate(UpVector);
 		viewMats[0].Scale({+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
 		viewMats[0].RotateX(90.0f * math::DEG_TO_RAD); // rotate to match real 'world' coordinates
-		viewMats[0].Scale(XZVector); // flatten; LuaOpenGL::DrawScreen uses persp-proj so z-values influence x&y
+		viewMats[0].Scale(XZVector + UpVector * 0.0001f); // (invertibly) flatten; LuaOpenGL::DrawScreen uses persp-proj so z-values influence x&y
 
 		viewMats[1].LoadIdentity();
 		viewMats[1].Translate(UpVector);
