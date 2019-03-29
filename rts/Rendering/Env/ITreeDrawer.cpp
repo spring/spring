@@ -33,6 +33,8 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
+	configHandler->NotifyOnChange(this, {"TreeRadius"});
+
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
 
 	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
@@ -41,10 +43,18 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 }
 
 ITreeDrawer::~ITreeDrawer() {
-	eventHandler.RemoveClient(this);
+	configHandler->RemoveObserver(this);
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
+
+	eventHandler.RemoveClient(this);
 }
 
+
+void ITreeDrawer::ConfigNotify(const std::string& key, const std::string& value)
+{
+	baseTreeDistance = float(std::max(0, std::atoi(value.c_str())));
+	drawTreeDistance = Clamp(baseTreeDistance, 1.0f, CGlobalRendering::MAX_VIEW_RANGE);
+}
 
 
 void ITreeDrawer::AddTrees()

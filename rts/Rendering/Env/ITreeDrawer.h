@@ -26,6 +26,8 @@ public:
 	void ResetState() const;
 	void Draw();
 
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 	virtual void Draw(float treeDistance) = 0;
 	virtual void DrawShadowPass() {}
 	virtual void Update() override = 0;
