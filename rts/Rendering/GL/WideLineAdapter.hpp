@@ -8,7 +8,6 @@
 #include "WideLineAdapterFwd.hpp"
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
-#include "System/Log/ILog.h"
 
 #include <vector>
 
@@ -23,7 +22,7 @@ namespace GL {
 	public:
 		static constexpr size_t VAT_IN_FLOATS = sizeof(VertexArrayType) / sizeof(float);
 
-		void Setup(TRenderDataBuffer<VertexArrayType>* b, float x, float y, float w, const CMatrix44f& t) {
+		void Setup(TRenderDataBuffer<VertexArrayType>* b, float x, float y, float w, const CMatrix44f& t, bool fixMinimap = false) {
 			assert(offset == 0);
 			buffer = b;
 			xScale = x;
@@ -32,7 +31,14 @@ namespace GL {
 			iyScale = 1.0f / y;
 			width = w;
 			transform = t;
-			invTransform = t.Invert();
+			// minimap drops the y coord and makes the matrix non-invertable
+			if (fixMinimap) {
+				transform.m[6] = 0.00001f;
+				transform.m[14] = 1.0f;
+			}
+			bool success;
+			invTransform = transform.Invert(&success);
+			assert(success);
 		}
 
 		void SetWidth(float w) {
@@ -57,9 +63,9 @@ namespace GL {
 
 		void Submit(uint32_t primType) {
 			assert(primType == GL_LINES || primType == GL_LINE_STRIP || primType == GL_LINE_LOOP || primType == GL_QUADS);
+			assert(buffer->NumElems() == 0);
 
 			if (offset == 0) {
-				assert(buffer->NumElems() == 0);
 				buffer->Submit(primType); // shouldn't do anything, but someone asked submit, so we submit
 				return;
 			}

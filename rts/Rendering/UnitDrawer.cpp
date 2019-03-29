@@ -19,6 +19,7 @@
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/GL/WideLineAdapter.hpp"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Colors.h"
 #include "Rendering/IconHandler.h"
@@ -1448,13 +1449,13 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	#if 0
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
-	#if 0
 	// done by caller (GuiHandler::DrawMap)
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
@@ -1464,15 +1465,15 @@ void CUnitDrawer::SetupShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 
 void CUnitDrawer::ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild)
 {
-	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
-	Shader::IProgramObject* shader = buffer->GetShader();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
+	//Shader::IProgramObject* shader = buffer->GetShader();
 
 	if (testCanBuild) {
-		buffer->Submit(GL_QUADS);
+		wla->Submit(GL_QUADS);
 		return;
 	}
 
-	buffer->Submit(GL_LINES);
+	wla->Submit(GL_LINES);
 	// leave enabled for caller
 	// shader->Disable();
 
@@ -1489,7 +1490,7 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 	if (!camera->InView(buildInfo.pos))
 		return false;
 
-	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 	const int x1 = buildInfo.pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE);
 	const int z1 = buildInfo.pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE);
@@ -1524,24 +1525,24 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 		const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
 		for (const auto& buildableSquare : buildableSquares) {
-			buffer->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
-			buffer->SafeAppend({buildableSquare + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			wla->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]});
+			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
+			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			wla->SafeAppend({buildableSquare + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
 		}
 
 		for (const auto& featureSquare : featureSquares) {
-			buffer->SafeAppend({featureSquare                                      , featureSquareColors[0]});
-			buffer->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
-			buffer->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
-			buffer->SafeAppend({featureSquare + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
+			wla->SafeAppend({featureSquare                                      , featureSquareColors[0]});
+			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
+			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
+			wla->SafeAppend({featureSquare + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
 		}
 
 		for (const auto& illegalSquare : illegalSquares) {
-			buffer->SafeAppend({illegalSquare                                      , illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
-			buffer->SafeAppend({illegalSquare + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			wla->SafeAppend({illegalSquare                                      , illegalSquareColors[0]});
+			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
+			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			wla->SafeAppend({illegalSquare + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
 		}
 
 		return canBuild;
@@ -1554,16 +1555,16 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 	constexpr unsigned char ec[4] = { 0, 128, 255, 255 }; // end color
 
 	// vertical lines
-	buffer->SafeAppend({float3(x1, h, z1), sc}); buffer->SafeAppend({float3(x1, 0.0f, z1), ec});
-	buffer->SafeAppend({float3(x1, h, z2), sc}); buffer->SafeAppend({float3(x1, 0.0f, z2), ec});
-	buffer->SafeAppend({float3(x2, h, z2), sc}); buffer->SafeAppend({float3(x2, 0.0f, z2), ec});
-	buffer->SafeAppend({float3(x2, h, z1), sc}); buffer->SafeAppend({float3(x2, 0.0f, z1), ec});
+	wla->SafeAppend({float3(x1, h, z1), sc}); wla->SafeAppend({float3(x1, 0.0f, z1), ec});
+	wla->SafeAppend({float3(x1, h, z2), sc}); wla->SafeAppend({float3(x1, 0.0f, z2), ec});
+	wla->SafeAppend({float3(x2, h, z2), sc}); wla->SafeAppend({float3(x2, 0.0f, z2), ec});
+	wla->SafeAppend({float3(x2, h, z1), sc}); wla->SafeAppend({float3(x2, 0.0f, z1), ec});
 
 	// horizontal line-loop
-	buffer->SafeAppend({float3(x1, 0.0f, z1), ec}); buffer->SafeAppend({float3(x1, 0.0f, z2), ec});
-	buffer->SafeAppend({float3(x1, 0.0f, z2), ec}); buffer->SafeAppend({float3(x2, 0.0f, z2), ec});
-	buffer->SafeAppend({float3(x2, 0.0f, z2), ec}); buffer->SafeAppend({float3(x2, 0.0f, z1), ec});
-	buffer->SafeAppend({float3(x2, 0.0f, z1), ec}); buffer->SafeAppend({float3(x1, 0.0f, z1), ec});
+	wla->SafeAppend({float3(x1, 0.0f, z1), ec}); wla->SafeAppend({float3(x1, 0.0f, z2), ec});
+	wla->SafeAppend({float3(x1, 0.0f, z2), ec}); wla->SafeAppend({float3(x2, 0.0f, z2), ec});
+	wla->SafeAppend({float3(x2, 0.0f, z2), ec}); wla->SafeAppend({float3(x2, 0.0f, z1), ec});
+	wla->SafeAppend({float3(x2, 0.0f, z1), ec}); wla->SafeAppend({float3(x1, 0.0f, z1), ec});
 	return false;
 }
 

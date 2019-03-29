@@ -39,6 +39,24 @@ extern void glBallisticCircle(
 	const float3& params,
 	const float4& color
 );
+extern void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const CWeapon* weapon,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+);
+extern void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+);
 
 
 

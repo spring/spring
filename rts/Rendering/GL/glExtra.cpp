@@ -56,9 +56,9 @@ void glResetWeaponArcDrawState() { glAttribStatePtr->DisableCullFace(); }
 
 
 
-
+template<class T>
 static void glBallisticCircle(
-	GL::RenderDataBufferC* rdBuffer,
+	T* rdBuffer,
 	const CWeapon* weapon,
 	const WeaponDef* weaponDef,
 	uint32_t circleRes,
@@ -159,7 +159,7 @@ static void glBallisticCircle(
  *  Draws a trigonometric circle in 'circleRes' steps, with a slope modifier
  */
 void glBallisticCircle(
-	GL::RenderDataBufferC* rdBuffer,
+	GL::WideLineAdapterC* rdBuffer,
 	const CWeapon* weapon,
 	uint32_t circleRes,
 	uint32_t lineMode,
@@ -180,6 +180,30 @@ void glBallisticCircle(
 	const float4& color
 ) {
 	glBallisticCircle(rdBuffer,  nullptr, weaponDef,  circleRes, lineMode,  center, params, color);
+}
+
+void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const CWeapon* weapon,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(wla,  weapon, weapon->weaponDef,  circleRes, lineMode,  center, params, color);
+}
+
+void glBallisticCircleW(
+	GL::WideLineAdapterC* wla,
+	const WeaponDef* weaponDef,
+	uint32_t circleRes,
+	uint32_t lineMode,
+	const float3& center,
+	const float3& params,
+	const float4& color
+) {
+	glBallisticCircle(wla,  nullptr, weaponDef,  circleRes, lineMode,  center, params, color);
 }
 
 

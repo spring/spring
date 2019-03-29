@@ -3431,11 +3431,11 @@ static inline void DrawUnitWeaponAngleCones(const CUnit* unit, GL::RenderDataBuf
 }
 
 
-static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject*)
+static void DrawUnitWeaponRangeRingFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject*)
 {
-	glBallisticCircle(rdb, unit->weapons[0],  40, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
+	glBallisticCircleW(wla, unit->weapons[0],  40, GL_LINES,  unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity}, cmdColors.rangeAttack);
 }
-static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo)
+static void DrawUnitWeaponAngleConeFunc(const CUnit* unit, GL::RenderDataBufferC* rdb, GL::WideLineAdapterC* wla, Shader::IProgramObject* ipo)
 {
 	// never invoked on minimap
 	DrawUnitWeaponAngleCones(unit, rdb, ipo);
@@ -3447,6 +3447,7 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 	const UnitDef* buildeeDef,
 	const DrawFunc unitDrawFunc,
 	GL::RenderDataBufferC* rdb,
+	GL::WideLineAdapterC* wla,
 	Shader::IProgramObject* ipo,
 	bool drawSelecteeShapes, // rings for pass 1, cones for pass 2
 	bool drawPointeeRing,
@@ -3460,7 +3461,7 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 	drawBuildeeRings &= (unitDrawFunc == DrawUnitWeaponRangeRingFunc);
 
 	if (drawPointeeRing)
-		unitDrawFunc(pointeeUnit, rdb, ipo);
+		unitDrawFunc(pointeeUnit, rdb, wla, ipo);
 
 	if (drawBuildeeRings) {
 		// draw (primary) weapon range for queued turrets
@@ -3471,7 +3472,7 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 			const UnitDefWeapon& udw = buildeeDef->GetWeapon(0);
 			const WeaponDef* wd = udw.def;
 
-			glBallisticCircle(rdb, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
+			glBallisticCircleW(wla, wd,  40, GL_LINES,  bi.pos, {wd->range, wd->heightmod, mapInfo->map.gravity}, cmdColors.rangeAttack);
 		}
 	}
 
@@ -3494,14 +3495,14 @@ template<typename DrawFunc> static void DrawRangeRingsAndAngleCones(
 			if (!gu->spectatingFullView && !unit->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 
-			unitDrawFunc(unit, rdb, ipo);
+			unitDrawFunc(unit, rdb, wla, ipo);
 		}
 	}
 
 	// unlike rings, cones are not batched for simplicity
 	// buffer will just be empty here if drawing the latter
-	assert(unitDrawFunc != DrawUnitWeaponAngleConeFunc || rdb->NumElems() == 0);
-	rdb->Submit(GL_LINES);
+	assert(unitDrawFunc != DrawUnitWeaponAngleConeFunc || wla->NumElems() == 0);
+	wla->Submit(GL_LINES);
 }
 
 
@@ -3546,11 +3547,13 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
+	const int xScale = onMiniMap? minimap->GetSizeX(): globalRendering->viewSizeX;
+	const int yScale = onMiniMap? minimap->GetSizeY(): globalRendering->viewSizeY;
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
-	wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, projMat * viewMat);
+	wla->Setup(buffer, xScale, yScale, 1.0f, projMat * viewMat, onMiniMap);
 
 
 	if (activeMousePress) {
@@ -3860,12 +3863,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		wla->Submit(GL_LINES);
 	}
 
-	if (!onMiniMap) {
-		glAttribStatePtr->LineWidth(cmdColors.SelectedLineWidth());
-	} else {
-		glAttribStatePtr->LineWidth(1.49f);
-	}
-
 	if (rayTraceDist > 0.0f) {
 		assert(activeBuildCommand);
 		assert(buildeeDef != nullptr);
@@ -3938,7 +3935,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		}
 	}
 
-
 	{
 		// draw range circles (for immobile units) if attack orders are imminent
 		const int defaultCmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
@@ -3959,14 +3955,12 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 			for (int i = 0; i < (1 + drawWeaponCones); i++) {
 				setupDrawStateFuncs[i]();
-				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
+				DrawRangeRingsAndAngleCones(buildInfoQueue, pointeeUnit, buildeeDef, unitDrawFuncs[i], buffer, wla, shader, activeAttackCmd || defaultAttackCmd, drawPointeeRing, drawBuildeeRings, onMiniMap);
 				resetDrawStateFuncs[i]();
 			}
 		}
 	}
 
-
-	glAttribStatePtr->LineWidth(1.0f);
 
 	if (!onMiniMap) {
 		glAttribStatePtr->EnableDepthMask();
