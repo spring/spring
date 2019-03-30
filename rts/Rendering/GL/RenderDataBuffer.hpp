@@ -417,21 +417,34 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Reset(size_t = 0) {}
+		void Reset(size_t pos = 0) {}
 
 
-		bool CheckSizeE(size_t ne) const { return false; }
-		bool CheckSizeI(size_t ni) const { return false; }
+		bool CheckSizeE(size_t ne, size_t pos) const { return false; }
+		bool CheckSizeI(size_t ni, size_t pos) const { return false; }
 
-		void Append(const VertexArrayType& e) {}
-		void Append(const  IndexArrayType  i) {}
+
+		void Update(const VertexArrayType& e,            size_t pos) {}
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) {}
+		void Update(const  IndexArrayType  i,            size_t pos) {}
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) {}
+
+		void SafeUpdate(const VertexArrayType& e,            size_t pos) {}
+		void SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {}
+		void SafeUpdate(const  IndexArrayType  i,            size_t pos) {}
+		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {}
+
+
+		void Append(const VertexArrayType& e,          ) {}
 		void Append(const VertexArrayType* e, size_t ne) {}
+		void Append(const  IndexArrayType  i,          ) {}
 		void Append(const  IndexArrayType* i, size_t ni) {}
 
-		void SafeAppend(const VertexArrayType& e) {}
+		void SafeAppend(const VertexArrayType& e,          ) {}
 		void SafeAppend(const VertexArrayType* e, size_t ne) {}
-		void SafeAppend(const  IndexArrayType  i) {}
+		void SafeAppend(const  IndexArrayType  i,          ) {}
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {}
+
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
 		void Submit(uint32_t primType) {}
@@ -522,29 +535,50 @@ namespace GL {
 		}
 
 
-		bool CheckSizeE(size_t ne) const { return ((curElemPos + (ne - 1)) < rdb->GetNumElems<VertexArrayType>()); }
-		bool CheckSizeI(size_t ni) const { return ((curIndxPos + (ni - 1)) < rdb->GetNumIndcs< IndexArrayType>()); }
+		bool CheckSizeE(size_t ne, size_t pos) const { return (ne > 0 && ((pos + (ne - 1)) < rdb->GetNumElems<VertexArrayType>())); }
+		bool CheckSizeI(size_t ni, size_t pos) const { return (ni > 0 && ((pos + (ni - 1)) < rdb->GetNumIndcs< IndexArrayType>())); }
 
-		void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }
-		void AssertSizeI(size_t ni) const { assert(CheckSizeI(ni)); }
+		void AssertSizeE(size_t ne, size_t pos) const { assert(CheckSizeE(ne, pos)); }
+		void AssertSizeI(size_t ni, size_t pos) const { assert(CheckSizeI(ni, pos)); }
 
-		void Append(const VertexArrayType& e) { Append(&e, 1); }
-		void Append(const  IndexArrayType  i) { Append(&i, 1); }
-		void Append(const VertexArrayType* e, size_t ne) { AssertSizeE(ne); std::memcpy(&elemsMap[curElemPos], e, ne * sizeof(VertexArrayType)); curElemPos += ne; }
-		void Append(const  IndexArrayType* i, size_t ni) { AssertSizeI(ni); std::memcpy(&indcsMap[curIndxPos], i, ni * sizeof( IndexArrayType)); curIndxPos += ni; }
 
-		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
+		void Update(const VertexArrayType& e,            size_t pos) {      Update(&e,  1, pos);                                                               }
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) { AssertSizeE(    ne, pos); std::memcpy(&elemsMap[pos], e, ne * sizeof(VertexArrayType)); }
+		void Update(const  IndexArrayType  i,            size_t pos) {      Update(&i,  1, pos);                                                               }
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { AssertSizeI(    ni, pos); std::memcpy(&indcsMap[pos], i, ni * sizeof( IndexArrayType)); }
+
+		void SafeUpdate(const VertexArrayType& e,            size_t pos) { SafeUpdate(&e, 1, pos); }
+		void SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
+			if (elemsMap == nullptr || ne == 0 || !CheckSizeE(ne, pos))
+				return;
+			Update(e, ne, pos);
+		}
+		void SafeUpdate(const  IndexArrayType  i,            size_t pos) { SafeUpdate(&i, 1, pos); }
+		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
+			if (indcsMap == nullptr || ni == 0 || !CheckSizeI(ni, pos))
+				return;
+			Update(i, ni, pos);
+		}
+
+
+		void Append(const VertexArrayType& e           ) { Append(&e,  1            );                   }
+		void Append(const VertexArrayType* e, size_t ne) { Update( e, ne, curElemPos); curElemPos += ne; }
+		void Append(const  IndexArrayType  i           ) { Append(&i,  1            );                   }
+		void Append(const  IndexArrayType* i, size_t ni) { Update( i, ni, curIndxPos); curIndxPos += ni; }
+
+		void SafeAppend(const VertexArrayType& e           ) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (ne == 0 || !CheckSizeE(ne) || elemsMap == nullptr)
+			if (elemsMap == nullptr || ne == 0 || !CheckSizeE(ne, curElemPos))
 				return;
 			Append(e, ne);
 		}
-		void SafeAppend(const  IndexArrayType  i) { SafeAppend(&i, 1); }
+		void SafeAppend(const  IndexArrayType  i           ) { SafeAppend(&i, 1); }
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {
-			if (ni == 0 || !CheckSizeI(ni) || indcsMap == nullptr)
+			if (indcsMap == nullptr || ni == 0 || !CheckSizeI(ni, curIndxPos))
 				return;
 			Append(i, ni);
 		}
+
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->Submit(primType, dataIndx, dataSize); }
 		void Submit(uint32_t primType) {
