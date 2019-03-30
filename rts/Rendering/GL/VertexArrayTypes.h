@@ -48,7 +48,8 @@ struct VA_TYPE_LUA {
 	float4 p; // Lua can freely set the w-component
 	float3 n;
 	float4 uv; // two channels for basic texturing
-	SColor c;
+	SColor c0; // primary
+	SColor c1; // secondary
 };
 
 static_assert(sizeof(SColor) == sizeof(float), "");

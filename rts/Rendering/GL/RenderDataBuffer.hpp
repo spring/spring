@@ -112,12 +112,13 @@ namespace GL {
 	#endif
 
 
-	static_assert(sizeof(VA_TYPE_LUA) == (sizeof(float) * (4 + 3 + 4) + sizeof(uint32_t)), "");
-	const static std::array<Shader::ShaderInput, 4> VA_TYPE_LUA_ATTRS = {{
-		{0,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 4),  "a_vertex_xyzw" , VA_TYPE_OFFSET(float,  0)},
-		{1,  3, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 4),  "a_normal_xyz"  , VA_TYPE_OFFSET(float,  4)},
-		{2,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 4),  "a_texcoor_stuv", VA_TYPE_OFFSET(float,  7)},
-		{3,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 11 + sizeof(uint8_t) * 4),  "a_color_rgba"  , VA_TYPE_OFFSET(float, 11)},
+	static_assert(sizeof(VA_TYPE_LUA) == (sizeof(float) * (4 + 3 + 4) + sizeof(uint32_t) * (1 + 1)), "");
+	const static std::array<Shader::ShaderInput, 5> VA_TYPE_LUA_ATTRS = {{
+		{0,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_vertex_xyzw" , VA_TYPE_OFFSET(float,  0)},
+		{1,  3, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_normal_xyz"  , VA_TYPE_OFFSET(float,  4)},
+		{2,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_texcoor_stuv", VA_TYPE_OFFSET(float,  7)},
+		{3,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_color_rgba"  , VA_TYPE_OFFSET(float, 11)},
+		{4,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_color_rgba"  , VA_TYPE_OFFSET(float, 12)},
 	}};
 
 
