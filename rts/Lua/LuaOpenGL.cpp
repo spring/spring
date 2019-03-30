@@ -2980,59 +2980,53 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 
 int LuaOpenGL::GetMatrixData(lua_State* L)
 {
-	const int luaType = lua_type(L, 1);
+	switch (lua_type(L, 1)) {
+		case LUA_TNUMBER: {
+			// GL_{PROJECTION,MODELVIEW,TEXTURE}
+			const CMatrix44f& matrix = GL::GetMatrix(lua_tonumber(L, 1));
 
-	if (luaType == LUA_TNUMBER) {
-		const GLenum type = (GLenum)lua_tonumber(L, 1);
-		GLenum pname = 0;
-		switch (type) {
-			case GL_PROJECTION: { pname = GL_PROJECTION_MATRIX; break; }
-			case GL_MODELVIEW:  { pname = GL_MODELVIEW_MATRIX;  break; }
-			case GL_TEXTURE:    { pname = GL_TEXTURE_MATRIX;    break; }
-			default: {
-				luaL_error(L, "Incorrect arguments to gl.GetMatrixData(id)");
+			if (lua_isnumber(L, 2)) {
+				const int index = lua_toint(L, 2);
+
+				if ((index < 0) || (index >= 16))
+					return 0;
+
+				lua_pushnumber(L, matrix[index]);
+				return 1;
 			}
-		}
-		GLfloat matrix[16];
-		glGetFloatv(pname, matrix);
 
-		if (lua_isnumber(L, 2)) {
-			const int index = lua_toint(L, 2);
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, matrix[i]);
+			}
 
-			if ((index < 0) || (index >= 16))
-				return 0;
+			return 16;
+		} break;
 
-			lua_pushnumber(L, matrix[index]);
-			return 1;
-		}
+		case LUA_TSTRING: {
+			const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 
-		for (const GLfloat m: matrix) {
-			lua_pushnumber(L, m);
-		}
+			if (matptr == nullptr)
+				luaL_error(L, "Incorrect arguments to gl.GetMatrixData(name)");
 
-		return 16;
-	}
-	else if (luaType == LUA_TSTRING) {
-		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
+			if (lua_isnumber(L, 2)) {
+				const int index = lua_toint(L, 2);
 
-		if (matptr == nullptr)
-			luaL_error(L, "Incorrect arguments to gl.GetMatrixData(name)");
+				if ((index < 0) || (index >= 16))
+					return 0;
 
-		if (lua_isnumber(L, 2)) {
-			const int index = lua_toint(L, 2);
+				lua_pushnumber(L, (*matptr)[index]);
+				return 1;
+			}
 
-			if ((index < 0) || (index >= 16))
-				return 0;
+			for (int i = 0; i < 16; i++) {
+				lua_pushnumber(L, (*matptr)[i]);
+			}
 
-			lua_pushnumber(L, (*matptr)[index]);
-			return 1;
-		}
+			return 16;
+		} break;
 
-		for (int i = 0; i < 16; i++) {
-			lua_pushnumber(L, (*matptr)[i]);
-		}
-
-		return 16;
+		default: {
+		} break;
 	}
 
 	return 0;
