@@ -435,14 +435,14 @@ namespace GL {
 		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {}
 
 
-		void Append(const VertexArrayType& e,          ) {}
+		void Append(const VertexArrayType& e           ) {}
 		void Append(const VertexArrayType* e, size_t ne) {}
-		void Append(const  IndexArrayType  i,          ) {}
+		void Append(const  IndexArrayType  i           ) {}
 		void Append(const  IndexArrayType* i, size_t ni) {}
 
-		void SafeAppend(const VertexArrayType& e,          ) {}
+		void SafeAppend(const VertexArrayType& e           ) {}
 		void SafeAppend(const VertexArrayType* e, size_t ne) {}
-		void SafeAppend(const  IndexArrayType  i,          ) {}
+		void SafeAppend(const  IndexArrayType  i           ) {}
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {}
 
 
@@ -549,13 +549,13 @@ namespace GL {
 
 		void SafeUpdate(const VertexArrayType& e,            size_t pos) { SafeUpdate(&e, 1, pos); }
 		void SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
-			if (elemsMap == nullptr || ne == 0 || !CheckSizeE(ne, pos))
+			if (elemsMap == nullptr || !CheckSizeE(ne, pos))
 				return;
 			Update(e, ne, pos);
 		}
 		void SafeUpdate(const  IndexArrayType  i,            size_t pos) { SafeUpdate(&i, 1, pos); }
 		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
-			if (indcsMap == nullptr || ni == 0 || !CheckSizeI(ni, pos))
+			if (indcsMap == nullptr || !CheckSizeI(ni, pos))
 				return;
 			Update(i, ni, pos);
 		}
@@ -568,13 +568,13 @@ namespace GL {
 
 		void SafeAppend(const VertexArrayType& e           ) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (elemsMap == nullptr || ne == 0 || !CheckSizeE(ne, curElemPos))
+			if (elemsMap == nullptr || !CheckSizeE(ne, curElemPos))
 				return;
 			Append(e, ne);
 		}
 		void SafeAppend(const  IndexArrayType  i           ) { SafeAppend(&i, 1); }
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {
-			if (indcsMap == nullptr || ni == 0 || !CheckSizeI(ni, curIndxPos))
+			if (indcsMap == nullptr || !CheckSizeI(ni, curIndxPos))
 				return;
 			Append(i, ni);
 		}
