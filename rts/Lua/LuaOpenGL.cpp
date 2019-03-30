@@ -204,8 +204,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ResetMatrices);
 	REGISTER_LUA_CFUNC(Clear);
 	REGISTER_LUA_CFUNC(SwapBuffers);
-	REGISTER_LUA_CFUNC(Lighting);
-	REGISTER_LUA_CFUNC(ShadeModel);
 	REGISTER_LUA_CFUNC(Scissor);
 	REGISTER_LUA_CFUNC(Viewport);
 	REGISTER_LUA_CFUNC(ColorMask);
@@ -215,17 +213,13 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
-	REGISTER_LUA_CFUNC(Fog);
 	REGISTER_LUA_CFUNC(AlphaTest);
-	REGISTER_LUA_CFUNC(LineStipple);
-	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
 	REGISTER_LUA_CFUNC(BlendEquationSeparate);
 	REGISTER_LUA_CFUNC(BlendFuncSeparate);
 
-	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
 
 	REGISTER_LUA_CFUNC(PolygonMode);
@@ -238,11 +232,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMaskSeparate);
 	REGISTER_LUA_CFUNC(StencilFuncSeparate);
 	REGISTER_LUA_CFUNC(StencilOpSeparate);
-
-	REGISTER_LUA_CFUNC(PointSize);
-
-	REGISTER_LUA_CFUNC(PointSprite);
-	REGISTER_LUA_CFUNC(PointParameter);
 
 	REGISTER_LUA_CFUNC(Texture);
 	REGISTER_LUA_CFUNC(CreateTexture);
@@ -258,20 +247,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GenerateMipmap);
 
 	REGISTER_LUA_CFUNC(ActiveTexture);
-	REGISTER_LUA_CFUNC(TexEnv);
-	REGISTER_LUA_CFUNC(MultiTexEnv);
-	REGISTER_LUA_CFUNC(TexGen);
-	REGISTER_LUA_CFUNC(MultiTexGen);
 
-	REGISTER_LUA_CFUNC(Shape);
 	REGISTER_LUA_CFUNC(BeginEnd);
 	REGISTER_LUA_CFUNC(Vertex);
 	REGISTER_LUA_CFUNC(Normal);
 	REGISTER_LUA_CFUNC(TexCoord);
-	REGISTER_LUA_CFUNC(MultiTexCoord);
-	REGISTER_LUA_CFUNC(SecondaryColor);
-	REGISTER_LUA_CFUNC(FogCoord);
-	REGISTER_LUA_CFUNC(EdgeFlag);
 
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
@@ -303,12 +283,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(FeaturePieceMatrix);
 	REGISTER_LUA_CFUNC(FeaturePieceMultMatrix);
 
-	REGISTER_LUA_CFUNC(DrawListAtUnit);
 	REGISTER_LUA_CFUNC(DrawFuncAtUnit);
 	REGISTER_LUA_CFUNC(DrawGroundCircle);
 	REGISTER_LUA_CFUNC(DrawGroundQuad);
 
-	REGISTER_LUA_CFUNC(Light);
 	REGISTER_LUA_CFUNC(ClipPlane);
 
 	REGISTER_LUA_CFUNC(MatrixMode);
@@ -329,10 +307,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PushAttrib);
 	REGISTER_LUA_CFUNC(PopAttrib);
 	REGISTER_LUA_CFUNC(UnsafeState);
-
-	REGISTER_LUA_CFUNC(CreateList);
-	REGISTER_LUA_CFUNC(CallList);
-	REGISTER_LUA_CFUNC(DeleteList);
 
 	REGISTER_LUA_CFUNC(Flush);
 	REGISTER_LUA_CFUNC(Finish);

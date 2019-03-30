@@ -170,9 +170,6 @@ class LuaOpenGL {
 		static int Clear(lua_State* L);
 		static int SwapBuffers(lua_State* L);
 
-		static int Lighting(lua_State* L) { return 0; }
-		static int ShadeModel(lua_State* L) { return 0; }
-
 		static int Scissor(lua_State* L);
 		static int Viewport(lua_State* L);
 		static int ColorMask(lua_State* L);
@@ -181,17 +178,13 @@ class LuaOpenGL {
 		static int DepthClamp(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
-		static int Fog(lua_State* L) { return 0; }
 		static int AlphaTest(lua_State* L);
-		static int LineStipple(lua_State* L) { return 0; }
-		static int LineWidth(lua_State* L) { return 0; }
 		static int Blending(lua_State* L);
 		static int BlendEquation(lua_State* L);
 		static int BlendFunc(lua_State* L);
 		static int BlendEquationSeparate(lua_State* L);
 		static int BlendFuncSeparate(lua_State* L);
 
-		static int Material(lua_State* L) { return 0; }
 		static int Color(lua_State* L);
 
 		static int PolygonMode(lua_State* L);
@@ -205,10 +198,6 @@ class LuaOpenGL {
 		static int StencilFuncSeparate(lua_State* L);
 		static int StencilOpSeparate(lua_State* L);
 
-		static int PointSize(lua_State* L) { return 0; }
-		static int PointSprite(lua_State* L) { return 0; }
-		static int PointParameter(lua_State* L) { return 0; }
-
 		static int Texture(lua_State* L);
 		static int CreateTexture(lua_State* L);
 		static int ChangeTextureParams(lua_State* L);
@@ -219,20 +208,11 @@ class LuaOpenGL {
 		static int RenderToTexture(lua_State* L);
 		static int GenerateMipmap(lua_State* L);
 		static int ActiveTexture(lua_State* L);
-		static int TexEnv(lua_State* L) { return 0; }
-		static int TexGen(lua_State* L) { return 0; }
-		static int MultiTexEnv(lua_State* L) { return 0; }
-		static int MultiTexGen(lua_State* L) { return 0; }
 
-		static int Shape(lua_State* L) { return 0; }
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
-		static int MultiTexCoord(lua_State* L) { return 0; }
-		static int SecondaryColor(lua_State* L) { return 0; }
-		static int FogCoord(lua_State* L) { return 0; }
-		static int EdgeFlag(lua_State* L) { return 0; }
 
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
@@ -271,12 +251,10 @@ class LuaOpenGL {
 		static int FeaturePieceMultMatrix(lua_State* L);
 
 
-		static int DrawListAtUnit(lua_State* L) { return 0; }
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
 		static int DrawGroundQuad(lua_State* L);
 
-		static int Light(lua_State* L) { return 0; }
 		static int ClipPlane(lua_State* L);
 
 		static int MatrixMode(lua_State* L);
@@ -297,10 +275,6 @@ class LuaOpenGL {
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);
-
-		static int CreateList(lua_State* L) { return 0; }
-		static int CallList(lua_State* L) { return 0; }
-		static int DeleteList(lua_State* L) { return 0; }
 
 		static int Flush(lua_State* L);
 		static int Finish(lua_State* L);
