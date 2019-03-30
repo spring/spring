@@ -1806,17 +1806,15 @@ int LuaOpenGL::Rect(lua_State* L)
 	pos.z = 0.0f;
 	pos.w = 1.0f;
 
-	luaRenderBuffer = GL::GetRenderBufferL();
+	GL::RenderDataBufferL* rb = GL::GetRenderBufferL();
 
-	pos.x = x1; pos.y = y1; luaRenderBuffer->SafeAppend(luaBufferVertex);
-	pos.x = x2; pos.y = y1; luaRenderBuffer->SafeAppend(luaBufferVertex);
-	pos.x = x2; pos.y = y2; luaRenderBuffer->SafeAppend(luaBufferVertex);
-	pos.x = x1; pos.y = y2; luaRenderBuffer->SafeAppend(luaBufferVertex);
+	pos.x = x1; pos.y = y1; rb->SafeAppend(luaBufferVertex);
+	pos.x = x2; pos.y = y1; rb->SafeAppend(luaBufferVertex);
+	pos.x = x2; pos.y = y2; rb->SafeAppend(luaBufferVertex);
+	pos.x = x1; pos.y = y2; rb->SafeAppend(luaBufferVertex);
 
 	// immediate submission
-	luaRenderBuffer->Submit(GL_QUADS);
-
-	luaRenderBuffer = nullptr;
+	rb->Submit(GL_QUADS);
 	return 0;
 }
 

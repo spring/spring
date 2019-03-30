@@ -417,7 +417,7 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Reset(size_t) {}
+		void Reset(size_t = 0) {}
 
 
 		bool CheckSizeE(size_t ne) const { return false; }
