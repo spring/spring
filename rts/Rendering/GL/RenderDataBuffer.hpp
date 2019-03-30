@@ -417,7 +417,7 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Reset() {}
+		void Reset(size_t) {}
 
 
 		bool CheckSizeE(size_t ne) const { return false; }
@@ -511,14 +511,14 @@ namespace GL {
 		void UnmapUnbindIndcs() { rdb->UnmapIndcs(true); indcsMap = nullptr; }
 
 
-		void Reset() {
-			prvElemPos = 0;
-			curElemPos = 0;
-			sumElemPos = 0;
+		void Reset(size_t pos = 0) {
+			prvElemPos = pos;
+			curElemPos = pos;
+			sumElemPos = pos;
 
-			prvIndxPos = 0;
-			curIndxPos = 0;
-			sumIndxPos = 0;
+			prvIndxPos = pos;
+			curIndxPos = pos;
+			sumIndxPos = pos;
 		}
 
 

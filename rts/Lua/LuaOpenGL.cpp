@@ -1698,7 +1698,7 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int argCount = lua_gettop(L); // number of arguments
+	const int argCount = lua_gettop(L);
 	const int primType = luaL_checkint(L, 1);
 
 	if ((argCount < 2) || !lua_isfunction(L, 2))
@@ -1708,20 +1708,18 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		// caller is expected to supply a shader and transform
 		// default would only make sense for trivial scenarios
 		//
-		// NOTE: if non-null, caller is gl.UpdateVertexArray
-		if (luaRenderBuffer == nullptr)
-			luaRenderBuffer = GL::GetRenderBufferL();
+		assert(luaRenderBuffer == nullptr);
+		luaRenderBuffer = GL::GetRenderBufferL();
 
 		inBeginEnd = true;
-		const int callError = lua_pcall(L, argCount - 2, 0, 0);
+		const int nFuncArgs = argCount - 2;
+		const int callError = lua_pcall(L, nFuncArgs, 0, 0);
 		inBeginEnd = false;
 
 		if (callError != 0)
-			luaL_error(L, "[gl.%s(type, func, ...)] ierror(%i) = %ss", __func__, callError, lua_tostring(L, -1));
+			luaL_error(L, "[gl.%s(type, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
 
-		if (luaRenderBuffer == GL::GetRenderBufferL())
-			luaRenderBuffer->Submit(primType);
-
+		luaRenderBuffer->Submit(primType);
 		luaRenderBuffer = nullptr;
 	}
 
@@ -1795,6 +1793,10 @@ int LuaOpenGL::Rect(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
+	// block UpdateVertexArray calls
+	if (inBeginEnd)
+		return 0;
+
 	const float x1 = luaL_checkfloat(L, 1);
 	const float y1 = luaL_checkfloat(L, 2);
 	const float x2 = luaL_checkfloat(L, 3);
@@ -1806,27 +1808,12 @@ int LuaOpenGL::Rect(lua_State* L)
 
 	luaRenderBuffer = GL::GetRenderBufferL();
 
-	{
-		pos.x = x1;
-		pos.y = y1;
-		luaRenderBuffer->SafeAppend(luaBufferVertex);
-	}
-	{
-		pos.x = x2;
-		pos.y = y1;
-		luaRenderBuffer->SafeAppend(luaBufferVertex);
-	}
-	{
-		pos.x = x2;
-		pos.y = y2;
-		luaRenderBuffer->SafeAppend(luaBufferVertex);
-	}
-	{
-		pos.x = x1;
-		pos.y = y2;
-		luaRenderBuffer->SafeAppend(luaBufferVertex);
-	}
+	pos.x = x1; pos.y = y1; luaRenderBuffer->SafeAppend(luaBufferVertex);
+	pos.x = x2; pos.y = y1; luaRenderBuffer->SafeAppend(luaBufferVertex);
+	pos.x = x2; pos.y = y2; luaRenderBuffer->SafeAppend(luaBufferVertex);
+	pos.x = x1; pos.y = y2; luaRenderBuffer->SafeAppend(luaBufferVertex);
 
+	// immediate submission
 	luaRenderBuffer->Submit(GL_QUADS);
 
 	luaRenderBuffer = nullptr;
@@ -2842,7 +2829,10 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 		return 0;
 
 	const unsigned int bufferID = luaL_checkint(L, 1);
+	const unsigned int startPos = luaL_checkint(L, 2);
 
+	if (!lua_isfunction(L, 3))
+		return 0;
 	if (bufferID >= luaRenderBuffers.size())
 		return 0;
 
@@ -2860,13 +2850,20 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 	{
 		luaRenderBuffer = wb;
 		// rewind; sub-region updates are painful to handle with just gl.Vertex&co
-		luaRenderBuffer->Reset();
+		luaRenderBuffer->Reset(startPos);
 
-		// fill the buffer
-		assert(lua_isfunction(L, 2));
-		BeginEnd(L);
-		assert(luaRenderBuffer == nullptr);
+		{
+			inBeginEnd = true;
+			// fill the buffer
+			const int nFuncArgs = lua_gettop(L) - 3;
+			const int callError = lua_pcall(L, nFuncArgs, 0, 0);
+			inBeginEnd = false;
 
+			if (callError != 0)
+				luaL_error(L, "[gl.%s(id, pos, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
+		}
+
+		assert(luaRenderBuffer != nullptr);
 		luaRenderBuffer = nullptr;
 	}
 
