@@ -714,50 +714,18 @@ void LuaMatTexture::Bind() const
 	const GLuint texID = GetTextureID();
 	const GLuint texType = GetTextureTarget();
 
-	if (texID != 0) {
+	if (texID != 0)
 		glBindTexture(texType, texID);
-
-		// do not enable cubemap samplers here (not
-		// needed for shaders, not wanted otherwise)
-		if (enable) {
-			switch (texType) {
-				case GL_TEXTURE_2D:       {   glEnable(texType);   } break;
-				case GL_TEXTURE_CUBE_MAP: { /*glEnable(texType);*/ } break;
-				default:                  {                        } break;
-			}
-		}
-	}
-
-	else if (!enable) {
-		switch (texType) {
-			case GL_TEXTURE_2D:       {   glDisable(texType);   } break;
-			case GL_TEXTURE_CUBE_MAP: { /*glDisable(texType);*/ } break;
-			default:                  {                         } break;
-		}
-	}
 
 	if (type == LUATEX_SHADOWMAP)
 		shadowHandler.SetupShadowTexSamplerRaw();
-
 }
 
 
 void LuaMatTexture::Unbind() const
 {
-	if (type == LUATEX_NONE)
-		return;
-
 	if (type == LUATEX_SHADOWMAP)
 		shadowHandler.ResetShadowTexSamplerRaw();
-
-	if (!enable)
-		return;
-
-	switch (GetTextureTarget()) {
-		case GL_TEXTURE_2D:       {   glDisable(GL_TEXTURE_2D);         } break;
-		case GL_TEXTURE_CUBE_MAP: { /*glDisable(GL_TEXTURE_CUBE_MAP);*/ } break;
-		default:                  {                                     } break;
-	}
 }
 
 

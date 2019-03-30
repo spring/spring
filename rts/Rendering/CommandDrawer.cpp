@@ -80,7 +80,6 @@ void CommandDrawer::DrawLuaQueuedUnitSetCommands(bool onMiniMap) const
 	if (luaQueuedUnitSet.empty())
 		return;
 
-	glDisable(GL_TEXTURE_2D);
 	glAttribStatePtr->DisableDepthTest();
 
 	lineDrawer.Configure(cmdColors.UseColorRestarts(),

@@ -380,10 +380,6 @@ void LuaOpenGL::ResetGLState()
 	// glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
 	#endif
 
-	#if 0
-	// FIXME -- multitexturing
-	// glDisable(GL_TEXTURE_2D);
-	#endif
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL); // ::PolygonMode
 	#if 0
@@ -2301,19 +2297,11 @@ int LuaOpenGL::Texture(lua_State* L)
 		if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS))
 			luaL_error(L, "Bad texture unit given to gl.Texture()");
 
-		texUnit += texNum;
-
-		if (texUnit != GL_TEXTURE0)
+		if ((texUnit += texNum) != GL_TEXTURE0)
 			glActiveTexture(texUnit);
 	}
 
 	if (lua_isboolean(L, nextArg)) {
-		if (lua_toboolean(L, nextArg)) {
-			glEnable(GL_TEXTURE_2D);
-		} else {
-			glDisable(GL_TEXTURE_2D);
-		}
-
 		if (texUnit != GL_TEXTURE0)
 			glActiveTexture(GL_TEXTURE0);
 
