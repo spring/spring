@@ -19,7 +19,9 @@ static GL::RenderDataBuffer gRenderBufferTC[2];
 static GL::RenderDataBuffer gRenderBuffer2D0[2];
 static GL::RenderDataBuffer gRenderBuffer2DT[2];
 
+static GL::RenderDataBuffer gRenderBufferLUA[2];
 
+// typed special-purpose buffer wrappers
 static GL::RenderDataBuffer0 tRenderBuffer0 [2];
 static GL::RenderDataBufferC tRenderBufferC [2];
 static GL::RenderDataBufferC tRenderBufferFC[2];
@@ -31,6 +33,8 @@ static GL::RenderDataBufferTC tRenderBufferTC[2];
 
 static GL::RenderDataBuffer2D0 tRenderBuffer2D0[2];
 static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
+
+static GL::RenderDataBufferLUA tRenderBufferLUA[2];
 
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0 /*globalRendering->drawFrame & 1*/ ]; }
@@ -44,6 +48,8 @@ GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0 /*gl
 
 GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0 /*globalRendering->drawFrame & 1*/ ]; }
+
+GL::RenderDataBufferLUA* GL::GetRenderBufferLUA() { return &tRenderBufferLUA[0 /*globalRendering->drawFrame & 1*/ ]; }
 
 
 void GL::InitRenderBuffers() {
@@ -75,6 +81,8 @@ void GL::InitRenderBuffers() {
 
 		SETUP_RBUFFER(2D0, i, 1 << 18, 1 << 16);
 		SETUP_RBUFFER(2DT, i, 1 << 18, 1 << 16);
+
+		SETUP_RBUFFER(LUA, i, 1 << 20, 1 << 16);
 	}
 
 	for (int i = 0; i < 2; i++) {
@@ -89,6 +97,9 @@ void GL::InitRenderBuffers() {
 
 		CREATE_SHADER(2D0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 		CREATE_SHADER(2DT, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
+
+		// Lua users are expected to supply their own
+		// CREATE_SHADER(LUA, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 	}
 
 	#undef CREATE_SHADER
@@ -108,16 +119,13 @@ void GL::KillRenderBuffers() {
 
 		gRenderBuffer2D0[i].Kill();
 		gRenderBuffer2DT[i].Kill();
+
+		gRenderBufferLUA[i].Kill();
 	}
 }
 
 void GL::SwapRenderBuffers() {
-	#if 0
 	// NB: called before frame is incremented
-	tRenderBuffer0[1 - (globalRendering->drawFrame & 1)].Reset();
-	tRenderBufferC[1 - (globalRendering->drawFrame & 1)].Reset();
-	tRenderBufferT[1 - (globalRendering->drawFrame & 1)].Reset();
-	#else
 	std::swap(tRenderBuffer0 [0], tRenderBuffer0 [1]);
 	std::swap(tRenderBufferC [0], tRenderBufferC [1]);
 	std::swap(tRenderBufferFC[0], tRenderBufferFC[1]);
@@ -130,6 +138,8 @@ void GL::SwapRenderBuffers() {
 	std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[1]);
 	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
 
+	std::swap(tRenderBufferLUA[0], tRenderBufferLUA[1]);
+
 	tRenderBuffer0 [0].Reset();
 	tRenderBufferC [0].Reset();
 	tRenderBufferFC[0].Reset();
@@ -141,7 +151,8 @@ void GL::SwapRenderBuffers() {
 
 	tRenderBuffer2D0[0].Reset();
 	tRenderBuffer2DT[0].Reset();
-	#endif
+
+	tRenderBufferLUA[0].Reset();
 }
 
 
@@ -190,12 +201,11 @@ char* GL::RenderDataBuffer::FormatShaderBase(
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform mat4 u_proj_mat;\n");
 		} break;
 		case 'F': {
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st*)
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex1;\n"); // TNT (v_texcoor_uv1)
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex2;\n"); // TNT (v_texcoor_uv2)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT*,LUA (v_texcoor_st*)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform float u_gamma_exponent = 1.0;\n"); // TODO: set for every shader
 		} break;
-		default: {} break;
+		default: {
+		} break;
 	}
 
 	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\n");
@@ -272,10 +282,11 @@ char* GL::RenderDataBuffer::FormatShaderType(
 	} else {
 		switch (type[0]) {
 			case 'V': {
-				// position (2D or 3D) is always the first attribute
+				// position (2D, 3D, or 4D [Lua]) is always the first attribute
 				switch (rawAttrs[0].count) {
-					case 2: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xy , 0.0, 1.0);\n"); } break;
-					case 3: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz,      1.0);\n"); } break;
+					case 2: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xy  , 0.0, 1.0);\n"); } break;
+					case 3: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz ,      1.0);\n"); } break;
+					case 4: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyzw          );\n"); } break;
 					default: {} break;
 				}
 

@@ -1,13 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-// TODO:
-// - go back to counting matrix push/pops (just for modelview?)
-//   would have to make sure that display lists are also handled
-//   (GL_MODELVIEW_STACK_DEPTH could help current situation, but
-//    requires the ARB_imaging extension)
-// - use materials instead of raw calls (again, handle dlists)
-
 #include "Rendering/GL/myGL.h"
 #include <string>
 #include <vector>
@@ -49,6 +42,7 @@
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -75,6 +69,17 @@ static constexpr int MAX_TEXTURE_UNITS = 32;
 
 /******************************************************************************/
 /******************************************************************************/
+
+static VA_TYPE_LUA luaBufferVertex = {
+	{0.0f, 0.0f, 0.0f, 1.0f}, // p
+	{0.0f, 0.0f, 0.0f      }, // n
+	{0.0f, 0.0f, 0.0f, 0.0f}, // uv
+	{0   , 0   , 0   , 0   }, // c
+};
+
+// null outside BeginEnd
+static GL::RenderDataBufferLUA* luaRenderBuffer = nullptr;
+
 
 void (*LuaOpenGL::resetMatrixFunc)() = nullptr;
 
@@ -1538,13 +1543,7 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 
 	bool useTxcd = false;
-/*
-	bool useNorm = false;
 
-	if (lua_isboolean(L, 5)) {
-		useNorm = lua_toboolean(L, 5);
-	}
-*/
 	float tu0, tv0, tu1, tv1;
 	if (args == 9) {
 		tu0 = luaL_checknumber(L, 6);
@@ -1706,15 +1705,22 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	if ((args < 2) || !lua_isfunction(L, 2))
 		luaL_error(L, "Incorrect arguments to gl.BeginEnd(type, func, ...)");
 
-	// call the function
-	glBegin((GLuint)luaL_checkint(L, 1));
-	const int error = lua_pcall(L, (args - 2), 0, 0);
-	glEnd();
+	// caller is expected to supply a shader and transform
+	// default would only make sense for trivial scenarios
+	luaRenderBuffer = GL::GetRenderBufferLUA();
 
-	if (error != 0) {
-		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s", error, lua_tostring(L, -1));
+	const int primType = luaL_checkint(L, 1);
+	const int callError = lua_pcall(L, (args - 2), 0, 0);
+
+	luaRenderBuffer->Submit(primType);
+	luaRenderBuffer = nullptr;
+
+
+	if (callError != 0) {
+		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s", callError, lua_tostring(L, -1));
 		lua_error(L);
 	}
+
 	return 0;
 }
 
@@ -1725,164 +1731,51 @@ int LuaOpenGL::Vertex(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 1) {
-		if (!lua_istable(L, 1)) {
-			luaL_error(L, "Bad data passed to gl.Vertex()");
-		}
-		lua_rawgeti(L, 1, 1);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.Vertex()");
-		}
-		const float x = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 2);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.Vertex()");
-		}
-		const float y = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 3);
-		if (!lua_isnumber(L, -1)) {
-			glVertex2f(x, y);
-			return 0;
-		}
-		const float z = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 4);
-		if (!lua_isnumber(L, -1)) {
-			glVertex3f(x, y, z);
-			return 0;
-		}
-		const float w = lua_tofloat(L, -1);
-		glVertex4f(x, y, z, w);
+	if (luaRenderBuffer == nullptr)
 		return 0;
-	}
 
-	if (args == 3) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		const float z = luaL_checkfloat(L, 3);
-		glVertex3f(x, y, z);
-	}
-	else if (args == 2) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		glVertex2f(x, y);
-	}
-	else if (args == 4) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		const float z = luaL_checkfloat(L, 3);
-		const float w = luaL_checkfloat(L, 4);
-		glVertex4f(x, y, z, w);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.Vertex()");
-	}
+	// can only be set inside BeginEnd
+	luaBufferVertex.p.x = luaL_optfloat(L, 1, luaBufferVertex.p.x);
+	luaBufferVertex.p.y = luaL_optfloat(L, 2, luaBufferVertex.p.y);
+	luaBufferVertex.p.z = luaL_optfloat(L, 3, luaBufferVertex.p.z);
+	luaBufferVertex.p.w = luaL_optfloat(L, 4, luaBufferVertex.p.w);
 
+	luaRenderBuffer->SafeAppend(luaBufferVertex);
 	return 0;
 }
-
 
 int LuaOpenGL::Normal(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 1) {
-		if (!lua_istable(L, 1)) {
-			luaL_error(L, "Bad data passed to gl.Normal()");
-		}
-		lua_rawgeti(L, 1, 1);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.Normal()");
-		}
-		const float x = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 2);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.Normal()");
-		}
-		const float y = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 3);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.Normal()");
-		}
-		const float z = lua_tofloat(L, -1);
-		glNormal3f(x, y, z);
-		return 0;
-	}
-
-	const float x = luaL_checkfloat(L, 1);
-	const float y = luaL_checkfloat(L, 2);
-	const float z = luaL_checkfloat(L, 3);
-	glNormal3f(x, y, z);
+	// can be set anywhere outside BeginEnd
+	luaBufferVertex.n.x = luaL_optfloat(L, 1, luaBufferVertex.n.x);
+	luaBufferVertex.n.y = luaL_optfloat(L, 2, luaBufferVertex.n.y);
+	luaBufferVertex.n.z = luaL_optfloat(L, 3, luaBufferVertex.n.z);
 	return 0;
 }
-
 
 int LuaOpenGL::TexCoord(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
+	// can be set anywhere outside BeginEnd
+	luaBufferVertex.uv.x = luaL_optfloat(L, 1, luaBufferVertex.uv.x);
+	luaBufferVertex.uv.y = luaL_optfloat(L, 2, luaBufferVertex.uv.y);
+	luaBufferVertex.uv.z = luaL_optfloat(L, 3, luaBufferVertex.uv.z);
+	luaBufferVertex.uv.w = luaL_optfloat(L, 4, luaBufferVertex.uv.w);
+	return 0;
+}
 
-	if (args == 1) {
-		if (lua_isnumber(L, 1)) {
-			const float x = lua_tofloat(L, 1);
-			glTexCoord1f(x);
-			return 0;
-		}
-		if (!lua_istable(L, 1)) {
-			luaL_error(L, "Bad 1data passed to gl.TexCoord()");
-		}
-		lua_rawgeti(L, 1, 1);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad 2data passed to gl.TexCoord()");
-		}
-		const float x = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 2);
-		if (!lua_isnumber(L, -1)) {
-			glTexCoord1f(x);
-			return 0;
-		}
-		const float y = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 3);
-		if (!lua_isnumber(L, -1)) {
-			glTexCoord2f(x, y);
-			return 0;
-		}
-		const float z = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 4);
-		if (!lua_isnumber(L, -1)) {
-			glTexCoord3f(x, y, z);
-			return 0;
-		}
-		const float w = lua_tofloat(L, -1);
-		glTexCoord4f(x, y, z, w);
-		return 0;
-	}
+int LuaOpenGL::Color(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
 
-	if (args == 2) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		glTexCoord2f(x, y);
-	}
-	else if (args == 3) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		const float z = luaL_checkfloat(L, 3);
-		glTexCoord3f(x, y, z);
-	}
-	else if (args == 4) {
-		const float x = luaL_checkfloat(L, 1);
-		const float y = luaL_checkfloat(L, 2);
-		const float z = luaL_checkfloat(L, 3);
-		const float w = luaL_checkfloat(L, 4);
-		glTexCoord4f(x, y, z, w);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.TexCoord()");
-	}
+	// can be set anywhere outside BeginEnd
+	luaBufferVertex.c.r = static_cast<uint8_t>(luaL_optfloat(L, 1, luaBufferVertex.c.r * 1.0f) * 255.0f);
+	luaBufferVertex.c.g = static_cast<uint8_t>(luaL_optfloat(L, 2, luaBufferVertex.c.g * 1.0f) * 255.0f);
+	luaBufferVertex.c.b = static_cast<uint8_t>(luaL_optfloat(L, 3, luaBufferVertex.c.b * 1.0f) * 255.0f);
+	luaBufferVertex.c.a = static_cast<uint8_t>(luaL_optfloat(L, 4, luaBufferVertex.c.a * 1.0f) * 255.0f);
 	return 0;
 }
 
@@ -1954,48 +1847,6 @@ int LuaOpenGL::TexRect(lua_State* L)
 
 	return 0;
 }
-
-
-/******************************************************************************/
-
-int LuaOpenGL::Color(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1) {
-		luaL_error(L, "Incorrect arguments to gl.Color()");
-	}
-
-	float color[4];
-
-	if (args == 1) {
-		if (!lua_istable(L, 1)) {
-			luaL_error(L, "Incorrect arguments to gl.Color()");
-		}
-		const int count = LuaUtils::ParseFloatArray(L, -1, color, 4);
-		if (count < 3) {
-			luaL_error(L, "Incorrect arguments to gl.Color()");
-		}
-		if (count == 3) {
-			color[3] = 1.0f;
-		}
-	}
-	else if (args >= 3) {
-		color[0] = (GLfloat)luaL_checkfloat(L, 1);
-		color[1] = (GLfloat)luaL_checkfloat(L, 2);
-		color[2] = (GLfloat)luaL_checkfloat(L, 3);
-		color[3] = (GLfloat)luaL_optnumber(L, 4, 1.0f);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.Color()");
-	}
-
-	glColor4fv(color);
-
-	return 0;
-}
-
 
 
 /******************************************************************************/

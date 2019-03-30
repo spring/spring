@@ -5,6 +5,7 @@
 
 #include "System/Color.h"
 #include "System/float4.h"
+#include "System/type2.h"
 
 struct VA_TYPE_0 {
 	float3 p;
@@ -43,6 +44,12 @@ struct VA_TYPE_2dTC {
 	float  s, t;
 	SColor c;
 };
+struct VA_TYPE_LUA {
+	float4 p; // Lua can freely set the w-component
+	float3 n;
+	float4 uv; // two channels for basic texturing
+	SColor c;
+};
 
 static_assert(sizeof(SColor) == sizeof(float), "");
 
@@ -56,6 +63,7 @@ static_assert(sizeof(SColor) == sizeof(float), "");
 #define VA_SIZE_2D0  (sizeof(VA_TYPE_2d0 ) / sizeof(float))
 #define VA_SIZE_2DT  (sizeof(VA_TYPE_2dT ) / sizeof(float))
 #define VA_SIZE_2DTC (sizeof(VA_TYPE_2dTC) / sizeof(float))
+#define VA_SIZE_LUA  (sizeof(VA_TYPE_LUA ) / sizeof(float))
 
 #define VA_TYPE_OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
 

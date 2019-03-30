@@ -66,7 +66,6 @@ void GL::MatrixState::RotateZ(float a) { Load((Top()).RotateZ(-a * math::DEG_TO_
 
 
 
-#if 0
 void GL::MatrixMode(unsigned int glMode) {
 	switch (glMode) {
 		case GL_MODELVIEW : { glMatrixState->SetMode(0); } break;
@@ -75,11 +74,7 @@ void GL::MatrixMode(unsigned int glMode) {
 		default           : {             assert(false); } break;
 	}
 }
-#else
-void GL::MatrixMode(unsigned int glMode) { glMatrixMode(glMode); }
-#endif
 
-#if 0
 int GL::GetMatrixMode() {
 	switch (glMatrixState->GetMode()) {
 		case  0: { return GL_MODELVIEW ; } break;
@@ -90,13 +85,6 @@ int GL::GetMatrixMode() {
 
 	return 0;
 }
-#else
-int GL::GetMatrixMode() {
-	int matrixMode = 0;
-	glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
-	return matrixMode;
-}
-#endif
 
 const CMatrix44f& GL::GetMatrix() { return (glMatrixState->Top()); }
 const CMatrix44f& GL::GetMatrix(unsigned int glMode) {
@@ -112,31 +100,6 @@ const CMatrix44f& GL::GetMatrix(unsigned int glMode) {
 }
 
 
-/*
-static bool InDisplayList() {
-	GLboolean inListCompile = GL_FALSE;
-	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-	return inListCompile;
-}
-static void CompareMatrices(const CMatrix44f& svm, const CMatrix44f& spm) {
-	// calls in display lists will modify the local stack(s)
-	// lists need to be completely removed before switching!
-	assert(!InDisplayList());
-
-	CMatrix44f cvm;
-	CMatrix44f cpm;
-
-	glGetFloatv(GL_MODELVIEW_MATRIX, &cvm.m[0]);
-	glGetFloatv(GL_PROJECTION_MATRIX, &cpm.m[0]);
-
-	for (int i = 0; i < 16; i++) {
-		assert(epscmp(svm[i], cvm[i], 0.01f));
-		assert(epscmp(spm[i], cpm[i], 0.01f));
-	}
-}
-*/
-
-#if 0
 void GL::PushMatrix(const CMatrix44f& m) { glMatrixState->Push(m); }
 void GL::PushMatrix() { glMatrixState->Push(glMatrixState->Top()); }
 void GL::PopMatrix() { glMatrixState->Pop(); }
@@ -153,42 +116,4 @@ void GL::Rotate(float a, float x, float y, float z) { glMatrixState->Rotate(a, x
 void GL::RotateX(float a) { glMatrixState->RotateX(a); }
 void GL::RotateY(float a) { glMatrixState->RotateY(a); }
 void GL::RotateZ(float a) { glMatrixState->RotateZ(a); }
-
-#elif 0
-// sanity-checked versions
-void GL::PushMatrix() { glMatrixState->Push(glMatrixState->Top());  glPushMatrix(); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::PopMatrix() { glMatrixState->Pop();  glPopMatrix(); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-
-void GL::MultMatrix(const CMatrix44f& m) { glMatrixState->Mult(m);  glMultMatrixf(m); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::LoadMatrix(const CMatrix44f& m) { glMatrixState->Load(m);  glLoadMatrixf(m); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::LoadIdentity() { LoadMatrix(CMatrix44f::Identity());  glLoadIdentity(); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-
-void GL::Translate(const float3& v) { glMatrixState->Translate(v);  glTranslatef(v.x, v.y, v.z); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::Translate(float x, float y, float z) { glMatrixState->Translate({x, y, z});  glTranslatef(x, y, z); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::Scale(const float3& s) { glMatrixState->Scale(s);  glScalef(s.x, s.y, s.z); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::Scale(float x, float y, float z) { glMatrixState->Scale({x, y, z});  glScalef(x, y, z); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::Rotate(float a, float x, float y, float z) { glMatrixState->Rotate(a, x, y, z);  glRotatef(a, x, y, z); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); } // FIXME: broken
-void GL::RotateX(float a) { glMatrixState->RotateX(a);  glRotatef(a, 1.0f, 0.0f, 0.0f); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::RotateY(float a) { glMatrixState->RotateY(a);  glRotatef(a, 0.0f, 1.0f, 0.0f); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-void GL::RotateZ(float a) { glMatrixState->RotateZ(a);  glRotatef(a, 0.0f, 0.0f, 1.0f); CompareMatrices(glMatrixState->Top(0), glMatrixState->Top(1)); }
-
-#else
-
-void GL::PushMatrix(const CMatrix44f& m) { glPushMatrix(); glLoadMatrixf(m); }
-void GL::PushMatrix() { glPushMatrix(); }
-void GL::PopMatrix() { glPopMatrix(); }
-
-void GL::MultMatrix(const CMatrix44f& m) { glMultMatrixf(m); }
-void GL::LoadMatrix(const CMatrix44f& m) { glLoadMatrixf(m); }
-void GL::LoadIdentity() { glLoadIdentity(); }
-
-void GL::Translate(const float3& v) { glTranslatef(v.x, v.y, v.z); }
-void GL::Translate(float x, float y, float z) { glTranslatef(x, y, z); }
-void GL::Scale(const float3& s) { glScalef(s.x, s.y, s.z); }
-void GL::Scale(float x, float y, float z) { glScalef(x, y, z); }
-void GL::Rotate(float a, float x, float y, float z) { glRotatef(a, x, y, z); }
-void GL::RotateX(float a) { glRotatef(a, 1.0f, 0.0f, 0.0f); }
-void GL::RotateY(float a) { glRotatef(a, 0.0f, 1.0f, 0.0f); }
-void GL::RotateZ(float a) { glRotatef(a, 0.0f, 0.0f, 1.0f); }
-#endif
 
