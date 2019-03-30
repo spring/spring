@@ -1747,15 +1747,15 @@ int LuaOpenGL::Color(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	// can be set anywhere outside BeginEnd
-	luaBufferVertex.c0.r = static_cast<uint8_t>(luaL_optfloat(L, 1, luaBufferVertex.c0.r * 1.0f) * 255.0f);
-	luaBufferVertex.c0.g = static_cast<uint8_t>(luaL_optfloat(L, 2, luaBufferVertex.c0.g * 1.0f) * 255.0f);
-	luaBufferVertex.c0.b = static_cast<uint8_t>(luaL_optfloat(L, 3, luaBufferVertex.c0.b * 1.0f) * 255.0f);
-	luaBufferVertex.c0.a = static_cast<uint8_t>(luaL_optfloat(L, 4, luaBufferVertex.c0.a * 1.0f) * 255.0f);
+	luaBufferVertex.c0.r = static_cast<uint8_t>(luaL_optfloat(L, 1, luaBufferVertex.c0.r / 255.0f) * 255.0f);
+	luaBufferVertex.c0.g = static_cast<uint8_t>(luaL_optfloat(L, 2, luaBufferVertex.c0.g / 255.0f) * 255.0f);
+	luaBufferVertex.c0.b = static_cast<uint8_t>(luaL_optfloat(L, 3, luaBufferVertex.c0.b / 255.0f) * 255.0f);
+	luaBufferVertex.c0.a = static_cast<uint8_t>(luaL_optfloat(L, 4, luaBufferVertex.c0.a / 255.0f) * 255.0f);
 
-	luaBufferVertex.c1.r = static_cast<uint8_t>(luaL_optfloat(L, 5, luaBufferVertex.c1.r * 1.0f) * 255.0f);
-	luaBufferVertex.c1.g = static_cast<uint8_t>(luaL_optfloat(L, 6, luaBufferVertex.c1.g * 1.0f) * 255.0f);
-	luaBufferVertex.c1.b = static_cast<uint8_t>(luaL_optfloat(L, 7, luaBufferVertex.c1.b * 1.0f) * 255.0f);
-	luaBufferVertex.c1.a = static_cast<uint8_t>(luaL_optfloat(L, 8, luaBufferVertex.c1.a * 1.0f) * 255.0f);
+	luaBufferVertex.c1.r = static_cast<uint8_t>(luaL_optfloat(L, 5, luaBufferVertex.c1.r / 255.0f) * 255.0f);
+	luaBufferVertex.c1.g = static_cast<uint8_t>(luaL_optfloat(L, 6, luaBufferVertex.c1.g / 255.0f) * 255.0f);
+	luaBufferVertex.c1.b = static_cast<uint8_t>(luaL_optfloat(L, 7, luaBufferVertex.c1.b / 255.0f) * 255.0f);
+	luaBufferVertex.c1.a = static_cast<uint8_t>(luaL_optfloat(L, 8, luaBufferVertex.c1.a / 255.0f) * 255.0f);
 	return 0;
 }
 
