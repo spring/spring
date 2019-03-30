@@ -34,8 +34,8 @@ class LuaOpenGL {
 		static bool IsDrawingEnabled(lua_State* L) { return GetLuaContextData(L)->drawingEnabled; }
 		static void SetDrawingEnabled(lua_State* L, bool value) { GetLuaContextData(L)->drawingEnabled = value; }
 
-		static bool GetSafeMode() { return safeMode; }
-		static void SetSafeMode(bool value) { safeMode = value; }
+		static bool GetSafeMode() { return inSafeMode; }
+		static void SetSafeMode(bool value) { inSafeMode = value; }
 
 		#define NOOP_STATE_FUNCS(Name)    \
 		static void Enable  ## Name () {} \
@@ -130,22 +130,8 @@ class LuaOpenGL {
 		static void RevertScreenMatrices();
 
 	private:
-		static DrawMode drawMode;
-		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
-
-		static bool safeMode;
-
-		static float screenWidth;
-		static float screenDistance;
-		static void (*resetMatrixFunc)(void);
-		static unsigned int resetStateList;
-
-		struct OcclusionQuery {
-			unsigned int index; // into LuaOpenGL::occlusionQueries
-			unsigned int id;
-		};
-
-		static std::vector<OcclusionQuery*> occlusionQueries;
+		static bool inSafeMode;
+		static bool inBeginEnd;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -169,6 +155,11 @@ class LuaOpenGL {
 		static int ResetMatrices(lua_State* L);
 		static int Clear(lua_State* L);
 		static int SwapBuffers(lua_State* L);
+
+		static int CreateVertexArray(lua_State* L);
+		static int DeleteVertexArray(lua_State* L);
+		static int UpdateVertexArray(lua_State* L);
+		static int RenderVertexArray(lua_State* L);
 
 		static int Scissor(lua_State* L);
 		static int Viewport(lua_State* L);

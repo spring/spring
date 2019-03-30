@@ -112,8 +112,8 @@ namespace GL {
 	#endif
 
 
-	static_assert(sizeof(VA_TYPE_LUA) == (sizeof(float) * (4 + 3 + 4) + sizeof(uint32_t) * (1 + 1)), "");
-	const static std::array<Shader::ShaderInput, 5> VA_TYPE_LUA_ATTRS = {{
+	static_assert(sizeof(VA_TYPE_L) == (sizeof(float) * (4 + 3 + 4) + sizeof(uint32_t) * (1 + 1)), "");
+	const static std::array<Shader::ShaderInput, 5> VA_TYPE_L_ATTRS = {{
 		{0,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_vertex_xyzw" , VA_TYPE_OFFSET(float,  0)},
 		{1,  3, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_normal_xyz"  , VA_TYPE_OFFSET(float,  4)},
 		{2,  4, GL_FLOAT        ,  (sizeof(float) * 11 + sizeof(uint8_t) * 8),  "a_texcoor_stuv", VA_TYPE_OFFSET(float,  7)},
@@ -132,7 +132,7 @@ namespace GL {
 	const static size_t NUM_VA_TYPE_2D0_ATTRS = VA_TYPE_2D0_ATTRS.size(); // (sizeof(VA_TYPE_2D0_ATTRS) / sizeof(VA_TYPE_2D0_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_2DT_ATTRS = VA_TYPE_2DT_ATTRS.size(); // (sizeof(VA_TYPE_2DT_ATTRS) / sizeof(VA_TYPE_2DT_ATTRS[0]));
 	const static size_t NUM_VA_TYPE_2DTC_ATTRS = VA_TYPE_2DTC_ATTRS.size(); // (sizeof(VA_TYPE_2DTC_ATTRS) / sizeof(VA_TYPE_2DTC_ATTRS[0]));
-	const static size_t NUM_VA_TYPE_LUA_ATTRS = VA_TYPE_LUA_ATTRS.size(); // (sizeof(VA_TYPE_LUA_ATTRS) / sizeof(VA_TYPE_LUA_ATTRS[0]));
+	const static size_t NUM_VA_TYPE_L_ATTRS = VA_TYPE_L_ATTRS.size(); // (sizeof(VA_TYPE_L_ATTRS) / sizeof(VA_TYPE_L_ATTRS[0]));
 
 
 	struct RenderDataBuffer {
@@ -279,10 +279,10 @@ namespace GL {
 			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_2DTC_ATTRS.size(), VA_TYPE_2DTC_ATTRS.data(),  code, type, "VA_TYPE_2DTC");
 			return ptr;
 		}
-		static char* FormatShaderLUA(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderL(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_LUA");
-			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_LUA_ATTRS.size(), VA_TYPE_LUA_ATTRS.data(),  code, type, "VA_TYPE_LUA");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_L");
+			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_L_ATTRS.size(), VA_TYPE_L_ATTRS.data(),  code, type, "VA_TYPE_L");
 			return ptr;
 		}
 
@@ -329,14 +329,14 @@ namespace GL {
 		void Upload2D0 (size_t numElems, size_t numIndcs,  const VA_TYPE_2d0*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2D0_ATTRS.size() ,  e, i, VA_TYPE_2D0_ATTRS.data()); }
 		void Upload2DT (size_t numElems, size_t numIndcs,  const VA_TYPE_2dT*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2DT_ATTRS.size() ,  e, i, VA_TYPE_2DT_ATTRS.data()); }
 		void Upload2DTC(size_t numElems, size_t numIndcs,  const VA_TYPE_2dTC* e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_2DTC_ATTRS.size(),  e, i, VA_TYPE_2DTC_ATTRS.data()); }
-		void UploadLUA (size_t numElems, size_t numIndcs,  const VA_TYPE_LUA*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_LUA_ATTRS.size() ,  e, i, VA_TYPE_LUA_ATTRS.data()); }
+		void UploadL   (size_t numElems, size_t numIndcs,  const VA_TYPE_L*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_L_ATTRS.size()   ,  e, i, VA_TYPE_L_ATTRS.data()); }
 
 
 		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
 		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
 
-		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
-		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
+		void UnmapElems(bool unbind = false) { elems.UnmapBuffer(); if (unbind) { elems.Unbind(); } mapped = false; }
+		void UnmapIndcs(bool unbind = false) { indcs.UnmapBuffer(); if (unbind) { indcs.Unbind(); } mapped = false; }
 
 		VAO& GetArray() { return array; }
 		VBO& GetElems() { return elems; }
@@ -379,6 +379,7 @@ namespace GL {
 	};
 
 
+
 	#ifdef HEADLESS
 	template<typename VertexArrayType> struct TRenderDataBuffer {
 	public:
@@ -399,6 +400,22 @@ namespace GL {
 		) {
 			rdb = rdbp;
 		}
+		template<typename VertexAttribArray> void SetupStatic(
+			RenderDataBuffer* rdbp,
+			const VertexAttribArray* vaap,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
+			rdb = rdbp;
+		}
+
+
+		template<typename T> T* BindMapElems(bool r = false, bool w = true) { return (static_cast<T*>(nullptr)); }
+		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { return (static_cast<T*>(nullptr)); }
+
+		void UnmapUnbindElems() {}
+		void UnmapUnbindIndcs() {}
+
 
 		void Reset() {}
 
@@ -473,6 +490,26 @@ namespace GL {
 			elemsMap = rdb->MapElems<VertexArrayType>(true, true);
 			indcsMap = rdb->MapIndcs< IndexArrayType>(true, true); // null if numIndcs is 0
 		}
+
+		template<typename VertexAttribArray> void SetupStatic(
+			RenderDataBuffer* rdbp,
+			const VertexAttribArray* vaap,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
+			rdb = rdbp;
+
+			rdb->Init(false);
+			rdb->TUpload<VertexArrayType, IndexArrayType, Shader::ShaderInput>(numElems, numIndcs, vaap->size(),  nullptr, nullptr, vaap->data());
+		}
+
+
+		template<typename T> T* BindMapElems(bool r = false, bool w = true) { return (elemsMap = rdb->MapElems<T>(true, false, r, w)); }
+		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { return (indcsMap = rdb->MapIndcs<T>(true, false, r, w)); }
+
+		void UnmapUnbindElems() { rdb->UnmapElems(true); elemsMap = nullptr; }
+		void UnmapUnbindIndcs() { rdb->UnmapIndcs(true); indcsMap = nullptr; }
+
 
 		void Reset() {
 			prvElemPos = 0;
@@ -570,7 +607,7 @@ namespace GL {
 	RenderDataBuffer2D0* GetRenderBuffer2D0();
 	RenderDataBuffer2DT* GetRenderBuffer2DT();
 
-	RenderDataBufferLUA* GetRenderBufferLUA();
+	RenderDataBufferL* GetRenderBufferL();
 };
 
 #endif

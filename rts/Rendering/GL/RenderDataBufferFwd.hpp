@@ -24,7 +24,7 @@ namespace GL {
 	typedef TRenderDataBuffer<VA_TYPE_2d0> RenderDataBuffer2D0;
 	typedef TRenderDataBuffer<VA_TYPE_2dT> RenderDataBuffer2DT;
 
-	typedef TRenderDataBuffer<VA_TYPE_LUA> RenderDataBufferLUA;
+	typedef TRenderDataBuffer<VA_TYPE_L> RenderDataBufferL;
 
 	typedef WideLineAdapter<VA_TYPE_C> WideLineAdapterC;
 };

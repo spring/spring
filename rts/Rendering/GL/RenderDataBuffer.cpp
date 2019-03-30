@@ -19,7 +19,7 @@ static GL::RenderDataBuffer gRenderBufferTC[2];
 static GL::RenderDataBuffer gRenderBuffer2D0[2];
 static GL::RenderDataBuffer gRenderBuffer2DT[2];
 
-static GL::RenderDataBuffer gRenderBufferLUA[2];
+static GL::RenderDataBuffer gRenderBufferL[2];
 
 // typed special-purpose buffer wrappers
 static GL::RenderDataBuffer0 tRenderBuffer0 [2];
@@ -34,7 +34,7 @@ static GL::RenderDataBufferTC tRenderBufferTC[2];
 static GL::RenderDataBuffer2D0 tRenderBuffer2D0[2];
 static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
 
-static GL::RenderDataBufferLUA tRenderBufferLUA[2];
+static GL::RenderDataBufferL tRenderBufferL[2];
 
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0 /*globalRendering->drawFrame & 1*/ ]; }
@@ -49,7 +49,7 @@ GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0 /*gl
 GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0 /*globalRendering->drawFrame & 1*/ ]; }
 
-GL::RenderDataBufferLUA* GL::GetRenderBufferLUA() { return &tRenderBufferLUA[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferL* GL::GetRenderBufferL() { return &tRenderBufferL[0 /*globalRendering->drawFrame & 1*/ ]; }
 
 
 void GL::InitRenderBuffers() {
@@ -82,7 +82,7 @@ void GL::InitRenderBuffers() {
 		SETUP_RBUFFER(2D0, i, 1 << 18, 1 << 16);
 		SETUP_RBUFFER(2DT, i, 1 << 18, 1 << 16);
 
-		SETUP_RBUFFER(LUA, i, 1 << 20, 1 << 16);
+		SETUP_RBUFFER(L, i, 1 << 20, 1 << 16);
 	}
 
 	for (int i = 0; i < 2; i++) {
@@ -98,8 +98,8 @@ void GL::InitRenderBuffers() {
 		CREATE_SHADER(2D0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 		CREATE_SHADER(2DT, i, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
 
-		// Lua users are expected to supply their own
-		// CREATE_SHADER(LUA, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		// Lua buffer users are expected to supply their own
+		// CREATE_SHADER(L, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 	}
 
 	#undef CREATE_SHADER
@@ -120,7 +120,7 @@ void GL::KillRenderBuffers() {
 		gRenderBuffer2D0[i].Kill();
 		gRenderBuffer2DT[i].Kill();
 
-		gRenderBufferLUA[i].Kill();
+		gRenderBufferL[i].Kill();
 	}
 }
 
@@ -138,7 +138,7 @@ void GL::SwapRenderBuffers() {
 	std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[1]);
 	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
 
-	std::swap(tRenderBufferLUA[0], tRenderBufferLUA[1]);
+	std::swap(tRenderBufferL[0], tRenderBufferL[1]);
 
 	tRenderBuffer0 [0].Reset();
 	tRenderBufferC [0].Reset();
@@ -152,7 +152,7 @@ void GL::SwapRenderBuffers() {
 	tRenderBuffer2D0[0].Reset();
 	tRenderBuffer2DT[0].Reset();
 
-	tRenderBufferLUA[0].Reset();
+	tRenderBufferL[0].Reset();
 }
 
 
@@ -201,7 +201,7 @@ char* GL::RenderDataBuffer::FormatShaderBase(
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform mat4 u_proj_mat;\n");
 		} break;
 		case 'F': {
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT*,LUA (v_texcoor_st*)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT*,L (v_texcoor_st*)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform float u_gamma_exponent = 1.0;\n"); // TODO: set for every shader
 		} break;
 		default: {

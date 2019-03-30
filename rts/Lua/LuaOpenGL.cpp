@@ -20,7 +20,6 @@
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaUtils.h"
-//FIXME#include "LuaVBOs.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/CommandColors.h"
@@ -65,12 +64,18 @@
 #undef far // avoid collision with windef.h
 #undef near
 
+struct LuaOcclusionQuery {
+	unsigned int index; // into LuaOpenGL::occlusionQueries
+	unsigned int id;
+};
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 static constexpr int MAX_TEXTURE_UNITS = 32;
 
-/******************************************************************************/
-/******************************************************************************/
-
-static VA_TYPE_LUA luaBufferVertex = {
+static VA_TYPE_L luaBufferVertex = {
 	{0.0f, 0.0f, 0.0f, 1.0f}, // p
 	{0.0f, 0.0f, 0.0f      }, // n
 	{0.0f, 0.0f, 0.0f, 0.0f}, // uv
@@ -78,24 +83,30 @@ static VA_TYPE_LUA luaBufferVertex = {
 	{0   , 0   , 0   , 0   }, // c1
 };
 
-// null outside BeginEnd
-static GL::RenderDataBufferLUA* luaRenderBuffer = nullptr;
-
-
-void (*LuaOpenGL::resetMatrixFunc)() = nullptr;
-
-LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
-LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
-
-bool  LuaOpenGL::safeMode = true;
-
-float LuaOpenGL::screenWidth = 0.36f; // screen width (meters)
-float LuaOpenGL::screenDistance = 0.60f; // eye-to-screen (meters)
 
 static float3 screenViewTrans;
+static float2 screenParameters = {0.36f, 0.60f}; // screen width (meters), eye-to-screen (meters)
 
-std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
 
+static LuaOpenGL::DrawMode currDrawMode = LuaOpenGL::DRAW_NONE;
+static LuaOpenGL::DrawMode prevDrawMode = LuaOpenGL::DRAW_NONE; // for minimap (when drawn in Screen mode)
+
+
+// allocated by CreateVertexArray
+static FixedDynMemPool<sizeof(GL::RenderDataBuffer), 32, 256> renderBufferPool;
+
+static std::vector<GL::RenderDataBufferL> luaRenderBuffers;
+static std::vector<LuaOcclusionQuery*> occlusionQueries;
+
+// global immediate buffer; null outside BeginEnd
+// can also point to a vertex-array being updated
+static GL::RenderDataBufferL* luaRenderBuffer = nullptr;
+
+static void (*resetMatrixFunc)() = nullptr;
+
+
+bool LuaOpenGL::inSafeMode = true;
+bool LuaOpenGL::inBeginEnd = false;
 
 
 
@@ -173,10 +184,21 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 
 void LuaOpenGL::Free()
 {
-	for (const OcclusionQuery* q: occlusionQueries) {
+	for (GL::RenderDataBufferL& wb: luaRenderBuffers) {
+		GL::RenderDataBuffer* rb = wb.GetBuffer();
+
+		if (rb == nullptr)
+			continue;
+
+		rb->Kill();
+		renderBufferPool.free(rb);
+	}
+
+	for (const LuaOcclusionQuery* q: occlusionQueries) {
 		glDeleteQueries(1, &q->id);
 	}
 
+	luaRenderBuffers.clear();
 	occlusionQueries.clear();
 }
 
@@ -205,6 +227,12 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ResetMatrices);
 	REGISTER_LUA_CFUNC(Clear);
 	REGISTER_LUA_CFUNC(SwapBuffers);
+
+	REGISTER_LUA_CFUNC(CreateVertexArray);
+	REGISTER_LUA_CFUNC(DeleteVertexArray);
+	REGISTER_LUA_CFUNC(UpdateVertexArray);
+	REGISTER_LUA_CFUNC(RenderVertexArray);
+
 	REGISTER_LUA_CFUNC(Scissor);
 	REGISTER_LUA_CFUNC(Viewport);
 	REGISTER_LUA_CFUNC(ColorMask);
@@ -333,7 +361,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	LuaShaders::PushEntries(L);
  	LuaFBOs::PushEntries(L);
  	LuaRBOs::PushEntries(L);
-	// TODO LuaVBOs::PushEntries(L);
 
 	LuaFonts::PushEntries(L);
 	return true;
@@ -418,10 +445,10 @@ constexpr GLbitfield AttribBits =
 
 void LuaOpenGL::EnableCommon(DrawMode mode)
 {
-	assert(drawMode == DRAW_NONE);
-	drawMode = mode;
+	assert(currDrawMode == DRAW_NONE);
+	currDrawMode = mode;
 
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	glAttribStatePtr->PushBits(AttribBits);
@@ -431,10 +458,10 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 
 void LuaOpenGL::DisableCommon(DrawMode mode)
 {
-	assert(drawMode == mode);
-	drawMode = DRAW_NONE;
+	assert(currDrawMode == mode);
+	currDrawMode = DRAW_NONE;
 
-	if (safeMode)
+	if (inSafeMode)
 		glAttribStatePtr->PopBits();
 
 	glUseProgram(0);
@@ -458,7 +485,7 @@ void LuaOpenGL::EnableDrawGenesis()
 
 void LuaOpenGL::DisableDrawGenesis()
 {
-	if (safeMode)
+	if (inSafeMode)
 		ResetGenesisMatrices();
 
 	DisableCommon(DRAW_GENESIS);
@@ -467,7 +494,7 @@ void LuaOpenGL::DisableDrawGenesis()
 
 void LuaOpenGL::ResetDrawGenesis()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetGenesisMatrices();
@@ -488,7 +515,7 @@ void LuaOpenGL::EnableDrawWorld()
 
 void LuaOpenGL::DisableDrawWorld()
 {
-	if (safeMode)
+	if (inSafeMode)
 		ResetWorldMatrices();
 
 	DisableCommon(DRAW_WORLD);
@@ -496,7 +523,7 @@ void LuaOpenGL::DisableDrawWorld()
 
 void LuaOpenGL::ResetDrawWorld()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetWorldMatrices();
@@ -517,7 +544,7 @@ void LuaOpenGL::EnableDrawWorldPreUnit()
 
 void LuaOpenGL::DisableDrawWorldPreUnit()
 {
-	if (safeMode)
+	if (inSafeMode)
 		ResetWorldMatrices();
 
 	DisableCommon(DRAW_WORLD);
@@ -525,7 +552,7 @@ void LuaOpenGL::DisableDrawWorldPreUnit()
 
 void LuaOpenGL::ResetDrawWorldPreUnit()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetWorldMatrices();
@@ -565,7 +592,7 @@ void LuaOpenGL::DisableDrawWorldShadow()
 
 void LuaOpenGL::ResetDrawWorldShadow()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetWorldShadowMatrices();
@@ -590,7 +617,7 @@ void LuaOpenGL::EnableDrawWorldReflection()
 
 void LuaOpenGL::DisableDrawWorldReflection()
 {
-	if (safeMode)
+	if (inSafeMode)
 		ResetWorldMatrices();
 
 	DisableCommon(DRAW_WORLD_REFLECTION);
@@ -598,7 +625,7 @@ void LuaOpenGL::DisableDrawWorldReflection()
 
 void LuaOpenGL::ResetDrawWorldReflection()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetWorldMatrices();
@@ -619,7 +646,7 @@ void LuaOpenGL::EnableDrawWorldRefraction()
 
 void LuaOpenGL::DisableDrawWorldRefraction()
 {
-	if (safeMode)
+	if (inSafeMode)
 		ResetWorldMatrices();
 
 	DisableCommon(DRAW_WORLD_REFRACTION);
@@ -627,7 +654,7 @@ void LuaOpenGL::DisableDrawWorldRefraction()
 
 void LuaOpenGL::ResetDrawWorldRefraction()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetWorldMatrices();
@@ -658,7 +685,7 @@ void LuaOpenGL::DisableDrawScreenCommon()
 
 void LuaOpenGL::ResetDrawScreenCommon()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetScreenMatrices();
@@ -672,9 +699,9 @@ void LuaOpenGL::ResetDrawScreenCommon()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
-	if (drawMode == DRAW_SCREEN) {
+	if (currDrawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
-		drawMode = DRAW_NONE;
+		currDrawMode = DRAW_NONE;
 	}
 
 	EnableCommon(DRAW_MINIMAP);
@@ -691,7 +718,7 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		return;
 	}
 
-	if (safeMode) {
+	if (inSafeMode) {
 		glAttribStatePtr->PopBits();
 	} else {
 		ResetGLState();
@@ -701,12 +728,12 @@ void LuaOpenGL::DisableDrawInMiniMap()
 	resetMatrixFunc();
 
 	prevDrawMode = DRAW_NONE;
-	drawMode = DRAW_SCREEN;
+	currDrawMode = DRAW_SCREEN;
 }
 
 void LuaOpenGL::ResetDrawInMiniMap()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetMiniMapMatrices();
@@ -721,9 +748,9 @@ void LuaOpenGL::ResetDrawInMiniMap()
 
 void LuaOpenGL::EnableDrawInMiniMapBackground()
 {
-	if (drawMode == DRAW_SCREEN) {
+	if (currDrawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
-		drawMode = DRAW_NONE;
+		currDrawMode = DRAW_NONE;
 	}
 
 	EnableCommon(DRAW_MINIMAP_BACKGROUND);
@@ -740,7 +767,7 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 		return;
 	}
 
-	if (safeMode) {
+	if (inSafeMode) {
 		glAttribStatePtr->PopBits();
 	} else {
 		ResetGLState();
@@ -750,12 +777,12 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 	resetMatrixFunc();
 
 	prevDrawMode = DRAW_NONE;
-	drawMode = DRAW_SCREEN;
+	currDrawMode = DRAW_SCREEN;
 }
 
 void LuaOpenGL::ResetDrawInMiniMapBackground()
 {
-	if (!safeMode)
+	if (!inSafeMode)
 		return;
 
 	ResetMiniMapMatrices();
@@ -780,7 +807,7 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float hssx = 0.5f * ssx;
 	const float hssy = 0.5f * ssy;
 
-	const float zplane = screenDistance * (ssx / screenWidth);
+	const float zplane = screenParameters.y * (ssx / screenParameters.x);
 	const float znear  = zplane * 0.5f;
 	const float zfar   = zplane * 2.0f;
 	const float zfact  = znear / zplane;
@@ -906,8 +933,8 @@ int LuaOpenGL::GetString(lua_State* L)
 int LuaOpenGL::ConfigScreen(lua_State* L)
 {
 //	CheckDrawingEnabled(L, __func__);
-	screenWidth = luaL_checkfloat(L, 1);
-	screenDistance = luaL_checkfloat(L, 2);
+	screenParameters.x = luaL_checkfloat(L, 1);
+	screenParameters.y = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -972,7 +999,7 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 	if (minimap == nullptr)
 		return 0;
 
-	if (drawMode != DRAW_SCREEN)
+	if (currDrawMode != DRAW_SCREEN)
 		luaL_error(L, "gl.DrawMiniMap() can only be used within DrawScreenItems()");
 
 	if (!minimap->GetSlaveMode())
@@ -1671,25 +1698,31 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-
-	if ((args < 2) || !lua_isfunction(L, 2))
-		luaL_error(L, "Incorrect arguments to gl.BeginEnd(type, func, ...)");
-
-	// caller is expected to supply a shader and transform
-	// default would only make sense for trivial scenarios
-	luaRenderBuffer = GL::GetRenderBufferLUA();
-
+	const int argCount = lua_gettop(L); // number of arguments
 	const int primType = luaL_checkint(L, 1);
-	const int callError = lua_pcall(L, (args - 2), 0, 0);
 
-	luaRenderBuffer->Submit(primType);
-	luaRenderBuffer = nullptr;
+	if ((argCount < 2) || !lua_isfunction(L, 2))
+		luaL_error(L, "[gl.%s(type, func, ...)] incorrect arguments", __func__);
 
+	if (!inBeginEnd) {
+		// caller is expected to supply a shader and transform
+		// default would only make sense for trivial scenarios
+		//
+		// NOTE: if non-null, caller is gl.UpdateVertexArray
+		if (luaRenderBuffer == nullptr)
+			luaRenderBuffer = GL::GetRenderBufferL();
 
-	if (callError != 0) {
-		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s", callError, lua_tostring(L, -1));
-		lua_error(L);
+		inBeginEnd = true;
+		const int callError = lua_pcall(L, argCount - 2, 0, 0);
+		inBeginEnd = false;
+
+		if (callError != 0)
+			luaL_error(L, "[gl.%s(type, func, ...)] ierror(%i) = %ss", __func__, callError, lua_tostring(L, -1));
+
+		if (luaRenderBuffer == GL::GetRenderBufferL())
+			luaRenderBuffer->Submit(primType);
+
+		luaRenderBuffer = nullptr;
 	}
 
 	return 0;
@@ -1761,11 +1794,42 @@ int LuaOpenGL::Color(lua_State* L)
 int LuaOpenGL::Rect(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+
 	const float x1 = luaL_checkfloat(L, 1);
 	const float y1 = luaL_checkfloat(L, 2);
 	const float x2 = luaL_checkfloat(L, 3);
 	const float y2 = luaL_checkfloat(L, 4);
-	glRectf(x1, y1, x2, y2);
+
+	float4& pos = luaBufferVertex.p;
+	pos.z = 0.0f;
+	pos.w = 1.0f;
+
+	luaRenderBuffer = GL::GetRenderBufferL();
+
+	{
+		pos.x = x1;
+		pos.y = y1;
+		luaRenderBuffer->SafeAppend(luaBufferVertex);
+	}
+	{
+		pos.x = x2;
+		pos.y = y1;
+		luaRenderBuffer->SafeAppend(luaBufferVertex);
+	}
+	{
+		pos.x = x2;
+		pos.y = y2;
+		luaRenderBuffer->SafeAppend(luaBufferVertex);
+	}
+	{
+		pos.x = x1;
+		pos.y = y2;
+		luaRenderBuffer->SafeAppend(luaBufferVertex);
+	}
+
+	luaRenderBuffer->Submit(GL_QUADS);
+
+	luaRenderBuffer = nullptr;
 	return 0;
 }
 
@@ -2573,7 +2637,7 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 		return 0;
 
 	GLint currentFBO = 0;
-	if (drawMode == DRAW_WORLD_SHADOW)
+	if (currDrawMode == DRAW_WORLD_SHADOW)
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, tex->fbo);
@@ -2707,6 +2771,140 @@ int LuaOpenGL::SwapBuffers(lua_State* L)
 	globalRendering->SwapBuffers(true, true);
 	return 0;
 }
+
+
+
+/******************************************************************************/
+
+int LuaOpenGL::CreateVertexArray(lua_State* L)
+{
+	if (inBeginEnd)
+		return 0;
+
+	unsigned int bufferID = -1u;
+
+	{
+		if (luaRenderBuffers.empty())
+			luaRenderBuffers.reserve(32);
+
+		// find free slot
+		const auto pred = [](GL::RenderDataBufferL& p) { return (p.GetBuffer() == nullptr); };
+		const auto iter = std::find_if(luaRenderBuffers.begin(), luaRenderBuffers.end(), pred);
+
+		if (iter != luaRenderBuffers.end()) {
+			bufferID = iter - luaRenderBuffers.begin();
+		} else {
+			bufferID = luaRenderBuffers.size();
+			luaRenderBuffers.emplace_back();
+		}
+	}
+
+	// TODO: indices, gl.VertexIndex?
+	if (luaL_optboolean(L, 3, false)) {
+		luaRenderBuffers[bufferID].Setup(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), 0 * luaL_checkint(L, 2));
+	} else {
+		luaRenderBuffers[bufferID].SetupStatic(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), 0 * luaL_checkint(L, 2));
+	}
+
+	lua_pushnumber(L, bufferID);
+	return 1;
+}
+
+int LuaOpenGL::DeleteVertexArray(lua_State* L)
+{
+	if (inBeginEnd)
+		return 0;
+
+	const unsigned int bufferID = luaL_checkint(L, 1);
+
+	if (bufferID >= luaRenderBuffers.size())
+		return 0;
+
+	GL::RenderDataBufferL& wb = luaRenderBuffers[bufferID];
+	GL::RenderDataBuffer* rb = wb.GetBuffer();
+
+	if (rb != nullptr) {
+		// also unmaps
+		rb->Kill();
+		renderBufferPool.free(rb);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
+	wb = {};
+	return 1;
+}
+
+int LuaOpenGL::UpdateVertexArray(lua_State* L)
+{
+	if (inBeginEnd)
+		return 0;
+
+	const unsigned int bufferID = luaL_checkint(L, 1);
+
+	if (bufferID >= luaRenderBuffers.size())
+		return 0;
+
+	GL::RenderDataBufferL* wb = &luaRenderBuffers[bufferID];
+	GL::RenderDataBuffer* rb = wb->GetBuffer();
+
+	if (rb == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	if (!rb->IsPinned())
+		wb->BindMapElems<VA_TYPE_L>();
+
+	{
+		luaRenderBuffer = wb;
+		// rewind; sub-region updates are painful to handle with just gl.Vertex&co
+		luaRenderBuffer->Reset();
+
+		// fill the buffer
+		assert(lua_isfunction(L, 2));
+		BeginEnd(L);
+		assert(luaRenderBuffer == nullptr);
+
+		luaRenderBuffer = nullptr;
+	}
+
+	if (!rb->IsPinned())
+		wb->UnmapUnbindElems();
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaOpenGL::RenderVertexArray(lua_State* L)
+{
+	if (inBeginEnd)
+		return 0;
+
+	const unsigned int bufferID = luaL_checkint(L, 1);
+	const unsigned int primType = luaL_checkint(L, 2);
+
+	if (bufferID >= luaRenderBuffers.size())
+		return 0;
+
+	GL::RenderDataBufferL& wb = luaRenderBuffers[bufferID];
+	GL::RenderDataBuffer* rb = wb.GetBuffer();
+
+	if (rb == nullptr) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const unsigned int elemIndx = luaL_optint(L, 3, 0);
+	const unsigned int numElems = luaL_optint(L, 4, rb->GetNumElems<VA_TYPE_L>());
+
+	rb->Submit(primType, elemIndx, numElems);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 
 
 /******************************************************************************/
@@ -3293,7 +3491,7 @@ int LuaOpenGL::CreateOcclusionQuery(lua_State* L)
 	if (id == 0)
 		return 0;
 
-	OcclusionQuery* qry = static_cast<OcclusionQuery*>(lua_newuserdata(L, sizeof(OcclusionQuery)));
+	LuaOcclusionQuery* qry = static_cast<LuaOcclusionQuery*>(lua_newuserdata(L, sizeof(LuaOcclusionQuery)));
 
 	if (qry == nullptr)
 		return 0;
@@ -3313,7 +3511,7 @@ int LuaOpenGL::DeleteOcclusionQuery(lua_State* L)
 	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "gl.DeleteOcclusionQuery(q) expects a userdata query");
 
-	const OcclusionQuery* qry = static_cast<const OcclusionQuery*>(lua_touserdata(L, 1));
+	const LuaOcclusionQuery* qry = static_cast<const LuaOcclusionQuery*>(lua_touserdata(L, 1));
 
 	if (qry == nullptr)
 		return 0;
@@ -3338,7 +3536,7 @@ int LuaOpenGL::RunOcclusionQuery(lua_State* L)
 	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "gl.RunQuery(q,f) expects a userdata query");
 
-	const OcclusionQuery* qry = static_cast<const OcclusionQuery*>(lua_touserdata(L, 1));
+	const LuaOcclusionQuery* qry = static_cast<const LuaOcclusionQuery*>(lua_touserdata(L, 1));
 
 	if (qry == nullptr)
 		return 0;
@@ -3369,7 +3567,7 @@ int LuaOpenGL::GetOcclusionQuery(lua_State* L)
 	if (!lua_islightuserdata(L, 1))
 		luaL_error(L, "gl.GetOcclusionQuery(q) expects a userdata query");
 
-	const OcclusionQuery* qry = static_cast<const OcclusionQuery*>(lua_touserdata(L, 1));
+	const LuaOcclusionQuery* qry = static_cast<const LuaOcclusionQuery*>(lua_touserdata(L, 1));
 
 	if (qry == nullptr)
 		return 0;
