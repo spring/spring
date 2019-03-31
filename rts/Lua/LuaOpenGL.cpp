@@ -2820,53 +2820,89 @@ int LuaOpenGL::DeleteVertexArray(lua_State* L)
 	wb = {};
 	return 1;
 }
-
 int LuaOpenGL::UpdateVertexArray(lua_State* L)
 {
 	if (inBeginEnd)
 		return 0;
 
 	const unsigned int bufferID = luaL_checkint(L, 1);
-	const unsigned int startPos = luaL_checkint(L, 2);
+	const unsigned int minIndex = luaL_checkint(L, 2);
+	const unsigned int maxIndex = luaL_checkint(L, 3);
+	const unsigned int vtxCount = maxIndex - minIndex + 1;
 
-	if (!lua_isfunction(L, 3))
-		return 0;
 	if (bufferID >= luaRenderBuffers.size())
 		return 0;
+	if (maxIndex < minIndex)
+		return 0;
 
-	GL::RenderDataBufferL* wb = &luaRenderBuffers[bufferID];
-	GL::RenderDataBuffer* rb = wb->GetBuffer();
+
+	GL::RenderDataBufferL& wb = luaRenderBuffers[bufferID];
+	GL::RenderDataBuffer* rb = wb.GetBuffer();
 
 	if (rb == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
+
 	if (!rb->IsPinned())
-		wb->BindMapElems<VA_TYPE_L>();
+		wb.BindMapElems<VA_TYPE_L>();
 
-	{
-		luaRenderBuffer = wb;
-		// rewind; sub-region updates are painful to handle with just gl.Vertex&co
-		luaRenderBuffer->Reset(startPos);
+	switch (lua_type(L, 4)) {
+		case LUA_TTABLE: {
+			std::array<float, 4096 * 4> array;
+			std::array<VA_TYPE_L, 4096> verts;
 
-		{
-			inBeginEnd = true;
-			// fill the buffer
-			const int nFuncArgs = lua_gettop(L) - 3;
-			const int callError = lua_pcall(L, nFuncArgs, 0, 0);
-			inBeginEnd = false;
+			using A = decltype(array);
 
-			if (callError != 0)
-				luaL_error(L, "[gl.%s(id, pos, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
-		}
+			const auto CopyFloatsP  = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].p  = {&array[i * 4]}; } };
+			const auto CopyFloatsN  = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].n  = {&array[i * 3]}; } };
+			const auto CopyFloatsUV = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].uv = {&array[i * 4]}; } };
+			const auto CopyFloatsC0 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c0 = {&array[i * 4]}; } };
+			const auto CopyFloatsC1 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c1 = {&array[i * 4]}; } };
 
-		assert(luaRenderBuffer != nullptr);
-		luaRenderBuffer = nullptr;
+			memset(array.data(), 0, array.size() * sizeof(float));
+
+			// ParseFloatArray will read at most |array| scalar values from each of t.{p,n,uv,c0,c1}, remaining data will be zero-filled
+			// t = {p = {x,y,z,w|x,y,z,w|...}, n = {x,y,z|x,y,z|...}, uv = {s,t,u,v|s,t,u,v|...}, c0 = {r,g,b,a|r,g,b,a|...}, c1 = {...}}
+			{ lua_getfield(L, 4, "p" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsP (array); lua_pop(L, 1); }
+			{ lua_getfield(L, 4, "n" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsN (array); lua_pop(L, 1); }
+			{ lua_getfield(L, 4, "uv"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsUV(array); lua_pop(L, 1); }
+			{ lua_getfield(L, 4, "c0"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC0(array); lua_pop(L, 1); }
+			{ lua_getfield(L, 4, "c1"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC1(array); lua_pop(L, 1); }
+
+			wb.SafeUpdate(verts.data(), vtxCount & (verts.size() - 1), minIndex);
+		} break;
+
+		case LUA_TFUNCTION: {
+			// make gl.Vertex write to the chosen buffer
+			luaRenderBuffer = &wb;
+			// rewind; length of sub-region update is determined
+			// by the number of gl.Vertex calls made in function
+			luaRenderBuffer->Reset(minIndex);
+
+			{
+				inBeginEnd = true;
+				// fill the buffer
+				const int nFuncArgs = lua_gettop(L) - 4;
+				const int callError = lua_pcall(L, nFuncArgs, 0, 0);
+				inBeginEnd = false;
+
+				if (callError != 0)
+					luaL_error(L, "[gl.%s(id, pos, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
+			}
+
+			assert(luaRenderBuffer != nullptr);
+			luaRenderBuffer->Reset(rb->GetNumElems<VA_TYPE_L>());
+			luaRenderBuffer = nullptr;
+		} break;
+
+		default: {
+		} break;
 	}
 
 	if (!rb->IsPinned())
-		wb->UnmapUnbindElems();
+		wb.UnmapUnbindElems();
 
 	lua_pushboolean(L, true);
 	return 1;

@@ -77,7 +77,7 @@ Lua:
  - add gl.{Create,Delete,Update,Render}VertexArray
      gl.CreateVertexArray(number elemsCount, number indexCount) -> number id | nil
      gl.DeleteVertexArray(number id) -> boolean success | nil
-     gl.UpdateVertexArray(number id, number pos, function f [, args...]) -> boolean success | nil
+     gl.UpdateVertexArray(number id, number minIndex, number maxIndex, table vertexData | function updateFunc [, args...]) -> boolean success | nil
      gl.RenderVertexArray(number id) -> boolean success | nil
  - add `VFS.GAME` as a synonym to `VFS.MOD`
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
