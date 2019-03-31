@@ -2,6 +2,7 @@
 
 #include "BufferedArchive.h"
 #include "System/GlobalConfig.h"
+#include "System/MainDefines.h"
 #include "System/Log/ILog.h"
 
 #include <cassert>
@@ -20,11 +21,22 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	std::lock_guard<spring::mutex> lck(archiveLock);
 	assert(IsFileId(fid));
 
-	if (noCache)
-		return GetFileImpl(fid, buffer);
+	int ret = 0;
+
+	if (noCache) {
+		if ((ret = GetFileImpl(fid, buffer)) != 1)
+			LOG_L(L_WARNING, "[BufferedArchive::%s(fid=%u)][noCache] name=%s ret=%d size=" _STPF_, __func__, fid, archiveFile.c_str(), ret, buffer.size());
+
+		return (ret == 1);
+	}
+
 	// engine-only
-	if (!globalConfig.vfsCacheArchiveFiles)
-		return GetFileImpl(fid, buffer);
+	if (!globalConfig.vfsCacheArchiveFiles) {
+		if ((ret = GetFileImpl(fid, buffer)) != 1)
+			LOG_L(L_WARNING, "[BufferedArchive::%s(fid=%u)][!vfsCache] name=%s ret=%d size=" _STPF_, __func__, fid, archiveFile.c_str(), ret, buffer.size());
+
+		return (ret == 1);
+	}
 
 	// NumFiles is virtual, can't do this in ctor
 	if (cache.empty())
@@ -33,15 +45,17 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	FileBuffer& fb = cache.at(fid);
 
 	if (!fb.populated) {
-		fb.exists = GetFileImpl(fid, fb.data);
+		fb.exists = ((ret = GetFileImpl(fid, fb.data)) == 1);
 		fb.populated = true;
 
 		cacheSize += fb.data.size();
 		fileCount += fb.exists;
 	}
 
-	if (!fb.exists)
+	if (!fb.exists) {
+		LOG_L(L_WARNING, "[BufferedArchive::%s(fid=%u)][!fb.exists] name=%s ret=%d size=" _STPF_, __func__, fid, archiveFile.c_str(), ret, fb.data.size());
 		return false;
+	}
 
 	if (buffer.size() != fb.data.size())
 		buffer.resize(fb.data.size());

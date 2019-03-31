@@ -41,7 +41,7 @@ public:
 	bool IsOpen() override;
 
 	unsigned int NumFiles() const override;
-	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
 	bool HasLowReadingCost(unsigned int fid) const override;
 	#if 0

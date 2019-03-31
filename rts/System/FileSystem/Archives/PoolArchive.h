@@ -96,7 +96,7 @@ public:
 	}
 
 protected:
-	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 
 	std::pair<uint64_t, uint64_t> GetSums() const {
 		std::pair<uint64_t, uint64_t> p;

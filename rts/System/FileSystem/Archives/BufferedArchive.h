@@ -24,7 +24,7 @@ public:
 	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 
 protected:
-	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
+	virtual int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 
 	struct FileBuffer {
 		FileBuffer() = default;

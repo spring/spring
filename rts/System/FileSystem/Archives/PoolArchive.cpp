@@ -121,7 +121,7 @@ CPoolArchive::~CPoolArchive()
 	}
 }
 
-bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
+int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
@@ -148,7 +148,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 	gzFile in = gzopen(path.c_str(), "rb");
 
 	if (in == nullptr)
-		return false;
+		return -1;
 
 	buffer.clear();
 	buffer.resize(f->size);
@@ -162,9 +162,9 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 	if (bytesRead != buffer.size()) {
 		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\" (bytesRead=%d fileSize=%u)", __func__, path.c_str(), bytesRead, f->size);
 		buffer.clear();
-		return false;
+		return 0;
 	}
 
 	sha512::calc_digest(buffer.data(), buffer.size(), f->shasum);
-	return true;
+	return 1;
 }

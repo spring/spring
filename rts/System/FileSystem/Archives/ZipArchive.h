@@ -54,7 +54,7 @@ protected:
 	};
 	std::vector<FileData> fileData;
 
-	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 };
 
 #endif // _ZIP_ARCHIVE_H

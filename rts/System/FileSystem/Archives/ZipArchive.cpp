@@ -88,11 +88,11 @@ unsigned int CZipArchive::GetCrc32(unsigned int fid)
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more
 // than one file at a time
-bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
+int CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	// Prevent opening files on missing/invalid archives
 	if (zip == nullptr)
-		return false;
+		return -4;
 
 	assert(IsFileId(fid));
 
@@ -102,18 +102,19 @@ bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 	unzGetCurrentFileInfo(zip, &fi, nullptr, 0, nullptr, 0, nullptr, 0);
 
 	if (unzOpenCurrentFile(zip) != UNZ_OK)
-		return false;
+		return -3;
 
+	buffer.clear();
 	buffer.resize(fi.uncompressed_size);
 
-	bool ret = true;
+	int ret = 1;
+
 	if (!buffer.empty() && unzReadCurrentFile(zip, &buffer[0], fi.uncompressed_size) != fi.uncompressed_size)
-		ret = false;
-
+		ret -= 2;
 	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
-		ret = false;
+		ret -= 1;
 
-	if (!ret)
+	if (ret != 1)
 		buffer.clear();
 
 	return ret;
