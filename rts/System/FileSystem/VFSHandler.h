@@ -52,9 +52,9 @@ public:
 	 * of the file.
 	 * @param filePath raw file path, for example "maps/myMap.smf",
 	 *   case-insensitive
-	 * @return true if the file exists in the VFS, false otherwise
+	 * @return 1 (or 0 if empty) if the file exists in the VFS, -1 otherwise
 	 */
-	bool FileExists(const std::string& filePath, Section section);
+	int FileExists(const std::string& filePath, Section section);
 
 	/**
 	 * Returns the absolute path of a VFS file (does not work for dirs).
@@ -81,9 +81,9 @@ public:
 	 * Reads the contents of a file from within the VFS.
 	 * @param filePath raw file path, for example "maps/myMap.smf",
 	 *   case-insensitive
-	 * @return true if the file exists in the VFS and was successfully read
+	 * @return 1 if the file exists in the VFS and was successfully read
 	 */
-	bool LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section);
+	int LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section);
 
 
 	/**

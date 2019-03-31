@@ -274,7 +274,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{normalizedFilePath, FileData{}}, pred);
 
 	if (iter != files[section].end() && iter->first == normalizedFilePath)
-		return iter->second;
+		return {iter->second.ar, iter->second.size};
 
 	// file does not exist in the VFS
 	return {nullptr, 0};
@@ -282,7 +282,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 
 
 
-bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section)
+int CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section)
 {
 	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
 
@@ -290,12 +290,13 @@ bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t
 	const FileData& fileData = GetFileData(normalizedPath, section);
 
 	if (fileData.ar == nullptr)
-		return false;
+		return -1;
 
+	// 0 or 1
 	return (fileData.ar->GetFile(normalizedPath, buffer));
 }
 
-bool CVFSHandler::FileExists(const std::string& filePath, Section section)
+int CVFSHandler::FileExists(const std::string& filePath, Section section)
 {
 	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
 
@@ -303,8 +304,9 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 	const FileData& fileData = GetFileData(normalizedPath, section);
 
 	if (fileData.ar == nullptr)
-		return false;
+		return -1;
 
+	// 0 or 1
 	return (fileData.ar->FileExists(normalizedPath));
 }
 
@@ -340,6 +342,8 @@ std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section
 
 std::vector<std::string> CVFSHandler::GetAllArchiveNames() const
 {
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
+
 	std::vector<std::string> ret;
 	ret.reserve(archives.size());
 

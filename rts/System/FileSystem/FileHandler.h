@@ -42,6 +42,7 @@ public:
 	bool Eof() const;
 	int GetPos();
 	int FileSize() const { return fileSize; }
+	int LoadCode() const { return loadCode; }
 
 	bool LoadStringData(std::string& data);
 	std::string GetFileExt() const;
@@ -77,8 +78,10 @@ protected:
 	std::string fileName;
 	std::ifstream ifs;
 	std::vector<std::uint8_t> fileBuffer;
-	int filePos;
-	int fileSize;
+
+	int filePos = 0;
+	int fileSize = -1;
+	int loadCode = -3; // {-1,0,1} if loaded from VFS
 };
 
 #endif // _FILE_HANDLER_H
