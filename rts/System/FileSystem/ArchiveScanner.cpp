@@ -424,7 +424,7 @@ void CArchiveScanner::Clear()
 void CArchiveScanner::Reload()
 {
 	// {Read,Write,Scan}* all grab this too but we need the entire reloading-sequence to appear atomic
-	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 
 	// dtor
 	if (isDirty)
@@ -438,7 +438,7 @@ void CArchiveScanner::Reload()
 
 void CArchiveScanner::ScanAllDirs()
 {
-	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 
 	const std::vector<std::string>& dataDirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
@@ -463,7 +463,7 @@ void CArchiveScanner::ScanAllDirs()
 
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
 {
-	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 	std::deque<std::string> foundArchives;
 
 	isDirty = true;
@@ -966,7 +966,7 @@ bool CArchiveScanner::GetArchiveChecksum(const std::string& archiveName, Archive
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
-	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 	if (!FileSystem::FileExists(filename)) {
 		LOG_L(L_INFO, "[AS::%s] ArchiveCache %s doesn't exist", __func__, filename.c_str());
 		return;
@@ -1064,7 +1064,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
-	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 	if (!isDirty)
 		return;
 
@@ -1186,6 +1186,8 @@ static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	std::vector<ArchiveData> ret;
 	ret.reserve(archiveInfos.size());
 
@@ -1207,6 +1209,8 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() cons
 
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	std::vector<ArchiveData> ret;
 	ret.reserve(archiveInfos.size());
 
@@ -1228,6 +1232,8 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	std::vector<ArchiveData> ret;
 	ret.reserve(archiveInfos.size());
 
@@ -1253,6 +1259,8 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 	// for very long dependency chains, prefer to sort and remove duplicates
 	const auto& NameCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.first  < b.first ); };
 	const auto& IndxCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.second < b.second); };
+
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 
 	std::vector<          std::string         > retArchives;
 	std::vector<std::pair<std::string, size_t>> tmpArchives[2];
@@ -1378,6 +1386,8 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& versionedMapNam
 
 sha512::raw_digest CArchiveScanner::GetArchiveSingleChecksumBytes(const std::string& filePath)
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	// compute checksum for archive only when it is actually loaded by e.g. PreGame or LuaVFS
 	// (this updates its ArchiveInfo iff !CheckCachedData and marks the scanner as dirty s.t.
 	// cache will be rewritten on reload/shutdown)
@@ -1443,6 +1453,8 @@ void CArchiveScanner::CheckArchive(
 
 std::string CArchiveScanner::GetArchivePath(const std::string& archiveName) const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	const auto aii = archiveInfosIndex.find(StringToLower(FileSystem::GetFilename(archiveName)));
 
 	if (aii == archiveInfosIndex.end())
@@ -1453,6 +1465,8 @@ std::string CArchiveScanner::GetArchivePath(const std::string& archiveName) cons
 
 std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	const auto aii = archiveInfosIndex.find(StringToLower(archiveName));
 
 	if (aii != archiveInfosIndex.end())
@@ -1475,6 +1489,8 @@ std::string CArchiveScanner::MapHumanNameFromArchive(const std::string& archiveN
 
 std::string CArchiveScanner::ArchiveFromName(const std::string& versionedName) const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedName); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
@@ -1486,6 +1502,8 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& versionedName) c
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& versionedName) const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	const auto pred = [&](const decltype(archiveInfos)::value_type& p) { return (p.archiveData.GetNameVersioned() == versionedName); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
@@ -1498,6 +1516,8 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& 
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveDataByArchive(const std::string& archive) const
 {
+	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+
 	const auto aii = archiveInfosIndex.find(StringToLower(archive));
 
 	if (aii != archiveInfosIndex.end())
