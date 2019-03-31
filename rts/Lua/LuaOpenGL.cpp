@@ -249,8 +249,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(BlendEquationSeparate);
 	REGISTER_LUA_CFUNC(BlendFuncSeparate);
 
-	REGISTER_LUA_CFUNC(Color);
-
 	REGISTER_LUA_CFUNC(PolygonMode);
 	REGISTER_LUA_CFUNC(PolygonOffset);
 
@@ -281,6 +279,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Vertex);
 	REGISTER_LUA_CFUNC(Normal);
 	REGISTER_LUA_CFUNC(TexCoord);
+	REGISTER_LUA_CFUNC(Color);
 
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
@@ -1492,15 +1491,7 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
 
-	GL::RenderDataBufferC*  buffer = GL::GetRenderBufferC();
-	Shader::IProgramObject* shader = (luaL_optboolean(L, 11, true))? buffer->GetShader(): nullptr;
-
-	// if null, expect caller to supply a shader
-	if (shader != nullptr) {
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	}
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	if ((lua_gettop(L) >= 6) && lua_isnumber(L, 6)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 8, 0));
@@ -1520,10 +1511,9 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 		glResetRangeRingDrawState();
 	} else {
 		glSurfaceCircle(buffer, {pos, luaL_checkfloat(L, 4)}, {luaL_optfloat(L, 4, 1.0f), luaL_optfloat(L, 5, 1.0f), luaL_optfloat(L, 6, 1.0f), 1.0f}, luaL_checkint(L, 5));
+		// immediate submission
+		buffer->Submit(GL_LINES);
 	}
-
-	if (shader != nullptr)
-		shader->Disable();
 
 	return 0;
 }
@@ -1550,39 +1540,32 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 		tv1 = luaL_checknumber(L, 9);
 		useTxcd = true;
 	} else {
-		if (lua_isboolean(L, 6)) {
-			useTxcd = lua_toboolean(L, 6);
-			if (useTxcd) {
-				tu0 = 0.0f;
-				tv0 = 0.0f;
-				tu1 = 1.0f;
-				tv1 = 1.0f;
-			}
+		if ((useTxcd = lua_isboolean(L, 6) && lua_toboolean(L, 6))) {
+			tu0 = 0.0f;
+			tv0 = 0.0f;
+			tu1 = 1.0f;
+			tv1 = 1.0f;
 		}
 	}
 	const int mapxi = mapDims.mapxp1;
 	const int mapzi = mapDims.mapyp1;
 	const float* heightmap = readMap->GetCornerHeightMapUnsynced();
 
-	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
-	const float xe = std::max(0.0f, std::min(float3::maxxpos, x1)); // x end
-	const float zs = std::max(0.0f, std::min(float3::maxzpos, z0)); // z start
-	const float ze = std::max(0.0f, std::min(float3::maxzpos, z1)); // z end
-	const int xis = std::max(0, std::min(mapxi, int((xs + 0.5f) / SQUARE_SIZE)));
-	const int xie = std::max(0, std::min(mapxi, int((xe + 0.5f) / SQUARE_SIZE)));
-	const int zis = std::max(0, std::min(mapzi, int((zs + 0.5f) / SQUARE_SIZE)));
-	const int zie = std::max(0, std::min(mapzi, int((ze + 0.5f) / SQUARE_SIZE)));
+	const float xs = Clamp(x0, 0.0f, float3::maxxpos); // x start
+	const float xe = Clamp(x1, 0.0f, float3::maxxpos); // x end
+	const float zs = Clamp(z0, 0.0f, float3::maxzpos); // z start
+	const float ze = Clamp(z1, 0.0f, float3::maxzpos); // z end
+
+	const int xis = Clamp(int((xs + 0.5f) / SQUARE_SIZE), 0, mapxi);
+	const int xie = Clamp(int((xe + 0.5f) / SQUARE_SIZE), 0, mapxi);
+	const int zis = Clamp(int((zs + 0.5f) / SQUARE_SIZE), 0, mapzi);
+	const int zie = Clamp(int((ze + 0.5f) / SQUARE_SIZE), 0, mapzi);
+
 	if ((xis >= xie) || (zis >= zie))
 		return 0;
 
 	if (!useTxcd) {
-		#if 0
-		GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
-		Shader::IProgramObject* ipo = rdb->GetShader();
-
-		ipo->Enable();
-		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
@@ -1595,49 +1578,21 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 				const float yt = heightmap[ziOff + xit];
 				const float z = zi * SQUARE_SIZE;
 
-				rdb->SafeAppend({xt, yt, z});
-				rdb->SafeAppend({xb, yb, z});
+				// use whatever c0 was most recently set by gl.Color
+				buffer->SafeAppend({{xt, yt, z}, {luaBufferVertex.c0}});
+				buffer->SafeAppend({{xb, yb, z}, {luaBufferVertex.c0}});
 			}
 
-			rdb->Submit(GL_TRIANGLE_STRIP);
-		}
-
-		ipo->Disable();
-		#endif
-
-
-
-		for (int xib = xis; xib < xie; xib++) {
-			const int xit = xib + 1;
-			const float xb = xib * SQUARE_SIZE;
-			const float xt = xb + SQUARE_SIZE;
-			glBegin(GL_TRIANGLE_STRIP);
-			for (int zi = zis; zi <= zie; zi++) {
-				const int ziOff = zi * mapxi;
-				const float yb = heightmap[ziOff + xib];
-				const float yt = heightmap[ziOff + xit];
-				const float z = zi * SQUARE_SIZE;
-				glVertex3f(xt, yt, z);
-				glVertex3f(xb, yb, z);
-			}
-			glEnd();
+			buffer->Submit(GL_TRIANGLE_STRIP);
 		}
 	} else {
+		GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+
 		const float tuStep = (tu1 - tu0) / float(xie - xis);
 		const float tvStep = (tv1 - tv0) / float(zie - zis);
 
 		float tub = tu0;
 
-
-
-		#if 0
-		GL::RenderDataBufferT* rdb = GL::GetRenderBufferT();
-		Shader::IProgramObject* ipo = rdb->GetShader();
-
-		ipo->Enable();
-		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-
 		for (int xib = xis; xib < xie; xib++) {
 			const int xit = xib + 1;
 			const float xb = xib * SQUARE_SIZE;
@@ -1651,42 +1606,16 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 				const float yt = heightmap[ziOff + xit];
 				const float z = zi * SQUARE_SIZE;
 
-				rdb->SafeAppend({{xt, yt, z}, tut, tv});
-				rdb->SafeAppend({{xb, yb, z}, tub, tv});
+				buffer->SafeAppend({{xt, yt, z}, tut, tv, {luaBufferVertex.c0}});
+				buffer->SafeAppend({{xb, yb, z}, tub, tv, {luaBufferVertex.c0}});
 
 				tv += tvStep;
 			}
 
-			rdb->Submit(GL_TRIANGLE_STRIP);
-		}
-
-		ipo->Disable();
-		#endif
-
-
-
-		for (int xib = xis; xib < xie; xib++) {
-			const int xit = xib + 1;
-			const float xb = xib * SQUARE_SIZE;
-			const float xt = xb + SQUARE_SIZE;
-			const float tut = tub + tuStep;
-			float tv = tv0;
-			glBegin(GL_TRIANGLE_STRIP);
-			for (int zi = zis; zi <= zie; zi++) {
-				const int ziOff = zi * mapxi;
-				const float yb = heightmap[ziOff + xib];
-				const float yt = heightmap[ziOff + xit];
-				const float z = zi * SQUARE_SIZE;
-				glTexCoord2f(tut, tv);
-				glVertex3f(xt, yt, z);
-				glTexCoord2f(tub, tv);
-				glVertex3f(xb, yb, z);
-				tv += tvStep;
-			}
-			glEnd();
-			tub += tuStep;
+			buffer->Submit(GL_TRIANGLE_STRIP);
 		}
 	}
+
 	return 0;
 }
 
@@ -1707,7 +1636,6 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	if (!inBeginEnd) {
 		// caller is expected to supply a shader and transform
 		// default would only make sense for trivial scenarios
-		//
 		assert(luaRenderBuffer == nullptr);
 		luaRenderBuffer = GL::GetRenderBufferL();
 
@@ -1802,19 +1730,15 @@ int LuaOpenGL::Rect(lua_State* L)
 	const float x2 = luaL_checkfloat(L, 3);
 	const float y2 = luaL_checkfloat(L, 4);
 
-	float4& pos = luaBufferVertex.p;
-	pos.z = 0.0f;
-	pos.w = 1.0f;
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
-	GL::RenderDataBufferL* rb = GL::GetRenderBufferL();
+	// use whatever c0 was most recently set by gl.Color; immediate submission
+	buffer->SafeAppend({{x1, y1, 0.0f}, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x2, y1, 0.0f}, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x2, y2, 0.0f}, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x1, y2, 0.0f}, {luaBufferVertex.c0}});
 
-	pos.x = x1; pos.y = y1; rb->SafeAppend(luaBufferVertex);
-	pos.x = x2; pos.y = y1; rb->SafeAppend(luaBufferVertex);
-	pos.x = x2; pos.y = y2; rb->SafeAppend(luaBufferVertex);
-	pos.x = x1; pos.y = y2; rb->SafeAppend(luaBufferVertex);
-
-	// immediate submission
-	rb->Submit(GL_QUADS);
+	buffer->Submit(GL_QUADS);
 	return 0;
 }
 
@@ -1823,6 +1747,10 @@ int LuaOpenGL::TexRect(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
+	// block UpdateVertexArray calls
+	if (inBeginEnd)
+		return 0;
+
 	const int args = lua_gettop(L); // number of arguments
 
 	const float x1 = luaL_checkfloat(L, 1);
@@ -1830,14 +1758,16 @@ int LuaOpenGL::TexRect(lua_State* L)
 	const float x2 = luaL_checkfloat(L, 3);
 	const float y2 = luaL_checkfloat(L, 4);
 
-	// Spring's textures get loaded with a vertical flip
-	// We change that for the default settings.
+	float s1 = 0.0f;
+	float t1 = 1.0f;
+	float s2 = 1.0f;
+	float t2 = 0.0f;
 
+	GL::RenderDataBufferTC* buffer = GL::GetRenderBufferTC();
+
+	// Spring's textures are vertically flipped;
+	// invert the default texcoors to compensate
 	if (args <= 6) {
-		float s1 = 0.0f;
-		float t1 = 1.0f;
-		float s2 = 1.0f;
-		float t2 = 0.0f;
 		if ((args >= 5) && luaL_optboolean(L, 5, false)) {
 			// flip s-coords
 			s1 = 1.0f;
@@ -1848,28 +1778,28 @@ int LuaOpenGL::TexRect(lua_State* L)
 			t1 = 0.0f;
 			t2 = 1.0f;
 		}
-		glBegin(GL_QUADS); {
-			glTexCoord2f(s1, t1); glVertex2f(x1, y1);
-			glTexCoord2f(s2, t1); glVertex2f(x2, y1);
-			glTexCoord2f(s2, t2); glVertex2f(x2, y2);
-			glTexCoord2f(s1, t2); glVertex2f(x1, y2);
-		}
-		glEnd();
+
+		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}});
+		buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}});
+		buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}});
+		buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}});
+
+		buffer->Submit(GL_QUADS);
 		return 0;
 	}
 
-	const float s1 = luaL_checkfloat(L, 5);
-	const float t1 = luaL_checkfloat(L, 6);
-	const float s2 = luaL_checkfloat(L, 7);
-	const float t2 = luaL_checkfloat(L, 8);
-	glBegin(GL_QUADS); {
-		glTexCoord2f(s1, t1); glVertex2f(x1, y1);
-		glTexCoord2f(s2, t1); glVertex2f(x2, y1);
-		glTexCoord2f(s2, t2); glVertex2f(x2, y2);
-		glTexCoord2f(s1, t2); glVertex2f(x1, y2);
-	}
-	glEnd();
+	s1 = luaL_checkfloat(L, 5);
+	t1 = luaL_checkfloat(L, 6);
+	s2 = luaL_checkfloat(L, 7);
+	t2 = luaL_checkfloat(L, 8);
 
+	// use whatever c0 was most recently set by gl.Color; immediate submission
+	buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}});
+
+	buffer->Submit(GL_QUADS);
 	return 0;
 }
 
@@ -2983,7 +2913,7 @@ int LuaOpenGL::Ortho(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	GL::MultMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
+	GL::MultMatrix(CMatrix44f::ClipOrthoProj(left, right, bottom, top, near, far, globalRendering->supportClipSpaceControl * 1.0f));
 	return 0;
 }
 
@@ -2999,7 +2929,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	GL::MultMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, near, far));
+	GL::MultMatrix(CMatrix44f::ClipPerspProj(left, right, bottom, top, near, far, globalRendering->supportClipSpaceControl * 1.0f));
 	return 0;
 }
 
@@ -3019,26 +2949,31 @@ int LuaOpenGL::ClipPlane(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int plane = luaL_checkint(L, 1);
-	if ((plane < 1) || (plane > 2)) {
+
+	if ((plane < 1) || (plane > 2))
 		luaL_error(L, "gl.ClipPlane: bad plane number (use 1 or 2)");
-	}
+
 	// use GL_CLIP_PLANE4 and GL_CLIP_PLANE5 for LuaOpenGL  (6 are guaranteed)
-	const GLenum gl_plane = GL_CLIP_PLANE4 + plane - 1;
+	const GLenum glPlane = GL_CLIP_PLANE4 + plane - 1;
+
 	if (lua_isboolean(L, 2)) {
 		if (lua_toboolean(L, 2)) {
-			glEnable(gl_plane);
+			glEnable(glPlane);
 		} else {
-			glDisable(gl_plane);
+			glDisable(glPlane);
 		}
 		return 0;
 	}
-	GLdouble equation[4];
-	equation[0] = (double)luaL_checknumber(L, 2);
-	equation[1] = (double)luaL_checknumber(L, 3);
-	equation[2] = (double)luaL_checknumber(L, 4);
-	equation[3] = (double)luaL_checknumber(L, 5);
-	glClipPlane(gl_plane, equation);
-	glEnable(gl_plane);
+
+	const GLdouble equation[4] = {
+		(double)luaL_checknumber(L, 2),
+		(double)luaL_checknumber(L, 3),
+		(double)luaL_checknumber(L, 4),
+		(double)luaL_checknumber(L, 5),
+	};
+
+	glClipPlane(glPlane, equation);
+	glEnable(glPlane);
 	return 0;
 }
 
@@ -3072,29 +3007,31 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int luaType = lua_type(L, 1);
-	if (luaType == LUA_TSTRING) {
-		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != nullptr) {
-			GL::LoadMatrix(*matptr);
-		} else {
-			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
-		}
-		return 0;
-	} else {
-		CMatrix44f matrix;
-		if (luaType == LUA_TTABLE) {
-			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16) {
-				luaL_error(L, "gl.LoadMatrix requires all 16 values");
-			}
-		}
-		else {
+	CMatrix44f matrix;
+
+	switch (lua_type(L, 1)) {
+		case LUA_TSTRING: {
+			const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
+
+			if (matptr == nullptr)
+				luaL_error(L, "[gl.%s] unknown matrix \"%s\"", __func__, lua_tostring(L, 1));
+
+			matrix = *matptr;
+		} break;
+
+		case LUA_TTABLE: {
+			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16)
+				luaL_error(L, "[gl.%s] all 16 values required", __func__);
+		} break;
+
+		default: {
 			for (int i = 1; i <= 16; i++) {
 				matrix.m[i - 1] = (GLfloat)luaL_checknumber(L, i);
 			}
-		}
-		GL::LoadMatrix(matrix);
+		} break;
 	}
+
+	GL::LoadMatrix(matrix);
 	return 0;
 }
 
@@ -3103,29 +3040,31 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int luaType = lua_type(L, 1);
-	if (luaType == LUA_TSTRING) {
-		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != nullptr) {
-			GL::MultMatrix(*matptr);
-		} else {
-			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
-		}
-		return 0;
-	} else {
-		CMatrix44f matrix;
-		if (luaType == LUA_TTABLE) {
-			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16) {
-				luaL_error(L, "gl.LoadMatrix requires all 16 values");
-			}
-		}
-		else {
+	CMatrix44f matrix;
+
+	switch (lua_type(L, 1)) {
+		case LUA_TSTRING: {
+			const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
+
+			if (matptr == nullptr)
+				luaL_error(L, "[gl.%s] unknown matrix \"%s\"", __func__, lua_tostring(L, 1));
+
+			matrix = *matptr;
+		} break;
+
+		case LUA_TTABLE: {
+			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16)
+				luaL_error(L, "[gl.%s] all 16 values required", __func__);
+		} break;
+
+		default: {
 			for (int i = 1; i <= 16; i++) {
 				matrix.m[i - 1] = (GLfloat)luaL_checknumber(L, i);
 			}
-		}
-		GL::MultMatrix(matrix);
+		} break;
 	}
+
+	GL::MultMatrix(matrix);
 	return 0;
 }
 
