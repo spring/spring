@@ -2861,17 +2861,15 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			const auto CopyFloatsC0 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c0 = {&array[i * 4]}; } };
 			const auto CopyFloatsC1 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c1 = {&array[i * 4]}; } };
 
-			memset(array.data(), 0, array.size() * sizeof(float));
-
 			// ParseFloatArray will read at most |array| scalar values from each of t.{p,n,uv,c0,c1}, remaining data will be zero-filled
 			// t = {p = {x,y,z,w|x,y,z,w|...}, n = {x,y,z|x,y,z|...}, uv = {s,t,u,v|s,t,u,v|...}, c0 = {r,g,b,a|r,g,b,a|...}, c1 = {...}}
-			{ lua_getfield(L, 4, "p" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsP (array); lua_pop(L, 1); }
-			{ lua_getfield(L, 4, "n" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsN (array); lua_pop(L, 1); }
-			{ lua_getfield(L, 4, "uv"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsUV(array); lua_pop(L, 1); }
-			{ lua_getfield(L, 4, "c0"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC0(array); lua_pop(L, 1); }
-			{ lua_getfield(L, 4, "c1"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC1(array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "p" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsP (array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "n" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsN (array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "uv"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsUV(array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c0"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC0(array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c1"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC1(array); lua_pop(L, 1); }
 
-			wb.SafeUpdate(verts.data(), vtxCount & (verts.size() - 1), minIndex);
+			wb.SafeUpdate(verts.data(), vtxCount & (verts.size() - 1), minIndex & (verts.size() - 1));
 		} break;
 
 		case LUA_TFUNCTION: {
