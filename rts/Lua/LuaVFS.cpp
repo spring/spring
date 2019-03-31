@@ -101,30 +101,23 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 
 const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 {
-	const char* defMode = SPRING_VFS_RAW_FIRST;
+	const bool vfsOnly = (synced && !CLuaHandle::GetDevMode());
 
-	if (synced && !CLuaHandle::GetDevMode())
-		defMode = SPRING_VFS_ZIP;
+	const char* defModes = vfsOnly? SPRING_VFS_ZIP : SPRING_VFS_RAW_FIRST;
+	const char* badModes = vfsOnly? SPRING_VFS_RAW SPRING_VFS_MENU : "";
 
-	string modes = luaL_optstring(L, index, defMode);
-
-	if (synced && !CLuaHandle::GetDevMode())
-		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW SPRING_VFS_MENU);
-
-	return modes;
+	return CFileHandler::ForbidModes(luaL_optstring(L, index, defModes), badModes);
 }
 
 
 /******************************************************************************/
 
-static bool LoadFileWithModes(const string& filename, string& data, const string& modes)
+static int LoadFileWithModes(const std::string& fileName, std::string& data, const std::string& vfsModes)
 {
-	CFileHandler fh(filename, modes);
+	CFileHandler fh(fileName, vfsModes);
 
 	if (!fh.FileExists())
-		return false;
-
-	data.clear();
+		return (fh.LoadCode());
 
 	return (fh.LoadStringData(data));
 }
@@ -135,39 +128,41 @@ static bool LoadFileWithModes(const string& filename, string& data, const string
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const std::string& filename = luaL_checkstring(L, 1);
+	const std::string& fileName = luaL_checkstring(L, 1);
+	      std::string  fileData;
 
 	#if 0
-	ScopedOnceTimer timer("LuaVFS::Include(" + filename + ")");
+	ScopedOnceTimer timer("LuaVFS::Include(" + fileName + ")");
 	#endif
 
 	// the path may point to a file or dir outside of any data-dir
-	// if (!LuaIO::IsSimplePath(filename)) return 0;
+	// if (!LuaIO::IsSimplePath(fileName)) return 0;
 
-	bool hasCustomEnv = false;
-	if (!lua_isnoneornil(L, 2)) {
-		//note this check must happen before luaL_loadbuffer gets called
-		// it pushes new values on the stack and if only index 1 was given
-		// to Include those by luaL_loadbuffer are pushed to index 2,3,...
+	// note: this check must happen before luaL_loadbuffer gets called
+	// it pushes new values on the stack and if only index 1 was given
+	// to Include those by luaL_loadbuffer are pushed to index 2,3,...
+	const bool hasCustomEnv = !lua_isnoneornil(L, 2);
+
+	if (hasCustomEnv)
 		luaL_checktype(L, 2, LUA_TTABLE);
-		hasCustomEnv = true;
-	}
 
-	std::string code;
-	if (!LoadFileWithModes(filename, code, GetModes(L, 3, synced))) {
+	int loadCode = 0;
+	int luaError = 0;
+
+	if ((loadCode = LoadFileWithModes(fileName, fileData, GetModes(L, 3, synced))) != 1) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadvfs] file=%s status=%d", __func__, synced, fileName.c_str(), loadCode);
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
 
-	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
-	if (error != 0) {
+	if ((luaError = luaL_loadbuffer(L, fileData.c_str(), fileData.size(), fileName.c_str())) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadbuf] file=%s error=%i (%s)", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
+
 
 	// set the chunk's fenv to the current fenv, or a user table
 	if (hasCustomEnv) {
@@ -178,13 +173,14 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	// set the include fenv to the current function's fenv
 	if (lua_setfenv(L, -2) == 0)
-		luaL_error(L, "Include(): error with setfenv");
+		luaL_error(L, "[LuaVFS::%s(synced=%d)][setfenv] file=%s type=%d", __func__, synced, fileName.c_str(), lua_type(L, -2));
+
 
 	const int paramTop = lua_gettop(L) - 1;
 
-	if ((error = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
+	if ((luaError = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][pcall] file=%s error=%i (%s)", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -215,7 +211,7 @@ int LuaVFS::LoadFile(lua_State* L, bool synced)
 	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
 	string data;
-	if (LoadFileWithModes(filename, data, GetModes(L, 2, synced))) {
+	if (LoadFileWithModes(filename, data, GetModes(L, 2, synced)) == 1) {
 		lua_pushsstring(L, data);
 		return 1;
 	}

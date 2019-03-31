@@ -90,9 +90,9 @@ bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 {
 #ifndef TOOLS
 	if (vfsHandler == nullptr)
-		return false;
+		return (loadCode = -2, false);
 
-	if (vfsHandler->LoadFile(StringToLower(fileName), fileBuffer, (CVFSHandler::Section) section)) {
+	if ((loadCode = vfsHandler->LoadFile(StringToLower(fileName), fileBuffer, (CVFSHandler::Section) section)) == 1) {
 		// capacity can exceed size if FH was used to open more than one file
 		// assert(fileBuffer.size() == fileBuffer.capacity());
 
@@ -126,6 +126,7 @@ void CFileHandler::Close()
 {
 	filePos = 0;
 	fileSize = -1;
+	loadCode = -3;
 
 	ifs.close();
 	fileBuffer.clear();
@@ -140,7 +141,7 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 	for (char c: modes) {
 #ifndef TOOLS
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section) == 1)
 			return true;
 
 		if ((c == SPRING_VFS_RAW[0]) && FileSystem::FileExists(dataDirsAccess.LocateFile(filePath)))
@@ -273,7 +274,7 @@ std::string CFileHandler::GetFileAbsolutePath(const std::string& filePath, const
 	for (char c: modes) {
 #ifndef TOOLS
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section) == 1)
 			return vfsHandler->GetFileAbsolutePath(filePath, section);
 
 		if ((c == SPRING_VFS_RAW[0]) && FileSystem::FileExists(dataDirsAccess.LocateFile(filePath)))
@@ -302,7 +303,7 @@ std::string CFileHandler::GetArchiveContainingFile(const std::string& filePath, 
 	for (char c: modes) {
 #ifndef TOOLS
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section) == 1)
 			return vfsHandler->GetFileArchiveName(filePath, section);
 #endif
 	}

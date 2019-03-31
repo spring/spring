@@ -68,6 +68,6 @@ int CLuaGaia::GetInitSelectTeam() const
 
 bool CLuaGaia::CanLoadHandler()
 {
-	return (gs->useLuaGaia && (vfsHandler->FileExists(LuaGaiaSyncedFilename, CVFSHandler::Map) || vfsHandler->FileExists(LuaGaiaUnsyncedFilename, CVFSHandler::Map)));
+	return (gs->useLuaGaia && (vfsHandler->FileExists(LuaGaiaSyncedFilename, CVFSHandler::Map) == 1 || vfsHandler->FileExists(LuaGaiaUnsyncedFilename, CVFSHandler::Map) == 1));
 }
 
