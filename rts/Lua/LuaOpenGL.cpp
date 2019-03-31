@@ -2869,7 +2869,8 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c0"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC0(array); lua_pop(L, 1); }
 			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c1"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC1(array); lua_pop(L, 1); }
 
-			wb.SafeUpdate(verts.data(), vtxCount & (verts.size() - 1), minIndex & (verts.size() - 1));
+			// NB: total buffer size can exceed |verts|, do not clamp args
+			wb.SafeUpdate(verts.data(), vtxCount, minIndex);
 		} break;
 
 		case LUA_TFUNCTION: {
