@@ -240,7 +240,7 @@ unsigned int CSevenZipArchive::NumFiles() const
 	return fileData.size();
 }
 
-bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
+int CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
@@ -253,10 +253,10 @@ bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& 
 	if (res == SZ_OK) {
 		buffer.resize(outSizeProcessed);
 		memcpy(&buffer[0], (char*)outBuffer + offset, outSizeProcessed);
-		return true;
+		return 1;
 	}
 
-	return false;
+	return 0;
 }
 
 void CSevenZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
