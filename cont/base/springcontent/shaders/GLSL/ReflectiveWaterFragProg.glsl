@@ -3,8 +3,8 @@
 uniform sampler2D reflmap_tex; // TU0
 uniform sampler2D bumpmap_tex; // TU1
 
-uniform vec4 u_forward_zx;
-uniform vec4 u_forward_xz;
+uniform vec2 u_forward_vec; // x,z,0,0
+uniform vec3 u_gamma_expon;
 
 in vec4 v_color_rgba;
 in vec2 v_reflmap_tc;
@@ -22,12 +22,14 @@ void main() {
 	vec2 tex_coor_ofs;
 	vec4 vertex_color = v_color_rgba;
 
-	tex_coor_ofs.x = dot(bumpmap_texel + bumpmap_add, u_forward_zx);
-	tex_coor_ofs.y = dot(bumpmap_texel + bumpmap_add, u_forward_xz);
+	tex_coor_ofs.x = dot(bumpmap_texel + bumpmap_add, vec4( u_forward_vec.y, u_forward_vec.x, 0.0, 0.0));
+	tex_coor_ofs.y = dot(bumpmap_texel + bumpmap_add, vec4(-u_forward_vec.x, u_forward_vec.y, 0.0, 0.0));
 	vertex_color.a += (tex_coor_ofs.y * 0.03);
 
 	// dependent lookup
 	reflmap_texel = texture(reflmap_tex, v_reflmap_tc + tex_coor_ofs * bumpmap_mul);
 	f_frag_color = reflmap_texel * vertex_color;
+
+	f_frag_color.rgb = pow(f_frag_color.rgb, u_gamma_expon);
 }
 

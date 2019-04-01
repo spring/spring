@@ -102,8 +102,8 @@ CAdvWater::CAdvWater()
 		waterShader->SetUniform("bumpmap_tex", 1);
 		waterShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		waterShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
-		waterShader->SetUniform("u_forward_zx", 0.0f, 0.0f, 0.0f, 0.0f);
-		waterShader->SetUniform("u_forward_xz", 0.0f, 0.0f, 0.0f, 0.0f);
+		waterShader->SetUniform("u_forward_vec", 0.0f, 0.0f);
+		waterShader->SetUniform("u_gamma_expon", 1.0f, 1.0f, 1.0f);
 		waterShader->Disable();
 		waterShader->Validate();
 	}
@@ -151,6 +151,7 @@ void CAdvWater::Draw(bool useBlending)
 
 	const float3& cameraPos = camera->GetPos();
 	const float3& planeColor = waterRendering->surfaceColor;
+	const float3  gammaExpon = OnesVector * globalRendering->gammaExponent;
 
 	float3 base = camera->CalcPixelDir(vpx      , vsy) * numDivs;
 	float3 dv   = camera->CalcPixelDir(vpx      ,   0) - camera->CalcPixelDir(vpx, vsy);
@@ -198,8 +199,8 @@ void CAdvWater::Draw(bool useBlending)
 	ipo->Enable();
 	ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	ipo->SetUniform("u_forward_zx",  forward.z, forward.x, 0.0f, 0.0f);
-	ipo->SetUniform("u_forward_xz", -forward.x, forward.z, 0.0f, 0.0f);
+	ipo->SetUniform("u_forward_vec", forward.x, forward.z);
+	ipo->SetUniform("u_gamma_expon", gammaExpon.x, gammaExpon.y, gammaExpon.z);
 
 	// generate a grid, bottom to top
 	for (int a = 0, yn = int(numDivs), xn = yn + 1; a < 5; ++a) {
