@@ -100,9 +100,6 @@
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
-using std::min;
-using std::max;
-
 // MinGW defines this for a WINAPI function
 #undef SendMessage
 #undef CreateDirectory
@@ -1074,109 +1071,169 @@ int LuaUnsyncedCtrl::SetVideoCapturingTimeOffset(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetWaterParams()");
-	}
+	if (!lua_istable(L, 1))
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
-		if (lua_istable(L, -1)) {
-			float color[3];
-			const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
-			if (size >= 3) {
-				if (key == "absorb") {
-					waterRendering->absorb = color;
-				} else if (key == "baseColor") {
-					waterRendering->baseColor = color;
-				} else if (key == "minColor") {
-					waterRendering->minColor = color;
-				} else if (key == "surfaceColor") {
-					waterRendering->surfaceColor = color;
-				} else if (key == "diffuseColor") {
-					waterRendering->diffuseColor = color;
-				} else if (key == "specularColor") {
-					waterRendering->specularColor = color;
-					} else if (key == "planeColor") {
-					waterRendering->planeColor.x = color[0];
-					waterRendering->planeColor.y = color[1];
-					waterRendering->planeColor.z = color[2];
-				} else {
-					luaL_error(L, "Unknown array key %s", key.c_str());
+		switch (lua_type(L, -1)) {
+			case LUA_TTABLE: {
+				float color[3];
+				const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
+
+				if (size < 3)
+					luaL_error(L, "[%s] unexpected size %d for array key %s", __func__, size, key);
+
+				switch (hashString(key)) {
+					case hashString("absorb"): {
+						waterRendering->absorb = color;
+					} break;
+					case hashString("baseColor"): {
+						waterRendering->baseColor = color;
+					} break;
+					case hashString("minColor"): {
+						waterRendering->minColor = color;
+					} break;
+					case hashString("surfaceColor"): {
+						waterRendering->surfaceColor = color;
+					} break;
+					case hashString("diffuseColor"): {
+						waterRendering->diffuseColor = color;
+					} break;
+					case hashString("specularColor"): {
+						waterRendering->specularColor = color;
+					} break;
+					case hashString("planeColor"): {
+						waterRendering->planeColor.x = color[0];
+						waterRendering->planeColor.y = color[1];
+						waterRendering->planeColor.z = color[2];
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown array key \"%s\"", __func__, key);
+					} break;
 				}
-			} else {
-				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
-			}
-		}
 
-		else if (lua_israwstring(L, -1)) {
-			const std::string value = lua_tostring(L, -1);
-			if (key == "texture") {
-				waterRendering->texture = value;
-			} else if (key == "foamTexture") {
-				waterRendering->foamTexture = value;
-			} else if (key == "normalTexture") {
-				waterRendering->normalTexture = value;
-			} else {
-				luaL_error(L, "Unknown string key %s", key.c_str());
-			}
-		}
+				continue;
+			} break;
 
-		else if (lua_isnumber(L, -1)) {
-			const float value = lua_tofloat(L, -1);
-			if (key == "repeatX") {
-				waterRendering->repeatX = value;
-			} else if (key == "repeatY") {
-				waterRendering->repeatY = value;
-			} else if (key == "surfaceAlpha") {
-				waterRendering->surfaceAlpha = value;
-			} else if (key == "ambientFactor") {
-				waterRendering->ambientFactor = value;
-			} else if (key == "diffuseFactor") {
-				waterRendering->diffuseFactor = value;
-			} else if (key == "specularFactor") {
-				waterRendering->specularFactor = value;
-			} else if (key == "specularPower") {
-				waterRendering->specularPower = value;
-			} else if (key == "fresnelMin") {
-				waterRendering->fresnelMin = value;
-			} else if (key == "fresnelMax") {
-				waterRendering->fresnelMax = value;
-			} else if (key == "fresnelPower") {
-				waterRendering->fresnelPower = value;
-			} else if (key == "reflectionDistortion") {
-				waterRendering->reflDistortion = value;
-			} else if (key == "blurBase") {
-				waterRendering->blurBase = value;
-			} else if (key == "blurExponent") {
-				waterRendering->blurExponent = value;
-			} else if (key == "perlinStartFreq") {
-				waterRendering->perlinStartFreq = value;
-			} else if (key == "perlinLacunarity") {
-				waterRendering->perlinLacunarity = value;
-			} else if (key == "perlinAmplitude") {
-				waterRendering->perlinAmplitude = value;
-			} else if (key == "numTiles") {
-				waterRendering->numTiles = (unsigned char)value;
-			} else {
-				luaL_error(L, "Unknown scalar key %s", key.c_str());
-			}
-		}
+			case LUA_TSTRING: {
+				const std::string value = lua_tostring(L, -1);
 
-		else if (lua_isboolean(L, -1)) {
-			const bool value = lua_toboolean(L, -1);
-			if (key == "shoreWaves") {
-				waterRendering->shoreWaves = value;
-			} else if (key == "forceRendering") {
-				waterRendering->forceRendering = value;
-			} else if (key == "hasWaterPlane") {
-				waterRendering->hasWaterPlane = value;
-			} else {
-				luaL_error(L, "Unknown boolean key %s", key.c_str());
-			}
+				switch (hashString(key)) {
+					case hashString("texture"): {
+						waterRendering->texture = value;
+					} break;
+					case hashString("foamTexture"): {
+						waterRendering->foamTexture = value;
+					} break;
+					case hashString("normalTexture"): {
+						waterRendering->normalTexture = value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown string key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			case LUA_TNUMBER: {
+				const float value = lua_tofloat(L, -1);
+
+				switch (hashString(key)) {
+					case hashString("repeatX"): {
+						waterRendering->repeatX = value;
+					} break;
+					case hashString("repeatY"): {
+						waterRendering->repeatY = value;
+					} break;
+
+					case hashString("surfaceAlpha"): {
+						waterRendering->surfaceAlpha = value;
+					} break;
+
+					case hashString("ambientFactor"): {
+						waterRendering->ambientFactor = value;
+					} break;
+					case hashString("diffuseFactor"): {
+						waterRendering->diffuseFactor = value;
+					} break;
+					case hashString("specularFactor"): {
+						waterRendering->specularFactor = value;
+					} break;
+					case hashString("specularPower"): {
+						waterRendering->specularPower = value;
+					} break;
+
+					case hashString("fresnelMin"): {
+						waterRendering->fresnelMin = value;
+					} break;
+					case hashString("fresnelMax"): {
+						waterRendering->fresnelMax = value;
+					} break;
+					case hashString("fresnelPower"): {
+						waterRendering->fresnelPower = value;
+					} break;
+
+					case hashString("reflectionDistortion"): {
+						waterRendering->reflDistortion = value;
+					} break;
+
+					case hashString("blurBase"): {
+						waterRendering->blurBase = value;
+					} break;
+					case hashString("blurExponent"): {
+						waterRendering->blurExponent = value;
+					} break;
+
+					case hashString("perlinStartFreq"): {
+						waterRendering->perlinStartFreq = value;
+					} break;
+					case hashString("perlinLacunarity"): {
+						waterRendering->perlinLacunarity = value;
+					} break;
+					case hashString("perlinAmplitude"): {
+						waterRendering->perlinAmplitude = value;
+					} break;
+
+					case hashString("numTiles"): {
+						waterRendering->numTiles = (unsigned char)value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown scalar key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			case LUA_TBOOLEAN: {
+				const bool value = lua_toboolean(L, -1);
+
+				switch (hashString(key)) {
+					case hashString("shoreWaves"): {
+						waterRendering->shoreWaves = value;
+					} break;
+					case hashString("forceRendering"): {
+						waterRendering->forceRendering = value;
+					} break;
+					case hashString("hasWaterPlane"): {
+						waterRendering->hasWaterPlane = value;
+					} break;
+					default: {
+						luaL_error(L, "[%s] unknown boolean key \"%s\"", __func__, key);
+					} break;
+				}
+
+				continue;
+			} break;
+
+			default: {
+			} break;
 		}
 	}
 
@@ -1188,7 +1245,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const char* caller)
 {
 	if (!lua_istable(L, tblIdx)) {
-		luaL_error(L, "[%s] argument %c must be a table!", caller, tblIdx);
+		luaL_error(L, "[%s] argument %d must be a table!", caller, tblIdx);
 		return false;
 	}
 
@@ -1196,62 +1253,90 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const std::string& key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
-		if (lua_istable(L, -1)) {
-			float array[3] = {0.0f, 0.0f, 0.0f};
+		switch (lua_type(L, -1)) {
+			case LUA_TTABLE: {
+				float array[3] = {0.0f, 0.0f, 0.0f};
 
-			if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
-				if (key == "position") {
-					light.SetPosition(array);
-				} else if (key == "direction") {
-					light.SetDirection(array);
-				} else if (key == "ambientColor") {
-					light.SetAmbientColor(array);
-				} else if (key == "diffuseColor") {
-					light.SetDiffuseColor(array);
-				} else if (key == "specularColor") {
-					light.SetSpecularColor(array);
-				} else if (key == "intensityWeight") {
-					light.SetIntensityWeight(array);
-				} else if (key == "attenuation") {
-					light.SetAttenuation(array);
-				} else if (key == "ambientDecayRate") {
-					light.SetAmbientDecayRate(array);
-				} else if (key == "diffuseDecayRate") {
-					light.SetDiffuseDecayRate(array);
-				} else if (key == "specularDecayRate") {
-					light.SetSpecularDecayRate(array);
-				} else if (key == "decayFunctionType") {
-					light.SetDecayFunctionType(array);
+				if (LuaUtils::ParseFloatArray(L, -1, array, 3) < 3)
+					continue;
+
+				switch (hashString(key)) {
+					case hashString("position"): {
+						light.SetPosition(array);
+					} break;
+					case hashString("direction"): {
+						light.SetDirection(array);
+					} break;
+
+					case hashString("ambientColor"): {
+						light.SetAmbientColor(array);
+					} break;
+					case hashString("diffuseColor"): {
+						light.SetDiffuseColor(array);
+					} break;
+					case hashString("specularColor"): {
+						light.SetSpecularColor(array);
+					} break;
+
+					case hashString("intensityWeight"): {
+						light.SetIntensityWeight(array);
+					} break;
+					case hashString("attenuation"): {
+						light.SetAttenuation(array);
+					} break;
+
+					case hashString("ambientDecayRate"): {
+						light.SetAmbientDecayRate(array);
+					} break;
+					case hashString("diffuseDecayRate"): {
+						light.SetDiffuseDecayRate(array);
+					} break;
+					case hashString("specularDecayRate"): {
+						light.SetSpecularDecayRate(array);
+					} break;
+					case hashString("decayFunctionType"): {
+						light.SetDecayFunctionType(array);
+					} break;
+
+					default: {
+					} break;
 				}
+
+				continue;
+			} break;
+
+			case LUA_TNUMBER: {
+				case hashString("radius"): {
+					light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
+				} break;
+				case hashString("fov"): {
+					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
+				} break;
+				case hashString("ttl"): {
+					light.SetTTL(lua_tofloat(L, -1));
+				} break;
+				case hashString("priority"): {
+					light.SetPriority(lua_tofloat(L, -1));
+				} break;
+
+				continue;
 			}
 
-			continue;
-		}
+			case LUA_TBOOLEAN: {
+				case hashString("ignoreLOS"): {
+					light.SetIgnoreLOS(lua_toboolean(L, -1));
+				} break;
+				case hashString("localSpace"): {
+					light.SetLocalSpace(lua_toboolean(L, -1));
+				} break;
 
-		if (lua_isnumber(L, -1)) {
-			if (key == "radius") {
-				light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
-			} else if (key == "fov") {
-				light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
-			} else if (key == "ttl") {
-				light.SetTTL(lua_tofloat(L, -1));
-			} else if (key == "priority") {
-				light.SetPriority(lua_tofloat(L, -1));
+				continue;
 			}
 
-			continue;
-		}
-
-		if (lua_isboolean(L, -1)) {
-			if (key == "ignoreLOS") {
-				light.SetIgnoreLOS(lua_toboolean(L, -1));
-			} else if (key == "localSpace") {
-				light.SetLocalSpace(lua_toboolean(L, -1));
-			}
-
-			continue;
+			default: {
+			} break;
 		}
 	}
 
@@ -2200,16 +2285,16 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	const auto& decoyMap = unitDefHandler->GetDecoyDefIDs();
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 
-	if (decoyMapIt == decoyMap.end())
-		return 0;
+	if (decoyMapIt != decoyMap.end()) {
+		const auto& decoySet = decoyMapIt->second;
 
-	const auto& decoySet = decoyMapIt->second;
-
-	for (const int decoyDefID: decoySet) {
-		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
-		decoyDef->iconType = ud->iconType;
+		for (const int decoyDefID: decoySet) {
+			const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
+			decoyDef->iconType = ud->iconType;
+		}
 	}
 
+	//!! unitDrawer->UpdateUnitDefMiniMapIcons(ud);
 	return 0;
 }
 
@@ -2814,42 +2899,53 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetMapRenderingParams()");
-	}
+	if (!lua_istable(L, 1))
+		luaL_error(L, "[%s] incorrect arguments");
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string key = lua_tostring(L, -2);
+		const char* key = lua_tostring(L, -2);
 
 		if (lua_istable(L, -1)) {
 			float values[4];
 			const int size = LuaUtils::ParseFloatArray(L, -1, values, 4);
-			if (size == 4) {
-				if (key == "splatTexScales") {
+
+			if (size < 4)
+				luaL_error(L, "[%s] unexpected size %d for array key \"%s\"", __func__, size, key);
+
+			switch (hashString(key)) {
+				case hashString("splatTexScales"): {
 					mapRendering->splatTexScales = values;
-				} else if (key == "splatTexMults") {
+				} break;
+				case hashString("splatTexMults"): {
 					mapRendering->splatTexMults = values;
-				} else {
-					luaL_error(L, "Unknown array key %s", key.c_str());
-				}
-			} else {
-				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown array key \"%s\"", __func__, key);
+				} break;
 			}
+
+			continue;
 		}
 
-		else if (lua_isboolean(L, -1)) {
+		if (lua_isboolean(L, -1)) {
 			const bool value = lua_toboolean(L, -1);
-			if (key == "voidWater") {
-				mapRendering->voidWater = value;
-			} else if (key == "voidGround") {
-				mapRendering->voidGround = value;
-			} else if (key == "splatDetailNormalDiffuseAlpha") {
-				mapRendering->splatDetailNormalDiffuseAlpha = value;
-			} else {
-				luaL_error(L, "Unknown boolean key %s", key.c_str());
+
+			switch (hashString(key)) {
+				case hashString("voidWater"): {
+					mapRendering->voidWater = value;
+				} break;
+				case hashString("voidGround"): {
+					mapRendering->voidGround = value;
+				} break;
+				case hashString("splatDetailNormalDiffuseAlpha"): {
+					mapRendering->splatDetailNormalDiffuseAlpha = value;
+				} break;
+				default: {
+					luaL_error(L, "[%s] unknown boolean key \"%s\"", __func__, key);
+				} break;
 			}
 		}
 	}
