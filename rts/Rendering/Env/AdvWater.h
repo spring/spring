@@ -3,9 +3,10 @@
 #ifndef ADV_WATER_H
 #define ADV_WATER_H
 
+#include "IWater.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "IWater.h"
+#include "Rendering/Shaders/Shader.h"
 
 class CAdvWater : public IWater
 {
@@ -23,12 +24,12 @@ protected:
 	FBO reflectFBO;
 	FBO bumpFBO;
 
-	GLuint reflectTexture;
-	GLuint bumpTexture;
-	GLuint rawBumpTexture[4];
-	float3 waterSurfaceColor;
+	GLuint reflectTexture = 0;
+	GLuint bumpmapTexture = 0;
 
-	unsigned int waterFP;
+	GLuint rawBumpTextures[4] = {0, 0, 0, 0};
+
+	Shader::IProgramObject* waterShader = nullptr;
 };
 
 #endif // ADV_WATER_H

@@ -61,7 +61,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	static IWater tmpRenderer;
 	static bool allowedModes[NUM_WATER_RENDERERS] = {
 		true,
-		false,
+		true,
 		false,
 		false,
 		true,
