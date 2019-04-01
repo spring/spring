@@ -1308,29 +1308,37 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 			} break;
 
 			case LUA_TNUMBER: {
-				case hashString("radius"): {
-					light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
-				} break;
-				case hashString("fov"): {
-					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
-				} break;
-				case hashString("ttl"): {
-					light.SetTTL(lua_tofloat(L, -1));
-				} break;
-				case hashString("priority"): {
-					light.SetPriority(lua_tofloat(L, -1));
-				} break;
+				switch (hashString(key)) {
+					case hashString("radius"): {
+						light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
+					} break;
+					case hashString("fov"): {
+						light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
+					} break;
+					case hashString("ttl"): {
+						light.SetTTL(lua_tofloat(L, -1));
+					} break;
+					case hashString("priority"): {
+						light.SetPriority(lua_tofloat(L, -1));
+					} break;
+					default: {
+					} break;
+				}
 
 				continue;
 			}
 
 			case LUA_TBOOLEAN: {
-				case hashString("ignoreLOS"): {
-					light.SetIgnoreLOS(lua_toboolean(L, -1));
-				} break;
-				case hashString("localSpace"): {
-					light.SetLocalSpace(lua_toboolean(L, -1));
-				} break;
+				switch (hashString(key)) {
+					case hashString("ignoreLOS"): {
+						light.SetIgnoreLOS(lua_toboolean(L, -1));
+					} break;
+					case hashString("localSpace"): {
+						light.SetLocalSpace(lua_toboolean(L, -1));
+					} break;
+					default: {
+					} break;
+				}
 
 				continue;
 			}
