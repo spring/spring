@@ -1645,7 +1645,7 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		inBeginEnd = false;
 
 		if (callError != 0)
-			luaL_error(L, "[gl.%s(type, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
+			luaL_error(L, "[gl.%s(type, func, ...)] error %d (%s)", __func__, callError, lua_tostring(L, -1));
 
 		luaRenderBuffer->Submit(primType);
 		luaRenderBuffer = nullptr;
@@ -2818,7 +2818,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 				inBeginEnd = false;
 
 				if (callError != 0)
-					luaL_error(L, "[gl.%s(id, pos, func, ...)] error %i (%s)", __func__, callError, lua_tostring(L, -1));
+					luaL_error(L, "[gl.%s(id, pos, func, ...)] error %d (%s)", __func__, callError, lua_tostring(L, -1));
 			}
 
 			assert(luaRenderBuffer != nullptr);
