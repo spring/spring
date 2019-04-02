@@ -176,12 +176,13 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	{
 		// weapon avoidance and projectile collision flags
 		lua_pushliteral(L, "collisionFlags");
-		lua_createtable(L, 0, 8);
+		lua_createtable(L, 0, 9);
 			LuaPushNamedNumber(L, "noEnemies"   , Collision::NOENEMIES   );
 			LuaPushNamedNumber(L, "noFriendlies", Collision::NOFRIENDLIES);
 			LuaPushNamedNumber(L, "noFeatures"  , Collision::NOFEATURES  );
 			LuaPushNamedNumber(L, "noNeutrals"  , Collision::NONEUTRALS  );
-			LuaPushNamedNumber(L, "noFirebases" , Collision::NOFIREBASES );
+			LuaPushNamedNumber(L, "noFireBases" , Collision::NOFIREBASES );
+			LuaPushNamedNumber(L, "noNonTargets", Collision::NONONTARGETS);
 			LuaPushNamedNumber(L, "noGround"    , Collision::NOGROUND    );
 			LuaPushNamedNumber(L, "noCloaked"   , Collision::NOCLOAKED   );
 			LuaPushNamedNumber(L, "noUnits"     , Collision::NOUNITS     );

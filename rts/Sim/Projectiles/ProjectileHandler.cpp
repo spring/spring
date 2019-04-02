@@ -426,27 +426,36 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
 {
+	const unsigned int collFlags = p->GetCollisionFlags();
+
+	// disregard everything else when this bit is set
+	// (ground and feature flags are tested elsewhere)
+	if ((collFlags & Collision::NONONTARGETS) != 0)
+		return (p->weapon && static_cast<const CWeaponProjectile*>(p)->GetTargetObject() == u);
+
+	if ((collFlags & Collision::NOCLOAKED) != 0 && u->IsCloaked())
+		return false;
+	if ((collFlags & Collision::NONEUTRALS) != 0 && u->IsNeutral())
+		return false;
+
+	if ((collFlags & Collision::NOFIREBASES) != 0) {
+		const CUnit* owner = p->owner();
+		const CUnit* trans = (owner != nullptr)? owner->GetTransporter(): nullptr;
+
+		// check if the unit being collided with is occupied by p's owner
+		if (u == trans && trans->unitDef->isFirePlatform)
+			return false;
+	}
+
 	if (teamHandler.IsValidAllyTeam(p->GetAllyteamID())) {
-		const bool noFriendsBit = ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) != 0);
-		const bool noEnemiesBit = ((p->GetCollisionFlags() & Collision::NOENEMIES   ) != 0);
+		const bool noFriendsBit = ((collFlags & Collision::NOFRIENDLIES) != 0);
+		const bool noEnemiesBit = ((collFlags & Collision::NOENEMIES   ) != 0);
 		const bool friendlyFire = teamHandler.AlliedAllyTeams(p->GetAllyteamID(), u->allyteam);
 
 		if (noFriendsBit && friendlyFire)
 			return false;
 
 		if (noEnemiesBit && !friendlyFire)
-			return false;
-	}
-
-	if ((p->GetCollisionFlags() & Collision::NONEUTRALS) != 0 && u->IsNeutral())
-		return false;
-
-	if ((p->GetCollisionFlags() & Collision::NOFIREBASES) != 0) {
-		const CUnit* owner = p->owner();
-		const CUnit* trans = (owner != nullptr)? owner->GetTransporter(): nullptr;
-
-		// check if the unit being collided with is occupied by p's owner
-		if (u == trans && trans->unitDef->isFirePlatform)
 			return false;
 	}
 
