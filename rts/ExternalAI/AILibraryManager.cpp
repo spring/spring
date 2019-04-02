@@ -81,7 +81,7 @@ void AILibraryManager::GatherInterfaceLibInfo()
 	std::map<const AIInterfaceKey, std::set<std::string> > duplicateInterfaces;
 
 	for (const auto& possibleDataDir: dataDirsAccess.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR)) {
-		const T_dirs& infoFiles = CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
+		const auto& infoFiles = CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
 
 		if (infoFiles.empty())
 			continue;
@@ -183,14 +183,14 @@ void AILibraryManager::GatherSkirmishAILibInfoFromLuaFiles(T_dupSkirm& duplicate
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIOptions.lua
 	for (const auto& possibleDataDir : dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR)) {
-		const T_dirs& infoFiles = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
+		const auto& infoFiles = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
 
 		if (infoFiles.empty())
 			continue;
 
 		// skirmish AI info is available
 		const std::string& infoFile = infoFiles[0];
-		const T_dirs& optionFile = CFileHandler::FindFiles(possibleDataDir, "AIOptions.lua");
+		const auto& optionFile = CFileHandler::FindFiles(possibleDataDir, "AIOptions.lua");
 
 		std::string optionFileName;
 
