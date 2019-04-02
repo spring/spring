@@ -18,6 +18,8 @@ public:
 	typedef spring::unsynced_map<std::string, Shader::IProgramObject*> ProgramObjMap;
 	typedef spring::unsynced_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
 	typedef spring::unsynced_map<std::string, ProgramObjMap> ProgramTable;
+	// indexed by literals
+	typedef spring::unsynced_map<const char*, std::array<std::string, GL::SHADER_TYPE_CNT>> ExtShaderSourceMap;
 	typedef spring::unsynced_map<const char*, Shader::IProgramObject*> ExtProgramObjMap;
 
 	static CShaderHandler* GetInstance();
@@ -35,11 +37,16 @@ public:
 		shaderCache.Clear();
 	}
 
-	void InsertExtProgramObject(const char* name, Shader::IProgramObject* prog) { extProgramObjects.insert(name, prog); }
-	void RemoveExtProgramObject(const char* name, Shader::IProgramObject* prog) { extProgramObjects.erase(name); }
+
+	void InsertExtProgramObject(const char* name, Shader::IProgramObject* prog);
+	void RemoveExtProgramObject(const char* name, Shader::IProgramObject* prog) {
+		extProgramObjects.erase(name);
+		extShaderSources.erase(name);
+	}
 
 	bool ReleaseProgramObjects(const std::string& poClass, bool persistent = false);
 	void ReleaseProgramObjectsMap(ProgramObjMap& poMap);
+
 
 	Shader::IProgramObject* CreateProgramObject(const std::string& poClass, const std::string& poName, bool persistent = false);
 	/**
@@ -56,6 +63,15 @@ public:
 			return nullptr;
 
 		return (it->second);
+	}
+
+	const std::array<std::string, GL::SHADER_TYPE_CNT>* GetExtShaderSources(const char* name) const {
+		const auto it = extShaderSources.find(name);
+
+		if (it == extShaderSources.end())
+			return nullptr;
+
+		return &it->second;
 	}
 
 
@@ -101,6 +117,7 @@ private:
 
 	// holds external programs not created by CreateProgramObject
 	ExtProgramObjMap extProgramObjects;
+	ExtShaderSourceMap extShaderSources;
 
 	// all (re)loaded program ID's, by hash
 	ShaderCache shaderCache;

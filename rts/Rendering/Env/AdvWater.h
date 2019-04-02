@@ -16,7 +16,8 @@ public:
 	virtual int GetID() const { return WATER_RENDERER_REFLECTIVE; }
 	virtual const char* GetName() const { return "reflective"; }
 
-	virtual void Draw();
+	virtual void Draw() { Draw(true); }
+
 	void Draw(bool useBlending);
 	void UpdateWater(CGame* game);
 

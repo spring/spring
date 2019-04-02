@@ -50,9 +50,11 @@ namespace Shader {
 		unsigned int GetType() const { return type; }
 		unsigned int GetHash() const;
 
+		const std::string& GetSrc(bool text) const { return (text? srcText: srcData); }
 		const std::string& GetLog() const { return log; }
 
-		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
+		void SetSourceString(const std::string& src, bool text) { (text? srcText: srcData) = src; }
+		void SetDefineStrings(const std::string& defs) { modDefStrs = defs; }
 
 	protected:
 		unsigned int glid = 0;
@@ -111,19 +113,25 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject() { LoadFromID(0); uniformStates.reserve(32); }
-		IProgramObject(const std::string& poName): name(poName) { uniformStates.reserve(32); }
+		IProgramObject() {
+			shaderObjs.reserve(4);
+			uniformStates.reserve(32);
+		}
+		IProgramObject(const std::string& poName): name(poName) {
+			shaderObjs.reserve(4);
+			uniformStates.reserve(32);
+		}
 		IProgramObject(const IProgramObject& po) = delete;
 		IProgramObject(IProgramObject&& po) { *this = std::move(po); }
 		virtual ~IProgramObject() {}
 
 		IProgramObject& operator = (const IProgramObject& po) = delete;
 		IProgramObject& operator = (IProgramObject&& po) {
-			glid = po.glid;
-			hash = po.hash;
+			std::swap(glid, po.glid);
+			std::swap(hash, po.hash);
 
-			valid = po.valid;
-			bound = po.bound;
+			std::swap(valid, po.valid);
+			std::swap(bound, po.bound);
 
 			name = std::move(po.name);
 			log = std::move(po.log);
@@ -134,8 +142,6 @@ namespace Shader {
 			uniformStates = std::move(po.uniformStates);
 			luaTextures = std::move(po.luaTextures);
 
-			// invalidate old
-			po.LoadFromID(0);
 			return *this;
 		}
 
@@ -175,6 +181,7 @@ namespace Shader {
 		unsigned int GetObjID() const { return glid; }
 		unsigned int GetHash() const { return hash; }
 
+		const std::vector<IShaderObject*>& GetShaderObjs() const { return shaderObjs; }
 		const std::string& GetName() const { return name; }
 		const std::string& GetLog() const { return log; }
 

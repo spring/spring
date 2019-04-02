@@ -437,7 +437,7 @@ namespace Shader {
 	void GLSLProgramObject::SetShaderDefinitions(const std::string& defs) {
 		// NOTE: this does not preserve the #version pragma
 		for (IShaderObject*& so: shaderObjs) {
-			so->SetDefinitions(defs);
+			so->SetDefineStrings(defs);
 		}
 	}
 

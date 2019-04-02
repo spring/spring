@@ -35,6 +35,26 @@ void CShaderHandler::ReloadShaders(bool persistent)
 }
 
 
+void CShaderHandler::InsertExtProgramObject(const char* name, Shader::IProgramObject* prog)
+{
+	assert(name[0] != 0);
+
+	if (GetExtProgramObject(name) != nullptr)
+		return;
+
+	assert(GetExtShaderSources(name) == nullptr);
+
+	extProgramObjects.insert(name, prog);
+	extShaderSources.insert(name, {});
+
+	// the attached shader objects may go away later, so make
+	// copies of their source strings while those still exist
+	for (const Shader::IShaderObject* shader: prog->GetShaderObjs()) {
+		extShaderSources[name][ GL::ShaderTypeToEnum(shader->GetType()) ] = shader->GetSrc(false);
+	}
+}
+
+
 bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool persistent)
 {
 	ProgramTable& pTable = programObjects[persistent];

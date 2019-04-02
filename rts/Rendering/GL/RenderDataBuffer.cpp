@@ -5,6 +5,7 @@
 
 #include "myGL.h"
 #include "RenderDataBuffer.hpp"
+#include "Rendering/Shaders/ShaderHandler.h"
 
 // global general-purpose buffers
 static GL::RenderDataBuffer gRenderBuffer0 [2];
@@ -37,19 +38,19 @@ static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
 static GL::RenderDataBufferL tRenderBufferL[2];
 
 
-GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferC* GL::GetRenderBufferC () { return &tRenderBufferC [0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferC* GL::GetRenderBufferFC() { return &tRenderBufferFC[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferT* GL::GetRenderBufferT () { return &tRenderBufferT [0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0]; }
+GL::RenderDataBufferC* GL::GetRenderBufferC () { return &tRenderBufferC [0]; }
+GL::RenderDataBufferC* GL::GetRenderBufferFC() { return &tRenderBufferFC[0]; }
+GL::RenderDataBufferT* GL::GetRenderBufferT () { return &tRenderBufferT [0]; }
 
-GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return &tRenderBufferT4[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return &tRenderBufferTN[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return &tRenderBufferT4[0]; }
+GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return &tRenderBufferTN[0]; }
+GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0]; }
 
-GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0]; }
+GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0]; }
 
-GL::RenderDataBufferL* GL::GetRenderBufferL() { return &tRenderBufferL[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferL* GL::GetRenderBufferL() { return &tRenderBufferL[0]; }
 
 
 void GL::InitRenderBuffers() {
@@ -59,14 +60,15 @@ void GL::InitRenderBuffers() {
 	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, "", ""}, {GL_FRAGMENT_SHADER, "", ""}};
 
 
+	#define MAKE_NAME_STR(T) GL::RenderDataBuffer::GetShaderName(#T)
 	#define SETUP_RBUFFER(T, i, ne, ni) tRenderBuffer ## T[i].Setup(&gRenderBuffer ## T[i], &GL::VA_TYPE_ ## T ## _ATTRS, ne, ni)
-	#define CREATE_SHADER(T, i, VS_CODE, FS_CODE)                                                                          \
-		do {                                                                                                               \
-			GL::RenderDataBuffer::FormatShader ## T(vsBuffer, vsBuffer + sizeof(vsBuffer), "", "", VS_CODE, "VS");         \
-			GL::RenderDataBuffer::FormatShader ## T(fsBuffer, fsBuffer + sizeof(fsBuffer), "", "", FS_CODE, "FS");         \
-			shaderObjs[0] = {GL_VERTEX_SHADER  , &vsBuffer[0], ""};                                                        \
-			shaderObjs[1] = {GL_FRAGMENT_SHADER, &fsBuffer[0], ""};                                                        \
-			gRenderBuffer ## T[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0,  &shaderObjs[0], nullptr); \
+	#define CREATE_SHADER(T, i, VS_CODE, FS_CODE)                                                                                            \
+		do {                                                                                                                                 \
+			GL::RenderDataBuffer::FormatShader ## T(vsBuffer, vsBuffer + sizeof(vsBuffer), "", "", VS_CODE, "VS");                           \
+			GL::RenderDataBuffer::FormatShader ## T(fsBuffer, fsBuffer + sizeof(fsBuffer), "", "", FS_CODE, "FS");                           \
+			shaderObjs[0] = {GL_VERTEX_SHADER  , &vsBuffer[0], ""};                                                                          \
+			shaderObjs[1] = {GL_FRAGMENT_SHADER, &fsBuffer[0], ""};                                                                          \
+			gRenderBuffer ## T[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0,  &shaderObjs[0], nullptr, MAKE_NAME_STR(T)); \
 		} while (false)
 
 	for (int i = 0; i < 2; i++) {
@@ -104,6 +106,7 @@ void GL::InitRenderBuffers() {
 
 	#undef CREATE_SHADER
 	#undef SETUP_RBUFFER
+	#undef MAKE_NAME_STR
 }
 
 void GL::KillRenderBuffers() {
@@ -125,7 +128,7 @@ void GL::KillRenderBuffers() {
 }
 
 void GL::SwapRenderBuffers() {
-	// NB: called before frame is incremented
+	// NB: called before drawFrame counter is incremented
 	std::swap(tRenderBuffer0 [0], tRenderBuffer0 [1]);
 	std::swap(tRenderBufferC [0], tRenderBufferC [1]);
 	std::swap(tRenderBufferFC[0], tRenderBufferFC[1]);
@@ -327,11 +330,16 @@ Shader::GLSLProgramObject* GL::RenderDataBuffer::CreateShader(
 	size_t numObjects,
 	size_t numUniforms,
 	Shader::GLSLShaderObject* objects,
-	const Shader::ShaderInput* uniforms
+	const Shader::ShaderInput* uniforms,
+	const char* progName
 ) {
 	for (size_t n = 0; n < numObjects; n++) {
 		shader.AttachShaderObject(&objects[n]);
 	}
+
+	// keep the source strings around for LuaOpenGL
+	if (progName[0] != 0)
+		shaderHandler->InsertExtProgramObject(progName, &shader);
 
 	shader.ReloadShaderObjects();
 	shader.CreateAndLink();

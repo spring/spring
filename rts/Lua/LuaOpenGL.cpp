@@ -25,7 +25,6 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Fonts/glFont.h"
@@ -44,6 +43,7 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -52,7 +52,6 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -212,6 +211,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(HasExtension);
 	REGISTER_LUA_CFUNC(GetNumber);
 	REGISTER_LUA_CFUNC(GetString);
+	REGISTER_LUA_CFUNC(GetDefaultShaderSources);
 
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
@@ -923,6 +923,28 @@ int LuaOpenGL::GetString(lua_State* L)
 		lua_pushstring(L, pstring);
 	} else {
 		lua_pushstring(L, "[NULL]");
+	}
+
+	return 1;
+}
+
+int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
+{
+	const char* shader = GL::RenderDataBuffer::GetShaderName(luaL_checkstring(L, 1));
+	const auto* sources = shaderHandler->GetExtShaderSources(shader);
+
+	if (sources == nullptr)
+		return 0;
+
+	lua_createtable(L, 0, sources->size());
+
+	for (const std::string& src: *sources) {
+		if (src.empty())
+			continue;
+
+		lua_pushstring(L, GL::ShaderEnumToStr(&src - sources->data())); // key ("vs", "fs", etc)
+		lua_pushsstring(L, src); // val
+		lua_rawset(L, -3);
 	}
 
 	return 1;

@@ -140,6 +140,7 @@ class LuaOpenGL {
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
+		static int GetDefaultShaderSources(lua_State* L);
 
 		static int ConfigScreen(lua_State* L);
 

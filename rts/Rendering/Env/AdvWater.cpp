@@ -131,11 +131,6 @@ CAdvWater::~CAdvWater()
 }
 
 
-void CAdvWater::Draw()
-{
-	Draw(true);
-}
-
 void CAdvWater::Draw(bool useBlending)
 {
 	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())

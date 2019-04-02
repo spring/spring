@@ -79,6 +79,13 @@ Lua:
      gl.DeleteVertexArray(number id) -> boolean success | nil
      gl.UpdateVertexArray(number id, number minIndex, number maxIndex, table vertexData | function updateFunc [, args...]) -> boolean success | nil
      gl.RenderVertexArray(number id) -> boolean success | nil
+ - add gl.GetDefaultShaderSources(string shaderName) -> table | nil
+     shaderName can be one of {"0", "C", "T",  "T4", "TN", "TC",  "2D0", "2DT"}
+     table contains vertex/fragment/... source strings for the respective engine
+     shader used internally to draw UI elements, etc ("0" means the given shader
+     only receives position attributes, "C" means it receives colors, "T" means
+     it receives texture coors, "N" means it receives normals, and "XY" means it
+     receives X and Y)
  - add `VFS.GAME` as a synonym to `VFS.MOD`
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this

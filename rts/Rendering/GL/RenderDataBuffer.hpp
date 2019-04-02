@@ -200,6 +200,27 @@ namespace GL {
 		void EnableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const;
 		void DisableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const;
 
+		static const char* GetShaderName(const char* s) {
+			switch (hashString(s)) {
+				case hashString("0"  ): case hashString("VA_TYPE_0"  ): { return "[VA_SHADER_0]"; } break;
+				case hashString("C"  ): case hashString("VA_TYPE_C"  ): { return "[VA_SHADER_C]"; } break;
+				case hashString("T"  ): case hashString("VA_TYPE_T"  ): { return "[VA_SHADER_T]"; } break;
+
+				case hashString("T4" ): case hashString("VA_TYPE_T4" ): { return "[VA_SHADER_T4]"; } break;
+				case hashString("TN" ): case hashString("VA_TYPE_TN" ): { return "[VA_SHADER_TN]"; } break;
+				case hashString("TC" ): case hashString("VA_TYPE_TC" ): { return "[VA_SHADER_TC]"; } break;
+
+				case hashString("2D0"): case hashString("VA_TYPE_2D0"): { return "[VA_SHADER_2D0]"; } break;
+				case hashString("2DT"): case hashString("VA_TYPE_2DT"): { return "[VA_SHADER_2DT]"; } break;
+
+				// VA_TYPE_L has no associated shader
+				default: {
+				} break;
+			}
+
+			return "";
+		}
+
 		static char* FormatShaderBase(
 			char* buf,
 			const char* end,
@@ -290,7 +311,8 @@ namespace GL {
 			size_t numObjects,
 			size_t numUniforms,
 			Shader::GLSLShaderObject* objects,
-			const Shader::ShaderInput* uniforms
+			const Shader::ShaderInput* uniforms,
+			const char* progName = ""
 		);
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
