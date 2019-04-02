@@ -849,9 +849,6 @@ int LuaSyncedRead::GetGlobalLos(lua_State* L)
 
 int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 {
-	if (gs == nullptr)
-		return 0;
-
 	lua_pushboolean(L, !gs->noHelperAIs);
 	return 1;
 }
@@ -859,9 +856,6 @@ int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 
 int LuaSyncedRead::FixedAllies(lua_State* L)
 {
-	if (gameSetup == nullptr)
-		return 0;
-
 	lua_pushboolean(L, gameSetup->fixedAllies);
 	return 1;
 }
