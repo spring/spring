@@ -1087,12 +1087,15 @@ bool CGame::Update()
 		SLuaAllocError error = {};
 
 		if (spring_lua_alloc_get_error(&error)) {
-			// convert the "abc\ndef\n..." buffer into "abc", "def", ... chunks
+			// convert the "abc\ndef\n..." buffer into 0-terminated "abc", "def", ... chunks
 			for (char *ptr = &error.msgBuf[0], *tmp = nullptr; (tmp = strstr(ptr, "\n")) != nullptr; ptr = tmp + 1) {
 				*tmp = 0;
 
 				LOG_L(L_FATAL, "%s", error.msgBuf);
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_FATAL, error.msgBuf);
+
+				// force a restart if synced Lua died, simply reloading might not work
+				gu->globalQuit = gu->globalQuit || (strstr(error.msgBuf, "[OOM] synced=1") != nullptr);
 			}
 		}
 	}
