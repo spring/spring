@@ -113,7 +113,7 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 
 void ClassAliasList::Load(const LuaTable& aliasTable)
 {
-	spring::unordered_map<string, string> aliasList;
+	decltype(aliases) aliasList;
 	aliasTable.GetMap(aliasList);
 	aliases.insert(aliasList.begin(), aliasList.end());
 }
