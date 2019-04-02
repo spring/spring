@@ -426,12 +426,16 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
 {
-	const unsigned int collFlags = p->GetCollisionFlags();
+	const unsigned int collFlags = p->GetCollisionFlags() * p->weapon;
+
+	// only weapon-projectiles can have non-zero flags
+	if (collFlags == 0)
+		return false;
 
 	// disregard everything else when this bit is set
 	// (ground and feature flags are tested elsewhere)
 	if ((collFlags & Collision::NONONTARGETS) != 0)
-		return (p->weapon && static_cast<const CWeaponProjectile*>(p)->GetTargetObject() == u);
+		return (static_cast<const CWeaponProjectile*>(p)->GetTargetObject() == u);
 
 	if ((collFlags & Collision::NOCLOAKED) != 0 && u->IsCloaked())
 		return false;
@@ -454,7 +458,6 @@ static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
 
 		if (noFriendsBit && friendlyFire)
 			return false;
-
 		if (noEnemiesBit && !friendlyFire)
 			return false;
 	}
