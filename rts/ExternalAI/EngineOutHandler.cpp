@@ -61,6 +61,7 @@ void CEngineOutHandler::Create() {
 	if (numInstances != 0)
 		return;
 
+	AILibraryManager::Create();
 	singleton.Init();
 
 	numInstances += 1;
