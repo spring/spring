@@ -34,12 +34,12 @@ public:
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	typedef std::map<const SkirmishAIKey, std::set<std::string> > T_dupSkirm;
 
-	typedef std::map<const AIInterfaceKey, std::unique_ptr<CAIInterfaceLibrary> > T_loadedInterfaces;
 
 public:
-	static AILibraryManager* GetInstance();
+	static AILibraryManager* GetInstance(bool init = true);
 
-	static void Destroy();
+	static void Create() { GetInstance(false); }
+	static void Destroy() { GetInstance(false)->Kill(); }
 	static void OutputAIInterfacesInfo();
 	static void OutputSkirmishAIInfo();
 
@@ -50,6 +50,7 @@ public:
 	 */
 	void Kill();
 
+	bool Initialized() const { return initialized; }
 
 	/**
 	 * Returns a resolved aikey
@@ -64,11 +65,6 @@ public:
 	const T_interfaceInfos& GetInterfaceInfos() const { return interfaceInfos; }
 	const T_skirmishAIInfos& GetSkirmishAIInfos() const { return skirmishAIInfos; }
 
-	/**
-	 * Returns a set of files which contain duplicate AI Interface infos.
-	 * This can be used for issueing warnings.
-	 */
-	const T_dupInt& GetDuplicateInterfaceInfos() const { return duplicateInterfaceInfos; }
 	/**
 	 * Returns a set of files which contain duplicate Skirmish AI infos.
 	 * This can be used for issueing warnings.
@@ -93,7 +89,7 @@ public:
 
 private:
 	/** Unloads all currently loaded AIs and interfaces. */
-	void ReleaseEverything();
+	void ReleaseAll();
 
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
@@ -115,7 +111,7 @@ private:
 	 * AI/Interfaces/C/0.1/InterfaceInfo.lua
 	 * AI/Interfaces/Java/0.1/InterfaceInfo.lua
 	 */
-	void GatherInterfaceLibrariesInfos();
+	void GatherInterfaceLibInfo();
 	/**
 	 * Loads info about available Skirmish AIs from Lua info- and option-files.
 	 * -> AI libraries can not corrupt the engines memory
@@ -132,19 +128,20 @@ private:
 	 * AI/Skirmish/RAI/0.601/AIInfo.lua
 	 * AI/Skirmish/RAI/0.601/AIOptions.lua
 	 */
-	void GatherSkirmishAIsLibrariesInfos();
+	void GatherSkirmishAILibInfo();
 
-	void GatherSkirmishAIsLibrariesInfosFromLuaFiles(T_dupSkirm duplicateSkirmishAIInfoCheck);
-	void GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dupSkirm duplicateSkirmishAIInfoCheck);
-	void StoreSkirmishAILibraryInfos(T_dupSkirm duplicateSkirmishAIInfoCheck, CSkirmishAILibraryInfo& skirmishAIInfo, const std::string& sourceDesc);
+	void GatherSkirmishAILibInfoFromLuaFiles(T_dupSkirm& duplicateSkirmishAIInfoCheck);
+	void GatherSkirmishAILibInfoFromInterfaceLib(T_dupSkirm& duplicateSkirmishAIInfoCheck);
+	void StoreSkirmishAILibInfo(T_dupSkirm& duplicateSkirmishAIInfoCheck, CSkirmishAILibraryInfo& skirmishAIInfo, const std::string& sourceDesc);
 	/// Filter out Skirmish AIs that are specified multiple times
-	void FilterDuplicateSkirmishAILibrariesInfos(T_dupSkirm duplicateSkirmishAIInfoCheck);
+	void FilterDuplicateSkirmishAILibInfo(const T_dupSkirm& duplicateSkirmishAIInfoCheck);
 
 	/**
 	 * Clears info about available AIs.
 	 */
-	void ClearAllInfos();
+	void ClearAll();
 
+private:
 	/**
 	 * Finds the best fitting interface.
 	 * The short name has to fit perfectly, and the version of the interface
@@ -157,7 +154,7 @@ private:
 	 *
 	 * @see AILibraryManager::VersionCompare()
 	 */
-	static AIInterfaceKey FindFittingInterfaceSpecifier(
+	static AIInterfaceKey FindFittingInterfaceKey(
 		const std::string& shortName,
 		const std::string& minVersion,
 		const T_interfaceSpecs& specs
@@ -183,17 +180,21 @@ private:
 	 */
 	static int VersionCompare(const std::string& version1, const std::string& version2);
 
-	T_loadedInterfaces loadedAIInterfaceLibraries;
+private:
+	std::map<const AIInterfaceKey, std::unique_ptr<CAIInterfaceLibrary> > loadedAIInterfaceLibs;
 
 	T_interfaceSpecs interfaceKeys;
 	T_skirmishAIKeys skirmishAIKeys;
+
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 
 	T_dupInt duplicateInterfaceInfos;
 	T_dupSkirm duplicateSkirmishAIInfos;
+
+	bool initialized = false;
 };
 
-#define aiLibManager AILibraryManager::GetInstance()
+#define aiLibManager AILibraryManager::GetInstance(true)
 #endif // AI_LIBRARY_MANAGER_H
 
