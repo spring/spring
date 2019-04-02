@@ -230,7 +230,7 @@ void AILibraryManager::GatherSkirmishAILibInfoFromInterfaceLib(T_dupSkirm& dupli
 			//   AIs. This is the duty of the AI Interface plugin.
 			CSkirmishAILibraryInfo skirmishAIInfo = CSkirmishAILibraryInfo(rawInfos, rawLuaOptions);
 
-			StoreSkirmishAILibraryInfos(duplicateSkirmishAIs, skirmishAIInfo, intInf.first.ToString());
+			StoreSkirmishAILibInfo(duplicateSkirmishAIs, skirmishAIInfo, intInf.first.ToString());
 		}
 	}
 }
