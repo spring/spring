@@ -44,6 +44,11 @@ public:
 	bool GetKeys(std::vector<int>& data) const;
 	bool GetKeys(std::vector<std::string>& data) const;
 
+	bool GetPairs(std::vector<std::pair<int, float>>& data) const { return false; } // TODO
+	bool GetPairs(std::vector<std::pair<int, std::string>>& data) const;
+	bool GetPairs(std::vector<std::pair<std::string, float>>& data) const;
+	bool GetPairs(std::vector<std::pair<std::string, std::string>>& data) const;
+
 	bool GetMap(spring::unordered_map<int, float>& data) const;
 	bool GetMap(spring::unordered_map<int, std::string>& data) const;
 	bool GetMap(spring::unordered_map<std::string, float>& data) const;

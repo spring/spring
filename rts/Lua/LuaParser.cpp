@@ -1137,15 +1137,15 @@ bool LuaTable::GetKeys(std::vector<int>& data) const
 
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) {
-			const int value = lua_toint(L, -2);
-			data.push_back(value);
-		}
+		if (!lua_israwnumber(L, -2))
+			continue;
+
+		data.push_back(lua_toint(L, -2));
 	}
+
 	std::stable_sort(data.begin(), data.end());
 	return true;
 }
-
 
 bool LuaTable::GetKeys(std::vector<std::string>& data) const
 {
@@ -1164,6 +1164,85 @@ bool LuaTable::GetKeys(std::vector<std::string>& data) const
 }
 
 
+
+bool LuaTable::GetPairs(std::vector<std::pair<int, std::string>>& data) const
+{
+	if (!PushTable())
+		return false;
+
+	const int table = lua_gettop(L);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2) || !lua_isstring(L, -1))
+			continue;
+
+		if (lua_isstring(L, -1)) {
+			data.emplace_back(lua_toint(L, -2), lua_tostring(L, -1));
+			continue;
+		}
+		if (lua_isboolean(L, -1)) {
+			data.emplace_back(lua_toint(L, -2), lua_toboolean(L, -1) ? "1" : "0");
+			continue;
+		}
+	}
+
+	using T = std::remove_reference<decltype(data)>::type;
+	using P = T::value_type;
+
+	std::stable_sort(data.begin(), data.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+	return true;
+}
+
+bool LuaTable::GetPairs(std::vector<std::pair<std::string, float>>& data) const
+{
+	if (!PushTable())
+		return false;
+
+	const int table = lua_gettop(L);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+			continue;
+
+		data.emplace_back(lua_tostring(L, -2), lua_tonumber(L, -1));
+	}
+
+	using T = std::remove_reference<decltype(data)>::type;
+	using P = T::value_type;
+
+	std::stable_sort(data.begin(), data.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+	return true;
+}
+
+bool LuaTable::GetPairs(std::vector<std::pair<std::string, std::string>>& data) const
+{
+	if (!PushTable())
+		return false;
+
+	const int table = lua_gettop(L);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		if (lua_isstring(L, -1)) { // includes numbers
+			data.emplace_back(lua_tostring(L, -2), lua_tostring(L, -1));
+			continue;
+		}
+		if (lua_isboolean(L, -1)) {
+			data.emplace_back(lua_tostring(L, -2), lua_toboolean(L, -1) ? "1" : "0");
+			continue;
+		}
+	}
+
+	using T = std::remove_reference<decltype(data)>::type;
+	using P = T::value_type;
+
+	std::stable_sort(data.begin(), data.end(), [](const P& a, const P& b) { return (a.first < b.first); });
+	return true;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -1176,16 +1255,16 @@ bool LuaTable::GetMap(spring::unordered_map<int, float>& data) const
 		return false;
 
 	const int table = lua_gettop(L);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {
-			const int   key   =   lua_toint(L, -2);
-			const float value = lua_tonumber(L, -1);
-			data[key] = value;
-		}
+		if (!lua_israwnumber(L, -2) || !lua_isnumber(L, -1))
+			continue;
+
+		data[lua_toint(L, -2)] = lua_tonumber(L, -1);
 	}
+
 	return true;
 }
-
 
 bool LuaTable::GetMap(spring::unordered_map<int, std::string>& data) const
 {
@@ -1193,22 +1272,23 @@ bool LuaTable::GetMap(spring::unordered_map<int, std::string>& data) const
 		return false;
 
 	const int table = lua_gettop(L);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
-			if (lua_isstring(L, -1)) {
-				const int         key   = lua_toint(L, -2);
-				const std::string value = lua_tostring(L, -1);
-				data[key] = value;
-			} else if (lua_isboolean(L, -1)) {
-				const int         key   = lua_toint(L, -2);
-				const std::string value = lua_toboolean(L, -1) ? "1" : "0";
-				data[key] = value;
-			}
+		if (!lua_israwnumber(L, -2) || !lua_isstring(L, -1))
+			continue;
+
+		if (lua_isstring(L, -1)) {
+			data[lua_toint(L, -2)] = lua_tostring(L, -1);
+			continue;
+		}
+		if (lua_isboolean(L, -1)) {
+			data[lua_toint(L, -2)] = lua_toboolean(L, -1) ? "1" : "0";
+			continue;
 		}
 	}
+
 	return true;
 }
-
 
 bool LuaTable::GetMap(spring::unordered_map<std::string, float>& data) const
 {
@@ -1216,16 +1296,16 @@ bool LuaTable::GetMap(spring::unordered_map<std::string, float>& data) const
 		return false;
 
 	const int table = lua_gettop(L);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-			const std::string key   = lua_tostring(L, -2);
-			const float       value = lua_tonumber(L, -1);
-			data[key] = value;
-		}
+		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+			continue;
+
+		data[lua_tostring(L, -2)] = lua_tonumber(L, -1);
 	}
+
 	return true;
 }
-
 
 bool LuaTable::GetMap(spring::unordered_map<std::string, std::string>& data) const
 {
@@ -1233,19 +1313,21 @@ bool LuaTable::GetMap(spring::unordered_map<std::string, std::string>& data) con
 		return false;
 
 	const int table = lua_gettop(L);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			if (lua_isstring(L, -1)) { // includes numbers
-				const std::string key   = lua_tostring(L, -2);
-				const std::string value = lua_tostring(L, -1);
-				data[key] = value;
-			} else if (lua_isboolean(L, -1)) {
-				const std::string key   = lua_tostring(L, -2);
-				const std::string value = lua_toboolean(L, -1) ? "1" : "0";
-				data[key] = value;
-			}
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		if (lua_isstring(L, -1)) { // includes numbers
+			data[lua_tostring(L, -2)] = lua_tostring(L, -1);
+			continue;
+		}
+		if (lua_isboolean(L, -1)) {
+			data[lua_tostring(L, -2)] = lua_toboolean(L, -1) ? "1" : "0";
+			continue;
 		}
 	}
+
 	return true;
 }
 

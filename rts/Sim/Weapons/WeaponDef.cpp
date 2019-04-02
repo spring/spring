@@ -12,6 +12,7 @@
 #include "Sim/Units/Scripts/CobInstance.h" // TAANG2RAD
 #include "System/SpringMath.h"
 #include "System/Log/ILog.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 
 
@@ -321,28 +322,36 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		if (selfExplode)
 			predictBoost = wdTable.GetFloat("predictBoost", 0.5f);
 
-		if (type == "Melee") {
-			targetBorder = Clamp(wdTable.GetFloat("targetBorder", 1.0f), -1.0f, 1.0f);
-			cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", 1.0f)), 0.0f, 128.0f);
-		}
+		switch (hashString(type.c_str())) {
+			case hashString("Melee"): {
+				targetBorder = Clamp(wdTable.GetFloat("targetBorder", 1.0f), -1.0f, 1.0f);
+				cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", 1.0f)), 0.0f, 128.0f);
+			} break;
 
-		//FIXME move to lua (for all other weapons this tag is named `duration` and has a different default)
-		if (type == "Flame")
-			duration = wdTable.GetFloat("flameGfxTime", 1.2f);
+			//TODO move to lua (for all other weapons this tag is named `duration` and has a different default)
+			case hashString("Flame"): {
+				duration = wdTable.GetFloat("flameGfxTime", 1.2f);
+			} break;
 
-		if (type == "Cannon") {
-			heightmod = wdTable.GetFloat("heightMod", 0.8f);
-		} else if (type == "BeamLaser" || type == "LightningCannon") {
-			heightmod = wdTable.GetFloat("heightMod", 1.0f);
-		}
+			case hashString("Cannon"): {
+				heightmod = wdTable.GetFloat("heightMod", 0.8f);
+			} break;
+			case hashString("BeamLaser"):
+			case hashString("LightningCannon"): {
+				heightmod = wdTable.GetFloat("heightMod", 1.0f);
+			} break;
 
-		if (type == "LaserCannon") {
-			// for lasers we want this to be true by default: it sets
-			// projectile ttl values to the minimum required to hit a
-			// target which prevents them overshooting (lasers travel
-			// many elmos per frame and ttl's are rounded) at maximum
-			// range
-			selfExplode = wdTable.GetBool("burnblow", true);
+			case hashString("LaserCannon"): {
+				// for lasers we want this to be true by default: it sets
+				// projectile ttl values to the minimum required to hit a
+				// target which prevents them overshooting (lasers travel
+				// many elmos per frame and ttl's are rounded) at maximum
+				// range
+				selfExplode = wdTable.GetBool("burnblow", true);
+			} break;
+
+			default: {
+			} break;
 		}
 	}
 
@@ -361,16 +370,18 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		if (!paralyzer)
 			damages.paralyzeDamageTime = 0;
 
-		spring::unordered_map<string, float> dmgs;
-		spring::unordered_map<string, float>::const_iterator di;
 
-		dmgTable.GetMap(dmgs);
+		static std::vector<std::pair<std::string, float>> dmgs;
 
-		for (di = dmgs.cbegin(); di != dmgs.cend(); ++di) {
-			const int type = damageArrayHandler.GetTypeFromName(di->first);
-			if (type != 0) {
-				damages.Set(type, std::max(0.0001f, di->second));
-			}
+		dmgs.clear();
+		dmgs.reserve(32);
+		dmgTable.GetPairs(dmgs);
+
+		for (const auto& pair: dmgs) {
+			const int type = damageArrayHandler.GetTypeFromName(pair.first);
+			if (type == 0)
+				continue;
+			damages.Set(type, std::max(0.0001f, pair.second));
 		}
 
 		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damages.damageAreaOfEffect * 0.1f);
@@ -397,96 +408,112 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		defInterceptType = 0;
 
 		ownerExpAccWeight = -1.0f;
-		if (type == "Cannon") {
-			// CExplosiveProjectile
-			defInterceptType = 1;
-			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-			intensity = wdTable.GetFloat("intensity", 0.2f);
-		} else if (type == "Rifle") {
-			// no projectile or intercept type
-			defInterceptType = 128;
+		switch (hashString(type.c_str())) {
+			case hashString("Cannon"): {
+				// CExplosiveProjectile
+				defInterceptType = 1;
+				projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-		} else if (type == "Melee") {
-			// no projectile or intercept type
-			defInterceptType = 256;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+				intensity = wdTable.GetFloat("intensity", 0.2f);
+			} break;
+			case hashString("Rifle"): {
+				// no projectile or intercept type
+				defInterceptType = 128;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-		} else if (type == "Flame") {
-			// CFlameProjectile
-			projectileType = WEAPON_FLAME_PROJECTILE;
-			defInterceptType = 16;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+			} break;
+			case hashString("Melee"): {
+				// no projectile or intercept type
+				defInterceptType = 256;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
-			collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
-		} else if (type == "MissileLauncher") {
-			// CMissileProjectile
-			projectileType = WEAPON_MISSILE_PROJECTILE;
-			defInterceptType = 4;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+			} break;
+			case hashString("Flame"): {
+				// CFlameProjectile
+				projectileType = WEAPON_FLAME_PROJECTILE;
+				defInterceptType = 16;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		} else if (type == "LaserCannon") {
-			// CLaserProjectile
-			projectileType = WEAPON_LASER_PROJECTILE;
-			defInterceptType = 2;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
+				collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+			} break;
+			case hashString("MissileLauncher"): {
+				// CMissileProjectile
+				projectileType = WEAPON_MISSILE_PROJECTILE;
+				defInterceptType = 4;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-			collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
-		} else if (type == "BeamLaser") {
-			projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
-			defInterceptType = 2;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			} break;
+			case hashString("LaserCannon"): {
+				// CLaserProjectile
+				projectileType = WEAPON_LASER_PROJECTILE;
+				defInterceptType = 2;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-		} else if (type == "LightningCannon") {
-			projectileType = WEAPON_LIGHTNING_PROJECTILE;
-			defInterceptType = 64;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+				collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+			} break;
+			case hashString("BeamLaser"): {
+				projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
+				defInterceptType = 2;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		} else if (type == "EmgCannon") {
-			// CEmgProjectile
-			projectileType = WEAPON_EMG_PROJECTILE;
-			defInterceptType = 1;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+			} break;
+			case hashString("LightningCannon"): {
+				projectileType = WEAPON_LIGHTNING_PROJECTILE;
+				defInterceptType = 64;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-			size = wdTable.GetFloat("size", 3.0f);
-		} else if (type == "TorpedoLauncher") {
-			// WeaponLoader will create either BombDropper with dropTorpedoes = true
-			// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
-			// (both types of weapons will spawn TorpedoProjectile's)
-			//
-			projectileType = WEAPON_TORPEDO_PROJECTILE;
-			defInterceptType = 32;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			} break;
+			case hashString("EmgCannon"): {
+				// CEmgProjectile
+				projectileType = WEAPON_EMG_PROJECTILE;
+				defInterceptType = 1;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-			waterweapon = true;
-		} else if (type == "DGun") {
-			// CFireBallProjectile
-			projectileType = WEAPON_FIREBALL_PROJECTILE;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+				size = wdTable.GetFloat("size", 3.0f);
+			} break;
+			case hashString("TorpedoLauncher"): {
+				// WeaponLoader will create either BombDropper with dropTorpedoes = true
+				// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
+				// (both types of weapons will spawn TorpedoProjectile's)
+				//
+				projectileType = WEAPON_TORPEDO_PROJECTILE;
+				defInterceptType = 32;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-			collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
-		} else if (type == "StarburstLauncher") {
-			// CStarburstProjectile
-			projectileType = WEAPON_STARBURST_PROJECTILE;
-			defInterceptType = 4;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+				waterweapon = true;
+			} break;
+			case hashString("DGun"): {
+				// CFireBallProjectile
+				projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-		} else if (type == "AircraftBomb") {
-			// WeaponLoader will create BombDropper with dropTorpedoes = false
-			// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
-			//
-			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
-			defInterceptType = 8;
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+				collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
+			} break;
+			case hashString("StarburstLauncher"): {
+				// CStarburstProjectile
+				projectileType = WEAPON_STARBURST_PROJECTILE;
+				defInterceptType = 4;
 
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-		} else {
-			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+			} break;
+			case hashString("AircraftBomb"): {
+				// WeaponLoader will create BombDropper with dropTorpedoes = false
+				// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
+				//
+				projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+				defInterceptType = 8;
+
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+			} break;
+			default: {
+				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+			} break;
 		}
 
 		if (ownerExpAccWeight < 0.0f)
-			LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
+			LOG_L(L_ERROR, "[%s] weaponDef %s has negative ownerExpAccWeight %f", __func__, name.c_str(), ownerExpAccWeight);
 
 		interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 	}
@@ -497,10 +524,10 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	wdTable.SubTable("customParams").GetMap(customParams);
 
 	// internal only
-	isNulled = (StringToLower(name) == "noweapon");
+	isNulled = (strcasecmp(name.c_str(), "noweapon") == 0);
 	isShield = (type == "Shield");
 	noAutoTarget = (manualfire || interceptor || isShield);
-	onlyForward = !turret && (type != "StarburstLauncher");
+	onlyForward = !turret && (projectileType != WEAPON_STARBURST_PROJECTILE);
 }
 
 
@@ -513,8 +540,8 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 	// FIXME: do we still want or need any of this?
 	const bool forceSetVolume =
 		(fireSound.getVolume(0) == -1.0f) ||
-		(hitSound.getVolume(0) == -1.0f)  ||
-		(hitSound.getVolume(1) == -1.0f);
+		( hitSound.getVolume(0) == -1.0f) ||
+		( hitSound.getVolume(1) == -1.0f);
 
 	if (!forceSetVolume)
 		return;
@@ -528,20 +555,6 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 
 	const float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
 	const float hitSoundVolume = fireSoundVolume;
-
-	#if 0
-	if (fireSoundVolume > 100.0f) {
-		if (type == "MissileLauncher" || type == "StarburstLauncher") {
-			fireSoundVolume = 10.0f * math::sqrt(hitSoundVolume);
-		}
-	}
-
-	if (damages.damageAreaOfEffect > 8.0f)
-		hitSoundVolume *= 2.0f;
-
-	if (type == "DGun")
-		hitSoundVolume *= 0.15f;
-	#endif
 
 	if (fireSound.getVolume(0) == -1.0f)
 		fireSound.setVolume(0, fireSoundVolume);
@@ -558,18 +571,20 @@ void WeaponDef::LoadSound(
 	const std::string& soundKey,
 	GuiSoundSet& soundData
 ) {
-	if (soundKey == "soundStart") {
-		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, ""), wdTable.GetFloat(soundKey + "Volume", -1.0f));
-		return;
-	}
+	switch (hashString(soundKey.c_str())) {
+		case hashString("soundStart"): {
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, ""), wdTable.GetFloat(soundKey + "Volume", -1.0f));
+		} break;
 
-	if (soundKey == "soundHitDry") {
-		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
-		return;
-	}
-	if (soundKey == "soundHitWet") {
-		CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
-		return;
+		case hashString("soundHitDry"): {
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
+		} break;
+		case hashString("soundHitWet"): {
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
