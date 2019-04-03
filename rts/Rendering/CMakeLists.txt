@@ -21,7 +21,6 @@ set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/DynWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/GrassDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/MapRendering.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/RefractWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyLight.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SunLighting.cpp"

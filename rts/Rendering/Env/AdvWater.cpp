@@ -9,6 +9,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/RenderDataBuffer.hpp"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "System/Exceptions.h"
 
@@ -16,7 +17,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CAdvWater::CAdvWater()
+CAdvWater::CAdvWater(bool refractive)
 {
 	assert(FBO::IsSupported());
 
@@ -38,60 +39,82 @@ CAdvWater::CAdvWater()
 
 	glGenTextures(4, rawBumpTextures);
 
-	for (int y = 0; y < 64; ++y) {
-		for (int x = 0; x < 64; ++x) {
-			scrap[(y*64 + x)*4 + 0] = 128;
-			scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>(fastmath::sin(y * math::TWOPI / 64.0f) * 128 + 128);
-			scrap[(y*64 + x)*4 + 2] = 0;
-			scrap[(y*64 + x)*4 + 3] = 255;
-		}
-	}
-
-
-	glBindTexture(GL_TEXTURE_2D, rawBumpTextures[0]);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
-
-	for (int y = 0; y < 64; ++y) {
-		for (int x = 0; x < 64; ++x) {
-			const float ang = 26.5f * math::DEG_TO_RAD;
-			const float pos = y * 2 + x;
-
-			scrap[(y*64 + x)*4 + 0] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
-		}
-	}
-
-
-	glBindTexture(GL_TEXTURE_2D, rawBumpTextures[1]);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
-
-	for (int y = 0; y < 64; ++y) {
-		for (int x = 0; x < 64; ++x) {
-			const float ang = -19.0f * math::DEG_TO_RAD;
-			const float pos = 3.0f * y - x;
-
-			scrap[(y*64 + x)*4 + 0] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
-		}
-	}
-
-
-	glBindTexture(GL_TEXTURE_2D, rawBumpTextures[2]);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
-
 	{
+		for (int y = 0; y < 64; ++y) {
+			for (int x = 0; x < 64; ++x) {
+				scrap[(y*64 + x)*4 + 0] = 128;
+				scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>(fastmath::sin(y * math::TWOPI / 64.0f) * 128 + 128);
+				scrap[(y*64 + x)*4 + 2] = 0;
+				scrap[(y*64 + x)*4 + 3] = 255;
+			}
+		}
+
+
+		glBindTexture(GL_TEXTURE_2D, rawBumpTextures[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
+	}
+	{
+		for (int y = 0; y < 64; ++y) {
+			for (int x = 0; x < 64; ++x) {
+				const float ang = 26.5f * math::DEG_TO_RAD;
+				const float pos = y * 2 + x;
+
+				scrap[(y*64 + x)*4 + 0] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
+				scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
+			}
+		}
+
+
+		glBindTexture(GL_TEXTURE_2D, rawBumpTextures[1]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
+	}
+	{
+		for (int y = 0; y < 64; ++y) {
+			for (int x = 0; x < 64; ++x) {
+				const float ang = -19.0f * math::DEG_TO_RAD;
+				const float pos = 3.0f * y - x;
+
+				scrap[(y*64 + x)*4 + 0] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
+				scrap[(y*64 + x)*4 + 1] = static_cast<uint8_t>((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
+			}
+		}
+
+
+		glBindTexture(GL_TEXTURE_2D, rawBumpTextures[2]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
+	}
+	if (refractive) {
+		glGenTextures(1, &subsurfTexture);
+		glBindTexture(GL_TEXTURE_RECTANGLE, subsurfTexture);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, 3, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_RGB, GL_INT, 0);
+	}
+
+
+	if (!refractive) {
 		const std::string& vsText = Shader::GetShaderSource("GLSL/ReflectiveWaterVertProg.glsl");
 		const std::string& fsText = Shader::GetShaderSource("GLSL/ReflectiveWaterFragProg.glsl");
 
-		waterShader = shaderHandler->CreateProgramObject("[AdvWater]", "WaterShader");
+		waterShader = shaderHandler->CreateProgramObject("[AdvWater]", "ReflectiveWaterShader");
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject(vsText, "", GL_VERTEX_SHADER));
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject(fsText, "", GL_FRAGMENT_SHADER));
+	} else {
+		const std::string& vsText = Shader::GetShaderSource("GLSL/RefractiveWaterVertProg.glsl");
+		const std::string& fsText = Shader::GetShaderSource("GLSL/RefractiveWaterFragProg.glsl");
+
+		waterShader = shaderHandler->CreateProgramObject("[AdvWater]", "RefractiveWaterShader");
+		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject(vsText, "", GL_VERTEX_SHADER));
+		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject(fsText, "", GL_FRAGMENT_SHADER));
+	}
+	{
 		waterShader->Link();
 
 		if (!waterShader->IsValid())
@@ -100,10 +123,17 @@ CAdvWater::CAdvWater()
 		waterShader->Enable();
 		waterShader->SetUniform("reflmap_tex", 0);
 		waterShader->SetUniform("bumpmap_tex", 1);
+		waterShader->SetUniform("subsurf_tex", 2); // refractive
+		waterShader->SetUniform("shading_tex", 3); // refractive
+
 		waterShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		waterShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
 		waterShader->SetUniform("u_forward_vec", 0.0f, 0.0f);
 		waterShader->SetUniform("u_gamma_expon", 1.0f, 1.0f, 1.0f);
+		waterShader->SetUniform("u_texrect_size", 0.0f, 0.0f); // refractive
+		waterShader->SetUniform("u_shading_sgen", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f); // refractive
+		waterShader->SetUniform("u_shading_tgen", 0.0f, 0.0f, 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f); // refractive
+
 		waterShader->Disable();
 		waterShader->Validate();
 	}
@@ -128,6 +158,11 @@ CAdvWater::~CAdvWater()
 	glDeleteTextures(1, &reflectTexture);
 	glDeleteTextures(1, &bumpmapTexture);
 	glDeleteTextures(4, rawBumpTextures);
+
+	if (subsurfTexture == 0)
+		return;
+
+	glDeleteTextures(1, &subsurfTexture);
 }
 
 
@@ -178,11 +213,21 @@ void CAdvWater::Draw(bool useBlending)
 	}
 
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, bumpmapTexture);
+	if (subsurfTexture != 0) {
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture()); // has water depth encoded in alpha
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, reflectTexture);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_RECTANGLE, subsurfTexture);
+		glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	}
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, bumpmapTexture);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, reflectTexture);
+	}
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
@@ -195,14 +240,14 @@ void CAdvWater::Draw(bool useBlending)
 	ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	ipo->SetUniform("u_forward_vec", forward.x, forward.z);
 	ipo->SetUniform("u_gamma_expon", gammaExpon.x, gammaExpon.y, gammaExpon.z);
+	ipo->SetUniform("u_texrect_size", globalRendering->viewSizeX * 10.0f, globalRendering->viewSizeY * 10.0f); // range [0, width], not [0,1]
 
 	// generate a grid, bottom to top
 	for (int a = 0, yn = int(numDivs), xn = yn + 1; a < 5; ++a) {
 		bool maxReached = false;
 
 		for (int y = 0; y < yn; ++y) {
-			dir = (base + ZeroVector).ANormalize();
-			xbase = base;
+			dir = ((xbase = base) + ZeroVector).ANormalize();
 
 			if ((maxReached |= (dir.y >= ymax)))
 				break;

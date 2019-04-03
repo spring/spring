@@ -8,6 +8,8 @@ set(FILES
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
 	shaders/GLSL/ReflectiveWaterVertProg.glsl
 	shaders/GLSL/ReflectiveWaterFragProg.glsl
+	shaders/GLSL/RefractiveWaterVertProg.glsl
+	shaders/GLSL/RefractiveWaterFragProg.glsl
 	shaders/GLSL/ColVolDebugVertProg.glsl
 	shaders/GLSL/ColVolDebugFragProg.glsl
 	shaders/GLSL/infoHeight.lua
@@ -52,7 +54,6 @@ set(FILES
 	shaders/ARB/waterDynNT.vp
 	shaders/ARB/waterDynWave.vp
 	shaders/ARB/waterDyn.fp
-	shaders/ARB/waterRefractTR.fp
 	shaders/ARB/dwAddSplash.fp
 	shaders/ARB/waterDyn.vp
 	shaders/ARB/waterDynWave.fp
