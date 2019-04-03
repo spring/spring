@@ -11,8 +11,8 @@ namespace Shader {
 	struct IProgramObject;
 };
 namespace {
-	constexpr static const char* NAMES[2] = {"reflective", "refractive"};
-	constexpr static int MODES[2] = {IWater::WATER_RENDERER_REFLECTIVE, IWater::WATER_RENDERER_REFRACTIVE};
+	constexpr static const char* ADV_WATER_NAMES[2] = {"reflective", "refractive"};
+	constexpr static int ADV_WATER_MODES[2] = {IWater::WATER_RENDERER_REFLECTIVE, IWater::WATER_RENDERER_REFRACTIVE};
 };
 
 
@@ -22,8 +22,8 @@ public:
 	CAdvWater(bool refractive = false);
 	virtual ~CAdvWater();
 
-	int GetID() const override { return MODES[subsurfTexture != 0]; }
-	const char* GetName() const override { return NAMES[subsurfTexture != 0]; }
+	int GetID() const override { return ADV_WATER_MODES[subsurfTexture != 0]; }
+	const char* GetName() const override { return ADV_WATER_NAMES[subsurfTexture != 0]; }
 
 	void Draw() override { Draw(subsurfTexture == 0); }
 
