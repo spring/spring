@@ -4618,7 +4618,7 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 
 int LuaSyncedRead::ValidFeatureID(lua_State* L)
 {
-	lua_pushboolean(L, ParseFeature(L, __func__, 1) != nullptr);
+	lua_pushboolean(L, lua_isnumber(L, 1) && ParseFeature(L, __func__, 1) != nullptr);
 	return 1;
 }
 
