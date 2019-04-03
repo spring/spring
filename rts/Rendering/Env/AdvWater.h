@@ -10,6 +10,11 @@
 namespace Shader {
 	struct IProgramObject;
 };
+namespace {
+	constexpr static const char* NAMES[2] = {"reflective", "refractive"};
+	constexpr static int MODES[2] = {IWater::WATER_RENDERER_REFLECTIVE, IWater::WATER_RENDERER_REFRACTIVE};
+};
+
 
 class CAdvWater : public IWater
 {
@@ -17,8 +22,8 @@ public:
 	CAdvWater(bool refractive = false);
 	virtual ~CAdvWater();
 
-	int GetID() const override { return modes[subsurfTexture != 0]; }
-	const char* GetName() const override { return names[subsurfTexture != 0]; }
+	int GetID() const override { return MODES[subsurfTexture != 0]; }
+	const char* GetName() const override { return NAMES[subsurfTexture != 0]; }
 
 	void Draw() override { Draw(subsurfTexture == 0); }
 
@@ -26,9 +31,6 @@ public:
 	void UpdateWater(CGame* game);
 
 protected:
-	constexpr inline static const char* names[] = {"reflective", "refractive"};
-	constexpr inline static int modes[] = {WATER_RENDERER_REFLECTIVE, WATER_RENDERER_REFRACTIVE};
-
 	FBO reflectFBO;
 	FBO bumpFBO;
 
