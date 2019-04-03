@@ -2521,8 +2521,6 @@ void CGuiHandler::Draw()
 	glAttribStatePtr->DisableDepthTest();
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GEQUAL, 0.01f);
 
 	if (iconsCount > 0)
 		DrawMenu();
@@ -2864,6 +2862,7 @@ void CGuiHandler::DrawMenu()
 	shaderC->Enable();
 	shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shaderC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 
 	const float boxAlpha = mix(frameAlpha, guiAlpha, frameAlpha < 0.0f);
@@ -2943,6 +2942,7 @@ void CGuiHandler::DrawMenu()
 		shaderTC->Enable();
 		shaderTC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderTC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 		// icon textures (TODO: atlas these)
 		for (int iconIdx: menuIconIndices) {
@@ -2961,6 +2961,7 @@ void CGuiHandler::DrawMenu()
 			);
 		}
 
+		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shaderTC->Disable();
 		shaderC->Enable();
 	}
@@ -3125,6 +3126,7 @@ void CGuiHandler::DrawMenu()
 	// submits for us
 	DrawMenuNumberInput(bufferC);
 
+	shaderC->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shaderC->Disable();
 	font->DrawBufferedGL4();
 }
@@ -3515,7 +3517,6 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		glAttribStatePtr->DisableDepthMask();
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glAttribStatePtr->DisableAlphaTest();
 	}
 
 
@@ -3553,6 +3554,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	// no alpha-test if drawing on world, does not seem essential
+	// shader->SetUniform("u_alpha_test_ctrl", 0.5f, 0.0f, 0.0f, 1.0f * onMiniMap);
 	wla->Setup(buffer, xScale, yScale, 1.0f, projMat * viewMat, onMiniMap);
 
 

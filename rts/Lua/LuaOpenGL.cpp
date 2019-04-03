@@ -242,7 +242,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
-	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
@@ -384,9 +383,6 @@ void LuaOpenGL::ResetGLState()
 	glBlendEquation(GL_FUNC_ADD); // ::BlendEquation*
 	#endif
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ::Blending, ::BlendFunc*
-
-	glAttribStatePtr->DisableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	#if 0
 	glDisable(GL_COLOR_LOGIC_OP); // ::LogicOp
@@ -2122,29 +2118,6 @@ int LuaOpenGL::BlendFuncSeparate(lua_State* L)
 	return 0;
 }
 
-
-
-int LuaOpenGL::AlphaTest(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (luaL_checkboolean(L, 1)) {
-			glAttribStatePtr->EnableAlphaTest();
-		} else {
-			glAttribStatePtr->DisableAlphaTest();
-		}
-	}
-	else if (args == 2) {
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc((GLenum)luaL_checkint(L, 1), (GLfloat)luaL_checkint(L, 2));
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.AlphaTest()");
-	}
-	return 0;
-}
 
 
 int LuaOpenGL::PolygonMode(lua_State* L)

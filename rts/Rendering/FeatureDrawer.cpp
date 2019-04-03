@@ -519,12 +519,13 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 					continue;
 
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
-
-				glAttribStatePtr->AlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
+				unitDrawer->SetAlphaTest({f->drawAlpha * 0.5f, 1.0f, 0.0f, 0.0f}); // test > (alpha/2)
 				DrawFeatureDefTrans(f, false, false);
 			}
 		}
 	}
+
+	unitDrawer->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0f}); // no test
 }
 
 
@@ -555,10 +556,8 @@ void CFeatureDrawer::DrawShadowPass()
 		// (we are just interested in the 255 alpha here)
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		// need the alpha-mask for transparent features
+		// need the alpha-mask for transparent features; threshold set in ShadowHandler
 		glAttribStatePtr->PushColorBufferBit();
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface

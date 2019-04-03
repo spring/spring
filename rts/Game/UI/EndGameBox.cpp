@@ -210,7 +210,6 @@ void CEndGameBox::Draw()
 
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// Large Box

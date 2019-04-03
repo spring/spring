@@ -122,7 +122,6 @@ void CQuitBox::Draw()
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// draw the background box

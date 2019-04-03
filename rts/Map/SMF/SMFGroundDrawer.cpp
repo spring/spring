@@ -353,10 +353,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, DrawPass::TerrainDeferred);
 
-		if (alphaTest) {
-			glAttribStatePtr->EnableAlphaTest();
-			glAttribStatePtr->AlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
-		}
+		if (alphaTest)
+			smfRenderStates[RENDER_STATE_SEL]->SetAlphaTest({mapInfo->map.voidAlphaMin, 1.0f, 0.0f, 0.0f}); // test > min
 
 		if (HaveLuaRenderState())
 			eventHandler.DrawGroundPreDeferred();
@@ -364,7 +362,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		meshDrawer->DrawMesh(drawPass);
 
 		if (alphaTest)
-			glAttribStatePtr->DisableAlphaTest();
+			smfRenderStates[RENDER_STATE_SEL]->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0f}); // no test
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
@@ -397,15 +395,17 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 		if (wireframe)
 			glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		if (alphaTest) {
-			glAttribStatePtr->EnableAlphaTest();
-			glAttribStatePtr->AlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
-		}
+		if (alphaTest)
+			smfRenderStates[RENDER_STATE_SEL]->SetAlphaTest({mapInfo->map.voidAlphaMin, 1.0f, 0.0f, 0.0f}); // test > min
 
 		if (HaveLuaRenderState())
 			eventHandler.DrawGroundPreForward();
 
 		meshDrawer->DrawMesh(drawPass);
+
+		if (alphaTest)
+			smfRenderStates[RENDER_STATE_SEL]->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0f}); // no test
+
 
 		glAttribStatePtr->PopBits();
 
@@ -470,24 +470,14 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireframe + GL_FILL * (1 - wireframe));
 
-	#if 0
-	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.9f);
-	}
-	#endif
-
 	shaderProg->Enable();
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	shaderProg->SetUniform<const char*, float>("u_gamma_exponent", globalRendering->gammaExponent);
+	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.9f, 1.0f, 0.0f, 0.0f); // test > 0.9 if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
 	meshDrawer->DrawBorderMesh(drawPass); // calls back into ::SetupBigSquare
+	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shaderProg->Disable();
-
-	#if 0
-	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
-		glAttribStatePtr->DisableAlphaTest();
-	#endif
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glAttribStatePtr->DisableBlendMask();

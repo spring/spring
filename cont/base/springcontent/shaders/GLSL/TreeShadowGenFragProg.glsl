@@ -1,6 +1,6 @@
 uniform sampler2D alphaMaskTex;
 
-uniform vec2 alphaParams;
+uniform vec2 alphaTestCtrl;
 
 
 in vec2 vTexCoord;
@@ -15,10 +15,10 @@ layout(depth_unchanged) out float gl_FragDepth;
 void main() {
 	#if 0
 	// factors in height-based alpha reduction from less dense foliage
-	if ((texture(alphaMaskTex, vTexCoord).a * vBaseColor.a) <= alphaParams.x)
+	if ((texture(alphaMaskTex, vTexCoord).a * vBaseColor.a) <= alphaTestCtrl.x)
 		discard;
 	#else
-	if (texture(alphaMaskTex, vTexCoord).a <= alphaParams.x)
+	if (texture(alphaMaskTex, vTexCoord).a <= alphaTestCtrl.x)
 		discard;
 	#endif
 

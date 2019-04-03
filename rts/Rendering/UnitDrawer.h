@@ -131,6 +131,7 @@ public:
 	// alpha.x := alpha-value
 	// alpha.y := alpha-pass (true or false)
 	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
+	void SetAlphaTest(const float4& params) const;
 
 
 	void SetupOpaqueDrawing(bool deferredPass);

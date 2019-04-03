@@ -35,6 +35,8 @@ uniform vec4 teamColor;
 uniform vec4 nanoColor;
 // uniform float alphaPass;
 
+uniform vec4 alphaTestCtrl;
+
 // fwdDynLights[i] := {pos, dir, diffuse, specular, ambient, {fov, radius, -, -}}
 uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
 
@@ -153,6 +155,14 @@ void main(void)
 
 	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * shadingColor.a; // apply one-bit mask
+
+	#if (DEFERRED_MODE == 0)
+	float alphaTestGreater = float(alpha > alphaTestCtrl.x) * alphaTestCtrl.y;
+	float alphaTestSmaller = float(alpha < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+	if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+		discard;
+	#endif
 
 	specularColor *= (shadingColor.g * 4.0);
 	// no highlights if in shadow; decrease light to ambient level

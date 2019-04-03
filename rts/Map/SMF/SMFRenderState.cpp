@@ -18,6 +18,7 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
+#include "System/float4.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
 
@@ -175,6 +176,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
 			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
 
+			glslShaders[n]->SetUniform4v<const char*, float>("alphaTestCtrl", float4{0.0f, 0.0f, 0.0f, 1.0f});
+
 			// Enable always sets these
 			// glslShaders[n]->SetUniform4v<const char*, float>("fwdDynLights", lightHandler->NumLightUniformVecs(), lightHandler->GetRawLightDataPtr());
 
@@ -330,6 +333,7 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 
 
 void SMFRenderStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
+	// called during the SunChanged event, shader is not bound
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
@@ -337,5 +341,9 @@ void SMFRenderStateGLSL::SetSkyLight(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
+}
+
+void SMFRenderStateGLSL::SetAlphaTest(const float4& params) const {
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v<const char*, float>("alphaTestCtrl", params);
 }
 

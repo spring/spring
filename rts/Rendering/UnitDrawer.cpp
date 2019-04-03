@@ -423,8 +423,6 @@ void CUnitDrawer::Draw()
 		DrawOpaquePass(false);
 
 	farTextureHandler->Draw();
-
-	glAttribStatePtr->DisableAlphaTest();
 }
 
 void CUnitDrawer::DrawOpaquePass(bool deferredPass)
@@ -529,8 +527,6 @@ void CUnitDrawer::DrawUnitIcons()
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glAttribStatePtr->DisableDepthTest();
 	glAttribStatePtr->DisableBlendMask();
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.05f);
 
 	// A2C effectiveness is limited below four samples
 	if (globalRendering->msaaLevel >= 4)
@@ -542,6 +538,7 @@ void CUnitDrawer::DrawUnitIcons()
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 
 
 	for (const auto& p: unitsByIcon) {
@@ -575,6 +572,7 @@ void CUnitDrawer::DrawUnitIcons()
 	if (globalRendering->msaaLevel >= 4)
 		glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 	glAttribStatePtr->PopBits();
 }
@@ -669,8 +667,6 @@ void CUnitDrawer::DrawShadowPass()
 {
 	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
 	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	Shader::IProgramObject* po = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
@@ -689,16 +685,14 @@ void CUnitDrawer::DrawShadowPass()
 		glAttribStatePtr->EnableCullFace();
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
-			// note: just use DrawOpaqueUnits()? would
-			// save texture switches needed anyway for
-			// alpha-masking
+			// note: just use DrawOpaqueUnits()? would save texture switches
+			// needed anyway for alpha-masking; threshold set in ShadowHandler
 			DrawOpaqueUnitsShadow(modelType);
 		}
 	}
 
 	po->Disable();
 
-	glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
@@ -776,9 +770,9 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.1f);
 	glAttribStatePtr->DisableDepthMask();
+
+	unitDrawerStates[DRAWER_STATE_SEL]->SetAlphaTest({0.1f, 1.0f, 0.0f, 0.0f}); // test > 0.1
 
 	if (water->DrawReflectionPass() || water->DrawRefractionPass()) {
 		// IWater enables GL_CLIP_DISTANCE{0,1}
@@ -793,6 +787,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass, bool aboveWater)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
+	unitDrawerStates[DRAWER_STATE_SEL]->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0f}); // no test
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, /*deferredPass*/ false);
 
 	glAttribStatePtr->PopBits();
@@ -804,7 +799,6 @@ void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 {
 	{
 		SetupAlphaDrawing(false, aboveWater);
-		glAttribStatePtr->DisableAlphaTest();
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			PushModelRenderState(modelType);
@@ -813,7 +807,6 @@ void CUnitDrawer::DrawAlphaPass(bool aboveWater)
 			PopModelRenderState(modelType);
 		}
 
-		glAttribStatePtr->EnableAlphaTest();
 		ResetAlphaDrawing(false);
 	}
 
@@ -1001,12 +994,11 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glAttribStatePtr->EnableCullFace();
 	glAttribStatePtr->CullFace(GL_BACK);
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 
 	// pick base shaders (GLSL); not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false);
+	unitDrawerStates[DRAWER_STATE_SEL]->SetAlphaTest({0.5f, 1.0f, 0.0f, 0.0f}); // test > 0.5
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use the SSP render-state
@@ -1018,6 +1010,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 {
+	unitDrawerStates[DRAWER_STATE_SEL]->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0f}); // no test
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 
 	glAttribStatePtr->PopBits();
@@ -1035,6 +1028,12 @@ void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 
 	setTeamColorFuncs[b0 * b1](unitDrawerStates[DRAWER_STATE_SEL], team, alpha);
 }
+
+void CUnitDrawer::SetAlphaTest(const float4& params) const
+{
+	unitDrawerStates[DRAWER_STATE_SEL]->SetAlphaTest(params);
+}
+
 
 
 void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)

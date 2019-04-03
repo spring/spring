@@ -232,7 +232,6 @@ void CGameInfo::Draw()
 
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	// draw the boxes
 	for (size_t i = 0; i < labels.size(); i++) {

@@ -170,7 +170,6 @@ class LuaOpenGL {
 		static int DepthClamp(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
-		static int AlphaTest(lua_State* L);
 		static int Blending(lua_State* L);
 		static int BlendEquation(lua_State* L);
 		static int BlendFunc(lua_State* L);

@@ -493,9 +493,8 @@ void CGrassDrawer::SetupStateShadow()
 	EnableShader(GRASS_PROGRAM_SHADOW);
 
 	glActiveTexture(GL_TEXTURE0);
-	glAttribStatePtr->DisableAlphaTest();
-	glAttribStatePtr->DisableCullFace();
 
+	glAttribStatePtr->DisableCullFace();
 	glAttribStatePtr->PolygonOffset(5.0f, 15.0f);
 	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 }
@@ -504,7 +503,6 @@ void CGrassDrawer::ResetStateShadow()
 {
 	glAttribStatePtr->EnableCullFace();
 	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
-	glAttribStatePtr->DisableAlphaTest();
 
 	grassShaders[GRASS_PROGRAM_CURR]->Disable();
 }
@@ -557,7 +555,6 @@ void CGrassDrawer::SetupStateOpaque()
 
 	glActiveTexture(GL_TEXTURE0);
 	glAttribStatePtr->DisableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->EnableDepthMask();
 }
 

@@ -74,7 +74,6 @@ void CResourceBar::Draw()
 
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 
 	const float metalx = box.x1 + 0.01f;

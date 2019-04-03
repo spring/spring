@@ -778,8 +778,6 @@ void CDecalsDrawerGL4::Draw()
 	glAttribStatePtr->EnableDepthClamp();
 	// glAttribStatePtr->EnableDepthTest();
 	glAttribStatePtr->DisableDepthTest();
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_LESS, 1.0f);
 
 
 	const CMatrix44f& viewProjMat    = camera->GetViewProjectionMatrix();
@@ -821,7 +819,6 @@ void CDecalsDrawerGL4::Draw()
 	glAttribStatePtr->CullFace(GL_BACK);
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAttribStatePtr->DisableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	decalShader->Disable();
 	//if (setTimerQuery) drawTimerQuery.Stop();
@@ -1152,8 +1149,6 @@ void CDecalsDrawerGL4::UpdateOverlap()
 
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->DisableDepthTest();
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
 	glAttribStatePtr->EnableStencilTest();
 	glAttribStatePtr->StencilMask(0xFF);
 
@@ -1166,6 +1161,7 @@ void CDecalsDrawerGL4::UpdateOverlap()
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 
 
 		// either initialize or check queries
@@ -1188,6 +1184,7 @@ void CDecalsDrawerGL4::UpdateOverlap()
 			UpdateOverlap_GenerateQueries(candidatesForOverlap, buffer);
 		}
 
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shader->Disable();
 	}
 

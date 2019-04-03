@@ -205,7 +205,8 @@ char* GL::RenderDataBuffer::FormatShaderBase(
 		} break;
 		case 'F': {
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT*,L (v_texcoor_st*)
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform float u_gamma_exponent = 1.0;\n"); // TODO: set for every shader
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform vec4 u_alpha_test_ctrl = vec4(0.0, 0.0, 0.0, 1.0);\n");
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform vec3 u_gamma_exponents = vec3(1.0, 1.0, 1.0);\n"); // TODO: set for every shader
 		} break;
 		default: {
 		} break;
@@ -319,8 +320,13 @@ char* GL::RenderDataBuffer::FormatShaderType(
 	}
 
 	// assume shaders want this even if they specify main()
-	if (type[0] == 'F')
-		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tf_color_rgba.rgb = pow(f_color_rgba.rgb, vec3(u_gamma_exponent));\n");
+	if (type[0] == 'F') {
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tfloat alpha_test_gt = float(f_color_rgba.a > u_alpha_test_ctrl.x) * u_alpha_test_ctrl.y;\n");
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tfloat alpha_test_lt = float(f_color_rgba.a < u_alpha_test_ctrl.x) * u_alpha_test_ctrl.z;\n");
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tif ((alpha_test_gt + alpha_test_lt + u_alpha_test_ctrl.w) == 0.0)\n");
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\t\tdiscard;\n");
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tf_color_rgba.rgb = pow(f_color_rgba.rgb, u_gamma_exponents);\n");
+	}
 
 	return (ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "}\n"));
 }

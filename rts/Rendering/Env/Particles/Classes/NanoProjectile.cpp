@@ -67,8 +67,8 @@ void CNanoProjectile::Draw(GL::RenderDataBufferTC* va) const
 
 void CNanoProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)
 {
-	va->SafeAppend({pos        , color4::green});
-	va->SafeAppend({pos + speed, color4::green});
+	va->SafeAppend({pos        , color});
+	va->SafeAppend({pos + speed, color});
 }
 
 

@@ -625,12 +625,9 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 {
 	if (fxBuffer->NumElems() > 0) {
 		glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glActiveTexture(GL_TEXTURE0);
-
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
-		glAttribStatePtr->EnableAlphaTest();
 		glAttribStatePtr->DisableDepthMask();
 
+		glActiveTexture(GL_TEXTURE0);
 		// send event after the default state has been set, allows overriding
 		// it for specific cases such as proper blending with depth-aware fog
 		// (requires mask=true and func=always)
@@ -640,8 +637,10 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 		po->Enable();
 		po->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 		po->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		po->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 		textureAtlas->BindTexture();
 		fxBuffer->Submit(GL_QUADS);
+		po->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		po->Disable();
 	} else {
 		eventHandler.DrawWorldPreParticles();
@@ -782,9 +781,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
-
 	glAttribStatePtr->PolygonOffset(-20.0f, -1000.0f);
 	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
@@ -797,6 +793,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	gfShader->Enable();
 	gfShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	gfShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	gfShader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
 	bool depthTest = true;
 	bool depthMask = false;
@@ -831,10 +828,10 @@ void CProjectileDrawer::DrawGroundFlashes()
 	}
 
 	gfBuffer->Submit(GL_QUADS);
+	gfShader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	gfShader->Disable();
 
 	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
-	glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->EnableDepthTest();
@@ -855,7 +852,6 @@ void CProjectileDrawer::UpdatePerlin() {
 	glAttribStatePtr->DisableDepthMask();
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_ONE, GL_ONE);
-	glAttribStatePtr->DisableAlphaTest();
 
 	unsigned char col[4];
 	const float time = globalRendering->lastFrameTime * gs->speedFactor * 0.003f;
@@ -870,6 +866,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 
 	for (int a = 0; a < 4; ++a) {
 		if ((perlinData.blendWeights[a] += (time * speed)) > 1.0f) {

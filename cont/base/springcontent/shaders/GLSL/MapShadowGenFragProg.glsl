@@ -7,7 +7,7 @@ layout(depth_unchanged) out float gl_FragDepth;
 // uniform sampler2D alphaMaskTex;
 
 uniform vec4 shadowParams;
-// uniform vec2 alphaParams;
+// uniform vec2 alphaTestCtrl;
 
 uniform mat4 shadowViewMat;
 uniform mat4 shadowProjMat;
@@ -20,7 +20,7 @@ in vec4 vertexModelPos;
 void main() {
 	#if 0
 	// TODO: generate coords and bind this (as for models)
-	if (texture2D(alphaMaskTex, vTexCoord).a <= alphaParams.x)
+	if (texture2D(alphaMaskTex, vTexCoord).a <= alphaTestCtrl.x)
 		discard;
 	#endif
 

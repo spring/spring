@@ -385,9 +385,6 @@ void CAdvTreeGenerator::CreateGranTex(uint8_t* data, int xpos, int ypos, int xsi
 
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glAttribStatePtr->DisableBlendMask();
-
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
-	glAttribStatePtr->EnableAlphaTest();
 	glAttribStatePtr->DisableDepthTest();
 
 	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -432,6 +429,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 	}
 
 	{
@@ -472,6 +470,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 
 	if (start == ZeroVector) {
 		buffer->Submit(GL_QUADS);
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 1.0f); // no test
 		shader->Disable();
 	}
 }
@@ -587,9 +586,6 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	glAttribStatePtr->ViewPort(0, 0, TEX_SIZE_X, TEX_SIZE_Y);
 
 	glAttribStatePtr->DisableBlendMask();
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
-
 	glAttribStatePtr->ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glAttribStatePtr->Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -602,6 +598,7 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f, globalRendering->supportClipSpaceControl * 1.0f));
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 
 	const float baseCol = 0.8f + 0.2f * guRNG.NextFloat();
 
@@ -626,6 +623,7 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	}
 
 	buffer->Submit(GL_QUADS);
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 
 

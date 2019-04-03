@@ -718,7 +718,7 @@ void CProjectileHandler::AddNanoParticle(
 	dif += (guRNG.NextVector() * 0.15f);
 
 	const     float3 udColor = unitDef->nanoColor;
-	constexpr float  udAlpha = 20 / 256.0f; // denom=255 is not constexpr-able
+	constexpr float  udAlpha = 64.0f / 256.0f; // denom=255 is not constexpr-able
 
 	const     uint8_t* tColor = (teamHandler.Team(teamNum))->color;
 	constexpr uint8_t  tAlpha = udAlpha * 256;
@@ -755,7 +755,7 @@ void CProjectileHandler::AddNanoParticle(
 	dif += (guRNG.NextVector() * (radius / len));
 
 	const     float3 udColor = unitDef->nanoColor;
-	constexpr float  udAlpha = 20 / 256.0f;
+	constexpr float  udAlpha = 64.0f / 256.0f;
 
 	const     uint8_t* tColor = (teamHandler.Team(teamNum))->color;
 	constexpr uint8_t  tAlpha = udAlpha * 256;

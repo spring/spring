@@ -23,6 +23,8 @@ uniform float groundShadowDensity;
 
 uniform float gammaExponent;
 
+uniform vec4 alphaTestCtrl;
+
 uniform vec2 mapHeights; // min & max height on the map
 
 uniform vec4 lightDir;
@@ -433,6 +435,15 @@ void main() {
 
 		fragColor.rgb = (diffuseColor.rgb + detailColor.rgb) * shadeInt.rgb;
 		fragColor.a = shadeInt.a;
+	}
+	#endif
+	#ifndef DEFERRED_MODE
+	{
+		float alphaTestGreater = float(fragColor.a > alphaTestCtrl.x) * alphaTestCtrl.y;
+		float alphaTestSmaller = float(fragColor.a < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+		if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+			discard;
 	}
 	#endif
 

@@ -52,7 +52,6 @@ void CCursorIcons::Draw()
 	glAttribStatePtr->PushBits(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
 	glAttribStatePtr->DisableDepthMask();
 
 	Sort();
@@ -77,6 +76,7 @@ void CCursorIcons::DrawCursors()
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
 	const SColor iconColor = {1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha()};
 
@@ -110,6 +110,7 @@ void CCursorIcons::DrawCursors()
 	}
 
 	buffer->Submit(GL_QUADS);
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 }
 

@@ -1080,8 +1080,6 @@ void CBumpWater::Draw()
 		glCopyTexSubImage2D(screenCopyTarget, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
-	glAttribStatePtr->DisableAlphaTest();
-
 	if (refraction < 2)
 		glAttribStatePtr->DisableDepthMask();
 

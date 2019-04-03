@@ -12,6 +12,8 @@ uniform float gammaExponent;
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 
+uniform vec4 alphaTestCtrl;
+
 uniform vec4 fogColor;
 
 
@@ -37,6 +39,13 @@ void main() {
 	vec4 diffuseCol = texture(diffuseTex, vTexCoord) * vBaseColor;
 	vec3 shadeInt = mix(groundAmbientColor.rgb, vec3(1.0, 1.0, 1.0), shadowCoeff);
 
+	{
+		float alphaTestGreater = float(diffuseCol.a > alphaTestCtrl.x) * alphaTestCtrl.y;
+		float alphaTestSmaller = float(diffuseCol.a < alphaTestCtrl.x) * alphaTestCtrl.z;
+
+		if ((alphaTestGreater + alphaTestSmaller + alphaTestCtrl.w) == 0.0)
+			discard;
+	}
 
 	fFragColor.rgb = diffuseCol.rgb * shadeInt.rgb;
 	fFragColor.rgb = mix(fogColor.rgb, fFragColor.rgb, vFogFactor);

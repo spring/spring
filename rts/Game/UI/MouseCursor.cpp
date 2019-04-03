@@ -283,15 +283,16 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 	glAttribStatePtr->EnableBlendMask();
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.01f);
 
 	glBindTexture(GL_TEXTURE_2D, frames[currentFrame].image.texture);
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, cursorMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
 	buffer->Submit(GL_QUADS);
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 }
 

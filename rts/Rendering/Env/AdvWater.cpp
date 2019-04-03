@@ -170,7 +170,6 @@ void CAdvWater::Draw(bool useBlending)
 	col[2] = static_cast<uint8_t>(planeColor.z * 255.0f);
 
 	glAttribStatePtr->DisableDepthMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	if (useBlending) {
 		glAttribStatePtr->EnableBlendMask();

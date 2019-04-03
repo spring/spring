@@ -271,8 +271,6 @@ void CFarTextureHandler::Draw()
 
 	// render currently queued far-icons
 	if (!renderQueue.empty()) {
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, farTextureID);
 
@@ -283,15 +281,15 @@ void CFarTextureHandler::Draw()
 		shader->Enable();
 		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 
 		for (const CSolidObject* obj: renderQueue) {
 			DrawFarTexture(obj, buffer);
 		}
 
 		buffer->Submit(GL_QUADS);
+		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shader->Disable();
-
-		glAttribStatePtr->DisableAlphaTest();
 	}
 
 	renderQueue.clear();

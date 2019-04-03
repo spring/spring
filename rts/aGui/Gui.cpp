@@ -90,7 +90,6 @@ void Gui::Draw()
 {
 	Clean();
 
-	// glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->EnableBlendMask();
 
 	shader->Enable();

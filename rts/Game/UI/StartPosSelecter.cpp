@@ -187,7 +187,6 @@ void CStartPosSelecter::Draw()
 
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		gleDrawQuadC(readyBox, InBox(mx, my, readyBox)? SColor{0.7f, 0.2f, 0.2f, guiAlpha}: SColor{0.7f, 0.7f, 0.2f, guiAlpha}, buffer);

@@ -122,7 +122,6 @@ void CShareBox::Draw()
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	glAttribStatePtr->EnableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 
 	{
 		// outer box

@@ -192,7 +192,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		po->SetUniformLocation("modelMat"     ); // idx 3
 		po->SetUniformLocation("pieceMats"    ); // idx 4
 		po->SetUniformLocation("alphaMaskTex" ); // idx 5
-		po->SetUniformLocation("alphaParams"  ); // idx 6
+		po->SetUniformLocation("alphaTestCtrl"); // idx 6
 
 		po->Enable();
 		po->SetUniform1i(5, 0);
@@ -215,7 +215,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		// TODO
 		po->Enable();
 		po->SetUniform1i(3, 0); // alphaMaskTex
-		po->SetUniform2f(4, mapInfo->map.voidAlphaMin, mapInfo->map.voidAlphaMax); // alphaParams
+		po->SetUniform2f(4, mapInfo->map.voidAlphaMin, mapInfo->map.voidAlphaMax); // alphaTestCtrl
 		po->Disable();
 		#endif
 
@@ -236,7 +236,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		po->SetUniformLocation("cameraDirY"   ); // idx 5
 		po->SetUniformLocation("$dummy$"      ); // idx 6, unused
 		po->SetUniformLocation("alphaMaskTex" ); // idx 7
-		po->SetUniformLocation("alphaParams"  ); // idx 8
+		po->SetUniformLocation("alphaTestCtrl"); // idx 8
 
 		po->Enable();
 		po->SetUniform1i(7, 0);
@@ -269,7 +269,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		po->SetUniformLocation("shadowViewMat"); // idx 1
 		po->SetUniformLocation("shadowProjMat"); // idx 2
 		po->SetUniformLocation("alphaMaskTex" ); // idx 3
-		po->SetUniformLocation("alphaParams"  ); // idx 4
+		po->SetUniformLocation("alphaTestCtrl"); // idx 4
 
 		po->Enable();
 		po->SetUniform1i(3, 0);
@@ -578,7 +578,6 @@ void CShadowHandler::CreateShadows()
 	shadowMapFBO.Bind();
 
 	glAttribStatePtr->DisableBlendMask();
-	glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->EnableDepthMask();
 	glAttribStatePtr->EnableDepthTest();
 	glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);

@@ -1535,7 +1535,6 @@ void CMiniMap::DrawBackground()
 	Shader::IProgramObject* shader = &buffer->GetShader();
 
 	// draw the map
-	glAttribStatePtr->DisableAlphaTest();
 	glAttribStatePtr->DisableBlendMask();
 
 	{
@@ -1565,14 +1564,12 @@ void CMiniMap::DrawUnitIcons() const
 	shader->Enable();
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 	shader->SetUniform("u_tex0", 0); // icon texture binding
-
-	glAttribStatePtr->EnableAlphaTest();
-	glAttribStatePtr->AlphaFunc(GL_GREATER, 0.0f);
 
 	unitDrawer->DrawUnitMiniMapIcons(buffer);
 
-	glAttribStatePtr->DisableAlphaTest();
+	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 }
 

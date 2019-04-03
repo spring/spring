@@ -127,9 +127,11 @@ static float GetLODFloat(const std::string& name)
 static void SetupDefOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
 	unitDrawer->PushModelRenderState(modelType);
+	unitDrawer->SetAlphaTest({0.5f, 1.0f, 0.0f, 0.0}); // test > 0.5 (engine shaders)
 }
 
 static void ResetDefOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
+	unitDrawer->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0}); // no test
 	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetOpaqueDrawing(deferredPass);
 }
@@ -151,9 +153,11 @@ static void ResetLuaOpaqueFeatureDrawState(unsigned int modelType, bool deferred
 static void SetupDefAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupAlphaDrawing(deferredPass, true);
 	unitDrawer->PushModelRenderState(modelType);
+	unitDrawer->SetAlphaTest({0.1f, 1.0f, 0.0f, 0.0}); // test > 0.1 (engine shaders)
 }
 
 static void ResetDefAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
+	unitDrawer->SetAlphaTest({0.0f, 0.0f, 0.0f, 1.0}); // no test
 	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetAlphaDrawing(deferredPass);
 }
@@ -371,13 +375,8 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	glAttribStatePtr->PushBits(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
 	if (inAlphaBin) {
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.1f);
 		glAttribStatePtr->EnableBlendMask();
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glAttribStatePtr->EnableAlphaTest();
-		glAttribStatePtr->AlphaFunc(GL_GREATER, 0.5f);
 	}
 
 	const LuaMaterial* prevMat = &LuaMaterial::defMat;

@@ -103,7 +103,6 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->DisableDepthMask();
 	glAttribStatePtr->DisableDepthTest();
-	glAttribStatePtr->DisableAlphaTest();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
