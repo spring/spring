@@ -152,7 +152,7 @@ void C3DOParser::Kill()
 S3DModel C3DOParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
-	std::vector<unsigned char> fileBuf;
+	std::vector<uint8_t> fileBuf;
 
 	if (!file.FileExists())
 		throw content_error("[3DOParser] could not find model-file " + name);
@@ -174,7 +174,7 @@ S3DModel C3DOParser::Load(const std::string& name)
 		model.mins = DEF_MIN_SIZE;
 		model.maxs = DEF_MAX_SIZE;
 
-	model.FlattenPieceTree(LoadPiece(&model, nullptr, 0, fileBuf));
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf, 0));
 
 	// set after the extrema are known
 	model.radius = model.CalcDrawRadius();
@@ -264,6 +264,7 @@ void S3DOPiece::GetPrimitives(
 	const spring::unordered_set<std::string>& teamTextures
 ) {
 	spring::unordered_map<int, int> prevHashes;
+	std::vector<int> sortedVerts;
 
 	for (int a = 0; a < num; a++) {
 		if (a == excludePrim)
@@ -308,11 +309,15 @@ void S3DOPiece::GetPrimitives(
 		// 3do has often duplicated faces (with equal geometry)
 		// with different textures (e.g. for animations and other effects)
 		// we don't support those, only render the last one
-		std::vector<int> orderVert = sp.indices;
-		std::sort(orderVert.begin(), orderVert.end());
-		const int vertHash = HsiehHash(&orderVert[0], orderVert.size() * sizeof(orderVert[0]), 0x123456);
+		sortedVerts.clear();
+		sortedVerts.resize(sp.indices.size());
 
-		auto phi = prevHashes.find(vertHash);
+		std::copy(sortedVerts.begin(), sp.indices.begin(), sp.indices.end());
+		std::sort(sortedVerts.begin(), sortedVerts.end());
+
+		const int vertHash = HsiehHash(&sortedVerts[0], sortedVerts.size() * sizeof(sortedVerts[0]), 0x123456);
+
+		const auto phi = prevHashes.find(vertHash);
 		if (phi != prevHashes.end()) {
 			prims[phi->second] = sp;
 			continue;
@@ -342,25 +347,28 @@ S3DOPiece* C3DOParser::AllocPiece()
 	return &piecePool[numPoolPieces++];
 }
 
-S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf)
+S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, const std::vector<uint8_t>& buf, int pos)
 {
+	if ((pos + sizeof(TA3DO::_3DObject)) > buf.size())
+		throw content_error("[3DOParser] corrupted piece for model-file " + model->name);
+
 	model->numPieces++;
 
 	TA3DO::_3DObject me;
 	int curOffset = pos;
-	READ_3DOBJECT(me, fileBuf, curOffset);
+	READ_3DOBJECT(me, buf, curOffset);
 
 	S3DOPiece* piece = AllocPiece();
 
-	piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, fileBuf, curOffset)));
+	piece->name = std::move(StringToLower(GET_TEXT(me.OffsetToObjectName, buf, curOffset)));
 	piece->parent = parent;
 	piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
 	piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
 	piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
 
 	piece->SetGlobalOffset(CMatrix44f::Identity());
-	piece->GetVertices(&me, fileBuf);
-	piece->GetPrimitives(model, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf, teamTextures);
+	piece->GetVertices(&me, buf);
+	piece->GetPrimitives(model, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), buf, teamTextures);
 
 	piece->CalcNormals();
 	piece->SetMinMaxExtends();
@@ -381,10 +389,10 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, co
 	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	if (me.OffsetToChildObject > 0)
-		piece->children.push_back(LoadPiece(model, piece, me.OffsetToChildObject, fileBuf));
+		piece->children.push_back(LoadPiece(model, piece, buf, me.OffsetToChildObject));
 
 	if (me.OffsetToSiblingObject > 0)
-		parent->children.push_back(LoadPiece(model, parent, me.OffsetToSiblingObject, fileBuf));
+		parent->children.push_back(LoadPiece(model, parent, buf, me.OffsetToSiblingObject));
 
 	return piece;
 }

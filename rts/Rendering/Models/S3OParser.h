@@ -82,7 +82,7 @@ public:
 
 private:
 	SS3OPiece* AllocPiece();
-	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
+	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, std::vector<uint8_t>& buf, int offset);
 
 private:
 	std::vector<SS3OPiece> piecePool;
