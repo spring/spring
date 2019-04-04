@@ -150,6 +150,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponMuzzlePos;
+		params.end = currentTargetPos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
 		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;
