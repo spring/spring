@@ -312,7 +312,7 @@ void S3DOPiece::GetPrimitives(
 		sortedVerts.clear();
 		sortedVerts.resize(sp.indices.size());
 
-		std::copy(sortedVerts.begin(), sp.indices.begin(), sp.indices.end());
+		std::copy(sp.indices.begin(), sp.indices.end(), sortedVerts.begin());
 		std::sort(sortedVerts.begin(), sortedVerts.end());
 
 		const int vertHash = HsiehHash(&sortedVerts[0], sortedVerts.size() * sizeof(sortedVerts[0]), 0x123456);
