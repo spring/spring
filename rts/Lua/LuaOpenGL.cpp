@@ -2709,11 +2709,10 @@ int LuaOpenGL::CreateVertexArray(lua_State* L)
 		}
 	}
 
-	// TODO: indices, gl.VertexIndex?
 	if (luaL_optboolean(L, 3, false)) {
-		luaRenderBuffers[bufferID].Setup(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), 0 * luaL_checkint(L, 2));
+		luaRenderBuffers[bufferID].Setup(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), luaL_checkint(L, 2));
 	} else {
-		luaRenderBuffers[bufferID].SetupStatic(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), 0 * luaL_checkint(L, 2));
+		luaRenderBuffers[bufferID].SetupStatic(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), luaL_checkint(L, 2));
 	}
 
 	lua_pushnumber(L, bufferID);
@@ -2745,19 +2744,17 @@ int LuaOpenGL::DeleteVertexArray(lua_State* L)
 	wb = {};
 	return 1;
 }
+
 int LuaOpenGL::UpdateVertexArray(lua_State* L)
 {
 	if (inBeginEnd)
 		return 0;
 
 	const unsigned int bufferID = luaL_checkint(L, 1);
-	const unsigned int minIndex = luaL_checkint(L, 2);
-	const unsigned int maxIndex = luaL_checkint(L, 3);
-	const unsigned int vtxCount = maxIndex - minIndex + 1;
+	const unsigned int elemsPos = luaL_checkint(L, 2);
+	const unsigned int indcsPos = luaL_checkint(L, 3);
 
 	if (bufferID >= luaRenderBuffers.size())
-		return 0;
-	if (maxIndex < minIndex)
 		return 0;
 
 
@@ -2775,27 +2772,34 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 
 	switch (lua_type(L, 4)) {
 		case LUA_TTABLE: {
-			std::array<float, 4096 * 4> array;
-			std::array<VA_TYPE_L, 4096> verts;
+			std::array<    float, 4096 * 4> array;
+			std::array<      int, 4096    > indcs;
+			std::array<VA_TYPE_L, 4096    > elems;
 
 			using A = decltype(array);
 
-			const auto CopyFloatsP  = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].p  = {&array[i * 4]}; } };
-			const auto CopyFloatsN  = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].n  = {&array[i * 3]}; } };
-			const auto CopyFloatsUV = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].uv = {&array[i * 4]}; } };
-			const auto CopyFloatsC0 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c0 = {&array[i * 4]}; } };
-			const auto CopyFloatsC1 = [&](const A& array) { for (size_t i = 0, k = verts.size(); i < k; i++) { verts[i].c1 = {&array[i * 4]}; } };
+			const auto CopyFloatsP  = [&](const A& array) { for (size_t i = 0, k = elems.size(); i < k; i++) { elems[i].p  = {&array[i * 4]}; } };
+			const auto CopyFloatsN  = [&](const A& array) { for (size_t i = 0, k = elems.size(); i < k; i++) { elems[i].n  = {&array[i * 3]}; } };
+			const auto CopyFloatsUV = [&](const A& array) { for (size_t i = 0, k = elems.size(); i < k; i++) { elems[i].uv = {&array[i * 4]}; } };
+			const auto CopyFloatsC0 = [&](const A& array) { for (size_t i = 0, k = elems.size(); i < k; i++) { elems[i].c0 = {&array[i * 4]}; } };
+			const auto CopyFloatsC1 = [&](const A& array) { for (size_t i = 0, k = elems.size(); i < k; i++) { elems[i].c1 = {&array[i * 4]}; } };
 
-			// ParseFloatArray will read at most |array| scalar values from each of t.{p,n,uv,c0,c1}, remaining data will be zero-filled
+			int numElems = 0;
+			int numIndcs = 0;
+
+			// ParseFloatArray reads at most |array| scalar values from each of t.{p,n,uv,c0,c1}, remaining elements will be zero-filled
 			// t = {p = {x,y,z,w|x,y,z,w|...}, n = {x,y,z|x,y,z|...}, uv = {s,t,u,v|s,t,u,v|...}, c0 = {r,g,b,a|r,g,b,a|...}, c1 = {...}}
-			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "p" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsP (array); lua_pop(L, 1); }
-			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "n" ); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsN (array); lua_pop(L, 1); }
-			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "uv"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsUV(array); lua_pop(L, 1); }
-			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c0"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC0(array); lua_pop(L, 1); }
-			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c1"); LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()); CopyFloatsC1(array); lua_pop(L, 1); }
+			// non-matching p/n/... table lengths qualifies as user error since verts are not initialized from any existing buffer data
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "p" ); numElems = std::max(numElems, LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()) / 4); CopyFloatsP (array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "n" ); numElems = std::max(numElems, LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()) / 3); CopyFloatsN (array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "uv"); numElems = std::max(numElems, LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()) / 4); CopyFloatsUV(array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c0"); numElems = std::max(numElems, LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()) / 4); CopyFloatsC0(array); lua_pop(L, 1); }
+			{ memset(array.data(), 0, sizeof(array)); lua_getfield(L, 4, "c1"); numElems = std::max(numElems, LuaUtils::ParseFloatArray(L, -1, array.data(), array.size()) / 4); CopyFloatsC1(array); lua_pop(L, 1); }
+			{ memset(indcs.data(), 0, sizeof(indcs)); lua_getfield(L, 4, "i" ); numIndcs = std::max(numIndcs, LuaUtils::ParseIntArray  (L, -1, indcs.data(), indcs.size()) / 1);                      lua_pop(L, 1); }
 
-			// NB: total buffer size can exceed |verts|, do not clamp args
-			wb.SafeUpdate(verts.data(), vtxCount, minIndex);
+			// NB: total buffer size can exceed |elems|, do not clamp args
+			wb.SafeUpdate(                            elems.data() , numElems, elemsPos);
+			wb.SafeUpdate(reinterpret_cast<uint32_t*>(indcs.data()), numIndcs, indcsPos);
 		} break;
 
 		case LUA_TFUNCTION: {
@@ -2803,11 +2807,11 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			luaRenderBuffer = &wb;
 			// rewind; length of sub-region update is determined
 			// by the number of gl.Vertex calls made in function
-			luaRenderBuffer->Reset(minIndex);
+			luaRenderBuffer->Reset(elemsPos, indcsPos);
 
 			{
 				inBeginEnd = true;
-				// fill the buffer
+				// fill the buffer (TODO: gl.VertexIndex?)
 				const int nFuncArgs = lua_gettop(L) - 4;
 				const int callError = lua_pcall(L, nFuncArgs, 0, 0);
 				inBeginEnd = false;
@@ -2817,7 +2821,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			}
 
 			assert(luaRenderBuffer != nullptr);
-			luaRenderBuffer->Reset(rb->GetNumElems<VA_TYPE_L>());
+			luaRenderBuffer->Reset(rb->GetNumElems<VA_TYPE_L>(), rb->GetNumIndcs<uint32_t>());
 			luaRenderBuffer = nullptr;
 		} break;
 

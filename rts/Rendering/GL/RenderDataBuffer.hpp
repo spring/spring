@@ -439,7 +439,7 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Reset(size_t pos = 0) {}
+		void Reset(size_t elemsPos = 0, size_t indcsPos = 0) {}
 
 
 		bool CheckSizeE(size_t ne, size_t pos) const { return false; }
@@ -539,21 +539,21 @@ namespace GL {
 		}
 
 
-		template<typename T> T* BindMapElems(bool r = false, bool w = true) { return (elemsMap = rdb->MapElems<T>(true, false, r, w)); }
-		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { return (indcsMap = rdb->MapIndcs<T>(true, false, r, w)); }
+		template<typename T> T* BindMapElems(bool r = false, bool w = true) { assert(!rdb->IsPinned()); return (elemsMap = rdb->MapElems<T>(true, false, r, w)); }
+		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { assert(!rdb->IsPinned()); return (indcsMap = rdb->MapIndcs<T>(true, false, r, w)); }
 
-		void UnmapUnbindElems() { rdb->UnmapElems(true); elemsMap = nullptr; }
-		void UnmapUnbindIndcs() { rdb->UnmapIndcs(true); indcsMap = nullptr; }
+		void UnmapUnbindElems() { assert(!rdb->IsPinned()); rdb->UnmapElems(true); elemsMap = nullptr; }
+		void UnmapUnbindIndcs() { assert(!rdb->IsPinned()); rdb->UnmapIndcs(true); indcsMap = nullptr; }
 
 
-		void Reset(size_t pos = 0) {
-			prvElemPos = pos;
-			curElemPos = pos;
-			sumElemPos = pos;
+		void Reset(size_t elemsPos = 0, size_t indcsPos = 0) {
+			prvElemPos = elemsPos;
+			curElemPos = elemsPos;
+			sumElemPos = elemsPos;
 
-			prvIndxPos = pos;
-			curIndxPos = pos;
-			sumIndxPos = pos;
+			prvIndxPos = indcsPos;
+			curIndxPos = indcsPos;
+			sumIndxPos = indcsPos;
 		}
 
 

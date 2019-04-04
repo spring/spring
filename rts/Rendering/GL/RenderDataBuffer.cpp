@@ -7,35 +7,37 @@
 #include "RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 
+constexpr static int NUM_RENDER_BUFFERS = 2;
+
 // global general-purpose buffers
-static GL::RenderDataBuffer gRenderBuffer0 [2];
-static GL::RenderDataBuffer gRenderBufferC [2];
-static GL::RenderDataBuffer gRenderBufferFC[2];
-static GL::RenderDataBuffer gRenderBufferT [2];
+static GL::RenderDataBuffer gRenderBuffer0 [NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferC [NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferFC[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferT [NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBufferT4[2];
-static GL::RenderDataBuffer gRenderBufferTN[2];
-static GL::RenderDataBuffer gRenderBufferTC[2];
+static GL::RenderDataBuffer gRenderBufferT4[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferTN[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferTC[NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBuffer2D0[2];
-static GL::RenderDataBuffer gRenderBuffer2DT[2];
+static GL::RenderDataBuffer gRenderBuffer2D0[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBuffer2DT[NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBufferL[2];
+static GL::RenderDataBuffer gRenderBufferL[NUM_RENDER_BUFFERS];
 
 // typed special-purpose buffer wrappers
-static GL::RenderDataBuffer0 tRenderBuffer0 [2];
-static GL::RenderDataBufferC tRenderBufferC [2];
-static GL::RenderDataBufferC tRenderBufferFC[2];
-static GL::RenderDataBufferT tRenderBufferT [2];
+static GL::RenderDataBuffer0 tRenderBuffer0 [NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferC tRenderBufferC [NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferC tRenderBufferFC[NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferT tRenderBufferT [NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBufferT4 tRenderBufferT4[2];
-static GL::RenderDataBufferTN tRenderBufferTN[2];
-static GL::RenderDataBufferTC tRenderBufferTC[2];
+static GL::RenderDataBufferT4 tRenderBufferT4[NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferTN tRenderBufferTN[NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferTC tRenderBufferTC[NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer2D0 tRenderBuffer2D0[2];
-static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
+static GL::RenderDataBuffer2D0 tRenderBuffer2D0[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer2DT tRenderBuffer2DT[NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBufferL tRenderBufferL[2];
+static GL::RenderDataBufferL tRenderBufferL[NUM_RENDER_BUFFERS];
 
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0]; }
@@ -71,23 +73,23 @@ void GL::InitRenderBuffers() {
 			gRenderBuffer ## T[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0,  &shaderObjs[0], nullptr, MAKE_NAME_STR(T)); \
 		} while (false)
 
-	for (int i = 0; i < 2; i++) {
-		SETUP_RBUFFER( 0, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER( C, i, 1 << 20, 1 << 16); // more heavily used
-		SETUP_RBUFFER(FC, i, 1 << 10, 1 <<  8); // less heavily used
-		SETUP_RBUFFER( T, i, 1 << 18, 1 << 16);
+	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
+		SETUP_RBUFFER( 0, i, 1 << 16, 1 << 16); // InfoTexture only
+		SETUP_RBUFFER( C, i, 1 << 22, 1 << 22);
+		SETUP_RBUFFER(FC, i, 1 << 10, 1 << 10); // GuiHandler only
+		SETUP_RBUFFER( T, i, 1 << 22, 1 << 22);
 
-		SETUP_RBUFFER(T4, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER(TN, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER(TC, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER(T4, i, 1 << 16, 1 << 16); // BumpWater only
+		SETUP_RBUFFER(TN, i, 1 << 16, 1 << 16); // FarTexHandler only
+		SETUP_RBUFFER(TC, i, 1 << 22, 1 << 22);
 
-		SETUP_RBUFFER(2D0, i, 1 << 18, 1 << 16);
-		SETUP_RBUFFER(2DT, i, 1 << 18, 1 << 16);
+		SETUP_RBUFFER(2D0, i, 1 << 16, 1 << 16); // unused
+		SETUP_RBUFFER(2DT, i, 1 << 22, 1 << 22); // BumpWater,GeomBuffer
 
-		SETUP_RBUFFER(L, i, 1 << 20, 1 << 16);
+		SETUP_RBUFFER(L, i, 1 << 22, 1 << 22); // LuaOpenGL only
 	}
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
 		CREATE_SHADER( 0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 		CREATE_SHADER( C, i, "", "\tf_color_rgba = v_color_rgba      * (1.0 / 255.0);\n");
 		CREATE_SHADER(FC, i, "", "\tf_color_rgba = v_color_rgba_flat * (1.0 / 255.0);\n");
@@ -110,7 +112,7 @@ void GL::InitRenderBuffers() {
 }
 
 void GL::KillRenderBuffers() {
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
 		gRenderBuffer0 [i].Kill();
 		gRenderBufferC [i].Kill();
 		gRenderBufferFC[i].Kill();
@@ -128,20 +130,25 @@ void GL::KillRenderBuffers() {
 }
 
 void GL::SwapRenderBuffers() {
+	static_assert(NUM_RENDER_BUFFERS == 2 || NUM_RENDER_BUFFERS == 3, "");
+
 	// NB: called before drawFrame counter is incremented
-	std::swap(tRenderBuffer0 [0], tRenderBuffer0 [1]);
-	std::swap(tRenderBufferC [0], tRenderBufferC [1]);
-	std::swap(tRenderBufferFC[0], tRenderBufferFC[1]);
-	std::swap(tRenderBufferT [0], tRenderBufferT [1]);
+	// A=0,B=1,C=2 -> B=0,C=1,A=2 -> C=0,A=1,B=2 -> A,B,C
+	for (int i = 0, n = NUM_RENDER_BUFFERS - 1; i < n; i++) {
+		std::swap(tRenderBuffer0 [0], tRenderBuffer0 [n - i]);
+		std::swap(tRenderBufferC [0], tRenderBufferC [n - i]);
+		std::swap(tRenderBufferFC[0], tRenderBufferFC[n - i]);
+		std::swap(tRenderBufferT [0], tRenderBufferT [n - i]);
 
-	std::swap(tRenderBufferT4[0], tRenderBufferT4[1]);
-	std::swap(tRenderBufferTN[0], tRenderBufferTN[1]);
-	std::swap(tRenderBufferTC[0], tRenderBufferTC[1]);
+		std::swap(tRenderBufferT4[0], tRenderBufferT4[n - i]);
+		std::swap(tRenderBufferTN[0], tRenderBufferTN[n - i]);
+		std::swap(tRenderBufferTC[0], tRenderBufferTC[n - i]);
 
-	std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[1]);
-	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
+		std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[n - i]);
+		std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[n - i]);
 
-	std::swap(tRenderBufferL[0], tRenderBufferL[1]);
+		std::swap(tRenderBufferL[0], tRenderBufferL[n - i]);
+	}
 
 	tRenderBuffer0 [0].Reset();
 	tRenderBufferC [0].Reset();
