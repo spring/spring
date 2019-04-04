@@ -162,7 +162,7 @@ public:
 	S3DModel Load(const std::string& name);
 
 	S3DOPiece* AllocPiece();
-	S3DOPiece* LoadPiece(S3DModel* model, S3DOPiece* parent, int pos, const std::vector<unsigned char>& fileBuf);
+	S3DOPiece* LoadPiece(S3DModel* model, S3DOPiece* parent, const std::vector<uint8_t>& buf, int pos);
 
 private:
 	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, TA3DO::_Primitive* p, const std::vector<unsigned char>& fileBuf) const;

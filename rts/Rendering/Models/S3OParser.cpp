@@ -34,7 +34,7 @@ void CS3OParser::Kill() {
 S3DModel CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
-	std::vector<unsigned char> fileBuf;
+	std::vector<uint8_t> fileBuf;
 
 	if (!file.FileExists())
 		throw content_error("[S3OParser] could not find model-file " + name);
@@ -45,6 +45,9 @@ S3DModel CS3OParser::Load(const std::string& name)
 	} else {
 		fileBuf = std::move(file.GetBuffer());
 	}
+
+	if (fileBuf.size() < sizeof(S3OHeader))
+		throw content_error("[S3OParser] corrupted header for model-file " + name);
 
 	S3OHeader header;
 	memcpy(&header, fileBuf.data(), sizeof(header));
@@ -61,7 +64,7 @@ S3DModel CS3OParser::Load(const std::string& name)
 
 	textureHandlerS3O.PreloadTexture(&model);
 
-	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf.data(), header.rootPiece));
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf, header.rootPiece));
 
 	// set after the extrema are known
 	model.radius = (header.radius <= 0.01f)? model.CalcDrawRadius(): header.radius;
@@ -90,8 +93,11 @@ SS3OPiece* CS3OParser::AllocPiece()
 	return &piecePool[numPoolPieces++];
 }
 
-SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned char* buf, int offset)
+SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, std::vector<uint8_t>& buf, int offset)
 {
+	if ((offset + sizeof(Piece)) > buf.size())
+		throw content_error("[S3OParser] corrupted piece for model-file " + model->name);
+
 	model->numPieces++;
 
 	// retrieve piece data
