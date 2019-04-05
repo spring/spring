@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstring>
 
 #include <SDL.h>
 #if (!defined(HEADLESS) && !defined(WIN32) && !defined(__APPLE__))
