@@ -134,22 +134,22 @@ void StringTrimInPlace(std::string& str, const std::string& ws = " \t\n\r");
 std::string StringTrim(const std::string& str, const std::string& ws = " \t\n\r");
 
 
-static inline std::string IntToString(int i, const std::string& format = "%i")
+static inline std::string IntToString(int i, const char* format = "%i")
 {
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), format.c_str(), i);
-	return std::string(buf);
+	SNPRINTF(buf, sizeof(buf), format, i);
+	return buf;
 }
 
-static inline std::string FloatToString(float f, const std::string& format = "%f")
+static inline std::string FloatToString(float f, const char* format = "%f")
 {
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), format.c_str(), f);
-	return std::string(buf);
+	SNPRINTF(buf, sizeof(buf), format, f);
+	return buf;
 }
 
 template<typename int_type = int>
-static inline int_type StringToInt(std::string str, bool* failed = NULL)
+static inline int_type StringToInt(std::string str, bool* failed = nullptr)
 {
 	StringTrimInPlace(str);
 	std::istringstream stream(str);
