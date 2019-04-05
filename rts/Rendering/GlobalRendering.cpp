@@ -16,7 +16,6 @@
 #include "System/type2.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
-#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -707,13 +706,15 @@ void CGlobalRendering::CheckGLExtensions() const
 
 void CGlobalRendering::SetGLSupportFlags()
 {
-	const std::string& glVendor   = StringToLower(globalRenderingInfo.glVendor);
-	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
+	const char* glVendor   = globalRenderingInfo.glVendor;
+	const char* glRenderer = globalRenderingInfo.glRenderer;
 
-	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
-	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
-	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
-	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
+	haveNvidia  = (strcasestr(  glVendor,  "nvidia ") != nullptr);
+	haveATI    |= (strcasestr(  glVendor,     "ati ") != nullptr);
+	haveATI    |= (strcasestr(  glVendor,     "amd ") != nullptr);
+	haveIntel   = (strcasestr(  glVendor,    "intel") != nullptr);
+	haveMesa   |= (strcasestr(glRenderer,    "mesa ") != nullptr);
+	haveMesa   |= (strcasestr(glRenderer, "gallium ") != nullptr);
 
 	if (haveATI) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;

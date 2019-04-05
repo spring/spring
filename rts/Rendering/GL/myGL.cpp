@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <array>
-#include <string>
 #include <cmath>
 
 #include <SDL.h>
@@ -11,14 +10,9 @@
 #endif
 
 #include "myGL.h"
-#include "MatrixState.hpp"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
-#include "System/Exceptions.h"
-#include "System/StringUtil.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
 
@@ -181,24 +175,20 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	assert(glVendor != nullptr);
 	assert(glRenderer != nullptr);
 
-	const std::string& _glVendor = StringToLower(glVendor);
-	// const std::string& _glRenderer = StringToLower(glRenderer);
-
 	// should be unreachable
 	// note that checking for Microsoft stubs is no longer required
 	// (context-creation will fail if no vendor-specific or pre-GL3
 	// drivers are installed)
-	if (_glVendor.find("unknown") != std::string::npos)
+	if (strcasestr(glVendor, "unknown") != nullptr)
 		return false;
 
-	if (_glVendor.find("vmware") != std::string::npos) {
+	if (strcasestr(glVendor, "vmware") != nullptr) {
 		const char* msg =
 			"Running Spring with virtualized drivers can result in severely degraded "
 			"performance and is discouraged. Prefer to use your host operating system.";
 
 		LOG_L(L_WARNING, "%s", msg);
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
-		return true;
 	}
 
 	return true;
@@ -304,13 +294,7 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-	if (globalRendering->atiHacks) {
-		glEnable(target);
-		glGenerateMipmap(target);
-		glDisable(target);
-	} else {
-		glGenerateMipmap(target);
-	}
+	glGenerateMipmap(target);
 }
 
 

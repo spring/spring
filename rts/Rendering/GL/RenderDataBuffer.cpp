@@ -73,16 +73,16 @@ void GL::InitRenderBuffers() {
 
 	for (int i = 0; i < GL::NUM_RENDER_BUFFERS; i++) {
 		SETUP_RBUFFER( 0, i, 1 << 16, 1 << 16); // InfoTexture only
-		SETUP_RBUFFER( C, i, 1 << 22, 1 << 22);
+		SETUP_RBUFFER( C, i, 1 << 20, 1 << 20);
 		SETUP_RBUFFER(FC, i, 1 << 10, 1 << 10); // GuiHandler only
-		SETUP_RBUFFER( T, i, 1 << 22, 1 << 22);
+		SETUP_RBUFFER( T, i, 1 << 20, 1 << 20);
 
 		SETUP_RBUFFER(T4, i, 1 << 16, 1 << 16); // BumpWater only
 		SETUP_RBUFFER(TN, i, 1 << 16, 1 << 16); // FarTexHandler only
-		SETUP_RBUFFER(TC, i, 1 << 22, 1 << 22);
+		SETUP_RBUFFER(TC, i, 1 << 20, 1 << 20);
 
 		SETUP_RBUFFER(2D0, i, 1 << 16, 1 << 16); // unused
-		SETUP_RBUFFER(2DT, i, 1 << 22, 1 << 22); // BumpWater,GeomBuffer
+		SETUP_RBUFFER(2DT, i, 1 << 20, 1 << 20); // BumpWater,GeomBuffer
 
 		SETUP_RBUFFER(L, i, 1 << 22, 1 << 22); // LuaOpenGL only
 	}
@@ -133,19 +133,19 @@ void GL::SwapRenderBuffers() {
 	// NB: called before drawFrame counter is incremented
 	// A=0,B=1,C=2 -> B=0,C=1,A=2 -> C=0,A=1,B=2 -> A,B,C
 	for (int i = 0, n = GL::NUM_RENDER_BUFFERS - 1; i < n; i++) {
-		std::swap(tRenderBuffer0 [0], tRenderBuffer0 [n - i]);
-		std::swap(tRenderBufferC [0], tRenderBufferC [n - i]);
-		std::swap(tRenderBufferFC[0], tRenderBufferFC[n - i]);
-		std::swap(tRenderBufferT [0], tRenderBufferT [n - i]);
+		std::swap(tRenderBuffer0 [i], tRenderBuffer0 [i + 1]);
+		std::swap(tRenderBufferC [i], tRenderBufferC [i + 1]);
+		std::swap(tRenderBufferFC[i], tRenderBufferFC[i + 1]);
+		std::swap(tRenderBufferT [i], tRenderBufferT [i + 1]);
 
-		std::swap(tRenderBufferT4[0], tRenderBufferT4[n - i]);
-		std::swap(tRenderBufferTN[0], tRenderBufferTN[n - i]);
-		std::swap(tRenderBufferTC[0], tRenderBufferTC[n - i]);
+		std::swap(tRenderBufferT4[i], tRenderBufferT4[i + 1]);
+		std::swap(tRenderBufferTN[i], tRenderBufferTN[i + 1]);
+		std::swap(tRenderBufferTC[i], tRenderBufferTC[i + 1]);
 
-		std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[n - i]);
-		std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[n - i]);
+		std::swap(tRenderBuffer2D0[i], tRenderBuffer2D0[i + 1]);
+		std::swap(tRenderBuffer2DT[i], tRenderBuffer2DT[i + 1]);
 
-		std::swap(tRenderBufferL[0], tRenderBufferL[n - i]);
+		std::swap(tRenderBufferL[i], tRenderBufferL[i + 1]);
 	}
 
 	tRenderBuffer0 [0].Reset();
