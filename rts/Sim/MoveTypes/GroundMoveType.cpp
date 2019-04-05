@@ -1836,6 +1836,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 
 	const float3& pos = collider->pos;
 	const float3& vel = collider->speed;
+	const float3& rgt = collider->rightdir;
 
 	float3 strafeVec;
 	float3 bounceVec;
@@ -1845,8 +1846,8 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		float3 sqrSumPosition; // .y is always 0
 		float2 sqrPenDistance; // .x = sum, .y = count
 
-		const float3 rightDir2D = (collider->rightdir * XZVector).SafeNormalize();
-		const float3 speedDir2D = (collider->speed    * XZVector).SafeNormalize();
+		const float3 rightDir2D = (rgt * XZVector).SafeNormalize();
+		const float3 speedDir2D = (vel * XZVector).SafeNormalize();
 
 
 		const int xmid = (pos.x + vel.x) / SQUARE_SIZE;
@@ -1872,7 +1873,7 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		// NOTE:
 		//   assumes the collider's footprint is still always axis-aligned
 		// NOTE:
-		//   the pathfinders only care about the CENTER square for terrain!
+		//   the pathfinders only care about the CENTER square wrt terrain!
 		//   this means paths can come closer to impassable terrain than is
 		//   allowed by collision detection (more probable if edges between
 		//   passable and impassable areas are hard instead of gradients or
@@ -1885,13 +1886,10 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 				const int xabs = xmid + x;
 				const int zabs = zmid + z;
 
-				if (checkTerrain) {
-					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, speedDir2D) > 0.01f)
-						continue;
-				} else {
-					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
-						continue;
-				}
+				if ( checkTerrain &&  (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, speedDir2D) > 0.01f))
+					continue;
+				if (!checkTerrain && ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0))
+					continue;
 
 				const float3 squarePos = float3(xabs * SQUARE_SIZE + (SQUARE_SIZE >> 1), pos.y, zabs * SQUARE_SIZE + (SQUARE_SIZE >> 1));
 				const float3 squareVec = pos - squarePos;
@@ -1960,16 +1958,16 @@ bool CGroundMoveType::HandleStaticObjectCollision(
 		const float  colRadiusSum = colliderRadius + collideeRadius;
 		const float   sepDistance = separationVector.Length() + 0.1f;
 		const float   penDistance = std::min(sepDistance - colRadiusSum, 0.0f);
-		const float  colSlideSign = -Sign(collidee->pos.dot(collider->rightdir) - pos.dot(collider->rightdir));
+		const float  colSlideSign = -Sign(collidee->pos.dot(rgt) - pos.dot(rgt));
 
 		const float strafeScale = std::min(currentSpeed, std::max(0.0f, -penDistance * 0.5f)) * (1 - checkYardMap * false);
 		const float bounceScale = std::min(currentSpeed, std::max(0.0f, -penDistance       )) * (1 - checkYardMap *  true);
 
-		strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
-		bounceVec = (   separationVector / sepDistance) * bounceScale;
+		strafeVec = (             rgt * colSlideSign) * strafeScale;
+		bounceVec = (separationVector /  sepDistance) * bounceScale;
 		summedVec = strafeVec + bounceVec;
 
-		if (colliderMD->TestMoveSquare(collider, pos + summedVec, collider->speed, true, true, true)) {
+		if (colliderMD->TestMoveSquare(collider, pos + summedVec, vel, true, true, true)) {
 			collider->Move(summedVec, true);
 
 			currWayPoint += summedVec;
@@ -1999,6 +1997,8 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float3 crushImpulse = collider->speed * collider->mass * Sign(int(!reversing));
 
 	const bool allowUCO = modInfo.allowUnitCollisionOverlap;
+	const bool allowCAU = modInfo.allowCrushingAlliedUnits;
+	const bool allowPEU = modInfo.allowPushingEnemyUnits;
 	const bool allowSAT = modInfo.allowSepAxisCollisionTest;
 	const bool forceSAT = (colliderParams.z > 0.1f);
 
@@ -2022,7 +2022,6 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if (unloadingCollidee)
 			collidee->unloadingTransportId = -1;
-
 		if (unloadingCollider)
 			collider->unloadingTransportId = -1;
 
@@ -2065,8 +2064,8 @@ void CGroundMoveType::HandleUnitCollisions(
 
 
 		// NOTE:
-		//    we exclude aircraft (which have NULL moveDef's) landed
-		//    on the ground, since they would just stack when pushed
+		//   we exclude aircraft (which have NULL moveDef's) landed
+		//   on the ground, since they would just stack when pushed
 		bool pushCollider = colliderMobile;
 		bool pushCollidee = collideeMobile;
 		bool crushCollidee = false;
@@ -2077,16 +2076,11 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool collideeYields = (collider->IsMoving() && !collidee->IsMoving());
 		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
-		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
+		crushCollidee |= (!alliedCollision || allowCAU);
 		crushCollidee &= ((colliderParams.x * collider->mass) > (collideeParams.x * collidee->mass));
 
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(collider, crushImpulse, true);
-
-		#if 0
-		if (pathController.IgnoreCollision(collider, collidee))
-			continue;
-		#endif
 
 		if (eventHandler.UnitUnitCollision(collider, collidee))
 			continue;
@@ -2094,27 +2088,35 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (collideeMobile)
 			HandleUnitCollisionsAux(collider, collidee, this, static_cast<CGroundMoveType*>(collidee->moveType));
 
-		// FIXME:
+		// NOTE:
 		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
 		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
 		//   the collision is treated normally --> not what we want here, but the desired
 		//   behavior (making each party stop and block the other) has many corner-cases
-		//   this also happens when both parties are pushResistant --> make each respond
-		//   to the other as a static obstacle so the tags still have some effect
-		pushCollider = pushCollider && (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
-		pushCollidee = pushCollidee && (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
+		//   so instead have collider respond as though collidee is semi-static obstacle
+		//   this also happens when both parties are pushResistant
+		pushCollider = pushCollider && (alliedCollision || allowPEU || !collider->blockEnemyPushing);
+		pushCollidee = pushCollidee && (alliedCollision || allowPEU || !collidee->blockEnemyPushing);
 		pushCollider = pushCollider && (!collider->beingBuilt && !collider->UsingScriptMoveType() && !collider->moveType->IsPushResistant());
 		pushCollidee = pushCollidee && (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collidee->moveType->IsPushResistant());
 
 		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
 			// building (always axis-aligned, possibly has a yardmap)
 			// or semi-static collidee that should be handled as such
-			// this also handles two mutually push-resistant parties!
-			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, (!atEndOfPath && !atGoal), true, false))
+			//
+			// since all push-resistant units use the BLOCK_STRUCTURE
+			// mask when stopped, avoid the yardmap || terrain branch
+			// of HSOC which is not well suited to both parties moving
+			// and can leave them inside stuck each other's footprints
+			const bool allowNewPath = (!atEndOfPath && !atGoal);
+			const bool checkYardMap = ((pushCollider || pushCollidee) || collideeUD->IsFactoryUnit());
+
+			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, allowNewPath, checkYardMap, false))
 				ReRequestPath(false);
 
 			continue;
 		}
+
 
 		const float colliderRelRadius = colliderParams.y / (colliderParams.y + collideeParams.y);
 		const float collideeRelRadius = collideeParams.y / (colliderParams.y + collideeParams.y);
@@ -2136,8 +2138,10 @@ void CGroundMoveType::HandleUnitCollisions(
 			v2 = std::max(1.0f, collideeParams.x),
 			c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 			c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
+			// weighted momenta
 			s1 = m1 * v1 * c1,
 			s2 = m2 * v2 * c2,
+			// relative momenta
  			r1 = s1 / (s1 + s2 + 1.0f),
  			r2 = s2 / (s1 + s2 + 1.0f);
 
@@ -2159,18 +2163,17 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
 		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
 		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
-		const float3 colliderMoveVec = colliderPushVec + colliderSlideVec;
-		const float3 collideeMoveVec = collideePushVec + collideeSlideVec;
+		const float3 colliderMoveVec  = colliderPushVec + colliderSlideVec;
+		const float3 collideeMoveVec  = collideePushVec + collideeSlideVec;
 
-		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec))
-				collider->Move(colliderMoveVec, true);
-		}
+		const bool moveCollider = ((pushCollider || !pushCollidee) && colliderMobile);
+		const bool moveCollidee = ((pushCollidee || !pushCollider) && collideeMobile);
 
-		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec))
-				collidee->Move(collideeMoveVec, true);
-		}
+		if (moveCollider && colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec))
+			collider->Move(colliderMoveVec, true);
+
+		if (moveCollidee && collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec))
+			collidee->Move(collideeMoveVec, true);
 	}
 }
 
@@ -2227,7 +2230,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		const float3 sepDirection   = separationVect / sepDistance;
 		const float3 colResponseVec = sepDirection * XZVector * sepResponse;
 
-		// multiply the collider's mass by a large constant (so that heavy
+		// multiply the collidee's mass by a large constant (so that heavy
 		// features do not bounce light units away like jittering pinballs;
 		// collideeMassScale ~= 0.01 suppresses large responses)
 		const float
