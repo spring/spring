@@ -519,7 +519,10 @@ bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
 			memIdx = texMemPool.AllocIdxRaw(GetMemSize());
 
 			// ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, GetRawMem());
-			std::memcpy(GetRawMem(), ilGetData(), GetMemSize());
+			for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
+				std::memset(GetRawMem(), 0xFF, GetMemSize());
+				std::memcpy(GetRawMem(), imgData, GetMemSize());
+			}
 		} else {
 			LOG_L(L_ERROR, "[BMP::%s] failed to load \"%s\" or invalid format %d", __func__, filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
 		}
@@ -594,7 +597,10 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 		texMemPool.FreeRaw(GetRawMem(), curMemSize);
 		memIdx = texMemPool.AllocIdxRaw(GetMemSize());
 
-		std::memcpy(GetRawMem(), ilGetData(), GetMemSize());
+		for (const ILubyte* imgData = ilGetData(); imgData != nullptr; imgData = nullptr) {
+			std::memset(GetRawMem(), 0xFF, GetMemSize());
+			std::memcpy(GetRawMem(), imgData, GetMemSize());
+		}
 
 		ilDeleteImages(1, &imageID);
 	}
