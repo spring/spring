@@ -28,6 +28,9 @@
 
 ProfileDrawer* ProfileDrawer::instance = nullptr;
 
+static constexpr float MAX_THREAD_HIST_TIME = 0.5f; // secs
+static constexpr float MAX_FRAMES_HIST_TIME = 0.5f; // secs
+
 static constexpr float  MIN_X_COOR = 0.6f;
 static constexpr float  MAX_X_COOR = 0.99f;
 static constexpr float  MIN_Y_COOR = 0.95f;
@@ -67,61 +70,103 @@ void ProfileDrawer::SetEnabled(bool enable)
 
 
 
-static void DrawTimeSlice(
+static void DrawBufferStats(const float2 pos)
+{
+	const float4 drawArea = {pos.x, pos.y + 0.02f, 0.2f, pos.y - (0.23f + 0.02f)};
+
+	GL::RenderDataBuffer0* rdb0 = GL::GetRenderBuffer0();
+	GL::RenderDataBufferC* rdbC = GL::GetRenderBufferC();
+	GL::RenderDataBufferT* rdbT = GL::GetRenderBufferT();
+
+	GL::RenderDataBufferT4* rdbT4 = GL::GetRenderBufferT4();
+	GL::RenderDataBufferTN* rdbTN = GL::GetRenderBufferTN();
+	GL::RenderDataBufferTC* rdbTC = GL::GetRenderBufferTC();
+
+	GL::RenderDataBuffer2D0* rdb2D0 = GL::GetRenderBuffer2D0();
+	GL::RenderDataBuffer2DT* rdb2DT = GL::GetRenderBuffer2DT();
+
+	GL::RenderDataBufferL* rdbL = GL::GetRenderBufferL();
+
+
+	// background
+	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TL
+	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BL
+	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BR
+	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TR
+	rdbC->Submit(GL_QUADS);
+
+
+	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
+	font->glFormat(pos.x, pos.y - 0.00f, 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "RenderBuffers (%u/%u)", globalRendering->drawFrame % GL::NUM_RENDER_BUFFERS, GL::NUM_RENDER_BUFFERS);
+	font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t0={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb0->SumElems(), rdb0->SumIndcs(), rdb0->NumSubmits(false), rdb0->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tC={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbC->SumElems(), rdbC->SumIndcs(), rdbC->NumSubmits(false), rdbC->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.065f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbT->SumElems(), rdbT->SumIndcs(), rdbT->NumSubmits(false), rdbT->NumSubmits(true));
+
+	font->glFormat(pos.x, pos.y - 0.095f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT4={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbT4->SumElems(), rdbT4->SumIndcs(), rdbT4->NumSubmits(false), rdbT4->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.115f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTN={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbTN->SumElems(), rdbTN->SumIndcs(), rdbTN->NumSubmits(false), rdbTN->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.135f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTC={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbTC->SumElems(), rdbTC->SumIndcs(), rdbTC->NumSubmits(false), rdbTC->NumSubmits(true));
+
+	font->glFormat(pos.x, pos.y - 0.165f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2D0={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb2D0->SumElems(), rdb2D0->SumIndcs(), rdb2D0->NumSubmits(false), rdb2D0->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.185f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2DT={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb2DT->SumElems(), rdb2DT->SumIndcs(), rdb2DT->NumSubmits(false), rdb2DT->NumSubmits(true));
+
+	font->glFormat(pos.x, pos.y - 0.215f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tL={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbL->SumElems(), rdbL->SumIndcs(), rdbL->NumSubmits(false), rdbL->NumSubmits(true));
+}
+
+static void DrawTimeSlices(
 	std::deque<TimeSlice>& frames,
 	const spring_time curTime,
-	const spring_time maxHist,
-	const float drawArea[4],
+	const spring_time maxTime,
+	const float4& drawArea,
 	const float4& sliceColor
 ) {
 	// remove old entries
-	while (!frames.empty() && (curTime - frames.front().second) > maxHist) {
+	while (!frames.empty() && (curTime - frames.front().second) > maxTime) {
 		frames.pop_front();
 	}
 
-	const float y1 = drawArea[1];
-	const float y2 = drawArea[3];
+	const float y1 = drawArea.y;
+	const float y2 = drawArea.w;
 
 	// render
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	for (const TimeSlice& ts: frames) {
-		float x1 = (ts.first  % maxHist).toSecsf() / maxHist.toSecsf();
-		float x2 = (ts.second % maxHist).toSecsf() / maxHist.toSecsf();
+		float x1 = (ts.first  % maxTime).toSecsf() / maxTime.toSecsf();
+		float x2 = (ts.second % maxTime).toSecsf() / maxTime.toSecsf();
 
 		x2 = std::max(x1 + globalRendering->pixelX, x2);
 
-		x1 = drawArea[0] + x1 * (drawArea[2] - drawArea[0]);
-		x2 = drawArea[0] + x2 * (drawArea[2] - drawArea[0]);
+		x1 = drawArea.x + x1 * (drawArea.z - drawArea.x);
+		x2 = drawArea.x + x2 * (drawArea.z - drawArea.x);
 
 		buffer->SafeAppend({{x1, y1, 0.0f}, {sliceColor}});
 		buffer->SafeAppend({{x1, y2, 0.0f}, {sliceColor}});
 		buffer->SafeAppend({{x2, y2, 0.0f}, {sliceColor}});
 		buffer->SafeAppend({{x2, y1, 0.0f}, {sliceColor}});
 
-		const float mx1 = x1 + 3 * globalRendering->pixelX;
-		const float mx2 = x2 - 3 * globalRendering->pixelX;
+		const float mx1 = x1 + 3.0f * globalRendering->pixelX;
+		const float mx2 = x2 - 3.0f * globalRendering->pixelX;
 
-		if (mx1 < mx2) {
-			buffer->SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-			buffer->SafeAppend({{mx1, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-			buffer->SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-			buffer->SafeAppend({{mx2, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-		}
+		if (mx1 >= mx2)
+			continue;
+
+		buffer->SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
+		buffer->SafeAppend({{mx1, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
+		buffer->SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
+		buffer->SafeAppend({{mx2, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
 	}
 }
 
 
 static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 {
-	constexpr float maxHistTime    = 4.0f;
 	constexpr float    barColor[4] = {0.0f, 0.0f, 0.0f, 0.5f};
 	constexpr float feederColor[4] = {1.0f, 0.0f, 0.0f, 1.0f};
 
 	const float drawArea[4] = {0.01f, 0.30f, (MIN_X_COOR * 0.5f), 0.35f};
 
 	const spring_time curTime = spring_now();
-	const spring_time maxHist = spring_secs(maxHistTime);
+	const spring_time maxTime = spring_secs(MAX_THREAD_HIST_TIME);
 
 	const size_t numThreads = profiler.GetNumThreadProfiles();
 
@@ -134,27 +179,27 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 	}
 	{
 		// title
-		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.0fsec)", maxHistTime);
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.0f seconds :: %lu threads)", MAX_THREAD_HIST_TIME, numThreads);
 	}
 	{
-		// need to lock; DrawTimeSlice pop_back()'s old entries from
+		// need to lock; DrawTimeSlice pop_front()'s old entries from
 		// threadProf while ~ScopedMtTimer can modify it concurrently
 		profiler.ToggleLock(true);
 
-		// bars
+		// bars for each pool-thread profile
 		int i = 0;
 		for (auto& threadProf: profiler.GetThreadProfiles()) {
 			float drawArea2[4] = {drawArea[0], 0.0f, drawArea[2], 0.0f};
 			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
 			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - (4 * globalRendering->pixelY);
-			DrawTimeSlice(threadProf, curTime, maxHist, drawArea2, {1.0f, 0.0f, 0.0f, 0.6f});
+			DrawTimeSlices(threadProf, curTime, maxTime, drawArea2, {1.0f, 0.0f, 0.0f, 0.6f});
 		}
 
 		profiler.ToggleLock(false);
 	}
 	{
 		// feeder
-		const float r = (curTime % maxHist).toSecsf() / maxHistTime;
+		const float r = (curTime % maxTime).toSecsf() / MAX_THREAD_HIST_TIME;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 
 		buffer->SafeAppend({{xf                                 , drawArea[1], 0.0f}, {feederColor}});
@@ -167,14 +212,13 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 
 static void DrawFrameBarcode(GL::RenderDataBufferC* buffer)
 {
-	constexpr float maxHistTime    = 0.5f;
 	constexpr float    barColor[4] = {0.0f, 0.0f, 0.0f, 0.5f};
 	constexpr float feederColor[4] = {1.0f, 0.0f, 0.0f, 1.0f};
 
 	const float drawArea[4] = {0.01f, 0.21f, MIN_X_COOR - 0.05f, 0.26f};
 
 	const spring_time curTime = spring_now();
-	const spring_time maxHist = spring_secs(maxHistTime);
+	const spring_time maxTime = spring_secs(MAX_FRAMES_HIST_TIME);
 
 	// background
 	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
@@ -190,41 +234,35 @@ static void DrawFrameBarcode(GL::RenderDataBufferC* buffer)
 		"\xff\x01\x01\xff  Swap"
 		"\xff\x01\xff\x01  Video"
 		"\xff\xff\x01\x01  Sim"
-		, maxHistTime
+		, MAX_FRAMES_HIST_TIME
 	);
 
-	// gc frames
-	DrawTimeSlice(lgcFrames, curTime, maxHist, drawArea, {1.0f, 0.5f, 1.0f, 0.55f});
+	DrawTimeSlices(lgcFrames, curTime, maxTime, drawArea, {1.0f, 0.5f, 1.0f, 0.55f}); // gc frames
+	DrawTimeSlices(uusFrames, curTime, maxTime, drawArea, {1.0f, 1.0f, 0.0f, 0.90f}); // unsynced-update frames
+	DrawTimeSlices(swpFrames, curTime, maxTime, drawArea, {0.0f, 0.0f, 1.0f, 0.55f}); // video swap frames
+	DrawTimeSlices(vidFrames, curTime, maxTime, drawArea, {0.0f, 1.0f, 0.0f, 0.55f}); // video frames
+	DrawTimeSlices(simFrames, curTime, maxTime, drawArea, {1.0f, 0.0f, 0.0f, 0.55f}); // sim frames
 
-	// updateunsynced frames
-	DrawTimeSlice(uusFrames, curTime, maxHist, drawArea, {1.0f, 1.0f, 0.0f, 0.9f});
+	{
+		// draw 'feeder' (indicates current time pos)
+		const float r = (curTime % maxTime).toSecsf() / MAX_FRAMES_HIST_TIME;
+		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 
-	// video swap frames
-	DrawTimeSlice(swpFrames, curTime, maxHist, drawArea, {0.0f, 0.0f, 1.0f, 0.55f});
+		buffer->SafeAppend({{xf                               , drawArea[1], 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xf                               , drawArea[3], 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}});
+	}
+	{
+		// draw scale (horizontal bar that indicates 30FPS timing length)
+		const float xs1 = drawArea[2] - 1.0f / (30.0f * MAX_FRAMES_HIST_TIME) * (drawArea[2] - drawArea[0]);
+		const float xs2 = drawArea[2] + 0.0f                                  * (drawArea[2] - drawArea[0]);
 
-	// video frames
-	DrawTimeSlice(vidFrames, curTime, maxHist, drawArea, {0.0f, 1.0f, 0.0f, 0.55f});
-
-	// sim frames
-	DrawTimeSlice(simFrames, curTime, maxHist, drawArea, {1.0f, 0.0f, 0.0f, 0.55f});
-
-	// draw 'feeder' indicating current time pos
-	const float r = (curTime % maxHist).toSecsf() / maxHistTime;
-	const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-
-	buffer->SafeAppend({{xf                               , drawArea[1], 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xf                               , drawArea[3], 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}});
-
-	// draw scale (horizontal bar that indicates 30FPS timing length)
-	const float xs1 = drawArea[2] - 1.0f / (30.0f * maxHistTime) * (drawArea[2] - drawArea[0]);
-	const float xs2 = drawArea[2] + 0.0f                         * (drawArea[2] - drawArea[0]);
-
-	buffer->SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xs1, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-	buffer->SafeAppend({{xs2, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xs1, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xs2, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+	}
 }
 
 
@@ -466,6 +504,7 @@ void ProfileDrawer::DrawScreen()
 	// text before profiler to batch the background
 	DrawInfoText(buffer);
 	DrawProfiler(buffer);
+	DrawBufferStats({0.01f, 0.605f});
 
 	shader->Disable();
 	font->DrawBufferedGL4();

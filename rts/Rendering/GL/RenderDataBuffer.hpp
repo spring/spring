@@ -12,6 +12,9 @@
 #include "Rendering/Shaders/Shader.h"
 
 namespace GL {
+	constexpr static int NUM_RENDER_BUFFERS = 2;
+
+
 	static_assert(sizeof(VA_TYPE_0) == sizeof(float3), "");
 	static_assert(sizeof(VA_TYPE_0) == (sizeof(float) * 3), "");
 	const static std::array<Shader::ShaderInput, 1> VA_TYPE_0_ATTRS = {{
@@ -439,7 +442,8 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Reset(size_t elemsPos = 0, size_t indcsPos = 0) {}
+		void Reset() { Reset(0, 0); }
+		void Reset(size_t elemsPos, size_t indcsPos) {}
 
 
 		bool CheckSizeE(size_t ne, size_t pos) const { return false; }
@@ -507,6 +511,9 @@ namespace GL {
 			std::swap(prvIndxPos, trdb.prvIndxPos);
 			std::swap(curIndxPos, trdb.curIndxPos);
 			std::swap(sumIndxPos, trdb.sumIndxPos);
+
+			std::swap(numSubmits[0], trdb.numSubmits[0]);
+			std::swap(numSubmits[1], trdb.numSubmits[1]);
 			return *this;
 		}
 
@@ -546,7 +553,17 @@ namespace GL {
 		void UnmapUnbindIndcs() { assert(!rdb->IsPinned()); rdb->UnmapIndcs(true); indcsMap = nullptr; }
 
 
-		void Reset(size_t elemsPos = 0, size_t indcsPos = 0) {
+		void Reset() {
+			Reset(0, 0);
+
+			numSubmits[0] = 0;
+			numSubmits[1] = 0;
+		}
+		void Reset(size_t elemsPos, size_t indcsPos) {
+			// there should never be data left unsubmitted
+			assert(NumElems() == 0);
+			assert(NumIndcs() == 0);
+
 			prvElemPos = elemsPos;
 			curElemPos = elemsPos;
 			sumElemPos = elemsPos;
@@ -607,6 +624,7 @@ namespace GL {
 			if (NumElems() > 0)
 				rdb->Submit(primType, prvElemPos, NumElems());
 
+			numSubmits[0] += 1;
 			sumElemPos += NumElems();
 			prvElemPos = curElemPos;
 		}
@@ -616,6 +634,7 @@ namespace GL {
 				rdb->SubmitIndexed(primType, prvIndxPos, NumIndcs());
 
 			// TODO: allow multiple batches with the same set of indices?
+			numSubmits[1] += 1;
 			sumIndxPos += NumIndcs();
 			prvIndxPos = curIndxPos;
 		}
@@ -624,6 +643,7 @@ namespace GL {
 		size_t NumIndcs() const { return (curIndxPos - prvIndxPos); }
 		size_t SumElems() const { return sumElemPos; }
 		size_t SumIndcs() const { return sumIndxPos; }
+		size_t NumSubmits(bool indexed) const { return numSubmits[indexed]; }
 
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
 		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
@@ -642,6 +662,9 @@ namespace GL {
 		size_t prvIndxPos = 0;
 		size_t curIndxPos = 0;
 		size_t sumIndxPos = 0;
+
+		// [0] := non-indexed, [1] := indexed
+		size_t numSubmits[2] = {0, 0};
 	};
 	#endif
 

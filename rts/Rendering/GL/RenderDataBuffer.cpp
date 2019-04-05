@@ -7,37 +7,35 @@
 #include "RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 
-constexpr static int NUM_RENDER_BUFFERS = 2;
-
 // global general-purpose buffers
-static GL::RenderDataBuffer gRenderBuffer0 [NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBufferC [NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBufferFC[NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBufferT [NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBuffer0 [GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferC [GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferFC[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferT [GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBufferT4[NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBufferTN[NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBufferTC[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferT4[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferTN[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferTC[GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBuffer2D0[NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer gRenderBuffer2DT[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBuffer2D0[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBuffer2DT[GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer gRenderBufferL[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer gRenderBufferL[GL::NUM_RENDER_BUFFERS];
 
 // typed special-purpose buffer wrappers
-static GL::RenderDataBuffer0 tRenderBuffer0 [NUM_RENDER_BUFFERS];
-static GL::RenderDataBufferC tRenderBufferC [NUM_RENDER_BUFFERS];
-static GL::RenderDataBufferC tRenderBufferFC[NUM_RENDER_BUFFERS];
-static GL::RenderDataBufferT tRenderBufferT [NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer0 tRenderBuffer0 [GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferC tRenderBufferC [GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferC tRenderBufferFC[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferT tRenderBufferT [GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBufferT4 tRenderBufferT4[NUM_RENDER_BUFFERS];
-static GL::RenderDataBufferTN tRenderBufferTN[NUM_RENDER_BUFFERS];
-static GL::RenderDataBufferTC tRenderBufferTC[NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferT4 tRenderBufferT4[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferTN tRenderBufferTN[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferTC tRenderBufferTC[GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBuffer2D0 tRenderBuffer2D0[NUM_RENDER_BUFFERS];
-static GL::RenderDataBuffer2DT tRenderBuffer2DT[NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer2D0 tRenderBuffer2D0[GL::NUM_RENDER_BUFFERS];
+static GL::RenderDataBuffer2DT tRenderBuffer2DT[GL::NUM_RENDER_BUFFERS];
 
-static GL::RenderDataBufferL tRenderBufferL[NUM_RENDER_BUFFERS];
+static GL::RenderDataBufferL tRenderBufferL[GL::NUM_RENDER_BUFFERS];
 
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0]; }
@@ -73,7 +71,7 @@ void GL::InitRenderBuffers() {
 			gRenderBuffer ## T[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0,  &shaderObjs[0], nullptr, MAKE_NAME_STR(T)); \
 		} while (false)
 
-	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
+	for (int i = 0; i < GL::NUM_RENDER_BUFFERS; i++) {
 		SETUP_RBUFFER( 0, i, 1 << 16, 1 << 16); // InfoTexture only
 		SETUP_RBUFFER( C, i, 1 << 22, 1 << 22);
 		SETUP_RBUFFER(FC, i, 1 << 10, 1 << 10); // GuiHandler only
@@ -89,7 +87,7 @@ void GL::InitRenderBuffers() {
 		SETUP_RBUFFER(L, i, 1 << 22, 1 << 22); // LuaOpenGL only
 	}
 
-	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
+	for (int i = 0; i < GL::NUM_RENDER_BUFFERS; i++) {
 		CREATE_SHADER( 0, i, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
 		CREATE_SHADER( C, i, "", "\tf_color_rgba = v_color_rgba      * (1.0 / 255.0);\n");
 		CREATE_SHADER(FC, i, "", "\tf_color_rgba = v_color_rgba_flat * (1.0 / 255.0);\n");
@@ -112,7 +110,7 @@ void GL::InitRenderBuffers() {
 }
 
 void GL::KillRenderBuffers() {
-	for (int i = 0; i < NUM_RENDER_BUFFERS; i++) {
+	for (int i = 0; i < GL::NUM_RENDER_BUFFERS; i++) {
 		gRenderBuffer0 [i].Kill();
 		gRenderBufferC [i].Kill();
 		gRenderBufferFC[i].Kill();
@@ -130,11 +128,11 @@ void GL::KillRenderBuffers() {
 }
 
 void GL::SwapRenderBuffers() {
-	static_assert(NUM_RENDER_BUFFERS == 2 || NUM_RENDER_BUFFERS == 3, "");
+	static_assert(GL::NUM_RENDER_BUFFERS == 2 || GL::NUM_RENDER_BUFFERS == 3, "");
 
 	// NB: called before drawFrame counter is incremented
 	// A=0,B=1,C=2 -> B=0,C=1,A=2 -> C=0,A=1,B=2 -> A,B,C
-	for (int i = 0, n = NUM_RENDER_BUFFERS - 1; i < n; i++) {
+	for (int i = 0, n = GL::NUM_RENDER_BUFFERS - 1; i < n; i++) {
 		std::swap(tRenderBuffer0 [0], tRenderBuffer0 [n - i]);
 		std::swap(tRenderBufferC [0], tRenderBufferC [n - i]);
 		std::swap(tRenderBufferFC[0], tRenderBufferFC[n - i]);
