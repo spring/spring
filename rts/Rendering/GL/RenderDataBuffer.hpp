@@ -479,6 +479,9 @@ namespace GL {
 
 		size_t NumElems() const { return 0; }
 		size_t NumIndcs() const { return 0; }
+		size_t SumElems() const { return 0; }
+		size_t SumIndcs() const { return 0; }
+		size_t NumSubmits(bool indexed) const { return 0; }
 
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
 		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
