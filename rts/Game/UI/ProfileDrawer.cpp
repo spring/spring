@@ -87,7 +87,6 @@ static void DrawBufferStats(const float2 pos)
 
 	GL::RenderDataBufferL* rdbL = GL::GetRenderBufferL();
 
-
 	// background
 	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TL
 	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BL
@@ -95,21 +94,22 @@ static void DrawBufferStats(const float2 pos)
 	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TR
 	rdbC->Submit(GL_QUADS);
 
-
+	#define FMT "{elems=" _STPF_ " indcs=" _STPF_ " submits{e,i}={" _STPF_ "," _STPF_ "}}"
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 	font->glFormat(pos.x, pos.y - 0.00f, 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "RenderBuffers (%u/%u)", globalRendering->drawFrame % GL::NUM_RENDER_BUFFERS, GL::NUM_RENDER_BUFFERS);
-	font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t0={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb0->SumElems(), rdb0->SumIndcs(), rdb0->NumSubmits(false), rdb0->NumSubmits(true));
-	font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tC={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbC->SumElems(), rdbC->SumIndcs(), rdbC->NumSubmits(false), rdbC->NumSubmits(true));
-	font->glFormat(pos.x, pos.y - 0.065f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbT->SumElems(), rdbT->SumIndcs(), rdbT->NumSubmits(false), rdbT->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.025f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t0=" FMT, rdb0->SumElems(), rdb0->SumIndcs(), rdb0->NumSubmits(false), rdb0->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.045f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tC=" FMT, rdbC->SumElems(), rdbC->SumIndcs(), rdbC->NumSubmits(false), rdbC->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.065f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT=" FMT, rdbT->SumElems(), rdbT->SumIndcs(), rdbT->NumSubmits(false), rdbT->NumSubmits(true));
 
-	font->glFormat(pos.x, pos.y - 0.095f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT4={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbT4->SumElems(), rdbT4->SumIndcs(), rdbT4->NumSubmits(false), rdbT4->NumSubmits(true));
-	font->glFormat(pos.x, pos.y - 0.115f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTN={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbTN->SumElems(), rdbTN->SumIndcs(), rdbTN->NumSubmits(false), rdbTN->NumSubmits(true));
-	font->glFormat(pos.x, pos.y - 0.135f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTC={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbTC->SumElems(), rdbTC->SumIndcs(), rdbTC->NumSubmits(false), rdbTC->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.095f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tT4=" FMT, rdbT4->SumElems(), rdbT4->SumIndcs(), rdbT4->NumSubmits(false), rdbT4->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.115f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTN=" FMT, rdbTN->SumElems(), rdbTN->SumIndcs(), rdbTN->NumSubmits(false), rdbTN->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.135f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tTC=" FMT, rdbTC->SumElems(), rdbTC->SumIndcs(), rdbTC->NumSubmits(false), rdbTC->NumSubmits(true));
 
-	font->glFormat(pos.x, pos.y - 0.165f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2D0={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb2D0->SumElems(), rdb2D0->SumIndcs(), rdb2D0->NumSubmits(false), rdb2D0->NumSubmits(true));
-	font->glFormat(pos.x, pos.y - 0.185f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2DT={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdb2DT->SumElems(), rdb2DT->SumIndcs(), rdb2DT->NumSubmits(false), rdb2DT->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.165f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2D0=" FMT, rdb2D0->SumElems(), rdb2D0->SumIndcs(), rdb2D0->NumSubmits(false), rdb2D0->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.185f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\t2DT=" FMT, rdb2DT->SumElems(), rdb2DT->SumIndcs(), rdb2DT->NumSubmits(false), rdb2DT->NumSubmits(true));
 
-	font->glFormat(pos.x, pos.y - 0.215f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tL={elems=%lu indcs=%lu submits{e,i}={%lu,%lu}}", rdbL->SumElems(), rdbL->SumIndcs(), rdbL->NumSubmits(false), rdbL->NumSubmits(true));
+	font->glFormat(pos.x, pos.y - 0.215f, 0.5f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "\tL=" FMT, rdbL->SumElems(), rdbL->SumIndcs(), rdbL->NumSubmits(false), rdbL->NumSubmits(true));
+	#undef FMT
 }
 
 static void DrawTimeSlices(
@@ -179,7 +179,7 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 	}
 	{
 		// title
-		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.0f seconds :: %lu threads)", MAX_THREAD_HIST_TIME, numThreads);
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED, "ThreadPool (%.1f seconds :: " _STPF_ " threads)", MAX_THREAD_HIST_TIME, numThreads);
 	}
 	{
 		// need to lock; DrawTimeSlice pop_front()'s old entries from
