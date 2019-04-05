@@ -14,17 +14,18 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
+#include "System/SafeUtil.h"
+#include "System/StringUtil.h"
 #include "System/type2.h"
 #include "System/TimeProfiler.h"
-#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/creg/creg_cond.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Platform/errorhandler.h"
-#include "System/creg/creg_cond.h"
 
 
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
@@ -710,12 +711,12 @@ void CGlobalRendering::SetGLSupportFlags()
 	const char* glVendor   = globalRenderingInfo.glVendor;
 	const char* glRenderer = globalRenderingInfo.glRenderer;
 
-	haveNvidia  = (strcasestr(  glVendor,  "nvidia ") != nullptr);
-	haveATI    |= (strcasestr(  glVendor,     "ati ") != nullptr);
-	haveATI    |= (strcasestr(  glVendor,     "amd ") != nullptr);
-	haveIntel   = (strcasestr(  glVendor,    "intel") != nullptr);
-	haveMesa   |= (strcasestr(glRenderer,    "mesa ") != nullptr);
-	haveMesa   |= (strcasestr(glRenderer, "gallium ") != nullptr);
+	haveNvidia  = (StrCaseStr(  glVendor,  "nvidia ") != nullptr);
+	haveATI    |= (StrCaseStr(  glVendor,     "ati ") != nullptr);
+	haveATI    |= (StrCaseStr(  glVendor,     "amd ") != nullptr);
+	haveIntel   = (StrCaseStr(  glVendor,    "intel") != nullptr);
+	haveMesa   |= (StrCaseStr(glRenderer,    "mesa ") != nullptr);
+	haveMesa   |= (StrCaseStr(glRenderer, "gallium ") != nullptr);
 
 	if (haveATI) {
 		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;

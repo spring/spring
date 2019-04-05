@@ -16,6 +16,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
+#include "System/StringUtil.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
@@ -180,10 +181,10 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	// note that checking for Microsoft stubs is no longer required
 	// (context-creation will fail if no vendor-specific or pre-GL3
 	// drivers are installed)
-	if (strcasestr(glVendor, "unknown") != nullptr)
+	if (StrCaseStr(glVendor, "unknown") != nullptr)
 		return false;
 
-	if (strcasestr(glVendor, "vmware") != nullptr) {
+	if (StrCaseStr(glVendor, "vmware") != nullptr) {
 		const char* msg =
 			"Running Spring with virtualized drivers can result in severely degraded "
 			"performance and is discouraged. Prefer to use your host operating system.";
