@@ -73,6 +73,7 @@ class LuaSyncedCtrl
 		static int SetUnitStealth(lua_State* L);
 		static int SetUnitSonarStealth(lua_State* L);
 		static int SetUnitAlwaysVisible(lua_State* L);
+		static int SetUnitUseAirLos(lua_State* L);
 		static int SetUnitResourcing(lua_State* L);
 		static int SetUnitMetalExtraction(lua_State* L);
 		static int SetUnitHarvestStorage(lua_State* L);
@@ -118,6 +119,7 @@ class LuaSyncedCtrl
 		static int RemoveGrass(lua_State* L);
 
 		static int SetFeatureAlwaysVisible(lua_State* L);
+		static int SetFeatureUseAirLos(lua_State* L);
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureMaxHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
@@ -140,6 +142,7 @@ class LuaSyncedCtrl
 		static int SetFeaturePieceCollisionVolumeData(lua_State* L);
 
 		static int SetProjectileAlwaysVisible(lua_State* L);
+		static int SetProjectileUseAirLos(lua_State* L);
 		static int SetProjectileMoveControl(lua_State* L);
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);

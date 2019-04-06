@@ -180,6 +180,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStealth);
 	REGISTER_LUA_CFUNC(SetUnitSonarStealth);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetUnitUseAirLos);
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
@@ -225,6 +226,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetFeatureUseAirLos);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureMaxHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -248,6 +250,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetProjectileUseAirLos);
 	REGISTER_LUA_CFUNC(SetProjectileMoveControl);
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
@@ -624,11 +627,22 @@ static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* ob
 	return 0;
 }
 
+
 static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
 {
 	if (o == nullptr)
 		return 0;
+
 	o->alwaysVisible = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+static int SetWorldObjectUseAirLos(lua_State* L, CWorldObject* o, const char* caller)
+{
+	if (o == nullptr)
+		return 0;
+
+	o->useAirLos = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1995,6 +2009,11 @@ int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 	return (SetWorldObjectAlwaysVisible(L, ParseUnit(L, __func__, 1), __func__));
 }
 
+int LuaSyncedCtrl::SetUnitUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseUnit(L, __func__, 1), __func__));
+}
+
 
 int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 {
@@ -2923,6 +2942,11 @@ int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 	return (SetWorldObjectAlwaysVisible(L, ParseFeature(L, __func__, 1), __func__));
 }
 
+int LuaSyncedCtrl::SetFeatureUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseFeature(L, __func__, 1), __func__));
+}
+
 
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
@@ -3177,6 +3201,12 @@ int LuaSyncedCtrl::SetProjectileAlwaysVisible(lua_State* L)
 {
 	return (SetWorldObjectAlwaysVisible(L, ParseProjectile(L, __func__, 1), __func__));
 }
+
+int LuaSyncedCtrl::SetProjectileUseAirLos(lua_State* L)
+{
+	return (SetWorldObjectUseAirLos(L, ParseProjectile(L, __func__, 1), __func__));
+}
+
 
 int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
 {
