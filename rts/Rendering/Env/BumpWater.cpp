@@ -163,7 +163,7 @@ CBumpWater::CBumpWater()
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA16F, 4096, 4096, 0, GL_RGBA, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &maxw);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &maxh);
-		if (mapDims.mapx>maxw || mapDims.mapy>maxh) {
+		if (mapDims.mapx > maxw || mapDims.mapy > maxh) {
 			shoreWaves = false;
 			LOG_L(L_WARNING, "Can not display shorewaves (map too large)!");
 		}
@@ -275,10 +275,7 @@ CBumpWater::CBumpWater()
 		glBindTexture(screenCopyTarget, depthTexture);
 		glTexParameteri(screenCopyTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(screenCopyTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-		const GLuint depthFormat = (!globalRendering->atiHacks)? GL_DEPTH_COMPONENT24: GL_DEPTH_COMPONENT32;
-
-		glTexImage2D(screenCopyTarget, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		glTexImage2D(screenCopyTarget, 0, GL_DEPTH_COMPONENT32, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 	}
 
 	if (dynWaves) {
