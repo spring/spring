@@ -223,8 +223,7 @@ void CWorldDrawer::GenerateIBLTextures() const
 		}
 	}
 
-	if (FBO::IsSupported())
-		FBO::Unbind();
+	FBO::Unbind();
 
 	// restore the normal active camera's VP
 	camera->LoadViewPort();

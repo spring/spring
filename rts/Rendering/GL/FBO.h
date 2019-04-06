@@ -18,14 +18,6 @@
 class FBO
 {
 public:
-	/**
-	 * @brief IsSupported
-	 *
-	 * if FrameBuffers are supported by the current platform (now checked on startup)
-	 */
-	static constexpr bool IsSupported() { return true; }
-
-
 	FBO(         ) { Init(false); }
 	FBO(bool noop) { Init( noop); }
 	~FBO() { Kill(); }

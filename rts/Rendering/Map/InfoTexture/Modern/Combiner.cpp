@@ -43,7 +43,7 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	// Also GL3.x enforces that GL_RGB10_A2 must be renderable.
 	glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RGB10_A2, texSize.x, texSize.y);
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CInfoTextureCombiner");

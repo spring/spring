@@ -40,7 +40,7 @@ CRadarTexture::CRadarTexture()
 	infoTexPBO.New(texSize.x * texSize.y * texChannels * sizeof(uint16_t), GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CRadarTexture");

@@ -16,8 +16,6 @@
 
 CAdvWater::CAdvWater(bool refractive)
 {
-	assert(FBO::IsSupported());
-
 	uint8_t scrap[512 * 512 * 4];
 
 	glGenTextures(1, &reflectTexture);

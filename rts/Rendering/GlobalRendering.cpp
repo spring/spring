@@ -793,7 +793,7 @@ void CGlobalRendering::SetGLSupportFlags()
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffer = (state > 0);
 		#else
-		if (FBO::IsSupported() && !atiHacks) {
+		if (!atiHacks) {
 			FBO fbo;
 			fbo.Bind();
 			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
@@ -885,7 +885,6 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 void CGlobalRendering::LogGLSupportInfo() const
 {
 	LOG("[GR::%s]", __func__);
-	LOG("\tFBO extension support     : %i", FBO::IsSupported());
 	LOG("\tNVX GPU mem-info support  : %i", glewIsExtensionSupported("GL_NVX_gpu_memory_info"));
 	LOG("\tATI GPU mem-info support  : %i", glewIsExtensionSupported("GL_ATI_meminfo"));
 	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));

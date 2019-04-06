@@ -50,8 +50,6 @@ CDynWater::CDynWater()
 	: camPosX(0)
 	, camPosZ(0)
 {
-	assert(FBO::IsSupported());
-
 	lastWaveFrame = 0;
 	firstDraw = true;
 	camPosBig = float3(2048, 0, 2048);

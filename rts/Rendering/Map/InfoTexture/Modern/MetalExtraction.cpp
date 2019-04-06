@@ -41,7 +41,7 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 	//  then on the gpu instead.
 	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_R32F, texSize.x, texSize.y);
 
-	if (FBO::IsSupported()) {
+	{
 		fbo.Bind();
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CMetalExtractionTexture");
