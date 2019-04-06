@@ -1186,7 +1186,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 	}
 
 	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (aircraftState != AIRCRAFT_LANDED));
-	owner->useAirLos = true;
+	owner->useAirLos = (aircraftState != AIRCRAFT_LANDED);
 
 	switch (aircraftState) {
 		case AIRCRAFT_CRASHING:
@@ -1202,8 +1202,6 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			break;
 
 		case AIRCRAFT_LANDED:
-			owner->useAirLos = false;
-
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 			owner->Deactivate();
