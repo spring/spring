@@ -2475,32 +2475,35 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const std::string& key = luaL_checkstring(L, 2);
 	const int radius = Clamp(luaL_checkint(L, 3), 0, MAX_UNIT_SENSOR_RADIUS);
 
-	if (key == "los") {
-		unit->ChangeLos(unit->realLosRadius = radius, unit->realAirLosRadius);
-		lua_pushnumber(L, unit->losRadius);
-	} else if (key == "airLos") {
-		unit->ChangeLos(unit->realAirLosRadius = radius, radius);
-		lua_pushnumber(L, unit->airLosRadius);
-	} else if (key == "radar") {
-		unit->radarRadius = radius;
-		lua_pushnumber(L, unit->radarRadius);
-	} else if (key == "sonar") {
-		unit->sonarRadius = radius;
-		lua_pushnumber(L, unit->sonarRadius);
-	} else if (key == "seismic") {
-		unit->seismicRadius = radius;
-		lua_pushnumber(L, unit->seismicRadius);
-	} else if (key == "radarJammer") {
-		unit->jammerRadius = radius;
-		lua_pushnumber(L, unit->jammerRadius);
-	} else if (key == "sonarJammer") {
-		unit->sonarJamRadius = radius;
-		lua_pushnumber(L, unit->sonarJamRadius);
-	} else {
-		luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
+	switch (hashString(luaL_checkstring(L, 2))) {
+		case hashString("los"): {
+			unit->ChangeLos(unit->realLosRadius = radius, unit->realAirLosRadius);
+			lua_pushnumber(L, unit->losRadius);
+		} break;
+		case hashString("airLos"): {
+			unit->ChangeLos(unit->realAirLosRadius = radius, radius);
+			lua_pushnumber(L, unit->airLosRadius);
+		} break;
+		case hashString("radar"): {
+			lua_pushnumber(L, unit->radarRadius = radius);
+		} break;
+		case hashString("sonar"): {
+			lua_pushnumber(L, unit->sonarRadius = radius);
+		} break;
+		case hashString("seismic"): {
+			lua_pushnumber(L, unit->seismicRadius = radius);
+		} break;
+		case hashString("radarJammer"): {
+			lua_pushnumber(L, unit->jammerRadius = radius);
+		} break;
+		case hashString("sonarJammer"): {
+			lua_pushnumber(L, unit->sonarJamRadius = radius);
+		} break;
+		default: {
+			luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
+		} break;
 	}
 
 	return 1;
