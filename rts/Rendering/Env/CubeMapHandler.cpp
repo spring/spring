@@ -181,7 +181,6 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glFace, bool skyOnly)
 			curCam->UpdateViewRange();
 			curCam->UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, curCam->GetAspectRatio());
 			curCam->UpdateFrustum();
-			curCam->LoadMatrices();
 
 			// generate the face
 			game->SetDrawMode(Game::ReflectionDraw);

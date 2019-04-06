@@ -161,7 +161,6 @@ public:
 	const float3& GetFrustumPlane(unsigned int i) const { return frustum.planes[i]; }
 	const float3& GetFrustumEdge (unsigned int i) const { return frustum.edges [i]; }
 
-	void LoadMatrices() const;
 	void LoadViewPort() const;
 	void UpdateLoadViewPort(int px, int py, int sx, int sy);
 

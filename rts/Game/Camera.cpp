@@ -102,7 +102,6 @@ void CCamera::Update(const UpdateParams& p)
 	if (p.updateFrustum)
 		UpdateFrustum();
 
-	LoadMatrices();
 	// not done here
 	// LoadViewPort();
 }
@@ -230,15 +229,6 @@ void CCamera::UpdateLoadViewPort(int px, int py, int sx, int sy)
 	LoadViewPort();
 }
 
-
-void CCamera::LoadMatrices() const
-{
-	GL::MatrixMode(GL_PROJECTION);
-	GL::LoadMatrix(projectionMatrix);
-
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::LoadMatrix(viewMatrix);
-}
 
 void CCamera::LoadViewPort() const
 {

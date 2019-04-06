@@ -526,11 +526,8 @@ void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
 	shadowCam->UpdateFrustum();
 	shadowCam->UpdateLoadViewPort(0, 0, shadowMapSize, shadowMapSize);
-	// load matrices into gl_{ModelView,Projection}Matrix
-	shadowCam->Update({false, false, false, false, false});
 
-	// next set matrices needed for SP visibility culling (these
-	// are *NEVER* loaded into gl_{ModelView,Projection}Matrix!)
+	// next set matrices needed for SP visibility culling
 	shadowCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_CULLING]);
 	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_CULLING]);
 	shadowCam->UpdateFrustum();
