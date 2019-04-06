@@ -1180,6 +1180,8 @@ void CMiniMap::DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer)
 
 	Shader::IProgramObject* shader = buffer->GetShader();
 	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
 
 	// highlight
 	if (((mouse->lastx + 1) <= buttonSize) && ((mouse->lasty + 1) <= buttonSize)) {
