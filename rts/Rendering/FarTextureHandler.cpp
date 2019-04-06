@@ -143,7 +143,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
 	fbo.CheckStatus("FARTEXTURE");
 
-	glAttribStatePtr->PushBits(GL_ALL_ATTRIB_BITS);
+	glAttribStatePtr->PushBits(GL_POLYGON_BIT | GL_ENABLE_BIT);
 	glAttribStatePtr->DisableBlendMask();
 	glAttribStatePtr->FrontFace(GL_CW);
 
@@ -175,8 +175,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	Shader::IProgramObject* shader = state->GetActiveShader();
 
 	// overwrite the matrices set by SetupOpaqueDrawing
-	shader->SetUniformMatrix4fv(8, false, iconCam.GetViewMatrix());
-	shader->SetUniformMatrix4fv(9, false, iconCam.GetProjectionMatrix());
+	shader->SetUniformMatrix4fv(7, false, iconCam.GetViewMatrix());
+	shader->SetUniformMatrix4fv(8, false, iconCam.GetProjectionMatrix());
 
 
 	for (int orient = 0; orient < NUM_ICON_ORIENTATIONS; ++orient) {

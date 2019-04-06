@@ -1141,7 +1141,7 @@ void CDecalsDrawerGL4::UpdateOverlap()
 		return; // early-exit before GL stuff is done
 
 	fboOverlap.Bind();
-	glAttribStatePtr->PushBits(GL_ALL_ATTRIB_BITS);
+	glAttribStatePtr->PushBits(GL_VIEWPORT_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	glAttribStatePtr->ViewPort(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
 
