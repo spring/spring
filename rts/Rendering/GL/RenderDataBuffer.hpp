@@ -565,7 +565,7 @@ namespace GL {
 		void UnmapUnbindIndcs() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapIndcs(true); indcsMap = nullptr; }
 
 
-		static GLsync WaitBuffer(GLsync& syncObj) {
+		static GLsync WaitBuffer(const GLsync& syncObj) {
 			#if (SYNC_RENDER_BUFFERS == 1)
 			#ifndef HEADLESS
 			constexpr GLuint64 NANOSECS_PER_SEC = 1000000000;
@@ -590,6 +590,7 @@ namespace GL {
 				waitTime = NANOSECS_PER_SEC;
 			}
 
+			glDeleteSync(syncObj);
 			return {0};
 			#endif
 			#endif
