@@ -417,7 +417,7 @@ namespace GL {
 		TRenderDataBuffer(TRenderDataBuffer&& trdb) { *this = std::move(trdb); }
 
 		TRenderDataBuffer& operator = (const TRenderDataBuffer& trdb) = delete;
-		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) { std::swap(rdb, trdb.rdb); return *this; }
+		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) { std::swap(rawBuffer, trdb.rawBuffer); return *this; }
 
 		template<typename VertexAttribArray> void Setup(
 			RenderDataBuffer* buffer,
@@ -487,7 +487,7 @@ namespace GL {
 		size_t SumIndcs() const { return 0; }
 		size_t NumSubmits(bool indexed) const { return 0; }
 
-		GL::RenderDataBuffer* GetBuffer() { return rawBuffer }
+		GL::RenderDataBuffer* GetBuffer() { return rawBuffer; }
 		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
 
 	private:
