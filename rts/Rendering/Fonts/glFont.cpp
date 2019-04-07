@@ -39,8 +39,6 @@ CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontO
 
 bool CglFont::threadSafety = false;
 
-/*******************************************************************************/
-/*******************************************************************************/
 
 CglFont* font = nullptr;
 CglFont* smallFont = nullptr;
@@ -54,8 +52,7 @@ static const float darkLuminosity = 0.05 +
 	0.7152f * std::pow(darkOutline[1], 2.2) +
 	0.0722f * std::pow(darkOutline[2], 2.2);
 
-/*******************************************************************************/
-/*******************************************************************************/
+
 
 bool CglFont::LoadConfigFonts()
 {
@@ -125,6 +122,14 @@ void CglFont::ReallocAtlases(bool pre)
 		static_cast<CFontTexture*>(smallFont)->ReallocAtlases(pre);
 }
 
+void CglFont::SwapBuffers()
+{
+	if (font != nullptr)
+		font->SwapBuffersGL4();
+	if (smallFont != nullptr)
+		smallFont->SwapBuffersGL4();
+}
+
 
 
 CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
@@ -135,16 +140,14 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	outlineColor = darkOutline;
 
 	for (unsigned int i = 0; i < 2; i++) {
-		primaryBuffer[i].Init(true);
-		outlineBuffer[i].Init(true);
-		primaryBuffer[i].UploadTC((NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
-		outlineBuffer[i].UploadTC((NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
+		primaryBufferTC[i].Setup(&primaryBuffer[i], &GL::VA_TYPE_TC_ATTRS, (NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0); // no indices
+		outlineBufferTC[i].Setup(&outlineBuffer[i], &GL::VA_TYPE_TC_ATTRS, (NUM_BUFFER_ELEMS * TRI_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0);
 
-		mapBufferPtr[i * 2 + PRIMARY_BUFFER] = primaryBuffer[i].MapElems<VA_TYPE_TC>(true, true);
+		mapBufferPtr[i * 2 + PRIMARY_BUFFER] = primaryBufferTC[i].GetElemsMap();
 		prvBufferPos[i * 2 + PRIMARY_BUFFER] = mapBufferPtr[i * 2 + PRIMARY_BUFFER];
 		curBufferPos[i * 2 + PRIMARY_BUFFER] = mapBufferPtr[i * 2 + PRIMARY_BUFFER];
 
-		mapBufferPtr[i * 2 + OUTLINE_BUFFER] = outlineBuffer[i].MapElems<VA_TYPE_TC>(true, true);
+		mapBufferPtr[i * 2 + OUTLINE_BUFFER] = outlineBufferTC[i].GetElemsMap();
 		prvBufferPos[i * 2 + OUTLINE_BUFFER] = mapBufferPtr[i * 2 + OUTLINE_BUFFER];
 		curBufferPos[i * 2 + OUTLINE_BUFFER] = mapBufferPtr[i * 2 + OUTLINE_BUFFER];
 
@@ -156,6 +159,7 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	{
 		char vsBuf[65536];
 		char fsBuf[65536];
+
 		// color attribs are not normalized
 		const char* fsVars =
 			"const float v_color_mult = 1.0 / 255.0;\n"
@@ -190,6 +194,8 @@ CglFont::~CglFont()
 
 #ifdef HEADLESS
 
+void CglFont::SwapBuffersGL4() {}
+
 void CglFont::BeginGL4(Shader::IProgramObject* shader) {}
 void CglFont::EndGL4(Shader::IProgramObject* shader) {}
 void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader) {}
@@ -215,8 +221,7 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text) { ret
 
 #else
 
-/*******************************************************************************/
-/*******************************************************************************/
+
 
 // helper for GetText{Width,Height}
 template <typename T>
@@ -286,16 +291,10 @@ static inline bool SkipColorCodesAndNewLines(
 
 
 
-/*******************************************************************************/
-/*******************************************************************************/
-
 float CglFont::GetCharacterWidth(const char32_t c)
 {
 	return GetGlyph(c).advance;
 }
-
-
-
 
 float CglFont::GetTextWidth_(const std::u8string& text)
 {
@@ -490,18 +489,18 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 }
 
 
-/*******************************************************************************/
-/*******************************************************************************/
+
 
 void CglFont::SetAutoOutlineColor(bool enable)
 {
 	if (threadSafety)
 		bufferMutex.lock();
+
 	autoOutlineColor = enable;
+
 	if (threadSafety)
 		bufferMutex.unlock();
 }
-
 
 void CglFont::SetTextColor(const float4* color)
 {
@@ -541,13 +540,13 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
-	const float luminosity = 0.05 +
-				 0.2126f * std::pow(textColor[0], 2.2) +
-				 0.7152f * std::pow(textColor[1], 2.2) +
-				 0.0722f * std::pow(textColor[2], 2.2);
+	const float luminosity =
+		0.2126f * std::pow(textColor[0], 2.2f) +
+		0.7152f * std::pow(textColor[1], 2.2f) +
+		0.0722f * std::pow(textColor[2], 2.2f);
 
-	const float maxLum = std::max(luminosity, darkLuminosity);
-	const float minLum = std::min(luminosity, darkLuminosity);
+	const float maxLum = std::max(luminosity + 0.05f, darkLuminosity);
+	const float minLum = std::min(luminosity + 0.05f, darkLuminosity);
 
 	if ((maxLum / minLum) > 5.0f)
 		return &darkOutline;
@@ -558,8 +557,19 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 
 
-/*******************************************************************************/
-/*******************************************************************************/
+
+void CglFont::SwapBuffersGL4() {
+	primaryBufferTC[currBufferIndxGL4].Sync();
+	outlineBufferTC[currBufferIndxGL4].Sync();
+
+	// any data that was buffered but not submitted last frame gets discarded, user error
+	lastPrintFrameGL4 = globalRendering->drawFrame;
+	currBufferIndxGL4 = (currBufferIndxGL4 + 1) & 1;
+
+	ResetBufferGL4(false);
+	ResetBufferGL4( true);
+}
+
 
 void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 	if (threadSafety)
@@ -693,8 +703,6 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 
 
 
-/*******************************************************************************/
-/*******************************************************************************/
 
 void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const std::string& str, const ColorCodeCallBack& cccb)
 {
@@ -720,6 +728,9 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
+
+	primaryBufferTC[currBufferIndxGL4].Wait();
+	// outlineBufferTC[currBufferIndxGL4].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -792,6 +803,9 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
+
+	primaryBufferTC[currBufferIndxGL4].Wait();
+	outlineBufferTC[currBufferIndxGL4].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -876,6 +890,9 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
+
+	primaryBufferTC[currBufferIndxGL4].Wait();
+	outlineBufferTC[currBufferIndxGL4].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -1077,15 +1094,6 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	} else if (buffered) {
 		if (threadSafety && !inBeginEndGL4)
 			bufferMutex.lock();
-	}
-
-	// any data that was buffered but not submitted last frame gets discarded, user error
-	if (lastPrintFrameGL4 != globalRendering->drawFrame) {
-		lastPrintFrameGL4 = globalRendering->drawFrame;
-		currBufferIndxGL4 = (currBufferIndxGL4 + 1) & 1;
-
-		ResetBufferGL4(false);
-		ResetBufferGL4( true);
 	}
 
 	// select correct decoration RenderString function

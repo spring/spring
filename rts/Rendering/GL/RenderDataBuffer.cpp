@@ -5,7 +5,9 @@
 
 #include "myGL.h"
 #include "RenderDataBuffer.hpp"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+
 
 // global general-purpose buffers
 static GL::RenderDataBuffer gRenderBuffer0 [GL::NUM_RENDER_BUFFERS];
@@ -38,19 +40,19 @@ static GL::RenderDataBuffer2DT tRenderBuffer2DT[GL::NUM_RENDER_BUFFERS];
 static GL::RenderDataBufferL tRenderBufferL[GL::NUM_RENDER_BUFFERS];
 
 
-GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return &tRenderBuffer0 [0]; }
-GL::RenderDataBufferC* GL::GetRenderBufferC () { return &tRenderBufferC [0]; }
-GL::RenderDataBufferC* GL::GetRenderBufferFC() { return &tRenderBufferFC[0]; }
-GL::RenderDataBufferT* GL::GetRenderBufferT () { return &tRenderBufferT [0]; }
+GL::RenderDataBuffer0* GL::GetRenderBuffer0 () { return (tRenderBuffer0 [0].Wait(), &tRenderBuffer0 [0]); }
+GL::RenderDataBufferC* GL::GetRenderBufferC () { return (tRenderBufferC [0].Wait(), &tRenderBufferC [0]); }
+GL::RenderDataBufferC* GL::GetRenderBufferFC() { return (tRenderBufferFC[0].Wait(), &tRenderBufferFC[0]); }
+GL::RenderDataBufferT* GL::GetRenderBufferT () { return (tRenderBufferT [0].Wait(), &tRenderBufferT [0]); }
 
-GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return &tRenderBufferT4[0]; }
-GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return &tRenderBufferTN[0]; }
-GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0]; }
+GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return (tRenderBufferT4[0].Wait(), &tRenderBufferT4[0]); }
+GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return (tRenderBufferTN[0].Wait(), &tRenderBufferTN[0]); }
+GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return (tRenderBufferTC[0].Wait(), &tRenderBufferTC[0]); }
 
-GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0]; }
-GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0]; }
+GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return (tRenderBuffer2D0[0].Wait(), &tRenderBuffer2D0[0]); }
+GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return (tRenderBuffer2DT[0].Wait(), &tRenderBuffer2DT[0]); }
 
-GL::RenderDataBufferL* GL::GetRenderBufferL() { return &tRenderBufferL[0]; }
+GL::RenderDataBufferL* GL::GetRenderBufferL() { return (tRenderBufferL[0].Wait(), &tRenderBufferL[0]); }
 
 
 void GL::InitRenderBuffers() {
@@ -130,6 +132,24 @@ void GL::KillRenderBuffers() {
 void GL::SwapRenderBuffers() {
 	static_assert(GL::NUM_RENDER_BUFFERS == 2 || GL::NUM_RENDER_BUFFERS == 3, "");
 
+	#if (SYNC_RENDER_BUFFERS == 1)
+	{
+		tRenderBuffer0 [0].Sync();
+		tRenderBufferC [0].Sync();
+		tRenderBufferFC[0].Sync();
+		tRenderBufferT [0].Sync();
+
+		tRenderBufferT4[0].Sync();
+		tRenderBufferTN[0].Sync();
+		tRenderBufferTC[0].Sync();
+
+		tRenderBuffer2D0[0].Sync();
+		tRenderBuffer2DT[0].Sync();
+
+		tRenderBufferL[0].Sync();
+	}
+	#endif
+
 	// NB: called before drawFrame counter is incremented
 	// A=0,B=1,C=2 -> B=0,C=1,A=2 -> C=0,A=1,B=2 -> A,B,C
 	for (int i = 0, n = GL::NUM_RENDER_BUFFERS - 1; i < n; i++) {
@@ -148,19 +168,23 @@ void GL::SwapRenderBuffers() {
 		std::swap(tRenderBufferL[i], tRenderBufferL[i + 1]);
 	}
 
-	tRenderBuffer0 [0].Reset();
-	tRenderBufferC [0].Reset();
-	tRenderBufferFC[0].Reset();
-	tRenderBufferT [0].Reset();
+	{
+		tRenderBuffer0 [0].Reset();
+		tRenderBufferC [0].Reset();
+		tRenderBufferFC[0].Reset();
+		tRenderBufferT [0].Reset();
 
-	tRenderBufferT4[0].Reset();
-	tRenderBufferTN[0].Reset();
-	tRenderBufferTC[0].Reset();
+		tRenderBufferT4[0].Reset();
+		tRenderBufferTN[0].Reset();
+		tRenderBufferTC[0].Reset();
 
-	tRenderBuffer2D0[0].Reset();
-	tRenderBuffer2DT[0].Reset();
+		tRenderBuffer2D0[0].Reset();
+		tRenderBuffer2DT[0].Reset();
 
-	tRenderBufferL[0].Reset();
+		tRenderBufferL[0].Reset();
+	}
+
+	CglFont::SwapBuffers();
 }
 
 

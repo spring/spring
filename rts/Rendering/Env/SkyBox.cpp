@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "SkyBox.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
@@ -36,7 +35,7 @@ CSkyBox::CSkyBox(const std::string& texture)
 
 CSkyBox::~CSkyBox()
 {
-	skyBox.Kill();
+	(skyBox.GetBuffer())->Kill();
 }
 
 
@@ -70,12 +69,13 @@ void CSkyBox::LoadBuffer()
 		{1,  3, GL_FLOAT,  (sizeof(float) * 5),  "a_texcoor_xyz", VA_TYPE_OFFSET(float, 2)},
 	}};
 
+	static GL::RenderDataBuffer rawBuf;
 
-	skyBox.Init(true);
-	skyBox.TUpload<SkyBoxVertType, uint32_t, SkyBoxAttrType>(SKYBOX_BUFFER_LEN, 0, vertAttrs.size(),  nullptr, nullptr, vertAttrs.data());
+	rawBuf.Kill();
+	skyBox.Setup(&rawBuf, &vertAttrs, SKYBOX_BUFFER_LEN, 0);
 
 	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText, ""}, {GL_FRAGMENT_SHADER, fsText, ""}};
-	Shader::IProgramObject* shaderProg = skyBox.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+	Shader::IProgramObject* shaderProg = rawBuf.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();
 	shaderProg->SetUniform("u_skycube_tex", 0);
@@ -84,7 +84,7 @@ void CSkyBox::LoadBuffer()
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shaderProg->Disable();
 
-	vtxPtr = skyBox.MapElems<SkyBoxVertType>(true, true);
+	vtxPtr = skyBox.GetElemsMap();
 	vtxPos = vtxPtr;
 
 	for (unsigned int i = 0, n = SKYBOX_BUFFER_LEN; i < n; i++) {
@@ -107,19 +107,22 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
+	SkyBoxBuffer* buffer = &skyBox;
+	Shader::IProgramObject* shader = buffer->GetShader();
+
 	{
+		buffer->Wait();
+
 		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
 		*(vtxPos++) = {{1.0f, 1.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX,                          0)};
 		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
 		*(vtxPos++) = {{0.0f, 0.0f}, -camera->CalcPixelDir(                         0, globalRendering->viewSizeY)};
 	}
 	{
-		GL::RenderDataBuffer* buffer = &skyBox;
-		Shader::IProgramObject* shader = &buffer->GetShader();
-
 		shader->Enable();
 		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
-		skyBox.Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
+		buffer->Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
+		buffer->Sync();
 		shader->Disable();
 	}
 

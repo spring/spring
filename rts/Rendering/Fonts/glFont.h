@@ -47,6 +47,7 @@ public:
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 	static void ReallocAtlases(bool pre);
+	static void SwapBuffers();
 
 	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
 	~CglFont();
@@ -59,6 +60,8 @@ public:
 
 	void DrawBufferedGL4() { DrawBufferedGL4(defShader); }
 	void DrawBufferedGL4(Shader::IProgramObject* shader);
+
+	void SwapBuffersGL4();
 
 	void ResetBufferGL4(bool outline) {
 		const unsigned int bi = GetBufferIdx(outline);
@@ -130,9 +133,6 @@ private:
 private:
 	unsigned int GetBufferIdx(bool outline) const { return (currBufferIndxGL4 * 2 + outline); }
 
-	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIndxGL4]; }
-	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIndxGL4]; }
-
 	enum {
 		PRIMARY_BUFFER = 0,
 		OUTLINE_BUFFER = 1,
@@ -146,6 +146,9 @@ private:
 	// used by {Begin,End}GL4; each double-buffered
 	GL::RenderDataBuffer primaryBuffer[2];
 	GL::RenderDataBuffer outlineBuffer[2];
+
+	GL::RenderDataBufferTC primaryBufferTC[2];
+	GL::RenderDataBufferTC outlineBufferTC[2];
 
 	Shader::IProgramObject* defShader = nullptr;
 	Shader::IProgramObject* curShader = nullptr;
