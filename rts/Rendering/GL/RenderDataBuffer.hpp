@@ -490,6 +490,9 @@ namespace GL {
 		GL::RenderDataBuffer* GetBuffer() { return rawBuffer; }
 		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
 
+		VertexArrayType* GetElemsMap() { return nullptr; }
+		IndexArrayType* GetIndcsMap() { return nullptr; }
+
 	private:
 		RenderDataBuffer* rawBuffer = nullptr;
 	};
