@@ -111,7 +111,8 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	{
-		buffer->Wait();
+		if (vtxPos == vtxPtr)
+			buffer->Wait();
 
 		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
 		*(vtxPos++) = {{1.0f, 1.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX,                          0)};
@@ -122,13 +123,14 @@ void CSkyBox::Draw(Game::DrawMode mode)
 		shader->Enable();
 		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 		buffer->Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % SKYBOX_BUFFER_LEN, 4);
-		buffer->Sync();
 		shader->Disable();
 	}
 
 	// wraparound
 	if ((vtxPos - vtxPtr) >= SKYBOX_BUFFER_LEN)
 		vtxPos = vtxPtr;
+	if (vtxPos == vtxPtr)
+		buffer->Sync();
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	glAttribStatePtr->EnableDepthMask();
