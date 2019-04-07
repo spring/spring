@@ -26,6 +26,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 static constexpr unsigned int SKYBOX_VERTEX_CNT = 6 * 4;
 static constexpr unsigned int SKYBOX_BUFFER_LEN = SKYBOX_VERTEX_CNT * 2;
 
+static_assert((SKYBOX_BUFFER_LEN % 4) == 0, "");
+
 
 CSkyBox::CSkyBox(const std::string& texture)
 {
@@ -69,13 +71,13 @@ void CSkyBox::LoadBuffer()
 		{1,  3, GL_FLOAT,  (sizeof(float) * 5),  "a_texcoor_xyz", VA_TYPE_OFFSET(float, 2)},
 	}};
 
-	static GL::RenderDataBuffer rawBuf;
+	static GL::RenderDataBuffer skyBuf;
 
-	rawBuf.Kill();
-	skyBox.Setup(&rawBuf, &vertAttrs, SKYBOX_BUFFER_LEN, 0);
+	skyBuf.Kill();
+	skyBox.Setup(&skyBuf, &vertAttrs, SKYBOX_BUFFER_LEN, 0);
 
 	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsText, ""}, {GL_FRAGMENT_SHADER, fsText, ""}};
-	Shader::IProgramObject* shaderProg = rawBuf.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+	Shader::IProgramObject* shaderProg = skyBuf.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();
 	shaderProg->SetUniform("u_skycube_tex", 0);
@@ -87,9 +89,7 @@ void CSkyBox::LoadBuffer()
 	vtxPtr = skyBox.GetElemsMap();
 	vtxPos = vtxPtr;
 
-	for (unsigned int i = 0, n = SKYBOX_BUFFER_LEN; i < n; i++) {
-		*(vtxPos++) = {{0.0f, 0.0f}, ZeroVector};
-	}
+	memset(vtxPos, 0, SKYBOX_BUFFER_LEN * sizeof(SkyBoxVertType));
 	#endif
 }
 
@@ -121,13 +121,13 @@ void CSkyBox::Draw(Game::DrawMode mode)
 	{
 		shader->Enable();
 		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
-		buffer->Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % (SKYBOX_BUFFER_LEN), 4);
+		buffer->Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % SKYBOX_BUFFER_LEN, 4);
 		buffer->Sync();
 		shader->Disable();
 	}
 
 	// wraparound
-	if ((vtxPos - vtxPtr) >= (SKYBOX_BUFFER_LEN))
+	if ((vtxPos - vtxPtr) >= SKYBOX_BUFFER_LEN)
 		vtxPos = vtxPtr;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
