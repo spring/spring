@@ -444,8 +444,9 @@ namespace GL {
 		void UnmapUnbindIndcs() {}
 
 
-		void Wait() {}
-		void Sync() {}
+		bool Wait() { return false; }
+		bool Sync() { return false; }
+
 		void Reset() { Reset(0, 0); }
 		void Reset(size_t elemsPos, size_t indcsPos) {}
 
@@ -565,7 +566,7 @@ namespace GL {
 		void UnmapUnbindIndcs() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapIndcs(true); indcsMap = nullptr; }
 
 
-		static GLsync WaitBuffer(const GLsync& syncObj) {
+		static GLsync WaitSync(const GLsync& syncObj) {
 			#if (SYNC_RENDER_BUFFERS == 1)
 			#ifndef HEADLESS
 			constexpr GLuint64 NANOSECS_PER_SEC = 1000000000;
@@ -573,8 +574,10 @@ namespace GL {
 			GLbitfield waitFlag = 0;
 			GLuint64 waitTime = 0;
 
-			// only wait on the first access this frame
-			while (syncObj != 0) {
+			// only wait on the first access this frame, and never indefinitely
+			assert(syncObj != 0);
+
+			for (int i = 0; i < 10; i++) {
 				const GLenum waitRet = glClientWaitSync(syncObj, waitFlag, waitTime);
 
 				if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED)
@@ -597,8 +600,9 @@ namespace GL {
 		}
 
 
-		void Wait() { glSyncObj = WaitBuffer(glSyncObj); }
-		void Sync() { glSyncObj = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0); }
+		bool Wait() { return (glSyncObj == 0 || (glSyncObj = WaitSync(glSyncObj)) == 0); }
+		bool Sync() { return (glSyncObj == 0 && (glSyncObj = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0)) != 0); }
+
 		void Reset() {
 			Reset(0, 0);
 

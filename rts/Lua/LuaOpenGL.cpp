@@ -2769,6 +2769,8 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 
 	if (!rb->IsPinned())
 		wb.BindMapElems<VA_TYPE_L>();
+	else
+		wb.Wait();
 
 	switch (lua_type(L, 4)) {
 		case LUA_TTABLE: {
@@ -2859,6 +2861,9 @@ int LuaOpenGL::RenderVertexArray(lua_State* L)
 	const unsigned int numElems = luaL_optint(L, 4, rb->GetNumElems<VA_TYPE_L>());
 
 	rb->Submit(primType, elemIndx, numElems);
+
+	if (rb->IsPinned())
+		wb.Sync();
 
 	lua_pushboolean(L, true);
 	return 1;
