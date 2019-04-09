@@ -134,7 +134,7 @@ vec3 GetFragmentNormal(vec2 uv) {
 	#ifdef SSMF_UNCOMPRESSED_NORMALS
 	normal = normalize(texture(normalsTex, uv).xyz);
 	#else
-	normal.xz = texture(normalsTex, uv).ra;
+	normal.xz = texture(normalsTex, uv).rg;
 	normal.y  = sqrt(1.0 - dot(normal.xz, normal.xz));
 	#endif
 	return normal;

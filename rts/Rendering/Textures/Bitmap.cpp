@@ -400,7 +400,7 @@ void CBitmap::AllocDummy(const SColor fill)
 	memcpy(GetRawMem(), &fill.r, sizeof(SColor));
 }
 
-bool CBitmap::Load(std::string const& filename, uint8_t defaultAlpha)
+bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
 {
 	bool isLoaded = false;
 	bool isValid  = false;
@@ -603,7 +603,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
+bool CBitmap::Save(const std::string& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
 		#ifndef BITMAP_NO_OPENGL
@@ -721,9 +721,35 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 }
 
 
-bool CBitmap::SaveFloat(std::string const& filename) const
+bool CBitmap::SaveGrayScale(const std::string& filename) const
 {
-	// small hack: we read the RGBA pack as a single FLT32 value!
+	if (compressed)
+		return false;
+
+	CBitmap bmp = *this;
+
+	for (uint8_t* mem = bmp.GetRawMem(); mem != nullptr; mem = nullptr) {
+		// approximate luminance
+		bmp.MakeGrayScale();
+
+		// convert RGBA tuples to normalized FLT32 values expected by SaveFloat; GBA are destroyed
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
+				*reinterpret_cast<float*>(&mem[(y * xsize + x) * 4]) = static_cast<float>(mem[(y * xsize + x) * 4 + 0] / 255.0f);
+			}
+		}
+
+		// save FLT32 data in 16-bit ushort format
+		return (bmp.SaveFloat(filename));
+	}
+
+	return false;
+}
+
+
+bool CBitmap::SaveFloat(const std::string& filename) const
+{
+	// must have four channels; each RGBA tuple is reinterpreted as a single FLT32 value
 	if (GetMemSize() == 0 || channels != 4)
 		return false;
 
@@ -731,17 +757,17 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourselves
-	const uint8_t* mem = GetRawMem();
-	const float* memf = reinterpret_cast<const float*>(&mem[0]);
+	const uint8_t* u8mem = GetRawMem();
+	const float* f32mem = reinterpret_cast<const float*>(&u8mem[0]);
 
-	uint16_t* buf = reinterpret_cast<uint16_t*>(texMemPool.AllocRaw(xsize * ysize * sizeof(uint16_t)));
+	uint16_t* u16mem = reinterpret_cast<uint16_t*>(texMemPool.AllocRaw(xsize * ysize * sizeof(uint16_t)));
 
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = x + (xsize * ((ysize - 1) - y));
 			const int mi = x + (xsize * (              y));
-			const uint16_t us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
-			buf[bi] = us;
+			const uint16_t us = f32mem[mi] * 0xFFFF; // convert float 0..1 to ushort
+			u16mem[bi] = us;
 		}
 	}
 
@@ -753,9 +779,9 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	ilBindImage(imageID);
 	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
 	//       IL_FLOAT is converted to RGB with 8bit colordepth!
-	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf);
+	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, u16mem);
 
-	texMemPool.FreeRaw(reinterpret_cast<uint8_t*>(buf), xsize * ysize * sizeof(uint16_t));
+	texMemPool.FreeRaw(reinterpret_cast<uint8_t*>(u16mem), xsize * ysize * sizeof(uint16_t));
 
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);

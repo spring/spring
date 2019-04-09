@@ -44,10 +44,7 @@ void HeightMapTexture::Init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE32F_ARB,
-		xSize, ySize, 0,
-		GL_LUMINANCE, GL_FLOAT, readMap->GetCornerHeightMapUnsynced());
-
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,  xSize, ySize, 0,  GL_RED, GL_FLOAT, readMap->GetCornerHeightMapUnsynced());
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -89,9 +86,7 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 
 	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexSubImage2D(GL_TEXTURE_2D, 0,
-		rect.x1, rect.z1, sizeX, sizeZ,
-		GL_LUMINANCE, GL_FLOAT, pbo.GetPtr());
+	glTexSubImage2D(GL_TEXTURE_2D, 0,  rect.x1, rect.z1, sizeX, sizeZ,  GL_RED, GL_FLOAT, pbo.GetPtr());
 
 	pbo.Invalidate();
 	pbo.Unbind();

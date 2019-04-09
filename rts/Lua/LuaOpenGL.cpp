@@ -3278,11 +3278,10 @@ static int PixelFormatSize(GLenum f)
 		case GL_RED:
 		case GL_GREEN:
 		case GL_BLUE:
-		case GL_ALPHA:
-		case GL_LUMINANCE: {
+		case GL_ALPHA: {
 			return 1;
 		}
-		case GL_LUMINANCE_ALPHA: {
+		case GL_RG: {
 			return 2;
 		}
 		case GL_RGB:
@@ -3436,15 +3435,19 @@ int LuaOpenGL::SaveImage(lua_State* L)
 
 	if (!gs16b) {
 		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+
 		if (yflip)
 			bitmap.ReverseYAxis();
+
 		lua_pushboolean(L, bitmap.Save(filename, !alpha));
 	} else {
-		// single channel only!
-		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.GetRawMem());
+		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+
 		if (yflip)
 			bitmap.ReverseYAxis();
-		lua_pushboolean(L, bitmap.SaveFloat(filename));
+
+		// always saves as 16-bit image
+		lua_pushboolean(L, bitmap.SaveGrayScale(filename));
 	}
 
 	if (tgtReadBuffer != 0)

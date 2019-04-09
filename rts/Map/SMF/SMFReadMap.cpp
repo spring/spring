@@ -351,10 +351,10 @@ void CSMFReadMap::CreateShadingTex()
 void CSMFReadMap::CreateNormalTex()
 {
 #if (SSMF_UNCOMPRESSED_NORMALS == 0)
-	GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
+	GLenum texFormat = GL_RG16F;
 
 	if (configHandler->GetBool("GroundNormalTextureHighPrecision"))
-		texFormat = GL_LUMINANCE_ALPHA32F_ARB;
+		texFormat = GL_RG32F;
 #endif
 
 	normalsTex.SetRawSize(int2(mapDims.mapxp1, mapDims.mapyp1));
@@ -366,9 +366,9 @@ void CSMFReadMap::CreateNormalTex()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, nullptr);
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RG, GL_FLOAT, nullptr);
 #endif
 }
 
@@ -541,7 +541,7 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
 	glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &normalPixels[0]);
 #else
-	glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &normalPixels[0]);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RG, GL_FLOAT, &normalPixels[0]);
 #endif
 }
 

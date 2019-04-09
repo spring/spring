@@ -286,9 +286,8 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 				internalFormat = GL_COMPRESSED_RGB;
 			break;
 
-			case GL_LUMINANCE:
-				internalFormat = GL_COMPRESSED_LUMINANCE;
-			break;
+			default: {
+			} break;
 		}
 	}
 

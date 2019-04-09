@@ -115,7 +115,6 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		if (n == ATTACHMENT_ZVALTEX) {
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT;
 		} else {
