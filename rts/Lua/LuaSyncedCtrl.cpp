@@ -634,7 +634,7 @@ static int SetSolidObjectPieceVisible(lua_State* L, CSolidObject* obj)
 	if (obj == nullptr)
 		return 0;
 
-	const LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 2);
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 2);
 	if (lmp == nullptr)
 		luaL_argerror(L, 2, "invalid piece");
 
