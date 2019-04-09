@@ -26,7 +26,6 @@
 #include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
-#include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -214,11 +213,11 @@ bool CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularExponent", sunLighting->specularExponent);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 		grassShaders[i]->SetUniform("gammaExponent", globalRendering->gammaExponent);
-		grassShaders[i]->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
-		grassShaders[i]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
-		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
-		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
-		grassShaders[i]->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
+		grassShaders[i]->SetUniform4v<float>("shadowParams", shadowHandler.GetShadowParams());
+		grassShaders[i]->SetUniform4v<float>("fogColor", sky->fogColor);
+		grassShaders[i]->SetUniformMatrix4x4<float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
+		grassShaders[i]->SetUniformMatrix4x4<float>("viewMatrix", false, camera->GetViewMatrix());
+		grassShaders[i]->SetUniformMatrix4x4<float>("projMatrix", false, camera->GetProjectionMatrix());
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
 
@@ -351,17 +350,17 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	ipo->SetUniform("specularExponent"   , sunLighting->specularExponent);
 	ipo->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 	ipo->SetUniform("gammaExponent"      , globalRendering->gammaExponent);
-	ipo->SetUniformMatrix4x4<const char*, float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
-	ipo->SetUniform4v<const char*, float>("shadowParams", shadowHandler.GetShadowParams());
+	ipo->SetUniformMatrix4x4<float>("shadowMatrix", false, shadowHandler.GetShadowViewMatrix());
+	ipo->SetUniform4v<float>("shadowParams", shadowHandler.GetShadowParams());
 
 	switch (type) {
 		case GRASS_PROGRAM_OPAQUE: {
-			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, camera->GetViewMatrix());
-			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, camera->GetProjectionMatrix());
+			ipo->SetUniformMatrix4x4<float>("viewMatrix", false, camera->GetViewMatrix());
+			ipo->SetUniformMatrix4x4<float>("projMatrix", false, camera->GetProjectionMatrix());
 		} break;
 		case GRASS_PROGRAM_SHADOW: {
-			ipo->SetUniformMatrix4x4<const char*, float>("viewMatrix", false, shadowHandler.GetShadowViewMatrix());
-			ipo->SetUniformMatrix4x4<const char*, float>("projMatrix", false, shadowHandler.GetShadowProjMatrix());
+			ipo->SetUniformMatrix4x4<float>("viewMatrix", false, shadowHandler.GetShadowViewMatrix());
+			ipo->SetUniformMatrix4x4<float>("projMatrix", false, shadowHandler.GetShadowProjMatrix());
 		} break;
 		default: {
 		} break;

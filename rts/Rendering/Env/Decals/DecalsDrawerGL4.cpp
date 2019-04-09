@@ -530,8 +530,8 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 
 		assert(!decalShader->IsBound());
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, atlasSize.x, 0.0f, atlasSize.y, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, atlasSize.x, 0.0f, atlasSize.y, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
 
 		for (auto& p: textures) {
 			if (p.second.id == 0)
@@ -1159,8 +1159,8 @@ void CDecalsDrawerGL4::UpdateOverlap()
 
 		assert(!decalShader->IsBound());
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE, -1.0f, 1.0f, globalRendering->supportClipSpaceControl * 1.0f));
 		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 
 

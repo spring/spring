@@ -245,8 +245,8 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		Shader::IProgramObject* shaderProg = renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 		shaderProg->Enable();
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 		shaderProg->SetUniform("u_plane_offset", 0.0f);
 		shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 		shaderProg->Disable();
@@ -269,8 +269,8 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	borderShader.Validate();
 
 	shaderProg->Enable();
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniform("u_diffuse_tex_sqr", -1, -1);
 	shaderProg->SetUniform("u_diffuse_tex", 0);
 	shaderProg->SetUniform("u_detail_tex", 2);
@@ -287,8 +287,8 @@ void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	Shader::IProgramObject* shader = &buffer.GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	shader->SetUniform("u_plane_offset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
 	shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
 	buffer.Submit(GL_TRIANGLE_STRIP, 0, buffer.GetNumElems<VA_TYPE_C>());
@@ -471,9 +471,9 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireframe + GL_FILL * (1 - wireframe));
 
 	shaderProg->Enable();
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
-	shaderProg->SetUniform<const char*, float>("u_gamma_exponent", globalRendering->gammaExponent);
+	shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shaderProg->SetUniform<float>("u_gamma_exponent", globalRendering->gammaExponent);
 	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.9f, 1.0f, 0.0f, 0.0f); // test > 0.9 if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
 	meshDrawer->DrawBorderMesh(drawPass); // calls back into ::SetupBigSquare
 	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test

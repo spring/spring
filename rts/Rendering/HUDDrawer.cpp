@@ -83,8 +83,8 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 
 	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
@@ -112,7 +112,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	// prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
 	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
 	rdbc->SafeAppend({{ 0.0f,  0.5f, 0.0f}, arrowColor});
@@ -198,8 +198,8 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
-	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	prog->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 
 

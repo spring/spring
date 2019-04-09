@@ -548,8 +548,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	}
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, minimap->GetViewMat(0));
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, minimap->GetProjMat(0));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, minimap->GetViewMat(0));
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, minimap->GetProjMat(0));
 	buffer->Submit(GL_LINES);
 	shader->Disable();
 }
@@ -635,8 +635,8 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 
 
 		po->Enable();
-		po->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		po->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		po->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		po->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		po->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 		textureAtlas->BindTexture();
 		fxBuffer->Submit(GL_QUADS);
@@ -791,8 +791,8 @@ void CProjectileDrawer::DrawGroundFlashes()
 	gfShader = gfBuffer->GetShader();
 
 	gfShader->Enable();
-	gfShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	gfShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	gfShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	gfShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	gfShader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 
 	bool depthTest = true;
@@ -864,8 +864,8 @@ void CProjectileDrawer::UpdatePerlin() {
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 
 	for (int a = 0; a < 4; ++a) {

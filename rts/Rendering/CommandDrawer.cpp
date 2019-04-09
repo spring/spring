@@ -62,8 +62,8 @@ void CommandDrawer::Draw(const CCommandAI* cai, bool onMiniMap) const {
 
 	// hand off all surface circles
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
 	buffer->Submit(GL_LINES);
 	shader->Disable();
 }

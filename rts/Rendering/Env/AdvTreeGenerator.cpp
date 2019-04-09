@@ -427,8 +427,8 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 	// root-level call, setup
 	if (start == ZeroVector) {
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f, globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -4.0f, 4.0f, globalRendering->supportClipSpaceControl * 1.0f));
 		shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 	}
 
@@ -596,8 +596,8 @@ void CAdvTreeGenerator::CreateLeafTex(uint8_t* data, int xpos, int ypos, int xsi
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f, globalRendering->supportClipSpaceControl * 1.0f));
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj(-1.0f, 1.0f, -1.0f, 1.0f, -5.0f, 5.0f, globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniform("u_alpha_test_ctrl", 0.5f, 1.0f, 0.0f, 0.0f); // test > 0.5
 
 	const float baseCol = 0.8f + 0.2f * guRNG.NextFloat();

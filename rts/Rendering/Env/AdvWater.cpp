@@ -121,8 +121,8 @@ CAdvWater::CAdvWater(bool refractive)
 		waterShader->SetUniform("subsurf_tex", 2); // refractive
 		waterShader->SetUniform("shading_tex", 3); // refractive
 
-		waterShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		waterShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+		waterShader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		waterShader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 		waterShader->SetUniform("u_forward_vec", 0.0f, 0.0f);
 		waterShader->SetUniform("u_gamma_expon", 1.0f, 1.0f, 1.0f);
 		waterShader->SetUniform("u_texrect_size", 0.0f, 0.0f); // refractive
@@ -231,8 +231,8 @@ void CAdvWater::Draw(bool useBlending)
 	Shader::IProgramObject* ipo = waterShader;
 
 	ipo->Enable();
-	ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-	ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	ipo->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+	ipo->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	ipo->SetUniform("u_forward_vec", forward.x, forward.z);
 	ipo->SetUniform("u_gamma_expon", gammaExpon.x, gammaExpon.y, gammaExpon.z);
 	ipo->SetUniform("u_texrect_size", globalRendering->viewSizeX * 10.0f, globalRendering->viewSizeY * 10.0f); // range [0, width], not [0,1]
@@ -327,8 +327,8 @@ void CAdvWater::UpdateWater(CGame* game)
 		Shader::IProgramObject* shader = buffer->GetShader();
 
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 		{
 			glBindTexture(GL_TEXTURE_2D, rawBumpTextures[0]);

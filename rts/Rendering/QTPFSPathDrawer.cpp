@@ -64,8 +64,8 @@ void QTPFSPathDrawer::DrawAll() const {
 		GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 		ipo->Enable();
-		ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		ipo->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		ipo->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
+		ipo->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		wla->Setup(rdb, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, camera->GetViewProjectionMatrix());
 
 		DrawNodes(wla, visibleNodes);

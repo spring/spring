@@ -197,8 +197,8 @@ void CMiniMap::LoadBuffer()
 	Shader::IProgramObject* shaderProg = miniMap.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	shaderProg->Enable();
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 	shaderProg->SetUniform("u_shading_tex", 0);
 	shaderProg->SetUniform("u_minimap_tex", 1);
 	shaderProg->SetUniform("u_infomap_tex", 2);
@@ -1158,8 +1158,8 @@ void CMiniMap::DrawMinimizedButtonQuad(GL::RenderDataBufferTC* buffer)
 
 	Shader::IProgramObject* shader = buffer->GetShader();
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 	buffer->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
 	buffer->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
 	buffer->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
@@ -1180,8 +1180,8 @@ void CMiniMap::DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer)
 
 	Shader::IProgramObject* shader = buffer->GetShader();
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 
 	// highlight
 	if (((mouse->lastx + 1) <= buttonSize) && ((mouse->lasty + 1) <= buttonSize)) {
@@ -1240,8 +1240,8 @@ void CMiniMap::DrawFrame(GL::RenderDataBufferC* buffer)
 
 	Shader::IProgramObject* shader = buffer->GetShader();
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 
 	buffer->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y            - 2 + 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
 	buffer->SafeAppend({{(curPos.x            - 2 + 0.5f) * px, (curPos.y + curDim.y + 2 - 0.5f) * py, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}});
@@ -1276,8 +1276,8 @@ bool CMiniMap::DrawButtonQuads(GL::RenderDataBufferTC* buffer)
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 
 	resizeBox.DrawTextureBox(buffer);
 	moveBox.DrawTextureBox(buffer);
@@ -1379,8 +1379,8 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 		Shader::IProgramObject* shader = buffer->GetShader();
 
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
 
 		glBindTexture(GL_TEXTURE_2D, minimapTextureID);
 
@@ -1403,8 +1403,8 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 		GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
 
 		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, miniMat);
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, miniMat);
+		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
 		wla->Setup(buffer, globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f, projMat * miniMat);
 
 		RenderCameraFrustumLinesAndSelectionBox(wla);
@@ -1564,8 +1564,8 @@ void CMiniMap::DrawUnitIcons() const
 	viewMat.Scale({+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f});
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
 	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 	shader->SetUniform("u_tex0", 0); // icon texture binding
 
@@ -1586,8 +1586,8 @@ void CMiniMap::DrawUnitRanges() const
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMats[0]);
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMats[0]);
 
 	for (const int unitID: selUnits) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);

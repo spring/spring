@@ -243,8 +243,8 @@ void CEndGameBox::Draw()
 	{
 		// draw boxes
 		shaderC->Enable();
-		shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		bufferC->Submit(GL_QUADS);
 		shaderC->Disable();
 	}
@@ -347,8 +347,8 @@ void CEndGameBox::Draw()
 
 		glBindTexture(GL_TEXTURE_2D, graphTex);
 		shaderT->Enable();
-		shaderT->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderT->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderT->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderT->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		bufferT->Submit(GL_QUADS);
 		shaderT->Disable();
 		glBindTexture(GL_TEXTURE_2D, 0);

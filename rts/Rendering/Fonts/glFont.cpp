@@ -173,9 +173,9 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		Shader::IProgramObject* shaderProg = primaryBuffer[0].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 		shaderProg->Enable();
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		shaderProg->SetUniformMatrix2x2<const char*, float>("u_txcd_mat", false, GetTexScaleMatrix(1.0f, 1.0f));
+		shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderProg->SetUniformMatrix2x2<float>("u_txcd_mat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		shaderProg->SetUniform("u_tex0", 0);
 		shaderProg->Disable();
 
@@ -603,9 +603,9 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 		if (curShader == defShader) {
-			curShader->SetUniformMatrix2x2<const char*, float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
+			curShader->SetUniformMatrix2x2<float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
 		} else {
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
+			curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
 		}
 
 
@@ -627,7 +627,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 			curShader->Disable();
 		} else {
 			// reset
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
+			curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -664,9 +664,9 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 		if (curShader == defShader) {
-			curShader->SetUniformMatrix2x2<const char*, float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
+			curShader->SetUniformMatrix2x2<float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
 		} else {
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
+			curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
 		}
 
 
@@ -686,7 +686,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 			curShader->Disable();
 		} else {
 			// reset
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
+			curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -960,7 +960,7 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 
 	if ((curShader = shader) == defShader) {
 		curShader->Enable();
-		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	}
 
 
@@ -982,10 +982,10 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 	if (curShader == defShader) {
 		// TODO: simplify
-		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, vm * CMatrix44f(p, RgtVector, UpVector, FwdVector) * bm);
-		curShader->SetUniformMatrix2x2<const char*, float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
+		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, vm * CMatrix44f(p, RgtVector, UpVector, FwdVector) * bm);
+		curShader->SetUniformMatrix2x2<float>("u_txcd_mat", false, GetTexScaleMatrix(texWidth, texHeight));
 	} else {
-		curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
+		curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(texWidth, texHeight));
 	}
 
 
@@ -1004,11 +1004,11 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
 	if (curShader == defShader) {
-		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		curShader->Disable();
 	} else {
-		curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
+		curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 	}
 
 	curShader = nullptr;

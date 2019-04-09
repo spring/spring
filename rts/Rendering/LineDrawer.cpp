@@ -83,8 +83,8 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	};
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
 
 	DrawLines(regularLines[0], GL_LINE_LOOP);
 	DrawLines(regularLines[1], GL_LINES    );

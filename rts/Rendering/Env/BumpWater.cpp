@@ -210,8 +210,8 @@ CBumpWater::CBumpWater()
 			blurShader->SetUniform1i(0, 0);
 			blurShader->SetUniform1i(1, 1);
 			blurShader->SetUniform2i(2, 0, 0);
-			blurShader->SetUniformMatrix4x4<const char*, float>("uViewMat", false, CMatrix44f::Identity());
-			blurShader->SetUniformMatrix4x4<const char*, float>("uProjMat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+			blurShader->SetUniformMatrix4x4<float>("uViewMat", false, CMatrix44f::Identity());
+			blurShader->SetUniformMatrix4x4<float>("uProjMat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 			blurShader->Disable();
 			blurShader->Validate();
 
@@ -583,8 +583,8 @@ void CBumpWater::GenWaterPlaneBuffer(bool radial)
 		Shader::IProgramObject* shaderProg = waterPlaneBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 		shaderProg->Enable();
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 		shaderProg->Disable();
 	}
 }
@@ -992,8 +992,8 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 
 	glAttribStatePtr->ViewPort(0, 0, normalTextureX, normalTextureY);
 
@@ -1218,8 +1218,8 @@ void CBumpWater::OcclusionQuery()
 	Shader::IProgramObject* waterPlaneShader = &waterPlaneBuffer.GetShader();
 
 	waterPlaneShader->Enable();
-	waterPlaneShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * CMatrix44f(float3{0.0f, 10.0f, 0.0f}));
-	waterPlaneShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	waterPlaneShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix() * CMatrix44f(float3{0.0f, 10.0f, 0.0f}));
+	waterPlaneShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 	glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 	waterPlaneBuffer.Submit(mix(GL_TRIANGLES, GL_TRIANGLE_STRIP, endlessOcean), 0, waterPlaneBuffer.GetNumElems<VA_TYPE_0>());

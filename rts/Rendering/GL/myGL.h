@@ -27,12 +27,6 @@
 #endif
 
 
-// replaced by Matrix::{Ortho,Persp}Proj
-#undef glOrtho
-#undef gluOrtho2D
-#undef glFrustum
-
-
 void glSaveTexture(const GLuint textureID, const char* filename);
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);

@@ -2860,8 +2860,8 @@ void CGuiHandler::DrawMenu()
 	Shader::IProgramObject* shaderC  = bufferC->GetShader(); // used for everything else
 
 	shaderC->Enable();
-	shaderC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-	shaderC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+	shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shaderC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 
@@ -2940,8 +2940,8 @@ void CGuiHandler::DrawMenu()
 	{
 		shaderC->Disable();
 		shaderTC->Enable();
-		shaderTC->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderTC->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderTC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderTC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 		shaderTC->SetUniform("u_alpha_test_ctrl", 0.0099f, 1.0f, 0.0f, 0.0f); // test > 0.0099
 
 		// icon textures (TODO: atlas these)
@@ -3408,7 +3408,7 @@ static void DrawWeaponAngleCone(
 	mat.RotateZ(-headingPitch.y);
 	mat.Scale({xlen, yzlen, yzlen});
 
-	ipo->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * mat);
+	ipo->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix() * mat);
 
 	glDrawCone(rdb, GL_FRONT, 64, {1.0f, 0.0f, 0.0f, 0.25f}); // back-faces (inside) in red
 	glDrawCone(rdb, GL_BACK , 64, {0.0f, 1.0f, 0.0f, 0.25f}); // front-faces (outside) in green
@@ -3552,8 +3552,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 	const int yScale = onMiniMap? minimap->GetSizeY(): globalRendering->viewSizeY;
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
 	// no alpha-test if drawing on world, does not seem essential
 	// shader->SetUniform("u_alpha_test_ctrl", 0.5f, 0.0f, 0.0f, 1.0f * onMiniMap);
 	wla->Setup(buffer, xScale, yScale, 1.0f, projMat * viewMat, onMiniMap);
@@ -4030,8 +4030,8 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	shader->Enable();
-	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix() * markerMat);
-	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix() * markerMat);
+	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 	buffer->SafeAppend(markerVerts, sizeof(markerVerts) / sizeof(markerVerts[0]));
 	buffer->SafeAppend(markerIndcs, sizeof(markerIndcs) / sizeof(markerIndcs[0]));
