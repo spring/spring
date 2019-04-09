@@ -202,6 +202,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetUnitPieceVisible);
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitPieceMatrix);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
@@ -247,6 +248,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeaturePieceCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetFeaturePieceVisible);
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
@@ -624,6 +626,19 @@ static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* ob
 	// piece volumes are not allowed to use discrete hit-testing
 	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
 	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
+	return 0;
+}
+
+static int SetSolidObjectPieceVisible(lua_State* L, CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	LocalModelPiece* const lmp = ParseObjectLocalModelPiece(L, obj, 2);
+	if (lmp == nullptr)
+		luaL_argerror(L, 2, "invalid piece");
+
+	lmp->scriptSetVisible = luaL_checkboolean(L, 3);
 	return 0;
 }
 
@@ -2466,6 +2481,10 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	return (SetSolidObjectPieceCollisionVolumeData(L, ParseUnit(L, __func__, 1)));
 }
 
+int LuaSyncedCtrl::SetUnitPieceVisible(lua_State* L)
+{
+	return (SetSolidObjectPieceVisible(L, ParseUnit(L, __func__, 1)));
+}
 
 
 int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
@@ -3196,6 +3215,10 @@ int LuaSyncedCtrl::SetFeaturePieceCollisionVolumeData(lua_State* L)
 	return (SetSolidObjectPieceCollisionVolumeData(L, ParseFeature(L, __func__, 1)));
 }
 
+int LuaSyncedCtrl::SetFeaturePieceVisible(lua_State* L)
+{
+	return (SetSolidObjectPieceVisible(L, ParseFeature(L, __func__, 1)));
+}
 
 /******************************************************************************/
 /******************************************************************************/
