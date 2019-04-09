@@ -311,6 +311,9 @@ void S3DModelPiece::CreateShatterPieces()
 	if (!HasGeometryData())
 		return;
 
+	// Release() does not virginize, do that here in case of reload
+	shatterIndices = {};
+
 	shatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	shatterIndices.New(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
 	// spams performance warnings ("Buffer object 123 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_STREAM_DRAW) is being copied/moved from VIDEO memory to HOST memory.")
