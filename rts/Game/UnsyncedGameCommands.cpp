@@ -87,6 +87,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
@@ -3010,18 +3011,28 @@ class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DebugInfoActionExecutor() : IUnsyncedActionExecutor(
 		"DebugInfo",
-		"Print debug info to the chat/log-file about either: sound, profiling"
+		"Print debug info to the chat/log-file about either sound, profiling, or command-descriptions"
 	) {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		if (action.GetArgs() == "sound") {
-			sound->PrintDebugInfo();
-		} else if (action.GetArgs() == "profiling") {
-			profiler.PrintProfilingInfo();
-		} else {
-			LOG_L(L_WARNING, "Give either of these as argument: sound, profiling");
+		const std::string& args = action.GetArgs();
+
+		switch (hashString(args.c_str())) {
+			case hashString("sound"): {
+				sound->PrintDebugInfo();
+			} break;
+			case hashString("profiling"): {
+				profiler.PrintProfilingInfo();
+			} break;
+			case hashString("cmddescrs"): {
+				commandDescriptionCache.Dump(true);
+			} break;
+			default: {
+				LOG_L(L_WARNING, "[DbgInfoAction::%s] unknown argument \"%s\" (use \"sound\", \"profiling\", or \"cmddescrs\")", __func__, args.c_str());
+			} break;
 		}
+
 		return true;
 	}
 };
