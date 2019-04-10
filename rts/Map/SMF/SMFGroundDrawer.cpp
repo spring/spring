@@ -411,6 +411,10 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
+
+		if (drawForward) {
+			eventHandler.DrawGroundPostForward();
+		}
 	}
 }
 
