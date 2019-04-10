@@ -77,9 +77,9 @@ bool VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 		return New(newSize, newUsage, nullptr);
 
 	const size_t oldSize = bufSize;
+	const GLenum oldBoundTarget = curBoundTarget;
 
 	glClearErrors("VBO", __func__, globalRendering->glDebugErrors);
-	const GLenum oldBoundTarget = curBoundTarget;
 
 	{
 		VBO vbo(GL_COPY_WRITE_BUFFER, immutableStorage);
@@ -238,15 +238,6 @@ void VBO::Invalidate()
 		return;
 	}
 #endif
-	if (globalRendering->atiHacks) {
-		Unbind();
-		glDeleteBuffers(1, &vboId);
-		glGenBuffers(1, &vboId);
-		Bind();
-		bufSize = -bufSize; // else New() would early-exit
-		New(-bufSize, usage, nullptr);
-		return;
-	}
 
 	// note: allocating memory doesn't actually block the memory it just makes room in _virtual_ memory space
 	New(bufSize, usage, nullptr);
