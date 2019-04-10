@@ -363,15 +363,6 @@ void VBO::Invalidate()
 		return;
 	}
 #endif
-	if (isSupported && globalRendering->atiHacks) {
-		Unbind();
-		glDeleteBuffers(1, &vboId);
-		glGenBuffers(1, &vboId);
-		Bind();
-		bufSize = -bufSize; // else New() would early-exit
-		New(-bufSize, usage, nullptr);
-		return;
-	}
 
 	// note: allocating memory doesn't actually block the memory it just makes room in _virtual_ memory space
 	New(bufSize, usage, nullptr);
