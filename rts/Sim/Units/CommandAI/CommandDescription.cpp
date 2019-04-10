@@ -121,6 +121,18 @@ const SCommandDescription* CCommandDescriptionCache::GetPtr(SCommandDescription&
 	if (iter == iend || iter->first != cdHash) {
 		if (numFreeSlots == 0) {
 			LOG_L(L_WARNING, "[CmdDescrCache::%s] too many unique command-descriptions.\nid: %d, type: %d, queueing: %d, hidden: %d, disabled: %d, showUnique: %d, onlyTexture: %d, name: %s, action: %s, iconname: %s, mouseicon: %s, tooltip: %s, hash: %d", __func__, cd.id, cd.type, cd.queueing, cd.hidden, cd.disabled, cd.showUnique, cd.onlyTexture, cd.name.c_str(), cd.action.c_str(), cd.iconname.c_str(), cd.mouseicon.c_str(), cd.tooltip.c_str(), cdHash);
+
+			// debugging help
+			static bool first_time = true;
+			if (first_time) {
+				LOG_L(L_WARNING, "[CmdDescrCache::%s] dump of existing command-descriptions:\n", 
+				for (unsigned i = 0; i < cache.size(); ++i) {
+					const auto &c = cache[i];
+					LOG_L(L_WARNING, "[CmdDescrCache::%s] [%u] id: %d, type: %d, queueing: %d, hidden: %d, disabled: %d, showUnique: %d, onlyTexture: %d, name: %s, action: %s, iconname: %s, mouseicon: %s, tooltip: %s", __func__, i, c.id, c.type, c.queueing, c.hidden, c.disabled, c.showUnique, c.onlyTexture, c.name.c_str(), c.action.c_str(), c.iconname.c_str(), c.mouseicon.c_str(), c.tooltip.c_str());
+				}
+				first_time = false; // pop this cherry
+			}
+
 			return &cache[cache.size() - 1];
 		}
 
