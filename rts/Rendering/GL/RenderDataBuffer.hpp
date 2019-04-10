@@ -408,8 +408,9 @@ namespace GL {
 
 
 	#ifdef HEADLESS
-	template<typename VertexArrayType> struct TRenderDataBuffer {
+	template<typename VA_TYPE> struct TRenderDataBuffer {
 	public:
+		typedef VA_TYPE VertexArrayType;
 		typedef uint32_t IndexArrayType;
 
 		TRenderDataBuffer() = default;
@@ -437,8 +438,8 @@ namespace GL {
 		}
 
 
-		template<typename T> T* BindMapElems(bool r = false, bool w = true) { return (static_cast<T*>(nullptr)); }
-		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { return (static_cast<T*>(nullptr)); }
+		VertexArrayType* BindMapElems(bool r = false, bool w = true) { return (static_cast<VertexArrayType*>(nullptr)); }
+		 IndexArrayType* BindMapIndcs(bool r = false, bool w = true) { return (static_cast< IndexArrayType*>(nullptr)); }
 
 		void UnmapUnbindElems() {}
 		void UnmapUnbindIndcs() {}
@@ -492,7 +493,7 @@ namespace GL {
 		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
 
 		VertexArrayType* GetElemsMap() { return nullptr; }
-		IndexArrayType* GetIndcsMap() { return nullptr; }
+		 IndexArrayType* GetIndcsMap() { return nullptr; }
 
 	private:
 		RenderDataBuffer* rawBuffer = nullptr;
@@ -501,9 +502,10 @@ namespace GL {
 	#else
 
 	// typed persistent wrapper
-	template<typename VertexArrayType> struct TRenderDataBuffer {
+	template<typename VA_TYPE> struct TRenderDataBuffer {
 	public:
-		typedef uint32_t IndexArrayType;
+		typedef VA_TYPE VertexArrayType;
+		typedef uint32_t IndexArrayType; // GL_UNSIGNED_INT
 
 		TRenderDataBuffer() = default;
 		TRenderDataBuffer(const TRenderDataBuffer& trdb) = delete;
@@ -559,8 +561,8 @@ namespace GL {
 		}
 
 
-		template<typename T> T* BindMapElems(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (elemsMap = rawBuffer->MapElems<T>(true, false, r, w)); }
-		template<typename T> T* BindMapIndcs(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (indcsMap = rawBuffer->MapIndcs<T>(true, false, r, w)); }
+		VertexArrayType* BindMapElems(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (elemsMap = rawBuffer->MapElems<VertexArrayType>(true, false, r, w)); }
+		 IndexArrayType* BindMapIndcs(bool r = false, bool w = true) { assert(!rawBuffer->IsPinned()); return (indcsMap = rawBuffer->MapIndcs< IndexArrayType>(true, false, r, w)); }
 
 		void UnmapUnbindElems() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapElems(true); elemsMap = nullptr; }
 		void UnmapUnbindIndcs() { assert(!rawBuffer->IsPinned()); rawBuffer->UnmapIndcs(true); indcsMap = nullptr; }
@@ -574,7 +576,6 @@ namespace GL {
 			GLbitfield waitFlag = 0;
 			GLuint64 waitTime = 0;
 
-			// only wait on the first access this frame, and never indefinitely
 			assert(syncObj != 0);
 
 			for (int i = 0; i < 10; i++) {
@@ -600,6 +601,7 @@ namespace GL {
 		}
 
 
+		// only wait on the first access this frame, and never indefinitely
 		bool Wait() { return (glSyncObj == 0 || (glSyncObj = WaitSync(glSyncObj)) == 0); }
 		bool Sync() { return (glSyncObj == 0 && (glSyncObj = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0)) != 0); }
 
@@ -699,7 +701,7 @@ namespace GL {
 		Shader::IProgramObject* GetShader() { return &(rawBuffer->GetShader()); }
 
 		VertexArrayType* GetElemsMap() { return elemsMap; }
-		IndexArrayType* GetIndcsMap() { return indcsMap; }
+		 IndexArrayType* GetIndcsMap() { return indcsMap; }
 
 	private:
 		RenderDataBuffer* rawBuffer = nullptr;

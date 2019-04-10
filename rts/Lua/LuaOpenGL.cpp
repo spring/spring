@@ -2768,7 +2768,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 
 
 	if (!rb->IsPinned())
-		wb.BindMapElems<VA_TYPE_L>();
+		wb.BindMapElems();
 	else
 		wb.Wait();
 
@@ -2860,10 +2860,13 @@ int LuaOpenGL::RenderVertexArray(lua_State* L)
 	const unsigned int dataIndx = luaL_optint(L, 3,       0);
 	const unsigned int dataSize = luaL_optint(L, 4, 1 << 20); // arbitrary
 
-	if (rb->GetNumIndcs<uint32_t>() > 0) {
-		rb->SubmitIndexed(primType, dataIndx, std::min(size_t(dataSize), rb->GetNumIndcs<uint32_t>()));
+	const unsigned int numElems = rb->GetNumElems<VA_TYPE_L>();
+	const unsigned int numIndcs = rb->GetNumIndcs<uint32_t>();
+
+	if (numIndcs > 0) {
+		rb->SubmitIndexed(primType, dataIndx, std::min(dataSize, numIndcs));
 	} else {
-		rb->Submit(primType, dataIndx, std::min(size_t(dataSize), rb->GetNumElems<VA_TYPE_L>()));
+		rb->Submit(primType, dataIndx, std::min(dataSize, numElems));
 	}
 
 	if (rb->IsPinned())

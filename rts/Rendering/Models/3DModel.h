@@ -119,6 +119,8 @@ struct S3DModelPiece {
 		vboStartIndx = 0;
 
 		shatterIndices.Release();
+		// Release() does not virginize, be explicit here in case of reload
+		shatterIndices = {};
 
 		hasBakedMat = false;
 		dummyPadding = false;
