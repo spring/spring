@@ -2857,10 +2857,14 @@ int LuaOpenGL::RenderVertexArray(lua_State* L)
 		return 1;
 	}
 
-	const unsigned int elemIndx = luaL_optint(L, 3, 0);
-	const unsigned int numElems = luaL_optint(L, 4, rb->GetNumElems<VA_TYPE_L>());
+	const unsigned int dataIndx = luaL_optint(L, 3,       0);
+	const unsigned int dataSize = luaL_optint(L, 4, 1 << 20); // arbitrary
 
-	rb->Submit(primType, elemIndx, numElems);
+	if (wb.NumIndcs() > 0) {
+		rb->SubmitIndexed(primType, dataIndx, std::min(size_t(dataSize), rb->GetNumIndcs<uint32_t>()));
+	} else {
+		rb->Submit(primType, dataIndx, std::min(size_t(dataSize), rb->GetNumElems<VA_TYPE_L>()));
+	}
 
 	if (rb->IsPinned())
 		wb.Sync();
