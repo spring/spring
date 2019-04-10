@@ -37,7 +37,8 @@ CR_REG_METADATA(CCommandDescriptionCache, (
 	CR_MEMBER(cache),
 
 	CR_MEMBER(numCmdDescrs),
-	CR_MEMBER(numFreeSlots)
+	CR_MEMBER(numFreeSlots),
+	CR_MEMBER(cacheFullCtr)
 ))
 
 
