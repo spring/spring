@@ -120,7 +120,7 @@ const SCommandDescription* CCommandDescriptionCache::GetPtr(SCommandDescription&
 
 	if (iter == iend || iter->first != cdHash) {
 		if (numFreeSlots == 0) {
-			LOG_L(L_WARNING, "[CmdDescrCache::%s] too many unique command-descriptions", __func__);
+			LOG_L(L_WARNING, "[CmdDescrCache::%s] too many unique command-descriptions.\nid: %d, type: %d, queueing: %d, hidden: %d, disabled: %d, showUnique: %d, onlyTexture: %d, name: %s, action: %s, iconname: %s, mouseicon: %s, tooltip: %s, hash: %d", __func__, cd.id, cd.type, cd.queueing, cd.hidden, cd.disabled, cd.showUnique, cd.onlyTexture, cd.name.c_str(), cd.action.c_str(), cd.iconname.c_str(), cd.mouseicon.c_str(), cd.tooltip.c_str(), cdHash);
 			return &cache[cache.size() - 1];
 		}
 
