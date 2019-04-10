@@ -4,26 +4,44 @@
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
 #include "SyncedActionExecutor.h"
-#include "Game.h"
 #include "Action.h"
 #include "CameraHandler.h"
 #include "ConsoleHistory.h"
 #include "CommandMessage.h"
+#include "Game.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "SelectedUnitsHandler.h"
-#include "System/TimeProfiler.h"
-#include "IVideoCapturing.h"
 #include "WordCompletion.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
+#include "IVideoCapturing.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
+
 #include "ExternalAI/AILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/CommandColors.h"
+#include "Game/UI/EndGameBox.h"
+#include "Game/UI/GameInfo.h"
+#include "Game/UI/GuiHandler.h"
+#include "Game/UI/InfoConsole.h"
+#include "Game/UI/InputReceiver.h"
+#include "Game/UI/KeyBindings.h"
+#include "Game/UI/KeyCodes.h"
+#include "Game/UI/MiniMap.h"
+#include "Game/UI/ProfileDrawer.h"
+#include "Game/UI/QuitBox.h"
+#include "Game/UI/ResourceBar.h"
+#include "Game/UI/SelectionKeyHandler.h"
+#include "Game/UI/ShareBox.h"
+#include "Game/UI/TooltipConsole.h"
+#include "Game/UI/UnitTracker.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Game/UI/PlayerRoster.h"
 
 #include "Lua/LuaOpenGL.h"
@@ -42,19 +60,13 @@
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/IPathDrawer.h"
-#include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/IWater.h"
-#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/Fonts/glFont.h"
-#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/TeamHighlight.h"
-#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
@@ -66,45 +78,27 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/Modern/Path.h"
-#include "Lua/LuaOpenGL.h"
-#include "Lua/LuaUI.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
+#include "Rendering/Shaders/ShaderHandler.h"
+
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Units/UnitHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Game/UI/Groups/GroupHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "UI/CommandColors.h"
-#include "UI/EndGameBox.h"
-#include "UI/GameInfo.h"
-#include "UI/GuiHandler.h"
-#include "UI/InfoConsole.h"
-#include "UI/InputReceiver.h"
-#include "UI/KeyBindings.h"
-#include "UI/KeyCodes.h"
-#include "UI/MiniMap.h"
-#include "UI/QuitBox.h"
-#include "UI/ResourceBar.h"
-#include "UI/SelectionKeyHandler.h"
-#include "UI/ShareBox.h"
-#include "UI/TooltipConsole.h"
-#include "UI/UnitTracker.h"
-#include "UI/ProfileDrawer.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/EventHandler.h"
-#include "System/Log/ILog.h"
-#include "System/GlobalConfig.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 
+#include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
+#include "System/SafeUtil.h"
+#include "System/TimeProfiler.h"
+#include "System/Log/ILog.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
-#include "System/SafeUtil.h"
-#include "System/EventHandler.h"
 
 #include <SDL_events.h>
 #include <SDL_video.h>
@@ -3029,18 +3023,28 @@ class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DebugInfoActionExecutor() : IUnsyncedActionExecutor(
 		"DebugInfo",
-		"Print debug info to the chat/log-file about either: sound, profiling"
+		"Print debug info to the chat/log-file about either sound, profiling, or command-descriptions"
 	) {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		if (action.GetArgs() == "sound") {
-			sound->PrintDebugInfo();
-		} else if (action.GetArgs() == "profiling") {
-			profiler.PrintProfilingInfo();
-		} else {
-			LOG_L(L_WARNING, "Give either of these as argument: sound, profiling");
+		const std::string& args = action.GetArgs();
+
+		switch (hashString(args.c_str())) {
+			case hashString("sound"): {
+				sound->PrintDebugInfo();
+			} break;
+			case hashString("profiling"): {
+				profiler.PrintProfilingInfo();
+			} break;
+			case hashString("cmddescrs"): {
+				commandDescriptionCache.Dump(true);
+			} break;
+			default: {
+				LOG_L(L_WARNING, "[DbgInfoAction::%s] unknown argument \"%s\" (use \"sound\", \"profiling\", or \"cmddescrs\")", __func__, args.c_str());
+			} break;
 		}
+
 		return true;
 	}
 };

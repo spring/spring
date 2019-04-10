@@ -80,6 +80,7 @@ class CCommandDescriptionCache {
 public:
 	void Init();
 	void Kill() {}
+	void Dump(bool forced);
 
 	const SCommandDescription& GetRef(SCommandDescription&& cd) { return *GetPtr(std::move(cd)); }
 	const SCommandDescription* GetPtr(SCommandDescription&& cd);
@@ -100,6 +101,7 @@ private:
 
 	unsigned int numCmdDescrs = 0;
 	unsigned int numFreeSlots = 0;
+	unsigned int cacheFullCtr = 0;
 };
 
 extern CCommandDescriptionCache commandDescriptionCache;
