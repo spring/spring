@@ -1268,7 +1268,8 @@ int LuaUnsyncedRead::HaveShadows(lua_State* L)
 int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 {
 	lua_pushboolean(L, unitDrawer->UseAdvShading());
-	return 1;
+	lua_pushboolean(L, readMap->GetGroundDrawer()->UseAdvShading());
+	return 2;
 }
 
 
