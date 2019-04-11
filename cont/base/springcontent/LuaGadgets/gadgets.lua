@@ -1850,6 +1850,12 @@ function gadgetHandler:DrawGroundPreForward()
   end
 end
 
+function gadgetHandler:DrawGroundPostForward()
+  for _,g in r_ipairs(self.DrawGroundPostForwardList) do
+    g:DrawGroundPostForward()
+  end
+end
+
 function gadgetHandler:DrawGroundPreDeferred()
   for _,g in r_ipairs(self.DrawGroundPreDeferredList) do
     g:DrawGroundPreDeferred()

@@ -138,6 +138,7 @@ CALLIN_LIST = {
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
 	"DrawGroundPreForward",
+	"DrawGroundPostForward",
 	"DrawGroundPreDeferred",
 	"DrawGroundPostDeferred",
 	"DrawUnitsPostDeferred",
