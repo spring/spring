@@ -80,6 +80,7 @@ class LuaOpenGL {
 
 		// no-ops (should probably guard some state)
 		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPostForward)
 		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
 		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
 		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
