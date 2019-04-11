@@ -1627,7 +1627,7 @@ void CCommandAI::UpdateStockpileIcon()
 		c.name =
 			IntToString(stockpileWeapon->numStockpiled                                    ) + "/" +
 			IntToString(stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
-		possibleCommands[n] = commandDescriptionCache.GetPtr(std::move(c));
+		UpdateCommandDescription(n, std::move(c));
 
 		selectedUnitsHandler.PossibleCommandChange(owner);
 		break;
