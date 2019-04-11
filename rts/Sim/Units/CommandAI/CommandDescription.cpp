@@ -132,7 +132,13 @@ int CCommandDescriptionCache::CalcHash(const SCommandDescription& cd) const
 	hash = HsiehHash(&cd.disabled       , sizeof(cd.disabled)   , hash);
 	hash = HsiehHash(&cd.showUnique     , sizeof(cd.showUnique) , hash);
 	hash = HsiehHash(&cd.onlyTexture    , sizeof(cd.onlyTexture), hash);
-	hash = HsiehHash(cd.name.data()     , cd.name.size()        , hash);
+
+	// exclude name from stockpile command-descr hashes, since those
+	// use the string to stash numStockpiled/numStockpileQued counts
+	// (which would overflow the cache if considered unique)
+	if (cd.id != CMD_STOCKPILE)
+		hash = HsiehHash(cd.name.data() , cd.name.size()        , hash);
+
 	hash = HsiehHash(cd.action.data()   , cd.action.size()      , hash);
 	hash = HsiehHash(cd.iconname.data() , cd.iconname.size()    , hash);
 	hash = HsiehHash(cd.mouseicon.data(), cd.mouseicon.size()   , hash);
