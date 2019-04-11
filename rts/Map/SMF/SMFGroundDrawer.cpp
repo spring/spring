@@ -317,10 +317,9 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
 
-	// must be after the unbind
-	if (!drawForward) {
+	// send event if no forward pass will follow; must be done after the unbind
+	if (!drawForward)
 		eventHandler.DrawGroundPostDeferred();
-	}
 }
 
 void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest)
@@ -351,6 +350,9 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
+
+		if (HaveLuaRenderState())
+			eventHandler.DrawGroundPostForward();
 	}
 }
 

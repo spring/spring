@@ -155,6 +155,7 @@ local flexCallIns = {
   'DrawWorldReflection',
   'DrawWorldRefraction',
   'DrawGroundPreForward',
+  'DrawGroundPostForward',
   'DrawGroundPreDeferred',
   'DrawGroundPostDeferred',
   'DrawScreenEffects',
@@ -1318,6 +1319,13 @@ function widgetHandler:DrawGroundPreForward()
     w:DrawGroundPreForward()
   end
 end
+
+function widgetHandler:DrawGroundPostForward()
+  for _,w in ripairs(self.DrawGroundPostForwardList) do
+    w:DrawGroundPostForward()
+  end
+end
+
 
 function widgetHandler:DrawGroundPreDeferred()
   for _,w in ripairs(self.DrawGroundPreDeferredList) do

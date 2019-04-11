@@ -263,6 +263,7 @@ class CEventHandler
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
 		void DrawGroundPreForward();
+		void DrawGroundPostForward();
 		void DrawGroundPreDeferred();
 		void DrawGroundPostDeferred();
 		void DrawUnitsPostDeferred();

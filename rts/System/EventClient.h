@@ -324,6 +324,7 @@ class CEventClient
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
 		virtual void DrawGroundPreForward() {}
+		virtual void DrawGroundPostForward() {}
 		virtual void DrawGroundPreDeferred() {}
 		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
