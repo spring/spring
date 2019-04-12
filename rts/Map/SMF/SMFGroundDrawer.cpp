@@ -536,7 +536,7 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 	if (!ipo.IsBound())
 		return;
 
-	ipo.SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY, smfMap->numBigTexX);
+	ipo.SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY, bigSquareY * smfMap->numBigTexX + bigSquareX);
 }
 
 
