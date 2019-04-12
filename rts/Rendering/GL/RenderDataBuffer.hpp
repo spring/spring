@@ -687,6 +687,8 @@ namespace GL {
 
 			// TODO: allow multiple batches with the same set of indices?
 			numSubmits[1] += 1;
+			sumElemPos += NumElems();
+			prvElemPos = curElemPos;
 			sumIndxPos += NumIndcs();
 			prvIndxPos = curIndxPos;
 		}
