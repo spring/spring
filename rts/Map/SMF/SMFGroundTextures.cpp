@@ -321,24 +321,23 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 	const int x = btx * smfMap->bigTexSize + (smfMap->bigTexSize >> 1);
 	const int y = bty * smfMap->bigTexSize + (smfMap->bigTexSize >> 1);
 	const int idx = (y >> 3) * smfMap->heightMapSizeX + (x >> 3);
-	const float3 bigTexSquarePos(x, hm[idx], y);
 
-	return (cam->InView(bigTexSquarePos, bigTexSquareRadius));
+	return (cam->InView({x * 1.0f, hm[idx], y * 1.0f}, bigTexSquareRadius));
 }
 
 void CSMFGroundTextures::DrawUpdate()
 {
 	const CCamera* cam = CCameraHandler::GetActiveCamera();
 
+	const float3& camPos = cam->GetPos();
+
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;
 	const float vsySq = globalRendering->viewSizeY * globalRendering->viewSizeY;
 	const float vdiag = fastmath::apxsqrt(vsxSq + vsySq);
 
-	BindSquareTextureArray();
-
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
-		float dz = cam->GetPos().z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
+		float dz = camPos.z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
 		dz -= (SQUARE_SIZE << 6);
 		dz = std::max(0.0f, float(math::fabs(dz) - (SQUARE_SIZE << 6)));
 
@@ -353,19 +352,20 @@ void CSMFGroundTextures::DrawUpdate()
 				if ((square->GetMipLevel() < 3) && ((globalRendering->drawFrame - square->GetDrawFrame()) > 120)) {
 					// `unload` texture (load lowest mip-map) if
 					// the square wasn't visible for 120 vframes
-					LoadSquareTexture(x, y, 3);
+					square->SetMipLevel(3);
 				}
+
 				continue;
 			}
 
-			float dx = cam->GetPos().x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
+			float dx = camPos.x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
 			dx -= (SQUARE_SIZE << 6);
 			dx = std::max(0.0f, float(math::fabs(dx) - (SQUARE_SIZE << 6)));
 
-			const float hAvg =
-				(heightMaxima[y * smfMap->numBigTexX + x] +
-				 heightMinima[y * smfMap->numBigTexX + x]) / 2.0f;
-			const float dy = std::max(cam->GetPos().y - hAvg, 0.0f);
+			const float avgHeight = (heightMaxima[y * smfMap->numBigTexX + x] + heightMinima[y * smfMap->numBigTexX + x]) * 0.5f;
+			const float difHeight =  heightMaxima[y * smfMap->numBigTexX + x] - heightMinima[y * smfMap->numBigTexX + x];
+
+			const float dy = std::max(camPos.y - avgHeight, 0.0f);
 			const float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
 
 			// we work under the following assumptions:
@@ -377,18 +377,15 @@ void CSMFGroundTextures::DrawUpdate()
 			//    translates to a diameter of =~ sqrt2 * bigTexSize =~ 1400 pixels
 			//
 			//    half (vertical) FOV is 45 degs, for default and most other camera modes
-			int wantedLevel = 0;
-			float heightDiff =
-				heightMaxima[y * smfMap->numBigTexX + x] -
-				heightMinima[y * smfMap->numBigTexX + x];
 			int screenPixels = smfMap->bigTexSize;
+			int wantedLevel = 0;
 
 			if (dist > 0.0f) {
-				if (heightDiff > float(smfMap->bigTexSize)) {
+				if (difHeight > float(smfMap->bigTexSize)) {
 					// this means the heightmap chunk is taller than it is wide,
 					// so we use the tallness metric instead for calculating its
 					// on-screen size in pixels
-					screenPixels = (heightDiff) * (vdiag * 0.5f) / dist;
+					screenPixels = (difHeight) * (vdiag * 0.5f) / dist;
 				} else {
 					screenPixels = smfMap->bigTexSize * (vdiag * 0.5f) / dist;
 				}
@@ -408,14 +405,9 @@ void CSMFGroundTextures::DrawUpdate()
 			if (stretchFactors[y * smfMap->numBigTexX + x] > 16000 && wantedLevel > 0)
 				wantedLevel--;
 
-			if (square->GetMipLevel() == wantedLevel)
-				continue;
-
-			LoadSquareTexture(x, y, wantedLevel);
+			square->SetMipLevel(wantedLevel);
 		}
 	}
-
-	UnBindSquareTextureArray();
 }
 
 

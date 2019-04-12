@@ -3,7 +3,7 @@
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
 
-uniform ivec3 texSquare;     // x, y, y * X + x (index into diffuseTex)
+uniform ivec4 texSquare;     // x, y, y * X + x (index into diffuseTex), mip
 uniform vec3 cameraPos;
 uniform vec4 lightDir;       // mapInfo->light.sunDir
 uniform vec3 fogParams;      // .x := start, .y := end, .z := viewrange

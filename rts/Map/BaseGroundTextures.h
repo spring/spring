@@ -14,6 +14,8 @@ public:
 
 	virtual void BindSquareTextureArray() const {}
 	virtual void UnBindSquareTextureArray() const {}
+
+	virtual unsigned int GetSquareMipLevel(unsigned int i) const { return 0; }
 };
 
 #endif

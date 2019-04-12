@@ -26,6 +26,8 @@ public:
 	void BindSquareTextureArray() const override;
 	void UnBindSquareTextureArray() const override;
 
+	unsigned int GetSquareMipLevel(unsigned int i) const override { return squares[i].GetMipLevel(); }
+
 protected:
 	void LoadTiles(CSMFMapFile& file);
 	void LoadSquareTextures(const int minLevel, const int maxLevel);

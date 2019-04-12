@@ -528,15 +528,18 @@ void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
+	const int sqrIdx = bigSquareY * smfMap->numBigTexX + bigSquareX;
+	const int sqrMip = groundTextures->GetSquareMipLevel(sqrIdx);
+
 	groundTextures->DrawUpdateSquare(bigSquareX, bigSquareY);
-	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY, smfMap->numBigTexX);
+	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY, smfMap->numBigTexX, sqrMip);
 
 	Shader::IProgramObject& ipo = borderShader;
 
 	if (!ipo.IsBound())
 		return;
 
-	ipo.SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY, bigSquareY * smfMap->numBigTexX + bigSquareX);
+	ipo.SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY, sqrIdx);
 }
 
 

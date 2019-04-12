@@ -35,7 +35,7 @@ uniform mat4 viewMat;
 
 uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
 
-uniform ivec3 texSquare;
+uniform ivec4 texSquare;
 
 
 
@@ -390,7 +390,7 @@ void main() {
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normalVec), 0.001, 1.0);
 	#endif
 
-	vec4  diffuseColor = texture(diffuseTex, vec3(diffTexCoords, texSquare.z));
+	vec4  diffuseColor = textureLod(diffuseTex, vec3(diffTexCoords, texSquare.z), texSquare.w);
 	vec4 specularColor = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionColor = vec4(0.0, 0.0, 0.0, 0.0);
 
