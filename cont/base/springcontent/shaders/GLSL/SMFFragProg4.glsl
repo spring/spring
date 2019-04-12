@@ -8,9 +8,9 @@ const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
 
 
 
-uniform sampler2D diffuseTex;
-uniform sampler2D normalsTex;
-uniform sampler2D detailTex;
+uniform sampler2DArray diffuseTex;
+uniform sampler2D      normalsTex;
+uniform sampler2D      detailTex;
 
 uniform vec2 normalTexGen;   // either 1.0/mapSize (when NPOT are supported) or 1.0/mapSizePO2
 uniform vec2 specularTexGen; // 1.0/mapSize
@@ -34,6 +34,8 @@ uniform vec4 fogColor;
 uniform mat4 viewMat;
 
 uniform vec4 fwdDynLights[MAX_LIGHT_UNIFORM_VECS];
+
+uniform ivec3 texSquare;
 
 
 
@@ -388,7 +390,7 @@ void main() {
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normalVec), 0.001, 1.0);
 	#endif
 
-	vec4  diffuseColor = texture(diffuseTex, diffTexCoords);
+	vec4  diffuseColor = texture(diffuseTex, vec3(diffTexCoords, texSquare.z));
 	vec4 specularColor = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionColor = vec4(0.0, 0.0, 0.0, 0.0);
 

@@ -271,7 +271,7 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	shaderProg->Enable();
 	shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
-	shaderProg->SetUniform("u_diffuse_tex_sqr", -1, -1);
+	shaderProg->SetUniform("u_diffuse_tex_sqr", -1, -1, -1);
 	shaderProg->SetUniform("u_diffuse_tex", 0);
 	shaderProg->SetUniform("u_detail_tex", 2);
 	shaderProg->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
@@ -429,6 +429,8 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	glAttribStatePtr->EnableCullFace();
 	glAttribStatePtr->CullFace(GL_BACK);
 
+	groundTextures->BindSquareTextureArray();
+
 	// do the deferred pass first, will allow us to re-use
 	// its output at some future point and eventually draw
 	// the entire map deferred
@@ -438,6 +440,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (drawForward)
 		DrawForwardPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
 
+	groundTextures->UnBindSquareTextureArray();
 	glAttribStatePtr->DisableCullFace();
 
 	if (drawPass != DrawPass::Normal)
@@ -463,8 +466,6 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
-	glActiveTexture(GL_TEXTURE0);
-
 
 	glAttribStatePtr->EnableCullFace();
 	glAttribStatePtr->CullFace(GL_BACK);
@@ -477,7 +478,11 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	shaderProg->SetUniform<float>("u_gamma_exponent", globalRendering->gammaExponent);
 	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.9f, 1.0f, 0.0f, 0.0f); // test > 0.9 if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
+
+	groundTextures->BindSquareTextureArray();
 	meshDrawer->DrawBorderMesh(drawPass); // calls back into ::SetupBigSquare
+	groundTextures->UnBindSquareTextureArray();
+
 	// shaderProg->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shaderProg->Disable();
 
@@ -523,13 +528,15 @@ void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
-	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
-	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY);
+	groundTextures->DrawUpdateSquare(bigSquareX, bigSquareY);
+	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY, smfMap->numBigTexX);
 
-	if (!borderShader.IsBound())
+	Shader::IProgramObject& ipo = borderShader;
+
+	if (!ipo.IsBound())
 		return;
 
-	static_cast<Shader::IProgramObject&>(borderShader).SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY);
+	ipo.SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY, smfMap->numBigTexX);
 }
 
 
