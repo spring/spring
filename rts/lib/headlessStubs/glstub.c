@@ -224,13 +224,16 @@ GLAPI void APIENTRY glVertexAttribPointerARB(GLuint index, GLint size, GLenum ty
 GLAPI void APIENTRY glEnableVertexAttribArrayARB(GLuint index) {}
 GLAPI void APIENTRY glDisableVertexAttribArrayARB(GLuint index) {}
 
-GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glCompressedTexImage1DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data) {}
-GLAPI void APIENTRY glGetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img) {}
+GLAPI void APIENTRY glCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data) {}
+GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint level, GLvoid *img) {}
+
+GLAPI void APIENTRY glTexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glTexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) {}
 
 GLAPI void APIENTRY glProgramStringARB(GLenum target, GLenum format, GLsizei len, const GLvoid *string) {}
 GLAPI void APIENTRY glBindProgramARB(GLenum target, GLuint program) {}
@@ -450,11 +453,11 @@ GLAPI void APIENTRY glOrtho(GLdouble left, GLdouble right,
 GLAPI void APIENTRY glGenTextures(GLsizei n, GLuint *textures) {}
 
 GLAPI void APIENTRY glBindTexture(GLenum target, GLuint texture) {}
-GLAPI void APIENTRY glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) {}
 
 GLAPI void APIENTRY glTexParameteri(GLenum target, GLenum pname, GLint param) {}
 GLAPI void APIENTRY glTexParameterf(GLenum target, GLenum pname, GLfloat param) {}
 GLAPI void APIENTRY glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params) {}
+GLAPI void APIENTRY glGetTexParameteriv(GLenum target, GLenum pname, GLint* params) {}
 
 GLAPI void APIENTRY glTexImage2D(GLenum target, GLint level,
                                     GLint internalFormat,
