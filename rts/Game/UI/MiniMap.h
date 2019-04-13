@@ -112,25 +112,35 @@ protected:
 	int2 oldPos;
 	int2 oldDim;
 
-	float unitBaseSize;
-	float unitExponent;
+	float minimapRefreshRate = 0.0f;
 
-	float unitSizeX;
-	float unitSizeY;
-	float unitSelectRadius;
+	float unitBaseSize = 0.0f;
+	float unitExponent = 0.0f;
 
-	bool fullProxy;
+	float unitSizeX = 0.0f;
+	float unitSizeY = 0.0f;
+	float unitSelectRadius = 0.0f;
 
-	bool proxyMode;
-	bool selecting;
-	bool maxspect;
-	bool maximized;
-	bool minimized;
-	bool mouseLook;
-	bool mouseMove;
-	bool mouseResize;
+	bool fullProxy = false;
+	bool proxyMode = false;
+	bool selecting = false;
+	bool maxspect = false;
+	bool maximized = false;
+	bool minimized = false;
+	bool mouseEvents = true; // if false, MousePress is not handled
+	bool mouseLook = false;
+	bool mouseMove = false;
+	bool mouseResize = false;
 
-	bool slaveDrawMode;
+	bool slaveDrawMode = false;
+	bool simpleColors = false;
+
+	bool showButtons = false;
+	bool drawProjectiles = false;
+	bool useIcons = true;
+
+	bool renderToTexture = true;
+	bool multisampledFBO = false;
 
 	struct IntBox {
 		bool Inside(int x, int y) const {
@@ -142,38 +152,33 @@ protected:
 		float xminTx, xmaxTx, yminTx, ymaxTx;  // texture coordinates
 	};
 
-	int buttonSize;
-	bool showButtons;
+	int lastWindowSizeX = 0;
+	int lastWindowSizeY = 0;
+
+	int buttonSize = 0;
+
+	int drawCommands = 0;
+	float cursorScale = 0.0f;
+
 	IntBox mapBox;
 	IntBox buttonBox;
 	IntBox moveBox;
 	IntBox resizeBox;
 	IntBox minimizeBox;
 	IntBox maximizeBox;
-	int lastWindowSizeX;
-	int lastWindowSizeY;
 
-	bool drawProjectiles;
-	bool useIcons;
-	int drawCommands;
-	float cursorScale;
-
-	bool simpleColors;
 	SColor myColor;
 	SColor allyColor;
 	SColor enemyColor;
 
-	bool renderToTexture;
 	FBO fbo;
 	FBO fboResolve;
-	bool multisampledFBO;
-	GLuint minimapTex;
+	GLuint minimapTex = 0;
 	int2 minimapTexSize;
-	float minimapRefreshRate;
 
 	GLuint buttonsTexture;
 	GLuint circleLists; // 8 - 256 divs
-	static const int circleListsCount = 6;
+	static constexpr int circleListsCount = 6;
 
 	struct Notification {
 		float creationTime;
@@ -182,7 +187,7 @@ protected:
 	};
 	std::deque<Notification> notes;
 
-	CUnit* lastClicked;
+	CUnit* lastClicked = nullptr;
 };
 
 

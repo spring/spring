@@ -74,25 +74,9 @@ CMiniMap* minimap = nullptr;
 
 CMiniMap::CMiniMap()
 	: CInputReceiver(BACK)
-	, fullProxy(false)
-	, proxyMode(false)
-	, selecting(false)
-	, maxspect(false)
-	, maximized(false)
-	, minimized(false)
-	, mouseLook(false)
-	, mouseMove(false)
-	, mouseResize(false)
-	, slaveDrawMode(false)
-	, showButtons(false)
-	, useIcons(true)
 	, myColor(0.2f, 0.9f, 0.2f, 1.0f)
 	, allyColor(0.3f, 0.3f, 0.9f, 1.0f)
 	, enemyColor(0.9f, 0.2f, 0.2f, 1.0f)
-	, renderToTexture(true)
-	, multisampledFBO(false)
-	, minimapTex(0)
-	, lastClicked(nullptr)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
@@ -300,9 +284,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	if (words.empty())
 		return;
 
-	const std::string command = StringToLower(words[0]);
-
-	switch (hashString(command.c_str())) {
+	switch (hashStringLower(words[0].c_str())) {
 		case hashString("fullproxy"): {
 			fullProxy = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !fullProxy;
 		} break;
@@ -366,7 +348,11 @@ void CMiniMap::ConfigCommand(const std::string& line)
 			const bool wantMaximized = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !isMaximized;
 
 			if (isMaximized != wantMaximized)
-				ToggleMaximized(command == "maxspect");
+				ToggleMaximized(StrCaseStr(words[0].c_str(), "maxspect") == 0);
+		} break;
+
+		case hashString("mouseevents"): {
+			mouseEvents = (words.size() >= 2) ? !!atoi(words[1].c_str()) : !mouseEvents;
 		} break;
 
 		default: {
@@ -538,6 +524,9 @@ void CMiniMap::SelectUnits(int x, int y)
 
 bool CMiniMap::MousePress(int x, int y, int button)
 {
+	if (!mouseEvents)
+		return false;
+
 	if (minimized) {
 		if ((x < buttonSize) && (y < buttonSize)) {
 			minimized = false;
@@ -602,6 +591,9 @@ bool CMiniMap::MousePress(int x, int y, int button)
 
 void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 {
+	// if Press is not handled, should never get Move
+	assert(mouseEvents);
+
 	if (mouseMove) {
 		curPos.x += dx;
 		curPos.y -= dy;
@@ -650,6 +642,9 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CMiniMap::MouseRelease(int x, int y, int button)
 {
+	// if Press is not handled, should never get Release
+	assert(mouseEvents);
+
 	if (mouseMove || mouseResize || mouseLook) {
 		mouseMove = false;
 		mouseResize = false;
