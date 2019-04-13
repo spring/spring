@@ -144,12 +144,12 @@ protected:
 	float unitSelectRadius = 0.0f;
 
 	bool fullProxy = false;
-
 	bool proxyMode = false;
 	bool selecting = false;
 	bool maxspect = false;
 	bool maximized = false;
 	bool minimized = false;
+	bool mouseEvents = true; // if false, MousePress is not handled
 	bool mouseLook = false;
 	bool mouseMove = false;
 	bool mouseResize = false;
@@ -194,7 +194,7 @@ protected:
 
 	int buttonSize = 0;
 
-	int drawCommands;
+	int drawCommands = 0;
 	float cursorScale = 0.0f;
 
 	SColor myColor = {0.2f, 0.9f, 0.2f, 1.0f};

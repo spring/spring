@@ -293,7 +293,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.dir      = (dir = GetCursorCameraDir(x, y));
 	bp.movement = 0;
 
-	if (activeReceiver && activeReceiver->MousePress(x, y, button))
+	if (activeReceiver != nullptr && activeReceiver->MousePress(x, y, button))
 		return;
 
 	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode()) {
