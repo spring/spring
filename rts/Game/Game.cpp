@@ -436,6 +436,13 @@ void CGame::LoadGame(const std::string& mapFileName)
 			saveFileHandler->LoadGame();
 			LoadLua(false, true);
 		}
+
+		{
+			char msgBuf[512];
+
+			SNPRINTF(msgBuf, sizeof(msgBuf), "[Game::%s][lua{Rules,Gaia}={%p,%p}]", __func__, luaRules, luaGaia);
+			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgBuf);
+		}
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
@@ -1448,30 +1455,19 @@ void CGame::StartPlaying()
 {
 	assert(!playing);
 	playing = true;
-	lastReadNetTime = spring_gettime();
 
-	gu->startTime = gu->gameTime;
-	gu->myTeam = playerHandler.Player(gu->myPlayerNum)->team;
-	gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
+	{
+		lastReadNetTime = spring_gettime();
+
+		gu->startTime = gu->gameTime;
+		gu->myTeam = playerHandler.Player(gu->myPlayerNum)->team;
+		gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
+	}
 
 	GameSetupDrawer::Disable();
 	CLuaUI::UpdateTeams();
 
-	// setup the teams
-	for (int a = 0; a < teamHandler.ActiveTeams(); ++a) {
-		CTeam* team = teamHandler.Team(a);
-
-		if (team->gaia)
-			continue;
-
-		if (!team->HasValidStartPos() && gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
-			// if the player did not choose a start position (eg. if
-			// the game was force-started by the host before sending
-			// any), silently generate one for him
-			// TODO: notify Lua of this also?
-			team->SetDefaultStartPos();
-		}
-	}
+	teamHandler.SetDefaultStartPositions(gameSetup);
 
 	if (saveFileHandler == nullptr)
 		eventHandler.GameStart();
