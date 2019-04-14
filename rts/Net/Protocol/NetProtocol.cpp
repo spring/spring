@@ -95,13 +95,18 @@ std::string CNetProtocol::ConnectionStr() const
 
 std::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
+	// not called while client is loading
+	// std::lock_guard<spring::spinlock> lock(serverConnMutex);
 	return serverConn->Peek(ahead);
 }
 
 void CNetProtocol::DeleteBufferPacketAt(unsigned index)
 {
+	// not called while client is loading
+	// std::lock_guard<spring::spinlock> lock(serverConnMutex);
 	return serverConn->DeleteBufferPacketAt(index);
 }
+
 
 float CNetProtocol::GetPacketTime(int frameNum) const
 {
