@@ -212,9 +212,11 @@ void CSMFGroundTextures::LoadSquareTextures(const int minLevel, const int maxLev
 	);
 
 	{
+		#ifndef HEADLESS
 		GLint val = 0;
 		glGetTexParameteriv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_IMMUTABLE_FORMAT, &val);
 		assert(val == 1);
+		#endif
 	}
 
 	#endif
