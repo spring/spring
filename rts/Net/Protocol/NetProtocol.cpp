@@ -112,8 +112,10 @@ float CNetProtocol::GetPacketTime(int frameNum) const
 	return (gu->startTime + frameNum / (1.0f * GAME_SPEED));
 }
 
+
 std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
+	std::lock_guard<spring::spinlock> lock(serverConnMutex);
 	std::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret == nullptr)
@@ -127,15 +129,14 @@ std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 	return ret;
 }
 
+
+void CNetProtocol::Send(const netcode::RawPacket* pkt) { Send(std::shared_ptr<const netcode::RawPacket>(pkt)); }
 void CNetProtocol::Send(std::shared_ptr<const netcode::RawPacket> pkt)
 {
+	std::lock_guard<spring::spinlock> lock(serverConnMutex);
 	serverConn->SendData(pkt);
 }
 
-void CNetProtocol::Send(const netcode::RawPacket* pkt)
-{
-	Send(std::shared_ptr<const netcode::RawPacket>(pkt));
-}
 
 __FORCE_ALIGN_STACK__
 void CNetProtocol::UpdateLoop()
@@ -150,11 +151,16 @@ void CNetProtocol::UpdateLoop()
 
 void CNetProtocol::Update()
 {
+	// any call to clientNet->Send is unsafe while heartbeat thread exists, i.e. during loading
+	std::lock_guard<spring::spinlock> lock(serverConnMutex);
+
 	serverConn->Update();
 }
 
 void CNetProtocol::Close(bool flush)
 {
+	std::lock_guard<spring::spinlock> lock(serverConnMutex);
+
 	serverConn->Close(flush);
 }
 

@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
+#include "System/Threading/SpringThreading.h"
 
 class ClientSetup;
 class CDemoRecorder;
@@ -110,6 +111,8 @@ public:
 
 private:
 	std::atomic<bool> keepUpdating;
+
+	spring::spinlock serverConnMutex;
 
 	std::unique_ptr<netcode::CConnection> serverConn;
 	std::unique_ptr<CDemoRecorder> demoRecorder;
