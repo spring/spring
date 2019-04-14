@@ -128,8 +128,8 @@ static int LoadFileWithModes(const std::string& fileName, std::string& data, con
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const std::string& fileName = luaL_checkstring(L, 1);
-	      std::string  fileData;
+	const std::string fileName = luaL_checkstring(L, 1);
+	      std::string fileData;
 
 	#if 0
 	ScopedOnceTimer timer("LuaVFS::Include(" + fileName + ")");
@@ -151,14 +151,14 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	if ((loadCode = LoadFileWithModes(fileName, fileData, GetModes(L, 3, synced))) != 1) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadvfs] file=%s status=%d", __func__, synced, fileName.c_str(), loadCode);
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadvfs] file=%s status=%d cenv=%d", __func__, synced, fileName.c_str(), loadCode, hasCustomEnv);
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
 
 	if ((luaError = luaL_loadbuffer(L, fileData.c_str(), fileData.size(), fileName.c_str())) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadbuf] file=%s error=%i (%s)", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][loadbuf] file=%s error=%i (%s) cenv=%d", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1), hasCustomEnv);
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -166,21 +166,23 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	// set the chunk's fenv to the current fenv, or a user table
 	if (hasCustomEnv) {
-		lua_pushvalue(L, 2); // user fenv
+		luaL_checktype(L, 2, LUA_TTABLE);
+		lua_pushvalue(L, 2);
 	} else {
 		LuaUtils::PushCurrentFuncEnv(L, __func__);
+		luaL_checktype(L, -1, LUA_TTABLE);
 	}
 
 	// set the include fenv to the current function's fenv
 	if (lua_setfenv(L, -2) == 0)
-		luaL_error(L, "[LuaVFS::%s(synced=%d)][setfenv] file=%s type=%d", __func__, synced, fileName.c_str(), lua_type(L, -2));
+		luaL_error(L, "[LuaVFS::%s(synced=%d)][setfenv] file=%s type=%d cenv=%d", __func__, synced, fileName.c_str(), lua_type(L, -2), hasCustomEnv);
 
 
 	const int paramTop = lua_gettop(L) - 1;
 
 	if ((luaError = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][pcall] file=%s error=%i (%s)", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "[LuaVFS::%s(synced=%d)][pcall] file=%s error=%i (%s) ptop=%d cenv=%d", __func__, synced, fileName.c_str(), luaError, lua_tostring(L, -1), paramTop, hasCustomEnv);
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
