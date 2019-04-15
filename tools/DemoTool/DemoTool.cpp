@@ -353,7 +353,22 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << std::endl;
 				break;
 			case NETMSG_MAPDRAW:
-				std::cout << "NETMSG_MAPDRAW" << std::endl;
+				std::cout << "NETMSG_MAPDRAW Player:" << (int)buffer[2];
+				switch (buffer[3]) {
+					case MAPDRAW_POINT:
+						std::cout << " POINT x:" << *(int16_t*)&buffer[4] << " z:" << *(int16_t*)&buffer[6];
+						if (packet->length > 10) {
+							std::cout << " Msg: " << (char*)buffer+9;
+						}
+						break;
+					case MAPDRAW_LINE:
+						std::cout << " LINE x1:" << *(int16_t*)&buffer[4] << " z1:" << *(int16_t*)&buffer[6] << " x2:" << *(int16_t*)&buffer[8] << " z2:" << *(int16_t*)&buffer[10];
+						break;
+					case MAPDRAW_ERASE:
+						std::cout << " ERASE x:" << *(int16_t*)&buffer[4] << " z:" << *(int16_t*)&buffer[6];
+						break;
+				}
+				std::cout << std::endl;
 				break;
 			case NETMSG_PATH_CHECKSUM:
 				std::cout << "NETMSG_PATH_CHECKSUM" << std::endl;
