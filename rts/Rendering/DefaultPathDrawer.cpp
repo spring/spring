@@ -91,13 +91,16 @@ void DefaultPathDrawer::DrawInMiniMap()
 	for (const int2& blkIdx: pe->GetUpdatedBlocks()) {
 		const float2 blkPos = {blkIdx.x * blkSize * 1.0f, blkIdx.y * blkSize * 1.0f};
 
-		rdbc->SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
-		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
-		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
-		rdbc->SafeAppend({{blkPos.x                 , blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}});
+		rdbc->SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tl
+		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tr
+		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // br
+
+		rdbc->SafeAppend({{blkPos.x + blkSize * 1.0f, blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // br
+		rdbc->SafeAppend({{blkPos.x                 , blkPos.y + blkSize * 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // bl
+		rdbc->SafeAppend({{blkPos.x                 , blkPos.y                 , 0.0f}, {1.0f, 1.0f, 0.0f, 0.7f}}); // tl
 	}
 
-	rdbc->Submit(GL_QUADS);
+	rdbc->Submit(GL_TRIANGLES);
 	prog->Disable();
 }
 

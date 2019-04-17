@@ -245,7 +245,7 @@ void CEndGameBox::Draw()
 		shaderC->Enable();
 		shaderC->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderC->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		bufferC->Submit(GL_QUADS);
+		bufferC->Submit(GL_TRIANGLES);
 		shaderC->Disable();
 	}
 
@@ -340,16 +340,19 @@ void CEndGameBox::Draw()
 			FillTeamStats();
 
 
-		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.08f, 0.0f}, 0.0f, 0.0f});
-		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.08f, 0.0f}, 4.0f, 0.0f});
-		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.62f, 0.0f}, 4.0f, 4.0f});
-		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.62f, 0.0f}, 0.0f, 4.0f});
+		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.08f, 0.0f}, 0.0f, 0.0f}); // tl
+		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.08f, 0.0f}, 4.0f, 0.0f}); // tr
+		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.62f, 0.0f}, 4.0f, 4.0f}); // br
+
+		bufferT->SafeAppend({{box.x1 + 0.69f, box.y1 + 0.62f, 0.0f}, 4.0f, 4.0f}); // br
+		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.62f, 0.0f}, 0.0f, 4.0f}); // bl
+		bufferT->SafeAppend({{box.x1 + 0.15f, box.y1 + 0.08f, 0.0f}, 0.0f, 0.0f}); // tl
 
 		glBindTexture(GL_TEXTURE_2D, graphTex);
 		shaderT->Enable();
 		shaderT->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 		shaderT->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		bufferT->Submit(GL_QUADS);
+		bufferT->Submit(GL_TRIANGLES);
 		shaderT->Disable();
 		glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -361,12 +364,15 @@ void CEndGameBox::Draw()
 		if (mx > bxmin && mx < bxmax && my > bymin && my < bymax) {
 			const float sel = math::floor(50.0f * -(my - box.y1 - 0.57f));
 
-			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
-			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
-			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
-			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}});
+			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // tl
+			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // bl
+			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // br
+
+			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // br
+			bufferC->SafeAppend({{box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // tr
+			bufferC->SafeAppend({{box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0.0f}, {0.7f, 0.2f, 0.2f, guiAlpha}}); // tl
 			shaderC->Enable();
-			bufferC->Submit(GL_QUADS);
+			bufferC->Submit(GL_TRIANGLES);
 			shaderC->Disable();
 		}
 

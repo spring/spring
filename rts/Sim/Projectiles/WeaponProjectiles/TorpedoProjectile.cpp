@@ -180,51 +180,83 @@ void CTorpedoProjectile::Draw(GL::RenderDataBufferTC* va) const
 	if (r.SqLength() < 0.001f)
 		r = RgtVector;
 
-	r.Normalize();
-	const float3 u = dir.cross(r);
+	const float3 u = dir.cross(r.Normalize());
 	const float h = 12;
 	const float w = 2;
 	const SColor col(60, 60, 100, 255);
 
-	va->SafeAppend({drawPos + (r * w),             texx, texy, col});
-	va->SafeAppend({drawPos + (u * w),             texx, texy, col});
-	va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+	{
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
 
-	va->SafeAppend({drawPos + (u * w),             texx, texy, col});
-	va->SafeAppend({drawPos - (r * w),             texx, texy, col});
-	va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
 
-	va->SafeAppend({drawPos - (r * w),             texx, texy, col});
-	va->SafeAppend({drawPos - (u * w),             texx, texy, col});
-	va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
 
-	va->SafeAppend({drawPos - (u * w),             texx, texy, col});
-	va->SafeAppend({drawPos + (r * w),             texx, texy, col});
-	va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w),             texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (r * w),             texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
 
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w),             texx, texy, col});
+	}
 
-	va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+	{
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (u * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
 
-	va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
-	va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos - (r * w) + (dir * h), texx, texy, col});
+	}
+	{
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (r * w) + (dir * h), texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos + (dir * h * 1.2f),    texx, texy, col});
+		va->SafeAppend({drawPos - (u * w) + (dir * h), texx, texy, col});
+	}
 }
 

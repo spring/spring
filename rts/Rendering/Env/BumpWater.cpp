@@ -872,14 +872,17 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 	{
 		// NB: 4-channel texcoors
 		for (const CoastAtlasRect& r: coastmapAtlasRects) {
-			rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}});
-			rdbt->SafeAppend({{r.x1, r.y2, 0.0f}, {r.tx1, r.ty2, 0.0f, 1.0f}});
-			rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}});
-			rdbt->SafeAppend({{r.x2, r.y1, 0.0f}, {r.tx2, r.ty1, 1.0f, 0.0f}});
+			rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}}); // tl
+			rdbt->SafeAppend({{r.x1, r.y2, 0.0f}, {r.tx1, r.ty2, 0.0f, 1.0f}}); // bl
+			rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}}); // br
+
+			rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}}); // br
+			rdbt->SafeAppend({{r.x2, r.y1, 0.0f}, {r.tx2, r.ty1, 1.0f, 0.0f}}); // tr
+			rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}}); // tl
 			numCoastRects += r.isCoastline;
 		}
 
-		rdbt->Submit(GL_QUADS);
+		rdbt->Submit(GL_TRIANGLES);
 	}
 
 	if (numCoastRects > 0 && atlasSizeX > 0 && atlasSizeY > 0) {
@@ -895,13 +898,16 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 						continue;
 
 					// NB: pass positions as texcoords for scissoring
-					rdbt->SafeAppend({{r.tx1, r.ty1, 0.0f}, {r.x1, r.y1, 0.0f, 0.0f}});
-					rdbt->SafeAppend({{r.tx1, r.ty2, 0.0f}, {r.x1, r.y2, 0.0f, 1.0f}});
-					rdbt->SafeAppend({{r.tx2, r.ty2, 0.0f}, {r.x2, r.y2, 1.0f, 1.0f}});
-					rdbt->SafeAppend({{r.tx2, r.ty1, 0.0f}, {r.x2, r.y1, 1.0f, 0.0f}});
+					rdbt->SafeAppend({{r.tx1, r.ty1, 0.0f}, {r.x1, r.y1, 0.0f, 0.0f}}); // tl
+					rdbt->SafeAppend({{r.tx1, r.ty2, 0.0f}, {r.x1, r.y2, 0.0f, 1.0f}}); // bl
+					rdbt->SafeAppend({{r.tx2, r.ty2, 0.0f}, {r.x2, r.y2, 1.0f, 1.0f}}); // br
+
+					rdbt->SafeAppend({{r.tx2, r.ty2, 0.0f}, {r.x2, r.y2, 1.0f, 1.0f}}); // br
+					rdbt->SafeAppend({{r.tx2, r.ty1, 0.0f}, {r.x2, r.y1, 1.0f, 0.0f}}); // tr
+					rdbt->SafeAppend({{r.tx1, r.ty1, 0.0f}, {r.x1, r.y1, 0.0f, 0.0f}}); // tl
 				}
 
-				rdbt->Submit(GL_QUADS);
+				rdbt->Submit(GL_TRIANGLES);
 			}
 
 
@@ -914,13 +920,16 @@ void CBumpWater::UpdateCoastmap(const bool initialize)
 					if (!r.isCoastline)
 						continue;
 
-					rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}});
-					rdbt->SafeAppend({{r.x1, r.y2, 0.0f}, {r.tx1, r.ty2, 0.0f, 1.0f}});
-					rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}});
-					rdbt->SafeAppend({{r.x2, r.y1, 0.0f}, {r.tx2, r.ty1, 1.0f, 0.0f}});
+					rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}}); // tl
+					rdbt->SafeAppend({{r.x1, r.y2, 0.0f}, {r.tx1, r.ty2, 0.0f, 1.0f}}); // bl
+					rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}}); // br
+
+					rdbt->SafeAppend({{r.x2, r.y2, 0.0f}, {r.tx2, r.ty2, 1.0f, 1.0f}}); // br
+					rdbt->SafeAppend({{r.x2, r.y1, 0.0f}, {r.tx2, r.ty1, 1.0f, 0.0f}}); // tr
+					rdbt->SafeAppend({{r.x1, r.y1, 0.0f}, {r.tx1, r.ty1, 0.0f, 0.0f}}); // tl
 				}
 
-				rdbt->Submit(GL_QUADS);
+				rdbt->Submit(GL_TRIANGLES);
 			}
 		}
 	}
@@ -1003,14 +1012,17 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 				const uint8_t tx = offset % tiles;
 				const uint8_t ty = (offset - tx) / tiles;
 
-				buffer->SafeAppend({(x    ) * tilesize, (y    ) * tilesize,  (tx    ) * tilesize, (ty    ) * tilesize});
-				buffer->SafeAppend({(x    ) * tilesize, (y + 1) * tilesize,  (tx    ) * tilesize, (ty + 1) * tilesize});
-				buffer->SafeAppend({(x + 1) * tilesize, (y + 1) * tilesize,  (tx + 1) * tilesize, (ty + 1) * tilesize});
-				buffer->SafeAppend({(x + 1) * tilesize, (y    ) * tilesize,  (tx + 1) * tilesize, (ty    ) * tilesize});
+				buffer->SafeAppend({(x    ) * tilesize, (y    ) * tilesize,  (tx    ) * tilesize, (ty    ) * tilesize}); // tl
+				buffer->SafeAppend({(x    ) * tilesize, (y + 1) * tilesize,  (tx    ) * tilesize, (ty + 1) * tilesize}); // bl
+				buffer->SafeAppend({(x + 1) * tilesize, (y + 1) * tilesize,  (tx + 1) * tilesize, (ty + 1) * tilesize}); // br
+
+				buffer->SafeAppend({(x + 1) * tilesize, (y + 1) * tilesize,  (tx + 1) * tilesize, (ty + 1) * tilesize}); // br
+				buffer->SafeAppend({(x + 1) * tilesize, (y    ) * tilesize,  (tx + 1) * tilesize, (ty    ) * tilesize}); // tr
+				buffer->SafeAppend({(x    ) * tilesize, (y    ) * tilesize,  (tx    ) * tilesize, (ty    ) * tilesize}); // tl
 			}
 		}
 
-	buffer->Submit(GL_QUADS);
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
 	// redundant?

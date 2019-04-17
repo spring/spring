@@ -24,10 +24,13 @@
 
 // FIXME: "array must be initialized with a brace-enclosed initializer" if constexpr
 static const VA_TYPE_TC CURSOR_VERTS[] = {
-	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
-	VA_TYPE_TC{{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
-	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
-	VA_TYPE_TC{{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tl
+	VA_TYPE_TC{{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // bl
+	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // br
+
+	VA_TYPE_TC{{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // br
+	VA_TYPE_TC{{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tr
+	VA_TYPE_TC{{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}, // tl
 };
 
 
@@ -291,7 +294,7 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
 	shader->SetUniform("u_alpha_test_ctrl", 0.01f, 1.0f, 0.0f, 0.0f); // test > 0.01
 	buffer->SafeAppend(&CURSOR_VERTS[0], sizeof(CURSOR_VERTS) / sizeof(CURSOR_VERTS[0]));
-	buffer->Submit(GL_QUADS);
+	buffer->Submit(GL_TRIANGLES);
 	shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	shader->Disable();
 }

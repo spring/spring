@@ -91,8 +91,11 @@ static void DrawBufferStats(const float2 pos)
 	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TL
 	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BL
 	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BR
+
+	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.w + 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // BR
 	rdbC->SafeAppend({{drawArea.z + 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TR
-	rdbC->Submit(GL_QUADS);
+	rdbC->SafeAppend({{drawArea.x - 10.0f * globalRendering->pixelX, drawArea.y - 10.0f * globalRendering->pixelY, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // TL
+	rdbC->Submit(GL_TRIANGLES);
 
 	#define FMT "{elems=" _STPF_ " indcs=" _STPF_ " submits{e,i}={" _STPF_ "," _STPF_ "}}"
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
@@ -139,10 +142,13 @@ static void DrawTimeSlices(
 		x1 = drawArea.x + x1 * (drawArea.z - drawArea.x);
 		x2 = drawArea.x + x2 * (drawArea.z - drawArea.x);
 
-		buffer->SafeAppend({{x1, y1, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{x1, y2, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{x2, y2, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{x2, y1, 0.0f}, {sliceColor}});
+		buffer->SafeAppend({{x1, y1, 0.0f}, {sliceColor}}); // tl
+		buffer->SafeAppend({{x1, y2, 0.0f}, {sliceColor}}); // bl
+		buffer->SafeAppend({{x2, y2, 0.0f}, {sliceColor}}); // br
+
+		buffer->SafeAppend({{x2, y2, 0.0f}, {sliceColor}}); // br
+		buffer->SafeAppend({{x2, y1, 0.0f}, {sliceColor}}); // tr
+		buffer->SafeAppend({{x1, y1, 0.0f}, {sliceColor}}); // tl
 
 		const float mx1 = x1 + 3.0f * globalRendering->pixelX;
 		const float mx2 = x2 - 3.0f * globalRendering->pixelX;
@@ -150,10 +156,13 @@ static void DrawTimeSlices(
 		if (mx1 >= mx2)
 			continue;
 
-		buffer->SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{mx1, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
-		buffer->SafeAppend({{mx2, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}});
+		buffer->SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // bl
+		buffer->SafeAppend({{mx1, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // tl
+		buffer->SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // tr
+
+		buffer->SafeAppend({{mx2, y2 - 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // tr
+		buffer->SafeAppend({{mx2, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // br
+		buffer->SafeAppend({{mx1, y1 + 3.0f * globalRendering->pixelX, 0.0f}, {sliceColor}}); // bl
 	}
 }
 
@@ -172,10 +181,13 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 
 	{
 		// background
-		buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-		buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-		buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-		buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
+		buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tl
+		buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // bl
+		buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // br
+
+		buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // br
+		buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tr
+		buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tl
 	}
 	{
 		// title
@@ -202,10 +214,13 @@ static void DrawThreadBarcode(GL::RenderDataBufferC* buffer)
 		const float r = (curTime % maxTime).toSecsf() / MAX_THREAD_HIST_TIME;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 
-		buffer->SafeAppend({{xf                                 , drawArea[1], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf                                 , drawArea[3], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xf                                 , drawArea[1], 0.0f}, {feederColor}}); // tl
+		buffer->SafeAppend({{xf                                 , drawArea[3], 0.0f}, {feederColor}}); // bl
+		buffer->SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}}); // br
+
+		buffer->SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}}); // br
+		buffer->SafeAppend({{xf + 5.0f * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}}); // tr
+		buffer->SafeAppend({{xf                                 , drawArea[1], 0.0f}, {feederColor}}); // tl
 	}
 }
 
@@ -221,10 +236,13 @@ static void DrawFrameBarcode(GL::RenderDataBufferC* buffer)
 	const spring_time maxTime = spring_secs(MAX_FRAMES_HIST_TIME);
 
 	// background
-	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-	buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, {barColor}});
-	buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}});
+	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tl
+	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // bl
+	buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // br
+
+	buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[3] + 20.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // br
+	buffer->SafeAppend({{drawArea[2] + 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tr
+	buffer->SafeAppend({{drawArea[0] - 10.0f * globalRendering->pixelX, drawArea[1] - 10.0f * globalRendering->pixelY, 0.0f}, {barColor}}); // tl
 
 	// title and legend
 	font->glFormat(drawArea[0], drawArea[3] + 10 * globalRendering->pixelY, 0.7f, FONT_TOP | DBG_FONT_FLAGS | FONT_BUFFERED,
@@ -248,20 +266,26 @@ static void DrawFrameBarcode(GL::RenderDataBufferC* buffer)
 		const float r = (curTime % maxTime).toSecsf() / MAX_FRAMES_HIST_TIME;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
 
-		buffer->SafeAppend({{xf                               , drawArea[1], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf                               , drawArea[3], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xf                               , drawArea[1], 0.0f}, {feederColor}}); // tl
+		buffer->SafeAppend({{xf                               , drawArea[3], 0.0f}, {feederColor}}); // bl
+		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}}); // br
+
+		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[3], 0.0f}, {feederColor}}); // br
+		buffer->SafeAppend({{xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f}, {feederColor}}); // tr
+		buffer->SafeAppend({{xf                               , drawArea[1], 0.0f}, {feederColor}}); // tl
 	}
 	{
 		// draw scale (horizontal bar that indicates 30FPS timing length)
 		const float xs1 = drawArea[2] - 1.0f / (30.0f * MAX_FRAMES_HIST_TIME) * (drawArea[2] - drawArea[0]);
 		const float xs2 = drawArea[2] + 0.0f                                  * (drawArea[2] - drawArea[0]);
 
-		buffer->SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xs1, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
-		buffer->SafeAppend({{xs2, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}});
+		buffer->SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // tl
+		buffer->SafeAppend({{xs1, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // bl
+		buffer->SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // br
+
+		buffer->SafeAppend({{xs2, drawArea[3] + 10.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // br
+		buffer->SafeAppend({{xs2, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // tr
+		buffer->SafeAppend({{xs1, drawArea[3] +  2.0f * globalRendering->pixelY, 0.0f}, {feederColor}}); // tl
 	}
 }
 
@@ -279,12 +303,15 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 
 	const auto& sortedProfiles = profiler.GetSortedProfiles();
 
-	// draw the background of the window
+	// draw the window background
 	{
-		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}});
-		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}});
+		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}}); // tl
+		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}}); // bl
+		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}}); // br
+
+		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR +                         LINE_HEIGHT + 0.005f, 0.0f}, {winColor}}); // br
+		buffer->SafeAppend({{MAX_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}}); // tr
+		buffer->SafeAppend({{MIN_X_COOR, MIN_Y_COOR - sortedProfiles.size() * LINE_HEIGHT - 0.010f, 0.0f}, {winColor}}); // tl
 	}
 
 	// table header
@@ -343,17 +370,23 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 			const SColor actColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 			// selection box
-			buffer->SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT          , 0.0f), selColor}); // upper left
-			buffer->SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // lower left
-			buffer->SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // lower right
-			buffer->SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT          , 0.0f), selColor}); // upper right
+			buffer->SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT          , 0.0f), selColor}); // tl
+			buffer->SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // bl
+			buffer->SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // br
+
+			buffer->SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT - boxSize, 0.0f), selColor}); // br
+			buffer->SafeAppend({boxMat * float3(boxSize, -i * LINE_HEIGHT          , 0.0f), selColor}); // tr
+			buffer->SafeAppend({boxMat * float3(   0.0f, -i * LINE_HEIGHT          , 0.0f), selColor}); // tl
 
 			// activated box
 			if (tr.showGraph) {
-				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // upper left
-				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // lower left
-				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // lower right
-				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // upper right
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tl
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // bl
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // br
+
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT - boxSize + selOffset, 0.0f), actColor}); // br
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT + boxSize - selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tr
+				buffer->SafeAppend({boxMat * float3(LINE_HEIGHT +           selOffset, -i * LINE_HEIGHT -           selOffset, 0.0f), actColor}); // tl
 			}
 
 			i++;
@@ -361,7 +394,7 @@ static void DrawProfiler(GL::RenderDataBufferC* buffer)
 	}
 
 	// flush all quad elements
-	buffer->Submit(GL_QUADS);
+	buffer->Submit(GL_TRIANGLES);
 
 	// draw the graph lines
 	GL::WideLineAdapterC* wla = GL::GetWideLineAdapterC();
@@ -400,10 +433,13 @@ static void DrawInfoText(GL::RenderDataBufferC* buffer)
 	constexpr float bgColor[4] = {0.0f, 0.0f, 0.0f, 0.5f};
 
 	// background
-	buffer->SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, {bgColor}});
-	buffer->SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, {bgColor}});
-	buffer->SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, {bgColor}});
-	buffer->SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, {bgColor}});
+	buffer->SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // tl
+	buffer->SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // bl
+	buffer->SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // br
+
+	buffer->SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.17f + 20.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // br
+	buffer->SafeAppend({{MIN_X_COOR - 0.05f + 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // tr
+	buffer->SafeAppend({{             0.01f - 10.0f * globalRendering->pixelX, 0.02f - 10.0f * globalRendering->pixelY, 0.0f}, {bgColor}}); // tl
 
 	// print performance-related information (timings, particle-counts, etc)
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);

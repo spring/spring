@@ -207,7 +207,10 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
 					buffer->SafeAppend({curPart.pos2, curPart.texPos, 1.0f, curPartColor});
 					buffer->SafeAppend({nxtPart.pos2, nxtPart.texPos, 1.0f, nxtPartColor});
+
+					buffer->SafeAppend({nxtPart.pos2, nxtPart.texPos, 1.0f, nxtPartColor});
 					buffer->SafeAppend({nxtPart.pos1, nxtPart.texPos, 0.0f, nxtPartColor});
+					buffer->SafeAppend({curPart.pos1, curPart.texPos, 0.0f, curPartColor});
 				}
 
 				curPartColor[3] = nxtPartColor[3];
@@ -215,7 +218,7 @@ void LegacyTrackHandler::DrawTracks(GL::RenderDataBufferTC* buffer, Shader::IPro
 			}
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 	}
 }
 

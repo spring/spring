@@ -77,10 +77,13 @@ extern void SetDrawSurfaceCircleFuncs(DrawSurfaceCircleFunc func, DrawSurfaceCir
 
 
 template<typename TQuad, typename TColor, typename TRenderBuffer> void gleDrawQuadC(const TQuad& quad, const TColor& color, TRenderBuffer* buffer) {
-	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color});
-	buffer->SafeAppend({{quad.x1, quad.y2, 0.0f}, color});
-	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color});
-	buffer->SafeAppend({{quad.x2, quad.y1, 0.0f}, color});
+	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color}); // tl
+	buffer->SafeAppend({{quad.x1, quad.y2, 0.0f}, color}); // bl
+	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color}); // br
+
+	buffer->SafeAppend({{quad.x2, quad.y2, 0.0f}, color}); // br
+	buffer->SafeAppend({{quad.x2, quad.y1, 0.0f}, color}); // tr
+	buffer->SafeAppend({{quad.x1, quad.y1, 0.0f}, color}); // tl
 }
 
 

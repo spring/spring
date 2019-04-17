@@ -67,12 +67,18 @@ void CGeoSquareProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({p1 - xdir * xsize, u, v0e, col});
 		va->SafeAppend({p1 + xdir * xsize, u, v0s, col});
 		va->SafeAppend({p2 + ydir * ysize, u, v0s, col});
+
+		va->SafeAppend({p2 + ydir * ysize, u, v0s, col});
 		va->SafeAppend({p2 - ydir * ysize, u, v0e, col});
+		va->SafeAppend({p1 - xdir * xsize, u, v0e, col});
 	} else {
 		va->SafeAppend({p1 - xdir * xsize, u, v0e,                      col});
 		va->SafeAppend({p1 + xdir * xsize, u, v0s,                      col});
 		va->SafeAppend({p2,                u, v0s + (v0e - v0s) * 0.5f, col});
+
+		va->SafeAppend({p2,                u, v0s + (v0e - v0s) * 0.5f, col});
 		va->SafeAppend({p2,                u, v0s + (v0e - v0s) * 1.5f, col});
+		va->SafeAppend({p1 - xdir * xsize, u, v0e,                      col});
 	}
 }
 

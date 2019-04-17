@@ -414,11 +414,14 @@ void DebugDrawerAI::TexSet::Draw(GL::RenderDataBufferT* buffer, Shader::IProgram
 		const float3& size = tex.GetSize();
 
 		glBindTexture(GL_TEXTURE_2D, tex.GetID());
-		buffer->SafeAppend({pos,                                0.0f, 1.0f});
-		buffer->SafeAppend({pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f});
-		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f});
-		buffer->SafeAppend({pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({pos,                                0.0f, 1.0f}); // tl
+		buffer->SafeAppend({pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f}); // tr
+		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f}); // br
+
+		buffer->SafeAppend({pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f}); // br
+		buffer->SafeAppend({pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f}); // bl
+		buffer->SafeAppend({pos,                                0.0f, 1.0f}); // tl
+		buffer->Submit(GL_TRIANGLES);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		const float tx = pos.x + size.x * 0.5f - ((tex.GetLabelWidth () * 0.5f) / globalRendering->viewSizeX) * size.x;

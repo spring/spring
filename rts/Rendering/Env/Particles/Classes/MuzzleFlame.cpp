@@ -73,22 +73,29 @@ void CMuzzleFlame::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col});
+
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col});
 		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xstart, st->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col});
 		#undef st
 
-		if (fade < 1.0f) {
-			col[0] = (unsigned char) ((1.0f - fade) * 255);
-			col[1] = (unsigned char) ((1.0f - fade) * 255);
-			col[2] = (unsigned char) ((1.0f - fade) * 255);
-			col[3] = (unsigned char) (1);
+		if (fade >= 1.0f)
+			continue;
 
-			#define mft projectileDrawer->muzzleflametex
-			va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col});
-			va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col});
-			va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col});
-			va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col});
-			#undef mft
-		}
+		col[0] = (unsigned char) ((1.0f - fade) * 255);
+		col[1] = (unsigned char) ((1.0f - fade) * 255);
+		col[2] = (unsigned char) ((1.0f - fade) * 255);
+		col[3] = (unsigned char) (1);
+
+		#define mft projectileDrawer->muzzleflametex
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col});
+
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col});
+		#undef mft
 	}
 }
 

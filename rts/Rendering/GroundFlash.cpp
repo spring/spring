@@ -231,7 +231,10 @@ void CStandardGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, c});
 		va->SafeAppend({p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, c});
 		va->SafeAppend({p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   c});
+
+		va->SafeAppend({p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   c});
 		va->SafeAppend({p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   c});
+		va->SafeAppend({p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, c});
 	}
 
 	if (iAge < 1.0f) {
@@ -251,7 +254,10 @@ void CStandardGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   c});
 		va->SafeAppend({p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   c});
 		va->SafeAppend({p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, c});
+
+		va->SafeAppend({p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, c});
 		va->SafeAppend({p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, c});
+		va->SafeAppend({p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   c});
 	}
 }
 
@@ -311,7 +317,10 @@ void CSimpleGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({p1, texture->xstart, texture->ystart, color});
 	va->SafeAppend({p2, texture->xend,   texture->ystart, color});
 	va->SafeAppend({p3, texture->xend,   texture->yend,   color});
+
+	va->SafeAppend({p3, texture->xend,   texture->yend,   color});
 	va->SafeAppend({p4, texture->xstart, texture->yend,   color});
+	va->SafeAppend({p1, texture->xstart, texture->ystart, color});
 }
 
 bool CSimpleGroundFlash::Update()
@@ -387,7 +396,10 @@ void CSeismicGroundFlash::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({p1, texture->xstart, texture->ystart, {color.r, color.g, color.b, curAlpha}});
 	va->SafeAppend({p2, texture->xend,   texture->ystart, {color.r, color.g, color.b, curAlpha}});
 	va->SafeAppend({p3, texture->xend,   texture->yend,   {color.r, color.g, color.b, curAlpha}});
+
+	va->SafeAppend({p3, texture->xend,   texture->yend,   {color.r, color.g, color.b, curAlpha}});
 	va->SafeAppend({p4, texture->xstart, texture->yend,   {color.r, color.g, color.b, curAlpha}});
+	va->SafeAppend({p1, texture->xstart, texture->ystart, {color.r, color.g, color.b, curAlpha}});
 }
 
 bool CSeismicGroundFlash::Update()

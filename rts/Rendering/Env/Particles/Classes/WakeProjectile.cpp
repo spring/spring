@@ -88,7 +88,10 @@ void CWakeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
 	va->SafeAppend({drawPos + dir1 - dir2, wt->xstart, wt->yend,   col});
 	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
+
+	va->SafeAppend({drawPos - dir1 - dir2, wt->xend,   wt->yend,   col});
 	va->SafeAppend({drawPos - dir1 + dir2, wt->xend,   wt->ystart, col});
+	va->SafeAppend({drawPos + dir1 + dir2, wt->xstart, wt->ystart, col});
 	#undef wt
 }
 

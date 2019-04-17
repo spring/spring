@@ -11,10 +11,13 @@
 #include "System/Log/ILog.h"
 
 constexpr VA_TYPE_0 VERTS[] = {
-	{{-1.0f, -1.0f, 0.0f}},
-	{{-1.0f, +1.0f, 0.0f}},
-	{{+1.0f, +1.0f, 0.0f}},
-	{{+1.0f, -1.0f, 0.0f}},
+	{{-1.0f, -1.0f, 0.0f}}, // bl
+	{{-1.0f, +1.0f, 0.0f}}, // tl
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+
+	{{+1.0f, +1.0f, 0.0f}}, // tr
+	{{+1.0f, -1.0f, 0.0f}}, // br
+	{{-1.0f, -1.0f, 0.0f}}, // bl
 };
 
 
@@ -187,7 +190,7 @@ void CAirLosTexture::Update()
 
 	shader->Enable();
 	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 	shader->Disable();
 
 	glAttribStatePtr->ViewPort(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);

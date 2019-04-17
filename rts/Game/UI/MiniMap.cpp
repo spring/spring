@@ -178,11 +178,14 @@ void CMiniMap::LoadBuffer()
 
 	typedef Shader::ShaderInput MiniMapAttrType;
 
-	const std::array<MiniMapVertType, 4> verts = {{
-		{{0.0f, 0.0f}, {0.0f, 1.0f}},
-		{{0.0f, 1.0f}, {0.0f, 0.0f}},
-		{{1.0f, 1.0f}, {1.0f, 0.0f}},
-		{{1.0f, 0.0f}, {1.0f, 1.0f}},
+	const std::array<MiniMapVertType, 6> verts = {{
+		{{0.0f, 0.0f}, {0.0f, 1.0f}}, // tl
+		{{0.0f, 1.0f}, {0.0f, 0.0f}}, // bl
+		{{1.0f, 1.0f}, {1.0f, 0.0f}}, // br
+
+		{{1.0f, 1.0f}, {1.0f, 0.0f}}, // br
+		{{1.0f, 0.0f}, {1.0f, 1.0f}}, // tr
+		{{0.0f, 0.0f}, {0.0f, 1.0f}}, // tl
 	}};
 	const std::array<MiniMapAttrType, 2> attrs = {{
 		{0,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_vertex_pos", VA_TYPE_OFFSET(float, 0)},
@@ -1171,11 +1174,14 @@ void CMiniMap::DrawMinimizedButtonQuad(GL::RenderDataBufferTC* buffer)
 	shader->Enable();
 	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMats[0]);
-	buffer->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-	buffer->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-	buffer->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-	buffer->SafeAppend({{xmin, ymax, 0.0f}, minimizeBox.xminTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}});
-	buffer->Submit(GL_QUADS);
+	buffer->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // tl
+	buffer->SafeAppend({{xmax, ymin, 0.0f}, minimizeBox.xmaxTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // tr
+	buffer->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // br
+
+	buffer->SafeAppend({{xmax, ymax, 0.0f}, minimizeBox.xmaxTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // br
+	buffer->SafeAppend({{xmin, ymax, 0.0f}, minimizeBox.xminTx, minimizeBox.ymaxTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // bl
+	buffer->SafeAppend({{xmin, ymin, 0.0f}, minimizeBox.xminTx, minimizeBox.yminTx, {1.0f, 1.0f, 1.0f, 1.0f}}); // tl
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 }
 
@@ -1197,11 +1203,14 @@ void CMiniMap::DrawMinimizedButtonLoop(GL::RenderDataBufferC* buffer)
 	// highlight
 	if (((mouse->lastx + 1) <= buttonSize) && ((mouse->lasty + 1) <= buttonSize)) {
 		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		buffer->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-		buffer->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-		buffer->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-		buffer->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // tl
+		buffer->SafeAppend({{xmax, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // tr
+		buffer->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // br
+
+		buffer->SafeAppend({{xmax, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // br
+		buffer->SafeAppend({{xmin, ymax, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // bl
+		buffer->SafeAppend({{xmin, ymin, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}}); // tl
+		buffer->Submit(GL_TRIANGLES);
 		// glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
@@ -1229,7 +1238,10 @@ void CMiniMap::IntBox::DrawBox(GL::RenderDataBufferC* buffer) const
 	buffer->SafeAppend({{tlx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 	buffer->SafeAppend({{brx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 	buffer->SafeAppend({{brx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+
+	buffer->SafeAppend({{brx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 	buffer->SafeAppend({{tlx, bry, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
+	buffer->SafeAppend({{tlx, tly, 0.0f}, {1.0f, 1.0f, 1.0f, 0.4f}});
 }
 
 void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* buffer) const
@@ -1237,10 +1249,13 @@ void CMiniMap::IntBox::DrawTextureBox(GL::RenderDataBufferTC* buffer) const
 	const float px = globalRendering->pixelX;
 	const float py = globalRendering->pixelY;
 
-	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color});
-	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymin    ) * py, 0.0f}, xmaxTx, yminTx, color});
-	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color});
-	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymax + 1) * py, 0.0f}, xminTx, ymaxTx, color});
+	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color}); // tl
+	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymin    ) * py, 0.0f}, xmaxTx, yminTx, color}); // tr
+	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color}); // br
+
+	buffer->SafeAppend({{(xmax + 1) * px, 1.0f - (ymax + 1) * py, 0.0f}, xmaxTx, ymaxTx, color}); // br
+	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymax + 1) * py, 0.0f}, xminTx, ymaxTx, color}); // bl
+	buffer->SafeAppend({{(xmin    ) * px, 1.0f - (ymin    ) * py, 0.0f}, xminTx, yminTx, color}); // tl
 }
 
 
@@ -1295,7 +1310,7 @@ bool CMiniMap::DrawButtonQuads(GL::RenderDataBufferTC* buffer)
 	maximizeBox.DrawTextureBox(buffer);
 	minimizeBox.DrawTextureBox(buffer);
 
-	buffer->Submit(GL_QUADS);
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1327,7 +1342,7 @@ bool CMiniMap::DrawButtonLoops(GL::RenderDataBufferC* buffer)
 			}
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 		// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
@@ -1395,11 +1410,14 @@ void CMiniMap::RenderCachedTextureImpl(const CMatrix44f& viewMat, const CMatrix4
 
 		glBindTexture(GL_TEXTURE_2D, minimapTextureID);
 
-		buffer->SafeAppend({{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
-		buffer->SafeAppend({{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // tl
+		buffer->SafeAppend({{1.0f, 0.0f, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // tr
+		buffer->SafeAppend({{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // br
+
+		buffer->SafeAppend({{1.0f, 1.0f, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // br
+		buffer->SafeAppend({{0.0f, 1.0f, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // bl
+		buffer->SafeAppend({{0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, 1.0f}}); // tl
+		buffer->Submit(GL_TRIANGLES);
 
 		shader->Disable();
 	}
@@ -1555,7 +1573,7 @@ void CMiniMap::DrawBackground()
 		shader->Enable();
 		shader->SetUniform("u_infotex_mul", infoTextureHandler->IsEnabled() * 1.0f);
 		shader->SetUniform("u_gamma_expon", globalRendering->gammaExponent);
-		buffer->Submit(GL_QUADS, 0, buffer->GetNumElems<MiniMapVertType>());
+		buffer->Submit(GL_TRIANGLES, 0, buffer->GetNumElems<MiniMapVertType>());
 		shader->Disable();
 	}
 

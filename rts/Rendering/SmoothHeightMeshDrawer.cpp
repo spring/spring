@@ -38,14 +38,17 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 			const float h3 = smoothGround.GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
 			const float h4 = smoothGround.GetHeightAboveWater(x,            z + quadSize) + yoffset;
 
-			buffer->SafeAppend({{x,            h1, z           }, quadColor});
-			buffer->SafeAppend({{x + quadSize, h2, z           }, quadColor});
-			buffer->SafeAppend({{x + quadSize, h3, z + quadSize}, quadColor});
-			buffer->SafeAppend({{x,            h4, z + quadSize}, quadColor});
+			buffer->SafeAppend({{x,            h1, z           }, quadColor}); // tl
+			buffer->SafeAppend({{x + quadSize, h2, z           }, quadColor}); // tr
+			buffer->SafeAppend({{x + quadSize, h3, z + quadSize}, quadColor}); // br
+
+			buffer->SafeAppend({{x + quadSize, h3, z + quadSize}, quadColor}); // br
+			buffer->SafeAppend({{x,            h4, z + quadSize}, quadColor}); // bl
+			buffer->SafeAppend({{x,            h1, z           }, quadColor}); // tl
 		}
 	}
 
-	buffer->Submit(GL_QUADS);
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);

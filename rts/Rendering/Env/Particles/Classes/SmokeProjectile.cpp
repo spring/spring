@@ -110,7 +110,10 @@ void CSmokeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
 	va->SafeAppend({drawPos + pos1, st->xend,   st->ystart, col});
 	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
+
+	va->SafeAppend({drawPos + pos2, st->xend,   st->yend,   col});
 	va->SafeAppend({drawPos - pos1, st->xstart, st->yend,   col});
+	va->SafeAppend({drawPos - pos2, st->xstart, st->ystart, col});
 	#undef st
 }
 

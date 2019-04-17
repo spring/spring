@@ -2569,8 +2569,11 @@ bool CGuiHandler::DrawMenuUnitBuildIcon(const Box& iconBox, GL::RenderDataBuffer
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 
 	return true;
 }
@@ -2733,8 +2736,11 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{iconBox.x2, iconBox.y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{iconBox.x1, iconBox.y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 
 	if (tex2.empty())
 		return true; // success, no second texture to draw
@@ -2756,8 +2762,11 @@ bool CGuiHandler::DrawMenuIconTexture(const Box& iconBox, const std::string& tex
 	rdBuffer->SafeAppend({{x1, y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x2, y1, 0.0f}, 1.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x2, y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+
+	rdBuffer->SafeAppend({{x2, y2, 0.0f}, 1.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
 	rdBuffer->SafeAppend({{x1, y2, 0.0f}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{x1, y1, 0.0f}, 0.0f, 0.0f, {1.0f, 1.0f, 1.0f, textureAlpha}});
+	rdBuffer->Submit(GL_TRIANGLES);
 	return true;
 }
 
@@ -2767,7 +2776,10 @@ void CGuiHandler::DrawMenuIconFrame(const Box& iconBox, const SColor& color, GL:
 	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y1 - fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
+
+	rdBuffer->SafeAppend({{iconBox.x2 - fudge, iconBox.y2 + fudge, 0.0f}, color});
 	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y2 + fudge, 0.0f}, color});
+	rdBuffer->SafeAppend({{iconBox.x1 + fudge, iconBox.y1 - fudge, 0.0f}, color});
 }
 
 
@@ -2902,8 +2914,11 @@ void CGuiHandler::DrawMenu()
 		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
+
+		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y2, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
 		bufferC->SafeAppend({{buttonBox.x2, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
-		bufferC->Submit(GL_QUADS);
+		bufferC->SafeAppend({{buttonBox.x1, buttonBox.y1, 0.0f}, {0.2f, 0.2f, 0.2f, boxAlpha}});
+		bufferC->Submit(GL_TRIANGLES);
 	}
 
 	// filter invalid icons
@@ -2934,7 +2949,7 @@ void CGuiHandler::DrawMenu()
 				DrawMenuIconOptionLEDs(icon.visual, commands[icon.commandsID], bufferC, outline);
 			}
 
-			bufferC->Submit(GL_QUADS);
+			bufferC->Submit(outline? GL_LINES: GL_TRIANGLES);
 		}
 	}
 	{
@@ -2983,7 +2998,7 @@ void CGuiHandler::DrawMenu()
 			DrawMenuIconFrame(icon.visual, bgrndColors[(1 + bpl.pressed) * (1 - activeCommand)], bufferC, 0.0f);
 		}
 
-		bufferC->Submit(GL_QUADS);
+		bufferC->Submit(GL_TRIANGLES);
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	{
@@ -3059,7 +3074,7 @@ void CGuiHandler::DrawMenu()
 		}
 
 		// should be submitted as GL_LINE_LOOP, but this is faster
-		bufferC->Submit(GL_QUADS);
+		bufferC->Submit(GL_TRIANGLES);
 		glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, polyModes[0]);
 	}
 
@@ -3078,10 +3093,13 @@ void CGuiHandler::DrawMenu()
 			bufferC->SafeAppend({{b.x1, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x2, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x2, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
+
+			bufferC->SafeAppend({{b.x2, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 			bufferC->SafeAppend({{b.x1, b.y2, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
+			bufferC->SafeAppend({{b.x1, b.y1, 0.0f}, {0.5f, 0.5f, 0.5f, 0.5f}});
 		}
 
-		bufferC->Submit(GL_QUADS);
+		bufferC->Submit(GL_TRIANGLES);
 		glAttribStatePtr->BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
@@ -3101,8 +3119,9 @@ void CGuiHandler::DrawMenu()
 			const bool highlightIcon = ((mouseIconIdx == arrowIconIdx) || (icon.commandsID == inCommand)) && (!customCommand || !cmdDesc.params.empty());
 
 			(this->*drawFunc)(icon.visual, arrowColors[highlightIcon], bufferC);
-			bufferC->Submit(GL_POLYGON);
 		}
+
+		bufferC->Submit(GL_TRIANGLES);
 	}
 
 
@@ -3147,9 +3166,12 @@ void CGuiHandler::DrawMenuName(GL::RenderDataBufferC* rdBuffer) const
 		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+
+		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2 + textHeight + (yIconSize * 0.25f), 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{buttonBox.x2, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+		rdBuffer->SafeAppend({{buttonBox.x1, buttonBox.y2                                   , 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		// done by caller
-		// rdBuffer->Submit(GL_QUADS);
+		// rdBuffer->Submit(GL_TRIANGLES);
 
 		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, menuName);
 	} else {
@@ -3190,9 +3212,12 @@ void CGuiHandler::DrawMenuSelectionInfo(GL::RenderDataBufferC* rdBuffer) const
 		rdBuffer->SafeAppend({{x1, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x1, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x2, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+
+		rdBuffer->SafeAppend({{x2, y2, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		rdBuffer->SafeAppend({{x2, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
+		rdBuffer->SafeAppend({{x1, y1, 0.0f}, {0.2f, 0.2f, 0.2f, guiAlpha}});
 		// done by caller
-		// rdBuffer->Submit(GL_QUADS);
+		// rdBuffer->Submit(GL_TRIANGLES);
 
 		smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
 		smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM | FONT_BUFFERED, buf.str());
@@ -3223,18 +3248,24 @@ void CGuiHandler::DrawMenuNumberInput(GL::RenderDataBufferC* rdBuffer) const
 	rdBuffer->SafeAppend({{0.235f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.235f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.250f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.250f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.250f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.235f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 
 	rdBuffer->SafeAppend({{0.750f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.750f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.765f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.765f, 0.55f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.765f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.750f, 0.45f, 0.0f}, {1.0f, 1.0f, 0.0f, 0.8f}});
 
 	rdBuffer->SafeAppend({{0.25f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.25f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.75f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
+	rdBuffer->SafeAppend({{0.75f, 0.51f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
 	rdBuffer->SafeAppend({{0.75f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
-	rdBuffer->Submit(GL_QUADS);
+	rdBuffer->SafeAppend({{0.25f, 0.49f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.8f}});
+	// rdBuffer->Submit(GL_TRIANGLES);
 
 
 	rdBuffer->SafeAppend({{slideX + 0.015f, 0.55f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}});
@@ -3258,11 +3289,25 @@ void CGuiHandler::DrawMenuPrevArrow(const Box& iconBox, const SColor& color, GL:
 	const float ySize = 0.125f * math::fabs(iconBox.y2 - iconBox.y1);
 	const float xSiz2 = 2.0f * xSize;
 
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color});
+	#if 0
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	#else
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	#endif
 }
 
 void CGuiHandler::DrawMenuNextArrow(const Box& iconBox, const SColor& color, GL::RenderDataBufferC* rdBuffer) const
@@ -3272,11 +3317,25 @@ void CGuiHandler::DrawMenuNextArrow(const Box& iconBox, const SColor& color, GL:
 	const float ySize = 0.125f * math::fabs(iconBox.y2 - iconBox.y1);
 	const float xSiz2 = 2.0f * xSize;
 
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color});
-	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color});
+	#if 0
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	#else
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter + ySize, 0.0f}, color}); // v4 (top)
+	rdBuffer->SafeAppend({{iconBox.x1 + xSize, yCenter - ySize, 0.0f}, color}); // v0 (bot)
+
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter - ySize, 0.0f}, color}); // v1 (bot)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSize, yCenter        , 0.0f}, color}); // v2 (tip)
+	rdBuffer->SafeAppend({{iconBox.x2 - xSiz2, yCenter + ySize, 0.0f}, color}); // v3 (top)
+	#endif
 }
 
 
@@ -3331,7 +3390,10 @@ void CGuiHandler::DrawMenuIconOptionLEDs(const Box& iconBox, const SCommandDescr
 			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx     , starty + ys, 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, colors[c]});
+
+			rdBuffer->SafeAppend({{startx + xs, starty + ys, 0.0f}, colors[c]});
 			rdBuffer->SafeAppend({{startx + xs, starty     , 0.0f}, colors[c]});
+			rdBuffer->SafeAppend({{startx     , starty     , 0.0f}, colors[c]});
 		}
 	}
 }
@@ -3687,11 +3749,14 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 							buffer->SafeAppend({{outerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+
+							buffer->SafeAppend({{outerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 							buffer->SafeAppend({{innerPos.x, 0.0f, outerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
+							buffer->SafeAppend({{innerPos.x, 0.0f, innerPos.z}, {1.0f, 0.0f, 0.0f, 0.5f}});
 
 							assert(shader->IsBound());
 							// must waste a submit, code below assumes LINES
-							buffer->Submit(GL_QUADS);
+							buffer->Submit(GL_TRIANGLES);
 						}
 					}
 				} break;
@@ -4154,18 +4219,27 @@ void CGuiHandler::DrawFormationFrontOrder(
 
 	{
 		// direction arrow
-		buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 + xdir * 25.0f + zdir *  50.0f, {&color.x}});
+		{
+			buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f                , {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
 
-		buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 - xdir * 40.0f + zdir *  50.0f, {&color.x}});
-		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
-		buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 25.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 25.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 25.0f                , {&color.x}});
+		}
+		{
+			buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 - xdir * 40.0f + zdir *  50.0f, {&color.x}});
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 +                zdir * 100.0f, {&color.x}});
+			buffer->SafeAppend({pos1 + xdir * 40.0f + zdir *  50.0f, {&color.x}});
+		}
 
 		glAttribStatePtr->DisableDepthTest();
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 		glAttribStatePtr->EnableDepthTest();
 	}
 
@@ -4285,17 +4359,27 @@ static void DrawBoxShape(const void* data)
 
 	assert(boxData->shader->IsBound());
 
-	// top
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
-	// bottom
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
-	boxData->buffer->Submit(GL_QUADS);
+	{
+		// top
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+	}
+	{
+		// bottom
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	}
+	boxData->buffer->Submit(GL_TRIANGLES);
 
 	// sides
 	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});

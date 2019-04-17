@@ -66,7 +66,10 @@ void CTracerProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos + UpVector * 0.001f                   ,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
 	va->SafeAppend({drawPos + UpVector * 0.001f - dir * drawLength,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
 	va->SafeAppend({drawPos - UpVector * 0.001f - dir * drawLength,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
+
+	va->SafeAppend({drawPos - UpVector * 0.001f - dir * drawLength,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
 	va->SafeAppend({drawPos - UpVector * 0.001f                   ,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
+	va->SafeAppend({drawPos + UpVector * 0.001f                   ,  1.0f / 16, 1.0f / 16,  {1.0f, 1.0f, 0.1f, 0.4f}});
 }
 
 

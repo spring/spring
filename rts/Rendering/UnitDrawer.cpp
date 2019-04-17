@@ -565,7 +565,7 @@ void CUnitDrawer::DrawUnitIcons()
 			DrawUnitIcon(const_cast<CUnit*>(unit), buffer, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR));
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 	}
 
 
@@ -745,15 +745,18 @@ void CUnitDrawer::DrawUnitIcon(CUnit* unit, GL::RenderDataBufferTC* buffer, bool
 	const float3 dx = camera->GetRight() * unit->iconRadius;
 	const float3 vn = pos - dx;
 	const float3 vp = pos + dx;
-	const float3 vnn = vn - dy; // bottom-left
-	const float3 vpn = vp - dy; // bottom-right
-	const float3 vnp = vn + dy; // top-right
-	const float3 vpp = vp + dy; // top-left
+	const float3 bl = vn - dy; // bottom-left
+	const float3 br = vp - dy; // bottom-right
+	const float3 tl = vn + dy; // top-left
+	const float3 tr = vp + dy; // top-right
 
-	buffer->SafeAppend({vnn, 0.0f, 1.0f, color});
-	buffer->SafeAppend({vpn, 1.0f, 1.0f, color});
-	buffer->SafeAppend({vpp, 1.0f, 0.0f, color});
-	buffer->SafeAppend({vnp, 0.0f, 0.0f, color});
+	buffer->SafeAppend({bl, 0.0f, 1.0f, color});
+	buffer->SafeAppend({br, 1.0f, 1.0f, color});
+	buffer->SafeAppend({tr, 1.0f, 0.0f, color});
+
+	buffer->SafeAppend({tr, 1.0f, 0.0f, color});
+	buffer->SafeAppend({tl, 0.0f, 0.0f, color});
+	buffer->SafeAppend({bl, 0.0f, 1.0f, color});
 }
 
 
@@ -1524,24 +1527,33 @@ bool CUnitDrawer::ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::ve
 		const SColor   illegalSquareColors[] = {{0.9f, 0.0f, 0.0f, 0.7f}};
 
 		for (const auto& buildableSquare : buildableSquares) {
-			wla->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]});
-			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]});
-			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
-			wla->SafeAppend({buildableSquare + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]});
+			wla->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]}); // tl
+			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0,           0), buildableSquareColors[canBuild]}); // tr
+			wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]}); // br
+
+			// wla->SafeAppend({buildableSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), buildableSquareColors[canBuild]}); // br
+			wla->SafeAppend({buildableSquare + float3(          0, 0, SQUARE_SIZE), buildableSquareColors[canBuild]}); // bl
+			// wla->SafeAppend({buildableSquare                                      , buildableSquareColors[canBuild]}); // tl
 		}
 
 		for (const auto& featureSquare : featureSquares) {
-			wla->SafeAppend({featureSquare                                      , featureSquareColors[0]});
-			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]});
-			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]});
-			wla->SafeAppend({featureSquare + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]});
+			wla->SafeAppend({featureSquare                                      , featureSquareColors[0]}); // tl
+			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0,           0), featureSquareColors[0]}); // tr
+			wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]}); // br
+
+			// wla->SafeAppend({featureSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), featureSquareColors[0]}); // br
+			wla->SafeAppend({featureSquare + float3(          0, 0, SQUARE_SIZE), featureSquareColors[0]}); // bl
+			// wla->SafeAppend({featureSquare                                      , featureSquareColors[0]}); // tl
 		}
 
 		for (const auto& illegalSquare : illegalSquares) {
-			wla->SafeAppend({illegalSquare                                      , illegalSquareColors[0]});
-			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]});
-			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]});
-			wla->SafeAppend({illegalSquare + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]});
+			wla->SafeAppend({illegalSquare                                      , illegalSquareColors[0]}); // tl
+			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0,           0), illegalSquareColors[0]}); // tr
+			wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]}); // br
+
+			// wla->SafeAppend({illegalSquare + float3(SQUARE_SIZE, 0, SQUARE_SIZE), illegalSquareColors[0]}); // br
+			wla->SafeAppend({illegalSquare + float3(          0, 0, SQUARE_SIZE), illegalSquareColors[0]}); // bl
+			// wla->SafeAppend({illegalSquare                                      , illegalSquareColors[0]}); // tl
 		}
 
 		return canBuild;
@@ -1647,10 +1659,13 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, GL::RenderDataBufferTC*
 	const float y0 = iconPos.z - iconSizeY;
 	const float y1 = iconPos.z + iconSizeY;
 
-	buffer->SafeAppend({{x0, y0, 0.0f}, 0.0f, 0.0f, color});
-	buffer->SafeAppend({{x1, y0, 0.0f}, 1.0f, 0.0f, color});
-	buffer->SafeAppend({{x1, y1, 0.0f}, 1.0f, 1.0f, color});
-	buffer->SafeAppend({{x0, y1, 0.0f}, 0.0f, 1.0f, color});
+	buffer->SafeAppend({{x0, y0, 0.0f}, 0.0f, 0.0f, color}); // tl
+	buffer->SafeAppend({{x1, y0, 0.0f}, 1.0f, 0.0f, color}); // tr
+	buffer->SafeAppend({{x1, y1, 0.0f}, 1.0f, 1.0f, color}); // br
+
+	buffer->SafeAppend({{x1, y1, 0.0f}, 1.0f, 1.0f, color}); // br
+	buffer->SafeAppend({{x0, y1, 0.0f}, 0.0f, 1.0f, color}); // bl
+	buffer->SafeAppend({{x0, y0, 0.0f}, 0.0f, 0.0f, color}); // tl
 }
 
 void CUnitDrawer::DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const {
@@ -1670,7 +1685,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons(GL::RenderDataBufferTC* buffer) const {
 			DrawUnitMiniMapIcon(unit, buffer);
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 	}
 }
 

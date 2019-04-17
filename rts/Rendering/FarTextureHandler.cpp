@@ -237,10 +237,13 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, GL::RenderDataB
 	const float3 rgv = camera->GetRight() * icon.texScales.x;
 	const float3 cnv = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
 
-	rdb->SafeAppend({pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                , cnv});
-	rdb->SafeAppend({pos + upv + rgv, objTexCoors.x,                 objTexCoors.y + objIconSize.y, cnv});
-	rdb->SafeAppend({pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y, cnv});
-	rdb->SafeAppend({pos - upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y                , cnv});
+	rdb->SafeAppend({pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                , cnv}); // br
+	rdb->SafeAppend({pos + upv + rgv, objTexCoors.x,                 objTexCoors.y + objIconSize.y, cnv}); // tr
+	rdb->SafeAppend({pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y, cnv}); // tl
+
+	rdb->SafeAppend({pos + upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y + objIconSize.y, cnv}); // tl
+	rdb->SafeAppend({pos - upv - rgv, objTexCoors.x + objIconSize.x, objTexCoors.y                , cnv}); // bl
+	rdb->SafeAppend({pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                , cnv}); // br
 }
 
 
@@ -287,7 +290,7 @@ void CFarTextureHandler::Draw()
 			DrawFarTexture(obj, buffer);
 		}
 
-		buffer->Submit(GL_QUADS);
+		buffer->Submit(GL_TRIANGLES);
 		shader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		shader->Disable();
 	}

@@ -162,7 +162,10 @@ void CFireProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
 		va->SafeAppend({interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col});
 		va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
+
+		va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
 		va->SafeAppend({interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col});
+		va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
 	}
 
 	for (const SubParticle& pi: subParticles) {
@@ -189,7 +192,10 @@ void CFireProjectile::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
 			va->SafeAppend({interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col});
 			va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
+
+			va->SafeAppend({interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col});
 			va->SafeAppend({interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col});
+			va->SafeAppend({interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col});
 		}
 
 		unsigned char c;
@@ -206,7 +212,10 @@ void CFireProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - dir1 - dir2, at->xstart, at->ystart, col2});
 		va->SafeAppend({interPos + dir1 - dir2, at->xend,   at->ystart, col2});
 		va->SafeAppend({interPos + dir1 + dir2, at->xend,   at->yend,   col2});
+
+		va->SafeAppend({interPos + dir1 + dir2, at->xend,   at->yend,   col2});
 		va->SafeAppend({interPos - dir1 + dir2, at->xstart, at->yend,   col2});
+		va->SafeAppend({interPos - dir1 - dir2, at->xstart, at->ystart, col2});
 	}
 }
 

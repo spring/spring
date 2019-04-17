@@ -20,10 +20,10 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 
 // between 1 and 4 drawcalls per frame (opaque, water, env * 2)
-// each call updates 4 vertices using a different camera and is
+// each call updates 6 vertices using a different camera and is
 // double-buffered; this means buffer size must be the smallest
 // common multiple of {1,2,3,4} to avoid flickering
-static constexpr unsigned int SKYBOX_VERTEX_CNT = 6 * 4;
+static constexpr unsigned int SKYBOX_VERTEX_CNT = 6 * (2 * 3);
 static constexpr unsigned int SKYBOX_BUFFER_LEN = SKYBOX_VERTEX_CNT * 2;
 
 static_assert((SKYBOX_BUFFER_LEN % 4) == 0, "");
@@ -117,12 +117,15 @@ void CSkyBox::Draw(Game::DrawMode mode)
 		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
 		*(vtxPos++) = {{1.0f, 1.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX,                          0)};
 		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
+
+		*(vtxPos++) = {{1.0f, 0.0f}, -camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY)};
 		*(vtxPos++) = {{0.0f, 0.0f}, -camera->CalcPixelDir(                         0, globalRendering->viewSizeY)};
+		*(vtxPos++) = {{0.0f, 1.0f}, -camera->CalcPixelDir(                         0,                          0)};
 	}
 	{
 		shader->Enable();
 		shader->SetUniform("u_gamma_exponent", globalRendering->gammaExponent);
-		buffer->Submit(GL_QUADS, (((vtxPos - 4) - vtxPtr) + SKYBOX_VERTEX_CNT) % SKYBOX_BUFFER_LEN, 4);
+		buffer->Submit(GL_TRIANGLES, (((vtxPos - 6) - vtxPtr) + SKYBOX_VERTEX_CNT) % SKYBOX_BUFFER_LEN, 6);
 		shader->Disable();
 	}
 

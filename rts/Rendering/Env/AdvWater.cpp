@@ -332,37 +332,54 @@ void CAdvWater::UpdateWater(CGame* game)
 
 		{
 			glBindTexture(GL_TEXTURE_2D, rawBumpTextures[0]);
-			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0046f, color});
-			buffer->SafeAppend({  UpVector, 0.0f, 2.0f + gs->frameNum * 0.0046f, color});
-			buffer->SafeAppend({  XYVector, 2.0f, 2.0f + gs->frameNum * 0.0046f, color});
-			buffer->SafeAppend({ RgtVector, 2.0f, 0.0f + gs->frameNum * 0.0046f, color});
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0046f, color}); // tl
+			buffer->SafeAppend({  UpVector, 0.0f, 2.0f + gs->frameNum * 0.0046f, color}); // bl
+			buffer->SafeAppend({  XYVector, 2.0f, 2.0f + gs->frameNum * 0.0046f, color}); // br
+
+			buffer->SafeAppend({  XYVector, 2.0f, 2.0f + gs->frameNum * 0.0046f, color}); // br
+			buffer->SafeAppend({ RgtVector, 2.0f, 0.0f + gs->frameNum * 0.0046f, color}); // tr
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0046f, color}); // tl
+
 
 			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0026f, color});
 			buffer->SafeAppend({  UpVector, 0.0f, 4.0f + gs->frameNum * 0.0026f, color});
 			buffer->SafeAppend({  XYVector, 2.0f, 4.0f + gs->frameNum * 0.0026f, color});
+
+			buffer->SafeAppend({  XYVector, 2.0f, 4.0f + gs->frameNum * 0.0026f, color});
 			buffer->SafeAppend({ RgtVector, 2.0f, 0.0f + gs->frameNum * 0.0026f, color});
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0026f, color});
+
 
 			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0012f, color});
 			buffer->SafeAppend({  UpVector, 0.0f, 8.0f + gs->frameNum * 0.0012f, color});
 			buffer->SafeAppend({  XYVector, 2.0f, 8.0f + gs->frameNum * 0.0012f, color});
+
+			buffer->SafeAppend({  XYVector, 2.0f, 8.0f + gs->frameNum * 0.0012f, color});
 			buffer->SafeAppend({ RgtVector, 2.0f, 0.0f + gs->frameNum * 0.0012f, color});
-			buffer->Submit(GL_QUADS);
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0012f, color});
+			buffer->Submit(GL_TRIANGLES);
 		}
 		{
 			glBindTexture(GL_TEXTURE_2D, rawBumpTextures[1]);
 			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0036f, color});
 			buffer->SafeAppend({  UpVector, 0.0f, 1.0f + gs->frameNum * 0.0036f, color});
 			buffer->SafeAppend({  XYVector, 1.0f, 1.0f + gs->frameNum * 0.0036f, color});
+
+			buffer->SafeAppend({  XYVector, 1.0f, 1.0f + gs->frameNum * 0.0036f, color});
 			buffer->SafeAppend({ RgtVector, 1.0f, 0.0f + gs->frameNum * 0.0036f, color});
-			buffer->Submit(GL_QUADS);
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0036f, color});
+			buffer->Submit(GL_TRIANGLES);
 		}
 		{
 			glBindTexture(GL_TEXTURE_2D, rawBumpTextures[2]);
 			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0082f, color});
 			buffer->SafeAppend({  UpVector, 0.0f, 1.0f + gs->frameNum * 0.0082f, color});
 			buffer->SafeAppend({  XYVector, 1.0f, 1.0f + gs->frameNum * 0.0082f, color});
+
+			buffer->SafeAppend({  XYVector, 1.0f, 1.0f + gs->frameNum * 0.0082f, color});
 			buffer->SafeAppend({ RgtVector, 1.0f, 0.0f + gs->frameNum * 0.0082f, color});
-			buffer->Submit(GL_QUADS);
+			buffer->SafeAppend({ZeroVector, 0.0f, 0.0f + gs->frameNum * 0.0082f, color});
+			buffer->Submit(GL_TRIANGLES);
 		}
 
 		// this fixes a memory leak on ATI cards

@@ -91,12 +91,15 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::Identity());
 
-	buffer->SafeAppend({texMins.x, texMins.y,  texMins.x, texMins.y});
-	buffer->SafeAppend({texMaxs.x, texMins.y,  texMaxs.x, texMins.y});
-	buffer->SafeAppend({texMaxs.x, texMaxs.y,  texMaxs.x, texMaxs.y});
-	buffer->SafeAppend({texMins.x, texMaxs.y,  texMins.x, texMaxs.y});
+	buffer->SafeAppend({texMins.x, texMins.y,  texMins.x, texMins.y}); // tl
+	buffer->SafeAppend({texMaxs.x, texMins.y,  texMaxs.x, texMins.y}); // tr
+	buffer->SafeAppend({texMaxs.x, texMaxs.y,  texMaxs.x, texMaxs.y}); // br
 
-	buffer->Submit(GL_QUADS);
+	buffer->SafeAppend({texMaxs.x, texMaxs.y,  texMaxs.x, texMaxs.y}); // br
+	buffer->SafeAppend({texMins.x, texMaxs.y,  texMins.x, texMaxs.y}); // bl
+	buffer->SafeAppend({texMins.x, texMins.y,  texMins.x, texMins.y}); // tl
+
+	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
 	glBindTexture(GL_TEXTURE_2D, 0);

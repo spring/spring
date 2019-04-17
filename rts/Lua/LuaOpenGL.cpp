@@ -1751,12 +1751,15 @@ int LuaOpenGL::Rect(lua_State* L)
 	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
 
 	// use whatever c0 was most recently set by gl.Color; immediate submission
-	buffer->SafeAppend({{x1, y1, 0.0f}, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x2, y1, 0.0f}, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x2, y2, 0.0f}, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x1, y2, 0.0f}, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x1, y1, 0.0f}, {luaBufferVertex.c0}}); // tl
+	buffer->SafeAppend({{x2, y1, 0.0f}, {luaBufferVertex.c0}}); // tr
+	buffer->SafeAppend({{x2, y2, 0.0f}, {luaBufferVertex.c0}}); // br
 
-	buffer->Submit(GL_QUADS);
+	buffer->SafeAppend({{x2, y2, 0.0f}, {luaBufferVertex.c0}}); // br
+	buffer->SafeAppend({{x1, y2, 0.0f}, {luaBufferVertex.c0}}); // bl
+	buffer->SafeAppend({{x1, y1, 0.0f}, {luaBufferVertex.c0}}); // tl
+
+	buffer->Submit(GL_TRIANGLES);
 	return 0;
 }
 
@@ -1797,12 +1800,15 @@ int LuaOpenGL::TexRect(lua_State* L)
 			t2 = 1.0f;
 		}
 
-		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}});
-		buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}});
-		buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}});
-		buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}});
+		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
+		buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}}); // tr
+		buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}}); // br
 
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}}); // br
+		buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}}); // bl
+		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
+
+		buffer->Submit(GL_TRIANGLES);
 		return 0;
 	}
 
@@ -1812,12 +1818,15 @@ int LuaOpenGL::TexRect(lua_State* L)
 	t2 = luaL_checkfloat(L, 8);
 
 	// use whatever c0 was most recently set by gl.Color; immediate submission
-	buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}});
-	buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}});
+	buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
+	buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}}); // tr
+	buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}}); // br
 
-	buffer->Submit(GL_QUADS);
+	buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}}); // br
+	buffer->SafeAppend({{x1, y2, 0.0f}, s1, t2, {luaBufferVertex.c0}}); // bl
+	buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
+
+	buffer->Submit(GL_TRIANGLES);
 	return 0;
 }
 

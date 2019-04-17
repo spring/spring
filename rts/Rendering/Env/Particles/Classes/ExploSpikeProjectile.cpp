@@ -97,7 +97,10 @@ void CExploSpikeProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
 	va->SafeAppend({drawPos + l - w, let->xend,   let->ystart, col});
 	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
+
+	va->SafeAppend({drawPos - l - w, let->xstart, let->ystart, col});
 	va->SafeAppend({drawPos - l + w, let->xstart, let->yend,   col});
+	va->SafeAppend({drawPos + l + w, let->xend,   let->yend,   col});
 	#undef let
 }
 

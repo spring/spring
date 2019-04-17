@@ -72,11 +72,14 @@ void GameControllerTextInput::Draw() {
 		shader->Enable();
 		shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
 		shader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos             , inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tl
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // bl
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // br
+
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY + caretHeight, 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // br
+		buffer->SafeAppend({{caretScrPos + caretWidth, inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tr
+		buffer->SafeAppend({{caretScrPos             , inputTextPosY              , 0.0f}, {caretIllum, caretIllum, caretIllum, 0.75f}}); // tl
+		buffer->Submit(GL_TRIANGLES);
 		shader->Disable();
 	}
 

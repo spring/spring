@@ -111,7 +111,7 @@ void CFlareProjectile::Draw(GL::RenderDataBufferTC* va) const
 	if (gs->frameNum <= activateFrame)
 		return;
 
-	constexpr float rad = 6.0f;
+	constexpr float radius = 6.0f;
 	const     float alpha = std::max(0.0f, 1.0f - (gs->frameNum - activateFrame) * alphaFalloff);
 
 	unsigned char col[4];
@@ -124,10 +124,13 @@ void CFlareProjectile::Draw(GL::RenderDataBufferTC* va) const
 		const float3 interPos = subProjPos[a] + subProjVel[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		va->SafeAppend({interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col});
-		va->SafeAppend({interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col});
-		va->SafeAppend({interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col});
-		va->SafeAppend({interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * radius - camera->GetUp() * radius, fpt->xstart, fpt->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * radius - camera->GetUp() * radius, fpt->xend,   fpt->ystart, col});
+		va->SafeAppend({interPos + camera->GetRight() * radius + camera->GetUp() * radius, fpt->xend,   fpt->yend,   col});
+
+		va->SafeAppend({interPos + camera->GetRight() * radius + camera->GetUp() * radius, fpt->xend,   fpt->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * radius + camera->GetUp() * radius, fpt->xstart, fpt->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * radius - camera->GetUp() * radius, fpt->xstart, fpt->ystart, col});
 		#undef fpt
 	}
 }

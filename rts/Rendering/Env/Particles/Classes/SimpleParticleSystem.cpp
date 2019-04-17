@@ -103,13 +103,19 @@ void CSimpleParticleSystem::Draw(GL::RenderDataBufferTC* va) const
 				va->SafeAppend({interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color});
 				va->SafeAppend({interPos - ydir * size + xdir * size, texture->xend,   texture->ystart, color});
 				va->SafeAppend({interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color});
+
+				va->SafeAppend({interPos + ydir * size + xdir * size, texture->xend,   texture->yend,   color});
 				va->SafeAppend({interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color});
+				va->SafeAppend({interPos - ydir * size - xdir * size, texture->xstart, texture->ystart, color});
 			} else {
 				// in this case the particle's coor-system is degenerate
 				va->SafeAppend({interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color});
 				va->SafeAppend({interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color});
 				va->SafeAppend({interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color});
+
+				va->SafeAppend({interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color});
 				va->SafeAppend({interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color});
+				va->SafeAppend({interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color});
 			}
 		}
 	} else {
@@ -129,7 +135,10 @@ void CSimpleParticleSystem::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color});
 			va->SafeAppend({interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color});
 			va->SafeAppend({interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color});
+
+			va->SafeAppend({interPos + cameraRight + cameraUp, texture->xend,   texture->yend,   color});
 			va->SafeAppend({interPos - cameraRight + cameraUp, texture->xstart, texture->yend,   color});
+			va->SafeAppend({interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color});
 		}
 	}
 }

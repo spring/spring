@@ -69,9 +69,6 @@ void CLineDrawer::DrawAll(bool onMiniMap)
 	wla->Setup(buffer, xScale, yScale, onMiniMap? 2.5f : 1.0f, projMat * viewMat, onMiniMap);
 
 	const auto DrawLines = [&](const std::vector<Line>& lines, unsigned int glType) {
-		// if (lines.empty())
-			// return;
-
 		for (const auto& line: lines) {
 			if (line.empty())
 				continue;

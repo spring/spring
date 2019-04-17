@@ -639,7 +639,7 @@ void CProjectileDrawer::DrawParticlePass(Shader::IProgramObject* po, bool, bool)
 		po->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		po->SetUniform("u_alpha_test_ctrl", 0.0f, 1.0f, 0.0f, 0.0f); // test > 0.0
 		textureAtlas->BindTexture();
-		fxBuffer->Submit(GL_QUADS);
+		fxBuffer->Submit(GL_TRIANGLES);
 		po->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 		po->Disable();
 	} else {
@@ -694,7 +694,7 @@ void CProjectileDrawer::DrawParticleShadowPass(Shader::IProgramObject* po)
 	po->SetUniformMatrix4fv(1, false, shadowHandler.GetShadowViewMatrix());
 	po->SetUniformMatrix4fv(2, false, shadowHandler.GetShadowProjMatrix());
 	textureAtlas->BindTexture();
-	fxBuffer->Submit(GL_QUADS);
+	fxBuffer->Submit(GL_TRIANGLES);
 	po->Disable();
 }
 
@@ -806,7 +806,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 			continue;
 
 		if (depthTest != gf->depthTest) {
-			gfBuffer->Submit(GL_QUADS);
+			gfBuffer->Submit(GL_TRIANGLES);
 
 			if ((depthTest = gf->depthTest)) {
 				glAttribStatePtr->EnableDepthTest();
@@ -815,7 +815,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 			}
 		}
 		if (depthMask != gf->depthMask) {
-			gfBuffer->Submit(GL_QUADS);
+			gfBuffer->Submit(GL_TRIANGLES);
 
 			if ((depthMask = gf->depthMask)) {
 				glAttribStatePtr->EnableDepthMask();
@@ -827,7 +827,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 		gf->Draw(gfBuffer);
 	}
 
-	gfBuffer->Submit(GL_QUADS);
+	gfBuffer->Submit(GL_TRIANGLES);
 	gfShader->SetUniform("u_alpha_test_ctrl", 0.0f, 0.0f, 0.0f, 1.0f); // no test
 	gfShader->Disable();
 
@@ -882,24 +882,34 @@ void CProjectileDrawer::UpdatePerlin() {
 
 		std::fill(std::begin(col), std::end(col), int((1.0f - perlinData.blendWeights[a]) * 16 * size));
 
-		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
-		buffer->SafeAppend({ZeroVector,     0,     0, col});
-		buffer->SafeAppend({  UpVector,     0, tsize, col});
-		buffer->SafeAppend({  XYVector, tsize, tsize, col});
-		buffer->SafeAppend({ RgtVector, tsize,     0, col});
-		buffer->Submit(GL_QUADS);
+		{
+			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 0]);
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->SafeAppend({  UpVector,     0, tsize, col});
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+			buffer->SafeAppend({ RgtVector, tsize,     0, col});
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->Submit(GL_TRIANGLES);
+		}
 
 		if (a == 0)
 			glAttribStatePtr->EnableBlendMask();
 
 		std::fill(std::begin(col), std::end(col), int(perlinData.blendWeights[a] * 16 * size));
 
-		glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 1]);
-		buffer->SafeAppend({ZeroVector,     0,     0, col});
-		buffer->SafeAppend({  UpVector,     0, tsize, col});
-		buffer->SafeAppend({  XYVector, tsize, tsize, col});
-		buffer->SafeAppend({ RgtVector, tsize,     0, col});
-		buffer->Submit(GL_QUADS);
+		{
+			glBindTexture(GL_TEXTURE_2D, perlinData.blendTextures[a * 2 + 1]);
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->SafeAppend({  UpVector,     0, tsize, col});
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+
+			buffer->SafeAppend({  XYVector, tsize, tsize, col});
+			buffer->SafeAppend({ RgtVector, tsize,     0, col});
+			buffer->SafeAppend({ZeroVector,     0,     0, col});
+			buffer->Submit(GL_TRIANGLES);
+		}
 
 		speed *= 0.6f;
 		size *= 2.0f;

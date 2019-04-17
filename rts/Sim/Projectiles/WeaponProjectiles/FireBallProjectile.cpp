@@ -58,7 +58,10 @@ void CFireBallProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col});
 		va->SafeAppend({sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend,   ept->ystart, col});
 		va->SafeAppend({sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col});
+
+		va->SafeAppend({sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col});
 		va->SafeAppend({sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend,   col});
+		va->SafeAppend({sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col});
 		#undef ept
 	}
 
@@ -71,7 +74,10 @@ void CFireBallProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col});
 		va->SafeAppend({interPos - (speed * 0.5f * i) + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col});
 		va->SafeAppend({interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col});
+
+		va->SafeAppend({interPos - (speed * 0.5f * i) + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col});
 		va->SafeAppend({interPos - (speed * 0.5f * i) - camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col});
+		va->SafeAppend({interPos - (speed * 0.5f * i) - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col});
 		#undef dgt
 	}
 }

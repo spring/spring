@@ -67,21 +67,33 @@ void CBitmapMuzzleFlame::Draw(GL::RenderDataBufferTC* va) const
 	const float3 ydir = (dir.cross(xdir)).SafeANormalize();
 	const float3 frontpos = pos + dir * frontOffset * ilength;
 
-	va->SafeAppend({pos + ydir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
-	va->SafeAppend({pos + ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col});
-	va->SafeAppend({pos - ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
-	va->SafeAppend({pos - ydir * isize,                 sideTexture->xstart, sideTexture->yend,   col});
+	{
+		va->SafeAppend({pos + ydir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
+		va->SafeAppend({pos + ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col});
+		va->SafeAppend({pos - ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
 
-	va->SafeAppend({pos + xdir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
-	va->SafeAppend({pos + xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col});
-	va->SafeAppend({pos - xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
-	va->SafeAppend({pos - xdir * isize,                 sideTexture->xstart, sideTexture->yend,   col});
+		va->SafeAppend({pos - ydir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
+		va->SafeAppend({pos - ydir * isize,                 sideTexture->xstart, sideTexture->yend,   col});
+		va->SafeAppend({pos + ydir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
+	}
+	{
+		va->SafeAppend({pos + xdir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
+		va->SafeAppend({pos + xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col});
+		va->SafeAppend({pos - xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
 
-	va->SafeAppend({frontpos - xdir * isize + ydir * isize, frontTexture->xstart, frontTexture->ystart, col});
-	va->SafeAppend({frontpos + xdir * isize + ydir * isize, frontTexture->xend,   frontTexture->ystart, col});
-	va->SafeAppend({frontpos + xdir * isize - ydir * isize, frontTexture->xend,   frontTexture->yend,   col});
-	va->SafeAppend({frontpos - xdir * isize - ydir * isize, frontTexture->xstart, frontTexture->yend,   col});
+		va->SafeAppend({pos - xdir * isize + dir * ilength, sideTexture->xend,   sideTexture->yend,   col});
+		va->SafeAppend({pos - xdir * isize,                 sideTexture->xstart, sideTexture->yend,   col});
+		va->SafeAppend({pos + xdir * isize,                 sideTexture->xstart, sideTexture->ystart, col});
+	}
+	{
+		va->SafeAppend({frontpos - xdir * isize + ydir * isize, frontTexture->xstart, frontTexture->ystart, col});
+		va->SafeAppend({frontpos + xdir * isize + ydir * isize, frontTexture->xend,   frontTexture->ystart, col});
+		va->SafeAppend({frontpos + xdir * isize - ydir * isize, frontTexture->xend,   frontTexture->yend,   col});
 
+		va->SafeAppend({frontpos + xdir * isize - ydir * isize, frontTexture->xend,   frontTexture->yend,   col});
+		va->SafeAppend({frontpos - xdir * isize - ydir * isize, frontTexture->xstart, frontTexture->yend,   col});
+		va->SafeAppend({frontpos - xdir * isize + ydir * isize, frontTexture->xstart, frontTexture->ystart, col});
+	}
 }
 
 void CBitmapMuzzleFlame::Update()

@@ -75,7 +75,10 @@ void CEmgProjectile::Draw(GL::RenderDataBufferTC* va) const
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col});
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius-camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col});
 }
 
 int CEmgProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)

@@ -59,10 +59,14 @@ void CNanoProjectile::Update()
 void CNanoProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
 	const auto* gfxt = projectileDrawer->gfxtex;
+
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color});
 	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
+
+	va->SafeAppend({drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color});
 	va->SafeAppend({drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color});
+	va->SafeAppend({drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color});
 }
 
 void CNanoProjectile::DrawOnMinimap(GL::RenderDataBufferC* va)

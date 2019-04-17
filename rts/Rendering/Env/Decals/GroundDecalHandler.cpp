@@ -42,7 +42,7 @@
 // 4K * 2 (object plus scar) decals, 32MB per buffer
 #define NUM_BUFFER_ELEMS ((MAX_NUM_DECALS * 2) * 1024)
 #define ELEM_BUFFER_SIZE (sizeof(VA_TYPE_TC))
-#define QUAD_BUFFER_SIZE (4 * ELEM_BUFFER_SIZE)
+#define QUAD_BUFFER_SIZE (6 * ELEM_BUFFER_SIZE)
 
 
 static FixedDynMemPool<sizeof(SolidObjectGroundDecal), 64, 1024> sogdMemPool;
@@ -250,7 +250,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		// clip decal dimensions against map-edges
 		const int cxsize = (dxsize - dxoff) - ((dxpos + dxsize) - gsmx) * ((dxpos + dxsize) > gsmx);
 		const int czsize = (dzsize - dzoff) - ((dzpos + dzsize) - gsmy) * ((dzpos + dzsize) > gsmy);
-		const int nverts = cxsize * czsize * 4;
+		const int nverts = cxsize * czsize * (2 * 3);
 
 
 		const float xts = 1.0f / dxsize;
@@ -307,10 +307,13 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 				#define HEIGHT2WORLD(x) ((x) << 3)
 				#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
-				*(curBufferPos++) = { VERTEX(px    , yv[0], pz    ),  uv[0], uv[1],  color};
-				*(curBufferPos++) = { VERTEX(px + 1, yv[1], pz    ),  uv[2], uv[3],  color};
-				*(curBufferPos++) = { VERTEX(px + 1, yv[2], pz + 1),  uv[4], uv[5],  color};
-				*(curBufferPos++) = { VERTEX(px    , yv[3], pz + 1),  uv[6], uv[7],  color};
+				*(curBufferPos++) = { VERTEX(px    , yv[0], pz    ),  uv[0], uv[1],  color}; // tl
+				*(curBufferPos++) = { VERTEX(px + 1, yv[1], pz    ),  uv[2], uv[3],  color}; // tr
+				*(curBufferPos++) = { VERTEX(px + 1, yv[2], pz + 1),  uv[4], uv[5],  color}; // br
+
+				*(curBufferPos++) = { VERTEX(px + 1, yv[2], pz + 1),  uv[4], uv[5],  color}; // br
+				*(curBufferPos++) = { VERTEX(px    , yv[3], pz + 1),  uv[6], uv[7],  color}; // bl
+				*(curBufferPos++) = { VERTEX(px    , yv[0], pz    ),  uv[0], uv[1],  color}; // tl
 				#undef VERTEX
 				#undef HEIGHT2WORLD
 			}
@@ -327,7 +330,7 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 	decalShaders[DECAL_SHADER_CURR]->SetUniform1f(12, decal->alpha);
 	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(8, false, mat);
-	decalBuffer.Submit(GL_QUADS, decalIdx, numVerts);
+	decalBuffer.Submit(GL_TRIANGLES, decalIdx, numVerts);
 
 	#undef HEIGHT
 	#endif
@@ -357,7 +360,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 		const unsigned int sz = std::max(                0, int((pos.z - radius) * 0.0625f));
 		const unsigned int ex = std::min(mapDims.hmapx - 1, int((pos.x + radius) * 0.0625f));
 		const unsigned int ez = std::min(mapDims.hmapy - 1, int((pos.z + radius) * 0.0625f));
-		const unsigned int nv = ((ex - sx) + 1) * ((ez - sz) + 1) * 4;
+		const unsigned int nv = ((ex - sx) + 1) * ((ez - sz) + 1) * (2 * 3);
 
 		// create the scar texture-quads
 		float px1 = sx * TEX_QUAD_SIZE;
@@ -383,10 +386,13 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 				const float tz1 = std::min(0.5f, (pos.z - pz1) / radius4 + 0.25f);
 				const float tz2 = std::max(0.0f, (pos.z - pz2) / radius4 + 0.25f);
 
-				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + tx, tz1 + ty, color};
-				*(curBufferPos++) = {float3(px2, 0.0f, pz1), tx2 + tx, tz1 + ty, color};
-				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + tx, tz2 + ty, color};
-				*(curBufferPos++) = {float3(px1, 0.0f, pz2), tx1 + tx, tz2 + ty, color};
+				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + tx, tz1 + ty, color}; // tl
+				*(curBufferPos++) = {float3(px2, 0.0f, pz1), tx2 + tx, tz1 + ty, color}; // tr
+				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + tx, tz2 + ty, color}; // br
+
+				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + tx, tz2 + ty, color}; // br
+				*(curBufferPos++) = {float3(px1, 0.0f, pz2), tx1 + tx, tz2 + ty, color}; // bl
+				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + tx, tz1 + ty, color}; // tl
 
 				pz1 = pz2;
 			}
@@ -404,7 +410,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 
 	decalShaders[DECAL_SHADER_CURR]->SetUniform1f(12, scar.fadedAlpha);
 	decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(8, false, CMatrix44f::Identity());
-	decalBuffer.Submit(GL_QUADS, decalIdx, numVerts);
+	decalBuffer.Submit(GL_TRIANGLES, decalIdx, numVerts);
 	#endif
 }
 

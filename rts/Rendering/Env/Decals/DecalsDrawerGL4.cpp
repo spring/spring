@@ -1121,10 +1121,13 @@ static void DRAW_DECAL(const CDecalsDrawerGL4::Decal* d, GL::RenderDataBufferTC*
 	const float4 tc  = d->texOffsets;
 	const SColor  c  = {1.0f, 1.0f, 1.0f, 1.0f};
 
-	rdb->SafeAppend({m * -ds1, tc[0], tc[1], c});
-	rdb->SafeAppend({m *  ds2, tc[2], tc[1], c});
-	rdb->SafeAppend({m *  ds1, tc[2], tc[3], c});
-	rdb->SafeAppend({m * -ds2, tc[0], tc[3], c});
+	rdb->SafeAppend({m * -ds1, tc[0], tc[1], c}); // bl
+	rdb->SafeAppend({m *  ds2, tc[2], tc[1], c}); // br
+	rdb->SafeAppend({m *  ds1, tc[2], tc[3], c}); // tr
+
+	rdb->SafeAppend({m *  ds1, tc[2], tc[3], c}); // tr
+	rdb->SafeAppend({m * -ds2, tc[0], tc[3], c}); // tl
+	rdb->SafeAppend({m * -ds1, tc[0], tc[1], c}); // bl
 }
 
 
@@ -1285,7 +1288,7 @@ void CDecalsDrawerGL4::UpdateOverlap_Initialize(GL::RenderDataBufferTC* rdb)
 			DRAW_DECAL(&d, rdb);
 		}
 
-		rdb->Submit(GL_QUADS);
+		rdb->Submit(GL_TRIANGLES);
 	}
 
 	#if 0
@@ -1311,7 +1314,7 @@ void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& can
 		glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, q);
 
 		DRAW_DECAL(&decals[i], rdb);
-		rdb->Submit(GL_QUADS);
+		rdb->Submit(GL_TRIANGLES);
 
 		glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
 		waitingOverlapGlQueries.emplace_back(i, q);
@@ -1376,7 +1379,7 @@ std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries(GL::RenderDataBuff
 		numFreedDecals++;
 	}
 
-	rdb->Submit(GL_QUADS);
+	rdb->Submit(GL_TRIANGLES);
 
 
 	candidatesForRemoval.erase(candidatesForRemoval.begin(), eraseIt);

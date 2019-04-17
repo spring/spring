@@ -33,9 +33,9 @@ private:
 	bool GenBarkTextures(const std::string& leafTexFile);
 	void GenVertexBuffers();
 
-	void CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);
-	void TrunkIterator(const float3& start, const float3& dir, float length, float size, int depth);
-	void DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size);
+	void CreateBushLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);
+	void BushTrunkIterator(const float3& start, const float3& dir, float length, float size, int depth);
+	void DrawBushTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size);
 	void DrawPineTrunk(const float3& start, const float3& end, float size);
 	void DrawPineBranch(const float3& start, const float3& dir, float size);
 	void CreateGranTexBranch(const float3& start, const float3& end);

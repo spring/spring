@@ -407,8 +407,11 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 			buffer->SafeAppend({{cpos.x - cpos.w, 0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
 			buffer->SafeAppend({{cpos.x - cpos.w, 0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
 			buffer->SafeAppend({{cpos.x + cpos.w, 0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+
+			buffer->SafeAppend({{cpos.x + cpos.w, 0.0f, cpos.z + cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
 			buffer->SafeAppend({{cpos.x + cpos.w, 0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
-			buffer->Submit(GL_QUADS);
+			buffer->SafeAppend({{cpos.x - cpos.w, 0.0f, cpos.z - cpos.w}, {0.0f, 0.5f, 0.3f, 0.50f}});
+			buffer->Submit(GL_TRIANGLES);
 		}
 
 		{
@@ -442,8 +445,11 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 		buffer->SafeAppend({{0.0f, 0.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
 		buffer->SafeAppend({{1.0f, 0.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
 		buffer->SafeAppend({{1.0f, 1.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+
+		buffer->SafeAppend({{1.0f, 1.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
 		buffer->SafeAppend({{0.0f, 1.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
-		buffer->Submit(GL_QUADS);
+		buffer->SafeAppend({{0.0f, 0.0f, -1.0f}, {0.0f, 0.2f, 0.8f, 0.333f}});
+		buffer->Submit(GL_TRIANGLES);
 
 		shader->Disable();
 	}

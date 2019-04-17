@@ -7,8 +7,8 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/SpringMath.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
@@ -76,30 +76,34 @@ void CLightningProjectile::Draw(GL::RenderDataBufferTC* va) const
 	const float3 ddir = (targetPos - startPos).Normalize();
 	const float3 dif  = (startPos - camera->GetPos()).Normalize();
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
-	float3 tempPos = startPos;
+
+	const float3 tmpPos = startPos;
 
 	for (int d = 1; d < NUM_DISPLACEMENTS - 1; ++d) {
-		float f = (d + 1) * 0.111f;
+		const float3 mixPos = mix(startPos, targetPos, (d + 1) * 0.111f);
 
 		#define WDV (&weaponDef->visuals)
-		va->SafeAppend({tempPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col});
-		va->SafeAppend({tempPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col});
-		tempPos = (startPos * (1.0f - f)) + (targetPos * f);
-		va->SafeAppend({tempPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col});
-		va->SafeAppend({tempPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + (dir1 * (displacements[d    ] - WDV->thickness)), WDV->texture1->xstart, WDV->texture1->yend,   col});
+		va->SafeAppend({mixPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col});
+
+		va->SafeAppend({mixPos + (dir1 * (displacements[d + 1] - WDV->thickness)), WDV->texture1->xend,   WDV->texture1->yend,   col});
+		va->SafeAppend({mixPos + (dir1 * (displacements[d + 1] + WDV->thickness)), WDV->texture1->xend,   WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + (dir1 * (displacements[d    ] + WDV->thickness)), WDV->texture1->xstart, WDV->texture1->ystart, col});
 		#undef WDV
 	}
 
-	tempPos = startPos;
 	for (int d = 1; d < NUM_DISPLACEMENTS - 1; ++d) {
-		const float f = (d + 1) * 0.111f;
+		const float3 mixPos = mix(startPos, targetPos, (d + 1) * 0.111f);
 
 		#define WDV (&weaponDef->visuals)
-		va->SafeAppend({tempPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col});
-		va->SafeAppend({tempPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col});
-		tempPos = startPos * (1.0f - f) + targetPos * f;
-		va->SafeAppend({tempPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col});
-		va->SafeAppend({tempPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + dir1 * (displacements2[d    ] - WDV->thickness), WDV->texture1->xstart, WDV->texture1->yend,   col});
+		va->SafeAppend({mixPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col});
+
+		va->SafeAppend({mixPos + dir1 * (displacements2[d + 1] - WDV->thickness), WDV->texture1->xend,   WDV->texture1->yend,   col});
+		va->SafeAppend({mixPos + dir1 * (displacements2[d + 1] + WDV->thickness), WDV->texture1->xend,   WDV->texture1->ystart, col});
+		va->SafeAppend({tmpPos + dir1 * (displacements2[d    ] + WDV->thickness), WDV->texture1->xstart, WDV->texture1->ystart, col});
 		#undef WDV
 	}
 }

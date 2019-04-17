@@ -283,13 +283,16 @@ void CRoamMeshDrawer::DrawInMiniMap()
 		if (p.IsVisible(CCameraHandler::GetActiveCamera()))
 			continue;
 
-		rdbc->SafeAppend({{patchPos.x                    , patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
-		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
-		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
-		rdbc->SafeAppend({{patchPos.x                    , patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}});
+		rdbc->SafeAppend({{patchPos.x                    , patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // tl
+		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // tr
+		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // br
+
+		rdbc->SafeAppend({{patchPos.x + PATCH_SIZE * 1.0f, patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // br
+		rdbc->SafeAppend({{patchPos.x                    , patchPos.y + PATCH_SIZE * 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // bl
+		rdbc->SafeAppend({{patchPos.x                    , patchPos.y                    , 0.0f}, {0.0f, 0.0f, 0.0f, 0.5f}}); // tl
 	}
 
-	rdbc->Submit(GL_QUADS);
+	rdbc->Submit(GL_TRIANGLES);
 	prog->Disable();
 
 	globalRendering->drawFrame += 1;

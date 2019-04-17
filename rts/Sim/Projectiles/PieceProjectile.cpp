@@ -268,7 +268,10 @@ void CPieceProjectile::Draw(GL::RenderDataBufferTC* va) const
 		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xend,   eft->ystart, col});
 		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col});
+
+		va->SafeAppend({interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xend,   eft->yend,   col});
 		va->SafeAppend({interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, eft->xstart, eft->yend,   col});
+		va->SafeAppend({interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, eft->xstart, eft->ystart, col});
 	}
 }
 

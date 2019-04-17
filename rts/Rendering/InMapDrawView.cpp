@@ -128,20 +128,33 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point, GL:
 	const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
 	const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
 
-	buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size,               0.25f, 1.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color});
-	buffer->SafeAppend({pos1 - xdir * size + ydir * size, 0.00f, 0.0f, color});
+	{
+		buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color}); // tl
+		buffer->SafeAppend({pos1 + xdir * size,               0.25f, 1.0f, color}); // tr
+		buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color}); // br
 
-	buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
-	buffer->SafeAppend({pos1 + xdir * size,               0.75f, 1.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
-	buffer->SafeAppend({pos2 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 + xdir * size + ydir * size, 0.00f, 1.0f, color}); // br
+		buffer->SafeAppend({pos1 - xdir * size + ydir * size, 0.00f, 0.0f, color}); // bl
+		buffer->SafeAppend({pos1 - xdir * size,               0.25f, 0.0f, color}); // tl
+	}
+	{
+		buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 + xdir * size,               0.75f, 1.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
 
-	buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size,               0.25f, 1.0f, color});
-	buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
-	buffer->SafeAppend({pos2 - xdir * size - ydir * size, 0.00f, 0.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.75f, 1.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size,               0.75f, 0.0f, color});
+		buffer->SafeAppend({pos1 - xdir * size,               0.75f, 0.0f, color});
+	}
+	{
+		buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size,               0.25f, 1.0f, color});
+		buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
+
+		buffer->SafeAppend({pos2 + xdir * size - ydir * size, 0.00f, 1.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size - ydir * size, 0.00f, 0.0f, color});
+		buffer->SafeAppend({pos2 - xdir * size,               0.25f, 0.0f, color});
+	}
 
 	if (point->GetLabel().empty())
 		return;
@@ -216,7 +229,7 @@ void CInMapDrawView::Draw()
 		pointShader->Enable();
 		pointShader->SetUniformMatrix4x4<float>("u_movi_mat", false, camera->GetViewMatrix());
 		pointShader->SetUniformMatrix4x4<float>("u_proj_mat", false, camera->GetProjectionMatrix());
-		pointBuffer->Submit(GL_QUADS);
+		pointBuffer->Submit(GL_TRIANGLES);
 		pointShader->Disable();
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}

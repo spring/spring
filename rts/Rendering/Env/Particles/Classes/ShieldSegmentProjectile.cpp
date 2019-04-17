@@ -348,7 +348,10 @@ void ShieldSegmentProjectile::Draw(GL::RenderDataBufferTC* va) const
 			va->SafeAppend({shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color});
 			va->SafeAppend({shieldPos + vertices[idxTR] * size, texCoors[idxTR].x, texCoors[idxTR].y, color});
 			va->SafeAppend({shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color});
+
+			va->SafeAppend({shieldPos + vertices[idxBR] * size, texCoors[idxBR].x, texCoors[idxBR].y, color});
 			va->SafeAppend({shieldPos + vertices[idxBL] * size, texCoors[idxBL].x, texCoors[idxBL].y, color});
+			va->SafeAppend({shieldPos + vertices[idxTL] * size, texCoors[idxTL].x, texCoors[idxTL].y, color});
 		}
 	}
 }
