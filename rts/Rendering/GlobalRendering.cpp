@@ -34,7 +34,7 @@ CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).descript
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceCoreContext).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
