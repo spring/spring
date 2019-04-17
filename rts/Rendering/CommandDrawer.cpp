@@ -52,20 +52,23 @@ void CommandDrawer::Draw(const CCommandAI* cai, bool onMiniMap) const {
 	const CMatrix44f& projMat = onMiniMap? minimap->GetProjMat(0): camera->GetProjectionMatrix();
 	const CMatrix44f& viewMat = onMiniMap? minimap->GetViewMat(0): camera->GetViewMatrix();
 
+	const auto& DrawBuffer = [&viewMat, &projMat](GL::RenderDataBufferC* rdb, Shader::IProgramObject* ipo) {
+		// hand off all surface circles
+		ipo->Enable();
+		ipo->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
+		ipo->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
+		rdb->Submit(GL_LINES);
+		ipo->Disable();
+	};
+
 	// note: {Air,Builder}CAI inherit from MobileCAI, so test that last
-	if ((dynamic_cast<const     CAirCAI*>(cai)) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai), buffer); return; }
-	if ((dynamic_cast<const CBuilderCAI*>(cai)) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai), buffer); return; }
-	if ((dynamic_cast<const CFactoryCAI*>(cai)) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai), buffer); return; }
-	if ((dynamic_cast<const  CMobileCAI*>(cai)) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai), buffer); return; }
+	if (dynamic_cast<const     CAirCAI*>(cai) != nullptr) {     DrawAirCAICommands(static_cast<const     CAirCAI*>(cai), buffer); DrawBuffer(buffer, shader); return; }
+	if (dynamic_cast<const CBuilderCAI*>(cai) != nullptr) { DrawBuilderCAICommands(static_cast<const CBuilderCAI*>(cai), buffer); DrawBuffer(buffer, shader); return; }
+	if (dynamic_cast<const CFactoryCAI*>(cai) != nullptr) { DrawFactoryCAICommands(static_cast<const CFactoryCAI*>(cai), buffer); DrawBuffer(buffer, shader); return; }
+	if (dynamic_cast<const  CMobileCAI*>(cai) != nullptr) {  DrawMobileCAICommands(static_cast<const  CMobileCAI*>(cai), buffer); DrawBuffer(buffer, shader); return; }
 
 	DrawCommands(cai, buffer);
-
-	// hand off all surface circles
-	shader->Enable();
-	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
-	shader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
-	buffer->Submit(GL_LINES);
-	shader->Disable();
+	DrawBuffer(buffer, shader);
 }
 
 
