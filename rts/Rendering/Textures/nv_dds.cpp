@@ -174,6 +174,8 @@
 using namespace std;
 using namespace nv_dds;
 
+static constexpr unsigned int BASE_INT_FORMATS[] = {0, GL_RED, GL_RG, GL_RGB, GL_RGBA};
+
 ///////////////////////////////////////////////////////////////////////////////
 // CDDSImage public functions
 
@@ -417,7 +419,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 	}
 	else if (ddsh.ddspf.dwRGBBitCount == 8)
 	{
-		m_format = GL_LUMINANCE;
+		m_format = GL_RED;
 		m_components = 1;
 	}
 	else
@@ -427,6 +429,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 		#endif
 		return false;
 	}
+
 
 	// store primary surface width/height/depth
 	unsigned int width = ddsh.dwWidth;
@@ -541,8 +544,7 @@ bool CDDSImage::load(string filename, bool flipImage)
 	fclose(fp);
 	#endif
 
-	m_valid = true;
-	return true;
+	return (m_valid = true);
 }
 
 bool CDDSImage::write_texture(const CTexture &texture, FILE *fp) const
@@ -755,7 +757,7 @@ bool CDDSImage::upload_texture1D() const
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-        glTexImage1D(GL_TEXTURE_1D, 0, m_components, baseImage.get_width(), 0,
+        glTexImage1D(GL_TEXTURE_1D, 0, BASE_INT_FORMATS[m_components], baseImage.get_width(), 0,
             m_format, GL_UNSIGNED_BYTE, baseImage);
 
         // load all mipmaps
@@ -763,7 +765,7 @@ bool CDDSImage::upload_texture1D() const
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
-            glTexImage1D(GL_TEXTURE_1D, i+1, m_components, 
+            glTexImage1D(GL_TEXTURE_1D, i+1, BASE_INT_FORMATS[m_components],
                 mipmap.get_width(), 0, m_format, GL_UNSIGNED_BYTE, mipmap);
         }
 
@@ -825,8 +827,8 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target) const
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-        glTexImage2D(target, 0, m_components, image.get_width(), 
-            image.get_height(), 0, m_format, GL_UNSIGNED_BYTE, 
+        glTexImage2D(target, 0, BASE_INT_FORMATS[m_components], image.get_width(),
+            image.get_height(), 0, m_format, GL_UNSIGNED_BYTE,
             image);
 
         // load all mipmaps
@@ -834,7 +836,7 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target) const
         {
             const CSurface &mipmap = image.get_mipmap(i);
             
-            glTexImage2D(target, i+1, m_components, mipmap.get_width(), 
+            glTexImage2D(target, i+1, BASE_INT_FORMATS[m_components], mipmap.get_width(),
                 mipmap.get_height(), 0, m_format, GL_UNSIGNED_BYTE, mipmap); 
         }
 
@@ -881,8 +883,8 @@ bool CDDSImage::upload_texture3D() const
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
-        glTexImage3D(GL_TEXTURE_3D, 0, m_components, baseImage.get_width(), 
-            baseImage.get_height(), baseImage.get_depth(), 0, m_format, 
+        glTexImage3D(GL_TEXTURE_3D, 0, BASE_INT_FORMATS[m_components], baseImage.get_width(),
+            baseImage.get_height(), baseImage.get_depth(), 0, m_format,
             GL_UNSIGNED_BYTE, baseImage);
         
         // load all mipmap volumes
@@ -890,7 +892,7 @@ bool CDDSImage::upload_texture3D() const
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
-            glTexImage3D(GL_TEXTURE_3D, i+1, m_components, 
+            glTexImage3D(GL_TEXTURE_3D, i+1, BASE_INT_FORMATS[m_components],
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 0, 
                 m_format, GL_UNSIGNED_BYTE,  mipmap);
         }
