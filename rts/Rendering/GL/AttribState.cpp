@@ -407,26 +407,32 @@ void GL::AttribState::PopDepthFunc() {
 
 
 void GL::AttribState::AlphaTest(bool enable) {
+	return;
 	glSetStateFuncs[alphaTestStack.Top() = enable](GL_ALPHA_TEST);
 }
 void GL::AttribState::PushAlphaTest(bool enable) {
+	return;
 	glSetStateFuncs[alphaTestStack.Push(enable)](GL_ALPHA_TEST);
 }
 void GL::AttribState::PopAlphaTest() {
+	return;
 	glSetStateFuncs[alphaTestStack.Pop(true)](GL_ALPHA_TEST);
 }
 
 
 void GL::AttribState::AlphaFunc(uint32_t func, float rval) {
+	return;
 	glAlphaFunc(
 		(alphaFuncStack.Top()).func = func,
 		(alphaFuncStack.Top()).rval = rval
 	);
 }
 void GL::AttribState::PushAlphaFunc(uint32_t func, float rval) {
+	return;
 	AlphaFunc(alphaFuncStack.Push({func, rval}));
 }
 void GL::AttribState::PopAlphaFunc() {
+	return;
 	AlphaFunc(alphaFuncStack.Pop(true));
 }
 

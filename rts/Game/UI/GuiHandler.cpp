@@ -4265,7 +4265,7 @@ void CGuiHandler::DrawFormationFrontOrder(
 			buffer->SafeAppend({p + UpVector * 100.0f, {&color.x}});
 		}
 
-		buffer->Submit(GL_QUAD_STRIP);
+		buffer->Submit(GL_TRIANGLE_STRIP);
 	}
 }
 
@@ -4319,7 +4319,7 @@ static void DrawCylinderShape(const void* data)
 			cylData->buffer->SafeAppend({{x, params.y, z}, color});
 		}
 
-		cylData->buffer->Submit(GL_QUAD_STRIP);
+		cylData->buffer->Submit(GL_TRIANGLE_STRIP);
 	}
 	{
 		// top
@@ -4381,18 +4381,25 @@ static void DrawBoxShape(const void* data)
 	}
 	boxData->buffer->Submit(GL_TRIANGLES);
 
-	// sides
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
-	boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
-	boxData->buffer->Submit(GL_QUAD_STRIP);
+	{
+		// sides
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, maxs.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, maxs.z}, color});
+
+		boxData->buffer->SafeAppend({{maxs.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{maxs.x, mins.y, mins.z}, color});
+
+		boxData->buffer->SafeAppend({{mins.x, maxs.y, mins.z}, color});
+		boxData->buffer->SafeAppend({{mins.x, mins.y, mins.z}, color});
+	}
+
+	boxData->buffer->Submit(GL_TRIANGLE_STRIP);
 	// leave enabled for DrawSelectBox corner-posts
 	// boxData->shader->Disable();
 }

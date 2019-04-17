@@ -25,6 +25,7 @@ void CLineDrawer::UpdateLineStipple()
 
 void CLineDrawer::SetupLineStipple()
 {
+	#if 0
 	const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
 
 	if (!(lineStipple = ((stipPat != 0x0000) && (stipPat != 0xffff))))
@@ -34,6 +35,7 @@ void CLineDrawer::SetupLineStipple()
 	const int shiftBits = 15 - (int(stippleTimer * 20.0f) % 16);
 
 	glLineStipple(cmdColors.StippleFactor(), (fullPat >> shiftBits));
+	#endif
 }
 
 
