@@ -1201,13 +1201,11 @@ void CUnitDrawer::DrawStaticModelRaw(const S3DModel* mdl, const IUnitDrawerState
 
 
 
-typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const IUnitDrawerState* state, const float4&, const float4&, bool);
+typedef const void (*DrawModelBuildStageOpaqueFunc)(const CUnit*, const IUnitDrawerState*, const float4&, const float4&, bool);
+typedef const void (*DrawModelBuildStageShadowFunc)(const CUnit*, Shader::IProgramObject*, const float4&, const float4&, bool);
 
-static const void DrawModelNoopBuildStage(const CUnit*, const IUnitDrawerState* state, const float4&, const float4&, bool)
-{
-}
-
-static const void DrawModelWireBuildStage(
+static const void DrawModelNoopBuildStageOpaque(const CUnit*, const IUnitDrawerState*, const float4&, const float4&, bool) {}
+static const void DrawModelWireBuildStageOpaque(
 	const CUnit* unit,
 	const IUnitDrawerState* state,
 	const float4& upperPlane,
@@ -1221,7 +1219,7 @@ static const void DrawModelWireBuildStage(
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-static const void DrawModelFlatBuildStage(
+static const void DrawModelFlatBuildStageOpaque(
 	const CUnit* unit,
 	const IUnitDrawerState* state,
 	const float4& upperPlane,
@@ -1233,7 +1231,7 @@ static const void DrawModelFlatBuildStage(
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 }
 
-static const void DrawModelFillBuildStage(
+static const void DrawModelFillBuildStageOpaque(
 	const CUnit* unit,
 	const IUnitDrawerState* state,
 	const float4& upperPlane,
@@ -1241,6 +1239,7 @@ static const void DrawModelFillBuildStage(
 	bool noLuaCall
 ) {
 	state->SetBuildClipPlanes(upperPlane, lowerPlane);
+
 	glAttribStatePtr->PolygonOffset(1.0f, 1.0f);
 	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
 
@@ -1249,11 +1248,66 @@ static const void DrawModelFillBuildStage(
 	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 }
 
-static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
-	DrawModelNoopBuildStage,
-	DrawModelWireBuildStage,
-	DrawModelFlatBuildStage,
-	DrawModelFillBuildStage,
+
+static const void DrawModelNoopBuildStageShadow(const CUnit*, Shader::IProgramObject*, const float4&, const float4&, bool) {}
+static const void DrawModelWireBuildStageShadow(
+	const CUnit* unit,
+	Shader::IProgramObject* prog,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	prog->SetUniform4fv(7, upperPlane);
+	prog->SetUniform4fv(8, lowerPlane);
+
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+static const void DrawModelFlatBuildStageShadow(
+	const CUnit* unit,
+	Shader::IProgramObject* prog,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	prog->SetUniform4fv(7, upperPlane);
+	prog->SetUniform4fv(8, lowerPlane);
+
+	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+}
+
+static const void DrawModelFillBuildStageShadow(
+	const CUnit* unit,
+	Shader::IProgramObject* prog,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+}
+
+
+static constexpr DrawModelBuildStageOpaqueFunc drawModelBuildStageOpaqueFuncs[] = {
+	DrawModelNoopBuildStageOpaque,
+	DrawModelWireBuildStageOpaque,
+	DrawModelFlatBuildStageOpaque,
+	DrawModelFillBuildStageOpaque,
+};
+
+static constexpr DrawModelBuildStageShadowFunc drawModelBuildStageShadowFuncs[] = {
+	DrawModelNoopBuildStageShadow,
+	DrawModelWireBuildStageShadow,
+	DrawModelFlatBuildStageShadow,
+	DrawModelFillBuildStageShadow,
+};
+
+enum {
+	BUILDSTAGE_WIRE = 0,
+	BUILDSTAGE_FLAT = 1,
+	BUILDSTAGE_FILL = 2,
+	BUILDSTAGE_NONE = 3,
 };
 
 
@@ -1261,10 +1315,57 @@ static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
 
 void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall)
 {
-	if (unit->buildProgress <= 0.666f)
-		return;
+	const float3 stageBounds = {0.0f, unit->model->CalcDrawHeight(), unit->buildProgress};
 
-	DrawUnitModel(unit, noLuaCall);
+	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
+	// the default value derives from the model vertices and makes more sense to use here
+	//
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color later on.
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
+	};
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
+	};
+
+
+	DrawModelBuildStageShadowFunc stageFunc = nullptr;
+	Shader::IProgramObject* shadowProg = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+
+	glEnable(GL_CLIP_DISTANCE0);
+	glEnable(GL_CLIP_DISTANCE1);
+
+	{
+		// wireframe, unconditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc(unit, shadowProg, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
+	}
+	{
+		// flat-colored, conditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc(unit, shadowProg, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
+	}
+
+	glDisable(GL_CLIP_DISTANCE1);
+	glDisable(GL_CLIP_DISTANCE0);
+
+	{
+		// fully-shaded, conditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc(unit, shadowProg, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
+	}
+
+	shadowProg->SetUniform4fv(7, upperPlanes[BUILDSTAGE_NONE]);
+	shadowProg->SetUniform4fv(8, lowerPlanes[BUILDSTAGE_NONE]);
 }
 
 void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
@@ -1300,40 +1401,38 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 		{0.0f,  0.0f, 0.0f,                                                           0.0f },
 	};
 
-	enum {
-		STAGE_WIRE = 0,
-		STAGE_FLAT = 1,
-		STAGE_FILL = 2,
-		STAGE_NONE = 3,
-	};
-
 	// note: draw-func for stage i is at index i+1 (noop-func is at 0)
-	DrawModelBuildStageFunc stageFunc = nullptr;
+	DrawModelBuildStageOpaqueFunc stageFunc = nullptr;
 	IUnitDrawerState* selState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 
 	glEnable(GL_CLIP_DISTANCE0);
 	glEnable(GL_CLIP_DISTANCE1);
 
-	// wireframe, unconditional
-	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
-	stageFunc(unit, selState, upperPlanes[STAGE_WIRE], lowerPlanes[STAGE_WIRE], noLuaCall);
-
-	// flat-colored, conditional
-	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
-	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
-	stageFunc(unit, selState, upperPlanes[STAGE_FLAT], lowerPlanes[STAGE_FLAT], noLuaCall);
+	{
+		// wireframe, unconditional
+		selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
+		stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc(unit, selState, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
+	}
+	{
+		// flat-colored, conditional
+		selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+		stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc(unit, selState, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
+	}
 
 	glDisable(GL_CLIP_DISTANCE1);
 
-	// fully-shaded, conditional
-	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f));
-	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
-	stageFunc(unit, selState, upperPlanes[STAGE_FILL], lowerPlanes[STAGE_FILL], noLuaCall);
+	{
+		// fully-shaded, conditional
+		selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f));
+		stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc(unit, selState, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
+	}
 
 	glDisable(GL_CLIP_DISTANCE0);
 
-	selState->SetBuildClipPlanes(upperPlanes[STAGE_NONE], lowerPlanes[STAGE_NONE]);
+	selState->SetBuildClipPlanes(upperPlanes[BUILDSTAGE_NONE], lowerPlanes[BUILDSTAGE_NONE]);
 }
 
 

@@ -186,13 +186,15 @@ void CShadowHandler::LoadShadowGenShaders()
 		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelShadowGenFragProg.glsl", versionDef + extraDefs, GL_FRAGMENT_SHADER));
 		po->Link();
 
-		po->SetUniformLocation("shadowParams" ); // idx 0
-		po->SetUniformLocation("shadowViewMat"); // idx 1
-		po->SetUniformLocation("shadowProjMat"); // idx 2
-		po->SetUniformLocation("modelMat"     ); // idx 3
-		po->SetUniformLocation("pieceMats"    ); // idx 4
-		po->SetUniformLocation("alphaMaskTex" ); // idx 5
-		po->SetUniformLocation("alphaTestCtrl"); // idx 6
+		po->SetUniformLocation("shadowParams"  ); // idx 0
+		po->SetUniformLocation("shadowViewMat" ); // idx 1
+		po->SetUniformLocation("shadowProjMat" ); // idx 2
+		po->SetUniformLocation("modelMat"      ); // idx 3
+		po->SetUniformLocation("pieceMats"     ); // idx 4
+		po->SetUniformLocation("alphaMaskTex"  ); // idx 5
+		po->SetUniformLocation("alphaTestCtrl" ); // idx 6
+		po->SetUniformLocation("upperClipPlane"); // idx 7
+		po->SetUniformLocation("lowerClipPlane"); // idx 8
 
 		po->Enable();
 		po->SetUniform1i(5, 0);
