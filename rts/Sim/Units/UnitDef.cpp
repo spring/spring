@@ -110,6 +110,7 @@ UnitDef::UnitDef()
 	, floatOnWater(false)
 	, pushResistant(false)
 	, strafeToAttack(false)
+	, stopToAttack(false)
 	, minCollisionSpeed(0.0f)
 	, slideTolerance(0.0f)
 	, maxHeightDif(0.0f)
@@ -599,6 +600,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
 	levelGround = udTable.GetBool("levelGround", true);
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
+	stopToAttack = udTable.GetBool("stopToAttack", false);
 
 
 	// initialize the (per-unitdef) collision-volume
