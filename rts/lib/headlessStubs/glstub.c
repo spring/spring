@@ -380,6 +380,7 @@ GLAPI void APIENTRY glTexImage1D( GLenum target, GLint level,
 GLAPI void APIENTRY glVertex3fv( const GLfloat *v ) {}
 GLAPI void APIENTRY glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {}
 GLAPI void APIENTRY glClipPlane( GLenum plane, const GLdouble *equation ) {}
+GLAPI void APIENTRY glClipPlanef( GLenum plane, const GLfloat *equation ) {}
 GLAPI void APIENTRY glMatrixMode(GLenum mode) {}
 
 GLAPI void APIENTRY  glGetBooleanv( GLenum pname, GLboolean *params ) {

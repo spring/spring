@@ -786,6 +786,7 @@ GLAPI void GLAPIENTRY glEdgeFlagv( const GLboolean *flag );
 GLAPI void GLAPIENTRY glScissor( GLint x, GLint y, GLsizei width, GLsizei height);
 
 GLAPI void GLAPIENTRY glClipPlane( GLenum plane, const GLdouble *equation );
+GLAPI void GLAPIENTRY glClipPlanef( GLenum plane, const GLfloat *equation );
 
 GLAPI void GLAPIENTRY glGetClipPlane( GLenum plane, GLdouble *equation );
 
