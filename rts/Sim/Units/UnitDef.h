@@ -177,6 +177,7 @@ public:
 	bool floatOnWater;
 	bool pushResistant;
 	bool strafeToAttack;  /// should the unit move sideways when it can't shoot?
+	bool stopToAttack;
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxHeightDif;   /// maximum terraform height this building allows
