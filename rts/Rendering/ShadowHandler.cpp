@@ -230,12 +230,12 @@ void CShadowHandler::LoadShadowGenShaders()
 			}
 
 			po->Link();
-			po->SetUniformLocation("shadowParams");  // idx 0
-			po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("alphaMaskTex");  // idx 4
-			po->SetUniformLocation("alphaParams");   // idx 5, used by SHADOWGEN_PROGRAM_MAP
+			po->SetUniformLocation("shadowParams"); // idx 0
+			po->SetUniformLocation("cameraDirX"  ); // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("cameraDirY"  ); // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("treeOffset"  ); // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("alphaMaskTex"); // idx 4
+			po->SetUniformLocation("alphaParams" ); // idx 5, used by SHADOWGEN_PROGRAM_MAP
 			po->Enable();
 			po->SetUniform1i(4, 0); // alphaMaskTex
 			po->SetUniform2f(5, mapInfo->map.voidAlphaMin, 0.0f); // alphaParams

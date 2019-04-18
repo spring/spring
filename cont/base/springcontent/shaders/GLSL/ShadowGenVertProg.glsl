@@ -38,6 +38,7 @@ void main() {
 
 
 	#ifdef SHADOWGEN_PROGRAM_MODEL
+	gl_ClipVertex  = vertexPos;
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
 

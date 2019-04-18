@@ -1296,16 +1296,15 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, bool);
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const float4&, const float4&, bool);
 
-static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, bool)
-{
-}
+static const void DrawModelNoopBuildStageOpaque(const CUnit*, const float4&, const float4&, bool) {}
+static const void DrawModelNoopBuildStageShadow(const CUnit*, const float4&, const float4&, bool) {}
 
-static const void DrawModelWireBuildStage(
+static const void DrawModelWireBuildStageOpaque(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
 	if (globalRendering->atiHacks) {
@@ -1313,8 +1312,8 @@ static const void DrawModelWireBuildStage(
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 	} else {
-		glClipPlane(GL_CLIP_PLANE0, upperPlane);
-		glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
+		glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
 	}
 
 	// FFP-only drawing still needs raw colors
@@ -1328,28 +1327,28 @@ static const void DrawModelWireBuildStage(
 	}
 }
 
-static const void DrawModelFlatBuildStage(
+static const void DrawModelFlatBuildStageOpaque(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
-	glClipPlane(GL_CLIP_PLANE0, upperPlane);
-	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
+	glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 }
 
-static const void DrawModelFillBuildStage(
+static const void DrawModelFillBuildStageOpaque(
 	const CUnit* unit,
-	const double* upperPlane,
-	const double* lowerPlane,
+	const float4& upperPlane,
+	const float4& lowerPlane,
 	bool noLuaCall
 ) {
 	if (globalRendering->atiHacks) {
 		glDisable(GL_CLIP_PLANE0);
 	} else {
-		glClipPlane(GL_CLIP_PLANE0, upperPlane);
+		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
 	}
 
 	glPolygonOffset(1.0f, 1.0f);
@@ -1358,11 +1357,78 @@ static const void DrawModelFillBuildStage(
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
-	DrawModelNoopBuildStage,
-	DrawModelWireBuildStage,
-	DrawModelFlatBuildStage,
-	DrawModelFillBuildStage,
+
+static const void DrawModelWireBuildStageShadow(
+	const CUnit* unit,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	if (globalRendering->atiHacks) {
+		glDisable(GL_CLIP_PLANE0);
+		glDisable(GL_CLIP_PLANE1);
+	} else {
+		glPushMatrix();
+		glLoadIdentity();
+		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
+		glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
+		glPopMatrix();
+	}
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	if (globalRendering->atiHacks) {
+		glEnable(GL_CLIP_PLANE0);
+		glEnable(GL_CLIP_PLANE1);
+	}
+}
+
+static const void DrawModelFlatBuildStageShadow(
+	const CUnit* unit,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	glPushMatrix();
+	glLoadIdentity();
+	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
+	glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
+	glPopMatrix();
+
+	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+}
+
+static const void DrawModelFillBuildStageShadow(
+	const CUnit* unit,
+	const float4& upperPlane,
+	const float4& lowerPlane,
+	bool noLuaCall
+) {
+	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+}
+
+
+static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[] = {
+	DrawModelNoopBuildStageOpaque,
+	DrawModelWireBuildStageOpaque,
+	DrawModelFlatBuildStageOpaque,
+	DrawModelFillBuildStageOpaque,
+};
+
+static constexpr DrawModelBuildStageFunc drawModelBuildStageShadowFuncs[] = {
+	DrawModelNoopBuildStageShadow,
+	DrawModelWireBuildStageShadow,
+	DrawModelFlatBuildStageShadow,
+	DrawModelFillBuildStageShadow,
+};
+
+enum {
+	BUILDSTAGE_WIRE = 0,
+	BUILDSTAGE_FLAT = 1,
+	BUILDSTAGE_FILL = 2,
+	BUILDSTAGE_NONE = 3,
 };
 
 
@@ -1370,10 +1436,56 @@ static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
 
 void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall)
 {
-	if (unit->buildProgress <= 0.666f)
-		return;
+	const float3 stageBounds = {0.0f, unit->model->CalcDrawHeight(), unit->buildProgress};
 
-	DrawUnitModel(unit, noLuaCall);
+	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
+	// the default value derives from the model vertices and makes more sense to use here
+	//
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color later on.
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
+	};
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
+	};
+
+	DrawModelBuildStageFunc stageFunc = nullptr;
+	// Shader::IProgramObject* shadowProg = shadowHandler.GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+
+	glPushAttrib(GL_CURRENT_BIT);
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+
+	{
+		// wireframe, unconditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
+	}
+	{
+		// flat-colored, conditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
+	}
+
+	glDisable(GL_CLIP_PLANE1);
+	glDisable(GL_CLIP_PLANE0);
+
+	{
+		// fully-shaded, conditional
+		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
+	}
+
+	glPopAttrib();
 }
 
 void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
@@ -1396,21 +1508,17 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
-	const double upperPlanes[] = {
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0      ),
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 1.0),
-		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 2.0),
+	const float4 upperPlanes[] = {
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
+		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
+		{0.0f,  0.0f, 0.0f,                                                          0.0f },
 	};
-	const double lowerPlanes[] = {
-		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0 - 9.0),
-		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0 - 2.0),
-		0.0,  1.0, 0.0,                                  (                       0.0),
-	};
-
-	enum {
-		STAGE_WIRE = 0,
-		STAGE_FLAT = 1,
-		STAGE_FILL = 2,
+	const float4 lowerPlanes[] = {
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
+		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
+		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
+		{0.0f,  0.0f, 0.0f,                                                           0.0f },
 	};
 
 	// note: draw-func for stage i is at index i+1 (noop-func is at 0)
@@ -1423,20 +1531,20 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	// wireframe, unconditional
 	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
-	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], noLuaCall);
+	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+	stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 
 	// flat-colored, conditional
 	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
-	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
-	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], noLuaCall);
+	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
 	// fully-shaded, conditional
 	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
-	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
-	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], noLuaCall);
+	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
 	glPopAttrib();
