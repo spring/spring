@@ -1307,6 +1307,7 @@ static const void DrawModelWireBuildStageOpaque(
 	const float4& lowerPlane,
 	bool noLuaCall
 ) {
+	#ifndef HEADLESS
 	if (globalRendering->atiHacks) {
 		// some ATi mobility cards/drivers dont like clipping wireframes
 		glDisable(GL_CLIP_PLANE0);
@@ -1325,6 +1326,7 @@ static const void DrawModelWireBuildStageOpaque(
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
+	#endif
 }
 
 static const void DrawModelFlatBuildStageOpaque(
@@ -1333,10 +1335,12 @@ static const void DrawModelFlatBuildStageOpaque(
 	const float4& lowerPlane,
 	bool noLuaCall
 ) {
+	#ifndef HEADLESS
 	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
 	glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	#endif
 }
 
 static const void DrawModelFillBuildStageOpaque(
@@ -1345,6 +1349,7 @@ static const void DrawModelFillBuildStageOpaque(
 	const float4& lowerPlane,
 	bool noLuaCall
 ) {
+	#ifndef HEADLESS
 	if (globalRendering->atiHacks) {
 		glDisable(GL_CLIP_PLANE0);
 	} else {
@@ -1355,6 +1360,7 @@ static const void DrawModelFillBuildStageOpaque(
 	glEnable(GL_POLYGON_OFFSET_FILL);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	#endif
 }
 
 
@@ -1364,6 +1370,7 @@ static const void DrawModelWireBuildStageShadow(
 	const float4& lowerPlane,
 	bool noLuaCall
 ) {
+	#ifndef HEADLESS
 	if (globalRendering->atiHacks) {
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
@@ -1383,6 +1390,7 @@ static const void DrawModelWireBuildStageShadow(
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
+	#endif
 }
 
 static const void DrawModelFlatBuildStageShadow(
@@ -1391,6 +1399,7 @@ static const void DrawModelFlatBuildStageShadow(
 	const float4& lowerPlane,
 	bool noLuaCall
 ) {
+	#ifndef HEADLESS
 	glPushMatrix();
 	glLoadIdentity();
 	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
@@ -1398,6 +1407,7 @@ static const void DrawModelFlatBuildStageShadow(
 	glPopMatrix();
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	#endif
 }
 
 static const void DrawModelFillBuildStageShadow(
