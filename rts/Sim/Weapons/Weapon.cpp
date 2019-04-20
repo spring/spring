@@ -842,7 +842,8 @@ float3 CWeapon::GetTargetBorderPos(
 	const float3 targetRayPos = rawTargetPos + targetOffset;
 
 	// adjust the length of <targetVec> based on the targetBorder factor
-	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry))
+	// the muzzle position must not be inside tmpColVol for this to work
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry) && tmpColQry.AllHit())
 		targetBorderPos = mix(tmpColQry.GetIngressPos(), tmpColQry.GetEgressPos(), weaponDef->targetBorder <= 0.0f);
 
 	return targetBorderPos;
@@ -1258,14 +1259,20 @@ float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
 
 float3 CWeapon::GetLeadVec(const CUnit* unit) const
 {
-	assert(unit);
-	const float predict = GetPredictedImpactTime(unit->pos);
-	float3 lead = unit->speed * predict * mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
-	if (weaponDef->leadLimit >= 0.0f) {
-		const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
-		if (lead.SqLength() > Square(leadBonus))
-			lead *= (leadBonus) / (lead.Length() + 0.01f);
-	}
+	const float predictTime = GetPredictedImpactTime(unit->pos);
+	const float predictMult = mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
+
+	float3 lead = unit->speed * predictTime * predictMult;
+
+	if (weaponDef->leadLimit < 0.0f)
+		return lead;
+
+	const float leadLenSq = lead.SqLength();
+	const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
+
+	if (leadLenSq > Square(leadBonus))
+		lead *= (leadBonus / (math::sqrt(leadLenSq) + 0.01f));
+
 	return lead;
 }
 
