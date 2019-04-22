@@ -1082,7 +1082,7 @@ bool CGame::Update()
 
 	if (!gameOver) {
 		if (clientNet->NeedsReconnect())
-			clientNet->AttemptReconnect(SpringVersion::GetFull(), Platform::GetPlatformStr());
+			clientNet->AttemptReconnect(SpringVersion::GetSync(), Platform::GetPlatformStr());
 
 		if (clientNet->CheckTimeout(0, gs->PreSimFrame()))
 			GameEnd({}, true);
