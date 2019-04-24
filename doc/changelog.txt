@@ -14,6 +14,8 @@ Sim:
 Lua:
  - add Platform.osVersion; complements Platform.osName
  - add Platform.hwConfig
+ - Script.IsEngineMinVersion now available in all Lua parsing contexts,
+   most importantly in `defs.lua`
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
  - let Spring.SelectUnitArray select enemy units with godmode enabled
