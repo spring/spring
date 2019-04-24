@@ -7,6 +7,7 @@
 #include "LuaUtils.h"
 #include "LuaConfig.h"
 
+#include "Game/GameVersion.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Objects/SolidObjectDef.h"
@@ -528,6 +529,34 @@ void LuaUtils::PrintStack(lua_State* L)
 	}
 }
 
+
+int LuaUtils::IsEngineMinVersion(lua_State* L)
+{
+	const int minMajorVer = luaL_checkint(L, 1);
+	const int minMinorVer = luaL_optint(L, 2, 0);
+	const int minCommits  = luaL_optint(L, 3, 0);
+
+	if (StringToInt(SpringVersion::GetMajor()) < minMajorVer) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	if (StringToInt(SpringVersion::GetMajor()) == minMajorVer) {
+		if (StringToInt(SpringVersion::GetMinor()) < minMinorVer) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		if (StringToInt(SpringVersion::GetCommits()) < minCommits) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+
+}
 
 /******************************************************************************/
 /******************************************************************************/

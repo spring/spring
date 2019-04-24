@@ -110,6 +110,8 @@ class LuaUtils {
 
 		static void PrintStack(lua_State* L);
 
+		static int IsEngineMinVersion(lua_State* L);
+
 		// from LuaFeatureDefs.cpp / LuaUnitDefs.cpp / LuaWeaponDefs.cpp
 		// (helper for the Next() iteration routine)
 		static int Next(const ParamMap& paramMap, lua_State* L);

@@ -18,7 +18,6 @@
 #include "LuaVFS.h"
 #include "LuaUtils.h"
 
-#include "Game/GameVersion.h"
 #include "Sim/Misc/GlobalSynced.h" // gsRNG
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -155,6 +154,10 @@ void LuaParser::SetupEnv(bool isSyncedCtxt, bool isDefsParser)
 	AddFunc("Echo", LuaUtils::Echo);
 	AddFunc("Log", LuaUtils::Log);
 	AddFunc("TimeCheck", TimeCheck);
+	EndTable();
+
+	GetTable("Script");
+	AddFunc("IsEngineMinVersion", LuaUtils::IsEngineMinVersion);
 	EndTable();
 
 	#if (!defined(UNITSYNC) && !defined(DEDICATED))
