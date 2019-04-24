@@ -320,7 +320,7 @@ class CLuaHandle : public CEventClient
 		std::vector<bool> watchExplosionDefs;   // callin masks for Explosion
 		std::vector<bool> watchAllowTargetDefs; // callin masks for AllowWeapon*Target*
 
-	private: // call-outs
+	public: // call-outs
 		static int KillActiveHandle(lua_State* L);
 		static int CallOutGetName(lua_State* L);
 		static int CallOutGetSynced(lua_State* L);
