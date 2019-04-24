@@ -3,6 +3,10 @@
 #include "DataDirLocater.h"
 
 #include <cstdlib>
+#include <cassert>
+#include <cstring>
+#include <sstream>
+
 #ifdef WIN32
 	#include <io.h>
 	#include <direct.h>
@@ -17,12 +21,9 @@
 #endif
 
 #include "System/Platform/Win/win32.h"
-#include <sstream>
-#include <cassert>
-#include <cstring>
 
-#include "FileSystem.h"
 #include "CacheDir.h"
+#include "FileSystem.h"
 #include "System/Exceptions.h"
 #include "System/MainDefines.h" // for sPS, cPS, cPD
 #include "System/Config/ConfigHandler.h"
@@ -30,9 +31,15 @@
 #include "System/Platform/Misc.h"
 #include "System/SafeUtil.h"
 
-CONFIG(std::string, SpringData).defaultValue("")
-		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs")
-		.readOnly(true);
+CONFIG(std::string, SpringData)
+	.defaultValue("")
+	.description("List of additional data-directories, separated by ';' on Windows and ':' on other OSs")
+	.readOnly(true);
+
+CONFIG(std::string, SpringDataRoot)
+	.defaultValue("")
+	.description("Optional custom data-directory content root ('base', 'maps', ...) to scan for archives")
+	.readOnly(true);
 
 
 static inline std::string GetSpringBinaryName()
@@ -66,16 +73,27 @@ static std::string GetBinaryLocation()
 }
 
 
-DataDir::DataDir(const std::string& path)
-	: path(path)
-	, writable(false)
+static inline void SplitColonString(const std::string& str, const std::function<void(const std::string&)>& cbf)
+{
+	size_t prev_colon = 0;
+	size_t colon;
+
+	// cPD is ';' or ':' depending on OS
+	while ((colon = str.find(cPD, prev_colon)) != std::string::npos) {
+		cbf(str.substr(prev_colon, colon - prev_colon));
+		prev_colon = colon + 1;
+	}
+}
+
+
+
+DataDir::DataDir(const std::string& path): path(path)
 {
 	FileSystem::EnsurePathSepAtEnd(this->path);
 }
 
+
 DataDirLocater::DataDirLocater()
-	: isolationMode(false)
-	, writeDir(nullptr)
 {
 	UpdateIsolationModeByEnvVar();
 }
@@ -109,19 +127,23 @@ const std::vector<DataDir>& DataDirLocater::GetDataDirs() const
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 {
 	std::string out;
+
 #ifdef _WIN32
-	const size_t maxSize = 32 * 1024;
+	constexpr size_t maxSize = 32 * 1024;
 	char out_c[maxSize];
 	ExpandEnvironmentStrings(in.c_str(), out_c, maxSize); // expands %HOME% etc.
 	out = out_c;
 #else
 	std::string previous = in;
+
 	for (int i = 0; i < 10; ++i) { // repeat substitution till we got a pure absolute path
 		wordexp_t pwordexp;
-		int r = wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD); // expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
-		if (r == EXIT_SUCCESS) {
+
+		// expands $FOO, ${FOO}, ${FOO-DEF} ~/, etc.
+		if (wordexp(previous.c_str(), &pwordexp, WRDE_NOCMD) == EXIT_SUCCESS) {
 			if (pwordexp.we_wordc > 0) {
-				out = pwordexp.we_wordv[0];;
+				out = pwordexp.we_wordv[0];
+
 				for (unsigned int w = 1; w < pwordexp.we_wordc; ++w) {
 					out += " ";
 					out += pwordexp.we_wordv[w];
@@ -132,9 +154,9 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 			out = in;
 		}
 
-		if (previous == out) {
+		if (previous == out)
 			break;
-		}
+
 		previous.swap(out);
 	}
 #endif
@@ -146,34 +168,24 @@ void DataDirLocater::AddDirs(const std::string& dirs)
 	if (dirs.empty())
 		return;
 
-	size_t prev_colon = 0;
-	size_t colon;
-	while ((colon = dirs.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
-		AddDir(dirs.substr(prev_colon, colon - prev_colon));
-		prev_colon = colon + 1;
-	}
-	AddDir(dirs.substr(prev_colon));
+	SplitColonString(dirs, [&](const std::string& dir) { AddDir(dir); });
 }
 
 void DataDirLocater::AddDir(const std::string& dir)
 {
-	if (!dir.empty()) {
-		// to make use of ensure-slash-at-end,
-		// we create a DataDir here already
-		const DataDir newDataDir(SubstEnvVars(dir));
-		bool alreadyAdded = false;
+	if (dir.empty())
+		return;
 
-		for (const auto& dd : dataDirs) {
-			if (FileSystem::ComparePaths(newDataDir.path, dd.path)) {
-				alreadyAdded = true;
-				break;
-			}
-		}
+	// create DataDir here to ensure comparison includes trailing slash
+	const DataDir newDataDir(SubstEnvVars(dir));
 
-		if (!alreadyAdded) {
-			dataDirs.push_back(newDataDir);
-		}
-	}
+	const auto pred = [&](const DataDir& dd) { return (FileSystem::ComparePaths(newDataDir.path, dd.path)); };
+	const auto iter = std::find_if(dataDirs.begin(), dataDirs.end(), pred);
+
+	if (iter != dataDirs.end())
+		return;
+
+	dataDirs.push_back(newDataDir);
 }
 
 bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
@@ -247,7 +259,6 @@ void DataDirLocater::AddCurWorkDir()
 	AddDir(Platform::GetOrigCWD());
 }
 
-
 void DataDirLocater::AddPortableDir()
 {
 	const std::string dd_curWorkDir = GetBinaryLocation();
@@ -263,9 +274,9 @@ void DataDirLocater::AddPortableDir()
 	// unitsyncs/unitsync-0.83.1.0.exe
 	const std::string curWorkDirParent = FileSystem::GetParent(dd_curWorkDir);
 
-	if (!curWorkDirParent.empty() && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
+	if (!curWorkDirParent.empty() && LooksLikeMultiVersionDataDir(curWorkDirParent))
 		AddDirs(curWorkDirParent); // "../"
-	}
+
 	AddDirs(dd_curWorkDir);
 }
 
@@ -333,7 +344,7 @@ void DataDirLocater::AddEtcDirs()
 		}
 	}
 
-	AddDirs(dd_etc);                              // from /etc/spring/datadir FIXME add in IsolatedMode too? FIXME
+	AddDirs(dd_etc);  // from /etc/spring/datadir FIXME add in IsolatedMode too?
 #endif
 }
 
@@ -341,10 +352,8 @@ void DataDirLocater::AddEtcDirs()
 void DataDirLocater::AddShareDirs()
 {
 	// always true under Windows and true for `multi-engine` setups under *nix
-	if (IsInstallDirDataDir()) {
-		const std::string dd_curWorkDir = GetBinaryLocation();
-		AddDirs(dd_curWorkDir);
-	}
+	if (IsInstallDirDataDir())
+		AddDirs(GetBinaryLocation());
 
 #if defined(__APPLE__)
 	// Mac OS X Application Bundle (*.app) - single file install
@@ -561,6 +570,12 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 
 	return dataDirPaths;
 }
+
+std::array<std::string, 5> DataDirLocater::GetDataDirRoots() const
+{
+	return {{"base", "maps", "games", "packages", configHandler->GetString("SpringDataRoot")}};
+}
+
 
 static DataDirLocater* instance = nullptr;
 DataDirLocater& DataDirLocater::GetInstance()
