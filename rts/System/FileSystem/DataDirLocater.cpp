@@ -83,6 +83,8 @@ static inline void SplitColonString(const std::string& str, const std::function<
 		cbf(str.substr(prev_colon, colon - prev_colon));
 		prev_colon = colon + 1;
 	}
+
+	cbf(str.substr(prev_colon));
 }
 
 
@@ -215,12 +217,12 @@ void DataDirLocater::FilterUsableDataDirs()
 				newDatadirs.push_back(dd);
 				previous = dd.path;
 				if (dd.writable) {
-					LOG("Using read-write data directory: %s", dd.path.c_str());
+					LOG("[DataDirLocater::%s] using read-write data directory: %s", __func__, dd.path.c_str());
 				} else {
-					LOG("Using read-only data directory: %s",  dd.path.c_str());
+					LOG("[DataDirLocater::%s] using read-only data directory: %s", __func__, dd.path.c_str());
 				}
 			} else {
-				LOG_L(L_DEBUG, "Potentional data directory: %s", dd.path.c_str());
+				LOG_L(L_DEBUG, "[DataDirLocater::%s] potentional data directory: %s", __func__, dd.path.c_str());
 			}
 		}
 	}
@@ -244,13 +246,13 @@ void DataDirLocater::FindWriteableDataDir()
 	writeDir = nullptr;
 
 	for (DataDir& d: dataDirs) {
-		if (!IsWriteableDir(&d))
-			continue;
-
-		d.writable = true;
-		writeDir = &d;
-		break;
+		if ((d.writable = IsWriteableDir(&d))) {
+			writeDir = &d;
+			break;
+		}
 	}
+
+	LOG("[DataDirLocater::%s] using writeable data-directory \"%s\"", __func__, (writeDir != nullptr)? writeDir->path.c_str(): "<NULL>");
 }
 
 
