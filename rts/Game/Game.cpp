@@ -497,6 +497,10 @@ void CGame::LoadDefs(LuaParser* defsParser)
 		defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 		defsParser->EndTable();
 
+		defsParser->GetTable("Script");
+		defsParser->AddFunc("IsEngineMinVersion", CLuaHandle::CallOutIsEngineMinVersion);
+		defsParser->EndTable();
+
 		// run the parser
 		if (!defsParser->Execute())
 			throw content_error("Defs-Parser: " + defsParser->GetErrorLog());
