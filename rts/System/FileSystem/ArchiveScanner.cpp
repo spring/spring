@@ -440,15 +440,20 @@ void CArchiveScanner::ScanAllDirs()
 {
 	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
 
-	const std::vector<std::string>& dataDirs = dataDirLocater.GetDataDirPaths();
-	std::vector<std::string> scanDirs;
-	scanDirs.reserve(dataDirs.size());
+	const std::vector<std::string>& dataDirPaths = dataDirLocater.GetDataDirPaths();
+	const std::array<std::string, 5>& dataDirRoots = dataDirLocater.GetDataDirRoots();
 
-	for (auto d = dataDirs.rbegin(); d != dataDirs.rend(); ++d) {
-		scanDirs.push_back(*d + "maps");
-		scanDirs.push_back(*d + "base");
-		scanDirs.push_back(*d + "games");
-		scanDirs.push_back(*d + "packages");
+	std::vector<std::string> scanDirs;
+	scanDirs.reserve(dataDirPaths.size());
+
+	// last specified is first scanned
+	for (auto d = dataDirPaths.rbegin(); d != dataDirPaths.rend(); ++d) {
+		for (const std::string& s: dataDirRoots) {
+			if (s.empty())
+				continue;
+
+			scanDirs.push_back(*d + s);
+		}
 	}
 
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
