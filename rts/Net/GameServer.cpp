@@ -1499,33 +1499,34 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						break;
 					}
 
-					const std::vector<uint8_t>& totAIsInGiverTeam = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam);
-					const std::vector<uint8_t>& myAIsInGiverTeam  = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam, player);
+					const std::vector<uint8_t>& giverTeamAIs       = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam);
+					const std::vector<uint8_t>& giverTeamPlayerAIs = getSkirmishAIIds(skirmishAIs, freeSkirmishAIs, giverTeam, player);
 
-					const int numPlayersInGiverTeam          = countNumPlayersInTeam(players, giverTeam);
-					const size_t numControllersInGiverTeam   = numPlayersInGiverTeam + totAIsInGiverTeam.size();
+					const size_t numPlayersInGiverTeam       = countNumPlayersInTeam(players, giverTeam);
+					const size_t numControllersInGiverTeam   = numPlayersInGiverTeam + giverTeamAIs.size();
+
 					const bool isGiverLeader                 = (teams[giverTeam].GetLeader() == player);
 					const bool isGiverOwnTeam                = (giverTeam == fromTeam);
 					const bool isSpec                        = players[player].spectator;
-					const bool giverHasAIs                   = (!myAIsInGiverTeam.empty());
+					const bool giverHasAIs                   = (!giverTeamPlayerAIs.empty());
 					const bool giverIsAllied                 = (teams[giverTeam].teamAllyteam == teams[fromTeam].teamAllyteam);
 					const bool isSinglePlayer                = (players.size() <= 1);
+					const bool giveAwayOk                    = (isGiverOwnTeam || numPlayersInGiverTeam == 0);
+
+					const char* playerName                   = players[player].name.c_str();
 					const char* playerType                   = players[player].GetType();
 
 					if (!isSinglePlayer &&
 						(isSpec || (!isGiverOwnTeam && !isGiverLeader) ||
 						(giverHasAIs && !giverIsAllied && !cheating))) {
-							Message(spring::format("%s %s sent invalid team giveaway", playerType, players[player].name.c_str()), true);
+							Message(spring::format("%s %s sent invalid team giveaway", playerType, playerName), true);
 							break;
 					}
 
 					Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, giverTeam));
 
-					bool giveAwayOk = false;
-
 					if (isGiverOwnTeam) {
 						// player is giving stuff from his own team
-						giveAwayOk = true;
 						//players[player].team = 0;
 						players[player].spectator = true;
 
@@ -1535,12 +1536,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						// player is giving stuff from one of his AI teams
 						if (numPlayersInGiverTeam == 0) {
 							// kill the first AI
-							skirmishAIs[ myAIsInGiverTeam[0] ] = std::make_pair(false, GameSkirmishAI{});
-							freeSkirmishAIs.push_back(myAIsInGiverTeam[0]);
-
-							giveAwayOk = true;
+							skirmishAIs[ giverTeamPlayerAIs[0] ] = std::make_pair(false, GameSkirmishAI{});
+							freeSkirmishAIs.push_back(giverTeamPlayerAIs[0]);
 						} else {
-							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, players[player].name.c_str(), giverTeam), true);
+							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, playerName, giverTeam), true);
 						}
 					}
 
@@ -1549,12 +1548,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						teams[giverTeam].SetActive(false);
 						teams[giverTeam].SetLeader(-1);
 
-						const int toLeader = teams[toTeam].GetLeader();
-						const std::string& toLeaderName = (toLeader >= 0) ? players[toLeader].name : UncontrolledPlayerName;
+						const int leadPlayer = teams[toTeam].GetLeader();
 
-						std::ostringstream givenAwayMsg;
-						givenAwayMsg << players[player].name << " gave everything to " << toLeaderName;
-						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
+						const std::string  giverName = players[player].name;
+						const std::string& recipName = (leadPlayer >= 0) ? players[leadPlayer].name : UncontrolledPlayerName;
+
+						Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, giverName + " gave everything to " + recipName));
 					}
 					break;
 				}
@@ -1566,8 +1565,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						Message(spring::format("Spectator %s sent invalid team resign", players[player].name.c_str()), true);
 						break;
 					}
-					ResignPlayer(player);
 
+					ResignPlayer(player);
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
@@ -1633,74 +1632,75 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 			break;
 		}
+
 		case NETMSG_AI_CREATED: {
 			try {
+				// client issued aicontrol command
 				netcode::UnpackPacket pckt(packet, 2);
-				unsigned char playerId;
+				std::string aiName;
+
+				uint8_t playerId;
+				uint8_t skirmishAIId;
+				uint8_t aiTeamId;
+
 				pckt >> playerId;
+
 				if (playerId != a) {
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 					break;
 				}
-				unsigned char skirmishAIId_rec; // ignored, we have to create the real one
-				pckt >> skirmishAIId_rec;
-				unsigned char aiTeamId;
+
+				pckt >> skirmishAIId;
 				pckt >> aiTeamId;
-				std::string aiName;
 				pckt >> aiName;
 
 				if (aiTeamId >= teams.size()) {
-					Message(spring::format("Invalid teamID %d in NETMSG_AI_CREATED from player %d", unsigned(aiTeamId), unsigned(playerId)));
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] invalid teamID %d from player %d", __func__, unsigned(aiTeamId), unsigned(playerId)));
 					break;
 				}
 
-				const unsigned char playerTeamId = players[playerId].team;
+				const uint8_t playerTeamId = players[playerId].team;
 
-				GameTeam* tpl                    = &teams[playerTeamId];
-				GameTeam* tai                    = &teams[aiTeamId];
+				GameTeam* tpl           = &teams[playerTeamId];
+				GameTeam* tai           = &teams[aiTeamId];
 
-				const bool weAreLeader           = (tai->GetLeader() == playerId);
-				const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
-				const bool singlePlayer          = (players.size() <= 1);
+				const bool weAreLeader  = (tai->GetLeader() == playerId);
+				const bool weAreAllied  = (tpl->teamAllyteam == tai->teamAllyteam);
+				const bool singlePlayer = (players.size() <= 1);
 
-				if (weAreLeader || singlePlayer || (weAreAllied && (cheating || !tai->HasLeader()))) {
-					// creating the AI is ok
-				} else {
+				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || !tai->HasLeader())))) {
 					Message(spring::format(NoAICreated, players[playerId].name.c_str(), (int)playerId, (int)aiTeamId));
 					break;
 				}
-				const uint8_t skirmishAIId = ReserveSkirmishAIId();
-				if (skirmishAIId == MAX_AIS) {
-					Message(spring::format("Unable to create AI, limit reached (%d)", (int)MAX_AIS));
+
+				// discard bogus ID from message, reserve actual slot here
+				if ((skirmishAIId = ReserveSkirmishAIId()) == MAX_AIS) {
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] unable to create AI, limit reached (%d)", __func__, (int)MAX_AIS));
 					break;
 				}
 
 				players[playerId].aiClientLinks[skirmishAIId] = {};
-				Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
 
-/*
-#ifdef SYNCDEBUG
-			if (myId != skirmishAIId) {
-				Message(spring::format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).", players[playerId].name, skirmishAIId, myId));
-			}
-#endif // SYNCDEBUG
-*/
+				skirmishAIs[skirmishAIId].first = true;
 				skirmishAIs[skirmishAIId].second.team = aiTeamId;
 				skirmishAIs[skirmishAIId].second.name = aiName;
 				skirmishAIs[skirmishAIId].second.hostPlayer = playerId;
 
+				// bounce back, sender will do local creation
+				Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
+
 				if (!tai->HasLeader()) {
-					tai->SetLeader(skirmishAIs[skirmishAIId].second.hostPlayer);
+					tai->SetLeader(playerId);
 					tai->SetActive(true);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(spring::format("Player %s sent invalid AICreated: %s", players[a].name.c_str(), ex.what()));
+				Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] exception \"%s\" parsing message from player %s", ex.what(), players[a].name.c_str()));
 			}
 			break;
 		}
 		case NETMSG_AI_STATE_CHANGED: {
-			const unsigned char playerId     = inbuf[1];
-			const unsigned char skirmishAIId = inbuf[2];
+			const uint8_t playerId     = inbuf[1];
+			const uint8_t skirmishAIId = inbuf[2];
 
 			if (playerId != a) {
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
@@ -1708,27 +1708,26 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 
 			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
+			const ESkirmishAIStatus oldState = skirmishAIs[skirmishAIId].second.status;
 
 			if (!skirmishAIs[skirmishAIId].first) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (-1), (int)newState));
 				break;
 			}
 
-			const unsigned aiTeamId          = skirmishAIs[skirmishAIId].second.team;
-			const unsigned playerTeamId      = players[playerId].team;
+			const uint8_t aiTeamId          = skirmishAIs[skirmishAIId].second.team;
+			const uint8_t playerTeamId      = players[playerId].team;
 
-			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
-			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(skirmishAIs, freeSkirmishAIs, aiTeamId);
+			const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(skirmishAIs, freeSkirmishAIs, aiTeamId);
 
-			GameTeam* tpl                    = &teams[playerTeamId];
-			GameTeam* tai                    = &teams[aiTeamId];
+			GameTeam* tpl                   = &teams[playerTeamId];
+			GameTeam* tai                   = &teams[aiTeamId];
 
-			const bool weAreAIHost           = (skirmishAIs[skirmishAIId].second.hostPlayer == playerId);
-			const bool weAreLeader           = (tai->GetLeader() == playerId);
-			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
-			const bool singlePlayer          = (players.size() <= 1);
-
-			const ESkirmishAIStatus oldState = skirmishAIs[skirmishAIId].second.status;
+			const bool weAreAIHost          = (skirmishAIs[skirmishAIId].second.hostPlayer == playerId);
+			const bool weAreLeader          = (tai->GetLeader() == playerId);
+			const bool weAreAllied          = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer         = (players.size() <= 1);
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (int)aiTeamId, (int)newState));
@@ -1736,21 +1735,17 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 			Broadcast(packet); // forward data
 
-			if ((skirmishAIs[skirmishAIId].second.status = newState) == SKIRMAISTATE_DEAD) {
-				if (oldState == SKIRMAISTATE_RELOADING) {
-					// skip resetting this AIs management state,
-					// as it will be reinitialized instantly
-				} else {
-					skirmishAIs[skirmishAIId] = std::make_pair(false, GameSkirmishAI{});
+			// skip resetting management state for reloading AI's; will be reinitialized instantly
+			if ((skirmishAIs[skirmishAIId].second.status = newState) == SKIRMAISTATE_DEAD && oldState != SKIRMAISTATE_RELOADING) {
+				skirmishAIs[skirmishAIId] = std::make_pair(false, GameSkirmishAI{});
 
-					freeSkirmishAIs.push_back(skirmishAIId);
-					players[playerId].aiClientLinks.erase(skirmishAIId);
+				freeSkirmishAIs.push_back(skirmishAIId);
+				players[playerId].aiClientLinks.erase(skirmishAIId);
 
-					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
-						// team has no controller left now
-						tai->SetActive(false);
-						tai->SetLeader(-1);
-					}
+				if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+					// team has no controller left now
+					tai->SetActive(false);
+					tai->SetLeader(-1);
 				}
 			}
 			break;
