@@ -3,6 +3,7 @@
 
 #include "ModInfo.h"
 
+#include "Lua/LuaHandle.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
@@ -118,6 +119,9 @@ void CModInfo::Init(const std::string& modFileName)
 	// customize the defs environment
 	parser.GetTable("Spring");
 	parser.AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+	parser.EndTable();
+	parser.GetTable("Script");
+	parser.AddFunc("IsEngineMinVersion", CLuaHandle::CallOutIsEngineMinVersion);
 	parser.EndTable();
 	parser.Execute();
 
