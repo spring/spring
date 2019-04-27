@@ -13,23 +13,17 @@
 extern "C" {
 #endif
 
-//#include <stdio.h>
+#include <assert.h>
 
 const GLubyte* glewGetString(GLenum name) {
-	//printf( "glewGetString()"  );
-	if (name == GLEW_VERSION) {
-		return (const GLubyte*) "spring headless stub GLEW version";
-	} else {
-		return (const GLubyte*) "GL_ARB_multitexture GL_ARB_texture_env_combine GL_ARB_texture_compression";
-	}
+	assert(name == GLEW_VERSION);
+	return (const GLubyte*) "spring headless stub GLEW version";
 }
 
 GLboolean glewIsSupported(const char* name) { return GL_FALSE; }
 GLboolean glewIsExtensionSupported(const char* name) { return GL_FALSE; }
 
 GLenum glewInit() {
-   //printf( "glewInit()\n"  );
-
    return 0;
 }
 
