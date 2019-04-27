@@ -444,7 +444,7 @@ void CArchiveScanner::ScanAllDirs()
 	const std::array<std::string, 5>& dataDirRoots = dataDirLocater.GetDataDirRoots();
 
 	std::vector<std::string> scanDirs;
-	scanDirs.reserve(dataDirPaths.size());
+	scanDirs.reserve(dataDirPaths.size() * dataDirRoots.size());
 
 	// last specified is first scanned
 	for (auto d = dataDirPaths.rbegin(); d != dataDirPaths.rend(); ++d) {
@@ -452,7 +452,7 @@ void CArchiveScanner::ScanAllDirs()
 			if (s.empty())
 				continue;
 
-			scanDirs.push_back(*d + s);
+			scanDirs.emplace_back(*d + s);
 		}
 	}
 
