@@ -516,6 +516,8 @@ void CGame::ClientReadNet()
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_PATH_CHECKSUM] invalid player-number %i", __func__, playerNum);
 					break;
 				}
+				if (pathManager->GetPathFinderType() == NOPFS_TYPE)
+					break;
 
 				const std::uint32_t playerCheckSum = *reinterpret_cast<const std::uint32_t*>(&inbuf[2]);
 				const std::uint32_t localCheckSum = pathManager->GetPathCheckSum();
