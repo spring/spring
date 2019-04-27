@@ -159,7 +159,7 @@ else  (UNIX AND NOT MINGW)
 	if(MSVC)
 		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(EXE_FLAGS WIN32)
-	else
+	else()
 		include_directories(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
