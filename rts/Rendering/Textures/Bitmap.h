@@ -39,8 +39,10 @@ public:
 	bool Load(std::string const& filename, uint8_t defaultAlpha = 255);
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
-	bool Save(std::string const& filename, bool opaque = true, bool logged = false) const;
-	bool SaveFloat(std::string const& filename) const;
+
+	bool Save(const std::string& filename, bool opaque = true, bool logged = false) const;
+	bool SaveGrayScale(const std::string& filename) const;
+	bool SaveFloat(const std::string& filename) const;
 
 	bool Empty() const { return (memIdx == size_t(-1)); } // implies size=0
 

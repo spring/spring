@@ -4287,7 +4287,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 		return 0;
 	}
 
-    GLenum curReadBuffer = 0;
+	GLenum curReadBuffer = 0;
 	GLenum tgtReadBuffer = 0;
 
 	bool alpha = false;
@@ -4322,17 +4322,16 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	CBitmap bitmap;
 	bitmap.Alloc(width, height);
 
+	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+
+	if (yflip)
+		bitmap.ReverseYAxis();
+
 	if (!gs16b) {
-		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-		if (yflip)
-			bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.Save(filename, !alpha));
 	} else {
-		// single channel only!
-		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.GetRawMem());
-		if (yflip)
-			bitmap.ReverseYAxis();
-		lua_pushboolean(L, bitmap.SaveFloat(filename));
+		// always saves as 16-bit image
+		lua_pushboolean(L, bitmap.SaveGrayScale(filename));
 	}
 
 	if (tgtReadBuffer != 0)
