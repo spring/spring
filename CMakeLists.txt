@@ -156,7 +156,10 @@ else  (UNIX AND NOT MINGW)
 		add_definitions(-DWIN32)
 	endif()
 
-	if(NOT MSVC)
+	if(MSVC)
+		add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
+		set(EXE_FLAGS WIN32)
+	else
 		include_directories(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
