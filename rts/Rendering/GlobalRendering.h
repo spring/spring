@@ -195,6 +195,13 @@ public:
 	float maxTexAnisoLvl;
 
 
+	/**
+	 * @brief active video
+	 *
+	 * Whether the graphics need to be drawn
+	 */
+	bool active;
+
 	bool drawSky;
 	bool drawWater;
 	bool drawGround;
@@ -217,14 +224,6 @@ public:
 	 */
 	bool teamNanospray;
 
-
-	/**
-	 * @brief active video
-	 *
-	 * Whether the graphics need to be drawn
-	 */
-	bool active;
-
 	/**
 	 * @brief compressTextures
 	 *
@@ -243,13 +242,6 @@ public:
 	bool haveIntel;
 	bool haveNvidia;
 
-
-	/**
-	 * @brief collection of some ATI bugfixes
-	 *
-	 * enables some ATI bugfixes
-	 */
-	bool atiHacks;
 
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures

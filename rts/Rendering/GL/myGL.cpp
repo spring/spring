@@ -12,7 +12,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/StringUtil.h"
 

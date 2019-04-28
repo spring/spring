@@ -36,10 +36,12 @@ CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).descript
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
-CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
-// enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
-// (otherwise defaults to off because it reduces mipmap quality, smallest compressed level is bigger)
+// apply runtime texture compression for glBuildMipmaps?
+// glCompressedTex*Image* must additionally be supported
+// for DDS (SMF DXT1, etc)
+// this defaults to off because it reduces mipmap quality
+// the smallest compressed mip-level is necessarily bigger
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
@@ -73,7 +75,8 @@ GlobalRenderingInfo globalRenderingInfo;
 CR_BIND(CGlobalRendering, )
 
 CR_REG_METADATA(CGlobalRendering, (
-	CR_MEMBER(teamNanospray),
+	CR_MEMBER(active),
+
 	CR_MEMBER(drawSky),
 	CR_MEMBER(drawWater),
 	CR_MEMBER(drawGround),
@@ -116,7 +119,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(maxTexAnisoLvl),
 
-	CR_IGNORED(active),
+	CR_MEMBER(teamNanospray),
 	CR_IGNORED(compressTextures),
 
 	CR_IGNORED(haveATI),
@@ -124,7 +127,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
 
-	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(support24bitDepthBuffer),
@@ -195,6 +197,7 @@ CGlobalRendering::CGlobalRendering()
 	, maxTextureSize(2048)
 	, maxTexAnisoLvl(0.0f)
 
+	, active(true)
 	, drawSky(true)
 	, drawWater(true)
 	, drawGround(true)
@@ -208,14 +211,12 @@ CGlobalRendering::CGlobalRendering()
 	, glDebugErrors(false)
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
-	, active(true)
-	, compressTextures(false)
+	, compressTextures(configHandler->GetBool("CompressTextures"))
 
 	, haveATI(false)
 	, haveMesa(false)
 	, haveIntel(false)
 	, haveNvidia(false)
-	, atiHacks(false)
 
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
@@ -752,20 +753,6 @@ void CGlobalRendering::SetGLSupportFlags()
 	}
 
 
-	{
-		// use some ATI bugfixes?
-		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI;
-		atiHacks &= (atiHacksCfg < 0); // runtime detect
-		atiHacks |= (atiHacksCfg > 0); // user override
-	}
-
-	// apply runtime texture compression for glBuildMipmaps?
-	// glCompressedTex*Image* must additionally be supported
-	// for DDS (SMF DXT1, etc)
-	compressTextures = configHandler->GetBool("CompressTextures");
-
-
 	#ifdef GLEW_NV_primitive_restart
 	// not defined for headless builds
 	supportRestartPrimitive = GLEW_NV_primitive_restart;
@@ -783,9 +770,9 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
 
 
-	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
-	// they seem to support GL_DEPTH_COMPONENT24 for static textures
-	// but those can't be rendered to)
+	// detect if GL_DEPTH_COMPONENT24 is supported for render targets
+	// many ATIs historically did not; they only seemed to support it
+	// for static textures
 	{
 		#if 0
 		GLint state = 0;
@@ -793,11 +780,11 @@ void CGlobalRendering::SetGLSupportFlags()
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffer = (state > 0);
 		#else
-		if (!atiHacks) {
+		{
 			FBO fbo;
 			fbo.Bind();
 			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT,  GL_DEPTH_COMPONENT24, 16, 16);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT , GL_DEPTH_COMPONENT24, 16, 16);
 			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
 			fbo.Unbind();
 		}
@@ -904,8 +891,7 @@ void CGlobalRendering::LogGLSupportInfo() const
 	LOG("\tmax. uniform buffer-bindings : %i", glslMaxUniformBufferBindings);
 	LOG("\tmax. uniform block-size      : %iKB", glslMaxUniformBufferSize / 1024);
 	LOG("\t");
-	LOG("\tenable ATI-hacks : %i", atiHacks);
-	LOG("\tcompress MIP-maps: %i", compressTextures);
+	LOG("\trun-time texture compression: %i", compressTextures);
 	LOG("\t");
 }
 
