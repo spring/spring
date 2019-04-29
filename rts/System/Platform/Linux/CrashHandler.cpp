@@ -941,20 +941,30 @@ namespace CrashHandler
 
 	void HandleSignal(int signal, siginfo_t* siginfo, void* pctx)
 	{
-		if (signal == SIGINT) {
-			// ctrl+c = kill
-			LOG("caught SIGINT, aborting");
+		switch (signal) {
+			case SIGINT: {
+				// ctrl+c = kill
+				LOG("[%s] caught SIGINT, aborting", __func__);
 
-			// first try a clean exit
-			SDL_Event event;
-			event.type = SDL_QUIT;
-			SDL_PushEvent(&event);
+				// first try a clean exit
+				SDL_Event event;
+				event.type = SDL_QUIT;
+				SDL_PushEvent(&event);
 
-			// abort after 5sec
-			spring::thread(std::bind(&ForcedExitAfterFiveSecs));
-			spring::thread(std::bind(&ForcedExitAfterTenSecs));
-			return;
+				// abort after 5sec
+				spring::thread(std::bind(&ForcedExitAfterFiveSecs));
+				spring::thread(std::bind(&ForcedExitAfterTenSecs));
+				return;
+			} break;
+			case SIGCONT: {
+				Watchdog::ClearTimers(false, false);
+				LOG("[%s] caught SIGCONT, resuming", __func__);
+				return;
+			} break;
+			default: {
+			} break;
 		}
+
 
 		// turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
 		if ((++reentrances) >= 2) {
@@ -1045,6 +1055,8 @@ namespace CrashHandler
 		sigaction(SIGFPE,  &sa, nullptr); // div0 and more
 		sigaction(SIGABRT, &sa, nullptr);
 		sigaction(SIGINT,  &sa, nullptr);
+		// sigaction(SIGSTOP, &sa, nullptr); // cannot be caught
+		sigaction(SIGCONT, &sa, nullptr);
 		sigaction(SIGBUS,  &sa, nullptr); // on macosx EXC_BAD_ACCESS (mach exception) is translated to SIGBUS
 
 		std::set_new_handler(NewHandler);
@@ -1061,6 +1073,8 @@ namespace CrashHandler
 		sigaction(SIGFPE,  &sa, nullptr);
 		sigaction(SIGABRT, &sa, nullptr);
 		sigaction(SIGINT,  &sa, nullptr);
+		// sigaction(SIGSTOP, &sa, nullptr);
+		sigaction(SIGCONT, &sa, nullptr);
 		sigaction(SIGBUS,  &sa, nullptr);
 
 		std::set_new_handler(nullptr);
