@@ -957,7 +957,9 @@ namespace CrashHandler
 				return;
 			} break;
 			case SIGCONT: {
+				#ifndef DEDICATED
 				Watchdog::ClearTimers(false, false);
+				#endif
 				LOG("[%s] caught SIGCONT, resuming", __func__);
 				return;
 			} break;
