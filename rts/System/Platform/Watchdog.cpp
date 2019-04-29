@@ -351,14 +351,16 @@ namespace Watchdog
 		threadInfo->timer = disable ? spring_notime : spring_gettime();
 	}
 
-	void ClearPrimaryTimers(bool disable)
+	void ClearTimers(bool disable, bool primary)
 	{
+		// bail if Watchdog is not running
 		if (!hangDetectorThread.joinable())
-			return; //! Watchdog isn't running
+			return;
 
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
 			WatchDogThreadInfo* threadInfo = registeredThreads[i];
-			if (threadSlots[i].primary)
+
+			if (!primary || threadSlots[i].primary)
 				threadInfo->timer = disable ? spring_notime : spring_gettime();
 		}
 	}
