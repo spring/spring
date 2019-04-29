@@ -793,7 +793,6 @@ namespace CrashHandler
 
 		StackTrace stacktrace;
 
-		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
 			void* iparray[MAX_STACKTRACE_DEPTH];
@@ -802,8 +801,8 @@ namespace CrashHandler
 			if (numLines > MAX_STACKTRACE_DEPTH)
 				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-			// give them meaningful names
-			ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
 		}
 
 		if (stacktrace.empty()) {
@@ -811,7 +810,6 @@ namespace CrashHandler
 			return;
 		}
 
-		// Translate it
 		TranslateStackTrace(stacktrace, logLevel);
 		LogStacktrace(logLevel, stacktrace);
 	}
@@ -846,50 +844,47 @@ namespace CrashHandler
     void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName)
     {
 #if !(DEDICATED || UNIT_TEST)
-        Watchdog::ClearTimer();
+		Watchdog::ClearTimer();
 #endif
-        assert(ctls != nullptr);
-        assert(ctls->handle != 0);
-        assert(!threadName.empty());
+		assert(ctls != nullptr);
+		assert(ctls->handle != 0);
+		assert(!threadName.empty());
 
-        LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
-        LOG_L(L_DEBUG, "SuspendedStacktrace[1]");
+		LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
+		LOG_L(L_DEBUG, "[%s][1]", __func__);
 
-        StackTrace stacktrace;
+		StackTrace stacktrace;
 
-        // Get untranslated stacktrace symbols
-        {
-            // process and analyse the raw stack trace
-            void* iparray[MAX_STACKTRACE_DEPTH];
+		{
+			// process and analyse the raw stack trace
+			void* iparray[MAX_STACKTRACE_DEPTH];
 
 			ctls->Suspend();
 			const int numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
 			ctls->Resume();
 
-            LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
+			LOG_L(L_DEBUG, "[%s][2]", __func__);
 
-            if (numLines > MAX_STACKTRACE_DEPTH)
-                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
+			if (numLines > MAX_STACKTRACE_DEPTH)
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-			// give them meaningful names
-            ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
-        }
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+		}
 
-        if (stacktrace.empty()) {
-            LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
-            return;
-        }
+		if (stacktrace.empty()) {
+			LOG_L(L_WARNING, "  Unable to create suspended stacktrace");
+			return;
+		}
 
-        LOG_L(L_DEBUG, "SuspendedStacktrace[3]");
+		LOG_L(L_DEBUG, "[%s][3]", __func__);
 
-        // Translate symbols into code line numbers
-        TranslateStackTrace(stacktrace, LOG_LEVEL_WARNING);
+		// Translate symbols into code line numbers
+		TranslateStackTrace(stacktrace, LOG_LEVEL_WARNING);
 
-        LOG_L(L_DEBUG, "SuspendedStacktrace[4]");
+		LOG_L(L_DEBUG, "[%s][4]", __func__);
 
-        // Print out the translated StackTrace
-        LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
-
+		LogStacktrace(LOG_LEVEL_WARNING, stacktrace);
     }
 
 
@@ -899,47 +894,44 @@ namespace CrashHandler
 	 * provide siginfo_t and ucontext_t structures to help produce the trace using libunwind.
 	 * @brief PrepareStacktrace
 	 */
-    void HaltedStacktrace(const std::string& errstr, siginfo_t* siginfo, ucontext_t* ucontext)
+    void HaltedStacktrace(siginfo_t* siginfo, ucontext_t* ucontext, const char* signame)
     {
-        LOG_L(L_ERROR, "Halted Stacktrace for Spring %s using libunwind:", (SpringVersion::GetFull()).c_str());
+		LOG_L(L_ERROR, "Halted Stacktrace for Spring %s (%s) using libunwind:", (SpringVersion::GetFull()).c_str(), signame);
 
-        assert(siginfo != nullptr);
-        assert(ucontext != nullptr);
+		assert(siginfo != nullptr);
+		assert(ucontext != nullptr);
 
-        StackTrace stacktrace;
+		StackTrace stacktrace;
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[1]");
+		LOG_L(L_DEBUG, "[%s][1]", __func__);
 
-        // Get untranslated stacktrace symbols
-        {
-            // process and analyse the raw stack trace
-            void* iparray[MAX_STACKTRACE_DEPTH];
+		{
+			// process and analyse the raw stack trace
+			void* iparray[MAX_STACKTRACE_DEPTH];
+			const int numLines = thread_unwind(nullptr, iparray, stacktrace);
 
-            const int numLines = thread_unwind(nullptr, iparray, stacktrace);
+			LOG_L(L_DEBUG, "[%s][2]", __func__);
 
-            LOG_L(L_DEBUG, "HaltedStacktrace[2]");
+			if (numLines > MAX_STACKTRACE_DEPTH)
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 
-            if (numLines > MAX_STACKTRACE_DEPTH)
-                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
-
-			// give them meaningful names
-            ExtractSymbols(backtrace_symbols(iparray, numLines), stacktrace);
+			// get untranslated stacktrace symbols; give them meaningful names
+			ExtractSymbols(backtrace_symbols(iparray, std::min(numLines, MAX_STACKTRACE_DEPTH)), stacktrace);
         }
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[3]");
+		LOG_L(L_DEBUG, "[%s][3]", __func__);
 
-        if (stacktrace.empty()) {
-            LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
-            return;
-        }
+		if (stacktrace.empty()) {
+			LOG_I(LOG_LEVEL_ERROR, "  Unable to create stacktrace");
+			return;
+		}
 
-        // Translate it
-        TranslateStackTrace(stacktrace, LOG_LEVEL_ERROR);
+		TranslateStackTrace(stacktrace, LOG_LEVEL_ERROR);
 
-        LOG_L(L_DEBUG, "HaltedStacktrace[4]");
+		LOG_L(L_DEBUG, "[%s][4]", __func__);
 
-        // Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
-        LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
+		// Print out the translated StackTrace. Ignore the frames that occur inside the signal handler (before its line in the trace) -- they are likely some kind of padding or just garbage.
+		LogStacktrace(LOG_LEVEL_ERROR, stacktrace);
     }
 
 
@@ -964,96 +956,62 @@ namespace CrashHandler
 			return;
 		}
 
-		// Turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
+		// turn off signal handling for this signal temporarily in order to disable recursive events (e.g. SIGSEGV)
 		if ((++reentrances) >= 2) {
 			sigaction_t& sa = GetSigAction(nullptr);
 			sigaction(signal, &sa, nullptr);
 		}
 
-		ucontext_t* uctx = reinterpret_cast<ucontext_t*> (pctx);
-
 		logSinkHandler.SetSinking(false);
 
-		std::string error = strsignal(signal);
-		// append the signal name (it seems there is no OS function to map signum to signame :<)
-		if (signal == SIGSEGV) {
-			error += " (SIGSEGV)";
-		} else if (signal == SIGILL) {
-			error += " (SIGILL)";
-		} else if (signal == SIGPIPE) {
-			error += " (SIGPIPE)";
-		} else if (signal == SIGIO) {
-			error += " (SIGIO)";
-		} else if (signal == SIGABRT) {
-			error += " (SIGABRT)";
-		} else if (signal == SIGFPE) {
-			error += " (SIGFPE)";
-		} else if (signal == SIGBUS) {
-			error += " (SIGBUS)";
+
+		ucontext_t* uctx = reinterpret_cast<ucontext_t*>(pctx);
+
+		const char* sigdesc = strsignal(signal);
+		const char* signame = "";
+
+		// append the signal name (no OS function to map signum to signame)
+		switch (signal) {
+			case SIGSEGV: { signame = "SIGSEGV"; } break;
+			case SIGILL : { signame = "SIGILL" ; } break;
+			case SIGPIPE: { signame = "SIGPIPE"; } break;
+			case SIGIO  : { signame = "SIGIO"  ; } break;
+			case SIGFPE : { signame = "SIGFPE" ; } break; // causes endless loop, process never gets past the signal trigger
+			case SIGABRT: { signame = "SIGABRT"; } break; // same
+			case SIGBUS : { signame = "SIGBUS" ; } break;
+			default     : {                      } break;
 		}
-		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), (SpringVersion::GetFull()).c_str());
 
-		const bool nonFatalSignal = false;
-		const bool fatalSignal =
-			(signal == SIGSEGV) ||
-			(signal == SIGILL)  ||
-			(signal == SIGPIPE) ||
-			(signal == SIGFPE)  || // causes a endless loop, and process never gets far the causing cmd :<
-			(signal == SIGABRT) || // same
-			(signal == SIGBUS);
-
-		bool keepRunning = false;
-		bool aiCrash = false;
-
-		if (fatalSignal)
-			keepRunning = false;
-		if (nonFatalSignal)
-			keepRunning = true;
+		LOG_L(L_ERROR, "%s in Spring %s", sigdesc, (SpringVersion::GetFull()).c_str());
 
 		// print stacktrace
 		PrepareStacktrace();
-		HaltedStacktrace(error, siginfo, uctx);
+		HaltedStacktrace(siginfo, uctx, signame);
 		CleanupStacktrace();
 
-		// try to clean up
-		if (keepRunning) {
-			bool cleanupOk = true;
-
-			// try to cleanup AIs
-			if (aiCrash)
-				cleanupOk = false;
-
-			if (cleanupOk) {
-				logSinkHandler.SetSinking(true);
-			} else {
-				keepRunning = false;
-			}
-		}
-
-		if (!keepRunning) {
-			Remove();
-
+		if (signal != SIGIO) {
 			char buf[8192];
 			char* ptr = buf;
 
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s", "Spring has crashed:\n");
-			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", error.c_str());
+			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", sigdesc);
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", "A stacktrace has been written to:\n");
 			ptr += snprintf(buf, sizeof(buf) - (ptr - buf), "%s.\n\n", (logOutput.GetFilePath()).c_str());
 
+			// fatal signal, try to clean up
+			Remove();
 			// exit if we cought a critical signal; don't handle any further signals when exiting
 			ErrorMessageBox(buf, "Spring crashed", MBF_OK | MBF_CRASH);
+		} else {
+			logSinkHandler.SetSinking(true);
 		}
 
-		// Re-enable signal handling for this signal
+		// re-enable signal handling for this signal
 		// FIXME: reentrances should be implemented using __thread
 		if (reentrances >= 2) {
 			sigaction_t& sa = GetSigAction(&HandleSignal);
 			sigaction(signal, &sa, nullptr);
 		}
-
-
-
 	}
 
 	void OutputStacktrace() {
