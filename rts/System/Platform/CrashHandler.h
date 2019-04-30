@@ -24,7 +24,7 @@ namespace CrashHandler {
 	 * Imho this is a better solution than adding yet another optional parameter to the Stacktrace interface because
 	 *   the parameter is specific to the needs of one platform.
 	 */
-	void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName);
+	void SuspendedStacktrace(Threading::ThreadControls* ctls, const char* threadName);
 #else
 	bool InitImageHlpDll();
 #endif

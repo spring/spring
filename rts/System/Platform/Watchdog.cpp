@@ -44,7 +44,6 @@ namespace Watchdog
 		}
 		void ResetThreadControls() {
 			#ifndef WIN32
-			// this is not auto-destructed (!)
 			ctls.reset();
 			#endif
 		}
@@ -52,10 +51,7 @@ namespace Watchdog
 		void SetThreadControls()
 		{
 			#ifndef WIN32
-			const auto& c = Threading::GetCurrentThreadControls();
-			assert(c != nullptr);
-			// copy shared_ptr object, not shared_ptr*
-			ctls = c;
+			ctls = Threading::GetCurrentThreadControls();
 			#endif
 		}
 
@@ -161,7 +157,7 @@ namespace Watchdog
 					#ifdef WIN32
 					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
 					#else
-					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), std::string(threadNames[i]));
+					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), threadNames[i]);
 					#endif
 				}
 
@@ -235,7 +231,7 @@ namespace Watchdog
 		WatchDogThreadInfo* threadInfo = nullptr;
 
 		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
+			LOG_L(L_ERROR, "[Watchdog::%s] invalid thread number %u", __func__, num);
 			return false;
 		}
 
