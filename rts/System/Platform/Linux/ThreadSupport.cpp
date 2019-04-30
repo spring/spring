@@ -147,10 +147,6 @@ void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls)
 
 	#ifndef WIN32
 	if (threadCtls.get() != nullptr) {
-		// do nothing if Load is actually Main (LoadingMT=0 case)
-		if (Threading::IsGameLoadThread())
-			return;
-
 		// old shared_ptr will be deleted by the reset below
 		LOG_L(L_WARNING, "[%s] thread already has ThreadControls installed", __func__);
 	} else {

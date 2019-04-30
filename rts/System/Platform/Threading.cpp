@@ -295,14 +295,15 @@ namespace Threading {
 
 	static void SetThreadID(unsigned int threadIndex) {
 		// NOTE:
-		//   the ID's of LOAD and SND always have to be set unconditionally since
-		//   those two threads are joined and respawned when reloading, KISS here
-		//   (while other threads never call Set*Thread more than once making the
-		//   is-cached flags redundant anyway)
+		//   LOAD and SND thread ID's always have to be set unconditionally
+		//   (threads are joined and respawned when reloading, so KISS here)
+		//   other threads never call Set*Thread more than once, no need for
+		//   caching
 		nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
 
 		switch (threadIndex) {
 			case THREAD_IDX_LOAD: {
+				// do nothing if Load is actually Main (LoadingMT=0 case)
 				if (IsMainThread())
 					return;
 			} break;
