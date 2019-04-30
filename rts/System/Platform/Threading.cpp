@@ -29,19 +29,10 @@
 
 
 namespace Threading {
-	enum {
-		THREAD_IDX_MAIN = 0,
-		THREAD_IDX_LOAD = 1,
-		THREAD_IDX_SND  = 2,
-		THREAD_IDX_VFSI = 3,
-		THREAD_IDX_WDOG = 4,
-		THREAD_IDX_LAST = 5,
-	};
+	thread_local std::shared_ptr<ThreadControls> localThreadControls;
 
 	static NativeThreadId nativeThreadIDs[THREAD_IDX_LAST] = {};
 	static Error threadError;
-
-	thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
@@ -277,27 +268,19 @@ namespace Threading {
 	}
 
 
-
 #ifndef WIN32
-	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
-	{
-		// If there is no object registered, need to return an "empty" shared_ptr
-		if (threadCtls == nullptr)
-			return std::shared_ptr<ThreadControls>();
-
-		return threadCtls;
-	}
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls() { return localThreadControls; }
 #endif
 
 
-	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* threadCtls)
 	{
 #ifndef WIN32
 		// only used as locking mechanism, not installed by thread
 		Threading::ThreadControls tempCtls;
 
 		std::unique_lock<spring::mutex> lock(tempCtls.mutSuspend);
-		spring::thread localthread(std::bind(Threading::ThreadStart, taskFunc, ppCtlsReturn, &tempCtls));
+		spring::thread localthread(std::bind(Threading::ThreadStart, taskFunc, threadCtls, &tempCtls));
 
 		// wait so that we know the thread is running and fully initialized before returning
 		tempCtls.condInitialized.wait(lock);
@@ -310,7 +293,7 @@ namespace Threading {
 
 
 
-	static void SetThread(unsigned int threadIndex, bool setControls, bool isLoadThread) {
+	static void SetThreadID(unsigned int threadIndex) {
 		// NOTE:
 		//   the ID's of LOAD and SND always have to be set unconditionally since
 		//   those two threads are joined and respawned when reloading, KISS here
@@ -318,17 +301,27 @@ namespace Threading {
 		//   is-cached flags redundant anyway)
 		nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
 
-		if (!setControls)
-			return;
+		switch (threadIndex) {
+			case THREAD_IDX_LOAD: {
+				if (IsMainThread())
+					return;
+			} break;
+			#ifndef WIN32
+			// both heartBeatThread and soundThread make use of CreateNewThread -> ThreadStart
+			// other threads under the eye of watchdog have their control structure setup here
+			case THREAD_IDX_SND : { return; } break;
+			#endif
+			case THREAD_IDX_WDOG: { return; } break;
+		}
 
-		SetCurrentThreadControls(isLoadThread);
+		SetupCurrentThreadControls(localThreadControls);
 	}
 
-	void     SetMainThread() { SetThread(THREAD_IDX_MAIN,  true, false); }
-	void SetGameLoadThread() { SetThread(THREAD_IDX_LOAD,  true,  true); }
-	void    SetAudioThread() { SetThread(THREAD_IDX_SND ,  true, false); }
-	void  SetFileSysThread() { SetThread(THREAD_IDX_VFSI,  true, false); }
-	void SetWatchDogThread() { SetThread(THREAD_IDX_WDOG, false, false); }
+	void     SetMainThread() { SetThreadID(THREAD_IDX_MAIN); }
+	void SetGameLoadThread() { SetThreadID(THREAD_IDX_LOAD); }
+	void    SetAudioThread() { SetThreadID(THREAD_IDX_SND ); }
+	void  SetFileSysThread() { SetThreadID(THREAD_IDX_VFSI); }
+	void SetWatchDogThread() { SetThreadID(THREAD_IDX_WDOG); }
 
 	bool IsMainThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_MAIN]); }
 	bool IsMainThread(                       ) { return IsMainThread(Threading::GetCurrentThreadId()); }

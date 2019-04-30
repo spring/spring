@@ -841,16 +841,16 @@ namespace CrashHandler
      * Since the thread to be traced may be running, it requires a ThreadControls object in order to suspend/resume the thread.
      * @brief RemoteStacktrace
      */
-    void SuspendedStacktrace(Threading::ThreadControls* ctls, const std::string& threadName)
+    void SuspendedStacktrace(Threading::ThreadControls* ctls, const char* threadName)
     {
 #if !(DEDICATED || UNIT_TEST)
 		Watchdog::ClearTimer();
 #endif
 		assert(ctls != nullptr);
 		assert(ctls->handle != 0);
-		assert(!threadName.empty());
+		assert(threadName[0] != 0);
 
-		LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName.c_str(), (SpringVersion::GetFull()).c_str());
+		LOG_L(L_WARNING, "Suspended-thread Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 		LOG_L(L_DEBUG, "[%s][1]", __func__);
 
 		StackTrace stacktrace;

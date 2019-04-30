@@ -25,16 +25,26 @@
 
 
 namespace Threading {
-
 	class ThreadControls;
 
-#ifndef WIN32
-	extern thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
-#endif
+	enum {
+		THREAD_IDX_MAIN = 0,
+		THREAD_IDX_LOAD = 1,
+		THREAD_IDX_SND  = 2,
+		THREAD_IDX_VFSI = 3,
+		THREAD_IDX_WDOG = 4,
+		THREAD_IDX_LAST = 5,
+	};
 
-	/**
-	 * Generic types & functions to handle OS native threads
-	 */
+
+	// used to indicate the result of a suspend or resume operation
+	enum SuspendResult {
+		THREADERR_NONE,
+		THREADERR_NOT_RUNNING,
+		THREADERR_MISC
+	};
+
+	// generic types & functions to handle OS native threads
 #ifdef WIN32
 	typedef DWORD     NativeThreadId;
 	typedef HANDLE    NativeThreadHandle;
@@ -45,24 +55,20 @@ namespace Threading {
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
 
-	/**
-	 * Used to indicate the result of a suspend or resume operation.
-	 */
-	enum SuspendResult {
-		THREADERR_NONE,
-		THREADERR_NOT_RUNNING,
-		THREADERR_MISC
-	};
+#ifndef WIN32
+	extern thread_local std::shared_ptr<ThreadControls> localThreadControls;
+#endif
+
 
 	/**
 	 * Creates a new spring::thread whose entry function is wrapped by some boilerplate code that allows for suspend/resume.
 	 * These suspend/resume controls are exposed via the ThreadControls object that is provided by the caller and initialized by the thread.
 	 * The thread is guaranteed to be in a running and initialized state when this function returns.
 	 *
-	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
+	 * The threadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
 	 *
 	 */
-	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* threadCtls = nullptr);
 
 	/**
 	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
@@ -70,9 +76,9 @@ namespace Threading {
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
 
 #ifndef WIN32
-	void SetCurrentThreadControls(bool);
+	void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls);
 #else
-	static inline void SetCurrentThreadControls(bool) {}
+	static inline void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls) {}
 #endif
 
 	/**
@@ -95,6 +101,7 @@ namespace Threading {
 		pid_t                   thread_id;
 	#endif
 	};
+
 
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
