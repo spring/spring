@@ -528,12 +528,11 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 
 	o->SetDirVectorsEuler(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 
-	if (isFeature) {
-		// not a hack: ForcedSpin() and CalculateTransform() calculate a
-		// transform based only on frontdir and assume the helper y-axis
-		// points up
+	// not a hack: ForcedSpin() and CalculateTransform() calculate a
+	// transform based only on frontdir and assume the helper y-axis
+	// points up
+	if (isFeature)
 		static_cast<CFeature*>(o)->UpdateTransform(o->pos, true);
-	}
 
 	return 0;
 }

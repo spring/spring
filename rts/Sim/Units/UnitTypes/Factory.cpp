@@ -379,14 +379,11 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	//   (and should also be more than CMD_CANCEL_DIST
 	//   elmos distant from foundPos)
 	//
-	if (!unit->unitDef->canfly && exitPos.IsInBounds()) {
-		Command c0(CMD_MOVE, SHIFT_KEY, exitPos);
-		unit->commandAI->GiveCommand(c0);
-	}
+	if (!unit->unitDef->canfly && exitPos.IsInBounds())
+		unit->commandAI->GiveCommand(Command(CMD_MOVE, SHIFT_KEY, exitPos));
 
 	// second actual empty-spot waypoint
-	Command c1(CMD_MOVE, SHIFT_KEY, foundPos);
-	unit->commandAI->GiveCommand(c1);
+	unit->commandAI->GiveCommand(Command(CMD_MOVE, SHIFT_KEY, foundPos));
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
@@ -410,22 +407,19 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		// move-order. However, this order can *itself* cause the PF
 		// system to consider the path blocked if the extra waypoint
 		// falls within the factory's confines, so use a wide berth.
-		const float xs = unitDef->xsize * SQUARE_SIZE * 0.5f;
-		const float zs = unitDef->zsize * SQUARE_SIZE * 0.5f;
+		const float3 fpSize = {unitDef->xsize * SQUARE_SIZE * 0.5f, 0.0f, unitDef->zsize * SQUARE_SIZE * 0.5f};
+		const float3 fpMins = {unit->pos.x - fpSize.x, 0.0f, unit->pos.z - fpSize.z};
+		const float3 fpMaxs = {unit->pos.x + fpSize.x, 0.0f, unit->pos.z + fpSize.z};
 
-		float tmpDst = 2.0f;
-		float3 tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
+		float3 tmpVec;
+		float3 tmpPos;
 
-		if (buildFacing == FACING_NORTH || buildFacing == FACING_SOUTH) {
-			while ((tmpPos.z >= unit->pos.z - zs) && (tmpPos.z <= unit->pos.z + zs)) {
-				tmpDst += 0.5f;
-				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
-			}
-		} else {
-			while ((tmpPos.x >= unit->pos.x - xs) && (tmpPos.x <= unit->pos.x + xs)) {
-				tmpDst += 0.5f;
-				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
-			}
+		for (int i = 0, k = 2 * (math::fabs(frontdir.z) > math::fabs(frontdir.x)); i < 128; i++) {
+			tmpVec = frontdir * radius * (2.0f + i * 0.5f);
+			tmpPos = unit->pos + tmpVec;
+
+			if ((tmpPos[k] < fpMins[k]) || (tmpPos[k] > fpMaxs[k]))
+				break;
 		}
 
 		c.PushPos(tmpPos.cClampInBounds());
