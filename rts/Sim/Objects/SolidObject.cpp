@@ -343,24 +343,23 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const
 	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                              UpVector  * (1 - useGroundNormal);
 
-	if (moveDef == nullptr) {
-		// aircraft cannot use updir reliably or their
-		// coordinate-system would degenerate too much
-		// over time without periodic re-ortho'ing
+	// aircraft cannot use updir reliably or their
+	// coordinate-system would degenerate too much
+	// over time without periodic re-ortho'ing
+	if (moveDef == nullptr)
 		return (gn + UpVector * (1 - useGroundNormal));
-	}
 
 	// not an aircraft if we get here, prevent pitch changes
 	// if(f) the object is neither on the ground nor in water
 	// for whatever reason (GMT also prevents heading changes)
 	if (!IsInAir()) {
 		switch (moveDef->speedModClass) {
-			case MoveDef::Tank:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
-			case MoveDef::KBot:  { return ((gn + wn) * IsOnGround() + updir * (1 - IsOnGround())); } break;
+			case MoveDef::Tank:  { return mix(float3(updir), gn + wn, IsOnGround()); } break;
+			case MoveDef::KBot:  { return mix(float3(updir), gn + wn, IsOnGround()); } break;
 
-			case MoveDef::Hover: { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-			case MoveDef::Ship : { return ((UpVector * IsInWater()) + (gn + wn) * (1 - IsInWater())); } break;
-			default            : {                                                                    } break;
+			case MoveDef::Hover: { return mix(UpVector, gn + wn, 1 - IsInWater()); } break;
+			case MoveDef::Ship : { return mix(UpVector, gn + wn, 1 - IsInWater()); } break;
+			default            : {                                                 } break;
 		}
 	}
 
@@ -378,13 +377,12 @@ void CSolidObject::SetDirVectorsEuler(const float3 angles)
 	// whenever these angles are retrieved, the handedness is converted again
 	SetDirVectors(matrix.RotateEulerXYZ(angles));
 	SetHeadingFromDirection();
+	SetFacingFromHeading();
 	UpdateMidAndAimPos();
 }
 
-void CSolidObject::SetHeadingFromDirection()
-{
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-}
+void CSolidObject::SetHeadingFromDirection() { heading = GetHeadingFromVector(frontdir.x, frontdir.z); }
+void CSolidObject::SetFacingFromHeading() { buildFacing = GetFacingFromHeading(heading); }
 
 void CSolidObject::UpdateDirVectors(bool useGroundNormal)
 {

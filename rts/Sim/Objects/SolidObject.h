@@ -152,6 +152,8 @@ public:
 	// update object's <heading> from current frontdir
 	// should always be called after a SetDirVectors()
 	void SetHeadingFromDirection();
+	// update object's <buildFacing> from current heading
+	void SetFacingFromHeading();
 	// update object's local coor-sys from current <heading>
 	// (unlike ForcedSpin which updates from given <updir>)
 	// NOTE: movetypes call this directly
