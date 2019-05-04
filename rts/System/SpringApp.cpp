@@ -317,7 +317,6 @@ bool SpringApp::InitFileSystem()
 	// (employ all available threads, then switch to default)
 	ThreadPool::SetMaximumThreadCount();
 
-	#ifndef HEADLESS
 	// threaded initialization s.t. the window gets CPU time
 	// FileSystem is mostly self-contained, don't need locks
 	// (at this point neither the platform CWD nor data-dirs
@@ -328,6 +327,7 @@ bool SpringApp::InitFileSystem()
 	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.{png,jpg}", 0));
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
 
+	#ifndef HEADLESS
 	if (!splashScreenFiles.empty()) {
 		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ], SpringVersion::GetFull(), [&]() { return (FileSystemInitializer::Initialized()); });
 	} else {
@@ -337,11 +337,9 @@ bool SpringApp::InitFileSystem()
 	// skip hangs while waiting for the popup to die and kill us
 	if (!ret)
 		Watchdog::DeregisterThread(WDT_MAIN);
+	#endif
 
 	fsInitThread.join();
-	#else
-	FileSystemInitializer::InitializeThr(&ret);
-	#endif
 
 	ThreadPool::SetDefaultThreadCount();
 	// see InputHandler::PushEvents
