@@ -73,10 +73,12 @@ Lua:
  - remove gl.LineStipple
  - remove gl.LineWidth
  - remove gl.AlphaTest
+ - remove gl.ClipPlane
  - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
  - remove LuaMaterial {pre,post}list handling
  - remove 'useCamera' LuaMaterial parameter
  - remove 'identities' gl.ActiveFBO argument
+ - add gl.ClipDist(number index, boolean enable) -> nil
  - add gl.{Create,Delete,Update,Render}VertexArray
      gl.CreateVertexArray(number vertexCount, number indexCount) -> number id | nil
      gl.DeleteVertexArray(number id) -> boolean success | nil

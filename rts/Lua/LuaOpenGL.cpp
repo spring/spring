@@ -314,7 +314,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DrawGroundCircle);
 	REGISTER_LUA_CFUNC(DrawGroundQuad);
 
-	REGISTER_LUA_CFUNC(ClipPlane);
+	REGISTER_LUA_CFUNC(ClipDist);
 
 	REGISTER_LUA_CFUNC(MatrixMode);
 	REGISTER_LUA_CFUNC(LoadIdentity);
@@ -410,16 +410,6 @@ void LuaOpenGL::ResetGLState()
 	glAttribStatePtr->PolygonOffsetPoint(GL_FALSE);
 	#endif
 
-	#if 0
-	glDisable(GL_LINE_STIPPLE); // ::LineStipple
-
-	glDisable(GL_CLIP_PLANE4); // ::ClipPlane
-	glDisable(GL_CLIP_PLANE5); // ::ClipPlane
-	#endif
-
-	#if 0
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // ::Color, ::Shape
-	#endif
 	glUseProgram(0);
 }
 
@@ -2964,36 +2954,23 @@ int LuaOpenGL::Billboard(lua_State* L)
 
 /******************************************************************************/
 
-int LuaOpenGL::ClipPlane(lua_State* L)
+int LuaOpenGL::ClipDist(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int plane = luaL_checkint(L, 1);
+	const int index = luaL_checkint(L, 1);
 
-	if ((plane < 1) || (plane > 2))
-		luaL_error(L, "gl.ClipPlane: bad plane number (use 1 or 2)");
-
-	// use GL_CLIP_PLANE4 and GL_CLIP_PLANE5 for LuaOpenGL  (6 are guaranteed)
-	const GLenum glPlane = GL_CLIP_PLANE4 + plane - 1;
-
-	if (lua_isboolean(L, 2)) {
-		if (lua_toboolean(L, 2)) {
-			glEnable(glPlane);
-		} else {
-			glDisable(glPlane);
-		}
+	if ((index < 1) || (index > 8))
+		luaL_error(L, "[gl.%s] bad clip-distance index %d", __func__, index);
+	if (!lua_isboolean(L, 2))
 		return 0;
+
+	if (lua_toboolean(L, 2)) {
+		glEnable(GL_CLIP_DISTANCE0 + (index - 1));
+	} else {
+		glDisable(GL_CLIP_DISTANCE0 + (index - 1));
 	}
 
-	const GLdouble equation[4] = {
-		(double)luaL_checknumber(L, 2),
-		(double)luaL_checknumber(L, 3),
-		(double)luaL_checknumber(L, 4),
-		(double)luaL_checknumber(L, 5),
-	};
-
-	glClipPlane(glPlane, equation);
-	glEnable(glPlane);
 	return 0;
 }
 
