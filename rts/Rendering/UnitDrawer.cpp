@@ -1296,140 +1296,171 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const float4&, const float4&, bool);
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, bool);
 
-static const void DrawModelNoopBuildStageOpaque(const CUnit*, const float4&, const float4&, bool) {}
-static const void DrawModelNoopBuildStageShadow(const CUnit*, const float4&, const float4&, bool) {}
+static const void DrawModelNoopBuildStageOpaque(const CUnit*, const double*, const double*, bool) {}
+static const void DrawModelNoopBuildStageShadow(const CUnit*, const double*, const double*, bool) {}
 
 static const void DrawModelWireBuildStageOpaque(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
-	#ifndef HEADLESS
-	if (globalRendering->atiHacks) {
-		// some ATi mobility cards/drivers dont like clipping wireframes
-		glDisable(GL_CLIP_PLANE0);
-		glDisable(GL_CLIP_PLANE1);
-	} else {
-		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
-		glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
-	}
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 
-	// FFP-only drawing still needs raw colors
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+static const void DrawModelWireBuildStageOpaqueATI(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	bool noLuaCall
+) {
+	// some ATi mobility cards/drivers dont like clipping wireframes
+	glDisable(GL_CLIP_PLANE0);
+	glDisable(GL_CLIP_PLANE1);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (globalRendering->atiHacks) {
-		glEnable(GL_CLIP_PLANE0);
-		glEnable(GL_CLIP_PLANE1);
-	}
-	#endif
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
 }
+
 
 static const void DrawModelFlatBuildStageOpaque(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
-	#ifndef HEADLESS
-	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
-	glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
-	#endif
 }
+
 
 static const void DrawModelFillBuildStageOpaque(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
-	#ifndef HEADLESS
-	if (globalRendering->atiHacks) {
-		glDisable(GL_CLIP_PLANE0);
-	} else {
-		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
-	}
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
 
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	#endif
 }
+
+static const void DrawModelFillBuildStageOpaqueATI(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	bool noLuaCall
+) {
+	glDisable(GL_CLIP_PLANE0);
+
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+}
+
+
 
 
 static const void DrawModelWireBuildStageShadow(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
-	#ifndef HEADLESS
-	if (globalRendering->atiHacks) {
-		glDisable(GL_CLIP_PLANE0);
-		glDisable(GL_CLIP_PLANE1);
-	} else {
-		glPushMatrix();
-		glLoadIdentity();
-		glClipPlanef(GL_CLIP_PLANE0, upperPlane);
-		glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
-		glPopMatrix();
-	}
+	glPushMatrix();
+	glLoadIdentity();
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+	glPopMatrix();
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+static const void DrawModelWireBuildStageShadowATI(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	bool noLuaCall
+) {
+	glDisable(GL_CLIP_PLANE0);
+	glDisable(GL_CLIP_PLANE1);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (globalRendering->atiHacks) {
-		glEnable(GL_CLIP_PLANE0);
-		glEnable(GL_CLIP_PLANE1);
-	}
-	#endif
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
 }
+
 
 static const void DrawModelFlatBuildStageShadow(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
-	#ifndef HEADLESS
 	glPushMatrix();
 	glLoadIdentity();
-	glClipPlanef(GL_CLIP_PLANE0, upperPlane);
-	glClipPlanef(GL_CLIP_PLANE1, lowerPlane);
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 	glPopMatrix();
 
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
-	#endif
 }
+
 
 static const void DrawModelFillBuildStageShadow(
 	const CUnit* unit,
-	const float4& upperPlane,
-	const float4& lowerPlane,
+	const double* upperPlane,
+	const double* lowerPlane,
 	bool noLuaCall
 ) {
 	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 }
 
 
-static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[] = {
+static constexpr DrawModelBuildStageFunc drawModelBuildStageOpaqueFuncs[4 + 4] = {
+	// atiHacks=0
 	DrawModelNoopBuildStageOpaque,
 	DrawModelWireBuildStageOpaque,
 	DrawModelFlatBuildStageOpaque,
 	DrawModelFillBuildStageOpaque,
+	// atiHacks=1
+	DrawModelNoopBuildStageOpaque,
+	DrawModelWireBuildStageOpaqueATI,
+	DrawModelFlatBuildStageOpaque,
+	DrawModelFillBuildStageOpaqueATI,
 };
 
-static constexpr DrawModelBuildStageFunc drawModelBuildStageShadowFuncs[] = {
+static constexpr DrawModelBuildStageFunc drawModelBuildStageShadowFuncs[4 + 4] = {
+	// atiHacks=0
 	DrawModelNoopBuildStageShadow,
 	DrawModelWireBuildStageShadow,
+	DrawModelFlatBuildStageShadow,
+	DrawModelFillBuildStageShadow,
+	// atiHacks=1
+	DrawModelNoopBuildStageShadow,
+	DrawModelWireBuildStageShadowATI,
 	DrawModelFlatBuildStageShadow,
 	DrawModelFillBuildStageShadow,
 };
@@ -1455,13 +1486,13 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
-	const float4 upperPlanes[] = {
+	const double upperPlanes[4][4] = {
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
 		{0.0f,  0.0f, 0.0f,                                                          0.0f },
 	};
-	const float4 lowerPlanes[] = {
+	const double lowerPlanes[4][4] = {
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
 		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
@@ -1477,12 +1508,12 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// wireframe, unconditional
-		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 	}
 	{
 		// flat-colored, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 	}
 
@@ -1491,7 +1522,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 	{
 		// fully-shaded, conditional
-		stageFunc = drawModelBuildStageShadowFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+		stageFunc = drawModelBuildStageShadowFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 		stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 	}
 
@@ -1518,13 +1549,13 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
 	// wireframe/flat color later on.
-	const float4 upperPlanes[] = {
+	const double upperPlanes[4][4] = {
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f       )},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 1.0f)},
 		{0.0f, -1.0f, 0.0f,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0f - 2.0f)},
 		{0.0f,  0.0f, 0.0f,                                                          0.0f },
 	};
-	const float4 lowerPlanes[] = {
+	const double lowerPlanes[4][4] = {
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0f - 9.0f)},
 		{0.0f,  1.0f, 0.0f, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0f - 2.0f)},
 		{0.0f,  1.0f, 0.0f,                                  (                        0.0f)},
@@ -1541,19 +1572,19 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	// wireframe, unconditional
 	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_WIRE + 1) * (stageBounds.z > 0.000f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_WIRE], lowerPlanes[BUILDSTAGE_WIRE], noLuaCall);
 
 	// flat-colored, conditional
 	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
-	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FLAT], lowerPlanes[BUILDSTAGE_FLAT], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
 	// fully-shaded, conditional
 	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
-	stageFunc = drawModelBuildStageOpaqueFuncs[(BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc = drawModelBuildStageOpaqueFuncs[(globalRendering->atiHacks * 4) + (BUILDSTAGE_FILL + 1) * (stageBounds.z > 0.666f)];
 	stageFunc(unit, upperPlanes[BUILDSTAGE_FILL], lowerPlanes[BUILDSTAGE_FILL], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
