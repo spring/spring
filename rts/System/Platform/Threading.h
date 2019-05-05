@@ -77,8 +77,6 @@ namespace Threading {
 
 #ifndef WIN32
 	void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls);
-#else
-	static inline void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls) {}
 #endif
 
 	/**
@@ -182,7 +180,7 @@ namespace Threading {
 			memset(e.caption, 0, sizeof(caption));
 			memset(e.message, 0, sizeof(message));
 
-			flags = e.flags;	
+			flags = e.flags;
 			e.flags = 0;
 			return *this;
 		}

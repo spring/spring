@@ -29,7 +29,9 @@
 
 
 namespace Threading {
+#ifndef WIN32
 	thread_local std::shared_ptr<ThreadControls> localThreadControls;
+#endif
 
 	static NativeThreadId nativeThreadIDs[THREAD_IDX_LAST] = {};
 	static Error threadError;
@@ -314,8 +316,9 @@ namespace Threading {
 			#endif
 			case THREAD_IDX_WDOG: { return; } break;
 		}
-
+	#ifndef WIN32
 		SetupCurrentThreadControls(localThreadControls);
+	#endif
 	}
 
 	void     SetMainThread() { SetThreadID(THREAD_IDX_MAIN); }
