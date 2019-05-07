@@ -69,6 +69,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
+	CR_MEMBER(prevPos),
 	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
 	CR_MEMBER(yardOpen),
 

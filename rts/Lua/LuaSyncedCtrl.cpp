@@ -601,6 +601,8 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
+	if (luaL_optboolean(L, 14, true))
+		o->DisjointInterpolation();
 	return 0;
 }
 
@@ -2636,6 +2638,8 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 	}
 
 	unit->ForcedMove(pos);
+	if (luaL_optboolean(L, 5, true))
+		unit->DisjointInterpolation();
 	return 0;
 }
 
@@ -3104,6 +3108,8 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	pos.z = luaL_checkfloat(L, 4);
 
 	feature->ForcedMove(pos);
+	if (luaL_optboolean(L, 5, true))
+		feature->DisjointInterpolation();
 	return 0;
 }
 

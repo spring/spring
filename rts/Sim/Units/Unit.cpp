@@ -338,6 +338,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	SetVelocity(params.speed);
 	Move((params.pos).cClampInMap(), false);
+	DisjointInterpolation();
 	UpdateDirVectors(!upright);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);

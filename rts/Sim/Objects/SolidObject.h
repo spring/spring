@@ -123,6 +123,7 @@ public:
 		midPos += dv;
 		aimPos += dv;
 	}
+	void DisjointInterpolation() {prevPos = pos; }
 
 	// this should be called whenever the direction
 	// vectors are changed (ie. after a rotation) in
@@ -287,6 +288,10 @@ public:
 
 	virtual void SetMass(float newMass);
 
+	// extrapolated base-positions; used in unsynced code
+	float3 GetDrawPos(                float t) const { return (prevPos + (pos - prevPos) * t); }
+	float3 GetDrawPos(const float3 v, float t) const { return (prevPos +               v * t); }
+
 private:
 	void SetMidPos(const float3& mp, bool relative) {
 		if (relative) {
@@ -402,6 +407,8 @@ public:
 	float3 drawPos;
 	///< drawPos + relMidPos (unsynced)
 	float3 drawMidPos;
+	///< position at the start of the frame
+	float3 prevPos;
 
 	/**
 	 * @brief mod controlled parameters

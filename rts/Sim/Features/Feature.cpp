@@ -188,6 +188,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
+	DisjointInterpolation();
 	// use base-class version, AddFeature() below
 	// will already insert us in the update-queue
 	CWorldObject::SetVelocity(params.speed);
@@ -463,6 +464,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	quadField.RemoveFeature(this);
 
 	const float3 oldPos = pos;
+	prevPos = pos;
 
 	UnBlock();
 	Move(newPos - pos, true);
