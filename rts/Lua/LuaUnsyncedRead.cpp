@@ -167,7 +167,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLosViewColors);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
-	REGISTER_LUA_CFUNC(GetCurrentCamera);
 	REGISTER_LUA_CFUNC(GetCameraState);
 	REGISTER_LUA_CFUNC(GetCameraPosition);
 	REGISTER_LUA_CFUNC(GetCameraDirection);
@@ -1428,12 +1427,6 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	return 1;
 }
 
-int LuaUnsyncedRead::GetCurrentCamera(lua_State* L)
-{
-	lua_pushsstring(L, camHandler->GetCurrentController().GetName());
-	return 1;
-}
-
 int LuaUnsyncedRead::GetCameraState(lua_State* L)
 {
 	CCameraController::StateMap camState;
@@ -1441,7 +1434,6 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 
 	if (!luaL_optboolean(L, 1, true)) {
 		// table-less version; pushes just the name and the cam-specific values
-		// you can use GetCurrentCamera beforehand to know how to interpret the values
 		// use GetCamera{Position,Direction,FOV} for the common fields from the base class
 		lua_pushsstring(L, camHandler->GetCurrentController().GetName());
 
