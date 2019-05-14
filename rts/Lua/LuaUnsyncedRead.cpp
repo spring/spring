@@ -1393,14 +1393,57 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraState(lua_State* L)
 {
+	CCameraController::StateMap camState;
+	camHandler->GetState(camState);
+
+	if (!luaL_optboolean(L, 1, true)) {
+		// table-less version; pushes just the name and the cam-specific values
+		// use GetCamera{Position,Direction,FOV} for the common fields from the base class
+		lua_pushsstring(L, camHandler->GetCurrentController().GetName());
+
+		switch (camHandler->GetCurrentControllerNum()) {
+		case CCameraHandler::CAMERA_MODE_FIRSTPERSON:
+		case CCameraHandler::CAMERA_MODE_ROTOVERHEAD: // happens to have the same set of values as FPS
+			lua_pushnumber(L, camState["oldHeight"]);
+			return 1 + 1;
+
+		case CCameraHandler::CAMERA_MODE_OVERHEAD:
+			lua_pushnumber(L, camState["height"]);
+			lua_pushnumber(L, camState["angle"]);
+			lua_pushnumber(L, camState["flipped"]);
+			return 1 + 3;
+
+		case CCameraHandler::CAMERA_MODE_SPRING:
+			lua_pushnumber(L, camState["rx"]);
+			lua_pushnumber(L, camState["ry"]);
+			lua_pushnumber(L, camState["rz"]);
+			lua_pushnumber(L, camState["dist"]);
+			return 1 + 4;
+
+		case CCameraHandler::CAMERA_MODE_FREE:
+			lua_pushnumber(L, camState["rx"]);
+			lua_pushnumber(L, camState["ry"]);
+			lua_pushnumber(L, camState["rz"]);
+			lua_pushnumber(L, camState["vx"]);
+			lua_pushnumber(L, camState["vy"]);
+			lua_pushnumber(L, camState["vz"]);
+			lua_pushnumber(L, camState["avx"]);
+			lua_pushnumber(L, camState["avy"]);
+			lua_pushnumber(L, camState["avz"]);
+			return 1 + 9;
+
+		case CCameraHandler::CAMERA_MODE_OVERVIEW:
+		default:
+			// overview has no extra values
+			return 1 + 0;
+		}
+	}
+
 	lua_newtable(L);
 
 	lua_pushliteral(L, "name");
 	lua_pushsstring(L, (camHandler->GetCurrentController()).GetName());
 	lua_rawset(L, -3);
-
-	CCameraController::StateMap camState;
-	camHandler->GetState(camState);
 
 	for (const auto& s: camState) {
 		lua_pushsstring(L, s.first);
