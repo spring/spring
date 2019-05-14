@@ -146,6 +146,8 @@ Lua:
  ! Spring.GetTeamInfo: switched the last two return values around (incomeMultiplier is now 7th, customKeys is now 8th)
  - Added a second boolean parameter to Spring.Get{Player,Team}Info, if it is false the function will not return
    the (now) last return value, the customKeys table (allocation optimisation)
+ ! Spring.GetUnit{Armored,IsActive} now works on enemies in LoS
+ ! Spring.GetUnitMass no longer works on enemies outside of LoS
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
