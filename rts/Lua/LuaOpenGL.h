@@ -247,7 +247,7 @@ class LuaOpenGL {
 		static int DrawGroundCircle(lua_State* L);
 		static int DrawGroundQuad(lua_State* L);
 
-		static int ClipPlane(lua_State* L);
+		static int ClipDist(lua_State* L);
 
 		static int MatrixMode(lua_State* L);
 		static int LoadIdentity(lua_State* L);
