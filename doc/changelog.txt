@@ -145,7 +145,8 @@ Lua:
  - Added a second boolean parameter to Spring.Get{Player,Team}Info, if it is false the function will not return
    the (now) last return value, the customKeys table (allocation optimisation)
  - Added Spring.GetCurrentCamera, returns the name of the current camera
- - Added a boolean parameter to Spring.GetCameraState, if set to false it will return the following camera-specific values on the stack:
+ - Added a boolean parameter to Spring.GetCameraState, if set to false it will return the current camera name
+   and then thefollowing camera-specific values on the stack:
      fps, rot -> oldHeight
      ta -> height, angle, flipped
      spring -> rx, ry, rz, dist
