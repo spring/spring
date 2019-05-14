@@ -2771,7 +2771,7 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 
 int LuaSyncedRead::GetUnitArmored(lua_State* L)
 {
-	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
@@ -2783,7 +2783,7 @@ int LuaSyncedRead::GetUnitArmored(lua_State* L)
 
 int LuaSyncedRead::GetUnitIsActive(lua_State* L)
 {
-	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
+	const CUnit* unit = ParseInLosUnit(L, __func__, 1);
 	if (unit == nullptr)
 		return 0;
 
