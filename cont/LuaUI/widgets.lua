@@ -158,6 +158,8 @@ local flexCallIns = {
   'DrawGroundPostForward',
   'DrawGroundPreDeferred',
   'DrawGroundPostDeferred',
+  'DrawUnitsPostDeferred',
+  'DrawFeaturesPostDeferred',
   'DrawScreenEffects',
   'DrawScreenPost',
   'DrawInMiniMap',
@@ -1359,6 +1361,18 @@ end
 function widgetHandler:DrawGroundPostDeferred()
   for _,w in ripairs(self.DrawGroundPostDeferredList) do
     w:DrawGroundPostDeferred()
+  end
+end
+
+function widgetHandler:DrawUnitsPostDeferred()
+  for _,w in ripairs(self.DrawUnitsPostDeferredList) do
+    w:DrawUnitsPostDeferred()
+  end
+end
+
+function widgetHandler:DrawFeaturesPostDeferred()
+  for _,w in ripairs(self.DrawFeaturesPostDeferredList) do
+    w:DrawFeaturesPostDeferred()
   end
 end
 

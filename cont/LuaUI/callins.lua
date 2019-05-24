@@ -82,6 +82,8 @@ CallInsList = {
 	"DrawGroundPostForward",
 	"DrawGroundPreDeferred",
 	"DrawGroundPostDeferred",
+	"DrawUnitsPostDeferred",
+	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",
 	"DrawScreenPost",
 	"DrawScreen",
