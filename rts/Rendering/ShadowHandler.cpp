@@ -31,6 +31,11 @@
 CONFIG(int, Shadows).defaultValue(2).headlessValue(-1).minimumValue(-1).safemodeValue(-1).description("Sets whether shadows are rendered.\n-1:=forceoff, 0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 
+CONFIG(int, ShadowSoftness).defaultValue(CShadowHandler::SHADOW_HARD)
+	.minimumValue(CShadowHandler::SHADOW_HARD)
+	.maximumValue(CShadowHandler::SHADOW_SOFTLAST - 1)
+	.description("Shadows softness setting.\n0:=hard, 1:=soft, 2:=softer, 3:=softest");
+
 CShadowHandler shadowHandler;
 
 bool CShadowHandler::shadowsSupported = false;
@@ -41,16 +46,18 @@ void CShadowHandler::Reload(const char* argv)
 {
 	int nextShadowConfig = (shadowConfig + 1) & 0xF;
 	int nextShadowMapSize = shadowMapSize;
+	int nextShadowSoftness = shadowSoftness;
 
 	if (argv != nullptr)
-		(void) sscanf(argv, "%i %i", &nextShadowConfig, &nextShadowMapSize);
+		(void) sscanf(argv, "%i %i %i", &nextShadowConfig, &nextShadowMapSize, &nextShadowSoftness);
 
 	// do nothing without a parameter change
-	if (nextShadowConfig == shadowConfig && nextShadowMapSize == shadowMapSize)
+	if (nextShadowConfig == shadowConfig && nextShadowMapSize == shadowMapSize && nextShadowSoftness == shadowSoftness)
 		return;
 
 	configHandler->Set("Shadows", nextShadowConfig & 0xF);
 	configHandler->Set("ShadowMapSize", Clamp(nextShadowMapSize, int(MIN_SHADOWMAP_SIZE), int(MAX_SHADOWMAP_SIZE)));
+	configHandler->Set("ShadowSoftness", Clamp(nextShadowSoftness, int(CShadowHandler::SHADOW_HARD), int(CShadowHandler::SHADOW_SOFTLAST - 1)));
 
 	Kill();
 	Init();
@@ -63,6 +70,7 @@ void CShadowHandler::Init()
 
 	shadowConfig  = configHandler->GetInt("Shadows");
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
+	shadowSoftness = configHandler->GetInt("ShadowSoftness");
 	shadowGenBits = SHADOWGEN_BIT_NONE;
 
 	shadowsLoaded = false;

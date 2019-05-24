@@ -4,9 +4,11 @@ const float SMF_SHALLOW_WATER_DEPTH     = 10.0;
 const float SMF_SHALLOW_WATER_DEPTH_INV = 1.0 / SMF_SHALLOW_WATER_DEPTH;
 const float SMF_DETAILTEX_RES           = 0.02;
 
-const float DEGREES_TO_RADIANS = 3.141592653589793 / 180.0;
+const float PI = 2.0 * acos(0.0);
+const float DEGREES_TO_RADIANS = PI / 180.0;
 
-
+#define NORM2SNORM(value) (value * 2.0 - 1.0)
+#define SNORM2NORM(value) (value * 0.5 + 0.5)
 
 uniform sampler2DArray diffuseTex;
 uniform sampler2D      normalsTex;
@@ -49,10 +51,37 @@ uniform ivec4 texSquare;
 	uniform sampler2D specularTex;
 #endif
 
-#ifdef HAVE_SHADOWS
+#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
 	uniform sampler2DShadow shadowTex;
 	uniform mat4 shadowMat;
-	uniform vec4 shadowParams;
+	uniform vec4 shadowParams; //unused, will be removed by compiler
+
+	#define SHADOW_HARD 0
+	#define SHADOW_SOFT 1
+	#define SHADOW_SOFTER 2
+	#define SHADOW_SOFTEST 3
+
+	#if (SHADOW_SOFTNESS == SHADOW_HARD)
+		#define SHADOW_SAMPLES 1
+	#endif
+
+	#if (SHADOW_SOFTNESS == SHADOW_SOFT)
+		#define SHADOW_SAMPLES 3 // number of shadowmap samples per fragment
+		#define SHADOW_RANDOMNESS 0.4 // 0.0 - blocky look, 1.0 - random points look
+		#define SHADOW_SAMPLING_DISTANCE 2.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
+	#endif
+
+	#if (SHADOW_SOFTNESS == SHADOW_SOFTER)
+		#define SHADOW_SAMPLES 6 // number of shadowmap samples per fragment
+		#define SHADOW_RANDOMNESS 0.4 // 0.0 - blocky look, 1.0 - random points look
+		#define SHADOW_SAMPLING_DISTANCE 2.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
+	#endif
+
+	#if (SHADOW_SOFTNESS == SHADOW_SOFTEST)
+		#define SHADOW_SAMPLES 8 // number of shadowmap samples per fragment
+		#define SHADOW_RANDOMNESS 0.4 // 0.0 - blocky look, 1.0 - random points look
+		#define SHADOW_SAMPLING_DISTANCE 4.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
+	#endif
 #endif
 
 #ifdef SMF_WATER_ABSORPTION
@@ -99,6 +128,9 @@ uniform ivec4 texSquare;
 in vec3 halfDir;
 in vec4 vertexPos;
 in vec2 diffuseTexCoords;
+#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
+	in vec4 vertexShadowPos;
+#endif
 
 in float fogFactor;
 
@@ -147,7 +179,7 @@ vec3 GetFragmentNormal(vec2 uv) {
 vec4 GetDetailTextureColor(vec2 uv) {
 	#ifndef SMF_DETAIL_TEXTURE_SPLATTING
 		vec2 detailTexCoord = vertexPos.xz * vec2(SMF_DETAILTEX_RES);
-		vec4 detailCol = (texture(detailTex, detailTexCoord) * 2.0) - 1.0;
+		vec4 detailCol = NORM2SNORM(texture(detailTex, detailTexCoord));
 	#else
 		vec4 splatTexCoord0 = vertexPos.xzxz * splatTexScales.rrgg;
 		vec4 splatTexCoord1 = vertexPos.xzxz * splatTexScales.bbaa;
@@ -156,7 +188,7 @@ vec4 GetDetailTextureColor(vec2 uv) {
 			splatDetails.g = texture(splatDetailTex, splatTexCoord0.pq).g;
 			splatDetails.b = texture(splatDetailTex, splatTexCoord1.st).b;
 			splatDetails.a = texture(splatDetailTex, splatTexCoord1.pq).a;
-			splatDetails   = (splatDetails * 2.0) - 1.0;
+			splatDetails   = NORM2SNORM(splatDetails);
 		vec4 splatDist = texture(splatDistrTex, uv) * splatTexMults;
 		vec4 detailCol = vec4(dot(splatDetails, splatDist));
 	#endif
@@ -174,10 +206,10 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 	splatDetailStrength.x = min(1.0, dot(splatDist, vec4(1.0)));
 
 	vec4 splatDetailNormal;
-		splatDetailNormal  = ((texture(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatDist.r);
-		splatDetailNormal += ((texture(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatDist.g);
-		splatDetailNormal += ((texture(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatDist.b);
-		splatDetailNormal += ((texture(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatDist.a);
+		splatDetailNormal  = NORM2SNORM(texture(splatDetailNormalTex1, splatTexCoord0.st)) * splatDist.r;
+		splatDetailNormal += NORM2SNORM(texture(splatDetailNormalTex2, splatTexCoord0.pq)) * splatDist.g;
+		splatDetailNormal += NORM2SNORM(texture(splatDetailNormalTex3, splatTexCoord1.st)) * splatDist.b;
+		splatDetailNormal += NORM2SNORM(texture(splatDetailNormalTex4, splatTexCoord1.pq)) * splatDist.a;
 
 	// note: y=0.01 (pointing up) in case all splat-cofacs are zero
 	splatDetailNormal.y = max(splatDetailNormal.y, 0.01);
@@ -313,7 +345,56 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specula
 	return light;
 }
 
+#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
+float hash12(vec2 p) {
+	const float HASHSCALE1 = 0.1031;
+	vec3 p3  = fract(vec3(p.xyx) * HASHSCALE1);
+	p3 += dot(p3, p3.yzx + 19.19);
+	return fract((p3.x + p3.y) * p3.z);
+}
 
+// http://blog.marmakoide.org/?p=1
+const float goldenAngle = PI * (3.0 - sqrt(5.0));
+vec2 SpiralSNorm(int i, int N) {
+	float theta = float(i) * goldenAngle;
+	float r = sqrt(float(i)) / sqrt(float(N));
+	return vec2(r * cos(theta), r * sin(theta));
+}
+
+float GetShadowPCF(float NdotL) {
+	float shadow = 0.0;
+
+	const float cb = 0.00005;
+	float bias = cb * tan(acos(NdotL));
+	bias = clamp(bias, 0.0, 5.0 * cb);
+
+	#if (SHADOW_SAMPLES > 1)
+		float rndRotAngle = NORM2SNORM(hash12(gl_FragCoord.xy)) * PI / 2.0 * SHADOW_RANDOMNESS;
+
+		vec2 vSinCos = vec2(sin(rndRotAngle), cos(rndRotAngle));
+		mat2 rotMat = mat2(vSinCos.y, -vSinCos.x, vSinCos.x, vSinCos.y);
+
+		vec2 filterSize = vec2(SHADOW_SAMPLING_DISTANCE / 8192.0);
+
+		for (int i = 0; i < SHADOW_SAMPLES; ++i) {
+			// SpiralSNorm return low discrepancy sampling vec2
+			vec2 offset = (rotMat * SpiralSNorm( i, SHADOW_SAMPLES )) * filterSize;
+
+			vec4 shTexCoord = vertexShadowPos + vec4(offset, -bias, 0.0);
+			shadow += textureProj( shadowTex, shTexCoord );
+		}
+
+		shadow /= float(SHADOW_SAMPLES);
+		shadow *= 1.0 - smoothstep(shadow, 1.0,  0.2);
+	#else
+		vec4 shTexCoord = vertexShadowPos;
+		shTexCoord.z -= bias;
+		shadow = textureProj( shadowTex, shTexCoord );
+	#endif
+
+	return mix(1.0, shadow, groundShadowDensity);
+}
+#endif
 
 void main() {
 	vec2 diffTexCoords = diffuseTexCoords;
@@ -352,7 +433,7 @@ void main() {
 	#ifdef SMF_BLEND_NORMALS
 	{
 		vec4 dtSample = texture(blendNormalsTex, normTexCoords);
-		vec3 dtNormal = (dtSample.xyz * 2.0) - 1.0;
+		vec3 dtNormal = NORM2SNORM(dtSample.xyz);
 
 		// convert dtNormal from TS to WS before mixing
 		normalVec = normalize(mix(normalVec, stnMatrix * dtNormal, dtSample.a));
@@ -384,9 +465,9 @@ void main() {
 	}
 	#endif
 
-
+	float NdotL = dot(lightDir.xyz, normalVec);
 	#ifndef DEFERRED_MODE
-	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normalVec), 0.0, 1.0);
+	float cosAngleDiffuse = clamp(NdotL, 0.0, 1.0);
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normalVec), 0.001, 1.0);
 	#endif
 
@@ -418,17 +499,19 @@ void main() {
 	}
 	#endif
 
-
 	float shadowCoeff = 1.0;
-
-	#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
 	{
-		vec4 vertexShadowPos = shadowMat * vertexPos;
+		float nShadowMix = smoothstep(0.0, 0.35, NdotL); //use unclamped NdotL
+		float nShadowCoeff = mix(1.0, nShadowMix, groundShadowDensity); //NdotL based "shadow"
 
-		// shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
-		shadowCoeff = mix(1.0, textureProj(shadowTex, vertexShadowPos), groundShadowDensity);
+		#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
+			float gShadowCoeff = GetShadowPCF(cosAngleDiffuse); //use clamped NdotL
+		#else
+			float gShadowCoeff = 1.0;
+		#endif
+
+		shadowCoeff = min(nShadowCoeff, gShadowCoeff);
 	}
-	#endif
 
 	#ifndef DEFERRED_MODE
 	{
@@ -482,7 +565,7 @@ void main() {
 
 
 	#ifdef DEFERRED_MODE
-	fragData[GBUFFER_NORMTEX_IDX] = vec4((normalVec + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	fragData[GBUFFER_NORMTEX_IDX] = vec4(SNORM2NORM(normalVec), 1.0);
 	fragData[GBUFFER_DIFFTEX_IDX] = diffuseColor + detailColor;
 	fragData[GBUFFER_SPECTEX_IDX] = specularColor;
 	fragData[GBUFFER_EMITTEX_IDX] = emissionColor;

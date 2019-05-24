@@ -36,10 +36,19 @@ public:
 		SHADOWGEN_BIT_PROJ  = 8,
 		SHADOWGEN_BIT_TREE  = 16,
 	};
+
 	enum ShadowMapSizes {
 		MIN_SHADOWMAP_SIZE =   512,
 		DEF_SHADOWMAP_SIZE =  2048,
 		MAX_SHADOWMAP_SIZE = 16384,
+	};
+
+	enum ShadowSoftnessOptions {
+		SHADOW_HARD = 0,
+		SHADOW_SOFT = 1,
+		SHADOW_SOFTER = 2,
+		SHADOW_SOFTEST = 3,
+		SHADOW_SOFTLAST = 4,
 	};
 
 	enum ShadowGenProgram {
@@ -72,6 +81,8 @@ public:
 
 	static bool ShadowsInitialized() { return firstInit; }
 	static bool ShadowsSupported() { return shadowsSupported; }
+
+	unsigned int ShadowSoftness() { return shadowSoftness; }
 
 	bool ShadowsLoaded() const { return shadowsLoaded; }
 	bool InShadowPass() const { return inShadowPass; }
@@ -106,6 +117,8 @@ private:
 
 	bool shadowsLoaded = false;
 	bool inShadowPass = false;
+
+	unsigned int shadowSoftness;
 
 	static bool firstInit;
 	static bool shadowsSupported;

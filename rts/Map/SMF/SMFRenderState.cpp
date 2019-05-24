@@ -245,6 +245,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
 	shader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
+	shader->SetFlag("SHADOW_SOFTNESS", shadowHandler.ShadowSoftness());
 	shader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	shader->Enable();
