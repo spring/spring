@@ -29,6 +29,7 @@
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowPostDeferredDrawEvents).defaultValue(true);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -314,9 +315,9 @@ void LuaObjectDrawer::Update(bool init)
 	if ((drawDeferredEnabled = geomBuffer->Valid())) {
 		drawDeferredEnabled &= (geomBuffer->Update(init));
 
-		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward() || configHandler->GetBool("AllowPostDeferredDrawEvents");
 		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
-		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward();
+		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || configHandler->GetBool("AllowPostDeferredDrawEvents");
 		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred();
 
 		// if both object types are going to be drawn deferred, only
