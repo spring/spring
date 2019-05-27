@@ -42,6 +42,7 @@ CONFIG(int, MaxDynamicMapLights)
 	.minimumValue(0);
 
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
 CONFIG(int, ROAM)
@@ -75,6 +76,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
 	drawWaterPlane = false; // waterRendering->hasWaterPlane;
+	postDeferredEvents = configHandler->GetBool("AllowDrawMapPostDeferredEvents");
 
 	smfRenderStates[RENDER_STATE_SSP]->Init(this);
 	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
@@ -376,7 +378,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 	#endif
 
 	// send event if no forward pass will follow; must be done after the unbind
-	if (!drawForward)
+	if (!drawForward || postDeferredEvents)
 		eventHandler.DrawGroundPostDeferred();
 }
 
