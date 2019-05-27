@@ -43,6 +43,7 @@ CONFIG(int, MaxDynamicMapLights)
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
 CONFIG(int, ROAM)
@@ -75,6 +76,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
+	postDeferredEvents = configHandler->GetBool("AllowDrawMapPostDeferredEvents");
 
 
 	// NOTE:
@@ -318,7 +320,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 	#endif
 
 	// send event if no forward pass will follow; must be done after the unbind
-	if (!drawForward)
+	if (!drawForward || postDeferredEvents)
 		eventHandler.DrawGroundPostDeferred();
 }
 
