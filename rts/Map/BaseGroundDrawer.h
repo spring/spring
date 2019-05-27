@@ -58,9 +58,9 @@ public:
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
 public:
-	float LODScaleReflection;
-	float LODScaleRefraction;
-	float LODScaleTerrainReflection;
+	float LODScaleReflection = 1.0f;
+	float LODScaleRefraction = 1.0f;
+	float LODScaleTerrainReflection = 1.0f;
 
 	float spPolygonOffsetScale = 10.0f;
 	float spPolygonOffsetUnits = 10000.0f;
@@ -80,6 +80,7 @@ protected:
 	bool drawDeferred = false;
 	bool drawMapEdges = true;
 	bool drawWaterPlane = false;
+	bool postDeferredEvents = false;
 
 	bool wireframe = false;
 };
