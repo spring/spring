@@ -167,18 +167,18 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 		return false;
 	}
 
-	vorbis_info* vorbisInfo = ov_info(&oggStream, -1);
-	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
+	const vorbis_info* vorbisInfo = ov_info(&oggStream, -1);
+	// const vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
 
 	ALenum format;
 
-	if (vorbisInfo->channels == 1) {
-		format = AL_FORMAT_MONO16;
-	} else if (vorbisInfo->channels == 2) {
-		format = AL_FORMAT_STEREO16;
-	} else {
-		LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%i)", __func__, file.c_str(), vorbisInfo->channels);
-		return false;
+	switch (vorbisInfo->channels) {
+		case  1: { format = AL_FORMAT_MONO16  ; } break;
+		case  2: { format = AL_FORMAT_STEREO16; } break;
+		default: {
+			LOG_L(L_ERROR, "[%s(%s)] invalid number of channels (%i)", __func__, file.c_str(), vorbisInfo->channels);
+			return false;
+		}
 	}
 
 	size_t pos = 0;
@@ -213,9 +213,11 @@ bool SoundBuffer::LoadVorbis(const std::string& file, const std::vector<std::uin
 	if (!AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate))
 		LOG_L(L_WARNING, "[%s(%s)] failed generating buffer", __func__, file.c_str());
 
+	// for non-seekable streams, ov_time_total returns OV_EINVAL (-131) while
+	// ov_time_tell always[?] returns the decoding time offset relative to EOS
 	filename = file;
 	channels = vorbisInfo->channels;
-	length   = ov_time_total(&oggStream, -1);
+	length   = (ov_seekable(&oggStream) == 0)? ov_time_tell(&oggStream): ov_time_total(&oggStream, -1);
 	return true;
 }
 
