@@ -29,7 +29,8 @@ std::string LuaTextures::Create(const Texture& tex)
 		case GL_DEPTH_COMPONENT:
 		case GL_DEPTH_COMPONENT16:
 		case GL_DEPTH_COMPONENT24:
-		case GL_DEPTH_COMPONENT32: {
+		case GL_DEPTH_COMPONENT32:
+		case GL_DEPTH_COMPONENT32F: {
 			dataFormat = GL_DEPTH_COMPONENT;
 			dataType = GL_FLOAT;
 		} break;
