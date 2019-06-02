@@ -67,8 +67,8 @@ uniform ivec4 texSquare;
 
 	#if (SHADOW_SOFTNESS == SHADOW_SOFT)
 		#define SHADOW_SAMPLES 3 // number of shadowmap samples per fragment
-		#define SHADOW_RANDOMNESS 0.4 // 0.0 - blocky look, 1.0 - random points look
-		#define SHADOW_SAMPLING_DISTANCE 2.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
+		#define SHADOW_RANDOMNESS 1.0 // 0.0 - blocky look, 1.0 - random points look
+		#define SHADOW_SAMPLING_DISTANCE 1.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
 	#endif
 
 	#if (SHADOW_SOFTNESS == SHADOW_SOFTER)
@@ -80,7 +80,7 @@ uniform ivec4 texSquare;
 	#if (SHADOW_SOFTNESS == SHADOW_SOFTEST)
 		#define SHADOW_SAMPLES 8 // number of shadowmap samples per fragment
 		#define SHADOW_RANDOMNESS 0.4 // 0.0 - blocky look, 1.0 - random points look
-		#define SHADOW_SAMPLING_DISTANCE 4.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
+		#define SHADOW_SAMPLING_DISTANCE 3.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
 	#endif
 #endif
 
@@ -346,7 +346,7 @@ vec3 DynamicLighting(vec3 wsNormal, vec3 camDir, vec3 diffuseColor, vec4 specula
 }
 
 #if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
-float hash12(vec2 p) {
+float hash12L(vec2 p) {
 	const float HASHSCALE1 = 0.1031;
 	vec3 p3  = fract(vec3(p.xyx) * HASHSCALE1);
 	p3 += dot(p3, p3.yzx + 19.19);
@@ -361,15 +361,37 @@ vec2 SpiralSNorm(int i, int N) {
 	return vec2(r * cos(theta), r * sin(theta));
 }
 
+// Derivatives of light-space depth with respect to texture2D coordinates
+vec2 DepthGradient(vec2 uv, float z) {
+	vec2 dZduv = vec2(0.0, 0.0);
+
+	vec3 dUVZdx = dFdx(vec3(uv,z));
+	vec3 dUVZdy = dFdy(vec3(uv,z));
+
+	dZduv.x = dUVZdy.y * dUVZdx.z;
+	dZduv.x -= dUVZdx.y * dUVZdy.z;
+
+	dZduv.y = dUVZdx.x * dUVZdy.z;
+	dZduv.y -= dUVZdy.x * dUVZdx.z;
+
+	float det = (dUVZdx.x * dUVZdy.y) - (dUVZdx.y * dUVZdy.x);
+	dZduv /= det;
+
+	return dZduv;
+}
+
+float BiasedZ(float z0, vec2 dZduv, vec2 offset) {
+	return z0 + dot(dZduv, offset);
+}
+
 float GetShadowPCF(float NdotL) {
 	float shadow = 0.0;
 
-	const float cb = 0.00005;
-	float bias = cb * tan(acos(NdotL));
-	bias = clamp(bias, 0.0, 5.0 * cb);
+	vec3 shadowCoordN = vertexShadowPos.xyz / vertexShadowPos.w;
+	#if defined(SHADOW_SAMPLES) && (SHADOW_SAMPLES > 1)
+		vec2 dZduv = DepthGradient(shadowCoordN.xy, shadowCoordN.z);
 
-	#if (SHADOW_SAMPLES > 1)
-		float rndRotAngle = NORM2SNORM(hash12(gl_FragCoord.xy)) * PI / 2.0 * SHADOW_RANDOMNESS;
+		float rndRotAngle = NORM2SNORM(hash12L(gl_FragCoord.xy)) * PI / 2.0 * SHADOW_RANDOMNESS;
 
 		vec2 vSinCos = vec2(sin(rndRotAngle), cos(rndRotAngle));
 		mat2 rotMat = mat2(vSinCos.y, -vSinCos.x, vSinCos.x, vSinCos.y);
@@ -380,16 +402,20 @@ float GetShadowPCF(float NdotL) {
 			// SpiralSNorm return low discrepancy sampling vec2
 			vec2 offset = (rotMat * SpiralSNorm( i, SHADOW_SAMPLES )) * filterSize;
 
-			vec4 shTexCoord = vertexShadowPos + vec4(offset, -bias, 0.0);
-			shadow += textureProj( shadowTex, shTexCoord );
+			vec3 shadowSamplingCoord = vec3(shadowCoordN.xy, 0.0) + vec3(offset, BiasedZ(shadowCoordN.z, dZduv, offset));
+			shadow += texture( shadowTex, shadowSamplingCoord );
 		}
 
 		shadow /= float(SHADOW_SAMPLES);
 		shadow *= 1.0 - smoothstep(shadow, 1.0,  0.2);
 	#else
-		vec4 shTexCoord = vertexShadowPos;
-		shTexCoord.z -= bias;
-		shadow = textureProj( shadowTex, shTexCoord );
+		const float cb = 0.00005;
+		float bias = cb * tan(acos(NdotL));
+		bias = clamp(bias, 0.0, 5.0 * cb);
+
+		vec3 shadowSamplingCoord = shadowCoordN;
+		shadowSamplingCoord.z -= bias;
+		shadow = texture( shadowTex, shadowSamplingCoord );
 	#endif
 
 	return mix(1.0, shadow, groundShadowDensity);
