@@ -245,7 +245,10 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
 	shader->SetFlag("HAVE_SHADOWS", shadowHandler.ShadowsLoaded());
-	shader->SetFlag("SHADOW_SOFTNESS", shadowHandler.ShadowSoftness());
+
+	unsigned int shadowSoftness = shadowHandler.ShadowSoftness();
+	shader->SetFlag("SHADOW_SOFTNESS", shadowSoftness);
+
 	shader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	shader->Enable();
@@ -254,8 +257,15 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	shader->SetUniformMatrix4x4<float>("viewMat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<float>("viewMatInv", false, camera->GetViewMatrixInverse());
 	shader->SetUniformMatrix4x4<float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-	shader->SetUniformMatrix4x4<float>("shadowMat", false, shadowHandler.GetShadowViewMatrix());
+
+	CMatrix44f shadowViewMatrix = shadowHandler.GetShadowViewMatrix();
+	shader->SetUniformMatrix4x4<float>("shadowMat", false, shadowViewMatrix);
+
 	shader->SetUniform4v<float>("shadowParams", shadowHandler.GetShadowParams());
+	if (shadowSoftness > 0) {
+		float2 lightProjScale = { shadowViewMatrix[0] * mapDims.mapx * SQUARE_SIZE, shadowViewMatrix[5] * mapDims.mapy * SQUARE_SIZE };
+		shader->SetUniform2v<float>("lightProjScale", &lightProjScale.x);
+	}
 	shader->SetUniform3v<float>("fogParams", &fogParams.x);
 	shader->SetUniform<float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	shader->SetUniform<float>("gammaExponent", globalRendering->gammaExponent);

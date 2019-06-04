@@ -82,6 +82,11 @@ uniform ivec4 texSquare;
 		#define SHADOW_RANDOMNESS 0.8 // 0.0 - blocky look, 1.0 - random points look
 		#define SHADOW_SAMPLING_DISTANCE 4.0 // how far shadow samples go (in shadowmap texels) as if it was applied to 8192x8192 sized shadow map
 	#endif
+	#if (SHADOW_SOFTNESS > SHADOW_HARD)
+		uniform vec2 lightProjScale;
+	#else
+		const vec2 lightProjScale = vec2(1.0); // unused
+	#endif
 #endif
 
 #ifdef SMF_WATER_ABSORPTION
@@ -384,7 +389,7 @@ float BiasedZ(float z0, vec2 dZduv, vec2 offset) {
 	return z0 + dot(dZduv, offset);
 }
 
-float GetShadowPCF(float NdotL) {
+float GetShadowPCF(float NdotL, vec2 shadowScaleFactor) {
 	float shadow = 0.0;
 
 	vec3 shadowCoordN = vertexShadowPos.xyz / vertexShadowPos.w;
@@ -396,7 +401,7 @@ float GetShadowPCF(float NdotL) {
 		vec2 vSinCos = vec2(sin(rndRotAngle), cos(rndRotAngle));
 		mat2 rotMat = mat2(vSinCos.y, -vSinCos.x, vSinCos.x, vSinCos.y);
 
-		vec2 filterSize = vec2(SHADOW_SAMPLING_DISTANCE / 8192.0);
+		vec2 filterSize = vec2(SHADOW_SAMPLING_DISTANCE / 8192.0) * shadowScaleFactor;
 
 		for (int i = 0; i < SHADOW_SAMPLES; ++i) {
 			// SpiralSNorm return low discrepancy sampling vec2
@@ -531,7 +536,7 @@ void main() {
 		float nShadowCoeff = mix(1.0, nShadowMix, groundShadowDensity); //NdotL based "shadow"
 
 		#if (!defined(DEFERRED_MODE) && defined(HAVE_SHADOWS))
-			float gShadowCoeff = GetShadowPCF(cosAngleDiffuse); //use clamped NdotL
+			float gShadowCoeff = GetShadowPCF(cosAngleDiffuse, lightProjScale); //use clamped NdotL
 		#else
 			float gShadowCoeff = 1.0;
 		#endif
