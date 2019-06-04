@@ -16,6 +16,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Net/GameServer.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/BuildingMaskMap.h"
@@ -86,6 +87,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(&buildingMaskMap, buildingMaskMap.GetClass());
 	s->SerializeObjectInstance(&projectileHandler, projectileHandler.GetClass());
 	CPlasmaRepulser::SerializeShieldSegmentCollectionPool(s);
+	CColorMap::SerializeColorMaps(s);
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s->SerializeObjectInstance(&envResHandler, envResHandler.GetClass());
 	s->SerializeObjectInstance(&moveDefHandler, moveDefHandler.GetClass());

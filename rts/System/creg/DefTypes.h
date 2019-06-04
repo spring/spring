@@ -45,7 +45,6 @@ namespace creg
 	DECTYPE(UnitDef, unitDefHandler->GetUnitDefByID, const)
 	DECTYPE(FeatureDef, featureDefHandler->GetFeatureDefByID, const)
 	DECTYPE(WeaponDef, weaponDefHandler->GetWeaponDefByID, const)
-	DECTYPE(CColorMap, CColorMap::GetColorMapByID, )
 
 }
 

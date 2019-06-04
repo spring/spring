@@ -12,6 +12,18 @@
 #include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/UnorderedMap.hpp"
+#include "System/creg/STL_Map.h"
+
+CR_BIND(CColorMap, )
+CR_REG_METADATA(CColorMap, (
+	CR_MEMBER(xsize),
+	CR_IGNORED(nxsize),
+	CR_MEMBER(ysize),
+	CR_IGNORED(map),
+
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+))
 
 
 static std::array<CColorMap, 2048 + 1> colorMapsCache;
@@ -33,13 +45,6 @@ void CColorMap::InitStatic()
 	}
 
 	numColorMaps = 0;
-}
-
-
-CColorMap* CColorMap::GetColorMapByID(int id)
-{
-	assert(colorMapsCache[id].id == id);
-	return &colorMapsCache[id];
 }
 
 CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
@@ -101,8 +106,6 @@ CColorMap::CColorMap(const float* data, size_t size)
 	xsize  = (size - (size % 4)) / 4;
 	ysize  = 1;
 	nxsize = xsize - 1;
-	nysize = ysize - 1;
-	id = numColorMaps;
 
 	std::array<SColor, 4096> cmap;
 
@@ -128,8 +131,6 @@ CColorMap::CColorMap(const std::string& fileName)
 	xsize  = bitmap.xsize;
 	ysize  = bitmap.ysize;
 	nxsize = xsize - 1;
-	nysize = ysize - 1;
-	id = numColorMaps;
 
 	LoadMap(bitmap.GetRawMem(), xsize * ysize);
 }
@@ -174,3 +175,34 @@ void CColorMap::GetColor(unsigned char* color, float pos)
 	color[3] = ((col1[3] * ia) + (col2[3] * aa)) >> 8;
 }
 
+#ifdef USING_CREG
+void CColorMap::SerializeColorMaps(creg::ISerializer* s)
+{
+	if (!s->IsWriting()) {
+		for (CColorMap& cm: colorMapsCache) {
+			cm.Clear();
+		}
+	}
+
+	s->SerializeInt(&numColorMaps, sizeof(numColorMaps));
+	for (size_t i = 0; i < numColorMaps; ++i) {
+		s->SerializeObjectInstance(&colorMapsCache[i], CColorMap::StaticClass());
+	}
+
+	std::unique_ptr<creg::IType> mapType = creg::DeduceType<decltype(namedColorMaps)>::Get();
+	mapType->Serialize(s, &namedColorMaps);
+}
+
+void CColorMap::PostLoad()
+{
+	nxsize = xsize - 1;
+}
+
+void CColorMap::Serialize(creg::ISerializer* s)
+{
+	if (!s->IsWriting())
+		map.resize(xsize * ysize);
+
+	s->Serialize(&map[0].r, xsize * ysize * 4);
+}
+#endif

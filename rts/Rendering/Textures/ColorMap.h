@@ -16,6 +16,7 @@
 class CColorMap
 {
 public:
+	CR_DECLARE_STRUCT(CColorMap)
 	CColorMap() = default;
 	/// Loads from a float vector
 	CColorMap(const float* data, size_t size);
@@ -28,6 +29,9 @@ public:
 	CColorMap& operator = (const CColorMap&) = delete;
 	CColorMap& operator = (CColorMap&&) = default;
 
+	void PostLoad();
+	void Serialize(creg::ISerializer* s);
+
 public:
 	/**
 	 * @param color buffer with room for 4 bytes
@@ -35,10 +39,8 @@ public:
 	 */
 	void GetColor(unsigned char* color, float pos);
 	void Clear() {
-		id = -1;
-
 		xsize = 2; nxsize = 1;
-		ysize = 1; nysize = 0;
+		ysize = 1;
 
 		map.clear();
 	}
@@ -49,8 +51,7 @@ private:
 public:
 	static void InitStatic();
 
-	// creg
-	static CColorMap* GetColorMapByID(int id);
+	static void SerializeColorMaps(creg::ISerializer* s);
 
 	/// Load colormap from a bitmap
 	static CColorMap* LoadFromBitmapFile(const std::string& fileName);
@@ -65,15 +66,10 @@ public:
 	 */
 	static CColorMap* LoadFromDefString(const std::string& defString);
 
-public:
-	// directly accessible for creg
-	int id = -1;
-
 private:
 	int  xsize = 2;
 	int nxsize = 1;
 	int  ysize = 1;
-	int nysize = 0;
 
 	std::vector<SColor> map;
 };
