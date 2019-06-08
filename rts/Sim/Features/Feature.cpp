@@ -464,10 +464,10 @@ void CFeature::ForcedMove(const float3& newPos)
 	quadField.RemoveFeature(this);
 
 	const float3 oldPos = pos;
-	prevPos = pos;
 
 	UnBlock();
 	Move(newPos - pos, true);
+	DisjointInterpolation();
 	Block();
 
 	// ForcedMove calls might cause the pstate to go stale
@@ -550,6 +550,7 @@ bool CFeature::UpdateVelocity(
 bool CFeature::UpdatePosition()
 {
 	const float3 oldPos = pos;
+	prevPos = pos;
 	// const float4 oldSpd = speed;
 
 	if (moveCtrl.enabled) {
