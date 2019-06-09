@@ -106,6 +106,9 @@ public:
 private:
 	bool InitLibrary(bool postLoad);
 
+	void SendInitEvent();
+	void SendUnitEvents();
+
 	/**
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */

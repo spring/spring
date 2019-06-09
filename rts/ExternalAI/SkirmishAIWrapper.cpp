@@ -90,7 +90,7 @@ void CSkirmishAIWrapper::PreInit(int aiID)
 		CTimeProfiler::RegisterTimer(GetTimerName());
 	}
 
-	LOG_L(L_INFO, "[AIWrapper::%s] creating callbacks for AI %d on team %d", __func__, skirmishAIId, teamId);
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] creating callbacks", __func__, skirmishAIId, teamId);
 	CreateCallback();
 }
 
@@ -124,46 +124,20 @@ bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 
 	libManager->FetchSkirmishAILibrary(key);
 
-	const CSkirmishAILibraryInfo& libInfo = (libManager->GetSkirmishAIInfos().find(key))->second;
-	const bool loadSupported = (libInfo.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
+	const auto& libInfoMap = libManager->GetSkirmishAIInfos();
+	const auto& libInfoIt  = libInfoMap.find(key);
+
+	const bool loadSupported = (libInfoIt != libInfoMap.end() && libInfoIt->second.GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes");
 
 	libManager->ReleaseSkirmishAILibrary(key);
+
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] postLoad=%d loadSupported=%d numUnits=%u", __func__, skirmishAIId, teamId, postLoad, loadSupported, unitHandler.NumUnitsByTeam(teamId));
 
 	if (!postLoad || loadSupported)
 		return true;
 
-
-	// fallback code to help the AI if it
-	// doesn't implement load/save support
-	Init();
-
-	for (unsigned int a = 0; a < unitHandler.MaxUnits(); a++) {
-		const CUnit* unit = unitHandler.GetUnit(a);
-
-		if (unit == nullptr)
-			continue;
-
-		if (unit->team == teamId) {
-			UnitCreated(a, -1);
-
-			if (!unit->beingBuilt)
-				UnitFinished(a);
-
-			continue;
-		}
-
-		if (unit->allyteam == teamHandler.AllyTeam(teamId))
-			continue;
-
-		if (teamHandler.Ally(teamHandler.AllyTeam(teamId), unit->allyteam))
-			continue;
-
-		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS))
-			EnemyEnterRadar(a);
-
-		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & LOS_INLOS)
-			EnemyEnterLOS(a);
-	}
+	SendInitEvent();
+	SendUnitEvents();
 
 	return true;
 }
@@ -173,17 +147,7 @@ void CSkirmishAIWrapper::Init() {
 	if (!InitLibrary(false))
 		return;
 
-	const SInitEvent evtData = {skirmishAIId, sCallback};
-	const int error = HandleEvent(EVENT_INIT, &evtData);
-
-	if (error == 0) {
-		initialized = true;
-		return;
-	}
-
-	// init failed
-	LOG_L(L_ERROR, "[AIWrapper::%s] handling EVENT_INIT for AI %d on team %d failed with error %d", __func__, skirmishAIId, teamId, error);
-	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
+	SendInitEvent();
 }
 
 void CSkirmishAIWrapper::Kill()
@@ -216,7 +180,8 @@ void CSkirmishAIWrapper::Kill()
 	}
 }
 
-void CSkirmishAIWrapper::Release(int reason) {
+void CSkirmishAIWrapper::Release(int reason)
+{
 	if (!initialized || released)
 		return;
 
@@ -225,6 +190,50 @@ void CSkirmishAIWrapper::Release(int reason) {
 	HandleEvent(EVENT_RELEASE, &evtData);
 
 	released = true;
+}
+
+
+void CSkirmishAIWrapper::SendInitEvent()
+{
+	const SInitEvent evtData = {skirmishAIId, sCallback};
+	const int error = HandleEvent(EVENT_INIT, &evtData);
+
+	if (error == 0) {
+		initialized = true;
+		return;
+	}
+
+	// init failed
+	LOG_L(L_ERROR, "[AIWrapper::%s][AI=%d team=%d] error %d handling EVENT_INIT", __func__, skirmishAIId, teamId, error);
+	skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
+}
+
+void CSkirmishAIWrapper::SendUnitEvents()
+{
+	// fallback code to help the AI if it
+	// doesn't implement load/save support
+	for (const CUnit* unit: unitHandler.GetActiveUnits()) {
+		if (unit->team == teamId) {
+			UnitCreated(unit->id, -1);
+
+			if (!unit->beingBuilt)
+				UnitFinished(unit->id);
+
+			continue;
+		}
+
+		if (unit->allyteam == teamHandler.AllyTeam(teamId))
+			continue;
+
+		if (teamHandler.Ally(teamHandler.AllyTeam(teamId), unit->allyteam))
+			continue;
+
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS))
+			EnemyEnterRadar(unit->id);
+
+		if (unit->losStatus[teamHandler.AllyTeam(teamId)] & LOS_INLOS)
+			EnemyEnterLOS(unit->id);
+	}
 }
 
 
