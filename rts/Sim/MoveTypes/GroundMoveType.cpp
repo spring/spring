@@ -1589,11 +1589,10 @@ bool CGroundMoveType::CanSetNextWayPoint() {
 			// note: can somehow cause units to move in circles near obstacles
 			// (mantis3718) if rectangle is too generous in size
 			const bool rangeTest = owner->moveDef->TestMoveSquareRange(owner, float3::min(cwp, pos), float3::max(cwp, pos), owner->speed, true, true, true);
-			const bool facePoint = ((cwp - pos).dot(flatFrontDir) >= 0.0f);
 			const bool allowSkip = ((cwp - pos).SqLength() <= Square(SQUARE_SIZE));
 
-			// CanSetNextWayPoint may return true if (allowSkip || (rangeTest && facePoint))
-			if (!allowSkip && (!rangeTest || !facePoint))
+			// CanSetNextWayPoint may return true if (allowSkip || rangeTest)
+			if (!allowSkip && !rangeTest)
 				return false;
 		}
 
