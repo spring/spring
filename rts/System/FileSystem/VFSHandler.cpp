@@ -270,11 +270,25 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	assert(section < Section::Count);
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
-	const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
-	const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{normalizedFilePath, FileData{}}, pred);
+	const auto& vect = files[section];
+	const auto  cbeg = vect.cbegin();
+	const auto  cend = vect.cend();
+	const auto  file = FileEntry{normalizedFilePath, FileData{}};
 
-	if (iter != files[section].end() && iter->first == normalizedFilePath)
-		return {iter->second.ar, iter->second.size};
+	{
+		const auto pred = [ ](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
+		const auto iter = std::lower_bound(cbeg, cend, file, pred);
+
+		if (iter != cend && iter->first == normalizedFilePath)
+			return {iter->second.ar, iter->second.size};
+	}
+	{
+		// sanity-check ordering
+		const auto pred = [&](const FileEntry& e) { return (e.first == file.first); };
+		const auto iter = std::find_if(cbeg, cend, pred);
+
+		LOG_L(L_WARNING, "[VFSH::%s(path=\"%s\" section=%d)] idx=" _STPF_ "/" _STPF_ " end=%d", __func__, file.first.c_str(), section, iter - cbeg, vect.size(), iter == cend);
+	}
 
 	// file does not exist in the VFS
 	return {nullptr, 0};
