@@ -274,6 +274,27 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 	const auto  cbeg = vect.cbegin();
 	const auto  cend = vect.cend();
 	const auto  file = FileEntry{normalizedFilePath, FileData{}};
+	const auto  sane = [&]() -> bool {
+		for (size_t i = 1, n = vect.size(); i < n; i++) {
+			if (vect[i - 1].first > vect[i].first)
+				return false;
+		}
+		return true;
+	};
+
+	if (file.first.find("customcmds") != std::string::npos) {
+		// sanity-check ordering
+		const auto pred = [&](const FileEntry& e) { return (e.first == file.first); };
+		const auto iter = std::find_if(cbeg, cend, pred);
+
+		LOG_L(L_WARNING, "[VFSH::%s(path=\"%s\" section=%d)] idx=" _STPF_ "/" _STPF_ " end=%d  sane=%d global=%d", __func__, file.first.c_str(), section, iter - cbeg, vect.size(), iter == cend, sane(), this == vfsHandlerGlobal);
+
+		if (iter == cend) {
+			for (const auto& fdp: vect) {
+				LOG_L(L_WARNING, "\tfile=%s (arch=%p size=%d)", fdp.first.c_str(), fdp.second.ar, fdp.second.size);
+			}
+		}
+	}
 
 	{
 		const auto pred = [ ](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
@@ -281,13 +302,6 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 
 		if (iter != cend && iter->first == normalizedFilePath)
 			return {iter->second.ar, iter->second.size};
-	}
-	{
-		// sanity-check ordering
-		const auto pred = [&](const FileEntry& e) { return (e.first == file.first); };
-		const auto iter = std::find_if(cbeg, cend, pred);
-
-		LOG_L(L_WARNING, "[VFSH::%s(path=\"%s\" section=%d)] idx=" _STPF_ "/" _STPF_ " end=%d", __func__, file.first.c_str(), section, iter - cbeg, vect.size(), iter == cend);
 	}
 
 	// file does not exist in the VFS
