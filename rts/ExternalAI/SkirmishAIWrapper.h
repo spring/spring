@@ -4,7 +4,6 @@
 #define SKIRMISH_AI_WRAPPER_H
 
 #include "SkirmishAIKey.h"
-#include "System/Object.h"
 
 class CSkirmishAILibrary;
 struct SSkirmishAICallback;
@@ -16,13 +15,11 @@ class float3;
 /**
  * Acts as an OO wrapper for a Skirmish AI instance.
  * Basically converts function calls to AIEvents,
- * which are then sent ot the AI.
+ * which are then sent to the AI library.
  */
 class CSkirmishAIWrapper {
 private:
 	CR_DECLARE_STRUCT(CSkirmishAIWrapper)
-
-	void CreateCallback();
 
 public:
 	/// used only by creg
@@ -36,8 +33,14 @@ public:
 
 	void Serialize(creg::ISerializer* s) {}
 	void PostLoad() {
+		#if 0
+		// EngineOutHandler invokes PostLoad directly since
+		// it does not (de)serialize AI's, less error-prone
 		CreateCallback();
 		InitLibrary(true);
+		#else
+		SendUnitEvents();
+		#endif
 	}
 
 
@@ -105,6 +108,7 @@ public:
 
 private:
 	bool InitLibrary(bool postLoad);
+	void CreateCallback();
 
 	void SendInitEvent();
 	void SendUnitEvents();
@@ -123,7 +127,7 @@ private:
 	SkirmishAIKey key;
 
 	const CSkirmishAILibrary* library = nullptr;
-	const SSkirmishAICallback* sCallback = nullptr;
+	const SSkirmishAICallback* callback = nullptr;
 
 	// first 4 bytes store hash(timerName + 4)
 	char timerName[sizeof(uint32_t) + 60] = {0};
