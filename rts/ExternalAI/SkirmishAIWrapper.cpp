@@ -37,7 +37,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(key),
 
 	CR_IGNORED(library),
-	CR_IGNORED(sCallback),
+	CR_IGNORED(callback),
 
 	CR_MEMBER(timerName),
 
@@ -101,7 +101,7 @@ void CSkirmishAIWrapper::PreDestroy() {
 
 void CSkirmishAIWrapper::CreateCallback() {
 	library = nullptr;
-	sCallback = skirmishAiCallback_GetInstance(this);
+	callback = skirmishAiCallback_GetInstance(this);
 }
 
 
@@ -112,7 +112,7 @@ bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 	{
 		ScopedTimer timer(GetTimerNameHash());
 
-		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr || !(libraryInit = library->Init(skirmishAIId, sCallback)))
+		if ((library = libManager->FetchSkirmishAILibrary(key)) == nullptr || !(libraryInit = library->Init(skirmishAIId, callback)))
 			skirmishAIHandler.SetLocalKillFlag(skirmishAIId, 5 /* = AI failed to init */);
 	}
 
@@ -122,6 +122,7 @@ bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 		return false;
 	}
 
+	#if 0
 	libManager->FetchSkirmishAILibrary(key);
 
 	const auto& libInfoMap = libManager->GetSkirmishAIInfos();
@@ -138,6 +139,9 @@ bool CSkirmishAIWrapper::InitLibrary(bool postLoad) {
 
 	SendInitEvent();
 	SendUnitEvents();
+	#else
+	assert(!postLoad);
+	#endif
 
 	return true;
 }
@@ -170,7 +174,7 @@ void CSkirmishAIWrapper::Kill()
 	}
 	{
 		library = nullptr;
-		sCallback = nullptr;
+		callback = nullptr;
 	}
 	{
 		// mark as inactive for EngineOutHandler::{Load,Save}; AI data
@@ -195,7 +199,7 @@ void CSkirmishAIWrapper::Release(int reason)
 
 void CSkirmishAIWrapper::SendInitEvent()
 {
-	const SInitEvent evtData = {skirmishAIId, sCallback};
+	const SInitEvent evtData = {skirmishAIId, callback};
 	const int error = HandleEvent(EVENT_INIT, &evtData);
 
 	if (error == 0) {
@@ -210,6 +214,8 @@ void CSkirmishAIWrapper::SendInitEvent()
 
 void CSkirmishAIWrapper::SendUnitEvents()
 {
+	LOG_L(L_INFO, "[AIWrapper::%s][AI=%d team=%d] numUnits=%u", __func__, skirmishAIId, teamId, unitHandler.NumUnitsByTeam(teamId));
+
 	// fallback code to help the AI if it
 	// doesn't implement load/save support
 	for (const CUnit* unit: unitHandler.GetActiveUnits()) {

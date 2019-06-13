@@ -26,13 +26,11 @@
 
 CR_BIND(CEngineOutHandler, )
 CR_REG_METADATA(CEngineOutHandler, (
-	// FIXME:
-	//   "constexpr std::pair<_T1, _T2>::pair(const std::pair<_T1, _T2>&)
-	//   [with _T1 = const unsigned char; _T2 = std::unique_ptr<CSkirmishAIWrapper>]’
-	//   is implicitly deleted because the default definition would be ill-formed"
 	CR_IGNORED(hostSkirmishAIs),
 	CR_IGNORED(teamSkirmishAIs),
-	CR_IGNORED(activeSkirmishAIs)
+	CR_IGNORED(activeSkirmishAIs),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 
@@ -89,6 +87,12 @@ void CEngineOutHandler::Destroy() {
 		hostSkirmishAIs[aiID].FUNC;          \
 	}
 
+
+void CEngineOutHandler::PostLoad()
+{
+	AI_SCOPED_TIMER();
+	DO_FOR_SKIRMISH_AIS(PostLoad())
+}
 
 void CEngineOutHandler::PreDestroy() {
 	AI_SCOPED_TIMER();
@@ -521,6 +525,7 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 	LOG_L(L_INFO, "[EOH::%s(id=%u)]", __func__, skirmishAIId);
 
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	      CSkirmishAIWrapper& aiInst = hostSkirmishAIs[skirmishAIId];
 
 	if (aiData->status != SKIRMAISTATE_RELOADING)
 		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
@@ -528,31 +533,27 @@ void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 	if (aiData->isLuaAI) {
 		// currently, we need to do nothing for Lua AIs
 		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
-	} else {
-		hostSkirmishAIs[                skirmishAIId             ].PreInit(skirmishAIId);
-		teamSkirmishAIs[hostSkirmishAIs[skirmishAIId].GetTeamId()].push_back(skirmishAIId);
-		hostSkirmishAIs[                skirmishAIId             ].Init();
-
-		activeSkirmishAIs.push_back(skirmishAIId);
-
-		if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
-			return;
-
-		// We will only get here if the AI is created mid-game.
-		if (!gs->PreSimFrame())
-			hostSkirmishAIs[skirmishAIId].Update(gs->frameNum);
-
-		// Send a UnitCreated event for each unit of the team.
-		// This will only do something if the AI is created mid-game.
-		const CTeam* team = teamHandler.Team(hostSkirmishAIs[skirmishAIId].GetTeamId());
-
-		for (const CUnit* u: unitHandler.GetUnitsByTeam(team->teamNum)) {
-			hostSkirmishAIs[skirmishAIId].UnitCreated(u->id, -1);
-			hostSkirmishAIs[skirmishAIId].UnitFinished(u->id);
-		}
-
-		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+		return;
 	}
+
+	aiInst.PreInit(skirmishAIId);
+
+	teamSkirmishAIs[ aiInst.GetTeamId() ].push_back(skirmishAIId);
+	activeSkirmishAIs.push_back(skirmishAIId);
+
+	aiInst.Init();
+
+	if (skirmishAIHandler.HasLocalKillFlag(skirmishAIId))
+		return;
+
+	if (!gs->PreSimFrame())
+		aiInst.Update(gs->frameNum);
+
+	// send events for each unit belonging to the AI's team
+	// will only do something if the AI is created mid-game
+	aiInst.PostLoad();
+
+	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 }
 
 void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {

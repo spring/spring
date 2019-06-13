@@ -43,6 +43,7 @@ public:
 		activeSkirmishAIs.clear();
 	}
 
+	void PostLoad();
 	/** Called just before all the units are destroyed. */
 	void PreDestroy();
 
