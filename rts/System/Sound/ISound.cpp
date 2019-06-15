@@ -21,6 +21,9 @@
 
 CONFIG(bool, Sound).defaultValue(true).description("Enables (OpenAL) or disables sound.");
 
+CONFIG(bool, UseEFX     ).defaultValue( true).safemodeValue(false);
+CONFIG(bool, UseSDLAudio).defaultValue(false).safemodeValue(false);
+
 // defined here so spring-headless contains them, too (default & headless should contain the same set of configtags!)
 CONFIG(int, MaxSounds).defaultValue(128).headlessValue(1).minimumValue(1).description("Maximum sounds played in parallel.");
 CONFIG(int, PitchAdjust).defaultValue(0).description("Adjusts sound pitch proportional to [if set to 1, the square root of] game speed. Set to 2 for linear scaling.");
@@ -31,10 +34,10 @@ CONFIG(int, snd_volunitreply).defaultValue(100).minimumValue(0).maximumValue(200
 CONFIG(int, snd_volbattle).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"battle\" sound channel.");
 CONFIG(int, snd_volui).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"ui\" sound channel.");
 CONFIG(int, snd_volmusic).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"music\" sound channel.");
+CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
+
 CONFIG(std::string, snd_device).defaultValue("").description("Sets the used output device. See \"Available Devices\" section in infolog.txt.");
 
-CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
-CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
 
 
 #ifndef NO_SOUND
