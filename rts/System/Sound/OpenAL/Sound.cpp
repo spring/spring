@@ -452,6 +452,9 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	LOAD_PROC(alcRenderSamplesSOFT);
 #undef LOAD_PROC
 
+	if (!configHandler->GetBool("UseSDLAudio"))
+		return;
+
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
 		LOG("[Sound::%s] failed to initialize SDL audio, error:  \"%s\"", __func__, SDL_GetError());
 		return;
@@ -529,6 +532,8 @@ void CSound::OpenLoopbackDevice(const std::string& deviceName)
 	attrs[6] = 0; // end of list
 
 
+	LOG("[Sound::%s] opening loopback device", __func__);
+
 	// initialize OpenAL loopback device, using our format attributes
 	if ((curDevice = alcLoopbackOpenDeviceSOFT(nullptr)) == nullptr) {
 		LOG("[Sound::%s] failed to create loopback device", __func__);
@@ -561,7 +566,6 @@ void CSound::InitThread(int cfgMaxSounds)
 
 	{
 		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-		assert(curDevice == nullptr && curContext == nullptr);
 		// if empty, open default device
 		std::string configDeviceName;
 
@@ -570,6 +574,9 @@ void CSound::InitThread(int cfgMaxSounds)
 		// call IsSet; we do not want to create a default for snd_device
 		if (configHandler->IsSet("snd_device"))
 			configDeviceName = configHandler->GetString("snd_device");
+
+		assert(curDevice == nullptr);
+		assert(curContext == nullptr);
 
 		OpenLoopbackDevice(configDeviceName);
 
