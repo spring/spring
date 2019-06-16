@@ -276,6 +276,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	//FIXME: REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	//FIXME: REGISTER_LUA_CFUNC(SetUnitCOBValue);
 
+	REGISTER_LUA_CFUNC(UnitFinishCommand);
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
@@ -3519,6 +3520,21 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 
 /******************************************************************************/
+
+int LuaSyncedCtrl::UnitFinishCommand(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+
+	CUnit* const unit = ParseUnit(L, __func__, 1);
+	if (unit == nullptr)
+		luaL_error(L, "Invalid unitID given to UnitFinishCommand()");
+
+	CCommandAI* const cai = unit->commandAI;
+	if (!cai->commandQue.empty())
+		cai->FinishCommand();
+
+	return 0;
+}
 
 int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
