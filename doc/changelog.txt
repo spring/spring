@@ -135,6 +135,8 @@ Lua:
  - Added VFS.GetFileAbsolutePath(string vfsFilePath) -> string filePathOnDisk
  - Added VFS.GetArchiveContainingFile(string vfsFilePath) -> string archiveName
  - add a 6th return value (feature->reclaimTime) to GetFeatureResources.
+ - Add `Spring.UnitFinishCommand(unitID)`, finishes current command. Unlike CMD.REMOVE it works with Repeat/UnitCmdDone
+   and unlike CommandFallback it works on builtin engine commands. 
  - Allow spawning of any CEG from any LUS:
    EmitSfx(p, "cegTag") param will emit the CEG with tag="cegTag"
    EmitSfx(p, SFX.GLOBAL | cegID) will emit the CEG with id=cegID

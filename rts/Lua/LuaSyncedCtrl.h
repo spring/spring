@@ -43,6 +43,7 @@ class LuaSyncedCtrl
 		static int SetUnitRulesParam(lua_State* L);
 		static int SetFeatureRulesParam(lua_State* L);
 
+		static int UnitFinishCommand(lua_State* L);
 		static int GiveOrderToUnit(lua_State* L);
 		static int GiveOrderToUnitMap(lua_State* L);
 		static int GiveOrderToUnitArray(lua_State* L);

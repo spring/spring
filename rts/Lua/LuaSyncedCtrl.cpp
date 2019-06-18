@@ -276,6 +276,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	//FIXME: REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	//FIXME: REGISTER_LUA_CFUNC(SetUnitCOBValue);
 
+	REGISTER_LUA_CFUNC(UnitFinishCommand);
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
@@ -3520,6 +3521,21 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 /******************************************************************************/
 
+int LuaSyncedCtrl::UnitFinishCommand(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+
+	CUnit* unit = ParseUnit(L, __func__, 1);
+	if (unit == nullptr)
+		luaL_error(L, "[%s] invalid unitID", __func__);
+
+	CCommandAI* cai = unit->commandAI;
+	if (!cai->commandQue.empty())
+		cai->FinishCommand();
+
+	return 0;
+}
+
 int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
@@ -3527,7 +3543,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
-		luaL_error(L, "Invalid unitID given to GiveOrderToUnit()");
+		luaL_error(L, "[%s] invalid unitID", __func__);
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
@@ -3537,7 +3553,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	}
 
 	if (inGiveOrder)
-		luaL_error(L, "GiveOrderToUnit() recursion is not permitted");
+		luaL_error(L, "[%s] recursion not permitted", __func__);
 
 	inGiveOrder = true;
 	unit->commandAI->GiveCommand(cmd);
@@ -3564,9 +3580,8 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderToUnitMap() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
 
 	inGiveOrder = true;
 	int count = 0;
@@ -3600,9 +3615,9 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __func__, 2);
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
@@ -3640,9 +3655,9 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderArrayToUnitMap() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
@@ -3683,9 +3698,9 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	if (inGiveOrder) {
-		luaL_error(L, "GiveOrderArrayToUnitArray() recursion is not permitted");
-	}
+	if (inGiveOrder)
+		luaL_error(L, "[%s] recursion not permitted", __func__);
+
 	inGiveOrder = true;
 
 	int count = 0;
