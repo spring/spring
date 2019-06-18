@@ -1132,6 +1132,8 @@ void CCommandAI::ExecuteRemove(const Command& c)
 
 	// if false, remove commands by tag
 	const bool removeByID = (c.GetOpts() & ALT_KEY);
+	// if true, finish the command instead of removing (= gets put at the end if repeat enabled)
+	const bool finishCommand = (c.GetOpts() & META_KEY);
 	// disable repeating during the removals
 	const bool prevRepeat = repeatOrders;
 
@@ -1152,7 +1154,7 @@ void CCommandAI::ExecuteRemove(const Command& c)
 	if ((c.GetNumParams() <= 0) || (queue->size() <= 0))
 		return;
 
-	repeatOrders = false;
+	repeatOrders = finishCommand && prevRepeat;
 
 	for (unsigned int p = 0; p < c.GetNumParams(); p++) {
 		const int removeValue = c.GetParam(p); // tag or id
@@ -1190,14 +1192,22 @@ void CCommandAI::ExecuteRemove(const Command& c)
 					}
 				}
 
-				if (!facCAI && (ci == queue->begin())) {
-					if (!active) {
+				if (facCAI == nullptr) {
+					if (ci == queue->begin()) {
+						if (!active) {
+							active = true;
+							FinishCommand();
+							ci = queue->begin();
+							break;
+						}
 						active = true;
-						FinishCommand();
+					} else if (repeatOrders && !ci->IsInternalOrder() && ci->GetID() != CMD_STOP && ci->GetID() != CMD_PATROL) {
+						const Command tmpCmd = *ci; // copy needed because both erase and push_back can invalidate the iterator for each other
+						queue->erase(ci);
+						queue->push_back(tmpCmd);
 						ci = queue->begin();
 						break;
 					}
-					active = true;
 				}
 
 				queue->erase(ci);
@@ -1206,6 +1216,8 @@ void CCommandAI::ExecuteRemove(const Command& c)
 				// the removal may have corrupted the iterator
 				break;
 			}
+			if (finishCommand)
+				break;
 		} while (ci != queue->end());
 	}
 
