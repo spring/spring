@@ -16,8 +16,8 @@
 #define MAX_LOG_SINKS 8
 
 namespace log_formatter {
-	static std::array<log_sink_ptr, MAX_LOG_SINKS> sinks = {nullptr};
-	static std::array<log_cleanup_ptr, MAX_LOG_SINKS> cleanupFuncs = {nullptr};
+	static std::array<log_sink_ptr, MAX_LOG_SINKS> sinks = {{nullptr}};
+	static std::array<log_cleanup_ptr, MAX_LOG_SINKS> cleanupFuncs = {{nullptr}};
 
 	static size_t numSinks = 0;
 	static size_t numFuncs = 0;
