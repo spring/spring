@@ -2363,17 +2363,20 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __func__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
+	if (unit->team != gu->myTeam)
+		return 0;
 
-	if ((unit->team == gu->myTeam) && (unit->group)) {
-		lua_pushnumber(L, unit->group->id);
-		return 1;
-	}
+	const CGroup* group = unit->GetGroup();
 
-	return 0;
+	if (group == nullptr)
+		return 0;
+
+	lua_pushnumber(L, group->id);
+	return 1;
 }
 
 

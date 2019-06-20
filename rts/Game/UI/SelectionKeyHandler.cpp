@@ -118,7 +118,7 @@ namespace {
 	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty())
 	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
 	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT))
-	DECLARE_FILTER(InHotkeyGroup, unit->group != nullptr)
+	DECLARE_FILTER(InHotkeyGroup, unit->GetGroup() != nullptr)
 	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius)
 	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire)
 

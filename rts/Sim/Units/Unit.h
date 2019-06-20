@@ -223,6 +223,9 @@ protected:
 public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
+	const CGroup* GetGroup() const;
+	      CGroup* GetGroup();
+
 public:
 	static void  SetEmpDeclineRate(float value) { empDeclineRate = value; }
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
@@ -513,10 +516,6 @@ public:
 	bool isSelected;
 	bool isIcon;
 	float iconRadius;
-
-	unsigned int lastUnitUpdate;
-
-	CGroup* group;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

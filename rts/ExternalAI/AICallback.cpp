@@ -334,7 +334,7 @@ int CAICallback::GetUnitGroup(int unitId)
 	if (unit == nullptr)
 		return -1;
 
-	const CGroup* group = unit->group;
+	const CGroup* group = unit->GetGroup();
 
 	if (group != nullptr)
 		return group->id;

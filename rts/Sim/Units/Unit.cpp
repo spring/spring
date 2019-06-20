@@ -33,6 +33,7 @@
 #include "Rendering/GroundFlash.h"
 
 #include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
@@ -203,8 +204,6 @@ CUnit::CUnit()
 , isSelected(false)
 , isIcon(false)
 , iconRadius(0.0f)
-, lastUnitUpdate(0)
-, group(nullptr)
 
 , stunned(false)
 {
@@ -1894,7 +1893,7 @@ void CUnit::CalculateTerrainType()
 	if (!script->HasSetSFXOccupy())
 		return;
 
-	if (GetTransporter() != NULL) {
+	if (GetTransporter() != nullptr) {
 		curTerrainType = SFX_TERRAINTYPE_NONE;
 		return;
 	}
@@ -1907,16 +1906,19 @@ void CUnit::CalculateTerrainType()
 			curTerrainType = SFX_TERRAINTYPE_WATER_B;
 		else
 			curTerrainType = SFX_TERRAINTYPE_WATER_A;
+
+		return;
 	}
 	// shore
-	else if (height < 0.0f) {
+	if (height < 0.0f) {
 		if (upright)
 			curTerrainType = SFX_TERRAINTYPE_WATER_A;
+
+		return;
 	}
+
 	// land (or air)
-	else {
-		curTerrainType = SFX_TERRAINTYPE_LAND;
-	}
+	curTerrainType = SFX_TERRAINTYPE_LAND;
 }
 
 
@@ -1926,15 +1928,19 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
+	CGroup* group = GetGroup();
+
 	if (group != nullptr)
 		group->RemoveUnit(this);
 
-	if ((group = newGroup) == nullptr)
+	if (!uiGroupHandlers[team].SetUnitGroup(this, newGroup))
 		return true;
 
+	assert(newGroup != nullptr);
+
 	if (!newGroup->AddUnit(this)) {
-		// group did not accept us
-		group = nullptr;
+		// new group did not accept us
+		uiGroupHandlers[team].SetUnitGroup(this, nullptr);
 		return false;
 	}
 
@@ -1948,6 +1954,9 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 
 	return true;
 }
+
+const CGroup* CUnit::GetGroup() const { return uiGroupHandlers[team].GetUnitGroup(id); }
+      CGroup* CUnit::GetGroup()       { return uiGroupHandlers[team].GetUnitGroup(id); }
 
 
 /******************************************************************************/
@@ -2890,7 +2899,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(prevMoveType),
 
 	CR_MEMBER(commandAI),
-	CR_MEMBER(group),
 	CR_MEMBER(script),
 
 	CR_IGNORED( usMemBuffer),
@@ -3023,8 +3031,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(isSelected),
 	CR_MEMBER_UN(isIcon),
 	CR_MEMBER(iconRadius),
-
-	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER(stunned),
 

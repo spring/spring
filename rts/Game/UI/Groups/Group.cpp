@@ -37,12 +37,11 @@ CGroup::~CGroup()
 
 void CGroup::PostLoad()
 {
-	auto unitBackup = units;
+	while (!units.empty()) {
+		CUnit* unit = unitHandler.GetUnit(*units.begin());
 
-	for (const int unitID: unitBackup) {
-		CUnit* unit = unitHandler.GetUnit(unitID);
 		units.erase(unit->id);
-		unit->group = nullptr;
+		handler->SetUnitGroup(unit, nullptr);
 	}
 }
 
