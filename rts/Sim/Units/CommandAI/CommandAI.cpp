@@ -1008,6 +1008,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 		// shutdown the current order
 		owner->DropCurrentAttackTarget();
 		StopMove();
+
 		inCommand = false;
 		targetDied = false;
 
@@ -1016,9 +1017,9 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 	}
 
 	if (commandQue.empty()) {
-		if (!owner->group) {
+		if (owner->GetGroup() == nullptr)
 			eoh->UnitIdle(*owner);
-		}
+
 		eventHandler.UnitIdle(owner);
 	} else {
 		SlowUpdate();
@@ -1578,7 +1579,7 @@ void CCommandAI::FinishCommand()
 	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
-		if (owner->group == nullptr)
+		if (owner->GetGroup() == nullptr)
 			eoh->UnitIdle(*owner);
 
 		eventHandler.UnitIdle(owner);

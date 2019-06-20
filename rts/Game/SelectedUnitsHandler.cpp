@@ -107,6 +107,7 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	for (const int unitID: selectedUnits) {
 		const CUnit* u = unitHandler.GetUnit(unitID);
 		const CCommandAI* cai = u->commandAI;
+		const CGroup* group = u->GetGroup();
 
 		for (const SCommandDescription* cmdDesc: cai->GetPossibleCommands()) {
 			states[cmdDesc->id] = cmdDesc->disabled ? 2 : 1;
@@ -115,16 +116,16 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		if (cai->lastSelectedCommandPage < commandPage)
 			commandPage = cai->lastSelectedCommandPage;
 
-		if (foundGroup == -2 && u->group)
-			foundGroup = u->group->id;
+		if (foundGroup == -2 && group)
+			foundGroup = group->id;
 
-		if (!u->group || foundGroup != u->group->id)
+		if (!group || foundGroup != group->id)
 			foundGroup = -1;
 
-		if (foundGroup2 == -2 && u->group)
-			foundGroup2 = u->group->id;
+		if (foundGroup2 == -2 && group)
+			foundGroup2 = group->id;
 
-		if (foundGroup2 >= 0 && u->group && u->group->id != foundGroup2)
+		if (foundGroup2 >= 0 && group && group->id != foundGroup2)
 			foundGroup2 = -1;
 	}
 
@@ -206,7 +207,7 @@ void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 		for (const int unitID: selectedUnits) {
 			CUnit* u = unitHandler.GetUnit(unitID);
 
-			if (u->group != nullptr) {
+			if (u->GetGroup() != nullptr) {
 				u->SetGroup(nullptr);
 				possibleCommandsChanged = true;
 			}
@@ -215,18 +216,22 @@ void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 	}
 
 	if (cmdID == CMD_GROUPSELECT) {
-		SelectGroup(unitHandler.GetUnit(*selectedUnits.begin())->group->id);
+		const CUnit* u = unitHandler.GetUnit(*selectedUnits.begin());
+		const CGroup* g = u->GetGroup();
+
+		SelectGroup(g->id);
 		return;
 	}
 
 	if (cmdID == CMD_GROUPADD) {
-		CGroup* group = nullptr;
+		const CGroup* group = nullptr;
 
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler.GetUnit(unitID);
+			const CUnit* u = unitHandler.GetUnit(unitID);
+			const CGroup* g = u->GetGroup();
 
-			if (u->group != nullptr) {
-				group = u->group;
+			if (g != nullptr) {
+				group = g;
 				possibleCommandsChanged = true;
 				break;
 			}
@@ -234,17 +239,19 @@ void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 		if (group != nullptr) {
 			for (const int unitID: selectedUnits) {
 				CUnit* u = unitHandler.GetUnit(unitID);
+				CGroup* g = nullptr;
 
 				if (u == nullptr) {
 					assert(false);
 					continue;
 				}
-				if (u->group != nullptr)
+
+				if ((g = u->GetGroup()) != nullptr)
 					continue;
 
 				// change group, but do not call SUH::AddUnit while iterating
 				// (the unit's id is already present in selectedUnits anyway)
-				u->SetGroup(group, false, false);
+				u->SetGroup(const_cast<CGroup*>(group), false, false);
 			}
 
 			SelectGroup(group->id);
@@ -383,6 +390,7 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported, we should not be able to select it
 	const CUnit* trans = unit->GetTransporter();
+
 	if (trans != nullptr && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform)
 		return;
 
@@ -395,7 +403,9 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 
-	if (!(unit->group) || unit->group->id != selectedGroup)
+	const CGroup* g = unit->GetGroup();
+
+	if (g == nullptr || g->id != selectedGroup)
 		selectedGroup = -1;
 
 	unit->isSelected = true;
@@ -584,6 +594,7 @@ void CSelectedUnitsHandler::Draw()
 		if (selectedGroup != -1) {
 			const CGroupHandler* gh = &uiGroupHandlers[gu->myTeam];
 			const CGroup* g = gh->groups[selectedGroup];
+
 			unitSet = &g->units;
 		}
 

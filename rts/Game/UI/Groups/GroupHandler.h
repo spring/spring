@@ -4,6 +4,7 @@
 #define	_GROUP_HANDLER_H
 
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedMap.hpp"
 
 #include <string>
 #include <vector>
@@ -32,6 +33,25 @@ public:
 	bool GroupCommand(int num, const std::string& cmd);
 
 	CGroup* CreateNewGroup();
+	CGroup* GetUnitGroup(int unitID) const {
+		const auto iter = unitGroups.find(int unitID);
+
+		if (iter == unitGroups.end())
+			return nullptr;
+
+		return (iter->second);
+	}
+
+	bool SetUnitGroup(int unitID, CGroup* g) {
+		unitGroups.erase(int unitID);
+
+		if (g == nullptr)
+			return false;
+
+		unitGroups.insert(unitID, g);
+		return true;
+	}
+
 	void RemoveGroup(CGroup* group);
 
 	void PushGroupChange(int id);
@@ -44,6 +64,8 @@ public:
 protected:
 	std::vector<int> freeGroups;
 	std::vector<int> changedGroups;
+
+	spring::unsynced_map<int, CGroup*> unitGroups;
 
 	int team = 0;
 	/**

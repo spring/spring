@@ -18,10 +18,13 @@ std::vector<CGroupHandler> uiGroupHandlers;
 CR_BIND(CGroupHandler, (0))
 CR_REG_METADATA(CGroupHandler, (
 	CR_MEMBER(groups),
-	CR_MEMBER(team),
 	CR_MEMBER(freeGroups),
-	CR_MEMBER(firstUnusedGroup),
-	CR_MEMBER(changedGroups)
+	CR_MEMBER(changedGroups),
+	CR_MEMBER(unitGroups),
+
+	CR_MEMBER(team),
+	CR_MEMBER(firstUnusedGroup)
+
 ))
 
 //////////////////////////////////////////////////////////////////////
@@ -30,6 +33,8 @@ CR_REG_METADATA(CGroupHandler, (
 
 CGroupHandler::CGroupHandler(int teamId): team(teamId)
 {
+	groups.reserve(FIRST_SPECIAL_GROUP);
+
 	for (int g = 0; g < FIRST_SPECIAL_GROUP; ++g) {
 		groups.push_back(new CGroup(g, this));
 	}
@@ -46,10 +51,11 @@ void CGroupHandler::Update()
 {
 	{
 		for (CGroup* g: groups) {
-			if (g != nullptr) {
-				// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
-				g->Update();
-			}
+			if (g == nullptr)
+				continue;
+
+			// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
+			g->Update();
 		}
 	}
 
