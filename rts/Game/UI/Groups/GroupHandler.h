@@ -34,7 +34,7 @@ public:
 
 	CGroup* CreateNewGroup();
 	CGroup* GetUnitGroup(int unitID) const {
-		const auto iter = unitGroups.find(int unitID);
+		const auto iter = unitGroups.find(unitID);
 
 		if (iter == unitGroups.end())
 			return nullptr;
@@ -43,7 +43,7 @@ public:
 	}
 
 	bool SetUnitGroup(int unitID, CGroup* g) {
-		unitGroups.erase(int unitID);
+		unitGroups.erase(unitID);
 
 		if (g == nullptr)
 			return false;
