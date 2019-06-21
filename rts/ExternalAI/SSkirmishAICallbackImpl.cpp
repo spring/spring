@@ -4898,21 +4898,22 @@ EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 	return GetCallBack(skirmishAIId)->IsDebugDrawerEnabled();
 }
 
-EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIdsMaxSize) {
-	const std::vector<CGroup*>& gs = uiGroupHandlers[AI_TEAM_IDS[skirmishAIId]].groups;
-	const int groupIdsRealSize = gs.size();
+EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int maxGroups) {
+	const CGroupHandler& gh = uiGroupHandlers[ AI_TEAM_IDS[skirmishAIId] ];
+	const std::vector<CGroup>& gs = gh.GetGroups();
 
-	int groupIdsSize = groupIdsRealSize;
+	const int numGroups = gs.size();
+	int numGroupsRet = numGroups;
 
 	if (groupIds != nullptr) {
-		groupIdsSize = std::min(groupIdsRealSize, groupIdsMaxSize);
+		numGroupsRet = std::min(numGroups, maxGroups);
 
-		for (int g = 0; g < groupIdsSize; ++g) {
-			groupIds[g] = gs[g]->id;
+		for (int i = 0; i < numGroupsRet; ++i) {
+			groupIds[i] = gs[i].id;
 		}
 	}
 
-	return groupIdsSize;
+	return numGroupsRet;
 }
 
 EXPORT(int) skirmishAiCallback_Group_getSupportedCommands(int skirmishAIId, int groupId) {

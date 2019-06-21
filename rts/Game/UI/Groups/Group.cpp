@@ -9,30 +9,14 @@
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
 
-CR_BIND(CGroup, (0, nullptr))
+CR_BIND(CGroup, (0, 0))
 CR_REG_METADATA(CGroup, (
 	CR_MEMBER(id),
+	CR_MEMBER(ghIndex),
 	CR_MEMBER(units),
-	CR_MEMBER(handler),
+
 	CR_POSTLOAD(PostLoad)
 ))
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CGroup::CGroup(int id, CGroupHandler* groupHandler)
-	: id(id)
-	, handler(groupHandler)
-{
-}
-
-CGroup::~CGroup()
-{
-	// should not have any units left, but just to be sure
-	ClearUnits();
-}
-
 
 
 void CGroup::PostLoad()
@@ -41,21 +25,21 @@ void CGroup::PostLoad()
 		CUnit* unit = unitHandler.GetUnit(*units.begin());
 
 		units.erase(unit->id);
-		handler->SetUnitGroup(unit, nullptr);
+		uiGroupHandlers[ghIndex].SetUnitGroup(unit->id, nullptr);
 	}
 }
 
 bool CGroup::AddUnit(CUnit* unit)
 {
 	units.insert(unit->id);
-	handler->PushGroupChange(id);
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 	return true;
 }
 
 void CGroup::RemoveUnit(CUnit* unit)
 {
 	units.erase(unit->id);
-	handler->PushGroupChange(id);
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 }
 
 void CGroup::RemoveIfEmptySpecialGroup()
@@ -67,15 +51,10 @@ void CGroup::RemoveIfEmptySpecialGroup()
 		return;
 
 	//HACK so Global AI groups do not get erased DEPRECATED
-	if (handler->GetTeam() != gu->myTeam)
+	if (uiGroupHandlers[ghIndex].GetTeam() != gu->myTeam)
 		return;
 
-	handler->RemoveGroup(this);
-}
-
-void CGroup::Update()
-{
-	RemoveIfEmptySpecialGroup();
+	uiGroupHandlers[ghIndex].RemoveGroup(this);
 }
 
 void CGroup::ClearUnits()
@@ -84,7 +63,8 @@ void CGroup::ClearUnits()
 		CUnit* unit = unitHandler.GetUnit(*units.begin());
 		unit->SetGroup(nullptr);
 	}
-	handler->PushGroupChange(id);
+
+	uiGroupHandlers[ghIndex].PushGroupChange(id);
 }
 
 float3 CGroup::CalculateCenter() const

@@ -117,16 +117,16 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		if (cai->lastSelectedCommandPage < commandPage)
 			commandPage = cai->lastSelectedCommandPage;
 
-		if (foundGroup == -2 && group)
+		if (foundGroup == -2 && group != nullptr)
 			foundGroup = group->id;
 
-		if (!group || foundGroup != group->id)
+		if (group == nullptr || foundGroup != group->id)
 			foundGroup = -1;
 
-		if (foundGroup2 == -2 && group)
+		if (foundGroup2 == -2 && group != nullptr)
 			foundGroup2 = group->id;
 
-		if (foundGroup2 >= 0 && group && group->id != foundGroup2)
+		if (foundGroup2 >= 0 && group != nullptr && group->id != foundGroup2)
 			foundGroup2 = -1;
 	}
 
@@ -198,7 +198,7 @@ void CSelectedUnitsHandler::GiveCommand(const Command& c, bool fromUser)
 		playerHandler.Player(gu->myPlayerNum)->currentStats.numCommands++;
 
 		if (selectedGroup != -1) {
-			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += uiGroupHandlers[gu->myTeam].groups[selectedGroup]->units.size();
+			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += uiGroupHandlers[gu->myTeam].GetGroupSize(selectedGroup);
 		} else {
 			playerHandler.Player(gu->myPlayerNum)->currentStats.unitCommands += selectedUnits.size();
 		}
@@ -451,7 +451,7 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 {
 	ClearSelected();
 	selectedGroup = num;
-	CGroup* group = uiGroupHandlers[gu->myTeam].groups[num];
+	CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(num);
 
 	for (const int unitID: group->units) {
 		CUnit* u = unitHandler.GetUnit(unitID);
@@ -602,7 +602,7 @@ void CSelectedUnitsHandler::Draw()
 		// for each
 		if (selectedGroup != -1) {
 			const CGroupHandler* gh = &uiGroupHandlers[gu->myTeam];
-			const CGroup* g = gh->groups[selectedGroup];
+			const CGroup* g = gh->GetGroup(selectedGroup);
 
 			unitSet = &g->units;
 		}
@@ -890,7 +890,8 @@ void CSelectedUnitsHandler::DrawCommands(bool onMiniMap)
 	glAttribStatePtr->BlendFunc((GLenum) cmdColors.QueuedBlendSrc(), (GLenum) cmdColors.QueuedBlendDst());
 
 	if (selectedGroup != -1) {
-		const auto& groupUnits = uiGroupHandlers[gu->myTeam].groups[selectedGroup]->units;
+		const auto& groupHandler = uiGroupHandlers[gu->myTeam];
+		const auto& groupUnits = groupHandler.GetGroup(selectedGroup)->units;
 
 		for (const int unitID: groupUnits) {
 			commandDrawer->Draw((unitHandler.GetUnit(unitID))->commandAI, onMiniMap);

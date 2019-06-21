@@ -2331,21 +2331,17 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
 	unsigned int count = 0;
 
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
+	const std::vector<CGroup>& groups = uiGroupHandlers[gu->myTeam].GetGroups();
 
 	// not an array-table
 	lua_createtable(L, 0, groups.size());
 
-	for (auto git = groups.begin(); git != groups.end(); ++git) {
-		const CGroup* group = *git;
-
-		if (group == nullptr)
-			continue;
-		if (group->units.empty())
+	for (const CGroup& group: groups) {
+		if (group.units.empty())
 			continue;
 
-		lua_pushnumber(L, group->units.size());
-		lua_rawseti(L, -2, group->id);
+		lua_pushnumber(L, group.units.size());
+		lua_rawseti(L, -2, group.id);
 		count++;
 	}
 
@@ -2385,16 +2381,17 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
 
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
+	if (!uiGroupHandlers[gu->myTeam].HasGroup(groupID))
 		return 0; // nils
 
-	lua_createtable(L, groups[groupID]->units.size(), 0);
+	const CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(groupID);
+
+	lua_createtable(L, group->units.size(), 0);
 
 	unsigned int count = 0;
 
-	for (const int unitID: groups[groupID]->units) {
+	for (const int unitID: group->units) {
 		lua_pushnumber(L, unitID);
 		lua_rawseti(L, -2, ++count);
 	}
@@ -2406,15 +2403,16 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
 
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
+	if (!uiGroupHandlers[gu->myTeam].HasGroup(groupID))
 		return 0; // nils
+
+	const CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(groupID);
 
 	ggusUnitDefMap.clear();
 	ggusUnitDefMap.resize(unitDefHandler->NumUnitDefs() + 1);
 
-	for (const int unitID: groups[groupID]->units) {
+	for (const int unitID: group->units) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
@@ -2448,15 +2446,16 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
 
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
+	if (!uiGroupHandlers[gu->myTeam].HasGroup(groupID))
 		return 0; // nils
+
+	const CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(groupID);
 
 	ggucCountMap.clear();
 	ggucCountMap.resize(unitDefHandler->NumUnitDefs() + 1, {0, 0});
 
-	for (const int unitID: groups[groupID]->units) {
+	for (const int unitID: group->units) {
 		const CUnit* unit = unitHandler.GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
 
@@ -2480,13 +2479,9 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
-	const int groupID = luaL_checkint(L, 1);
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
+	const CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(luaL_checkint(L, 1));
 
-	if ((size_t(groupID) >= groups.size()) || (groups[groupID] == nullptr))
-		return 0; // nils
-
-	lua_pushnumber(L, groups[groupID]->units.size());
+	lua_pushnumber(L, group->units.size());
 	return 1;
 }
 
