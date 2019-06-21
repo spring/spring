@@ -2363,12 +2363,10 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 		return 0;
 	}
 
-	const std::vector<CGroup*>& groups = uiGroupHandlers[gu->myTeam].groups;
-
-	if ((groupID < 0) || (groupID >= (int)groups.size()))
+	if (!uiGroupHandlers[gu->myTeam].HasGroup(groupID))
 		return 0;
 
-	CGroup* group = groups[groupID];
+	CGroup* group = uiGroupHandlers[gu->myTeam].GetGroup(groupID);
 
 	if (group != nullptr)
 		unit->SetGroup(group);

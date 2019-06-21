@@ -64,7 +64,7 @@
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler.MaxUnits())
-#define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
+#define CHECK_GROUPID(id) (gh->HasGroup(id))
 // With some hacking you can raise an abort (assert) instead of ignoring the id,
 //#define CHECK_UNITID(id) (assert(id > 0 && id < unitHandler.MaxUnits()), true)
 // ...or disable the check altogether for release.
@@ -300,10 +300,7 @@ void CAICallback::EraseGroup(int groupId)
 	if (!CHECK_GROUPID(groupId))
 		return;
 
-	if (gh->groups[groupId] == nullptr)
-		return;
-
-	gh->RemoveGroup(gh->groups[groupId]);
+	gh->RemoveGroup(gh->GetGroup(groupId));
 }
 
 bool CAICallback::AddUnitToGroup(int unitId, int groupId)
@@ -313,7 +310,7 @@ bool CAICallback::AddUnitToGroup(int unitId, int groupId)
 	if (unit == nullptr)
 		return false;
 
-	return (CHECK_GROUPID(groupId) && gh->groups[groupId] != nullptr && unit->SetGroup(gh->groups[groupId]));
+	return (CHECK_GROUPID(groupId) && unit->SetGroup(gh->GetGroup(groupId)));
 }
 
 bool CAICallback::RemoveUnitFromGroup(int unitId)

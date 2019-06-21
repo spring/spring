@@ -35,27 +35,24 @@ CGroupHandler::CGroupHandler(int teamId): team(teamId)
 {
 	groups.reserve(FIRST_SPECIAL_GROUP);
 
-	for (int g = 0; g < FIRST_SPECIAL_GROUP; ++g) {
-		groups.push_back(new CGroup(g, this));
+	for (int groupId = 0; groupId < FIRST_SPECIAL_GROUP; ++groupId) {
+		groups.emplace_back(groupId, teamId);
 	}
 }
 
 CGroupHandler::~CGroupHandler()
 {
 	for (int g = 0; g < firstUnusedGroup; ++g) {
-		delete groups[g];
+		groups[g].ClearUnits();
 	}
 }
 
 void CGroupHandler::Update()
 {
 	{
-		for (CGroup* g: groups) {
-			if (g == nullptr)
-				continue;
-
-			// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
-			g->Update();
+		for (CGroup& g: groups) {
+			// may invoke RemoveGroup, but can not cause iterator invalidation
+			g.Update();
 		}
 	}
 
@@ -76,26 +73,21 @@ void CGroupHandler::Update()
 
 bool CGroupHandler::GroupCommand(int num)
 {
-	std::string cmd;
+	if (KeyInput::GetKeyModState(KMOD_CTRL))
+		return GroupCommand(num, (!KeyInput::GetKeyModState(KMOD_SHIFT))? "set": "add");
 
-	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			cmd = "set";
-		} else {
-			cmd = "add";
-		}
-	} else if (KeyInput::GetKeyModState(KMOD_SHIFT))  {
-		cmd = "selectadd";
-	} else if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		cmd = "selecttoggle";
-	}
+	if (KeyInput::GetKeyModState(KMOD_SHIFT))
+		return GroupCommand(num, "selectadd");
 
-	return GroupCommand(num, cmd);
+	if (KeyInput::GetKeyModState(KMOD_ALT))
+		return GroupCommand(num, "selecttoggle");
+
+	return GroupCommand(num, "");
 }
 
 bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
-	CGroup* group = groups[num];
+	CGroup* group = GetGroup(num);
 
 	switch (hashString(cmd.c_str())) {
 		case hashString("set"):
@@ -164,31 +156,29 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 	return true;
 }
 
+
 CGroup* CGroupHandler::CreateNewGroup()
 {
 	if (freeGroups.empty()) {
-		groups.push_back(new CGroup(firstUnusedGroup++, this));
-		return (groups.back());
+		groups.emplace_back(firstUnusedGroup++, team);
+		return &groups[groups.size() - 1];
 	}
 
-	const int id = spring::VectorBackPop(freeGroups);
-
-	return (groups[id] = new CGroup(id, this));
+	return &groups[ spring::VectorBackPop(freeGroups) ];
 }
 
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
 	if (group->id < FIRST_SPECIAL_GROUP) {
-		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
+		LOG_L(L_WARNING, "[GroupHandler::%s] trying to remove hot-key group %i", __func__, group->id);
 		return;
 	}
 
 	if (selectedUnitsHandler.IsGroupSelected(group->id))
 		selectedUnitsHandler.ClearSelected();
 
-	groups[group->id] = nullptr;
+	group->ClearUnits();
 	freeGroups.push_back(group->id);
-	delete group;
 }
 
 void CGroupHandler::PushGroupChange(int id)
