@@ -1937,14 +1937,14 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 	if (group != nullptr)
 		group->RemoveUnit(this);
 
-	if (!uiGroupHandlers[team].SetUnitGroup(this, newGroup))
+	if (!uiGroupHandlers[team].SetUnitGroup(id, newGroup))
 		return true;
 
 	assert(newGroup != nullptr);
 
 	if (!newGroup->AddUnit(this)) {
 		// new group did not accept us
-		uiGroupHandlers[team].SetUnitGroup(this, nullptr);
+		uiGroupHandlers[team].SetUnitGroup(id, nullptr);
 		return false;
 	}
 
