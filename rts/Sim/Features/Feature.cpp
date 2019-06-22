@@ -18,7 +18,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/UnitDef.h"
@@ -56,7 +55,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(def),
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
-	CR_MEMBER(myFire),
+
 	CR_MEMBER(solidOnTop),
 	CR_MEMBER(transMatrix),
 	CR_POSTLOAD(PostLoad)
@@ -91,14 +90,10 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField.RemoveFeature(this);
 
-	if (myFire != nullptr) {
-		myFire->StopFire();
-		myFire = nullptr;
-	}
+	if (!def->geoThermal)
+		return;
 
-	if (def->geoThermal) {
-		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
-	}
+	CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 }
 
 
@@ -437,7 +432,7 @@ void CFeature::DoDamage(
 void CFeature::DependentDied(CObject *o)
 {
 	if (o == solidOnTop)
-		solidOnTop = 0;
+		solidOnTop = nullptr;
 
 	CSolidObject::DependentDied(o);
 }
@@ -631,10 +626,10 @@ void CFeature::StartFire()
 	if (fireTime != 0 || !def->burnable)
 		return;
 
+	// burn for a few seconds
 	fireTime = 200 + gsRNG.NextInt(GAME_SPEED);
-	featureHandler.SetFeatureUpdateable(this);
 
-	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
+	featureHandler.SetFeatureUpdateable(this);
 }
 
 

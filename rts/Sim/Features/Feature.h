@@ -20,7 +20,6 @@ struct FeatureLoadParams;
 class CUnit;
 struct UnitDef;
 class DamageArray;
-class CFireProjectile;
 
 
 
@@ -114,6 +113,8 @@ public:
 	const CMatrix44f& GetTransformMatrixRef(bool synced = false) const { return transMatrix[synced]; }
 
 private:
+	void PostLoad();
+
 	static int ChunkNumber(float f);
 
 public:
@@ -149,15 +150,11 @@ public:
 
 	MoveCtrl moveCtrl;
 
-	CFireProjectile* myFire = nullptr;
-
 	/// object on top of us if we are a geothermal vent
 	CSolidObject* solidOnTop = nullptr;
 
 
 private:
-	void PostLoad();
-
 	// [0] := unsynced, [1] := synced
 	CMatrix44f transMatrix[2];
 };
