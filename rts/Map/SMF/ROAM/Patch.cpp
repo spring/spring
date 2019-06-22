@@ -90,24 +90,25 @@ CTriNodePool::CTriNodePool(const size_t poolSize): nextTriNodeIdx(0)
 
 void CTriNodePool::Reset()
 {
-	// reinit all entries; faster than calling TriTreeNode's ctor
-	if (nextTriNodeIdx > 0)
-		memset(&pool[0], 0, sizeof(TriTreeNode) * nextTriNodeIdx);
+	// reinit all entries
+	memset(pool.data(), 0, pool.size() * sizeof(TriTreeNode));
 
 	nextTriNodeIdx = 0;
 }
 
 bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
-	// pool exhausted, make sure both child nodes are NULL
+	// pool exhausted, make sure both child nodes are dummies
 	if (OutOfNodes()) {
-		left  = nullptr;
-		right = nullptr;
+		LOG_L(L_WARNING, "[TriNodePool::%s] #nodes=" _STPF_ " #pool=" _STPF_ "", __func__, nextTriNodeIdx, pool.size());
+
+		left  = nullptr; // GetDummyNode();
+		right = nullptr; // GetDummyNode();
 		return false;
 	}
 
-	left  = &(pool[nextTriNodeIdx++]);
-	right = &(pool[nextTriNodeIdx++]);
+	left  = &pool[nextTriNodeIdx++];
+	right = &pool[nextTriNodeIdx++];
 	return true;
 }
 
@@ -151,10 +152,6 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 
 	smfGroundDrawer = _drawer;
 
-	// attach the two base-triangles together
-	baseLeft.BaseNeighbor  = &baseRight;
-	baseRight.BaseNeighbor = &baseLeft;
-
 	// create used OpenGL objects
 	triList = glGenLists(1);
 
@@ -176,14 +173,15 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 		}
 	}
 
+	Reset();
 	UpdateHeightMap();
 }
 
 void Patch::Reset()
 {
 	// reset the important relationships
-	baseLeft  = TriTreeNode();
-	baseRight = TriTreeNode();
+	baseLeft  = {};
+	baseRight = {};
 
 	// attach the two base-triangles together
 	baseLeft.BaseNeighbor  = &baseRight;
@@ -247,53 +245,72 @@ bool Patch::Split(TriTreeNode* tri)
 
 	assert(tri->IsBranch());
 
-	// fill in the information we can get from the parent (neighbor pointers)
-	tri->LeftChild->BaseNeighbor = tri->LeftNeighbor;
-	tri->LeftChild->LeftNeighbor = tri->RightChild;
+	TriTreeNode* tlc = tri->LeftChild;
+	TriTreeNode* trc = tri->RightChild;
+	TriTreeNode* tln = tri->LeftNeighbor;
+	TriTreeNode* trn = tri->RightNeighbor;
+	TriTreeNode* tbn = tri->BaseNeighbor;
 
-	tri->RightChild->BaseNeighbor = tri->RightNeighbor;
-	tri->RightChild->RightNeighbor = tri->LeftChild;
+	assert(!tlc->IsDummy());
+	assert(!trc->IsDummy());
+
+	{
+		// fill in the information we can get from the parent (neighbor pointers)
+		tlc->BaseNeighbor = tln;
+		tlc->LeftNeighbor = trc;
+	}
+	{
+		trc->BaseNeighbor = trn;
+		trc->RightNeighbor = tlc;
+	}
 
 	// link our left-neighbor to the new children
-	if (tri->LeftNeighbor != nullptr) {
-		if (tri->LeftNeighbor->BaseNeighbor == tri)
-			tri->LeftNeighbor->BaseNeighbor = tri->LeftChild;
-		else if (tri->LeftNeighbor->LeftNeighbor == tri)
-			tri->LeftNeighbor->LeftNeighbor = tri->LeftChild;
-		else if (tri->LeftNeighbor->RightNeighbor == tri)
-			tri->LeftNeighbor->RightNeighbor = tri->LeftChild;
+	if (tln != nullptr) {
+		if (tln->BaseNeighbor == tri)
+			tln->BaseNeighbor = tlc;
+		else if (tln->LeftNeighbor == tri)
+			tln->LeftNeighbor = tlc;
+		else if (tln->RightNeighbor == tri)
+			tln->RightNeighbor = tlc;
 		else
 			;// illegal Left neighbor
 	}
 
 	// link our right-neighbor to the new children
-	if (tri->RightNeighbor != nullptr) {
-		if (tri->RightNeighbor->BaseNeighbor == tri)
-			tri->RightNeighbor->BaseNeighbor = tri->RightChild;
-		else if (tri->RightNeighbor->RightNeighbor == tri)
-			tri->RightNeighbor->RightNeighbor = tri->RightChild;
-		else if (tri->RightNeighbor->LeftNeighbor == tri)
-			tri->RightNeighbor->LeftNeighbor = tri->RightChild;
+	if (trn != nullptr) {
+		if (trn->BaseNeighbor == tri)
+			trn->BaseNeighbor = trc;
+		else if (trn->RightNeighbor == tri)
+			trn->RightNeighbor = trc;
+		else if (trn->LeftNeighbor == tri)
+			trn->LeftNeighbor = trc;
 		else
 			;// illegal Right neighbor
 	}
 
 	// link our base-neighbor to the new children
-	if (tri->BaseNeighbor != nullptr) {
-		if (tri->BaseNeighbor->IsBranch()) {
-			tri->BaseNeighbor->LeftChild->RightNeighbor = tri->RightChild;
-			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
+	if (tbn != nullptr) {
+		if (tbn->IsBranch()) {
+			assert(curTriPool->ValidNode(tbn->LeftChild));
+			assert(curTriPool->ValidNode(tbn->RightChild));
 
-			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
-			tri->RightChild->LeftNeighbor = tri->BaseNeighbor->LeftChild;
+			if ((tlc->RightNeighbor = tbn->RightChild) != nullptr)
+				tbn->RightChild->LeftNeighbor = tlc;
+			else
+				LOG_L(L_WARNING, "[Patch::%s][R] tbn->IsValid()=%d/%d tbn->{Left,Right}Child={%p,%p}", __func__, tbn->IsValid(), curTriPool->ValidNode(tbn), tbn->LeftChild, tbn->RightChild);
+
+			if ((trc->LeftNeighbor = tbn->LeftChild) != nullptr)
+				tbn->LeftChild->RightNeighbor = trc;
+			else
+				LOG_L(L_WARNING, "[Patch::%s][L] tbn->IsValid()=%d/%d tbn->{Left,Right}Child={%p,%p}", __func__, tbn->IsValid(), curTriPool->ValidNode(tbn), tbn->LeftChild, tbn->RightChild);
 		} else {
 			// base Neighbor (in a diamond with us) was not split yet, do so now
-			Split(tri->BaseNeighbor);
+			Split(tbn);
 		}
 	} else {
 		// edge triangle, trivial case
-		tri->LeftChild->RightNeighbor = nullptr;
-		tri->RightChild->LeftNeighbor = nullptr;
+		tlc->RightNeighbor = nullptr;
+		trc->LeftNeighbor = nullptr;
 	}
 
 	return true;
@@ -722,7 +739,7 @@ void Patch::SwitchRenderMode(int mode)
 		} break;
 	}
 
-	CRoamMeshDrawer::ForceTesselation();
+	CRoamMeshDrawer::ForceNextTesselation(true, true);
 }
 
 

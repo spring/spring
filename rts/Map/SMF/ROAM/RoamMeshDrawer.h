@@ -53,14 +53,20 @@ public:
 	void DrawMesh(const DrawPass::e& drawPass);
 	void DrawBorderMesh(const DrawPass::e& drawPass);
 
-	static void ForceTesselation() {
-		forceTessellate[MESH_NORMAL] = true;
-		forceTessellate[MESH_SHADOW] = true;
+	static void ForceNextTesselation(bool normal, bool shadow) {
+		forceNextTesselation[MESH_NORMAL] = normal;
+		forceNextTesselation[MESH_SHADOW] = shadow;
+	}
+	static void UseThreadTesselation(bool normal, bool shadow) {
+		useThreadTesselation[MESH_NORMAL] = normal;
+		useThreadTesselation[MESH_SHADOW] = shadow;
 	}
 
 private:
 	void Reset(bool shadowPass);
-	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass);
+	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass) {
+		return tesselateFuncs[ useThreadTesselation[shadowPass] ](patches, cam, viewRadius, shadowPass);
+	}
 
 private:
 	CSMFGroundDrawer* smfGroundDrawer;
@@ -71,15 +77,19 @@ private:
 
 	float3 lastCamPos[MESH_COUNT];
 
+	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[MESH_COUNT];
+
 	// [1] is used for the shadow pass, [0] is used for all other passes
 	std::vector< Patch > patchMeshGrid[MESH_COUNT];
 	std::vector< Patch*> borderPatches[MESH_COUNT];
 
-	//< char instead of bool, accessors to different elements must be thread-safe
+	// char instead of bool, accessors to different elements must be thread-safe
 	std::vector<uint8_t> patchVisFlags[MESH_COUNT];
 
-	//< whether tessellation should be forcibly performed next frame
-	static bool forceTessellate[MESH_COUNT];
+	// whether tessellation should be forcibly performed next frame
+	static bool forceNextTesselation[MESH_COUNT];
+	// whether tessellation should be performed with threads
+	static bool useThreadTesselation[MESH_COUNT];
 };
 
 #endif // _ROAM_MESH_DRAWER_H_
