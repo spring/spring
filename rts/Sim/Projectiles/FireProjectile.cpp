@@ -100,15 +100,18 @@ void CFireProjectile::Update()
 			quadField.GetFeaturesExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
 			quadField.GetUnitsExact(qfQuery, emitPos + envResHandler.GetCurrentWindVec() * 0.7f, emitRadius * 2);
 
+			const DamageArray fireDmg(30.0f);
+
 			for (CFeature* f: *qfQuery.features) {
-				if (gsRNG.NextFloat() > 0.8f) {
-					f->StartFire();
-				}
+				if (gsRNG.NextFloat() <= 0.8f)
+					continue;
+
+				f->StartFire();
+				// f->DoDamage(fireDmg, ZeroVector, nullptr, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
 			}
 
-			const DamageArray fireDmg(30);
 			for (CUnit* u: *qfQuery.units) {
-				u->DoDamage(fireDmg, ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
+				u->DoDamage(fireDmg, ZeroVector, nullptr, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
 			}
 		}
 	}
