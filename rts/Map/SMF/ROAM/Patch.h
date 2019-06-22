@@ -35,25 +35,18 @@ class CCamera;
 // stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
-	TriTreeNode()
-		: LeftChild(nullptr)
-		, RightChild(nullptr)
-		, BaseNeighbor(nullptr)
-		, LeftNeighbor(nullptr)
-		, RightNeighbor(nullptr)
-	{}
-
 	// all non-leaf nodes have both children, so just check for one
 	bool IsValid() const { return ((LeftChild == nullptr && RightChild == nullptr) || (LeftChild != nullptr && RightChild != nullptr)); }
 	bool IsLeaf() const { assert(IsValid()); return (LeftChild == nullptr); }
-	bool IsBranch() const { assert(IsValid()); return (RightChild != nullptr); }
+	bool IsBranch() const { assert(IsValid()); return (LeftChild != nullptr); }
+	bool IsDummy() const { return (this == LeftChild || this == RightChild); }
 
-	TriTreeNode* LeftChild;
-	TriTreeNode* RightChild;
+	TriTreeNode* LeftChild = nullptr;
+	TriTreeNode* RightChild = nullptr;
 
-	TriTreeNode* BaseNeighbor;
-	TriTreeNode* LeftNeighbor;
-	TriTreeNode* RightNeighbor;
+	TriTreeNode* BaseNeighbor = nullptr;
+	TriTreeNode* LeftNeighbor = nullptr;
+	TriTreeNode* RightNeighbor = nullptr;
 };
 
 
@@ -66,7 +59,19 @@ class CTriNodePool
 public:
 	static void InitPools(bool shadowPass, size_t newPoolSize = NEW_POOL_SIZE);
 	static void ResetAll(bool shadowPass);
+
 	inline static CTriNodePool* GetPool(bool shadowPass);
+	inline static TriTreeNode* GetDummyNode() {
+		static TriTreeNode node;
+
+		node.LeftChild     = &node;
+		node.RightChild    = &node;
+		node.BaseNeighbor  = &node;
+		node.LeftNeighbor  = &node;
+		node.RightNeighbor = &node;
+
+		return &node;
+	}
 
 public:
 	CTriNodePool(const size_t poolSize);
@@ -74,6 +79,7 @@ public:
 	void Reset();
 	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
+	bool ValidNode(const TriTreeNode* n) const { return (n >= &pool.front() && n <= &pool.back()); }
 	bool OutOfNodes() const { return (nextTriNodeIdx >= pool.size()); }
 
 private:

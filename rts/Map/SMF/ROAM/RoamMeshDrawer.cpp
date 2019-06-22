@@ -34,7 +34,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 
 
 
-bool CRoamMeshDrawer::forceTessellate[2] = {false, false};
+bool CRoamMeshDrawer::forceNextTesselation[2] = {false, false};
+bool CRoamMeshDrawer::useThreadTesselation[2] = {false, false};
 
 
 
@@ -45,8 +46,6 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 {
 	eventHandler.AddClient(this);
 
-	ForceTesselation();
-
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		CTriNodePool::InitPools(i == MESH_SHADOW);
 	}
@@ -54,6 +53,75 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 	numPatchesX = mapDims.mapx / PATCH_SIZE;
 	numPatchesY = mapDims.mapy / PATCH_SIZE;
 	// assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
+
+	ForceNextTesselation(true, true);
+	UseThreadTesselation(numPatchesX >= 4 && numPatchesY >= 4 && false, false);
+
+
+	tesselateFuncs[true] = [this](std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass) {
+		// create an approximate tessellated mesh of the landscape
+		//
+		//   px 0 1 2   3 4 5 . .
+		//   z  _________
+		//   0 |0|1|2 | 0 . .
+		//   1 |3|4|5 | 3 . .
+		//   2 |6|7|8 | 6 . .
+		//     |
+		//   3 |0|1|2 | 0 . .
+		//   4  . . .   . . .
+		//   5  . . .   . . .
+		//   .
+		//   .
+		// each patch is connected to 2, 3, or 4 neighbors via its two base-triangles
+		// tessellation can extend into these neighbors so patches sharing a neighbor
+		// can not be touched concurrently without expensive locking, must split the
+		// update into 3x3 sub-blocks instead s.t. only patches with equal sub-block
+		// indices ([0,8]) are tessellated in parallel
+		// note that both numPatchesX and numPatchesY must be larger than or equal to
+		// 4 for this to be even barely worth it; threading with 9 (!) for_mt's has a
+		// high setup-cost
+		std::atomic<bool> forceTess{false};
+
+		for (int blkIdx = 0; blkIdx < (3 * 3); ++blkIdx) {
+			for_mt(0, patches.size(), [&](const int pi) {
+				Patch& p = patches[pi];
+
+				// convert (RM) grid-coors to subblock-index
+				const int  px = pi % numPatchesX;
+				const int  pz = pi / numPatchesX;
+				const int sbx = px % 3;
+				const int sbz = pz % 3;
+				const int sbi = sbx + (sbz * 3);
+
+				if (sbi != blkIdx)
+					return;
+
+				if (!p.IsVisible(cam))
+					return;
+
+				forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
+			});
+
+			if (forceTess)
+				return true;
+		}
+
+		return false;
+	};
+
+	tesselateFuncs[false] = [this](std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass) {
+		bool forceTess{false};
+
+		for (Patch& p: patches) {
+			if (!p.IsVisible(cam))
+				continue;
+
+			forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
+		}
+
+		return forceTess;
+	};
+
 
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		patchMeshGrid[i].resize(numPatchesX * numPatchesY);
@@ -116,7 +184,7 @@ void CRoamMeshDrawer::Update()
 	CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	bool shadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
-	bool retessellate = forceTessellate[shadowPass];
+	bool retessellate = forceNextTesselation[shadowPass];
 
 	auto& patches = patchMeshGrid[shadowPass];
 	auto& pvflags = patchVisFlags[shadowPass];
@@ -174,7 +242,7 @@ void CRoamMeshDrawer::Update()
 		//SCOPED_TIMER("ROAM::Tessellate");
 
 		Reset(shadowPass);
-		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
+		forceNextTesselation[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
 	}
 
 	{
@@ -326,69 +394,6 @@ void CRoamMeshDrawer::Reset(bool shadowPass)
 			if (y < (numPatchesY - 1)) { pbr->RightNeighbor = patches[(y + 1) * numPatchesX + x].GetBaseLeft(); }
 		}
 	}
-}
-
-
-
-bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass)
-{
-	// create an approximate tessellated mesh of the landscape
-	//
-	//   px 0 1 2   3 4 5 . .
-	//   z  _________
-	//   0 |0|1|2 | 0 . .
-	//   1 |3|4|5 | 3 . .
-	//   2 |6|7|8 | 6 . .
-	//     |
-	//   3 |0|1|2 | 0 . .
-	//   4  . . .   . . .
-	//   5  . . .   . . .
-	//   .
-	//   .
-	// each patch is connected to 2, 3, or 4 neighbors via its two base-triangles
-	// tessellation can extend into these neighbors so patches sharing a neighbor
-	// can not be touched concurrently without expensive locking, must split the
-	// update into 3x3 sub-blocks instead s.t. only patches with equal sub-block
-	// indices ([0,8]) are tessellated in parallel
-	// note that both numPatchesX and numPatchesY must be larger than or equal to
-	// 4 for this to be even barely worth it; threading with 9 (!) for_mt's has a
-	// high setup-cost
-	std::atomic<bool> forceTess{false};
-
-	if (numPatchesX >= 4 && numPatchesY >= 4) {
-		for (int blkIdx = 0; blkIdx < (3 * 3); ++blkIdx) {
-			for_mt(0, patches.size(), [&](const int pi) {
-				Patch& p = patches[pi];
-
-				// convert (RM) grid-coors to subblock-index
-				const int  px = pi % numPatchesX;
-				const int  pz = pi / numPatchesX;
-				const int sbx = px % 3;
-				const int sbz = pz % 3;
-				const int sbi = sbx + (sbz * 3);
-
-				if (sbi != blkIdx)
-					return;
-
-				if (!p.IsVisible(cam))
-					return;
-
-				forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
-			});
-
-			if (forceTess)
-				return true;
-		}
-	} else {
-		for (Patch& p: patches) {
-			if (!p.IsVisible(cam))
-				continue;
-
-			forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
-		}
-	}
-
-	return forceTess;
 }
 
 
