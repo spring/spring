@@ -16,15 +16,15 @@ void GL::GeometryBuffer::Init(bool ctor) {
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 
 	// NOTE:
-	//   Lua can toggle drawDeferred and might be the
-	//   first to call us --> initial buffer size must
-	//   be (0, 0) so prevSize != currSize (when !init)
+	//   initial buffer size must be 0 s.t. prevSize != currSize when !init
+	//   (Lua can toggle drawDeferred and might be the first to cause a call
+	//   to Create)
 	prevBufferSize = GetWantedSize(false);
 	currBufferSize = GetWantedSize(true);
 
 	dead = false;
 	bound = false;
-	msaa = configHandler->GetBool("AllowMultiSampledFrameBuffer");
+	msaa = configHandler->GetBool("AllowMultiSampledFrameBuffers");
 }
 
 void GL::GeometryBuffer::Kill(bool dtor) {
@@ -86,6 +86,7 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	GL::RenderDataBuffer2DT* buffer = GL::GetRenderBuffer2DT();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
+	// FIXME: needs resolve or different shader if msaa
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GetTextureTarget(), texID);
 
@@ -187,9 +188,6 @@ bool GL::GeometryBuffer::Update(const bool init) {
 }
 
 int2 GL::GeometryBuffer::GetWantedSize(bool allowed) const {
-	if (allowed)
-		return {globalRendering->viewSizeX, globalRendering->viewSizeY};
-
-	return {0, 0};
+	return {globalRendering->viewSizeX * allowed, globalRendering->viewSizeY * allowed};
 }
 
