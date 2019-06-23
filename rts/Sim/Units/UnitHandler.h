@@ -61,7 +61,6 @@ public:
 	CUnit* GetUnit(unsigned int id) const { return ((id < MaxUnits())? units[id]: nullptr); }
 
 	static CUnit* NewUnit(const UnitDef* ud);
-	static void SanityCheckUnit(const CUnit* unit);
 
 	const std::vector<CUnit*>& GetActiveUnits() const { return activeUnits; }
 	      std::vector<CUnit*>& GetActiveUnits()       { return activeUnits; }

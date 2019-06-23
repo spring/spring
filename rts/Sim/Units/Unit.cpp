@@ -85,134 +85,17 @@ float CUnit::expReloadScale = 0.0f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit()
-: CSolidObject()
-, unitDef(nullptr)
-
-, shieldWeapon(nullptr)
-, stockpileWeapon(nullptr)
-
-, selfdExpDamages(nullptr)
-, deathExpDamages(nullptr)
-
-, soloBuilder(nullptr)
-, lastAttacker(nullptr)
-, transporter(nullptr)
-
-, fpsControlPlayer(nullptr)
-
-, moveType(nullptr)
-, prevMoveType(nullptr)
-, commandAI(nullptr)
-, script(nullptr)
-
-, los{nullptr}
-, losStatus{0}
-
-, incomingMissiles{nullptr}
-
-, deathSpeed(ZeroVector)
-, lastMuzzleFlameDir(UpVector)
-, flankingBonusDir(RgtVector)
-, posErrorVector(ZeroVector)
-, posErrorDelta(ZeroVector)
-
-, featureDefID(-1)
-, power(100.0f)
-, buildProgress(0.0f)
-, paralyzeDamage(0.0f)
-, captureProgress(0.0f)
-, experience(0.0f)
-, limExperience(0.0f)
-, neutral(false)
-, beingBuilt(true)
-, upright(true)
-, groundLevelled(true)
-, terraformLeft(0.0f)
-, repairAmount(0.0f)
-
-, lastAttackFrame(-200)
-, lastFireWeapon(0)
-, lastNanoAdd(gs->frameNum)
-, lastFlareDrop(0)
-
-, loadingTransportId(-1)
-, unloadingTransportId(-1)
-, transportCapacityUsed(0)
-, transportMassUsed(0)
-
-, inBuildStance(false)
-, useHighTrajectory(false)
-, dontUseWeapons(false)
-, dontFire(false)
-, deathScriptFinished(false)
-
-, delayedWreckLevel(-1)
-, restTime(0)
-, outOfMapTime(0)
-, reloadSpeed(1.0f)
-, maxRange(0.0f)
-, lastMuzzleFlameSize(0.0f)
-, armorType(0)
-, category(0)
-, mapSquare(-1)
-, realLosRadius(0)
-, realAirLosRadius(0)
-, losRadius(0)
-, airLosRadius(0)
-, radarRadius(0)
-, sonarRadius(0)
-, jammerRadius(0)
-, sonarJamRadius(0)
-, seismicRadius(0)
-, seismicSignature(0.0f)
-, stealth(false)
-, sonarStealth(false)
-, cost(100.0f, 0.0f)
-, metalExtract(0.0f)
-, buildTime(100.0f)
-, recentDamage(0.0f)
-, fireState(FIRESTATE_FIREATWILL)
-, moveState(MOVESTATE_MANEUVER)
-, activated(false)
-, isDead(false)
-, fallSpeed(0.2f)
-, travel(0.0f)
-, travelPeriod(0.0f)
-, flankingBonusMode(0)
-, flankingBonusMobility(10.0f)
-, flankingBonusMobilityAdd(0.01f)
-, flankingBonusAvgDamage(1.4f)
-, flankingBonusDifDamage(0.5f)
-, armoredState(false)
-, armoredMultiple(1.0f)
-, curArmorMultiple(1.0f)
-, nextPosErrorUpdate(1)
-
-, isCloaked(false)
-, wantCloak(false)
-, decloakDistance(0.0f)
-
-, lastTerrainType(-1)
-, curTerrainType(0)
-
-, selfDCountdown(0)
-, cegDamage(1)
-
-, noMinimap(false)
-, leaveTracks(false)
-, isSelected(false)
-, isIcon(false)
-, iconRadius(0.0f)
-
-, myTrack(nullptr)
-, myIcon(nullptr)
-
-, stunned(false)
+CUnit::CUnit(): CSolidObject()
 {
 	assert(unitMemPool.alloced(this));
+
 	static_assert((sizeof(los) / sizeof(los[0])) == ILosType::LOS_TYPE_COUNT, "");
 	static_assert((sizeof(losStatus) / sizeof(losStatus[0])) == MAX_TEAMS, "");
+
+	fireState = FIRESTATE_FIREATWILL;
+	moveState = MOVESTATE_MANEUVER;
+
+	lastNanoAdd = gs->frameNum;
 }
 
 CUnit::~CUnit()
@@ -288,6 +171,29 @@ void CUnit::InitStatic()
 }
 
 
+void CUnit::SanityCheck() const
+{
+	pos.AssertNaNs();
+	midPos.AssertNaNs();
+	relMidPos.AssertNaNs();
+	preFramePos.AssertNaNs();
+
+	speed.AssertNaNs();
+	deathSpeed.AssertNaNs();
+
+	rightdir.AssertNaNs();
+	updir.AssertNaNs();
+	frontdir.AssertNaNs();
+
+	if (unitDef->IsGroundUnit()) {
+		assert(pos.x >= -(float3::maxxpos * 16.0f));
+		assert(pos.x <=  (float3::maxxpos * 16.0f));
+		assert(pos.z >= -(float3::maxzpos * 16.0f));
+		assert(pos.z <=  (float3::maxzpos * 16.0f));
+	}
+}
+
+
 void CUnit::PreInit(const UnitLoadParams& params)
 {
 	// if this is < 0, UnitHandler will give us a random ID
@@ -339,7 +245,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	upright  = unitDef->upright;
 
 	SetVelocity(params.speed);
-	Move((params.pos).cClampInMap(), false);
+	Move(preFramePos = params.pos.cClampInMap(), false);
 	UpdateDirVectors(!upright);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
@@ -621,7 +527,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 void CUnit::ForcedMove(const float3& newPos)
 {
 	UnBlock();
-	Move(newPos - pos, true);
+	Move((preFramePos = newPos) - pos, true);
 	Block();
 
 	eventHandler.UnitMoved(this);
@@ -2945,6 +2851,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(maxRange),
 	CR_MEMBER(lastMuzzleFlameSize),
 
+	CR_MEMBER(preFramePos),
 	CR_MEMBER(deathSpeed),
 	CR_MEMBER(lastMuzzleFlameDir),
 	CR_MEMBER(flankingBonusDir),

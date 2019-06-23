@@ -51,25 +51,6 @@ UnitMemPool unitMemPool;
 CUnitHandler unitHandler;
 
 
-void CUnitHandler::SanityCheckUnit(const CUnit* unit)
-{
-	unit->pos.AssertNaNs();
-	unit->midPos.AssertNaNs();
-	unit->relMidPos.AssertNaNs();
-	unit->speed.AssertNaNs();
-	unit->deathSpeed.AssertNaNs();
-	unit->rightdir.AssertNaNs();
-	unit->updir.AssertNaNs();
-	unit->frontdir.AssertNaNs();
-
-	if (unit->unitDef->IsGroundUnit()) {
-		assert(unit->pos.x >= -(float3::maxxpos * 16.0f));
-		assert(unit->pos.x <=  (float3::maxxpos * 16.0f));
-		assert(unit->pos.z >= -(float3::maxzpos * 16.0f));
-		assert(unit->pos.z <=  (float3::maxzpos * 16.0f));
-	}
-};
-
 CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 {
 	// special static builder structures that can always be given
@@ -325,17 +306,18 @@ void CUnitHandler::UpdateUnitMoveTypes()
 		CUnit* unit = activeUnits[activeUpdateUnit];
 		AMoveType* moveType = unit->moveType;
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
+		unit->PreUpdate();
 
 		if (moveType->Update())
 			eventHandler.UnitMoved(unit);
 
 		// this unit is not coming back, kill it now without any death
-		// sequence (so deathScriptFinished becomes true immediately)
+		// sequence (s.t. deathScriptFinished becomes true immediately)
 		if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED))
 			unit->ForcedKillUnit(nullptr, false, true, false);
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 		assert(activeUnits[activeUpdateUnit] == unit);
 	}
 }
@@ -363,11 +345,11 @@ void CUnitHandler::SlowUpdateUnits()
 	for (size_t n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
 		CUnit* unit = activeUnits[activeSlowUpdateUnit];
 
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 		unit->SlowUpdate();
 		unit->SlowUpdateWeapons();
 		unit->localModel.UpdateBoundingVolume();
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
 
 		n--;
 	}
@@ -379,11 +361,13 @@ void CUnitHandler::UpdateUnits()
 
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 		CUnit* unit = activeUnits[activeUpdateUnit];
-		SanityCheckUnit(unit);
+
+		unit->SanityCheck();
 		unit->Update();
 		// unsynced; done on-demand when drawing unit
 		// unit->UpdateLocalModel();
-		SanityCheckUnit(unit);
+		unit->SanityCheck();
+
 		assert(activeUnits[activeUpdateUnit] == unit);
 	}
 }
