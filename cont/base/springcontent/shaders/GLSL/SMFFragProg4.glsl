@@ -4,7 +4,7 @@ const float SMF_SHALLOW_WATER_DEPTH     = 10.0;
 const float SMF_SHALLOW_WATER_DEPTH_INV = 1.0 / SMF_SHALLOW_WATER_DEPTH;
 const float SMF_DETAILTEX_RES           = 0.02;
 
-const float PI = 2.0 * acos(0.0);
+const float PI = 3.1415926535897932384626433832795;
 const float DEGREES_TO_RADIANS = PI / 180.0;
 
 #define NORM2SNORM(value) (value * 2.0 - 1.0)
@@ -359,7 +359,7 @@ float hash12L(vec2 p) {
 }
 
 // http://blog.marmakoide.org/?p=1
-const float goldenAngle = PI * (3.0 - sqrt(5.0));
+const float goldenAngle = 2.3999632297286533222315555066336;
 vec2 SpiralSNorm(int i, int N) {
 	float theta = float(i) * goldenAngle;
 	float r = sqrt(float(i)) / sqrt(float(N));
