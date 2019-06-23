@@ -3873,18 +3873,7 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitTravel(lua_State* L)
-{
-	const CUnit* unit = ParseAllyUnit(L, __func__, 1);
-	if (unit == nullptr)
-		return 0;
-
-	lua_pushnumber(L, unit->travel);
-	lua_pushnumber(L, unit->travelPeriod);
-	return 2;
-}
-
-
+int LuaSyncedRead::GetUnitTravel(lua_State* L) { lua_pushnumber(L, 0.0f); lua_pushnumber(L, 0.0f); return 2; } // DEPRECATED
 int LuaSyncedRead::GetUnitFuel(lua_State* L) { lua_pushnumber(L, 0.0f); return 1; } // DEPRECATED
 
 

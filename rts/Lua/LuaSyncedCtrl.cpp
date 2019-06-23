@@ -2260,23 +2260,7 @@ int LuaSyncedCtrl::SetUnitFlanking(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __func__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	if (lua_isnumber(L, 2))
-		unit->travel = lua_tofloat(L, 2);
-
-	if (lua_isnumber(L, 3))
-		unit->travelPeriod = lua_tofloat(L, 3);
-
-	return 0;
-}
-
-
+int LuaSyncedCtrl::SetUnitTravel(lua_State* L) { return 0; } // DEPRECATED
 int LuaSyncedCtrl::SetUnitFuel(lua_State* L) { return 0; } // DEPRECATED
 
 

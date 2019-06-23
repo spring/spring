@@ -647,9 +647,6 @@ void CUnit::Update()
 	if (isDead)
 		return;
 
-	if (travelPeriod != 0.0f)
-		travel = math::fmod(travel += speed.w, travelPeriod);
-
 	recentDamage *= 0.9f;
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
@@ -2778,9 +2775,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(deathExpDamages),
 
 	CR_MEMBER(featureDefID),
-
-	CR_MEMBER(travel),
-	CR_MEMBER(travelPeriod),
 
 	CR_MEMBER(power),
 
