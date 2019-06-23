@@ -73,9 +73,7 @@ AMoveType::AMoveType(CUnit* owner):
 void AMoveType::SlowUpdate()
 {
 	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		const int newMapSquare = CGround::GetSquare(owner->pos);
+		const int newMapSquare = CGround::GetSquare(oldSlowUpdatePos = owner->pos);
 
 		if (newMapSquare != owner->mapSquare) {
 			owner->mapSquare = newMapSquare;

@@ -1511,9 +1511,9 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CUnit* t = u->GetTransporter();
 
 	if (t != nullptr) {
-		u->drawPos = u->GetDrawPos(t->speed, globalRendering->timeOffset);
+		u->drawPos = u->preFramePos + t->GetDrawDeltaPos(globalRendering->timeOffset);
 	} else {
-		u->drawPos = u->GetDrawPos(          globalRendering->timeOffset);
+		u->drawPos = u->preFramePos + u->GetDrawDeltaPos(globalRendering->timeOffset);
 	}
 
 	u->drawMidPos = u->GetMdlDrawMidPos();
