@@ -764,32 +764,32 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportSeamlessCubeMaps = GLEW_ARB_seamless_cube_map;
 	#endif
 	// CC did not exist as an extension before GL4.5, too recent to enforce
-	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
+	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
-	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
+	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
 
 
-	// detect if GL_DEPTH_COMPONENT24 is supported for render targets
-	// many ATIs historically did not; they only seemed to support it
-	// for static textures
+	#if 0
 	{
-		#if 0
+		// detect if GL_DEPTH_COMPONENT24 is supported for render targets
+		// many ATIs historically did not; they only seemed to support it
+		// for static textures
 		GLint state = 0;
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_RED, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffer = (state > 0);
-		#else
-		{
-			FBO fbo;
-			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT , GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
-			fbo.Unbind();
-		}
-		#endif
 	}
+	#else
+	{
+		FBO fbo;
+		fbo.Bind();
+		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
+		fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT , GL_DEPTH_COMPONENT24, 16, 16);
+		support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
+		fbo.Unbind();
+	}
+	#endif
 }
 
 void CGlobalRendering::QueryGLMaxVals()

@@ -30,6 +30,7 @@
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDrawModelPostDeferredEvents).defaultValue(true);
+CONFIG(bool, AllowMultiSampledFrameBuffer).defaultValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -284,8 +285,7 @@ void LuaObjectDrawer::Init()
 	assert(geomBuffer == nullptr);
 
 	// cannot be a unique_ptr because it is leaked
-	geomBuffer = new GL::GeometryBuffer();
-	geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
+	geomBuffer = new GL::GeometryBuffer("LUAOBJECTDRAWER-GBUFFER");
 }
 
 void LuaObjectDrawer::Kill()

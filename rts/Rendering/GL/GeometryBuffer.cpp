@@ -3,6 +3,7 @@
 #include "GeometryBuffer.h"
 #include "RenderDataBuffer.hpp"
 #include "Rendering/GlobalRendering.h"
+#include "System/Config/ConfigHandler.h"
 
 #include <algorithm>
 #include <cstring> // memset
@@ -23,6 +24,7 @@ void GL::GeometryBuffer::Init(bool ctor) {
 
 	dead = false;
 	bound = false;
+	msaa = configHandler->GetBool("AllowMultiSampledFrameBuffer");
 }
 
 void GL::GeometryBuffer::Kill(bool dtor) {
@@ -85,7 +87,7 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texID);
+	glBindTexture(GetTextureTarget(), texID);
 
 	shader->Enable();
 	shader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
@@ -102,7 +104,7 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	buffer->Submit(GL_TRIANGLES);
 	shader->Disable();
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GetTextureTarget(), 0);
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
@@ -110,28 +112,36 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 	for (; n < ATTACHMENT_COUNT; n++) {
 		glGenTextures(1, &bufferTextureIDs[n]);
-		glBindTexture(GL_TEXTURE_2D, bufferTextureIDs[n]);
+		glBindTexture(GetTextureTarget(), bufferTextureIDs[n]);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		if (n == ATTACHMENT_ZVALTEX) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+			if (GetTextureTarget() == GL_TEXTURE_2D)
+				glTexImage2D(GetTextureTarget(), 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+			else
+				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_DEPTH_COMPONENT32F, size.x, size.y, GL_TRUE);
+
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT;
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			if (GetTextureTarget() == GL_TEXTURE_2D)
+				glTexImage2D(GetTextureTarget(), 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			else
+				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_RGBA, size.x, size.y, GL_TRUE);
+
 			bufferAttachments[n] = GL_COLOR_ATTACHMENT0 + n;
 		}
 	}
 
 	// sic; Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
 	for (buffer.Bind(); n > 0; n--) {
-		buffer.AttachTexture(bufferTextureIDs[n - 1], GL_TEXTURE_2D, bufferAttachments[n - 1]);
+		buffer.AttachTexture(bufferTextureIDs[n - 1], GetTextureTarget(), bufferAttachments[n - 1]);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GetTextureTarget(), 0);
 	// define the attachments we are going to draw into
 	// note: the depth-texture attachment does not count
 	// here and will be GL_NONE implicitly!
@@ -178,8 +188,8 @@ bool GL::GeometryBuffer::Update(const bool init) {
 
 int2 GL::GeometryBuffer::GetWantedSize(bool allowed) const {
 	if (allowed)
-		return (int2(globalRendering->viewSizeX, globalRendering->viewSizeY));
+		return {globalRendering->viewSizeX, globalRendering->viewSizeY};
 
-	return (int2(0, 0));
+	return {0, 0};
 }
 
