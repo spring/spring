@@ -233,6 +233,7 @@ public:
 	bool supportNonPowerOfTwoTex;
 	bool supportTextureQueryLOD;
 
+	bool supportMSAAFrameBuffer;
 	/**
 	 * @brief support24bitDepthBuffer
 	 *

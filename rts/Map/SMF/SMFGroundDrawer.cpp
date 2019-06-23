@@ -57,6 +57,7 @@ CONFIG(int, ROAM)
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
 	, meshDrawer(nullptr)
+	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
 {
 	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
@@ -71,7 +72,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
-	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();

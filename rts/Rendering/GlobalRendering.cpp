@@ -128,6 +128,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
+	CR_IGNORED(supportMSAAFrameBuffer),
 	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
@@ -220,6 +221,7 @@ CGlobalRendering::CGlobalRendering()
 
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
+	, supportMSAAFrameBuffer(false)
 	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
@@ -670,32 +672,32 @@ void CGlobalRendering::SetGLSupportFlags()
 	supportSeamlessCubeMaps = GLEW_ARB_seamless_cube_map;
 	#endif
 	// CC did not exist as an extension before GL4.5, too recent to enforce
-	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
+	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
-	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
+	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
+	supportMSAAFrameBuffer = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
 
-
-	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
-	// they seem to support GL_DEPTH_COMPONENT24 for static textures
-	// but those can't be rendered to)
+	#if 0
 	{
-		#if 0
+		// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
+		// they seem to support GL_DEPTH_COMPONENT24 for static textures
+		// but those can't be rendered to)
 		GLint state = 0;
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffer = (state > 0);
-		#else
-		if (FBO::IsSupported() && !atiHacks) {
-			FBO fbo;
-			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
-			fbo.Unbind();
-		}
-		#endif
 	}
+	#else
+	if (FBO::IsSupported() && !atiHacks) {
+		FBO fbo;
+		fbo.Bind();
+		fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
+		fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
+		support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+		fbo.Unbind();
+	}
+	#endif
 }
 
 void CGlobalRendering::QueryGLMaxVals()
@@ -778,6 +780,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
+	LOG("\tMSAA frame-buffer support : %i", supportMSAAFrameBuffer);
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));

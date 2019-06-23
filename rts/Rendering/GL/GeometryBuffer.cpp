@@ -2,6 +2,8 @@
 
 #include "GeometryBuffer.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/Config/ConfigHandler.h"
+
 #include <algorithm>
 #include <cstring> //memset
 
@@ -21,6 +23,8 @@ void GL::GeometryBuffer::Init(bool ctor) {
 
 	dead = false;
 	bound = false;
+	msaa |= configHandler->GetBool("AllowMultiSampledFrameBuffer");
+	msaa &= globalRendering->supportMSAAFrameBuffer;
 }
 
 void GL::GeometryBuffer::Kill(bool dtor) {
@@ -86,16 +90,16 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	glLoadIdentity();
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texID);
+	glEnable(GetTextureTarget());
+	glBindTexture(GetTextureTarget(), texID);
 	glBegin(GL_QUADS);
 	glTexCoord2f(texMins.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMins.y);
 	glTexCoord2f(texMaxs.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMins.y);
 	glTexCoord2f(texMaxs.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMaxs.y);
 	glTexCoord2f(texMins.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMaxs.y);
 	glEnd();
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
+	glBindTexture(GetTextureTarget(), 0);
+	glDisable(GetTextureTarget());
 
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -107,29 +111,38 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 	for (; n < ATTACHMENT_COUNT; n++) {
 		glGenTextures(1, &bufferTextureIDs[n]);
-		glBindTexture(GL_TEXTURE_2D, bufferTextureIDs[n]);
+		glBindTexture(GetTextureTarget(), bufferTextureIDs[n]);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		if (n == ATTACHMENT_ZVALTEX) {
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+			glTexParameteri(GetTextureTarget(), GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+
+			if (GetTextureTarget() == GL_TEXTURE_2D)
+				glTexImage2D(GetTextureTarget(), 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+			else
+				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_DEPTH_COMPONENT32F, size.x, size.y, GL_TRUE);
+
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			if (GetTextureTarget() == GL_TEXTURE_2D)
+				glTexImage2D(GetTextureTarget(), 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			else
+				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_RGBA, size.x, size.y, GL_TRUE);
+
 			bufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
 		}
 	}
 
 	// sic; Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
 	for (buffer.Bind(); n > 0; n--) {
-		buffer.AttachTexture(bufferTextureIDs[n - 1], GL_TEXTURE_2D, bufferAttachments[n - 1]);
+		buffer.AttachTexture(bufferTextureIDs[n - 1], GetTextureTarget(), bufferAttachments[n - 1]);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GetTextureTarget(), 0);
 	// define the attachments we are going to draw into
 	// note: the depth-texture attachment does not count
 	// here and will be GL_NONE implicitly!
@@ -176,8 +189,8 @@ bool GL::GeometryBuffer::Update(const bool init) {
 
 int2 GL::GeometryBuffer::GetWantedSize(bool allowed) const {
 	if (allowed)
-		return (int2(globalRendering->viewSizeX, globalRendering->viewSizeY));
+		return {globalRendering->viewSizeX, globalRendering->viewSizeY};
 
-	return (int2(0, 0));
+	return {0, 0};
 }
 
