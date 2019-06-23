@@ -11,11 +11,22 @@
 
 
 CR_BIND_DERIVED(CBuilding, CUnit, )
-CR_REG_METADATA(CBuilding, )
+CR_REG_METADATA(CBuilding, (
+	CR_IGNORED(blockMap), // reloaded in PostLoad
+	CR_POSTLOAD(PostLoad)
+))
+
+
+void CBuilding::PostLoad()
+{
+	blockMap = unitDef->GetYardMapPtr();
+}
+
 
 void CBuilding::PreInit(const UnitLoadParams& params)
 {
 	unitDef = params.unitDef;
+	blockMap = unitDef->GetYardMapPtr(); // null if empty
 	blockHeightChanges = unitDef->levelGround;
 
 	CUnit::PreInit(params);

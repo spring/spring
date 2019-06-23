@@ -90,7 +90,7 @@ public:
 	}
 
 	const UnitDefWeapon& GetWeapon(unsigned int idx) const { return weapons[idx]; }
-	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
+	const YardMapStatus* GetYardMapPtr() const { return (yardmap.data()); }
 
 
 	void AddModelExpGenID(unsigned int egID) { modelExplGenIDs[1 + modelExplGenIDs[0]] = egID; modelExplGenIDs[0] += (egID != -1u); }

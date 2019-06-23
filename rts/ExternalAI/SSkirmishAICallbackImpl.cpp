@@ -3003,44 +3003,46 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(
 	int yardMapMaxSize
 ) {
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<YardMapStatus>& yardMapInternal = unitDef->GetYardMap();
+	const YardMapStatus* udYardMap = unitDef->GetYardMapPtr();
 
-	int yardMapSize = yardMapInternal.size();
+	int yardMapSize = unitDef->yardmap.size();
 
-	if ((yardMap != nullptr) && !yardMapInternal.empty()) {
-		yardMapSize = std::min(int(yardMapInternal.size()), yardMapMaxSize);
+	if (yardMap != nullptr && udYardMap != nullptr) {
+		yardMapSize = std::min(yardMapSize, yardMapMaxSize);
 
 		const int xsize = unitDef->xsize;
 		const int zsize = unitDef->zsize;
-		int2 xdir(1,0);
-		int2 zdir(0,1);
-		int row_width = xsize;
-		int startidx = 0; // position of yardMapInternal[0] in the new destination array
+
+		int2 xdir(1, 0);
+		int2 zdir(0, 1);
+
+		int rowWidth = xsize;
+		int startIdx = 0; // position of udYardMap[0] in the new destination array
 
 		switch (facing) {
 			case FACING_SOUTH:
 				xdir = int2( 1, 0);
 				zdir = int2( 0, 1);
-				row_width = xsize;
-				startidx  = 0; // topleft
+				rowWidth = xsize;
+				startIdx  = 0; // topleft
 				break;
 			case FACING_NORTH:
 				xdir = int2(-1, 0);
 				zdir = int2( 0,-1);
-				row_width = xsize;
-				startidx  = (xsize * zsize) - 1; // bottomright
+				rowWidth = xsize;
+				startIdx  = (xsize * zsize) - 1; // bottomright
 				break;
 			case FACING_EAST:
 				xdir = int2( 0, 1);
 				zdir = int2(-1, 0);
-				row_width = zsize;
-				startidx  = (xsize - 1) * zsize; // bottomleft
+				rowWidth = zsize;
+				startIdx  = (xsize - 1) * zsize; // bottomleft
 				break;
 			case FACING_WEST:
 				xdir = int2( 0,-1);
 				zdir = int2( 1, 0);
-				row_width = zsize;
-				startidx  = zsize - 1;  // topright
+				rowWidth = zsize;
+				startIdx  = zsize - 1;  // topright
 				break;
 			default:
 				assert(false);
@@ -3051,9 +3053,9 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(
 			for (int x = 0; x < xsize; ++x) {
 				const int xt = xdir.x * x + xdir.y * z;
 				const int zt = zdir.x * x + zdir.y * z;
-				const int idx = startidx + xt + zt * row_width;
+				const int idx = startIdx + xt + zt * rowWidth;
 				assert(idx >= 0 && idx < yardMapSize);
-				yardMap[idx] = (short) yardMapInternal[x + z * xsize];
+				yardMap[idx] = (short) udYardMap[x + z * xsize];
 			}
 		}
 	}

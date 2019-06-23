@@ -16,9 +16,17 @@ public:
 	CBuilding(): CUnit() { immobile = true; }
 	virtual ~CBuilding() {}
 
+	void PostLoad();
 	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);
 	void ForcedMove(const float3& newPos);
+
+	const YardMapStatus* GetBlockMap() const override { return blockMap; }
+
+protected:
+	// current unrotated blockmap/yardmap of this object;
+	// null means no active yardmap (all squares blocked)
+	const YardMapStatus* blockMap = nullptr;
 };
 
 #endif // _BUILDING_H

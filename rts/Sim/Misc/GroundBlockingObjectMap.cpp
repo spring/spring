@@ -29,7 +29,7 @@ CR_REG_METADATA(CGroundBlockingObjectMap, (
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
-	if (object->blockMap != nullptr) {
+	if (object->GetBlockMap() != nullptr) {
 		// if object has a yardmap, add it to map selectively
 		// (checking the specific state of each yardmap cell)
 		AddGroundBlockingObject(object, YARDMAP_BLOCKED);

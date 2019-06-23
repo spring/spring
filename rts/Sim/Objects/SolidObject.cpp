@@ -25,6 +25,8 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(crushable),
 	CR_MEMBER(immobile),
+	CR_MEMBER(yardOpen),
+
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
@@ -69,14 +71,11 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
-	CR_MEMBER(yardOpen),
 
 	CR_MEMBER(buildFacing),
 	CR_MEMBER(modParams),
 
 	CR_POSTLOAD(PostLoad)
-
 ))
 
 
@@ -218,7 +217,9 @@ void CSolidObject::Block()
 
 YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 {
-	if (!blockMap)
+	const YardMapStatus* blockMap = GetBlockMap();
+
+	if (blockMap == nullptr)
 		return YARDMAP_OPEN;
 
 	const int hxsize = footprint.x >> 1;
