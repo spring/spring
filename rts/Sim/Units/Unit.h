@@ -336,12 +336,12 @@ public:
 
 	// 0.0-1.0
 	float buildProgress = 0.0f;
-	// if health-this is negative the unit is stunned
+	// if (health - this) is negative the unit is stunned
 	float paralyzeDamage = 0.0f;
 	// how close this unit is to being captured
 	float captureProgress = 0.0f;
 	float experience = 0.0f;
-	// goes ->1 as experience go -> infinite
+	// approaches 1 as experience approaches infinity
 	float limExperience = 0.0f;
 
 
@@ -359,7 +359,7 @@ public:
 	int lastNanoAdd = 0;
 	int lastFlareDrop = 0;
 
-	// id of transport that the unit is about to be picked up by
+	// id of transport that the unit is about to be {un}loaded by
 	int loadingTransportId = -1;
 	int unloadingTransportId = -1;
 
@@ -445,11 +445,6 @@ public:
 
 	// for units being dropped from transports (parachute drops)
 	float fallSpeed = 0.2f;
-
-	// total distance the unit has moved
-	float travel = 0.0f;
-	// 0.0f disables travel accumulation
-	float travelPeriod = 0.0f;
 
 	/**
 	 * 0 = no flanking bonus
