@@ -1405,7 +1405,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case YARD_OPEN: {
-			if (unit->blockMap != nullptr) {
+			if (unit->GetBlockMap() != nullptr) {
 				// note: if this unit is a factory, engine-controlled
 				// OpenYard() and CloseYard() calls can interfere with
 				// the yardOpen state (they probably should be removed

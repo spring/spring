@@ -260,7 +260,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	ASSERT_SYNCED(pos);
 
-	blockMap = (unitDef->GetYardMap()).data(); // null if empty
 	footprint = int2(unitDef->xsize, unitDef->zsize);
 
 	beingBuilt = params.beingBuilt;
@@ -397,8 +396,6 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::PostLoad()
 {
-	blockMap = (unitDef->GetYardMap()).data();
-
 	if (unitDef->windGenerator > 0.0f)
 		envResHandler.AddGenerator(this);
 

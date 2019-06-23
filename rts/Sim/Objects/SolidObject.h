@@ -108,6 +108,8 @@ public:
 	virtual void Kill(CUnit* killer, const float3& impulse, bool crushed);
 	virtual int GetBlockingMapID() const { return -1; }
 
+	virtual const YardMapStatus* GetBlockMap() const { return nullptr; }
+
 	virtual void ForcedMove(const float3& newPos) {}
 	virtual void ForcedSpin(const float3& newDir);
 
@@ -370,8 +372,6 @@ public:
 
 	///< pieces that were last hit by a {[0] := unsynced, [1] := synced} projectile
 	const LocalModelPiece* hitModelPieces[2];
-	///< current (unrotated!) blockmap/yardmap of this object; null means no active yardmap (all squares blocked)
-	const YardMapStatus* blockMap = nullptr;
 
 	SolidObjectGroundDecal* groundDecal = nullptr;
 
