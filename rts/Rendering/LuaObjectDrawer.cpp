@@ -27,7 +27,7 @@
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDrawModelPostDeferredEvents).defaultValue(true);
-CONFIG(bool, AllowMultiSampledFrameBuffer).defaultValue(false);
+CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
