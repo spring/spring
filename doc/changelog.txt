@@ -151,6 +151,7 @@ Lua:
  ! Spring.GetUnit{Armored,IsActive} now works on enemies in LoS
  ! Spring.GetUnitMass no longer works on enemies outside of LoS
  ! remove Spring.{Set,Get}UnitTravel
+ ! remove Spring.SetUnitToFeature (use the AllowFeatureCreation callin to block features from being spawned)
  - Added a boolean parameter to Spring.GetCameraState, if set to false it will return the current camera name
    and then the following camera-specific values on the stack:
      fps, rot -> oldHeight
