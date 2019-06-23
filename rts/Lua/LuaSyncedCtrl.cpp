@@ -326,7 +326,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RemoveUnitCmdDesc);
 
 	REGISTER_LUA_CFUNC(SetNoPause);
-	REGISTER_LUA_CFUNC(SetUnitToFeature);
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 	REGISTER_LUA_CFUNC(SetRadarErrorParams);
@@ -4611,16 +4610,6 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 	if (gameServer != nullptr)
 		gameServer->SetGamePausable(!luaL_checkboolean(L, 1));
 
-	return 0;
-}
-
-
-int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
-{
-	if (!FullCtrl(L))
-		return 0;
-
-	CUnit::SetSpawnFeature(luaL_checkboolean(L, 1));
 	return 0;
 }
 

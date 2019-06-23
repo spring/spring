@@ -254,8 +254,6 @@ public:
 		return (1.0f - (limExperience * experienceWeight));
 	}
 
-	static void SetSpawnFeature(bool b) { spawnFeature = b; }
-
 public:
 	const UnitDef* unitDef = nullptr;
 
@@ -544,8 +542,6 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
-
-	static bool spawnFeature;
 };
 
 #endif // UNIT_H

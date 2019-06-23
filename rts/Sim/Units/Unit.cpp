@@ -75,8 +75,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-bool  CUnit::spawnFeature = true;
-
 float CUnit::empDeclineRate = 0.0f;
 float CUnit::expMultiplier  = 0.0f;
 float CUnit::expPowerScale  = 0.0f;
@@ -104,15 +102,16 @@ CUnit::~CUnit()
 	// clean up if we are still under MoveCtrl here
 	DisableScriptMoveType();
 
-	if (delayedWreckLevel >= 0) {
-		// NOTE: could also do this in Update() or even in CUnitKilledCB()
-		// where we wouldn't need deathSpeed, but not in KillUnit() since
-		// we have to wait for deathScriptFinished (but we want the delay
-		// in frames between CUnitKilledCB() and the CreateWreckage() call
-		// to be as short as possible to prevent position jumps)
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, delayedWreckLevel - 1, 1};
-		featureHandler.CreateWreckage(params);
-	}
+	// NOTE:
+	//   could also do this in Update() or even in CUnitKilledCB() where
+	//   we wouldn't need deathSpeed, but not in KillUnit() since we have
+	//   to wait for deathScriptFinished there
+	//   we nevertheless want the sim-frame latency between CUnitKilledCB()
+	//   and the CreateWreckage() call to be as low as possible to prevent
+	//   position discontinuities
+	if (delayedWreckLevel >= 0)
+		featureHandler.CreateWreckage({featureDefHandler->GetFeatureDefByID(featureDefID), unitDef,  pos, deathSpeed,  -1, team, -1,  heading, buildFacing,  delayedWreckLevel - 1, 1});
+
 	if (deathExpDamages != nullptr)
 		DynDamageArray::DecRef(deathExpDamages);
 	if (selfdExpDamages != nullptr)
@@ -156,8 +155,6 @@ CUnit::~CUnit()
 
 void CUnit::InitStatic()
 {
-	spawnFeature = true;
-
 	// numerator was 2*UNIT_SLOWUPDATE_RATE/GAME_SPEED which equals 1 since 99.0
 	SetEmpDeclineRate(1.0f / modInfo.paralyzeDeclineRate);
 	SetExpMultiplier(modInfo.unitExpMultiplier);
@@ -441,12 +438,16 @@ void CUnit::FinishedBuilding(bool postInit)
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
-	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), nullptr, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0, 0};
-		CFeature* f = featureHandler.CreateWreckage(p);
+	{
+		if (!unitDef->isFeature)
+			return;
 
-		if (f != nullptr)
-			f->blockHeightChanges = true;
+		CFeature* f = featureHandler.CreateWreckage({featureDefHandler->GetFeatureDefByID(featureDefID), nullptr,  pos, ZeroVector,  -1, team, allyteam,  heading, buildFacing,  0, 0});
+
+		if (f == nullptr)
+			return;
+
+		f->blockHeightChanges = true;
 
 		UnBlock();
 		KillUnit(nullptr, false, true);
@@ -2949,9 +2950,6 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(expGrade),
 
 //	CR_MEMBER(empDecline),
-//	CR_MEMBER(spawnFeature),
-
-//	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
 ))

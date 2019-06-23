@@ -156,19 +156,18 @@ CFeature* CFeatureHandler::CreateWreckage(const FeatureLoadParams& cparams)
 	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
 		return nullptr;
 
-	if (!fd->modelName.empty()) {
-		FeatureLoadParams params = cparams;
+	if (fd->modelName.empty())
+		return nullptr;
 
-		params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
-		params.featureDef = fd;
+	FeatureLoadParams params = cparams;
 
-		// for the CreateWreckage call, params.smokeTime acts as a multiplier
-		params.smokeTime = fd->smokeTime * cparams.smokeTime;
+	params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
+	params.featureDef = fd;
 
-		return (LoadFeature(params));
-	}
+	// for the CreateWreckage call, params.smokeTime acts as a multiplier
+	params.smokeTime = fd->smokeTime * cparams.smokeTime;
 
-	return nullptr;
+	return (LoadFeature(params));
 }
 
 
