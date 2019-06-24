@@ -277,7 +277,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
-	if (GLEW_EXT_framebuffer_object) {
+	if (FBO::IsSupported()) {
 		// FIXME: obsolete
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
 		REGISTER_LUA_CFUNC(RenderToTexture);
@@ -386,7 +386,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	if (canUseShaders)
 		LuaShaders::PushEntries(L);
 
-	if (GLEW_EXT_framebuffer_object) {
+	if (FBO::IsSupported()) {
 	 	LuaFBOs::PushEntries(L);
 	 	LuaRBOs::PushEntries(L);
 	}

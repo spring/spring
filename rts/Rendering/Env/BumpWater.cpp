@@ -187,8 +187,8 @@ CBumpWater::CBumpWater()
 		throw content_error("[" LOG_SECTION_BUMP_WATER "] your hardware/driver setup does not support GLSL");
 	}
 
-	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
-	dynWaves   = dynWaves && (GLEW_EXT_framebuffer_object && GLEW_ARB_imaging);
+	shoreWaves = shoreWaves && (FBO::IsSupported());
+	dynWaves   = dynWaves && (FBO::IsSupported() && GLEW_ARB_imaging);
 
 
 	// LOAD TEXTURES
@@ -363,7 +363,7 @@ CBumpWater::CBumpWater()
 	}
 
 	// CREATE FBOs
-	if (GLEW_EXT_framebuffer_object) {
+	if (FBO::IsSupported()) {
 		GLuint depthRBOFormat = GL_DEPTH_COMPONENT;
 		switch (depthBits) {
 			case 16: depthRBOFormat = GL_DEPTH_COMPONENT16; break;

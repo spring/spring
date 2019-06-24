@@ -41,6 +41,14 @@ std::string LuaTextures::Create(const Texture& tex)
 	switch (tex.target) {
 		case GL_TEXTURE_2D_MULTISAMPLE: {
 			assert(tex.samples > 1);
+
+			// 2DMS target only makes sense for FBO's
+			if (!globalRendering->supportMSAAFrameBuffer) {
+				glDeleteTextures(1, &texID);
+				glBindTexture(GL_TEXTURE_2D, currentBinding);
+				return "";
+			}
+
 			glTexImage2DMultisample(tex.target, tex.samples, tex.format, tex.xsize, tex.ysize, GL_TRUE);
 		} break;
 		case GL_TEXTURE_2D: {
@@ -65,10 +73,11 @@ std::string LuaTextures::Create(const Texture& tex)
 	GLuint fboDepth = 0;
 
 	if (tex.fbo != 0) {
-		if (!GLEW_EXT_framebuffer_object) {
+		if (!FBO::IsSupported()) {
 			glDeleteTextures(1, &texID);
 			return "";
 		}
+
 		GLint currentFBO;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
 
@@ -139,7 +148,7 @@ bool LuaTextures::Free(const std::string& name)
 		const Texture& tex = textureVec[it->second];
 		glDeleteTextures(1, &tex.id);
 
-		if (GLEW_EXT_framebuffer_object) {
+		if (FBO::IsSupported()) {
 			glDeleteFramebuffersEXT(1, &tex.fbo);
 			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
 		}
@@ -155,7 +164,7 @@ bool LuaTextures::Free(const std::string& name)
 
 bool LuaTextures::FreeFBO(const std::string& name)
 {
-	if (!GLEW_EXT_framebuffer_object)
+	if (!FBO::IsSupported())
 		return false;
 
 	const auto it = textureMap.find(name);
@@ -180,7 +189,7 @@ void LuaTextures::FreeAll()
 		const Texture& tex = textureVec[item.second];
 		glDeleteTextures(1, &tex.id);
 
-		if (GLEW_EXT_framebuffer_object) {
+		if (FBO::IsSupported()) {
 			glDeleteFramebuffersEXT(1, &tex.fbo);
 			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
 		}

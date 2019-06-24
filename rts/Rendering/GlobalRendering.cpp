@@ -671,12 +671,16 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_ARB_seamless_cube_map
 	supportSeamlessCubeMaps = GLEW_ARB_seamless_cube_map;
 	#endif
+	#ifdef GLEW_EXT_framebuffer_multisample
+	supportMSAAFrameBuffer = GLEW_EXT_framebuffer_multisample;
+	#endif
+
 	// CC did not exist as an extension before GL4.5, too recent to enforce
 	supportClipSpaceControl &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 45);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 
 	supportFragDepthLayout = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 42);
-	supportMSAAFrameBuffer = ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
+	supportMSAAFrameBuffer &= ((globalRenderingInfo.glContextVersion.x * 10 + globalRenderingInfo.glContextVersion.y) >= 32);
 
 	#if 0
 	{
@@ -780,7 +784,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
 	LOG("\tS3TC/DXT1 texture support : %i/%i", glewIsExtensionSupported("GL_EXT_texture_compression_s3tc"), glewIsExtensionSupported("GL_EXT_texture_compression_dxt1"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
-	LOG("\tMSAA frame-buffer support : %i", supportMSAAFrameBuffer);
+	LOG("\tMSAA frame-buffer support : %i (%i)", supportMSAAFrameBuffer, glewIsExtensionSupported("GL_EXT_framebuffer_multisample"));
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
