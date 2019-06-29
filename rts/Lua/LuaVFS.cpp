@@ -14,6 +14,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
@@ -472,6 +473,8 @@ int LuaVFS::UnmapArchive(lua_State* L)
 	// the path may point to a file or dir outside of any data-dir
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
+
+	LOG("[LuaVFS::%s] archive=%s", __func__, filename.c_str());
 
 	if (!vfsHandler->RemoveArchive(filename)) {
 		std::ostringstream buf;

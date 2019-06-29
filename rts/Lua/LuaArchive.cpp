@@ -12,6 +12,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/FileSystem/VFSHandler.h"
+#include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
 #include <string>
@@ -220,6 +221,8 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 {
 	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
 	const std::string mapArchiveName = luaL_optsstring(L, 2, "");
+
+	LOG("LuaArchive::%s] game=%s map=%s", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
 
 	// load selected archives to get lua ais
 	if (!gameArchiveName.empty())
