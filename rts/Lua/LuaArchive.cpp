@@ -224,11 +224,17 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 
 	LOG("LuaArchive::%s] game=%s map=%s", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
 
+	CVFSHandler* oldHandler = vfsHandler;
+	CVFSHandler  tmpHandler;
+
+	CVFSHandler::GrabLock();
+	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
+
 	// load selected archives to get lua ais
 	if (!gameArchiveName.empty())
-		vfsHandler->AddArchive(gameArchiveName, false);
+		tmpHandler.AddArchive(gameArchiveName, false);
 	if (!mapArchiveName.empty())
-		vfsHandler->AddArchive(mapArchiveName, false);
+		tmpHandler.AddArchive(mapArchiveName, false);
 
 	const auto& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
 	const auto& luaAIInfos = luaAIImplHandler.LoadInfoItems();
@@ -258,11 +264,8 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		lua_rawseti(L, -2, ++count);
 	}
 
-	// close archives
-	if (!mapArchiveName.empty())
-		vfsHandler->RemoveArchive(mapArchiveName);
-	if (!gameArchiveName.empty())
-		vfsHandler->RemoveArchive(gameArchiveName);
+	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	CVFSHandler::FreeLock();
 
 	return 1;
 }

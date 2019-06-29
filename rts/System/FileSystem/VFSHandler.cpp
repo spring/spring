@@ -60,7 +60,7 @@ void CVFSHandler::SetGlobalInstance(CVFSHandler* handler)
 }
 void CVFSHandler::SetGlobalInstanceRaw(CVFSHandler* handler)
 {
-	LOG_L(L_INFO, "[VFSH::%s] handler=%p", __func__, handler);
+	LOG_L(L_INFO, "[VFSH::%s] handler=%p global=%p", __func__, handler, vfsHandlerGlobal);
 
 	// assert(vfsMutex.locked());
 	vfsHandlerGlobal = handler;
