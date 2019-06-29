@@ -64,7 +64,7 @@ static spring::unordered_map<std::string, int> GetEnabledSections() {
 	#endif
 	#if !defined(DEBUG)
 	// Always show at least INFO level of these sections
-	enabledSections += "Sound,";
+	enabledSections += "Sound,VFS:30";
 	#endif
 	enabledSections += StringToLower(configHandler->GetString("LogSections"));
 #endif

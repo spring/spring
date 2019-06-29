@@ -60,6 +60,8 @@ void CVFSHandler::SetGlobalInstance(CVFSHandler* handler)
 }
 void CVFSHandler::SetGlobalInstanceRaw(CVFSHandler* handler)
 {
+	LOG_L(L_INFO, "[VFSH::%s] handler=%p", __func__, handler);
+
 	// assert(vfsMutex.locked());
 	vfsHandlerGlobal = handler;
 }
@@ -112,11 +114,12 @@ static const std::string GetArchivePath(const std::string& name) {
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 {
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
-	LOG_L(L_DEBUG, "[VFSH::%s(arName=\"%s\", overwrite=%s)]", __func__, archiveName.c_str(), overwrite ? "true" : "false");
 
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	const std::string& archivePath = GetArchivePath(archiveName);
 	const Section section = GetModTypeSection(archiveData.GetModType());
+
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", __func__, this, archiveName.c_str(), overwrite ? "true" : "false", section);
 
 	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
@@ -126,7 +129,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 	if (ar == nullptr) {
 		if ((ar = archiveLoader.OpenArchive(archivePath)) == nullptr) {
-			LOG_L(L_ERROR, "[VFSH::%s] failed to open archive '%s' (path '%s', type %d)", __func__, archiveName.c_str(), archivePath.c_str(), archiveData.GetModType());
+			LOG_L(L_ERROR, "[VFSH::%s<this=%p>] failed to open archive '%s' (path '%s', type %d)", __func__, this, archiveName.c_str(), archivePath.c_str(), archiveData.GetModType());
 			return false;
 		}
 		archives[archivePath] = ar;
@@ -145,13 +148,13 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 			const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{name, FileData{}}, pred);
 
 			if (iter != files[section].end() && iter->first == name) {
-				LOG_L(L_DEBUG, "[VFSH::%s] skipping \"%s\", exists", __func__, name.c_str());
+				LOG_L(L_DEBUG, "[VFSH::%s<this=%p>] skipping \"%s\", exists", __func__, this, name.c_str());
 				continue;
 			}
 
-			LOG_L(L_DEBUG, "[VFSH::%s] adding \"%s\", does not exist", __func__, name.c_str());
+			LOG_L(L_DEBUG, "[VFSH::%s<this=%p>] adding \"%s\", does not exist", __func__, this, name.c_str());
 		} else {
-			LOG_L(L_DEBUG, "[VFSH::%s] overriding \"%s\"", __func__, name.c_str());
+			LOG_L(L_DEBUG, "[VFSH::%s<this=%p>] overriding \"%s\"", __func__, this, name.c_str());
 		}
 
 		// can not add directly to files[section], would break lower_bound
@@ -159,8 +162,8 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 		files[Section::Temp].emplace_back(name, FileData{ar, fi.second});
 	}
 
-	for (size_t i = 0, n = files[Section::Temp].size(); i < n; i++) {
-		files[section].emplace_back(std::move(files[Section::Temp][i]));
+	for (FileEntry& fileEntry: files[Section::Temp]) {
+		files[section].emplace_back(std::move(fileEntry));
 	}
 
 	std::stable_sort(files[section].begin(), files[section].end(), [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); });
@@ -194,7 +197,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	assert(!archivePath.empty());
 	assert(section < Section::Count);
 
-	LOG_L(L_INFO, "[VFHS::%s(archiveName=\"%s\")]", __func__, archivePath.c_str());
+	LOG_L(L_INFO, "[VFHS::%s<this=%p>(archiveName=\"%s\")] section=%d", __func__, this, archivePath.c_str(), section);
 
 	const auto it = archives.find(archivePath);
 
@@ -214,8 +217,6 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 		if ((pair.second).ar != ar)
 			continue;
 
-		LOG_L(L_DEBUG, "[VFHS::%s] removing \"%s\"", __func__, name.c_str());
-
 		// mark entry for removal
 		name.clear();
 	}
@@ -224,6 +225,8 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 		const auto beg = files[section].begin();
 		const auto end = files[section].end();
 		const auto pos = std::remove_if(beg, end, [](const FileEntry& e) { return (e.first.empty()); });
+
+		LOG_L(L_INFO, "[VFHS::%s<this=%p>] #files=" _STPF_ "/" _STPF_ "", __func__, this, end - beg, pos - beg);
 
 		// wipe entries belonging to the to-be-deleted archive
 		files[section].erase(pos, end);
@@ -239,7 +242,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 
 void CVFSHandler::DeleteArchives()
 {
-	LOG_L(L_INFO, "[VFSH::%s] #archives=%lu", __func__, (long unsigned) archives.size());
+	LOG_L(L_INFO, "[VFSH::%s<this=%p>] #archives=" _STPF_ "", __func__, this, archives.size());
 
 	for (const auto& p: archives) {
 		LOG_L(L_INFO, "\tarchive=%s (%p)", (p.first).c_str(), p.second);
@@ -287,7 +290,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 		const auto pred = [&](const FileEntry& e) { return (e.first == file.first); };
 		const auto iter = std::find_if(cbeg, cend, pred);
 
-		LOG_L(L_WARNING, "[VFSH::%s(path=\"%s\" section=%d)] idx=" _STPF_ "/" _STPF_ " end=%d  sane=%d global=%d", __func__, file.first.c_str(), section, iter - cbeg, vect.size(), iter == cend, sane(), this == vfsHandlerGlobal);
+		LOG_L(L_WARNING, "[VFSH::%s<this=%p>(path=\"%s\" section=%d)] idx=" _STPF_ "/" _STPF_ " end=%d sane=%d", __func__, this, file.first.c_str(), section, iter - cbeg, vect.size(), iter == cend, sane());
 
 		if (iter == cend) {
 			for (const auto& fdp: vect) {
@@ -312,7 +315,7 @@ CVFSHandler::FileData CVFSHandler::GetFileData(const std::string& normalizedFile
 
 int CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section)
 {
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(filePath=\"%s\", section=%d)]", __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const FileData& fileData = GetFileData(normalizedPath, section);
@@ -326,7 +329,7 @@ int CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>
 
 int CVFSHandler::FileExists(const std::string& filePath, Section section)
 {
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(filePath=\"%s\", section=%d)]", __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const FileData& fileData = GetFileData(normalizedPath, section);
@@ -340,7 +343,7 @@ int CVFSHandler::FileExists(const std::string& filePath, Section section)
 
 std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Section section)
 {
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(filePath=\"%s\", section=%d)]", __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const FileData& fileData = GetFileData(normalizedPath, section);
@@ -357,7 +360,7 @@ std::string CVFSHandler::GetFileAbsolutePath(const std::string& filePath, Sectio
 
 std::string CVFSHandler::GetFileArchiveName(const std::string& filePath, Section section)
 {
-	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", section=%d)]", __func__, filePath.c_str(), section);
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(filePath=\"%s\", section=%d)]", __func__, this, filePath.c_str(), section);
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const auto& fileData = GetFileData(normalizedPath, section);
@@ -391,7 +394,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(rawDir=\"%s\")] section=%d", __func__, this, rawDir.c_str(), section);
 
 	std::vector<std::string> dirFiles;
 	std::string dir = std::move(GetNormalizedPath(rawDir));
@@ -443,7 +446,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s<this=%p>(rawDir=\"%s\")] section=%d", __func__, this, rawDir.c_str(), section);
 
 	std::vector<std::string> dirs;
 	std::vector<std::string>::iterator iter;
@@ -493,3 +496,4 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 
 	return dirs;
 }
+
