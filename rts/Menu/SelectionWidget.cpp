@@ -154,20 +154,24 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	if (userMod == SelectionWidget::NoModSelect || userMap == SelectionWidget::NoMapSelect )
 		return;
 
-	vfsHandler->AddArchive(userMod, true);
-	vfsHandler->AddArchive(userMap, true);
+	CVFSHandler* oldHandler = vfsHandler;
+	CVFSHandler  tmpHandler{"MenuVFS"};
 
-	const CLuaAIImplHandler::InfoItemVector& luaAIInfos = luaAIImplHandler.LoadInfoItems();
+	CVFSHandler::GrabLock();
+	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
 
-	for (const auto& luaAIInfo: luaAIInfos) {
+	tmpHandler.AddArchive(userMod, true);
+	tmpHandler.AddArchive(userMap, true);
+
+	for (const auto& luaAIInfo: luaAIImplHandler.LoadInfoItems()) {
 		for (const auto& prop: luaAIInfo) {
 			if (prop.key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
 				availableScripts.push_back(prop.GetValueAsString());
 		}
 	}
 
-	vfsHandler->RemoveArchive(userMap);
-	vfsHandler->RemoveArchive(userMod);
+	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	CVFSHandler::FreeLock();
 }
 
 void SelectionWidget::UpdateAvailableScripts()
