@@ -122,7 +122,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 	const std::string& archivePath = GetArchivePath(archiveName);
 	const Section section = GetModTypeSection(archiveData.GetModType());
 
-	LOG_L(L_DEBUG, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", section);
+	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", section);
 
 	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
@@ -247,6 +247,8 @@ void CVFSHandler::DeleteArchives()
 {
 	LOG_L(L_INFO, "[%s::%s<this=%p>] #archives=" _STPF_ "", vfsName, __func__, this, archives.size());
 
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
+
 	for (const auto& p: archives) {
 		LOG_L(L_INFO, "\tarchive=%s (%p)", (p.first).c_str(), p.second);
 		delete p.second;
@@ -263,6 +265,8 @@ void CVFSHandler::DeleteArchives()
 void CVFSHandler::ReserveArchives()
 {
 	LOG_L(L_INFO, "[%s::%s<this=%p>] #archives=" _STPF_ "", vfsName, __func__, this, archives.size());
+
+	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	assert(files[Section::Mod ].empty());
 	assert(files[Section::Map ].empty());
