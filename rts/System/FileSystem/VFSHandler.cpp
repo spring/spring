@@ -252,6 +252,23 @@ void CVFSHandler::DeleteArchives()
 		delete p.second;
 	}
 
+	for (int section = Section::Mod; section <= Section::Temp; section++) {
+		LOG_L(L_INFO, "\t#files[%d]=" _STPF_, section, files[section].size());
+		files[section].clear();
+	}
+
+	archives.clear();
+}
+
+void CVFSHandler::ReserveArchives()
+{
+	LOG_L(L_INFO, "[%s::%s<this=%p>] #archives=" _STPF_ "", vfsName, __func__, this, archives.size());
+
+	assert(files[Section::Mod ].empty());
+	assert(files[Section::Map ].empty());
+	assert(files[Section::Base].empty());
+	assert(files[Section::Menu].empty());
+
 	archives.clear();
 	archives.reserve(8192);
 
