@@ -284,7 +284,7 @@ class ScopedMapLoader {
 			if (f.FileExists())
 				return;
 
-			CVFSHandler::SetGlobalInstance(new CVFSHandler());
+			CVFSHandler::SetGlobalInstance(new CVFSHandler("ScopedMapLoaderVFS"));
 			vfsHandler->AddArchiveWithDeps(mapName, false);
 		}
 
@@ -549,7 +549,7 @@ EXPORT(void) RemoveAllArchives()
 		LOG_L(L_DEBUG, "removing all archives");
 
 		CVFSHandler::FreeGlobalInstance();
-		CVFSHandler::SetGlobalInstance(new CVFSHandler());
+		CVFSHandler::SetGlobalInstance(new CVFSHandler("UnitSyncVFS"));
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

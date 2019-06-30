@@ -70,7 +70,7 @@ bool FileSystemInitializer::Initialize()
 		dataDirLocater.Check();
 
 		archiveScanner = new CArchiveScanner();
-		CVFSHandler::SetGlobalInstance(new CVFSHandler());
+		CVFSHandler::SetGlobalInstance(new CVFSHandler("SpringVFS"));
 
 		initSuccess = true;
 	} catch (const std::exception& ex) {

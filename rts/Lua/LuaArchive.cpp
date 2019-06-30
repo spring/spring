@@ -225,7 +225,7 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	LOG("LuaArchive::%s] game=%s map=%s", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
 
 	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler;
+	CVFSHandler  tmpHandler{"LuaArchiveVFS"};
 
 	CVFSHandler::GrabLock();
 	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
@@ -244,7 +244,7 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	unsigned int count = 0;
 
 	for (const auto& luaAIInfo: luaAIInfos) {
-		lua_newtable(L); {
+		lua_createtable(L, 0, luaAIInfo.size()); {
 			for (const auto& luaAIInfoItem: luaAIInfo) {
 				if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
 					HSTR_PUSH_STRING(L, "shortName", luaAIInfoItem.GetValueAsString());
@@ -257,7 +257,7 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	}
 
 	for (const auto& aiKey: skirmishAIKeys) {
-		lua_newtable(L); {
+		lua_createtable(L, 0, 2); {
 			HSTR_PUSH_STRING(L, "shortName", aiKey.GetShortName());
 			HSTR_PUSH_STRING(L, "version", aiKey.GetVersion());
 		}

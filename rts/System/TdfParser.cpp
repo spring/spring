@@ -129,7 +129,7 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 
 void TdfParser::ParseBuffer(const char* buf, size_t size) {
 	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler;
+	CVFSHandler  tmpHandler{"TDFParserVFS"};
 
 	// block other threads from getting the global until we are done
 	CVFSHandler::GrabLock();
