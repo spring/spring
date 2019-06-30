@@ -20,7 +20,7 @@ class IArchive;
 class CVFSHandler
 {
 public:
-	CVFSHandler(const char* s): vfsName(s) { DeleteArchives(); }
+	CVFSHandler(const char* s): vfsName(s) { ReserveArchives(); }
 	~CVFSHandler() { DeleteArchives(); }
 
 	const char* GetName() const { return vfsName; }
@@ -128,6 +128,7 @@ public:
 
 
 	void DeleteArchives();
+	void ReserveArchives();
 
 private:
 	struct FileData {

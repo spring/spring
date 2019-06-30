@@ -112,6 +112,7 @@ void FileSystemInitializer::Reload()
 {
 	// repopulated by PreGame, etc
 	vfsHandler->DeleteArchives();
+	vfsHandler->ReserveArchives();
 	archiveScanner->Reload();
 }
 
