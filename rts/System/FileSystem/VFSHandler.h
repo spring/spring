@@ -20,8 +20,10 @@ class IArchive;
 class CVFSHandler
 {
 public:
-	CVFSHandler() { DeleteArchives(); }
+	CVFSHandler(const char* s): vfsName(s) { DeleteArchives(); }
 	~CVFSHandler() { DeleteArchives(); }
+
+	const char* GetName() const { return vfsName; }
 
 	enum Section {
 		Mod,
@@ -134,12 +136,14 @@ private:
 	};
 	typedef std::pair<std::string, FileData> FileEntry;
 
+	std::string GetNormalizedPath(const std::string& rawPath);
+	FileData GetFileData(const std::string& normalizedFilePath, Section section);
+
+private:
 	std::array<std::vector<FileEntry>, Section::Count> files;
 	spring::unordered_map<std::string, IArchive*> archives;
 
-private:
-	std::string GetNormalizedPath(const std::string& rawPath);
-	FileData GetFileData(const std::string& normalizedFilePath, Section section);
+	const char* vfsName = "";
 };
 
 #define vfsHandler (CVFSHandler::GetGlobalInstance())

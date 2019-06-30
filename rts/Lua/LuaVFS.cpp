@@ -388,7 +388,7 @@ int LuaVFS::UseArchive(lua_State* L)
 
 
 	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler;
+	CVFSHandler  tmpHandler{"LuaVFS"};
 
 	// block other threads from getting the global until we are done
 	CVFSHandler::GrabLock();
