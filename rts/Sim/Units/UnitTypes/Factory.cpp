@@ -149,15 +149,14 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	if (isDead)
 		return;
 
-	const float3& buildPos = CalcBuildPos();
-	const bool blocked = groundBlockingObjectMap.GroundBlocked(buildPos, this);
+	const float3& buildPos = CalcBuildPos(script->QueryBuildInfo());
 
 	// wait until buildPos is no longer blocked (eg. by a previous buildee)
 	//
 	// it might rarely be the case that a unit got stuck inside the factory
 	// or died right after completion and left some wreckage, but that is up
 	// to players to fix
-	if (blocked)
+	if (groundBlockingObjectMap.GroundBlocked(buildPos, this))
 		return;
 
 	UnitLoadParams buildeeParams = {buildeeDef, this, buildPos, ZeroVector, -1, team, buildFacing, true, false};
