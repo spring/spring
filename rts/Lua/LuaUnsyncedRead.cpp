@@ -2137,21 +2137,18 @@ int LuaUnsyncedRead::GetClipboard(lua_State* L)
 
 int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 {
-	CInfoConsole* ic = infoConsole;
+	lua_createtable(L, infoConsole->GetMsgPosCount(), 0);
 
-	if (ic == nullptr)
-		return 0;
-
-	lua_newtable(L);
-	for (unsigned int i = 1; i <= ic->GetMsgPosCount(); i++) {
+	for (unsigned int i = 1; i <= infoConsole->GetMsgPosCount(); i++) {
 		lua_createtable(L, 3, 0); {
-			const float3 msgpos = ic->GetMsgPos();
+			const float3 msgpos = infoConsole->GetMsgPos();
 			lua_pushnumber(L, msgpos.x); lua_rawseti(L, -2, 1);
 			lua_pushnumber(L, msgpos.y); lua_rawseti(L, -2, 2);
 			lua_pushnumber(L, msgpos.z); lua_rawseti(L, -2, 3);
 		}
 		lua_rawseti(L, -2, i);
 	}
+
 	return 1;
 }
 
@@ -2159,34 +2156,21 @@ int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 
 int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 {
-	CInfoConsole* ic = infoConsole;
-	if (ic == nullptr) {
-		return true;
-	}
+	std::vector<CInfoConsole::RawLine> lines;
+	infoConsole->GetRawLines(lines);
 
-	const int args = lua_gettop(L); // number of arguments
+	const size_t lineCount = lines.size();
+	      size_t startLine = 0;
 
-	std::deque<CInfoConsole::RawLine> lines;
-	ic->GetRawLines(lines);
-	const int lineCount = (int)lines.size();
-
-	int start = 0;
-	if (args >= 1) {
-		const int maxLines = luaL_checkint(L, 1);
-		if (maxLines < lineCount) {
-			start = (lineCount - maxLines);
-		}
-	}
+	if (lua_gettop(L) >= 1)
+		startLine = lineCount - std::min(lineCount, size_t(luaL_checkint(L, 1)));
 
 	// table = { [1] = { text = string, zone = number}, etc... }
-	lua_newtable(L);
+	lua_createtable(L, lineCount - startLine, 0);
 
-	unsigned int count = 0;
-
-	for (int i = start; i < lineCount; i++) {
-		count++;
-		lua_pushnumber(L, count);
-		lua_newtable(L); {
+	for (size_t i = startLine, n = 0; i < lineCount; i++) {
+		lua_pushnumber(L, ++n);
+		lua_createtable(L, 0, 2); {
 			lua_pushliteral(L, "text");
 			lua_pushsstring(L, lines[i].text);
 			lua_rawset(L, -3);

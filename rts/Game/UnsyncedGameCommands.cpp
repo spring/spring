@@ -2262,9 +2262,6 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		if (infoConsole == nullptr)
-			return false;
-
 		InverseOrSetBool(infoConsole->enabled, action.GetArgs());
 		return true;
 	}
