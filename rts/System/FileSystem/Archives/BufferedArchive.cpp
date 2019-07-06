@@ -7,6 +7,9 @@
 
 #include <cassert>
 
+spring::mutex CBufferedArchive::archiveLock;
+
+
 CBufferedArchive::~CBufferedArchive()
 {
 	// filter archives for which only {map,mod}info.lua was accessed
@@ -39,10 +42,10 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	}
 
 	// NumFiles is virtual, can't do this in ctor
-	if (cache.empty())
-		cache.resize(NumFiles());
+	if (fileCache.empty())
+		fileCache.resize(NumFiles());
 
-	FileBuffer& fb = cache.at(fid);
+	FileBuffer& fb = fileCache.at(fid);
 
 	if (!fb.populated) {
 		fb.exists = ((ret = GetFileImpl(fid, fb.data)) == 1);
