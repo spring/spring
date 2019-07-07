@@ -3,6 +3,7 @@
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
 
+#include <cstring> // strcmp
 #include <string>
 #include <vector>
 
@@ -21,12 +22,8 @@ class LuaMatHandler
 LuaMatRef
 	LuaMatBin*
 
-LuaObjectLODMaterial rename
-	LuaMatRef
-	pre + post DL
-
-LuaObjectMaterial (set of LODs) //FIXME merge with LuaObjectLODMaterial?
-	LuaObjectLODMaterial []
+LuaObjectMaterial (set of LODs) //FIXME merge with LuaMatRef?
+	LuaMatRef []
 
 LuaObjectMaterialData (helper to choose the current LOD) //FIXME rename
 	LuaObjectMaterial []
@@ -103,8 +100,29 @@ class LuaMatShader {
 
 /******************************************************************************/
 
+struct LuaMatUniform {
+	char name[32];
+	union {
+		int i[32];
+		float f[32];
+	} data;
+
+	// GL_INT or GL_FLOAT_*
+	int type = 0;
+	// number of data elements
+	int size = 0;
+
+	// -3 := empty uniform, -2 := loc not set, -1 := loc invalid
+	mutable int loc = -3;
+};
+
 struct LuaMatUniforms {
 public:
+	LuaMatUniforms() {
+		ClearObjectUniforms(LUAOBJ_UNIT   );
+		ClearObjectUniforms(LUAOBJ_FEATURE);
+	}
+
 	void Print(const std::string& indent, bool isDeferred) const;
 	void Parse(lua_State* L, const int tableIdx);
 	void AutoLink(LuaMatShader* s);
@@ -116,6 +134,43 @@ public:
 		modelMatrix.Execute(mm);
 		pieceMatrices.Execute(pms);
 	}
+
+
+	bool ClearObjectUniforms(int objType) {
+		objectUniforms[objType].clear();
+		objectUniforms[objType].reserve(128);
+		return true;
+	}
+
+	bool ClearObjectUniforms(int objId, int objType) { return (objectUniforms[objType].erase(objId)); }
+	bool ClearObjectUniform(int objId, int objType, const char* name) {
+		const auto iter = objectUniforms[objType].find(objId);
+		const auto pred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
+
+		if (iter == objectUniforms[objType].end())
+			return false;
+
+		auto& uniformData = iter->second;
+		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), pred);
+
+		if (uniformIter == uniformData.end())
+			return false;
+
+		return (*uniformIter = LuaMatUniform{}, true);
+	}
+
+	bool AddObjectUniform(int objId, int objType, const LuaMatUniform& u) {
+		const auto pred = [](const LuaMatUniform& a) { return (a.loc == -3); };
+
+		auto& uniformData = objectUniforms[objType][objId];
+		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), pred);
+
+		if (uniformIter == uniformData.end())
+			return false;
+
+		return (*uniformIter = u, true);
+	}
+
 
 	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
@@ -190,6 +245,9 @@ private:
 	spring::unsynced_map<std::string, IUniform*> GetEngineNameUniformPairs();
 
 public:
+	// per-{unit,feature} custom uniforms set via LuaObjectRendering
+	spring::unsynced_map<int, std::array<LuaMatUniform, 16>> objectUniforms[2];
+
 	UniformMat<CMatrix44f> viewMatrix;
 	UniformMat<CMatrix44f> projMatrix;
 	UniformMat<CMatrix44f> viprMatrix;
@@ -216,53 +274,54 @@ public:
 
 
 class LuaMaterial {
-	public:
-		LuaMaterial() = default;
-		LuaMaterial(LuaMatType matType): type(matType) {}
+public:
+	LuaMaterial() = default;
+	LuaMaterial(LuaMatType matType): type(matType) {}
 
-		void Parse(
-			lua_State* L,
-			const int tableIdx,
-			void(*ParseShader)(lua_State*, int, LuaMatShader&),
-			void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
-			GLuint(*ParseDisplayList)(lua_State*, int)
-		);
+	void Parse(
+		lua_State* L,
+		const int tableIdx,
+		void(*ParseShader)(lua_State*, int, LuaMatShader&),
+		void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
+		GLuint(*ParseDisplayList)(lua_State*, int)
+	);
 
-		void Finalize();
-		void Execute(const LuaMaterial& prev, bool deferredPass) const;
+	void Finalize();
+	void Execute(const LuaMaterial& prev, bool deferredPass) const;
 
-		void ExecuteInstanceTeamColor(const float4& tc, bool deferredPass) const { uniforms[deferredPass].ExecuteInstanceTeamColor(tc); }
-		void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms, bool deferredPass) const {
-			uniforms[deferredPass].ExecuteInstanceMatrices(mm, pms);
-		}
+	void ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const;
+	void ExecuteInstanceTeamColor(const float4& tc, bool deferredPass) const { uniforms[deferredPass].ExecuteInstanceTeamColor(tc); }
+	void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms, bool deferredPass) const {
+		uniforms[deferredPass].ExecuteInstanceMatrices(mm, pms);
+	}
 
-		void Print(const std::string& indent) const;
+	void Print(const std::string& indent) const;
 
-		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
+	static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
-		bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
-		bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+	bool operator <  (const LuaMaterial& m) const { return (Compare(*this, m) <  0); }
+	bool operator == (const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
 
-		bool HasDrawCall() const { return (uuid >= 0); }
+	bool HasDrawCall() const { return (uuid >= 0); }
 
-	public:
-		static constexpr int MAX_TEX_UNITS = 16;
+public:
+	static constexpr int MAX_TEX_UNITS = 16;
 
-		// default invalid
-		LuaMatType type = LuaMatType(-1);
+	// default invalid
+	LuaMatType type = LuaMatType(-1);
 
-		int uuid = -1; // user-set unique ID, enables Draw callin
-		int order = 0; // for manually adjusting rendering order
-		int texCount = 0;
+	int uuid = -1; // user-set unique ID, enables Draw callin
+	int order = 0; // for manually adjusting rendering order
+	int texCount = 0;
 
-		// [0] := standard, [1] := deferred
-		LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
-		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
-		LuaMatTexture  textures[MAX_TEX_UNITS];
+	// [0] := standard, [1] := deferred
+	LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
+	LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
+	LuaMatTexture  textures[MAX_TEX_UNITS];
 
-		GLenum cullingMode = 0;
+	GLenum cullingMode = 0;
 
-		static const LuaMaterial defMat;
+	static const LuaMaterial defMat;
 };
 
 
@@ -270,52 +329,50 @@ class LuaMaterial {
 /******************************************************************************/
 
 class LuaMatBin : public LuaMaterial {
+friend class LuaMatHandler;
+public:
+	void ClearUnits() { units.clear(); }
+	void ClearFeatures() { features.clear(); }
 
-	friend class LuaMatHandler;
+	const std::vector<CSolidObject*>& GetUnits() const { return units; }
+	const std::vector<CSolidObject*>& GetFeatures() const { return features; }
+	const std::vector<CSolidObject*>& GetObjects(LuaObjType objType) const {
+		static const std::vector<CSolidObject*> dummy;
 
-	public:
-		void ClearUnits() { units.clear(); }
-		void ClearFeatures() { features.clear(); }
-
-		const std::vector<CSolidObject*>& GetUnits() const { return units; }
-		const std::vector<CSolidObject*>& GetFeatures() const { return features; }
-		const std::vector<CSolidObject*>& GetObjects(LuaObjType objType) const {
-			static const std::vector<CSolidObject*> dummy;
-
-			switch (objType) {
-				case LUAOBJ_UNIT   : { return (GetUnits   ()); } break;
-				case LUAOBJ_FEATURE: { return (GetFeatures()); } break;
-				default            : {          assert(false); } break;
-			}
-
-			return dummy;
+		switch (objType) {
+			case LUAOBJ_UNIT   : { return (GetUnits   ()); } break;
+			case LUAOBJ_FEATURE: { return (GetFeatures()); } break;
+			default            : {          assert(false); } break;
 		}
 
-		void Ref() { refCount++; }
-		void UnRef();
+		return dummy;
+	}
 
-		void AddUnit(CSolidObject* o) { units.push_back(o); }
-		void AddFeature(CSolidObject* o) { features.push_back(o); }
-		void AddObject(CSolidObject* o, LuaObjType objType) {
-			switch (objType) {
-				case LUAOBJ_UNIT   : { AddUnit   (o); } break;
-				case LUAOBJ_FEATURE: { AddFeature(o); } break;
-				default            : { assert(false); } break;
-			}
+	void Ref() { refCount++; }
+	void UnRef();
+
+	void AddUnit(CSolidObject* o) { units.push_back(o); }
+	void AddFeature(CSolidObject* o) { features.push_back(o); }
+	void AddObject(CSolidObject* o, LuaObjType objType) {
+		switch (objType) {
+			case LUAOBJ_UNIT   : { AddUnit   (o); } break;
+			case LUAOBJ_FEATURE: { AddFeature(o); } break;
+			default            : { assert(false); } break;
 		}
+	}
 
-		void Print(const std::string& indent) const;
+	void Print(const std::string& indent) const;
 
-	private:
-		LuaMatBin(const LuaMaterial& _mat) : LuaMaterial(_mat), refCount(0) {}
-		LuaMatBin(const LuaMatBin&);
-		LuaMatBin& operator=(const LuaMatBin&) = delete;
+private:
+	LuaMatBin(const LuaMaterial& _mat) : LuaMaterial(_mat), refCount(0) {}
+	LuaMatBin(const LuaMatBin&);
+	LuaMatBin& operator=(const LuaMatBin&) = delete;
 
-	private:
-		int refCount;
+private:
+	int refCount;
 
-		std::vector<CSolidObject*> units;
-		std::vector<CSolidObject*> features;
+	std::vector<CSolidObject*> units;
+	std::vector<CSolidObject*> features;
 };
 
 

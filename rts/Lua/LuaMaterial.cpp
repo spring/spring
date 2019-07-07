@@ -61,6 +61,24 @@ static const char* GLUniformTypeToString(const GLenum uType)
 	return "unknown";
 }
 
+static const char* GetMatTypeName(LuaMatType type)
+{
+	const char* typeName = "Unknown";
+
+	switch (type) {
+		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
+		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
+		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
+		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
+		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
+
+		case LUAMAT_TYPE_COUNT: {
+		} break;
+	}
+
+	return typeName;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -335,6 +353,41 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	}
 }
 
+void LuaMaterial::ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const
+{
+	const LuaMatShader&   matShader   =  shaders[deferredPass];
+	const LuaMatUniforms& matUniforms = uniforms[deferredPass];
+
+	const auto& objUniforms = matUniforms.objectUniforms[objType];
+	const auto& objUniformsIt = objUniforms.find(objId);
+
+	if (objUniformsIt == objUniforms.end())
+		return;
+
+	// apply custom per-object LuaMaterial uniforms (if any)
+	for (const LuaMatUniform& u: objUniformsIt->second) {
+		switch (u.loc) {
+			case -3: { continue; } break;
+			case -2: {
+				if ((u.loc = glGetUniformLocation(matShader.openglID, u.name)) == -1) {
+					LOG_L(L_WARNING, "[LuaMaterial::%s(objId=%d objType=%d)][uuid=%d] uniform \"%s\" not present in %s shader for material %s", __func__, objId, objType, uuid, u.name, deferredPass? "deferred": "forward", GetMatTypeName(type));
+					continue;
+				}
+			} break;
+			case -1: { continue; } break;
+			default: {           } break;
+		}
+
+		switch (u.type) {
+			case GL_INT       : { glUniform1iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_FLOAT     : { glUniform1fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_MAT3: { glUniformMatrix3fv(u.loc,      1, false, u.data.f); } break;
+			case GL_FLOAT_MAT4: { glUniformMatrix4fv(u.loc,      1, false, u.data.f); } break;
+			default           : {                                                     } break;
+		}
+	}
+}
+
 
 
 int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
@@ -421,24 +474,6 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 		return ((a.teamColor.loc > b.teamColor.loc) * 2 - 1);
 
 	return 0;
-}
-
-static const char* GetMatTypeName(LuaMatType type)
-{
-	const char* typeName = "Unknown";
-
-	switch (type) {
-		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
-		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
-		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
-		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
-		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
-
-		case LUAMAT_TYPE_COUNT: {
-		} break;
-	}
-
-	return typeName;
 }
 
 

@@ -40,6 +40,8 @@ Lua:
  - add Spring.SetTidal(number strength)
  - add Spring.GetTidal
  - add Spring.{Unit,Feature}Rendering.SetProjectileLuaDraw
+ - add Spring.{Unit,Feature}Rendering.Set{Deferred,Forward}MaterialUniform
+ - add Spring.{Unit,Feature}Rendering.Clear{Deferred,Forward}MaterialUniform
  - add Spring.AddObjectDecal
  ! rename Spring.RemoveBuildingDecal to Spring.RemoveObjectDecal
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead

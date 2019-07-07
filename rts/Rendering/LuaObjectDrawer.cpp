@@ -83,9 +83,6 @@ typedef void(*FeatureDrawFunc)(const CFeature*, bool, bool);
 
 #endif
 
-typedef const void (*TeamColorUniformFunc)(const CSolidObject*, const LuaMaterial*, const float2, bool);
-typedef const void (*TransMatrUniformFunc)(const CSolidObject*, const LuaMaterial*, bool);
-
 
 
 #ifdef USE_STD_ARRAY
@@ -211,6 +208,7 @@ static void ResetLuaShadowFeatureDrawState(unsigned int modelType, bool deferred
 
 
 
+static const void SetObjectMatricesNop(const CSolidObject* o, const LuaMaterial* m, bool deferredPass) {}
 static const void SetObjectMatricesLua(const CSolidObject* o, const LuaMaterial* m, bool deferredPass) {
 	LocalModel* lm = const_cast<LocalModel*>(&o->localModel);
 
@@ -239,31 +237,49 @@ static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial
 }
 
 
+static const void SetObjectUniformsNop(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+static const void SetObjectUniformsLua(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) { m->ExecuteInstanceUniforms(o->id, objectType, deferredPass); }
+static const void SetObjectUniformsDef(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
 
-static const TeamColorUniformFunc tcUniformFuncs[] = {
+
+
+static const decltype(&SetObjectTeamColorDef) tcUniformFuncs[] = {
 	SetObjectTeamColorNop,
 	SetObjectTeamColorLua,
 	SetObjectTeamColorDef,
 };
 
-static const TransMatrUniformFunc tmUniformFuncs[] = {
+static const decltype(&SetObjectMatricesDef) tmUniformFuncs[] = {
+	SetObjectMatricesNop,
 	SetObjectMatricesLua,
 	SetObjectMatricesDef,
 };
 
+static const decltype(&SetObjectUniformsDef) soUniformFuncs[] = {
+	SetObjectUniformsNop,
+	SetObjectUniformsLua,
+	SetObjectUniformsDef,
+};
 
 
-static inline unsigned int GetTeamColorUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
-	const unsigned int isCustomType = s->IsCustomType() * 1;
-	const unsigned int isEngineType = s->IsEngineType() * 2;
+
+static inline unsigned int CalcTeamColorUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
 	// if still in the same team{-bucket}, pick the no-op func
-	return ((isCustomType + isEngineType) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
+	return ((isCustomType | isEngineType) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
 }
 
-static inline unsigned int GetTransMatrUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
-	const unsigned int isCustomType = s->IsCustomType() * 1;
-	const unsigned int isEngineType = s->IsEngineType() * 2;
-	return (isCustomType + isEngineType);
+static inline unsigned int CalcTransMatrUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
+}
+
+static inline unsigned int CalcSetObjectUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
 }
 
 
@@ -436,9 +452,9 @@ void LuaObjectDrawer::DrawMaterialBin(
 	for (int objTeam = minObjTeam; objTeam <= maxObjTeam; objTeam++) {
 		for (const CSolidObject* obj: objectBuckets[objTeam]) {
 			const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-			const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
+			const LuaMatRef* lodMatRef = matData->GetLODMatRef(matType);
 
-			DrawBinObject(obj, objType, lodMat, currBin,  deferredPass, alphaMatBin, true, false);
+			DrawBinObject(obj, objType, lodMatRef, currBin,  deferredPass, alphaMatBin, true, false);
 		}
 
 		objectBuckets[objTeam].clear();
@@ -449,9 +465,9 @@ void LuaObjectDrawer::DrawMaterialBin(
 
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-		const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
+		const LuaMatRef* lodMatRef = matData->GetLODMatRef(matType);
 
-		DrawBinObject(obj, objType, lodMat, currBin,  deferredPass, alphaMatBin, true, false);
+		DrawBinObject(obj, objType, lodMatRef, currBin,  deferredPass, alphaMatBin, true, false);
 	}
 	#endif
 }
@@ -459,37 +475,42 @@ void LuaObjectDrawer::DrawMaterialBin(
 void LuaObjectDrawer::DrawBinObject(
 	const CSolidObject* obj,
 	LuaObjType objType,
-	const LuaObjectLODMaterial* lodMat,
+	const LuaMatRef* matRef,
 	const LuaMaterial* luaMat,
 	bool deferredPass,
 	bool alphaMatBin,
 	bool applyTrans,
 	bool noLuaCall
 ) {
-	const unsigned int tcFuncIdx = GetTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
-	const unsigned int tmFuncIdx = GetTransMatrUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int tcFuncIdx = CalcTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int tmFuncIdx = CalcTransMatrUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int soFuncIdx = CalcSetObjectUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			const auto udFunc = unitDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
 			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
 
 			const CUnit* u = static_cast<const CUnit*>(obj);
 
 			tcFunc(u, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
 			tmFunc(u, luaMat, deferredPass);
+			soFunc(u, luaMat, objType, deferredPass);
 			udFunc(u, true, noLuaCall, true);
 		} break;
 		case LUAOBJ_FEATURE: {
 			const auto fdFunc = featureDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
 			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
 
 			const CFeature* f = static_cast<const CFeature*>(obj);
 
 			tcFunc(f, luaMat, {f->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
 			tmFunc(f, luaMat, deferredPass);
+			soFunc(f, luaMat, objType, deferredPass);
 			fdFunc(f, true, noLuaCall);
 		} break;
 		default: {
@@ -560,15 +581,15 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans)
 {
 	const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-	const LuaObjectLODMaterial* lodMat = nullptr;
+	const LuaMatRef* lodMatRef = nullptr;
 
 	if (!matData->Enabled())
 		return false;
 
 	// note: always uses an opaque material (for now)
-	if ((lodMat = matData->GetLuaLODMaterial(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
+	if ((lodMatRef = matData->GetLODMatRef(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
 		return false;
-	if (!lodMat->IsActive())
+	if (!lodMatRef->IsActive())
 		return false;
 
 	switch (objType) {
@@ -599,7 +620,7 @@ bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType
 	LuaObjectMaterialData::SetGlobalLODFactor(objType, LuaObjectDrawer::GetLODScale(objType) * camera->GetLPPScale());
 
 	// get the ref-counted actual material
-	const LuaMatBin* currBin = lodMat->matref.GetBin();
+	const LuaMatBin* currBin = lodMatRef->GetBin();
 	const LuaMaterial* currMat = currBin;
 
 	// reset
@@ -608,7 +629,7 @@ bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType
 	// NOTE: doesn't make sense to support deferred mode for this? (extra arg in gl.Unit, etc)
 	currMat->Execute(LuaMaterial::defMat, false);
 
-	DrawBinObject(obj, objType, lodMat, currMat, false, false, applyTrans, true);
+	DrawBinObject(obj, objType, lodMatRef, currMat, false, false, applyTrans, true);
 
 	// switch back to default material
 	LuaMaterial::defMat.Execute(*currMat, false);
