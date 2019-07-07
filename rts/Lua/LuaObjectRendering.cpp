@@ -383,13 +383,13 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 	LuaMatUniform& objUniform = matUniforms->GetObjectUniform(lua_toint(L, 1), objType, uniformName);
 	LuaMatUniform& dmyUniform = LuaMatUniforms::GetDummyObjectUniform();
 
-	constexpr size_t S = sizeof(objUniform.name) - 1;
+	constexpr size_t S = sizeof(objUniform.name);
 	constexpr size_t N = sizeof(objUniform.data.i) / sizeof(objUniform.data.i[0]);
 
 	if (&objUniform == &dmyUniform) {
-		memset(objUniform.name, 0, S + 1);
-		memcpy(objUniform.name, uniformName, std::min(S, strlen(uniformName) - 1));
 		memset(objUniform.data.i, 0, sizeof(objUniform.data.i));
+		memset(objUniform.name, 0, S);
+		strncpy(objUniform.name, uniformName, S - 1);
 		assert(objUniform.loc == -3);
 
 		// if u is a dummy reference, it counts as a new uniform
