@@ -421,7 +421,6 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 
 	LuaObjectMaterial* objMat = nullptr;
 	LuaObjectLODMaterial* luaObjLodMat = nullptr;
-	LuaMatRef* lodMatRef = nullptr;
 	LuaMatBin* matBin = nullptr;
 	LuaMatUniforms* matUniforms = nullptr;
 
@@ -430,12 +429,11 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 
 	if (obj == nullptr)
 		return 0;
-
 	if ((objMat = GetObjectMaterial(obj, materialName)) == nullptr)
 		return 0;
 	if ((luaObjLodMat = objMat->GetMaterial(luaL_checkint(L, 3) - 1)) == nullptr)
 		return 0;
-	if ((matBin = lodMatRef->GetBin()) == nullptr)
+	if ((matBin = luaObjLodMat->matref.GetBin()) == nullptr)
 		return 0;
 	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
 		return 0;
@@ -492,7 +490,6 @@ static int ClearMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::
 
 	LuaObjectMaterial* objMat = nullptr;
 	LuaObjectLODMaterial* luaObjLodMat = nullptr;
-	LuaMatRef* lodMatRef = nullptr;
 	LuaMatBin* matBin = nullptr;
 	LuaMatUniforms* matUniforms = nullptr;
 
@@ -506,7 +503,7 @@ static int ClearMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::
 		return 0;
 	if ((luaObjLodMat = objMat->GetMaterial(luaL_checkint(L, 3) - 1)) == nullptr)
 		return 0;
-	if ((matBin = lodMatRef->GetBin()) == nullptr)
+	if ((matBin = luaObjLodMat->matref.GetBin()) == nullptr)
 		return 0;
 	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
 		return 0;
