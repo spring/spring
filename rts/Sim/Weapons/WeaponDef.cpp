@@ -1,5 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
 #include "WeaponDef.h"
 
 #include "Game/TraceRay.h"
@@ -524,7 +523,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	wdTable.SubTable("customParams").GetMap(customParams);
 
 	// internal only
-	isNulled = (strcasecmp(name.c_str(), "noweapon") == 0);
+	isNulled = (STRCASECMP(name.c_str(), "noweapon") == 0);
 	isShield = (type == "Shield");
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (projectileType != WEAPON_STARBURST_PROJECTILE);

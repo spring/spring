@@ -391,7 +391,6 @@ int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 	return 0;
 }
 
-
 int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 {
 	// args=<objID, lodLevel, matName, preListID, postListID>
@@ -410,10 +409,110 @@ int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 	if (lodMat == nullptr)
 		return 0;
 
-	lodMat->preDisplayList  = ParseDisplayList(L, 4);
+	lodMat->preDisplayList = ParseDisplayList(L, 4);
 	lodMat->postDisplayList = ParseDisplayList(L, 5);
 	return 0;
 }
+
+static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pass matPass)
+{
+	// args=<objID, matName, lodMatNum,   uniformName, uniformType, uniformData>
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, objType);
+
+	LuaObjectMaterial* objMat = nullptr;
+	LuaObjectLODMaterial* luaObjLodMat = nullptr;
+	LuaMatRef* lodMatRef = nullptr;
+	LuaMatBin* matBin = nullptr;
+	LuaMatUniforms* matUniforms = nullptr;
+
+	const char* materialName = luaL_checkstring(L, 2);
+	const char* uniformName = luaL_checkstring(L, 4);
+
+	if (obj == nullptr)
+		return 0;
+
+	if ((objMat = GetObjectMaterial(obj, materialName)) == nullptr)
+		return 0;
+	if ((luaObjLodMat = objMat->GetMaterial(luaL_checkint(L, 3) - 1)) == nullptr)
+		return 0;
+	if ((matBin = lodMatRef->GetBin()) == nullptr)
+		return 0;
+	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
+		return 0;
+
+	LuaMatUniform u;
+
+	constexpr size_t S = sizeof(u.name) - 1;
+	constexpr size_t N = sizeof(u.data.i) / sizeof(u.data.i[0]);
+
+	memset(u.name, 0, S + 1);
+	memcpy(u.name, uniformName, std::min(S, strlen(uniformName) - 1));
+	memset(u.data.i, 0, sizeof(u.data.i));
+
+	// actual location will be set when material executes
+	u.loc = -2;
+
+	switch (luaL_checkint(L, 5)) {
+		case GL_INT: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_INT_VEC2: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_INT_VEC3: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_INT_VEC4: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+
+		case GL_FLOAT: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT_VEC2: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT_VEC3: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT_VEC4: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+
+		case GL_FLOAT_MAT3: { u.type = GL_FLOAT_MAT3; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT_MAT4: { u.type = GL_FLOAT_MAT4; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+
+		default: {
+		} break;
+	}
+
+	return 1;
+}
+
+int LuaObjectRenderingImpl::SetDeferredMaterialUniform(lua_State* L) { return (SetMaterialUniform(L, GetObjectType(), LuaMatShader::LUASHADER_PASS_DFR)); }
+int LuaObjectRenderingImpl::SetForwardMaterialUniform(lua_State* L) { return (SetMaterialUniform(L, GetObjectType(), LuaMatShader::LUASHADER_PASS_FWD)); }
+
+static int ClearMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pass matPass)
+{
+	// args=<objID, matName, lodMatNum,   uniformName>
+	CSolidObject* obj = ParseSolidObject(L, __func__, 1, objType);
+
+	LuaObjectMaterial* objMat = nullptr;
+	LuaObjectLODMaterial* luaObjLodMat = nullptr;
+	LuaMatRef* lodMatRef = nullptr;
+	LuaMatBin* matBin = nullptr;
+	LuaMatUniforms* matUniforms = nullptr;
+
+	const char* materialName = luaL_checkstring(L, 2);
+	const char* uniformName = luaL_checkstring(L, 4);
+
+	if (obj == nullptr)
+		return 0;
+
+	if ((objMat = GetObjectMaterial(obj, materialName)) == nullptr)
+		return 0;
+	if ((luaObjLodMat = objMat->GetMaterial(luaL_checkint(L, 3) - 1)) == nullptr)
+		return 0;
+	if ((matBin = lodMatRef->GetBin()) == nullptr)
+		return 0;
+	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
+		return 0;
+
+	switch (hashString(uniformName)) {
+		case hashString("$obj"): { lua_pushboolean(L, matUniforms->ClearObjectUniforms(obj->id, objType)); } break; // clears all uniforms for one object
+		case hashString("$all"): { lua_pushboolean(L, matUniforms->ClearObjectUniforms(objType)); } break; // clears all uniforms for all objects
+		default: { lua_pushboolean(L, matUniforms->ClearObjectUniform(obj->id, objType, uniformName)); } break; // clears one uniform for one object by name
+	}
+
+	return 1;
+}
+
+int LuaObjectRenderingImpl::ClearDeferredMaterialUniform(lua_State* L) { return (ClearMaterialUniform(L, GetObjectType(), LuaMatShader::LUASHADER_PASS_FWD)); }
+int LuaObjectRenderingImpl::ClearForwardMaterialUniform(lua_State* L) { return (ClearMaterialUniform(L, GetObjectType(), LuaMatShader::LUASHADER_PASS_DFR)); }
 
 
 /******************************************************************************/

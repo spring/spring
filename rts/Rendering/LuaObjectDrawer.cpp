@@ -192,7 +192,7 @@ static const void SetObjectTeamColorNoType(const bool deferredPass, const CSolid
 static const void SetObjectTeamColorCustom(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
 {
 	assert(m->shaders[deferredPass].IsCustomType());
-	m->ExecuteInstance(deferredPass, o, alpha);
+	m->ExecuteInstanceTeamColor(IUnitDrawerState::GetTeamColor(o->team, alpha.x), deferredPass);
 }
 
 static const void SetObjectTeamColorEngine(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
@@ -207,14 +207,53 @@ static const void SetObjectTeamColorEngine(const bool deferredPass, const CSolid
 	//FIXME binObjTeam = o->team;
 }
 
-static const TeamColorFunc teamColorFuncs[] = {
-	SetObjectTeamColorNoType,
-	SetObjectTeamColorCustom,
-	SetObjectTeamColorEngine,
+static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, const float2, bool) {}
+static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
+{
+	assert(m->shaders[deferredPass].IsCustomType());
+	m->ExecuteInstanceTeamColor(IUnitDrawerState::GetTeamColor(o->team, a.x), deferredPass);
+}
+
+static const void SetObjectTeamColorDef(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
+{
+	// only useful to set this if the object has a standard
+	// (engine) shader attached, otherwise requires testing
+	// if shader is bound in DrawerState etc
+	assert(m->shaders[deferredPass].IsEngineType());
+	unitDrawer->SetTeamColour(o->team, a);
+}
+
+
+static const void SetObjectUniformsNop(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+static const void SetObjectUniformsLua(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) { m->ExecuteInstanceUniforms(o->id, objectType, deferredPass); }
+static const void SetObjectUniformsDef(const CSolidObject* o, const LuaMaterial* m, int objectType, bool deferredPass) {} // no-op
+
+
+
+static const decltype(&SetObjectTeamColorDef) tcUniformFuncs[] = {
+	SetObjectTeamColorNop,
+	SetObjectTeamColorLua,
+	SetObjectTeamColorDef,
 };
 
-static inline unsigned int GetTeamColorFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
-	return ((int(s->IsCustomType()) * 1 + int(s->IsEngineType()) * 2) * (o->team != LuaObjectDrawer::GetBinObjTeam())); //FIXME
+static const decltype(&SetObjectUniformsDef) soUniformFuncs[] = {
+	SetObjectUniformsNop,
+	SetObjectUniformsLua,
+	SetObjectUniformsDef,
+};
+
+
+static inline unsigned int CalcTeamColorUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	// if still in the same team{-bucket}, pick the no-op func
+	return ((isCustomType | isEngineType) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
+}
+
+static inline unsigned int CalcSetObjectUniformFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	const unsigned int isCustomType = s->IsCustomType() << 0;
+	const unsigned int isEngineType = s->IsEngineType() << 1;
+	return (isCustomType | isEngineType);
 }
 
 
@@ -425,35 +464,30 @@ void LuaObjectDrawer::DrawBinObject(
 	const unsigned int postList = lodMat->postDisplayList;
 
 	const unsigned int tcFuncIdx = CalcTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
-	const unsigned int tmFuncIdx = CalcTransMatrUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 	const unsigned int soFuncIdx = CalcSetObjectUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const auto udFunc = unitDrawFuncs[applyTrans];
+			const auto drawFunc = unitDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
-			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
 			const auto soFunc = soUniformFuncs[soFuncIdx];
 
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			tcFunc(u, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
-			tmFunc(u, luaMat, deferredPass);
-			soFunc(u, luaMat, objType, deferredPass);
-			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
+			tcFunc(unit, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
+			soFunc(unit, luaMat, objType, deferredPass);
+			CALL_FUNC_VA(unitDrawer, drawFunc, unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const auto fdFunc = featureDrawFuncs[applyTrans];
+			const auto drawFunc = featureDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
-			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
 			const auto soFunc = soUniformFuncs[soFuncIdx];
 
-			const CFeature* f = static_cast<const CFeature*>(obj);
+			const CFeature* feat = static_cast<const CFeature*>(obj);
 
-			tcFunc(f, luaMat, {f->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
-			tmFunc(f, luaMat, deferredPass);
-			soFunc(f, luaMat, objType, deferredPass);
-			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
+			tcFunc(feat, luaMat, {feat->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
+			soFunc(feat, luaMat, objType, deferredPass);
+			CALL_FUNC_VA(featureDrawer, drawFunc, feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);

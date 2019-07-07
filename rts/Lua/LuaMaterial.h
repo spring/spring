@@ -3,6 +3,7 @@
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
 
+#include <cstring> // strcmp
 #include <string>
 #include <vector>
 
@@ -134,11 +135,6 @@ public:
 
 	void Execute() const;
 	void ExecuteInstanceTeamColor(const float4& tc) const { teamColor.Execute(tc); }
-	void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms) const {
-		modelMatrix.Execute(mm);
-		pieceMatrices.Execute(pms);
-	}
-
 
 	bool ClearObjectUniforms(int objType) {
 		objectUniforms[objType].clear();
@@ -292,9 +288,6 @@ public:
 
 	void ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const;
 	void ExecuteInstanceTeamColor(const float4& tc, bool deferredPass) const { uniforms[deferredPass].ExecuteInstanceTeamColor(tc); }
-	void ExecuteInstanceMatrices(const CMatrix44f& mm, const std::vector<CMatrix44f>& pms, bool deferredPass) const {
-		uniforms[deferredPass].ExecuteInstanceMatrices(mm, pms);
-	}
 
 	void Print(const std::string& indent) const;
 

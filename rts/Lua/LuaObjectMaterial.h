@@ -43,26 +43,27 @@ class LuaMatRef {
 
 	friend class LuaMatHandler;
 
-	public:
-		LuaMatRef() : bin(nullptr) {}
-		LuaMatRef(const LuaMatRef&);
-		LuaMatRef& operator=(const LuaMatRef&);
-		~LuaMatRef();
+public:
+	LuaMatRef() = default;
+	LuaMatRef(const LuaMatRef&);
+	LuaMatRef& operator=(const LuaMatRef&);
+	~LuaMatRef();
 
-		void Reset();
+	void Reset();
 
-		void AddUnit(CSolidObject*);
-		void AddFeature(CSolidObject*);
+	void AddUnit(CSolidObject*);
+	void AddFeature(CSolidObject*);
 
-		inline bool IsActive() const { return (bin != nullptr); }
+	bool IsActive() const { return (bin != nullptr); }
 
-		inline const LuaMatBin* GetBin() const { return bin; }
+	const LuaMatBin* GetBin() const { return bin; }
+	LuaMatBin* GetBin() { return bin; }
 
-	private:
-		LuaMatRef(LuaMatBin* _bin);
-		
-	private:
-		LuaMatBin* bin; // can be NULL
+private:
+	LuaMatRef(LuaMatBin* _bin);
+
+private:
+	LuaMatBin* bin = nullptr; // can be NULL
 };
 
 

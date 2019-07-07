@@ -83,7 +83,7 @@ private:
 	static void DrawBinObject(
 		const CSolidObject* obj,
 		LuaObjType objType,
-		const LuaMatRef* matRef,
+		const LuaObjectLODMaterial* lodMat,
 		const LuaMaterial* luaMat,
 		bool deferredPass,
 		bool alphaMatBin,

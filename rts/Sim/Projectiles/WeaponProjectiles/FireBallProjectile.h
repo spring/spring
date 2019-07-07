@@ -3,6 +3,7 @@
 #ifndef _FIRE_BALL_PROJECTILE_H
 #define _FIRE_BALL_PROJECTILE_H
 
+#include <algorithm>
 #include "WeaponProjectile.h"
 
 class CFireBallProjectile : public CWeaponProjectile

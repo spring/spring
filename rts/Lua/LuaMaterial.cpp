@@ -108,14 +108,6 @@ bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 //  LuaMatShader
 //
 
-void LuaMatShader::Finalize()
-{
-	if (type != LUASHADER_GL) {
-		openglID = 0;
-	}
-}
-
-
 int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 {
 	if (a.type != b.type)
@@ -515,24 +507,6 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 	return 0;
 }
 
-static const char* GetMatTypeName(LuaMatType type)
-{
-	const char* typeName = "Unknown";
-
-	switch (type) {
-		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
-		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
-		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
-		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
-		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
-
-		case LUAMAT_TYPE_COUNT: {
-		} break;
-	}
-
-	return typeName;
-}
-
 
 void LuaMaterial::Print(const string& indent) const
 {
@@ -801,7 +775,7 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
 	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
 
-	LOG("%s     teamColorLoc  = %i", indent.c_str(), teamColor.loc);
+	LOG("%s  teamColorLoc     = %i", indent.c_str(), teamColor.loc);
 
 	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
 	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
