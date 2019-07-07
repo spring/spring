@@ -128,19 +128,16 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 	static_assert(int(LUASHADER_GL ) == int(MODELTYPE_OTHER), "");
 
 	if (type != prev.type) {
-		// reset old, setup new
 		switch (prev.type) {
 			case LUASHADER_GL: {
 				glUseProgram(0);
-
-				assert(luaMatHandler.resetDrawStateFuncs[prev.type] != nullptr);
-				luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
 			case LUASHADER_ASS: {
-				assert(luaMatHandler.resetDrawStateFuncs[prev.type] != nullptr);
-				luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
+				if (luaMatHandler.resetDrawStateFuncs[prev.type]) {
+					luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
+				}
 			} break;
 			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
@@ -150,29 +147,23 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 			case LUASHADER_GL: {
 				// custom shader
 				glUseProgram(openglID);
-
-				assert(luaMatHandler.setupDrawStateFuncs[type] != nullptr);
-				luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
 			case LUASHADER_ASS: {
-				assert(luaMatHandler.setupDrawStateFuncs[type] != nullptr);
-				luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
+				if (luaMatHandler.setupDrawStateFuncs[type]) {
+					luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
+				}
 			} break;
 			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
 		}
-
-		return;
 	}
-
-	if (type != LUASHADER_GL)
-		return;
-	if (openglID == prev.openglID)
-		return;
-
-	glUseProgram(openglID);
+	else if (type == LUASHADER_GL) {
+		if (openglID != prev.openglID) {
+			glUseProgram(openglID);
+		}
+	}
 }
 
 

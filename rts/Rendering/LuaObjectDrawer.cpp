@@ -182,31 +182,6 @@ static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
-
-static const void SetObjectTeamColorNoType(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2) {
-	// material without any shader for the current (fwd/def) pass
-	const LuaMatShader* s = &m->shaders[deferredPass];
-	assert((!s->IsCustomType() && !s->IsEngineType()) || (o->team == LuaObjectDrawer::GetBinObjTeam()));
-}
-
-static const void SetObjectTeamColorCustom(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
-{
-	assert(m->shaders[deferredPass].IsCustomType());
-	m->ExecuteInstanceTeamColor(IUnitDrawerState::GetTeamColor(o->team, alpha.x), deferredPass);
-}
-
-static const void SetObjectTeamColorEngine(const bool deferredPass, const CSolidObject* o, const LuaMaterial* m, const float2 alpha)
-{
-	// only useful to set this if the object has a standard
-	// (engine) shader attached, otherwise requires testing
-	// if shader is bound in DrawerState etc (there is *no*
-	// FFP texenv fallback for customs to rely on anymore!)
-	assert(m->shaders[deferredPass].IsEngineType());
-
-	unitDrawer->SetTeamColour(o->team, alpha);
-	//FIXME binObjTeam = o->team;
-}
-
 static const void SetObjectTeamColorNop(const CSolidObject*, const LuaMaterial*, const float2, bool) {}
 static const void SetObjectTeamColorLua(const CSolidObject* o, const LuaMaterial* m, const float2 a, bool deferredPass)
 {
