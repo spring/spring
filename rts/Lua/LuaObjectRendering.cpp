@@ -379,36 +379,44 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
 		return 0;
 
-	LuaMatUniform u;
+	// find an existing uniform to update
+	LuaMatUniform& objUniform = matUniforms->GetObjectUniform(lua_toint(L, 1), objType, uniformName);
+	LuaMatUniform& dmyUniform = LuaMatUniforms::GetDummyObjectUniform();
 
-	constexpr size_t S = sizeof(u.name) - 1;
-	constexpr size_t N = sizeof(u.data.i) / sizeof(u.data.i[0]);
+	constexpr size_t S = sizeof(objUniform.name) - 1;
+	constexpr size_t N = sizeof(objUniform.data.i) / sizeof(objUniform.data.i[0]);
 
-	memset(u.name, 0, S + 1);
-	memcpy(u.name, uniformName, std::min(S, strlen(uniformName) - 1));
-	memset(u.data.i, 0, sizeof(u.data.i));
+	if (&objUniform == &dmyUniform) {
+		memset(objUniform.name, 0, S + 1);
+		memcpy(objUniform.name, uniformName, std::min(S, strlen(uniformName) - 1));
+		memset(objUniform.data.i, 0, sizeof(objUniform.data.i));
+		assert(objUniform.loc == -3);
 
-	// actual location will be set when material executes
-	u.loc = -2;
+		// if u is a dummy reference, it counts as a new uniform
+		// actual location will be set when the material executes
+		objUniform.loc = -2;
+	}
 
 	switch (luaL_checkint(L, 5)) {
-		case GL_INT     : { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_INT_VEC2: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_INT_VEC3: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_INT_VEC4: { u.type = GL_INT; u.size = LuaUtils::ParseIntArray(L, 6, u.data.i, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_INT       : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
+		case GL_INT_VEC2  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
+		case GL_INT_VEC3  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
+		case GL_INT_VEC4  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
 
-		case GL_FLOAT     : { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_FLOAT_VEC2: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_FLOAT_VEC3: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_FLOAT_VEC4: { u.type = GL_FLOAT; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT     : { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT_VEC2: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT_VEC3: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT_VEC4: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
 
-		case GL_FLOAT_MAT3: { u.type = GL_FLOAT_MAT3; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
-		case GL_FLOAT_MAT4: { u.type = GL_FLOAT_MAT4; u.size = LuaUtils::ParseFloatArray(L, 6, u.data.f, N); lua_pushboolean(L, matUniforms->AddObjectUniform(lua_toint(L, 1), objType, u)); } break;
+		case GL_FLOAT_MAT3: { objUniform.type = GL_FLOAT_MAT3; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT_MAT4: { objUniform.type = GL_FLOAT_MAT4; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
 
 		default: {
+			return 0;
 		} break;
 	}
 
+	lua_pushboolean(L, &objUniform != &dmyUniform || matUniforms->AddObjectUniform(lua_toint(L, 1), objType, objUniform));
 	return 1;
 }
 

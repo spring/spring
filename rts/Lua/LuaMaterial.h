@@ -156,7 +156,7 @@ public:
 		if (uniformIter == uniformData.end())
 			return false;
 
-		return (*uniformIter = LuaMatUniform{}, true);
+		return (*uniformIter = {}, true);
 	}
 
 	bool AddObjectUniform(int objId, int objType, const LuaMatUniform& u) {
@@ -169,6 +169,24 @@ public:
 			return false;
 
 		return (*uniformIter = u, true);
+	}
+
+
+	static LuaMatUniform& GetDummyObjectUniform() {
+		static LuaMatUniform u;
+		return (u = {});
+	}
+
+	LuaMatUniform& GetObjectUniform(int objId, int objType, const char* name) {
+		const auto pred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
+
+		auto& data = objectUniforms[objType][objId];
+		auto  iter = std::find_if(data.begin(), data.end(), pred);
+
+		if (iter == data.end())
+			return (GetDummyObjectUniform());
+
+		return *iter;
 	}
 
 
