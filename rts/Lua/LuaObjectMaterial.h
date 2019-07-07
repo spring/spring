@@ -57,7 +57,7 @@ public:
 	bool IsActive() const { return (bin != nullptr); }
 
 	const LuaMatBin* GetBin() const { return bin; }
-	LuaMatBin* GetBin() { return bin; }
+	      LuaMatBin* GetBin()       { return bin; }
 
 private:
 	LuaMatRef(LuaMatBin* _bin);
