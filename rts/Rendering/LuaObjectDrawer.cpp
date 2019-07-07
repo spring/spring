@@ -443,7 +443,7 @@ void LuaObjectDrawer::DrawBinObject(
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const auto drawFunc = unitDrawFuncs[applyTrans];
+			const auto udFunc = unitDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
 			const auto soFunc = soUniformFuncs[soFuncIdx];
 
@@ -451,10 +451,10 @@ void LuaObjectDrawer::DrawBinObject(
 
 			tcFunc(unit, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
 			soFunc(unit, luaMat, objType, deferredPass);
-			CALL_FUNC_VA(unitDrawer, drawFunc, unit, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(unitDrawer, udFunc, unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const auto drawFunc = featureDrawFuncs[applyTrans];
+			const auto fdFunc = featureDrawFuncs[applyTrans];
 			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
 			const auto soFunc = soUniformFuncs[soFuncIdx];
 
@@ -462,7 +462,7 @@ void LuaObjectDrawer::DrawBinObject(
 
 			tcFunc(feat, luaMat, {feat->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
 			soFunc(feat, luaMat, objType, deferredPass);
-			CALL_FUNC_VA(featureDrawer, drawFunc, feat, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(featureDrawer, fdFunc, feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
