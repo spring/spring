@@ -62,6 +62,24 @@ static const char* GLUniformTypeToString(const GLenum uType)
 	return "unknown";
 }
 
+static const char* GetMatTypeName(LuaMatType type)
+{
+	const char* typeName = "Unknown";
+
+	switch (type) {
+		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
+		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
+		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
+		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
+		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
+
+		case LUAMAT_TYPE_COUNT: {
+		} break;
+	}
+
+	return typeName;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -90,22 +108,13 @@ bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 //  LuaMatShader
 //
 
-void LuaMatShader::Finalize()
-{
-	if (type != LUASHADER_GL) {
-		openglID = 0;
-	}
-}
-
-
 int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 {
 	if (a.type != b.type)
 		return ((a.type > b.type) * 2 - 1);
 
-	if (a.openglID != b.openglID) {
+	if (a.openglID != b.openglID)
 		return ((a.openglID > b.openglID) * 2 - 1);
-	}
 
 	return 0;
 }
@@ -113,6 +122,11 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 
 void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
+	static_assert(int(LUASHADER_3DO) == int(MODELTYPE_3DO  ), "");
+	static_assert(int(LUASHADER_S3O) == int(MODELTYPE_S3O  ), "");
+	static_assert(int(LUASHADER_ASS) == int(MODELTYPE_ASS  ), "");
+	static_assert(int(LUASHADER_GL ) == int(MODELTYPE_OTHER), "");
+
 	if (type != prev.type) {
 		switch (prev.type) {
 			case LUASHADER_GL: {
@@ -159,11 +173,11 @@ void LuaMatShader::Print(const string& indent, bool isDeferred) const
 
 	switch (type) {
 		case LUASHADER_NONE: { typeName = "LUASHADER_NONE"; } break;
-		case LUASHADER_GL:   { typeName = "LUASHADER_GL"  ; } break;
-		case LUASHADER_3DO:  { typeName = "LUASHADER_3DO" ; } break;
-		case LUASHADER_S3O:  { typeName = "LUASHADER_S3O" ; } break;
-		case LUASHADER_ASS:  { typeName = "LUASHADER_ASS" ; } break;
-		default: { assert(false); } break;
+		case LUASHADER_GL  : { typeName = "LUASHADER_GL"  ; } break;
+		case LUASHADER_3DO : { typeName = "LUASHADER_3DO" ; } break;
+		case LUASHADER_S3O : { typeName = "LUASHADER_S3O" ; } break;
+		case LUASHADER_ASS : { typeName = "LUASHADER_ASS" ; } break;
+		default            : {               assert(false); } break;
 	}
 
 	LOG("%s[shader][%s]", indent.c_str(), (isDeferred? "deferred": "standard"));
@@ -358,10 +372,49 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	}
 }
 
-void LuaMaterial::ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const
+void LuaMaterial::ExecuteInstanceUniforms(int objId, int objType, bool deferredPass) const
 {
-	uniforms[deferredPass].ExecuteInstance(o, alpha);
+	const LuaMatShader&   matShader   =  shaders[deferredPass];
+	const LuaMatUniforms& matUniforms = uniforms[deferredPass];
+
+	const auto& objUniforms = matUniforms.objectUniforms[objType];
+	const auto& objUniformsIt = objUniforms.find(objId);
+
+	if (objUniformsIt == objUniforms.end())
+		return;
+
+	// apply custom per-object LuaMaterial uniforms (if any)
+	for (const LuaMatUniform& u: objUniformsIt->second) {
+		switch (u.loc) {
+			case -3: { continue; } break;
+			case -2: {
+				if ((u.loc = glGetUniformLocation(matShader.openglID, u.name)) == -1) {
+					LOG_L(L_WARNING, "[LuaMaterial::%s(objId=%d objType=%d)][uuid=%d] uniform \"%s\" not present in %s shader for material %s", __func__, objId, objType, uuid, u.name, deferredPass? "deferred": "forward", GetMatTypeName(type));
+					continue;
+				}
+			} break;
+			case -1: { continue; } break;
+			default: {           } break;
+		}
+
+		switch (u.type) {
+			case GL_INT       : { glUniform1iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC2  : { glUniform2iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC3  : { glUniform3iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC4  : { glUniform4iv      (u.loc, u.size       , u.data.i); } break;
+
+			case GL_FLOAT     : { glUniform1fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC2: { glUniform2fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC3: { glUniform3fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC4: { glUniform4fv      (u.loc, u.size       , u.data.f); } break;
+
+			case GL_FLOAT_MAT3: { glUniformMatrix3fv(u.loc, u.size, false, u.data.f); } break;
+			case GL_FLOAT_MAT4: { glUniformMatrix4fv(u.loc, u.size, false, u.data.f); } break;
+			default           : {                                                     } break;
+		}
+	}
 }
+
 
 
 int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
@@ -451,24 +504,6 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 		return ((a.teamColor.loc > b.teamColor.loc) * 2 - 1);
 
 	return 0;
-}
-
-static const char* GetMatTypeName(LuaMatType type)
-{
-	const char* typeName = "Unknown";
-
-	switch (type) {
-		case LUAMAT_ALPHA:          { typeName = "LUAMAT_ALPHA";          } break;
-		case LUAMAT_OPAQUE:         { typeName = "LUAMAT_OPAQUE";         } break;
-		case LUAMAT_ALPHA_REFLECT:  { typeName = "LUAMAT_ALPHA_REFLECT";  } break;
-		case LUAMAT_OPAQUE_REFLECT: { typeName = "LUAMAT_OPAQUE_REFLECT"; } break;
-		case LUAMAT_SHADOW:         { typeName = "LUAMAT_SHADOW";         } break;
-
-		case LUAMAT_TYPE_COUNT: {
-		} break;
-	}
-
-	return typeName;
 }
 
 
@@ -727,12 +762,6 @@ void LuaMatUniforms::Execute() const
 	visFrame.Execute(globalRendering->drawFrame);
 }
 
-void LuaMatUniforms::ExecuteInstance(const CSolidObject* o, const float2 alpha) const
-{
-	teamColor.Execute(IUnitDrawerState::GetTeamColor(o->team, alpha.x));
-	//{"speed", },
-	//{"health", },
-}
 
 void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 {
@@ -744,6 +773,8 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 
 	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
 	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
+
+	LOG("%s  teamColorLoc     = %i", indent.c_str(), teamColor.loc);
 
 	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
 	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
