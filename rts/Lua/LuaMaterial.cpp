@@ -380,9 +380,17 @@ void LuaMaterial::ExecuteInstanceUniforms(int objId, int objType, bool deferredP
 
 		switch (u.type) {
 			case GL_INT       : { glUniform1iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC2  : { glUniform2iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC3  : { glUniform3iv      (u.loc, u.size       , u.data.i); } break;
+			case GL_INT_VEC4  : { glUniform4iv      (u.loc, u.size       , u.data.i); } break;
+
 			case GL_FLOAT     : { glUniform1fv      (u.loc, u.size       , u.data.f); } break;
-			case GL_FLOAT_MAT3: { glUniformMatrix3fv(u.loc,      1, false, u.data.f); } break;
-			case GL_FLOAT_MAT4: { glUniformMatrix4fv(u.loc,      1, false, u.data.f); } break;
+			case GL_FLOAT_VEC2: { glUniform2fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC3: { glUniform3fv      (u.loc, u.size       , u.data.f); } break;
+			case GL_FLOAT_VEC4: { glUniform4fv      (u.loc, u.size       , u.data.f); } break;
+
+			case GL_FLOAT_MAT3: { glUniformMatrix3fv(u.loc, u.size, false, u.data.f); } break;
+			case GL_FLOAT_MAT4: { glUniformMatrix4fv(u.loc, u.size, false, u.data.f); } break;
 			default           : {                                                     } break;
 		}
 	}
