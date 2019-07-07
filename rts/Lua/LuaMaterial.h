@@ -106,7 +106,7 @@ class LuaMatShader {
 /******************************************************************************/
 
 struct LuaMatUniform {
-	char name[32];
+	char name[32] = {0};
 	union {
 		int i[32];
 		float f[32];
