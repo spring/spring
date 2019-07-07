@@ -456,19 +456,19 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 		objUniform.loc = -2;
 	}
 
-	switch (luaL_checkint(L, 5)) {
-		case GL_INT       : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
-		case GL_INT_VEC2  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
-		case GL_INT_VEC3  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
-		case GL_INT_VEC4  : { objUniform.type = GL_INT       ; objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N); } break;
+	switch (objUniform.type = luaL_checkint(L, 5)) {
+		case GL_INT       : { objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N) / 1; } break;
+		case GL_INT_VEC2  : { objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N) / 2; } break;
+		case GL_INT_VEC3  : { objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N) / 3; } break;
+		case GL_INT_VEC4  : { objUniform.size = LuaUtils::ParseIntArray  (L, 6, objUniform.data.i, N) / 4; } break;
 
-		case GL_FLOAT     : { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
-		case GL_FLOAT_VEC2: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
-		case GL_FLOAT_VEC3: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
-		case GL_FLOAT_VEC4: { objUniform.type = GL_FLOAT     ; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT     : { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) / 1; } break;
+		case GL_FLOAT_VEC2: { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) / 2; } break;
+		case GL_FLOAT_VEC3: { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) / 3; } break;
+		case GL_FLOAT_VEC4: { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) / 4; } break;
 
-		case GL_FLOAT_MAT3: { objUniform.type = GL_FLOAT_MAT3; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
-		case GL_FLOAT_MAT4: { objUniform.type = GL_FLOAT_MAT4; objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N); } break;
+		case GL_FLOAT_MAT3: { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) /  9; } break;
+		case GL_FLOAT_MAT4: { objUniform.size = LuaUtils::ParseFloatArray(L, 6, objUniform.data.f, N) / 16; } break;
 
 		default: {
 			return 0;
