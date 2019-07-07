@@ -21,6 +21,8 @@
 #include "System/SafeUtil.h"
 
 
+// optimisation for team-color, but potentially breaks
+// the alpha-pass and matrices can not be bucket-sorted
 #define USE_OBJECT_RENDERING_BUCKETS
 
 // applies to both units and features
@@ -421,23 +423,36 @@ void LuaObjectDrawer::DrawBinObject(
 ) {
 	const unsigned int preList  = lodMat->preDisplayList;
 	const unsigned int postList = lodMat->postDisplayList;
-	const unsigned int tcFunIdx = GetTeamColorFuncIndex(obj, &luaMat->shaders[deferredPass]);
+
+	const unsigned int tcFuncIdx = CalcTeamColorUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int tmFuncIdx = CalcTransMatrUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
+	const unsigned int soFuncIdx = CalcSetObjectUniformFuncIndex(obj, &luaMat->shaders[deferredPass]);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const UnitDrawFunc drawFunc = unitDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
+			const auto udFunc = unitDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
+
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			tcolFunc(deferredPass, unit, luaMat, float2(1.0f, 1.0f * alphaMatBin));
+			tcFunc(u, luaMat, {1.0f, 1.0f * alphaMatBin}, deferredPass);
+			tmFunc(u, luaMat, deferredPass);
+			soFunc(u, luaMat, objType, deferredPass);
 			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const FeatureDrawFunc drawFunc = featureDrawFuncs[applyTrans];
-			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
-			const CFeature* feat = static_cast<const CFeature*>(obj);
+			const auto fdFunc = featureDrawFuncs[applyTrans];
+			const auto tcFunc = tcUniformFuncs[tcFuncIdx];
+			const auto tmFunc = tmUniformFuncs[tmFuncIdx];
+			const auto soFunc = soUniformFuncs[soFuncIdx];
 
-			tcolFunc(deferredPass, feat, luaMat, float2(feat->drawAlpha, 1.0f * alphaMatBin));
+			const CFeature* f = static_cast<const CFeature*>(obj);
+
+			tcFunc(f, luaMat, {f->drawAlpha, 1.0f * alphaMatBin}, deferredPass);
+			tmFunc(f, luaMat, deferredPass);
+			soFunc(f, luaMat, objType, deferredPass);
 			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
