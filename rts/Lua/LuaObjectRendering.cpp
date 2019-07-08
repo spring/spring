@@ -362,7 +362,6 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 	LuaObjectMaterial* objMat = nullptr;
 	LuaMatRef* lodMatRef = nullptr;
 	LuaMatBin* matBin = nullptr;
-	LuaMatUniforms* matUniforms = nullptr;
 
 	const char* materialName = luaL_checkstring(L, 2);
 	const char*  uniformName = luaL_checkstring(L, 4);
@@ -376,11 +375,10 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 		return 0;
 	if ((matBin = lodMatRef->GetBin()) == nullptr)
 		return 0;
-	if ((matUniforms = &matBin->uniforms[matPass]) == nullptr)
-		return 0;
 
+	LuaMatUniforms& matUniforms = matBin->uniforms[matPass];
 	// find an existing uniform to update
-	LuaMatUniform& objUniform = matUniforms->GetObjectUniform(lua_toint(L, 1), objType, uniformName);
+	LuaMatUniform& objUniform = matUniforms.GetObjectUniform(lua_toint(L, 1), objType, uniformName);
 	LuaMatUniform& dmyUniform = LuaMatUniforms::GetDummyObjectUniform();
 
 	constexpr size_t S = sizeof(objUniform.name);
@@ -416,7 +414,7 @@ static int SetMaterialUniform(lua_State* L, LuaObjType objType, LuaMatShader::Pa
 		} break;
 	}
 
-	lua_pushboolean(L, &objUniform != &dmyUniform || matUniforms->AddObjectUniform(lua_toint(L, 1), objType, objUniform));
+	lua_pushboolean(L, &objUniform != &dmyUniform || matUniforms.AddObjectUniform(lua_toint(L, 1), objType, objUniform));
 	return 1;
 }
 
