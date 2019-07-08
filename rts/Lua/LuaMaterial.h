@@ -144,19 +144,31 @@ public:
 
 	bool ClearObjectUniforms(int objId, int objType) { return (objectUniforms[objType].erase(objId)); }
 	bool ClearObjectUniform(int objId, int objType, const char* name) {
-		const auto iter = objectUniforms[objType].find(objId);
-		const auto pred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
+		const auto objIter = objectUniforms[objType].find(objId);
+		const auto strPred = [name](const LuaMatUniform& a) { return (strcmp(name, a.name) == 0); };
+		const auto locPred = [](const LuaMatUniform& a) { return (a.loc == -3); };
 
-		if (iter == objectUniforms[objType].end())
+		if (objIter == objectUniforms[objType].end())
 			return false;
 
-		auto& uniformData = iter->second;
-		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), pred);
+		auto& uniformData = objIter->second;
+		auto  uniformIter = std::find_if(uniformData.begin(), uniformData.end(), strPred);
 
 		if (uniformIter == uniformData.end())
 			return false;
 
-		return (*uniformIter = {}, true);
+		assert(uniformIter->loc != -3);
+
+		// replace iter with last valid (locIter - 1) uniform
+		auto locIter = std::find_if(uniformIter + 1, uniformData.end(), locPred);
+
+		if ((locIter--) == uniformData.end()) {
+			*uniformIter = uniformData.back();
+			return (uniformData.back() = {}, true);
+		}
+
+		*uniformIter = *locIter;
+		return (*locIter = {}, true);
 	}
 
 	bool AddObjectUniform(int objId, int objType, const LuaMatUniform& u) {
