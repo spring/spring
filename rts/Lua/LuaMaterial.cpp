@@ -384,9 +384,10 @@ void LuaMaterial::ExecuteInstanceUniforms(int objId, int objType, bool deferredP
 		return;
 
 	// apply custom per-object LuaMaterial uniforms (if any)
+	// can stop at first empty slot, Clear ensures contiguity
 	for (const LuaMatUniform& u: objUniformsIt->second) {
 		switch (u.loc) {
-			case -3: { continue; } break;
+			case -3: {   return; } break;
 			case -2: {
 				if ((u.loc = glGetUniformLocation(matShader.openglID, u.name)) == -1) {
 					LOG_L(L_WARNING, "[LuaMaterial::%s(objId=%d objType=%d)][uuid=%d] uniform \"%s\" not present in %s shader for material %s", __func__, objId, objType, uuid, u.name, deferredPass? "deferred": "forward", GetMatTypeName(type));
