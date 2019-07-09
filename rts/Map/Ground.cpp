@@ -31,11 +31,8 @@ static inline float InterpolateCornerHeight(float x, float z, const float* corne
 	//    |/        |
 	// BL ---------- BR
 	//
-	// float3::max{x,z}pos equals mapDims.map{x,y} * SQUARE_SIZE - 1;
-	// must cancel out the -1's before division or column x=mapx and
-	// row z=mapy of the *corner* heightmap would never be accessed
-	x = Clamp(x, 0.0f, float3::maxxpos + 1.0f) / SQUARE_SIZE;
-	z = Clamp(z, 0.0f, float3::maxzpos + 1.0f) / SQUARE_SIZE;
+	x = Clamp(x, 0.0f, float3::maxxpos) / SQUARE_SIZE;
+	z = Clamp(z, 0.0f, float3::maxzpos) / SQUARE_SIZE;
 
 	const int ix = x;
 	const int iz = z;
