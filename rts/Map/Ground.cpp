@@ -13,7 +13,7 @@
 #undef far // avoid collision with windef.h
 #undef near
 
-static inline float InterpolateHeight(float x, float z, const float* heightmap)
+static inline float InterpolateCornerHeight(float x, float z, const float* cornerHeightMap)
 {
 	// NOTE:
 	// This isn't a bilinear interpolation. Instead it interpolates
@@ -30,32 +30,38 @@ static inline float InterpolateHeight(float x, float z, const float* heightmap)
 	//    | /  \>=1 |
 	//    |/        |
 	// BL ---------- BR
+	//
+	// float3::max{x,z}pos equals mapDims.map{x,y} * SQUARE_SIZE - 1;
+	// must cancel out the -1's before division or column x=mapx and
+	// row z=mapy of the *corner* heightmap would never be accessed
+	x = Clamp(x, 0.0f, float3::maxxpos + 1.0f) / SQUARE_SIZE;
+	z = Clamp(z, 0.0f, float3::maxzpos + 1.0f) / SQUARE_SIZE;
 
-	x = Clamp(x, 0.0f, float3::maxxpos) / SQUARE_SIZE;
-	z = Clamp(z, 0.0f, float3::maxzpos) / SQUARE_SIZE;
+	const int ix = x;
+	const int iz = z;
+	const int hs = ix + iz * mapDims.mapxp1;
 
-	const int isx = x;
-	const int isz = z;
-	const float dx = x - isx;
-	const float dz = z - isz;
-	const int hs = isx + isz * mapDims.mapxp1;
+	const float dx = x - ix;
+	const float dz = z - iz;
 
 	float h = 0.0f;
 
 	if (dx + dz < 1.0f) {
 		// top-left triangle
-		const float h00 = heightmap[hs                 ];
-		const float h10 = heightmap[hs + 1             ];
-		const float h01 = heightmap[hs     + mapDims.mapxp1];
+		const float h00 = cornerHeightMap[hs + 0                 ];
+		const float h10 = cornerHeightMap[hs + 1                 ];
+		const float h01 = cornerHeightMap[hs + 0 + mapDims.mapxp1];
+
 		const float xdif = dx * (h10 - h00);
 		const float zdif = dz * (h01 - h00);
 
 		h = h00 + xdif + zdif;
 	} else {
 		// bottom-right triangle
-		const float h10 = heightmap[hs + 1             ];
-		const float h11 = heightmap[hs + 1 + mapDims.mapxp1];
-		const float h01 = heightmap[hs     + mapDims.mapxp1];
+		const float h10 = cornerHeightMap[hs + 1                 ];
+		const float h01 = cornerHeightMap[hs + 0 + mapDims.mapxp1];
+		const float h11 = cornerHeightMap[hs + 1 + mapDims.mapxp1];
+
 		const float xdif = (1.0f - dx) * (h01 - h11);
 		const float zdif = (1.0f - dz) * (h10 - h11);
 
@@ -98,16 +104,15 @@ static inline float LineGroundSquareCol(
 
 		if (toFacePlaneDist <= 0.0f) {
 			// project \<from - cornerVertex\> onto the TL-normal
-			float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
+			const float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 			if (fromFacePlaneDist != toFacePlaneDist) {
 				const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
 				const float3 col = mix(from, to, alpha);
 
-				if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
-					// point of intersection is inside the TL triangle
+				// point of intersection is inside the TL triangle
+				if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE))
 					return col.distance(from);
-				}
 			}
 		}
 	}
@@ -126,16 +131,15 @@ static inline float LineGroundSquareCol(
 
 		if (toFacePlaneDist <= 0.0f) {
 			// project \<from - cornerVertex\> onto the BR-normal
-			float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
+			const float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 			if (fromFacePlaneDist != toFacePlaneDist) {
 				const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
 				const float3 col = mix(from, to, alpha);
 
-				if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
-					// point of intersection is inside the BR triangle
+				// point of intersection is inside the BR triangle
+				if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE))
 					return col.distance(from);
-				}
 			}
 		}
 	}
@@ -176,12 +180,11 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 	const float s0 = xp + zp - xt - zt - p->radius;
 	const float s1 = xp + zp - xt - zt - SQUARE_SIZE * 2 + p->radius;
 
-	if ((d0 <= p->radius) && (s0 < SQUARE_SIZE)) {
+	if ((d0 <= p->radius) && (s0 < SQUARE_SIZE))
 		p->Collision();
-	}
-	if ((d1 <= p->radius) && (s1 > -SQUARE_SIZE)) {
+
+	if ((d1 <= p->radius) && (s1 > -SQUARE_SIZE))
 		p->Collision();
-	}
 
 	return;
 }
@@ -240,9 +243,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 		const int sx = from.x / SQUARE_SIZE;
 		const int sz = from.z / SQUARE_SIZE;
 
-		if (from.y <= hm[sz * mapDims.mapxp1 + sx]) {
+		if (from.y <= hm[sz * mapDims.mapxp1 + sx])
 			return 0.0f + skippedDist;
-		}
 	}
 
 	const float dx = to.x - from.x;
@@ -267,9 +269,9 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 		// <from> and <to> are the same
 		const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, fsz);
 
-		if (ret >= 0.0f) {
+		if (ret >= 0.0f)
 			return (ret + skippedDist);
-		}
+
 	} else if (fsx == tsx) {
 		// ray is parallel to z-axis
 		int zp = fsz;
@@ -277,9 +279,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 		while (keepgoing) {
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  fsx, zp);
 
-			if (ret >= 0.0f) {
+			if (ret >= 0.0f)
 				return (ret + skippedDist);
-			}
 
 			keepgoing = (zp != tsz);
 			zp += dirz;
@@ -291,9 +292,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 		while (keepgoing) {
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  xp, fsz);
 
-			if (ret >= 0.0f) {
+			if (ret >= 0.0f)
 				return (ret + skippedDist);
-			}
 
 			keepgoing = (xp != tsx);
 			xp += dirx;
@@ -328,9 +328,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 			// do the collision test with the squares triangles
 			const float ret = LineGroundSquareCol(hm, nm,  from, to,  curx, curz);
 
-			if (ret >= 0.0f) {
+			if (ret >= 0.0f)
 				return (ret + skippedDist);
-			}
 
 			// check if we reached the end already and need to stop the loop
 			const bool endReached = (curx == tsx && curz == tsz);
@@ -448,12 +447,12 @@ float CGround::GetHeightAboveWater(float x, float z, bool synced)
 
 float CGround::GetHeightReal(float x, float z, bool synced)
 {
-	return InterpolateHeight(x, z, readMap->GetSharedCornerHeightMap(synced));
+	return InterpolateCornerHeight(x, z, readMap->GetSharedCornerHeightMap(synced));
 }
 
 float CGround::GetOrigHeight(float x, float z)
 {
-	return InterpolateHeight(x, z, readMap->GetOriginalHeightMapSynced());
+	return InterpolateCornerHeight(x, z, readMap->GetOriginalHeightMapSynced());
 }
 
 

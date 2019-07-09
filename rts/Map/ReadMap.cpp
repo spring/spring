@@ -273,6 +273,9 @@ void CReadMap::Initialize()
 	// set global map info
 	mapDims.Initialize();
 
+	float3::maxxpos = mapDims.mapx * SQUARE_SIZE - 1;
+	float3::maxzpos = mapDims.mapy * SQUARE_SIZE - 1;
+
 	boundingRadius = math::sqrt(Square(mapDims.mapx * SQUARE_SIZE) + Square(mapDims.mapy * SQUARE_SIZE)) * 0.5f;
 
 	{
@@ -298,9 +301,6 @@ void CReadMap::Initialize()
 		sprintf(loadMsg, fmtString, reqMemFootPrintKB / 1024);
 		loadscreen->SetLoadMessage(loadMsg);
 	}
-
-	float3::maxxpos = mapDims.mapx * SQUARE_SIZE - 1;
-	float3::maxzpos = mapDims.mapy * SQUARE_SIZE - 1;
 
 	originalHeightMap.clear();
 	originalHeightMap.resize(mapDims.mapxp1 * mapDims.mapyp1);
