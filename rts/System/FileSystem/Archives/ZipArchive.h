@@ -35,24 +35,30 @@ public:
 
 	int GetType() const override { return ARCHIVE_TYPE_SDZ; }
 
-	bool IsOpen() override;
+	bool IsOpen() override { return (zip != nullptr); }
 
-	unsigned int NumFiles() const override;
+	unsigned int NumFiles() const override { return (fileEntries.size()); }
 	void FileInfo(unsigned int fid, std::string& name, int& size) const override;
+
 	#if 0
-	unsigned int GetCrc32(unsigned int fid);
+	unsigned int GetCrc32(unsigned int fid) {
+		assert(IsFileId(fid));
+		return fileEntries[fid].crc;
+	}
 	#endif
 
 protected:
 	unzFile zip;
 
-	struct FileData {
+	// actual data is in BufferedArchive
+	struct FileEntry {
 		unz_file_pos fp;
 		int size;
 		std::string origName;
 		unsigned int crc;
 	};
-	std::vector<FileData> fileData;
+
+	std::vector<FileEntry> fileEntries;
 
 	int GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
 };
