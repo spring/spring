@@ -94,8 +94,8 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(SRectangle hmRect, bool initialize = false);
-	void UpdateLOS(const SRectangle& hmRect);
+	void UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initialize = false);
+	void UpdateLOS(const SRectangle& hgtMapRect);
 	void BecomeSpectator();
 	void UpdateDraw(bool firstCall);
 
@@ -212,8 +212,8 @@ private:
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
-	inline void HeightMapUpdateLOSCheck(const SRectangle& hmRect);
-	inline bool HasHeightMapChanged(const int lmx, const int lmy);
+	inline void HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect);
+	inline bool HasHeightMapChanged(const int2 losMapPos);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
