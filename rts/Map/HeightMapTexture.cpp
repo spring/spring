@@ -34,6 +34,7 @@ void HeightMapTexture::Init()
 	if (!GLEW_ARB_texture_float || !GLEW_ARB_texture_non_power_of_two)
 		return;
 
+	// corner-heightmap dimensions
 	xSize = mapDims.mapxp1;
 	ySize = mapDims.mapyp1;
 
@@ -51,6 +52,10 @@ void HeightMapTexture::Init()
 		GL_LUMINANCE, GL_FLOAT, readMap->GetCornerHeightMapUnsynced());
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	pbo.Bind();
+	pbo.New(xSize * ySize * sizeof(float));
+	pbo.Unbind();
 }
 
 
@@ -68,11 +73,15 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	if (texID == 0)
 		return;
 
-	const int sizeX = rect.x2 - rect.x1 + 1;
-	const int sizeZ = rect.z2 - rect.z1 + 1;
+	// the upper bounds of UHM rectangles are clamped to
+	// map{x,y}; valid for indexing the corner heightmap
+	const int sizeX = rect.GetWidth() + 1;
+	const int sizeZ = rect.GetHeight() + 1;
+
+	assert(sizeX <= xSize);
+	assert(sizeZ <= ySize);
 
 	pbo.Bind();
-	pbo.New(sizeX * sizeZ * sizeof(float));
 
 	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 	      float* heightBuf = reinterpret_cast<float*>(pbo.MapBuffer());
@@ -80,7 +89,7 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	if (heightBuf != nullptr) {
 		for (int z = 0; z < sizeZ; z++) {
 			const void* src = heightMap + rect.x1 + (z + rect.z1) * xSize;
-			      void* dst = heightBuf + z * sizeX;
+			      void* dst = heightBuf +           (z          ) * sizeX;
 
 			memcpy(dst, src, sizeX * sizeof(float));
 		}
@@ -88,12 +97,10 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 	pbo.UnmapBuffer();
 
-
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glTexSubImage2D(GL_TEXTURE_2D, 0,
 		rect.x1, rect.z1, sizeX, sizeZ,
 		GL_LUMINANCE, GL_FLOAT, pbo.GetPtr());
 
-	pbo.Invalidate();
 	pbo.Unbind();
 }

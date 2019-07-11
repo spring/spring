@@ -395,7 +395,8 @@ void CSMFReadMap::UpdateVertexNormalsUnsynced(const SRectangle& update)
 
 	const int W = mapDims.mapxp1;
 	const int H = mapDims.mapyp1;
-	static const int SS = SQUARE_SIZE;
+
+	constexpr int SS = SQUARE_SIZE;
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
@@ -476,20 +477,22 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-	const int minx = std::max(update.x1 - 1,          0);
-	const int minz = std::max(update.y1 - 1,          0);
+	const int minx = std::max(update.x1 - 1,              0);
+	const int minz = std::max(update.y1 - 1,              0);
 	const int maxx = std::min(update.x2 + 1, mapDims.mapxm1);
 	const int maxz = std::min(update.y2 + 1, mapDims.mapym1);
 
-	int idx0, idx1;
 	for (int z = minz; z <= maxz; z++) {
-		idx0  = (z * mapDims.mapx + minx) * 2    ;
-		idx1  = (z * mapDims.mapx + maxx) * 2 + 1;
-		memcpy(&ufn[idx0], &sfn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
-
-		idx0  = (z * mapDims.mapx + minx);
-		idx1  = (z * mapDims.mapx + maxx);
-		memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+		{
+			const int idx0 = (z * mapDims.mapx + minx) * 2    ;
+			const int idx1 = (z * mapDims.mapx + maxx) * 2 + 1;
+			memcpy(&ufn[idx0], &sfn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+		}
+		{
+			const int idx0 = (z * mapDims.mapx + minx);
+			const int idx1 = (z * mapDims.mapx + maxx);
+			memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+		}
 	}
 	#endif
 }
@@ -506,7 +509,7 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-	const int minx = std::max(update.x1 - 1,           0);
+	const int minx = std::max(update.x1 - 1,            0);
 	const int minz = std::max(update.y1 - 1,            0);
 	const int maxx = std::min(update.x2 + 1, mapDims.mapx);
 	const int maxz = std::min(update.y2 + 1, mapDims.mapy);
@@ -562,8 +565,8 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		// texture space is [0 .. mapDims.mapxm1] x [0 .. mapDims.mapym1]
 
 		// enlarge rect by 1pixel in all directions (cause we use center normals and not corner ones)
-		const int x1 = std::max(update.x1 - 1,          0);
-		const int y1 = std::max(update.y1 - 1,          0);
+		const int x1 = std::max(update.x1 - 1,              0);
+		const int y1 = std::max(update.y1 - 1,              0);
 		const int x2 = std::min(update.x2 + 1, mapDims.mapxm1);
 		const int y2 = std::min(update.y2 + 1, mapDims.mapym1);
 

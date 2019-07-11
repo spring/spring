@@ -502,8 +502,13 @@ void CReadMap::UpdateHeightMapSynced(SRectangle hmRect, bool initialize)
 
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	// push the unsynced update; initial one without LOS check
+	// NOTE:
+	//   hmRect is clamped to map{x,y}m1 which are the proper bounds for center heightmaps
+	//   parts of UpdateHeightMapUnsynced() (vertex normals, normal texture) however clamp
+	//   to map{x,y} since they index corner heightmaps, while all UnsyncedHeightMapUpdate
+	//   clients should already expect {x,z}2 <= map{x,y} and do proper clamping as well
 	if (initialize) {
-		unsyncedHeightMapUpdates.push_back(hmRect);
+		unsyncedHeightMapUpdates.push_back({hmRect.x1, hmRect.z1, hmRect.x2 + 1, hmRect.z2 + 1});
 	} else {
 		#ifdef USE_HEIGHTMAP_DIGESTS
 		// convert heightmap rectangle to LOS-map space
@@ -525,7 +530,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle hmRect, bool initialize)
 		HeightMapUpdateLOSCheck(hmRect);
 	}
 	#else
-	unsyncedHeightMapUpdates.push_back(hmRect);
+	unsyncedHeightMapUpdates.push_back({hmRect.x1, hmRect.z1, hmRect.x2 + 1, hmRect.z2 + 1});
 	#endif
 }
 
@@ -561,7 +566,8 @@ void CReadMap::UpdateMipHeightmaps(const SRectangle& rect, bool initialize)
 		const int ex = (rect.x2 >> i);
 		const int sy = (rect.z1 >> i) & (~1);
 		const int ey = (rect.z2 >> i);
-		float* topMipMap = mipPointerHeightMaps[i];
+
+		float* topMipMap = mipPointerHeightMaps[i    ];
 		float* subMipMap = mipPointerHeightMaps[i + 1];
 
 		for (int y = sy; y < ey; y += 2) {
