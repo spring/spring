@@ -81,12 +81,12 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 #endif
 
 	if (!clientSetup->isHost) {
-		LOG("[%s] client using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] using client IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		// don't allow luasocket to connect to the host
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
 		clientNet->InitClient(clientSetup, SpringVersion::GetSync(), Platform::GetPlatformStr());
 	} else {
-		LOG("[%s] server using IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] using server IP %s and port %i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		clientNet->InitLocalClient();
 	}
 }
@@ -185,27 +185,49 @@ bool CPreGame::Update()
 	return true;
 }
 
-void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
+
+void CPreGame::AddMapArchivesToVFS(const CGameSetup* setup)
 {
-	LOG("[PreGame::%s] using map: %s", __func__, setup->mapName.c_str());
-	// Load Map archive
-	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
-
-	if (mapOnly)
+	// map gets added in StartServer if we are the host
+	if (gameServer != nullptr) {
+		assert(vfsHandler->HasArchive(setup->mapName));
 		return;
-
-	// Load Mutators (if any)
-	for (const std::string& mut: setup->GetMutatorsCont()) {
-		LOG("[PreGame::%s] using mutator: %s", __func__, mut.c_str());
-		vfsHandler->AddArchiveWithDeps(mut, false);
 	}
 
-	// Load Game archive
-	vfsHandler->AddArchiveWithDeps(setup->modName, false);
+	LOG("[PreGame::%s] using map \"%s\" (loaded=%d cached=%d)", __func__, setup->mapName.c_str(), vfsHandler->HasArchive(setup->mapName), vfsHandler->HasTempArchive(setup->mapName));
+
+	// load map archive (from reload-stash if possible)
+	if (vfsHandler->HasTempArchive(setup->mapName))
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+
+	if (!vfsHandler->HasArchive(setup->mapName))
+		vfsHandler->AddArchiveWithDeps(setup->mapName, false);
+}
+
+void CPreGame::AddModArchivesToVFS(const CGameSetup* setup)
+{
+	LOG("[PreGame::%s] using game \"%s\" (loaded=%d cached=%d)", __func__, setup->modName.c_str(), vfsHandler->HasArchive(setup->modName), vfsHandler->HasTempArchive(setup->modName));
+
+	// load game archive (from reload-stash if possible)
+	if (vfsHandler->HasTempArchive(setup->modName))
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+
+	// load mutators (if any); use WithDeps since mutators depend on the archives they override
+	for (const std::string& mut: setup->GetMutatorsCont()) {
+		LOG("[PreGame::%s] using mutator \"%s\"", __func__, mut.c_str());
+
+		if (vfsHandler->HasArchive(mut))
+			continue;
+
+		vfsHandler->AddArchiveWithDeps(mut, true);
+	}
+
+	if (!vfsHandler->HasArchive(setup->modName))
+		vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
 	modFileName = archiveScanner->ArchiveFromName(setup->modName);
-	LOG("[PreGame::%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modFileName.c_str());
 }
+
 
 void CPreGame::StartServer(const std::string& setupscript)
 {
@@ -229,7 +251,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	AddGameSetupArchivesToVFS(startGameSetup.get(), true);
+	AddMapArchivesToVFS(startGameSetup.get());
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
@@ -521,7 +543,8 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	}
 
 	// load archives into VFS
-	AddGameSetupArchivesToVFS(gameSetup, false);
+	AddMapArchivesToVFS(gameSetup);
+	AddModArchivesToVFS(gameSetup);
 
 	{
 		// check checksums of map & game

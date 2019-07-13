@@ -124,22 +124,26 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 , settingsWindow(nullptr)
 , curSelect(nullptr)
 {
-	SetPos(0,0);
-	SetSize(1,1);
+	SetPos(0, 0);
+	SetSize(1, 1);
 	agui::gui->AddElement(this, true);
 
 	{ // GUI stuff
-		agui::Picture* background = new agui::Picture(this);;
+		agui::Picture* background = new agui::Picture(this);
+
 		{
-			const std::string archiveName = configHandler->GetString("MenuArchive");
-			vfsHandler->AddArchive(archiveName, false);
+			// can not conflict with LuaMenu archive, just keep  in VFS if it was not already
+			vfsHandler->SetName("SelMenuVFS");
+			vfsHandler->AddArchiveIf(configHandler->GetString("MenuArchive"), false);
+			vfsHandler->SetName("SpringVFS");
+
+			//TODO: select by resolution / aspect ratio with fallback image
 			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
-			if (!files.empty()) {
-				//TODO: select by resolution / aspect ratio with fallback image
-				background->Load(files[guRNG.NextInt(files.size())]);
-			}
-			vfsHandler->RemoveArchive(archiveName);
+
+			if (!files.empty())
+				background->Load(files[ guRNG.NextInt(files.size()) ]);
 		}
+
 		selw = new SelectionWidget(this);
 		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
 		menu->SetPos(0.1, 0.5);

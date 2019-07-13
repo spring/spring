@@ -369,39 +369,59 @@ int LuaVFS::GetArchiveContainingFile(lua_State* L)
 
 int LuaVFS::UseArchive(lua_State* L)
 {
-	const std::string& filename = luaL_checkstring(L, 1);
+	const std::string& fileName = luaL_checkstring(L, 1);
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(filename)) {}
+	if (!LuaIO::IsSimplePath(fileName)) {}
 
 
 	constexpr int funcIndex = 2;
+	int callError = 0;
+
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
 	if (!lua_isfunction(L, funcIndex))
 		return 0;
 
-	if (!CFileHandler::FileExists(filename, SPRING_VFS_RAW))
+	if (!CFileHandler::FileExists(fileName, SPRING_VFS_RAW))
 		return 0;
 
+	{
+		// block other threads from getting the global until we are done
+		CVFSHandler::GrabLock();
 
-	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler{"LuaVFS"};
+		vfsHandler->SetName("LuaVFS");
+		vfsHandler->UnMapArchives();
 
-	// block other threads from getting the global until we are done
-	CVFSHandler::GrabLock();
-	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
-	tmpHandler.AddArchive(filename, false);
+		// could be mod,map,etc
+		const CVFSHandler::Section vfsSection = CVFSHandler::GetArchiveSection(fileName);
+		const CVFSHandler::Section tmpSection = CVFSHandler::GetTempArchiveSection(fileName);
 
-	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
+		const bool hasArchive = vfsHandler->HasArchive(fileName, tmpSection);
 
-	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
-	CVFSHandler::FreeLock();
+		if (hasArchive) {
+			vfsHandler->SwapArchiveSections(vfsSection, tmpSection);
+		} else {
+			vfsHandler->AddArchive(fileName, false);
+		}
 
+		callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-	if (error != 0)
+		if (hasArchive) {
+			vfsHandler->SwapArchiveSections(vfsSection, tmpSection);
+		} else {
+			vfsHandler->DeleteArchives(vfsSection);
+		}
+
+		vfsHandler->ReMapArchives();
+		vfsHandler->SetName("SpringVFS");
+
+		CVFSHandler::FreeLock();
+	}
+
+	if (callError != 0)
 		lua_error(L);
 
 	return (lua_gettop(L) - funcIndex + 1);

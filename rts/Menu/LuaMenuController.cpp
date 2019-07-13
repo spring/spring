@@ -49,7 +49,11 @@ bool CLuaMenuController::Reset()
 	}
 
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
-	vfsHandler->AddArchiveWithDeps(menuArchive, false);
+
+	if (vfsHandler->HasTempArchive(menuArchive))
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Menu, CVFSHandler::Section::TempMenu);
+	if (!vfsHandler->HasArchive(menuArchive))
+		vfsHandler->AddArchiveWithDeps(menuArchive, false);
 
 	mouse->ReloadCursors();
 	return true;

@@ -27,11 +27,13 @@ Gui::Gui()
  , inputCon(input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1)))
 {
 	{
-		vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
+		// just keep basecontent in VFS if it was not already
+		vfsHandler->SetName("UIVFS");
+		vfsHandler->AddArchiveIf(CArchiveScanner::GetSpringBaseContentName(), false);
+		vfsHandler->SetName("SpringVFS");
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg4.glsl", "", GL_VERTEX_SHADER));
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg4.glsl", "", GL_FRAGMENT_SHADER));
 		shader->Link();
-		vfsHandler->RemoveArchive(CArchiveScanner::GetSpringBaseContentName());
 	}
 	{
 		const std::string& name = shader->GetName();
