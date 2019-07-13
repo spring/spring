@@ -28,7 +28,7 @@ CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
 // returns absolute filename for given archive name, empty if not found
-static const std::string GetFileName(const std::string& name){
+static const std::string GetFileName(const std::string& name) {
 	if (name.empty())
 		return name;
 	const std::string& filename = archiveScanner->ArchiveFromName(name);
@@ -154,14 +154,31 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	if (userMod == SelectionWidget::NoModSelect || userMap == SelectionWidget::NoMapSelect )
 		return;
 
-	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler{"MenuVFS"};
-
 	CVFSHandler::GrabLock();
-	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
 
-	tmpHandler.AddArchive(userMod, true);
-	tmpHandler.AddArchive(userMap, true);
+	vfsHandler->SetName("SelWidgetVFS");
+	// menu is only shown on startup, or after reload which already unmaps
+	// vfsHandler->UnMapArchives();
+
+	bool hasModArchive = false;
+	bool hasMapArchive = false;
+
+	if ((hasModArchive = vfsHandler->HasTempArchive(userMod))) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+	} else {
+		// archive will be kept around for PreGame, so use WithDeps
+		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
+		vfsHandler->AddArchiveWithDeps(userMod, false);
+	}
+
+	if ((hasMapArchive = vfsHandler->HasTempArchive(userMap))) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+	} else {
+		// archive will be kept around for PreGame, so use WithDeps
+		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
+		vfsHandler->AddArchiveWithDeps(userMap, false);
+	}
+
 
 	for (const auto& luaAIInfo: luaAIImplHandler.LoadInfoItems()) {
 		for (const auto& prop: luaAIInfo) {
@@ -170,7 +187,23 @@ void SelectionWidget::AddAIScriptsFromArchive()
 		}
 	}
 
-	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	if (hasModArchive) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+	} else {
+		// keep around for PreGame
+		// vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
+	}
+	if (hasMapArchive) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+	} else {
+		// keep around for PreGame
+		// vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
+	}
+
+	// no unmap, no remap
+	// vfsHandler->ReMapArchives();
+	vfsHandler->SetName("SpringVFS");
+
 	CVFSHandler::FreeLock();
 }
 
@@ -181,8 +214,8 @@ void SelectionWidget::UpdateAvailableScripts()
 
 	availableScripts.clear();
 	availableScripts.reserve(16);
-	// load selected archives to get lua ais
 
+	// load selected archives to get lua ais
 	AddAIScriptsFromArchive();
 
 	// add sandbox script to list

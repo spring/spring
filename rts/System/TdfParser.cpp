@@ -101,25 +101,22 @@ void TdfParser::print(std::ostream & out) const {
 void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection) {
 	std::vector<std::string> keys;
 	table.GetKeys(keys);
+
 	for (const std::string& key: keys) {
 		LuaTable::DataType dt = table.GetType(key);
 		switch (dt) {
 			case LuaTable::DataType::TABLE: {
 				ParseLuaTable(table.SubTable(key), currentSection->construct_subsection(key));
-				break;
-			}
+			} break;
 			case LuaTable::DataType::BOOLEAN: {
 				currentSection->AddPair(key, table.Get(key, false));
-				break;
-			}
+			} break;
 			case LuaTable::DataType::NUMBER: {
 				currentSection->AddPair(key, table.Get(key, 0.0f));
-				break;
-			}
+			} break;
 			case LuaTable::DataType::STRING: {
 				currentSection->AddPair(key, table.Get(key, std::string("")));
-				break;
-			}
+			} break;
 			default:
 				throw content_error("invalid datatype for key " + key);
 		}
@@ -128,13 +125,10 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 
 
 void TdfParser::ParseBuffer(const char* buf, size_t size) {
-	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler{"TDFParserVFS"};
-
-	// block other threads from getting the global until we are done
 	CVFSHandler::GrabLock();
-	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
-	tmpHandler.AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
+
+	vfsHandler->SetName("TDFParserVFS");
+	vfsHandler->AddArchiveIf(CArchiveScanner::GetSpringBaseContentName(), false);
 
 	{
 		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + buf + "]])";
@@ -144,7 +138,9 @@ void TdfParser::ParseBuffer(const char* buf, size_t size) {
 		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
 	}
 
-	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
+	// just keep basecontent in VFS if it was not already
+	vfsHandler->SetName("SpringVFS");
+
 	CVFSHandler::FreeLock();
 }
 

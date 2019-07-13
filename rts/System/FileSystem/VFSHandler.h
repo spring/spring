@@ -20,23 +20,40 @@ class IArchive;
 class CVFSHandler
 {
 public:
-	CVFSHandler(const char* s): vfsName(s) { ReserveArchives(); }
+	CVFSHandler(const char* s) { SetName(s); ReserveArchives(); }
 	~CVFSHandler() { DeleteArchives(); }
 
 	const char* GetName() const { return vfsName; }
 
-	enum Section {
+	void SetName(const char* s) { vfsName = s; }
+
+	void BlockInsertArchive() { insertAllowed = false; }
+	void AllowInsertArchive() { insertAllowed =  true; }
+	void BlockRemoveArchive() { removeAllowed = false; }
+	void AllowRemoveArchive() { removeAllowed =  true; }
+
+
+	enum Section: int {
 		Mod,
 		Map,
 		Base,
 		Menu,
 		Temp,
+		TempMod,
+		TempMap,
+		TempBase,
+		TempMenu,
 		Count,
 		Error
 	};
 
 	static Section GetModeSection(char mode);
 	static Section GetModTypeSection(int modtype);
+	static Section GetArchiveSection(const std::string& archiveName);
+	static Section GetTempArchiveSection(const std::string& archiveName) {
+		return Section(GetArchiveSection(archiveName) + (Section::TempMod - Section::Mod));
+	}
+
 
 	static void GrabLock();
 	static void FreeLock();
@@ -105,17 +122,24 @@ public:
 	std::vector<std::string> GetDirsInDir(const std::string& dir, Section section);
 
 
+	bool HasTempArchive(const std::string& archiveName) const { return (HasArchive(archiveName, GetTempArchiveSection(archiveName))); }
+
+	bool HasArchive(const std::string& archiveName) const { return (HasArchive(archiveName, GetArchiveSection(archiveName))); }
+	bool HasArchive(const std::string& archiveName, Section archiveSection) const;
+
 	/**
 	 * Adds an archive to the VFS.
-	 * @param override determines whether in case of a  conflict, the existing
+	 * @param override determines whether in case of a conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
 	bool AddArchive(const std::string& archiveName, bool overwrite);
+	bool AddArchiveIf(const std::string& archiveName, bool overwrite) {
+		return (!archiveName.empty() && !HasArchive(archiveName) && AddArchive(archiveName, overwrite));
+	}
 
 	/**
 	 * Adds an archive and all of its dependencies to the VFS.
-	 * @param override determines whether in case of a  conflict, the existing
-	 *   entry in the VFS is overwritten or not.
+	 * @param override determines whether an existing entry in the VFS is overwritten or not.
 	 */
 	bool AddArchiveWithDeps(const std::string& archiveName, bool overwrite);
 
@@ -126,9 +150,13 @@ public:
 	 */
 	bool RemoveArchive(const std::string& archiveName);
 
-
 	void DeleteArchives();
+	void DeleteArchives(Section section);
 	void ReserveArchives();
+
+	void UnMapArchives();
+	void ReMapArchives();
+	void SwapArchiveSections(Section src, Section dst);
 
 private:
 	struct FileData {
@@ -138,13 +166,16 @@ private:
 	typedef std::pair<std::string, FileData> FileEntry;
 
 	std::string GetNormalizedPath(const std::string& rawPath);
-	FileData GetFileData(const std::string& normalizedFilePath, Section section);
+	FileData GetFileData(const std::string& normalizedFilePath, Section section) const;
 
 private:
 	std::array<std::vector<FileEntry>, Section::Count> files;
-	spring::unordered_map<std::string, IArchive*> archives;
+	std::array<spring::unordered_map<std::string, IArchive*>, Section::Count> archives;
 
 	const char* vfsName = "";
+
+	bool insertAllowed = true;
+	bool removeAllowed = true;
 };
 
 #define vfsHandler (CVFSHandler::GetGlobalInstance())

@@ -50,7 +50,9 @@ public:
 	int KeyPressed(int k, bool isRepeat) override;
 
 private:
-	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);
+	void AddMapArchivesToVFS(const CGameSetup* setup);
+	void AddModArchivesToVFS(const CGameSetup* setup);
+
 	void StartServer(const std::string& setupscript);
 	void StartServerForDemo(const std::string& demoName);
 

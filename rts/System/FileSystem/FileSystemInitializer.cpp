@@ -111,8 +111,9 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 void FileSystemInitializer::Reload()
 {
 	// repopulated by PreGame, etc
-	vfsHandler->DeleteArchives();
-	vfsHandler->ReserveArchives();
+	// stash mod and map archives which may be requested again
+	// useful since reloading the same game is the common case
+	vfsHandler->UnMapArchives();
 	archiveScanner->Reload();
 }
 

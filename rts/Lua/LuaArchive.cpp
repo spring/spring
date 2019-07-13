@@ -220,30 +220,40 @@ int LuaArchive::GetNameFromRapidTag(lua_State* L)
 int LuaArchive::GetAvailableAIs(lua_State* L)
 {
 	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
-	const std::string mapArchiveName = luaL_optsstring(L, 2, "");
+	const std::string  mapArchiveName = luaL_optsstring(L, 2, "");
 
 	LOG("LuaArchive::%s] game=%s map=%s", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
 
-	CVFSHandler* oldHandler = vfsHandler;
-	CVFSHandler  tmpHandler{"LuaArchiveVFS"};
-
 	CVFSHandler::GrabLock();
-	CVFSHandler::SetGlobalInstanceRaw(&tmpHandler);
 
-	// load selected archives to get lua ais
-	if (!gameArchiveName.empty())
-		tmpHandler.AddArchive(gameArchiveName, false);
-	if (!mapArchiveName.empty())
-		tmpHandler.AddArchive(mapArchiveName, false);
+	vfsHandler->SetName("LuaArchiveVFS");
+	vfsHandler->UnMapArchives();
 
+	bool hasModArchive = false;
+	bool hasMapArchive = false;
+
+	// load selected archives to get lua AI's
+	if ((hasModArchive = vfsHandler->HasTempArchive(gameArchiveName))) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+	} else {
+		vfsHandler->AddArchive(gameArchiveName, false);
+	}
+
+	if ((hasMapArchive = vfsHandler->HasTempArchive(mapArchiveName))) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+	} else {
+		vfsHandler->AddArchive(mapArchiveName, false);
+	}
+
+	// executing LuaAI.lua can not do harm to VFS
+	const auto& luaAIInfoItems = luaAIImplHandler.LoadInfoItems();
 	const auto& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	const auto& luaAIInfos = luaAIImplHandler.LoadInfoItems();
 
-	lua_createtable(L, skirmishAIKeys.size() + luaAIInfos.size(), 0);
+	lua_createtable(L, skirmishAIKeys.size() + luaAIInfoItems.size(), 0);
 
 	unsigned int count = 0;
 
-	for (const auto& luaAIInfo: luaAIInfos) {
+	for (const auto& luaAIInfo: luaAIInfoItems) {
 		lua_createtable(L, 0, luaAIInfo.size()); {
 			for (const auto& luaAIInfoItem: luaAIInfo) {
 				if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
@@ -264,8 +274,20 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		lua_rawseti(L, -2, ++count);
 	}
 
-	CVFSHandler::SetGlobalInstanceRaw(oldHandler);
-	CVFSHandler::FreeLock();
+	if (hasModArchive) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+	} else {
+		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
+	}
+	if (hasMapArchive) {
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+	} else {
+		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
+	}
 
+	vfsHandler->ReMapArchives();
+	vfsHandler->SetName("SpringVFS");
+
+	CVFSHandler::FreeLock();
 	return 1;
 }
