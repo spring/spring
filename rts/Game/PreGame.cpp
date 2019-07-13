@@ -188,13 +188,9 @@ bool CPreGame::Update()
 
 void CPreGame::AddMapArchivesToVFS(const CGameSetup* setup)
 {
-	// map gets added in StartServer if we are the host
-	if (gameServer != nullptr) {
-		assert(vfsHandler->HasArchive(setup->mapName));
-		return;
-	}
-
-	LOG("[PreGame::%s] using map \"%s\" (loaded=%d cached=%d)", __func__, setup->mapName.c_str(), vfsHandler->HasArchive(setup->mapName), vfsHandler->HasTempArchive(setup->mapName));
+	// map gets added in StartServer if we are the host, so this can show twice
+	// StartServerForDemo does *not* add the map but waits for GameDataReceived
+	LOG("[PreGame::%s][server=%p] using map \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->mapName.c_str(), vfsHandler->HasArchive(setup->mapName), vfsHandler->HasTempArchive(setup->mapName));
 
 	// load map archive (from reload-stash if possible)
 	if (vfsHandler->HasTempArchive(setup->mapName))
@@ -206,7 +202,7 @@ void CPreGame::AddMapArchivesToVFS(const CGameSetup* setup)
 
 void CPreGame::AddModArchivesToVFS(const CGameSetup* setup)
 {
-	LOG("[PreGame::%s] using game \"%s\" (loaded=%d cached=%d)", __func__, setup->modName.c_str(), vfsHandler->HasArchive(setup->modName), vfsHandler->HasTempArchive(setup->modName));
+	LOG("[PreGame::%s][server=%p] using game \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->modName.c_str(), vfsHandler->HasArchive(setup->modName), vfsHandler->HasTempArchive(setup->modName));
 
 	// load game archive (from reload-stash if possible)
 	if (vfsHandler->HasTempArchive(setup->modName))
