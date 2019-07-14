@@ -433,6 +433,11 @@ void CShadowHandler::DrawShadowPasses()
 		// (could just disable culling of terrain faces entirely, but we
 		// also want to prevent overdraw in low-angle passes)
 		// glAttribStatePtr->CullFace(GL_FRONT);
+
+		// Restore GL_BACK culling, because Lua shadow materials might
+		// have changed culling at their own discretion
+		glAttribStatePtr->CullFace(GL_BACK);
+
 		if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0) {
 			currentShadowPass = SHADOWGEN_PROGRAM_MAP;
 			readMap->GetGroundDrawer()->DrawShadowPass();
