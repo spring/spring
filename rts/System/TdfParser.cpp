@@ -128,7 +128,6 @@ void TdfParser::ParseBuffer(const char* buf, size_t size) {
 	CVFSHandler::GrabLock();
 
 	vfsHandler->SetName("TDFParserVFS");
-	vfsHandler->AddArchiveIf(CArchiveScanner::GetSpringBaseContentName(), false);
 
 	{
 		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + buf + "]])";
@@ -138,7 +137,6 @@ void TdfParser::ParseBuffer(const char* buf, size_t size) {
 		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
 	}
 
-	// just keep basecontent in VFS if it was not already
 	vfsHandler->SetName("SpringVFS");
 
 	CVFSHandler::FreeLock();

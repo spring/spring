@@ -311,6 +311,9 @@ void CVFSHandler::ReserveArchives()
 		files[section].clear();
 		files[section].reserve(2048);
 	}
+
+	// preload universal dependencies
+	AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 }
 
 
