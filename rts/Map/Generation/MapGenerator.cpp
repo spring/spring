@@ -160,7 +160,6 @@ void CMapGenerator::GenerateSMF(CVirtualFile* fileSMF)
 void CMapGenerator::GenerateMapInfo(CVirtualFile* fileMapInfo)
 {
 	//Open template mapinfo.lua
-	vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 	const std::string luaTemplate = "mapgenerator/mapinfo_template.lua";
 	CFileHandler fh(luaTemplate, SPRING_VFS_PWD_ALL);
 	if (!fh.FileExists())
