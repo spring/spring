@@ -144,6 +144,8 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 
 void CFeature::Initialize(const FeatureLoadParams& params)
 {
+	const CSolidObject* po = params.parentObj;
+
 	def = params.featureDef;
 	udef = params.unitDef;
 
@@ -182,10 +184,10 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	moveCtrl.SetVelocityMask(mix(OnesVector, UpVector, udef == nullptr && def->drawType < DRAWTYPE_TREE));
 
 	// set position before mid-position
-	Move((params.pos).cClampInMap(), false);
+	Move(((po == nullptr)? params.pos: po->pos).cClampInMap(), false);
 	// use base-class version, AddFeature() below
 	// will already insert us in the update-queue
-	CWorldObject::SetVelocity(params.speed);
+	CWorldObject::SetVelocity((po == nullptr)? params.speed: po->speed);
 
 	switch (def->drawType) {
 		case DRAWTYPE_NONE: {
@@ -316,7 +318,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	if ((modInfo.multiReclaim == 0) && (lastReclaimFrame == gs->frameNum))
 		return true;
 
-	const float step = (-amount) / reclaimTime;
+	const float step = -amount / reclaimTime;
 
 	if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 		return false;
@@ -351,11 +353,12 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 	else {
 		// Chunky reclaiming, work out how many chunk boundaries we crossed
 		const float chunkSize = 1.0f / modInfo.reclaimMethod;
-		const int oldChunk = ChunkNumber(oldReclaimLeft);
-		const int newChunk = ChunkNumber(reclaimLeft);
 
-		if (oldChunk != newChunk) {
-			const float numChunks = oldChunk - newChunk;
+		const int oldChunk  = ChunkNumber(oldReclaimLeft);
+		const int newChunk  = ChunkNumber(reclaimLeft);
+		const int numChunks = oldChunk - newChunk;
+
+		if (numChunks != 0) {
 			order.add.metal  = std::min(numChunks * defResources.metal  * chunkSize, resources.metal);
 			order.add.energy = std::min(numChunks * defResources.energy * chunkSize, resources.energy);
 		}
@@ -411,7 +414,7 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
+		FeatureLoadParams params = {nullptr, nullptr, featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
 		CFeature* deathFeature = featureHandler.CreateWreckage(params);
 
 		if (deathFeature != nullptr) {

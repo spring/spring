@@ -2883,7 +2883,9 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature =  true;
+
 	FeatureLoadParams  params;
+	params.parentObj   = nullptr;
 	params.featureDef  = featureDef;
 	params.unitDef     = nullptr;
 	params.pos         = pos;
