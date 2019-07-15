@@ -3,7 +3,6 @@
 #ifndef _FEATURE_HANDLER_H
 #define _FEATURE_HANDLER_H
 
-#include <deque>
 #include <vector>
 
 #include "System/float3.h"
@@ -13,14 +12,17 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
+class CSolidObject;
 struct UnitDef;
 class LuaTable;
 struct FeatureDef;
 
 struct FeatureLoadParams {
-	const FeatureDef* featureDef;
+	const CSolidObject* parentObj;
 	const UnitDef* unitDef;
+	const FeatureDef* featureDef;
 
+	// not used if parentObj != nullptr
 	float3 pos;
 	float3 speed;
 

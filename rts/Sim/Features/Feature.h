@@ -3,9 +3,6 @@
 #ifndef _FEATURE_H
 #define _FEATURE_H
 
-#include <vector>
-#include <list>
-#include <string>
 #include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"

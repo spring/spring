@@ -316,7 +316,6 @@ public:
 	// used as interpolation reference for drawpos since a unit can
 	// move along vectors other than its velocity
 	float3 preFramePos;
-	float3 deathSpeed;
 
 	float3 lastMuzzleFlameDir = UpVector;
 	// units take less damage when attacked from this dir (encourage flanking fire)

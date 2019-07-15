@@ -74,8 +74,9 @@ void CFeatureHandler::LoadFeaturesFromMap()
 			continue;
 
 		FeatureLoadParams params = {
-			def,
 			nullptr,
+			nullptr,
+			def,
 
 			float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 			ZeroVector,
@@ -161,6 +162,7 @@ CFeature* CFeatureHandler::CreateWreckage(const FeatureLoadParams& cparams)
 
 	FeatureLoadParams params = cparams;
 
+	params.parentObj = cparams.parentObj;
 	params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
 	params.featureDef = fd;
 

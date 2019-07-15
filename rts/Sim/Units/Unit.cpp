@@ -103,14 +103,13 @@ CUnit::~CUnit()
 	DisableScriptMoveType();
 
 	// NOTE:
-	//   could also do this in Update() or even in CUnitKilledCB() where
-	//   we wouldn't need deathSpeed, but not in KillUnit() since we have
-	//   to wait for deathScriptFinished there
+	//   could also do this in Update() or even in CUnitKilledCB(), but not
+	//   in KillUnit() since we have to wait for deathScriptFinished there
 	//   we nevertheless want the sim-frame latency between CUnitKilledCB()
 	//   and the CreateWreckage() call to be as low as possible to prevent
 	//   position discontinuities
 	if (delayedWreckLevel >= 0)
-		featureHandler.CreateWreckage({featureDefHandler->GetFeatureDefByID(featureDefID), unitDef,  pos, deathSpeed,  -1, team, -1,  heading, buildFacing,  delayedWreckLevel - 1, 1});
+		featureHandler.CreateWreckage({this, unitDef, featureDefHandler->GetFeatureDefByID(featureDefID),  {}, {},  -1, team, -1,  heading, buildFacing,  delayedWreckLevel - 1, 1});
 
 	if (deathExpDamages != nullptr)
 		DynDamageArray::DecRef(deathExpDamages);
@@ -176,7 +175,6 @@ void CUnit::SanityCheck() const
 	preFramePos.AssertNaNs();
 
 	speed.AssertNaNs();
-	deathSpeed.AssertNaNs();
 
 	rightdir.AssertNaNs();
 	updir.AssertNaNs();
@@ -439,7 +437,7 @@ void CUnit::FinishedBuilding(bool postInit)
 		if (!unitDef->isFeature)
 			return;
 
-		CFeature* f = featureHandler.CreateWreckage({featureDefHandler->GetFeatureDefByID(featureDefID), nullptr,  pos, ZeroVector,  -1, team, allyteam,  heading, buildFacing,  0, 0});
+		CFeature* f = featureHandler.CreateWreckage({this, nullptr, featureDefHandler->GetFeatureDefByID(featureDefID),  {}, {},  -1, team, allyteam,  heading, buildFacing,  0, 0});
 
 		if (f == nullptr)
 			return;
@@ -473,8 +471,6 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	// pre-destruction event; unit may be kept around for its death sequence
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
-
-	deathSpeed = speed;
 
 	// Will be called in the destructor again, but this can not hurt
 	SetGroup(nullptr);
@@ -1332,12 +1328,13 @@ void CUnit::ApplyImpulse(const float3& impulse) {
 	}
 
 	const float3& groundNormal = CGround::GetNormal(pos.x, pos.z);
-	const float groundImpulseScale = std::min(0.0f, impulse.dot(groundNormal));
-	const float3 modImpulse = impulse - (groundNormal * groundImpulseScale * IsOnGround());
+	const float3  scaledNormal = groundNormal * std::min(0.0f, impulse.dot(groundNormal)) * IsOnGround();
+	const float3    modImpulse = impulse - scaledNormal;
 
-	if (moveType->CanApplyImpulse(modImpulse)) {
-		CSolidObject::ApplyImpulse(modImpulse);
-	}
+	if (!moveType->CanApplyImpulse(modImpulse))
+		return;
+
+	CSolidObject::ApplyImpulse(modImpulse);
 }
 
 
@@ -2844,7 +2841,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastMuzzleFlameSize),
 
 	CR_MEMBER(preFramePos),
-	CR_MEMBER(deathSpeed),
 	CR_MEMBER(lastMuzzleFlameDir),
 	CR_MEMBER(flankingBonusDir),
 
