@@ -28,14 +28,16 @@ CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
 // returns absolute filename for given archive name, empty if not found
-static const std::string GetFileName(const std::string& name) {
+static const std::string GetAbsFileName(const std::string& name) {
 	if (name.empty())
 		return name;
+
 	const std::string& filename = archiveScanner->ArchiveFromName(name);
+
 	if (filename == name)
 		return "";
-	const std::string& path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
+
+	return (archiveScanner->GetArchivePath(filename) + filename);
 }
 
 
@@ -59,9 +61,9 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	userMap = configHandler->GetString("LastSelectedMap");
 	userScript = configHandler->GetString("LastSelectedScript");
 
-	if (GetFileName(userMod).empty())
+	if (GetAbsFileName(userMod).empty())
 		userMod = NoModSelect;
-	if (GetFileName(userMap).empty())
+	if (GetAbsFileName(userMap).empty())
 		userMap = NoMapSelect;
 
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
@@ -99,10 +101,8 @@ void SelectionWidget::ShowDemoList(const std::function<void(const std::string&)>
 	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
 	const std::string dir = std::move(FileSystem::EnsurePathSepAtEnd("demos"));
 
-	const std::vector<std::string> demos(dataDirsAccess.FindFiles(cwd + dir, "*.sdfz", 0));
-
 	// FIXME: names overflow the box
-	for (const std::string& demo: demos) {
+	for (const std::string& demo: dataDirsAccess.FindFiles(cwd + dir, "*.sdfz", 0)) {
 		curSelect->list->AddItem(demo.substr(demo.find(dir) + 6), "");
 	}
 
@@ -163,29 +163,32 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	bool hasModArchive = false;
 	bool hasMapArchive = false;
 
-	if ((hasModArchive = vfsHandler->HasTempArchive(userMod))) {
+	if ((hasModArchive = vfsHandler->HasTempArchive(userMod)))
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	} else {
+
+	if (!vfsHandler->HasArchive(userMod)) {
 		// archive will be kept around for PreGame, so use WithDeps
 		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
 		vfsHandler->AddArchiveWithDeps(userMod, false);
 	}
 
-	if ((hasMapArchive = vfsHandler->HasTempArchive(userMap))) {
+	if ((hasMapArchive = vfsHandler->HasTempArchive(userMap)))
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	} else {
+
+	if (!vfsHandler->HasArchive(userMap)) {
 		// archive will be kept around for PreGame, so use WithDeps
 		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
 		vfsHandler->AddArchiveWithDeps(userMap, false);
 	}
 
 
-	for (const auto& luaAIInfo: luaAIImplHandler.LoadInfoItems()) {
-		for (const auto& prop: luaAIInfo) {
-			if (prop.key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				availableScripts.push_back(prop.GetValueAsString());
+	for (const auto& infoItem: luaAIImplHandler.LoadInfoItems()) {
+		for (const auto& infoProp: infoItem) {
+			if (infoProp.key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				availableScripts.push_back(infoProp.GetValueAsString());
 		}
 	}
+
 
 	if (hasModArchive) {
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
@@ -193,6 +196,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 		// keep around for PreGame
 		// vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
 	}
+
 	if (hasMapArchive) {
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
 	} else {
