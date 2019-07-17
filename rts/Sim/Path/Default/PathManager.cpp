@@ -60,6 +60,12 @@ CPathManager::~CPathManager()
 	IPathFinder::KillStatic();
 }
 
+
+std::uint32_t CPathManager::GetPathCheckSum() const {
+	assert(IsFinalized());
+	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
+}
+
 std::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
@@ -72,11 +78,6 @@ std::int64_t CPathManager::Finalize() {
 		maxResPF->Init(false);
 		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 		lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
-
-		// make cached path data checksum part of synced state s.t. when
-		// any client has a corrupted or incorrect cache it desyncs from
-		// the start, not minutes later
-		{ SyncedUint tmp(GetPathCheckSum()); }
 	}
 
 	const spring_time dt = spring_gettime() - t0;
@@ -709,13 +710,6 @@ void CPathManager::GetPathWayPoints(
 	for (IPath::path_list_type::const_reverse_iterator pvi = lowResPoints.rbegin(); pvi != lowResPoints.rend(); ++pvi) {
 		points.push_back(*pvi);
 	}
-}
-
-
-
-std::uint32_t CPathManager::GetPathCheckSum() const {
-	assert(IsFinalized());
-	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }
 
 

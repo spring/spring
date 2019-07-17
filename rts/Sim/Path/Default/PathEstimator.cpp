@@ -28,7 +28,6 @@
 #include "System/Platform/Threading.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
-#include "System/Sync/HsiehHash.h"
 #include "System/Sync/SHA512.hpp"
 
 #define ENABLE_NETLOG_CHECKSUM 1
@@ -205,7 +204,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		loadscreen->SetLoadMessage(calcMsg, true);
 	}
 
-	// Calculate PreCached PathData Checksum
+	// calculate checksum over block-offsets and vertex-costs
 	pathChecksum = CalcChecksum();
 
 	// switch to runtime wanted IPathFinder (maybe PF or PE)
@@ -956,9 +955,6 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 		return false;
 	}
 
-	// pointless; gets reassigned the output of CalcChecksum and CRC is not otherwise used
-	// pathChecksum = upfile->GetCrc32(fid);
-
 	std::vector<std::uint8_t> buffer;
 
 	if (!upfile->GetFile(fid, buffer) || buffer.size() < 4) {
@@ -1043,15 +1039,14 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 	}
 
 	assert(upfile->FindFile("pathinfo") < upfile->NumFiles());
-	// pointless; gets reassigned the output of CalcChecksum and CRC is not otherwise used
-	// pathChecksum = upfile->GetCrc32(upfile->FindFile("pathinfo"));
 }
 
 
 std::uint32_t CPathEstimator::CalcChecksum() const
 {
-	std::uint32_t cs = 0;
-	std::uint64_t nb = 0;
+	std::uint32_t chksum = 0;
+	std::uint64_t nbytes = vertexCosts.size() * sizeof(float);
+	std::uint64_t offset = 0;
 
 	#if (ENABLE_NETLOG_CHECKSUM == 1)
 	std::array<char, 128 + sha512::SHA_LEN * 2 + 1> msgBuffer;
@@ -1061,24 +1056,27 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 	sha512::msg_vector rawBytes;
 	#endif
 
+	#if (ENABLE_NETLOG_CHECKSUM == 1)
 	for (const auto& pathTypeOffsets: blockStates.peNodeOffsets) {
-		nb = pathTypeOffsets.size() * sizeof(short2);
-		cs = HsiehHash(pathTypeOffsets.data(), nb, cs);
-
-		#if (ENABLE_NETLOG_CHECKSUM == 1)
-		rawBytes.resize(rawBytes.size() + nb, 0);
-		std::memcpy(&rawBytes[rawBytes.size() - nb], pathTypeOffsets.data(), nb);
-		#endif
+		nbytes += (pathTypeOffsets.size() * sizeof(short2));
 	}
 
-	nb = vertexCosts.size() * sizeof(float);
-	cs = HsiehHash(vertexCosts.data(), nb, cs);
+	rawBytes.clear();
+	rawBytes.resize(nbytes);
 
-	#if (ENABLE_NETLOG_CHECKSUM == 1)
+	for (const auto& pathTypeOffsets: blockStates.peNodeOffsets) {
+		nbytes = pathTypeOffsets.size() * sizeof(short2);
+		offset += nbytes;
+
+		std::memcpy(&rawBytes[offset - nbytes], pathTypeOffsets.data(), nbytes);
+	}
+
 	{
-		rawBytes.resize(rawBytes.size() + nb);
+		nbytes = vertexCosts.size() * sizeof(float);
+		offset += nbytes;
 
-		std::memcpy(&rawBytes[rawBytes.size() - nb], vertexCosts.data(), nb);
+		std::memcpy(&rawBytes[offset - nbytes], vertexCosts.data(), nbytes);
+
 		sha512::calc_digest(rawBytes, shaBytes); // hash(offsets|costs)
 		sha512::dump_digest(shaBytes, hexChars); // hexify(hash)
 
@@ -1087,7 +1085,21 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 	}
 	#endif
 
-	return cs;
+	// make path-estimator checksum part of synced state s.t. when
+	// a client has a corrupted or stale cache it desyncs from the
+	// start, not minutes later
+	for (size_t i = 0, n = shaBytes.size() / 4; i < n; i += 1) {
+		const uint16_t hi = (shaBytes[i * 4 + 0] << 8) | (shaBytes[i * 4 + 1] << 0);
+		const uint16_t lo = (shaBytes[i * 4 + 2] << 8) | (shaBytes[i * 4 + 3] << 0);
+
+		const SyncedUint su = (hi << 16) | (lo << 0);
+
+		// copy first four bytes to reduced checksum
+		if (chksum == 0)
+			chksum = su;
+	}
+
+	return chksum;
 }
 
 
