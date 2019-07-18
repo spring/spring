@@ -32,6 +32,7 @@ public:
 	 */
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
+	virtual void RemoveCacheFiles() {}
 	virtual void Update() {}
 	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
 

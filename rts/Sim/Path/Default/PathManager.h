@@ -81,6 +81,7 @@ public:
 
 	std::int64_t Finalize() override;
 
+	void RemoveCacheFiles() override;
 	void Update() override;
 	void UpdatePath(const CSolidObject*, unsigned int) override;
 	void DeletePath(unsigned int pathID) override {

@@ -61,6 +61,13 @@ CPathManager::~CPathManager()
 }
 
 
+void CPathManager::RemoveCacheFiles()
+{
+	medResPE->RemoveCacheFile("pe" , mapInfo->map.name);
+	lowResPE->RemoveCacheFile("pe2", mapInfo->map.name);
+}
+
+
 std::uint32_t CPathManager::GetPathCheckSum() const {
 	assert(IsFinalized());
 	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
@@ -76,7 +83,7 @@ std::int64_t CPathManager::Finalize() {
 
 		// maxResPF only runs on the main thread, so can be unsafe
 		maxResPF->Init(false);
-		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		medResPE->Init(maxResPF, MEDRES_PE_BLOCKSIZE, "pe" , mapInfo->map.name);
 		lowResPE->Init(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 	}
 
