@@ -537,6 +537,7 @@ void CGame::ClientReadNet()
 				} else {
 					if (playerCheckSum != localCheckSum) {
 						LOG_L(L_WARNING, fmtStrs[1], playerCheckSum, pType, playerNum, pName, localCheckSum);
+						pathManager->RemoveCacheFiles();
 					}
 				}
 			} break;

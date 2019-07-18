@@ -43,6 +43,11 @@ static const std::string GetPathCacheDir() {
 	return (FileSystem::GetCacheDir() + "/paths/");
 }
 
+static const std::string GetCacheFileName(const std::string& fileHashCode, const std::string& peFileName, const std::string& mapFileName) {
+	return (GetPathCacheDir() + mapFileName + "." + peFileName + "-" + fileHashCode + ".zip");
+}
+
+
 static size_t GetNumThreads() {
 	const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
 	const size_t numCores = Threading::GetLogicalCpuCores();
@@ -51,7 +56,7 @@ static size_t GetNumThreads() {
 
 
 
-void CPathEstimator::Init(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& mapFileName)
+void CPathEstimator::Init(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::string& peFileName, const std::string& mapFileName)
 {
 	IPathFinder::Init(BLOCK_SIZE);
 
@@ -127,7 +132,7 @@ void CPathEstimator::Init(IPathFinder* pf, unsigned int BLOCK_SIZE, const std::s
 	}
 
 	// load precalculated data if it exists
-	InitEstimator(cacheFileName, mapFileName);
+	InitEstimator(peFileName, mapFileName);
 }
 
 
@@ -138,7 +143,7 @@ void CPathEstimator::Kill()
 }
 
 
-void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& mapName)
+void CPathEstimator::InitEstimator(const std::string& peFileName, const std::string& mapFileName)
 {
 	const unsigned int numThreads = GetNumThreads();
 
@@ -156,7 +161,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	// Not much point in multithreading these...
 	InitBlocks();
 
-	if (!ReadFile(cacheFileName, mapName)) {
+	if (!ReadFile(peFileName, mapFileName)) {
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
 		const unsigned int minMemFootPrint = sizeof(CPathFinder) + parentPathFinder->GetMemFootPrint();
@@ -195,12 +200,12 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		}
 
 
-		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, cacheFileName.c_str(), fileHashCode);
+		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, peFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
 
-		WriteFile(cacheFileName, mapName);
+		WriteFile(peFileName, mapFileName);
 
-		sprintf(calcMsg, fmtStrs[3], __func__, BLOCK_SIZE, cacheFileName.c_str(), fileHashCode);
+		sprintf(calcMsg, fmtStrs[3], __func__, BLOCK_SIZE, peFileName.c_str(), fileHashCode);
 		loadscreen->SetLoadMessage(calcMsg, true);
 	}
 
@@ -925,13 +930,18 @@ void CPathEstimator::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& 
 }
 
 
+bool CPathEstimator::RemoveCacheFile(const std::string& peFileName, const std::string& mapFileName)
+{
+	return (FileSystem::Remove(GetCacheFileName(IntToString(fileHashCode, "%x"), peFileName, mapFileName)));
+}
+
 /**
  * Try to read offset and vertices data from file, return false on failure
  */
-bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string& mapName)
+bool CPathEstimator::ReadFile(const std::string& peFileName, const std::string& mapFileName)
 {
 	const std::string hashHexString = IntToString(fileHashCode, "%x");
-	const std::string cacheFileName = GetPathCacheDir() + mapName + "." + baseFileName + "-" + hashHexString + ".zip";
+	const std::string cacheFileName = GetCacheFileName(hashHexString, peFileName, mapFileName);
 
 	LOG("[PathEstimator::%s] hash=%s file=\"%s\" (exists=%d)", __func__, hashHexString.c_str(), cacheFileName.c_str(), FileSystem::FileExists(cacheFileName));
 
@@ -996,14 +1006,14 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 /**
  * Try to write offset and vertex data to file.
  */
-void CPathEstimator::WriteFile(const std::string& baseFileName, const std::string& mapName)
+bool CPathEstimator::WriteFile(const std::string& peFileName, const std::string& mapFileName)
 {
 	// we need this directory to exist
 	if (!FileSystem::CreateDirectory(GetPathCacheDir()))
-		return;
+		return false;
 
 	const std::string hashHexString = IntToString(fileHashCode, "%x");
-	const std::string cacheFileName = GetPathCacheDir() + mapName + "." + baseFileName + "-" + hashHexString + ".zip";
+	const std::string cacheFileName = GetCacheFileName(hashHexString, peFileName, mapFileName);
 
 	LOG("[PathEstimator::%s] hash=%s file=\"%s\" (exists=%d)", __func__, hashHexString.c_str(), cacheFileName.c_str(), FileSystem::FileExists(cacheFileName));
 
@@ -1011,7 +1021,7 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 	zipFile file = zipOpen(dataDirsAccess.LocateFile(cacheFileName, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
 
 	if (file == nullptr)
-		return;
+		return false;
 
 	zipOpenNewFileInZip(file, "pathinfo", nullptr, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_BEST_COMPRESSION);
 
@@ -1035,10 +1045,11 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 
 	if (upfile == nullptr || !upfile->IsOpen()) {
 		FileSystem::Remove(cacheFileName);
-		return;
+		return false;
 	}
 
 	assert(upfile->FindFile("pathinfo") < upfile->NumFiles());
+  return true;
 }
 
 
