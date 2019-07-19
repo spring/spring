@@ -806,7 +806,9 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 	if (aiIter == archiveInfosIndex.end())
 		return false;
 
-	ArchiveInfo&  ai = archiveInfos[aiIter->second];
+	const size_t archiveIndex = aiIter->second;
+
+	ArchiveInfo&  ai = archiveInfos[archiveIndex           ];
 	ArchiveInfo& rai = archiveInfos[archiveInfos.size() - 1];
 
 	// this archive may have been obsoleted, do not process it if so
@@ -839,7 +841,8 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 		throw user_error(
 			std::string("duplicate base content detected:\n\t") + ai.path +
 			std::string("\n\t") + filePath +
-			std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
+			std::string("\nPlease fix your configuration/installation as this can cause desyncs!")
+		);
 	}
 
 	// if we are here, we could have invalid info in the cache
@@ -848,9 +851,9 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned& mod
 	// (not the contents)
 	//
 	// remap replacement archive
-	if (aiIter->second != (archiveInfos.size() - 1)) {
-		archiveInfosIndex[StringToLower(rai.origName)] = aiIter->second;
-		archiveInfos[aiIter->second] = std::move(rai);
+	if (archiveIndex != (archiveInfos.size() - 1)) {
+		archiveInfosIndex[StringToLower(rai.origName)] = archiveIndex;
+		archiveInfos[archiveIndex] = std::move(rai);
 	}
 
 	archiveInfosIndex.erase(fileNameLower);
