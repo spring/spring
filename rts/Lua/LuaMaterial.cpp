@@ -645,9 +645,8 @@ void LuaMatUniforms::AutoLink(LuaMatShader* shader)
 
 void LuaMatUniforms::Validate(LuaMatShader* s)
 {
-	constexpr const char* fmts[3] = {
+	constexpr const char* fmts[2] = {
 		"[LuaMatUniforms::%s] engine shaders prohibit the usage of uniform \"%s\"",
-		"[LuaMatUniforms::%s] missing \"TeamColor\" uniform",
 		"[LuaMatUniforms::%s] incorrect uniform-type for \"%s\" at location %d (declared %s, expected %s)",
 	};
 
@@ -662,11 +661,6 @@ void LuaMatUniforms::Validate(LuaMatShader* s)
 
 		return;
 	}
-
-	// print warning when teamcolor is not bound
-	if (!teamColor.IsValid())
-		LOG_L(L_WARNING, fmts[1], __func__);
-
 
 	const decltype(GetEngineNameUniformPairs())& uniforms = GetEngineNameUniformPairs();
 	      decltype(uniforms.end()) uniformsIt;
@@ -702,7 +696,7 @@ void LuaMatUniforms::Validate(LuaMatShader* s)
 		if (au.type == expectedType)
 			continue;
 
-		LOG_L(L_WARNING, fmts[2], __func__, au.name, uniformLoc,  GLUniformTypeToString(au.type), GLUniformTypeToString(expectedType));
+		LOG_L(L_WARNING, fmts[1], __func__, au.name, uniformLoc,  GLUniformTypeToString(au.type), GLUniformTypeToString(expectedType));
 	}
 }
 
