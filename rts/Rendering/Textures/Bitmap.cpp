@@ -508,6 +508,7 @@ bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
 
 			xsize = ilGetInteger(IL_IMAGE_WIDTH);
 			ysize = ilGetInteger(IL_IMAGE_HEIGHT);
+			// format = ilGetInteger(IL_IMAGE_FORMAT);
 
 			texMemPool.FreeRaw(GetRawMem(), curMemSize);
 			memIdx = texMemPool.AllocIdxRaw(GetMemSize());
@@ -517,16 +518,16 @@ bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
 				std::memset(GetRawMem(), 0xFF, GetMemSize());
 				std::memcpy(GetRawMem(), imgData, GetMemSize());
 			}
-		} else {
-			LOG_L(L_ERROR, "[BMP::%s] failed to load \"%s\" or invalid format %d", __func__, filename.c_str(), ilGetInteger(IL_IMAGE_FORMAT));
 		}
 
 		ilDisable(IL_ORIGIN_SET);
 		ilDeleteImages(1, &imageID);
 	}
 
-	// has to be outside the mutex scope
+	// has to be outside the mutex scope; AllocDummy will acquire it again and
+	// LOG can indirectly cause other bitmaps to be loaded through FontTexture
 	if (!isValid) {
+		LOG_L(L_ERROR, "[BMP::%s] invalid bitmap \"%s\" (loaded=%d)", __func__, filename.c_str(), isLoaded);
 		AllocDummy();
 		return false;
 	}
