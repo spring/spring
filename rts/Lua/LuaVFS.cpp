@@ -388,10 +388,9 @@ int LuaVFS::UseArchive(lua_State* L)
 	if (!CFileHandler::FileExists(fileName, SPRING_VFS_RAW))
 		return 0;
 
-	{
+	if (!fileName.empty()) {
 		// block other threads from getting the global until we are done
-		CVFSHandler::GrabLock();
-
+		vfsHandler->GrabLock();
 		vfsHandler->SetName("LuaVFS");
 		vfsHandler->UnMapArchives();
 
@@ -412,13 +411,12 @@ int LuaVFS::UseArchive(lua_State* L)
 		if (hasArchive) {
 			vfsHandler->SwapArchiveSections(vfsSection, tmpSection);
 		} else {
-			vfsHandler->DeleteArchives(vfsSection);
+			vfsHandler->RemoveArchive(fileName);
 		}
 
 		vfsHandler->ReMapArchives();
 		vfsHandler->SetName("SpringVFS");
-
-		CVFSHandler::FreeLock();
+		vfsHandler->FreeLock();
 	}
 
 	if (callError != 0)
