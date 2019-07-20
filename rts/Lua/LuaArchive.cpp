@@ -222,72 +222,101 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
 	const std::string  mapArchiveName = luaL_optsstring(L, 2, "");
 
-	LOG("LuaArchive::%s] game=%s map=%s", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
-
-	CVFSHandler::GrabLock();
-
+	vfsHandler->GrabLock();
 	vfsHandler->SetName("LuaArchiveVFS");
-	vfsHandler->UnMapArchives();
+	// usually only called from LuaMenu between (re)load and PreGame
+	// unmapping would clear any cached archives, reuse them instead
+	// NB: if called at actual game time, must stash current mod/map
+	// vfsHandler->UnMapArchives();
 
-	bool hasModArchive = false;
-	bool hasMapArchive = false;
+	bool hasModArchive[2] = {false, true};
+	bool hasMapArchive[2] = {false, true};
 
-	// load selected archives to get lua AI's
-	if ((hasModArchive = vfsHandler->HasTempArchive(gameArchiveName))) {
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	} else {
-		vfsHandler->AddArchive(gameArchiveName, false);
+	// load selected archives to access Lua AI's
+	// if names are empty, scan current archives
+	if (!gameArchiveName.empty()) {
+		if ((hasModArchive[0] = vfsHandler->HasTempArchive(gameArchiveName)))
+			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+
+		if (!(hasModArchive[1] = vfsHandler->HasArchive(gameArchiveName))) {
+			assert(!hasModArchive[0]);
+			vfsHandler->DeleteArchives(CVFSHandler::Section::TempMod);
+			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+			vfsHandler->AddArchive(gameArchiveName, false);
+		}
 	}
 
-	if ((hasMapArchive = vfsHandler->HasTempArchive(mapArchiveName))) {
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	} else {
-		vfsHandler->AddArchive(mapArchiveName, false);
+	if (!mapArchiveName.empty()) {
+		if ((hasMapArchive[0] = vfsHandler->HasTempArchive(mapArchiveName)))
+			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+
+		if (!(hasMapArchive[1] = vfsHandler->HasArchive(mapArchiveName))) {
+			assert(!hasMapArchive[0]);
+			vfsHandler->DeleteArchives(CVFSHandler::Section::TempMap);
+			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
+			vfsHandler->AddArchive(mapArchiveName, false);
+		}
 	}
 
-	// executing LuaAI.lua can not do harm to VFS
-	const auto& luaAIInfoItems = luaAIImplHandler.LoadInfoItems();
-	const auto& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
+	LOG("LuaArchive::%s] game=\"%s\" (cached=%d loaded=%d) map=\"%s\" (cached=%d loaded=%d)", __func__,
+		gameArchiveName.c_str(), hasModArchive[0], hasModArchive[1],
+		 mapArchiveName.c_str(), hasMapArchive[0], hasMapArchive[1]
+	);
 
-	lua_createtable(L, skirmishAIKeys.size() + luaAIInfoItems.size(), 0);
+	{
+		// executing LuaAI.lua can not do harm to VFS
+		const auto& luaAIInfoItems = luaAIImplHandler.LoadInfoItems();
+		const auto& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
 
-	unsigned int count = 0;
+		lua_createtable(L, skirmishAIKeys.size() + luaAIInfoItems.size(), 0);
 
-	for (const auto& luaAIInfo: luaAIInfoItems) {
-		lua_createtable(L, 0, luaAIInfo.size()); {
-			for (const auto& luaAIInfoItem: luaAIInfo) {
-				if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-					HSTR_PUSH_STRING(L, "shortName", luaAIInfoItem.GetValueAsString());
-				} else if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_VERSION) {
-					HSTR_PUSH_STRING(L, "version", luaAIInfoItem.GetValueAsString());
+		unsigned int count = 0;
+
+		for (const auto& luaAIInfo: luaAIInfoItems) {
+			lua_createtable(L, 0, luaAIInfo.size()); {
+				for (const auto& luaAIInfoItem: luaAIInfo) {
+					if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
+						HSTR_PUSH_STRING(L, "shortName", luaAIInfoItem.GetValueAsString());
+					} else if (luaAIInfoItem.key == SKIRMISH_AI_PROPERTY_VERSION) {
+						HSTR_PUSH_STRING(L, "version", luaAIInfoItem.GetValueAsString());
+					}
 				}
 			}
+			lua_rawseti(L, -2, ++count);
 		}
-		lua_rawseti(L, -2, ++count);
+
+		for (const auto& aiKey: skirmishAIKeys) {
+			lua_createtable(L, 0, 2); {
+				HSTR_PUSH_STRING(L, "shortName", aiKey.GetShortName());
+				HSTR_PUSH_STRING(L, "version", aiKey.GetVersion());
+			}
+			lua_rawseti(L, -2, ++count);
+		}
 	}
 
-	for (const auto& aiKey: skirmishAIKeys) {
-		lua_createtable(L, 0, 2); {
-			HSTR_PUSH_STRING(L, "shortName", aiKey.GetShortName());
-			HSTR_PUSH_STRING(L, "version", aiKey.GetVersion());
-		}
-		lua_rawseti(L, -2, ++count);
-	}
-
-	if (hasModArchive) {
+	// gameArchiveName was cached pre-call
+	if (hasModArchive[0])
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	} else {
+	// gameArchiveName was not loaded pre-call
+	if (!hasModArchive[1]) {
+		assert(!hasModArchive[0]);
 		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
 	}
-	if (hasMapArchive) {
+
+	// mapArchiveName was cached pre-call
+	if (hasMapArchive[0])
 		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	} else {
+	// mapArchiveName was not loaded pre-call
+	if (!hasMapArchive[1]) {
+		assert(!hasMapArchive[0]);
 		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
+		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
 	}
 
-	vfsHandler->ReMapArchives();
+	// no unmap, no remap
+	// vfsHandler->ReMapArchives();
 	vfsHandler->SetName("SpringVFS");
-
-	CVFSHandler::FreeLock();
+	vfsHandler->FreeLock();
 	return 1;
 }

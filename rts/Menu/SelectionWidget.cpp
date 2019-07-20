@@ -154,8 +154,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	if (userMod == SelectionWidget::NoModSelect || userMap == SelectionWidget::NoMapSelect )
 		return;
 
-	CVFSHandler::GrabLock();
-
+	vfsHandler->GrabLock();
 	vfsHandler->SetName("SelWidgetVFS");
 	// menu is only shown on startup, or after reload which already unmaps
 	// vfsHandler->UnMapArchives();
@@ -207,8 +206,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	// no unmap, no remap
 	// vfsHandler->ReMapArchives();
 	vfsHandler->SetName("SpringVFS");
-
-	CVFSHandler::FreeLock();
+	vfsHandler->FreeLock();
 }
 
 void SelectionWidget::UpdateAvailableScripts()
