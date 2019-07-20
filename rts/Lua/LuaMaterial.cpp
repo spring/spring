@@ -642,8 +642,8 @@ void LuaMatUniforms::Validate(LuaMatShader* s)
 	}
 
 	// print warning when teamcolor is not bound
-	if (!teamColor.IsValid())
-		LOG_L(L_WARNING, fmts[1], __func__);
+	//if (!teamColor.IsValid())
+		//LOG_L(L_WARNING, fmts[1], __func__);
 
 
 	const decltype(GetEngineNameUniformPairs())& uniforms = GetEngineNameUniformPairs();
