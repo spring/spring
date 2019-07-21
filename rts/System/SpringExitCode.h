@@ -5,11 +5,11 @@
 
 namespace spring {
 	enum {
-		EXIT_CODE_FAILURE = -2,
-		EXIT_CODE_DESYNC  = -1,
-		EXIT_CODE_SUCCESS =  0,
-		EXIT_CODE_TIMEOUT =  1,
-		EXIT_CODE_FORCED  =  2,
+		EXIT_CODE_FAILURE = -1002, // SpringApp::Run
+		EXIT_CODE_DESYNC  = -1001, // GameServer::CheckSync
+		EXIT_CODE_SUCCESS =     0,
+		EXIT_CODE_TIMEOUT =  1001, // PreGame::UpdateClientNet
+		EXIT_CODE_FORCED  =  1002, // Game::LoadGame
 	};
 
 	// only here for validation tests
