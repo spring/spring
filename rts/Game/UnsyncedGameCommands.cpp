@@ -2982,7 +2982,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		game->ReloadGame();
+		game->Reload();
 		return true;
 	}
 };
