@@ -346,7 +346,7 @@ void CGame::AddTimedJobs()
 	}
 }
 
-void CGame::LoadGame(const std::string& mapFileName)
+void CGame::Load(const std::string& mapFileName)
 {
 	// NOTE:
 	//   this is needed for LuaHandle::CallOut*UpdateCallIn
@@ -1858,7 +1858,7 @@ bool CGame::IsLagging(float maxLatency) const
 }
 
 
-void CGame::ReloadGame()
+void CGame::Reload()
 {
 	if (saveFileHandler != nullptr) {
 		// This reloads heightmap, triggers Load call-in, etc.
@@ -1869,7 +1869,7 @@ void CGame::ReloadGame()
 	}
 }
 
-void CGame::SaveGame(std::string&& fileName, std::string&& saveArgs)
+void CGame::Save(std::string&& fileName, std::string&& saveArgs)
 {
 	globalSaveFileData.name = std::move(fileName);
 	globalSaveFileData.args = std::move(saveArgs);

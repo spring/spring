@@ -9,7 +9,7 @@ namespace spring {
 		EXIT_CODE_DESYNC  = -1001, // GameServer::CheckSync
 		EXIT_CODE_SUCCESS =     0,
 		EXIT_CODE_TIMEOUT =  1001, // PreGame::UpdateClientNet
-		EXIT_CODE_FORCED  =  1002, // Game::LoadGame
+		EXIT_CODE_FORCED  =  1002, // Game::Load
 	};
 
 	// only here for validation tests

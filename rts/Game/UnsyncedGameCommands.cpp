@@ -2975,9 +2975,9 @@ public:
 		std::vector<std::string> args = _local_strSpaceTokenize(action.GetArgs());
 
 		switch (args.size()) {
-			case  1: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),                 ""); } return  true;
-			case  2: { game->SaveGame("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"), std::move(args[1])); } return  true;
-			default: {                                                                                    ; }        break;
+			case  1: { game->Save("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"),                 ""); return  true; } break;
+			case  2: { game->Save("Saves/" + args[0] + (usecreg? ".ssf": ".slsf"), std::move(args[1])); return  true; } break;
+			default: {                                                                                                } break;
 		}
 
 		return false;

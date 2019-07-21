@@ -321,7 +321,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			const std::string currTimeStr = std::move(CTimeUtil::GetCurrentTimeStr());
 			const std::string saveFileName = currTimeStr + "_" + modInfo.filename + "_" + gameSetup->mapName;
 
-			game->SaveGame("Saves/" + saveFileName + ".ssf", "");
+			game->Save("Saves/" + saveFileName + ".ssf", "");
 		}
 	}
 	else if (InBox(mx, my, box + menuBox)) {

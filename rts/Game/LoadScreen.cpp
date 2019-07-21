@@ -110,7 +110,7 @@ bool CLoadScreen::Init()
 	if ((CglFont::threadSafety = mtLoading)) {
 		try {
 			// create the game-loading thread; rebinds primary context to hidden window
-			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapFileName)));
+			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::Load, game, mapFileName)));
 
 			while (!Watchdog::HasThread(WDT_LOAD));
 		} catch (const opengl_error& gle) {
@@ -133,7 +133,7 @@ bool CLoadScreen::Init()
 		return true;
 
 	LOG("[LoadScreen::%s] single-threaded", __func__);
-	game->LoadGame(mapFileName);
+	game->Load(mapFileName);
 	return false;
 }
 
@@ -147,7 +147,7 @@ void CLoadScreen::Kill()
 
 	CLuaIntro::FreeHandler();
 
-	// at this point, the thread running CGame::LoadGame
+	// at this point, gameLoadThread running CGame::Load
 	// has finished and deregistered itself from WatchDog
 	gameLoadThread.join();
 
@@ -183,7 +183,7 @@ void CLoadScreen::CreateDeleteInstance(std::string&& mapFileName, std::string&& 
 	if (CreateInstance(std::move(mapFileName), std::move(modFileName), saveFile))
 		return;
 
-	// not mtLoading, LoadGame has completed and we can go
+	// not mtLoading, Game::Load has completed and we can go
 	DeleteInstance();
 	FinishedLoading();
 }
