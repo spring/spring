@@ -40,7 +40,7 @@ public:
 	};
 
 public:
-	void LoadGame(const std::string& mapName);
+	void Load(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
@@ -89,8 +89,8 @@ public:
 
 	void ParseInputTextGeometry(const std::string& geo);
 
-	void ReloadGame();
-	void SaveGame(std::string&& fileName, std::string&& saveArgs);
+	void Reload();
+	void Save(std::string&& fileName, std::string&& saveArgs);
 
 	void ResizeEvent() override;
 

@@ -37,7 +37,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 
 	if (unitHandler.MaxUnits() > 0) {
-		// simulation; values are meaningless prior to LoadGame
+		// simulation; values are meaningless prior to Game::Load
 		LuaPushNamedNumber(L, "maxUnits", unitHandler.MaxUnits());
 
 		// NB: not constants
@@ -69,7 +69,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 
 	if (!modInfo.filename.empty()) {
-		// mod-info; values are meaningless prior to LoadGame
+		// mod-info; values are meaningless prior to Game::Load
 		LuaPushNamedString(L, "gameName"     , modInfo.humanName);
 		LuaPushNamedString(L, "gameShortName", modInfo.shortName);
 		LuaPushNamedString(L, "gameVersion"  , modInfo.version);
