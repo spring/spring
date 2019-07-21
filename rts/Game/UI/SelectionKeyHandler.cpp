@@ -116,10 +116,10 @@ namespace {
 	DECLARE_FILTER(Aircraft, unit->unitDef->IsAirUnit())
 	DECLARE_FILTER(Weapons, !unit->weapons.empty())
 	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty())
-	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
-	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT))
+	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() && (unit->commandAI->commandQue.front().GetID() == CMD_WAIT))
 	DECLARE_FILTER(InHotkeyGroup, unit->GetGroup() != nullptr)
-	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius)
+	DECLARE_FILTER(Radar, (unit->radarRadius > 0 || unit->sonarRadius > 0))
+	DECLARE_FILTER(Jammer, (unit->jammerRadius > 0))
 	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire)
 
 	DECLARE_FILTER_EX(WeaponRange, 1, unit->maxRange > minRange,
