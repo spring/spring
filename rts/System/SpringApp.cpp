@@ -644,7 +644,7 @@ void SpringApp::Reload(const std::string script)
 		gameServer->SetReloading(true);
 
 	if (clientNet != nullptr)
-		clientNet->SetDemoRecorder(nullptr);
+		clientNet->ResetDemoRecorder();
 
 	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then
@@ -879,7 +879,7 @@ void SpringApp::Kill(bool fromRun)
 	// write the demo before destroying game, such that it can not
 	// be affected by a crash in any of the Game::Kill* functions
 	if (clientNet != nullptr)
-		clientNet->SetDemoRecorder(nullptr);
+		clientNet->ResetDemoRecorder();
 
 	// see ::Reload
 	ISound::Shutdown(false);

@@ -595,12 +595,12 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	if (clientNet != nullptr && wantDemo) {
 		assert(clientNet->GetDemoRecorder() == nullptr);
 
-		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
-		recorder->WriteSetupText(gameData->GetSetupText());
-		recorder->SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
-		clientNet->SetDemoRecorder(recorder);
+		CDemoRecorder recorder = {gameSetup->mapName, gameSetup->modName, false};
+		recorder.WriteSetupText(gameData->GetSetupText());
+		recorder.SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
+		clientNet->SetDemoRecorder(std::move(recorder));
 
-		LOG("PreGame::%s] recording demo to \"%s\"", __func__, (recorder->GetName()).c_str());
+		LOG("[PreGame::%s] recording demo to \"%s\"", __func__, (clientNet->GetDemoRecorder()->GetName()).c_str());
 	}
 }
 
