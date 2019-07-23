@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <string>
-#include <memory>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
 #include "System/Threading/SpringThreading.h"
@@ -103,8 +102,11 @@ public:
 
 	void KeepUpdating(bool b) { keepUpdating = b; }
 
-	void SetDemoRecorder(CDemoRecorder* r);
-	CDemoRecorder* GetDemoRecorder() const;
+	void SetDemoRecorder(CDemoRecorder&& r);
+	void ResetDemoRecorder();
+
+	netcode::CConnection* GetServerConnection() { return serverConnPtr; }
+	CDemoRecorder* GetDemoRecorder() { return demoRecordPtr; }
 
 	unsigned int GetNumWaitingServerPackets() const;
 	unsigned int GetNumWaitingPingPackets() const;
@@ -114,8 +116,11 @@ private:
 
 	spring::spinlock serverConnMutex;
 
-	std::unique_ptr<netcode::CConnection> serverConn;
-	std::unique_ptr<CDemoRecorder> demoRecorder;
+	uint8_t serverConnMem[1024];
+	uint8_t demoRecordMem[ 512];
+
+	netcode::CConnection* serverConnPtr = nullptr;
+	CDemoRecorder* demoRecordPtr = nullptr;
 
 	std::string userName;
 	std::string userPasswd;

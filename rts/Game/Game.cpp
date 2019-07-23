@@ -1609,7 +1609,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 
 	CDemoRecorder* record = clientNet->GetDemoRecorder();
 
-	if (record == nullptr)
+	if (!record->IsValid())
 		return;
 
 	// Write CPlayer::Statistics and CTeam::Statistics to demo

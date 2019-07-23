@@ -45,6 +45,9 @@ CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modN
 
 CDemoRecorder::~CDemoRecorder()
 {
+	if (file == nullptr)
+		return;
+
 	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
@@ -89,7 +92,7 @@ void CDemoRecorder::WriteDemoFile()
 		gzclose(file);
 	};
 
-	LOG("[%s] writing %s-demo \"%s\" (%u bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), static_cast<unsigned int>(data.size()));
+	LOG("[DemoRecorder::%s] writing %s-demo \"%s\" (" _STPF_ " bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), data.size());
 
 	#ifndef WIN32
 	// NOTE: can not use ThreadPool for this directly here, workers are already gone
