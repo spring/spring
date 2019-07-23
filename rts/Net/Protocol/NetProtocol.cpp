@@ -1,12 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+// included first due to "WinSock.h has already been included" error on Windows
+#include "System/Net/UDPConnection.h"
+#include "System/Net/LocalConnection.h"
+
 #include "NetProtocol.h"
 #include "Game/ClientSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/LoadSave/DemoRecorder.h"
-#include "System/Net/LocalConnection.h"
-#include "System/Net/UDPConnection.h"
+// #include "System/Net/LocalConnection.h"
+// #include "System/Net/UDPConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/Threading.h"
 #include "System/Config/ConfigHandler.h"
