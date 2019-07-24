@@ -30,7 +30,6 @@ CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stack
 
 CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(3).maximumValue(4);
 CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
-CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
@@ -193,7 +192,7 @@ CGlobalRendering::CGlobalRendering()
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
 	// fallback
-	, msaaLevel(std::max(configHandler->GetInt("MSAALevel"), configHandler->GetInt("FSAALevel")))
+	, msaaLevel(configHandler->GetInt("MSAALevel"))
 	, maxTextureSize(2048)
 	, maxTexAnisoLvl(0.0f)
 
