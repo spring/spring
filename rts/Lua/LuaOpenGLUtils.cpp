@@ -626,6 +626,10 @@ GLuint LuaMatTexture::GetTextureTarget() const
 {
 	GLuint texType = GL_TEXTURE_2D;
 
+	#define groundDrawer (readMap->GetGroundDrawer())
+	#define gdGeomBuff (groundDrawer->GetGeometryBuffer())
+	#define udGeomBuff (unitDrawer->GetGeometryBuffer())
+
 	switch (type) {
 		case LUATEX_NAMED: {
 			texType = GL_TEXTURE_2D; //FIXME allow lua to load cubemaps!
@@ -684,7 +688,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MAP_GBUFFER_EMIT:
 		case LUATEX_MAP_GBUFFER_MISC:
 		case LUATEX_MAP_GBUFFER_ZVAL: {
-			texType = GL_TEXTURE_2D;
+			texType = gdGeomBuff->GetTextureTarget();
 		} break;
 
 		case LUATEX_MODEL_GBUFFER_NORM:
@@ -693,7 +697,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MODEL_GBUFFER_EMIT:
 		case LUATEX_MODEL_GBUFFER_MISC:
 		case LUATEX_MODEL_GBUFFER_ZVAL: {
-			texType = GL_TEXTURE_2D;
+			texType = udGeomBuff->GetTextureTarget();
 		} break;
 
 		case LUATEX_FONT:
@@ -704,6 +708,10 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		default:
 			assert(false);
 	}
+
+	#undef udGeomBuff
+	#undef gdGeomBuff
+	#undef groundDrawer
 
 	return texType;
 }
