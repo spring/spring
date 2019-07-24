@@ -131,7 +131,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 			if (GetTextureTarget() == GL_TEXTURE_2D)
 				glTexImage2D(GetTextureTarget(), 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 			else
-				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_RGBA, size.x, size.y, GL_TRUE);
+				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_RGBA8, size.x, size.y, GL_TRUE);
 
 			bufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
 		}
