@@ -3,19 +3,16 @@
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "System/EventHandler.h"
 #include "System/Rectangle.h"
+#include "System/TimeProfiler.h"
 
 #include <cstring>
 
 HeightMapTexture* heightMapTexture = nullptr;
-HeightMapTexture::HeightMapTexture()
-	: CEventClient("[HeightMapTexture]", 2718965, false)
+HeightMapTexture::HeightMapTexture(): CEventClient("[HeightMapTexture]", 2718965, false)
 {
-	texID = 0;
-	xSize = 0;
-	ySize = 0;
-
 	eventHandler.AddClient(this);
 	Init();
 }
@@ -47,20 +44,20 @@ void HeightMapTexture::Init()
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,  xSize, ySize, 0,  GL_RED, GL_FLOAT, readMap->GetCornerHeightMapUnsynced());
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	pbo.Bind();
-	pbo.New(xSize * ySize * sizeof(float));
-	pbo.Unbind();
 }
 
 
 void HeightMapTexture::Kill()
 {
 	glDeleteTextures(1, &texID);
+
 	texID = 0;
 	xSize = 0;
 	ySize = 0;
-	pbo.Release();
+
+	for (PBO& pbo: pbos) {
+		pbo.Release();
+	}
 }
 
 
@@ -68,6 +65,8 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	if (texID == 0)
 		return;
+
+	SCOPED_TIMER("Update::HeightMapTexture");
 
 	// the upper bounds of UHM rectangles are clamped to
 	// map{x,y}; valid for indexing the corner heightmap
@@ -77,7 +76,11 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	assert(sizeX <= xSize);
 	assert(sizeZ <= ySize);
 
+	// RR update policy
+	PBO& pbo = pbos[globalRendering->drawFrame % 3];
+
 	pbo.Bind();
+	pbo.New(sizeX * sizeZ * sizeof(float));
 
 	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 	      float* heightBuf = reinterpret_cast<float*>(pbo.MapBuffer());
