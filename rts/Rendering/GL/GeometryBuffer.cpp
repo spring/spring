@@ -139,10 +139,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 	// sic; Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
 	buffer.Bind();
-
-	for (unsigned int n = 0; n < ATTACHMENT_COUNT; n++) {
-		buffer.AttachTexture(bufferTextureIDs[n], texTarget, bufferAttachments[n]);
-	}
+	buffer.AttachTextures(bufferTextureIDs, bufferAttachments, texTarget, ATTACHMENT_COUNT);
 
 	glBindTexture(texTarget, 0);
 	// define the attachments we are going to draw into

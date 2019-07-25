@@ -60,6 +60,13 @@ public:
 	 */
 	bool IsValid() const;
 
+
+	void AttachTextures(const GLuint* ids, const GLenum* attachments, const GLenum texTarget, const GLuint texCount, const int mipLevel = 0, const int zSlice = 0) {
+		for (unsigned int i = 0; i < texCount; i++) {
+			AttachTexture(ids[i], texTarget, attachments[i], mipLevel, zSlice);
+		}
+	}
+
 	/**
 	 * @brief AttachTexture
 	 * @param texTarget texture target (GL_TEXTURE_2D etc.)
