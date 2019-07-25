@@ -107,39 +107,41 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
-	unsigned int n = 0;
+	const unsigned int texTarget = GetTextureTarget();
 
-	for (; n < ATTACHMENT_COUNT; n++) {
+	for (unsigned int n = 0; n < ATTACHMENT_COUNT; n++) {
 		glGenTextures(1, &bufferTextureIDs[n]);
-		glBindTexture(GetTextureTarget(), bufferTextureIDs[n]);
+		glBindTexture(texTarget, bufferTextureIDs[n]);
 
-		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GetTextureTarget(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GetTextureTarget(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(texTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(texTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(texTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		if (n == ATTACHMENT_ZVALTEX) {
-			glTexParameteri(GetTextureTarget(), GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+			glTexParameteri(texTarget, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 
-			if (GetTextureTarget() == GL_TEXTURE_2D)
-				glTexImage2D(GetTextureTarget(), 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+			if (texTarget == GL_TEXTURE_2D)
+				glTexImage2D(texTarget, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 			else
-				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_DEPTH_COMPONENT32F, size.x, size.y, GL_TRUE);
+				glTexImage2DMultisample(texTarget, globalRendering->msaaLevel, GL_DEPTH_COMPONENT32F, size.x, size.y, GL_TRUE);
 
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
-			if (GetTextureTarget() == GL_TEXTURE_2D)
-				glTexImage2D(GetTextureTarget(), 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			if (texTarget == GL_TEXTURE_2D)
+				glTexImage2D(texTarget, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 			else
-				glTexImage2DMultisample(GetTextureTarget(), globalRendering->msaaLevel, GL_RGBA8, size.x, size.y, GL_TRUE);
+				glTexImage2DMultisample(texTarget, globalRendering->msaaLevel, GL_RGBA8, size.x, size.y, GL_TRUE);
 
 			bufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
 		}
 	}
 
 	// sic; Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
-	for (buffer.Bind(); n > 0; n--) {
-		buffer.AttachTexture(bufferTextureIDs[n - 1], GetTextureTarget(), bufferAttachments[n - 1]);
+	buffer.Bind();
+
+	for (unsigned int n = 0; n < ATTACHMENT_COUNT; n++) {
+		buffer.AttachTexture(bufferTextureIDs[n], texTarget, bufferAttachments[n]);
 	}
 
 	glBindTexture(GetTextureTarget(), 0);
