@@ -102,6 +102,9 @@ VBO& VBO::operator=(VBO&& other)
 }
 
 
+void VBO::Generate() const { glGenBuffers(1, &vboId); }
+void VBO::Delete() const { glDeleteBuffers(1, &vboId); vboId = 0; }
+
 void VBO::Bind(GLenum target) const
 {
 	assert(!bound);

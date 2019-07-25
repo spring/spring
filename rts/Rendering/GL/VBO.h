@@ -25,6 +25,14 @@ public:
 	static bool IsVBOSupported();
 	static bool IsPBOSupported();
 
+	// NOTE: if declared in global scope, user has to call these before exit
+	void Release() {
+		UnmapIf();
+		Delete();
+	}
+	void Generate() const;
+	void Delete() const;
+
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBindBuffer.xml
@@ -47,7 +55,16 @@ public:
 	 */
 	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
+
 	void UnmapBuffer();
+	void UnmapIf() {
+		if (!mapped)
+			return;
+
+		Bind();
+		UnmapBuffer();
+		Unbind();
+	}
 
 	GLuint GetId() const {
 		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);

@@ -49,10 +49,6 @@ void HeightMapTexture::Init()
 		GL_LUMINANCE, GL_FLOAT, readMap->GetCornerHeightMapUnsynced());
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	pbo.Bind();
-	pbo.New(xSize * ySize * sizeof(float));
-	pbo.Unbind();
 }
 
 
