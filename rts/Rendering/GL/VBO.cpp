@@ -69,16 +69,8 @@ VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0), isSupported(true)
 
 VBO::~VBO()
 {
-	if (mapped) {
-		Bind();
-		UnmapBuffer();
-		Unbind();
-	}
-	if (GLEW_ARB_vertex_buffer_object)
-		glDeleteBuffers(1, &vboId);
-
-	delete[] data;
-	data = nullptr;
+	UnmapIf();
+	Delete();
 }
 
 
@@ -103,17 +95,24 @@ VBO& VBO::operator=(VBO&& other)
 
 
 void VBO::Generate() const { glGenBuffers(1, &vboId); }
-void VBO::Delete() const { glDeleteBuffers(1, &vboId); vboId = 0; }
+void VBO::Delete() {
+	if (GLEW_ARB_vertex_buffer_object)
+		glDeleteBuffers(1, &vboId);
+
+	vboId = 0;
+
+	delete[] data;
+	data = nullptr;
+}
 
 void VBO::Bind(GLenum target) const
 {
 	assert(!bound);
 
+	if (isSupported)
+		glBindBuffer(curBoundTarget = target, GetId());
+
 	bound = true;
-	if (isSupported) {
-		curBoundTarget = target;
-		glBindBuffer(target, GetId());
-	}
 }
 
 

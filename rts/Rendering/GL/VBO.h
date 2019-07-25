@@ -31,7 +31,7 @@ public:
 		Delete();
 	}
 	void Generate() const;
-	void Delete() const;
+	void Delete();
 
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
