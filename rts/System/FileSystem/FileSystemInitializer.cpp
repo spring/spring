@@ -113,7 +113,7 @@ void FileSystemInitializer::Reload()
 	// repopulated by PreGame, etc
 	// stash mod and map archives which may be requested again
 	// useful since reloading the same game is the common case
-	vfsHandler->UnMapArchives();
+	vfsHandler->UnMapArchives(true);
 	archiveScanner->Reload();
 }
 

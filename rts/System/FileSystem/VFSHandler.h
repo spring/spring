@@ -154,8 +154,8 @@ public:
 	void DeleteArchives(Section section);
 	void ReserveArchives();
 
-	void UnMapArchives();
-	void ReMapArchives();
+	void UnMapArchives(bool reload = false);
+	void ReMapArchives(bool reload = false);
 	void SwapArchiveSections(Section src, Section dst);
 
 private:
