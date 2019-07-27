@@ -317,19 +317,28 @@ void CVFSHandler::ReserveArchives()
 }
 
 
-void CVFSHandler::UnMapArchives()
+void CVFSHandler::UnMapArchives(bool reload)
 {
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
-	DeleteArchives(Section::TempMod );
-	DeleteArchives(Section::TempMap );
+	// reloading from game to menu stashes archives, so do
+	// not wipe them when reloading from menu back to game
+	if (!reload || !files[Section::Mod].empty())
+		DeleteArchives(Section::TempMod );
+
+	if (!reload || !files[Section::Map].empty())
+		DeleteArchives(Section::TempMap );
+
 	// base is a dependency of most archives, leave it alone
 	// otherwise PreGame etc also have to swap Section::Base
-	// DeleteArchives(Section::TempBase);
+	// if (!reload || !files[Section::Base].empty())
+	//	DeleteArchives(Section::TempBase);
+
 	// menu persists reload, but controller is always reset
-	DeleteArchives(Section::TempMenu);
+	if (!reload || !files[Section::Menu].empty())
+		DeleteArchives(Section::TempMenu);
 
 	SwapArchiveSections(Section::TempMod , Section::Mod );
 	SwapArchiveSections(Section::TempMap , Section::Map );
@@ -337,17 +346,21 @@ void CVFSHandler::UnMapArchives()
 	SwapArchiveSections(Section::TempMenu, Section::Menu);
 }
 
-void CVFSHandler::ReMapArchives()
+void CVFSHandler::ReMapArchives(bool reload)
 {
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
-	DeleteArchives(Section::Mod );
-	DeleteArchives(Section::Map );
+	if (!reload || !files[Section::TempMod].empty())
+		DeleteArchives(Section::Mod );
+	if (!reload || !files[Section::TempMap].empty())
+		DeleteArchives(Section::Map );
 	// see UnMapArchives
-	// DeleteArchives(Section::Base);
-	DeleteArchives(Section::Menu);
+	// if (!reload || !files[Section::TempBase].empty())
+	//	DeleteArchives(Section::Base);
+	if (!reload || !files[Section::TempMenu].empty())
+		DeleteArchives(Section::Menu);
 
 	SwapArchiveSections(Section::TempMod , Section::Mod );
 	SwapArchiveSections(Section::TempMap , Section::Map );
