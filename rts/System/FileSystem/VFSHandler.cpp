@@ -321,7 +321,7 @@ void CVFSHandler::UnMapArchives(bool reload)
 {
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
-	LOG_L(L_INFO, "[%s::%s<this=%p>] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
+	LOG_L(L_INFO, "[%s::%s<this=%p>(reload=%d)] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, reload, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
 	// reloading from game to menu stashes archives, so do
 	// not wipe them when reloading from menu back to game
@@ -350,7 +350,7 @@ void CVFSHandler::ReMapArchives(bool reload)
 {
 	std::lock_guard<decltype(vfsMutex)> lck(vfsMutex);
 
-	LOG_L(L_INFO, "[%s::%s<this=%p>] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
+	LOG_L(L_INFO, "[%s::%s<this=%p>(reload=%d)] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, reload, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
 	if (!reload || !files[Section::TempMod].empty())
 		DeleteArchives(Section::Mod );
