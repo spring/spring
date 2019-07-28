@@ -1,6 +1,10 @@
 #include <algorithm>
 #include <numeric>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <SDL2/SDL.h>
 
 #include "Rendering/GL/myGL.h"
@@ -439,4 +443,11 @@ int main(int argc, char** argv)
 	SDL_Quit();
 	return 0;
 }
+
+#ifdef WIN32
+int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	return main(__argc, __argv);
+}
+#endif
 
