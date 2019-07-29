@@ -490,8 +490,8 @@ void CReadMap::UpdateHeightMapSynced(const SRectangle& hgtMapRect, bool initiali
 	if (hgtMapRect.GetArea() <= 0)
 		return;
 
-	const int2 mins = {hgtMapRect.x1 - 1, hgtMapRect.z1 + 1};
-	const int2 maxs = {hgtMapRect.x2 - 1, hgtMapRect.z2 + 1};
+	const int2 mins = {hgtMapRect.x1 - 1, hgtMapRect.z1 - 1};
+	const int2 maxs = {hgtMapRect.x2 + 1, hgtMapRect.z2 + 1};
 
 	// NOTE:
 	//   rectangles are clamped to map{x,y}m1 which are the proper inclusive bounds for center heightmaps
