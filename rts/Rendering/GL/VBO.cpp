@@ -28,6 +28,7 @@ VBO& VBO::operator=(VBO&& other) noexcept
 	std::swap(vboId, other.vboId);
 	std::swap(bound, other.bound);
 	std::swap(mapped, other.mapped);
+	std::swap(nullSizeMapped, other.nullSizeMapped);
 
 	std::swap(bufSize, other.bufSize);
 	std::swap(memSize, other.memSize);
@@ -35,7 +36,7 @@ VBO& VBO::operator=(VBO&& other) noexcept
 	std::swap(curBoundTarget, other.curBoundTarget);
 	std::swap(defTarget, other.defTarget);
 	std::swap(usage, other.usage);
-	std::swap(nullSizeMapped, other.nullSizeMapped);
+	std::swap(mapUnsyncedBit, other.mapUnsyncedBit);
 
 	std::swap(immutableStorage, other.immutableStorage);
 	std::swap(readableStorage, other.readableStorage);
@@ -164,11 +165,14 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	assert((offset + size) <= bufSize);
 	mapped = true;
 
+	// ATI interprets unsynchronized access differently; (un)mapping does not sync
+	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
+
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
 	// for easier handling convert the glMapBuffer ones here
 	switch (access) {
 		case GL_WRITE_ONLY: {
-			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~((GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT) * immutableStorage);
@@ -176,7 +180,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 			#endif
 		} break;
 		case GL_READ_WRITE: {
-			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);
@@ -184,7 +188,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 			#endif
 		} break;
 		case GL_READ_ONLY: {
-			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | mapUnsyncedBit;
 
 			#ifdef GLEW_ARB_buffer_storage
 			access &= ~(GL_MAP_UNSYNCHRONIZED_BIT * immutableStorage);

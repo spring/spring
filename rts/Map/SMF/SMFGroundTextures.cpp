@@ -172,8 +172,6 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	// implement S3TC now
 	// (recompression quality would have to be low anyway for performance reasons)
 	tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-	// ATI interprets unsynchronized access differently; (un)mapping does not sync
-	pboUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
 }
 
 void CSMFGroundTextures::LoadSquareTextures(const int minLevel, const int maxLevel)
@@ -458,7 +456,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pboUnsyncedBit));
+	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
 	glBindTexture(ttarget, texID);
@@ -528,7 +526,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pboUnsyncedBit));
+	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
 	glCompressedTexSubImage3D(
