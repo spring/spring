@@ -40,17 +40,10 @@ bool VBO::IsSupported() const
 }
 
 
-VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0), isSupported(true)
+VBO::VBO(GLenum _defTarget, const bool storage)
 {
-	bound = false;
-	mapped = false;
-	data = nullptr;
-	bufSize = 0;
-	memSize = 0;
 	curBoundTarget = _defTarget;
 	defTarget = _defTarget;
-	usage = GL_STREAM_DRAW;
-	nullSizeMapped = false;
 
 	isSupported = IsSupported();
 	immutableStorage = storage;
@@ -79,17 +72,20 @@ VBO& VBO::operator=(VBO&& other)
 	std::swap(vboId, other.vboId);
 	std::swap(bound, other.bound);
 	std::swap(mapped, other.mapped);
-	std::swap(data, other.data);
+	std::swap(nullSizeMapped, other.nullSizeMapped);
+
 	std::swap(bufSize, other.bufSize);
 	std::swap(memSize, other.memSize);
+
 	std::swap(curBoundTarget, other.curBoundTarget);
 	std::swap(defTarget, other.defTarget);
 	std::swap(usage, other.usage);
-	std::swap(nullSizeMapped, other.nullSizeMapped);
+	std::swap(mapUnsyncedBit, other.mapUnsyncedBit);
 
 	std::swap(isSupported, other.isSupported);
 	std::swap(immutableStorage, other.immutableStorage);
 
+	std::swap(data, other.data);
 	return *this;
 }
 
@@ -303,22 +299,24 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	assert(offset + size <= bufSize);
 	mapped = true;
 
+	// ATI interprets unsynchronized access differently; (un)mapping does not sync
+	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
+
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
 	// for easier handling convert the glMapBuffer ones here
 	switch (access) {
 		case GL_WRITE_ONLY:
-			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | mapUnsyncedBit;
 		#ifdef GLEW_ARB_buffer_storage
-			if (immutableStorage) {
+			if (immutableStorage)
 				access = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-			}
 		#endif
 			break;
 		case GL_READ_WRITE:
-			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | mapUnsyncedBit;
 			break;
 		case GL_READ_ONLY:
-			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			access = GL_MAP_READ_BIT | mapUnsyncedBit;
 			break;
 		default: break;
 	}

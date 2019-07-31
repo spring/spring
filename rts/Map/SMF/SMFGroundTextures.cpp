@@ -177,8 +177,6 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	{
 		tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 	}
-	// ATI interprets unsynchronized access differently; (un)mapping does not sync
-	pboUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
 }
 
 void CSMFGroundTextures::LoadSquareTextures(const int mipLevel)
@@ -418,13 +416,18 @@ bool CSMFGroundTextures::SetSquareLuaTexture(int texSquareX, int texSquareY, int
 }
 
 bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel) {
-	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX) { return false; }
-	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY) { return false; }
-	if (texMipLevel < 0 || texMipLevel > 3) { return false; }
+	if (texSquareX < 0 || texSquareX >= smfMap->numBigTexX)
+		return false;
+	if (texSquareY < 0 || texSquareY >= smfMap->numBigTexY)
+		return false;
+	if (texMipLevel < 0 || texMipLevel > 3)
+		return false;
 
 	// no point extracting sub-rectangles from compressed data
-	if (texSizeX != (smfMap->bigTexSize >> texMipLevel)) { return false; }
-	if (texSizeY != (smfMap->bigTexSize >> texMipLevel)) { return false; }
+	if (texSizeX != (smfMap->bigTexSize >> texMipLevel))
+		return false;
+	if (texSizeY != (smfMap->bigTexSize >> texMipLevel))
+		return false;
 
 	constexpr GLenum ttarget = GL_TEXTURE_2D;
 	constexpr GLbitfield access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT;
@@ -434,7 +437,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pboUnsyncedBit));
+	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
 	glBindTexture(ttarget, texID);
@@ -502,7 +505,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 
 	pbo.Bind();
 	pbo.New(numSqBytes);
-	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pboUnsyncedBit));
+	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer(0, pbo.bufSize, access | pbo.mapUnsyncedBit));
 	pbo.UnmapBuffer();
 
 	glDeleteTextures(1, square->GetTextureIDPtr());
