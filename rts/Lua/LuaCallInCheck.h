@@ -7,9 +7,9 @@
 #include "LuaUtils.h"
 
 #if DEBUG_LUA
-#  define LUA_CALL_IN_CHECK(L, ...) LuaUtils::ScopedStackChecker ciCheck((L)); SCOPED_SPECIAL_TIMER("Lua");
+#  define LUA_CALL_IN_CHECK(L, ...) LuaUtils::ScopedStackChecker ciCheck((L)); SCOPED_SPECIAL_TIMER((GetLuaContextData(L)->synced)? "Lua::callins::synced": "Lua::callins::unsynced");
 #else
-#  define LUA_CALL_IN_CHECK(L, ...) SCOPED_SPECIAL_TIMER("Lua");
+#  define LUA_CALL_IN_CHECK(L, ...) SCOPED_SPECIAL_TIMER((GetLuaContextData(L)->synced)? "Lua::callins::synced": "Lua::callins::unsynced");
 #endif
 
 #endif /* LUA_CALL_IN_CHECK_H */
