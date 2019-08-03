@@ -408,7 +408,9 @@ void CMobileCAI::ExecuteMove(Command& c)
 	}
 
 	// bypass cancel-distance check for internal (BUGGER_OFF) move commands
-	if (sqGoalDist >= cancelDistance || c.IsInternalOrder() || !HasMoreMoveCommands())
+	// (not for internal CMD_FIGHT's created by ExecutePatrol; these should
+	// get cancelled like regular user fight-commands)
+	if (sqGoalDist >= cancelDistance || (c.IsInternalOrder() && !c.IsAttackCommand()) || !HasMoreMoveCommands())
 		return;
 
 	// fallback

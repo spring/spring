@@ -346,6 +346,10 @@ public:
 		return IsBuildCommand();
 	}
 
+	bool IsAttackCommand() const {
+		return (GetID() == CMD_ATTACK || GetID() == CMD_AREA_ATTACK || GetID() == CMD_FIGHT);
+	}
+
 	bool IsAreaCommand() const {
 		switch (GetID()) {
 			case CMD_CAPTURE:
