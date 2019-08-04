@@ -132,7 +132,7 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		agui::Picture* background = new agui::Picture(this);
 
 		{
-			// can not conflict with LuaMenu archive, just keep  in VFS if it was not already
+			// can not conflict with LuaMenu archive, just keep in VFS if it was not already
 			vfsHandler->SetName("SelMenuVFS");
 			vfsHandler->AddArchiveIf(configHandler->GetString("MenuArchive"), false);
 			vfsHandler->SetName("SpringVFS");
