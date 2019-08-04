@@ -192,34 +192,23 @@ void CPreGame::AddMapArchivesToVFS(const CGameSetup* setup)
 	// StartServerForDemo does *not* add the map but waits for GameDataReceived
 	LOG("[PreGame::%s][server=%p] using map \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->mapName.c_str(), vfsHandler->HasArchive(setup->mapName), vfsHandler->HasTempArchive(setup->mapName));
 
-	// load map archive (from reload-stash if possible)
-	if (vfsHandler->HasTempArchive(setup->mapName))
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-
-	if (!vfsHandler->HasArchive(setup->mapName))
-		vfsHandler->AddArchiveWithDeps(setup->mapName, false);
+	// load map archive
+	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
 }
 
 void CPreGame::AddModArchivesToVFS(const CGameSetup* setup)
 {
 	LOG("[PreGame::%s][server=%p] using game \"%s\" (loaded=%d cached=%d)", __func__, gameServer, setup->modName.c_str(), vfsHandler->HasArchive(setup->modName), vfsHandler->HasTempArchive(setup->modName));
 
-	// load game archive (from reload-stash if possible)
-	if (vfsHandler->HasTempArchive(setup->modName))
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-
 	// load mutators (if any); use WithDeps since mutators depend on the archives they override
 	for (const std::string& mut: setup->GetMutatorsCont()) {
 		LOG("[PreGame::%s] using mutator \"%s\"", __func__, mut.c_str());
 
-		if (vfsHandler->HasArchive(mut))
-			continue;
-
 		vfsHandler->AddArchiveWithDeps(mut, true);
 	}
 
-	if (!vfsHandler->HasArchive(setup->modName))
-		vfsHandler->AddArchiveWithDeps(setup->modName, false);
+	// load game archive
+	vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
 	modFileName = archiveScanner->ArchiveFromName(setup->modName);
 }

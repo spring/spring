@@ -53,15 +53,7 @@ bool CLuaMenuController::Reset()
 	// lock should not be needed here, but does no harm either
 	vfsHandler->GrabLock();
 	vfsHandler->SetName("LuaMenuVFS");
-
-	if (vfsHandler->HasTempArchive(menuArchive))
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Menu, CVFSHandler::Section::TempMenu);
-
-	if (!vfsHandler->HasArchive(menuArchive)) {
-		vfsHandler->DeleteArchives(CVFSHandler::Section::Menu);
-		vfsHandler->AddArchiveWithDeps(menuArchive, false);
-	}
-
+	vfsHandler->AddArchiveWithDeps(menuArchive, false);
 	vfsHandler->SetName("SpringVFS");
 	vfsHandler->FreeLock();
 

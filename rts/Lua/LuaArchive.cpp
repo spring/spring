@@ -222,46 +222,30 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
 	const std::string  mapArchiveName = luaL_optsstring(L, 2, "");
 
+	LOG("LuaArchive::%s] game=\"%s\" (cached=%d loaded=%d) map=\"%s\" (cached=%d loaded=%d)", __func__,
+		gameArchiveName.c_str(), vfsHandler->HasTempArchive(gameArchiveName), vfsHandler->HasArchive(gameArchiveName),
+		 mapArchiveName.c_str(), vfsHandler->HasTempArchive( mapArchiveName), vfsHandler->HasArchive( mapArchiveName)
+	);
+
 	vfsHandler->GrabLock();
 	vfsHandler->SetName("LuaArchiveVFS");
 	// usually only called from LuaMenu between (re)load and PreGame
-	// unmapping would clear any cached archives, reuse them instead
 	// NB: if called at actual game time, must stash current mod/map
-	// vfsHandler->UnMapArchives();
-
-	bool hasModArchive[2] = {false, true};
-	bool hasMapArchive[2] = {false, true};
+	vfsHandler->UnMapArchives(false);
 
 	// load selected archives to access Lua AI's
 	// if names are empty, scan current archives
-	if (!gameArchiveName.empty()) {
-		if ((hasModArchive[0] = vfsHandler->HasTempArchive(gameArchiveName)))
-			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
+	//
+	// in case either archive is already stashed
+	// (from a previous reload) this will simply
+	// repopulate files
+	if (!gameArchiveName.empty())
+		vfsHandler->AddArchive(gameArchiveName, false);
 
-		if (!(hasModArchive[1] = vfsHandler->HasArchive(gameArchiveName))) {
-			assert(!hasModArchive[0]);
-			vfsHandler->DeleteArchives(CVFSHandler::Section::TempMod);
-			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-			vfsHandler->AddArchive(gameArchiveName, false);
-		}
-	}
+	if (!mapArchiveName.empty())
+		vfsHandler->AddArchive(mapArchiveName, false);
 
-	if (!mapArchiveName.empty()) {
-		if ((hasMapArchive[0] = vfsHandler->HasTempArchive(mapArchiveName)))
-			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-
-		if (!(hasMapArchive[1] = vfsHandler->HasArchive(mapArchiveName))) {
-			assert(!hasMapArchive[0]);
-			vfsHandler->DeleteArchives(CVFSHandler::Section::TempMap);
-			vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-			vfsHandler->AddArchive(mapArchiveName, false);
-		}
-	}
-
-	LOG("LuaArchive::%s] game=\"%s\" (cached=%d loaded=%d) map=\"%s\" (cached=%d loaded=%d)", __func__,
-		gameArchiveName.c_str(), hasModArchive[0], hasModArchive[1],
-		 mapArchiveName.c_str(), hasMapArchive[0], hasMapArchive[1]
-	);
+	LOG("LuaArchive::%s] game=\"%s\" map=\"%s\"", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
 
 	{
 		// executing LuaAI.lua can not do harm to VFS
@@ -294,28 +278,7 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		}
 	}
 
-	// gameArchiveName was cached pre-call
-	if (hasModArchive[0])
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	// gameArchiveName was not loaded pre-call
-	if (!hasModArchive[1]) {
-		assert(!hasModArchive[0]);
-		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	}
-
-	// mapArchiveName was cached pre-call
-	if (hasMapArchive[0])
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	// mapArchiveName was not loaded pre-call
-	if (!hasMapArchive[1]) {
-		assert(!hasMapArchive[0]);
-		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	}
-
-	// no unmap, no remap
-	// vfsHandler->ReMapArchives();
+	vfsHandler->ReMapArchives(false);
 	vfsHandler->SetName("SpringVFS");
 	vfsHandler->FreeLock();
 	return 1;
