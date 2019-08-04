@@ -245,8 +245,6 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 	if (!mapArchiveName.empty())
 		vfsHandler->AddArchive(mapArchiveName, false);
 
-	LOG("LuaArchive::%s] game=\"%s\" map=\"%s\"", __func__, gameArchiveName.c_str(), mapArchiveName.c_str());
-
 	{
 		// executing LuaAI.lua can not do harm to VFS
 		const auto& luaAIInfoItems = luaAIImplHandler.LoadInfoItems();
