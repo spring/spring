@@ -392,29 +392,15 @@ int LuaVFS::UseArchive(lua_State* L)
 		// block other threads from getting the global until we are done
 		vfsHandler->GrabLock();
 		vfsHandler->SetName("LuaVFS");
-		vfsHandler->UnMapArchives();
+		vfsHandler->UnMapArchives(false);
 
 		// could be mod,map,etc
-		const CVFSHandler::Section vfsSection = CVFSHandler::GetArchiveSection(fileName);
-		const CVFSHandler::Section tmpSection = CVFSHandler::GetTempArchiveSection(fileName);
-
-		const bool hasArchive = vfsHandler->HasArchive(fileName, tmpSection);
-
-		if (hasArchive) {
-			vfsHandler->SwapArchiveSections(vfsSection, tmpSection);
-		} else {
-			vfsHandler->AddArchive(fileName, false);
-		}
+		vfsHandler->AddArchive(fileName, false);
 
 		callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-		if (hasArchive) {
-			vfsHandler->SwapArchiveSections(vfsSection, tmpSection);
-		} else {
-			vfsHandler->RemoveArchive(fileName);
-		}
-
-		vfsHandler->ReMapArchives();
+		vfsHandler->RemoveArchive(fileName);
+		vfsHandler->ReMapArchives(false);
 		vfsHandler->SetName("SpringVFS");
 		vfsHandler->FreeLock();
 	}

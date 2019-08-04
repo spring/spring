@@ -157,28 +157,10 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	vfsHandler->GrabLock();
 	vfsHandler->SetName("SelWidgetVFS");
 	// menu is only shown on startup, or after reload which already unmaps
-	// vfsHandler->UnMapArchives();
-
-	bool hasModArchive = false;
-	bool hasMapArchive = false;
-
-	if ((hasModArchive = vfsHandler->HasTempArchive(userMod)))
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-
-	if (!vfsHandler->HasArchive(userMod)) {
-		// archive will be kept around for PreGame, so use WithDeps
-		vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
-		vfsHandler->AddArchiveWithDeps(userMod, false);
-	}
-
-	if ((hasMapArchive = vfsHandler->HasTempArchive(userMap)))
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-
-	if (!vfsHandler->HasArchive(userMap)) {
-		// archive will be kept around for PreGame, so use WithDeps
-		vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
-		vfsHandler->AddArchiveWithDeps(userMap, false);
-	}
+	vfsHandler->UnMapArchives(false);
+	// archives will be kept around for PreGame and stashed on reload
+	vfsHandler->AddArchiveWithDeps(userMod, false);
+	vfsHandler->AddArchiveWithDeps(userMap, false);
 
 
 	for (const auto& infoItem: luaAIImplHandler.LoadInfoItems()) {
@@ -189,22 +171,7 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	}
 
 
-	if (hasModArchive) {
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Mod, CVFSHandler::Section::TempMod);
-	} else {
-		// keep around for PreGame
-		// vfsHandler->DeleteArchives(CVFSHandler::Section::Mod);
-	}
-
-	if (hasMapArchive) {
-		vfsHandler->SwapArchiveSections(CVFSHandler::Section::Map, CVFSHandler::Section::TempMap);
-	} else {
-		// keep around for PreGame
-		// vfsHandler->DeleteArchives(CVFSHandler::Section::Map);
-	}
-
-	// no unmap, no remap
-	// vfsHandler->ReMapArchives();
+	vfsHandler->ReMapArchives(false);
 	vfsHandler->SetName("SpringVFS");
 	vfsHandler->FreeLock();
 }

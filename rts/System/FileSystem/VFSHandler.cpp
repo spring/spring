@@ -138,26 +138,32 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	const std::string& archivePath = GetArchivePath(archiveName);
-	const Section section = GetModTypeSection(archiveData.GetModType());
+	const Section rawSection = GetModTypeSection(archiveData.GetModType());
+	const Section tmpSection = Section(rawSection + (Section::TempMod - Section::Mod));
 
-	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", section);
+	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", rawSection);
 
 	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
-	assert(section < Section::Count);
+	assert(rawSection < Section::Count);
 
-	IArchive* ar = archives[section][archivePath];
+	// populate files from stashed archive if possible
+	IArchive* ar = archives[tmpSection][archivePath];
 
 	if (ar == nullptr) {
-		// remove the entry created by operator[]
-		archives[section].erase(archivePath);
+		archives[tmpSection].erase(archivePath);
 
-		if ((ar = archiveLoader.OpenArchive(archivePath)) == nullptr) {
-			LOG_L(L_ERROR, "[%s::%s<this=%p>] failed to open archive '%s' (path '%s', type %d)", vfsName, __func__, this, archiveName.c_str(), archivePath.c_str(), archiveData.GetModType());
-			return false;
+		if ((ar = archives[rawSection][archivePath]) == nullptr) {
+			// remove the entry created by operator[]
+			archives[rawSection].erase(archivePath);
+
+			if ((ar = archiveLoader.OpenArchive(archivePath)) == nullptr) {
+				LOG_L(L_ERROR, "[%s::%s<this=%p>] failed to open archive '%s' (path '%s', type %d)", vfsName, __func__, this, archiveName.c_str(), archivePath.c_str(), archiveData.GetModType());
+				return false;
+			}
+
+			archives[rawSection].emplace(archivePath, ar);
 		}
-
-		archives[section].emplace(archivePath, ar);
 	}
 
 
@@ -170,9 +176,9 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 		if (!overwrite) {
 			const auto pred = [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); };
-			const auto iter = std::lower_bound(files[section].begin(), files[section].end(), FileEntry{name, FileData{}}, pred);
+			const auto iter = std::lower_bound(files[rawSection].begin(), files[rawSection].end(), FileEntry{name, FileData{}}, pred);
 
-			if (iter != files[section].end() && iter->first == name) {
+			if (iter != files[rawSection].end() && iter->first == name) {
 				LOG_L(L_DEBUG, "[%s::%s<this=%p>] skipping \"%s\", exists", vfsName, __func__, this, name.c_str());
 				continue;
 			}
@@ -188,10 +194,10 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 	}
 
 	for (FileEntry& fileEntry: files[Section::Temp]) {
-		files[section].emplace_back(std::move(fileEntry));
+		files[rawSection].emplace_back(std::move(fileEntry));
 	}
 
-	std::stable_sort(files[section].begin(), files[section].end(), [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); });
+	std::stable_sort(files[rawSection].begin(), files[rawSection].end(), [](const FileEntry& a, const FileEntry& b) { return (a.first < b.first); });
 	return true;
 }
 
@@ -279,6 +285,10 @@ void CVFSHandler::DeleteArchives()
 	for (int section = Section::Mod; section <= Section::Temp; section++) {
 		DeleteArchives(Section(section));
 	}
+
+	for (int section = Section::TempMod; section <= Section::TempMenu; section++) {
+		DeleteArchives(Section(section));
+	}
 }
 
 void CVFSHandler::DeleteArchives(Section section)
@@ -323,27 +333,37 @@ void CVFSHandler::UnMapArchives(bool reload)
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>(reload=%d)] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, reload, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
-	// reloading from game to menu stashes archives, so do
-	// not wipe them when reloading from menu back to game
-	if (!reload || !files[Section::Mod].empty())
-		DeleteArchives(Section::TempMod );
+	if (reload) {
+		files[Section::Mod ].clear();
+		files[Section::Map ].clear();
+		// base is a dependency of most archives, leave it alone
+		// files[Section::Base].clear();
+		// menu persists reload, but controller is always reset
+		files[Section::Menu].clear();
 
-	if (!reload || !files[Section::Map].empty())
-		DeleteArchives(Section::TempMap );
+		// stash archives when reloading from game to menu
+		for (const auto& pair: archives[Section::Mod]) {
+			archives[Section::TempMod ].insert(pair);
+		}
+		for (const auto& pair: archives[Section::Map]) {
+			archives[Section::TempMap ].insert(pair);
+		}
+		for (const auto& pair: archives[Section::Menu]) {
+			archives[Section::TempMenu].insert(pair);
+		}
 
-	// base is a dependency of most archives, leave it alone
-	// otherwise PreGame etc also have to swap Section::Base
-	// if (!reload || !files[Section::Base].empty())
-	//	DeleteArchives(Section::TempBase);
+		archives[Section::Mod ].clear();
+		archives[Section::Map ].clear();
+		archives[Section::Menu].clear();
+	} else {
+		std::swap(files[Section::Mod ], files[Section::TempMod ]);
+		std::swap(files[Section::Map ], files[Section::TempMap ]);
+		std::swap(files[Section::Menu], files[Section::TempMenu]);
 
-	// menu persists reload, but controller is always reset
-	if (!reload || !files[Section::Menu].empty())
-		DeleteArchives(Section::TempMenu);
-
-	SwapArchiveSections(Section::TempMod , Section::Mod );
-	SwapArchiveSections(Section::TempMap , Section::Map );
-	// SwapArchiveSections(Section::TempBase, Section::Base);
-	SwapArchiveSections(Section::TempMenu, Section::Menu);
+		files[Section::Mod ].clear();
+		files[Section::Map ].clear();
+		files[Section::Menu].clear();
+	}
 }
 
 void CVFSHandler::ReMapArchives(bool reload)
@@ -352,20 +372,17 @@ void CVFSHandler::ReMapArchives(bool reload)
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>(reload=%d)] (#mod=" _STPF_ " #map=" _STPF_ " #menu=" _STPF_ ")", vfsName, __func__, this, reload, files[Section::Mod].size(), files[Section::Map].size(), files[Section::Menu].size());
 
-	if (!reload || !files[Section::TempMod].empty())
-		DeleteArchives(Section::Mod );
-	if (!reload || !files[Section::TempMap].empty())
-		DeleteArchives(Section::Map );
-	// see UnMapArchives
-	// if (!reload || !files[Section::TempBase].empty())
-	//	DeleteArchives(Section::Base);
-	if (!reload || !files[Section::TempMenu].empty())
-		DeleteArchives(Section::Menu);
+	if (reload) {
+		assert(false);
+	} else {
+		std::swap(files[Section::Mod ], files[Section::TempMod ]);
+		std::swap(files[Section::Map ], files[Section::TempMap ]);
+		std::swap(files[Section::Menu], files[Section::TempMenu]);
 
-	SwapArchiveSections(Section::TempMod , Section::Mod );
-	SwapArchiveSections(Section::TempMap , Section::Map );
-	// SwapArchiveSections(Section::TempBase, Section::Base);
-	SwapArchiveSections(Section::TempMenu, Section::Menu);
+		files[Section::TempMod ].clear();
+		files[Section::TempMap ].clear();
+		files[Section::TempMenu].clear();
+	}
 }
 
 
