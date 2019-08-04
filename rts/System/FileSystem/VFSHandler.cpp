@@ -141,14 +141,14 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 	const Section rawSection = GetModTypeSection(archiveData.GetModType());
 	const Section tmpSection = Section(rawSection + (Section::TempMod - Section::Mod));
 
-	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", rawSection);
-
 	assert(!archiveData.IsEmpty());
 	assert(!archivePath.empty());
 	assert(rawSection < Section::Count);
 
 	// populate files from stashed archive if possible
 	IArchive* ar = archives[tmpSection][archivePath];
+
+	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d cached=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", rawSection, ar != nullptr);
 
 	if (ar == nullptr) {
 		archives[tmpSection].erase(archivePath);

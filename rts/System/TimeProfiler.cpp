@@ -107,7 +107,11 @@ ScopedMtTimer::~ScopedMtTimer()
 
 CTimeProfiler::CTimeProfiler()
 {
+	// self
 	RegisterTimer("Misc::Profiler::AddTime");
+	// specials (conditional on LuaContextData)
+	RegisterTimer("Lua::Callins::Synced");
+	RegisterTimer("Lua::Callins::Unsynced");
 	ResetState();
 }
 
