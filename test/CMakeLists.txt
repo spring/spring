@@ -426,7 +426,7 @@ endif()
 	set(test_libs ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES} ${SDL2_LIBRARY})
 	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
-	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIR})
+	target_include_directories(test_${test_name} PRIVATE ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
 ################################################################################
 ### SQRT
