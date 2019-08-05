@@ -11,6 +11,9 @@
 #include "System/Log/ILog.h"
 #include "System/type2.h"
 
+#define CATCH_CONFIG_MAIN
+#include "lib/catch.hpp"
+
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
 static constexpr int WIN_SIZE_X = 640;
@@ -422,7 +425,7 @@ static void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context)
 
 
 
-int main(int argc, char** argv)
+int fakemain(int argc, char** argv)
 {
 	const int glMajorVersion = (argc > 1)? std::atoi(argv[1]): -1;
 	const int glMinorVersion = (argc > 2)? std::atoi(argv[2]):  0;
@@ -447,7 +450,14 @@ int main(int argc, char** argv)
 #ifdef WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	return main(__argc, __argv);
+	return fakemain(__argc, __argv);
 }
 #endif
+
+
+
+TEST_CASE("CreateContext")
+{
+	fakemain(0, nullptr);
+}
 
