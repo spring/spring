@@ -33,8 +33,6 @@ CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceCoreContext).defaultValue(1).minimumValue(0).maximumValue(1);
-CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 
 // apply runtime texture compression for glBuildMipmaps?
 // glCompressedTex*Image* must additionally be supported
@@ -111,9 +109,6 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(gammaExponent),
 
-	CR_IGNORED(forceCoreContext),
-	CR_IGNORED(forceSwapBuffers),
-
 	CR_IGNORED(msaaLevel),
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(maxTexAnisoLvl),
@@ -187,9 +182,6 @@ CGlobalRendering::CGlobalRendering()
 	, aspectRatio(1.0f)
 
 	, gammaExponent(1.0f)
-
-	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
-	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
 	// fallback
 	, msaaLevel(configHandler->GetInt("MSAALevel"))
@@ -336,7 +328,7 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 {
 	SDL_GLContext newContext = nullptr;
 
-	constexpr int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
+	constexpr int2 glCtxs[] = {{3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
 	          int2 cmpCtx;
 
 	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), minCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)))) {
@@ -348,33 +340,26 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 		return newContext;
 
 	const char* winName = (targetWindow == sdlWindows[1])? "hidden": "main";
-
-	const char* frmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d %s-context", "[GR::%s] created %s GL%d.%d %s-context"};
-	const char* profs[] = {"compatibility", "core"};
+	const char* msgFmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d context", "[GR::%s] created %s GL%d.%d context"};
 
 	char buf[1024] = {0};
-	SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), winName, minCtx.x, minCtx.y, profs[forceCoreContext]);
+	SNPRINTF(buf, sizeof(buf), msgFmts[false], __func__, SDL_GetError(), winName, minCtx.x, minCtx.y);
 
-	for (const int2 tmpCtx: glCtxs) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, tmpCtx.y);
+	for (const int2 tstCtx: glCtxs) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tstCtx.x);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, tstCtx.y);
 
-		for (uint32_t mask: {SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY}) {
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
-
-			if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
-				LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
-			} else {
-				// save the lowest successfully created fallback compatibility-context
-				if (mask == SDL_GL_CONTEXT_PROFILE_COMPATIBILITY && cmpCtx.x == 0 && tmpCtx.x >= minCtx.x)
-					cmpCtx = tmpCtx;
-
-				LOG_L(L_WARNING, frmts[true], __func__, winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
-			}
-
-			// accepts nullptr's
-			SDL_GL_DeleteContext(newContext);
+		if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
+			LOG_L(L_WARNING, msgFmts[false], __func__, SDL_GetError(), winName, tstCtx.x, tstCtx.y);
+			break;
 		}
+
+		// save the lowest successfully created fallback context
+		if (cmpCtx.x == 0 && tstCtx.x >= minCtx.x)
+			cmpCtx = tstCtx;
+
+		LOG_L(L_WARNING, msgFmts[true], __func__, winName, tstCtx.x, tstCtx.y);
+		SDL_GL_DeleteContext(newContext);
 	}
 
 	if (cmpCtx.x == 0) {
@@ -384,10 +369,8 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, cmpCtx.x);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, cmpCtx.y);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
-	// should never fail at this point
-	return (newContext = SDL_GL_CreateContext(targetWindow));
+	return (SDL_GL_CreateContext(targetWindow));
 }
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
@@ -429,7 +412,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	//   3.0/1.30 for Mesa, other drivers return their *maximum* supported context
 	//   in compat and do not make 3.0 itself available in core (though this still
 	//   suffices for most of Spring)
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, minCtx.x);
@@ -599,17 +582,11 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	if (clearErrors || glDebugErrors)
 		glClearErrors("GR", __func__, glDebugErrors);
 
-	#if 0
-	// not swapping while still incrementing drawFrame can cause weirdness
-	if (!allowSwapBuffers && !forceSwapBuffers)
-		return;
-	#endif
-
-	const spring_time pre = spring_now();
+	const spring_time preSwapTime = spring_now();
 
 	GL::SwapRenderBuffers();
 	SDL_GL_SwapWindow(sdlWindows[0]);
-	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+	eventHandler.DbgTimingInfo(TIMING_SWAP, preSwapTime, spring_now());
 
 	// NB: this does not just count frames drawn by game
 	drawFrame += 1;

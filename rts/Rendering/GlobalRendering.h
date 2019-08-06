@@ -175,9 +175,6 @@ public:
 	float gammaExponent;
 
 
-	int forceCoreContext;
-	int forceSwapBuffers;
-
 	/**
 	 * @brief MSAA
 	 *
