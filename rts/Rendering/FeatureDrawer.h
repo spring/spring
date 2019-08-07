@@ -60,9 +60,6 @@ public:
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 public:
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return LuaObjectDrawer::GetGeometryBuffer(); }
-
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
@@ -126,6 +123,10 @@ private:
 	std::array< std::vector<int>, CCamera::CAMTYPE_ENVMAP> camVisibleQuads;
 	std::array<unsigned int, CCamera::CAMTYPE_ENVMAP> camVisDrawFrames;
 	std::vector<CFeature*> unsortedFeatures;
+
+	private:
+		const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
+		GL::GeometryBuffer* GetGeometryBuffer() { return LuaObjectDrawer::GetGeometryBuffer(); }
 };
 
 extern CFeatureDrawer* featureDrawer;

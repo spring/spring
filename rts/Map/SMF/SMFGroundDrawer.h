@@ -60,9 +60,6 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return GL::GeometryBufferUni::geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return GL::GeometryBufferUni::geomBuffer; }
-
 	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
 private:
@@ -88,6 +85,10 @@ protected:
 	// [2] := custom shader-driven rendering path (via Lua)
 	// [3] := currently selected state (shared by deferred pass)
 	std::vector<ISMFRenderState*> smfRenderStates;
+
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return GL::GeometryBufferUni::geomBuffer; }
+	GL::GeometryBuffer* GetGeometryBuffer() { return GL::GeometryBufferUni::geomBuffer; }
+
 
 	GL::LightHandler lightHandler;
 };

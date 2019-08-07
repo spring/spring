@@ -10,9 +10,9 @@
 
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false).description("Deprecated. Set AllowDeferredRendering instead.");
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false).description("Deprecated. Set AllowDeferredRendering instead.");
-CONFIG(bool, AllowDeferredRendering).defaultValue(false).safemodeValue(false).description("Render terrain and models into the deferred buffer");
+CONFIG(bool, AllowDeferredRendering).defaultValue(false).safemodeValue(false).description("Render terrain and models into the deferred buffers");
 
-CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
+CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false).safemodeValue(false).description("Create multisampled deferred buffers");
 
 void GL::GeometryBuffer::Init(bool ctor) {
 	// if dead, this must be a non-ctor reload

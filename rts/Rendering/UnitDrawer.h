@@ -151,9 +151,6 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return LuaObjectDrawer::GetGeometryBuffer(); }
-
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
 	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
 
@@ -310,6 +307,9 @@ private:
 
 private:
 	GL::LightHandler lightHandler;
+
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
+	GL::GeometryBuffer* GetGeometryBuffer() { return LuaObjectDrawer::GetGeometryBuffer(); }
 };
 
 extern CUnitDrawer* unitDrawer;

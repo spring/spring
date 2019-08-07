@@ -46,8 +46,6 @@ public:
 
 	virtual const GL::LightHandler* GetLightHandler() const { return nullptr; }
 	virtual       GL::LightHandler* GetLightHandler()       { return nullptr; }
-	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return nullptr; }
-	virtual       GL::GeometryBuffer* GetGeometryBuffer()       { return nullptr; }
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
@@ -86,6 +84,9 @@ protected:
 
 	bool wireframe;
 	bool advShading;
+
+	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return nullptr; }
+	virtual       GL::GeometryBuffer* GetGeometryBuffer() { return nullptr; }
 };
 
 #endif // _BASE_GROUND_DRAWER_H
