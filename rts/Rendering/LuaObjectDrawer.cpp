@@ -19,6 +19,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/SafeUtil.h"
+#include "System/Log/ILog.h"
 
 
 // optimisation for team-color, but potentially breaks
@@ -26,10 +27,11 @@
 #define USE_OBJECT_RENDERING_BUCKETS
 
 // applies to both units and features
-CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
-CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false).description("Deprecated. Use AllowDeferred{Unit,Feature}BufferClear");
+CONFIG(bool, AllowDeferredUnitBufferClear).defaultValue(false).safemodeValue(false).description("Clear deferred buffer before drawing Units");
+CONFIG(bool, AllowDeferredFeatureBufferClear).defaultValue(false).safemodeValue(false).description("Clear deferred buffer before drawing Features");
+
 CONFIG(bool, AllowDrawModelPostDeferredEvents).defaultValue(true);
-CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -37,15 +39,14 @@ CONFIG(float, LODScaleReflection).defaultValue(1.0f);
 CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 
-
-GL::GeometryBuffer* LuaObjectDrawer::geomBuffer = nullptr;
-
 bool LuaObjectDrawer::inDrawPass = false;
 bool LuaObjectDrawer::inAlphaBin = false;
 
-bool LuaObjectDrawer::drawDeferredEnabled = false;
-bool LuaObjectDrawer::drawDeferredAllowed = false;
-bool LuaObjectDrawer::bufferClearAllowed = false;
+bool LuaObjectDrawer::drawDeferred = false;
+
+bool LuaObjectDrawer::bufferUnitClearAllowed = false;
+bool LuaObjectDrawer::bufferFeatureClearAllowed = false;
+bool LuaObjectDrawer::drawModelPostDeferredEventsAllowed = false;
 
 int LuaObjectDrawer::binObjTeam = -1;
 
@@ -100,7 +101,7 @@ static DECL_ARRAY(   UnitDrawFunc,    unitDrawFuncs, 2) = {nullptr, nullptr};
 static DECL_ARRAY(FeatureDrawFunc, featureDrawFuncs, 2) = {nullptr, nullptr};
 
 static DECL_ARRAY(bool, notifyEventFlags, LUAOBJ_LAST) = {false, false};
-static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = { true,  true};
+static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = {false, false};
 
 static const DECL_ARRAY(LuaMatType, opaqueMats, 2) = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const DECL_ARRAY(LuaMatType,  alphaMats, 2) = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
@@ -244,13 +245,11 @@ void LuaObjectDrawer::Init()
 	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
 	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureTrans;
 
-	drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
-	bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
+	static bool bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
+	bufferUnitClearAllowed = configHandler->GetBool("AllowDeferredUnitBufferClear") || bufferClearAllowed;
+	bufferFeatureClearAllowed = configHandler->GetBool("AllowDeferredFeatureBufferClear") || bufferClearAllowed;
 
-	assert(geomBuffer == nullptr);
-
-	// cannot be a unique_ptr because it is leaked
-	geomBuffer = new GL::GeometryBuffer("LUAOBJECTDRAWER-GBUFFER");
+	drawModelPostDeferredEventsAllowed = configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 }
 
 void LuaObjectDrawer::Kill()
@@ -263,33 +262,18 @@ void LuaObjectDrawer::Kill()
 
 	featureDrawFuncs[false] = nullptr;
 	featureDrawFuncs[ true] = nullptr;
-
-	assert(geomBuffer != nullptr);
-	spring::SafeDelete(geomBuffer);
 }
 
 
-void LuaObjectDrawer::Update(bool init)
+void LuaObjectDrawer::Update()
 {
-	assert(geomBuffer != nullptr);
+	// update buffer only if it is valid && deferred pass is enabled
+	if ((drawDeferred = GetGeometryBuffer()->EnabledAndValid())) {
 
-	if (!drawDeferredAllowed)
-		return;
-
-	// update buffer only if it is valid
-	if ((drawDeferredEnabled = geomBuffer->Valid())) {
-		drawDeferredEnabled &= (geomBuffer->Update(init));
-
-		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
-		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
-		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || configHandler->GetBool("AllowDrawModelPostDeferredEvents");
-		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred();
-
-		// if both object types are going to be drawn deferred, only
-		// reset buffer for the first s.t. just a single shading pass
-		// is needed (in Lua)
-		if (bufferClearFlags[LUAOBJ_UNIT] && bufferClearFlags[LUAOBJ_FEATURE])
-			bufferClearFlags[LUAOBJ_FEATURE] = bufferClearAllowed;
+		notifyEventFlags[LUAOBJ_UNIT] = !unitDrawer->DrawForward() || drawModelPostDeferredEventsAllowed;
+		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred() && bufferUnitClearAllowed;
+		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || drawModelPostDeferredEventsAllowed;
+		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred() && bufferFeatureClearAllowed;
 	}
 }
 
@@ -473,12 +457,10 @@ void LuaObjectDrawer::DrawBinObject(
 	binObjTeam = obj->team; //FIXME alpha????
 }
 
-
+#define geomBuffer GetGeometryBuffer()
 void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 {
-	if (!drawDeferredEnabled)
-		return;
-	if (!geomBuffer->Valid())
+	if (!drawDeferred)
 		return;
 
 	// deferred pass must be executed with GLSL base shaders so
@@ -530,6 +512,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 		CALL_FUNC_NA(&eventHandler, eventFuncs[objType]);
 	}
 }
+#undef geomBuffer
 
 
 

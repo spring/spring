@@ -301,11 +301,8 @@ void CUnitDrawer::Init() {
 	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
 	drawModelFuncs[2] = &CUnitDrawer::DrawUnitModel;
 
-	// shared with FeatureDrawer!
-	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
-
 	drawForward = true;
-	drawDeferred = (geomBuffer->Valid());
+	drawDeferred = GetGeometryBuffer()->EnabledAndValid();
 	wireFrameMode = false;
 
 	// NOTE:
@@ -372,8 +369,6 @@ void CUnitDrawer::Kill()
 
 	unsortedUnits.clear();
 	unitsByIcon.clear();
-
-	geomBuffer = nullptr;
 }
 
 

@@ -31,9 +31,9 @@ namespace GL {
 		void DrawDebug(const unsigned int texID) const { DrawDebug(texID, float2(0.0f, 0.0f), float2(1.0f, 1.0f)); }
 
 		bool HasAttachments() const { return (bufferTextureIDs[0] != 0); }
-		bool Valid() const { return (buffer.IsValid()); }
+		bool EnabledAndValid(bool init = false) const;
 		bool Create(const int2 size);
-		bool Update(const bool init);
+		bool Update(const bool init = false);
 
 		GLuint GetTextureTarget() const { return (msaa? GL_TEXTURE_2D_MULTISAMPLE: GL_TEXTURE_2D); }
 		GLuint GetBufferTexture(unsigned int idx) const { return bufferTextureIDs[idx]; }
@@ -63,9 +63,17 @@ namespace GL {
 
 		const char* name = "";
 
+		bool enabled = false;
+
 		bool dead = false;
 		bool bound = false;
+		bool createSuccess = false;
+
 		bool msaa = false;
+	};
+
+	struct GeometryBufferUni {
+		static GeometryBuffer* geomBuffer;
 	};
 }
 

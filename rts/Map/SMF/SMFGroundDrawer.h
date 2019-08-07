@@ -43,7 +43,7 @@ public:
 	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {
 		if ((drawDeferred = b)) {
-			drawDeferred &= UpdateGeometryBuffer(false);
+			drawDeferred &= GetGeometryBuffer()->EnabledAndValid();
 		}
 	}
 
@@ -60,8 +60,8 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return GL::GeometryBufferUni::geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return GL::GeometryBufferUni::geomBuffer; }
 
 	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
@@ -73,7 +73,6 @@ private:
 	inline void DrawBorder(const DrawPass::e drawPass);
 
 	bool HaveLuaRenderState() const;
-	bool UpdateGeometryBuffer(bool init);
 
 protected:
 	CSMFReadMap* smfMap;
@@ -91,7 +90,6 @@ protected:
 	std::vector<ISMFRenderState*> smfRenderStates;
 
 	GL::LightHandler lightHandler;
-	GL::GeometryBuffer geomBuffer;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

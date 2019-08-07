@@ -29,6 +29,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/GL/GeometryBuffer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
@@ -48,6 +49,12 @@
 void CWorldDrawer::InitPre() const
 {
 	CShaderHandler::GetInstance(0);
+
+	loadscreen->SetLoadMessage("Creating Deferred Buffers");
+	GL::GeometryBufferUni::geomBuffer = new GL::GeometryBuffer("UNIFIED - GBUFFER");
+	if (GL::GeometryBufferUni::geomBuffer->EnabledAndValid(true))
+		GL::GeometryBufferUni::geomBuffer->Update(true);
+
 	LuaObjectDrawer::Init();
 
 	CColorMap::InitStatic();
@@ -61,8 +68,8 @@ void CWorldDrawer::InitPre() const
 	textureHandlerS3O.Init();
 
 	CFeatureDrawer::InitStatic();
-	loadscreen->SetLoadMessage("Creating Sky");
 
+	loadscreen->SetLoadMessage("Creating Sky");
 	sky = ISky::GetSky();
 	sunLighting->Init();
 }
@@ -137,6 +144,7 @@ void CWorldDrawer::Kill()
 	spring::SafeDelete(grassDrawer);
 	spring::SafeDelete(pathDrawer);
 	shadowHandler.Kill();
+	spring::SafeDelete(GL::GeometryBufferUni::geomBuffer);
 	spring::SafeDelete(inMapDrawerView);
 
 	CFeatureDrawer::KillStatic(gu->globalReload);
@@ -165,7 +173,11 @@ void CWorldDrawer::Kill()
 void CWorldDrawer::Update(bool newSimFrame)
 {
 	SCOPED_TIMER("Update::WorldDrawer");
-	LuaObjectDrawer::Update(numUpdates == 0);
+
+	if (GL::GeometryBufferUni::geomBuffer->EnabledAndValid())
+		GL::GeometryBufferUni::geomBuffer->Update();
+
+	LuaObjectDrawer::Update();
 	readMap->UpdateDraw(numUpdates == 0);
 
 	if (globalRendering->drawGround)

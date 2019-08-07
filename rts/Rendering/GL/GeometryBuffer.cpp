@@ -7,6 +7,13 @@
 #include <algorithm>
 #include <cstring> //memset
 
+
+CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false).description("Deprecated. Set AllowDeferredRendering instead.");
+CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false).description("Deprecated. Set AllowDeferredRendering instead.");
+CONFIG(bool, AllowDeferredRendering).defaultValue(false).safemodeValue(false).description("Render terrain and models into the deferred buffer");
+
+CONFIG(bool, AllowMultiSampledFrameBuffers).defaultValue(false);
+
 void GL::GeometryBuffer::Init(bool ctor) {
 	// if dead, this must be a non-ctor reload
 	assert(!dead || !ctor);
@@ -23,6 +30,12 @@ void GL::GeometryBuffer::Init(bool ctor) {
 
 	dead = false;
 	bound = false;
+
+	enabled =
+		configHandler->GetBool("AllowDeferredRendering") ||
+		configHandler->GetBool("AllowDeferredMapRendering") ||
+		configHandler->GetBool("AllowDeferredModelRendering");
+
 	msaa |= configHandler->GetBool("AllowMultiSampledFrameBuffers");
 	msaa &= globalRendering->supportMSAAFrameBuffer;
 }
@@ -80,6 +93,8 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 	// return to incomplete state
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
+
+	createSuccess = false;
 }
 
 void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const {
@@ -104,6 +119,10 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+}
+
+bool GL::GeometryBuffer::EnabledAndValid(bool init) const {
+	return enabled && (init ? true : createSuccess && buffer.IsValid());
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
@@ -152,10 +171,10 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 	// can still invalidate it
 	assert(buffer.IsValid());
 
-	const bool ret = buffer.CheckStatus(name);
+	createSuccess = buffer.CheckStatus(name);
 
 	buffer.Unbind();
-	return ret;
+	return createSuccess;
 }
 
 bool GL::GeometryBuffer::Update(const bool init) {
@@ -190,3 +209,4 @@ int2 GL::GeometryBuffer::GetWantedSize(bool allowed) const {
 	return {globalRendering->viewSizeX * allowed, globalRendering->viewSizeY * allowed};
 }
 
+GL::GeometryBuffer* GL::GeometryBufferUni::geomBuffer = nullptr;

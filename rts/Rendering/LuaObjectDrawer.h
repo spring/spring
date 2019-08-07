@@ -29,7 +29,7 @@ public:
 	static bool DrawSingleObject(const CSolidObject* obj, LuaObjType objType);
 	static bool DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType);
 
-	static void Update(bool init);
+	static void Update();
 	static void Init();
 	static void Kill();
 
@@ -67,7 +67,7 @@ public:
 	// shared by {Unit,Feature}Drawer
 	// note: the pointer MUST already be valid during
 	// FeatureDrawer's ctor, in CWorldDrawer::LoadPre)
-	static GL::GeometryBuffer* GetGeometryBuffer() { return geomBuffer; }
+	static GL::GeometryBuffer* GetGeometryBuffer() { return GL::GeometryBufferUni::geomBuffer; }
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
@@ -92,20 +92,23 @@ private:
 	);
 
 private:
-	static GL::GeometryBuffer* geomBuffer;
-
 	// whether we are currently in DrawMaterialBins
 	static bool inDrawPass;
 	// whether alpha-material bins are being drawn
 	static bool inAlphaBin;
 
 	// whether we can execute DrawDeferredPass
-	static bool drawDeferredEnabled;
-	// whether deferred object drawing is allowed by user
-	static bool drawDeferredAllowed;
+	// and deferred object drawing is allowed by user
+	static bool drawDeferred;
 
-	// whether the deferred feature pass clears the GB
-	static bool bufferClearAllowed;
+	// whether clean the GB before deferred {unit,feature} passes
+	static bool bufferUnitClearAllowed;
+	static bool bufferFeatureClearAllowed;
+
+	// whether the Draw{Units, Features}PostDeferred
+	// event is sent regardless of Forward rendering
+	// being disabled for {Units, Features}
+	static bool drawModelPostDeferredEventsAllowed;
 
 	// team of last object visited in DrawMaterialBin
 	// (needed because bins are not sorted by team and

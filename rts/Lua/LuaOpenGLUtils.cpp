@@ -114,6 +114,13 @@ LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name
 		case hashString("$model_gbuffer_misctex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC; } break;
 		case hashString("$model_gbuffer_zvaltex"): { return LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL; } break;
 
+		case hashString("$uni_gbuffer_normtex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_NORM; } break;
+		case hashString("$uni_gbuffer_difftex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_DIFF; } break;
+		case hashString("$uni_gbuffer_spectex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_SPEC; } break;
+		case hashString("$uni_gbuffer_emittex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_EMIT; } break;
+		case hashString("$uni_gbuffer_misctex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_MISC; } break;
+		case hashString("$uni_gbuffer_zvaltex"): { return LuaMatTexture::LUATEX_UNI_GBUFFER_ZVAL; } break;
+
 		case hashString("$font"     ): { return LuaMatTexture::LUATEX_FONT     ; } break;
 		case hashString("$smallfont"): { return LuaMatTexture::LUATEX_FONTSMALL; } break;
 		case hashString("$fontsmall"): { return LuaMatTexture::LUATEX_FONTSMALL; } break;
@@ -590,6 +597,13 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_MODEL_GBUFFER_MISC: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_MISCTEX); } break;
 		case LUATEX_MODEL_GBUFFER_ZVAL: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX); } break;
 
+		case LUATEX_UNI_GBUFFER_NORM: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX); } break;
+		case LUATEX_UNI_GBUFFER_DIFF: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_DIFFTEX); } break;
+		case LUATEX_UNI_GBUFFER_SPEC: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_SPECTEX); } break;
+		case LUATEX_UNI_GBUFFER_EMIT: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_EMITTEX); } break;
+		case LUATEX_UNI_GBUFFER_MISC: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_MISCTEX); } break;
+		case LUATEX_UNI_GBUFFER_ZVAL: { texID = udGeomBuff->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_ZVALTEX); } break;
+
 
 		// font textures
 		case LUATEX_FONT: {
@@ -688,6 +702,15 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_MODEL_GBUFFER_EMIT:
 		case LUATEX_MODEL_GBUFFER_MISC:
 		case LUATEX_MODEL_GBUFFER_ZVAL: {
+			texType = udGeomBuff->GetTextureTarget();
+		} break;
+
+		case LUATEX_UNI_GBUFFER_NORM:
+		case LUATEX_UNI_GBUFFER_DIFF:
+		case LUATEX_UNI_GBUFFER_SPEC:
+		case LUATEX_UNI_GBUFFER_EMIT:
+		case LUATEX_UNI_GBUFFER_MISC:
+		case LUATEX_UNI_GBUFFER_ZVAL: {
 			texType = udGeomBuff->GetTextureTarget();
 		} break;
 
@@ -888,6 +911,15 @@ int2 LuaMatTexture::GetSize() const
 				return (udGeomBuff->GetWantedSize(unitDrawer->DrawDeferred()));
 		} break;
 
+		case LUATEX_UNI_GBUFFER_NORM:
+		case LUATEX_UNI_GBUFFER_DIFF:
+		case LUATEX_UNI_GBUFFER_SPEC:
+		case LUATEX_UNI_GBUFFER_EMIT:
+		case LUATEX_UNI_GBUFFER_MISC:
+		case LUATEX_UNI_GBUFFER_ZVAL: {
+			if (unitDrawer != nullptr)
+				return (udGeomBuff->GetWantedSize(unitDrawer->DrawDeferred()));
+		} break;
 
 		case LUATEX_FONT:
 			return {font->GetTextureWidth(), font->GetTextureHeight()};
@@ -978,6 +1010,12 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_MISC);
 		STRING_CASE(typeName, LUATEX_MODEL_GBUFFER_ZVAL);
 
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_NORM);
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_DIFF);
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_SPEC);
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_EMIT);
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_MISC);
+		STRING_CASE(typeName, LUATEX_UNI_GBUFFER_ZVAL);
 
 		STRING_CASE(typeName, LUATEX_FONT);
 		STRING_CASE(typeName, LUATEX_FONTSMALL);

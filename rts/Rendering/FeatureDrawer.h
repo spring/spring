@@ -7,14 +7,12 @@
 #include <array>
 #include "Game/Camera.h"
 #include "Rendering/Models/ModelRenderContainer.h"
+#include "Rendering/GL/GeometryBuffer.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
 
 class CFeature;
-
-namespace GL {
-	struct GeometryBuffer;
-}
 
 class CFeatureDrawer: public CEventClient
 {
@@ -62,8 +60,8 @@ public:
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 public:
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return LuaObjectDrawer::GetGeometryBuffer(); }
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
@@ -128,8 +126,6 @@ private:
 	std::array< std::vector<int>, CCamera::CAMTYPE_ENVMAP> camVisibleQuads;
 	std::array<unsigned int, CCamera::CAMTYPE_ENVMAP> camVisDrawFrames;
 	std::vector<CFeature*> unsortedFeatures;
-
-	GL::GeometryBuffer* geomBuffer;
 };
 
 extern CFeatureDrawer* featureDrawer;

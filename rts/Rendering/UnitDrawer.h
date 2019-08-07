@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/GL/GeometryBuffer.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/UnitDrawerState.hpp"
@@ -31,10 +33,6 @@ struct IUnitDrawerState;
 namespace icon {
 	class CIconData;
 }
-namespace GL {
-	struct GeometryBuffer;
-}
-
 
 struct GhostSolidObject {
 public:
@@ -153,8 +151,8 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return LuaObjectDrawer::GetGeometryBuffer(); }
 
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
 	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
@@ -312,7 +310,6 @@ private:
 
 private:
 	GL::LightHandler lightHandler;
-	GL::GeometryBuffer* geomBuffer;
 };
 
 extern CUnitDrawer* unitDrawer;

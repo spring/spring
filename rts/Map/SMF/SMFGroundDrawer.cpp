@@ -42,7 +42,6 @@ CONFIG(int, MaxDynamicMapLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
-CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
@@ -57,7 +56,6 @@ CONFIG(int, ROAM)
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
 	, meshDrawer(nullptr)
-	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
 {
 	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
@@ -74,7 +72,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 
 	drawForward = true;
-	drawDeferred = geomBuffer.Valid();
+	drawDeferred = GetGeometryBuffer()->EnabledAndValid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
 	postDeferredEvents = configHandler->GetBool("AllowDrawMapPostDeferredEvents");
 
@@ -107,10 +105,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 		glNewList((waterPlaneDispLists[1] = glGenLists(1)), GL_COMPILE);
 		CreateWaterPlanes(false);
 		glEndList();
-	}
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(true);
 	}
 }
 
@@ -266,9 +260,10 @@ bool CSMFGroundDrawer::HaveLuaRenderState() const
 
 
 
+#define geomBuffer GetGeometryBuffer()
 void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest)
 {
-	if (!geomBuffer.Valid())
+	if (!geomBuffer->EnabledAndValid())
 		return;
 
 	// some water renderers use FBO's for the reflection pass
@@ -287,9 +282,9 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		return;
 
 	{
-		geomBuffer.Bind();
-		geomBuffer.SetDepthRange(1.0f, 0.0f);
-		geomBuffer.Clear();
+		geomBuffer->Bind();
+		geomBuffer->SetDepthRange(1.0f, 0.0f);
+		geomBuffer->Clear();
 
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, DrawPass::TerrainDeferred);
@@ -311,8 +306,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
 
-		geomBuffer.SetDepthRange(0.0f, 1.0f);
-		geomBuffer.UnBind();
+		geomBuffer->SetDepthRange(0.0f, 1.0f);
+		geomBuffer->UnBind();
 	}
 
 	#if 0
@@ -323,6 +318,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 	if (!drawForward || postDeferredEvents)
 		eventHandler.DrawGroundPostDeferred();
 }
+#undef geomBuffer
 
 void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest)
 {
@@ -514,10 +510,6 @@ void CSMFGroundDrawer::Update()
 	groundTextures->DrawUpdate();
 	// done by DrawMesh; needs to know the actual draw-pass
 	// meshDrawer->Update();
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(false);
-	}
 }
 
 void CSMFGroundDrawer::UpdateRenderState()
@@ -534,18 +526,6 @@ void CSMFGroundDrawer::SunChanged() {
 	// note: only the active state is notified of a given change
 	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSky(sky->GetLight());
 }
-
-
-bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
-{
-	static const bool drawDeferredAllowed = configHandler->GetBool("AllowDeferredMapRendering");
-
-	if (!drawDeferredAllowed)
-		return false;
-
-	return (geomBuffer.Update(init));
-}
-
 
 
 void CSMFGroundDrawer::SetDetail(int newGroundDetail)

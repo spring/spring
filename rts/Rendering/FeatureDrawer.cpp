@@ -17,7 +17,6 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -133,9 +132,9 @@ static const SetFeatureAlphaMatFunc setFeatureAlphaMatFuncs[] = {
 void CFeatureDrawer::InitStatic() {
 	if (featureDrawer == nullptr)
 		featureDrawer = new (featureDrawerMem) CFeatureDrawer();
-
 	featureDrawer->Init();
 }
+
 void CFeatureDrawer::KillStatic(bool reload) {
 	featureDrawer->Kill();
 
@@ -153,11 +152,8 @@ void CFeatureDrawer::Init()
 
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_FEATURE);
 
-	// shared with UnitDrawer!
-	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
-
 	drawForward = true;
-	drawDeferred = (geomBuffer->Valid());
+	drawDeferred = GetGeometryBuffer()->EnabledAndValid();
 
 	inAlphaPass = false;
 	inShadowPass = false;
@@ -199,8 +195,6 @@ void CFeatureDrawer::Kill()
 	}
 
 	unsortedFeatures.clear();
-
-	geomBuffer = nullptr;
 }
 
 
