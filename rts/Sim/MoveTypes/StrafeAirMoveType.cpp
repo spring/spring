@@ -1014,7 +1014,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		owner->SetSpeed(spd);
 
 		owner->Move(owner->speed, true);
-		owner->UpdateDirVectors(owner->IsOnGround());
+		owner->UpdateDirVectors(owner->IsOnGround(), false);
 		owner->UpdateMidAndAimPos();
 	}
 

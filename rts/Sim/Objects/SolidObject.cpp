@@ -331,41 +331,13 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 	return dragAccelVec;
 }
 
-float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const
+float3 CSolidObject::GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const
 {
-	// NOTE:
-	//   for aircraft IsOnGround is already factored into useGroundNormal
-	//   for ground-units the situation is more complicated because 1) it
-	//   depends on the 'upright' tag and 2) ships and hovercraft are not
-	//   "on the ground" all the time ('ground' is the ocean floor, *not*
-	//   the water surface) and neither are tanks / bots due to impulses,
-	//   gravity, ...
-	//
-	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
-	const float3 wn =                              UpVector  * (1 - useGroundNormal);
+	const float3 groundUp = CGround::GetSmoothNormal(pos.x, pos.z);
+	const float3 objectUp = mix(UpVector, {updir}, useObjectNormal);
+	const float3 wantedUp = mix(objectUp, groundUp, useGroundNormal);
 
-	// aircraft cannot use updir reliably or their
-	// coordinate-system would degenerate too much
-	// over time without periodic re-ortho'ing
-	if (moveDef == nullptr)
-		return (gn + UpVector * (1 - useGroundNormal));
-
-	// not an aircraft if we get here, prevent pitch changes
-	// if(f) the object is neither on the ground nor in water
-	// for whatever reason (GMT also prevents heading changes)
-	if (!IsInAir()) {
-		switch (moveDef->speedModClass) {
-			case MoveDef::Tank:  { return mix(float3(updir), gn + wn, IsOnGround()); } break;
-			case MoveDef::KBot:  { return mix(float3(updir), gn + wn, IsOnGround()); } break;
-
-			case MoveDef::Hover: { return mix(UpVector, gn + wn, 1 - IsInWater()); } break;
-			case MoveDef::Ship : { return mix(UpVector, gn + wn, 1 - IsInWater()); } break;
-			default            : {                                                 } break;
-		}
-	}
-
-	// prefer to keep local up-vector as long as possible
-	return updir;
+	return wantedUp;
 }
 
 
@@ -385,9 +357,9 @@ void CSolidObject::SetDirVectorsEuler(const float3 angles)
 void CSolidObject::SetHeadingFromDirection() { heading = GetHeadingFromVector(frontdir.x, frontdir.z); }
 void CSolidObject::SetFacingFromHeading() { buildFacing = GetFacingFromHeading(heading); }
 
-void CSolidObject::UpdateDirVectors(bool useGroundNormal)
+void CSolidObject::UpdateDirVectors(bool useGroundNormal, bool useObjectNormal)
 {
-	updir    = GetWantedUpDir(useGroundNormal);
+	updir    = GetWantedUpDir(useGroundNormal, useObjectNormal);
 	frontdir = GetVectorFromHeading(heading);
 	rightdir = (frontdir.cross(updir)).Normalize();
 	frontdir = updir.cross(rightdir);

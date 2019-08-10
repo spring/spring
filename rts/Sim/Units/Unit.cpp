@@ -241,7 +241,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	SetVelocity(params.speed);
 	Move(preFramePos = params.pos.cClampInMap(), false);
-	UpdateDirVectors(!upright);
+	UpdateDirVectors(!upright && IsOnGround(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateMidAndAimPos();
@@ -252,7 +252,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] id: " << id << ", name: " << unitDef->name << " ";
+	tracefile << "[" << __func__ << "] id: " << id << ", name: " << unitDef->name << " ";
 	tracefile << "pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
 #endif
 

@@ -143,11 +143,11 @@ public:
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
 
-	void AddHeading(short deltaHeading, bool useGroundNormal) { SetHeading(heading + deltaHeading, useGroundNormal); }
-	void SetHeading(short worldHeading, bool useGroundNormal) {
+	void AddHeading(short deltaHeading, bool useGroundNormal, bool useObjectNormal) { SetHeading(heading + deltaHeading, useGroundNormal, useObjectNormal); }
+	void SetHeading(short worldHeading, bool useGroundNormal, bool useObjectNormal) {
 		heading = worldHeading;
 
-		UpdateDirVectors(useGroundNormal);
+		UpdateDirVectors(useGroundNormal, useObjectNormal);
 		UpdateMidAndAimPos();
 	}
 
@@ -159,7 +159,7 @@ public:
 	// update object's local coor-sys from current <heading>
 	// (unlike ForcedSpin which updates from given <updir>)
 	// NOTE: movetypes call this directly
-	void UpdateDirVectors(bool useGroundNormal);
+	void UpdateDirVectors(bool useGroundNormal, bool useObjectNormal);
 
 	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
 	virtual CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const = 0;
@@ -227,7 +227,7 @@ public:
 	float2 GetFootPrint(float scale) const { return {xsize * scale, zsize * scale}; }
 
 	float3 GetDragAccelerationVec(const float4& params) const;
-	float3 GetWantedUpDir(bool useGroundNormal) const;
+	float3 GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const;
 
 	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
 	float CalcFootPrintMinExteriorRadius(float scale = 1.0f) const;
