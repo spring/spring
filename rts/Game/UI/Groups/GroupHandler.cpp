@@ -40,12 +40,6 @@ CGroupHandler::CGroupHandler(int teamId): team(teamId)
 	}
 }
 
-CGroupHandler::~CGroupHandler()
-{
-	for (int g = 0; g < firstUnusedGroup; ++g) {
-		groups[g].ClearUnits();
-	}
-}
 
 void CGroupHandler::Update()
 {

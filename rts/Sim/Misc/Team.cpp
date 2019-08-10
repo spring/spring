@@ -209,24 +209,24 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 	CTeam* target = teamHandler.Team(toTeam);
 
 	if (target == nullptr) {
-		LOG_L(L_WARNING, "Team %i does not exist, can't give units", toTeam);
+		LOG_L(L_WARNING, "[Team::%s] team %i does not exist, can't give units", __func__, toTeam);
 		return;
 	}
 
 	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "m", res.metal)) {
 		target->res.metal += res.metal;
-		res.metal = 0;
+		res.metal = 0.0f;
 	}
 	if (eventHandler.AllowResourceTransfer(teamNum, toTeam, "e", res.energy)) {
 		target->res.energy += res.energy;
-		res.energy = 0;
+		res.energy = 0.0f;
 	}
 
-	// make a copy of unitsByDef[teamNum][0] since ChangeTeam modifies it
-	const auto teamUnits = unitHandler.GetUnitsByTeam(teamNum);
+	const auto& teamUnits = unitHandler.GetUnitsByTeam(teamNum);
 
-	for (CUnit* u: teamUnits) {
-		u->ChangeTeam(toTeam, CUnit::ChangeGiven);
+	// NB: can not be a ranged loop since ChangeTeam removes [i] from teamUnits on success
+	for (size_t i = 0; i < teamUnits.size(); ) {
+		i += (!teamUnits[i]->ChangeTeam(toTeam, CUnit::ChangeGiven));
 	}
 }
 

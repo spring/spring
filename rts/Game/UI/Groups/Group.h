@@ -28,7 +28,7 @@ public:
 	CGroup(const CGroup& ) = delete;
 	CGroup(      CGroup&&) = default;
 
-	~CGroup() { ClearUnits(); }
+	~CGroup() = default;
 
 	CGroup& operator = (const CGroup& ) = delete;
 	CGroup& operator = (      CGroup&&) = default;
