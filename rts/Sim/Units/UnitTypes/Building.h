@@ -17,9 +17,9 @@ public:
 	virtual ~CBuilding() {}
 
 	void PostLoad();
-	void PreInit(const UnitLoadParams& params);
-	void PostInit(const CUnit* builder);
-	void ForcedMove(const float3& newPos);
+	void PreInit(const UnitLoadParams& params) override;
+	void PostInit(const CUnit* builder) override;
+	void ForcedMove(const float3& newPos) override;
 
 	const YardMapStatus* GetBlockMap() const override { return blockMap; }
 

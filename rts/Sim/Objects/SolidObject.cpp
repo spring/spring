@@ -334,8 +334,8 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 float3 CSolidObject::GetWantedUpDir(bool useGroundNormal, bool useObjectNormal) const
 {
 	const float3 groundUp = CGround::GetSmoothNormal(pos.x, pos.z);
-	const float3 objectUp = mix(UpVector, {updir}, useObjectNormal);
-	const float3 wantedUp = mix(objectUp, groundUp, useGroundNormal);
+	const float3 objectUp = mix(UpVector, float3{updir}, useObjectNormal);
+	const float3 wantedUp = mix(objectUp,      groundUp, useGroundNormal);
 
 	return wantedUp;
 }
