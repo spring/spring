@@ -16,6 +16,11 @@
 
 #define CLAMP(i) Clamp((i), 0, smfReadMap->maxHeightMapIdx)
 
+static inline float GetVisibleVertexHeight(int idx) {
+	return readMap->GetCornerHeightMapUnsynced()[idx];
+}
+
+
 CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
 	, smfGroundDrawer(gd)

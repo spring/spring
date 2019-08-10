@@ -284,7 +284,7 @@ extern CReadMap* readMap;
 extern MapDimensions mapDims;
 
 
-
+inline float CReadMap::AddHeight(const int idx, const float a) { return SetHeight(idx, a, 1); }
 inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	float& x = (*heightMapSyncedPtr)[idx];
 
@@ -298,30 +298,21 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	return x;
 }
 
-inline float CReadMap::AddHeight(const int idx, const float a) {
-	return SetHeight(idx, a, 1);
-}
 
 
 
+static inline float3 CornerSqrToPosRaw(const float* hm, int sqx, int sqz) { return {sqx * SQUARE_SIZE * 1.0f, hm[(sqz * mapDims.mapxp1) + sqx], sqz * SQUARE_SIZE * 1.0f}; }
+static inline float3 CenterSqrToPosRaw(const float* hm, int sqx, int sqz) { return {sqx * SQUARE_SIZE * 1.0f, hm[(sqz * mapDims.mapx  ) + sqx], sqz * SQUARE_SIZE * 1.0f}; }
+
+static inline float3 CornerSqrToPos(const float* hm, int sqx, int sqz) { return (CornerSqrToPosRaw(hm, Clamp(sqx, 0, mapDims.mapx  ), Clamp(sqz, 0, mapDims.mapy  ))); }
+static inline float3 CenterSqrToPos(const float* hm, int sqx, int sqz) { return (CenterSqrToPosRaw(hm, Clamp(sqx, 0, mapDims.mapxm1), Clamp(sqz, 0, mapDims.mapym1))); }
 
 
-/// Converts a map-square into a float3-position.
-static inline float3 SquareToFloat3(int xSquare, int zSquare) {
-	const float* hm = readMap->GetCenterHeightMapSynced();
-	const float h = hm[(zSquare * mapDims.mapx) + xSquare];
-	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
-}
+static inline float3 CornerSquareToFloat3(int sqx, int sqz) { return (CornerSqrToPosRaw(readMap->GetCornerHeightMapSynced(), sqx, sqz)); }
+static inline float3       SquareToFloat3(int sqx, int sqz) { return (CenterSqrToPosRaw(readMap->GetCenterHeightMapSynced(), sqx, sqz)); }
 
-static inline float3 SquareToFloat3(int2 sq) {
-	return SquareToFloat3(sq.x, sq.y);
-}
-
-
-static inline float GetVisibleVertexHeight(int idx) {
-	const float* hm = readMap->GetCornerHeightMapUnsynced();
-	return hm[idx];
-}
+static inline float3 CornerSquareToFloat3(int2 sqr) { return (CornerSquareToFloat3(sqr.x, sqr.y)); }
+static inline float3       SquareToFloat3(int2 sqr) { return (      SquareToFloat3(sqr.x, sqr.y)); }
 
 
 #endif /* READ_MAP_H */

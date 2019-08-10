@@ -704,6 +704,8 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect)
 	const        int losSqrSize = losHandler->los.mipDiv / SQUARE_SIZE;
 	const SRectangle losMapRect = hgtMapRect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
 
+	const float* ctrHgtMap = readMap->GetCenterHeightMapSynced();
+
 	const auto PushRect = [&](SRectangle& subRect, int hmx, int hmz) {
 		if (subRect.GetArea() > 0) {
 			subRect.ClampIn(hgtMapRect);
@@ -726,7 +728,10 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hgtMapRect)
 			hmx = lmx * losSqrSize;
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
-			if (!(gu->spectatingFullView || losHandler->InLos(SquareToFloat3(hmx, hmz), gu->myAllyTeam))) {
+			// NB:
+			//   LosHandler expects positions in center-heightmap bounds, but hgtMapRect is a corner-rectangle
+			//   as such hmx and hmz have to be clamped by CenterSqrToPos before the center-height is accessed
+			if (!(gu->spectatingFullView || losHandler->InLos(CenterSqrToPos(ctrHgtMap, hmx, hmz), gu->myAllyTeam))) {
 				PushRect(subRect, hmx, hmz);
 				continue;
 			}
