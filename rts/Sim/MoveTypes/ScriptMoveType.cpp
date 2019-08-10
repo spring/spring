@@ -140,7 +140,7 @@ bool CScriptMoveType::Update()
 	CheckLimits();
 
 	if (trackSlope) {
-		owner->UpdateDirVectors(true);
+		owner->UpdateDirVectors(owner->IsOnGround(), false);
 		owner->UpdateMidAndAimPos();
 	}
 
@@ -208,16 +208,14 @@ void CScriptMoveType::SetRotationVelocity(const float3& _rotVel)
 
 void CScriptMoveType::SetHeading(short heading)
 {
-	owner->SetHeading(heading, trackSlope);
+	owner->SetHeading(heading, trackSlope, false);
 }
 
 
 void CScriptMoveType::SetNoBlocking(bool state)
 {
 	// if false, forces blocking-map updates
-	noBlocking = state;
-
-	if (noBlocking) {
+	if ((noBlocking = state)) {
 		owner->UnBlock();
 	} else {
 		owner->Block();

@@ -487,7 +487,7 @@ void CFeature::ForcedSpin(const float3& newDir)
 
 void CFeature::UpdateTransformAndPhysState()
 {
-	UpdateDirVectors(!def->upright);
+	UpdateDirVectors(!def->upright && IsOnGround(), true);
 	UpdateTransform(pos, true);
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (SetSpeed(speed) != 0.0f));
