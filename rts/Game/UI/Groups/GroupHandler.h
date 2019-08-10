@@ -27,7 +27,7 @@ public:
 	CGroupHandler(const CGroupHandler& ) = delete;
 	CGroupHandler(      CGroupHandler&&) = default;
 
-	~CGroupHandler();
+	~CGroupHandler() = default;
 
 	CGroupHandler& operator = (const CGroupHandler& ) = delete;
 	CGroupHandler& operator = (      CGroupHandler&&) = default;

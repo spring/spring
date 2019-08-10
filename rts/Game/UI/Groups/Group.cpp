@@ -59,6 +59,8 @@ void CGroup::RemoveIfEmptySpecialGroup()
 
 void CGroup::ClearUnits()
 {
+	assert(!uiGroupHandlers.empty());
+
 	while (!units.empty()) {
 		CUnit* unit = unitHandler.GetUnit(*units.begin());
 		unit->SetGroup(nullptr);
