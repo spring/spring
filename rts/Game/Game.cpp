@@ -722,9 +722,11 @@ void CGame::LoadInterface()
 		uiGroupHandlers.emplace_back(t);
 	}
 
-	// note: disable is needed in case user reloads before StartPlaying
-	GameSetupDrawer::Disable();
-	GameSetupDrawer::Enable();
+	if (saveFileHandler == nullptr) {
+		// note: disable is needed in case user reloads before StartPlaying
+		GameSetupDrawer::Disable();
+		GameSetupDrawer::Enable();
+	}
 }
 
 void CGame::LoadLua(bool onlySynced, bool onlyUnsynced)
