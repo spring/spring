@@ -140,8 +140,8 @@ public:
 	 *   "metal"  -  metalmap
 	 *   "grass"  -  grassmap
 	 */
-	virtual unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) = 0;
-	virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
+	virtual unsigned char* GetInfoMap(const char* name, MapBitmapInfo* bm) = 0;
+	virtual void FreeInfoMap(const char* name, unsigned char* data) = 0;
 
 	/// Determine visibility for a rectangular grid
 	/// call ResetState for statically allocated drawer objects

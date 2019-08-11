@@ -1030,11 +1030,10 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 		ScopedMapLoader mapLoader(mapName, mapFile);
 		CSMFMapFile file(mapFile);
 
-		const std::string n = name;
-		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
+		const int actualType = (strcmp(name, "height") == 0)? bm_grayscale_16 : bm_grayscale_8;
 
 		if (actualType == typeHint) {
-			ret = file.ReadInfoMap(n, data);
+			ret = file.ReadInfoMap(name, data);
 		} else if (actualType == bm_grayscale_16 && typeHint == bm_grayscale_8) {
 			// convert from 16 bits per pixel to 8 bits per pixel
 			MapBitmapInfo bmInfo;
@@ -1043,7 +1042,7 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 			const int size = bmInfo.width * bmInfo.height;
 			if (size > 0) {
 				unsigned short* temp = new unsigned short[size];
-				if (file.ReadInfoMap(n, temp)) {
+				if (file.ReadInfoMap(name, temp)) {
 					const unsigned short* inp = temp;
 					const unsigned short* inp_end = temp + size;
 					unsigned char* outp = data;
