@@ -53,6 +53,8 @@ static void LogVersionInfo(const char* glVendor, const char* glRenderer)
 
 bool CheckSDLVideoModes()
 {
+	LOG("[%s][1]", __func__);
+
 	// get available fullscreen/hardware modes
 	const int numDisplays = SDL_GetNumVideoDisplays();
 
@@ -66,7 +68,7 @@ bool CheckSDLVideoModes()
 	SDL_GetCurrentDisplayMode(0, &cdm);
 
 	LOG(
-		"[%s] desktop={%ix%ix%ibpp@%iHz} current={%ix%ix%ibpp@%iHz}",
+		"[%s][2] desktop={%ix%ix%ibpp@%iHz} current={%ix%ix%ibpp@%iHz}",
 		__func__,
 		ddm.w, ddm.h, SDL_BPP(ddm.format), ddm.refresh_rate,
 		cdm.w, cdm.h, SDL_BPP(cdm.format), cdm.refresh_rate
@@ -363,6 +365,8 @@ static bool CheckGLExtensions()
 
 static bool CreateWindowAndContext(const int2& minCtx)
 {
+	LOG("[%s]", __func__);
+
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
@@ -418,6 +422,8 @@ static bool CreateWindowAndContext(const int2& minCtx)
 
 static void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context)
 {
+	LOG("[%s]", __func__);
+
 	SDL_GL_MakeCurrent(window, nullptr);
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(context);
@@ -430,6 +436,8 @@ int fakemain(int argc, char** argv)
 	const int glMajorVersion = (argc > 1)? std::atoi(argv[1]): -1;
 	const int glMinorVersion = (argc > 2)? std::atoi(argv[2]):  0;
 
+	LOG("[%s][SDL_Init]", __func__);
+
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		LOG("[%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
 		return 0;
@@ -441,6 +449,8 @@ int fakemain(int argc, char** argv)
 		CreateWindowAndContext({glMajorVersion, glMinorVersion});
 		DestroyWindowAndContext(sdlWindow, glContext);
 	}
+
+	LOG("[%s][SDL_Quit*]", __func__);
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	SDL_Quit();
