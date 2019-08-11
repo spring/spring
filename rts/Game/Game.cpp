@@ -893,8 +893,6 @@ void CGame::KillInterface()
 	selectionKeys.Kill(); // CSelectionKeyHandler*
 	spring::SafeDelete(inMapDrawerModel);
 	spring::SafeDelete(inMapDrawer);
-
-	uiGroupHandlers.clear();
 }
 
 void CGame::KillSimulation()
