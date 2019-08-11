@@ -28,8 +28,6 @@ private:
 
 	bool allowOrders = true;
 
-	CGroupHandler* gh = nullptr;
-
 private:
 	// utility methods
 	void verify();
