@@ -1554,7 +1554,7 @@ bool CAICallback::IsDebugDrawerEnabled() const
 	// this function will never be called,
 	// as it is handled in the C layer directly
 	// see eg. Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
-	return debugDrawerAI->GetDraw();
+	return debugDrawerAI->IsEnabled();
 }
 
 int CAICallback::GetNumUnitDefs()
