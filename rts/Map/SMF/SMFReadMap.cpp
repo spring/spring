@@ -131,8 +131,9 @@ void CSMFReadMap::LoadHeightMap()
 
 	const float minHgt = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
 	const float maxHgt = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;
-	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? nullptr: &cornerHeightMapSynced[0];
-	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? nullptr: &cornerHeightMapUnsynced[0];
+
+	float* cornerHeightMapSyncedData = cornerHeightMapSynced.data();
+	float* cornerHeightMapUnsyncedData = cornerHeightMapUnsynced.data();
 
 	// FIXME:
 	//     callchain CReadMap::Initialize --> CReadMap::UpdateHeightMapSynced(0, 0, mapDims.mapx, mapDims.mapy) -->
@@ -873,7 +874,7 @@ void CSMFReadMap::GetFeatureInfo(MapFeatureInfo* f) { mapFile.ReadFeatureInfo(f)
 const char* CSMFReadMap::GetFeatureTypeName(int typeID) { return mapFile.GetFeatureTypeName(typeID); }
 
 
-unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
+unsigned char* CSMFReadMap::GetInfoMap(const char* name, MapBitmapInfo* bmInfo)
 {
 	// get size
 	mapFile.GetInfoMapSize(name, bmInfo);
@@ -882,22 +883,22 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 		return nullptr;
 
 	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
+	const char* texName = "";
 
 	CBitmap infomapBM;
-	std::string texName;
 
-	switch (hashString(name.c_str())) {
-		case hashString("metal"): { texName = mapInfo->smf.metalmapTexName; } break;
-		case hashString("type" ): { texName = mapInfo->smf.typemapTexName ; } break;
-		case hashString("grass"): { texName = mapInfo->smf.grassmapTexName; } break;
+	switch (hashString(name)) {
+		case hashString("metal"): { texName = mapInfo->smf.metalmapTexName.c_str(); } break;
+		case hashString("type" ): { texName = mapInfo->smf.typemapTexName.c_str() ; } break;
+		case hashString("grass"): { texName = mapInfo->smf.grassmapTexName.c_str(); } break;
 		default: {
-			LOG_L(L_WARNING, "[SMFReadMap::%s] unknown texture-name \"%s\"", __func__, name.c_str());
+			LOG_L(L_WARNING, "[SMFReadMap::%s] unknown texture-name \"%s\"", __func__, name);
 		} break;
 	}
 
 	// get data from mapinfo-override texture
-	if (!texName.empty() && !infomapBM.LoadGrayscale(texName))
-		LOG_L(L_WARNING, "[SMFReadMap::%s] cannot load override-texture \"%s\"", __func__, texName.c_str());
+	if (texName[0] != 0 && !infomapBM.LoadGrayscale(texName))
+		LOG_L(L_WARNING, "[SMFReadMap::%s] cannot load override-texture \"%s\"", __func__, texName);
 
 	if (!infomapBM.Empty()) {
 		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
@@ -906,7 +907,7 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 		}
 
 		LOG_L(L_WARNING, "[SMFReadMap::%s] invalid dimensions for override-texture \"%s\": %ix%i != %ix%i",
-			__func__, texName.c_str(),
+			__func__, texName,
 			infomapBM.xsize, infomapBM.ysize,
 			bmInfo->width, bmInfo->height
 		);
@@ -921,7 +922,7 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 }
 
 
-void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char* data)
+void CSMFReadMap::FreeInfoMap(const char* name, unsigned char* data)
 {
 	delete[] data;
 }
