@@ -68,7 +68,7 @@ private:
 public:
 	bool IsDoneLoading() const { return loadDone; }
 	bool IsClientPaused() const { return paused; }
-	bool IsLagging(float maxLatency = 500.0f) const;
+	bool IsSimLagging(float maxLatency = 500.0f) const;
 	bool IsSavedGame() const { return (saveFileHandler != nullptr); }
 	bool IsGameOver() const { return gameOver; }
 

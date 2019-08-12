@@ -1168,7 +1168,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	numDrawFrames++;
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !videoCapturing->AllowRecord()) {
+	if (!gs->paused && !IsSimLagging() && !gs->PreSimFrame() && !videoCapturing->AllowRecord()) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
@@ -1850,7 +1850,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 }
 
 
-bool CGame::IsLagging(float maxLatency) const
+bool CGame::IsSimLagging(float maxLatency) const
 {
 	const float deltaTime = spring_tomsecs(spring_gettime() - lastFrameTime);
 	const float sfLatency = maxLatency / gs->speedFactor;

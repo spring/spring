@@ -98,7 +98,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
-	REGISTER_LUA_CFUNC(GetHasLag);
 	REGISTER_LUA_CFUNC(GetVideoCapturingMode);
 
 	REGISTER_LUA_CFUNC(GetViewGeometry);
@@ -568,12 +567,6 @@ int LuaUnsyncedRead::GetFrameTimeOffset(lua_State* L)
 int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 {
 	lua_pushnumber(L, game->updateDeltaSeconds);
-	return 1;
-}
-
-int LuaUnsyncedRead::GetHasLag(lua_State* L)
-{
-	lua_pushboolean(L, (game != nullptr)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
 
@@ -1926,10 +1919,12 @@ int LuaUnsyncedRead::GetGameSpeed(lua_State* L)
 
 int LuaUnsyncedRead::GetGameState(lua_State* L)
 {
+  const float maxLatency = luaL_optfloat(L, 1, 500.0f);
+
 	lua_pushboolean(L, game->IsDoneLoading());
 	lua_pushboolean(L, game->IsSavedGame());
 	lua_pushboolean(L, game->IsClientPaused()); // local state; included for demos
-	lua_pushboolean(L, game->IsLagging());
+	lua_pushboolean(L, game->IsSimLagging(maxLatency));
 	return 4;
 }
 
