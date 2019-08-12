@@ -166,7 +166,7 @@ CR_REG_METADATA(CGame, (
 	CR_MEMBER(hideInterface),
 
 	// FIXME: atomic type deduction
-	CR_IGNORED(finishedLoading),
+	CR_IGNORED(loadDone),
 	CR_IGNORED(gameOver),
 
 	CR_IGNORED(gameDrawMode),
@@ -454,7 +454,7 @@ void CGame::Load(const std::string& mapFileName)
 	if (forcedQuit)
 		spring::exitCode = spring::EXIT_CODE_FORCED;
 
-	finishedLoading = true;
+	loadDone = true;
 	globalQuit = globalQuit | forcedQuit;
 }
 

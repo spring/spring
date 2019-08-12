@@ -185,6 +185,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetFPS);
 	REGISTER_LUA_CFUNC(GetGameSpeed);
+	REGISTER_LUA_CFUNC(GetGameState);
 
 	REGISTER_LUA_CFUNC(GetActiveCommand);
 	REGISTER_LUA_CFUNC(GetDefaultCommand);
@@ -1920,7 +1921,15 @@ int LuaUnsyncedRead::GetGameSpeed(lua_State* L)
 	lua_pushnumber(L, gs->wantedSpeedFactor);
 	lua_pushnumber(L, gs->speedFactor);
 	lua_pushboolean(L, gs->paused);
-	lua_pushboolean(L, game->paused); // local state; included for demos
+	return 3;
+}
+
+int LuaUnsyncedRead::GetGameState(lua_State* L)
+{
+	lua_pushboolean(L, game->IsDoneLoading());
+	lua_pushboolean(L, game->IsSavedGame());
+	lua_pushboolean(L, game->IsClientPaused()); // local state; included for demos
+	lua_pushboolean(L, game->IsLagging());
 	return 4;
 }
 
