@@ -208,10 +208,61 @@ void CSolidObject::Block()
 	UnBlock();
 
 	// only block when `touching` the ground
-	if ((pos.y - radius) <= CGround::GetHeightAboveWater(pos.x, pos.z)) {
+	if (FootPrintOnGround()) {
 		groundBlockingObjectMap.AddGroundBlockingObject(this);
 		assert(IsBlocking());
 	}
+}
+
+bool CSolidObject::FootPrintOnGround() const {
+	constexpr float scale = SQUARE_SIZE * 0.5f;
+	const     float sdist = std::max(radius, CalcFootPrintMinExteriorRadius());
+
+	#if 0
+	float3 p = pos;
+
+	{
+		// middle; AboveWater means floating structures still block
+		// by itself can fail on steep slopes for units with high slope tolerance, as will IsOnGround()
+		// must sample at least the footprint corners or alternatively use the exterior bounding-sphere
+		// radius
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+
+	{
+		// top-left
+		p = pos + float3{-xsize * scale, 0.0f, -zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// top-right
+		p = pos + float3{+xsize * scale, 0.0f, -zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// bottom-right
+		p = pos + float3{+xsize * scale, 0.0f, +zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+	{
+		// bottom-left
+		p = pos + float3{-xsize * scale, 0.0f, +zsize * scale};
+
+		if ((p.y - sdist) <= CGround::GetHeightAboveWater(p.x, p.z))
+			return true;
+	}
+
+	return false;
+	#else
+	return ((pos.y - sdist) <= CGround::GetHeightAboveWater(pos.x, pos.z));
+	#endif
 }
 
 

@@ -239,6 +239,7 @@ public:
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
+	bool FootPrintOnGround() const;
 	bool BlockMapPosChanged() const { return (groundBlockPos != pos); }
 
 	bool IsOnGround   () const { return (HasPhysicalStateBit(PSTATE_BIT_ONGROUND   )); }
