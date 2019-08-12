@@ -74,9 +74,11 @@ private:
 	void KillSimulation();
 
 public:
-	bool IsFinishedLoading() const { return finishedLoading; }
-	bool IsGameOver() const { return gameOver; }
+	bool IsDoneLoading() const { return loadDone; }
+	bool IsClientPaused() const { return paused; }
 	bool IsLagging(float maxLatency = 500.0f) const;
+	bool IsSavedGame() const { return (saveFileHandler != nullptr); }
+	bool IsGameOver() const { return gameOver; }
 
 	const spring::unordered_map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
@@ -221,7 +223,7 @@ private:
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFileHandler;
 
-	std::atomic<bool> finishedLoading = {false};
+	std::atomic<bool> loadDone = {false};
 	std::atomic<bool> gameOver = {false};
 };
 
