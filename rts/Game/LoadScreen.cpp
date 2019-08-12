@@ -248,7 +248,7 @@ bool CLoadScreen::Update()
 		loadMessages.clear();
 	}
 
-	if (game->IsFinishedLoading()) {
+	if (game->IsDoneLoading()) {
 		CLoadScreen::DeleteInstance();
 		FinishedLoading();
 		return true;
