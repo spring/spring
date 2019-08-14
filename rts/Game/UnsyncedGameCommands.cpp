@@ -946,6 +946,9 @@ public:
 		gu->myAllyTeam = teamHandler.AllyTeam(teamId);
 
 		CLuaUI::UpdateTeams();
+
+		// NOTE: unsynced event
+		eventHandler.PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
 };
