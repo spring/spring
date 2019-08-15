@@ -150,6 +150,10 @@ public:
 		const unsigned int collisionStateBits = 0xFFFFFFFF
 	);
 
+
+	bool InsertUnitIf(CUnit* unit, const float3& wpos);
+	bool RemoveUnitIf(CUnit* unit, const float3& wpos);
+
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
@@ -240,6 +244,8 @@ private:
 	QueryVectorCache<CProjectile*> tempProjectiles;
 	QueryVectorCache<CSolidObject*> tempSolids;
 	QueryVectorCache<int> tempQuads;
+
+	float2 invQuadSize;
 
 	int numQuadsX;
 	int numQuadsZ;

@@ -117,6 +117,8 @@ void CQuadField::Init(int2 mapDims, int quadSize)
 	assert((mapDims.x * SQUARE_SIZE) % quadSize == 0);
 	assert((mapDims.y * SQUARE_SIZE) % quadSize == 0);
 
+	invQuadSize = {1.0f / quadSizeX, 1.0f / quadSizeZ};
+
 	baseQuads.resize(numQuadsX * numQuadsZ);
 	tempQuads.ReserveAll(numQuadsX * numQuadsZ);
 	tempQuads.ReleaseAll();
@@ -220,75 +222,114 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 {
 	dir.AssertNaNs();
 	start.AssertNaNs();
-	qfq.quads = tempQuads.ReserveVector();
+
+	auto& queryQuads = *tempQuads.ReserveVector();
 
 	const float3 to = start + (dir * length);
-	const float3 invQuadSize = float3(1.0f / quadSizeX, 1.0f, 1.0f / quadSizeZ);
 
 	const bool noXdir = (math::floor(start.x * invQuadSize.x) == math::floor(to.x * invQuadSize.x));
-	const bool noZdir = (math::floor(start.z * invQuadSize.z) == math::floor(to.z * invQuadSize.z));
+	const bool noZdir = (math::floor(start.z * invQuadSize.y) == math::floor(to.z * invQuadSize.y));
 
-	// often happened special case
+
+	// special case
 	if (noXdir && noZdir) {
-		qfq.quads->push_back(WorldPosToQuadFieldIdx(start));
-		assert(unsigned(qfq.quads->back()) < baseQuads.size());
+		queryQuads.push_back(WorldPosToQuadFieldIdx(start));
+		assert(static_cast<unsigned>(queryQuads.back()) < baseQuads.size());
 		return;
 	}
 
-	// to prevent Div0
+	// prevent div0
 	if (noZdir) {
 		int startX = Clamp<int>(start.x * invQuadSize.x, 0, numQuadsX - 1);
 		int finalX = Clamp<int>(   to.x * invQuadSize.x, 0, numQuadsX - 1);
-		if (finalX < startX) std::swap(startX, finalX);
+
+		if (finalX < startX)
+			std::swap(startX, finalX);
+
 		assert(finalX < numQuadsX);
 
-		const int row = Clamp<int>(start.z * invQuadSize.z, 0, numQuadsZ - 1) * numQuadsX;
+		const int row = Clamp<int>(start.z * invQuadSize.y, 0, numQuadsZ - 1) * numQuadsX;
 
 		for (unsigned x = startX; x <= finalX; x++) {
-			qfq.quads->push_back(row + x);
-			assert(unsigned(qfq.quads->back()) < baseQuads.size());
+			queryQuads.push_back(row + x);
+			assert(static_cast<unsigned>(queryQuads.back()) < baseQuads.size());
 		}
 
 		return;
 	}
 
-	// all other
-	// hint at code: we iterate the affected z-range and then for each z we compute what xs are touched
-	float startZuc = start.z * invQuadSize.z;
-	float finalZuc =    to.z * invQuadSize.z;
-	if (finalZuc < startZuc) std::swap(startZuc, finalZuc);
-	int startZ = Clamp<int>(startZuc, 0, numQuadsZ - 1);
-	int finalZ = Clamp<int>(finalZuc, 0, numQuadsZ - 1);
+
+	// iterate z-range; compute which columns (x) are touched for each row (z)
+	float startZuc = start.z * invQuadSize.y;
+	float finalZuc =    to.z * invQuadSize.y;
+
+	if (finalZuc < startZuc)
+		std::swap(startZuc, finalZuc);
+
+	const int startZ = Clamp<int>(startZuc, 0, numQuadsZ - 1);
+	const int finalZ = Clamp<int>(finalZuc, 0, numQuadsZ - 1);
+
 	assert(finalZ < quadSizeZ);
+
 	const float invDirZ = 1.0f / dir.z;
 
 	for (int z = startZ; z <= finalZ; z++) {
 		float t0 = ((z    ) * quadSizeZ - start.z) * invDirZ;
 		float t1 = ((z + 1) * quadSizeZ - start.z) * invDirZ;
-		if ((startZuc < 0 && z == 0) || (startZuc >= numQuadsZ && z == finalZ)) {
+
+		if ((startZuc < 0 && z == 0) || (startZuc >= numQuadsZ && z == finalZ))
 			t0 = ((startZuc    ) * quadSizeZ - start.z) * invDirZ;
-		}
-		if ((finalZuc < 0 && z == 0) || (finalZuc >= numQuadsZ && z == finalZ)) {
+
+		if ((finalZuc < 0 && z == 0) || (finalZuc >= numQuadsZ && z == finalZ))
 			t1 = ((finalZuc + 1) * quadSizeZ - start.z) * invDirZ;
-		}
-		t0 = Clamp(t0, 0.f, length);
-		t1 = Clamp(t1, 0.f, length);
+
+		t0 = Clamp(t0, 0.0f, length);
+		t1 = Clamp(t1, 0.0f, length);
 
 		unsigned startX = Clamp<int>((dir.x * t0 + start.x) * invQuadSize.x, 0, numQuadsX - 1);
 		unsigned finalX = Clamp<int>((dir.x * t1 + start.x) * invQuadSize.x, 0, numQuadsX - 1);
-		if (finalX < startX) std::swap(startX, finalX);
+
+		if (finalX < startX)
+			std::swap(startX, finalX);
+
 		assert(finalX < numQuadsX);
 
 		const int row = Clamp(z, 0, numQuadsZ - 1) * numQuadsX;
 
 		for (unsigned x = startX; x <= finalX; x++) {
-			qfq.quads->push_back(row + x);
-			assert(unsigned(qfq.quads->back()) < baseQuads.size());
+			queryQuads.push_back(row + x);
+			assert(static_cast<unsigned>(queryQuads.back()) < baseQuads.size());
 		}
 	}
-
-	return;
 }
+
+
+bool CQuadField::InsertUnitIf(CUnit* unit, const float3& wpos)
+{
+	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
+	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
+
+	if (wposQuadIdx == uposQuadIdx)
+		return false;
+
+	spring::VectorInsertUnique(baseQuads[wposQuadIdx].units, unit, false);
+	spring::VectorInsertUnique(unit->quads, wposQuadIdx, false);
+	return true;
+}
+
+bool CQuadField::RemoveUnitIf(CUnit* unit, const float3& wpos)
+{
+	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
+	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
+
+	if (wposQuadIdx == uposQuadIdx)
+		return false;
+
+	spring::VectorErase(baseQuads[wposQuadIdx].units, unit);
+	spring::VectorErase(unit->quads, wposQuadIdx);
+	return true;
+}
+
 
 
 #ifndef UNIT_TEST
@@ -299,9 +340,8 @@ void CQuadField::MovedUnit(CUnit* unit)
 
 	// compare if the quads have changed, if not stop here
 	if (qfQuery.quads->size() == unit->quads.size()) {
-		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), unit->quads.begin())) {
+		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), unit->quads.begin()))
 			return;
-		}
 	}
 
 	for (const int qi: unit->quads) {
@@ -347,9 +387,8 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 
 	// compare if the quads have changed, if not stop here
 	if (qfQuery.quads->size() == repulserQuads.size()) {
-		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), repulserQuads.begin())) {
+		if (std::equal(qfQuery.quads->begin(), qfQuery.quads->end(), repulserQuads.begin()))
 			return;
-		}
 	}
 
 	for (const int qi: repulserQuads) {

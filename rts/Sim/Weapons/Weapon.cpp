@@ -14,6 +14,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -1084,13 +1085,23 @@ void CWeapon::Fire(bool scriptCall)
 	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
+
 	owner->lastFireWeapon = gs->frameNum;
+
+	// target-leading can nudge currentTargetPos into an adjacent quadfield cell
+	// such that tracing a ray to it does not touch the cell in which our target
+	// unit actually resides
+	// to prevent this, temporarily add unit to cell at currentTargetPos as well
+	if (currentTarget.type == Target_Unit)
+		quadField.InsertUnitIf(currentTarget.unit, currentTargetPos);
 
 	FireImpl(scriptCall);
 
-	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
+	if (currentTarget.type == Target_Unit)
+		quadField.RemoveUnitIf(currentTarget.unit, currentTargetPos);
+
+	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
-	}
 }
 
 
