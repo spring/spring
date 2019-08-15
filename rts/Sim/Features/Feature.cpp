@@ -388,6 +388,9 @@ void CFeature::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
+	// do nothing if already marked for deletion this frame, i.e. isDead
+	if (deleteMe)
+		return;
 	// paralyzers do not damage features
 	if (damages.paralyzeDamageTime)
 		return;
