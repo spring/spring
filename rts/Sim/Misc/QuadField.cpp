@@ -24,6 +24,7 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
 	CR_MEMBER(quadSizeZ),
+	CR_MEMBER(invQuadSize),
 
 	CR_IGNORED(tempUnits),
 	CR_IGNORED(tempFeatures),
