@@ -304,6 +304,8 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 }
 
 
+
+#ifndef UNIT_TEST
 bool CQuadField::InsertUnitIf(CUnit* unit, const float3& wpos)
 {
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
@@ -329,6 +331,7 @@ bool CQuadField::RemoveUnitIf(CUnit* unit, const float3& wpos)
 	spring::VectorErase(unit->quads, wposQuadIdx);
 	return true;
 }
+#endif
 
 
 
