@@ -223,7 +223,7 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 	dir.AssertNaNs();
 	start.AssertNaNs();
 
-	auto& queryQuads = *tempQuads.ReserveVector();
+	auto& queryQuads = *(qfq.quads = tempQuads.ReserveVector());
 
 	const float3 to = start + (dir * length);
 
