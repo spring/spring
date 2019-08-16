@@ -452,10 +452,9 @@ void CWeapon::UpdateFire()
 	nextSalvo = gs->frameNum;
 	salvoError = gsRNG.NextVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
-	if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
-		// area firing stuff is too effective at radar firing...
+	// area firing stuff is too effective at radar firing...
+	if (HavePosTarget() || (HaveUnitTarget() && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS)))
 		salvoError *= 1.3f;
-	}
 
 	owner->lastMuzzleFlameSize = muzzleFlareSize;
 	owner->lastMuzzleFlameDir = wantedDir;
@@ -566,7 +565,7 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 void CWeapon::DropCurrentTarget()
 {
-	if (currentTarget.type == Target_Unit)
+	if (HaveUnitTarget())
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 
 	currentTarget = SWeaponTarget();
@@ -598,7 +597,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (avoidTarget)
 		return true;
 
-	if (currentTarget.type == Target_Unit) {
+	if (HaveUnitTarget()) {
 		if (!TryTarget(SWeaponTarget(currentTarget.unit, currentTarget.isUserTarget))) {
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
@@ -634,7 +633,7 @@ bool CWeapon::AutoTarget()
 	// search for other in range targets
 	lastTargetRetry = gs->frameNum;
 
-	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* avoidUnit = (avoidTarget && HaveUnitTarget()) ? currentTarget.unit : nullptr;
 
 	// NOTE:
 	//   GenerateWeaponTargets sorts by INCREASING order of priority, so lower equals better
@@ -1092,15 +1091,18 @@ void CWeapon::Fire(bool scriptCall)
 	// such that tracing a ray to it does not touch the cell in which our target
 	// unit actually resides
 	// to prevent this, temporarily add unit to cell at currentTargetPos as well
-	if (currentTarget.type == Target_Unit)
-		quadField.InsertUnitIf(currentTarget.unit, currentTargetPos);
+	bool qfAddUnit = (HaveUnitTarget() && weaponDef->IsHitScanWeapon());
+	bool qfHasUnit = false;
+
+	if (qfAddUnit)
+		qfHasUnit = quadField.InsertUnitIf(currentTarget.unit, currentTargetPos);
 
 	FireImpl(scriptCall);
 
-	if (currentTarget.type == Target_Unit)
+	if (qfHasUnit)
 		quadField.RemoveUnitIf(currentTarget.unit, currentTargetPos);
 
-	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
+	if (fireSoundId > 0 && (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger)
 		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 

@@ -38,6 +38,9 @@ public:
 	void AimScriptFinished(bool retCode) { angleGood = retCode; }
 
 	bool HaveTarget() const { return (currentTarget.type != Target_None); }
+	bool HaveUnitTarget() const { return (currentTarget.type == Target_Unit); }
+	bool HavePosTarget() const { return (currentTarget.type == Target_Pos); }
+
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3& GetCurrentTargetPos() const { return currentTargetPos; }
 

@@ -312,11 +312,16 @@ bool CQuadField::InsertUnitIf(CUnit* unit, const float3& wpos)
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
 	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
 
+	// do nothing if unit already exists in cell containing <wpos>
 	if (wposQuadIdx == uposQuadIdx)
 		return false;
 
+	// unit might also be overlapping the cell, so test for uniqueness
+	if (!spring::VectorInsertUnique(unit->quads, wposQuadIdx, true))
+		return false;
+
 	spring::VectorInsertUnique(baseQuads[wposQuadIdx].units, unit, false);
-	spring::VectorInsertUnique(unit->quads, wposQuadIdx, false);
+	spring::VectorInsertUnique(baseQuads[wposQuadIdx].teamUnits[unit->allyteam], unit, false);
 	return true;
 }
 
@@ -325,11 +330,15 @@ bool CQuadField::RemoveUnitIf(CUnit* unit, const float3& wpos)
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
 	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
 
+	// do nothing if unit is now (or still) in cell containing <wpos>
 	if (wposQuadIdx == uposQuadIdx)
 		return false;
 
+	if (!spring::VectorErase(unit->quads, wposQuadIdx))
+		return false;
+
 	spring::VectorErase(baseQuads[wposQuadIdx].units, unit);
-	spring::VectorErase(unit->quads, wposQuadIdx);
+	spring::VectorErase(baseQuads[wposQuadIdx].teamUnits[unit->allyteam], unit);
 	return true;
 }
 #endif
