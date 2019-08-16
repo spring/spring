@@ -452,10 +452,6 @@ void CWeapon::UpdateFire()
 	nextSalvo = gs->frameNum;
 	salvoError = gsRNG.NextVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
-	// area firing stuff is too effective at radar firing...
-	if (HavePosTarget() || (HaveUnitTarget() && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS)))
-		salvoError *= 1.3f;
-
 	owner->lastMuzzleFlameSize = muzzleFlareSize;
 	owner->lastMuzzleFlameDir = wantedDir;
 	owner->script->FireWeapon(weaponNum);
