@@ -1098,7 +1098,7 @@ void CWeapon::Fire(bool scriptCall)
 	if (qfHasUnit)
 		quadField.RemoveUnitIf(currentTarget.unit, currentTargetPos);
 
-	if (fireSoundId > 0 && (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger)
+	if (fireSoundId > 0 && (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger))
 		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
