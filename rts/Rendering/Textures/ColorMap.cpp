@@ -71,29 +71,43 @@ CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
 	if (numColorMaps >= (colorMapsCache.size() - 1))
 		return &colorMapsCache[colorMapsCache.size() - 1];
 
-	colorMapsCache[numColorMaps] = {data, size};
+	CColorMap cm{data, size};
+
+	// slowish, but gets invoked by /reloadcegs via LoadFromDefString callback
+	// need to do a cache lookup or numColorMaps quickly spirals out of control
+	for (size_t i = 0; i < numColorMaps; i++) {
+		if (colorMapsCache[i].map.size() != cm.map.size())
+			continue;
+
+		if (memcmp(colorMapsCache[i].map.data(), cm.map.data(), cm.map.size()) == 0)
+			return &colorMapsCache[i];
+	}
+
+	colorMapsCache[numColorMaps] = std::move(cm);
+
 	return &colorMapsCache[numColorMaps++];
 }
 
 
 CColorMap* CColorMap::LoadFromDefString(const std::string& defString)
 {
-	std::stringstream stream;
 	std::array<float, 4096> vec;
 
-	stream << defString;
+	size_t idx = 0;
 
-	size_t count = 0;
-	float value = 0.0f;
+	char* pos = const_cast<char*>(defString.c_str());
+	char* end = nullptr;
 
-	while ((count < vec.size()) && (stream >> value)) {
-		vec[count++] = value;
+	vec.fill(0.0f);
+
+	for (float val; (val = std::strtof(pos, &end), pos != end && idx < vec.size()); pos = end) {
+		vec[idx++] = val;
 	}
 
-	if (count == 0)
+	if (idx == 0)
 		return (CColorMap::LoadFromBitmapFile("bitmaps\\" + defString));
 
-	return (CColorMap::LoadFromRawVector(vec.data(), count));
+	return (CColorMap::LoadFromRawVector(vec.data(), idx));
 }
 
 
