@@ -1111,7 +1111,16 @@ void CBumpWater::Draw()
 
 	glMultiTexCoord2f(GL_TEXTURE1, windVec.x, windVec.z);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+#if 1
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(0, 2);
+
 	glCallList(displayList);
+
+	glDisable(GL_POLYGON_OFFSET_FILL);
+#else
+	glCallList(displayList);
+#endif
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	waterShader->Disable();

@@ -262,11 +262,16 @@ void CCamera::UpdateViewRange()
 	// view-angle dependent (i.e. FPS-view)
 	wantedViewRange = std::max(wantedViewRange, angleViewRange);
 
+#if 0
 	// NOTE: factor is always >= 1, not what we want when near ground
 	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
 
 	frustum.scales.z = CGlobalRendering::NEAR_PLANE * factor;
 	frustum.scales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
+#else
+	frustum.scales.z = 0.001 * wantedViewRange;
+	frustum.scales.w = wantedViewRange;
+#endif
 }
 
 
