@@ -139,26 +139,14 @@ class CCustomExplosionGenerator: public IExplosionGenerator
 {
 protected:
 	struct ProjectileSpawnInfo {
-		ProjectileSpawnInfo()
-			: spawnableID(0)
-			, count(0)
-			, flags(0)
-		{}
-		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
-			: spawnableID(psi.spawnableID)
-			, code(psi.code)
-			, count(psi.count)
-			, flags(psi.flags)
-		{}
+		unsigned int spawnableID = 0;
 
-		unsigned int spawnableID;
+		/// number of projectiles spawned of this type
+		unsigned int count = 0;
+		unsigned int flags = 0;
 
 		/// parsed explosion script code
 		std::vector<char> code;
-
-		/// number of projectiles spawned of this type
-		unsigned int count;
-		unsigned int flags;
 	};
 
 	struct ExpGenParams {

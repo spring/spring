@@ -708,28 +708,33 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	string& code
 ) {
 	const std::string content = script.substr(0, script.find(';', 0));
-	const bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
+
+	const bool isFloat = (memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT);
+	const bool isInt   = (memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT  );
 
 	if (content == "dir") {
 		// dir keyword; type has to be float3
-		if (memberInfo.length < 3 || !isFloat)
+		if (!isFloat || memberInfo.length < 3)
 			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
-		code += OP_DIR;
-		std::uint16_t ofs = memberInfo.offset;
-		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
+		const std::uint16_t ofs = memberInfo.offset;
 
+		code.append(1, OP_DIR);
+		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
 		return;
 	}
 
-	//Arrays (float3 or float4)
+	// arrays (float3 or float4)
 	if (memberInfo.length > 1) {
 		string::size_type start = 0;
 		SExpGenSpawnableMemberInfo subInfo = memberInfo;
 		subInfo.length = 1;
+
 		for (unsigned int i = 0; i < memberInfo.length && start < script.length(); ++i) {
-			string::size_type subEnd = script.find(',', start + 1);
+			const string::size_type subEnd = script.find(',', start + 1);
+
 			ParseExplosionCode(psi, script.substr(start, subEnd - start), subInfo, code);
+
 			start = subEnd + 1;
 			subInfo.offset += subInfo.size;
 		}
@@ -737,22 +742,24 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		return;
 	}
 
-	//Textures, Colormaps, etc.
+	// textures, colormaps, etc.
 	if (memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_PTR) {
 		// Memory is managed by whomever this callback belongs to
 		void* ptr = memberInfo.ptrCallback(content);
-		code += OP_LOADP;
-		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
-		code += OP_STOREP;
-		std::uint16_t ofs = memberInfo.offset;
-		code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 
+		code.append(1, OP_LOADP);
+		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
+
+		const std::uint16_t ofs = memberInfo.offset;
+
+		code.append(1, OP_STOREP);
+		code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 		return;
 	}
 
 
-	//Floats or Ints
-	assert(isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
+	// Floats or Ints
+	assert(isFloat || isInt);
 
 	if (isFloat) {
 		switch (memberInfo.size) {
@@ -767,8 +774,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 
 	// parse the code
-	int p = 0;
-	while (p < script.length()) {
+	for (size_t p = 0, len = script.length(); p < len; ) {
 		char opcode = OP_END;
 		char c = script[p++];
 
@@ -791,7 +797,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		else if (c == 'q') { opcode = OP_POWBUFF;  useInt = true; }
 		else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 		else {
-			LOG_L(L_WARNING, "[CCEG::%s] unknown op-code \"%c\" in \"%s\" at index %d", __func__, c, script.c_str(), p);
+			LOG_L(L_WARNING, "[CCEG::%s] unknown op-code \"%c\" in \"%s\" at index " _STPF_ "", __func__, c, script.c_str(), p);
 			continue;
 		}
 
@@ -802,28 +808,27 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		char* endp = nullptr;
 
 		if (!useInt) {
-			// strtod&co expect C-style strings with NULLs,
-			// c_str() is guaranteed to be NULL-terminated
-			// (whether .data() == .c_str() depends on the
-			// implementation of std::string)
-			const float v = (float)strtod(&script.c_str()[p], &endp);
+			const float v = (float)strtod(&script[p], &endp);
 
-			p += (endp - &script.c_str()[p]);
-			code += opcode;
+			p += (endp - &script[p]);
+
+			code.append(1, opcode);
 			code.append((char*) &v, ((char*) &v) + sizeof(v));
 		} else {
-			const int v = std::max(0, std::min(16, (int)strtol(&script.c_str()[p], &endp, 10)));
+			const int v = Clamp(int(strtol(&script[p], &endp, 10)), 0, 16);
 
-			p += (endp - &script.c_str()[p]);
-			code += opcode;
-			code.append((char*) &v, ((char*) &v) + + sizeof(v));
+			p += (endp - &script[p]);
+
+			code.append(1, opcode);
+			code.append((char*) &v, ((char*) &v) + sizeof(v));
 		}
 	}
 
 	// store the final value
+	const std::uint16_t ofs = memberInfo.offset;
+
 	code.push_back(isFloat ? OP_STOREF : OP_STOREI);
 	code.push_back(memberInfo.size);
-	std::uint16_t ofs = memberInfo.offset;
 	code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 }
 
