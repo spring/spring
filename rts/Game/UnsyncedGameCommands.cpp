@@ -2544,9 +2544,7 @@ public:
 		if (args.empty())
 			return false;
 
-		globalRendering->minViewRange = std::fabs(atof(args.c_str()));
-		globalRendering->minViewRange = std::max(globalRendering->minViewRange, CGlobalRendering::MIN_ZNEAR_DIST);
-		globalRendering->minViewRange = std::min(globalRendering->minViewRange, globalRendering->maxViewRange);
+		globalRendering->minViewRange = Clamp(strtof(args.c_str(), nullptr), CGlobalRendering::MIN_ZNEAR_DIST, globalRendering->maxViewRange);
 		return true;
 	}
 };
@@ -2562,9 +2560,7 @@ public:
 		if (args.empty())
 			return false;
 
-		globalRendering->maxViewRange = std::fabs(atof(args.c_str()));
-		globalRendering->maxViewRange = std::min(globalRendering->maxViewRange, CGlobalRendering::MAX_VIEW_RANGE);
-		globalRendering->maxViewRange = std::max(globalRendering->maxViewRange, globalRendering->minViewRange);
+		globalRendering->maxViewRange = Clamp(strtof(args.c_str(), nullptr), globalRendering->minViewRange, CGlobalRendering::MAX_VIEW_RANGE);
 		return true;
 	}
 };
@@ -2702,20 +2698,24 @@ public:
 
 			if (args.size() == 2) {
 				const int objType = Clamp(atoi(args[0].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
-				const float lodScale = atof(args[1].c_str());
+				const float lodScale = strtof(args[1].c_str(), nullptr);
 
 				LuaObjectDrawer::SetLODScale(objType, lodScale);
 			}
 			else if (args.size() == 3) {
 				const int objType = Clamp(atoi(args[1].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
-				const float lodScale = atof(args[2].c_str());
+				const float lodScale = strtof(args[2].c_str(), nullptr);
 
-				if (args[0] == "shadow") {
-					LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
-				} else if (args[0] == "reflection") {
-					LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
-				} else if (args[0] == "refraction") {
-					LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
+				switch (hashString(args[0].c_str())) {
+					case hashString("shadow"): {
+						LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
+					} break;
+					case hashString("reflection"): {
+						LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
+					} break;
+					case hashString("refraction"): {
+						LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
+					} break;
 				}
 			} else {
 				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2861,7 +2861,7 @@ public:
 		const std::string& args = action.GetArgs();
 
 		const spring_time t0 = spring_now();
-		const spring_time t1 = t0 + spring_time((args.empty())? 20.0f * 1000.0f: atof(args.c_str()) * 1000.0f);
+		const spring_time t1 = t0 + spring_time((args.empty())? 20.0f * 1000.0f: strtof(args.c_str(), nullptr) * 1000.0f);
 
 		for (spring_time t = t0; t < t1; t = spring_now()) {
 			// prevent compiler from removing this
