@@ -1,15 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstring> // memcpy
-#include <sstream>
-
 #include <array>
+#include <cstring> // memcpy
 
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/STL_Map.h"

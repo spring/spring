@@ -520,11 +520,17 @@ CBumpWater::CBumpWater()
 
 
 	// CREATE DISPLAYLIST
-	displayList = glGenLists(1);
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->CheckInitSize(4 * 33 * 2); // endless
-	glNewList(displayList, GL_COMPILE);
+
+	glNewList(displayList = glGenLists(1), GL_COMPILE);
+
+#if 1
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(0.0f, 2.0f);
+#endif
+
 	if (endlessOcean) {
 		DrawRadialDisc(va);
 	} else {
@@ -539,7 +545,12 @@ CBumpWater::CBumpWater()
 		}
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
+
+#if 1
+	glDisable(GL_POLYGON_OFFSET_FILL);
+#endif
 	glEndList();
+
 
 /*
 	windndir = envResHandler.GetCurrentWindDir();
@@ -1110,6 +1121,7 @@ void CBumpWater::Draw()
 		SetUniforms();
 
 	glMultiTexCoord2f(GL_TEXTURE1, windVec.x, windVec.z);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glCallList(displayList);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1220,7 +1232,7 @@ void CBumpWater::OcclusionQuery()
 		glEnable(GL_DEPTH_TEST);
 
 		glPushMatrix();
-			glTranslatef(0.0, 10.0, 0.0);
+			glTranslatef(0.0f, 10.0f, 0.0f);
 			glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 				glCallList(displayList);
 			glEndQuery(GL_ANY_SAMPLES_PASSED);

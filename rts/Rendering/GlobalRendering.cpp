@@ -106,6 +106,9 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(viewSizeY),
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
+
+	CR_IGNORED(minViewRange),
+	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
 	CR_IGNORED(forceDisableShaders),
@@ -184,6 +187,9 @@ CGlobalRendering::CGlobalRendering()
 	, pixelX(0.01f)
 	, pixelY(0.01f)
 
+	// sane defaults
+	, minViewRange(MIN_ZNEAR_DIST * 8.0f)
+	, maxViewRange(MAX_VIEW_RANGE * 0.25f)
 	, aspectRatio(1.0f)
 
 	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
@@ -1067,7 +1073,7 @@ void CGlobalRendering::InitGLState()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
-	gluPerspective(45.0f, aspectRatio, 2.8f, MAX_VIEW_RANGE);
+	gluPerspective(45.0f, aspectRatio, minViewRange, maxViewRange);
 
 	// this does not accomplish much
 	// SwapBuffers(true, true);
