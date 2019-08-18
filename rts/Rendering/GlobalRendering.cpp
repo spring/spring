@@ -105,6 +105,9 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(viewSizeY),
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
+
+	CR_IGNORED(minViewRange),
+	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
 	CR_IGNORED(gammaExponent),
@@ -179,6 +182,9 @@ CGlobalRendering::CGlobalRendering()
 	, pixelX(0.01f)
 	, pixelY(0.01f)
 
+	// sane defaults
+	, minViewRange(MIN_ZNEAR_DIST * 8.0f)
+	, maxViewRange(MAX_VIEW_RANGE * 0.25f)
 	, aspectRatio(1.0f)
 
 	, gammaExponent(1.0f)
@@ -1134,7 +1140,7 @@ void CGlobalRendering::InitGLState()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
-		// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
+		// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), minViewRange, maxViewRange));
 	} else {
 		// resize event, no need to reinitialize state in modern times
 		glAttribStatePtr->ViewPort(viewPosX, viewPosY, viewSizeX, viewSizeY);

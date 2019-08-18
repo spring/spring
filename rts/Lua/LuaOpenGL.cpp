@@ -970,7 +970,9 @@ int LuaOpenGL::GetViewRange(lua_State* L)
 
 	lua_pushnumber(L, cam->GetNearPlaneDist());
 	lua_pushnumber(L, cam->GetFarPlaneDist());
-	return 2;
+	lua_pushnumber(L, globalRendering->minViewRange);
+	lua_pushnumber(L, globalRendering->maxViewRange);
+	return 4;
 }
 
 int LuaOpenGL::SlaveMiniMap(lua_State* L)

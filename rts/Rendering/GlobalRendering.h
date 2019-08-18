@@ -91,12 +91,12 @@ public:
 	/**
 	* @brief max view range in elmos
 	*/
-	static constexpr float MAX_VIEW_RANGE = 8000.0f;
+	static constexpr float MAX_VIEW_RANGE = 65536.0f;
 
 	/**
 	* @brief near z-plane distance in elmos
 	*/
-	static constexpr float NEAR_PLANE = 2.8f;
+	static constexpr float MIN_ZNEAR_DIST = 0.5f;
 
 
 	/// magic constant to reduce overblending on SMF maps
@@ -165,6 +165,8 @@ public:
 	float pixelX;
 	float pixelY;
 
+	float minViewRange;
+	float maxViewRange;
 	/**
 	 * @brief aspect ratio
 	 *

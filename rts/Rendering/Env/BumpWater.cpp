@@ -1129,7 +1129,10 @@ void CBumpWater::Draw()
 		SetUniforms();
 
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
+	glAttribStatePtr->PolygonOffsetFill(GL_TRUE);
+	glAttribStatePtr->PolygonOffset(0.0f, 2.0f);
 	waterPlaneBuffer.Submit(mix(GL_TRIANGLES, GL_TRIANGLE_STRIP, endlessOcean), 0, waterPlaneBuffer.GetNumElems<VA_TYPE_0>());
+	glAttribStatePtr->PolygonOffsetFill(GL_FALSE);
 	glAttribStatePtr->PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	waterShader->Disable();

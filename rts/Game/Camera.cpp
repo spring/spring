@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "UI/MouseHandler.h"
+#include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
@@ -35,7 +36,7 @@ CCamera::CCamera(unsigned int cameraType, unsigned int projectionType)
 	memset(movState, 0, sizeof(movState));
 	memset(rotState, 0, sizeof(rotState));
 
-	frustum.scales.z = CGlobalRendering::NEAR_PLANE;
+	frustum.scales.z = CGlobalRendering::MIN_ZNEAR_DIST;
 	frustum.scales.w = CGlobalRendering::MAX_VIEW_RANGE;
 
 	SetVFOV(45.0f);
@@ -238,25 +239,47 @@ void CCamera::LoadViewPort() const
 
 void CCamera::UpdateViewRange()
 {
-	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
-	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
-	const float maxDistToBorder  = math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+	#if 0
+	// horizon-probe direction
+	const float3 hpPixelDir = (forward * XZVector + UpVector * -0.01f).Normalize();
 
-	const float  angleViewRange  = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
-	const float heightViewRange  = (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f;
+	const float3 tlPixelDir = CalcPixelDir(                         0,                          0);
+	const float3 trPixelDir = CalcPixelDir(globalRendering->viewSizeX,                          0);
+	const float3 brPixelDir = CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY);
+	const float3 blPixelDir = CalcPixelDir(                         0, globalRendering->viewSizeY);
+	#endif
 
-	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
+	constexpr float SQ_MAX_VIEW_RANGE = Square(CGlobalRendering::MAX_VIEW_RANGE);
+	constexpr float ZFAR_ZNEAR_FACTOR = 0.001f;
 
-	// camera-height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, heightViewRange);
-	// view-angle dependent (i.e. FPS-view)
-	wantedViewRange = std::max(wantedViewRange, angleViewRange);
+	const float maxEdgeDistX = std::max(pos.x, float3::maxxpos - pos.x);
+	const float maxEdgeDistZ = std::max(pos.z, float3::maxzpos - pos.z);
+	const float maxEdgeDist  = math::sqrt(Square(maxEdgeDistX) + Square(maxEdgeDistZ));
+	const float mapMinHeight = readMap->GetCurrMinHeight();
 
-	// NOTE: factor is always >= 1, not what we want when near ground
-	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
+	float wantedViewRange = 0.0f;
 
-	frustum.scales.z = CGlobalRendering::NEAR_PLANE * factor;
-	frustum.scales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
+	#if 0
+	// only pick horizon probe-dir if between bottom and top planes
+	if (hpPixelDir.y >= (blPixelDir.y + brPixelDir.y) * 0.5f && hpPixelDir.y <= (tlPixelDir.y + trPixelDir.y) * 0.5f)
+		wantedViewRange = CGround::LinePlaneCol(pos, hpPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight);
+	#endif
+
+	// camera-height dependence (i.e. TAB-view)
+	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, mapMinHeight)) * 2.0f);
+	// view-angle dependence (i.e. FPS-view)
+	wantedViewRange = std::max(wantedViewRange, (1.0f - std::max(0.0f, forward.dot(UpVector))) * maxEdgeDist);
+
+	#if 0
+	wantedViewRange = std::max(wantedViewRange, CGround::LinePlaneCol(pos, tlPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight));
+	wantedViewRange = std::max(wantedViewRange, CGround::LinePlaneCol(pos, trPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight));
+	wantedViewRange = std::max(wantedViewRange, CGround::LinePlaneCol(pos, brPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight));
+	wantedViewRange = std::max(wantedViewRange, CGround::LinePlaneCol(pos, blPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight));
+	wantedViewRange = Clamp(wantedViewRange, CGlobalRendering::MIN_ZNEAR_DIST, CGlobalRendering::MAX_VIEW_RANGE);
+	#endif
+
+	frustum.scales.z = std::max(wantedViewRange * ZFAR_ZNEAR_FACTOR, globalRendering->minViewRange);
+	frustum.scales.w = std::min(wantedViewRange                    , globalRendering->maxViewRange);
 }
 
 

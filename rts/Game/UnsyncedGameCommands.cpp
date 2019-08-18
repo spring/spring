@@ -2514,6 +2514,44 @@ public:
 
 
 
+class MinViewRangeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MinViewRangeActionExecutor() : IUnsyncedActionExecutor("MinViewRange", "Set minimum view-distance") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const std::string& args = action.GetArgs();
+
+		if (args.empty())
+			return false;
+
+		globalRendering->minViewRange = std::fabs(atof(args.c_str()));
+		globalRendering->minViewRange = std::max(globalRendering->minViewRange, CGlobalRendering::MIN_ZNEAR_DIST);
+		globalRendering->minViewRange = std::min(globalRendering->minViewRange, globalRendering->maxViewRange);
+		return true;
+	}
+};
+
+class MaxViewRangeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MaxViewRangeActionExecutor() : IUnsyncedActionExecutor("MaxViewRange", "Set maximum view-distance") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const std::string& args = action.GetArgs();
+
+		if (args.empty())
+			return false;
+
+		globalRendering->maxViewRange = std::fabs(atof(args.c_str()));
+		globalRendering->maxViewRange = std::min(globalRendering->maxViewRange, CGlobalRendering::MAX_VIEW_RANGE);
+		globalRendering->maxViewRange = std::max(globalRendering->maxViewRange, globalRendering->minViewRange);
+		return true;
+	}
+};
+
+
+
 class GatherModeActionExecutor : public IUnsyncedActionExecutor {
 public:
 	GatherModeActionExecutor() : IUnsyncedActionExecutor("GatherMode", "Enter/Leave gather-wait command mode") {
@@ -3360,6 +3398,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<DistSortProjectilesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxNanoParticlesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MinViewRangeActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MaxViewRangeActionExecutor>());
 
 	AddActionExecutor(AllocActionExecutor<GatherModeActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<PasteTextActionExecutor>());
