@@ -2,6 +2,9 @@
 
 #include "DemoReader.h"
 
+#include "Game/GameVersion.h"
+#include "Sim/Misc/GlobalConstants.h"
+
 #ifndef TOOLS
 #include "System/Config/ConfigHandler.h"
 CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to play every replay file (may crash / cause undefined behaviour in replays)");
@@ -11,9 +14,8 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
-#include "Game/GameVersion.h"
-#include "Sim/Misc/GlobalConstants.h"
 
+#include <array>
 #include <climits>
 #include <stdexcept>
 #include <cassert>
