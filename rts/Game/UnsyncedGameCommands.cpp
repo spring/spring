@@ -544,7 +544,7 @@ private:
 
 class MouseCancelSelectionRectangleActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MouseCancelSelectionRectangleActionExecutor(): IUnsyncedActionExecutor("MouseCancelSelectionRectangle") {
+	MouseCancelSelectionRectangleActionExecutor(): IUnsyncedActionExecutor("MouseCancelSelectionRectangle", "") {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
