@@ -40,6 +40,7 @@ public:
 	void HideMouse();
 	void ShowMouse();
 	void ToggleMiddleClickScroll(); /// lock+hide
+	void CancelButtonMovement(int button) { buttons[button].movement = 0; }
 	void WarpMouse(int x, int y);
 
 	void DrawSelectionBox(); /// draw mousebox (selection box)
