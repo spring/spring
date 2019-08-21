@@ -567,7 +567,7 @@ class MouseActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MouseActionExecutor(int _button): IUnsyncedActionExecutor(
 		"Mouse" + IntToString(_button),
-		"Simulates a mouse button press of button " + IntToString(_button)
+		"Simulates a press of mouse-button " + IntToString(_button)
 	) {
 		button = _button;
 	}
@@ -581,6 +581,18 @@ public:
 
 private:
 	int button;
+};
+
+class MouseCancelSelectionRectangleActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MouseCancelSelectionRectangleActionExecutor(): IUnsyncedActionExecutor("MouseCancelSelectionRectangle") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		// MouseHandler::MouseRelease checks LMB movement against drag-selection threshold
+		mouse->CancelButtonMovement(SDL_BUTTON_LEFT);
+		return true;
+	}
 };
 
 
@@ -3293,6 +3305,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(3));
 	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(4));
 	AddActionExecutor(AllocActionExecutor<MouseActionExecutor>(5));
+	AddActionExecutor(AllocActionExecutor<MouseCancelSelectionRectangleActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ViewSelectionActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(0, "Forward"));
 	AddActionExecutor(AllocActionExecutor<CameraMoveActionExecutor>(1, "Back"));
