@@ -330,9 +330,19 @@ bool CQuadField::RemoveUnitIf(CUnit* unit, const float3& wpos)
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
 	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
 
-	// do nothing if unit is now (or still) in cell containing <wpos>
+	// do nothing if unit now exists in cell containing <wpos>
+	// (meaning it must have somehow moved since InsertUnitIf)
 	if (wposQuadIdx == uposQuadIdx)
 		return false;
+
+	QuadFieldQuery qfQuery;
+	GetQuads(qfQuery, unit->pos, unit->radius);
+
+	// do nothing if the cells touched by unit now contain <wpos>
+	if (std::find(qfQuery.quads->begin(), qfQuery.quads->end(), wposQuadIdx) != qfQuery.quads->end()) {
+		assert(std::find(unit->quads.begin(), unit->quads.end(), wposQuadIdx) != unit->quads.end());
+		return false;
+	}
 
 	if (!spring::VectorErase(unit->quads, wposQuadIdx))
 		return false;
