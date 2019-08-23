@@ -112,6 +112,8 @@ CTimeProfiler::CTimeProfiler()
 	// specials (conditional on LuaContextData)
 	RegisterTimer("Lua::Callins::Synced");
 	RegisterTimer("Lua::Callins::Unsynced");
+	RegisterTimer("Lua::CollectGarbage::Synced");
+	RegisterTimer("Lua::CollectGarbage::Unsynced");
 	ResetState();
 }
 

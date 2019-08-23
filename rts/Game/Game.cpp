@@ -309,8 +309,6 @@ void CGame::AddTimedJobs()
 		JobDispatcher::Job j;
 
 		j.f = [this]() -> bool {
-			SCOPED_TIMER("Misc::CollectGarbage");
-
 			const float simFrameDeltaTime = (spring_gettime() - lastSimFrameNetPacketTime).toMilliSecsf();
 			const float gcForcedDeltaTime = (5.0f * 1000.0f) / (GAME_SPEED * gs->speedFactor);
 
