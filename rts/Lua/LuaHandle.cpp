@@ -2508,6 +2508,8 @@ void CLuaHandle::CollectGarbage()
 	if (spring_lua_alloc_skip_gc(gcMemLoadMult))
 		return;
 
+	LUA_CALL_IN_CHECK_NAMED(L, (GetLuaContextData(L)->synced)? "Lua::CollectGarbage::Synced": "Lua::CollectGarbage::Unsynced");
+
 	lua_lock(L_GC);
 	SetHandleRunning(L_GC, true);
 
