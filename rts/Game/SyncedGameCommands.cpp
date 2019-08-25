@@ -94,10 +94,24 @@ public:
 	}
 
 	bool Execute(const SyncedAction& action) const final {
-		InverseOrSetBool(gs->godMode, action.GetArgs());
+		const std::string& args = action.GetArgs();
+
+		if (args.empty()) {
+			gs->godMode = GODMODE_MAX_VAL - gs->godMode;
+		} else {
+			gs->godMode = Clamp(atoi(args.c_str()), 0, int(GODMODE_MAX_VAL));
+		}
+
 		CLuaUI::UpdateTeams();
-		LogSystemStatus("God-Mode", gs->godMode);
 		CPlayer::UpdateControlledTeams();
+
+		switch (gs->godMode) {
+			case               0: { LOG("god-mode disabled"              ); } break;
+			case GODMODE_ATC_BIT: { LOG("god-mode enabled (allied teams)"); } break;
+			case GODMODE_ETC_BIT: { LOG("god-mode enabled (enemy teams)" ); } break;
+			case GODMODE_MAX_VAL: { LOG("god-mode enabled (all teams)"   ); } break;
+		}
+
 		return true;
 	}
 };

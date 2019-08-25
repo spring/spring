@@ -812,8 +812,10 @@ int LuaSyncedRead::IsCheatingEnabled(lua_State* L)
 
 int LuaSyncedRead::IsGodModeEnabled(lua_State* L)
 {
-	lua_pushboolean(L, gs->godMode);
-	return 1;
+	lua_pushboolean(L, gs->godMode != 0);
+	lua_pushboolean(L, (gs->godMode & GODMODE_ATC_BIT) != 0);
+	lua_pushboolean(L, (gs->godMode & GODMODE_ETC_BIT) != 0);
+	return 3;
 }
 
 
