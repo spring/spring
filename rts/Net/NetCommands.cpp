@@ -260,7 +260,7 @@ void CGame::ClientReadNet()
 			std::shared_ptr<const netcode::RawPacket> peekPacket = clientNet->Peek(0);
 
 			if (peekPacket != nullptr && peekPacket->data[0] == NETMSG_SYNCRESPONSE) {
-				if (haveServerDemo && haveClientDemo && gs->godMode) {
+				if (haveServerDemo && haveClientDemo && gs->godMode != 0) {
 					assert(configHandler->GetBool("DemoFromDemo"));
 
 					const  int32_t syncFrameNum = *reinterpret_cast<const int32_t*>(peekPacket->data + sizeof(uint8_t) + sizeof(uint8_t));

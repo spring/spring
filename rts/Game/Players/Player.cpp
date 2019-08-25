@@ -40,9 +40,6 @@ CR_REG_METADATA(CPlayer, (
 //////////////////////////////////////////////////////////////////////
 
 CPlayer::CPlayer()
-	: active(false)
-	, playerNum(-1)
-	, ping(0)
 {
 	fpsController.SetControllerPlayer(this);
 }
@@ -52,12 +49,19 @@ CPlayer::CPlayer()
 void CPlayer::SetControlledTeams()
 {
 	controlledTeams.clear();
+	controlledTeams.reserve(teamHandler.ActiveTeams());
 
-	if (gs->godMode) {
+	if (gs->godMode != 0) {
 		// anyone can control any unit
 		for (int t = 0; t < teamHandler.ActiveTeams(); t++) {
-			controlledTeams.insert(t);
+			if ((gs->godMode & GODMODE_ATC_BIT) != 0 &&  teamHandler.AlliedTeams(team, t))
+				controlledTeams.insert(t);
+			if ((gs->godMode & GODMODE_ETC_BIT) != 0 && !teamHandler.AlliedTeams(team, t))
+				controlledTeams.insert(t);
 		}
+
+		// self-control
+		controlledTeams.insert(team);
 		return;
 	}
 

@@ -193,7 +193,7 @@ void CGameServer::Initialize()
 {
 	// configs
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
-	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin");
+	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin") || myGameSetup->onlyLocal; ///!!! mantis #4418
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
 	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");

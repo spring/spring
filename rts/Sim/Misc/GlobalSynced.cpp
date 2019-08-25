@@ -34,12 +34,12 @@ CR_BIND(CGlobalSynced, )
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
 	CR_MEMBER(tempNum),
+	CR_MEMBER(godMode),
 
 	CR_MEMBER(speedFactor),
 	CR_MEMBER(wantedSpeedFactor),
 
 	CR_MEMBER(paused),
-	CR_MEMBER(godMode),
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
@@ -56,6 +56,7 @@ void CGlobalSynced::Kill()
 void CGlobalSynced::ResetState() {
 	frameNum = -1; // first real frame is 0
 	tempNum  =  1;
+	godMode  =  0;
 
 #ifdef SYNCCHECK
 	// reset checksum
@@ -65,9 +66,7 @@ void CGlobalSynced::ResetState() {
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;
 
-	paused  = false;
-	godMode = false;
-
+	paused          = false;
 	cheatEnabled    = false;
 	noHelperAIs     = false;
 	editDefsEnabled = false;

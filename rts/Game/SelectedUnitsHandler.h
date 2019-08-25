@@ -18,8 +18,6 @@ struct SCommandDescription;
 class CSelectedUnitsHandler : public CObject
 {
 public:
-	CSelectedUnitsHandler();
-
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
 	void AINetOrder(int unitID, int playerID, const Command& c);
@@ -65,20 +63,24 @@ public:
 	void SelectUnits(const std::string& line);
 	void SelectCycle(const std::string& command);
 
+private:
+	int selectedGroup = -1;
+	int soundMultiselID = 0;
+
+	bool autoAddBuiltUnitsToFactoryGroup = false;
+	bool autoAddBuiltUnitsToSelectedGroup = false;
+	bool buildIconsFirst = false;
+
 public:
-	bool selectionChanged;
-	bool possibleCommandsChanged;
+	bool selectionChanged = false;
+	bool possibleCommandsChanged = true;
 
 	spring::unordered_set<int> selectedUnits;
 	std::vector< std::vector<int> > netSelected;
 
 private:
-	int selectedGroup;
-	int soundMultiselID;
-
-	bool autoAddBuiltUnitsToFactoryGroup;
-	bool autoAddBuiltUnitsToSelectedGroup;
-	bool buildIconsFirst;
+	// buffer for SendCommand unordered_set->vector conversion
+	std::vector<int16_t> selectedUnitIDs;
 };
 
 extern CSelectedUnitsHandler selectedUnitsHandler;

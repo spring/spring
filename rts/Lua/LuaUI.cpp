@@ -239,15 +239,16 @@ bool CLuaUI::HasCallIn(lua_State* L, const string& name) const
 
 void CLuaUI::UpdateTeams()
 {
-	if (luaUI) {
-		luaUI->SetFullCtrl(gs->godMode);
-		luaUI->SetCtrlTeam(gs->godMode ? AllAccessTeam :
-		                  (gu->spectating ? NoAccessTeam : gu->myTeam));
-		luaUI->SetFullRead(gu->spectatingFullView);
-		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
-		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
-		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
-	}
+	if (luaUI == nullptr)
+		return;
+
+	luaUI->SetFullCtrl(gs->godMode == GODMODE_MAX_VAL);
+	luaUI->SetCtrlTeam(gs->godMode == GODMODE_MAX_VAL ? AllAccessTeam :
+	                  (gu->spectating ? NoAccessTeam : gu->myTeam));
+	luaUI->SetFullRead(gu->spectatingFullView);
+	luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
+	luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
+	luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
 }
 
 
