@@ -68,6 +68,7 @@ private:
 	std::array<float3, maxMsgCount> lastMsgPositions;
 
 	std::vector<RawLine> tmpLines;
+	std::vector<InfoLine> tmpInfoLines;
 	std::deque<RawLine> rawLines;
 	std::deque<InfoLine> infoLines;
 

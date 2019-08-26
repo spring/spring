@@ -89,13 +89,19 @@ void CInfoConsole::Draw()
 	if (smallFont == nullptr)
 		return;
 
-	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
-
-	if (infoLines.empty())
-		return;
-
 	// infoConsole exists before guiHandler does, but is never drawn during that period
 	assert(guihandler != nullptr);
+
+	{
+		// make copies s.t. mutex is not locked during glPrint calls
+		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+
+		if (infoLines.empty())
+			return;
+
+		tmpInfoLines.clear();
+		tmpInfoLines.insert(tmpInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
+	}
 
 	// always draw outlined text here, saves an ugly black background
 	// (the default console is practically no longer used in any case)
@@ -108,8 +114,8 @@ void CInfoConsole::Draw()
 	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 	smallFont->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	for (size_t i = 0; i < std::min(infoLines.size(), maxLines); ++i) {
-		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, infoLines[i].text);
+	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
+		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
 	}
 
 	smallFont->DrawBufferedGL4();
