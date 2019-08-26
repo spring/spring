@@ -106,10 +106,10 @@ public:
 		CPlayer::UpdateControlledTeams();
 
 		switch (gs->godMode) {
-			case               0: { LOG("god-mode disabled"              ); } break;
-			case GODMODE_ATC_BIT: { LOG("god-mode enabled (allied teams)"); } break;
-			case GODMODE_ETC_BIT: { LOG("god-mode enabled (enemy teams)" ); } break;
-			case GODMODE_MAX_VAL: { LOG("god-mode enabled (all teams)"   ); } break;
+			case               0: { LOG("[GodModeAction] god-mode disabled"              ); } break;
+			case GODMODE_ATC_BIT: { LOG("[GodModeAction] god-mode enabled (allied teams)"); } break;
+			case GODMODE_ETC_BIT: { LOG("[GodModeAction] god-mode enabled (enemy teams)" ); } break;
+			case GODMODE_MAX_VAL: { LOG("[GodModeAction] god-mode enabled (all teams)"   ); } break;
 		}
 
 		return true;

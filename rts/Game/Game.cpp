@@ -1460,7 +1460,7 @@ void CGame::StartPlaying()
 		lastReadNetTime = spring_gettime();
 
 		gu->startTime = gu->gameTime;
-		gu->myTeam = playerHandler.Player(gu->myPlayerNum)->team;
+		gu->myTeam = gu->GetMyPlayer()->team;
 		gu->myAllyTeam = teamHandler.AllyTeam(gu->myTeam);
 	}
 
