@@ -961,6 +961,8 @@ public:
 
 		// NOTE: unsynced event
 		eventHandler.PlayerChanged(gu->myPlayerNum);
+
+		LOG("[SpecTeamAction] local client %d now spectating team %d and allyteam %d", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 		return true;
 	}
 };

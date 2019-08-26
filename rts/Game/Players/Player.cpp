@@ -60,6 +60,10 @@ void CPlayer::SetControlledTeams()
 				controlledTeams.insert(t);
 		}
 
+		// facilitate LuaUnsyncedCtrl checks
+		if (gs->godMode == GODMODE_MAX_VAL)
+			controlledTeams.insert(CEventClient::AllAccessTeam);
+
 		// self-control
 		controlledTeams.insert(team);
 		return;

@@ -378,7 +378,7 @@ static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index
 
 	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
 
-	// partial god-mode does not set selectTeam to AllAccess
+	// partial god-mode does not set selectTeam to AllAccess; spectatingFullSelect does
 	if (gu->GetMyPlayer()->CanControlTeam(selectTeam))
 		return unit;
 
@@ -2416,16 +2416,13 @@ static bool CanGiveOrders(const lua_State* L)
 	if (gs->noHelperAIs)
 		return false;
 
-	if (gu->spectating)
-		return false;
-
 	const int ctrlTeam = CLuaHandle::GetHandleCtrlTeam(L);
 
 	if (gu->GetMyPlayer()->CanControlTeam(ctrlTeam))
 		return true;
 
 	// FIXME ? (correct? warning / error?)
-	return ((ctrlTeam == gu->myTeam) && (ctrlTeam >= 0));
+	return (!gu->spectating && (ctrlTeam == gu->myTeam) && (ctrlTeam >= 0));
 }
 
 
