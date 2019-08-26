@@ -489,6 +489,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 				collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
+				leadLimit = wdTable.GetFloat("leadLimit", 0.0f);
 			} break;
 			case hashString("StarburstLauncher"): {
 				// CStarburstProjectile
