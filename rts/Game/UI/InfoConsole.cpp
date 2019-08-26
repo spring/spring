@@ -91,10 +91,19 @@ void CInfoConsole::Draw()
 	if (smallFont == nullptr)
 		return;
 
-	std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+	// infoConsole exists before guiHandler does, but is never drawn during that period
+	assert(guihandler != nullptr);
 
-	if (infoLines.empty())
-		return;
+	{
+		// make copies s.t. mutex is not locked during glPrint calls
+		std::lock_guard<decltype(infoConsoleMutex)> scoped_lock(infoConsoleMutex);
+
+		if (infoLines.empty())
+			return;
+
+		tmpInfoLines.clear();
+		tmpInfoLines.insert(tmpInfoLines.cend(), infoLines.cbegin(), infoLines.cbegin() + std::min(infoLines.size(), maxLines)); 
+	}
 
 	smallFont->Begin();
 	smallFont->SetColors(); // default
@@ -105,8 +114,8 @@ void CInfoConsole::Draw()
 	float curX = xpos + border * globalRendering->pixelX;
 	float curY = ypos - border * globalRendering->pixelY;
 
-	for (size_t i = 0; i < std::min(infoLines.size(), maxLines); ++i) {
-		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, infoLines[i].text);
+	for (size_t i = 0, n = tmpInfoLines.size(); i < n; ++i) {
+		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, tmpInfoLines[i].text);
 	}
 
 	smallFont->End();
