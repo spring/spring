@@ -7,9 +7,9 @@
 #include <stdexcept>
 #include <sstream>
 #include <string>
+#include <cassert>
 #include <cstring>
 #include <iostream>
-#include <assert.h>
 
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
@@ -48,6 +48,8 @@ static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 
 CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 {
+	memset(&dummyHash, 0, sizeof(dummyHash));
+
 	char c_name[255];
 	uint8_t c_md5sum[16];
 	uint8_t c_crc32[4];
@@ -165,6 +167,6 @@ int CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffe
 		return 0;
 	}
 
-	sha512::calc_digest(buffer.data(), buffer.size(), f->shasum);
+	sha512::calc_digest(buffer.data(), buffer.size(), f->shasum.data());
 	return 1;
 }

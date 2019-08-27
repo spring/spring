@@ -90,9 +90,15 @@ public:
 	}
 	bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN]) override {
 		assert(IsFileId(fid));
-		// FIXME: not calculated until GetFileImpl
-		memcpy(hash, &files[fid].shasum[0], sha512::SHA_LEN);
-		return true;
+
+		const FileData& fd = files[fid];
+
+		// pool-entry hashes are not calculated until GetFileImpl, must check JIT
+		if (memcmp(fd.shasum.data(), dummyHash.data(), sizeof(fd.shasum)) == 0)
+			GetFileImpl(fid, dummyData);
+
+		memcpy(hash, fd.shasum.data(), sha512::SHA_LEN);
+		return (memcmp(fd.shasum.data(), dummyHash.data(), sizeof(fd.shasum)) != 0);
 	}
 
 protected:
@@ -111,8 +117,9 @@ protected:
 
 	struct FileData {
 		std::string name;
-		uint8_t md5sum[16];
-		uint8_t shasum[sha512::SHA_LEN];
+		std::array<uint8_t,              16> md5sum;
+		std::array<uint8_t, sha512::SHA_LEN> shasum;
+
 		uint32_t crc32;
 		uint32_t size;
 	};
@@ -126,7 +133,11 @@ protected:
 
 private:
 	bool isOpen = false;
+
+	std::array<uint8_t, sha512::SHA_LEN> dummyHash;
+
 	std::string poolRootDir;
+	std::vector<std::uint8_t> dummyData;
 
 	std::vector<FileData> files;
 	std::vector<FileStat> stats;
