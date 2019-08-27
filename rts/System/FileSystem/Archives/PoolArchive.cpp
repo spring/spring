@@ -48,7 +48,7 @@ static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 
 CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 {
-	memset(&dummyHash, 0, sizeof(dummyHash));
+	memset(&dummyFileHash, 0, sizeof(dummyFileHash));
 
 	char c_name[255];
 	uint8_t c_md5sum[16];

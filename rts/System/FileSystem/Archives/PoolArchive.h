@@ -8,6 +8,7 @@
 
 #include "IArchiveFactory.h"
 #include "BufferedArchive.h"
+#include "System/MainDefines.h"
 
 
 /**
@@ -92,13 +93,15 @@ public:
 		assert(IsFileId(fid));
 
 		const FileData& fd = files[fid];
+		// TLS to handle ArchiveScanner threading
+		static _threadlocal std::vector<std::uint8_t> fb;
 
 		// pool-entry hashes are not calculated until GetFileImpl, must check JIT
-		if (memcmp(fd.shasum.data(), dummyHash.data(), sizeof(fd.shasum)) == 0)
-			GetFileImpl(fid, dummyData);
+		if (memcmp(fd.shasum.data(), dummyFileHash.data(), sizeof(fd.shasum)) == 0)
+			GetFileImpl(fid, fb);
 
 		memcpy(hash, fd.shasum.data(), sha512::SHA_LEN);
-		return (memcmp(fd.shasum.data(), dummyHash.data(), sizeof(fd.shasum)) != 0);
+		return (memcmp(fd.shasum.data(), dummyFileHash.data(), sizeof(fd.shasum)) != 0);
 	}
 
 protected:
@@ -134,10 +137,8 @@ protected:
 private:
 	bool isOpen = false;
 
-	std::array<uint8_t, sha512::SHA_LEN> dummyHash;
-
 	std::string poolRootDir;
-	std::vector<std::uint8_t> dummyData;
+	std::array<uint8_t, sha512::SHA_LEN> dummyFileHash;
 
 	std::vector<FileData> files;
 	std::vector<FileStat> stats;
