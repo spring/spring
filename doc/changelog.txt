@@ -10,7 +10,7 @@ Sim:
  ! remove legacy (COB, though also affecting Lua) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
  ! remove CMD_SET_WANTED_MAX_SPEED
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
- - DGun weapontype: allow leading (leadLimit for DGun defaults to 0 instead of 1 for back-compatibility)
+ - DGun weapontype: allow leading (leadLimit for DGun defaults to 0 instead of -1 for back-compatibility)
 
 Lua:
  - add Platform.osVersion; complements Platform.osName
