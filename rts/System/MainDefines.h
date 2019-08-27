@@ -63,6 +63,9 @@
 
 #if defined(_MSC_VER)
 	#define _threadlocal __declspec(thread)
+#elif defined(__clang__)
+	// clang's __thread does not allow objects with non-trivial dtors
+	#define _threadlocal thread_local
 #else
 	#define _threadlocal __thread
 #endif
