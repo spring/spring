@@ -928,6 +928,7 @@ bool CArchiveScanner::GetArchiveChecksum(const std::string& archiveName, Archive
 	std::unique_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
 	std::vector<std::string> fileNames;
 	std::vector<sha512::raw_digest> fileHashes;
+	std::array<std::vector<std::uint8_t>, ThreadPool::MAX_THREADS> fileBuffers;
 
 	fileNames.reserve(ar->NumFiles());
 	fileHashes.reserve(ar->NumFiles());
@@ -948,7 +949,7 @@ bool CArchiveScanner::GetArchiveChecksum(const std::string& archiveName, Archive
 
 	// compute hashes of the files
 	for_mt(0, fileNames.size(), [&](const int i) {
-		ar->CalcHash(ar->FindFile(fileNames[i]), fileHashes[i].data());
+		ar->CalcHash(ar->FindFile(fileNames[i]), fileHashes[i].data(), fileBuffers[ ThreadPool::GetThreadNum() ]);
 
 		#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);

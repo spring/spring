@@ -8,7 +8,6 @@
 
 #include "IArchiveFactory.h"
 #include "BufferedArchive.h"
-#include "System/MainDefines.h"
 
 
 /**
@@ -89,12 +88,10 @@ public:
 		name = files[fid].name;
 		size = files[fid].size;
 	}
-	bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN]) override {
+	bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN], std::vector<std::uint8_t>& fb) override {
 		assert(IsFileId(fid));
 
 		const FileData& fd = files[fid];
-		// TLS to handle ArchiveScanner threading
-		static _threadlocal std::vector<std::uint8_t> fb;
 
 		// pool-entry hashes are not calculated until GetFileImpl, must check JIT
 		if (memcmp(fd.shasum.data(), dummyFileHash.data(), sizeof(fd.shasum)) == 0)

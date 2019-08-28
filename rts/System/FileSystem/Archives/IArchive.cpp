@@ -15,18 +15,16 @@ unsigned int IArchive::FindFile(const std::string& filePath) const
 	return NumFiles();
 }
 
-bool IArchive::CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN])
+bool IArchive::CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN], std::vector<std::uint8_t>& fb)
 {
 	// NOTE: should be possible to avoid a re-read for buffered archives
-	std::vector<std::uint8_t> buffer;
-
-	if (!GetFile(fid, buffer))
+	if (!GetFile(fid, fb))
 		return false;
 
-	if (buffer.empty())
+	if (fb.empty())
 		return false;
 
-	sha512::calc_digest(buffer.data(), buffer.size(), hash);
+	sha512::calc_digest(fb.data(), fb.size(), hash);
 	return true;
 }
 
