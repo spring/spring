@@ -124,7 +124,7 @@ public:
 	/**
 	 * Fetches the (SHA512) hash of a file by its ID.
 	 */
-	virtual bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN]);
+	virtual bool CalcHash(uint32_t fid, uint8_t hash[sha512::SHA_LEN], std::vector<std::uint8_t>& fb);
 
 
 protected:
