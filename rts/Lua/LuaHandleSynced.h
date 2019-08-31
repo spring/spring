@@ -187,6 +187,10 @@ class CSplitLuaHandle
 			syncedLuaHandle.CheckStack();
 			unsyncedLuaHandle.CheckStack();
 		}
+		void CollectGarbage(bool forced) {
+			syncedLuaHandle.CollectGarbage(forced);
+			unsyncedLuaHandle.CollectGarbage(forced);
+		}
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
 			if (!CLuaHandle::GetHandleSynced(L))

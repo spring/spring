@@ -315,7 +315,7 @@ void CGame::AddTimedJobs()
 			// SimFrame handles gc when not paused, this all other cases
 			// do not check the global synced state, never true in demos
 			if (luaGCControl == 1 || simFrameDeltaTime > gcForcedDeltaTime)
-				eventHandler.CollectGarbage();
+				eventHandler.CollectGarbage(false);
 
 			CInputReceiver::CollectGarbage();
 			return true;
@@ -788,6 +788,7 @@ void CGame::LoadFinalize()
 	if (saveFileHandler == nullptr) {
 		ENTER_SYNCED_CODE();
 		eventHandler.GamePreload();
+		eventHandler.CollectGarbage(true);
 		LEAVE_SYNCED_CODE();
 	}
 
@@ -1522,7 +1523,7 @@ void CGame::SimFrame() {
 			// keep garbage-collection rate tied to sim-speed
 			// (fixed 30Hz gc is not enough while catching up)
 			if (luaGCControl == 0)
-				eventHandler.CollectGarbage();
+				eventHandler.CollectGarbage(false);
 
 			eventHandler.GameFrame(gs->frameNum);
 		}

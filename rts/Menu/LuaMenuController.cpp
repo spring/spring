@@ -95,7 +95,7 @@ bool CLuaMenuController::Draw()
 	// we should not become the active controller unless this holds (see ::Activate)
 	assert(luaMenu != nullptr);
 
-	eventHandler.CollectGarbage();
+	eventHandler.CollectGarbage(false);
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
 	mouse->UpdateCursors();

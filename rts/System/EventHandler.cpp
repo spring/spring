@@ -555,9 +555,9 @@ void CEventHandler::UnitHarvestStorageFull(const CUnit* unit)
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::CollectGarbage()
+void CEventHandler::CollectGarbage(bool forced)
 {
-	ITERATE_EVENTCLIENTLIST_NA(CollectGarbage);
+	ITERATE_EVENTCLIENTLIST(CollectGarbage, forced);
 }
 
 void CEventHandler::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end)

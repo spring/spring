@@ -346,7 +346,7 @@ class CEventClient
 		virtual void DrawLoadScreen();
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
-		virtual void CollectGarbage() {}
+		virtual void CollectGarbage(bool forced) {}
 		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
 		virtual void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime) {}
 		virtual void MetalMapChanged(const int x, const int z) {}
