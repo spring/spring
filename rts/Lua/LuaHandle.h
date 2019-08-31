@@ -259,7 +259,7 @@ class CLuaHandle : public CEventClient
 
 		//FIXME void MetalMapChanged(const int x, const int z);
 
-		void CollectGarbage() override;
+		void CollectGarbage(bool forced) override;
 
 		void DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType) override;
 		void DownloadStarted(int ID) override;

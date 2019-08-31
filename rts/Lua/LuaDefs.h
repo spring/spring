@@ -95,6 +95,7 @@ namespace {
 			return false;                                \
                                                          \
 		HandlerInstance = new HandlerType();             \
+		HandlerInstance->CollectGarbage(true);           \
 		return (HandlerInstance->IsValid());             \
 	}
 
@@ -108,6 +109,7 @@ namespace {
 			return false;                                     \
                                                               \
 		HandlerInstance = new HandlerType(onlySynced);        \
+		HandlerInstance->CollectGarbage(true);                \
 		return (HandlerInstance->IsValid());                  \
 	}
 

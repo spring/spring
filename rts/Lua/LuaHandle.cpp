@@ -432,10 +432,7 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 
 	if (error == LUA_ERRMEM) {
 		// try to free some memory so other lua states can alloc again
-		for (int i = 0; i < 20; ++i) {
-			CollectGarbage();
-		}
-
+		CollectGarbage(true);
 		// kill the entire handle next frame
 		KillActiveHandle(L);
 	}
@@ -2500,12 +2497,12 @@ void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
 /******************************************************************************/
 /******************************************************************************/
 
-void CLuaHandle::CollectGarbage()
+void CLuaHandle::CollectGarbage(bool forced)
 {
 	const float gcMemLoadMult = D.gcCtrl.baseMemLoadMult;
 	const float gcRunTimeMult = D.gcCtrl.baseRunTimeMult;
 
-	if (spring_lua_alloc_skip_gc(gcMemLoadMult))
+	if (!forced && spring_lua_alloc_skip_gc(gcMemLoadMult))
 		return;
 
 	LUA_CALL_IN_CHECK_NAMED(L, (GetLuaContextData(L)->synced)? "Lua::CollectGarbage::Synced": "Lua::CollectGarbage::Unsynced");
@@ -2531,7 +2528,7 @@ void CLuaHandle::CollectGarbage()
 	const spring_time   endTime = startTime + spring_msecs(gcLoopRunTime);
 
 	// perform GC cycles until time runs out or iteration-limit is reached
-	while (gcItersInBatch < D.gcCtrl.itersPerBatch && spring_gettime() < endTime) {
+	while (forced || (gcItersInBatch < D.gcCtrl.itersPerBatch && spring_gettime() < endTime)) {
 		gcItersInBatch++;
 
 		if (!lua_gc(L_GC, LUA_GCSTEP, gcStepsPerIter))

@@ -290,7 +290,7 @@ class CEventHandler
 		/// percentage when reconnecting to a running game
 		void GameProgress(int gameFrame);
 
-		void CollectGarbage();
+		void CollectGarbage(bool forced);
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
 		void Pong(uint8_t pingTag, const spring_time pktSendTime, const spring_time pktRecvTime);
 		void MetalMapChanged(const int x, const int z);
