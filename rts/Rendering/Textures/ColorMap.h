@@ -19,7 +19,7 @@ public:
 	CR_DECLARE_STRUCT(CColorMap)
 	CColorMap() = default;
 	/// Loads from a float vector
-	CColorMap(const float* data, size_t size);
+	CColorMap(const float* data, size_t size) { Load(data, size); }
 	/// Loads from a file
 	CColorMap(const std::string& fileName);
 
@@ -44,6 +44,7 @@ public:
 
 		map.clear();
 	}
+	void Load(const float* data, size_t size);
 
 private:
 	void LoadMap(const unsigned char* buf, int num);
