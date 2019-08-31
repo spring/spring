@@ -23,7 +23,7 @@ CR_REG_METADATA(CColorMap, (
 ))
 
 
-static std::array<CColorMap, 2048 + 1> colorMapsCache;
+static std::array<CColorMap, 2048 + 2> colorMapsCache;
 static spring::unordered_map<std::string, CColorMap*> namedColorMaps;
 
 static size_t numColorMaps = 0;
@@ -32,7 +32,7 @@ static size_t numColorMaps = 0;
 void CColorMap::InitStatic()
 {
 	namedColorMaps.clear();
-	namedColorMaps.reserve(colorMapsCache.size() - 1);
+	namedColorMaps.reserve(colorMapsCache.size() - 2);
 
 	// reuse inner ColorMap vectors when reloading
 	// colorMapsCache.fill({});
@@ -53,8 +53,8 @@ CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 		return it->second;
 
 	// hand out a dummy if cache is full
-	if (numColorMaps >= (colorMapsCache.size() - 1))
-		return &colorMapsCache[colorMapsCache.size() - 1];
+	if (numColorMaps >= (colorMapsCache.size() - 2))
+		return &colorMapsCache[colorMapsCache.size() - 2];
 
 	colorMapsCache[numColorMaps] = {fileName};
 	namedColorMaps[fn] = &colorMapsCache[numColorMaps];
@@ -64,11 +64,10 @@ CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 
 CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
 {
-	// ditto
-	if (numColorMaps >= (colorMapsCache.size() - 1))
-		return &colorMapsCache[colorMapsCache.size() - 1];
+	CColorMap& cm = colorMapsCache[colorMapsCache.size() - 1];
 
-	CColorMap cm{data, size};
+	cm.Clear();
+	cm.Load(data, size);
 
 	// slowish, but gets invoked by /reloadcegs via LoadFromDefString callback
 	// need to do a cache lookup or numColorMaps quickly spirals out of control
@@ -76,11 +75,16 @@ CColorMap* CColorMap::LoadFromRawVector(const float* data, size_t size)
 		if (colorMapsCache[i].map.size() != cm.map.size())
 			continue;
 
-		if (memcmp(colorMapsCache[i].map.data(), cm.map.data(), cm.map.size()) == 0)
+		if (memcmp(colorMapsCache[i].map.data(), cm.map.data(), cm.map.size() * sizeof(SColor)) == 0)
 			return &colorMapsCache[i];
 	}
 
-	colorMapsCache[numColorMaps] = std::move(cm);
+	// ditto
+	if (numColorMaps >= (colorMapsCache.size() - 2))
+		return &colorMapsCache[colorMapsCache.size() - 2];
+
+	colorMapsCache[numColorMaps].Clear();
+	colorMapsCache[numColorMaps].Load(data, size);
 
 	return &colorMapsCache[numColorMaps++];
 }
@@ -109,24 +113,6 @@ CColorMap* CColorMap::LoadFromDefString(const std::string& defString)
 
 
 
-CColorMap::CColorMap(const float* data, size_t size)
-{
-	if (size < 8)
-		throw content_error("[ColorMap] less than two RGBA colors specified");
-
-	xsize  = (size - (size % 4)) / 4;
-	ysize  = 1;
-	nxsize = xsize - 1;
-
-	std::array<SColor, 4096> cmap;
-
-	for (size_t i = 0, n = std::min(size_t(xsize), cmap.size()); i < n; ++i) {
-		cmap[i] = SColor(&data[i * 4]);
-	}
-
-	LoadMap(&cmap[0].r, xsize);
-}
-
 CColorMap::CColorMap(const std::string& fileName)
 {
 	CBitmap bitmap;
@@ -146,6 +132,24 @@ CColorMap::CColorMap(const std::string& fileName)
 	LoadMap(bitmap.GetRawMem(), xsize * ysize);
 }
 
+
+void CColorMap::Load(const float* data, size_t size)
+{
+	if (size < 8)
+		throw content_error("[ColorMap] less than two RGBA colors specified");
+
+	xsize  = (size - (size % 4)) / 4;
+	ysize  = 1;
+	nxsize = xsize - 1;
+
+	std::array<SColor, 4096> cmap;
+
+	for (size_t i = 0, n = std::min(size_t(xsize), cmap.size()); i < n; ++i) {
+		cmap[i] = SColor(&data[i * 4]);
+	}
+
+	LoadMap(&cmap[0].r, xsize);
+}
 
 void CColorMap::LoadMap(const unsigned char* buf, int num)
 {
