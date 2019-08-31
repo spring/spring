@@ -11,6 +11,8 @@ Sim:
  ! remove CMD_SET_WANTED_MAX_SPEED
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
  - DGun weapontype: allow leading (leadLimit for DGun defaults to 0 instead of -1 for back-compatibility)
+ - change default ownerExpAccWeight to 0 for all weapon-types
+ - remove salvoError multiplier hack for positional and out-of-los targets
 
 Lua:
  - add Platform.osVersion; complements Platform.osName

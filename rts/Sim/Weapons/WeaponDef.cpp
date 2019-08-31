@@ -406,88 +406,69 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		// get some weapon specific defaults
 		defInterceptType = 0;
 
-		ownerExpAccWeight = -1.0f;
-
 		switch (hashString(type.c_str())) {
 			case hashString("Cannon"): {
 				// CExplosiveProjectile
 				defInterceptType = 1;
 				projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 				intensity = wdTable.GetFloat("intensity", 0.2f);
 			} break;
 			case hashString("Rifle"): {
 				// no projectile or intercept type
 				defInterceptType = 128;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 			} break;
 			case hashString("Melee"): {
 				// no projectile or intercept type
 				defInterceptType = 256;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 			} break;
 			case hashString("Flame"): {
 				// CFlameProjectile
 				projectileType = WEAPON_FLAME_PROJECTILE;
 				defInterceptType = 16;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
-				collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+				collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
 			} break;
 			case hashString("MissileLauncher"): {
 				// CMissileProjectile
 				projectileType = WEAPON_MISSILE_PROJECTILE;
 				defInterceptType = 4;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 			} break;
 			case hashString("LaserCannon"): {
 				// CLaserProjectile
 				projectileType = WEAPON_LASER_PROJECTILE;
 				defInterceptType = 2;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 				collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
 			} break;
 			case hashString("BeamLaser"): {
 				projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
 				defInterceptType = 2;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 			} break;
 			case hashString("LightningCannon"): {
 				projectileType = WEAPON_LIGHTNING_PROJECTILE;
 				defInterceptType = 64;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 			} break;
 			case hashString("EmgCannon"): {
 				// CEmgProjectile
 				projectileType = WEAPON_EMG_PROJECTILE;
 				defInterceptType = 1;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 				size = wdTable.GetFloat("size", 3.0f);
 			} break;
 			case hashString("TorpedoLauncher"): {
 				// WeaponLoader will create either BombDropper with dropTorpedoes = true
 				// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
 				// (both types of weapons will spawn TorpedoProjectile's)
-				//
 				projectileType = WEAPON_TORPEDO_PROJECTILE;
 				defInterceptType = 32;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 				waterweapon = true;
 			} break;
 			case hashString("DGun"): {
 				// CFireBallProjectile
 				projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 				collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
 				leadLimit = wdTable.GetFloat("leadLimit", 0.0f);
 			} break;
@@ -495,8 +476,6 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 				// CStarburstProjectile
 				projectileType = WEAPON_STARBURST_PROJECTILE;
 				defInterceptType = 4;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 			} break;
 			case hashString("AircraftBomb"): {
 				// WeaponLoader will create BombDropper with dropTorpedoes = false
@@ -504,15 +483,12 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 				//
 				projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 				defInterceptType = 8;
-
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 			} break;
 			default: {
-				ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 			} break;
 		}
 
-		if (ownerExpAccWeight < 0.0f)
+		if ((ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f)) < 0.0f)
 			LOG_L(L_ERROR, "[%s] weaponDef %s has negative ownerExpAccWeight %f", __func__, name.c_str(), ownerExpAccWeight);
 
 		interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
