@@ -58,8 +58,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(sprayAngle),
 	CR_MEMBER(predictSpeedMod),
 
-	CR_MEMBER(fireSoundId),
-	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(hasBlockShot),
 	CR_MEMBER(hasTargetWeight),
 	CR_MEMBER(angleGood),
@@ -179,9 +177,8 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
 	errorVectorAdd(ZeroVector),
-	muzzleFlareSize(1),
-	fireSoundId(0),
-	fireSoundVolume(0)
+
+	muzzleFlareSize(1)
 {
 	assert(weaponMemPool.alloced(this));
 }
@@ -1098,8 +1095,8 @@ void CWeapon::Fire(bool scriptCall)
 	if (qfHasUnit)
 		quadField.RemoveUnitIf(currentTarget.unit, currentTargetPos);
 
-	if (fireSoundId > 0 && (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger))
-		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
+	if (salvoLeft == (salvoSize - 1) || !weaponDef->soundTrigger)
+		Channels::Battle->PlayRandomSample(weaponDef->fireSound, owner);
 }
 
 
