@@ -512,32 +512,6 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 	LoadSound(wdTable, "soundStart" , fireSound);
 	LoadSound(wdTable, "soundHitDry",  hitSound);
 	LoadSound(wdTable, "soundHitWet",  hitSound);
-
-	// FIXME: do we still want or need any of this?
-	const bool forceSetVolume =
-		(fireSound.getVolume(0) == -1.0f) ||
-		( hitSound.getVolume(0) == -1.0f) ||
-		( hitSound.getVolume(1) == -1.0f);
-
-	if (!forceSetVolume)
-		return;
-
-	if (damages.GetDefault() <= 50.0f) {
-		fireSound.setVolume(0, 5.0f);
-		hitSound.setVolume(0, 5.0f);
-		hitSound.setVolume(1, 5.0f);
-		return;
-	}
-
-	const float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
-	const float hitSoundVolume = fireSoundVolume;
-
-	if (fireSound.getVolume(0) == -1.0f)
-		fireSound.setVolume(0, fireSoundVolume);
-	if (hitSound.getVolume(0) == -1.0f)
-		hitSound.setVolume(0, hitSoundVolume);
-	if (hitSound.getVolume(1) == -1.0f)
-		hitSound.setVolume(1, hitSoundVolume);
 }
 
 

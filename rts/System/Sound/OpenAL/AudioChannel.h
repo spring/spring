@@ -24,8 +24,6 @@ private:
 	typedef std::pair<std::string, float> StreamQueueItem;
 
 public:
-	AudioChannel(): curStreamSrc(nullptr) {}
-
 	void Enable(bool newState);
 	void SetVolume(float newVolume);
 
@@ -36,7 +34,7 @@ public:
 	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
 
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj);
-	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
+	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos, const float3& vel = ZeroVector);
 
 	void StreamPlay(const StreamQueueItem& item, bool enqueue) { StreamPlay(item.first, item.second, enqueue); }
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
@@ -52,15 +50,14 @@ public:
 	float StreamGetPlayTime();
 
 protected:
-	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative);
-
-	void SoundSourceFinished(CSoundSource* sndSource);
+	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative) override;
+	void SoundSourceFinished(CSoundSource* sndSource) override;
 
 private:
 	spring::unsynced_set<CSoundSource*> curSources;
 	std::deque<StreamQueueItem> streamQueue;
 
-	CSoundSource* curStreamSrc;
+	CSoundSource* curStreamSrc = nullptr;
 
 	static constexpr size_t MAX_STREAM_QUEUESIZE = 10;
 };

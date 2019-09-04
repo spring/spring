@@ -196,8 +196,6 @@ public:
 	float3 errorVectorAdd;
 
 	float muzzleFlareSize;                  // size of muzzle flare if drawn
-	int fireSoundId;
-	float fireSoundVolume;
 
 protected:
 	SWeaponTarget currentTarget;
