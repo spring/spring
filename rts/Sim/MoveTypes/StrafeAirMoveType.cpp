@@ -118,10 +118,10 @@ static float GetRudderDeflection(
 ) {
 	float rudder = 0.0f;
 
-	const float minGroundHeight = groundHeight + 15.0f * (1.0f + isAttacking);
+	const float minGroundHeight = std::min(groundHeight + 15.0f, wantedHeight) * (1.0f + isAttacking);
 	const float maxRudderSpeedf = std::max(0.01f, maxRudder * spd.w * (1.0f + isAttacking));
 
-	const float minHeightMult = (pos.y > minGroundHeight);
+	const float minHeightMult = (pos.y >= minGroundHeight);
 
 	rudder -= (1.0f * minHeightMult * (goalDotRight < -maxRudderSpeedf)                   );
 	rudder += (1.0f * minHeightMult * (goalDotRight >  maxRudderSpeedf)                   );
@@ -187,13 +187,13 @@ static float GetAileronDeflection(
 		// const float clampedBankAbs = math::fabs(Clamp(absRightDirY - maxBank, -1.0f, 1.0f));
 		// const float clampedBank    = std::max(clampedBankAbs, 0.3f);
 
-		aileron -= (clampedBank * (minSpeedMult) * (goalBankDif < -maxAileronSpeedf2 && rightdir.y <  maxBank));
-		aileron += (clampedBank * (minSpeedMult) * (goalBankDif >  maxAileronSpeedf2 && rightdir.y > -maxBank));
+		aileron -= (clampedBank * minSpeedMult * (goalBankDif < -maxAileronSpeedf2 && rightdir.y <  maxBank));
+		aileron += (clampedBank * minSpeedMult * (goalBankDif >  maxAileronSpeedf2 && rightdir.y > -maxBank));
 
 		/// NB: these ignore maxBank
-		aileron += (1.0f * (minSpeedMult) * (aileron == 0.0f) * (       relBankMult) * (goalBankDif / maxAileronSpeedf2));
-		aileron -= (1.0f * (minSpeedMult) * (aileron == 0.0f) * (1.0f - relBankMult) * (rightdir.y < 0.0f && goalBankDif < 0.0f));
-		aileron += (1.0f * (minSpeedMult) * (aileron == 0.0f) * (1.0f - relBankMult) * (rightdir.y > 0.0f && goalBankDif > 0.0f));
+		aileron += (1.0f * minSpeedMult * (aileron == 0.0f) * (       relBankMult) * (goalBankDif / maxAileronSpeedf2));
+		aileron -= (1.0f * minSpeedMult * (aileron == 0.0f) * (1.0f - relBankMult) * (rightdir.y < 0.0f && goalBankDif < 0.0f));
+		aileron += (1.0f * minSpeedMult * (aileron == 0.0f) * (1.0f - relBankMult) * (rightdir.y > 0.0f && goalBankDif > 0.0f));
 
 		// if right wing too high, roll right (cw)
 		// if right wing too low, roll left (ccw)
@@ -282,7 +282,7 @@ static float GetElevatorDeflection(
 			const float maxElevatorSpeedf = std::max(0.001f, maxElevator * 20.0f * spd.w * spd.w);
 
 			const float posHeight = CGround::GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
-			const float difHeight = std::max(groundHeight, posHeight) + wantedHeight - pos.y - frontdir.y * spd.w * 20.0f;
+			const float difHeight = std::max(groundHeight, posHeight) + wantedHeight - pos.y - (frontdir.y * spd.w * 20.0f);
 
 			const float absFrontDirY = math::fabs(frontdir.y);
 			const float clampedPitch = 1.0f;
