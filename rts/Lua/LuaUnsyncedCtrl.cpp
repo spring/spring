@@ -376,16 +376,16 @@ static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index
 	if (unit == nullptr || unit->noSelect)
 		return nullptr;
 
-	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
-
-	// partial god-mode does not set selectTeam to AllAccess; spectatingFullSelect does
-	if (gu->GetMyPlayer()->CanControlTeam(selectTeam))
+	// NB:
+	//   partial god-mode does not set selectTeam to AllAccess (which
+	//   is registered in controlledTeams); spectatingFullSelect does
+	if (gu->GetMyPlayer()->CanControlTeam(unit->team))
 		return unit;
 
-	if (selectTeam < 0)
-		return ((selectTeam == CEventClient::AllAccessTeam)? unit: nullptr);
+	if (CanSelectTeam(L, unit->team))
+		return unit;
 
-	return ((selectTeam == unit->team)? unit: nullptr);
+	return nullptr;
 }
 
 
@@ -871,7 +871,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SelectUnitArray()");
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	// clear the current units, unless the append flag is present
 	if (!luaL_optboolean(L, 2, false))
@@ -894,7 +894,7 @@ int LuaUnsyncedCtrl::SelectUnitArray(lua_State* L)
 int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 {
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SelectUnitMap()");
+		luaL_error(L, "[%s] incorrect arguments", __func__);
 
 	// clear the current units, unless the append flag is present
 	if (!luaL_optboolean(L, 2, false))
@@ -2381,9 +2381,9 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseCtrlUnit(L, __func__, -2); // the key
-			if (unit != nullptr && !unit->noSelect) {
+
+			if (unit != nullptr && !unit->noSelect)
 				unitIDs.push_back(unit->id);
-			}
 		}
 	}
 }
@@ -2398,9 +2398,9 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __func__, -1); // the value
-			if (unit != nullptr && !unit->noSelect) {
+
+			if (unit != nullptr && !unit->noSelect)
 				unitIDs.push_back(unit->id);
-			}
 		}
 	}
 }

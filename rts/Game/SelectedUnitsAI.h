@@ -14,21 +14,21 @@ class CUnit;
 /// handles giving commands to the currently selected group of units.
 class CSelectedUnitsHandlerAI {
 public:
-	void GiveCommandNet(Command& c, int player);
+	bool GiveCommandNet(Command& c, int playerNum);
 
 private:
-	void CalculateGroupData(int player, bool queueing);
-	void MakeFormationFrontOrder(Command* c, int player);
-	void CreateUnitOrder(std::vector< std::pair<float, int> >& out, int player);
+	void CalculateGroupData(int playerNum, bool queueing);
+	void MakeFormationFrontOrder(Command* c, int playerNum);
+	void CreateUnitOrder(std::vector< std::pair<float, int> >& out, int playerNum);
 
 	float3 MoveToPos(float3 nextCornerPos, float3 dir, const CUnit* unit, Command* command, std::vector<std::pair<int, Command> >* frontcmds, bool* newline);
 
 	void SetUnitWantedMaxSpeedNet(CUnit* unit);
 	void SetUnitGroupWantedMaxSpeedNet(CUnit* unit);
 
-	void SelectAttackNet(const Command& cmd, int player);
-	void SelectCircleUnits(const float3& pos, float radius, int player, std::vector<int>& units);
-	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int player, std::vector<int>& units);
+	bool SelectAttackNet(const Command& cmd, int playerNum);
+	void SelectCircleUnits(const float3& pos, float radius, int playerNum, std::vector<int>& units);
+	void SelectRectangleUnits(const float3& pos0, const float3& pos1, int playerNum, std::vector<int>& units);
 
 	float3 LastQueuePosition(const CUnit* unit);
 
