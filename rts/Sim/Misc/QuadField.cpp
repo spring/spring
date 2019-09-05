@@ -309,6 +309,8 @@ void CQuadField::GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const f
 #ifndef UNIT_TEST
 bool CQuadField::InsertUnitIf(CUnit* unit, const float3& wpos)
 {
+	assert(unit != nullptr);
+
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
 	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
 
@@ -327,6 +329,9 @@ bool CQuadField::InsertUnitIf(CUnit* unit, const float3& wpos)
 
 bool CQuadField::RemoveUnitIf(CUnit* unit, const float3& wpos)
 {
+	if (unit == nullptr)
+		return false;
+
 	const int wposQuadIdx = WorldPosToQuadFieldIdx(wpos);
 	const int uposQuadIdx = WorldPosToQuadFieldIdx(unit->pos);
 
