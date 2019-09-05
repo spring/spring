@@ -523,14 +523,14 @@ void WeaponDef::LoadSound(
 ) {
 	switch (hashString(soundKey.c_str())) {
 		case hashString("soundStart"): {
-			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, ""), wdTable.GetFloat(soundKey + "Volume", -1.0f));
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, ""), wdTable.GetFloat(soundKey + "Volume", 1.0f));
 		} break;
 
 		case hashString("soundHitDry"): {
-			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", 1.0f)));
 		} break;
 		case hashString("soundHitWet"): {
-			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f)));
+			CommonDefHandler::AddSoundSetData(soundData, wdTable.GetString(soundKey, wdTable.GetString("soundHit", "")), wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", 1.0f)));
 		} break;
 
 		default: {
