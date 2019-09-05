@@ -661,22 +661,23 @@ void CGame::ClientReadNet()
 					if (!playerHandler.IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 
+					const CPlayer* netPlayer = playerHandler.Player(playerNum);
+					const CUnit* unit = nullptr;
+
 					selectedUnitIDs.reserve(numUnitIDs);
 
 					for (uint32_t a = 0; a < numUnitIDs; ++a) {
 						int16_t unitID; pckt >> unitID;
-						const CUnit* unit = unitHandler.GetUnit(unitID);
 
-						if (unit == nullptr) {
-							// unit was destroyed in simulation (without its ID being recycled)
-							// after sending a command but before receiving it back, more likely
-							// to happen in high-latency situations
-							// LOG_L(L_WARNING, "[NETMSG_SELECT] invalid unitID (%i) from player %i", unitID, playerNum);
+						// unit was destroyed in simulation (without its ID being recycled)
+						// after sending a command but before receiving it back, more likely
+						// to happen in high-latency situations
+						// LOG_L(L_WARNING, "[NETMSG_SELECT] invalid unitID (%i) from player %i", unitID, playerNum);
+						if ((unit = unitHandler.GetUnit(unitID)) == nullptr)
 							continue;
-						}
 
-						// if in godMode, this is always true for any player
-						if (playerHandler.Player(playerNum)->CanControlTeam(unit->team))
+						// if in (full) godMode, this is always true for any player
+						if (netPlayer->CanControlTeam(unit->team))
 							selectedUnitIDs.push_back(unitID);
 					}
 

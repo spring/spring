@@ -282,6 +282,22 @@ static inline int CtrlAllyTeam(const lua_State* L)
 	return teamHandler.AllyTeam(ctrlTeam);
 }
 
+static inline int SelectTeam(const lua_State* L)
+{
+	return CLuaHandle::GetHandleSelectTeam(L);
+}
+
+
+static inline bool CanSelectTeam(const lua_State* L, int teamID)
+{
+	const int selectTeam = SelectTeam(L);
+
+	if (selectTeam < 0)
+		return (selectTeam == CEventClient::AllAccessTeam);
+
+	return (selectTeam == teamID);
+}
+
 
 static inline bool CanControlTeam(const lua_State* L, int teamID)
 {

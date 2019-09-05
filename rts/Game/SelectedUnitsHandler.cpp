@@ -687,29 +687,31 @@ void CSelectedUnitsHandler::Draw()
 }
 
 
-void CSelectedUnitsHandler::DependentDied(CObject *o)
+void CSelectedUnitsHandler::DependentDied(CObject* o)
 {
 	selectedUnits.erase(static_cast<CUnit*>(o)->id);
+
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 }
 
 
+// handles NETMSG_SELECT's
 void CSelectedUnitsHandler::NetSelect(std::vector<int>& s, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
 	netSelected[playerId] = s;
 }
 
-
+// handles NETMSG_COMMAND's
 void CSelectedUnitsHandler::NetOrder(Command& c, int playerId)
 {
 	assert(unsigned(playerId) < netSelected.size());
-	selectedUnitsAI.GiveCommandNet(c, playerId);
 
 	if (netSelected[playerId].empty())
 		return;
 
+	selectedUnitsAI.GiveCommandNet(c, playerId);
 	eoh->PlayerCommandGiven(netSelected[playerId], c, playerId);
 }
 
@@ -718,6 +720,7 @@ void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 	netSelected[playerId].clear();
 }
 
+// handles NETMSG_AICOMMAND{S}'s
 void CSelectedUnitsHandler::AINetOrder(int unitID, int playerID, const Command& c)
 {
 	CUnit* unit = unitHandler.GetUnit(unitID);
@@ -728,15 +731,11 @@ void CSelectedUnitsHandler::AINetOrder(int unitID, int playerID, const Command& 
 	if (player == nullptr)
 		return;
 
-	if (!player->CanControlTeam(unit->team)) {
-		// Outputting a warning will result in false bug reports due to lag
-		// between time of giving valid orders on units which then change team
-		// due to e.g. LuaRules.
-
-		//LOG_L(L_WARNING, "Invalid order from player %i for (unit %i %s, team %i)",
-		//		playerID, unitID, unit->unitDefName.c_str(), unit->team);
+	// no warning; will result in false bug reports due to latency between
+	// time of giving valid orders on units which then change team through
+	// e.g. LuaRules
+	if (!player->CanControlTeam(unit->team))
 		return;
-	}
 
 	// always pulled from net, synced command by definition
 	// (fromSynced determines whether CMD_UNLOAD_UNITS uses
