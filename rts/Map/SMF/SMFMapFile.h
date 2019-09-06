@@ -59,7 +59,7 @@ private:
 	SMFHeader header;
 	MapFeatureHeader featureHeader;
 
-	char featureTypes[8192][64];
+	char featureTypes[16384][32];
 
 	int featureFileOffset = 0;
 };
