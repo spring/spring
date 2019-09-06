@@ -126,6 +126,7 @@ AI:
    skirmishAiCallback_Unit_get{CaptureProgress,BuildProgress,ParalyzeDamage} functions
 
 Misc:
+ - add MapConvNG executables to official spring builds: https://springrts.com/wiki/MapConvNG
  - remove joystick support
  - detect hangs during filesystem initialisation
  - fix stale thread-id cache in watchdog after reload
