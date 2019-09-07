@@ -515,83 +515,88 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 	s->read((char*)&ph, sizeof(PackageHeader));
 
 	if (memcmp(ph.magic, CREG_PACKAGE_FILE_ID, 4) != 0)
-		throw std::runtime_error("Incorrect object package file ID");
+		throw content_error("Incorrect object package file ID");
 
 	// Load references
 	classRefs.resize(ph.numObjClassRefs);
 	s->seekg(ph.objClassRefOffset);
-	for (int a = 0; a < ph.numObjClassRefs; a++)
-	{
+
+	for (int a = 0; a < ph.numObjClassRefs; a++) {
 		const std::string className = ReadZStr(*s);
-		creg::Class* class_ = System::GetClass(className);
-		if (!class_)
-			throw std::runtime_error("Package file contains reference to unknown class " + className);
-		classRefs[a] = class_;
+
+		if ((classRefs[a] = System::GetClass(className)) == nullptr)
+			throw content_error("Package file contains reference to unknown class " + className);
 	}
 
-	// Calculate metadata checksum and compare with stored checksum
-	unsigned int checksum = 0;
-	for (auto& classRef: classRefs)
-		classRef->CalculateChecksum(checksum);
-	LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Checksum: %X (savegame: %X)\n", checksum, ph.metadataChecksum);
-	if (checksum != ph.metadataChecksum)
-		throw std::runtime_error("Metadata checksum error: Package file was saved with a different version");
+	{
+		// Calculate metadata checksum and compare with stored checksum
+		unsigned int checksum = 0;
+
+		for (const auto& classRef: classRefs)
+			classRef->CalculateChecksum(checksum);
+
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Checksum: %X (savegame: %X)\n", checksum, ph.metadataChecksum);
+
+		if (checksum != ph.metadataChecksum)
+			throw content_error("Metadata checksum error: Package file was saved with a different version");
+	}
 
 	// Create all non-embedded objects
 	s->seekg(ph.objTableOffset);
 	objects.resize(ph.numObjects);
-	for (int a = 0; a < ph.numObjects; a++)
-	{
+
+	for (int a = 0; a < ph.numObjects; a++) {
 		unsigned int classRefIndex;
 		char isEmbedded;
+
 		ReadVarSizeUInt(stream, &classRefIndex);
 		stream->read((char*)&isEmbedded, sizeof(char));
 		Class* c = classRefs[classRefIndex];
 
 		objects[a].obj = nullptr;
+
 		if (!isEmbedded) {
-			size_t size;
-			if (c->HasGetSize()) {
+			size_t size = c->size;
+
+			if (c->HasGetSize())
 				ReadVarSizeUInt(stream, &size);
-			} else {
-				size = c->size;
-			}
+
 			// Allocate and construct
-			void* inst = c->CreateInstance(size);
-			objects[a].obj = inst;
+			objects[a].obj = c->CreateInstance(size);
 		}
+
 		objects[a].isEmbedded = !!isEmbedded;
 		objects[a].classRef = classRefIndex;
 	}
 
-	int endOffset = s->tellg();
+	const int endOffset = s->tellg();
 
 	// Read the object data using serialization
 	s->seekg(ph.objDataOffset);
-	for (auto& object: objects) {
-		if (!object.isEmbedded) {
-			creg::Class* cls = classRefs[object.classRef];
-			SerializeObject(cls, object.obj);
-			LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name, cls->size);
-		}
+	for (const auto& object: objects) {
+		if (object.isEmbedded)
+			continue;
+
+		creg::Class* cls = classRefs[object.classRef];
+		SerializeObject(cls, object.obj);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name, cls->size);
 	}
 
 	// Fix pointers to embedded objects
-	for (auto& unfixedPointer: unfixedPointers) {
-		void* p = objects[unfixedPointer.objID].obj;
-		*unfixedPointer.ptrAddr = p;
+	for (const auto& unfixedPointer: unfixedPointers) {
+		*unfixedPointer.ptrAddr = objects[unfixedPointer.objID].obj;
 	}
 
-	// Run all registered post load callbacks
-	for (auto& callback: callbacks) {
+	// Run all registered PostLoad callbacks
+	for (const auto& callback: callbacks) {
 		callback.cb(callback.userdata);
 	}
 
-	// Run post load functions on `all` objects (exclude root object)
-	for (uint a = 1; a < objects.size(); a++) {
-		StoredObject& o = objects[a];
-		creg::Class* oc = classRefs[objects[a].classRef];
+	// Run PostLoad functions on `all` objects (exclude root object)
+	for (const StoredObject& o: objects) {
+		creg::Class* oc = classRefs[o.classRef];
 		creg::Class* c = oc;
+
 		CallPostLoad(c, oc, o.obj);
 	}
 
@@ -604,6 +609,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 			int(objects.size()), int(classRefs.size()));
 
 	s->seekg(endOffset);
+
 	unfixedPointers.clear();
 	objects.clear();
 }
