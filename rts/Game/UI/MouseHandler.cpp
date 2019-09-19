@@ -330,16 +330,16 @@ void CMouseHandler::MousePress(int x, int y, int button)
 				if (activeReceiver == nullptr)
 					activeReceiver = recv;
 
-				return;
+				break;
 			}
 		}
-	} else {
-		if (guihandler != nullptr && guihandler->MousePress(x, y, button)) {
-			if (activeReceiver == nullptr)
-				activeReceiver = guihandler; // for default (rmb) commands
 
-			return;
-		}
+		return;
+	}
+
+	if (guihandler != nullptr && guihandler->MousePress(x, y, button)) {
+		if (activeReceiver == nullptr)
+			activeReceiver = guihandler; // for default (rmb) commands
 	}
 }
 
@@ -759,13 +759,11 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool forceRebind
 	if (!hardwareCursor || hideCursor)
 		return;
 
-	if (loadedCursors[activeCursorIdx].IsHWValid()) {
-		hwHideCursor = false;
-		loadedCursors[activeCursorIdx].BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
-	} else {
-		hwHideCursor = true;
+	if ((hwHideCursor = !loadedCursors[activeCursorIdx].IsHWValid())) {
 		SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetWMMouseCursor(nullptr);
+	} else {
+		loadedCursors[activeCursorIdx].BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
 	}
 }
 
@@ -927,40 +925,41 @@ bool CMouseHandler::AssignMouseCursor(
 	CMouseCursor::HotSpot hotSpot,
 	bool overwrite
 ) {
-	const auto cmdIt = cursorCommandMap.find(cmdName);
+	const auto  cmdIt = cursorCommandMap.find(cmdName);
 	const auto fileIt = cursorFileMap.find(fileName);
 
-	const bool haveCmd = (cmdIt != cursorCommandMap.end());
+	const bool haveCmd  = ( cmdIt != cursorCommandMap.end());
 	const bool haveFile = (fileIt != cursorFileMap.end());
 
+	// already assigned a cursor for this command
 	if (haveCmd && !overwrite)
-		return false; // already assigned
+		return false;
 
+	// cursor is already loaded but not assigned, reuse it
 	if (haveFile) {
-		// cursor is already loaded, reuse it
 		cursorCommandMap[cmdName] = fileIt->second;
 		return true;
 	}
 
-	CMouseCursor newCursor = std::move(CMouseCursor::New(fileName, hotSpot));
-
-	if (!newCursor.IsValid())
-		return false;
-
-	const int commandCursorIdx = haveCmd? cmdIt->second: -1;
+	const size_t numLoadedCursors = loadedCursors.size();
+	const size_t commandCursorIdx = haveCmd? cmdIt->second: numLoadedCursors + 1;
 
 	// assign the new cursor and remap indices
-	loadedCursors.emplace_back();
-	loadedCursors.back() = std::move(newCursor);
+	loadedCursors.emplace_back(fileName, hotSpot);
 
-	cursorFileMap[fileName] = loadedCursors.size() - 1;
-	cursorCommandMap[cmdName] = loadedCursors.size() - 1;
+	// a loaded cursor can be invalid, but if so the command will not be mapped to it
+	// allows Lua code to replace the cursor by a valid one later and do reassignment
+	// cursorCommandMap[cmdName] = (loadedCursors[numLoadedCursors].IsValid())? numLoadedCursors: commandCursorIdx;
+	cursorFileMap[fileName] = numLoadedCursors;
+
+	if (loadedCursors[numLoadedCursors].IsValid())
+		cursorCommandMap[cmdName] = numLoadedCursors;
 
 	// switch to the null-cursor if our active one is being (re)assigned
 	if (activeCursorIdx == commandCursorIdx)
 		SetCursor("none", true);
 
-	return true;
+	return (loadedCursors[numLoadedCursors].IsValid());
 }
 
 bool CMouseHandler::ReplaceMouseCursor(
@@ -973,18 +972,13 @@ bool CMouseHandler::ReplaceMouseCursor(
 	if (fileIt == cursorFileMap.end())
 		return false;
 
-	CMouseCursor newCursor = std::move(CMouseCursor::New(newName, hotSpot));
-
-	if (!newCursor.IsValid())
-		return false; // leave the old one
-
-	loadedCursors[fileIt->second] = std::move(newCursor);
+	loadedCursors[fileIt->second] = CMouseCursor(newName, hotSpot);
 
 	// update current cursor if necessary
 	if (activeCursorIdx == fileIt->second)
 		SetCursor(activeCursorName, true);
 
-	return true;
+	return (loadedCursors[activeCursorIdx].IsValid());
 }
 
 

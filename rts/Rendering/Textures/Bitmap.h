@@ -56,6 +56,7 @@ public:
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
+	void Fill(const SColor& c);
 
 	void CopySubImage(const CBitmap& src, int x, int y);
 

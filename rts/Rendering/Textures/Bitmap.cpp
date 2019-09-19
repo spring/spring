@@ -397,7 +397,7 @@ void CBitmap::AllocDummy(const SColor fill)
 	compressed = false;
 
 	Alloc(1, 1, sizeof(SColor));
-	memcpy(GetRawMem(), &fill.r, sizeof(SColor));
+	Fill(fill);
 }
 
 bool CBitmap::Load(const std::string& filename, uint8_t defaultAlpha)
@@ -1109,6 +1109,19 @@ void CBitmap::Blur(int iterations, float weight)
 		return;
 
 	std::swap(src, dst);
+}
+
+
+void CBitmap::Fill(const SColor& c)
+{
+	if (compressed)
+		return;
+
+	uint8_t* mem = GetRawMem();
+
+	for (size_t i = 0, n = GetMemSize() / channels; i < n; i++) {
+		memcpy(&mem[i * channels], &c.r, channels);
+	}
 }
 
 
