@@ -443,12 +443,7 @@ void CSolidObject::ForcedSpin(const float3& newDir)
 void CSolidObject::Kill(CUnit* killer, const float3& impulse, bool crushed)
 {
 	UpdateVoidState(false);
-
-	if (crushed) {
-		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_CRUSHED, -1);
-	} else {
-		DoDamage(DamageArray(health + 1.0f), impulse, killer, -DAMAGE_EXTSOURCE_KILLED, -1);
-	}
+	DoDamage(DamageArray(health + 1.0f), impulse, killer, crushed? DAMAGE_EXTSOURCE_CRUSHED: DAMAGE_EXTSOURCE_KILLED, -1);
 }
 
 
