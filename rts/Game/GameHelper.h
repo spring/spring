@@ -58,8 +58,9 @@ public:
 	CGameHelper() {}
 	CGameHelper(const CGameHelper&) = delete; // no-copy
 
-	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
-	static void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static size_t GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	static size_t GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+
 	static CUnit* GetClosestUnit(const float3& pos, float searchRadius);
 	static CUnit* GetClosestEnemyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
@@ -125,7 +126,7 @@ public:
 		bool synced = false
 	);
 
-	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
+	static size_t GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
 
 	void Init();
 	void Update();
@@ -180,6 +181,10 @@ private:
 
 	// note: size must be a power of two
 	std::array<std::vector<WaitingDamage>, 128> waitingDamages;
+
+public:
+	std::vector<int> targetUnitIDs; // GetEnemyUnits{NoLosTest}
+	std::vector<std::pair<float, CUnit*>> targetPairs; // GenerateWeaponTargets
 };
 
 extern CGameHelper* helper;

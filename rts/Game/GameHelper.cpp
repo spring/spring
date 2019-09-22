@@ -637,7 +637,7 @@ namespace {
 
 
 
-void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets)
+size_t CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets)
 {
 	const CUnit*  weaponOwner = weapon->owner;
 	const CUnit* lastAttacker = ((weaponOwner->lastAttackFrame + 200) <= gs->frameNum) ? weaponOwner->lastAttacker : nullptr;
@@ -669,6 +669,9 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	// copy on purpose since the below calls lua
 	QuadFieldQuery qfQuery;
 	quadField.GetQuads(qfQuery, ownerPos, scanRadius);
+
+	targets.clear();
+	targets.reserve(32);
 
 	const int tempNum = gs->GetTempNum();
 
@@ -761,6 +764,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 		tracefile << "\n";
 	}
 #endif
+
+	return (targets.size());
 }
 
 
@@ -825,16 +830,26 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const CUnit* excludeUnit, const floa
 	return q.GetClosestUnit();
 }
 
-void CGameHelper::GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
+size_t CGameHelper::GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found)
 {
+	found.clear();
+	found.reserve(128);
+
 	Query::AllUnitsById q(pos, searchRadius, found);
 	QueryUnits(Filter::Enemy_InLos(nullptr, searchAllyteam), q);
+
+	return (found.size());
 }
 
-void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
+size_t CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found)
 {
+	found.clear();
+	found.reserve(128);
+
 	Query::AllUnitsById q(pos, searchRadius, found);
 	QueryUnits(Filter::Enemy(nullptr, searchAllyteam), q);
+
+	return (found.size());
 }
 
 
