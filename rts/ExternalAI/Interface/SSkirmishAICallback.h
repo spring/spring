@@ -1775,7 +1775,7 @@ struct SSkirmishAICallback {
 	/**
 	 * Returns the closest position from a given position that a building can be
 	 * built at.
-	 * @param minDist the distance in 1/(SQUARE_SIZE * 2) = 1/16 of full map
+	 * @param minDist the distance in 1/BUILD_SQUARE_SIZE = 1/16 of full map
 	 *                resolution, that the building must keep to other
 	 *                buildings; this makes it easier to keep free paths through
 	 *                a base

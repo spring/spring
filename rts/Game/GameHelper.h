@@ -48,10 +48,6 @@ struct CExplosionParams {
 class CGameHelper
 {
 public:
-	enum {
-		TEST_ALLIED  = 1,
-		TEST_NEUTRAL = 2,
-	};
 	enum BuildSquareStatus {
 		BUILDSQUARE_BLOCKED     = 0,
 		BUILDSQUARE_OCCUPIED    = 1,
@@ -117,9 +113,17 @@ public:
 	);
 
 	/**
-	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
+	 * @param minDistance measured in 1/BUILD_SQUARE_SIZE = 1/16 of full map resolution.
 	 */
-	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
+	static float3 ClosestBuildPos(
+		int team,
+		const UnitDef* unitDef,
+		const float3& worldPos,
+		float searchRadius,
+		int minDistance,
+		int buildFacing = 0,
+		bool synced = false
+	);
 
 	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
 

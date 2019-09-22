@@ -79,7 +79,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 
 	for (size_t i = 0; i < vectoredSpots.size(); ++i) {
 		if (extractor != nullptr) {
-			spotCoords = CGameHelper::ClosestBuildSite(team, extractor, vectoredSpots[i], maxDivergence, 2);
+			spotCoords = CGameHelper::ClosestBuildPos(team, extractor, vectoredSpots[i], maxDivergence, 2);
 		} else {
 			spotCoords = vectoredSpots[i];
 		}

@@ -1106,7 +1106,7 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int faci
 
 float3 CAICallback::ClosestBuildSite(const UnitDef* unitDef, const float3& pos, float searchRadius, int minDist, int facing)
 {
-	return CGameHelper::ClosestBuildSite(team, unitDef, pos, searchRadius, minDist, facing);
+	return CGameHelper::ClosestBuildPos(team, unitDef, pos, searchRadius, minDist, facing);
 }
 
 

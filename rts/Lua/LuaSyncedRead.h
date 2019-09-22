@@ -234,6 +234,7 @@ class LuaSyncedRead {
 		static int TestMoveOrder(lua_State* L);
 		static int TestBuildOrder(lua_State* L);
 		static int Pos2BuildPos(lua_State* L);
+		static int ClosestBuildPos(lua_State* L);
 
 		static int GetPositionLosState(lua_State* L);
 		static int IsPosInLos(lua_State* L);
