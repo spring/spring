@@ -2516,21 +2516,16 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float range = luaL_optnumber(L, 2, 1.0e9f);
-	const bool useLos =
-		!CLuaHandle::GetHandleFullRead(L) || !lua_isboolean(L, 3) || lua_toboolean(L, 3);
-	const CUnit* target = nullptr;
+	const bool wantLOS = !lua_isboolean(L, 3) || lua_toboolean(L, 3);
+	const bool testLOS = !CLuaHandle::GetHandleFullRead(L) || wantLOS;
 
-	if (useLos) {
-		target = CGameHelper::GetClosestEnemyUnit(unit, unit->pos, range, unit->allyteam);
-	} else {
-		target = CGameHelper::GetClosestEnemyUnitNoLosTest(unit, unit->pos, range, unit->allyteam, false, true);
-	}
+	const CUnit* target = CGameHelper::GetClosestEnemyUnitNoLosTest(unit, unit->pos, luaL_optnumber(L, 2, 1.0e9f), unit->allyteam, false, !testLOS);
 
 	if (target != nullptr) {
 		lua_pushnumber(L, target->id);
 		return 1;
 	}
+
 	return 0;
 }
 

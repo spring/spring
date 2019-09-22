@@ -68,7 +68,7 @@ public:
 		const float3& pos,
 		float searchRadius,
 		int searchAllyteam,
-		bool sphere,
+		bool testSphere,
 		bool canBeBlind
 	);
 	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
