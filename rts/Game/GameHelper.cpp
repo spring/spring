@@ -863,18 +863,16 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
 
-	constexpr int BUILDMAP_SQ = SQUARE_SIZE * 2;
-
 	// snap build-positions to 16-elmo grid
 	if (buildInfo.GetXSize() & 2)
-		pos.x = math::floor((buildInfo.pos.x              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
+		pos.x = math::floor((buildInfo.pos.x              ) / BUILD_SQUARE_SIZE) * BUILD_SQUARE_SIZE + SQUARE_SIZE;
 	else
-		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
+		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / BUILD_SQUARE_SIZE) * BUILD_SQUARE_SIZE;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = math::floor((buildInfo.pos.z              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
+		pos.z = math::floor((buildInfo.pos.z              ) / BUILD_SQUARE_SIZE) * BUILD_SQUARE_SIZE + SQUARE_SIZE;
 	else
-		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
+		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / BUILD_SQUARE_SIZE) * BUILD_SQUARE_SIZE;
 
 	pos.y = CGameHelper::GetBuildHeight(pos, buildInfo.def, synced);
 	return pos;
@@ -882,108 +880,127 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 
 
 struct SearchOffset {
-	int dx,dy;
+	int dx, dy;
 	int qdist; // dx*dx+dy*dy
 };
-static bool SearchOffsetComparator (const SearchOffset& a, const SearchOffset& b)
-{
-	return a.qdist < b.qdist;
-}
-static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
-{
-	static vector <SearchOffset> searchOffsets;
-	unsigned int size = radius*radius*4;
-	if (size > searchOffsets.size()) {
-		searchOffsets.resize (size);
 
-		for (int y = 0; y < radius*2; y++)
-			for (int x = 0; x < radius*2; x++)
-			{
-				SearchOffset& i = searchOffsets[y*radius*2 + x];
+static const std::vector<SearchOffset>& GetSearchOffsetTable(int radius)
+{
+	assert(radius >= 0);
+
+	static std::vector<SearchOffset> searchOffsets;
+	static std::function<bool(const SearchOffset&, const SearchOffset&)> searchOffsetCmp = [](const SearchOffset& a, const SearchOffset& b) {
+		return (a.qdist < b.qdist);
+	};
+
+	const unsigned int diam = radius * 2;
+	const unsigned int size = Square(diam);
+
+	if (size > searchOffsets.size()) {
+		searchOffsets.resize(size);
+
+		for (unsigned int y = 0; y < diam; y++) {
+			for (unsigned int x = 0; x < diam; x++) {
+				SearchOffset& i = searchOffsets[y * diam + x];
 
 				i.dx = x - radius;
 				i.dy = y - radius;
-				i.qdist = i.dx*i.dx + i.dy*i.dy;
+				i.qdist = Square(i.dx) + Square(i.dy);
 			}
+		}
 
-		std::stable_sort(searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+		std::stable_sort(searchOffsets.begin(), searchOffsets.end(), searchOffsetCmp);
 	}
 
 	return searchOffsets;
 }
 
-//! only used by the AI callback of the same name
-float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
-{
+// used by AICallback, ResourceMapAnalyzer (unsynced), LuaSyncedRead
+float3 CGameHelper::ClosestBuildPos(
+	int team,
+	const UnitDef* unitDef,
+	const float3& worldPos,
+	float searchRadius,
+	int minDistance,
+	int buildFacing,
+	bool synced
+) {
 	if (unitDef == nullptr)
 		return -RgtVector;
 
 	CFeature* feature = nullptr;
 
 	const int allyTeam = teamHandler.AllyTeam(team);
-	const int endr = (int) (searchRadius / (SQUARE_SIZE * 2));
-	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
+	const int rawRadius = static_cast<int>(searchRadius / BUILD_SQUARE_SIZE);
+	const int maxRadius = Clamp(rawRadius, 1, 128);
 
-	for (int so = 0; so < endr * endr * 4; so++) {
-		const float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
-		const float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
+	const auto& offsets = GetSearchOffsetTable(maxRadius);
 
-		BuildInfo bi(unitDef, float3(x, 0.0f, z), facing);
+	// no ranged loop, table can store more offsets than we are interested in checking
+	for (int i = 0, n = Square(maxRadius * 2); i < n; i++) {
+		const float wxpos = worldPos.x + offsets[i].dx * BUILD_SQUARE_SIZE;
+		const float wzpos = worldPos.z + offsets[i].dy * BUILD_SQUARE_SIZE;
+
+		BuildInfo bi(unitDef, {wxpos, 0.0f, wzpos}, buildFacing);
 		bi.pos = Pos2BuildPos(bi, false);
 
-		if (CGameHelper::TestUnitBuildSquare(bi, feature, allyTeam, false) && (!feature || feature->allyteam != allyTeam)) {
-			const int xs = (int) (x / SQUARE_SIZE);
-			const int zs = (int) (z / SQUARE_SIZE);
-			const int xsize = bi.GetXSize();
-			const int zsize = bi.GetZSize();
+		if (!TestUnitBuildSquare(bi, feature, allyTeam, synced) && (feature == nullptr || feature->allyteam != allyTeam))
+			continue;
 
-			bool good = true;
+		const int xsqr  = static_cast<int>(wxpos / SQUARE_SIZE);
+		const int zsqr  = static_cast<int>(wzpos / SQUARE_SIZE);
+		const int xsize = bi.GetXSize();
+		const int zsize = bi.GetZSize();
 
-			int z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist);
-			int z2Max = std::min(mapDims.mapy, zs + (zsize + 1) / 2 + minDist);
-			int x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist);
-			int x2Max = std::min(mapDims.mapx, xs + (xsize + 1) / 2 + minDist);
+		int xmin = std::max(           0, xsqr - (xsize    ) / 2 - minDistance);
+		int zmin = std::max(           0, zsqr - (zsize    ) / 2 - minDistance);
+		int xmax = std::min(mapDims.mapx, xsqr + (xsize + 1) / 2 + minDistance);
+		int zmax = std::min(mapDims.mapy, zsqr + (zsize + 1) / 2 + minDistance);
 
-			// check for nearby blocking features
-			for (int z2 = z2Min; z2 < z2Max; ++z2) {
-				for (int x2 = x2Min; x2 < x2Max; ++x2) {
-					CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
+		bool free = true;
 
-					if (solObj && solObj->immobile && !dynamic_cast<CFeature*>(solObj)) {
-						good = false;
-						break;
-					}
-				}
-			}
+		// check for nearby blocking objects
+		for (int z = zmin; z < zmax; ++z) {
+			for (int x = xmin; x < xmax; ++x) {
+				const CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z * mapDims.mapx + x);
 
-			if (good) {
-				z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist - 2);
-				z2Max = std::min(mapDims.mapy, zs + (zsize + 1) / 2 + minDist + 2);
-				x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist - 2);
-				x2Max = std::min(mapDims.mapx, xs + (xsize + 1) / 2 + minDist + 2);
+				if (solObj == nullptr)
+					continue;
+				// immobile=true implies Feature or Building
+				if (!solObj->immobile)
+					continue;
 
-				// check for nearby factories with open yards
-				for (int z2 = z2Min; z2 < z2Max; ++z2) {
-					for (int x2 = x2Min; x2 < x2Max; ++x2) {
-						CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
-
-						if (solObj == nullptr)
-							continue;
-						if (!solObj->immobile)
-							continue;
-						if (!solObj->yardOpen)
-							continue;
-
-						good = false;
-						break;
-					}
-				}
-			}
-
-			if (good) {
-				return bi.pos;
+				free = false;
+				break;
 			}
 		}
+
+		if (free) {
+			xmin = std::max(           0, xmin - 2);
+			zmin = std::max(           0, zmin - 2);
+			xmax = std::min(mapDims.mapx, xmax + 2);
+			zmax = std::min(mapDims.mapy, zmax + 2);
+
+			// none found, check for nearby factories with open yards
+			for (int z = zmin; z < zmax; ++z) {
+				for (int x = xmin; x < xmax; ++x) {
+					const CSolidObject* solObj = groundBlockingObjectMap.GroundBlockedUnsafe(z * mapDims.mapx + x);
+
+					if (solObj == nullptr)
+						continue;
+					if (!solObj->immobile)
+						continue;
+					if (!solObj->yardOpen)
+						continue;
+
+					free = false;
+					break;
+				}
+			}
+		}
+
+		if (free)
+			return bi.pos;
 	}
 
 	return -RgtVector;
@@ -1017,17 +1034,17 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	unsigned int numBorderSquares = 0;
 	float sumBorderSquareHeight = 0.0f;
 
-	static const int xsize = 1;
-	static const int zsize = 1;
+	constexpr int xsize = 1;
+	constexpr int zsize = 1;
 
 	// top-left footprint corner (sans clamping)
 	const int px = (pos.x - (xsize * (SQUARE_SIZE >> 1))) / SQUARE_SIZE;
 	const int pz = (pos.z - (zsize * (SQUARE_SIZE >> 1))) / SQUARE_SIZE;
 	// top-left and bottom-right footprint corner (clamped)
-	const int x1 = std::min(mapDims.mapx, std::max(0, px));
-	const int z1 = std::min(mapDims.mapy, std::max(0, pz));
-	const int x2 = std::max(0, std::min(mapDims.mapx, x1 + xsize));
-	const int z2 = std::max(0, std::min(mapDims.mapy, z1 + zsize));
+	const int x1 = Clamp(px        , 0, mapDims.mapx);
+	const int z1 = Clamp(pz        , 0, mapDims.mapy);
+	const int x2 = Clamp(x1 + xsize, 0, mapDims.mapx);
+	const int z2 = Clamp(z1 + zsize, 0, mapDims.mapy);
 
 	for (int x = x1; x <= x2; x++) {
 		for (int z = z1; z <= z2; z++) {
@@ -1041,7 +1058,7 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 				numBorderSquares += 1;
 			}
 
-			// restrict the range of [minH, maxH] to
+			// restrict the range of {min,max}Hgt to
 			// the minimum and maximum square height
 			// within the footprint
 			minHgt = std::max(minHgt, sqMinHgt - maxDifHgt);
@@ -1053,10 +1070,10 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	float avgHgt = sumBorderSquareHeight / numBorderSquares;
 
 	// and clamp it to [minH, maxH] if necessary
-	if (avgHgt < minHgt && minHgt < maxHgt) { avgHgt = (minHgt + 0.01f); }
-	if (avgHgt > maxHgt && maxHgt > minHgt) { avgHgt = (maxHgt - 0.01f); }
+	if (avgHgt < minHgt && minHgt < maxHgt) { avgHgt = minHgt + 0.01f; }
+	if (avgHgt > maxHgt && maxHgt > minHgt) { avgHgt = maxHgt - 0.01f; }
 
-	if (unitdef->floatOnWater && avgHgt < 0.0f)
+	if (avgHgt < 0.0f && unitdef->floatOnWater)
 		avgHgt = -unitdef->waterline;
 
 	return avgHgt;
@@ -1282,30 +1299,31 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 }
 
 /**
- * Returns a build Command that intersects the ray described by pos and dir from
- * the command queues of the units 'units' on team number 'team'.
  * @brief returns a build Command that intersects the ray described by pos and dir
  * @return the build Command, or a Command with id 0 if none is found
  */
 Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
-	float3 tempF1 = pos;
+	for (const auto& pair: unitHandler.GetBuilderCAIs()) {
+		const CUnit* unit = unitHandler.GetUnit(pair.first);
 
-	for (CUnit* unit: unitHandler.GetActiveUnits()) {
 		if (unit->team != gu->myTeam)
 			continue;
 
-		CCommandQueue::iterator ci = unit->commandAI->commandQue.begin();
+		for (const Command& cmd: unit->commandAI->commandQue) {
+			if (!cmd.IsBuildCommand())
+				continue;
+			if (cmd.GetNumParams() < 3)
+				continue;
 
-		for (; ci != unit->commandAI->commandQue.end(); ++ci) {
-			const Command& cmd = *ci;
+			const BuildInfo bi(cmd);
 
-			if (cmd.GetID() < 0 && cmd.GetNumParams() >= 3) {
-				BuildInfo bi(cmd);
-				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
+			const float3 vec = dir * ((bi.pos.y - pos.y) / dir.y);
+			const float3 dif = float3::fabs(pos + vec - bi.pos);
 
-				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.z))
-					return cmd;
-			}
+			if (bi.def == nullptr)
+				continue;
+			if ((bi.GetXSize() / 2) * SQUARE_SIZE > dif.x && (bi.GetZSize() / 2) * SQUARE_SIZE > dif.z)
+				return cmd;
 		}
 	}
 

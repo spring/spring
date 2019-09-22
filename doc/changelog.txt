@@ -37,6 +37,7 @@ Lua:
  - add a 3rd param to DefaultCommand callin: the current default command
     works with the above: gadgets receive the default engine cmd,
     widgets then receive what gadgets returned (possibly engine default)
+ - add  Spring.ClosestBuildPos(teamID, unitdefID, worldx,worldy,worldz, searchRadius, minDistance, buildFacing) -> buildx,buildy,buildz  to LuaSyncedRead
  - add  Spring.GetGlobalLos(allyTeamID) -> bool  to LuaSyncedRead
  - add  Spring.IsNoCostEnabled() -> bool  to LuaSyncedRead
  - add Spring.SetWind(number minStrength, number maxStrength)

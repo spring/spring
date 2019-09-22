@@ -471,7 +471,7 @@ void CGame::LoadMap(const std::string& mapFileName)
 		helper->Init();
 		readMap = CReadMap::LoadMap(mapFileName);
 
-		// half size; building positions are snapped to multiples of 2*SQUARE_SIZE
+		// half size; building positions are snapped to multiples of BUILD_SQUARE_SIZE
 		buildingMaskMap.Init(mapDims.hmapx * mapDims.hmapy);
 		groundBlockingObjectMap.Init(mapDims.mapSquares);
 	}

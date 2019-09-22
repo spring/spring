@@ -322,6 +322,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TestMoveOrder);
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
+	REGISTER_LUA_CFUNC(ClosestBuildPos);
+
 	REGISTER_LUA_CFUNC(GetPositionLosState);
 	REGISTER_LUA_CFUNC(IsPosInLos);
 	REGISTER_LUA_CFUNC(IsPosInRadar);
@@ -5386,15 +5388,10 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 		return 1;
 	}
 
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
-	const int facing = LuaUtils::ParseFacing(L, __func__, 5);
-
 	BuildInfo bi;
-	bi.buildFacing = facing;
+	bi.buildFacing = LuaUtils::ParseFacing(L, __func__, 5);
 	bi.def = unitDef;
-	bi.pos = pos;
+	bi.pos = {luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)};
 	bi.pos = CGameHelper::Pos2BuildPos(bi, CLuaHandle::GetHandleSynced(L));
 	CFeature* feature;
 
@@ -5405,16 +5402,16 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	// 3 = BUILDSQUARE_OPEN
 	int retval = CGameHelper::TestUnitBuildSquare(bi, feature, CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleSynced(L));
 
-	// output of TestUnitBuildSquare was changed after this lua function was writen
-	// keep backward-compability by mapping:
-	// BUILDSQUARE_OPEN = BUILDSQUARE_RECLAIMABLE = 2
+	// the output of TestUnitBuildSquare was changed after this API function was written
+	// keep backward-compability by mapping BUILDSQUARE_OPEN to BUILDSQUARE_RECLAIMABLE
 	if (retval == CGameHelper::BUILDSQUARE_OPEN)
-		retval = 2;
+		retval = CGameHelper::BUILDSQUARE_RECLAIMABLE;
 
 	if (feature == nullptr) {
 		lua_pushnumber(L, retval);
 		return 1;
 	}
+
 	lua_pushnumber(L, retval);
 	lua_pushnumber(L, feature->id);
 	return 2;
@@ -5428,18 +5425,32 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 	if (ud == nullptr)
 		return 0;
 
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
-	const int facing = luaL_optint(L, 5, FACING_SOUTH);
-
-	const BuildInfo buildInfo(ud, pos, facing);
-	const float3 buildPos = CGameHelper::Pos2BuildPos(buildInfo, CLuaHandle::GetHandleSynced(L));
+	const float3 worldPos = {luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)};
+	const float3 buildPos = CGameHelper::Pos2BuildPos({ud, worldPos, luaL_optint(L, 5, FACING_SOUTH)}, CLuaHandle::GetHandleSynced(L));
 
 	lua_pushnumber(L, buildPos.x);
 	lua_pushnumber(L, buildPos.y);
 	lua_pushnumber(L, buildPos.z);
+	return 3;
+}
 
+
+int LuaSyncedRead::ClosestBuildPos(lua_State* L)
+{
+	const int teamID = luaL_checkint(L, 1);
+	const int udefID = luaL_checkint(L, 2);
+
+	const float searchRadius = luaL_checkfloat(L, 6);
+
+	const int minDistance = luaL_checkfloat(L, 7);
+	const int buildFacing = luaL_checkint(L, 8);
+
+	const float3 worldPos = {luaL_checkfloat(L, 3), luaL_checkfloat(L, 4), luaL_checkfloat(L, 5)};
+	const float3 buildPos = CGameHelper::ClosestBuildPos(teamID, unitDefHandler->GetUnitDefByID(udefID), worldPos, searchRadius, minDistance, buildFacing, CLuaHandle::GetHandleSynced(L));
+
+	lua_pushnumber(L, buildPos.x);
+	lua_pushnumber(L, buildPos.y);
+	lua_pushnumber(L, buildPos.z);
 	return 3;
 }
 
@@ -5449,12 +5460,11 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 
 static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 {
-	if (lua_isnoneornil(L, arg)) {
-		const int rat = CLuaHandle::GetHandleReadAllyTeam(L);
-		return rat;
-	}
+	if (lua_isnoneornil(L, arg))
+		return (CLuaHandle::GetHandleReadAllyTeam(L));
 
 	const int aat = luaL_optint(L, arg, CEventClient::MinSpecialTeam - 1);
+
 	if (aat == CEventClient::NoAccessTeam)
 		return aat;
 
