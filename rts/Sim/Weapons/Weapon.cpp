@@ -301,11 +301,6 @@ void CWeapon::Update()
 	UpdateAim();
 	UpdateFire();
 	UpdateSalvo();
-
-#ifdef TRACE_SYNC
-	tracefile << __FUNCTION__;
-	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z << "\n";
-#endif
 }
 
 
@@ -681,11 +676,6 @@ void CWeapon::SlowUpdate()
 {
 	errorVectorAdd = (gsRNG.NextVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
 	predictSpeedMod = 1.0f + (gsRNG.NextFloat() - 0.5f) * 2 * ExperienceErrorScale();
-
-#ifdef TRACE_SYNC
-	tracefile << "Weapon slow update: ";
-	tracefile << owner->id << " " << weaponNum <<  "\n";
-#endif
 
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
@@ -1067,12 +1057,6 @@ void CWeapon::Init()
 
 void CWeapon::Fire(bool scriptCall)
 {
-#ifdef TRACE_SYNC
-	tracefile << weaponDef->name.c_str() << " fire: ";
-	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z;
-	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
-#endif
-
 	owner->lastFireWeapon = gs->frameNum;
 
 	// target-leading can nudge currentTargetPos into an adjacent quadfield cell

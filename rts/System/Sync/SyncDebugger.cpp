@@ -372,9 +372,7 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 void CSyncDebugger::ClientSendBlockResponse(int block)
 {
 	std::vector<unsigned> checksums;
-#ifdef TRACE_SYNC
-	tracefile << "Sending block response for block " << block << "\n";
-#endif
+
 	for (unsigned i = 0; i < BLOCK_SIZE; ++i) {
 		if (historybt) {
 			checksums.push_back(historybt[BLOCK_SIZE * block + i].data);
@@ -382,18 +380,8 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 		else {
 			checksums.push_back(history[BLOCK_SIZE * block + i].data);
 		}
-#ifdef TRACE_SYNC
-		if (historybt) {
-			tracefile << historybt[BLOCK_SIZE * block + i].data << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
-		}
-		else {
-			tracefile << history[BLOCK_SIZE * block + i].data << " " << history[BLOCK_SIZE * block + i].data  << "\n";
-		}
-#endif
 	}
-#ifdef TRACE_SYNC
-	tracefile << "done\n";
-#endif
+
 	clientNet->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
 }
 
