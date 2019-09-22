@@ -702,11 +702,6 @@ void CUnitScript::Explode(int piece, int flags)
 	const float3 relPos = GetPiecePos(piece);
 	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
-#ifdef TRACE_SYNC
-	tracefile << "Cob explosion: ";
-	tracefile << absPos.x << " " << absPos.y << " " << absPos.z << " " << piece << " " << flags << "\n";
-#endif
-
 	// do an explosion at the location first
 	if (!(flags & PF_NoHeatCloud))
 		projMemPool.alloc<CHeatCloudProjectile>(nullptr, absPos, ZeroVector, 30, 30);

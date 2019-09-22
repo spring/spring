@@ -86,12 +86,10 @@ CProjectile::CProjectile(
 
 CProjectile::~CProjectile()
 {
-	if (synced) {
-		quadField.RemoveProjectile(this);
-#ifdef TRACE_SYNC
-		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-#endif
-	}
+	if (!synced)
+		return;
+
+	quadField.RemoveProjectile(this);
 }
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)

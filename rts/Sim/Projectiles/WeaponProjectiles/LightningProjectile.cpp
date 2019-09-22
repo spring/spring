@@ -10,10 +10,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-#ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
-#endif
-
 CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CLightningProjectile,(
@@ -41,12 +37,6 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 		displacements[d]  = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 		displacements2[d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << params.pos.x << " " << params.pos.y << " " << params.pos.z << " ";
-	tracefile << params.end.x << " " << params.end.y << " " << params.end.z << "\n";
-#endif
 }
 
 void CLightningProjectile::Update()

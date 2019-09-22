@@ -414,11 +414,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	ASSERT_SYNCED(freeIDs.size());
 	ASSERT_SYNCED(p->id);
-
-	#ifdef TRACE_SYNC
-	tracefile << "New projectile id: " << p->id << ", ownerID: " << p->GetOwnerID();
-	tracefile << ", type: " << p->GetProjectileType() << " pos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
-	#endif
 }
 
 

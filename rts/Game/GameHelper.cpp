@@ -752,19 +752,6 @@ size_t CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* av
 	}
 
 	std::stable_sort(targets.begin(), targets.end(), [](const std::pair<float, CUnit*>& a, const std::pair<float, CUnit*>& b) { return (a.first < b.first); });
-
-#ifdef TRACE_SYNC
-	{
-		tracefile << "[GenerateWeaponTargets] ownerID, attackRadius: " << weaponOwner->id << ", " << scanRadius << " ";
-
-		for (const auto& ti: targets) {
-			tracefile << "\tpriority: " << (ti.first) <<  ", targetID: " << (ti.second)->id <<  " ";
-		}
-
-		tracefile << "\n";
-	}
-#endif
-
 	return (targets.size());
 }
 
