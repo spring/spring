@@ -456,7 +456,7 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
 			// target wandered out of the attack-area
-			SetOrderTarget(NULL);
+			SetOrderTarget(nullptr);
 			SelectNewAreaAttackTargetOrPos(c);
 		}
 	} else {
@@ -562,18 +562,17 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 	const float3& pos = ac.GetPos(0);
 	const float radius = ac.GetParam(3);
 
-	std::vector<int> enemyUnitIDs;
-	CGameHelper::GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
+	auto& targetIDs = helper->targetUnitIDs;
 
-	if (enemyUnitIDs.empty()) {
+	if (CGameHelper::GetEnemyUnits(pos, radius, owner->allyteam, targetIDs) == 0) {
 		float3 attackPos = pos + (gsRNG.NextVector() * radius);
 		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
 		owner->AttackGround(attackPos, !ac.IsInternalOrder(), false);
 		SetGoal(attackPos, owner->pos);
 	} else {
-		const unsigned int unitIdx = gsRNG.NextInt(enemyUnitIDs.size()); // [0, size - 1]
-		const unsigned int unitID = enemyUnitIDs[unitIdx];
+		const unsigned int unitIdx = gsRNG.NextInt(targetIDs.size()); // [0, size - 1]
+		const unsigned int unitID = targetIDs[unitIdx];
 
 		CUnit* targetUnit = unitHandler.GetUnitUnsafe(unitID);
 

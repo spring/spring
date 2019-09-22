@@ -1053,18 +1053,16 @@ void CUnit::SlowUpdateKamikaze(bool scanForTargets)
 	if (!unitDef->canKamikaze)
 		return;
 
+	// if on FAW, actively look for targets close to us
 	if (scanForTargets) {
-		// if on FAW, actively look for targets close to us
-		std::vector<int> targetUnits;
+		constexpr decltype(&CGameHelper::GetEnemyUnits) helperFuncs[] = {CGameHelper::GetEnemyUnitsNoLosTest, CGameHelper::GetEnemyUnits};
 
-		if (unitDef->kamikazeUseLOS) {
-			CGameHelper::GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, targetUnits);
-		} else {
-			CGameHelper::GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, targetUnits);
-		}
+		auto& helperFunc = helperFuncs[unitDef->kamikazeUseLOS];
+		auto& targetIDs = helper->targetUnitIDs;
 
-		for (int targetID: targetUnits) {
-			const CUnit* target = unitHandler.GetUnitUnsafe(targetID);
+		// NB: no code reached from here [should] call[s] GameHelper::GetEnemyUnits*(..., targetIDs) while iterating
+		for (size_t i = 0, n = helperFunc(pos, unitDef->kamikazeDist, allyteam, targetIDs); i < n; i++, assert(n == targetIDs.size())) {
+			const CUnit* target = unitHandler.GetUnitUnsafe(targetIDs[i]);
 
 			if (pos.SqDistance(target->pos) >= Square(unitDef->kamikazeDist))
 				continue;

@@ -623,27 +623,22 @@ bool CWeapon::AutoTarget()
 	if (!AllowWeaponAutoTarget())
 		return false;
 
-	// search for other in range targets
+	// search for other in-range targets
 	lastTargetRetry = gs->frameNum;
 
 	const CUnit* avoidUnit = (avoidTarget && HaveUnitTarget()) ? currentTarget.unit : nullptr;
 
+	CUnit* goodTargetUnit = nullptr;
+	CUnit*  badTargetUnit = nullptr;
+
+	auto& targetPairs = helper->targetPairs;
+
 	// NOTE:
 	//   GenerateWeaponTargets sorts by INCREASING order of priority, so lower equals better
-	//   <targets> is normally sorted such that all bad TargetCategory units are at the end,
-	//   but Lua can mess with the ordering arbitrarily
-	static std::vector<std::pair<float, CUnit*>> targets;
-
-	targets.clear();
-	targets.reserve(32);
-
-	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
-
-	CUnit* goodTargetUnit = nullptr;
-	CUnit* badTargetUnit = nullptr;
-
-	for (const auto& targetsPair: targets) {
-		CUnit* unit = targetsPair.second;
+	//   <targetPairs> is normally sorted such that all bad TargetCategory units live at the
+	//   end, but Lua can mess with the ordering arbitrarily
+	for (size_t i = 0, n = CGameHelper::GenerateWeaponTargets(this, avoidUnit, targetPairs); i < n; i++, assert(n == targetPairs.size())) {
+		CUnit* unit = targetPairs[i].second;
 
 		// save the "best" bad target in case we have no other
 		// good targets (of higher priority) left in <targets>
