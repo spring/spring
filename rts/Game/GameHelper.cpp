@@ -791,20 +791,24 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(
 	const float3& pos,
 	float searchRadius,
 	int searchAllyteam,
-	bool sphere,
+	bool testSphere,
 	bool canBeBlind
 ) {
-	if (sphere) {
+	CUnit* closestUnit = nullptr;
+
+	if (testSphere) {
 		// includes target radius
 		Query::ClosestUnit_InLos q(pos, searchRadius, canBeBlind);
 		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
-		return q.GetClosestUnit();
+		closestUnit = q.GetClosestUnit();
 	} else {
-		// cylinder (doesn't include target radius)
+		// excludes target radius
 		Query::ClosestUnit_InLos_Cylinder q(pos, searchRadius, canBeBlind);
 		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
-		return q.GetClosestUnit();
+		closestUnit = q.GetClosestUnit();
 	}
+
+	return closestUnit;
 }
 
 CUnit* CGameHelper::GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam)
