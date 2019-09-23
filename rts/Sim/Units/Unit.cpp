@@ -65,7 +65,6 @@
 #include "System/creg/STL_List.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
-#include "System/Sync/SyncTracer.h"
 
 #undef near
 

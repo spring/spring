@@ -10,7 +10,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/SpringMath.h"
 #include "System/FastMath.h"
 
