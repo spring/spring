@@ -12,7 +12,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/SpringMath.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, )

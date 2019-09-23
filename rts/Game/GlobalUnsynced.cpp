@@ -15,7 +15,6 @@
 #include "System/SafeUtil.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Sync/SyncTracer.h"
 
 #include <ctime>
 

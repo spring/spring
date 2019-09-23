@@ -33,7 +33,6 @@
 #include "System/StringUtil.h"
 #include "System/SpringMath.h"
 #include "System/Sound/ISoundChannels.h"
-#include "System/Sync/SyncTracer.h"
 
 
 /******************************************************************************/

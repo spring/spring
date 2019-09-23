@@ -19,7 +19,6 @@
 #include "System/Log/ILog.h"
 #include "System/SpringMath.h"
 #include "System/TimeProfiler.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Set.h"
 

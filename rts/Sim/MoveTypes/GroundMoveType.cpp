@@ -34,7 +34,6 @@
 #include "System/type2.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Sync/SyncTracer.h"
 
 #if 1
 #include "Rendering/IPathDrawer.h"
