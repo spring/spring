@@ -484,7 +484,7 @@ void CWeapon::UpdateSalvo()
 
 	// Decloak
 	if (owner->unitDef->decloakOnFire)
-		owner->ScriptDecloak(nullptr, this);
+		owner->ScriptDecloak(HaveUnitTarget()? currentTarget.unit: nullptr, this);
 
 	for (int i = 0; i < projectilesPerShot; ++i) {
 		owner->script->Shot(weaponNum);
