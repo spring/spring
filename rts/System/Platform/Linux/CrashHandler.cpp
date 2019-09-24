@@ -21,8 +21,9 @@
 #include <libunwind.h>
 #include <dlfcn.h>
 
-#include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/SpringExitCode.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
@@ -662,22 +663,17 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 
 
 
-__FORCE_ALIGN_STACK__
-static void ForcedExitAfterFiveSecs() {
-	spring::this_thread::sleep_for(std::chrono::seconds(5));
-	std::exit(-1);
-}
+static void ForcedExit(int secs)
+{
+	std::function<void()> func = [secs]() {
+		spring::this_thread::sleep_for(std::chrono::seconds(secs));
+		std::exit(spring::EXIT_CODE_KILLED);
+	};
+	spring::thread thread{func};
 
-__FORCE_ALIGN_STACK__
-static void ForcedExitAfterTenSecs() {
-	spring::this_thread::sleep_for(std::chrono::seconds(10));
-#if defined(__GNUC__)
-	std::_Exit(-1);
-#else
-	std::quick_exit(-1);
-#endif
+	assert(thread.joinable());
+	thread.detach();
 }
-
 
 typedef struct sigaction sigaction_t;
 typedef void (*sigact_handler_t)(int, siginfo_t*, void*);
@@ -951,9 +947,8 @@ namespace CrashHandler
 				event.type = SDL_QUIT;
 				SDL_PushEvent(&event);
 
-				// abort after 5sec
-				spring::thread(std::bind(&ForcedExitAfterFiveSecs));
-				spring::thread(std::bind(&ForcedExitAfterTenSecs));
+				// force an exit if no such luck
+				ForcedExit(5);
 				return;
 			} break;
 			case SIGCONT: {

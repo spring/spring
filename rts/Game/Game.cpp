@@ -446,7 +446,7 @@ void CGame::Load(const std::string& mapFileName)
 	AddTimedJobs();
 
 	if (forcedQuit)
-		spring::exitCode = spring::EXIT_CODE_FORCED;
+		spring::exitCode = spring::EXIT_CODE_NOLOAD;
 
 	loadDone = true;
 	globalQuit = globalQuit | forcedQuit;
