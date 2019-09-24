@@ -413,13 +413,13 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 
 	if (FLAGS_gen_fontconfig) {
 		CFontTexture::GenFontConfig();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 
 	if (FLAGS_sync_version) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
 		std::cout << SpringVersion::GetSync() << std::endl;
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 
 	if (FLAGS_isolation)
@@ -438,21 +438,21 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	// Interface Documentations in JSON-Format
 	if (FLAGS_list_config_vars) {
 		ConfigVariable::OutputMetaDataMap();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	if (FLAGS_list_def_tags) {
 		DefType::OutputTagMap();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	if (FLAGS_list_ceg_classes)
-		exit(CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE);
+		exit(CCustomExplosionGenerator::OutputProjectileClassInfo() ? spring::EXIT_CODE_SUCCESS : spring::EXIT_CODE_FAILURE);
 
 	// Runtime Tests
 	if (FLAGS_test_creg) {
 #ifdef USING_CREG
-		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
+		exit(creg::RuntimeTest() ? spring::EXIT_CODE_SUCCESS : spring::EXIT_CODE_FAILURE);
 #else
-		exit(EXIT_FAILURE); //Do not fail tests
+		exit(spring::EXIT_CODE_SUCCESS);
 #endif
 	}
 
@@ -460,12 +460,12 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	if (FLAGS_list_ai_interfaces) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		AILibraryManager::OutputAIInterfacesInfo();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 	else if (FLAGS_list_skirmish_ais) {
 		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		AILibraryManager::OutputSkirmishAIInfo();
-		exit(EXIT_SUCCESS);
+		exit(spring::EXIT_CODE_SUCCESS);
 	}
 
 	CTextureAtlas::SetDebug(FLAGS_textureatlas);
@@ -786,7 +786,7 @@ int SpringApp::Run()
 	// ErrorMsgBox sets threadError if called from any non-main thread
 	try {
 		if ((gu->globalQuit = !Init() || gu->globalQuit))
-			spring::exitCode = spring::EXIT_CODE_FAILURE;
+			spring::exitCode = spring::EXIT_CODE_NOINIT;
 
 		while (!gu->globalQuit) {
 			Watchdog::ClearTimer(WDT_MAIN);

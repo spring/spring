@@ -11,6 +11,7 @@
 #include <string>
 #include <functional>
 
+#include "System/SpringExitCode.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Threading/SpringThreading.h"
@@ -30,19 +31,18 @@
 
 static void ExitSpringProcessAux(bool waitForExit, bool exitSuccess)
 {
-	// wait 10 seconds before forcing the kill
-	for (unsigned int n = 0; (waitForExit && n < 10); ++n) {
-		spring::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+	// wait a bit before forcing the kill
+	if (waitForExit)
+		spring::this_thread::sleep_for(std::chrono::seconds(5));
 
 	logSinkHandler.SetSinking(false);
 
 #ifdef _MSC_VER
 	if (!exitSuccess)
-		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
+		TerminateProcess(GetCurrentProcess(), spring::EXIT_CODE_CRASHED);
 #endif
 
-	exit(EXIT_FAILURE);
+	exit(spring::EXIT_CODE_CRASHED);
 }
 
 
