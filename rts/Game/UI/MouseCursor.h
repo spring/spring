@@ -42,7 +42,7 @@ public:
 private:
 	struct ImageData;
 
-	bool LoadDummyImage();
+//	bool LoadDummyImage();
 	bool LoadCursorImage(const std::string& name, ImageData& image);
 	bool Build(const std::string& name);
 	bool BuildFromSpecFile(const std::string& name, int& lastFrame);

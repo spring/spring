@@ -222,6 +222,7 @@ bool CMouseCursor::BuildFromFileNames(const std::string& name, int lastFrame)
 }
 
 
+/*
 bool CMouseCursor::LoadDummyImage()
 {
 	ImageData id;
@@ -240,7 +241,9 @@ bool CMouseCursor::LoadDummyImage()
 	frames.emplace_back(images.size() - 1, float(DEF_FRAME_LENGTH));
 
 	hwCursor->PushImage(bn.xsize, bn.ysize, bn.GetRawMem());
+	return true;
 }
+*/
 
 bool CMouseCursor::LoadCursorImage(const std::string& name, ImageData& image)
 {
