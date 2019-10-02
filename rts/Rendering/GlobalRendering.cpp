@@ -189,7 +189,7 @@ CGlobalRendering::CGlobalRendering()
 
 	// sane defaults
 	, minViewRange(MIN_ZNEAR_DIST * 8.0f)
-	, maxViewRange(MAX_VIEW_RANGE * 0.25f)
+	, maxViewRange(MAX_VIEW_RANGE * 0.6f)
 	, aspectRatio(1.0f)
 
 	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
