@@ -268,7 +268,9 @@ void CCamera::UpdateViewRange()
 	// camera-height dependence (i.e. TAB-view)
 	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, mapMinHeight)) * 2.0f);
 	// view-angle dependence (i.e. FPS-view)
-	wantedViewRange = std::max(wantedViewRange, (1.0f - std::max(0.0f, forward.dot(UpVector))) * maxEdgeDist);
+	// forward normally points down, so 1-min(0, dot(f,u))
+	// will be >= 1 and increase the effective maxEdgeDist
+	wantedViewRange = std::max(wantedViewRange, (1.0f - std::min(0.0f, forward.dot(UpVector))) * maxEdgeDist);
 
 	#if 0
 	wantedViewRange = std::max(wantedViewRange, CGround::LinePlaneCol(pos, tlPixelDir, SQ_MAX_VIEW_RANGE, mapMinHeight));
