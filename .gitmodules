@@ -20,5 +20,5 @@
 	path = tools/pr-downloader
 	url = git://github.com/spring/pr-downloader.git
 [submodule "tools/SpringMapConvNG"]
-	path = tools/SpringMapConvNG
+	path = tools/mapcompile
 	url = https://github.com/spring/SpringMapConvNG.git
