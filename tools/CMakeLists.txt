@@ -1,7 +1,7 @@
 
 add_subdirectory(unitsync)
 add_subdirectory(DemoTool)
-add_subdirectory(SpringMapConvNG)
+add_subdirectory(mapcompile)
 
 if    (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/CMakeLists.txt")
 	message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/pr-downloader/ is missing, please run\n git submodule init && git submodule update")
