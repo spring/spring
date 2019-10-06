@@ -579,12 +579,14 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		wantDemo = false;
 
 	if (clientNet != nullptr && wantDemo) {
-		assert(clientNet->GetDemoRecorder() == nullptr);
-
 		CDemoRecorder recorder = {gameSetup->mapName, gameSetup->modName, false};
+
 		recorder.WriteSetupText(gameData->GetSetupText());
 		recorder.SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
+
+		assert(!clientNet->GetDemoRecorder()->IsValid());
 		clientNet->SetDemoRecorder(std::move(recorder));
+		assert(clientNet->GetDemoRecorder()->IsValid());
 
 		LOG("[PreGame::%s] recording demo to \"%s\"", __func__, (clientNet->GetDemoRecorder()->GetName()).c_str());
 	}
