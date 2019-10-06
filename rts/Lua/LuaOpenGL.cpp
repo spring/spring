@@ -2711,6 +2711,7 @@ int LuaOpenGL::CreateVertexArray(lua_State* L)
 	}
 
 	if (luaL_optboolean(L, 3, false)) {
+		// persistent
 		luaRenderBuffers[bufferID].Setup(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), luaL_checkint(L, 2));
 	} else {
 		luaRenderBuffers[bufferID].SetupStatic(renderBufferPool.alloc<GL::RenderDataBuffer>(), &GL::VA_TYPE_L_ATTRS, luaL_checkint(L, 1), luaL_checkint(L, 2));
@@ -2768,10 +2769,12 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 	}
 
 
-	if (!rb->IsPinned())
+	if (!rb->IsPinned()) {
 		wb.BindMapElems();
-	else
+		wb.BindMapIndcs();
+	} else {
 		wb.Wait();
+	}
 
 	switch (lua_type(L, 4)) {
 		case LUA_TTABLE: {
@@ -2832,8 +2835,10 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 		} break;
 	}
 
-	if (!rb->IsPinned())
+	if (!rb->IsPinned()) {
 		wb.UnmapUnbindElems();
+		wb.UnmapUnbindIndcs();
+	}
 
 	lua_pushboolean(L, true);
 	return 1;

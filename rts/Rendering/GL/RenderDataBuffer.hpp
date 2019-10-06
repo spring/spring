@@ -154,8 +154,9 @@ namespace GL {
 
 			shader = std::move(rdb.shader);
 
-			inited = rdb.inited;
-			mapped = rdb.mapped;
+			inited    = rdb.inited;
+			mapped[0] = rdb.mapped[0];
+			mapped[1] = rdb.mapped[1];
 			return *this;
 		}
 
@@ -177,8 +178,9 @@ namespace GL {
 			SetElemBufferUsage(GL_STATIC_DRAW);
 			SetIndxBufferUsage(GL_STATIC_DRAW);
 
-			inited = true;
-			mapped = false;
+			inited    =  true;
+			mapped[0] = false;
+			mapped[1] = false;
 			return true;
 		}
 		bool Kill() {
@@ -191,8 +193,9 @@ namespace GL {
 			// do not delete the attached objects
 			shader.Release(false);
 
-			inited = false;
-			mapped = false;
+			inited    = false;
+			mapped[0] = false;
+			mapped[1] = false;
 			return true;
 		}
 
@@ -359,11 +362,11 @@ namespace GL {
 		void UploadL   (size_t numElems, size_t numIndcs,  const VA_TYPE_L*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_L_ATTRS.size()   ,  e, i, VA_TYPE_L_ATTRS.data()); }
 
 
-		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
-		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
+		template<typename T> T* MapElems(bool bind, bool unbind, bool r = false, bool w = true) { mapped[0] = true; return (MapBuffer<T>(elems, bind, unbind, r, w)); }
+		template<typename T> T* MapIndcs(bool bind, bool unbind, bool r = false, bool w = true) { mapped[1] = true; return (MapBuffer<T>(indcs, bind, unbind, r, w)); }
 
-		void UnmapElems(bool unbind = false) { elems.UnmapBuffer(); if (unbind) { elems.Unbind(); } mapped = false; }
-		void UnmapIndcs(bool unbind = false) { indcs.UnmapBuffer(); if (unbind) { indcs.Unbind(); } mapped = false; }
+		void UnmapElems(bool unbind = false) { elems.UnmapBuffer(); if (unbind) { elems.Unbind(); } mapped[0] = false; }
+		void UnmapIndcs(bool unbind = false) { indcs.UnmapBuffer(); if (unbind) { indcs.Unbind(); } mapped[1] = false; }
 
 		VAO& GetArray() { return array; }
 		VBO& GetElems() { return elems; }
@@ -374,7 +377,7 @@ namespace GL {
 		template<typename T> size_t GetNumIndcs() const { return (indcs.GetSize() / sizeof(T)); }
 
 		bool IsInited() const { return inited; }
-		bool IsMapped() const { return mapped; }
+		bool IsMapped() const { return (mapped[0] || mapped[1]); }
 		bool IsPinned() const { return elems.immutableStorage; }
 
 	private:
@@ -401,8 +404,8 @@ namespace GL {
 
 		Shader::GLSLProgramObject shader;
 
-		bool inited = false;
-		bool mapped = false;
+		bool inited    = false;
+		bool mapped[2] = {false, false};
 	};
 
 
@@ -456,26 +459,26 @@ namespace GL {
 		bool CheckSizeI(size_t ni, size_t pos) const { return false; }
 
 
-		void Update(const VertexArrayType& e,            size_t pos) {}
-		void Update(const VertexArrayType* e, size_t ne, size_t pos) {}
-		void Update(const  IndexArrayType  i,            size_t pos) {}
-		void Update(const  IndexArrayType* i, size_t ni, size_t pos) {}
+		void Update(const VertexArrayType& e,            size_t pos) { return false; }
+		void Update(const  IndexArrayType  i,            size_t pos) { return false; }
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) { return false; }
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { return false; }
 
-		void SafeUpdate(const VertexArrayType& e,            size_t pos) {}
-		void SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {}
-		void SafeUpdate(const  IndexArrayType  i,            size_t pos) {}
-		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {}
+		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return false; }
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return false; }
+		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) { return false; }
+		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) { return false; }
 
 
-		void Append(const VertexArrayType& e           ) {}
-		void Append(const VertexArrayType* e, size_t ne) {}
-		void Append(const  IndexArrayType  i           ) {}
-		void Append(const  IndexArrayType* i, size_t ni) {}
+		void Append(const VertexArrayType& e           ) { return false; }
+		void Append(const  IndexArrayType  i           ) { return false; }
+		void Append(const VertexArrayType* e, size_t ne) { return false; }
+		void Append(const  IndexArrayType* i, size_t ni) { return false; }
 
-		void SafeAppend(const VertexArrayType& e           ) {}
-		void SafeAppend(const VertexArrayType* e, size_t ne) {}
-		void SafeAppend(const  IndexArrayType  i           ) {}
-		void SafeAppend(const  IndexArrayType* i, size_t ni) {}
+		bool SafeAppend(const VertexArrayType& e           ) { return false; }
+		bool SafeAppend(const  IndexArrayType  i           ) { return false; }
+		bool SafeAppend(const VertexArrayType* e, size_t ne) { return false; }
+		bool SafeAppend(const  IndexArrayType* i, size_t ni) { return false; }
 
 
 		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
@@ -634,40 +637,40 @@ namespace GL {
 
 
 		void Update(const VertexArrayType& e,            size_t pos) {      Update(&e,  1, pos);                                                               }
-		void Update(const VertexArrayType* e, size_t ne, size_t pos) { AssertSizeE(    ne, pos); std::memcpy(&elemsMap[pos], e, ne * sizeof(VertexArrayType)); }
 		void Update(const  IndexArrayType  i,            size_t pos) {      Update(&i,  1, pos);                                                               }
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) { AssertSizeE(    ne, pos); std::memcpy(&elemsMap[pos], e, ne * sizeof(VertexArrayType)); }
 		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { AssertSizeI(    ni, pos); std::memcpy(&indcsMap[pos], i, ni * sizeof( IndexArrayType)); }
 
-		void SafeUpdate(const VertexArrayType& e,            size_t pos) { SafeUpdate(&e, 1, pos); }
-		void SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
+		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { SafeUpdate(&e, 1, pos); }
+		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
 			if (elemsMap == nullptr || !CheckSizeE(ne, pos))
-				return;
-			Update(e, ne, pos);
+				return false;
+			return (Update(e, ne, pos), true);
 		}
-		void SafeUpdate(const  IndexArrayType  i,            size_t pos) { SafeUpdate(&i, 1, pos); }
-		void SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { SafeUpdate(&i, 1, pos); }
+		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
 			if (indcsMap == nullptr || !CheckSizeI(ni, pos))
-				return;
-			Update(i, ni, pos);
+				return false;
+			return (Update(i, ni, pos), true);
 		}
 
 
 		void Append(const VertexArrayType& e           ) { Append(&e,  1            );                   }
-		void Append(const VertexArrayType* e, size_t ne) { Update( e, ne, curElemPos); curElemPos += ne; }
 		void Append(const  IndexArrayType  i           ) { Append(&i,  1            );                   }
+		void Append(const VertexArrayType* e, size_t ne) { Update( e, ne, curElemPos); curElemPos += ne; }
 		void Append(const  IndexArrayType* i, size_t ni) { Update( i, ni, curIndxPos); curIndxPos += ni; }
 
 		void SafeAppend(const VertexArrayType& e           ) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
 			if (elemsMap == nullptr || !CheckSizeE(ne, curElemPos))
-				return;
-			Append(e, ne);
+				return false;
+			return (Append(e, ne), true);
 		}
 		void SafeAppend(const  IndexArrayType  i           ) { SafeAppend(&i, 1); }
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {
 			if (indcsMap == nullptr || !CheckSizeI(ni, curIndxPos))
-				return;
-			Append(i, ni);
+				return false;
+			return (Append(i, ni), true);
 		}
 
 
