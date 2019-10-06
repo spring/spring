@@ -127,8 +127,8 @@ public:
 
 	void OpenBlockingYard(CSolidObject* object);
 	void CloseBlockingYard(CSolidObject* object);
-	bool CanOpenYard(CSolidObject* object) const;
-	bool CanCloseYard(CSolidObject* object) const;
+	bool CanOpenYard(const CSolidObject* object) const { return CheckYard(object, YARDMAP_YARDINV); }
+	bool CanCloseYard(const CSolidObject* object) const { return CheckYard(object, YARDMAP_YARD); }
 
 
 	// these retrieve either the first object in
@@ -171,7 +171,7 @@ public:
 	}
 
 private:
-	bool CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const;
+	bool CheckYard(const CSolidObject* yardUnit, const YardMapStatus& mask) const;
 
 	const ArrCell& GetArrCell(unsigned int mapSquare) const { return           arrCells[mapSquare]               ; }
 	      ArrCell& GetArrCell(unsigned int mapSquare)       { return           arrCells[mapSquare]               ; }

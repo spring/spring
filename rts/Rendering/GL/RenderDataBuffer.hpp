@@ -642,12 +642,12 @@ namespace GL {
 		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { AssertSizeI(    ni, pos); std::memcpy(&indcsMap[pos], i, ni * sizeof( IndexArrayType)); }
 
 		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return SafeUpdate(&e, 1, pos); }
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return SafeUpdate(&i, 1, pos); }
 		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
 			if (elemsMap == nullptr || !CheckSizeE(ne, pos))
 				return false;
 			return (Update(e, ne, pos), true);
 		}
-		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return SafeUpdate(&i, 1, pos); }
 		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
 			if (indcsMap == nullptr || !CheckSizeI(ni, pos))
 				return false;

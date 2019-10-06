@@ -185,10 +185,13 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object)
 }
 
 
-inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const
+bool CGroundBlockingObjectMap::CheckYard(const CSolidObject* yardUnit, const YardMapStatus& mask) const
 {
-	for (int z = yardUnit->mapPos.y; z < yardUnit->mapPos.y + yardUnit->zsize; ++z) {
-		for (int x = yardUnit->mapPos.x; x < yardUnit->mapPos.x + yardUnit->xsize; ++x) {
+	const int2 mins = yardUnit->mapPos;
+	const int2 maxs = mins + int2(yardUnit->xsize, yardUnit->zsize);
+
+	for (int z = mins.y; z < maxs.y; ++z) {
+		for (int x = mins.x; x < maxs.x; ++x) {
 			if ((yardUnit->GetGroundBlockingMaskAtPos(float3(x * SQUARE_SIZE, 0.0f, z * SQUARE_SIZE)) & mask) == 0)
 				continue;
 
@@ -198,17 +201,6 @@ inline bool CGroundBlockingObjectMap::CheckYard(CSolidObject* yardUnit, const Ya
 	}
 
 	return true;
-}
-
-
-bool CGroundBlockingObjectMap::CanOpenYard(CSolidObject* yardUnit) const
-{
-	return CheckYard(yardUnit, YARDMAP_YARDINV);
-}
-
-bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit) const
-{
-	return CheckYard(yardUnit, YARDMAP_YARD);
 }
 
 
