@@ -224,7 +224,7 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 		return;
 
 	if (immutableStorage && bufSize != 0) {
-		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, (unsigned long) bufSize, usage, data);
+		LOG_L(L_ERROR, "[VBO::%s({cur,new}size={" _STPF_ "," _STPF_ "},{cur,new}usage={0x%x,0x%x},data=%p)] cannot recreate persistent storage buffer", __func__, bufSize, newSize, usage, newUsage, data);
 		return;
 	}
 
@@ -233,7 +233,7 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 
 	#ifdef GLEW_ARB_buffer_storage
 		if (immutableStorage) {
-			glBufferStorage(curBoundTarget, newSize, newData, newUsage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
+			glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/ GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
 		} else
 	#endif
 		{
