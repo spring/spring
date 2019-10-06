@@ -459,10 +459,10 @@ namespace GL {
 		bool CheckSizeI(size_t ni, size_t pos) const { return false; }
 
 
-		void Update(const VertexArrayType& e,            size_t pos) { return false; }
-		void Update(const  IndexArrayType  i,            size_t pos) { return false; }
-		void Update(const VertexArrayType* e, size_t ne, size_t pos) { return false; }
-		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { return false; }
+		void Update(const VertexArrayType& e,            size_t pos) {}
+		void Update(const  IndexArrayType  i,            size_t pos) {}
+		void Update(const VertexArrayType* e, size_t ne, size_t pos) {}
+		void Update(const  IndexArrayType* i, size_t ni, size_t pos) {}
 
 		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return false; }
 		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return false; }
@@ -470,10 +470,10 @@ namespace GL {
 		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) { return false; }
 
 
-		void Append(const VertexArrayType& e           ) { return false; }
-		void Append(const  IndexArrayType  i           ) { return false; }
-		void Append(const VertexArrayType* e, size_t ne) { return false; }
-		void Append(const  IndexArrayType* i, size_t ni) { return false; }
+		void Append(const VertexArrayType& e           ) {}
+		void Append(const  IndexArrayType  i           ) {}
+		void Append(const VertexArrayType* e, size_t ne) {}
+		void Append(const  IndexArrayType* i, size_t ni) {}
 
 		bool SafeAppend(const VertexArrayType& e           ) { return false; }
 		bool SafeAppend(const  IndexArrayType  i           ) { return false; }
@@ -641,13 +641,13 @@ namespace GL {
 		void Update(const VertexArrayType* e, size_t ne, size_t pos) { AssertSizeE(    ne, pos); std::memcpy(&elemsMap[pos], e, ne * sizeof(VertexArrayType)); }
 		void Update(const  IndexArrayType* i, size_t ni, size_t pos) { AssertSizeI(    ni, pos); std::memcpy(&indcsMap[pos], i, ni * sizeof( IndexArrayType)); }
 
-		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { SafeUpdate(&e, 1, pos); }
+		bool SafeUpdate(const VertexArrayType& e,            size_t pos) { return SafeUpdate(&e, 1, pos); }
 		bool SafeUpdate(const VertexArrayType* e, size_t ne, size_t pos) {
 			if (elemsMap == nullptr || !CheckSizeE(ne, pos))
 				return false;
 			return (Update(e, ne, pos), true);
 		}
-		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { SafeUpdate(&i, 1, pos); }
+		bool SafeUpdate(const  IndexArrayType  i,            size_t pos) { return SafeUpdate(&i, 1, pos); }
 		bool SafeUpdate(const  IndexArrayType* i, size_t ni, size_t pos) {
 			if (indcsMap == nullptr || !CheckSizeI(ni, pos))
 				return false;
@@ -660,14 +660,14 @@ namespace GL {
 		void Append(const VertexArrayType* e, size_t ne) { Update( e, ne, curElemPos); curElemPos += ne; }
 		void Append(const  IndexArrayType* i, size_t ni) { Update( i, ni, curIndxPos); curIndxPos += ni; }
 
-		void SafeAppend(const VertexArrayType& e           ) { SafeAppend(&e, 1); }
-		void SafeAppend(const VertexArrayType* e, size_t ne) {
+		bool SafeAppend(const VertexArrayType& e           ) { return SafeAppend(&e, 1); }
+		bool SafeAppend(const VertexArrayType* e, size_t ne) {
 			if (elemsMap == nullptr || !CheckSizeE(ne, curElemPos))
 				return false;
 			return (Append(e, ne), true);
 		}
-		void SafeAppend(const  IndexArrayType  i           ) { SafeAppend(&i, 1); }
-		void SafeAppend(const  IndexArrayType* i, size_t ni) {
+		bool SafeAppend(const  IndexArrayType  i           ) { return SafeAppend(&i, 1); }
+		bool SafeAppend(const  IndexArrayType* i, size_t ni) {
 			if (indcsMap == nullptr || !CheckSizeI(ni, curIndxPos))
 				return false;
 			return (Append(i, ni), true);
