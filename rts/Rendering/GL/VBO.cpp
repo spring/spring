@@ -122,7 +122,7 @@ bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 		return true;
 
 	if (immutableStorage && bufSize != 0) {
-		LOG_L(L_ERROR, "[VBO::%s({cur,new}size={" _STPF_ "," _STPF_ "},{cur,new}usage={0x%x,0x%x},data=%p)] cannot recreate persistent storage buffer", __func__, bufSize, newSize, usage, newUsage, data);
+		LOG_L(L_ERROR, "[VBO::%s({cur,new}size={" _STPF_ "," _STPF_ "},{cur,new}usage={0x%x,0x%x},data=%p)] cannot recreate persistent storage buffer", __func__, bufSize, newSize, usage, newUsage, newData);
 		return false;
 	}
 
