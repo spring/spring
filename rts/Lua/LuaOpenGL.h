@@ -203,6 +203,7 @@ class LuaOpenGL {
 
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);
+		static int VertexIndices(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
 

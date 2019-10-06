@@ -82,6 +82,7 @@ static VA_TYPE_L luaBufferVertex = {
 	{0   , 0   , 0   , 0   }, // c1
 };
 
+static std::array<      int, 4096    > luaVertexInidices;
 
 static float3 screenViewTrans;
 static float2 screenParameters = {0.36f, 0.60f}; // screen width (meters), eye-to-screen (meters)
@@ -276,6 +277,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(BeginEnd);
 	REGISTER_LUA_CFUNC(Vertex);
+	REGISTER_LUA_CFUNC(VertexIndices);
 	REGISTER_LUA_CFUNC(Normal);
 	REGISTER_LUA_CFUNC(TexCoord);
 	REGISTER_LUA_CFUNC(Color);
@@ -935,7 +937,6 @@ int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 
 	return 1;
 }
-
 
 int LuaOpenGL::ConfigScreen(lua_State* L)
 {
@@ -1657,7 +1658,18 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		if (callError != 0)
 			luaL_error(L, "[gl.%s(type, func, ...)] error %d (%s)", __func__, callError, lua_tostring(L, -1));
 
-		luaRenderBuffer->Submit(primType);
+		const unsigned int numElems = luaRenderBuffer->NumElems();
+		const unsigned int numIndcs = luaRenderBuffer->NumIndcs();
+
+		LOG("BeginEnd: numElems = %d, numIndcs = %d", numElems, numIndcs);
+
+		if (numIndcs > 0) {
+			luaRenderBuffer->SubmitIndexed(primType);
+		}
+		else {
+			luaRenderBuffer->Submit(primType);
+		}
+
 		luaRenderBuffer = nullptr;
 	}
 
@@ -1681,6 +1693,28 @@ int LuaOpenGL::Vertex(lua_State* L)
 	luaBufferVertex.p.w = luaL_optfloat(L, 4, luaBufferVertex.p.w);
 
 	luaRenderBuffer->SafeAppend(luaBufferVertex);
+	return 0;
+}
+
+int LuaOpenGL::VertexIndices(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	if (luaRenderBuffer == nullptr)
+		return 0;
+
+	if (lua_type(L, 1) != LUA_TTABLE) {
+		luaL_error(L, "Incorrect argument to gl.VertexIndices()");
+		return 0;
+	}
+
+	int numIndcs = LuaUtils::ParseIntArray(L, -1, luaVertexInidices.data(), luaVertexInidices.size());
+
+	//luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs, 0);
+	luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs);
+
+	LOG("VertexIndices: numIndcs = %d, %d", numIndcs, (int)luaRenderBuffer->NumIndcs());
+
 	return 0;
 }
 
@@ -1752,6 +1786,7 @@ int LuaOpenGL::Rect(lua_State* L)
 	buffer->SafeAppend({{x1, y1, 0.0f}, {luaBufferVertex.c0}}); // tl
 
 	buffer->Submit(GL_TRIANGLES);
+
 	return 0;
 }
 
@@ -1791,7 +1826,7 @@ int LuaOpenGL::TexRect(lua_State* L)
 			t1 = 0.0f;
 			t2 = 1.0f;
 		}
-
+		// use whatever c0 was most recently set by gl.Color; immediate submission
 		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
 		buffer->SafeAppend({{x2, y1, 0.0f}, s2, t1, {luaBufferVertex.c0}}); // tr
 		buffer->SafeAppend({{x2, y2, 0.0f}, s2, t2, {luaBufferVertex.c0}}); // br
@@ -1801,6 +1836,7 @@ int LuaOpenGL::TexRect(lua_State* L)
 		buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
 
 		buffer->Submit(GL_TRIANGLES);
+
 		return 0;
 	}
 
@@ -1819,6 +1855,7 @@ int LuaOpenGL::TexRect(lua_State* L)
 	buffer->SafeAppend({{x1, y1, 0.0f}, s1, t1, {luaBufferVertex.c0}}); // tl
 
 	buffer->Submit(GL_TRIANGLES);
+
 	return 0;
 }
 
@@ -2806,6 +2843,8 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			// NB: total buffer size can exceed |elems|, do not clamp args
 			wb.SafeUpdate(                            elems.data() , numElems, elemsPos);
 			wb.SafeUpdate(reinterpret_cast<uint32_t*>(indcs.data()), numIndcs, indcsPos);
+
+			LOG("UpdateVertexArray(LUA_TTABLE) ||| numElems = %d, %d ||| numIndcs = %d, %d", numElems, (int)wb.NumElems(), numIndcs, (int)wb.NumIndcs());
 		} break;
 
 		case LUA_TFUNCTION: {
