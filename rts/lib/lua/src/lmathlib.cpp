@@ -274,6 +274,8 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
+  lua_pushnumber(L, math::TWOPI);
+  lua_setfield(L, -2, "tau");
 #if STREFLOP_ENABLED
   lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else
