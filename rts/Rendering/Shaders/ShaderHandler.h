@@ -6,6 +6,7 @@
 #include <string>
 
 #include "Rendering/GL/myGL.h" //GLuint
+#include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
 
 namespace Shader {
@@ -19,8 +20,8 @@ public:
 	typedef spring::unsynced_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
 	typedef spring::unsynced_map<std::string, ProgramObjMap> ProgramTable;
 	// indexed by literals
-	typedef spring::unsynced_map<const char*, std::array<std::string, GL::SHADER_TYPE_CNT>> ExtShaderSourceMap;
-	typedef spring::unsynced_map<const char*, Shader::IProgramObject*> ExtProgramObjMap;
+	typedef spring::unsynced_map<unsigned int, std::array<std::string, GL::SHADER_TYPE_CNT>> ExtShaderSourceMap;
+	typedef spring::unsynced_map<unsigned int, Shader::IProgramObject*> ExtProgramObjMap;
 
 	static CShaderHandler* GetInstance();
 
@@ -40,8 +41,8 @@ public:
 
 	void InsertExtProgramObject(const char* name, Shader::IProgramObject* prog);
 	void RemoveExtProgramObject(const char* name, Shader::IProgramObject* prog) {
-		extProgramObjects.erase(name);
-		extShaderSources.erase(name);
+		extProgramObjects.erase(hashString(name));
+		extShaderSources.erase(hashString(name));
 	}
 
 	bool ReleaseProgramObjects(const std::string& poClass, bool persistent = false);
@@ -57,7 +58,7 @@ public:
 	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
 
 	Shader::IProgramObject* GetExtProgramObject(const char* name) {
-		const auto it = extProgramObjects.find(name);
+		const auto it = extProgramObjects.find(hashString(name));
 
 		if (it == extProgramObjects.end())
 			return nullptr;
@@ -66,7 +67,7 @@ public:
 	}
 
 	const std::array<std::string, GL::SHADER_TYPE_CNT>* GetExtShaderSources(const char* name) const {
-		const auto it = extShaderSources.find(name);
+		const auto it = extShaderSources.find(hashString(name));
 
 		if (it == extShaderSources.end())
 			return nullptr;

@@ -44,13 +44,17 @@ void CShaderHandler::InsertExtProgramObject(const char* name, Shader::IProgramOb
 
 	assert(GetExtShaderSources(name) == nullptr);
 
-	extProgramObjects.insert(name, prog);
-	extShaderSources.insert(name, {});
+	// for RenderDataBuffer shaders, collision freedom is
+	// guaranteed at compile-time by GetShaderName switch
+	const unsigned int hash = hashString(name);
+
+	extProgramObjects.insert(hash, prog);
+	extShaderSources.insert(hash, {});
 
 	// the attached shader objects may go away later, so make
 	// copies of their source strings while those still exist
 	for (const Shader::IShaderObject* shader: prog->GetShaderObjs()) {
-		extShaderSources[name][ GL::ShaderTypeToEnum(shader->GetType()) ] = shader->GetSrc(false);
+		extShaderSources[hash][ GL::ShaderTypeToEnum(shader->GetType()) ] = shader->GetSrc(false);
 	}
 }
 
