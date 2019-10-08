@@ -2841,8 +2841,6 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			// NB: total buffer size can exceed |elems|, do not clamp args
 			wb.SafeUpdate(                            elems.data() , numElems, elemsPos);
 			wb.SafeUpdate(reinterpret_cast<uint32_t*>(indcs.data()), numIndcs, indcsPos);
-
-			//LOG("UpdateVertexArray(LUA_TTABLE) ||| numElems = %d, %d ||| numIndcs = %d, %d", numElems, (int)wb.NumElems(), numIndcs, (int)wb.NumIndcs());
 		} break;
 
 		case LUA_TFUNCTION: {
