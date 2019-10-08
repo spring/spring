@@ -8,7 +8,6 @@
 #include "Rendering/GL/myGL.h" //GLuint
 #include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Log/ILog.h"
 
 namespace Shader {
 	struct IProgramObject;
