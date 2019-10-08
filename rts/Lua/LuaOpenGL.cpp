@@ -919,7 +919,9 @@ int LuaOpenGL::GetString(lua_State* L)
 int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 {
 	const char* shader = GL::RenderDataBuffer::GetShaderName(luaL_checkstring(L, 1));
+	LOG("GetDefaultShaderSources: shader = %s", shader);
 	const auto* sources = shaderHandler->GetExtShaderSources(shader);
+	LOG("GetDefaultShaderSources: sources = %p", (void*)sources);
 
 	if (sources == nullptr)
 		return 0;
@@ -930,6 +932,8 @@ int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 		if (src.empty())
 			continue;
 
+		LOG("GetDefaultShaderSources: src = %s", src.c_str());
+		
 		lua_pushstring(L, GL::ShaderEnumToStr(&src - sources->data())); // key ("vs", "fs", etc)
 		lua_pushsstring(L, src); // val
 		lua_rawset(L, -3);
@@ -1661,7 +1665,7 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		const unsigned int numElems = luaRenderBuffer->NumElems();
 		const unsigned int numIndcs = luaRenderBuffer->NumIndcs();
 
-		LOG("BeginEnd: numElems = %d, numIndcs = %d", numElems, numIndcs);
+		//LOG("BeginEnd: numElems = %d, numIndcs = %d", numElems, numIndcs);
 
 		if (numIndcs > 0) {
 			luaRenderBuffer->SubmitIndexed(primType);
@@ -1713,7 +1717,7 @@ int LuaOpenGL::VertexIndices(lua_State* L)
 	//luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs, 0);
 	luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs);
 
-	LOG("VertexIndices: numIndcs = %d, %d", numIndcs, (int)luaRenderBuffer->NumIndcs());
+	//LOG("VertexIndices: numIndcs = %d, %d", numIndcs, (int)luaRenderBuffer->NumIndcs());
 
 	return 0;
 }
@@ -2844,7 +2848,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 			wb.SafeUpdate(                            elems.data() , numElems, elemsPos);
 			wb.SafeUpdate(reinterpret_cast<uint32_t*>(indcs.data()), numIndcs, indcsPos);
 
-			LOG("UpdateVertexArray(LUA_TTABLE) ||| numElems = %d, %d ||| numIndcs = %d, %d", numElems, (int)wb.NumElems(), numIndcs, (int)wb.NumIndcs());
+			//LOG("UpdateVertexArray(LUA_TTABLE) ||| numElems = %d, %d ||| numIndcs = %d, %d", numElems, (int)wb.NumElems(), numIndcs, (int)wb.NumIndcs());
 		} break;
 
 		case LUA_TFUNCTION: {

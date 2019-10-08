@@ -8,6 +8,7 @@
 #include "Rendering/GL/myGL.h" //GLuint
 #include "System/StringHash.h"
 #include "System/UnorderedMap.hpp"
+#include "System/Log/ILog.h"
 
 namespace Shader {
 	struct IProgramObject;
@@ -68,6 +69,14 @@ public:
 
 	const std::array<std::string, GL::SHADER_TYPE_CNT>* GetExtShaderSources(const char* name) const {
 		const auto it = extShaderSources.find(hashString(name));
+
+		LOG("GetExtShaderSources %s", name);
+
+		for (auto const& x : extShaderSources) {
+			LOG("extShaderSources[%s]", x.first);
+		}
+
+		//LOG("extShaderSources it %s, %s, %s", it->first, it->second[GL::SHADER_TYPE_VS].c_str(), it->second[GL::SHADER_TYPE_FS].c_str());
 
 		if (it == extShaderSources.end())
 			return nullptr;
