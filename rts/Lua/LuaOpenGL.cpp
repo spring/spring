@@ -82,7 +82,7 @@ static VA_TYPE_L luaBufferVertex = {
 	{0   , 0   , 0   , 0   }, // c1
 };
 
-static std::array<      int, 4096    > luaVertexInidices;
+static std::array<int, 4096> luaVertexInidices;
 
 static float3 screenViewTrans;
 static float2 screenParameters = {0.36f, 0.60f}; // screen width (meters), eye-to-screen (meters)
@@ -1658,10 +1658,10 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		if (callError != 0)
 			luaL_error(L, "[gl.%s(type, func, ...)] error %d (%s)", __func__, callError, lua_tostring(L, -1));
 
-		const unsigned int numElems = luaRenderBuffer->NumElems();
-		const unsigned int numIndcs = luaRenderBuffer->NumIndcs();
+		GL::RenderDataBuffer* rb = luaRenderBuffer->GetBuffer();
 
-		//LOG("BeginEnd: numElems = %d, numIndcs = %d", numElems, numIndcs);
+		const unsigned int numIndcs = rb->GetNumIndcs<uint32_t>();
+		LOG("numIndcs1 %u", numIndcs);
 
 		if (numIndcs > 0) {
 			luaRenderBuffer->SubmitIndexed(primType);
@@ -1708,10 +1708,11 @@ int LuaOpenGL::VertexIndices(lua_State* L)
 		return 0;
 	}
 
+	memset(luaVertexInidices.data(), 0, sizeof(luaVertexInidices));
 	int numIndcs = LuaUtils::ParseIntArray(L, -1, luaVertexInidices.data(), luaVertexInidices.size());
 
-	//luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs, 0);
-	luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs);
+	luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs, 0);
+	//luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs);
 
 	return 0;
 }
@@ -2903,6 +2904,8 @@ int LuaOpenGL::RenderVertexArray(lua_State* L)
 
 	const unsigned int numElems = rb->GetNumElems<VA_TYPE_L>();
 	const unsigned int numIndcs = rb->GetNumIndcs<uint32_t>();
+
+	LOG("numIndcs2 %u", numIndcs);
 
 	if (numIndcs > 0) {
 		rb->SubmitIndexed(primType, dataIndx, std::min(dataSize, numIndcs));
