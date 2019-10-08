@@ -919,9 +919,7 @@ int LuaOpenGL::GetString(lua_State* L)
 int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 {
 	const char* shader = GL::RenderDataBuffer::GetShaderName(luaL_checkstring(L, 1));
-	LOG("GetDefaultShaderSources: shader = %s", shader);
 	const auto* sources = shaderHandler->GetExtShaderSources(shader);
-	LOG("GetDefaultShaderSources: sources = %p", (void*)sources);
 
 	if (sources == nullptr)
 		return 0;
@@ -932,8 +930,6 @@ int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 		if (src.empty())
 			continue;
 
-		LOG("GetDefaultShaderSources: src = %s", src.c_str());
-		
 		lua_pushstring(L, GL::ShaderEnumToStr(&src - sources->data())); // key ("vs", "fs", etc)
 		lua_pushsstring(L, src); // val
 		lua_rawset(L, -3);
@@ -1716,8 +1712,6 @@ int LuaOpenGL::VertexIndices(lua_State* L)
 
 	//luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs, 0);
 	luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(luaVertexInidices.data()), numIndcs);
-
-	//LOG("VertexIndices: numIndcs = %d, %d", numIndcs, (int)luaRenderBuffer->NumIndcs());
 
 	return 0;
 }
