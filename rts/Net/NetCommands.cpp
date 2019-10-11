@@ -693,15 +693,16 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
 
-					int16_t psize; pckt >> psize;
+					int16_t pktLen; pckt >> pktLen;
 					uint8_t player; pckt >> player;
-					uint8_t aiID; pckt >> aiID;
-					int16_t unitID;
+
+					uint8_t aiInstID; pckt >> aiInstID;
+					uint8_t aiTeamID; pckt >> aiTeamID;
+					int16_t   unitID; pckt >>   unitID;
 
 					if (!playerHandler.IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> unitID;
 					if (unitID < 0 || static_cast<size_t>(unitID) >= unitHandler.MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
@@ -731,7 +732,7 @@ void CGame::ClientReadNet()
 					}
 
 					// command originating from SkirmishAI or LuaUnsyncedCtrl
-					selectedUnitsHandler.AINetOrder(unitID, player, c);
+					selectedUnitsHandler.AINetOrder(unitID, aiTeamID, player, c);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());
@@ -743,7 +744,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 
 					uint8_t player;
-					uint8_t aiID;
+					uint8_t aiInstID;
 					uint8_t pairwise;
 					uint32_t sameCmdID;
 					uint8_t sameCmdOpt;
@@ -757,7 +758,7 @@ void CGame::ClientReadNet()
 					if (!playerHandler.IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					pckt >> aiID;
+					pckt >> aiInstID;
 					pckt >> pairwise;
 					pckt >> sameCmdID;
 					pckt >> sameCmdOpt;
@@ -801,15 +802,17 @@ void CGame::ClientReadNet()
 						commands.push_back(cmd);
 					}
 
-					// apply the commands
+					assert(aiInstID == MAX_AIS);
+
+					// apply the "AI" commands (which actually originate from LuaUnsyncedCtrl)
 					if (pairwise) {
 						for (int16_t x = 0; x < std::min(unitCount, commandCount); ++x) {
-							selectedUnitsHandler.AINetOrder(unitIDs[x], player, commands[x]);
+							selectedUnitsHandler.AINetOrder(unitIDs[x], aiInstID, player, commands[x]);
 						}
 					} else {
 						for (int16_t c = 0; c < commandCount; c++) {
 							for (int16_t u = 0; u < unitCount; u++) {
-								selectedUnitsHandler.AINetOrder(unitIDs[u], player, commands[c]);
+								selectedUnitsHandler.AINetOrder(unitIDs[u], aiInstID, player, commands[c]);
 							}
 						}
 					}
