@@ -43,14 +43,16 @@ bool CglFont::threadSafety = false;
 CglFont* font = nullptr;
 CglFont* smallFont = nullptr;
 
+static spring::unsynced_set<CglFont*> loadedFonts;
+
 static constexpr float4        white(1.00f, 1.00f, 1.00f, 0.95f);
 static constexpr float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
-static constexpr float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
+static constexpr float4 lightOutline(0.95f, 0.95f, 0.95f, 0.80f);
 
-static const float darkLuminosity = 0.05 +
-	0.2126f * std::pow(darkOutline[0], 2.2) +
-	0.7152f * std::pow(darkOutline[1], 2.2) +
-	0.0722f * std::pow(darkOutline[2], 2.2);
+static const float darkLuminosity = 0.05f +
+	0.2126f * std::pow(darkOutline[0], 2.2f) +
+	0.7152f * std::pow(darkOutline[1], 2.2f) +
+	0.0722f * std::pow(darkOutline[2], 2.2f);
 
 
 
@@ -79,6 +81,7 @@ bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::strin
 	if (newLargeFont != nullptr && newSmallFont != nullptr) {
 		spring::SafeDelete(font);
 		spring::SafeDelete(smallFont);
+
 		font = newLargeFont;
 		smallFont = newSmallFont;
 
@@ -124,10 +127,12 @@ void CglFont::ReallocAtlases(bool pre)
 
 void CglFont::SwapBuffers()
 {
-	if (font != nullptr)
-		font->SwapBuffersGL4();
-	if (smallFont != nullptr)
-		smallFont->SwapBuffersGL4();
+	assert(     font == nullptr || loadedFonts.find(     font) != loadedFonts.end());
+	assert(smallFont == nullptr || loadedFonts.find(smallFont) != loadedFonts.end());
+
+	for (CglFont* f: loadedFonts) {
+		f->SwapBuffersGL4();
+	}
 }
 
 
@@ -181,6 +186,8 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 		defShader = shaderProg;
 	}
+
+	loadedFonts.insert(this);
 }
 
 CglFont::~CglFont()
@@ -189,6 +196,8 @@ CglFont::~CglFont()
 		primaryBuffer[i].Kill();
 		outlineBuffer[i].Kill();
 	}
+
+	loadedFonts.erase(this);
 }
 
 
@@ -566,8 +575,7 @@ void CglFont::SwapBuffersGL4() {
 	lastPrintFrameGL4 = globalRendering->drawFrame;
 	currBufferIndxGL4 = (currBufferIndxGL4 + 1) & 1;
 
-	ResetBufferGL4(false);
-	ResetBufferGL4( true);
+	ResetBuffersGL4();
 }
 
 
