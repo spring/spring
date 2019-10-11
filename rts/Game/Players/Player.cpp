@@ -3,7 +3,6 @@
 #include <cassert>
 
 
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "Player.h"
 #include "PlayerHandler.h"
 #include "Game/Camera.h"
@@ -52,7 +51,7 @@ void CPlayer::SetControlledTeams()
 	controlledTeams.reserve(teamHandler.ActiveTeams());
 
 	if (gs->godMode != 0) {
-		// anyone can control any unit
+		// anyone can control any (friendly and/or enemy) unit
 		for (int t = 0; t < teamHandler.ActiveTeams(); t++) {
 			if ((gs->godMode & GODMODE_ATC_BIT) != 0 &&  teamHandler.AlliedTeams(team, t))
 				controlledTeams.insert(t);
@@ -69,19 +68,11 @@ void CPlayer::SetControlledTeams()
 		return;
 	}
 
+	if (spectator)
+		return;
+
 	// my team
-	if (!spectator)
-		controlledTeams.insert(team);
-
-	// AI teams
-	for (const auto& p: skirmishAIHandler.GetAllSkirmishAIs()) {
-		const SkirmishAIData& sad = *(p.second);
-
-		if (sad.hostPlayer != playerNum)
-			continue;
-
-		controlledTeams.insert(sad.team);
-	}
+	controlledTeams.insert(team);
 }
 
 
