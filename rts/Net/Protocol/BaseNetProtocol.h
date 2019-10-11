@@ -55,7 +55,7 @@ public:
 	PacketType SendPause(uint8_t playerNum, uint8_t bPaused);
 
 	PacketType SendCommand(uint8_t playerNum, int32_t commandID, int32_t timeout, uint8_t options, uint32_t numParams, const float* params);
-	PacketType SendAICommand(uint8_t playerNum, uint8_t aiID, int16_t unitID, int32_t commandID, int32_t aiCommandID, int32_t timeout, uint8_t options, uint32_t numParams, const float* params);
+	PacketType SendAICommand(uint8_t playerNum, uint8_t aiInstID, uint8_t aiTeamID, int16_t unitID, int32_t commandID, int32_t aiCommandID, int32_t timeout, uint8_t options, uint32_t numParams, const float* params);
 	PacketType SendAIShare(uint8_t playerNum, uint8_t aiID, uint8_t sourceTeam, uint8_t destTeam, float metal, float energy, const std::vector<int16_t>& unitIDs);
 
 	PacketType SendUserSpeed(uint8_t playerNum, float userSpeed);

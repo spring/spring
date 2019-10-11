@@ -729,21 +729,26 @@ void CSelectedUnitsHandler::ClearNetSelect(int playerId)
 	netSelected[playerId].clear();
 }
 
-// handles NETMSG_AICOMMAND{S}'s
-void CSelectedUnitsHandler::AINetOrder(int unitID, int playerID, const Command& c)
+// handles NETMSG_AICOMMAND{S}'s sent by AICallback / LuaUnsyncedCtrl (!)
+void CSelectedUnitsHandler::AINetOrder(int unitID, int aiTeamID, int playerID, const Command& c)
 {
 	CUnit* unit = unitHandler.GetUnit(unitID);
+
 	if (unit == nullptr)
 		return;
 
 	const CPlayer* player = playerHandler.Player(playerID);
+
 	if (player == nullptr)
 		return;
 
 	// no warning; will result in false bug reports due to latency between
 	// time of giving valid orders on units which then change team through
 	// e.g. LuaRules
-	if (!player->CanControlTeam(unit->team))
+	// AI's are hosted by players, but do not have any Player representation
+	// themselves and should not be automatically controllable by their host
+	// on the other hand they should always be able to control their OWN team
+	if ((aiTeamID == MAX_TEAMS && !player->CanControlTeam(unit->team)) || (aiTeamID != MAX_TEAMS && aiTeamID != unit->team))
 		return;
 
 	// always pulled from net, synced command by definition
@@ -999,6 +1004,7 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 }
 
 
+// despite the NETMSG_AICOMMANDS packet-id, this only services LuaUnsyncedCtrl
 void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise)
 {
 	// do not waste bandwidth (units can be selected
@@ -1052,7 +1058,7 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 	*packet << static_cast<uint8_t>(NETMSG_AICOMMANDS)
 	        << static_cast<uint16_t>(msgLen)
 	        << static_cast<uint8_t>(gu->myPlayerNum)
-	        << skirmishAIHandler.GetCurrentAIID()
+	        << MAX_AIS
 	        << static_cast<uint8_t>(pairwise)
 	        << static_cast<uint32_t>(sameCmdID)
 	        << static_cast<uint8_t>(sameCmdOpt)

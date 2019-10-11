@@ -20,9 +20,9 @@ class CSelectedUnitsHandler : public CObject
 public:
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
-	void AINetOrder(int unitID, int playerID, const Command& c);
+	void AINetOrder(int unitID, int aiTeamID, int playerID, const Command& c);
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
-	bool CommandsChanged() const { return possibleCommandsChanged; }
+
 	void NetOrder(Command& c, int playerId);
 	void NetSelect(std::vector<int>& s, int playerId);
 	void ClearNetSelect(int playerId);
@@ -53,6 +53,7 @@ public:
 	void SendCommand(const Command& c);
 	void SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands, bool pairwise = false);
 
+	bool CommandsChanged() const { return possibleCommandsChanged; }
 	bool IsUnitSelected(const CUnit* unit) const;
 	bool IsUnitSelected(const int unitID) const;
 	bool AutoAddBuiltUnitsToFactoryGroup() const { return autoAddBuiltUnitsToFactoryGroup; }

@@ -139,7 +139,8 @@ PacketType CBaseNetProtocol::SendCommand(
 
 PacketType CBaseNetProtocol::SendAICommand(
 	uint8_t playerNum,
-	uint8_t aiID,
+	uint8_t aiInstID,
+	uint8_t aiTeamID,
 	int16_t unitID,
 	int32_t commandID,
 	int32_t aiCommandID,
@@ -151,7 +152,7 @@ PacketType CBaseNetProtocol::SendAICommand(
 	const int32_t commandTypeID = (aiCommandID != -1)? NETMSG_AICOMMAND_TRACKED: NETMSG_AICOMMAND;
 
 	const uint32_t payloadSize =
-		sizeof(playerNum) + sizeof(aiID) + sizeof(unitID) +
+		sizeof(playerNum) + sizeof(aiInstID) + sizeof(aiTeamID) + sizeof(unitID) +
 		sizeof(commandID) + sizeof(timeout) + sizeof(options) + sizeof(numParams) +
 		(sizeof(commandTypeID) * (commandTypeID == NETMSG_AICOMMAND_TRACKED)) + (numParams * sizeof(float));
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
@@ -162,7 +163,7 @@ PacketType CBaseNetProtocol::SendAICommand(
 		throw netcode::PackPacketException("[BaseNetProto::SendAICommand] maximum packet-size exceeded");
 
 	PackPacket* packet = new PackPacket(packetSize, commandTypeID);
-	*packet << static_cast<uint16_t>(packetSize) << playerNum << aiID << unitID;
+	*packet << static_cast<uint16_t>(packetSize) << playerNum << aiInstID << aiTeamID << unitID;
 	*packet << commandID << timeout << options << numParams;
 
 	if (commandTypeID == NETMSG_AICOMMAND_TRACKED)
