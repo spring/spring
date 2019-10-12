@@ -24,10 +24,14 @@ class LuaFonts {
 		static int DeleteFont(lua_State* L);
 
 	private: // userdata call-outs
-		static int Print(lua_State* L);
-
 		static int Begin(lua_State* L);
+		static int Print(lua_State* L);
 		static int End(lua_State* L);
+
+		static int WorldBegin(lua_State* L);
+		static int WorldPrint(lua_State* L);
+		static int WorldEnd(lua_State* L);
+
 		static int DrawBuffered(lua_State* L);
 
 		static int WrapText(lua_State* L);
