@@ -265,6 +265,8 @@ class LuaOpenGL {
 		static int PushPopMatrix(lua_State* L);
 		static int GetMatrixData(lua_State* L);
 
+		static int GetDrawMode(lua_State* L);
+
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);

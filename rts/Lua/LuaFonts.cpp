@@ -232,6 +232,9 @@ int LuaFonts::Print(lua_State* L)
 				case 'o':
 				case 'O': { options |= FONT_OUTLINE;   } break;
 
+				case 'N': { options |= FONT_NORM;      } break;
+				case 'S': { options |= FONT_SCALE;     } break;
+
 				case 'n': { options ^= FONT_NEAREST;   } break;
 				case 'B': { options |= FONT_BUFFERED;  } break; // for DrawBuffered
 

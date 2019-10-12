@@ -333,6 +333,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Billboard);
 	REGISTER_LUA_CFUNC(GetMatrixData);
 
+	REGISTER_LUA_CFUNC(GetDrawMode);
+
 	REGISTER_LUA_CFUNC(PushAttrib);
 	REGISTER_LUA_CFUNC(PopAttrib);
 	REGISTER_LUA_CFUNC(UnsafeState);
@@ -3234,6 +3236,13 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 	}
 
 	return 0;
+}
+
+int LuaOpenGL::GetDrawMode(lua_State* L)
+{
+	lua_pushnumber(L, currDrawMode);
+	lua_pushnumber(L, prevDrawMode);
+	return 2;
 }
 
 /******************************************************************************/
