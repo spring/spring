@@ -276,6 +276,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(BeginEnd);
 	REGISTER_LUA_CFUNC(Vertex);
+	REGISTER_LUA_CFUNC(VertexIndices);
 	REGISTER_LUA_CFUNC(Normal);
 	REGISTER_LUA_CFUNC(TexCoord);
 	REGISTER_LUA_CFUNC(Color);
@@ -330,6 +331,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PushPopMatrix);
 	REGISTER_LUA_CFUNC(Billboard);
 	REGISTER_LUA_CFUNC(GetMatrixData);
+
+	REGISTER_LUA_CFUNC(GetDrawMode);
 
 	REGISTER_LUA_CFUNC(PushAttrib);
 	REGISTER_LUA_CFUNC(PopAttrib);
@@ -1657,7 +1660,11 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 		if (callError != 0)
 			luaL_error(L, "[gl.%s(type, func, ...)] error %d (%s)", __func__, callError, lua_tostring(L, -1));
 
-		luaRenderBuffer->Submit(primType);
+		if (luaRenderBuffer->NumIndcs() > 0)
+			luaRenderBuffer->SubmitIndexed(primType);
+		else
+			luaRenderBuffer->Submit(primType);
+
 		luaRenderBuffer = nullptr;
 	}
 
@@ -1681,6 +1688,26 @@ int LuaOpenGL::Vertex(lua_State* L)
 	luaBufferVertex.p.w = luaL_optfloat(L, 4, luaBufferVertex.p.w);
 
 	luaRenderBuffer->SafeAppend(luaBufferVertex);
+	return 0;
+}
+
+
+int LuaOpenGL::VertexIndices(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	if (luaRenderBuffer == nullptr)
+		return 0;
+
+	if (lua_type(L, 1) != LUA_TTABLE) {
+		luaL_error(L, "[gl.%s] argument not a table", __func__);
+		return 0;
+	}
+
+	std::array<int, 4096> indcs;
+
+	// luaRenderBuffer->SafeUpdate(reinterpret_cast<uint32_t*>(indcs.data()), LuaUtils::ParseIntArray(L, -1, indcs.data(), indcs.size()), 0);
+	luaRenderBuffer->SafeAppend(reinterpret_cast<uint32_t*>(indcs.data()), LuaUtils::ParseIntArray(L, -1, indcs.data(), indcs.size()));
 	return 0;
 }
 
@@ -2809,7 +2836,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 		} break;
 
 		case LUA_TFUNCTION: {
-			// make gl.Vertex write to the chosen buffer
+			// make gl.Vertex{Indices} write to the chosen buffer
 			luaRenderBuffer = &wb;
 			// rewind; length of sub-region update is determined
 			// by the number of gl.Vertex calls made in function
@@ -2817,7 +2844,7 @@ int LuaOpenGL::UpdateVertexArray(lua_State* L)
 
 			{
 				inBeginEnd = true;
-				// fill the buffer (TODO: gl.VertexIndex?)
+				// fill the buffer
 				const int nFuncArgs = lua_gettop(L) - 4;
 				const int callError = lua_pcall(L, nFuncArgs, 0, 0);
 				inBeginEnd = false;
@@ -3201,6 +3228,14 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 	}
 
 	return 0;
+}
+
+
+int LuaOpenGL::GetDrawMode(lua_State* L)
+{
+	lua_pushnumber(L, currDrawMode);
+	lua_pushnumber(L, prevDrawMode);
+	return 2;
 }
 
 /******************************************************************************/

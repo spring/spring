@@ -203,6 +203,7 @@ class LuaOpenGL {
 
 		static int BeginEnd(lua_State* L);
 		static int Vertex(lua_State* L);
+		static int VertexIndices(lua_State* L);
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
 
@@ -263,6 +264,8 @@ class LuaOpenGL {
 		static int PopMatrix(lua_State* L);
 		static int PushPopMatrix(lua_State* L);
 		static int GetMatrixData(lua_State* L);
+
+		static int GetDrawMode(lua_State* L);
 
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
