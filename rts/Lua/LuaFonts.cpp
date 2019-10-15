@@ -211,7 +211,7 @@ int LuaFonts::Print(lua_State* L)
 	const float ypos = luaL_checkfloat(L, 4);
 	const float size = luaL_optfloat(L, 5, f->GetSize());
 
-	unsigned int options = FONT_NEAREST;
+	unsigned int options = 0;
 
 	if ((lua_gettop(L) >= 6) && lua_isstring(L, 6)) {
 		const char* c = lua_tostring(L, 6);
@@ -232,7 +232,7 @@ int LuaFonts::Print(lua_State* L)
 				case 'o':
 				case 'O': { options |= FONT_OUTLINE;   } break;
 
-				case 'n': { options ^= FONT_NEAREST;   } break;
+				case 'n': { options |= FONT_NEAREST;   } break;
 				case 'B': { options |= FONT_BUFFERED;  } break; // for DrawBuffered
 
 				case 'N': { options |= FONT_NORM;      } break;
