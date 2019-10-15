@@ -886,7 +886,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 			if (CExpGenSpawnable::GetSpawnableMemberInfo(className, memberInfo)) {
 				ParseExplosionCode(&psi, propIt.second, memberInfo, code);
 			} else {
-				LOG_L(L_WARNING, "[CCEG::%s] %s: unknown tag %s::%s", __func__, tag, className.c_str(), propIt.first.c_str());
+				LOG_L(L_WARNING, "[CCEG::%s] unknown field %s::%s in spawn-table \"%s\" for CEG \"%s\"", __func__, tag, propIt.first.c_str(), spawnName.c_str(), className.c_str());
 			}
 		}
 
