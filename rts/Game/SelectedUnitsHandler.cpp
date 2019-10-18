@@ -1039,26 +1039,35 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 			sameCmdParamSize = 0xFFFF;
 	}
 
-	unsigned int psize = ((sameCmdID == 0) ? 4 : 0) + ((sameCmdOpt == 0xFF) ? 1 : 0) + ((sameCmdParamSize == 0xFFFF) ? 2 : 0);
+	unsigned int psize = 4 * (sameCmdID == 0) + (sameCmdOpt == 0xFF) + (2 * (sameCmdParamSize == 0xFFFF));
 	unsigned int msgLen = 0;
 
-	msgLen += (1 + 2 + 1 + 1 + 1 + 4 + 1 + 2); // msg type, msg size, player ID, AI ID, pairwise, sameCmdID, sameCmdOpt, sameCmdParamSize
-	msgLen += 2; // unitID count
-	msgLen += unitIDCount * 2;
-	msgLen += 2; // command count
+	// msg type, msg size
+	msgLen += (sizeof(uint8_t) + sizeof(static_cast<uint16_t>(msgLen)));
+	// player ID, AI ID, pairwise
+	msgLen += (sizeof(uint8_t) * 2 + sizeof(pairwise));
+	msgLen += (sizeof(sameCmdID) + sizeof(sameCmdOpt) + static_cast<uint16_t>(sameCmdParamSize));
+
+	msgLen += sizeof(static_cast<uint16_t>(unitIDCount));
+	msgLen += (unitIDCount * sizeof(uint16_t));
+
+	msgLen += sizeof(static_cast<uint16_t>(commandCount));
 	msgLen += (commandCount * psize); // id, options, params size
-	msgLen += (totalParams * 4);
+	msgLen += (totalParams * sizeof(float));
 
 	if (msgLen > 8192) {
 		LOG_L(L_WARNING, "[%s] discarded oversized (len=%i) NETMSG_AICOMMANDS packet", __func__, msgLen);
-		return; // drop the oversized packet
+		return; // do not send oversized packets
 	}
 
 	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
 	*packet << static_cast<uint8_t>(NETMSG_AICOMMANDS)
 	        << static_cast<uint16_t>(msgLen)
+
 	        << static_cast<uint8_t>(gu->myPlayerNum)
-	        << MAX_AIS
+	        << static_cast<uint8_t>(MAX_AIS)
+	        // << static_cast<uint8_t>(MAX_TEAMS)
+
 	        << static_cast<uint8_t>(pairwise)
 	        << static_cast<uint32_t>(sameCmdID)
 	        << static_cast<uint8_t>(sameCmdOpt)
