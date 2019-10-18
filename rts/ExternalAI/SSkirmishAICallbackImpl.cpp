@@ -1721,19 +1721,9 @@ EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) { return 0.0
 EXPORT(float) skirmishAiCallback_Gui_getScreenX(int skirmishAIId) { return 0.0f; }
 EXPORT(float) skirmishAiCallback_Gui_getScreenY(int skirmishAIId) { return 0.0f; }
 
-EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* return_posF3_out) {
-	// DEPRECATED
-	return_posF3_out[0] = 0.0f;
-	return_posF3_out[1] = 0.0f;
-	return_posF3_out[2] = 0.0f;
-}
+EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int skirmishAIId, float* dir) {} // DEPRECATED
+EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* pos) {} // DEPRECATED
 
-EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int skirmishAIId, float* return_posF3_out) {
-	// DEPRECATED
-	return_posF3_out[0] = 0.0f;
-	return_posF3_out[1] = 0.0f;
-	return_posF3_out[2] = 0.0f;
-}
 
 
 
@@ -3093,7 +3083,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getMinTransportSize(int skirmishAIId, int
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAirBase(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->isAirBase;
+	return false; // DEPRECATED
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getTransportMass(int skirmishAIId, int unitDefId) {
