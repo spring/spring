@@ -693,14 +693,14 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
 
-					int16_t pktLen; pckt >> pktLen;
-					uint8_t player; pckt >> player;
+					int16_t pcktSize; pckt >> pcktSize;
+					uint8_t playerID; pckt >> playerID;
 
 					uint8_t aiInstID; pckt >> aiInstID;
 					uint8_t aiTeamID; pckt >> aiTeamID;
 					int16_t   unitID; pckt >>   unitID;
 
-					if (!playerHandler.IsValidPlayer(player))
+					if (!playerHandler.IsValidPlayer(playerID))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					if (unitID < 0 || static_cast<size_t>(unitID) >= unitHandler.MaxUnits())
@@ -732,8 +732,8 @@ void CGame::ClientReadNet()
 					}
 
 					// command originating from SkirmishAI or LuaUnsyncedCtrl
-					selectedUnitsHandler.AINetOrder(unitID, aiTeamID, player, c);
-					AddTraffic(player, packetCode, dataLength);
+					selectedUnitsHandler.AINetOrder(unitID, aiTeamID, playerID, c);
+					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());
 				}
@@ -743,8 +743,9 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 
-					uint8_t player;
+					uint8_t playerID;
 					uint8_t aiInstID;
+					uint8_t aiTeamID;
 					uint8_t pairwise;
 					uint32_t sameCmdID;
 					uint8_t sameCmdOpt;
@@ -753,12 +754,13 @@ void CGame::ClientReadNet()
 					int16_t unitCount;
 					int16_t commandCount;
 
-					pckt >> player;
+					pckt >> playerID;
 
-					if (!playerHandler.IsValidPlayer(player))
+					if (!playerHandler.IsValidPlayer(playerID))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					pckt >> aiInstID;
+					// pckt >> aiTeamID;
 					pckt >> pairwise;
 					pckt >> sameCmdID;
 					pckt >> sameCmdOpt;
@@ -807,16 +809,16 @@ void CGame::ClientReadNet()
 					// apply the "AI" commands (which actually originate from LuaUnsyncedCtrl)
 					if (pairwise) {
 						for (int16_t x = 0; x < std::min(unitCount, commandCount); ++x) {
-							selectedUnitsHandler.AINetOrder(unitIDs[x], aiInstID, player, commands[x]);
+							selectedUnitsHandler.AINetOrder(unitIDs[x], aiInstID, playerID, commands[x]);
 						}
 					} else {
 						for (int16_t c = 0; c < commandCount; c++) {
 							for (int16_t u = 0; u < unitCount; u++) {
-								selectedUnitsHandler.AINetOrder(unitIDs[u], aiInstID, player, commands[c]);
+								selectedUnitsHandler.AINetOrder(unitIDs[u], aiInstID, playerID, commands[c]);
 							}
 						}
 					}
-					AddTraffic(player, packetCode, dataLength);
+					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMANDS] exception \"%s\"", __func__, ex.what());
 				}
