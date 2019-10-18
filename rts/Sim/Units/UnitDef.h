@@ -310,7 +310,6 @@ public:
 	int transportCapacity;
 	int transportSize;
 	int minTransportSize;
-	bool isAirBase;
 	bool isFirePlatform;							///< should the carried units still be able to shoot?
 	float transportMass;
 	float minTransportMass;

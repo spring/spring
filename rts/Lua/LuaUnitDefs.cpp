@@ -811,7 +811,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT(  "transportSize",         ud.transportSize);
 	ADD_FLOAT("transportMass",         ud.transportMass);
 	ADD_FLOAT("loadingRadius",         ud.loadingRadius);
-	ADD_BOOL( "isAirBase",             ud.isAirBase);
+
+	ADD_DEPRECATED_LUADEF_KEY("isAirBase");
+
 	ADD_BOOL( "isFirePlatform",        ud.isFirePlatform);
 	ADD_BOOL( "holdSteady",            ud.holdSteady);
 	ADD_BOOL( "releaseHeld",           ud.releaseHeld);
