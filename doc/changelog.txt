@@ -135,7 +135,9 @@ Lua:
    The first is mandatory for tesselation to work, the other two are optional and can be used on the OpenGL host side instead of
    writing the tesselation control shader.
    4) New vertex primitive type GL.PATCHES
- ! Renamed SetShaderParameter to SetGeometryShaderParameter to avoid confusion of what kind shader parameters belongs to.
+ ! Renamed SetShaderParameter to SetGeometryShaderParameter to avoid confusion
+ - add font:World{Begin,End,Print} callouts
+ - add font:SetText{View,Proj}Matrix callouts
  - Added VFS.GetLoadedArchives() -> { string archiveName1, string archiveName2 ... }
  - Added VFS.GetArchivePath(string archiveName1) -> string archivePathOnDisk
  - Added VFS.GetFileAbsolutePath(string vfsFilePath) -> string filePathOnDisk

@@ -50,6 +50,9 @@ bool LuaFonts::CreateMetatable(lua_State* L)
 		REGISTER_LUA_CFUNC(GetTextWidth);
 		REGISTER_LUA_CFUNC(GetTextHeight);
 
+		REGISTER_LUA_CFUNC(SetTextViewMatrix);
+		REGISTER_LUA_CFUNC(SetTextProjMatrix);
+
 		REGISTER_LUA_CFUNC(SetTextColor);
 		REGISTER_LUA_CFUNC(SetOutlineColor);
 
@@ -267,7 +270,7 @@ int LuaFonts::Begin(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	CglFont* f = tofont(L, 1);
-	f->BeginGL4();
+	f->Begin();
 	return 0;
 }
 
@@ -275,7 +278,7 @@ int LuaFonts::End(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	CglFont* f = tofont(L, 1);
-	f->EndGL4();
+	f->End();
 	return 0;
 }
 
@@ -302,7 +305,7 @@ int LuaFonts::DrawBuffered(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 	CglFont* f = tofont(L, 1);
 	// does Begin&End state changes internally
-	f->DrawBufferedGL4();
+	f->DrawBuffered();
 	return 0;
 }
 
@@ -397,6 +400,34 @@ int LuaFonts::SetAutoOutlineColor(lua_State* L)
 	return 0;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaFonts::SetTextViewMatrix(lua_State* L)
+{
+	CglFont* f = tofont(L, 1);
+	CMatrix44f mat;
+
+	if (LuaUtils::ParseFloatArray(L, 2, &mat.m[0], 16) == 16)
+		f->SetViewMatrix(mat);
+	else
+		f->SetViewMatrix(CglFont::DefViewMatrix());
+
+	return 0;
+}
+int LuaFonts::SetTextProjMatrix(lua_State* L)
+{
+	CglFont* f = tofont(L, 1);
+	CMatrix44f mat;
+
+	if (LuaUtils::ParseFloatArray(L, 2, &mat.m[0], 16) == 16)
+		f->SetProjMatrix(mat);
+	else
+		f->SetProjMatrix(CglFont::DefProjMatrix());
+
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/

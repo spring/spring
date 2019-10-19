@@ -1038,21 +1038,21 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 int LuaOpenGL::BeginText(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	font->BeginGL4();
+	font->Begin();
 	return 0;
 }
 
 int LuaOpenGL::EndText(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	font->EndGL4();
+	font->End();
 	return 0;
 }
 
 int LuaOpenGL::DrawBufferedText(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	font->DrawBufferedGL4();
+	font->DrawBuffered();
 	return 0;
 }
 

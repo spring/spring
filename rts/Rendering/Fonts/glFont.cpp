@@ -125,13 +125,13 @@ void CglFont::ReallocAtlases(bool pre)
 		static_cast<CFontTexture*>(smallFont)->ReallocAtlases(pre);
 }
 
-void CglFont::SwapBuffers()
+void CglFont::SwapRenderBuffers()
 {
 	assert(     font == nullptr || loadedFonts.find(     font) != loadedFonts.end());
 	assert(smallFont == nullptr || loadedFonts.find(smallFont) != loadedFonts.end());
 
 	for (CglFont* f: loadedFonts) {
-		f->SwapBuffersGL4();
+		f->SwapBuffers();
 	}
 }
 
@@ -178,8 +178,8 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		Shader::IProgramObject* shaderProg = primaryBuffer[0].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 		shaderProg->Enable();
-		shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		shaderProg->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMatrix = DefViewMatrix());
+		shaderProg->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix = DefProjMatrix());
 		shaderProg->SetUniformMatrix2x2<float>("u_txcd_mat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		shaderProg->SetUniform("u_tex0", 0);
 		shaderProg->Disable();
@@ -203,15 +203,18 @@ CglFont::~CglFont()
 
 #ifdef HEADLESS
 
-void CglFont::SwapBuffersGL4() {}
+void CglFont::SwapBuffers() {}
 
-void CglFont::BeginGL4(Shader::IProgramObject* shader) {}
-void CglFont::EndGL4(Shader::IProgramObject* shader) {}
-void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader) {}
+void CglFont::Begin(Shader::IProgramObject* shader) {}
+void CglFont::End(Shader::IProgramObject* shader) {}
+void CglFont::DrawBuffered(Shader::IProgramObject* shader) {}
 
 void CglFont::glWorldBegin(Shader::IProgramObject* shader) {}
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str) {}
 void CglFont::glWorldEnd(Shader::IProgramObject* shader) {}
+
+CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }
+CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::Identity(); }
 
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& str) {}
 void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& str) {}
@@ -567,28 +570,28 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 
 
-void CglFont::SwapBuffersGL4() {
-	primaryBufferTC[currBufferIndxGL4].Sync();
-	outlineBufferTC[currBufferIndxGL4].Sync();
+void CglFont::SwapBuffers() {
+	primaryBufferTC[currBufferIndx].Sync();
+	outlineBufferTC[currBufferIndx].Sync();
 
 	// any data that was buffered but not submitted last frame gets discarded, user error
-	lastPrintFrameGL4 = globalRendering->drawFrame;
-	currBufferIndxGL4 = (currBufferIndxGL4 + 1) & 1;
+	lastPrintFrame = globalRendering->drawFrame;
+	currBufferIndx = (currBufferIndx + 1) & 1;
 
-	ResetBuffersGL4();
+	ResetBuffers();
 }
 
 
-void CglFont::BeginGL4(Shader::IProgramObject* shader) {
+void CglFont::Begin(Shader::IProgramObject* shader) {
 	if (threadSafety)
 		bufferMutex.lock();
 
-	if (inBeginEndGL4) {
+	if (inBeginEndBlock) {
 		bufferMutex.unlock();
 		return;
 	}
 
-	inBeginEndGL4 = true;
+	inBeginEndBlock = true;
 
 	{
 		if ((curShader = shader) == defShader)
@@ -601,8 +604,8 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 	}
 }
 
-void CglFont::EndGL4(Shader::IProgramObject* shader) {
-	if (!inBeginEndGL4)
+void CglFont::End(Shader::IProgramObject* shader) {
+	if (!inBeginEndBlock)
 		return;
 
 	{
@@ -621,9 +624,9 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		// skip past the submitted data chunk; buffer should never fill up
 		// within a single frame so handling wrap-around here is pointless
@@ -632,6 +635,8 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 
 
 		if (curShader == defShader) {
+			curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMatrix);
+			curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix);
 			curShader->Disable();
 		} else {
 			// reset
@@ -645,14 +650,14 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 
 	curShader = nullptr;
 
-	inBeginEndGL4 = false;
+	inBeginEndBlock = false;
 
 	if (threadSafety)
 		bufferMutex.unlock();
 }
 
 
-void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
+void CglFont::DrawBuffered(Shader::IProgramObject* shader)
 {
 	if (threadSafety)
 		bufferMutex.lock();
@@ -682,9 +687,9 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 		if (curBufferPos[obi] > prvBufferPos[obi])
-			outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+			outlineBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 		if (curBufferPos[pbi] > prvBufferPos[pbi])
-			primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+			primaryBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 		prvBufferPos[pbi] = curBufferPos[pbi];
 		prvBufferPos[obi] = curBufferPos[obi];
@@ -737,8 +742,8 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
 
-	primaryBufferTC[currBufferIndxGL4].Wait();
-	// outlineBufferTC[currBufferIndxGL4].Wait();
+	primaryBufferTC[currBufferIndx].Wait();
+	// outlineBufferTC[currBufferIndx].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -812,8 +817,8 @@ void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, c
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
 
-	primaryBufferTC[currBufferIndxGL4].Wait();
-	outlineBufferTC[currBufferIndxGL4].Wait();
+	primaryBufferTC[currBufferIndx].Wait();
+	outlineBufferTC[currBufferIndx].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -899,8 +904,8 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 	constexpr float texScaleX = 1.0f;
 	constexpr float texScaleY = 1.0f;
 
-	primaryBufferTC[currBufferIndxGL4].Wait();
-	outlineBufferTC[currBufferIndxGL4].Wait();
+	primaryBufferTC[currBufferIndx].Wait();
+	outlineBufferTC[currBufferIndx].Wait();
 
 	// check for end-of-string
 	while (!SkipColorCodesAndNewLines(ustr, cccb, &currentPos, &skippedLines, &newColor, &baseTextColor)) {
@@ -1001,9 +1006,9 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const unsigned int obi = GetBufferIdx(OUTLINE_BUFFER);
 
 	if (curBufferPos[obi] > prvBufferPos[obi])
-		outlineBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
+		outlineBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[obi] - mapBufferPtr[obi]), (curBufferPos[obi] - prvBufferPos[obi]));
 	if (curBufferPos[pbi] > prvBufferPos[pbi])
-		primaryBuffer[currBufferIndxGL4].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
+		primaryBuffer[currBufferIndx].Submit(GL_TRIANGLES, (prvBufferPos[pbi] - mapBufferPtr[pbi]), (curBufferPos[pbi] - prvBufferPos[pbi]));
 
 	prvBufferPos[pbi] = curBufferPos[pbi];
 	prvBufferPos[obi] = curBufferPos[obi];
@@ -1012,8 +1017,8 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
 	if (curShader == defShader) {
-		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, CMatrix44f::Identity());
-		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
+		curShader->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMatrix);
+		curShader->SetUniformMatrix4x4<float>("u_proj_mat", false, projMatrix);
 		curShader->Disable();
 	} else {
 		curShader->SetUniformMatrix2x2<float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
@@ -1031,6 +1036,10 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 
 
 
+CMatrix44f CglFont::DefViewMatrix() { return CMatrix44f::Identity(); }
+CMatrix44f CglFont::DefProjMatrix() { return CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f); }
+
+
 
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)
 {
@@ -1040,6 +1049,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 	float sizeX = s;
 	float sizeY = s;
+	float textDescender = 0.0f;
 
 	// render in normalized coords (0..1) instead of screencoords (0..~1024)
 	if (options & FONT_NORM) {
@@ -1049,31 +1059,29 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 	// horizontal alignment (FONT_LEFT is default)
 	if (options & FONT_CENTER) {
-		x -= sizeX * 0.5f * GetTextWidth(text);
+		x -= (sizeX * 0.5f * GetTextWidth(text));
 	} else if (options & FONT_RIGHT) {
-		x -= sizeX * GetTextWidth(text);
+		x -= (sizeX * GetTextWidth(text));
 	}
 
 
 	// vertical alignment
-	y += sizeY * GetDescender(); // move to baseline (note: descender is negative)
+	y += (sizeY * GetDescender()); // move to baseline (note: descender is negative)
+
 	if (options & FONT_BASELINE) {
 		// nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * GetDescender();
+		y -= (sizeY * GetDescender());
 	} else if (options & FONT_VCENTER) {
-		float textDescender;
-		y -= sizeY * 0.5f * GetTextHeight(text, &textDescender);
-		y -= sizeY * 0.5f * textDescender;
+		y -= (sizeY * 0.5f * GetTextHeight(text, &textDescender));
+		y -= (sizeY * 0.5f * textDescender);
 	} else if (options & FONT_TOP) {
 		y -= sizeY * GetTextHeight(text);
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * GetDescender();
-		y -= sizeY;
+		y -= (sizeY * (GetDescender() + 1.0f));
 	} else if (options & FONT_BOTTOM) {
-		float textDescender;
 		GetTextHeight(text, &textDescender);
-		y -= sizeY * textDescender;
+		y -= (sizeY * textDescender);
 	}
 
 	if (options & FONT_NEAREST) {
@@ -1081,7 +1089,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 		y = (int)y;
 	}
 
-	// backup text & outline colors (also ::ColorResetIndicator will reset to those)
+	// backup text & outline colors, ::ColorResetIndicator will reset them
 	baseTextColor = textColor;
 	baseOutlineColor = outlineColor;
 
@@ -1094,13 +1102,13 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	};
 
 	const bool buffered = ((options & FONT_BUFFERED) != 0);
-	const bool immediate = (!inBeginEndGL4 && !buffered);
+	const bool immediate = (!inBeginEndBlock && !buffered);
 
 	if (immediate) {
 		// no buffering
-		BeginGL4();
+		Begin();
 	} else if (buffered) {
-		if (threadSafety && !inBeginEndGL4)
+		if (threadSafety && !inBeginEndBlock)
 			bufferMutex.lock();
 	}
 
@@ -1114,9 +1122,9 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	}
 
 	if (immediate) {
-		EndGL4();
+		End();
 	} else if (buffered) {
-		if (threadSafety && !inBeginEndGL4)
+		if (threadSafety && !inBeginEndBlock)
 			bufferMutex.unlock();
 	}
 
@@ -1233,26 +1241,25 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 
 	// horizontal alignment (FONT_LEFT is default)
 	if (options & FONT_CENTER) {
-		x -= sizeX * 0.5f * totalWidth;
+		x -= (sizeX * 0.5f * totalWidth);
 	} else if (options & FONT_RIGHT) {
-		x -= sizeX * totalWidth;
+		x -= (sizeX * totalWidth);
 	}
 
 	// vertical alignment
 	if (options & FONT_BASELINE) {
 		// nothing
 	} else if (options & FONT_DESCENDER) {
-		y -= sizeY * GetDescender();
+		y -= (sizeY * GetDescender());
 	} else if (options & FONT_VCENTER) {
-		y -= sizeY * 0.5f * maxHeight;
-		y -= sizeY * 0.5f * minDescender;
+		y -= (sizeY * 0.5f * maxHeight);
+		y -= (sizeY * 0.5f * minDescender);
 	} else if (options & FONT_TOP) {
-		y -= sizeY * maxHeight;
+		y -= (sizeY * maxHeight);
 	} else if (options & FONT_ASCENDER) {
-		y -= sizeY * GetDescender();
-		y -= sizeY;
+		y -= (sizeY * (GetDescender() + 1.0f));
 	} else if (options & FONT_BOTTOM) {
-		y -= sizeY * minDescender;
+		y -= (sizeY * minDescender);
 	}
 
 	for (size_t i = 0; i < colLines.size(); ++i) {

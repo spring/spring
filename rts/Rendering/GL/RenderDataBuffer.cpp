@@ -184,7 +184,7 @@ void GL::SwapRenderBuffers() {
 		tRenderBufferL[0].Reset();
 	}
 
-	CglFont::SwapBuffers();
+	CglFont::SwapRenderBuffers();
 }
 
 
