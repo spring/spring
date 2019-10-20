@@ -134,14 +134,16 @@ LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const char* name)
 		case hashString(    "projectioninverse"): { return LUAMATRICES_PROJECTIONINVERSE    ; } break;
 		case hashString("viewprojectioninverse"): { return LUAMATRICES_VIEWPROJECTIONINVERSE; } break;
 		case hashString(            "billboard"): { return LUAMATRICES_BILLBOARD            ; } break;
-		case hashString(               "shadow"): { return LUAMATRICES_SHADOW               ; } break;
+		case hashString(           "shadow"    ): // fall-through
+		case hashString(           "shadowview"): { return LUAMATRICES_SHADOW_VIEW          ; } break;
+		case hashString(           "shadowproj"): { return LUAMATRICES_SHADOW_PROJ          ; } break;
 
-		case hashString(  "mmview"   ): { return LUAMATRICES_MINIMAP_DRAWVIEW     ; } break;
-		case hashString(  "mmproj"   ): { return LUAMATRICES_MINIMAP_DRAWPROJ     ; } break;
-		case hashString("dimmview"   ): { return LUAMATRICES_MINIMAP_DIMMVIEW     ; } break;
-		case hashString("dimmproj"   ): { return LUAMATRICES_MINIMAP_DIMMPROJ     ; } break;
-		case hashString("dimmviewlua"): { return LUAMATRICES_MINIMAP_DIMMVIEW_LUA ; } break;
-		case hashString("dimmprojlua"): { return LUAMATRICES_MINIMAP_DIMMPROJ_LUA ; } break;
+		case hashString(  "mmview"   ): { return LUAMATRICES_MINIMAP_DRAWVIEW    ; } break;
+		case hashString(  "mmproj"   ): { return LUAMATRICES_MINIMAP_DRAWPROJ    ; } break;
+		case hashString("dimmview"   ): { return LUAMATRICES_MINIMAP_DIMMVIEW    ; } break;
+		case hashString("dimmproj"   ): { return LUAMATRICES_MINIMAP_DIMMPROJ    ; } break;
+		case hashString("dimmviewlua"): { return LUAMATRICES_MINIMAP_DIMMVIEW_LUA; } break;
+		case hashString("dimmprojlua"): { return LUAMATRICES_MINIMAP_DIMMPROJ_LUA; } break;
 
 		// backward compatibility
 		case hashString("camera"   ): { return LUAMATRICES_VIEW             ; } break;
@@ -160,8 +162,11 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const char* name)
 	const LuaMatrixType matType = GetLuaMatrixType(name);
 
 	switch (matType) {
-		case LUAMATRICES_SHADOW:
+		case LUAMATRICES_SHADOW_VIEW:
 			return &shadowHandler.GetShadowViewMatrix();
+		case LUAMATRICES_SHADOW_PROJ:
+			return &shadowHandler.GetShadowProjMatrix();
+
 		case LUAMATRICES_VIEW:
 			return &camera->GetViewMatrix();
 		case LUAMATRICES_VIEWINVERSE:

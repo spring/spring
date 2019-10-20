@@ -56,6 +56,8 @@ Lua:
  - add Spring.Ping callout and corresponding Pong callin
  - add Spring.GetMapStartPositions callout
  - add gl.GetViewRange callout
+ - add gl.GetScreenViewTrans callout
+ - add gl.GetScreen{View,Proj}Matrix callouts for legacy compatibility
  - add DrawMaterial callin
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
@@ -67,23 +69,23 @@ Lua:
    [more efficient; call gl.Feature(treeID, true, true) to render a single
    tree with default state]
  ! remove the $specular named texture
- - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
- - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
- - remove gl.PointSize, gl.PointSprite, gl.PointParameter
- - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen, gl.MultiTexCoord
- - remove gl.CreateList, gl.CallList, gl.DeleteList
- - remove gl.DrawListAtUnit
- - remove gl.Shape
- - remove gl.EdgeFlag
- - remove gl.GetGlobalTex{Names,Coords}
- - remove gl.LineStipple
- - remove gl.LineWidth
- - remove gl.AlphaTest
- - remove gl.ClipPlane
- - remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
- - remove LuaMaterial {pre,post}list handling
- - remove 'useCamera' LuaMaterial parameter
- - remove 'identities' gl.ActiveFBO argument
+ ! remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
+ ! remove gl.Fog, gl.FogCoord, gl.SecondaryColor
+ ! remove gl.PointSize, gl.PointSprite, gl.PointParameter
+ ! remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen, gl.MultiTexCoord
+ ! remove gl.CreateList, gl.CallList, gl.DeleteList
+ ! remove gl.DrawListAtUnit
+ ! remove gl.Shape
+ ! remove gl.EdgeFlag
+ ! remove gl.GetGlobalTex{Names,Coords}
+ ! remove gl.LineStipple
+ ! remove gl.LineWidth
+ ! remove gl.AlphaTest
+ ! remove gl.ClipPlane
+ ! remove {Unit,Feature}Rendering.{SetPieceList,SetMaterialDisplayLists}
+ ! remove LuaMaterial {pre,post}list handling
+ ! remove 'useCamera' LuaMaterial parameter
+ ! remove 'identities' gl.ActiveFBO argument
  - add gl.ClipDist(number index, boolean enable) -> nil
  - add gl.{Create,Delete,Update,Render}VertexArray
      gl.CreateVertexArray(number vertexCount, number indexCount) -> number id | nil

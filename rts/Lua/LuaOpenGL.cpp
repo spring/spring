@@ -46,8 +46,6 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
@@ -83,8 +81,11 @@ static VA_TYPE_L luaBufferVertex = {
 };
 
 
-static float3 screenViewTrans;
-static float2 screenParameters = {0.36f, 0.60f}; // screen width (meters), eye-to-screen (meters)
+// .x := screen width (meters), .y := eye-to-screen (meters)
+static float2 screenParameters = {0.36f, 0.60f};
+
+static CMatrix44f screenViewMatrix;
+static CMatrix44f screenProjMatrix;
 
 
 static LuaOpenGL::DrawMode currDrawMode = LuaOpenGL::DRAW_NONE;
@@ -423,14 +424,6 @@ void LuaOpenGL::ResetGLState()
 //  Common routines
 //
 
-constexpr GLbitfield AttribBits =
-	GL_COLOR_BUFFER_BIT |
-	GL_DEPTH_BUFFER_BIT |
-	GL_ENABLE_BIT       |
-	GL_POLYGON_BIT      |
-	GL_VIEWPORT_BIT;
-
-
 void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(currDrawMode == DRAW_NONE);
@@ -439,7 +432,7 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 	if (!inSafeMode)
 		return;
 
-	glAttribStatePtr->PushBits(AttribBits);
+	glAttribStatePtr->PushBits(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_POLYGON_BIT | GL_VIEWPORT_BIT);
 	ResetGLState();
 }
 
@@ -663,13 +656,11 @@ void LuaOpenGL::EnableDrawScreenCommon()
 	ResetGLState();
 }
 
-
 void LuaOpenGL::DisableDrawScreenCommon()
 {
 	RevertScreenMatrices();
 	DisableCommon(DRAW_SCREEN);
 }
-
 
 void LuaOpenGL::ResetDrawScreenCommon()
 {
@@ -805,75 +796,27 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float right  = ((vpx + vsx) - hssx) * zfact;
 	const float top    = ((vpy + vsy) - hssy) * zfact;
 
-	GL::MatrixMode(GL_PROJECTION);
-	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
-
-	GL::MatrixMode(GL_MODELVIEW);
-	GL::LoadIdentity();
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
-	GL::Translate(screenViewTrans = {left / zfact, bottom / zfact, -zplane});
+	screenViewMatrix = CMatrix44f{float3{left / zfact, bottom / zfact, -zplane}};
+	screenProjMatrix = CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar);
 }
 
 void LuaOpenGL::RevertScreenMatrices()
 {
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f));
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
+	screenProjMatrix = CMatrix44f::ClipOrthoProj01(globalRendering->supportClipSpaceControl * 1.0f);
+	screenViewMatrix = CMatrix44f::Identity();
 }
 
 
 /******************************************************************************/
 /******************************************************************************/
-
-void LuaOpenGL::ResetGenesisMatrices()
-{
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadIdentity();
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
-}
-
-
-void LuaOpenGL::ResetWorldMatrices()
-{
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(camera->GetProjectionMatrix());
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadMatrix(camera->GetViewMatrix());
-}
-
-void LuaOpenGL::ResetWorldShadowMatrices()
-{
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(shadowHandler.GetShadowProjMatrix());
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadMatrix(shadowHandler.GetShadowViewMatrix());
-}
-
-
-void LuaOpenGL::ResetScreenMatrices()
-{
-	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
-	GL::MatrixMode(GL_PROJECTION); GL::LoadIdentity();
-	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
-
-	SetupScreenMatrices();
-}
-
-
-void LuaOpenGL::ResetMiniMapMatrices()
-{
-	assert(minimap != nullptr);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!IsDrawingEnabled(L)) {
-		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
-		              "call-ins, or while creating display lists", caller);
-	}
+	if (IsDrawingEnabled(L))
+		return;
+
+	luaL_error(L, "%s(): OpenGL calls can only be used in Draw() call-ins", caller);
 }
 
 
@@ -942,7 +885,6 @@ int LuaOpenGL::GetDefaultShaderSources(lua_State* L)
 
 int LuaOpenGL::ConfigScreen(lua_State* L)
 {
-//	CheckDrawingEnabled(L, __func__);
 	screenParameters.x = luaL_checkfloat(L, 1);
 	screenParameters.y = luaL_checkfloat(L, 2);
 	return 0;
@@ -950,11 +892,23 @@ int LuaOpenGL::ConfigScreen(lua_State* L)
 
 int LuaOpenGL::GetScreenViewTrans(lua_State* L)
 {
-	lua_pushnumber(L, screenViewTrans.x);
-	lua_pushnumber(L, screenViewTrans.y);
-	lua_pushnumber(L, screenViewTrans.z);
+	lua_pushnumber(L, screenViewMatrix[12]);
+	lua_pushnumber(L, screenViewMatrix[13]);
+	lua_pushnumber(L, screenViewMatrix[14]);
 	return 3;
 }
+
+
+static int PushMatrixParams(lua_State* L, const CMatrix44f& mat)
+{
+	for (float p: mat.m) {
+		lua_pushnumber(L, p);
+	}
+	return 16;
+}
+
+int LuaOpenGL::GetScreenViewMatrix(lua_State* L) { return PushMatrixParams(L, screenViewMatrix); }
+int LuaOpenGL::GetScreenProjMatrix(lua_State* L) { return PushMatrixParams(L, screenProjMatrix); }
 
 
 int LuaOpenGL::GetViewSizes(lua_State* L)
@@ -1876,26 +1830,27 @@ int LuaOpenGL::Scissor(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (luaL_checkboolean(L, 1)) {
+	switch (lua_gettop(L)) {
+		case 1: {
+			if (luaL_checkboolean(L, 1)) {
+				glAttribStatePtr->EnableScissorTest();
+			} else {
+				glAttribStatePtr->DisableScissorTest();
+			}
+		} break;
+		case 4: {
 			glAttribStatePtr->EnableScissorTest();
-		} else {
-			glAttribStatePtr->DisableScissorTest();
-		}
-	}
-	else if (args == 4) {
-		glAttribStatePtr->EnableScissorTest();
-		const GLint   x =   (GLint)luaL_checkint(L, 1);
-		const GLint   y =   (GLint)luaL_checkint(L, 2);
-		const GLsizei w = (GLsizei)luaL_checkint(L, 3);
-		const GLsizei h = (GLsizei)luaL_checkint(L, 4);
-		if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
-		if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
-		glScissor(x + globalRendering->viewPosX, y + globalRendering->viewPosY, w, h);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.Scissor()");
+			const GLint   x =   (GLint)luaL_checkint(L, 1);
+			const GLint   y =   (GLint)luaL_checkint(L, 2);
+			const GLsizei w = (GLsizei)luaL_checkint(L, 3);
+			const GLsizei h = (GLsizei)luaL_checkint(L, 4);
+			if (w < 0) luaL_argerror(L, 3, "<width> must be greater than or equal zero!");
+			if (h < 0) luaL_argerror(L, 4, "<height> must be greater than or equal zero!");
+			glScissor(x + globalRendering->viewPosX, y + globalRendering->viewPosY, w, h);
+		} break;
+		default: {
+			luaL_error(L, "Incorrect arguments to gl.Scissor()");
+		} break;
 	}
 
 	return 0;
@@ -1922,20 +1877,22 @@ int LuaOpenGL::ColorMask(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (luaL_checkboolean(L, 1)) {
-			glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		} else {
-			glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-		}
+	switch (lua_gettop(L)) {
+		case 1: {
+			if (luaL_checkboolean(L, 1)) {
+				glAttribStatePtr->ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+			} else {
+				glAttribStatePtr->ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+			}
+		} break;
+		case 4: {
+			glAttribStatePtr->ColorMask(luaL_checkboolean(L, 1), luaL_checkboolean(L, 2), luaL_checkboolean(L, 3), luaL_checkboolean(L, 4));
+		} break;
+		default: {
+			luaL_error(L, "Incorrect arguments to gl.ColorMask()");
+		} break;
 	}
-	else if (args == 4) {
-		glAttribStatePtr->ColorMask(luaL_checkboolean(L, 1), luaL_checkboolean(L, 2), luaL_checkboolean(L, 3), luaL_checkboolean(L, 4));
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.ColorMask()");
-	}
+
 	return 0;
 }
 
@@ -1956,8 +1913,7 @@ int LuaOpenGL::DepthTest(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1)
+	if (lua_gettop(L) != 1)
 		luaL_error(L, "Incorrect arguments to gl.DepthTest()");
 
 	if (lua_isboolean(L, 1)) {
@@ -1966,14 +1922,15 @@ int LuaOpenGL::DepthTest(lua_State* L)
 		} else {
 			glAttribStatePtr->DisableDepthTest();
 		}
+		return 0;
 	}
-	else if (lua_isnumber(L, 1)) {
+	if (lua_isnumber(L, 1)) {
 		glAttribStatePtr->EnableDepthTest();
 		glAttribStatePtr->DepthFunc((GLenum)lua_tonumber(L, 1));
+		return 0;
 	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.DepthTest()");
-	}
+
+	luaL_error(L, "Incorrect arguments to gl.DepthTest()");
 	return 0;
 }
 
@@ -1995,10 +1952,8 @@ int LuaOpenGL::Culling(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1)
+	if (lua_gettop(L) != 1)
 		luaL_error(L, "Incorrect arguments to gl.Culling()");
-
 
 	if (lua_isboolean(L, 1)) {
 		if (lua_toboolean(L, 1)) {
@@ -2006,14 +1961,15 @@ int LuaOpenGL::Culling(lua_State* L)
 		} else {
 			glAttribStatePtr->DisableCullFace();
 		}
+		return 0;
 	}
-	else if (lua_isnumber(L, 1)) {
+	if (lua_isnumber(L, 1)) {
 		glAttribStatePtr->EnableCullFace();
 		glAttribStatePtr->CullFace((GLenum)lua_tonumber(L, 1));
+		return 0;
 	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.Culling()");
-	}
+
+	luaL_error(L, "Incorrect arguments to gl.Culling()");
 	return 0;
 }
 
@@ -2022,8 +1978,7 @@ int LuaOpenGL::LogicOp(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 1)
+	if (lua_gettop(L) != 1)
 		luaL_error(L, "Incorrect arguments to gl.LogicOp()");
 
 	if (lua_isboolean(L, 1)) {
@@ -2032,14 +1987,15 @@ int LuaOpenGL::LogicOp(lua_State* L)
 		} else {
 			glDisable(GL_COLOR_LOGIC_OP);
 		}
+		return 0;
 	}
-	else if (lua_isnumber(L, 1)) {
+	if (lua_isnumber(L, 1)) {
 		glEnable(GL_COLOR_LOGIC_OP);
 		glLogicOp((GLenum)lua_tonumber(L, 1));
+		return 0;
 	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.LogicOp()");
-	}
+
+	luaL_error(L, "Incorrect arguments to gl.LogicOp()");
 	return 0;
 }
 
@@ -2109,8 +2065,8 @@ int LuaOpenGL::Blending(lua_State* L)
 int LuaOpenGL::BlendEquation(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	const GLenum mode = (GLenum)luaL_checkint(L, 1);
-	glBlendEquation(mode);
+
+	glBlendEquation((GLenum)luaL_checkint(L, 1));
 	return 0;
 }
 
@@ -3120,8 +3076,8 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0)
+	// number of arguments
+	if (lua_gettop(L) != 0)
 		luaL_error(L, "gl.PopMatrix takes no arguments");
 
 	if (!GetLuaContextData(L)->glMatrixTracker.PopMatrix())
@@ -3136,11 +3092,10 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	std::vector<GLenum> matModes;
+	std::array<GLenum, 256> matModes;
 	int arg;
-	for (arg = 1; lua_isnumber(L, arg); arg++) {
-		const GLenum mode = (GLenum)lua_tonumber(L, arg);
-		matModes.push_back(mode);
+	for (arg = 1; lua_isnumber(L, arg) && arg <= 256; arg++) {
+		matModes[arg - 1] = (GLenum)lua_tonumber(L, arg);
 	}
 
 	if (!lua_isfunction(L, arg))
@@ -3149,8 +3104,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PushMatrix();
 	} else {
-		for (const GLenum matMode: matModes) {
-			GL::MatrixMode(matMode);
+		for (int i = 0; i < arg; i++) {
+			GL::MatrixMode(matModes[i]);
 			GL::PushMatrix();
 		}
 	}
@@ -3161,8 +3116,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	if (arg == 1) {
 		GL::PopMatrix();
 	} else {
-		for (const GLenum matMode: matModes) {
-			GL::MatrixMode(matMode);
+		for (int i = 0; i < arg; i++) {
+			GL::MatrixMode(matModes[i]);
 			GL::PopMatrix();
 		}
 	}
@@ -3939,5 +3894,3 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 	return 0;
 }
 
-/******************************************************************************/
-/******************************************************************************/

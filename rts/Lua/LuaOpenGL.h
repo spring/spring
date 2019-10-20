@@ -121,11 +121,11 @@ class LuaOpenGL {
 
 		static void ClearMatrixStack(int);
 
-		static void ResetGenesisMatrices();
-		static void ResetWorldMatrices();
-		static void ResetWorldShadowMatrices();
-		static void ResetScreenMatrices();
-		static void ResetMiniMapMatrices();
+		static void ResetGenesisMatrices() {}
+		static void ResetWorldMatrices() {}
+		static void ResetWorldShadowMatrices() {}
+		static void ResetScreenMatrices() { SetupScreenMatrices(); }
+		static void ResetMiniMapMatrices() {}
 
 		static void SetupScreenMatrices();
 		static void RevertScreenMatrices();
@@ -146,6 +146,9 @@ class LuaOpenGL {
 		static int ConfigScreen(lua_State* L);
 
 		static int GetScreenViewTrans(lua_State* L);
+		static int GetScreenViewMatrix(lua_State* L);
+		static int GetScreenProjMatrix(lua_State* L);
+
 		static int GetViewSizes(lua_State* L);
 		static int GetViewRange(lua_State* L);
 
