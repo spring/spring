@@ -217,6 +217,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ConfigScreen);
 
 	REGISTER_LUA_CFUNC(GetScreenViewTrans);
+	REGISTER_LUA_CFUNC(GetScreenViewMatrix);
+	REGISTER_LUA_CFUNC(GetScreenProjMatrix);
 	REGISTER_LUA_CFUNC(GetViewSizes);
 	REGISTER_LUA_CFUNC(GetViewRange);
 
