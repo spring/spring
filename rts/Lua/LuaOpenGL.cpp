@@ -1023,7 +1023,7 @@ int LuaOpenGL::Text(lua_State* L)
 	const float ypos = luaL_checkfloat(L, 3);
 	const float size = luaL_optnumber(L, 4, 12.0f);
 
-	unsigned int options = FONT_NEAREST;
+	unsigned int options = 0;
 
 	bool outline = false;
 	bool lightOut = false;
@@ -1047,8 +1047,11 @@ int LuaOpenGL::Text(lua_State* L)
 				case 'o': { options |= FONT_OUTLINE;   } break;
 				case 'O': { options |= FONT_OUTLINE;   } break;
 
-				case 'n': { options ^= FONT_NEAREST;   } break;
+				case 'n': { options |= FONT_NEAREST;   } break;
 				case 'B': { options |= FONT_BUFFERED;  } break; // for DrawBufferedText
+
+				case 'N': { options |= FONT_NORM;      } break;
+				case 'S': { options |= FONT_SCALE;     } break;
 				default: break;
 			}
 
