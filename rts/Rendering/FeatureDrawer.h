@@ -8,7 +8,6 @@
 #include "Game/Camera.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/GL/GeometryBuffer.h"
-#include "Rendering/LuaObjectDrawer.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
 
@@ -125,8 +124,8 @@ private:
 	std::vector<CFeature*> unsortedFeatures;
 
 	private:
-		const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
-		GL::GeometryBuffer* GetGeometryBuffer() { return LuaObjectDrawer::GetGeometryBuffer(); }
+		const GL::GeometryBuffer* GetGeometryBuffer() const { return GL::GeometryBufferUni::geomBuffer; }
+		GL::GeometryBuffer* GetGeometryBuffer() { return GL::GeometryBufferUni::geomBuffer; }
 };
 
 extern CFeatureDrawer* featureDrawer;

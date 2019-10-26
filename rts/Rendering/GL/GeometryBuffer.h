@@ -31,7 +31,7 @@ namespace GL {
 		void DrawDebug(const unsigned int texID) const { DrawDebug(texID, float2(0.0f, 0.0f), float2(1.0f, 1.0f)); }
 
 		bool HasAttachments() const { return (bufferTextureIDs[0] != 0); }
-		bool EnabledAndValid(bool init = false) const;
+		bool EnabledAndValid(bool init = false) const { return (enabled && (init || valid)); };
 		bool Create(const int2 size);
 		bool Update(const bool init = false);
 
@@ -67,7 +67,7 @@ namespace GL {
 
 		bool dead = false;
 		bool bound = false;
-		bool createSuccess = false;
+		bool valid = false;
 
 		bool msaa = false;
 	};

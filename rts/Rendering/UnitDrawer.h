@@ -8,7 +8,6 @@
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/GeometryBuffer.h"
-#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Rendering/UnitDrawerState.hpp"
@@ -308,8 +307,8 @@ private:
 private:
 	GL::LightHandler lightHandler;
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return LuaObjectDrawer::GetGeometryBuffer(); }
-	GL::GeometryBuffer* GetGeometryBuffer() { return LuaObjectDrawer::GetGeometryBuffer(); }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return GL::GeometryBufferUni::geomBuffer; }
+	GL::GeometryBuffer* GetGeometryBuffer() { return GL::GeometryBufferUni::geomBuffer; }
 };
 
 extern CUnitDrawer* unitDrawer;

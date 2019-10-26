@@ -19,7 +19,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/SafeUtil.h"
-#include "System/Log/ILog.h"
 
 
 // optimisation for team-color, but potentially breaks
@@ -245,9 +244,8 @@ void LuaObjectDrawer::Init()
 	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
 	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureTrans;
 
-	static bool bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
-	bufferUnitClearAllowed = configHandler->GetBool("AllowDeferredUnitBufferClear") || bufferClearAllowed;
-	bufferFeatureClearAllowed = configHandler->GetBool("AllowDeferredFeatureBufferClear") || bufferClearAllowed;
+	bufferUnitClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear") || configHandler->GetBool("AllowDeferredUnitBufferClear");
+	bufferFeatureClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear") || configHandler->GetBool("AllowDeferredFeatureBufferClear");
 
 	drawModelPostDeferredEventsAllowed = configHandler->GetBool("AllowDrawModelPostDeferredEvents");
 }
@@ -270,7 +268,7 @@ void LuaObjectDrawer::Update()
 	// update buffer only if it is valid && deferred pass is enabled
 	if ((drawDeferred = GetGeometryBuffer()->EnabledAndValid())) {
 
-		notifyEventFlags[LUAOBJ_UNIT] = !unitDrawer->DrawForward() || drawModelPostDeferredEventsAllowed;
+		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward() || drawModelPostDeferredEventsAllowed;
 		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred() && bufferUnitClearAllowed;
 		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward() || drawModelPostDeferredEventsAllowed;
 		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred() && bufferFeatureClearAllowed;

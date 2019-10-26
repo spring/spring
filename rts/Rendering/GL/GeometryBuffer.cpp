@@ -94,7 +94,7 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 
-	createSuccess = false;
+	valid = false;
 }
 
 void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const {
@@ -119,10 +119,6 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-}
-
-bool GL::GeometryBuffer::EnabledAndValid(bool init) const {
-	return enabled && (init ? true : createSuccess && buffer.IsValid());
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
@@ -171,10 +167,10 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 	// can still invalidate it
 	assert(buffer.IsValid());
 
-	createSuccess = buffer.CheckStatus(name);
+	valid = buffer.IsValid() && buffer.CheckStatus(name);
 
 	buffer.Unbind();
-	return createSuccess;
+	return valid;
 }
 
 bool GL::GeometryBuffer::Update(const bool init) {
