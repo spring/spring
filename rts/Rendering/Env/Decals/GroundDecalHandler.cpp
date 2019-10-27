@@ -5,20 +5,18 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GameHelper.h" // ExplosionParams
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
+#include "Rendering/UnitDrawer.h" // GhostSolidObject
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -28,16 +26,20 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/MemPoolTypes.h"
 #include "System/SpringMath.h"
 #include "System/StringUtil.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
-#define TEX_QUAD_SIZE 16
-#define MAX_NUM_DECALS 4096
+static constexpr int SCAR_ATLAS_SIZE = 512 * 4;
+static constexpr int SCAR_DECAL_SIZE = 256 * 2;
+static constexpr int NUM_SCAR_DECALS = SCAR_ATLAS_SIZE / SCAR_DECAL_SIZE;
+
+static constexpr int TEX_QUAD_SIZE  = SQUARE_SIZE * 2;
+static constexpr int MAX_NUM_DECALS = 4096;
 
 // 4K * 2 (object plus scar) decals, 32MB per buffer
 #define NUM_BUFFER_ELEMS ((MAX_NUM_DECALS * 2) * 1024)
@@ -79,12 +81,12 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 	usedScarIDs.clear();
 	usedScarIDs.reserve(128);
 	scarTexBuf.clear();
-	scarTexBuf.resize(512 * 512 * 4, 0); // 1MB
+	scarTexBuf.resize(SCAR_ATLAS_SIZE * SCAR_ATLAS_SIZE * 4, 0);
 
 	for (int i = 0; i < MAX_NUM_DECALS; i++) {
 		freeScarIDs.push_back(i);
 		// wipe out scars from previous runs
-		scars[i] = Scar();
+		scars[i] = {};
 	}
 
 	scarFieldX = mapDims.mapx / 32;
@@ -117,7 +119,7 @@ CGroundDecalHandler::~CGroundDecalHandler()
 		glDeleteTextures(1, &dctype.texture);
 	}
 
-	glDeleteTextures(1, &scarTex);
+	glDeleteTextures(1, &scarAtlasTex);
 
 	shaderHandler->ReleaseProgramObjects("[GroundDecalHandler]");
 
@@ -150,16 +152,49 @@ void CGroundDecalHandler::LoadScarTextures() {
 	const LuaTable&   gfxTable = rootTable.SubTable("graphics");
 	const LuaTable& scarsTable =  gfxTable.SubTable("scars");
 
-	LoadScarTexture("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), scarTexBuf.data(),   0,   0);
-	LoadScarTexture("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), scarTexBuf.data(), 256,   0);
-	LoadScarTexture("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), scarTexBuf.data(),   0, 256);
-	LoadScarTexture("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), scarTexBuf.data(), 256, 256);
+	static_assert(SCAR_ATLAS_SIZE >= SCAR_DECAL_SIZE, "");
+	static_assert((SCAR_ATLAS_SIZE % SCAR_DECAL_SIZE) == 0, "");
 
-	glGenTextures(1, &scarTex);
-	glBindTexture(GL_TEXTURE_2D, scarTex);
+	std::array<std::string, NUM_SCAR_DECALS * NUM_SCAR_DECALS> scarTexNames;
+
+	for (int i = 0, j = i + 1, n = NUM_SCAR_DECALS * NUM_SCAR_DECALS; i < n; i++, j++) {
+		if (CFileHandler::FileExists(scarTexNames[i] = "bitmaps/" + scarsTable.GetString(j, "scars/scar" + IntToString(j) + ".bmp"), SPRING_VFS_ZIP))
+			continue;
+
+		scarTexNames[i].clear();
+	}
+
+	{
+		const auto pred = [](const std::string& name) { return (name.empty()); };
+		const auto iter = std::remove_if(scarTexNames.begin(), scarTexNames.end(), pred);
+
+		// always assign a valid scar to each atlas slot
+		// (if fewer scars than slots, recycle textures)
+		if ((iter - scarTexNames.begin()) > 0) {
+			for (int i = 0, n = NUM_SCAR_DECALS * NUM_SCAR_DECALS; i < n; i++) {
+				const int xidx = i % NUM_SCAR_DECALS;
+				const int yidx = i / NUM_SCAR_DECALS;
+
+				const int xofs = xidx * SCAR_DECAL_SIZE;
+				const int yofs = yidx * SCAR_DECAL_SIZE;
+
+				LoadScarTexture(scarTexNames[i % (iter - scarTexNames.begin())], scarTexBuf.data(), xofs, yofs);
+			}
+		}
+	}
+
+	glGenTextures(1, &scarAtlasTex);
+	glBindTexture(GL_TEXTURE_2D, scarAtlasTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, scarTexBuf.data());
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, SCAR_ATLAS_SIZE, SCAR_ATLAS_SIZE, GL_RGBA, GL_UNSIGNED_BYTE, scarTexBuf.data());
+
+	#if 0
+	{
+		CBitmap bmp(scarTexBuf.data(), SCAR_ATLAS_SIZE, SCAR_ATLAS_SIZE);
+		bmp.Save("scarAtlasTex.bmp");
+	}
+	#endif
 }
 
 void CGroundDecalHandler::LoadDecalShaders() {
@@ -351,16 +386,21 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 	if (numVerts == 0) {
 		const float3 pos = scar.pos;
 
-		const float radius = scar.radius;
-		const float radius4 = radius * 4.0f;
-		const float tx = scar.texOffsetX;
-		const float ty = scar.texOffsetY;
+		constexpr float insd = 1.0f / NUM_SCAR_DECALS;
+		constexpr float itqs = 1.0f / TEX_QUAD_SIZE;
 
-		const unsigned int sx = std::max(                0, int((pos.x - radius) * 0.0625f));
-		const unsigned int sz = std::max(                0, int((pos.z - radius) * 0.0625f));
-		const unsigned int ex = std::min(mapDims.hmapx - 1, int((pos.x + radius) * 0.0625f));
-		const unsigned int ez = std::min(mapDims.hmapy - 1, int((pos.z + radius) * 0.0625f));
+		// decal corners in half-heightmap space
+		const unsigned int sx = std::max(                0, int((pos.x - scar.radius) * itqs));
+		const unsigned int sz = std::max(                0, int((pos.z - scar.radius) * itqs));
+		const unsigned int ex = std::min(mapDims.hmapx - 1, int((pos.x + scar.radius) * itqs));
+		const unsigned int ez = std::min(mapDims.hmapy - 1, int((pos.z + scar.radius) * itqs));
 		const unsigned int nv = ((ex - sx) + 1) * ((ez - sz) + 1) * (2 * 3);
+
+		const float toffsetx = scar.texOffsetX;
+		const float toffsety = scar.texOffsetY;
+
+		const float ixrange = 1.0f / (ex - sx);
+		const float iyrange = 1.0f / (ez - sz);
 
 		// create the scar texture-quads
 		float px1 = sx * TEX_QUAD_SIZE;
@@ -381,18 +421,20 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar& scar)
 
 			for (unsigned int z = sz; z <= ez; ++z) {
 				const float pz2 = pz1 + TEX_QUAD_SIZE;
-				const float tx1 = std::min(0.5f, (pos.x - px1) / radius4 + 0.25f);
-				const float tx2 = std::max(0.0f, (pos.x - px2) / radius4 + 0.25f);
-				const float tz1 = std::min(0.5f, (pos.z - pz1) / radius4 + 0.25f);
-				const float tz2 = std::max(0.0f, (pos.z - pz2) / radius4 + 0.25f);
 
-				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + tx, tz1 + ty, color}; // tl
-				*(curBufferPos++) = {float3(px2, 0.0f, pz1), tx2 + tx, tz1 + ty, color}; // tr
-				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + tx, tz2 + ty, color}; // br
+				const float tx1 = ((x     - sx) * ixrange) * insd;
+				const float tx2 = ((x + 1 - sx) * ixrange) * insd;
 
-				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + tx, tz2 + ty, color}; // br
-				*(curBufferPos++) = {float3(px1, 0.0f, pz2), tx1 + tx, tz2 + ty, color}; // bl
-				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + tx, tz1 + ty, color}; // tl
+				const float tz1 = ((z -     sz) * iyrange) * insd;
+				const float tz2 = ((z + 1 - sz) * iyrange) * insd;
+
+				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + toffsetx, tz1 + toffsety, color}; // tl
+				*(curBufferPos++) = {float3(px2, 0.0f, pz1), tx2 + toffsetx, tz1 + toffsety, color}; // tr
+				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + toffsetx, tz2 + toffsety, color}; // br
+
+				*(curBufferPos++) = {float3(px2, 0.0f, pz2), tx2 + toffsetx, tz2 + toffsety, color}; // br
+				*(curBufferPos++) = {float3(px1, 0.0f, pz2), tx1 + toffsetx, tz2 + toffsety, color}; // bl
+				*(curBufferPos++) = {float3(px1, 0.0f, pz1), tx1 + toffsetx, tz1 + toffsety, color}; // tl
 
 				pz1 = pz2;
 			}
@@ -627,7 +669,7 @@ void CGroundDecalHandler::DrawDecals()
 	DrawObjectDecals();
 
 	// draw explosion decals
-	glBindTexture(GL_TEXTURE_2D, scarTex);
+	glBindTexture(GL_TEXTURE_2D, scarAtlasTex);
 	glAttribStatePtr->PolygonOffset(-10.0f, -400.0f);
 	AddScars();
 	DrawScars();
@@ -684,12 +726,12 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 	s.radius = radius * 1.4f;
 	s.id = id;
 	s.creationTime = gs->frameNum;
-	s.startAlpha = std::max(50.0f, std::min(255.0f, damage));
+	s.startAlpha = Clamp(damage, 50.0f, 255.0f);
 	s.lifeTime = int(gs->frameNum + ttl);
 	s.alphaDecay = s.startAlpha / ttl;
-	// atlas contains 2x2 textures, pick one of them
-	s.texOffsetX = (guRNG.NextInt() & 128)? 0: 0.5f;
-	s.texOffsetY = (guRNG.NextInt() & 128)? 0: 0.5f;
+	// atlas contains NUM_SCAR_DECALS by NUM_SCAR_DECALS textures, pick one of them
+	s.texOffsetX = (1.0f / NUM_SCAR_DECALS) * guRNG.NextInt(NUM_SCAR_DECALS);
+	s.texOffsetY = (1.0f / NUM_SCAR_DECALS) * guRNG.NextInt(NUM_SCAR_DECALS);
 
 	s.x1 = int(std::max(                    0.0f, (s.pos.x - radius) / (SQUARE_SIZE * 2)    ));
 	s.y1 = int(std::max(                    0.0f, (s.pos.z - radius) / (SQUARE_SIZE * 2)    ));
@@ -704,17 +746,17 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 }
 
 
-void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset)
+bool CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset)
 {
 	CBitmap bm;
 
 	if (!bm.Load(file)) {
 		LOG_L(L_WARNING, "[%s] could not load file \"%s\"", __func__, file.c_str());
-		return;
+		return false;
 	}
 
-	if (bm.ysize != 256 || bm.xsize != 256)
-		bm = bm.CreateRescaled(256, 256);
+	if (bm.ysize != SCAR_DECAL_SIZE || bm.xsize != SCAR_DECAL_SIZE)
+		bm = bm.CreateRescaled(SCAR_DECAL_SIZE, SCAR_DECAL_SIZE);
 
 	const unsigned char* rmem = bm.GetRawMem();
 
@@ -723,7 +765,7 @@ void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf,
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int memIndex = ((y * bm.xsize) + x) * 4;
-				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
+				const int bufIndex = (((y + yoffset) * SCAR_ATLAS_SIZE) + x + xoffset) * 4;
 				const int brightness = rmem[memIndex + 0];
 
 				buf[bufIndex + 0] = (brightness * 90) / 255;
@@ -736,10 +778,12 @@ void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf,
 		// we copy into an atlas, so we need to copy line by line
 		for (int y = 0; y < bm.ysize; ++y) {
 			const int memIndex = (y * bm.xsize) * 4;
-			const int bufIndex = (((y + yoffset) * 512) + xoffset) * 4;
+			const int bufIndex = (((y + yoffset) * SCAR_ATLAS_SIZE) + xoffset) * 4;
 			memcpy(&buf[bufIndex], &rmem[memIndex], bm.xsize * sizeof(SColor));
 		}
 	}
+
+	return true;
 }
 
 
