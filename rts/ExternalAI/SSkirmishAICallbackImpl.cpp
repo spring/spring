@@ -113,8 +113,13 @@ static const CUnit* getUnit(int unitId) {
 	return (unitHandler.GetUnit(unitId));
 }
 
-static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
-	return teamHandler.AlliedTeams(unit->team, AI_TEAM_IDS[skirmishAIId]);
+static bool isUnitInLos(int skirmishAIId, const CUnit* unit) {
+	const int teamId = AI_TEAM_IDS[skirmishAIId];
+	if (teamHandler.AlliedTeams(unit->team, teamId))
+		return true;
+
+	const int allyID = teamHandler.AllyTeam(teamId);
+	return (unit->losStatus[allyID] & LOS_INLOS);
 }
 
 static int unitModParamLosMask(int skirmishAIId, const CUnit* unit) {
@@ -3875,7 +3880,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
 	const CUnit* unit = getUnit(unitId);
 
-	if (unit != nullptr && (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)))
+	if (unit != nullptr && (skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || isUnitInLos(skirmishAIId, unit)))
 		return unit->weapons.size();
 
 	return 0;
@@ -3887,7 +3892,7 @@ EXPORT(int) skirmishAiCallback_Unit_getWeapon(int skirmishAIId, int unitId, int 
 	if (unit == nullptr || ((size_t)weaponMountId >= unit->weapons.size()))
 		return -1;
 
-	if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId) || isUnitInLos(skirmishAIId, unit))
 		return weaponMountId;
 
 	return -1;
