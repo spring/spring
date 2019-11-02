@@ -52,7 +52,7 @@ class CSyncedLuaHandle : public CLuaHandle
 
 	public: // call-ins
 		bool CommandFallback(const CUnit* unit, const Command& cmd) override;
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) override;
+		bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) override;
 
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) override;
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) override;

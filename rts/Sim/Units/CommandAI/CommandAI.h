@@ -37,8 +37,11 @@ public:
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 	void AddCommandDependency(const Command& c);
 	void ClearCommandDependencies();
-	/// feeds into GiveCommandReal()
-	void GiveCommand(const Command& c, bool fromSynced = true);
+
+	// these both feed into GiveCommandReal()
+	void GiveCommand(const Command& c,                bool fromSynced = true              ); // sim
+	void GiveCommand(const Command& c, int playerNum, bool fromSynced       , bool fromLua); // net,Lua
+
 	void ClearTargetLock(const Command& fc);
 	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
 

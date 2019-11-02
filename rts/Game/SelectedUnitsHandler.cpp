@@ -754,7 +754,7 @@ void CSelectedUnitsHandler::AINetOrder(int unitID, int aiTeamID, int playerID, c
 	// always pulled from net, synced command by definition
 	// (fromSynced determines whether CMD_UNLOAD_UNITS uses
 	// synced or unsynced randomized position sampling, etc)
-	unit->commandAI->GiveCommand(c, true);
+	unit->commandAI->GiveCommand(c, playerID, true, false);
 }
 
 

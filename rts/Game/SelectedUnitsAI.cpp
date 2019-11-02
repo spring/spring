@@ -110,7 +110,7 @@ bool CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int playerNum)
 		if (MayRequireSetMaxSpeedCommand(c))
 			SetUnitWantedMaxSpeedNet(unit);
 
-		unit->commandAI->GiveCommand(c, true);
+		unit->commandAI->GiveCommand(c, playerNum, true, false);
 
 		if (cmdID == CMD_WAIT && playerNum == gu->myPlayerNum)
 			waitCommandsAI.AcknowledgeCommand(c);
@@ -229,7 +229,7 @@ bool CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int playerNum)
 				SetUnitWantedMaxSpeedNet(unit);
 			}
 
-			unit->commandAI->GiveCommand(uc, ret = true);
+			unit->commandAI->GiveCommand(uc, playerNum, ret = true, false);
 		}
 
 		return ret;
@@ -247,7 +247,7 @@ bool CSelectedUnitsHandlerAI::GiveCommandNet(Command& c, int playerNum)
 			if (MayRequireSetMaxSpeedCommand(c))
 				SetUnitWantedMaxSpeedNet(unit);
 
-			unit->commandAI->GiveCommand(c, ret = true);
+			unit->commandAI->GiveCommand(c, playerNum, ret = true, false);
 		}
 
 		if (cmdID != CMD_WAIT)
@@ -331,7 +331,7 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int playerNum)
 			if (unit == nullptr)
 				continue;
 
-			unit->commandAI->GiveCommand(*c, false);
+			unit->commandAI->GiveCommand(*c, playerNum, false, false);
 		}
 
 		return;
@@ -431,7 +431,7 @@ void CSelectedUnitsHandlerAI::MakeFormationFrontOrder(Command* c, int playerNum)
 			CUnit* unit = unitHandler.GetUnit(mixedUnitIDs[i]);
 			CCommandAI* cai = unit->commandAI;
 
-			cai->GiveCommand(frontMoveCommands[i].second, false);
+			cai->GiveCommand(frontMoveCommands[i].second, playerNum, false, false);
 		}
 
 		frontMoveCommands.clear();
@@ -565,7 +565,7 @@ bool CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int playerNum)
 				if (!commandAI->WillCancelQueued(attackCmd))
 					continue;
 
-				commandAI->GiveCommand(attackCmd, ret = true);
+				commandAI->GiveCommand(attackCmd, playerNum, ret = true, false);
 			}
 		}
 
@@ -624,7 +624,7 @@ bool CSelectedUnitsHandlerAI::SelectAttackNet(const Command& cmd, int playerNum)
 			if (queueingCmd && commandAI->WillCancelQueued(attackCmd))
 				continue;
 
-			commandAI->GiveCommand(attackCmd, ret = true);
+			commandAI->GiveCommand(attackCmd, playerNum, ret = true, false);
 
 			SetUnitWantedMaxSpeedNet(unit);
 			// following commands are always queued

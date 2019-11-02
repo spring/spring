@@ -3541,7 +3541,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 		luaL_error(L, "[%s] recursion not permitted", __func__);
 
 	inGiveOrder = true;
-	unit->commandAI->GiveCommand(cmd);
+	unit->commandAI->GiveCommand(cmd, -1, true, true);
 	inGiveOrder = false;
 
 	lua_pushboolean(L, true);
@@ -3554,11 +3554,11 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
-	ParseUnitMap(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
+	std::vector<CUnit*> units;
 
-	if (unitCount <= 0) {
+	ParseUnitMap(L, __func__, 1, units);
+
+	if (units.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
@@ -3570,10 +3570,9 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 	inGiveOrder = true;
 	int count = 0;
-	for (int i = 0; i < unitCount; i++) {
-		CUnit* unit = units[i];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			unit->commandAI->GiveCommand(cmd);
+			unit->commandAI->GiveCommand(cmd, -1, true, true);
 			count++;
 		}
 	}
@@ -3589,11 +3588,11 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
-	ParseUnitArray(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
+	std::vector<CUnit*> units;
 
-	if (unitCount <= 0) {
+	ParseUnitArray(L, __func__, 1, units);
+
+	if (units.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
@@ -3606,10 +3605,9 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int i = 0; i < unitCount; i++) {
-		CUnit* unit = units[i];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			unit->commandAI->GiveCommand(cmd);
+			unit->commandAI->GiveCommand(cmd, -1, true, true);
 			count++;
 		}
 	}
@@ -3625,17 +3623,13 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
-	// units
-	vector<CUnit*> units;
+	std::vector<CUnit*> units;
+	std::vector<Command> commands;
+
 	ParseUnitMap(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
-
-	// commands
-	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
-	const int commandCount = (int)commands.size();
 
-	if ((unitCount <= 0) || (commandCount <= 0)) {
+	if (units.empty() || commands.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
@@ -3646,11 +3640,10 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 	inGiveOrder = true;
 
 	int count = 0;
-	for (int u = 0; u < unitCount; u++) {
-		CUnit* unit = units[u];
+	for (CUnit* unit: units) {
 		if (CanControlUnit(L, unit)) {
-			for (int c = 0; c < commandCount; c++) {
-				unit->commandAI->GiveCommand(commands[c]);
+			for (const Command& c: commands) {
+				unit->commandAI->GiveCommand(c, -1, true, true);
 			}
 			count++;
 		}
@@ -3667,18 +3660,13 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	CheckAllowGameChanges(L);
 
 	// units
-	vector<CUnit*> units;
+	std::vector<CUnit*> units;
+	std::vector<Command> commands;
+
 	ParseUnitArray(L, __func__, 1, units);
-	const int unitCount = (int)units.size();
-
-	// commands
-	vector<Command> commands;
 	LuaUtils::ParseCommandArray(L, __func__, 2, commands);
-	const int commandCount = (int)commands.size();
 
-	bool pairwise = luaL_optboolean(L, 3, false);
-
-	if ((unitCount <= 0) || (commandCount <= 0)) {
+	if (units.empty() || commands.empty()) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
@@ -3689,21 +3677,21 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	inGiveOrder = true;
 
 	int count = 0;
-	if (pairwise) {
-		for (int x = 0; x < std::min(unitCount, commandCount); ++x) {
-			CUnit* unit = units[x];
+
+	if (luaL_optboolean(L, 3, false)) {
+		// pairwise
+		for (size_t i = 0, n = std::min(units.size(), commands.size()); i < n; ++i) {
+			CUnit* unit = units[i];
 			if (CanControlUnit(L, unit)) {
-				unit->commandAI->GiveCommand(commands[x]);
+				unit->commandAI->GiveCommand(commands[i], -1, true, true);
 				count++;
 			}
 		}
-	}
-	else {
-		for (int u = 0; u < unitCount; u++) {
-			CUnit* unit = units[u];
+	} else {
+		for (CUnit* unit: units) {
 			if (CanControlUnit(L, unit)) {
-				for (int c = 0; c < commandCount; c++) {
-					unit->commandAI->GiveCommand(commands[c]);
+				for (const Command& c: commands) {
+					unit->commandAI->GiveCommand(c, -1, true, true);
 				}
 				count++;
 			}

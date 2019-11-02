@@ -1094,11 +1094,17 @@ function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
-                                    cmdID, cmdParams, cmdOptions, cmdTag, synced)
+function gadgetHandler:AllowCommand(
+	unitID, unitDefID, unitTeam,
+	cmdID, cmdParams, cmdOptions, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,g in r_ipairs(self.AllowCommandList) do
-    if (not g:AllowCommand(unitID, unitDefID, unitTeam,
-                           cmdID, cmdParams, cmdOptions, cmdTag, synced)) then
+    if (not g:AllowCommand(
+		unitID, unitDefID, unitTeam,
+		cmdID, cmdParams, cmdOptions, cmdTag,
+		playerID, fromSynced, fromLua)
+	) then
       return false
     end
   end
@@ -1429,9 +1435,17 @@ function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams
   end
 end
 
-function gadgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+function gadgetHandler:UnitCommand(
+	unitID, unitDefID, unitTeam,
+	cmdID, cmdParams, cmdOpts, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,g in r_ipairs(self.UnitCommandList) do
-    g:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+    g:UnitCommand(
+		unitID, unitDefID, unitTeam,
+		cmdID, cmdParams, cmdOpts, cmdTag,
+		playerID, fromSynced, fromLua
+	)
   end
 end
 
