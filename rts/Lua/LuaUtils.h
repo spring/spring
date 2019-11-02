@@ -97,7 +97,7 @@ class LuaUtils {
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
-		static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
+		static int  PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
 
 		static Command ParseCommand(lua_State* L, const char* caller, int idIndex);
 		static Command ParseCommandTable(lua_State* L, const char* caller, int table);

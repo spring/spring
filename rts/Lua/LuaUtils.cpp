@@ -932,7 +932,7 @@ void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool su
 		lua_rawset(L, -3);
 }
 
-void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
+int LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
 {
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -944,6 +944,7 @@ void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command
 	PushCommandOptionsTable(L, cmd, false);
 
 	lua_pushnumber(L, cmd.GetTag());
+	return 7;
 }
 
 

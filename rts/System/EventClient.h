@@ -131,8 +131,8 @@ class CEventClient
 		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
 
 		virtual void UnitIdle(const CUnit* unit) {}
-		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
-		virtual void UnitCmdDone(const CUnit* unit, const Command& command) {}
+		virtual void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua) {}
+		virtual void UnitCmdDone(const CUnit* unit, const Command& command                                              ) {}
 		virtual void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -196,7 +196,7 @@ class CEventClient
 
 
 		virtual bool CommandFallback(const CUnit* unit, const Command& cmd) { return false; }
-		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced) { return true; }
+		virtual bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua) { return true; }
 
 		virtual bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo) { return true; }
 		virtual bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture) { return true; }

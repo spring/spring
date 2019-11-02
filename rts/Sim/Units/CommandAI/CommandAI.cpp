@@ -746,11 +746,15 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 {
-	if (!eventHandler.AllowCommand(owner, c, fromSynced))
+	GiveCommand(c, teamHandler.Team(owner->team)->leader, fromSynced, false);
+}
+void CCommandAI::GiveCommand(const Command& c, int playerNum, bool fromSynced, bool fromLua)
+{
+	if (!eventHandler.AllowCommand(owner, c, playerNum, fromSynced, fromLua))
 		return;
 
-	eventHandler.UnitCommand(owner, c);
-	this->GiveCommandReal(c, fromSynced); // send to the sub-classes
+	eventHandler.UnitCommand(owner, c, playerNum, fromSynced, fromLua);
+	GiveCommandReal(c, fromSynced); // send to the sub-classes
 }
 
 
@@ -780,12 +784,14 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 	switch (c.GetID()) {
 		case CMD_FIRE_STATE: {
 			owner->fireState = (int)c.GetParam(0);
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_MOVE_STATE: {
 			owner->moveState = (int)c.GetParam(0);
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
@@ -800,12 +806,14 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				// we can not accept any other values as valid
 				return false;
 			}
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
 		}
 		case CMD_TRAJECTORY: {
 			owner->useHighTrajectory = !!c.GetParam(0);
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
@@ -820,6 +828,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				// we can not accept any other values as valid
 				return false;
 			}
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
@@ -834,6 +843,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				// we can not accept any other values as valid
 				return false;
 			}
+
 			SetCommandDescParam0(c);
 			selectedUnitsHandler.PossibleCommandChange(owner);
 			return true;
@@ -864,10 +874,9 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 
 
 void CCommandAI::ClearTargetLock(const Command &c) {
-	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.GetOpts() & META_KEY) == 0) {
-		// no meta-bit attack lock, clear the order
+	// if no meta-bit attack lock, clear the order
+	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.GetOpts() & META_KEY) == 0)
 		owner->DropCurrentAttackTarget();
-	}
 }
 
 

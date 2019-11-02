@@ -930,10 +930,10 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 }
 
 
-void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
+void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua)
 {
 	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 11, __func__);
+	luaL_checkstack(L, 1 + 7 + 3, __func__);
 
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
@@ -941,10 +941,14 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	LuaUtils::PushUnitAndCommand(L, unit, command);
+	const int argc = LuaUtils::PushUnitAndCommand(L, unit, command);
+
+	lua_pushnumber(L, playerNum);
+	lua_pushboolean(L, fromSynced);
+	lua_pushboolean(L, fromLua);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, argc + 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 

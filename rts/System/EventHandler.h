@@ -79,8 +79,8 @@ class CEventHandler
 		void RenderProjectileDestroyed(const CProjectile* proj);
 
 		void UnitIdle(const CUnit* unit);
-		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, const Command& command);
+		void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua);
+		void UnitCmdDone(const CUnit* unit, const Command& command                                              );
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -134,7 +134,7 @@ class CEventHandler
 		                      const CWeapon* weapon, int oldCount);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
-		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
+		bool AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua);
 
 		bool AllowUnitCreation(const UnitDef* unitDef, const CUnit* builder, const BuildInfo* buildInfo);
 		bool AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture);
@@ -498,16 +498,12 @@ inline bool CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFe
 
 
 
-inline void CEventHandler::UnitCommand(const CUnit* unit,
-                                           const Command& command)
+inline void CEventHandler::UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua)
 {
-	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCommand, unit, command)
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCommand, unit, command, playerNum, fromSynced, fromLua)
 }
 
-
-
-inline void CEventHandler::UnitCmdDone(const CUnit* unit,
-                                           const Command& command)
+inline void CEventHandler::UnitCmdDone(const CUnit* unit, const Command& command)
 {
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitCmdDone, unit, command)
 }

@@ -19,6 +19,9 @@ Lua:
  - add Platform.hwConfig
  - Script.IsEngineMinVersion now available in all Lua parsing contexts,
    most importantly in `defs.lua`
+ ! change {Allow,Unit}Command callin parameters
+	AllowCommand(..., cmdTag, fromSynced) --> AllowCommand(..., cmdTag, playerID, fromSynced, fromLua)
+	 UnitCommand(..., cmdTag            ) -->  UnitCommand(..., cmdTag, playerID, fromSynced, fromLua)
  ! remove Game.mapHumanName
  ! remove UnitDefs[i].moveDef.{family,type}
  - let Spring.SelectUnitArray select enemy units with godmode enabled
@@ -926,8 +929,8 @@ Lua (model rendering):
  ! gl.UnitShape and gl.FeatureShape now take three extra boolean arguments
    and set their relevant GL state internally (so that calling only these
    functions is enough to get correctly rendered models; pass in 'false'
-   for the [new] THIRD argument to get the fixed behavior, omit it or pass
-   in 'true' [default] to render with your own custom state instead)
+   for the [new] THIRD argument for the fixed behavior, omit it or pass in
+   'true' [default] to render with your own custom state instead)
    NOTE:
      the [new] FOURTH argument should be 'true' if in DrawScreen and 'false'
      (default) if in DrawWorld; any transforms for these two functions *MUST*

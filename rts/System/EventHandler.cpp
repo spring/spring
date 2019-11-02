@@ -246,9 +246,9 @@ bool CEventHandler::CommandFallback(const CUnit* unit, const Command& cmd)
 }
 
 
-bool CEventHandler::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced)
+bool CEventHandler::AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua)
 {
-	return ControlIterateDefTrue(listAllowCommand, &CEventClient::AllowCommand, unit, cmd, fromSynced);
+	return ControlIterateDefTrue(listAllowCommand, &CEventClient::AllowCommand, unit, cmd, playerNum, fromSynced, fromLua);
 }
 
 

@@ -48,11 +48,11 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-	#define PERMISSIONS_FUNCS(Name, type, dataArg, OVERRIDE) \
-		void Set ## Name(type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg; } \
-		type Get ## Name() const OVERRIDE { return GetLuaContextData(L)->dataArg; } \
-		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg;; } \
-		static type GetHandle ## Name(const lua_State* L) { return GetLuaContextData(L)->dataArg; }
+	#define PERMISSIONS_FUNCS(Name, type, val, OVERRIDE) \
+		void Set ## Name(type _ ## val)                {        GetLuaContextData(L)->val = _ ## val; } \
+		type Get ## Name(             ) const OVERRIDE { return GetLuaContextData(L)->val           ; } \
+		static void SetHandle ## Name(const lua_State* L, type _ ## val) {        GetLuaContextData(L)->val = _ ## val; } \
+		static type GetHandle ## Name(const lua_State* L               ) { return GetLuaContextData(L)->val           ; }
 
 		PERMISSIONS_FUNCS(FullRead,     bool, fullRead, override); // virtual function in CEventClient
 		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl, );
@@ -129,8 +129,8 @@ class CLuaHandle : public CEventClient
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) override;
 
 		void UnitIdle(const CUnit* unit) override;
-		void UnitCommand(const CUnit* unit, const Command& command) override;
-		void UnitCmdDone(const CUnit* unit, const Command& command) override;
+		void UnitCommand(const CUnit* unit, const Command& command, int playerNum, bool fromSynced, bool fromLua) override;
+		void UnitCmdDone(const CUnit* unit, const Command& command                                              ) override;
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,

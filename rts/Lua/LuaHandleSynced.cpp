@@ -516,21 +516,23 @@ bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 }
 
 
-bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced)
+bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, int playerNum, bool fromSynced, bool fromLua)
 {
 	LUA_CALL_IN_CHECK(L, true);
-	luaL_checkstack(L, 10, __func__);
+	luaL_checkstack(L, 7 + 3, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
-	LuaUtils::PushUnitAndCommand(L, unit, cmd);
+	const int argc = LuaUtils::PushUnitAndCommand(L, unit, cmd);
 
+	lua_pushnumber(L, playerNum);
 	lua_pushboolean(L, fromSynced);
+	lua_pushboolean(L, fromLua);
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, 8, 1))
+	if (!RunCallIn(L, cmdStr, argc + 3, 1))
 		return true;
 
 	// get the results
