@@ -771,6 +771,7 @@ void CGame::ClientReadNet()
 
 					// parse the unit list
 					pckt >> unitCount;
+					unitIDs.reserve(unitCount);
 
 					for (int16_t u = 0; u < unitCount; u++) {
 						int16_t unitID;
@@ -780,6 +781,7 @@ void CGame::ClientReadNet()
 
 					// parse the command list
 					pckt >> commandCount;
+					commands.reserve(commandCount);
 
 					for (int16_t c = 0; c < commandCount; c++) {
 						int32_t cmdID;
@@ -790,11 +792,10 @@ void CGame::ClientReadNet()
 							pckt >> cmdID;
 						if ((cmdOpt = sameCmdOpt) == 0xFF)
 							pckt >> cmdOpt;
-
-						Command cmd(cmdID, cmdOpt);
-
 						if ((paramCount = sameCmdParamSize) == 0xFFFF)
 							pckt >> paramCount;
+
+						Command cmd(cmdID, cmdOpt);
 
 						for (uint16_t p = 0; p < paramCount; p++) {
 							float param;

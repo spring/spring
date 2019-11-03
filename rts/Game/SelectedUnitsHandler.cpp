@@ -1024,54 +1024,63 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 
 	// if all commands share the same ID / options / number of parameters,
 	// insert only these values into the packet to save a bit of bandwidth
-	uint8_t sameCmdOpt = commands[0].GetOpts();
-	int32_t sameCmdID = commands[0].GetID();
-	int32_t sameCmdParamSize = commands[0].GetNumParams();
+	int32_t refCmdID = commands[0].GetID();
+	uint8_t refCmdOpts = commands[0].GetOpts();
+	int32_t refCmdSize = commands[0].GetNumParams();
 
 	for (unsigned int c = 0; c < commandCount; c++) {
 		totalParams += commands[c].GetNumParams();
 
-		if (sameCmdID != 0 && sameCmdID != commands[c].GetID())
-			sameCmdID = 0;
-		if (sameCmdOpt != 0xFF && sameCmdOpt != commands[c].GetOpts())
-			sameCmdOpt = 0xFF;
-		if (sameCmdParamSize != 0xFFFF && sameCmdParamSize != commands[c].GetNumParams())
-			sameCmdParamSize = 0xFFFF;
+		if (refCmdID != 0 && refCmdID != commands[c].GetID())
+			refCmdID = 0;
+		if (refCmdOpts != 0xFF && refCmdOpts != commands[c].GetOpts())
+			refCmdOpts = 0xFF;
+		if (refCmdSize != 0xFFFF && refCmdSize != commands[c].GetNumParams())
+			refCmdSize = 0xFFFF;
 	}
 
-	unsigned int psize = 4 * (sameCmdID == 0) + (sameCmdOpt == 0xFF) + (2 * (sameCmdParamSize == 0xFFFF));
-	unsigned int msgLen = 0;
+	unsigned int optBytesPerCmd = 0;
+	unsigned int totalPacketLen = 0;
+
+	// optional data per command (cmdID, cmdOpts, #cmdParams)
+	optBytesPerCmd += (sizeof(uint32_t) * (refCmdID   == 0     ));
+	optBytesPerCmd += (sizeof(uint8_t ) * (refCmdOpts == 0xFF  ));
+	optBytesPerCmd += (sizeof(uint16_t) * (refCmdSize == 0xFFFF));
 
 	// msg type, msg size
-	msgLen += (sizeof(uint8_t) + sizeof(static_cast<uint16_t>(msgLen)));
+	totalPacketLen += (sizeof(uint8_t) + sizeof(static_cast<uint16_t>(totalPacketLen)));
 	// player ID, AI ID, pairwise
-	msgLen += (sizeof(uint8_t) * 2 + sizeof(pairwise));
-	msgLen += (sizeof(sameCmdID) + sizeof(sameCmdOpt) + static_cast<uint16_t>(sameCmdParamSize));
+	totalPacketLen += (sizeof(uint8_t) * 3);
+	totalPacketLen += (
+		sizeof(static_cast<uint32_t>(refCmdID  )) +
+		sizeof(static_cast<uint8_t >(refCmdOpts)) +
+		sizeof(static_cast<uint16_t>(refCmdSize))
+	);
 
-	msgLen += sizeof(static_cast<uint16_t>(unitIDCount));
-	msgLen += (unitIDCount * sizeof(uint16_t));
+	totalPacketLen += sizeof(static_cast<uint16_t>(unitIDCount));
+	totalPacketLen += (unitIDCount * sizeof(uint16_t));
 
-	msgLen += sizeof(static_cast<uint16_t>(commandCount));
-	msgLen += (commandCount * psize); // id, options, params size
-	msgLen += (totalParams * sizeof(float));
+	totalPacketLen += sizeof(static_cast<uint16_t>(commandCount));
+	totalPacketLen += (commandCount * optBytesPerCmd);
+	totalPacketLen += (totalParams * sizeof(float)); // params are floats
 
-	if (msgLen > 8192) {
-		LOG_L(L_WARNING, "[%s] discarded oversized (len=%i) NETMSG_AICOMMANDS packet", __func__, msgLen);
+	if (totalPacketLen > 8192) {
+		LOG_L(L_WARNING, "[%s] discarded oversized (len=%i) NETMSG_AICOMMANDS packet", __func__, totalPacketLen);
 		return; // do not send oversized packets
 	}
 
-	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
-	*packet << static_cast<uint8_t>(NETMSG_AICOMMANDS)
-	        << static_cast<uint16_t>(msgLen)
+	netcode::PackPacket* packet = new netcode::PackPacket(totalPacketLen);
+	*packet << static_cast<uint8_t >(NETMSG_AICOMMANDS)
+	        << static_cast<uint16_t>(totalPacketLen)
 
 	        << static_cast<uint8_t>(gu->myPlayerNum)
 	        << static_cast<uint8_t>(MAX_AIS)
 	        // << static_cast<uint8_t>(MAX_TEAMS)
 
-	        << static_cast<uint8_t>(pairwise)
-	        << static_cast<uint32_t>(sameCmdID)
-	        << static_cast<uint8_t>(sameCmdOpt)
-	        << static_cast<uint16_t>(sameCmdParamSize);
+	        << static_cast<uint8_t >(pairwise)
+	        << static_cast<uint32_t>(refCmdID)
+	        << static_cast<uint8_t >(refCmdOpts)
+	        << static_cast<uint16_t>(refCmdSize);
 
 	// NOTE: does not check for invalid unitIDs
 	*packet << static_cast<uint16_t>(unitIDCount);
@@ -1084,11 +1093,11 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 	for (unsigned int i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
 
-		if (sameCmdID == 0)
+		if (refCmdID == 0)
 			*packet << static_cast<uint32_t>(cmd.GetID());
-		if (sameCmdOpt == 0xFF)
-			*packet << cmd.GetOpts();
-		if (sameCmdParamSize == 0xFFFF)
+		if (refCmdOpts == 0xFF)
+			*packet << static_cast<uint8_t>(cmd.GetOpts());
+		if (refCmdSize == 0xFFFF)
 			*packet << static_cast<uint16_t>(cmd.GetNumParams());
 
 		for (unsigned int j = 0, n = cmd.GetNumParams(); j < n; j++) {
