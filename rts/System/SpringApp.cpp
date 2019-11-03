@@ -647,8 +647,9 @@ void SpringApp::Reload(const std::string script)
 		clientNet->ResetDemoRecorder();
 
 	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
-	// ~CGame also calls this, which does not matter because handlers are gone by then
-	game->KillLua(false);
+	// ~CGame also calls this, which does not matter because Lua handlers are gone by then
+	if (game != nullptr)
+		game->KillLua(false);
 
 	LOG("[SpringApp::%s][3]", __func__);
 
