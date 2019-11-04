@@ -1863,9 +1863,17 @@ function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
+function widgetHandler:UnitCommand(
+	unitID, unitDefID, unitTeam,
+	cmdId, cmdParams, cmdOpts, cmdTag,
+	playerID, fromSynced, fromLua
+)
   for _,w in ipairs(self.UnitCommandList) do
-    w:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
+    w:UnitCommand(
+      unitID, unitDefID, unitTeam,
+      cmdID, cmdParams, cmdOpts, cmdTag,
+      playerID, fromSynced, fromLua
+    )
   end
   return
 end
