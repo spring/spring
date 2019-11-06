@@ -66,11 +66,11 @@ public:
 	static CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
 	static CUnit* GetClosestEnemyUnitNoLosTest(
 		const CUnit* excludeUnit,
-		const float3& pos,
+		const float3& searchPos,
 		float searchRadius,
 		int searchAllyteam,
-		bool testSphere,
-		bool canBeBlind
+		bool sphereDistTest,
+		bool checkSightDist
 	);
 	static CUnit* GetClosestFriendlyUnit(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);
 	static CUnit* GetClosestEnemyAircraft(const CUnit* excludeUnit, const float3& pos, float searchRadius, int searchAllyteam);

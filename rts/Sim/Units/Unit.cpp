@@ -2383,7 +2383,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 	const CUnit* closestEnemy = this;
 
 	if (!stunCheck)
-		closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(this, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, true);
+		closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(this, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 
 	return (eventHandler.AllowUnitCloak(this, closestEnemy));
 }
