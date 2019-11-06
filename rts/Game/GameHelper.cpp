@@ -557,28 +557,26 @@ namespace {
 		 * Search area just needs to touch the unit's radius: this query includes the
 		 * target unit's radius.
 		 *
-		 * If canBeBlind is true then the LOS test is skipped.
+		 * If checkSightDist is false then the LOS test is skipped.
 		 */
 		struct ClosestUnit_InLos : public Base
 		{
 		protected:
 			float closeDist;
 			CUnit* closeUnit;
-			const bool canBeBlind;
+			const bool checkSightDist;
 
 		public:
-			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
+			ClosestUnit_InLos(const float3& pos, float searchRadius, bool checkSightDistance) :
 				Base(pos, searchRadius + unitHandler.MaxUnitRadius()),
-				closeDist(searchRadius), closeUnit(nullptr), canBeBlind(canBeBlind) {}
+				closeDist(searchRadius), closeUnit(nullptr), checkSightDist(checkSightDistance) {}
 
 			void AddUnit(CUnit* u) {
 				// FIXME: use volumeBoundingRadius?
 				// (more for consistency than need)
 				const float dist = pos.distance(u->midPos) - u->radius;
 
-				if (dist <= closeDist &&
-					(canBeBlind || (u->losRadius > dist))
-				) {
+				if (dist <= closeDist && (!checkSightDist || (dist <= u->losRadius))) {
 					closeDist = dist;
 					closeUnit = u;
 				}
@@ -591,21 +589,19 @@ namespace {
 		 * Returns the closest unit (2D) which may have LOS on the search position.
 		 * Whether it actually has LOS depends on nearby obstacles.
 		 *
-		 * If canBeBlind is true then the LOS test is skipped.
+		 * If checkSightDist is false then the LOS test is skipped.
 		 */
 		struct ClosestUnit_InLos_Cylinder : public ClosestUnit
 		{
-			const bool canBeBlind;
+			const bool checkSightDist;
 
-			ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
-				ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
+			ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool checkSightDistance) :
+				ClosestUnit(pos, searchRadius), checkSightDist(checkSightDistance) {}
 
 			void AddUnit(CUnit* u) {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
-				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius) > sqDist)
-				) {
+				if (sqDist <= closeSqDist && (!checkSightDist || sqDist <= Square(u->losRadius))) {
 					closeSqDist = sqDist;
 					closeUnit = u;
 				}
@@ -779,22 +775,22 @@ CUnit* CGameHelper::GetClosestValidTarget(const float3& pos, float searchRadius,
 
 CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(
 	const CUnit* excludeUnit,
-	const float3& pos,
+	const float3& searchPos,
 	float searchRadius,
 	int searchAllyteam,
-	bool testSphere,
-	bool canBeBlind
+	bool sphereDistTest,
+	bool checkSightDist
 ) {
 	CUnit* closestUnit = nullptr;
 
-	if (testSphere) {
+	if (sphereDistTest) {
 		// includes target radius
-		Query::ClosestUnit_InLos q(pos, searchRadius, canBeBlind);
+		Query::ClosestUnit_InLos q(searchPos, searchRadius, checkSightDist);
 		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		closestUnit = q.GetClosestUnit();
 	} else {
 		// excludes target radius
-		Query::ClosestUnit_InLos_Cylinder q(pos, searchRadius, canBeBlind);
+		Query::ClosestUnit_InLos_Cylinder q(searchPos, searchRadius, checkSightDist);
 		QueryUnits(Filter::Enemy(excludeUnit, searchAllyteam), q);
 		closestUnit = q.GetClosestUnit();
 	}

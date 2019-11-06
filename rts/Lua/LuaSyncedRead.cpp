@@ -2519,14 +2519,20 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 	const bool wantLOS = !lua_isboolean(L, 3) || lua_toboolean(L, 3);
 	const bool testLOS = !CLuaHandle::GetHandleFullRead(L) || wantLOS;
 
-	const CUnit* target = CGameHelper::GetClosestEnemyUnitNoLosTest(unit, unit->pos, luaL_optnumber(L, 2, 1.0e9f), unit->allyteam, false, !testLOS);
+	const bool sphereDistTest = luaL_optboolean(L, 4, false);
+	const bool checkSightDist = luaL_optboolean(L, 5, false);
 
-	if (target != nullptr) {
-		lua_pushnumber(L, target->id);
-		return 1;
-	}
+	// if ignoring LOS, pass checkSightDist=false (by default)
+	// such that enemies outside unit's los-range are included
+	const CUnit* target = testLOS?
+		CGameHelper::GetClosestEnemyUnit         (unit, unit->pos, luaL_optnumber(L, 2, 1.0e9f), unit->allyteam                                ):
+		CGameHelper::GetClosestEnemyUnitNoLosTest(unit, unit->pos, luaL_optnumber(L, 2, 1.0e9f), unit->allyteam, sphereDistTest, checkSightDist);
 
-	return 0;
+	if (target == nullptr)
+		return 0;
+
+	lua_pushnumber(L, target->id);
+	return 1;
 }
 
 
