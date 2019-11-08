@@ -378,9 +378,9 @@ void main() {
 		detailColor = vec4(splatDetailStrength.y);
 
 		// convert the splat detail normal to worldspace,
-		// then mix it with the regular one (note: needs
-		// another normalization?)
-		normalVec = mix(normalVec, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
+		// then mix it with the regular one, then normalize it again 
+		// to get correct specular and diffuse highlights. 
+		normalVec = normalize(mix(normalVec, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x));
 	}
 	#endif
 
