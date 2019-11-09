@@ -129,17 +129,17 @@ public:
 			indcs.reserve(K);
 
 			for (size_t j = 0; j < K; j++) {
-				indcs.push_back((num_chunks + 1) * K - j - 1);
+				indcs.push_back(static_cast<uint32_t>((num_chunks + 1) * K - j - 1));
 			}
 
 			num_chunks += 1;
 		}
 
-		const size_t idx = spring::VectorBackPop(indcs);
+		const uint32_t idx = spring::VectorBackPop(indcs);
 
 		assert(size <= PAGE_SIZE());
-		memcpy(ptr = page_mem(page_index = idx), &idx, sizeof(size_t));
-		return (ptr + sizeof(size_t));
+		memcpy(ptr = page_mem(page_index = idx), &idx, sizeof(idx));
+		return (ptr + sizeof(idx));
 	}
 
 
@@ -153,11 +153,11 @@ public:
 	}
 
 	void freeMem(void* ptr) {
-		const size_t idx = page_idx(ptr);
+		const uint32_t idx = page_idx(ptr);
 
 		// zero-fill page
 		assert(idx < (N * K));
-		memset(page_mem(idx), 0, sizeof(size_t) + S);
+		memset(page_mem(idx), 0, sizeof(idx) + S);
 
 		indcs.push_back(idx);
 	}
@@ -171,7 +171,7 @@ public:
 		// (objects are assumed to have already been freed)
 		for (size_t i = 0; i < num_chunks; i++) {
 			for (size_t j = 0; j < K; j++) {
-				indcs.push_back((i + 1) * K - j - 1);
+				indcs.push_back(static_cast<uint32_t>((i + 1) * K - j - 1));
 			}
 		}
 
@@ -194,26 +194,26 @@ public:
 		return (&chunk_mem[idx % K][0] + ofs);
 	}
 
-	size_t page_idx(void* ptr) const {
+	uint32_t page_idx(void* ptr) const {
 		const uint8_t* raw_ptr = reinterpret_cast<const uint8_t*>(ptr);
-		const uint8_t* idx_ptr = raw_ptr - sizeof(size_t);
+		const uint8_t* idx_ptr = raw_ptr - sizeof(uint32_t);
 
-		return (*reinterpret_cast<const size_t*>(idx_ptr));
+		return (*reinterpret_cast<const uint32_t*>(idx_ptr));
 	}
 
 	size_t alloc_size() const { return (num_chunks * NUM_PAGES() * PAGE_SIZE()); } // size of total number of pages added over the pool's lifetime
 	size_t freed_size() const { return (indcs.size() * PAGE_SIZE()); } // size of number of pages that were freed and are awaiting reuse
 
-	bool mapped(void* ptr) const { return ((page_idx(ptr) < (num_chunks * K)) && (page_mem(page_idx(ptr), sizeof(size_t)) == ptr)); }
-	bool alloced(void* ptr) const { return ((page_index < (num_chunks * K)) && (page_mem(page_index, sizeof(size_t)) == ptr)); }
+	bool mapped(void* ptr) const { return ((page_idx(ptr) < (num_chunks * K)) && (page_mem(page_idx(ptr), sizeof(uint32_t)) == ptr)); }
+	bool alloced(void* ptr) const { return ((page_index < (num_chunks * K)) && (page_mem(page_index, sizeof(uint32_t)) == ptr)); }
 
 private:
-	// first size_t bytes are reserved for index
-	typedef std::array<uint8_t[sizeof(size_t) + S], K> t_chunk_mem;
+	// first sizeof(uint32_t) bytes are reserved for index
+	typedef std::array<uint8_t[sizeof(uint32_t) + S], K> t_chunk_mem;
 	typedef std::unique_ptr<t_chunk_mem> t_chunk_ptr;
 
 	std::array<t_chunk_ptr, N> chunks;
-	std::vector<size_t> indcs;
+	std::vector<uint32_t> indcs;
 
 	size_t num_chunks = 0;
 	size_t page_index = 0;
