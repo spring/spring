@@ -137,6 +137,9 @@ void CCameraHandler::Init()
 		RegisterAction("viewsave");
 		RegisterAction("viewload");
 
+		RegisterAction("camtimefactor");
+		RegisterAction("camtimeexponent");
+
 		SortRegisteredActions();
 	}
 
@@ -505,12 +508,12 @@ void CCameraHandler::PushAction(const Action& action)
 		case hashString("viewsave"): {
 			if (!action.extra.empty()) {
 				SaveView(action.extra);
-				LOG("Saved view: %s", action.extra.c_str());
+				LOG("[CamHandler::%s] saved view \"%s\"", __func__, action.extra.c_str());
 			}
 		} break;
 		case hashString("viewload"): {
-			if (!LoadView(action.extra))
-				LOG_L(L_WARNING, "Loading view failed!");
+			if (LoadView(action.extra))
+				LOG("[CamHandler::%s] loaded view \"%s\"", __func__, action.extra.c_str());
 
 		} break;
 
@@ -519,6 +522,19 @@ void CCameraHandler::PushAction(const Action& action)
 		} break;
 		case hashString("togglecammode"): {
 			ToggleState();
+		} break;
+
+		case hashString("camtimefactor"): {
+			if (!action.extra.empty())
+				camTransState.timeFactor = std::atof(action.extra.c_str());
+
+			LOG("[CamHandler::%s] set transition-time factor to %f", __func__, camTransState.timeFactor);
+		} break;
+		case hashString("camtimeexponent"): {
+			if (!action.extra.empty())
+				camTransState.timeExponent = std::atof(action.extra.c_str());
+
+			LOG("[CamHandler::%s] set transition-time exponent to %f", __func__, camTransState.timeExponent);
 		} break;
 	}
 }
