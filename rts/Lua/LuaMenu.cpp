@@ -258,6 +258,8 @@ bool CLuaMenu::LoadLuaMenuFunctions(lua_State* L)
 
 bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 {
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetLuaMemUsage);
+
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetViewGeometry);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetWindowGeometry);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetScreenGeometry);
