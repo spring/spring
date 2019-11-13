@@ -647,6 +647,16 @@ void CUnit::Update()
 	outOfMapTime *= (!pos.IsInBounds());
 }
 
+void CUnit::UpdateWeapons()
+{
+	if (!CanUpdateWeapons())
+		return;
+
+	for (CWeapon* w: weapons) {
+		w->Update();
+	}
+}
+
 void CUnit::UpdateTransportees()
 {
 	for (TransportedUnit& tu: transportedUnits) {
@@ -1018,12 +1028,6 @@ void CUnit::SlowUpdate()
 
 	CalculateTerrainType();
 	UpdateTerrainType();
-}
-
-
-bool CUnit::CanUpdateWeapons() const
-{
-	return (!beingBuilt && !IsStunned() && !dontUseWeapons && !dontFire && !isDead);
 }
 
 
@@ -2327,7 +2331,7 @@ void CUnit::TempHoldFire(int cmdID)
 	if (!eventHandler.AllowBuilderHoldFire(this, cmdID))
 		return;
 
-	// block the SlowUpdateWeapons cycle
+	// block the {Slow}UpdateWeapons cycle
 	SetHoldFire(true);
 
 	// clear current target (if any)
@@ -2809,9 +2813,10 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(inBuildStance),
 	CR_MEMBER(useHighTrajectory),
+	CR_MEMBER(onTempHoldFire),
 
-	CR_MEMBER(dontUseWeapons),
-	CR_MEMBER(dontFire),
+	CR_MEMBER(forceUseWeapons),
+	CR_MEMBER(blockUseWeapons),
 
 	CR_MEMBER(deathScriptFinished),
 	CR_MEMBER(delayedWreckLevel),

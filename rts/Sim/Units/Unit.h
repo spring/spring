@@ -153,7 +153,10 @@ public:
 	bool IsStunned() const { return stunned; }
 	bool IsIdle() const;
 
-	bool CanUpdateWeapons() const;
+	bool HaveTarget() const { return (curTarget.type != Target_None); }
+	bool CanUpdateWeapons() const {
+		return (forceUseWeapons || (!blockUseWeapons && !onTempHoldFire !isDead && !beingBuilt && !IsStunned()));
+	}
 
 	void SetNeutral(bool b);
 	void SetStunned(bool stun);
@@ -163,6 +166,8 @@ public:
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	void UpdateLosStatus(int allyTeam);
 	unsigned short CalcLosStatus(int allyTeam) const;
+
+	void UpdateWeapons();
 
 	void SlowUpdateWeapons();
 	void SlowUpdateKamikaze(bool scanForTargets);
@@ -212,8 +217,7 @@ public:
 	virtual void IncomingMissile(CMissileProjectile* missile);
 
 	void TempHoldFire(int cmdID);
-	void SetHoldFire(bool b) { dontFire = b; }
-	bool HaveTarget() const { return (curTarget.type != Target_None); }
+	void SetHoldFire(bool b) { onTempHoldFire = b; }
 
 	// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
@@ -487,22 +491,21 @@ public:
 	bool inBuildStance = false;
 	// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory = false;
+	// used by landed gunships to block weapon Update()'s, also by builders to
+	// prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s during certain
+	// commands
+	bool onTempHoldFire = false;
 
-	// used by landed gunships to block weapon Update()'s
-	bool dontUseWeapons = false;
-	// used by builders to prevent weapon SlowUpdate()'s and Attack{Unit,Ground}()'s
-	bool dontFire = false;
+	// Lua overrides for CanUpdateWeapons
+	bool forceUseWeapons = false;
+	bool blockUseWeapons = false;
 
-	// the script has finished exectuting the killed function and the unit can be deleted
+	// signals if script has finished executing Killed and the unit can be deleted
 	bool deathScriptFinished = false;
 
-	/**
-	 * neutral allegiance, will not be automatically
-	 * fired upon unless the fireState is set to >
-	 * FIRESTATE_FIREATWILL
-	 */
+	// if true, unit will not be automatically fired upon unless attacker's fireState is set to > FIREATWILL
 	bool neutral = false;
-	// is in built (:= nanoframe)
+	// if unit is currently incompletely constructed (implies buildProgress < 1)
 	bool beingBuilt = true;
 	// if the updir is straight up or align to the ground vector
 	bool upright = true;
