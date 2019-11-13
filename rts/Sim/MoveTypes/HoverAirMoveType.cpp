@@ -147,7 +147,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	bankingAllowed = owner->unitDef->bankingAllowed;
 
 	// prevent weapons from being updated and firing while on the ground
-	owner->dontUseWeapons = true;
+	owner->SetHoldFire(true);
 }
 
 
@@ -174,7 +174,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		return;
 
 
-	owner->dontUseWeapons = (newState == AIRCRAFT_LANDED);
+	owner->onTempHoldFire = (newState == AIRCRAFT_LANDED);
 	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 
 	aircraftState = newState;

@@ -169,6 +169,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitHealth);
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
+	REGISTER_LUA_CFUNC(SetUnitUseWeapons);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitWeaponDamages);
 	REGISTER_LUA_CFUNC(SetUnitMaxRange);
@@ -1692,6 +1693,18 @@ static bool SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 }
 
 
+int LuaSyncedCtrl::SetUnitUseWeapons(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->forceUseWeapons = luaL_optboolean(L, 2, unit->forceUseWeapons);
+	unit->blockUseWeapons = luaL_optboolean(L, 3, unit->blockUseWeapons);
+	return 0;
+}
+
 int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);
@@ -1886,34 +1899,40 @@ int LuaSyncedCtrl::SetUnitArmored(lua_State* L)
 
 static unsigned char ParseLosBits(lua_State* L, int index, unsigned char bits)
 {
-	if (lua_isnumber(L, index)) {
+	if (lua_isnumber(L, index))
 		return (unsigned char)lua_tonumber(L, index);
-	}
-	else if (lua_istable(L, index)) {
+
+	if (lua_istable(L, index)) {
 		for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2)) { luaL_error(L, "bad key type");   }
 			if (!lua_isboolean(L, -1))   { luaL_error(L, "bad value type"); }
-			const string key = lua_tostring(L, -2);
+
 			const bool set = lua_toboolean(L, -1);
-			if (key == "los") {
-				if (set) { bits |=  LOS_INLOS; }
-				else     { bits &= ~LOS_INLOS; }
-			}
-			else if (key == "radar") {
-				if (set) { bits |=  LOS_INRADAR; }
-				else     { bits &= ~LOS_INRADAR; }
-			}
-			else if (key == "prevLos") {
-				if (set) { bits |=  LOS_PREVLOS; }
-				else     { bits &= ~LOS_PREVLOS; }
-			}
-			else if (key == "contRadar") {
-				if (set) { bits |=  LOS_CONTRADAR; }
-				else     { bits &= ~LOS_CONTRADAR; }
+
+			switch (hashString(lua_tostring(L, -2))) {
+				case hashString("los"): {
+					if (set) { bits |=  LOS_INLOS; }
+					else     { bits &= ~LOS_INLOS; }
+				} break;
+				case hashString("radar"): {
+					if (set) { bits |=  LOS_INRADAR; }
+					else     { bits &= ~LOS_INRADAR; }
+				} break;
+				case hashString("prevLos"): {
+					if (set) { bits |=  LOS_PREVLOS; }
+					else     { bits &= ~LOS_PREVLOS; }
+				} break;
+				case hashString("contRadar"): {
+					if (set) { bits |=  LOS_CONTRADAR; }
+					else     { bits &= ~LOS_CONTRADAR; }
+				} break;
+				default: {
+				} break;
 			}
 		}
 		return bits;
 	}
+
  	luaL_error(L, "ERROR: expected number or table");
 	return 0;
 }
@@ -4248,6 +4267,7 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 	return 0;
 }
 
+// NB: not permanent
 int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __func__, 1);

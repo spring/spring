@@ -375,16 +375,7 @@ void CUnitHandler::UpdateUnitWeapons()
 {
 	SCOPED_TIMER("Sim::Unit::Weapon");
 	for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
-		CUnit* unit = activeUnits[activeUpdateUnit];
-
-		if (!unit->CanUpdateWeapons())
-			continue;
-
-		for (CWeapon* w: unit->weapons) {
-			w->Update();
-		}
-
-		assert(activeUnits[activeUpdateUnit] == unit);
+		activeUnits[activeUpdateUnit]->UpdateWeapons();
 	}
 }
 
