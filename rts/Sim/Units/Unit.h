@@ -155,7 +155,7 @@ public:
 
 	bool HaveTarget() const { return (curTarget.type != Target_None); }
 	bool CanUpdateWeapons() const {
-		return (forceUseWeapons || (!blockUseWeapons && !onTempHoldFire !isDead && !beingBuilt && !IsStunned()));
+		return (forceUseWeapons || (allowUseWeapons && !onTempHoldFire !isDead && !beingBuilt && !IsStunned()));
 	}
 
 	void SetNeutral(bool b);
@@ -498,7 +498,7 @@ public:
 
 	// Lua overrides for CanUpdateWeapons
 	bool forceUseWeapons = false;
-	bool blockUseWeapons = false;
+	bool allowUseWeapons =  true;
 
 	// signals if script has finished executing Killed and the unit can be deleted
 	bool deathScriptFinished = false;

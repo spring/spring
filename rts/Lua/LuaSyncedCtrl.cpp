@@ -1701,7 +1701,7 @@ int LuaSyncedCtrl::SetUnitUseWeapons(lua_State* L)
 		return 0;
 
 	unit->forceUseWeapons = luaL_optboolean(L, 2, unit->forceUseWeapons);
-	unit->blockUseWeapons = luaL_optboolean(L, 3, unit->blockUseWeapons);
+	unit->allowUseWeapons = luaL_optboolean(L, 3, unit->allowUseWeapons);
 	return 0;
 }
 
