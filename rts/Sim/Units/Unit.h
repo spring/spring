@@ -155,7 +155,7 @@ public:
 
 	bool HaveTarget() const { return (curTarget.type != Target_None); }
 	bool CanUpdateWeapons() const {
-		return (forceUseWeapons || (allowUseWeapons && !onTempHoldFire !isDead && !beingBuilt && !IsStunned()));
+		return (forceUseWeapons || (allowUseWeapons && !onTempHoldFire && !isDead && !beingBuilt && !IsStunned()));
 	}
 
 	void SetNeutral(bool b);
