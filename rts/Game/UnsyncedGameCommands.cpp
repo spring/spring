@@ -1631,6 +1631,29 @@ public:
 };
 
 
+class FeatureFadeDistActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FeatureFadeDistActionExecutor(): IUnsyncedActionExecutor("FeatureFadeDist", "") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		featureDrawer->ConfigNotify("FeatureFadeDistance", action.GetArgs());
+		return true;
+	}
+};
+
+class FeatureDrawDistActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FeatureDrawDistActionExecutor(): IUnsyncedActionExecutor("FeatureDrawDist", "") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		featureDrawer->ConfigNotify("FeatureDrawDistance", action.GetArgs());
+		return true;
+	}
+};
+
+
 
 class SpeedUpActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3362,6 +3385,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<LessGrassActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MoreTreesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<LessTreesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FeatureFadeDistActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<FeatureDrawDistActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SpeedUpActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<SlowDownActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<ControlUnitActionExecutor>());
