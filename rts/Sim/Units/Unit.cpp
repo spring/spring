@@ -2817,7 +2817,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(onTempHoldFire),
 
 	CR_MEMBER(forceUseWeapons),
-	CR_MEMBER(blockUseWeapons),
+	CR_MEMBER(allowUseWeapons),
 
 	CR_MEMBER(deathScriptFinished),
 	CR_MEMBER(delayedWreckLevel),
