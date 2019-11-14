@@ -74,30 +74,30 @@ static bool SetFeatureDrawAlpha(
 		return true;
 	}
 
-	const float sqDist = (f->pos - cam->GetPos()).SqLength();
+	const float sqCamDist = (f->pos - cam->GetPos()).SqLength();
 	const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
 
 	// if true, feature will become a fartex
-	if (sqDist >= farLength)
+	if (sqCamDist >= farLength)
 		return false;
 
-	float sqFadeDistB = sqFadeDistMin;
-	float sqFadeDistE = sqFadeDistMax;
+	float sqFadeDistBeg = sqFadeDistMin;
+	float sqFadeDistEnd = sqFadeDistMax;
 
 	if (farLength < sqFadeDistMax) {
-		sqFadeDistE = farLength;
-		sqFadeDistB = farLength * (sqFadeDistMin / sqFadeDistMax);
+		sqFadeDistBeg = farLength * (sqFadeDistMin / sqFadeDistMax);
+		sqFadeDistEnd = farLength;
 	}
 
-	if (sqDist < sqFadeDistB) {
+	if (sqCamDist < sqFadeDistBeg) {
 		// draw feature as normal, no fading
 		f->drawAlpha = 1.0f;
 		return true;
 	}
 
-	if (sqDist < sqFadeDistE) {
+	if (sqCamDist < sqFadeDistEnd) {
 		// otherwise save it for the fade-pass
-		f->drawAlpha = 1.0f - ((sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB));
+		f->drawAlpha = 1.0f - ((sqCamDist - sqFadeDistBeg) / (sqFadeDistEnd - sqFadeDistBeg));
 		return true;
 	}
 
@@ -208,16 +208,20 @@ void CFeatureDrawer::ConfigNotify(const std::string& key, const std::string& val
 {
 	switch (hashString(key.c_str())) {
 		case hashString("FeatureDrawDistance"): {
-			featureDrawDistance = std::max(0.0f, std::strtof(value.c_str(), nullptr));
+			featureDrawDistance = std::strtof(value.c_str(), nullptr);
 		} break;
 		case hashString("FeatureFadeDistance"): {
-			featureFadeDistance = std::max(0.0f, std::strtof(value.c_str(), nullptr));
+			featureFadeDistance = std::strtof(value.c_str(), nullptr);
 		} break;
 		default: {
 		} break;
 	}
 
-	featureFadeDistance = std::min(featureFadeDistance, featureDrawDistance);
+	featureDrawDistance = std::max(               0.0f, featureDrawDistance);
+	featureFadeDistance = std::max(               0.0f, featureFadeDistance);
+	featureFadeDistance = std::min(featureDrawDistance, featureFadeDistance);
+
+	LOG_L(L_INFO, "[FeatureDrawer::%s] {draw,fade}distance set to {%f,%f}", __func__, featureDrawDistance, featureFadeDistance);
 }
 
 
