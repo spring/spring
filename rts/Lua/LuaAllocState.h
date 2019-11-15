@@ -6,11 +6,6 @@
 #include <atomic>
 
 struct SLuaAllocState {
-	static constexpr uint64_t MAX_ALLOC_BYTES[] = {
-		 768u * (1024u * 1024u), // spring32
-		1536u * (1024u * 1024u), // spring64
-	};
-
 	std::atomic<uint64_t> allocedBytes;
 	std::atomic<uint64_t> numLuaAllocs;
 	std::atomic<uint64_t> luaAllocTime;
