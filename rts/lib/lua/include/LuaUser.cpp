@@ -230,7 +230,11 @@ const char* spring_lua_get_handle_name(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
-static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={" _STPF_ "," _STPF_ "}bytes\n";
+static constexpr const char* LUA_OOM_FMT_STR = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={" _STPF_ "," _STPF_ "}bytes\n";
+static constexpr uint64_t MAX_ALLOC_BYTES[] = {
+	 768u * (1024u * 1024u), // spring32
+	1536u * (1024u * 1024u), // spring64
+};
 
 // tracks allocations across all states
 static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
@@ -241,7 +245,7 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 	const CLuaHandle* lho = lcd->owner;
 
 	const char* lhn = spring_lua_get_handle_name(lho);
-	const char* fmt = maxAllocFmtStr;
+	const char* fmt = LUA_OOM_FMT_STR;
 
 	SLuaAllocState& s = gLuaAllocState;
 	SLuaAllocError& e = gLuaAllocError;
@@ -250,7 +254,7 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 		e.msgPtr = &e.msgBuf[0];
 
 	// append to buffer until it fills up or get_error is called
-	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, s.allocedBytes.load(), SLuaAllocState::MAX_ALLOC_BYTES[__archBits__ == 64]);
+	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, s.allocedBytes.load(), MAX_ALLOC_BYTES[__archBits__ == 64]);
 }
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
@@ -270,7 +274,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > SLuaAllocState::MAX_ALLOC_BYTES[__archBits__ == 64])) {
+	if ((nsize > osize) && (gLuaAllocState.allocedBytes.load() > MAX_ALLOC_BYTES[__archBits__ == 64])) {
 		// (re)allocation
 		// better kill Lua than whole engine; instant desync if synced handle
 		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
@@ -309,7 +313,7 @@ void spring_lua_alloc_get_stats(SLuaAllocState* state)
 bool spring_lua_alloc_skip_gc(float gcLoadMult)
 {
 	// randomly skip a GC cycle with probability 1 - (weighted memory load ratio)
-	const float rawLoadRatio = float(gLuaAllocState.allocedBytes.load()) / float(SLuaAllocState::MAX_ALLOC_BYTES[__archBits__ == 64]);
+	const float rawLoadRatio = float(gLuaAllocState.allocedBytes.load()) / float(MAX_ALLOC_BYTES[__archBits__ == 64]);
 	const float modLoadRatio = gcLoadMult * rawLoadRatio;
 	return (lguRNG.NextFloat() > modLoadRatio);
 }
