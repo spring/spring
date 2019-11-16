@@ -181,11 +181,11 @@ void CFeatureDrawer::Kill()
 
 void CFeatureDrawer::ConfigNotify(const std::string& key, const std::string& value)
 {
-	switch (hashString(key.c_str())) {
-		case hashString("FeatureDrawDistance"): {
+	switch (hashStringLower(key.c_str())) {
+		case hashStringLower("FeatureDrawDistance"): {
 			featureDrawDistance = std::strtof(value.c_str(), nullptr);
 		} break;
-		case hashString("FeatureFadeDistance"): {
+		case hashStringLower("FeatureFadeDistance"): {
 			featureFadeDistance = std::strtof(value.c_str(), nullptr);
 		} break;
 		default: {

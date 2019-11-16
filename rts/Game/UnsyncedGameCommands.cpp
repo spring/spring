@@ -1633,22 +1633,22 @@ public:
 
 class FeatureFadeDistActionExecutor : public IUnsyncedActionExecutor {
 public:
-	FeatureFadeDistActionExecutor(): IUnsyncedActionExecutor("FeatureFadeDist", "") {
+	FeatureFadeDistActionExecutor(): IUnsyncedActionExecutor("FeatureFadeDistance", "") {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		featureDrawer->ConfigNotify("FeatureFadeDistance", action.GetArgs());
+		featureDrawer->ConfigNotify(action.GetCmd(), action.GetArgs());
 		return true;
 	}
 };
 
 class FeatureDrawDistActionExecutor : public IUnsyncedActionExecutor {
 public:
-	FeatureDrawDistActionExecutor(): IUnsyncedActionExecutor("FeatureDrawDist", "") {
+	FeatureDrawDistActionExecutor(): IUnsyncedActionExecutor("FeatureDrawDistance", "") {
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		featureDrawer->ConfigNotify("FeatureDrawDistance", action.GetArgs());
+		featureDrawer->ConfigNotify(action.GetCmd(), action.GetArgs());
 		return true;
 	}
 };
