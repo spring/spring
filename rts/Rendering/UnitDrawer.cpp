@@ -366,20 +366,6 @@ void CUnitDrawer::Kill()
 
 
 
-void CUnitDrawer::SetUnitDrawDist(float dist)
-{
-	unitDrawDist = dist;
-	unitDrawDistSqr = dist * dist;
-}
-
-void CUnitDrawer::SetUnitIconDist(float dist)
-{
-	unitIconDist = dist;
-	iconLength = 750.0f * unitIconDist * unitIconDist;
-}
-
-
-
 void CUnitDrawer::Update()
 {
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {

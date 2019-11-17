@@ -143,8 +143,10 @@ public:
 	void ResetShowUnitBuildSquares(bool onMiniMap, bool testCanBuild);
 	bool ShowUnitBuildSquares(const BuildInfo& buildInfo, const std::vector<Command>& commands, bool testCanBuild);
 
-	void SetUnitDrawDist(float dist);
-	void SetUnitIconDist(float dist);
+	#define sqr(x) ((x) * (x))
+	void SetUnitDrawDist(float dist) { unitDrawDistSqr = sqr(unitDrawDist = dist)         ; }
+	void SetUnitIconDist(float dist) {      iconLength = sqr(unitIconDist = dist) * 750.0f; }
+	#undef sqr
 
 public:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);

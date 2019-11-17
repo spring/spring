@@ -101,6 +101,8 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
+	void SetDrawFlag(int f) { drawFlag = f; }
+
 	bool IsInLosForAllyTeam(int argAllyTeam) const;
 
 	// NOTE:
@@ -118,7 +120,7 @@ public:
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
-	 * Basically, once a corspe has been a little bit reclaimed,
+	 * Basically, once a corpse has been a little bit reclaimed,
 	 * if they start rezzing, then they cannot reclaim again
 	 * until the corpse has been fully 'repaired'.
 	 */
@@ -132,9 +134,6 @@ public:
 	float reclaimTime = 0.0f;
 	float reclaimLeft = 1.0f;
 
-	SResourcePack defResources = {0.0f, 1.0f};
-	SResourcePack resources = {0.0f, 1.0f};
-
 	int lastReclaimFrame = 0;
 	int fireTime = 0;
 	int smokeTime = 0;
@@ -142,10 +141,13 @@ public:
 	int drawQuad = -1; /// which drawQuad we are part of (unsynced)
 	int drawFlag = -2; /// one of FD_*_FLAG (unsynced)
 
-	const FeatureDef* def = nullptr;
-	const UnitDef* udef = nullptr; /// type of unit this feature should be resurrected to
+	SResourcePack defResources = {0.0f, 1.0f};
+	SResourcePack resources = {0.0f, 1.0f};
 
 	MoveCtrl moveCtrl;
+
+	const FeatureDef* def = nullptr;
+	const UnitDef* udef = nullptr; /// type of unit this feature should be resurrected to
 
 	/// object on top of us if we are a geothermal vent
 	CSolidObject* solidOnTop = nullptr;
