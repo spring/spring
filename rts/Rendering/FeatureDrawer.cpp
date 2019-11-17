@@ -66,7 +66,7 @@ static bool SetFeatureDrawAlpha(
 		return (f->drawAlpha = 0.0f, false);
 
 	const float sqrCamDist = (f->pos - cam->GetPos()).SqLength();
-	const float farTexDist = Square(f->drawRadius * unitDrawer->unitDrawDist);
+	const float farTexDist = Square(f->GetDrawRadius() * unitDrawer->unitDrawDist);
 
 	// first test if feature should be rendered as a fartex
 	if (sqrCamDist >= farTexDist)
