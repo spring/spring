@@ -136,8 +136,10 @@ public:
 	void ResetAlphaDrawing(bool deferredPass);
 
 
-	void SetUnitDrawDist(float dist);
-	void SetUnitIconDist(float dist);
+	#define sqr(x) ((x) * (x))
+	void SetUnitDrawDist(float dist) { unitDrawDistSqr = sqr(unitDrawDist = dist)         ; }
+	void SetUnitIconDist(float dist) {      iconLength = sqr(unitIconDist = dist) * 750.0f; }
+	#undef sqr
 
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
