@@ -149,11 +149,18 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, const CSolidObject* i
 
 bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, const CSolidObject* ignoreObj) const
 {
-	const int xSqr = unsigned(pos.x) / SQUARE_SIZE;
-	const int zSqr = unsigned(pos.z) / SQUARE_SIZE;
+	const int xSqr = static_cast<unsigned>(pos.x / SQUARE_SIZE);
+	const int zSqr = static_cast<unsigned>(pos.z / SQUARE_SIZE);
 	return (GroundBlocked(xSqr, zSqr, ignoreObj));
 }
 
+
+CGroundBlockingObjectMap::BlockingMapCell CGroundBlockingObjectMap::GetCellUnsafeConst(const float3& pos) const
+{
+	const int xSqr = static_cast<unsigned>(pos.x / SQUARE_SIZE);
+	const int zSqr = static_cast<unsigned>(pos.z / SQUARE_SIZE);
+	return (GetCellUnsafeConst(zSqr * mapDims.mapx + xSqr));
+}
 
 
 /**
