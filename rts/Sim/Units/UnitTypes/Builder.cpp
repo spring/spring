@@ -720,7 +720,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// note: even if construction has already started,
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
-			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst((buildInfo.pos.z / SQUARE_SIZE) * mapDims.mapx + buildInfo.pos.x / SQUARE_SIZE);
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(buildInfo.pos);
 
 			const CSolidObject* o = nullptr;
 			const CUnit* u = nullptr;

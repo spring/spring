@@ -164,6 +164,7 @@ public:
 	}
 
 
+	BlockingMapCell GetCellUnsafeConst(const float3& pos) const;
 	BlockingMapCell GetCellUnsafeConst(unsigned int mapSquare) const {
 		assert(mapSquare < arrCells.size());
 		// avoid vec-cell lookup unless needed
