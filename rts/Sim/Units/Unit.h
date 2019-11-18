@@ -469,6 +469,8 @@ public:
 	float curArmorMultiple = 1.0f;
 
 	int nextPosErrorUpdate = 1;
+	// bit-mask indicating which allyteams see this unit with positional error
+	int posErrorAllyTeamMask = 0xFFFFFFFF;
 
 
 	int lastTerrainType = -1;

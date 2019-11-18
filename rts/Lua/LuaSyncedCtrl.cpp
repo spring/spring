@@ -2538,9 +2538,15 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->posErrorVector = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	unit->posErrorDelta = float3(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7));
+	unit->posErrorVector.x = luaL_optfloat(L, 2, unit->posErrorVector.x);
+	unit->posErrorVector.y = luaL_optfloat(L, 3, unit->posErrorVector.y);
+	unit->posErrorVector.z = luaL_optfloat(L, 4, unit->posErrorVector.z);
+	unit->posErrorDelta.x = luaL_optfloat(L, 5, unit->posErrorDelta.x);
+	unit->posErrorDelta.y = luaL_optfloat(L, 6, unit->posErrorDelta.y);
+	unit->posErrorDelta.z = luaL_optfloat(L, 7, unit->posErrorDelta.z);
+
 	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
+	unit->posErrorAllyTeamMask = luaL_optint(L, 9, unit->posErrorAllyTeamMask);
 	return 0;
 }
 

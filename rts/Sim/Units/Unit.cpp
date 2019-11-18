@@ -521,21 +521,25 @@ void CUnit::ForcedMove(const float3& newPos)
 
 float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
-	const int tstAllyTeam = argAllyTeam * (argAllyTeam >= 0) * (argAllyTeam < teamHandler.ActiveAllyTeams());
+	const int tstAllyTeam = argAllyTeam * teamHandler.IsValidAllyTeam(argAllyTeam);
+	const int atErrorMask = posErrorAllyTeamMask & (1 << tstAllyTeam);
+  const int atSightMask = losStatus[tstAllyTeam];
 
-	const bool limitRead = (1            ) && (tstAllyTeam != argAllyTeam); // LuaHandle without full read access
-	const bool isVisible = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
-	const bool seenGhost = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsBuildingUnit()); // seen ghosted building, no error
-	const bool isOnRadar = (1 - limitRead) && ((losStatus[tstAllyTeam] & LOS_INRADAR) != 0); // current radar contact
+	const bool limitRead = (1            ) && (tstAllyTeam != argAllyTeam); // indicates LuaHandle without full read access
+	const bool isVisible = (1 - limitRead) && ((atSightMask & LOS_INLOS  ) != 0 || teamHandler.Ally(tstAllyTeam, allyteam)); // in LOS or allied, no error
+	const bool seenGhost = (1 - limitRead) && ((atSightMask & LOS_PREVLOS) != 0 && gameSetup->ghostedBuildings && unitDef->IsBuildingUnit()); // seen ghosted building, no error
+	const bool isOnRadar = (1 - limitRead) && ((atSightMask & LOS_INRADAR) != 0); // current radar contact
+
+	float errorMult = 0.0f;
 
 	switch ((limitRead * 1) + (isVisible * 2) + (seenGhost * 4) + (isOnRadar * 8)) {
-		case  0: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; // !limitRead &&  !isVisible && !seenGhost  && !isOnRadar
-		case  1: { return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);         } break; //  limitRead
-		case  8: { return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam)); } break; // !limitRead &&  !isVisible && !seenGhost  &&  isOnRadar
-		default: {                                                                               } break; // !limitRead && ( isVisible ||  seenGhost) && !isOnRadar
+		case  0: { errorMult = losHandler->GetBaseRadarErrorSize() * 2.0f;         } break; // !limitRead &&  !isVisible && !seenGhost  && !isOnRadar
+		case  1: { errorMult = losHandler->GetBaseRadarErrorSize() * 2.0f;         } break; //  limitRead (allyteam < 0 || allyteam >= #activeallyteams)
+		case  8: { errorMult = losHandler->GetAllyTeamRadarErrorSize(tstAllyTeam); } break; // !limitRead &&  !isVisible && !seenGhost  &&  isOnRadar
+		default: {                                                                 } break; // !limitRead && ( isVisible ||  seenGhost) && !isOnRadar
 	}
 
-	return ZeroVector;
+	return (posErrorVector * errorMult * ((atErrorMask + limitRead) != 0));
 }
 
 void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
@@ -2897,7 +2901,9 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(posErrorVector),
 	CR_MEMBER(posErrorDelta),
+
 	CR_MEMBER(nextPosErrorUpdate),
+	CR_MEMBER(posErrorAllyTeamMask),
 
 	CR_MEMBER(wantCloak),
 	CR_MEMBER(isCloaked),
