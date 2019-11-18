@@ -720,23 +720,35 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// note: even if construction has already started,
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
-			CSolidObject* o = groundBlockingObjectMap.GroundBlocked(buildInfo.pos);
-			CUnit* u = nullptr;
+			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst((buildInfo.pos.z / SQUARE_SIZE) * mapDims.mapx + buildInfo.pos.x / SQUARE_SIZE);
 
-			if (o != nullptr) {
-				u = dynamic_cast<CUnit*>(o);
-			} else {
-				// <pos> might map to a non-blocking portion
-				// of the buildee's yardmap, fallback check
-				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
+			const CSolidObject* o = nullptr;
+			const CUnit* u = nullptr;
+
+			// look for any blocking assistable buildee at build.pos
+			for (size_t i = 0, n = cell.size(); i < n; i++) {
+				const CUnit* cu = dynamic_cast<const CUnit*>(o = cell[i]);
+
+				if (cu == nullptr)
+					continue;
+				if (!CanAssistUnit(cu, buildInfo.def))
+					continue;
+
+				u = cu;
+				break;
 			}
+
+			// <pos> might map to a non-blocking portion
+			// of the buildee's yardmap, fallback check
+			if (u == nullptr)
+				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
 
 			if (u != nullptr) {
 				if (CanAssistUnit(u, buildInfo.def)) {
 					// StopBuild sets this to false, fix it here if picking up the same buildee again
 					terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
 
-					AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
+					AddDeathDependence(curBuild = const_cast<CUnit*>(u), DEPENDENCE_BUILD);
 					ScriptStartBuilding(u->pos, false);
 					return true;
 				}
