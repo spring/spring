@@ -165,6 +165,14 @@ public:
 	void SetNeutral(bool b);
 	void SetStunned(bool stun);
 
+	bool GetPosErrorBit(int at) const {
+		return (posErrorMask[at / 32] & (1 << (at % 32)));
+	}
+	void SetPosErrorBit(int at, int bit) {
+		posErrorMask[at / 32] |=  ((1 << (at % 32)) * (bit == 1));
+		posErrorMask[at / 32] &= ~((1 << (at % 32)) * (bit == 0));
+	}
+
 	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
@@ -307,6 +315,8 @@ public:
 	// indicates the los/radar status each allyteam has on this unit
 	// should technically be MAX_ALLYTEAMS, but #allyteams <= #teams
 	std::array<unsigned char, /*MAX_TEAMS*/ 255> losStatus{{0}};
+	// bit-mask indicating which allyteams see this unit with positional error
+	std::array<unsigned  int, /*MAX_TEAMS/32*/ 8> posErrorMask{{1}};
 
 	// quads the unit is part of
 	std::vector<int> quads;
@@ -469,9 +479,6 @@ public:
 	float curArmorMultiple = 1.0f;
 
 	int nextPosErrorUpdate = 1;
-	// bit-mask indicating which allyteams see this unit with positional error
-	int posErrorAllyTeamMask = 0xFFFFFFFF;
-
 
 	int lastTerrainType = -1;
 	// Used for calling setSFXoccupy which TA scripts want

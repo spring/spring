@@ -2546,7 +2546,10 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 	unit->posErrorDelta.z = luaL_optfloat(L, 7, unit->posErrorDelta.z);
 
 	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
-	unit->posErrorAllyTeamMask = luaL_optint(L, 9, unit->posErrorAllyTeamMask);
+
+	if (lua_isnumber(L, 9) && lua_isboolean(L, 10))
+		unit->SetPosErrorBit(Clamp(lua_tointeger(L, 9), 0, teamHandler.ActiveAllyTeams()), lua_toboolean(L, 10));
+
 	return 0;
 }
 

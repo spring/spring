@@ -2864,7 +2864,7 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 			lua_pushnumber(L, unit->sonarJamRadius);
 		} break;
 		default: {
-			luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
+			luaL_error(L, "[%s] unknown sensor type \"%s\"", __func__, luaL_checkstring(L, 2));
 		} break;
 	}
 
@@ -2878,6 +2878,9 @@ int LuaSyncedRead::GetUnitPosErrorParams(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
+	const int optAllyTeam = luaL_optinteger(L, 2, 0);
+	const int argAllyTeam = Clamp(optAllyTeam, 0, teamHandler.ActiveAllyTeams());
+
 	lua_pushnumber(L, unit->posErrorVector.x);
 	lua_pushnumber(L, unit->posErrorVector.y);
 	lua_pushnumber(L, unit->posErrorVector.z);
@@ -2885,7 +2888,9 @@ int LuaSyncedRead::GetUnitPosErrorParams(lua_State* L)
 	lua_pushnumber(L, unit->posErrorDelta.y);
 	lua_pushnumber(L, unit->posErrorDelta.z);
 	lua_pushnumber(L, unit->nextPosErrorUpdate);
-	return (3 + 3 + 1);
+	lua_pushboolean(L, unit->GetPosErrorBit(argAllyTeam));
+
+	return (3 + 3 + 1 + 1);
 }
 
 
