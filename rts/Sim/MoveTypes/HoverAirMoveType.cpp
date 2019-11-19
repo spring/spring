@@ -294,11 +294,10 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 		return;
 
 	circlingPos = pos;
-	goalDistance = distance;
 	goalPos = owner->pos;
 
 	// let this handle any needed state transitions
-	StartMoving(goalPos, goalDistance);
+	StartMoving(goalPos, goalDistance = distance);
 
 	// FIXME:
 	//   the FLY_ATTACKING state is broken (unknown how long this has been
@@ -403,55 +402,23 @@ void CHoverAirMoveType::UpdateTakeoff()
 // Move the unit around a bit..
 void CHoverAirMoveType::UpdateHovering()
 {
-	#if 0
-	#define NOZERO(x) std::max(x, 0.0001f)
+	const float  curSqGoalDist = goalPos.SqDistance2D(owner->pos);
+	const float  maxSqGoalDist = Square(GetGoalRadius());
+	const float absHoverFactor = math::fabs(owner->unitDef->dlHoverFactor) * 0.5f;
 
-	float3 deltaVec = goalPos - owner->pos;
-	float3 deltaDir = float3(deltaVec.x, 0.0f, deltaVec.z);
-
-	const float driftSpeed = math::fabs(owner->unitDef->dlHoverFactor);
-	const float goalDistance = NOZERO(deltaDir.Length2D());
-	const float brakeDistance = 0.5f * owner->speed.SqLength2D() / decRate;
-
-	// move towards goal position if it's not immediately
-	// behind us when we have more waypoints to get to
-	// *** this behavior interferes with the loading procedure of transports ***
-	const bool b0 = (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands());
-	const bool b1 = (goalDistance < brakeDistance && goalDistance > 1.0f);
-
-	if (b0 && b1 && !owner->unitDef->IsTransportUnit()) {
-		deltaDir = owner->frontdir;
-	} else {
-		deltaDir *= smoothstep(0.0f, 20.0f, goalDistance) / goalDistance;
-		deltaDir -= owner->speed;
-	}
-
-	if (deltaDir.SqLength2D() > (maxSpeed * maxSpeed))
-		deltaDir *= (maxSpeed / NOZERO(math::sqrt(deltaDir.SqLength2D())));
-
-	// random movement (a sort of fake wind effect)
-	// random drift values are in range -0.5 ... 0.5
-	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
-	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
-
-	wantedSpeed = owner->speed + deltaDir;
-	wantedSpeed += (randomWind * driftSpeed * 0.5f);
-
-	UpdateAirPhysics();
-	#endif
-
-	#if 1
-	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
-	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
+	randomWind.x = (randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f);
+	randomWind.z = (randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f);
 
 	// randomly drift (but not too far from goal-position; a larger
 	// deviation causes a larger wantedSpeed back in its direction)
-	// when not picking up a transportee
-	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f * (1 - UnitHasLoadCmd(owner)));
+	// when not picking up a transportee and when not close to goal
+	// otherwise any aircraft that entered state=HOVERING while its
+	// move order is still unfinished might not (ever) transition to
+	// LANDING
+	wantedSpeed = (randomWind * absHoverFactor * (1 - UnitHasLoadCmd(owner)) * (dontLand || curSqGoalDist > maxSqGoalDist));
 	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, float3::fabs(goalPos - owner->pos)) * (goalPos - owner->pos));
 
 	UpdateAirPhysics();
-	#endif
 }
 
 
