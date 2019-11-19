@@ -88,6 +88,10 @@ CUnit::CUnit(): CSolidObject()
 
 	static_assert((sizeof(los) / sizeof(los[0])) == ILosType::LOS_TYPE_COUNT, "");
 	static_assert((sizeof(losStatus) / sizeof(losStatus[0])) == MAX_TEAMS, "");
+	static_assert((sizeof(posErrorMask) == 32), "");
+
+	losStatus.fill(0);
+	posErrorMask.fill(0xFFFFFFFF);
 
 	fireState = FIRESTATE_FIREATWILL;
 	moveState = MOVESTATE_MANEUVER;
@@ -525,7 +529,7 @@ float3 CUnit::GetErrorVector(int argAllyTeam) const
 	if (!teamHandler.IsValidAllyTeam(argAllyTeam))
 		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
 
-	const int atErrorMask = posErrorAllyTeamMask & (1 << argAllyTeam);
+	const int atErrorMask = GetPosErrorBit(argAllyTeam);
 	const int atSightMask = losStatus[argAllyTeam];
 
 	const int isVisible = 2 * ((atSightMask & LOS_INLOS  ) != 0 ||                  teamHandler.Ally(argAllyTeam, allyteam)); // in LOS or allied, no error
@@ -2800,6 +2804,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_IGNORED(los),
 	CR_MEMBER(losStatus),
+	CR_MEMBER(posErrorMask),
 	CR_MEMBER(quads),
 
 
@@ -2903,7 +2908,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(posErrorDelta),
 
 	CR_MEMBER(nextPosErrorUpdate),
-	CR_MEMBER(posErrorAllyTeamMask),
 
 	CR_MEMBER(wantCloak),
 	CR_MEMBER(isCloaked),
