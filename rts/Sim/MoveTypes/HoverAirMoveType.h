@@ -39,6 +39,8 @@ public:
 	void UpdateCircling();
 	void UpdateHovering();
 
+	float GetGoalRadius(float s = 0.0f) const override { return (SQUARE_SIZE * SQUARE_SIZE); }
+
 	short GetWantedHeading() const { return wantedHeading; }
 	short GetForcedHeading() const { return forcedHeading; }
 
