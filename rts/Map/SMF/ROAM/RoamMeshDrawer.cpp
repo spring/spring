@@ -42,7 +42,6 @@ bool CRoamMeshDrawer::useThreadTesselation[2] = {false, false};
 CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 	: CEventClient("[CRoamMeshDrawer]", 271989, false)
 	, smfGroundDrawer(gd)
-	, lastGroundDetail{0, 0}
 {
 	eventHandler.AddClient(this);
 
@@ -55,7 +54,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 	// assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
 
 	ForceNextTesselation(true, true);
-	UseThreadTesselation(numPatchesX >= 4 && numPatchesY >= 4 && false, false);
+	UseThreadTesselation(numPatchesX >= 4 && numPatchesY >= 4, numPatchesX >= 4 && numPatchesY >= 4);
 
 
 	tesselateFuncs[true] = [this](std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass) {
@@ -99,6 +98,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 				if (!p.IsVisible(cam))
 					return;
 
+				// stop early in case of pool exhaustion
 				forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
 			});
 
@@ -184,7 +184,7 @@ void CRoamMeshDrawer::Update()
 	CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	bool shadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
-	bool retessellate = forceNextTesselation[shadowPass];
+	bool tesselMesh = forceNextTesselation[shadowPass];
 
 	auto& patches = patchMeshGrid[shadowPass];
 	auto& pvflags = patchVisFlags[shadowPass];
@@ -203,46 +203,39 @@ void CRoamMeshDrawer::Update()
 
 		#if (RETESSELLATE_MODE == 2)
 			if (p.IsVisible(cam)) {
-				if (pvflags[i] == 0) {
+				if (tesselMesh |= (pvflags[i] == 0))
 					pvflags[i] = 1;
-					retessellate = true;
-				}
-				if (p.IsDirty()) {
+				if (tesselMesh |= p.IsDirty())
 					p.ComputeVariance();
-					retessellate = true;
-				}
 			} else {
 				pvflags[i] = 0;
 			}
 
 		#else
 
-			if (uint8_t(p.IsVisible(cam)) != pvflags[i]) {
+			if (tesselMesh |= (uint8_t(p.IsVisible(cam)) != pvflags[i]))
 				pvflags[i] = uint8_t(p.IsVisible(cam));
-				retessellate = true;
-			}
-			if (p.IsVisible(cam) && p.IsDirty()) {
+
+			if (tesselMesh |= (p.IsVisible(cam) && p.IsDirty()))
 				p.ComputeVariance();
-				retessellate = true;
-			}
 		#endif
 		}
 	}
 
 	// Further conditions that can cause a retessellation
 #if (RETESSELLATE_MODE == 2)
-	retessellate |= ((cam->GetPos() - lastCamPos[shadowPass]).SqLength() > (500.0f * 500.0f));
+	tesselMesh |= ((cam->GetPos() - lastCamPos[shadowPass]).SqLength() > (500.0f * 500.0f));
 #endif
-	retessellate |= (lastGroundDetail[shadowPass] != smfGroundDrawer->GetGroundDetail());
+	tesselMesh |= (lastGroundDetail[shadowPass] != smfGroundDrawer->GetGroundDetail());
 
-	if (!retessellate)
+	if (!tesselMesh)
 		return;
 
 	{
 		//SCOPED_TIMER("ROAM::Tessellate");
 
 		Reset(shadowPass);
-		forceNextTesselation[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
+		Tessellate(patches, cam, smfGroundDrawer->GetGroundDetail(), useThreadTesselation[shadowPass], shadowPass);
 	}
 
 	{
@@ -387,11 +380,11 @@ void CRoamMeshDrawer::Reset(bool shadowPass)
 			TriTreeNode* pbr = patch.GetBaseRight();
 
 			// link all patches together, leave borders NULL
-			if (x > (              0)) { pbl->LeftNeighbor = patches[y * numPatchesX + x - 1].GetBaseRight(); }
-			if (x < (numPatchesX - 1)) { pbr->LeftNeighbor = patches[y * numPatchesX + x + 1].GetBaseLeft(); }
+			if (x > (              0)) pbl->LeftNeighbor = patches[y * numPatchesX + x - 1].GetBaseRight();
+			if (x < (numPatchesX - 1)) pbr->LeftNeighbor = patches[y * numPatchesX + x + 1].GetBaseLeft();
 
-			if (y > (              0)) { pbl->RightNeighbor = patches[(y - 1) * numPatchesX + x].GetBaseRight(); }
-			if (y < (numPatchesY - 1)) { pbr->RightNeighbor = patches[(y + 1) * numPatchesX + x].GetBaseLeft(); }
+			if (y > (              0)) pbl->RightNeighbor = patches[(y - 1) * numPatchesX + x].GetBaseRight();
+			if (y < (numPatchesY - 1)) pbr->RightNeighbor = patches[(y + 1) * numPatchesX + x].GetBaseLeft();
 		}
 	}
 }
@@ -400,14 +393,14 @@ void CRoamMeshDrawer::Reset(bool shadowPass)
 
 void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	const int margin = 2;
-	const float INV_PATCH_SIZE = 1.0f / PATCH_SIZE;
+	constexpr int BORDER_MARGIN = 2;
+	constexpr float INV_PATCH_SIZE = 1.0f / PATCH_SIZE;
 
-	// hint: the -+1 are cause Patches share 1 pixel border (no vertex holes!)
-	const int xstart = std::max(          0, (int)math::floor((rect.x1 - margin) * INV_PATCH_SIZE));
-	const int xend   = std::min(numPatchesX, (int)math::ceil ((rect.x2 + margin) * INV_PATCH_SIZE));
-	const int zstart = std::max(          0, (int)math::floor((rect.z1 - margin) * INV_PATCH_SIZE));
-	const int zend   = std::min(numPatchesY, (int)math::ceil ((rect.z2 + margin) * INV_PATCH_SIZE));
+	// add margin since Patches share borders
+	const int xstart = std::max(          0, (int)math::floor((rect.x1 - BORDER_MARGIN) * INV_PATCH_SIZE));
+	const int xend   = std::min(numPatchesX, (int)math::ceil ((rect.x2 + BORDER_MARGIN) * INV_PATCH_SIZE));
+	const int zstart = std::max(          0, (int)math::floor((rect.z1 - BORDER_MARGIN) * INV_PATCH_SIZE));
+	const int zend   = std::min(numPatchesY, (int)math::ceil ((rect.z2 + BORDER_MARGIN) * INV_PATCH_SIZE));
 
 	// update patches in both tessellations
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
@@ -417,12 +410,12 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 			for (int x = xstart; x < xend; ++x) {
 				Patch& p = patches[z * numPatchesX + x];
 
-				// clamp the update rect to the patch constraints
+				// clamp the update-rectangle within the patch
 				SRectangle prect(
-					std::max(rect.x1 - margin - p.coors.x, 0),
-					std::max(rect.z1 - margin - p.coors.y, 0),
-					std::min(rect.x2 + margin - p.coors.x, PATCH_SIZE),
-					std::min(rect.z2 + margin - p.coors.y, PATCH_SIZE)
+					std::max(rect.x1 - BORDER_MARGIN - p.coors.x,          0),
+					std::max(rect.z1 - BORDER_MARGIN - p.coors.y,          0),
+					std::min(rect.x2 + BORDER_MARGIN - p.coors.x, PATCH_SIZE),
+					std::min(rect.z2 + BORDER_MARGIN - p.coors.y, PATCH_SIZE)
 				);
 
 				p.UpdateHeightMap(prect);

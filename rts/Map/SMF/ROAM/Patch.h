@@ -24,9 +24,7 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // how many TriTreeNodes should be reserved per pool
-// this is a reasonable baseline for *most* maps but
-// not guaranteed to suffice under all possible user
-// detail levels on every map in existence
+// (1M is a reasonable baseline for most large maps)
 #define NEW_POOL_SIZE (1 << 20)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
@@ -35,18 +33,28 @@ class CCamera;
 // stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
+	static TriTreeNode dummyNode;
+
 	// all non-leaf nodes have both children, so just check for one
-	bool IsValid() const { return ((LeftChild == nullptr && RightChild == nullptr) || (LeftChild != nullptr && RightChild != nullptr)); }
-	bool IsLeaf() const { assert(IsValid()); return (LeftChild == nullptr); }
-	bool IsBranch() const { assert(IsValid()); return (LeftChild != nullptr); }
-	bool IsDummy() const { return (this == LeftChild || this == RightChild); }
+	bool IsLeaf() const { assert(!IsDummy()); return (LeftChild == &dummyNode); }
+	bool IsBranch() const { assert(!IsDummy()); return (LeftChild != &dummyNode); }
+	bool IsDummy() const { return (this == &dummyNode); }
 
-	TriTreeNode* LeftChild = nullptr;
-	TriTreeNode* RightChild = nullptr;
+	void Reset() {
+		 LeftChild = &dummyNode;
+		RightChild = &dummyNode;
 
-	TriTreeNode* BaseNeighbor = nullptr;
-	TriTreeNode* LeftNeighbor = nullptr;
-	TriTreeNode* RightNeighbor = nullptr;
+		 BaseNeighbor = &dummyNode;
+		 LeftNeighbor = &dummyNode;
+		RightNeighbor = &dummyNode;
+	}
+
+	TriTreeNode*  LeftChild = &dummyNode;
+	TriTreeNode* RightChild = &dummyNode;
+
+	TriTreeNode*  BaseNeighbor = &dummyNode;
+	TriTreeNode*  LeftNeighbor = &dummyNode;
+	TriTreeNode* RightNeighbor = &dummyNode;
 };
 
 
@@ -60,18 +68,7 @@ public:
 	static void InitPools(bool shadowPass, size_t newPoolSize = NEW_POOL_SIZE);
 	static void ResetAll(bool shadowPass);
 
-	inline static CTriNodePool* GetPool(bool shadowPass);
-	inline static TriTreeNode* GetDummyNode() {
-		static TriTreeNode node;
-
-		node.LeftChild     = &node;
-		node.RightChild    = &node;
-		node.BaseNeighbor  = &node;
-		node.LeftNeighbor  = &node;
-		node.RightNeighbor = &node;
-
-		return &node;
-	}
+	inline static CTriNodePool* GetPoolForThread(bool shadowPass);
 
 public:
 	CTriNodePool(const size_t poolSize);
@@ -79,14 +76,14 @@ public:
 	void Reset();
 	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
-	bool ValidNode(const TriTreeNode* n) const { return (n >= &pool.front() && n <= &pool.back()); }
-	bool OutOfNodes() const { return (nextTriNodeIdx >= pool.size()); }
+	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }
+	bool OutOfNodes() const { return (nextTriNodeIdx >= tris.size()); }
 
 private:
-	std::vector<TriTreeNode> pool;
+	std::vector<TriTreeNode> tris;
 
 	// index of next free TriTreeNode
-	size_t nextTriNodeIdx;
+	size_t nextTriNodeIdx = 0;
 };
 
 
@@ -139,7 +136,7 @@ private:
 	// split a single triangle and link it into the mesh; will correctly force-split diamonds
 	bool Split(TriTreeNode* tri);
 	// tessellate patch; will continue to split until the variance metric is met
-	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
+	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int treeIdx, const int curNodeIdx);
 	void RecursGenIndices(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
 	// computes variance over the entire tree; does not examine node relationships
@@ -148,7 +145,8 @@ private:
 		const   int2 rght,
 		const   int2 apex,
 		const float3 hgts,
-		const    int node
+		const    int treeIdx,
+		const    int curNodeIdx
 	);
 
 	void RecursGenBorderVertices(
@@ -162,31 +160,26 @@ private:
 	float GetHeight(int2 pos);
 
 private:
-	CSMFGroundDrawer* smfGroundDrawer;
+	CSMFGroundDrawer* smfGroundDrawer = nullptr;
 
 	// pool used during Tessellate; each invoked Split allocates from this
-	CTriNodePool* curTriPool;
-
-	// which variance we are currently using [only valid during the Tessellate and ComputeVariance passes]
-	float* currentVariance;
+	CTriNodePool* curTriPool = nullptr;
 
 	// does the variance-tree need to be recalculated for this Patch?
-	bool isDirty;
-	bool isTesselated;
+	bool isDirty = true;
+	bool isTesselated = false;
 
-	float varianceMaxLimit;
-	float camDistLODFactor; // defines the LOD falloff in camera distance
+	float varianceMaxLimit = std::numeric_limits<float>::max();
+	float camDistLODFactor = 1.0f; // defines the LOD falloff in camera distance
 
 	// world-coordinate offsets of this patch
-	int2 coors;
+	int2 coors = {-1, -1};
 
 
 	TriTreeNode baseLeft;  // left base-triangle tree node
 	TriTreeNode baseRight; // right base-triangle tree node
 
-	std::array<float, 1 << VARIANCE_DEPTH> varianceLeft;  // left variance tree
-	std::array<float, 1 << VARIANCE_DEPTH> varianceRight; // right variance tree
-
+	std::array<float, 1 << VARIANCE_DEPTH> varianceTrees[2];
 	// TODO: remove, map+update buffer instead
 	std::array<float, 3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1)> vertices;
 	std::vector<VA_TYPE_C> borderVertices;

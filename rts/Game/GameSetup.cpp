@@ -182,7 +182,7 @@ void CGameSetup::ResetState()
 
 	gameStartDelay = 0;
 	numDemoPlayers = 0;
-	maxUnitsPerTeam = 1500;
+	maxUnitsPerTeam = 0;
 
 	maxSpeed = 0.0f;
 	minSpeed = 0.0f;

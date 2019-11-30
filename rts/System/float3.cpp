@@ -60,6 +60,11 @@ float3 float3::fabs(const float3 v)
 	return {std::fabs(v.x), std::fabs(v.y), std::fabs(v.z)};
 }
 
+float3 float3::sign(const float3 v)
+{
+	return {Sign(v.x), Sign(v.y), Sign(v.z)};
+}
+
 bool float3::equals(const float3& f, const float3& eps) const
 {
 	return (epscmp(x, f.x, eps.x) && epscmp(y, f.y, eps.y) && epscmp(z, f.z, eps.z));

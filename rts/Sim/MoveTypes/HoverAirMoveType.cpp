@@ -417,6 +417,7 @@ void CHoverAirMoveType::UpdateHovering()
 	// LANDING
 	wantedSpeed = (randomWind * absHoverFactor * (1 - UnitHasLoadCmd(owner)) * (dontLand || curSqGoalDist > maxSqGoalDist));
 	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, float3::fabs(goalPos - owner->pos)) * (goalPos - owner->pos));
+	wantedSpeed = float3::min(float3::fabs(wantedSpeed), OnesVector * maxSpeed) * float3::sign(wantedSpeed);
 
 	UpdateAirPhysics();
 }
