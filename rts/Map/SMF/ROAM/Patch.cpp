@@ -23,7 +23,10 @@
 #include <climits>
 
 
+TriTreeNode TriTreeNode::dummyNode;
+
 Patch::RenderMode Patch::renderMode = Patch::VBO;
+
 
 static size_t CUR_POOL_SIZE =                 0; // split over all threads
 static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
@@ -34,21 +37,26 @@ static std::vector<CTriNodePool> pools[CRoamMeshDrawer::MESH_COUNT];
 
 void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
-	const int numThreads = ThreadPool::GetMaxThreads();
-	const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
+	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
+		const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
 
-	try {
-		pools[shadowPass].clear();
-		pools[shadowPass].reserve(numThreads);
+		LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
 
-		for (int i = 0; i < numThreads; i++) {
-			pools[shadowPass].emplace_back(thrPoolSize + (thrPoolSize & 1));
+		try {
+			pools[shadowPass].clear();
+			pools[shadowPass].reserve(numThreads);
+
+			for (int i = 0; i < numThreads; i++) {
+				pools[shadowPass].emplace_back(thrPoolSize + (thrPoolSize & 1));
+			}
+
+			break;
+		} catch (const std::bad_alloc& e) {
+			LOG_L(L_FATAL, "[TriNodePool::%s] exception \"%s\" (numThreads=%d shadowPass=%d)", __func__, e.what(), numThreads, shadowPass);
+
+			// try again after reducing the wanted pool-size by a quarter
+			newPoolSize = (MAX_POOL_SIZE = newPoolSize - (newPoolSize >> 2));
 		}
-	} catch (const std::bad_alloc& e) {
-		LOG_L(L_FATAL, "[TriNodePool::%s] bad_alloc exception \"%s\" (numThreads=%d newPoolSize=%lu)", __func__, e.what(), numThreads, (unsigned long) newPoolSize);
-
-		// try again after reducing the wanted pool-size by a quarter
-		InitPools(shadowPass, MAX_POOL_SIZE = (newPoolSize - (newPoolSize >> 2)));
 	}
 }
 
@@ -66,32 +74,33 @@ void CTriNodePool::ResetAll(bool shadowPass)
 	if (CUR_POOL_SIZE >= MAX_POOL_SIZE)
 		return;
 
-	InitPools(shadowPass, std::min<size_t>(CUR_POOL_SIZE * 2, MAX_POOL_SIZE));
+	InitPools(shadowPass, std::min(CUR_POOL_SIZE * 2, MAX_POOL_SIZE));
 }
 
 
-CTriNodePool* CTriNodePool::GetPool(bool shadowPass)
+CTriNodePool* CTriNodePool::GetPoolForThread(bool shadowPass)
 {
 	return &(pools[shadowPass][ThreadPool::GetThreadNum()]);
 }
 
 
-CTriNodePool::CTriNodePool(const size_t poolSize): nextTriNodeIdx(0)
+CTriNodePool::CTriNodePool(const size_t poolSize)
 {
 	// child nodes are always allocated in pairs, so poolSize must be even
 	// (it does not technically need to be non-zero since patch root nodes
 	// live outside the pool, but KISS)
-	assert((poolSize & 0x1) == 0);
+	assert((poolSize & 1) == 0);
 	assert(poolSize > 0);
 
-	pool.resize(poolSize);
+	tris.resize(poolSize);
 }
 
 
 void CTriNodePool::Reset()
 {
-	// reinit all entries
-	memset(pool.data(), 0, pool.size() * sizeof(TriTreeNode));
+	for (size_t i = 0; i < nextTriNodeIdx; i++) {
+		tris[i].Reset();
+	}
 
 	nextTriNodeIdx = 0;
 }
@@ -100,15 +109,15 @@ bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
 	// pool exhausted, make sure both child nodes are dummies
 	if (OutOfNodes()) {
-		LOG_L(L_WARNING, "[TriNodePool::%s] #nodes=" _STPF_ " #pool=" _STPF_ "", __func__, nextTriNodeIdx, pool.size());
+		LOG_L(L_WARNING, "[TriNodePool::%s] #nodes=" _STPF_ " #pool=" _STPF_ " thread=%d", __func__, nextTriNodeIdx, tris.size(), ThreadPool::GetThreadNum());
 
-		left  = nullptr; // GetDummyNode();
-		right = nullptr; // GetDummyNode();
+		left  = &TriTreeNode::dummyNode;
+		right = &TriTreeNode::dummyNode;
 		return false;
 	}
 
-	left  = &pool[nextTriNodeIdx++];
-	right = &pool[nextTriNodeIdx++];
+	left  = &tris[nextTriNodeIdx++];
+	right = &tris[nextTriNodeIdx++];
 	return true;
 }
 
@@ -116,19 +125,9 @@ bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 
 
 Patch::Patch()
-	: smfGroundDrawer(nullptr)
-	, currentVariance(nullptr)
-	, isDirty(true)
-	, vboVerticesUploaded(false)
-	, varianceMaxLimit(std::numeric_limits<float>::max())
-	, camDistLODFactor(1.0f)
-	, coors(-1, -1)
-	, triList(0)
-	, vertexBuffer(0)
-	, vertexIndexBuffer(0)
 {
-	varianceLeft.resize(1 << VARIANCE_DEPTH);
-	varianceRight.resize(1 << VARIANCE_DEPTH);
+	varianceTrees[0].fill(0.0f);
+	varianceTrees[1].fill(0.0f);
 }
 
 Patch::~Patch()
@@ -231,12 +230,15 @@ void Patch::VBOUploadVertices()
 //
 bool Patch::Split(TriTreeNode* tri)
 {
+	if (tri->IsDummy())
+		return false;
+
 	// we are already split, no need to do it again
 	if (!tri->IsLeaf())
 		return true;
 
 	// if this triangle is not in a proper diamond, force split our base-neighbor
-	if (tri->BaseNeighbor != nullptr && (tri->BaseNeighbor->BaseNeighbor != tri))
+	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri))
 		Split(tri->BaseNeighbor);
 
 	// create children and link into mesh, or make this triangle a leaf
@@ -260,12 +262,12 @@ bool Patch::Split(TriTreeNode* tri)
 		tlc->LeftNeighbor = trc;
 	}
 	{
-		trc->BaseNeighbor = trn;
+		trc-> BaseNeighbor = trn;
 		trc->RightNeighbor = tlc;
 	}
 
 	// link our left-neighbor to the new children
-	if (tln != nullptr) {
+	if (!tln->IsDummy()) {
 		if (tln->BaseNeighbor == tri)
 			tln->BaseNeighbor = tlc;
 		else if (tln->LeftNeighbor == tri)
@@ -277,7 +279,7 @@ bool Patch::Split(TriTreeNode* tri)
 	}
 
 	// link our right-neighbor to the new children
-	if (trn != nullptr) {
+	if (!trn->IsDummy()) {
 		if (trn->BaseNeighbor == tri)
 			trn->BaseNeighbor = trc;
 		else if (trn->RightNeighbor == tri)
@@ -289,28 +291,25 @@ bool Patch::Split(TriTreeNode* tri)
 	}
 
 	// link our base-neighbor to the new children
-	if (tbn != nullptr) {
+	if (!tbn->IsDummy()) {
 		if (tbn->IsBranch()) {
 			assert(curTriPool->ValidNode(tbn->LeftChild));
 			assert(curTriPool->ValidNode(tbn->RightChild));
 
-			if ((tlc->RightNeighbor = tbn->RightChild) != nullptr)
+			if (!(tlc->RightNeighbor = tbn->RightChild)->IsDummy())
 				tbn->RightChild->LeftNeighbor = tlc;
-			else
-				LOG_L(L_WARNING, "[Patch::%s][R] tbn->IsValid()=%d/%d tbn->{Left,Right}Child={%p,%p}", __func__, tbn->IsValid(), curTriPool->ValidNode(tbn), tbn->LeftChild, tbn->RightChild);
 
-			if ((trc->LeftNeighbor = tbn->LeftChild) != nullptr)
+			if (!(trc->LeftNeighbor = tbn->LeftChild)->IsDummy())
 				tbn->LeftChild->RightNeighbor = trc;
-			else
-				LOG_L(L_WARNING, "[Patch::%s][L] tbn->IsValid()=%d/%d tbn->{Left,Right}Child={%p,%p}", __func__, tbn->IsValid(), curTriPool->ValidNode(tbn), tbn->LeftChild, tbn->RightChild);
 		} else {
 			// base Neighbor (in a diamond with us) was not split yet, do so now
+			// FIXME: if pool ran out above, this will fail and leave a LOD-crack
 			Split(tbn);
 		}
 	} else {
 		// edge triangle, trivial case
-		tlc->RightNeighbor = nullptr;
-		trc->LeftNeighbor = nullptr;
+		tlc->RightNeighbor = &TriTreeNode::dummyNode;
+		trc-> LeftNeighbor = &TriTreeNode::dummyNode;
 	}
 
 	return true;
@@ -321,16 +320,18 @@ bool Patch::Split(TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node)
+void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int varTreeIdx, const int curNodeIdx)
 {
 	// bail if we can not tessellate further in at least one dimension
 	if ((abs(left.x - right.x) <= 1) && (abs(left.y - right.y) <= 1))
+		return;
+	if (tri->IsDummy())
 		return;
 
 	// default > 1; when variance isn't saved this issues further tessellation
 	float triVariance = 10.0f;
 
-	if (node < (1 << VARIANCE_DEPTH)) {
+	if (curNodeIdx < (1 << VARIANCE_DEPTH)) {
 		// make maximum tessellation-level dependent on camDistLODFactor
 		// huge cliffs cause huge variances and would otherwise always tessellate
 		// regardless of the actual camera distance (-> huge/distfromcam ~= huge)
@@ -339,22 +340,21 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 		const int size  = std::max(sizeX, sizeY);
 
 		// take distance, variance and patch size into consideration
-		triVariance = (std::min(currentVariance[node], varianceMaxLimit) * PATCH_SIZE * size) * camDistLODFactor;
+		triVariance = (std::min(varianceTrees[varTreeIdx][curNodeIdx], varianceMaxLimit) * PATCH_SIZE * size) * camDistLODFactor;
 	}
 
 	// stop tesselation
 	if (triVariance <= 1.0f)
 		return;
 
-	Split(tri);
+	if ((Split(tri), !tri->IsBranch()))
+		return;
 
-	if (tri->IsBranch()) {
-		// triangle was split, also try to split its children
-		const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
+	// triangle was split, also try to split its children
+	const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
 
-		RecursTessellate(tri->LeftChild,  apex,  left, center, (node << 1)    );
-		RecursTessellate(tri->RightChild, right, apex, center, (node << 1) + 1);
-	}
+	RecursTessellate(tri-> LeftChild,  apex, left, center, varTreeIdx, (curNodeIdx << 1)    );
+	RecursTessellate(tri->RightChild, right, apex, center, varTreeIdx, (curNodeIdx << 1) + 1);
 }
 
 
@@ -364,6 +364,8 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 
 void Patch::RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex)
 {
+	if (tri->IsDummy())
+		return;
 	if (tri->IsLeaf()) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
 		indices.push_back(left.x  + left.y  * (PATCH_SIZE + 1));
@@ -373,7 +375,7 @@ void Patch::RecursRender(const TriTreeNode* tri, const int2 left, const int2 rig
 
 	const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
 
-	RecursRender(tri->LeftChild,  apex,  left, center);
+	RecursRender(tri-> LeftChild,  apex, left, center);
 	RecursRender(tri->RightChild, right, apex, center);
 }
 
@@ -400,7 +402,8 @@ float Patch::RecursComputeVariance(
 	const   int2 rght,
 	const   int2 apex,
 	const float3 hgts,
-	const    int node
+	const    int varTreeIdx,
+	const    int curNodeIdx
 ) {
 	/*      A
 	 *     /|\
@@ -419,37 +422,35 @@ float Patch::RecursComputeVariance(
 	// variance of this triangle is the actual height at its hypotenuse
 	// midpoint minus the interpolated height; use values passed on the
 	// stack instead of re-accessing the heightmap
-	float myVariance = math::fabs(mhgt - ((hgts.x + hgts.y) * 0.5f));
+	float mvar = math::fabs(mhgt - ((hgts.x + hgts.y) * 0.5f));
 
 	// shore lines get more variance for higher accuracy
 	// NOTE: .x := height(L), .y := height(R), .z := height(A)
-	//
 	if ((hgts.x * hgts.y) < 0.0f || (hgts.x * mhgt) < 0.0f || (hgts.y * mhgt) < 0.0f)
-		myVariance = std::max(myVariance * 1.5f, 20.0f);
+		mvar = std::max(mvar * 1.5f, 20.0f);
 
-	// myVariance = MAX(abs(left.x - rght.x), abs(left.y - rght.y)) * myVariance;
+	#if 0
+	mvar = MAX(abs(left.x - rght.x), abs(left.y - rght.y)) * mvar;
+	#endif
 
 	// save some CPU, only calculate variance down to a 4x4 block
 	if ((abs(left.x - rght.x) >= 4) || (abs(left.y - rght.y) >= 4)) {
 		const float3 hgts1 = {hgts.z, hgts.x, mhgt};
 		const float3 hgts2 = {hgts.y, hgts.z, mhgt};
 
-		const float child1Variance = RecursComputeVariance(apex, left, mpos, hgts1, (node << 1)    );
-		const float child2Variance = RecursComputeVariance(rght, apex, mpos, hgts2, (node << 1) + 1);
-
 		// final variance for this node is the max of its own variance and that of its children
-		myVariance = std::max(myVariance, child1Variance);
-		myVariance = std::max(myVariance, child2Variance);
+		mvar = std::max(mvar, RecursComputeVariance(apex, left, mpos, hgts1, varTreeIdx, (curNodeIdx << 1)    ));
+		mvar = std::max(mvar, RecursComputeVariance(rght, apex, mpos, hgts2, varTreeIdx, (curNodeIdx << 1) + 1));
 	}
 
 	// NOTE: Variance is never zero
-	myVariance = std::max(0.001f, myVariance);
+	mvar = std::max(0.001f, mvar);
 
 	// store the final variance for this node
-	if (node < (1 << VARIANCE_DEPTH))
-		currentVariance[node] = myVariance;
+	if (curNodeIdx < (1 << VARIANCE_DEPTH))
+		varianceTrees[varTreeIdx][curNodeIdx] = mvar;
 
-	return myVariance;
+	return mvar;
 }
 
 
@@ -459,8 +460,6 @@ float Patch::RecursComputeVariance(
 void Patch::ComputeVariance()
 {
 	{
-		currentVariance = &varianceLeft[0];
-
 		const   int2 left = {         0, PATCH_SIZE};
 		const   int2 rght = {PATCH_SIZE,          0};
 		const   int2 apex = {         0,          0};
@@ -470,12 +469,10 @@ void Patch::ComputeVariance()
 			GetHeight(apex),
 		};
 
-		RecursComputeVariance(left, rght, apex, hgts, 1);
+		RecursComputeVariance(left, rght, apex, hgts, 0, 1);
 	}
 
 	{
-		currentVariance = &varianceRight[0];
-
 		const   int2 left = {PATCH_SIZE,          0};
 		const   int2 rght = {         0, PATCH_SIZE};
 		const   int2 apex = {PATCH_SIZE, PATCH_SIZE};
@@ -485,7 +482,7 @@ void Patch::ComputeVariance()
 			GetHeight(apex),
 		};
 
-		RecursComputeVariance(left, rght, apex, hgts, 1);
+		RecursComputeVariance(left, rght, apex, hgts, 1, 1);
 	}
 
 	// Clear the dirty flag for this patch
@@ -507,7 +504,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	// Tessellate is called from multiple threads during both passes
 	// caller ensures that two patches that are neighbors or share a
 	// neighbor are never touched concurrently (crucial for ::Split)
-	curTriPool = CTriNodePool::GetPool(shadowPass);
+	curTriPool = CTriNodePool::GetPoolForThread(shadowPass);
 
 	// MAGIC NUMBER 1: scale factor to reduce LOD with camera distance
 	camDistLODFactor  = midPos.distance(camPos);
@@ -523,22 +520,18 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 	{
 		// split each of the base triangles
-		currentVariance = &varianceLeft[0];
-
 		const int2 left = {coors.x,              coors.y + PATCH_SIZE};
 		const int2 rght = {coors.x + PATCH_SIZE, coors.y             };
 		const int2 apex = {coors.x,              coors.y             };
 
-		RecursTessellate(&baseLeft, left, rght, apex, 1);
+		RecursTessellate(&baseLeft, left, rght, apex, 0, 1);
 	}
 	{
-		currentVariance = &varianceRight[0];
-
 		const int2 left = {coors.x + PATCH_SIZE, coors.y             };
 		const int2 rght = {coors.x,              coors.y + PATCH_SIZE};
 		const int2 apex = {coors.x + PATCH_SIZE, coors.y + PATCH_SIZE};
 
-		RecursTessellate(&baseRight, left, rght, apex, 1);
+		RecursTessellate(&baseRight, left, rght, apex, 1, 1);
 	}
 
 	return (!curTriPool->OutOfNodes());
@@ -599,8 +592,7 @@ void Patch::RecursBorderRender(
 	const int2 left,
 	const int2 rght,
 	const int2 apex,
-	int depth,
-	bool leftChild
+	const int2 depth
 ) {
 	if (tri->IsLeaf()) {
 		const float3& v1 = *(float3*)&vertices[(apex.x + apex.y * (PATCH_SIZE + 1))*3];
@@ -612,7 +604,7 @@ void Patch::RecursBorderRender(
 
 		va->EnlargeArrays(6, 0, VA_SIZE_C);
 
-		if ((depth & 1) == 0) {
+		if ((depth.x & 1) == 0) {
 			va->AddVertexQC(v2,                          white);
 			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			va->AddVertexQC(float3(v3.x, v3.y, v3.z),    white);
@@ -621,7 +613,8 @@ void Patch::RecursBorderRender(
 			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
 		} else {
-			if (leftChild) {
+			if (depth.y) {
+				// left child
 				va->AddVertexQC(v1,                          white);
 				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
 				va->AddVertexQC(float3(v2.x, v2.y, v2.z),    white);
@@ -630,6 +623,7 @@ void Patch::RecursBorderRender(
 				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
 				va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			} else {
+				// right child
 				va->AddVertexQC(v3,                          white);
 				va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
 				va->AddVertexQC(float3(v1.x, v1.y, v1.z),    white);
@@ -648,18 +642,18 @@ void Patch::RecursBorderRender(
 	// at even depths, descend down left *and* right children since both
 	// are on the patch-edge; returns are needed for gcc's TCO (although
 	// unlikely to be applied)
-	if ((depth & 1) == 0) {
-		       RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1, !leftChild);
-		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1,  leftChild);
+	if ((depth.x & 1) == 0) {
+		       RecursBorderRender(va, tri-> LeftChild, apex, left, center, {depth.x + 1, !depth.y});
+		return RecursBorderRender(va, tri->RightChild, rght, apex, center, {depth.x + 1,  depth.y});
 	}
 
 	// at odd depths (where only one triangle is on the edge), always force
 	// a left-bias for the next call so the recursion ends up at the correct
 	// leafs
-	if (leftChild) {
-		return RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1, true);
+	if (depth.y) {
+		return RecursBorderRender(va, tri-> LeftChild, apex, left, center, {depth.x + 1, true});
 	} else {
-		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1, true);
+		return RecursBorderRender(va, tri->RightChild, rght, apex, center, {depth.x + 1, true});
 	}
 }
 
@@ -671,10 +665,10 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 	// border vertices are always part of base-level triangles
 	// that have either no left or no right neighbor, i.e. are
 	// on the map edge
-	if (baseLeft.LeftNeighbor   == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1,  true); // left border
-	if (baseLeft.RightNeighbor  == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1, false); // right border
-	if (baseRight.RightNeighbor == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1, false); // bottom border
-	if (baseRight.LeftNeighbor  == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1,  true); // top border
+	if (baseLeft . LeftNeighbor->IsDummy()) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, {1,  true}); // left border
+	if (baseLeft .RightNeighbor->IsDummy()) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, {1, false}); // right border
+	if (baseRight.RightNeighbor->IsDummy()) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1, false}); // bottom border
+	if (baseRight. LeftNeighbor->IsDummy()) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1,  true}); // top border
 	#undef PS
 }
 
@@ -713,10 +707,8 @@ void Patch::SetSquareTexture() const
 
 void Patch::SwitchRenderMode(int mode)
 {
-	if (mode < 0) {
-		mode = renderMode + 1;
-		mode %= 3;
-	}
+	if (mode < 0)
+		mode = (renderMode + 1) % 3;
 
 	if (!GLEW_ARB_vertex_buffer_object && mode == VBO)
 		mode = DL;

@@ -64,20 +64,20 @@ public:
 
 private:
 	void Reset(bool shadowPass);
-	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass) {
-		return tesselateFuncs[ useThreadTesselation[shadowPass] ](patches, cam, viewRadius, shadowPass);
+	void Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool useThreads, bool shadowPass) {
+		forceNextTesselation[shadowPass] = tesselateFuncs[useThreads](patches, cam, viewRadius, shadowPass);
 	}
 
 private:
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	int numPatchesX;
-	int numPatchesY;
-	int lastGroundDetail[MESH_COUNT];
+	int numPatchesX = 0;
+	int numPatchesY = 0;
+	int lastGroundDetail[MESH_COUNT] = {0, 0};
 
 	float3 lastCamPos[MESH_COUNT];
 
-	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[MESH_COUNT];
+	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[2];
 
 	// [1] is used for the shadow pass, [0] is used for all other passes
 	std::vector< Patch > patchMeshGrid[MESH_COUNT];

@@ -245,26 +245,56 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
+		CSMFGroundDrawer* smfDrawer = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
 
-		if (smfGD == nullptr)
+		if (smfDrawer == nullptr)
 			return false;
 
-		if (!action.GetArgs().empty()) {
-			int rendererMode = -1;
-			int roamPatchMode = -1;
-
-			sscanf((action.GetArgs()).c_str(), "%i %i", &rendererMode, &roamPatchMode);
-
-			smfGD->SwitchMeshDrawer(rendererMode);
-
-			if (rendererMode == SMF_MESHDRAWER_ROAM && roamPatchMode >= 0) {
-				Patch::SwitchRenderMode(roamPatchMode);
-			}
-		} else {
-			smfGD->SwitchMeshDrawer();
+		if (action.GetArgs().empty()) {
+			smfDrawer->SwitchMeshDrawer();
+			return true;
 		}
 
+		int smfMeshDrawerArg = -1;
+		int roamPatchModeArg = -1;
+
+		sscanf((action.GetArgs()).c_str(), "%i %i", &smfMeshDrawerArg, &roamPatchModeArg);
+
+		smfDrawer->SwitchMeshDrawer(smfMeshDrawerArg);
+
+		if (smfMeshDrawerArg == SMF_MESHDRAWER_ROAM && roamPatchModeArg >= 0)
+			Patch::SwitchRenderMode(roamPatchModeArg);
+
+		return true;
+	}
+};
+
+class MapTesselUseThreadsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MapTesselUseThreadsActionExecutor() : IUnsyncedActionExecutor(
+		"maptesselusethreads",
+		"enable or disable threaded map-mesh tessellation"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		CSMFGroundDrawer* smfDrawer = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
+		CRoamMeshDrawer* meshDrawer = nullptr;
+
+		if (smfDrawer == nullptr)
+			return false;
+		if ((meshDrawer = dynamic_cast<CRoamMeshDrawer*>(smfDrawer->GetMeshDrawer())) == nullptr)
+			return false;
+
+		if ((action.GetArgs()).empty())
+			return false;
+
+		int normalPassArg = 1;
+		int shadowPassArg = 1;
+
+		sscanf((action.GetArgs()).c_str(), "%i %i", &normalPassArg, &shadowPassArg);
+
+		meshDrawer->UseThreadTesselation(normalPassArg != 0, shadowPassArg != 0);
 		return true;
 	}
 };
@@ -3313,6 +3343,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<ShadowsActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapShadowPolyOffsetActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapMeshDrawerActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<MapTesselUseThreadsActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MapBorderActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<WaterActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<AdvModelShadingActionExecutor>()); // [maint]

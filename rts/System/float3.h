@@ -675,6 +675,7 @@ public:
 	static float3 min(const float3 v1, const float3 v2);
 	static float3 max(const float3 v1, const float3 v2);
 	static float3 fabs(const float3 v);
+	static float3 sign(const float3 v);
 
 	static constexpr float cmp_eps() { return 1e-04f; }
 	static constexpr float nrm_eps() { return 1e-12f; }
