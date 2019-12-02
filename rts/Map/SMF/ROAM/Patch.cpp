@@ -25,7 +25,7 @@ static size_t CUR_POOL_SIZE =                 0; // split over all threads
 static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
 
 
-static std::vector<CTriNodePool> pools[CRoamMeshDrawer::MESH_COUNT];
+static CTriNodePool pools[CRoamMeshDrawer::MESH_COUNT][ThreadPool::MAX_THREADS];
 
 TriTreeNode TriTreeNode::dummyNode;
 
@@ -33,18 +33,15 @@ TriTreeNode TriTreeNode::dummyNode;
 void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
 	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
-		const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
-
-		LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
-
 		try {
-			pools[shadowPass].clear();
-			pools[shadowPass].reserve(numThreads);
+			const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
 
 			for (int i = 0; i < numThreads; i++) {
-				pools[shadowPass].emplace_back(thrPoolSize + (thrPoolSize & 1));
+				pools[shadowPass][i].Reset();
+				pools[shadowPass][i].Resize(thrPoolSize + (thrPoolSize & 1));
 			}
 
+			LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
 			break;
 		} catch (const std::bad_alloc& e) {
 			LOG_L(L_FATAL, "[TriNodePool::%s] exception \"%s\" (numThreads=%d shadowPass=%d)", __func__, e.what(), numThreads, shadowPass);
@@ -59,9 +56,9 @@ void CTriNodePool::ResetAll(bool shadowPass)
 {
 	bool outOfNodes = false;
 
-	for (CTriNodePool& pool: pools[shadowPass]) {
-		outOfNodes |= pool.OutOfNodes();
-		pool.Reset();
+	for (int i = 0, n = ThreadPool::GetMaxThreads(); i < n; i++) {
+		outOfNodes |= pools[shadowPass][i].OutOfNodes();
+		pools[shadowPass][i].Reset();
 	}
 
 	if (!outOfNodes)
@@ -79,7 +76,7 @@ CTriNodePool* CTriNodePool::GetPoolForThread(bool shadowPass)
 }
 
 
-CTriNodePool::CTriNodePool(const size_t poolSize)
+void CTriNodePool::Resize(size_t poolSize)
 {
 	// child nodes are always allocated in pairs, so poolSize must be even
 	// (it does not technically need to be non-zero since patch root nodes
@@ -89,7 +86,6 @@ CTriNodePool::CTriNodePool(const size_t poolSize)
 
 	tris.resize(poolSize);
 }
-
 
 void CTriNodePool::Reset()
 {

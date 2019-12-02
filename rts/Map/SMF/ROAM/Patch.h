@@ -71,8 +71,7 @@ public:
 	inline static CTriNodePool* GetPoolForThread(bool shadowPass);
 
 public:
-	CTriNodePool(const size_t poolSize);
-
+	void Resize(size_t poolSize);
 	void Reset();
 	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
