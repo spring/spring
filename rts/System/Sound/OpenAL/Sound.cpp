@@ -4,8 +4,6 @@
 
 #include <cstdlib>
 #include <cmath>
-#include <al.h>
-#include <alc.h>
 #include <alext.h>
 
 #ifdef ALC_SOFT_loopback
