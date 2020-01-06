@@ -6,6 +6,8 @@
 #include <atomic>
 #include <string>
 #include <vector>
+#include <al.h>
+#include <alc.h>
 
 #include "System/Sound/ISound.h"
 #include "System/float3.h"
@@ -18,10 +20,6 @@
 class CSoundSource;
 class SoundBuffer;
 class SoundItem;
-struct ALCdevice_struct;
-typedef struct ALCdevice_struct ALCdevice;
-struct ALCcontext_struct;
-typedef struct ALCcontext_struct ALCcontext;
 
 /// Default sound system implementation (OpenAL)
 class CSound : public ISound
