@@ -21,6 +21,8 @@ namespace Threading {
 	);
 }
 
-int gettid ();
+extern "C" {
+__pid_t gettid() __THROW;
+}
 
 #endif // THREADSIGNALHANDLER_H
