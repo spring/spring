@@ -32,7 +32,7 @@ void CRifle::FireImpl(const bool scriptCall)
 	CUnit* hitUnit;
 	CFeature* hitFeature;
 
-	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
+	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, collisionFlags, owner, hitUnit, hitFeature);
 	const float impulse = CGameHelper::CalcImpulseScale(*damages, 1.0f);
 
 	if (hitUnit != nullptr) {
