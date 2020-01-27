@@ -117,6 +117,9 @@ bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 	assert(bound);
 	assert(!mapped || (newData == nullptr && newSize == bufSize && newUsage == usage));
 
+	// ATI interprets unsynchronized access differently; (un)mapping does not sync
+	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
+
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
 	if (newData == nullptr && newSize == bufSize && newUsage == usage)
 		return true;
@@ -164,9 +167,6 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 	assert(!mapped);
 	assert((offset + size) <= bufSize);
 	mapped = true;
-
-	// ATI interprets unsynchronized access differently; (un)mapping does not sync
-	mapUnsyncedBit = GL_MAP_UNSYNCHRONIZED_BIT * (1 - globalRendering->haveATI);
 
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
 	// for easier handling convert the glMapBuffer ones here
