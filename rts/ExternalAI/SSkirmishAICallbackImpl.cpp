@@ -3509,21 +3509,23 @@ EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getParams(
 	int unitId,
 	int supportedCommandId,
 	const char** params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
 	/*const*/ CAICallback* cb = GetCallBack(skirmishAIId);
 	const std::vector<const SCommandDescription*>* cq = cb->GetUnitCommands(unitId);
 	const std::vector<std::string>& ps = cq->at(supportedCommandId)->params;
 
-	const int paramsRealSize = ps.size();
+	const int cqNumParams = ps.size();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		for (unsigned int i = 0, n = std::min(paramsRealSize, paramsMaxSize); i < n; i++) {
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
 			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return (std::min(paramsRealSize, paramsMaxSize));
+	return retNumParams;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getStockpile(int skirmishAIId, int unitId) {
@@ -3633,23 +3635,26 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getParams(
 	int unitId,
 	int commandId,
 	float* params,
-	int maxParams
+	int maxNumParams
 ) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
 
 	if (!CHECK_COMMAND_ID(q, commandId))
 		return -1;
 
-	const float* cmdParams = q->at(commandId).GetParams();
-	const int numParams = q->at(commandId).GetNumParams();
+	const int cqNumParams = q->at(commandId).GetNumParams();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		for (unsigned int i = 0, n = std::min(numParams, maxParams); i < n; i++) {
+		const float* cmdParams = q->at(commandId).GetParams();
+
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
 			params[i] = cmdParams[i];
 		}
 	}
 
-	return (std::min(numParams, maxParams));
+	return retNumParams;
 }
 
 #undef CHECK_COMMAND_ID
@@ -4797,9 +4802,12 @@ EXPORT(bool) skirmishAiCallback_WeaponDef_isDynDamageInverted(int skirmishAIId, 
 	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageInverted;
 }
 
-EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId,
-		const char** keys, const char** values) {
-
+EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(
+	int skirmishAIId,
+	int weaponDefId,
+	const char** keys,
+	const char** values
+) {
 	const auto& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
@@ -4944,18 +4952,20 @@ EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(
 	int groupId,
 	int supportedCommandId,
 	const char** params,
-	int paramsMaxSize
+	int maxNumParams
 ) {
 	const std::vector<std::string>& ps = GetCallBack(skirmishAIId)->GetGroupCommands(groupId)->at(supportedCommandId)->params;
-	const int paramsRealSize = ps.size();
+	const int cqNumParams = ps.size();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		for (unsigned int i = 0, n = std::min(paramsRealSize, paramsMaxSize); i < n; i++) {
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
 			params[i] = ps.at(i).c_str();
 		}
 	}
 
-	return (std::min(paramsRealSize, paramsMaxSize));
+	return retNumParams;
 }
 
 EXPORT(int) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int groupId) {
@@ -4990,22 +5000,25 @@ EXPORT(int) skirmishAiCallback_Group_OrderPreview_getParams(
 	int skirmishAIId,
 	int groupId,
 	float* params,
-	int maxParams
+	int maxNumParams
 ) {
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return 0;
 
 	const Command& guiCommand = guihandler->GetOrderPreview();
-	const float* cmdParams = guiCommand.GetParams();
-	const int numParams = guiCommand.GetNumParams();
+	const int cqNumParams = guiCommand.GetNumParams();
+	// NOTE: LegacyCpp AI interface wrapper expects real array size as return-value after 1st call with outArray=nullptr
+	int retNumParams = cqNumParams;
 
 	if (params != nullptr) {
-		for (unsigned int i = 0, n = std::min(numParams, maxParams); i < n; i++) {
+		const float* cmdParams = guiCommand.GetParams();
+
+		for (int i = 0, n = (retNumParams = std::min(cqNumParams, maxNumParams)); i < n; i++) {
 			params[i] = cmdParams[i];
 		}
 	}
 
-	return (std::min(numParams, maxParams));
+	return retNumParams;
 }
 
 EXPORT(bool) skirmishAiCallback_Group_isSelected(int skirmishAIId, int groupId) {
