@@ -41,9 +41,8 @@ enum LinuxThreadState {
 /**
  * There is no glibc wrapper for this system call, so you have to write one:
  */
-static int gettid () {
-	long tid = syscall(SYS_gettid);
-	return tid;
+static int gettid() {
+	return syscall(SYS_gettid);
 }
 
 /**
