@@ -72,7 +72,7 @@ public:
 
 public:
 	void Resize(size_t poolSize);
-	void Reset();
+	void Reset() { nextTriNodeIdx = 0; }
 	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
 	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }

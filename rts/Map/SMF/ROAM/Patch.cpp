@@ -87,15 +87,6 @@ void CTriNodePool::Resize(size_t poolSize)
 	tris.resize(poolSize);
 }
 
-void CTriNodePool::Reset()
-{
-	for (size_t i = 0; i < nextTriNodeIdx; i++) {
-		tris[i].Reset();
-	}
-
-	nextTriNodeIdx = 0;
-}
-
 bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
 	// pool exhausted, make sure both child nodes are dummies
@@ -109,6 +100,9 @@ bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 
 	left  = &tris[nextTriNodeIdx++];
 	right = &tris[nextTriNodeIdx++];
+
+	left->Reset();
+	right->Reset();
 	return true;
 }
 
