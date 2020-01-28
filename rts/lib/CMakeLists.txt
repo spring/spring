@@ -62,3 +62,21 @@ endforeach()
 
 ADD_SUBDIRECTORY(assimp)
 target_compile_definitions(assimp PRIVATE -DASSIMP_BUILD_NO_OWN_ZLIB)
+
+# hide assimp compile warnings with g++
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	include(CheckCXXCompilerFlag)
+	check_cxx_compiler_flag(-Wno-class-memaccess CXX_SUPPORT_NO_CLASS_MEMACCESS)
+	set(flagstoadd "")
+
+	if(CXX_SUPPORT_NO_CLASS_MEMACCESS)
+		set(flagstoadd "${flagstoadd} -Wno-class-memaccess")
+	endif()
+	check_cxx_compiler_flag(-Wno-tautological-compare CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
+	if(CXX_SUPPORT_NO_AUTOLOGICAL_COMPARE)
+		set(flagstoadd "${flagstoadd} -Wno-tautological-compare")
+	endif()
+	set_target_properties(assimp PROPERTIES COMPILE_FLAGS ${flagstoadd})
+
+endif()
+

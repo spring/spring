@@ -134,7 +134,9 @@ bool LWOImporter::HandleTextures(aiMaterial* pcMat, const TextureList& in, aiTex
                 }
                 break;
             default:
+                DefaultLogger::get()->error("Invalid texture.mapMode");
                 ai_assert(false);
+		return false;
         };
 
         if (mapping != aiTextureMapping_UV) {
