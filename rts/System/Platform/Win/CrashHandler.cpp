@@ -345,6 +345,8 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			glLibFound |= (strstr(modName, "ig4") != nullptr);
 			// OpenGL lib names (Intel)
 			glLibFound |= (strstr(modName, "ig75icd32.dll") != nullptr);
+			// Windows driver store, i.e. "..\DriverStore\FileRepository\...\ig9.dll"
+			glLibFound |= (strstr(modName, "DriverStore") != nullptr);
 		}
 	}
 
