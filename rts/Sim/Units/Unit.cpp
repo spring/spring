@@ -256,6 +256,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	beingBuilt = params.beingBuilt;
 	mass = (beingBuilt)? mass: unitDef->mass;
 	crushResistance = unitDef->crushResistance;
+	pathRadiusMult = unitDef->pathRadiusMult;
 	power = unitDef->power;
 	maxHealth = unitDef->health;
 	health = beingBuilt? 0.1f: unitDef->health;

@@ -137,6 +137,7 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 
 	fd.mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
 	fd.crushResistance = fdTable.GetFloat("crushResistance", fd.mass);
+	fd.pathRadiusMult = fdTable.GetFloat("pathRadiusMult", 1.0f);
 
 	fd.decalDef.Parse(fdTable);
 

@@ -317,6 +317,8 @@ public:
 	float mass = DEFAULT_MASS;
 	///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 	float crushResistance = 0.0f;
+	///< Modifies the radius used by the path follower for avoidance and push-collisions.
+	float pathRadiusMult = 01.0f;
 
 	///< whether this object can potentially be crushed during a collision with another object
 	bool crushable = false;

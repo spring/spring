@@ -581,6 +581,16 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
 	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
+	if (RequireMoveDef()) {
+		// Reverse compatibility for collision radii that are derived from the moveDef footprint. The typical case is
+		// a square unit with (xsize == moveDef->xsize + 1). This multiplier makes the conversion to the same radius
+		// as the previous behaviour.
+		pathRadiusMult = udTable.GetFloat("pathRadiusMult", (xsize - 1)/xsize);
+		
+	} else {
+		pathRadiusMult = udTable.GetFloat("pathRadiusMult", 1.0f);
+	}
+
 	buildingMask = (std::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	if (IsImmobileUnit())
 		CreateYardMap(udTable.GetString("yardMap", ""));
