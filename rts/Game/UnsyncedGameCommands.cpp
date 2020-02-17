@@ -53,6 +53,7 @@
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Map/SMF/ROAM/Patch.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
+#include "Map/SMF/ROAMSingle/PatchSingle.h"
 
 #include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -264,6 +265,9 @@ public:
 
 		if (smfMeshDrawerArg == SMF_MESHDRAWER_ROAM && roamPatchModeArg >= 0)
 			Patch::SwitchRenderMode(roamPatchModeArg);
+
+		if (smfMeshDrawerArg == SMF_MESHDRAWER_ROAM_SINGLE && roamPatchModeArg >= 0)
+			PatchSingle::SwitchRenderMode(roamPatchModeArg);
 
 		return true;
 	}

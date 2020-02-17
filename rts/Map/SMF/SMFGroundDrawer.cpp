@@ -10,6 +10,7 @@
 #include "Map/SMF/Basic/BasicMeshDrawer.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
+#include "Map/SMF/ROAMSingle/RoamSingleMeshDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
@@ -46,6 +47,7 @@ CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false)
 CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
+CONFIG(bool, RoamThreading).defaultValue(false);
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
 	.safemodeValue(Patch::DL)
@@ -59,7 +61,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	, meshDrawer(nullptr)
 	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
 {
-	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
+	drawerMode = (configHandler->GetInt("ROAM") != 0) ? (configHandler->GetBool("RoamThreading") ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_ROAM_SINGLE) : SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
 
 	groundTextures = new CSMFGroundTextures(smfMap);
@@ -117,7 +119,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
 	// remember which ROAM-mode was enabled (if any)
-	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
+	//configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): ((dynamic_cast<CRoamSingleMeshDrawer*>(meshDrawer) != nullptr)? PatchSingle::GetRenderMode(): 0));
 
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
@@ -155,6 +157,10 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 		case SMF_MESHDRAWER_BASIC: {
 			LOG("Switching to Basic Mesh Rendering");
 			meshDrawer = new CBasicMeshDrawer(this);
+		} break;
+		case SMF_MESHDRAWER_ROAM_SINGLE: {
+			LOG("Switching to single threaded ROAM Mesh Rendering");
+			meshDrawer = new CRoamSingleMeshDrawer(this);
 		} break;
 		default: {
 			LOG("Switching to ROAM Mesh Rendering");
