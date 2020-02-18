@@ -10,6 +10,7 @@
 #include "Map/SMF/Basic/BasicMeshDrawer.h"
 // #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
+#include "Map/SMF/ROAMSingle/RoamSingleMeshDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
@@ -45,6 +46,7 @@ CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false)
 CONFIG(bool, AllowDrawMapPostDeferredEvents).defaultValue(true);
 
 
+CONFIG(bool, RoamThreading).defaultValue(false);
 CONFIG(int, ROAM)
 	.defaultValue(1)
 	.safemodeValue(1)
@@ -58,7 +60,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	, meshDrawer(nullptr)
 	, geomBuffer{"GROUNDDRAWER-GBUFFER"}
 {
-	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
+	drawerMode = (configHandler->GetInt("ROAM") != 0) ? (configHandler->GetBool("RoamThreading") ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_ROAM_SINGLE) : SMF_MESHDRAWER_BASIC;
 	groundDetail = configHandler->GetInt("GroundDetail");
 
 	groundTextures = new CSMFGroundTextures(smfMap);
@@ -104,7 +106,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
 	// remember if ROAM-mode was enabled
-	configHandler->Set("ROAM", int(dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr));
+	configHandler->Set("ROAM", int((dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr) || (dynamic_cast<CRoamSingleMeshDrawer*>(meshDrawer) != nullptr)));
 
 	smfRenderStates[RENDER_STATE_NOP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_NOP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
@@ -148,6 +150,11 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 			LOG("Switching to Basic Mesh Rendering");
 			spring::SafeDelete(meshDrawer);
 			meshDrawer = new CBasicMeshDrawer(this);
+		} break;
+		case SMF_MESHDRAWER_ROAM_SINGLE: {
+			LOG("Switching to single threaded ROAM Mesh Rendering");
+			spring::SafeDelete(meshDrawer);
+			meshDrawer = new CRoamSingleMeshDrawer(this);
 		} break;
 		default: {
 			LOG("Switching to ROAM Mesh Rendering");

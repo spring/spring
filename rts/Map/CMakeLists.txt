@@ -23,5 +23,7 @@ set(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/Legacy/LegacyMeshDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/Patch.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/RoamMeshDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAMSingle/PatchSingle.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAMSingle/RoamSingleMeshDrawer.cpp"
 		PARENT_SCOPE
 	)
