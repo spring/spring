@@ -2038,7 +2038,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float2 collideeParams = {collidee->speed.w, collideeMobile? collideeMD->CalcFootPrintMaxInteriorRadius(): collidee->CalcFootPrintMaxInteriorRadius()};
 		const float4 separationVect = {collider->pos - collidee->pos, Square(colliderParams.y + collideeParams.y)};
 
-		if (!checkCollisionFuncs[allowSAT && (forceSAT || (collideeMD->CalcFootPrintAxisStretchFactor() > 0.1f))](separationVect, collider, collidee, colliderMD, collideeMD))
+		if (!checkCollisionFuncs[allowSAT && (forceSAT || (collideeMobile ? collideeMD->CalcFootPrintAxisStretchFactor() > 0.1f : false))](separationVect, collider, collidee, colliderMD, collideeMD)) {
 			continue;
 
 
