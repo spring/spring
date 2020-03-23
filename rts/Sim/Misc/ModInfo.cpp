@@ -85,6 +85,7 @@ void CModInfo::ResetState()
 
 		requireSonarUnderWater = true;
 		alwaysVisibleOverridesCloaked = false;
+		decloakRequiresLineOfSight = false;
 		separateJammers = true;
 	}
 	{
@@ -252,6 +253,7 @@ void CModInfo::Init(const std::string& modFileName)
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", requireSonarUnderWater);
 		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", alwaysVisibleOverridesCloaked);
+		decloakRequiresLineOfSight = sensors.GetBool("decloakRequiresLineOfSight", decloakRequiresLineOfSight);
 		separateJammers = sensors.GetBool("separateJammers", separateJammers);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
