@@ -205,7 +205,7 @@ void CRoamMeshDrawer::Update()
 			if (p.IsVisible(cam)) {
 				if (tesselMesh |= (pvflags[i] == 0))
 					pvflags[i] = 1;
-				if (p.IsDirty()){
+				if (p.IsDirty()) {
 					p.ComputeVariance();
 					tesselMesh = true;
 				}
@@ -217,7 +217,7 @@ void CRoamMeshDrawer::Update()
 
 			if (tesselMesh |= (uint8_t(p.IsVisible(cam)) != pvflags[i]))
 				pvflags[i] = uint8_t(p.IsVisible(cam));
-			if (p.IsVisible(cam) && p.IsDirty()){
+			if (p.IsVisible(cam) && p.IsDirty()) {
 				p.ComputeVariance();
 				tesselMesh = true;
 			}
