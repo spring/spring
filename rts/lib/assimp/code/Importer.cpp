@@ -556,6 +556,8 @@ void WriteLogOpening(const std::string& file)
         << "ppc64"
 #elif defined(__arm__)
         << "arm"
+#elif defined(__e2k__)
+        << "e2k"
 #else
     << "<unknown architecture>"
 #endif

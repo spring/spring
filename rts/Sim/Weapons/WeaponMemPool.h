@@ -6,7 +6,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/MemPoolTypes.h"
 
-#if (defined(__x86_64) || defined(__x86_64__))
+#if (defined(__x86_64) || defined(__x86_64__) || defined(__e2k__))
 // NOTE: ~742MB, way too big for 32-bit builds
 typedef StaticMemPool<MAX_UNITS * MAX_WEAPONS_PER_UNIT, 760> WeaponMemPool;
 #else

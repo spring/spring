@@ -6,7 +6,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/MemPoolTypes.h"
 
-#if (defined(__x86_64) || defined(__x86_64__))
+#if (defined(__x86_64) || defined(__x86_64__) || defined(__e2k__))
 typedef StaticMemPool<MAX_PROJECTILES, 868> ProjMemPool;
 #else
 typedef FixedDynMemPool<868, MAX_PROJECTILES / 2000, MAX_PROJECTILES / 64> ProjMemPool;
