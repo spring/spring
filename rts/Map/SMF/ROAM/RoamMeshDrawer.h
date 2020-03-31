@@ -77,6 +77,9 @@ private:
 
 	float3 lastCamPos[MESH_COUNT];
 
+	int numPatchesLeftVisibility[MESH_COUNT] = {0};
+	int tesselationsSinceLastReset[MESH_COUNT] = {0};
+
 	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[2];
 
 	// [1] is used for the shadow pass, [0] is used for all other passes

@@ -24,11 +24,11 @@ class CCamera;
 
 // how many TriTreeNodes should be reserved per pool
 // (1M is a reasonable baseline for most large maps)
-#define NEW_POOL_SIZE (1 << 20)
+#define NEW_POOL_SIZE (1 << 21)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
 
-
+class Patch; //declare it so that tritreenode can store its parent
 // stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
@@ -54,6 +54,8 @@ struct TriTreeNode
 	TriTreeNode*  BaseNeighbor = &dummyNode;
 	TriTreeNode*  LeftNeighbor = &dummyNode;
 	TriTreeNode* RightNeighbor = &dummyNode;
+
+	Patch* parentPatch = NULL; //triangles know their parent patch so they know of a neighbour's Split() func caused changes to them
 };
 
 
@@ -68,6 +70,7 @@ public:
 
 	inline static CTriNodePool* GetPoolForThread(bool shadowPass);
 
+
 public:
 	void Resize(size_t poolSize);
 	void Reset() { nextTriNodeIdx = 0; }
@@ -75,6 +78,9 @@ public:
 
 	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }
 	bool OutOfNodes() const { return (nextTriNodeIdx >= tris.size()); }
+
+	size_t getPoolSize() { return tris.size(); }
+	size_t getNextTriNodeIdx() { return nextTriNodeIdx; }
 
 private:
 	std::vector<TriTreeNode> tris;
@@ -113,6 +119,8 @@ public:
 	int GetTriCount() const { return (indices.size() / 3); }
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
+
+	float3 lastCameraPosition ; //the last camera position this patch was tesselated from
 
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
 	void ComputeVariance();
@@ -175,8 +183,12 @@ private:
 	bool isDirty = true;
 	bool vboVerticesUploaded = false;
 
+	// Did the tesselation tree change from what we have stored in the VBO?
+	bool isChanged = false;
+
 	float varianceMaxLimit = std::numeric_limits<float>::max();
 	float camDistLODFactor = 1.0f; // defines the LOD falloff in camera distance
+
 
 	// world-coordinate offsets of this patch
 	int2 coors = {-1, -1};
@@ -195,7 +207,7 @@ private:
 	// NOTE:
 	//   shadow-mesh patches are only ever viewed by one camera
 	//   normal-mesh patches can be viewed by *multiple* types!
-	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
+	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames = { 0 };
 
 
 	GLuint triList = 0;
