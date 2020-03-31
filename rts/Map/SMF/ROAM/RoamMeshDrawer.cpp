@@ -206,8 +206,9 @@ void CRoamMeshDrawer::Update()
     int numPatchesEnterVisibility = 0;
     int numPatchesEnteredSkipped = 0;
     int numPatchesExitVisibility = 0;
-    int numPatchesRetesselated = 0;
-    bool patchesToTesselate[numPatchesX * numPatchesY]={false};
+    int numPatchesRetesselated = 0;    
+    bool patchesToTesselate[numPatchesX * numPatchesY];
+    memset( patchesToTesselate, 0, numPatchesX * numPatchesY*sizeof(bool) );
     // Notes for Tessmode 3, e.g. LOAM (Lazy Optimally Adapting Meshes).
     // Dear reader, consider yourself a rubber ducky.
 
