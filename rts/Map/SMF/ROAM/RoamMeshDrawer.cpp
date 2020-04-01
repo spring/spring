@@ -212,9 +212,10 @@ void CRoamMeshDrawer::Update()
 	size_t numPatchesZoomChanged = 0;
 
 	CCamera* playerCamera = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
-	float3 playerCameraPosition = playerCamera->GetPos();							  
+	float3 playerCameraPosition = playerCamera->GetPos();
 	std::vector<bool> patchesToTesselate(numPatchesX * numPatchesY);
 	std::fill(patchesToTesselate.begin(),patchesToTesselate.end(),0);
+
 
     // Notes for Tessmode 3, e.g. LOAM (Lazy Optimally Adapting Meshes).
     // Dear reader, consider yourself a rubber ducky.
@@ -374,16 +375,16 @@ void CRoamMeshDrawer::Update()
 		#elif (RETESSELLATE_MODE == 1)
 			const bool isVisibleNow = p.IsVisible(cam);
 			const bool wasVisible = pvflags[i];
-			
+
 			if (isVisibleNow && !wasVisible)
 				numPatchesEnterVisibility++;
-			
+
 			if (!isVisibleNow && wasVisible)
 				numPatchesExitVisibility ++;
-			
+
 			if (isVisibleNow)
 				numPatchesVisible ++;
-			
+
 			if(p.IsVisible(cam) != pvflags[i]){
 				if (pvflags[i]) {
 					numPatchesExitVisibility++;
@@ -515,10 +516,10 @@ void CRoamMeshDrawer::Update()
 			Patch* p = &patches[i];
 
 			if (p->IsVisible(cam))
-		   
+
 
 				p->GenerateIndices();
-							   
+
 		});
 	}
 
@@ -529,8 +530,8 @@ void CRoamMeshDrawer::Update()
 			if (p.IsVisible(cam))
 				p.Upload();
 
-					 
-							
+
+
 		}
 	}
 #endif
@@ -593,10 +594,10 @@ void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawInMiniMap()
 {
 	#ifdef DRAW_DEBUG_IN_MINIMAP
-		 
+
 	// DrawInMiniMap runs before DrawWorld
-																							
-																		  
+
+
 	globalRendering->drawFrame -= 1;
 
 	glMatrixMode(GL_PROJECTION);
@@ -611,25 +612,25 @@ void CRoamMeshDrawer::DrawInMiniMap()
 		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-													
 
-				
-																			 
-																			 
+
+
+
+
 
 	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
-															   
+
 
 		if (p.IsVisible(CCameraHandler::GetActiveCamera()))
 			continue;
 
 		glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
-																																														   
-																																														   
 
-																																														   
-																																														   
-																																														   
+
+
+
+
+
 	}
 
 	glMatrixMode(GL_PROJECTION);
@@ -705,4 +706,3 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		}
 	}
 }
-
