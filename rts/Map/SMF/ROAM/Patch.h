@@ -56,7 +56,7 @@ struct TriTreeNode
 	TriTreeNode*  BaseNeighbor = &dummyNode;
 	TriTreeNode*  LeftNeighbor = &dummyNode;
 	TriTreeNode* RightNeighbor = &dummyNode;
-	
+
 	Patch* parentPatch = NULL; //triangles know their parent patch so they know of a neighbour's Split() func caused changes to them
 };
 
@@ -80,7 +80,7 @@ public:
 
 	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }
 	bool OutOfNodes() const { return (nextTriNodeIdx >= tris.size()); }
-	
+
 	size_t getPoolSize() { return tris.size(); }
 	size_t getNextTriNodeIdx() { return nextTriNodeIdx; }
 private:
@@ -114,7 +114,11 @@ public:
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
 	float3 lastCameraPosition ; //the last camera position this patch was tesselated from
-	
+
+	//this specifies the manhattan distance from the camera during the last tesselation
+	//note that this can only become lower, as we can only increase tesselation levels while maintaining no cracks
+	float camDistanceLastTesselation;
+
 	// create an approximate mesh
 
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
@@ -171,7 +175,7 @@ private:
 
 	// pool used during Tessellate; each invoked Split allocates from this
 	CTriNodePool* curTriPool = nullptr;
-
+	float3 midPos;
 	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty = true;
 	bool isTesselated = false;

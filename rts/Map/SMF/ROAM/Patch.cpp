@@ -181,16 +181,23 @@ void Patch::Reset()
 	baseLeft.parentPatch = this;
 	baseRight.parentPatch = this;
 
+	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.y = readMap->GetCurrAvgHeight();
+
 	//Reset camera
 	lastCameraPosition.x = -10000000;
 	lastCameraPosition.y = -10000000;
 	lastCameraPosition.z = -10000000;
+	camDistanceLastTesselation = 10000000;
 }
 
 
 void Patch::UpdateHeightMap(const SRectangle& rect)
 {
 	const float* hMap = readMap->GetCornerHeightMapUnsynced();
+
+	float averageHeight = 0;
 
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
@@ -199,11 +206,13 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 			const int xw = x + coors.x;
 			const int zw = z + coors.y;
 
-			// only update y-coord
-			vertices[vindex + 1] = hMap[zw * mapDims.mapxp1 + xw];
+			const float height = hMap[zw * mapDims.mapxp1 + xw];
+			vertices[vindex + 1] = height;
+			averageHeight += height;
 		}
 	}
 
+	midPos.y = averageHeight/((PATCH_SIZE+1)*(PATCH_SIZE+1));
 	UploadVertices();
 	// UploadBorderVertices();
 
@@ -579,10 +588,6 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	isTesselated = true;
 
 	// Set/Update LOD params (FIXME: wrong height?)
-	float3 midPos;
-	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.y = readMap->GetCurrAvgHeight();
 
 	// Tessellate is called from multiple threads during both passes
 	// caller ensures that two patches that are neighbors or share a
@@ -591,6 +596,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 	// MAGIC NUMBER 1: scale factor to reduce LOD with camera distance
 	camDistLODFactor  = midPos.distance(camPos);
+	camDistanceLastTesselation = camDistLODFactor; //store distance from camera
 	camDistLODFactor *= (300.0f / viewRadius);
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;
@@ -658,7 +664,6 @@ void Patch::UploadVertices()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(0);
 
-	isChanged = false;
 }
 
 void Patch::UploadBorderVertices()
@@ -686,6 +691,7 @@ void Patch::UploadIndices()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	isChanged = false;
 }
 
 
