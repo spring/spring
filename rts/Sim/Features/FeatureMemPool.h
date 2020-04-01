@@ -7,7 +7,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/MemPoolTypes.h"
 
-#if (defined(__x86_64) || defined(__x86_64__))
+#if (defined(__x86_64) || defined(__x86_64__) || defined(__e2k__))
 typedef StaticMemPool<MAX_FEATURES, sizeof(CFeature)> FeatureMemPool;
 #else
 typedef FixedDynMemPool<sizeof(CFeature), MAX_FEATURES / 1000, MAX_FEATURES / 32> FeatureMemPool;

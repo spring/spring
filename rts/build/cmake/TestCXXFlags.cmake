@@ -137,10 +137,15 @@ IF    (NOT MSVC AND NOT DEFINED MARCH)
 	# 64bit
 	if    ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
 		# always syncs with 32bit
-		check_cxx_accepts_flag("-march=x86_64" HAS_X86_64_FLAG_)
+		check_cxx_accepts_flag("-march=x86-64" HAS_X86_64_FLAG_)
 		if    (HAS_X86_64_FLAG_)
-			set(MARCH "x86_64")
+			set(MARCH "x86-64")
 		endif (HAS_X86_64_FLAG_)
+		# MCST lcc compiler accept -march=elbrus-v2/v3/v4/v5/v6 and -march=native
+		check_cxx_accepts_flag("-march=elbrus-v2" HAS_E2K_FLAG_)
+		if    (HAS_E2K_FLAG_)
+			set(MARCH "native")
+		endif (HAS_E2K_FLAG_)
 	endif ((CMAKE_SIZEOF_VOID_P EQUAL 8) AND (NOT MARCH))
 endif (NOT MSVC AND NOT DEFINED MARCH)
 

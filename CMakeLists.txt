@@ -385,9 +385,16 @@ option(ENABLE_STREFLOP "build Spring with streflop support (REQUIRED FOR MULTIPL
 
 if (ENABLE_STREFLOP)
 ## note: is removed in ./AI/CMakeLists.txt since it would break AI compilation
-add_definitions(-DSTREFLOP_SSE)
+	if (HAS_I686_FLAG_ OR HAS_X86_64_FLAG_)
+		add_definitions(-DSTREFLOP_SSE)
+		message(STATUS "Build with streflop support (using SSE implementation)")
+	else ()
+		add_definitions(-DSTREFLOP_SOFT)
+		message(STATUS "Build with streflop support (using software implementation)")
+	endif ()
 else ()
-add_definitions(-DNOT_USING_STREFLOP)
+	add_definitions(-DNOT_USING_STREFLOP)
+	message(STATUS "Build without streflop support (REQUIRED FOR MULTIPLAYER)")
 endif ()
 
 
