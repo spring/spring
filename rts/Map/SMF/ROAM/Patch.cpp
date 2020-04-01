@@ -40,7 +40,7 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
 		try {
 
-            size_t thrPoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
+			size_t thrPoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
 			for (int i = 0; i < numThreads; i++) {
 				if (i > 0) thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
 
@@ -48,7 +48,7 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 				pools[shadowPass][i].Resize(thrPoolSize + (thrPoolSize & 1));
 			}
 
-      LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
+			LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
 			break;
 		} catch (const std::bad_alloc& e) {
 			LOG_L(L_FATAL, "[TriNodePool::%s] exception \"%s\" (numThreads=%d shadowPass=%d)", __func__, e.what(), numThreads, shadowPass);
@@ -90,7 +90,7 @@ void CTriNodePool::Resize(size_t poolSize)
 	// live outside the pool, but KISS)
 	assert((poolSize & 1) == 0);
 	assert(poolSize > 0);
-	LOG_L(L_INFO, "[TriNodePool::%s] to %i ",__func__, poolSize);
+	LOG_L(L_INFO, "[TriNodePool::%s] to " _STPF_,__func__, poolSize);
 
 	tris.resize(poolSize);
 }
@@ -179,7 +179,7 @@ void Patch::Reset()
 	baseLeft.BaseNeighbor  = &baseRight;
 	baseRight.BaseNeighbor = &baseLeft;
 
-    //Connect the base triangles to their parent
+	//Connect the base triangles to their parent
 	baseLeft.parentPatch = this;
 	baseRight.parentPatch = this;
 
@@ -242,9 +242,8 @@ bool Patch::Split(TriTreeNode* tri)
 	// if this triangle is not in a proper diamond, force split our base-neighbor
 	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri)){
 		Split(tri->BaseNeighbor);
-        if (tri->BaseNeighbor->parentPatch != this){
-            tri->BaseNeighbor->parentPatch->isChanged = true;
-        }
+		if (tri->BaseNeighbor->parentPatch != this)
+			tri->BaseNeighbor->parentPatch->isChanged = true;
 	}
 
 	// create children and link into mesh, or make this triangle a leaf
@@ -317,9 +316,9 @@ bool Patch::Split(TriTreeNode* tri)
 			// base Neighbor (in a diamond with us) was not split yet, do so now
 			// FIXME: if pool ran out above, this will fail and leave a LOD-crack
 			Split(tbn);
-			if (tbn->parentPatch != this){
-                tbn->parentPatch->isChanged = true;
-			}
+			if (tbn->parentPatch != this)
+				tbn->parentPatch->isChanged = true;
+			
 		}
 	} else {
 		// edge triangle, trivial case
@@ -362,13 +361,13 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 	if (triVariance <= 1.0f)
 		return;
 
-    // since we can 'retesselate' to a deeper depth, to preserve the trinodepool we will only split if its unsplit
-    if (!tri->IsBranch()){
-        Split(tri);
-        // we perform the split, and if the result is not a branch (e.g. couldnt split) we bail
-        if(!tri->IsBranch())
-            return;
-    }
+	// since we can 'retesselate' to a deeper depth, to preserve the trinodepool we will only split if its unsplit
+	if (!tri->IsBranch()){
+		Split(tri);
+		// we perform the split, and if the result is not a branch (e.g. couldnt split) we bail
+		if(!tri->IsBranch())
+			return;
+	}
 	// triangle was split, also try to split its children
 	const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
 

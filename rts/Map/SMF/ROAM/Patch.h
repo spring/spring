@@ -23,7 +23,8 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // how many TriTreeNodes should be reserved per pool
-// (1M is a reasonable baseline for most large maps)
+// (2M is a reasonable baseline for most large maps)
+// if a 32bit TriTreeNode struct is 28 bytes, the total ram usage of LOAM is 2M*28*2 = 104 MB
 #define NEW_POOL_SIZE (1 << 21)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
@@ -122,6 +123,10 @@ public:
 
 	float3 lastCameraPosition ; //the last camera position this patch was tesselated from
 
+	//this specifies the manhattan distance from the camera during the last tesselation
+	//note that this can only become lower, as we can only increase tesselation levels while maintaining no cracks
+	float camDistanceLastTesselation;
+
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
 	void ComputeVariance();
 
@@ -178,7 +183,7 @@ private:
 
 	// pool used during Tessellate; each invoked Split allocates from this
 	CTriNodePool* curTriPool = nullptr;
-
+	float3 midPos;
 	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty = true;
 	bool vboVerticesUploaded = false;
@@ -207,7 +212,7 @@ private:
 	// NOTE:
 	//   shadow-mesh patches are only ever viewed by one camera
 	//   normal-mesh patches can be viewed by *multiple* types!
-	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames = { 0 };
+	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames = {};
 
 
 	GLuint triList = 0;

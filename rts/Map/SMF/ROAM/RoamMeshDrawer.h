@@ -77,8 +77,8 @@ private:
 
 	float3 lastCamPos[MESH_COUNT];
 
-	int numPatchesLeftVisibility[MESH_COUNT] = {0};
-	int tesselationsSinceLastReset[MESH_COUNT] = {0};
+	int numPatchesLeftVisibility[MESH_COUNT] = {};
+	std::array <int, MESH_COUNT> tesselationsSinceLastReset = {};
 
 	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[2];
 
