@@ -180,11 +180,11 @@ void Patch::Reset()
 	//Connect the base triangles to their parent
 	baseLeft.parentPatch = this;
 	baseRight.parentPatch = this;
-
 	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
 	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	midPos.y = readMap->GetCurrAvgHeight();
 
+	
 	//Reset camera
 	lastCameraPosition.x = -10000000;
 	lastCameraPosition.y = -10000000;

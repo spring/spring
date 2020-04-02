@@ -92,6 +92,10 @@ private:
 	static bool forceNextTesselation[MESH_COUNT];
 	// whether tessellation should be performed with threads
 	static bool useThreadTesselation[MESH_COUNT];
+
+	#ifdef DRAW_DEBUG_IN_MINIMAP
+		std::vector<float3> debugColors;
+	#endif
 };
 
 #endif // _ROAM_MESH_DRAWER_H_
