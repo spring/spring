@@ -369,37 +369,40 @@ int LuaVFS::GetArchiveContainingFile(lua_State* L)
 
 int LuaVFS::UseArchive(lua_State* L)
 {
-	const std::string& fileName = luaL_checkstring(L, 1);
+	// only from unsynced
+	if (CLuaHandle::GetHandleSynced(L))
+		return 0;
+
+	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	const std::string& filepath = archiveScanner->GetArchivePath(filename) + filename;
+	const std::string& arname = archiveScanner->NameFromArchive(filename);
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(fileName)) {}
+	if (!LuaIO::IsSimplePath(filename)) {}
 
 
 	constexpr int funcIndex = 2;
 	int callError = 0;
 
-	if (CLuaHandle::GetHandleSynced(L))
-		return 0;
-
 	if (!lua_isfunction(L, funcIndex))
 		return 0;
 
-	if (!CFileHandler::FileExists(fileName, SPRING_VFS_RAW))
+	if (!CFileHandler::FileExists(filepath, SPRING_VFS_RAW))
 		return 0;
 
-	if (!fileName.empty()) {
+	if (!filename.empty()) {
 		// block other threads from getting the global until we are done
 		vfsHandler->GrabLock();
 		vfsHandler->SetName("LuaVFS");
 		vfsHandler->UnMapArchives(false);
 
 		// could be mod,map,etc
-		vfsHandler->AddArchive(fileName, false);
+		vfsHandler->AddArchive(arname, false);
 
 		callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-		vfsHandler->RemoveArchive(fileName);
+		vfsHandler->RemoveArchive(arname);
 		vfsHandler->ReMapArchives(false);
 		vfsHandler->SetName("SpringVFS");
 		vfsHandler->FreeLock();
@@ -419,12 +422,13 @@ int LuaVFS::MapArchive(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	const std::string& filepath = archiveScanner->GetArchivePath(filename) + filename;
 
 	// the path may point to a file or dir outside of any data-dir
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
 
-	if (!CFileHandler::FileExists(filename, SPRING_VFS_RAW)) {
+	if (!CFileHandler::FileExists(filepath, SPRING_VFS_RAW)) {
 		std::ostringstream buf;
 		buf << "[" << __func__ << "] archive not found: " << filename;
 
@@ -453,7 +457,7 @@ int LuaVFS::MapArchive(lua_State* L)
 		}
 	}
 
-	if (!vfsHandler->AddArchive(filename, false)) {
+	if (!vfsHandler->AddArchive(archiveScanner->NameFromArchive(filename), false)) {
 		std::ostringstream buf;
 		buf << "[" << __func__ << "] failed to load archive: " << filename;
 
@@ -480,7 +484,7 @@ int LuaVFS::UnmapArchive(lua_State* L)
 
 	LOG("[LuaVFS::%s] archive=%s", __func__, filename.c_str());
 
-	if (!vfsHandler->RemoveArchive(filename)) {
+	if (!vfsHandler->RemoveArchive(archiveScanner->NameFromArchive(filename))) {
 		std::ostringstream buf;
 		buf << "[" << __func__ << "] failed to remove archive: " << filename;
 
