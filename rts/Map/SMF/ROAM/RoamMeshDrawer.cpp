@@ -217,7 +217,7 @@ void CRoamMeshDrawer::Update()
 
 	CCamera* playerCamera = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	float3 playerCameraPosition = playerCamera->GetPos();
-	float totalCameraDistanceRatioInv = 0;
+	float totalCameraDistanceRatioInv = 0.0f ;
 	std::vector<bool> patchesToTesselate(numPatchesX * numPatchesY);
 	std::fill(patchesToTesselate.begin(),patchesToTesselate.end(),0);
 

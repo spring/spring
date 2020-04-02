@@ -186,10 +186,10 @@ void Patch::Reset()
 
 	
 	//Reset camera
-	lastCameraPosition.x = -10000000;
-	lastCameraPosition.y = -10000000;
-	lastCameraPosition.z = -10000000;
-	camDistanceLastTesselation = 10000000;
+	lastCameraPosition.x = -10000000.0f;
+	lastCameraPosition.y = -10000000.0f;
+	lastCameraPosition.z = -10000000.0f;
+	camDistanceLastTesselation = 10000000.0f;
 }
 
 
