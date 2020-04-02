@@ -212,7 +212,7 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 			averageHeight += height;
 		}
 	}
-	
+
 	midPos.y = averageHeight/((PATCH_SIZE+1)*(PATCH_SIZE+1));
 	VBOUploadVertices();
 	isDirty = true;
@@ -521,11 +521,6 @@ void Patch::ComputeVariance()
 //
 bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 {
-	// Set/Update LOD params (FIXME: wrong height?)
-	float3 midPos;
-	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.y = readMap->GetCurrAvgHeight();
 
 	// Tessellate is called from multiple threads during both passes
 	// caller ensures that two patches that are neighbors or share a

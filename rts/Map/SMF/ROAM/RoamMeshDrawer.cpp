@@ -648,7 +648,7 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	#if (RETESSELLATE_MODE == 3)
 	int pi = 0;
 	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
-		glColor4f(debugColors[pi].x,debugColors[pi].y,debugColors[pi].z,0.5f);
+		glColor4f(debugColors[pi].x, debugColors[pi].y, debugColors[pi].z ,0.5f);
 		pi++;
 		glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 	}
