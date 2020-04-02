@@ -36,7 +36,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 //tessmode can be 1,2,(3 is LOAM)
 #define RETESSELLATE_MODE 3
 #define RETESSELLATE_TO_FREE_INVISIBLE_PATCHES 50
-#define MAGIC_RETESSELATE_RETURNING_PATCH_CAMDIST (1000.0f * 1000.0f)
 #define MAGIC_RETESSELATE_CAMERA_RATIO 1.5f
 #define MAGIC_TOTAL_CAMDIST_RETESSELATE 2.5f
 #define TESSMODE_3_DEBUG 0
@@ -513,7 +512,7 @@ void CRoamMeshDrawer::Update()
 	#if TESSMODE_3_DEBUG
 	if (actualTesselations> 0){
 
-		LOG("#V=%i d_in=%i d_out=%i in df:#%i shadow:%i Z+%i actual=%i up=%i skip=%i mratio = %.2f, P=%iK/%iK" ,
+		LOG("#V=%i d_in=%i d_out=%i in df:#%i shadow:%i Z+%i actual=%i up=%i skip=%i mratio = %.2f, P="  _STPF_  "K/" _STPF_  "K" ,
 			numPatchesVisible,
 			numPatchesEnterVisibility,
 			numPatchesExitVisibility,
@@ -644,8 +643,6 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	const CMatrix44f& projMat = minimap->GetProjMat(1);
 
 	prog->Enable();
-	//prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	//prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, projMat);
 	prog->SetUniformMatrix4x4<float>("u_movi_mat", false, viewMat);
 	prog->SetUniformMatrix4x4<float>("u_proj_mat", false, projMat);
 	#if (RETESSELLATE_MODE == 3)
