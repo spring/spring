@@ -34,9 +34,12 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
 	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
 		try {
-			const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
 
+
+			size_t thrPoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
 			for (int i = 0; i < numThreads; i++) {
+				if (i > 0) thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
+
 				pools[shadowPass][i].Reset();
 				pools[shadowPass][i].Resize(thrPoolSize + (thrPoolSize & 1));
 			}
@@ -83,6 +86,7 @@ void CTriNodePool::Resize(size_t poolSize)
 	// live outside the pool, but KISS)
 	assert((poolSize & 1) == 0);
 	assert(poolSize > 0);
+	LOG_L(L_INFO, "[TriNodePool::%s] to " _STPF_,__func__, poolSize);
 
 	tris.resize(poolSize);
 }
@@ -172,12 +176,28 @@ void Patch::Reset()
 	// attach the two base-triangles together
 	baseLeft.BaseNeighbor  = &baseRight;
 	baseRight.BaseNeighbor = &baseLeft;
+
+	//Connect the base triangles to their parent
+	baseLeft.parentPatch = this;
+	baseRight.parentPatch = this;
+	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.y = readMap->GetCurrAvgHeight();
+
+	
+	//Reset camera
+	lastCameraPosition.x = -10000000.0f;
+	lastCameraPosition.y = -10000000.0f;
+	lastCameraPosition.z = -10000000.0f;
+	camDistanceLastTesselation = 10000000.0f;
 }
 
 
 void Patch::UpdateHeightMap(const SRectangle& rect)
 {
 	const float* hMap = readMap->GetCornerHeightMapUnsynced();
+
+	float averageHeight = 0;
 
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
@@ -186,11 +206,13 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 			const int xw = x + coors.x;
 			const int zw = z + coors.y;
 
-			// only update y-coord
-			vertices[vindex + 1] = hMap[zw * mapDims.mapxp1 + xw];
+			const float height = hMap[zw * mapDims.mapxp1 + xw];
+			vertices[vindex + 1] = height;
+			averageHeight += height;
 		}
 	}
 
+	midPos.y = averageHeight/((PATCH_SIZE+1)*(PATCH_SIZE+1));
 	UploadVertices();
 	// UploadBorderVertices();
 
@@ -208,9 +230,11 @@ bool Patch::Split(TriTreeNode* tri)
 		return true;
 
 	// if this triangle is not in a proper diamond, force split our base-neighbor
-	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri))
+	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri)){
 		Split(tri->BaseNeighbor);
-
+		if (tri->BaseNeighbor->parentPatch != this)
+			tri->BaseNeighbor->parentPatch->isChanged = true;
+	}
 	// create children and link into mesh, or make this triangle a leaf
 	if (!curTriPool->Allocate(tri->LeftChild, tri->RightChild))
 		return false;
@@ -222,6 +246,11 @@ bool Patch::Split(TriTreeNode* tri)
 	TriTreeNode* tln = tri->LeftNeighbor;
 	TriTreeNode* trn = tri->RightNeighbor;
 	TriTreeNode* tbn = tri->BaseNeighbor;
+
+	// Set up parent patches so they notify them of changes
+	tri->LeftChild->parentPatch = tri->parentPatch;
+	tri->RightChild->parentPatch = tri->parentPatch;
+	tri->parentPatch->isChanged = true;
 
 	assert(!tlc->IsDummy());
 	assert(!trc->IsDummy());
@@ -275,6 +304,9 @@ bool Patch::Split(TriTreeNode* tri)
 			// base Neighbor (in a diamond with us) was not split yet, do so now
 			// FIXME: if pool ran out above, this will fail and leave a LOD-crack
 			Split(tbn);
+			if (tbn->parentPatch != this)
+				tbn->parentPatch->isChanged = true;
+
 		}
 	} else {
 		// edge triangle, trivial case
@@ -314,9 +346,13 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 	if (triVariance <= 1.0f)
 		return;
 
-	if ((Split(tri), !tri->IsBranch()))
-		return;
-
+	// since we can 'retesselate' to a deeper depth, to preserve the trinodepool we will only split if its unsplit
+	if (!tri->IsBranch()){
+		Split(tri);
+		// we perform the split, and if the result is not a branch (e.g. couldnt split) we bail
+		if(!tri->IsBranch())
+			return;
+	}
 	// triangle was split, also try to split its children
 	const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
 
@@ -552,10 +588,6 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	isTesselated = true;
 
 	// Set/Update LOD params (FIXME: wrong height?)
-	float3 midPos;
-	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
-	midPos.y = readMap->GetCurrAvgHeight();
 
 	// Tessellate is called from multiple threads during both passes
 	// caller ensures that two patches that are neighbors or share a
@@ -564,6 +596,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 	// MAGIC NUMBER 1: scale factor to reduce LOD with camera distance
 	camDistLODFactor  = midPos.distance(camPos);
+	camDistanceLastTesselation = camDistLODFactor; //store distance from camera
 	camDistLODFactor *= (300.0f / viewRadius);
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;
@@ -590,6 +623,11 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 		RecursTessellate(&baseRight, left, rght, apex, 1, 1);
 	}
 
+	// mark patches that are totally flat and did not get split in RecursTessellate
+	// as 'changed', so their vertices can be updated
+	if (baseLeft.IsLeaf() && baseRight.IsLeaf()) isChanged = true;
+
+    lastCameraPosition = camPos;
 	return (!curTriPool->OutOfNodes());
 }
 
@@ -625,6 +663,7 @@ void Patch::UploadVertices()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(0);
+
 }
 
 void Patch::UploadBorderVertices()
@@ -652,6 +691,7 @@ void Patch::UploadIndices()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	isChanged = false;
 }
 
 
