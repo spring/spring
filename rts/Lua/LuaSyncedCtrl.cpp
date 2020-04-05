@@ -1030,7 +1030,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 	LuaRulesParams::Param& param = params[key];
 
 	// set the value of the parameter
-	if (lua_isnumber(L, valIndex)) {
+	if (lua_israwnumber(L, valIndex)) {
 		param.valueInt = lua_tofloat(L, valIndex);
 		param.valueString.resize(0);
 	} else if (lua_isstring(L, valIndex)) {
