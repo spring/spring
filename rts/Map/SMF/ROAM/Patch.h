@@ -23,12 +23,13 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // how many TriTreeNodes should be reserved per pool
-// (1M is a reasonable baseline for most large maps)
-#define NEW_POOL_SIZE (1 << 20)
+// (2M is a reasonable baseline for most large maps)
+// if a 32bit TriTreeNode struct is 28 bytes, the total ram usage of LOAM is 2M*28*2 = 104 MB
+#define NEW_POOL_SIZE (1 << 21)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
 
-
+class Patch; //declare it so that tritreenode can store its parent
 // stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
@@ -54,6 +55,8 @@ struct TriTreeNode
 	TriTreeNode*  BaseNeighbor = &dummyNode;
 	TriTreeNode*  LeftNeighbor = &dummyNode;
 	TriTreeNode* RightNeighbor = &dummyNode;
+
+	Patch* parentPatch = NULL; //triangles know their parent patch so they know of a neighbour's Split() func caused changes to them
 };
 
 
@@ -76,6 +79,8 @@ public:
 	bool ValidNode(const TriTreeNode* n) const { return (n >= &tris.front() && n <= &tris.back()); }
 	bool OutOfNodes() const { return (nextTriNodeIdx >= tris.size()); }
 
+	size_t getPoolSize() { return tris.size(); }
+	size_t getNextTriNodeIdx() { return nextTriNodeIdx; }
 private:
 	std::vector<TriTreeNode> tris;
 
@@ -113,6 +118,14 @@ public:
 	int GetTriCount() const { return (indices.size() / 3); }
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
+
+	float3 lastCameraPosition ; //the last camera position this patch was tesselated from
+
+	//this specifies the manhattan distance from the camera during the last tesselation
+	//note that this can only become lower, as we can only increase tesselation levels while maintaining no cracks
+	float camDistanceLastTesselation;
+
+	// create an approximate mesh
 
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
 	void ComputeVariance();
@@ -170,10 +183,12 @@ private:
 
 	// pool used during Tessellate; each invoked Split allocates from this
 	CTriNodePool* curTriPool = nullptr;
-
+	float3 midPos;
 	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty = true;
 	bool vboVerticesUploaded = false;
+	// Did the tesselation tree change from what we have stored in the VBO?
+	bool isChanged = false;
 
 	float varianceMaxLimit = std::numeric_limits<float>::max();
 	float camDistLODFactor = 1.0f; // defines the LOD falloff in camera distance
@@ -195,7 +210,7 @@ private:
 	// NOTE:
 	//   shadow-mesh patches are only ever viewed by one camera
 	//   normal-mesh patches can be viewed by *multiple* types!
-	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
+	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames = {};
 
 
 	GLuint triList = 0;

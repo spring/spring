@@ -361,7 +361,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 			// advance to the next nearest edge in either x or z dir, or in the case we reached the end make sure
 			// we set it to the exact square positions (floating point precision sometimes hinders us to hit it)
 			if (xn >= 1.0f && zn >= 1.0f) {
-				assert(curx != nextx || curz != nextz);
+				//assert(curx != nextx || curz != nextz);
 				curx = nextx;
 				curz = nextz;
 			} else if (xn < zn) {
