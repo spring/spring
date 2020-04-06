@@ -698,7 +698,6 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 	if (baseRight.RightNeighbor->IsDummy()) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1, false}); // bottom border
 	if (baseRight. LeftNeighbor->IsDummy()) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1,  true}); // top border
 	#undef PS
-	isChanged = false;
 }
 
 
@@ -726,6 +725,7 @@ void Patch::Upload()
 		default: {
 		} break;
 	}
+	isChanged = false;
 }
 
 void Patch::SetSquareTexture() const
