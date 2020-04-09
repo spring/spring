@@ -38,6 +38,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 #define RETESSELLATE_TO_FREE_INVISIBLE_PATCHES 50
 #define MAGIC_RETESSELATE_CAMERA_RATIO 1.5f
 #define MAGIC_TOTAL_CAMDIST_RETESSELATE 2.5f
+#define CAMCHANGETHRES 16.0f
 #define TESSMODE_3_DEBUG 0
 
 bool CRoamMeshDrawer::forceNextTesselation[2] = {false, false};
@@ -208,6 +209,15 @@ void CRoamMeshDrawer::Update()
 	auto& pvflags = patchVisFlags[shadowPass];
 
 	Patch::UpdateVisibility(cam, patches, numPatchesX);
+
+	//Early bailout conditions:
+	if ((cam->GetPos().distance(lastCamPos[shadowPass]) < CAMCHANGETHRES) &&
+		(cam->GetDir().distance(lastCamDir[shadowPass]) < CAMCHANGETHRES*0.001f) &&
+		(heightMapChanged == false) &&
+		(smfGroundDrawer->GetGroundDetail() == lastGroundDetail[shadowPass])){
+		return;
+	}
+
 	size_t numPatchesVisible = 0;
 	size_t numPatchesEnterVisibility = 0;
 	size_t numPatchesEnteredSkipped = 0;
@@ -480,21 +490,34 @@ void CRoamMeshDrawer::Update()
 				}
 				pi++;
 			}
-			forceNextTesselation[shadowPass] = false;
 		}
 	}
 
 	{
 		//SCOPED_TIMER("ROAM::GenerateIndexArray");
-		for_mt(0, patches.size(), [&patches, &cam](const int i) {
-			Patch* p = &patches[i];
-			if (p->IsVisible(cam)){
-				if (p->isChanged ){
-					p->GenerateIndices();
-					p->GenerateBorderVertices();
+		//only do for_mt if a full tesselation happened, since only a few patches come into visibility
+		if (forceNextTesselation[shadowPass]){
+			for_mt(0, patches.size(), [&patches, &cam](const int i) {
+				Patch* p = &patches[i];
+				if (p->IsVisible(cam)){
+					if (p->isChanged ){
+						p->GenerateIndices();
+						p->GenerateBorderVertices();
+					}
+				}
+			});
+		}
+		else
+		{
+			for (Patch& p: patches) {
+				if (p.IsVisible(cam)){
+					if (p.isChanged ){
+						p.GenerateIndices();
+						p.GenerateBorderVertices();
+					}
 				}
 			}
-		});
+		}
 	}
 	{
 		//SCOPED_TIMER("ROAM::Upload");
@@ -523,8 +546,8 @@ void CRoamMeshDrawer::Update()
 			actualUploads,
 			numPatchesEnteredSkipped,
 			totalCameraDistanceRatioInv,
-			patches[0].curTriPool->getNextTriNodeIdx()/1024,
-			patches[0].curTriPool->getPoolSize()/1024);
+			0,//patches[0].curTriPool->getNextTriNodeIdx()/1024,//these cause access violations
+			0);//patches[0].curTriPool->getPoolSize()/1024);
 
 		float3 nowcampos = cam->GetPos();
 		//LOG("Camera pass=%i pos= %.1f, %.1f, %.1f", shadowPass, nowcampos.x, nowcampos.y, nowcampos.z );
@@ -574,6 +597,9 @@ void CRoamMeshDrawer::Update()
 
 	lastGroundDetail[shadowPass] = smfGroundDrawer->GetGroundDetail();
 	lastCamPos[shadowPass] = cam->GetPos(); //
+	lastCamDir[shadowPass] = cam->GetDir();
+	forceNextTesselation[shadowPass] = false;
+	heightMapChanged = false;
 }
 
 
@@ -746,5 +772,6 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 			}
 		}
 	}
+	heightMapChanged = true;
 }
 
