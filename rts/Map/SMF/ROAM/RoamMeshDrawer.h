@@ -75,7 +75,10 @@ private:
 	int numPatchesY = 0;
 	int lastGroundDetail[MESH_COUNT] = {0, 0};
 
+	bool heightMapChanged = false;
+
 	float3 lastCamPos[MESH_COUNT];
+	float3 lastCamDir[MESH_COUNT];
 
 	int numPatchesLeftVisibility[MESH_COUNT] = {};
 	std::array <int, MESH_COUNT> tesselationsSinceLastReset = {};
