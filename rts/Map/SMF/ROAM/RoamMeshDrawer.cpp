@@ -38,10 +38,11 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 #define RETESSELLATE_TO_FREE_INVISIBLE_PATCHES 50
 #define MAGIC_RETESSELATE_CAMERA_RATIO 1.5f
 #define MAGIC_TOTAL_CAMDIST_RETESSELATE 2.5f
+#define CAMERA_CHANGE_TRESHOLD 16.0f
 #define TESSMODE_3_DEBUG 0
 
-bool CRoamMeshDrawer::forceNextTesselation[2] = {false, false};
-bool CRoamMeshDrawer::useThreadTesselation[2] = {false, false};
+bool CRoamMeshDrawer::forceNextTesselation[MESH_COUNT] = {false, false};
+bool CRoamMeshDrawer::useThreadTesselation[MESH_COUNT] = {false, false};
 
 
 
@@ -205,8 +206,18 @@ void CRoamMeshDrawer::Update()
 
 	auto& patches = patchMeshGrid[shadowPass];
 	auto& pvflags = patchVisFlags[shadowPass];
+	const int numPatches = patches.size();
 
 	Patch::UpdateVisibility(cam, patches, numPatchesX);
+
+	//Early bailout conditions:
+	if ((cam->GetPos().distance(lastCamPos[shadowPass]) < CAMERA_CHANGE_TRESHOLD) &&
+		(cam->GetDir().distance(lastCamDir[shadowPass]) < CAMERA_CHANGE_TRESHOLD * 0.001f) &&
+		(heightMapChanged == false) &&
+		(smfGroundDrawer->GetGroundDetail() == lastGroundDetail[shadowPass])){
+		return;
+	}
+
 	size_t numPatchesVisible = 0;
 	size_t numPatchesEnterVisibility = 0;
 	size_t numPatchesEnteredSkipped = 0;
@@ -216,83 +227,83 @@ void CRoamMeshDrawer::Update()
 
 	CCamera* playerCamera = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
 	float3 playerCameraPosition = playerCamera->GetPos();
-	float totalCameraDistanceRatioInv = 0.0f ;
-	std::vector<bool> patchesToTesselate(numPatchesX * numPatchesY);
-	std::fill(patchesToTesselate.begin(),patchesToTesselate.end(),0);
+	float totalCameraDistanceRatioInv = 0.0f;
+	std::vector<bool> patchesToTesselate(numPatches);
+	std::fill(patchesToTesselate.begin(), patchesToTesselate.end(),0);
 
-    // Notes for Tessmode 3, e.g. LOAM (Lazy Optimally Adapting Meshes).
-    // Dear reader, consider yourself a rubber ducky.
+	// Notes for Tessmode 3, e.g. LOAM (Lazy Optimally Adapting Meshes).
+	// Dear reader, consider yourself a rubber ducky.
 
-    // 1. a dirty patch can be retesselated by just running tessellate
-    // --needs the ability to 'resume' tesselation
-    // --after retesselation, only update the vertex buffers of the stuff that changed
+	// 1. a dirty patch can be retesselated by just running tessellate
+	// --needs the ability to 'resume' tesselation
+	// --after retesselation, only update the vertex buffers of the stuff that changed
 
-    // 2. when a patch goes out of view, dont force a reset on the whole thing
+	// 2. when a patch goes out of view, dont force a reset on the whole thing
 
-    // 3. visibility checking needs some serious rework, and the groundwork for that is already laid out above
-    //  -- 3x as many shadow patches rendered as regular!
+	// 3. visibility checking needs some serious rework, and the groundwork for that is already laid out above
+	//  -- 3x as many shadow patches rendered as regular!
 
-    // MT roam is not appreciably faster than ST roam, gut it
-    // MT roam easily runs out of pool space, and crashes due to:
-    // not guaranteed that two threads do not tesselate patches that dont share neighbours
-    // unbalanced use of trinodepools
-    // wasteful of RAM
-    // Easy to run out of, completely nondeterministic that a resized pool will not fuck up
+	// MT roam is not appreciably faster than ST roam, gut it
+	// MT roam easily runs out of pool space, and crashes due to:
+	// not guaranteed that two threads do not tesselate patches that dont share neighbours
+	// unbalanced use of trinodepools
+	// wasteful of RAM
+	// Easy to run out of, completely nondeterministic that a resized pool will not fuck up
 
-    // we need to get rid of the malloc errors that come from MT roam
+	// we need to get rid of the malloc errors that come from MT roam
 
-    // Why do we even keep a separate set of meshes for shadow and regular?
-    // we could easily half the load again by reusing the same meshes (especiallally the ram load)
-    // we need to use visible in shadowORmain
+	// Why do we even keep a separate set of meshes for shadow and regular?
+	// we could easily half the load again by reusing the same meshes (especiallally the ram load)
+	// we need to use visible in shadowORmain
 
-    // fix pool.resize failing, either by retrying with a tiny bit smaller window, or by stopping tesselation straight up
+	// fix pool.resize failing, either by retrying with a tiny bit smaller window, or by stopping tesselation straight up
 
-    // How can we retessellate patches entering view sanely?
-    // The same way we do it for dirty patches? does this mean that they might be forced to be at a lower resolution?
-    // can they be at a lower resolution even?
+	// How can we retessellate patches entering view sanely?
+	// The same way we do it for dirty patches? does this mean that they might be forced to be at a lower resolution?
+	// can they be at a lower resolution even?
 
-    // Tricky cases:
-    // going from full view to zoomed in state:
-    // theoretically, full view should be tesselated at a low degree, so not all of the trinodepool should be exhausted
-    // when zooming in further, an increase in detail should be forced , but this 1. further exhausts the tripool, and should not be done too often.
-    // we can call retesselate of a patch,
+	// Tricky cases:
+	// going from full view to zoomed in state:
+	// theoretically, full view should be tesselated at a low degree, so not all of the trinodepool should be exhausted
+	// when zooming in further, an increase in detail should be forced , but this 1. further exhausts the tripool, and should not be done too often.
+	// we can call retesselate of a patch,
 
-    // an exhaustion of the tritreenodepool should instantly trigger a reset and retesselate
+	// an exhaustion of the tritreenodepool should instantly trigger a reset and retesselate
 
-    // 4. Shadowpass seems to have on average 3x more patches than regular.
-    //  - also, its 'camera' is quite static, only really changes along one axis, and is unreliable:
-    // [f=0002142] [RoamMeshDrawer] Skip:37 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
-    // [f=0002142] [RoamMeshDrawer] Skip:50 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
-    // [f=0002142] [RoamMeshDrawer] Skip:63 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
-    // [f=0002142] [RoamMeshDrawer] Skip:76 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
+	// 4. Shadowpass seems to have on average 3x more patches than regular.
+	//  - also, its 'camera' is quite static, only really changes along one axis, and is unreliable:
+	// [f=0002142] [RoamMeshDrawer] Skip:37 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
+	// [f=0002142] [RoamMeshDrawer] Skip:50 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
+	// [f=0002142] [RoamMeshDrawer] Skip:63 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
+	// [f=0002142] [RoamMeshDrawer] Skip:76 oldcam: 4334.830078:-259.387939:-259.387939 nowcam 5011.015137:-259.387939:1593.139526 dist=924793.375000
 
-    // TODO:
-    // unintialized memory read in Patch::IsVisible!
+	// TODO:
+	// unintialized memory read in Patch::IsVisible!
 
-    // TODO tritreenodepool:
-    // allow growth
-    // handle bad allocs
+	// TODO tritreenodepool:
+	// allow growth
+	// handle bad allocs
 
-    // 5. Better zoom handling:
-    //  -since the tesselation depends only on the distance from camera
-    //  -position doesnt really matter
-    //  - if a patch was tesselated with a camera that is more than 2x closer than the last tesselation of that patch, then we should retesselate
-    //  - I do not know how this relates to the shadow camera, as that still needs quite a bit of work anyway
-    //  - maybe just use the shadowcamera for visibility, but actually use the main camera for distance?
-    //  - this would also add a 'magic'
-    //  TODO: lastCamPos[shadowPass] = cam->GetPos(); // is update a frame too late
-    //  CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER) // gets the actual camera! lets hope its updated before shadow pas
+	// 5. Better zoom handling:
+	//  -since the tesselation depends only on the distance from camera
+	//  -position doesnt really matter
+	//  - if a patch was tesselated with a camera that is more than 2x closer than the last tesselation of that patch, then we should retesselate
+	//  - I do not know how this relates to the shadow camera, as that still needs quite a bit of work anyway
+	//  - maybe just use the shadowcamera for visibility, but actually use the main camera for distance?
+	//  - this would also add a 'magic'
+	//  TODO: lastCamPos[shadowPass] = cam->GetPos(); // is update a frame too late
+	//  CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER) // gets the actual camera! lets hope its updated before shadow pas
 
-	#if TESSMODE_3_DEBUG
-		if(tesselMesh) LOG("Tesselation forced for pass %i in frame %i", shadowPass,globalRendering->drawFrame);
-
-	#endif //TESSMODE_3_DEBUG
+#if TESSMODE_3_DEBUG
+	if (tesselMesh)
+		LOG("Tesselation forced for pass %i in frame %i", shadowPass,globalRendering->drawFrame);
+#endif //TESSMODE_3_DEBUG
 
 	{
 		// Check if a retessellation is needed
 		//SCOPED_TIMER("ROAM::ComputeVariance");
 
-		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
+		for (int i = 0; i < numPatches; ++i) {
 			//FIXME multithread? don't retessellate on small heightmap changes?
 			Patch& p = patches[i];
 
@@ -316,16 +327,20 @@ void CRoamMeshDrawer::Update()
 			// first case: a patch left visibility;
 			// do nothing, just count the number of patches in total that have done so, as they still use the trinodepools
 			// when a sufficient number of patches have left visibility, we are going to have to force a reset.
-			if (!isVisibleNow && wasVisible){
+			if (!isVisibleNow && wasVisible) {
 				numPatchesExitVisibility ++;
 				numPatchesLeftVisibility[shadowPass]++;
-				if (numPatchesLeftVisibility[shadowPass] > numPatchesX*numPatchesY*RETESSELLATE_TO_FREE_INVISIBLE_PATCHES){
+				if (numPatchesLeftVisibility[shadowPass] > numPatches * RETESSELLATE_TO_FREE_INVISIBLE_PATCHES){
 
 					// Be even lazier, and only force full retesselation once zoomed back in
-					if ((numPatchesVisible *(5-3*shadowPass)  < numPatchesX*numPatchesY) ||
-						(numPatchesLeftVisibility[shadowPass] > 2*numPatchesX*numPatchesY*RETESSELLATE_TO_FREE_INVISIBLE_PATCHES)){
+					if ((numPatchesVisible * (5 - 3 * shadowPass) < numPatches) ||
+						(numPatchesLeftVisibility[shadowPass] > 2 * numPatches * RETESSELLATE_TO_FREE_INVISIBLE_PATCHES)){
 						#if TESSMODE_3_DEBUG
-							LOG("Too many patches (%i) left visibility, forcing retess on this df #%i! poolsize=%i used=%i",numPatchesLeftVisibility[shadowPass],globalRendering->drawFrame,p.curTriPool->getPoolSize(),p.curTriPool->getNextTriNodeIdx());
+							LOG("Too many patches (%i) left visibility, forcing retess on this df #%i! poolsize=%i used=%i",
+								numPatchesLeftVisibility[shadowPass],
+								globalRendering->drawFrame,
+								p.curTriPool->getPoolSize(),
+								p.curTriPool->getNextTriNodeIdx());
 						#endif
 						forceNextTesselation[shadowPass] = true;
 						numPatchesLeftVisibility[shadowPass] = 0;
@@ -338,29 +353,29 @@ void CRoamMeshDrawer::Update()
 			if (isVisibleNow){
 				numPatchesVisible ++;
 				// if it was dirty(had heightmap change) then recompute variances.
-				if (p.IsDirty()){
+				if (p.IsDirty()) {
 					p.ComputeVariance();
 					// here we can do incremental retesselation?
 					patchesToTesselate[i] = true;
 				}
-				if (!wasVisible )
+
+				if (!wasVisible)
 					numPatchesEnterVisibility++;
 
 
 				const float currentDistanceFromCamera = playerCameraPosition.distance(p.midPos);
 
 				//high numbers means we zoomed in more:
-				const float distanceFromCameraRatio = p.camDistanceLastTesselation  / currentDistanceFromCamera;
+				const float distanceFromCameraRatio = p.camDistanceLastTesselation / currentDistanceFromCamera;
 
-				if((currentDistanceFromCamera > 500.0f ) && (distanceFromCameraRatio > MAGIC_RETESSELATE_CAMERA_RATIO)){
+				if ((currentDistanceFromCamera > 500.0f ) && (distanceFromCameraRatio > MAGIC_RETESSELATE_CAMERA_RATIO)) {
 						patchesToTesselate[i] = true;
 						numPatchesZoomChanged++;
 						// Since we just retesselated,
 						totalCameraDistanceRatioInv += 1.0;
 						//LOG("Zoom%i currdist=%.1f lastdist=%.1f ratio=%.1f",i,currentDistanceFromCamera,p.camDistanceLastTesselation,distanceFromCameraRatio);
-					}
-				else{
-					totalCameraDistanceRatioInv += 1.0/distanceFromCameraRatio;
+				} else {
+					totalCameraDistanceRatioInv += 1.0 / distanceFromCameraRatio;
 				}
 
 			}
@@ -368,17 +383,16 @@ void CRoamMeshDrawer::Update()
 
 
 			#ifdef DRAW_DEBUG_IN_MINIMAP
-				if (isVisibleNow){
-					if (shadowPass){
+				if (isVisibleNow) {
+					if (shadowPass) {
 						debugColors[i].z = 1.0;
-					}else{
+					} else {
 						debugColors[i].y = 1.0;
 					}
-
-				}else{
-					if (shadowPass){
+				} else {
+					if (shadowPass) {
 						debugColors[i].z = 0.0;
-					}else{
+					} else {
 						debugColors[i].y = 0.0;
 					}
 
@@ -398,10 +412,10 @@ void CRoamMeshDrawer::Update()
 			if (isVisibleNow)
 				numPatchesVisible ++;
 
-			if(p.IsVisible(cam) != pvflags[i]){
+			if (p.IsVisible(cam) != pvflags[i]) {
 				if (pvflags[i]) {
 					numPatchesExitVisibility++;
-				}else {
+				} else {
 					numPatchesEnterVisibility++;
 					p.Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail(), shadowPass);
 				}
@@ -427,88 +441,111 @@ void CRoamMeshDrawer::Update()
 	int actualTesselations = 0;
 	int actualUploads = 0;
 	totalCameraDistanceRatioInv = totalCameraDistanceRatioInv / numPatchesVisible;
-	if (totalCameraDistanceRatioInv > MAGIC_TOTAL_CAMDIST_RETESSELATE){
-		#if TESSMODE_3_DEBUG
-			LOG("Zoomed out too far, retesselating all to save tris: Visible=%i pass=%i ratio=%.2f",numPatchesVisible,shadowPass,totalCameraDistanceRatioInv);
-		#endif
+
+	if (totalCameraDistanceRatioInv > MAGIC_TOTAL_CAMDIST_RETESSELATE) {
 		forceNextTesselation[shadowPass] = true;
+
+	#if TESSMODE_3_DEBUG
+		LOG("Zoomed out too far, retesselating all to save tris: Visible=%i pass=%i ratio=%.2f",
+			numPatchesVisible,
+			shadowPass,
+			totalCameraDistanceRatioInv);
+	#endif
 	}
-	 {
+
+	{
 		//SCOPED_TIMER("ROAM::Tessellate");
 
 		// tesselate all the patches patches that are marked for it, but if we run out of trinodes,
 		// then reset all of them and try again
 		bool tessSuccess = true;
 		if (!forceNextTesselation[shadowPass] ){
-			int pi = 0;
-			for (Patch& p: patches) {
-				#ifdef DRAW_DEBUG_IN_MINIMAP
-					debugColors[pi].x = std::max (debugColors[pi].x -0.002f,0.0f);
-				#endif
-				if (patchesToTesselate[pi]){
-					actualTesselations++;
-					tesselationsSinceLastReset[shadowPass]++;
-					#ifdef DRAW_DEBUG_IN_MINIMAP
-						debugColors[pi].x = 1.0;
-					#endif
-					if(!p.Tessellate(playerCameraPosition, smfGroundDrawer->GetGroundDetail(), shadowPass)){
-						tessSuccess = false;
-						#if TESSMODE_3_DEBUG
-							LOG("Lazy tesselation ran out of trinodes, trying again after a reset #Visible=%i #tesssincelastreset=%i, shadow=%i" , numPatchesVisible,tesselationsSinceLastReset[shadowPass],shadowPass);
-						#endif // TESSMODE_3_DEBUG
+			for (int pi = 0; pi < numPatches; ++pi) {
+				Patch& p = patches[pi];
 
-						break;
-					}
+			#ifdef DRAW_DEBUG_IN_MINIMAP
+				debugColors[pi].x = std::max (debugColors[pi].x -0.002f,0.0f);
+			#endif
 
-				}
-				pi++; //whoops
+				if (!patchesToTesselate[pi])
+					continue;
+
+				actualTesselations++;
+				tesselationsSinceLastReset[shadowPass]++;
+
+			#ifdef DRAW_DEBUG_IN_MINIMAP
+				debugColors[pi].x = 1.0;
+			#endif
+
+				if (p.Tessellate(playerCameraPosition, smfGroundDrawer->GetGroundDetail(), shadowPass))
+					continue;
+
+				tessSuccess = false;
+
+			#if TESSMODE_3_DEBUG
+				LOG("Lazy tesselation ran out of trinodes, trying again after a reset #Visible=%i #tesssincelastreset=%i, shadow=%i",
+					numPatchesVisible,
+					tesselationsSinceLastReset[shadowPass],
+					shadowPass);
+			#endif // TESSMODE_3_DEBUG
+
+				break;
 			}
 		}
 
 		if(forceNextTesselation[shadowPass] || !tessSuccess ){
-			int pi = 0;
 			Reset(shadowPass);
-			for (Patch& p: patches) {
-				if (p.IsVisible(cam)){
-					p.Tessellate(playerCameraPosition, smfGroundDrawer->GetGroundDetail(), shadowPass);
-					actualTesselations ++;
-					tesselationsSinceLastReset[shadowPass]++;
-					#ifdef DRAW_DEBUG_IN_MINIMAP
-							debugColors[pi].x = 1.0;
-					#endif
-				}
-				pi++;
+			for (int pi = 0; pi < numPatches; ++pi) {
+				Patch& p = patches[pi];
+				if (!p.IsVisible(cam))
+					continue;
+
+				p.Tessellate(playerCameraPosition, smfGroundDrawer->GetGroundDetail(), shadowPass);
+				actualTesselations++;
+				tesselationsSinceLastReset[shadowPass]++;
+
+			#ifdef DRAW_DEBUG_IN_MINIMAP
+				debugColors[pi].x = 1.0;
+			#endif
 			}
-			forceNextTesselation[shadowPass] = false;
 		}
 	}
 
 	{
 		//SCOPED_TIMER("ROAM::GenerateIndexArray");
-		for_mt(0, patches.size(), [&patches, &cam](const int i) {
-			Patch* p = &patches[i];
-			if (p->IsVisible(cam)){
-				if (p->isChanged )
-					p->GenerateIndices();
+		//only do for_mt if a full tesselation happened, since only a few patches come into visibility
+		if (forceNextTesselation[shadowPass]) {
+			for_mt(0, numPatches, [&patches, &cam](const int i) {
+				Patch* p = &patches[i];
+				if (!p->IsVisible(cam))
+					return;
+
+				p->GenerateIndices();
+			});
+		} else {
+			for (Patch& p: patches) {
+				if (!p.IsVisible(cam))
+					continue;
+
+				p.GenerateIndices();
 			}
-		});
+		}
 	}
 	{
 		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
-			if (p.IsVisible(cam)){
-				if (p.isChanged ){
-					p.Upload();
-					actualUploads++;
-				}
-			}
+			if (!p.IsVisible(cam))
+				continue;
+
+			p.Upload();
+			actualUploads++;
 		}
 	}
-	#if TESSMODE_3_DEBUG
+#if TESSMODE_3_DEBUG
 	if (actualTesselations> 0){
 
-		LOG("#V=%i d_in=%i d_out=%i in df:#%i shadow:%i Z+%i actual=%i up=%i skip=%i mratio = %.2f, P="  _STPF_  "K/" _STPF_  "K" ,
+		LOG("#V=%i d_in=%i d_out=%i in df:#%i shadow:%i Z+%i actual=%i up=%i skip=%i mratio = %.2f",
 			numPatchesVisible,
 			numPatchesEnterVisibility,
 			numPatchesExitVisibility,
@@ -518,22 +555,20 @@ void CRoamMeshDrawer::Update()
 			actualTesselations,
 			actualUploads,
 			numPatchesEnteredSkipped,
-			totalCameraDistanceRatioInv,
-			patches[0].curTriPool->getNextTriNodeIdx()/1024,
-			patches[0].curTriPool->getPoolSize()/1024);
+			totalCameraDistanceRatioInv);
 
 		float3 nowcampos = cam->GetPos();
 		//LOG("Camera pass=%i pos= %.1f, %.1f, %.1f", shadowPass, nowcampos.x, nowcampos.y, nowcampos.z );
 	}
-	#endif // TESSMODE_3_DEBUG
+#endif // TESSMODE_3_DEBUG
 
 
-#else
+#else // (RETESSELLATE_MODE == 3)
 	tesselMesh |= (lastGroundDetail[shadowPass] != smfGroundDrawer->GetGroundDetail());
 
 	if (!tesselMesh)
 		return;
-		\\LOG("Retesselating %i delta in:%i out: %iin df :%i pass:%i threads:%i" , numPatchesVisible,numPatchesEnterVisibility, numPatchesExitVisibility, globalRendering->drawFrame, shadowPass, useThreadTesselation[shadowPass]);
+
 	{
 		//SCOPED_TIMER("ROAM::Tessellate");
 
@@ -563,7 +598,10 @@ void CRoamMeshDrawer::Update()
 #endif
 
 	lastGroundDetail[shadowPass] = smfGroundDrawer->GetGroundDetail();
-	lastCamPos[shadowPass] = cam->GetPos(); //
+	lastCamPos[shadowPass] = cam->GetPos();
+	lastCamDir[shadowPass] = cam->GetDir();
+	forceNextTesselation[shadowPass] = false;
+	heightMapChanged = false;
 }
 
 
@@ -722,5 +760,6 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 			}
 		}
 	}
+	heightMapChanged = true;
 }
 
