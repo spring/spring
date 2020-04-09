@@ -73,12 +73,15 @@ private:
 
 	int numPatchesX = 0;
 	int numPatchesY = 0;
-	int lastGroundDetail[MESH_COUNT] = {0, 0};
+	std::array<int, MESH_COUNT> lastGroundDetail = {};
 
-	float3 lastCamPos[MESH_COUNT];
+	bool heightMapChanged = false;
 
-	int numPatchesLeftVisibility[MESH_COUNT] = {};
-	std::array <int, MESH_COUNT> tesselationsSinceLastReset = {};
+	std::array<float3, MESH_COUNT> lastCamPos;
+	std::array<float3, MESH_COUNT> lastCamDir;
+
+	std::array<int, MESH_COUNT> numPatchesLeftVisibility = {};
+	std::array<int, MESH_COUNT> tesselationsSinceLastReset = {};
 	std::function<bool(std::vector<Patch>&, const CCamera*, int, bool)> tesselateFuncs[2];
 
 	// [1] is used for the shadow pass, [0] is used for all other passes
@@ -93,9 +96,9 @@ private:
 	// whether tessellation should be performed with threads
 	static bool useThreadTesselation[MESH_COUNT];
 
-	#ifdef DRAW_DEBUG_IN_MINIMAP
-		std::vector<float3> debugColors;
-	#endif
+#ifdef DRAW_DEBUG_IN_MINIMAP
+	std::vector<float3> debugColors;
+#endif
 };
 
 #endif // _ROAM_MESH_DRAWER_H_
