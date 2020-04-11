@@ -39,8 +39,6 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
 	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
 		try {
-
-
 			size_t thrPoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
 			for (int i = 0; i < numThreads; i++) {
 				if (i > 0) thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
@@ -187,7 +185,7 @@ void Patch::Reset()
 	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	midPos.y = readMap->GetCurrAvgHeight();
 
-	
+
 	//Reset camera
 	lastCameraPosition.x = -10000000.0f;
 	lastCameraPosition.y = -10000000.0f;
@@ -250,7 +248,7 @@ bool Patch::Split(TriTreeNode* tri)
 		return true;
 
 	// if this triangle is not in a proper diamond, force split our base-neighbor
-	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri)){
+	if (!tri->BaseNeighbor->IsDummy() && (tri->BaseNeighbor->BaseNeighbor != tri)) {
 		Split(tri->BaseNeighbor);
 		if (tri->BaseNeighbor->parentPatch != this)
 			tri->BaseNeighbor->parentPatch->isChanged = true;
@@ -370,7 +368,7 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 		return;
 
 	// since we can 'retesselate' to a deeper depth, to preserve the trinodepool we will only split if its unsplit
-	if (!tri->IsBranch()){
+	if (!tri->IsBranch()) {
 		Split(tri);
 		// we perform the split, and if the result is not a branch (e.g. couldnt split) we bail
 		if(!tri->IsBranch())
@@ -768,21 +766,6 @@ void Patch::SwitchRenderMode(int mode)
 // ---------------------------------------------------------------------
 // Visibility Update Functions
 //
-
-#if 0
-void Patch::UpdateVisibility(CCamera* cam)
-{
-	const float3 mins( coors.x               * SQUARE_SIZE, readMap->GetCurrMinHeight(),  coors.y               * SQUARE_SIZE);
-	const float3 maxs((coors.x + PATCH_SIZE) * SQUARE_SIZE, readMap->GetCurrMaxHeight(), (coors.y + PATCH_SIZE) * SQUARE_SIZE);
-
-	if (!cam->InView(mins, maxs))
-		return;
-
-	lastDrawFrames[cam->GetCamType()] = globalRendering->drawFrame;
-}
-#endif
-
-
 class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
@@ -807,13 +790,6 @@ private:
 
 void Patch::UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX)
 {
-	#if 0
-	// very slow
-	for (Patch& p: patches) {
-		p.UpdateVisibility(cam);
-	}
-	#else
-	// very fast
 	static CPatchInViewChecker checker;
 
 	assert(cam->GetCamType() < CCamera::CAMTYPE_VISCUL);
@@ -821,7 +797,6 @@ void Patch::UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const in
 
 	cam->CalcFrustumLines(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, &checker, 1e9, PATCH_SIZE);
-	#endif
 }
 
 bool Patch::IsVisible(const CCamera* cam) const {

@@ -18,7 +18,7 @@ class CCamera;
 
 
 // Visualize visible patches in Minimap for debugging?
-// #define DRAW_DEBUG_IN_MINIMAP
+#define DRAW_DEBUG_IN_MINIMAP
 
 
 /**
@@ -57,16 +57,10 @@ public:
 		forceNextTesselation[MESH_NORMAL] = normal;
 		forceNextTesselation[MESH_SHADOW] = shadow;
 	}
-	static void UseThreadTesselation(bool normal, bool shadow) {
-		useThreadTesselation[MESH_NORMAL] = normal;
-		useThreadTesselation[MESH_SHADOW] = shadow;
-	}
 
 private:
 	void Reset(bool shadowPass);
-	void Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool useThreads, bool shadowPass) {
-		forceNextTesselation[shadowPass] = tesselateFuncs[useThreads](patches, cam, viewRadius, shadowPass);
-	}
+	void Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass);
 
 private:
 	CSMFGroundDrawer* smfGroundDrawer;
@@ -93,8 +87,6 @@ private:
 
 	// whether tessellation should be forcibly performed next frame
 	static bool forceNextTesselation[MESH_COUNT];
-	// whether tessellation should be performed with threads
-	static bool useThreadTesselation[MESH_COUNT];
 
 #ifdef DRAW_DEBUG_IN_MINIMAP
 	std::vector<float3> debugColors;
