@@ -150,7 +150,7 @@ static void PrintSize(const char* txt, int size)
 
 static void ReadString(std::istream& s, std::string& str)
 {
-	char cstr[1 << 16]; // 64kB
+	char cstr[1 << 19]; // 512kB
 	s.getline(cstr, sizeof(cstr), 0);
 	str += cstr;
 }
