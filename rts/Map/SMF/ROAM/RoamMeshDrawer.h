@@ -18,7 +18,7 @@ class CCamera;
 
 
 // Visualize visible patches in Minimap for debugging?
-#define DRAW_DEBUG_IN_MINIMAP
+// #define DRAW_DEBUG_IN_MINIMAP
 
 
 /**
