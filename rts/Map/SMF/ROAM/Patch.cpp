@@ -25,27 +25,23 @@ static size_t CUR_POOL_SIZE =                 0; // split over all threads
 static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
 
 
-static CTriNodePool pools[CRoamMeshDrawer::MESH_COUNT][ThreadPool::MAX_THREADS];
+static CTriNodePool pools[CRoamMeshDrawer::MESH_COUNT];
 
 TriTreeNode TriTreeNode::dummyNode;
 
 
 void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
-	for (int j = 0, numThreads = ThreadPool::GetMaxThreads(); newPoolSize > 0; j++) {
+	for (int j = 0; newPoolSize > 0; j++) {
 		try {
-			size_t thrPoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
-			for (int i = 0; i < numThreads; i++) {
-				if (i > 0) thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
+			size_t PoolSize =  std::max((CUR_POOL_SIZE = newPoolSize),newPoolSize); //the first pool should be larger, as only full retess uses threaded
+			pools[shadowPass].Reset();
+			pools[shadowPass].Resize(PoolSize + (PoolSize & 1));
 
-				pools[shadowPass][i].Reset();
-				pools[shadowPass][i].Resize(thrPoolSize + (thrPoolSize & 1));
-			}
-
-			LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " thrPoolSize=" _STPF_ " (numThreads=%d shadowPass=%d)", __func__, newPoolSize, thrPoolSize, numThreads, shadowPass);
+			LOG_L(L_INFO, "[TriNodePool::%s] newPoolSize=" _STPF_ " PoolSize=" _STPF_ " (shadowPass=%d)", __func__, newPoolSize, PoolSize, shadowPass);
 			break;
 		} catch (const std::bad_alloc& e) {
-			LOG_L(L_FATAL, "[TriNodePool::%s] exception \"%s\" (numThreads=%d shadowPass=%d)", __func__, e.what(), numThreads, shadowPass);
+			LOG_L(L_FATAL, "[TriNodePool::%s] exception \"%s\" (shadowPass=%d)", __func__, e.what(), shadowPass);
 
 			// try again after reducing the wanted pool-size by a quarter
 			newPoolSize = (MAX_POOL_SIZE = newPoolSize - (newPoolSize >> 2));
@@ -55,13 +51,8 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 
 void CTriNodePool::ResetAll(bool shadowPass)
 {
-	bool outOfNodes = false;
-
-	for (int i = 0, n = ThreadPool::GetMaxThreads(); i < n; i++) {
-		outOfNodes |= pools[shadowPass][i].OutOfNodes();
-		pools[shadowPass][i].Reset();
-	}
-
+	bool outOfNodes = pools[shadowPass].OutOfNodes();
+	pools[shadowPass].Reset();
 	if (!outOfNodes)
 		return;
 	if (CUR_POOL_SIZE >= MAX_POOL_SIZE)
@@ -71,9 +62,9 @@ void CTriNodePool::ResetAll(bool shadowPass)
 }
 
 
-CTriNodePool* CTriNodePool::GetPoolForThread(bool shadowPass)
+CTriNodePool* CTriNodePool::GetPool(bool shadowPass)
 {
-	return &(pools[shadowPass][ThreadPool::GetThreadNum()]);
+	return &(pools[shadowPass]);
 }
 
 
@@ -93,7 +84,7 @@ bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
 	// pool exhausted, make sure both child nodes are dummies
 	if (OutOfNodes()) {
-		LOG_L(L_WARNING, "[TriNodePool::%s] #nodes=" _STPF_ " #pool=" _STPF_ " thread=%d", __func__, nextTriNodeIdx, tris.size(), ThreadPool::GetThreadNum());
+		LOG_L(L_WARNING, "[TriNodePool::%s] #nodes=" _STPF_ " #pool=" _STPF_ , __func__, nextTriNodeIdx, tris.size());
 
 		left  = &TriTreeNode::dummyNode;
 		right = &TriTreeNode::dummyNode;
@@ -587,10 +578,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 	// Set/Update LOD params (FIXME: wrong height?)
 
-	// Tessellate is called from multiple threads during both passes
-	// caller ensures that two patches that are neighbors or share a
-	// neighbor are never touched concurrently (crucial for ::Split)
-	curTriPool = CTriNodePool::GetPoolForThread(shadowPass);
+	curTriPool = CTriNodePool::GetPool(shadowPass);
 
 	// MAGIC NUMBER 1: scale factor to reduce LOD with camera distance
 	camDistLODFactor  = midPos.distance(camPos);
@@ -625,7 +613,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	// as 'changed', so their vertices can be updated
 	if (baseLeft.IsLeaf() && baseRight.IsLeaf()) isChanged = true;
 
-    lastCameraPosition = camPos;
+	lastCameraPosition = camPos;
 	return (!curTriPool->OutOfNodes());
 }
 

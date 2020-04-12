@@ -71,7 +71,7 @@ public:
 	static void InitPools(bool shadowPass, size_t newPoolSize = NEW_POOL_SIZE);
 	static void ResetAll(bool shadowPass);
 
-	inline static CTriNodePool* GetPoolForThread(bool shadowPass);
+	inline static CTriNodePool* GetPool(bool shadowPass);
 
 public:
 	void Resize(size_t poolSize);
