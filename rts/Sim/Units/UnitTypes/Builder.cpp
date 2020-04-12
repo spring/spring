@@ -711,7 +711,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 		case CGameHelper::BUILDSQUARE_OPEN: {
 			// <pos> might map to a non-blocking portion
 			// of the buildee's yardmap, fallback check
-			const CUnit* u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, 8.0f, allyteam);
+			const CUnit* u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, static_cast<float>(SQUARE_SIZE), allyteam);
 			if (u != nullptr) {
 				if (CanAssistUnit(u, buildInfo.def)) {
 					// StopBuild sets this to false, fix it here if picking up the same buildee again
