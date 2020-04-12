@@ -748,7 +748,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 				if (cu == nullptr)
 					continue;
-				if (allyteam != cu->allyteam)
+				if (!teamHandler.Ally(allyteam, cu->allyteam)
 					return false; // Enemy units that block always block the cell
 				if (!CanAssistUnit(cu, buildInfo.def))
 					continue;
