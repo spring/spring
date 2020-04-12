@@ -134,9 +134,6 @@ public:
 	void SetSquareTexture() const;
 
 public:
-	#if 0
-	void UpdateVisibility(CCamera* cam);
-	#endif
 	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
