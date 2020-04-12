@@ -398,7 +398,7 @@ void CRoamMeshDrawer::Update()
 			});
 		} else {
 			for (Patch& p: patches) {
-				if (!p.IsVisible(cam))
+				if (!p.IsVisible(cam) || !p.isChanged)
 					continue;
 
 				p.GenerateIndices();
@@ -409,7 +409,7 @@ void CRoamMeshDrawer::Update()
 		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
-			if (!p.IsVisible(cam))
+			if (!p.IsVisible(cam) || !p.isChanged)
 				continue;
 
 			p.Upload();
@@ -433,43 +433,6 @@ void CRoamMeshDrawer::Update()
 		//LOG("Camera pass=%i pos= %.1f, %.1f, %.1f", shadowPass, nowcampos.x, nowcampos.y, nowcampos.z);
 	}
 #endif // TESSELATION_DEBUG
-
-
-	tesselMesh |= (lastGroundDetail[shadowPass] != smfGroundDrawer->GetGroundDetail());
-
-	if (!tesselMesh)
-		return;
-
-	{
-		//SCOPED_TIMER("ROAM::Tessellate");
-
-		Reset(shadowPass);
-		Tessellate(patches, cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
-	}
-
-	{
-		//SCOPED_TIMER("ROAM::GenerateIndexArray");
-
-		for_mt(0, patches.size(), [&patches, &cam](const int i) {
-			Patch* p = &patches[i];
-			if (!p->IsVisible(cam))
-				return;
-
-			p->GenerateIndices();
-		});
-	}
-
-	{
-		//SCOPED_TIMER("ROAM::Upload");
-
-		for (Patch& p: patches) {
-			if (!p.IsVisible(cam))
-				continue;
-
-			p.Upload();
-		}
-	}
-
 
 	lastGroundDetail[shadowPass] = smfGroundDrawer->GetGroundDetail();
 	lastCamPos[shadowPass] = cam->GetPos();
