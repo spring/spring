@@ -388,7 +388,7 @@ void CRoamMeshDrawer::Update()
 		if (forceNextTesselation[shadowPass]) {
 			for_mt(0, numPatches, [&patches, &cam](const int i) {
 				Patch* p = &patches[i];
-				if (!p->IsVisible(cam) || !p->isChanged)
+				if (!p->IsVisible(cam))
 					return;
 
 				p->GenerateIndices();
