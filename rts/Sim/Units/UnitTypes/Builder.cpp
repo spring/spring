@@ -708,8 +708,25 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 	const CGameHelper::BuildSquareStatus tbs = CGameHelper::TestUnitBuildSquare(buildInfo, feature, -1, true);
 
 	switch (tbs) {
-		case CGameHelper::BUILDSQUARE_OPEN:
-			break;
+		case CGameHelper::BUILDSQUARE_OPEN: {
+			// <pos> might map to a non-blocking portion
+			// of the buildee's yardmap, fallback check
+			const CUnit* u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, 8.0f, allyteam);
+			if (u != nullptr) {
+				if (CanAssistUnit(u, buildInfo.def)) {
+					// StopBuild sets this to false, fix it here if picking up the same buildee again
+					terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
+
+					AddDeathDependence(curBuild = const_cast<CUnit*>(u), DEPENDENCE_BUILD);
+					ScriptStartBuilding(u->pos, false);
+					return true;
+				}
+
+				// let BuggerOff handle this case (TODO: non-landed aircraft should not count)
+				if (buildInfo.FootPrintOverlap(u->pos, u->GetFootPrint(SQUARE_SIZE * 0.5f)))
+					return false;
+			}
+		} break;
 
 		case CGameHelper::BUILDSQUARE_BLOCKED:
 		case CGameHelper::BUILDSQUARE_OCCUPIED: {
@@ -731,11 +748,12 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 				if (cu == nullptr)
 					continue;
+				if (allyteam != cu->allyteam)
+					return false; // Enemy units that block always block the cell
 				if (!CanAssistUnit(cu, buildInfo.def))
 					continue;
 
 				u = cu;
-				break;
 			}
 
 			// <pos> might map to a non-blocking portion
