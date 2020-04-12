@@ -208,6 +208,7 @@ void CRoamMeshDrawer::Update()
 	size_t numPatchesEnterVisibility = 0;
 	size_t numPatchesExitVisibility = 0;
 	size_t numPatchesZoomChanged = 0;
+
 #endif
 
 	CCamera* playerCamera = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
@@ -362,7 +363,6 @@ void CRoamMeshDrawer::Update()
 					tesselationsSinceLastReset[shadowPass],
 					shadowPass);
 			#endif // TESSELATION_DEBUG
-
 				break;
 			}
 		}
@@ -398,6 +398,8 @@ void CRoamMeshDrawer::Update()
 			});
 		} else {
 			for (Patch& p: patches) {
+				if (!p.isChanged)
+					continue;
 				if (!p.IsVisible(cam))
 					continue;
 
@@ -409,6 +411,8 @@ void CRoamMeshDrawer::Update()
 		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
+			if (!p.isChanged)
+				continue;
 			if (!p.IsVisible(cam))
 				continue;
 
@@ -417,7 +421,7 @@ void CRoamMeshDrawer::Update()
 		}
 	}
 #if TESSELATION_DEBUG
-	if (actualTesselations > 0) {
+	if (actualTesselations > 0 || actualUploads > 0) {
 		LOG("#V=%i d_in=%i d_out=%i in df:#%i shadow:%i Z+%i actual=%i up=%i mratio = %.2f",
 			numPatchesVisible,
 			numPatchesEnterVisibility,
@@ -433,43 +437,6 @@ void CRoamMeshDrawer::Update()
 		//LOG("Camera pass=%i pos= %.1f, %.1f, %.1f", shadowPass, nowcampos.x, nowcampos.y, nowcampos.z);
 	}
 #endif // TESSELATION_DEBUG
-
-
-	tesselMesh |= (lastGroundDetail[shadowPass] != smfGroundDrawer->GetGroundDetail());
-
-	if (!tesselMesh)
-		return;
-
-	{
-		//SCOPED_TIMER("ROAM::Tessellate");
-
-		Reset(shadowPass);
-		Tessellate(patches, cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
-	}
-
-	{
-		//SCOPED_TIMER("ROAM::GenerateIndexArray");
-
-		for_mt(0, patches.size(), [&patches, &cam](const int i) {
-			Patch* p = &patches[i];
-			if (!p->IsVisible(cam))
-				return;
-
-			p->GenerateIndices();
-		});
-	}
-
-	{
-		//SCOPED_TIMER("ROAM::Upload");
-
-		for (Patch& p: patches) {
-			if (!p.IsVisible(cam))
-				continue;
-
-			p.Upload();
-		}
-	}
-
 
 	lastGroundDetail[shadowPass] = smfGroundDrawer->GetGroundDetail();
 	lastCamPos[shadowPass] = cam->GetPos();
@@ -494,25 +461,31 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	// SCOPED_TIMER can't have dynamic values in a single call
 	//SCOPED_TIMER(drawPass == DrawPass::Normal ? "Draw::World::Terrain::ROAM" : "Misc::ROAM");
-	SCOPED_TIMER("Draw::World::Terrain::ROAM");
+	{
 
-	switch (drawPass) {
-		case DrawPass::Normal: { Update(); } break;
-		case DrawPass::Shadow: { Update(); } break;
-		default: {
-			Patch::UpdateVisibility(CCameraHandler::GetActiveCamera(), patchMeshGrid[MESH_NORMAL], numPatchesX);
-		} break;
+		SCOPED_TIMER("Draw::World::Terrain::ROAM::Update");
+
+		switch (drawPass) {
+			case DrawPass::Normal: { Update(); } break;
+			case DrawPass::Shadow: { Update(); } break;
+			default: {
+				Patch::UpdateVisibility(CCameraHandler::GetActiveCamera(), patchMeshGrid[MESH_NORMAL], numPatchesX);
+			} break;
+		}
 	}
 
-	for (Patch& p: patchMeshGrid[drawPass == DrawPass::Shadow]) {
-		if (!p.IsVisible(CCameraHandler::GetActiveCamera()))
-			continue;
+	{
+		SCOPED_TIMER("Draw::World::Terrain::ROAM::Draw");
+		for (Patch& p: patchMeshGrid[drawPass == DrawPass::Shadow]) {
+			if (!p.IsVisible(CCameraHandler::GetActiveCamera()))
+				continue;
 
-		// do not need textures in the SP
-		if (drawPass != DrawPass::Shadow)
-			p.SetSquareTexture();
+			// do not need textures in the SP
+			if (drawPass != DrawPass::Shadow)
+				p.SetSquareTexture();
 
-		p.Draw();
+			p.Draw();
+		}
 	}
 }
 
