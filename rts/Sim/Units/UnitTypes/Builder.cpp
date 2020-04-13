@@ -731,11 +731,12 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 				if (cu == nullptr)
 					continue;
+				if (allyteam != cu->allyteam)
+					return false; // Enemy units that block always block the cell
 				if (!CanAssistUnit(cu, buildInfo.def))
 					continue;
 
 				u = cu;
-				break;
 			}
 
 			// <pos> might map to a non-blocking portion
