@@ -11,10 +11,15 @@ Sim:
  ! remove CMD_SET_WANTED_MAX_SPEED
  - allow CEG trails for crashing aircraft (engine will randomly select from any generators listed in sfxTypes.crashExplosionGenerators)
  - DGun weapontype: allow leading (leadLimit for DGun defaults to 0 instead of -1 for back-compatibility)
+ - Rifle weapontype: obey collision flags
  - change default ownerExpAccWeight to 0 for all weapon-types
  - remove salvoError multiplier hack for positional and out-of-los targets
 
 Lua:
+ - add math.tau
+ - add sensors.decloakRequiresLineOfSight modrule. If true, sight radius works as a cap for decloak radius
+   (for example a unit with decloak radius 200 will not be decloaked with a 100 LoS unit in the 100-200 range,
+   and units with 0 LoS can't decloak others at all regardless of decloak range). Defaults to false.
  - add Platform.osVersion; complements Platform.osName
  - add Platform.hwConfig
  - Script.IsEngineMinVersion now available in all Lua parsing contexts,
@@ -39,18 +44,26 @@ Lua:
  - add a 3rd param to DefaultCommand callin: the current default command
     works with the above: gadgets receive the default engine cmd,
     widgets then receive what gadgets returned (possibly engine default)
- - add  Spring.ClosestBuildPos(teamID, unitdefID, worldx,worldy,worldz, searchRadius, minDistance, buildFacing) -> buildx,buildy,buildz  to LuaSyncedRead
- - add  Spring.GetGlobalLos(allyTeamID) -> bool  to LuaSyncedRead
- - add  Spring.IsNoCostEnabled() -> bool  to LuaSyncedRead
+ - add Spring.ClosestBuildPos(teamID, unitdefID, worldx,worldy,worldz, searchRadius, minDistance, buildFacing) -> buildx,buildy,buildz  to LuaSyncedRead
+ - add Spring.GetGlobalLos(allyTeamID) -> bool  to LuaSyncedRead
+ - add Spring.IsNoCostEnabled() -> bool  to LuaSyncedRead
  - add Spring.SetWind(number minStrength, number maxStrength)
  - add Spring.SetTidal(number strength)
  - add Spring.GetTidal
+ - add Spring.GetGameState() -> bool, bool, bool, bool  to LuaUnsyncedRead
+   1) finished loading
+   2) loaded from a save
+   3) locally paused (i.e. after entering /pause)
+   4) lagging wrt expected simframe time
+ - add Spring.SetUnitUseWeapons(unitID, bool force, bool block), only one of the bools should be true
+   setting force to true means the unit can fire even when being dead, stunned, a nanoframe, or in build stance
+   setting block to true means the unit can't fire at all (unless "force" which takes priority)
  - add Spring.{Unit,Feature}Rendering.SetProjectileLuaDraw
  - add Spring.{Unit,Feature}Rendering.Set{Deferred,Forward}MaterialUniform
  - add Spring.{Unit,Feature}Rendering.Clear{Deferred,Forward}MaterialUniform
  - add Spring.AddObjectDecal
  ! rename Spring.RemoveBuildingDecal to Spring.RemoveObjectDecal
- - add Spring.GetLuaMemUsage to LuaUnsyncedRead
+ - add Spring.GetLuaMemUsage to LuaUnsyncedRead and LuaMenu
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
@@ -131,6 +144,7 @@ AI:
    skirmishAiCallback_Unit_get{CaptureProgress,BuildProgress,ParalyzeDamage} functions
 
 Misc:
+ - Rifle weapontype: remove hardcoded particles
  - add MapConvNG executables to official spring builds: https://springrts.com/wiki/MapConvNG
  - remove joystick support
  - detect hangs during filesystem initialisation
