@@ -59,6 +59,7 @@ Lua:
  - add Spring.SetUnitUseWeapons(unitID, bool force, bool block), only one of the bools should be true
    setting force to true means the unit can fire even when being dead, stunned, a nanoframe, or in build stance
    setting block to true means the unit can't fire at all (unless "force" which takes priority)
+ - add Spring.Set{Unit,Feature}PieceVisible(unit/featureID, pieceID, bool visible)
  - add Spring.{Unit,Feature}Rendering.SetProjectileLuaDraw
  - add Spring.{Unit,Feature}Rendering.Set{Deferred,Forward}MaterialUniform
  - add Spring.{Unit,Feature}Rendering.Clear{Deferred,Forward}MaterialUniform
