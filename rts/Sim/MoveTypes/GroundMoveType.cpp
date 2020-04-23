@@ -2101,6 +2101,20 @@ void CGroundMoveType::HandleUnitCollisions(
 			const bool allowNewPath = (!atEndOfPath && !atGoal);
 			const bool checkYardMap = ((pushCollider || pushCollidee) || collideeUD->IsFactoryUnit());
 
+			// NOTE:
+			//   This is superhacky... But works like a charm!!!
+			//   In case 2 push resistant units park together, they would not
+			//   separate anymore, since pathfinding is not able to find a
+			//   non-blocked route.
+			//   This may happens for instance in unit balls, where units can
+			//   be pushed twiced, coming back to the blocked position.
+			//   The easiest way to workaround it is by marking the collider as
+			//   moving, so the conflict will be automagically fixed when a new
+			//   route is imposed.
+			if (collider->moveType->IsPushResistant() && !collider->IsMoving() && collidee->moveType->IsPushResistant() && !collidee->IsMoving()) {
+				collider->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, true);
+			}
+
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, allowNewPath, checkYardMap, false))
 				ReRequestPath(false);
 
