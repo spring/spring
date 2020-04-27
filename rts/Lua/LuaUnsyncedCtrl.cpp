@@ -1669,9 +1669,6 @@ int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1684,9 +1681,6 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1699,9 +1693,6 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CUnit* unit = ParseCtrlUnit(L, __func__, 1);
 
 	if (unit == nullptr)
@@ -1746,9 +1737,6 @@ int LuaUnsyncedCtrl::SetUnitSelectionVolumeData(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CFeature* feature = ParseCtrlFeature(L, __func__, 1);
 
 	if (feature == nullptr)
