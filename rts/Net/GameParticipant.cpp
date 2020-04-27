@@ -9,6 +9,10 @@
 
 GameParticipant::GameParticipant()
 {
+	// HAX: reserve enough buckets to avoid rehash of container
+	//      while traversing and processing /aicontrol command
+	aiClientLinks.reserve(MAX_AIS);
+
 	aiClientLinks[MAX_AIS] = ClientLinkData(false);
 }
 
