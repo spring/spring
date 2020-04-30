@@ -180,9 +180,9 @@ CGameServer::~CGameServer()
 {
 	quitServer = true;
 
-	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][1]", __func__);
 	thread.join();
-	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+	LOG_L(L_INFO, "[%s][2]", __func__);
 
 	// after this, demoRecorder goes out of scope and its dtor is called
 	WriteDemoData();
@@ -1953,7 +1953,9 @@ void CGameServer::ServerReadNet()
 	for (GameParticipant& player: players) {
 		std::shared_ptr<netcode::CConnection>& playerLink = player.clientLink;
 		std::shared_ptr<const RawPacket> packet;
+
 		spring::unordered_map<uint8_t, GameParticipant::ClientLinkData>& aiClientLinks = player.aiClientLinks;
+		std::array<uint8_t, MAX_AIS + 1> aiClientNumbers;
 
 		// if no link, player is not connected
 		if (playerLink == nullptr)
@@ -1984,50 +1986,61 @@ void CGameServer::ServerReadNet()
 					aiID = packet->data[4];
 			}
 
-			const auto liit = aiClientLinks.find(aiID);
+			const auto aiLinkIt = aiClientLinks.find(aiID);
 
-			if (liit != aiClientLinks.end()) {
-				liit->second.link->SendData(packet);
+			if (aiLinkIt != aiClientLinks.end()) {
+				aiLinkIt->second.link->SendData(packet);
 			} else {
 				// unreachable, aiClientLinks always contains a loopback entry for id=MAX_AIS
 				Message(spring::format("Player %s sent invalid SkirmishAI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cmdID));
 			}
 		}
 
-		for (auto& aiLinkData: aiClientLinks) {
-			int  bandwidthUsage = aiLinkData.second.bandwidthUsage;
-			int& numPacketsSent = aiLinkData.second.numPacketsSent;
+
+		// copy client AI id's; ProcessPacket() can cause aiClientLinks to be rehashed during iteration below
+		aiClientNumbers.fill(0);
+
+		for (const auto& pair: aiClientLinks) {
+			aiClientNumbers[ aiClientNumbers[MAX_AIS]++ ] = pair.first;
+		}
+
+		for (size_t i = 0, n = aiClientLinks.size(); i < n; i++) {
+			const uint8_t aiClientNum = aiClientNumbers[i];
+			const auto aiLinkData = aiClientLinks[aiClientNum];
+
+			int bandwidthUsage = aiLinkData.bandwidthUsage;
+			int numPacketsSent = aiLinkData.numPacketsSent;
 
 			int numPktsDropped = 0;
-			int peekAheadindex = 0;
+			int peekAheadIndex = 0;
 
 			const bool bwLimitWasReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
 
 			if (updateBandwidth >= 1.0f && globalConfig.linkIncomingSustainedBandwidth > 0)
-				bandwidthUsage = std::max(0, bandwidthUsage - std::max(1, (int)((float)globalConfig.linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
+				bandwidthUsage = std::max(0, bandwidthUsage - std::max(1, int(globalConfig.linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
 
-			bool bwLimitIsReached  = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
-			bool dropPacket = globalConfig.linkIncomingMaxWaitingPackets > 0 && (globalConfig.linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
+			bool bwLimitIsReached = (globalConfig.linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig.linkIncomingPeakBandwidth);
+			bool forcedDropPacket = (globalConfig.linkIncomingMaxWaitingPackets > 0 && (globalConfig.linkIncomingPeakBandwidth <= 0 || bwLimitWasReached));
 
-			std::shared_ptr<netcode::CConnection>& aiLink = aiLinkData.second.link;
+			std::shared_ptr<netcode::CConnection> aiLink = aiLinkData.link;
 			std::shared_ptr<const RawPacket> aiPacket;
 
 			while (aiLink != nullptr) {
-				if (dropPacket)
-					dropPacket = ((aiPacket = aiLink->Peek(globalConfig.linkIncomingMaxWaitingPackets)) != nullptr);
+				if (forcedDropPacket)
+					forcedDropPacket = ((aiPacket = aiLink->Peek(globalConfig.linkIncomingMaxWaitingPackets)) != nullptr);
 
 				// if packet is to be dropped, just pull it from queue instead of peek
-				if (!bwLimitIsReached || dropPacket)
+				if (!bwLimitIsReached || forcedDropPacket)
 					numPacketsSent += ((aiPacket = aiLink->GetData()) != nullptr);
 				else
-					aiPacket = aiLink->Peek(peekAheadindex++);
+					aiPacket = aiLink->Peek(peekAheadIndex++);
 
 				if (aiPacket == nullptr)
 					break;
 
 				const bool droppablePacket = (aiPacket->length <= 0 || (aiPacket->data[0] != NETMSG_SYNCRESPONSE && aiPacket->data[0] != NETMSG_KEYFRAME));
 
-				if (dropPacket && droppablePacket) {
+				if (forcedDropPacket && droppablePacket) {
 					++numPktsDropped;
 					continue;
 				}
@@ -2046,18 +2059,22 @@ void CGameServer::ServerReadNet()
 				}
 			}
 
+			// "if" needs C++17
+			for (auto it = aiClientLinks.find(aiClientNum); it != aiClientLinks.end(); it = aiClientLinks.end())
+				it->second.numPacketsSent = numPacketsSent;
+
 			if (numPktsDropped > 0) {
-				if (aiLinkData.first == MAX_AIS)
+				if (aiClientNum == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [%d packets dropped, %d sent]", player.name.c_str(), numPktsDropped, numPacketsSent));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI %d [%d packets dropped, %d sent]", player.name.c_str(), (int)aiLinkData.first, numPktsDropped, numPacketsSent));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI %d [%d packets dropped, %d sent]", player.name.c_str(), (int)aiClientNum, numPktsDropped, numPacketsSent));
 			}
 
 			if (!bwLimitWasReached && bwLimitIsReached) {
-				if (aiLinkData.first == MAX_AIS)
+				if (aiClientNum == MAX_AIS)
 					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed, %d sent]", player.name.c_str(), numPacketsSent));
 				else
-					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI %d [packets delayed, %d sent]", player.name.c_str(), (int)aiLinkData.first, numPacketsSent));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI %d [packets delayed, %d sent]", player.name.c_str(), (int)aiClientNum, numPacketsSent));
 			}
 		}
 	}
