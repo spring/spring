@@ -730,7 +730,12 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 
 				if (cu == nullptr)
 					continue;
-				if (allyteam != cu->allyteam) // NB: not teamHandler.Ally because allies don't share LoS
+				/* NB: allies (cf. `teamHandler.Ally`) are also blocked
+				 * even though in theory we could want to assist them. This
+				 * is because allies aren't caught by `GetClosestFriendlyUnit`
+				 * so it would be possible to build on top of them if they
+				 * weren't assistable. */
+				if (allyteam != cu->allyteam)
 					return false; // Enemy units that block always block the cell
 				if (!CanAssistUnit(cu, buildInfo.def))
 					continue;
