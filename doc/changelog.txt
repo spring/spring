@@ -193,6 +193,7 @@ AI:
    skirmishAiCallback_Unit_get{CaptureProgress,BuildProgress,ParalyzeDamage} functions
 
 Misc:
+ - dedicated server now defaults the `AllowSpectatorJoin` springsetting to false (still true for non-dedi) 
  - Rifle weapontype: remove hardcoded particles
  - add MapConvNG executables to official spring builds: https://springrts.com/wiki/MapConvNG
  - remove joystick support
