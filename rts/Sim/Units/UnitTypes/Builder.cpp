@@ -722,12 +722,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWait
 			// closest to us
 			const CGroundBlockingObjectMap::BlockingMapCell& cell = groundBlockingObjectMap.GetCellUnsafeConst(buildInfo.pos);
 
-			const CSolidObject* o = nullptr;
 			const CUnit* u = nullptr;
 
 			// look for any blocking assistable buildee at build.pos
 			for (size_t i = 0, n = cell.size(); i < n; i++) {
-				const CUnit* cu = dynamic_cast<const CUnit*>(o = cell[i]);
+				const CUnit* cu = dynamic_cast<const CUnit*>(cell[i]);
 
 				if (cu == nullptr)
 					continue;
