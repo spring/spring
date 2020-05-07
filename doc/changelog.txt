@@ -139,6 +139,9 @@ Lua:
      spring -> rx, ry, rz, dist
      free -> rx, ry, rz, vx, vy, vz, avx, avy, avz
      ov -> (nil)
+ - Spring.SetUnitWeaponState with "autoTargetRangeBoost" now also lets Cannon
+   and StarburstLauncher weapons look ahead and pre-aim at targets just
+   outside of nominal range.
 
 AI:
  - reveal unit's captureProgress, buildProgress and paralyzeDamage params through
