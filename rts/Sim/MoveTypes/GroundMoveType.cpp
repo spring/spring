@@ -2107,7 +2107,7 @@ void CGroundMoveType::HandleUnitCollisions(
 			//   separate anymore, since pathfinding is not able to find a
 			//   non-blocked route.
 			//   This may happens for instance in unit balls, where units can
-			//   be pushed twiced, coming back to the blocked position.
+			//   be pushed twice, coming back to the blocked position.
 			//   The easiest way to workaround it is by marking the collider as
 			//   moving, so the conflict will be automagically fixed when a new
 			//   route is imposed.
