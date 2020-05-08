@@ -373,40 +373,29 @@ int LuaVFS::UseArchive(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
-	const std::string& filepath = archiveScanner->GetArchivePath(filename) + filename;
-	const std::string& arname = archiveScanner->NameFromArchive(filename);
-
-	// FIXME: return 0, keep searches within the Spring directory
-	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(filename)) {}
-
+	const std::string& archiveName = luaL_checkstring(L, 1);
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty())
+		return 0;
 
 	constexpr int funcIndex = 2;
-	int callError = 0;
-
 	if (!lua_isfunction(L, funcIndex))
 		return 0;
 
-	if (!CFileHandler::FileExists(filepath, SPRING_VFS_RAW))
-		return 0;
+	// block other threads from getting the global until we are done
+	vfsHandler->GrabLock();
+	vfsHandler->SetName("LuaVFS");
+	vfsHandler->UnMapArchives(false);
 
-	if (!filename.empty()) {
-		// block other threads from getting the global until we are done
-		vfsHandler->GrabLock();
-		vfsHandler->SetName("LuaVFS");
-		vfsHandler->UnMapArchives(false);
+	// could be mod,map,etc
+	vfsHandler->AddArchive(archiveName, false);
 
-		// could be mod,map,etc
-		vfsHandler->AddArchive(arname, false);
+	callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-		callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
-
-		vfsHandler->RemoveArchive(arname);
-		vfsHandler->ReMapArchives(false);
-		vfsHandler->SetName("SpringVFS");
-		vfsHandler->FreeLock();
-	}
+	vfsHandler->RemoveArchive(archiveName);
+	vfsHandler->ReMapArchives(false);
+	vfsHandler->SetName("SpringVFS");
+	vfsHandler->FreeLock();
 
 	if (callError != 0)
 		lua_error(L);
@@ -421,16 +410,12 @@ int LuaVFS::MapArchive(lua_State* L)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
-	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
-	const std::string& filepath = archiveScanner->GetArchivePath(filename) + filename;
 
-	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(filename))
-		return 0;
-
-	if (!CFileHandler::FileExists(filepath, SPRING_VFS_RAW)) {
+	const std::string& archiveName = luaL_checkstring(L, 1);
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty()) {
 		std::ostringstream buf;
-		buf << "[" << __func__ << "] archive not found: " << filename;
+		buf << "[" << __func__ << "] archive not found: " << archiveName;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
@@ -443,12 +428,12 @@ int LuaVFS::MapArchive(lua_State* L)
 
 		std::fill(argChecksum.begin(), argChecksum.end(), 0);
 		std::memcpy(argChecksum.data(), lua_tostring(L, 2), std::min(argChecksum.size() - 1, strlen(lua_tostring(L, 2))));
-		sha512::dump_digest(archiveScanner->GetArchiveSingleChecksumBytes(filename), hexChecksum);
+		sha512::dump_digest(archiveScanner->GetArchiveSingleChecksumBytes(archiveName), hexChecksum);
 
 		if (argChecksum != hexChecksum) {
 			std::ostringstream buf;
 
-			buf << "[" << __func__ << "] incorrect archive checksum ";
+			buf << "[" << __func__ << "] incorrect checksum for archive: " << archiveName;
 			buf << "(got: " << argChecksum.data() << ", expected: " << hexChecksum.data() << ")";
 
 			lua_pushboolean(L, false);
@@ -457,9 +442,9 @@ int LuaVFS::MapArchive(lua_State* L)
 		}
 	}
 
-	if (!vfsHandler->AddArchive(archiveScanner->NameFromArchive(filename), false)) {
+	if (!vfsHandler->AddArchive(archiveName, false)) {
 		std::ostringstream buf;
-		buf << "[" << __func__ << "] failed to load archive: " << filename;
+		buf << "[" << __func__ << "] failed to load archive: " << archiveName;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
@@ -476,17 +461,16 @@ int LuaVFS::UnmapArchive(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
-
-	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(filename))
+	const std::string& archiveName = luaL_checkstring(L, 1);
+	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
+	if (archiveData.IsEmpty())
 		return 0;
 
-	LOG("[LuaVFS::%s] archive=%s", __func__, filename.c_str());
+	LOG("[LuaVFS::%s] archive=%s", __func__, archiveName.c_str());
 
-	if (!vfsHandler->RemoveArchive(archiveScanner->NameFromArchive(filename))) {
+	if (!vfsHandler->RemoveArchive(archiveName)) {
 		std::ostringstream buf;
-		buf << "[" << __func__ << "] failed to remove archive: " << filename;
+		buf << "[" << __func__ << "] failed to remove archive: " << archiveName;
 
 		lua_pushboolean(L, false);
 		lua_pushsstring(L, buf.str());
