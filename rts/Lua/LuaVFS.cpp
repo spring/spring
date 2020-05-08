@@ -390,7 +390,7 @@ int LuaVFS::UseArchive(lua_State* L)
 	// could be mod,map,etc
 	vfsHandler->AddArchive(archiveName, false);
 
-	callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
+	const int callError = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
 	vfsHandler->RemoveArchive(archiveName);
 	vfsHandler->ReMapArchives(false);
