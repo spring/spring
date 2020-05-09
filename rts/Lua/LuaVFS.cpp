@@ -376,11 +376,11 @@ int LuaVFS::UseArchive(lua_State* L)
 	const std::string& archiveName = luaL_checkstring(L, 1);
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	if (archiveData.IsEmpty())
-		return 0;
+		luaL_error(L, "[VFS::%s] archive not found: %s", __func__, archiveName.c_str());
 
 	constexpr int funcIndex = 2;
 	if (!lua_isfunction(L, funcIndex))
-		return 0;
+		luaL_error(L, "[VFS::%s] second argument should be a function", __func__);
 
 	// block other threads from getting the global until we are done
 	vfsHandler->GrabLock();
@@ -413,14 +413,8 @@ int LuaVFS::MapArchive(lua_State* L)
 
 	const std::string& archiveName = luaL_checkstring(L, 1);
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
-	if (archiveData.IsEmpty()) {
-		std::ostringstream buf;
-		buf << "[" << __func__ << "] archive not found: " << archiveName;
-
-		lua_pushboolean(L, false);
-		lua_pushsstring(L, buf.str());
-		return 2;
-	}
+	if (archiveData.IsEmpty())
+		luaL_error(L, "[VFS::%s] archive not found: %s", __func__, archiveName.c_str());
 
 	if (args >= 2) {
 		sha512::hex_digest argChecksum;
@@ -430,26 +424,13 @@ int LuaVFS::MapArchive(lua_State* L)
 		std::memcpy(argChecksum.data(), lua_tostring(L, 2), std::min(argChecksum.size() - 1, strlen(lua_tostring(L, 2))));
 		sha512::dump_digest(archiveScanner->GetArchiveSingleChecksumBytes(archiveName), hexChecksum);
 
-		if (argChecksum != hexChecksum) {
-			std::ostringstream buf;
-
-			buf << "[" << __func__ << "] incorrect checksum for archive: " << archiveName;
-			buf << "(got: " << argChecksum.data() << ", expected: " << hexChecksum.data() << ")";
-
-			lua_pushboolean(L, false);
-			lua_pushsstring(L, buf.str());
-			return 2;
-		}
+		if (argChecksum != hexChecksum)
+			luaL_error(L, "[VFS::%s] incorrect checksum for archive: %s (got: %s, expected: %s)",
+				__func__, archiveName.c_str(), argChecksum.data(), hexChecksum.data());
 	}
 
-	if (!vfsHandler->AddArchive(archiveName, false)) {
-		std::ostringstream buf;
-		buf << "[" << __func__ << "] failed to load archive: " << archiveName;
-
-		lua_pushboolean(L, false);
-		lua_pushsstring(L, buf.str());
-		return 2;
-	}
+	if (!vfsHandler->AddArchive(archiveName, false))
+		luaL_error(L, "[VFS::%s] failed to load archive: %s", archiveName.c_str());
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -464,18 +445,12 @@ int LuaVFS::UnmapArchive(lua_State* L)
 	const std::string& archiveName = luaL_checkstring(L, 1);
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	if (archiveData.IsEmpty())
-		return 0;
+		luaL_error(L, "[VFS::%s] archive not found: %s", __func__, archiveName.c_str());
 
 	LOG("[LuaVFS::%s] archive=%s", __func__, archiveName.c_str());
 
-	if (!vfsHandler->RemoveArchive(archiveName)) {
-		std::ostringstream buf;
-		buf << "[" << __func__ << "] failed to remove archive: " << archiveName;
-
-		lua_pushboolean(L, false);
-		lua_pushsstring(L, buf.str());
-		return 2;
-	}
+	if (!vfsHandler->RemoveArchive(archiveName))
+		luaL_error(L, "[VFS::%s] failed to remove archive: %s", __func__, archiveName.c_str());
 
 	lua_pushboolean(L, true);
 	return 1;
