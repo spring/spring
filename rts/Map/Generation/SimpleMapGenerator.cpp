@@ -25,20 +25,22 @@ void CSimpleMapGenerator::GenerateInfo()
 	}
 
 	const std::string* newMapXStr = mapOpts.try_get("new_map_x");
-	const std::string* newMapZStr = mapOpts.try_get("new_map_z");
+	const std::string* newMapYStr = mapOpts.try_get("new_map_y");
 
-	if (newMapXStr == nullptr || newMapZStr == nullptr) {
+	if (newMapXStr == nullptr || newMapYStr == nullptr) {
 		mapSize = int2(1, 1);
 		return;
 	}
 
 
 	try {
-		const int newMapX = std::stoi(*newMapXStr);
-		const int newMapZ = std::stoi(*newMapZStr);
+		// mapSize coordinates are actually 2x the spring map dimensions
+		// Example: 10x10 map has mapSize = (5, 5)
+		const int newMapX = std::stoi(*newMapXStr) / 2;
+		const int newMapY = std::stoi(*newMapYStr) / 2;
 
-		if (newMapX > 0 && newMapZ > 0)
-			mapSize = int2(newMapX, newMapZ);
+		if (newMapX > 0 && newMapY > 0)
+			mapSize = int2(newMapX, newMapY);
 
 	} catch (...) {
 		mapSize = int2(1, 1);
