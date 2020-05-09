@@ -114,9 +114,10 @@ Lua:
  - Added VFS.GetArchivePath(string archiveName1) -> string archivePathOnDisk
  - Added VFS.GetFileAbsolutePath(string vfsFilePath) -> string filePathOnDisk
  - Added VFS.GetArchiveContainingFile(string vfsFilePath) -> string archiveName
+ ! VFS.MapArchive, VFS.UnmapArchive and VFS.UseArchive now take archiveName instead of fileName as the first parameter.
  - add a 6th return value (feature->reclaimTime) to GetFeatureResources.
  - Add `Spring.UnitFinishCommand(unitID)`, finishes current command. Unlike CMD.REMOVE it works with Repeat/UnitCmdDone
-   and unlike CommandFallback it works on builtin engine commands. 
+   and unlike CommandFallback it works on builtin engine commands.
  - Allow spawning of any CEG from any LUS:
    EmitSfx(p, "cegTag") param will emit the CEG with tag="cegTag"
    EmitSfx(p, SFX.GLOBAL | cegID) will emit the CEG with id=cegID
@@ -148,7 +149,7 @@ AI:
    skirmishAiCallback_Unit_get{CaptureProgress,BuildProgress,ParalyzeDamage} functions
 
 Misc:
- - dedicated server now defaults the `AllowSpectatorJoin` springsetting to false (still true for non-dedi) 
+ - dedicated server now defaults the `AllowSpectatorJoin` springsetting to false (still true for non-dedi)
  - Rifle weapontype: remove hardcoded particles
  - add MapConvNG executables to official spring builds: https://springrts.com/wiki/MapConvNG
  - remove joystick support
