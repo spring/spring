@@ -234,6 +234,7 @@ Misc:
  - IME editing support for those with the proper SDL2 version/IME tool combination
  ! Made lockluaui.txt obsolete: no longer necessary for it to exists in order to enable VFS for LuaUI
  - use SHA2 rather than CRC32 content hashes
+ ! blank map params: new_map_x and new_map_y are now in map dimension sizes rather than map dimension * 2. new_map_z renamed to new_map_y
 
 Fixes:
  - fix #1968 (units not moving in direction of next queued [build-]command if current order blocked)
