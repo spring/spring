@@ -34,7 +34,7 @@ public:
 	void SlowUpdate() override final;
 
 	float GetRange2D(float ydiff, float rbFac, float hbFac) const { return (GetStaticRange2D({range, ydiff}, {projectileSpeed, gravity}, {rbFac, hbFac})); }
-	float GetRange2D(float boost, float ydiff) const override final { return (GetRange2D(ydiff, rangeBoostFactor, heightBoostFactor)); }
+	float GetRange2D(float boost, float ydiff) const override final { return (GetRange2D(ydiff, rangeBoostFactor, heightBoostFactor)) + boost; }
 
 	// baseConsts{.x := weaponDefRange, .y := modHeightDif}
 	// projConsts{.x := speed, .y := gravity}
