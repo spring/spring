@@ -14,6 +14,7 @@ Sim:
  - Rifle weapontype: obey collision flags
  - change default ownerExpAccWeight to 0 for all weapon-types
  - remove salvoError multiplier hack for positional and out-of-los targets
+ - add new UnitDef tag "stopToAttack"
 
 Lua:
  - add math.tau
