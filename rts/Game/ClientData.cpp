@@ -37,6 +37,6 @@ std::string ClientData::GetUncompressed(const std::vector<std::uint8_t>& compres
 	std::vector<std::uint8_t> buffer{zlib::inflate(compressed)};
 	std::string cdata{buffer.begin(), buffer.end()};
 
-	return (std::move(cdata));
+	return cdata;
 }
 

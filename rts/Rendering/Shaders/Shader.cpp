@@ -115,7 +115,7 @@ std::string Shader::GetShaderVersionDirective(std::string& srcText)
 		srcText.erase(pos, eol - pos);
 	}
 
-	return (std::move(version));
+	return version;
 }
 
 /*****************************************************************/
@@ -548,7 +548,7 @@ namespace Shader {
 			programLog.append(shaderLog);
 		}
 
-		return (std::move(cso));
+		return cso;
 	}
 }
 

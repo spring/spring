@@ -681,7 +681,7 @@ template<typename T, typename F, typename... A> std::string ControlReverseIterat
 		if (str.empty())
 			continue;
 
-		return (std::move(str));
+		return str;
 	}
 
 	return {};
