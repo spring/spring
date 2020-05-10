@@ -745,7 +745,6 @@ void CGame::ClientReadNet()
 
 					uint8_t playerID;
 					uint8_t aiInstID;
-					uint8_t aiTeamID;
 					uint8_t pairwise;
 					uint32_t sameCmdID;
 					uint8_t sameCmdOpt;
@@ -760,7 +759,6 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					pckt >> aiInstID;
-					// pckt >> aiTeamID;
 					pckt >> pairwise;
 					pckt >> sameCmdID;
 					pckt >> sameCmdOpt;
