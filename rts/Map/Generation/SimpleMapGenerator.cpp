@@ -54,7 +54,6 @@ void CSimpleMapGenerator::GenerateMap()
 
 	mapDescription = "Simple Random Map";
 
-	const int2 gs = GetGridSize();
 	std::vector<float>& map = GetHeightMap();
 	std::fill(map.begin(), map.end(), 50.0f);
 }

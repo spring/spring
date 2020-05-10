@@ -249,7 +249,9 @@ void CCamera::UpdateViewRange()
 	const float3 blPixelDir = CalcPixelDir(                         0, globalRendering->viewSizeY);
 	#endif
 
+	#if 0
 	constexpr float SQ_MAX_VIEW_RANGE = Square(CGlobalRendering::MAX_VIEW_RANGE);
+	#endif
 	constexpr float ZFAR_ZNEAR_FACTOR = 0.001f;
 
 	const float maxEdgeDistX = std::max(pos.x, float3::maxxpos - pos.x);

@@ -215,10 +215,10 @@ void CSolidObject::Block()
 }
 
 bool CSolidObject::FootPrintOnGround() const {
-	constexpr float scale = SQUARE_SIZE * 0.5f;
 	const     float sdist = std::max(radius, CalcFootPrintMinExteriorRadius());
 
 	#if 0
+	constexpr float scale = SQUARE_SIZE * 0.5f;
 	float3 p = pos;
 
 	{

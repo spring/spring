@@ -182,8 +182,9 @@ void CRoamMeshDrawer::Update()
 	CCamera* cam = CCameraHandler::GetActiveCamera();
 
 	bool shadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
+#if TESSELATION_DEBUG
 	bool tesselMesh = forceNextTesselation[shadowPass];
-	bool fullRetesselate = false;
+#endif
 
 	auto& patches = patchMeshGrid[shadowPass];
 	auto& pvflags = patchVisFlags[shadowPass];

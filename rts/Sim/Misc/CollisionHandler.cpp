@@ -512,9 +512,6 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		return true;
 	}
 
-	// ray direction in volume-space
-	const float3 dir = (pi1 - pi0).SafeNormalize();
-
 	// ray direction in (unit) cylinder-space
 	float3 udir;
 
