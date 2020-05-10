@@ -136,10 +136,14 @@ public:
 	void ResetAlphaDrawing(bool deferredPass);
 
 
-	#define sqr(x) ((x) * (x))
-	void SetUnitDrawDist(float dist) { unitDrawDistSqr = sqr(unitDrawDist = dist)         ; }
-	void SetUnitIconDist(float dist) {      iconLength = sqr(unitIconDist = dist) * 750.0f; }
-	#undef sqr
+	void SetUnitDrawDist(float dist) {
+		unitDrawDist = dist;
+		unitDrawDistSqr = unitDrawDist * unitDrawDist;
+	}
+	void SetUnitIconDist(float dist) {
+		unitIconDist = dist;
+		iconLength = unitIconDist * unitIconDist * 750.0f;
+	}
 
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
