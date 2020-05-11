@@ -1996,6 +1996,13 @@ void CGroundMoveType::HandleUnitCollisions(
 	QuadFieldQuery qfQuery;
 	quadField.GetUnitsExact(qfQuery, collider->pos, colliderParams.x + (colliderParams.y * 2.0f));
 
+	// Push resistant units may eventually park in the same spot of another push
+	// resistant unit. To avoid them block each other, the unit was set in a
+	// fake moving state.
+	bool colliderCanStop = false;
+	if (collider->moveType->IsPushResistant() && collider->IsMoving() && currentSpeed < 0.01f)
+		colliderCanStop = true;
+
 	for (CUnit* collidee: *qfQuery.units) {
 		if (collidee == collider) continue;
 		if (collidee->IsSkidding()) continue;
@@ -2101,18 +2108,15 @@ void CGroundMoveType::HandleUnitCollisions(
 			const bool allowNewPath = (!atEndOfPath && !atGoal);
 			const bool checkYardMap = ((pushCollider || pushCollidee) || collideeUD->IsFactoryUnit());
 
-			// NOTE:
-			//   This is superhacky... But works like a charm!!!
-			//   In case 2 push resistant units park together, they would not
-			//   separate anymore, since pathfinding is not able to find a
-			//   non-blocked route.
-			//   This may happens for instance in unit balls, where units can
-			//   be pushed twice, coming back to the blocked position.
-			//   The easiest way to workaround it is by marking the collider as
-			//   moving, so the conflict will be automagically fixed when a new
-			//   route is imposed.
-			if (collider->moveType->IsPushResistant() && !collider->IsMoving() && collidee->moveType->IsPushResistant() && !collidee->IsMoving()) {
-				collider->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, true);
+			if (collidee->moveType->IsPushResistant() && !collidee->IsMoving()) {
+				// This spot is already took by another unit, so the collider
+				// might not stop here
+				colliderCanStop = false;
+				if (collider->moveType->IsPushResistant() && !collider->IsMoving()) {
+					// The collider already stopped, so we must set it in a fake
+					// moving state
+					collider->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, true);
+				}
 			}
 
 			if (HandleStaticObjectCollision(collider, collidee, colliderMD,  colliderParams.y, collideeParams.y,  separationVect, allowNewPath, checkYardMap, false))
@@ -2179,6 +2183,9 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (moveCollidee && collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec))
 			collidee->Move(collideeMoveVec, true);
 	}
+
+	if (colliderCanStop)
+		collider->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, false);
 }
 
 void CGroundMoveType::HandleFeatureCollisions(
