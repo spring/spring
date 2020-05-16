@@ -421,7 +421,7 @@ void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
 		return;
 	if (!unitDef->IsGroundUnit())
 		return;
-	if (unitDef->floatOnWater && newPos[1] <= unitDef->waterline * -1.0f)
+	if (unit->IsInWater() && !unit->IsOnGround())
 		return;
 
 
