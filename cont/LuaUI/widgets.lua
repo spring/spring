@@ -107,6 +107,7 @@ local flexCallIns = {
   'GameOver',
   'GamePaused',
   'GameFrame',
+  'GameProgress',
   'GameSetup',
   'TeamDied',
   'TeamChanged',
