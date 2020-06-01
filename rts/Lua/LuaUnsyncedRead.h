@@ -51,9 +51,11 @@ class LuaUnsyncedRead {
 		static int GetUnitNoMinimap(lua_State* L);
 		static int GetUnitNoSelect(lua_State* L);
 		static int GetUnitSelectionVolumeData(lua_State* L);
+		static int GetUnitLastTracedPiece(lua_State* L);
 		static int GetFeatureLuaDraw(lua_State* L);
 		static int GetFeatureNoDraw(lua_State* L);
 		static int GetFeatureSelectionVolumeData(lua_State* L);
+		static int GetFeatureLastTracedPiece(lua_State* L);
 
 		static int GetUnitPieceTransformMatrices(lua_State* L);
 		static int GetFeaturePieceTransformMatrices(lua_State* L);
