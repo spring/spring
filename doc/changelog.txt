@@ -18,6 +18,9 @@ Sim:
 
 Lua:
  - add math.tau
+ - add Spring.Get{Unit,Feature}LastTracedPiece
+   Same as Spring.Get{Unit,Feature}LastHitPiece,
+   but for unsynced (ray traces etc)
  - add sensors.decloakRequiresLineOfSight modrule. If true, sight radius works as a cap for decloak radius
    (for example a unit with decloak radius 200 will not be decloaked with a 100 LoS unit in the 100-200 range,
    and units with 0 LoS can't decloak others at all regardless of decloak range). Defaults to false.
