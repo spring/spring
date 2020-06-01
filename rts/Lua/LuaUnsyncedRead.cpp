@@ -749,7 +749,7 @@ int LuaUnsyncedRead::GetUnitSelectionVolumeData(lua_State* L)
 	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __func__, 1));
 }
 
-int LuaSyncedRead::GetUnitLastTracedPiece(lua_State* L)
+int LuaUnsyncedRead::GetUnitLastTracedPiece(lua_State* L)
 {
 	return GetSolidObjectLastTracedPiece(L, ParseUnit(L, __func__, 1));
 }
@@ -769,7 +769,7 @@ int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
 	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __func__, 1));
 }
 
-int LuaSyncedRead::GetFeatureLastTracedPiece(lua_State* L)
+int LuaUnsyncedRead::GetFeatureLastTracedPiece(lua_State* L)
 {
 	return GetSolidObjectLastTracedPiece(L, ParseFeature(L, __func__, 1));
 }
