@@ -122,9 +122,11 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
 	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
+	REGISTER_LUA_CFUNC(GetUnitLastTracedPiece);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
 	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
+	REGISTER_LUA_CFUNC(GetFeatureLastTracedPiece);
 
 	REGISTER_LUA_CFUNC(GetUnitPieceTransformMatrices);
 	REGISTER_LUA_CFUNC(GetFeaturePieceTransformMatrices);
@@ -335,7 +337,25 @@ static int GetSolidObjectSelectionVolume(lua_State* L, const CSolidObject* obj)
 }
 
 
+static int GetSolidObjectLastTracedPiece(lua_State* L, const CSolidObject* o)
+{
+	if (o == nullptr)
+		return 0;
+	if (o->hitModelPieces[false] == nullptr)
+		return 0;
 
+	const LocalModelPiece* lmp = o->hitModelPieces[false];
+	const S3DModelPiece* omp = lmp->original;
+
+	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
+		lua_pushnumber(L, lmp->GetLModelPieceIndex() + 1);
+	} else {
+		lua_pushsstring(L, omp->name);
+	}
+
+	lua_pushnumber(L, o->pieceHitFrames[false]);
+	return 2;
+}
 
 
 /******************************************************************************/
@@ -729,6 +749,11 @@ int LuaUnsyncedRead::GetUnitSelectionVolumeData(lua_State* L)
 	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __func__, 1));
 }
 
+int LuaSyncedRead::GetUnitLastTracedPiece(lua_State* L)
+{
+	return GetSolidObjectLastTracedPiece(L, ParseUnit(L, __func__, 1));
+}
+
 int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 {
 	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __func__, 1)));
@@ -744,6 +769,10 @@ int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
 	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __func__, 1));
 }
 
+int LuaSyncedRead::GetFeatureLastTracedPiece(lua_State* L)
+{
+	return GetSolidObjectLastTracedPiece(L, ParseFeature(L, __func__, 1));
+}
 
 
 static int GetObjectTransformMatrix(const CSolidObject* o, lua_State* L)
