@@ -166,9 +166,9 @@ namespace GL {
 			if (inited)
 				return false;
 
-			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent, readable));
-			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent, readable));
-			shader = std::move(Shader::GLSLProgramObject());
+			elems = VBO(GL_ARRAY_BUFFER, persistent, readable);
+			indcs = VBO(GL_ELEMENT_ARRAY_BUFFER, persistent, readable);
+			shader = Shader::GLSLProgramObject();
 
 			elems.Generate();
 			indcs.Generate();
