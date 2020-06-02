@@ -93,6 +93,9 @@ void CBeamLaserProjectile::Update()
 
 void CBeamLaserProjectile::Draw(GL::RenderDataBufferTC* va) const
 {
+	if (thickness <= 0.0)
+		return;
+
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos
