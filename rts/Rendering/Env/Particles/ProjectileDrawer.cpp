@@ -279,6 +279,7 @@ void CProjectileDrawer::Init() {
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
 			fxShader->Enable();
 			fxShader->SetUniform("atlasTex", 0);
 			fxShader->SetUniform("depthTex", 8);
@@ -686,7 +687,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-			fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
 			fxShader->Enable();
 			fxShader->SetUniform("invScreenRes", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
 		}
