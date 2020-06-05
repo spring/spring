@@ -394,45 +394,54 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 }
 
 
+static bool CanReceiveTracks(const float3& pos)
+{
+	// calculate typemap-index
+	const int tmz = pos.z / (SQUARE_SIZE * 2);
+	const int tmx = pos.x / (SQUARE_SIZE * 2);
+	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
+
+	const uint8_t* typeMap = readMap->GetTypeMapSynced();
+	const uint8_t  typeNum = typeMap[tmi];
+
+	return (mapInfo->terrainTypes[typeNum].receiveTracks);
+}
+
 void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 {
-	if (!unit->leaveTracks)
-		return;
-
 	const UnitDef* unitDef = unit->unitDef;
 	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
 
+	if (!unit->leaveTracks)
+		return;
 	if (!unitDef->IsGroundUnit())
 		return;
-
-	if (decalDef.trackDecalType < -1)
+	if (unit->IsInWater() && !unit->IsOnGround())
 		return;
 
-	if (decalDef.trackDecalType < 0) {
-		const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
-		if (decalDef.trackDecalType < -1)
-			return;
+
+	// -2 := failed to load texture, do not try again
+	// -1 := texture was not loaded yet, first attempt
+	switch (decalDef.trackDecalType) {
+		case -2: {                                                                             return; } break;
+		case -1: { const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef); } break;
+		default: {                                                                                     } break;
 	}
 
-	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+	if (decalDef.trackDecalType < 0)
+		return;
+
+
+	if (unit->myTrack != nullptr && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
 		return;
 
 	if (!gu->spectatingFullView && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0)
 		return;
 
-	// calculate typemap-index
-	const int tmz = newPos.z / (SQUARE_SIZE * 2);
-	const int tmx = newPos.x / (SQUARE_SIZE * 2);
-	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
-
-	const unsigned char* typeMap = readMap->GetTypeMapSynced();
-	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
-
-	if (!terType.receiveTracks)
+	if (!CanReceiveTracks(newPos))
 		return;
 
-	static const int decalLevel = 3; //FIXME
-	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
+	const float trackLifeTime = GAME_SPEED * 3 * decalDef.trackDecalStrength;
 
 	if (trackLifeTime <= 0.0f)
 		return;
@@ -564,4 +573,5 @@ void LegacyTrackHandler::RenderUnitDestroyed(const CUnit* unit)
 {
 	RemoveTrack(const_cast<CUnit*>(unit));
 }
+
 
