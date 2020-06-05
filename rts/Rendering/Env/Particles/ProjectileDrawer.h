@@ -45,7 +45,10 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
+		return
+			(eventName == "RenderProjectileCreated") ||
+			(eventName == "RenderProjectileDestroyed") ||
+			(eventName == "ViewResize");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -53,6 +56,7 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+	void ViewResize() override;
 
 	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
 

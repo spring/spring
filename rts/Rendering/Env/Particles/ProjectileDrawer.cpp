@@ -264,18 +264,6 @@ void CProjectileDrawer::Init() {
 
 	if (globalRendering->haveGLSL) {
 		{
-			glGenTextures(1, &depthTexture);
-
-			glBindTexture(GL_TEXTURE_2D, depthTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-		{
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
@@ -285,6 +273,7 @@ void CProjectileDrawer::Init() {
 			fxShader->SetUniform("depthTex", 8);
 			fxShader->Disable();
 		}
+		ViewResize();
 	}
 }
 
@@ -316,6 +305,35 @@ void CProjectileDrawer::Kill() {
 	if (fxShader) {
 		glDeleteTextures(1, &depthTexture);
 		fxShader->Release();
+	}
+}
+
+void CProjectileDrawer::ViewResize()
+{
+	if (globalRendering->haveGLSL) {
+		{
+			if (depthTexture != 0u) {
+				glDeleteTextures(1, &depthTexture);
+				depthTexture = 0u;
+			}
+			glGenTextures(1, &depthTexture);
+
+			glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			if (fxShader->IsValid()) {
+				fxShader->Enable();
+				fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
+				fxShader->Disable();
+			}
+		}
 	}
 }
 
@@ -686,9 +704,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		if (fxShader && fxShader->IsValid()) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
 			fxShader->Enable();
-			fxShader->SetUniform("invScreenRes", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
 		}
 
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
@@ -856,7 +872,19 @@ void CProjectileDrawer::DrawGroundFlashes()
 		gf->Draw(gfVA);
 	}
 
+	if (fxShader && fxShader->IsValid()) {
+		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		fxShader->Enable();
+	}
+
 	gfVA->DrawArrayTC(GL_QUADS);
+
+	if (fxShader && fxShader->IsValid()) {
+		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
+		fxShader->Disable();
+	}
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
