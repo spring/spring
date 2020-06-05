@@ -421,6 +421,8 @@ void LegacyTrackHandler::AddTrack(const CUnit* unit, const float3& newPos)
 		return;
 	if (!unitDef->IsGroundUnit())
 		return;
+	if (unit->IsInWater() && !unit->IsOnGround())
+		return;
 
 
 	// -2 := failed to load texture, do not try again
