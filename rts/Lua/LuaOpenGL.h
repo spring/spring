@@ -4,6 +4,7 @@
 #define LUA_GL_H
 
 #include <vector>
+#include <unordered_set>
 
 #include "Lua/LuaHandle.h"
 
@@ -136,10 +137,13 @@ class LuaOpenGL {
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
 		static bool safeMode;
 		static bool canUseShaders;
+		static bool warnDeprecatedGL;
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
+
+		static std::unordered_set<string> deprecatedGLWarned;
 
 		struct OcclusionQuery {
 			unsigned int index; // into LuaOpenGL::occlusionQueries
@@ -150,6 +154,8 @@ class LuaOpenGL {
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
+		static void CondWarnDeprecatedGL(lua_State* L, const char* caller);
+		static void NotImplementedError(lua_State* L, const char* caller);
 
 	private:
 		static int HasExtension(lua_State* L);
@@ -170,6 +176,18 @@ class LuaOpenGL {
 		static int ResetMatrices(lua_State* L);
 		static int Clear(lua_State* L);
 		static int SwapBuffers(lua_State* L);
+
+		static int CreateVertexArray(lua_State* L);
+		static int DeleteVertexArray(lua_State* L);
+		static int UpdateVertexArray(lua_State* L);
+		static int RenderVertexArray(lua_State* L);
+
+		static int BeginEndD(lua_State* L);
+		static int VertexD(lua_State* L);
+		static int VertexIndicesD(lua_State* L);
+		static int NormalD(lua_State* L);
+		static int TexCoordD(lua_State* L);
+		static int ColorD(lua_State* L);
 
 		static int Lighting(lua_State* L);
 		static int ShadeModel(lua_State* L);
@@ -240,6 +258,7 @@ class LuaOpenGL {
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
 		static int EndText(lua_State* L);
+		static int DrawBufferedText(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 
