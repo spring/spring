@@ -9,6 +9,8 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_MODULES_SPRING}/OverrideFlags.cmake"
 
 project(Spring)
 
+add_definitions(-DFMT_HEADER_ONLY) #for fmt lib
+
 # dummy so that qtcreator shows all files (even those of windows)
 if(CMAKE_VERSION VERSION_GREATER 3.1.2)
 	add_library(platform_sources EXCLUDE_FROM_ALL "")
