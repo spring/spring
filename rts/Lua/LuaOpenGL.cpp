@@ -1071,6 +1071,7 @@ inline void LuaOpenGL::CondWarnDeprecatedGL(lua_State* L, const char* caller)
 {
 	if (deprecatedGLWarnLevel <= 0)
 		return;
+
 	std::string luaCaller;
 
 	if (deprecatedGLWarnLevel >= 2) {
@@ -1087,11 +1088,12 @@ inline void LuaOpenGL::CondWarnDeprecatedGL(lua_State* L, const char* caller)
 
 	if (deprecatedGLWarned.find(key) == deprecatedGLWarned.end()) {
 		deprecatedGLWarned.emplace(key);
-
-		if (deprecatedGLWarnLevel == 1)
-			LOG_L(L_WARNING, "%s(): Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
-		else
-			LOG_L(L_WARNING, "%s(): Attempt to call a deprecated OpenGL function from Lua OpenGL in %s", caller, luaCaller.c_str());
+		if (deprecatedGLWarnLevel == 1) {
+			LOG("gl. %s: Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
+		}
+		else {
+			LOG("gl. %s: Attempt to call a deprecated OpenGL function from Lua OpenGL in %s", caller, luaCaller.c_str());
+		}
 	}
 }
 
