@@ -137,7 +137,7 @@ class LuaOpenGL {
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
 		static bool safeMode;
 		static bool canUseShaders;
-		static bool warnDeprecatedGL;
+		static int deprecatedGLWarnLevel;
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);

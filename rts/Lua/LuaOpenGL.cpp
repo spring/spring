@@ -13,6 +13,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "lib/fmt/format.h"
+
 #include "LuaOpenGL.h"
 
 #include "LuaInclude.h"
@@ -74,7 +76,7 @@
 #undef near
 
 CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
-CONFIG(bool, WarnDeprecatedGL).defaultValue(true).headlessValue(false).safemodeValue(false);
+CONFIG(int, DeprecatedGLWarnLevel).defaultValue(2).headlessValue(0).safemodeValue(0);
 
 static constexpr int MAX_TEXTURE_UNITS = 32;
 
@@ -90,7 +92,7 @@ LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
-bool  LuaOpenGL::warnDeprecatedGL = false;
+int  LuaOpenGL::deprecatedGLWarnLevel = 0;
 
 std::unordered_set<string> LuaOpenGL::deprecatedGLWarned = {};
 
@@ -186,9 +188,14 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	warnDeprecatedGL = configHandler->GetBool("WarnDeprecatedGL");
 	canUseShaders = (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders"));
-	deprecatedGLWarned.reserve(128);
+
+	deprecatedGLWarnLevel = configHandler->GetInt("DeprecatedGLWarnLevel");
+	if (deprecatedGLWarnLevel == 1)
+		deprecatedGLWarned.reserve(64); // only deprecated calls are logged
+	else if (deprecatedGLWarnLevel >= 2)
+		deprecatedGLWarned.reserve(4096); // deprecated calls are logged along with caller information
+
 	deprecatedGLWarned.clear();
 }
 
@@ -1062,12 +1069,29 @@ inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 
 inline void LuaOpenGL::CondWarnDeprecatedGL(lua_State* L, const char* caller)
 {
-	if (!warnDeprecatedGL)
+	if (deprecatedGLWarnLevel <= 0)
 		return;
+	std::string luaCaller;
 
-	if (deprecatedGLWarned.find(caller) == deprecatedGLWarned.end()) {
-		deprecatedGLWarned.emplace(caller);
-		LOG_L(L_WARNING, "%s(): Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
+	if (deprecatedGLWarnLevel >= 2) {
+		lua_Debug info;
+		const int level = 1; // A calling function from Lua
+		if (lua_getstack(L, level, &info)) {
+			lua_getinfo(L, "nSl", &info);
+
+			luaCaller = fmt::format("[{}]:{} Caller: {}", info.short_src, info.currentline, (info.name ? info.name : "<unknown>"));
+		}
+	}
+
+	const auto key = fmt::format("{}{}", caller, luaCaller.c_str());
+
+	if (deprecatedGLWarned.find(key) == deprecatedGLWarned.end()) {
+		deprecatedGLWarned.emplace(key);
+
+		if (deprecatedGLWarnLevel == 1)
+			LOG_L(L_WARNING, "%s(): Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
+		else
+			LOG_L(L_WARNING, "%s(): Attempt to call a deprecated OpenGL function from Lua OpenGL in %s", caller, luaCaller.c_str());
 	}
 }
 
@@ -1959,6 +1983,7 @@ int LuaOpenGL::Shape(lua_State* L)
 int LuaOpenGL::BeginEnd(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+	CondWarnDeprecatedGL(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isfunction(L, 2)) {
@@ -1989,6 +2014,7 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 int LuaOpenGL::Vertex(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+	CondWarnDeprecatedGL(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2051,6 +2077,7 @@ int LuaOpenGL::Vertex(lua_State* L)
 int LuaOpenGL::Normal(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+	CondWarnDeprecatedGL(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2088,6 +2115,7 @@ int LuaOpenGL::Normal(lua_State* L)
 int LuaOpenGL::TexCoord(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+	CondWarnDeprecatedGL(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2361,6 +2389,7 @@ int LuaOpenGL::TexRect(lua_State* L)
 int LuaOpenGL::Color(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+	CondWarnDeprecatedGL(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args < 1) {
