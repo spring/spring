@@ -1,0 +1,29 @@
+name: Build Engine
+
+on: [push, pull_request]
+
+jobs:
+	build:
+		name: ${{ matrix.config.name }}
+		runs-on: ubuntu-latest
+		strategy:
+			fail-fast: false
+		matrix:
+			config:
+				- {
+					name: "Ubuntu Latest GCC", artifact: "Linux.tar.xz",
+					cc: "gcc", cxx: "g++"
+				}
+		steps:
+			- name: Checkout 🛎️
+			  uses: actions/checkout@v2
+			  with:
+					persist-credentials: false
+			- name: Install cmake git and build-essential
+			  run: sudo apt-get install build-essential cmake git
+			- name: Install build dependencies
+			  run: sudo apt-get install mingw32-x-binutils mingw32-x-gcc mingw32-x-runtime mingw-x-w32api ibogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev libboost-thread-dev libboost-regex-dev libboost-system-dev libboost-program-options-dev libboost-signals-dev libboost-chrono-dev libboost-filesystem-dev libunwind8-dev default-jdk libcurl4-gnutls-dev
+			- name: CMake
+			  run: cmake .
+			- name: Make Engine
+			  run: make spring
