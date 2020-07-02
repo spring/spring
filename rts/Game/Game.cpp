@@ -1638,18 +1638,20 @@ void CGame::SendNetChat(std::string message, int destination)
 		destination = ChatMessage::TO_EVERYONE;
 
 		if ((message.length() >= 2) && (message[1] == ':')) {
-			const char lower = tolower(message[0]);
-			if (lower == 'a') {
-				destination = ChatMessage::TO_ALLIES;
-				message = message.substr(2);
-			} else if (lower == 's') {
-				destination = ChatMessage::TO_SPECTATORS;
-				message = message.substr(2);
+			switch (tolower(message[0])) {
+				case 'a': {
+					destination = ChatMessage::TO_ALLIES;
+					message = message.substr(2);
+				} break;
+				case 's': {
+					destination = ChatMessage::TO_SPECTATORS;
+					message = message.substr(2);
+				} break;
+				default: {
+				} break;
 			}
 		}
 	}
-	if (message.size() > 128)
-		message.resize(128); // safety
 
 	ChatMessage buf(gu->myPlayerNum, destination, message);
 	clientNet->Send(buf.Pack());
