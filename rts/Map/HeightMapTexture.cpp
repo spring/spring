@@ -88,7 +88,7 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	pbo.New(sizeX * sizeZ * sizeof(float));
 
 	const float* heightMap = readMap->GetCornerHeightMapUnsynced();
-	      float* heightBuf = reinterpret_cast<float*>(pbo.MapBuffer());
+	      float* heightBuf = reinterpret_cast<float*>(pbo.MapBuffer(0, pbo.bufSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | pbo.mapUnsyncedBit));
 
 	if (heightBuf != nullptr) {
 		for (int z = 0; z < sizeZ; z++) {
@@ -104,5 +104,6 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glTexSubImage2D(GL_TEXTURE_2D, 0,  rect.x1, rect.z1, sizeX, sizeZ,  GL_RED, GL_FLOAT, pbo.GetPtr());
 
+	pbo.Invalidate();
 	pbo.Unbind();
 }
