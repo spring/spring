@@ -13,7 +13,7 @@
 #include "System/float3.h"
 #include "System/UnorderedMap.hpp"
 
-#define MAX_UNITDEF_EXPGEN_IDS 8
+#define MAX_UNITDEF_EXPGEN_IDS 32
 
 
 struct Command;
