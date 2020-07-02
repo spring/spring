@@ -357,39 +357,42 @@ void CMouseHandler::GetSelectionBoxCoeff(
 	const float3& pos2,
 	const float3& dir2,
 	float2& topright,
-	float2& btmleft
+	float2& bttmleft
 ) {
-	float dist = CGround::LineGroundCol(pos1, pos1 + dir1 * camera->GetFarPlaneDist() * 1.4f, false);
+	const float maxDist = camera->GetFarPlaneDist() * 1.4f;
 
-	if (dist < 0.0f)
-		dist = camera->GetFarPlaneDist() * 1.4f;
+	float pos1Dist = CGround::LineGroundCol(pos1, pos1 + dir1 * maxDist, false);
+	float pos2Dist = CGround::LineGroundCol(pos2, pos2 + dir2 * maxDist, false);
 
-	float3 gpos1 = pos1 + dir1 * dist;
+	if (pos1Dist < 0.0f)
+		pos1Dist = maxDist;
+	if (pos2Dist < 0.0f)
+		pos2Dist = maxDist;
 
-	dist = CGround::LineGroundCol(pos2, pos2 + dir2 * camera->GetFarPlaneDist() * 1.4f, false);
-	if (dist < 0.0f)
-		dist = camera->GetFarPlaneDist() * 1.4f;
-
-	float3 gpos2 = pos2 + dir2 * dist;
+	const float3 gpos1 = pos1 + dir1 * pos1Dist;
+	const float3 gpos2 = pos2 + dir2 * pos2Dist;
 
 	const float3 cdir1 = (gpos1 - camera->GetPos()).ANormalize();
 	const float3 cdir2 = (gpos2 - camera->GetPos()).ANormalize();
 
+	float cdir1_fw = cdir1.dot(camera->GetDir());
+	float cdir2_fw = cdir2.dot(camera->GetDir());
+
 	// prevent DivByZero
-	float cdir1_fw = cdir1.dot(camera->GetDir()); if (cdir1_fw == 0.0f) cdir1_fw = 0.0001f;
-	float cdir2_fw = cdir2.dot(camera->GetDir()); if (cdir2_fw == 0.0f) cdir2_fw = 0.0001f;
+	cdir1_fw = std::max(std::fabs(cdir1_fw), 0.001f) * std::copysign(1.0f, cdir1_fw);
+	cdir2_fw = std::max(std::fabs(cdir2_fw), 0.001f) * std::copysign(1.0f, cdir2_fw);
 
 	// one corner of the rectangle
 	topright.x = cdir1.dot(camera->GetRight()) / cdir1_fw;
 	topright.y = cdir1.dot(camera->GetUp())    / cdir1_fw;
 
 	// opposite corner
-	btmleft.x = cdir2.dot(camera->GetRight()) / cdir2_fw;
-	btmleft.y = cdir2.dot(camera->GetUp())    / cdir2_fw;
+	bttmleft.x = cdir2.dot(camera->GetRight()) / cdir2_fw;
+	bttmleft.y = cdir2.dot(camera->GetUp())    / cdir2_fw;
 
 	// sort coeff so topright really is the topright corner
-	if (topright.x < btmleft.x) std::swap(topright.x, btmleft.x);
-	if (topright.y < btmleft.y) std::swap(topright.y, btmleft.y);
+	if (topright.x < bttmleft.x) std::swap(topright.x, bttmleft.x);
+	if (topright.y < bttmleft.y) std::swap(topright.y, bttmleft.y);
 }
 
 
@@ -442,23 +445,25 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
 			selectedUnitsHandler.ClearSelected();
 
-		if (bp.movement > 4) {
+		if (bp.movement > dragSelectionThreshold) {
 			// select box
-			float2 topright, btmleft;
-			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
+			float2 topright;
+			float2 bttmleft;
+
+			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, bttmleft);
 
 			// GetSelectionBoxCoeff returns us the corner pos, but we want to do a inview frustum check.
 			// To do so we need the frustum planes (= plane normal + plane offset).
-			float3 norm1 = camera->GetUp();
+			float3 norm1 =  camera->GetUp();
 			float3 norm2 = -camera->GetUp();
-			float3 norm3 = camera->GetRight();
+			float3 norm3 =  camera->GetRight();
 			float3 norm4 = -camera->GetRight();
 
-			#define signf(x) ((x>0.0f) ? 1.0f : -1)
-			if (topright.y != 0) norm1 = (camera->GetDir() * signf(-topright.y)) + (camera->GetUp() / math::fabs(topright.y));
-			if (btmleft.y  != 0) norm2 = (camera->GetDir() * signf(  btmleft.y)) - (camera->GetUp() / math::fabs(btmleft.y));
-			if (topright.x != 0) norm3 = (camera->GetDir() * signf(-topright.x)) + (camera->GetRight() / math::fabs(topright.x));
-			if (btmleft.x  != 0) norm4 = (camera->GetDir() * signf(  btmleft.x)) - (camera->GetRight() / math::fabs(btmleft.x));
+			#define signf(x) ((x > 0.0f) ? 1.0f : -1.0f)
+			if (topright.y != 0.0f) norm1 = (camera->GetDir() * signf(-topright.y)) + (camera->GetUp()    / math::fabs(topright.y));
+			if (bttmleft.y != 0.0f) norm2 = (camera->GetDir() * signf( bttmleft.y)) - (camera->GetUp()    / math::fabs(bttmleft.y));
+			if (topright.x != 0.0f) norm3 = (camera->GetDir() * signf(-topright.x)) + (camera->GetRight() / math::fabs(topright.x));
+			if (bttmleft.x != 0.0f) norm4 = (camera->GetDir() * signf( bttmleft.x)) - (camera->GetRight() / math::fabs(bttmleft.x));
 
 			const float4 plane1(norm1, -(norm1.dot(camera->GetPos())));
 			const float4 plane2(norm2, -(norm2.dot(camera->GetPos())));
@@ -496,55 +501,71 @@ void CMouseHandler::DrawSelectionBox()
 {
 	dir = GetCursorCameraDir(lastx, lasty);
 
-	if (activeReceiver)
+	if (activeReceiver != nullptr)
 		return;
 
 	if (gu->fpsMode)
 		return;
 
-	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
+	const ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-	if (bp.pressed && !bp.chorded && (bp.movement > 4) &&
-	   (!inMapDrawer || !inMapDrawer->IsDrawMode()))
-	{
-		float2 topright, btmleft;
-		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topright, btmleft);
+	if (!bp.pressed)
+		return;
+	if (bp.chorded)
+		return;
+	if (bp.movement <= dragSelectionThreshold)
+		return;
 
-		float3 dir1S = camera->GetRight() * topright.x;
-		float3 dir1U = camera->GetUp()    * topright.y;
-		float3 dir2S = camera->GetRight() * btmleft.x;
-		float3 dir2U = camera->GetUp()    * btmleft.y;
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
+		return;
 
-		glColor4fv(cmdColors.mouseBox);
 
-		glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT);
 
-		glDisable(GL_FOG);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
 
-		glEnable(GL_BLEND);
-		glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
-		            (GLenum)cmdColors.MouseBoxBlendDst());
+	glEnable(GL_BLEND);
+	glBlendFunc((GLenum) cmdColors.MouseBoxBlendSrc(), (GLenum) cmdColors.MouseBoxBlendDst());
 
-		glLineWidth(cmdColors.MouseBoxLineWidth());
+	glColor4fv(cmdColors.mouseBox);
+	glLineWidth(cmdColors.MouseBoxLineWidth());
 
-		float3 verts[] = {
-			camera->GetPos() + (dir1U + dir1S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir2U + dir1S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir2U + dir2S + camera->GetDir()) * 30,
-			camera->GetPos() + (dir1U + dir2S + camera->GetDir()) * 30,
-		};
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_LINE_LOOP, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
+	float2 topRight;
+	float2 bttmLeft;
 
-		glLineWidth(1.0f);
+	GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->GetPos(), dir, topRight, bttmLeft);
 
-		glPopAttrib();
-	}
+	// do not let the rectangle verts be clipped
+	const float dirScale = camera->GetNearPlaneDist() * 2.0f;
+
+	const float3 camPos    = camera->GetPos();
+	const float3 camDirs[] = {
+		camera->GetRight()   * bttmLeft.x, // xmin
+		camera->GetRight()   * topRight.x, // xmax
+		camera->GetUp()      * bttmLeft.y, // ymin
+		camera->GetUp()      * topRight.y, // ymax
+		camera->GetForward()
+	};
+
+	const float3 boxVerts[] = {
+		camPos + (camDirs[1] + camDirs[3] + camDirs[4]) * dirScale,
+		camPos + (camDirs[1] + camDirs[2] + camDirs[4]) * dirScale,
+		camPos + (camDirs[0] + camDirs[2] + camDirs[4]) * dirScale,
+		camPos + (camDirs[0] + camDirs[3] + camDirs[4]) * dirScale,
+	};
+
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, boxVerts);
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	glLineWidth(1.0f);
+
+	glPopAttrib();
 }
 
 
