@@ -23,7 +23,7 @@ ChatMessage::ChatMessage(int from, int dest, const std::string& chat)
 ChatMessage::ChatMessage(std::shared_ptr<const netcode::RawPacket> data)
 {
 	assert(data->data[0] == NETMSG_CHAT);
-	assert(data->length <= (4 * sizeof(uint8_t) + MAX_MESSAGE_SIZE + 1));
+	assert(data->length <= (4 * sizeof(uint8_t) + MAX_MSG_SIZE + 1));
 
 	netcode::UnpackPacket packet(data, 2);
 
@@ -46,7 +46,7 @@ const netcode::RawPacket* ChatMessage::Pack() const
 	const     uint8_t messageSize = static_cast<uint8_t>(msg.size() + 1);
 	const     uint8_t  packetSize = headerSize + messageSize;
 
-	assert(packetSize <= (headerSize + MAX_MESSAGE_SIZE + 1));
+	assert(packetSize <= (headerSize + MAX_MSG_SIZE + 1));
 
 	netcode::PackPacket* buffer = new netcode::PackPacket(packetSize, NETMSG_CHAT);
 
