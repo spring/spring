@@ -39,6 +39,7 @@ class LuaSyncedMoveCtrl {
 
 		static int SetTrackSlope(lua_State* L);
 		static int SetTrackGround(lua_State* L);
+		static int SetTrackLimits(lua_State* L);
 		static int SetGroundOffset(lua_State* L);
 		static int SetGravity(lua_State* L);
 		static int SetDrag(lua_State* L);
@@ -52,6 +53,7 @@ class LuaSyncedMoveCtrl {
 		static int SetShotStop(lua_State* L);
 		static int SetSlopeStop(lua_State* L);
 		static int SetCollideStop(lua_State* L);
+		static int SetLimitsStop(lua_State* L);
 
 		// *MoveType-specific setters
 		static int SetGroundMoveTypeData(lua_State* L);

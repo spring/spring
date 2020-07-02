@@ -15,6 +15,7 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/StringUtil.h"
@@ -197,6 +198,15 @@ bool LuaConstGame::PushEntries(lua_State* L)
 			LuaPushNamedNumber(L, "Hover", MoveDef::SpeedModClass::Hover);
 			LuaPushNamedNumber(L, "Boat" , MoveDef::SpeedModClass::Ship );
 			LuaPushNamedNumber(L, "Ship" , MoveDef::SpeedModClass::Ship );
+		lua_rawset(L, -3);
+	}
+	{
+		// MoveCtrl script-notify types
+		lua_pushliteral(L, "scriptNotifyTypes");
+		lua_createtable(L, 0, 3);
+			LuaPushNamedNumber(L, "HitNothing", CScriptMoveType::HitNothing);
+			LuaPushNamedNumber(L, "HitGround" , CScriptMoveType::HitGround );
+			LuaPushNamedNumber(L, "HitLimit"  , CScriptMoveType::HitLimit  );
 		lua_rawset(L, -3);
 	}
 
