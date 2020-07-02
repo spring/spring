@@ -14,11 +14,6 @@
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CScriptMoveType, (
-	CR_MEMBER(tag),
-	CR_MEMBER(extrapolate),
-	CR_MEMBER(useRelVel),
-	CR_MEMBER(useRotVel),
-	CR_MEMBER(drag),
 	CR_MEMBER(velVec),
 	CR_MEMBER(relVel),
 	CR_MEMBER(rot),
@@ -26,44 +21,29 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
 
-	CR_MEMBER(trackSlope),
-	CR_MEMBER(trackGround),
+	CR_MEMBER(tag),
+
+	CR_MEMBER(drag),
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(gravityFactor),
 	CR_MEMBER(windFactor),
+
+	CR_MEMBER(extrapolate),
+	CR_MEMBER(useRelVel),
+	CR_MEMBER(useRotVel),
+
+	CR_MEMBER(trackSlope),
+	CR_MEMBER(trackGround),
+	CR_MEMBER(trackLimits),
+
 	CR_MEMBER(noBlocking), // copy of CSolidObject::PSTATE_BIT_BLOCKING
-	CR_MEMBER(gndStop),
-	CR_MEMBER(shotStop),
-	CR_MEMBER(slopeStop),
-	CR_MEMBER(collideStop),
+	CR_MEMBER(groundStop),
+
 	CR_MEMBER(scriptNotify)
 ))
 
 
-CScriptMoveType::CScriptMoveType(CUnit* owner):
-	AMoveType(owner),
-	tag(0),
-	extrapolate(true),
-	useRelVel(false),
-	useRotVel(false),
-	drag(0.0f),
-	velVec(ZeroVector),
-	relVel(ZeroVector),
-	rot(ZeroVector),
-	rotVel(ZeroVector),
-	mins(-1.0e9f, -1.0e9f, -1.0e9f),
-	maxs(+1.0e9f, +1.0e9f, +1.0e9f),
-	trackSlope(false),
-	trackGround(false),
-	groundOffset(0.0f),
-	gravityFactor(0.0f),
-	windFactor(0.0f),
-	noBlocking(false),
-	gndStop(false),
-	shotStop(false),
-	slopeStop(false),
-	collideStop(false),
-	scriptNotify(0)
+CScriptMoveType::CScriptMoveType(CUnit* owner): AMoveType(owner)
 {
 	// use the transformation matrix instead of heading
 	UseHeading(false);
@@ -88,7 +68,7 @@ void CScriptMoveType::CheckNotify()
 		// NOTE: deletes \<this\>
 		owner->DisableScriptMoveType();
 	} else {
-		scriptNotify = 0;
+		scriptNotify = HitNothing;
 	}
 }
 
@@ -127,11 +107,11 @@ bool CScriptMoveType::Update()
 			owner->Move(UpVector * (gndMin - owner->pos.y), true);
 			owner->speed.y = 0.0f;
 
-			if (gndStop) {
+			if (groundStop) {
 				velVec = ZeroVector;
 				relVel = ZeroVector;
 				rotVel = ZeroVector;
-				scriptNotify = 1;
+				scriptNotify = HitGround;
 			}
 		}
 	}
@@ -162,14 +142,30 @@ bool CScriptMoveType::Update()
 
 void CScriptMoveType::CheckLimits()
 {
-	if (owner->pos.x < mins.x) { owner->pos.x = mins.x; owner->speed.x = 0.0f; }
-	if (owner->pos.x > maxs.x) { owner->pos.x = maxs.x; owner->speed.x = 0.0f; }
-	if (owner->pos.y < mins.y) { owner->pos.y = mins.y; owner->speed.y = 0.0f; }
-	if (owner->pos.y > maxs.y) { owner->pos.y = maxs.y; owner->speed.y = 0.0f; }
-	if (owner->pos.z < mins.z) { owner->pos.z = mins.z; owner->speed.z = 0.0f; }
-	if (owner->pos.z > maxs.z) { owner->pos.z = maxs.z; owner->speed.z = 0.0f; }
+	float3 pos = owner->pos;
+	float4 vel = owner->speed;
 
-	owner->UpdateMidAndAimPos();
+	if (pos.x < mins.x) { pos.x = mins.x; vel.x = 0.0f; }
+	if (pos.x > maxs.x) { pos.x = maxs.x; vel.x = 0.0f; }
+	if (pos.y < mins.y) { pos.y = mins.y; vel.y = 0.0f; }
+	if (pos.y > maxs.y) { pos.y = maxs.y; vel.y = 0.0f; }
+	if (pos.z < mins.z) { pos.z = mins.z; vel.z = 0.0f; }
+	if (pos.z > maxs.z) { pos.z = maxs.z; vel.z = 0.0f; }
+
+	// bail if still within limits
+	if (pos == owner->pos)
+		return;
+
+
+	if (limitsStop) {
+		owner->Move(pos, false);
+		owner->SetVelocityAndSpeed(vel);
+	}
+
+	if (trackLimits) {
+		scriptNotify = HitLimit;
+		CheckNotify();
+	}
 }
 
 
@@ -185,26 +181,14 @@ void CScriptMoveType::SetPosition(const float3& _pos) { owner->Move(_pos, false)
 void CScriptMoveType::SetVelocity(const float3& _vel) { owner->SetVelocityAndSpeed(velVec = _vel); }
 
 
-
-void CScriptMoveType::SetRelativeVelocity(const float3& _relVel)
-{
-	relVel = _relVel;
-	useRelVel = ((relVel.x != 0.0f) || (relVel.y != 0.0f) || (relVel.z != 0.0f));
-}
+void CScriptMoveType::SetRelativeVelocity(const float3& _relVel) { useRelVel = ((relVel = _relVel) != ZeroVector); }
+void CScriptMoveType::SetRotationVelocity(const float3& _rotVel) { useRotVel = ((rotVel = _rotVel) != ZeroVector); }
 
 
 void CScriptMoveType::SetRotation(const float3& _rot)
 {
 	owner->SetDirVectorsEuler(rot = _rot);
 }
-
-
-void CScriptMoveType::SetRotationVelocity(const float3& _rotVel)
-{
-	rotVel = _rotVel;
-	useRotVel = ((rotVel.x != 0.0f) || (rotVel.y != 0.0f) || (rotVel.z != 0.0f));
-}
-
 
 void CScriptMoveType::SetHeading(short heading)
 {

@@ -55,6 +55,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetTrackSlope);
 	REGISTER_LUA_CFUNC(SetTrackGround);
+	REGISTER_LUA_CFUNC(SetTrackLimits);
 	REGISTER_LUA_CFUNC(SetGroundOffset);
 	REGISTER_LUA_CFUNC(SetGravity);
 	REGISTER_LUA_CFUNC(SetDrag);
@@ -68,6 +69,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetShotStop);
 	REGISTER_LUA_CFUNC(SetSlopeStop);
 	REGISTER_LUA_CFUNC(SetCollideStop);
+	REGISTER_LUA_CFUNC(SetLimitsStop);
 
 	REGISTER_LUA_CFUNC(SetAirMoveTypeData);
 	REGISTER_LUA_CFUNC(SetGroundMoveTypeData);
@@ -389,6 +391,18 @@ int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 }
 
 
+int LuaSyncedMoveCtrl::SetTrackLimits(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
+
+	if (moveType == nullptr)
+		return 0;
+
+	moveType->trackLimits = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+
 int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 {
 	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
@@ -444,14 +458,8 @@ int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 	if (moveType == nullptr)
 		return 0;
 
-	const float3 mins(luaL_checkfloat(L, 2),
-	                  luaL_checkfloat(L, 3),
-	                  luaL_checkfloat(L, 4));
-	const float3 maxs(luaL_checkfloat(L, 5),
-	                  luaL_checkfloat(L, 6),
-	                  luaL_checkfloat(L, 7));
-	moveType->mins = mins;
-	moveType->maxs = maxs;
+	moveType->mins = {luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)};
+	moveType->maxs = {luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7)};
 	return 0;
 }
 
@@ -472,28 +480,8 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 }
 
 
-int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
-
-	if (moveType == nullptr)
-		return 0;
-
-	moveType->shotStop = luaL_checkboolean(L, 2);
-	return 0;
-}
-
-
-int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
-
-	if (moveType == nullptr)
-		return 0;
-
-	moveType->slopeStop = luaL_checkboolean(L, 2);
-	return 0;
-}
+int LuaSyncedMoveCtrl::SetShotStop(lua_State* L) { return 0; }
+int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L) { return 0; }
 
 
 int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
@@ -503,8 +491,19 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 	if (moveType == nullptr)
 		return 0;
 
-	moveType->gndStop = luaL_checkboolean(L, 2); // FIXME
-	moveType->collideStop = lua_toboolean(L, 2);
+	moveType->groundStop = lua_toboolean(L, 2); // FIXME
+	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::SetLimitsStop(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
+
+	if (moveType == nullptr)
+		return 0;
+
+	moveType->limitsStop = lua_toboolean(L, 2);
 	return 0;
 }
 
