@@ -568,26 +568,25 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
-	char extMsg[2048] = {0};
+	char extMsg[ 128] = {0};
 	char errMsg[2048] = {0};
 	char* ptr = &extMsg[0];
 
-	if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
-	if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
-	if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
+	if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " multitexture ");
+	if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " texture_env_combine ");
+	if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " texture_compression ");
 
 	if (extMsg[0] == 0)
 		return;
 
 	SNPRINTF(errMsg, sizeof(errMsg),
-		"Needed OpenGL extension(s) not found:\n"
-		"  %s\n\n"
-		"Update your graphics-card drivers!\n"
-		"  Graphics card:  %s\n"
-		"  OpenGL version: %s\n",
+		"OpenGL extension(s) GL_ARB_{%s} not found; update your GPU drivers!\n"
+		"  GL renderer: %s\n"
+		"  GL  version: %s\n",
 		extMsg,
 		globalRenderingInfo.glRenderer,
 		globalRenderingInfo.glVersion);
+
 	throw unsupported_error(errMsg);
 }
 
