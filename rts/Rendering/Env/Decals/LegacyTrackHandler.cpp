@@ -423,9 +423,9 @@ void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 	// -2 := failed to load texture, do not try again
 	// -1 := texture was not loaded yet, first attempt
 	switch (decalDef.trackDecalType) {
-		case -2: {                                                                             return; } break;
-		case -1: { const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef); } break;
-		default: {                                                                                     } break;
+		case -2: {                                                                                                return; } break;
+		case -1: { const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName); } break;
+		default: {                                                                                                        } break;
 	}
 
 	if (decalDef.trackDecalType < 0)
@@ -447,12 +447,12 @@ void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 		return;
 
 	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
-
+	const float3 ofs = unit->rightdir * decalDef.trackDecalWidth * 0.5f;
 
 	// prepare the new part of the track; will be copied
 	TrackPart trackPart;
-	trackPart.pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	trackPart.pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
+	trackPart.pos1 = pos + ofs;
+	trackPart.pos2 = pos - ofs;
 	trackPart.pos1.y = CGround::GetHeightReal(trackPart.pos1.x, trackPart.pos1.z, false);
 	trackPart.pos2.y = CGround::GetHeightReal(trackPart.pos2.x, trackPart.pos2.z, false);
 	trackPart.creationTime = gs->frameNum;
