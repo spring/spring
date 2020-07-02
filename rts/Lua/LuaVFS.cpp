@@ -376,11 +376,14 @@ int LuaVFS::UseArchive(lua_State* L)
 	const std::string& archiveName = luaL_checkstring(L, 1);
 	const CArchiveScanner::ArchiveData& archiveData = archiveScanner->GetArchiveData(archiveName);
 	if (archiveData.IsEmpty())
-		luaL_error(L, "[VFS::%s] archive not found: %s", __func__, archiveName.c_str());
+		luaL_error(L, "[VFS::%s] archive \"%s\" not found", __func__, archiveName.c_str());
 
 	constexpr int funcIndex = 2;
 	if (!lua_isfunction(L, funcIndex))
 		luaL_error(L, "[VFS::%s] second argument should be a function", __func__);
+
+	if (vfsHandler->HasArchive(archiveName))
+		luaL_error(L, "[VFS::%s] archive \"%s\" already loaded", __func__, archiveName.c_str());
 
 	// block other threads from getting the global until we are done
 	vfsHandler->GrabLock();
