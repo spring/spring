@@ -37,7 +37,9 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(trackLimits),
 
 	CR_MEMBER(noBlocking), // copy of CSolidObject::PSTATE_BIT_BLOCKING
+
 	CR_MEMBER(groundStop),
+	CR_MEMBER(limitsStop),
 
 	CR_MEMBER(scriptNotify)
 ))
