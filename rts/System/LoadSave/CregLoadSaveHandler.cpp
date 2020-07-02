@@ -44,6 +44,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
+#define MAX_STRING_SIZE (1 << 19) // 512kB excluding null-term
 
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
@@ -130,7 +131,9 @@ void CLuaStateCollector::Serialize(creg::ISerializer* s) {
 
 static void WriteString(std::ostream& s, const std::string& str)
 {
-	assert(str.length() < (1 << 16));
+	if (str.length() > MAX_STRING_SIZE)
+		throw content_error("[creg::WriteString] string \"" + str + "\" too long");
+
 	s.write(str.c_str(), str.length() + 1);
 }
 
@@ -150,9 +153,10 @@ static void PrintSize(const char* txt, int size)
 
 static void ReadString(std::istream& s, std::string& str)
 {
-	char cstr[1 << 19]; // 512kB
-	s.getline(cstr, sizeof(cstr), 0);
-	str += cstr;
+	char cstr[MAX_STRING_SIZE + 1];
+	s.getline(cstr, sizeof(cstr) - 1, 0);
+	str.clear();
+	str.append(cstr);
 }
 
 
@@ -277,7 +281,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 {
 	CGZFileHandler saveFile(dataDirsAccess.LocateFile(FindSaveFile(path)), SPRING_VFS_RAW_FIRST);
-	std::stringbuf *sbuf = iss.rdbuf();
+	std::stringbuf* sbuf = iss.rdbuf();
 	char buf[4096];
 	int len;
 	while ((len = saveFile.Read(buf, sizeof(buf))) > 0)
@@ -286,25 +290,16 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 	//Check for compatible save versions
 	std::string saveVersion;
 	ReadString(iss, saveVersion);
+
 	if (saveVersion != SpringVersion::GetSync()) {
 		if (SpringVersion::IsRelease()) {
-			throw content_error("File was saved by an incompatible engine version: " + saveVersion);
-		} else {
-			LOG_L(L_WARNING, "File was saved by a different engine version: %s", saveVersion.c_str());
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf, sizeof(buf), "[LSH::%s][DBG] file was saved by incompatible engine version \"%s\"", __func__, saveVersion.c_str());
+			throw content_error(buf);
 		}
+
+		LOG_L(L_WARNING, "[LSH::%s][REL] file was saved by incompatible engine version \"%s\"", __func__, saveVersion.c_str());
 	}
-
-
-	// in case these contained values alredy
-	// (this is the case when loading a game through the spring menu eg),
-	// we set them to empty strings, as ReadString() does append,
-	// and we would end up with the correct value but two times
-	// eg: "AbcAbc" instead of "Abc"
-
-	//FIXME remove
-	scriptText = "";
-	modName = "";
-	mapName = "";
 
 	// read our own header.
 	ReadString(iss, scriptText);
