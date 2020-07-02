@@ -93,7 +93,7 @@ private:
 		const float3& pos2,
 		const float3& dir2,
 		float2& topright,
-		float2& btmleft
+		float2& bttmleft
 	);
 
 public:
