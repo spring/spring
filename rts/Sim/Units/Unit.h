@@ -96,7 +96,7 @@ public:
 
 	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final;
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 
 	bool AllowedReclaim(CUnit* builder) const;
 

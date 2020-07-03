@@ -44,7 +44,6 @@ private:
 	float groupMinMaxSpeed = 0.0f;
 	float groupColumnDist = 64.0f;
 
-	int formationNumColumns = 0;
 
 
 	std::vector< std::pair<float, int> > sortedUnitPairs; // <priority, unitID>

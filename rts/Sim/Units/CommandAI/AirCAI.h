@@ -20,7 +20,7 @@ public:
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature) override;
 	void SlowUpdate() override;
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
 	void AddUnit(CUnit* unit);
 	void FinishCommand() override;
 	void BuggerOff(const float3& pos, float radius) override;

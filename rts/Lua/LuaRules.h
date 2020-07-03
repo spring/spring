@@ -47,13 +47,13 @@ private:
 	virtual ~CLuaRules();
 
 protected:
-	bool AddSyncedCode(lua_State* L);
-	bool AddUnsyncedCode(lua_State* L);
+	bool AddSyncedCode(lua_State* L) override;
+	bool AddUnsyncedCode(lua_State* L) override;
 
 	std::string GetUnsyncedFileName() const override;
-	std::string GetSyncedFileName() const;
+	std::string GetSyncedFileName() const override;
 	std::string GetInitFileModes() const override;
-	int GetInitSelectTeam() const;
+	int GetInitSelectTeam() const override;
 
 	int UnpackCobArg(lua_State* L);
 

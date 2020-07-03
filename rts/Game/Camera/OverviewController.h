@@ -10,7 +10,7 @@ class COverviewController : public CCameraController
 public:
 	COverviewController();
 
-	const std::string GetName() const { return "ov"; }
+	const std::string GetName() const override { return "ov"; }
 
 	void KeyMove(float3 move) override {}
 	void MouseMove(float3 move) override {}
@@ -20,11 +20,11 @@ public:
 	void SetPos(const float3& newPos) override {}
 	void SetDir(const float3& newDir) override {}
 
-	float3 SwitchFrom() const;
-	void SwitchTo(const int oldCam, const bool showText);
+	float3 SwitchFrom() const override;
+	void SwitchTo(const int oldCam, const bool showText) override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
 private:
 	bool minimizeMinimap;

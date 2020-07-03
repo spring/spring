@@ -22,10 +22,10 @@ protected:
 	bool AddSyncedCode(lua_State* L) override { return true; }
 	bool AddUnsyncedCode(lua_State* L) override { return true; }
 
-	std::string GetUnsyncedFileName() const;
-	std::string GetSyncedFileName() const;
-	std::string GetInitFileModes() const;
-	int GetInitSelectTeam() const;
+	std::string GetUnsyncedFileName() const override;
+	std::string GetSyncedFileName() const override;
+	std::string GetInitFileModes() const override;
+	int GetInitSelectTeam() const override;
 
 private:
 	CLuaGaia(bool onlySynced);

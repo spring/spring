@@ -26,17 +26,17 @@ public:
 	/// @return whether the to-be-built unit is enqueued
 	unsigned int QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd);
 
-	void Update();
+	void Update() override;
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	void CreateNanoParticle(bool highPriority = false);
 
 	/// supply the build piece to speed up
 	float3 CalcBuildPos(int buildPiece = -1);
 
-	void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
-	void PreInit(const UnitLoadParams& params);
-	bool ChangeTeam(int newTeam, ChangeType type);
+	void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true) override;
+	void PreInit(const UnitLoadParams& params) override;
+	bool ChangeTeam(int newTeam, ChangeType type) override;
 
 	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
 	      NanoPieceCache& GetNanoPieceCache()       { return nanoPieceCache; }
