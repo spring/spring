@@ -17,7 +17,7 @@ class CDirArchiveFactory : public IArchiveFactory {
 public:
 	CDirArchiveFactory();
 private:
-	IArchive* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const override;
 };
 
 

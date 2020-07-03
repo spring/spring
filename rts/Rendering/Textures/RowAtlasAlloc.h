@@ -13,8 +13,8 @@ class CRowAtlasAlloc : public IAtlasAllocator
 public:
 	CRowAtlasAlloc();
 
-	virtual bool Allocate();
-	virtual int GetMaxMipMaps() { return 0; }
+	virtual bool Allocate() override;
+	virtual int GetMaxMipMaps() override { return 0; }
 
 private:
 	struct Row {

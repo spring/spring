@@ -21,7 +21,7 @@ class CUnit;
 class CPlayer : public PlayerBase
 {
 public:
-	CR_DECLARE(CPlayer)
+	CR_DECLARE_DERIVED(CPlayer)
 
 	enum {
 		PLAYER_RDYSTATE_UPDATED = 0,

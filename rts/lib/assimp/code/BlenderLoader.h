@@ -112,24 +112,24 @@ public:
     bool CanRead( const std::string& pFile,
         IOSystem* pIOHandler,
         bool checkSig
-    ) const;
+    ) const override;
 
 protected:
 
     // --------------------
-    const aiImporterDesc* GetInfo () const;
+    const aiImporterDesc* GetInfo () const override;
 
     // --------------------
     void GetExtensionList(std::set<std::string>& app);
 
     // --------------------
-    void SetupProperties(const Importer* pImp);
+    void SetupProperties(const Importer* pImp) override;
 
     // --------------------
     void InternReadFile( const std::string& pFile,
         aiScene* pScene,
         IOSystem* pIOHandler
-    );
+    ) override;
 
     // --------------------
     void ParseBlendFile(Blender::FileDatabase& out,

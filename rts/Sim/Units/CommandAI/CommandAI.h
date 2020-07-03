@@ -19,22 +19,22 @@ struct Command;
 
 class CCommandAI : public CObject
 {
-	CR_DECLARE(CCommandAI)
+	CR_DECLARE_DERIVED(CCommandAI)
 
 public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 
 	static void InitCommandDescriptionCache();
 	static void KillCommandDescriptionCache();
 
 	inline void SetOrderTarget(CUnit* o);
 
-	virtual void AddDeathDependence(CObject* o, DependenceType dep);
-	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
+	virtual void AddDeathDependence(CObject* o, DependenceType dep) override;
+	virtual void DeleteDeathDependence(CObject* o, DependenceType dep) override;
 	void AddCommandDependency(const Command& c);
 	void ClearCommandDependencies();
 

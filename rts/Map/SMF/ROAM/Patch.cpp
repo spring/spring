@@ -695,7 +695,7 @@ void Patch::SetSquareTexture() const
 class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
-	void ResetState() final {}
+	void ResetState() final override {}
 	void ResetState(CCamera* c, Patch* p, int npx, int npy) {
 		testCamera = c;
 		patchArray = p;
@@ -703,7 +703,7 @@ public:
 		numPatchesY = npy;
 	}
 
-	void DrawQuad(int x, int y) final {
+	void DrawQuad(int x, int y) final override {
 		assert(x >= 0 && x < numPatchesX);
 		assert(y >= 0 && y < numPatchesY);
 

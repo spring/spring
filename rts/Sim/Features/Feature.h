@@ -22,7 +22,7 @@ class DamageArray;
 
 class CFeature: public CSolidObject, public spring::noncopyable
 {
-	CR_DECLARE(CFeature)
+	CR_DECLARE_DERIVED(CFeature)
 
 public:
 	CFeature();
@@ -72,19 +72,19 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
-	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) def); }
+	const SolidObjectDef* GetDef() const override { return ((const SolidObjectDef*) def); }
 
-	int GetBlockingMapID() const;
+	int GetBlockingMapID() const override;
 
 	/**
 	 * Negative amount = reclaim
 	 * @return true if reclaimed
 	 */
-	bool AddBuildPower(CUnit* builder, float amount);
-	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
-	void SetVelocity(const float3& v);
-	void ForcedMove(const float3& newPos);
-	void ForcedSpin(const float3& newDir);
+	bool AddBuildPower(CUnit* builder, float amount) override;
+	void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) override;
+	void SetVelocity(const float3& v) override;
+	void ForcedMove(const float3& newPos) override;
+	void ForcedSpin(const float3& newDir) override;
 
 	bool Update();
 	bool UpdatePosition();
@@ -98,7 +98,7 @@ public:
 	void StartFire();
 	void EmitGeoSmoke();
 
-	void DependentDied(CObject *o);
+	void DependentDied(CObject *o) override;
 	void ChangeTeam(int newTeam);
 
 	void SetDrawFlag(int f) { drawFlag = f; }
@@ -108,7 +108,7 @@ public:
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final { return transMatrix[synced]; }
+	CMatrix44f GetTransformMatrix(bool synced = false, bool fullread = false) const final override { return transMatrix[synced]; }
 	const CMatrix44f& GetTransformMatrixRef(bool synced = false) const { return transMatrix[synced]; }
 
 private:

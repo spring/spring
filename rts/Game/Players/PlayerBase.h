@@ -14,7 +14,7 @@
  */
 class PlayerBase : public TeamController
 {
-	CR_DECLARE(PlayerBase)
+	CR_DECLARE_DERIVED(PlayerBase)
 
 public:
 	typedef spring::unordered_map<std::string, std::string> customOpts;

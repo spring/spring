@@ -61,7 +61,7 @@ class CUnitDrawer: public CEventClient
 {
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
 			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
 			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
@@ -69,22 +69,22 @@ public:
 			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
 			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderUnitCreated(const CUnit*, int cloaked);
-	void RenderUnitDestroyed(const CUnit*);
+	void RenderUnitCreated(const CUnit*, int cloaked) override;
+	void RenderUnitDestroyed(const CUnit*) override;
 
-	void UnitEnteredRadar(const CUnit* unit, int allyTeam);
-	void UnitEnteredLos(const CUnit* unit, int allyTeam);
-	void UnitLeftRadar(const CUnit* unit, int allyTeam);
-	void UnitLeftLos(const CUnit* unit, int allyTeam);
+	void UnitEnteredRadar(const CUnit* unit, int allyTeam) override;
+	void UnitEnteredLos(const CUnit* unit, int allyTeam) override;
+	void UnitLeftRadar(const CUnit* unit, int allyTeam) override;
+	void UnitLeftLos(const CUnit* unit, int allyTeam) override;
 
-	void UnitCloaked(const CUnit* unit);
-	void UnitDecloaked(const CUnit* unit);
+	void UnitCloaked(const CUnit* unit) override;
+	void UnitDecloaked(const CUnit* unit) override;
 
-	void PlayerChanged(int playerNum);
-	void SunChanged();
+	void PlayerChanged(int playerNum) override;
+	void SunChanged() override;
 
 public:
 	CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false) {}
@@ -95,7 +95,7 @@ public:
 	void Init();
 	void Kill();
 
-	void Update();
+	void Update() override;
 
 	void UpdateGhostedBuildings();
 

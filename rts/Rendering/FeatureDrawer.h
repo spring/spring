@@ -31,7 +31,7 @@ public:
 	void ConfigNotify(const std::string& key, const std::string& value);
 
 	void UpdateDrawQuad(CFeature* feature);
-	void Update();
+	void Update() override;
 
 	void Draw();
 	void DrawOpaquePass(bool deferredPass);
@@ -55,15 +55,15 @@ public:
 
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureDestroyed(const CFeature* feature);
-	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void RenderFeatureCreated(const CFeature* feature) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
+	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
 
 public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }

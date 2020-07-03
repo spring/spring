@@ -31,15 +31,15 @@ public:
 
 	void Update();
 
-	void Draw();
+	void Draw() override;
 	void DrawMapStuff(bool onMiniMap);
 	void DrawCentroidCursor();
 
 	bool AboveGui(int x, int y);
-	bool KeyPressed(int key, bool isRepeat);
-	bool KeyReleased(int key);
-	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button)
+	bool KeyPressed(int key, bool isRepeat) override;
+	bool KeyReleased(int key) override;
+	bool MousePress(int x, int y, int button) override;
+	void MouseRelease(int x, int y, int button) override
 	{
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
@@ -47,8 +47,8 @@ public:
 		MouseRelease(x, y, button, camera->GetPos(), mouse->dir);
 	}
 	void MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir);
-	bool IsAbove(int x, int y);
-	std::string GetTooltip(int x, int y);
+	bool IsAbove(int x, int y) override;
+	std::string GetTooltip(int x, int y) override;
 	std::string GetBuildTooltip() const;
 
 	Command GetOrderPreview();

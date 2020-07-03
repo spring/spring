@@ -60,7 +60,7 @@ namespace GL {
 		}
 
 		// a light can only depend on one object
-		void DependentDied(CObject* o) { trackObject = nullptr; }
+		void DependentDied(CObject* o) override { trackObject = nullptr; }
 
 		const CWorldObject* GetTrackObject() const { return trackObject; }
 

@@ -262,61 +262,61 @@ public:
   {
   }
 
-  impl_base* clone() const ASIO_NOEXCEPT
+  impl_base* clone() const ASIO_NOEXCEPT override
   {
     return const_cast<impl_base*>(static_cast<const impl_base*>(this));
   }
 
-  void destroy() ASIO_NOEXCEPT
+  void destroy() ASIO_NOEXCEPT override
   {
   }
 
-  void on_work_started() ASIO_NOEXCEPT
+  void on_work_started() ASIO_NOEXCEPT override
   {
     executor_.on_work_started();
   }
 
-  void on_work_finished() ASIO_NOEXCEPT
+  void on_work_finished() ASIO_NOEXCEPT override
   {
     executor_.on_work_finished();
   }
 
-  execution_context& context() ASIO_NOEXCEPT
+  execution_context& context() ASIO_NOEXCEPT override
   {
     return executor_.context();
   }
 
-  void dispatch(ASIO_MOVE_ARG(function) f)
+  void dispatch(ASIO_MOVE_ARG(function) f) override
   {
     executor_.dispatch(ASIO_MOVE_CAST(function)(f), allocator_);
   }
 
-  void post(ASIO_MOVE_ARG(function) f)
+  void post(ASIO_MOVE_ARG(function) f) override
   {
     executor_.post(ASIO_MOVE_CAST(function)(f), allocator_);
   }
 
-  void defer(ASIO_MOVE_ARG(function) f)
+  void defer(ASIO_MOVE_ARG(function) f) override
   {
     executor_.defer(ASIO_MOVE_CAST(function)(f), allocator_);
   }
 
-  type_id_result_type target_type() const ASIO_NOEXCEPT
+  type_id_result_type target_type() const ASIO_NOEXCEPT override
   {
     return type_id<system_executor>();
   }
 
-  void* target() ASIO_NOEXCEPT
+  void* target() ASIO_NOEXCEPT override
   {
     return &executor_;
   }
 
-  const void* target() const ASIO_NOEXCEPT
+  const void* target() const ASIO_NOEXCEPT override
   {
     return &executor_;
   }
 
-  bool equals(const impl_base* e) const ASIO_NOEXCEPT
+  bool equals(const impl_base* e) const ASIO_NOEXCEPT override
   {
     return this == e;
   }

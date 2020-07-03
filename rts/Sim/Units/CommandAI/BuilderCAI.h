@@ -22,7 +22,7 @@ struct UnitDef;
 class CBuilderCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CBuilderCAI)
+	CR_DECLARE_DERIVED(CBuilderCAI)
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();
@@ -30,19 +30,19 @@ public:
 	static void InitStatic();
 	void PostLoad();
 
-	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
-	void SlowUpdate();
+	int GetDefaultCmd(const CUnit* unit, const CFeature* feature) override;
+	void SlowUpdate() override;
 
-	void FinishCommand();
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void BuggerOff(const float3& pos, float radius);
+	void FinishCommand() override;
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
+	void BuggerOff(const float3& pos, float radius) override;
 	bool TargetInterceptable(const CUnit* unit, float uspeed);
 
 	void ExecuteBuildCmd(Command& c);
-	void ExecutePatrol(Command& c);
-	void ExecuteFight(Command& c);
-	void ExecuteGuard(Command& c);
-	void ExecuteStop(Command& c);
+	void ExecutePatrol(Command& c) override;
+	void ExecuteFight(Command& c) override;
+	void ExecuteGuard(Command& c) override;
+	void ExecuteStop(Command& c) override;
 	virtual void ExecuteRepair(Command& c);
 	virtual void ExecuteCapture(Command& c);
 	virtual void ExecuteReclaim(Command& c);

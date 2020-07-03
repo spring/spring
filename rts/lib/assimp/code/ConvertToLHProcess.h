@@ -79,10 +79,10 @@ public:
     ~MakeLeftHandedProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
 
@@ -130,10 +130,10 @@ public:
     ~FlipWindingOrderProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
     void ProcessMesh( aiMesh* pMesh);
@@ -154,10 +154,10 @@ public:
     ~FlipUVsProcess();
 
     // -------------------------------------------------------------------
-    bool IsActive( unsigned int pFlags) const;
+    bool IsActive( unsigned int pFlags) const override;
 
     // -------------------------------------------------------------------
-    void Execute( aiScene* pScene);
+    void Execute( aiScene* pScene) override;
 
 protected:
     void ProcessMesh( aiMesh* pMesh);

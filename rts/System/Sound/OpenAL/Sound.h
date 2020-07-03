@@ -36,7 +36,7 @@ public:
 	size_t GetDefSoundId(const std::string& name) override;
 	size_t GetSoundId(const std::string& name) override;
 
-	SoundItem* GetSoundItem(size_t id);
+	SoundItem* GetSoundItem(size_t id) override;
 	CSoundSource* GetNextBestSource(bool lock = true) override;
 
 	void NewFrame() override;
@@ -63,7 +63,7 @@ public:
 	bool SoundThreadQuit() const override { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const override { return canLoadDefs; }
 
-	bool LoadSoundDefsImpl(LuaParser* defsParser);
+	bool LoadSoundDefsImpl(LuaParser* defsParser) override;
 	const float3& GetListenerPos() const override { return myPos; }
 
 	ALCdevice* GetCurrentDevice() { return curDevice; }

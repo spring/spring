@@ -15,7 +15,7 @@ class CColorMap;
 class CGroundFlash : public CExpGenSpawnable
 {
 public:
-	CR_DECLARE(CGroundFlash)
+	CR_DECLARE_DERIVED(CGroundFlash)
 
 	CGroundFlash(const float3& _pos);
 	CGroundFlash();
@@ -24,7 +24,7 @@ public:
 	virtual void Draw(GL::RenderDataBufferTC* va) const {}
 	/// @return false when it should be deleted
 	virtual bool Update() { return false; }
-	virtual void Init(const CUnit* owner, const float3& offset) {}
+	virtual void Init(const CUnit* owner, const float3& offset) override {}
 
 	float3 CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const;
 

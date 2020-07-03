@@ -46,14 +46,14 @@ public:
 	void UpdateTextures();
 
 
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void RenderProjectileCreated(const CProjectile* projectile);
-	void RenderProjectileDestroyed(const CProjectile* projectile);
+	void RenderProjectileCreated(const CProjectile* projectile) override;
+	void RenderProjectileDestroyed(const CProjectile* projectile) override;
 
 
 	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }

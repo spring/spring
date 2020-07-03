@@ -58,9 +58,9 @@ void mydummy() {}
 class CatmullClarkSubdivider : public Subdivider
 {
 public:
-    void Subdivide (aiMesh* mesh, aiMesh*& out, unsigned int num, bool discard_input);
+    void Subdivide (aiMesh* mesh, aiMesh*& out, unsigned int num, bool discard_input) override;
     void Subdivide (aiMesh** smesh, size_t nmesh,
-        aiMesh** out, unsigned int num, bool discard_input);
+        aiMesh** out, unsigned int num, bool discard_input) override;
 
     // ---------------------------------------------------------------------------
     /** Intermediate description of an edge between two corners of a polygon*/
@@ -126,7 +126,7 @@ void  CatmullClarkSubdivider::Subdivide (
     )
 {
     ai_assert(mesh != out);
-    
+
     Subdivide(&mesh,1,&out,num,discard_input);
 }
 

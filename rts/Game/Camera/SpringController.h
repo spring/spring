@@ -11,23 +11,23 @@ class CSpringController : public CCameraController
 public:
 	CSpringController();
 
-	const std::string GetName() const { return "spring"; }
+	const std::string GetName() const override { return "spring"; }
 
-	void KeyMove(float3 move);
-	void MouseMove(float3 move);
-	void ScreenEdgeMove(float3 move);
-	void MouseWheelMove(float move);
+	void KeyMove(float3 move) override;
+	void MouseMove(float3 move) override;
+	void ScreenEdgeMove(float3 move) override;
+	void MouseWheelMove(float move) override;
 
-	void Update();
-	void SetPos(const float3& newPos) { pos = newPos; Update(); }
-	float3 GetPos() const;
-	float3 GetRot() const { return (float3(rot.x, GetAzimuth(), 0.0f)); }
+	void Update() override;
+	void SetPos(const float3& newPos) override { pos = newPos; Update(); }
+	float3 GetPos() const override;
+	float3 GetRot() const override { return (float3(rot.x, GetAzimuth(), 0.0f)); }
 
-	float3 SwitchFrom() const { return pos; }
-	void SwitchTo(const int oldCam, const bool showText);
+	float3 SwitchFrom() const override { return pos; }
+	void SwitchTo(const int oldCam, const bool showText) override;
 
-	void GetState(StateMap& sm) const;
-	bool SetState(const StateMap& sm);
+	void GetState(StateMap& sm) const override;
+	bool SetState(const StateMap& sm) override;
 
 private:
 	float GetAzimuth() const;

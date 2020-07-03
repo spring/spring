@@ -68,7 +68,7 @@ class ObjectPointerType : public ObjectPointerBaseType
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 public:
 	ObjectPointerType() : ObjectPointerBaseType(T::StaticClass(), sizeof(T*)) { }
-	void Serialize(ISerializer *s, void *instance) {
+	void Serialize(ISerializer *s, void *instance) override {
 		void **ptr = (void**)instance;
 		if (s->IsWriting()) {
 			s->SerializeObjectPtr(ptr, (*ptr != nullptr) ? ((T*)*ptr)->GetClass() : 0);
@@ -100,7 +100,7 @@ public:
 	typedef T ArrayType[N];
 	StaticArrayType() : StaticArrayBaseType(DeduceType<T>::Get(), N * sizeof(T)) { }
 
-	void Serialize(ISerializer* s, void* instance)
+	void Serialize(ISerializer* s, void* instance) override
 	{
 		T* array = (T*) instance;
 
@@ -128,7 +128,7 @@ public:
 
 	stlStaticArrayType() : StaticArrayBaseType(DeduceType<ElemT>::Get(), sizeof(ArrayT)) {}
 
-	void Serialize(ISerializer* s, void* instance)
+	void Serialize(ISerializer* s, void* instance) override
 	{
 		ArrayT& array = *(ArrayT*) instance;
 
@@ -156,7 +156,7 @@ public:
 	DynamicArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(VectorT)) {}
 	~DynamicArrayType() {}
 
-	void Serialize(ISerializer* s, void* inst) {
+	void Serialize(ISerializer* s, void* inst) override {
 		VectorT& ct = *(VectorT*) inst;
 
 		if (s->IsWriting()) {
@@ -199,7 +199,7 @@ public:
 	BitArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(T)) { }
 	~BitArrayType() { }
 
-	void Serialize(ISerializer* s, void* inst) {
+	void Serialize(ISerializer* s, void* inst) override {
 		T* ct = (T*)inst;
 		if (s->IsWriting()) {
 			int size = (int)ct->size();

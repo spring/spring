@@ -68,13 +68,13 @@ public:
     ai_real getScale() const;
 
     /// Overwritten, @see BaseProcess
-    virtual bool IsActive( unsigned int pFlags ) const;
+    virtual bool IsActive( unsigned int pFlags ) const override;
 
     /// Overwritten, @see BaseProcess
-    virtual void SetupProperties( const Importer* pImp );
+    virtual void SetupProperties( const Importer* pImp ) override;
 
     /// Overwritten, @see BaseProcess
-    virtual void Execute( aiScene* pScene );
+    virtual void Execute( aiScene* pScene ) override;
 
 private:
     void traverseNodes( aiNode *currentNode );

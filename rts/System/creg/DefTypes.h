@@ -21,7 +21,7 @@ namespace creg
 	{                                                                      \
 	public:                                                                \
 	T ## Type() : IType(sizeof(T*)) { }                                    \
-	void Serialize(ISerializer* s, void* instance)                         \
+	void Serialize(ISerializer* s, void* instance) override                \
 		{                                                                  \
 			c T** defPtr = (c T**) instance;                       \
 			if (s->IsWriting()) {                                          \
@@ -33,7 +33,7 @@ namespace creg
 				*defPtr = cb(id);                                          \
 			}                                                              \
 		}                                                                  \
-		std::string GetName() const { return #T "*"; }                     \
+		std::string GetName() const override { return #T "*"; }            \
 	};                                                                     \
 	template<>                                                             \
 	struct DeduceType<c T*> {                                          \

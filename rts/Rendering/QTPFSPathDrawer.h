@@ -28,8 +28,8 @@ struct QTPFSPathDrawer: public IPathDrawer {
 public:
 	QTPFSPathDrawer();
 
-	void DrawAll() const;
-	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
+	void DrawAll() const override;
+	void UpdateExtraTexture(int, int, int, int, unsigned char*) const override;
 
 private:
 	void DrawNodes(GL::WideLineAdapterC* wla, const std::vector<const QTPFS::QTNode*>& nodes) const;

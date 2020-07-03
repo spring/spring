@@ -29,14 +29,14 @@ class CRoamMeshDrawer : public IMeshDrawer, public CEventClient
 {
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "UnsyncedHeightMapUpdate") || (eventName == "DrawInMiniMap");
 	}
-	bool GetFullRead() const { return true; }
-	int  GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void UnsyncedHeightMapUpdate(const SRectangle& rect);
-	void DrawInMiniMap();
+	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
+	void DrawInMiniMap() override;
 
 public:
 	enum {
@@ -48,10 +48,10 @@ public:
 	CRoamMeshDrawer(CSMFGroundDrawer* gd);
 	~CRoamMeshDrawer();
 
-	void Update();
+	void Update() override;
 
-	void DrawMesh(const DrawPass::e& drawPass);
-	void DrawBorderMesh(const DrawPass::e& drawPass);
+	void DrawMesh(const DrawPass::e& drawPass) override;
+	void DrawBorderMesh(const DrawPass::e& drawPass) override;
 
 	static void ForceNextTesselation(bool normal, bool shadow) {
 		forceNextTesselation[MESH_NORMAL] = normal;

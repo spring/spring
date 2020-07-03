@@ -28,7 +28,7 @@ enum ESkirmishAIStatus {
  * It is used on the Game-Server and on clients (as a base class).
  */
 class SkirmishAIBase : public TeamController {
-	CR_DECLARE(SkirmishAIBase)
+	CR_DECLARE_DERIVED(SkirmishAIBase)
 
 public:
 	virtual ~SkirmishAIBase() {}

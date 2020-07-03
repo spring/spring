@@ -40,7 +40,7 @@ public:
 	void PrintDebugInfo() override;
 	bool SoundThreadQuit() const override { return false; }
 	bool CanLoadSoundDefs() const override { return true; }
-	bool LoadSoundDefsImpl(LuaParser* defsParser) { return false; }
+	bool LoadSoundDefsImpl(LuaParser* defsParser) override { return false; }
 
 	const float3& GetListenerPos() const override { return ZeroVector; }
 };

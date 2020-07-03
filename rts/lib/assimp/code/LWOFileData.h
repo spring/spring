@@ -342,7 +342,7 @@ struct VColorChannel : public VMapEntry
 
     //! need to overwrite this function - the alpha channel must
     //! be initialized to 1.0 by default
-    virtual void Allocate(unsigned int num)
+    virtual void Allocate(unsigned int num) override
     {
         if (!rawData.empty())
             return; // return if already allocated

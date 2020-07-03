@@ -17,8 +17,8 @@ namespace creg
 	public:
 		ObjectInstanceType(Class* objc, size_t size) : IType(size), objectClass(objc) {}
 		~ObjectInstanceType() {}
-		void Serialize(ISerializer* s, void* instance);
-		std::string GetName() const;
+		void Serialize(ISerializer* s, void* instance) override;
+		std::string GetName() const override;
 
 		Class* objectClass;
 	};
@@ -27,7 +27,7 @@ namespace creg
 	{
 	public:
 		StringType() { }
-		std::string GetName() const;
+		std::string GetName() const override;
 	};
 
 }

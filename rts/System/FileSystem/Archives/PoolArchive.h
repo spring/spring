@@ -18,7 +18,7 @@ class CPoolArchiveFactory : public IArchiveFactory {
 public:
 	CPoolArchiveFactory();
 private:
-	IArchive* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const override;
 };
 
 

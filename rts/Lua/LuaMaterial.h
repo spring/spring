@@ -221,25 +221,25 @@ public:
 private:
 	template<typename Type> struct UniformMat : public IUniform {
 	public:
-		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool CanExec() const override { return (loc != GL_INVALID_INDEX); }
 		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
 
-		GLenum GetType() const { return GL_FLOAT_MAT4; }
+		GLenum GetType() const override { return GL_FLOAT_MAT4; }
 	};
 
 	template<typename Type> struct UniformMatArray : public IUniform {
 	public:
-		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool CanExec() const override { return (loc != GL_INVALID_INDEX); }
 		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, val.size(), GL_FALSE, val[0]); return true; }
 
-		GLenum GetType() const { return GL_FLOAT_MAT4; }
+		GLenum GetType() const override { return GL_FLOAT_MAT4; }
 	};
 
 	template<typename Type, size_t Size = sizeof(Type) / sizeof(float)> struct UniformVec : public IUniform {
 	public:
-		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool CanExec() const override { return (loc != GL_INVALID_INDEX); }
 		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) const {
 			switch (Size) {
@@ -249,7 +249,7 @@ private:
 			}
 		}
 
-		GLenum GetType() const {
+		GLenum GetType() const override {
 			switch (Size) {
 				case 3: return GL_FLOAT_VEC3;
 				case 4: return GL_FLOAT_VEC4;
@@ -260,11 +260,11 @@ private:
 
 	template<typename Type> struct UniformInt : public IUniform {
 	public:
-		bool CanExec() const { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
+		bool CanExec() const override { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
 
-		GLenum GetType() const { return GL_INT; }
+		GLenum GetType() const override { return GL_INT; }
 	public:
 		Type cur = Type(0);
 		Type prv = Type(0);

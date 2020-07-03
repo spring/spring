@@ -27,15 +27,15 @@ public:
 	CMiniMap();
 	virtual ~CMiniMap();
 
-	bool MousePress(int x, int y, int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
-	void MouseRelease(int x, int y, int button);
+	bool MousePress(int x, int y, int button) override;
+	void MouseMove(int x, int y, int dx,int dy, int button) override;
+	void MouseRelease(int x, int y, int button) override;
 	void MoveView(int x, int y);
-	bool IsAbove(int x, int y);
+	bool IsAbove(int x, int y) override;
 
-	std::string GetTooltip(int x, int y);
+	std::string GetTooltip(int x, int y) override;
 
-	void Draw();
+	void Draw() override;
 	void DrawForReal();
 	void Update();
 

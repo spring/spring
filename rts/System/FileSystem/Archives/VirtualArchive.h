@@ -27,7 +27,7 @@ public:
 	CVirtualArchive* AddArchive(const std::string& fileName);
 
 private:
-	IArchive* DoCreateArchive(const std::string& fileName) const;
+	IArchive* DoCreateArchive(const std::string& fileName) const override;
 
 	std::vector<CVirtualArchive*> archives;
 };

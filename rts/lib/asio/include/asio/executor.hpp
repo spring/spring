@@ -36,7 +36,7 @@ public:
 
   /// Obtain message associated with exception.
   ASIO_DECL virtual const char* what() const
-    ASIO_NOEXCEPT_OR_NOTHROW;
+    ASIO_NOEXCEPT_OR_NOTHROW override;
 };
 
 /// Polymorphic wrapper for executors.

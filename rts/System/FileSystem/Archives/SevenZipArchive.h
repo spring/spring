@@ -23,7 +23,7 @@ public:
 	CSevenZipArchiveFactory(): IArchiveFactory("sd7") {}
 	bool CheckForSolid() const { return true; }
 private:
-	IArchive* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const override;
 };
 
 

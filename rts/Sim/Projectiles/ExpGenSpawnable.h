@@ -10,7 +10,7 @@ class CUnit;
 
 class CExpGenSpawnable: public CWorldObject
 {
-	CR_DECLARE(CExpGenSpawnable)
+	CR_DECLARE_DERIVED(CExpGenSpawnable)
 public:
 	CExpGenSpawnable(const float3& pos, const float3& spd);
 

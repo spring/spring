@@ -13,12 +13,12 @@ public:
 
 	virtual ~IPathDrawer();
 	virtual void DrawAll() const {}
-	virtual void DrawInMiniMap() {}
+	virtual void DrawInMiniMap() override {}
 
 	virtual void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
 
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "DrawInMiniMap");
 	}
 

@@ -19,7 +19,7 @@ private:
 	GameSetupDrawer();
 	~GameSetupDrawer();
 
-	virtual void Draw();
+	virtual void Draw() override;
 
 	static GameSetupDrawer* instance;
 

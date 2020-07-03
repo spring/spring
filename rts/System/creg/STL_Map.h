@@ -46,7 +46,7 @@ namespace creg
 
 		~MapType() { }
 
-		void Serialize(ISerializer *s, void *instance)
+		void Serialize(ISerializer *s, void *instance) override
 		{
 			T& ct = *(T*)instance;
 			if (s->IsWriting()) {
@@ -69,7 +69,7 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() const { return "map<" + DeduceType<typename T::key_type>::Get()->GetName() + ", " + DeduceType<typename T::mapped_type>::Get()->GetName() + ">"; }
+		std::string GetName() const override { return "map<" + DeduceType<typename T::key_type>::Get()->GetName() + ", " + DeduceType<typename T::mapped_type>::Get()->GetName() + ">"; }
 	};
 
 	// Map type

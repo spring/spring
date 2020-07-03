@@ -151,8 +151,8 @@ namespace nv_dds
             CTexture &operator=(const CTexture &rhs);
             CTexture &operator=(CTexture &&rhs) noexcept;
 
-            void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            void clear();
+            void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels) override;
+            void clear() override;
 
             inline const CSurface &get_mipmap(unsigned int index) const
             {

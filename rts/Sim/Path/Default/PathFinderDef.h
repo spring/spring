@@ -78,7 +78,7 @@ public:
 	// tests if a square is inside is the circular constrained area
 	// defined by the start and goal positions (note that this only
 	// saves CPU under certain conditions and destroys admissibility)
-	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const {
+	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const override {
 		const int dx = halfWayX - xSquare;
 		const int dz = halfWayZ - zSquare;
 
@@ -103,7 +103,7 @@ public:
 		uint32_t blockSize
 	);
 
-	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const {
+	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const override {
 		if (startBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		if ( goalBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		return (constraintDisabled);

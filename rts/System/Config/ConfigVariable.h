@@ -77,12 +77,12 @@ class ConfigVariableTypedMetaData : public ConfigVariableMetaData
 public:
 	ConfigVariableTypedMetaData(const char* k, const char* t) { key = k; type = t; }
 
-	const StringConvertibleOptionalValue& GetDefaultValue() const { return defaultValue; }
-	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
-	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
-	const StringConvertibleOptionalValue& GetSafemodeValue() const { return safemodeValue; }
-	const StringConvertibleOptionalValue& GetHeadlessValue() const { return headlessValue; }
-	const StringConvertibleOptionalValue& GetDedicatedValue() const { return dedicatedValue; }
+	const StringConvertibleOptionalValue& GetDefaultValue() const override { return defaultValue; }
+	const StringConvertibleOptionalValue& GetMinimumValue() const override { return minimumValue; }
+	const StringConvertibleOptionalValue& GetMaximumValue() const override { return maximumValue; }
+	const StringConvertibleOptionalValue& GetSafemodeValue() const override { return safemodeValue; }
+	const StringConvertibleOptionalValue& GetHeadlessValue() const override { return headlessValue; }
+	const StringConvertibleOptionalValue& GetDedicatedValue() const override { return dedicatedValue; }
 
 	/**
 	 * @brief Clamp a value using the declared minimum and maximum value.
@@ -97,7 +97,7 @@ public:
 	 * This guarantees the value will always be in range, even if Lua, a client
 	 * of unitsync or erroneous Spring code uses the wrong getter.
 	 */
-	std::string Clamp(const std::string& value) const
+	std::string Clamp(const std::string& value) const override
 	{
 		TypedStringConvertibleOptionalValue<T> temp;
 		temp = TypedStringConvertibleOptionalValue<T>::FromString(value);

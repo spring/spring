@@ -21,10 +21,10 @@ class CLegacyMeshDrawer : public IMeshDrawer
 public:
 	CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
 
-	void Update() {}
+	void Update() override {}
 
-	void DrawMesh(const DrawPass::e& drawPass);
-	void DrawBorderMesh(const DrawPass::e& drawPass) {}
+	void DrawMesh(const DrawPass::e& drawPass) override;
+	void DrawBorderMesh(const DrawPass::e& drawPass) override {}
 	void DrawShadowMesh();
 
 private:

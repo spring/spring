@@ -46,7 +46,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override{
 		InverseOrSetBool(gs->cheatEnabled, action.GetArgs());
 		LogSystemStatus("Cheating", gs->cheatEnabled);
 		return true;
@@ -59,7 +59,7 @@ public:
 	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp", "Enables/Disables widgets (LuaUI control)") {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		InverseOrSetBool(gs->noHelperAIs, action.GetArgs());
 		selectedUnitsHandler.PossibleCommandChange(nullptr);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
@@ -73,7 +73,7 @@ public:
 	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw", "Allows/Disallows spectators to draw on the map") {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		bool allowSpecMapDrawing = inMapDrawer->GetSpecMapDrawingAllowed();
 		InverseOrSetBool(allowSpecMapDrawing, action.GetArgs(), true);
 		inMapDrawer->SetSpecMapDrawingAllowed(allowSpecMapDrawing);
@@ -93,7 +93,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		const std::string& args = action.GetArgs();
 
 		if (args.empty()) {
@@ -127,7 +127,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		const std::string& args = action.GetArgs();
 
 		const unsigned int argAllyTeam = atoi(args.c_str());
@@ -164,7 +164,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		bool isFree = unitDefHandler->GetNoCost();
 		InverseOrSetBool(isFree, action.GetArgs());
 		unitDefHandler->SetNoCost(isFree);
@@ -184,7 +184,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		// not for autohosts
 		if (!playerHandler.IsValidPlayer(action.GetPlayerID()))
 			return false;
@@ -199,7 +199,7 @@ public:
 	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", "Destroys one or multiple units by unit-ID, instantly", true) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		std::stringstream argsStream(action.GetArgs());
 		LOG("Killing units: %s", action.GetArgs().c_str());
 
@@ -229,7 +229,7 @@ public:
 	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat", "Enables/Disables spectators to use the chat") {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		InverseOrSetBool(game->noSpectatorChat, action.GetArgs());
 		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
 		return true;
@@ -242,7 +242,7 @@ public:
 	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB", "Reloads COB scripts", true) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
 		return true;
 	}
@@ -254,7 +254,7 @@ public:
 	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCEGs", "Reloads CEG scripts", true) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		explGenHandler.ReloadGenerators(action.GetArgs());
 		return true;
 	}
@@ -270,7 +270,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		bool devMode = CLuaHandle::GetDevMode();
 		InverseOrSetBool(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
@@ -286,7 +286,7 @@ public:
 			"Allows/Disallows editing of unit-, feature- and weapon-defs"
 			" through Lua", true) {}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		InverseOrSetBool(gs->editDefsEnabled, action.GetArgs());
 		LogSystemStatus("Unit-, Feature- & Weapon-Def editing", gs->editDefsEnabled);
 		return true;
@@ -397,7 +397,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		// NOTE:
 		//   previously only the host player (ID == 0) was allowed to issue these actions
 		//   prior to some server changes they worked even in demos with that restriction,
@@ -419,7 +419,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		if (!gs->useLuaGaia)
 			return false;
 
@@ -475,7 +475,7 @@ public:
 	AtmActionExecutor() : ISyncedActionExecutor("Atm", "Gives 1000 metal and 1000 energy to the issuing player's team", true) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		const std::string& args = action.GetArgs();
 
 		const int team = playerHandler.Player(action.GetPlayerID())->team;
@@ -497,7 +497,7 @@ public:
 	) {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		const CPlayer* actionPlayer = playerHandler.Player(action.GetPlayerID());
 
 		if (actionPlayer->spectator && !gs->cheatEnabled)
@@ -537,7 +537,7 @@ public:
 	SkipActionExecutor() : ISyncedActionExecutor("Skip", "Fast-forwards to a given frame, or stops fast-forwarding") {
 	}
 
-	bool Execute(const SyncedAction& action) const final {
+	bool Execute(const SyncedAction& action) const final override {
 		if (action.GetArgs().find_first_of("start") == 0) {
 			std::istringstream buf(action.GetArgs().substr(6));
 			int targetFrame;

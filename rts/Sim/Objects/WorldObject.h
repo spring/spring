@@ -11,7 +11,7 @@ struct S3DModel;
 class CWorldObject: public CObject
 {
 public:
-	CR_DECLARE(CWorldObject)
+	CR_DECLARE_DERIVED(CWorldObject)
 
 	CWorldObject() = default;
 	CWorldObject(const float3& pos, const float3& spd): CWorldObject()

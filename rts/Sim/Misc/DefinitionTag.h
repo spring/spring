@@ -136,10 +136,10 @@ public:
 		return data;
 	}
 
-	const StringConvertibleOptionalValue& GetDefaultValue() const { return defaultValue; }
-	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
-	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
-	const StringConvertibleOptionalValue& GetScaleValue()   const { return scaleValue; }
+	const StringConvertibleOptionalValue& GetDefaultValue() const override { return defaultValue; }
+	const StringConvertibleOptionalValue& GetMinimumValue() const override { return minimumValue; }
+	const StringConvertibleOptionalValue& GetMaximumValue() const override { return maximumValue; }
+	const StringConvertibleOptionalValue& GetScaleValue()   const override { return scaleValue; }
 
 protected:
 	TypedStringConvertibleOptionalValue<T> defaultValue;

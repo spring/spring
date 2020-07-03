@@ -26,7 +26,7 @@ public:
 	void NetOrder(Command& c, int playerId);
 	void NetSelect(std::vector<int>& s, int playerId);
 	void ClearNetSelect(int playerId);
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	void Draw();
 
 	struct AvailableCommandsStruct {

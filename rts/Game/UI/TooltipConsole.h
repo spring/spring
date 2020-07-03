@@ -33,8 +33,8 @@ class CTooltipConsole : public CInputReceiver {
 	public:
 		CTooltipConsole();
 
-		void Draw();
-		bool IsAbove(int x, int y);
+		void Draw() override;
+		bool IsAbove(int x, int y) override;
 
 		// helpers
 		static std::string MakeUnitString(const CUnit* unit);

@@ -19,9 +19,9 @@ public:
 	CLuaLoadSaveHandler();
 	~CLuaLoadSaveHandler();
 
-	void SaveGame(const std::string& file);
-	void LoadGameStartInfo(const std::string& file);
-	void LoadGame();
+	void SaveGame(const std::string& file) override;
+	void LoadGameStartInfo(const std::string& file) override;
+	void LoadGame() override;
 
 protected:
 	void SaveEventClients(); // Lua

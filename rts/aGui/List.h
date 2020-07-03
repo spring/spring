@@ -25,8 +25,8 @@ public:
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	void MouseRelease(int x, int y, int button);
-	virtual void DrawSelf();
-	virtual bool HandleEventSelf(const SDL_Event& ev);
+	virtual void DrawSelf() override;
+	virtual bool HandleEventSelf(const SDL_Event& ev) override;
 	std::string GetTooltip(int x, int y) const { return tooltip; }
 
 	void RemoveAllItems();

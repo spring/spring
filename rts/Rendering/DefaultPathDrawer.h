@@ -18,9 +18,9 @@ struct DefaultPathDrawer: public IPathDrawer {
 public:
 	DefaultPathDrawer();
 
-	void DrawAll() const;
-	void DrawInMiniMap();
-	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
+	void DrawAll() const override;
+	void DrawInMiniMap() override;
+	void UpdateExtraTexture(int, int, int, int, unsigned char*) const override;
 
 	enum BuildSquareStatus {
 		NOLOS          = 0,

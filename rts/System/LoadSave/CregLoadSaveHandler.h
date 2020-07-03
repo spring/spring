@@ -12,10 +12,10 @@ class CCregLoadSaveHandler : public ILoadSaveHandler
 public:
 	CCregLoadSaveHandler();
 	~CCregLoadSaveHandler();
-	void SaveGame(const std::string& path);
+	void SaveGame(const std::string& path) override;
 	/// load things such as map and mod, needed to fire up the engine
-	void LoadGameStartInfo(const std::string& path);
-	void LoadGame();
+	void LoadGameStartInfo(const std::string& path) override;
+	void LoadGame() override;
 
 protected:
 	std::stringstream iss;

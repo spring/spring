@@ -338,13 +338,13 @@ aiMesh* MakeSubmesh(const aiMesh *superMesh, const std::vector<unsigned int> &su
 // all steps which use it to speedup its computations.
 class ComputeSpatialSortProcess : public BaseProcess
 {
-    bool IsActive( unsigned int pFlags) const
+    bool IsActive( unsigned int pFlags) const override
     {
         return NULL != shared && 0 != (pFlags & (aiProcess_CalcTangentSpace |
             aiProcess_GenNormals | aiProcess_JoinIdenticalVertices));
     }
 
-    void Execute( aiScene* pScene)
+    void Execute( aiScene* pScene) override
     {
         typedef std::pair<SpatialSort, ai_real> _Type;
         DefaultLogger::get()->debug("Generate spatially-sorted vertex cache");
@@ -367,13 +367,13 @@ class ComputeSpatialSortProcess : public BaseProcess
 // ... and the same again to cleanup the whole stuff
 class DestroySpatialSortProcess : public BaseProcess
 {
-    bool IsActive( unsigned int pFlags) const
+    bool IsActive( unsigned int pFlags) const override
     {
         return NULL != shared && 0 != (pFlags & (aiProcess_CalcTangentSpace |
             aiProcess_GenNormals | aiProcess_JoinIdenticalVertices));
     }
 
-    void Execute( aiScene* /*pScene*/)
+    void Execute( aiScene* /*pScene*/) override
     {
         shared->RemoveProperty(AI_SPP_SPATIAL_SORT);
     }

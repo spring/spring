@@ -13,7 +13,7 @@ namespace creg {
 			: IType(size), objClass(cls) { }
 		~ObjectPointerBaseType() { }
 
-		std::string GetName() const;
+		std::string GetName() const override;
 	};
 
 	class StaticArrayBaseType : public IType
@@ -25,7 +25,7 @@ namespace creg {
 			: IType(size), elemType(std::move(et)) { }
 		~StaticArrayBaseType() { }
 
-		std::string GetName() const;
+		std::string GetName() const override;
 	};
 
 	class DynamicArrayBaseType : public IType
@@ -37,7 +37,7 @@ namespace creg {
 			: IType(size), elemType(std::move(et)) { }
 		~DynamicArrayBaseType() { }
 
-		std::string GetName() const;
+		std::string GetName() const override;
 	};
 
 	class IgnoredType : public IType
@@ -46,14 +46,14 @@ namespace creg {
 		IgnoredType(int size) : IType(size) { }
 		~IgnoredType() {}
 
-		void Serialize(ISerializer* s, void* instance)
+		void Serialize(ISerializer* s, void* instance) override
 		{
 			for (int a=0;a<size;a++) {
 				char c=0;
 				s->Serialize(&c,1);
 			}
 		}
-		std::string GetName() const
+		std::string GetName() const override
 		{
 			return "ignored";
 		}
@@ -65,8 +65,8 @@ namespace creg {
 		BasicType(BasicTypeID ID, size_t size) : IType(size), id(ID) {}
 		~BasicType() {}
 
-		void Serialize(ISerializer* s, void* instance);
-		std::string GetName() const;
+		void Serialize(ISerializer* s, void* instance) override;
+		std::string GetName() const override;
 
 		BasicTypeID id;
 	};

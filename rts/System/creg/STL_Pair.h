@@ -15,13 +15,13 @@ namespace creg
 		PairType() : IType(sizeof(T)) { }
 		~PairType() { }
 
-		void Serialize(ISerializer* s, void* instance)
+		void Serialize(ISerializer* s, void* instance) override
 		{
 			T& p = *(T*)instance;
 			DeduceType<typename T::first_type>::Get()->Serialize(s,(void*) &p.first);
 			DeduceType<typename T::second_type>::Get()->Serialize(s,(void*) &p.second);
 		}
-		std::string GetName() const { return "pair<" + DeduceType<typename T::first_type>::Get()->GetName() + "," + DeduceType<typename T::second_type>::Get()->GetName() + ">"; }
+		std::string GetName() const override { return "pair<" + DeduceType<typename T::first_type>::Get()->GetName() + "," + DeduceType<typename T::second_type>::Get()->GetName() + ">"; }
 	};
 
 

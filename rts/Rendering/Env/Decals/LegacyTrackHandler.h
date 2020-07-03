@@ -37,18 +37,18 @@ public:
 
 public:
 	//CEventClient
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitDestroyed") ||
 			(eventName == "UnitMoved");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void SunChanged();
-	void RenderUnitDestroyed(const CUnit*);
-	void UnitMoved(const CUnit* unit);
+	void SunChanged() override;
+	void RenderUnitDestroyed(const CUnit*) override;
+	void UnitMoved(const CUnit* unit) override;
 
 private:
 	bool GetDrawTracks() const;

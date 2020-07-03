@@ -56,7 +56,7 @@ public:
 	static void UpdateTeams();
 
 public: // call-ins
-	bool HasCallIn(lua_State* L, const string& name) const;
+	bool HasCallIn(lua_State* L, const string& name) const override;
 
 	bool LayoutButtons(int& xButtons, int& yButtons,
 	                   const vector<SCommandDescription>& cmds,

@@ -12,7 +12,7 @@
  */
 class AAirMoveType : public AMoveType
 {
-	CR_DECLARE(AAirMoveType)
+	CR_DECLARE_DERIVED(AAirMoveType)
 public:
 	typedef float(*GetGroundHeightFunc)(float, float);
 	typedef void(*EmitCrashTrailFunc)(CUnit*, unsigned int);
@@ -35,7 +35,7 @@ public:
 	AAirMoveType(CUnit* unit);
 	virtual ~AAirMoveType() {}
 
-	virtual bool Update();
+	virtual bool Update() override;
 	virtual void UpdateLanded();
 	virtual void Takeoff() {}
 	virtual void Land() {}
@@ -55,10 +55,10 @@ public:
 	void UpdateLandingHeight(float newWantedHeight);
 	void UpdateLanding();
 
-	bool CanApplyImpulse(const float3&) { return true; }
+	bool CanApplyImpulse(const float3&) override { return true; }
 	bool UseSmoothMesh() const;
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 
 protected:
 	void CheckForCollision();
