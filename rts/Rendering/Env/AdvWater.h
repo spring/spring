@@ -28,7 +28,7 @@ public:
 	void Draw() override { Draw(subsurfTexture == 0); }
 
 	void Draw(bool useBlending);
-	void UpdateWater(CGame* game);
+	void UpdateWater(CGame* game) override;
 
 protected:
 	FBO reflectFBO;

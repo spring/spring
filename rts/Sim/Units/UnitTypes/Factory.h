@@ -15,7 +15,7 @@ class CFactory;
 class CFactory : public CBuilding
 {
 public:
-	CR_DECLARE(CFactory)
+	CR_DECLARE_DERIVED(CFactory)
 
 	CFactory();
 

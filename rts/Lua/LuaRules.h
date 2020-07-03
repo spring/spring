@@ -50,9 +50,9 @@ protected:
 	bool AddSyncedCode(lua_State* L);
 	bool AddUnsyncedCode(lua_State* L);
 
-	std::string GetUnsyncedFileName() const;
+	std::string GetUnsyncedFileName() const override;
 	std::string GetSyncedFileName() const;
-	std::string GetInitFileModes() const;
+	std::string GetInitFileModes() const override;
 	int GetInitSelectTeam() const;
 
 	int UnpackCobArg(lua_State* L);

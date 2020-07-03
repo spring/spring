@@ -15,7 +15,7 @@ class Window : public GuiElement
 public:
 	Window(const std::string& title = "", GuiElement* parent = nullptr);
 
-	virtual void AddChild(GuiElement* elem);
+	virtual void AddChild(GuiElement* elem) override;
 	slimsig::signal<void (void)> WantClose;
 
 protected:
