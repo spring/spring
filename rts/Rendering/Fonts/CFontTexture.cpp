@@ -440,11 +440,7 @@ void CFontTexture::Update() {
 
 bool CFontTexture::GenFontConfig() {
 	#ifdef HEADLESS
-	return true;
-	#endif
-
 	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
-	FtLibraryHandler ftLibHandler;
 	char osFontsDir[32 * 1024];
 
 	#ifdef WIN32
@@ -453,6 +449,8 @@ bool CFontTexture::GenFontConfig() {
 	strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));
 	#endif
 
+	FtLibraryHandler::GetLibrary();
+
 	if (FtLibraryHandler::CheckFontConfig()) {
 		printf("[%s] fontconfig for directory \"%s\" up to date\n", __func__, osFontsDir);
 		return true;
@@ -460,6 +458,9 @@ bool CFontTexture::GenFontConfig() {
 
 	printf("[%s] creating fontconfig for directory \"%s\"\n", __func__, osFontsDir);
 	return (FtLibraryHandler::BuildFontConfig(osFontsDir));
+	#endif
+
+	return true;
 }
 
 
