@@ -439,7 +439,7 @@ void CFontTexture::Update() {
 
 
 bool CFontTexture::GenFontConfig() {
-	#ifdef HEADLESS
+	#ifndef HEADLESS
 	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
 	char osFontsDir[32 * 1024];
 
