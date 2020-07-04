@@ -145,10 +145,15 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 	assert(!archivePath.empty());
 	assert(rawSection < Section::Count);
 
-	// populate files from stashed archive if possible
+	// populate files from stashed archive if possible, but
+	// exclude directory archives which should only ever be
+	// used for development purposes anyway
 	IArchive* ar = archives[tmpSection][archivePath];
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d cached=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", rawSection, ar != nullptr);
+
+	if (ar != nullptr && ar->GetType() == ARCHIVE_TYPE_SDD)
+		spring::SafeDelete(ar);
 
 	if (ar == nullptr) {
 		archives[tmpSection].erase(archivePath);
