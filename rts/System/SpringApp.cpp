@@ -100,6 +100,7 @@ CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("
 CONFIG(unsigned, TextureMemPoolSize).defaultValue(128 * (1 + (__archBits__ == 64))).minimumValue(1);
 CONFIG(bool, UseLuaMemPools).defaultValue(__archBits__ == 64).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
+CONFIG(bool, UseFontConfigLib).defaultValue(false).description("Whether the system fontconfig library (if present and enabled at compile-time) should be used for handling fonts.");
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
