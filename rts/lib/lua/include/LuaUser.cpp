@@ -346,7 +346,7 @@ void spring_lua_alloc_update_stats(int clearStatsFrame)
 ////// Custom synced float to string
 //////////////////////////////////////////////////////////
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 static inline int sprintf64(char* dst, std::int64_t x) { return sprintf(dst, "%I64d", x); }
@@ -406,7 +406,7 @@ static constexpr inline int GetDigitsInStdNotation(const int log10)
 
 static inline int PrintIntPart(char* buf, float f, const bool roundingCarryBit = false)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	if (f < (std::numeric_limits<int>::max() - roundingCarryBit)) {
 		return sprintf(buf, "%d", int(f) + roundingCarryBit);
 	} else

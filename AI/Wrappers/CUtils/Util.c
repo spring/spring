@@ -23,11 +23,11 @@
 #ifdef _WIN32
 #include <io.h>          // needed for dir listing
 #include <direct.h>      // mkdir()
-#else // WIN32
+#else // _WIN32
 #include <sys/stat.h>    // mkdir()
 #include <sys/types.h>   // mkdir()
 #include <dirent.h>      // needed for dir listing
-#endif // WIN32
+#endif // _WIN32
 
 #include "Util.h"
 
@@ -404,7 +404,7 @@ bool util_strToBool(const char* str) {
 }
 
 
-#if defined WIN32
+#if defined _WIN32
 static bool util_isFile(const struct _finddata_t* fileInfo) {
 	return !(fileInfo->attrib & _A_SUBDIR)
 			&& fileInfo->attrib & (_A_NORMAL | _A_HIDDEN | _A_ARCH);
@@ -479,7 +479,7 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 	return util_listFilesRec(
 			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
-#else // defined WIN32
+#else // defined _WIN32
 
 static const char* fileSelectorSuffix = NULL;
 
@@ -551,7 +551,7 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 	return util_listFilesRec(
 			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
-#endif // defined WIN32
+#endif // defined _WIN32
 
 void util_removeTrailingSlash(char* fsPath) {
 
@@ -597,14 +597,14 @@ bool util_fileExists(const char* filePath) {
 
 static bool util_makeDirS(const char* dirPath) {
 
-	#if defined WIN32
+	#if defined _WIN32
 		int mkStat = _mkdir(dirPath);
 		if (mkStat == 0) {
 			return true;
 		} else {
 			return false;
 		}
-	#else // defined WIN32
+	#else // defined _WIN32
 		// with read/write/search permissions for owner and group,
 		// and with read/search permissions for others
 		int mkStat = mkdir(dirPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -613,7 +613,7 @@ static bool util_makeDirS(const char* dirPath) {
 		} else {
 			return false;
 		}
-	#endif // defined WIN32
+	#endif // defined _WIN32
 }
 
 bool util_makeDir(const char* dirPath, bool recursive) {

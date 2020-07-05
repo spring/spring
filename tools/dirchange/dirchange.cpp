@@ -15,7 +15,7 @@
 #include <list>
 #include <map>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #include <dirent.h>
@@ -98,7 +98,7 @@ const char *GetFilename (const char *file)
 	return file;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 void Scan(const string& curPath, const string& storePath)
 {
 	struct _finddata_t files;

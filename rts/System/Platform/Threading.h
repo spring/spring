@@ -45,7 +45,7 @@ namespace Threading {
 	};
 
 	// generic types & functions to handle OS native threads
-#ifdef WIN32
+#ifdef _WIN32
 	typedef DWORD     NativeThreadId;
 	typedef HANDLE    NativeThreadHandle;
 #else
@@ -55,7 +55,7 @@ namespace Threading {
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
 
-#ifndef WIN32
+#ifndef _WIN32
 	extern thread_local std::shared_ptr<ThreadControls> localThreadControls;
 #endif
 
@@ -75,7 +75,7 @@ namespace Threading {
 	 */
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
 
-#ifndef WIN32
+#ifndef _WIN32
 	void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls);
 #endif
 
@@ -92,7 +92,7 @@ namespace Threading {
 
 		NativeThreadHandle      handle;
 		std::atomic<bool>       running;
-	#ifndef WIN32
+	#ifndef _WIN32
 		spring::mutex            mutSuspend;
 		spring::condition_variable condInitialized;
 		ucontext_t              ucontext;

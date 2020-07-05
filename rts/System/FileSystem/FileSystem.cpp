@@ -196,7 +196,7 @@ std::string FileSystem::GetExtension(const std::string& path)
 {
 	const std::string fileName = GetFilename(path);
 	size_t l = fileName.length();
-//#ifdef WIN32
+//#ifdef _WIN32
 	//! windows eats dots and spaces at the end of filenames
 	while (l > 0) {
 		const char prevChar = fileName[l-1];

@@ -10,7 +10,7 @@
 	#include <sys/ioctl.h>
 	#include <sys/socket.h>
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	#include <io.h>
 	#include <direct.h>
 	#include <process.h>
@@ -37,7 +37,7 @@
 
 
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <pwd.h> // for getpw*()
 #include <sys/statvfs.h>
@@ -58,14 +58,14 @@
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"
-#if defined(WIN32)
+#if defined(_WIN32)
 #include "System/Platform/Win/WinVersion.h"
 #endif
 #include "System/Sync/SHA512.hpp"
 
 
 
-#if       defined WIN32
+#if       defined _WIN32
 /**
  * Returns a handle to the currently loaded module.
  * Note: requires at least Windows 2000
@@ -147,7 +147,7 @@ namespace Platform
 		return userDir;
 	}
 
-	#ifndef WIN32
+	#ifndef _WIN32
 	static std::string GetRealPath(const std::string& path)
 	{
 		char realPath[65536] = {0};
@@ -187,7 +187,7 @@ namespace Platform
 		}
 
 
-		#elif defined(WIN32)
+		#elif defined(_WIN32)
 		TCHAR procExeFile[MAX_PATH + 1];
 
 		// main process executable handle
@@ -296,7 +296,7 @@ namespace Platform
 			error = "Not loaded";
 		}
 
-	#elif WIN32
+	#elif _WIN32
 		HMODULE hModule = nullptr;
 
 		if (moduleName.empty()) {
@@ -342,7 +342,7 @@ namespace Platform
 
 	std::string GetOSNameStr()
 	{
-		#if defined(WIN32)
+		#if defined(_WIN32)
 		// "Windows Vista"
 		return (windows::GetDisplayString(true, false, false));
 		#else
@@ -358,7 +358,7 @@ namespace Platform
 
 	std::string GetOSVersionStr()
 	{
-		#if defined(WIN32)
+		#if defined(_WIN32)
 		// "Ultimate Edition, 32-bit Service Pack 1 (build 7601)"
 		return (windows::GetDisplayString(false, true, true));
 		#else
@@ -375,7 +375,7 @@ namespace Platform
 	std::string GetOSDisplayStr() { return (GetOSNameStr() + " " + GetOSVersionStr()); }
 	std::string GetOSFamilyStr()
 	{
-		#if defined(WIN32)
+		#if defined(_WIN32)
 		return "Windows";
 		#elif defined(__linux__)
 		return "Linux";
@@ -401,7 +401,7 @@ namespace Platform
 		return (Platform::GetOSFamilyStr() + " " + Platform::GetWordSizeStr());
 	}
 
-	#if (defined(WIN32))
+	#if (defined(_WIN32))
 	std::string GetHardwareStr() { return (windows::GetHardwareString()); }
 	#else
 	std::string GetHardwareStr() {
@@ -491,7 +491,7 @@ namespace Platform
 
 
 	uint64_t FreeDiskSpace(const std::string& path) {
-		#ifdef WIN32
+		#ifdef _WIN32
 		ULARGE_INTEGER bytesFree;
 
 		if (!GetDiskFreeSpaceEx(path.c_str(), &bytesFree, nullptr, nullptr))
@@ -520,7 +520,7 @@ namespace Platform
 
 	bool Is64Bit() { return (NativeWordSize() == 8); }
 
-	#ifdef WIN32
+	#ifdef _WIN32
 	/** @brief checks if the current process is running in 32bit emulation mode
 		@return FALSE, TRUE, -1 on error (usually no permissions) */
 	bool Is32BitEmulation()
@@ -565,7 +565,7 @@ namespace Platform
 
 
 	std::string GetShortFileName(const std::string& file) {
-		#ifdef WIN32
+		#ifdef _WIN32
 		std::vector<TCHAR> shortPathC(file.size() + 1, 0);
 
 		// FIXME: stackoverflow.com/questions/843843/getshortpathname-unpredictable-results
@@ -600,7 +600,7 @@ namespace Platform
 		args[0] = GetShortFileName(args[0]);
 
 		if (asSubprocess) {
-			#ifdef WIN32
+			#ifdef _WIN32
 			STARTUPINFO si;
 			PROCESS_INFORMATION pi;
 
@@ -654,7 +654,7 @@ namespace Platform
 			argPointers[a + 1] = nullptr;
 		}
 
-		#ifdef WIN32
+		#ifdef _WIN32
 			#define EXECVP _execvp
 		#else
 			#define EXECVP execvp

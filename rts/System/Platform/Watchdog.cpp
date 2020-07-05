@@ -43,14 +43,14 @@ namespace Watchdog
 			numreg = {0};
 		}
 		void ResetThreadControls() {
-			#ifndef WIN32
+			#ifndef _WIN32
 			ctls.reset();
 			#endif
 		}
 
 		void SetThreadControls()
 		{
-			#ifndef WIN32
+			#ifndef _WIN32
 			ctls = Threading::GetCurrentThreadControls();
 			#endif
 		}
@@ -154,7 +154,7 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
-					#ifdef WIN32
+					#ifdef _WIN32
 					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
 					#else
 					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), threadNames[i]);

@@ -94,7 +94,7 @@ void CDemoRecorder::WriteDemoFile()
 
 	LOG("[DemoRecorder::%s] writing %s-demo \"%s\" (" _STPF_ " bytes)", __func__, (isServerDemo? "server": "client"), demoName.c_str(), data.size());
 
-	#ifndef WIN32
+	#ifndef _WIN32
 	// NOTE: can not use ThreadPool for this directly here, workers are already gone
 	// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
 	ThreadPool::AddExtJob(spring::thread(std::move(func), file, std::ref(data)));

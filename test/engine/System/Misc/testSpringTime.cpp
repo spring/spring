@@ -31,7 +31,7 @@ struct Cpp11ChronoClock {
 
 
 
-#if defined(__USE_GNU) && !defined(WIN32)
+#if defined(__USE_GNU) && !defined(_WIN32)
 #include <time.h>
 struct PosixClockMT {
 	static inline float ToMs() { return 1.0f / 1e6; }
@@ -112,7 +112,7 @@ TEST_CASE("ClockQualityCheck")
 
 	float bestAvg = 1e9;
 
-#if defined(__USE_GNU) && !defined(WIN32)
+#if defined(__USE_GNU) && !defined(_WIN32)
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockMT>::Run());
 	bestAvg = std::min(bestAvg, TestProcessor<PosixClockRT>::Run());
 #endif
@@ -208,7 +208,7 @@ TEST_CASE("ClockQualityCheck")
 void sleep_spring(int time) { spring_sleep(spring_msecs(time)); }
 void sleep_spring2(int time) { spring_sleep(spring_time::fromNanoSecs(time)); }
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <windows.h>
 	void sleep_windows(int time)  { Sleep(time); }
 #else
@@ -268,7 +268,7 @@ TEST_CASE("ThreadSleepTime")
 	BenchmarkSleepFnc("sleep_stdchrono", &sleep_stdchrono, 500, 1e6);
 	BenchmarkSleepFnc("yield_chrono", &yield_chrono, 500000, 0);
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 	BenchmarkSleepFnc("sleep_windows", &sleep_windows, 500, 1e0);
 #else
 	BenchmarkSleepFnc("sleep_posix_msec", &sleep_posix_msec, 500, 1e0);

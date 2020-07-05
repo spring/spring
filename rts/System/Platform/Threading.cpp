@@ -13,7 +13,7 @@
 #include <memory>
 #include <cinttypes>
 #if defined(__APPLE__) || defined(__FreeBSD__)
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	#include <windows.h>
 #else
 	#if defined(__USE_GNU)
@@ -22,14 +22,14 @@
 	#include <sched.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 	#include "Linux/ThreadSupport.h"
 #endif
 
 
 
 namespace Threading {
-#ifndef WIN32
+#ifndef _WIN32
 	thread_local std::shared_ptr<ThreadControls> localThreadControls;
 #endif
 
@@ -37,7 +37,7 @@ namespace Threading {
 	static Error threadError;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	static DWORD_PTR cpusSystem = 0;
 #else
 	static cpu_set_t cpusSystem;
@@ -49,7 +49,7 @@ namespace Threading {
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 		// Get the available cores
 		DWORD_PTR curMask;
 		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cpusSystem);
@@ -66,7 +66,7 @@ namespace Threading {
 
 
 	#if defined(__APPLE__) || defined(__FreeBSD__)
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 	#else
 	static std::uint32_t CalcCoreAffinityMask(const cpu_set_t* cpuSet) {
 		std::uint32_t coreMask = 0;
@@ -104,7 +104,7 @@ namespace Threading {
 		// no-op
 		return 0;
 
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 		DWORD_PTR curMask;
 		DWORD_PTR systemCpus;
 		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &systemCpus);
@@ -128,7 +128,7 @@ namespace Threading {
 		// no-op
 		return 0;
 
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 		// create mask
 		DWORD_PTR cpusWanted = (coreMask & cpusSystem);
 		DWORD_PTR result = 0;
@@ -183,7 +183,7 @@ namespace Threading {
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 		return (~0);
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 		return cpusSystem;
 	#else
 		return (CalcCoreAffinityMask(&cpusSystem));
@@ -212,7 +212,7 @@ namespace Threading {
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
-	#elif defined(WIN32)
+	#elif defined(_WIN32)
 		//TODO add MMCSS (http://msdn.microsoft.com/en-us/library/ms684247.aspx)
 		//Note: only available with mingw64!!!
 
@@ -236,7 +236,7 @@ namespace Threading {
 
 	NativeThreadHandle GetCurrentThread()
 	{
-	#ifdef WIN32
+	#ifdef _WIN32
 		// we need to use this cause GetCurrentThread() just returns a pseudo handle,
 		// which returns in all threads the current active one, so we need to translate it
 		// with DuplicateHandle to an absolute handle valid in our watchdog thread
@@ -251,7 +251,7 @@ namespace Threading {
 
 	NativeThreadId GetCurrentThreadId()
 	{
-	#ifdef WIN32
+	#ifdef _WIN32
 		return ::GetCurrentThreadId();
 	#else
 		return pthread_self();
@@ -264,20 +264,20 @@ namespace Threading {
 		handle(0),
 		running(false)
 	{
-#ifndef WIN32
+#ifndef _WIN32
 		memset(&ucontext, 0, sizeof(ucontext_t));
 #endif
 	}
 
 
-#ifndef WIN32
+#ifndef _WIN32
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls() { return localThreadControls; }
 #endif
 
 
 	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* threadCtls)
 	{
-#ifndef WIN32
+#ifndef _WIN32
 		// only used as locking mechanism, not installed by thread
 		Threading::ThreadControls tempCtls;
 
@@ -309,14 +309,14 @@ namespace Threading {
 				if (IsMainThread())
 					return;
 			} break;
-			#ifndef WIN32
+			#ifndef _WIN32
 			// both heartBeatThread and soundThread make use of CreateNewThread -> ThreadStart
 			// other threads under the eye of watchdog have their control structure setup here
 			case THREAD_IDX_SND : { return; } break;
 			#endif
 			case THREAD_IDX_WDOG: { return; } break;
 		}
-	#ifndef WIN32
+	#ifndef _WIN32
 		SetupCurrentThreadControls(localThreadControls);
 	#endif
 	}
@@ -346,7 +346,7 @@ namespace Threading {
 
 	void SetThreadName(const std::string& newname)
 	{
-	#if defined(__USE_GNU) && !defined(WIN32)
+	#if defined(__USE_GNU) && !defined(_WIN32)
 		//alternative: pthread_setname_np(pthread_self(), newname.c_str());
 		prctl(PR_SET_NAME, newname.c_str(), 0, 0, 0);
 	#elif _MSC_VER

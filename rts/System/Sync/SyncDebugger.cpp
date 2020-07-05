@@ -19,7 +19,7 @@
 #include "Logger.h"
 
 
-#ifndef WIN32
+#ifndef _WIN32
 	/* for backtrace() function */
 	#include <execinfo.h>
 	#define HAVE_BACKTRACE

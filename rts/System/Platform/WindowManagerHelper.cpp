@@ -28,7 +28,7 @@ void SetIcon(CBitmap* bmp) {
 
 	// 24bit RGB or 32bit RGBA
 	if (((bmp->channels != 3) && (bmp->channels != 4))
-//#ifdef    WIN32
+//#ifdef    _WIN32
 		// on windows, the icon has to be 32x32
 		|| (bmp->xsize != 32)
 		|| (bmp->ysize != 32)

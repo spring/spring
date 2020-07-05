@@ -10,7 +10,7 @@
 #define CLS_AI_CALLBACK PKG_AI"JniAICallback"
 
 // define path entry delimitter, used eg for the java class-path
-#ifdef WIN32
+#ifdef _WIN32
 #define ENTRY_DELIM ";"
 #else
 #define ENTRY_DELIM ":"
