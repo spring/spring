@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include <SDL.h>
-#if (!defined(HEADLESS) && !defined(WIN32) && !defined(__APPLE__))
+#if (!defined(HEADLESS) && !defined(_WIN32) && !defined(__APPLE__))
 // need this for glXQueryCurrentRendererIntegerMESA (glxext)
 #include <GL/glxew.h>
 #endif
