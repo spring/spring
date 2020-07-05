@@ -831,7 +831,7 @@ public:
 					aiData.options = aiOptions;
 					aiData.isLuaAI = aiLibInfo.IsLuaAI();
 
-					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
+					skirmishAIHandler.NetCreateLocalSkirmishAI(aiData);
 				}
 			}
 		} else {

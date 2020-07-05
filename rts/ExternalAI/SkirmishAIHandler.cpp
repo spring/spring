@@ -201,7 +201,7 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 	eoh->CreateSkirmishAI(skirmishAIId);
 }
 
-void CSkirmishAIHandler::CreateLocalSkirmishAI(const SkirmishAIData& aiData) {
+void CSkirmishAIHandler::NetCreateLocalSkirmishAI(const SkirmishAIData& aiData) {
 	// fail if a local AI is already in line for this team
 	assert(!IsValidSkirmishAI(localTeamAIs[aiData.team]));
 	// fail, if the specified AI is not a local one
