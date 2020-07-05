@@ -4,7 +4,7 @@
 #define _THREADING_H_
 
 #include <string>
-#ifndef WIN32
+#ifndef _WIN32
 #include <pthread.h>
 #include "System/Platform/Linux/ThreadSupport.h"
 #include <semaphore.h>
