@@ -44,7 +44,7 @@ CONFIG(std::string, SpringDataRoot)
 
 static inline std::string GetSpringBinaryName()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	return "spring.exe";
 #else
 	return "spring";
@@ -53,7 +53,7 @@ static inline std::string GetSpringBinaryName()
 
 static inline std::string GetUnitsyncLibName()
 {
-#if   defined(WIN32)
+#if   defined(_WIN32)
 	return "unitsync.dll";
 #elif defined(__APPLE__)
 	return "libunitsync.dylib";

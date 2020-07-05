@@ -322,7 +322,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 		return nullptr;
 	}
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	if (borderless && !fullScreen) {
 		WindowManagerHelper::SetWindowResizable(newWindow, !borderless);
 
@@ -1122,7 +1122,7 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 
 
 
-#if defined(WIN32) && !defined(HEADLESS)
+#if defined(_WIN32) && !defined(HEADLESS)
 	#if defined(_MSC_VER) && _MSC_VER >= 1600
 		#define _GL_APIENTRY __stdcall
 	#else

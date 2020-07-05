@@ -244,7 +244,7 @@ public:
   // Set the value for the linger timeout.
   void timeout ASIO_PREVENT_MACRO_SUBSTITUTION(int value)
   {
-#if defined(WIN32)
+#if defined(_WIN32)
     value_.l_linger = static_cast<u_short>(value);
 #else
     value_.l_linger = value;

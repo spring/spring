@@ -112,7 +112,7 @@ bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 
 //////////////////////////////////////////////////////////////////////
 
-#if defined(WIN32) && !defined(HEADLESS)
+#if defined(_WIN32) && !defined(HEADLESS)
 
 class CWin32MouseInput : public IMouseInput
 {
@@ -234,7 +234,7 @@ bool IMouseInput::WarpPos(int2 pos)
 IMouseInput* IMouseInput::GetInstance(bool relModeWarp)
 {
 	if (mouseInput == nullptr) {
-#if defined(WIN32) && !defined(HEADLESS)
+#if defined(_WIN32) && !defined(HEADLESS)
 		mouseInput = new (mouseInputMem) CWin32MouseInput(relModeWarp);
 #else
 		mouseInput = new (mouseInputMem) IMouseInput(relModeWarp);
