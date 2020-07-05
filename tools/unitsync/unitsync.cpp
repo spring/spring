@@ -44,7 +44,7 @@
 #include "System/StringUtil.h"
 #include "System/ExportDefines.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -64,7 +64,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
 #define SQUARE_SIZE 8
 
 
-#ifdef WIN32
+#ifdef _WIN32
 BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
 	return TRUE;

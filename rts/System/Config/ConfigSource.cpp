@@ -5,7 +5,7 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/ScopedFileLock.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <io.h>
 #else
 	#include <unistd.h>
@@ -176,7 +176,7 @@ void FileConfigSource::Read(FILE* file)
 void FileConfigSource::Write(FILE* file)
 {
 	rewind(file);
-#ifdef WIN32
+#ifdef _WIN32
 	int err = _chsize(fileno(file), 0);
 #else
 	int err = ftruncate(fileno(file), 0);

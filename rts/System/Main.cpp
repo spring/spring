@@ -18,7 +18,7 @@
 #include <clocale>
 #include <cstdlib>
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 #endif
 
@@ -51,7 +51,7 @@ int Run(int argc, char* argv[])
 #if !defined(PROFILE) && !defined(HEADLESS)
 static bool SetNvOptimusProfile(const std::string& processFileName)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

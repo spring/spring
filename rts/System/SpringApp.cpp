@@ -8,7 +8,7 @@
 #include <SDL.h>
 #include <gflags/gflags.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
@@ -288,7 +288,7 @@ bool SpringApp::Init()
 
 bool SpringApp::InitPlatformLibs()
 {
-#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
+#if !(defined(_WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// MUST run before any other X11 call (including
 	// those by SDL) to make calls to X11 threadsafe
 	if (!XInitThreads()) {
@@ -297,7 +297,7 @@ bool SpringApp::InitPlatformLibs()
 	}
 #endif
 
-#if defined(WIN32) && defined(__GNUC__)
+#if defined(_WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
 		// suppress dialog box if gdb helpers aren't found
@@ -407,7 +407,7 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	if (argc >= 2)
 		inputFile = argv[1];
 
-#ifndef WIN32
+#ifndef _WIN32
 	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))

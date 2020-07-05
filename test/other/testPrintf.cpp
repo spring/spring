@@ -101,7 +101,7 @@ TEST_CASE("SpringFormat")
 		sprintf(s2, (std::string("%") + fmt + "f").c_str(), f);
 		LOG("%40s %40s", s1, s2);
 
-#ifdef WIN32
+#ifdef _WIN32
 		if (!std::isnan(f)) // window's printf doesn't support signed NaNs
 #endif
 		CHECK(strcmp(s1, s2) == 0);

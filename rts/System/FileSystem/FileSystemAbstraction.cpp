@@ -54,7 +54,7 @@ std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path
 bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 {
 
-#ifdef WIN32
+#ifdef _WIN32
 	// examples: "C:\", "C:/", "C:", "c:", "D:"
 	bool isFsRoot = (p.length() >= 2 && p[1] == ':' &&
 			((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) &&
@@ -166,7 +166,7 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 	if (!FileExists(file))
 		return false;
 
-#ifdef WIN32
+#ifdef _WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
 	return (access(file.c_str(), R_OK | F_OK) == 0);
@@ -216,7 +216,7 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 	//const boost::filesystem::path f(file);
 	//return f.is_absolute();
 
-#ifdef WIN32
+#ifdef _WIN32
 	return ((path.length() > 1) && (path[1] == ':'));
 #else
 	return ((path.length() > 0) && (path[0] == '/'));
@@ -261,7 +261,7 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	if (DirExists(file)) {
 		if (!RemoveDirectory(StripTrailingSlashes(file).c_str())) {
 			LPSTR messageBuffer = nullptr;
@@ -341,7 +341,7 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-#ifndef WIN32
+#ifndef _WIN32
 	struct stat info1, info2;
 	const int ret1 = stat(path1.c_str(), &info1);
 	const int ret2 = stat(path2.c_str(), &info2);

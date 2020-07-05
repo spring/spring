@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <numeric>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -457,7 +457,7 @@ int fakemain(int argc, char** argv)
 	return 0;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return fakemain(__argc, __argv);
@@ -468,7 +468,7 @@ int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 TEST_CASE("CreateContext")
 {
-	#ifdef WIN32
+	#ifdef _WIN32
 	// FIXME: SDL_Init triggers SIGABRT on Linux buildbots
 	fakemain(0, nullptr);
 	#endif

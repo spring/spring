@@ -144,7 +144,7 @@ void SetupCurrentThreadControls(std::shared_ptr<ThreadControls>& threadCtls)
 {
 	assert(!Threading::IsWatchDogThread());
 
-	#ifndef WIN32
+	#ifndef _WIN32
 	if (threadCtls.get() != nullptr) {
 		// old shared_ptr will be deleted by the reset below
 		LOG_L(L_WARNING, "[%s] thread already has ThreadControls installed", __func__);

@@ -105,7 +105,7 @@ LogStream* LogStream::createDefaultStream(aiDefaultLogStream    streams,
     {
         // This is a platform-specific feature
     case aiDefaultLogStream_DEBUGGER:
-#ifdef WIN32
+#ifdef _WIN32
         return new Win32DebugLogStream();
 #else
         return NULL;
@@ -417,7 +417,7 @@ unsigned int DefaultLogger::GetThreadID()
 {
     // fixme: we can get this value via std::threads
     // std::this_thread::get_id().hash() returns a (big) size_t, not sure if this is useful in this case.
-#ifdef WIN32
+#ifdef _WIN32
     return (unsigned int)::GetCurrentThreadId();
 #else
     return 0; // not supported

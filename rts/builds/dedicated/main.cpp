@@ -59,7 +59,7 @@ void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
-#ifndef WIN32
+#ifndef _WIN32
 	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))

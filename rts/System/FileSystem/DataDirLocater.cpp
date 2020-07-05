@@ -7,7 +7,7 @@
 #include <cstring>
 #include <sstream>
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <io.h>
 	#include <direct.h>
 	#include <windows.h>
@@ -285,7 +285,7 @@ void DataDirLocater::AddPortableDir()
 
 void DataDirLocater::AddHomeDirs()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	// All MS Windows variants
 
 	// fetch my documents path
@@ -320,7 +320,7 @@ void DataDirLocater::AddHomeDirs()
 
 void DataDirLocater::AddEtcDirs()
 {
-#ifndef WIN32
+#ifndef _WIN32
 	// Linux, FreeBSD, Solaris, Apple non-bundle
 
 	// settings in /etc
@@ -457,7 +457,7 @@ void DataDirLocater::Check()
 				"Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
-			#ifdef WIN32
+			#ifdef _WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
 				"- by giving your user-account write access to the installation directory";
 			#else

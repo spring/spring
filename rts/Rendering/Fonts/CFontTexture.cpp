@@ -436,7 +436,7 @@ bool CFontTexture::GenFontConfig() {
 	// called only from SpringApp::ParseCmdLine, regular singleton does not exist
 	char osFontsDir[32 * 1024];
 
-	#ifdef WIN32
+	#ifdef _WIN32
 	ExpandEnvironmentStrings("%WINDIR%\\fonts", osFontsDir, sizeof(osFontsDir)); // expands %HOME% etc.
 	#else
 	strncpy(osFontsDir, "/etc/fonts/", sizeof(osFontsDir));

@@ -21,7 +21,7 @@
 #endif
 
 
-#if (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
+#if (defined(_WIN32) && !defined(FORCE_CHRONO_TIMERS))
 	#define USE_NATIVE_WINDOWS_CLOCK 1
 #endif
 

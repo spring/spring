@@ -1822,7 +1822,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	std::string dname = FileSystem::GetDirectory(path);
 	std::string fname = FileSystem::GetFilename(path);
 
-#ifdef WIN32
+#ifdef _WIN32
 	const size_t s = dname.size();
 	// get rid of any trailing slashes (CreateDirectory()
 	// fails on at least XP and Vista if they are present,

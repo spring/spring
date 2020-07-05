@@ -645,7 +645,7 @@ void AddExtJob(spring::thread&& t) {
 }
 
 void AddExtJob(std::future<void>&& f) {
-	#ifndef WIN32
+	#ifndef _WIN32
 	for (auto& ef: extFutures) {
 		// find a future whose (void) result is already available, without blocking
 		// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
