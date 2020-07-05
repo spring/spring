@@ -43,6 +43,7 @@
 #include "System/SpringExitCode.h"
 #include "System/SpringFormat.h"
 #include "System/TdfParser.h"
+#include "System/StringHash.h"
 #include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
@@ -111,17 +112,16 @@ static constexpr unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
 
 //FIXME remodularize server commands, so they get registered in word completion etc.
-static const std::array<std::string, 23> SERVER_COMMANDS = {
+decltype(CGameServer::commandBlacklist) CGameServer::commandBlacklist{
 	"kick", "kickbynum",
 	"mute", "mutebynum",
+	"aictrl", "aictrlbynum",
 	"setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
 	"singlestep", "spec", "specbynum"
 };
-
-std::array<std::string, 23> CGameServer::commandBlacklist = SERVER_COMMANDS;
 
 
 
@@ -131,44 +131,10 @@ CGameServer::CGameServer(
 	const std::shared_ptr<const ClientSetup> newClientSetup,
 	const std::shared_ptr<const    GameData> newGameData,
 	const std::shared_ptr<const  CGameSetup> newGameSetup
-)
-: serverFrameNum(-1)
+) {
+	lastPlayerInfo = serverStartTime;
+	lastUpdate = serverStartTime;
 
-, serverStartTime(spring_gettime())
-, readyTime(spring_notime)
-, gameEndTime(spring_notime)
-, lastPlayerInfo(serverStartTime)
-, lastUpdate(serverStartTime)
-
-, modGameTime(0.0f)
-, gameTime(0.0f)
-, startTime(0.0f)
-, frameTimeLeft(0.0f)
-
-, isPaused(false)
-, gamePausable(true)
-
-, userSpeedFactor(1.0f)
-, internalSpeed(1.0f)
-
-, medianCpu(0.0f)
-, medianPing(0)
-
-, cheating(false)
-, noHelperAIs(false)
-, canReconnect(false)
-, allowSpecDraw(true)
-
-, syncErrorFrame(0)
-, syncWarningFrame(0)
-
-, localClientNumber(-1u)
-
-, gameHasStarted(false)
-, generatedGameID(false)
-, reloadingServer(false)
-, quitServer(false)
-{
 	myClientSetup = newClientSetup;
 	myGameData = newGameData;
 	myGameSetup = newGameSetup;
@@ -202,7 +168,7 @@ void CGameServer::Initialize()
 
 	// start network
 	if (!myGameSetup->onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
+		udpListener.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 	Message(spring::format(ServerStart, myClientSetup->hostPort), false);
@@ -211,7 +177,9 @@ void CGameServer::Initialize()
 	maxUserSpeed = myGameSetup->maxSpeed;
 	minUserSpeed = myGameSetup->minSpeed;
 	noHelperAIs  = myGameSetup->noHelperAIs;
-	StripGameSetupText(myGameData.get());
+
+	// modify and save GameSetup text (remove passwords)
+	StripGameSetupText(const_cast<GameData*>(myGameData.get()));
 
 	// load demo (if there is one)
 	if (myGameSetup->hostDemo) {
@@ -221,9 +189,10 @@ void CGameServer::Initialize()
 
 	// initialize players, teams & ais
 	{
-		pingTimeFilter.fill(spring_notime);
-		clientDrawFilter.fill({spring_notime, 0});
-		clientMuteFilter.fill({false, false});
+		netPingTimings.fill(spring_notime);
+		mapDrawTimings.fill({spring_notime, 0});
+		chatMutedFlags.fill({false, false});
+		aiControlFlags.fill(false);
 
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
 		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
@@ -236,9 +205,8 @@ void CGameServer::Initialize()
 		if (demoReader != nullptr) {
 			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
 			players.resize(std::max(demoPlayers, playerStartData.size()));
-			if (players.size() >= MAX_PLAYERS) {
+			if (players.size() >= MAX_PLAYERS)
 				Message(spring::format("Too many Players (%d) in the demo", players.size()));
-			}
 		}
 
 		std::copy(playerStartData.begin(), playerStartData.end(), players.begin());
@@ -275,7 +243,6 @@ void CGameServer::Initialize()
 	}
 
 	{
-		// std::copy(SERVER_COMMANDS.begin(), SERVER_COMMANDS.end(), commandBlacklist.begin());
 		std::sort(commandBlacklist.begin(), commandBlacklist.end());
 	}
 
@@ -288,8 +255,9 @@ void CGameServer::Initialize()
 	}
 
 	loopSleepTime = configHandler->GetInt("ServerSleepTime");
-	lastNewFrameTick = spring_gettime();
 	linkMinPacketSize = globalConfig.linkIncomingMaxPacketRate > 0 ? (globalConfig.linkIncomingSustainedBandwidth / globalConfig.linkIncomingMaxPacketRate) : 1;
+
+	lastNewFrameTick = spring_gettime();
 	lastBandwidthUpdate = spring_gettime();
 
 	thread = std::move(spring::thread(std::bind(&CGameServer::UpdateLoop, this)));
@@ -363,29 +331,25 @@ void CGameServer::WriteDemoData()
 	*/
 }
 
-void CGameServer::StripGameSetupText(const GameData* newGameData)
+void CGameServer::StripGameSetupText(GameData* gameData)
 {
-	// modify and save GameSetup text (remove passwords)
-	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
-	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
+	TdfParser parser((gameData->GetSetupText()).c_str(), (gameData->GetSetupText()).length());
 
-	for (const auto& item: rootSec->sections) {
-		const std::string& sectionKey = StringToLower(item.first);
+	TdfParser::TdfSection* rootSec = parser.GetRootSection();
+	TdfParser::TdfSection* gameSec = rootSec->sections["game"];
 
-		if (!StringStartsWith(sectionKey, "player"))
+	for (const auto& sectionPair: gameSec->sections) {
+		if (!StringStartsWith(StringToLower(sectionPair.first), "player"))
 			continue;
 
-		TdfParser::TdfSection* playerSec = item.second;
+		TdfParser::TdfSection* playerSec = sectionPair.second;
 		playerSec->remove("password", false);
 	}
 
 	std::ostringstream strbuf;
 	parser.print(strbuf);
 
-	GameData* modGameData = new GameData(*newGameData);
-
-	modGameData->SetSetupText(strbuf.str());
-	myGameData.reset(modGameData);
+	gameData->SetSetupText(strbuf.str());
 }
 
 
@@ -450,18 +414,17 @@ void CGameServer::SkipTo(int targetFrameNum)
 		gameTime = GetDemoTime();
 		modGameTime = demoReader->GetModGameTime() + 0.001f;
 
-		if (UDPNet == nullptr) { continue; }
+		if (udpListener == nullptr) { continue; }
 		if ((serverFrameNum % 20) != 0) { continue; }
 
 		// send data every few frames, as otherwise packets would grow too big
-		UDPNet->Update();
+		udpListener->Update();
 	}
 
 	Broadcast(std::shared_ptr<const netcode::RawPacket>(endMsg.Pack()));
 
-	if (UDPNet) {
-		UDPNet->Update();
-	}
+	if (udpListener != nullptr)
+		udpListener->Update();
 
 	lastUpdate = spring_gettime();
 	isPaused = wasPaused;
@@ -564,15 +527,14 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 		}
 	}
 
-	if (targetFrameNum > 0) {
-		// skipping
+	// skipping
+	if (targetFrameNum > 0)
 		ret = (serverFrameNum < targetFrameNum);
-	}
 
 	if (demoReader->ReachedEnd()) {
 		demoReader.reset();
 		Message(DemoEnd);
-		gameEndTime = spring_gettime();
+
 		ret = false;
 	}
 
@@ -1070,9 +1032,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			}
 
 			// limit to 50 pings per second
-			if (spring_diffmsecs(spring_now(), pingTimeFilter[playerNum]) >= 20) {
+			if (spring_diffmsecs(spring_now(), netPingTimings[playerNum]) >= 20) {
 				players[playerNum].SendData(CBaseNetProtocol::Get().SendPing(playerNum, inbuf[2], *(reinterpret_cast<const float*>(&inbuf[3]))));
-				pingTimeFilter[playerNum] = spring_now();
+				netPingTimings[playerNum] = spring_now();
 			}
 		} break;
 
@@ -1160,7 +1122,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				// if this player is chat-muted, drop his messages quietly
-				if (clientMuteFilter[a].first)
+				if (chatMutedFlags[a].first)
 					break;
 
 				GotChatMessage(msg);
@@ -1424,7 +1386,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				// if this player is draw-muted, drop his messages quietly
-				if (clientMuteFilter[a].second)
+				if (chatMutedFlags[a].second)
 					break;
 
 
@@ -1432,15 +1394,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				// each followed the previous by less than 50 milliseconds
 				// this is impossible to reach manually, but (very) easily
 				// through Lua and would allow clients to be DOS'ed
-				clientDrawFilter[a].second += (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
-				clientDrawFilter[a].second *= (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
-				clientDrawFilter[a].first   = spring_now();
+				mapDrawTimings[a].second += (spring_diffmsecs(spring_now(), mapDrawTimings[a].first) < 50);
+				mapDrawTimings[a].second *= (spring_diffmsecs(spring_now(), mapDrawTimings[a].first) < 50);
+				mapDrawTimings[a].first   = spring_now();
 
-				if (clientDrawFilter[a].second > 25)
+				if (mapDrawTimings[a].second > 25)
 					break;
 
 
-				if (!players[playerNum].spectator || allowSpecDraw)
+				if (allowSpecDraw || !players[playerNum].spectator)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid MapDraw: %s", players[a].name.c_str(), ex.what()));
@@ -1649,13 +1611,17 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 					break;
 				}
+				if (aiControlFlags[playerId]) {
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] player %d not allowed to use /aicontrol", __func__, int(playerId)));
+					break;
+				}
 
 				pckt >> skirmishAIId;
 				pckt >> aiTeamId;
 				pckt >> aiName;
 
 				if (aiTeamId >= teams.size()) {
-					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] invalid teamID %d from player %d", __func__, unsigned(aiTeamId), unsigned(playerId)));
+					Message(spring::format("[GameServer::%s][NETMSG_AI_CREATED] invalid teamID %d from player %d", __func__, int(aiTeamId), int(playerId)));
 					break;
 				}
 
@@ -1824,9 +1790,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 				if (hostif != nullptr)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
-				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
-				gameEndTime = spring_gettime();
+				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid GameOver: %s", players[a].name.c_str(), ex.what()));
 			}
@@ -1866,12 +1831,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 void CGameServer::HandleConnectionAttempts()
 {
-	while (UDPNet != nullptr && UDPNet->HasIncomingConnections()) {
-		std::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
+	while (udpListener != nullptr && udpListener->HasIncomingConnections()) {
+		std::shared_ptr<netcode::UDPConnection> prev = udpListener->PreviewConnection().lock();
 		std::shared_ptr<const RawPacket> packet = prev->GetData();
 
 		if (packet == nullptr) {
-			UDPNet->RejectConnection();
+			udpListener->RejectConnection();
 			continue;
 		}
 
@@ -1906,7 +1871,7 @@ void CGameServer::HandleConnectionAttempts()
 			if (netversion != NETWORK_VERSION)
 				throw netcode::UnpackPacketException(spring::format("Wrong network version: received %d, required %d", (int)netversion, (int)NETWORK_VERSION));
 
-			BindConnection(UDPNet->AcceptConnection(), name, passwd, version, platform, false, reconnect, netloss);
+			BindConnection(udpListener->AcceptConnection(), name, passwd, version, platform, false, reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
 			const asio::ip::udp::endpoint endp = prev->GetEndpoint();
 			const asio::ip::address addr = endp.address();
@@ -1935,7 +1900,7 @@ void CGameServer::HandleConnectionAttempts()
 				Message(msg, false, true);
 			}
 
-			UDPNet->RejectConnection();
+			udpListener->RejectConnection();
 		}
 	}
 }
@@ -2176,11 +2141,12 @@ void CGameServer::StartGame(bool forced)
 	assert(!gameHasStarted);
 	gameHasStarted = true;
 	startTime = gameTime;
+
 	if (!canReconnect && !allowSpecJoin)
 		packetCache.clear(); // free memory
 
-	if (UDPNet && !canReconnect && !allowSpecJoin)
-		UDPNet->SetAcceptingConnections(false); // do not accept new connections
+	if (udpListener && !canReconnect && !allowSpecJoin)
+		udpListener->SetAcceptingConnections(false); // do not accept new connections
 
 	// make sure initial game speed is within allowed range and send a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
@@ -2266,227 +2232,282 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 {
-	if (action.command == "kickbynum") {
-		if (!action.extra.empty()) {
-			const int playerNum = atoi(action.extra.c_str());
-			KickPlayer(playerNum);
-		}
-	}
-	else if (action.command == "kick") {
-		if (!action.extra.empty()) {
-			std::string name = action.extra;
-			StringToLowerInPlace(name);
-			for (GameParticipant& p: players) {
-				std::string playerLower = StringToLower(p.name);
-				if (playerLower.find(name)==0) {	// can kick on substrings of name
-					if (!p.isLocal) // do not kick host
-						KickPlayer(p.id);
-				}
+	switch (hashString(action.command.c_str())) {
+		case hashString("kickbynum"): {
+			if (action.extra.empty())
+				return;
+
+			KickPlayer(atoi(action.extra.c_str()));
+		} break;
+
+		case hashString("kick"): {
+			if (action.extra.empty())
+				return;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow kick on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			// do not kick host
+			if (iter != players.end() && !iter->isLocal)
+				KickPlayer(iter->id);
+		} break;
+
+
+		case hashString("mute"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-name> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "mute") {
-		if (action.extra.empty()) {
-			LOG_L(L_WARNING, "Failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-		} else {
+
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				LOG_L(L_WARNING, "Failed to mute player, usage: /mute <playername> [chatmute] [drawmute]");
-			} else {
-				const std::string name = StringToLower(tokens[0]);
-
-				bool muteChat = true;
-				bool muteDraw = true;
-
-				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
-				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
-
-				for (GameParticipant& p: players) {
-					const std::string playerLower = StringToLower(p.name);
-
-					if (playerLower.find(name) == 0) {	// can kick on substrings of name
-						MutePlayer(p.id, muteChat, muteDraw);
-						break;
-					}
-				}
+				LOG_L(L_WARNING, "[%s] incorrect arguments, usage: /%s <player-name> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "mutebynum") {
 
-		if (action.extra.empty()) {
-			LOG_L(L_WARNING, "Failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-		} else {
+			const std::string name = StringToLower(tokens[0]);
+
+			bool muteChat = true;
+			bool muteDraw = true;
+
+			if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+			if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
+
+			// allow mute on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter != players.end())
+				MutePlayer(iter->id, muteChat, muteDraw);
+		} break;
+
+		case hashString("mutebynum"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-id> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
+			}
+
 			const std::vector<std::string>& tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.empty() || tokens.size() > 3) {
-				LOG_L(L_WARNING, "Failed to mute player, usage: /mutebynum <player-id> [chatmute] [drawmute]");
-			} else {
-				const int playerID = atoi(tokens[0].c_str());
-				bool muteChat = true;
-				bool muteDraw = true;
-
-				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
-				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
-
-				MutePlayer(playerID, muteChat, muteDraw);
+				LOG_L(L_WARNING, "[%s] incorrect arguments, usage: /%s <player-id> [chatmute] [drawmute]", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	if (action.command == "specbynum") {
-		if (!action.extra.empty()) {
-			const int playerNum = atoi(action.extra.c_str());
-			SpecPlayer(playerNum);
-		}
-	}
-	else if (action.command == "spec") {
-		if (!action.extra.empty()) {
-			std::string name = action.extra;
-			StringToLowerInPlace(name);
-			for (GameParticipant& p: players) {
-				std::string playerLower = StringToLower(p.name);
-				if (playerLower.find(name)==0) {	// can spec on substrings of name
-					SpecPlayer(p.id);
-				}
+
+			const int playerID = atoi(tokens[0].c_str());
+
+			bool muteChat = true;
+			bool muteDraw = true;
+
+			if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+			if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
+
+			MutePlayer(playerID, muteChat, muteDraw);
+		} break;
+
+
+		case hashString("aictrl"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-name>", __func__, action.command.c_str());
+				return;
 			}
-		}
-	}
-	else if (action.command == "nopause") {
-		InverseOrSetBool(gamePausable, action.extra);
-	}
-	else if (action.command == "nohelp") {
-		InverseOrSetBool(noHelperAIs, action.extra);
-		// sent it because clients have to do stuff when this changes
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "nospecdraw") {
-		InverseOrSetBool(allowSpecDraw, action.extra, true);
-		// sent it because clients have to do stuff when this changes
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "setmaxspeed" && !action.extra.empty()) {
-		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
-		if (newUserSpeed > 0.2) {
-			maxUserSpeed = newUserSpeed;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow aictrl on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter == players.end())
+				return;
+
+			aiControlFlags[iter->id] = !aiControlFlags[iter->id];
+		} break;
+
+		case hashString("aictrlbynum"): {
+			if (action.extra.empty()) {
+				LOG_L(L_WARNING, "[%s] missing argument, usage: /%s <player-id>", __func__, action.command.c_str());
+				return;
+			}
+
+			const size_t playerNum = atoi(action.extra.c_str());
+
+			if (playerNum >= players.size())
+				return;
+
+			// toggle
+			aiControlFlags[playerNum] = !aiControlFlags[playerNum];
+		} break;
+
+
+		case hashString("specbynum"): {
+			if (action.extra.empty())
+				return;
+
+			SpecPlayer(atoi(action.extra.c_str()));
+		} break;
+
+		case hashString("spec"): {
+			if (action.extra.empty())
+				return;
+
+			const std::string name = StringToLower(action.extra);
+
+			// allow spec on substrings of name
+			const auto pred = [&](const GameParticipant& p) { return ((StringToLower(p.name)).find(name) == 0); };
+			const auto iter = std::find_if(players.begin(), players.end(), pred);
+
+			if (iter != players.end())
+				SpecPlayer(iter->id);
+		} break;
+
+
+		case hashString("nopause"): {
+			InverseOrSetBool(gamePausable, action.extra);
+		} break;
+		case hashString("nohelp"): {
+			InverseOrSetBool(noHelperAIs, action.extra);
+			// sent it because clients have to do stuff when this changes
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+		case hashString("nospecdraw"): {
+			InverseOrSetBool(allowSpecDraw, action.extra, true);
+			// sent it because clients have to do stuff when this changes
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+
+		case hashString("setmaxspeed"): {
+			if (action.extra.empty())
+				return;
+
+			const float argUserSpeed = static_cast<float>(atof(action.extra.c_str()));
+			const float newUserSpeed = std::max(argUserSpeed, minUserSpeed);
+
+			if (newUserSpeed > 0.2f) {
+				maxUserSpeed = newUserSpeed;
+				UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
+			}
+		} break;
+		case hashString("setminspeed"): {
+			if (action.extra.empty())
+				return;
+
+			minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
 			UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
-		}
-	}
-	else if (action.command == "setminspeed" && !action.extra.empty()) {
-		minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
-		UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
-	}
-	else if (action.command == "forcestart") {
-		if (!gameHasStarted)
-			CheckForGameStart(true);
-	}
-	else if (action.command == "skip") {
-		if (demoReader) {
-			std::string timeStr = action.extra;
+		} break;
+
+		case hashString("forcestart"): {
+			if (!gameHasStarted)
+				CheckForGameStart(true);
+		} break;
+
+		case hashString("skip"): {
+			if (demoReader == nullptr)
+				return;
 
 			// parse the skip time
+			std::string timeStr = action.extra;
 
-			// skip in seconds
 			bool skipFrames = false;
-			if (timeStr[0] == 'f') {
-				// skip in frame
-				skipFrames = true;
-				timeStr.erase(0, 1); // remove first char
-			}
-
-			// skip to absolute game-second/-frame
 			bool skipRelative = false;
-			if (timeStr[0] == '+') {
-				// skip to relative game-second/-frame
-				skipRelative = true;
+
+			// skip in seconds/frame
+			if ((skipFrames = (timeStr[0] == 'f')))
 				timeStr.erase(0, 1); // remove first char
-			}
+
+			// skip to absolute or relative game-second/-frame
+			if ((skipRelative = (timeStr[0] == '+')))
+				timeStr.erase(0, 1); // remove first char
 
 			// amount of frames/seconds to skip (to)
 			const int amount = atoi(timeStr.c_str());
-
 			// the absolute frame to skip to
-			int endFrame;
+			const int endFrame = skipFrames? amount: (GAME_SPEED * amount);
 
-			if (skipFrames)
-				endFrame = amount;
-			else
-				endFrame = GAME_SPEED * amount;
+			SkipTo(endFrame + (serverFrameNum * skipRelative));
+		} break;
 
-			if (skipRelative)
-				endFrame += serverFrameNum;
+		case hashString("cheat"): {
+			InverseOrSetBool(cheating, action.extra);
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
 
-			SkipTo(endFrame);
-		}
-	}
-	else if (action.command == "cheat") {
-		InverseOrSetBool(cheating, action.extra);
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
-	}
-	else if (action.command == "singlestep") {
-		if (isPaused) {
-			if (demoReader != nullptr) {
-				// we only want to advance one frame at most, so
-				// the next time-index must be "close enough" not
-				// to move past more than 1 NETMSG_NEWFRAME
+		case hashString("singlestep"): {
+			if (!isPaused)
+				return;
+
+			// we only want to advance one frame at most, so
+			// the next time-index must be "close enough" not
+			// to move past more than 1 NETMSG_NEWFRAME
+			if (demoReader != nullptr)
 				modGameTime = demoReader->GetModGameTime() + 0.001f;
-			}
 
 			CreateNewFrame(true, true);
-		}
-	}
-	else if (action.command == "adduser") {
-		if (!action.extra.empty() && whiteListAdditionalPlayers) {
+		} break;
+
+		case hashString("adduser"): {
+			if (action.extra.empty())
+				return;
+			if (!whiteListAdditionalPlayers)
+				return;
+
 			// split string by whitespaces
 			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
 
-			if (tokens.size() > 1) {
-				const std::string& name = tokens[0];
-				const std::string& pwd = tokens[1];
-				int team = 0;
-				bool spectator = true;
-				if (tokens.size() > 2) {
-					spectator = (tokens[2] != "0");
-				}
-				if (tokens.size() > 3) {
-					team = atoi(tokens[3].c_str());
-				}
-				// note: this must only compare by name
-				auto participantIter = std::find_if(players.begin(), players.end(), [&name](GameParticipant& p) {
-					return p.name == name;
-				});
-
-				if (participantIter != players.end()) {
-					participantIter->SetValue("password", pwd);
-
-					LOG("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), pwd.c_str());
-				} else {
-					AddAdditionalUser(name, pwd, false, spectator, team);
-
-					LOG("Added client \"%s\" with password \"%s\" to team %d (as a %s)",
-						name.c_str(), pwd.c_str(), team, (spectator? "spectator": "player")
-					);
-				}
-			} else {
+			if (tokens.size() <= 1) {
 				LOG_L(L_WARNING,
-					"Failed to add player/spectator password. usage: "
-					"/adduser <player-name> <password> [spectator] [team]"
+					"[%s] failed to add player/spectator password, usage: "
+					"/adduser <player-name> <password> [spectator] [team]",
+					__func__
+				);
+				return;
+			}
+
+			const std::string& name = tokens[0];
+			const std::string& pwd = tokens[1];
+			int team = 0;
+			bool spectator = true;
+
+			if (tokens.size() > 2)
+				spectator = (tokens[2] != "0");
+			if (tokens.size() > 3)
+				team = atoi(tokens[3].c_str());
+
+			// note: this must only compare by name
+			const auto playerPred = [&name](const GameParticipant& p) { return (p.name == name); };
+			const auto playerIter = std::find_if(players.begin(), players.end(), playerPred);
+
+			if (playerIter != players.end()) {
+				playerIter->SetValue("password", pwd);
+
+				LOG("[%s] changed password for client \"%s\" to \"%s\"", __func__, name.c_str(), pwd.c_str());
+			} else {
+				AddAdditionalUser(name, pwd, false, spectator, team);
+
+				LOG("[%s] added %s \"%s\" with password \"%s\" to team %d",
+					__func__, (spectator? "spectator": "player"), name.c_str(), pwd.c_str(), team
 				);
 			}
-		}
-	}
-	else if (action.command == "kill") {
-		LOG("Server killed!");
-		quitServer = true;
-	}
-	else if (action.command == "pause") {
-		if (gameHasStarted) {
+		} break;
+
+		case hashString("kill"): {
+			LOG("Server killed!");
+			quitServer = true;
+		} break;
+		case hashString("pause"): {
 			// action can originate from autohost prior to start
 			// (normal clients are blocked from sending any pause
 			// commands during this period)
+			if (!gameHasStarted)
+				return;
+
 			bool newPausedState = isPaused;
 
 			if (action.extra.empty()) {
@@ -2498,12 +2519,13 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 			}
 
 			isPaused = newPausedState;
-		}
-	}
-	else {
-		// only forward to players (send over network)
-		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
+
+		default: {
+			// only forward to players (send over network)
+			CommandMessage msg(action, SERVER_PLAYER);
+			Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
+		} break;
 	}
 }
 
@@ -2657,8 +2679,8 @@ void CGameServer::UpdateLoop()
 		while (!quitServer) {
 			spring_msecs(loopSleepTime).sleep(true);
 
-			if (UDPNet != nullptr)
-				UDPNet->Update();
+			if (udpListener != nullptr)
+				udpListener->Update();
 
 			std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 			ServerReadNet();
@@ -2689,7 +2711,7 @@ void CGameServer::UpdateLoop()
 }
 
 
-void CGameServer::KickPlayer(const int playerNum)
+void CGameServer::KickPlayer(int playerNum)
 {
 	// only kick connected players
 	if (players[playerNum].clientLink == nullptr) {
@@ -2707,19 +2729,19 @@ void CGameServer::KickPlayer(const int playerNum)
 }
 
 
-void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw)
+void CGameServer::MutePlayer(int playerNum, bool muteChat, bool muteDraw)
 {
 	if (playerNum >= players.size()) {
-		LOG_L(L_WARNING, "MutePlayer: invalid playerNum");
+		LOG_L(L_WARNING, "[%s] invalid playerNum %d", __func__, playerNum);
 		return;
 	}
 
-	clientMuteFilter[playerNum].first  = muteChat;
-	clientMuteFilter[playerNum].second = muteDraw;
+	chatMutedFlags[playerNum].first  = muteChat;
+	chatMutedFlags[playerNum].second = muteDraw;
 }
 
 
-void CGameServer::SpecPlayer(const int player)
+void CGameServer::SpecPlayer(int player)
 {
 	if (players[player].clientLink == nullptr) {
 		Message(spring::format("Attempt to spec user %d who is not connected", player));
@@ -2773,7 +2795,7 @@ bool CGameServer::CheckPlayerPassword(const int playerNum, const std::string& pw
 	if (playerNum >= players.size()) // new player
 		return true;
 
-	const GameParticipant::customOpts& opts = players[playerNum].GetAllValues();
+	const auto& opts = players[playerNum].GetAllValues();
 	const auto it = opts.find("password");
 
 	return (it == opts.end() || it->second == pw);
@@ -2944,8 +2966,8 @@ unsigned CGameServer::BindConnection(
 	if (newPlayer.clientLink != nullptr) {
 		newPlayer.clientLink->ReconnectTo(*clientLink);
 
-		if (UDPNet != nullptr)
-			UDPNet->UpdateConnections();
+		if (udpListener != nullptr)
+			udpListener->UpdateConnections();
 
 		Message(spring::format(" -> Connection reestablished (id %i)", newPlayerNumber));
 		newPlayer.clientLink->SetLossFactor(netloss);
@@ -3009,10 +3031,8 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 	if (internalSpeed == newSpeed)
 		return;
 
-	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
-	internalSpeed = newSpeed;
+	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(internalSpeed = newSpeed));
 }
-
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
@@ -3022,8 +3042,7 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 	if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
 		InternalSpeedChange(newSpeed);
 
-	Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
-	userSpeedFactor = newSpeed;
+	Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, userSpeedFactor = newSpeed));
 }
 
 

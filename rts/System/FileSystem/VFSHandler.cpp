@@ -152,7 +152,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 	LOG_L(L_INFO, "[%s::%s<this=%p>(arName=\"%s\", overwrite=%s)] section=%d cached=%d", vfsName, __func__, this, archiveName.c_str(), overwrite ? "true" : "false", rawSection, ar != nullptr);
 
-	if (ar != nullptr && ar->GetType() == ARCHIVE_TYPE_SDD)
+	if (dynamic_cast<CDirArchive*>(ar) != nullptr)
 		spring::SafeDelete(ar);
 
 	if (ar == nullptr) {

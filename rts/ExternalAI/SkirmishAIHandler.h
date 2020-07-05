@@ -122,7 +122,8 @@ public:
 	 * @param aiData detailed info of the AI to create
 	 * @see EngineOutHandler::CreateSkirmishAI()
 	 */
-	void CreateLocalSkirmishAI(const SkirmishAIData& aiData);
+	void NetCreateLocalSkirmishAI(const SkirmishAIData& aiData);
+
 	/**
 	 * Returns detailed (including unsynced) data for a Skirmish AI to be
 	 * running on the local machine.
