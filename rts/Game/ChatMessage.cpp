@@ -6,8 +6,6 @@
 #include "System/Net/PackPacket.h"
 #include "System/Net/UnpackPacket.h"
 
-constexpr size_t ChatMessage::MAX_MSG_SIZE;
-
 ChatMessage::ChatMessage(int from, int dest, const std::string& chat)
 	: fromPlayer(from)
 	, destination(dest)
