@@ -328,16 +328,8 @@ else  (LDGOLD_FOUND)
 	message(WARNING "You are using ld.bfd, it's much slower than ld.gold.")
 endif (LDGOLD_FOUND)
 
-
-### C++11/14
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-	message(STATUS "Compiling with C++14")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-else()
-	message(STATUS "Compiling with C++11")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
-endif()
-
+message(STATUS "Compiling with C++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
 
 add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
 add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants

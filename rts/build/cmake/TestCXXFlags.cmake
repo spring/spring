@@ -89,33 +89,9 @@ If    (NOT DEFINED IEEE_FP_FLAG)
 EndIf (NOT DEFINED IEEE_FP_FLAG)
 
 
-If    (NOT DEFINED CXX11_FLAGS)
-	If   (MSVC)
-		# Nothing needed
-		Set(CXX11_FLAGS "")
-	ElseIf ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
-	Else (MSVC)
-		# note, we need gnu++11 instead of c++11, cause else we get compile errors
-		# under mingw (pthread.h missing, sys/utsname.h missing, M_PI not defined and more)
-		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
-		If    (NOT CXX11_FLAGS)
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
-		EndIf (NOT CXX11_FLAGS)
-		If    (NOT CXX11_FLAGS)
-			# xcode
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++0x")
-		EndIf (NOT CXX11_FLAGS)
-		If    (NOT CXX11_FLAGS)
-			# xcode 2
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++0x")
-		EndIf (NOT CXX11_FLAGS)
-
-		If    (NOT CXX11_FLAGS)
-			Message(WARNING "C++11 support missing")
-		EndIf (NOT CXX11_FLAGS)
-	Endif(MSVC)
-EndIf (NOT DEFINED CXX11_FLAGS)
+If    (NOT DEFINED CXX17_FLAGS)
+	CHECK_AND_ADD_FLAGS(CXX17_FLAGS "-std=c++17")
+EndIf (NOT DEFINED CXX17_FLAGS)
 
 
 If    (NOT MSVC AND NOT DEFINED LTO_FLAGS)
