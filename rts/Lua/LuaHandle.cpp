@@ -1460,6 +1460,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 
 	assert(p->synced);
 
+	int weaponID = -1;
 	if (p->weapon) {
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 		const WeaponDef* wd = wp->GetWeaponDef();
@@ -1467,6 +1468,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		// if this weapon-type is not being watched, bail
 		if (wd == nullptr || !watchProjectileDefs[wd->id])
 			return;
+		weaponID = wd->id;
 	}
 	if (p->piece && !watchProjectileDefs[watchProjectileDefs.size() - 1])
 		return;
@@ -1480,6 +1482,8 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		return;
 
 	lua_pushnumber(L, p->id);
+	lua_pushnumber(L, (int) p->GetOwnerID());
+	lua_pushnumber(L, weaponID);
 
 	// call the routine
 	RunCallIn(L, cmdStr, 1, 0);
