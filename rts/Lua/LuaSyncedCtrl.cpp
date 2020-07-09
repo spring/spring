@@ -2504,7 +2504,7 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 			lua_pushnumber(L, unit->losRadius);
 		} break;
 		case hashString("airLos"): {
-			unit->ChangeLos(unit->realAirLosRadius = radius, radius);
+			unit->ChangeLos(unit->realLosRadius, unit->realAirLosRadius = radius);
 			lua_pushnumber(L, unit->airLosRadius);
 		} break;
 		case hashString("radar"): {
