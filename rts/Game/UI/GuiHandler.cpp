@@ -3643,7 +3643,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 			DrawUnitDefRanges(unit, unitdef, unit->pos);
 
 			// draw (primary) weapon range
-			if (unit->maxRange > 0.0f) {
+			if (!unit->weapons.empty()) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->weapons[0], 40, unit->pos, {unit->maxRange, 0.0f, mapInfo->map.gravity});
