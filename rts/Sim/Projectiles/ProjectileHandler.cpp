@@ -55,7 +55,8 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER_UN(lastProjectileCounts),
 
 	CR_MEMBER(freeProjectileIDs),
-	CR_MEMBER(projectileMaps)
+	CR_MEMBER(projectileMaps),
+	CR_MEMBER(createdProjectiles)
 ))
 
 
