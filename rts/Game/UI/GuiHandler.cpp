@@ -4009,7 +4009,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 
 		const bool  activeAttackCmd  = (haveActiveCommand && commands[inCommand].id == CMD_ATTACK);
 		const bool defaultAttackCmd  = (inCommand == -1 && defaultCmd > 0 && commands[defaultCmd].id == CMD_ATTACK);
-		const bool  drawPointeeRing  = (pointeeUnit != nullptr && pointeeUnit->maxRange > 0.0f);
+		const bool  drawPointeeRing  = (pointeeUnit != nullptr && !pointeeUnit->weapons.empty());
 		const bool  drawBuildeeRings = (activeBuildCommand && rayTraceDist > 0.0f);
 		const bool   drawWeaponCones = (!onMiniMap && gs->cheatEnabled && globalRendering->drawDebug);
 
