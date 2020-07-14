@@ -103,7 +103,6 @@ public:
 	bool checkCol = true;
 	bool ignoreWater = false;
 	bool deleteMe = false;
-	bool callEvent = true;         // do we need to call the ProjectileCreated event
 
 	bool castShadow = false;
 	bool drawSorted = true;
