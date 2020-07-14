@@ -941,9 +941,14 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return !!unit->upright;
 	case POW:
 		return int(math::pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
-	case PRINT:
-		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
-		break;
+	case PRINT: {
+		const CCobInstance* cobScript = dynamic_cast<CCobInstance*>(unit->script);
+
+		const char*   unitName = unit->unitDef->name.c_str();
+		const char* scriptName = (cobScript != nullptr)? cobScript->cobFile->name.c_str(): "Lua";
+
+		LOG("[UnitScript::PRINT][unit=%s script=%s] p1=%d p2=%d p3=%d p4=%d", unitName, scriptName, p1, p2, p3, p4);
+	} break;
 	case HEADING: {
 		if (p1 <= 0)
 			return unit->heading;
@@ -958,7 +963,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case TARGET_ID: {
 		if (size_t(p1 - 1) < unit->weapons.size()) {
 			const CWeapon* w = unit->weapons[p1 - 1];
-			auto curTarget = w->GetCurrentTarget();
+			const auto curTarget = w->GetCurrentTarget();
 			switch (curTarget.type) {
 				case Target_Unit:      return curTarget.unit->id;
 				case Target_None:      return -1;
@@ -1290,26 +1295,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	default:
-		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB global vars are deprecated");
-			return 0;
-		}
-		else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB team vars are deprecated");
-			return 0;
-		}
-		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB allyteam vars are deprecated");
-			return 0;
-		}
-		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-			ShowUnitScriptError("[US::GetUnitVal] COB unit vars are deprecated");
-			return 0;
-		}
-		else {
-			ShowUnitScriptError("[US::GetUnitVal] CobError: unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " +
-			IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
-		}
+		ShowUnitScriptError("[US::GetUnitVal] unknown get-constant " + IntToString(val) + " (params = " + IntToString(p1) + " " + IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
 	}
 #endif
 
@@ -1532,33 +1518,19 @@ void CUnitScript::SetUnitVal(int val, int param)
 			unit->flankingBonusMobilityAdd = (param / (float)COBSCALE);
 		} break;
 		case FLANK_B_MAX_DAMAGE: {
-			float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage)*0.5f;
-			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage)*0.5f;
+			const float mindamage = unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (param / (float)COBSCALE + mindamage) * 0.5f;
+			unit->flankingBonusDifDamage = (param / (float)COBSCALE - mindamage) * 0.5f;
 		} break;
 
 		case FLANK_B_MIN_DAMAGE: {
-			float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
-			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE)*0.5f;
-			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE)*0.5f;
+			const float maxdamage = unit->flankingBonusAvgDamage + unit->flankingBonusDifDamage;
+			unit->flankingBonusAvgDamage = (maxdamage + param / (float)COBSCALE) * 0.5f;
+			unit->flankingBonusDifDamage = (maxdamage - param / (float)COBSCALE) * 0.5f;
 		} break;
 
 		default: {
-			if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB global vars are deprecated");
-			}
-			else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB team vars are deprecated");
-			}
-			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB allyteam vars are deprecated");
-			}
-			else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-				ShowUnitScriptError("[US::SetUnitVal] COB unit vars are deprecated");
-			}
-			else {
-				ShowUnitScriptError("[US::SetUnitVal] CobError: unknown set-constant " + IntToString(val));
-			}
+			ShowUnitScriptError("[US::SetUnitVal] unknown set-constant " + IntToString(val));
 		}
 	}
 #endif
