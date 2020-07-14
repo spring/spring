@@ -61,7 +61,7 @@ public:
 		return std::min(1.0f, fract);
 	}
 
-	int   GetCurrentParticles() const;
+	int GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
@@ -98,8 +98,29 @@ public:
 	GroundFlashContainer groundFlashes;
 
 private:
-	void UpdateProjectileContainer(bool);
+	// event-notifiers
+	void CreateProjectile(CProjectile*);
+	void DestroyProjectile(CProjectile*);
 
+	void CreateProjectiles(bool);
+	void CreateProjectiles() {
+		CreateProjectiles( true);
+		CreateProjectiles(false);
+	}
+
+	void DestroyProjectiles(bool);
+	void DestroyProjectiles() {
+		DestroyProjectiles( true);
+		DestroyProjectiles(false);
+	}
+
+	void UpdateProjectiles(bool);
+	void UpdateProjectiles() {
+		UpdateProjectiles( true);
+		UpdateProjectiles(false);
+	}
+
+private:
 	// [0] := available unsynced projectile ID's
 	// [1] := available synced (weapon, piece) projectile ID's
 	std::vector<int> freeProjectileIDs[2];
@@ -107,6 +128,8 @@ private:
 	// [0] := ID ==> projectile* map for living unsynced projectiles
 	// [1] := ID ==> projectile* map for living   synced projectiles
 	std::vector<CProjectile*> projectileMaps[2];
+
+	std::vector<CProjectile*> createdProjectiles[2];
 };
 
 
