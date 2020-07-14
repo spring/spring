@@ -22,22 +22,6 @@ class CUnitScript
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
-public:
-	static const int UNIT_VAR_COUNT   = 8;
-	static const int TEAM_VAR_COUNT   = 64;
-	static const int ALLY_VAR_COUNT   = 64;
-	static const int GLOBAL_VAR_COUNT = 4096;
-
-	static const int UNIT_VAR_START   = 1024;
-	static const int TEAM_VAR_START   = 2048;
-	static const int ALLY_VAR_START   = 3072;
-	static const int GLOBAL_VAR_START = 4096;
-
-	static const int UNIT_VAR_END   = UNIT_VAR_START   + UNIT_VAR_COUNT   - 1;
-	static const int TEAM_VAR_END   = TEAM_VAR_START   + TEAM_VAR_COUNT   - 1;
-	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
-	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
-
 protected:
 	CUnit* unit;
 	bool busy;
