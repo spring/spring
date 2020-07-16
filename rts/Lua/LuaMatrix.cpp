@@ -26,16 +26,7 @@ CMatrix44f LuaMatrixImpl::screenProjMatrix = CMatrix44f{};
 
 void LuaMatrixImpl::Zero()
 {
-#if 1
 	std::fill(&mat[0], &mat[0] + 16, 0.0f);
-#else
-	#define MAT_EQ_0(i) mat[i] = 0.0f
-		MAT_EQ_0(0); MAT_EQ_0(1); MAT_EQ_0(2); MAT_EQ_0(3);
-		MAT_EQ_0(4); MAT_EQ_0(5); MAT_EQ_0(6); MAT_EQ_0(7);
-		MAT_EQ_0(8); MAT_EQ_0(9); MAT_EQ_0(10); MAT_EQ_0(11);
-		MAT_EQ_0(12); MAT_EQ_0(13); MAT_EQ_0(14); MAT_EQ_0(15);
-	#undef MAT_EQ_0
-#endif
 }
 
 void LuaMatrixImpl::SetMatrixElements(const float m0, const float m1, const float m2, const float m3, const float m4, const float m5, const float m6, const float m7, const float m8, const float m9, const float m10, const float m11, const float m12, const float m13, const float m14, const float m15)
@@ -189,7 +180,7 @@ inline bool LuaMatrixImpl::ObjectPieceMatImpl(const unsigned int objID, const un
 	}
 }
 
-inline void LuaMatrixImpl::CondSetupScreenMatrices() {
+inline void LuaMatrixImpl::SetupScreenMatrices() {
 	// .x := screen width (meters), .y := eye-to-screen (meters)
 	static float2 screenParameters = { 0.36f, 0.60f };
 
@@ -217,19 +208,19 @@ inline void LuaMatrixImpl::CondSetupScreenMatrices() {
 
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
 	LuaMatrixImpl::screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
-	LuaMatrixImpl::screenProjMatrix = CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar);
+	LuaMatrixImpl::screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, globalRendering->supportClipSpaceControl * 1.0f);
 }
 
 void LuaMatrixImpl::ScreenViewMatrix(const sol::optional<bool> mult)
 {
-	CondSetupScreenMatrices();
+	SetupScreenMatrices();
 	const auto lambda = [=]() { return screenViewMatrix; };
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::viewProjMultDefault, lambda);
 }
 
 void LuaMatrixImpl::ScreenProjMatrix(const sol::optional<bool> mult)
 {
-	CondSetupScreenMatrices();
+	SetupScreenMatrices();
 	const auto lambda = [=]() { return screenProjMatrix; };
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::viewProjMultDefault, lambda);
 }
@@ -324,15 +315,15 @@ bool LuaMatrix::PushEntries(lua_State* L)
 		"FeatureMatrix", &LuaMatrixImpl::FeatureMatrix,
 		"FeaturePieceMatrix", &LuaMatrixImpl::FeaturePieceMatrix,
 
-		"ProjectileMatrix", & LuaMatrixImpl::ProjectileMatrix,
-		"ProjectilePieceMatrix", & LuaMatrixImpl::ProjectilePieceMatrix,
+		"ProjectileMatrix", &LuaMatrixImpl::ProjectileMatrix,
+		"ProjectilePieceMatrix", &LuaMatrixImpl::ProjectilePieceMatrix,
 
 		"ScreenViewMatrix", &LuaMatrixImpl::ScreenViewMatrix,
 		"ScreenProjMatrix", &LuaMatrixImpl::ScreenProjMatrix,
 
 		"SunViewMatrix", &LuaMatrixImpl::SunViewMatrix,
 		"ShadowViewMatrix", &LuaMatrixImpl::SunViewMatrix,
-		"SunProjMatrix", & LuaMatrixImpl::SunProjMatrix,
+		"SunProjMatrix", &LuaMatrixImpl::SunProjMatrix,
 		"ShadowProjMatrix", &LuaMatrixImpl::SunProjMatrix,
 
 		"Ortho", &LuaMatrixImpl::Ortho,
@@ -350,7 +341,7 @@ bool LuaMatrix::PushEntries(lua_State* L)
 		sol::meta_function::addition, &LuaMatrixImpl::operator+
 		);
 
-	//gl.set("Matrix", sol::lua_nil); //because :)
+	gl.set("LuaMatrixImpl", sol::lua_nil); //because it's awkward :)
 
 	return true;
 }

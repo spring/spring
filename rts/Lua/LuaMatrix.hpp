@@ -171,7 +171,7 @@ private:
 	inline static bool IsObjectVisible(const TObj* obj, sol::this_state L);
 
 private:
-	static void CondSetupScreenMatrices();
+	static void SetupScreenMatrices();
 
 	inline static const LocalModelPiece* ParseObjectConstLocalModelPiece(const CSolidObject* obj, const unsigned int pieceNum);
 	//static methods
