@@ -154,18 +154,6 @@ class LuaOpenGL {
 			unsigned int id;
 		};
 
-		//go for Structure Of Arrays approach for simplicity. We don't care about performance here
-		struct LuaVertexArray {
-			GLuint vaoID;
-			VBO vboP;
-			VBO vboN;
-			VBO vboUV;
-			VBO vboC0;
-			VBO vboC1;
-			VBO vboIndices;
-		};
-
-		static std::vector<LuaVertexArray*> luaVertexArrays;
 		static std::vector<OcclusionQuery*> occlusionQueries;
 
 	private:

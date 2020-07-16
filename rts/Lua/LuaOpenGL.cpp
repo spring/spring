@@ -108,7 +108,6 @@ float LuaOpenGL::screenDistance = 0.60f; // eye-to-screen (meters)
 
 static float3 screenViewTrans;
 
-std::vector<LuaOpenGL::LuaVertexArray*> LuaOpenGL::luaVertexArrays;
 std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
 
 
@@ -205,8 +204,6 @@ void LuaOpenGL::Init()
 		deprecatedGLWarned.reserve(4096); // deprecated calls are logged along with caller information
 
 	deprecatedGLWarned.clear();
-
-	luaVertexArrays.reserve(2048);
 }
 
 void LuaOpenGL::Free()
@@ -221,12 +218,7 @@ void LuaOpenGL::Free()
 		glDeleteQueries(1, &q->id);
 	}
 
-	for (const auto& lva : luaVertexArrays) {
-		glDeleteVertexArrays(1, &lva->vaoID);
-	}
-
 	occlusionQueries.clear();
-	luaVertexArrays.clear(); //destructor for stored objects is called here (?)
 }
 
 /******************************************************************************/
@@ -336,7 +328,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(BeginText);
 	REGISTER_LUA_CFUNC(Text);
 	REGISTER_LUA_CFUNC(EndText);
-	REGISTER_LUA_CFUNC(DrawBufferedText);
 	REGISTER_LUA_CFUNC(GetTextWidth);
 	REGISTER_LUA_CFUNC(GetTextHeight);
 
@@ -1261,14 +1252,6 @@ int LuaOpenGL::EndText(lua_State* L)
 	font->End();
 	return 0;
 }
-
-int LuaOpenGL::DrawBufferedText(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-	NotImplementedError(L, __func__);
-	return 0;
-}
-
 
 int LuaOpenGL::Text(lua_State* L)
 {
