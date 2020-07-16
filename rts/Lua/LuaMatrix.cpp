@@ -91,10 +91,10 @@ inline const TObj* LuaMatrixImpl::ParseObject(int objID, sol::this_state L)
 	if constexpr(std::is_same<TObj, CUnit>::value) {
 		obj = unitHandler.GetUnit(objID);
 	}
-	else if constexpr(std::is_same<TObj, CUnit>::value) {
+	else if constexpr(std::is_same<TObj, CFeature>::value) {
 		obj = featureHandler.GetFeature(objID);
 	}
-	else if constexpr(std::is_same<TObj, CUnit>::value) {
+	else if constexpr(std::is_same<TObj, CProjectile>::value) {
 		obj = projectileHandler.GetProjectileBySyncedID(objID);
 	}
 
