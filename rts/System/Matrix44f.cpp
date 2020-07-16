@@ -373,6 +373,28 @@ CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 	return (*this);
 }
 
+CMatrix44f CMatrix44f::operator+(const CMatrix44f& mat) const
+{
+	CMatrix44f r;
+#if 0
+	for (size_t i = 0; i < 16; i += 4) {
+		r[i + 0] = m[i + 0] + mat[i + 0];
+		r[i + 1] = m[i + 1] + mat[i + 1];
+		r[i + 2] = m[i + 2] + mat[i + 2];
+		r[i + 3] = m[i + 3] + mat[i + 3];
+	}
+#else //brings spring's Matrix44 on par with Eigen in terms of perfomance
+	#define ADD_COLUMN(col) _mm_storeu_ps(&r.md[col][0], _mm_add_ps(_mm_loadu_ps(&md[col][0]), _mm_loadu_ps(&mat.md[col][0])))
+	ADD_COLUMN(0);
+	ADD_COLUMN(1);
+	ADD_COLUMN(2);
+	ADD_COLUMN(3);
+	#undef ADD_COLUMN
+#endif
+
+	return r;
+}
+
 __FORCE_ALIGN_STACK__
 float4 CMatrix44f::operator* (const float4 v) const
 {

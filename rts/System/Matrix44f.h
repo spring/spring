@@ -85,18 +85,7 @@ public:
 
 	// matrix addition
 	CMatrix44f& operator += (const CMatrix44f& mat) { return ((*this) = (*this) + mat); }
-	CMatrix44f  operator +  (const CMatrix44f& mat) const {
-		CMatrix44f r;
-
-		for (size_t i = 0; i < 16; i += 4) {
-			r[i + 0] = m[i + 0] + mat[i + 0];
-			r[i + 1] = m[i + 1] + mat[i + 1];
-			r[i + 2] = m[i + 2] + mat[i + 2];
-			r[i + 3] = m[i + 3] + mat[i + 3];
-		}
-
-		return r;
-	}
+	CMatrix44f  operator +  (const CMatrix44f& mat) const;
 
 	float& operator [] (int a)       { return m[a]; }
 	float  operator [] (int a) const { return m[a]; }

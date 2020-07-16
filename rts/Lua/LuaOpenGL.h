@@ -4,8 +4,13 @@
 #define LUA_GL_H
 
 #include <vector>
+#include <string>
+#include <unordered_set>
 
+#include "Rendering/GL/myGL.h"
 #include "Lua/LuaHandle.h"
+
+#include "Rendering/GL/VBO.h"
 
 struct lua_State;
 
@@ -136,20 +141,37 @@ class LuaOpenGL {
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
 		static bool safeMode;
 		static bool canUseShaders;
+		static int deprecatedGLWarnLevel;
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
+
+		static std::unordered_set<std::string> deprecatedGLWarned;
 
 		struct OcclusionQuery {
 			unsigned int index; // into LuaOpenGL::occlusionQueries
 			unsigned int id;
 		};
 
+		//go for Structure Of Arrays approach for simplicity. We don't care about performance here
+		struct LuaVertexArray {
+			GLuint vaoID;
+			VBO vboP;
+			VBO vboN;
+			VBO vboUV;
+			VBO vboC0;
+			VBO vboC1;
+			VBO vboIndices;
+		};
+
+		static std::vector<LuaVertexArray*> luaVertexArrays;
 		static std::vector<OcclusionQuery*> occlusionQueries;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
+		static void CondWarnDeprecatedGL(lua_State* L, const char* caller);
+		static void NotImplementedError(lua_State* L, const char* caller);
 
 	private:
 		static int HasExtension(lua_State* L);
@@ -240,6 +262,7 @@ class LuaOpenGL {
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
 		static int EndText(lua_State* L);
+		static int DrawBufferedText(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 
