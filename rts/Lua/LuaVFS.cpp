@@ -239,26 +239,19 @@ int LuaVFS::UnsyncLoadFile(lua_State* L)
 int LuaVFS::FileExists(lua_State* L, bool synced)
 {
 	const std::string& filename = luaL_checkstring(L, 1);
+	const std::string& vfsModes = GetModes(L, 2, synced);
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
 	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
-	lua_pushboolean(L, CFileHandler::FileExists(filename, GetModes(L, 2, synced)));
+	lua_pushboolean(L, CFileHandler::FileExists(filename, vfsModes));
 	return 1;
 }
 
 
-int LuaVFS::SyncFileExists(lua_State* L)
-{
-	return FileExists(L, true);
-}
-
-
-int LuaVFS::UnsyncFileExists(lua_State* L)
-{
-	return FileExists(L, false);
-}
+int LuaVFS::  SyncFileExists(lua_State* L) { return FileExists(L,  true); }
+int LuaVFS::UnsyncFileExists(lua_State* L) { return FileExists(L, false); }
 
 
 /******************************************************************************/
