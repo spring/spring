@@ -674,11 +674,14 @@ int LuaParser::FileExists(lua_State* L)
 	const LuaParser* currentParser = GetLuaParser(L);
 
 	const std::string& filename = luaL_checkstring(L, 1);
+	// filter any modes not within the parser's allowed set
+	const std::string& argModes = luaL_optstring(L, 2, currentParser->accessModes.c_str());
+	const std::string& vfsModes = CFileHandler::AllowModes(argModes, currentParser->accessModes);
 
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
 
-	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
+	lua_pushboolean(L, CFileHandler::FileExists(filename, vfsModes));
 	return 1;
 }
 
