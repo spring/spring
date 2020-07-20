@@ -154,11 +154,15 @@ std::string ClassAliasList::FindAlias(const std::string& className) const
 void CExplosionGeneratorHandler::Init()
 {
 	egMemPool.clear();
-	egMemPool.reserve(32);
+	egMemPool.reserve(512);
 
-	explosionGenerators.reserve(32);
-	explosionGenerators.push_back(egMemPool.alloc<CStdExplosionGenerator>()); // id=0
-	explosionGenerators[0]->SetGeneratorID(EXPGEN_ID_STANDARD);
+	explosionGenerators.reserve(512);
+	explosionGenerators.push_back(egMemPool.alloc<CStdExplosionGenerator>()); // id=0 (shared standard EG)
+	explosionGenerators.push_back(egMemPool.alloc<   IExplosionGenerator>()); // id=1 (dummy fallback EG)
+
+	explosionGenerators[EXPGEN_ID_STANDARD]->SetGeneratorID(EXPGEN_ID_STANDARD);
+	explosionGenerators[EXPGEN_ID_FALLBACK]->SetGeneratorID(EXPGEN_ID_FALLBACK);
+
 
 	exploParser = nullptr;
 	aliasParser = nullptr;
@@ -331,8 +335,9 @@ IExplosionGenerator* CExplosionGeneratorHandler::GetGenerator(unsigned int expGe
 {
 	if (expGenID == EXPGEN_ID_INVALID)
 		return nullptr;
+	// can happen after save/load for spawners
 	if (expGenID >= explosionGenerators.size())
-		return nullptr;
+		return explosionGenerators[EXPGEN_ID_FALLBACK];
 
 	return explosionGenerators[expGenID];
 }
