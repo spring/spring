@@ -42,6 +42,7 @@ public:
 	enum {
 		EXPGEN_ID_INVALID  = -1u,
 		EXPGEN_ID_STANDARD =  0u,
+		EXPGEN_ID_FALLBACK =  1u,
 	};
 
 	void Init();
@@ -93,7 +94,7 @@ public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 
-	virtual bool Load(CExplosionGeneratorHandler* handler, const char* tag) = 0;
+	virtual bool Load(CExplosionGeneratorHandler* handler, const char* tag) { return false; }
 	virtual bool Reload(CExplosionGeneratorHandler* handler, const char* tag) { return true; }
 	virtual bool Explosion(
 		const float3& pos,
@@ -103,7 +104,7 @@ public:
 		float gfxMod,
 		CUnit* owner,
 		CUnit* hit
-	) = 0;
+	) { return false; }
 
 	unsigned int GetGeneratorID() const { return generatorID; }
 	void SetGeneratorID(unsigned int id) { generatorID = id; }

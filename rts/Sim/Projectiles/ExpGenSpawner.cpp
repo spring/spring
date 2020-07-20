@@ -17,11 +17,7 @@ CR_REG_METADATA(CExpGenSpawner,
 ))
 
 
-CExpGenSpawner::CExpGenSpawner() :
-	CProjectile(),
-	delay(1),
-	damage(0.0f),
-	explosionGenerator(nullptr)
+CExpGenSpawner::CExpGenSpawner() : CProjectile()
 {
 	checkCol = false;
 	deleteMe = false;
@@ -29,26 +25,26 @@ CExpGenSpawner::CExpGenSpawner() :
 
 void CExpGenSpawner::Serialize(creg::ISerializer* s) {
 	int generatorID;
+
 	if (s->IsWriting())
 		generatorID = explosionGenerator->GetGeneratorID();
 
 	s->SerializeInt(&generatorID, sizeof(generatorID));
 
-	if (!s->IsWriting())
-		explosionGenerator = explGenHandler.GetGenerator(generatorID);
+	if (s->IsWriting())
+		return;
+
+	// NOTE:
+	//   projectiles are serialized, but ExplosionGeneratorHandler itself is not
+	//   as such generator-id can be invalid when this spawner gets deserialized
+	//   (if additional generators were loaded at runtime before game was saved)
+	explosionGenerator = explGenHandler.GetGenerator(generatorID);
 }
 
 void CExpGenSpawner::Update()
 {
-	if ((deleteMe |= ((delay--) <= 0))) {
-		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), nullptr);
-	}
-}
-
-
-int CExpGenSpawner::GetProjectilesCount() const
-{
-	return 0;
+	if ((deleteMe |= ((delay--) <= 0)))
+		explosionGenerator->Explosion(pos, dir,  damage, 0.0f, 0.0f,  owner(), nullptr);
 }
 
 
@@ -59,6 +55,7 @@ bool CExpGenSpawner::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	CHECK_MEMBER_INFO_INT  (CExpGenSpawner, delay )
 	CHECK_MEMBER_INFO_FLOAT(CExpGenSpawner, damage)
+	// TODO: much nicer to load cegID directly via LoadGeneratorID callback
 	CHECK_MEMBER_INFO_PTR  (CExpGenSpawner, explosionGenerator, explGenHandler.LoadGenerator)
 
 	return false;
