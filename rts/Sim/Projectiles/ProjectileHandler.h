@@ -11,7 +11,7 @@
 #include "System/float3.h"
 
 // bypass id and event handling for unsynced projectiles (faster)
-#define UNSYNCED_PROJ_NOEVENT 1
+#define PH_UNSYNCED_PROJECTILE_EVENTS 0
 
 class CProjectile;
 class CUnit;
@@ -64,7 +64,7 @@ public:
 	int GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
-	void AddGroundFlash(CGroundFlash* flash);
+	void AddGroundFlash(CGroundFlash* flash) { groundFlashes.push_back(flash); }
 	void AddFlyingPiece(
 		int modelType,
 		const S3DModelPiece* piece,
@@ -102,18 +102,6 @@ private:
 	void CreateProjectile(CProjectile*);
 	void DestroyProjectile(CProjectile*);
 
-	void CreateProjectiles(bool);
-	void CreateProjectiles() {
-		CreateProjectiles( true);
-		CreateProjectiles(false);
-	}
-
-	void DestroyProjectiles(bool);
-	void DestroyProjectiles() {
-		DestroyProjectiles( true);
-		DestroyProjectiles(false);
-	}
-
 	void UpdateProjectiles(bool);
 	void UpdateProjectiles() {
 		UpdateProjectiles( true);
@@ -128,8 +116,6 @@ private:
 	// [0] := ID ==> projectile* map for living unsynced projectiles
 	// [1] := ID ==> projectile* map for living   synced projectiles
 	std::vector<CProjectile*> projectileMaps[2];
-
-	std::vector<CProjectile*> createdProjectiles[2];
 };
 
 
