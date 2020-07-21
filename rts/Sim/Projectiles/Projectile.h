@@ -102,6 +102,8 @@ public:
 	bool luaMoveCtrl = false;
 	bool checkCol = true;
 	bool ignoreWater = false;
+
+	bool createMe =  true;
 	bool deleteMe = false;
 
 	bool castShadow = false;
