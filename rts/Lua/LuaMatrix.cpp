@@ -1,6 +1,7 @@
 #include "LuaMatrix.hpp"
 
 #include <algorithm>
+#include <array>
 
 #include "LuaUtils.h"
 
@@ -31,12 +32,8 @@ void LuaMatrixImpl::Zero()
 
 void LuaMatrixImpl::SetMatrixElements(const float m0, const float m1, const float m2, const float m3, const float m4, const float m5, const float m6, const float m7, const float m8, const float m9, const float m10, const float m11, const float m12, const float m13, const float m14, const float m15)
 {
-#define MAT_EQ_M(i) mat[i] = m##i
-	MAT_EQ_M(0); MAT_EQ_M(1); MAT_EQ_M(2); MAT_EQ_M(3);
-	MAT_EQ_M(4); MAT_EQ_M(5); MAT_EQ_M(6); MAT_EQ_M(7);
-	MAT_EQ_M(8); MAT_EQ_M(9); MAT_EQ_M(10); MAT_EQ_M(11);
-	MAT_EQ_M(12); MAT_EQ_M(13); MAT_EQ_M(14); MAT_EQ_M(15);
-#undef MAT_EQ_M
+	const std::array<float, 16> arr { m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 };
+	std::copy(arr.cbegin(), arr.cend(), &mat.m[0]);
 }
 
 void LuaMatrixImpl::Translate(const float x, const float y, const float z)
