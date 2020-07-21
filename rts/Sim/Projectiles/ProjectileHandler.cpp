@@ -55,8 +55,7 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER_UN(lastProjectileCounts),
 
 	CR_MEMBER(freeProjectileIDs),
-	CR_MEMBER(projectileMaps),
-	CR_MEMBER(createdProjectiles)
+	CR_MEMBER(projectileMaps)
 ))
 
 
@@ -80,17 +79,13 @@ void CProjectileHandler::Init()
 	projectileMaps[true].clear();
 	projectileMaps[true].resize(1024, nullptr);
 
-#if UNSYNCED_PROJ_NOEVENT
+#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
 	projectileMaps[false].clear();
 	projectileMaps[false].resize(0, nullptr);
 #else
 	projectileMaps[false].clear();
 	projectileMaps[false].resize(8192, nullptr);
 #endif
-	createdProjectiles[false].clear();
-	createdProjectiles[false].reserve(256);
-	createdProjectiles[ true].clear();
-	createdProjectiles[ true].reserve(256);
 
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
@@ -162,9 +157,6 @@ void CProjectileHandler::Kill()
 	projectileMaps[ true].clear();
 	projectileMaps[false].clear();
 
-	createdProjectiles[ true].clear();
-	createdProjectiles[false].clear();
-
 	CCollisionHandler::PrintStats();
 }
 
@@ -188,14 +180,43 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 }
 
 
-
 void CProjectileHandler::UpdateProjectiles(bool synced)
 {
-	SCOPED_TIMER("Sim::Projectiles::Update");
-
 	ProjectileContainer& pc = projectileContainers[synced];
 
-	// WARNING: can't use iterators here because p->Update() may add new projectiles to the container
+	// WARNING:
+	//   we can't use iterators here because ProjectileCreated
+	//   and ProjectileDestroyed events may add new projectiles
+	//   to the container!
+	for (size_t i = 0; i < pc.size(); /*no-op*/) {
+		CProjectile* p = pc[i];
+
+		assert(p != nullptr);
+		assert(p->synced == synced);
+#ifdef USING_CREG
+		assert(p->synced == !!(p->GetClass()->flags & creg::CF_Synced));
+#endif
+
+		// (delayed) creation for projectiles added after CheckCollisions()
+		if (p->createMe)
+			CreateProjectile(p);
+
+		// deletion (FIXME: move outside of loop)
+		if (p->deleteMe) {
+			pc[i] = pc.back();
+			pc.pop_back();
+
+			DestroyProjectile(p);
+			continue;
+		}
+
+		// neither
+		++i;
+	}
+
+	SCOPED_TIMER("Sim::Projectiles::Update");
+
+	// WARNING: same as above but for p->Update()
 	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
 		assert(p != nullptr);
@@ -269,52 +290,11 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 
 
 
-void CProjectileHandler::CreateProjectiles(bool synced)
-{
-	auto& projs = createdProjectiles[synced];
-
-	// WARNING: ProjectileCreated can trigger AddProjectile
-	for (size_t i = 0, n = projs.size(); i < n; i = n, n = projs.size()) {
-		while (i < n) {
-			CreateProjectile(projs[i++]);
-		}
-	}
-
-	projs.clear();
-}
-
-void CProjectileHandler::DestroyProjectiles(bool synced)
-{
-	ProjectileContainer& pc = projectileContainers[synced];
-
-	// WARNING: ProjectileDestroyed can trigger AddProjectile
-	for (size_t i = 0; i < pc.size(); /*no-op*/) {
-		CProjectile* p = pc[i];
-
-		assert(p != nullptr);
-		assert(p->synced == synced);
-#ifdef USING_CREG
-		assert(p->synced == !!(p->GetClass()->flags & creg::CF_Synced));
-#endif
-
-		// deletion
-		if (p->deleteMe) {
-			pc[i] = pc.back();
-			pc.pop_back();
-
-			DestroyProjectile(p);
-			continue;
-		}
-
-		++i;
-	}
-}
-
-
-
 void CProjectileHandler::CreateProjectile(CProjectile* p)
 {
-	if (p->synced || !UNSYNCED_PROJ_NOEVENT)
+	p->createMe = false;
+
+	if (p->synced || PH_UNSYNCED_PROJECTILE_EVENTS == 1)
 		eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 
 	eventHandler.RenderProjectileCreated(p);
@@ -322,6 +302,8 @@ void CProjectileHandler::CreateProjectile(CProjectile* p)
 
 void CProjectileHandler::DestroyProjectile(CProjectile* p)
 {
+	assert(!p->createMe);
+
 	eventHandler.RenderProjectileDestroyed(p);
 
 	if (p->synced) {
@@ -333,7 +315,7 @@ void CProjectileHandler::DestroyProjectile(CProjectile* p)
 		ASSERT_SYNCED(p->pos);
 		ASSERT_SYNCED(p->id);
 	} else {
-	#if !UNSYNCED_PROJ_NOEVENT
+	#if (PH_UNSYNCED_PROJECTILE_EVENTS == 1)
 		eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 
 		projectileMaps[false][p->id] = nullptr;
@@ -351,11 +333,8 @@ void CProjectileHandler::Update()
 	{
 		SCOPED_TIMER("Sim::Projectiles");
 
-		// announce existence of projectiles created last frame to Lua, etc
-		CreateProjectiles();
 		// check if any projectiles have collided since the previous update
 		CheckCollisions();
-		DestroyProjectiles();
 		UpdateProjectiles();
 
 		UPDATE_PTR_CONTAINER(groundFlashes);
@@ -396,6 +375,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
+	assert(p->createMe);
 
 	static constexpr decltype(&UnsyncedRandInt) rngFuncs[] = {&UnsyncedRandInt, &SyncedRandInt};
 
@@ -405,50 +385,42 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	projectileContainers[p->synced].push_back(p);
 
-	#if UNSYNCED_PROJ_NOEVENT
-	if (!p->synced)
-		return;
-	#endif
+	if (p->synced || PH_UNSYNCED_PROJECTILE_EVENTS == 1) {
+		if (freeIDs.empty()) {
+			const size_t oldSize = projMap.size();
+			const size_t newSize = std::max(oldSize + 256, oldSize * 2);
 
-	if (freeIDs.empty()) {
-		const size_t oldSize = projMap.size();
-		const size_t newSize = oldSize + 256;
+			projMap.resize(newSize, nullptr);
+			freeIDs.resize(newSize - oldSize);
 
-		projMap.resize(newSize, nullptr);
-
-		for (int i = oldSize; i < newSize; i++) {
-			freeIDs.push_back(i);
+			// generate (newSize - oldSize) new id's starting from oldSize
+			std::for_each(freeIDs.begin(), freeIDs.end(), [k = oldSize](int& id) mutable { id = k++; });
+			std::random_shuffle(freeIDs.begin(), freeIDs.end(), rngFunc);
 		}
 
-		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rngFunc);
+
+		#if 0
+		// popping from the back means ID's are reused more often
+		projMap[p->id = spring::VectorBackPop(freeIDs)] = p;
+		#else
+		{
+			// randomly shuffled, randomly indexed
+			const unsigned int idx = rngFunc(freeIDs.size());
+			const          int pid = (p->id = freeIDs[idx]);
+
+			projMap[pid] = p;
+			freeIDs[idx] = freeIDs.back();
+			freeIDs.pop_back();
+		}
+		#endif
+
+		#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
+		ASSERT_SYNCED(freeIDs.size());
+		ASSERT_SYNCED(p->id);
+		#endif
 	}
 
-
-	#if 0
-	// popping from the back means ID's are reused more often
-	projMap[p->id = spring::VectorBackPop(freeIDs)] = p;
-	#else
-	{
-		// randomly shuffled, randomly indexed
-		const unsigned int idx = rngFunc(freeIDs.size());
-		const          int pid = freeIDs[idx];
-
-		projMap[p->id = pid] = p;
-		freeIDs[idx] = freeIDs.back();
-		freeIDs.pop_back();
-	}
-	#endif
-
-	if ((p->id) > (1 << 24))
-		LOG_L(L_WARNING, "[ProjectileHandler::%s] Lua %s projectile IDs are now out of range", __func__, (p->synced? "synced": "unsynced"));
-
-	createdProjectiles[p->synced].push_back(p);
-
-	if (!p->synced)
-		return;
-
-	ASSERT_SYNCED(freeIDs.size());
-	ASSERT_SYNCED(p->id);
+	CreateProjectile(p);
 }
 
 
@@ -706,12 +678,6 @@ void CProjectileHandler::CheckCollisions()
 
 
 
-void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
-{
-	groundFlashes.push_back(flash);
-}
-
-
 void CProjectileHandler::AddFlyingPiece(
 	const S3DModel* model,
 	const S3DModelPiece* piece,
@@ -814,8 +780,10 @@ CProjectile* CProjectileHandler::GetProjectileBySyncedID(int id)
 
 CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
 {
-	if (UNSYNCED_PROJ_NOEVENT)
-		return nullptr; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
+	#if (PH_UNSYNCED_PROJECTILE_EVENTS == 0)
+	// unsynced projectiles have no IDs in this case
+	return nullptr;
+	#endif
 
 	if ((size_t)id < projectileMaps[false].size())
 		return projectileMaps[false][id];
@@ -857,3 +825,4 @@ int CProjectileHandler::GetCurrentParticles() const
 	partCount += groundFlashes.size();
 	return partCount;
 }
+
