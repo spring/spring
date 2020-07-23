@@ -120,15 +120,21 @@ void CPreGame::LoadSaveFile(const std::string& save)
 
 	saveFileHandler = ILoadSaveHandler::CreateHandler(save);
 
-	if (!saveFileHandler->LoadGameStartInfo(save) && !configHandler->GetBool("LoadBadSaves")) {
-		LOG_L(L_ERROR, "[PreGame::%s] incompatible save-file specified", __func__);
-
-		spring::exitCode = spring::EXIT_CODE_BADSAVE;
-		gu->globalQuit = true;
+	if (saveFileHandler->LoadGameStartInfo(save) || configHandler->GetBool("LoadBadSaves")) {
+		StartServer(saveFileHandler->GetScriptText());
 		return;
 	}
 
-	StartServer(saveFileHandler->GetScriptText());
+	LOG_L(L_ERROR, "[PreGame::%s] incompatible save-file specified", __func__);
+
+	if (CLuaMenuController::ActivateInstance("[PreGame] incompatible save-file")) {
+		assert(pregame == this);
+		spring::SafeDelete(pregame);
+		return;
+	}
+
+	spring::exitCode = spring::EXIT_CODE_BADSAVE;
+	gu->globalQuit = true;
 }
 
 int CPreGame::KeyPressed(int k, bool isRepeat)
