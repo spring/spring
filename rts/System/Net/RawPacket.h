@@ -38,7 +38,7 @@ public:
 	}
 
 	RawPacket(RawPacket&& p) { *this = std::move(p); }
-	~RawPacket() { Delete(); }
+	virtual ~RawPacket() { Delete(); }
 
 	RawPacket& operator = (RawPacket&& p) {
 		data = p.data;
