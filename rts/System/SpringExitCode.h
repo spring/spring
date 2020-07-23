@@ -13,6 +13,7 @@ namespace spring {
 		EXIT_CODE_TIMEOUT =  1001, // PreGame::UpdateClientNet
 		EXIT_CODE_NOLOAD  =  1002, // Game::Load
 		EXIT_CODE_KILLED  =  1003, // CrashHandler::ForcedExit
+		EXIT_CODE_BADSAVE =  1004, // PreGame::LoadSaveFile
 	};
 
 	// only here for validation tests
