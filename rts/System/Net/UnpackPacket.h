@@ -20,6 +20,7 @@ public:
 	UnpackPacketException(const std::string& what) : std::runtime_error(what) {}
 };
 
+
 class UnpackPacket
 {
 public:
