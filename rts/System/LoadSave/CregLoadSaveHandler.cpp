@@ -277,36 +277,35 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 #endif //USING_CREG
 }
 
-/// this just loads the mapname and some other early stuff
-void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
+/// loads the data (map&mod-name,setup-script) needed by PreGame
+bool CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 {
 	CGZFileHandler saveFile(dataDirsAccess.LocateFile(FindSaveFile(path)), SPRING_VFS_RAW_FIRST);
+
 	std::stringbuf* sbuf = iss.rdbuf();
+	std::string saveVersion;
+	std::string syncVersion = SpringVersion::GetSync();
+
 	char buf[4096];
 	int len;
 	while ((len = saveFile.Read(buf, sizeof(buf))) > 0)
 		sbuf->sputn(buf, len);
 
-	//Check for compatible save versions
-	std::string saveVersion;
 	ReadString(iss, saveVersion);
 
-	if (saveVersion != SpringVersion::GetSync()) {
-		if (SpringVersion::IsRelease()) {
-			memset(buf, 0, sizeof(buf));
-			snprintf(buf, sizeof(buf), "[LSH::%s][DBG] file was saved by incompatible engine version \"%s\"", __func__, saveVersion.c_str());
-			throw content_error(buf);
-		}
+	// check saved engine version against current build
+	// in general these will *not* be binary-compatible
+	// (so prefer to terminate loading from PreGame)
+	if (saveVersion != syncVersion)
+		LOG_L(L_WARNING, "[LSH::%s][release=%d] file \"%s\" saved by engine version \"%s\" incompatible with \"%s\"", __func__, SpringVersion::IsRelease(), path.c_str(), saveVersion.c_str(), syncVersion.c_str());
 
-		LOG_L(L_WARNING, "[LSH::%s][REL] file was saved by incompatible engine version \"%s\"", __func__, saveVersion.c_str());
-	}
-
-	// read our own header.
+	// read our own header
 	ReadString(iss, scriptText);
 	ReadString(iss, modName);
 	ReadString(iss, mapName);
 
 	CGameSetup::LoadSavedScript(path, scriptText);
+	return (saveVersion == syncVersion);
 }
 
 /// this should be called on frame 0 when the game has started

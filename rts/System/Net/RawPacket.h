@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-#include "System/Misc/NonCopyable.h"
 #include "System/SafeVector.h"
 
 namespace netcode

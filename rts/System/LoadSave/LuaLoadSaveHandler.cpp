@@ -177,14 +177,16 @@ void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, con
 }
 
 
-void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
+bool CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	const std::string realfile = dataDirsAccess.LocateFile(FindSaveFile(filename = file));
+	const std::string saveFileName = FindSaveFile(filename = file);
+	const std::string realFileName = dataDirsAccess.LocateFile(saveFileName);
 
-	if ((loadfile = archiveLoader.OpenArchive(realfile, "sdz")) == nullptr || !loadfile->IsOpen())
+	if ((loadfile = archiveLoader.OpenArchive(realFileName, "sdz")) == nullptr || !loadfile->IsOpen())
 		throw content_error("Unable to open savegame \"" + filename + "\"");
 
 	scriptText = LoadEntireFile(FILE_STARTSCRIPT);
+	return true;
 }
 
 
@@ -244,8 +246,9 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
 	std::vector<std::uint8_t> buf;
-	if (loadfile->GetFile(file, buf)) {
+
+	if (loadfile->GetFile(file, buf))
 		return std::string((char*) &*buf.begin(), buf.size());
-	}
+
 	return "";
 }

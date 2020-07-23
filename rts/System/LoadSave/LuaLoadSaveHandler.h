@@ -20,7 +20,7 @@ public:
 	~CLuaLoadSaveHandler();
 
 	void SaveGame(const std::string& file) override;
-	void LoadGameStartInfo(const std::string& file) override;
+	bool LoadGameStartInfo(const std::string& file) override;
 	void LoadGame() override;
 
 protected:
