@@ -32,7 +32,7 @@ public:
 
 	virtual void SaveGame(const std::string& file) = 0;
 	/// load scriptText and (for creg saves) {map,mod}Name needed to fire up the engine
-	virtual void LoadGameStartInfo(const std::string& file) = 0;
+	virtual bool LoadGameStartInfo(const std::string& file) = 0;
 	virtual void LoadGame() = 0;
 
 	void SaveInfo(const std::string& _mapName, const std::string& _modName) {
@@ -52,7 +52,7 @@ protected:
 class DummyLoadSaveHandler: public ILoadSaveHandler {
 public:
 	void SaveGame(const std::string& file) override {}
-	void LoadGameStartInfo(const std::string& file) override {}
+	bool LoadGameStartInfo(const std::string& file) override { return false; }
 	void LoadGame() override {}
 };
 
