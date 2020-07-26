@@ -357,11 +357,11 @@ void CMobileCAI::Execute()
 	Command& c = commandQue.front();
 
 	switch (c.GetID()) {
-		case CMD_MOVE:                 { ExecuteMove(c);				return; }
-		case CMD_PATROL:               { ExecutePatrol(c);				return; }
-		case CMD_FIGHT:                { ExecuteFight(c);				return; }
-		case CMD_GUARD:                { ExecuteGuard(c);				return; }
-		case CMD_LOAD_ONTO:            { ExecuteLoadOnto(c);			return; }
+		case CMD_MOVE:      { ExecuteMove(c);     return; }
+		case CMD_PATROL:    { ExecutePatrol(c);   return; }
+		case CMD_FIGHT:     { ExecuteFight(c);    return; }
+		case CMD_GUARD:     { ExecuteGuard(c);    return; }
+		case CMD_LOAD_ONTO: { ExecuteLoadOnto(c); return; }
 	}
 
 	if (owner->unitDef->IsTransportUnit()) {
@@ -433,11 +433,12 @@ void CMobileCAI::ExecuteLoadOnto(Command& c) {
 
 	if (!inCommand) {
 		inCommand = true;
+		// order transport to load <owner>; this can recursively end up back in *this::Execute (!)
 		transport->commandAI->GiveCommandReal(Command(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id));
 	}
 
-	if (owner->GetTransporter() != nullptr) {
-		assert(!commandQue.empty()); // <c> should still be in front
+	// queue might be empty after transport load-order
+	if (!commandQue.empty() && owner->GetTransporter() != nullptr) {
 		StopMoveAndFinishCommand();
 		return;
 	}
@@ -978,12 +979,6 @@ void CMobileCAI::StopMove()
 	owner->moveType->StopMoving();
 }
 
-void CMobileCAI::StopMoveAndFinishCommand()
-{
-	StopMove();
-	FinishCommand();
-}
-
 void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 {
 	StopMove();
@@ -1066,6 +1061,7 @@ void CMobileCAI::FinishCommand()
 		lastUserGoal = owner->pos;
 
 	tempOrder = false;
+
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
 
@@ -1291,6 +1287,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			}
 
 			if (c.IsInternalOrder()) {
+				// internally issued by MobileCAI
 				if (unit->commandAI->commandQue.empty()) {
 					if (!LoadStillValid(unit)) {
 						StopMoveAndFinishCommand();

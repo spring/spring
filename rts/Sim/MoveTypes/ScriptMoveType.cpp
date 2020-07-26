@@ -63,7 +63,7 @@ CScriptMoveType::~CScriptMoveType()
 
 void CScriptMoveType::CheckNotify()
 {
-	if (!scriptNotify)
+	if (scriptNotify == HitNothing)
 		return;
 
 	if (eventHandler.MoveCtrlNotify(owner, scriptNotify)) {
