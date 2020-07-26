@@ -1569,7 +1569,7 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
+	const Command cmd = commandQue.front(); // copy is needed here
 
 	const bool dontRepeat = (cmd.IsInternalOrder());
 	const bool pushCommand = (cmd.GetID() != CMD_STOP && cmd.GetID() != CMD_PATROL);

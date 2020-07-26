@@ -25,10 +25,15 @@ public:
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	virtual void BuggerOff(const float3& pos, float radius) override;
+
 	bool SetFrontMoveCommandPos(const float3& pos);
+
 	void StopMove() override;
-	void StopMoveAndFinishCommand();
 	void StopMoveAndKeepPointing(const float3& p, const float r, bool b);
+	void StopMoveAndFinishCommand() {
+		StopMove();
+		FinishCommand();
+	}
 
 	bool AllowedCommand(const Command& c, bool fromSynced) override;
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature) override;
