@@ -426,23 +426,25 @@ void CMobileCAI::ExecuteLoadOnto(Command& c) {
 	}
 
 	// prevent <owner> from chasing after full transports, etc
-	if (!transport->unitDef->IsTransportUnit() || !transport->CanTransport(owner)) {
+	if (!transport->CanTransport(owner)) {
 		StopMoveAndFinishCommand();
 		return;
 	}
 
 	if (!inCommand) {
 		inCommand = true;
-		// order transport to load <owner>; this can recursively end up back in *this::Execute (!)
-		transport->commandAI->GiveCommandReal(Command(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id));
+		// order transport to load <owner> before resuming its own queue
+		transport->commandAI->commandQue.push_front(Command(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id));
 	}
 
-	// queue might be empty after transport load-order
-	if (!commandQue.empty() && owner->GetTransporter() != nullptr) {
+	if (owner->GetTransporter() == transport) {
+		// owner already loaded; <c> should still be in front of queue
+		assert(!commandQue.empty());
 		StopMoveAndFinishCommand();
 		return;
 	}
 
+	// owner not loaded yet, stand still or move closer
 	if ((owner->pos - transport->pos).SqLength2D() < cancelDistance) {
 		StopMove();
 	} else {
