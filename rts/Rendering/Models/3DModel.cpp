@@ -161,20 +161,20 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 
 	{
 		// fill the vertex index vbo
-		const size_t isize = indices.size() * sizeof(unsigned int);
+		const size_t mapSize = indices.size() * sizeof(unsigned int);
 		size_t vboPos = 0;
 
-		auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
+		if (auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY)); vboMem != nullptr) {
+			for (ShatterPartDataPair& cp: shatterPartsBuf) {
+				S3DModelPiecePart::RenderData& rd = cp.first;
 
-		for (ShatterPartDataPair& cp: shatterPartsBuf) {
-			S3DModelPiecePart::RenderData& rd = cp.first;
+				rd.indexCount = (cp.second).size();
+				rd.vboOffset  = num * mapSize + vboPos;
 
-			rd.indexCount = (cp.second).size();
-			rd.vboOffset  = num * isize + vboPos;
-
-			if (rd.indexCount > 0) {
-				memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
-				vboPos += (rd.indexCount * sizeof(unsigned int));
+				if (rd.indexCount > 0) {
+					memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
+					vboPos += (rd.indexCount * sizeof(unsigned int));
+				}
 			}
 		}
 
