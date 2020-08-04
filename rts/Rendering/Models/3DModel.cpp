@@ -164,7 +164,7 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 		const size_t mapSize = indices.size() * sizeof(unsigned int);
 		size_t vboPos = 0;
 
-		if (auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY)); vboMem != nullptr) {
+		for (auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * mapSize, mapSize, GL_WRITE_ONLY)); vboMem != nullptr; vboMem = nullptr) {
 			for (ShatterPartDataPair& cp: shatterPartsBuf) {
 				S3DModelPiecePart::RenderData& rd = cp.first;
 

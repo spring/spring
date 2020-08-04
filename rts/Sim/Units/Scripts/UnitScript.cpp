@@ -938,12 +938,10 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UPRIGHT:
 		return !!unit->upright;
 	case POW:
-		return int(math::pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
+		return int(math::pow((p1 * 1.0f) / COBSCALE, (p2 * 1.0f) / COBSCALE) * COBSCALE);
 	case PRINT: {
-		const CCobInstance* cobScript = dynamic_cast<CCobInstance*>(unit->script);
-
 		const char*   unitName = unit->unitDef->name.c_str();
-		const char* scriptName = (cobScript != nullptr)? cobScript->cobFile->name.c_str(): "Lua";
+		const char* scriptName = unit->unitDef->scriptName.c_str();
 
 		LOG("[UnitScript::PRINT][unit=%s script=%s] p1=%d p2=%d p3=%d p4=%d", unitName, scriptName, p1, p2, p3, p4);
 	} break;
