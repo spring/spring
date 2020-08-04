@@ -7,15 +7,7 @@
 #include <vector>
 
 // texture spacing in the atlas (in pixels)
-static const int ATLAS_PADDING = 1;
-
-
-CRowAtlasAlloc::CRowAtlasAlloc()
-: nextRowPos(0)
-{
-	atlasSize.x = 256;
-	atlasSize.y = 256;
-}
+static constexpr int ATLAS_PADDING = 1;
 
 
 inline int CRowAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
@@ -33,7 +25,7 @@ void CRowAtlasAlloc::EstimateNeededSize()
 	int spaceNeeded = 0;
 	int spaceFree = atlasSize.x * (atlasSize.y - nextRowPos);
 
-	for (auto it: entries) {
+	for (const auto& it: entries) {
 		spaceNeeded += it.second.size.x * it.second.size.y;
 	}
 	for (auto& row: imageRows) {
