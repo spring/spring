@@ -897,10 +897,10 @@ void LuaOpenGL::SetupScreenMatrices()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 
 	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(*globalRendering->screenProjMatrix);
+	glLoadMatrixf(&globalRendering->screenProjMatrix->m[0]);
 
 	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(*globalRendering->screenViewMatrix);
+	glLoadMatrixf(&globalRendering->screenViewMatrix->m[0]);
 }
 
 void LuaOpenGL::RevertScreenMatrices()
