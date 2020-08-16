@@ -72,7 +72,14 @@ bool LuaMatrix::PushEntries(lua_State* L)
 
 		"Ortho", &LuaMatrixImpl::Ortho,
 		"Frustum", &LuaMatrixImpl::Frustum,
-		"Billboard", &LuaMatrixImpl::Billboard,
+
+		"CameraViewMatrix", &LuaMatrixImpl::CameraViewMatrix,
+		"CameraProjMatrix", &LuaMatrixImpl::CameraProjMatrix,
+		"CameraViewProjMatrix", &LuaMatrixImpl::CameraViewProjMatrix,
+		"CameraViewInverseMatrix", &LuaMatrixImpl::CameraViewInverseMatrix,
+		"CameraProjInverseMatrix", &LuaMatrixImpl::CameraProjInverseMatrix,
+		"CameraViewProjInverseMatrix", &LuaMatrixImpl::CameraViewProjInverseMatrix,
+		"CameraBillboardMatrix", &LuaMatrixImpl::CameraBillboardMatrix,
 
 		"GetAsScalar", &LuaMatrixImpl::GetAsScalar,
 		"GetAsTable", &LuaMatrixImpl::GetAsTable,

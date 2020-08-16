@@ -16,6 +16,7 @@
 
 struct CSolidObject;
 struct LocalModelPiece;
+struct CCamera;
 
 using tuple16f = std::tuple< float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float >;
 using tuple4f =  std::tuple< float, float, float, float >;
@@ -76,7 +77,14 @@ public:
 
 	void Ortho(const float left, const float right, const float bottom, const float top, const float near, const float far, const sol::optional<bool> mult);
 	void Frustum(const float left, const float right, const float bottom, const float top, const float near, const float far, const sol::optional<bool> mult);
-	void Billboard(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+
+	void CameraViewMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraViewProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraViewInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraViewProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
+	void CameraBillboardMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
 
 	tuple16f GetAsScalar()
 	{
@@ -117,6 +125,8 @@ public:
 	LuaMatrixImpl operator* (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat * lmi.mat); };
 	LuaMatrixImpl operator+ (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat + lmi.mat); };
 private:
+	CCamera* GetCamera(const sol::optional<unsigned int> cameraIdOpt);
+
 	void AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f* matIn);
 	void AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f& matIn);
 

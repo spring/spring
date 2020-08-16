@@ -137,6 +137,15 @@ const LocalModelPiece* LuaMatrixImpl::ParseObjectConstLocalModelPiece(const CSol
 
 ///////////////////////////////////////////////////////////
 
+CCamera* LuaMatrixImpl::GetCamera(const sol::optional<unsigned int> cameraIdOpt)
+{
+	constexpr unsigned int minCamType = CCamera::CAMTYPE_PLAYER;
+	constexpr unsigned int maxCamType = CCamera::CAMTYPE_ACTIVE;
+
+	const unsigned int camType = std::clamp(cameraIdOpt.value_or(maxCamType), minCamType, maxCamType);
+	const auto cam = CCameraHandler::GetCamera(camType);
+}
+
 void LuaMatrixImpl::AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f* matIn)
 {
 	const bool multVal = mult.value_or(multDefault);
@@ -257,13 +266,58 @@ void LuaMatrixImpl::Frustum(const float left, const float right, const float bot
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, CMatrix44f::ClipPerspProj(left, right, bottom, top, _near, _far, globalRendering->supportClipSpaceControl * 1.0f));
 }
 
-void LuaMatrixImpl::Billboard(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+void LuaMatrixImpl::CameraViewMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	constexpr unsigned int minCamType = CCamera::CAMTYPE_PLAYER;
-	constexpr unsigned int maxCamType = CCamera::CAMTYPE_ACTIVE;
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetViewMatrix();
 
-	const unsigned int camType = std::clamp(cameraIdOpt.value_or(maxCamType), minCamType, maxCamType);
-	const auto cam = CCameraHandler::GetCamera(camType);
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
 
-	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, cam->GetBillBoardMatrix());
+void LuaMatrixImpl::CameraProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetProjectionMatrix();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
+
+void LuaMatrixImpl::CameraViewProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetViewMatrix() * cam->GetProjectionMatrix();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
+
+void LuaMatrixImpl::CameraViewInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetViewMatrixInverse();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
+
+void LuaMatrixImpl::CameraProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetProjectionMatrixInverse();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
+
+void LuaMatrixImpl::CameraViewProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetViewMatrixInverse() * cam->GetProjectionMatrixInverse();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
+}
+
+void LuaMatrixImpl::CameraBillboardMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
+{
+	const auto cam = GetCamera(cameraIdOpt);
+	const auto matIn = cam->GetViewMatrix() * cam->GetBillBoardMatrix();
+
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
