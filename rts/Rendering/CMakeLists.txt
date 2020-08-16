@@ -112,6 +112,7 @@ set(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/nv_dds.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/QuadtreeAtlasAlloc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Textures/RowAtlasAlloc.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/UniformConstants.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawerState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/VerticalSync.cpp"

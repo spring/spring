@@ -11,7 +11,7 @@
 #include "LuaOpenGL.h"
 #include "LuaOpenGLUtils.h"
 #include "LuaUtils.h"
-#include "LuaMatrix.hpp"
+#include "LuaMatrixImpl.h"
 
 #include "Game/Camera.h"
 #include "System/Log/ILog.h"

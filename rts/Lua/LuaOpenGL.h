@@ -10,8 +10,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Lua/LuaHandle.h"
 
-#include "Rendering/GL/VBO.h"
-
 struct lua_State;
 
 
@@ -165,8 +163,6 @@ class LuaOpenGL {
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
-
-		static int ConfigScreen(lua_State* L);
 
 		static int GetScreenViewTrans(lua_State* L);
 		static int GetViewSizes(lua_State* L);

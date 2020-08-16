@@ -15,7 +15,6 @@
 #include <optional>
 
 #include "lib/fmt/format.h"
-#include "lib/sol2/sol.hpp"
 
 #include "LuaOpenGL.h"
 
@@ -32,18 +31,16 @@
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaUtils.h"
-#include "LuaMatrix.hpp"
-//FIXME#include "LuaVBOs.h"
+#include "LuaMatrix.h"
+
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
-
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/LineDrawer.h"
@@ -63,7 +60,6 @@
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureDefHandler.h"
@@ -74,13 +70,9 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
-
-#undef far // avoid collision with windef.h
-#undef near
 
 CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
 CONFIG(int, DeprecatedGLWarnLevel).defaultValue(2).headlessValue(0).safemodeValue(0);
@@ -102,9 +94,6 @@ bool  LuaOpenGL::canUseShaders = false;
 int  LuaOpenGL::deprecatedGLWarnLevel = 0;
 
 std::unordered_set<std::string> LuaOpenGL::deprecatedGLWarned = {};
-
-float LuaOpenGL::screenWidth = 0.36f; // screen width (meters)
-float LuaOpenGL::screenDistance = 0.60f; // eye-to-screen (meters)
 
 static float3 screenViewTrans;
 
@@ -202,8 +191,6 @@ void LuaOpenGL::Init()
 		deprecatedGLWarned.reserve(64); // only deprecated calls are logged
 	else if (deprecatedGLWarnLevel >= 2)
 		deprecatedGLWarned.reserve(4096); // deprecated calls are logged along with caller information
-
-	deprecatedGLWarned.clear();
 }
 
 void LuaOpenGL::Free()
@@ -214,7 +201,7 @@ void LuaOpenGL::Free()
 	if (!globalRendering->haveGLSL)
 		return;
 
-	for (const auto q: occlusionQueries) {
+	for (const OcclusionQuery* q: occlusionQueries) {
 		glDeleteQueries(1, &q->id);
 	}
 
@@ -231,8 +218,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(HasExtension);
 	REGISTER_LUA_CFUNC(GetNumber);
 	REGISTER_LUA_CFUNC(GetString);
-
-	REGISTER_LUA_CFUNC(ConfigScreen);
 
 	REGISTER_LUA_CFUNC(GetScreenViewTrans);
 	REGISTER_LUA_CFUNC(GetViewSizes);
@@ -415,8 +400,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	LuaMatrix::PushEntries(L);
 
 	LuaFonts::PushEntries(L);
-
-//FIXME		LuaVBOs::PushEntries(L);
 
 	return true;
 }
@@ -913,35 +896,11 @@ void LuaOpenGL::SetupScreenMatrices()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 
-	const int remScreenSize = globalRendering->screenSizeY - globalRendering->winSizeY; // remaining desktop size (ssy >= wsy)
-	const int bottomWinCoor = remScreenSize - globalRendering->winPosY; // *bottom*-left origin
-
-	const float vpx  = globalRendering->viewPosX + globalRendering->winPosX;
-	const float vpy  = globalRendering->viewPosY + bottomWinCoor;
-	const float vsx  = globalRendering->viewSizeX; // same as winSizeX except in dual-screen mode
-	const float vsy  = globalRendering->viewSizeY; // same as winSizeY
-	const float ssx  = globalRendering->screenSizeX;
-	const float ssy  = globalRendering->screenSizeY;
-	const float hssx = 0.5f * ssx;
-	const float hssy = 0.5f * ssy;
-
-	const float zplane = screenDistance * (ssx / screenWidth);
-	const float znear  = zplane * 0.5f;
-	const float zfar   = zplane * 2.0f;
-	const float zfact  = znear / zplane;
-
-	const float left   = (vpx - hssx) * zfact;
-	const float bottom = (vpy - hssy) * zfact;
-	const float right  = ((vpx + vsx) - hssx) * zfact;
-	const float top    = ((vpy + vsy) - hssy) * zfact;
-
 	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
+	glLoadMatrixf(*globalRendering->screenProjMatrix);
 
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
-	glTranslatef3(screenViewTrans = {left / zfact, bottom / zfact, -zplane});
+	glLoadMatrixf(*globalRendering->screenViewMatrix);
 }
 
 void LuaOpenGL::RevertScreenMatrices()
@@ -1071,7 +1030,7 @@ inline void LuaOpenGL::CondWarnDeprecatedGL(lua_State* L, const char* caller)
 
 	if (deprecatedGLWarnLevel >= 2) {
 		lua_Debug info;
-		const int level = 1; // A calling function from Lua
+		constexpr int level = 1; // A calling function from Lua
 		if (lua_getstack(L, level, &info)) {
 			lua_getinfo(L, "nSl", &info);
 
@@ -1079,16 +1038,17 @@ inline void LuaOpenGL::CondWarnDeprecatedGL(lua_State* L, const char* caller)
 		}
 	}
 
-	const auto key = fmt::format("{}{}", caller, luaCaller.c_str());
+	const std::string key = fmt::format("{}{}", caller, luaCaller.c_str());
 
-	if (deprecatedGLWarned.find(key) == deprecatedGLWarned.end()) {
-		deprecatedGLWarned.emplace(key);
-		if (deprecatedGLWarnLevel == 1) {
-			LOG("gl.%s: Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
-		}
-		else {
-			LOG("gl.%s: Attempt to call a deprecated OpenGL function from Lua OpenGL in %s", caller, luaCaller.c_str());
-		}
+	if (deprecatedGLWarned.find(key) != deprecatedGLWarned.end())
+		return;
+
+	deprecatedGLWarned.emplace(key);
+	if (deprecatedGLWarnLevel == 1) {
+		LOG("gl.%s: Attempt to call a deprecated OpenGL function from Lua OpenGL", caller);
+	}
+	else {
+		LOG("gl.%s: Attempt to call a deprecated OpenGL function from Lua OpenGL in %s", caller, luaCaller.c_str());
 	}
 }
 
@@ -1136,15 +1096,6 @@ int LuaOpenGL::GetString(lua_State* L)
 	}
 
 	return 1;
-}
-
-
-int LuaOpenGL::ConfigScreen(lua_State* L)
-{
-//	CheckDrawingEnabled(L, __func__);
-	screenWidth = luaL_checkfloat(L, 1);
-	screenDistance = luaL_checkfloat(L, 2);
-	return 0;
 }
 
 int LuaOpenGL::GetScreenViewTrans(lua_State* L)
@@ -3755,9 +3706,9 @@ int LuaOpenGL::Ortho(lua_State* L)
 	const float right  = luaL_checknumber(L, 2);
 	const float bottom = luaL_checknumber(L, 3);
 	const float top    = luaL_checknumber(L, 4);
-	const float near   = luaL_checknumber(L, 5);
-	const float far    = luaL_checknumber(L, 6);
-	glOrtho(left, right, bottom, top, near, far);
+	const float _near  = luaL_checknumber(L, 5);
+	const float _far   = luaL_checknumber(L, 6);
+	glOrtho(left, right, bottom, top, _near, _far);
 	return 0;
 }
 
@@ -3770,9 +3721,9 @@ int LuaOpenGL::Frustum(lua_State* L)
 	const float right  = luaL_checknumber(L, 2);
 	const float bottom = luaL_checknumber(L, 3);
 	const float top    = luaL_checknumber(L, 4);
-	const float near   = luaL_checknumber(L, 5);
-	const float far    = luaL_checknumber(L, 6);
-	glFrustum(left, right, bottom, top, near, far);
+	const float _near  = luaL_checknumber(L, 5);
+	const float _far   = luaL_checknumber(L, 6);
+	glFrustum(left, right, bottom, top, _near, _far);
 	return 0;
 }
 
