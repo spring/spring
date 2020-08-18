@@ -11,6 +11,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
+#include "System/SafeUtil.h"
 
 
 void UniformConstants::Init()
@@ -42,7 +43,7 @@ void UniformConstants::Kill()
 
 	for (auto& ucbBuffer : ucbBuffers) {
 		ucbBuffer->Release();
-		delete ucbBuffer;
+		spring::SafeDelete(ucbBuffer);
 		ucbBuffer = nullptr;
 	}
 }

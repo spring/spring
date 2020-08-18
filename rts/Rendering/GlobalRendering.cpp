@@ -18,6 +18,7 @@
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Matrix44f.h"
+#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -269,8 +270,8 @@ CGlobalRendering::~CGlobalRendering()
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
 
-	delete screenViewMatrix; screenViewMatrix = nullptr;
-	delete screenProjMatrix; screenProjMatrix = nullptr;
+	spring::SafeDelete(screenViewMatrix);
+	spring::SafeDelete(screenProjMatrix);
 
 	UniformConstants::GetInstance().Kill();
 
