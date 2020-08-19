@@ -44,7 +44,6 @@ void UniformConstants::Kill()
 	for (auto& ucbBuffer : ucbBuffers) {
 		ucbBuffer->Release();
 		spring::SafeDelete(ucbBuffer);
-		ucbBuffer = nullptr;
 	}
 }
 
