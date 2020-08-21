@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
 
-struct UniformConstantsBuffer {
+struct UniformMatricesBuffer {
 	CMatrix44f screenView;
 	CMatrix44f screenProj;
 	CMatrix44f screenViewProj;
@@ -27,10 +27,14 @@ struct UniformConstantsBuffer {
 	CMatrix44f shadowViewProj;
 
 	//TODO: minimap matrices
+};
 
+struct UniformParamsBuffer {
 	float4 timeInfo; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
-	float4 viewGemetry; //vsx, vsy, vpx, vpy
+	float4 viewGeometry; //vsx, vsy, vpx, vpy
 	float4 mapSize; //xz, xzPO2
+
+	float4 rndVec3; //new every draw frame. Only xyz are initialized
 };
 
 class UniformConstants {
@@ -44,29 +48,30 @@ public:
 		return supported;
 	}
 public:
-	UniformConstants() : ucbBuffer(nullptr), bound(false) {};
+	UniformConstants() : umbBuffer(nullptr), upbBuffer(nullptr), umbBufferSize(0), upbBufferSize(0) {};
 	void Init();
 	void Kill();
 	void Update();
-	void Bind(const int bindIndex = BINDING_INDEX);
-	void Unbind(const int bindIndex = BINDING_INDEX);
+	void Bind();
 private:
-	void UpdateMatrices(UniformConstantsBuffer* updateBuffer);
-	void UpdateParams(UniformConstantsBuffer* updateBuffer);
+	void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
+	void UpdateParams(UniformParamsBuffer* updateBuffer);
 private:
 	static constexpr int BUFFERING = 3;
-	static constexpr GLuint BINDING_INDEX = 0;
+
+	static constexpr int UBO_MATRIX_IDX = 0;
+	static constexpr int UBO_PARAMS_IDX = 1;
+
 	static constexpr bool PERSISTENT_STORAGE = false;
 
-	int buffOffset;
-	int buffSize;
+	int umbBufferSize;
+	int upbBufferSize;
 
-	int buffSlice;
+	VBO* umbBuffer;
+	VBO* upbBuffer;
 
-	bool bound;
-
-	VBO* ucbBuffer;
-	std::array<VBO*, BUFFERING> ucbBuffers;
+	std::array<VBO*, BUFFERING> umbBuffers;
+	std::array<VBO*, BUFFERING> upbBuffers;
 };
 
 #endif

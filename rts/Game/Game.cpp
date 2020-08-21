@@ -1356,9 +1356,6 @@ bool CGame::Draw() {
 	SetDrawMode(gameNotDrawing);
 	CTeamHighlight::Disable();
 
-	// Unbind per-drawFrame UBO
-	UniformConstants::GetInstance().Unbind();
-
 	const spring_time currentTimePostDraw = spring_gettime();
 	const spring_time currentFrameDrawTime = currentTimePostDraw - currentTimePreDraw;
 	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, currentFrameDrawTime.toMilliSecsf(), 0.05f);

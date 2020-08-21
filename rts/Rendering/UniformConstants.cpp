@@ -25,14 +25,23 @@ void UniformConstants::Init()
 		GLint uniformBufferOffset = 0;
 
 		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniformBufferOffset);
-		buffSize = ((sizeof(UniformConstantsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
+
+		umbBufferSize = ((sizeof(UniformMatricesBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
+		upbBufferSize = ((sizeof(UniformParamsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
 	}
 
-	for (auto& ucbBuffer : ucbBuffers) {
-		ucbBuffer = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
-		ucbBuffer->Bind(GL_UNIFORM_BUFFER);
-		ucbBuffer->New(buffSize, GL_DYNAMIC_DRAW);
-		ucbBuffer->Unbind();
+	for (auto& buf : umbBuffers) {
+		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
+		buf->Bind(GL_UNIFORM_BUFFER);
+		buf->New(umbBufferSize, GL_DYNAMIC_DRAW);
+		buf->Unbind();
+	}
+
+	for (auto& buf : upbBuffers) {
+		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
+		buf->Bind(GL_UNIFORM_BUFFER);
+		buf->New(upbBufferSize, GL_DYNAMIC_DRAW);
+		buf->Unbind();
 	}
 }
 
@@ -41,13 +50,21 @@ void UniformConstants::Kill()
 	if (!Supported())
 		return;
 
-	for (auto& ucbBuffer : ucbBuffers) {
-		ucbBuffer->Release();
-		spring::SafeDelete(ucbBuffer);
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0);
+
+	for (auto& buf : umbBuffers) {
+		buf->Release();
+		spring::SafeDelete(buf);
+	}
+
+	for (auto& buf : upbBuffers) {
+		buf->Release();
+		spring::SafeDelete(buf);
 	}
 }
 
-void UniformConstants::UpdateMatrices(UniformConstantsBuffer* updateBuffer)
+void UniformConstants::UpdateMatrices(UniformMatricesBuffer* updateBuffer)
 {
 	if (!Supported())
 		return;
@@ -73,43 +90,43 @@ void UniformConstants::UpdateMatrices(UniformConstantsBuffer* updateBuffer)
 }
 
 
-void UniformConstants::UpdateParams(UniformConstantsBuffer* updateBuffer)
+void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
 {
 	updateBuffer->timeInfo = float4{(float)gs->frameNum, gs->frameNum / (1.0f * GAME_SPEED), (float)globalRendering->drawFrame, globalRendering->timeOffset}; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
-	updateBuffer->viewGemetry = float4{(float)globalRendering->viewSizeX, (float)globalRendering->viewSizeY, (float)globalRendering->viewPosX, (float)globalRendering->viewPosY}; //vsx, vsy, vpx, vpy
+	updateBuffer->viewGeometry = float4{(float)globalRendering->viewSizeX, (float)globalRendering->viewSizeY, (float)globalRendering->viewPosX, (float)globalRendering->viewPosY}; //vsx, vsy, vpx, vpy
 	updateBuffer->mapSize = float4{(float)mapDims.mapx, (float)mapDims.mapy, (float)mapDims.pwr2mapx, (float)mapDims.pwr2mapy} *(float)SQUARE_SIZE; //xz, xzPO2
+
+	updateBuffer->rndVec3 = float4{guRNG.NextVector(), 0.0f};
 }
 
 void UniformConstants::Update()
 {
-	auto buffSlice = globalRendering->drawFrame % BUFFERING;
-	ucbBuffer = ucbBuffers[buffSlice];
+	auto buffCurIdx = globalRendering->drawFrame % BUFFERING;
+	umbBuffer = umbBuffers[buffCurIdx];
+	upbBuffer = upbBuffers[buffCurIdx];
 
-	ucbBuffer->Bind(GL_UNIFORM_BUFFER);
-	auto updateBuffer = reinterpret_cast<UniformConstantsBuffer*>(ucbBuffer->MapBuffer(0, buffSize));
-	assert(updateBuffer);
+	umbBuffer->Bind(GL_UNIFORM_BUFFER);
+	auto umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbBuffer->MapBuffer(0, umbBufferSize));
+	assert(umbBufferMap != nullptr);
+	UpdateMatrices(umbBufferMap);
+	umbBuffer->UnmapBuffer();
+	umbBuffer->Unbind();
 
-	UpdateMatrices(updateBuffer);
-	UpdateParams(updateBuffer);
-
-	ucbBuffer->UnmapBuffer();
-	ucbBuffer->Unbind();
+	upbBuffer->Bind(GL_UNIFORM_BUFFER);
+	auto upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbBuffer->MapBuffer(0, upbBufferSize));
+	assert(umbBufferMap != nullptr);
+	UpdateParams(upbBufferMap);
+	upbBuffer->UnmapBuffer();
+	upbBuffer->Unbind();
 }
 
-void UniformConstants::Bind(const int bindIndex)
+//lazy / implicit unbinding included
+void UniformConstants::Bind()
 {
 	if (!Supported())
 		return;
 
-	assert(ucbBuffer && !bound);
-	glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, ucbBuffer->GetId());
-}
-
-void UniformConstants::Unbind(const int bindIndex)
-{
-	if (!Supported())
-		return;
-
-	assert(ucbBuffer && bound);
-	glBindBufferBase(GL_UNIFORM_BUFFER, bindIndex, 0);
+	assert(umbBuffer != nullptr && upbBuffer != nullptr);
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbBuffer->GetId());
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbBuffer->GetId());
 }
