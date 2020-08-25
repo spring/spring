@@ -258,8 +258,8 @@ CGlobalRendering::CGlobalRendering()
 	, sdlWindows{nullptr, nullptr}
 	, glContexts{nullptr, nullptr}
 {
-	screenViewMatrix = new CMatrix44f{};
-	screenProjMatrix = new CMatrix44f{};
+	screenViewMatrix = std::make_unique<CMatrix44f>();
+	screenProjMatrix = std::make_unique<CMatrix44f>();
 
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
@@ -269,9 +269,6 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
-
-	spring::SafeDelete(screenViewMatrix);
-	spring::SafeDelete(screenProjMatrix);
 
 	UniformConstants::GetInstance().Kill();
 

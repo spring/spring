@@ -17,21 +17,15 @@ bool LuaMatrix::PushEntries(lua_State* L)
 		sol::constructors<LuaMatrixImpl()>(),
 
 		"Zero", &LuaMatrixImpl::Zero,
-		"LoadZero", &LuaMatrixImpl::Zero,
 
 		"Identity", &LuaMatrixImpl::Identity,
-		"LoadIdentity", &LuaMatrixImpl::Identity,
 
 		"SetMatrixElements", &LuaMatrixImpl::SetMatrixElements,
 
 		"DeepCopy", &LuaMatrixImpl::DeepCopy,
 
-		//"Mult", sol::overload(&LuaMatrixImpl::MultMat4, &LuaMatrixImpl::MultVec4, LuaMatrixImpl::MultVec3),
-
-		"InverseAffine", &LuaMatrixImpl::InverseAffine,
-		"InvertAffine", &LuaMatrixImpl::InverseAffine,
-		"Inverse", &LuaMatrixImpl::Inverse,
-		"Invert", &LuaMatrixImpl::Inverse,
+		"InvertAffine", &LuaMatrixImpl::InvertAffine,
+		"Invert", &LuaMatrixImpl::Invert,
 
 		"Transpose", &LuaMatrixImpl::Transpose,
 
@@ -63,15 +57,13 @@ bool LuaMatrix::PushEntries(lua_State* L)
 		"ScreenProjMatrix", &LuaMatrixImpl::ScreenProjMatrix,
 		"ScreenViewProjMatrix", & LuaMatrixImpl::ScreenViewProjMatrix,
 
-		"SunViewMatrix", &LuaMatrixImpl::SunViewMatrix,
-		"ShadowViewMatrix", &LuaMatrixImpl::SunViewMatrix,
-		"SunProjMatrix", &LuaMatrixImpl::SunProjMatrix,
-		"ShadowProjMatrix", &LuaMatrixImpl::SunProjMatrix,
-		"SunViewProjMatrix", & LuaMatrixImpl::SunViewProjMatrix,
-		"ShadowViewProjMatrix", & LuaMatrixImpl::SunViewProjMatrix,
+		"ShadowViewMatrix", &LuaMatrixImpl::ShadowViewMatrix,
+		"ShadowProjMatrix", &LuaMatrixImpl::ShadowProjMatrix,
+		"ShadowViewProjMatrix", & LuaMatrixImpl::ShadowViewProjMatrix,
 
 		"Ortho", &LuaMatrixImpl::Ortho,
 		"Frustum", &LuaMatrixImpl::Frustum,
+		"LookAt", &LuaMatrixImpl::LookAt,
 
 		"CameraViewMatrix", &LuaMatrixImpl::CameraViewMatrix,
 		"CameraProjMatrix", &LuaMatrixImpl::CameraProjMatrix,
@@ -86,7 +78,7 @@ bool LuaMatrix::PushEntries(lua_State* L)
 
 		sol::meta_function::multiplication, sol::overload(
 			sol::resolve< LuaMatrixImpl(const LuaMatrixImpl&) const >(&LuaMatrixImpl::operator*),
-			sol::resolve< sol::as_table_t<std::array<float, 4>>(const sol::table&) const >(&LuaMatrixImpl::operator*)
+			sol::resolve< sol::as_table_t< std::array<float, 4> >(const sol::table&) const >(&LuaMatrixImpl::operator*)
 		),
 
 		sol::meta_function::addition, &LuaMatrixImpl::operator+
@@ -99,7 +91,5 @@ bool LuaMatrix::PushEntries(lua_State* L)
 
 int LuaMatrix::GetMatrix(lua_State* L)
 {
-	return sol::stack::call_lua(L, 1, [=]() {
-		return std::move(LuaMatrixImpl{});
-	});
+	return sol::stack::call_lua(L, 1, [] { return LuaMatrixImpl{}; });
 }

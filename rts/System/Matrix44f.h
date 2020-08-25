@@ -3,6 +3,8 @@
 #ifndef MATRIX44F_H
 #define MATRIX44F_H
 
+#include <cmath>
+
 #include "System/float3.h"
 #include "System/float4.h"
 
@@ -12,8 +14,14 @@ public:
 	CR_DECLARE_STRUCT(CMatrix44f)
 
 	// identity
-	CMatrix44f() : m{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f} { }
+	CMatrix44f() : m{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f} {};
 	CMatrix44f(const CMatrix44f& mat);
+
+	CMatrix44f(
+		const float  m0, const float  m1, const float  m2, const float  m3,
+		const float  m4, const float  m5, const float  m6, const float  m7,
+		const float  m8, const float  m9, const float m10, const float m11,
+		const float m12, const float m13, const float m14, const float m15) : m{m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15} {};
 
 	CMatrix44f(const float3 pos, const float3 x, const float3 y, const float3 z);
 	CMatrix44f(const float rotX, const float rotY, const float rotZ);
@@ -119,7 +127,11 @@ public:
 		constexpr float cc[2] = {0.0f, 1.0f};
 		return (ClipControl(cc[enabled]));
 	}
-
+	static CMatrix44f LookAtView(const float3& eye, const float3& center, const float3& up = UpVector);
+	static CMatrix44f LookAtView(const float3& eye, const float3& center, const float roll = 0.0f) { return LookAtView(eye, center, float3{std::sin(roll), std::cos(roll), 0.0}); }
+	static CMatrix44f LookAtView(const float eyeX, const float eyeY, const float eyeZ, const float atX, const float atY, const float atZ, const float roll = 0.0f) {
+		return LookAtView(float3{eyeX, eyeY, eyeZ}, float3{atX, atY, atZ}, roll);
+	}
 
 public:
 	/// OpenGL ordered (ie. column-major)

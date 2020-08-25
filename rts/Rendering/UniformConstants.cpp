@@ -30,14 +30,14 @@ void UniformConstants::Init()
 		upbBufferSize = ((sizeof(UniformParamsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
 	}
 
-	for (auto& buf : umbBuffers) {
+	for (VBO*& buf : umbBuffers) {
 		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
 		buf->Bind(GL_UNIFORM_BUFFER);
 		buf->New(umbBufferSize, GL_DYNAMIC_DRAW);
 		buf->Unbind();
 	}
 
-	for (auto& buf : upbBuffers) {
+	for (VBO*& buf : upbBuffers) {
 		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
 		buf->Bind(GL_UNIFORM_BUFFER);
 		buf->New(upbBufferSize, GL_DYNAMIC_DRAW);
@@ -53,12 +53,12 @@ void UniformConstants::Kill()
 	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0);
 
-	for (auto& buf : umbBuffers) {
+	for (VBO*& buf : umbBuffers) {
 		buf->Release();
 		spring::SafeDelete(buf);
 	}
 
-	for (auto& buf : upbBuffers) {
+	for (VBO*& buf : upbBuffers) {
 		buf->Release();
 		spring::SafeDelete(buf);
 	}
@@ -106,17 +106,33 @@ void UniformConstants::Update()
 	upbBuffer = upbBuffers[buffCurIdx];
 
 	umbBuffer->Bind(GL_UNIFORM_BUFFER);
-	auto umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbBuffer->MapBuffer(0, umbBufferSize));
+
+	if (umbBufferMap == nullptr)
+		umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbBuffer->MapBuffer(0, umbBufferSize));
+
 	assert(umbBufferMap != nullptr);
 	UpdateMatrices(umbBufferMap);
-	umbBuffer->UnmapBuffer();
+
+	if (PERSISTENT_STORAGE == false) {
+		umbBuffer->UnmapBuffer();
+		umbBufferMap = nullptr;
+	}
+
 	umbBuffer->Unbind();
 
 	upbBuffer->Bind(GL_UNIFORM_BUFFER);
-	auto upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbBuffer->MapBuffer(0, upbBufferSize));
+
+	if (upbBufferMap == nullptr)
+		upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbBuffer->MapBuffer(0, upbBufferSize));
+
 	assert(umbBufferMap != nullptr);
 	UpdateParams(upbBufferMap);
-	upbBuffer->UnmapBuffer();
+
+	if (PERSISTENT_STORAGE == false) {
+		upbBuffer->UnmapBuffer();
+		upbBufferMap = nullptr;
+	}
+
 	upbBuffer->Unbind();
 }
 

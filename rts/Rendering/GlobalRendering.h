@@ -4,6 +4,7 @@
 #define _GLOBAL_RENDERING_H
 
 #include <string>
+#include <memory>
 
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
@@ -132,8 +133,8 @@ public:
 	int viewSizeY;
 
 	/// screen {View,Proj} matrices for rendering in pixel coordinates
-	CMatrix44f* screenViewMatrix;
-	CMatrix44f* screenProjMatrix;
+	std::unique_ptr<CMatrix44f> screenViewMatrix;
+	std::unique_ptr<CMatrix44f> screenProjMatrix;
 
 	/// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
 	float pixelX;

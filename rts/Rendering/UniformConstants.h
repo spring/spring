@@ -48,7 +48,7 @@ public:
 		return supported;
 	}
 public:
-	UniformConstants() : umbBuffer(nullptr), upbBuffer(nullptr), umbBufferSize(0), upbBufferSize(0) {};
+	UniformConstants() : umbBuffer(nullptr), upbBuffer(nullptr), umbBufferMap(nullptr), upbBufferMap(nullptr), umbBufferSize(0), upbBufferSize(0) {};
 	void Init();
 	void Kill();
 	void Update();
@@ -66,6 +66,9 @@ private:
 
 	int umbBufferSize;
 	int upbBufferSize;
+
+	UniformMatricesBuffer* umbBufferMap;
+	UniformParamsBuffer* upbBufferMap;
 
 	VBO* umbBuffer;
 	VBO* upbBuffer;

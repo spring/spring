@@ -19,7 +19,6 @@ struct LocalModelPiece;
 struct CCamera;
 
 using tuple16f = std::tuple< float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float >;
-using tuple4f =  std::tuple< float, float, float, float >;
 
 class LuaMatrixImpl {
 public:
@@ -34,12 +33,15 @@ public:
 		const float  m0, const float  m1, const float  m2, const float  m3,
 		const float  m4, const float  m5, const float  m6, const float  m7,
 		const float  m8, const float  m9, const float m10, const float m11,
-		const float m12, const float m13, const float m14, const float m15);
+		const float m12, const float m13, const float m14, const float m15)
+	{
+		mat = CMatrix44f{m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15};
+	};
 
-	LuaMatrixImpl DeepCopy() { return LuaMatrixImpl(*this); }
+	LuaMatrixImpl DeepCopy() const { return LuaMatrixImpl(*this); }
 
-	void InverseAffine() { mat.InvertAffineInPlace(); };
-	void Inverse() { mat.InvertInPlace(); };
+	void InvertAffine() { mat.InvertAffineInPlace(); };
+	void Invert() { mat.InvertInPlace(); };
 
 	void Transpose() { mat.Transpose(); };
 
@@ -54,9 +56,9 @@ public:
 	void RotateRadY(const float rad) { RotateRad(rad, 0.0f, 1.0f, 0.0f); };
 	void RotateRadZ(const float rad) { RotateRad(rad, 0.0f, 0.0f, 1.0f); };
 
-	void RotateDegX(const float deg) { RotateRad(deg * math::DEG_TO_RAD, 1.0f, 0.0f, 0.0f); };
-	void RotateDegY(const float deg) { RotateRad(deg * math::DEG_TO_RAD, 0.0f, 1.0f, 0.0f); };
-	void RotateDegZ(const float deg) { RotateRad(deg * math::DEG_TO_RAD, 0.0f, 0.0f, 1.0f); };
+	void RotateDegX(const float deg) { RotateDeg(deg, 1.0f, 0.0f, 0.0f); };
+	void RotateDegY(const float deg) { RotateDeg(deg, 0.0f, 1.0f, 0.0f); };
+	void RotateDegZ(const float deg) { RotateDeg(deg, 0.0f, 0.0f, 1.0f); };
 
 	// NB: sol::this_state is passed implicitly by sol. It's nothing more than a POD type carrying lua_State*, thus no need to pass it by reference
 	bool UnitMatrix(const unsigned int unitID, const sol::optional<bool> mult, sol::this_state L);
@@ -71,12 +73,13 @@ public:
 	void ScreenProjMatrix(const sol::optional<bool> mult);
 	void ScreenViewProjMatrix(const sol::optional<bool> mult);
 
-	void SunViewMatrix(const sol::optional<bool> mult);
-	void SunProjMatrix(const sol::optional<bool> mult);
-	void SunViewProjMatrix(const sol::optional<bool> mult);
+	void ShadowViewMatrix(const sol::optional<bool> mult);
+	void ShadowProjMatrix(const sol::optional<bool> mult);
+	void ShadowViewProjMatrix(const sol::optional<bool> mult);
 
 	void Ortho(const float left, const float right, const float bottom, const float top, const float near, const float far, const sol::optional<bool> mult);
 	void Frustum(const float left, const float right, const float bottom, const float top, const float near, const float far, const sol::optional<bool> mult);
+	void LookAt(const float eyeX, const float eyeY, const float eyeZ, const float atX, const float atY, const float atZ, const float roll, const sol::optional<bool> mult);
 
 	void CameraViewMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
 	void CameraProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
@@ -86,7 +89,7 @@ public:
 	void CameraViewProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
 	void CameraBillboardMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult);
 
-	tuple16f GetAsScalar()
+	tuple16f GetAsScalar() const
 	{
 		return std::make_tuple(
 			mat[0], mat[1], mat[2], mat[3],
@@ -99,10 +102,10 @@ public:
 	sol::as_table_t<std::array<float, 16>> GetAsTable()
 	{
 		return sol::as_table(std::array<float, 16> {
-			mat[0], mat[1], mat[2], mat[3],
-			mat[4], mat[5], mat[6], mat[7],
-			mat[8], mat[9], mat[10], mat[11],
-			mat[12], mat[13], mat[14], mat[15]
+				mat[0], mat[1], mat[2], mat[3],
+				mat[4], mat[5], mat[6], mat[7],
+				mat[8], mat[9], mat[10], mat[11],
+				mat[12], mat[13], mat[14], mat[15]
 		});
 	}
 
@@ -112,12 +115,8 @@ public:
 public:
 	sol::as_table_t<std::array<float, 4>> operator* (const sol::table& tbl) const {
 		float4 f4 {0.0f, 0.0f, 0.0f, 1.0f};
-		for (auto i = 1; i <= 4; ++i) {
-			const sol::optional<float> maybeValue = tbl[i];
-			if (!maybeValue)
-				continue;
-
-			f4[i - 1] = maybeValue.value();
+		for (int i = 1; i <= 4; ++i) {
+			f4[i - 1] = tbl[i].get_or<float>(f4[i - 1]);
 		}
 		f4 = mat * f4;
 		return sol::as_table(std::array<float, 4> {f4.x, f4.y, f4.z, f4.w});
@@ -125,11 +124,10 @@ public:
 	LuaMatrixImpl operator* (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat * lmi.mat); };
 	LuaMatrixImpl operator+ (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat + lmi.mat); };
 private:
-	CCamera* GetCamera(const sol::optional<unsigned int> cameraIdOpt);
-
 	void AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f* matIn);
 	void AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f& matIn);
-
+private:
+	//static templated methods
 	template<typename TObj>
 	static const TObj* ParseObject(int objID, sol::this_state L);
 
@@ -147,18 +145,15 @@ private:
 	static bool IsObjectVisible(const TObj* obj, sol::this_state L);
 
 private:
-	static const LocalModelPiece* ParseObjectConstLocalModelPiece(const CSolidObject* obj, const unsigned int pieceNum);
 	//static methods
+	static CCamera* GetCamera(const sol::optional<unsigned int> cameraIdOpt);
+	static const LocalModelPiece* ParseObjectConstLocalModelPiece(const CSolidObject* obj, const unsigned int pieceNum);
 private:
+	//static constants
 	static constexpr bool VIEWPROJ_MULT_DEFAULT = false;
 	static constexpr bool OBJECT_MULT_DEFAULT = true;
-	//static constants
 private:
 	CMatrix44f mat;
-private:
-	static CMatrix44f screenViewMatrix;
-	static CMatrix44f screenProjMatrix;
-	//private vars
 };
 
 #endif //LUA_MATRIX_IMPL_H

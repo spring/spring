@@ -18,22 +18,9 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 
-CMatrix44f LuaMatrixImpl::screenViewMatrix = CMatrix44f{};
-CMatrix44f LuaMatrixImpl::screenProjMatrix = CMatrix44f{};
-
 void LuaMatrixImpl::Zero()
 {
 	std::fill(&mat[0], &mat[0] + 16, 0.0f);
-}
-
-void LuaMatrixImpl::SetMatrixElements(
-	const float  m0, const float  m1, const float  m2, const float  m3,
-	const float  m4, const float  m5, const float  m6, const float  m7,
-	const float  m8, const float  m9, const float m10, const float m11,
-	const float m12, const float m13, const float m14, const float m15)
-{
-	const std::array<float, 16> arr {m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15};
-	std::copy(arr.cbegin(), arr.cend(), &mat.m[0]);
 }
 
 void LuaMatrixImpl::Translate(const float x, const float y, const float z)
@@ -53,9 +40,7 @@ void LuaMatrixImpl::Scale(const float s)
 
 void LuaMatrixImpl::RotateRad(const float rad, const float x, const float y, const float z)
 {
-	// TODO: Find out why minus and if it is correct.
-	// This code is copy-pasted from develop
-	mat.Rotate(-rad , {x, y, z});
+	mat.Rotate(rad , {x, y, z});
 }
 
 ///////////////////////////////////////////////////////////
@@ -95,7 +80,7 @@ bool LuaMatrixImpl::IsObjectVisible(const TObj* obj, sol::this_state L)
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
 
-	if ((readAllyTeam < 0) && (readAllyTeam == CEventClient::NoAccessTeam))
+	if (readAllyTeam < 0 && readAllyTeam == CEventClient::NoAccessTeam)
 		return false;
 
 	if constexpr(std::is_same<TObj, CProjectile>::value) //CProjectile has no IsInLosForAllyTeam()
@@ -142,8 +127,9 @@ CCamera* LuaMatrixImpl::GetCamera(const sol::optional<unsigned int> cameraIdOpt)
 	constexpr unsigned int minCamType = CCamera::CAMTYPE_PLAYER;
 	constexpr unsigned int maxCamType = CCamera::CAMTYPE_ACTIVE;
 
-	const unsigned int camType = std::clamp(cameraIdOpt.value_or(maxCamType), minCamType, maxCamType);
-	const auto cam = CCameraHandler::GetCamera(camType);
+	const unsigned int camType = std::clamp(cameraIdOpt.value_or(minCamType), minCamType, maxCamType);
+	CCamera* cam = CCameraHandler::GetCamera(camType);
+	return cam;
 }
 
 void LuaMatrixImpl::AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f* matIn)
@@ -155,9 +141,7 @@ void LuaMatrixImpl::AssignOrMultMatImpl(const sol::optional<bool> mult, const bo
 		return;
 	}
 
-	//TODO: check multiplication order
-	CMatrix44f tmpMat = *matIn;
-	mat *= tmpMat;
+	mat *= (*matIn);
 }
 
 void LuaMatrixImpl::AssignOrMultMatImpl(const sol::optional<bool> mult, const bool multDefault, const CMatrix44f& matIn)
@@ -226,33 +210,33 @@ bool LuaMatrixImpl::ObjectPieceMatImpl(const unsigned int objID, const unsigned 
 
 void LuaMatrixImpl::ScreenViewMatrix(const sol::optional<bool> mult)
 {
-	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, globalRendering->screenViewMatrix);
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, *globalRendering->screenViewMatrix);
 }
 
 void LuaMatrixImpl::ScreenProjMatrix(const sol::optional<bool> mult)
 {
-	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, globalRendering->screenProjMatrix);
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, *globalRendering->screenProjMatrix);
 }
 
 void LuaMatrixImpl::ScreenViewProjMatrix(const sol::optional<bool> mult)
 {
-	auto screenViewProjMatrix = (*globalRendering->screenProjMatrix) * (*globalRendering->screenViewMatrix);
+	CMatrix44f screenViewProjMatrix = (*globalRendering->screenProjMatrix) * (*globalRendering->screenViewMatrix);
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, screenViewProjMatrix);
 }
 
-void LuaMatrixImpl::SunViewMatrix(const sol::optional<bool> mult)
+void LuaMatrixImpl::ShadowViewMatrix(const sol::optional<bool> mult)
 {
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, shadowHandler.GetShadowViewMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING));
 }
 
-void LuaMatrixImpl::SunProjMatrix(const sol::optional<bool> mult)
+void LuaMatrixImpl::ShadowProjMatrix(const sol::optional<bool> mult)
 {
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, shadowHandler.GetShadowProjMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING));
 }
 
-void LuaMatrixImpl::SunViewProjMatrix(const sol::optional<bool> mult)
+void LuaMatrixImpl::ShadowViewProjMatrix(const sol::optional<bool> mult)
 {
-	auto viewProj = shadowHandler.GetShadowProjMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING) * shadowHandler.GetShadowViewMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
+	CMatrix44f viewProj = shadowHandler.GetShadowProjMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING) * shadowHandler.GetShadowViewMatrix(CShadowHandler::SHADOWMAT_TYPE_DRAWING);
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, viewProj);
 }
 
@@ -266,58 +250,63 @@ void LuaMatrixImpl::Frustum(const float left, const float right, const float bot
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, CMatrix44f::ClipPerspProj(left, right, bottom, top, _near, _far, globalRendering->supportClipSpaceControl * 1.0f));
 }
 
+void LuaMatrixImpl::LookAt(const float eyeX, const float eyeY, const float eyeZ, const float atX, const float atY, const float atZ, const float roll, const sol::optional<bool> mult)
+{
+	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, CMatrix44f::LookAtView(eyeX, eyeY, eyeZ, atX, atY, atZ, roll));
+}
+
 void LuaMatrixImpl::CameraViewMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetViewMatrix();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f& matIn = cam->GetViewMatrix();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetProjectionMatrix();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f& matIn = cam->GetProjectionMatrix();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraViewProjMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetViewMatrix() * cam->GetProjectionMatrix();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f matIn = cam->GetViewMatrix() * cam->GetProjectionMatrix();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraViewInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetViewMatrixInverse();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f& matIn = cam->GetViewMatrixInverse();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetProjectionMatrixInverse();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f& matIn = cam->GetProjectionMatrixInverse();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraViewProjInverseMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetViewMatrixInverse() * cam->GetProjectionMatrixInverse();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f matIn = cam->GetViewMatrixInverse() * cam->GetProjectionMatrixInverse();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
 
 void LuaMatrixImpl::CameraBillboardMatrix(const sol::optional<unsigned int> cameraIdOpt, const sol::optional<bool> mult)
 {
-	const auto cam = GetCamera(cameraIdOpt);
-	const auto matIn = cam->GetViewMatrix() * cam->GetBillBoardMatrix();
+	CCamera* cam = GetCamera(cameraIdOpt);
+	const CMatrix44f matIn = cam->GetViewMatrix() * cam->GetBillBoardMatrix();
 
 	AssignOrMultMatImpl(mult, LuaMatrixImpl::VIEWPROJ_MULT_DEFAULT, matIn);
 }
