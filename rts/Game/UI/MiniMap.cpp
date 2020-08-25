@@ -1448,7 +1448,12 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 
 	if (useNormalizedCoors) {
 		glPushMatrix();
-		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
+
+		if (globalRendering->dualScreenMode)
+			glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
+		else
+			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
+
 		glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
 	}
 
@@ -1465,8 +1470,12 @@ bool CMiniMap::RenderCachedTexture(bool useNormalizedCoors)
 
 	DrawCameraFrustumAndMouseSelection();
 
-	if (useNormalizedCoors)
+	if (useNormalizedCoors) {
+		if (globalRendering->dualScreenMode)
+			glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+
 		glPopMatrix();
+	}
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
