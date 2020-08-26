@@ -2,6 +2,7 @@
 #define UNIFORM_CONSTANTS_H
 
 #include <array>
+#include <memory>
 
 #include "System/float4.h"
 #include "System/Matrix44f.h"
@@ -54,6 +55,11 @@ public:
 	void Update();
 	void Bind();
 private:
+	void InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize);
+
+	template<typename TBuffType, typename TUpdateFunc>
+	void UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+
 	void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
 	void UpdateParams(UniformParamsBuffer* updateBuffer);
 private:
@@ -70,11 +76,8 @@ private:
 	UniformMatricesBuffer* umbBufferMap;
 	UniformParamsBuffer* upbBufferMap;
 
-	VBO* umbBuffer;
-	VBO* upbBuffer;
-
-	std::array<VBO*, BUFFERING> umbBuffers;
-	std::array<VBO*, BUFFERING> upbBuffers;
+	std::unique_ptr<VBO> umbBuffer;
+	std::unique_ptr<VBO> upbBuffer;
 };
 
 #endif

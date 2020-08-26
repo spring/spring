@@ -14,6 +14,16 @@
 #include "System/SafeUtil.h"
 
 
+
+void UniformConstants::InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize)
+{
+	vbo = std::make_unique<VBO>(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
+	vbo->Bind(GL_UNIFORM_BUFFER);
+	vbo->New(BUFFERING * vboSingleSize, GL_DYNAMIC_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
+	vbo->Unbind();
+}
+
+
 void UniformConstants::Init()
 {
 	if (!Supported()) {
@@ -30,19 +40,8 @@ void UniformConstants::Init()
 		upbBufferSize = ((sizeof(UniformParamsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
 	}
 
-	for (VBO*& buf : umbBuffers) {
-		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
-		buf->Bind(GL_UNIFORM_BUFFER);
-		buf->New(umbBufferSize, GL_DYNAMIC_DRAW);
-		buf->Unbind();
-	}
-
-	for (VBO*& buf : upbBuffers) {
-		buf = new VBO(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
-		buf->Bind(GL_UNIFORM_BUFFER);
-		buf->New(upbBufferSize, GL_DYNAMIC_DRAW);
-		buf->Unbind();
-	}
+	InitVBO(umbBuffer, umbBufferSize);
+	InitVBO(upbBuffer, upbBufferSize);
 }
 
 void UniformConstants::Kill()
@@ -52,16 +51,6 @@ void UniformConstants::Kill()
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0);
-
-	for (VBO*& buf : umbBuffers) {
-		buf->Release();
-		spring::SafeDelete(buf);
-	}
-
-	for (VBO*& buf : upbBuffers) {
-		buf->Release();
-		spring::SafeDelete(buf);
-	}
 }
 
 void UniformConstants::UpdateMatrices(UniformMatricesBuffer* updateBuffer)
@@ -99,41 +88,41 @@ void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
 	updateBuffer->rndVec3 = float4{guRNG.NextVector(), 0.0f};
 }
 
+
+template<typename TBuffType, typename TUpdateFunc>
+void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
+{
+	TBuffType* thisFrameBuffMap = nullptr;
+
+	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
+	vbo->Bind(GL_UNIFORM_BUFFER);
+
+	if constexpr (PERSISTENT_STORAGE) {
+		if (buffMap == nullptr) {
+			buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
+			assert(buffMap != nullptr);
+		}
+
+		thisFrameBuffMap = reinterpret_cast<TBuffType*> (reinterpret_cast<GLubyte*>(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
+	} else {
+		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(buffCurIdx * vboSingleSize, vboSingleSize));
+		assert(buffMap != nullptr);
+
+		thisFrameBuffMap = buffMap;
+	}
+
+	(this->*updateFunc)(thisFrameBuffMap);
+
+	if constexpr(!PERSISTENT_STORAGE)
+		vbo->UnmapBuffer();
+
+	vbo->Unbind();
+}
+
 void UniformConstants::Update()
 {
-	auto buffCurIdx = globalRendering->drawFrame % BUFFERING;
-	umbBuffer = umbBuffers[buffCurIdx];
-	upbBuffer = upbBuffers[buffCurIdx];
-
-	umbBuffer->Bind(GL_UNIFORM_BUFFER);
-
-	if (umbBufferMap == nullptr)
-		umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbBuffer->MapBuffer(0, umbBufferSize));
-
-	assert(umbBufferMap != nullptr);
-	UpdateMatrices(umbBufferMap);
-
-	if (PERSISTENT_STORAGE == false) {
-		umbBuffer->UnmapBuffer();
-		umbBufferMap = nullptr;
-	}
-
-	umbBuffer->Unbind();
-
-	upbBuffer->Bind(GL_UNIFORM_BUFFER);
-
-	if (upbBufferMap == nullptr)
-		upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbBuffer->MapBuffer(0, upbBufferSize));
-
-	assert(umbBufferMap != nullptr);
-	UpdateParams(upbBufferMap);
-
-	if (PERSISTENT_STORAGE == false) {
-		upbBuffer->UnmapBuffer();
-		upbBufferMap = nullptr;
-	}
-
-	upbBuffer->Unbind();
+	UpdateMap(umbBuffer, umbBufferMap, this->UpdateMatrices, umbBufferSize);
+	UpdateMap(upbBuffer, upbBufferMap, this->UpdateParams  , upbBufferSize);
 }
 
 //lazy / implicit unbinding included
