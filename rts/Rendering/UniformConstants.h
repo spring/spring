@@ -49,16 +49,13 @@ public:
 		return supported;
 	}
 public:
-	UniformConstants() : umbBuffer(nullptr), upbBuffer(nullptr), umbBufferMap(nullptr), upbBufferMap(nullptr), umbBufferSize(0), upbBufferSize(0) {};
+	UniformConstants() : umbBufferMap(nullptr), upbBufferMap(nullptr), umbVBO(nullptr), upbVBO(nullptr), umbBufferSize(0), upbBufferSize(0) {};
 	void Init();
 	void Kill();
 	void Update();
 	void Bind();
 private:
 	void InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize);
-
-	template<typename TBuffType, typename TUpdateFunc>
-	void UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
 
 	void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
 	void UpdateParams(UniformParamsBuffer* updateBuffer);
@@ -76,8 +73,8 @@ private:
 	UniformMatricesBuffer* umbBufferMap;
 	UniformParamsBuffer* upbBufferMap;
 
-	std::unique_ptr<VBO> umbBuffer;
-	std::unique_ptr<VBO> upbBuffer;
+	std::unique_ptr<VBO> umbVBO;
+	std::unique_ptr<VBO> upbVBO;
 };
 
 #endif
