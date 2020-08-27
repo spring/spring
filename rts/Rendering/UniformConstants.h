@@ -49,7 +49,6 @@ public:
 		return supported;
 	}
 public:
-	UniformConstants() : umbBuffer(nullptr), upbBuffer(nullptr), umbBufferMap(nullptr), upbBufferMap(nullptr), umbBufferSize(0), upbBufferSize(0) {};
 	void Init();
 	void Kill();
 	void Update();
@@ -70,11 +69,11 @@ private:
 
 	static constexpr bool PERSISTENT_STORAGE = false;
 
-	int umbBufferSize;
-	int upbBufferSize;
+	int umbBufferSize = 0;
+	int upbBufferSize = 0;
 
-	UniformMatricesBuffer* umbBufferMap;
-	UniformParamsBuffer* upbBufferMap;
+	UniformMatricesBuffer* umbBufferMap = nullptr;
+	UniformParamsBuffer* upbBufferMap = nullptr;
 
 	std::unique_ptr<VBO> umbBuffer;
 	std::unique_ptr<VBO> upbBuffer;
