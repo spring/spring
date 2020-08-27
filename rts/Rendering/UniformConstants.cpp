@@ -40,8 +40,8 @@ void UniformConstants::Init()
 		upbBufferSize = ((sizeof(UniformParamsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
 	}
 
-	InitVBO(umbVBO, umbBufferSize);
-	InitVBO(upbVBO, upbBufferSize);
+	InitVBO(umbBuffer, umbBufferSize);
+	InitVBO(upbBuffer, upbBufferSize);
 }
 
 void UniformConstants::Kill()
@@ -86,68 +86,43 @@ void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
 }
 
 
+template<typename TBuffType, typename TUpdateFunc>
+void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
+{
+	TBuffType* thisFrameBuffMap = nullptr;
+
+	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
+	vbo->Bind(GL_UNIFORM_BUFFER);
+
+	if constexpr (PERSISTENT_STORAGE) {
+		if (buffMap == nullptr) {
+			buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
+			assert(buffMap != nullptr);
+		}
+
+		thisFrameBuffMap = reinterpret_cast<TBuffType*> (reinterpret_cast<GLubyte*>(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
+	} else {
+		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(buffCurIdx * vboSingleSize, vboSingleSize));
+		assert(buffMap != nullptr);
+
+		thisFrameBuffMap = buffMap;
+	}
+
+	updateFunc(thisFrameBuffMap);
+
+	if constexpr(!PERSISTENT_STORAGE)
+		vbo->UnmapBuffer();
+
+	vbo->Unbind();
+}
+
 void UniformConstants::Update()
 {
 	if (!Supported())
 		return;
 
-	{
-		UniformMatricesBuffer* thisFrameBuffMap = nullptr;
-
-		unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
-		umbVBO->Bind(GL_UNIFORM_BUFFER);
-
-		if constexpr (PERSISTENT_STORAGE) {
-			if (umbBufferMap == nullptr) {
-				umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbVBO->MapBuffer(0, BUFFERING * umbBufferSize)); //map first time and forever
-				assert(umbBufferMap != nullptr);
-			}
-
-			thisFrameBuffMap = reinterpret_cast<UniformMatricesBuffer*> (reinterpret_cast<GLubyte*>(umbBufferMap) + buffCurIdx * umbBufferSize); //choose the current part of the buffer
-		}
-		else {
-			umbBufferMap = reinterpret_cast<UniformMatricesBuffer*>(umbVBO->MapBuffer(buffCurIdx * umbBufferSize, umbBufferSize));
-			assert(umbBufferMap != nullptr);
-
-			thisFrameBuffMap = umbBufferMap;
-		}
-
-		UpdateMatrices(thisFrameBuffMap);
-
-		if constexpr (!PERSISTENT_STORAGE)
-			umbVBO->UnmapBuffer();
-
-		umbVBO->Unbind();
-	}
-
-	{
-		UniformParamsBuffer* thisFrameBuffMap = nullptr;
-
-		unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
-		upbVBO->Bind(GL_UNIFORM_BUFFER);
-
-		if constexpr (PERSISTENT_STORAGE) {
-			if (upbBufferMap == nullptr) {
-				upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbVBO->MapBuffer(0, BUFFERING * upbBufferSize)); //map first time and forever
-				assert(upbBufferMap != nullptr);
-			}
-
-			thisFrameBuffMap = reinterpret_cast<UniformParamsBuffer*> (reinterpret_cast<GLubyte*>(upbBufferMap) + buffCurIdx * upbBufferSize); //choose the current part of the buffer
-		}
-		else {
-			upbBufferMap = reinterpret_cast<UniformParamsBuffer*>(upbVBO->MapBuffer(buffCurIdx * upbBufferSize, upbBufferSize));
-			assert(upbBufferMap != nullptr);
-
-			thisFrameBuffMap = upbBufferMap;
-		}
-
-		UpdateParams(thisFrameBuffMap);
-
-		if constexpr (!PERSISTENT_STORAGE)
-			upbVBO->UnmapBuffer();
-
-		upbVBO->Unbind();
-	}
+	UpdateMap(umbBuffer, umbBufferMap, UniformConstants::UpdateMatrices, umbBufferSize);
+	UpdateMap(upbBuffer, upbBufferMap, UniformConstants::UpdateParams  , upbBufferSize);
 }
 
 //lazy / implicit unbinding included
@@ -156,7 +131,7 @@ void UniformConstants::Bind()
 	if (!Supported())
 		return;
 
-	assert(umbVBO != nullptr && upbVBO != nullptr);
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbVBO->GetId());
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbVBO->GetId());
+	assert(umbBuffer != nullptr && upbBuffer != nullptr);
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbBuffer->GetId());
+	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbBuffer->GetId());
 }
