@@ -1,6 +1,7 @@
 #include "UniformConstants.h"
 
 #include <cassert>
+#include <stdint.h>
 
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
@@ -100,7 +101,7 @@ void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap,
 			assert(buffMap != nullptr);
 		}
 
-		thisFrameBuffMap = reinterpret_cast<TBuffType*> (reinterpret_cast<GLubyte*>(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
+		thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
 	} else {
 		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(buffCurIdx * vboSingleSize, vboSingleSize));
 		assert(buffMap != nullptr);
