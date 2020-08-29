@@ -93,16 +93,17 @@ void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap,
 	TBuffType* thisFrameBuffMap = nullptr;
 
 	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
-	vbo->Bind(GL_UNIFORM_BUFFER);
 
 	if constexpr (PERSISTENT_STORAGE) {
 		if (buffMap == nullptr) {
+			vbo->Bind(GL_UNIFORM_BUFFER);
 			buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
 			assert(buffMap != nullptr);
 		}
 
 		thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
 	} else {
+		vbo->Bind(GL_UNIFORM_BUFFER);
 		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(buffCurIdx * vboSingleSize, vboSingleSize));
 		assert(buffMap != nullptr);
 
@@ -114,7 +115,8 @@ void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap,
 	if constexpr(!PERSISTENT_STORAGE)
 		vbo->UnmapBuffer();
 
-	vbo->Unbind();
+	if (vbo->bound)
+		vbo->Unbind();
 }
 
 void UniformConstants::Update()

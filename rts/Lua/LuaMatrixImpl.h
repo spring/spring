@@ -18,6 +18,26 @@ struct CSolidObject;
 struct LocalModelPiece;
 struct CCamera;
 
+class CMatrix44fProxy : public CMatrix44f {
+public:
+	//begin, end, size
+	float* begin() noexcept { return std::begin(m); }
+	const float* begin() const noexcept { return std::begin(m); }
+	float* end() noexcept { return std::end(m); }
+	const float* end() const noexcept { return std::end(m); }
+	constexpr std::size_t size() const noexcept { return std::size(m); }
+};
+
+class float4Proxy : public float4 {
+public:
+	//begin, end, size
+	float* begin() noexcept { return std::begin(xyz); }
+	const float* begin() const noexcept { return std::begin(xyz); }
+	float* end() noexcept { return std::end(xyz) + 1; }
+	const float* end() const noexcept { return std::end(xyz) + 1; }
+	constexpr std::size_t size() const noexcept { return std::size(xyz) + 1; }
+};
+
 using tuple16f = std::tuple< float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float >;
 
 class LuaMatrixImpl {
@@ -99,27 +119,22 @@ public:
 		);
 	}
 
-	sol::as_table_t<std::array<float, 16>> GetAsTable()
+	sol::as_table_t<CMatrix44fProxy> GetAsTable()
 	{
-		return sol::as_table(std::array<float, 16> {
-				mat[0], mat[1], mat[2], mat[3],
-				mat[4], mat[5], mat[6], mat[7],
-				mat[8], mat[9], mat[10], mat[11],
-				mat[12], mat[13], mat[14], mat[15]
-		});
+		return sol::as_table(static_cast<CMatrix44fProxy&>(mat));
 	}
 
 public:
 	const CMatrix44f& GetMatRef() const { return  mat; }
 	const CMatrix44f* GetMatPtr() const { return &mat; }
 public:
-	sol::as_table_t<std::array<float, 4>> operator* (const sol::table& tbl) const {
+	sol::as_table_t<float4Proxy> operator* (const sol::table& tbl) const {
 		float4 f4 {0.0f, 0.0f, 0.0f, 1.0f};
 		for (int i = 1; i <= 4; ++i) {
 			f4[i - 1] = tbl[i].get_or<float>(f4[i - 1]);
 		}
 		f4 = mat * f4;
-		return sol::as_table(std::array<float, 4> {f4.x, f4.y, f4.z, f4.w});
+		return sol::as_table(static_cast<float4Proxy&>(f4));
 	};
 	LuaMatrixImpl operator* (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat * lmi.mat); };
 	LuaMatrixImpl operator+ (const LuaMatrixImpl& lmi) const { return LuaMatrixImpl(mat + lmi.mat); };

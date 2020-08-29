@@ -78,7 +78,7 @@ bool LuaMatrix::PushEntries(lua_State* L)
 
 		sol::meta_function::multiplication, sol::overload(
 			sol::resolve< LuaMatrixImpl(const LuaMatrixImpl&) const >(&LuaMatrixImpl::operator*),
-			sol::resolve< sol::as_table_t< std::array<float, 4> >(const sol::table&) const >(&LuaMatrixImpl::operator*)
+			sol::resolve< sol::as_table_t<float4Proxy>(const sol::table&) const >(&LuaMatrixImpl::operator*)
 		),
 
 		sol::meta_function::addition, &LuaMatrixImpl::operator+
