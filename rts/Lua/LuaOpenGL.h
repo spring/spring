@@ -4,7 +4,10 @@
 #define LUA_GL_H
 
 #include <vector>
+#include <string>
+#include <unordered_set>
 
+#include "Rendering/GL/myGL.h"
 #include "Lua/LuaHandle.h"
 
 struct lua_State;
@@ -136,10 +139,13 @@ class LuaOpenGL {
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
 		static bool safeMode;
 		static bool canUseShaders;
+		static int deprecatedGLWarnLevel;
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
+
+		static std::unordered_set<std::string> deprecatedGLWarned;
 
 		struct OcclusionQuery {
 			unsigned int index; // into LuaOpenGL::occlusionQueries
@@ -150,13 +156,13 @@ class LuaOpenGL {
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
+		static void CondWarnDeprecatedGL(lua_State* L, const char* caller);
+		static void NotImplementedError(lua_State* L, const char* caller);
 
 	private:
 		static int HasExtension(lua_State* L);
 		static int GetNumber(lua_State* L);
 		static int GetString(lua_State* L);
-
-		static int ConfigScreen(lua_State* L);
 
 		static int GetScreenViewTrans(lua_State* L);
 		static int GetViewSizes(lua_State* L);
@@ -240,6 +246,7 @@ class LuaOpenGL {
 		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
 		static int EndText(lua_State* L);
+		static int DrawBufferedText(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 

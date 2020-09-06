@@ -51,5 +51,7 @@ set(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaVFS.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaWeaponDefs.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaZip.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMatrix.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMatrixImpl.cpp"
 		PARENT_SCOPE
 	)

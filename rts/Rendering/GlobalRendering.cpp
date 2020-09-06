@@ -10,12 +10,14 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/UniformConstants.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/type2.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -104,6 +106,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(viewPosY),
 	CR_IGNORED(viewSizeX),
 	CR_IGNORED(viewSizeY),
+	CR_IGNORED(screenViewMatrix),
+	CR_IGNORED(screenProjMatrix),
 	CR_IGNORED(pixelX),
 	CR_IGNORED(pixelY),
 
@@ -183,6 +187,9 @@ CGlobalRendering::CGlobalRendering()
 	, viewSizeX(1)
 	, viewSizeY(1)
 
+	, screenViewMatrix(nullptr)
+	, screenProjMatrix(nullptr)
+
 	// pixel geometry
 	, pixelX(0.01f)
 	, pixelY(0.01f)
@@ -250,6 +257,9 @@ CGlobalRendering::CGlobalRendering()
 	, sdlWindows{nullptr, nullptr}
 	, glContexts{nullptr, nullptr}
 {
+	screenViewMatrix = std::make_unique<CMatrix44f>();
+	screenProjMatrix = std::make_unique<CMatrix44f>();
+
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"Fullscreen", "WindowBorderless"});
 }
@@ -258,6 +268,8 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
+
+	UniformConstants::GetInstance().Kill();
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
@@ -1026,6 +1038,39 @@ void CGlobalRendering::UpdateGLConfigs()
 	verticalSync->SetInterval();
 }
 
+void CGlobalRendering::UpdateScreenMatrices()
+{
+	LOG("[GR::%s]", __func__);
+	// .x := screen width (meters), .y := eye-to-screen (meters)
+	static float2 screenParameters = { 0.36f, 0.60f };
+
+	const int remScreenSize = screenSizeY - winSizeY; // remaining desktop size (ssy >= wsy)
+	const int bottomWinCoor = remScreenSize - winPosY; // *bottom*-left origin
+
+	const float vpx = viewPosX + winPosX;
+	const float vpy = viewPosY + bottomWinCoor;
+	const float vsx = viewSizeX; // same as winSizeX except in dual-screen mode
+	const float vsy = viewSizeY; // same as winSizeY
+	const float ssx = screenSizeX;
+	const float ssy = screenSizeY;
+	const float hssx = 0.5f * ssx;
+	const float hssy = 0.5f * ssy;
+
+	const float zplane = screenParameters.y * (ssx / screenParameters.x);
+	const float znear = zplane * 0.5f;
+	const float zfar = zplane * 2.0f;
+	const float zfact = znear / zplane;
+
+	const float left = (vpx - hssx) * zfact;
+	const float bottom = (vpy - hssy) * zfact;
+	const float right = ((vpx + vsx) - hssx) * zfact;
+	const float top = ((vpy + vsy) - hssy) * zfact;
+
+	// translate s.t. (0,0,0) is on the zplane, on the window's bottom-left corner
+	*screenViewMatrix = CMatrix44f{ float3{left / zfact, bottom / zfact, -zplane} };
+	*screenProjMatrix = CMatrix44f::ClipPerspProj(left, right, bottom, top, znear, zfar, supportClipSpaceControl * 1.0f);
+}
+
 void CGlobalRendering::UpdateGLGeometry()
 {
 	LOG("[GR::%s][1] winSize=<%d,%d>", __func__, winSizeX, winSizeY);
@@ -1034,6 +1079,7 @@ void CGlobalRendering::UpdateGLGeometry()
 	SetDualScreenParams();
 	UpdateViewPortGeometry();
 	UpdatePixelGeometry();
+	UpdateScreenMatrices();
 
 	LOG("[GR::%s][2] winSize=<%d,%d>", __func__, winSizeX, winSizeY);
 }
@@ -1074,11 +1120,12 @@ void CGlobalRendering::InitGLState()
 	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
 	gluPerspective(45.0f, aspectRatio, minViewRange, maxViewRange);
 
+	UniformConstants::GetInstance().Init();
+
 	// this does not accomplish much
 	// SwapBuffers(true, true);
 	LogDisplayMode(sdlWindows[0]);
 }
-
 
 /**
  * @brief multisample verify

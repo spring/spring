@@ -373,6 +373,28 @@ CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 	return (*this);
 }
 
+CMatrix44f CMatrix44f::operator+(const CMatrix44f& mat) const
+{
+	CMatrix44f r;
+#if 0
+	for (size_t i = 0; i < 16; i += 4) {
+		r[i + 0] = m[i + 0] + mat[i + 0];
+		r[i + 1] = m[i + 1] + mat[i + 1];
+		r[i + 2] = m[i + 2] + mat[i + 2];
+		r[i + 3] = m[i + 3] + mat[i + 3];
+	}
+#else //brings spring's Matrix44 on par with Eigen in terms of perfomance
+	#define ADD_COLUMN(col) _mm_storeu_ps(&r.md[col][0], _mm_add_ps(_mm_loadu_ps(&md[col][0]), _mm_loadu_ps(&mat.md[col][0])))
+	ADD_COLUMN(0);
+	ADD_COLUMN(1);
+	ADD_COLUMN(2);
+	ADD_COLUMN(3);
+	#undef ADD_COLUMN
+#endif
+
+	return r;
+}
+
 __FORCE_ALIGN_STACK__
 float4 CMatrix44f::operator* (const float4 v) const
 {
@@ -708,5 +730,32 @@ CMatrix44f CMatrix44f::OrthoProj(float l, float r, float b, float t, float zn, f
 	proj[15] = 1.0f;
 
 	return proj;
+}
+
+CMatrix44f CMatrix44f::LookAtView(const float3& eye, const float3& center, const float3& up)
+{
+	//TODO: figure out non-standard sign of viewMatrix[2], viewMatrix[6], viewMatrix[10], viewMatrix[14]
+	const float3 f = (center - eye).ANormalize();
+	const float3 s = f.cross(up);
+	const float3 u = s.cross(f);
+	CMatrix44f viewMatrix = {};
+	viewMatrix[0] =  s.x;
+	viewMatrix[1] =  u.x;
+	viewMatrix[2] = -f.x;
+
+	viewMatrix[4] =  s.y;
+	viewMatrix[5] =  u.y;
+	viewMatrix[6] = -f.y;
+
+	viewMatrix[8] =  s.z;
+	viewMatrix[9] =  u.z;
+	viewMatrix[10] = -f.z;
+
+	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
+	viewMatrix[12] = s.dot(-eye);
+	viewMatrix[13] = u.dot(-eye);
+	viewMatrix[14] = f.dot( eye);
+
+	return viewMatrix;
 }
 

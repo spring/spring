@@ -4,6 +4,7 @@
 #define _GLOBAL_RENDERING_H
 
 #include <string>
+#include <memory>
 
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
@@ -12,6 +13,8 @@
 struct SDL_version;
 struct SDL_Window;
 typedef void* SDL_GLContext;
+
+struct CMatrix44f;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -69,6 +72,7 @@ public:
 	void SaveWindowPosAndSize();
 	void UpdateGLConfigs();
 	void UpdateGLGeometry();
+	void UpdateScreenMatrices();
 
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetMaxWinRes() const;
@@ -78,7 +82,6 @@ public:
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
-
 
 public:
 	/**
@@ -128,6 +131,10 @@ public:
 	/// the viewport size in pixels
 	int viewSizeX;
 	int viewSizeY;
+
+	/// screen {View,Proj} matrices for rendering in pixel coordinates
+	std::unique_ptr<CMatrix44f> screenViewMatrix;
+	std::unique_ptr<CMatrix44f> screenProjMatrix;
 
 	/// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
 	float pixelX;

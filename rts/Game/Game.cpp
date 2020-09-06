@@ -44,6 +44,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/UniformConstants.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Lua/LuaGaia.h"
@@ -1188,6 +1189,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	// set camera
 	camHandler->UpdateController(playerHandler.Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
+	//Update per-drawFrame UBO
+	UniformConstants::GetInstance().Update();
+
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 
@@ -1256,6 +1260,9 @@ bool CGame::Draw() {
 	SCOPED_SPECIAL_TIMER("Draw");
 
 	SetDrawMode(gameNormalDraw);
+
+	// Bind per-drawFrame UBO
+	UniformConstants::GetInstance().Bind();
 
 	{
 		SCOPED_TIMER("Draw::DrawGenesis");

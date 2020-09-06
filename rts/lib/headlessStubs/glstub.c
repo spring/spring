@@ -227,6 +227,8 @@ GLAPI void APIENTRY glBindBuffer(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {}
+GLAPI void APIENTRY glBindBufferBase(GLenum target, GLuint index, GLuint buffer) {}
+GLAPI void APIENTRY glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) {}
 
 GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) {
 	return (GLvoid*) NULL;
