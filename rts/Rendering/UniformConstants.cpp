@@ -38,7 +38,7 @@ void UniformConstants::Init()
 		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniformBufferOffset);
 
 		umbBufferSize = ((sizeof(UniformMatricesBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
-		upbBufferSize = ((sizeof(UniformParamsBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
+		upbBufferSize = ((sizeof(UniformParamsBuffer  ) / uniformBufferOffset) + 1) * uniformBufferOffset;
 	}
 
 	InitVBO(umbBuffer, umbBufferSize);
@@ -50,8 +50,14 @@ void UniformConstants::Kill()
 	if (!Supported())
 		return;
 
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0);
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, GetBufferOffset(umbBufferSize), umbBufferSize);
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, GetBufferOffset(upbBufferSize), upbBufferSize);
+}
+
+intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)
+{
+	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
+	return (intptr_t)(buffCurIdx * vboSingleSize);
 }
 
 void UniformConstants::UpdateMatrices(UniformMatricesBuffer* updateBuffer)
@@ -92,8 +98,6 @@ void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap,
 {
 	TBuffType* thisFrameBuffMap = nullptr;
 
-	unsigned int buffCurIdx = globalRendering->drawFrame % BUFFERING;
-
 	if constexpr (PERSISTENT_STORAGE) {
 		if (buffMap == nullptr) {
 			vbo->Bind(GL_UNIFORM_BUFFER);
@@ -101,10 +105,10 @@ void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap,
 			assert(buffMap != nullptr);
 		}
 
-		thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + buffCurIdx * vboSingleSize); //choose the current part of the buffer
+		thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
 	} else {
 		vbo->Bind(GL_UNIFORM_BUFFER);
-		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(buffCurIdx * vboSingleSize, vboSingleSize));
+		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
 		assert(buffMap != nullptr);
 
 		thisFrameBuffMap = buffMap;
@@ -135,6 +139,6 @@ void UniformConstants::Bind()
 		return;
 
 	assert(umbBuffer != nullptr && upbBuffer != nullptr);
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbBuffer->GetId());
-	glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbBuffer->GetId());
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbBuffer->GetId(), GetBufferOffset(umbBufferSize), umbBufferSize);
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbBuffer->GetId(), GetBufferOffset(upbBufferSize), upbBufferSize);
 }

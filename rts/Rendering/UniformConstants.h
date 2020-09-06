@@ -59,6 +59,7 @@ private:
 	template<typename TBuffType, typename TUpdateFunc>
 	void UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
 
+	static intptr_t GetBufferOffset(const int vboSingleSize);
 	static void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
 	static void UpdateParams(UniformParamsBuffer* updateBuffer);
 private:
@@ -67,7 +68,7 @@ private:
 	static constexpr int UBO_MATRIX_IDX = 0;
 	static constexpr int UBO_PARAMS_IDX = 1;
 
-	static constexpr bool PERSISTENT_STORAGE = false;
+	static constexpr bool PERSISTENT_STORAGE = false; //PERSISTENT_STORAGE = true requires OpenGL 4.4
 
 	int umbBufferSize = 0;
 	int upbBufferSize = 0;
