@@ -244,6 +244,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
 
+	REGISTER_LUA_CFUNC(SetDrawBuild);
+
 	REGISTER_LUA_CFUNC(SetBuildSpacing);
 	REGISTER_LUA_CFUNC(SetBuildFacing);
 
@@ -1051,7 +1053,6 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 	lua_pushboolean(L, featureDrawer->DrawForward());
 	return 4;
 }
-
 
 int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
 {
@@ -2771,6 +2772,16 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+int LuaUnsyncedCtrl::SetDrawBuild(lua_State* L)
+{
+	if (guihandler != nullptr){
+			guihandler->drawBuildGrid = !!luaL_checkboolean(L, 1);
+			guihandler->drawBuildGhost = !!luaL_checkboolean(L, 2);
+	}
+	return 0;
+}
 
 int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 {
