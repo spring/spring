@@ -126,6 +126,8 @@ class LuaUnsyncedRead {
 
 		static int GetGatherMode(lua_State* L);
 
+		static int GetDrawBuild(lua_State* L);
+
 		static int GetBuildFacing(lua_State* L);
 		static int GetBuildSpacing(lua_State* L);
 
