@@ -3936,7 +3936,8 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 		assert(buildeeDef != nullptr);
 
 		if (!buildInfoQueue.empty()) {
-			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
+			if (drawBuildGrid || onMiniMap)
+				unitDrawer->SetupShowUnitBuildSquares(onMiniMap, true);
 
 			// first pass; grid squares
 			for (const BuildInfo& bi: buildInfoQueue) {
@@ -3954,26 +3955,28 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						}
 					}
 				}
-
-				if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
-					buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
-				} else {
-					buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
+				if (drawBuildGrid || onMiniMap){
+					if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
+						buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
+					} else {
+						buildColors.emplace_back(1.0f, 0.5f, 0.5f, 0.4f); // red
+					}
 				}
 			}
+			if (drawBuildGrid || onMiniMap){
+				unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
+				unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
 
-			unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
-			unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
+				// second pass; water-depth indicator lines
+				for (const BuildInfo& bi: buildInfoQueue) {
+					unitDrawer->ShowUnitBuildSquares(bi, {}, false);
+				}
 
-			// second pass; water-depth indicator lines
-			for (const BuildInfo& bi: buildInfoQueue) {
-				unitDrawer->ShowUnitBuildSquares(bi, {}, false);
-			}
-
-			unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
+				unitDrawer->ResetShowUnitBuildSquares(onMiniMap, false);
+			}				
 		}
 
-		if (!onMiniMap && !buildInfoQueue.empty()) {
+		if (drawBuildGhost && !onMiniMap && !buildInfoQueue.empty()) {
 			// render a pending line/area-build queue
 			assert((buildInfoQueue.front()).def == (buildInfoQueue.back()).def);
 			assert(buildInfoQueue.size() == buildColors.size());
