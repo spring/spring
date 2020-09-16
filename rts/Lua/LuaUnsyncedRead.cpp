@@ -188,8 +188,12 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActiveCmdDescs);
 	REGISTER_LUA_CFUNC(GetActiveCmdDesc);
 	REGISTER_LUA_CFUNC(GetCmdDescIndex);
+
+	REGISTER_LUA_CFUNC(GetDrawBuild);
+
 	REGISTER_LUA_CFUNC(GetBuildFacing);
 	REGISTER_LUA_CFUNC(GetBuildSpacing);
+
 	REGISTER_LUA_CFUNC(GetGatherMode);
 	REGISTER_LUA_CFUNC(GetActivePage);
 
@@ -1995,6 +1999,16 @@ int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaUnsyncedRead::GetDrawBuild(lua_State* L)
+{
+	if (guihandler == nullptr)
+		return 0;
+
+	lua_pushboolean(L, guihandler->drawBuildGrid);
+	lua_pushboolean(L, guihandler->drawBuildGhost);
+	return 2;
+}
 
 int LuaUnsyncedRead::GetBuildFacing(lua_State* L)
 {
