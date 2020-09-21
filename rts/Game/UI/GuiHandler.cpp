@@ -3778,14 +3778,14 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 							}
 						}
 					}
-					if (drawBuildGrid || onMiniMap){
+					if (drawBuildGrid || onMiniMap) {
 						if (unitDrawer->ShowUnitBuildSquare(bi, buildCommands)) {
 							glColor4f(0.7f, 1.0f, 1.0f, 0.4f);
 						} else {
 							glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
 						}
 					}
-					if (drawBuildGhost && !onMiniMap)  {
+					if (drawBuildGhost && !onMiniMap) {
 						glPushMatrix();
 						glLoadIdentity();
 						glTranslatef3(buildPos);
