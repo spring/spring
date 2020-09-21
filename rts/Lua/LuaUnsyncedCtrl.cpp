@@ -2776,10 +2776,11 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawBuild(lua_State* L)
 {
-	if (guihandler != nullptr){
-			guihandler->drawBuildGrid = !!luaL_checkboolean(L, 1);
-			guihandler->drawBuildGhost = !!luaL_checkboolean(L, 2);
-	}
+	if (guihandler == nullptr)
+		return 0;
+	
+	guihandler->drawBuildGrid = luaL_checkboolean(L, 1);
+	guihandler->drawBuildGhost = luaL_checkboolean(L, 2);
 	return 0;
 }
 
