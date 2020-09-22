@@ -3955,7 +3955,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 						}
 					}
 				}
-				if (drawBuildGrid || onMiniMap){
+				if (drawBuildGrid || onMiniMap) {
 					if (unitDrawer->ShowUnitBuildSquares(bi, buildCommands, true)) {
 						buildColors.emplace_back(0.7f, 1.0f, 1.0f, 0.4f); // yellow
 					} else {
@@ -3963,7 +3963,7 @@ void CGuiHandler::DrawMapStuff(bool onMiniMap)
 					}
 				}
 			}
-			if (drawBuildGrid || onMiniMap){
+			if (drawBuildGrid || onMiniMap) {
 				unitDrawer->ResetShowUnitBuildSquares(onMiniMap, true);
 				unitDrawer->SetupShowUnitBuildSquares(onMiniMap, false);
 
