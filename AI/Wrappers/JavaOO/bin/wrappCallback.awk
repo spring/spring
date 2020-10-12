@@ -29,7 +29,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS = "(\\()|(\\)\\;)";
+	FS = "(\\()|(\\);)";
 	IGNORECASE = 0;
 
 	# Used by other scripts
@@ -1161,7 +1161,7 @@ function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 function wrappFunctionDef(funcDef, commentEolTot) {
 
-	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)\\;)");
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\);)");
 	# because the empty part after ");" would count as part as well
 	size_funcParts--;
 
@@ -1203,7 +1203,7 @@ function canDeleteDocumentation() {
 		sub(/[ \t]*\/\/.*$/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
-		if (match(funcSoFar, /\;$/)) {
+		if (match(funcSoFar, /;$/)) {
 			# function ends in this line
 			wrappFunctionDef(funcSoFar, commentEolTot);
 			isMultiLineFunc = 0;
@@ -1223,7 +1223,7 @@ function canDeleteDocumentation() {
 	# remove possible comment at end of line: // foo bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
-	if (match(funcStartLine, /\;$/)) {
+	if (match(funcStartLine, /;$/)) {
 		# function ends in this line
 		wrappFunctionDef(funcStartLine, commentEolTot);
 	} else {
