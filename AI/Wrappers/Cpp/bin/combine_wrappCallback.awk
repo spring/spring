@@ -247,7 +247,7 @@ function canDeleteDocumentation() {
 		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
-		if (match(funcSoFar, /\;$/)) {
+		if (match(funcSoFar, /;$/)) {
 			# function ends in this line
 			wrappFunction(funcSoFar, commentEolTot);
 			isMultiLineFunc = 0;
