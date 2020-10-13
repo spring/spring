@@ -212,16 +212,13 @@ void CLogOutput::LogSectionInfo()
 	const auto& enabledSections = GetEnabledSections();
 
 	std::stringstream availableLogSectionsStr;
-	std::stringstream enabledLogSectionsStr;
-
-	availableLogSectionsStr << "Available:";
-	enabledLogSectionsStr << "Enabled:";
+	std::stringstream   enabledLogSectionsStr;
 
 	for (int i = 0, n = log_filter_section_getNumRegisteredSections(); i < n; i++) {
 		const char* regSec = registeredSections[i];
 
 		availableLogSectionsStr << "\n    ";
-		availableLogSectionsStr << regSec;
+		availableLogSectionsStr << "[A] " << regSec;
 
 		// enabled sections (keys) are in lower-case
 		const auto sectionIter = enabledSections.find(StringToLower(regSec));
@@ -246,12 +243,11 @@ void CLogOutput::LogSectionInfo()
 		log_filter_section_setMinLevel(logLevel, regSec);
 
 		enabledLogSectionsStr << "\n    ";
-		enabledLogSectionsStr << regSec << " (" << log_util_levelToString(logLevel) << ")";
+		enabledLogSectionsStr << "[E] " << regSec << " (" << log_util_levelToString(logLevel) << ")";
 	}
 
-	LOG("============== <Log Sections> ==============");
-	LOG("  %s", (availableLogSectionsStr.str()).c_str());
-	LOG("  %s", (enabledLogSectionsStr.str()).c_str());
+	LOG("============== <Log Sections ([A]vailable, [E]nabled)> ==============");
+	LOG("  %s%s", (availableLogSectionsStr.str()).c_str(), (enabledLogSectionsStr.str()).c_str());
 	LOG("  ");
 	LOG("  Enable or disable log sections using the LogSections configuration key");
 	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
