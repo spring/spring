@@ -4,6 +4,8 @@
 #define GL_ATTRIB_STATE_H
 
 #include <array>
+#include <cstdint>
+#include <cstddef>
 
 namespace GL {
 	struct AttribState {
