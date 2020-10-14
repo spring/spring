@@ -43,9 +43,9 @@ size_t log_framePrefixer_createPrefix(char* result, size_t resultSize)
 	assert(resultSize != 0);
 
 	if (frameNumRef == nullptr)
-		return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld] ", hh, mm, ss, ns % 1000000));
+		return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld] ", hh, mm, ss, (ns / 1000) % 1000000));
 
-	return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld][f=%07d] ", hh, mm, ss, ns % 1000000, *frameNumRef));
+	return (SNPRINTF(result, resultSize, "[t=%02d:%02d:%02d.%06ld][f=%07d] ", hh, mm, ss, (ns / 1000) % 1000000, *frameNumRef));
 }
 
 #ifdef __cplusplus
