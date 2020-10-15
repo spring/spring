@@ -32,6 +32,7 @@
 #include "LuaTextures.h"
 #include "LuaUtils.h"
 #include "LuaMatrix.h"
+#include "LuaVAO.h"
 
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -398,6 +399,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	}
 
 	LuaMatrix::PushEntries(L);
+	LuaVAO::PushEntries(L);
 
 	LuaFonts::PushEntries(L);
 

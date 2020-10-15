@@ -188,8 +188,12 @@ GLAPI GLint APIENTRY glGetAttribLocationARB(GLhandleARB programObj, const GLchar
 }
 
 GLAPI void APIENTRY glVertexAttribPointerARB(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer) {}
+GLAPI void APIENTRY glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer) {}
+GLAPI void APIENTRY glVertexAttribDivisor(GLuint index, GLuint divisor) {}
 GLAPI void APIENTRY glEnableVertexAttribArrayARB(GLuint index) {}
+GLAPI void APIENTRY glEnableVertexAttribArray(GLuint index) {}
 GLAPI void APIENTRY glDisableVertexAttribArrayARB(GLuint index) {}
+GLAPI void APIENTRY glDisableVertexAttribArray(GLuint index) {}
 
 GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data) {}
 GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) {}
@@ -226,9 +230,14 @@ GLAPI void APIENTRY glMultiTexCoord2ivARB(GLenum target, const GLint *v) {}
 GLAPI void APIENTRY glBindBuffer(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {}
+GLAPI void APIENTRY glBufferStorage(GLenum target, GLsizeiptr size, const void* data, GLbitfield flags) {}
 GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {}
 GLAPI void APIENTRY glBindBufferBase(GLenum target, GLuint index, GLuint buffer) {}
 GLAPI void APIENTRY glBindBufferRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) {}
+
+GLAPI void APIENTRY glGenVertexArrays(GLsizei n, GLuint* arrays) {}
+GLAPI void APIENTRY glBindVertexArray(GLuint array) {}
+GLAPI void APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint* arrays) {}
 
 GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) {
 	return (GLvoid*) NULL;
@@ -295,6 +304,9 @@ GLAPI void APIENTRY glCopyTexSubImage2D(GLenum target, GLint level,
 
 GLAPI void APIENTRY glDrawBuffer(GLenum mode) {}
 GLAPI void APIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) {}
+GLAPI void APIENTRY glDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex) {}
+GLAPI void APIENTRY glDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount) {}
+GLAPI void APIENTRY glDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount, GLint basevertex) {}
 GLAPI void APIENTRY glEdgeFlag(GLboolean flag) {}
 GLAPI void APIENTRY glEvalCoord1f(GLfloat u) {}
 GLAPI void APIENTRY glEvalCoord2f(GLfloat u, GLfloat v) {}
@@ -403,6 +415,7 @@ GLAPI void APIENTRY glTexCoordPointer(GLint size, GLenum type, GLsizei stride, c
 GLAPI void APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr) {}
 GLAPI void APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr) {}
 GLAPI void APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count) {}
+GLAPI void APIENTRY glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount) {}
 
 GLAPI void APIENTRY glTexEnvi(GLenum target, GLenum pname, GLint param) {}
 

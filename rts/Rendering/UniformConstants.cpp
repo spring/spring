@@ -18,7 +18,7 @@
 
 void UniformConstants::InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize)
 {
-	vbo = std::make_unique<VBO>(GL_UNIFORM_BUFFER, PERSISTENT_STORAGE);
+	vbo = std::make_unique<VBO>(GL_UNIFORM_BUFFER, globalRendering->supportPersistentMapping);
 	vbo->Bind(GL_UNIFORM_BUFFER);
 	vbo->New(BUFFERING * vboSingleSize, GL_DYNAMIC_DRAW); //allocate BUFFERING times the buffer size for non-blocking updates
 	vbo->Unbind();
@@ -32,14 +32,8 @@ void UniformConstants::Init()
 		return;
 	}
 
-	{
-		GLint uniformBufferOffset = 0;
-
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniformBufferOffset);
-
-		umbBufferSize = ((sizeof(UniformMatricesBuffer) / uniformBufferOffset) + 1) * uniformBufferOffset;
-		upbBufferSize = ((sizeof(UniformParamsBuffer  ) / uniformBufferOffset) + 1) * uniformBufferOffset;
-	}
+	umbBufferSize = RoundBuffSizeUp<UniformMatricesBuffer>();
+	upbBufferSize = RoundBuffSizeUp<UniformParamsBuffer  >();
 
 	InitVBO(umbBuffer, umbBufferSize);
 	InitVBO(upbBuffer, upbBufferSize);
@@ -92,35 +86,48 @@ void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
 	updateBuffer->rndVec3 = float4{guRNG.NextVector(), 0.0f};
 }
 
+template<typename TBuffType, typename TUpdateFunc>
+void UniformConstants::UpdateMapStandard(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
+{
+	vbo->Bind(GL_UNIFORM_BUFFER);
+	buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
+	assert(buffMap != nullptr);
+
+	updateFunc(buffMap);
+
+	vbo->UnmapBuffer();
+	vbo->Unbind();
+}
+
+template<typename TBuffType, typename TUpdateFunc>
+void UniformConstants::UpdateMapPersistent(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
+{
+	TBuffType* thisFrameBuffMap = nullptr;
+
+	if (buffMap == nullptr) { //
+		vbo->Bind(GL_UNIFORM_BUFFER); //bind only first time
+		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
+		assert(buffMap != nullptr);
+	}
+
+	thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap)+GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
+
+	updateFunc(thisFrameBuffMap);
+
+	//no need to unmap
+
+	if (vbo->bound) //unbind only first time
+		vbo->Unbind();
+}
+
 
 template<typename TBuffType, typename TUpdateFunc>
 void UniformConstants::UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
 {
-	TBuffType* thisFrameBuffMap = nullptr;
-
-	if constexpr (PERSISTENT_STORAGE) {
-		if (buffMap == nullptr) {
-			vbo->Bind(GL_UNIFORM_BUFFER);
-			buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
-			assert(buffMap != nullptr);
-		}
-
-		thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
-	} else {
-		vbo->Bind(GL_UNIFORM_BUFFER);
-		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
-		assert(buffMap != nullptr);
-
-		thisFrameBuffMap = buffMap;
-	}
-
-	updateFunc(thisFrameBuffMap);
-
-	if constexpr(!PERSISTENT_STORAGE)
-		vbo->UnmapBuffer();
-
-	if (vbo->bound)
-		vbo->Unbind();
+	if (globalRendering->supportPersistentMapping)
+		UpdateMapStandard(vbo, buffMap, updateFunc, vboSingleSize);
+	else
+		UpdateMapPersistent(vbo, buffMap, updateFunc, vboSingleSize);
 }
 
 void UniformConstants::Update()

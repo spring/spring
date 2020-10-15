@@ -149,7 +149,7 @@ public:
 	 */
 	float aspectRatio;
 
-
+	int forceDisablePersistentMapping;
 	int forceDisableShaders;
 	int forceCoreContext;
 	int forceSwapBuffers;
@@ -233,6 +233,13 @@ public:
 	 * enables some ATI bugfixes
 	 */
 	bool atiHacks;
+
+	/**
+	* @brief whether the GPU supports persistent buffer mapping
+	*
+	* ARB_buffer_storage or OpenGL 4.4
+	*/
+	bool supportPersistentMapping;
 
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures

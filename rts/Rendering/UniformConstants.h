@@ -57,7 +57,24 @@ private:
 	void InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize);
 
 	template<typename TBuffType, typename TUpdateFunc>
+	void UpdateMapStandard(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+
+	template<typename TBuffType, typename TUpdateFunc>
+	void UpdateMapPersistent(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+
+	template<typename TBuffType, typename TUpdateFunc>
 	void UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+
+	template<typename TBuffType>
+	static GLint RoundBuffSizeUp() {
+		const auto getAllignment = []() {
+			GLint buffAlignment = 0;
+			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &buffAlignment);
+			return buffAlignment;
+		};
+		static GLint uboAlignment = getAllignment(); //executed once
+		return ((sizeof(TBuffType) / uboAlignment) + 1) * uboAlignment;
+	}
 
 	static intptr_t GetBufferOffset(const int vboSingleSize);
 	static void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
@@ -67,8 +84,6 @@ private:
 
 	static constexpr int UBO_MATRIX_IDX = 0;
 	static constexpr int UBO_PARAMS_IDX = 1;
-
-	static constexpr bool PERSISTENT_STORAGE = false; //PERSISTENT_STORAGE = true requires OpenGL 4.4
 
 	int umbBufferSize = 0;
 	int upbBufferSize = 0;

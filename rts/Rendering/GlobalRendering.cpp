@@ -35,6 +35,8 @@ CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(
 CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
+CONFIG(int, ForceDisablePersistentMapping).defaultValue(0).minimumValue(0).maximumValue(1);
+
 CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
@@ -115,6 +117,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxViewRange),
 	CR_IGNORED(aspectRatio),
 
+	CR_IGNORED(forceDisablePersistentMapping),
 	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
@@ -132,6 +135,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveNvidia),
 
 	CR_IGNORED(atiHacks),
+	CR_IGNORED(supportPersistentMapping),
 	CR_IGNORED(supportNonPowerOfTwoTex),
 	CR_IGNORED(supportTextureQueryLOD),
 	CR_IGNORED(supportMSAAFrameBuffer),
@@ -199,6 +203,7 @@ CGlobalRendering::CGlobalRendering()
 	, maxViewRange(MAX_VIEW_RANGE * 0.5f)
 	, aspectRatio(1.0f)
 
+	, forceDisablePersistentMapping(configHandler->GetInt("ForceDisablePersistentMapping"))
 	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
@@ -231,6 +236,7 @@ CGlobalRendering::CGlobalRendering()
 	, haveNvidia(false)
 	, atiHacks(false)
 
+	, supportPersistentMapping(false)
 	, supportNonPowerOfTwoTex(false)
 	, supportTextureQueryLOD(false)
 	, supportMSAAFrameBuffer(false)
@@ -642,6 +648,8 @@ void CGlobalRendering::SetGLSupportFlags()
 		globalRenderingInfo.gpuName   = "Unknown";
 		globalRenderingInfo.gpuVendor = "Unknown";
 	}
+
+	supportPersistentMapping = GLEW_ARB_buffer_storage && forceDisablePersistentMapping > 0;
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
 	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));

@@ -43,8 +43,9 @@ using tuple16f = std::tuple< float, float, float, float, float, float, float, fl
 class LuaMatrixImpl {
 public:
 	LuaMatrixImpl() = default; //matrices should default to identity
+	LuaMatrixImpl(LuaMatrixImpl&& lmi) = default; //move cons
 	LuaMatrixImpl(CMatrix44f mm) : mat(mm) {};
-	LuaMatrixImpl(const LuaMatrixImpl& lmi) : mat(lmi.mat) {};
+	LuaMatrixImpl(const LuaMatrixImpl& lmi) : mat(lmi.mat) {}; //for deepcopy
 public:
 	void Zero();
 	void Identity() { mat = CMatrix44f::Identity(); };
