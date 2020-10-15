@@ -7,7 +7,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "Rendering/GL/myGL.h"
 #include "Lua/LuaHandle.h"
 
 struct lua_State;
