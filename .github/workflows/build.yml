@@ -1,0 +1,365 @@
+name: Build Engine
+on:
+  workflow_dispatch:
+    inputs:
+      bin-type:
+        description: Upload Spring as (artefact|prerelease|release)
+        required: true
+        default: "prerelease"
+      strip-symbols:
+        description: Strip Debug Symbols
+        required: true
+        default: "true"
+      dbg-artifacts:
+        description: Upload Debug Symbols (as Artifact)
+        required: true
+        default: "false"
+      skip-cache:
+        description: Skip Cache
+        required: true
+        default: "false"
+jobs:
+  build:
+    name: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            os: 'windows-64',
+            runs-on: 'ubuntu-20.04'
+          }
+        - {
+            os: 'linux-64',
+            runs-on: 'ubuntu-18.04'
+          }
+    steps:
+      - name: Debug Action
+        uses: hmarr/debug-action@v1.0.0
+
+      - name: Extract Branch Name
+        #https://stackoverflow.com/questions/58033366/how-to-get-current-branch-within-github-actions/58034787
+        id: extract-branch
+#        if: github.event_name != 'pull_request'
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Replace CMake version
+        uses: jwlawson/actions-setup-cmake@v1.4
+        with:
+          cmake-version: '3.16.x'
+
+      - name: Show CMake Version
+        run: cmake --version
+
+      - name: Install Build Dependencies (windows-64)
+        if: matrix.config.os == 'windows-64'
+        run: >
+          sudo apt-get install --fix-missing
+          binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
+          p7zip-full
+          clang-format
+
+      - name: Install GCC-10 PPA (linux-64)
+        if: matrix.config.runs-on == 'windows-64'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt install gcc-10
+
+      - name: Install Build Dependencies (linux-64)
+        if: matrix.config.os == 'linux-64'
+        run: >
+          sudo apt-get install --fix-missing
+          gcc-10 g++-10
+          zlib1g zlib1g-dev
+          libdevil-dev
+          libcurl4-openssl-dev
+          p7zip-full
+          libopenal-dev
+          libvorbis-dev
+          libsdl2-dev
+          libunwind-dev
+          libfreetype6-dev
+          libglew-dev
+          libfontconfig1-dev
+          libminizip-dev
+          clang-format
+
+      - name: Get Workflow Cache Version and Date
+        id: get-cache-id
+        run: |
+          version=v1
+          echo "::set-output name=version::$version"
+          echo "::set-output name=date::$(/bin/date -u "+%Y%V")"
+        shell: bash
+
+      - name: Download Cache Data
+        if: github.event.inputs.skip-cache != 'true'
+        id: cache-dl
+        uses: actions/cache@v2
+        with:
+          path: /tmp/cache/${{ matrix.config.os }}/
+          key: ${{ matrix.config.os }}-${{ env.BRANCH_NAME }}-${{ steps.get-cache-id.outputs.date }}-${{ steps.get-cache-id.outputs.version }}
+          restore-keys: |
+            ${{ matrix.config.os }}-${{ env.BRANCH_NAME }}-${{ steps.get-cache-id.outputs.date }}-
+            ${{ matrix.config.os }}-${{ env.BRANCH_NAME }}-
+            ${{ matrix.config.os }}-
+
+      - name: Check and Unpack Cache Data
+        id: cache
+        #steps.cache-dl.outputs.cache-hit is not good because it reports false for partial cache key hit
+        run: |
+          if [ -f /tmp/cache/${{ matrix.config.os }}/cache.tgz ]; then
+            echo "Found build cache"
+            echo "::set-output name=cache-hit::true"
+            tar xvfz /tmp/cache/${{ matrix.config.os }}/cache.tgz
+          else
+            echo "Not found build cache"
+            echo "::set-output name=cache-hit::false"
+          fi
+        shell: bash
+
+      - name: Update Cached sources
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          git pull --rebase origin ${{ env.BRANCH_NAME }}
+          git submodule update
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Clone Repository and Dependencies (windows-64)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
+        run: |
+          git clone --recursive git://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          cd spring
+          git clone https://github.com/spring/mingwlibs64
+
+      - name: Clone Repository and Dependencies (linux-64)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
+        run: |
+          git clone --recursive git://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          cd spring
+          git clone https://github.com/spring/mingwlibs64
+
+      - name: Create Build Folders
+        run: |
+          mkdir -p ./build-${{ matrix.config.os }}/
+          mkdir -p ./build-${{ matrix.config.os }}/bin-dir
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Prepare Toolchain file (windows-64)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
+        run: |
+          touch ./my.cmake
+          echo "SET(CMAKE_SYSTEM_NAME Windows)" >> ./my.cmake
+          echo "SET(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)" >> ./my.cmake
+          echo "SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++-posix)" >> ./my.cmake
+          echo "SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)" >> ./my.cmake
+        shell: bash
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Prepare Toolchain file (linux-64)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
+        run: |
+          touch ./my.cmake
+          echo "SET(CMAKE_SYSTEM_NAME Linux)" >> ./my.cmake
+          echo "SET(CMAKE_C_COMPILER gcc-10)" >> ./my.cmake
+          echo "SET(CMAKE_CXX_COMPILER g++-10)" >> ./my.cmake
+        shell: bash
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Run CMake
+        run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Run Make All
+        run: make -j$(nproc) all
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
+
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+
+      - name: Fill Portable Directory (windows-64)
+        if: matrix.config.os == 'windows-64'
+        run: |
+          rm -rf ./bin-dir/*
+          cp ../mingwlibs64/dll/* ./bin-dir/
+          cp ./*.exe ./bin-dir/
+          cp ../rts/lib/luasocket/src/socket.lua ./bin-dir/
+          cp ./tools/pr-downloader/src/pr-downloader.exe ./bin-dir/
+          touch ./bin-dir/springsettings.cfg
+          cp ./unitsync.dll ./bin-dir/
+          cp ../cont/luaui.lua ./bin-dir/luaui.lua
+          cp -R ../cont/LuaUI ./bin-dir/LuaUI
+          mkdir ./bin-dir/games
+          mkdir ./bin-dir/maps
+          cp -R ../cont/fonts ./bin-dir/fonts
+          cp -R ../cont/examples ./bin-dir/examples
+          mkdir ./bin-dir/doc
+          cp ../AUTHORS ./bin-dir/doc/AUTHORS
+          cp ../COPYING ./bin-dir/doc/COPYING
+          cp ../FAQ ./bin-dir/doc/FAQ
+          cp ../gpl-2.0.txt ./bin-dir/doc/gpl-2.0.txt
+          cp ../gpl-3.0.txt ./bin-dir/doc/gpl-3.0.txt
+          cp ../LICENSE ./bin-dir/doc/LICENSE
+          cp ../README.markdown ./bin-dir/doc/README.markdown
+          cp ../THANKS ./bin-dir/doc/THANKS
+          cp ../cont/ctrlpanel.txt ./bin-dir/ctrlpanel.txt
+          cp ../cont/cmdcolors.txt ./bin-dir/cmdcolors.txt
+          cp -R ./base ./bin-dir/base
+          mkdir -p ./bin-dir/AI/Interfaces/C/0.1/
+          cp -R ./AI/Interfaces/C/data/* ./bin-dir/AI/Interfaces/C/0.1/
+          cp -R ../AI/Interfaces/C/data/* ./bin-dir/AI/Interfaces/C/0.1/
+          mkdir -p ./bin-dir/AI/Skirmish/NullAI/0.1
+          cp -R ./AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
+          cp -R ../AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
+          mkdir -p ./bin-dir/AI/Skirmish/Shard/dev/
+          cp -R ./AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+          cp -R ../AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
+        shell: bash
+
+      - name: Fill Portable Directory (linux-64)
+        if: matrix.config.os == 'linux-64'
+        run: |
+          rm -rf ./bin-dir/*
+          cp ./spring* ./bin-dir/
+          cp ../rts/lib/luasocket/src/socket.lua ./bin-dir/
+          cp ./tools/pr-downloader/src/pr-downloader ./bin-dir/
+          touch ./bin-dir/springsettings.cfg
+          cp ./libunitsync.so ./bin-dir/
+          mkdir -p ./bin-dir/bin/
+          cp ./tools/mapcompile/mapcompile ./bin-dir/bin/
+          cp ../cont/luaui.lua ./bin-dir/luaui.lua
+          cp -R ../cont/LuaUI ./bin-dir/LuaUI
+          cp -R ../cont/fonts ./bin-dir/fonts
+          cp -R ../cont/examples ./bin-dir/examples
+          mkdir -p ./bin-dir/share/applications
+          cp -R ../cont/freedesktop/applications/* ./bin-dir/share/applications/
+          mkdir -p ./bin-dir/share/mime/packages
+          cp -R ../cont/freedesktop/mime/* ./bin-dir/share/mime/packages
+          mkdir -p ./bin-dir/share/pixmaps
+          cp -R ../cont/freedesktop/pixmaps/* ./bin-dir/share/pixmaps/
+          cp ../cont/ctrlpanel.txt ./bin-dir/ctrlpanel.txt
+          cp ../cont/cmdcolors.txt ./bin-dir/cmdcolors.txt
+          cp -R ./base ./bin-dir/base
+          mkdir -p ./bin-dir/AI/Interfaces/C/0.1/
+          cp -R ./AI/Interfaces/C/data/* ./bin-dir/AI/Interfaces/C/0.1/
+          cp -R ../AI/Interfaces/C/data/* ./bin-dir/AI/Interfaces/C/0.1/
+          mkdir -p ./bin-dir/AI/Skirmish/NullAI/0.1
+          cp -R ./AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
+          cp -R ../AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
+          mkdir -p ./bin-dir/AI/Skirmish/Shard/dev/
+          cp -R ./AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+          cp -R ../AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
+        shell: bash
+
+      - name: Fill-in Debug Symbols Directory (windows-64)
+        if: github.event.inputs.strip-symbols == 'true' && matrix.config.os == 'windows-64'
+        run: |
+          EXECUTABLES=$(find -maxdepth 1 -name '*.dll')" "$(find -maxdepth 1 -name '*.exe')" "$(find AI/Skirmish -name SkirmishAI.dll)" "$(find AI/Interfaces -name AIInterface.dll)" "$(find -name pr-downloader_shared.dll)
+          for tostripfile in ${EXECUTABLES}; do
+            if [ -f ${tostripfile} ]; then
+              if ! objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
+                      debugfile=$(dirname $tostripfile)/$(echo $(basename $tostripfile) | cut -f 1 -d '.').dbg
+                      echo "stripping ${tostripfile}, producing ${debugfile}"
+                      (objcopy --only-keep-debug ${tostripfile} ${debugfile} && \
+                      strip --strip-debug --strip-unneeded ${tostripfile} && \
+                      objcopy --add-gnu-debuglink=${debugfile} ${tostripfile})
+                  else
+                      echo "not stripping ${tostripfile}"
+                  fi
+              fi
+          done
+          wait
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
+        shell: bash
+
+      - name: Fill-in Debug Symbols Directory (linux-64)
+        if: github.event.inputs.strip-symbols == 'true' && matrix.config.os == 'linux-64'
+        run: |
+          EXECUTABLES=$(find -maxdepth 1 -name '*.so')" "$(find -maxdepth 1 -name 'spring*' -executable)" "$(find -maxdepth 1 -name 'pr-downloader')" "$(find AI/Skirmish -name libSkirmishAI.so)" "$(find AI/Interfaces -name libAIInterface.so)
+          for tostripfile in ${EXECUTABLES}; do
+            if [ -f ${tostripfile} ]; then
+              if ! objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
+                      debugfile=$(dirname $tostripfile)/$(echo $(basename $tostripfile) | cut -f 1 -d '.').dbg
+                      echo "stripping ${tostripfile}, producing ${debugfile}"
+                      (objcopy --only-keep-debug ${tostripfile} ${debugfile} && \
+                      strip --strip-debug --strip-unneeded ${tostripfile} && \
+                      objcopy --add-gnu-debuglink=${debugfile} ${tostripfile})
+                  else
+                      echo "not stripping ${tostripfile}"
+                  fi
+              fi
+          done
+          wait
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
+        shell: bash
+
+      - name: Pack Build Artifacts
+        id: pack-artifacts
+        run: |
+          tag_name={${{ env.BRANCH_NAME }}}$(git describe)_${{ matrix.config.os }}
+          bin_name=spring_bar_$tag_name-minimal-portable.7z
+          dbg_name=spring_bar_$tag_name-minimal-symbols.tgz
+          echo "::set-output name=tag_name::$tag_name"
+          echo "::set-output name=bin_name::$bin_name"
+          echo "::set-output name=dbg_name::$dbg_name"
+          cd ./bin-dir
+          7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on ../$bin_name ./* -xr\!*.dbg
+          touch empty.dbg
+          DEBUGFILES=$(find ./ -name '*.dbg')
+          tar cvfz ../$dbg_name ${DEBUGFILES}
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
+        shell: bash
+
+      - name: Upload Bin as Artifact
+        if: github.event.inputs.bin-type == 'artefact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.pack-artifacts.outputs.bin_name }}
+          path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
+
+      - name: Create Bin (Pre-)Release
+        if: github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.pack-artifacts.outputs.tag_name }}
+          release_name: ${{ steps.pack-artifacts.outputs.tag_name }}
+          draft: false
+          prerelease: ${{ github.event.inputs.bin-type == 'prerelease' }}
+
+      - name: Upload Bin (Pre-)Release
+        if: github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
+          asset_name: ${{ steps.pack-artifacts.outputs.bin_name }}
+          asset_content_type: application/zip
+
+      - name: Upload Dbg Artifacts
+        if: github.event.inputs.dbg-artifacts == 'true' && github.event.inputs.strip-symbols == 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.pack-artifacts.outputs.dbg_name }}
+          path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.dbg_name }}
+
+      - name: Clean up Build Dir and Artifacts
+        run: |
+          rm ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
+          rm ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.dbg_name }}
+          rm -rf ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
+
+      - name: Pack Cache Data
+        if: steps.cache-dl.outputs.cache-hit != 'true' #cause it won't be saved anyway due to cache hit
+        run: |
+          mkdir -p /tmp/cache/${{ matrix.config.os }}/
+          tar cvfz /tmp/cache/${{ matrix.config.os }}/cache.tgz ./
