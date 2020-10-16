@@ -44,8 +44,9 @@ void UniformConstants::Kill()
 	if (!Supported())
 		return;
 
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, GetBufferOffset(umbBufferSize), umbBufferSize);
-	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, GetBufferOffset(upbBufferSize), upbBufferSize);
+	//unbind the whole ring buffer range
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, 0, 0, umbBufferSize * BUFFERING);
+	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, 0, 0, upbBufferSize * BUFFERING);
 }
 
 intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)

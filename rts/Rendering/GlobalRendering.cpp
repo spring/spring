@@ -272,10 +272,10 @@ CGlobalRendering::CGlobalRendering()
 
 CGlobalRendering::~CGlobalRendering()
 {
+	UniformConstants::GetInstance().Kill();
+
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
-
-	UniformConstants::GetInstance().Kill();
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
