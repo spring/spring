@@ -16,6 +16,7 @@ bool LuaVAO::PushEntries(lua_State* L)
 
 	gl.new_usertype<LuaVAOImpl>("VAO",
 		sol::constructors<LuaVAOImpl(const sol::optional<bool>, sol::this_state)>(),
+		"Delete", &LuaVAOImpl::Delete,
 		"SetVertexAttributes", &LuaVAOImpl::SetVertexAttributes,
 		"SetInstanceAttributes", &LuaVAOImpl::SetInstanceAttributes,
 		"SetIndexAttributes", &LuaVAOImpl::SetIndexAttributes,

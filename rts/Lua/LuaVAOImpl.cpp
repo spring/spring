@@ -7,6 +7,7 @@
 #if 0
 #include "System/Log/ILog.h"
 #endif
+#include "System/SafeUtil.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/VAO.h"
 #include "Rendering/GlobalRendering.h"
@@ -36,17 +37,21 @@ LuaVAOImpl::LuaVAOImpl(const sol::optional<bool> freqUpdatedOpt, sol::this_state
 	//LOG("LuaVAOImpl()");
 }
 
+void LuaVAOImpl::Delete()
+{
+	spring::SafeDestruct(vao);
+
+	spring::SafeDestruct(vboVert);
+	spring::SafeDestruct(vboInst);
+	spring::SafeDestruct(ebo);
+
+	vaoAttribs.clear();
+}
+
 LuaVAOImpl::~LuaVAOImpl()
 {
 	//LOG("~LuaVAOImpl()");
-
-	if (vao) delete vao;
-
-	if (vboVert) delete vboVert;
-	if (vboInst) delete vboInst;
-	if (ebo) delete ebo;
-
-	vaoAttribs.clear();
+	Delete();
 }
 
 

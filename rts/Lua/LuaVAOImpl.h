@@ -34,6 +34,7 @@ public:
 	LuaVAOImpl(const LuaVAOImpl& lva) = delete; //no copy cons
 	LuaVAOImpl(LuaVAOImpl&& lva) = default; //move cons
 
+	void Delete();
 	~LuaVAOImpl();
 public:
 	int SetVertexAttributes(const int maxVertCount, const sol::object& attrDefObject);
