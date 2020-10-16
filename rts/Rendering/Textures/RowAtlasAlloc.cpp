@@ -25,7 +25,7 @@ void CRowAtlasAlloc::EstimateNeededSize()
 	int spaceNeeded = 0;
 	int spaceFree = atlasSize.x * (atlasSize.y - nextRowPos);
 
-	for (auto it: entries) {
+	for (const auto& it: entries) {
 		spaceNeeded += it.second.size.x * it.second.size.y;
 	}
 	for (auto& row: imageRows) {

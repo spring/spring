@@ -8,7 +8,7 @@
 //    requires the ARB_imaging extension)
 // - use materials instead of raw calls (again, handle dlists)
 
-//#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/myGL.h"
 
 #include <vector>
 #include <algorithm>
