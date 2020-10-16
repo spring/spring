@@ -76,7 +76,7 @@
 #include "System/Matrix44f.h"
 
 CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
-CONFIG(int, DeprecatedGLWarnLevel).defaultValue(2).headlessValue(0).safemodeValue(0);
+CONFIG(int, DeprecatedGLWarnLevel).defaultValue(0).headlessValue(0).safemodeValue(0);
 
 static constexpr int MAX_TEXTURE_UNITS = 32;
 
