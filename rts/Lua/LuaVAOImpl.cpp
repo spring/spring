@@ -6,6 +6,7 @@
 
 #if 0
 #include "System/Log/ILog.h"
+//			LOG("%s, %f, %p, %d, %d", attr.name.c_str(), *iter, mappedBuf, outValSize, bytesWritten);
 #endif
 #include "System/SafeUtil.h"
 #include "Rendering/GL/VBO.h"
@@ -436,8 +437,29 @@ bool LuaVAOImpl::SetIndexAttributesImpl(const int maxIndxCount, const GLenum ind
 
 int LuaVAOImpl::UploadImpl(const sol::table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo)
 {
-	if (!vbo)
+	if (!vbo) {
+		LuaError("[%s] Invalid VBO, did you call Set*Attributes?", __func__);
 		return 0;
+	}
+
+	if (attrNum) {
+		if (*attrNum < 0 || *attrNum >= numAttributes) {
+			LuaError("[%s] Attibute number (%d) is too large or too small", __func__, *attrNum);
+			return 0; //invalid attrNum
+		}
+
+		const auto vaoAttribIter = vaoAttribs.find(*attrNum);
+		if (vaoAttribIter == vaoAttribs.cend()) {
+			LuaError("[%s] Definition of attibute number (%d) not found", __func__, *attrNum);
+			return 0; //non-existing attrNum
+		}
+
+		if (vaoAttribIter->second.divisor != divisor) {
+			LuaError("[%s] Mismatch between attribute upload and attribute definition types", __func__, *attrNum);
+			return 0; //wrong divisor
+		}
+	}
+
 
 	const int aOffset = std::max(offsetOpt.value_or(0), 0);
 	const int byteOffset = aOffset * aSizeInBytes;
@@ -460,52 +482,60 @@ int LuaVAOImpl::UploadImpl(const sol::table& luaTblData, const sol::optional<int
 	vbo->Bind();
 	auto mappedBuf = vbo->MapBuffer(byteOffset, byteSize, GL_MAP_WRITE_BIT);
 
-	#define TRANSFORM_COPY_ATTRIB(t, sz, iter) \
+	#define TRANSFORM_COPY_ATTRIB(outT, sz, iter, mcpy) \
+	{ \
+		constexpr int outValSize = sizeof(outT); \
 		for (int n = 0; n < sz; ++n) { \
-			const auto outVal = TransformFunc<lua_Number, t>(*iter); \
-			const auto outValSize = sizeof(outVal); \
 			if (bytesWritten + outValSize > byteSize) { \
 				vbo->UnmapBuffer(); \
 				vbo->Unbind(); \
 				return bytesWritten; \
 			} \
-			memcpy(mappedBuf, &outVal, outValSize); \
-			mappedBuf += outValSize; \
+			if (mcpy) { \
+				const auto outVal = TransformFunc<lua_Number, outT>(*iter); \
+				memcpy(mappedBuf, &outVal, outValSize); \
+				++iter; \
+			} \
 			bytesWritten += outValSize; \
-			++iter; \
-		}
+			mappedBuf += outValSize; \
+		} \
+	}
 
 	for (auto bdvIter = dataVec.cbegin(); bdvIter != dataVec.cend(); ) {
 		for (const auto& va : vaoAttribs) {
 			const auto& attr = va.second;
 
-			if (attrNum && *attrNum != va.first) //not the attribute num we are interested in
+			// the attribute num we are interested in
+			// the divisor we are interested in
+			bool mcpy = true;
+
+			if (attr.divisor != divisor)
 				continue;
 
-			if (attr.divisor != divisor) //not the divisor we are interested in
-				continue;
+			if (attrNum && *attrNum != va.first)
+				mcpy = false; //to skip copying
 
 			switch (attr.type) {
 			case GL_BYTE:
-				TRANSFORM_COPY_ATTRIB(int8_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(int8_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_UNSIGNED_BYTE:
-				TRANSFORM_COPY_ATTRIB(uint8_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(uint8_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_SHORT:
-				TRANSFORM_COPY_ATTRIB(int16_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(int16_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_UNSIGNED_SHORT:
-				TRANSFORM_COPY_ATTRIB(uint16_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(uint16_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_INT:
-				TRANSFORM_COPY_ATTRIB(int32_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(int32_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_UNSIGNED_INT:
-				TRANSFORM_COPY_ATTRIB(uint32_t, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(uint32_t, attr.size, bdvIter, mcpy);
 				break;
 			case GL_FLOAT:
-				TRANSFORM_COPY_ATTRIB(GLfloat, attr.size, bdvIter);
+				TRANSFORM_COPY_ATTRIB(GLfloat, attr.size, bdvIter, mcpy);
 				break;
 			}
 		}
@@ -571,10 +601,10 @@ int LuaVAOImpl::UploadIndices(const sol::table& indData, const sol::optional<int
 	ebo->Bind();
 	auto mappedBuf = ebo->MapBuffer(byteOffset, byteSize, GL_MAP_WRITE_BIT);
 
-#define TRANSFORM_COPY_INDEX(outT, iter) \
+	#define TRANSFORM_COPY_INDEX(outT, iter) \
 	{ \
+		constexpr int outValSize = sizeof(outT); \
 		const auto outVal = TransformFunc<lua_Number, outT>(*iter); \
-		const auto outValSize = sizeof(outVal); \
 		if (bytesWritten + outValSize > byteSize) {	\
 			ebo->UnmapBuffer(); \
 			ebo->Unbind(); \
@@ -582,7 +612,7 @@ int LuaVAOImpl::UploadIndices(const sol::table& indData, const sol::optional<int
 		} \
 		memcpy(mappedBuf, &outVal, outValSize); \
 		mappedBuf += outValSize; \
-		bytesWritten += outValSize;\
+		bytesWritten += outValSize; \
 	}
 
 	for (auto bdvIter = dataVec.cbegin(); bdvIter != dataVec.cend(); ++bdvIter) {
