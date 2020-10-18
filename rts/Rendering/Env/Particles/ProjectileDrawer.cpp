@@ -32,13 +32,14 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/Log/ILog.h"
+//#include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
-
+CONFIG(bool, SoftParticles).defaultValue(true).safemodeValue(false).description("Soften up CEG particles on clipping edges");
 
 CProjectileDrawer* projectileDrawer = nullptr;
 
@@ -262,7 +263,8 @@ void CProjectileDrawer::Init() {
 
 	LoadWeaponTextures();
 
-	if (globalRendering->haveGLSL) {
+	bool softParticles = configHandler->GetBool("SoftParticles");
+	if (globalRendering->haveGLSL && softParticles) {
 		{
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
@@ -318,17 +320,20 @@ void CProjectileDrawer::ViewResize()
 			}
 			glGenTextures(1, &depthTexture);
 
+			//LOG("%s depthTexture = %d", __func__, depthTexture);
+
 			glBindTexture(GL_TEXTURE_2D, depthTexture);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
 
-			if (fxShader->IsValid()) {
+			if (fxShader && fxShader->IsValid()) {
 				fxShader->Enable();
 				fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
 				fxShader->Disable();
@@ -711,8 +716,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		fxVA->DrawArrayTC(GL_QUADS);
 
 		if (fxShader && fxShader->IsValid()) {
-			glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
+			glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 			fxShader->Disable();
 		}
 	} else {
@@ -881,8 +886,8 @@ void CProjectileDrawer::DrawGroundFlashes()
 	gfVA->DrawArrayTC(GL_QUADS);
 
 	if (fxShader && fxShader->IsValid()) {
-		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 		fxShader->Disable();
 	}
 
