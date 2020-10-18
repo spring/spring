@@ -11,15 +11,18 @@ public:
 	VAO() = default;
 	VAO(const VAO& v) = delete;
 	VAO(VAO&& v) { *this = std::move(v); }
+	~VAO() { Delete(); }
 
 	VAO& operator = (const VAO& v) = delete;
 	VAO& operator = (VAO&& v) { id = v.id; v.id = 0; return *this; }
 
+	uint32_t GetId() { if (id == 0) Generate(); return id; }
+
+	void Bind();
+	void Unbind() const;
+private:
 	void Generate();
 	void Delete();
-	void Bind() const;
-	void Unbind() const;
-
 private:
 	uint32_t id = 0;
 };

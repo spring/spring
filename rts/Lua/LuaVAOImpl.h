@@ -10,7 +10,6 @@
 #include "lib/sol2/sol.hpp"
 #include "lib/fmt/format.h"
 
-struct lua_State;
 struct VAO;
 struct VBO;
 
@@ -80,7 +79,7 @@ private:
 		return ((buffSizeSingle / vboAlignment) + 1) * vboAlignment;
 	}
 private:
-	static constexpr int BUFFERING = 3;
+	static constexpr int BUFFERING = 3; //unused
 	static constexpr int MAX_NUMBER_OF_ATTRIBUTES = 16;
 	static constexpr GLenum DEFAULT_VERT_ATTR_TYPE = GL_FLOAT;
 	static constexpr GLenum DEFAULT_INDX_ATTR_TYPE = GL_UNSIGNED_SHORT;

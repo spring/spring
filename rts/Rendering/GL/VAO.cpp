@@ -4,7 +4,13 @@
 #include "Rendering/GL/myGL.h"
 
 void VAO::Generate() { glGenVertexArrays(1, &id); }
-void VAO::Delete() { glDeleteVertexArrays(1, &id); id = 0; }
-void VAO::Bind() const { glBindVertexArray(id); }
+void VAO::Delete() {
+	if (id > 0) {
+		glDeleteVertexArrays(1, &id);
+		id = 0;
+	}
+}
+void VAO::Bind() {
+	glBindVertexArray(GetId());
+}
 void VAO::Unbind() const { glBindVertexArray(0); }
-

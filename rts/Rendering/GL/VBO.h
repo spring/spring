@@ -67,7 +67,7 @@ public:
 	}
 
 	GLuint GetId() const {
-		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);
+		if (isSupported && (vboId == 0)) Generate(); //lazy init
 		return vboId;
 	}
 
