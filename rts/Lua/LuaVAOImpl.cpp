@@ -32,7 +32,7 @@ LuaVAOImpl::LuaVAOImpl(const sol::optional<bool> freqUpdatedOpt, sol::this_state
 
 	vertAttribsSizeInBytes(0),
 	instAttribsSizeInBytes(0),
-	indElemSizeInBytes(0)
+	indxElemSizeInBytes(0)
 {
 	//LOG("LuaVAOImpl()");
 }
@@ -165,11 +165,12 @@ bool LuaVAOImpl::FillAttribsNumberImpl(const int numFloatAttribs, const int divi
 	constexpr GLint size = 4;
 	constexpr int typeSizeInBytes = sizeof(GLfloat);
 
+	const int attrID0 = numAttributes;
 	for (int attrID = 0; attrID < std::ceil(numFloatAttribs / 4.0f); ++attrID) {
 
 		const std::string name = fmt::format("attr{}", attrID);
 
-		vaoAttribs[attrID] = {
+		vaoAttribs[attrID0 + attrID] = {
 			divisor,
 			size,
 			type,
@@ -250,9 +251,9 @@ int LuaVAOImpl::SetVertexAttributes(const int maxVertCount, const sol::object& a
 	if (this->vertAttribsSizeInBytes <= 0)
 		return 0;
 
-	vboVert = new VBO(GL_ARRAY_BUFFER, globalRendering->supportPersistentMapping);
+	vboVert = new VBO(GL_ARRAY_BUFFER, MapPersistently());
 	vboVert->Bind();
-	vboVert->New(this->maxVertCount * this->vertAttribsSizeInBytes, (this->freqUpdated ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
+	vboVert->New(this->maxVertCount * this->vertAttribsSizeInBytes, GL_STATIC_DRAW);
 	vboVert->Unbind();
 
 	return numAttributes;
@@ -273,9 +274,9 @@ int LuaVAOImpl::SetInstanceAttributes(const int maxInstCount, const sol::object&
 	if (this->instAttribsSizeInBytes <= 0)
 		return 0;
 
-	vboInst = new VBO(GL_ARRAY_BUFFER, globalRendering->supportPersistentMapping);
+	vboInst = new VBO(GL_ARRAY_BUFFER, MapPersistently());
 	vboInst->Bind();
-	vboInst->New(this->maxInstCount * this->instAttribsSizeInBytes, (this->freqUpdated ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
+	vboInst->New(this->maxInstCount * this->instAttribsSizeInBytes, GL_STATIC_DRAW);
 	vboInst->Unbind();
 
 	return numAttributes;
@@ -285,6 +286,11 @@ bool LuaVAOImpl::SetIndexAttributes(const int maxIndxCount, const sol::optional<
 {
 	const auto indexType = indTypeOpt.value_or(LuaVAOImpl::DEFAULT_INDX_ATTR_TYPE);
 	return SetIndexAttributesImpl(maxIndxCount, indexType);
+}
+
+bool LuaVAOImpl::MapPersistently()
+{
+	return globalRendering->supportPersistentMapping && freqUpdated;
 }
 
 bool LuaVAOImpl::CheckPrimType(GLenum mode)
@@ -419,10 +425,10 @@ bool LuaVAOImpl::SetIndexAttributesImpl(const int maxIndxCount, const GLenum ind
 	if (typeSizeInBytes == 0)
 		return false;
 
-	this->indElemSizeInBytes = typeSizeInBytes;
-	ebo = new VBO(GL_ELEMENT_ARRAY_BUFFER, globalRendering->supportPersistentMapping);
+	this->indxElemSizeInBytes = typeSizeInBytes;
+	ebo = new VBO(GL_ELEMENT_ARRAY_BUFFER, MapPersistently());
 	ebo->Bind();
-	ebo->New(this->maxIndxCount * this->indElemSizeInBytes, (this->freqUpdated ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
+	ebo->New(this->maxIndxCount * this->indxElemSizeInBytes, GL_STATIC_DRAW);
 	ebo->Unbind();
 
 	return true;
@@ -545,7 +551,7 @@ int LuaVAOImpl::UploadIndices(const sol::table& indData, const sol::optional<int
 	}
 
 	const int aOffset = std::max(indOffsetOpt.value_or(0), 0);
-	const int byteOffset = aOffset * indElemSizeInBytes;
+	const int byteOffset = aOffset * indxElemSizeInBytes;
 
 	const int byteSize = ebo->GetSize() - byteOffset; //non-precise, but save way
 
@@ -651,7 +657,7 @@ bool LuaVAOImpl::DrawElements(const GLenum mode, const sol::optional<GLsizei> in
 		return false;
 
 	const auto indElemOffset = std::max(indElemOffsetOpt.value_or(0), 0);
-	const auto indElemOffsetInBytes = indElemOffset * indElemSizeInBytes;
+	const auto indElemOffsetInBytes = indElemOffset * indxElemSizeInBytes;
 	const auto baseVertex = std::max(baseVertexOpt.value_or(0), 0);
 	const auto instanceCount = std::max(instanceCountOpt.value_or(0), 0); // 0 - forces ordinary version, while 1 - calls *Instanced()
 

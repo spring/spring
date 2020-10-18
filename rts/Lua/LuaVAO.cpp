@@ -40,6 +40,9 @@ bool LuaVAO::PushEntries(lua_State* L)
 
 int LuaVAO::GetVAO(lua_State* L)
 {
+	if (!LuaVAOImpl::Supported())
+		return 0;
+
 	return sol::stack::call_lua(L, 1, [=](const sol::optional<bool> freqUpdatedOpt) {
 		return LuaVAOImpl{freqUpdatedOpt, L};
 	});

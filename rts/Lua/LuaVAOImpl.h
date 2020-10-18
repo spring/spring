@@ -36,6 +36,11 @@ public:
 	void Delete();
 	~LuaVAOImpl();
 public:
+	static bool Supported() {
+		static bool supported = GLEW_ARB_vertex_buffer_object;
+		return supported;
+	};
+public:
 	int SetVertexAttributes(const int maxVertCount, const sol::object& attrDefObject);
 	int SetInstanceAttributes(const int maxInstCount, const sol::object& attrDefObject);
 	bool SetIndexAttributes(const int maxIndxCount, const sol::optional<GLenum> indTypeOpt);
@@ -51,6 +56,7 @@ public:
 	bool DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt);
 	bool DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);
 private:
+	bool MapPersistently();
 	bool CheckPrimType(GLenum mode);
 	bool CondInitVAO();
 	bool SetIndexAttributesImpl(const int maxIndxCount, const GLenum indType);
@@ -94,7 +100,7 @@ private:
 
 	int vertAttribsSizeInBytes;
 	int instAttribsSizeInBytes;
-	int indElemSizeInBytes;
+	int indxElemSizeInBytes;
 
 	GLenum indexType;
 	bool freqUpdated;
