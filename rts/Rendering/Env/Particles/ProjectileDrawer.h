@@ -7,6 +7,8 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
@@ -43,7 +45,10 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
+		return
+			(eventName == "RenderProjectileCreated") ||
+			(eventName == "RenderProjectileDestroyed") ||
+			(eventName == "ViewResize");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -51,6 +56,7 @@ public:
 	void RenderProjectileCreated(const CProjectile* projectile);
 	void RenderProjectileDestroyed(const CProjectile* projectile);
 
+	void ViewResize() override;
 
 	unsigned int NumSmokeTextures() const { return (smokeTextures.size()); }
 
@@ -105,6 +111,9 @@ public:
 	AtlasedTexture* groundringtex = nullptr;
 
 	AtlasedTexture* seismictex = nullptr;
+
+	GLuint depthTexture = 0u;
+	Shader::IProgramObject* fxShader = nullptr;
 
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
