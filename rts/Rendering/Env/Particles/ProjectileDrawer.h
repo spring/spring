@@ -66,6 +66,8 @@ public:
 	bool EnableSorting(bool b) { return (drawSorted =           b); }
 	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
 
+	bool EnableSoften(bool b) { return fxShader && fxShader->IsValid() ? (drawSoften = b) : false; }
+	bool ToggleSoften() { return EnableSoften(!drawSoften); }
 
 	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
@@ -111,10 +113,6 @@ public:
 	AtlasedTexture* groundringtex = nullptr;
 
 	AtlasedTexture* seismictex = nullptr;
-
-	GLuint depthTexture = 0u;
-	Shader::IProgramObject* fxShader = nullptr;
-
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
@@ -161,6 +159,11 @@ private:
 	std::vector<CProjectile*> sortedProjectiles[2];
 
 	bool drawSorted = true;
+
+	GLuint depthTexture = 0u;
+	Shader::IProgramObject* fxShader = nullptr;
+
+	bool drawSoften = true;
 };
 
 extern CProjectileDrawer* projectileDrawer;

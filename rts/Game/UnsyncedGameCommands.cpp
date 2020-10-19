@@ -340,8 +340,6 @@ public:
 	}
 };
 
-
-
 class WaterActionExecutor : public IUnsyncedActionExecutor {
 public:
 	WaterActionExecutor() : IUnsyncedActionExecutor(
@@ -2524,6 +2522,31 @@ public:
 	}
 };
 
+class ParticleSoftenActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ParticleSoftenActionExecutor() : IUnsyncedActionExecutor(
+		"SoftParticles",
+		"Enable/Disable particles softening: 0=disabled, 1=enabled"
+	) {
+	}
+
+	bool Execute(const UnsyncedAction& action) const final {
+		const auto& args = action.GetArgs();
+
+		const char* fmt = "ProjectileDrawer particles-softening %s";
+		const char* strs[] = { "disabled", "enabled" };
+
+		if (!args.empty()) {
+			LOG(fmt, strs[projectileDrawer->EnableSoften(atoi(args.c_str()))]);
+		}
+		else {
+			LOG(fmt, strs[projectileDrawer->ToggleSoften()]);
+		}
+
+		return true;
+	}
+};
+
 class MaxParticlesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MaxParticlesActionExecutor() : IUnsyncedActionExecutor(
@@ -3451,6 +3474,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors()
 	AddActionExecutor(AllocActionExecutor<GroundDecalsActionExecutor>());
 
 	AddActionExecutor(AllocActionExecutor<DistSortProjectilesActionExecutor>());
+	AddActionExecutor(AllocActionExecutor<ParticleSoftenActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MaxNanoParticlesActionExecutor>());
 	AddActionExecutor(AllocActionExecutor<MinViewRangeActionExecutor>());

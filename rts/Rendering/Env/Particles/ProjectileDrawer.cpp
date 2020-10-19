@@ -264,7 +264,7 @@ void CProjectileDrawer::Init() {
 	LoadWeaponTextures();
 
 	bool softParticles = configHandler->GetBool("SoftParticles");
-	if (globalRendering->haveGLSL && softParticles) {
+	if (globalRendering->haveGLSL) {
 		{
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
@@ -277,6 +277,7 @@ void CProjectileDrawer::Init() {
 		}
 		ViewResize();
 	}
+	drawSoften = softParticles && fxShader && fxShader->IsValid();
 }
 
 void CProjectileDrawer::Kill() {
@@ -308,6 +309,8 @@ void CProjectileDrawer::Kill() {
 		glDeleteTextures(1, &depthTexture);
 		fxShader->Release();
 	}
+
+	configHandler->Set("SoftParticles", drawSoften);
 }
 
 void CProjectileDrawer::ViewResize()
@@ -706,7 +709,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// (requires mask=true and func=always)
 		eventHandler.DrawWorldPreParticles();
 
-		if (fxShader && fxShader->IsValid()) {
+		if (drawSoften) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 			fxShader->Enable();
@@ -715,7 +718,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 
-		if (fxShader && fxShader->IsValid()) {
+		if (drawSoften) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
 			glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 			fxShader->Disable();
@@ -877,7 +880,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 		gf->Draw(gfVA);
 	}
 
-	if (fxShader && fxShader->IsValid()) {
+	if (drawSoften) {
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		fxShader->Enable();
@@ -885,7 +888,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 	gfVA->DrawArrayTC(GL_QUADS);
 
-	if (fxShader && fxShader->IsValid()) {
+	if (drawSoften) {
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 		fxShader->Disable();
