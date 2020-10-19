@@ -141,8 +141,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
         run: |
           git clone --recursive git://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
-          cd spring
-          git clone https://github.com/spring/mingwlibs64
 
       - name: Create Build Folders
         run: |
@@ -171,12 +169,23 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+
+      - name: Remove BAR-specific release tags
+        run: |
+          git fetch --tags origin || true
+          TAGS=$(git tag) || true
+          for TAG in $TAGS
+          do
+            git tag -d $(echo $TAG | grep '{.*}') || true
+          done
+        shell: bash
+        working-directory: ${{ github.workspace }}/spring
+
       - name: Run CMake
         run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
         working-directory: ${{ github.workspace }}/spring
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
 
       - name: Run Make All
         run: make -j$(nproc) all
