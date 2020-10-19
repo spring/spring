@@ -175,12 +175,12 @@ jobs:
         run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
         working-directory: ${{ github.workspace }}/spring
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Run Make All
         run: make -j$(nproc) all
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
-
-#      - name: Setup tmate session
-#        uses: mxschmitt/action-tmate@v3
 
       - name: Fill Portable Directory (windows-64)
         if: matrix.config.os == 'windows-64'
