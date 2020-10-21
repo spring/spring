@@ -309,10 +309,22 @@ jobs:
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
         shell: bash
 
+      - name: Compile custom patchelf (linux-64)
+        if: matrix.config.os == 'linux-64'
+        run: |
+          sudo apt-get install -y g++ autoconf &&
+          git clone https://github.com/NixOS/patchelf.git ./patchelf &&
+          cd ./patchelf &&
+          ./bootstrap.sh &&
+          ./configure &&
+          sed -i 's/32 \* 1024/512 \* 1024/g' src/patchelf.cc &&
+          make && make install
+        working-directory: /tmp/
+        shell: bash
+
       - name: Replace Some Versioned Libs with the Generic Ones (linux-64)
         if: matrix.config.os == 'linux-64'
         run: |
-          sudo apt-get install -y patchelf
           NEEDED_LIBS=$(patchelf --print-needed ./spring)
           REPLACE_LIBS="libGLEW"
           for NEEDED_LIB in $NEEDED_LIBS; do
