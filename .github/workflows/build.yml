@@ -269,7 +269,7 @@ jobs:
 
       - name: Replace Some Versioned Libs with the Generic Ones (linux-64)
         if: matrix.config.os == 'linux-64'
-      - run: |
+        run: |
           sudo apt-get install -y patchelf
           NEEDED_LIBS=$(patchelf --print-needed ./spring)
           REPLACE_LIBS="libGLEW"
