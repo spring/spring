@@ -8,6 +8,10 @@
 #include "System/Log/ILog.h"
 //			LOG("%s, %f, %p, %d, %d", attr.name.c_str(), *iter, mappedBuf, outValSize, bytesWritten);
 #endif
+#if 0
+#include "System/TimeProfiler.h"
+//			SCOPED_TIMER("LuaVAOImpl::UploadImpl::Resize");
+#endif
 #include "System/SafeUtil.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/VAO.h"
@@ -254,7 +258,7 @@ int LuaVAOImpl::SetVertexAttributes(const int maxVertCount, const sol::object& a
 
 	vboVert = new VBO(GL_ARRAY_BUFFER, MapPersistently());
 	vboVert->Bind();
-	vboVert->New(this->maxVertCount * this->vertAttribsSizeInBytes, GL_STATIC_DRAW);
+	vboVert->New(this->maxVertCount * this->vertAttribsSizeInBytes, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	vboVert->Unbind();
 
 	return numAttributes;
@@ -277,7 +281,7 @@ int LuaVAOImpl::SetInstanceAttributes(const int maxInstCount, const sol::object&
 
 	vboInst = new VBO(GL_ARRAY_BUFFER, MapPersistently());
 	vboInst->Bind();
-	vboInst->New(this->maxInstCount * this->instAttribsSizeInBytes, GL_STATIC_DRAW);
+	vboInst->New(this->maxInstCount * this->instAttribsSizeInBytes, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	vboInst->Unbind();
 
 	return numAttributes;
@@ -291,7 +295,8 @@ bool LuaVAOImpl::SetIndexAttributes(const int maxIndxCount, const sol::optional<
 
 bool LuaVAOImpl::MapPersistently()
 {
-	return globalRendering->supportPersistentMapping && freqUpdated;
+	return false;
+	//return globalRendering->supportPersistentMapping && freqUpdated;
 }
 
 bool LuaVAOImpl::CheckPrimType(GLenum mode)
@@ -429,13 +434,13 @@ bool LuaVAOImpl::SetIndexAttributesImpl(const int maxIndxCount, const GLenum ind
 	this->indxElemSizeInBytes = typeSizeInBytes;
 	ebo = new VBO(GL_ELEMENT_ARRAY_BUFFER, MapPersistently());
 	ebo->Bind();
-	ebo->New(this->maxIndxCount * this->indxElemSizeInBytes, GL_STATIC_DRAW);
+	ebo->New(this->maxIndxCount * this->indxElemSizeInBytes, freqUpdated ? GL_STREAM_DRAW : GL_STATIC_DRAW);
 	ebo->Unbind();
 
 	return true;
 }
 
-int LuaVAOImpl::UploadImpl(const sol::table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo)
+int LuaVAOImpl::UploadImpl(const sol::stack_table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo)
 {
 	if (!vbo) {
 		LuaError("[%s] Invalid VBO, did you call Set*Attributes?", __func__);
@@ -471,12 +476,14 @@ int LuaVAOImpl::UploadImpl(const sol::table& luaTblData, const sol::optional<int
 
 	int bytesWritten = 0;
 
-	std::vector<lua_Number> dataVec;
-	dataVec.resize(luaTblData.size());
+	const int luaTblDataSize = luaTblData.size();
 
-	for (auto k = 0; k < luaTblData.size(); ++k) {
-		const auto& maybeNum = luaTblData.get<sol::optional<lua_Number>>(k + 1);
-		dataVec.at(k) = maybeNum.value_or(static_cast<lua_Number>(0));
+	std::vector<lua_Number> dataVec;
+	dataVec.resize(luaTblDataSize);
+
+	constexpr auto defaultValue = static_cast<lua_Number>(0);
+	for (auto k = 0; k < luaTblDataSize; ++k) {
+		dataVec[k] = luaTblData.raw_get_or<lua_Number>(k + 1, defaultValue);
 	}
 
 	vbo->Bind();
@@ -543,33 +550,35 @@ int LuaVAOImpl::UploadImpl(const sol::table& luaTblData, const sol::optional<int
 
 	#undef TRANSFORM_COPY_ATTRIB
 
-	vbo->UnmapBuffer();
-	vbo->Unbind();
+	if (vbo->mapped)
+		vbo->UnmapBuffer();
+	if (vbo->bound)
+		vbo->Unbind();
 
 	return bytesWritten;
 }
 
-int LuaVAOImpl::UploadVertexBulk(const sol::table& bulkData, const sol::optional<int> vertexOffsetOpt)
+int LuaVAOImpl::UploadVertexBulk(const sol::stack_table& bulkData, const sol::optional<int> vertexOffsetOpt)
 {
 	return UploadImpl(bulkData, vertexOffsetOpt, 0, nullptr, this->vertAttribsSizeInBytes, vboVert);
 }
 
-int LuaVAOImpl::UploadInstanceBulk(const sol::table& bulkData, const sol::optional<int> instanceOffsetOpt)
+int LuaVAOImpl::UploadInstanceBulk(const sol::stack_table& bulkData, const sol::optional<int> instanceOffsetOpt)
 {
 	return UploadImpl(bulkData, instanceOffsetOpt, 1, nullptr, this->instAttribsSizeInBytes, vboInst);
 }
 
-int LuaVAOImpl::UploadVertexAttribute(const int attrIndex, const sol::table& attrData, const sol::optional<int> vertexOffsetOpt)
+int LuaVAOImpl::UploadVertexAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> vertexOffsetOpt)
 {
 	return UploadImpl(attrData, vertexOffsetOpt, 0, &attrIndex, this->vertAttribsSizeInBytes, vboVert);
 }
 
-int LuaVAOImpl::UploadInstanceAttribute(const int attrIndex, const sol::table& attrData, const sol::optional<int> instanceOffsetOpt)
+int LuaVAOImpl::UploadInstanceAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> instanceOffsetOpt)
 {
 	return UploadImpl(attrData, instanceOffsetOpt, 1, &attrIndex, this->instAttribsSizeInBytes, vboInst);
 }
 
-int LuaVAOImpl::UploadIndices(const sol::table& indData, const sol::optional<int> indOffsetOpt)
+int LuaVAOImpl::UploadIndices(const sol::stack_table& indData, const sol::optional<int> indOffsetOpt)
 {
 	const int indDataSize = indData.size();
 	if (indDataSize <= 0)

@@ -45,13 +45,13 @@ public:
 	int SetInstanceAttributes(const int maxInstCount, const sol::object& attrDefObject);
 	bool SetIndexAttributes(const int maxIndxCount, const sol::optional<GLenum> indTypeOpt);
 
-	int UploadVertexBulk(const sol::table& bulkData, const sol::optional<int> vertexOffsetOpt);
-	int UploadInstanceBulk(const sol::table& bulkData, const sol::optional<int> instanceOffsetOpt);
+	int UploadVertexBulk(const sol::stack_table& bulkData, const sol::optional<int> vertexOffsetOpt);
+	int UploadInstanceBulk(const sol::stack_table& bulkData, const sol::optional<int> instanceOffsetOpt);
 
-	int UploadVertexAttribute(const int attrIndex, const sol::table& attrData, const sol::optional<int> vertexOffsetOpt);
-	int UploadInstanceAttribute(const int attrIndex, const sol::table& attrData, const sol::optional<int> instanceOffsetOpt);
+	int UploadVertexAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> vertexOffsetOpt);
+	int UploadInstanceAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> instanceOffsetOpt);
 
-	int UploadIndices(const sol::table& indData, const sol::optional<int> indOffsetOpt);
+	int UploadIndices(const sol::stack_table& indData, const sol::optional<int> indOffsetOpt);
 
 	bool DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt);
 	bool DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);
@@ -60,7 +60,7 @@ private:
 	bool CheckPrimType(GLenum mode);
 	bool CondInitVAO();
 	bool SetIndexAttributesImpl(const int maxIndxCount, const GLenum indType);
-	int UploadImpl(const sol::table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo);
+	int UploadImpl(const sol::stack_table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo);
 
 	bool FillAttribsTableImpl(const sol::table& attrDefTable, const int divisor);
 	bool FillAttribsNumberImpl(const int numFloatAttribs, const int divisor);
