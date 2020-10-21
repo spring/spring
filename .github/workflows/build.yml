@@ -267,28 +267,6 @@ jobs:
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
-      - name: Replace Some Versioned Libs with the Generic Ones (linux-64)
-        if: matrix.config.os == 'linux-64'
-        run: |
-          sudo apt-get install -y patchelf
-          NEEDED_LIBS=$(patchelf --print-needed ./spring)
-          REPLACE_LIBS="libGLEW"
-          for NEEDED_LIB in $NEEDED_LIBS; do
-            REPLACE=false
-            for REPLACE_LIB in $REPLACE_LIBS; do
-              if echo $NEEDED_LIB | grep -q $REPLACE_LIB; then
-                REPLACE=true
-              fi
-            done
-            if $REPLACE; then
-              NEEDED_LIB_GEN=$(echo $NEEDED_LIB | sed 's/\.so.*//')".so"
-              echo "Replacing $NEEDED_LIB ref with $NEEDED_LIB_GEN"
-              patchelf --replace-needed $NEEDED_LIB $NEEDED_LIB_GEN ./spring
-            fi
-          done
-        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir/
-        shell: bash
-
       - name: Fill-in Debug Symbols Directory (windows-64)
         if: github.event.inputs.strip-symbols == 'true' && matrix.config.os == 'windows-64'
         run: |
@@ -329,6 +307,28 @@ jobs:
           done
           wait
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
+        shell: bash
+
+      - name: Replace Some Versioned Libs with the Generic Ones (linux-64)
+        if: matrix.config.os == 'linux-64'
+        run: |
+          sudo apt-get install -y patchelf
+          NEEDED_LIBS=$(patchelf --print-needed ./spring)
+          REPLACE_LIBS="libGLEW"
+          for NEEDED_LIB in $NEEDED_LIBS; do
+            REPLACE=false
+            for REPLACE_LIB in $REPLACE_LIBS; do
+              if echo $NEEDED_LIB | grep -q $REPLACE_LIB; then
+                REPLACE=true
+              fi
+            done
+            if $REPLACE; then
+              NEEDED_LIB_GEN=$(echo $NEEDED_LIB | sed 's/\.so.*//')".so"
+              echo "Replacing $NEEDED_LIB ref with $NEEDED_LIB_GEN"
+              patchelf --replace-needed $NEEDED_LIB $NEEDED_LIB_GEN ./spring
+            fi
+          done
+        working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir/
         shell: bash
 
       - name: Pack Build Artifacts
