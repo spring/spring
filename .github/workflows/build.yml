@@ -318,7 +318,7 @@ jobs:
           ./bootstrap.sh &&
           ./configure &&
           sed -i 's/32 \* 1024/512 \* 1024/g' src/patchelf.cc &&
-          make && make install
+          make && sudo make install
         working-directory: /tmp/
         shell: bash
 
