@@ -73,7 +73,9 @@ private:
 			return buffAlignment;
 		};
 		static GLint uboAlignment = getAllignment(); //executed once
-		return ((sizeof(TBuffType) / uboAlignment) + 1) * uboAlignment;
+		constexpr TBuffTypeSize = sizeof(TBuffType);
+		//return ((TBuffTypeSize / uboAlignment) + 1) * uboAlignment; //incorrect
+		return (TBuffTypeSize + (uboAlignment - TBuffTypeSize % uboAlignment) % uboAlignment);
 	}
 
 	static intptr_t GetBufferOffset(const int vboSingleSize);
