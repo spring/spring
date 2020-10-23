@@ -173,9 +173,6 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
-#      - name: Setup tmate session
-#        uses: mxschmitt/action-tmate@v3
-
       - name: Remove BAR-specific release tags
         run: |
           git fetch --tags origin || true
@@ -187,8 +184,29 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
-      - name: Run CMake
+      - name: Run CMake (windows-64)
+        if: matrix.config.os == 'windows-linux-64'
         run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
+      - name: Run CMake (linux-64)
+        if: matrix.config.os == 'windows-linux-64'
+        run: >
+          cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE 
+          -DPREFER_STATIC_LIBS:BOOL=1 \
+          -DIL_IL_HEADER:PATH=${INCLUDEDIR}/IL/il.h -DIL_INCLUDE_DIR:PATH=${INCLUDEDIR} -DIL_IL_LIBRARY:PATH=${LIBDIR}/libIL.a \
+          -DPNG_PNG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DPNG_LIBRARY_RELEASE:PATH=${LIBDIR}/libpng.a \
+          -DJPEG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DJPEG_LIBRARY:PATH=${LIBDIR}/libjpeg.a \
+          -DTIFF_INCLUDE_DIR:PATH=${INCLUDEDIR} -DTIFF_LIBRARY_RELEASE:PATH=${LIBDIR}/libtiff.a \
+          -DZLIB_INCLUDE_DIR:PATH=${INCLUDEDIR} -DZLIB_LIBRARY_RELEASE:PATH=${LIBDIR}/libz.a \
+          -DBZIP2_INCLUDE_DIR:PATH=${INCLUDEDIR} -DBZIP2_LIBRARIES:PATH=${LIBDIR}/libz.a \
+          -DGLEW_INCLUDE_DIR:PATH=${INCLUDEDIR} -DGLEW_LIBRARIES:PATH=${LIBDIR}/libGLEW.a \
+          -DLIBUNWIND_INCLUDE_DIRS:PATH=${INCLUDEDIR} -DLIBUNWIND_LIBRARY:PATH=${LIBDIR}/libunwind.a \
+          -DXCB_LIBRARIES:PATH=/usr/lib/x86_64-linux-gnu/libxcb.a
+          -B ./build-${{ matrix.config.os }}/ .
         working-directory: ${{ github.workspace }}/spring
 
       - name: Run Make All
