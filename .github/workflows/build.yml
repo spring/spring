@@ -125,13 +125,14 @@ jobs:
         if: steps.cache.outputs.cache-hit == 'true'
         run: |
           THIS_BRANCH=$(git branch --show-current)
-          if [[ "$THIS_BRANCH" == ${{ env.BRANCH_NAME }} ]]; then
+          if [[ $THIS_BRANCH != ${{ env.BRANCH_NAME }} ]]; then
             git reset --hard HEAD
             git checkout -b ${{ env.BRANCH_NAME }} || git checkout ${{ env.BRANCH_NAME }} || true
           fi
           git pull --rebase origin ${{ env.BRANCH_NAME }}
           git submodule update
         working-directory: ${{ github.workspace }}/spring
+        shell: bash
 
       - name: Clone Repository and Dependencies (windows-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
