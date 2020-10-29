@@ -57,6 +57,7 @@ jobs:
         if: matrix.config.os == 'windows-64'
         run: >
           sudo apt-get install --fix-missing
+          coreutils
           binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
           p7zip-full
           clang-format
@@ -73,6 +74,7 @@ jobs:
         if: matrix.config.os == 'linux-64'
         run: >
           sudo apt-get install --fix-missing -y
+          coreutils
           zlib1g zlib1g-dev
           libdevil-dev
           libcurl4-openssl-dev
@@ -133,12 +135,12 @@ jobs:
           git pull --rebase origin ${{ env.BRANCH_NAME }}
           git submodule update
           MYPWD=$(pwd)
-          if [ -d ./mingwlibs64 ]
+          if [ -d ./mingwlibs64 ]; then
             cd ./mingwlibs64
             git pull --rebase
             cd $MYPWD
           fi
-          if [ -d ./spring-static-libs ]
+          if [ -d ./spring-static-libs ]; then
             cd ./spring-static-libs
             git pull --rebase
             cd $MYPWD
@@ -220,6 +222,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
           -DCMAKE_INSTALL_PREFIX:PATH= -DBINDIR:PATH=./ -DLIBDIR:PATH=./ -DDATADIR:PATH=./ -DMANDIR:PATH=share/man -DDOCDIR:PATH=share/doc/spring \
           -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE \
+          -DOGG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DOGG_LIBRARY=${LIBDIR}/libogg.a \
           -DMINIZIP_INCLUDE_DIR:PATH=${INCLUDEDIR} -DMINIZIP_LIBRARY=${LIBDIR}/libminizip.a \
           -DLZMA_LIBRARY=${LIBDIR}/liblzma.a \
           -DLIBUUID_LIBRARY=${LIBDIR}/libuuid.a \
@@ -256,6 +259,7 @@ jobs:
           cp ../rts/lib/luasocket/src/socket.lua ./bin-dir/
           cp ./tools/pr-downloader/src/pr-downloader.exe ./bin-dir/
           touch ./bin-dir/springsettings.cfg
+          truncate -s 0 ./bin-dir/springsettings.cfg
           cp ./unitsync.dll ./bin-dir/
           cp ../cont/luaui.lua ./bin-dir/luaui.lua
           cp -R ../cont/LuaUI ./bin-dir/LuaUI
@@ -295,6 +299,7 @@ jobs:
           cp ../rts/lib/luasocket/src/socket.lua ./bin-dir/
           cp ./tools/pr-downloader/src/pr-downloader ./bin-dir/
           touch ./bin-dir/springsettings.cfg
+          truncate -s 0 ./bin-dir/springsettings.cfg
           cp ./libunitsync.so ./bin-dir/
           mkdir -p ./bin-dir/bin/
           cp ./tools/mapcompile/mapcompile ./bin-dir/bin/
