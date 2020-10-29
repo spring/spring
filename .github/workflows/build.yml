@@ -204,14 +204,14 @@ jobs:
         run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ -G Ninja .
         working-directory: ${{ github.workspace }}/spring
 
-      - name: Setup tmate session
-        if: matrix.config.os == 'linux-64'
-        uses: mxschmitt/action-tmate@v3
+#      - name: Setup tmate session
+#        if: matrix.config.os == 'linux-64'
+#        uses: mxschmitt/action-tmate@v3
 
       - name: Run CMake (linux-64)
         if: matrix.config.os == 'linux-64'
         run: |
-          WORKDIR=spring-static-libs
+          WORKDIR=$(pwd)/spring-static-libs
           LIBDIR=$WORKDIR/lib
           INCLUDEDIR=$WORKDIR/include
           cmake \
