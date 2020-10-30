@@ -31,6 +31,10 @@ jobs:
             runs-on: 'ubuntu-20.04'
           }
         - {
+            os: 'windows-32',
+            runs-on: 'ubuntu-20.04'
+          }
+        - {
             os: 'linux-64',
             runs-on: 'ubuntu-18.04'
           }
@@ -53,18 +57,28 @@ jobs:
       - name: Show CMake Version
         run: cmake --version
 
-      - name: Install Build Dependencies (windows-64)
-        if: matrix.config.os == 'windows-64'
+      - name: Install Build Dependencies (Common)
         run: >
-          sudo apt-get install --fix-missing
+          sudo apt-get install --fix-missing -y
           coreutils
-          binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
           p7zip-full
           clang-format
           ninja-build
 
+      - name: Install Build Dependencies (windows-64)
+        if: matrix.config.os == 'windows-64'
+        run: >
+          sudo apt-get install --fix-missing -y
+          binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
+
+      - name: Install Build Dependencies (windows-32)
+        if: matrix.config.os == 'windows-32'
+        run: >
+          sudo apt-get install --fix-missing -y
+          binutils-mingw-w64-i686 g++-mingw-w64-i686 gcc-mingw-w64-i686
+
       - name: Install GCC-10 PPA (linux-64)
-        if: matrix.config.runs-on == 'windows-64'
+        if: matrix.config.runs-on == 'linux-64'
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt update -y
@@ -74,11 +88,9 @@ jobs:
         if: matrix.config.os == 'linux-64'
         run: >
           sudo apt-get install --fix-missing -y
-          coreutils
           zlib1g zlib1g-dev
           libdevil-dev
           libcurl4-openssl-dev
-          p7zip-full
           libopenal-dev
           libvorbis-dev
           libsdl2-dev
@@ -88,8 +100,6 @@ jobs:
           libfontconfig1-dev
           libminizip-dev
           libgif-dev
-          clang-format
-          ninja-build
 
       - name: Get Workflow Cache Version and Date
         id: get-cache-id
@@ -151,17 +161,24 @@ jobs:
       - name: Clone Repository and Dependencies (windows-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
         run: |
-          git clone --recursive git://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursivehttps://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs64.git mingwlibs64
+
+      - name: Clone Repository and Dependencies (windows-32)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
+        run: |
+          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
+          cd spring
+          git clone https://github.com/spring/mingwlibs.git mingwlibs
 
       - name: Clone Repository and Dependencies (linux-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
         run: |
-          git clone --recursive git://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
-          git clone https://github.com/beyond-all-reason/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
+          git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
 
       - name: Create Build Folders
         run: |
@@ -177,6 +194,17 @@ jobs:
           echo "SET(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)" >> ./my.cmake
           echo "SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++-posix)" >> ./my.cmake
           echo "SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)" >> ./my.cmake
+        shell: bash
+        working-directory: ${{ github.workspace }}/spring
+
+      - name: Prepare Toolchain file (windows-32)
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
+        run: |
+          touch ./my.cmake
+          echo "SET(CMAKE_SYSTEM_NAME Windows)" >> ./my.cmake
+          echo "SET(CMAKE_C_COMPILER i686-w64-mingw32-gcc-posix)" >> ./my.cmake
+          echo "SET(CMAKE_CXX_COMPILER i686-w64-mingw32-g++-posix)" >> ./my.cmake
+          echo "SET(CMAKE_RC_COMPILER /usr/bin/i686-w64-mingw32-windres)" >> ./my.cmake
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
@@ -201,8 +229,8 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
-      - name: Run CMake (windows-64)
-        if: matrix.config.os == 'windows-64'
+      - name: Run CMake (windows)
+        if: matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32'
         run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ -G Ninja .
         working-directory: ${{ github.workspace }}/spring
 
@@ -250,11 +278,16 @@ jobs:
         run: ninja all
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
 
-      - name: Fill Portable Directory (windows-64)
-        if: matrix.config.os == 'windows-64'
+      - name: Fill Portable Directory (windows)
+        if: matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32'
         run: |
           rm -rf ./bin-dir/*
-          cp ../mingwlibs64/dll/* ./bin-dir/
+          if [ -d ../mingwlibs64 ]; then
+            cp ../mingwlibs64/dll/* ./bin-dir/
+          fi
+          if [ -d ../mingwlibs ]; then
+            cp ../mingwlibs/dll/* ./bin-dir/
+          fi
           cp ./*.exe ./bin-dir/
           cp ../rts/lib/luasocket/src/socket.lua ./bin-dir/
           cp ./tools/pr-downloader/src/pr-downloader.exe ./bin-dir/
@@ -328,8 +361,8 @@ jobs:
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
-      - name: Fill-in Debug Symbols Directory (windows-64)
-        if: github.event.inputs.strip-symbols == 'true' && matrix.config.os == 'windows-64'
+      - name: Fill-in Debug Symbols Directory (windows)
+        if: github.event.inputs.strip-symbols == 'true' && (matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32')
         run: |
           EXECUTABLES=$(find -maxdepth 1 -name '*.dll')" "$(find -maxdepth 1 -name '*.exe')" "$(find AI/Skirmish -name SkirmishAI.dll)" "$(find AI/Interfaces -name AIInterface.dll)" "$(find -name pr-downloader_shared.dll)
           for tostripfile in ${EXECUTABLES}; do
@@ -373,7 +406,7 @@ jobs:
       - name: Pack Build Artifacts
         id: pack-artifacts
         run: |
-          tag_name={${{ env.BRANCH_NAME }}}$(git describe)_${{ matrix.config.os }}
+          tag_name={${{ env.BRANCH_NAME }}}$(git describe --abbrev=7)_${{ matrix.config.os }}
           bin_name=spring_bar_$tag_name-minimal-portable.7z
           dbg_name=spring_bar_$tag_name-minimal-symbols.tgz
           echo "::set-output name=tag_name::$tag_name"
