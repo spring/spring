@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       bin-type:
-        description: Upload Spring as (artifact|prerelease|release)
+        description: Upload Spring as (artifact|draft|prerelease|release)
         required: true
         default: "artifact"
       strip-symbols:
@@ -406,9 +406,11 @@ jobs:
       - name: Pack Build Artifacts
         id: pack-artifacts
         run: |
+          tag_name_short={${{ env.BRANCH_NAME }}}$(git describe --abbrev=7)
           tag_name={${{ env.BRANCH_NAME }}}$(git describe --abbrev=7)_${{ matrix.config.os }}
           bin_name=spring_bar_$tag_name-minimal-portable.7z
           dbg_name=spring_bar_$tag_name-minimal-symbols.tgz
+          echo "::set-output name=tag_name_short::$tag_name_short"
           echo "::set-output name=tag_name::$tag_name"
           echo "::set-output name=bin_name::$bin_name"
           echo "::set-output name=dbg_name::$dbg_name"
@@ -428,19 +430,19 @@ jobs:
           path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
 
       - name: Create Bin (Pre-)Release
-        if: github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
+        if: github.event.inputs.bin-type == 'draft' || github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
         id: create-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.pack-artifacts.outputs.tag_name }}
-          release_name: ${{ steps.pack-artifacts.outputs.tag_name }}
-          draft: false
-          prerelease: ${{ github.event.inputs.bin-type == 'prerelease' }}
+          tag_name: ${{ steps.pack-artifacts.outputs.tag_name_short }}
+          release_name: ${{ steps.pack-artifacts.outputs.tag_name_short }}
+          draft: ${{ github.event.inputs.bin-type == 'draft' }}
+          prerelease: ${{ github.event.inputs.bin-type != 'release' }}
 
       - name: Upload Bin (Pre-)Release
-        if: github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
+        if: github.event.inputs.bin-type == 'draft' || github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
