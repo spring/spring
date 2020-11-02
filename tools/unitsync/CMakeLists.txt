@@ -118,6 +118,24 @@ endif ()
 add_library(unitsync SHARED ${unitsync_files})
 add_dependencies(unitsync generateVersionFiles)
 target_link_libraries(unitsync ${unitsync_libs})
+
+
+# hide exported symbols
+# see nm -c libunitsync.so
+include(CMakePushCheckState)
+include(CheckCXXCompilerFlag)
+function(check_linker_flag flag out_var)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
+  check_cxx_compiler_flag("" ${out_var})
+  cmake_pop_check_state()
+endfunction()
+check_linker_flag("-Wl,--exclude-libs,ALL" LINKER_HAS_EXCLUDELIBS)
+if (LINKER_HAS_EXCLUDELIBS)
+	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--exclude-libs,ALL)
+endif()
+
+
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
