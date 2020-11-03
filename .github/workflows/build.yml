@@ -2,18 +2,10 @@ name: Build Engine
 on:
   workflow_dispatch:
     inputs:
-      bin-type:
-        description: Upload Spring as (artifact|draft|prerelease|release)
-        required: true
-        default: "artifact"
       strip-symbols:
         description: Strip Debug Symbols
         required: true
         default: "true"
-      dbg-artifacts:
-        description: Upload Debug Symbols (as Artifact)
-        required: true
-        default: "false"
       skip-cache:
         description: Skip Cache
         required: true
@@ -161,21 +153,21 @@ jobs:
       - name: Clone Repository and Dependencies (windows-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
         run: |
-          git clone --recursivehttps://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursivehttps://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs64.git mingwlibs64
 
       - name: Clone Repository and Dependencies (windows-32)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
         run: |
-          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs.git mingwlibs
 
       - name: Clone Repository and Dependencies (linux-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
         run: |
-          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
           cd spring
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
@@ -423,37 +415,13 @@ jobs:
         shell: bash
 
       - name: Upload Bin as Artifact
-        if: github.event.inputs.bin-type == 'artifact'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.pack-artifacts.outputs.bin_name }}
           path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
 
-      - name: Create Bin (Pre-)Release
-        if: github.event.inputs.bin-type == 'draft' || github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.pack-artifacts.outputs.tag_name_short }}
-          release_name: ${{ steps.pack-artifacts.outputs.tag_name_short }}
-          draft: ${{ github.event.inputs.bin-type == 'draft' }}
-          prerelease: ${{ github.event.inputs.bin-type != 'release' }}
-
-      - name: Upload Bin (Pre-)Release
-        if: github.event.inputs.bin-type == 'draft' || github.event.inputs.bin-type == 'prerelease' || github.event.inputs.bin-type == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
-          asset_name: ${{ steps.pack-artifacts.outputs.bin_name }}
-          asset_content_type: application/zip
-
       - name: Upload Dbg Artifacts
-        if: github.event.inputs.dbg-artifacts == 'true' && github.event.inputs.strip-symbols == 'true'
+        #if: github.event.inputs.strip-symbols == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.pack-artifacts.outputs.dbg_name }}
