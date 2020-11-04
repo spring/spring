@@ -1,0 +1,65 @@
+name: Release Engine
+on:
+  workflow_dispatch:
+    inputs:
+      wf-run-id:
+        description: Workflow Run Id to Upload
+        required: true
+        default: ""
+      bin-type:
+        description: Upload Spring as (prerelease|release)
+        required: true
+        default: "prerelease"
+      release-tag:
+        description: Release Name/Tag
+        required: true
+        default: ""
+jobs:
+  release:
+    name: Release Engine
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Build Dependencies (Common)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install --fix-missing -y curl unzip
+
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+
+      - name: Download Artifacts
+        id: dl-artifacts
+        run: |
+          get_code=$(curl -X GET -u "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/beyond-all-reason/spring/actions/runs/${{ github.event.inputs.wf-run-id }}")
+          if [ $get_code != 200 ]; then
+            exit 1
+          fi
+
+          artifact_dl_urls=$(curl -X GET -u "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" -s "https://api.github.com/repos/beyond-all-reason/spring/actions/runs/${{ github.event.inputs.wf-run-id }}/artifacts" | jq ".artifacts[].archive_download_url" |  tr -d "\"")
+
+          for adl in $artifact_dl_urls; do
+            curl -X GET -u "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" -L -s -o tmp.zip $adl
+            unzip tmp.zip
+            rm tmp.zip
+          done
+
+          if [ "${{ github.event.inputs.release-tag }}" == "" ]; then
+            filename=$(ls | head -n 1)
+            release_tag=$(echo $filename | cut -d'_' -f1,2,3)
+            echo "::set-output name=release_tag::$release_tag"
+          else
+            echo "::set-output name=release_tag::${{ github.event.inputs.release-tag }}"
+          fi
+        shell: bash
+
+      - name: Upload Artifacts As Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./*
+          file_glob: true
+          overwrite: true
+          prerelease: ${{ github.event.inputs.bin-type == 'prerelease' }}
+          tag: ${{ steps.dl-artifacts.outputs.release_tag }}
+          body: "Github Action Upload"

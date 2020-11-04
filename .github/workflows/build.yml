@@ -421,7 +421,7 @@ jobs:
           path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
 
       - name: Upload Dbg Artifacts
-        #if: github.event.inputs.strip-symbols == 'true'
+        if: github.event.inputs.strip-symbols == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.pack-artifacts.outputs.dbg_name }}
