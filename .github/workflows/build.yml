@@ -153,21 +153,21 @@ jobs:
       - name: Clone Repository and Dependencies (windows-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
         run: |
-          git clone --recursivehttps://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs64.git mingwlibs64
 
       - name: Clone Repository and Dependencies (windows-32)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
         run: |
-          git clone --recursive https://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs.git mingwlibs
 
       - name: Clone Repository and Dependencies (linux-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
         run: |
-          git clone --recursive https://github.com/beyond-all-reason/spring.git -b ${{ env.BRANCH_NAME }}
+          git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/spring-static-libs.git -b $UBUNTU_VER spring-static-libs
