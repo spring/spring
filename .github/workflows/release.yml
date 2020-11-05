@@ -12,7 +12,7 @@ on:
         default: "prerelease"
       release-tag:
         description: Release Name/Tag
-        required: true
+        required: false
         default: ""
 jobs:
   release:

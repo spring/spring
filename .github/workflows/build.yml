@@ -144,7 +144,13 @@ jobs:
           fi
           if [ -d ./spring-static-libs ]; then
             cd ./spring-static-libs
-            git pull --rebase
+            UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
+            THIS_BRANCH=$(git branch --show-current)
+            if [[ $THIS_BRANCH != $UBUNTU_VER ]]; then
+              git reset --hard HEAD
+              git checkout -b $UBUNTU_VER || git checkout $UBUNTU_VER || true
+            fi
+            git pull --rebase origin $UBUNTU_VER
             cd $MYPWD
           fi
         working-directory: ${{ github.workspace }}/spring
