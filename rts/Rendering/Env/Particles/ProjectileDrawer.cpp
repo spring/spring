@@ -325,12 +325,16 @@ void CProjectileDrawer::ViewResize()
 
 			//LOG("%s depthTexture = %d", __func__, depthTexture);
 
+			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, depthTexture);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
@@ -713,15 +717,16 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 			fxShader->Enable();
+			fxShader->SetUniform("softenValue", 16.0f);
 		}
 
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 
 		if (drawSoften) {
+			fxShader->Disable();
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
 			glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
-			fxShader->Disable();
 		}
 	} else {
 		eventHandler.DrawWorldPreParticles();
@@ -856,11 +861,13 @@ void CProjectileDrawer::DrawGroundFlashes()
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
-		if (depthTest != gf->depthTest) {
+		bool depthTestWanted = drawSoften ? false : gf->depthTest;
+
+		if (depthTest != depthTestWanted) {
 			gfVA->DrawArrayTC(GL_QUADS);
 			gfVA->Initialize();
 
-			if ((depthTest = gf->depthTest)) {
+			if ((depthTest = depthTestWanted)) {
 				glEnable(GL_DEPTH_TEST);
 			} else {
 				glDisable(GL_DEPTH_TEST);
@@ -884,14 +891,15 @@ void CProjectileDrawer::DrawGroundFlashes()
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		fxShader->Enable();
+		fxShader->SetUniform("softenValue", -500.0f);
 	}
 
 	gfVA->DrawArrayTC(GL_QUADS);
 
 	if (drawSoften) {
+		fxShader->Disable();
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
-		fxShader->Disable();
 	}
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);

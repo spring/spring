@@ -80,12 +80,8 @@ CGroundFlash::CGroundFlash()
 	alwaysVisible = false;
 }
 
-CGroundFlash::CGroundFlash(const float3& _pos)
+CGroundFlash::CGroundFlash(const float3& _pos) : CGroundFlash()
 {
-	size = 0.0f;
-	depthTest = true;
-	depthMask = false;
-	alwaysVisible = false;
 	pos = _pos;
 }
 

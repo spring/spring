@@ -9,6 +9,7 @@ in vec4 vsPos;
 #define projMatrix gl_ProjectionMatrix
 
 uniform vec2 invScreenSize;
+uniform float softenValue;
 
 #define NORM2SNORM(value) (value * 2.0 - 1.0)
 #define SNORM2NORM(value) (value * 0.5 + 0.5)
@@ -22,31 +23,19 @@ float GetViewSpaceDepth(float d) {
 	return -projMatrix[3][2] / (projMatrix[2][2] + d);
 }
 
-//very slow due to no early-z test
-void HighQualitySoften(float depthZO, vec4 color) {
-	float depthVS = GetViewSpaceDepth(depthZO);
-
-	float edgeSmoothness = smoothstep(-16.0, 0.0, vsPos.z - depthVS);
-
-	gl_FragColor = color * vertColor;
-	gl_FragColor *= edgeSmoothness;
-	float fragDepth = mix(depthZO - 1e-3, gl_FragCoord.z, 1.0 - edgeSmoothness);
-	gl_FragDepth = fragDepth; //always 0 to -1, no matter clip_ctrl
-}
-
-void NormQualitySoften(float depthZO, vec4 color) {
-	float depthVS = GetViewSpaceDepth(depthZO);
-
-	float edgeSmoothness = smoothstep(0.0, 16.0, vsPos.z - depthVS);
-
-	gl_FragColor = color * vertColor;
-	gl_FragColor *= edgeSmoothness;
-}
-
 void main() {
 	vec4 color = texture(atlasTex, gl_TexCoord[0].xy);
 	vec2 screenUV = gl_FragCoord.xy * invScreenSize;
 
 	float depthZO = texture(depthTex, screenUV).x;
-	NormQualitySoften(depthZO, color);
+	float depthVS = GetViewSpaceDepth(depthZO);
+	float edgeSmoothness;
+
+	if (softenValue > 0.0)
+		edgeSmoothness = smoothstep(0.0, softenValue, vsPos.z - depthVS); // soften edges
+	else
+		edgeSmoothness = smoothstep(softenValue, 0.0, vsPos.z - depthVS); // follow the surface up
+
+	gl_FragColor  = color * vertColor;
+	gl_FragColor *= edgeSmoothness;
 }
