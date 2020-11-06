@@ -136,6 +136,10 @@ private:
 	static constexpr int perlinBlendTexSize = 16;
 	static constexpr int perlinTexSize = 128;
 
+	// start edge fading of regular CEGs if height difference is less than [0]
+	// fade out groundflashes to 0 as height difference reaches [1]
+	static constexpr float softenValues[2] = { 16.0f, -350.0f };
+
 	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
 

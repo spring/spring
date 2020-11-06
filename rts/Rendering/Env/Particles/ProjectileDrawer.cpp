@@ -717,7 +717,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 			fxShader->Enable();
-			fxShader->SetUniform("softenValue", 16.0f);
+			fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[0]);
 		}
 
 		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
@@ -891,7 +891,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		fxShader->Enable();
-		fxShader->SetUniform("softenValue", -500.0f);
+		fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[1]);
 	}
 
 	gfVA->DrawArrayTC(GL_QUADS);
