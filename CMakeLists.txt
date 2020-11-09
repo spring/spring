@@ -337,7 +337,11 @@ else  (LDGOLD_FOUND)
 endif (LDGOLD_FOUND)
 
 message(STATUS "Compiling with C++17")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+else (MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX17_FLAGS}")
+endif(MSVC)
 
 add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
 add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
