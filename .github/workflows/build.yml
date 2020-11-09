@@ -219,11 +219,8 @@ jobs:
       - name: Remove BAR-specific release tags
         run: |
           git fetch --tags origin || true
-          TAGS=$(git tag) || true
-          for TAG in $TAGS
-          do
-            git tag -d $(echo $TAG | grep '{.*}') || true
-          done
+          TAGS=$(git tag | grep '{.*}') || true
+          git tag -d $TAGS
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 

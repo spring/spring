@@ -36,6 +36,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "zlib.h"
 #include "minizip/zip.h"
 #include <cstring>
 #include <sstream>
