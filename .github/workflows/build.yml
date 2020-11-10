@@ -41,14 +41,6 @@ jobs:
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
         shell: bash
 
-      - name: Replace CMake version
-        uses: jwlawson/actions-setup-cmake@v1.4
-        with:
-          cmake-version: '3.16.x'
-
-      - name: Show CMake Version
-        run: cmake --version
-
       - name: Install Build Dependencies (Common)
         run: >
           sudo apt-get install --fix-missing -y
@@ -92,6 +84,14 @@ jobs:
           libfontconfig1-dev
           libminizip-dev
           libgif-dev
+
+      - name: Replace CMake version
+        uses: jwlawson/actions-setup-cmake@v1.4
+        with:
+          cmake-version: '3.16.x'
+
+      - name: Show CMake Version
+        run: cmake --version
 
       - name: Get Workflow Cache Version and Date
         id: get-cache-id
@@ -197,6 +197,8 @@ jobs:
           echo "SET(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)" >> ./my.cmake
           echo "SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++-posix)" >> ./my.cmake
           echo "SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)" >> ./my.cmake
+          echo "SET(CMAKE_DLLTOOL /usr/bin/x86_64-w64-mingw32-dlltool)" >> ./my.cmake
+          echo "SET(DLLTOOL /usr/bin/x86_64-w64-mingw32-dlltool)" >> ./my.cmake
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
@@ -208,6 +210,8 @@ jobs:
           echo "SET(CMAKE_C_COMPILER i686-w64-mingw32-gcc-posix)" >> ./my.cmake
           echo "SET(CMAKE_CXX_COMPILER i686-w64-mingw32-g++-posix)" >> ./my.cmake
           echo "SET(CMAKE_RC_COMPILER /usr/bin/i686-w64-mingw32-windres)" >> ./my.cmake
+          echo "SET(CMAKE_DLLTOOL /usr/bin/i686-w64-mingw32-dlltool)" >> ./my.cmake
+          echo "SET(DLLTOOL /usr/bin/i686-w64-mingw32-dlltool)" >> ./my.cmake
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
