@@ -235,9 +235,9 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
-      - name: Setup tmate session
+#      - name: Setup tmate session
 #        if: matrix.config.os == 'linux-64'
-        uses: mxschmitt/action-tmate@v3
+#        uses: mxschmitt/action-tmate@v3
 
       - name: Run CMake (windows)
         if: matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32'
