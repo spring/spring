@@ -22,10 +22,10 @@ jobs:
             os: 'windows-64',
             runs-on: 'ubuntu-20.04'
           }
-        - {
-            os: 'windows-32',
-            runs-on: 'ubuntu-20.04'
-          }
+#        - {
+#            os: 'windows-32',
+#            runs-on: 'ubuntu-20.04'
+#          }
         - {
             os: 'linux-64',
             runs-on: 'ubuntu-18.04'
@@ -139,6 +139,8 @@ jobs:
           fi
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }} || true #it may fail first time if a submodule URL was replaced
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }}
+          git submodule sync
+          git submodule update --init --recursive --remote
           MYPWD=$(pwd)
           if [ -d ./mingwlibs64 ]; then
             cd ./mingwlibs64
