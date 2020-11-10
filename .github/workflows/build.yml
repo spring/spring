@@ -15,7 +15,7 @@ jobs:
     name: ${{ matrix.config.os }}
     runs-on: ${{ matrix.config.runs-on }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         config:
         - {
@@ -126,6 +126,9 @@ jobs:
           fi
         shell: bash
 
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+
       - name: Update Cached sources
         if: steps.cache.outputs.cache-hit == 'true'
         run: |
@@ -134,8 +137,8 @@ jobs:
             git reset --hard HEAD
             git checkout -b ${{ env.BRANCH_NAME }} || git checkout ${{ env.BRANCH_NAME }} || true
           fi
-          git pull --rebase origin ${{ env.BRANCH_NAME }}
-          git submodule update
+          git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }} || true #it may fail first time if a submodule URL was replaced
+          git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }}
           MYPWD=$(pwd)
           if [ -d ./mingwlibs64 ]; then
             cd ./mingwlibs64
@@ -219,8 +222,7 @@ jobs:
       - name: Remove BAR-specific release tags
         run: |
           git fetch --tags origin || true
-          TAGS=$(git tag | grep '{.*}') || true
-          git tag -d $TAGS
+          git tag -d $(git tag | grep '{.*}') || true
         shell: bash
         working-directory: ${{ github.workspace }}/spring
 
