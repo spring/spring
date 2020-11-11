@@ -716,17 +716,17 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		if (drawSoften) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+			glActiveTexture(GL_TEXTURE0);
 			fxShader->Enable();
 			fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[0]);
 		}
 
-		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
+		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 
 		if (drawSoften) {
 			fxShader->Disable();
-			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
-			glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
+			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 		}
 	} else {
 		eventHandler.DrawWorldPreParticles();
@@ -890,6 +890,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	if (drawSoften) {
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		glActiveTexture(GL_TEXTURE0);
 		fxShader->Enable();
 		fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[1]);
 	}
@@ -898,8 +899,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 	if (drawSoften) {
 		fxShader->Disable();
-		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 	}
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);
