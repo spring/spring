@@ -66,8 +66,8 @@ public:
 	bool EnableSorting(bool b) { return (drawSorted =           b); }
 	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
 
-	bool EnableSoften(bool b) { return fxShader && fxShader->IsValid() ? (drawSoften = b) : false; }
-	bool ToggleSoften() { return EnableSoften(!drawSoften); }
+	int EnableSoften(int b) { return fxShader && fxShader->IsValid() ? (drawSoften = b) : 0; }
+	int ToggleSoften() { return EnableSoften((drawSoften + 1) % 3); }
 
 	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
@@ -138,7 +138,8 @@ private:
 
 	// start edge fading of regular CEGs if height difference is less than [0]
 	// fade out groundflashes to 0 as height difference reaches [1]
-	static constexpr float softenValues[2] = { 16.0f, -350.0f };
+	static constexpr float softenThreshold[2] = { 8.0f, 350.0f };
+	static constexpr float softenExponent[2]  = { 0.6f, 8.0f };
 
 	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
@@ -167,7 +168,7 @@ private:
 	GLuint depthTexture = 0u;
 	Shader::IProgramObject* fxShader = nullptr;
 
-	bool drawSoften = true;
+	int drawSoften = 1;
 };
 
 extern CProjectileDrawer* projectileDrawer;

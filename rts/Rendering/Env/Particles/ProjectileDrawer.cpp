@@ -39,7 +39,7 @@
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
-CONFIG(bool, SoftParticles).defaultValue(true).safemodeValue(false).description("Soften up CEG particles on clipping edges");
+CONFIG(int, SoftParticles).defaultValue(1).safemodeValue(0).description("Soften up CEG particles on clipping edges");
 
 CProjectileDrawer* projectileDrawer = nullptr;
 
@@ -263,7 +263,6 @@ void CProjectileDrawer::Init() {
 
 	LoadWeaponTextures();
 
-	bool softParticles = configHandler->GetBool("SoftParticles");
 	if (globalRendering->haveGLSL) {
 		{
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
@@ -273,11 +272,12 @@ void CProjectileDrawer::Init() {
 			fxShader->Enable();
 			fxShader->SetUniform("atlasTex", 0);
 			fxShader->SetUniform("depthTex", 8);
+			fxShader->SetUniform("softenExponent", CProjectileDrawer::softenExponent[0], CProjectileDrawer::softenExponent[1]);
 			fxShader->Disable();
 		}
 		ViewResize();
 	}
-	drawSoften = softParticles && fxShader && fxShader->IsValid();
+	drawSoften = fxShader && fxShader->IsValid() ? configHandler->GetInt("SoftParticles") : 0;
 }
 
 void CProjectileDrawer::Kill() {
@@ -713,18 +713,19 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// (requires mask=true and func=always)
 		eventHandler.DrawWorldPreParticles();
 
-		if (drawSoften) {
+		if (drawSoften > 0) {
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 			glActiveTexture(GL_TEXTURE0);
+			fxShader->SetFlag("EXTRA_UNSAFE_SOFTNESS", drawSoften == 2);
 			fxShader->Enable();
-			fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[0]);
+			fxShader->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
 
 		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 
-		if (drawSoften) {
+		if (drawSoften > 0) {
 			fxShader->Disable();
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 		}
@@ -861,7 +862,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
-		bool depthTestWanted = drawSoften ? false : gf->depthTest;
+		bool depthTestWanted = drawSoften > 0 ? false : gf->depthTest;
 
 		if (depthTest != depthTestWanted) {
 			gfVA->DrawArrayTC(GL_QUADS);
@@ -887,17 +888,17 @@ void CProjectileDrawer::DrawGroundFlashes()
 		gf->Draw(gfVA);
 	}
 
-	if (drawSoften) {
+	if (drawSoften > 0) {
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		glActiveTexture(GL_TEXTURE0);
 		fxShader->Enable();
-		fxShader->SetUniform("softenValue", CProjectileDrawer::softenValues[1]);
+		fxShader->SetUniform("softenThreshold", -CProjectileDrawer::softenThreshold[1]);
 	}
 
 	gfVA->DrawArrayTC(GL_QUADS);
 
-	if (drawSoften) {
+	if (drawSoften > 0) {
 		fxShader->Disable();
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 	}

@@ -48,6 +48,7 @@ jobs:
           p7zip-full
           clang-format
           ninja-build
+          software-properties-common
 
       - name: Install Build Dependencies (windows-64)
         if: matrix.config.os == 'windows-64'
@@ -192,7 +193,7 @@ jobs:
       - name: Prepare Toolchain file (windows-64)
         if: matrix.config.os == 'windows-64'
         run: |
-          rm ./my.cmake
+          rm ./my.cmake || true
           touch ./my.cmake
           echo "SET(CMAKE_SYSTEM_NAME Windows)" >> ./my.cmake
           echo "SET(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)" >> ./my.cmake
@@ -206,7 +207,7 @@ jobs:
       - name: Prepare Toolchain file (windows-32)
         if: matrix.config.os == 'windows-32'
         run: |
-          rm ./my.cmake
+          rm ./my.cmake || true
           touch ./my.cmake
           echo "SET(CMAKE_SYSTEM_NAME Windows)" >> ./my.cmake
           echo "SET(CMAKE_C_COMPILER i686-w64-mingw32-gcc-posix)" >> ./my.cmake
@@ -220,7 +221,7 @@ jobs:
       - name: Prepare Toolchain file (linux-64)
         if: matrix.config.os == 'linux-64'
         run: |
-          rm ./my.cmake
+          rm ./my.cmake || true
           touch ./my.cmake
           echo "SET(CMAKE_SYSTEM_NAME Linux)" >> ./my.cmake
           echo "SET(CMAKE_C_COMPILER gcc-10)" >> ./my.cmake
