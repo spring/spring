@@ -48,6 +48,7 @@ jobs:
           p7zip-full
           clang-format
           ninja-build
+          git
           software-properties-common
 
       - name: Install Build Dependencies (windows-64)
@@ -73,18 +74,10 @@ jobs:
         if: matrix.config.os == 'linux-64'
         run: >
           sudo apt-get install --fix-missing -y
-          zlib1g zlib1g-dev
-          libdevil-dev
-          libcurl4-openssl-dev
-          libopenal-dev
-          libvorbis-dev
           libsdl2-dev
-          libunwind-dev
+          libopenal-dev
           libfreetype6-dev
-          libglew-dev
           libfontconfig1-dev
-          libminizip-dev
-          libgif-dev
 
       - name: Replace CMake version
         uses: jwlawson/actions-setup-cmake@v1.4
@@ -97,7 +90,7 @@ jobs:
       - name: Get Workflow Cache Version and Date
         id: get-cache-id
         run: |
-          version=v2
+          version=v3
           echo "::set-output name=version::$version"
           echo "::set-output name=date::$(/bin/date -u "+%Y%V")"
         shell: bash
@@ -242,7 +235,7 @@ jobs:
 
       - name: Run CMake (windows)
         if: matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32'
-        run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ -G Ninja .
+        run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
         working-directory: ${{ github.workspace }}/spring
 
       - name: Run CMake (linux-64)
@@ -265,6 +258,7 @@ jobs:
           -DIL_IL_HEADER:PATH=${INCLUDEDIR}/IL/il.h -DIL_INCLUDE_DIR:PATH=${INCLUDEDIR} \
           -DIL_IL_LIBRARY:PATH=${LIBDIR}/libIL.a -DIL_LIBRARIES:PATH=${LIBDIR}/libIL.a \
           -DILU_LIBRARIES:PATH=${LIBDIR}/libILU.a \
+          -DGIF_LIBRARY:PATH=${LIBDIR}/libgif.a -DGIF_INCLUDE_DIR:PATH=${INCLUDEDIR} \
           -DPNG_PNG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DPNG_LIBRARY_RELEASE:PATH=${LIBDIR}/libpng.a \
           -DJPEG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DJPEG_LIBRARY:PATH=${LIBDIR}/libjpeg.a \
           -DTIFF_INCLUDE_DIR:PATH=${INCLUDEDIR} -DTIFF_LIBRARY_RELEASE:PATH=${LIBDIR}/libtiff.a \
@@ -277,12 +271,17 @@ jobs:
           -DVORBIS_INCLUDE_DIR:PATH=${INCLUDEDIR} \
           -DVORBISENC_LIBRARY:PATH=${LIBDIR}/libvorbisenc.a -DVORBISFILE_LIBRARY:PATH=${LIBDIR}/libvorbisfile.a -DVORBIS_LIBRARY:PATH=${LIBDIR}/libvorbis.a \
           -B ./build-${{ matrix.config.os }}/ \
-          -G Ninja \
           .
         working-directory: ${{ github.workspace }}/spring
 
       - name: Run Make All
-        run: ninja all
+        run: |
+          CLEANLIST_LIN=$(find -maxdepth 1 -name '*.so')" "$(find -maxdepth 1 -name 'spring*' -executable)" "$(find -maxdepth 1 -name 'pr-downloader')" "$(find AI/Skirmish -name libSkirmishAI.so)" "$(find AI/Interfaces -name libAIInterface.so)
+          CLEANLIST_WIN=$(find -maxdepth 1 -name '*.dll')" "$(find -maxdepth 1 -name '*.exe')" "$(find AI/Skirmish -name SkirmishAI.dll)" "$(find AI/Interfaces -name AIInterface.dll)" "$(find -name pr-downloader_shared.dll)
+          CLEANLIST_VAR=$(find -name 'GameVersion.cpp.o')
+          CLEANLIST=$CLEANLIST_LIN" "$CLEANLIST_WIN" "$CLEANLIST_VAR
+          rm -f $CLEANLIST VERSION
+          make -j$(nproc) all
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
 
       - name: Fill Portable Directory (windows)
