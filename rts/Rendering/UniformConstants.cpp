@@ -102,6 +102,8 @@ void UniformConstants::UpdateMapStandard(VBO* vbo, TBuffType*& buffMap, const TU
 	buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
 	ASSERT(buffMap != nullptr);
 
+	LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(buffMap), vboSingleSize);
+
 	updateFunc(buffMap);
 
 	vbo->UnmapBuffer();
@@ -120,6 +122,8 @@ void UniformConstants::UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const 
 	}
 
 	thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
+
+	LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(thisFrameBuffMap), vboSingleSize);
 
 	updateFunc(thisFrameBuffMap);
 
