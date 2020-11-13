@@ -2,7 +2,6 @@
 #define UNIFORM_CONSTANTS_H
 
 #include <array>
-#include <memory>
 #include <cstdint>
 
 #include "System/float4.h"
@@ -55,28 +54,29 @@ public:
 	void Update();
 	void Bind();
 private:
-	void InitVBO(std::unique_ptr<VBO>& vbo, const int vboSingleSize);
 
 	template<typename TBuffType, typename TUpdateFunc>
-	void UpdateMapStandard(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+	static void UpdateMapStandard(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
 
 	template<typename TBuffType, typename TUpdateFunc>
-	void UpdateMapPersistent(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+	static void UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
 
 	template<typename TBuffType, typename TUpdateFunc>
-	void UpdateMap(std::unique_ptr<VBO>& vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+	void UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize);
+
+	static void InitVBO(VBO*& vbo, const int vboSingleSize);
 
 	template<typename TBuffType>
 	static GLint RoundBuffSizeUp() {
 		const auto getAllignment = []() {
 			GLint buffAlignment = 0;
 			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &buffAlignment);
-			return buffAlignment;
+			return std::max(buffAlignment, 4);
 		};
 		static uint32_t uboAlignment = getAllignment(); //executed once
-		constexpr uint32_t TBuffTypeSize = sizeof(TBuffType);
-		//return ((TBuffTypeSize / uboAlignment) + 1) * uboAlignment; //incorrect
-		return (TBuffTypeSize + (uboAlignment - TBuffTypeSize % uboAlignment) % uboAlignment);
+		constexpr uint32_t buffTypeSize = sizeof(TBuffType);
+		//return ((buffTypeSize / uboAlignment) + 1) * uboAlignment; //incorrect
+		return (buffTypeSize + (uboAlignment - buffTypeSize % uboAlignment) % uboAlignment);
 	}
 
 	static intptr_t GetBufferOffset(const int vboSingleSize);
@@ -94,8 +94,8 @@ private:
 	UniformMatricesBuffer* umbBufferMap = nullptr;
 	UniformParamsBuffer* upbBufferMap = nullptr;
 
-	std::unique_ptr<VBO> umbBuffer;
-	std::unique_ptr<VBO> upbBuffer;
+	VBO* umbVBO = nullptr;
+	VBO* upbVBO = nullptr;
 };
 
 #endif
