@@ -250,7 +250,7 @@ void CProjectileDrawer::Init() {
 
 		perlinFB.Bind();
 		perlinFB.AttachTexture(textureAtlas->GetTexID());
-		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
+		drawPerlinTex = perlinFB.CheckStatus("PROJECTILE-DRAWER-PERLIN");
 		perlinFB.Unbind();
 	}
 
@@ -263,21 +263,21 @@ void CProjectileDrawer::Init() {
 
 	LoadWeaponTextures();
 
-	if (globalRendering->haveGLSL) {
+	if (CheckSoftenExt()) {
 		{
 			fxShader = shaderHandler->CreateProgramObject("[ProjectileDrawer::VFS]", "FX Shader", false);
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
 			fxShader->Enable();
-			fxShader->SetUniform("atlasTex", 0);
-			fxShader->SetUniform("depthTex", 8);
+			fxShader->SetUniform("atlasTex",  0);
+			fxShader->SetUniform("depthTex", 15);
 			fxShader->SetUniform("softenExponent", CProjectileDrawer::softenExponent[0], CProjectileDrawer::softenExponent[1]);
 			fxShader->Disable();
 		}
 		ViewResize();
+		EnableSoften(configHandler->GetInt("SoftParticles"));
 	}
-	drawSoften = fxShader && fxShader->IsValid() ? configHandler->GetInt("SoftParticles") : 0;
 }
 
 void CProjectileDrawer::Kill() {
@@ -306,50 +306,90 @@ void CProjectileDrawer::Kill() {
 	drawSorted = true;
 
 	if (fxShader) {
-		glDeleteTextures(1, &depthTexture);
 		fxShader->Release();
 	}
 
-	configHandler->Set("SoftParticles", drawSoften);
+	if (depthFBO.IsValid()) {
+		depthFBO.Bind();
+		depthFBO.DetachAll();
+		depthFBO.Unbind();
+	}
+	depthFBO.Kill();
+
+	if (depthTexture > 0u)
+		glDeleteTextures(1, &depthTexture);
+
+	configHandler->Set("SoftParticles", wantSoften);
 }
 
 void CProjectileDrawer::ViewResize()
 {
-	if (globalRendering->haveGLSL) {
-		{
-			if (depthTexture != 0u) {
-				glDeleteTextures(1, &depthTexture);
-				depthTexture = 0u;
-			}
-			glGenTextures(1, &depthTexture);
+	if (!CheckSoftenExt())
+		return;
 
-			//LOG("%s depthTexture = %d", __func__, depthTexture);
-
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, depthTexture);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-
-			glBindTexture(GL_TEXTURE_2D, 0);
-
-			if (fxShader && fxShader->IsValid()) {
-				fxShader->Enable();
-				fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
-				fxShader->Disable();
-			}
-		}
+	if (depthTexture != 0u) {
+		glDeleteTextures(1, &depthTexture);
+		depthTexture = 0u;
 	}
+	glGenTextures(1, &depthTexture);
+
+	//LOG("%s depthTexture = %d", __func__, depthTexture);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if (depthFBO.IsValid()) {
+		depthFBO.Bind();
+		depthFBO.DetachAll();
+		depthFBO.Unbind();
+	}
+
+	depthFBO.Kill();
+	depthFBO.Init(false);
+
+	depthFBO.Bind();
+	depthFBO.AttachTexture(depthTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+	glDrawBuffer(GL_NONE);
+	depthFBO.CheckStatus("PROJECTILE-DRAWER-DEPTHFBO");
+	depthFBO.Unbind();
+
+	fxShader->Enable();
+	fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
+	fxShader->Disable();
 }
 
+bool CProjectileDrawer::CheckSoftenExt()
+{
+	static bool result = FBO::IsSupported() && GLEW_EXT_framebuffer_blit && globalRendering->haveGLSL; //eval once
+	return result;
+}
 
+void CProjectileDrawer::CopyDepthBufferToTexture()
+{
+	//no need to touch glViewport
+	int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
+
+	GLint currentFBO;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
+
+	glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, currentFBO);
+	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, depthFBO.fboId);
+	glBlitFramebufferEXT(screenRect[0], screenRect[1], screenRect[2], screenRect[3], screenRect[0], screenRect[1], screenRect[2], screenRect[3], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+}
 
 void CProjectileDrawer::ParseAtlasTextures(
 	const bool blockTextures,
@@ -713,21 +753,23 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// (requires mask=true and func=always)
 		eventHandler.DrawWorldPreParticles();
 
-		if (drawSoften > 0) {
-			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
-			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-			glActiveTexture(GL_TEXTURE0);
-			fxShader->SetFlag("EXTRA_UNSAFE_SOFTNESS", drawSoften == 2);
+
+		glActiveTexture(GL_TEXTURE0); textureAtlas->BindTexture();
+
+		if (wantSoften > 0) {
+			CopyDepthBufferToTexture();
+			glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+			fxShader->SetFlag("EXTRA_UNSAFE_SOFTNESS", wantSoften == 2);
 			fxShader->Enable();
 			fxShader->SetUniform("softenThreshold", CProjectileDrawer::softenThreshold[0]);
 		}
 
-		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 
-		if (drawSoften > 0) {
+		if (wantSoften > 0) {
 			fxShader->Disable();
-			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 		}
 	} else {
 		eventHandler.DrawWorldPreParticles();
@@ -862,7 +904,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 		if (!camera->InView(gf->pos, gf->size))
 			continue;
 
-		bool depthTestWanted = drawSoften > 0 ? false : gf->depthTest;
+		bool depthTestWanted = wantSoften > 0 ? false : gf->depthTest;
 
 		if (depthTest != depthTestWanted) {
 			gfVA->DrawArrayTC(GL_QUADS);
@@ -888,19 +930,19 @@ void CProjectileDrawer::DrawGroundFlashes()
 		gf->Draw(gfVA);
 	}
 
-	if (drawSoften > 0) {
-		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, depthTexture);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-		glActiveTexture(GL_TEXTURE0);
+	if (wantSoften > 0) {
+		CopyDepthBufferToTexture();
+		glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
+
 		fxShader->Enable();
 		fxShader->SetUniform("softenThreshold", -CProjectileDrawer::softenThreshold[1]);
 	}
 
 	gfVA->DrawArrayTC(GL_QUADS);
 
-	if (drawSoften > 0) {
+	if (wantSoften > 0) {
 		fxShader->Disable();
-		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0); glActiveTexture(GL_TEXTURE0);
 	}
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);

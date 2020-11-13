@@ -24,7 +24,6 @@ struct FlyingPiece;
 class LuaTable;
 
 
-
 class CProjectileDrawer: public CEventClient {
 public:
 	CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false), perlinFB(true) {}
@@ -66,8 +65,11 @@ public:
 	bool EnableSorting(bool b) { return (drawSorted =           b); }
 	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
 
-	int EnableSoften(int b) { return fxShader && fxShader->IsValid() ? (drawSoften = b) : 0; }
-	int ToggleSoften() { return EnableSoften((drawSoften + 1) % 3); }
+	static bool CheckSoftenExt();
+	bool CanDrawSoften() { return CheckSoftenExt() && fxShader && fxShader->IsValid() && depthTexture != 0u && depthFBO.IsValid(); }
+	int EnableSoften(int b) { return CanDrawSoften() ? (wantSoften = std::clamp(b, 0, WANT_SOFTEN_COUNT - 1)) : 0; }
+	int ToggleSoften() { return EnableSoften((wantSoften + 1) % WANT_SOFTEN_COUNT); }
+	void CopyDepthBufferToTexture();
 
 	const AtlasedTexture* GetSmokeTexture(unsigned int i) const { return smokeTextures[i]; }
 
@@ -166,9 +168,11 @@ private:
 	bool drawSorted = true;
 
 	GLuint depthTexture = 0u;
+	FBO depthFBO;
 	Shader::IProgramObject* fxShader = nullptr;
 
-	int drawSoften = 1;
+	constexpr static int WANT_SOFTEN_COUNT = 3;
+	int wantSoften = 0;
 };
 
 extern CProjectileDrawer* projectileDrawer;
