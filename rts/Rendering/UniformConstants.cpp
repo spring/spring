@@ -21,6 +21,8 @@
 	#define ASSERT(x) do { } while(0)
 #endif
 
+#define DRAWFRAME_LIMIT 32
+
 void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 {
 	vbo = new VBO{GL_UNIFORM_BUFFER, globalRendering->supportPersistentMapping};
@@ -102,7 +104,8 @@ void UniformConstants::UpdateMapStandard(VBO* vbo, TBuffType*& buffMap, const TU
 	buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
 	ASSERT(buffMap != nullptr);
 
-	LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(buffMap), vboSingleSize);
+	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
+		LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(buffMap), vboSingleSize);
 
 	updateFunc(buffMap);
 
@@ -123,7 +126,8 @@ void UniformConstants::UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const 
 
 	thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
 
-	LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(thisFrameBuffMap), vboSingleSize);
+	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
+		LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(thisFrameBuffMap), vboSingleSize);
 
 	updateFunc(thisFrameBuffMap);
 
@@ -148,7 +152,8 @@ void UniformConstants::Update()
 	if (!Supported())
 		return;
 
-	LOG_L(L_WARNING, "[%s] umbBufferMap=%p, upbBufferMap=%p, umbBufferSize=%d, upbBufferSize=%d", __func__ , static_cast<void*>(umbBufferMap), static_cast<void*>(upbBufferMap), umbBufferSize, upbBufferSize);
+	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
+		LOG_L(L_WARNING, "[%s] drawFrame=%u umbBufferMap=%p, upbBufferMap=%p, umbBufferSize=%d, upbBufferSize=%d", __func__ , globalRendering->drawFrame, static_cast<void*>(umbBufferMap), static_cast<void*>(upbBufferMap), umbBufferSize, upbBufferSize);
 
 	UpdateMap(umbVBO, umbBufferMap, UniformConstants::UpdateMatrices, umbBufferSize);
 	UpdateMap(upbVBO, upbBufferMap, UniformConstants::UpdateParams  , upbBufferSize);
