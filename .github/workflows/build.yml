@@ -22,10 +22,10 @@ jobs:
             os: 'windows-64',
             runs-on: 'ubuntu-20.04'
           }
-        - {
-            os: 'windows-32',
-            runs-on: 'ubuntu-20.04'
-          }
+#        - {
+#            os: 'windows-32',
+#            runs-on: 'ubuntu-20.04'
+#          }
         - {
             os: 'linux-64',
             runs-on: 'ubuntu-18.04'
@@ -90,7 +90,7 @@ jobs:
       - name: Get Workflow Cache Version and Date
         id: get-cache-id
         run: |
-          version=v3
+          version=v4
           echo "::set-output name=version::$version"
           echo "::set-output name=date::$(/bin/date -u "+%Y%V")"
         shell: bash
@@ -160,7 +160,7 @@ jobs:
         run: |
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
-          git clone https://github.com/spring/mingwlibs64.git mingwlibs64
+          git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/mingwlibs64.git mingwlibs64
 
       - name: Clone Repository and Dependencies (windows-32)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
@@ -235,8 +235,29 @@ jobs:
 
       - name: Run CMake (windows)
         if: matrix.config.os == 'windows-64' || matrix.config.os == 'windows-32'
-        run: cmake -DCMAKE_TOOLCHAIN_FILE=./my.cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE -B ./build-${{ matrix.config.os }}/ .
+        run: |
+          if [ -d ./mingwlibs ]; then
+            WORKDIR=$(pwd)/mingwlibs
+          fi
+          if [ -d ./mingwlibs64 ]; then
+            WORKDIR=$(pwd)/mingwlibs64
+          fi
+          LIBDIR=$WORKDIR/dll
+          INCLUDEDIR=$WORKDIR/include
+
+          MYCFLAGS="-O3 -march=nehalem -mtune=nehalem"
+
+          cmake \
+          -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
+          -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
+          -DCMAKE_C_FLAGS="${MYCFLAGS}" \
+          -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
+          -DMINIZIP_INCLUDE_DIR:PATH=${INCLUDEDIR} -DMINIZIP_LIBRARY=${LIBDIR}/libminizip.dll \
+          -DAI_TYPES=NATIVE \
+          -B ./build-${{ matrix.config.os }}/ \
+          .
         working-directory: ${{ github.workspace }}/spring
+        shell: bash
 
       - name: Run CMake (linux-64)
         if: matrix.config.os == 'linux-64'
@@ -244,10 +265,15 @@ jobs:
           WORKDIR=$(pwd)/spring-static-libs
           LIBDIR=$WORKDIR/lib
           INCLUDEDIR=$WORKDIR/include
+
+          MYCFLAGS="-O3 -march=nehalem -mtune=nehalem"
+
           cmake \
+          -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
+          -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
+          -DCMAKE_C_FLAGS="${MYCFLAGS}" \
           -DPREFER_STATIC_LIBS:BOOL=1 \
           -DCMAKE_USE_RELATIVE_PATHS:BOOL=1 \
-          -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
           -DCMAKE_INSTALL_PREFIX:PATH= -DBINDIR:PATH=./ -DLIBDIR:PATH=./ -DDATADIR:PATH=./ -DMANDIR:PATH=share/man -DDOCDIR:PATH=share/doc/spring \
           -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DAI_TYPES=NATIVE \
           -DOGG_INCLUDE_DIR:PATH=${INCLUDEDIR} -DOGG_LIBRARY=${LIBDIR}/libogg.a \
@@ -273,6 +299,7 @@ jobs:
           -B ./build-${{ matrix.config.os }}/ \
           .
         working-directory: ${{ github.workspace }}/spring
+        shell: bash
 
       - name: Run Make All
         run: |
