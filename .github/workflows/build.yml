@@ -252,7 +252,6 @@ jobs:
           -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
           -DCMAKE_C_FLAGS="${MYCFLAGS}" \
           -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
-          -DMINIZIP_INCLUDE_DIR:PATH=${INCLUDEDIR} -DMINIZIP_LIBRARY=${LIBDIR}/libminizip.dll \
           -DAI_TYPES=NATIVE \
           -B ./build-${{ matrix.config.os }}/ \
           .
