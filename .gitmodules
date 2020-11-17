@@ -13,3 +13,7 @@
 [submodule "tools/SpringMapConvNG"]
 	path = tools/mapcompile
 	url = https://github.com/spring/SpringMapConvNG.git
+[submodule "AI/Skirmish/BARb"]
+	path = AI/Skirmish/BARb
+	url = https://github.com/rlcevg/CircuitAI.git
+	branch = barb3
