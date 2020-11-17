@@ -11,11 +11,11 @@ if     (MINIZIP_FOUND)
 	set_global(SPRING_MINIZIP_LIBRARY "${MINIZIP_LIBRARY}")
 else   (MINIZIP_FOUND)
 	# Build our own minizip library
-	set(miniZipSources
-			"unzip"
-			"zip"
-			"ioapi"
-		)
+	
+	file(GLOB miniZipSources
+		"*.h"
+		"*.c"
+	)	
 
 	add_definitions(-DNOCRYPT -DNOUNCRYPT)
 	find_package(ZLIB REQUIRED)
