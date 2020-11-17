@@ -253,8 +253,8 @@ jobs:
           LIBDIR=$WORKDIR/dll
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS=${{ github.event.inputs.compilation-flags }}}
-          MYRWDIFLAGS=${{ github.event.inputs.relwithdeb-flags }}
+          MYCFLAGS="${{ github.event.inputs.compilation-flags }}}"
+          MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
@@ -276,8 +276,8 @@ jobs:
           LIBDIR=$WORKDIR/lib
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS=${{ github.event.inputs.compilation-flags }}}
-          MYRWDIFLAGS=${{ github.event.inputs.relwithdeb-flags }}
+          MYCFLAGS="${{ github.event.inputs.compilation-flags }}}"
+          MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
