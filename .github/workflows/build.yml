@@ -10,6 +10,14 @@ on:
         description: Skip Cache
         required: true
         default: "false"
+      compilation-flags:
+        description: Common Compilation Flags
+        required: true
+        default: "-O3 -march=nehalem -mtune=nehalem"
+      relwithdeb-flags:
+        description: RELWITHDEBINFO Compilation flags
+        required: true
+        default: "-ggdb3 -DNDEBUG"
 jobs:
   build:
     name: ${{ matrix.config.os }}
@@ -90,7 +98,7 @@ jobs:
       - name: Get Workflow Cache Version and Date
         id: get-cache-id
         run: |
-          version=v4
+          version=v5
           echo "::set-output name=version::$version"
           echo "::set-output name=date::$(/bin/date -u "+%Y%V")"
         shell: bash
@@ -245,12 +253,15 @@ jobs:
           LIBDIR=$WORKDIR/dll
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS="-O3 -march=nehalem -mtune=nehalem"
+          MYCFLAGS=${{ github.event.inputs.compilation-flags }}}
+          MYRWDIFLAGS=${{ github.event.inputs.relwithdeb-flags }}
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
           -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
           -DCMAKE_C_FLAGS="${MYCFLAGS}" \
+          -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
+          -DCMAKE_C_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
           -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
           -DAI_TYPES=NATIVE \
           -B ./build-${{ matrix.config.os }}/ \
@@ -265,12 +276,15 @@ jobs:
           LIBDIR=$WORKDIR/lib
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS="-O3 -march=nehalem -mtune=nehalem"
+          MYCFLAGS=${{ github.event.inputs.compilation-flags }}}
+          MYRWDIFLAGS=${{ github.event.inputs.relwithdeb-flags }}
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
           -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
           -DCMAKE_C_FLAGS="${MYCFLAGS}" \
+          -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
+          -DCMAKE_C_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
           -DPREFER_STATIC_LIBS:BOOL=1 \
           -DCMAKE_USE_RELATIVE_PATHS:BOOL=1 \
           -DCMAKE_INSTALL_PREFIX:PATH= -DBINDIR:PATH=./ -DLIBDIR:PATH=./ -DDATADIR:PATH=./ -DMANDIR:PATH=share/man -DDOCDIR:PATH=share/doc/spring \
