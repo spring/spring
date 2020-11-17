@@ -13,11 +13,11 @@ on:
       compilation-flags:
         description: Common Compilation Flags
         required: true
-        default: "-O3 -march=nehalem -mtune=nehalem"
+        default: "-march=nehalem -mtune=nehalem"
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags
         required: true
-        default: "-ggdb3 -DNDEBUG"
+        default: "-O3 -ggdb3 -DNDEBUG"
 jobs:
   build:
     name: ${{ matrix.config.os }}
