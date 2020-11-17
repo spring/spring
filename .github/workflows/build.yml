@@ -364,9 +364,12 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/NullAI/0.1
           cp -R ./AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
           cp -R ../AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
-          mkdir -p ./bin-dir/AI/Skirmish/Shard/dev/
-          cp -R ./AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
-          cp -R ../AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+          mkdir -p ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          cp -R ./AI/Skirmish/CircuitAI/data/* ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          cp -R ../AI/Skirmish/CircuitAI/data/* ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
+          cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
+          cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
@@ -401,9 +404,12 @@ jobs:
           mkdir -p ./bin-dir/AI/Skirmish/NullAI/0.1
           cp -R ./AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
           cp -R ../AI/Skirmish/NullAI/data/* ./bin-dir/AI/Skirmish/NullAI/0.1/
-          mkdir -p ./bin-dir/AI/Skirmish/Shard/dev/
-          cp -R ./AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
-          cp -R ../AI/Skirmish/Shard/data/* ./bin-dir/AI/Skirmish/Shard/dev/
+          mkdir -p ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          cp -R ./AI/Skirmish/CircuitAI/data/* ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          cp -R ../AI/Skirmish/CircuitAI/data/* ./bin-dir/AI/Skirmish/CircuitAI/stable/
+          mkdir -p ./bin-dir/AI/Skirmish/BARb/stable/
+          cp -R ./AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
+          cp -R ../AI/Skirmish/BARb/data/* ./bin-dir/AI/Skirmish/BARb/stable/
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}
         shell: bash
 
