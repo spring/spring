@@ -50,13 +50,16 @@ jobs:
         shell: bash
 
       - name: Install Build Dependencies (Common)
-        run: >
-          sudo apt-get install --fix-missing -y
-          coreutils
-          p7zip-full
-          clang-format
-          ninja-build
-          git
+        run: |
+          sudo apt-get update -y
+          sudo apt-get upgrade -y
+
+          sudo apt-get install --fix-missing -y \
+          coreutils \
+          p7zip-full \
+          clang-format \
+          ninja-build \
+          git \
           software-properties-common
 
       - name: Install Build Dependencies (windows-64)
