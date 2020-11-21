@@ -92,12 +92,13 @@ private:
 	int CalcHash(const SCommandDescription& cd) const;
 
 private:
+	static constexpr int CACHE_SIZE = 1024;
 	// maps hashes to cache-indices (sorted)
-	std::array< std::pair<int, unsigned int>, 1024 > index;
+	std::vector< std::pair<int, unsigned int> > index;
 	// tracks free slots in cache (stack)
-	std::array<unsigned int, 1024> slots;
+	std::vector<unsigned int> slots;
 	// includes one dummy description
-	std::array<SCommandDescription, 1024 + 1> cache;
+	std::vector<SCommandDescription> cache;
 
 	unsigned int numCmdDescrs = 0;
 	unsigned int numFreeSlots = 0;
