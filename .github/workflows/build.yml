@@ -52,7 +52,7 @@ jobs:
       - name: Install Build Dependencies (Common)
         run: |
           sudo apt-get update -y
-          sudo apt-get upgrade -y
+          #sudo apt-get upgrade -y
 
           sudo apt-get install --fix-missing -y \
           coreutils \
