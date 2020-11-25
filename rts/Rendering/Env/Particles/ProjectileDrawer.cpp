@@ -269,11 +269,13 @@ void CProjectileDrawer::Init() {
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXVertProg.glsl", "", GL_VERTEX_SHADER));
 			fxShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/ProjFXFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			fxShader->SetFlag("DEPTH_CLIP01", globalRendering->supportClipSpaceControl);
+			fxShader->Link();
 			fxShader->Enable();
 			fxShader->SetUniform("atlasTex",  0);
 			fxShader->SetUniform("depthTex", 15);
 			fxShader->SetUniform("softenExponent", CProjectileDrawer::softenExponent[0], CProjectileDrawer::softenExponent[1]);
 			fxShader->Disable();
+			fxShader->Validate();
 		}
 		ViewResize();
 		EnableSoften(configHandler->GetInt("SoftParticles"));

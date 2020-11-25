@@ -142,9 +142,9 @@ template<typename TBuffType, typename TUpdateFunc>
 void UniformConstants::UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFunc& updateFunc, const int vboSingleSize)
 {
 	if (globalRendering->supportPersistentMapping)
-		UpdateMapStandard(vbo, buffMap, updateFunc, vboSingleSize);
-	else
 		UpdateMapPersistent(vbo, buffMap, updateFunc, vboSingleSize);
+	else
+		UpdateMapStandard  (vbo, buffMap, updateFunc, vboSingleSize);
 }
 
 void UniformConstants::Update()
