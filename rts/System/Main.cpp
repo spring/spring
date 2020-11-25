@@ -6,7 +6,7 @@
 	https://springrts.com/
 */
 
-
+#include "System/ExportDefines.h"
 #include "System/SpringApp.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
@@ -17,10 +17,15 @@
 
 #include <clocale>
 #include <cstdlib>
+#include <cstdint>
 
 #ifdef _WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 #endif
+
+// https://stackoverflow.com/a/27881472/9819318
+EXTERNALIZER_B EXPORT_CLAUSE uint32_t NvOptimusEnablement = 0x00000001;         EXTERNALIZER_E //Optimus/NV use discrete GPU hint
+EXTERNALIZER_B EXPORT_CLAUSE uint32_t AmdPowerXpressRequestHighPerformance = 1; EXTERNALIZER_E // AMD use discrete GPU hint
 
 int Run(int argc, char* argv[])
 {
