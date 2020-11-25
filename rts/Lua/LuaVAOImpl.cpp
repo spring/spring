@@ -492,20 +492,23 @@ int LuaVAOImpl::UploadImpl(const sol::stack_table& luaTblData, const sol::option
 	#define TRANSFORM_COPY_ATTRIB(outT, sz, iter, mcpy) \
 	{ \
 		constexpr int outValSize = sizeof(outT); \
-		for (int n = 0; n < sz; ++n) { \
-			if (bytesWritten + outValSize > byteSize) { \
-				vbo->UnmapBuffer(); \
-				vbo->Unbind(); \
-				return bytesWritten; \
-			} \
-			if (mcpy) { \
+		const int outValSizeStride = sz * outValSize; \
+		if (bytesWritten + outValSizeStride > byteSize) { \
+			vbo->UnmapBuffer(); \
+			vbo->Unbind(); \
+			return bytesWritten; \
+		} \
+		if (mcpy) { \
+			for (int n = 0; n < sz; ++n) { \
 				const auto outVal = TransformFunc<lua_Number, outT>(*iter); \
 				memcpy(mappedBuf, &outVal, outValSize); \
+				mappedBuf += outValSize; \
 				++iter; \
 			} \
-			bytesWritten += outValSize; \
-			mappedBuf += outValSize; \
+		} else { \
+			mappedBuf += outValSizeStride; \
 		} \
+		bytesWritten += outValSizeStride; \
 	}
 
 	for (auto bdvIter = dataVec.cbegin(); bdvIter != dataVec.cend(); ) {

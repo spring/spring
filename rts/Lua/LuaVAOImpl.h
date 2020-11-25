@@ -15,7 +15,7 @@ struct VBO;
 
 struct VAOAttrib {
 	int divisor;
-	GLint size;
+	GLint size; // in number of elements
 	GLenum type;
 	GLboolean normalized;
 	GLsizei stride;
