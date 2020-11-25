@@ -142,6 +142,8 @@ jobs:
             git reset --hard HEAD
             git checkout -b ${{ env.BRANCH_NAME }} || git checkout ${{ env.BRANCH_NAME }} || true
           fi
+          git config --global user.name  "GitHub Action"
+          git config --global user.email "action@github.com"
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }} || true #it may fail first time if a submodule URL was replaced
           git pull --rebase --recurse-submodules origin ${{ env.BRANCH_NAME }}
           git submodule sync
@@ -169,6 +171,8 @@ jobs:
       - name: Clone Repository and Dependencies (windows-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-64'
         run: |
+          git config --global user.name  "GitHub Action"
+          git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/${GITHUB_REPOSITORY_OWNER}/mingwlibs64.git mingwlibs64
@@ -176,6 +180,8 @@ jobs:
       - name: Clone Repository and Dependencies (windows-32)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-32'
         run: |
+          git config --global user.name  "GitHub Action"
+          git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           git clone https://github.com/spring/mingwlibs.git mingwlibs
@@ -183,6 +189,8 @@ jobs:
       - name: Clone Repository and Dependencies (linux-64)
         if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'linux-64'
         run: |
+          git config --global user.name  "GitHub Action"
+          git config --global user.email "action@github.com"
           git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git -b ${{ env.BRANCH_NAME }}
           cd spring
           UBUNTU_VER=$(echo ${{ matrix.config.runs-on }} | cut -d'-' -f2)
