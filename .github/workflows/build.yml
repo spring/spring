@@ -10,14 +10,22 @@ on:
         description: Skip Cache
         required: true
         default: "false"
-      compilation-flags:
-        description: Common Compilation Flags
+      archtune-flags:
+        description: Arch/Tune Flags
         required: true
-        default: "-march=nehalem -mtune=nehalem"
+        default: "nehalem"
+      sse-flags:
+        description: Custom SSE Flags
+        required: true
+        default: "-msse -mfpmath=sse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mno-sse4a -mno-avx -mno-fma -mno-fma4 -mno-xop -mno-lwp -mno-avx2"
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags
         required: true
         default: "-O3 -ggdb3 -DNDEBUG"
+      compilation-flags:
+        description: Extra Compilation Flags
+        required: false
+        default: ""
 jobs:
   build:
     name: ${{ matrix.config.os }}
@@ -264,11 +272,15 @@ jobs:
           LIBDIR=$WORKDIR/dll
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS="${{ github.event.inputs.compilation-flags }}"
+          MYARCHTUNE="${{ github.event.inputs.archtune-flags }}"
+          MYSSEFLAGS="${{ github.event.inputs.sse-flags }}"
+          MYCFLAGS="-mtune=${MYARCHTUNE} ${{ github.event.inputs.compilation-flags }}"
           MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
+          -DMARCH_FLAG="${MYARCHTUNE}" \
+          -DSSE_FLAGS="${MYSSEFLAGS}" \
           -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
           -DCMAKE_C_FLAGS="${MYCFLAGS}" \
           -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
@@ -287,11 +299,15 @@ jobs:
           LIBDIR=$WORKDIR/lib
           INCLUDEDIR=$WORKDIR/include
 
-          MYCFLAGS="${{ github.event.inputs.compilation-flags }}"
+          MYARCHTUNE="${{ github.event.inputs.archtune-flags }}"
+          MYSSEFLAGS="${{ github.event.inputs.sse-flags }}"
+          MYCFLAGS="-mtune=${MYARCHTUNE} ${{ github.event.inputs.compilation-flags }}"
           MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \
           -DCMAKE_TOOLCHAIN_FILE=./my.cmake \
+          -DMARCH_FLAG="${MYARCHTUNE}" \
+          -DSSE_FLAGS="${MYSSEFLAGS}" \
           -DCMAKE_CXX_FLAGS="${MYCFLAGS}" \
           -DCMAKE_C_FLAGS="${MYCFLAGS}" \
           -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="${MYRWDIFLAGS}" \
