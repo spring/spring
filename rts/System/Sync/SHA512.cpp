@@ -53,7 +53,7 @@ void sha512::calc_digest(const uint8_t msg_bytes[], size_t len, uint8_t sha_byte
 	dm_compress(state, msg_bytes, ofs);
 
 	// handle final blocks
-	if ((len - ofs) > 0)
+	if (len > ofs)
 		std::memmove(block, &msg_bytes[ofs], len - ofs);
 
 	ofs  = len & (BLK_LEN - 1);
