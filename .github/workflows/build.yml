@@ -274,7 +274,7 @@ jobs:
 
           MYARCHTUNE="${{ github.event.inputs.archtune-flags }}"
           MYSSEFLAGS="${{ github.event.inputs.sse-flags }}"
-          MYCFLAGS="-mtune=${MYARCHTUNE} ${{ github.event.inputs.compilation-flags }}"
+          MYCFLAGS="${{ github.event.inputs.compilation-flags }}"
           MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \
@@ -301,7 +301,7 @@ jobs:
 
           MYARCHTUNE="${{ github.event.inputs.archtune-flags }}"
           MYSSEFLAGS="${{ github.event.inputs.sse-flags }}"
-          MYCFLAGS="-mtune=${MYARCHTUNE} ${{ github.event.inputs.compilation-flags }}"
+          MYCFLAGS="${{ github.event.inputs.compilation-flags }}"
           MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
 
           cmake \

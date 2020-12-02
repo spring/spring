@@ -418,14 +418,12 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 	endif (UNIX)
 
 	if    (MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
-		message(STATUS "using march=${MARCH_FLAG}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG} -mtune=${MARCH_FLAG}")
 	else  (MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-		message(STATUS "using mtune=generic")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=generic -mtune=generic")
 	endif (MARCH_FLAG)
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") #set in ./rts/build/cmake/TestCXXFlags.cmake
 elseif (MSVC)
 	# silence warnings
 	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
@@ -492,6 +490,7 @@ else  (MSVC)
 	endif  (MINGW)
 endif (MSVC)
 
+message(STATUS "Using CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
 
 #######################################
