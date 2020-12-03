@@ -34,6 +34,9 @@ void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 
 void UniformConstants::Init()
 {
+	if (initialized) //don't need to reinit on resolution changes
+		return;
+
 	if (!Supported()) {
 		LOG_L(L_ERROR, "[UniformConstants::%s] Important OpenGL extensions are not supported by the system\n  GLEW_ARB_uniform_buffer_object = %d\n  GLEW_ARB_shading_language_420pack = %d", __func__, GLEW_ARB_uniform_buffer_object, GLEW_ARB_shading_language_420pack);
 		return;
@@ -44,11 +47,13 @@ void UniformConstants::Init()
 
 	InitVBO(umbVBO, umbBufferSize);
 	InitVBO(upbVBO, upbBufferSize);
+
+	initialized = true;
 }
 
 void UniformConstants::Kill()
 {
-	if (!Supported())
+	if (!Supported() || !initialized)
 		return;
 
 	//unbind the whole ring buffer range
@@ -57,6 +62,8 @@ void UniformConstants::Kill()
 
 	spring::SafeDelete(umbVBO);
 	spring::SafeDelete(upbVBO);
+
+	initialized = false;
 }
 
 intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)

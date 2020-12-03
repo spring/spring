@@ -98,6 +98,8 @@ private:
 
 	VBO* umbVBO = nullptr;
 	VBO* upbVBO = nullptr;
+
+	bool initialized = false;
 };
 
 #endif
