@@ -75,7 +75,7 @@ private:
 		};
 		static uint32_t uboAlignment = getAllignment(); //executed once
 		constexpr uint32_t buffTypeSize = sizeof(TBuffType);
-		//return ((buffTypeSize / uboAlignment) + 1) * uboAlignment; //incorrect
+
 		return (buffTypeSize + (uboAlignment - buffTypeSize % uboAlignment) % uboAlignment);
 	}
 
