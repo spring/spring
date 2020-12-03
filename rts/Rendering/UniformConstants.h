@@ -8,7 +8,6 @@
 #include "System/Matrix44f.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
-#include "System/Log/ILog.h"
 
 struct UniformMatricesBuffer {
 	CMatrix44f screenView;
@@ -72,7 +71,6 @@ private:
 		const auto getAllignment = []() {
 			GLint buffAlignment = 0;
 			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &buffAlignment);
-			LOG_L(L_WARNING, "[%s] GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT = %d", __func__, buffAlignment);
 			return std::max(buffAlignment, 32);
 		};
 		static uint32_t uboAlignment = getAllignment(); //executed once

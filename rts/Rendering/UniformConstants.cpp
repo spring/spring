@@ -1,6 +1,6 @@
 #include "UniformConstants.h"
 
-//#include <cassert>
+#include <cassert>
 #include <stdint.h>
 
 #include "Rendering/GlobalRendering.h"
@@ -13,15 +13,6 @@
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
-
-#define MYASSERT
-#ifdef MYASSERT
-	#define ASSERT(x) do { if( !(x) ) { LOG_L(L_ERROR, "[UniformConstants::%s] assertion failure. Line %d", __func__, __LINE__); /*abort();*/ } } while(0)
-#else
-	#define ASSERT(x) do { } while(0)
-#endif
-
-#define DRAWFRAME_LIMIT 32
 
 void UniformConstants::InitVBO(VBO*& vbo, const int vboSingleSize)
 {
@@ -109,10 +100,7 @@ void UniformConstants::UpdateMapStandard(VBO* vbo, TBuffType*& buffMap, const TU
 {
 	vbo->Bind(GL_UNIFORM_BUFFER);
 	buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(GetBufferOffset(vboSingleSize), vboSingleSize));
-	ASSERT(buffMap != nullptr);
-
-	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
-		LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(buffMap), vboSingleSize);
+	assert(buffMap != nullptr);
 
 	updateFunc(buffMap);
 
@@ -128,13 +116,10 @@ void UniformConstants::UpdateMapPersistent(VBO* vbo, TBuffType*& buffMap, const 
 	if (buffMap == nullptr) { //
 		vbo->Bind(GL_UNIFORM_BUFFER); //bind only first time
 		buffMap = reinterpret_cast<TBuffType*>(vbo->MapBuffer(0, BUFFERING * vboSingleSize)); //map first time and forever
-		ASSERT(buffMap != nullptr);
+		assert(buffMap != nullptr);
 	}
 
 	thisFrameBuffMap = reinterpret_cast<TBuffType*>((intptr_t)(buffMap) + GetBufferOffset(vboSingleSize)); //choose the current part of the buffer
-
-	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
-		LOG_L(L_WARNING, "[%s] VBO=%p, buffMap=%p, vboSingleSize=%d", __func__ , static_cast<void*>(vbo), static_cast<void*>(thisFrameBuffMap), vboSingleSize);
 
 	updateFunc(thisFrameBuffMap);
 
@@ -159,9 +144,6 @@ void UniformConstants::Update()
 	if (!Supported())
 		return;
 
-	if (globalRendering->drawFrame <= DRAWFRAME_LIMIT)
-		LOG_L(L_WARNING, "[%s] drawFrame=%u umbBufferMap=%p, upbBufferMap=%p, umbBufferSize=%d, upbBufferSize=%d", __func__ , globalRendering->drawFrame, static_cast<void*>(umbBufferMap), static_cast<void*>(upbBufferMap), umbBufferSize, upbBufferSize);
-
 	UpdateMap(umbVBO, umbBufferMap, UniformConstants::UpdateMatrices, umbBufferSize);
 	UpdateMap(upbVBO, upbBufferMap, UniformConstants::UpdateParams  , upbBufferSize);
 }
@@ -172,7 +154,8 @@ void UniformConstants::Bind()
 	if (!Supported())
 		return;
 
-	ASSERT(umbVBO != nullptr && upbVBO != nullptr);
+	assert(umbVBO != nullptr && upbVBO != nullptr);
+
 	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_MATRIX_IDX, umbVBO->GetId(), GetBufferOffset(umbBufferSize), umbBufferSize);
 	glBindBufferRange(GL_UNIFORM_BUFFER, UBO_PARAMS_IDX, upbVBO->GetId(), GetBufferOffset(upbBufferSize), upbBufferSize);
 }
