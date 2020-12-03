@@ -12,10 +12,11 @@ if     (MINIZIP_FOUND)
 else   (MINIZIP_FOUND)
 	# Build our own minizip library
 	
-	file(GLOB miniZipSources
-		"*.h"
-		"*.c"
-	)	
+	set(miniZipSources
+			"unzip"
+			"zip"
+			"ioapi"
+		)
 
 	add_definitions(-DNOCRYPT -DNOUNCRYPT)
 	find_package(ZLIB REQUIRED)
