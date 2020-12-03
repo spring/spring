@@ -519,9 +519,11 @@ jobs:
           rm ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.bin_name }}
           rm ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.dbg_name }}
           rm -rf ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
+          find ${{ github.workspace }}/spring/build-${{ matrix.config.os }} -type f -iname "*.dbg" -delete
 
       - name: Pack Cache Data
         if: steps.cache-dl.outputs.cache-hit != 'true' #cause it won't be saved anyway due to cache hit
         run: |
           mkdir -p /tmp/cache/${{ matrix.config.os }}/
+          rm /tmp/cache/${{ matrix.config.os }}/cache.tgz || true
           tar cvfz /tmp/cache/${{ matrix.config.os }}/cache.tgz ./
