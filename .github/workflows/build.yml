@@ -12,7 +12,7 @@ on:
         default: "false"
       archtune-flags:
         description: Arch/Tune Flags
-        required: true
+        required: false
         default: "nehalem"
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags

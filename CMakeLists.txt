@@ -417,13 +417,25 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
 
-	if    (MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG} -mtune=${MARCH_FLAG}")
-	else  (MARCH_FLAG)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=generic -mtune=generic")
-	endif (MARCH_FLAG)
+	if    (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG} -mtune=${MARCH_FLAG}") #march/mtune define SSE flags
+	else  (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+		set(FALLBACK_SSE_FLAGS "-msse")
+		#set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mmmx")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") #SSE_FLAGS are now user input only
+		# worth to test if sync
+		#set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mpopcnt -mlzcnt -mabm")
+
+		# disable rest
+		#set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-3dnow") tests showed it might sync
+		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4.1 -mno-sse4.2 -mno-sse4 -mno-sse4a")
+		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx -mno-fma -mno-fma4 -mno-xop -mno-lwp")
+		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx2")
+
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic ${FALLBACK_SSE_FLAGS}")
+	endif (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS} -mfpmath=sse") #SSE_FLAGS are now user input only
 elseif (MSVC)
 	# silence warnings
 	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
@@ -499,6 +511,16 @@ else  (MSVC)
 endif (MSVC)
 
 message(STATUS "Using CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+
+if (CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
+	message (STATUS "Using CMAKE_CXX_FLAGS_RELWITHDEBINFO:${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+elseif (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+	message (STATUS "Using CMAKE_CXX_FLAGS_DEBUG:${CMAKE_CXX_FLAGS_DEBUG}")
+elseif (CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+	message (STATUS "Using CMAKE_CXX_FLAGS_RELEASE:${CMAKE_CXX_FLAGS_RELEASE}")
+elseif (CMAKE_BUILD_TYPE STREQUAL "PROFILE")
+	message (STATUS "Using CMAKE_CXX_FLAGS_PROFILE:${CMAKE_CXX_FLAGS_PROFILE}")
+endif (CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
 
 
 #######################################
