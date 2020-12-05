@@ -35,7 +35,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-//#include "System/Log/ILog.h"
+#include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
@@ -50,12 +50,14 @@ static uint8_t projectileDrawerMem[sizeof(CProjectileDrawer)];
 
 
 void CProjectileDrawer::InitStatic() {
+	//LOG_L(L_WARNING, "CProjectileDrawer::InitStatic()");
 	if (projectileDrawer == nullptr)
 		projectileDrawer = new (projectileDrawerMem) CProjectileDrawer();
 
 	projectileDrawer->Init();
 }
 void CProjectileDrawer::KillStatic(bool reload) {
+	//LOG_L(L_WARNING, "CProjectileDrawer::KillStatic() %s", reload ? "true" : "false");
 	projectileDrawer->Kill();
 
 	if (reload)
@@ -66,6 +68,7 @@ void CProjectileDrawer::KillStatic(bool reload) {
 }
 
 void CProjectileDrawer::Init() {
+	//LOG_L(L_WARNING, "CProjectileDrawer::Init()");
 	eventHandler.AddClient(this);
 
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
@@ -283,6 +286,7 @@ void CProjectileDrawer::Init() {
 }
 
 void CProjectileDrawer::Kill() {
+	//LOG_L(L_WARNING, "CProjectileDrawer::Kill()");
 	eventHandler.RemoveClient(this);
 	autoLinkedEvents.clear();
 
@@ -309,17 +313,23 @@ void CProjectileDrawer::Kill() {
 
 	if (fxShader) {
 		fxShader->Release();
+		//spring::SafeDelete(fxShader); crashes spring
 	}
 
-	if (depthFBO.IsValid()) {
-		depthFBO.Bind();
-		depthFBO.DetachAll();
-		depthFBO.Unbind();
+	if (depthFBO) {
+		if (depthFBO->IsValid()) {
+			depthFBO->Bind();
+			depthFBO->DetachAll();
+			depthFBO->Unbind();
+		}
+		depthFBO->Kill();
+		spring::SafeDelete(depthFBO);
 	}
-	depthFBO.Kill();
 
-	if (depthTexture > 0u)
+	if (depthTexture > 0u) {
 		glDeleteTextures(1, &depthTexture);
+		depthTexture = 0u;
+	}
 
 	configHandler->Set("SoftParticles", wantSoften);
 }
@@ -346,26 +356,30 @@ void CProjectileDrawer::ViewResize()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0); //might break something else
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	if (depthFBO.IsValid()) {
-		depthFBO.Bind();
-		depthFBO.DetachAll();
-		depthFBO.Unbind();
+	if (depthFBO) {
+		if (depthFBO->IsValid()) {
+			depthFBO->Bind();
+			depthFBO->DetachAll();
+			depthFBO->Unbind();
+		}
+		depthFBO->Kill();
+		spring::SafeDelete(depthFBO); //probably redundant
 	}
 
-	depthFBO.Kill();
-	depthFBO.Init(false);
+	depthFBO = new FBO(); //probably redundant
+	depthFBO->Init(false);
 
-	depthFBO.Bind();
-	depthFBO.AttachTexture(depthTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+	depthFBO->Bind();
+	depthFBO->AttachTexture(depthTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 	glDrawBuffer(GL_NONE);
-	depthFBO.CheckStatus("PROJECTILE-DRAWER-DEPTHFBO");
-	depthFBO.Unbind();
+	depthFBO->CheckStatus("PROJECTILE-DRAWER-DEPTHFBO");
+	depthFBO->Unbind();
 
 	fxShader->Enable();
 	fxShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
@@ -387,7 +401,7 @@ void CProjectileDrawer::CopyDepthBufferToTexture()
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
 
 	glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, currentFBO);
-	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, depthFBO.fboId);
+	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, depthFBO->fboId);
 	glBlitFramebufferEXT(screenRect[0], screenRect[1], screenRect[2], screenRect[3], screenRect[0], screenRect[1], screenRect[2], screenRect[3], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);

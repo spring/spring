@@ -66,7 +66,14 @@ public:
 	bool ToggleSorting(      ) { return (drawSorted = !drawSorted); }
 
 	static bool CheckSoftenExt();
-	bool CanDrawSoften() { return CheckSoftenExt() && fxShader && fxShader->IsValid() && depthTexture != 0u && depthFBO.IsValid(); }
+	bool CanDrawSoften() {
+		return
+			CheckSoftenExt() &&
+			fxShader && fxShader->IsValid() &&
+			depthTexture != 0u &&
+			depthFBO && depthFBO->IsValid();
+	};
+
 	int EnableSoften(int b) { return CanDrawSoften() ? (wantSoften = std::clamp(b, 0, WANT_SOFTEN_COUNT - 1)) : 0; }
 	int ToggleSoften() { return EnableSoften((wantSoften + 1) % WANT_SOFTEN_COUNT); }
 	void CopyDepthBufferToTexture();
@@ -168,7 +175,7 @@ private:
 	bool drawSorted = true;
 
 	GLuint depthTexture = 0u;
-	FBO depthFBO;
+	FBO* depthFBO = nullptr;
 	Shader::IProgramObject* fxShader = nullptr;
 
 	constexpr static int WANT_SOFTEN_COUNT = 3;
