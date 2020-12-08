@@ -45,7 +45,7 @@ jobs:
           done
 
           if [ "${{ github.event.inputs.release-tag }}" == "" ]; then
-            filename=$(ls | head -n 1)
+            filename=$(ls | grep spring | head -n 1)
             release_tag=$(echo $filename | cut -d'_' -f1,2,3)
             echo "::set-output name=release_tag::$release_tag"
           else

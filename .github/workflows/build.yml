@@ -13,7 +13,7 @@ on:
       archtune-flags:
         description: Arch/Tune Flags
         required: false
-        default: "nehalem"
+        default: ""
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags
         required: true
@@ -474,6 +474,28 @@ jobs:
         working-directory: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/bin-dir
         shell: bash
 
+      - name: Fill-in Build Options File
+        if: matrix.config.os == 'linux-64'
+        run: |
+          MYARCHTUNE="${{ github.event.inputs.archtune-flags }}"
+          MYCFLAGS="${{ github.event.inputs.compilation-flags }}"
+          MYRWDIFLAGS="${{ github.event.inputs.relwithdeb-flags }}"
+          MYSKIPCACHE="${{ github.event.inputs.skip-cache }}"
+          MYSTRIPSYMBOLS="${{ github.event.inputs.strip-symbols }}"
+          MYCXX_FLAGS=$(cat ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/rts/builds/legacy/CMakeFiles/engine-legacy.dir/flags.make | grep CXX_FLAGS)
+
+          rm -rf buildoptions.txt || true
+          touch ./buildoptions.txt
+          echo "MYARCHTUNE=$MYARCHTUNE" >> ./buildoptions.txt
+          echo "MYCFLAGS=$MYCFLAGS" >> ./buildoptions.txt
+          echo "MYRWDIFLAGS=$MYRWDIFLAGS" >> ./buildoptions.txt
+          echo "MYSKIPCACHE=$MYSKIPCACHE" >> ./buildoptions.txt
+          echo "MYSTRIPSYMBOLS=$MYSTRIPSYMBOLS" >> ./buildoptions.txt
+          echo "$MYCXX_FLAGS" >> ./buildoptions.txt
+
+        working-directory: ${{ github.workspace }}/spring
+        shell: bash
+
       - name: Pack Build Artifacts
         id: pack-artifacts
         run: |
@@ -505,6 +527,13 @@ jobs:
         with:
           name: ${{ steps.pack-artifacts.outputs.dbg_name }}
           path: ${{ github.workspace }}/spring/build-${{ matrix.config.os }}/${{ steps.pack-artifacts.outputs.dbg_name }}
+
+      - name: Upload Build Options Artifact
+        if: matrix.config.os == 'linux-64'
+        uses: actions/upload-artifact@v2
+        with:
+          name: buildoptions.txt
+          path: ${{ github.workspace }}/spring/buildoptions.txt
 
       - name: Clean up Build Dir and Artifacts
         run: |
