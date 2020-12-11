@@ -2330,7 +2330,18 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const final {
-		InverseOrSetBool(CEndGameBox::enabled, action.GetArgs());
+		const auto& args = action.GetArgs();
+
+		const char* fmt = "EndGame Graph %s";
+		const char* strs[] = { "disabled", "enabled, causes quit", "enabled, causes reload" };
+
+		if (args.empty()) {
+			CEndGameBox::enabledMode = (CEndGameBox::enabledMode + 1) % 3;
+		} else {
+			CEndGameBox::enabledMode = std::clamp(atoi(args.c_str()), 0, 2);
+		}
+		LOG(fmt, strs[CEndGameBox::enabledMode]);
+
 		return true;
 	}
 };
