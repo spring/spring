@@ -416,10 +416,18 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
 		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
+	
+	if (NOT MARCH_FLAG)
+		set(MARCH_FLAG "generic")
+	endif (MARCH_FLAG)
+	
+	if (MARCH_FLAG STREQUAL "")
+		set(MARCH_FLAG "generic")
+	endif (MARCH_FLAG STREQUAL "")
 
-	if    (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+	if (NOT MARCH_FLAG STREQUAL "generic")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG} -mtune=${MARCH_FLAG}") #march/mtune define SSE flags
-	else  (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+	else (NOT MARCH_FLAG STREQUAL "generic")
 		set(FALLBACK_SSE_FLAGS "-msse")
 		#set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mmmx")
 
@@ -432,8 +440,9 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx -mno-fma -mno-fma4 -mno-xop -mno-lwp")
 		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx2")
 
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic ${FALLBACK_SSE_FLAGS}")
-	endif (MARCH_FLAG AND (NOT MARCH_FLAG STREQUAL ""))
+		# mtune=generic freaks out sometimes, set arch explicitly and then disable everything redundant to demote it back to generic
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=nehalem -mtune=nehalem ${FALLBACK_SSE_FLAGS}")
+	endif (NOT MARCH_FLAG STREQUAL "generic")
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS} -mfpmath=sse") #SSE_FLAGS are now user input only
 elseif (MSVC)
