@@ -96,7 +96,7 @@ endif (APPLE)
 include(TestCXXFlags)
 
 ## 32bit or 64bit?
-set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use `generic` for generic optimization)")
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(MARCH_BITS 64 CACHE INTERNAL "" FORCE)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -416,11 +416,11 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
 		check_and_add_flags(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
-	
+
 	if (NOT MARCH_FLAG)
 		set(MARCH_FLAG "generic")
-	endif (MARCH_FLAG)
-	
+	endif (NOT MARCH_FLAG)
+
 	if (MARCH_FLAG STREQUAL "")
 		set(MARCH_FLAG "generic")
 	endif (MARCH_FLAG STREQUAL "")
@@ -440,8 +440,13 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx -mno-fma -mno-fma4 -mno-xop -mno-lwp")
 		set(FALLBACK_SSE_FLAGS "${FALLBACK_SSE_FLAGS} -mno-avx2")
 
-		# mtune=generic freaks out sometimes, set arch explicitly and then disable everything redundant to demote it back to generic
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=nehalem -mtune=nehalem ${FALLBACK_SSE_FLAGS}")
+		if (MARCH_BITS EQUAL 64)
+			set(FALLBACK_MARCH "x86-64")
+		else (MARCH_BITS EQUAL 64)
+			set(FALLBACK_MARCH "i686")
+		endif (MARCH_BITS EQUAL 64)
+
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${FALLBACK_MARCH} -mtune=generic ${FALLBACK_SSE_FLAGS}")
 	endif (NOT MARCH_FLAG STREQUAL "generic")
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS} -mfpmath=sse") #SSE_FLAGS are now user input only
