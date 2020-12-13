@@ -17,7 +17,7 @@ on:
       relwithdeb-flags:
         description: RELWITHDEBINFO Compilation flags
         required: true
-        default: "-O3 -ggdb3 -DNDEBUG"
+        default: "-O3 -g -DNDEBUG"
       compilation-flags:
         description: Extra Compilation Flags
         required: false
