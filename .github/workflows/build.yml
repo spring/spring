@@ -107,7 +107,7 @@ jobs:
         run: |
           version=v5
           echo "::set-output name=version::$version"
-          echo "::set-output name=date::$(/bin/date -u "+%Y%V")"
+          echo "::set-output name=session::$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')"
         shell: bash
 
       - name: Download Cache Data
@@ -116,7 +116,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/cache/${{ matrix.config.os }}/
-          key: ${{ matrix.config.os }}-${{ steps.get-cache-id.outputs.version }}-${{ env.BRANCH_NAME }}-${{ steps.get-cache-id.outputs.date }}
+          key: ${{ matrix.config.os }}-${{ steps.get-cache-id.outputs.version }}-${{ env.BRANCH_NAME }}-${{ steps.get-cache-id.outputs.session }} #will never match, but will always update
           restore-keys: |
             ${{ matrix.config.os }}-${{ steps.get-cache-id.outputs.version }}-${{ env.BRANCH_NAME }}-
             ${{ matrix.config.os }}-${{ steps.get-cache-id.outputs.version }}-
