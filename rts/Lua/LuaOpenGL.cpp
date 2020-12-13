@@ -3391,7 +3391,7 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 		return 0;
 
 	glBindTexture(tex->target, tex->id);
-	glEnable(tex->target); // leave it bound and enabledMode
+	glEnable(tex->target); // leave it bound and enabled
 
 	const GLint xoff =   (GLint)luaL_checknumber(L, 2);
 	const GLint yoff =   (GLint)luaL_checknumber(L, 3);
