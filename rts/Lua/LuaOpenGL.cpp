@@ -4280,7 +4280,7 @@ int LuaOpenGL::GetFixedState(lua_State* L)
 
 			lua_pushboolean(L, glIsEnabled(GL_ALPHA_TEST));
 
-			GLfloat alphaRef = 0.0f;
+			GLfloat alphaRef;
 			glGetFloatv(GL_ALPHA_TEST_REF, &alphaRef);
 
 			lua_createtable(L, 0, 2);

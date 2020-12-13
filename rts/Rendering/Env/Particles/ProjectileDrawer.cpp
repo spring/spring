@@ -394,6 +394,7 @@ bool CProjectileDrawer::CheckSoftenExt()
 
 void CProjectileDrawer::CopyDepthBufferToTexture()
 {
+#if 0
 	//no need to touch glViewport
 	int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
 
@@ -405,6 +406,13 @@ void CProjectileDrawer::CopyDepthBufferToTexture()
 	glBlitFramebufferEXT(screenRect[0], screenRect[1], screenRect[2], screenRect[3], screenRect[0], screenRect[1], screenRect[2], screenRect[3], GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
+#else
+	GLint activeTex;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
+	glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glActiveTexture(activeTex);
+#endif
 }
 
 void CProjectileDrawer::ParseAtlasTextures(
