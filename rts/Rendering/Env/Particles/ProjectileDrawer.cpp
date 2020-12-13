@@ -394,7 +394,7 @@ bool CProjectileDrawer::CheckSoftenExt()
 
 void CProjectileDrawer::CopyDepthBufferToTexture()
 {
-#if 0
+#if 1
 	//no need to touch glViewport
 	int screenRect[4] = { 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY };
 
