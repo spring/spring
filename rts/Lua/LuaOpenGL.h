@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "Lua/LuaHandle.h"
 
@@ -145,6 +146,8 @@ class LuaOpenGL {
 		static unsigned int resetStateList;
 
 		static std::unordered_set<std::string> deprecatedGLWarned;
+		static std::unordered_map<GLenum, std::string> fixedStateEnumToString;
+		static std::string fixedStateEnumToStringUnk;
 
 		struct OcclusionQuery {
 			unsigned int index; // into LuaOpenGL::occlusionQueries
@@ -302,6 +305,7 @@ class LuaOpenGL {
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);
+		static int GetFixedState(lua_State* L);
 
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);

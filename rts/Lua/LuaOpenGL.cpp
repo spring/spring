@@ -96,6 +96,73 @@ int  LuaOpenGL::deprecatedGLWarnLevel = 0;
 
 std::unordered_set<std::string> LuaOpenGL::deprecatedGLWarned = {};
 
+#define FillFixedStateEnumToString(arg) { arg, #arg }
+std::unordered_map<GLenum, std::string> LuaOpenGL::fixedStateEnumToString = {
+		FillFixedStateEnumToString(GL_ZERO),
+		FillFixedStateEnumToString(GL_ONE),
+		FillFixedStateEnumToString(GL_SRC_COLOR),
+		FillFixedStateEnumToString(GL_ONE_MINUS_SRC_COLOR),
+		FillFixedStateEnumToString(GL_DST_COLOR),
+		FillFixedStateEnumToString(GL_ONE_MINUS_DST_COLOR),
+		FillFixedStateEnumToString(GL_SRC_ALPHA),
+		FillFixedStateEnumToString(GL_ONE_MINUS_SRC_ALPHA),
+		FillFixedStateEnumToString(GL_DST_ALPHA),
+		FillFixedStateEnumToString(GL_ONE_MINUS_DST_ALPHA),
+		FillFixedStateEnumToString(GL_CONSTANT_COLOR),
+		FillFixedStateEnumToString(GL_ONE_MINUS_CONSTANT_COLOR),
+		FillFixedStateEnumToString(GL_CONSTANT_ALPHA),
+		FillFixedStateEnumToString(GL_ONE_MINUS_CONSTANT_ALPHA),
+
+		FillFixedStateEnumToString(GL_FUNC_ADD),
+		FillFixedStateEnumToString(GL_FUNC_SUBTRACT),
+		FillFixedStateEnumToString(GL_FUNC_REVERSE_SUBTRACT),
+		FillFixedStateEnumToString(GL_MIN),
+		FillFixedStateEnumToString(GL_MAX),
+
+		FillFixedStateEnumToString(GL_NEVER),
+		FillFixedStateEnumToString(GL_LESS),
+		FillFixedStateEnumToString(GL_EQUAL),
+		FillFixedStateEnumToString(GL_LEQUAL),
+		FillFixedStateEnumToString(GL_GREATER),
+		FillFixedStateEnumToString(GL_NOTEQUAL),
+		FillFixedStateEnumToString(GL_GEQUAL),
+		FillFixedStateEnumToString(GL_ALWAYS),
+
+		FillFixedStateEnumToString(GL_FLAT),
+		FillFixedStateEnumToString(GL_SMOOTH),
+
+		FillFixedStateEnumToString(GL_FRONT),
+		FillFixedStateEnumToString(GL_BACK),
+		FillFixedStateEnumToString(GL_FRONT_AND_BACK),
+
+		FillFixedStateEnumToString(GL_CLEAR),
+		FillFixedStateEnumToString(GL_SET),
+		FillFixedStateEnumToString(GL_COPY),
+		FillFixedStateEnumToString(GL_COPY_INVERTED),
+		FillFixedStateEnumToString(GL_NOOP),
+		FillFixedStateEnumToString(GL_INVERT),
+		FillFixedStateEnumToString(GL_AND),
+		FillFixedStateEnumToString(GL_NAND),
+		FillFixedStateEnumToString(GL_OR),
+		FillFixedStateEnumToString(GL_NOR),
+		FillFixedStateEnumToString(GL_XOR),
+		FillFixedStateEnumToString(GL_EQUIV),
+		FillFixedStateEnumToString(GL_AND_REVERSE),
+		FillFixedStateEnumToString(GL_AND_INVERTED),
+		FillFixedStateEnumToString(GL_OR_REVERSE),
+		FillFixedStateEnumToString(GL_OR_INVERTED),
+
+		FillFixedStateEnumToString(GL_LINEAR),
+		FillFixedStateEnumToString(GL_EXP),
+		FillFixedStateEnumToString(GL_EXP2),
+
+		FillFixedStateEnumToString(GL_POINT),
+		FillFixedStateEnumToString(GL_LINE),
+		FillFixedStateEnumToString(GL_FILL),
+};
+#undef FillFixedStateEnumToString
+std::string LuaOpenGL::fixedStateEnumToStringUnk;
+
 static float3 screenViewTrans;
 
 std::vector<LuaOpenGL::OcclusionQuery*> LuaOpenGL::occlusionQueries;
@@ -363,6 +430,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PushAttrib);
 	REGISTER_LUA_CFUNC(PopAttrib);
 	REGISTER_LUA_CFUNC(UnsafeState);
+	REGISTER_LUA_CFUNC(GetFixedState);
 
 	REGISTER_LUA_CFUNC(CreateList);
 	REGISTER_LUA_CFUNC(CallList);
@@ -3323,7 +3391,7 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 		return 0;
 
 	glBindTexture(tex->target, tex->id);
-	glEnable(tex->target); // leave it bound and enabled
+	glEnable(tex->target); // leave it bound and enabledMode
 
 	const GLint xoff =   (GLint)luaL_checknumber(L, 2);
 	const GLint yoff =   (GLint)luaL_checknumber(L, 3);
@@ -4102,6 +4170,273 @@ int LuaOpenGL::UnsafeState(lua_State* L)
 				error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
+	return 0;
+}
+
+int LuaOpenGL::GetFixedState(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+	const char* param = luaL_checkstring(L, 1);
+	const bool toStr = luaL_optboolean(L, 2, false);
+
+	#define PushFixedState(key) \
+	{ \
+		GLint val = 0; glGetIntegerv(key, &val); \
+		if (toStr) { \
+			auto strIter = fixedStateEnumToString.find(val); \
+			HSTR_PUSH_STRING(L, #key, strIter != fixedStateEnumToString.end() ? strIter->second : fixedStateEnumToStringUnk); \
+		} else { \
+			HSTR_PUSH_NUMBER(L, #key, val); \
+		}; \
+	}
+
+	switch (hashString(param)) {
+		case hashString("blending"): {
+			lua_pushboolean(L, glIsEnabled(GL_BLEND));
+
+			lua_createtable(L, 0, 6);
+			PushFixedState(GL_BLEND_SRC_RGB);
+			PushFixedState(GL_BLEND_SRC_ALPHA);
+			PushFixedState(GL_BLEND_DST_RGB);
+			PushFixedState(GL_BLEND_DST_ALPHA);
+
+			PushFixedState(GL_BLEND_EQUATION_RGB);
+			PushFixedState(GL_BLEND_EQUATION_ALPHA);
+
+			return 2;
+		} break;
+		case hashString("depth"): {
+			lua_pushboolean(L, glIsEnabled(GL_DEPTH_TEST));
+			lua_pushboolean(L, glIsEnabled(GL_DEPTH_WRITEMASK));
+
+			lua_createtable(L, 0, 1);
+			PushFixedState(GL_DEPTH_FUNC);
+
+			return 3;
+		} break;
+		case hashString("shadeModel"):
+		case hashString("shademodel"): {
+			CondWarnDeprecatedGL(L, __func__);
+
+			lua_createtable(L, 0, 1);
+			PushFixedState(GL_SHADE_MODEL);
+
+			return 1;
+		} break;
+		case hashString("scissor"): {
+			lua_pushboolean(L, glIsEnabled(GL_SCISSOR_TEST));
+
+			GLint rect[4];
+			glGetIntegerv(GL_SCISSOR_BOX, rect);
+
+			lua_createtable(L, 0, 4);
+			HSTR_PUSH_NUMBER(L, "GL_SCISSOR_BOX_X", rect[0]);
+			HSTR_PUSH_NUMBER(L, "GL_SCISSOR_BOX_Y", rect[1]);
+			HSTR_PUSH_NUMBER(L, "GL_SCISSOR_BOX_W", rect[2]);
+			HSTR_PUSH_NUMBER(L, "GL_SCISSOR_BOX_H", rect[3]);
+
+			return 2;
+		} break;
+		case hashString("lighting"): {
+			CondWarnDeprecatedGL(L, __func__);
+
+			lua_pushboolean(L, glIsEnabled(GL_LIGHTING));
+
+			return 1;
+		} break;
+		case hashString("colorMask"):
+		case hashString("colormask"): {
+			GLboolean mask[4];
+			glGetBooleanv(GL_COLOR_WRITEMASK, mask);
+
+			lua_createtable(L, 0, 4);
+			HSTR_PUSH_BOOL(L, "GL_COLOR_WRITEMASK_R", mask[0]);
+			HSTR_PUSH_BOOL(L, "GL_COLOR_WRITEMASK_G", mask[1]);
+			HSTR_PUSH_BOOL(L, "GL_COLOR_WRITEMASK_B", mask[2]);
+			HSTR_PUSH_BOOL(L, "GL_COLOR_WRITEMASK_A", mask[3]);
+
+			return 1;
+		} break;
+		case hashString("culling"): {
+			lua_pushboolean(L, glIsEnabled(GL_CULL_FACE));
+
+			lua_createtable(L, 0, 1);
+			PushFixedState(GL_CULL_FACE_MODE);
+
+			return 2;
+		} break;
+		case hashString("logicOp"):
+		case hashString("logicop"): {
+			lua_pushboolean(L, glIsEnabled(GL_COLOR_LOGIC_OP));
+
+			lua_createtable(L, 0, 1);
+			PushFixedState(GL_LOGIC_OP_MODE);
+
+			return 2;
+		} break;
+		case hashString("alphaTest"):
+		case hashString("alphatest"): {
+			CondWarnDeprecatedGL(L, __func__);
+
+			lua_pushboolean(L, glIsEnabled(GL_ALPHA_TEST));
+
+			GLfloat alphaRef = 0.0f;
+			glGetFloatv(GL_ALPHA_TEST_REF, &alphaRef);
+
+			lua_createtable(L, 0, 2);
+			PushFixedState(GL_ALPHA_TEST_FUNC);
+			HSTR_PUSH_NUMBER(L, "GL_ALPHA_TEST_REF", alphaRef);
+
+			return 2;
+		} break;
+		case hashString("fog"): {
+			CondWarnDeprecatedGL(L, __func__);
+			lua_pushboolean(L, glIsEnabled(GL_FOG));
+
+			GLfloat fogColor[4];
+			glGetFloatv(GL_FOG_COLOR, fogColor);
+
+			GLfloat fogDensity;
+			glGetFloatv(GL_FOG_DENSITY, &fogDensity);
+
+			GLfloat fogStart;
+			glGetFloatv(GL_FOG_START, &fogStart);
+			GLfloat fogEnd;
+			glGetFloatv(GL_FOG_END, &fogEnd);
+
+			lua_createtable(L, 0, 8);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_COLOR_R", fogColor[0]);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_COLOR_G", fogColor[1]);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_COLOR_B", fogColor[2]);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_COLOR_A", fogColor[3]);
+
+			HSTR_PUSH_NUMBER(L, "GL_FOG_DENSITY", fogDensity);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_START", fogStart);
+			HSTR_PUSH_NUMBER(L, "GL_FOG_END", fogEnd);
+
+			PushFixedState(GL_FOG_MODE);
+
+			return 2;
+		} break;
+		case hashString("edgeFlag"):
+		case hashString("edgeflag"): {
+			CondWarnDeprecatedGL(L, __func__);
+
+			GLboolean edgeFlag;
+			glGetBooleanv(GL_EDGE_FLAG, &edgeFlag);
+
+			lua_pushboolean(L, edgeFlag);
+
+			return 1;
+		} break;
+		case hashString("lineStripple"):
+		case hashString("linestripple"): {
+			CondWarnDeprecatedGL(L, __func__);
+
+			lua_pushboolean(L, glIsEnabled(GL_LINE_STIPPLE));
+
+			GLint stripplePattern;
+			glGetIntegerv(GL_LINE_STIPPLE_PATTERN, &stripplePattern);
+
+			GLint strippleRepeat;
+			glGetIntegerv(GL_LINE_STIPPLE_REPEAT, &strippleRepeat);
+
+			lua_createtable(L, 0, 2);
+			HSTR_PUSH_NUMBER(L, "GL_LINE_STIPPLE_PATTERN", stripplePattern);
+			HSTR_PUSH_NUMBER(L, "GL_LINE_STIPPLE_REPEAT", strippleRepeat);
+
+			return 1;
+		} break;
+		case hashString("polygonMode"):
+		case hashString("polygonmode"): {
+			lua_createtable(L, 0, 1);
+			PushFixedState(GL_POLYGON_MODE);
+
+			return 1;
+		} break;
+		case hashString("polygonOffset"):
+		case hashString("polygonoffset"): {
+			GLfloat offsetFactor;
+			glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &offsetFactor);
+
+			GLfloat offsetDensity;
+			glGetFloatv(GL_POLYGON_OFFSET_UNITS, &offsetDensity);
+
+			lua_createtable(L, 0, 5);
+			HSTR_PUSH_BOOL(L, "GL_POLYGON_OFFSET_FILL", glIsEnabled(GL_POLYGON_OFFSET_FILL));
+			HSTR_PUSH_BOOL(L, "GL_POLYGON_OFFSET_LINE", glIsEnabled(GL_POLYGON_OFFSET_LINE));
+			HSTR_PUSH_BOOL(L, "GL_POLYGON_OFFSET_POINT", glIsEnabled(GL_POLYGON_OFFSET_POINT));
+			HSTR_PUSH_NUMBER(L, "GL_POLYGON_OFFSET_FACTOR", offsetFactor);
+			HSTR_PUSH_NUMBER(L, "GL_POLYGON_OFFSET_UNITS", offsetDensity);
+
+			return 2;
+		} break;
+		case hashString("stencil"): {
+			lua_pushboolean(L, glIsEnabled(GL_STENCIL_TEST));
+
+			GLint stencilWriteMask;
+			glGetIntegerv(GL_STENCIL_WRITEMASK, &stencilWriteMask);
+
+			GLint stencilBits;
+			glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+
+			GLint stencilValueMask;
+			glGetIntegerv(GL_STENCIL_VALUE_MASK, &stencilValueMask);
+
+			lua_createtable(L, 0, 8);
+			HSTR_PUSH_NUMBER(L, "GL_STENCIL_WRITEMASK", stencilWriteMask);
+
+			HSTR_PUSH_NUMBER(L, "GL_STENCIL_BITS", stencilBits);
+
+			HSTR_PUSH_NUMBER(L, "GL_STENCIL_VALUE_MASK", stencilValueMask);
+			HSTR_PUSH_NUMBER(L, "GL_STENCIL_REF", stencilValueMask);
+
+			PushFixedState(GL_STENCIL_FUNC);
+
+			if (GLEW_EXT_stencil_two_side) {
+				GLint stencilBackWriteMask;
+				glGetIntegerv(GL_STENCIL_BACK_WRITEMASK, &stencilBackWriteMask);
+
+				GLint stencilBackValueMask;
+				glGetIntegerv(GL_STENCIL_BACK_VALUE_MASK, &stencilBackValueMask);
+
+				GLint stencilBackRef;
+				glGetIntegerv(GL_STENCIL_BACK_REF, &stencilBackRef);
+
+				HSTR_PUSH_NUMBER(L, "GL_STENCIL_BACK_WRITEMASK", stencilBackWriteMask);
+				HSTR_PUSH_NUMBER(L, "GL_STENCIL_BACK_VALUE_MASK", stencilBackValueMask);
+				HSTR_PUSH_NUMBER(L, "GL_STENCIL_BACK_REF", stencilBackRef);
+
+				PushFixedState(GL_STENCIL_BACK_FUNC);
+			}
+
+			return 2;
+		} break;
+		case hashString("lineWidth"):
+		case hashString("linewidth"): {
+			GLfloat lineWidth;
+			glGetFloatv(GL_LINE_WIDTH, &lineWidth);
+			lua_pushnumber(L, lineWidth);
+
+			return 1;
+		} break;
+		case hashString("pointSize"):
+		case hashString("pointsize"): {
+			lua_pushboolean(L, glIsEnabled(GL_PROGRAM_POINT_SIZE));
+
+			GLfloat pointSize;
+			glGetFloatv(GL_POINT_SIZE, &pointSize);
+			lua_pushnumber(L, pointSize);
+
+			return 2;
+		} break;
+		default: {
+			luaL_error(L, "Incorrect first argument (%s) to gl.GetFixedState", param);
+		};
+	}
+
+	#undef PushFixedState
+
 	return 0;
 }
 

@@ -284,6 +284,7 @@ GLAPI void APIENTRY glValidateProgram(GLuint program) {}
 
 GLAPI void APIENTRY glClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {}
 GLAPI void APIENTRY glEnable(GLenum i) {}
+GLAPI GLboolean APIENTRY glIsEnabled(GLenum cap) { return GL_FALSE; }
 GLAPI void APIENTRY glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {}
 GLAPI void APIENTRY glColor3fv(const GLfloat *v) {}
 GLAPI void APIENTRY glColor3ub(GLubyte red, GLubyte green, GLubyte blue) {}
