@@ -102,12 +102,13 @@ jobs:
       - name: Show CMake Version
         run: cmake --version
 
-      - name: Get Workflow Cache Version and Date
+      - name: Get Workflow Cache Data
         id: get-cache-id
         run: |
           version=v5
           echo "::set-output name=version::$version"
-          echo "::set-output name=session::$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')"
+          session=$(head /dev/random -c 32 | sha1sum | awk '{ print $1 }')
+          echo "::set-output name=session::$session"
         shell: bash
 
       - name: Download Cache Data
