@@ -34,10 +34,10 @@ jobs:
             os: 'windows-64',
             runs-on: 'ubuntu-20.04'
           }
-        - {
-            os: 'windows-32',
-            runs-on: 'ubuntu-20.04'
-          }
+#        - {
+#            os: 'windows-32',
+#            runs-on: 'ubuntu-20.04'
+#          }
         - {
             os: 'linux-64',
             runs-on: 'ubuntu-18.04'
@@ -547,7 +547,7 @@ jobs:
           find $BUILDDIR -type f -iname "*.dbg" -delete
           CLEANLIST_LIN=$(find $BUILDDIR -maxdepth 1 -name '*.so')" "$(find $BUILDDIR -maxdepth 1 -name 'spring*' -executable)" "$(find $BUILDDIR -maxdepth 1 -name 'pr-downloader')" "$(find $BUILDDIR/AI/Skirmish -name libSkirmishAI.so)" "$(find $BUILDDIR/AI/Interfaces -name libAIInterface.so)
           CLEANLIST_WIN=$(find $BUILDDIR -maxdepth 1 -name '*.dll')" "$(find $BUILDDIR -maxdepth 1 -name '*.exe')" "$(find $BUILDDIR/AI/Skirmish -name SkirmishAI.dll)" "$(find $BUILDDIR/AI/Interfaces -name AIInterface.dll)" "$(find $BUILDDIR -name pr-downloader_shared.dll)
-          CLEANLIST=$CLEANLIST_LIN" "$CLEANLIST_WIN"
+          CLEANLIST=$CLEANLIST_LIN" "$CLEANLIST_WIN
           rm -f $CLEANLIST || true
 
       - name: Pack Cache Data
