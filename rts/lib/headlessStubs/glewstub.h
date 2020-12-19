@@ -55,6 +55,7 @@ extern "C" {
 #define GLEW_ARB_multitexture GL_TRUE
 #define GLEW_ARB_depth_texture GL_TRUE
 #define GLEW_ARB_vertex_buffer_object GL_FALSE
+#define GLEW_ARB_vertex_array_object GL_FALSE
 #define GLEW_ARB_vertex_shader GL_FALSE
 #define GLEW_ARB_vertex_program GL_FALSE
 #define GLEW_ARB_shader_objects GL_FALSE
@@ -66,6 +67,7 @@ extern "C" {
 #define GLEW_ARB_imaging GL_FALSE
 #define GLEW_ARB_occlusion_query GL_FALSE
 #define GLEW_ARB_geometry_shader4 GL_FALSE
+#define GLEW_ARB_instanced_arrays GL_FALSE
 #define GLEW_ARB_transform_feedback_instanced GL_FALSE
 #define GLEW_ARB_uniform_buffer_object GL_FALSE
 #define GLEW_ARB_transform_feedback3 GL_FALSE
@@ -74,6 +76,7 @@ extern "C" {
 #define GLEW_ARB_framebuffer_object GL_FALSE
 #define GLEW_ARB_shading_language_420pack GL_FALSE
 #define GLEW_ARB_buffer_storage GL_FALSE
+#define GLEW_ARB_draw_elements_base_vertex GL_FALSE
 
 #define GLXEW_SGI_video_sync GL_FALSE
 
