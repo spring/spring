@@ -36,6 +36,9 @@ struct UniformParamsBuffer {
 	float4 mapSize; //xz, xzPO2
 
 	float4 rndVec3; //new every draw frame. Only xyz are initialized
+
+	float4 fogColor; //fog color
+	float4 fogParams; //fog {start, end, 0.0, scale}
 };
 
 class UniformConstants {

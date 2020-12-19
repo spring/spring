@@ -5,6 +5,7 @@
 
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/ISky.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
@@ -93,6 +94,14 @@ void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
 	updateBuffer->mapSize = float4{(float)mapDims.mapx, (float)mapDims.mapy, (float)mapDims.pwr2mapx, (float)mapDims.pwr2mapy} *(float)SQUARE_SIZE; //xz, xzPO2
 
 	updateBuffer->rndVec3 = float4{guRNG.NextVector(), 0.0f};
+
+	float4 forColor = (sky != nullptr) ? float4{sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f} : float4{0.7f, 0.7f, 0.8f, 1.0f};
+	updateBuffer->fogColor = forColor;
+
+	const auto camPlayer = CCameraHandler::GetCamera(CCamera::CAMTYPE_PLAYER);
+	float4 fogParams = (sky != nullptr) ? float4{sky->fogStart * camPlayer->GetFarPlaneDist(), sky->fogEnd * camPlayer->GetFarPlaneDist(), 0.0f, 0.0f} : float4{0.1f * CGlobalRendering::MAX_VIEW_RANGE, 1.0f * CGlobalRendering::MAX_VIEW_RANGE, 0.0f, 0.0f};
+	fogParams.w = 1.0f / (fogParams.y - fogParams.x);
+	updateBuffer->fogParams = fogParams;
 }
 
 template<typename TBuffType, typename TUpdateFunc>
