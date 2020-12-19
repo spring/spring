@@ -37,7 +37,7 @@ public:
 	~LuaVAOImpl();
 public:
 	static bool Supported() {
-		static bool supported = GLEW_ARB_vertex_buffer_object;
+		static bool supported = GLEW_ARB_vertex_buffer_object && GLEW_ARB_vertex_array_object && GLEW_ARB_instanced_arrays && GLEW_ARB_draw_elements_base_vertex;
 		return supported;
 	};
 public:

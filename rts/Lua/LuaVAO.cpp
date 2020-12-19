@@ -40,8 +40,12 @@ bool LuaVAO::PushEntries(lua_State* L)
 
 int LuaVAO::GetVAO(lua_State* L)
 {
-	if (!LuaVAOImpl::Supported())
+	if (!LuaVAOImpl::Supported()) {
+		LOG_L(L_ERROR, "[LuaVAO::%s] Important OpenGL extensions are not supported by the system\n  GLEW_ARB_vertex_buffer_object\n GLEW_ARB_vertex_array_object\n GLEW_ARB_instanced_arrays\n GLEW_ARB_draw_elements_base_vertex", \
+			__func__, GLEW_ARB_vertex_buffer_object, GLEW_ARB_vertex_array_object, GLEW_ARB_instanced_arrays, GLEW_ARB_draw_elements_base_vertex);
+
 		return 0;
+	}
 
 	return sol::stack::call_lua(L, 1, [=](const sol::optional<bool> freqUpdatedOpt) {
 		return LuaVAOImpl{freqUpdatedOpt, L};
