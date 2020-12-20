@@ -21,7 +21,7 @@ include(Util)
 include(PreferStaticLibs)
 
 # check for minimal gcc version
-set(MIN_GCC_VER "5.4")
+set(MIN_GCC_VER "7.0")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
 		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
