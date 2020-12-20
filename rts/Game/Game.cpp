@@ -1323,6 +1323,7 @@ bool CGame::Draw() {
 		worldDrawer.GenerateIBLTextures();
 
 		camera->Update();
+		UniformConstants::GetInstance().UpdateMatrices();
 
 		worldDrawer.Draw();
 		worldDrawer.ResetMVPMatrices();

@@ -64,7 +64,7 @@ intptr_t UniformConstants::GetBufferOffset(const int vboSingleSize)
 	return (intptr_t)(buffCurIdx * vboSingleSize);
 }
 
-void UniformConstants::UpdateMatrices(UniformMatricesBuffer* updateBuffer)
+void UniformConstants::UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer)
 {
 	updateBuffer->screenView = *globalRendering->screenViewMatrix;
 	updateBuffer->screenProj = *globalRendering->screenProjMatrix;
@@ -87,7 +87,7 @@ void UniformConstants::UpdateMatrices(UniformMatricesBuffer* updateBuffer)
 }
 
 
-void UniformConstants::UpdateParams(UniformParamsBuffer* updateBuffer)
+void UniformConstants::UpdateParamsImpl(UniformParamsBuffer* updateBuffer)
 {
 	updateBuffer->timeInfo = float4{(float)gs->frameNum, gs->frameNum / (1.0f * GAME_SPEED), (float)globalRendering->drawFrame, globalRendering->timeOffset}; //gameFrame, gameSeconds, drawFrame, frameTimeOffset
 	updateBuffer->viewGeometry = float4{(float)globalRendering->viewSizeX, (float)globalRendering->viewSizeY, (float)globalRendering->viewPosX, (float)globalRendering->viewPosY}; //vsx, vsy, vpx, vpy
@@ -148,13 +148,20 @@ void UniformConstants::UpdateMap(VBO* vbo, TBuffType*& buffMap, const TUpdateFun
 		UpdateMapStandard  (vbo, buffMap, updateFunc, vboSingleSize);
 }
 
-void UniformConstants::Update()
+void UniformConstants::UpdateMatrices()
 {
 	if (!Supported())
 		return;
 
-	UpdateMap(umbVBO, umbBufferMap, UniformConstants::UpdateMatrices, umbBufferSize);
-	UpdateMap(upbVBO, upbBufferMap, UniformConstants::UpdateParams  , upbBufferSize);
+	UpdateMap(umbVBO, umbBufferMap, UniformConstants::UpdateMatricesImpl, umbBufferSize);
+}
+
+void UniformConstants::UpdateParams()
+{
+	if (!Supported())
+		return;
+
+	UpdateMap(upbVBO, upbBufferMap, UniformConstants::UpdateParamsImpl, upbBufferSize);
 }
 
 //lazy / implicit unbinding included

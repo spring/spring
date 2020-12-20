@@ -54,7 +54,12 @@ public:
 public:
 	void Init();
 	void Kill();
-	void Update();
+	void UpdateMatrices();
+	void UpdateParams();
+	void Update() {
+		UpdateMatrices();
+		UpdateParams();
+	}
 	void Bind();
 private:
 
@@ -83,8 +88,8 @@ private:
 	}
 
 	static intptr_t GetBufferOffset(const int vboSingleSize);
-	static void UpdateMatrices(UniformMatricesBuffer* updateBuffer);
-	static void UpdateParams(UniformParamsBuffer* updateBuffer);
+	static void UpdateMatricesImpl(UniformMatricesBuffer* updateBuffer);
+	static void UpdateParamsImpl(UniformParamsBuffer* updateBuffer);
 private:
 	static constexpr int BUFFERING = 3;
 
