@@ -306,19 +306,22 @@ class ScopedMapLoader {
 
 EXPORT(const char*) GetSpringVersion()
 {
+	if (SpringVersion::IsRelease()) {
+		return GetStr(SpringVersion::GetSync() + "." + SpringVersion::GetPatchSet());
+	}
 	return GetStr(SpringVersion::GetSync());
 }
 
 
 EXPORT(const char*) GetSpringVersionPatchset()
 {
-	return GetStr(SpringVersion::GetPatchSet());
+	return "";
 }
 
 
 EXPORT(bool) IsSpringReleaseVersion()
 {
-	return SpringVersion::IsRelease();
+	return false;
 }
 
 class UnitsyncConfigObserver
