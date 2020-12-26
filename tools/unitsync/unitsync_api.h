@@ -46,19 +46,6 @@ EXPORT(const char* ) GetNextError();
  * Returns a string specifying the synced part of the version of Spring used to
  * build this library with.
  *
- * Before release 83:
- *   Release:
- *     The version will be of the format "Major.Minor".
- *     With Major=0.82 and Minor=6, the returned version would be "0.82.6".
- *   Development:
- *     They use the same format, but major ends with a +, for example "0.82+.5".
- *   Examples:
- *   - 0.78.0: 1st release of 0.78
- *   - 0.82.6: 7th release of 0.82
- *   - 0.82+.5: some test-version from after the 6th release of 0.82
- *   - 0.82+.0: some dev-version from after the 1st release of 0.82
- *     (on the main dev branch)
- *
  * After release 83:
  *   You may check for sync compatibility by using a string equality test with
  *   the return of this function.
@@ -74,33 +61,18 @@ EXPORT(const char* ) GetNextError();
  *     this may only be on the the master or hotfix branch
  *   - 83.0.1-13-g1234567 develop: some dev-version after the 1st release of 83
  *     on the develop branch
+ * After release 106.0:
+ *    The full version, for example "104.0.1-2155-gddd1321651 develop" or "105.0"
  */
 EXPORT(const char* ) GetSpringVersion();
 
 /**
- * @brief Returns the unsynced/patch-set part of the version of Spring
- *   this unitsync was compiled with.
- *
- * Before release 83:
- *   You may want to use this together with GetSpringVersion() to form the whole
- *   version like this:
- *   GetSpringVersion() + "." + GetSpringVersionPatchset()
- *   This will provide you with a version of the format "Major.Minor.Patchset".
- *   Examples:
- *   - 0.82.6.0                in this case, the 0 is usually omitted -> 0.82.6
- *   - 0.82.6.1                release
- *   - 0.82+.6.1               dev build
- *
- * After release 83:
- *   You should only possibly append this to the main version returned by
- *   GetSpringVersion(), if it is a release, as otherwise GetSpringVersion()
- *   already contains the patch-set.
+ * @deprecated
  */
 EXPORT(const char* ) GetSpringVersionPatchset();
 
 /**
- * @brief Returns true if the version of Spring this unitsync was compiled
- *   with is a release version, false if it is a development version.
+ * @deprecated
  */
 EXPORT(bool        ) IsSpringReleaseVersion();
 
