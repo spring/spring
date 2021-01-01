@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 
 struct VBO;
+struct LuaVAOImpl;
 
 // Workaround to continue using lib/sol2/forward.hpp
 namespace sol {
@@ -43,6 +44,8 @@ public:
 private:
 	void AllocGLBuffer(size_t byteSize);
 	void CopyAttrMapToVec();
+	void DeleteImpl();
+	void SetAttachedToVAO(bool attach);
 
 	int BindBufferRangeImpl(const GLuint index, const sol::optional<int> elemOffsetOpt, const sol::optional<int> elemCountOpt, const sol::optional<GLenum> targetOpt, const bool bind);
 
@@ -66,6 +69,8 @@ private:
 	template<typename TIn>
 	bool TransformAndRead(int& bytesRead, GLubyte*& mappedBuf, const int mappedBufferSizeInBytes, const int size, std::vector<lua_Number>& vec, const bool copyData);
 private:
+	friend class LuaVAOImpl;
+private:
 	struct BufferAttribDef {
 		GLenum type;
 		GLint size; // in number of elements of type
@@ -78,6 +83,8 @@ private:
 	};
 private:
 	bool freqUpdated;
+
+	int vaoAttachCount;
 
 	GLenum defTarget;
 

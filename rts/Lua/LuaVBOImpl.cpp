@@ -17,21 +17,29 @@
 
 LuaVBOImpl::LuaVBOImpl(const sol::optional<GLenum> defTargetOpt, const sol::optional<bool> freqUpdatedOpt, sol::this_state L_):
 	defTarget{defTargetOpt.value_or(GL_ARRAY_BUFFER)}, freqUpdated{freqUpdatedOpt.value_or(false)},
-	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}
+	elemSizeInBytes{0u}, elementsCount{0u}, bufferSizeInBytes{0u}, attributesCount{0u}, vaoAttachCount{0u}
 {
 	memcpy(&L[0], &L_, std::min(sizeof(sol::this_state_container), sizeof(sol::this_state)));
 }
 
 LuaVBOImpl::~LuaVBOImpl()
 {
-	Delete();
+	DeleteImpl();
 }
 
-void LuaVBOImpl::Delete()
+void LuaVBOImpl::DeleteImpl()
 {
 	//safe to call multiple times
 	spring::SafeDestruct(vbo);
 	bufferAttribDefs.clear();
+}
+
+void LuaVBOImpl::Delete()
+{
+	if (vaoAttachCount != 0)
+		LuaError("[LuaVBOImpl::%s] Attempt to Delete a VBO attached to one or more VAOs. Delete() VAOs first", __func__);
+
+	DeleteImpl();
 }
 
 /////////////////////////////////
@@ -361,7 +369,11 @@ bool LuaVBOImpl::DefineElementArray(const sol::optional<sol::object> attribDefAr
 void LuaVBOImpl::Define(const int elementsCount, const sol::optional<sol::object> attribDefArgOpt)
 {
 	if (vbo) {
-		LuaError("[LuaVBOImpl::%s] Attempt to call %s multiple times", __func__);
+		LuaError("[LuaVBOImpl::%s] Attempt to call %s multiple times. VBO definition is immutable.", __func__);
+	}
+
+	if (elementsCount <= 0) {
+		LuaError("[LuaVBOImpl::%s] Elements count cannot be <= 0", __func__);
 	}
 
 	this->elementsCount = elementsCount;
@@ -686,6 +698,16 @@ void LuaVBOImpl::DumpDefinition()
 	LOG("%s", ss.str().c_str());
 }
 
+void LuaVBOImpl::SetAttachedToVAO(bool attach)
+{
+	if (attach)
+		++vaoAttachCount;
+	else {
+		--vaoAttachCount;
+		vaoAttachCount = std::max(vaoAttachCount, 0);
+	}
+}
+
 void LuaVBOImpl::AllocGLBuffer(size_t byteSize)
 {
 	if (defTarget == GL_UNIFORM_BUFFER && bufferSizeInBytes > BUFFER_SANE_LIMIT_BYTES) {
@@ -780,5 +802,4 @@ template<typename ...Args>
 void LuaVBOImpl::LuaError(std::string format, Args ...args)
 {
 	luaL_error(*reinterpret_cast<sol::this_state*>(L), fmt::sprintf(format, args...).c_str());
-	//luaL_error(*reinterpret_cast<sol::this_state*>(L), format.c_str(), args...);
 }

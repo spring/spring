@@ -6,11 +6,19 @@
 #include <map>
 #include <string>
 
+#include "lib/sol2/forward.hpp"
+
 #include "Rendering/GL/myGL.h"
-#include "lib/sol2/sol.hpp"
+
 
 struct VAO;
 struct VBO;
+struct LuaVBOImpl;
+
+// Workaround to continue using lib/sol2/forward.hpp
+namespace sol {
+	using this_state_container = char[8]; //enough room to hold 64 bit pointer
+}
 
 struct VAOAttrib {
 	int divisor;
@@ -27,7 +35,7 @@ struct VAOAttrib {
 class LuaVAOImpl {
 public:
 	LuaVAOImpl() = delete;
-	LuaVAOImpl(const sol::optional<bool> freqUpdatedOpt, sol::this_state L);
+	LuaVAOImpl(sol::this_state L_);
 
 	LuaVAOImpl(const LuaVAOImpl& lva) = delete; //no copy cons
 	LuaVAOImpl(LuaVAOImpl&& lva) = default; //move cons
@@ -35,79 +43,30 @@ public:
 	void Delete();
 	~LuaVAOImpl();
 public:
-	static bool Supported() {
-		static bool supported = GLEW_ARB_vertex_buffer_object && GLEW_ARB_vertex_array_object && GLEW_ARB_instanced_arrays && GLEW_ARB_draw_elements_base_vertex;
-		return supported;
-	};
+	static bool Supported();
 public:
-	int SetVertexAttributes(const int maxVertCount, const sol::object& attrDefObject);
-	int SetInstanceAttributes(const int maxInstCount, const sol::object& attrDefObject);
-	bool SetIndexAttributes(const int maxIndxCount, const sol::optional<GLenum> indTypeOpt);
+	void AttachVertexBuffer(LuaVBOImpl& luaVBO);
+	void AttachInstanceBuffer(LuaVBOImpl& luaVBO);
+	void AttachIndexBuffer(LuaVBOImpl& luaVBO);
 
-	int UploadVertexBulk(const sol::stack_table& bulkData, const sol::optional<int> vertexOffsetOpt);
-	int UploadInstanceBulk(const sol::stack_table& bulkData, const sol::optional<int> instanceOffsetOpt);
-
-	int UploadVertexAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> vertexOffsetOpt);
-	int UploadInstanceAttribute(const int attrIndex, const sol::stack_table& attrData, const sol::optional<int> instanceOffsetOpt);
-
-	int UploadIndices(const sol::stack_table& indData, const sol::optional<int> indOffsetOpt);
-
-	bool DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt);
-	bool DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);
+	void DrawArrays(const GLenum mode, const sol::optional<GLsizei> vertCountOpt, const sol::optional<GLint> firstOpt, const sol::optional<int> instanceCountOpt);
+	void DrawElements(const GLenum mode, const sol::optional<GLsizei> indCountOpt, const sol::optional<int> indElemOffsetOpt, const sol::optional<int> instanceCountOpt, const sol::optional<int> baseVertexOpt);
 private:
-	bool MapPersistently();
-	bool CheckPrimType(GLenum mode);
-	bool CondInitVAO();
-	bool SetIndexAttributesImpl(const int maxIndxCount, const GLenum indType);
-	int UploadImpl(const sol::stack_table& luaTblData, const sol::optional<int> offsetOpt, const int divisor, const int* attrNum, const int aSizeInBytes, VBO* vbo);
-
-	bool FillAttribsTableImpl(const sol::table& attrDefTable, const int divisor);
-	bool FillAttribsNumberImpl(const int numFloatAttribs, const int divisor);
-	void FillAttribsImpl(const sol::object& attrDefTable, const int divisor, int& attribsSizeInBytes);
+	std::pair<GLsizei, GLsizei> DrawCheck(const GLenum mode, const sol::optional<GLsizei> drawCountOpt, const sol::optional<int> instanceCountOpt, const bool indexed);
+	void CondInitVAO();
+	void CheckDrawPrimitiveType(GLenum mode);
+	void AttachBufferImpl(LuaVBOImpl& luaVBO, LuaVBOImpl*& thisLuaVBO, GLenum reqTarget);
 private:
 	template <typename... Args>
-	void LuaError(std::string format, Args... args) { luaL_error(L, format.c_str(), args...); };
+	void LuaError(std::string format, Args... args);
 private:
-	template <typename  TIn, typename  TOut>
-	static TOut TransformFunc(const TIn input);
-
-	template<typename T>
-	static T MaybeFunc(const sol::table& tbl, const std::string& key, T defValue);
-
-	static GLint RoundBuffSizeUp(const int buffSizeSingle) {
-		const auto getAllignment = []() {
-			GLint buffAlignment = 0;
-			glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &buffAlignment);
-			return buffAlignment;
-		};
-		static GLint vboAlignment = getAllignment(); //executed once
-		return ((buffSizeSingle / vboAlignment) + 1) * vboAlignment;
-	}
+	sol::this_state_container L;
 private:
-	static constexpr int BUFFERING = 3; //unused
-	static constexpr int MAX_NUMBER_OF_ATTRIBUTES = 16;
-	static constexpr GLenum DEFAULT_VERT_ATTR_TYPE = GL_FLOAT;
-	static constexpr GLenum DEFAULT_INDX_ATTR_TYPE = GL_UNSIGNED_SHORT;
-private:
-	sol::this_state L;
-private:
-	int numAttributes;
+	VAO* vao = nullptr;
 
-	int maxVertCount;
-	int maxInstCount;
-	int maxIndxCount;
-
-	int vertAttribsSizeInBytes;
-	int instAttribsSizeInBytes;
-	int indxElemSizeInBytes;
-
-	GLenum indexType;
-	bool freqUpdated;
-
-	VAO* vao;
-	VBO* vboVert;
-	VBO* vboInst;
-	VBO* ebo;
+	LuaVBOImpl* vertLuaVBO = nullptr;
+	LuaVBOImpl* instLuaVBO = nullptr;
+	LuaVBOImpl* indxLuaVBO = nullptr;
 
 	std::map<int, VAOAttrib> vaoAttribs;
 };

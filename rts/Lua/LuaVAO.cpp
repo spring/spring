@@ -2,6 +2,7 @@
 
 #include "lib/sol2/sol.hpp"
 
+#include "LuaVBOImpl.h"
 #include "LuaVAOImpl.h"
 #include "LuaUtils.h"
 
@@ -15,19 +16,12 @@ bool LuaVAO::PushEntries(lua_State* L)
 	auto gl = sol::stack::get<sol::table>(L, -1);
 
 	gl.new_usertype<LuaVAOImpl>("VAO",
-		sol::constructors<LuaVAOImpl(const sol::optional<bool>, sol::this_state)>(),
+		sol::constructors<LuaVAOImpl(sol::this_state)>(),
 		"Delete", &LuaVAOImpl::Delete,
-		"SetVertexAttributes", &LuaVAOImpl::SetVertexAttributes,
-		"SetInstanceAttributes", &LuaVAOImpl::SetInstanceAttributes,
-		"SetIndexAttributes", &LuaVAOImpl::SetIndexAttributes,
 
-		"UploadVertexBulk", &LuaVAOImpl::UploadVertexBulk,
-		"UploadInstanceBulk", &LuaVAOImpl::UploadInstanceBulk,
-
-		"UploadVertexAttribute", &LuaVAOImpl::UploadVertexAttribute,
-		"UploadInstanceAttribute", &LuaVAOImpl::UploadInstanceAttribute,
-
-		"UploadIndices", &LuaVAOImpl::UploadIndices,
+		"AttachVertexBuffer", &LuaVAOImpl::AttachVertexBuffer,
+		"AttachInstanceBuffer", &LuaVAOImpl::AttachInstanceBuffer,
+		"AttachIndexBuffer", &LuaVAOImpl::AttachIndexBuffer,
 
 		"DrawArrays", &LuaVAOImpl::DrawArrays,
 		"DrawElements", &LuaVAOImpl::DrawElements
@@ -47,7 +41,7 @@ int LuaVAO::GetVAO(lua_State* L)
 		return 0;
 	}
 
-	return sol::stack::call_lua(L, 1, [=](const sol::optional<bool> freqUpdatedOpt) {
-		return LuaVAOImpl{freqUpdatedOpt, L};
+	return sol::stack::call_lua(L, 1, [=]() {
+		return LuaVAOImpl{L};
 	});
 }
