@@ -50,11 +50,7 @@ to be reverted before 106.0 is released. ****
 8) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
 9) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
-		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32.exe
-		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32_portable.7z
-		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32-minimal-portable.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win64/spring_${REL_VERS}_win64-minimal-portable.7z
-		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux32/spring_${REL_VERS}_minimal-portable-linux32-static.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
@@ -82,18 +78,3 @@ to be reverted before 106.0 is released. ****
 			https://sourceforge.net/projects/springrts/files/springrts/spring-${REL_VERS}/
 
 
-Windows reference
------------------
-git checkout master
-git reset --hard origin/master
-git merge develop --no-ff
-SET REL_VERS=103.0
-git tag -a -m "%REL_VERS% release" %REL_VERS%
-git checkout develop
-git tag -a -m "dev version after the %REL_VERS% release" %REL_VERS%.1
-wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/linux32/spring_%REL_VERS%_minimal-portable-linux32-static.7z
-wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/linux64/spring_%REL_VERS%_minimal-portable-linux64-static.7z
-wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/source/spring_%REL_VERS%_src.tar.gz
-wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/source/spring_%REL_VERS%_src.tar.lzma
-
-rsync --progress -h spring_%REL_VERS%* ashdnazg,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-%REL_VERS%/
