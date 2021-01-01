@@ -133,6 +133,8 @@ endfunction()
 check_linker_flag("-Wl,--exclude-libs,ALL" LINKER_HAS_EXCLUDELIBS)
 if (LINKER_HAS_EXCLUDELIBS)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--exclude-libs,ALL)
+else()
+	message(FATAL_ERROR "linker doesn't support -Wl,--exclude-libs,ALL this leads to a broke unitsync.so")
 endif()
 
 
